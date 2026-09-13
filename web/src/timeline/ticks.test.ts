@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_FORMATION } from '@/types/layer'
 
 import { createLinearScale, createSymlogScale, type TimeWindow } from './scale'
-import { generateTicks } from './ticks'
+import { generateTicks, tickLabelAlign } from './ticks'
 
 const TRACK_WIDTH = 900
 
@@ -71,6 +71,24 @@ describe('generateTicks', () => {
   it('degrades to no ticks for a non-positive track width', () => {
     const window: TimeWindow = [0, EARTH_FORMATION]
     expect(generateTicks(window, createSymlogScale(window), 0)).toEqual([])
+  })
+})
+
+describe('tickLabelAlign', () => {
+  it('hugs the left edge for a tick whose centred label would overhang u=0', () => {
+    expect(tickLabelAlign(0, '4.57 Ga', TRACK_WIDTH)).toBe('start')
+  })
+
+  it('hugs the right edge for the "present" tick at u=1', () => {
+    expect(tickLabelAlign(1, 'present', TRACK_WIDTH)).toBe('end')
+  })
+
+  it('centres a tick comfortably inside the track', () => {
+    expect(tickLabelAlign(0.5, '66 Ma', TRACK_WIDTH)).toBe('center')
+  })
+
+  it('degrades to center for a non-positive track width', () => {
+    expect(tickLabelAlign(1, 'present', 0)).toBe('center')
   })
 })
 

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EARTH_FORMATION } from '@/types/layer'
 
+import type { TimelineCheckpoint } from '../checkpoints'
 import { minimapBracket } from '../minimapLayout'
 import type { TimeWindow } from '../scale'
 import { Minimap } from './Minimap'
@@ -147,5 +148,22 @@ describe('<Minimap> click / double-click', () => {
     fireEvent.doubleClick(track)
 
     expect(animateWindowTo).toHaveBeenCalledWith([0, EARTH_FORMATION])
+  })
+})
+
+describe('<Minimap> checkpoints', () => {
+  it('renders a titled tick for every checkpoint, regardless of the visible window', () => {
+    const checkpoints: TimelineCheckpoint[] = [
+      { id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' },
+      { id: 'modern-city', t: 0, label: 'Modern city' },
+    ]
+    render(<Minimap t={MID_WINDOW[0]} window={MID_WINDOW} checkpoints={checkpoints} onWindowChange={vi.fn()} animateWindowTo={vi.fn()} />)
+    expect(screen.getByTitle('Pleistocene steppe')).toBeTruthy()
+    expect(screen.getByTitle('Modern city')).toBeTruthy()
+  })
+
+  it('renders no checkpoint ticks when none are passed', () => {
+    render(<Minimap t={MID_WINDOW[0]} window={MID_WINDOW} onWindowChange={vi.fn()} animateWindowTo={vi.fn()} />)
+    expect(screen.queryByTitle('Pleistocene steppe')).toBeNull()
   })
 })

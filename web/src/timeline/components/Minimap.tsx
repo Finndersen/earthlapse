@@ -23,6 +23,7 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 
+import type { TimelineCheckpoint } from '../checkpoints'
 import { ERA_BANDS } from '../eras'
 import { formatTimeRange } from '../format'
 import { minimapBracket, MINIMAP_FULL_DOMAIN, MIN_BRACKET_PX } from '../minimapLayout'
@@ -30,6 +31,7 @@ import { createLinearScale, createSymlogScale, type TimeWindow } from '../scale'
 import { useTrackWidth } from '../useTrackWidth'
 import { clampWindowToDomain } from '../util'
 import { MIN_SPAN_YEARS } from '../zoom'
+import styles from './Minimap.module.css'
 
 /** How close, in px, a pointer must land to a bracket edge to grab it for resizing rather than
  *  the bracket body (for panning) or the track (for recentring). */
@@ -54,6 +56,9 @@ interface DragState {
 interface MinimapProps {
   t: GeoTime
   window: TimeWindow
+  /** Drawn as tiny amber ticks (W13), full domain, regardless of `window` — the same "always
+   *  shown, no LOD" treatment as the scrub track's pips. Optional; defaults to none. */
+  checkpoints?: readonly TimelineCheckpoint[]
   onWindowChange: (window: TimeWindow) => void
   animateWindowTo: (window: TimeWindow) => void
 }
@@ -66,7 +71,7 @@ function formatHistoryFraction(fraction: number): string {
   return `${pct.toExponential(1)}%`
 }
 
-export function Minimap({ t, window: visibleWindow, onWindowChange, animateWindowTo }: MinimapProps) {
+export function Minimap({ t, window: visibleWindow, checkpoints = [], onWindowChange, animateWindowTo }: MinimapProps) {
   // A tracked (re-render-triggering) width, not just a ref read during render: the bracket's
   // MIN_BRACKET_PX floor needs a real pixel width, and a plain `trackRef.current
   // ?.getBoundingClientRect()` read during render is always 0 on first paint (the ref isn't
@@ -165,7 +170,7 @@ export function Minimap({ t, window: visibleWindow, onWindowChange, animateWindo
   const historyFraction = (visibleWindow[1] - visibleWindow[0]) / EARTH_FORMATION
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
+    <div className={styles.wrap}>
       <div
         ref={trackRef}
         role="slider"
@@ -174,22 +179,17 @@ export function Minimap({ t, window: visibleWindow, onWindowChange, animateWindo
         aria-valuemax={1}
         aria-valuenow={(bracket.leftPx + bracket.widthPx / 2) / Math.max(1, trackWidthPx)}
         tabIndex={0}
+        className={styles.track}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
-        style={{
-          position: 'relative',
-          height: 20,
-          cursor: 'pointer',
-          touchAction: 'none',
-        }}
       >
         {/* Clipping lives on this inner wrapper, not the interactive track itself — the
             bracket label below sits above the strip and must not be cut off by it. */}
-        <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: 3, overflow: 'hidden', background: 'rgba(231,226,214,0.05)' }}>
+        <div aria-hidden className={styles.clip}>
           {ERA_BANDS.map((band) => {
             const left = MINIMAP_SYMLOG_SCALE.toUnit(band.window[1])
             const right = MINIMAP_SYMLOG_SCALE.toUnit(band.window[0])
@@ -197,82 +197,42 @@ export function Minimap({ t, window: visibleWindow, onWindowChange, animateWindo
               <div
                 key={band.id}
                 title={band.name}
-                style={{
-                  position: 'absolute',
-                  left: `${left * 100}%`,
-                  width: `${Math.max(right - left, 0) * 100}%`,
-                  top: 0,
-                  bottom: 0,
-                  background: ERA_BAND_TINT[band.id],
-                  borderRight: '1px solid rgba(231,226,214,0.08)',
-                }}
+                className={styles.eraBand}
+                style={{ left: `${left * 100}%`, width: `${Math.max(right - left, 0) * 100}%`, background: ERA_BAND_TINT[band.id] }}
               />
             )
           })}
 
-          <div
-            style={{
-              position: 'absolute',
-              left: playheadU * 100 + '%',
-              top: 2,
-              bottom: 2,
-              width: 1,
-              marginLeft: -0.5,
-              background: 'rgba(231,226,214,0.85)',
-            }}
-          />
+          {checkpoints.map((checkpoint) => (
+            <div
+              key={checkpoint.id}
+              title={checkpoint.label}
+              className={styles.checkpointTick}
+              style={{ left: `${MINIMAP_SYMLOG_SCALE.toUnit(checkpoint.t) * 100}%` }}
+            />
+          ))}
+
+          <div className={styles.playheadTick} style={{ left: `${playheadU * 100}%` }} />
 
           <div
-            style={{
-              position: 'absolute',
-              left: `${bracket.leftPx}px`,
-              width: `${Math.max(bracket.widthPx, MIN_BRACKET_PX)}px`,
-              top: 0,
-              bottom: 0,
-              background: 'rgba(231,226,214,0.18)',
-              border: '1px solid rgba(231,226,214,0.55)',
-              borderRadius: 2,
-              boxSizing: 'border-box',
-              cursor: 'grab',
-            }}
+            className={styles.bracket}
+            style={{ left: `${bracket.leftPx}px`, width: `${Math.max(bracket.widthPx, MIN_BRACKET_PX)}px` }}
           />
         </div>
 
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            left: `${bracket.leftPx + bracket.widthPx / 2}px`,
-            top: -15,
-            transform: 'translateX(-50%)',
-            fontSize: 10,
-            whiteSpace: 'nowrap',
-            color: 'rgba(231,226,214,0.75)',
-            pointerEvents: 'none',
-          }}
-        >
+        <div aria-hidden className={styles.bracketLabel} style={{ left: `${bracket.leftPx + bracket.widthPx / 2}px` }}>
           {formatTimeRange(visibleWindow)}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <div
-          aria-hidden
-          style={{ position: 'relative', height: 3, flex: 1, borderRadius: 1.5, background: 'rgba(231,226,214,0.06)' }}
-        >
+      <div className={styles.linearRow}>
+        <div aria-hidden className={styles.linearTrack}>
           <div
-            style={{
-              position: 'absolute',
-              left: `${linearStartU * 100}%`,
-              width: `${Math.max(linearEndU - linearStartU, 0.0015) * 100}%`,
-              top: 0,
-              bottom: 0,
-              borderRadius: 1.5,
-              background: 'rgba(217,154,78,0.65)',
-            }}
+            className={styles.linearFill}
+            style={{ left: `${linearStartU * 100}%`, width: `${Math.max(linearEndU - linearStartU, 0.0015) * 100}%` }}
           />
         </div>
-        <span aria-hidden style={{ fontSize: 9.5, color: 'rgba(231,226,214,0.35)', whiteSpace: 'nowrap' }}>
+        <span aria-hidden className={styles.historyLabel}>
           {formatHistoryFraction(historyFraction)} of Earth&rsquo;s history
         </span>
       </div>

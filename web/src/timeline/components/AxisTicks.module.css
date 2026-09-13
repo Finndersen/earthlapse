@@ -1,0 +1,16 @@
+.ticks {
+  position: relative;
+  height: 16px;
+  width: 100%;
+}
+
+.label {
+  position: absolute;
+  top: 0;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  white-space: nowrap;
+}

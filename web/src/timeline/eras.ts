@@ -45,3 +45,19 @@ export const ERA_BANDS: readonly EraBand[] = [
   { id: 'mesozoic', name: 'Mesozoic', window: [CENOZOIC_BASE, MESOZOIC_BASE] },
   { id: 'cenozoic', name: 'Cenozoic', window: [0, CENOZOIC_BASE] },
 ]
+
+/**
+ * The eon/era name containing `t` (the shell's era/time title, W13) — a thin wrapper over
+ * `ERA_BANDS` so callers elsewhere in the app don't need to know its window-overlap shape or
+ * import the band list just to look one up. No period-level breakdown: `ERA_BANDS` only goes
+ * to eon/era resolution (see this file's own doc comment), so there is none to include yet.
+ * At an exact boundary shared by two adjacent bands, the older one wins, matching `ERA_BANDS`'
+ * own oldest-to-newest ordering.
+ */
+export function eraNameForTime(t: GeoTime): string {
+  const band = ERA_BANDS.find((b) => t >= b.window[0] && t <= b.window[1])
+  if (band === undefined) {
+    throw new Error(`eraNameForTime: t=${t} is outside ERA_BANDS' domain [0, ${EARTH_FORMATION}]`)
+  }
+  return band.name
+}

@@ -145,3 +145,21 @@ export function generateTicks(window: TimeWindow, scale: TimeScale, trackWidthPx
   if (scale.kind === 'linear') return linearStepTicks(window, scale, trackWidthPx)
   return symlogTicks(window, scale, trackWidthPx)
 }
+
+export type TickLabelAlign = 'start' | 'center' | 'end'
+
+/**
+ * Which edge (if either) a tick label at `u` must hug so it never renders outside the track —
+ * `'start'` left-aligns the label to its own tick position, `'end'` right-aligns it, `'center'`
+ * is the normal centred case. Only the ticks nearest either edge can ever need this: a label's
+ * own half-width has to reach past the track boundary for a real clip to occur (e.g. the
+ * "present" tick at `u = 1`, whose centred half-width overhangs the track's right edge).
+ */
+export function tickLabelAlign(u: number, label: string, trackWidthPx: number): TickLabelAlign {
+  if (!(trackWidthPx > 0)) return 'center'
+  const px = u * trackWidthPx
+  const halfWidth = estimateLabelWidthPx(label) / 2
+  if (px - halfWidth < 0) return 'start'
+  if (px + halfWidth > trackWidthPx) return 'end'
+  return 'center'
+}

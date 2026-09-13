@@ -1,17 +1,24 @@
 'use client'
 
 /** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, event uncertainty bands with
- *  LOD fade, and the playhead. */
+ *  LOD fade, scene checkpoint pips, and the playhead. A luminous hairline baseline rather than
+ *  a filled panel, per the shared visual language — the hit area (`.hitArea`) stays taller
+ *  than anything drawn inside it so the track stays easy to grab. */
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
 
 import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 
+import { layoutCheckpointPips } from '../checkpointLayout'
+import type { TimelineCheckpoint } from '../checkpoints'
+import { formatGeoTime } from '../format'
 import { minImportanceForSpan, visibleEvents } from '../lod'
 import type { TimeWindow } from '../scale'
+import { useTrackWidth } from '../useTrackWidth'
 import { clamp, clampUnit } from '../util'
 import { panWindow, zoomWindow } from '../zoom'
+import styles from './ScrubTrack.module.css'
 
 /** Wheel `deltaY` -> zoom `factor`, tuned so a typical mouse-wheel notch (~100) changes span
  *  by roughly 15%. */
@@ -21,12 +28,19 @@ const ZOOM_SENSITIVITY = 0.0015
  *  transparent to fully opaque, so events pop in as a fade rather than a hard cut. */
 const FADE_BAND = 0.12
 
+/** Half the hit area's own height (`.hitArea` in the CSS module) — where a row-0 checkpoint
+ *  pip sits vertically, staggered rows climbing above it. Kept in sync with that height by
+ *  hand since CSS custom properties can't drive inline pixel math here. */
+const PIP_BASELINE_PX = 24
+const PIP_ROW_STEP_PX = 11
+
 interface ScrubTrackProps {
   t: GeoTime
   window: TimeWindow
   scale: TimeScale
   scaleKind: 'symlog' | 'linear'
   events: readonly TimelineEvent[]
+  checkpoints: readonly TimelineCheckpoint[]
   onScrub: (t: GeoTime) => void
   onWindowChange: (window: TimeWindow) => void
   /** Double-clicking an event's marker frames its uncertainty band (README §2) instead of
@@ -40,19 +54,23 @@ export function ScrubTrack({
   scale,
   scaleKind,
   events,
+  checkpoints,
   onScrub,
   onWindowChange,
   onFrameEvent,
 }: ScrubTrackProps) {
-  const trackRef = useRef<HTMLDivElement>(null)
+  const [trackRef, trackWidthPx] = useTrackWidth<HTMLDivElement>()
 
-  const uFromClientX = useCallback((clientX: number): number => {
-    const el = trackRef.current
-    if (!el) return 0
-    const rect = el.getBoundingClientRect()
-    if (rect.width === 0) return 0
-    return clampUnit((clientX - rect.left) / rect.width)
-  }, [])
+  const uFromClientX = useCallback(
+    (clientX: number): number => {
+      const el = trackRef.current
+      if (!el) return 0
+      const rect = el.getBoundingClientRect()
+      if (rect.width === 0) return 0
+      return clampUnit((clientX - rect.left) / rect.width)
+    },
+    [trackRef],
+  )
 
   const scrubToClientX = useCallback(
     (clientX: number): void => onScrub(scale.fromUnit(uFromClientX(clientX))),
@@ -78,6 +96,11 @@ export function ScrubTrack({
   const shown = visibleEvents(events, visibleWindow, spanYears)
   const playheadU = clampUnit(scale.toUnit(t))
 
+  const pips = useMemo(
+    () => layoutCheckpointPips(checkpoints, visibleWindow, scale, trackWidthPx),
+    [checkpoints, visibleWindow, scale, trackWidthPx],
+  )
+
   // Plain vertical wheel zooms around the cursor (also how ctrl+wheel / trackpad pinch reach
   // this handler — the browser reports pinch as a wheel event with ctrlKey set, but the
   // deltaY-driven zoom below already does the right thing for it without special-casing).
@@ -86,7 +109,6 @@ export function ScrubTrack({
     e.preventDefault()
     const isPan = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
     if (isPan) {
-      const trackWidthPx = trackRef.current?.getBoundingClientRect().width ?? 0
       if (trackWidthPx === 0) return
       // Shift turns a plain vertical scroll (deltaY, deltaX === 0) into a pan — reuse deltaY
       // as the pan delta in that case rather than requiring the browser to have already
@@ -120,19 +142,14 @@ export function ScrubTrack({
       aria-valuemax={visibleWindow[1]}
       aria-valuenow={t}
       tabIndex={0}
+      className={styles.hitArea}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onWheel={handleWheel}
       onDoubleClick={handleDoubleClick}
-      style={{
-        position: 'relative',
-        height: 40,
-        borderRadius: 4,
-        background: 'rgba(255,255,255,0.06)',
-        touchAction: 'none',
-        cursor: 'ew-resize',
-      }}
     >
+      <div aria-hidden className={styles.baseline} />
+
       {shown.map((event) => {
         const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
         const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
@@ -141,34 +158,46 @@ export function ScrubTrack({
           <div
             key={event.id}
             title={event.label}
+            className={styles.eventBand}
             style={{
-              position: 'absolute',
               left: `${uStart * 100}%`,
               width: `${Math.max(uEnd - uStart, 0.002) * 100}%`,
-              top: 6,
-              bottom: 6,
-              background: 'rgba(120,190,255,0.55)',
               opacity,
-              borderRadius: 2,
-              pointerEvents: 'none',
             }}
           />
         )
       })}
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          left: `${playheadU * 100}%`,
-          top: 0,
-          bottom: 0,
-          width: 2,
-          marginLeft: -1,
-          background: '#fff',
-          boxShadow: '0 0 6px rgba(255,255,255,0.8)',
-          pointerEvents: 'none',
-        }}
-      />
+
+      {pips.map((pip) => (
+        <button
+          key={pip.id}
+          type="button"
+          className={styles.pip}
+          style={{ left: `${pip.u * 100}%`, top: PIP_BASELINE_PX - pip.row * PIP_ROW_STEP_PX }}
+          title={`${pip.label} — ${formatGeoTime(pip.t)}`}
+          aria-label={`${pip.label}, ${formatGeoTime(pip.t)}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onScrub(pip.t)
+          }}
+        >
+          <span aria-hidden className={styles.pipDiamond} />
+          <span aria-hidden className={styles.pipPreview}>
+            {pip.thumbnailUrl && <img className={styles.pipThumb} src={pip.thumbnailUrl} alt="" />}
+            <span className={styles.pipTime}>{formatGeoTime(pip.t)}</span>
+            <span className={styles.pipLabel}>{pip.label}</span>
+          </span>
+        </button>
+      ))}
+
+      <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
+        <div className={styles.playheadKnob} />
+      </div>
+      <span aria-live="polite" className={styles.timeLabel} style={{ left: `${playheadU * 100}%` }}>
+        {formatGeoTime(t)}
+      </span>
     </div>
   )
 }

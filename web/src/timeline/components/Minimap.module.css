@@ -1,0 +1,109 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.track {
+  position: relative;
+  height: 20px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.track:focus-visible {
+  outline: none;
+}
+
+.track:focus-visible .clip {
+  box-shadow: 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.clip {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(239, 233, 220, 0.04);
+}
+
+.eraBand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-right: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.1));
+}
+
+.playheadTick {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--hud-ink, rgba(239, 233, 220, 0.85));
+}
+
+.checkpointTick {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--hud-accent, #e8b06a);
+  box-shadow: 0 0 4px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.bracket {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--hud-accent, #e8b06a);
+  border-radius: 2px;
+  background: rgba(232, 176, 106, 0.07);
+  box-shadow: 0 0 8px var(--hud-accent-glow, rgba(232, 176, 106, 0.35));
+  cursor: grab;
+}
+
+.bracketLabel {
+  position: absolute;
+  top: -15px;
+  transform: translateX(-50%);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  pointer-events: none;
+}
+
+.linearRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.linearTrack {
+  position: relative;
+  height: 2px;
+  flex: 1;
+  border-radius: 1px;
+  background: rgba(239, 233, 220, 0.06);
+}
+
+.linearFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 1px;
+  background: var(--hud-accent, rgba(232, 176, 106, 0.65));
+  opacity: 0.65;
+}
+
+.historyLabel {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}

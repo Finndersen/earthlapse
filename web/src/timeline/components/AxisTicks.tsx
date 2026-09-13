@@ -1,20 +1,28 @@
 'use client'
 
-/** Nice, non-overlapping labels under the scrub track (README §2). Purely presentational —
- *  all the "which ticks, where" logic lives in `ticks.ts`; this just measures its own width
- *  and renders what that returns. */
+/** Nice, non-overlapping labels under the scrub track. Purely presentational — all the
+ *  "which ticks, where" logic lives in `ticks.ts`; this just measures its own width and
+ *  renders what that returns, clamping the two edge labels via `tickLabelAlign` so a tick
+ *  like "present" at `u = 1` never renders clipped outside the track. */
 
 import { useMemo } from 'react'
 
 import type { TimeScale } from '@/types/layer'
 
 import type { TimeWindow } from '../scale'
-import { generateTicks } from '../ticks'
+import { generateTicks, tickLabelAlign } from '../ticks'
 import { useTrackWidth } from '../useTrackWidth'
+import styles from './AxisTicks.module.css'
 
 interface AxisTicksProps {
   window: TimeWindow
   scale: TimeScale
+}
+
+const ALIGN_TRANSFORM: Record<ReturnType<typeof tickLabelAlign>, string> = {
+  start: 'translateX(0)',
+  center: 'translateX(-50%)',
+  end: 'translateX(-100%)',
 }
 
 export function AxisTicks({ window: visibleWindow, scale }: AxisTicksProps) {
@@ -22,18 +30,14 @@ export function AxisTicks({ window: visibleWindow, scale }: AxisTicksProps) {
   const ticks = useMemo(() => generateTicks(visibleWindow, scale, widthPx), [visibleWindow, scale, widthPx])
 
   return (
-    <div ref={ref} aria-hidden style={{ position: 'relative', height: 16, width: '100%' }}>
+    <div ref={ref} aria-hidden className={styles.ticks}>
       {ticks.map((tick) => (
         <span
           key={tick.t}
+          className={styles.label}
           style={{
-            position: 'absolute',
             left: `${tick.u * 100}%`,
-            transform: 'translateX(-50%)',
-            fontSize: 10,
-            letterSpacing: 0.2,
-            color: 'rgba(255,255,255,0.4)',
-            whiteSpace: 'nowrap',
+            transform: ALIGN_TRANSFORM[tickLabelAlign(tick.u, tick.label, widthPx)],
           }}
         >
           {tick.label}

@@ -1,0 +1,41 @@
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ghostButton {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.ghostButton:hover,
+.ghostButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  border-color: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  outline: none;
+}
+
+.followingIndicator {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hud-accent, #e8b06a);
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  min-width: 0;
+}

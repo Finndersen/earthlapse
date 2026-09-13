@@ -58,15 +58,31 @@
  *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
  *   a time without the rest of the timeline UI.
  * - `ERA_BANDS` — the eon/era boundaries (ICS v2024/12) behind the minimap's orientation bands.
+ *   `eraNameForTime(t)` looks one up directly, for callers (the shell's era/time title) that
+ *   just need the name.
  * - `timelineKeyIntent(event)` maps a keydown to a `TimelineKeyIntent` (or `null`), ignoring
  *   text-input targets — the pure half of `Timeline`'s keyboard handling.
+ * - `TimelineCheckpoint` (W13) — a generated still, plotted on the scrub track as a pip and on
+ *   the minimap as a tick, distinct from data-driven `TimelineEvent`s: no importance/LOD, so
+ *   `visibleCheckpoints` is a plain window-overlap filter. `layoutCheckpointPips` positions
+ *   and (when several would render within `MIN_PIP_SEPARATION_PX` of each other) vertically
+ *   staggers them so none is ever hidden. `nearestNeighbourCheckpoint` and the combined
+ *   `nearestStepTarget` (events ∪ checkpoints) back the transport's step buttons and the ←/→
+ *   shortcut, so every scene is reachable by stepping.
  *
  * ## `<Timeline>` — props contract
  *
  * See the doc comment on `TimelineProps` in Timeline.tsx.
  */
 
-export { ERA_BANDS, type EraBand } from './eras'
+export { layoutCheckpointPips, MIN_PIP_SEPARATION_PX, type CheckpointPipLayout } from './checkpointLayout'
+export {
+  nearestNeighbourCheckpoint,
+  nearestStepTarget,
+  visibleCheckpoints,
+  type TimelineCheckpoint,
+} from './checkpoints'
+export { eraNameForTime, ERA_BANDS, type EraBand } from './eras'
 export { formatGeoTime, formatTimeRange } from './format'
 export { FOLLOW_TARGET_U, FOLLOW_TRIGGER_U, followWindow } from './follow'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
@@ -80,7 +96,7 @@ export {
   SYMLOG_C,
   type TimeWindow,
 } from './scale'
-export { generateTicks, type AxisTick } from './ticks'
+export { generateTicks, tickLabelAlign, type AxisTick, type TickLabelAlign } from './ticks'
 export { Timeline, type TimelineProps } from './Timeline'
 export { useAnimatedScale } from './useAnimatedScale'
 export { usePrefersReducedMotion } from './usePrefersReducedMotion'
