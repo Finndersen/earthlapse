@@ -1,0 +1,155 @@
+/*
+ * The globe as a floating orb: a transparent canvas (no square container) over a soft
+ * atmospheric halo, and — expanded — a large centred orb on a dimmed backdrop.
+ */
+
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 50%, rgba(3, 4, 6, 0.7), rgba(3, 4, 6, 0.95) 72%);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+  animation: fadeIn 260ms ease;
+}
+
+.orb {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.orbExpanded {
+  position: relative;
+  width: min(84vmin, 820px);
+  height: min(84vmin, 820px);
+  cursor: grab;
+}
+
+/* A wide, faint scatter beyond the shader's own atmosphere. With `inset: -12%` the planet's
+   silhouette (≈76% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈62%
+   of this gradient's radius. */
+.halo {
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(143, 199, 255, 0.16) 0%,
+    rgba(143, 199, 255, 0.16) 60%,
+    rgba(143, 199, 255, 0.08) 72%,
+    rgba(143, 199, 255, 0.025) 86%,
+    transparent 100%
+  );
+  opacity: 0.8;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.orb:hover .halo {
+  opacity: 1;
+}
+
+.outOfDomain {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64%;
+  transform: translate(-50%, -50%);
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 8.5px;
+  line-height: 1.5;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  pointer-events: none;
+}
+
+.orbExpanded .outOfDomain {
+  font-size: 12px;
+  width: 40%;
+}
+
+/* Hugs the sphere's silhouette (see .halo) rather than the square canvas. */
+.expandButton {
+  position: absolute;
+  inset: 11%;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  cursor: zoom-in;
+  transition: box-shadow 240ms ease;
+}
+
+.expandButton:hover {
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    0 0 26px rgba(143, 199, 255, 0.25);
+}
+
+.expandButton:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px var(--hud-accent, #e8b06a),
+    0 0 20px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.closeButton {
+  position: absolute;
+  top: clamp(16px, 2.4vw, 34px);
+  right: clamp(16px, 3vw, 48px);
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-size: 15px;
+  line-height: 40px;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.closeButton:hover {
+  color: var(--hud-ink, #efe9dc);
+  box-shadow: inset 0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.closeButton:focus-visible {
+  outline: none;
+  color: var(--hud-accent, #e8b06a);
+  box-shadow:
+    inset 0 0 0 1px var(--hud-accent, #e8b06a),
+    0 0 14px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+
+  .halo,
+  .expandButton,
+  .closeButton {
+    transition: none;
+  }
+}

@@ -10,16 +10,19 @@ afterEach(() => {
   cleanup()
 })
 
-function renderShell() {
+function renderShell(calm = false) {
   return render(
     <ShellLayout
+      scene={<div>SCENE_SLOT</div>}
       globe={<div>GLOBE_SLOT</div>}
-      hud={<div>HUD_SLOT</div>}
+      readouts={<div>READOUTS_SLOT</div>}
+      title={<div>TITLE_SLOT</div>}
+      badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
       caption={<div>CAPTION_SLOT</div>}
-      scene={<div>SCENE_SLOT</div>}
-      timeline={<div>TIMELINE_SLOT</div>}
       chart={<div>CHART_SLOT</div>}
+      timeline={<div>TIMELINE_SLOT</div>}
+      calm={calm}
     />,
   )
 }
@@ -30,13 +33,15 @@ describe('ShellLayout', () => {
     // getByText throws if the text is absent or duplicated, so a successful call is itself
     // the assertion; no @testing-library/jest-dom matcher is installed in this project.
     for (const text of [
+      'SCENE_SLOT',
       'GLOBE_SLOT',
-      'HUD_SLOT',
+      'READOUTS_SLOT',
+      'TITLE_SLOT',
+      'BADGE_SLOT',
       'ANCESTOR_SLOT',
       'CAPTION_SLOT',
-      'SCENE_SLOT',
-      'TIMELINE_SLOT',
       'CHART_SLOT',
+      'TIMELINE_SLOT',
     ]) {
       expect(screen.getByText(text).textContent).toBe(text)
     }
@@ -51,5 +56,10 @@ describe('ShellLayout', () => {
     renderShell()
     const link = screen.getByText('Credits')
     expect(link.getAttribute('href')).toBe('/credits')
+  })
+
+  it.each([true, false])('exposes calm=%s on the root for the periphery fade', (calm) => {
+    const { container } = renderShell(calm)
+    expect((container.firstElementChild as HTMLElement).dataset.calm).toBe(String(calm))
   })
 })

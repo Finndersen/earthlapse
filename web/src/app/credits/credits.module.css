@@ -1,11 +1,13 @@
 .page {
   min-height: 100vh;
-  background: #0a0b0d;
-  color: #e7e2d6;
-  font-family: 'Archivo Narrow', 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
   display: flex;
   justify-content: center;
-  padding: clamp(24px, 5vw, 64px) 20px;
+  padding: clamp(28px, 6vw, 80px) clamp(16px, 4vw, 40px);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(232, 176, 106, 0.05), transparent 70%),
+    #030406;
+  color: var(--hud-ink);
+  font-family: var(--hud-sans);
 }
 
 .wrap {
@@ -14,107 +16,132 @@
 }
 
 .back {
-  display: inline-block;
-  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: clamp(28px, 5vw, 48px);
+  padding: 6px 0;
+  font-family: var(--hud-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: #8b8e94;
+  color: var(--hud-dim);
   text-decoration: none;
-  margin-bottom: 24px;
+  transition: color 220ms ease;
 }
 
 .back:hover,
 .back:focus-visible {
-  color: #d99a4e;
+  color: var(--hud-accent);
+  text-shadow: 0 0 14px var(--hud-accent-glow);
+}
+
+.back:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 4px;
 }
 
 .title {
-  font-size: clamp(28px, 4vw, 38px);
-  font-weight: 600;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 200;
   letter-spacing: -0.01em;
 }
 
 .intro {
-  color: #8b8e94;
-  font-size: 15px;
-  line-height: 1.6;
   max-width: 58ch;
-  margin: 0 0 32px;
+  margin: 0 0 clamp(28px, 5vw, 44px);
+  font-family: var(--hud-serif);
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--hud-dim);
 }
 
-.status {
-  color: #8b8e94;
-  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 13px;
+.status,
+.statusError {
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
 }
 
 .statusError {
-  color: #e0503f;
-  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 13px;
+  color: #e8826a;
+  text-transform: none;
+  letter-spacing: 0.04em;
 }
 
 .stubNotice {
-  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  color: #d99a4e;
-  border: 1px solid rgba(217, 154, 78, 0.4);
-  border-radius: 3px;
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   margin: 0 0 20px;
-  display: inline-block;
+  font-family: var(--hud-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hud-accent);
+}
+
+.stubNotice::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hud-accent);
+  box-shadow: 0 0 8px var(--hud-accent-glow);
 }
 
 .list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .item {
-  padding: 20px 0;
-  border-top: 1px solid rgba(231, 226, 214, 0.09);
-}
-
-.item:last-child {
-  border-bottom: 1px solid rgba(231, 226, 214, 0.09);
+  padding: 24px 0;
+  border-top: 1px solid var(--hud-hairline);
 }
 
 .itemTitle {
-  font-size: 17px;
-  font-weight: 600;
-  margin: 0 0 6px;
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .itemCitation {
-  margin: 0 0 10px;
-  color: #c7c3b8;
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 58ch;
+  max-width: 60ch;
+  margin: 0 0 12px;
+  font-family: var(--hud-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--hud-dim);
 }
 
 .itemMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 16px;
   align-items: baseline;
+  gap: 6px 18px;
   margin: 0;
-  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  font-size: 12px;
-  color: #565a61;
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--hud-faint);
+  overflow-wrap: anywhere;
 }
 
 .itemMeta a {
-  color: #8b8e94;
+  color: var(--hud-dim);
+  text-decoration-color: var(--hud-hairline);
+  text-underline-offset: 3px;
 }
 
 .itemMeta a:hover,
 .itemMeta a:focus-visible {
-  color: #d99a4e;
+  color: var(--hud-accent);
 }

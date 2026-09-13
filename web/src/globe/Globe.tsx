@@ -7,20 +7,32 @@
 
 import { OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, type MouseEvent, type PointerEvent } from 'react'
 import * as THREE from 'three'
 
 import type { RasterData } from '@/data/curated'
 import type { GeoTime } from '@/types/layer'
 
 import { globeBlendAt, globeUniforms } from './blend'
-import { GLOBE_FRAGMENT_SHADER, GLOBE_VERTEX_SHADER, RIM_FRAGMENT_SHADER, RIM_VERTEX_SHADER } from './shaders'
+import styles from './Globe.module.css'
+import {
+  ATMOSPHERE_SCALE,
+  GLOBE_FRAGMENT_SHADER,
+  GLOBE_VERTEX_SHADER,
+  RIM_FRAGMENT_SHADER,
+  RIM_VERTEX_SHADER,
+} from './shaders'
 import { PLACEHOLDER_TEXTURE } from './textureCache'
 import { useGlobeTexturePair } from './useGlobeTexturePair'
 
 const OUT_OF_DOMAIN_LABEL = 'No reconstruction before 540 Ma'
 const AUTO_ROTATE_RADIANS_PER_SECOND = 0.025
 const RIM_COLOR = new THREE.Color('#8fc7ff')
+/** Far enough back (with the 40° fov) that the sphere and its atmosphere shell sit whole
+ *  inside the canvas with a margin — the orb reads as a floating object, never a disc
+ *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
+ *  Globe.module.css's halo and expand ring are sized against. */
+const CAMERA_DISTANCE = 3.6
 
 export interface GlobeProps {
   t: GeoTime
@@ -41,30 +53,70 @@ export function Globe({ t, rasterData, assetBase, expanded, onToggleExpand }: Gl
   const showTexture = domain.hasData && pair.texturesReady
   const mix = showTexture ? pair.mix : 0
 
+  useCloseOnEscape(expanded, onToggleExpand)
+
+  // Closing on a backdrop click only when the press also *started* on the backdrop: a drag
+  // that rotates the globe and happens to be released outside it must not dismiss it.
+  const pressStartedOnBackdrop = useRef(false)
+  const onBackdropPointerDown = (e: PointerEvent<HTMLDivElement>): void => {
+    pressStartedOnBackdrop.current = e.target === e.currentTarget
+  }
+  const onBackdropClick = (e: MouseEvent<HTMLDivElement>): void => {
+    if (pressStartedOnBackdrop.current && e.target === e.currentTarget) onToggleExpand()
+  }
+
+  // The element types and order stay identical across both states so toggling restyles the
+  // same <Canvas> rather than remounting it (a new WebGL context and texture re-upload).
   return (
-    <div style={expanded ? styles.rootExpanded : styles.root}>
-      <Canvas camera={{ position: [0, 0, 2.6], fov: 40 }} dpr={[1, 2]}>
-        <GlobeSphere beforeTex={pair.beforeTex} afterTex={pair.afterTex} mix={mix} hasData={showTexture} />
-        <AtmosphereRim />
-        <OrbitControls enableZoom={expanded} enablePan={false} enableRotate rotateSpeed={0.6} />
-      </Canvas>
+    <div
+      className={expanded ? styles.backdrop : styles.root}
+      onPointerDown={expanded ? onBackdropPointerDown : undefined}
+      onClick={expanded ? onBackdropClick : undefined}
+    >
+      <div className={expanded ? styles.orbExpanded : styles.orb}>
+        <div className={styles.halo} aria-hidden="true" />
+        <Canvas camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true }}>
+          <GlobeSphere beforeTex={pair.beforeTex} afterTex={pair.afterTex} mix={mix} hasData={showTexture} />
+          <AtmosphereRim />
+          <OrbitControls enableZoom={expanded} enablePan={false} enableRotate={expanded} rotateSpeed={0.6} />
+        </Canvas>
 
-      {!domain.hasData && (
-        <div style={styles.outOfDomainLabel} aria-live="polite">
-          {OUT_OF_DOMAIN_LABEL}
-        </div>
+        {!domain.hasData && (
+          <div className={styles.outOfDomain} aria-live="polite">
+            {OUT_OF_DOMAIN_LABEL}
+          </div>
+        )}
+
+        {!expanded && (
+          <button type="button" className={styles.expandButton} onClick={onToggleExpand} aria-label="Expand globe" />
+        )}
+      </div>
+
+      {expanded && (
+        <button type="button" className={styles.closeButton} onClick={onToggleExpand} aria-label="Collapse globe">
+          ✕
+        </button>
       )}
-
-      <button
-        type="button"
-        onClick={onToggleExpand}
-        style={styles.toggleButton}
-        aria-label={expanded ? 'Collapse globe' : 'Expand globe'}
-      >
-        {expanded ? '✕' : '⤢'}
-      </button>
     </div>
   )
+}
+
+/** Escape collapses the expanded globe. The latest callback is read through a ref so the
+ *  listener isn't re-subscribed on every render (the globe re-renders every playback frame). */
+function useCloseOnEscape(expanded: boolean, onClose: () => void): void {
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
+
+  useEffect(() => {
+    if (!expanded) return
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onCloseRef.current()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [expanded])
 }
 
 // ------------------------------------------------------------------------------- sphere
@@ -116,7 +168,7 @@ function AtmosphereRim() {
   const uniforms = useMemo(() => ({ uColor: { value: RIM_COLOR } }), [])
 
   return (
-    <mesh scale={1.04}>
+    <mesh scale={ATMOSPHERE_SCALE}>
       <sphereGeometry args={[1, 48, 48]} />
       <shaderMaterial
         uniforms={uniforms}
@@ -129,53 +181,4 @@ function AtmosphereRim() {
       />
     </mesh>
   )
-}
-
-// -------------------------------------------------------------------------------- styles
-
-const styles: Record<string, CSSProperties> = {
-  root: {
-    position: 'relative',
-    width: '100%',
-    height: '100%',
-    borderRadius: '50%',
-    overflow: 'hidden',
-  },
-  rootExpanded: {
-    position: 'fixed',
-    inset: 0,
-    width: '100vw',
-    height: '100vh',
-    zIndex: 50,
-    borderRadius: 0,
-    overflow: 'hidden',
-    background: 'rgba(4, 6, 10, 0.92)',
-  },
-  outOfDomainLabel: {
-    position: 'absolute',
-    left: '50%',
-    bottom: '10%',
-    transform: 'translateX(-50%)',
-    fontSize: '0.7rem',
-    letterSpacing: '0.02em',
-    color: 'rgba(255, 255, 255, 0.65)',
-    textAlign: 'center',
-    whiteSpace: 'nowrap',
-    pointerEvents: 'none',
-  },
-  toggleButton: {
-    position: 'absolute',
-    top: '0.4rem',
-    right: '0.4rem',
-    width: '1.6rem',
-    height: '1.6rem',
-    lineHeight: '1.6rem',
-    padding: 0,
-    borderRadius: '50%',
-    border: 'none',
-    background: 'rgba(0, 0, 0, 0.45)',
-    color: 'rgba(255, 255, 255, 0.85)',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-  },
 }

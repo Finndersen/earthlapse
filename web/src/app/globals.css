@@ -1,5 +1,23 @@
+/*
+ * The shared HUD visual language. Global rather than scoped to the shell so the credits page
+ * and the loading/error states read as the same instrument; timeline components consume
+ * these with fallbacks.
+ */
 :root {
   color-scheme: dark;
+
+  --hud-ink: #efe9dc;
+  --hud-dim: rgba(239, 233, 220, 0.62);
+  --hud-faint: rgba(239, 233, 220, 0.36);
+  --hud-hairline: rgba(239, 233, 220, 0.18);
+  --hud-accent: #e8b06a;
+  --hud-accent-glow: rgba(232, 176, 106, 0.55);
+  --hud-event: rgba(140, 200, 255, 0.75);
+  --hud-event-glow: rgba(140, 200, 255, 0.35);
+  --hud-shadow: 0 1px 12px rgba(0, 0, 0, 0.85);
+  --hud-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --hud-sans: -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --hud-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
 }
 
 * {
@@ -10,6 +28,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #0a0b0d;
-  color: #e7e2d6;
+  background: #030406;
+  color: var(--hud-ink);
+  font-family: var(--hud-sans);
+  -webkit-font-smoothing: antialiased;
 }

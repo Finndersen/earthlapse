@@ -3,6 +3,9 @@
  * extra build-time loader is needed for two small shaders.
  */
 
+/** Radius of the atmosphere shell, as a multiple of the planet's. */
+export const ATMOSPHERE_SCALE = 1.15
+
 /**
  * UV is derived from the OBJECT-space normal (not world/view space), deliberately: the
  * sphere auto-rotates by mutating its own `rotation.y` each frame (see `Globe.tsx`), and the
@@ -25,6 +28,8 @@ void main() {
 }
 `
 
+/** Lit with a high ambient floor: the globe is a small orb read against a near-black lens
+ *  edge, so a deep terminator makes half of it vanish rather than adding form. */
 export const GLOBE_FRAGMENT_SHADER = /* glsl */ `
 uniform sampler2D uBefore;
 uniform sampler2D uAfter;
@@ -34,7 +39,7 @@ uniform float uHasData;
 varying vec3 vNormal;
 
 const float PI = 3.14159265359;
-const vec3 NEUTRAL_COLOR = vec3(0.08, 0.10, 0.14);
+const vec3 NEUTRAL_COLOR = vec3(0.10, 0.12, 0.16);
 const vec3 LIGHT_DIR = vec3(0.4, 0.6, 0.7);
 
 void main() {
@@ -47,12 +52,12 @@ void main() {
   vec3 dataColor = mix(texture2D(uBefore, uv).rgb, texture2D(uAfter, uv).rgb, uMix);
   vec3 baseColor = mix(NEUTRAL_COLOR, dataColor, uHasData);
 
-  float diffuse = 0.55 + 0.45 * max(dot(n, normalize(LIGHT_DIR)), 0.0);
+  float diffuse = 0.72 + 0.36 * max(dot(n, normalize(LIGHT_DIR)), 0.0);
   gl_FragColor = vec4(baseColor * diffuse, 1.0);
 }
 `
 
-/** A thin Fresnel glow on a slightly larger back-facing shell — the "subtle atmosphere rim". */
+/** A soft atmospheric glow on a larger back-facing shell. */
 export const RIM_VERTEX_SHADER = /* glsl */ `
 varying vec3 vNormal;
 varying vec3 vViewDir;
@@ -65,14 +70,23 @@ void main() {
 }
 `
 
+/**
+ * On the shell's back faces, |dot(normal, view)| runs from 0 at the shell's own silhouette up
+ * to PLANET_LIMB_COSINE where the line of sight grazes the planet (anything further in is
+ * hidden behind the planet by the depth test). Normalising by it feathers the glow from full
+ * strength at the planet's limb to nothing at the shell's edge, instead of a hard band.
+ */
 export const RIM_FRAGMENT_SHADER = /* glsl */ `
 uniform vec3 uColor;
 
 varying vec3 vNormal;
 varying vec3 vViewDir;
 
+const float PLANET_LIMB_COSINE = ${Math.sqrt(1 - 1 / ATMOSPHERE_SCALE ** 2).toFixed(4)};
+
 void main() {
-  float rim = pow(1.0 - max(dot(normalize(vNormal), normalize(vViewDir)), 0.0), 2.5);
-  gl_FragColor = vec4(uColor, rim * 0.55);
+  float d = abs(dot(normalize(vNormal), normalize(vViewDir)));
+  float glow = pow(clamp(d / PLANET_LIMB_COSINE, 0.0, 1.0), 3.0);
+  gl_FragColor = vec4(uColor, glow * 0.42);
 }
 `

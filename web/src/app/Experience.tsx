@@ -14,18 +14,21 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { captionOpacity, dominantScene, sceneAt, SceneView } from '@/scene'
-import { ShellLayout } from '@/shell'
+import { SceneView } from '@/scene'
+import { ShellLayout, useIdle } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
-import { advancePlayhead, createSymlogScale, followWindow, Timeline, usePlaybackLoop } from '@/timeline'
+import { advancePlayhead, createSymlogScale, followWindow, formatGeoTime, Timeline, usePlaybackLoop } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
+import type { Scene } from '@/types/manifest'
 
 import { buildLayers } from './buildLayers'
+import { eraNameAt } from './eraName'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
@@ -35,6 +38,9 @@ import { useAppData } from './useAppData'
  *  that reads as a fixed miniature of all of history, not a mirror of the user's current
  *  zoom). Module scope: one stable `TimeScale`, computed once, not per render. */
 const FULL_DOMAIN_SCALE: TimeScale = createSymlogScale([0, EARTH_FORMATION])
+
+/** How long playback runs untouched before the periphery HUD recedes (idle calm). */
+const IDLE_CALM_MS = 3000
 
 /** A `Layer<ScalarValue>` renders as a `DayLengthClock` rather than a `Sparkline` +
  *  `ScalarReadout` exactly when its unit is hours — `DayLengthClock`'s own doc comment
@@ -66,6 +72,16 @@ export function Experience() {
   // `onScaleChange`) rather than recomputed here — see that prop's doc comment for why a
   // second, independent `useAnimatedScale` instance would be the wrong move.
   const [chartScale, setChartScale] = useState<TimeScale | null>(null)
+
+  // Where SceneView's caption is portalled: the shell's subtitle position above the timeline.
+  // SceneView renders the caption inside its own full-window layer, which sits beneath the
+  // lens vignette; the portal keeps the caption driven by SceneView's own dissolve (so it can
+  // never drift out of sync with the image) while placing it in the HUD above the vignette.
+  const [captionHost, setCaptionHost] = useState<HTMLDivElement | null>(null)
+
+  // Idle calm is never armed with the globe expanded: the expanded globe lives inside the
+  // periphery the calm fades, and a modal the viewer opened must not dim itself.
+  const calm = useIdle({ armed: playback.playing && !globeExpanded, timeoutMs: IDLE_CALM_MS })
 
   // Follow-during-playback (timeline README §4), wired here next to the playback loop below.
   // Engages on every play press (the effect only ever turns it *on*); disengages the instant
@@ -130,8 +146,8 @@ export function Experience() {
 
   if (data.status === 'error') {
     return (
-      <main className={styles.errorPanel}>
-        <div className={styles.errorCard}>
+      <main className={styles.centered}>
+        <div className={styles.error}>
           <p className={styles.errorTitle}>Failed to load</p>
           <p className={styles.errorMessage}>{data.error.message}</p>
         </div>
@@ -146,15 +162,26 @@ export function Experience() {
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
   const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
-  const scenePair = manifest.scenes.length > 0 ? sceneAt(manifest.scenes, t) : null
-  const captionScene = scenePair ? dominantScene(scenePair) : null
-  // Cross-fades in sync with the scene dissolve (scene/scene.ts's `captionOpacity`, a pure
-  // function of the same `mix` driving the image transition) rather than switching text
-  // abruptly at the dominant-scene boundary.
-  const captionOpacityValue = scenePair ? captionOpacity(scenePair.mix) : 1
+  const renderCaption = (scene: Scene, opacity: number) =>
+    captionHost === null
+      ? null
+      : createPortal(
+          <p className={styles.caption} style={{ opacity }}>
+            {scene.caption}
+          </p>,
+          captionHost,
+        )
 
   return (
     <ShellLayout
+      calm={calm}
+      scene={
+        manifest.scenes.length > 0 ? (
+          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
+        ) : (
+          <div className={styles.placeholder}>No scenes in manifest.</div>
+        )
+      }
       globe={
         raster ? (
           <Globe
@@ -168,17 +195,18 @@ export function Experience() {
           <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
         )
       }
-      hud={
-        <div className={styles.hudList}>
+      readouts={
+        <div className={styles.readouts}>
           {hudScalarEntries.map((entry) => {
             const layer = scalarLayers.get(entry.id)
             if (layer === undefined) return null
             return (
-              <div key={entry.id} className={styles.layerRow} data-testid={`scalar-readout-${entry.id}`}>
+              <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
                 {isClockLayer(entry.unit) ? (
                   <DayLengthClock layer={layer} t={t} />
                 ) : (
                   <>
+                    <ScalarReadout layer={layer} t={t} />
                     <HudSparkline
                       layer={layer}
                       t={t}
@@ -187,7 +215,6 @@ export function Experience() {
                       expanded={expandedChartLayerId === entry.id}
                       onToggle={setExpandedChartLayerId}
                     />
-                    <ScalarReadout layer={layer} t={t} />
                   </>
                 )}
               </div>
@@ -195,51 +222,49 @@ export function Experience() {
           })}
         </div>
       }
+      title={<TimeTitle t={t} />}
+      badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
       ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
-      caption={
-        <p className={styles.captionText} style={{ opacity: captionOpacityValue }}>
-          {captionScene?.caption ?? 'No scene at this time.'}
-        </p>
-      }
-      scene={
-        manifest.scenes.length > 0 ? (
-          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} />
-        ) : (
-          <div className={styles.placeholder}>No scenes in manifest.</div>
-        )
-      }
-      timeline={
-        <div className={styles.timelineDock}>
-          {isStub && <span className={styles.stubBadge}>Stub data</span>}
-          <Timeline
-            t={t}
-            window={timeWindow}
-            scaleKind={scaleKind === 'linear' ? 'linear' : 'symlog'}
-            events={manifest.events}
-            playback={playback}
-            onScrub={setT}
-            onWindowChange={(w) => {
-              // Every window change reaching this callback is a user gesture (wheel, drag,
-              // a zoom/fit button, minimap click, a keyboard shortcut) — `followWindow`'s own
-              // panning never goes through it, see the playback loop above — so disengaging
-              // follow unconditionally here is exactly README §4's rule.
-              setFollowing(false)
-              setWindow([w[0], w[1]])
-            }}
-            onScaleKindChange={setScaleKind}
-            onPlaybackChange={(next) => {
-              setPlaying(next.playing)
-              setSpeed(next.speed)
-            }}
-            onScaleChange={setChartScale}
-            following={following}
-          />
-        </div>
-      }
+      caption={<div ref={setCaptionHost} className={styles.captionHost} />}
       chart={
         expandedChartLayer && chartScale ? <LayerChart layer={expandedChartLayer} t={t} scale={chartScale} /> : null
       }
+      timeline={
+        <Timeline
+          t={t}
+          window={timeWindow}
+          scaleKind={scaleKind === 'linear' ? 'linear' : 'symlog'}
+          events={manifest.events}
+          playback={playback}
+          onScrub={setT}
+          onWindowChange={(w) => {
+            // Every window change reaching this callback is a user gesture (wheel, drag,
+            // a zoom/fit button, minimap click, a keyboard shortcut) — `followWindow`'s own
+            // panning never goes through it, see the playback loop above — so disengaging
+            // follow unconditionally here is exactly README §4's rule.
+            setFollowing(false)
+            setWindow([w[0], w[1]])
+          }}
+          onScaleKindChange={setScaleKind}
+          onPlaybackChange={(next) => {
+            setPlaying(next.playing)
+            setSpeed(next.speed)
+          }}
+          onScaleChange={setChartScale}
+          following={following}
+        />
+      }
     />
+  )
+}
+
+/** The lens's headline: the current time in large light numerals, the eon/era beneath. */
+function TimeTitle({ t }: { t: GeoTime }) {
+  return (
+    <div className={styles.timeTitle} data-testid="time-title">
+      <span className={styles.time}>{formatGeoTime(t)}</span>
+      <span className={styles.era}>{eraNameAt(t)}</span>
+    </div>
   )
 }
 
@@ -258,11 +283,11 @@ interface HudSparklineProps {
  *  click handler. */
 function HudSparkline({ layer, t, entryId, chartable, expanded, onToggle }: HudSparklineProps) {
   const sparkline = <Sparkline layer={layer} t={t} scale={FULL_DOMAIN_SCALE} />
-  if (!chartable) return sparkline
+  if (!chartable) return <div className={styles.sparkline}>{sparkline}</div>
   return (
     <button
       type="button"
-      className={styles.sparklineButton}
+      className={`${styles.sparkline} ${styles.sparklineButton}`}
       aria-pressed={expanded}
       aria-label={`${expanded ? 'Collapse' : 'Expand'} ${layer.name} chart`}
       onClick={() => onToggle(expanded ? null : entryId)}

@@ -13,11 +13,12 @@ import { useState } from 'react'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
 import { clampUnit, formatValue } from '../format'
+import styles from './hud.module.css'
 
 const SAMPLE_COUNT = 240
 const VIEW_WIDTH = 600
 const VIEW_HEIGHT = 120
-const PAD_X = 8
+const PAD_X = 0
 const PAD_Y = 10
 
 export interface LayerChartProps {
@@ -85,40 +86,44 @@ export function LayerChart({ layer, t, scale }: LayerChartProps) {
   const playheadValue = layer.sample(t)
 
   return (
-    <div style={{ width: '100%' }}>
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        aria-expanded={expanded}
-        style={{ width: '100%', textAlign: 'left' }}
-      >
+    <div className={styles.chart}>
+      <button type="button" className={styles.chartToggle} onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
         {layer.name} — {playheadValue === null ? 'no data' : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
+        <span className={styles.chartHint} aria-hidden="true">
+          {expanded ? 'hide chart' : 'show chart'}
+        </span>
       </button>
       {expanded && (
-        <svg
-          viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
-          width="100%"
-          height={VIEW_HEIGHT}
-          role="img"
-          aria-label={`${layer.name} chart`}
-        >
-          {bandSegments.map((seg, i) => {
-            const upperPath = seg.map((p) => `${x(p.u)},${y(p.upper ?? p.value)}`)
-            const lowerPath = [...seg].reverse().map((p) => `${x(p.u)},${y(p.lower ?? p.value)}`)
-            return <polygon key={i} points={[...upperPath, ...lowerPath].join(' ')} fill="rgba(120,190,255,0.18)" stroke="none" />
-          })}
-          {lineSegments.map((seg, i) => (
-            <polyline
-              key={i}
-              points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
+        <div className={styles.chartPlot}>
+          {/* Stretched non-uniformly (`preserveAspectRatio="none"`) so x spans exactly the
+              timeline's width and the playhead lines up with the timeline's own. */}
+          <svg
+            className={styles.chartSvg}
+            viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+            preserveAspectRatio="none"
+            role="img"
+            aria-label={`${layer.name} chart`}
+          >
+            {bandSegments.map((seg, i) => {
+              const upperPath = seg.map((p) => `${x(p.u)},${y(p.upper ?? p.value)}`)
+              const lowerPath = [...seg].reverse().map((p) => `${x(p.u)},${y(p.lower ?? p.value)}`)
+              return <polygon key={i} className={styles.chartBand} points={[...upperPath, ...lowerPath].join(' ')} />
+            })}
+            {lineSegments.map((seg, i) => (
+              <polyline key={i} className={styles.chartLine} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
+            ))}
+            <line className={styles.chartPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />
+          </svg>
+          {playheadValue !== null && (
+            <span
+              className={styles.chartDot}
+              style={{
+                left: `${(x(playheadU) / VIEW_WIDTH) * 100}%`,
+                top: `${(y(playheadValue.value) / VIEW_HEIGHT) * 100}%`,
+              }}
             />
-          ))}
-          <line x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} stroke="rgba(255,255,255,0.6)" strokeWidth={1} />
-          {playheadValue !== null && <circle cx={x(playheadU)} cy={y(playheadValue.value)} r={2.5} fill="currentColor" />}
-        </svg>
+          )}
+        </div>
       )}
     </div>
   )

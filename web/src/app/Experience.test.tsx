@@ -147,6 +147,31 @@ describe('Experience (W12a integration)', () => {
     expect(readout.textContent).toMatch(/no data/i)
   })
 
+  it('titles the lens with the current time and its eon/era', async () => {
+    await renderSettled()
+    expect(screen.getByTestId('time-title').textContent).toMatch(/Archean/)
+
+    act(() => {
+      useTimeStore.getState().setT(0)
+    })
+
+    const title = screen.getByTestId('time-title').textContent
+    expect(title).toMatch(/present/)
+    expect(title).toMatch(/Cenozoic/)
+  })
+
+  it('renders the caption through SceneView so it follows the scene pair', async () => {
+    await renderSettled()
+
+    act(() => {
+      useTimeStore.getState().setT(0)
+    })
+
+    expect(screen.queryByText(/Archean shore/i)).toBeNull()
+    const base = screen.getByTestId('scene-base') as HTMLImageElement
+    expect(screen.getByText(base.alt).tagName).toBe('P')
+  })
+
   it('changes the ancestor readout across at least 5 t values', async () => {
     await renderSettled()
 

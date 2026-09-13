@@ -6,6 +6,7 @@
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { formatValue } from '../format'
+import styles from './hud.module.css'
 
 export interface ScalarReadoutProps {
   layer: Layer<ScalarValue>
@@ -16,15 +17,17 @@ export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
   const value = layer.sample(t)
 
   return (
-    <span>
-      <span>{layer.name}</span>{' '}
+    <span className={styles.readout}>
+      <span className={styles.label}>{layer.name}</span>{' '}
       {value === null ? (
-        <span aria-live="polite">no data</span>
+        <span className={styles.noData} aria-live="polite">
+          no data
+        </span>
       ) : (
-        <span aria-live="polite">
-          {formatValue(value.value)} {value.unit}
+        <span className={styles.value} aria-live="polite">
+          {formatValue(value.value)} <span className={styles.unit}>{value.unit}</span>
           {value.bounds && (
-            <span>
+            <span className={styles.bounds}>
               {' '}
               ({formatValue(value.bounds[0])}–{formatValue(value.bounds[1])} {value.unit})
             </span>

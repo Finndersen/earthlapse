@@ -9,6 +9,7 @@
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
 import { clampUnit } from '../format'
+import styles from './hud.module.css'
 
 const SAMPLE_COUNT = 96
 const VIEW_WIDTH = 200
@@ -67,23 +68,12 @@ export function Sparkline({ layer, t, scale }: SparklineProps) {
       style={{ display: 'block', overflow: 'visible' }}
     >
       {segments.map((seg, i) => (
-        <polyline
-          key={i}
-          points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.25}
-        />
+        <polyline key={i} className={styles.sparkLine} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
       ))}
-      <line
-        x1={x(playheadU)}
-        x2={x(playheadU)}
-        y1={0}
-        y2={VIEW_HEIGHT}
-        stroke="rgba(255,255,255,0.45)"
-        strokeWidth={1}
-      />
-      {playheadValue !== null && <circle cx={x(playheadU)} cy={y(playheadValue.value)} r={1.75} fill="currentColor" />}
+      <line className={styles.sparkPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />
+      {playheadValue !== null && (
+        <circle className={styles.sparkDot} cx={x(playheadU)} cy={y(playheadValue.value)} r={2.25} />
+      )}
     </svg>
   )
 }

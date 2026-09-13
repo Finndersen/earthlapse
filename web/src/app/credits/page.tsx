@@ -35,7 +35,7 @@ export default function CreditsPage() {
     <main className={styles.page}>
       <div className={styles.wrap}>
         <a className={styles.back} href="/">
-          ← Back
+          ← Back to the timeline
         </a>
         <h1 className={styles.title}>Credits</h1>
         <p className={styles.intro}>

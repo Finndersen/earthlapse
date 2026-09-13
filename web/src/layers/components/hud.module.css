@@ -1,0 +1,242 @@
+/*
+ * Shared look for the layer readouts: unboxed instrument type floating on the lens vignette
+ * — letter-spaced caps labels, light numerals, hairline marks, amber where `t` sits. Colours
+ * come from the global --hud-* tokens, with fallbacks so a component still reads when
+ * rendered outside the app (tests, a future embed).
+ */
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.label {
+  display: block;
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 1px 12px rgba(0, 0, 0, 0.85);
+}
+
+.value {
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: clamp(20px, 1.7vw, 26px);
+  font-weight: 250;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--hud-ink, #efe9dc);
+  white-space: nowrap;
+}
+
+.unit {
+  font-size: 0.52em;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.bounds {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.noData {
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+/* --------------------------------------------------------------------------- sparkline */
+
+.sparkLine {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkPlayhead {
+  stroke: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.sparkDot {
+  fill: var(--hud-accent, #e8b06a);
+  filter: drop-shadow(0 0 3px var(--hud-accent-glow, rgba(232, 176, 106, 0.55)));
+}
+
+/* ------------------------------------------------------------------------------- clock */
+
+.clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.clockRing {
+  fill: none;
+  stroke: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  stroke-width: 1;
+}
+
+.clockTick {
+  stroke: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  stroke-width: 1;
+}
+
+.clockHand {
+  stroke: var(--hud-accent, #e8b06a);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--hud-accent-glow, rgba(232, 176, 106, 0.55)));
+}
+
+.clockPivot {
+  fill: var(--hud-accent, #e8b06a);
+}
+
+/* ------------------------------------------------------------------------------- chart */
+
+.chart {
+  position: relative;
+  width: 100%;
+}
+
+.chartToggle {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 auto 6px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-shadow: inherit;
+  cursor: pointer;
+  transition:
+    color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.chartToggle:hover {
+  color: var(--hud-ink, #efe9dc);
+  box-shadow: inset 0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.chartToggle:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.chartToggle[aria-expanded='true'] {
+  color: var(--hud-accent, #e8b06a);
+}
+
+.chartHint {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  letter-spacing: 0.16em;
+}
+
+.chartPlot {
+  position: relative;
+  height: 110px;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.chartLine {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartBand {
+  fill: var(--hud-event-glow, rgba(140, 200, 255, 0.35));
+  opacity: 0.45;
+}
+
+.chartPlayhead {
+  stroke: var(--hud-accent, #e8b06a);
+  stroke-opacity: 0.7;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+/* An HTML dot rather than an SVG circle: the plot stretches non-uniformly to the timeline's
+   width, which would squash a circle into an ellipse. */
+.chartDot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--hud-accent, #e8b06a);
+  box-shadow: 0 0 10px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------- ancestor */
+
+.ancestor {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 4px;
+}
+
+.ancestorName {
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.ancestorDash {
+  display: none;
+}
+
+.ancestorRepresentative {
+  font-family: var(--hud-serif, Georgia, serif);
+  font-size: 13.5px;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.ancestorSince {
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}

@@ -1,201 +1,334 @@
 /*
- * Instrument-panel chrome around a bright central viewport (DESIGN §8). The surround reads
- * as a dim, blurred console; the viewport is the one saturated, in-focus thing on the page —
- * everything else is deliberately quieter so a photoreal still reads as the subject, not the
- * UI around it.
+ * The expedition viewing lens (DESIGN §8). The still fills the window; `.lens` is the only
+ * chrome — an elliptical clear aperture falling off to near-black — and every HUD element
+ * floats in that falloff with no panel, border or fill of its own. Legibility comes from the
+ * vignette plus a soft text-shadow, so the photograph stays the subject, not the UI.
+ *
+ * Colour and type tokens (--hud-*) are global, in app/globals.css, so the credits page and
+ * the loading/error states share them.
  */
 
 .shell {
-  --ink: #e7e2d6;
-  --ink-dim: #8b8e94;
-  --ink-faint: #565a61;
-  --surround: #0a0b0d;
-  --panel: #101216;
-  --panel-line: rgba(231, 226, 214, 0.09);
-  --accent: #d99a4e;
-  --accent-dim: rgba(217, 154, 78, 0.35);
-  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  --sans: 'Archivo Narrow', 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
+  --gutter: clamp(16px, 3vw, 48px);
+  --gutter-top: clamp(16px, 2.4vw, 34px);
+  --orb-size: clamp(120px, 13vw, 196px);
 
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--surround);
-  color: var(--ink);
-  font-family: var(--sans);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #030406;
+  color: var(--hud-ink);
+  font-family: var(--hud-sans);
+  text-shadow: var(--hud-shadow);
 }
 
-.surround {
-  position: relative;
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  gap: clamp(10px, 1.6vw, 20px);
-  padding: clamp(12px, 2vw, 24px);
+/* Faint caps type needs a tighter, darker halo than --hud-shadow to survive a bright plate. */
+.label,
+.note,
+.credits {
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    var(--hud-shadow);
 }
 
-/* A faint radial wash behind everything, the "blurred surround" the layout calls for —
-   cheaper and steadier than filter: blur() on real content underneath. */
-.surround::before {
+.scene {
+  position: absolute;
+  inset: 0;
+}
+
+/* Stacked backgrounds, top to bottom: the elliptical aperture (centred a little above the
+   middle, where the eye rests), side falloffs deep enough for the readouts and ancestor to
+   read over a bright sky, a deep bottom falloff for the caption and timeline, and a gentler
+   top one for the title. The vignette also hides the drift's frame margins (DESIGN §5). */
+.lens {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 62% 60% at 50% 44%,
+      transparent 0%,
+      transparent 42%,
+      rgba(3, 4, 6, 0.26) 58%,
+      rgba(3, 4, 6, 0.64) 74%,
+      rgba(3, 4, 6, 0.88) 88%,
+      rgba(3, 4, 6, 0.96) 100%
+    ),
+    linear-gradient(to right, rgba(3, 4, 6, 0.72) 0%, rgba(3, 4, 6, 0.42) 15%, transparent 30%),
+    linear-gradient(to left, rgba(3, 4, 6, 0.55) 0%, rgba(3, 4, 6, 0.26) 14%, transparent 24%),
+    linear-gradient(
+      to top,
+      rgba(3, 4, 6, 0.94) 0%,
+      rgba(3, 4, 6, 0.84) 16%,
+      rgba(3, 4, 6, 0.5) 28%,
+      rgba(3, 4, 6, 0.16) 36%,
+      transparent 42%
+    ),
+    linear-gradient(to bottom, rgba(3, 4, 6, 0.6) 0%, rgba(3, 4, 6, 0.22) 12%, transparent 22%);
+}
+
+/* A barely-there warm rim where the aperture begins to fall off — the glass of the lens. */
+.lens::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 42%, rgba(70, 60, 46, 0.16), transparent 62%);
+  background: radial-gradient(
+    ellipse 64% 60% at 50% 44%,
+    transparent 52%,
+    rgba(232, 176, 106, 0.045) 60%,
+    transparent 70%
+  );
+}
+
+/* Film grain: a tiled SVG turbulence at a few percent, enough to bind the flat HUD type to
+   the photographic plate without reading as noise. */
+.lens::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+}
+
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'globe    title    ancestor'
+    'readouts .        ancestor'
+    '.        .        .'
+    'bottom   bottom   bottom';
+  column-gap: var(--gutter);
+  padding: var(--gutter-top) var(--gutter) clamp(12px, 1.8vw, 24px);
   pointer-events: none;
 }
 
-.column {
-  position: relative;
+.hud > * {
+  pointer-events: auto;
+}
+
+/* Idle calm: while playback runs untouched, the periphery recedes slowly — and returns
+   quickly the moment the viewer moves. */
+.peripheral {
+  transition: opacity 180ms ease-out;
+}
+
+.shell[data-calm='true'] .peripheral {
+  opacity: 0.25;
+  transition-duration: 700ms;
+}
+
+.label {
+  display: block;
+  font-family: var(--hud-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
+}
+
+.globe {
+  grid-area: globe;
+  justify-self: start;
   display: flex;
   flex-direction: column;
-  gap: clamp(10px, 1.6vw, 20px);
-  width: clamp(200px, 20vw, 280px);
+  align-items: center;
+  gap: 6px;
+  width: var(--orb-size);
+}
+
+.orb {
+  width: var(--orb-size);
+  height: var(--orb-size);
+}
+
+.readouts {
+  grid-area: readouts;
+  justify-self: start;
+  margin-top: clamp(18px, 3vh, 36px);
   min-width: 0;
-  flex-shrink: 0;
 }
 
-.slot {
-  position: relative;
-  border: 1px solid var(--panel-line);
-  background: var(--panel);
-  border-radius: 3px;
-  min-height: 0;
+.title {
+  grid-area: title;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
 }
 
-.slotLabel {
+.ancestor {
+  grid-area: ancestor;
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 34ch;
+  padding-top: 40px;
+  text-align: right;
+}
+
+.credits {
   position: absolute;
-  top: 8px;
-  left: 10px;
-  font-family: var(--mono);
+  top: var(--gutter-top);
+  right: var(--gutter);
+  font-family: var(--hud-mono);
   font-size: 10px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-  pointer-events: none;
-}
-
-.globeSlot {
-  aspect-ratio: 1;
-  overflow: hidden;
-}
-
-.hudSlot {
-  flex: 1;
-  padding: 30px 12px 12px;
-  overflow: auto;
-}
-
-.ancestorSlot {
-  aspect-ratio: 4 / 5;
-  padding: 30px 12px 12px;
-  overflow: hidden;
-}
-
-.captionSlot {
-  flex: 1;
-  padding: 30px 14px 14px;
-  overflow: auto;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--ink-dim);
-}
-
-.viewport {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  border-radius: 4px;
-  overflow: hidden;
-  background: #000;
-  box-shadow: 0 0 0 1px var(--panel-line);
-}
-
-.viewportInner {
-  position: absolute;
-  inset: 0;
-}
-
-/* The vignette: aesthetic (draws the eye to centre) and functional (DESIGN §5 — masks
-   displacement artefacts at frame margins once depth is added). */
-.vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  box-shadow:
-    inset 0 0 min(14vw, 220px) min(6vw, 90px) rgba(0, 0, 0, 0.85),
-    inset 0 0 0 1px rgba(231, 226, 214, 0.06);
-}
-
-.creditsLink {
-  position: absolute;
-  top: clamp(12px, 2vw, 24px);
-  right: clamp(12px, 2vw, 24px);
-  z-index: 1;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  color: var(--hud-faint);
   text-decoration: none;
-  border: 1px solid var(--panel-line);
-  border-radius: 2px;
-  padding: 4px 9px;
+  padding: 4px 0;
+  transition:
+    color 220ms ease,
+    opacity 180ms ease-out;
 }
 
-.creditsLink:hover,
-.creditsLink:focus-visible {
-  color: var(--accent);
-  border-color: var(--accent-dim);
+.shell[data-calm='true'] .credits {
+  transition:
+    color 220ms ease,
+    opacity 700ms ease;
+}
+
+.credits:hover,
+.credits:focus-visible {
+  color: var(--hud-accent);
+  text-shadow: 0 0 14px var(--hud-accent-glow);
+}
+
+.credits:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 4px;
+}
+
+.bottom {
+  grid-area: bottom;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.caption {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 62ch;
+  margin-bottom: clamp(14px, 2.4vh, 28px);
+  text-align: center;
 }
 
 .note {
-  position: absolute;
-  left: 14px;
-  bottom: 12px;
-  font-family: var(--mono);
-  font-size: 10.5px;
-  letter-spacing: 0.03em;
-  color: rgba(231, 226, 214, 0.55);
-  background: rgba(10, 11, 13, 0.55);
-  padding: 4px 8px;
-  border-radius: 2px;
-  border: 1px solid var(--panel-line);
+  margin: 0;
+  font-family: var(--hud-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
 }
 
-.dock {
-  flex-shrink: 0;
-  border-top: 1px solid var(--panel-line);
-  background: var(--panel);
-  padding: clamp(10px, 1.6vw, 16px) clamp(12px, 2vw, 24px);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* The chart rises out of the timeline on a soft scrim rather than sitting in a box. */
+.chart {
+  position: relative;
+  min-width: 0;
 }
 
-.timelineRow {
-  min-height: 0;
+.chart:not(:empty) {
+  margin-bottom: 10px;
+  padding-top: 18px;
+  background: radial-gradient(ellipse 70% 100% at 50% 100%, rgba(3, 4, 6, 0.6), transparent 80%);
 }
 
-.chartRow {
-  min-height: 0;
+.timeline {
+  min-width: 0;
+  font-family: var(--hud-mono);
+  color: var(--hud-dim);
 }
 
-@media (max-width: 860px) {
-  .surround {
-    flex-direction: column;
+@media (max-width: 760px) {
+  .shell {
+    --orb-size: 84px;
   }
 
-  .column {
-    width: auto;
-    flex-direction: row;
+  /* On a phone the HUD stacks down the top third of the window, so the top falloff runs
+     deeper than on desktop, and the aperture narrows to the portrait frame. */
+  .lens {
+    background:
+      radial-gradient(
+        ellipse 80% 56% at 50% 50%,
+        transparent 0%,
+        transparent 40%,
+        rgba(3, 4, 6, 0.4) 70%,
+        rgba(3, 4, 6, 0.9) 100%
+      ),
+      linear-gradient(
+        to bottom,
+        rgba(3, 4, 6, 0.9) 0%,
+        rgba(3, 4, 6, 0.78) 22%,
+        rgba(3, 4, 6, 0.4) 34%,
+        transparent 44%
+      ),
+      linear-gradient(
+        to top,
+        rgba(3, 4, 6, 0.95) 0%,
+        rgba(3, 4, 6, 0.86) 24%,
+        rgba(3, 4, 6, 0.5) 34%,
+        transparent 44%
+      );
   }
 
-  .globeSlot {
-    aspect-ratio: auto;
-    width: clamp(96px, 24vw, 140px);
+  .hud {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'globe    title    .'
+      'ancestor ancestor ancestor'
+      'readouts readouts readouts'
+      '.        .        .'
+      'bottom   bottom   bottom';
+    row-gap: 12px;
   }
 
-  .viewport {
-    min-height: 260px;
+  .globe .label {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
+
+  .title {
+    gap: 6px;
+    padding-top: 6px;
+  }
+
+  .ancestor {
+    justify-self: center;
+    align-items: center;
+    max-width: 40ch;
+    padding-top: 0;
+    text-align: center;
+  }
+
+  .readouts {
+    justify-self: center;
+    margin-top: 0;
+  }
+
+  .caption {
+    margin-bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peripheral,
+  .credits {
+    transition: none;
   }
 }
