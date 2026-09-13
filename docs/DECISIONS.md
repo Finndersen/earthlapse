@@ -145,12 +145,40 @@ establishes.
 
 ---
 
+## ADR-009 — 2.5D parallax deferred out of v1
+
+**Status:** accepted
+
+**Context.** ADR-001 replaced generated video with stills plus depth-map displacement giving
+2.5D parallax. That coupled two things unnecessarily: the *dissolve* (which carries the
+experience) and the *parallax* (which makes each still feel alive). The parallax also carried
+the project's main open technical risk — whether displacement survives wide-vista framing —
+and pulled a depth-estimation dependency into the critical path.
+
+**Decision.** v1 renders a plain cross-dissolve between flat stills. No depth maps, no
+displacement, no Depth Anything dependency. The 2.5D effect is a later phase.
+
+**Consequences.**
+- The largest open technical risk leaves the critical path entirely.
+- One fewer dependency and one fewer offline pipeline stage in the MVP.
+- Upgrade is a genuine drop-in: depth maps are generated offline and the renderer swaps a
+  flat plane for a displaced one. No other component changes, no assets are regenerated.
+- v1 scenes will feel more like a slideshow. Accepted — composition discipline and the
+  dissolve are what carry continuity anyway (DESIGN §5), and the parallax was always
+  garnish rather than structure.
+- The `WIDE_RIDGE` framing risk (VISUAL_SPEC §3) is deferred with it.
+
+
+---
+
 ## Pending
 
 Decisions deferred to Phase 1, to be recorded here once answered:
 
 - **Image model selection** — bake-off required (VISUAL_SPEC §8)
 - **Chapter count** — 8 vs 14 (DESIGN §14 q1)
+- **Does depth displacement survive wide-vista framing** — deferred with ADR-009, revisit
+  when the 2.5D phase begins
 - **Default timeline scale** — symlog vs density (DESIGN §14 q3)
 - **Globe texture resolution** (DESIGN §14 q5)
 - **Ancestor portrait register** — photoreal vs illustrated (DESIGN §14 q4)

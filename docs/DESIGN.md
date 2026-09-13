@@ -169,6 +169,12 @@ An LLM may help draft a template; it does not author prompts per-event.
 **This is not a 3D world and there is no game-style scene graph.** Two distinct mechanisms
 are involved and they should not be conflated:
 
+> **v1 note (ADR-009).** The parallax described below is **deferred out of v1**. The first
+> version renders a plain cross-dissolve between flat stills — no depth maps, no
+> displacement. The upgrade is a genuine drop-in later: depth maps are generated offline and
+> the renderer swaps a flat plane for a displaced one, changing nothing else and regenerating
+> no assets. The rest of this section describes the eventual target.
+
 ### Within one image — parallax breathing
 
 Each generated still is a flat plane in three.js whose vertices are displaced slightly by
@@ -409,8 +415,8 @@ Against a $100 ceiling, enforced in code (§9).
 
 1. **Chapter count.** Few (continuous but repetitive) vs many (better coverage, more cuts).
    Test 8 vs 14 in Phase 1.
-2. **Does depth displacement hold up at wide-vista framing**, or only in closer shots? This
-   is the main technical risk in ADR-001 and is cheap to answer — one image, one depth map.
+2. ~~**Does depth displacement hold up at wide-vista framing?**~~ Deferred out of v1 by
+   ADR-009; revisit when the 2.5D phase begins.
 3. `symlog` or `density` as the default scale for a first-time visitor?
 4. Should the ancestor portrait be photoreal (matching the scene) or illustrated (clearly a
    diagram)? Mixed registers may read better than uniform ones.
