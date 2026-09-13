@@ -1,0 +1,112 @@
+.loupe {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(3, 4, 6, 0.86);
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    0 8px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.loupe[data-visible='true'] {
+  opacity: 1;
+}
+
+.track {
+  position: relative;
+  flex: 1;
+  border-radius: 3px;
+  background: rgba(239, 233, 220, 0.04);
+  overflow: visible;
+}
+
+.marker {
+  position: absolute;
+  top: 4px;
+  bottom: 18px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 999px;
+}
+
+.markerEvent {
+  background: var(--hud-event, rgba(140, 200, 255, 0.75));
+  box-shadow: 0 0 6px var(--hud-event-glow, rgba(140, 200, 255, 0.35));
+}
+
+.markerCheckpoint {
+  background: var(--hud-accent, #e8b06a);
+  box-shadow: 0 0 6px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.markerSnapped {
+  width: 3px;
+  margin-left: -1.5px;
+  box-shadow: 0 0 10px 2px var(--hud-accent-glow, rgba(232, 176, 106, 0.75));
+}
+
+.hairline {
+  position: absolute;
+  top: 0;
+  bottom: 18px;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--hud-ink, #efe9dc);
+  box-shadow: 0 0 4px rgba(239, 233, 220, 0.6);
+}
+
+.ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 14px;
+}
+
+.tickLabel {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8.5px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}
+
+.readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.snapLabel {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 10.5px;
+  color: var(--hud-accent, #e8b06a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  margin-left: auto;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  color: var(--hud-ink, #efe9dc);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loupe {
+    transition: none;
+  }
+}

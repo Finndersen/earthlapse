@@ -12,10 +12,16 @@
  * history" readout — the DESIGN §3 honesty about the warp, kept without making linear the
  * primary navigator.
  *
- * Interactions: drag the bracket body to pan, drag its edges to resize (zoom); click elsewhere
- * on the track to recentre (eased via `animateWindowTo`); double-click anywhere to fit the
- * full domain (also eased). Dragging is immediate, matching the "wheel and pinch stay
- * immediate" rule for anything that is itself a continuous gesture.
+ * Interactions: drag the bracket body to pan (`panBracket` — full-domain-warped `u`-space, so
+ * the bracket tracks the pointer exactly, at constant pixel width; defect-a fix, see that
+ * function's doc comment), drag its edges to resize (`resizeWindowEdge` — never inverts or
+ * collapses when a drag overshoots the opposite edge; defect-b fix); click elsewhere on the
+ * track to recentre (eased via `animateWindowTo`); double-click anywhere to fit the full domain
+ * (also eased). Once the bracket covers (nearly) the whole strip there is nothing left to grab
+ * distinctly from the track, so any drag there instead brush-selects a fresh window from the
+ * pointer-down position (defect-c fix, `isBracketNearlyFullDomain`). Dragging is immediate,
+ * matching the "wheel and pinch stay immediate" rule for anything that is itself a continuous
+ * gesture.
  */
 
 import { useCallback, useRef } from 'react'
@@ -26,15 +32,22 @@ import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 import type { TimelineCheckpoint } from '../checkpoints'
 import { ERA_BANDS } from '../eras'
 import { formatTimeRange } from '../format'
-import { minimapBracket, MINIMAP_FULL_DOMAIN, MIN_BRACKET_PX } from '../minimapLayout'
+import {
+  isBracketNearlyFullDomain,
+  minimapBracket,
+  MINIMAP_FULL_DOMAIN,
+  MIN_BRACKET_PX,
+  panBracket,
+} from '../minimapLayout'
 import { createLinearScale, createSymlogScale, type TimeWindow } from '../scale'
 import { useTrackWidth } from '../useTrackWidth'
 import { clampWindowToDomain } from '../util'
-import { MIN_SPAN_YEARS } from '../zoom'
+import { resizeWindowEdge } from '../zoom'
 import styles from './Minimap.module.css'
 
 /** How close, in px, a pointer must land to a bracket edge to grab it for resizing rather than
- *  the bracket body (for panning) or the track (for recentring). */
+ *  the bracket body (for panning) or the track (for recentring). Not consulted at all once
+ *  `isBracketNearlyFullDomain` is true — see the module doc comment. */
 const EDGE_HANDLE_PX = 7
 
 /** Module-scope, not per-render: `MINIMAP_FULL_DOMAIN` never changes, so recomputing these on
@@ -44,13 +57,23 @@ const EDGE_HANDLE_PX = 7
 const MINIMAP_SYMLOG_SCALE = createSymlogScale(MINIMAP_FULL_DOMAIN)
 const MINIMAP_LINEAR_SCALE = createLinearScale(MINIMAP_FULL_DOMAIN)
 
-type DragMode = 'pan' | 'resize-left' | 'resize-right'
+/** `'brush'`: the bracket covers (nearly) the whole strip (`isBracketNearlyFullDomain`), so a
+ *  drag anywhere draws a fresh window from the pointer-down position instead of panning or
+ *  resizing an already-indistinguishable-from-the-track bracket (defect c). */
+type DragMode = 'pan' | 'resize-left' | 'resize-right' | 'brush'
 
 interface DragState {
   mode: DragMode
   pointerId: number
+  /** Raw time under the pointer at drag-start — the fixed anchor for `resize-left`/`-right`
+   *  (the *other*, un-dragged bound) and for `brush` (the pointer-down position itself). Pan
+   *  doesn't use this; it works in `u`-space via `startPointerU` instead, since a raw-time
+   *  anchor can't reproduce exact-pixel tracking under a nonlinear warp. */
   startT: GeoTime
   startWindow: TimeWindow
+  /** The track's pixel-fraction `u` at drag-start (`panBracket`'s space) — only meaningful for
+   *  `'pan'`. */
+  startPointerU: number
 }
 
 interface MinimapProps {
@@ -95,11 +118,25 @@ export function Minimap({ t, window: visibleWindow, checkpoints = [], onWindowCh
     return MINIMAP_SYMLOG_SCALE.fromUnit(u)
   }, [])
 
+  /** The raw pixel fraction across the track — numerically the *same* `u` the bracket itself
+   *  is drawn at (`leftPx = u * trackWidthPx`, both driven by `MINIMAP_SYMLOG_SCALE`), so a
+   *  pixel-fraction delta here is directly a `panBracket` `deltaU` with no unit conversion. */
+  const uFromClientX = useCallback((clientX: number): number => {
+    const el = trackRef.current
+    if (!el) return 0
+    const rect = el.getBoundingClientRect()
+    if (rect.width === 0) return 0
+    return Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+  }, [])
+
   const classifyZone = useCallback(
     (clientX: number): DragMode | 'outside' => {
       const el = trackRef.current
       if (!el) return 'outside'
       const rect = el.getBoundingClientRect()
+      // Once the bracket is (nearly) the full strip there is no edge or body left to grab
+      // distinctly from the track itself — brush-select from anywhere (defect c).
+      if (isBracketNearlyFullDomain(visibleWindow)) return 'brush'
       const px = clientX - rect.left
       const { leftPx, widthPx } = minimapBracket(visibleWindow, rect.width)
       if (Math.abs(px - leftPx) <= EDGE_HANDLE_PX) return 'resize-left'
@@ -115,33 +152,31 @@ export function Minimap({ t, window: visibleWindow, checkpoints = [], onWindowCh
     const zone = classifyZone(e.clientX)
     if (zone === 'outside') return // a plain click on the track recentres — see handleClick
     e.currentTarget.setPointerCapture(e.pointerId)
-    dragRef.current = { mode: zone, pointerId: e.pointerId, startT: pixelToT(e.clientX), startWindow: visibleWindow }
+    dragRef.current = {
+      mode: zone,
+      pointerId: e.pointerId,
+      startT: pixelToT(e.clientX),
+      startWindow: visibleWindow,
+      startPointerU: uFromClientX(e.clientX),
+    }
   }
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
     const drag = dragRef.current
     if (!drag || drag.pointerId !== e.pointerId) return
     didDragRef.current = true
-    const currentT = pixelToT(e.clientX)
-    const [startNewest, startOldest] = drag.startWindow
 
     if (drag.mode === 'pan') {
-      // `pixelToT` is monotonically *decreasing* in clientX (screen-right is smaller t, per
-      // the package orientation — see index.ts), so a rightward drag (larger clientX) yields a
-      // negative `deltaT`. Adding it (not subtracting) is what makes the bracket track the
-      // cursor: dragging right must decrease both bounds (pan toward the present).
-      const deltaT = currentT - drag.startT
-      const [newest, oldest] = clampWindowToDomain(startNewest + deltaT, startOldest + deltaT, EARTH_FORMATION)
-      onWindowChange([newest, oldest])
+      const deltaU = uFromClientX(e.clientX) - drag.startPointerU
+      onWindowChange(panBracket(drag.startWindow, deltaU))
       return
     }
-    if (drag.mode === 'resize-left') {
-      const newOldest = Math.min(Math.max(currentT, startNewest + MIN_SPAN_YEARS), EARTH_FORMATION)
-      onWindowChange([startNewest, newOldest])
+    if (drag.mode === 'brush') {
+      onWindowChange(resizeWindowEdge(drag.startT, pixelToT(e.clientX)))
       return
     }
-    const newNewest = Math.max(Math.min(currentT, startOldest - MIN_SPAN_YEARS), 0)
-    onWindowChange([newNewest, startOldest])
+    const anchor = drag.mode === 'resize-left' ? drag.startWindow[0] : drag.startWindow[1]
+    onWindowChange(resizeWindowEdge(anchor, pixelToT(e.clientX)))
   }
 
   const handlePointerUp = (): void => {
@@ -174,7 +209,11 @@ export function Minimap({ t, window: visibleWindow, checkpoints = [], onWindowCh
       <div
         ref={trackRef}
         role="slider"
-        aria-label="Overview: drag to pan, drag an edge to zoom"
+        aria-label={
+          isBracketNearlyFullDomain(visibleWindow)
+            ? 'Overview: drag to select a time range'
+            : 'Overview: drag to pan, drag an edge to zoom'
+        }
         aria-valuemin={0}
         aria-valuemax={1}
         aria-valuenow={(bracket.leftPx + bracket.widthPx / 2) / Math.max(1, trackWidthPx)}

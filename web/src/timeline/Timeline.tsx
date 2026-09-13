@@ -45,6 +45,7 @@
  * collides with a button.
  */
 
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
 import { EARTH_FORMATION } from '@/types/layer'
@@ -54,8 +55,10 @@ import { nearestStepTarget, type TimelineCheckpoint } from './checkpoints'
 import { AxisTicks } from './components/AxisTicks'
 import { Minimap } from './components/Minimap'
 import { ScrubTrack } from './components/ScrubTrack'
+import { TimelineHint } from './components/TimelineHint'
 import { Transport } from './components/Transport'
 import { ZoomControls } from './components/ZoomControls'
+import { readHintDismissed, writeHintDismissed } from './hint'
 import { timelineKeyIntent } from './keyboard'
 import type { TimeWindow } from './scale'
 import styles from './Timeline.module.css'
@@ -63,7 +66,9 @@ import { frameEventWindow, zoomWindow } from './zoom'
 import { useWindowTransition } from './windowTransition'
 
 /** Span multiplier per zoom-button press or +/− keypress — halves/doubles the visible span,
- *  a single unambiguous "click" of zoom rather than a continuous rate. */
+ *  a single unambiguous "click" of zoom rather than a continuous rate. Also the factor for
+ *  double-clicking the track away from any event marker (brief §2: "zoom x2 around that
+ *  point"). */
 const BUTTON_ZOOM_FACTOR = 2
 
 export interface TimelineProps {
@@ -102,7 +107,35 @@ export function Timeline({
   onPlaybackChange,
   following = false,
 }: TimelineProps) {
-  const animateWindowTo = useWindowTransition({ window: visibleWindow, scaleKind, onWindowChange })
+  // The first-use hint (brief §2): shown until either dismissed directly or the first
+  // successful zoom/pan. Starts hidden and only flips on in an effect (not read synchronously
+  // from sessionStorage during render) so a server-rendered first paint never disagrees with
+  // the client's own storage — avoiding a hydration mismatch.
+  const [hintVisible, setHintVisible] = useState(false)
+  useEffect(() => {
+    if (!readHintDismissed()) setHintVisible(true)
+  }, [])
+  const hintDismissedRef = useRef(false)
+  const dismissHint = useCallback((): void => {
+    setHintVisible(false)
+    if (hintDismissedRef.current) return
+    hintDismissedRef.current = true
+    writeHintDismissed()
+  }, [])
+
+  // Every window change reaching this — wheel/pinch zoom, wheel/drag pan, a zoom/fit button, an
+  // event frame, a minimap or ruler drag — counts as the "successful zoom/pan" that dismisses
+  // the hint. Plain scrubbing (`onScrub`) deliberately does not: it's listed as its own bullet
+  // in the hint text, not what the hint is gating.
+  const handleWindowChange = useCallback(
+    (w: TimeWindow): void => {
+      dismissHint()
+      onWindowChange(w)
+    },
+    [dismissHint, onWindowChange],
+  )
+
+  const animateWindowTo = useWindowTransition({ window: visibleWindow, scaleKind, onWindowChange: handleWindowChange })
 
   const zoomAroundPlayhead = (factor: number): void => {
     const anchorU = Math.min(1, Math.max(0, scale.toUnit(t)))
@@ -110,6 +143,10 @@ export function Timeline({
   }
   const fitAll = (): void => animateWindowTo([0, EARTH_FORMATION])
   const handleFrameEvent = (event: TimelineEvent): void => animateWindowTo(frameEventWindow(event.tMin, event.tMax))
+  /** Double-clicking the track away from any event marker zooms x2 around that point, eased
+   *  (brief §2) — `anchorU` comes from `ScrubTrack` in its own 0..1 space, which is exactly
+   *  `zoomWindow`'s `anchorU` contract. */
+  const handleEmptyDoubleClick = (anchorU: number): void => animateWindowTo(zoomWindow(visibleWindow, anchorU, BUTTON_ZOOM_FACTOR, scaleKind))
 
   const spanYears = visibleWindow[1] - visibleWindow[0]
 
@@ -149,10 +186,16 @@ export function Timeline({
         events={events}
         checkpoints={checkpoints}
         onScrub={onScrub}
-        onWindowChange={onWindowChange}
+        onWindowChange={handleWindowChange}
         onFrameEvent={handleFrameEvent}
+        onEmptyDoubleClick={handleEmptyDoubleClick}
       />
-      <AxisTicks window={visibleWindow} scale={scale} />
+      <AxisTicks window={visibleWindow} scale={scale} scaleKind={scaleKind} onWindowChange={handleWindowChange} />
+      {hintVisible && (
+        <div className={styles.hintRow}>
+          <TimelineHint onDismiss={dismissHint} />
+        </div>
+      )}
       <div className={styles.controlsRow}>
         <Transport
           t={t}
@@ -164,7 +207,7 @@ export function Timeline({
           onPlaybackChange={onPlaybackChange}
         />
         <div className={styles.minimap}>
-          <Minimap t={t} window={visibleWindow} checkpoints={checkpoints} onWindowChange={onWindowChange} animateWindowTo={animateWindowTo} />
+          <Minimap t={t} window={visibleWindow} checkpoints={checkpoints} onWindowChange={handleWindowChange} animateWindowTo={animateWindowTo} />
         </div>
         <div className={styles.rightControls}>
           <ZoomControls

@@ -141,3 +141,32 @@ export function frameEventWindow(tMin: GeoTime, tMax: GeoTime): TimeWindow {
   const padding = band > 0 ? band * EVENT_FRAME_PADDING_FACTOR : POINT_EVENT_PADDING_YEARS
   return clampWindow(tMin - padding, tMax + padding)
 }
+
+/**
+ * Resizes a window by dragging one edge while `anchor` (the *other*, un-dragged edge) stays
+ * fixed — the minimap bracket's edge handles, and its brush-select fallback (`Minimap.tsx`)
+ * where `anchor` is instead the pointer-down position. `pointerT` is the raw time under the
+ * cursor.
+ *
+ * Unlike a naive `clamp(pointerT, anchor + MIN_SPAN_YEARS, ...)`, dragging the moving edge
+ * *past* `anchor` does not collapse the window to `MIN_SPAN_YEARS` and get stuck there: the
+ * pair is always re-sorted (`newest = min(anchor, pointerT)`, `oldest = max(...)`), so crossing
+ * over smoothly flips which bound `anchor` itself is, and the window keeps growing on the far
+ * side as the drag continues — exactly the "never inverts or collapses" behaviour a draggable
+ * bracket edge needs (regression: a v1 minimap edge-drag that overshot the opposite edge got
+ * permanently stuck at `[t, t + MIN_SPAN_YEARS]`, unresponsive to further dragging).
+ */
+export function resizeWindowEdge(anchor: GeoTime, pointerT: GeoTime): TimeWindow {
+  const clampedAnchor = clamp(anchor, 0, EARTH_FORMATION)
+  const clampedPointer = clamp(pointerT, 0, EARTH_FORMATION)
+  const newest = Math.min(clampedAnchor, clampedPointer)
+  const oldest = Math.max(clampedAnchor, clampedPointer)
+  if (oldest - newest >= MIN_SPAN_YEARS) return [newest, oldest]
+  // Enforce the minimum span by pushing the *moving* edge away from the anchor rather than
+  // clamping both edges independently — the anchor itself never moves, so a drag that is
+  // currently within MIN_SPAN_YEARS of it keeps tracking the anchor's side of the cursor
+  // rather than snapping to an arbitrary point.
+  return clampedPointer >= clampedAnchor
+    ? clampWindow(clampedAnchor, clampedAnchor + MIN_SPAN_YEARS)
+    : clampWindow(clampedAnchor - MIN_SPAN_YEARS, clampedAnchor)
+}

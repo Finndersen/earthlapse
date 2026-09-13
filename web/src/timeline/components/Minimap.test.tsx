@@ -6,6 +6,7 @@ import { EARTH_FORMATION } from '@/types/layer'
 import type { TimelineCheckpoint } from '../checkpoints'
 import { minimapBracket } from '../minimapLayout'
 import type { TimeWindow } from '../scale'
+import { MIN_SPAN_YEARS } from '../zoom'
 import { Minimap } from './Minimap'
 
 const TRACK_WIDTH = 800
@@ -58,11 +59,15 @@ describe('<Minimap> pointer drag', () => {
     fireEvent.pointerMove(track, { clientX: grabX + 40, pointerId: 1 })
 
     expect(onWindowChange).toHaveBeenCalled()
-    const [newest, oldest] = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    const result = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    const [newest, oldest] = result
     // Regression: dragging right must pan toward the present (smaller t), not away from it.
     expect(newest).toBeLessThan(MID_WINDOW[0])
     expect(oldest).toBeLessThan(MID_WINDOW[1])
-    expect(oldest - newest).toBeCloseTo(MID_WINDOW[1] - MID_WINDOW[0], 0)
+    // The bracket's rendered pixel width — not the raw-year span — stays constant across a pan
+    // (defect a: the strip is symlog, a nonlinear warp, so a fixed raw-year span does not mean
+    // a fixed pixel width; see the dedicated "defect a" tests below for the full story).
+    expect(minimapBracket(result, TRACK_WIDTH).widthPx).toBeCloseTo(widthPx, 3)
   })
 
   it('pans toward the past (both bounds increase) when the bracket is dragged left', () => {
@@ -78,19 +83,39 @@ describe('<Minimap> pointer drag', () => {
     expect(oldest).toBeGreaterThan(MID_WINDOW[1])
   })
 
-  it('keeps the span constant across a pan drag, only sliding the window', () => {
+  // Regression (defect a): panning used to shift both raw-year bounds by a fixed amount,
+  // which — because the minimap's strip is symlog, a nonlinear warp — keeps the raw-year span
+  // constant but does NOT keep the bracket's rendered pixel width constant, and does not track
+  // the cursor 1:1. The fix (`panBracket`) works in the minimap's own full-domain warped
+  // `u`-space instead, so it is the *pixel* width and position that stay exact, not the raw
+  // years. These two tests assert the property that actually matters to the person dragging it.
+  it('keeps the bracket pixel width exactly constant across a pan drag (defect a)', () => {
     const { track, onWindowChange } = renderMinimap(MID_WINDOW)
     const { leftPx, widthPx } = minimapBracket(MID_WINDOW, TRACK_WIDTH)
     const grabX = leftPx + widthPx / 2
-    const span = MID_WINDOW[1] - MID_WINDOW[0]
 
     fireEvent.pointerDown(track, { clientX: grabX, pointerId: 1 })
     for (const dx of [5, 12, 30, 31]) {
       fireEvent.pointerMove(track, { clientX: grabX + dx, pointerId: 1 })
     }
 
-    const [newest, oldest] = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
-    expect(oldest - newest).toBeCloseTo(span, 0)
+    const result = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    const { widthPx: resultWidthPx } = minimapBracket(result, TRACK_WIDTH)
+    expect(resultWidthPx).toBeCloseTo(widthPx, 3)
+  })
+
+  it('tracks the cursor exactly (1:1 in pixels) across a pan drag (defect a)', () => {
+    const { track, onWindowChange } = renderMinimap(MID_WINDOW)
+    const { leftPx, widthPx } = minimapBracket(MID_WINDOW, TRACK_WIDTH)
+    const grabX = leftPx + widthPx / 2
+    const dx = 78
+
+    fireEvent.pointerDown(track, { clientX: grabX, pointerId: 1 })
+    fireEvent.pointerMove(track, { clientX: grabX + dx, pointerId: 1 })
+
+    const result = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    const { leftPx: resultLeftPx } = minimapBracket(result, TRACK_WIDTH)
+    expect(resultLeftPx - leftPx).toBeCloseTo(dx, 3)
   })
 
   it('resizing the left edge changes only the oldest bound', () => {
@@ -116,6 +141,51 @@ describe('<Minimap> pointer drag', () => {
     const [newest, oldest] = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
     expect(oldest).toBe(MID_WINDOW[1])
     expect(newest).not.toBe(MID_WINDOW[0])
+  })
+
+  // Regression (defect b): dragging an edge handle far past the opposite edge used to collapse
+  // the window to MIN_SPAN_YEARS and get permanently stuck there.
+  it('never inverts or collapses-and-sticks when the left edge is dragged past the right edge (defect b)', () => {
+    const { track, onWindowChange } = renderMinimap(MID_WINDOW)
+    const { leftPx, widthPx } = minimapBracket(MID_WINDOW, TRACK_WIDTH)
+    const rightEdge = leftPx + widthPx
+
+    fireEvent.pointerDown(track, { clientX: leftPx, pointerId: 1 })
+    fireEvent.pointerMove(track, { clientX: rightEdge + 60, pointerId: 1 })
+    const overshoot = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    expect(overshoot[0]).toBeLessThanOrEqual(overshoot[1])
+    expect(overshoot[1] - overshoot[0]).toBeGreaterThan(MIN_SPAN_YEARS)
+
+    // Still responsive to further dragging, not stuck at a fixed minimum span.
+    fireEvent.pointerMove(track, { clientX: rightEdge + 120, pointerId: 1 })
+    const further = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    expect(further[1] - further[0]).toBeGreaterThan(overshoot[1] - overshoot[0])
+  })
+})
+
+describe('<Minimap> brush-select at full zoom-out (defect c)', () => {
+  it('draws a fresh window from the pointer-down position when the bracket spans the whole strip', () => {
+    const FULL: TimeWindow = [0, EARTH_FORMATION]
+    const { track, onWindowChange } = renderMinimap(FULL)
+
+    const startX = 200
+    fireEvent.pointerDown(track, { clientX: startX, pointerId: 1 })
+    fireEvent.pointerMove(track, { clientX: startX + 150, pointerId: 1 })
+
+    expect(onWindowChange).toHaveBeenCalled()
+    const result = onWindowChange.mock.calls.at(-1)![0] as TimeWindow
+    // A genuinely new (narrower) window, not a no-op pan of an already-full bracket.
+    expect(result[1] - result[0]).toBeLessThan(EARTH_FORMATION)
+  })
+
+  it('a plain click (no drag) at full zoom-out does not recentre or otherwise change the window', () => {
+    const FULL: TimeWindow = [0, EARTH_FORMATION]
+    const { track, onWindowChange, animateWindowTo } = renderMinimap(FULL)
+
+    fireEvent.click(track, { clientX: 300, detail: 1 })
+
+    expect(onWindowChange).not.toHaveBeenCalled()
+    expect(animateWindowTo).not.toHaveBeenCalled()
   })
 })
 

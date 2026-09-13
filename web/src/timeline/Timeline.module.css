@@ -6,6 +6,11 @@
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
 }
 
+.hintRow {
+  display: flex;
+  justify-content: center;
+}
+
 .controlsRow {
   display: flex;
   align-items: center;

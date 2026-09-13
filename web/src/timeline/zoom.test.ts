@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_FORMATION } from '@/types/layer'
 
 import { createSymlogScale, type TimeWindow } from './scale'
-import { EVENT_FRAME_PADDING_FACTOR, frameEventWindow, MIN_SPAN_YEARS, panWindow, zoomWindow } from './zoom'
+import { EVENT_FRAME_PADDING_FACTOR, frameEventWindow, MIN_SPAN_YEARS, panWindow, resizeWindowEdge, zoomWindow } from './zoom'
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 
@@ -156,5 +156,50 @@ describe('frameEventWindow', () => {
 
   it('rejects an inverted band', () => {
     expect(() => frameEventWindow(100, 0)).toThrow()
+  })
+})
+
+describe('resizeWindowEdge (defect b regression: dragging an edge past the opposite one)', () => {
+  it('keeps the anchor fixed and the pointer as the other edge in the ordinary (non-crossing) case', () => {
+    const [newest, oldest] = resizeWindowEdge(1e5, 5e5)
+    expect(newest).toBe(1e5)
+    expect(oldest).toBe(5e5)
+  })
+
+  it('orders the result regardless of which side of the anchor the pointer is on', () => {
+    const [newest, oldest] = resizeWindowEdge(5e5, 1e5)
+    expect(newest).toBe(1e5)
+    expect(oldest).toBe(5e5)
+  })
+
+  it('never collapses below MIN_SPAN_YEARS when the pointer sits exactly on the anchor', () => {
+    const [newest, oldest] = resizeWindowEdge(1e5, 1e5)
+    expect(oldest - newest).toBeCloseTo(MIN_SPAN_YEARS, 6)
+  })
+
+  it('flips which bound the anchor is, rather than sticking at MIN_SPAN_YEARS, once the pointer crosses it', () => {
+    const anchor = 91432187
+    // Regression repro from the brief: dragging the left edge (anchor = the fixed right/oldest
+    // bound) far past the anchor used to collapse and stick at [anchor, anchor + 1].
+    const justPast = resizeWindowEdge(anchor, anchor - 1)
+    expect(justPast[1] - justPast[0]).toBeCloseTo(MIN_SPAN_YEARS, 6)
+
+    const farPast = resizeWindowEdge(anchor, anchor - 5000)
+    expect(farPast[0]).toBeCloseTo(anchor - 5000, 3)
+    expect(farPast[1]).toBe(anchor)
+    // Still responsive to further dragging past that point — never stuck.
+    expect(farPast[1] - farPast[0]).toBeGreaterThan(justPast[1] - justPast[0])
+  })
+
+  it('clamps to the domain without inverting near the present edge', () => {
+    const [newest, oldest] = resizeWindowEdge(0, -1000)
+    expect(newest).toBeGreaterThanOrEqual(0)
+    expect(oldest).toBeGreaterThanOrEqual(newest)
+  })
+
+  it('clamps to the domain without inverting near the oldest edge', () => {
+    const [newest, oldest] = resizeWindowEdge(EARTH_FORMATION, EARTH_FORMATION + 1000)
+    expect(oldest).toBeLessThanOrEqual(EARTH_FORMATION)
+    expect(oldest).toBeGreaterThanOrEqual(newest)
   })
 })
