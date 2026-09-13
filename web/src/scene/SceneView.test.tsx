@@ -1,15 +1,30 @@
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Scene } from '@/types/manifest'
 
+import { crossfadeAlpha } from './transition'
 import { SceneView } from './SceneView'
-
-afterEach(cleanup)
 
 // jsdom has no WebGL context, so `supportsWebGL()` is false throughout this suite and every
 // render below exercises `SceneFallbackView` — the same testids and opacity contract as
 // before, now driven through the shared `SceneView` dispatcher.
+
+// jsdom does not implement requestAnimationFrame; `usePresentedSceneMix` only needs it when a
+// render moves the target away from what's already presented (most tests here are a single
+// `render()` call, which starts presented exactly at target — see presentation.ts's "no
+// animation on mount" — and so never touches this at all).
+beforeEach(() => {
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+    return setTimeout(() => cb(performance.now()), 16) as unknown as number
+  })
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+})
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 function scene(id: string, t: number): Scene {
   return {
@@ -27,7 +42,8 @@ function scene(id: string, t: number): Scene {
 const s0 = scene('s0', 0)
 const s1 = scene('s1', 100)
 const s2 = scene('s2', 400)
-const scenes: Scene[] = [s0, s1, s2]
+const s3 = scene('s3', 1e6)
+const scenes: Scene[] = [s0, s1, s2, s3]
 
 // p=0.5 of log1p(0)..log1p(100) -> mix 0.5, independent of DISSOLVE_WIDTH (the smoothstep
 // window is symmetric around the midpoint regardless of its width).
@@ -39,12 +55,12 @@ function tAtP(a: number, b: number, p: number): number {
 }
 
 describe('SceneView', () => {
-  it('draws the base layer at full opacity regardless of mix, and the overlay at mix', () => {
+  it('draws the base layer at full opacity regardless of mix, and the overlay at the eased crossfade alpha', () => {
     render(<SceneView t={midT} scenes={scenes} assetBase="https://cdn.example.com/build" />)
     const base = screen.getByTestId('scene-base') as HTMLImageElement
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
     expect(base.style.opacity).toBe('1')
-    expect(Number(overlay.style.opacity)).toBeCloseTo(0.5)
+    expect(Number(overlay.style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
   })
 
   it('draws the base layer at full opacity even when mix is 0 (never fades both to nothing)', () => {
@@ -94,24 +110,45 @@ describe('SceneView', () => {
     expect(opacities[0]).toBeCloseTo(0)
   })
 
-  it('never renders a stale base under a collapsed overlay when scrubbing across a scene boundary', () => {
-    // Just below s1.t: mix is near 1 (well past the narrow dissolve band, overlay ~ full).
-    const justBefore = tAtP(s0.t, s1.t, 0.99)
-    const { rerender } = render(<SceneView t={justBefore} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-    // Warm the shared decode cache the same way real scrubbing would: the overlay (s1) has
-    // now been displayed, so it is a known-decoded URL by the time we cross past it.
-    expect((screen.getByTestId('scene-overlay') as HTMLImageElement).src).toContain('s1.png')
-
-    // Just above s1.t: mix resets near 0 for the next pair (s1, s2), so the overlay's opacity
-    // collapses in this same render. The base must have already become s1, not still be s0 —
-    // otherwise the composite reads as "back to s0" for a frame.
-    const justAfter = tAtP(s1.t, s2.t, 0.01)
-    rerender(<SceneView t={justAfter} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
+  it('mounts with the presentation already settled at the target — no animation on the first frame', () => {
+    // Landing exactly mid-dissolve on mount must show that mix immediately, not ease in from
+    // scratch (presentation.ts: "the first presented state equals the target").
+    const t = tAtP(s0.t, s1.t, 0.5)
+    render(<SceneView t={t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.src).toContain('s1.png')
-    expect(base.style.opacity).toBe('1')
-    expect(Number(overlay.style.opacity)).toBeLessThan(0.5)
+    expect(Number(overlay.style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
   })
+
+  it(
+    'does not jump instantly to a scene several gaps away — it keeps showing the previous pair immediately after t moves, and only catches up over subsequent frames',
+    async () => {
+      // `alt` reflects the presented caption directly (unlike `src`, which `SceneFallbackView`
+      // only swaps once the browser has decoded the image — see its `useDecodedSrc` — and
+      // jsdom never fires that decode; this is the same reason Experience.test.tsx asserts on
+      // `alt`, not `src`, for the same kind of check).
+      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
+
+      act(() => {
+        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+      })
+
+      // No wall-clock time has passed yet — still showing s0, not s3.
+      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
+
+      // It does eventually reach s3, once the minimum transition duration has had time to
+      // play — settling alone on s3 (an exact scene `t`), so both layers show it and the
+      // overlay's crossfade alpha returns to 0, same as the mount-time "alone" case above.
+      await waitFor(
+        () => {
+          expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s3')
+          expect((screen.getByTestId('scene-overlay') as HTMLImageElement).alt).toBe('caption s3')
+          expect(screen.getByTestId('scene-base').style.opacity).toBe('1')
+          expect(screen.getByTestId('scene-overlay').style.opacity).toBe('0')
+        },
+        { timeout: 3000, interval: 50 },
+      )
+    },
+    10000,
+  )
 })

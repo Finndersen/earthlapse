@@ -1,17 +1,23 @@
 'use client'
 
 /**
- * `<SceneView>` — the scene viewport (DESIGN §5 v1 note / ADR-009: still no depth maps, but
- * the flat cross-fade is gone). Picks between two renderers of the same `sceneAt` pair:
- * `SceneCanvasView`, a WebGL full-viewport quad whose fragment shader does a clean
- * noise-masked dissolve + blur-through instead of a flat opacity ramp (`transition.ts` /
- * `shaders.ts`), or `SceneFallbackView`, the original two-`<img>` cross-fade with a CSS
- * stand-in for the same two effects, when WebGL is unavailable. Both renderers apply each
- * scene's own camera drift (`drift.ts`) for a slow "3D photo" breathe.
+ * `<SceneView>` — the scene viewport (DESIGN §5 v1 note / ADR-009: still no depth maps).
+ * Picks between two renderers of the same presented scene pair: `SceneCanvasView`, a WebGL
+ * full-viewport quad whose fragment shader does a smooth whole-image crossfade (`shaders.ts`,
+ * ADR-012), or `SceneFallbackView`, a two-`<img>` opacity cross-fade, when WebGL is
+ * unavailable. Both renderers apply each scene's own camera drift (`drift.ts`) for a slow
+ * "3D photo" breathe.
  *
- * Prop-driven and pure in `t`, plus the OS reduced-motion preference — UI view state, not
- * part of the `t -> pixels` contract, per `useReducedMotion`'s doc comment. No store import,
- * matches DESIGN §10 / the Layer convention.
+ * `sceneAt(scenes, t)` is the pure, instantaneous target — which two scenes and how far to
+ * dissolve, a function of `t` alone. What is actually *displayed* goes through
+ * `usePresentedSceneMix` (`presentation.ts`, ADR-012) first, which rate-limits how fast the
+ * presentation can move so a full transition never completes in under
+ * `MIN_TRANSITION_SECONDS` of wall-clock time, however abruptly `t` itself jumps.
+ *
+ * Prop-driven and pure in `t`, plus the OS reduced-motion preference and the presentation
+ * catch-up's own wall-clock pacing — UI view state, not part of the `t -> pixels` contract,
+ * per `useReducedMotion`'s doc comment. No store import, matches DESIGN §10 / the Layer
+ * convention.
  */
 
 import { type ReactNode, useMemo } from 'react'
@@ -20,10 +26,11 @@ import type { GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { driftAt, REST_DRIFT } from './drift'
+import { usePresentedSceneMix } from './presentation'
 import { captionOpacity, dominantScene, resolveAssetUrl, sceneAt } from './scene'
 import { SceneCanvasView } from './SceneCanvasView'
 import { SceneFallbackView } from './SceneFallbackView'
-import { transitionUniforms } from './transition'
+import { crossfadeAlpha } from './transition'
 import { useReducedMotion } from './useReducedMotion'
 import { supportsWebGL } from './webgl'
 
@@ -59,22 +66,27 @@ export function SceneView({ t, scenes, assetBase, renderCaption, className }: Sc
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
 
-  const pair = useMemo(() => sceneAt(scenes, t), [scenes, t])
-  const fromIndex = useMemo(() => sceneIndex(scenes, pair.from), [scenes, pair.from])
-  const toIndex = useMemo(() => sceneIndex(scenes, pair.to), [scenes, pair.to])
+  const target = useMemo(() => sceneAt(scenes, t), [scenes, t])
+  const presented = usePresentedSceneMix(target)
 
+  const fromIndex = useMemo(() => sceneIndex(scenes, presented.from), [scenes, presented.from])
+  const toIndex = useMemo(() => sceneIndex(scenes, presented.to), [scenes, presented.to])
+
+  // Drift stays a function of the real `t`, not the catch-up mix — it is each on-screen
+  // scene's own camera motion over the time it is actually being watched, unaffected by how
+  // quickly the presentation caught up to it.
   const fromDrift = reducedMotion ? REST_DRIFT : driftAt(scenes, fromIndex, t)
   const toDrift = reducedMotion ? REST_DRIFT : driftAt(scenes, toIndex, t)
-  const transition = useMemo(() => transitionUniforms(pair.mix), [pair.mix])
+  const mix = crossfadeAlpha(presented.mix)
 
-  const baseUrl = resolveAssetUrl(assetBase, pair.from.image)
-  const overlayUrl = resolveAssetUrl(assetBase, pair.to.image)
+  const baseUrl = resolveAssetUrl(assetBase, presented.from.image)
+  const overlayUrl = resolveAssetUrl(assetBase, presented.to.image)
   const preloadUrls = useMemo(
     () => neighbourUrls(scenes, fromIndex, toIndex, assetBase),
     [scenes, fromIndex, toIndex, assetBase],
   )
 
-  const caption = renderCaption?.(dominantScene(pair), captionOpacity(pair.mix))
+  const caption = renderCaption?.(dominantScene(presented), captionOpacity(presented.mix))
 
   return (
     <div className={className} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
@@ -83,19 +95,19 @@ export function SceneView({ t, scenes, assetBase, renderCaption, className }: Sc
           baseUrl={baseUrl}
           overlayUrl={overlayUrl}
           preloadUrls={preloadUrls}
-          transition={transition}
+          mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
-          imageAspect={pair.from.width / pair.from.height}
+          imageAspect={presented.from.width / presented.from.height}
         />
       ) : (
         <SceneFallbackView
           baseUrl={baseUrl}
           overlayUrl={overlayUrl}
-          baseCaption={pair.from.caption}
-          overlayCaption={pair.to.caption}
+          baseCaption={presented.from.caption}
+          overlayCaption={presented.to.caption}
           preloadUrls={preloadUrls}
-          transition={transition}
+          mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
         />

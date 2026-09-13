@@ -1,11 +1,13 @@
 /**
  * Scene sequencing and cross-dissolve mixing (DESIGN §5, v1 note / ADR-009).
  *
- * v1 renders stills — no depth maps, no displacement — but the transition between them is a
- * real shader dissolve (see `transition.ts`), not a flat opacity ramp. `sceneAt` is the pure
+ * v1 renders stills — no depth maps, no displacement. `sceneAt` is the pure, instantaneous
  * heart of it: given the manifest's scenes and a time cursor, it says which two scenes to
- * show and how far to dissolve between them. Everything downstream (`<SceneView>` and its
- * WebGL/fallback renderers) is a thin consumer of this.
+ * show and how far to dissolve between them — a *target*, not what is necessarily on screen
+ * this frame. `presentation.ts` (ADR-012) sits downstream, rate-limiting how fast the
+ * displayed mix can follow that target so a transition never completes in under a minimum
+ * wall-clock duration; `<SceneView>` and its WebGL/fallback renderers consume the presented
+ * result, not `sceneAt`'s output directly.
  */
 
 import type { GeoTime } from '@/types/layer'
@@ -31,8 +33,10 @@ export interface SceneMix {
  * gap; the brief cross-dissolve happens only in the narrow band around the midpoint. One
  * tunable, reused everywhere a dissolve window is needed — there is no separate within- vs
  * cross-chapter distinction any more (a 50/50 blend of two generated worlds reads as a muddy
- * double exposure regardless of which side of a chapter boundary it falls on; the shader
- * dissolve in `transition.ts` is what keeps the *brief* blend itself from reading as one).
+ * double exposure regardless of which side of a chapter boundary it falls on). This is
+ * `sceneAt`'s *target* window in `t`; `presentation.ts` (ADR-012) separately guarantees the
+ * blend actually takes a minimum amount of wall-clock time to cross, however fast `t` itself
+ * moves through it.
  */
 export const DISSOLVE_WIDTH = 0.14
 

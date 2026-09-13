@@ -2,11 +2,11 @@
 
 /**
  * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does
- * the noise-masked dissolve + blur-through (`transition.ts` / `shaders.ts`) and each layer's
- * own camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure.
- * Texture loads go through `textureCache`/`useScenePair`, which keep the previously bound
- * pair on screen until a newly requested pair has fully loaded, so this never shows a blank
- * or black frame; the scenes just outside the current pair are preloaded speculatively.
+ * the smooth whole-image crossfade (`shaders.ts`, ADR-012) and each layer's own camera drift
+ * (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go
+ * through `textureCache`/`useScenePair`, which keep the previously bound pair on screen until
+ * a newly requested pair has fully loaded, so this never shows a blank or black frame; the
+ * scenes just outside the current pair are preloaded speculatively.
  */
 
 import { Canvas, useThree } from '@react-three/fiber'
@@ -16,11 +16,7 @@ import * as THREE from 'three'
 import type { DriftUniforms } from './drift'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
 import { loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
-import type { TransitionUniforms } from './transition'
 import { useScenePair, type ScenePair } from './useScenePair'
-
-/** Scales `transition.blur` (a normalised 0..1 strength) to a UV-space blur radius. */
-const UV_BLUR_RADIUS = 0.006
 
 export interface SceneCanvasViewProps {
   baseUrl: string
@@ -28,7 +24,9 @@ export interface SceneCanvasViewProps {
   /** URLs of the scenes just outside the current pair — warmed into the texture cache ahead
    *  of need, same idea as `globe`'s neighbour preload. */
   preloadUrls: readonly string[]
-  transition: TransitionUniforms
+  /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
+   *  alone, `1` shows `overlayUrl` alone, pixel-exact at both ends (see `shaders.ts`). */
+  mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
   /** `from.width / from.height` — assumed shared across scenes (the generation pipeline
@@ -46,34 +44,26 @@ function usePreloadTextures(urls: readonly string[]): void {
   }, [key])
 }
 
-export function SceneCanvasView({
-  baseUrl,
-  overlayUrl,
-  preloadUrls,
-  transition,
-  fromDrift,
-  toDrift,
-  imageAspect,
-}: SceneCanvasViewProps) {
+export function SceneCanvasView({ baseUrl, overlayUrl, preloadUrls, mix, fromDrift, toDrift, imageAspect }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
   usePreloadTextures(preloadUrls)
 
   return (
     <Canvas orthographic dpr={[1, 2]} gl={{ antialias: false, alpha: false }} style={canvasStyle}>
-      <SceneQuad pair={pair} transition={transition} fromDrift={fromDrift} toDrift={toDrift} imageAspect={imageAspect} />
+      <SceneQuad pair={pair} mix={mix} fromDrift={fromDrift} toDrift={toDrift} imageAspect={imageAspect} />
     </Canvas>
   )
 }
 
 interface SceneQuadProps {
   pair: ScenePair
-  transition: TransitionUniforms
+  mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
   imageAspect: number
 }
 
-function SceneQuad({ pair, transition, fromDrift, toDrift, imageAspect }: SceneQuadProps) {
+function SceneQuad({ pair, mix, fromDrift, toDrift, imageAspect }: SceneQuadProps) {
   const { size } = useThree()
   const viewportAspect = size.height > 0 ? size.width / size.height : 1
   const aspect = imageAspect > 0 ? viewportAspect / imageAspect : 1
@@ -82,10 +72,7 @@ function SceneQuad({ pair, transition, fromDrift, toDrift, imageAspect }: SceneQ
     () => ({
       uFrom: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uTo: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
-      uThreshold: { value: 1 },
-      uEdge: { value: 0 },
-      uLuminanceBias: { value: 0 },
-      uBlur: { value: 0 },
+      uMix: { value: 0 },
       uAspect: { value: 1 },
       uFromZoom: { value: 1 },
       uFromOffset: { value: new THREE.Vector2(0, 0) },
@@ -110,10 +97,7 @@ function SceneQuad({ pair, transition, fromDrift, toDrift, imageAspect }: SceneQ
         uniforms={uniforms}
         uniforms-uFrom-value={pair.fromTex ?? PLACEHOLDER_TEXTURE}
         uniforms-uTo-value={pair.toTex ?? PLACEHOLDER_TEXTURE}
-        uniforms-uThreshold-value={transition.threshold}
-        uniforms-uEdge-value={transition.edge}
-        uniforms-uLuminanceBias-value={transition.luminanceBias}
-        uniforms-uBlur-value={transition.blur * UV_BLUR_RADIUS}
+        uniforms-uMix-value={mix}
         uniforms-uAspect-value={aspect}
         uniforms-uFromZoom-value={fromDrift.zoom}
         uniforms-uToZoom-value={toDrift.zoom}

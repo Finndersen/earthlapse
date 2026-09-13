@@ -5,7 +5,7 @@
  * wired together — see docs/ONESHOT_SCOPE.md.
  */
 
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useTimeStore } from '@/store/time'
@@ -70,37 +70,59 @@ async function renderSettled() {
 }
 
 describe('Experience (W12a integration)', () => {
-  it('renders a scene image once the stub manifest and layer data have loaded', async () => {
-    await renderSettled()
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    expect(base.tagName).toBe('IMG')
-    expect(base.src).toMatch(/\/stub\/scenes\/.+\.svg$/)
-    // The caption (unlike the <img> src, which SceneView only swaps once the browser has
-    // decoded it — see SceneView.tsx's `useDecodedSrc`, and jsdom never fires that decode)
-    // reflects the current scene pair immediately, so it is the reliable signal here that the
-    // initial scene actually is the oldest one.
-    expect(base.alt).toMatch(/Archean shore/i)
-  })
+  it(
+    'renders a scene image once the stub manifest and layer data have loaded',
+    async () => {
+      await renderSettled()
+      const base = screen.getByTestId('scene-base') as HTMLImageElement
+      expect(base.tagName).toBe('IMG')
+      expect(base.src).toMatch(/\/stub\/scenes\/.+\.svg$/)
+      // The caption text (Experience's own, computed straight off the store's `t`) settles
+      // the instant the initial-t effect applies, but the scene image itself now rate-limits
+      // how fast it can follow that jump (ADR-012 / `presentation.ts`'s
+      // `MIN_TRANSITION_SECONDS`), so it can lag the caption by up to that floor.
+      await waitFor(() => expect(base.alt).toMatch(/Archean shore/i), { timeout: 3000, interval: 50 })
+    },
+    10000,
+  )
 
   it('opens on the oldest scene\'s t, not t=0', async () => {
     await renderSettled()
     expect(useTimeStore.getState().t).toBe(4.0e9)
   })
 
-  it('changes the scene pair when the store t changes', async () => {
-    await renderSettled()
-    const before = (screen.getByTestId('scene-base') as HTMLImageElement).alt
+  it(
+    'changes the scene pair when the store t changes',
+    async () => {
+      await renderSettled()
+      const base = screen.getByTestId('scene-base') as HTMLImageElement
+      // `renderSettled`'s caption-based signal fires the instant the initial-t effect applies
+      // (Experience computes its caption straight off the store's `t`), which can be before
+      // the scene image itself has caught up to it (see the rate-limiting note above) — so
+      // `before` must capture the image actually having settled on the archean shore, not
+      // just the caption having said so, or the assertion below has nothing to compare against.
+      await waitFor(() => expect(base.alt).toMatch(/Archean shore/i), { timeout: 3000, interval: 50 })
+      const before = base.alt
 
-    act(() => {
-      useTimeStore.getState().setT(0)
-    })
+      act(() => {
+        useTimeStore.getState().setT(0)
+      })
 
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.alt).not.toBe(before)
-    expect(base.alt).toMatch(/modern city/i)
-    expect(overlay.alt).toMatch(/modern city/i)
-  })
+      // The scene package now rate-limits how fast the *displayed* pair can follow a jump
+      // this large (ADR-012 / `presentation.ts`'s `MIN_TRANSITION_SECONDS`), so it settles
+      // over real wall-clock time rather than the instant this store update used to produce.
+      await waitFor(
+        () => {
+          const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
+          expect(base.alt).not.toBe(before)
+          expect(base.alt).toMatch(/modern city/i)
+          expect(overlay.alt).toMatch(/modern city/i)
+        },
+        { timeout: 4000, interval: 50 },
+      )
+    },
+    12000,
+  )
 
   it('shows ~277 ppm for CO2 at t=0', async () => {
     await renderSettled()

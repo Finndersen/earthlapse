@@ -1,21 +1,18 @@
 'use client'
 
 /**
- * Fallback scene renderer for browsers without WebGL: the original two-`<img>` cross-fade
- * (base fixed at opacity 1, overlay at `mix` — never both faded at once), with a short CSS
- * blur-through standing in for the shader's blur-through and a CSS transform standing in for
- * camera drift. Never shows a blank frame: each layer decodes its next image off-DOM before
- * swapping to it and keeps showing its last decoded image while the next one decodes; the
- * scenes just outside the current pair are preloaded speculatively.
+ * Fallback scene renderer for browsers without WebGL: a plain two-`<img>` cross-fade (base
+ * fixed at opacity 1, overlay at `mix` — never both faded at once) with a CSS transform
+ * standing in for camera drift. No CSS filter is applied — `mix` is already the eased
+ * crossfade alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole
+ * effect (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM
+ * before swapping to it and keeps showing its last decoded image while the next one decodes;
+ * the scenes just outside the current pair are preloaded speculatively.
  */
 
 import { useEffect, useState, type CSSProperties } from 'react'
 
 import type { DriftUniforms } from './drift'
-import type { TransitionUniforms } from './transition'
-
-/** Scales `transition.blur` (a normalised 0..1 strength) to a CSS blur radius in px. */
-const CSS_BLUR_MAX_PX = 6
 
 /** URLs this browser session has confirmed decode cleanly. Shared by both layers of every
  *  `SceneFallbackView` instance — see `useDecodedSrc`'s doc comment on why sharing the cache
@@ -92,7 +89,9 @@ export interface SceneFallbackViewProps {
   baseCaption: string
   overlayCaption: string
   preloadUrls: readonly string[]
-  transition: TransitionUniforms
+  /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
+   *  alone, `1` shows `overlayUrl` alone. */
+  mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
 }
@@ -103,7 +102,7 @@ export function SceneFallbackView({
   baseCaption,
   overlayCaption,
   preloadUrls,
-  transition,
+  mix,
   fromDrift,
   toDrift,
 }: SceneFallbackViewProps) {
@@ -111,22 +110,19 @@ export function SceneFallbackView({
   const displayedOverlay = useDecodedSrc(overlayUrl)
   usePreload(preloadUrls)
 
-  const blurPx = transition.blur * CSS_BLUR_MAX_PX
-  const filter = blurPx > 0 ? `blur(${blurPx}px)` : 'none'
-
   return (
     <>
       <img
         src={displayedBase}
         alt={baseCaption}
         data-testid="scene-base"
-        style={{ ...layerStyle, opacity: 1, filter, transform: driftTransform(fromDrift) }}
+        style={{ ...layerStyle, opacity: 1, transform: driftTransform(fromDrift) }}
       />
       <img
         src={displayedOverlay}
         alt={overlayCaption}
         data-testid="scene-overlay"
-        style={{ ...layerStyle, opacity: transition.mix, filter, transform: driftTransform(toDrift) }}
+        style={{ ...layerStyle, opacity: mix, transform: driftTransform(toDrift) }}
       />
     </>
   )
