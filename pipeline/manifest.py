@@ -14,7 +14,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
-from pipeline.prompts import Shot
+from pipeline.prompts import PlateType, Shot
 from pipeline.shapes import GeoTime, Interpolation
 
 
@@ -166,9 +166,55 @@ class TreeNodeData(_WireModel):
     citation: str | None
 
 
+class PortraitPlateData(_WireModel):
+    """A pinned ancestor portrait (ADR-015), keyed by the lineage node it portrays."""
+
+    node_id: str
+    image: str
+    plate: PlateType
+    pinned: str
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+
+
+class PortraitMorphData(_WireModel):
+    """Flow fields between two consecutive published plates, as PNG data textures.
+
+    `forward` sits on the older plate's grid and `backward` on the younger's; a byte b decodes to
+    (b - 128) / 127 * range in plate UV, v pointing down the image (pipeline/flowfield.py).
+    """
+
+    older: str
+    younger: str
+    forward: str
+    backward: str
+    forward_range: float = Field(gt=0)
+    backward_range: float = Field(gt=0)
+    size: int = Field(gt=0)
+
+
+class PortraitSetData(_WireModel):
+    plates: tuple[PortraitPlateData, ...] = Field(min_length=1)
+    morphs: tuple[PortraitMorphData, ...]
+
+    @model_validator(mode="after")
+    def _morphs_join_consecutive_plates(self) -> Self:
+        order = [plate.node_id for plate in self.plates]
+        if len(set(order)) != len(order):
+            raise ValueError("portrait plates must name each lineage node once")
+        adjacent = set(zip(order[1:], order[:-1], strict=True))
+        for morph in self.morphs:
+            if (morph.older, morph.younger) not in adjacent:
+                raise ValueError(f"morph {morph.older} -> {morph.younger} joins no adjacent plates")
+        return self
+
+
 class TreeData(_WireModel):
     id: str
     nodes: tuple[TreeNodeData, ...] = Field(min_length=1)
+    # Additive (ADR-015): omitted entirely when no portrait is published, so layer files from
+    # before portraits existed stay byte-identical.
+    portraits: PortraitSetData | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 LayerData = SeriesData | RasterData | TreeData

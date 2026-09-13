@@ -305,3 +305,29 @@
   text-transform: uppercase;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
+
+/* ------------------------------------------------------------------- ancestor portrait */
+
+/* A round plate feathered into the lens's dark periphery: the plate's own black backdrop and
+   circular vignette (VISUAL_SPEC §10) meet the HUD with no hard rim. */
+.portrait {
+  position: relative;
+  width: clamp(112px, 10.5vw, 168px);
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+  -webkit-mask-image: radial-gradient(circle closest-side, #000 76%, transparent 100%);
+  mask-image: radial-gradient(circle closest-side, #000 76%, transparent 100%);
+  pointer-events: none;
+}
+
+.portraitLayer {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

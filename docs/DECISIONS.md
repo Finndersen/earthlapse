@@ -503,6 +503,99 @@ against introducing new shot types.
 
 ---
 
+## ADR-015 — Ancestor portraits: photoreal specimen plates with offline flow morphs
+
+**Status:** accepted — human-directed 2026-09-13. Resolves DESIGN §14 q4; supersedes DESIGN
+§10's "~50 nodes … (~$5 total)" estimate and the text-only ancestor readout.
+
+**Context.**
+- DESIGN §10 promised a portrait for each lineage node, and §14 q4 left its register open. The
+  human chose a **photoreal specimen plate** and asked for smooth morphing between portraits.
+  They also asked for a lower resolution than scenes "for cost savings if possible".
+- `data/lineage.yaml` has 42 nodes. The generation ceiling is $40, with $7.41 already spent.
+
+**Decision.**
+- **Register.** Two plate types, `SPECIMEN` and `MICROSCOPE`, share one invariant portrait style
+  (VISUAL_SPEC §10). It is separate from the scene style, and VISUAL_SPEC §2 is unchanged.
+  Portraits render from text only (ADR-010).
+- **Subjects.** They live in `data/portraits.yaml`, keyed by lineage node id. Each record has
+  `sources`, `gaps` and `evidence`. A `reconstruction` or `extant-proxy` must say so in the
+  prompt text (enforced when loading).
+  - 41 nodes have specs. `deuterostomia` is omitted because its lineage representative,
+    Saccorhytus, was reinterpreted as an ecdysozoan (Liu et al. 2022, Nature,
+    doi:10.1038/s41586-022-05107-z).
+  - The human must decide that node's representative. Until then the viewer holds the older
+    plate.
+- **Size.** 1:1 at 1K, set in `pipeline/generators/image.py` (`PORTRAIT_ASPECT_RATIO`,
+  `PORTRAIT_IMAGE_SIZE`). Scene size and aspect are unchanged.
+  - Google's pricing page, checked 2026-09-13, shows $120/M image output tokens. Images from 1K
+    up to 2K both use 1120 tokens (about $0.134 per image); 4K uses 2000 (about $0.24).
+    Source: https://ai.google.dev/gemini-api/docs/pricing.
+  - So **1K costs the same as 2K**: it saves payload, not money.
+  - The pipeline's pessimistic estimate is about $0.154 per plate (it adds input and a thinking
+    allowance). The latest ledgered actual was $0.141.
+  - `1:1` as an accepted aspect ratio is confirmed only by third-party integration docs, not
+    Google's own pages. The style gate's first response confirms it; the candidate sidecar
+    records the returned dimensions.
+- **Pipeline.** Portraits are a first-class image target built from existing machinery.
+  - Each portrait is a PROMPT node plus an IMAGE node (`portrait.<node>.prompt` / `.image`).
+    It uses the existing `AssetKind`s and `Resolver`, a candidate store at
+    `data/candidates/portraits/`, and the same `Ledger` and ceiling. Generators still reserve
+    before each call.
+  - CLI:
+    - `earthtime plan` shows every portrait and its estimate.
+    - `earthtime build --only portraits [--node …] [--candidates N]`, default 1.
+    - `earthtime review portraits [sheet|pick|clear]`, with pins written into
+      `data/portraits.yaml`.
+    - `earthtime publish` copies pinned plates to `data/media/portraits/`.
+  - `build.py` now loops over any `ImageJob`, `plan.py` shares the standing computation, and
+    `scenes.patch_pin_line` is public for reuse. Scene behaviour and CLI output are unchanged.
+  - **No change** to `graph.py`, `models.py`, `spend.py` or `shapes.py`.
+- **Contract additions (all additive, backward compatible).**
+  - `pipeline/manifest.py`: `TreeData.portraits` holds `PortraitSetData` (plates and morphs).
+    It is omitted from the JSON when absent, so existing layer files are byte-identical.
+  - `web/src/data/curated.ts`: `TreeData.portraits`, validated in `parseTreeData`. Every plate
+    must name a node, and every morph must join adjacent plates.
+  - `web/src/types/layer.ts`: optional `NodeValue.portrait` (a `PortraitMix`), plus
+    `PortraitPlate`, `PortraitMorph` and `PortraitPlateType`.
+  - The `Layer` interface is unchanged, and `sample()` stays pure in `t`.
+- **Morph.** Computed offline, deterministic and free, by `earthtime morph`. It needs the
+  optional `morph` extra (`opencv-python-headless`); core dependencies are unchanged.
+  - Per consecutive pinned pair: a subject box is taken from the dark backdrop, and the subject
+    is centred and scaled to 70% fill.
+  - DIS optical flow runs both ways, Gaussian-smoothed. It is composed back onto each plate's
+    own grid, so no alignment transform ships.
+  - Output is two 128×128 RGB PNG data textures, one per direction, encoded as byte =
+    round(d / range · 127) + 128.
+  - Cached by both pins' digests plus the algorithm version. Publish includes the cached morphs
+    and warns about pairs without one, which the viewer crossfades.
+- **Viewer.** `<AncestorPortrait layer t assetBase />` in `web/src/layers`.
+  - The target mix is pure in `t`. It runs a smoothstep across a band that starts at each plate's
+    divergence and covers `MORPH_BAND_FRACTION = 0.25` of the log1p gap down to the next
+    younger plate (or the present).
+  - The displayed mix is rate-limited to `MIN_PORTRAIT_TRANSITION_SECONDS = 1.2` by
+    `web/src/lib/presentedMix.ts`: ADR-012's limiter, generalised over the item type so the
+    layers package does not import the scene package.
+  - WebGL warps each plate toward the other by α / 1−α and blends in linear light. Without
+    WebGL it is a plain crossfade. The plate is round and feathered for the lens HUD.
+- **Style gate first.** `leca`, `bilateria`, `tetrapodomorpha` and `homo-erectus`, then the
+  remaining 37.
+
+**Consequences.**
+- All 41 plates at one candidate: about $6.30 estimated (about $5.80 at the ledgered actual).
+  The gate at two candidates: about $1.23 estimated. Morphs cost nothing.
+- A plate without a pin, or a pair without a morph, degrades gracefully: an older plate is held,
+  or the pair crossfades. Portraits can therefore ship a few at a time.
+- The limiter algorithm now exists twice: `scene/presentation.ts` and `lib/presentedMix.ts`.
+  `lib/webgl.ts` and `lib/assetUrl.ts` also repeat scene helpers. The scene package can adopt
+  the shared versions with no behaviour change; that is a follow-up.
+- Morphs between very different body plans read as a warped dissolve, not anatomical
+  correspondence. Plate framing discipline, not the flow algorithm, decides how good they look.
+- Some subject texts rest only on secondary summaries, where the primary paper was unreachable.
+  Those records say so in `gaps`, for review before pinning.
+
+---
+
 ## Pending
 
 Decisions deferred to Phase 1, to be recorded here once answered:
@@ -515,7 +608,7 @@ Decisions deferred to Phase 1, to be recorded here once answered:
   when the 2.5D phase begins
 - **Default timeline scale** — symlog vs density (DESIGN §14 q3)
 - **Globe texture resolution** (DESIGN §14 q5)
-- **Ancestor portrait register** — photoreal vs illustrated (DESIGN §14 q4)
+- ~~**Ancestor portrait register**~~ **RESOLVED by ADR-015:** photoreal specimen plates.
 - ~~**`gplately` viability**~~ **RESOLVED.** A clean `pip install gplately` completes in
   ~33 seconds, wheels only, no conda and no system GDAL/PROJ/GEOS. pygplates 1.0.0 ships
   first-party `macosx_11_0_arm64` wheels for cp38–cp313; every binary dependency (cartopy,

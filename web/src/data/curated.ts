@@ -7,7 +7,7 @@
  * EventSet data is inlined in Manifest.events (see manifest.ts) and has no equivalent here.
  */
 
-import type { GeoTime, Interpolation, NodeValue, RasterValue, ScalarValue } from '@/types/layer'
+import type { GeoTime, Interpolation, NodeValue, PortraitPlateType, RasterValue, ScalarValue } from '@/types/layer'
 
 // ------------------------------------------------------------------------------- shapes
 
@@ -48,11 +48,41 @@ export interface TreeNodeData {
 export interface TreeData {
   id: string
   nodes: TreeNodeData[]
+  /** Additive (ADR-015): published ancestor portraits. Absent when none are published. */
+  portraits?: PortraitSetData
+}
+
+/** Mirrors `PortraitPlateData` in pipeline/manifest.py. */
+export interface PortraitPlateData {
+  nodeId: string
+  image: string
+  plate: PortraitPlateType
+  pinned: string
+  width: number
+  height: number
+}
+
+/** Mirrors `PortraitMorphData` in pipeline/manifest.py. */
+export interface PortraitMorphData {
+  older: string
+  younger: string
+  forward: string
+  backward: string
+  forwardRange: number
+  backwardRange: number
+  size: number
+}
+
+export interface PortraitSetData {
+  /** Ascending by the portrayed node's `tDivergence`, like the nodes themselves. */
+  plates: PortraitPlateData[]
+  morphs: PortraitMorphData[]
 }
 
 // ------------------------------------------------------------------------------- parsing
 
 const INTERPOLATIONS: ReadonlySet<string> = new Set(['linear', 'log-linear', 'step', 'nearest'])
+const PLATE_TYPES: ReadonlySet<string> = new Set(['SPECIMEN', 'MICROSCOPE'])
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -171,7 +201,69 @@ export function parseTreeData(json: unknown): TreeData {
       throw new Error(`${id}: node ${n.id} has unknown parent ${n.parent}`)
     }
   }
-  return { id, nodes }
+  const tree: TreeData = { id, nodes }
+  if (root.portraits !== undefined && root.portraits !== null) {
+    tree.portraits = parsePortraitSet(root.portraits, id, nodes)
+  }
+  return tree
+}
+
+function expectPositiveNumber(v: unknown, path: string): number {
+  const n = expectNumber(v, path)
+  if (!(n > 0)) throw new Error(`${path}: expected a positive number, got ${n}`)
+  return n
+}
+
+/**
+ * Validates the additive portrait block (ADR-015): every plate names a node of this tree once,
+ * plates sort ascending by that node's `tDivergence`, and every morph joins a plate to the
+ * next older plate — the only pair the viewer ever warps between.
+ */
+function parsePortraitSet(json: unknown, treeId: string, nodes: readonly TreeNodeData[]): PortraitSetData {
+  const path = `${treeId}.portraits`
+  const root = expectRecord(json, path)
+  const divergence = new Map(nodes.map((n) => [n.id, n.tDivergence]))
+  const rawPlates = expectArray(root.plates, `${path}.plates`)
+  if (rawPlates.length === 0) throw new Error(`${path}: empty plates`)
+  const plates: PortraitPlateData[] = rawPlates.map((raw, i) => {
+    const p = expectRecord(raw, `${path}.plates[${i}]`)
+    const nodeId = expectString(p.nodeId, `${path}.plates[${i}].nodeId`)
+    if (!divergence.has(nodeId)) throw new Error(`${path}.plates[${i}]: unknown node ${nodeId}`)
+    const plate = expectString(p.plate, `${path}.plates[${i}].plate`)
+    if (!PLATE_TYPES.has(plate)) throw new Error(`${path}.plates[${i}]: unknown plate type "${plate}"`)
+    return {
+      nodeId,
+      image: expectString(p.image, `${path}.plates[${i}].image`),
+      plate: plate as PortraitPlateType,
+      pinned: expectString(p.pinned, `${path}.plates[${i}].pinned`),
+      width: expectPositiveNumber(p.width, `${path}.plates[${i}].width`),
+      height: expectPositiveNumber(p.height, `${path}.plates[${i}].height`),
+    }
+  })
+  if (new Set(plates.map((p) => p.nodeId)).size !== plates.length) {
+    throw new Error(`${path}: a node has more than one plate`)
+  }
+  plates.sort((a, b) => divergence.get(a.nodeId)! - divergence.get(b.nodeId)!)
+  const order = plates.map((p) => p.nodeId)
+
+  const morphs: PortraitMorphData[] = expectArray(root.morphs, `${path}.morphs`).map((raw, i) => {
+    const m = expectRecord(raw, `${path}.morphs[${i}]`)
+    const morph: PortraitMorphData = {
+      older: expectString(m.older, `${path}.morphs[${i}].older`),
+      younger: expectString(m.younger, `${path}.morphs[${i}].younger`),
+      forward: expectString(m.forward, `${path}.morphs[${i}].forward`),
+      backward: expectString(m.backward, `${path}.morphs[${i}].backward`),
+      forwardRange: expectPositiveNumber(m.forwardRange, `${path}.morphs[${i}].forwardRange`),
+      backwardRange: expectPositiveNumber(m.backwardRange, `${path}.morphs[${i}].backwardRange`),
+      size: expectPositiveNumber(m.size, `${path}.morphs[${i}].size`),
+    }
+    const youngerIndex = order.indexOf(morph.younger)
+    if (youngerIndex < 0 || order[youngerIndex + 1] !== morph.older) {
+      throw new Error(`${path}.morphs[${i}]: ${morph.older} -> ${morph.younger} joins no adjacent plates`)
+    }
+    return morph
+  })
+  return { plates, morphs }
 }
 
 // ------------------------------------------------------------------------------ sampling

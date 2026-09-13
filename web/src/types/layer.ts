@@ -59,6 +59,48 @@ export interface NodeValue {
   label: string
   representative?: string
   tDivergence: GeoTime
+  /** Additive (ADR-015): the ancestor portrait to show at this `t`, when the lineage layer
+   *  publishes portraits. Absent otherwise. */
+  portrait?: PortraitMix
+}
+
+/** Plate grammar of an ancestor portrait (VISUAL_SPEC §10). Mirrors `PlateType` in pipeline/prompts.py. */
+export type PortraitPlateType = 'SPECIMEN' | 'MICROSCOPE'
+
+/** One published ancestor portrait (ADR-015). */
+export interface PortraitPlate {
+  nodeId: string
+  /** The portrayed lineage node's divergence: orders plates and measures the distance between them. */
+  tDivergence: GeoTime
+  image: string
+  plate: PortraitPlateType
+  width: number
+  height: number
+  /** Flow fields between the next older plate and this one, when they were computed. Absent means
+   *  the pair crossfades without warping. */
+  morphFromOlder?: PortraitMorph
+}
+
+/**
+ * Two PNG data textures bending one plate into the next. `forward` lies on the older plate's
+ * grid and `backward` on the younger's; a red/green byte b decodes to (b - 128) / 127 * range
+ * in plate UV, v pointing down the image (pipeline/flowfield.py).
+ */
+export interface PortraitMorph {
+  older: string
+  forward: string
+  backward: string
+  forwardRange: number
+  backwardRange: number
+  size: number
+}
+
+/** Which two plates to show and how far `to` has replaced `from` (0 shows `from` alone). The
+ *  target is a pure function of `t`; the viewer rate-limits what it displays toward it. */
+export interface PortraitMix {
+  from: PortraitPlate
+  to: PortraitPlate
+  mix: number
 }
 
 export type LayerValue = ScalarValue | EventsValue | RasterValue | NodeValue

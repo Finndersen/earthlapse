@@ -1,0 +1,693 @@
+# portraits -- one "photoreal specimen plate" per lineage node (ADR-015, VISUAL_SPEC §10).
+#
+# Keyed by lineage node id (data/lineage.yaml). Rendered from text only (ADR-010):
+#
+#   prompt = PORTRAIT_STYLE + PLATE_TYPE[plate] + render_portrait_subject(subject)
+#
+# (pipeline/prompts.py). The plate camera is invariant; only the organism changes.
+#
+# Fields
+# ------
+#   plate      SPECIMEN (multicellular, whole organism, side profile facing right) or
+#              MICROSCOPE (a cell or small colony, darkfield micrograph).
+#   evidence   fossil | extant-proxy | reconstruction. `reconstruction` and `extant-proxy`
+#              are enforced to appear in `subject.organism` (as "reconstruction" / "proxy"),
+#              so a hypothetical ancestor is never prompted as if it were a specimen.
+#   sources    what the subject text was checked against, in September 2026, by web search
+#              and fetch of the paper or an authoritative page. Primary literature where it
+#              could be reached; where only a secondary summary was reachable, `gaps` says so.
+#   gaps       what those sources do not settle. The anatomy text never fills a gap with an
+#              unchecked claim; the model's own plausible rendering fills it, and review
+#              judges it. Empty when nothing is open.
+#   subject    organism / anatomy / surface / size (null where no source gave one) / absent.
+#   pin        written by `earthtime review portraits pick`; never edit by hand.
+#
+# Not every lineage node needs a plate: the viewer shows the nearest older plate.
+#
+# Deliberately omitted: `deuterostomia`. Its lineage representative, Saccorhytus coronarius,
+# was reinterpreted as an early ecdysozoan, not a deuterostome (Liu, Y. et al. 2022 Nature,
+# "Saccorhytus is an early ecdysozoan and not the earliest deuterostome",
+# doi:10.1038/s41586-022-05107-z). A plate of it would show a non-ancestor. The representative in
+# data/lineage.yaml needs a human decision; until then the viewer holds the Kimberella plate.
+#
+# Style gate (generate these four first and approve the look before the rest):
+#   leca (MICROSCOPE), bilateria (early animal), tetrapodomorpha, homo-erectus.
+
+portraits:
+  # ------------------------------------------------------------------ microscope plates
+
+  - id: luca
+    plate: MICROSCOPE
+    evidence: reconstruction
+    sources:
+      - "Moody, E.R.R. et al. (2024) Nature Ecology & Evolution 8, 1654-1666, doi:10.1038/s41559-024-02461-1 (LUCA 'a prokaryote-grade anaerobic acetogen')"
+    gaps:
+      - cell shape, size and motility are not constrained by the source
+    subject:
+      organism: "A reconstruction of LUCA, the last universal common ancestor of all cellular life, a single prokaryote-grade cell; no fossil of it exists"
+      anatomy: "one small, simple cell with no nucleus and no internal compartments, a plain unornamented outline and a smooth cell envelope"
+      surface: "translucent and colourless, glowing faintly against the black field"
+      size: null
+      absent: ["a nucleus", "visible organelles", "flagella or hairs of any kind", "a group of cells"]
+    pin: null
+
+  - id: archaeal-host-lineage
+    plate: MICROSCOPE
+    evidence: extant-proxy
+    sources:
+      - "Imachi, H. et al. (2020) 'Isolation of an archaeon at the prokaryote-eukaryote interface', Nature 577, 519-525 (PubMed 31942073): small non-motile cocci ~300-750 nm, membrane vesicles, chains of blebs, long often branching protrusions"
+    gaps:
+      - the ancestral host cell is unknown; the living proxy stands in for it
+    subject:
+      organism: "A living Asgard archaeon, Promethearchaeum syntrophicum, shown as a modern proxy for the archaeal lineage that became the host of the eukaryotic cell"
+      anatomy: "a small round cell (a coccus) sending out long, thin, often branching membrane protrusions, with chains of small blebs and tiny membrane vesicles around it; non-motile"
+      surface: "a translucent pale membrane, glowing faintly against the black field"
+      size: "a cell body about 300 to 750 nanometres across"
+      absent: ["a nucleus", "a flagellum", "visible internal organelles"]
+    pin: null
+
+  - id: leca
+    plate: MICROSCOPE
+    evidence: reconstruction
+    sources:
+      - "Koumandou, V.L. et al. (2013) 'Molecular paleontology and complexity in the last eukaryotic common ancestor', Crit. Rev. Biochem. Mol. Biol. (PMC3791482): LECA a flagellated heterotroph with mitochondria, nucleus, endomembrane system"
+      - "Mills, D.B. et al. (2022) 'Ancestral State Reconstructions Trace Mitochondria But Not Phagocytosis to the Last Eukaryotic Common Ancestor', Genome Biol. Evol. evac079: mitochondria, no plastids; phagotrophy contested"
+      - "Skejo, J. et al. (2021) 'Evidence for a Syncytial Origin of Eukaryotes from Ancestral State Reconstruction', Genome Biol. Evol. 13(7) evab096 (PMC8290118): a multinucleated stage likely"
+    gaps:
+      - the number of flagella is not constrained by these sources
+      - whether LECA fed by phagocytosis is contested, so no engulfed prey is shown
+      - a multinucleate (syncytial) stage is proposed; the plate shows one uninucleate cell
+    subject:
+      organism: "A reconstruction of LECA, the last eukaryotic common ancestor, a single-celled heterotrophic protist; no fossil of it exists"
+      anatomy: "a single rounded cell with a large, clearly visible nucleus, many small granular mitochondria in the cytoplasm, fine internal membranes, and flagella"
+      surface: "a translucent, colourless cell, its internal structures faintly lit in darkfield"
+      size: null
+      absent: ["chloroplasts or any green pigment", "a cell wall, shell or scales", "engulfed prey", "a group of cells"]
+    pin: null
+
+  - id: opisthokonta
+    plate: MICROSCOPE
+    evidence: reconstruction
+    sources:
+      - "Torruella, G. et al. (2012) 'Phylogenetic Relationships within the Opisthokonta Based on Phylogenomic Analyses of Conserved Single-Copy Protein Domains', Mol. Biol. Evol. 29(2), 531 (via search summary): a single posterior flagellum is the defining opisthokont synapomorphy"
+    gaps:
+      - cell shape and size are not constrained; only the posterior flagellum is diagnostic
+    subject:
+      organism: "A reconstruction of the stem opisthokont, the single-celled ancestor of animals and fungi; no fossil of it exists"
+      anatomy: "one cell with a visible nucleus, propelled by a single flagellum at its rear end, the defining feature of opisthokonts"
+      surface: "translucent and colourless, glowing faintly against the black field"
+      size: null
+      absent: ["a second flagellum", "a flagellum at the front of the cell", "chloroplasts or any green pigment", "a group of cells"]
+    pin: null
+
+  - id: holozoa
+    plate: MICROSCOPE
+    evidence: reconstruction
+    sources:
+      - "Dayel, M.J. et al. (2011) 'Cell differentiation and morphogenesis in the colony-forming choanoflagellate Salpingoeca rosetta', Dev. Biol. (PubMed 21699890)"
+      - "Dayel, M.J. & King, N. (2014) 'Prey Capture and Phagocytosis in the Choanoflagellate Salpingoeca rosetta', PLOS ONE (PMC4012994): apical flagellum within a collar of actin-filled microvilli; rosette cells face radially outward"
+    gaps:
+      - the stem holozoan itself is unknown; it is modelled on a living choanoflagellate colony, a model and not a claim of identity
+    subject:
+      organism: "A reconstruction of a stem holozoan, the lineage of animals and their single-celled relatives, modelled on a living colonial choanoflagellate"
+      anatomy: "a small spherical rosette colony of a few dozen cells, every cell with a single flagellum rising from its outer end inside a collar of fine microvilli, the flagella and collars all pointing radially outward"
+      surface: "translucent, colourless cells with a faint sheen along the collars in darkfield"
+      size: null
+      absent: ["tissues or organs", "a shell or spicules", "chloroplasts or any green pigment"]
+    pin: null
+
+  # ------------------------------------------------------------------- specimen plates
+
+  - id: metazoa
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2015) Current Biology 25(22), 2939-2950, doi:10.1016/j.cub.2015.09.066 (crown Metazoa 833-681 Ma)"
+      - "Nature News & Views (2024) 'Spongy but not glassy: Ediacaran fossil provides insight into early animal evolution', d41586-024-02033-0: Ediacaran sponges without mineral spicules"
+      - "Nettersheim, B.J. et al. (2019) Nature Ecology & Evolution, doi:10.1038/s41559-020-01334-7: sponge biomarkers negated; earliest sponge timing contested"
+    gaps:
+      - that the first animals were sponge-grade is widely held but contested
+      - sponge body-wall anatomy (pores, a top opening) was not confirmed against a source this session
+    subject:
+      organism: "A reconstruction of an early sponge-grade animal from the base of the animal tree, no fossil of the ancestor itself is known"
+      anatomy: "a small, soft, upright sac-shaped body attached to the surface at its base, its wall perforated by many tiny pores, one larger opening at the top, entirely soft-bodied with no mineral spicules"
+      surface: "a pale, soft, slightly translucent body wall; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["glassy or chalky spicules", "tentacles", "a mouth or gut", "eyes", "limbs"]
+    pin: null
+
+  - id: eumetazoa
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Dunn, F.S. et al. (2022) 'A crown-group cnidarian from the Ediacaran of Charnwood Forest, UK', Nature Ecology & Evolution 6, 1095-1104, doi:10.1038/s41559-022-01807-x: Auroralumina attenboroughii, 557-562 Ma, two bifurcating polyps in a rigid polyhedral organic skeleton, simple densely packed tentacles, ~20 cm"
+    gaps:
+      - Auroralumina is the oldest known crown cnidarian, standing in for the eumetazoan grade; it is not the eumetazoan ancestor itself
+    subject:
+      organism: "A reconstruction of an early cnidarian-grade animal, modelled on the Ediacaran fossil Auroralumina attenboroughii, the oldest known crown-group cnidarian"
+      anatomy: "two goblet-shaped cups branching from a short central stalk, each cup a rigid, many-sided organic skeleton housing a polyp crowned with simple, densely packed tentacles; standing upright with the stalk at the bottom"
+      surface: "soft polyp tissue within a rigid, faceted cup wall; no source gives its colour, so muted natural tones"
+      size: "about 20 cm tall"
+      absent: ["a stony or chalky coral skeleton", "a swimming bell", "eyes", "limbs", "a shell"]
+    pin: null
+
+  - id: bilateria
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Fedonkin, M.A. & Waggoner, B.M. (1997) 'The Late Precambrian fossil Kimberella is a mollusc-like bilaterian organism', Nature 388, 868-871, doi:10.1038/42242: bilaterally symmetrical benthic animal, non-mineralised univalved shell, creeping ventral foot"
+      - "Ivantsov, A.Yu. (2009) 'New reconstruction of Kimberella, problematic Vendian metazoan', Paleontological Journal, doi:10.1134/S003103010906001X"
+    gaps:
+      - body length was not confirmed against a source this session
+      - the radula-like feeding organ is inferred from associated scratch marks, not preserved directly
+    subject:
+      organism: "Kimberella quadrata, an Ediacaran bilaterian-grade animal"
+      anatomy: "a bilaterally symmetrical, bottom-dwelling animal with a single elongated oval, shield-like shell over its back that is not mineralised, a broad creeping muscular foot beneath it, and at its front end a mouthpart that scraped microbial mats"
+      surface: "a tough, leathery, unmineralised shell over soft body tissue; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a coiled shell", "a hard stony or chalky shell", "legs", "fins", "eyes on stalks"]
+    pin: null
+
+  - id: chordata
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Conway Morris, S. & Caron, J.-B. (2012) 'Pikaia gracilens Walcott, a stem-group chordate from the Middle Cambrian of British Columbia', Biological Reviews 87, 480-512, doi:10.1111/j.1469-185X.2012.00220.x: fusiform, laterally compressed, ~100 myomeres, small bilobed head with two narrow tentacles, thin dorsal fin without fin rays, at least nine bilaterally arranged anterior appendages, no other external features"
+    gaps:
+      - body length was not confirmed against a source this session
+    subject:
+      organism: "Pikaia gracilens, a Cambrian stem-group chordate"
+      anatomy: "a small, spindle-shaped, side-to-side flattened swimming body marked by about a hundred chevron-like muscle blocks, a small two-lobed head bearing two narrow tentacles, a thin dorsal fin without fin rays along the back, and a row of at least nine small paired appendages behind the head"
+      surface: "smooth, soft, slightly translucent skin; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["jaws", "eyes", "scales or bony plates", "paired fins with fin rays", "limbs"]
+    pin: null
+
+  - id: olfactores
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Chen, J.-Y. et al. (2003) 'The first tunicate from the Early Cambrian of South China', PNAS 100(14), 8314-8318, doi:10.1073/pnas.1431177100: large perforated branchial basket, sac-like peripharyngeal atrium, oral siphon with oral tentacles, U-shaped gut ending at an atrial siphon, body sac-like and pointed proximally, likely solitary"
+    gaps:
+      - body size was not confirmed against a source this session
+    subject:
+      organism: "Shankouclava shankouense, an early Cambrian tunicate"
+      anatomy: "a solitary, soft, sac-like body, elongated and tapering to a point at its base, standing upright; an oral siphon with small oral tentacles at the top, an atrial siphon beside it, a large perforated branchial basket filling most of the body, and a simple U-shaped gut"
+      surface: "a soft, slightly translucent body wall through which the branchial basket shows faintly; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a hard shell", "a tail", "eyes", "a colony of joined bodies", "limbs"]
+    pin: null
+
+  - id: vertebrata
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Shu, D.-G. et al. (1999) 'Lower Cambrian vertebrates from south China', Nature 402, 42-46 (Haikouichthys ercaicunensis, via search summary): elongate laterally compressed body, chevron myomeres, large dorsally placed eyes, at least six gill pouches"
+      - "Zhang, X.-G. & Hou, X.-G. (2004) 'Evidence for a single median fin-fold and tail in the Lower Cambrian vertebrate, Haikouichthys ercaicunensis', J. Evol. Biol., doi:10.1111/j.1420-9101.2004.00741.x: single dorsal, ventral and caudal fins, dorsal fin rays tilted forward"
+    gaps:
+      - body length was not confirmed against a source this session
+    subject:
+      organism: "Haikouichthys ercaicunensis, an early Cambrian jawless vertebrate"
+      anatomy: "an elongate, side-to-side flattened jawless fish with repeated chevron-shaped muscle blocks along its body, a head with large eyes set high, a short gill region with at least six gill pouches, and a single continuous median fin-fold along the back, belly and tail, the dorsal fin's rays tilted forward"
+      surface: "smooth, unarmoured skin; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["jaws", "teeth", "paired fins", "bony armour plates", "limbs"]
+    pin: null
+
+  - id: gnathostomata
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Andreev, P.S. et al. (2022) 'The oldest gnathostome teeth', Nature 609, 964-968, doi:10.1038/s41586-022-05166-2: Qianodus duplicis, isolated tooth whorls, early Silurian ~439 Ma"
+    gaps:
+      - Qianodus is known only from isolated tooth whorls; body form, fins and size are unknown and entirely reconstructed
+    subject:
+      organism: "A reconstruction of an early Silurian jawed fish; its representative, Qianodus duplicis, is known only from isolated tooth whorls, so the body is not based on any specimen"
+      anatomy: "a small fish with hinged jaws, whorls of teeth set along the front of the lower jaw, and a streamlined body with fins"
+      surface: "no source describes its skin or colour; muted natural tones"
+      size: null
+      absent: ["limbs or digits", "a round jawless sucker mouth", "lungs or a neck"]
+    pin: null
+
+  - id: osteichthyes
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Zhu, M. et al. (2009) 'The oldest articulated osteichthyan reveals mosaic gnathostome characters', Nature 458, 469-474, doi:10.1038/nature07855 (Guiyu oneiros)"
+      - "Cui, X. et al. (2019) 'Scale morphology and squamation pattern of Guiyu oneiros provide new insights into early osteichthyan body plan', Scientific Reports, doi:10.1038/s41598-019-40845-7: median dorsal plates, the third bearing a hollow ridged dorsal fin spine; roughly rhombic scales with parallel ganoid ridges"
+    gaps:
+      - total body length was not confirmed against a source this session
+    subject:
+      organism: "Guiyu oneiros, the oldest articulated bony fish, from the late Silurian"
+      anatomy: "an early bony fish with a row of median plates along the back, the third carrying a long, hollow dorsal fin spine ridged along its length, and a body covered in roughly rhombic scales with fine parallel ridges on each scale"
+      surface: "glossy, ridged rhombic scales; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["limbs or digits", "smooth scaleless skin", "a neck"]
+    pin: null
+
+  - id: sarcopterygii
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Zhu, M., Yu, X. & Janvier, P. (1999) 'A primitive fossil fish sheds light on the origin of bony fishes', Nature 397, 607-610 (Psarolepis romeri): shoulder girdle with pectoral spine, cheek plate, cosmine-bearing bone"
+      - "Qu, Q. et al. (2013) 'Scales and Dermal Skeletal Histology of an Early Bony Fish Psarolepis romeri and Their Bearing on the Evolution of Rhombic Scales and Hard Tissues', PLOS ONE (PMC3621673)"
+      - "Friedman, M. & Brazeau, M.D. (2010) J. Vert. Paleontol. 30(1), 36-56 (node dating)"
+    gaps:
+      - the lineage representative is a Psarolepis-grade taxon, not a named ancestor; the plate is modelled on Psarolepis
+      - body length was not confirmed against a source this session
+    subject:
+      organism: "A reconstruction of a basal lobe-finned-grade fish of the early Devonian, modelled on Psarolepis romeri"
+      anatomy: "an early bony fish mixing lobe-finned and ray-finned features: a shoulder girdle carrying a stout pectoral spine, a bony cheek plate, and bone covered in glossy cosmine, with rhombic scales over the body"
+      surface: "glossy, enamel-like cosmine on the head bones and scales; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["limbs or digits", "a neck", "smooth scaleless skin"]
+    pin: null
+
+  - id: tetrapodomorpha
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Daeschler, E.B., Shubin, N.H. & Jenkins, F.A. (2006) 'A Devonian tetrapod-like fish and the evolution of the tetrapod body plan', Nature 440, 757-763, doi:10.1038/nature04639"
+      - "Shubin, N.H., Daeschler, E.B. & Jenkins, F.A. (2006) 'The pectoral fin of Tiktaalik roseae and the origin of the tetrapod limb', Nature 440, 764-771, doi:10.1038/nature04637: broad flattened skull with dorsal eyes, spiracle, mobile neck with shoulder girdle freed from the skull, pectoral fin with wrist-like jointed bones, scales and gills"
+    gaps:
+      - body length was not confirmed against a source this session
+    subject:
+      organism: "Tiktaalik roseae, a late Devonian tetrapodomorph fish"
+      anatomy: "a large, fish-bodied animal with a broad, flattened, crocodile-like head, eyes on top of the skull, a spiracle opening behind each eye, a distinct mobile neck, stout pectoral fins with a jointed, wrist-like bony skeleton inside, gills, and a body covered in overlapping scales"
+      surface: "overlapping bony scales over the whole body; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["fingers or toes", "legs", "smooth amphibian skin", "claws"]
+    pin: null
+
+  - id: tetrapoda
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Coates, M.I. & Clack, J.A. (1990) 'Polydactyly in the earliest known tetrapod limbs', Nature 347, 66-69 (Acanthostega gunnari, via search summary): eight digits on the forelimb"
+      - "Ahlberg, P.E., Clack, J.A. & Blom, H. (2005) 'The axial skeleton of the Devonian tetrapod Ichthyostega', Nature 437, 137-140, doi:10.1038/nature03893: tail fin with rays"
+    gaps:
+      - webbing between the digits, forelimbs that could not bend forward at the elbow, internal gills and the ~60 cm length come from a secondary encyclopedia summary only
+    subject:
+      organism: "Acanthostega gunnari, a late Devonian limbed tetrapod that still lived in water"
+      anatomy: "a salamander-shaped aquatic animal with four limbs, eight digits on each forelimb, forelimbs held out as paddles rather than weight-bearing legs, a long body, and a deep tail fin supported by fin rays above and below"
+      surface: "no source describes its skin or colour; muted natural tones"
+      size: null
+      absent: ["claws", "hands or feet with five digits", "scales like a reptile's", "a neck frill"]
+    pin: null
+
+  - id: amniota
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Falcon-Lang, H.J., Benton, M.J. & Stimson, M. (2007) J. Geol. Soc. 164(6), 1113-1118, doi:10.1144/0016-76492007-015 (dating)"
+      - "Wikipedia, 'Hylonomus' (secondary): ~20 cm long including tail, lizard-like, small sharp teeth"
+    gaps:
+      - anatomy and size come from a secondary encyclopedia summary only; check against Carroll (1964) before approving
+    subject:
+      organism: "Hylonomus lyelli, one of the earliest reptile-grade amniotes, from the late Carboniferous"
+      anatomy: "a small, lizard-like four-legged animal with a long tail and small sharp teeth"
+      surface: "no source describes its skin or colour; muted natural tones"
+      size: "about 20 cm long including the tail"
+      absent: ["fur", "feathers", "gills", "a tail fin"]
+    pin: null
+
+  - id: synapsida
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Reisz, R.R. (1972) Bull. Mus. Comp. Zool. 144(2), 27-62 (description; not accessed this session)"
+      - "Wikipedia, 'Archaeothyris' (secondary): ~50 cm long, lizard-like, strong jaws, uniform sharp teeth with one pair of enlarged canines"
+    gaps:
+      - anatomy and size come from a secondary encyclopedia summary only; check against Reisz (1972) before approving
+    subject:
+      organism: "Archaeothyris florensis, one of the oldest undisputed synapsids, from the late Carboniferous"
+      anatomy: "a lizard-like four-legged predator with a long tail, strong jaws, rows of sharp teeth of similar shape and one pair of enlarged canine teeth"
+      surface: "no source describes its skin or colour; muted natural tones"
+      size: "about 50 cm long from head to tail"
+      absent: ["fur", "a sail on the back", "feathers", "gills"]
+    pin: null
+
+  - id: therapsida
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Matamales-Andreu, R. et al. (2024) 'Early-middle Permian Mediterranean gorgonopsian suggests an equatorial origin of therapsids', Nature Communications 15, 10346, doi:10.1038/s41467-024-54425-5"
+      - "Bendel, E.-M. et al. (2023) 'The postcranial anatomy of Gorgonops torvus', (PMC10332358), and Wikipedia 'Gorgonopsia' (secondary): long narrow skull, elongated sabre-like canines, reduced cheek teeth; early forms small"
+    gaps:
+      - the lineage representative is a gorgonopsian-grade therapsid, not a named species
+      - limb posture and body size of the earliest forms come from secondary summaries only
+    subject:
+      organism: "A reconstruction of an early gorgonopsian-grade therapsid predator of the Permian"
+      anatomy: "a four-legged predator with a long, narrow skull, elongated sabre-like upper canine teeth, few cheek teeth, and a long tail"
+      surface: "no source describes its skin or colour; muted natural tones"
+      size: null
+      absent: ["a sail on the back", "feathers", "horns", "a shell or armour plates"]
+    pin: null
+
+  - id: cynodontia
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Botha, J., Abdala, F. & Smith, R. (2007) 'The oldest cynodont: new clues on the origin and early diversification of the Cynodontia', Zool. J. Linn. Soc. 149(3), 477-492, doi:10.1111/j.1096-3642.2007.00268.x (abstract via search: a complete skull with lower jaw plus some cervicals, ribs and limb elements)"
+      - "Wikipedia, 'Charassognathus' (secondary): skull about 5 cm long"
+    gaps:
+      - the body is known only from a few vertebrae, ribs and limb elements and is largely reconstructed
+      - skull length comes from a secondary summary only
+    subject:
+      organism: "A reconstruction of Charassognathus gracilis, the oldest known cynodont, from the Late Permian; its body is largely inferred from a skull and a few bones"
+      anatomy: "a small, slender four-legged animal with a lightly built skull only a few centimetres long and a long tail"
+      surface: "no source describes its skin, hair or colour; muted natural tones"
+      size: "a skull about 5 cm long"
+      absent: ["sabre-like fangs", "a sail on the back", "feathers", "a shell or armour plates"]
+    pin: null
+
+  - id: mammaliaformes
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) 'The skull of Morganucodon', Zool. J. Linn. Soc. 71(1), 1-158"
+      - "Chinsamy, A. & Hurum, J.H. (2006) 'Bone microstructure and growth patterns of early mammals', Acta Palaeontol. Pol. 51(2), 325-338: M. watsoni adult skull 20-30 mm, total body length about 150 mm (after Kermack et al. 1973, 1981)"
+    gaps:
+      - fur is not described by these sources
+    subject:
+      organism: "Morganucodon watsoni, an early mammaliaform from around the Triassic-Jurassic boundary"
+      anatomy: "a small shrew- or mouse-like four-legged animal with a pointed snout, teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
+      surface: "the general appearance of a shrew or mouse; no source gives its colour, so muted natural tones"
+      size: "about 15 cm long overall, with a skull 2 to 3 cm long"
+      absent: ["scales", "a sail on the back", "feathers", "large fangs"]
+    pin: null
+
+  - id: mammalia
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500, doi:10.1098/rspb.2012.0683 (crown Mammalia, molecular date)"
+    gaps:
+      - a molecular-clock node with no agreed fossil; the plate bridges the Morganucodon and Juramaia plates either side and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the crown-mammal ancestor, dated only by molecular clock, shown as a small shrew-like Jurassic mammal"
+      anatomy: "a small shrew-like four-legged mammal with a pointed snout and a long tail"
+      surface: "short fur; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["scales", "feathers", "large fangs", "a pouch with young"]
+    pin: null
+
+  - id: theria
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500, doi:10.1098/rspb.2012.0683 (Theria, molecular date)"
+    gaps:
+      - a molecular-clock node with no specimen; the plate bridges its neighbours and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the therian ancestor of marsupials and placentals, dated only by molecular clock, shown as a small shrew-like Jurassic mammal"
+      anatomy: "a small shrew-like four-legged mammal with a pointed snout and a long tail"
+      surface: "short fur; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["scales", "feathers", "large fangs", "a pouch with young"]
+    pin: null
+
+  - id: eutheria
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Luo, Z.-X. et al. (2011) 'A Jurassic eutherian mammal and divergence of marsupials and placentals', Nature 476, 442-445, doi:10.1038/nature10291 (Juramaia sinensis)"
+      - "Carnegie Museum press release via ScienceDaily (2011-08-24): shrew-sized, skull 22 mm, forelimbs adapted for climbing"
+    gaps:
+      - body length and mass (70-100 mm, 15-17 g) come from a secondary summary only
+    subject:
+      organism: "Juramaia sinensis, the oldest known eutherian mammal, from the late Jurassic"
+      anatomy: "a shrew-sized four-legged mammal with a pointed snout, a skull about 22 mm long, forelimbs built for climbing, and a long tail"
+      surface: "short fur; no source gives its colour, so muted natural tones"
+      size: "shrew-sized, with a skull about 22 mm long"
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+    pin: null
+
+  - id: placentalia
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "O'Leary, M.A. et al. (2013) 'The Placental Mammal Ancestor and the Post-K-Pg Radiation of Placentals', Science 339, 662-667, doi:10.1126/science.1229237: hypothetical ancestor, tree-climbing, insect-eating, 6-245 g, long furry tail"
+    gaps:
+      - a phylogenetic reconstruction, not a specimen
+    subject:
+      organism: "A reconstruction of the placental mammal ancestor, following the hypothetical ancestor inferred by O'Leary and colleagues"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
+      size: "between a small shrew and a mid-sized rat, 6 to 245 grams"
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+    pin: null
+
+  - id: boreoeutheria
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (Boreoeutheria, molecular date)"
+      - "O'Leary, M.A. et al. (2013) Science 339, 662-667 (the placental ancestor grade this plate follows)"
+    gaps:
+      - a molecular-clock node; the plate holds the placental-ancestor grade and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the boreoeutherian ancestor, dated only by molecular clock, shown at the same grade as the placental ancestor"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+    pin: null
+
+  - id: euarchontoglires
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (Euarchontoglires, molecular date)"
+      - "O'Leary, M.A. et al. (2013) Science 339, 662-667 (the placental ancestor grade this plate follows)"
+    gaps:
+      - a molecular-clock node; the plate holds the placental-ancestor grade and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the ancestor of primates and rodents, dated only by molecular clock, shown at the same grade as the placental ancestor"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+    pin: null
+
+  - id: primatomorpha
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Chester, S.G.B., Bloch, J.I., Boyer, D.M. & Clemens, W.A. (2015) 'Oldest known euarchontan tarsals and affinities of Paleocene Purgatorius to Primates', PNAS 112(5), 1487-1492 (via Yale/UF press summaries): tree-dwelling, ankle joints that rotated to grip branches, about 3.5 ounces, fruit and insects"
+      - "Silcox, M.T. et al. (2017) Evolutionary Anthropology 26(2), 74-94 (plesiadapiform radiation)"
+    gaps:
+      - Purgatorius's status as a basal primatomorph is contested
+    subject:
+      organism: "Purgatorius, a Paleocene plesiadapiform close to the origin of primates"
+      anatomy: "a small tree-dwelling four-legged mammal with a long tail and flexible ankles that let its feet rotate to grip branches; it ate fruit and insects"
+      surface: "fur; no source gives its colour, so muted natural tones"
+      size: "about 100 grams, the weight of a deck of cards"
+      absent: ["nails in place of claws", "large forward-facing eyes", "a branch or tree", "scales"]
+    pin: null
+
+  - id: primates
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (crown Primates, molecular date)"
+    gaps:
+      - a molecular-clock node; the plate bridges the Purgatorius and Teilhardina plates and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the crown-primate ancestor, dated only by molecular clock, shown as a small tree-dwelling primate"
+      anatomy: "a small, lightly built tree-dwelling four-legged primate with a long tail and grasping hands and feet"
+      surface: "fur; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a branch or tree", "scales", "a human-like face"]
+    pin: null
+
+  - id: haplorhini
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Rose, K.D. et al. (2011) 'New fossils of the oldest North American euprimate Teilhardina brandti (Omomyidae) from the Paleocene-Eocene Thermal Maximum', Am. J. Phys. Anthropol., doi:10.1002/ajpa.21579: active arboreal quadruped; terminal phalanges are the oldest evidence of nails in euprimates"
+      - "Chatterjee, H.J. et al. (2009) BMC Evol. Biol. 9, 259 (node dating)"
+    gaps:
+      - body size was not confirmed against a source this session
+    subject:
+      organism: "Teilhardina brandti, one of the oldest known euprimates, from the earliest Eocene"
+      anatomy: "a small, active tree-dwelling four-legged primate with a long tail and nails, not claws, at the tips of its fingers and toes"
+      surface: "fur; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["claws", "a branch or tree", "a human-like face"]
+    pin: null
+
+  - id: simiiformes
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Beard, K.C. et al. (1994) 'A diverse new primate fauna from middle Eocene fissure-fillings in southeastern China', Nature 368, 604-609 (Eosimias sinensis)"
+      - "Beard, K.C., 'Eosimias', International Encyclopedia of Primatology (Wiley), doi:10.1002/9781119179313.wbprim0455: oldest widely recognised anthropoid, adult body mass under 100 g to about 200 g"
+    gaps:
+      - Eosimias is known mainly from jaws and teeth; its body is reconstructed
+    subject:
+      organism: "A reconstruction of Eosimias sinensis, a tiny middle-Eocene anthropoid primate known mainly from jaws and teeth"
+      anatomy: "a tiny tree-dwelling four-legged primate, smaller than any living monkey, with a long tail and grasping hands and feet"
+      surface: "fur; no source gives its colour, so muted natural tones"
+      size: "under 100 to about 200 grams"
+      absent: ["claws", "a branch or tree", "a human-like face"]
+    pin: null
+
+  - id: catarrhini
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Stevens, N.J. et al. (2013) 'Palaeontological evidence for an Oligocene divergence between Old World monkeys and apes', Nature 497, 611-614, doi:10.1038/nature12161: Rukwapithecus fleaglei, one partial lower jaw with four teeth"
+    gaps:
+      - Rukwapithecus is known only from a partial lower jaw; body form and size are entirely reconstructed
+    subject:
+      organism: "A reconstruction of a late-Oligocene catarrhine, the Old World monkey and ape lineage; its representative, Rukwapithecus fleaglei, is known only from a partial lower jaw"
+      anatomy: "a monkey-sized tree-dwelling primate with grasping hands and feet"
+      surface: "fur; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["claws", "a branch or tree", "a human-like face"]
+    pin: null
+
+  - id: hominoidea
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "MacLatchy, L. et al. (2000) 'Postcranial functional morphology of Morotopithecus bishopi, with implications for the evolution of modern ape locomotion', J. Hum. Evol. 39, 159-183: large-bodied; short stiff lower back; ape-like shoulder allowing arm-hanging; upright postures"
+      - "MacLatchy, L. et al. (2023) 'The evolution of hominoid locomotor versatility: Evidence from Moroto, a 21 Ma site in Uganda', Science, doi:10.1126/science.abq2835"
+    gaps:
+      - the lineage representative is a Morotopithecus-grade stem hominoid, not a named ancestor
+      - whether early apes had already lost the tail was not confirmed against a source this session
+    subject:
+      organism: "A reconstruction of an early Miocene stem ape, modelled on Morotopithecus bishopi"
+      anatomy: "a large-bodied ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright"
+      surface: "a coat of hair; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+    pin: null
+
+  - id: hominidae
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Locke, D.P. et al. (2011) Nature 469, 529-533, doi:10.1038/nature09687 (orangutan/African-ape split, molecular)"
+    gaps:
+      - a molecular-clock node with no specimen; the plate holds the Morotopithecus ape grade and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the great-ape ancestor of orangutans and African apes, dated only by molecular clock, shown at the same large-bodied ape grade as the plate before it"
+      anatomy: "a large-bodied ape with a short, stiff lower back and long arms built for hanging and climbing"
+      surface: "a coat of hair; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+    pin: null
+
+  - id: homininae
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Scally, A. et al. (2012) Nature 483, 169-175, doi:10.1038/nature10842 (gorilla/chimpanzee-human split, ~10 Ma)"
+    gaps:
+      - a molecular-clock node with no specimen; the plate holds the great-ape grade and adds no anatomy of its own
+    subject:
+      organism: "A reconstruction of the African-ape ancestor of gorillas, chimpanzees and humans, dated only by molecular clock, shown at the same large-bodied ape grade as the plate before it"
+      anatomy: "a large-bodied ape with long arms built for hanging and climbing"
+      surface: "a coat of hair; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+    pin: null
+
+  - id: hominini
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Brunet, M. et al. (2002) 'A new hominid from the Upper Miocene of Chad, Central Africa', Nature 418, 145-151"
+      - "Smithsonian Human Origins Program, 'Sahelanthropus tchadensis': very prominent browridges, sloping face, small flat canines, small brain slightly smaller than a chimpanzee's, elongated skull, forward-placed foramen magnum suggesting a head held on an upright body"
+    gaps:
+      - known from a skull, jaw fragments and teeth; the body below the head is reconstructed
+      - its placement as a hominin, rather than a gorilla-line or stem hominid, is contested
+    subject:
+      organism: "A reconstruction of Sahelanthropus tchadensis, a late-Miocene ape near the chimpanzee-human split; only its skull, jaw fragments and teeth are known"
+      anatomy: "an ape-like head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs"
+      surface: "a coat of hair; no source gives its colour, so muted natural tones"
+      size: null
+      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face"]
+    pin: null
+
+  - id: australopithecus
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Haile-Selassie, Y. et al. (2019) 'A 3.8-million-year-old hominin cranium from Woranso-Mille, Ethiopia', Nature 573, 214-219, doi:10.1038/s41586-019-1513-8: long, protruding face, well-developed sagittal crest, large canine"
+      - "Smithsonian Human Origins Program, 'Australopithecus anamensis': tibia shows regular bipedal walking; long forearms and wrist features suggest tree climbing; protruding face, long narrow braincase, forward-projecting cheekbones; long narrow thick jaws with parallel tooth rows"
+    gaps:
+      - overall body size was not given by the sources checked
+    subject:
+      organism: "Australopithecus anamensis, the earliest known species of Australopithecus"
+      anatomy: "an upright, two-legged ape-like hominin with a long, protruding face, forward-projecting cheekbones, a long and narrow braincase with a ridge along the top, long narrow jaws, long forearms, and hands built to climb as well as walk"
+      surface: "a coat of hair; no source gives its skin or hair colour, so muted natural tones"
+      size: null
+      absent: ["clothing or tools", "a branch or tree", "a modern human face", "a tail"]
+    pin: null
+
+  - id: homo
+    plate: SPECIMEN
+    evidence: reconstruction
+    sources:
+      - "Villmoare, B. et al. (2015) 'Early Homo at 2.8 Ma from Ledi-Geraru, Afar, Ethiopia', Science 347(6228), 1352-1355, doi:10.1126/science.aaa1343: LD 350-1 partial mandible combining derived Homo and primitive Australopithecus-like traits (per data/lineage.yaml; not re-fetched this session)"
+    gaps:
+      - LD 350-1 is a partial lower jaw only; head and body are reconstructed between the Australopithecus and Homo erectus plates
+    subject:
+      organism: "A reconstruction of the earliest Homo, about 2.8 million years ago; its representative, LD 350-1, is only a partial lower jaw"
+      anatomy: "an upright, two-legged early human mixing features of Australopithecus and later Homo"
+      surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming"
+      size: null
+      absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
+    pin: null
+
+  - id: homo-erectus
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Lordkipanidze, D. et al. (2013) 'A Complete Skull from Dmanisi, Georgia, and the Evolutionary Biology of Early Homo', Science 342, 326-331, doi:10.1126/science.1238484: D4500/D2600, small braincase (546 cc), large prognathic face; heavy brow ridges"
+      - "Smithsonian Human Origins Program, 'Homo erectus': modern human-like body proportions with relatively elongated legs and shorter arms, 145-185 cm, walked and possibly ran long distances"
+      - "Ferring, R. et al. (2011) PNAS 108(26), 10432-10436 (Dmanisi dating)"
+    gaps:
+      - the body proportions are species-level (largely from the Turkana Boy skeleton), not from the Dmanisi individuals the head follows
+    subject:
+      organism: "Homo erectus, as known from the Dmanisi fossils of Georgia"
+      anatomy: "a fully upright, two-legged early human with modern human-like body proportions, relatively long legs and shorter arms; the head with a small braincase, heavy brow ridges and a large, forward-projecting face"
+      surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
+      size: "145 to 185 cm tall across the species"
+      absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
+    pin: null
+
+  - id: homo-heidelbergensis
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Smithsonian Human Origins Program, 'Homo heidelbergensis': very large browridge, larger braincase and flatter face than older species, short wide bodies, males averaging 175 cm and females 157 cm"
+      - "Arsuaga, J.L. et al. (2014) 'Neandertal roots: Cranial and chronological evidence from Sima de los Huesos', Science 344, 1358-1363, doi:10.1126/science.1253958"
+      - "Meyer, M. et al. (2016) Nature 531, 504-507, doi:10.1038/nature17405 (node dating)"
+    gaps:
+      - which population was the ancestor of Neanderthals and modern humans is contested; the plate follows the Homo heidelbergensis sensu lato description
+    subject:
+      organism: "Homo heidelbergensis in the broad sense, the Middle Pleistocene population ancestral to Neanderthals and modern humans"
+      anatomy: "a fully upright early human with a short, wide, heavily built body, a very large browridge, a larger braincase and a flatter face than earlier humans"
+      surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
+      size: "males about 175 cm tall, females about 157 cm"
+      absent: ["clothing or tools", "jewellery or body paint", "a modern hairstyle", "a tail"]
+    pin: null
+
+  - id: homo-sapiens
+    plate: SPECIMEN
+    evidence: fossil
+    sources:
+      - "Hublin, J.-J. et al. (2017) 'New fossils from Jebel Irhoud, Morocco and the pan-African origin of Homo sapiens', Nature 546, 289-292, doi:10.1038/nature22336: facial shape almost indistinguishable from living humans; braincase large but elongated and archaic, not globular"
+    gaps:
+      - the body below the head is not described by the source; it follows modern human proportions
+    subject:
+      organism: "Early Homo sapiens, as known from the roughly 300,000-year-old Jebel Irhoud fossils of Morocco"
+      anatomy: "a fully upright modern human whose face is almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded"
+      surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
+      size: null
+      absent: ["clothing or tools", "jewellery, tattoos or body paint", "a modern hairstyle"]
+    pin: null

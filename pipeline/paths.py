@@ -27,6 +27,23 @@ class ProjectPaths:
         return self.candidates / "_review"
 
     @property
+    def portraits(self) -> Path:
+        return self.root / "data" / "portraits.yaml"
+
+    @property
+    def portrait_candidates(self) -> Path:
+        return self.candidates / "portraits"
+
+    @property
+    def portrait_morphs(self) -> Path:
+        # Slugs cannot start with "_", so this never collides with a lineage node's directory.
+        return self.portrait_candidates / "_morph"
+
+    @property
+    def portrait_review(self) -> Path:
+        return self.review / "portraits"
+
+    @property
     def media(self) -> Path:
         return self.root / "data" / "media"
 

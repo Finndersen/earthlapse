@@ -27,12 +27,32 @@
  *   is the caller's state; `onClose` is its own close button.
  * - `<DayLengthClock layer t />` — a small clock face plus the numeric reading, for a
  *   `Layer<ScalarValue>` whose unit is hours.
- * - `<AncestorReadout layer t />` — label, representative organism, "since <t>"; text only
- *   in v1 (DESIGN §10).
+ * - `<AncestorReadout layer t />` — label, representative organism, "since <t>".
+ * - `<AncestorPortrait layer t assetBase />` — the ancestor's specimen plate, flow-morphing
+ *   into the next across a band after each divergence (ADR-015); renders nothing when the
+ *   lineage publishes no portrait at `t`. Place it above `<AncestorReadout>` in the ancestor
+ *   slot. Its target is pure in `t`; the displayed morph is rate-limited to a minimum duration.
+ *
+ * ## Portrait helpers (pure)
+ * - `portraitAt(index, t)` / `indexPortraits(data)` — the portrait target; `MORPH_BAND_FRACTION`
+ *   is its one tunable.
+ * - `portraitDrawState(mix)` — older/younger/alpha/morph in draw order.
+ * - `decodeFlowByte(byte, range)` — the flow texture encoding.
  */
 
 export { createNodeLayer, createScalarLayer } from './factories'
+export {
+  decodeFlowByte,
+  indexPortraits,
+  MIN_PORTRAIT_TRANSITION_SECONDS,
+  MORPH_BAND_FRACTION,
+  portraitAt,
+  portraitDrawState,
+  type PortraitDrawState,
+  type PortraitIndex,
+} from './portraits'
 
+export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
 export { AncestorReadout, type AncestorReadoutProps } from './components/AncestorReadout'
 export { DayLengthClock, type DayLengthClockProps } from './components/DayLengthClock'
 export { LayerChart, type LayerChartProps } from './components/LayerChart'

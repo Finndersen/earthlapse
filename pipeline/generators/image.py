@@ -28,6 +28,11 @@ class ImageSize(StrEnum):
 PROJECT_ASPECT_RATIO = "16:9"
 PROJECT_IMAGE_SIZE = ImageSize.K2
 
+# Ancestor portraits are a second, independent camera (VISUAL_SPEC §10, ADR-015): a square
+# plate at 1K. 1K and 2K bill the same output tokens, so 1K saves payload, not money.
+PORTRAIT_ASPECT_RATIO = "1:1"
+PORTRAIT_IMAGE_SIZE = ImageSize.K1
+
 
 class PartKind(StrEnum):
     TEXT = "text"

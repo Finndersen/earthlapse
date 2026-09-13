@@ -294,3 +294,107 @@ def _temperature_band(celsius: float) -> str:
     if celsius < 200:
         return "far hotter than any climate on Earth today"
     return "a molten surface, beyond any climate"
+
+
+# ---------------------------------------------------------------------------- portraits
+
+
+class PlateType(StrEnum):
+    """The ancestor-portrait plate grammar (VISUAL_SPEC §10, ADR-015). Mirrors `PortraitPlate.plate`
+    in web/src/types/layer.ts."""
+
+    SPECIMEN = "SPECIMEN"  # a whole multicellular organism, side profile
+    MICROSCOPE = "MICROSCOPE"  # a single cell or small colony, darkfield micrograph
+
+
+# The plate camera only, identical in every portrait, the way INVARIANT_STYLE is for scenes. The
+# framing is held fixed so consecutive plates share their mass layout and the morph between them
+# reads as one creature becoming the next (VISUAL_SPEC §10).
+PORTRAIT_STYLE = (
+    "A real photograph: not concept art, not digital painting, not CGI, not illustration, not a "
+    "sculpture or museum model. A natural-history specimen plate from a scientific monograph, one "
+    "of a matched series photographed identically. Square 1:1 frame. The subject is exactly "
+    "centred and its longest dimension spans about 70% of the frame width. A seamless near-black "
+    "backdrop with no texture, horizon, props or ground, falling off evenly to pure black in a soft "
+    "circular vignette towards the corners. Fine, even grain; natural, true-to-life colour; no "
+    "colour grade, no HDR, no bloom, no lens flare. A thin, pale grey horizontal scale bar sits "
+    "below the subject, left of centre, with no numbers or letters. No text, no labels, no "
+    "watermark, no border."
+)
+
+PLATE_TYPE: dict[PlateType, str] = {
+    PlateType.SPECIMEN: (
+        "Plate type: whole-specimen portrait. The entire living organism in strict side profile, "
+        "facing right: its head or front end at the right, its rear or tail at the left, every "
+        "limb, fin, tentacle and the whole tail inside the frame. An organism that is attached or "
+        "radially built stands upright in side view with its base at the bottom. One soft studio "
+        "key light from the upper left and a faint rim light from behind; a barely visible soft "
+        "contact shadow is the only trace of a surface. Medium-format camera, 120mm macro lens, "
+        "stopped down so the whole organism is in sharp focus."
+    ),
+    PlateType.MICROSCOPE: (
+        "Plate type: light micrograph. The living cell or small colony seen through a research "
+        "microscope under darkfield illumination, glowing softly against the black field; the "
+        "round field of view is itself the circular vignette. Oil-immersion objective, one thin "
+        "focal plane, the cell's outer edges slightly soft, faint sensor noise. If the subject has "
+        "a flagellum it trails to the left, so the cell faces right like every other plate."
+    ),
+}
+
+PORTRAIT_ALWAYS_ABSENT = (
+    "text or labels",
+    "a handler's hand, tweezers, pins or a mounting stand",
+    "a museum label card",
+    "any other organism",
+    "a landscape or habitat background",
+)
+
+
+class PortraitSubject(BaseModel):
+    """One portrait's organism as data, rendered by one template so plates differ only in values.
+
+    Every clause of `anatomy` rests on the record's `sources` (pipeline/portraits.py). `size` is
+    None where no source checked gives one; the framing never changes with it.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    organism: str = Field(min_length=1)
+    anatomy: str = Field(min_length=1)
+    surface: str = Field(min_length=1)
+    size: str | None
+    absent: tuple[str, ...] = Field(min_length=1)
+
+
+class PortraitPrompt(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    plate: PlateType
+    subject: str = Field(min_length=1)
+
+
+def render_portrait_prompt(prompt: PortraitPrompt) -> str:
+    return "\n\n".join([PORTRAIT_STYLE, PLATE_TYPE[prompt.plate], f"Subject: {prompt.subject}"])
+
+
+def render_portrait_subject(subject: PortraitSubject) -> str:
+    size = (
+        []
+        if subject.size is None
+        else [
+            (
+                f"Real size: {subject.size}; the framing is identical across the series, so the "
+                "subject still spans about 70% of the frame."
+            )
+        ]
+    )
+    absent = ", ".join((*subject.absent, *PORTRAIT_ALWAYS_ABSENT))
+    return " ".join(
+        [
+            f"{subject.organism}.",
+            f"Visible anatomy: {subject.anatomy}.",
+            f"Surface and colour: {subject.surface}.",
+            *size,
+            f"None of these may appear anywhere in the frame: {absent}.",
+        ]
+    )

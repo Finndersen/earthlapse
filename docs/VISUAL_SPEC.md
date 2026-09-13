@@ -229,3 +229,97 @@ implies a claim to accuracy that generated deep-time imagery cannot support — 
 particular will be wrong in ways specialists notice.
 
 We are not claiming accuracy. We are claiming plausibility, and we say which is which.
+
+---
+
+## 10. Ancestor portraits (ADR-015)
+
+The ancestor layer (DESIGN §10) shows a portrait of the lineage node alive at `t`. Its register
+is a **photoreal specimen plate**: a natural-history monograph photograph of the whole organism
+against a black backdrop. It is a second camera, independent of the scene camera. §2's scene
+style split is unchanged; the same rule applies here: the plate camera is invariant, the
+organism varies.
+
+### Plate grammar
+
+| Plate | For | Framing |
+|---|---|---|
+| `SPECIMEN` | multicellular organisms | whole organism, strict side profile facing right (head at right, tail at left); an attached or radial organism stands upright, base down; studio key light upper left, faint rim light; 120mm macro, everything in focus |
+| `MICROSCOPE` | cells and small colonies | darkfield light micrograph, oil-immersion objective, one focal plane; the round field of view is the vignette; any flagellum trails left, so the cell faces right |
+
+### Invariant portrait style — identical in every portrait
+
+Stated once in `pipeline/prompts.py` (`PORTRAIT_STYLE`), before the plate type and subject:
+
+- A real photograph: not concept art, painting, CGI, illustration, sculpture or museum model.
+- One of a matched series photographed identically.
+- Square 1:1 frame, subject exactly centred, its longest dimension about **70% of the frame
+  width**, whatever the organism's real size. `pipeline/morph.py` normalises to the same fill.
+- A seamless near-black backdrop falling off to black in a soft **circular vignette**. The
+  viewer masks the plate to a feathered circle, so nothing important sits in the corners.
+- A thin pale scale bar below the subject, left of centre, **with no numbers or letters**. It
+  is a register cue, not a measurement; a real size, where a source gives one, goes into the
+  subject text instead.
+- No text, labels, watermark, border, grade, HDR, bloom or flare.
+
+### Subjects — one record per lineage node in `data/portraits.yaml`
+
+- `organism`, `anatomy`, `surface`, `size`, `absent`. They are rendered by one template, so
+  plates differ only in values.
+- Every anatomical clause rests on the record's `sources`. Primary literature is used where
+  reachable, otherwise an authoritative page.
+- Whatever the sources do not settle goes into `gaps` and is **never** filled with an unchecked
+  claim.
+- `evidence` is `fossil`, `extant-proxy` or `reconstruction`. A reconstruction or proxy must say
+  so in its `organism` text (enforced on load), so a hypothetical ancestor such as LUCA or LECA
+  is never prompted as a specimen.
+- Colour is almost never known from fossils. `surface` says "no source gives its colour" and
+  asks for muted natural tones.
+- `absent` names the anachronisms and wrong body plans the model is likely to reach for (digits
+  on Tiktaalik, a coiled shell on Kimberella).
+- Every plate also excludes `PORTRAIT_ALWAYS_ABSENT`: labels, a handler's hand or pins, a label
+  card, any other organism, a habitat.
+- Hominin plates add "rendered as a scientific reconstruction and not sexualised" and exclude
+  clothing, tools and modern grooming.
+- A node may have no plate. The viewer then holds the nearest older plate.
+  `deuterostomia` is omitted: its representative, Saccorhytus, is no longer
+  considered a deuterostome.
+
+### Size and cost
+
+**1:1 at 1K.** On the model in use, 1K and 2K bill the same 1120 output tokens, so the smaller
+size saves payload, not money; 4K bills 2000 tokens (ADR-015 has the figures). A portrait costs
+the same as a scene.
+
+### Morphing between plates
+
+- Consecutive pinned plates are joined by a dense optical-flow field computed offline
+  (`earthtime morph`, free).
+- Both plates are normalised first: the subject box is taken from the dark backdrop, then centred
+  and scaled to the 70% fill.
+- The viewer warps each plate toward the other while it crossfades.
+- Consistent framing is what makes this work: a plate that ignores the fill or the profile
+  direction morphs badly.
+- Morphs between very different body plans (a micrograph into a sponge, a fish into a tetrapod)
+  read as a warped dissolve, not an anatomical correspondence. That is expected.
+
+### Review
+
+- Review a portrait between its **older and younger neighbours** (`earthtime review portraits
+  sheet`), never alone. The morph runs between exactly those plates.
+- Judge in order:
+  1. Framing: centre, fill, facing right.
+  2. Anatomy against the record's `sources`.
+  3. Absences: nothing from `absent` appears.
+  4. Register: a photograph, not art.
+  5. Beauty.
+- Pin with `earthtime review portraits pick`.
+
+### Style gate
+
+- Generate and approve four plates before the rest, one per register risk:
+  - `leca` (micrograph)
+  - `bilateria` (an Ediacaran animal)
+  - `tetrapodomorpha` (a fossil vertebrate)
+  - `homo-erectus` (a hominin)
+- If the gate fails, change `PORTRAIT_STYLE` or `PLATE_TYPE`, not the subjects, and rerun it.

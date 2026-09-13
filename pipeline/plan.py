@@ -2,7 +2,8 @@
 
 The graph's `Resolver` knows PINNED, FRESH and STALE. For an image node, FRESH means candidates
 exist for the current digest, and without a pin that is AWAITING_REVIEW: a human still has to
-pick one. That mapping lives here so graph.py stays the contract it is.
+pick one. That mapping lives here so graph.py stays the contract it is. Scenes and ancestor
+portraits (ADR-015) are planned the same way, each against its own candidate store.
 """
 
 from __future__ import annotations
@@ -11,7 +12,8 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 
 from pipeline.assets import SceneAssets, SceneGraph
-from pipeline.graph import AssetNode, Status
+from pipeline.graph import AssetNode, Resolver, Status
+from pipeline.portraits import PortraitAssets, PortraitGraph, UnknownPortrait
 from pipeline.scenes import UnknownScene
 from pipeline.shapes import GeoTime
 from pipeline.store import CandidateStore
@@ -20,12 +22,28 @@ Estimator = Callable[[AssetNode], float]
 
 
 @dataclass(frozen=True)
-class ScenePlan:
-    assets: SceneAssets
+class ImageStanding:
     status: Status
     digest: str  # the image node's current digest
     candidate_count: int  # candidates stored for that digest
     estimate_usd: float  # cost of building it, zero unless stale
+
+
+@dataclass(frozen=True)
+class ScenePlan:
+    assets: SceneAssets
+    status: Status
+    digest: str
+    candidate_count: int
+    estimate_usd: float
+
+    @property
+    def subject_id(self) -> str:
+        return self.assets.scene.id
+
+    @property
+    def image(self) -> AssetNode:
+        return self.assets.image
 
 
 @dataclass(frozen=True)
@@ -56,28 +74,118 @@ class BuildPlan:
         raise UnknownScene(f"unknown scene {scene_id!r}")
 
 
+@dataclass(frozen=True)
+class PortraitPlan:
+    assets: PortraitAssets
+    status: Status
+    digest: str
+    candidate_count: int
+    estimate_usd: float
+
+    @property
+    def subject_id(self) -> str:
+        return self.assets.record.id
+
+    @property
+    def image(self) -> AssetNode:
+        return self.assets.image
+
+
+@dataclass(frozen=True)
+class PortraitBuildPlan:
+    portraits: tuple[PortraitPlan, ...]  # ascending in t_divergence
+    candidates_per_portrait: int
+
+    @property
+    def stale(self) -> tuple[PortraitPlan, ...]:
+        return tuple(p for p in self.portraits if p.status is Status.STALE)
+
+    @property
+    def estimate_usd(self) -> float:
+        return sum(p.estimate_usd for p in self.portraits)
+
+    def select(self, node_ids: Sequence[str]) -> PortraitBuildPlan:
+        known = {p.subject_id for p in self.portraits}
+        unknown = sorted(set(node_ids) - known)
+        if unknown:
+            raise UnknownPortrait(f"no portrait for lineage node(s): {', '.join(unknown)}")
+        wanted = set(node_ids)
+        return replace(self, portraits=tuple(p for p in self.portraits if p.subject_id in wanted))
+
+    def portrait(self, node_id: str) -> PortraitPlan:
+        for portrait in self.portraits:
+            if portrait.subject_id == node_id:
+                return portrait
+        raise UnknownPortrait(f"no portrait for lineage node {node_id!r}")
+
+
 def make_plan(
     graph: SceneGraph, store: CandidateStore, estimate: Estimator, candidates_per_scene: int
 ) -> BuildPlan:
-    if candidates_per_scene < 1:
-        raise ValueError(f"candidates per scene must be at least 1, got {candidates_per_scene}")
+    _require_candidates(candidates_per_scene)
     resolver = graph.resolver(store)
     scenes = []
     for assets in graph.assets:
-        digest = resolver.digest(assets.image.id)
-        status = _image_status(resolver.status(assets.image.id))
+        standing = _standing(
+            resolver, store, assets.scene.id, assets.image, estimate, candidates_per_scene
+        )
         scenes.append(
             ScenePlan(
                 assets=assets,
-                status=status,
-                digest=digest,
-                candidate_count=store.count(assets.scene.id, digest),
-                estimate_usd=(
-                    estimate(assets.image) * candidates_per_scene if status is Status.STALE else 0.0
-                ),
+                status=standing.status,
+                digest=standing.digest,
+                candidate_count=standing.candidate_count,
+                estimate_usd=standing.estimate_usd,
             )
         )
     return BuildPlan(scenes=tuple(scenes), candidates_per_scene=candidates_per_scene)
+
+
+def make_portrait_plan(
+    graph: PortraitGraph, store: CandidateStore, estimate: Estimator, candidates_per_portrait: int
+) -> PortraitBuildPlan:
+    _require_candidates(candidates_per_portrait)
+    resolver = graph.resolver(store)
+    portraits = []
+    for assets in graph.assets:
+        standing = _standing(
+            resolver, store, assets.record.id, assets.image, estimate, candidates_per_portrait
+        )
+        portraits.append(
+            PortraitPlan(
+                assets=assets,
+                status=standing.status,
+                digest=standing.digest,
+                candidate_count=standing.candidate_count,
+                estimate_usd=standing.estimate_usd,
+            )
+        )
+    return PortraitBuildPlan(
+        portraits=tuple(portraits), candidates_per_portrait=candidates_per_portrait
+    )
+
+
+def _require_candidates(count: int) -> None:
+    if count < 1:
+        raise ValueError(f"candidates per image must be at least 1, got {count}")
+
+
+def _standing(
+    resolver: Resolver,
+    store: CandidateStore,
+    subject_id: str,
+    image: AssetNode,
+    estimate: Estimator,
+    candidates: int,
+) -> ImageStanding:
+    digest = resolver.digest(image.id)
+    status = _image_status(resolver.status(image.id))
+    return ImageStanding(
+        status=status,
+        digest=digest,
+        candidate_count=store.count(subject_id, digest),
+        estimate_usd=estimate(image) * candidates if status is Status.STALE else 0.0,
+    )
 
 
 def _image_status(status: Status) -> Status:
@@ -108,17 +216,44 @@ def format_plan(plan: BuildPlan) -> str:
         f"${s.estimate_usd:.2f}"
         for s in reversed(plan.scenes)
     ]
-    counts = {status: sum(1 for s in plan.scenes if s.status is status) for status in Status}
-    stale = len(plan.stale)
-    images = stale * plan.candidates_per_scene
-    summary = [
+    summary = _summary(
+        "scenes", [s.status for s in plan.scenes], plan.candidates_per_scene, plan.estimate_usd
+    )
+    return "\n".join([header, *rows, "", *summary])
+
+
+def format_portrait_plan(plan: PortraitBuildPlan) -> str:
+    header = (
+        f"{'portrait':<22} {'age':>8}  {'plate':<10} {'evidence':<14} {'status':<16} "
+        f"{'cands':>5}  estimate"
+    )
+    rows = [
+        f"{p.subject_id:<22} {format_age(p.assets.node.t_divergence):>8}  "
+        f"{p.assets.record.plate.value:<10} {p.assets.record.evidence.value:<14} "
+        f"{p.status.value:<16} {p.candidate_count:>5}  ${p.estimate_usd:.2f}"
+        for p in reversed(plan.portraits)
+    ]
+    summary = _summary(
+        "portraits",
+        [p.status for p in plan.portraits],
+        plan.candidates_per_portrait,
+        plan.estimate_usd,
+    )
+    return "\n".join([header, *rows, "", *summary])
+
+
+def _summary(
+    noun: str, statuses: Sequence[Status], candidates: int, estimate_usd: float
+) -> list[str]:
+    counts = {status: sum(1 for s in statuses if s is status) for status in Status}
+    stale = counts[Status.STALE]
+    return [
         (
-            f"{len(plan.scenes)} scenes: {counts[Status.PINNED]} pinned, "
+            f"{len(statuses)} {noun}: {counts[Status.PINNED]} pinned, "
             f"{counts[Status.AWAITING_REVIEW]} awaiting review, {stale} stale"
         ),
         (
-            f"estimate to build stale scenes: {stale} x {plan.candidates_per_scene} candidates = "
-            f"{images} images, ${plan.estimate_usd:.2f}"
+            f"estimate to build stale {noun}: {stale} x {candidates} candidates = "
+            f"{stale * candidates} images, ${estimate_usd:.2f}"
         ),
     ]
-    return "\n".join([header, *rows, "", *summary])
