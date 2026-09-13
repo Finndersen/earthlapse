@@ -91,6 +91,12 @@ occlusion artefacts. Test this in Phase 1 before committing. See
 
 ## 4. Era anchors, not chaining (ADR-004)
 
+> **v1 note (ADR-010).** Era-anchor conditioning is **not used in v1**. Two gates on the
+> finals model showed a content-rich anchor leaking its content and a content-free style
+> reference adding nothing the text did not already do. Final scenes render from text alone;
+> composition discipline (§3) and the invariant spec (§2) carry continuity. The ban on
+> chaining below still holds.
+
 **Never condition a scene on its predecessor.** Two failure modes: aesthetic drift
 accumulates, and it makes the asset graph a chain so scene 57 cannot be regenerated without
 touching 58–200.

@@ -1,0 +1,869 @@
+"""`earthtime` end to end against a temporary project. Offline: a fake image generator only."""
+
+from __future__ import annotations
+
+import io
+import json
+import math
+import re
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+
+import pytest
+from PIL import Image
+from typer.testing import CliRunner
+
+from pipeline.assets import build_scene_graph
+from pipeline.cli import create_app
+from pipeline.curated import load_world, write_shape
+from pipeline.generators.gemini import MODEL_ID
+from pipeline.generators.image import (
+    GeneratedImage,
+    GenerationFailed,
+    ImageGenerator,
+    asset_digest,
+    sniff_image,
+)
+from pipeline.graph import AssetNode
+from pipeline.manifest import Manifest, RasterData, SeriesData, TreeData
+from pipeline.models import AtmosphereState, SkyState, WorldModel, WorldState
+from pipeline.paths import ProjectPaths
+from pipeline.prompts import UnsourcedConditions, render_conditions
+from pipeline.scenes import SceneBook, ScenePin, load_scene_book
+from pipeline.shapes import (
+    Event,
+    EventSet,
+    Interpolation,
+    RasterFrame,
+    RasterSequence,
+    Sample,
+    TimeSeries,
+    Tree,
+    TreeNode,
+)
+from pipeline.spend import Entry, Ledger
+from pipeline.store import CandidateRecord, CandidateStore
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+STUB_DIR = REPO_ROOT / "web" / "public" / "stub"
+
+ESTIMATE_USD = 0.1
+FAKE_GENERATOR = "fake-image"
+FAKE_VERSION = "1"
+
+SCENES_YAML = """\
+# A comment the pin writer must keep.
+chapters:
+  - id: molten
+    label: Molten
+    shot: WIDE_RIDGE
+    composition: ridge-vista
+  - id: shore
+    label: Shore
+    shot: WATER_EDGE
+    composition: water-edge-series
+
+scenes:
+  - id: hot-start
+    t: 4.5e9
+    chapter: molten
+    shot: WIDE_RIDGE
+    caption: A molten world.
+    unsourced:
+      o2_percent: 0  # hand-written
+      mean_temp_c: null
+    subject:
+      setting: A magma ocean
+      left_mass: black crust
+      vegetation: none
+      fauna: none
+      main_subject: a lava fountain
+      ground: hot crust
+      water: none
+      far_bank: none
+      sky_and_light: ash
+      absent: [water]
+    pin: null
+
+  - id: devonian
+    t: 3.75e8
+    chapter: shore
+    shot: WATER_EDGE
+    caption: An estuary.
+    unsourced:
+      o2_percent: 18
+      mean_temp_c: 24
+    subject:
+      setting: A Devonian estuary
+      left_mass: Archaeopteris trees
+      vegetation: Archaeopteris
+      fauna: lobe-finned fishes
+      main_subject: a tetrapodomorph
+      ground: mud
+      water: brackish
+      far_bank: bare upland
+      sky_and_light: clear
+      absent: [flowers, grass]
+    pin: null
+
+  - id: city
+    t: 0
+    chapter: shore
+    shot: WATER_EDGE
+    caption: A city.
+    unsourced:
+      o2_percent: 21
+      mean_temp_c: 15
+    subject:
+      setting: A waterfront
+      left_mass: towers
+      vegetation: street trees
+      fauna: gulls
+      main_subject: a ferry
+      ground: an embankment
+      water: a river
+      far_bank: a skyline
+      sky_and_light: haze
+      absent: [flying cars]
+    pin: null
+"""
+
+CO2 = TimeSeries(
+    id="co2",
+    unit="ppm",
+    interpolation=Interpolation.LOG_LINEAR,
+    samples=[Sample(t=0.0, value=280.0), Sample(t=5.7e8, value=4000.0)],
+)
+DAY_LENGTH = TimeSeries(
+    id="day_length",
+    unit="hours",
+    interpolation=Interpolation.LINEAR,
+    samples=[Sample(t=0.0, value=24.0), Sample(t=4.567e9, value=6.0, lower=5.0, upper=7.0)],
+)
+SOLAR_LUMINOSITY = TimeSeries(
+    id="solar_luminosity",
+    unit="relative",
+    interpolation=Interpolation.LINEAR,
+    samples=[Sample(t=0.0, value=1.0), Sample(t=4.567e9, value=0.7)],
+)
+LINEAGE = Tree(
+    id="lineage",
+    nodes=[
+        TreeNode(id="luca", parent=None, label="LUCA", t_divergence=4.0e9, citation="Moody 2024"),
+        TreeNode(
+            id="human",
+            parent="luca",
+            label="Homo sapiens",
+            t_divergence=3.0e5,
+            representative="Homo sapiens",
+        ),
+    ],
+)
+PALEODEM = RasterSequence(
+    id="paleodem",
+    frames=[
+        RasterFrame(t=0.0, ref="textures/paleodem/0.png"),
+        RasterFrame(t=1e8, ref="textures/paleodem/100.png"),
+    ],
+)
+EVENTS = EventSet(
+    id="events-core",
+    events=[
+        Event(
+            id="kpg",
+            label="K-Pg impact",
+            t_min=6.6e7,
+            t_max=6.61e7,
+            importance=0.95,
+            description="Chicxulub.",
+            citation="Renne et al. 2013",
+        )
+    ],
+)
+SOURCE_MANIFESTS = {
+    "astronomy": ("Analytic astronomy", "Laskar 2004", "n/a", "https://example.org/astro"),
+    "co2-o2": ("GEOCARB III", "Berner 2001", "public domain", "https://example.org/co2"),
+}
+
+
+class FakeGenerator:
+    """Reserves and settles in the real ledger, as every `ImageGenerator` must."""
+
+    name = FAKE_GENERATOR
+    version = FAKE_VERSION
+
+    def __init__(self, backend: FakeBackend, ledger: Ledger, ledger_path: Path) -> None:
+        self._backend = backend
+        self._ledger = ledger
+        self._ledger_path = ledger_path
+
+    def estimate_usd(self, node: AssetNode) -> float:
+        return ESTIMATE_USD
+
+    def render(self, node: AssetNode) -> GeneratedImage:
+        entry = self._ledger.reserve(node.id, self.name, 1, ESTIMATE_USD)
+        self._ledger.save(self._ledger_path)
+        self._backend.rendered.append(node.id)
+        if node.id in self._backend.failing:
+            self._ledger.settle(entry, 0.0)
+            self._ledger.save(self._ledger_path)
+            raise GenerationFailed(f"{node.id}: no image")
+        self._ledger.settle(entry, self._backend.actual_usd)
+        self._ledger.save(self._ledger_path)
+        data = _png(len(self._backend.rendered))
+        return GeneratedImage(
+            data=data, info=sniff_image(data), usage=None, cost_usd=self._backend.actual_usd
+        )
+
+
+class FakeBackend:
+    name = FAKE_GENERATOR
+    version = FAKE_VERSION
+
+    def __init__(self, actual_usd: float = ESTIMATE_USD, failing: frozenset[str] = frozenset()):
+        self.actual_usd = actual_usd
+        self.failing = failing
+        self.rendered: list[str] = []
+        self.opened = 0
+
+    def estimate_usd(self, node: AssetNode) -> float:
+        return ESTIMATE_USD
+
+    @contextmanager
+    def open(self, ledger: Ledger, ledger_path: Path, env_file: Path) -> Iterator[ImageGenerator]:
+        self.opened += 1
+        yield FakeGenerator(self, ledger, ledger_path)
+
+
+def _png(seed: int) -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGB", (16, 9), (seed * 37 % 256, seed * 91 % 256, 128)).save(buffer, "PNG")
+    return buffer.getvalue()
+
+
+@pytest.fixture
+def root(tmp_path: Path) -> Path:
+    project = tmp_path / "project"
+    paths = ProjectPaths(project)
+    paths.scenes.parent.mkdir(parents=True)
+    paths.scenes.write_text(SCENES_YAML)
+    for shape in (CO2, DAY_LENGTH, SOLAR_LUMINOSITY, LINEAGE, PALEODEM, EVENTS):
+        write_shape(shape, paths.curated)
+    for name, (title, citation, licence, url) in SOURCE_MANIFESTS.items():
+        source = paths.sources / name
+        source.mkdir(parents=True)
+        (source / "manifest.toml").write_text(
+            f'name = "{name}"\ntitle = "{title}"\ncitation = "{citation}"\n'
+            f'licence = "{licence}"\nurl = "{url}"\n'
+        )
+    return project.resolve()
+
+
+def _run(backend: FakeBackend, root: Path, *args: str) -> tuple[int, str]:
+    result = CliRunner().invoke(create_app(backend), ["--root", str(root), *args])
+    if result.exception is not None and not isinstance(result.exception, SystemExit):
+        raise result.exception
+    return result.exit_code, result.output
+
+
+def _build_and_pick_all(backend: FakeBackend, root: Path) -> None:
+    code, _ = _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")
+    assert code == 0
+    for scene_id in ("hot-start", "devonian", "city"):
+        assert _run(backend, root, "review", "pick", scene_id, "1")[0] == 0
+
+
+# -- plan ------------------------------------------------------------------------------------
+
+
+def test_plan_prints_an_estimate_and_spends_nothing(root: Path) -> None:
+    ledger_path = ProjectPaths(root).ledger
+    Ledger(entries=[Entry(node_id="x", generator="g", n=1, estimated_usd=1.53)]).save(ledger_path)
+    before = ledger_path.read_bytes()
+    backend = FakeBackend()
+
+    code, output = _run(backend, root, "plan")
+
+    assert code == 0
+    assert "3 scenes: 0 pinned, 0 awaiting review, 3 stale" in output
+    assert "estimate to build stale scenes: 3 x 3 candidates = 9 images, $0.90" in output
+    assert "ledger spend.json: $1.53 spent so far" in output
+    assert backend.opened == 0
+    assert backend.rendered == []
+    assert ledger_path.read_bytes() == before
+
+
+# -- build -----------------------------------------------------------------------------------
+
+
+def test_build_refuses_without_max_spend(root: Path) -> None:
+    backend = FakeBackend()
+
+    code, output = _run(backend, root, "build", "--only", "images")
+
+    assert code == 2
+    assert "Missing option '--max-spend'" in output
+    assert backend.opened == 0
+    assert not ProjectPaths(root).ledger.exists()
+
+
+def test_build_refuses_when_the_estimate_exceeds_the_remaining_budget(root: Path) -> None:
+    backend = FakeBackend()
+
+    code, output = _run(backend, root, "build", "--max-spend", "0.5")
+
+    assert code == 1
+    assert "REFUSED: estimate $0.90 exceeds the $0.50 remaining" in output
+    assert (backend.opened, backend.rendered) == (0, [])
+
+
+def test_build_writes_candidates_with_sidecars_then_awaits_review(root: Path) -> None:
+    backend = FakeBackend()
+
+    code, output = _run(backend, root, "build", "--max-spend", "10", "--candidates", "2")
+
+    assert code == 0, output
+    assert backend.rendered == [
+        "city.image",
+        "city.image",
+        "devonian.image",
+        "devonian.image",
+        "hot-start.image",
+        "hot-start.image",
+    ]
+    paths = ProjectPaths(root)
+    store = CandidateStore(paths.candidates)
+    graph = build_scene_graph(load_scene_book(paths.scenes), load_world(paths.curated), backend)
+    city = next(a for a in graph.assets if a.scene.id == "city")
+    digest = graph.resolver(store).digest(city.image.id)
+    first = store.candidates("city")[0]
+    data = first.image_path.read_bytes()
+    assert first.record == CandidateRecord(
+        scene_id="city",
+        node_id="city.image",
+        node_digest=digest,
+        asset_digest=asset_digest(data),
+        file=first.image_path.name,
+        prompt=city.image.inputs["prompt"],
+        generator=FAKE_GENERATOR,
+        generator_version=FAKE_VERSION,
+        mime_type="image/png",
+        width=16,
+        height=9,
+        usage=None,
+        cost_usd=ESTIMATE_USD,
+        attempts=1,
+        created_at=first.record.created_at,
+    )
+    assert first.image_path.parent == paths.candidates / "city" / digest
+    assert Ledger.load(paths.ledger).spent == pytest.approx(6 * ESTIMATE_USD)
+
+    _, plan_output = _run(backend, root, "plan")
+    assert "3 scenes: 0 pinned, 3 awaiting review, 0 stale" in plan_output
+
+
+def test_build_stops_cleanly_on_budget_exceeded_and_exits_non_zero(root: Path) -> None:
+    # Each call costs five times its estimate, so the pre-build check passes and the ledger
+    # has to stop the third call itself.
+    backend = FakeBackend(actual_usd=0.5)
+
+    code, output = _run(backend, root, "build", "--max-spend", "1.0", "--candidates", "1")
+
+    assert code == 1
+    assert backend.rendered == ["city.image", "devonian.image"]
+    assert "STOPPED at hot-start: BudgetExceeded" in output
+    assert "built: 2 candidates across 2 scenes" in output
+    ledger = Ledger.load(ProjectPaths(root).ledger)
+    assert ledger.spent == pytest.approx(1.0)
+    assert len(ledger.entries) == 2
+
+
+def test_a_failing_image_is_retried_once_then_its_scene_is_skipped(root: Path) -> None:
+    backend = FakeBackend(failing=frozenset({"devonian.image"}))
+
+    code, output = _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")
+
+    assert code == 1
+    assert backend.rendered == ["city.image", "devonian.image", "devonian.image", "hot-start.image"]
+    assert "skipped devonian: failed 2 times: devonian.image: no image" in output
+    store = CandidateStore(ProjectPaths(root).candidates)
+    assert [len(store.candidates(s)) for s in ("city", "devonian", "hot-start")] == [1, 0, 1]
+
+
+# -- pins ------------------------------------------------------------------------------------
+
+
+def test_a_pinned_scene_survives_a_prompt_change_and_is_not_regenerated(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")[0] == 0
+    assert _run(backend, root, "review", "pick", "devonian", "1")[0] == 0
+    paths = ProjectPaths(root)
+    pin = load_scene_book(paths.scenes).scene("devonian").pin
+    digest_before = _image_digest(root, backend, "devonian")
+
+    paths.scenes.write_text(
+        paths.scenes.read_text()
+        .replace("fauna: lobe-finned fishes", "fauna: eurypterids")
+        .replace("fauna: gulls", "fauna: cormorants")
+    )
+    backend.rendered.clear()
+    code, output = _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")
+
+    assert code == 0, output
+    assert _image_digest(root, backend, "devonian") != digest_before
+    assert backend.rendered == ["city.image"]
+    assert load_scene_book(paths.scenes).scene("devonian").pin == pin
+    assert "devonian" in output and re.search(r"devonian\s+375 Ma\s+shore\s+pinned", output)
+
+
+def _image_digest(root: Path, backend: FakeBackend, scene_id: str) -> str:
+    paths = ProjectPaths(root)
+    graph = build_scene_graph(load_scene_book(paths.scenes), load_world(paths.curated), backend)
+    return graph.resolver(CandidateStore(paths.candidates)).digest(f"{scene_id}.image")
+
+
+def test_review_pick_writes_the_pin_and_clear_removes_it(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "2")[0] == 0
+    paths = ProjectPaths(root)
+    second = CandidateStore(paths.candidates).candidates("devonian")[1]
+    original = paths.scenes.read_text()
+
+    code, output = _run(backend, root, "review", "pick", "devonian", "2")
+
+    assert code == 0, output
+    expected = ScenePin(
+        asset_digest=second.record.asset_digest,
+        path=second.image_path.relative_to(root).as_posix(),
+    )
+    assert load_scene_book(paths.scenes).scene("devonian").pin == expected
+    changed = [
+        (old, new)
+        for old, new in zip(
+            original.splitlines(), paths.scenes.read_text().splitlines(), strict=True
+        )
+        if old != new
+    ]
+    assert changed == [
+        (
+            "    pin: null",
+            f'    pin: {{asset_digest: "{expected.asset_digest}", path: "{expected.path}"}}',
+        )
+    ]
+
+    assert _run(backend, root, "review", "clear", "devonian")[0] == 0
+    assert paths.scenes.read_text() == original
+
+
+def test_review_refuses_an_out_of_range_candidate(root: Path) -> None:
+    code, output = _run(FakeBackend(), root, "review", "pick", "devonian", "1")
+
+    assert code == 1
+    assert "devonian has 0 candidate(s); no candidate 1" in output
+
+
+def test_review_lists_each_scene_between_its_predecessor_and_successor(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")[0] == 0
+
+    code, output = _run(backend, root, "review")
+
+    assert code == 0
+    devonian = output.split("\n\n")[1].splitlines()
+    assert devonian[:3] == [
+        "[2/3] devonian  375 Ma  chapter shore  awaiting-review",
+        "  predecessor: hot-start (4.50 Ga, unpinned)",
+        "  successor:   city (present, unpinned)",
+    ]
+    assert len(devonian) == 4
+
+
+def test_review_sheet_writes_one_sheet_per_scene_and_an_overview(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "2")[0] == 0
+
+    code, _ = _run(backend, root, "review", "sheet")
+
+    assert code == 0
+    review_dir = ProjectPaths(root).review
+    assert sorted(p.name for p in review_dir.iterdir()) == [
+        "01-hot-start.jpg",
+        "02-devonian.jpg",
+        "03-city.jpg",
+        "overview.jpg",
+    ]
+    with Image.open(review_dir / "02-devonian.jpg") as sheet:
+        assert sheet.width == 4 * 640  # previous | two candidates | next
+
+
+# -- prompts and digests ---------------------------------------------------------------------
+
+
+def test_the_prompt_digest_changes_only_where_world_state_changes(root: Path) -> None:
+    paths = ProjectPaths(root)
+    book = load_scene_book(paths.scenes)
+    world = load_world(paths.curated)
+    doubled = TimeSeries(
+        id="co2",
+        unit="ppm",
+        interpolation=Interpolation.LOG_LINEAR,
+        samples=[Sample(t=0.0, value=560.0), Sample(t=5.7e8, value=8000.0)],
+    )
+    richer = WorldModel(
+        series={**world.series, "co2": doubled},
+        rasters=world.rasters,
+        events=world.events,
+        trees=world.trees,
+    )
+    store = CandidateStore(paths.candidates)
+
+    def digests(model: WorldModel) -> dict[str, tuple[str, str]]:
+        graph = build_scene_graph(book, model, FakeBackend())
+        resolver = graph.resolver(store)
+        return {
+            a.scene.id: (resolver.digest(a.prompt.id), resolver.digest(a.image.id))
+            for a in graph.assets
+        }
+
+    base, changed = digests(world), digests(richer)
+
+    assert digests(load_world(paths.curated)) == base
+    assert changed["hot-start"] == base["hot-start"]  # 4.5 Ga lies beyond the CO2 record
+    for scene_id in ("devonian", "city"):
+        assert changed[scene_id][0] != base[scene_id][0]
+        assert changed[scene_id][1] != base[scene_id][1]
+
+
+def test_conditions_render_world_state_and_name_absent_values_rather_than_invent_them() -> None:
+    known = WorldState(
+        t=3.1e8,
+        atmosphere=AtmosphereState(co2_ppm=351.14),
+        sky=SkyState(day_length_hours=22.96, solar_luminosity_rel=0.9736),
+    )
+    unknown = WorldState(t=4.5e9)
+
+    assert render_conditions(known, UnsourcedConditions(o2_percent=32, mean_temp_c=16)) == (
+        "About 310 million years ago. "
+        "Atmosphere: CO2 351 ppm, close to today's level; oxygen 32%, far richer than today's 21%. "
+        "Global mean temperature about 16 °C, an icehouse world with ice at the poles, though the "
+        "tropics stay hot. "
+        "The Sun is 2.6% fainter than today; a day lasts 23.0 hours. "
+        "Land area: no reconstruction for this time. "
+        "No ancestor of humans is on record at this time."
+    )
+    assert render_conditions(unknown, UnsourcedConditions(o2_percent=None, mean_temp_c=None)) == (
+        "About 4.5 billion years ago. "
+        "Atmosphere: no CO2 record reaches this far back; no estimate of oxygen. "
+        "Global mean temperature: no estimate. "
+        "No record of the Sun's brightness at this time; no day-length record reaches this far "
+        "back. "
+        "Land area: no reconstruction for this time. "
+        "No ancestor of humans is on record at this time."
+    )
+
+
+FORBIDDEN_IN_PROMPTS = (
+    MODEL_ID,
+    "gemini",
+    "google",
+    "nano banana",
+    "imagen",
+    "openai",
+    "dall-e",
+    "gpt",
+    "flux",
+    "midjourney",
+    "stable diffusion",
+    "black forest",
+)
+
+
+def test_committed_scene_prompts_name_no_model_or_provider() -> None:
+    paths = ProjectPaths(REPO_ROOT)
+    book = load_scene_book(paths.scenes)
+    graph = build_scene_graph(book, load_world(paths.curated), FakeBackend())
+
+    prompts = [a.image.inputs["prompt"] for a in graph.assets]
+
+    assert len(prompts) == len(book.scenes) >= 12
+    for prompt in prompts:
+        lowered = prompt.lower()
+        assert [term for term in FORBIDDEN_IN_PROMPTS if term.lower() in lowered] == []
+
+
+def test_committed_scene_book_holds_one_composition_per_chapter_run() -> None:
+    book = load_scene_book(ProjectPaths(REPO_ROOT).scenes)
+    chapters = [s.chapter for s in book.chronological()]
+
+    assert len(set(chapters)) < len(chapters)  # never one chapter per scene
+    assert chapters[0] == "molten-earth"
+    assert set(chapters[1:]) == {"waters-edge"}
+
+
+# -- publish ---------------------------------------------------------------------------------
+
+
+def test_publish_refuses_while_any_scene_is_unpinned(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")[0] == 0
+    assert _run(backend, root, "review", "pick", "devonian", "1")[0] == 0
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 1
+    assert "REFUSED: unpinned scenes: hot-start, city" in output
+    assert not ProjectPaths(root).media.exists()
+
+
+def test_publish_allow_unpinned_skips_them_with_a_warning(root: Path) -> None:
+    backend = FakeBackend()
+    assert _run(backend, root, "build", "--max-spend", "10", "--candidates", "1")[0] == 0
+    assert _run(backend, root, "review", "pick", "devonian", "1")[0] == 0
+
+    code, output = _run(backend, root, "publish", "--allow-unpinned")
+
+    assert code == 0, output
+    assert "WARNING: skipping unpinned scenes: hot-start, city" in output
+    manifest = Manifest.model_validate_json(
+        (ProjectPaths(root).media / "manifest.json").read_text()
+    )
+    assert [s.id for s in manifest.scenes] == ["devonian"]
+    assert [c.id for c in manifest.chapters] == ["shore"]
+
+
+def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    book = load_scene_book(paths.scenes)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    media = paths.media
+    raw = json.loads((media / "manifest.json").read_text())
+    Manifest.model_validate(raw)
+    assert re.fullmatch(r"[0-9a-f]{16}", raw["buildId"])
+    boundary = math.expm1((math.log1p(3.75e8) + math.log1p(4.5e9)) / 2)
+    assert raw == {
+        "schemaVersion": 1,
+        "buildId": raw["buildId"],
+        "assetBase": "/media",
+        "scenes": [
+            _published_scene(book, "city", 0.0, "shore", "WATER_EDGE", "A city."),
+            _published_scene(book, "devonian", 3.75e8, "shore", "WATER_EDGE", "An estuary."),
+            _published_scene(book, "hot-start", 4.5e9, "molten", "WIDE_RIDGE", "A molten world."),
+        ],
+        "chapters": [
+            {"id": "shore", "label": "Shore", "tStart": 0.0, "tEnd": boundary},
+            {"id": "molten", "label": "Molten", "tStart": boundary, "tEnd": 4.567e9},
+        ],
+        "layers": [
+            {
+                "id": "co2",
+                "name": "Atmospheric CO₂",
+                "surface": "hud",
+                "dataKind": "scalar",
+                "timeDomain": [0.0, 5.7e8],
+                "source": "co2-o2",
+                "chartable": True,
+                "unit": "ppm",
+                "interpolation": "log-linear",
+                "data": "layers/co2.json",
+            },
+            {
+                "id": "day_length",
+                "name": "Day length",
+                "surface": "hud",
+                "dataKind": "scalar",
+                "timeDomain": [0.0, 4.567e9],
+                "source": "astronomy",
+                "chartable": False,
+                "unit": "hours",
+                "interpolation": "linear",
+                "data": "layers/day_length.json",
+            },
+            {
+                "id": "lineage",
+                "name": "Your ancestor",
+                "surface": "hud",
+                "dataKind": "node",
+                "timeDomain": [0.0, 4.0e9],
+                "source": "lineage",
+                "chartable": False,
+                "data": "layers/lineage.json",
+            },
+            {
+                "id": "paleodem",
+                "name": "Paleogeography",
+                "surface": "globe",
+                "dataKind": "raster",
+                "timeDomain": [0.0, 1e8],
+                "source": "paleodem",
+                "chartable": False,
+                "data": "layers/paleodem.json",
+            },
+        ],
+        "events": [
+            {
+                "id": "kpg",
+                "label": "K-Pg impact",
+                "tMin": 6.6e7,
+                "tMax": 6.61e7,
+                "importance": 0.95,
+                "description": "Chicxulub.",
+                "citation": "Renne et al. 2013",
+            }
+        ],
+        "credits": [
+            {
+                "sourceId": "astronomy",
+                "title": "Analytic astronomy",
+                "citation": "Laskar 2004",
+                "licence": "n/a",
+                "url": "https://example.org/astro",
+            },
+            {
+                "sourceId": "co2-o2",
+                "title": "GEOCARB III",
+                "citation": "Berner 2001",
+                "licence": "public domain",
+                "url": "https://example.org/co2",
+            },
+        ],
+    }
+    for scene in book.scenes:
+        assert scene.pin is not None
+        published = (media / "scenes" / f"{scene.id}.png").read_bytes()
+        assert published == (root / scene.pin.path).read_bytes()
+
+    assert _layer_json(media, "co2") == {
+        "id": "co2",
+        "unit": "ppm",
+        "interpolation": "log-linear",
+        "samples": [
+            {"t": 0.0, "value": 280.0, "lower": None, "upper": None},
+            {"t": 5.7e8, "value": 4000.0, "lower": None, "upper": None},
+        ],
+    }
+    assert _layer_json(media, "day_length") == {
+        "id": "day_length",
+        "unit": "hours",
+        "interpolation": "linear",
+        "samples": [
+            {"t": 0.0, "value": 24.0, "lower": None, "upper": None},
+            {"t": 4.567e9, "value": 6.0, "lower": 5.0, "upper": 7.0},
+        ],
+    }
+    assert _layer_json(media, "lineage") == {
+        "id": "lineage",
+        "nodes": [
+            {
+                "id": "human",
+                "parent": "luca",
+                "label": "Homo sapiens",
+                "tDivergence": 3.0e5,
+                "representative": "Homo sapiens",
+                "note": None,
+                "citation": None,
+            },
+            {
+                "id": "luca",
+                "parent": None,
+                "label": "LUCA",
+                "tDivergence": 4.0e9,
+                "representative": None,
+                "note": None,
+                "citation": "Moody 2024",
+            },
+        ],
+    }
+    assert _layer_json(media, "paleodem") == {
+        "id": "paleodem",
+        "frames": [
+            {"t": 0.0, "ref": "textures/paleodem/0.png"},
+            {"t": 1e8, "ref": "textures/paleodem/100.png"},
+        ],
+    }
+    for layer_id in ("co2", "day_length", "lineage", "paleodem"):
+        assert _key_paths(_layer_json(media, layer_id)) == _key_paths(
+            json.loads((STUB_DIR / "layers" / f"{layer_id}.json").read_text())
+        )
+
+
+def _published_scene(
+    book: SceneBook, scene_id: str, t: float, chapter: str, shot: str, caption: str
+) -> dict[str, object]:
+    pin = book.scene(scene_id).pin
+    assert pin is not None
+    return {
+        "id": scene_id,
+        "t": t,
+        "chapterId": chapter,
+        "image": f"scenes/{scene_id}.png",
+        "shot": shot,
+        "caption": caption,
+        "pinned": pin.asset_digest,
+        "width": 16,
+        "height": 9,
+    }
+
+
+def _layer_json(media: Path, layer_id: str) -> dict[str, object]:
+    loaded: dict[str, object] = json.loads((media / "layers" / f"{layer_id}.json").read_text())
+    return loaded
+
+
+def _key_paths(value: object, prefix: str = "") -> set[str]:
+    """Every key path in a JSON value, list items collapsed, so two files' shapes compare."""
+    if isinstance(value, dict):
+        paths = set()
+        for key, item in value.items():
+            paths |= {f"{prefix}.{key}"} | _key_paths(item, f"{prefix}.{key}")
+        return paths
+    if isinstance(value, list):
+        return set().union(*(_key_paths(item, f"{prefix}[]") for item in value))
+    return set()
+
+
+def test_publish_refuses_a_pinned_image_that_no_longer_matches_its_digest(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    pin = load_scene_book(ProjectPaths(root).scenes).scene("city").pin
+    assert pin is not None
+    (root / pin.path).write_bytes(_png(999))
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 1
+    assert f"city: {pin.path} no longer matches pinned digest {pin.asset_digest}" in output
+    assert not ProjectPaths(root).media.exists()
+
+
+# -- the web contract ------------------------------------------------------------------------
+
+
+def test_the_committed_stub_manifest_validates() -> None:
+    manifest = Manifest.model_validate_json((STUB_DIR / "manifest.json").read_text())
+
+    assert [s.id for s in manifest.scenes] == [
+        "holocene-city",
+        "carboniferous-swamp",
+        "archean-shore",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("layer_id", "model"),
+    [
+        ("co2", SeriesData),
+        ("day_length", SeriesData),
+        ("lineage", TreeData),
+        ("paleodem", RasterData),
+    ],
+)
+def test_the_committed_stub_layer_data_validates(
+    layer_id: str, model: type[SeriesData | TreeData | RasterData]
+) -> None:
+    model.model_validate_json((STUB_DIR / "layers" / f"{layer_id}.json").read_text())

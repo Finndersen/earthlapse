@@ -1,0 +1,348 @@
+# Scene records — the curated source of truth for `earthtime plan / build / review / publish`.
+#
+# One record per generated still. `t` is years before present (pipeline/shapes.py), chosen to
+# sit inside the matching interval in data/events.yaml. Prompts are rendered from each record
+# (pipeline/prompts.py): invariant style + shot + chapter composition + conditions + subject.
+# Text only, no reference image (ADR-010).
+#
+# Conditions
+# ----------
+# CO2, day length, solar luminosity, land fraction and "your ancestor" come from
+# `load_world(data/curated).at(t)`; where no source covers `t` the prompt says so rather than
+# inventing a value. `unsourced` holds what no curated source covers yet: rounded, plausible
+# figures, not citations, each commented. `null` means no defensible single figure exists.
+#
+# Chapters
+# --------
+# A chapter is a run of consecutive scenes sharing one composition (DESIGN §6). The viewer
+# dissolves slowly within a chapter and near-cuts across a boundary (web/src/scene/scene.ts),
+# so chapters follow composition, never one per scene. Gate v2 showed the WATER_EDGE framing
+# holding across very different worlds, so every scene that can stand at a water's edge does
+# (ADR-010). Only the magma ocean, which has no water, cannot.
+#
+# Pins
+# ----
+# `pin` stays `null` until a human runs `earthtime review pick <scene_id> <n>`, which rewrites
+# that one line. Keep each `pin:` on a single line. A pinned scene is never regenerated (ADR-005).
+
+chapters:
+  - id: molten-earth
+    label: Molten Earth
+    shot: WIDE_RIDGE
+    composition: ridge-vista
+  - id: waters-edge
+    label: At the water's edge
+    shot: WATER_EDGE
+    composition: water-edge-series
+
+scenes:
+  # Moon-forming impact 4.35-4.52 Ga (events.yaml moon-forming-impact).
+  - id: magma-ocean
+    t: 4.5e9
+    chapter: molten-earth
+    shot: WIDE_RIDGE
+    caption: In the aftermath of the Moon-forming impact, Earth's whole surface is a glowing ocean of magma beneath a looming, newborn Moon.
+    unsourced:
+      o2_percent: 0  # no free oxygen before biology
+      mean_temp_c: null  # a molten surface has no meaningful global mean
+    subject:
+      setting: The surface of the newborn Earth in the aftermath of the Moon-forming impact, seen from a ridge of freshly chilled black crust
+      left_mass: a jagged crag of black, glassy basalt crust, its cracks glowing orange-red with the heat beneath
+      vegetation: none; the planet is lifeless, every surface bare rock or molten
+      fauna: none
+      main_subject: a towering lava fountain rising from a slowly churning current of incandescent magma, crusting black at its edges
+      ground: cracked, still-hot black crust with orange light glowing through its fissures and wisps of rock vapour rising
+      water: none; in place of any sea, a molten ocean of glowing orange-red magma runs to the horizon, skinned with drifting plates of black crust
+      far_bank: no far bank; the magma ocean runs unbroken to the horizon under towering plumes of steam and ash
+      sky_and_light: a dark, dense sky of vapour and ash lit orange from below by the glowing magma; an enormous Moon, many times its present apparent size, hangs low through a gap in the clouds
+      absent: [water, snow, ice, plants, any living thing, green colour, people, buildings]
+    pin: null
+
+  # After the first ocean condensed (~4.4 Ga zircons) and before any evidence of life
+  # (events.yaml first-life: 3.4-4.1 Ga).
+  - id: hadean-ocean
+    t: 4.3e9
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The first ocean steams against black volcanic shores, a world of water and rock with no life anywhere.
+    unsourced:
+      o2_percent: 0  # no free oxygen before biology
+      mean_temp_c: 60  # contested: hot-early-ocean estimates run 40-80 °C, others argue temperate
+    subject:
+      setting: A shore of the first ocean on the young Hadean Earth, where a volcanic island rises from a hot, shallow sea
+      left_mass: a tall, dark sea stack of black pillow basalt, streaked rust-red and white with mineral crust, steam rising from its base
+      vegetation: none anywhere; bare rock only, with no green at all
+      fauna: none; the planet is lifeless
+      main_subject: a low volcanic vent at the waterline, hissing a white plume of steam up out of the sea
+      ground: coarse black volcanic sand and angular basalt boulders crusted with white and yellow mineral deposits
+      water: a hot, shallow, steaming sea, greenish-grey and opaque with dissolved iron, wisps of steam drifting over its surface
+      far_bank: a line of low black volcanic cones on the horizon, one trailing a plume of ash
+      sky_and_light: a thick, hazy, pale orange-brown sky with no blue in it; a large, close Moon faint through the haze; dim, diffuse, warm light
+      absent: [plants, algae, moss, green tint on rocks, animals, birds, people, buildings, blue sky, snow]
+    pin: null
+
+  # Oldest robust stromatolites, ~3.43 Ga Pilbara (events.yaml first-life, lower bound);
+  # before the Great Oxidation Event (2.1-2.4 Ga).
+  - id: archean-shore
+    t: 3.45e9
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Microbial stromatolites crowd an Archean tidal shore under a faint young Sun and a hazy, oxygen-free sky.
+    unsourced:
+      o2_percent: 0  # below 0.001% of present levels before the Great Oxidation Event
+      mean_temp_c: 30  # contested: isotope proxies argue hot (55-85 °C), models temperate
+    subject:
+      setting: An Archean tidal flat on the edge of a small volcanic continent, the oldest shore with life on it
+      left_mass: a tall, weathered cliff of dark greenstone and banded red-and-grey rock
+      vegetation: none on land, which is bare rock; the only life is microbial, slimy olive-brown and dark green mats coating the wet rock in the shallows
+      fauna: none; no animals exist yet
+      main_subject: a cluster of dome-shaped stromatolites, knee-high rounded mounds of finely layered grey rock skinned with dark microbial mat, breaking the still surface of the shallows
+      ground: wet, rippled grey sand and flat grey rock slabs streaked with rusty orange iron staining
+      water: shallow, calm, warm tidal water, faintly green-grey
+      far_bank: low, bare volcanic hills in grey and rust tones, with no green anywhere
+      sky_and_light: a hazy, pale orange sky rather than a blue one; soft, slightly dim, warm diffuse light
+      absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky]
+    pin: null
+
+  # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
+  - id: cryogenian-snowball
+    t: 6.5e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: During a Snowball Earth glaciation, ice reaches toward the equator and the sea survives only as dark leads between the ice.
+    unsourced:
+      o2_percent: 8  # contested: Neoproterozoic oxygen estimates span a few percent to near-modern
+      mean_temp_c: -40  # rough: snowball climate models give global means of -40 to -50 °C
+    subject:
+      setting: A frozen shore near the equator during a Snowball Earth glaciation
+      left_mass: a tall, sheer cliff of blue-white glacier ice, layered and streaked with dark wind-blown dust
+      vegetation: none visible; life survives only as microbial films in meltwater and in dark dust holes on the ice
+      fauna: none; no animals are visible
+      main_subject: a low, dark, frost-rimed boulder of ice-rafted rock at the edge of the open water
+      ground: hard, wind-scoured snow and bare blue ice with patches of dark dust and scattered gravel
+      water: a still meltwater lead, black and glassy, its edges skinned with thin new ice and small floating slabs
+      far_bank: an endless flat white ice shelf along the horizon
+      sky_and_light: a hard, clear, deep-blue cloudless sky; brilliant, cold, glaring sunlight reflecting off the ice; crisp, sharp shadows
+      absent: [plants, trees, grass, moss, animals, birds, penguins, polar bears, seals, people, buildings, footprints]
+    pin: null
+
+  # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma).
+  - id: ediacaran-shallows
+    t: 5.6e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Soft-bodied Ediacaran organisms, among the first large living things, lie on microbial mats in clear, sunlit shallows beside a barren coast.
+    unsourced:
+      o2_percent: 12  # contested: Ediacaran oxygen estimates range widely below modern
+      mean_temp_c: 18  # rounded: post-glacial Ediacaran climate, poorly constrained
+    subject:
+      setting: A shallow, sunlit Ediacaran sea floor seen through clear water at the edge of a barren coast
+      left_mass: a tall, bare outcrop of layered tan and grey sandstone with no plants on it
+      vegetation: none on land, which is bare rock and sand; underwater, a wrinkled olive-brown microbial mat carpets the sea floor
+      fauna: soft-bodied Ediacaran organisms visible through the clear water, flat oval quilted Dickinsonia up to half a metre long, feather-like Charnia fronds standing up from the mat, and small disc-shaped holdfasts
+      main_subject: a group of tall, pale Charnia fronds rising from the mat in the clear shallows, just below the surface
+      ground: a wet beach of rippled pale sand and flat sandstone slabs, bare of any plants
+      water: very clear, calm, shallow turquoise water through which the textured sea floor is plainly visible
+      far_bank: a low, barren coastline of reddish rock and sand, with no green
+      sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight throwing sparkling caustics across the sea floor
+      absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people]
+    pin: null
+
+  # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
+  - id: devonian-estuary
+    t: 3.75e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The first forests of Archaeopteris shade a Devonian estuary where lobe-finned fishes haul themselves into the shallows.
+    unsourced:
+      o2_percent: 18  # rounded: GEOCARBSULF-type estimates put Late Devonian O2 below modern
+      mean_temp_c: 24  # rounded: Late Devonian greenhouse
+    subject:
+      setting: A Late Devonian estuary where a river meets a shallow sea, on the coastal lowland of a bare continent
+      left_mass: a stand of Archaeopteris, the first true trees, straight slender trunks up to 20 m tall carrying flat horizontal sprays of fern-like foliage, open and airy with sky visible between the branches
+      vegetation: Archaeopteris trees, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them
+      fauna: lobe-finned fishes in the shallows; no land animals larger than a small arthropod
+      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m flat-headed lobe-finned fish with a crocodile-like head, resting in the shallows with its head and front fins raised out of the water
+      ground: bare, wet grey-brown mud and sand
+      water: shallow, calm, slightly silty brackish water
+      far_bank: a low, barren upland of thin rocky soil, grey and ochre, with only faint patches of low green and no forest
+      sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
+      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects]
+    pin: null
+
+  # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
+  - id: carboniferous-swamp
+    t: 3.1e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Giant lycopsid trees wall a Carboniferous coal swamp, where oxygen-rich air lets insects and millipedes grow to record sizes.
+    unsourced:
+      o2_percent: 32  # rounded: the Late Carboniferous oxygen peak, commonly put near 30-35%
+      mean_temp_c: 16  # rounded: Late Paleozoic Ice Age, polar ice with a hot, wet equator
+    subject:
+      setting: A Late Carboniferous coal swamp on a hot, wet lowland near the equator
+      left_mass: a dense wall of towering Lepidodendron and Sigillaria lycopsid trees, 30 m pole-like trunks patterned with diamond-shaped leaf scars and topped by forked crowns of long grass-like leaves, dark inside
+      vegetation: lycopsid trees, giant Calamites horsetails 10 m tall and Psaronius tree ferns packed beneath them, with ferns and seed-fern fronds
+      fauna: giant insects and arthropods; no reptiles in view
+      main_subject: a Meganeura, a giant griffinfly with a 70 cm wingspan, hovering low over the water, and beneath it an Arthropleura, a 2 m armoured millipede, crawling along a fallen log at the water's edge
+      ground: fallen, rotting lycopsid trunks half sunk in black mud, crowded with ferns and seed-fern fronds
+      water: still, black, tannin-dark standing swamp water, glassy, with floating debris
+      far_bank: more swamp forest of lycopsid poles fading into the humid haze
+      sky_and_light: a low, even overcast of white-grey cloud; soft, diffuse, almost shadowless light; the air saturated and heavy, a dense humid haze tinted green-grey that swallows the distance
+      absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
+    pin: null
+
+  # Middle Permian, before the end-Permian extinction (events.yaml permian-extinction: ~251.9 Ma).
+  - id: permian-interior
+    t: 2.6e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.
+    unsourced:
+      o2_percent: 26  # rounded: declining from the Carboniferous peak
+      mean_temp_c: 20  # rounded: warming out of the Late Paleozoic Ice Age
+    subject:
+      setting: The arid interior of the supercontinent Pangaea in the Middle Permian, far from any sea
+      left_mass: a sparse, ragged stand of Walchia-like early conifers and Glossopteris trees clinging to the river bank, dusty grey-green, several dead and leafless, open ground visible between the trunks
+      vegetation: sparse early conifers and Glossopteris only; the land is mostly bare
+      fauna: large synapsids at the river; nothing else in view
+      main_subject: two Moschops-like dinocephalians, massive barrel-bodied synapsids about 3 m long with thick skulls and sprawling limbs, standing in the shallows, one drinking
+      ground: cracked red mud and dry banks of layered red sandstone and mudstone, bare of plants
+      water: a shallow, shrinking seasonal river, opaque red-brown with silt
+      far_bank: flat-lying red beds and low dunes, bare to the horizon under dust
+      sky_and_light: a cloudless sky bleached almost white by suspended dust; a hard, glaring sun and short, sharp, dark shadows; heat shimmer and a tan dust haze over the distance
+      absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, swamp forest, lush green vegetation]
+    pin: null
+
+  # Morrison Formation sauropods, ~150 Ma; before flowering plants (events.yaml: 125-133 Ma).
+  - id: jurassic-floodplain
+    t: 1.5e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Sauropods wade a Late Jurassic braided river through a floodplain of conifers, cycads and ferns, without a single flower.
+    unsourced:
+      o2_percent: 25  # rounded: Jurassic estimates cluster near or a little above modern
+      mean_temp_c: 22  # rounded: warm Jurassic greenhouse, no permanent polar ice
+    subject:
+      setting: The bank of a broad braided river crossing a Late Jurassic floodplain
+      left_mass: a gallery forest of tall araucarian conifers, dark green and layered, over an understory of cycads and tree ferns
+      vegetation: conifers, cycads, ginkgoes, tree ferns, horsetails and low ferns; all the green is needles, fronds and fern leaves
+      fauna: long-necked sauropod dinosaurs; a few small pterosaurs gliding high over the river
+      main_subject: a Brachiosaurus-like sauropod, a long-necked dinosaur 12 m tall, wading at the waterline with its head raised, and a Diplodocus-like sauropod standing on a sandbar behind it
+      ground: a sandbar of pale sand and pebbles with scattered horsetails and clumps of fern
+      water: a shallow, calm braided river, clear to silty, reflecting the sky
+      far_bank: low, open fern prairie with scattered conifers under distant haze
+      sky_and_light: a clear, deep blue sky with high thin cirrus and a bank of building cumulus on the horizon; crisp air with moderate distance haze
+      absent: [flowers, flowering plants, grass, broadleaf trees, palms, large mammals, modern birds, people]
+    pin: null
+
+  # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
+  - id: cretaceous-forest
+    t: 6.8e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Two million years before the asteroid, duck-billed dinosaurs gather at a humid Late Cretaceous swamp where flowering trees have spread.
+    unsourced:
+      o2_percent: 27  # rounded: Late Cretaceous estimates run somewhat above modern
+      mean_temp_c: 22  # rounded: Maastrichtian, cooler than the mid-Cretaceous peak
+    subject:
+      setting: The edge of a swampy estuary on the humid coastal plain of the Western Interior Seaway in the Late Cretaceous
+      left_mass: a dense subtropical forest of tall flowering broadleaf trees and bald cypress, with fan palms in its understory
+      vegetation: flowering broadleaf trees, bald cypress, fan palms, ferns and horsetails, with water lilies along the margin
+      fauna: duck-billed dinosaurs; a crocodilian lying at the water's edge; dragonflies over the water
+      main_subject: a small herd of Edmontosaurus, 10 m duck-billed dinosaurs, standing at the waterline, one wading and drinking
+      ground: dark wet mud with reeds, ferns and fallen branches
+      water: still, tea-brown swamp water scattered with water-lily pads
+      far_bank: more swamp forest fading into humid haze
+      sky_and_light: heavy milky haze and towering cumulus clouds; soft, diffused warm light; the air thick with humidity
+      absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings]
+    pin: null
+
+  # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
+  - id: eocene-jungle
+    t: 5.0e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.
+    unsourced:
+      o2_percent: 23  # rounded: near modern
+      mean_temp_c: 27  # rounded: Early Eocene Climatic Optimum global mean, commonly put at 23-29 °C
+    subject:
+      setting: The shore of a still lake in the paratropical rainforest of the early Eocene hothouse
+      left_mass: a towering wall of dense rainforest, tall buttressed laurel and fig-like trees draped with lianas above palms and giant-leaved understory plants
+      vegetation: dense broadleaf rainforest with palms, lianas, tree ferns and aroids, and no open ground
+      fauna: a small lemur-like early primate clinging to a branch over the water; a crocodile basking on the bank
+      main_subject: a fox-sized early horse like Eurohippus, with a short neck and toes instead of hooves, drinking at the waterline
+      ground: dark leaf litter and exposed roots along a muddy bank
+      water: a still, dark green lake, glassy, reflecting the forest
+      far_bank: unbroken rainforest across the lake, steaming in the heat
+      sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
+      absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
+    pin: null
+
+  # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
+  - id: pleistocene-steppe
+    t: 2.0e4
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: At the height of the last ice age, woolly mammoths cross a cold, dry steppe beside a braided meltwater river.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 8  # rounded: Last Glacial Maximum about 6 °C colder than pre-industrial
+    subject:
+      setting: A braided meltwater river crossing the mammoth steppe at the Last Glacial Maximum
+      left_mass: a tall bluff of pale wind-blown loess and gravel, topped by a fringe of dry grass and a few stunted larches
+      vegetation: a cold steppe of tawny grasses, sedges and sagebrush with scattered dwarf willows, and no forest
+      fauna: woolly mammoths; steppe bison grazing in the distance; a few wild horses
+      main_subject: three woolly mammoths with long shaggy red-brown hair and curving tusks, standing at the waterline, one drinking
+      ground: gravel bars, grey silt and tussocks of dry grass
+      water: a shallow, cold, milky grey-blue glacial meltwater river
+      far_bank: a flat, treeless steppe running to a line of distant white glaciers on the horizon
+      sky_and_light: a cold, clear, pale sky with a few thin clouds and a veil of wind-blown dust; crisp, bright light and long shadows
+      absent: [forest, farm fields, fences, roads, buildings, domestic animals, people]
+    pin: null
+
+  # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
+  # writing (5,025-5,425 BP).
+  - id: neolithic-river-settlement
+    t: 9.0e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Two thousand years after farming began, a Neolithic village of mudbrick houses tends small fields of wheat beside a slow river.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early Holocene, near pre-industrial
+    subject:
+      setting: A Neolithic farming village on the bank of a slow river in the Fertile Crescent, about 7000 BCE
+      left_mass: a cluster of flat-roofed mudbrick houses two storeys high, built wall to wall, with wooden ladders to the roofs and smoke rising from a cooking fire
+      vegetation: small fields of ripening einkorn, emmer wheat and barley, reed beds along the river, and a few poplars and tamarisks
+      fauna: a few goats and sheep grazing near the houses; a heron in the reeds
+      main_subject: two villagers in simple undyed wool and linen clothing loading bundles of reeds into a small reed boat at the waterline
+      ground: trampled earth, a footpath down to the water, clay pots and woven baskets
+      water: a slow, silty brown river, calm
+      far_bank: a flat river plain of green and tan fields with low hills beyond
+      sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
+      absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
+    pin: null
+
+  # The present day (events.yaml present: t = 0).
+  - id: modern-city
+    t: 0.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The present, where a city of glass and concrete lines a river and one species reshapes the planet's surface in a geological instant.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: present global mean
+    subject:
+      setting: The waterfront of a large modern city on a wide river in the present day
+      left_mass: a cluster of tall modern glass-and-concrete high-rise towers
+      vegetation: planted street trees along the embankment promenade
+      fauna: a few gulls over the water and pigeons on the embankment
+      main_subject: a river ferry moored at a concrete pier at the waterline, with a few commuters on the pier
+      ground: a stone embankment with railings, a paved promenade and lamp posts
+      water: a wide, calm, grey-green river reflecting the buildings
+      far_bank: a dense skyline of apartment blocks, construction cranes and a bridge
+      sky_and_light: a lightly hazy pale-blue sky with a faint brown smog layer over the skyline; bright, slightly diffused daylight
+      absent: [futuristic architecture, flying vehicles, ruins, historical costume, dinosaurs, legible text, logos]
+    pin: null

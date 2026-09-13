@@ -28,7 +28,8 @@ it, do not unilaterally edit.
 - **Never regenerate a pinned asset.** Pins live in scene records and survive rebuilds. (ADR-005)
 - **No generated video for connective transitions.** (ADR-001) Motion is 2.5D displacement
   rendered live in the browser.
-- **Never chain image generation off the previous image.** Condition on the era anchor. (ADR-004)
+- **Never chain image generation off the previous image.** Final scenes render from text
+  only: style spec, shot, composition, conditions, subject. (ADR-004, ADR-010)
 - **No provider names outside `pipeline/generators/`.** Vendors must stay swappable.
 - **If something is unusable, stop and report.** Do not silently substitute a different
   dataset, model or approach.
@@ -56,7 +57,7 @@ make data                       # re-run stale source fetch/normalise
 earthtime plan                  # what is stale, what it will cost
 earthtime build --only images   # generate, respecting pins and ceiling
 earthtime review                # candidate picker
-earthtime publish               # upload to R2, emit manifest.json
+earthtime publish               # write data/media/manifest.json + media (local; no upload)
 pnpm dev                        # web
 ```
 

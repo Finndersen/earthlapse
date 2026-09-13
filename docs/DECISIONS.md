@@ -65,7 +65,8 @@ the plugin seam. Some sources will fit awkwardly; awkward is preferable to unbou
 
 ## ADR-004 — Era-anchor conditioning, never sequential chaining
 
-**Status:** accepted
+**Status:** accepted; the era-anchor conditioning half is superseded for v1 by ADR-010. The
+ban on sequential chaining stands.
 
 **Context.** Chaining each generated image off its predecessor accumulates aesthetic drift
 and makes the asset graph a chain — scene 57 cannot be regenerated without touching 58–200.
@@ -168,6 +169,53 @@ displacement, no Depth Anything dependency. The 2.5D effect is a later phase.
   garnish rather than structure.
 - The `WIDE_RIDGE` framing risk (VISUAL_SPEC §3) is deferred with it.
 
+---
+
+## ADR-010 — Final scenes are generated from text only (Approach B)
+
+**Status:** accepted. Supersedes ADR-004's era-anchor conditioning for v1.
+
+**Context.** ADR-004 assumed an approved reference image would hold a photographic look across
+scenes. Two gates tested it on `gemini-3-pro-image-preview`, the model the finals use.
+
+- **Gate v1** ($0.56, 4 images). One content-rich Middle Jurassic anchor, then three Mesozoic
+  scenes (Late Triassic, Late Jurassic, Late Cretaceous) conditioned on it, text before image.
+  The anchor's content leaked: the first scene came back as a near re-edit of the anchor, and
+  across 150 million years the world showed no visible change. Conditioning on content
+  transfers content, not style.
+- **Gate v2** ($0.98, 7 images). An A/B across three consecutive chapters (Devonian estuary,
+  Carboniferous swamp, Permian interior), all held to one `WATER_EDGE` composition. Variant A
+  conditioned each scene on a content-free style reference (grey rock, flat sky, placed before
+  the text); variant B sent the identical prompt with no image. A added no meaningful
+  difference: the text did nearly all the work in both. Three very different worlds read as
+  one camera in one place, and the held framing dissolved between them as a morph. B's
+  Carboniferous frame did drift toward a concept-art register.
+
+**Decision.**
+- A final scene is rendered from text alone: invariant style spec + shot + composition
+  constraints + `WorldState`-rendered conditions + curated subject. No reference or anchor
+  image is sent.
+- The invariant style spec opens with an explicit register, "a real photograph: not concept
+  art, not digital painting, not CGI, not illustration", against the drift B-02 showed. It
+  stays camera-only (ADR-008).
+- One image model, `gemini-3-pro-image-preview`, through the existing generator. The pipeline
+  selects it through `pipeline/generators/registry.py`; nothing outside `pipeline/generators/`
+  names a provider or model.
+- Reference-image conditioning stays supported in the generator (`ImageRequest.reference`) but
+  is unused. The gate entry points are removed now that this ADR records their results.
+
+**Consequences.**
+- No anchor bottleneck: every scene is independent, regenerable alone, and costs one text
+  prompt. The graph is a PROMPT node and an IMAGE node per scene, never a chain.
+- Continuity rests entirely on composition discipline and the invariant spec, so composition
+  defines chapters. A chapter is a run of scenes sharing one composition (DESIGN §6), and the
+  viewer (web/src/scene) dissolves across a wide window within a chapter and a narrow,
+  cut-like one across a boundary. v1 therefore has **14 scenes in 2 chapters**, not one
+  chapter per scene, which would turn every transition into a cut: `molten-earth` (the magma
+  ocean, a `WIDE_RIDGE` vista, because it has no water to stand beside) and `waters-edge` (the
+  other 13, 4.3 Ga to the present, all on the `WATER_EDGE` composition gate v2 validated).
+- Register drift is guarded only by wording; review catches the rest (VISUAL_SPEC §7).
+- `Chapter.anchorImage` in the manifest schema is now always absent.
 
 ---
 
@@ -175,8 +223,10 @@ displacement, no Depth Anything dependency. The 2.5D effect is a later phase.
 
 Decisions deferred to Phase 1, to be recorded here once answered:
 
-- **Image model selection** — bake-off required (VISUAL_SPEC §8)
-- **Chapter count** — 8 vs 14 (DESIGN §14 q1)
+- ~~**Image model selection**~~ **RESOLVED by ADR-010:** `gemini-3-pro-image-preview` for
+  every final scene, text only, selected in `pipeline/generators/registry.py`.
+- **Chapter count** — 8 vs 14 (DESIGN §14 q1). v1 ships 14 scenes in 2 composition-defined
+  chapters (ADR-010); revisit once the finals can be scrubbed.
 - **Does depth displacement survive wide-vista framing** — deferred with ADR-009, revisit
   when the 2.5D phase begins
 - **Default timeline scale** — symlog vs density (DESIGN §14 q3)

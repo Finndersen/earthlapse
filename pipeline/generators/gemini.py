@@ -8,13 +8,11 @@ the ledger is saved at both points so a crash mid-call still leaves a record (pi
 from __future__ import annotations
 
 import base64
-import hashlib
 import json
 import math
 import os
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -31,7 +29,17 @@ from tenacity import (
     wait_exponential,
 )
 
-from pipeline.generators.image import ImageInfo, ImageRequest, ImageSize, PartKind, sniff_image
+from pipeline.generators.image import (
+    GeneratedImage,
+    GenerationFailed,
+    GeneratorUnavailable,
+    ImageRequest,
+    ImageSize,
+    MissingCredentials,
+    PartKind,
+    TokenUsage,
+    sniff_image,
+)
 from pipeline.graph import AssetNode, Candidate
 from pipeline.spend import Entry, Ledger
 
@@ -76,47 +84,24 @@ ESTIMATED_THOUGHT_TOKENS = 1500
 CHARS_PER_TOKEN_LOWER_BOUND = 3
 
 
-class GenerationFailed(RuntimeError):
-    """The call returned, and may have been billed, but carried no usable image."""
-
-
-class TokenUsage(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    prompt_tokens: int
-    text_output_tokens: int
-    image_output_tokens: int
-    thought_tokens: int
-
-    def cost_usd(self, price: ModelPrice) -> float:
-        return (
-            self.prompt_tokens * price.input_per_m
-            + (self.text_output_tokens + self.thought_tokens) * price.text_output_per_m
-            + self.image_output_tokens * price.image_output_per_m
-        ) / 1e6
-
-
-@dataclass(frozen=True)
-class GeneratedImage:
-    data: bytes
-    info: ImageInfo
-    usage: TokenUsage | None  # absent when the response omitted usageMetadata
-    cost_usd: float  # from usage when present, otherwise the pre-call estimate
-
-    @property
-    def digest(self) -> str:
-        return hashlib.sha256(self.data).hexdigest()[:16]
+def usage_cost_usd(usage: TokenUsage, price: ModelPrice) -> float:
+    return (
+        usage.prompt_tokens * price.input_per_m
+        + (usage.text_output_tokens + usage.thought_tokens) * price.text_output_per_m
+        + usage.image_output_tokens * price.image_output_per_m
+    ) / 1e6
 
 
 def load_api_key(env_file: Path) -> str:
     """The process environment wins; otherwise read the gitignored .env. Never log the result."""
     if value := os.environ.get(API_KEY_ENV):
         return value
-    for line in env_file.read_text().splitlines():
-        name, sep, value = line.partition("=")
-        if sep and name.strip() == API_KEY_ENV and value.strip():
-            return value.strip().strip("\"'")
-    raise KeyError(f"{API_KEY_ENV} is not set in the environment or in {env_file}")
+    if env_file.is_file():
+        for line in env_file.read_text().splitlines():
+            name, sep, value = line.partition("=")
+            if sep and name.strip() == API_KEY_ENV and value.strip():
+                return value.strip().strip("\"'")
+    raise MissingCredentials(f"{API_KEY_ENV} is not set in the environment or in {env_file}")
 
 
 def make_client(api_key: str, transport: httpx.BaseTransport | None = None) -> httpx.Client:
@@ -130,7 +115,7 @@ def make_client(api_key: str, transport: httpx.BaseTransport | None = None) -> h
 
 
 class GeminiImageGenerator:
-    """`Generator` (pipeline/graph.py) for the pinned image model."""
+    """`Generator` (pipeline/graph.py) and `ImageGenerator` (image.py) for the pinned model."""
 
     name = "google-ai-studio-image"
     version = MODEL_ID
@@ -176,11 +161,18 @@ class GeminiImageGenerator:
         self._ledger.save(self._ledger_path)
         try:
             body = self._post_with_backoff(build_request_body(request))
-        except httpx.HTTPStatusError:
+        except httpx.HTTPStatusError as err:
             self._settle(entry, 0.0)  # a rejected request is not billed
-            raise
+            status = err.response.status_code
+            if status in RETRYABLE_STATUS:
+                raise GeneratorUnavailable(f"{node.id}: HTTP {status} outlasted backoff") from err
+            raise GenerationFailed(f"{node.id}: HTTP {status}") from err
+        except httpx.TransportError as err:
+            # The request may have reached the provider and been billed, so the pessimistic
+            # reservation stands unsettled rather than being zeroed.
+            raise GenerationFailed(f"{node.id}: {type(err).__name__}: {err}") from err
         usage = parse_usage(body)
-        cost = usage.cost_usd(price) if usage is not None else estimate
+        cost = usage_cost_usd(usage, price) if usage is not None else estimate
         self._settle(entry, cost)
         data = extract_final_image(body)
         return GeneratedImage(data=data, info=sniff_image(data), usage=usage, cost_usd=cost)
@@ -210,12 +202,13 @@ def estimate_usd(request: ImageRequest, price: ModelPrice) -> float:
     prompt_tokens = math.ceil(len(request.prompt) / CHARS_PER_TOKEN_LOWER_BOUND)
     if request.reference is not None:
         prompt_tokens += price.input_image_tokens
-    return TokenUsage(
+    usage = TokenUsage(
         prompt_tokens=prompt_tokens,
         text_output_tokens=0,
         image_output_tokens=price.output_image_tokens[request.image_size],
         thought_tokens=ESTIMATED_THOUGHT_TOKENS,
-    ).cost_usd(price)
+    )
+    return usage_cost_usd(usage, price)
 
 
 def build_request_body(request: ImageRequest) -> dict[str, Any]:
