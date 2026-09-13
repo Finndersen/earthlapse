@@ -45,3 +45,5 @@ web/public/media
 
 # Harness-managed agent worktrees
 .claude/worktrees/
+.pnpm-store/
+web/.vitest/
