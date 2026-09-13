@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 65 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 66 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -69,10 +69,18 @@ verification than the rest, flagged as such in their own comment in `data/events
 and year were); `gymnosperm-radiation`'s Looy & Duijnstee (2020) citation likewise lacks a
 live-confirmed journal and volume.
 
+Both batches were then put through a scientific review (ADR-014), also by fetching source pages
+because WebSearch was exhausted. Its corrections are applied in `data/events.yaml`. Any
+bibliographic line that could not be confirmed against its DOI page carries an inline
+**UNVERIFIED** marker rather than being shipped as if checked: `first-seed-plants`,
+`late-devonian-extinction` (Becker & House year, Percival 2018), `gymnosperm-radiation` (no
+primary source yet, importance lowered to 0.35), `angiosperm-radiation` (Benton, Wilf & Sauquet
+year) and `younger-dryas` (Rasmussen 2006 volume and pages).
+
 **Contested dates** get a wide `t_min`/`t_max` interval and the word "contested" (or an
 explanation of the disagreement) in the description, rather than a single invented number.
 Contested in this file: `moon-forming-impact` (4.35 vs 4.51-4.52 Ga), `first-life` (3.4 vs
-4.1 Ga), `origin-of-photosynthesis` (2.0 vs disputed ~3.4 Ga biomarker claims),
+4.1 Ga), `origin-of-photosynthesis` (must predate the ~2.43 Ga Great Oxidation Event; disputed ~3.4 Ga biomarker claims),
 `eukaryotes-origin` (1.6 vs 2.1 Ga), `insects` (possible myriapod misidentification),
 `amniotes` (318-307 Ma uncontroversial vs a 2025 claim pushing crown Amniota to ~358.9-354 Ma),
 `dinosaurs` (231 vs 243 Ma), `flowering-plants` (undisputed ~130 Ma vs a disputed Triassic
@@ -82,13 +90,17 @@ crown), `hominins` (contested classification), `control-of-fire` (sporadic vs ha
 span over 1 Myr), and `k-pg-aftermath` (the fern spike's own duration is not precisely
 bounded, so the scene's interval is kept deliberately narrow and conservative). Also contested, among the 19
 events added for the Cenozoic scene work package: `india-asia-collision` (59-34 Ma, one of
-the most debated timing questions in Earth science), `antarctic-circumpolar-current` (34 Ma
-classic view vs a 2023 study arguing for the late Miocene), `isthmus-of-panama` (~2.8 Ma
-final closure vs biological evidence for a complex emergence up to ~10 Ma earlier),
+the most debated timing questions in Earth science), `antarctic-circumpolar-current` (34-21 Ma
+for the gateway and proto-current; the modern current late Miocene per Evangelinos et al. 2024),
+`isthmus-of-panama` (~2.8 Ma final closure vs stepwise emergence and a middle-Miocene closure
+of the deep seaway, 16 Ma),
 `messinian-salinity-crisis` (well-dated onset and end, but how dry the basin got and how
 catastrophic the refill was remain disputed), and `toba-eruption` (well-dated eruption, but
 its "volcanic winter" severity and effect on contemporary humans is heavily contested and
-increasingly doubted).
+increasingly doubted). Also contested: `carboniferous-rainforest-collapse` (scale and
+ecological effects; rainforest persisted in Cathaysia), `lomekwi-stone-tools` (sceptics
+question the Pliocene age), `earliest-cave-art` (the disputed >65 ka Iberian Neanderthal-art
+claim) and `acheulean-technology` (1.95 Ma at Melka Kunture vs 1.76 Ma at Kokiselei).
 
 ## Event selection and density
 
@@ -106,7 +118,7 @@ within the last ~1.5 Myr, where density is highest). `last-glacial-maximum` was 
 the first browser review so the ice-age scene (t = 20 ka) has a matching event.
 
 A further 16 events were added under ADR-014, ahead of a richer set of deep-time scene specs
-(`data/scenes-draft-deep.yaml`, older than 66 Ma) so each new scene has a matching event to
+(older than 66 Ma, now in `data/scenes.yaml`) so each new scene has a matching event to
 anchor to: `origin-of-photosynthesis`, `banded-iron-formations`, `first-seaweeds`,
 `great-ordovician-biodiversification`, `end-ordovician-extinction`, `first-forests`,
 `first-seed-plants`, `late-devonian-extinction`, `carboniferous-rainforest-collapse`,
@@ -129,8 +141,7 @@ inside that same 66 Ma-present range this source already covers, in time order:
 `isthmus-of-panama`, `messinian-salinity-crisis`, `lomekwi-stone-tools`,
 `australopithecus-afarensis`, `quaternary-glaciation-begins`, `homo-erectus`,
 `acheulean-technology`, `toba-eruption`, `earliest-cave-art`, `neanderthal-sapiens-overlap`,
-`younger-dryas`. Ten of these back a matching new scene in `data/scenes-draft-cenozoic.yaml`
-(not yet merged into `data/scenes.yaml`); the other nine (`india-asia-collision`,
+`younger-dryas`. Ten of these back a matching new scene in `data/scenes.yaml`; the other nine (`india-asia-collision`,
 `antarctic-circumpolar-current`, `hipparion-dispersal`, `isthmus-of-panama`,
 `lomekwi-stone-tools`, `quaternary-glaciation-begins`, `toba-eruption`, `earliest-cave-art`,
 `younger-dryas`) stand alone, either because no single vantage suits them (a plate-tectonic
@@ -139,13 +150,16 @@ with a neighbouring one (see the work-package report for the reasoning per event
 citation in this batch is weaker than the rest and is flagged inline in
 `paleocene-mammal-radiation`'s own citation field: its Pantolambda detail rests on a
 paraphrased Wikipedia summary rather than primary literature, the one point in this batch
-where the session's WebSearch budget ran out before a stronger source could be found. Five
+where the session's WebSearch budget ran out before a stronger source could be found. Six
 topics named in that work package's brief — domestication of dogs, first cities, the Bronze
-Age, the start of the Holocene, and a broad "megafauna extinctions" event distinct from
-`younger-dryas` — were **not** added: the session's WebSearch budget (a session-wide cap
+Age, the start of the Holocene, a broad "megafauna extinctions" event distinct from
+`younger-dryas`, and the printing press — were **not** added: the session's WebSearch budget (a session-wide cap
 shared across concurrent agents) was exhausted before they could be verified, and per this
 project's "verify, don't assert from memory" rule they were left out rather than guessed.
 They remain open follow-up work, not a judgement that they don't belong.
+
+The scientific review added one more, `early-eocene-climatic-optimum`, so the
+`arctic-hothouse-forest` scene (52 Ma) has a matching event. The set totals 66 events.
 
 ## Gotchas
 

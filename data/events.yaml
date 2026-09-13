@@ -69,21 +69,19 @@ events:
 
   - id: origin-of-photosynthesis
     label: Oxygenic photosynthesis evolves
-    t_min: 2.0e9
+    t_min: 2.43e9
     t_max: 3.4e9
     importance: 0.55
     description: >
       Cyanobacteria evolve oxygen-releasing (oxygenic) photosynthesis, the innovation that
-      eventually oxygenates the atmosphere. Contested and wide: claims of 2-methylhopane
-      biomarkers and stromatolite morphology pushing the origin to ~3.4-2.7 Ga remain
-      disputed, while thylakoid membranes (the structure housing the photosynthetic
-      machinery) are unambiguously preserved in ~1.75 Ga cherts and most geological
-      evidence places oxygenic photosynthesis as well established by ~2.0 Ga, several
-      hundred million years before it permanently oxygenated the atmosphere (the Great
-      Oxidation Event, below).
+      eventually oxygenates the atmosphere. It must predate the Great Oxidation Event (onset
+      ~2.46-2.43 Ga), and most estimates put cyanobacteria at 2.7 Ga or earlier. Claims
+      pushing the origin to ~3.4-3.0 Ga rest on disputed biomarkers and stromatolite
+      evidence, so the upper bound is contested.
     citation: >
       Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). "The rise of oxygen in Earth's
-      early ocean and atmosphere." Nature, 506, 307-315.
+      early ocean and atmosphere." Nature, 506, 307-315. Gumsley, A.P. et al. (2017).
+      "Timing and tempo of the Great Oxidation Event." PNAS, 114(8), 1811-1816.
 
   - id: eukaryotes-origin
     label: Eukaryotes originate
@@ -147,7 +145,7 @@ events:
       Re-Os dating.
 
   - id: first-seaweeds
-    label: First multicellular seaweeds
+    label: Early green seaweeds
     t_min: 7.9e8
     t_max: 1.0e9
     importance: 0.4
@@ -155,8 +153,8 @@ events:
       Proterocladus antiquus, a multicellular chlorophyte (green alga) from the Nanfen
       Formation, China, is described from over 1,000 specimens showing branching thalli,
       varied cell shapes and asexual resting spores — a fully multicellular seaweed body
-      plan roughly a billion years old. This scene sits later in the same broad Tonian
-      interval during which such macroscopic algae were established.
+      plan roughly a billion years old. Red algae (Bangiomorpha, ~1.05 Ga) had already
+      become multicellular slightly earlier.
     citation: >
       Tang, Q., Pang, K., Yuan, X. & Xiao, S. (2020). "A one-billion-year-old multicellular
       chlorophyte." Nature Ecology & Evolution, 4(4), 543-549.
@@ -214,7 +212,7 @@ events:
     importance: 0.6
     description: >
       Marine animal diversity rises sharply through the Ordovician as reef-building,
-      suspension-feeding and pelagic clades radiate, tripling genus-level diversity and
+      suspension-feeding and pelagic clades radiate, tripling the number of marine families and
       replacing the sparser Cambrian fauna with a richer, more modern-looking Paleozoic
       one. Neither instantaneous nor globally synchronous — different clades diversify at
       different times in different places.
@@ -244,8 +242,8 @@ events:
     description: >
       One of the "Big Five" mass extinctions, eliminating roughly 85% of marine species in
       two pulses: a first pulse tied to rapid Gondwanan glaciation and sea-level fall, a
-      second some hundred thousand years later tied to spreading ocean anoxia as the ice
-      retreated. Bracketing dates carry real uncertainty; the two-pulse structure is well
+      second later in the Hirnantian, tied to widespread ocean anoxia and euxinia that
+      persisted into the earliest Silurian. Bracketing dates carry real uncertainty; the two-pulse structure is well
       established.
     citation: >
       Sheehan, P.M. (2001). "The Late Ordovician Mass Extinction." Annual Review of Earth
@@ -286,17 +284,21 @@ events:
   - id: first-forests
     label: First forests
     t_min: 3.78e8
-    t_max: 3.86e8
+    t_max: 3.93e8
     importance: 0.55
     description: >
-      In-situ stumps at Gilboa, New York, preserve the earliest known forest: dense stands
-      of Eospermatopteris, a cladoxylopsid tree up to 8 m tall with a shallow root crown, a
-      lineage unrelated to (and pre-dating the ecological dominance of) the progymnosperm
-      Archaeopteris that supplants it as the dominant tree later in the Late Devonian.
+      The first forests appear in the Middle Devonian. The oldest known, ~390 Ma in Somerset,
+      England, is a stand of Calamophyton, a small cladoxylopsid tree; at Gilboa, New York,
+      slightly younger stumps preserve dense stands of the taller cladoxylopsid
+      Eospermatopteris. Archaeopteris, the first tree with true wood and fern-like leafy
+      branches, is present by ~385 Ma and dominates Late Devonian forests.
     citation: >
-      Stein, W.E., Mannolini, F., Hernick, L.V., Landing, E. & Berry, C.M. (2007). "Giant
-      cladoxylopsid trees resolve the enigma of the Earth's earliest forest stumps at
-      Gilboa." Nature, 446(7138), 904-907.
+      Davies, N.S., McMahon, W.J. & Berry, C.M. (2024). "Earth's earliest forest: fossilized
+      trees and vegetation-induced sedimentary structures from the Middle Devonian (Eifelian)
+      Hangman Sandstone Formation, Somerset and Devon, SW England." Journal of the Geological
+      Society, doi:10.1144/jgs2023-204. Stein, W.E., Mannolini, F., Hernick, L.V., Landing, E.
+      & Berry, C.M. (2007). "Giant cladoxylopsid trees resolve the enigma of the Earth's
+      earliest forest stumps at Gilboa." Nature, 446(7138), 904-907.
 
   - id: first-seed-plants
     label: First seed plants
@@ -311,11 +313,10 @@ events:
       earlier, without yet being a true seed.
     citation: >
       Rothwell, G.W., Scheckler, S.E. & Gillespie, W.H. (1989). "Elkinsia gen. nov., a Late
-      Devonian gymnosperm with cupulate ovules." Botanical Gazette, 150(2), 170-189. NOTE:
-      author and year (Rothwell, 1989) and the Elkinsia/Late-Devonian/~370 Ma facts were
-      confirmed via a live fetch; the full title/journal/volume/pages above come from training
-      knowledge and were not independently confirmed live — see sources/events-core/README.md
-      "Verification method".
+      Devonian gymnosperm with cupulate ovules." Botanical Gazette, 150(2), 170-189. UNVERIFIED:
+      author, year and the Elkinsia/Late-Devonian/~370 Ma facts were confirmed live; the title,
+      journal, volume and pages were not — see sources/events-core/README.md "Verification
+      method".
 
   - id: late-devonian-extinction
     label: Late Devonian mass extinction
@@ -329,12 +330,12 @@ events:
       reef-building and marine vertebrate diversity and triggering marked body-size
       reduction among surviving fish lineages.
     citation: >
-      Becker, R.T. & House, M.R. (1986). "Kellwasser Events and goniatite successions in
-      the Devonian of the Montagne Noire." Courier Forschungsinstitut Senckenberg, 169,
-      45-77. Sallan, L. & Galimberti, A.K. (2015). "Body-size reduction in vertebrates
+      Becker, R.T. & House, M.R. "Kellwasser Events and goniatite successions in the
+      Devonian of the Montagne Noire." Courier Forschungsinstitut Senckenberg, 169, 45-77
+      (UNVERIFIED: the year is given as 1986 but looks inconsistent with that volume). Sallan, L. & Galimberti, A.K. (2015). "Body-size reduction in vertebrates
       following the end-Devonian mass extinction." Science, 350(6262), 812-815. Percival,
       L.M.E. et al. (2018). "Precisely dating the Frasnian-Famennian boundary." Scientific
-      Reports, 8, 9578.
+      Reports, 8, 9578 (UNVERIFIED: bibliographic line not confirmed against its DOI page).
 
   - id: amniotes
     label: First amniotes
@@ -360,35 +361,33 @@ events:
     t_max: 3.07e8
     importance: 0.5
     description: >
-      The vast equatorial coal-swamp rainforests fragment and largely vanish within a few
-      hundred thousand years as the climate swings from humid to arid, driven by cooling
-      and falling CO2 during the waning Late Paleozoic Ice Age; sea level falls roughly
-      100 m as Gondwanan ice sheets expand. Lycopsid swamp forest is replaced by drier,
-      seed-fern- and early-conifer-dominated vegetation across the Carboniferous-Permian
-      boundary.
+      Around 305 Ma the lycopsid-dominated coal-swamp rainforests of equatorial Euramerica
+      fragment into isolated refugia and give way to tree-fern-dominated vegetation as the
+      climate dries; in Cathaysia (China) such rainforests persist until the end of the
+      Permian. The scale and ecological effects are contested.
     citation: >
-      Montanez, I.P. et al. (2007). "CO2-forced climate and vegetation instability during
-      late Paleozoic deglaciation." Science, 315(5808), 87-91. Gulbranson, E.L. et al.
-      (2014). "Late Pennsylvanian aridification on the southwestern margin of Gondwana."
-      Palaeogeography, Palaeoclimatology, Palaeoecology, 417, 220-235.
+      Sahney, S., Benton, M.J. & Falcon-Lang, H.J. (2010). "Rainforest collapse triggered
+      Carboniferous tetrapod diversification in Euramerica." Geology, 38(12), 1079-1082.
+      Dunne, E.M. et al. (2018). Proceedings of the Royal Society B (contests the effect on
+      tetrapod diversity). Montanez, I.P. et al. (2007). "CO2-forced climate and vegetation
+      instability during late Paleozoic deglaciation." Science, 315(5808), 87-91.
 
   - id: gymnosperm-radiation
     label: Conifers and gymnosperms radiate
     t_min: 2.9e8
     t_max: 3.1e8
-    importance: 0.45
+    importance: 0.35
     description: >
-      As the coal-swamp lycopsids retreat with the Carboniferous rainforest collapse
-      (above), walchian conifers (Voltziales, e.g. Walchia) spread rapidly across the
-      newly drier ground — the first conifers, and part of a broader seed-plant
-      (gymnosperm) radiation that comes to dominate Permian and Triassic vegetation.
+      As the coal-swamp lycopsids retreat with the Carboniferous rainforest collapse (above),
+      walchian conifers (Voltziales, e.g. Walchia) spread across drier ground. They are among
+      the earliest conifers, which first appear in the Middle Pennsylvanian, before this
+      interval; it marks their spread within a broader seed-plant (gymnosperm) radiation that
+      comes to dominate Permian and Triassic vegetation.
     citation: >
-      Fossil record of Walchia and allied early Voltziales, Upper Pennsylvanian to Lower
-      Permian (Wikipedia, "Walchia" / "Voltziales," each live-fetched). Looy, C.V. &
-      Duijnstee, I.A.P. (2020), on voltzialean cone evolution through the Guadalupian. NOTE:
-      the author names and 2020 date for Looy & Duijnstee were live-fetched; its journal and
-      volume were not independently confirmed — see sources/events-core/README.md
-      "Verification method".
+      UNVERIFIED: no primary source confirmed yet. Walchian conifer ranges were checked only
+      against encyclopaedia summaries (Wikipedia, "Walchia" and "Voltziales"); Looy, C.V. &
+      Duijnstee, I.A.P. (2020) on voltzialean cone evolution has its authors and year
+      confirmed but not its journal or volume.
 
   - id: siberian-traps
     label: Siberian Traps eruptions
@@ -532,8 +531,9 @@ events:
     citation: >
       Lloyd, G.T. et al. (2008). "Dinosaurs and the Cretaceous Terrestrial Revolution."
       Proceedings of the Royal Society B, 275(1650), 2483-2490. Benton, M.J., Wilf, P. &
-      Sauquet, H. (2021). "The Angiosperm Terrestrial Revolution and the origins of
-      modern biodiversity." New Phytologist, 233(5), 2017-2035.
+      Sauquet, H. "The Angiosperm Terrestrial Revolution and the origins of modern
+      biodiversity." New Phytologist, 233(5), 2017-2035 (UNVERIFIED: year given as 2021; the
+      volume may be dated 2022).
 
   - id: deccan-traps
     label: Deccan Traps eruptions
@@ -571,7 +571,7 @@ events:
     t_max: 6.6043e7
     importance: 0.5
     description: >
-      In the first few thousand years after the Chicxulub impact, sections worldwide (most
+      Over roughly the first thousand years at well-dated sites after the Chicxulub impact, sections worldwide (most
       densely sampled in North America and New Zealand) record a sharp spike in fern
       spores — a "fern spike" — as ferns, opportunistic recolonisers of disturbed ground,
       dominate a landscape stripped of the forest that stood before impact.
@@ -582,20 +582,21 @@ events:
 
   - id: paleocene-mammal-radiation
     label: Paleocene mammal radiation
-    t_min: 5.58e7
+    t_min: 5.6e7
     t_max: 6.6043e7
     importance: 0.5
     description: >
       In the aftermath of the K-Pg extinction, placental mammals rapidly radiate to fill the
-      large-herbivore niches the non-avian dinosaurs left empty. Pantodonts such as
-      Pantolambda, a heavy-bodied browsing mammal, appear by the mid-Paleocene; the interval
-      here spans this radiation, from the extinction itself to the close of the Paleocene.
+      large-herbivore niches the non-avian dinosaurs left empty: mammal maximum body size is
+      near pre-extinction values within ~100 kyr and has tripled by ~300 kyr. Pantodonts such
+      as Pantolambda, a heavy-bodied browsing mammal, appear by the mid-Paleocene; the
+      interval spans the radiation from the extinction to the close of the Paleocene.
     citation: >
-      Halliday, T.J.D., Upchurch, P. & Goswami, A. (2015). "Resolving the relationships of
-      Paleocene placental mammals." Biological Reviews, 92(1), 521-550. Pantolambda as an
-      early large-bodied pantodont per Wikipedia, "Pantolambda" (paraphrased tertiary
-      source, not a primary date reference — the weakest citation in this batch). K-Pg
-      boundary age 66.043 Ma per Renne et al. (2013), this file's k-pg-impact entry.
+      Lyson, T.R. et al. (2019). "Exceptional continental record of biotic recovery after the
+      Cretaceous-Paleogene mass extinction." Science, 366, 977-983. Halliday, T.J.D.,
+      Upchurch, P. & Goswami, A. (2017; online 2015). "Resolving the relationships of
+      Paleocene placental mammals." Biological Reviews, 92(1), 521-550. Pantolambda ~63-57 Ma
+      per Wikipedia, "Pantolambda" (tertiary; the weakest source in this record).
 
   - id: primates
     label: First primates
@@ -623,8 +624,9 @@ events:
       rapid onset (on the order of 6 kyr) is followed by a ~100-170 kyr warm "body" phase and
       a slower ~50-135 kyr recovery.
     citation: >
-      "Constraints on the onset duration of the Paleocene-Eocene Thermal Maximum."
-      Philosophical Transactions of the Royal Society A, 376(2130), 20170082 (2018). Onset
+      Kirtland Turner, S. (2018). "Constraints on the onset duration of the Paleocene-Eocene
+      Thermal Maximum." Philosophical Transactions of the Royal Society A, 376(2130),
+      20170082. Onset
       dated to 55.9-56.0 Ma.
 
   - id: india-asia-collision
@@ -645,10 +647,25 @@ events:
       sediment-provenance estimate per "The timing of India-Asia collision onset: facts,
       theories, controversies," Earth-Science Reviews (2016).
 
+  - id: early-eocene-climatic-optimum
+    label: Early Eocene Climatic Optimum
+    t_min: 4.9e7
+    t_max: 5.4e7
+    importance: 0.55
+    description: >
+      The warmest sustained interval of the last 66 million years. Swamp forests,
+      crocodilians and year-round mammal residents such as Coryphodon live above the Arctic
+      Circle. Published bounds vary, from about 53-50 Ma to about 54-49 Ma.
+    citation: >
+      Woodburne, M.O., Gunnell, G.F. & Stucky, R.K. (2009). PNAS, 106(32), 13399-13403 (EECO
+      53-50 Ma). Eberle, J.J. et al. (2014). PLOS ONE, 9(5), e96079. Eberle, J.J., Fricke,
+      H.C. & Humphrey, J.D. (2009). "Lower-latitude mammals as year-round residents in Eocene
+      Arctic forests." Geology, 37, 499-502.
+
   - id: eocene-oligocene-transition
     label: Eocene-Oligocene transition; first Antarctic ice sheet
-    t_min: 3.36e7
-    t_max: 3.41e7
+    t_min: 3.365e7
+    t_max: 3.44e7
     importance: 0.75
     description: >
       Earth's climate steps from the early Cenozoic greenhouse into the modern icehouse: the
@@ -657,33 +674,35 @@ events:
       time. The associated cooling drives a major mammalian faunal turnover in Europe known
       as the Grande Coupure.
     citation: >
-      Coxall, H.K. et al. (2005). "Rapid stepwise onset of Antarctic glaciation and deep-sea
+      Hutchinson, D.K. et al. (2021). "The Eocene-Oligocene transition: a review of marine
+      and terrestrial proxy data, models and model-data comparisons." Climate of the Past, 17,
+      269 (EOT 34.44-33.65 Ma). Coxall, H.K. et al. (2005). "Rapid stepwise onset of Antarctic glaciation and deep-sea
       acidification in the late Eocene." Nature, 433, 53-57. Eocene-Oligocene boundary age
       33.9 Ma per the ICS International Chronostratigraphic Chart v2024/12. "Grande Coupure"
       term coined by Stehlin, H.G. (1910).
 
   - id: antarctic-circumpolar-current
-    label: Antarctic Circumpolar Current begins
+    label: Drake Passage opens; proto-Antarctic Circumpolar Current
     t_min: 2.1e7
     t_max: 3.4e7
     importance: 0.45
     description: >
-      The opening of the Drake Passage lets a continuous eastward current encircle
-      Antarctica, thermally isolating the continent and reinforcing its ice sheet. Contested
-      and poorly constrained: estimates for the current's onset range from the classic
-      Eocene-Oligocene boundary (~34 Ma) through 31-26 Ma to 23.5 +/- 2.5 Ma, and a 2023 study
-      proposes the modern, deep-reaching current did not fully establish until the late
-      Miocene, later still.
+      The opening of the Drake Passage lets an eastward current begin to encircle Antarctica,
+      thermally isolating the continent. Contested and poorly constrained: estimates for the
+      onset range from the Eocene-Oligocene boundary (~34 Ma) through 31-26 Ma to
+      23.5 +/- 2.5 Ma for a proto-current. The modern, deep-reaching current came later:
+      Evangelinos et al. (2024) place its onset in the late Miocene, so this interval marks
+      the gateway opening, not the modern current.
     citation: >
-      "Late Miocene onset of the modern Antarctic Circumpolar Current." Nature Geoscience
-      (2023) (younger, contested estimate). "Drake Passage gateway opening and Antarctic
+      Evangelinos, D. et al. (2024). "Late Miocene onset of the modern Antarctic Circumpolar
+      Current." Nature Geoscience, 17, 165-170. "Drake Passage gateway opening and Antarctic
       Circumpolar Current onset 31 Ma ago: The message of foraminifera and reconsideration of
       the Neodymium isotope record." Chemical Geology (2021) (31-26 Ma estimate).
 
   - id: grassland-spread
     label: Spread of C3 grasslands
     t_min: 1.55e7
-    t_max: 2.0e7
+    t_max: 2.3e7
     importance: 0.55
     description: >
       The first definitive grass-dominated open habitats appear in the early Miocene, though
@@ -693,6 +712,9 @@ events:
       grassland-dominated world that later culminates in the Late Neogene spread of C4
       grasses.
     citation: >
+      Stromberg, C.A.E. (2005). "Decoupled taxonomic radiation and ecological expansion of
+      open-habitat grasses in the Cenozoic of North America." PNAS, 102, 11980-11984
+      (open-habitat grass dominance in North America by the late Oligocene-early Miocene).
       Stromberg, C.A.E. (2011). "Evolution of Grasses and Grassland Ecosystems." Annual
       Review of Earth and Planetary Sciences, 39, 517-544.
 
@@ -714,21 +736,23 @@ events:
 
   - id: c4-expansion
     label: C4 grasses expand across the tropics
-    t_min: 6.0e6
+    t_min: 5.0e6
     t_max: 8.0e6
     importance: 0.65
     description: >
       Carbon-isotope evidence from fossil soils and tooth enamel across multiple continents
-      records a rapid, near-global replacement of C3-dominated woodland and grassland by
-      C4-dominated open savanna in the late Miocene — a major shift in the base of
-      terrestrial food webs and the habitat in which the human lineage's own later evolution
-      plays out.
+      records the late Miocene replacement of C3-dominated woodland and grassland by
+      C4-dominated open savanna, a major shift in the base of terrestrial food webs and the
+      habitat in which the human lineage's own later evolution plays out. Timing varied by
+      region, and C3 woodland persisted in places such as Greece (Quade, Solounias & Cerling
+      1994).
     citation: >
-      Quade, J., Solounias, N. & Cerling, T.E. (1994), carbon-isotope reconstruction of Late
-      Miocene vegetation in Greece from paleosol carbonates and fossil tooth enamel, as
-      reported in the Miocene C4-isotope literature (e.g. "High-resolution isotopic record of
-      C4 photosynthesis in a Miocene grassland," Palaeogeography, Palaeoclimatology,
-      Palaeoecology).
+      Cerling, T.E., Harris, J.M., MacFadden, B.J., Leakey, M.G., Quade, J., Eisenmann, V. &
+      Ehleringer, J.R. (1997). "Global vegetation change through the Miocene/Pliocene
+      boundary." Nature, 389, 153-158. Cerling, T.E., Ehleringer, J.R. & Harris, J.M. (1998).
+      Phil. Trans. R. Soc. B, 353, 159-170 (C4 biomass in mammal diets in Asia, Africa, North
+      and South America ~8-5 Ma). Uno, K.T. et al. (2011). PNAS, 108, 6509-6514 (East African
+      bovids on C4-dominated diets by 7.4 Ma; equids taking significant C4 by ~9.9-9.6 Ma).
 
   - id: hominins
     label: First hominins
@@ -749,20 +773,21 @@ events:
   - id: isthmus-of-panama
     label: Isthmus of Panama forms
     t_min: 2.8e6
-    t_max: 1.0e7
+    t_max: 1.6e7
     importance: 0.55
     description: >
       A continuous land connection rises between North and South America, closing the
       Central American Seaway and triggering the Great American Biotic Interchange.
-      Contested: one synthesis dates final closure to ~2.8 Ma, while a separate biological
-      and paleontological analysis argues an emergent, complex land connection — and
-      substantial faunal interchange — was already underway up to roughly 10 million years
-      earlier.
+      Contested: one synthesis dates final closure to ~2.8 Ma (O'Dea et al. 2016),
+      biological evidence argues for earlier, stepwise emergence (Bacon et al. 2015), and
+      detrital-zircon evidence suggests the deep seaway had already closed by the middle
+      Miocene (Montes et al. 2015).
     citation: >
       O'Dea, A. et al. (2016). "Formation of the Isthmus of Panama." Science Advances, 2(8),
       e1600883 (~2.8 Ma final closure). Bacon, C.D. et al. (2015). "Biological evidence
       supports an early and complex emergence of the Isthmus of Panama." PNAS, 112(19),
-      6110-6115 (contested, early-emergence hypothesis).
+      6110-6115 (contested, early-emergence hypothesis). Montes, C. et al.
+      (2015). "Middle Miocene closure of the Central American Seaway." Science, 348, 226-229.
 
   - id: messinian-salinity-crisis
     label: Messinian salinity crisis
@@ -770,15 +795,18 @@ events:
     t_max: 5.96e6
     importance: 0.55
     description: >
-      Tectonic restriction of the Strait of Gibraltar isolates the Mediterranean from the
-      Atlantic; extreme evaporation deposits kilometre-scale salt beds across the basin
-      floor. The crisis ends when the strait reopens at 5.33 Ma and Atlantic water refills
-      the basin in the Zanclean flood. Contested: how dry the basin actually became, and how
+      Tectonic closure of the Atlantic gateways, the Betic and Rifian corridors through
+      southern Spain and northern Morocco, isolates the Mediterranean from the Atlantic;
+      extreme evaporation deposits kilometre-scale salt beds across the basin floor. The
+      crisis ends at 5.33 Ma when Atlantic water floods back through the Strait of Gibraltar
+      in the Zanclean flood. Contested: how dry the basin actually became, and how
       catastrophic the final refill was, remain disputed.
     citation: >
-      Garcia-Castellanos, D. et al. (2009). "Catastrophic flood of the Mediterranean after
-      the Messinian Salinity Crisis." Nature, 462, 778-781. Onset 5.96 +/- 0.02 Ma; Atlantic
-      isolation established 5.59-5.33 Ma.
+      Krijgsman, W., Hilgen, F.J., Raffi, I., Sierro, F.J. & Wilson, D.S. (1999). "Chronology,
+      causes and progression of the Messinian salinity crisis." Nature, 400, 652-655 (onset
+      chronology). Garcia-Castellanos, D. et al. (2009). "Catastrophic flood of the
+      Mediterranean after the Messinian Salinity Crisis." Nature, 462, 778-781 (Zanclean
+      reflooding).
 
   - id: lomekwi-stone-tools
     label: Oldest known stone tools (Lomekwi 3)
@@ -789,13 +817,16 @@ events:
       Stone artefacts at Lomekwi 3, West Turkana, Kenya, predate the Oldowan industry by
       roughly 700,000 years and are the oldest known deliberately flaked stone tools — made
       500,000 years before the genus Homo appears in the fossil record, contradicting the
-      long-standing assumption that toolmaking began with Homo.
+      long-standing assumption that toolmaking began with Homo. Questioned: some
+      researchers remain sceptical that the artefacts are securely of Pliocene age.
     citation: >
       Harmand, S. et al. (2015). "3.3-million-year-old stone tools from Lomekwi 3, West
-      Turkana, Kenya." Nature, 521, 310-315.
+      Turkana, Kenya." Nature, 521, 310-315. Dominguez-Rodrigo, M. & Alcala, L.
+      (2019). "Pliocene Archaeology at Lomekwi 3? New Evidence Fuels More Skepticism." Journal
+      of African Archaeology, doi:10.1163/21915784-20190006.
 
   - id: australopithecus-afarensis
-    label: Australopithecus afarensis ("Lucy")
+    label: "Lucy (AL 288-1), Australopithecus afarensis"
     t_min: 3.18e6
     t_max: 3.22e6
     importance: 0.65
@@ -807,10 +838,11 @@ events:
       Discovered by Donald Johanson's team, Hadar, Ethiopia, 24 November 1974. Age and
       description per the Natural History Museum, "Australopithecus afarensis, Lucy's
       species," and Britannica, "Lucy | Australopithecus afarensis, 3.2 Million Years,
-      Ethiopia."
+      Ethiopia." Smithsonian National Museum of Natural History, Human Origins Program,
+      "Australopithecus afarensis" (species range ~3.85-2.95 Ma).
 
   - id: quaternary-glaciation-begins
-    label: Quaternary glaciation begins
+    label: Quaternary Period begins
     t_min: 2.58e6
     t_max: 2.58e6
     importance: 0.6
@@ -829,29 +861,33 @@ events:
     importance: 0.7
     description: >
       Homo erectus, the first hominin with fully modern human body proportions, appears in
-      East Africa. The oldest confirmed fossil, KNM-ER 2598, is securely dated to older than
+      Africa. The oldest confirmed fossil, KNM-ER 2598, is securely dated to older than
       1.855 Ma; the species is conventionally held to have evolved roughly 2 million years
       ago, and its fossils persist across Africa and Asia for well over a million years
       afterward.
     citation: >
       "New hominin remains and revised context from the earliest Homo erectus locality in
       East Turkana, Kenya." Nature Communications (2021), article s41467-021-22208-x
-      (KNM-ER 2598, >1.855 Ma).
+      (KNM-ER 2598, >1.855 Ma). Herries, A.I.R. et al. (2020). "Contemporaneity of
+      Australopithecus, Paranthropus, and early Homo erectus in South Africa." Science, 368,
+      eaaw7293 (DNH 134, ~2.04-1.95 Ma). Mussi, M. et al. (2023). Science, eadd9115 (Melka
+      Kunture mandible ca. 2 Ma).
 
   - id: acheulean-technology
     label: Acheulean handaxe technology begins
     t_min: 1.72e6
-    t_max: 1.76e6
+    t_max: 1.95e6
     importance: 0.5
     description: >
-      Symmetrical, bifacially flaked handaxes appear at Kokiselei, West Turkana, Kenya — the
-      oldest known Acheulean tools, roughly 350,000 years older than the previously accepted
-      start of the industry, and a marked advance in complexity over the simple Oldowan
-      flakes that preceded them.
+      Symmetrical, bifacially flaked handaxes appear by about 1.95 Ma at Melka Kunture,
+      Ethiopia, and by 1.76 Ma at Kokiselei, West Turkana, Kenya, a marked advance in
+      complexity over the simple Oldowan flakes that preceded them.
     citation: >
-      Lepre, C.J. et al. (2011). "An earlier origin for the Acheulian." Nature, 477, 82-85.
-      Kokiselei 4 dated to 1.76 Ma (nonlinear interpolation) / 1.72 Ma (linear interpolation)
-      via magnetostratigraphy bracketed by dated volcanic ash.
+      Mussi, M. et al. (2023). "Early Homo erectus lived at high altitudes and produced both
+      Oldowan and Acheulean tools." Science, eadd9115. Lepre, C.J. et al. (2011). "An earlier
+      origin for the Acheulian." Nature, 477, 82-85. Kokiselei 4 dated to 1.76 Ma (nonlinear
+      interpolation) / 1.72 Ma (linear interpolation) via magnetostratigraphy bracketed by
+      dated volcanic ash.
 
   - id: control-of-fire
     label: Habitual control of fire
@@ -899,9 +935,9 @@ events:
       archaeological evidence showing human populations persisted through the eruption
       without a severe bottleneck.
     citation: >
-      Dated to 73.88 +/- 0.32 ka per reporting summarised by the Max Planck Institute for
-      Geoanthropology, "Human Populations Survived the Toba Volcanic Super-Eruption 74,000
-      Years Ago" (2020). Contested effects per "Understanding the overestimated impact of the
+      Storey, M., Roberts, R.G. & Saidin, M. (2012). "Astronomically calibrated 40Ar/39Ar age
+      for the Toba supereruption and global synchronization of late Quaternary records."
+      PNAS, 109, 18684-18688 (73.88 +/- 0.32 ka, 1 sigma). Contested effects per "Understanding the overestimated impact of the
       Toba volcanic super-eruption on global environments and ancient hominins,"
       Earth-Science Reviews (2020).
 
@@ -923,18 +959,20 @@ events:
 
   - id: earliest-cave-art
     label: Earliest known cave and rock art
-    t_min: 5.12e4
-    t_max: 6.78e4
+    t_min: 6.4e4
+    t_max: 7.16e4
     importance: 0.6
     description: >
-      The oldest currently dated rock art is a hand stencil in Liang Metanduno cave,
-      Sulawesi, Indonesia, at least 67,800 years old; the oldest dated narrative scene —
-      humans and animals painted together to tell a story — is at Leang Karampuang, Sulawesi,
-      at least 51,200 years old. Both ages are laser-ablation U-series minimum ages, so the
-      true age of either artwork could be older still.
+      The oldest securely dated cave art is a hand stencil in Liang Metanduno, Muna Island,
+      Sulawesi, at least 67,800 +/- 3,800 years old (a laser-ablation U-series minimum age).
+      Narrative art, human-like figures with a pig, follows at Leang Karampuang, Sulawesi, by
+      51,200 years ago. Contested: U-Th ages of over 65,000 years for Iberian cave art
+      attributed to Neanderthals have been disputed, with critics arguing for ~47,000 years.
     citation: >
-      "Rock art from at least 67,800 years ago in Sulawesi." Nature (2026). Aubert, M. et al.
-      (2024). "Narrative cave art in Indonesia by 51,200 years ago." Nature, 631, 813-818.
+      Oktaviana, A.A. et al. (2026). "Rock art from at least 67,800 years ago in Sulawesi."
+      Nature, 650, 652-656. Oktaviana, A.A. et al. (2024). "Narrative cave art in Indonesia by
+      51,200 years ago." Nature, 631, 814-818. Hoffmann, D.L. et al. (2018). Science, 359,
+      912-915. Slimak, L. et al. (2018). Science, 361, eaau1371 (comment).
 
   - id: neanderthal-sapiens-overlap
     label: Neanderthals and Homo sapiens overlap in Europe
@@ -979,7 +1017,8 @@ events:
       decades — one of the fastest, largest climate swings of the whole glacial termination.
     citation: >
       Younger Dryas dated to approximately 12,900-11,700 years ago per Britannica, "Younger
-      Dryas | Definition, Causes, & Termination."
+      Dryas | Definition, Causes, & Termination." Rasmussen, S.O. et al. (2006), GICC05
+      Greenland ice-core chronology (volume and pages UNVERIFIED).
 
   - id: agriculture
     label: Agriculture begins

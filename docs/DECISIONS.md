@@ -394,112 +394,81 @@ impacts, flood basalts.
 
 ---
 
-## ADR-014 — A fifth shot, `UNDERWATER`, and a draft of deep-time scenes older than 66 Ma
+## ADR-014 — Richer scene coverage in the one `waters-edge` chapter; no new shot type
 
-**Status:** accepted (human-directed 2026-09-13).
+**Status:** accepted — human-directed 2026-09-13.
 
-**Context.** The human asked, ahead of spending the image budget, for much richer scene
-coverage of deep time: organic evolution from the origin of life through the first land
-plants and animals, plant evolution from spore-bearers through seeds to flowers and
-insect pollination, and the K-Pg extinction as an arrival-of-the-asteroid image plus an
-aftermath image. The existing camera grammar (VISUAL_SPEC §3) has four shots, all of them
-framed from land or a shoreline. The Cambrian explosion — trilobites, radiodonts,
-Hallucigenia, our own lineage's Haikouichthys — happened entirely on the open sea floor;
-no existing shot can honestly frame it, and forcing it into `WATER_EDGE` (a fish's-eye
-view from the shallows, per the existing scenes' composition) would misrepresent a fauna
-that lived below the photic shoreline, not at its edge.
+**Context.** Before spending the image budget the human asked for much richer scene coverage:
+organic evolution from the origin of life to the first land plants and animals, plant evolution
+from spores to seeds to flowers and insect pollination, the K-Pg extinction as an arrival image
+plus an aftermath image, and more events between 66 Ma and the present. Two work packages
+drafted scenes (deep time older than 66 Ma; the Cenozoic) and events, and two reviewers checked
+them against sources. ADR-014 was reserved for any new shot types or chapters this needed. One
+exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
 
 **Decision.**
-- A fifth shot, `UNDERWATER`: camera fully submerged at mid-water depth, looking
-  horizontally across the sea floor, light shafts from above. Added to `Shot` and
-  `SHOT_TYPE` in `pipeline/prompts.py`, the camera-grammar table in VISUAL_SPEC §3, and
-  additively to `Scene.shot` in `web/src/types/manifest.ts` (the union gains
-  `'UNDERWATER'`; every existing scene is unaffected). A matching `Composition.
-  UNDERWATER_SERIES` and `COMPOSITION_CONSTRAINTS` entry hold its own frame layout,
-  mirroring how `WATER_EDGE_SERIES` and `RIDGE_VISTA` are built.
-- 17 new scene specs, unpinned, drafted into a new file, `data/scenes-draft-deep.yaml`
-  (same schema as `data/scenes.yaml`, loads through the same `SceneBook` loader), spanning
-  a contested ~3.9 Ga origin-of-life setting through a K-Pg aftermath scene a few
-  thousand years after impact. Organised into three chapters: `primordial-seas`
-  (`WATER_EDGE`, four scenes from origin-of-life to the first multicellular seaweeds),
-  `cambrian-seafloor` (`UNDERWATER`, one scene), and `greening-world` (`WATER_EDGE`, the
-  remaining twelve scenes from the Ordovician shore through the K-Pg pair). Every scene's
-  date, organisms and environment are cited against primary literature or the ICS chart
-  in a comment block above the record, per the existing file's convention; `unsourced`
-  atmosphere/temperature figures follow that field's own documented convention (rounded,
-  plausible, not citations, per `data/scenes.yaml`'s header and `UnsourcedConditions`'
-  docstring) rather than being independently sourced.
-- `data/scenes.yaml`'s `devonian-estuary` scene is fixed in place: its Tiktaalik
-  description named "a crocodile-like head", which the SCENE SPEC RULES this brief
-  operated under specifically call out as a failure mode (likeness to a modern animal
-  gets drawn instead of the animal described) — the fix describes it by diagnostic fish
-  anatomy (lobe fins with fin rays, overlapping scales, a gill region, a flattened head,
-  a fish tail, mostly submerged) instead. Its pin is cleared so it regenerates; the
-  cleared pin's digest and path are kept in a YAML comment for reference.
-- 16 new events are added to `data/events.yaml`, verified against primary literature via
-  live web fetches (WebSearch was unavailable for this run — its session budget was
-  already spent by other concurrent work — so citations were verified by fetching the
-  actual source page rather than from model memory), each inserted near its
-  chronological neighbours: `origin-of-photosynthesis`, `banded-iron-formations`,
-  `first-seaweeds`, `great-ordovician-biodiversification`, `end-ordovician-extinction`,
-  `first-forests`, `first-seed-plants`, `late-devonian-extinction`,
-  `carboniferous-rainforest-collapse`, `gymnosperm-radiation`, `siberian-traps`,
-  `end-triassic-extinction`, `earliest-pollinating-insects`, `angiosperm-radiation`,
-  `deccan-traps`, `k-pg-aftermath`. Three requested topics were skipped as already
-  covered by an existing event, not added as duplicates: "first eukaryotic algae" (the
-  existing `eukaryotes-origin` event's own citation, Bengtson et al. 2017, already
-  describes 1.6 Ga crown-group red algae), "first vascular plants" (the existing
-  `land-plants` event's upper bound is already Cooksonia, ~425 Ma), and "first flowers"
-  (the existing `flowering-plants` event).
+- **No new shot type or chapter.** Every new scene joins the existing `waters-edge` chapter
+  (`WATER_EDGE` shot, `water-edge-series` composition), so `data/scenes.yaml` still holds two
+  chapters: `molten-earth` then `waters-edge`.
+- **`UNDERWATER` was drafted and then withdrawn** before any image was built. Two reasons:
+  - A single `UNDERWATER` scene at 518 Ma would split `waters-edge` into two runs.
+    `pipeline/scenes.py` forbids that, so it would force a chapter split and two extra
+    near-cuts (DESIGN §6).
+  - The Chengjiang biota lived on a shallow, muddy delta front, not a deep sea floor. It can be
+    shown through the shallows at a shoreline, as `ediacaran-shallows` already shows its fauna.
+  
+  The enum members, composition text, VISUAL_SPEC §3 row and `Scene.shot` union member it added
+  were removed in the same integration, so no contract changed. Re-adding it later would be
+  additive, together with `web/src/shell/manifest.ts`'s runtime `SHOT_TYPES` list and a chapter
+  split.
+- **26 new scene records are merged directly into `data/scenes.yaml`, all unpinned:**
+  - 16 older than 66 Ma, from `origin-of-life` (3.9 Ga, pool setting, contested) to the K-Pg
+    pair.
+  - 10 Cenozoic, from `paleocene-recovery` (62 Ma) to `ice-age-europe-neanderthal` (42 ka).
+  
+  The draft files are deleted. Publishing skips unpinned scenes with `--allow-unpinned`, so
+  merging changes nothing in the published manifest until candidates are picked.
+- **The K-Pg pair:**
+  - `kpg-arrival` (66.043 Ma) is captioned as a composite. The Hell Creek-type landscape lies
+    ~3,300 km from Chicxulub, and the steep trajectory (Collins et al. 2020) means the bolide
+    could not have been seen from there.
+  - `kpg-aftermath` sits ~100 years after impact, inside the fern spike: clear sky, dead trunks,
+    a fern carpet.
+- **`devonian-estuary`** is re-specified by diagnostic anatomy (a neck and no gill cover, not a
+  "crocodile-like head"), with Archaeopteris forest on its far bank. Its pin is cleared. The
+  pipeline has no "pinned but superseded" state, so the scene leaves the published manifest
+  until a new candidate is picked.
+- **Scientific review applied.** Both reviews' blockers and majors, and the minors that were
+  clearly right, are applied to the scenes and to `data/events.yaml`.
+  - `neoproterozoic-seaweed` is dropped as a near-duplicate of `boring-billion-shallows`.
+  - Where the subject that carries the story is millimetres to centimetres long (pollinating
+    insects, first flowers, algae), the scene's main subject is restated at landscape scale.
+    Insect-scale co-evolution is left to the ancestor-portrait channel (ADR-015).
+  - `absent` never lists `people` in a hominin scene, because the renderer would then forbid the
+    main subject. `tests/test_prompts.py` guards this.
+  - One event is added, `early-eocene-climatic-optimum`, so `data/events.yaml` holds 66 events.
+  - Citations that could not be confirmed carry an inline UNVERIFIED marker.
 
 **Consequences.**
-- No NORMATIVE contract changed non-additively: `Shot`/`Composition` are pipeline-internal
-  enums (not NORMATIVE themselves), and the one NORMATIVE surface touched,
-  `Scene.shot` in `web/src/types/manifest.ts`, only gained a union member.
-- `web/src/shell/manifest.ts`'s runtime manifest validator has its own separate
-  `SHOT_TYPES` literal array (`['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND']`) that
-  this ADR's brief did not own and therefore leaves unchanged. **Before any published
-  manifest can contain an `UNDERWATER` scene, that array needs `'UNDERWATER'` added too**,
-  or the runtime will reject the manifest. Flagged for whoever wires the Cambrian scene
-  into a build.
-- `data/scenes-draft-deep.yaml` is a standalone, unpinned draft — not merged into
-  `data/scenes.yaml`, not part of any chapter the manifest currently publishes, and not
-  built by this ADR. Merging it means deciding how its three chapters interleave with the
-  existing `molten-earth`/`waters-edge` pair (a chapter must be one consecutive run of
-  scenes in time, per `pipeline/scenes.py`'s `SceneBook` validator) and running
-  `earthtime review` to pin each generated candidate — deliberately left to whoever
-  merges it and spends the budget, per this run's no-generation, no-build constraint.
-- The devonian-estuary fix changes only prose (no field added or removed), so it is a
-  content correction, not a contract change, and needed no ADR of its own beyond being
-  recorded here per the brief's instruction.
-
-**Decision (Cenozoic scenes, 66 Ma to present).** None of the ten scenes drafted in
-`data/scenes-draft-cenozoic.yaml` need a new shot or chapter. Every subject in this range —
-a post-extinction recovery forest, a polar hothouse swamp forest, a calving ice coast, open
-grassland, a savanna waterhole, a drying salt basin, a rift-valley lakeshore, a land-bridge
-coastline, and two toolmaking lakesides — has a defensible water's edge in it, so all ten
-extend the existing `waters-edge` chapter (`WATER_EDGE` shot, `water-edge-series`
-composition) rather than introducing `CANOPY` or `GROUND` compositions. Concretely, this was
-possible only because `pipeline/prompts.py`'s `Composition` enum and
-`COMPOSITION_CONSTRAINTS` dict currently define composition text for just `WATER_EDGE`
-(`water-edge-series`) and `WIDE_RIDGE` (`ridge-vista`) — `CANOPY` and `GROUND` exist as
-`Shot` enum members (anticipating future use) but have no composition text wired up yet, so
-using either would have required an additive change to `pipeline/prompts.py`. This package
-found that change unnecessary rather than making it, in keeping with its brief's constraint
-against introducing new shot types.
-
-**Consequences.**
-- No change to `pipeline/prompts.py`, `pipeline/scenes.py`, or any NORMATIVE contract from
-  the Cenozoic scene work. `data/scenes-draft-cenozoic.yaml` merges into `data/scenes.yaml`
-  as a same-chapter extension — see that draft file's own header for the merge note.
-- `CANOPY` and `GROUND` remain unused by any chapter after this package. Wiring them up (new
-  `Composition` members and constraint text, additive) is still open work for whoever next
-  wants a non-water-edge chapter; this ADR does not close that door, it only reports that the
-  Cenozoic scenes didn't need it.
-- Ten new checkpoints extend `waters-edge` across 62 Ma-42 ka, six of them close enough
-  together in symlog time (see `data/scenes-draft-cenozoic.yaml`'s header) that ADR-012's
-  timeline-pacing tuning should revisit `SCENE_DWELL_SECONDS`/`MIN_TRANSITION_SECONDS` once
-  this draft is merged — flagged for whoever does that merge, not solved here.
+- `earthtime plan` lists 27 unpinned scenes: the 26 new ones plus `devonian-estuary`.
+- **Pacing:** `SCENE_DWELL_SECONDS` / `MIN_TRANSITION_SECONDS` (ADR-012) should be revisited
+  once the new scenes are pinned. The checkpoint count rises from 14 to 40, and some neighbours
+  sit very close in symlog time:
+  - the K-Pg pair, ~100 years apart
+  - `arctic-hothouse-forest` / `eocene-jungle`, 52 / 50 Ma
+- **Coverage gaps left open** (not verified this session, so not drafted):
+  - **Deep time:**
+    - first jawed vertebrates / Devonian fishes
+    - Calamophyton first forest (~390 Ma)
+    - first mammals and first birds
+    - end-Ordovician glaciation
+  - **Cenozoic:**
+    - an Oligocene scene
+    - whales returning to the sea (Wadi Al-Hitan, ~40 Ma)
+    - a Homo sapiens scene
+    - Miocene apes
+    - a post-100 Ma bee-and-flower scene
+- `CANOPY` and `GROUND` remain `Shot` members with no composition text.
 
 ---
 

@@ -81,6 +81,35 @@ scenes:
       absent: [plants, algae, moss, green tint on rocks, animals, birds, people, buildings, blue sky, snow]
     pin: {asset_digest: "4d674a11701a39a0", path: "data/candidates/hadean-ocean/637aeff03a06ea5c/03-4d674a11701a39a0.jpg"}
 
+  # ~3.9 Ga, inside events.yaml first-life (3.4-4.1 Ga). Setting is explicitly CONTESTED between
+  # deep-sea hydrothermal vents and shallow volcanic hot-spring pools: Dodd et al. (2017), "Evidence
+  # for early life in Earth's oldest hydrothermal vent precipitates," Nature 543, 60-64
+  # (Nuvvuagittuq Greenstone Belt, Quebec: vent hypothesis; the belt's age is itself contested,
+  # 3.75-4.3 Ga, and the biogenicity of the putative microfossils is disputed). The pool alternative
+  # traces to Darwin's 1871 "warm little pond" letter, formalised by Oparin (1924) and Haldane
+  # (1929). This scene depicts the pool side of the debate, because the WATER_EDGE composition
+  # needs a shoreline and a horizon that an abyssal vent cannot give; the caption says so.
+  - id: origin-of-life
+    t: 3.9e9
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: On a young, lifeless Earth, shallow volcanic pools cycle wet and dry in one of two contested settings where the first self-replicating chemistry may have begun.
+    unsourced:
+      o2_percent: 0  # no free oxygen before biology
+      mean_temp_c: 70  # rounded, contested: matches file convention for early hot-spring/ocean scenes
+    subject:
+      setting: A broad, shallow geothermal lake fed by volcanic hot springs on a young, mostly barren continent, at a time before any confirmed evidence of life anywhere on Earth
+      left_mass: a tall mound of layered white and orange mineral sinter terraces close to the water, steam rising from vents at its base
+      vegetation: none; no plant, algal or microbial life is yet in evidence anywhere in this scene
+      fauna: none
+      main_subject: a shallow, stone-rimmed terrace pool at the lake's edge, its cloudy, mineral-laden water skinned with a thin film of pale mineral froth, visibly shrinking at one edge where it is evaporating
+      ground: bare volcanic rock and crumbling white-and-ochre mineral crust, with no soil and no organic matter of any kind
+      water: a broad, shallow geothermal lake, warm and cloudy with dissolved minerals, its surface threaded with rising bubbles
+      far_bank: the lake's far shore, a rim of layered white and orange sinter terraces stepping up into a steaming volcanic hillside
+      sky_and_light: a hazy, pale orange-brown sky, thicker and dimmer than a modern one, with a faint young Sun and a large, close Moon pale through the haze; dim, diffuse, warm light
+      absent: [plants, algae, moss, lichen, any visible organism, animals, fish, birds, blue sky, snow, people, buildings]
+    pin: null
+
   # Oldest robust stromatolites, ~3.43 Ga Pilbara (events.yaml first-life, lower bound);
   # before the Great Oxidation Event (2.1-2.4 Ga).
   - id: archean-shore
@@ -103,6 +132,59 @@ scenes:
       sky_and_light: a hazy, pale orange sky rather than a blue one; soft, slightly dim, warm diffuse light
       absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky]
     pin: {asset_digest: "647c2acdb2e4a8ea", path: "data/candidates/archean-shore/94c954c71c1afb48/01-647c2acdb2e4a8ea.jpg"}
+
+  # ~2.4 Ga, at the onset of the Great Oxidation Event: Gumsley, A.P. et al. (2017), "Timing and
+  # tempo of the Great Oxidation Event," PNAS 114(8), 1811-1816 (onset 2.46-2.426 Ga); Lyons,
+  # Reinhard & Planavsky (2014), Nature 506, 307-315. Banded iron formations are far older than
+  # this scene (oldest ~3.7-3.8 Ga at Isua, peak 2.8-2.5 Ga; events.yaml banded-iron-formations),
+  # so the cliff is shown as already-deposited rock, not forming now. The red banding and the
+  # oxygen bubbles are what set this frame apart from archean-shore (3.45 Ga).
+  - id: great-oxidation
+    t: 2.4e9
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: As cyanobacteria flood the shallows with oxygen for the first time, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.
+    unsourced:
+      o2_percent: 2  # rounded: the GOE's early rise, a small fraction of modern levels, contested pace
+      mean_temp_c: 20  # rounded, contested: some models tie the GOE's onset to Huronian glaciation, more securely dated slightly later, so this scene is kept temperate rather than icy
+    subject:
+      setting: A shallow tidal shelf on the edge of a barren continent, beside cliffs of banded iron formation laid down on the sea floor over the preceding hundreds of millions of years
+      left_mass: a tall wave-cut cliff of banded iron formation, bold alternating stripes of rust-red iron oxide and silvery-grey silica
+      vegetation: none in the botanical sense; the only life is microbial — thick, wrinkled, olive-and-rust-coloured cyanobacterial mats coating the submerged rock and the pool margins
+      fauna: none; no animals exist yet
+      main_subject: a broad, dark cyanobacterial mat in a tidal pool, its surface frothed with thousands of tiny trapped oxygen bubbles
+      ground: bare grey-red rock and coarse sand, fringed where it stays wet by slick, dark microbial mat
+      water: shallow, still, faintly cloudy pale-green water lying over the iron-banded rock shelf
+      far_bank: low grey-red hills of layered rock, banded where iron formation is exposed at the surface, with no green anywhere except the microbial mats at the shore
+      sky_and_light: a sky in transition — still pale and hazy rather than a saturated blue, but faintly clearer than the thick orange-brown haze of deeper Archean time; soft, even light
+      absent: [land plants, trees, grass, moss, animals, fish, shells, birds, people, a fully clear blue sky]
+    pin: null
+
+  # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
+  # Ga): Bangiomorpha pubescens, Somerset Island, Arctic Canada. Gibson, T.M. et al. (2018),
+  # "Precise age of Bangiomorpha pubescens dates the origin of eukaryotic photosynthesis,"
+  # Geology 46(2), 135-138 — the oldest fossil with differentiated reproductive cells and
+  # complex multicellular organisation, a red alga.
+  - id: boring-billion-shallows
+    t: 1.047e9
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the climatically stable "Boring Billion," Bangiomorpha — the oldest known organism with differentiated sexual cells — grows in tidal pools on an otherwise still-lifeless shore.
+    unsourced:
+      o2_percent: 4  # rounded, contested: pre-Neoproterozoic-oxygenation estimates for this interval are low and disputed
+      mean_temp_c: 18  # rounded: the "Boring Billion" is generally characterised as climatically stable and non-glacial
+    subject:
+      setting: A shallow intertidal pool on a barren coast, in the long, climatically stable interval nicknamed the "Boring Billion"
+      left_mass: a low, weathered ledge of pale grey-buff dolostone, undercut at the waterline by tidal action
+      vegetation: none on land; in the shallows, dense tufts of hair-fine, reddish-purple Bangiomorpha-like algal filaments grow anchored to the rock, their tips faintly banded where reproductive cells are differentiated, alongside plain microbial mats
+      fauna: none; no animals exist yet, nothing grazes or moves among the algae
+      main_subject: dense reddish-purple fringes of hair-fine Bangiomorpha-like algal filaments carpeting the submerged rocks of a broad tidal pool, their tips swaying just below the surface
+      ground: bare, pale, ripple-marked dolostone, with a thin dried microbial crust above the tideline
+      water: shallow, clear, still tidal water lying in rock pools
+      far_bank: a flat, barren tidal platform of pale rock running to a low grey coastline, utterly bare of anything green beyond the algae at the shore
+      sky_and_light: a clear, pale sky, less hazy than deep Archean time but not the saturated blue of a modern one; calm, even, cool light
+      absent: [land plants, trees, grass, moss on land, animals, fish, shells, insects, birds, people]
+    pin: null
 
   # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
   - id: cryogenian-snowball
@@ -148,12 +230,122 @@ scenes:
       absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people]
     pin: {asset_digest: "bf667858e3d40d22", path: "data/candidates/ediacaran-shallows/9812bf36faf8a123/02-bf667858e3d40d22.jpg"}
 
+  # ~518 Ma, the Chengjiang biota (Yunnan, China): Yang, C., Li, X.-H., Zhu, M. & Condon, D.J.
+  # (2018), "Geochronological constraint on the Cambrian Chengjiang biota, South China," Journal of
+  # the Geological Society 175(4), 659-666. Shu, D. et al. (1999), "Lower Cambrian vertebrates from
+  # south China," Nature 402, 42 (Haikouichthys, ~2.5 cm, on the vertebrate stem). Chengjiang was a
+  # shallow, muddy, fast-sedimenting delta front (Maotianshan Shales), so the sea floor is shown
+  # through slightly silty shallows at a shoreline, the way ediacaran-shallows shows its fauna, in
+  # the one waters-edge chapter (ADR-014). Trilobites and Hallucigenia are documented at Chengjiang;
+  # the radiodont is described as Amplectobelua-grade (up to ~90 cm), since the Chengjiang specimen
+  # once assigned to Anomalocaris has been reclassified. Opabinia is Burgess Shale only and is not
+  # depicted. No archaeocyathid reefs are recorded at Chengjiang.
+  - id: cambrian-seafloor
+    t: 5.18e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.
+    unsourced:
+      o2_percent: 12  # rounded, contested: rising but still well below modern by the mid-Cambrian
+      mean_temp_c: 25  # rounded: Cambrian climate is generally reconstructed as warm
+    subject:
+      setting: The shore of a shallow, muddy Cambrian sea, its sea floor crowded with newly diversified animal life and plainly visible through the shallows beside a barren coast
+      left_mass: a tall, bare bank of layered grey-green mudstone and siltstone with no plants on it
+      vegetation: none on land, which is bare rock and mud; underwater, only sparse patches of microbial mat on the mud, with a low mound of settled debris colonised by upright vase-shaped and stalked sponges
+      fauna: numerous trilobites crawling and half-buried in the mud; a small, soft-bodied lobopodian with paired clawed legs and spines along its back (Hallucigenia-grade) clinging to debris; a loose shoal of tiny, slender, jawless swimmers about 2.5 cm long, each with a pair of large eyes, a row of small gill openings behind the head, a low fin fold along the back and zigzag muscle bands down the body
+      main_subject: an Amplectobelua-grade radiodont up to 90 cm long, a swimming predator with a segmented, finned body, two jointed grasping appendages at the front of its head and a circular, plate-ringed mouth, gliding low over the mud of the shallows toward a cluster of trilobites
+      ground: wet, soft grey-brown mud at the waterline, rippled and bare
+      water: shallow, slightly silty, pale green-blue sea water, clear enough near the shore that the muddy sea floor and its animals are plainly visible
+      far_bank: a low, barren coastline of grey mud and rock, with no green anywhere
+      sky_and_light: a clear, pale-blue sky with thin high cloud; bright sunlight throwing soft caustics across the sea floor
+      absent: [land plants, green vegetation on land, jawed fish, scaled fish, ammonites, corals, crabs, lobsters, sharks, modern fish, reptiles, mammals, birds, people]
+    pin: null
+
+  # ~450 Ma, inside events.yaml land-plants (425-470 Ma) on the cryptospore side: Rubinstein, C.V. et
+  # al. (2010), "Early Middle Ordovician evidence for land plants in Argentina," New Phytologist
+  # 188(2), 365-369. Ordovician land plants are known only from cryptospores (~470 Ma onward); the
+  # earliest megafossils are Silurian, so the plants are shown as a millimetre-scale film. Reef life
+  # per great-ordovician-biodiversification (Fan et al. 2020, Science 367(6475), 272-277).
+  - id: ordovician-reef-shore
+    t: 4.5e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to the tideline while a reef of shelled animals builds offshore.
+    unsourced:
+      o2_percent: 14  # rounded, contested: rising through the Ordovician
+      mean_temp_c: 26  # rounded: Ordovician greenhouse, before the end-Ordovician glaciation
+    subject:
+      setting: A rocky Ordovician shoreline fringed by a shallow reef, on a continent that is otherwise entirely bare rock
+      left_mass: a low ridge of pale grey Ordovician limestone, its surface pocked with the borings and encrusting forms of an early reef community
+      vegetation: on the wet rock just above the waterline, a thin, dark-green crust of tiny liverwort-grade plants only millimetres tall, with no stems, leaves or roots; nothing grows further inland, which stays bare rock
+      fauna: straight-shelled nautiloid cephalopods drifting in the shallows; brachiopods and crinoids encrusting the reef rock; no animals on land
+      main_subject: a dark-green film of tiny liverwort-grade plants spreading across the wet rock at the tideline
+      ground: bare, pale, wave-smoothed limestone, grey everywhere but for the plant patches near the water
+      water: clear, calm, pale turquoise water over a reef of crinoids, brachiopods and coral-like tabulate colonies
+      far_bank: a barren grey limestone coastline rising to low hills, entirely bare rock but for a faint green tinge right at the waterline
+      sky_and_light: a clear, warm, pale-blue sky with light high cloud; bright, warm, even sunlight
+      absent: [trees, grass, ferns, flowers, vascular plants, jawed fish, insects, land animals, birds, people]
+    pin: null
+
+  # ~425 Ma, at the Cooksonia end of events.yaml land-plants (t_min = 425 Ma): Edwards, D., Fanning,
+  # U. & Richardson, J.B. (1994), Silurian Cooksonia macrofossils. Only one Cooksonia species shows
+  # conducting tissue and the plants were a few centimetres tall. Eurypterus-type sea scorpions were
+  # ~13-23 cm long. Guiyu oneiros, ~425.6 Ma: Zhu, M. et al. (2009), Nature 458, 469-474. Jawed
+  # vertebrates are older still: Zhu, Y.-a. et al. (2022), "The oldest complete jawed vertebrates
+  # from the early Silurian of China," Nature 609, 954-958 (Xiushanosteus, ~435 Ma), so the caption
+  # does not call these the first jawed fish.
+  - id: silurian-shore
+    t: 4.25e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore where sea scorpions crawl and early bony fish swim in the shallows.
+    unsourced:
+      o2_percent: 16  # rounded
+      mean_temp_c: 28  # rounded: warm Silurian greenhouse, high sea levels
+    subject:
+      setting: A Silurian coastal margin, the shore itself now fringed for the first time by a true vascular plant
+      left_mass: a low bank of pale Silurian sandstone and shale, undercut where it meets the water
+      vegetation: a low, wiry fringe of Cooksonia, leafless branching stems only a few centimetres tall, forked at the tips into small rounded spore capsules, growing in a band just above the waterline; nothing grows more than a few steps inland
+      fauna: a eurypterid sea scorpion about 20 cm long, with a broad head shield, a pair of paddle-shaped rear legs and a narrow spine-like tail, resting half-buried in the sediment at the water's edge; small, bony-armoured jawed fish schooling in the shallows
+      main_subject: a slender, bony-armoured jawed fish about 25 cm long with paired fins and a simple jaw lined with small teeth, swimming just below the surface near the Cooksonia fringe
+      ground: bare, pale, ripple-marked sand and mud, with the Cooksonia fringe the only green in sight
+      water: shallow, clear, calm coastal water
+      far_bank: a low, barren coastal plain of grey-tan rock and sand, with only the faint dark-green fringe of Cooksonia visible at its edge
+      sky_and_light: a clear, pale-blue sky with a few high clouds; warm, even sunlight
+      absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, modern fish, sharks, birds, people]
+    pin: null
+
+  # ~407 Ma, inside the Rhynie chert's radiometric age (events.yaml insects, 3.96e8-4.11e8;
+  # Parry, S.F. et al. 2011, "A high-precision U-Pb age constraint on the Rhynie Chert,"
+  # Journal of the Geological Society 168(4), 863-872, giving ~410 Ma). Flora (Rhynia,
+  # Aglaophyton) and fauna (the springtail Rhyniella praecursor, trigonotarbid arachnids,
+  # a harvestman) per the Rhynie chert's documented fossil assemblage.
+  - id: rhynie-chert
+    t: 4.07e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.
+    unsourced:
+      o2_percent: 15  # rounded
+      mean_temp_c: 24  # rounded: warm Early Devonian
+    subject:
+      setting: A hot-spring-fed wetland on land, the same setting that will preserve this whole scene as the Rhynie chert
+      left_mass: a low mound of pale, silica-cemented sinter rock, evidence of the hot springs that permeate this ground
+      vegetation: dense stands of Rhynia and Aglaophyton, leafless upright stems no taller than 20 cm, forking evenly and topped with round spore capsules, growing in thick mats at the pool's edge; still no true leaves
+      fauna: tiny arthropods moving among the plant stems — a springtail no bigger than a grain of rice, a small eight-legged trigonotarbid arachnid with a rounded, visibly segmented, armour-plated abdomen and no silk, and a long-legged harvestman-like arachnid — none larger than a fingernail
+      main_subject: a cluster of Aglaophyton stems at the water's edge, their rounded spore capsules catching the light, with a small eight-legged arachnid with a segmented, plated abdomen resting motionless on one stem
+      ground: bare, wet, mineral-crusted ground threaded with low leafless plant stems
+      water: a shallow, clear, mineral-rich pool fed by a hot spring, its surface faintly rippled with rising warmth
+      far_bank: a barren, pale mineral-crusted plain fading into low volcanic hills, bare but for scattered patches of the same low plant stems
+      sky_and_light: a clear, pale-blue sky; bright, even sunlight; a faint shimmer of heat over the springs
+      absent: [trees, ferns with true leaves, seed plants, grass, flowers, winged insects, land vertebrates, birds, people, spiders, spider webs]
+    pin: null
+
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
-  # ADR-014: subject fixed to remove "crocodile-like", a likeness-based description the model
-  # renders as an actual crocodile instead of the fish anatomy intended (SCENE SPEC RULES).
-  # Diagnostic fish features named instead: lobe fins with fin rays (not legs), scales, a gill
-  # region, a flattened head, a fish tail, mostly submerged. Pin cleared to regenerate; the
-  # cleared pin was {asset_digest: "8674f9e4388274cc",
+  # Subject rewritten by diagnostic anatomy (ADR-014): no likeness to a crocodile, and "neck, no gill
+  # cover" rather than a "gill region", which invites external gills. Far bank now shows the forest
+  # its own caption names (Archaeopteris by ~385 Ma; events.yaml first-forests). Pin cleared to
+  # regenerate; the cleared pin was {asset_digest: "8674f9e4388274cc",
   # path: "data/candidates/devonian-estuary/eedc05d6e15201f6/01-8674f9e4388274cc.jpg"}.
   - id: devonian-estuary
     t: 3.75e8
@@ -168,12 +360,38 @@ scenes:
       left_mass: a stand of Archaeopteris, the first true trees, straight slender trunks up to 20 m tall carrying flat horizontal sprays of fern-like foliage, open and airy with sky visible between the branches
       vegetation: Archaeopteris trees, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them
       fauna: lobe-finned fishes in the shallows; no land animals larger than a small arthropod
-      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, overlapping scales down its flanks, a gill region at the base of a wide, flattened head, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface
+      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, rough diamond-shaped overlapping scales down its flanks, a wide flattened head joined to the shoulders by a short distinct neck with no gill cover, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface
       ground: bare, wet grey-brown mud and sand
       water: shallow, calm, slightly silty brackish water
-      far_bank: a low, barren upland of thin rocky soil, grey and ochre, with only faint patches of low green and no forest
+      far_bank: a low upland of grey and ochre rock with dark stands of Archaeopteris trees along the distant river margins
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
-      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects, crocodile, legs, digits, claws]
+      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects, crocodile, legs, digits, claws, external gills]
+    pin: null
+
+  # ~365 Ma, exactly at events.yaml tetrapods (t_min = 3.65e8; Acanthostega/Ichthyostega,
+  # Ahlberg & Clack 2006) and this file's new first-seed-plants event (3.6e8-3.7e8): Rothwell,
+  # G.W., Scheckler, S.E. & Gillespie, W.H. (1989), "Elkinsia gen. nov., a Late Devonian
+  # gymnosperm with cupulate ovules," Botanical Gazette 150(2), 170-189 — the oldest
+  # well-documented seed. Follows data/scenes.yaml's devonian-estuary (375 Ma) chronologically.
+  - id: late-devonian-tetrapod
+    t: 3.65e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Ten million years after Tiktaalik, a limbed but still fully aquatic animal paddles a forest stream where some of the first seed-bearing plants grow in the undergrowth.
+    unsourced:
+      o2_percent: 17  # rounded, close to devonian-estuary's 18 a little later
+      mean_temp_c: 23  # rounded
+    subject:
+      setting: A weed-choked Late Devonian stream on a forested coastal lowland
+      left_mass: a dense stand of tall Archaeopteris trees with flat sprays of fern-like leafy branches shading a tangle of undergrowth
+      vegetation: Archaeopteris trees over a low tangle of horsetail relatives and, scattered among them, sprawling Elkinsia-like seed ferns bearing small cup-like structures that enclose single seeds at their frond tips — the first seeds
+      fauna: an early tetrapod with true limbs; small lobe-finned fish visible in the water; no larger land animals yet
+      main_subject: an Acanthostega-like early tetrapod about 60 cm long, with four short paddle-like limbs, the front feet with eight slender digits, a broad flattened head, and a long tail edged with a fin, pushing along a submerged log in the shallow, weed-choked water
+      ground: waterlogged black mud dense with rotting plant debris and fallen branches
+      water: still, shallow, weed-choked water, dark with tannins and thick with drifting plant debris
+      far_bank: Archaeopteris forest with low seed-fern thickets in its understory, fading into humid haze
+      sky_and_light: a warm, hazy sky with scattered cumulus; soft, humid, slightly diffused light
+      absent: [flowers, grass, broadleaf trees, palms, conifers, reptiles, dinosaurs, mammals, birds, flying insects, walking on land]
     pin: null
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
@@ -198,6 +416,33 @@ scenes:
       absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
     pin: {asset_digest: "9d50ad8640e89aa9", path: "data/candidates/carboniferous-swamp/8db84df1af2f828c/01-9d50ad8640e89aa9.jpg"}
 
+  # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
+  # the range of walchian conifers (Walchia, ~310-290 Ma; the earliest walchians are Moscovian, so
+  # these are not the first conifers). Dimetrodon ranges 294.1-271 Ma, so t sits inside it.
+  # Dragonfly-like insects of this age were griffinflies (Meganisoptera); crown Odonata are Late
+  # Triassic, hence dragonflies in absent. Carboniferous-type rainforest persisted in Cathaysia
+  # until the end of the Permian, so the vegetation line is local, not global.
+  - id: permian-conifer-forest
+    t: 2.94e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Where coal-swamp rainforest once stood, open woodland of early conifers now spreads across drier ground, and sail-backed synapsids hunt along its streams.
+    unsourced:
+      o2_percent: 30  # rounded: still high following the Carboniferous peak, beginning to decline
+      mean_temp_c: 14  # rounded: the Late Paleozoic Ice Age is still ongoing this early in the Permian
+    subject:
+      setting: Open, drier woodland where the vast Carboniferous coal-swamp rainforest stood only a few million years before
+      left_mass: an open stand of Walchia-like early conifers, slender pole-like trunks with spirally arranged awl-shaped needles and small cone clusters, their canopy far more open than the lycopsid swamp forest that stood here before
+      vegetation: Walchia-like conifers and scattered seed ferns on drier ground; the giant lycopsid trees and horsetails of the old coal swamps are absent from this drier ground, and open, sun-dappled ground lies between the trees for the first time
+      fauna: a large sail-backed synapsid hunting at the water's edge; a few very large griffinflies (Meganisoptera), long-bodied insects with two pairs of broad, stiff, glassy, net-veined wings held flat out to the sides, over the water; no dinosaurs, no mammals
+      main_subject: a large sphenacodontid synapsid (Dimetrodon-grade), about 3 m long with a tall skin-covered sail rising from its spine, standing at the water's edge
+      ground: dry, sandy, sun-cracked soil scattered with fallen conifer needles, far more open than a swamp floor
+      water: a shrinking, shallow stream, clear over a sandy bed
+      far_bank: open conifer woodland thinning toward a dry, dune-fringed horizon, drier and more open than any earlier scene
+      sky_and_light: a clear, pale-blue sky with scattered fair-weather cloud; bright, dry sunlight, sharper-edged shadows than a humid swamp
+      absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, dense swamp forest, giant lycopsid trees, dragonflies, damselflies]
+    pin: null
+
   # Middle Permian, before the end-Permian extinction (events.yaml permian-extinction: ~251.9 Ma).
   - id: permian-interior
     t: 2.6e8
@@ -219,6 +464,90 @@ scenes:
       sky_and_light: a cloudless sky bleached almost white by suspended dust; a hard, glaring sun and short, sharp, dark shadows; heat shimmer and a tan dust haze over the distance
       absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, swamp forest, lush green vegetation]
     pin: {asset_digest: "736e79c67e650684", path: "data/candidates/permian-interior/f6afdfa062572f06/01-736e79c67e650684.jpg"}
+
+  # ~251 Ma, just after events.yaml permian-extinction (2.5188e8-2.51941e8) and inside
+  # Lystrosaurus's own dated range, ~255-248 Ma (Wikipedia, "Lystrosaurus"), and this file's
+  # new siberian-traps event (2.5e8-2.54e8). Lystrosaurus's "disaster taxon" status — at times
+  # some 95% of land vertebrates in its assemblage zone — is well documented; Benton, M.J.
+  # (2006), When Life Nearly Died, Thames & Hudson.
+  # Pleuromeia: unbranched stem up to ~2 m, bulbous base, single terminal cone, single-species stands.
+  - id: early-triassic-lystrosaurus
+    t: 2.51e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the super-greenhouse world that followed the worst extinction in Earth's history, one squat, tusked animal makes up nearly the entire land fauna.
+    unsourced:
+      o2_percent: 13  # rounded: a well-documented Early Triassic oxygen low following the extinction
+      mean_temp_c: 32  # rounded: the Early Triassic "super-greenhouse," several degrees above the pre-extinction world
+    subject:
+      setting: A barren, hot landscape less than a million years after the end-Permian mass extinction, on ground that supported a rich forest only a short time before
+      left_mass: a dense single-species stand of Pleuromeia, unbranched pole-like stems up to head height with bulbous lobed bases, narrow triangular leaves near the top and a single cone at each tip
+      vegetation: Pleuromeia and almost nothing else; bare, cracked ground between the stands
+      fauna: Lystrosaurus, dominating almost to the exclusion of every other land animal
+      main_subject: two Lystrosaurus, stocky, barrel-bodied dicynodont synapsids about a metre long with a horny beak and a pair of short, downward-pointing tusks, digging at the cracked mud near the water's edge
+      ground: cracked, sun-baked red mud, almost entirely bare
+      water: a shrunken, muddy, reddish-brown remnant of a once-larger river
+      far_bank: a barren red-brown plain stretching to the horizon, all but lifeless, broken only by scattered stands of Pleuromeia
+      sky_and_light: a hazy, dust-laden, bleached sky, harsh and glaring; hard, flat light with little relief
+      absent: [forests, lush vegetation, flowers, grass, dinosaurs, large predators, diverse fauna, birds, mammals]
+    pin: null
+
+  # ~231 Ma, exactly at events.yaml dinosaurs (t_min = 2.31e8): Martinez, R.N. et al. (2011),
+  # "A basal dinosaur from the dawn of the dinosaur era in southwestern Pangaea," Science
+  # 331(6014), 206-210 — Eoraptor, Ischigualasto Formation, Argentina, where rhynchosaurs and
+  # cynodonts, not dinosaurs, are the dominant land animals.
+  # Ischigualasto: Herrerasaurus (~6 m) the most abundant carnivore; Hyperodapedon and Exaeretodon
+  # predominant; flora of corystosperms (Dicroidium group), conifers and ferns; cool, strongly seasonal.
+  - id: late-triassic-dinosaurs
+    t: 2.31e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The first dinosaurs are still rare hunters in a world ruled by beaked rhynchosaurs and heavy-headed cynodonts.
+    unsourced:
+      o2_percent: 16  # rounded
+      mean_temp_c: 18  # rounded: cool, strongly seasonal floodplain
+    subject:
+      setting: A seasonal floodplain on the supercontinent Pangaea, where the first dinosaurs are still rare among an older reptile fauna
+      left_mass: a stand of tall conifers above thickets of forked-frond corystosperm seed ferns, with red-brown ash soil beneath
+      vegetation: corystosperm seed ferns with forked, fern-like fronds, conifers and ferns, with bare red-brown soil between
+      fauna: a herd of rhynchosaurs, squat, beaked reptiles about a metre long that remain the most numerous land animals here; a stocky, barrel-bodied cynodont about 1.5 m long, with a massive deep skull, a short tail and sprawling-to-upright limbs, scaly-skinned; dinosaurs are still few
+      main_subject: an Eoraptor-like early dinosaur, a slender, lightly built bipedal animal about a metre long with a long tail, small forelimbs and a narrow head, dashing along the water's edge after a smaller animal
+      ground: red-brown volcanic ash soil, cracked in the dry season, with scattered fallen conifer branches
+      water: a shallow, reddish-tinted seasonal river
+      far_bank: an open plain of red-brown soil and scattered conifers, drier and more open than a dense forest
+      sky_and_light: a cool, clear dry-season sky with high cloud; crisp, bright sunlight
+      absent: [flowers, grass, broadleaf trees, palms, sauropods, long-necked dinosaurs, mammals, birds, modern reptiles]
+    pin: null
+
+  # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
+  # 165-155 Ma, Callovian-Oxfordian): Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al.
+  # (2009), "A Probable Pollination Mode Before Angiosperms: Eurasian, Long-Proboscid
+  # Scorpionflies," Science 326(5954), 840-847 — documented pollinators of insect-pollinated
+  # gymnosperms such as Bennettitales, well before flowers existed.
+  # Ren et al. (2009) call this a PROBABLE pollination mode. UNVERIFIED: the specific ~160 Ma
+  # locality behind the date (reported as Middle Jurassic northeastern China) was not re-checked;
+  # other aneuretopsychid records are Karabastau (Late Jurassic), Yixian and Burmese amber.
+  # The insects are small in a landscape frame; insect-scale co-evolution is a portrait job (ADR-015).
+  - id: jurassic-cycad-pollination
+    t: 1.6e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Long-proboscid scorpionflies feed at the cones of Bennettitales, a probable plant-insect pollination partnership that predates flowers by tens of millions of years.
+    unsourced:
+      o2_percent: 23  # rounded, close to jurassic-floodplain's 25 a little earlier
+      mean_temp_c: 21  # rounded
+    subject:
+      setting: A cycad-and-bennettitalean thicket, part of the conifer-dominated flora that will later shade Late Jurassic sauropods
+      left_mass: a dense thicket of Bennettitales, squat barrel-shaped trunks crowned with stiff, feather-like, pinnate fronds, the trunks studded with cones ringed by scales
+      vegetation: Bennettitales and cycads with occasional tall conifers behind them; still no flowers or broad leaves anywhere
+      fauna: long-proboscid scorpionflies, slender insects with a long tubular mouthpart, perched on the cones, probing the open cone-scales of the Bennettitales for pollination droplets; a small feathered theropod dinosaur passing in the background
+      main_subject: a squat Bennettitales plant with a thick, barrel-shaped trunk studded with cones, a few slender long-legged insects perched on the cones
+      ground: dry leaf litter and fallen cone scales beneath the cycad thicket
+      water: a shallow, calm woodland pool at the thicket's edge
+      far_bank: more cycad and conifer woodland, open and dry, fading into haze
+      sky_and_light: a warm, hazy sky with high cirrus; soft, warm, slightly diffused sunlight
+      absent: [flowers, flowering plants, grass, broadleaf trees, palms, palm trees, coconut palms, bees, butterflies, large mammals, people]
+    pin: null
 
   # Morrison Formation sauropods, ~150 Ma; before flowering plants (events.yaml: 125-133 Ma).
   - id: jurassic-floodplain
@@ -242,6 +571,61 @@ scenes:
       absent: [flowers, flowering plants, grass, broadleaf trees, palms, large mammals, modern birds, people]
     pin: {asset_digest: "fff98516543632ed", path: "data/candidates/jurassic-floodplain/6633181a8f301dc0/01-fff98516543632ed.jpg"}
 
+  # ~125 Ma, exactly inside events.yaml flowering-plants (1.25e8-1.33e8): Gomez, B. et al.
+  # (2015), "Montsechia, an ancient aquatic angiosperm," PNAS 112(35), 10985-10988; Archaefructus
+  # (Sun et al. 2002), a comparably aged Early Cretaceous aquatic flowering plant.
+  # Earliest known macrofossils, not a proven first appearance. Archaefructus has no sepals or
+  # petals. Reeds are grasses, and the earliest grass fossils are ~113-100 Ma, hence absent.
+  - id: early-cretaceous-flowers
+    t: 1.25e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.
+    unsourced:
+      o2_percent: 24  # rounded
+      mean_temp_c: 20  # rounded: cooler Early Cretaceous, before the mid-Cretaceous thermal maximum
+    subject:
+      setting: The edge of a freshwater lake where, among a conifer-and-cycad flora, some of the earliest known flowering plants grow in the shallows
+      left_mass: a stand of tall conifers and cycads at the lake's edge, still the dominant plants, largely unchanged from earlier in this series
+      vegetation: conifers and cycads on the bank; in the shallows, mats of Archaefructus-like aquatic plants with fine divided leaves, their thin shoots rising above the water bearing small pod-like seed cases and pollen organs spaced along the stem, with no petals
+      fauna: small feathered dinosaurs foraging at the lake margin
+      main_subject: a dense floating mat of fine-leaved aquatic plants covering the shallows, thin reproductive shoots standing a hand's height above the water
+      ground: damp lakeshore mud fringed with horsetails and low ferns
+      water: a calm, clear freshwater lake
+      far_bank: conifer-and-cycad woodland along the far shore
+      sky_and_light: a clear, warm sky with scattered cumulus; bright, even sunlight
+      absent: [large showy flowers, petals, grass, reeds, grasses, broadleaf trees, bees, butterflies, large mammals, birds, people]
+    pin: null
+
+  # ~100 Ma, inside events.yaml's new angiosperm-radiation (8.0e7-1.25e8) and
+  # earliest-pollinating-insects (9.3e7-1.65e8) events. Melittosphex burmensis, ~100 Ma Burmese
+  # amber, was originally described as the oldest bee (Poinar, G.O. & Danforth, B.N. 2006, "A
+  # fossil bee from Early Cretaceous Burmese amber," Science 314(5799), 614) but is now
+  # reassessed as an aculeate wasp of uncertain taxonomic position rather than a true bee —
+  # depicted here by its diagnostic features (small size, wasp-like legs, bee-like branched
+  # pollen-collecting hairs) rather than asserted as a bee.
+  # Melittosphex is no longer placed in Apoidea; incertae sedis within Aculeata.
+  - id: mid-cretaceous-pollinators
+    t: 1.0e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.
+    unsourced:
+      o2_percent: 25  # rounded
+      mean_temp_c: 26  # rounded: approaching the Cretaceous thermal maximum
+    subject:
+      setting: A mixed forest where, for the first time in this series, flowering plants form a real understory beneath the conifer canopy
+      left_mass: a mixed stand of conifers and broadleaf flowering trees, the flowering trees now tall enough to stand among the conifers for the first time
+      vegetation: broadleaf flowering trees and shrubs thick with small white and yellow flowers, spreading beneath and among the conifers — a real flowering understory for the first time in this series
+      fauna: small wasps with branched hairs on their bodies visiting the flowers; a mid-sized theropod dinosaur passing at the tree line
+      main_subject: a flowering shrub at the waterline covered in small pale flowers, with a haze of tiny insects around it
+      ground: leaf litter from broadleaf trees mixed for the first time with fallen conifer needles
+      water: a calm, clear woodland stream
+      far_bank: mixed conifer-and-flowering forest, noticeably greener and denser with broadleaf growth than any earlier scene
+      sky_and_light: a warm, hazy sky, hotter and more humid than the Early Cretaceous; soft, diffused sunlight
+      absent: [true bees, butterflies, grass, large mammals, songbirds, parrots, pigeons, people]
+    pin: null
+
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
     t: 6.8e7
@@ -264,6 +648,120 @@ scenes:
       absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings]
     pin: {asset_digest: "45461089a48f8e16", path: "data/candidates/cretaceous-forest/3562b3bc257435a1/01-45461089a48f8e16.jpg"}
 
+  # 66.043 Ma, events.yaml k-pg-impact (66.032-66.054 Ma): Renne, P.R. et al. (2013), Science
+  # 339(6120), 684-687. A deliberate composite, and the caption says so: the landscape is the same
+  # Hell Creek-type coastal plain as cretaceous-forest (68 Ma), ~3,300 km from Chicxulub. The
+  # impactor came in steeply (45-60 degrees, from the northeast, ~20 km/s: Collins, G.S. et al.
+  # (2020), "A steeply-inclined trajectory for the Chicxulub impact," Nature Communications 11,
+  # 1480) and only glowed within ~100 km of the ground, so from here it would have stayed below the
+  # horizon. Relocating the viewer to the Gulf margin needs a verified Maastrichtian Gulf-margin
+  # dinosaur fauna first (not checked this session).
+  - id: kpg-arrival
+    t: 6.6043e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: "A composite moment: the asteroid that ends the age of dinosaurs, shown in a sky where, thousands of kilometres from its impact, it could never actually have been seen."
+    unsourced:
+      o2_percent: 27  # rounded, unchanged from data/scenes.yaml's cretaceous-forest: this is minutes before that scene's world, not yet altered
+      mean_temp_c: 22  # rounded, unchanged from cretaceous-forest for the same reason
+    subject:
+      setting: The edge of a swampy estuary on a humid Late Cretaceous coastal plain, moments before the asteroid strikes
+      left_mass: a dense subtropical forest of tall flowering broadleaf trees and bald cypress
+      vegetation: flowering broadleaf trees, bald cypress, ferns and fan palms
+      fauna: a small herd of duck-billed dinosaurs at the water's edge, heads raised toward the sky; a pterosaur fleeing overhead
+      main_subject: a small herd of large duck-billed dinosaurs, broad flat toothless beaks, heavy tails held level, standing on their hind legs at the waterline with heads turned up toward the light
+      ground: dark wet mud with reeds and fallen branches
+      water: still, tea-brown swamp water, its surface lit with a hard, unnatural white glare
+      far_bank: swamp forest fading into haze, lit starkly from above
+      sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
+      absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
+    pin: null
+
+  # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
+  # Raine, J.I. & Hollis, C.J. (2001), "Indication of global deforestation at the
+  # Cretaceous-Tertiary boundary by New Zealand fern spike," Science 294(5547), 1700-1702. Modelled
+  # post-impact darkness lasted about 2 years; at a well-dated Colorado site the fern spike lasted
+  # about 1,000 years; ~57% of North American plant species went extinct, not all. So a century
+  # out: a clear sky, dead and fallen trunks, and a fern carpet. No non-avian dinosaur is known
+  # from after the boundary.
+  - id: kpg-aftermath
+    t: 6.60429e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: A century after the impact, ferns carpet the ground where a flowering forest and its dinosaurs stood; the sky has long since cleared, but the world has not recovered.
+    unsourced:
+      o2_percent: 25  # rounded
+      mean_temp_c: 24  # rounded: impact winter lasted years, not centuries
+    subject:
+      setting: The same kind of estuary a century after the impact, its forest dead and its dinosaurs gone
+      left_mass: the grey, weathered trunks of dead trees, most fallen and rotting, a few broken stumps still upright
+      vegetation: ferns almost everywhere, a dense, low, uniform green carpet; only a few scattered young broadleaf saplings
+      fauna: no dinosaurs; a few small mammals move low through the ferns
+      main_subject: a dense carpet of ferns spreading from the water's edge across the ground among the fallen trunks
+      ground: dark soil strewn with fallen, rotting, moss-free trunks, overgrown by ferns
+      water: still, clear, tea-brown swamp water
+      far_bank: dead grey trunks standing and fallen along the far shore, ferns growing thickly around them
+      sky_and_light: a clear, pale-blue sky with scattered cloud; ordinary bright sunlight
+      absent: [dinosaurs, large animals, tall flowering canopy, blue-green conifer forest, people]
+    pin: null
+
+  # Paleocene mammal radiation (events.yaml paleocene-mammal-radiation), 62 Ma, about four million
+  # years after k-pg-impact (66.043 Ma). Forests recovered fast: a diverse tropical rainforest stood
+  # at Castle Rock, Colorado by 64.1 Ma (Johnson, K.R. & Ellis, B. (2002), Science 296, 2379-2383),
+  # and mammal maximum body size was near pre-extinction values within ~100 kyr and tripled by
+  # ~300 kyr (Lyson, T.R. et al. (2019), Science 366, 977-983). Pantolambda: cat-like body, heavy
+  # head, long tail, plantigrade five-toed feet with blunt nails, small tusk-like canines, ~63-57 Ma
+  # (Wikipedia summary, tertiary; the weakest source in this record).
+  - id: paleocene-recovery
+    t: 6.2e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: "Four million years after the impact that ended the dinosaurs, mammals have grown into the empty world: a heavy, long-tailed pantodont drinks at a Paleocene forest river."
+    unsourced:
+      o2_percent: 21  # rounded: near modern by the Paleocene
+      mean_temp_c: 24  # rounded: warm Paleocene greenhouse, cooler than the coming PETM
+    subject:
+      setting: The bank of a slow river through a mature, humid Paleocene forest in western North America, about four million years after the extinction that ended the age of dinosaurs
+      left_mass: a tall, closed stand of broad-leaved trees and palms, hung with vines, rising well above the riverbank
+      vegetation: dense broad-leaved forest with palms, ferns and flowering shrubs in the understory; no open grassland
+      fauna: a single pantodont mammal at the water's edge; no other large animals in view
+      main_subject: "a pantodont: a stocky mammal with a heavy head, a vaguely cat-like body, a long thick tail, short sturdy legs on flat five-toed feet ending in blunt nails, and small tusk-like canines, standing in the shallows to drink"
+      ground: damp, dark floodplain silt scattered with fallen fern fronds and small pebbles
+      water: a slow, muddy brown river, calm and shallow
+      far_bank: unbroken mature forest along the far bank
+      sky_and_light: a warm, hazy pale sky with scattered cumulus; soft, humid, even light
+      absent: [dinosaurs, grassland, bears, pigs, dogs, cats, hippopotamus, primates, people, buildings]
+    pin: null
+
+  # Early Eocene Climatic Optimum (events.yaml early-eocene-climatic-optimum), Margaret Formation,
+  # Ellesmere Island, ~52 Ma, ~77 degrees N palaeolatitude: Miller, K., Tietjen, K. & Beard, K.C.
+  # (2023), PLOS ONE (primatomorphs; crocodilians and tapiroid perissodactyls in the same fauna).
+  # Coryphodon lived there year-round: Eberle, J.J., Fricke, H.C. & Humphrey, J.D. (2009),
+  # "Lower-latitude mammals as year-round residents in Eocene Arctic forests," Geology 37, 499-502.
+  # The June noon sun at 77 N is ~36 degrees up, so the light is slanting, not near the horizon.
+  # The same hothouse as eocene-jungle (50 Ma) from the opposite latitude, with a mammal rather than
+  # a crocodilian as the main subject so the two frames differ.
+  - id: arctic-hothouse-forest
+    t: 5.2e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun disappears for months each winter, and heavy tusked Coryphodon wade its lakes.
+    unsourced:
+      o2_percent: 23  # rounded: near modern
+      mean_temp_c: 27  # rounded: EECO global mean, as eocene-jungle
+    subject:
+      setting: A still lake in a swamp conifer forest at 77 degrees north, in the high Arctic, in midsummer during the warmest sustained interval of the last 66 million years
+      left_mass: a stand of very tall, straight deciduous swamp conifers with soft, feathery, bright green needles, their broad trunks standing in shallow water
+      vegetation: tall deciduous swamp conifers and broadleaf trees in full green summer leaf, with a low fern understory
+      fauna: a heavy semi-aquatic Coryphodon in the shallows; a blunt-snouted crocodilian and a large freshwater turtle basking on a fallen log in the middle distance
+      main_subject: "a Coryphodon: a massive, short-legged, barrel-bodied mammal about two and a half metres long and a metre tall at the shoulder, with a large low head and short tusks at the front of its mouth, wading knee-deep"
+      ground: waterlogged peat scattered with fallen green needles and cones
+      water: a still, dark, tannin-brown lake reflecting the forest
+      far_bank: more swamp conifer forest fading into a low summer mist
+      sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
+      absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, rhinoceros, tapir, trunk, people, buildings]
+    pin: null
+
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
   - id: eocene-jungle
     t: 5.0e7
@@ -285,6 +783,224 @@ scenes:
       sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
       absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
     pin: {asset_digest: "6fd97ed7b5dbfd9a", path: "data/candidates/eocene-jungle/5899f56de73ec26e/01-6fd97ed7b5dbfd9a.jpg"}
+
+  # Eocene-Oligocene transition (events.yaml eocene-oligocene-transition): Hutchinson, D.K. et al.
+  # (2021), "The Eocene-Oligocene transition: a review of marine and terrestrial proxy data, models
+  # and model-data comparisons," Climate of the Past 17, 269 (EOT 34.44-33.65 Ma, ice growth
+  # culminating in the EOIS/Oi-1 step at ~33.65 Ma, hence t = 33.7 Ma); Coxall, H.K. et al. (2005),
+  # Nature 433, 53-57. Penguins stay in absent only to avoid modern-looking birds: giant penguins
+  # (Palaeeudyptes) did live on Antarctica's coasts at this time.
+  - id: eocene-oligocene-icesheet
+    t: 3.37e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: As Antarctica's first continent-scale ice sheet reaches the sea, Earth leaves the warm world of the early Cenozoic for the icehouse it has lived in ever since.
+    unsourced:
+      o2_percent: 24  # rounded: Late Eocene estimates run a little above modern
+      mean_temp_c: null  # no verified single global figure for the earliest Oligocene
+    subject:
+      setting: A cold, rocky coastline where a young ice sheet's outlet glacier meets the sea for the first time, at the moment Earth's climate tips from greenhouse to icehouse
+      left_mass: a tall wall of blue-white glacier ice, freshly advanced to the coast, its front cracked and streaked with rock debris
+      vegetation: a few hardy, low, cold-adapted shrubs and mosses clinging to bare rock above the tideline; no forest anywhere in view
+      fauna: no animals in view
+      main_subject: a low, growler-sized block of freshly calved glacier ice grounded in the shallows, meltwater dripping from its face
+      ground: bare, frost-shattered grey rock and gravel, with patches of thin moss
+      water: a cold, dark grey-green sea, calm, scattered with small floating fragments of ice
+      far_bank: the glacier's calving front stretching along the coast, hazed by blowing spray
+      sky_and_light: a cold, pale, high-latitude sky with fast-moving cloud; flat, diffuse, chilly light
+      absent: [forest, palms, flowering plants in bloom, large mammals, penguins, polar bears, people, buildings, ships]
+    pin: null
+
+  # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
+  # taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North
+  # America," PNAS 102, 11980-11984 (open-habitat grass dominance in North America by the late
+  # Oligocene-early Miocene); Stromberg, C.A.E. (2011), Annual Review of Earth and Planetary
+  # Sciences 39, 517-544 (forest and woodland still dominate globally). Horses described by foot
+  # anatomy so the model does not default to modern horses.
+  - id: miocene-grassland
+    t: 1.8e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Where woodland once stood, grass now dominates the open plains, and three-toed horses graze a horizon no earlier scene has shown.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 19  # rounded: warm early Miocene climatic optimum
+    subject:
+      setting: A broad river valley on the North American Great Plains, where open, grass-dominated country is spreading between patches of woodland
+      left_mass: a ragged stand of broadleaf trees, the last remnant of what was recently unbroken forest, thinning toward open ground
+      vegetation: tall, tawny-green open grassland stretching toward the horizon, with scattered trees and woodland only near the water
+      fauna: a small herd of medium-sized, three-toed hoofed grazing mammals out on the open grass; a few browsing mammals still near the tree line
+      main_subject: three slender, long-legged three-toed horses, each foot with a large central hoof flanked by two small side toes, grazing low in the open grass at the water's edge
+      ground: a mix of bare sandy soil and low, cropped grass near the water
+      water: a slow, clear river reflecting the open sky
+      far_bank: open rolling grassland dotted with scattered trees and woodland patches, running to a distant horizon
+      sky_and_light: a wide, bright blue sky with scattered fair-weather cumulus; clear, strong sunlight with a broad view to the horizon
+      absent: [dense unbroken forest, dinosaurs, primates, modern-style farmland, fences, people, buildings]
+    pin: null
+
+  # Late Miocene, ~7 Ma, within the C4 grass expansion (events.yaml c4-expansion, ~8-5 Ma by
+  # region): Cerling, T.E. et al. (1997), "Global vegetation change through the Miocene/Pliocene
+  # boundary," Nature 389, 153-158; Uno, K.T. et al. (2011), PNAS 108, 6509-6514 (East African bovids
+  # on C4-dominated diets by 7.4 Ma; equids taking significant C4 by ~9.9-9.6 Ma). Hipparionine
+  # horses in the Old World from ~11.1-11.4 Ma (events.yaml hipparion-dispersal).
+  - id: c4-savanna-hipparion
+    t: 7.0e6
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Coarse new grasses now carpet the plain, and three-toed horses crowd a shrinking waterhole in a drier, more open East Africa.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 18  # rounded: Late Miocene cooling and aridification
+    subject:
+      setting: An open, sunburnt savanna in the East African rift at a shrinking waterhole, where coarse, wiry grasses have spread across what was mixed woodland
+      left_mass: a single flat-topped acacia-like tree standing apart, its canopy thin, giving little shade over cracked bare ground
+      vegetation: tough, wiry, straw-coloured grass covering the plain almost to the horizon, with only isolated trees
+      fauna: a herd of small, three-toed hipparionine horses and a few small horned grazing mammals drinking together
+      main_subject: a pony-sized three-toed hipparionine horse, each foot with a large central hoof flanked by two small side toes, head down and drinking at the water's edge
+      ground: cracked, sun-baked pale earth around the shrinking waterhole, hoofprints pressed into the drying mud
+      water: a shallow, muddy, shrinking waterhole, its margins rimmed with dried mud
+      far_bank: open, sunburnt savanna running flat to a hazy, heat-shimmered horizon
+      sky_and_light: a bleached, almost white sky with a fierce, high sun; hard, short shadows and visible heat haze over the distance
+      absent: [dense forest, modern zebra, modern antelope, apes, hominins, people, fences, buildings]
+    pin: null
+
+  # Messinian salinity crisis, 5.96-5.33 Ma, placed in the halite phase at 5.6 Ma (events.yaml
+  # messinian-salinity-crisis): Krijgsman, W. et al. (1999), "Chronology, causes and progression of
+  # the Messinian salinity crisis," Nature 400, 652-655 (onset chronology); Garcia-Castellanos, D. et
+  # al. (2009), Nature 462, 778-781 (the Zanclean reflooding). How far the basin dried is contested,
+  # so the scene shows a brine lake among salt flats and the caption says the extent is debated.
+  - id: messinian-salt-flats
+    t: 5.6e6
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Cut off from the Atlantic, the Mediterranean shrinks to brine lakes ringed by thick beds of salt; how far the sea actually fell is still debated.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 20  # rounded: Late Miocene, regionally hot and arid around the drying basin
+    subject:
+      setting: The shore of a hypersaline brine lake deep in the drying Mediterranean basin, surrounded by flats of freshly precipitated salt
+      left_mass: a low ridge of banded white and grey salt and gypsum, built up in thick evaporite layers like terraced steps
+      vegetation: none; the salt crust supports no plant life at all
+      fauna: none visible; nothing lives on the bare salt
+      main_subject: a shallow, still, intensely saline brine pool, pink-tinged, rimmed with a crust of fresh white salt crystals forming at its edge
+      ground: a hard, cracked, brilliant white salt pan, polygonal cracks running in every direction
+      water: a small, shrinking, hypersaline brine pool, all that remains of an entire sea
+      far_bank: more bare white salt flat stretching unbroken to a shimmering horizon
+      sky_and_light: a cloudless, bleached white sky; a fierce sun and blinding glare off the salt, with almost no shadow
+      absent: [any plant, any animal, boats, fish, blue open sea, green colour anywhere, people, buildings]
+    pin: null
+
+  # Australopithecus afarensis, AL 288-1 ("Lucy"), Hadar, Ethiopia, ~3.2 Ma (events.yaml
+  # australopithecus-afarensis). Anatomy per Smithsonian Human Origins Program, "Australopithecus
+  # afarensis": long, strong arms with curved fingers adapted for climbing, apelike face (flat
+  # nose, strongly projecting lower jaw), braincase under 500 cc; woodland as well as grassland
+  # habitats. The oldest known stone tools (Lomekwi 3, ~3.3 Ma) predate this scene; no tools are
+  # shown because none are associated with AL 288-1. `absent` never lists "people" in a hominin
+  # scene: the renderer would forbid the main subject.
+  - id: lucy-afarensis
+    t: 3.2e6
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: A small, upright hominin of Lucy's species walks on two legs along a wooded Rift Valley river, still built with long, strong arms for climbing.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 20  # rounded: Pliocene East African rift, similar to present
+    subject:
+      setting: The wooded bank of a river running into a shallow lake in the Afar rift, where a small, upright hominin walks along the water beneath the trees
+      left_mass: a tall stand of riverside woodland trees with low, climbable branches
+      vegetation: riverside woodland and shrubs, closed near the water and opening to grassland beyond; no flat-topped acacias
+      fauna: none else in view; the focus is the hominin alone at the water's edge
+      main_subject: a small upright hominin about a metre tall walking on two short legs, with long, strong arms, long curved fingers, a small braincase, a flat nose and a strongly projecting lower face and jaw
+      ground: pale, sunbaked lakeshore mud and sand, with scattered pebbles
+      water: a shallow, calm, sunlit lake, pale blue-green
+      far_bank: riverside woodland opening to grassland beyond, hazy with distance
+      sky_and_light: a clear, warm, pale-blue East African sky with a few high clouds; bright, direct sunlight
+      absent: [modern humans, clothing, stone tools, spears, fire, chimpanzees, gorillas, buildings]
+    pin: null
+
+  # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
+  # 2(8), e1600883 (events.yaml isthmus-of-panama, contested: Bacon et al. 2015; Montes et al. 2015).
+  # Animals crossed before closure (ground sloths by ~9 Ma, Glyptotherium in central Mexico by
+  # ~3.9 Ma), so the caption does not claim this one is among the first. Glyptotherium reached ~2 m
+  # and ~400 kg. UNVERIFIED this session: head and tail armour detail, standard glyptodont anatomy;
+  # check before generation.
+  - id: panama-land-bridge
+    t: 2.8e6
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The last seaway between the Americas has closed, and the trickle of animals crossing between them becomes a flood; an armoured glyptodont walks the new coast.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 21  # rounded: warm tropical latitude, near present-day equatorial climate
+    subject:
+      setting: The coast of a narrow, newly continuous tropical isthmus joining North and South America
+      left_mass: a low ridge of dense tropical forest crowding the spine of the narrow land bridge
+      vegetation: dense tropical broadleaf forest along the ridge, giving way to open, sandy, sparsely vegetated ground near the coast on either side
+      fauna: a glyptodont walking along the shoreline; in the middle distance a tall flightless terror bird with a massive hooked beak and tiny wings
+      main_subject: a glyptodont about two metres long, its body covered by a single high, rigid, dome-shaped shell of bony plates, with a short armoured head and a thick armoured tail, walking on stout legs along the coastal sand
+      ground: pale coastal sand strewn with driftwood and shell fragments
+      water: calm, clear turquoise water along the shore
+      far_bank: open ocean to the horizon, with the forested spine of the isthmus curving away along the coast
+      sky_and_light: a bright, clear tropical sky with scattered cumulus; strong, direct equatorial sunlight
+      absent: [modern armadillos, tortoises, turtles, ostriches, rheas, emus, primates, people, boats, buildings]
+    pin: null
+
+  # Homo erectus with Acheulean handaxes, Kokiselei 4, West Turkana, Kenya, ~1.76 Ma (events.yaml
+  # homo-erectus, acheulean-technology): Lepre, C.J. et al. (2011), Nature 477, 82-85. Older
+  # Acheulean is now known at Melka Kunture, Ethiopia, ~1.95 Ma (Mussi, M. et al. (2023), Science,
+  # eadd9115). Tools, not fire: habitual fire use is not evidenced this early (events.yaml
+  # control-of-fire). No clothing: nothing cited supports it at 1.76 Ma.
+  - id: acheulean-erectus
+    t: 1.76e6
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: An early human shapes a symmetrical stone handaxe at a rift lake shore; handaxes like it will be made, and slowly refined, for more than a million years.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 20  # rounded: Early Pleistocene East African rift
+    subject:
+      setting: The shore of a shallow lake in the East African rift, where an early human ancestor crouches at a scatter of stone flakes
+      left_mass: a low outcrop of dark volcanic rock, partly quarried, with a scatter of flaked stone debris at its base
+      vegetation: scattered flat-topped trees and open grass near the water, with reeds along the immediate shoreline
+      fauna: none else in view; the focus is on the toolmaker alone at the water's edge
+      main_subject: an upright, long-legged hominin with near-modern body proportions, a heavy brow ridge, a low sloping forehead and a projecting face, crouched at the waterline striking one stone against another to shape a teardrop-shaped, symmetrical, sharp-edged handaxe
+      ground: pale lakeshore sand and gravel scattered with dark, sharp-edged stone flakes
+      water: a shallow, calm, clear lake reflecting the sky
+      far_bank: a dark volcanic escarpment rising beyond the lake plain
+      sky_and_light: a bright, clear East African sky with scattered high cloud; strong, even daylight
+      absent: [fire, clothing, spears, modern humans, metal, domesticated animals, buildings]
+    pin: null
+
+  # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
+  # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
+  # timing and spatiotemporal patterning of Neanderthal disappearance," Nature, 512, 306-309
+  # — Neanderthals disappear from the European record by ~41-39 ka, while Homo sapiens is
+  # present in Europe from ~45 ka, an overlap of roughly 2,600-5,400 years. This scene
+  # deliberately does NOT claim "first cave art": the current oldest confirmed rock/cave art
+  # is in Sulawesi, Indonesia, at >=51.2 ka (narrative art) and >=67.8 ka (hand stencil) —
+  # both older than, and unconnected to, this European scene (events.yaml
+  # earliest-cave-art). The brief's suggested "first cave art ~40-45 ka" premise does not
+  # hold up under verification, so this scene shows toolmaking, not painting.
+  - id: ice-age-europe-neanderthal
+    t: 4.2e4
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the last millennia before Neanderthals disappear from Europe, a hunter works a stone-tipped spear beside a cold river.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 9  # rounded: MIS 3 milder than the LGM (pleistocene-steppe uses 8; Tierney et al. 2020: LGM -6.1 C vs pre-industrial)
+    subject:
+      setting: A river valley in ice-age Europe, cut into a landscape of open tundra-steppe scattered with patches of coniferous forest
+      left_mass: a stand of hardy, wind-bent conifers on a low bluff above the river
+      vegetation: cold steppe grasses and dwarf shrubs with scattered stands of conifer, no broadleaf forest
+      fauna: a small herd of reindeer crossing the shallows in the middle distance; nothing else in view
+      main_subject: a heavily built, powerfully muscled hominin with a strong brow ridge and a broad nose, wrapped in draped animal hide, crouched at the water's edge working a wooden shaft tipped with a flaked stone point
+      ground: gravel and cobbles at the river's edge, with patches of frost-heaved soil
+      water: a shallow, cold, clear river, slow and calm along the near bank, over gravel
+      far_bank: open cold steppe rising to low hills, patched with dark conifer stands
+      sky_and_light: a pale, cold, high sky with fast-moving cloud; a low sun and long, cool-toned light
+      absent: [cave paintings, agriculture, farm animals, metal, modern humans, modern clothing, buildings]
+    pin: null
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
   - id: pleistocene-steppe

@@ -27,7 +27,6 @@ class Shot(StrEnum):
     WATER_EDGE = "WATER_EDGE"
     CANOPY = "CANOPY"
     GROUND = "GROUND"
-    UNDERWATER = "UNDERWATER"  # ADR-014: fully submerged shots (e.g. the Cambrian seafloor).
 
 
 class Composition(StrEnum):
@@ -35,7 +34,6 @@ class Composition(StrEnum):
 
     WATER_EDGE_SERIES = "water-edge-series"
     RIDGE_VISTA = "ridge-vista"
-    UNDERWATER_SERIES = "underwater-series"  # ADR-014
 
 
 # The camera only (ADR-008). Anything describing the world belongs in conditions or subject.
@@ -68,11 +66,6 @@ SHOT_TYPE: dict[Shot, str] = {
         "Shot type: camera low and close to the ground, detail-forward, shallow depth of field on "
         "the nearest subject."
     ),
-    Shot.UNDERWATER: (
-        "Shot type: camera fully submerged at mid-water depth, looking horizontally across the sea "
-        "floor, shafts of natural light filtering down from the surface above, water and suspended "
-        "particulates softening anything distant."
-    ),
 }
 
 # Held fixed within a chapter so dissolves read as morphs (VISUAL_SPEC §3). Light direction is
@@ -97,15 +90,6 @@ COMPOSITION_CONSTRAINTS: dict[Composition, str] = {
         "in the middle distance just right of centre, about a fifth of the frame width. Open sky "
         "over the right half. The light comes from the upper left, the sun itself out of frame; "
         "any shadows fall to the right."
-    ),
-    Composition.UNDERWATER_SERIES: (
-        "Composition, identical across this series of photographs: the sea floor runs level "
-        "across the bottom third of the frame. A ridge of rock or reef structure occupies the "
-        "left third, its top about 15% below the top edge. The main subject is in the middle "
-        "distance just right of centre, about a fifth of the frame width. Open water fills the "
-        "upper two-thirds, pale and lit by shafts of sunlight entering from the upper left; the "
-        "surface itself is out of frame. Fine suspended sediment softens anything far in the "
-        "background."
     ),
 }
 
