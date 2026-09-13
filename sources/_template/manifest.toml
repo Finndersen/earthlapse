@@ -1,0 +1,12 @@
+# See docs/DATA_SOURCES.md for field meanings.
+
+name = ""
+url = ""
+sha256 = ""
+licence = ""
+citation = ""
+time_domain = [0, 0]        # years BP, [oldest, newest]
+output_shape = ""            # TimeSeries | EventSet | RasterSequence | Tree
+interpolation = ""           # linear | log-linear | step | nearest
+volume_bytes = 0             # measured, not estimated
+storage_tier = ""            # git | git-lfs | r2
