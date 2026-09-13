@@ -387,6 +387,23 @@ events:
       Pagani, L. et al. (2015). "Tracing the route of modern humans out of Africa by using
       225 whole-genome sequences from Ethiopians and Egyptians." AJHG, 96(6), 986-991.
 
+  - id: last-glacial-maximum
+    label: Last Glacial Maximum
+    t_min: 1.9e4
+    t_max: 2.65e4
+    importance: 0.7
+    description: >
+      The height of the last ice age: most of the great Northern Hemisphere ice sheets stand
+      at their maximum extent, global sea level sits well over 100 m lower than today, and
+      cold, dry mammoth steppe spreads across northern Eurasia. The interval is the span over
+      which the ice sheets held near-maximum extent, not uncertainty about a single date.
+      Ages are calibrated years before 1950; the 75-year offset from this file's 2025
+      reference year is far inside the interval.
+    citation: >
+      Clark, P.U. et al. (2009). "The Last Glacial Maximum." Science, 325(5941), 710-714.
+      Most ice sheets reached their maximum extent between 26.5 and 19-20 ka, with
+      deglaciation beginning ~19-20 ka.
+
   - id: agriculture
     label: Agriculture begins
     t_min: 10025

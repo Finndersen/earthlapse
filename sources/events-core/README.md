@@ -73,12 +73,13 @@ event with a matching id (`earth-formation`, `moon-forming-impact`, `first-life`
 `great-oxidation-event`, `snowball-earth`, `ediacaran-biota`, `cambrian-explosion`,
 `land-plants`, `insects`, `tetrapods`, `amniotes`, `permian-extinction`, `dinosaurs`,
 `flowering-plants`, `k-pg-impact`, `primates`, `hominins`, `agriculture`, `writing`,
-`industrial-revolution`, `present`). Eight more fill out the set to 29 and produce the
+`industrial-revolution`, `present`). Nine more fill out the set to 30 and produce the
 deliberately uneven, present-clustered density the brief asks for:
 `eukaryotes-origin`, `multicellularity-sexual-reproduction`, `mammals-origin`, `birds-origin`
 (deep-time, filling the life-to-dinosaurs gap), and `homo-sapiens-origin`,
-`out-of-africa-migration`, `control-of-fire`, `moon-landing` (all within the last ~1.5 Myr,
-where density is highest).
+`out-of-africa-migration`, `control-of-fire`, `last-glacial-maximum`, `moon-landing` (all
+within the last ~1.5 Myr, where density is highest). `last-glacial-maximum` was added after
+the first browser review so the ice-age scene (t = 20 ka) has a matching event.
 
 ## Gotchas
 
