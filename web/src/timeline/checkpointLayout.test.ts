@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION } from '@/types/layer'
 
-import { layoutCheckpointPips, MIN_PIP_SEPARATION_PX } from './checkpointLayout'
+import { layoutCheckpointPips, MAX_PIP_ROWS, MIN_PIP_SEPARATION_PX } from './checkpointLayout'
 import type { TimelineCheckpoint } from './checkpoints'
 import { createSymlogScale, type TimeWindow } from './scale'
 
@@ -51,12 +51,20 @@ describe('layoutCheckpointPips', () => {
   })
 
   it('never lets two same-row pips render closer than MIN_PIP_SEPARATION_PX', () => {
-    // A cluster of checkpoints all within a few hundred years of each other, guaranteed to
-    // collide in pixel space at any reasonable track width.
-    const checkpoints = Array.from({ length: 6 }, (_, i) => checkpoint(`c${i}`, 1e5 + i * 5))
+    // The largest cluster the row budget can separate, all within a few decades of each other
+    // so every pair collides in pixel space at any reasonable track width.
+    const checkpoints = Array.from({ length: MAX_PIP_ROWS }, (_, i) => checkpoint(`c${i}`, 1e5 + i * 5))
     const pips = layoutCheckpointPips(checkpoints, FULL_DOMAIN, FULL_DOMAIN_SCALE, 800)
-    expect(pips).toHaveLength(6)
+    expect(pips).toHaveLength(MAX_PIP_ROWS)
+    expect(new Set(pips.map((p) => p.row)).size).toBe(MAX_PIP_ROWS)
     assertNoSameRowCollision(pips, 800)
+  })
+
+  it('still places every pip when a cluster exceeds the row budget', () => {
+    const checkpoints = Array.from({ length: MAX_PIP_ROWS + 2 }, (_, i) => checkpoint(`c${i}`, 1e5 + i * 5))
+    const pips = layoutCheckpointPips(checkpoints, FULL_DOMAIN, FULL_DOMAIN_SCALE, 800)
+    expect(pips).toHaveLength(MAX_PIP_ROWS + 2)
+    expect(pips.every((p) => p.row >= 0 && p.row < MAX_PIP_ROWS)).toBe(true)
   })
 
   it('keeps pleistocene-steppe, neolithic-river-settlement and modern-city all visible at full zoom-out on a narrow track', () => {

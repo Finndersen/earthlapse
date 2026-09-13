@@ -14,10 +14,11 @@ import { clampUnit } from './util'
  *  hit target, so the second one staggers to a different row instead of being hidden. */
 export const MIN_PIP_SEPARATION_PX = 8
 
-/** How many vertical rows `layoutCheckpointPips` will stagger into before falling back to
- *  whichever row is least crowded — comfortably more than any realistic cluster (the tightest
- *  one in the v1 manifest is three scenes bunched at the present-day end of the axis). */
-const MAX_ROWS = 4
+/** How many vertical rows `layoutCheckpointPips` will stagger into — bounded because
+ *  `ScrubTrack` climbs each row above the baseline inside a fixed-height hit area. Comfortably
+ *  more than any realistic cluster (the tightest one in the v1 manifest is three scenes bunched
+ *  at the present-day end of the axis); a larger cluster falls back to the least crowded row. */
+export const MAX_PIP_ROWS = 4
 
 export interface CheckpointPipLayout {
   id: string
@@ -31,9 +32,10 @@ export interface CheckpointPipLayout {
 }
 
 /**
- * Every checkpoint inside `window`, positioned and assigned a `row` so that no two pips in the
- * same row sit closer than `MIN_PIP_SEPARATION_PX` — a checkpoint is never dropped to solve a
- * collision, only staggered.
+ * Every checkpoint inside `window`, positioned and assigned a `row` so that, for any cluster of
+ * at most `MAX_PIP_ROWS` pips, no two in the same row sit closer than `MIN_PIP_SEPARATION_PX` —
+ * a checkpoint is never dropped to solve a collision, only staggered (beyond `MAX_PIP_ROWS` it
+ * shares the least crowded row rather than disappearing).
  *
  * Greedy left-to-right, the same shape as the classic "minimum rooms for overlapping
  * intervals" scheduling problem: pips are processed in ascending screen order and placed in
@@ -58,7 +60,7 @@ export function layoutCheckpointPips(
     const px = c.u * trackWidthPx
     let row = 0
     let bestGap = -Infinity
-    for (let r = 0; r < MAX_ROWS; r++) {
+    for (let r = 0; r < MAX_PIP_ROWS; r++) {
       const lastPx = lastPxByRow[r]
       const gap = lastPx === undefined ? Infinity : px - lastPx
       if (gap >= MIN_PIP_SEPARATION_PX) {
