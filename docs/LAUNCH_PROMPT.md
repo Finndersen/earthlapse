@@ -39,9 +39,13 @@ differently.
 
 Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 
-- Never raise --max-spend. The ceiling for this build is 35 USD, enforced in
-  pipeline/spend.py. Expected actual spend is about 18 USD. If a build hits the ceiling,
-  stop and report; do not work around it, do not retry in a loop.
+- Never raise --max-spend. The ceiling for this build is 18 USD, enforced in
+  pipeline/spend.py. Expected actual spend is about 14.50 USD. The ceiling sits BELOW the
+  funded balance on the billing account, so raising it does not buy more budget — it just
+  swaps a clean stop for an opaque billing failure. If a build hits the ceiling, stop and
+  report; do not work around it, do not retry in a loop.
+- Ancestor portraits are a STRETCH, not baseline. Generate them only if the ledger shows
+  headroom after the final scenes are done. The ancestor layer works as text-only in v1.
 - Do not modify anything in pipeline/shapes.py, pipeline/models.py, pipeline/graph.py,
   pipeline/spend.py, or web/src/types/. Agents import these. If one genuinely blocks a
   package, stop and report it as a proposed ADR rather than editing it — a local workaround

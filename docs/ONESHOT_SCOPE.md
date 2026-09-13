@@ -106,9 +106,17 @@ split — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection) for why
 | Anchor gate (W6a) | 4 | $0.52 |
 | Composition iteration | ~40 | $5.20 |
 | Final scenes, 14 × 3 candidates | ~42 | $5.46 |
-| Ancestor portraits (optional) | ~20 | $2.60 |
-| Retries and mistakes, +30% | | ~$4.00 |
-| **MVP total** | | **~$18** |
+| Retries and mistakes, +30% | | $3.30 |
+| **Core total** | | **~$14.50** |
+| Ancestor portraits — **stretch, only if budget allows** | ~20 | +$2.60 |
+
+**Funded by £20 of Google Cloud credit ≈ $21 usable** (assume 20% UK VAT reduces the
+effective amount). The ceiling is sized against that real figure, not against the project's
+notional $100.
+
+If spend runs hot, cut in this order: (1) ancestor portraits — the layer works as text-only
+in v1 anyway; (2) final candidates from 3 to 2 per scene, saving ~$1.80; (3) chapters from
+14 to 10.
 
 Ceiling for the whole one-shot: **`--max-spend 25`**. That leaves 3× headroom for iteration
 and keeps $75 of the project's $100 for later rounds. The ledger enforces it
@@ -211,7 +219,7 @@ A five-minute checklist. Every line must pass.
 - [ ] `pytest` — all tests green, offline, no network
 - [ ] `pnpm build` succeeds with no type errors
 - [ ] `earthtime plan` prints a cost estimate and spends nothing
-- [ ] `earthtime build --max-spend 35` completes; ledger total under $35
+- [ ] `earthtime build --max-spend 18` completes; ledger total under $18
 - [ ] `data/events.yaml` has ≥ 20 events, every one with a citation and `t_min ≤ t_max`
 - [ ] `data/lineage.yaml` resolves LUCA → *Homo sapiens* with no orphan parents
 - [ ] `pnpm dev` serves the page and it shows a scene image
@@ -240,10 +248,16 @@ These are expected to be missing. Do not "fix" them.
 
 ## Budget
 
-**`--max-spend 35`**, enforced in `pipeline/spend.py`. Expected actual **~$18**, all on Nano
-Banana Pro. The ceiling is set with headroom deliberately — setting it correctly upfront is
-different from an agent raising it mid-build, which is never allowed. Leaves ~$65 of the
-project's $100. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
+**`--max-spend 18`**, enforced in `pipeline/spend.py`. Expected actual **~$14.50** core, all
+on Nano Banana Pro.
+
+The ceiling is sized to sit **below the funded balance** (~$21 after VAT), not above it. A
+ceiling above available credit is worthless — you would hit an opaque billing failure
+mid-build instead of a clean, reported stop. Setting it correctly upfront is a different act
+from an agent raising it mid-build, which is never allowed.
+
+Also set a **Google Cloud budget alert at £15** as a second line of defence. The ledger is
+the primary guard; the alert catches anything the ledger does not see. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
 retry loop, not to constrain the build. **No agent may raise it**; if a build hits it,
 something is wrong, so stop and report.
 
