@@ -66,8 +66,8 @@ The backbone of the globe view.
 | **Access** | [Zenodo record 5460860](https://zenodo.org/records/5460860) — direct HTTP download, no auth |
 | **Format** | netCDF and GeoTIFF rasters |
 | **Coverage** | 0–540 Ma at ~5 Myr steps (117 rasters); a 0–750 Ma extension exists |
-| **Volume** | ⚠️ VERIFY — estimated 300 MB–1.5 GB raw depending on which bundle |
-| **Licence** | Open with citation required. ⚠️ VERIFY exact terms on the Zenodo record |
+| **Volume** | **414.7 MB** across 6 files — but the MVP needs only the **1° netCDF at 9.3 MB zipped** |
+| **Licence** | **CC BY 4.0**, verified against DataCite metadata and the shipped License.txt |
 | **Shape** | `RasterSequence` |
 | **Storage** | raw not committed; **derived globe textures → R2** |
 
@@ -105,12 +105,19 @@ actually in?
 - on-demand generation (§15 of DESIGN)
 - coastline overlays on the globe
 
-**Critical unknown** — ⚠️ VERIFY **first, before anything else**: does `gplately` install
-cleanly on the target platform? It has heavyweight geospatial dependencies (GDAL, PROJ,
-pygplates) that are historically painful. **If this is difficult, it blocks the vertical
-slice** and we need a fallback (precompute rotations offline into a lookup table and drop
-the runtime dependency). This is the single highest-risk install in the project — resolve it
-in the first hour of Phase 1.
+**Install risk — RESOLVED, no longer a blocker.** `pip install gplately` completes in ~33
+seconds, wheels only, no compilation, no conda, no system GDAL/PROJ/GEOS. pygplates 1.0.0
+publishes first-party `macosx_11_0_arm64` wheels for cp38–cp313. Install footprint ~1.0 GB
+for full gplately; `pip install pygplates` alone is 78 MB installed and sufficient if only
+rotations are needed. Model data is fetched separately by `plate-model-manager` — the
+Merdith 2021 deposit is 13.9 MB (Zenodo 4485738, CC-BY-4.0). No multi-gigabyte download
+anywhere in this source.
+
+⚠️ Two residual caveats: (1) verified on Linux x86_64 — the arm64 claim rests on wheel
+availability plus gplates.org's stated macOS 11.0+ ARM64 support, so confirm once on the
+target Mac; (2) **gplately and pygplates are GPL-2.0** — fine for the offline pipeline, but
+must not be vendored into the shipped frontend. Licences for EarthByte models other than
+Merdith 2021 are unconfirmed; check each deposit before republishing derived rasters.
 
 ---
 

@@ -182,5 +182,11 @@ Decisions deferred to Phase 1, to be recorded here once answered:
 - **Default timeline scale** — symlog vs density (DESIGN §14 q3)
 - **Globe texture resolution** (DESIGN §14 q5)
 - **Ancestor portrait register** — photoreal vs illustrated (DESIGN §14 q4)
-- **`gplately` viability** — if the install is unworkable, a precomputed rotation lookup
-  table replaces the runtime dependency (DATA_SOURCES `gplately`)
+- ~~**`gplately` viability**~~ **RESOLVED.** A clean `pip install gplately` completes in
+  ~33 seconds, wheels only, no conda and no system GDAL/PROJ/GEOS. pygplates 1.0.0 ships
+  first-party `macosx_11_0_arm64` wheels for cp38–cp313; every binary dependency (cartopy,
+  shapely, rasterio, netcdf4) also ships cp312 macOS arm64 wheels. The precomputed-rotation
+  fallback is not needed. Two caveats: verified on Linux x86_64, so arm64 rests on wheel
+  availability rather than a test — confirm once on the target Mac; and gplately/pygplates
+  are GPL-2.0, fine for the offline pipeline but **must not be vendored into the shipped
+  frontend**.
