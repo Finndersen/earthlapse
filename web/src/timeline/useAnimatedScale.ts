@@ -9,14 +9,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TimeScale } from '@/types/layer'
 
 import { blendScales, createLinearScale, createSymlogScale, type TimeWindow } from './scale'
+import { easeInOutCubic } from './util'
+import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 /** ~1.2s per the spec, eased so the collapse reads as a deliberate motion rather than a
  *  linear wipe. */
 const ANIMATION_DURATION_MS = 1200
-
-function easeInOutCubic(x: number): number {
-  return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2
-}
 
 /**
  * Returns a `TimeScale` over `window` that is `createSymlogScale` when at rest on
@@ -34,6 +32,7 @@ function easeInOutCubic(x: number): number {
 export function useAnimatedScale(window: TimeWindow, targetKind: 'symlog' | 'linear'): TimeScale {
   const targetK = targetKind === 'linear' ? 1 : 0
   const [k, setK] = useState(targetK)
+  const reducedMotion = usePrefersReducedMotion()
 
   const kRef = useRef(k)
   kRef.current = k
@@ -41,6 +40,10 @@ export function useAnimatedScale(window: TimeWindow, targetKind: 'symlog' | 'lin
 
   useEffect(() => {
     if (kRef.current === targetK) return
+    if (reducedMotion) {
+      setK(targetK)
+      return
+    }
 
     const from = kRef.current
     const startedAt = performance.now()
@@ -55,10 +58,11 @@ export function useAnimatedScale(window: TimeWindow, targetKind: 'symlog' | 'lin
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
-    // Re-runs only when the target changes; `k`'s own updates are read via `kRef` so the
-    // in-flight animation isn't restarted every frame by its own `setK` calls.
+    // Re-runs only when the target (or the reduced-motion preference) changes; `k`'s own
+    // updates are read via `kRef` so the in-flight animation isn't restarted every frame by
+    // its own `setK` calls.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetK])
+  }, [targetK, reducedMotion])
 
   const symlog = useMemo(() => createSymlogScale(window), [window])
   const linear = useMemo(() => createLinearScale(window), [window])

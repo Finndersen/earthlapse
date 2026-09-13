@@ -20,7 +20,7 @@ import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline }
 import { captionOpacity, dominantScene, sceneAt, SceneView } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { useTimeStore } from '@/store/time'
-import { advancePlayhead, createSymlogScale, Timeline, usePlaybackLoop } from '@/timeline'
+import { advancePlayhead, createSymlogScale, followWindow, Timeline, usePlaybackLoop } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
@@ -65,6 +65,19 @@ export function Experience() {
   // second, independent `useAnimatedScale` instance would be the wrong move.
   const [chartScale, setChartScale] = useState<TimeScale | null>(null)
 
+  // Follow-during-playback (timeline README §4), wired here next to the playback loop below.
+  // Engages on every play press (the effect only ever turns it *on*); disengages the instant
+  // the user manually pans or zooms the window — that happens in the wrapped `onWindowChange`
+  // passed to <Timeline>, not here, since only a *user* gesture should disengage it, never
+  // `followWindow`'s own panning (which writes `window` directly in the playback loop below,
+  // bypassing that callback entirely).
+  const [following, setFollowing] = useState(false)
+  const wasPlayingRef = useRef(playback.playing)
+  useEffect(() => {
+    if (playback.playing && !wasPlayingRef.current) setFollowing(true)
+    wasPlayingRef.current = playback.playing
+  }, [playback.playing])
+
   // Initial t (W12a brief): open on the oldest scene, once, the first time the manifest
   // loads — never again, so it doesn't fight a later manual scrub or a HMR-triggered reload
   // of this effect.
@@ -90,6 +103,10 @@ export function Experience() {
         return
       }
       if (next !== t) setT(next)
+      if (following) {
+        const followed = followWindow(timeWindow, next, scaleKind === 'linear' ? 'linear' : 'symlog')
+        if (followed[0] !== timeWindow[0] || followed[1] !== timeWindow[1]) setWindow([followed[0], followed[1]])
+      }
     },
   })
 
@@ -195,13 +212,21 @@ export function Experience() {
             events={manifest.events}
             playback={playback}
             onScrub={setT}
-            onWindowChange={(w) => setWindow([w[0], w[1]])}
+            onWindowChange={(w) => {
+              // Every window change reaching this callback is a user gesture (wheel, drag,
+              // a zoom/fit button, minimap click, a keyboard shortcut) — `followWindow`'s own
+              // panning never goes through it, see the playback loop above — so disengaging
+              // follow unconditionally here is exactly README §4's rule.
+              setFollowing(false)
+              setWindow([w[0], w[1]])
+            }}
             onScaleKindChange={setScaleKind}
             onPlaybackChange={(next) => {
               setPlaying(next.playing)
               setSpeed(next.speed)
             }}
             onScaleChange={setChartScale}
+            following={following}
           />
         </div>
       }

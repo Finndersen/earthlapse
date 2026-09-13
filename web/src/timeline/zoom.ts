@@ -4,7 +4,7 @@
 import { EARTH_FORMATION, type GeoTime, type ScaleKind } from '@/types/layer'
 
 import { unwarpFor, warpFor, type TimeWindow } from './scale'
-import { clamp, clampUnit } from './util'
+import { clamp, clampUnit, clampWindowToDomain } from './util'
 
 /** Narrowest window `zoomWindow` will produce. */
 export const MIN_SPAN_YEARS = 1
@@ -79,4 +79,65 @@ export function zoomWindow(window: TimeWindow, anchorU: number, factor: number, 
   }
 
   return clampWindow(unwarpFor(scaleKind, newWNewest), unwarpFor(scaleKind, newWOldest))
+}
+
+/**
+ * Pans `window` by `deltaU` — a fraction of the window's own warped width, in the same `u`
+ * orientation as every scale in this package (positive `deltaU` moves the window toward the
+ * present, i.e. toward `u = 1`). The span is kept exactly constant; the window only slides,
+ * clamped to `[0, EARTH_FORMATION]` by `clampWindowToDomain` rather than shrunk. Used for
+ * shift+wheel / horizontal-wheel panning on the scrub track — plain wheel zooms instead, see
+ * `ScrubTrack`.
+ *
+ * The raw-time shift is derived from a single reference point — the window's warped centre —
+ * moved by `deltaU` and converted back. That shift is then applied identically, in RAW time,
+ * to both bounds. Shifting each bound independently by the same *warped* amount instead would
+ * distort the span under a nonlinear warp like symlog (equal warped steps cover unequal raw
+ * years at different points in deep time); a pan gesture's whole point is to hold the raw
+ * years-span the user is looking at fixed, so raw years is the right space to shift it in.
+ */
+export function panWindow(window: TimeWindow, deltaU: number, scaleKind: ScaleKind): TimeWindow {
+  assertZoomableScaleKind(scaleKind)
+  if (!Number.isFinite(deltaU)) {
+    throw new Error(`panWindow: deltaU must be finite, got ${deltaU}`)
+  }
+
+  const [newest, oldest] = clampWindow(window[0], window[1])
+  const wNewest = warpFor(scaleKind, newest)
+  const wOldest = warpFor(scaleKind, oldest)
+  const width = wOldest - wNewest
+  if (width <= 0) return [newest, oldest]
+
+  const wCentre = (wNewest + wOldest) / 2
+  const tCentre = unwarpFor(scaleKind, wCentre)
+  // Subtracting moves the reference point toward smaller warped values for positive deltaU —
+  // smaller raw t, i.e. toward the present, matching this function's documented orientation.
+  const tShifted = unwarpFor(scaleKind, wCentre - deltaU * width)
+  const rawShift = tCentre - tShifted
+
+  const [slidNewest, slidOldest] = clampWindowToDomain(newest - rawShift, oldest - rawShift, EARTH_FORMATION)
+  return clampWindow(slidNewest, slidOldest)
+}
+
+/** Padding applied on each side of an event's uncertainty band when framing it (README §2:
+ *  "frame its uncertainty band with padding"), as a fraction of the band's own width. */
+export const EVENT_FRAME_PADDING_FACTOR = 0.5
+
+/** Fallback padding, in years, for a point event (`tMin === tMax`) that has no band width of
+ *  its own to take a fraction of. Small relative to every span this package renders above
+ *  `MIN_SPAN_YEARS`, and `clampWindow`'s own floor is the final safety net regardless. */
+const POINT_EVENT_PADDING_YEARS = MIN_SPAN_YEARS * 10
+
+/**
+ * The window that frames `[tMin, tMax]` with `EVENT_FRAME_PADDING_FACTOR` of the band's width
+ * as padding on each side (README §2: double-click an event marker to frame it). Clamped to
+ * the domain and to `MIN_SPAN_YEARS` the same way `zoomWindow` is.
+ */
+export function frameEventWindow(tMin: GeoTime, tMax: GeoTime): TimeWindow {
+  if (!(tMax >= tMin)) {
+    throw new Error(`frameEventWindow: tMax must be >= tMin, got tMin=${tMin}, tMax=${tMax}`)
+  }
+  const band = tMax - tMin
+  const padding = band > 0 ? band * EVENT_FRAME_PADDING_FACTOR : POINT_EVENT_PADDING_YEARS
+  return clampWindow(tMin - padding, tMax + padding)
 }

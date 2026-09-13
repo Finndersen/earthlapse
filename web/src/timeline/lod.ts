@@ -44,3 +44,28 @@ export function visibleEvents(
 function overlaps(e: TimelineEvent, newest: GeoTime, oldest: GeoTime): boolean {
   return e.tMax >= newest && e.tMin <= oldest
 }
+
+export type EventStepDirection = 'back' | 'forward'
+
+/**
+ * The nearest currently-visible event in `direction` from `t` — `'back'` being further into
+ * the past (screen-left), `'forward'` toward the present (screen-right), matching the
+ * package's left-to-right-is-past-to-present orientation. `undefined` when there is no such
+ * event (e.g. `t` already sits at the oldest/newest visible one). Shared by the transport's
+ * step buttons and the keyboard shortcut (README §2: "←/→ step to the previous/next event")
+ * so both agree on what "next event" means.
+ */
+export function nearestNeighbourEvent(
+  events: readonly TimelineEvent[],
+  window: TimeWindow,
+  spanYears: number,
+  t: GeoTime,
+  direction: EventStepDirection,
+): TimelineEvent | undefined {
+  const shown = visibleEvents(events, window, spanYears)
+  const candidates = direction === 'back' ? shown.filter((e) => e.tMin > t) : shown.filter((e) => e.tMax < t)
+  if (candidates.length === 0) return undefined
+  return direction === 'back'
+    ? candidates.reduce((a, b) => (a.tMin < b.tMin ? a : b))
+    : candidates.reduce((a, b) => (a.tMax > b.tMax ? a : b))
+}

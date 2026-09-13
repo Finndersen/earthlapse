@@ -28,28 +28,50 @@
  *   prop accept only `'symlog' | 'linear'`; passing `'density'` to `zoomWindow` throws rather
  *   than silently doing something wrong.
  *
- * ## Zoom, LOD, playback
+ * ## Zoom, pan, LOD, playback
  *
  * - `zoomWindow(window, anchorU, factor, scaleKind)` zooms around the cursor in warped space,
  *   clamped to `[0, EARTH_FORMATION]` and to a span of `[MIN_SPAN_YEARS, EARTH_FORMATION]`.
+ * - `panWindow(window, deltaU, scaleKind)` slides the window without resizing it — shift+wheel
+ *   / horizontal wheel on the scrub track.
+ * - `frameEventWindow(tMin, tMax)` — the window that frames an event's uncertainty band plus
+ *   padding (double-clicking a marker).
  * - `minImportanceForSpan(spanYears)` / `visibleEvents(events, window, spanYears)` — the 1D
  *   quadtree LOD (DESIGN §3): a wider visible span raises the importance floor for which
- *   events are drawn.
+ *   events are drawn. `nearestNeighbourEvent` finds the next one in a direction (the
+ *   transport's step buttons and the ←/→ keyboard shortcut).
  * - `advancePlayhead(t, dtSeconds, playback, fullScale)` moves `t` toward the present at
  *   constant velocity in `fullScale`'s warped `u` (always the *full-domain* scale, never the
  *   current window's — so playback speed is independent of zoom), scaled by `playback.speed`,
  *   clamped at the present. `usePlaybackLoop` drives it off `requestAnimationFrame`.
+ * - `followWindow(window, t, scaleKind)` — follow-during-playback (README §4): pans (never
+ *   resizes) the window once the playhead nears its present-side edge. Pure; the caller
+ *   (Experience.tsx, next to the playback loop) decides *whether* to apply the result and owns
+ *   disengage/re-engage on manual pan/zoom vs. the next play press.
+ * - `useWindowTransition({ window, scaleKind, onWindowChange })` returns `animateWindowTo`,
+ *   which eases a window change over `WINDOW_TRANSITION_MS` in warped space — used by every
+ *   *discrete* window change `Timeline` originates (zoom buttons, fit-all, event framing, a
+ *   minimap click). Wheel, pinch and drags call `onWindowChange` directly instead and so are
+ *   immediate.
  * - `formatGeoTime(t)` renders a `GeoTime` for humans (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`,
- *   `"250 years ago"`, `"present"`); exported for other packages that print a time without
- *   needing the rest of the timeline UI.
+ *   `"250 years ago"`, `"present"`); `formatTimeRange(window)` does the same for a whole window
+ *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
+ *   a time without the rest of the timeline UI.
+ * - `ERA_BANDS` — the eon/era boundaries (ICS v2024/12) behind the minimap's orientation bands.
+ * - `timelineKeyIntent(event)` maps a keydown to a `TimelineKeyIntent` (or `null`), ignoring
+ *   text-input targets — the pure half of `Timeline`'s keyboard handling.
  *
  * ## `<Timeline>` — props contract
  *
  * See the doc comment on `TimelineProps` in Timeline.tsx.
  */
 
-export { formatGeoTime } from './format'
-export { minImportanceForSpan, visibleEvents } from './lod'
+export { ERA_BANDS, type EraBand } from './eras'
+export { formatGeoTime, formatTimeRange } from './format'
+export { FOLLOW_TARGET_U, FOLLOW_TRIGGER_U, followWindow } from './follow'
+export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
+export { minImportanceForSpan, nearestNeighbourEvent, visibleEvents, type EventStepDirection } from './lod'
+export { minimapBracket, MINIMAP_FULL_DOMAIN, MIN_BRACKET_PX, type BracketLayout } from './minimapLayout'
 export { advancePlayhead, usePlaybackLoop } from './playback'
 export {
   blendScales,
@@ -58,6 +80,9 @@ export {
   SYMLOG_C,
   type TimeWindow,
 } from './scale'
+export { generateTicks, type AxisTick } from './ticks'
 export { Timeline, type TimelineProps } from './Timeline'
 export { useAnimatedScale } from './useAnimatedScale'
-export { MIN_SPAN_YEARS, zoomWindow } from './zoom'
+export { usePrefersReducedMotion } from './usePrefersReducedMotion'
+export { interpolateWindow, useWindowTransition, WINDOW_TRANSITION_MS } from './windowTransition'
+export { EVENT_FRAME_PADDING_FACTOR, frameEventWindow, MIN_SPAN_YEARS, panWindow, zoomWindow } from './zoom'

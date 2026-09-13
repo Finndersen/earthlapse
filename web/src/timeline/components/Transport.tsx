@@ -6,7 +6,7 @@
 
 import type { GeoTime, Playback, TimelineEvent } from '@/types/layer'
 
-import { visibleEvents } from '../lod'
+import { nearestNeighbourEvent } from '../lod'
 import type { TimeWindow } from '../scale'
 
 const SPEED_OPTIONS = [0.25, 0.5, 1, 2, 4, 8, 16, 32, 64] as const
@@ -22,18 +22,12 @@ interface TransportProps {
 
 export function Transport({ t, window: visibleWindow, events, playback, onScrub, onPlaybackChange }: TransportProps) {
   const spanYears = visibleWindow[1] - visibleWindow[0]
-  const shown = visibleEvents(events, visibleWindow, spanYears)
 
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
   // present (smaller t) — the same direction playback itself advances in.
   const jumpToNeighbourEvent = (direction: 'back' | 'forward'): void => {
-    const candidates = direction === 'back' ? shown.filter((e) => e.tMin > t) : shown.filter((e) => e.tMax < t)
-    if (candidates.length === 0) return
-    const nearest =
-      direction === 'back'
-        ? candidates.reduce((a, b) => (a.tMin < b.tMin ? a : b))
-        : candidates.reduce((a, b) => (a.tMax > b.tMax ? a : b))
-    onScrub((nearest.tMin + nearest.tMax) / 2)
+    const nearest = nearestNeighbourEvent(events, visibleWindow, spanYears, t, direction)
+    if (nearest) onScrub((nearest.tMin + nearest.tMax) / 2)
   }
 
   return (

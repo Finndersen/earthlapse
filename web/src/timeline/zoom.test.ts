@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_FORMATION } from '@/types/layer'
 
 import { createSymlogScale, type TimeWindow } from './scale'
-import { MIN_SPAN_YEARS, zoomWindow } from './zoom'
+import { EVENT_FRAME_PADDING_FACTOR, frameEventWindow, MIN_SPAN_YEARS, panWindow, zoomWindow } from './zoom'
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 
@@ -84,5 +84,77 @@ describe('zoomWindow', () => {
 
   it('rejects density, which is out of scope for this package', () => {
     expect(() => zoomWindow(FULL_DOMAIN, 0.5, 2, 'density')).toThrow(/density/)
+  })
+})
+
+describe('panWindow', () => {
+  it('keeps the span exactly constant', () => {
+    const window: TimeWindow = [1e7, 2e7]
+    const span = window[1] - window[0]
+    const result = panWindow(window, 0.1, 'symlog')
+    expect(result[1] - result[0]).toBeCloseTo(span, 3)
+  })
+
+  it('moves toward the present (smaller t) for positive deltaU', () => {
+    const window: TimeWindow = [1e7, 2e7]
+    const result = panWindow(window, 0.1, 'linear')
+    expect(result[0]).toBeLessThan(window[0])
+    expect(result[1]).toBeLessThan(window[1])
+  })
+
+  it('moves toward the past (larger t) for negative deltaU', () => {
+    const window: TimeWindow = [1e7, 2e7]
+    const result = panWindow(window, -0.1, 'linear')
+    expect(result[0]).toBeGreaterThan(window[0])
+    expect(result[1]).toBeGreaterThan(window[1])
+  })
+
+  it('slides rather than shrinks when panning off the present edge', () => {
+    const window: TimeWindow = [0, 1000]
+    const span = window[1] - window[0]
+    const result = panWindow(window, 0.5, 'linear')
+    expect(result[0]).toBe(0)
+    expect(result[1] - result[0]).toBeCloseTo(span, 6)
+  })
+
+  it('never produces a window outside [0, EARTH_FORMATION]', () => {
+    const result = panWindow([EARTH_FORMATION - 1000, EARTH_FORMATION], -1, 'symlog')
+    expect(result[0]).toBeGreaterThanOrEqual(0)
+    expect(result[1]).toBeLessThanOrEqual(EARTH_FORMATION)
+  })
+
+  it('rejects density, which is out of scope for this package', () => {
+    expect(() => panWindow(FULL_DOMAIN, 0.1, 'density')).toThrow(/density/)
+  })
+})
+
+describe('frameEventWindow', () => {
+  it('includes the full band plus padding on each side', () => {
+    const tMin = 2.5e8
+    const tMax = 2.52e8
+    const band = tMax - tMin
+    const result = frameEventWindow(tMin, tMax)
+    expect(result[0]).toBeCloseTo(tMin - band * EVENT_FRAME_PADDING_FACTOR, 6)
+    expect(result[1]).toBeCloseTo(tMax + band * EVENT_FRAME_PADDING_FACTOR, 6)
+    expect(result[0]).toBeLessThan(tMin)
+    expect(result[1]).toBeGreaterThan(tMax)
+  })
+
+  it('still produces a non-degenerate window for a point event', () => {
+    const result = frameEventWindow(1e6, 1e6)
+    expect(result[1] - result[0]).toBeGreaterThan(0)
+    expect(result[0]).toBeLessThanOrEqual(1e6)
+    expect(result[1]).toBeGreaterThanOrEqual(1e6)
+  })
+
+  it('clamps to the domain near the present edge without losing the band', () => {
+    const result = frameEventWindow(0, 100)
+    expect(result[0]).toBeGreaterThanOrEqual(0)
+    expect(result[0]).toBeLessThanOrEqual(0)
+    expect(result[1]).toBeGreaterThanOrEqual(100)
+  })
+
+  it('rejects an inverted band', () => {
+    expect(() => frameEventWindow(100, 0)).toThrow()
   })
 })
