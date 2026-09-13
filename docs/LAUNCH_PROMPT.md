@@ -22,7 +22,7 @@ serial integration pass. Roughly 12 agents. Use worktree isolation for packages 
 shared directories.
 
 W6a is an early gate and blocks W6 only — do not let it block the rest of the fan-out. It
-generates one era anchor plus three scenes conditioned on it, on the free tier, then STOPS
+generates one era anchor plus three scenes conditioned on it, on Pro (~0.52 USD), then STOPS
 and reports so I can look at the four images. Do not proceed into W6's full pipeline, and do
 not generate any final scenes, until I have said go. This is the cheapest risk retirement in
 the plan: the entire visual approach depends on anchor conditioning holding style, and
@@ -39,9 +39,8 @@ differently.
 
 Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 
-- Never raise --max-spend. The ceiling for this build is 25 USD, enforced in
-  pipeline/spend.py. Expected actual spend is about 5.50 USD, with the draft phase free on
-  the Gemini free tier. If a build hits the ceiling,
+- Never raise --max-spend. The ceiling for this build is 35 USD, enforced in
+  pipeline/spend.py. Expected actual spend is about 18 USD. If a build hits the ceiling,
   stop and report; do not work around it, do not retry in a loop.
 - Do not modify anything in pipeline/shapes.py, pipeline/models.py, pipeline/graph.py,
   pipeline/spend.py, or web/src/types/. Agents import these. If one genuinely blocks a
@@ -51,9 +50,11 @@ Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 - Every test must run offline against a committed fixture. No test may download a large file
   or hit a live API.
 - No provider name may appear outside pipeline/generators/.
-- Image generation uses the Gemini free tier for drafts. It has RPM limits and a daily token
-  cap, and a parallel fan-out WILL hit them. Keep generation concurrency low and treat HTTP
-  429 as backoff-and-retry, never as a failure or a reason to switch models.
+- ALL image generation uses gemini-3-pro-image-preview. Do not use the free-tier
+  gemini-2.5-flash-image anywhere in this build, including for drafts or the anchor gate —
+  prompts tuned on one model do not transfer to the other, and the gate is invalid if it
+  runs on a different model from the finals. Treat HTTP 429 as backoff-and-retry, never as
+  a failure or a reason to switch models.
 - If a data source turns out to be unusable — licence, rot, volume, whatever — stop and
   report. Do not silently substitute a different dataset.
 

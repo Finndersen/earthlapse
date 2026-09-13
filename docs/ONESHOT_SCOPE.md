@@ -98,16 +98,17 @@ v1 renders it as **text only** (label + representative + date). Portraits are a 
 
 14 chapters, one final still each, plus ~10 optional ancestor portraits.
 
-| Item | Count | Model | Unit | Cost |
-|---|---|---|---|---|
-| Draft / composition iteration | ~56 | `gemini-2.5-flash-image` | free tier | $0.00 |
-| Final scenes (3 candidates each) | ~42 | `gemini-3-pro-image-preview` | ~$0.13 | ~$5.50 |
-| Ancestor portraits (optional) | ~30 | `gemini-2.5-flash-image` | free tier | $0.00 |
-| **MVP total** | | | | **~$5.50** |
+All generation uses `gemini-3-pro-image-preview` at ~$0.13/image. One model, no two-tier
+split — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection) for why.
 
-The draft phase runs entirely on the free tier (~500 images/day). **Cost is not the
-constraint** — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection) for why Gemini
-was chosen over the ~5× cheaper FLUX ladder, and what the fallback is.
+| Item | Count | Cost |
+|---|---|---|
+| Anchor gate (W6a) | 4 | $0.52 |
+| Composition iteration | ~40 | $5.20 |
+| Final scenes, 14 × 3 candidates | ~42 | $5.46 |
+| Ancestor portraits (optional) | ~20 | $2.60 |
+| Retries and mistakes, +30% | | ~$4.00 |
+| **MVP total** | | **~$18** |
 
 Ceiling for the whole one-shot: **`--max-spend 25`**. That leaves 3× headroom for iteration
 and keeps $75 of the project's $100 for later rounds. The ledger enforces it
@@ -145,7 +146,7 @@ Every package's verification is a runnable command. "It renders" is not a verifi
 | **W3** | `sources/astronomy` | 4 analytic TimeSeries, no download | `pytest tests/sources/test_astronomy.py` — day length @ 600 Ma ≈ 21–22 h, solar luminosity @ 4 Ga ≈ 0.75 | spine | ✅ |
 | **W4** | `sources/events-core` | `data/events.yaml`, ~30 events | `pytest tests/sources/test_events.py` — every event has citation, `t_min ≤ t_max`, importance in 0..1, ≥ 20 events, spans > 4e9 | spine | ✅ |
 | **W5** | `sources/lineage` | `data/lineage.yaml`, ~40 nodes | `pytest tests/sources/test_lineage.py` — parents resolve, dates monotonic, path LUCA→human intact | spine | ✅ |
-| **W6a** | **anchor gate** — see below | 1 era anchor + 3 scenes conditioned on it, generated and saved | **human looks at 4 images and says go / no-go** | spine | ✅ first |
+| **W6a** | **anchor gate** — see below | 1 era anchor + 3 scenes conditioned on it, **generated on Pro**, saved | **human looks at 4 images and says go / no-go** | spine | ✅ first |
 | **W6** | `pipeline/generators` + prompt renderer + `earthtime` CLI | Generator protocol impls, prompt templates from WorldState, `plan`/`build`/`review`/`publish` | `pytest tests/test_pipeline.py` + `earthtime plan` prints a cost estimate without spending | W6a | ✅ |
 | **W7** | `web/timeline` | warped scale, LOD, scrub, play, speed, linear toggle | `pnpm test timeline` — `toUnit`/`fromUnit` round-trip to 1e-6 across the full domain; LOD drops low-importance events when zoomed out | spine | ✅ |
 | **W8** | `web/globe` | three.js sphere, texture blending | `pnpm test globe` — samples correct blend pair and alpha at 5 known `t` values | spine, W2 shape only | ✅ |
@@ -164,7 +165,11 @@ conditioning holds style across scenes (ADR-004, VISUAL_SPEC §4). Nothing else 
 tests it, and ~40 finals would be generated against it.
 
 So before W6 builds the full pipeline, it generates **one era anchor and three scenes
-conditioned on it**, on the free tier, and stops. Four images, a few minutes, $0.
+conditioned on it**, and stops. Four images, a few minutes, $0.52.
+
+⚠️ **Generate these on `gemini-3-pro-image-preview`** — the same model the finals use. Run on
+a cheaper model the gate proves nothing: a failure might be that model's limitation, and a
+pass does not transfer.
 
 - **Go** — the three scenes share a recognisable look. Proceed with W6 as specified.
 - **No-go** — they don't. Stop and report. The fallback is the invariant style spec alone
@@ -206,7 +211,7 @@ A five-minute checklist. Every line must pass.
 - [ ] `pytest` — all tests green, offline, no network
 - [ ] `pnpm build` succeeds with no type errors
 - [ ] `earthtime plan` prints a cost estimate and spends nothing
-- [ ] `earthtime build --max-spend 25` completes; ledger total under $25
+- [ ] `earthtime build --max-spend 35` completes; ledger total under $35
 - [ ] `data/events.yaml` has ≥ 20 events, every one with a citation and `t_min ≤ t_max`
 - [ ] `data/lineage.yaml` resolves LUCA → *Homo sapiens* with no orphan parents
 - [ ] `pnpm dev` serves the page and it shows a scene image
@@ -235,8 +240,10 @@ These are expected to be missing. Do not "fix" them.
 
 ## Budget
 
-**`--max-spend 25`**, enforced in `pipeline/spend.py`. Expected actual **~$5.50** — drafts
-free, finals on Nano Banana Pro. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
+**`--max-spend 35`**, enforced in `pipeline/spend.py`. Expected actual **~$18**, all on Nano
+Banana Pro. The ceiling is set with headroom deliberately — setting it correctly upfront is
+different from an agent raising it mid-build, which is never allowed. Leaves ~$65 of the
+project's $100. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
 retry loop, not to constrain the build. **No agent may raise it**; if a build hits it,
 something is wrong, so stop and report.
 

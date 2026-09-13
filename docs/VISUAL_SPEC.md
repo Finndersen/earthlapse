@@ -164,12 +164,23 @@ candidate picker showing one image at a time will produce a beautiful, incoheren
 
 **Decision: Google AI Studio (Gemini) as the primary provider, two-tier.**
 
-| Tier | Model ID | Cost | Use |
-|---|---|---|---|
-| Draft | `gemini-2.5-flash-image` (Nano Banana) | **free tier ~500/day**, else $0.019 | composition iteration, chapter framing |
-| Final | `gemini-3-pro-image-preview` (Nano Banana Pro) | ~$0.13 (token-priced, $120/M output) | approved scenes |
+**For the MVP: `gemini-3-pro-image-preview` (Nano Banana Pro) for everything.** ~$0.13 per
+image, token-priced at $120/M output. Expected MVP total **~$18**.
 
-Expected MVP total: **~$5.50**, with the entire draft phase at zero cost on the free tier.
+**Not** a two-tier split, despite the cost saving being available. The free tier
+(`gemini-2.5-flash-image`, ~500/day) saves roughly $5 on a $100 project and buys two real
+problems: prompt adherence differs between models, so prompts tuned on the cheap model may
+behave differently on the one that ships; and it doubles the config surface — two model
+entries, two price rows, two rate-limit regimes — in a pipeline being written by parallel
+agents. Not worth $5.
+
+**The anchor gate especially must run on Pro.** Its purpose is to validate anchor
+conditioning *for the pipeline that generates the finals*. Run on a different model it
+proves nothing: a failure might be that model's limitation, and a pass does not transfer.
+
+**Where the free tier does pay off: Phase 3**, the art-direction taste loop, when prompts are
+iterated by the hundred and the judgement is about composition rather than final quality.
+Switch to it then, deliberately.
 
 **Why Gemini rather than the cheaper FLUX ladder.** Cost is not a constraint at this scale —
 the whole MVP is single-digit dollars on any provider. The deciding requirement is
