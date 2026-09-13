@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { PLAYBACK_HOLD_SECONDS, resolveAssetUrl, SceneView } from '@/scene'
+import { resolveAssetUrl, scenePlaybackSegments, SceneView } from '@/scene'
 import { ShellLayout, useIdle } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
@@ -121,12 +121,21 @@ export function Experience() {
     setInitialised(true)
   }, [data, initialised, setT])
 
+  // Playback pacing (ADR-012 update — `scene/pacing.ts`): the wall-clock durations the
+  // playhead itself must spend crossing each scene and each dissolve, so the picture stays a
+  // pure function of `t` throughout playback. Memoised so it's only recomputed when the
+  // manifest's scenes change, not every frame.
+  const pacing = useMemo(
+    () => (data.status === 'ready' ? scenePlaybackSegments(data.manifest.scenes) : []),
+    [data],
+  )
+
   // The playback loop (DESIGN §3): the one place `t` advances on its own. Always paced by the
   // full-domain scale, per `advancePlayhead`'s contract, so speed is independent of zoom.
   usePlaybackLoop({
     playing: playback.playing,
     onFrame: (dtSeconds) => {
-      const next = advancePlayhead(t, dtSeconds, playback, FULL_DOMAIN_SCALE)
+      const next = advancePlayhead(t, dtSeconds, playback, FULL_DOMAIN_SCALE, pacing)
       if (next === 0) {
         // Reached the present: stop cleanly rather than spend every subsequent frame
         // computing a no-op clamp against a "playing" flag that never advances anything.
@@ -204,13 +213,7 @@ export function Experience() {
       globeExpanded={globeExpanded}
       scene={
         manifest.scenes.length > 0 ? (
-          <SceneView
-            t={t}
-            scenes={manifest.scenes}
-            assetBase={manifest.assetBase}
-            renderCaption={renderCaption}
-            minHoldSeconds={playback.playing ? PLAYBACK_HOLD_SECONDS : 0}
-          />
+          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
         ) : (
           <div className={styles.placeholder}>No scenes in manifest.</div>
         )

@@ -4,8 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Scene } from '@/types/manifest'
 
 import type { SceneMix } from './scene'
-import { advance, MIN_TRANSITION_SECONDS, PLAYBACK_HOLD_SECONDS, step, usePresentedSceneMix } from './presentation'
-import type { Presentation } from './presentation'
+import { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
 
 function scene(id: string, t: number): Scene {
   return {
@@ -267,84 +266,6 @@ describe('MIN_TRANSITION_SECONDS', () => {
   })
 })
 
-// ------------------------------------------------------------------------------- advance
-
-describe('advance: minimum on-screen hold', () => {
-  function held(scene: SceneMix, heldSeconds: number): Presentation {
-    return { scene, heldSeconds }
-  }
-
-  it('is exactly step when minHoldSeconds is 0', () => {
-    const state = held(alone(s0), 0)
-    const target = alone(s3)
-    expect(advance(state, target, 0.1, 0)).toEqual({ scene: step(alone(s0), target, 0.1), heldSeconds: 0 })
-  })
-
-  it('keeps a freshly settled scene on screen until the hold elapses, counting the hold', () => {
-    const state = held(alone(s0), 0)
-    const result = advance(state, alone(s3), 0.5, 2)
-    expect(result).toEqual({ scene: alone(s0), heldSeconds: 0.5 })
-  })
-
-  it('starts leaving once the hold has elapsed, resetting the hold', () => {
-    const state = held(alone(s0), 1.95)
-    const result = advance(state, alone(s3), 0.1, 2)
-    expect(result).toEqual({ scene: { from: s0, to: s3, mix: 0.1 / MIN_TRANSITION_SECONDS }, heldSeconds: 0 })
-  })
-
-  it('applies a rebase that keeps the same scene on screen even while holding', () => {
-    // Settled on s1 as the "to" of (s0, s1); target sits in s1's own hold region of (s1, s2).
-    const state = held({ from: s0, to: s1, mix: 1 }, 0.2)
-    const result = advance(state, { from: s1, to: s2, mix: 0 }, 0.1, 2)
-    expect(result.scene).toEqual({ from: s1, to: s2, mix: 0 })
-    expect(result.heldSeconds).toBeCloseTo(0.3)
-  })
-
-  it('holds even a same-pair move that would start fading the on-screen scene', () => {
-    const state = held({ from: s1, to: s2, mix: 0 }, 0.2)
-    const result = advance(state, { from: s1, to: s2, mix: 1 }, 0.1, 2)
-    expect(result.scene).toEqual({ from: s1, to: s2, mix: 0 })
-  })
-
-  it('never holds mid-transition', () => {
-    const state = held({ from: s0, to: s1, mix: 0.5 }, 0)
-    const result = advance(state, { from: s0, to: s1, mix: 1 }, 0.1, 2)
-    expect(result).toEqual({ scene: { from: s0, to: s1, mix: 0.5 + 0.1 / MIN_TRANSITION_SECONDS }, heldSeconds: 0 })
-  })
-
-  it.each([0, -1, NaN])('returns state unchanged for dt = %p', (dt) => {
-    const state = held(alone(s0), 0)
-    expect(advance(state, alone(s3), dt, 2)).toBe(state)
-  })
-
-  it('shows every scene it settles on for the whole hold while the target outruns it', () => {
-    // The target races through a new scene every 0.1s, far faster than a transition.
-    const scenes = [s0, s1, s2, s3, s4]
-    const dt = 1 / 60
-    const onScreenId = ({ scene: m }: Presentation): string | null => (m.mix === 0 ? m.from.id : m.mix === 1 ? m.to.id : null)
-
-    let state: Presentation = { scene: alone(s0), heldSeconds: 0 }
-    const settledSpans: Array<{ id: string; seconds: number }> = [{ id: 's0', seconds: 0 }]
-    for (let frame = 0; frame < 60 * 30; frame++) {
-      const target = alone(scenes[Math.min(scenes.length - 1, Math.floor(frame / 6))]!)
-      state = advance(state, target, dt, PLAYBACK_HOLD_SECONDS)
-      const id = onScreenId(state)
-      const current = settledSpans[settledSpans.length - 1]!
-      if (id === null) continue
-      if (id === current.id) current.seconds += dt
-      else settledSpans.push({ id, seconds: 0 })
-    }
-
-    expect(state.scene).toEqual(alone(s4))
-    // Every scene that was left again (all but the final one) was held for the full hold.
-    for (const span of settledSpans.slice(0, -1)) {
-      expect(span.seconds + 1e-9).toBeGreaterThanOrEqual(PLAYBACK_HOLD_SECONDS)
-    }
-    // And the hold skips outrun scenes rather than visiting each one.
-    expect(settledSpans.length).toBeLessThan(scenes.length)
-  })
-})
-
 // ================================================================== usePresentedSceneMix
 
 describe('usePresentedSceneMix', () => {
@@ -363,13 +284,13 @@ describe('usePresentedSceneMix', () => {
 
   it('mounts at target exactly — no animation on the first frame', () => {
     const target = alone(s0)
-    const { result } = renderHook(() => usePresentedSceneMix(target, 0))
+    const { result } = renderHook(() => usePresentedSceneMix(target))
     expect(result.current).toEqual(target)
   })
 
   it('catches up to a target that jumps to a distant scene, taking real wall-clock time to do it', async () => {
     const initialTarget = alone(s0)
-    const { result, rerender } = renderHook(({ target }) => usePresentedSceneMix(target, 0), {
+    const { result, rerender } = renderHook(({ target }) => usePresentedSceneMix(target), {
       initialProps: { target: initialTarget as SceneMix },
     })
     expect(result.current).toEqual(initialTarget)

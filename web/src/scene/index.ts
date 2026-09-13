@@ -1,9 +1,9 @@
 /**
  * Public API of the scene package (DESIGN §5 v1 note / ADR-009: still no depth/displacement;
  * ADR-012: a smooth whole-image crossfade with a minimum wall-clock duration, replacing the
- * noise-masked dissolve).
+ * noise-masked dissolve; updated for playback pacing — see `pacing.ts`).
  *
- * `<SceneView t scenes assetBase minHoldSeconds renderCaption? className? />` — prop-driven, pure in `t`
+ * `<SceneView t scenes assetBase renderCaption? className? />` — prop-driven, pure in `t`
  * (plus the OS reduced-motion preference and the presentation catch-up's own wall-clock
  * pacing; see `useReducedMotion` and `presentation.ts`). `scenes` is `Manifest.scenes` as-is
  * (sorted ascending by `t`); `assetBase` is `Manifest.assetBase`. `renderCaption`, if given,
@@ -11,16 +11,18 @@
  * (`captionOpacity`, in sync with the image dissolve); its return value is rendered as-is —
  * SceneView applies no positioning or styling to it.
  *
- * The pure logic is exported separately, for callers (e.g. a minimap or a scrubber preview)
- * that need it without the component:
+ * The pure logic is exported separately, for callers (e.g. a minimap or a scrubber preview,
+ * or the `timeline` package's playback pacing) that need it without the component:
  * - `sceneAt(scenes, t)` — the from/to/mix *target* sampler, instantaneous and pure in `t`.
  *   `DISSOLVE_WIDTH` is its one tunable: the fraction of the log1p gap between two scenes
  *   spent dissolving, centred on the midpoint.
  * - `step(state, target, dtSeconds)` — rate-limits a *presented* `SceneMix` toward `sceneAt`'s
  *   target, at most `dtSeconds / MIN_TRANSITION_SECONDS` of `mix` per call.
- *   `advance(presentation, target, dtSeconds, minHoldSeconds)` adds a minimum on-screen hold
- *   for settled scenes (`PLAYBACK_HOLD_SECONDS` during playback), and
- *   `usePresentedSceneMix(target, minHoldSeconds)` drives it with `requestAnimationFrame`.
+ *   `usePresentedSceneMix(target)` drives it with `requestAnimationFrame`.
+ * - `scenePlaybackSegments(scenes)` — the `PlaybackSegment`s (`{ tNewer, tOlder, minSeconds }`)
+ *   that `timeline/playback.ts`'s `advancePlayhead` paces the *playhead* through during
+ *   playback, so scenes dwell and dissolves take their minimum wall-clock time without ever
+ *   desynchronising the picture from `t`. `SCENE_DWELL_SECONDS` is its one tunable.
  * - `dominantScene(mix)` / `captionOpacity(mix)` — which scene reads as "current", and that
  *   scene's caption cross-fade opacity.
  * - `driftAt(scenes, index, t)` — a scene's camera-drift uniforms (zoom + lateral pan).
@@ -30,8 +32,9 @@
 
 export { REST_DRIFT, driftAt } from './drift'
 export type { DriftUniforms } from './drift'
-export { advance, MIN_TRANSITION_SECONDS, PLAYBACK_HOLD_SECONDS, step, usePresentedSceneMix } from './presentation'
-export type { Presentation } from './presentation'
+export { scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
+export type { PlaybackSegment } from './pacing'
+export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
 export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt } from './scene'
 export type { SceneMix } from './scene'
 export { SceneView } from './SceneView'

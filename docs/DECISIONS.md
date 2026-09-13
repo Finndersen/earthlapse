@@ -284,6 +284,20 @@ as a view into the world.
 - Layout: the scene fills the window behind an elliptical lens vignette. The globe, layer
   readouts, time/era title, ancestor, caption and timeline float in the darkened periphery
   with no panels or borders. The periphery dims while playback runs and the viewer is idle.
+- **Playback pacing update (superseding this ADR's first playback attempt).** A first pass
+  added a minimum on-screen *hold* downstream, in `presentation.ts` — wrong layer: it
+  desynchronised the picture from `t`, so time/era/ancestor/CO2 readouts could sit hundreds of
+  Myr ahead of a held image. Playback now paces the **playhead** instead
+  (`scene/pacing.ts`'s `scenePlaybackSegments`, consumed by `timeline/playback.ts`'s
+  `advancePlayhead`): at 1x, each scene dwells `SCENE_DWELL_SECONDS` (3 s, split across its
+  two neighbouring gaps) and each dissolve band takes at least `MIN_TRANSITION_SECONDS`
+  (1.6 s) before `t` is allowed past it — both divided by `speed` at faster rates. The picture
+  stays a pure function of `t` throughout normal playback, because nothing downstream of `t`
+  is being held back.
+- `presentation.ts`'s rate limiter is unchanged and is now purely the backstop for scrubbing
+  and for playback fast enough to still outrun the paced floor (at 8x a paced dissolve band
+  takes only 0.2 s of playhead time, under the limiter's own 1.6 s floor, so the picture can
+  lag `t` by up to ~1.6 s at high speed — acceptable, and no worse than before).
 
 **Consequences.**
 - A still frame is a pure function of `t` once the transition has settled, but not in the
@@ -294,6 +308,11 @@ as a view into the world.
 - DESIGN §8's diagram describes the pre-ADR-012 layout; the slots (globe, sparklines,
   ancestor, caption, timeline, chart dock) survive, and only their chrome and placement
   change.
+- A full 1x playthrough is no longer a flat 50 s (`1 / baseRate` at the store's default
+  `baseRate = 0.02`): across the current manifest's 14 scenes, most gaps are narrow enough in
+  symlog `u` to hit the per-scene/dissolve floor (33 of 39 paced segments), so a full 1x
+  playthrough of the current manifest takes about 87 s. A future manifest with wider gaps
+  would take less; nothing is slowed below the ordinary `baseRate`.
 
 ---
 

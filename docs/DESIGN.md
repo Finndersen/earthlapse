@@ -133,6 +133,12 @@ Playback rate is **constant events-per-second** — the playhead moves at consta
 *warped screen space*. A linear playthrough would spend 99.98% of its runtime in the
 Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else changes.
 
+> **v1 note (ADR-012).** Constant velocity is capped, not flat: consecutive scenes can sit as
+> little as ~1% of `u` apart, which a flat rate crosses in well under a dissolve's minimum
+> duration. `advancePlayhead` now caps the playhead's velocity downward while crossing a
+> scene's dwell or a dissolve band, so each takes at least its minimum wall-clock time (scaled
+> by speed); everywhere else the rate is exactly as flat as before.
+
 ---
 
 ## 4. `WorldState` — the central abstraction (NORMATIVE)
