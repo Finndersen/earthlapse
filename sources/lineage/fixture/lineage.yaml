@@ -1,0 +1,106 @@
+# A small REAL slice of data/lineage.yaml, committed for offline reference and any future
+# fixture-driven test. Not read by normalise.py — see its module docstring: normalise()
+# always parses the real data/lineage.yaml, per the working-conventions brief for this
+# source (matching sources/events-core/fixture/events.yaml's convention). Kept in the same
+# schema so a test can load it the same way as data/lineage.yaml. This slice is a single
+# unbroken sub-path (LUCA -> Metazoa) plus the terminal node (Homo sapiens), not the full
+# ~40-node path -- see the real file for the complete lineage.
+
+nodes:
+  - id: luca
+    parent: null
+    label: LUCA
+    representative: "LUCA (hypothetical; no direct fossil)"
+    t_divergence: 4.2e9
+    note: >
+      The last universal common ancestor of all cellular life. Dated to 4.2 Ga (95% CI
+      4.09-4.33 Ga under the ILN model, 4.18-4.33 Ga under GBM), implying life originated
+      within ~100-200 Myr of Earth's formation. Contested: other analyses place LUCA closer
+      to the hard 4.52 Ga root constraint (the Moon-forming impact).
+    citation: >
+      Moody, E.R.R., Álvarez-Carretero, S., Mahendrarajah, T.A. et al. (2024) "The nature of
+      the last universal common ancestor and its impact on the early Earth system." Nature
+      Ecology & Evolution 8, 1654-1666. doi:10.1038/s41559-024-02461-1
+
+  - id: archaeal-host-lineage
+    parent: luca
+    label: Archaeal host lineage (Asgard archaea)
+    representative: "Asgard archaea (e.g. extant Heimdallarchaeia / Lokiarchaeota)"
+    t_divergence: 2.6e9
+    note: >
+      The archaeal lineage, within Asgardarchaeota, whose descendant eventually became the
+      host cell of the eukaryotic symbiosis. Contested / poorly constrained -- see the real
+      data/lineage.yaml for the full discussion.
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+
+  - id: leca
+    parent: archaeal-host-lineage
+    label: Eukaryotes (LECA)
+    representative: "LECA (hypothetical); candidate fossil proxy Grypania spiralis"
+    t_divergence: 1.526e9
+    note: >
+      The last eukaryotic common ancestor -- crown Eukaryota. Betts et al. (2018) date it to
+      1,842-1,210 Ma (midpoint used here).
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+
+  - id: opisthokonta
+    parent: leca
+    label: Amorphea / Opisthokonta
+    representative: "stem opisthokont (no diagnostic fossil; molecular-clock node only)"
+    t_divergence: 1.416e9
+    note: >
+      The split between Opisthokonta (animals, fungi and relatives) and the rest of the
+      eukaryote crown. Betts et al. (2018): 1,707-1,125 Ma (midpoint used here).
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+
+  - id: holozoa
+    parent: opisthokonta
+    label: Holozoa
+    representative: "stem holozoan (no diagnostic fossil; molecular-clock node only)"
+    t_divergence: 1.0e9
+    note: >
+      The first split within Holozoa, after it splits from Fungi at the Opisthokonta node.
+      Not separately, precisely dated in the literature consulted -- contested / poorly
+      constrained; see the real data/lineage.yaml for the full discussion.
+    citation: >
+      Parfrey, L.W., Lahr, D.J.G., Knoll, A.H. & Katz, L.A. (2011) "Estimating the timing of
+      early eukaryotic diversification with multigene molecular clocks." Proceedings of the
+      National Academy of Sciences 108(33), 13624-13629. doi:10.1073/pnas.1110633108
+
+  - id: metazoa
+    parent: holozoa
+    label: Animals (Metazoa)
+    representative: "stem/early crown metazoan (Ediacaran sponge-grade animal)"
+    t_divergence: 7.57e8
+    note: >
+      Crown Metazoa -- the last common ancestor of all living animals, including sponges.
+      dos Reis et al. (2015): composite range 833-681 Ma (midpoint used here).
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: homo-sapiens
+    parent: metazoa
+    label: Homo sapiens
+    representative: "Homo sapiens (Jebel Irhoud, Morocco, ~300-350 ka)"
+    t_divergence: 3.0e5
+    note: >
+      FIXTURE NOTE: in the real data/lineage.yaml this node's parent is
+      "homo-heidelbergensis", not "metazoa" — the ~35 intermediate nodes are omitted from
+      this small offline slice. Fossils from Jebel Irhoud, Morocco, dated to ~300-350 ka,
+      are the oldest securely dated Homo sapiens material currently known.
+    citation: >
+      Hublin, J.-J., Ben-Ncer, A., Bailey, S.E. et al. (2017) "New fossils from Jebel
+      Irhoud, Morocco and the pan-African origin of Homo sapiens." Nature 546, 289-292.
+      doi:10.1038/nature22336

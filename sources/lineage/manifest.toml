@@ -1,0 +1,18 @@
+# See docs/DATA_SOURCES.md for field meanings.
+#
+# lineage is hand-curated (DATA_SOURCES.md: "this is source, not derived data"), like
+# events-core. data/lineage.yaml IS the dataset; there is no single upstream file it is
+# normalised from, and no bulk download (see fetch.py, README.md "TimeTree exclusion").
+# Every individual node's citation lives in data/lineage.yaml itself.
+
+name = "lineage"
+title = "The Ancestor Lineage: LUCA to Homo sapiens"
+url = ""
+sha256 = ""
+licence = "CC BY 4.0 (this compilation); dates are facts cited from the listed publications"
+citation = "Every node in data/lineage.yaml carries its own specific citation. Principal syntheses used across multiple adjacent nodes: Betts, H.C. et al. (2018) Nature Ecology & Evolution 2, 1556-1562 (early life); dos Reis, M. et al. (2015) Current Biology 25(22), 2939-2950 (animal origins); dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (placental mammal timescale); Chatterjee, H.J. et al. (2009) BMC Evolutionary Biology 9, 259 (primate divergence times)."
+time_domain = [4.2e9, 3.0e5]    # years BP, [oldest, newest] -- luca.t_divergence .. homo-sapiens.t_divergence
+output_shape = "Tree"
+interpolation = "n/a"           # Tree is a discrete dated lineage, not resampled between nodes
+volume_bytes = 21628             # measured: data/curated/lineage.parquet, 42 nodes
+storage_tier = "git"

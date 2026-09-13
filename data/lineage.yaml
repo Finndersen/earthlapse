@@ -1,0 +1,732 @@
+# lineage — the ancestor lineage for the "your ancestor at this moment" layer (Tree "lineage").
+#
+# Hand-curated source of truth. This file IS the data; sources/lineage/normalise.py only
+# parses and validates it into pipeline.shapes.Tree. Do not treat any other file as
+# authoritative for these nodes.
+#
+# This is ONE PATH from LUCA to Homo sapiens -- not a phylogeny. Every node's `parent` is
+# the previous node on this same path (null only for LUCA, the root). Nodes off this path
+# (sister taxa, extinct side branches) are deliberately absent; `Tree.path_to("homo-sapiens")`
+# must walk every node in this file in order (pipeline/shapes.py Tree.path_to).
+#
+# TimeTree exclusion (per the task's licence gate)
+# -------------------------------------------------
+# TimeTree's terms ("Redistribution of TimeTree data and its transformations are not
+# permitted") rule it out as the source of any committed date or citation here -- see
+# sources/lineage/README.md "Licensing note" for the full finding, carried forward from the
+# branch that first surfaced it. No number or citation in this file is derived from TimeTree.
+# Every `t_divergence` below is dated from the primary literature or a named peer-reviewed
+# synthesis, with its own citation. TimeTree was not consulted at all in producing this file
+# (not even privately) -- the primary-literature route made that unnecessary.
+#
+# t_divergence: definition and convention
+# ----------------------------------------
+# `t_divergence` is GeoTime (pipeline/shapes.py): years BEFORE PRESENT, positive into the
+# past. It is the point at which the lineage represented by this node originated --
+# i.e. split away from its sister lineage on the path. Two different kinds of evidence are
+# used, and each node's `note` says which:
+#
+#   - **Molecular-clock crown/stem age** for nodes with no informative fossil record of their
+#     own split (most nodes from LUCA through early vertebrates, and the placental-mammal
+#     radiation Mammalia..Primates, where a single consistent phylogenomic study covers many
+#     adjacent nodes at once -- see below). Where a study reports a range (95% CI or HPD), the
+#     range's midpoint is used as the point value and the full range is quoted in the note.
+#   - **Oldest unambiguous fossil (or trace-fossil) evidence of the newly-diverged lineage**,
+#     read as a "hard minimum" age for the split in the Benton & Donoghue (2007) sense, for
+#     nodes with a diagnostic fossil record (most nodes from Osteichthyes through the
+#     hominins). The true split is at least this old and very likely somewhat older; the
+#     fossil date is the defensible, checkable number.
+#
+# Two consistent-source clusters are used deliberately, so that a run of adjacent nodes
+# shares one calibration framework rather than mixing incompatible studies node-to-node:
+#   - Metazoa..Vertebrata: dos Reis et al. (2015), Current Biology -- composite ranges across
+#     their calibration strategies.
+#   - Mammalia..Primates: dos Reis et al. (2012), Proc. R. Soc. B -- their combined
+#     nuclear+mitochondrial analysis (Table 1).
+#
+# Contested nodes say so explicitly in `note`, per the project's "flag rather than invent"
+# rule (docs/ONESHOT_SCOPE.md "The event set"), applied here to lineage nodes too.
+#
+# Verification method
+# --------------------
+# Every citation below was looked up with WebSearch/WebFetch against the live paper (or a
+# freely accessible copy of it), not recalled from model memory -- several PDFs were fetched
+# and parsed directly (pypdf) to read exact figures off the abstract/results/tables rather
+# than trust a secondary summary. TimeTree was not used as a source, check, or cross-check for
+# any number here (see above).
+#
+# representative
+# ---------------
+# A representative organism per node: a specific fossil taxon where the node is defined or
+# evidenced by one, or a named extant proxy / "(hypothetical)" placeholder for deep nodes with
+# no informative fossil of their own (LUCA, LECA, and the early eukaryote stem).
+
+nodes:
+  - id: luca
+    parent: null
+    label: LUCA
+    representative: "LUCA (hypothetical; no direct fossil)"
+    t_divergence: 4.2e9
+    note: >
+      The last universal common ancestor of all cellular life. Dated to 4.2 Ga (95% CI
+      4.09-4.33 Ga under the ILN model, 4.18-4.33 Ga under GBM), implying life originated
+      within ~100-200 Myr of Earth's formation. Contested: other analyses (e.g. Betts et al.
+      2018, using different calibrations) place LUCA close to the hard 4.52 Ga root
+      constraint (the Moon-forming impact) rather than nearer 3.9-4.2 Ga; the age of LUCA
+      remains one of the least settled dates in this file.
+    citation: >
+      Moody, E.R.R., Álvarez-Carretero, S., Mahendrarajah, T.A. et al. (2024) "The nature of
+      the last universal common ancestor and its impact on the early Earth system." Nature
+      Ecology & Evolution 8, 1654-1666. doi:10.1038/s41559-024-02461-1
+
+  - id: archaeal-host-lineage
+    parent: luca
+    label: Archaeal host lineage (Asgard archaea)
+    representative: "Asgard archaea (e.g. extant Heimdallarchaeia / Lokiarchaeota)"
+    t_divergence: 2.6e9
+    note: >
+      The archaeal lineage, within Asgardarchaeota, whose descendant eventually became the
+      host cell of the eukaryotic symbiosis (the "Eukaryota-Asgardarchaeota split"). This is
+      the single least well-dated node in this file: Betts et al. (2018) bound it only
+      qualitatively (after their dated crown-Archaebacteria node in the Mesoarchaean-
+      Neoarchaean, and before crown Eukaryota's 1,842-1,210 Ma), while more recent
+      Asgard-focused molecular-clock work (Eme et al. 2023 and follow-on studies) proposes a
+      wide range of candidate ages, loosely ~2.7-1.9 Ga. 2.6 Ga is a representative point
+      within that spread, not a settled figure -- contested / poorly constrained.
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+      Eme, L., Tamarit, D., Caceres, E.F. et al. (2023) "Inference and reconstruction of the
+      heimdallarchaeial ancestry of eukaryotes." Nature 618, 992-999.
+      doi:10.1038/s41586-023-06186-2
+
+  - id: leca
+    parent: archaeal-host-lineage
+    label: Eukaryotes (LECA)
+    representative: "LECA (hypothetical); candidate fossil proxy Grypania spiralis"
+    t_divergence: 1.526e9
+    note: >
+      The last eukaryotic common ancestor -- crown Eukaryota, diverging "considerably after
+      both the Eukaryota-Asgardarchaeota split and the Great Oxidation Event, in the middle
+      Proterozoic." Betts et al. (2018) date it to 1,842-1,210 Ma (midpoint used here);
+      other studies converge on a similar Proterozoic window (e.g. Parfrey et al. 2011:
+      1,866-1,679 Ma).
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+
+  - id: opisthokonta
+    parent: leca
+    label: Amorphea / Opisthokonta
+    representative: "stem opisthokont (no diagnostic fossil; molecular-clock node only)"
+    t_divergence: 1.416e9
+    note: >
+      The split between Opisthokonta (animals, fungi and their close relatives) and the
+      rest of the eukaryote crown, within the broader Amorphea supergroup. Betts et al.
+      (2018) date the last common ancestor of extant Opisthokonta to 1,707-1,125 Ma
+      (midpoint used here); Parfrey et al. (2011) independently estimate a similar but
+      slightly younger 1,389-1,240 Ma for the same node.
+    citation: >
+      Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D.
+      (2018) "Integrated genomic and fossil evidence illuminates life's early evolution and
+      eukaryote origin." Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x
+
+  - id: holozoa
+    parent: opisthokonta
+    label: Holozoa
+    representative: "stem holozoan (no diagnostic fossil; molecular-clock node only)"
+    t_divergence: 1.0e9
+    note: >
+      Holozoa (animals plus their closest unicellular/colonial relatives, e.g.
+      choanoflagellates, filastereans) split from Fungi (Holomycota) at the Opisthokonta
+      node above; this node represents the first split *within* Holozoa. It is not
+      separately, precisely dated in the literature consulted here: Parfrey et al. (2011)
+      report only that the major opisthokont-level clades had diverged by ~1,000-1,200 Ma,
+      with diversification within crown groups beginning closer to ~800 Ma -- consistent
+      with a long stem lineage. 1.0 Ga is a representative point between the Opisthokonta
+      split (~1.4 Ga) and crown Metazoa (~0.76 Ga) reflecting that pattern, not a
+      independently measured age for this specific node -- flagged as contested / poorly
+      constrained.
+    citation: >
+      Parfrey, L.W., Lahr, D.J.G., Knoll, A.H. & Katz, L.A. (2011) "Estimating the timing of
+      early eukaryotic diversification with multigene molecular clocks." Proceedings of the
+      National Academy of Sciences 108(33), 13624-13629. doi:10.1073/pnas.1110633108
+
+  - id: metazoa
+    parent: holozoa
+    label: Animals (Metazoa)
+    representative: "stem/early crown metazoan (Ediacaran sponge-grade animal)"
+    t_divergence: 7.57e8
+    note: >
+      Crown Metazoa -- the last common ancestor of all living animals, including sponges.
+      dos Reis et al. (2015) report a composite range of 833-681 Ma across their calibration
+      strategies (midpoint used here; their most conservative strategy gives 834-795 Ma).
+      This substantially predates the Ediacaran body-fossil record, consistent with a long
+      cryptic stem lineage.
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: eumetazoa
+    parent: metazoa
+    label: Eumetazoans (Eumetazoa)
+    representative: "early cnidarian-grade animal (crown affinity of Ediacaran frondose fossils debated)"
+    t_divergence: 6.86e8
+    note: >
+      Crown Eumetazoa (animals with true tissues, excluding sponges and placozoans) per dos
+      Reis et al. (2015), composite range 746-626 Ma (midpoint used here), using the same
+      calibration framework as the Metazoa node above.
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: bilateria
+    parent: eumetazoa
+    label: Bilaterians (Bilateria)
+    representative: "Kimberella quadrata (Ediacaran bilaterian-grade fossil, ~558 Ma)"
+    t_divergence: 6.42e8
+    note: >
+      Crown Bilateria per dos Reis et al. (2015), composite range 688-596 Ma (midpoint used
+      here; their Strategy 3 gives an older 759-685 Ma). Kimberella is a widely cited
+      candidate bilaterian body fossil, though its precise phylogenetic placement is itself
+      debated.
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: deuterostomia
+    parent: bilateria
+    label: Deuterostomes (Deuterostomia)
+    representative: "Saccorhytus coronarius (early Cambrian; deuterostome affinity contested)"
+    t_divergence: 6.245e8
+    note: >
+      Crown Deuterostomia per dos Reis et al. (2015), composite range 662-587 Ma (midpoint
+      used here; their Strategy 3 gives an older 722-644 Ma). Saccorhytus's status as a
+      stem-deuterostome has been disputed by subsequent work; flagged as contested.
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: chordata
+    parent: deuterostomia
+    label: Chordates (Chordata)
+    representative: "Pikaia gracilens (Cambrian stem chordate, ~508 Ma)"
+    t_divergence: 5.9555e8
+    note: >
+      Crown Chordata (the Cephalochordata / Olfactores split) per dos Reis et al. (2015)
+      Strategy 1: 635.7-555.4 Ma (midpoint used here).
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: olfactores
+    parent: chordata
+    label: Olfactores
+    representative: "Shankouclava shankouense (early Cambrian tunicate, ~530 Ma)"
+    t_divergence: 5.3e8
+    note: >
+      Olfactores (Tunicata + Vertebrata, sister to Cephalochordata) originates when the
+      tunicate and vertebrate lineages split from each other -- a younger, separate event
+      from the Chordata node above. Dated here as a fossil minimum: Shankouclava, the
+      oldest unambiguous tunicate body fossil (Chengjiang biota, early Cambrian), implies
+      the tunicate-vertebrate split had already occurred by ~530 Ma. The true split is very
+      likely somewhat older than this minimum.
+    citation: >
+      Chen, J.-Y., Huang, D.-Y., Peng, Q.-Q., Chi, H.-M., Wang, X.-Q. & Feng, M. (2003) "The
+      first tunicate from the Early Cambrian of South China." Proceedings of the National
+      Academy of Sciences 100(14), 8314-8318. doi:10.1073/pnas.1431177100
+
+  - id: vertebrata
+    parent: olfactores
+    label: Vertebrates (Vertebrata)
+    representative: "Haikouichthys ercaicunensis (early Cambrian jawless vertebrate)"
+    t_divergence: 4.9655e8
+    note: >
+      Crown Vertebrata (the cyclostome / gnathostome split) per dos Reis et al. (2015),
+      composite range 533.8-459.3 Ma (midpoint used here).
+    citation: >
+      dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang,
+      Z. (2015) "Uncertainty in the Timing of Origin of Animals and the Limits of Precision
+      in Molecular Timescales." Current Biology 25(22), 2939-2950.
+      doi:10.1016/j.cub.2015.09.066
+
+  - id: gnathostomata
+    parent: vertebrata
+    label: Jawed vertebrates (Gnathostomata)
+    representative: "Qianodus duplicis (early Silurian; isolated tooth whorls)"
+    t_divergence: 4.39e8
+    note: >
+      Fossil-minimum age: isolated tooth whorls of Qianodus duplicis from the early
+      Silurian of Guizhou, China are the oldest direct evidence of jawed-vertebrate
+      dentition, dated to ~439 Ma -- extending the minimum age for gnathostomes by ~14 Myr
+      over the previous oldest articulated remains.
+    citation: >
+      Andreev, P.S., Sansom, I.J., Li, Q. et al. (2022) "The oldest gnathostome teeth."
+      Nature 609, 964-968. doi:10.1038/s41586-022-05166-2
+
+  - id: osteichthyes
+    parent: gnathostomata
+    label: Bony fishes (Osteichthyes)
+    representative: "Guiyu oneiros (late Silurian, ~419 Ma; oldest articulated osteichthyan)"
+    t_divergence: 4.19e8
+    note: >
+      Fossil-minimum age: Guiyu oneiros, the oldest near-complete articulated bony fish
+      (Ludlow, late Silurian, Yunnan, China), shows the actinopterygian-sarcopterygian
+      split had occurred by ~419 Ma.
+    citation: >
+      Zhu, M., Zhao, W., Jia, L., Lu, J., Qiao, T. & Qu, Q. (2009) "The oldest articulated
+      osteichthyan reveals mosaic gnathostome characters." Nature 458, 469-474.
+      doi:10.1038/nature07855
+
+  - id: sarcopterygii
+    parent: osteichthyes
+    label: Lobe-finned fishes (Sarcopterygii)
+    representative: "basal sarcopterygian (e.g. Psarolepis-grade taxon, early Devonian)"
+    t_divergence: 4.10e8
+    note: >
+      The first split within crown Sarcopterygii (separating the coelacanth/Actinistia line
+      from the lineage leading to lungfish and tetrapods), placed in the early Devonian
+      following Friedman & Brazeau's (2010) reappraisal of basal osteichthyan/sarcopterygian
+      divergence ages, which argued for younger ages than earlier literature for this
+      region of the tree. Treated as a fossil-minimum-style estimate consistent with that
+      reappraisal rather than a single dated specimen.
+    citation: >
+      Friedman, M. & Brazeau, M.D. (2010) "A Reappraisal of the Origin and Basal Radiation
+      of the Osteichthyes." Journal of Vertebrate Paleontology 30(1), 36-56.
+      doi:10.1080/02724630903409071
+
+  - id: tetrapodomorpha
+    parent: sarcopterygii
+    label: Tetrapodomorphs (Tetrapodomorpha)
+    representative: "Tiktaalik roseae (late Devonian, ~375 Ma)"
+    t_divergence: 3.75e8
+    note: >
+      Represents the fish-to-tetrapod transitional grade. Tiktaalik roseae, from the late
+      Devonian of Ellesmere Island, Canada, combines primitive sarcopterygian features with
+      a shortened skull roof, mobile neck and functional wrist -- an elpistostegalian
+      intermediate between fish and tetrapods, dated to ~375 Ma.
+    citation: >
+      Daeschler, E.B., Shubin, N.H. & Jenkins, F.A. (2006) "A Devonian tetrapod-like fish
+      and the evolution of the tetrapod body plan." Nature 440, 757-763.
+      doi:10.1038/nature04639
+
+  - id: tetrapoda
+    parent: tetrapodomorpha
+    label: Tetrapods (Tetrapoda)
+    representative: "Acanthostega gunnari / Ichthyostega stensioei (Famennian, late Devonian, ~365 Ma)"
+    t_divergence: 3.65e8
+    note: >
+      Fossil-minimum age from the two best-known Devonian limbed tetrapods, Acanthostega
+      and Ichthyostega (Famennian, East Greenland, ~365 Ma). Contested: these are widely
+      regarded as stem tetrapods rather than members of crown Tetrapoda proper, and
+      molecular/fossil estimates for the crown-tetrapod node itself span a wide range
+      (~395-333 Ma across studies, median ~352 Ma); 365 Ma is used here as the best-attested
+      fossil floor for "limbed, unambiguously tetrapod-grade" rather than a precise
+      crown-node date.
+    citation: >
+      Ahlberg, P.E., Clack, J.A. & Blom, H. (2005) "The axial skeleton of the Devonian
+      tetrapod Ichthyostega." Nature 437, 137-140. doi:10.1038/nature03893
+
+  - id: amniota
+    parent: tetrapoda
+    label: Amniotes (Amniota)
+    representative: "Hylonomus lyelli (Bashkirian, late Carboniferous, ~318 Ma)"
+    t_divergence: 3.18e8
+    note: >
+      Fossil-minimum age: Hylonomus lyelli, from the Joggins Formation, Nova Scotia, is the
+      classic earliest reptile-grade amniote, redated by Falcon-Lang et al. (2007) to
+      ~317-319 Ma. Contested: a 2025 phylogenetic reanalysis has questioned whether
+      Hylonomus itself falls inside or outside crown Amniota, and Tournaisian trackway
+      evidence has been argued to push the likely origin of the amniote lineage back by a
+      further 35-40 Myr; 318 Ma is used here as the long-standing, well-attested body-fossil
+      floor rather than a settled crown age.
+    citation: >
+      Falcon-Lang, H.J., Benton, M.J. & Stimson, M. (2007) "Ecology of earliest reptiles
+      inferred from basal Pennsylvanian trackways." Journal of the Geological Society
+      164(6), 1113-1118. doi:10.1144/0016-76492007-015
+
+  - id: synapsida
+    parent: amniota
+    label: Synapsids (Synapsida)
+    representative: "Archaeothyris florensis (late Carboniferous, ~306-308 Ma)"
+    t_divergence: 3.08e8
+    note: >
+      Fossil-minimum age: Archaeothyris (with the more fragmentary, slightly older
+      Protoclepsydrops) is among the oldest undisputed synapsids, from the Late
+      Carboniferous of Nova Scotia, ~306-308 Ma.
+    citation: >
+      Reisz, R.R. (1972) "Pelycosaurian reptiles from the middle Pennsylvanian of North
+      America." Bulletin of the Museum of Comparative Zoology 144(2), 27-62. (Pre-DOI-era
+      publication; no DOI assigned.)
+
+  - id: therapsida
+    parent: synapsida
+    label: Therapsids (Therapsida)
+    representative: "early Permian gorgonopsian-grade therapsid (Kammerer et al. 2024)"
+    t_divergence: 2.75e8
+    note: >
+      Therapsid origins are poorly resolved by direct fossils (the early-to-middle Permian
+      record is sparse, "Olson's Gap"); currently known therapsid subclades (Biarmosuchia,
+      Dinocephalia, Anomodontia, Gorgonopsia, Eutheriodontia) first appear in the record
+      ~281-272 Ma. Contested: Tetraceratops, once proposed as the oldest therapsid
+      (~283-274 Ma), is now generally regarded as a non-therapsid eupelycosaur. 275 Ma is
+      used as a representative point within the currently accepted window.
+    citation: >
+      Matamales-Andreu, R., Kammerer, C.F., Angielczyk, K.D., Simões, T.R., Mujal, E.,
+      Galobart, À. & Fortuny, J. (2024) "Early-middle Permian Mediterranean gorgonopsian
+      suggests an equatorial origin of therapsids." Nature Communications 15, 10346.
+      doi:10.1038/s41467-024-54425-5
+
+  - id: cynodontia
+    parent: therapsida
+    label: Cynodonts (Cynodontia)
+    representative: "Charassognathus gracilis (early Late Permian, Wuchiapingian, ~255 Ma)"
+    t_divergence: 2.55e8
+    note: >
+      Fossil-minimum age: Charassognathus gracilis, from the Tropidostoma Assemblage Zone
+      of the Karoo Supergroup, South Africa, is the oldest known cynodont, in the early
+      Late Permian alongside the similarly basal Procynosuchus and Dvinia.
+    citation: >
+      Botha, J., Abdala, F. & Smith, R. (2007) "The oldest cynodont: new clues on the
+      origin and early diversification of the Cynodontia." Zoological Journal of the
+      Linnean Society 149(3), 477-492. doi:10.1111/j.1096-3642.2007.00268.x
+
+  - id: mammaliaformes
+    parent: cynodontia
+    label: Mammaliaforms (Mammaliaformes)
+    representative: "Morganucodon watsoni (Triassic-Jurassic boundary, ~205 Ma)"
+    t_divergence: 2.05e8
+    note: >
+      Morganucodon and Sinoconodon are the standard reference mammaliaforms bracketing the
+      Triassic-Jurassic boundary, ~205 Ma, used here following Luo's (2007) synthesis
+      timeline of early mammal evolution.
+    citation: >
+      Luo, Z.-X. (2007) "Transformation and diversification in early mammal evolution."
+      Nature 450, 1011-1019. doi:10.1038/nature06277
+
+  - id: mammalia
+    parent: mammaliaformes
+    label: Mammals, crown (Mammalia)
+    representative: "crown mammal (molecular estimate; oldest unambiguous crown fossil debated)"
+    t_divergence: 1.846e8
+    note: >
+      Crown Mammalia -- the monotreme/therian split. dos Reis et al. (2012), combined
+      nuclear+mitochondrial Bayesian analysis: 184.6 Ma (95% CI 174.1-191.9 Ma).
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: theria
+    parent: mammalia
+    label: Therians (Theria)
+    representative: "crown therian (molecular estimate; marsupial-placental split)"
+    t_divergence: 1.728e8
+    note: >
+      Theria -- the marsupial/placental split. dos Reis et al. (2012): 172.8 Ma (95% CI
+      168.4-177.8 Ma), same combined analysis as the Mammalia node above.
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: eutheria
+    parent: theria
+    label: Eutherians (Eutheria)
+    representative: "Juramaia sinensis (late Jurassic, ~160 Ma; oldest known eutherian)"
+    t_divergence: 1.6e8
+    note: >
+      Fossil-minimum age for the eutherian (placental-line) stem: Juramaia sinensis, from
+      the late Jurassic of Liaoning, China, pushed the oldest eutherian body fossil back to
+      ~160 Ma, closing much of the previous gap between the fossil record and the dos
+      Reis et al. (2012) Theria molecular date above. Distinct from and younger than the
+      Theria split itself, per this file's convention of dating stem-group nodes from their
+      own oldest fossil rather than the (necessarily identical) divergence instant.
+    citation: >
+      Luo, Z.-X., Yuan, C.-X., Meng, Q.-J. & Ji, Q. (2011) "A Jurassic eutherian mammal and
+      divergence of marsupials and placentals." Nature 476, 442-445.
+      doi:10.1038/nature10291
+
+  - id: placentalia
+    parent: eutheria
+    label: Placentals (Placentalia)
+    representative: "crown placental (molecular estimate; post-K-Pg radiation)"
+    t_divergence: 8.91e7
+    note: >
+      Crown Placentalia -- the last common ancestor of all living placental orders. dos
+      Reis et al. (2012): 89.1 Ma (95% CI 87.9-90.4 Ma). The orders themselves radiate much
+      later, within ~20 Myr after the K-Pg extinction (45-65 Ma), per the same study.
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: boreoeutheria
+    parent: placentalia
+    label: Boreoeutheria
+    representative: "crown Boreoeutheria (molecular estimate)"
+    t_divergence: 8.38e7
+    note: >
+      Boreoeutheria (Laurasiatheria + Euarchontoglires), excluding Afrotheria and
+      Xenarthra. dos Reis et al. (2012) report this node (as "Boreotheria", a synonym) at
+      83.8 Ma (95% CI 82.8-84.9 Ma).
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: euarchontoglires
+    parent: boreoeutheria
+    label: Euarchontoglires
+    representative: "crown Euarchontoglires (molecular estimate)"
+    t_divergence: 7.58e7
+    note: >
+      Euarchontoglires (Primates + Dermoptera + Scandentia + Glires). dos Reis et al.
+      (2012): 75.8 Ma (95% CI 74.9-76.7 Ma). This file follows the task's specified
+      coverage list directly from Euarchontoglires to Primatomorpha, skipping the
+      intermediate Euarchonta rank (Primates + Dermoptera + Scandentia) as a simplification
+      appropriate to a single path rather than a full phylogeny.
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: primatomorpha
+    parent: euarchontoglires
+    label: Primatomorpha
+    representative: "Purgatorius (Paleocene plesiadapiform; basal-primatomorph status contested)"
+    t_divergence: 7.1e7
+    note: >
+      Primatomorpha (Primates + Dermoptera, i.e. colugos), the total-group split whose
+      Primates branch later gives rise to crown Primates. Poorly constrained by direct
+      fossils -- the affinities of Late Cretaceous/Paleocene plesiadapiforms such as
+      Purgatorius are actively debated, and molecular estimates for the closely related
+      crown-Primates node itself straddle the K-Pg boundary (one relaxed-clock analysis:
+      71.4-63.9 Ma, 80% posterior probability of a pre-K-Pg origin). 71 Ma is used as a
+      representative point predating (and consistent with) the crown Primates estimate
+      below; flagged as contested / poorly constrained.
+    citation: >
+      Silcox, M.T., Bloch, J.I., Boyer, D.M., Chester, S.G.B. & López-Torres, S. (2017)
+      "The evolutionary radiation of plesiadapiforms." Evolutionary Anthropology 26(2),
+      74-94. doi:10.1002/evan.21526
+
+  - id: primates
+    parent: primatomorpha
+    label: Primates
+    representative: "crown primate (molecular estimate; strepsirrhine-haplorhine split)"
+    t_divergence: 6.82e7
+    note: >
+      Crown Primates -- the strepsirrhine/haplorhine split. dos Reis et al. (2012): 68.2 Ma
+      (95% CI 67.3-69.1 Ma), broadly corroborated by an independent mitogenomic estimate of
+      ~74 Ma (Pozzi et al. 2014).
+    citation: >
+      dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012)
+      "Phylogenomic datasets provide both precision and accuracy in estimating the
+      timescale of placental mammal phylogeny." Proceedings of the Royal Society B
+      279(1742), 3491-3500. doi:10.1098/rspb.2012.0683
+
+  - id: haplorhini
+    parent: primates
+    label: Haplorhines (Haplorhini)
+    representative: "Teilhardina brandti (earliest omomyiform, early Eocene, ~56 Ma)"
+    t_divergence: 5.86e7
+    note: >
+      Crown Haplorhini -- the tarsier/anthropoid split. Chatterjee et al. (2009) Bayesian
+      mitochondrial supermatrix: 58.6 Ma.
+    citation: >
+      Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) "Estimating the phylogeny
+      and divergence times of primates using a supermatrix approach." BMC Evolutionary
+      Biology 9, 259. doi:10.1186/1471-2148-9-259
+
+  - id: simiiformes
+    parent: haplorhini
+    label: Simians / anthropoids (Simiiformes)
+    representative: "Eosimias sinensis (middle Eocene stem anthropoid)"
+    t_divergence: 4.3e7
+    note: >
+      Crown Simiiformes (Anthropoidea) -- the platyrrhine/catarrhine split. Chatterjee et
+      al. (2009): 43 Ma, consistent with independent estimates placing this split in the
+      middle-to-late Eocene (~40-44 Ma).
+    citation: >
+      Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) "Estimating the phylogeny
+      and divergence times of primates using a supermatrix approach." BMC Evolutionary
+      Biology 9, 259. doi:10.1186/1471-2148-9-259
+
+  - id: catarrhini
+    parent: simiiformes
+    label: Catarrhines (Catarrhini)
+    representative: "Rukwapithecus fleaglei (Oligocene, Nsungwe Formation, Tanzania, ~24.9 Ma)"
+    t_divergence: 2.493e7
+    note: >
+      Fossil-dated: Rukwapithecus fleaglei (stem hominoid) and a contemporaneous stem
+      cercopithecoid, from a single radiometrically dated horizon (U-Pb, 24.93 +/- 0.49 Ma)
+      of the Nsungwe Formation, Tanzania, directly bracket the catarrhine (Old World
+      monkey / ape) split at ~24.9 Ma -- among the most precisely dated splits in this file.
+    citation: >
+      Stevens, N.J., Seiffert, E.R., O'Connor, P.M., Roberts, E.M., Schmitz, M.D., Krause,
+      C., Gorscak, E., Ngasala, S., Hieronymus, T.L. & Temu, J. (2013) "Palaeontological
+      evidence for an Oligocene divergence between Old World monkeys and apes." Nature 497,
+      611-614. doi:10.1038/nature12161
+
+  - id: hominoidea
+    parent: catarrhini
+    label: Hominoids / apes (Hominoidea)
+    representative: "early Miocene stem hominoid (e.g. Morotopithecus-grade taxon)"
+    t_divergence: 2.15e7
+    note: >
+      Crown Hominoidea -- the gibbon (Hylobatidae) / great-ape (Hominidae) split. Chatterjee
+      et al. (2009): 21.5 Ma, consistent with the early Miocene fossil record of stem
+      hominoids.
+    citation: >
+      Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) "Estimating the phylogeny
+      and divergence times of primates using a supermatrix approach." BMC Evolutionary
+      Biology 9, 259. doi:10.1186/1471-2148-9-259
+
+  - id: hominidae
+    parent: hominoidea
+    label: Great apes / hominids (Hominidae)
+    representative: "crown Hominidae (molecular estimate; orangutan / African-ape split)"
+    t_divergence: 1.6e7
+    note: >
+      Crown Hominidae -- the orangutan (Ponginae) / African-ape (Homininae) split. Genomic
+      analyses place this in the early-to-middle Miocene, commonly cited as ~16 Ma
+      (spanning roughly 12-19 Ma across studies); Prado-Martinez et al.'s (2013) great-ape
+      diversity survey frames the whole great-ape radiation as spanning "the past 15 million
+      years," consistent with this figure.
+    citation: >
+      Locke, D.P., Hillier, L.W., Warren, W.C. et al. (2011) "Comparative and demographic
+      analysis of orang-utan genomes." Nature 469, 529-533. doi:10.1038/nature09687
+      Prado-Martinez, J., Sudmant, P.H., Kidd, J.M. et al. (2013) "Great ape genetic
+      diversity and population history." Nature 499, 471-475. doi:10.1038/nature12228
+
+  - id: homininae
+    parent: hominidae
+    label: Hominines (Homininae)
+    representative: "crown Homininae (molecular estimate; gorilla split)"
+    t_divergence: 1.0e7
+    note: >
+      Homininae -- the gorilla / (chimpanzee+human) split. The gorilla genome paper places
+      the human-chimpanzee-gorilla speciation event at approximately 10 Ma, synthesising
+      genomic and fossil evidence.
+    citation: >
+      Scally, A., Dutheil, J.Y., Hillier, L.W. et al. (2012) "Insights into hominid
+      evolution from the gorilla genome sequence." Nature 483, 169-175.
+      doi:10.1038/nature10842
+
+  - id: hominini
+    parent: homininae
+    label: Hominins (Hominini)
+    representative: "Sahelanthropus tchadensis (late Miocene, Chad, ~7 Ma)"
+    t_divergence: 7.5e6
+    note: >
+      Hominini -- the chimpanzee/human lineage split. Using directly measured generation
+      times in wild chimpanzees and gorillas (rather than assumed rates), Langergraber et
+      al. (2012) revise the human-chimpanzee divergence to at least 7-8 Ma (midpoint 7.5 Ma
+      used here), older than many earlier molecular estimates and consistent with
+      Sahelanthropus tchadensis (~7 Ma) as a plausible early hominin near this split.
+      Hominini's status/classification is itself contested in parts of the literature.
+    citation: >
+      Langergraber, K.E., Prüfer, K., Rowney, C. et al. (2012) "Generation times in wild
+      chimpanzees and gorillas suggest earlier divergence times in great ape and human
+      evolution." Proceedings of the National Academy of Sciences 109(39), 15716-15721.
+      doi:10.1073/pnas.1211740109
+
+  - id: australopithecus
+    parent: hominini
+    label: Australopithecus
+    representative: "Australopithecus anamensis (Kanapoi, Kenya, ~4.2-4.1 Ma)"
+    t_divergence: 4.17e6
+    note: >
+      Fossil-minimum age: Australopithecus anamensis, the earliest known species of
+      Australopithecus, from Kanapoi and Allia Bay, Kenya, with fossils bracketed between
+      tephra dated to 4.17 and 4.12 Ma (broader site range ~4.2-3.9 Ma).
+    citation: >
+      Leakey, M.G., Feibel, C.S., McDougall, I. & Walker, A. (1995) "New four-million-year-
+      old hominid species from Kanapoi and Allia Bay, Kenya." Nature 376, 565-571.
+      doi:10.1038/376565a0
+
+  - id: homo
+    parent: australopithecus
+    label: Homo
+    representative: "LD 350-1 (Ledi-Geraru, Ethiopia, ~2.8-2.75 Ma; earliest Homo)"
+    t_divergence: 2.8e6
+    note: >
+      Fossil-minimum age: LD 350-1, a partial mandible from Ledi-Geraru, Afar, Ethiopia,
+      securely dated to 2.80-2.75 Ma, is the oldest fossil combining derived Homo
+      morphology with primitive Australopithecus-like traits -- extending the genus Homo's
+      fossil record back by ~0.4 Myr from the previously oldest specimens. Its assignment to
+      Homo rather than Australopithecus has been debated by some researchers.
+    citation: >
+      Villmoare, B., Kimbel, W.H., Seyoum, C. et al. (2015) "Early Homo at 2.8 Ma from
+      Ledi-Geraru, Afar, Ethiopia." Science 347(6228), 1352-1355.
+      doi:10.1126/science.aaa1343
+
+  - id: homo-erectus
+    parent: homo
+    label: Homo erectus lineage
+    representative: "Homo erectus (Dmanisi, Georgia, ~1.85-1.78 Ma)"
+    t_divergence: 1.85e6
+    note: >
+      Fossil-minimum age: the Dmanisi hominin site, Georgia, has secure geochronology
+      dating its first occupation layers to shortly after 1.85 Ma, documenting Homo erectus
+      (sensu lato) at a time closely comparable to the oldest H. erectus localities in East
+      Africa, and the oldest well-dated hominin fossils found outside Africa.
+    citation: >
+      Ferring, R., Oms, O., Agustí, J. et al. (2011) "Earliest human occupations at Dmanisi
+      (Georgian Caucasus) dated to 1.85-1.78 Ma." Proceedings of the National Academy of
+      Sciences 108(26), 10432-10436. doi:10.1073/pnas.1106638108
+
+  - id: homo-heidelbergensis
+    parent: homo-erectus
+    label: Homo heidelbergensis / LCA with Neanderthals
+    representative: "Homo heidelbergensis sensu lato (Middle Pleistocene; e.g. Sima de los Huesos population)"
+    t_divergence: 6.5e5
+    note: >
+      The population ancestral to both Neanderthals and Homo sapiens. Nuclear-genome
+      analysis of the ~430 ka Sima de los Huesos hominins (Meyer et al. 2016), consistent
+      with Prüfer et al.'s (2014) Altai Neanderthal genome, places this last common
+      ancestor between 550 and 765 ka (midpoint 650 ka used here). Contested: this range is
+      argued by some to be too old for "Homo heidelbergensis" sensu stricto to be the
+      ancestral population, with Homo antecessor (from ~900 ka Spanish remains) proposed as
+      an alternative candidate; the identity of the ancestral population remains an active,
+      unresolved question even though the divergence *time* itself is comparatively
+      well-bounded.
+    citation: >
+      Meyer, M., Arsuaga, J.-L., de Filippo, C. et al. (2016) "Nuclear DNA sequences from
+      the Middle Pleistocene Sima de los Huesos hominins." Nature 531, 504-507.
+      doi:10.1038/nature17405
+      Prüfer, K., Racimo, F., Patterson, N. et al. (2014) "The complete genome sequence of a
+      Neanderthal from the Altai Mountains." Nature 505, 43-49. doi:10.1038/nature12886
+
+  - id: homo-sapiens
+    parent: homo-heidelbergensis
+    label: Homo sapiens
+    representative: "Homo sapiens (Jebel Irhoud, Morocco, ~300-350 ka)"
+    t_divergence: 3.0e5
+    note: >
+      Fossil-minimum age: fossils and stone tools from Jebel Irhoud, Morocco, dated to
+      ~300-350 ka, are the oldest securely dated Homo sapiens material currently known,
+      showing a modern-looking face and dentition combined with a more archaic, elongated
+      braincase -- consistent with a pan-African, rather than single-region, origin for the
+      species.
+    citation: >
+      Hublin, J.-J., Ben-Ncer, A., Bailey, S.E. et al. (2017) "New fossils from Jebel
+      Irhoud, Morocco and the pan-African origin of Homo sapiens." Nature 546, 289-292.
+      doi:10.1038/nature22336
