@@ -56,7 +56,7 @@ scenes:
       far_bank: no far bank; the magma ocean runs unbroken to the horizon under towering plumes of steam and ash
       sky_and_light: a dark, dense sky of vapour and ash lit orange from below by the glowing magma; an enormous Moon, many times its present apparent size, hangs low through a gap in the clouds
       absent: [water, snow, ice, plants, any living thing, green colour, people, buildings]
-    pin: null
+    pin: {asset_digest: "28a947b4b5aa181a", path: "data/candidates/magma-ocean/6db41144a561b051/03-28a947b4b5aa181a.jpg"}
 
   # After the first ocean condensed (~4.4 Ga zircons) and before any evidence of life
   # (events.yaml first-life: 3.4-4.1 Ga).
@@ -79,7 +79,7 @@ scenes:
       far_bank: a line of low black volcanic cones on the horizon, one trailing a plume of ash
       sky_and_light: a thick, hazy, pale orange-brown sky with no blue in it; a large, close Moon faint through the haze; dim, diffuse, warm light
       absent: [plants, algae, moss, green tint on rocks, animals, birds, people, buildings, blue sky, snow]
-    pin: null
+    pin: {asset_digest: "4d674a11701a39a0", path: "data/candidates/hadean-ocean/637aeff03a06ea5c/03-4d674a11701a39a0.jpg"}
 
   # Oldest robust stromatolites, ~3.43 Ga Pilbara (events.yaml first-life, lower bound);
   # before the Great Oxidation Event (2.1-2.4 Ga).
@@ -102,7 +102,7 @@ scenes:
       far_bank: low, bare volcanic hills in grey and rust tones, with no green anywhere
       sky_and_light: a hazy, pale orange sky rather than a blue one; soft, slightly dim, warm diffuse light
       absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky]
-    pin: null
+    pin: {asset_digest: "647c2acdb2e4a8ea", path: "data/candidates/archean-shore/94c954c71c1afb48/01-647c2acdb2e4a8ea.jpg"}
 
   # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
   - id: cryogenian-snowball
@@ -124,7 +124,7 @@ scenes:
       far_bank: an endless flat white ice shelf along the horizon
       sky_and_light: a hard, clear, deep-blue cloudless sky; brilliant, cold, glaring sunlight reflecting off the ice; crisp, sharp shadows
       absent: [plants, trees, grass, moss, animals, birds, penguins, polar bears, seals, people, buildings, footprints]
-    pin: null
+    pin: {asset_digest: "c9b3cf2decb2f0a6", path: "data/candidates/cryogenian-snowball/3dd3cbd08665a9aa/01-c9b3cf2decb2f0a6.jpg"}
 
   # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma).
   - id: ediacaran-shallows
@@ -146,7 +146,7 @@ scenes:
       far_bank: a low, barren coastline of reddish rock and sand, with no green
       sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight throwing sparkling caustics across the sea floor
       absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people]
-    pin: null
+    pin: {asset_digest: "bf667858e3d40d22", path: "data/candidates/ediacaran-shallows/9812bf36faf8a123/02-bf667858e3d40d22.jpg"}
 
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
   - id: devonian-estuary
@@ -168,7 +168,7 @@ scenes:
       far_bank: a low, barren upland of thin rocky soil, grey and ochre, with only faint patches of low green and no forest
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
       absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects]
-    pin: null
+    pin: {asset_digest: "8674f9e4388274cc", path: "data/candidates/devonian-estuary/eedc05d6e15201f6/01-8674f9e4388274cc.jpg"}
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
   - id: carboniferous-swamp
@@ -190,7 +190,7 @@ scenes:
       far_bank: more swamp forest of lycopsid poles fading into the humid haze
       sky_and_light: a low, even overcast of white-grey cloud; soft, diffuse, almost shadowless light; the air saturated and heavy, a dense humid haze tinted green-grey that swallows the distance
       absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
-    pin: null
+    pin: {asset_digest: "9d50ad8640e89aa9", path: "data/candidates/carboniferous-swamp/8db84df1af2f828c/01-9d50ad8640e89aa9.jpg"}
 
   # Middle Permian, before the end-Permian extinction (events.yaml permian-extinction: ~251.9 Ma).
   - id: permian-interior
@@ -212,7 +212,7 @@ scenes:
       far_bank: flat-lying red beds and low dunes, bare to the horizon under dust
       sky_and_light: a cloudless sky bleached almost white by suspended dust; a hard, glaring sun and short, sharp, dark shadows; heat shimmer and a tan dust haze over the distance
       absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, swamp forest, lush green vegetation]
-    pin: null
+    pin: {asset_digest: "736e79c67e650684", path: "data/candidates/permian-interior/f6afdfa062572f06/01-736e79c67e650684.jpg"}
 
   # Morrison Formation sauropods, ~150 Ma; before flowering plants (events.yaml: 125-133 Ma).
   - id: jurassic-floodplain
@@ -234,7 +234,7 @@ scenes:
       far_bank: low, open fern prairie with scattered conifers under distant haze
       sky_and_light: a clear, deep blue sky with high thin cirrus and a bank of building cumulus on the horizon; crisp air with moderate distance haze
       absent: [flowers, flowering plants, grass, broadleaf trees, palms, large mammals, modern birds, people]
-    pin: null
+    pin: {asset_digest: "fff98516543632ed", path: "data/candidates/jurassic-floodplain/6633181a8f301dc0/01-fff98516543632ed.jpg"}
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
@@ -256,7 +256,7 @@ scenes:
       far_bank: more swamp forest fading into humid haze
       sky_and_light: heavy milky haze and towering cumulus clouds; soft, diffused warm light; the air thick with humidity
       absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings]
-    pin: null
+    pin: {asset_digest: "45461089a48f8e16", path: "data/candidates/cretaceous-forest/3562b3bc257435a1/01-45461089a48f8e16.jpg"}
 
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
   - id: eocene-jungle
@@ -278,7 +278,7 @@ scenes:
       far_bank: unbroken rainforest across the lake, steaming in the heat
       sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
       absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
-    pin: null
+    pin: {asset_digest: "6fd97ed7b5dbfd9a", path: "data/candidates/eocene-jungle/5899f56de73ec26e/01-6fd97ed7b5dbfd9a.jpg"}
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
   - id: pleistocene-steppe
@@ -300,7 +300,7 @@ scenes:
       far_bank: a flat, treeless steppe running to a line of distant white glaciers on the horizon
       sky_and_light: a cold, clear, pale sky with a few thin clouds and a veil of wind-blown dust; crisp, bright light and long shadows
       absent: [forest, farm fields, fences, roads, buildings, domestic animals, people]
-    pin: null
+    pin: {asset_digest: "e5e38045d401cbd2", path: "data/candidates/pleistocene-steppe/7c096c8ee716b05f/01-e5e38045d401cbd2.jpg"}
 
   # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
   # writing (5,025-5,425 BP).
@@ -323,7 +323,7 @@ scenes:
       far_bank: a flat river plain of green and tan fields with low hills beyond
       sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
       absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
-    pin: null
+    pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
 
   # The present day (events.yaml present: t = 0).
   - id: modern-city
@@ -345,4 +345,4 @@ scenes:
       far_bank: a dense skyline of apartment blocks, construction cranes and a bridge
       sky_and_light: a lightly hazy pale-blue sky with a faint brown smog layer over the skyline; bright, slightly diffused daylight
       absent: [futuristic architecture, flying vehicles, ruins, historical costume, dinosaurs, legible text, logos]
-    pin: null
+    pin: {asset_digest: "89b360bb4addcd58", path: "data/candidates/modern-city/7b703b53d6eab5a8/02-89b360bb4addcd58.jpg"}
