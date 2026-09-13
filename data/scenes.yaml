@@ -149,6 +149,12 @@ scenes:
     pin: {asset_digest: "bf667858e3d40d22", path: "data/candidates/ediacaran-shallows/9812bf36faf8a123/02-bf667858e3d40d22.jpg"}
 
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
+  # ADR-014: subject fixed to remove "crocodile-like", a likeness-based description the model
+  # renders as an actual crocodile instead of the fish anatomy intended (SCENE SPEC RULES).
+  # Diagnostic fish features named instead: lobe fins with fin rays (not legs), scales, a gill
+  # region, a flattened head, a fish tail, mostly submerged. Pin cleared to regenerate; the
+  # cleared pin was {asset_digest: "8674f9e4388274cc",
+  # path: "data/candidates/devonian-estuary/eedc05d6e15201f6/01-8674f9e4388274cc.jpg"}.
   - id: devonian-estuary
     t: 3.75e8
     chapter: waters-edge
@@ -162,13 +168,13 @@ scenes:
       left_mass: a stand of Archaeopteris, the first true trees, straight slender trunks up to 20 m tall carrying flat horizontal sprays of fern-like foliage, open and airy with sky visible between the branches
       vegetation: Archaeopteris trees, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them
       fauna: lobe-finned fishes in the shallows; no land animals larger than a small arthropod
-      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m flat-headed lobe-finned fish with a crocodile-like head, resting in the shallows with its head and front fins raised out of the water
+      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, overlapping scales down its flanks, a gill region at the base of a wide, flattened head, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface
       ground: bare, wet grey-brown mud and sand
       water: shallow, calm, slightly silty brackish water
       far_bank: a low, barren upland of thin rocky soil, grey and ochre, with only faint patches of low green and no forest
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
-      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects]
-    pin: {asset_digest: "8674f9e4388274cc", path: "data/candidates/devonian-estuary/eedc05d6e15201f6/01-8674f9e4388274cc.jpg"}
+      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects, crocodile, legs, digits, claws]
+    pin: null
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
   - id: carboniferous-swamp

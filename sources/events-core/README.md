@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 29 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 46 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -57,14 +57,30 @@ set the primary paper for each landmark specimen is the more precise and more ea
 spot-checked citation. This is noted here as a deliberate deviation from "PBDB or primary
 literature" in favour of the primary-literature half of that instruction.
 
+The 16 events added under ADR-014 were verified the same way in spirit — against a citable
+primary source, never from model memory — but by a different mechanism: live web search was
+unavailable for that work (its session-wide budget had already been spent by other concurrent
+work before this file was touched), so each date and citation was instead verified by fetching
+the actual source page (an encyclopaedia summary in most cases) and cross-checking the primary
+citation it names, rather than by search. Two citations in that batch carry narrower
+verification than the rest, flagged as such in their own comment in `data/events.yaml`:
+`first-seed-plants`' full bibliographic detail (journal, volume, pages) for Rothwell et al.
+1989 was reconstructed from training knowledge and only partially confirmed live (the author
+and year were); `gymnosperm-radiation`'s Looy & Duijnstee (2020) citation likewise lacks a
+live-confirmed journal and volume.
+
 **Contested dates** get a wide `t_min`/`t_max` interval and the word "contested" (or an
 explanation of the disagreement) in the description, rather than a single invented number.
 Contested in this file: `moon-forming-impact` (4.35 vs 4.51-4.52 Ga), `first-life` (3.4 vs
-4.1 Ga), `eukaryotes-origin` (1.6 vs 2.1 Ga), `insects` (possible myriapod misidentification),
+4.1 Ga), `origin-of-photosynthesis` (2.0 vs disputed ~3.4 Ga biomarker claims),
+`eukaryotes-origin` (1.6 vs 2.1 Ga), `insects` (possible myriapod misidentification),
 `amniotes` (318-307 Ma uncontroversial vs a 2025 claim pushing crown Amniota to ~358.9-354 Ma),
 `dinosaurs` (231 vs 243 Ma), `flowering-plants` (undisputed ~130 Ma vs a disputed Triassic
-pollen claim), `primates` (stem vs crown), `hominins` (contested classification), and
-`control-of-fire` (sporadic vs habitual use span over 1 Myr).
+pollen claim), `earliest-pollinating-insects` (Melittosphex burmensis, originally described as
+the oldest bee, now reassessed as an aculeate wasp of uncertain position), `primates` (stem vs
+crown), `hominins` (contested classification), `control-of-fire` (sporadic vs habitual use
+span over 1 Myr), and `k-pg-aftermath` (the fern spike's own duration is not precisely
+bounded, so the scene's interval is kept deliberately narrow and conservative).
 
 ## Event selection and density
 
@@ -73,13 +89,27 @@ event with a matching id (`earth-formation`, `moon-forming-impact`, `first-life`
 `great-oxidation-event`, `snowball-earth`, `ediacaran-biota`, `cambrian-explosion`,
 `land-plants`, `insects`, `tetrapods`, `amniotes`, `permian-extinction`, `dinosaurs`,
 `flowering-plants`, `k-pg-impact`, `primates`, `hominins`, `agriculture`, `writing`,
-`industrial-revolution`, `present`). Nine more fill out the set to 30 and produce the
-deliberately uneven, present-clustered density the brief asks for:
+`industrial-revolution`, `present`). Nine more filled out the original set to 30 and produce
+the deliberately uneven, present-clustered density the brief asked for:
 `eukaryotes-origin`, `multicellularity-sexual-reproduction`, `mammals-origin`, `birds-origin`
 (deep-time, filling the life-to-dinosaurs gap), and `homo-sapiens-origin`,
 `out-of-africa-migration`, `control-of-fire`, `last-glacial-maximum`, `moon-landing` (all
 within the last ~1.5 Myr, where density is highest). `last-glacial-maximum` was added after
 the first browser review so the ice-age scene (t = 20 ka) has a matching event.
+
+A further 16 events were added under ADR-014, ahead of a richer set of deep-time scene specs
+(`data/scenes-draft-deep.yaml`, older than 66 Ma) so each new scene has a matching event to
+anchor to: `origin-of-photosynthesis`, `banded-iron-formations`, `first-seaweeds`,
+`great-ordovician-biodiversification`, `end-ordovician-extinction`, `first-forests`,
+`first-seed-plants`, `late-devonian-extinction`, `carboniferous-rainforest-collapse`,
+`gymnosperm-radiation`, `siberian-traps`, `end-triassic-extinction`,
+`earliest-pollinating-insects`, `angiosperm-radiation`, `deccan-traps`, `k-pg-aftermath`.
+Three topics from that same work-package brief were deliberately *not* added as new events,
+because an existing event already covers the same ground with a citation that already
+supports the claim: "first eukaryotic algae" (`eukaryotes-origin`'s own citation, Bengtson et
+al. 2017, already describes 1.6 Ga crown-group red algae), "first vascular plants"
+(`land-plants`'s upper bound is already Cooksonia, ~425 Ma), and "first flowers"
+(`flowering-plants`, already present). The set totals 46 events.
 
 ## Gotchas
 
@@ -110,8 +140,9 @@ the first browser review so the ice-age scene (t = 20 ka) has a matching event.
 
 ## Measured volume
 
-`data/curated/events-core.parquet`: **17,574 bytes** (17.2 KB) for 29 events. `data/events.yaml`
-itself (the actual source of truth, git-tracked separately): ~13 KB.
+`data/curated/events-core.parquet`: **25,921 bytes** (25.3 KB) for 46 events, regenerated from
+the current `data/events.yaml` via `normalise.main()`. `data/events.yaml` itself (the actual
+source of truth, git-tracked separately): **36,672 bytes** (35.8 KB).
 
 ## Storage tier chosen
 

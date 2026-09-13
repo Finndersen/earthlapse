@@ -36,8 +36,9 @@ export interface Scene {
   /** Depth map for 2.5D displacement. Absent in v1 — deferred by ADR-009. The field
    *  exists now so adding it later is a publish, not a schema migration. */
   depth?: string
-  /** Shot type from the camera grammar (VISUAL_SPEC §3). */
-  shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND'
+  /** Shot type from the camera grammar (VISUAL_SPEC §3). 'UNDERWATER' added by ADR-014 for
+   *  fully submerged shots (e.g. the Cambrian seafloor); additive, no scene used it before. */
+  shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND' | 'UNDERWATER'
   caption: string
   /** Digest of the approved asset. Present means pinned (ADR-005). */
   pinned?: string

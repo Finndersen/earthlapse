@@ -394,6 +394,87 @@ impacts, flood basalts.
 
 ---
 
+## ADR-014 — A fifth shot, `UNDERWATER`, and a draft of deep-time scenes older than 66 Ma
+
+**Status:** accepted (human-directed 2026-09-13).
+
+**Context.** The human asked, ahead of spending the image budget, for much richer scene
+coverage of deep time: organic evolution from the origin of life through the first land
+plants and animals, plant evolution from spore-bearers through seeds to flowers and
+insect pollination, and the K-Pg extinction as an arrival-of-the-asteroid image plus an
+aftermath image. The existing camera grammar (VISUAL_SPEC §3) has four shots, all of them
+framed from land or a shoreline. The Cambrian explosion — trilobites, radiodonts,
+Hallucigenia, our own lineage's Haikouichthys — happened entirely on the open sea floor;
+no existing shot can honestly frame it, and forcing it into `WATER_EDGE` (a fish's-eye
+view from the shallows, per the existing scenes' composition) would misrepresent a fauna
+that lived below the photic shoreline, not at its edge.
+
+**Decision.**
+- A fifth shot, `UNDERWATER`: camera fully submerged at mid-water depth, looking
+  horizontally across the sea floor, light shafts from above. Added to `Shot` and
+  `SHOT_TYPE` in `pipeline/prompts.py`, the camera-grammar table in VISUAL_SPEC §3, and
+  additively to `Scene.shot` in `web/src/types/manifest.ts` (the union gains
+  `'UNDERWATER'`; every existing scene is unaffected). A matching `Composition.
+  UNDERWATER_SERIES` and `COMPOSITION_CONSTRAINTS` entry hold its own frame layout,
+  mirroring how `WATER_EDGE_SERIES` and `RIDGE_VISTA` are built.
+- 17 new scene specs, unpinned, drafted into a new file, `data/scenes-draft-deep.yaml`
+  (same schema as `data/scenes.yaml`, loads through the same `SceneBook` loader), spanning
+  a contested ~3.9 Ga origin-of-life setting through a K-Pg aftermath scene a few
+  thousand years after impact. Organised into three chapters: `primordial-seas`
+  (`WATER_EDGE`, four scenes from origin-of-life to the first multicellular seaweeds),
+  `cambrian-seafloor` (`UNDERWATER`, one scene), and `greening-world` (`WATER_EDGE`, the
+  remaining twelve scenes from the Ordovician shore through the K-Pg pair). Every scene's
+  date, organisms and environment are cited against primary literature or the ICS chart
+  in a comment block above the record, per the existing file's convention; `unsourced`
+  atmosphere/temperature figures follow that field's own documented convention (rounded,
+  plausible, not citations, per `data/scenes.yaml`'s header and `UnsourcedConditions`'
+  docstring) rather than being independently sourced.
+- `data/scenes.yaml`'s `devonian-estuary` scene is fixed in place: its Tiktaalik
+  description named "a crocodile-like head", which the SCENE SPEC RULES this brief
+  operated under specifically call out as a failure mode (likeness to a modern animal
+  gets drawn instead of the animal described) — the fix describes it by diagnostic fish
+  anatomy (lobe fins with fin rays, overlapping scales, a gill region, a flattened head,
+  a fish tail, mostly submerged) instead. Its pin is cleared so it regenerates; the
+  cleared pin's digest and path are kept in a YAML comment for reference.
+- 16 new events are added to `data/events.yaml`, verified against primary literature via
+  live web fetches (WebSearch was unavailable for this run — its session budget was
+  already spent by other concurrent work — so citations were verified by fetching the
+  actual source page rather than from model memory), each inserted near its
+  chronological neighbours: `origin-of-photosynthesis`, `banded-iron-formations`,
+  `first-seaweeds`, `great-ordovician-biodiversification`, `end-ordovician-extinction`,
+  `first-forests`, `first-seed-plants`, `late-devonian-extinction`,
+  `carboniferous-rainforest-collapse`, `gymnosperm-radiation`, `siberian-traps`,
+  `end-triassic-extinction`, `earliest-pollinating-insects`, `angiosperm-radiation`,
+  `deccan-traps`, `k-pg-aftermath`. Three requested topics were skipped as already
+  covered by an existing event, not added as duplicates: "first eukaryotic algae" (the
+  existing `eukaryotes-origin` event's own citation, Bengtson et al. 2017, already
+  describes 1.6 Ga crown-group red algae), "first vascular plants" (the existing
+  `land-plants` event's upper bound is already Cooksonia, ~425 Ma), and "first flowers"
+  (the existing `flowering-plants` event).
+
+**Consequences.**
+- No NORMATIVE contract changed non-additively: `Shot`/`Composition` are pipeline-internal
+  enums (not NORMATIVE themselves), and the one NORMATIVE surface touched,
+  `Scene.shot` in `web/src/types/manifest.ts`, only gained a union member.
+- `web/src/shell/manifest.ts`'s runtime manifest validator has its own separate
+  `SHOT_TYPES` literal array (`['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND']`) that
+  this ADR's brief did not own and therefore leaves unchanged. **Before any published
+  manifest can contain an `UNDERWATER` scene, that array needs `'UNDERWATER'` added too**,
+  or the runtime will reject the manifest. Flagged for whoever wires the Cambrian scene
+  into a build.
+- `data/scenes-draft-deep.yaml` is a standalone, unpinned draft — not merged into
+  `data/scenes.yaml`, not part of any chapter the manifest currently publishes, and not
+  built by this ADR. Merging it means deciding how its three chapters interleave with the
+  existing `molten-earth`/`waters-edge` pair (a chapter must be one consecutive run of
+  scenes in time, per `pipeline/scenes.py`'s `SceneBook` validator) and running
+  `earthtime review` to pin each generated candidate — deliberately left to whoever
+  merges it and spends the budget, per this run's no-generation, no-build constraint.
+- The devonian-estuary fix changes only prose (no field added or removed), so it is a
+  content correction, not a contract change, and needed no ADR of its own beyond being
+  recorded here per the brief's instruction.
+
+---
+
 ## Pending
 
 Decisions deferred to Phase 1, to be recorded here once answered:

@@ -81,11 +81,18 @@ perceived-consistency work.
 | `WATER_EDGE` | low, near the waterline, water occupying lower third |
 | `CANOPY` | mid-height, looking through vegetation, layered depth |
 | `GROUND` | low and close, detail-forward, shallow depth |
+| `UNDERWATER` | fully submerged, mid-water, looking across the sea floor, light shafts from above (ADR-014) |
 
 ⚠️ **Open risk:** `WIDE_RIDGE` may not survive depth displacement — distant vistas have
 little depth variation and produce weak parallax, while foreground edges produce the worst
 occlusion artefacts. Test this in Phase 1 before committing. See
 [`DESIGN.md §14`](./DESIGN.md#14-open-questions) question 2.
+
+`UNDERWATER` (ADR-014) carries the same open risk as `WIDE_RIDGE`, for the opposite reason:
+a mid-water shot has no near-camera foreground at all, so occlusion-edge artefacts are less
+likely, but the water column itself gives depth estimation little texture to work from. Also
+untested against wide-vista framing; revisit alongside `WIDE_RIDGE` when the 2.5D phase
+begins.
 
 ---
 

@@ -67,6 +67,24 @@ events:
       "Potentially biogenic carbon preserved in a 4.1 billion-year-old zircon." PNAS,
       112(47), 14518-14521 (contested upper bound).
 
+  - id: origin-of-photosynthesis
+    label: Oxygenic photosynthesis evolves
+    t_min: 2.0e9
+    t_max: 3.4e9
+    importance: 0.55
+    description: >
+      Cyanobacteria evolve oxygen-releasing (oxygenic) photosynthesis, the innovation that
+      eventually oxygenates the atmosphere. Contested and wide: claims of 2-methylhopane
+      biomarkers and stromatolite morphology pushing the origin to ~3.4-2.7 Ga remain
+      disputed, while thylakoid membranes (the structure housing the photosynthetic
+      machinery) are unambiguously preserved in ~1.75 Ga cherts and most geological
+      evidence places oxygenic photosynthesis as well established by ~2.0 Ga, several
+      hundred million years before it permanently oxygenated the atmosphere (the Great
+      Oxidation Event, below).
+    citation: >
+      Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). "The rise of oxygen in Earth's
+      early ocean and atmosphere." Nature, 506, 307-315.
+
   - id: eukaryotes-origin
     label: Eukaryotes originate
     t_min: 1.6e9
@@ -97,6 +115,23 @@ events:
       Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). "The rise of oxygen in Earth's
       early ocean and atmosphere." Nature, 506, 307-315.
 
+  - id: banded-iron-formations
+    label: Banded iron formations peak
+    t_min: 1.85e9
+    t_max: 2.8e9
+    importance: 0.35
+    description: >
+      Dissolved iron in the anoxic Archean ocean is oxidised by cyanobacterial oxygen and
+      precipitates as banded iron formations, the main geochemical record of early
+      oxygenation. Deposition peaks in the late Archean (2.8-2.5 Ga) with a second pulse
+      around 1.85 Ga, after which the deposits largely stop — marking, it is generally
+      argued, when the deep ocean itself finally became oxygenated.
+    citation: >
+      Cloud, P. (1973). "Paleoecological Significance of the Banded Iron-Formation."
+      Economic Geology, 68(7), 1135-1143. Holland, H.D. (2006). "The oxygenation of the
+      atmosphere and oceans." Philosophical Transactions of the Royal Society B, 361(1470),
+      903-915.
+
   - id: multicellularity-sexual-reproduction
     label: Complex multicellularity and sex
     t_min: 1.030e9
@@ -110,6 +145,21 @@ events:
       Gibson, T.M. et al. (2018). "Precise age of Bangiomorpha pubescens dates the origin
       of eukaryotic photosynthesis." Geology, 46(2), 135-138. Age 1047 +/- 17 Ma via
       Re-Os dating.
+
+  - id: first-seaweeds
+    label: First multicellular seaweeds
+    t_min: 7.9e8
+    t_max: 1.0e9
+    importance: 0.4
+    description: >
+      Proterocladus antiquus, a multicellular chlorophyte (green alga) from the Nanfen
+      Formation, China, is described from over 1,000 specimens showing branching thalli,
+      varied cell shapes and asexual resting spores — a fully multicellular seaweed body
+      plan roughly a billion years old. This scene sits later in the same broad Tonian
+      interval during which such macroscopic algae were established.
+    citation: >
+      Tang, Q., Pang, K., Yuan, X. & Xiao, S. (2020). "A one-billion-year-old multicellular
+      chlorophyte." Nature Ecology & Evolution, 4(4), 543-549.
 
   - id: snowball-earth
     label: Snowball Earth glaciations
@@ -157,6 +207,21 @@ events:
       Construction of Animal Biodiversity. Roberts and Company (main diversification
       pulse ends within Cambrian Stage 3, ~521 Ma).
 
+  - id: great-ordovician-biodiversification
+    label: Great Ordovician Biodiversification Event
+    t_min: 4.6733e8
+    t_max: 4.9705e8
+    importance: 0.6
+    description: >
+      Marine animal diversity rises sharply through the Ordovician as reef-building,
+      suspension-feeding and pelagic clades radiate, tripling genus-level diversity and
+      replacing the sparser Cambrian fauna with a richer, more modern-looking Paleozoic
+      one. Neither instantaneous nor globally synchronous — different clades diversify at
+      different times in different places.
+    citation: >
+      Fan, J. et al. (2020). "A high-resolution summary of Cambrian to Early Triassic
+      marine invertebrate biodiversity." Science, 367(6475), 272-277.
+
   - id: land-plants
     label: Land plants colonise land
     t_min: 4.25e8
@@ -170,6 +235,22 @@ events:
       Rubinstein, C.V. et al. (2010). "Early Middle Ordovician evidence for land plants in
       Argentina (eastern Gondwana)." New Phytologist, 188(2), 365-369. Edwards, D., Fanning,
       U. & Richardson, J.B. (1994) for Cooksonia macrofossils, Silurian, ~425 Ma.
+
+  - id: end-ordovician-extinction
+    label: End-Ordovician mass extinction
+    t_min: 4.40e8
+    t_max: 4.45e8
+    importance: 0.8
+    description: >
+      One of the "Big Five" mass extinctions, eliminating roughly 85% of marine species in
+      two pulses: a first pulse tied to rapid Gondwanan glaciation and sea-level fall, a
+      second some hundred thousand years later tied to spreading ocean anoxia as the ice
+      retreated. Bracketing dates carry real uncertainty; the two-pulse structure is well
+      established.
+    citation: >
+      Sheehan, P.M. (2001). "The Late Ordovician Mass Extinction." Annual Review of Earth
+      and Planetary Sciences, 29(1), 331-364. Stockey, R.G. et al. (2020). "Persistent
+      global marine euxinia in the early Silurian." Nature Communications, 11(1), 1804.
 
   - id: insects
     label: First insects
@@ -202,6 +283,59 @@ events:
       Ahlberg, P.E. & Clack, J.A. (2006) for Ichthyostega/Acanthostega body fossils,
       ~365 Ma, Late Devonian.
 
+  - id: first-forests
+    label: First forests
+    t_min: 3.78e8
+    t_max: 3.86e8
+    importance: 0.55
+    description: >
+      In-situ stumps at Gilboa, New York, preserve the earliest known forest: dense stands
+      of Eospermatopteris, a cladoxylopsid tree up to 8 m tall with a shallow root crown, a
+      lineage unrelated to (and pre-dating the ecological dominance of) the progymnosperm
+      Archaeopteris that supplants it as the dominant tree later in the Late Devonian.
+    citation: >
+      Stein, W.E., Mannolini, F., Hernick, L.V., Landing, E. & Berry, C.M. (2007). "Giant
+      cladoxylopsid trees resolve the enigma of the Earth's earliest forest stumps at
+      Gilboa." Nature, 446(7138), 904-907.
+
+  - id: first-seed-plants
+    label: First seed plants
+    t_min: 3.6e8
+    t_max: 3.7e8
+    importance: 0.55
+    description: >
+      Elkinsia polymorpha, a seed fern from the Late Devonian of West Virginia, bears the
+      oldest well-documented seeds: an integumented ovule enclosed in a cupule, freeing
+      reproduction from the standing water that spore-dispersal required. The precursor
+      Runcaria (~385 Ma, Middle Devonian, Belgium) shows the integument evolving slightly
+      earlier, without yet being a true seed.
+    citation: >
+      Rothwell, G.W., Scheckler, S.E. & Gillespie, W.H. (1989). "Elkinsia gen. nov., a Late
+      Devonian gymnosperm with cupulate ovules." Botanical Gazette, 150(2), 170-189. NOTE:
+      author and year (Rothwell, 1989) and the Elkinsia/Late-Devonian/~370 Ma facts were
+      confirmed via a live fetch; the full title/journal/volume/pages above come from training
+      knowledge and were not independently confirmed live — see sources/events-core/README.md
+      "Verification method".
+
+  - id: late-devonian-extinction
+    label: Late Devonian mass extinction
+    t_min: 3.5886e8
+    t_max: 3.7215e8
+    importance: 0.75
+    description: >
+      Two extinction pulses bracket the Late Devonian: the Kellwasser event at the
+      Frasnian-Famennian boundary (~372.15 Ma), then the Hangenberg event ending the
+      Devonian entirely (~358.86 Ma) — together one of the "Big Five," severely reducing
+      reef-building and marine vertebrate diversity and triggering marked body-size
+      reduction among surviving fish lineages.
+    citation: >
+      Becker, R.T. & House, M.R. (1986). "Kellwasser Events and goniatite successions in
+      the Devonian of the Montagne Noire." Courier Forschungsinstitut Senckenberg, 169,
+      45-77. Sallan, L. & Galimberti, A.K. (2015). "Body-size reduction in vertebrates
+      following the end-Devonian mass extinction." Science, 350(6262), 812-815. Percival,
+      L.M.E. et al. (2018). "Precisely dating the Frasnian-Famennian boundary." Scientific
+      Reports, 8, 9578.
+
   - id: amniotes
     label: First amniotes
     t_min: 3.07e8
@@ -219,6 +353,61 @@ events:
       Society, 45, 61-83 (Hylonomus lyelli). Contested pushback: Long, J.A. et al. (2025).
       "Earliest amniote tracks recalibrate the timeline of tetrapod evolution." Nature,
       641, 1193-1200 (Snowy Plains Formation track-bearing slab).
+
+  - id: carboniferous-rainforest-collapse
+    label: Carboniferous rainforest collapse
+    t_min: 3.0e8
+    t_max: 3.07e8
+    importance: 0.5
+    description: >
+      The vast equatorial coal-swamp rainforests fragment and largely vanish within a few
+      hundred thousand years as the climate swings from humid to arid, driven by cooling
+      and falling CO2 during the waning Late Paleozoic Ice Age; sea level falls roughly
+      100 m as Gondwanan ice sheets expand. Lycopsid swamp forest is replaced by drier,
+      seed-fern- and early-conifer-dominated vegetation across the Carboniferous-Permian
+      boundary.
+    citation: >
+      Montanez, I.P. et al. (2007). "CO2-forced climate and vegetation instability during
+      late Paleozoic deglaciation." Science, 315(5808), 87-91. Gulbranson, E.L. et al.
+      (2014). "Late Pennsylvanian aridification on the southwestern margin of Gondwana."
+      Palaeogeography, Palaeoclimatology, Palaeoecology, 417, 220-235.
+
+  - id: gymnosperm-radiation
+    label: Conifers and gymnosperms radiate
+    t_min: 2.9e8
+    t_max: 3.1e8
+    importance: 0.45
+    description: >
+      As the coal-swamp lycopsids retreat with the Carboniferous rainforest collapse
+      (above), walchian conifers (Voltziales, e.g. Walchia) spread rapidly across the
+      newly drier ground — the first conifers, and part of a broader seed-plant
+      (gymnosperm) radiation that comes to dominate Permian and Triassic vegetation.
+    citation: >
+      Fossil record of Walchia and allied early Voltziales, Upper Pennsylvanian to Lower
+      Permian (Wikipedia, "Walchia" / "Voltziales," each live-fetched). Looy, C.V. &
+      Duijnstee, I.A.P. (2020), on voltzialean cone evolution through the Guadalupian. NOTE:
+      the author names and 2020 date for Looy & Duijnstee were live-fetched; its journal and
+      volume were not independently confirmed — see sources/events-core/README.md
+      "Verification method".
+
+  - id: siberian-traps
+    label: Siberian Traps eruptions
+    t_min: 2.5e8
+    t_max: 2.54e8
+    importance: 0.7
+    description: >
+      One of the largest volcanic events in Earth's history: roughly two million years of
+      flood-basalt eruptions across Siberia, releasing enormous volumes of CO2, sulphur
+      and halogens. Widely held to be the principal driver of the end-Permian mass
+      extinction (below), through some combination of runaway warming, ocean acidification
+      and anoxia.
+    citation: >
+      Burgess, S.D. & Bowring, S.A. (2015). "High-precision geochronology confirms
+      voluminous magmatism before, during, and after Earth's most severe extinction."
+      Science Advances, 1(7), e1500470. Kamo, S.L. et al. (2003). "Rapid eruption of
+      Siberian flood-volcanic rocks and evidence for coincidence with the
+      Permian-Triassic boundary and mass extinction at 251 Ma." Earth and Planetary
+      Science Letters, 214(1-2), 75-91.
 
   - id: permian-extinction
     label: End-Permian mass extinction
@@ -264,6 +453,21 @@ events:
       the oldest mammal." Journal of Vertebrate Paleontology, 13(3), 309-334 (~225 Ma).
       Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) for Morganucodon, ~205 Ma.
 
+  - id: end-triassic-extinction
+    label: End-Triassic mass extinction
+    t_min: 2.010e8
+    t_max: 2.018e8
+    importance: 0.8
+    description: >
+      One of the "Big Five" mass extinctions, precisely dated to the Triassic-Jurassic
+      boundary and tied to Central Atlantic Magmatic Province (CAMP) volcanism — the
+      largest known flood-basalt province by area — which released enough CO2 and sulphur
+      to drive intense warming, acidification and marine anoxia. Clears the way for
+      dinosaurs to become dominant in the Jurassic.
+    citation: >
+      Blackburn, T.J. et al. (2013). "Zircon U-Pb Geochronology Links the End-Triassic
+      Extinction with the Central Atlantic Magmatic Province." Science, 340(6135), 941-945.
+
   - id: birds-origin
     label: First birds
     t_min: 1.485e8
@@ -278,6 +482,26 @@ events:
       the radiation of maniraptoran theropod dinosaurs." BMC Evolutionary Biology, 17,
       236. Archaeopteryx horizon within the Solnhofen Limestone (Late Jurassic,
       Tithonian), ~150.8-148.5 Ma.
+
+  - id: earliest-pollinating-insects
+    label: Earliest pollinating insects
+    t_min: 9.3e7
+    t_max: 1.65e8
+    importance: 0.5
+    description: >
+      Long-proboscid scorpionflies (Aneuretopsychidae and kin, Jurassic-Cretaceous,
+      ~165-93 Ma) carry a tubular mouthpart interpreted as adapted to drink the
+      pollination droplets of insect-pollinated gymnosperms such as Bennettitales,
+      evidence for insect pollination well before flowers existed. Contested: a separate
+      ~100 Ma Burmese-amber specimen, Melittosphex burmensis, was described as the oldest
+      bee, but is now reassessed as an aculeate wasp of uncertain position rather than a
+      true bee.
+    citation: >
+      Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al. (2009). "A Probable
+      Pollination Mode Before Angiosperms: Eurasian, Long-Proboscid Scorpionflies."
+      Science, 326(5954), 840-847. Poinar, G.O. & Danforth, B.N. (2006). "A fossil bee
+      from Early Cretaceous Burmese amber." Science, 314(5799), 614 (original bee claim,
+      contested reclassification).
 
   - id: flowering-plants
     label: Flowering plants
@@ -294,6 +518,40 @@ events:
       112(35), 10985-10988 (~130 Ma, Barremian). Earliest undisputed angiosperm pollen
       spans the Hauterivian-Barremian, ~132.9-125 Ma.
 
+  - id: angiosperm-radiation
+    label: Flowering plants spread and radiate
+    t_min: 8.0e7
+    t_max: 1.25e8
+    importance: 0.55
+    description: >
+      Within the "Cretaceous Terrestrial Revolution," angiosperms spread from a marginal
+      lake-edge presence to ecological dominance over roughly 45 million years, coevolving
+      with pollinating insects and reshaping terrestrial food webs; the traditional bound
+      is 125-80 Ma, though some authors extend the revolution's later phase into the
+      Paleogene.
+    citation: >
+      Lloyd, G.T. et al. (2008). "Dinosaurs and the Cretaceous Terrestrial Revolution."
+      Proceedings of the Royal Society B, 275(1650), 2483-2490. Benton, M.J., Wilf, P. &
+      Sauquet, H. (2021). "The Angiosperm Terrestrial Revolution and the origins of
+      modern biodiversity." New Phytologist, 233(5), 2017-2035.
+
+  - id: deccan-traps
+    label: Deccan Traps eruptions
+    t_min: 6.56e7
+    t_max: 6.63e7
+    importance: 0.5
+    description: >
+      Massive flood-basalt volcanism in west-central India straddles the K-Pg boundary,
+      with the bulk of the eruptive volume concentrated in the ~66-65 Ma window. A
+      long-running debate weighs Deccan volcanism against the Chicxulub impact (below) as
+      a contributor to the end-Cretaceous extinction; a 2015 study argued the impact
+      itself triggered a shift in Deccan's eruptive tempo.
+    citation: >
+      Schoene, B. et al. (2021). "An evaluation of Deccan Traps eruption rates using
+      geochronologic data." Geochronology, 3(1), 181-198. Renne, P.R. et al. (2015).
+      "State shift in Deccan volcanism at the Cretaceous-Paleogene boundary, possibly
+      induced by impact." Science, 350(6256), 76-78.
+
   - id: k-pg-impact
     label: K-Pg impact
     t_min: 6.6032e7
@@ -306,6 +564,21 @@ events:
       Renne, P.R. et al. (2013). "Time scales of critical events around the
       Cretaceous-Paleogene boundary." Science, 339(6120), 684-687. Chicxulub impact and
       K-Pg boundary dated to 66.043 +/- 0.011 Ma.
+
+  - id: k-pg-aftermath
+    label: K-Pg aftermath fern spike
+    t_min: 6.6038e7
+    t_max: 6.6043e7
+    importance: 0.5
+    description: >
+      In the first few thousand years after the Chicxulub impact, sections worldwide (most
+      densely sampled in North America and New Zealand) record a sharp spike in fern
+      spores — a "fern spike" — as ferns, opportunistic recolonisers of disturbed ground,
+      dominate a landscape stripped of the forest that stood before impact.
+    citation: >
+      Vajda, V., Raine, J.I. & Hollis, C.J. (2001). "Indication of global deforestation at
+      the Cretaceous-Tertiary boundary by New Zealand fern spike." Science, 294(5547),
+      1700-1702.
 
   - id: primates
     label: First primates
