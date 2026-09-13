@@ -128,11 +128,11 @@ Small, easy, and the ideal first layer for the vertical slice.
 | | |
 |---|---|
 | **Source** | GEOCARBSULF / Berner; plus Foster et al. compilations |
-| **Access** | ⚠️ TBD — supplementary tables from the papers; likely CSV via journal or PANGAEA |
-| **Format** | CSV |
-| **Coverage** | 540 Ma → present |
+| **Access** | **VERIFIED.** `https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt` (NOAA Paleo, plain HTTP, no auth) |
+| **Format** | fixed-width text, long human-readable header, 58 rows |
+| **Coverage** | 570 Ma → present, exactly 10 Myr spacing, no gaps |
 | **Volume** | tiny — < 100 KB |
-| **Licence** | ⚠️ VERIFY per publication |
+| **Licence** | US public domain (NOAA); cite Berner GEOCARB III / Royer |
 | **Shape** | `TimeSeries` × 2 (CO₂ ppm, O₂ %) |
 | **Storage** | **git**, committed parquet |
 

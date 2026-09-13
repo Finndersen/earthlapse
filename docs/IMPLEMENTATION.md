@@ -1,5 +1,16 @@
 # Implementation Plan
 
+> ## ▶ The active plan is [`ONESHOT_SCOPE.md`](./ONESHOT_SCOPE.md)
+>
+> The first build round is a single multi-agent fan-out, not the incremental phasing below.
+> **Phase 0 is already complete** — the contracts are written, tested and committed. Phase 1's
+> unknowns were resolved by research agents (see `DECISIONS.md` and `DATA_SOURCES.md`), so the
+> build starts directly at fan-out.
+>
+> This document remains the reference for *why* the work is decomposed the way it is, and for
+> what happens after the MVP lands. Read it for the reasoning; read `ONESHOT_SCOPE.md` for
+> what to actually build.
+
 How this gets built, and how work is decomposed for parallel agents.
 
 **Guiding principle:** decompose by *verification boundary*, not by feature. Every work
@@ -22,10 +33,11 @@ Hence: contracts first, one slice, then fan out.
 
 ---
 
-## Phase 0 — Contracts
+## Phase 0 — Contracts ✅ COMPLETE
 
-**~300 lines. Reviewed by Finn, not written by him.** This is the thing every downstream
-agent must agree on; if parallel agents each invent it, the merge is a disaster.
+Committed and passing (`pytest tests/test_contracts.py`, 18 tests, offline). This is the
+thing every downstream agent must agree on; if parallel agents each invent it, the merge is a
+disaster — so it exists before any fan-out.
 
 Deliverables:
 
@@ -37,8 +49,11 @@ Deliverables:
 - `web/src/types/manifest.ts` — published manifest schema
 - `sources/_template/` — the per-source skeleton
 
-**Exit criteria:** types compile, `WorldState.at(t)` has a passing test against a stub, and
-Finn has reviewed and signed off. Nothing else starts until then.
+**Exit criteria — met.** Types compile, 18 contract tests pass offline, and the behaviours
+agents would otherwise diverge on are pinned: out-of-domain returns `None` rather than
+extrapolating; an upstream prompt edit propagates to the image digest; a pinned asset
+survives a rebuild while its dependency goes stale; the ledger refuses a call that would
+breach the ceiling.
 
 ---
 
@@ -57,12 +72,12 @@ Three events in one era, end to end, deployed and clickable.
 **This phase exists to surface unknowns, not to produce features.** Its real deliverables
 are answers:
 
-| Unknown | Why it matters | Cheap test |
-|---|---|---|
-| Does `gplately` install cleanly? | Heavy geospatial deps; **blocks the globe entirely** | one hour, first thing |
-| What is in the PaleoDEM netCDF? | Projection, datum, no-data, spacing all assumed | load one file |
-| Does depth displacement survive `WIDE_RIDGE`? | **Main risk in ADR-001** | one image, one depth map |
-| Does the image model hold style across a handful? | Determines the whole art pipeline | 6 images, same template |
+| Unknown | Status |
+|---|---|
+| Does `gplately` install cleanly? | ✅ **Resolved** — 33 s, wheels only, no conda. And moot for the MVP: gplately is out of scope, PaleoDEM rasters are already reconstructed. |
+| What is in the PaleoDEM netCDF? | ✅ **Mostly resolved** — 1° product, 9.3 MB, variable `z`, 181×361 float32, EPSG:4326, CC BY 4.0. Variable name from a documentation read, not from opening the file — the implementing agent confirms. |
+| Does depth displacement survive `WIDE_RIDGE`? | ⏸ **Deferred** out of v1 by ADR-009. |
+| Does the image model hold style across a handful? | ⏳ **Open** — first real question the one-shot answers (W6). |
 
 If any answer is bad, we change the design *before* spending money or parallelism. Write the
 answers into `DECISIONS.md` as they land.
