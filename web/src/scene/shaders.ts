@@ -56,9 +56,11 @@ float valueNoise(vec2 p) {
 }
 
 /** CSS object-fit: cover — crop the longer axis so the image fills uv fully. aspect is
- *  viewport-aspect / image-aspect. */
+ *  viewport-aspect / image-aspect: > 1 means the viewport is relatively wider, so only a
+ *  1/aspect band of the image's height is shown; < 1 means only an aspect-wide band of its
+ *  width is. Both scale factors stay <= 1, so sampling never leaves [0, 1]. */
 vec2 coverUV(vec2 uv, float aspect) {
-  vec2 scale = aspect > 1.0 ? vec2(1.0, aspect) : vec2(1.0 / aspect, 1.0);
+  vec2 scale = aspect > 1.0 ? vec2(1.0, 1.0 / aspect) : vec2(aspect, 1.0);
   return (uv - 0.5) * scale + 0.5;
 }
 
