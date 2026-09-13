@@ -1,0 +1,18 @@
+# See docs/DATA_SOURCES.md for field meanings.
+#
+# Zenodo record 5460860 ships 6 files totalling 414.7 MB; only the 1-degree netCDF
+# bundle (9.3 MB) is used here (see README.md "What was and wasn't downloaded"). `url`
+# is the direct file-content endpoint resolved from the Zenodo API
+# (`https://zenodo.org/api/records/5460860`), not the record landing page.
+
+name = "paleodem"
+title = "PALEOMAP PaleoDEMs (Scotese & Wright 2018) -- 1-degree, 0-540 Ma"
+url = "https://zenodo.org/api/records/5460860/files/Scotese_Wright_2018_Maps_1-88_1degX1deg_PaleoDEMS_nc.zip/content"
+sha256 = "7014767a168c28d3762f55117ebafcd0f6b6b90029a495e2d14fd23f94abc16d"
+licence = "CC BY 4.0"
+citation = "Scotese, C.R. and Wright, N.M. (2018). PALEOMAP Paleodigital Elevation Models (PaleoDEMs) for the Phanerozoic. PALEOMAP Project. Dataset, Zenodo. https://doi.org/10.5281/zenodo.5460860"
+time_domain = [5.4e8, 0.0]  # years BP, [oldest, newest]
+output_shape = "RasterSequence + TimeSeries"  # paleodem (raster) + land_fraction (series) -- see README.md; matches docs/DATA_SOURCES.md's own "+" notation for other dual-shape sources (hyde, paleoclimate)
+interpolation = "linear"    # land_fraction (TimeSeries); paleodem (RasterSequence) blends via RasterBlend instead, no interpolation enum applies to it
+volume_bytes = 9302291      # measured: the zip itself (sha256 above); see README.md for curated/media sizes
+storage_tier = "git"        # curated parquet only -- textures are generated media, never committed (see README.md)
