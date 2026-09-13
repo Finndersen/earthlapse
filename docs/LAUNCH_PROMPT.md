@@ -69,8 +69,9 @@ Commit as you go, one commit per work package, so I can review the history.
 
 1. `pip install -e ".[dev,data]"` and confirm `pytest` passes on your machine — the contracts
    were written and tested in a Linux container, not on macOS.
-2. Set whichever image provider API key you intend to use. The `Generator` protocol is
-   provider-agnostic, but W6 has to pick one; if you have a preference, add a line saying so.
+2. Put `FAL_KEY=...` in `.env` and load $5-10 of fal.ai credit. Expected MVP spend is about
+   $1.11, so that is ample. The model choice is already made in `VISUAL_SPEC.md` §8 —
+   FLUX.1 Schnell for drafts, FLUX.2 Pro for finals — so W6 has nothing to decide.
 3. Confirm you can reach `zenodo.org` and `ncei.noaa.gov`. My container could not, which is
    why W1's and W2's downloads are unverified against real bytes.
 

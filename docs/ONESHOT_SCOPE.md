@@ -96,12 +96,15 @@ v1 renders it as **text only** (label + representative + date). Portraits are a 
 
 14 chapters, one final still each, plus ~10 optional ancestor portraits.
 
-| Item | Count | Unit | Cost |
-|---|---|---|---|
-| Draft/composition iteration (cheap model) | ~56 | $0.02 | $1.12 |
-| Final scenes (premium, 3 candidates each) | ~42 | $0.10 | $4.20 |
-| Ancestor portraits (optional) | ~30 | $0.05 | $1.50 |
-| **MVP total** | | | **~$7** |
+| Item | Count | Model | Unit | Cost |
+|---|---|---|---|---|
+| Draft / composition iteration | ~56 | FLUX.1 Schnell | $0.0005 | $0.03 |
+| Final scenes (3 candidates each) | ~42 | FLUX.2 Pro | $0.015 | $0.63 |
+| Ancestor portraits (optional) | ~30 | FLUX.2 Pro | $0.015 | $0.45 |
+| **MVP total** | | | | **~$1.11** |
+
+Using Nano Banana Pro (~$0.13) for every final instead would come to ~$6. Either fits.
+**Cost is not the constraint here** — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection).
 
 Ceiling for the whole one-shot: **`--max-spend 25`**. That leaves 3× headroom for iteration
 and keeps $75 of the project's $100 for later rounds. The ledger enforces it
@@ -208,5 +211,10 @@ These are expected to be missing. Do not "fix" them.
 
 ## Budget
 
-**`--max-spend 25`**, enforced in `pipeline/spend.py`. Expected actual ~$7. No agent may
-raise the ceiling; if a build hits it, stop and report.
+**`--max-spend 25`**, enforced in `pipeline/spend.py`. Expected actual **~$1.11** on FLUX.2
+Pro finals. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
+retry loop, not to constrain the build. **No agent may raise it**; if a build hits it,
+something is wrong, so stop and report.
+
+**Credentials required:** `FAL_KEY` in `.env` (gitignored). $5–10 of fal.ai credit covers the
+MVP many times over. `GOOGLE_API_KEY` optional, only as the style-consistency fallback.

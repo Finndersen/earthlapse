@@ -162,19 +162,35 @@ candidate picker showing one image at a time will produce a beautiful, incoheren
 
 ## 8. Model selection
 
-⚠️ **TBD — decide in Phase 1 with a bake-off.** Requirements, in priority order:
+**Decision: fal.ai as the single provider, two-tier.**
 
-1. Multi-reference conditioning (for era anchors)
-2. Photorealism at landscape scale
-3. Prompt adherence for composition constraints
-4. Cost per image at draft quality vs final quality
+| Tier | Model | $/image | Use |
+|---|---|---|---|
+| Draft | `fal-ai/flux/schnell` | 0.0005 | composition iteration, chapter framing — 500 costs 25¢ |
+| Final | FLUX.2 Pro | 0.015 | approved scenes |
+| Escalation | FLUX.2 Max | 0.073 | a scene that won't come right |
 
-Candidates as of writing: Nano Banana Pro, FLUX.2, GPT Image 2. The `Generator` protocol
-(see DESIGN §9) keeps this swappable — **do not** hard-code a provider anywhere outside
-`pipeline/generators/`.
+Reference prices for alternatives: FLUX.2 Dev $0.0084, Gemini 2.5 Flash Image $0.019,
+FLUX.1 Pro $0.050, Nano Banana Pro (Gemini 3 Pro Image) ~$0.13 (token-priced, $120/M output).
 
-Strategy: cheap model for drafts and composition iteration, premium model for finals only.
-This is most of the budget headroom.
+**Cost is not a constraint.** The MVP's ~98 generations come to about $1.11 on FLUX.2 Pro
+finals, or ~$6 if every final used Nano Banana Pro. Both are noise against the $100 project
+budget. **Choose on quality and multi-reference capability, not price.**
+
+One key reaches the whole ladder, so the draft/final split is a config string rather than a
+second integration.
+
+**Fallback, only if needed:** Nano Banana Pro is reportedly strongest at holding identity and
+style across reference images — the era-anchor problem exactly. Add a Google AI Studio key
+*only if* style consistency isn't holding on FLUX. Do not set up two providers speculatively.
+
+Requirements this decision was made against, in priority order: multi-reference conditioning
+for era anchors; photorealism at landscape scale; prompt adherence for composition
+constraints; cost per image at draft vs final quality.
+
+⚠️ **No provider name may appear outside `pipeline/generators/`.** Swapping vendors must be a
+config change. `estimate_usd()` reads a per-model price table so `earthtime plan` can cost a
+build before spending anything.
 
 ---
 
