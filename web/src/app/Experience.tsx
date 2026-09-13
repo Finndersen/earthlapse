@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
-import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPortrait, AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { resolveAssetUrl, scenePlaybackSegments, SceneView } from '@/scene'
 import { ShellLayout, useIdle } from '@/shell'
 import { installDevHook } from '@/store/devHook'
@@ -263,7 +263,16 @@ export function Experience() {
       }
       title={<TimeTitle t={t} />}
       badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
-      ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
+      ancestor={
+        <div data-testid="ancestor-readout">
+          {nodeLayer ? (
+            <>
+              <AncestorPortrait layer={nodeLayer} t={t} assetBase={manifest.assetBase} />
+              <AncestorReadout layer={nodeLayer} t={t} />
+            </>
+          ) : null}
+        </div>
+      }
       caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
       chart={
         expandedChartLayer ? (
