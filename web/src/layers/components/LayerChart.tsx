@@ -8,6 +8,8 @@
  * only offers a way to close itself, so opening a chart is always a single gesture.
  */
 
+import { useEffect } from 'react'
+
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
 import { clampUnit, formatValue } from '../format'
@@ -34,6 +36,18 @@ interface ChartPoint {
 }
 
 export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
+  // Escape closes the chart from anywhere — scoped to this listener's own lifetime (mounted
+  // only while the chart is open, per the caller), so it never competes with the timeline's
+  // own keydown handling, which is a React handler on the timeline's root and only fires
+  // while focus is inside it (see `timeline/keyboard.ts`).
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   const samples: Array<ChartPoint | null> = []
   for (let i = 0; i <= SAMPLE_COUNT; i++) {
     const u = i / SAMPLE_COUNT
@@ -85,14 +99,17 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
 
   return (
     <div className={styles.chart}>
+      <button type="button" className={styles.chartClose} onClick={onClose} aria-label={`Close ${layer.name} chart`}>
+        <span className={styles.chartCloseGlyph} aria-hidden="true">
+          {'✕'}
+        </span>
+        <span className={styles.chartCloseLabel}>Close</span>
+      </button>
       <div className={styles.chartHeader}>
         <span className={styles.label}>{layer.name}</span>
         <span className={styles.chartValue}>
           {playheadValue === null ? 'no data' : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
         </span>
-        <button type="button" className={styles.chartClose} onClick={onClose} aria-label={`Close ${layer.name} chart`}>
-          {'✕'}
-        </button>
       </div>
       <div className={styles.chartPlot}>
         {/* Stretched non-uniformly (`preserveAspectRatio="none"`) so x spans exactly the

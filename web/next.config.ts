@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactStrictMode: true,
+  // The dev-mode "N" badge overlaps the transport's back button in the immersive lens shell.
+  devIndicators: false,
 }
 
 export default nextConfig

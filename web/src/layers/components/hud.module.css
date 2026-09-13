@@ -138,34 +138,63 @@
   white-space: nowrap;
 }
 
+/* Ghost pill anchored to the chart's top-right edge, clear of the centred header and the
+   bright image behind it: a hairline ring plus a soft dark halo keep it legible over any
+   plate, and it carries its own "Close" label so it doesn't rely on the × alone. */
 .chartClose {
-  align-self: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
+  position: absolute;
+  top: -6px;
+  right: 0;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px 5px 10px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  background: rgba(6, 5, 3, 0.4);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  font-size: 11px;
-  line-height: 24px;
   cursor: pointer;
   transition:
     color 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
     box-shadow 220ms ease;
 }
 
 .chartClose:hover {
   color: var(--hud-ink, #efe9dc);
-  box-shadow: inset 0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  background: rgba(6, 5, 3, 0.6);
 }
 
 .chartClose:focus-visible {
   outline: none;
+  border-color: var(--hud-accent, #e8b06a);
   color: var(--hud-accent, #e8b06a);
   box-shadow:
-    inset 0 0 0 1px var(--hud-accent, #e8b06a),
+    0 0 0 1px var(--hud-accent, #e8b06a),
     0 0 12px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.chartCloseGlyph {
+  font-size: 12px;
+  line-height: 1;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 1px 12px rgba(0, 0, 0, 0.85);
+}
+
+.chartCloseLabel {
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 1px 12px rgba(0, 0, 0, 0.85);
 }
 
 .chartPlot {

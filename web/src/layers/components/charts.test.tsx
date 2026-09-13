@@ -42,6 +42,31 @@ describe('<LayerChart>', () => {
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
+  it('closes on Escape while mounted', () => {
+    const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    const onClose = vi.fn()
+    render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={onClose} />)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops listening for Escape once unmounted', () => {
+    const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    const onClose = vi.fn()
+    const { unmount } = render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={onClose} />)
+    unmount()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('ignores keys other than Escape', () => {
+    const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    const onClose = vi.fn()
+    render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={onClose} />)
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('shows "no data" in the header when the playhead sits outside the layer domain', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
     const { container } = render(<LayerChart layer={layer} t={6e8} scale={FULL_SCALE} onClose={() => {}} />)
