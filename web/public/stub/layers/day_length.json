@@ -1,6 +1,6 @@
 {
   "id": "day_length",
-  "unit": "hours",
+  "unit": "h",
   "interpolation": "linear",
   "samples": [
     { "t": 0, "value": 24.0, "lower": null, "upper": null },

@@ -38,9 +38,10 @@ const FULL_DOMAIN_SCALE: TimeScale = createSymlogScale([0, EARTH_FORMATION])
 /** A `Layer<ScalarValue>` renders as a `DayLengthClock` rather than a `Sparkline` +
  *  `ScalarReadout` exactly when its unit is hours — `DayLengthClock`'s own doc comment
  *  ("for a `Layer<ScalarValue>` whose unit is hours") makes this the contract, not an id
- *  hard-coded here. */
+ *  hard-coded here. `'h'` is the unit symbol `earthtime publish` actually emits for hours
+ *  (sources/astronomy/normalise.py). */
 function isClockLayer(unit: string | undefined): boolean {
-  return unit === 'hours'
+  return unit === 'h'
 }
 
 export function Experience() {

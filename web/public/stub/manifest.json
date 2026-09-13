@@ -69,7 +69,7 @@
       "timeDomain": [0, 4.567e9],
       "source": "astronomy",
       "chartable": false,
-      "unit": "hours",
+      "unit": "h",
       "interpolation": "linear",
       "data": "layers/day_length.json"
     },
