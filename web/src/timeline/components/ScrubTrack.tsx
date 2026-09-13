@@ -71,6 +71,10 @@ export function ScrubTrack({
 
   const spanYears = visibleWindow[1] - visibleWindow[0]
   const threshold = minImportanceForSpan(spanYears)
+  // The fade ramps in from the LOD threshold, but never from above 1 - FADE_BAND: at full
+  // zoom-out the threshold reaches 1, which would otherwise fade the importance-1 events —
+  // the only ones `visibleEvents` still lets through there — to fully transparent.
+  const fadeFloor = Math.min(threshold, 1 - FADE_BAND)
   const shown = visibleEvents(events, visibleWindow, spanYears)
   const playheadU = clampUnit(scale.toUnit(t))
 
@@ -132,7 +136,7 @@ export function ScrubTrack({
       {shown.map((event) => {
         const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
         const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
-        const opacity = clampUnit((event.importance - threshold) / FADE_BAND)
+        const opacity = clampUnit((event.importance - fadeFloor) / FADE_BAND)
         return (
           <div
             key={event.id}

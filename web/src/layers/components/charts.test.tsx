@@ -56,6 +56,6 @@ describe('<DayLengthClock>', () => {
   it('renders "no data" outside the layer domain', () => {
     const layer = createScalarLayer(DAY_LENGTH_MANIFEST, DAY_LENGTH_DATA)
     const { container } = render(<DayLengthClock layer={layer} t={6e9} />)
-    expect(container.textContent).toBe('no data')
+    expect(container.textContent).toBe(`${DAY_LENGTH_MANIFEST.name} no data`)
   })
 })

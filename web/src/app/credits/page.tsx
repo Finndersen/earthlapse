@@ -57,9 +57,11 @@ export default function CreditsPage() {
                   <p className={styles.itemCitation}>{c.citation}</p>
                   <p className={styles.itemMeta}>
                     <span>{c.licence}</span>
-                    <a href={c.url} target="_blank" rel="noreferrer">
-                      {c.url}
-                    </a>
+                    {c.url !== '' && (
+                      <a href={c.url} target="_blank" rel="noreferrer">
+                        {c.url}
+                      </a>
+                    )}
                   </p>
                 </li>
               ))}

@@ -171,7 +171,11 @@ export function Timeline({
         onFrameEvent={handleFrameEvent}
       />
       <AxisTicks window={visibleWindow} scale={scale} />
-      <Minimap t={t} window={visibleWindow} onWindowChange={onWindowChange} animateWindowTo={animateWindowTo} />
+      {/* The minimap's range label sits above its strip; the margin keeps it clear of the
+          axis tick labels directly above. */}
+      <div style={{ marginTop: 10 }}>
+        <Minimap t={t} window={visibleWindow} onWindowChange={onWindowChange} animateWindowTo={animateWindowTo} />
+      </div>
     </div>
   )
 }

@@ -26,7 +26,11 @@ export function DayLengthClock({ layer, t }: DayLengthClockProps) {
   const value = layer.sample(t)
 
   if (value === null) {
-    return <span>no data</span>
+    return (
+      <span>
+        <span>{layer.name}</span> <span aria-live="polite">no data</span>
+      </span>
+    )
   }
 
   const hours = value.value
@@ -50,7 +54,10 @@ export function DayLengthClock({ layer, t }: DayLengthClockProps) {
         <circle cx={CENTER} cy={CENTER} r={1.5} fill="currentColor" />
       </svg>
       <span>
-        {formatValue(hours)} {value.unit}
+        <span>{layer.name}</span>{' '}
+        <span aria-live="polite">
+          {formatValue(hours)} {value.unit}
+        </span>
       </span>
     </span>
   )
