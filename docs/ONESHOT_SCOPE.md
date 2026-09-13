@@ -145,7 +145,8 @@ Every package's verification is a runnable command. "It renders" is not a verifi
 | **W3** | `sources/astronomy` | 4 analytic TimeSeries, no download | `pytest tests/sources/test_astronomy.py` — day length @ 600 Ma ≈ 21–22 h, solar luminosity @ 4 Ga ≈ 0.75 | spine | ✅ |
 | **W4** | `sources/events-core` | `data/events.yaml`, ~30 events | `pytest tests/sources/test_events.py` — every event has citation, `t_min ≤ t_max`, importance in 0..1, ≥ 20 events, spans > 4e9 | spine | ✅ |
 | **W5** | `sources/lineage` | `data/lineage.yaml`, ~40 nodes | `pytest tests/sources/test_lineage.py` — parents resolve, dates monotonic, path LUCA→human intact | spine | ✅ |
-| **W6** | `pipeline/generators` + prompt renderer + `earthtime` CLI | Generator protocol impls, prompt templates from WorldState, `plan`/`build`/`review`/`publish` | `pytest tests/test_pipeline.py` + `earthtime plan` prints a cost estimate without spending | spine | ✅ |
+| **W6a** | **anchor gate** — see below | 1 era anchor + 3 scenes conditioned on it, generated and saved | **human looks at 4 images and says go / no-go** | spine | ✅ first |
+| **W6** | `pipeline/generators` + prompt renderer + `earthtime` CLI | Generator protocol impls, prompt templates from WorldState, `plan`/`build`/`review`/`publish` | `pytest tests/test_pipeline.py` + `earthtime plan` prints a cost estimate without spending | W6a | ✅ |
 | **W7** | `web/timeline` | warped scale, LOD, scrub, play, speed, linear toggle | `pnpm test timeline` — `toUnit`/`fromUnit` round-trip to 1e-6 across the full domain; LOD drops low-importance events when zoomed out | spine | ✅ |
 | **W8** | `web/globe` | three.js sphere, texture blending | `pnpm test globe` — samples correct blend pair and alpha at 5 known `t` values | spine, W2 shape only | ✅ |
 | **W9** | `web/scene` | still display + depth-free cross-dissolve | `pnpm test scene` — correct scene pair and dissolve factor at chapter boundaries | spine | ✅ |
@@ -156,10 +157,28 @@ Every package's verification is a runnable command. "It renders" is not a verifi
 **Ownership is strict.** Each package owns its directory and writes nowhere else. If W7 needs
 a change in `web/src/types/layer.ts`, that is an ADR, not an edit.
 
+### W6a — the anchor gate
+
+**The whole visual approach rests on one unverified assumption:** that era-anchor
+conditioning holds style across scenes (ADR-004, VISUAL_SPEC §4). Nothing else in the plan
+tests it, and ~40 finals would be generated against it.
+
+So before W6 builds the full pipeline, it generates **one era anchor and three scenes
+conditioned on it**, on the free tier, and stops. Four images, a few minutes, $0.
+
+- **Go** — the three scenes share a recognisable look. Proceed with W6 as specified.
+- **No-go** — they don't. Stop and report. The fallback is the invariant style spec alone
+  (VISUAL_SPEC §2) with composition constraints doing the continuity work, which is weaker
+  but workable. That is a design decision, not something an agent should quietly choose.
+
+Cheapest risk retirement in the plan. Do it first.
+
 ## Execution shape
 
 ```
    [ contracts already committed — verify with pytest, do not rebuild ]
+                              │
+                            W6a  ← anchor gate: 4 images, human go/no-go, blocks W6 only
                               │
         ┌────────┬────────┬───┴────┬────────┬────────┬────────┬────────┐
        W1       W2       W3       W4       W5       W6       W7      W11     ← fan out

@@ -17,9 +17,16 @@ definition of done. Then read CLAUDE.md for the hard rules, and docs/DESIGN.md f
 architecture behind them.
 
 Orchestrate this as a workflow. The scope document's work package table maps directly onto
-it: W1-W7 and W11 fan out immediately, W8/W9/W10 follow their prerequisites, W12 is a serial
-integration pass. Roughly 12 agents. Use worktree isolation for packages that touch shared
-directories.
+it: W1-W5, W7 and W11 fan out immediately, W8/W9/W10 follow their prerequisites, W12 is a
+serial integration pass. Roughly 12 agents. Use worktree isolation for packages that touch
+shared directories.
+
+W6a is an early gate and blocks W6 only — do not let it block the rest of the fan-out. It
+generates one era anchor plus three scenes conditioned on it, on the free tier, then STOPS
+and reports so I can look at the four images. Do not proceed into W6's full pipeline, and do
+not generate any final scenes, until I have said go. This is the cheapest risk retirement in
+the plan: the entire visual approach depends on anchor conditioning holding style, and
+nothing else tests it.
 
 Before spawning anything, run `pytest tests/test_contracts.py`. If it does not pass, stop and
 tell me — the serial spine is the thing every agent depends on and the ground has moved.
@@ -72,10 +79,23 @@ Commit as you go, one commit per work package, so I can review the history.
 
 ## Notes for Finn
 
-**Before you launch:**
+**Before you launch — run this preflight:**
 
-1. `pip install -e ".[dev,data]"` and confirm `pytest` passes on your machine — the contracts
-   were written and tested in a Linux container, not on macOS.
+```sh
+python3 --version          # must be 3.12+ (code needs 3.11+ for StrEnum / typing.Self)
+node --version             # 20+
+pnpm --version || corepack enable   # or: npm i -g pnpm
+pip install -e ".[dev,data]"
+pytest tests/test_contracts.py      # must be 18 passed
+grep -q GOOGLE_API_KEY .env && echo "key present"
+```
+
+If `python3` is older than 3.11 the install will fail on `requires-python`. Either install a
+newer Python or say so and the contracts can be back-ported — it is a small change to two
+files.
+
+1. Confirm `pytest` passes **on the Mac** — the contracts were written and tested in a Linux
+   container, not on macOS.
 2. Put `GOOGLE_API_KEY=...` in `.env` — get it at aistudio.google.com -> Get API key ->
    Create API key. No credit card for the free tier, but **enable billing on the linked Cloud
    project** or Nano Banana Pro finals will fail with a quota error. The model choice is
