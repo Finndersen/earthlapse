@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { dominantScene, sceneAt, SceneView } from '@/scene'
+import { captionOpacity, dominantScene, sceneAt, SceneView } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { useTimeStore } from '@/store/time'
 import { advancePlayhead, createSymlogScale, Timeline, usePlaybackLoop } from '@/timeline'
@@ -123,8 +123,12 @@ export function Experience() {
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
   const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
-  const scenePair = manifest.scenes.length > 0 ? sceneAt(manifest.scenes, manifest.chapters, t) : null
+  const scenePair = manifest.scenes.length > 0 ? sceneAt(manifest.scenes, t) : null
   const captionScene = scenePair ? dominantScene(scenePair) : null
+  // Cross-fades in sync with the scene dissolve (scene/scene.ts's `captionOpacity`, a pure
+  // function of the same `mix` driving the image transition) rather than switching text
+  // abruptly at the dominant-scene boundary.
+  const captionOpacityValue = scenePair ? captionOpacity(scenePair.mix) : 1
 
   return (
     <ShellLayout
@@ -169,10 +173,14 @@ export function Experience() {
         </div>
       }
       ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
-      caption={<p className={styles.captionText}>{captionScene?.caption ?? 'No scene at this time.'}</p>}
+      caption={
+        <p className={styles.captionText} style={{ opacity: captionOpacityValue }}>
+          {captionScene?.caption ?? 'No scene at this time.'}
+        </p>
+      }
       scene={
         manifest.scenes.length > 0 ? (
-          <SceneView t={t} scenes={manifest.scenes} chapters={manifest.chapters} assetBase={manifest.assetBase} />
+          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} />
         ) : (
           <div className={styles.placeholder}>No scenes in manifest.</div>
         )

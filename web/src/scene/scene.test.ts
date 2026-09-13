@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Chapter, Scene } from '@/types/manifest'
+import type { Scene } from '@/types/manifest'
 
-import { dominantScene, resolveAssetUrl, sceneAt } from './scene'
+import { captionOpacity, DISSOLVE_WIDTH, dominantScene, resolveAssetUrl, sceneAt } from './scene'
 
-// Four scenes across two chapters: s0-s1 and s2-s3 are within-chapter intervals, s1-s2
-// straddles the 'late' -> 'early' boundary.
-function scene(id: string, t: number, chapterId: string): Scene {
+function scene(id: string, t: number): Scene {
   return {
     id,
     t,
-    chapterId,
+    chapterId: 'ch',
     image: `${id}.png`,
     shot: 'WIDE_RIDGE',
     caption: `caption ${id}`,
@@ -19,16 +17,11 @@ function scene(id: string, t: number, chapterId: string): Scene {
   }
 }
 
-const s0 = scene('s0', 0, 'late')
-const s1 = scene('s1', 100, 'late')
-const s2 = scene('s2', 200, 'early')
-const s3 = scene('s3', 400, 'early')
+const s0 = scene('s0', 0)
+const s1 = scene('s1', 100)
+const s2 = scene('s2', 200)
+const s3 = scene('s3', 400)
 const scenes: Scene[] = [s0, s1, s2, s3]
-
-const chapters: Chapter[] = [
-  { id: 'late', label: 'Late', tStart: 0, tEnd: 150 },
-  { id: 'early', label: 'Early', tStart: 150, tEnd: 500 },
-]
 
 /** Inverts sceneAt's log1p interpolation to pick a `t` landing at a known `p` in [a, b]. */
 function tAtP(a: number, b: number, p: number): number {
@@ -39,7 +32,7 @@ function tAtP(a: number, b: number, p: number): number {
 
 describe('sceneAt at an exact scene time', () => {
   it.each([s0, s1, s2, s3])('returns $id alone, mix 0', (s) => {
-    expect(sceneAt(scenes, chapters, s.t)).toEqual({ from: s, to: s, mix: 0 })
+    expect(sceneAt(scenes, s.t)).toEqual({ from: s, to: s, mix: 0 })
   })
 })
 
@@ -47,95 +40,85 @@ describe('sceneAt at an exact scene time', () => {
 
 describe('sceneAt outside the scene domain', () => {
   it('clamps to the newest scene before it', () => {
-    expect(sceneAt(scenes, chapters, -50)).toEqual({ from: s0, to: s0, mix: 0 })
+    expect(sceneAt(scenes, -50)).toEqual({ from: s0, to: s0, mix: 0 })
   })
 
   it('clamps to the oldest scene after it', () => {
-    expect(sceneAt(scenes, chapters, 1e6)).toEqual({ from: s3, to: s3, mix: 0 })
+    expect(sceneAt(scenes, 1e6)).toEqual({ from: s3, to: s3, mix: 0 })
   })
 })
 
-// ------------------------------------------------------------------------- within a chapter
+// ------------------------------------------------------------------------- hold, then dissolve
 
-describe('sceneAt within a chapter (wide window)', () => {
-  it('holds the newer scene before the window opens', () => {
-    const t = tAtP(s0.t, s1.t, 0.1)
-    expect(sceneAt(scenes, chapters, t)).toEqual({ from: s0, to: s1, mix: 0 })
+const halfWidth = DISSOLVE_WIDTH / 2
+
+describe('sceneAt: held clear outside the DISSOLVE_WIDTH band around the midpoint', () => {
+  it('is mix 0 well before the midpoint', () => {
+    const t = tAtP(s0.t, s1.t, 0.2)
+    expect(sceneAt(scenes, t)).toEqual({ from: s0, to: s1, mix: 0 })
   })
 
+  it('is still mix 0 just outside the band', () => {
+    const t = tAtP(s0.t, s1.t, 0.5 - halfWidth - 0.01)
+    expect(sceneAt(scenes, t).mix).toBe(0)
+  })
+
+  it('is mix 1 well after the midpoint', () => {
+    const t = tAtP(s2.t, s3.t, 0.8)
+    expect(sceneAt(scenes, t)).toEqual({ from: s2, to: s3, mix: 1 })
+  })
+
+  it('is already mix 1 just outside the band on the other side', () => {
+    const t = tAtP(s0.t, s1.t, 0.5 + halfWidth + 0.01)
+    expect(sceneAt(scenes, t).mix).toBe(1)
+  })
+})
+
+describe('sceneAt: rising only within the DISSOLVE_WIDTH band', () => {
   it('is exactly 0.5 at the interpolation midpoint (smoothstep is symmetric)', () => {
-    const t = tAtP(s0.t, s1.t, 0.5)
-    const result = sceneAt(scenes, chapters, t)
-    expect(result.from).toBe(s0)
-    expect(result.to).toBe(s1)
+    const t = tAtP(s1.t, s2.t, 0.5)
+    const result = sceneAt(scenes, t)
+    expect(result.from).toBe(s1)
+    expect(result.to).toBe(s2)
     expect(result.mix).toBeCloseTo(0.5)
   })
 
-  it('holds the older scene after the window closes', () => {
-    const t = tAtP(s2.t, s3.t, 0.9)
-    expect(sceneAt(scenes, chapters, t)).toEqual({ from: s2, to: s3, mix: 1 })
-  })
-
-  it('has already started dissolving at p=0.35, inside the 0.3..0.7 window', () => {
-    const t = tAtP(s0.t, s1.t, 0.35)
-    const mix = sceneAt(scenes, chapters, t).mix
-    expect(mix).toBeGreaterThan(0)
-    expect(mix).toBeLessThan(0.5)
-  })
-})
-
-// ---------------------------------------------------------------------- across a boundary
-
-describe('sceneAt across a chapter boundary (narrow window)', () => {
-  it('is still fully held at p=0.35, outside the narrower 0.45..0.55 window', () => {
-    const t = tAtP(s1.t, s2.t, 0.35)
-    expect(sceneAt(scenes, chapters, t)).toEqual({ from: s1, to: s2, mix: 0 })
-  })
-
-  it('reads as a near-cut: mix swings from 0 to 1 over a narrow band around the midpoint', () => {
-    const before = sceneAt(scenes, chapters, tAtP(s1.t, s2.t, 0.4)).mix
-    const after = sceneAt(scenes, chapters, tAtP(s1.t, s2.t, 0.6)).mix
-    expect(before).toBe(0)
-    expect(after).toBe(1)
-  })
-
-  it('is exactly 0.5 at the interpolation midpoint', () => {
-    const t = tAtP(s1.t, s2.t, 0.5)
-    expect(sceneAt(scenes, chapters, t).mix).toBeCloseTo(0.5)
-  })
-})
-
-// same p, different chapter membership -> different dissolve progress
-describe('the boundary window is narrower than the within-chapter window', () => {
-  it('at the same relative position p, a within-chapter pair has started dissolving while a cross-boundary pair has not', () => {
-    const withinMix = sceneAt(scenes, chapters, tAtP(s0.t, s1.t, 0.35)).mix
-    const acrossMix = sceneAt(scenes, chapters, tAtP(s1.t, s2.t, 0.35)).mix
-    expect(withinMix).toBeGreaterThan(acrossMix)
+  it('is strictly between 0 and 1 just inside the band on either side', () => {
+    const before = sceneAt(scenes, tAtP(s0.t, s1.t, 0.5 - halfWidth / 2)).mix
+    const after = sceneAt(scenes, tAtP(s0.t, s1.t, 0.5 + halfWidth / 2)).mix
+    expect(before).toBeGreaterThan(0)
+    expect(before).toBeLessThan(1)
+    expect(after).toBeGreaterThan(0)
+    expect(after).toBeLessThan(1)
   })
 })
 
 // --------------------------------------------------------------- continuity / monotonicity
 
-describe('mix across an interval', () => {
-  it('is continuous and monotone non-decreasing in t (within-chapter)', () => {
+describe('mix across a gap', () => {
+  it('is continuous and monotone non-decreasing in t', () => {
     const mixes = Array.from({ length: 49 }, (_, i) => {
       const p = 0.02 + (i / 48) * 0.96
-      return sceneAt(scenes, chapters, tAtP(s0.t, s1.t, p)).mix
+      return sceneAt(scenes, tAtP(s1.t, s2.t, p)).mix
     })
+    // Sanity bound on the step between adjacent samples, not a precise number: with 49
+    // samples over p in [0.02, 0.98] (step ~0.02) and the smoothstep's steepest point (slope
+    // 1.5 / DISSOLVE_WIDTH in p) landing exactly on a sample at p = 0.5, the true max step is
+    // ~0.208 — comfortably below "jumps by half the mix range in one sample" (0.5), which is
+    // what this guards against; it is not meant to pin DISSOLVE_WIDTH's exact value.
     for (let i = 1; i < mixes.length; i++) {
       expect(mixes[i]!).toBeGreaterThanOrEqual(mixes[i - 1]!)
-      expect(mixes[i]! - mixes[i - 1]!).toBeLessThan(0.15)
+      expect(mixes[i]! - mixes[i - 1]!).toBeLessThan(0.25)
     }
   })
 
-  it('is continuous and monotone non-decreasing in t (cross-boundary)', () => {
+  it('holds at 0 or 1 for most of the gap — the dissolve is a narrow band, not the whole span', () => {
     const mixes = Array.from({ length: 49 }, (_, i) => {
       const p = 0.02 + (i / 48) * 0.96
-      return sceneAt(scenes, chapters, tAtP(s1.t, s2.t, p)).mix
+      return sceneAt(scenes, tAtP(s0.t, s1.t, p)).mix
     })
-    for (let i = 1; i < mixes.length; i++) {
-      expect(mixes[i]!).toBeGreaterThanOrEqual(mixes[i - 1]!)
-    }
+    const heldCount = mixes.filter((m) => m === 0 || m === 1).length
+    expect(heldCount / mixes.length).toBeGreaterThan(0.5)
   })
 })
 
@@ -143,18 +126,13 @@ describe('mix across an interval', () => {
 
 describe('sceneAt edge cases', () => {
   it('throws on an empty scene list', () => {
-    expect(() => sceneAt([], chapters, 0)).toThrow(/no scenes/)
+    expect(() => sceneAt([], 0)).toThrow(/no scenes/)
   })
 
   it('returns the single scene alone for any t when there is only one', () => {
-    expect(sceneAt([s1], chapters, -1e9)).toEqual({ from: s1, to: s1, mix: 0 })
-    expect(sceneAt([s1], chapters, s1.t)).toEqual({ from: s1, to: s1, mix: 0 })
-    expect(sceneAt([s1], chapters, 1e9)).toEqual({ from: s1, to: s1, mix: 0 })
-  })
-
-  it('throws when a scene references a chapter absent from the manifest', () => {
-    const ghost = scene('ghost', 50, 'nonexistent')
-    expect(() => sceneAt([s0, ghost, s1], chapters, tAtP(0, 50, 0.5))).toThrow(/unknown chapter/)
+    expect(sceneAt([s1], -1e9)).toEqual({ from: s1, to: s1, mix: 0 })
+    expect(sceneAt([s1], s1.t)).toEqual({ from: s1, to: s1, mix: 0 })
+    expect(sceneAt([s1], 1e9)).toEqual({ from: s1, to: s1, mix: 0 })
   })
 })
 
@@ -168,6 +146,35 @@ describe('dominantScene', () => {
   it('is `to` once mix reaches 0.5', () => {
     expect(dominantScene({ from: s0, to: s1, mix: 0.5 })).toBe(s1)
     expect(dominantScene({ from: s0, to: s1, mix: 0.9 })).toBe(s1)
+  })
+})
+
+// ------------------------------------------------------------------------- captionOpacity
+
+describe('captionOpacity', () => {
+  it('is 1 at either end of the dissolve (mix 0 or 1)', () => {
+    expect(captionOpacity(0)).toBe(1)
+    expect(captionOpacity(1)).toBe(1)
+  })
+
+  it('dips to exactly 0 right at the switch point, mix 0.5', () => {
+    expect(captionOpacity(0.5)).toBe(0)
+  })
+
+  it('is symmetric around mix 0.5', () => {
+    expect(captionOpacity(0.3)).toBeCloseTo(captionOpacity(0.7))
+    expect(captionOpacity(0.1)).toBeCloseTo(captionOpacity(0.9))
+  })
+
+  it('falls monotonically from mix 0 to 0.5, then rises monotonically from 0.5 to 1', () => {
+    expect(captionOpacity(0.1)).toBeGreaterThan(captionOpacity(0.3))
+    expect(captionOpacity(0.3)).toBeGreaterThan(captionOpacity(0.5))
+    expect(captionOpacity(0.5)).toBeLessThan(captionOpacity(0.7))
+    expect(captionOpacity(0.7)).toBeLessThan(captionOpacity(0.9))
+  })
+
+  it('is a pure function of mix alone', () => {
+    expect(captionOpacity(0.42)).toBe(captionOpacity(0.42))
   })
 })
 

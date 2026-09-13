@@ -1,14 +1,15 @@
 /**
  * Scene sequencing and cross-dissolve mixing (DESIGN §5, v1 note / ADR-009).
  *
- * v1 renders a plain cross-dissolve between flat stills — no depth maps, no displacement.
- * `sceneAt` is the pure heart of it: given the manifest's scenes and chapters and a time
- * cursor, it says which two scenes to show and how far to dissolve between them. Everything
- * downstream (the `<SceneView>` component) is a thin renderer of this.
+ * v1 renders stills — no depth maps, no displacement — but the transition between them is a
+ * real shader dissolve (see `transition.ts`), not a flat opacity ramp. `sceneAt` is the pure
+ * heart of it: given the manifest's scenes and a time cursor, it says which two scenes to
+ * show and how far to dissolve between them. Everything downstream (`<SceneView>` and its
+ * WebGL/fallback renderers) is a thin consumer of this.
  */
 
 import type { GeoTime } from '@/types/layer'
-import type { Chapter, Scene } from '@/types/manifest'
+import type { Scene } from '@/types/manifest'
 
 /**
  * The pair of scenes to render at `t`, and how much of `to` to dissolve over `from`.
@@ -24,13 +25,16 @@ export interface SceneMix {
   mix: number
 }
 
-/** Within a chapter, composition is held constant (DESIGN §6): a wide window means each
- *  image reads as itself for most of its span before slowly giving way to the next. */
-const WITHIN_CHAPTER_WINDOW: readonly [number, number] = [0.3, 0.7]
-
-/** Crossing a chapter boundary changes composition, which should read as a cut: a narrow
- *  window compresses the dissolve relative to the hold on either side of it. */
-const CROSS_CHAPTER_WINDOW: readonly [number, number] = [0.45, 0.55]
+/**
+ * Width of the dissolve, as a fraction of the log1p gap between two consecutive scenes,
+ * centred on the gap's midpoint. Each scene is held clear for `1 - DISSOLVE_WIDTH` of the
+ * gap; the brief cross-dissolve happens only in the narrow band around the midpoint. One
+ * tunable, reused everywhere a dissolve window is needed — there is no separate within- vs
+ * cross-chapter distinction any more (a 50/50 blend of two generated worlds reads as a muddy
+ * double exposure regardless of which side of a chapter boundary it falls on; the shader
+ * dissolve in `transition.ts` is what keeps the *brief* blend itself from reading as one).
+ */
+export const DISSOLVE_WIDTH = 0.14
 
 /** Smoothstep of `x` (clamped) across `[edge0, edge1]`, 0 before it and 1 after. */
 function smoothstep(edge0: number, edge1: number, x: number): number {
@@ -55,14 +59,6 @@ function bisectLeft(scenes: readonly Scene[], t: GeoTime): number {
   return lo
 }
 
-function chapterOf(chapters: readonly Chapter[], chapterId: string): Chapter {
-  const chapter = chapters.find((c) => c.id === chapterId)
-  if (chapter === undefined) {
-    throw new Error(`sceneAt: scene references unknown chapter "${chapterId}"`)
-  }
-  return chapter
-}
-
 function alone(scene: Scene): SceneMix {
   return { from: scene, to: scene, mix: 0 }
 }
@@ -75,10 +71,11 @@ function alone(scene: Scene): SceneMix {
  * At exactly a scene's own `t` it returns that scene alone, mix 0. Between two consecutive
  * scenes `a` (newer) and `b` (older) it computes position `p` in `log1p(t)` space — matching
  * the symlog timeline warp (DESIGN §3) so a dissolve spans a proportional *screen* distance
- * rather than a proportional span of years — then dissolves through a smoothstep window
- * around the midpoint: wide within a chapter, narrow across a chapter boundary.
+ * rather than a proportional span of years — then dissolves through a `DISSOLVE_WIDTH`-wide
+ * smoothstep window centred on the midpoint (`p = 0.5`): held at `a` alone for most of the
+ * gap, a brief dissolve, held at `b` alone for the rest.
  */
-export function sceneAt(scenes: readonly Scene[], chapters: readonly Chapter[], t: GeoTime): SceneMix {
+export function sceneAt(scenes: readonly Scene[], t: GeoTime): SceneMix {
   if (scenes.length === 0) {
     throw new Error('sceneAt: no scenes')
   }
@@ -96,16 +93,27 @@ export function sceneAt(scenes: readonly Scene[], chapters: readonly Chapter[], 
   // took every t equal to a boundary), so a.t < b.t always holds and the division below is safe.
   const a = scenes[i - 1]!
 
-  const sameChapter = chapterOf(chapters, a.chapterId).id === chapterOf(chapters, b.chapterId).id
-  const [lo, hi] = sameChapter ? WITHIN_CHAPTER_WINDOW : CROSS_CHAPTER_WINDOW
-
   const p = (Math.log1p(t) - Math.log1p(a.t)) / (Math.log1p(b.t) - Math.log1p(a.t))
-  return { from: a, to: b, mix: smoothstep(lo, hi, p) }
+  const halfWidth = DISSOLVE_WIDTH / 2
+  return { from: a, to: b, mix: smoothstep(0.5 - halfWidth, 0.5 + halfWidth, p) }
 }
 
 /** The scene that reads as "current" for UI that can only show one, e.g. a caption. */
 export function dominantScene({ from, to, mix }: SceneMix): Scene {
   return mix < 0.5 ? from : to
+}
+
+/**
+ * Caption cross-fade opacity for whichever scene is currently dominant, a pure function of
+ * the same `mix` that drives the image dissolve — so the caption text fades out and back in
+ * exactly in sync with it, dipping to 0 right at `mix = 0.5`, the instant `dominantScene`
+ * switches which scene's caption is being shown, and back to 1 by the time `mix` settles at
+ * either end. No separate width constant: `mix` is already 0 or 1 outside the dissolve band
+ * around a gap's midpoint (see `DISSOLVE_WIDTH`), so this only ever moves within that band.
+ */
+export function captionOpacity(mix: number): number {
+  const distanceFromSwitch = Math.abs(mix - 0.5) * 2
+  return smoothstep(0, 1, distanceFromSwitch)
 }
 
 /** Resolves a manifest-relative media path against `Manifest.assetBase`. Leaves an already
