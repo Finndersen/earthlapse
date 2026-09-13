@@ -45,7 +45,7 @@ sources/<name>/
 |---|---|---|
 | < 5 MB curated | **git** | committed parquet, versioned with code |
 | 5–100 MB curated | **git-lfs** | still reproducible from a clone |
-| > 100 MB curated | **R2**, hash-manifested | `make data` downloads |
+| > 100 MB curated | **R2**, hash-manifested | `make data` downloads. *Not used in the MVP — everything stays local until deployment lands.* |
 | any raw | **never committed** | `data/raw/` is gitignored; reproducible via `fetch.py` + sha256 |
 | generated media | **R2** only | see [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
 

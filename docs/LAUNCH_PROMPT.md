@@ -53,6 +53,9 @@ working on them have read that section:
 - The PaleoDEM Zenodo record is 414 MB across six files but only the 9.3 MB 1-degree netCDF
   is needed. Do not download the rest.
 
+The MVP runs locally only — `pnpm dev`. Do not set up Cloudflare, R2, wrangler or any
+deployment. `earthtime publish` writes a manifest and media directory on disk, nothing more.
+
 When the fan-out completes, work through the Definition of Done checklist in
 ONESHOT_SCOPE.md yourself and report which lines pass and which do not. Be honest about
 partial results — I would much rather have eight of fourteen boxes ticked and know which

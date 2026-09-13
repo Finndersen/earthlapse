@@ -5,7 +5,8 @@ photoreal stills dissolving across 4.6 billion years, with a live paleogeographi
 scrubbable warped timeline of ~30 events, and three data layers — all driven by one time
 cursor.**
 
-Concretely, when it's done you open a URL and see a large image of the Archean shore. You
+Concretely, when it's done you run `pnpm dev`, open localhost, and see a large image of the
+Archean shore. You
 drag the timeline and the image dissolves forward through the Cambrian seafloor, the
 Carboniferous swamp, the Cretaceous forest, into a city. A globe in the corner shows the
 continents assembling and rifting as you drag. A CO₂ sparkline, a day-length readout and
@@ -27,7 +28,7 @@ That is the whole target. Everything below serves it.
 | **Events** | ~30 curated events with real uncertainty intervals and citations |
 | **Layers** | CO₂ (sparkline + chart), day length, ancestor-at-`t` |
 | **Data sources** | `co2-o2`, `paleodem`, `astronomy`, `events-core`, `lineage` |
-| **Deploy** | Cloudflare Pages, static, media on R2 or committed if small enough |
+| **Runs** | **locally — `pnpm dev`.** No deployment in this round. |
 
 ## What's explicitly out — and why that's fine
 
@@ -40,6 +41,7 @@ That is the whole target. Everything below serves it.
 | **Audio** | Cheap and high-impact, but pure addition. First fast-follow. |
 | **Density timeline scale** | symlog + linear is enough to prove the warp. |
 | **On-demand generation** | v2 (DESIGN §15). |
+| **Deployment** | Runs locally. Cloudflare Pages, R2, the hash manifest and wrangler auth are all a later round — none of it teaches us anything about whether the product works. Media stays in `data/media/`, served from the local dev server. |
 | **Review UI** | The candidate picker is a CLI listing in v1, not a web app. |
 
 ## Data sources for the MVP
@@ -148,7 +150,7 @@ Every package's verification is a runnable command. "It renders" is not a verifi
 | **W9** | `web/scene` | still display + depth-free cross-dissolve | `pnpm test scene` — correct scene pair and dissolve factor at chapter boundaries | spine | ✅ |
 | **W10** | `web/layers` | HUD sparkline, expandable chart, ancestor readout | `pnpm test layers` — each layer's `sample()` is pure and returns null outside its domain | spine, W7 | ⚠️ after W7 |
 | **W11** | `web` shell | layout, manifest loading, zustand `t` store, vignette | `pnpm build` succeeds; page renders against a stub manifest | spine | ✅ |
-| **W12** | integration + deploy | real manifest, generated scenes, Cloudflare Pages | the Definition of Done checklist below | all | ❌ serial |
+| **W12** | integration | real manifest, generated scenes, everything wired and running locally | the Definition of Done checklist below | all | ❌ serial |
 
 **Ownership is strict.** Each package owns its directory and writes nowhere else. If W7 needs
 a change in `web/src/types/layer.ts`, that is an ADR, not an edit.
@@ -187,7 +189,7 @@ A five-minute checklist. Every line must pass.
 - [ ] `earthtime build --max-spend 25` completes; ledger total under $25
 - [ ] `data/events.yaml` has ≥ 20 events, every one with a citation and `t_min ≤ t_max`
 - [ ] `data/lineage.yaml` resolves LUCA → *Homo sapiens* with no orphan parents
-- [ ] The deployed page loads and shows a scene image
+- [ ] `pnpm dev` serves the page and it shows a scene image
 - [ ] Dragging the timeline dissolves between scenes without flashing white or black
 - [ ] The globe changes visibly between 400 Ma and 100 Ma
 - [ ] The CO₂ readout shows ~280 ppm at `t=0` — **if it shows ~1.0, the RCO2 conversion was missed**
@@ -201,6 +203,8 @@ A five-minute checklist. Every line must pass.
 
 These are expected to be missing. Do not "fix" them.
 
+- Deployment — local only; `earthtime publish` writes a local manifest and media directory,
+  no R2 upload
 - Depth maps — `Scene.depth` is in the manifest schema but unpopulated (ADR-009)
 - Review UI — CLI listing, not a web app
 - Audio — silent
