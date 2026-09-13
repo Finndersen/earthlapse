@@ -1,0 +1,24 @@
+{
+  "_comment": "Ground-truth checkpoints for tests/sources/test_astronomy.py. This source has no data/raw/ input -- these are the same cited published values normalise.py hard-codes as Checkpoints, kept here as an independent fixture so the test compares normalise()'s output against a committed reference rather than against its own source code. t is years BP; values in the series' unit (see manifest.toml).",
+  "day_length_hours": [
+    { "t": 0.0, "value": 24.0, "citation": "Present mean solar day; 24 h by definition of the civil hour." },
+    { "t": 6.20e8, "value": 21.9, "lower": 21.5, "upper": 22.3, "citation": "Williams, G.E. (2000), Reviews of Geophysics 38(1), 37-59 -- Elatina-Reynella tidal rhythmites, ~620 Ma." },
+    { "t": 1.0e9, "value": 19.0, "lower": 18.0, "upper": 20.0, "citation": "Mitchell, R.N. & Kirscher, U. (2023), Nature Geoscience 16, 567-569 -- mid-Proterozoic stall, end (~1.0 Ga)." },
+    { "t": 2.0e9, "value": 19.0, "lower": 18.0, "upper": 20.0, "citation": "Mitchell & Kirscher (2023), as above -- stall start (~2.0 Ga)." },
+    { "t": 2.46e9, "value": 16.9, "lower": 16.7, "upper": 17.1, "citation": "Lantink, M.L. et al. (2022), PNAS 119(40), e2117146119 -- Joffre Member BIF cyclostratigraphy, 2.46 Ga." }
+  ],
+  "moon_distance_km": [
+    { "t": 0.0, "value": 384400.0, "citation": "Present mean Earth-Moon distance (semi-major axis); IAU / lunar laser ranging." },
+    { "t": 6.20e8, "value": 370900.0, "lower": 369000.0, "upper": 372800.0, "citation": "Williams (2000), as above -- 58.16 +/- 0.30 Earth radii at 620 Ma." },
+    { "t": 2.46e9, "value": 321800.0, "lower": 315300.0, "upper": 328300.0, "citation": "Lantink et al. (2022), as above -- 321,800 +/- 6,500 km at 2.46 Ga." }
+  ],
+  "solar_luminosity_rel": [
+    { "t": 0.0, "value": 1.0, "citation": "Gough, D.O. (1981), Solar Physics 74, 21-34 -- L/L0 = 1 at t=0 by construction of the formula." },
+    { "t": 4.0e9, "value": 0.7407, "citation": "Gough (1981) formula evaluated at 4 Ga; commonly rounded to 'about 75% of present' in secondary literature." },
+    { "t": 4.567e9, "value": 0.7144, "citation": "Gough (1981) formula at t=EARTH_FORMATION (4.567e9, the domain's outer edge) -- just 3 Myr before t_sun=4.57e9 (the Sun's zero-age-main-sequence birth), so essentially the canonical 'faint young Sun' figure, L/L0 = 1/1.4 = 0.7143." }
+  ],
+  "obliquity_deg": [
+    { "t": 0.0, "value": 23.3, "lower": 22.1, "upper": 24.5, "citation": "Laskar, J. et al. (2004), A&A 428, 261-285 -- La2004 solution; long-term mean with the Milankovitch-cycle amplitude as bounds." },
+    { "t": 2.5e8, "value": 23.3, "lower": 22.1, "upper": 24.5, "citation": "Laskar et al. (2004), as above -- held at the same mean across the solution's ~250 Myr domain; see README.md." }
+  ]
+}

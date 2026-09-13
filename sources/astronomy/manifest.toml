@@ -1,0 +1,16 @@
+# See docs/DATA_SOURCES.md for field meanings.
+
+name = "astronomy"
+title = "Earth's Day Length, Lunar Distance, Solar Luminosity and Obliquity"
+# No upstream file: every value is a closed-form formula or a cited published point
+# estimate, hard-coded (with its citation) in normalise.py. Nothing is downloaded, so
+# there is nothing to checksum -- see README.md "Deviations" and fetch.py.
+url = ""
+sha256 = ""
+licence = "N/A -- no dataset redistributed. Values are computed from published closed-form formulae and cited point measurements; see README.md for the citation attached to every checkpoint."
+citation = "Gough, D.O. (1981) 'Solar interior structure and luminosity variations', Solar Physics 74, 21-34. Williams, G.E. (2000) 'Geological constraints on the Precambrian history of Earth's rotation and the Moon's orbit', Reviews of Geophysics 38(1), 37-59. Mitchell, R.N. & Kirscher, U. (2023) 'Mid-Proterozoic day length stalled by tidal resonance', Nature Geoscience 16, 567-569. Lantink, M.L., Davies, J.H.F.L., Ovtcharova, M. & Hilgen, F.J. (2022) 'Milankovitch cycles in banded iron formations constrain the Earth-Moon system 2.46 billion years ago', PNAS 119(40), e2117146119. Laskar, J., Robutel, P., Joutel, F., Gastineau, M., Correia, A.C.M. & Levrard, B. (2004) 'A long-term numerical solution for the insolation quantities of the Earth', Astronomy & Astrophysics 428, 261-285. Full per-checkpoint citations in README.md."
+time_domain = [4.567e9, 0.0]  # years BP, [oldest, newest] -- widest of the 4 series (solar_luminosity)
+output_shape = "TimeSeries"
+interpolation = "linear"
+volume_bytes = 19523          # measured: sum of the 4 curated parquet files (see README.md)
+storage_tier = "git"
