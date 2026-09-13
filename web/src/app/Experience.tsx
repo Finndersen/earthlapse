@@ -19,6 +19,7 @@ import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { captionOpacity, dominantScene, sceneAt, SceneView } from '@/scene'
 import { ShellLayout } from '@/shell'
+import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
 import { advancePlayhead, createSymlogScale, followWindow, Timeline, usePlaybackLoop } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
@@ -78,6 +79,10 @@ export function Experience() {
     if (playback.playing && !wasPlayingRef.current) setFollowing(true)
     wasPlayingRef.current = playback.playing
   }, [playback.playing])
+
+  useEffect(() => {
+    installDevHook()
+  }, [])
 
   // Initial t (W12a brief): open on the oldest scene, once, the first time the manifest
   // loads — never again, so it doesn't fight a later manual scrub or a HMR-triggered reload
