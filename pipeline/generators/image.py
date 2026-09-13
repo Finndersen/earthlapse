@@ -23,15 +23,47 @@ PROJECT_ASPECT_RATIO = "16:9"
 PROJECT_IMAGE_SIZE = ImageSize.K2
 
 
+class PartKind(StrEnum):
+    TEXT = "text"
+    REFERENCE_IMAGE = "reference_image"
+
+
+class PartOrder(StrEnum):
+    """Where a reference image sits relative to the prompt text in a multimodal request.
+
+    Order changes what the model makes of the image, so it is part of the node's identity.
+    """
+
+    TEXT_FIRST = "text_first"
+    REFERENCE_FIRST = "reference_first"
+
+
+class ReferenceImage(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    path: Path
+    part_order: PartOrder
+
+
 class ImageRequest(BaseModel):
     """What an image node asks for, parsed once from `AssetNode.inputs` + `config`."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     prompt: str = Field(min_length=1)
-    reference: Path | None = None  # the era anchor (ADR-004); absent only for the anchor itself
+    reference: ReferenceImage | None = None  # absent for an unconditioned image
     aspect_ratio: str = Field(pattern=r"^\d+:\d+$")
     image_size: ImageSize
+
+    @property
+    def part_kinds(self) -> tuple[PartKind, ...]:
+        if self.reference is None:
+            return (PartKind.TEXT,)
+        match self.reference.part_order:
+            case PartOrder.TEXT_FIRST:
+                return (PartKind.TEXT, PartKind.REFERENCE_IMAGE)
+            case PartOrder.REFERENCE_FIRST:
+                return (PartKind.REFERENCE_IMAGE, PartKind.TEXT)
 
     @classmethod
     def from_node(cls, node: AssetNode) -> ImageRequest:

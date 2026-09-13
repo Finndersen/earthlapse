@@ -28,7 +28,12 @@ from pipeline.generators.gemini import (
     load_api_key,
     make_client,
 )
-from pipeline.generators.image import PROJECT_ASPECT_RATIO, PROJECT_IMAGE_SIZE, ImageRequest
+from pipeline.generators.image import (
+    PROJECT_ASPECT_RATIO,
+    PROJECT_IMAGE_SIZE,
+    ImageRequest,
+    PartOrder,
+)
 from pipeline.generators.prompts import (
     ChapterId,
     ScenePrompt,
@@ -160,15 +165,18 @@ class GateReport(BaseModel):
 
 class PaidCallAllowance:
     def __init__(self, calls: int) -> None:
+        self._cap = calls
         self._remaining = calls
 
     def take(self) -> None:
         if self._remaining == 0:
-            raise GateStopped(f"paid-call cap of {MAX_PAID_CALLS} reached")
+            raise GateStopped(f"paid-call cap of {self._cap} reached")
         self._remaining -= 1
 
 
-def image_node(node_id: str, generator: GeminiImageGenerator, inputs: dict[str, str]) -> AssetNode:
+def image_node(
+    node_id: str, generator: GeminiImageGenerator, inputs: dict[str, object]
+) -> AssetNode:
     return AssetNode(
         id=node_id,
         kind=AssetKind.IMAGE,
@@ -190,7 +198,10 @@ def scene_node(
     node = image_node(
         f"gate-{shot.slug}",
         generator,
-        {"prompt": render_conditioned_prompt(shot.scene), "reference": str(anchor_path)},
+        {
+            "prompt": render_conditioned_prompt(shot.scene),
+            "reference": {"path": str(anchor_path), "part_order": PartOrder.TEXT_FIRST.value},
+        },
     )
     return node.model_copy(update={"depends_on": [anchor.id]})
 
@@ -229,7 +240,7 @@ def run_gate(generator: GeminiImageGenerator, out_dir: Path) -> GateReport:
                 model_id=generator.version,
                 prompt=request.prompt,
                 conditioned_on_anchor=request.reference is not None,
-                reference=None if request.reference is None else request.reference.name,
+                reference=None if request.reference is None else request.reference.path.name,
                 mime_type=image.info.mime_type,
                 width=image.info.width,
                 height=image.info.height,

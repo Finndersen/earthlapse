@@ -31,7 +31,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from pipeline.generators.image import ImageInfo, ImageRequest, ImageSize, sniff_image
+from pipeline.generators.image import ImageInfo, ImageRequest, ImageSize, PartKind, sniff_image
 from pipeline.graph import AssetNode, Candidate
 from pipeline.spend import Entry, Ledger
 
@@ -219,19 +219,10 @@ def estimate_usd(request: ImageRequest, price: ModelPrice) -> float:
 
 
 def build_request_body(request: ImageRequest) -> dict[str, Any]:
-    parts: list[dict[str, Any]] = [{"text": request.prompt}]
-    if request.reference is not None:
-        reference = request.reference.read_bytes()
-        parts.append(
-            {
-                "inlineData": {
-                    "mimeType": sniff_image(reference).mime_type,
-                    "data": base64.b64encode(reference).decode("ascii"),
-                }
-            }
-        )
     return {
-        "contents": [{"role": "user", "parts": parts}],
+        "contents": [
+            {"role": "user", "parts": [_request_part(request, kind) for kind in request.part_kinds]}
+        ],
         "generationConfig": {
             "responseModalities": ["TEXT", "IMAGE"],
             "imageConfig": {
@@ -240,6 +231,21 @@ def build_request_body(request: ImageRequest) -> dict[str, Any]:
             },
         },
     }
+
+
+def _request_part(request: ImageRequest, kind: PartKind) -> dict[str, Any]:
+    match kind:
+        case PartKind.TEXT:
+            return {"text": request.prompt}
+        case PartKind.REFERENCE_IMAGE:
+            assert request.reference is not None, "part_kinds lists an image only with a reference"
+            reference = request.reference.path.read_bytes()
+            return {
+                "inlineData": {
+                    "mimeType": sniff_image(reference).mime_type,
+                    "data": base64.b64encode(reference).decode("ascii"),
+                }
+            }
 
 
 def parse_usage(body: dict[str, Any]) -> TokenUsage | None:
