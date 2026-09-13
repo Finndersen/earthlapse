@@ -208,14 +208,50 @@ scenes. Two gates tested it on `gemini-3-pro-image-preview`, the model the final
 - No anchor bottleneck: every scene is independent, regenerable alone, and costs one text
   prompt. The graph is a PROMPT node and an IMAGE node per scene, never a chain.
 - Continuity rests entirely on composition discipline and the invariant spec, so composition
-  defines chapters. A chapter is a run of scenes sharing one composition (DESIGN §6), and the
-  viewer (web/src/scene) dissolves across a wide window within a chapter and a narrow,
-  cut-like one across a boundary. v1 therefore has **14 scenes in 2 chapters**, not one
-  chapter per scene, which would turn every transition into a cut: `molten-earth` (the magma
-  ocean, a `WIDE_RIDGE` vista, because it has no water to stand beside) and `waters-edge` (the
-  other 13, 4.3 Ga to the present, all on the `WATER_EDGE` composition gate v2 validated).
+  defines chapters. A chapter is a run of scenes sharing one composition (DESIGN §6). v1 has
+  **14 scenes in 2 chapters**: `molten-earth` (the magma ocean, a `WIDE_RIDGE` vista, because
+  it has no water to stand beside) and `waters-edge` (the other 13, 4.3 Ga to the present, all
+  on the `WATER_EDGE` composition gate v2 validated). Chapters no longer change how the viewer
+  dissolves; see ADR-011.
 - Register drift is guarded only by wording; review catches the rest (VISUAL_SPEC §7).
 - `Chapter.anchorImage` in the manifest schema is now always absent.
+
+---
+
+## ADR-011 — Scenes hold clear and transition briefly; the minimap is a symlog overview
+
+**Status:** accepted (human-directed during the one-shot build).
+
+**Context.** The first viewer dissolved across the middle 40% of each gap between scenes (10%
+across a chapter boundary). A 50/50 blend of two different generated worlds reads as a muddy
+double exposure — doubled horizons, ghost animals — so most of the time the viewer would see
+an unclear image instead of the scene. Separately, DESIGN §3's linear-scale minimap renders any
+zoom window inside the last ~10 Myr at sub-pixel width, so it cannot show where the user is
+zoomed in exactly the ranges people explore. A true frame-by-frame generative morph would
+break scrubbing and cost against ADR-001's reasoning.
+
+**Decision.**
+- Each scene is shown clear for most of its gap. The transition is centred on the log-time
+  midpoint between neighbours, with one tunable width everywhere
+  (`DISSOLVE_WIDTH = 0.14` of the log gap in `web/src/scene`), independent of chapters.
+- The transition is a WebGL noise-masked dissolve with a slight luminance bias and a gentle
+  blur-through, pixel-exact at both ends; a two-image crossfade is the no-WebGL fallback.
+- Each still carries a slow camera drift (bounded zoom and pan, never revealing an edge) that
+  is a pure function of `t`, off under `prefers-reduced-motion`. This is 2D and does not
+  revive the deferred depth parallax (ADR-009).
+- The minimap is a **symlog overview** of the whole domain with eon/era bands, the playhead,
+  and a visible-window bracket that never renders narrower than 8 px. A hairline linear
+  strip beneath it keeps the warp honest. Zoom gains −/+/fit controls, ctrl-wheel and pinch,
+  keyboard, eased window changes, and the window follows the playhead during playback until
+  the user pans or zooms.
+
+**Consequences.**
+- Scrubbing and playback show the generated images as generated for most of the timeline;
+  appearance stays a pure function of `t`, so the two remain the same mechanism.
+- Denser checkpoints (more scenes sharing a composition) are the upgrade path to
+  morph-like transitions; generated video remains out of scope for connective transitions.
+- DESIGN §3's linear minimap is superseded; linear honesty survives as the hairline strip and
+  the symlog↔linear toggle.
 
 ---
 

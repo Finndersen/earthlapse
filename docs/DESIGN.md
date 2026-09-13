@@ -124,6 +124,9 @@ idea as map tile LOD.
 A persistent **linear-scale minimap** under the main axis keeps the warp legible and the
 distortion honest.
 
+> **v1 note (ADR-011).** The minimap ships as a **symlog overview** with a hairline linear
+> strip beneath it: a linear minimap renders any recent zoom window at sub-pixel width.
+
 ### Playback
 
 Playback rate is **constant events-per-second** — the playhead moves at constant velocity in
