@@ -18,17 +18,25 @@ import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { SceneView } from '@/scene'
+import { resolveAssetUrl, SceneView } from '@/scene'
 import { ShellLayout, useIdle } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
-import { advancePlayhead, createSymlogScale, followWindow, formatGeoTime, Timeline, usePlaybackLoop } from '@/timeline'
+import {
+  advancePlayhead,
+  createSymlogScale,
+  eraNameForTime,
+  followWindow,
+  formatGeoTime,
+  Timeline,
+  usePlaybackLoop,
+} from '@/timeline'
+import type { TimelineCheckpoint } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { buildLayers } from './buildLayers'
-import { eraNameAt } from './eraName'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
@@ -140,6 +148,22 @@ export function Experience() {
     [data],
   )
 
+  // Every scene is a timeline checkpoint, so the stills themselves are marked and steppable on
+  // the axis, not only the data-driven events. Memoised so the track's pip layout only reruns
+  // when the manifest does.
+  const checkpoints = useMemo(
+    (): TimelineCheckpoint[] =>
+      data.status === 'ready'
+        ? data.manifest.scenes.map((scene) => ({
+            id: scene.id,
+            t: scene.t,
+            label: scene.caption,
+            thumbnailUrl: resolveAssetUrl(data.manifest.assetBase, scene.image),
+          }))
+        : [],
+    [data],
+  )
+
   if (data.status === 'loading') {
     return <main className={styles.centered}>Loading manifest…</main>
   }
@@ -225,7 +249,7 @@ export function Experience() {
       title={<TimeTitle t={t} />}
       badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
       ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
-      caption={<div ref={setCaptionHost} className={styles.captionHost} />}
+      caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
       chart={
         expandedChartLayer && chartScale ? <LayerChart layer={expandedChartLayer} t={t} scale={chartScale} /> : null
       }
@@ -235,6 +259,7 @@ export function Experience() {
           window={timeWindow}
           scaleKind={scaleKind === 'linear' ? 'linear' : 'symlog'}
           events={manifest.events}
+          checkpoints={checkpoints}
           playback={playback}
           onScrub={setT}
           onWindowChange={(w) => {
@@ -263,7 +288,7 @@ function TimeTitle({ t }: { t: GeoTime }) {
   return (
     <div className={styles.timeTitle} data-testid="time-title">
       <span className={styles.time}>{formatGeoTime(t)}</span>
-      <span className={styles.era}>{eraNameAt(t)}</span>
+      <span className={styles.era}>{eraNameForTime(t)}</span>
     </div>
   )
 }

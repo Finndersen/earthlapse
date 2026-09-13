@@ -5,9 +5,10 @@
  * wired together — see docs/ONESHOT_SCOPE.md.
  */
 
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { resolveAssetUrl } from '@/scene'
 import { useTimeStore } from '@/store/time'
 
 import co2Data from '../../public/stub/layers/co2.json'
@@ -63,10 +64,11 @@ afterEach(() => {
 
 /** Waits for the manifest + every layer's data to load and the initial-t effect (opens on the
  *  oldest scene) to have applied, using the archean-shore caption becoming visible as the
- *  settled signal. */
+ *  settled signal. Scoped to the caption slot: the timeline's checkpoint pips repeat every
+ *  scene caption in their hover previews. */
 async function renderSettled() {
   render(<Experience />)
-  await screen.findByText(/Archean shore/i)
+  await within(await screen.findByTestId('scene-caption')).findByText(/Archean shore/i)
 }
 
 describe('Experience (W12a integration)', () => {
@@ -77,10 +79,10 @@ describe('Experience (W12a integration)', () => {
       const base = screen.getByTestId('scene-base') as HTMLImageElement
       expect(base.tagName).toBe('IMG')
       expect(base.src).toMatch(/\/stub\/scenes\/.+\.svg$/)
-      // The caption text (Experience's own, computed straight off the store's `t`) settles
-      // the instant the initial-t effect applies, but the scene image itself now rate-limits
-      // how fast it can follow that jump (ADR-012 / `presentation.ts`'s
-      // `MIN_TRANSITION_SECONDS`), so it can lag the caption by up to that floor.
+      // The caption follows the dominant scene of SceneView's presented pair, so it can name
+      // the archean shore mid-crossfade, before `scene-base` has settled on it — the presented
+      // pair rate-limits a jump this large (ADR-012 / `presentation.ts`'s
+      // `MIN_TRANSITION_SECONDS`).
       await waitFor(() => expect(base.alt).toMatch(/Archean shore/i), { timeout: 3000, interval: 50 })
     },
     10000,
@@ -96,11 +98,9 @@ describe('Experience (W12a integration)', () => {
     async () => {
       await renderSettled()
       const base = screen.getByTestId('scene-base') as HTMLImageElement
-      // `renderSettled`'s caption-based signal fires the instant the initial-t effect applies
-      // (Experience computes its caption straight off the store's `t`), which can be before
-      // the scene image itself has caught up to it (see the rate-limiting note above) — so
-      // `before` must capture the image actually having settled on the archean shore, not
-      // just the caption having said so, or the assertion below has nothing to compare against.
+      // `renderSettled`'s caption-based signal can fire mid-crossfade, before the scene image
+      // has settled (see the rate-limiting note above) — so `before` must capture the image
+      // actually having settled on the archean shore, not just the caption having said so.
       await waitFor(() => expect(base.alt).toMatch(/Archean shore/i), { timeout: 3000, interval: 50 })
       const before = base.alt
 
@@ -160,16 +160,38 @@ describe('Experience (W12a integration)', () => {
     expect(title).toMatch(/Cenozoic/)
   })
 
-  it('renders the caption through SceneView so it follows the scene pair', async () => {
+  it(
+    'renders the caption through SceneView so it follows the scene pair',
+    async () => {
+      await renderSettled()
+
+      act(() => {
+        useTimeStore.getState().setT(0)
+      })
+
+      // Caption and image share SceneView's rate-limited presented pair (ADR-012), so both
+      // reach the modern city together once the crossfade has run.
+      await waitFor(
+        () => {
+          const base = screen.getByTestId('scene-base') as HTMLImageElement
+          const caption = within(screen.getByTestId('scene-caption'))
+          expect(base.alt).toMatch(/modern city/i)
+          expect(caption.queryByText(/Archean shore/i)).toBeNull()
+          expect(caption.getByText(base.alt).tagName).toBe('P')
+        },
+        { timeout: 4000, interval: 50 },
+      )
+    },
+    12000,
+  )
+
+  it('marks every scene as a timeline checkpoint with its still as the thumbnail', async () => {
     await renderSettled()
 
-    act(() => {
-      useTimeStore.getState().setT(0)
-    })
-
-    expect(screen.queryByText(/Archean shore/i)).toBeNull()
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    expect(screen.getByText(base.alt).tagName).toBe('P')
+    for (const scene of stubManifest.scenes) {
+      const pip = screen.getByRole('button', { name: (name) => name.startsWith(`${scene.caption}, `) })
+      expect(pip.querySelector('img')?.getAttribute('src')).toBe(resolveAssetUrl(stubManifest.assetBase, scene.image))
+    }
   })
 
   it('changes the ancestor readout across at least 5 t values', async () => {
