@@ -1,7 +1,7 @@
 {
   "id": "paleodem",
   "frames": [
-    { "t": 0, "ref": "textures/paleodem/000ma.png" },
-    { "t": 5.0e8, "ref": "textures/paleodem/500ma.png" }
+    { "t": 1.0e8, "ref": "textures/paleodem/100ma.png" },
+    { "t": 4.0e8, "ref": "textures/paleodem/400ma.png" }
   ]
 }

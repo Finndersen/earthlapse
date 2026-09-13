@@ -20,8 +20,17 @@
       "citation": "TimeTree 5 (stub placeholder)"
     },
     {
-      "id": "tetrapoda",
+      "id": "vertebrata",
       "parent": "eukaryota",
+      "label": "First vertebrate",
+      "tDivergence": 5.2e8,
+      "representative": "Pikaia-like chordate",
+      "note": "Earliest chordates with a dorsal nerve cord.",
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "tetrapoda",
+      "parent": "vertebrata",
       "label": "Tetrapoda",
       "tDivergence": 3.9e8,
       "representative": "Tiktaalik-like sarcopterygian",
@@ -29,8 +38,26 @@
       "citation": "TimeTree 5 (stub placeholder)"
     },
     {
-      "id": "homo-sapiens",
+      "id": "mammalia",
       "parent": "tetrapoda",
+      "label": "First mammal",
+      "tDivergence": 2.0e8,
+      "representative": "Morganucodon-like early mammal",
+      "note": null,
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "primates",
+      "parent": "mammalia",
+      "label": "First primate",
+      "tDivergence": 6.6e7,
+      "representative": "Purgatorius-like early primate",
+      "note": null,
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "homo-sapiens",
+      "parent": "primates",
       "label": "Homo sapiens",
       "tDivergence": 3.0e5,
       "representative": "Homo sapiens",

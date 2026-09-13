@@ -4,12 +4,12 @@
   "assetBase": "/stub",
   "scenes": [
     {
-      "id": "archean-shore",
-      "t": 4.0e9,
-      "chapterId": "deep-past",
-      "image": "scenes/archean-shore.svg",
-      "shot": "WATER_EDGE",
-      "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
+      "id": "holocene-city",
+      "t": 0,
+      "chapterId": "present",
+      "image": "scenes/holocene-city.svg",
+      "shot": "WIDE_RIDGE",
+      "caption": "A modern city at dusk, one species reshaping the planet's surface in a geological instant.",
       "width": 1600,
       "height": 900
     },
@@ -24,12 +24,12 @@
       "height": 900
     },
     {
-      "id": "holocene-city",
-      "t": 0,
-      "chapterId": "present",
-      "image": "scenes/holocene-city.svg",
-      "shot": "WIDE_RIDGE",
-      "caption": "A modern city at dusk, one species reshaping the planet's surface in a geological instant.",
+      "id": "archean-shore",
+      "t": 4.0e9,
+      "chapterId": "deep-past",
+      "image": "scenes/archean-shore.svg",
+      "shot": "WATER_EDGE",
+      "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
       "width": 1600,
       "height": 900
     }
@@ -88,7 +88,7 @@
       "name": "Paleogeography",
       "surface": "globe",
       "dataKind": "raster",
-      "timeDomain": [0, 5.0e8],
+      "timeDomain": [1.0e8, 4.0e8],
       "source": "paleodem",
       "chartable": false,
       "data": "layers/paleodem.json"
