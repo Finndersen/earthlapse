@@ -13,7 +13,7 @@ import * as THREE from 'three'
 import type { RasterData } from '@/data/curated'
 import type { GeoTime } from '@/types/layer'
 
-import { globeBlendAt, globeUniforms } from './blend'
+import { globeBlendAt, globePreloadUrls, globeUniforms, travelDirection, type PreloadWindow, type TravelDirection } from './blend'
 import styles from './Globe.module.css'
 import {
   ATMOSPHERE_SCALE,
@@ -33,6 +33,9 @@ const RIM_COLOR = new THREE.Color('#8fc7ff')
  *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
  *  Globe.module.css's halo and expand ring are sized against. */
 const CAMERA_DISTANCE = 3.6
+/** Frames are ~5 Myr apart; a few ahead covers fast playback through one network round trip,
+ *  one behind covers a small scrub reversal. Must stay well inside textureCache's capacity. */
+const PRELOAD_WINDOW: PreloadWindow = { ahead: 4, behind: 1 }
 
 export interface GlobeProps {
   t: GeoTime
@@ -45,7 +48,12 @@ export interface GlobeProps {
 export function Globe({ t, rasterData, assetBase, expanded, onToggleExpand }: GlobeProps) {
   const blend = useMemo(() => globeBlendAt(rasterData, t, assetBase), [rasterData, t, assetBase])
   const domain = globeUniforms(blend)
-  const pair = useGlobeTexturePair(blend)
+  const direction = useTravelDirection(t)
+  const preloadUrls = useMemo(
+    () => globePreloadUrls(rasterData, t, direction, PRELOAD_WINDOW, assetBase),
+    [rasterData, t, direction, assetBase],
+  )
+  const pair = useGlobeTexturePair(blend, preloadUrls)
   // Gates the shader's textured look: even in-domain, don't show data until the first pair
   // has actually loaded. Distinct from `domain.hasData`, which alone decides the "no
   // reconstruction" label below — that label must reflect the *domain*, not load state, or
@@ -99,6 +107,17 @@ export function Globe({ t, rasterData, assetBase, expanded, onToggleExpand }: Gl
       )}
     </div>
   )
+}
+
+/** Which way `t` last moved, remembered across renders so preloading keeps looking ahead
+ *  after playback pauses. Playback runs from the past towards the present by default. */
+function useTravelDirection(t: GeoTime): TravelDirection {
+  const lastRef = useRef<{ t: GeoTime; direction: TravelDirection }>({ t, direction: 'toPresent' })
+  const direction = travelDirection(lastRef.current.t, t, lastRef.current.direction)
+  useEffect(() => {
+    lastRef.current = { t, direction }
+  })
+  return direction
 }
 
 /** Escape collapses the expanded globe. The latest callback is read through a ref so the

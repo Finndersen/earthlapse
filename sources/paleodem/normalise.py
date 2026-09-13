@@ -3,11 +3,11 @@
 Two curated shapes come out of the same raw grids (see README.md "Schema" for the file
 layout):
 
-- `RasterSequence` id "paleodem" -- ~12 epochs spread across 0-540 Ma, each frame a ref to
-  a texture PNG that render_textures() (a side effect, called from main() only -- see
-  below) writes separately.
+- `RasterSequence` id "paleodem" -- one frame per raw epoch (all 109, 0-540 Ma), each frame a
+  ref to a globe texture that render_textures() (a side effect, called from write_outputs()
+  only -- see below) writes separately.
 - `TimeSeries` id "land_fraction" -- cos(latitude) area-weighted land fraction (z > 0),
-  over *every* epoch the raw grids cover, not just the ~12 texture epochs.
+  over the same epochs.
 
 TRAP -- age is not a variable inside the netCDF at all (CONFIRMED by opening the files):
 there is no `time`/`age` coordinate or attribute. Each file's age in Ma is encoded only in
@@ -16,17 +16,14 @@ its filename, as a `_<Ma>Ma.nc` suffix (e.g. `..._Holocene_0Ma.nc`,
 `_discover_raw_files` is the one place that parses it.
 
 TRAP -- epochs are not evenly spaced. Most of the 109 files are 5 Myr apart, but a handful
-of boundary maps break that (4.5, 5.2, 5.3 Myr gaps -- see README.md "Timestep spacing").
-`_select_frame_epochs` therefore picks the *available* epoch nearest each of the 12 target
-ages rather than assuming an exact match exists, which also lets it degrade gracefully
-against the fixture's sparse 2-epoch slice (see tests/sources/test_paleodem.py) instead of
-raising on a fixture that can't possibly carry all 12.
+of boundary maps break that (385.2 and 390.5 Ma -- see README.md "Timestep spacing"). Frame
+refs therefore keep one decimal place of the real age rather than rounding it away, and
+nothing here assumes a regular grid.
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -50,26 +47,18 @@ _EXPECTED_LON_SIZE = 361
 
 MA_TO_YEARS = 1e6
 
-_TARGET_EPOCHS_MA: tuple[float, ...] = (
-    0.0,
-    50.0,
-    100.0,
-    150.0,
-    200.0,
-    250.0,
-    300.0,
-    350.0,
-    400.0,
-    450.0,
-    500.0,
-    540.0,
-)
-"""~12 epochs spread across 0-540 Ma, including 0, ~100/200/300/400/500 and the oldest
-(540) -- exactly the coverage requested for the globe's texture sequence."""
-
 TEXTURE_WIDTH = 1024
 TEXTURE_HEIGHT = 512
-"""2:1 equirectangular, bilinear-upsampled from the native 1x1 degree (181x361) grid."""
+"""2:1 equirectangular, bilinear-upsampled from the native 1x1 degree (181x361) grid. The
+source carries ~360 columns of real information, so a wider texture adds bytes, not detail."""
+
+TEXTURE_EXTENSION = ".webp"
+TEXTURE_WEBP_QUALITY = 90
+"""Lossy WebP. Measured against the real grids (README.md "Texture encoding"): ~37 KB mean per
+1024x512 frame, ~4 MB for all 109, PSNR 37-44 dB against the lossless render. The same frames
+as optimised PNG average ~264 KB (~29.5 MB total). The hypsometric tint is smooth ramps plus
+one coastline edge, which lossy WebP holds well; anything that must stay exact (a future
+plate-id raster, docs/GLOBE.md) is a different file and must be lossless."""
 
 _TEXTURE_SUBDIR = Path("textures") / "paleodem"
 
@@ -108,20 +97,15 @@ def _validate_grid(ds: xr.Dataset, path: Path) -> None:
         raise GridShapeError(f"paleodem: {path.name} has no 'z' variable")
 
 
-def _select_frame_epochs(available: Sequence[float], targets: Sequence[float]) -> list[float]:
-    """For each target age (Ma), the available age nearest it -- deduplicated and sorted.
-
-    Never fabricates an epoch: every returned age is one that genuinely exists in
-    `available`. A sparse source (the fixture's 2 epochs) degrades to fewer, still-real
-    frames rather than raising; a full source (the real 109 epochs, which include all 12
-    targets exactly) yields exactly the 12 targets.
-    """
-    chosen = {min(available, key=lambda age: abs(age - target)) for target in targets}
-    return sorted(chosen)
+def _texture_name(age_ma: float) -> str:
+    """`000.0Ma.webp` .. `540.0Ma.webp`: zero-padded so a directory listing sorts
+    chronologically, with one decimal so the off-grid boundary epochs (385.2, 390.5 Ma) keep
+    their real age instead of colliding with or impersonating a rounded neighbour."""
+    return f"{age_ma:05.1f}Ma{TEXTURE_EXTENSION}"
 
 
 def _frame_ref(age_ma: float) -> str:
-    return str(_TEXTURE_SUBDIR / f"{round(age_ma):03d}Ma.png")
+    return (_TEXTURE_SUBDIR / _texture_name(age_ma)).as_posix()
 
 
 def _drop_duplicate_lon_column(z: np.ndarray) -> np.ndarray:
@@ -151,13 +135,13 @@ def _land_fraction(z: np.ndarray, lat: np.ndarray) -> float:
 
 def normalise(raw_dir: Path) -> list[CuratedShape]:
     files_by_age = _discover_raw_files(raw_dir)
+    ages = sorted(files_by_age)
 
-    frame_ages = _select_frame_epochs(list(files_by_age), _TARGET_EPOCHS_MA)
-    frames = [RasterFrame(t=age * MA_TO_YEARS, ref=_frame_ref(age)) for age in frame_ages]
+    frames = [RasterFrame(t=age * MA_TO_YEARS, ref=_frame_ref(age)) for age in ages]
     paleodem = RasterSequence(id="paleodem", frames=frames)
 
     samples = []
-    for age_ma in sorted(files_by_age):
+    for age_ma in ages:
         with xr.open_dataset(files_by_age[age_ma]) as ds:
             _validate_grid(ds, files_by_age[age_ma])
             frac = _land_fraction(ds["z"].values, ds["lat"].values)
@@ -224,7 +208,7 @@ def elevation_to_rgb(z: np.ndarray) -> np.ndarray:
 
 def _render_frame(z: np.ndarray) -> Image.Image:
     """One elevation grid (lat ascending south->north, lon -180..180 including both edges)
-    -> a north-up, lon -180..180 left-to-right equirectangular RGB PNG image, bilinear-
+    -> a north-up, lon -180..180 left-to-right equirectangular RGB image, bilinear-
     upsampled to TEXTURE_WIDTHxTEXTURE_HEIGHT."""
     z_unique_lon = _drop_duplicate_lon_column(z)
     z_north_up = np.flipud(
@@ -236,21 +220,23 @@ def _render_frame(z: np.ndarray) -> Image.Image:
 
 
 def render_textures(raw_dir: Path, media_dir: Path) -> None:
-    """Write one equirectangular PNG per selected frame epoch into
-    media_dir/textures/paleodem/. A side effect -- deliberately kept out of normalise()
-    (module docstring, DESIGN.md's `Layer.sample()` purity contract, project CLAUDE.md),
-    called only from main().
-    """
+    """Write one equirectangular WebP per raw epoch into media_dir/textures/paleodem/, and
+    remove any other file there -- the directory belongs to this source alone, so a texture
+    it no longer references (an older encoding or naming scheme) is stale, not someone
+    else's. A side effect, deliberately kept out of normalise() (DESIGN.md's purity contract,
+    project CLAUDE.md)."""
     files_by_age = _discover_raw_files(raw_dir)
-    frame_ages = _select_frame_epochs(list(files_by_age), _TARGET_EPOCHS_MA)
     out_dir = media_dir / _TEXTURE_SUBDIR
     out_dir.mkdir(parents=True, exist_ok=True)
-    for age_ma in frame_ages:
-        path = files_by_age[age_ma]
+    expected = {_texture_name(age) for age in files_by_age}
+    for existing in out_dir.iterdir():
+        if existing.is_file() and existing.name not in expected:
+            existing.unlink()
+    for age_ma, path in sorted(files_by_age.items()):
         with xr.open_dataset(path) as ds:
             _validate_grid(ds, path)
             image = _render_frame(ds["z"].values)
-        image.save(out_dir / f"{round(age_ma):03d}Ma.png")
+        image.save(out_dir / _texture_name(age_ma), "WEBP", quality=TEXTURE_WEBP_QUALITY, method=6)
 
 
 def write_outputs(raw_dir: Path, repo_root: Path) -> None:

@@ -2,16 +2,15 @@
 
 The fixture is a real, deliberately sparse slice: just the 0 Ma and 540 Ma (oldest) grids,
 re-encoded to compact int16 netCDF (see sources/paleodem/fixture/ and README.md "Fixture").
-Because normalise()'s frame selection (`_select_frame_epochs`) picks the *available* epoch
-nearest each of the 12 target ages rather than requiring an exact match, this 2-epoch
-fixture degrades gracefully to a 2-frame RasterSequence instead of raising -- the same code
-path the real 109-epoch build uses to hit all 12 targets exactly.
+normalise() emits one frame per raw epoch, so the fixture yields a 2-frame RasterSequence by
+the same code path the real build uses for all 109.
 """
 
 from __future__ import annotations
 
 import hashlib
 import io
+import re
 import zipfile
 from pathlib import Path
 
@@ -19,6 +18,7 @@ import httpx
 import numpy as np
 import pytest
 import xarray as xr
+from PIL import Image
 
 from pipeline.fetching import FetchIntegrityError
 from pipeline.shapes import Interpolation, RasterSequence, TimeSeries
@@ -80,34 +80,57 @@ def test_frames_are_sorted_by_t(paleodem_shapes) -> None:
 
 
 def test_frame_refs_are_well_formed(paleodem_shapes) -> None:
-    """Every ref is a relative `textures/paleodem/<NNN>Ma.png` path -- resolved against the
+    """Every ref is a relative `textures/paleodem/<NNN.N>Ma.webp` path -- resolved against the
     manifest's assetBase at runtime, never absolute or reaching outside its own subtree."""
     raster, _ = paleodem_shapes
-    for frame in raster.frames:
-        assert frame.ref.startswith("textures/paleodem/")
-        assert frame.ref.endswith("Ma.png")
-        assert not frame.ref.startswith("/")
-        stem = frame.ref.removeprefix("textures/paleodem/").removesuffix("Ma.png")
-        assert stem.isdigit() and len(stem) == 3, f"frame ref {frame.ref!r} has malformed age"
+    assert [frame.ref for frame in raster.frames] == [
+        "textures/paleodem/000.0Ma.webp",
+        "textures/paleodem/540.0Ma.webp",
+    ]
 
 
-def test_fixture_degrades_to_only_its_own_real_epochs(paleodem_shapes) -> None:
-    """The fixture has only 0 Ma and 540 Ma -- every one of the 12 target ages should
-    collapse onto one of those two, real, epochs. No frame may claim an age the fixture
-    doesn't actually contain."""
+def test_frame_ref_keeps_the_real_age_of_off_grid_boundary_epochs(paleodem_normalise) -> None:
+    """385.2 and 390.5 Ma are real epochs in the full archive; rounding them to 385/390 would
+    name a texture after an age that doesn't exist."""
+    assert paleodem_normalise._frame_ref(385.2) == "textures/paleodem/385.2Ma.webp"
+    assert paleodem_normalise._frame_ref(5.0) == "textures/paleodem/005.0Ma.webp"
+
+
+def test_one_frame_per_raw_epoch(paleodem_shapes) -> None:
+    """No frame may claim an age the raw grids don't contain, and none may be skipped."""
     raster, _ = paleodem_shapes
-    ages_ma = {round(f.t / 1e6) for f in raster.frames}
-    assert ages_ma == {0, 540}
+    assert [f.t for f in raster.frames] == [0.0, 540.0 * 1e6]
 
 
-def test_land_fraction_covers_every_available_epoch_not_just_frame_epochs(paleodem_shapes) -> None:
-    """The RasterSequence has 2 frames (both fixture epochs collapse the same way), but
-    land_fraction must still have exactly one sample per raw file -- here also 2, since the
-    fixture only carries 2 files, but the point is it is driven by the raw file count, not
-    by `_TARGET_EPOCHS_MA` / the frame selection."""
+def test_land_fraction_has_one_sample_per_raw_file(paleodem_shapes) -> None:
     _, series = paleodem_shapes
     raw_file_count = len(list(fixture_dir("paleodem").glob("*.nc")))
     assert len(series.samples) == raw_file_count
+
+
+def test_render_textures_writes_one_webp_per_epoch_and_removes_stale_files(
+    paleodem_normalise, tmp_path
+) -> None:
+    out_dir = tmp_path / "textures" / "paleodem"
+    out_dir.mkdir(parents=True)
+    (out_dir / "000Ma.png").write_bytes(b"texture from an older naming scheme")
+
+    paleodem_normalise.render_textures(fixture_dir("paleodem"), tmp_path)
+
+    assert sorted(p.name for p in out_dir.iterdir()) == ["000.0Ma.webp", "540.0Ma.webp"]
+    for path in out_dir.iterdir():
+        with Image.open(path) as image:
+            assert (image.format, image.mode, image.size) == ("WEBP", "RGB", (1024, 512))
+
+
+def test_render_textures_names_match_frame_refs(
+    paleodem_normalise, paleodem_shapes, tmp_path
+) -> None:
+    raster, _ = paleodem_shapes
+    paleodem_normalise.render_textures(fixture_dir("paleodem"), tmp_path)
+    for frame in raster.frames:
+        assert (tmp_path / frame.ref).is_file()
+    assert all(re.fullmatch(r"textures/paleodem/\d{3}\.\dMa\.webp", f.ref) for f in raster.frames)
 
 
 def test_land_fraction_at_0ma_is_approximately_point_29(paleodem_shapes) -> None:

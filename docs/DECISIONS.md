@@ -316,6 +316,84 @@ as a view into the world.
 
 ---
 
+## ADR-013 — Globe v2: every PaleoDEM epoch now, plate-rotated texels next, effects as data
+
+**Status:** accepted — human-directed 2026-09-13. The Phase-1 bullets are implemented. The
+design bullets set direction for later phases; the contract changes they need are listed
+below and are not yet made. Detail and measurements: [`GLOBE.md`](./GLOBE.md).
+
+**Context.** The globe published 12 PaleoDEM textures, one every 50 Myr, and crossfaded the two
+nearest. Across a 50 Myr gap continents fade out and back in rather than move. The same 1°
+netCDF bundle holds 109 epochs, roughly every 5 Myr. The globe also shows nothing before
+540 Ma, and none of the planet's big states: ice ages, Snowball Earth, the magma ocean,
+impacts, flood basalts.
+
+**Decision — Phase 1 (implemented).**
+- `sources/paleodem` publishes **all 109 epochs** as globe textures: 1024×512 lossy WebP at
+  quality 90. Measured: 3.91 MB for all 109, against 29.5 MB as PNG. Refs are
+  `textures/paleodem/<NNN.N>Ma.webp`, keeping the real age of the 385.2 and 390.5 Ma boundary
+  maps.
+- The globe loads textures on demand into an **LRU cache of 16** (≈32 MB of GPU memory). It
+  preloads **4 frames ahead** in the direction `t` last moved and 1 behind, and decodes with
+  `createImageBitmap`, which runs off the main thread. It trims the cache only after a pair is
+  bound, never evicting the bound, requested or preloaded textures, and keeps the last bound
+  pair on screen until the next pair loads.
+- No contract changes: `RasterSequence`, `RasterFrameData` and `RasterValue` are unchanged,
+  and only the frame count and the ref extension differ.
+
+**Decision — design direction (later phases; see GLOBE.md §9 for order and cost).**
+- **Continental motion is motion-compensated interpolation.** Each frame gets a lossless
+  plate-id raster and a per-plate rotation table (unit quaternions). The shader samples each
+  neighbouring frame at the texel's position rotated back from `t` to that frame's age, then
+  crossfades the two. Plate ids and rotations for 0–540 Ma come from the **Scotese & Wright
+  2018** plate model, the PaleoDEMs' own frame. Merdith et al. 2021 is not used there: its
+  reference frame differs. Unassigned cells, mostly ocean floor, fall back to the plain
+  crossfade.
+- **1000–540 Ma** uses Merdith et al. 2021 continental polygons with stylised relief, labelled
+  as such. It crossfades into PaleoDEM across a short band at 540 Ma, because the two
+  reconstructions do not agree there.
+- **Before 1 Ga** no reconstruction exists. The globe shows stylised **regimes**, each clearly
+  labelled: magma ocean with the newborn Moon, Hadean water world, Archean haze with
+  scattered protocrust, and "unknown geography". None of them implies real positions.
+- **Curated shapes stay four (ADR-003).** Each id raster is a `RasterSequence`
+  (`paleodem_plates`). The rotation tables are a second `RasterSequence`
+  (`paleodem_rotations`) whose refs point at small binary tables. This is an awkward fit that
+  ADR-003 explicitly accepts. Ice extent for the last glacial cycle is a `RasterSequence`
+  (ICE-6G_C ice mask); Phanerozoic polar-ice extent is a `TimeSeries` (ice-line latitude).
+- **An effect is an optional, additive field on an `EventSet` event**, not a separate effects
+  table. The field is `effect: {kind, windows, anchor?}`, where `kind` is a closed enum
+  (`impact-winter`, `giant-impact`, `flood-basalt`, `ice-shell`, `regime-*`), `windows` holds
+  the dated intervals and `anchor` is an optional present-day lat/lon reconstructed to `t`.
+  Timeline events that have a globe effect carry it, which keeps one date and one citation per
+  event. The pre-1 Ga regimes live in a second `EventSet` (`globe-regimes`) that the timeline
+  does not list. Envelopes are functions of `t` alone, so effects stay pure (DESIGN §10).
+- Every stylised or artistic globe state is labelled on the globe itself, extending the
+  existing "No reconstruction before 540 Ma" label into a per-regime caption.
+
+**Contract changes these later phases need (all additive, not made yet).**
+- `pipeline/shapes.py` `Event` and `web/src/types/layer.ts` `TimelineEvent`: optional
+  `effect`.
+- `pipeline/models.py` `PlateSnapshot`: optional `plate_ids` / `plate_rotations`
+  `RasterBlend` fields.
+- `web/src/app/buildLayers.ts` currently takes "the manifest's one raster layer". It must
+  select raster layers by id once there are several. This is not a type change, but the
+  globe's owner has to coordinate it with the app shell.
+
+**Consequences.**
+- Continents drift visibly now: land moves 1–3° between 5 Myr frames (measured), so the
+  crossfade already reads as drift rather than fade. The payload shrank as the frame count
+  grew ninefold.
+- The warp raises land-mask agreement with the next real frame over a crossfade at every
+  measured step, by +0.7 to +5.6 IoU points at 5 Myr and +20 to +30 at 50 Myr. Coastline
+  redraws between epochs (sea level, new maps) remain, so the crossfade stays part of the
+  blend.
+- gplately and pygplates (GPL-2.0) stay offline under the existing `geo` extra. The frontend
+  receives only rasters and numbers.
+- The ICE-6G_C distribution (PMIP4) names required citations but states no licence. Confirm
+  redistribution terms before ice textures ship.
+
+---
+
 ## Pending
 
 Decisions deferred to Phase 1, to be recorded here once answered:

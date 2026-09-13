@@ -18,11 +18,15 @@
  * newest), the globe renders a neutral dim sphere and a small "no reconstruction" label
  * rather than fabricating or freezing on stale data.
  *
- * `globeBlendAt` and `globeUniforms` are exported separately because they're pure and worth
- * reusing or testing without a WebGL context.
+ * Textures are loaded on demand into a bounded LRU cache, with a few frames preloaded in the
+ * direction `t` is travelling (ADR-013); the last bound pair stays on screen until the next
+ * pair has loaded, so the globe never shows a blank frame.
+ *
+ * `globeBlendAt`, `globeUniforms` and `globePreloadUrls` are exported separately because
+ * they're pure and worth reusing or testing without a WebGL context.
  */
 
-export { globeBlendAt, globeUniforms } from './blend'
-export type { GlobeBlend, GlobeUniformValues } from './blend'
+export { globeBlendAt, globePreloadUrls, globeUniforms, travelDirection } from './blend'
+export type { GlobeBlend, GlobeUniformValues, PreloadWindow, TravelDirection } from './blend'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'

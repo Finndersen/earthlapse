@@ -1,8 +1,8 @@
 # Source: paleodem
 
 PALEOMAP PaleoDEMs (Scotese & Wright 2018), the backbone of the globe view. `RasterSequence`
-id `"paleodem"` (~12 texture epochs, 0-540 Ma) + `TimeSeries` id `"land_fraction"` (every
-available epoch), both from the same raw grids.
+id `"paleodem"` (all 109 epochs as globe textures, 0-540 Ma) + `TimeSeries` id
+`"land_fraction"` (the same 109 epochs), both from the same raw grids.
 
 ## Status: implemented, downloaded and verified against real bytes
 
@@ -56,8 +56,8 @@ would break.
   are exactly 5 Myr apart, but a handful of boundary maps break that: measured gaps are
   `{4.5, 5.0, 5.2, 5.3}` Myr (e.g. 385.2 Ma sits 4.8 Myr after 380 Ma and 5.3 before 390.5
   Ma — inserted extra "boundary" maps at stratigraphic stage boundaries, not a uniform
-  resample). `normalise.py` never assumes even spacing; `_select_frame_epochs` always
-  matches against the real available ages, never an assumed grid.
+  resample). `normalise.py` never assumes even spacing: it emits exactly the real available
+  ages, and frame refs keep one decimal (`385.2Ma.webp`) so boundary maps aren't renamed.
 - **Vertical datum / sea-level convention — z is metres relative to (paleo) sea level.**
   Not confirmed from the PDF (not downloaded — see above), but confirmed from two
   independent sources that were opened: (1) the Zenodo record's own metadata description
@@ -91,8 +91,8 @@ would break.
   the record as a whole (or an outdated figure carried over between record revisions) —
   not a truncated download (sha256 of the whole zip matches exactly, and 109 is the
   complete, gap-free count for every age this bundle actually ships). Not investigated
-  further since it doesn't affect anything downstream: 109 real epochs is ample for the ~12
-  texture epochs and gives `land_fraction` 109 real samples instead of a documented 117.
+  further since it doesn't affect anything downstream: the globe and `land_fraction` both
+  use all 109 real epochs rather than a documented 117.
 - **Global elevation range measured -9,000 to +10,500 m, not documented -11,000 to
   +10,500 m.** Scanned every cell of all 109 files (not just 0 Ma). The likely explanation,
   visible directly in each file's own `history` attribute (a GMT `grdsample` resampling
@@ -126,12 +126,39 @@ would break.
 
 ## Texture generation
 
-`normalise.py` picks ~12 frame epochs (0, 50, 100, ..., 500, 540 Ma — includes 0, ~100,
-~200, ~300, ~400, ~500 and the oldest, per the brief) via `_select_frame_epochs`: for each
-target age, the *available* epoch nearest it. Against the real 109-epoch data this always
-resolves to an exact match (all 12 target ages exist verbatim in the file list); against the
-fixture's sparse 2-epoch slice it degrades gracefully to just those 2 real epochs instead of
-raising — see `tests/sources/test_paleodem.py`'s module docstring.
+`normalise.py` emits one frame per raw epoch: all 109, 0-540 Ma (ADR-013). An earlier version
+published only 12 (every 50 Myr), so the globe crossfaded across 50 Myr gaps and continents
+faded out and back in rather than moving; at ~5 Myr spacing land moves 1-3° between frames
+(measured, docs/GLOBE.md §3), so the crossfade reads as drift. Refs are
+`textures/paleodem/<age>Ma.webp` with the age zero-padded to one decimal (`000.0Ma.webp`,
+`385.2Ma.webp`, `540.0Ma.webp`) so listings sort chronologically and the two off-grid
+boundary epochs keep their real ages.
+
+### Texture encoding
+
+Measured on the real grids (one epoch in nine, 13 frames, then all 109 for the chosen format):
+
+| Size | Encoding | Mean per frame | All 109 |
+|---|---|---|---|
+| 1024x512 | PNG (optimised, lossless) | 264 KB | 29.5 MB |
+| 1024x512 | WebP lossless | 203 KB | 22.6 MB |
+| 1024x512 | JPEG q88 | 53 KB | 5.9 MB |
+| **1024x512** | **WebP q90 (chosen)** | **35 KB** | **3.91 MB** (measured, all 109) |
+| 720x360 | PNG | 159 KB | 17.7 MB |
+| 720x360 | WebP q90 | 22 KB | 2.5 MB |
+
+Chosen: **1024x512 lossy WebP, quality 90**. PSNR against the lossless render is 37.6 dB at
+0 Ma (the busiest frame), 42.0 dB at 250 Ma and 43.7 dB at 540 Ma; 99th-percentile channel
+error 6-14 levels. The tint is smooth ramps plus one coastline edge, which lossy WebP holds
+well. PNG at the same size is at the ~30 MB ceiling on its own; dropping to 720x360 would throw
+away detail the 1024 bilinear upsample of the 360-column grid still shows on the expanded globe.
+Width stays 1024 because the source only has ~360 columns of information: wider adds bytes,
+not detail. Every browser the viewer targets decodes WebP. A future plate-id raster
+(docs/GLOBE.md) must be a separate, lossless file; never encode ids lossily.
+
+`render_textures` also deletes any file in `data/media/textures/paleodem/` that isn't one of
+the current frames. The directory belongs to this source, so the old `NNNMa.png` files from
+the 12-frame build don't linger after a rebuild.
 
 The hypsometric colour map (`elevation_to_rgb`, one pure function per the brief) is a single
 fixed set of control points shared by every epoch, so the globe's cross-fade blends colour
@@ -150,8 +177,8 @@ so:
 .venv/bin/python -m pipeline.databuild --only paleodem   # fetch + normalise -> curated parquet + write_outputs() -> textures
 ```
 
-produces both the curated parquet and `data/media/textures/paleodem/*.png` in one run.
-`manifest.toml`'s `outputs = ["data/media/textures/paleodem/*.png"]` tells databuild's
+produces both the curated parquet and `data/media/textures/paleodem/*.webp` in one run.
+`manifest.toml`'s `outputs = ["data/media/textures/paleodem/*.webp"]` tells databuild's
 staleness check about the textures too: deleting them (with the curated parquet and stamp
 otherwise untouched) makes the source stale again on the next `make data`, since a plain
 curated-file check alone would report "fresh" and never regenerate them.
@@ -168,11 +195,12 @@ instead of) the automatic `databuild` path, mirroring `sources/co2-o2/normalise.
 - Extracted raw `.nc` grids (109 files, `data/raw/paleodem/`, gitignored): ~9.7 MB total
   (individually 34-101 KB each, netCDF's own internal zlib compression already shrinks a
   261 KB raw `float32` 181x361 grid to well under that).
-- Curated `data/curated/paleodem.parquet` (12 frames: `t`, `ref`) and
-  `data/curated/land_fraction.parquet` (109 samples: `t`, `value`, `lower`, `upper`): see
-  `manifest.toml`-adjacent measurement below, both far under the git-tier threshold.
-- Generated textures (`data/media/textures/paleodem/*.png`, gitignored, never committed):
-  12 files, 1024x512 RGB PNG each.
+- Curated `data/curated/paleodem.parquet` (109 frames: `t`, `ref`) and
+  `data/curated/land_fraction.parquet` (109 samples: `t`, `value`, `lower`, `upper`), both
+  far under the git-tier threshold.
+- Generated textures (`data/media/textures/paleodem/*.webp`, gitignored, never committed):
+  109 files, 1024x512 RGB lossy WebP, **3.91 MB total** (20-70 KB each, mean 35 KB), rendered
+  in ~4 s on an M-series Mac. See "Texture encoding".
 
 ## Storage tier chosen
 
