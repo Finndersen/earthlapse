@@ -33,7 +33,7 @@ differently.
 Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 
 - Never raise --max-spend. The ceiling for this build is 25 USD, enforced in
-  pipeline/spend.py. Expected actual spend is about 7 USD. If a build hits the ceiling,
+  pipeline/spend.py. Expected actual spend is about 1.10 USD. If a build hits the ceiling,
   stop and report; do not work around it, do not retry in a loop.
 - Do not modify anything in pipeline/shapes.py, pipeline/models.py, pipeline/graph.py,
   pipeline/spend.py, or web/src/types/. Agents import these. If one genuinely blocks a
