@@ -1,0 +1,137 @@
+GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time
+-----------------------------------------------------------------------
+               World Data Center for Paleoclimatology, Boulder
+                                  and
+                     NOAA Paleoclimatology Program
+-----------------------------------------------------------------------
+NOTE: PLEASE CITE CONTRIBUTORS WHEN USING THIS DATA!!!!!
+
+NAME OF DATA SET: GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time
+LAST UPDATE: 8/2002 (Original Receipt by WDC Paleo)
+
+CONTRIBUTOR: Robert A. Berner, Yale University
+
+IGBP PAGES/WDCA CONTRIBUTION SERIES NUMBER: 2002-051
+
+SUGGESTED DATA CITATION: Berner, R.A. and Z. Kothavala, 2001.  
+GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time,
+IGBP PAGES/World Data Center for Paleoclimatology 
+Data Contribution Series # 2002-051.
+NOAA/NGDC Paleoclimatology Program, Boulder CO, USA.
+
+ORIGINAL REFERENCE: 
+Berner, R.A. and Z. Kothavala, 2001.  
+GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time,
+American Journal of Science, v.301, pp.182-204, February 2001.
+
+GEOGRAPHIC REGION: Global
+
+PERIOD OF RECORD: Phanerozoic, 570 MMYrBP-present
+
+DESCRIPTION: 
+Berner and Kothavala 2001 GEOCARB III revised model of Phanerozoic atmospheric CO2.
+
+Calculated paleolevels of atmospheric CO2 from the GEOCARB III model, which 
+models the carbon cycle on long time scales (here a 30 million year resolution). 
+The long term carbon cycle is primarily geochemical, a result of the exchange of 
+carbon between the atmosphere and rocks.  The third revision includes improvements 
+in the modeling of factors affecting CO2 uptake by continental weathering.  
+
+
+ABSTRACT:
+Revision of the GEOCARB model (Berner, 1991, 1994) for paleolevels of 
+atmospheric CO2, has been made with emphasis on factors affecting CO2 uptake 
+by continental weathering. This includes: (1) new GCM (general circulation model)
+results for the dependence of global mean surface temperature and runoff on CO2, 
+for both glaciated and non-glaciated periods, coupled with new results for the
+temperature response to changes in solar radiation; (2) demonstration that values for
+the weathering-uplift factor fR (t) based on Sr isotopes as was done in GEOCARB II 
+are in general agreement with independent values calculated from the abundance of
+terrigenous sediments as a measure of global physical erosion rate over Phanerozoic
+time; (3) more accurate estimates of the timing and the quantitative effects on Ca-Mg
+silicate weathering of the rise of large vascular plants on the continents during the
+Devonian; (4) inclusion of the effects of changes in paleogeography alone (constant
+CO2 and solar radiation) on global mean land surface temperature as it affects the rate
+of weathering; (5) consideration of the effects of volcanic weathering, both in
+subduction zones and on the seafloor; (6) use of new data on the d 13 C values for
+Phanerozoic limestones and organic matter; (7) consideration of the relative weathering
+enhancement by gymnosperms versus angiosperms; (8) revision of paleo land area
+based on more recent data and use of this data, along with GCM-based paleo-runoff
+results, to calculate global water discharge from the continents over time.
+Results show a similar overall pattern to those for GEOCARB II: very high CO2
+values during the early Paleozoic, a large drop during the Devonian and Carboniferous,
+high values during the early Mesozoic, and a gradual decrease from about 170 Ma
+to low values during the Cenozoic. However, the new results exhibit considerably
+higher CO2 values during the Mesozoic, and their downward trend with time agrees
+with the independent estimates of Ekart and others (1999). Sensitivity analysis shows
+that results for paleo-CO2 are especially sensitive to: the effects of CO2 fertilization
+and temperature on the acceleration of plant-mediated chemical weathering; the
+quantitative effects of plants on mineral dissolution rate for constant temperature and
+CO2; the relative roles of angiosperms and gymnosperms in accelerating rock weathering;
+and the response of paleo-temperature to the global climate model used. This
+emphasizes the need for further study of the role of plants in chemical weathering and
+the application of GCMs to study of paleo-CO2 and the long term carbon cycle.
+
+
+DATA:
+
+Time(Ma)  RCO2
+
+-570    11.70362
+-560    16.26684
+-550    17.95147
+-540    17.19382
+-530    25.52706
+-520    26.18222
+-510    22.39725
+-500    18.89189
+-490    17.29675
+-480    17.28357
+-470    17.72622
+-460    15.46943
+-450    15.85446
+-440    16.68599
+-430    16.99756
+-420    13.90174
+-410    11.0387
+-400    11.32285
+-390    13.45455
+-380    15.30221
+-370    8.040017
+-360    6.137963
+-350    4.337569
+-340    2.704967
+-330    1.671433
+-320    1.338068
+-310    1.254083
+-300    1.249976
+-290    1.326288
+-280    1.255351
+-270    1.440589
+-260    1.872322
+-250    6.081883
+-240    7.104142
+-230    5.197366
+-220    5.831312
+-210    4.912341
+-200    5.442125
+-190    4.441496
+-180    4.843969
+-170    8.573481
+-160    9.123775
+-150    7.599305
+-140    8.198544
+-130    6.605868
+-120    6.096954
+-110    5.88872
+-100    5.30103
+-90     4.317839
+-80     4.185097
+-70     3.200051
+-60     2.802144
+-50     3.176976
+-40     2.066398
+-30     1.417627
+-20     1.156633
+-10     0.990113
+0       0.9879701

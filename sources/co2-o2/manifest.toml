@@ -1,0 +1,13 @@
+# See docs/DATA_SOURCES.md for field meanings.
+
+name = "co2-o2"
+title = "GEOCARB III: Phanerozoic Atmospheric CO2"
+url = "https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt"
+sha256 = "4e7339d324c43b21fe0ce00654db2ed59fcd399d81cf5a082401b05a1d8f74ad"
+licence = "US public domain (NOAA/NGDC Paleoclimatology Program)"
+citation = "Berner, R.A. and Z. Kothavala, 2001. GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204."
+time_domain = [5.7e8, 0.0]  # years BP, [oldest, newest]
+output_shape = "TimeSeries"
+interpolation = "log-linear"
+volume_bytes = 5378          # measured, not estimated
+storage_tier = "git"
