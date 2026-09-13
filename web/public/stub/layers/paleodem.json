@@ -1,0 +1,7 @@
+{
+  "id": "paleodem",
+  "frames": [
+    { "t": 0, "ref": "textures/paleodem/000ma.png" },
+    { "t": 5.0e8, "ref": "textures/paleodem/500ma.png" }
+  ]
+}

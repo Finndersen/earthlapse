@@ -1,0 +1,41 @@
+{
+  "id": "lineage",
+  "nodes": [
+    {
+      "id": "luca",
+      "parent": null,
+      "label": "LUCA",
+      "tDivergence": 4.0e9,
+      "representative": null,
+      "note": "Last universal common ancestor.",
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "eukaryota",
+      "parent": "luca",
+      "label": "Eukaryota",
+      "tDivergence": 1.8e9,
+      "representative": null,
+      "note": "First cells with a nucleus.",
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "tetrapoda",
+      "parent": "eukaryota",
+      "label": "Tetrapoda",
+      "tDivergence": 3.9e8,
+      "representative": "Tiktaalik-like sarcopterygian",
+      "note": "First four-limbed vertebrates.",
+      "citation": "TimeTree 5 (stub placeholder)"
+    },
+    {
+      "id": "homo-sapiens",
+      "parent": "tetrapoda",
+      "label": "Homo sapiens",
+      "tDivergence": 3.0e5,
+      "representative": "Homo sapiens",
+      "note": null,
+      "citation": "TimeTree 5 (stub placeholder)"
+    }
+  ]
+}

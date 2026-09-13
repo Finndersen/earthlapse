@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "buildId": "stub-0001",
+  "assetBase": "/stub",
+  "scenes": [
+    {
+      "id": "archean-shore",
+      "t": 4.0e9,
+      "chapterId": "deep-past",
+      "image": "scenes/archean-shore.svg",
+      "shot": "WATER_EDGE",
+      "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "id": "carboniferous-swamp",
+      "t": 3.5e8,
+      "chapterId": "deep-past",
+      "image": "scenes/carboniferous-swamp.svg",
+      "shot": "CANOPY",
+      "caption": "A Carboniferous swamp, oxygen-rich air feeding forests taller than any before them.",
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "id": "holocene-city",
+      "t": 0,
+      "chapterId": "present",
+      "image": "scenes/holocene-city.svg",
+      "shot": "WIDE_RIDGE",
+      "caption": "A modern city at dusk, one species reshaping the planet's surface in a geological instant.",
+      "width": 1600,
+      "height": 900
+    }
+  ],
+  "chapters": [
+    {
+      "id": "deep-past",
+      "label": "Deep past",
+      "tStart": 3.0e8,
+      "tEnd": 4.567e9
+    },
+    {
+      "id": "present",
+      "label": "Present",
+      "tStart": 0,
+      "tEnd": 3.0e8
+    }
+  ],
+  "layers": [
+    {
+      "id": "co2",
+      "name": "Atmospheric CO₂",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [0, 5.7e8],
+      "source": "co2-o2",
+      "chartable": true,
+      "unit": "ppm",
+      "interpolation": "log-linear",
+      "data": "layers/co2.json"
+    },
+    {
+      "id": "day_length",
+      "name": "Day length",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [0, 4.567e9],
+      "source": "astronomy",
+      "chartable": false,
+      "unit": "hours",
+      "interpolation": "linear",
+      "data": "layers/day_length.json"
+    },
+    {
+      "id": "lineage",
+      "name": "Your ancestor",
+      "surface": "hud",
+      "dataKind": "node",
+      "timeDomain": [0, 4.0e9],
+      "source": "lineage",
+      "chartable": false,
+      "data": "layers/lineage.json"
+    },
+    {
+      "id": "paleodem",
+      "name": "Paleogeography",
+      "surface": "globe",
+      "dataKind": "raster",
+      "timeDomain": [0, 5.0e8],
+      "source": "paleodem",
+      "chartable": false,
+      "data": "layers/paleodem.json"
+    }
+  ],
+  "events": [
+    {
+      "id": "earth-formation",
+      "label": "Earth forms",
+      "tMin": 4.567e9,
+      "tMax": 4.567e9,
+      "importance": 1.0,
+      "description": "Accretion of the proto-Earth from the solar nebula.",
+      "citation": "stub placeholder citation"
+    },
+    {
+      "id": "moon-forming-impact",
+      "label": "Moon-forming impact",
+      "tMin": 4.51e9,
+      "tMax": 4.45e9,
+      "importance": 0.9,
+      "description": "A Mars-sized body, Theia, collides with the proto-Earth; debris forms the Moon.",
+      "citation": "stub placeholder citation"
+    },
+    {
+      "id": "great-oxidation",
+      "label": "Great Oxidation Event",
+      "tMin": 2.45e9,
+      "tMax": 2.32e9,
+      "importance": 0.85,
+      "description": "Cyanobacterial photosynthesis raises atmospheric oxygen for the first time.",
+      "citation": "stub placeholder citation"
+    },
+    {
+      "id": "cambrian-explosion",
+      "label": "Cambrian explosion",
+      "tMin": 5.41e8,
+      "tMax": 5.3e8,
+      "importance": 0.9,
+      "description": "Rapid diversification of animal body plans in the fossil record.",
+      "citation": "stub placeholder citation"
+    },
+    {
+      "id": "kpg-impact",
+      "label": "Chicxulub impact",
+      "tMin": 6.6e7,
+      "tMax": 6.6e7,
+      "importance": 0.95,
+      "description": "An asteroid impact ends the Cretaceous and the age of non-avian dinosaurs.",
+      "citation": "stub placeholder citation"
+    },
+    {
+      "id": "agriculture",
+      "label": "Agriculture begins",
+      "tMin": 1.2e4,
+      "tMax": 1.0e4,
+      "importance": 0.7,
+      "description": "Independent domestication of crops and livestock across several regions.",
+      "citation": "stub placeholder citation"
+    }
+  ],
+  "credits": [
+    {
+      "sourceId": "co2-o2",
+      "title": "Phanerozoic CO2",
+      "citation": "Royer, D.L., Berner, R.A. and Park, J. (2007). Phanerozoic atmospheric CO2 change.",
+      "licence": "Public domain (NOAA)",
+      "url": "https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt"
+    },
+    {
+      "sourceId": "paleodem",
+      "title": "PaleoDEM elevation and bathymetry",
+      "citation": "Scotese, C.R. and Wright, N. (2018). PALEOMAP PaleoDEM.",
+      "licence": "CC BY 4.0",
+      "url": "https://zenodo.org/records/5460860"
+    }
+  ]
+}

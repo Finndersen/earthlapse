@@ -1,0 +1,129 @@
+.centered {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0b0d;
+  color: #8b8e94;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.errorPanel {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0b0d;
+  padding: 24px;
+}
+
+.errorCard {
+  max-width: 560px;
+  width: 100%;
+  border: 1px solid rgba(224, 80, 63, 0.5);
+  background: rgba(224, 80, 63, 0.08);
+  border-radius: 4px;
+  padding: 24px 28px;
+  font-family: 'Archivo Narrow', 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.errorTitle {
+  margin: 0 0 8px;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e0503f;
+}
+
+.errorMessage {
+  margin: 0;
+  color: #e7e2d6;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.stubBadge {
+  display: inline-block;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #d99a4e;
+  border: 1px solid rgba(217, 154, 78, 0.45);
+  border-radius: 2px;
+  padding: 3px 7px;
+  margin-bottom: 10px;
+}
+
+.readout {
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+}
+
+.tValue {
+  font-size: 22px;
+  color: #e7e2d6;
+  letter-spacing: 0.02em;
+}
+
+.tLabel {
+  display: block;
+  font-size: 10px;
+  color: #565a61;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.scrubRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scrub {
+  flex: 1;
+  accent-color: #d99a4e;
+}
+
+.layerRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(231, 226, 214, 0.07);
+  font-size: 12.5px;
+}
+
+.layerRow:last-child {
+  border-bottom: none;
+}
+
+.layerName {
+  color: #e7e2d6;
+}
+
+.layerMeta {
+  color: #565a61;
+  font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.sceneImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.placeholder {
+  color: #565a61;
+  font-size: 12.5px;
+}
+
+.captionText {
+  margin: 0;
+}

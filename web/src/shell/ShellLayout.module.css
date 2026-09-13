@@ -1,0 +1,201 @@
+/*
+ * Instrument-panel chrome around a bright central viewport (DESIGN §8). The surround reads
+ * as a dim, blurred console; the viewport is the one saturated, in-focus thing on the page —
+ * everything else is deliberately quieter so a photoreal still reads as the subject, not the
+ * UI around it.
+ */
+
+.shell {
+  --ink: #e7e2d6;
+  --ink-dim: #8b8e94;
+  --ink-faint: #565a61;
+  --surround: #0a0b0d;
+  --panel: #101216;
+  --panel-line: rgba(231, 226, 214, 0.09);
+  --accent: #d99a4e;
+  --accent-dim: rgba(217, 154, 78, 0.35);
+  --mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+  --sans: 'Archivo Narrow', 'Barlow Condensed', 'Helvetica Neue', Arial, sans-serif;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--surround);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.surround {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: clamp(10px, 1.6vw, 20px);
+  padding: clamp(12px, 2vw, 24px);
+}
+
+/* A faint radial wash behind everything, the "blurred surround" the layout calls for —
+   cheaper and steadier than filter: blur() on real content underneath. */
+.surround::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 42%, rgba(70, 60, 46, 0.16), transparent 62%);
+  pointer-events: none;
+}
+
+.column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vw, 20px);
+  width: clamp(200px, 20vw, 280px);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.slot {
+  position: relative;
+  border: 1px solid var(--panel-line);
+  background: var(--panel);
+  border-radius: 3px;
+  min-height: 0;
+}
+
+.slotLabel {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  pointer-events: none;
+}
+
+.globeSlot {
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.hudSlot {
+  flex: 1;
+  padding: 30px 12px 12px;
+  overflow: auto;
+}
+
+.ancestorSlot {
+  aspect-ratio: 4 / 5;
+  padding: 30px 12px 12px;
+  overflow: hidden;
+}
+
+.captionSlot {
+  flex: 1;
+  padding: 30px 14px 14px;
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+
+.viewport {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 0 1px var(--panel-line);
+}
+
+.viewportInner {
+  position: absolute;
+  inset: 0;
+}
+
+/* The vignette: aesthetic (draws the eye to centre) and functional (DESIGN §5 — masks
+   displacement artefacts at frame margins once depth is added). */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 min(14vw, 220px) min(6vw, 90px) rgba(0, 0, 0, 0.85),
+    inset 0 0 0 1px rgba(231, 226, 214, 0.06);
+}
+
+.creditsLink {
+  position: absolute;
+  top: clamp(12px, 2vw, 24px);
+  right: clamp(12px, 2vw, 24px);
+  z-index: 1;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-decoration: none;
+  border: 1px solid var(--panel-line);
+  border-radius: 2px;
+  padding: 4px 9px;
+}
+
+.creditsLink:hover,
+.creditsLink:focus-visible {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+.note {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: rgba(231, 226, 214, 0.55);
+  background: rgba(10, 11, 13, 0.55);
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--panel-line);
+}
+
+.dock {
+  flex-shrink: 0;
+  border-top: 1px solid var(--panel-line);
+  background: var(--panel);
+  padding: clamp(10px, 1.6vw, 16px) clamp(12px, 2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineRow {
+  min-height: 0;
+}
+
+.chartRow {
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .surround {
+    flex-direction: column;
+  }
+
+  .column {
+    width: auto;
+    flex-direction: row;
+  }
+
+  .globeSlot {
+    aspect-ratio: auto;
+    width: clamp(96px, 24vw, 140px);
+  }
+
+  .viewport {
+    min-height: 260px;
+  }
+}

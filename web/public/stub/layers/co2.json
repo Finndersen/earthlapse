@@ -1,0 +1,11 @@
+{
+  "id": "co2",
+  "unit": "ppm",
+  "interpolation": "log-linear",
+  "samples": [
+    { "t": 0, "value": 276.6, "lower": null, "upper": null },
+    { "t": 1.0e8, "value": 1700, "lower": null, "upper": null },
+    { "t": 3.0e8, "value": 500, "lower": null, "upper": null },
+    { "t": 5.7e8, "value": 7300, "lower": null, "upper": null }
+  ]
+}
