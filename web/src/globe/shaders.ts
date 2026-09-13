@@ -9,9 +9,10 @@
  * texture must be glued to the surface and rotate with it, not stay fixed as the mesh turns
  * underneath it.
  *
- * Longitude uses `atan2(z, x)`, the same axis order three.js's own equirectangular-mapping
- * shader chunk uses, so u increases monotonically (no east-west mirroring) as it sweeps once
- * around the sphere with a single seam. Latitude uses `asin(y)`; combined with
+ * Longitude uses `-atan2(z, x)`. three.js's own equirectangular chunk uses `+atan2(z, x)`, but
+ * that is for environment maps seen from *inside* the sphere; on a globe seen from outside the
+ * same sign puts west on the viewer's right (Australia left of India, Africa right of it). The
+ * negation keeps east on the right, with a single seam. Latitude uses `asin(y)`; combined with
  * `texture.flipY = false` on load (see `textureCache.ts`), `v = 0` samples row 0 of the
  * source PNG — the top of the image — so north stays up.
  */
@@ -39,7 +40,7 @@ const vec3 LIGHT_DIR = vec3(0.4, 0.6, 0.7);
 void main() {
   vec3 n = normalize(vNormal);
   vec2 uv = vec2(
-    0.5 + atan(n.z, n.x) / (2.0 * PI),
+    0.5 - atan(n.z, n.x) / (2.0 * PI),
     0.5 - asin(clamp(n.y, -1.0, 1.0)) / PI
   );
 
