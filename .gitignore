@@ -41,3 +41,6 @@ out/
 .vscode/
 .idea/
 *.swp
+
+# Harness-managed agent worktrees
+.claude/worktrees/
