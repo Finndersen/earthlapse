@@ -162,3 +162,25 @@ This is where the budget gets spent and where the project either looks good or d
 - **The curated event list.** An LLM drafts; a human decides what the ~200 events are.
 - **Dataset substitution decisions.** If HYDE is unusable, that is a design conversation.
 - **Anything touching the spend ceiling.**
+
+---
+
+## Backlog — data layers deferred until the foundation is settled (2026-09-13)
+
+The human chose to note these after the first browser reviews, not to build them yet. Scene
+coverage, globe motion and ancestor portraits come first.
+
+- **Layer picker.** Hide day length by default: it reaches ~24 h early and then barely moves.
+  Moon distance and solar luminosity move behind the same picker.
+- **Global mean surface temperature.** The strongest candidate. Scotese et al. 2021 for the
+  Phanerozoic, CENOGRID (Westerhold 2020) for the Cenozoic, EPICA/Vostok for the last 800 kyr.
+  See DATA_SOURCES `paleoclimate`.
+- **Atmospheric O₂.** Explains the giant Carboniferous insects. Source it next to `co2-o2`.
+- **Marine biodiversity.** PBDB genus counts, with the Big Five extinctions as visible dips.
+  See DATA_SOURCES `pbdb`.
+- **Sea level.** See DATA_SOURCES `paleoclimate`.
+- **Land fraction.** Already curated as `land_fraction`, but not yet published as a HUD layer.
+- **Human population.** The HYDE global total, for the last 12 kyr.
+- **Tree-of-life ribbon.** A phylogeny band sharing the timeline's axis. Our lineage runs as the
+  spine, and sister clades branch off at their divergence times. Needs sister-clade curation
+  (plus extinction ends) and a branch layout. Still under discussion.
