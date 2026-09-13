@@ -4,6 +4,7 @@ no network, no real sources/ or data/ directories touched.
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -62,6 +63,103 @@ output_shape = "TimeSeries"
 interpolation = "linear"
 volume_bytes = 0
 storage_tier = "git"
+"""
+
+_MANIFEST_WITH_OUTPUTS_TEMPLATE = _MANIFEST_TEMPLATE + 'outputs = ["outputs/{name}/*.txt"]\n'
+
+_FETCH_WITH_VERIFIED_ARTEFACT_TEMPLATE = """\
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline.fetching import ensure_verified_artefact
+
+_CONTENT = {content!r}
+_SHA256 = {sha256!r}
+_CALLS_LOG = Path({calls_log!r})
+
+
+def _download() -> bytes:
+    with _CALLS_LOG.open("a") as f:
+        f.write("x")
+    return _CONTENT
+
+
+def fetch(raw_dir: Path) -> None:
+    ensure_verified_artefact(raw_dir, "artefact.bin", _SHA256, _download)
+"""
+
+_NORMALISE_READS_ARTEFACT_TEMPLATE = """\
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline.shapes import CuratedShape, Interpolation, Sample, TimeSeries
+
+
+def normalise(raw_dir: Path) -> list[CuratedShape]:
+    value = float((raw_dir / "artefact.bin").read_text())
+    return [
+        TimeSeries(
+            id={id!r},
+            unit="u",
+            interpolation=Interpolation.LINEAR,
+            samples=[Sample(t=0.0, value=value)],
+        )
+    ]
+"""
+
+_NORMALISE_WITH_WRITE_OUTPUTS_TEMPLATE = """\
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline.shapes import CuratedShape, Interpolation, Sample, TimeSeries
+
+
+def normalise(raw_dir: Path) -> list[CuratedShape]:
+    value = float((raw_dir / "value.txt").read_text())
+    return [
+        TimeSeries(
+            id={id!r},
+            unit="u",
+            interpolation=Interpolation.LINEAR,
+            samples=[Sample(t=0.0, value=value)],
+        )
+    ]
+
+
+def write_outputs(raw_dir: Path, repo_root: Path) -> None:
+    out_dir = repo_root / "outputs" / {id!r}
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "epoch.txt").write_text("rendered")
+"""
+
+_NORMALISE_WITH_TWO_OUTPUTS_TEMPLATE = """\
+from __future__ import annotations
+
+from pathlib import Path
+
+from pipeline.shapes import CuratedShape, Interpolation, Sample, TimeSeries
+
+
+def normalise(raw_dir: Path) -> list[CuratedShape]:
+    value = float((raw_dir / "value.txt").read_text())
+    return [
+        TimeSeries(
+            id={id!r},
+            unit="u",
+            interpolation=Interpolation.LINEAR,
+            samples=[Sample(t=0.0, value=value)],
+        )
+    ]
+
+
+def write_outputs(raw_dir: Path, repo_root: Path) -> None:
+    out_dir = repo_root / "outputs" / {id!r}
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "a.txt").write_text("a")
+    (out_dir / "b.txt").write_text("b")
 """
 
 
@@ -133,14 +231,20 @@ def test_editing_a_shared_data_file_makes_every_source_stale(repo: Path) -> None
     shared.write_text("v1\n")
 
     report_after_adding = build(repo)
-    assert _statuses(report_after_adding) == {"alpha": BuildStatus.REBUILT, "beta": BuildStatus.REBUILT}
+    assert _statuses(report_after_adding) == {
+        "alpha": BuildStatus.REBUILT,
+        "beta": BuildStatus.REBUILT,
+    }
 
     report_settled = build(repo)
     assert _statuses(report_settled) == {"alpha": BuildStatus.FRESH, "beta": BuildStatus.FRESH}
 
     shared.write_text("v2\n")
     report_after_editing = build(repo)
-    assert _statuses(report_after_editing) == {"alpha": BuildStatus.REBUILT, "beta": BuildStatus.REBUILT}
+    assert _statuses(report_after_editing) == {
+        "alpha": BuildStatus.REBUILT,
+        "beta": BuildStatus.REBUILT,
+    }
 
 
 def test_deleting_a_curated_file_makes_its_source_stale(repo: Path) -> None:
@@ -191,6 +295,141 @@ def test_force_rebuilds_a_source_that_would_otherwise_be_fresh(repo: Path) -> No
     assert _statuses(report) == {"alpha": BuildStatus.REBUILT, "beta": BuildStatus.REBUILT}
 
 
+# ------------------------------------------------------------------ verified artefact reuse
+
+
+def test_a_verified_raw_artefact_already_on_disk_is_reused_without_a_download_call(
+    tmp_path: Path,
+) -> None:
+    """A source whose fetch.py uses pipeline.fetching.ensure_verified_artefact must not hit
+    the network on a rebuild triggered for an unrelated reason (here, editing normalise.py)
+    once its raw artefact is already on disk and verifies -- the exact bug this hardens
+    against (zenodo.org flapping with 504s on an already-downloaded, still-valid source)."""
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir()
+    calls_log = tmp_path / "download_calls.txt"
+    content = b"3.0"
+    sha256 = hashlib.sha256(content).hexdigest()
+    source_dir = sources_dir / "gamma"
+    source_dir.mkdir()
+    (source_dir / "manifest.toml").write_text(_MANIFEST_TEMPLATE.format(name="gamma"))
+    (source_dir / "fetch.py").write_text(
+        _FETCH_WITH_VERIFIED_ARTEFACT_TEMPLATE.format(
+            content=content, sha256=sha256, calls_log=str(calls_log)
+        )
+    )
+    (source_dir / "normalise.py").write_text(_NORMALISE_READS_ARTEFACT_TEMPLATE.format(id="gamma"))
+
+    first = build(tmp_path)
+    assert _statuses(first) == {"gamma": BuildStatus.REBUILT}
+    assert calls_log.read_text().count("x") == 1
+
+    (source_dir / "normalise.py").write_text(
+        (source_dir / "normalise.py").read_text() + "\n# unrelated edit\n"
+    )
+
+    second = build(tmp_path)
+    assert _statuses(second) == {"gamma": BuildStatus.REBUILT}
+    assert calls_log.read_text().count("x") == 1  # no second download call
+
+
+def test_a_download_not_matching_the_expected_sha256_fails_the_build_loudly(
+    tmp_path: Path,
+) -> None:
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir()
+    calls_log = tmp_path / "download_calls.txt"
+    wrong_sha256 = "0" * 64
+    source_dir = sources_dir / "delta"
+    source_dir.mkdir()
+    (source_dir / "manifest.toml").write_text(_MANIFEST_TEMPLATE.format(name="delta"))
+    (source_dir / "fetch.py").write_text(
+        _FETCH_WITH_VERIFIED_ARTEFACT_TEMPLATE.format(
+            content=b"3.0", sha256=wrong_sha256, calls_log=str(calls_log)
+        )
+    )
+    (source_dir / "normalise.py").write_text(_NORMALISE_READS_ARTEFACT_TEMPLATE.format(id="delta"))
+
+    report = build(tmp_path)
+
+    result = report.results[0]
+    assert result.status is BuildStatus.FAILED
+    assert "sha256" in (result.error or "")
+    assert not (tmp_path / "data" / "curated" / "delta.parquet").exists()
+
+
+# ------------------------------------------------------------------------------- outputs
+
+
+def test_write_outputs_hook_runs_after_normalise_and_writes_the_declared_files(
+    tmp_path: Path,
+) -> None:
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir()
+    source_dir = sources_dir / "epsilon"
+    source_dir.mkdir()
+    (source_dir / "manifest.toml").write_text(
+        _MANIFEST_WITH_OUTPUTS_TEMPLATE.format(name="epsilon")
+    )
+    (source_dir / "fetch.py").write_text(_FETCH_TEMPLATE.format(value=1.0))
+    (source_dir / "normalise.py").write_text(
+        _NORMALISE_WITH_WRITE_OUTPUTS_TEMPLATE.format(id="epsilon")
+    )
+
+    report = build(tmp_path)
+
+    assert _statuses(report) == {"epsilon": BuildStatus.REBUILT}
+    assert (tmp_path / "outputs" / "epsilon" / "epoch.txt").is_file()
+
+
+def test_a_missing_declared_output_makes_an_otherwise_fresh_source_stale(tmp_path: Path) -> None:
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir()
+    source_dir = sources_dir / "zeta"
+    source_dir.mkdir()
+    (source_dir / "manifest.toml").write_text(_MANIFEST_WITH_OUTPUTS_TEMPLATE.format(name="zeta"))
+    (source_dir / "fetch.py").write_text(_FETCH_TEMPLATE.format(value=1.0))
+    (source_dir / "normalise.py").write_text(
+        _NORMALISE_WITH_WRITE_OUTPUTS_TEMPLATE.format(id="zeta")
+    )
+
+    build(tmp_path)
+    output_file = tmp_path / "outputs" / "zeta" / "epoch.txt"
+    assert output_file.is_file()
+
+    second = build(tmp_path)
+    assert _statuses(second) == {"zeta": BuildStatus.FRESH}
+
+    output_file.unlink()
+
+    third = build(tmp_path)
+    assert _statuses(third) == {"zeta": BuildStatus.REBUILT}
+    assert output_file.is_file()  # the hook re-ran and rewrote it
+
+
+def test_fewer_matching_outputs_than_the_stamp_recorded_makes_the_source_stale(
+    tmp_path: Path,
+) -> None:
+    """Distinct from the "matches nothing" case above: here the glob still matches one file,
+    just fewer than the two the stamp recorded -- also required to be stale."""
+    sources_dir = tmp_path / "sources"
+    sources_dir.mkdir()
+    source_dir = sources_dir / "eta"
+    source_dir.mkdir()
+    (source_dir / "manifest.toml").write_text(_MANIFEST_WITH_OUTPUTS_TEMPLATE.format(name="eta"))
+    (source_dir / "fetch.py").write_text(_FETCH_TEMPLATE.format(value=1.0))
+    (source_dir / "normalise.py").write_text(_NORMALISE_WITH_TWO_OUTPUTS_TEMPLATE.format(id="eta"))
+
+    build(tmp_path)
+    out_dir = tmp_path / "outputs" / "eta"
+    assert len(list(out_dir.glob("*.txt"))) == 2
+
+    (out_dir / "b.txt").unlink()
+
+    report = build(tmp_path)
+    assert _statuses(report) == {"eta": BuildStatus.REBUILT}
+
+
 # ------------------------------------------------------------------------ discover_sources
 
 
@@ -201,7 +440,7 @@ def test_discover_sources_excludes_directories_without_a_manifest_and_underscore
     sources_dir.mkdir()
     _write_source(sources_dir, "alpha")
     (sources_dir / "_template").mkdir()
-    (sources_dir / "_template" / "manifest.toml").write_text("name = \"_template\"\n")
+    (sources_dir / "_template" / "manifest.toml").write_text('name = "_template"\n')
     (sources_dir / "not_a_source").mkdir()  # no manifest.toml
 
     found = discover_sources(sources_dir)

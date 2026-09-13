@@ -253,13 +253,23 @@ def render_textures(raw_dir: Path, media_dir: Path) -> None:
         image.save(out_dir / f"{round(age_ma):03d}Ma.png")
 
 
+def write_outputs(raw_dir: Path, repo_root: Path) -> None:
+    """`databuild`'s optional post-normalise side-effect hook (see CONTRIBUTING.md
+    "Optional write_outputs hook") -- called automatically after `normalise()` so `make
+    data` / `pipeline.databuild` produces the globe textures too, not curated parquet only.
+    Thin wrapper over `render_textures`, which keeps its own `(raw_dir, media_dir)` signature
+    -- useful directly from `main()` and from tests -- while this one matches the hook's
+    `(raw_dir, repo_root)` signature every source that defines one must use."""
+    render_textures(raw_dir, repo_root / "data" / "media")
+
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     raw_dir = repo_root / "data" / "raw" / "paleodem"
     for shape in normalise(raw_dir):
         path = write_shape(shape, repo_root / "data" / "curated")
         print(f"wrote {path}")
-    render_textures(raw_dir, repo_root / "data" / "media")
+    write_outputs(raw_dir, repo_root)
     print(f"wrote textures to {repo_root / 'data' / 'media' / _TEXTURE_SUBDIR}")
 
 

@@ -16,3 +16,4 @@ output_shape = "RasterSequence + TimeSeries"  # paleodem (raster) + land_fractio
 interpolation = "linear"    # land_fraction (TimeSeries); paleodem (RasterSequence) blends via RasterBlend instead, no interpolation enum applies to it
 volume_bytes = 9302291      # measured: the zip itself (sha256 above); see README.md for curated/media sizes
 storage_tier = "git"        # curated parquet only -- textures are generated media, never committed (see README.md)
+outputs = ["data/media/textures/paleodem/*.png"]  # written by normalise.py's write_outputs() hook; see docs/DATA_SOURCES.md § Directory layout per source

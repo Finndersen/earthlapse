@@ -140,24 +140,31 @@ continuously rather than jumping between differently-tuned palettes. Texture wri
 only from `main()`, per the project's `Layer.sample()`/`normalise()` purity contract
 (`CLAUDE.md`, `DESIGN.md` §4/§10).
 
-**Running the real build is two commands, not one**, because `pipeline/databuild.py` (not
-owned by this package, not edited) only calls each source's `fetch()` then `normalise()` —
-it has no hook for a side effect like texture rendering:
+**Running the real build is one command.** `pipeline/databuild.py` calls each source's
+`fetch()`, then `normalise()`, then — if the module defines it — `write_outputs(raw_dir,
+repo_root)`, a hook `pipeline.databuild` looks for automatically after every rebuild. This
+package's `normalise.py` defines `write_outputs` as a thin wrapper over `render_textures`,
+so:
 
 ```
-.venv/bin/python -m pipeline.databuild --only paleodem   # fetch + normalise -> curated parquet
-.venv/bin/python sources/paleodem/normalise.py            # render_textures() -> data/media/textures/paleodem/*.png
+.venv/bin/python -m pipeline.databuild --only paleodem   # fetch + normalise -> curated parquet + write_outputs() -> textures
 ```
 
-The second command's `main()` assumes `data/raw/paleodem/` is already populated (by the
-first command's `fetch()`) — it does not re-fetch, mirroring how `sources/co2-o2/normalise.py`'s
-own `main()` is a manual entry point alongside (not instead of) the automatic `databuild`
-path.
+produces both the curated parquet and `data/media/textures/paleodem/*.png` in one run.
+`manifest.toml`'s `outputs = ["data/media/textures/paleodem/*.png"]` tells databuild's
+staleness check about the textures too: deleting them (with the curated parquet and stamp
+otherwise untouched) makes the source stale again on the next `make data`, since a plain
+curated-file check alone would report "fresh" and never regenerate them.
+
+`sources/paleodem/normalise.py`'s own `main()` remains a manual entry point alongside (not
+instead of) the automatic `databuild` path, mirroring `sources/co2-o2/normalise.py`'s
+`main()` — and still assumes `data/raw/paleodem/` is already populated by `fetch()`.
 
 ## Measured volume
 
 - Raw zip: **9,302,291 bytes** (9.3 MB, measured — matches the manifest's declared size and
-  the recorded sha256 exactly).
+  the recorded sha256 exactly). Kept in `data/raw/paleodem/` (gitignored) under its upstream
+  filename, verified rather than re-downloaded on later runs — see `fetch.py`.
 - Extracted raw `.nc` grids (109 files, `data/raw/paleodem/`, gitignored): ~9.7 MB total
   (individually 34-101 KB each, netCDF's own internal zlib compression already shrinks a
   261 KB raw `float32` 181x361 grid to well under that).

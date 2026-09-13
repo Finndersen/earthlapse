@@ -10,10 +10,17 @@ path the real 109-epoch build uses to hit all 12 targets exactly.
 
 from __future__ import annotations
 
+import hashlib
+import io
+import zipfile
+from pathlib import Path
+
+import httpx
 import numpy as np
 import pytest
 import xarray as xr
 
+from pipeline.fetching import FetchIntegrityError
 from pipeline.shapes import Interpolation, RasterSequence, TimeSeries
 from tests.sources.support import fixture_dir, load_source_module
 
@@ -179,3 +186,111 @@ def test_colour_map_extreme_values_are_clamped_not_erroring(paleodem_normalise) 
     rgb = paleodem_normalise.elevation_to_rgb(z)
     assert rgb.shape == (2, 3)
     assert (rgb >= 0).all() and (rgb <= 255).all()
+
+
+# ----------------------------------------------------------------------------------- fetch
+#
+# fetch()'s own manifest.toml is swapped for a tmp_path fixture the test controls, and only
+# the HTTP layer -- httpx.get, the single call `_download` makes -- is faked. Everything
+# else (ensure_verified_artefact's reuse/verify logic and the zip extraction) runs for real.
+
+
+def _write_manifest(path: Path, *, url: str, sha256: str) -> None:
+    path.write_text(
+        f'name = "paleodem"\nurl = "{url}"\nsha256 = "{sha256}"\n'
+        'licence = "test"\ncitation = "test"\ntime_domain = [0, 0]\n'
+        'output_shape = "RasterSequence + TimeSeries"\ninterpolation = "linear"\n'
+        'volume_bytes = 0\nstorage_tier = "git"\n'
+    )
+
+
+def _make_zip(*, nc_name: str = "Map01_PALEOMAP_1deg_Holocene_0Ma.nc") -> bytes:
+    """A minimal zip with one `.nc` member (content is arbitrary -- fetch()/`_extract_grids`
+    only filters by extension, it never parses netCDF) and one non-`.nc` member that must be
+    dropped by extraction, mirroring the real archive's `License.txt`."""
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr(f"Scotese_Wright_2018_v2/{nc_name}", b"fake netcdf bytes")
+        archive.writestr("Scotese_Wright_2018_v2/License.txt", b"licence text")
+    return buffer.getvalue()
+
+
+@pytest.fixture
+def fetch_module(tmp_path, monkeypatch):
+    module = load_source_module("paleodem", "fetch")
+    monkeypatch.setattr(module, "_MANIFEST", tmp_path / "manifest.toml")
+    return module
+
+
+class _FakeResponse:
+    def __init__(self, content: bytes) -> None:
+        self.content = content
+
+    def raise_for_status(self) -> None:
+        pass
+
+
+def test_fetch_reuses_an_already_verified_zip_without_calling_httpx_get_and_still_extracts(
+    fetch_module, tmp_path, monkeypatch
+) -> None:
+    zip_bytes = _make_zip()
+    _write_manifest(
+        tmp_path / "manifest.toml",
+        url="https://example.invalid/paleodem.zip",
+        sha256=hashlib.sha256(zip_bytes).hexdigest(),
+    )
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / fetch_module._ZIP_FILENAME).write_bytes(zip_bytes)
+
+    def _must_not_be_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("httpx.get must not be called when the cached zip already verifies")
+
+    monkeypatch.setattr(httpx, "get", _must_not_be_called)
+
+    fetch_module.fetch(raw_dir)
+
+    assert (raw_dir / fetch_module._ZIP_FILENAME).read_bytes() == zip_bytes
+    assert (raw_dir / "Map01_PALEOMAP_1deg_Holocene_0Ma.nc").is_file()
+    assert not (raw_dir / "License.txt").exists()
+
+
+def test_fetch_downloads_the_zip_and_extracts_only_nc_members_when_none_is_cached(
+    fetch_module, tmp_path, monkeypatch
+) -> None:
+    zip_bytes = _make_zip()
+    _write_manifest(
+        tmp_path / "manifest.toml",
+        url="https://example.invalid/paleodem.zip",
+        sha256=hashlib.sha256(zip_bytes).hexdigest(),
+    )
+    raw_dir = tmp_path / "raw"
+    calls = []
+
+    def _fake_get(url: str, **kwargs: object) -> _FakeResponse:
+        calls.append(url)
+        return _FakeResponse(zip_bytes)
+
+    monkeypatch.setattr(httpx, "get", _fake_get)
+
+    fetch_module.fetch(raw_dir)
+
+    assert calls == ["https://example.invalid/paleodem.zip"]
+    assert (raw_dir / fetch_module._ZIP_FILENAME).read_bytes() == zip_bytes
+    assert (raw_dir / "Map01_PALEOMAP_1deg_Holocene_0Ma.nc").is_file()
+    assert not (raw_dir / "License.txt").exists()
+
+
+def test_fetch_raises_and_writes_nothing_on_a_sha256_mismatch(
+    fetch_module, tmp_path, monkeypatch
+) -> None:
+    _write_manifest(
+        tmp_path / "manifest.toml", url="https://example.invalid/paleodem.zip", sha256="0" * 64
+    )
+    raw_dir = tmp_path / "raw"
+    monkeypatch.setattr(httpx, "get", lambda url, **kwargs: _FakeResponse(b"corrupt"))
+
+    with pytest.raises(FetchIntegrityError):
+        fetch_module.fetch(raw_dir)
+
+    assert not (raw_dir / fetch_module._ZIP_FILENAME).exists()

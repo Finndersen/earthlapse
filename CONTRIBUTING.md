@@ -50,6 +50,22 @@ layers/<id>/
 
 Copy `sources/_template/` to start.
 
+**Downloading a single upstream file?** Call `pipeline.fetching.ensure_verified_artefact`
+instead of reimplementing download/verify/cache — it keeps the verified artefact in
+`raw_dir` under its own filename and skips the network entirely on a later run if it is
+already there and still matches `manifest.toml`'s `sha256`. See `sources/co2-o2/fetch.py`
+or `sources/paleodem/fetch.py`.
+
+**Optional `write_outputs` hook.** If `normalise()` needs a side effect outside
+`data/curated/` — generated globe textures, say — put it in a `write_outputs(raw_dir:
+Path, repo_root: Path) -> None` function in `normalise.py`. `pipeline.databuild` calls it
+automatically, right after `normalise()`, if it exists — `normalise()` itself must stay
+pure. Declare the files it writes in `manifest.toml`'s optional `outputs` field, as
+repo-relative glob patterns (see `sources/_template/manifest.toml`); databuild records how
+many files each glob matched and treats the source as stale again if a later run finds
+fewer, or none — so deleting generated media makes `make data` regenerate it. See
+`sources/paleodem/normalise.py`.
+
 ### 3. Rules
 
 - **`t` is years before present**, float, positive into the past. Never calendar dates for

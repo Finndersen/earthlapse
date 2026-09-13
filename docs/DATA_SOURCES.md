@@ -39,6 +39,11 @@ sources/<name>/
   README.md         # findings from the deep dive: gotchas, schema, caveats
 ```
 
+`manifest.toml` may also declare `outputs`, repo-relative glob patterns for side-effect
+files an optional `write_outputs(raw_dir, repo_root)` hook in `normalise.py` writes outside
+`data/curated/` (e.g. paleodem's globe textures). See CONTRIBUTING.md "Optional
+write_outputs hook".
+
 ### Storage policy (NORMATIVE)
 
 | Size | Where | Notes |

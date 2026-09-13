@@ -8,8 +8,13 @@ own code (`fingerprint`) plus any hand-curated file committed directly under `da
 (`_shared_inputs_fingerprint` -- e.g. `data/events.yaml`, read by events-core's
 `normalise.py` from outside its own source directory) rather than trusting timestamps,
 runs `fetch` then `normalise` when it does, and writes the result through
-`pipeline.curated.write_shape`. A stamp at `data/raw/<name>/.databuild.json` records what
-was last built, so the next run can skip anything unchanged.
+`pipeline.curated.write_shape`. If `normalise.py` defines an optional `write_outputs(raw_dir,
+repo_root)` function, it is called next -- the hook for a source's side-effect writes outside
+`data/curated/` (e.g. paleodem's globe textures; see CONTRIBUTING.md "Optional write_outputs
+hook"). A stamp at `data/raw/<name>/.databuild.json` records what was last built -- including,
+for each glob `manifest.toml`'s optional `outputs` field declares, how many files it matched
+-- so the next run can skip anything unchanged, and now also treats a source as stale again
+if a declared output glob's on-disk files are missing or fewer than what was recorded.
 
 One source's failure -- typically a rotted upstream URL -- is caught, recorded in the
 report, and does not stop the rest of the build. `main()` then exits non-zero and lists
@@ -22,13 +27,14 @@ import argparse
 import hashlib
 import importlib.util
 import sys
+import tomllib
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from types import ModuleType
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from pipeline.curated import write_shape
 
@@ -130,11 +136,52 @@ def _shared_inputs_fingerprint(repo_root: Path) -> str:
     return _hash_files(data_dir, files)
 
 
+class SourceManifest(BaseModel):
+    """The subset of `manifest.toml` that `databuild.py` itself reads.
+
+    Every other field (`url`, `sha256`, `licence`, `citation`, ...) is consumed by a
+    source's own `fetch.py`/`normalise.py`, not by the build runner, so this model does not
+    mirror the full schema documented in `docs/DATA_SOURCES.md` § Contract -- pydantic's
+    default "ignore unknown fields" behaviour means it never needs updating when a source
+    adds a field only it cares about.
+    """
+
+    outputs: list[str] = Field(default_factory=list)
+    """Repo-relative glob patterns (see `sources/_template/manifest.toml`) for side-effect
+    files a source's optional `write_outputs()` hook writes outside `data/curated/` -- e.g.
+    paleodem's globe textures under `data/media/textures/paleodem/`. Most sources declare
+    none."""
+
+
+def _load_manifest(source_dir: Path) -> SourceManifest:
+    with (source_dir / "manifest.toml").open("rb") as f:
+        return SourceManifest.model_validate(tomllib.load(f))
+
+
+def _match_output_glob(repo_root: Path, pattern: str) -> list[Path]:
+    return sorted(repo_root.glob(pattern))
+
+
+class OutputStamp(BaseModel):
+    """How many files one declared `outputs` glob matched, as recorded at build time."""
+
+    pattern: str
+    count: int
+
+
+def _current_output_stamps(repo_root: Path, patterns: list[str]) -> list[OutputStamp]:
+    return [
+        OutputStamp(pattern=pattern, count=len(_match_output_glob(repo_root, pattern)))
+        for pattern in patterns
+    ]
+
+
 class BuildStamp(BaseModel):
     """Recorded at `data/raw/<name>/.databuild.json` after a successful build."""
 
     fingerprint: str
     curated_ids: list[str]
+    outputs: list[OutputStamp] = Field(default_factory=list)
 
 
 def _stamp_path(raw_dir: Path) -> Path:
@@ -153,13 +200,27 @@ def _write_stamp(raw_dir: Path, stamp: BuildStamp) -> None:
     _stamp_path(raw_dir).write_text(stamp.model_dump_json(indent=2) + "\n")
 
 
-def _is_stale(raw_dir: Path, curated_dir: Path, current_fingerprint: str) -> bool:
+def _outputs_are_stale(repo_root: Path, recorded: list[OutputStamp]) -> bool:
+    """True if any declared output glob now matches nothing, or matches fewer files than
+    the stamp recorded last time it was built -- e.g. paleodem's textures were deleted, or
+    partially deleted, out from under an otherwise-fresh curated build."""
+    return any(
+        (current := len(_match_output_glob(repo_root, output.pattern))) == 0
+        or current < output.count
+        for output in recorded
+    )
+
+
+def _is_stale(raw_dir: Path, curated_dir: Path, repo_root: Path, current_fingerprint: str) -> bool:
     """A source is stale if it has never been built, its fingerprint has drifted since
-    the last successful build, or a curated file that build recorded is now missing."""
+    the last successful build, a curated file that build recorded is now missing, or a
+    declared output glob (`manifest.toml`'s `outputs`) no longer matches what was recorded."""
     stamp = _load_stamp(raw_dir)
     if stamp is None or stamp.fingerprint != current_fingerprint:
         return True
-    return any(not (curated_dir / f"{cid}.parquet").is_file() for cid in stamp.curated_ids)
+    if any(not (curated_dir / f"{cid}.parquet").is_file() for cid in stamp.curated_ids):
+        return True
+    return _outputs_are_stale(repo_root, stamp.outputs)
 
 
 class BuildStatus(StrEnum):
@@ -189,7 +250,14 @@ class BuildReport:
         return 1 if self.failures else 0
 
 
-def _build_one(source: SourceDir, raw_dir: Path, curated_dir: Path, current_fingerprint: str) -> SourceResult:
+def _build_one(
+    source: SourceDir,
+    raw_dir: Path,
+    curated_dir: Path,
+    repo_root: Path,
+    manifest: SourceManifest,
+    current_fingerprint: str,
+) -> SourceResult:
     # Deliberately broad: this is a batch runner over independent sources, and one
     # source's exception (typically a rotted upstream URL) must be recorded and reported
     # rather than aborting every other source's build. Nothing here is swallowed -- the
@@ -204,14 +272,23 @@ def _build_one(source: SourceDir, raw_dir: Path, curated_dir: Path, current_fing
         for shape in shapes:
             write_shape(shape, curated_dir)
             curated_ids.append(shape.id)
-        _write_stamp(raw_dir, BuildStamp(fingerprint=current_fingerprint, curated_ids=curated_ids))
+        write_outputs = getattr(normalise_module, "write_outputs", None)
+        if write_outputs is not None:
+            write_outputs(raw_dir, repo_root)
+        outputs = _current_output_stamps(repo_root, manifest.outputs)
+        _write_stamp(
+            raw_dir,
+            BuildStamp(fingerprint=current_fingerprint, curated_ids=curated_ids, outputs=outputs),
+        )
     except Exception as exc:  # noqa: BLE001 -- one source's failure must be reported, not abort the build
         return SourceResult(
             name=source.name,
             status=BuildStatus.FAILED,
             error=f"{type(exc).__name__}: {exc}",
         )
-    return SourceResult(name=source.name, status=BuildStatus.REBUILT, curated_ids=tuple(curated_ids))
+    return SourceResult(
+        name=source.name, status=BuildStatus.REBUILT, curated_ids=tuple(curated_ids)
+    )
 
 
 def build(repo_root: Path, only: set[str] | None = None, force: bool = False) -> BuildReport:
@@ -236,13 +313,16 @@ def build(repo_root: Path, only: set[str] | None = None, force: bool = False) ->
     results: list[SourceResult] = []
     for source in sources:
         raw_dir = raw_root / source.name
+        manifest = _load_manifest(source.path)
         current_fingerprint = hashlib.sha256(
             f"{fingerprint(source.path)}\0{shared_fingerprint}".encode()
         ).hexdigest()
-        if not force and not _is_stale(raw_dir, curated_dir, current_fingerprint):
+        if not force and not _is_stale(raw_dir, curated_dir, repo_root, current_fingerprint):
             results.append(SourceResult(name=source.name, status=BuildStatus.FRESH))
             continue
-        results.append(_build_one(source, raw_dir, curated_dir, current_fingerprint))
+        results.append(
+            _build_one(source, raw_dir, curated_dir, repo_root, manifest, current_fingerprint)
+        )
     return BuildReport(results=tuple(results))
 
 
