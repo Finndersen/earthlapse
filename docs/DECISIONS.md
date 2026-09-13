@@ -220,7 +220,8 @@ scenes. Two gates tested it on `gemini-3-pro-image-preview`, the model the final
 
 ## ADR-011 — Scenes hold clear and transition briefly; the minimap is a symlog overview
 
-**Status:** accepted (human-directed during the one-shot build).
+**Status:** accepted (human-directed during the one-shot build). The transition bullet is
+superseded by ADR-012; the hold-clear and minimap decisions stand.
 
 **Context.** The first viewer dissolved across the middle 40% of each gap between scenes (10%
 across a chapter boundary). A 50/50 blend of two different generated worlds reads as a muddy
@@ -252,6 +253,47 @@ break scrubbing and cost against ADR-001's reasoning.
   morph-like transitions; generated video remains out of scope for connective transitions.
 - DESIGN §3's linear minimap is superseded; linear honesty survives as the hairline strip and
   the symlog↔linear toggle.
+
+---
+
+## ADR-012 — Smooth crossfade with a minimum duration; an immersive lens layout
+
+**Status:** accepted (human-directed after the first browser review). Supersedes ADR-011's
+transition bullet and DESIGN §8's boxed layout.
+
+**Context.** In the browser the ADR-011 transition failed in two ways. Scenes that sit close
+together on the symlog axis (roughly 500–200 Ma) sit only a few pixels apart, so a band that
+is 14% of their gap passes in milliseconds during playback and reads as a hard cut. The
+noise-masked dissolve revealed the incoming image patch by patch, which read as flashy
+rather than gradual. Separately, the only timeline markers were events, so scenes with no
+nearby high-importance event (the ice-age scene at 20 ka) had no marker at all. The boxed
+instrument-panel layout (bordered columns around a rounded viewport) read as a web page, not
+as a view into the world.
+
+**Decision.**
+- The transition is a uniform crossfade of the whole frame, blended in linear light. The
+  noise mask and the blur-through are removed.
+- `sceneAt(scenes, t)` stays pure in `t` and still defines the target. What is *displayed*
+  is rate-limited toward that target, so a full transition never takes less than a fixed
+  wall-clock minimum. Slower changes, such as slow scrubbing through a wide band, follow the
+  target exactly. A jump across several scenes crossfades directly from the displayed scene
+  to the target, never flashing through the ones in between. The caption fades in step with
+  the displayed crossfade.
+- Every scene is marked on the timeline and the minimap as a checkpoint, with no level-of-
+  detail filtering, and stepping visits checkpoints as well as events.
+- Layout: the scene fills the window behind an elliptical lens vignette. The globe, layer
+  readouts, time/era title, ancestor, caption and timeline float in the darkened periphery
+  with no panels or borders. The periphery dims while playback runs and the viewer is idle.
+
+**Consequences.**
+- A still frame is a pure function of `t` once the transition has settled, but not in the
+  first ~1.6 s after a jump. Screenshot and test tooling must wait for the transition to
+  settle.
+- Layers are unaffected: `Layer.sample()` remains pure in `t`. The rate limit is confined to
+  the scene view.
+- DESIGN §8's diagram describes the pre-ADR-012 layout; the slots (globe, sparklines,
+  ancestor, caption, timeline, chart dock) survive, and only their chrome and placement
+  change.
 
 ---
 

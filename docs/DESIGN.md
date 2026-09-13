@@ -285,6 +285,15 @@ expands to fill; it is never the default focus.
 └──────────────────────────────────────────────────────────┘
 ```
 
+> **v1 note (ADR-012):** the boxed layout above is superseded. The scene fills the window
+> behind an elliptical lens vignette. The same slots float, unboxed, in the darkened periphery:
+> - globe orb top-left, readouts beneath it
+> - time/era title top-centre
+> - ancestor top-right
+> - caption as a subtitle above the timeline
+>
+> Scene checkpoints are marked on the timeline.
+
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to
 the timeline; because the chart shares the timeline's warped x-axis, the value under the
