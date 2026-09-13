@@ -56,7 +56,7 @@ function tAtP(a: number, b: number, p: number): number {
 
 describe('SceneView', () => {
   it('draws the base layer at full opacity regardless of mix, and the overlay at the eased crossfade alpha', () => {
-    render(<SceneView t={midT} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+    render(<SceneView t={midT} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
     const base = screen.getByTestId('scene-base') as HTMLImageElement
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
     expect(base.style.opacity).toBe('1')
@@ -64,7 +64,7 @@ describe('SceneView', () => {
   })
 
   it('draws the base layer at full opacity even when mix is 0 (never fades both to nothing)', () => {
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
     const base = screen.getByTestId('scene-base') as HTMLImageElement
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
     expect(base.style.opacity).toBe('1')
@@ -72,7 +72,7 @@ describe('SceneView', () => {
   })
 
   it('resolves image src against assetBase', () => {
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
     const base = screen.getByTestId('scene-base') as HTMLImageElement
     expect(base.src).toBe('https://cdn.example.com/build/s0.png')
   })
@@ -83,6 +83,7 @@ describe('SceneView', () => {
         t={s0.t}
         scenes={scenes}
         assetBase="https://cdn.example.com/build"
+        minHoldSeconds={0}
         renderCaption={(scene, opacity) => (
           <p>
             caption: {scene.caption} @ {opacity}
@@ -101,6 +102,7 @@ describe('SceneView', () => {
         t={tAtP(s0.t, s1.t, 0.5)}
         scenes={scenes}
         assetBase="https://cdn.example.com/build"
+        minHoldSeconds={0}
         renderCaption={(_scene, opacity) => {
           opacities.push(opacity)
           return null
@@ -114,7 +116,7 @@ describe('SceneView', () => {
     // Landing exactly mid-dissolve on mount must show that mix immediately, not ease in from
     // scratch (presentation.ts: "the first presented state equals the target").
     const t = tAtP(s0.t, s1.t, 0.5)
-    render(<SceneView t={t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+    render(<SceneView t={t} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
     expect(Number(overlay.style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
   })
@@ -126,11 +128,11 @@ describe('SceneView', () => {
       // only swaps once the browser has decoded the image — see its `useDecodedSrc` — and
       // jsdom never fires that decode; this is the same reason Experience.test.tsx asserts on
       // `alt`, not `src`, for the same kind of check).
-      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
       expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
 
       act(() => {
-        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
+        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" minHoldSeconds={0} />)
       })
 
       // No wall-clock time has passed yet — still showing s0, not s3.

@@ -15,8 +15,10 @@
   z-index: 50;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 50% 50%, rgba(3, 4, 6, 0.7), rgba(3, 4, 6, 0.95) 72%);
-  backdrop-filter: blur(6px);
+  /* Dims the scene enough to focus the orb without blacking out the periphery: the shell keeps
+     the title and timeline above this backdrop, so they stay legible and usable. */
+  background: radial-gradient(ellipse at 50% 50%, rgba(3, 4, 6, 0.55), rgba(3, 4, 6, 0.8) 75%);
+  backdrop-filter: blur(3px);
   cursor: zoom-out;
   animation: fadeIn 260ms ease;
 }
@@ -28,9 +30,13 @@
 }
 
 .orbExpanded {
+  /* Sized so the sphere itself (≈76% of the canvas, see CAMERA_DISTANCE in Globe.tsx) fits
+     between the shell's title and its timeline band, which stay visible above the backdrop. */
+  --expanded-size: max(260px, min(84vmin, 820px, calc((100vh - 400px) / 0.76)));
+
   position: relative;
-  width: min(84vmin, 820px);
-  height: min(84vmin, 820px);
+  width: var(--expanded-size);
+  height: var(--expanded-size);
   cursor: grab;
 }
 

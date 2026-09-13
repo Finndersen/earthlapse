@@ -21,10 +21,10 @@
  * - `<Sparkline layer t scale />` — small inline SVG trend line across `scale`'s full span,
  *   with a playhead marker; gaps where the layer has no data are simply not drawn.
  * - `<ScalarReadout layer t />` — `value unit` (+ bounds if present), or "no data".
- * - `<LayerChart layer t scale />` — full-width chart docked to the timeline, sharing its
- *   `TimeScale` so the value under the playhead sits directly above it; renders the
- *   uncertainty band when the layer carries `bounds`. Collapsed by default; click the title
- *   bar to expand (local UI state only, not part of the `t` model).
+ * - `<LayerChart layer t scale onClose />` — full-width chart docked to the timeline, sharing
+ *   its `TimeScale` so the value under the playhead sits directly above it; renders the
+ *   uncertainty band when the layer carries `bounds`. Always fully drawn — whether it is open
+ *   is the caller's state; `onClose` is its own close button.
  * - `<DayLengthClock layer t />` — a small clock face plus the numeric reading, for a
  *   `Layer<ScalarValue>` whose unit is hours.
  * - `<AncestorReadout layer t />` — label, representative organism, "since <t>"; text only

@@ -44,6 +44,10 @@ export interface SceneViewProps {
    *  image dissolve). Positioning and styling are entirely the returned node's — SceneView
    *  applies neither. */
   renderCaption?: (scene: Scene, opacity: number) => ReactNode
+  /** Minimum seconds a settled scene stays on screen before the presentation dissolves away
+   *  from it (`presentation.ts`'s `advance`). `PLAYBACK_HOLD_SECONDS` while playing, `0` for
+   *  direct manipulation, which must never feel sticky. */
+  minHoldSeconds: number
   className?: string
 }
 
@@ -62,12 +66,12 @@ function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: num
   return urls
 }
 
-export function SceneView({ t, scenes, assetBase, renderCaption, className }: SceneViewProps): ReactNode {
+export function SceneView({ t, scenes, assetBase, renderCaption, minHoldSeconds, className }: SceneViewProps): ReactNode {
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
 
   const target = useMemo(() => sceneAt(scenes, t), [scenes, t])
-  const presented = usePresentedSceneMix(target)
+  const presented = usePresentedSceneMix(target, minHoldSeconds)
 
   const fromIndex = useMemo(() => sceneIndex(scenes, presented.from), [scenes, presented.from])
   const toIndex = useMemo(() => sceneIndex(scenes, presented.to), [scenes, presented.to])

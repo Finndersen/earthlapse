@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createLinearScale } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
@@ -26,20 +26,25 @@ describe('<Sparkline>', () => {
 })
 
 describe('<LayerChart>', () => {
-  it('is collapsed by default and expands on click, rendering an uncertainty band', () => {
+  it('renders the plot with its uncertainty band straight away — no second toggle', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
-    const { container, getByRole } = render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} />)
-    expect(container.querySelector('svg')).toBeNull()
-
-    fireEvent.click(getByRole('button'))
-
+    const { container } = render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={() => {}} />)
     expect(container.querySelector('svg')).not.toBeNull()
-    expect(container.querySelector('polygon')).not.toBeNull() // the uncertainty band
+    // One area wash per traced segment; any polygon beyond those is the uncertainty band.
+    expect(container.querySelectorAll('polygon').length).toBeGreaterThan(container.querySelectorAll('polyline').length)
   })
 
-  it('shows "no data" on the title bar when the playhead sits outside the layer domain', () => {
+  it('closes through its own close button', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
-    const { container } = render(<LayerChart layer={layer} t={6e8} scale={FULL_SCALE} />)
+    const onClose = vi.fn()
+    const { getByRole } = render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={onClose} />)
+    fireEvent.click(getByRole('button', { name: `Close ${CO2_MANIFEST.name} chart` }))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows "no data" in the header when the playhead sits outside the layer domain', () => {
+    const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    const { container } = render(<LayerChart layer={layer} t={6e8} scale={FULL_SCALE} onClose={() => {}} />)
     expect(container.textContent).toMatch(/no data/)
   })
 })

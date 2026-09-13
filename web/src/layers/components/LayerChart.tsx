@@ -4,11 +4,9 @@
  * Full-width chart docked to the timeline: it takes the *same* `TimeScale` the timeline
  * itself is using, so the value under the playhead sits directly above it rather than being
  * independently computed. Renders the uncertainty band wherever the layer carries `bounds`.
- * Collapsed to a title bar by default — the expand toggle is local UI state, not part of the
- * `t` model, so it does not affect purity of anything in `@/layers`.
+ * Whether it is shown at all is the caller's state (the HUD sparkline opens it); the chart
+ * only offers a way to close itself, so opening a chart is always a single gesture.
  */
-
-import { useState } from 'react'
 
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
@@ -25,6 +23,7 @@ export interface LayerChartProps {
   layer: Layer<ScalarValue>
   t: GeoTime
   scale: TimeScale
+  onClose: () => void
 }
 
 interface ChartPoint {
@@ -34,9 +33,7 @@ interface ChartPoint {
   upper: number | null
 }
 
-export function LayerChart({ layer, t, scale }: LayerChartProps) {
-  const [expanded, setExpanded] = useState(false)
-
+export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   const samples: Array<ChartPoint | null> = []
   for (let i = 0; i <= SAMPLE_COUNT; i++) {
     const u = i / SAMPLE_COUNT
@@ -84,47 +81,64 @@ export function LayerChart({ layer, t, scale }: LayerChartProps) {
 
   const playheadU = clampUnit(scale.toUnit(t))
   const playheadValue = layer.sample(t)
+  const unit = playheadValue?.unit ?? ''
 
   return (
     <div className={styles.chart}>
-      <button type="button" className={styles.chartToggle} onClick={() => setExpanded((e) => !e)} aria-expanded={expanded}>
-        {layer.name} — {playheadValue === null ? 'no data' : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
-        <span className={styles.chartHint} aria-hidden="true">
-          {expanded ? 'hide chart' : 'show chart'}
+      <div className={styles.chartHeader}>
+        <span className={styles.label}>{layer.name}</span>
+        <span className={styles.chartValue}>
+          {playheadValue === null ? 'no data' : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
         </span>
-      </button>
-      {expanded && (
-        <div className={styles.chartPlot}>
-          {/* Stretched non-uniformly (`preserveAspectRatio="none"`) so x spans exactly the
-              timeline's width and the playhead lines up with the timeline's own. */}
-          <svg
-            className={styles.chartSvg}
-            viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
-            preserveAspectRatio="none"
-            role="img"
-            aria-label={`${layer.name} chart`}
-          >
-            {bandSegments.map((seg, i) => {
-              const upperPath = seg.map((p) => `${x(p.u)},${y(p.upper ?? p.value)}`)
-              const lowerPath = [...seg].reverse().map((p) => `${x(p.u)},${y(p.lower ?? p.value)}`)
-              return <polygon key={i} className={styles.chartBand} points={[...upperPath, ...lowerPath].join(' ')} />
-            })}
-            {lineSegments.map((seg, i) => (
-              <polyline key={i} className={styles.chartLine} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
-            ))}
-            <line className={styles.chartPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />
-          </svg>
-          {playheadValue !== null && (
-            <span
-              className={styles.chartDot}
-              style={{
-                left: `${(x(playheadU) / VIEW_WIDTH) * 100}%`,
-                top: `${(y(playheadValue.value) / VIEW_HEIGHT) * 100}%`,
-              }}
-            />
-          )}
-        </div>
-      )}
+        <button type="button" className={styles.chartClose} onClick={onClose} aria-label={`Close ${layer.name} chart`}>
+          {'✕'}
+        </button>
+      </div>
+      <div className={styles.chartPlot}>
+        {/* Stretched non-uniformly (`preserveAspectRatio="none"`) so x spans exactly the
+            timeline's width and the playhead lines up with the timeline's own. */}
+        <svg
+          className={styles.chartSvg}
+          viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
+          preserveAspectRatio="none"
+          role="img"
+          aria-label={`${layer.name} chart`}
+        >
+          {lineSegments.map((seg, i) => {
+            const top = seg.map((p) => `${x(p.u)},${y(p.value)}`)
+            const base = [`${x(seg[seg.length - 1]!.u)},${VIEW_HEIGHT}`, `${x(seg[0]!.u)},${VIEW_HEIGHT}`]
+            return <polygon key={i} className={styles.chartArea} points={[...top, ...base].join(' ')} />
+          })}
+          {bandSegments.map((seg, i) => {
+            const upperPath = seg.map((p) => `${x(p.u)},${y(p.upper ?? p.value)}`)
+            const lowerPath = [...seg].reverse().map((p) => `${x(p.u)},${y(p.lower ?? p.value)}`)
+            return <polygon key={i} className={styles.chartBand} points={[...upperPath, ...lowerPath].join(' ')} />
+          })}
+          {lineSegments.map((seg, i) => (
+            <polyline key={i} className={styles.chartLine} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
+          ))}
+          <line className={styles.chartPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />
+        </svg>
+        {presentValues.length > 0 && (
+          <>
+            <span className={`${styles.chartAxis} ${styles.chartAxisMax}`} aria-hidden="true">
+              {formatValue(max)} {unit}
+            </span>
+            <span className={`${styles.chartAxis} ${styles.chartAxisMin}`} aria-hidden="true">
+              {formatValue(min)} {unit}
+            </span>
+          </>
+        )}
+        {playheadValue !== null && (
+          <span
+            className={styles.chartDot}
+            style={{
+              left: `${(x(playheadU) / VIEW_WIDTH) * 100}%`,
+              top: `${(y(playheadValue.value) / VIEW_HEIGHT) * 100}%`,
+            }}
+          />
+        )}
+      </div>
     </div>
   )
 }

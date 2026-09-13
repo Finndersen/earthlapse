@@ -3,7 +3,9 @@
 /** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, event uncertainty bands with
  *  LOD fade, scene checkpoint pips, and the playhead. A luminous hairline baseline rather than
  *  a filled panel, per the shared visual language — the hit area (`.hitArea`) stays taller
- *  than anything drawn inside it so the track stays easy to grab. */
+ *  than anything drawn inside it so the track stays easy to grab. Each pip carries
+ *  `data-checkpoint-pip`, a stable hook the shell uses to recede whatever sits where a pip's
+ *  hover preview rises. */
 
 import { useCallback, useMemo } from 'react'
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
@@ -33,6 +35,17 @@ const FADE_BAND = 0.12
  *  hand since CSS custom properties can't drive inline pixel math here. */
 const PIP_BASELINE_PX = 24
 const PIP_ROW_STEP_PX = 11
+
+/** Half of `.pipPreview`'s width in the CSS module: a pip closer than this to either end of
+ *  the track anchors its preview to that side instead of centring it, so it is never clipped
+ *  by the window edge. */
+const PREVIEW_HALF_WIDTH_PX = 60
+
+function previewAnchorClass(u: number, trackWidthPx: number): string {
+  if (u * trackWidthPx < PREVIEW_HALF_WIDTH_PX) return styles.previewStart ?? ''
+  if ((1 - u) * trackWidthPx < PREVIEW_HALF_WIDTH_PX) return styles.previewEnd ?? ''
+  return ''
+}
 
 interface ScrubTrackProps {
   t: GeoTime
@@ -173,6 +186,7 @@ export function ScrubTrack({
           key={pip.id}
           type="button"
           className={styles.pip}
+          data-checkpoint-pip
           style={{ left: `${pip.u * 100}%`, top: PIP_BASELINE_PX - pip.row * PIP_ROW_STEP_PX }}
           title={`${pip.label} — ${formatGeoTime(pip.t)}`}
           aria-label={`${pip.label}, ${formatGeoTime(pip.t)}`}
@@ -184,7 +198,7 @@ export function ScrubTrack({
           }}
         >
           <span aria-hidden className={styles.pipDiamond} />
-          <span aria-hidden className={styles.pipPreview}>
+          <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(pip.u, trackWidthPx)}`}>
             {pip.thumbnailUrl && <img className={styles.pipThumb} src={pip.thumbnailUrl} alt="" />}
             <span className={styles.pipTime}>{formatGeoTime(pip.t)}</span>
             <span className={styles.pipLabel}>{pip.label}</span>

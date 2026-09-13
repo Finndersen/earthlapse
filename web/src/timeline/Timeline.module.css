@@ -10,7 +10,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: clamp(12px, 2vw, 28px);
+  /* Clears the minimap's range label, which rides above its strip into this gap. */
+  margin-top: 12px;
+}
+
+.minimap {
+  flex: 1;
+  min-width: 0;
 }
 
 .rightControls {
@@ -46,6 +53,14 @@
   color: var(--hud-accent, #e8b06a);
 }
 
-.minimapRow {
-  margin-top: 6px;
+@media (max-width: 760px) {
+  .controlsRow {
+    flex-wrap: wrap;
+    row-gap: 18px;
+  }
+
+  .minimap {
+    order: 3;
+    flex-basis: 100%;
+  }
 }

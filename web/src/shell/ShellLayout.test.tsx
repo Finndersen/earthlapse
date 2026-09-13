@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { ShellLayout } from './ShellLayout'
@@ -10,7 +11,7 @@ afterEach(() => {
   cleanup()
 })
 
-function renderShell(calm = false) {
+function renderShell({ calm = false, globeExpanded = false, chart = <div>CHART_SLOT</div> as ReactNode } = {}) {
   return render(
     <ShellLayout
       scene={<div>SCENE_SLOT</div>}
@@ -20,9 +21,10 @@ function renderShell(calm = false) {
       badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
       caption={<div>CAPTION_SLOT</div>}
-      chart={<div>CHART_SLOT</div>}
+      chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
       calm={calm}
+      globeExpanded={globeExpanded}
     />,
   )
 }
@@ -59,7 +61,25 @@ describe('ShellLayout', () => {
   })
 
   it.each([true, false])('exposes calm=%s on the root for the periphery fade', (calm) => {
-    const { container } = renderShell(calm)
+    const { container } = renderShell({ calm })
     expect((container.firstElementChild as HTMLElement).dataset.calm).toBe(String(calm))
+  })
+
+  it.each([
+    [<div key="chart">CHART_SLOT</div>, 'true'],
+    [null, 'false'],
+  ])('exposes whether a chart is open, so the caption can yield its place (chart %#)', (chart, expected) => {
+    const { container } = renderShell({ chart })
+    expect((container.firstElementChild as HTMLElement).dataset.chartOpen).toBe(expected)
+  })
+
+  it.each([true, false])('exposes globeExpanded=%s on the root', (globeExpanded) => {
+    const { container } = renderShell({ globeExpanded })
+    expect((container.firstElementChild as HTMLElement).dataset.globeExpanded).toBe(String(globeExpanded))
+  })
+
+  it('keeps the reconstruction note outside the caption slot, so it stays while a chart is open', () => {
+    renderShell()
+    expect(screen.getByText('CAPTION_SLOT').parentElement?.contains(screen.getByText(/artistic reconstruction/i))).toBe(false)
   })
 })

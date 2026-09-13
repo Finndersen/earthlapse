@@ -40,7 +40,10 @@
  * child — this floats over whatever darkened surround the shell provides. The current-time
  * readout lives on the scrub track, riding above the playhead, rather than as a centred span
  * in this row — the shell shows the large era/time title elsewhere (`eraNameForTime`,
- * exported from `eras.ts`, is what it reads that from).
+ * exported from `eras.ts`, is what it reads that from). The transport, minimap and zoom
+ * controls share one row *beneath* the track, so the space above it belongs only to things
+ * that ride the track (the playhead readout, checkpoint previews, a docked chart) and never
+ * collides with a button.
  */
 
 import { useEffect } from 'react'
@@ -146,6 +149,18 @@ export function Timeline({
 
   return (
     <div className={styles.timeline} onKeyDown={handleKeyDown}>
+      <ScrubTrack
+        t={t}
+        window={visibleWindow}
+        scale={scale}
+        scaleKind={scaleKind}
+        events={events}
+        checkpoints={checkpoints}
+        onScrub={onScrub}
+        onWindowChange={onWindowChange}
+        onFrameEvent={handleFrameEvent}
+      />
+      <AxisTicks window={visibleWindow} scale={scale} />
       <div className={styles.controlsRow}>
         <Transport
           t={t}
@@ -156,6 +171,9 @@ export function Timeline({
           onScrub={onScrub}
           onPlaybackChange={onPlaybackChange}
         />
+        <div className={styles.minimap}>
+          <Minimap t={t} window={visibleWindow} checkpoints={checkpoints} onWindowChange={onWindowChange} animateWindowTo={animateWindowTo} />
+        </div>
         <div className={styles.rightControls}>
           <ZoomControls
             onZoomIn={() => zoomAroundPlayhead(BUTTON_ZOOM_FACTOR)}
@@ -172,21 +190,6 @@ export function Timeline({
             {scaleKind === 'symlog' ? 'symlog' : 'linear'}
           </button>
         </div>
-      </div>
-      <ScrubTrack
-        t={t}
-        window={visibleWindow}
-        scale={scale}
-        scaleKind={scaleKind}
-        events={events}
-        checkpoints={checkpoints}
-        onScrub={onScrub}
-        onWindowChange={onWindowChange}
-        onFrameEvent={handleFrameEvent}
-      />
-      <AxisTicks window={visibleWindow} scale={scale} />
-      <div className={styles.minimapRow}>
-        <Minimap t={t} window={visibleWindow} checkpoints={checkpoints} onWindowChange={onWindowChange} animateWindowTo={animateWindowTo} />
       </div>
     </div>
   )

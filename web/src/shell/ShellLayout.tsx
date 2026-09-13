@@ -20,13 +20,17 @@ export interface ShellLayoutProps {
   ancestor: ReactNode
   /** Bottom-centre, above the timeline: the scene caption as a subtitle. */
   caption: ReactNode
-  /** Just above the timeline: the expandable chart for the active layer, or nothing. */
-  chart: ReactNode
+  /** The open layer chart, or `null`. It takes the caption's place above the timeline (the
+   *  caption yields while it is open) so the two never overlap. */
+  chart: ReactNode | null
   /** Bottom band: the warped timeline with scrub, play and speed controls. */
   timeline: ReactNode
   /** Idle calm: quiets the periphery (globe, readouts, ancestor, credits) while the caption,
    *  title and timeline stay fully visible. */
   calm: boolean
+  /** The globe fills the lens: the title and timeline stay above its backdrop, still legible
+   *  and scrubbable (watching the continents move is the point), while the rest recedes. */
+  globeExpanded: boolean
 }
 
 /**
@@ -46,9 +50,10 @@ export function ShellLayout({
   chart,
   timeline,
   calm,
+  globeExpanded,
 }: ShellLayoutProps) {
   return (
-    <div className={styles.shell} data-calm={calm}>
+    <div className={styles.shell} data-calm={calm} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
       <div className={styles.scene}>{scene}</div>
       <div className={styles.lens} aria-hidden="true" />
 
@@ -75,11 +80,11 @@ export function ShellLayout({
         </Link>
 
         <div className={styles.bottom}>
-          <div className={styles.caption}>
-            {caption}
-            <p className={styles.note}>Artistic reconstruction — plausibility, not accuracy.</p>
+          <div className={styles.stage}>
+            <div className={styles.caption}>{caption}</div>
+            <div className={styles.chart}>{chart}</div>
           </div>
-          <div className={styles.chart}>{chart}</div>
+          <p className={styles.note}>Artistic reconstruction — plausibility, not accuracy.</p>
           <div className={styles.timeline}>{timeline}</div>
         </div>
       </div>

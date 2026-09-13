@@ -3,7 +3,7 @@
  * ADR-012: a smooth whole-image crossfade with a minimum wall-clock duration, replacing the
  * noise-masked dissolve).
  *
- * `<SceneView t scenes assetBase renderCaption? className? />` — prop-driven, pure in `t`
+ * `<SceneView t scenes assetBase minHoldSeconds renderCaption? className? />` — prop-driven, pure in `t`
  * (plus the OS reduced-motion preference and the presentation catch-up's own wall-clock
  * pacing; see `useReducedMotion` and `presentation.ts`). `scenes` is `Manifest.scenes` as-is
  * (sorted ascending by `t`); `assetBase` is `Manifest.assetBase`. `renderCaption`, if given,
@@ -18,7 +18,9 @@
  *   spent dissolving, centred on the midpoint.
  * - `step(state, target, dtSeconds)` — rate-limits a *presented* `SceneMix` toward `sceneAt`'s
  *   target, at most `dtSeconds / MIN_TRANSITION_SECONDS` of `mix` per call.
- *   `usePresentedSceneMix(target)` drives it with `requestAnimationFrame`.
+ *   `advance(presentation, target, dtSeconds, minHoldSeconds)` adds a minimum on-screen hold
+ *   for settled scenes (`PLAYBACK_HOLD_SECONDS` during playback), and
+ *   `usePresentedSceneMix(target, minHoldSeconds)` drives it with `requestAnimationFrame`.
  * - `dominantScene(mix)` / `captionOpacity(mix)` — which scene reads as "current", and that
  *   scene's caption cross-fade opacity.
  * - `driftAt(scenes, index, t)` — a scene's camera-drift uniforms (zoom + lateral pan).
@@ -28,7 +30,8 @@
 
 export { REST_DRIFT, driftAt } from './drift'
 export type { DriftUniforms } from './drift'
-export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
+export { advance, MIN_TRANSITION_SECONDS, PLAYBACK_HOLD_SECONDS, step, usePresentedSceneMix } from './presentation'
+export type { Presentation } from './presentation'
 export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt } from './scene'
 export type { SceneMix } from './scene'
 export { SceneView } from './SceneView'

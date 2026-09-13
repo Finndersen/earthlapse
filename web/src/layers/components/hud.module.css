@@ -118,44 +118,54 @@
   width: 100%;
 }
 
-.chartToggle {
+.chartHeader {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin: 0 auto 6px;
-  padding: 4px 10px;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.chartValue {
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--hud-accent, #e8b06a);
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 0.9),
+    0 1px 12px rgba(0, 0, 0, 0.85);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.chartClose {
+  align-self: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border: none;
-  border-radius: 999px;
+  border-radius: 50%;
   background: transparent;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  font-family: var(--hud-mono, ui-monospace, monospace);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  text-shadow: inherit;
+  font-size: 11px;
+  line-height: 24px;
   cursor: pointer;
   transition:
     color 220ms ease,
     box-shadow 220ms ease;
 }
 
-.chartToggle:hover {
+.chartClose:hover {
   color: var(--hud-ink, #efe9dc);
   box-shadow: inset 0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18));
 }
 
-.chartToggle:focus-visible {
+.chartClose:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 1px var(--hud-accent, #e8b06a);
-}
-
-.chartToggle[aria-expanded='true'] {
   color: var(--hud-accent, #e8b06a);
-}
-
-.chartHint {
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-  letter-spacing: 0.16em;
+  box-shadow:
+    inset 0 0 0 1px var(--hud-accent, #e8b06a),
+    0 0 12px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
 }
 
 .chartPlot {
@@ -168,7 +178,7 @@
   width: 100%;
   height: 100%;
   overflow: visible;
-  color: var(--hud-ink, #efe9dc);
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
 .chartLine {
@@ -177,6 +187,32 @@
   stroke-width: 1.4;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+}
+
+/* A faint amber wash under the trace ties the curve to the timeline below it. */
+.chartArea {
+  fill: var(--hud-accent, #e8b06a);
+  opacity: 0.08;
+}
+
+.chartAxis {
+  position: absolute;
+  left: 0;
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.chartAxisMax {
+  top: 0;
+}
+
+.chartAxisMin {
+  bottom: 0;
 }
 
 .chartBand {

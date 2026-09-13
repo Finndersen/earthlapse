@@ -157,6 +157,7 @@
 
 .title {
   grid-area: title;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,42 +212,99 @@
 
 .bottom {
   grid-area: bottom;
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   min-width: 0;
+  /* Only the band's contents take the pointer, never the gaps between them — with the globe
+     expanded this band sits above the globe's backdrop and must not swallow its clicks. */
+  pointer-events: none;
+}
+
+.bottom > * {
+  pointer-events: auto;
+}
+
+/* A feathered darkening that rises behind an open chart so its trace reads over any plate,
+   without a box: it fades in with the chart and has no edge of its own. */
+.bottom::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: calc(-1 * var(--gutter));
+  right: calc(-1 * var(--gutter));
+  bottom: -24px;
+  height: calc(100% + 120px);
+  background: linear-gradient(to top, rgba(3, 4, 6, 0.72) 0%, rgba(3, 4, 6, 0.6) 55%, transparent 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.shell[data-chart-open='true'] .bottom::before {
+  opacity: 1;
+}
+
+/* Caption and chart share one cell above the timeline: whichever is showing owns it. */
+.stage {
+  display: grid;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.stage > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.caption,
+.chart,
+.stage {
+  transition:
+    opacity 260ms ease,
+    visibility 0s linear 0s;
 }
 
 .caption {
-  align-self: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  justify-self: center;
   max-width: 62ch;
-  margin-bottom: clamp(14px, 2.4vh, 28px);
   text-align: center;
 }
 
+.shell[data-chart-open='true'] .caption,
+.shell[data-chart-open='false'] .chart,
+.shell[data-globe-expanded='true'] .stage {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 260ms ease,
+    visibility 0s linear 260ms;
+}
+
 .note {
-  margin: 0;
+  align-self: center;
+  /* Clears the playhead readout that rides above the scrub track at any playhead position. */
+  margin: 0 0 30px;
   font-family: var(--hud-mono);
   font-size: 9.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  text-align: center;
   color: var(--hud-faint);
 }
 
-/* The chart rises out of the timeline on a soft scrim rather than sitting in a box. */
-.chart {
-  position: relative;
-  min-width: 0;
+/* A checkpoint pip's hover preview rises into the caption's place (ScrubTrack marks its pips
+   with `data-checkpoint-pip` for exactly this); the caption recedes while it is shown. */
+.bottom:has([data-checkpoint-pip]:is(:hover, :focus-visible)) .stage {
+  opacity: 0.18;
 }
 
-.chart:not(:empty) {
-  margin-bottom: 10px;
-  padding-top: 18px;
-  background: radial-gradient(ellipse 70% 100% at 50% 100%, rgba(3, 4, 6, 0.6), transparent 80%);
+/* Globe.module.css's expanded backdrop sits at z-index 50 in this same stacking context. */
+.shell[data-globe-expanded='true'] .title,
+.shell[data-globe-expanded='true'] .bottom {
+  z-index: 60;
 }
 
 .timeline {
@@ -321,14 +379,15 @@
     margin-top: 0;
   }
 
-  .caption {
-    margin-bottom: 12px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .peripheral,
-  .credits {
+  .credits,
+  .caption,
+  .chart,
+  .stage,
+  .bottom::before {
     transition: none;
   }
 }

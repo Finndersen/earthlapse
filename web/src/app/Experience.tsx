@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
 import { AncestorReadout, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { resolveAssetUrl, SceneView } from '@/scene'
+import { PLAYBACK_HOLD_SECONDS, resolveAssetUrl, SceneView } from '@/scene'
 import { ShellLayout, useIdle } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
@@ -109,15 +109,17 @@ export function Experience() {
   }, [])
 
   // Initial t (W12a brief): open on the oldest scene, once, the first time the manifest
-  // loads — never again, so it doesn't fight a later manual scrub or a HMR-triggered reload
-  // of this effect.
-  const initialisedT = useRef(false)
+  // loads — never again, so it doesn't fight a later manual scrub. Nothing renders until it
+  // has been applied, so the scene mounts directly on the oldest still rather than first
+  // mounting at the store's default `t` and dissolving across all of history to get there.
+  const [initialised, setInitialised] = useState(false)
   useEffect(() => {
-    if (data.status !== 'ready' || initialisedT.current || data.manifest.scenes.length === 0) return
-    initialisedT.current = true
-    const oldest = data.manifest.scenes.reduce((a, b) => (b.t > a.t ? b : a))
-    setT(oldest.t)
-  }, [data, setT])
+    if (data.status !== 'ready' || initialised) return
+    if (data.manifest.scenes.length > 0) {
+      setT(data.manifest.scenes.reduce((a, b) => (b.t > a.t ? b : a)).t)
+    }
+    setInitialised(true)
+  }, [data, initialised, setT])
 
   // The playback loop (DESIGN §3): the one place `t` advances on its own. Always paced by the
   // full-domain scale, per `advancePlayhead`'s contract, so speed is independent of zoom.
@@ -164,7 +166,7 @@ export function Experience() {
     [data],
   )
 
-  if (data.status === 'loading') {
+  if (data.status === 'loading' || (data.status === 'ready' && !initialised)) {
     return <main className={styles.centered}>Loading manifest…</main>
   }
 
@@ -199,9 +201,16 @@ export function Experience() {
   return (
     <ShellLayout
       calm={calm}
+      globeExpanded={globeExpanded}
       scene={
         manifest.scenes.length > 0 ? (
-          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
+          <SceneView
+            t={t}
+            scenes={manifest.scenes}
+            assetBase={manifest.assetBase}
+            renderCaption={renderCaption}
+            minHoldSeconds={playback.playing ? PLAYBACK_HOLD_SECONDS : 0}
+          />
         ) : (
           <div className={styles.placeholder}>No scenes in manifest.</div>
         )
@@ -251,7 +260,9 @@ export function Experience() {
       ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
       caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
       chart={
-        expandedChartLayer && chartScale ? <LayerChart layer={expandedChartLayer} t={t} scale={chartScale} /> : null
+        expandedChartLayer && chartScale ? (
+          <LayerChart layer={expandedChartLayer} t={t} scale={chartScale} onClose={() => setExpandedChartLayerId(null)} />
+        ) : null
       }
       timeline={
         <Timeline
