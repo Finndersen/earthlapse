@@ -1,0 +1,19 @@
+# See docs/DATA_SOURCES.md for field meanings.
+#
+# events-core is hand-curated (DATA_SOURCES.md: "this is source, not derived data").
+# data/events.yaml IS the dataset; there is no single upstream file it is normalised from.
+# url/sha256 below describe the one concrete artifact fetch.py downloads: the ICS chart,
+# used as a dating reference while authoring data/events.yaml, not as raw input data.
+# Every individual event's citation lives in data/events.yaml itself.
+
+name = "events-core"
+title = "Curated Earth History Events"
+url = "https://stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf"
+sha256 = "7ce1edf87ca913933c704cae3be2f68f932d14aaa111db36c3d9c0e79e57c237"
+licence = "CC0 (Wikidata candidate pool, unused here) + ICS chart free-for-research/non-commercial-use-with-attribution (not modified beyond resizing) + per-event literature citations retain their own copyright, paraphrased not copied — see README.md"
+citation = "Every event in data/events.yaml carries its own specific citation. This manifest's citation covers only the ICS International Chronostratigraphic Chart v2024/12, stratigraphy.org, used as a boundary-dating reference."
+time_domain = [4.59e9, 0]    # years BP, [oldest, newest] — earth-formation.t_max .. present
+output_shape = "EventSet"
+interpolation = "n/a"         # EventSet is discrete events, not resampled between points
+volume_bytes = 17574          # measured: data/curated/events-core.parquet, 29 events
+storage_tier = "git"

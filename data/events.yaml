@@ -1,0 +1,461 @@
+# events-core — the curated event set for the scrubbable timeline (EventSet "events-core").
+#
+# Hand-curated source of truth. This file IS the data; sources/events-core/normalise.py
+# only parses and validates it into pipeline.shapes.EventSet. Do not treat any other file
+# as authoritative for these dates.
+#
+# Time convention
+# ---------------
+# t_min / t_max are years BEFORE PRESENT (GeoTime, see pipeline/shapes.py), t_min nearer
+# the present. For deep-time events, "present" is calendar year-independent (radiometric
+# ages are already reported as "Ma"/"Ga" before present). For HISTORICAL events (agriculture
+# onward), t is computed with a fixed reference year rather than the run date, so the file
+# does not silently drift every time it is regenerated:
+#
+#     t = 2025 - CE_year        (a BCE year is negative, e.g. 3400 BCE -> CE_year = -3400)
+#
+# See sources/events-core/README.md for the full rationale.
+#
+# Every event's date is verified against its citation, not invented. Contested dates carry
+# a wide t_min/t_max interval and say so explicitly in the description — see
+# sources/events-core/README.md for the verification method and the full source list.
+
+events:
+  - id: earth-formation
+    label: Earth forms
+    t_min: 4.49e9
+    t_max: 4.59e9
+    importance: 1.0
+    description: >
+      Earth accretes from the solar nebula and differentiates into a metallic core and
+      silicate mantle. Radiometric ages of the oldest meteorites and terrestrial/lunar
+      samples converge on 4.54 +/- 0.05 Ga for the completion of accretion.
+    citation: >
+      Dalrymple, G.B. (2001). "The age of the Earth in the twentieth century: a problem
+      (mostly) solved." Geological Society, London, Special Publications, 190, 205-221.
+
+  - id: moon-forming-impact
+    label: Moon-forming impact
+    t_min: 4.35e9
+    t_max: 4.52e9
+    importance: 0.9
+    description: >
+      A Mars-sized protoplanet collides with the young Earth; debris from the collision
+      accretes into the Moon. Contested: Hf-W and zircon U-Pb dating place the event at
+      4.51-4.52 Ga, but a 2024 tidal-remelting model argues most lunar rock ages instead
+      record a later heating event around 4.35 Ga rather than the original crystallisation
+      age, so the two camps disagree on which age the rock record actually preserves.
+    citation: >
+      Barboni, M. et al. (2017). "Early formation of the Moon 4.51 billion years ago."
+      Science Advances, 3, e1602365. Contested by: Nimmo, F., Kleine, T. & Morbidelli, A.
+      (2024). "Tidally driven remelting around 4.35 billion years ago indicates the Moon
+      is old." Nature, 636, 598-602.
+
+  - id: first-life
+    label: Earliest evidence of life
+    t_min: 3.4e9
+    t_max: 4.1e9
+    importance: 1.0
+    description: >
+      The oldest markers of biological activity on Earth. Contested and wide: robust
+      stromatolite and microfossil evidence is secure at ~3.4-3.5 Ga (Pilbara, Australia),
+      while claims of biogenic carbon in 4.1 Ga zircons and in 3.7-3.8 Ga Isua (Greenland)
+      metasediments remain disputed and lack scientific consensus.
+    citation: >
+      Allwood, A.C. et al. (2006). "Stromatolite reef from the Early Archaean era of
+      Australia." Nature, 441, 714-718 (~3.43 Ga, robust). Bell, E.A. et al. (2015).
+      "Potentially biogenic carbon preserved in a 4.1 billion-year-old zircon." PNAS,
+      112(47), 14518-14521 (contested upper bound).
+
+  - id: eukaryotes-origin
+    label: Eukaryotes originate
+    t_min: 1.6e9
+    t_max: 2.1e9
+    importance: 0.65
+    description: >
+      The lineage bearing a nucleus and internal membrane-bound organelles diverges from
+      other life. Contested: candidate fossils (the Francevillian Biota, Gabon) are dated
+      to 2.1 Ga, but the oldest fossils with unambiguous crown-eukaryote features are
+      ~1.6 Ga, closer to molecular-clock estimates for the last eukaryotic common ancestor.
+    citation: >
+      El Albani, A. et al. (2010). "Large colonial organisms with coordinated growth in
+      oxygenated environments 2.1 Gyr ago." Nature, 466, 100-104 (contested, 2.1 Ga).
+      Bengtson, S. et al. (2017). "Three-dimensional preservation of cellular and
+      subcellular structures suggests 1.6 billion-year-old crown-group red algae." PLOS
+      Biology, 15(3), e2000735.
+
+  - id: great-oxidation-event
+    label: Great Oxidation Event
+    t_min: 2.1e9
+    t_max: 2.4e9
+    importance: 0.95
+    description: >
+      Atmospheric oxygen rises by orders of magnitude as cyanobacterial photosynthesis
+      overwhelms reducing sinks in the crust and ocean — the first permanent oxygenation
+      of Earth's atmosphere, ending the anoxic Archean.
+    citation: >
+      Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). "The rise of oxygen in Earth's
+      early ocean and atmosphere." Nature, 506, 307-315.
+
+  - id: multicellularity-sexual-reproduction
+    label: Complex multicellularity and sex
+    t_min: 1.030e9
+    t_max: 1.064e9
+    importance: 0.55
+    description: >
+      Bangiomorpha pubescens, a red alga from Arctic Canada, is the oldest fossil with
+      differentiated reproductive cells and complex multicellular organisation — the
+      earliest direct evidence of eukaryotic sexual reproduction.
+    citation: >
+      Gibson, T.M. et al. (2018). "Precise age of Bangiomorpha pubescens dates the origin
+      of eukaryotic photosynthesis." Geology, 46(2), 135-138. Age 1047 +/- 17 Ma via
+      Re-Os dating.
+
+  - id: snowball-earth
+    label: Snowball Earth glaciations
+    t_min: 6.35e8
+    t_max: 7.2e8
+    importance: 0.85
+    description: >
+      Two near-global glaciations — the Sturtian (~717-660 Ma) and Marinoan (~650-635 Ma)
+      — bracket the Cryogenian Period, with geological evidence of ice reaching equatorial
+      latitudes ("Snowball Earth"). Onset and termination ages carry real uncertainty.
+    citation: >
+      Prave, A.R. et al. (2016). "A new rock-based definition for the Cryogenian Period
+      (circa 720-635 Ma)." Episodes, 39(2), 1-7. Base and top ages of the Cryogenian
+      System per the ICS International Chronostratigraphic Chart v2024/12.
+
+  - id: ediacaran-biota
+    label: Ediacaran biota
+    t_min: 5.388e8
+    t_max: 5.71e8
+    importance: 0.75
+    description: >
+      The Ediacara Biota — the first macroscopic, complex, soft-bodied multicellular
+      organisms — appear worldwide (Avalon assemblage, ~571 Ma) and persist until the
+      Ediacaran-Cambrian boundary. The interval here spans the biota's known stratigraphic
+      range, not date uncertainty about a single origin event.
+    citation: >
+      Narbonne, G.M. (2005). "The Ediacara Biota: Neoproterozoic origin of animals and
+      their ecosystems." Annual Review of Earth and Planetary Sciences, 33, 421-442. Top
+      of Ediacaran Period (Fortune Head GSSP) = 538.8 +/- 0.2 Ma per the ICS International
+      Chronostratigraphic Chart v2024/12.
+
+  - id: cambrian-explosion
+    label: Cambrian explosion
+    t_min: 5.21e8
+    t_max: 5.388e8
+    importance: 1.0
+    description: >
+      Most modern animal phyla appear in the fossil record within a geologically short
+      interval at the base of the Cambrian, as hard skeletons, complex eyes and burrowing
+      behaviour become widespread for the first time.
+    citation: >
+      Base of the Cambrian System (Ediacaran-Cambrian boundary, Fortune Head GSSP,
+      Newfoundland) = 538.8 +/- 0.2 Ma, per the ICS International Chronostratigraphic
+      Chart v2024/12. Erwin, D.H. & Valentine, J.W. (2013). The Cambrian Explosion: The
+      Construction of Animal Biodiversity. Roberts and Company (main diversification
+      pulse ends within Cambrian Stage 3, ~521 Ma).
+
+  - id: land-plants
+    label: Land plants colonise land
+    t_min: 4.25e8
+    t_max: 4.70e8
+    importance: 0.8
+    description: >
+      Embryophytes (land plants) colonise the terrestrial surface. Contested: the oldest
+      fossil evidence is liverwort-like cryptospores at ~470 Ma (Dapingian, Ordovician),
+      while the oldest unambiguous vascular macrofossils (Cooksonia) are ~425 Ma (Silurian).
+    citation: >
+      Rubinstein, C.V. et al. (2010). "Early Middle Ordovician evidence for land plants in
+      Argentina (eastern Gondwana)." New Phytologist, 188(2), 365-369. Edwards, D., Fanning,
+      U. & Richardson, J.B. (1994) for Cooksonia macrofossils, Silurian, ~425 Ma.
+
+  - id: insects
+    label: First insects
+    t_min: 3.96e8
+    t_max: 4.11e8
+    importance: 0.5
+    description: >
+      Rhyniognatha hirsti, from the Rhynie chert, is the specimen most commonly cited as
+      the oldest insect, based on mandible structure some interpret as diagnostic of a
+      winged insect. Contested: the fragmentary specimen has also been reinterpreted as a
+      myriapod rather than an insect.
+    citation: >
+      Engel, M.S. & Grimaldi, D.A. (2004). "New light shed on the oldest insect." Nature,
+      427, 627-630. Rhynie chert radiometrically dated to ~407-411 Ma (Parry, S.F. et al.
+      2011, Geology). Reinterpretation: Haug, C. & Haug, J.T. (2017). "The presumed oldest
+      flying insect: more likely a myriapod?" PeerJ, 5, e3402.
+
+  - id: tetrapods
+    label: First tetrapods
+    t_min: 3.65e8
+    t_max: 3.95e8
+    importance: 0.85
+    description: >
+      The oldest evidence of tetrapods — four-limbed vertebrates capable of terrestrial
+      locomotion. Trackways from Zachelmie, Poland predate the oldest body fossils
+      (Ichthyostega, Acanthostega) by roughly 20-30 Myr.
+    citation: >
+      Niedzwiedzki, G. et al. (2010). "Tetrapod trackways from the early Middle Devonian
+      period of Poland." Nature, 463, 43-48 (recalibrated to ~390-391 Ma against GTS2012).
+      Ahlberg, P.E. & Clack, J.A. (2006) for Ichthyostega/Acanthostega body fossils,
+      ~365 Ma, Late Devonian.
+
+  - id: amniotes
+    label: First amniotes
+    t_min: 3.07e8
+    t_max: 3.589e8
+    importance: 0.7
+    description: >
+      The amniotic egg allows vertebrates to reproduce away from standing water. Hylonomus
+      lyelli (~318-307 Ma) is the oldest uncontroversial amniote. Contested: fossil
+      trackways from the Snowy Plains Formation, Victoria, Australia, attributed to a
+      crown-group amniote with clawed feet and dated to the early Tournaisian (~358.9-354
+      Ma), would push the origin of crown Amniota back by 35-40 Myr if the attribution
+      holds.
+    citation: >
+      Carroll, R.L. (1964). "The earliest reptiles." Zoological Journal of the Linnean
+      Society, 45, 61-83 (Hylonomus lyelli). Contested pushback: Long, J.A. et al. (2025).
+      "Earliest amniote tracks recalibrate the timeline of tetrapod evolution." Nature,
+      641, 1193-1200 (Snowy Plains Formation track-bearing slab).
+
+  - id: permian-extinction
+    label: End-Permian mass extinction
+    t_min: 2.5188e8
+    t_max: 2.51941e8
+    importance: 1.0
+    description: >
+      The most severe mass extinction in Earth's history eliminates over 90% of marine
+      species and roughly 70% of terrestrial vertebrate genera, over an interval as short
+      as ~60,000 years — one of the most precisely dated events in deep time.
+    citation: >
+      Burgess, S.D., Bowring, S. & Shen, S.Z. (2014). "High-precision timeline for Earth's
+      most severe extinction." PNAS, 111(9), 3316-3321. Extinction interval bracketed
+      between 251.941 +/- 0.037 Ma and 251.880 +/- 0.031 Ma at the Meishan GSSP, Zhejiang,
+      China.
+
+  - id: dinosaurs
+    label: First dinosaurs
+    t_min: 2.31e8
+    t_max: 2.43e8
+    importance: 0.8
+    description: >
+      The oldest unambiguous dinosaurs (Eoraptor, Herrerasaurus) appear in the
+      Ischigualasto Formation of Argentina ~231 Ma. Contested: the fragmentary
+      Nyasasaurus parringtoni, if correctly identified as a dinosaur rather than a close
+      relative, would push the origin back to ~243 Ma.
+    citation: >
+      Martinez, R.N. et al. (2011). "A basal dinosaur from the dawn of the dinosaur era in
+      southwestern Pangaea." Science, 331(6014), 206-210 (Eoraptor, ~231 Ma). Nesbitt, S.J.
+      et al. (2013). "The oldest dinosaur? A Middle Triassic dinosauriform from Tanzania."
+      Biology Letters, 9(1), 20120949 (Nyasasaurus, contested, ~243 Ma).
+
+  - id: mammals-origin
+    label: First mammals
+    t_min: 2.05e8
+    t_max: 2.25e8
+    importance: 0.55
+    description: >
+      The earliest mammaliaforms — small, likely nocturnal insectivores — diverge from
+      cynodont therapsids around the Triassic-Jurassic boundary.
+    citation: >
+      Lucas, S.G. & Luo, Z. (1993). "Adelobasileus from the Upper Triassic of West Texas:
+      the oldest mammal." Journal of Vertebrate Paleontology, 13(3), 309-334 (~225 Ma).
+      Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) for Morganucodon, ~205 Ma.
+
+  - id: birds-origin
+    label: First birds
+    t_min: 1.485e8
+    t_max: 1.508e8
+    importance: 0.6
+    description: >
+      Archaeopteryx lithographica, from the Solnhofen limestone of Bavaria, is the
+      earliest widely accepted bird — a feathered, winged theropod bridging non-avian
+      dinosaurs and modern birds.
+    citation: >
+      Foth, C. & Rauhut, O.W.M. (2017). "Re-evaluation of the Haarlem Archaeopteryx and
+      the radiation of maniraptoran theropod dinosaurs." BMC Evolutionary Biology, 17,
+      236. Archaeopteryx horizon within the Solnhofen Limestone (Late Jurassic,
+      Tithonian), ~150.8-148.5 Ma.
+
+  - id: flowering-plants
+    label: Flowering plants
+    t_min: 1.25e8
+    t_max: 1.33e8
+    importance: 0.75
+    description: >
+      The oldest undisputed flowering plants (Montsechia vidalii, Archaefructus) appear
+      in Early Cretaceous lake deposits. A disputed claim of Middle Triassic
+      angiosperm-like pollen (~247-242 Ma) from the Alps has not been widely accepted, so
+      the timing of angiosperm origin well before the Cretaceous remains unresolved.
+    citation: >
+      Gomez, B. et al. (2015). "Montsechia, an ancient aquatic angiosperm." PNAS,
+      112(35), 10985-10988 (~130 Ma, Barremian). Earliest undisputed angiosperm pollen
+      spans the Hauterivian-Barremian, ~132.9-125 Ma.
+
+  - id: k-pg-impact
+    label: K-Pg impact
+    t_min: 6.6032e7
+    t_max: 6.6054e7
+    importance: 1.0
+    description: >
+      The Chicxulub asteroid impacts the Yucatan Peninsula, triggering the
+      Cretaceous-Paleogene mass extinction that ends the age of non-avian dinosaurs.
+    citation: >
+      Renne, P.R. et al. (2013). "Time scales of critical events around the
+      Cretaceous-Paleogene boundary." Science, 339(6120), 684-687. Chicxulub impact and
+      K-Pg boundary dated to 66.043 +/- 0.011 Ma.
+
+  - id: primates
+    label: First primates
+    t_min: 5.6e7
+    t_max: 6.59e7
+    importance: 0.7
+    description: >
+      Purgatorius, a stem primate from Montana, appears within roughly 150,000 years of
+      the K-Pg extinction. Crown-group primates (Euprimates, e.g. Teilhardina) are not
+      securely documented until ~56 Ma — the interval spans this stem-vs-crown ambiguity.
+    citation: >
+      Wilson Mantilla, G.P. et al. (2021). "Earliest Palaeocene purgatoriids and the
+      initial radiation of stem primates." Royal Society Open Science, 8(2), 210050
+      (Purgatorius, ~65.9 Ma). Smith, T., Rose, K.D. & Gingerich, P.D. (2006) for
+      Teilhardina, oldest crown primate, ~55.8 Ma.
+
+  - id: hominins
+    label: First hominins
+    t_min: 6.0e6
+    t_max: 7.2e6
+    importance: 0.8
+    description: >
+      Sahelanthropus tchadensis, from Chad, is the earliest widely proposed hominin, with
+      skeletal evidence interpreted by its describers as consistent with bipedalism.
+      Contested: its age predates the molecular estimate for the human-chimpanzee split
+      (~6.3-5.4 Ma), and its classification as a hominin rather than a stem great ape is
+      actively debated.
+    citation: >
+      Brunet, M. et al. (2002). "A new hominid from the Upper Miocene of Chad, Central
+      Africa." Nature, 418, 145-151. Site dated 7.2-6.8 Ma via biostratigraphy and
+      cosmogenic nuclide dating (Lebatard, A.-E. et al. 2008, PNAS, 105(9), 3226-3231).
+
+  - id: control-of-fire
+    label: Habitual control of fire
+    t_min: 4.0e5
+    t_max: 1.5e6
+    importance: 0.5
+    description: >
+      Evidence for hominin-controlled fire ranges from isolated early occurrences
+      (~1.0-1.5 Ma) to unambiguous, habitual, everyday use only from around 400 ka onward.
+      Contested: the gap between sporadic and habitual fire use spans over a million years
+      and the transition is not sharply dated.
+    citation: >
+      Berna, F. et al. (2012). "Microstratigraphic evidence of in situ fire in the
+      Acheulean strata of Wonderwerk Cave, Northern Cape province, South Africa." PNAS,
+      109(20), E1215-E1220 (~1.0 Ma). Roebroeks, W. & Villa, P. (2011). "On the earliest
+      evidence for habitual use of fire in Europe." PNAS, 108(13), 5209-5214 (habitual use
+      not clearly established before ~300-400 ka).
+
+  - id: homo-sapiens-origin
+    label: Homo sapiens appears
+    t_min: 2.81e5
+    t_max: 3.49e5
+    importance: 0.9
+    description: >
+      Fossils from Jebel Irhoud, Morocco, combine a modern-looking face with a more
+      archaic braincase shape. They are the oldest known Homo sapiens remains, pushing the
+      species' origin back roughly 100,000 years earlier than previously recognised and
+      supporting a pan-African rather than single-region origin.
+    citation: >
+      Hublin, J.-J. et al. (2017). "New fossils from Jebel Irhoud, Morocco and the
+      pan-African origin of Homo sapiens." Nature, 546, 289-292. Richter, D. et al.
+      (2017). "The age of the hominin fossils from Jebel Irhoud, Morocco, and the origins
+      of the Middle Stone Age." Nature, 546, 293-296. Combined age estimate: 315 +/- 34 ka.
+
+  - id: out-of-africa-migration
+    label: Out-of-Africa migration
+    t_min: 5.0e4
+    t_max: 7.0e4
+    importance: 0.6
+    description: >
+      Genomic evidence dates the principal migration of modern humans out of Africa,
+      ancestral to all non-African populations living today, to this window. Earlier,
+      smaller dispersals (e.g. into the Levant by ~180 ka) did not leave a substantial
+      genetic legacy in living non-African populations.
+    citation: >
+      Nielsen, R. et al. (2017). "Tracing the peopling of the world through genomics."
+      Nature, 541, 302-310 (review, ~50-70 ka for the main out-of-Africa dispersal).
+      Pagani, L. et al. (2015). "Tracing the route of modern humans out of Africa by using
+      225 whole-genome sequences from Ethiopians and Egyptians." AJHG, 96(6), 986-991.
+
+  - id: agriculture
+    label: Agriculture begins
+    t_min: 10025
+    t_max: 11525
+    importance: 0.85
+    description: >
+      Plant domestication begins in the Fertile Crescent — the first of several
+      independent origins of agriculture worldwide. The transition from cultivation of
+      wild stands to fixed morphological domestication (non-shattering cereals) was
+      gradual, spanning roughly two millennia, so the interval reflects that process
+      rather than a single event.
+    citation: >
+      Zeder, M.A. (2011). "The Origins of Agriculture in the Near East." Current
+      Anthropology, 52(S4), S221-S235. Domestication of founder crops (einkorn, emmer,
+      barley) begins ~10,500-9,500 cal BC, with morphological domestication clearly
+      established by ~8,000 cal BC.
+
+  - id: writing
+    label: Writing invented
+    t_min: 5025
+    t_max: 5425
+    importance: 0.75
+    description: >
+      Proto-cuneiform, the earliest writing system, develops at Uruk in southern
+      Mesopotamia as an administrative technology for tracking goods, labour and rations,
+      before evolving into full logographic cuneiform script by ~3200 BC.
+    citation: >
+      Englund, R.K. (1998). "Texts from the Late Uruk Period." In Mesopotamien:
+      Spaturuk-Zeit und Fruhdynastische Zeit (Orbis Biblicus et Orientalis 160/1).
+      Proto-cuneiform administrative tablets from Uruk date to the Uruk IV-III periods,
+      ~3400-3000 BC.
+
+  - id: industrial-revolution
+    label: Industrial Revolution
+    t_min: 185
+    t_max: 265
+    importance: 0.6
+    description: >
+      Mechanised manufacturing, steam power and the factory system transform Britain's
+      economy and, within a century, the rest of the industrialised world. Historians
+      disagree on precise bounds — Ashton's 1760-1830 and the wider 1760-1840 convention
+      are both in common use — so the interval reflects that disagreement.
+    citation: >
+      Ashton, T.S. (1948). The Industrial Revolution 1760-1830. Oxford University Press.
+      Conventional bracket widened to 1760-1840 by later historians (e.g. Encyclopaedia
+      Britannica, "Industrial Revolution").
+
+  - id: moon-landing
+    label: Moon landing
+    t_min: 56
+    t_max: 56
+    importance: 0.35
+    description: >
+      Apollo 11 lands the first humans on the Moon. Chosen as a precise, uncontested
+      near-present anchor point for the timeline — the rare event in this set with
+      effectively zero date uncertainty.
+    citation: >
+      NASA (1969). Apollo 11 Mission Report. Neil Armstrong and Buzz Aldrin land at Mare
+      Tranquillitatis on 20 July 1969 UTC.
+
+  - id: present
+    label: Present day
+    t_min: 0
+    t_max: 0
+    importance: 1.0
+    description: >
+      The reference instant against which every other event's years-before-present value
+      is measured (t = 0). See the README for the fixed 2025 reference-year convention
+      used to compute historical events' t values.
+    citation: >
+      By definition. t = 0 is the timeline's present-day anchor; see
+      sources/events-core/README.md for the reference-year convention.

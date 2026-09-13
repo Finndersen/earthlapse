@@ -1,0 +1,69 @@
+# A small REAL slice of data/events.yaml, committed for offline reference and any future
+# fixture-driven test. Not read by normalise.py — see its module docstring: normalise()
+# always parses the real data/events.yaml, per the working-conventions brief for this
+# source. Kept in the same schema so a test can load it the same way as data/events.yaml.
+
+events:
+  - id: earth-formation
+    label: Earth forms
+    t_min: 4.49e9
+    t_max: 4.59e9
+    importance: 1.0
+    description: >
+      Earth accretes from the solar nebula and differentiates into a metallic core and
+      silicate mantle. Radiometric ages of the oldest meteorites and terrestrial/lunar
+      samples converge on 4.54 +/- 0.05 Ga for the completion of accretion.
+    citation: >
+      Dalrymple, G.B. (2001). "The age of the Earth in the twentieth century: a problem
+      (mostly) solved." Geological Society, London, Special Publications, 190, 205-221.
+
+  - id: cambrian-explosion
+    label: Cambrian explosion
+    t_min: 5.21e8
+    t_max: 5.388e8
+    importance: 1.0
+    description: >
+      Most modern animal phyla appear in the fossil record within a geologically short
+      interval at the base of the Cambrian, as hard skeletons, complex eyes and burrowing
+      behaviour become widespread for the first time.
+    citation: >
+      Base of the Cambrian System (Ediacaran-Cambrian boundary, Fortune Head GSSP,
+      Newfoundland) = 538.8 +/- 0.2 Ma, per the ICS International Chronostratigraphic
+      Chart v2024/12.
+
+  - id: permian-extinction
+    label: End-Permian mass extinction
+    t_min: 2.5188e8
+    t_max: 2.51941e8
+    importance: 1.0
+    description: >
+      The most severe mass extinction in Earth's history eliminates over 90% of marine
+      species and roughly 70% of terrestrial vertebrate genera, over an interval as short
+      as ~60,000 years — one of the most precisely dated events in deep time.
+    citation: >
+      Burgess, S.D., Bowring, S. & Shen, S.Z. (2014). "High-precision timeline for Earth's
+      most severe extinction." PNAS, 111(9), 3316-3321.
+
+  - id: k-pg-impact
+    label: K-Pg impact
+    t_min: 6.6032e7
+    t_max: 6.6054e7
+    importance: 1.0
+    description: >
+      The Chicxulub asteroid impacts the Yucatan Peninsula, triggering the
+      Cretaceous-Paleogene mass extinction that ends the age of non-avian dinosaurs.
+    citation: >
+      Renne, P.R. et al. (2013). "Time scales of critical events around the
+      Cretaceous-Paleogene boundary." Science, 339(6120), 684-687.
+
+  - id: present
+    label: Present day
+    t_min: 0
+    t_max: 0
+    importance: 1.0
+    description: >
+      The reference instant against which every other event's years-before-present value
+      is measured (t = 0).
+    citation: >
+      By definition. t = 0 is the timeline's present-day anchor; see
+      sources/events-core/README.md for the reference-year convention.
