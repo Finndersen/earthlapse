@@ -47,3 +47,5 @@ web/public/media
 .claude/worktrees/
 .pnpm-store/
 web/.vitest/
+web/AGENTS.md
+web/CLAUDE.md
