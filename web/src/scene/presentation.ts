@@ -18,13 +18,11 @@
  * `usePresentedSceneMix` drives `step` with `requestAnimationFrame`, only while the presented
  * state has not yet converged on the target (no idle rAF loop once it has caught up).
  *
- * There used to be a second layer here — a minimum on-screen hold (`PLAYBACK_HOLD_SECONDS`)
- * so fast symlog playback wouldn't perpetually mid-dissolve. It was removed: holding the
- * *presentation* pinned the picture to a stale scene while `t` (and every other readout keyed
- * off it — time, era, ancestor, CO2) kept advancing underneath it, desynchronising the image
- * from the rest of the HUD. Playback now paces `t` itself instead (`scene/pacing.ts`,
- * `timeline/playback.ts`'s `advancePlayhead` pacing argument), so this module only ever needs
- * to rate-limit `step` — the picture stays a pure function of `t` throughout normal playback.
+ * Minimum on-screen dwell during playback is not this module's job: holding the *presentation*
+ * would desynchronise the picture from every other readout keyed off `t` (time, era, ancestor,
+ * CO2). Playback paces `t` itself instead (`scene/pacing.ts`, `timeline/playback.ts`'s
+ * `advancePlayhead` pacing argument), so this rate limit is only a backstop for scrubbing and
+ * very fast playback.
  */
 
 import { useEffect, useRef, useState } from 'react'

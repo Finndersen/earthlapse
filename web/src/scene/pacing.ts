@@ -4,11 +4,9 @@
  * function of `t` during playback while still reading as settled scenes joined by deliberate
  * dissolves rather than a blur.
  *
- * The earlier approach (a `PLAYBACK_HOLD_SECONDS` hold on the *presented* mix, downstream of
- * `t`) desynchronised the picture from every other `t`-driven readout — the display could sit
- * on a held scene for seconds while the time/era/ancestor/CO2 HUD kept advancing. Pacing the
- * *playhead* instead means `sceneAt(scenes, t)` and everything else that reads `t` stay in
- * lockstep: nothing here touches presentation, only how fast `t` itself is allowed to move.
+ * Pacing the *playhead* rather than the presented mix keeps `sceneAt(scenes, t)` and every
+ * other `t`-driven readout (time, era, ancestor, CO2) in lockstep: nothing here touches
+ * presentation, only how fast `t` itself is allowed to move.
  *
  * `scenePlaybackSegments` computes, once per manifest, the ranges of `t` that must take at
  * least a minimum number of wall-clock seconds to cross at 1x: the held part of each scene
