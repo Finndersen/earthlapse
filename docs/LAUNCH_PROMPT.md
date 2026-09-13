@@ -33,7 +33,8 @@ differently.
 Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 
 - Never raise --max-spend. The ceiling for this build is 25 USD, enforced in
-  pipeline/spend.py. Expected actual spend is about 1.10 USD. If a build hits the ceiling,
+  pipeline/spend.py. Expected actual spend is about 5.50 USD, with the draft phase free on
+  the Gemini free tier. If a build hits the ceiling,
   stop and report; do not work around it, do not retry in a loop.
 - Do not modify anything in pipeline/shapes.py, pipeline/models.py, pipeline/graph.py,
   pipeline/spend.py, or web/src/types/. Agents import these. If one genuinely blocks a
@@ -43,6 +44,9 @@ Non-negotiables, all of which are in CLAUDE.md but which I want stated here too:
 - Every test must run offline against a committed fixture. No test may download a large file
   or hit a live API.
 - No provider name may appear outside pipeline/generators/.
+- Image generation uses the Gemini free tier for drafts. It has RPM limits and a daily token
+  cap, and a parallel fan-out WILL hit them. Keep generation concurrency low and treat HTTP
+  429 as backoff-and-retry, never as a failure or a reason to switch models.
 - If a data source turns out to be unusable — licence, rot, volume, whatever — stop and
   report. Do not silently substitute a different dataset.
 
@@ -72,9 +76,11 @@ Commit as you go, one commit per work package, so I can review the history.
 
 1. `pip install -e ".[dev,data]"` and confirm `pytest` passes on your machine — the contracts
    were written and tested in a Linux container, not on macOS.
-2. Put `FAL_KEY=...` in `.env` and load $5-10 of fal.ai credit. Expected MVP spend is about
-   $1.11, so that is ample. The model choice is already made in `VISUAL_SPEC.md` §8 —
-   FLUX.1 Schnell for drafts, FLUX.2 Pro for finals — so W6 has nothing to decide.
+2. Put `GOOGLE_API_KEY=...` in `.env` — get it at aistudio.google.com -> Get API key ->
+   Create API key. No credit card for the free tier, but **enable billing on the linked Cloud
+   project** or Nano Banana Pro finals will fail with a quota error. The model choice is
+   already made in `VISUAL_SPEC.md` §8 — `gemini-2.5-flash-image` for drafts (free tier),
+   `gemini-3-pro-image-preview` for finals — so W6 has nothing to decide.
 3. Confirm you can reach `zenodo.org` and `ncei.noaa.gov`. My container could not, which is
    why W1's and W2's downloads are unverified against real bytes.
 

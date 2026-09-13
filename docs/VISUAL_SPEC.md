@@ -162,37 +162,41 @@ candidate picker showing one image at a time will produce a beautiful, incoheren
 
 ## 8. Model selection
 
-**Decision: fal.ai as the single provider, two-tier.**
+**Decision: Google AI Studio (Gemini) as the primary provider, two-tier.**
 
-| Tier | Model | $/image | Use |
+| Tier | Model ID | Cost | Use |
 |---|---|---|---|
-| Draft | `fal-ai/flux/schnell` | 0.0005 | composition iteration, chapter framing — 500 costs 25¢ |
-| Final | FLUX.2 Pro | 0.015 | approved scenes |
-| Escalation | FLUX.2 Max | 0.073 | a scene that won't come right |
+| Draft | `gemini-2.5-flash-image` (Nano Banana) | **free tier ~500/day**, else $0.019 | composition iteration, chapter framing |
+| Final | `gemini-3-pro-image-preview` (Nano Banana Pro) | ~$0.13 (token-priced, $120/M output) | approved scenes |
 
-Reference prices for alternatives: FLUX.2 Dev $0.0084, Gemini 2.5 Flash Image $0.019,
-FLUX.1 Pro $0.050, Nano Banana Pro (Gemini 3 Pro Image) ~$0.13 (token-priced, $120/M output).
+Expected MVP total: **~$5.50**, with the entire draft phase at zero cost on the free tier.
 
-**Cost is not a constraint.** The MVP's ~98 generations come to about $1.11 on FLUX.2 Pro
-finals, or ~$6 if every final used Nano Banana Pro. Both are noise against the $100 project
-budget. **Choose on quality and multi-reference capability, not price.**
+**Why Gemini rather than the cheaper FLUX ladder.** Cost is not a constraint at this scale —
+the whole MVP is single-digit dollars on any provider. The deciding requirement is
+**multi-reference conditioning for era anchors** (§4): holding a style across 14 scenes from
+an approved reference image. That is the hardest thing in the visual pipeline and the most
+likely to fail, and Nano Banana Pro is the strongest available at it. Starting here tests the
+risky thing first rather than building the whole harness and discovering the anchors don't
+hold.
 
-One key reaches the whole ladder, so the draft/final split is a config string rather than a
-second integration.
+**Fallback if that reasoning doesn't survive contact:** the FLUX ladder on fal.ai — FLUX.1
+Schnell $0.0005 for drafts, FLUX.2 Pro $0.015 for finals, FLUX.2 Max $0.073 to escalate a
+scene that won't come right. Roughly 5× cheaper overall and one key reaches the whole range.
+Reference prices for the rest: FLUX.2 Dev $0.0084, FLUX.1 Pro $0.050, Imagen 4 Fast $0.020.
 
-**Fallback, only if needed:** Nano Banana Pro is reportedly strongest at holding identity and
-style across reference images — the era-anchor problem exactly. Add a Google AI Studio key
-*only if* style consistency isn't holding on FLUX. Do not set up two providers speculatively.
+**Three operational cautions:**
 
-Requirements this decision was made against, in priority order: multi-reference conditioning
-for era anchors; photorealism at landscape scale; prompt adherence for composition
-constraints; cost per image at draft vs final quality.
+1. `preview` in `gemini-3-pro-image-preview` is not decorative — the model can change
+   behaviour or be withdrawn. Pin the id in config and expect to bump it.
+2. The free tier has RPM limits and a daily token cap. A parallel fan-out generating
+   concurrently **will** hit them. Keep generation concurrency low and treat 429 as backoff,
+   never as failure.
+3. Quota and pricing figures here come from third-party sources, not Google's own docs.
+   Confirm against the live quota page before relying on them.
 
 ⚠️ **No provider name may appear outside `pipeline/generators/`.** Swapping vendors must be a
-config change. `estimate_usd()` reads a per-model price table so `earthtime plan` can cost a
-build before spending anything.
-
----
+config change — this decision is explicitly expected to be revisited. `estimate_usd()` reads
+a per-model price table so `earthtime plan` can cost a build before spending anything.
 
 ## 9. Honesty
 

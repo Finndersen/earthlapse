@@ -100,13 +100,14 @@ v1 renders it as **text only** (label + representative + date). Portraits are a 
 
 | Item | Count | Model | Unit | Cost |
 |---|---|---|---|---|
-| Draft / composition iteration | ~56 | FLUX.1 Schnell | $0.0005 | $0.03 |
-| Final scenes (3 candidates each) | ~42 | FLUX.2 Pro | $0.015 | $0.63 |
-| Ancestor portraits (optional) | ~30 | FLUX.2 Pro | $0.015 | $0.45 |
-| **MVP total** | | | | **~$1.11** |
+| Draft / composition iteration | ~56 | `gemini-2.5-flash-image` | free tier | $0.00 |
+| Final scenes (3 candidates each) | ~42 | `gemini-3-pro-image-preview` | ~$0.13 | ~$5.50 |
+| Ancestor portraits (optional) | ~30 | `gemini-2.5-flash-image` | free tier | $0.00 |
+| **MVP total** | | | | **~$5.50** |
 
-Using Nano Banana Pro (~$0.13) for every final instead would come to ~$6. Either fits.
-**Cost is not the constraint here** — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection).
+The draft phase runs entirely on the free tier (~500 images/day). **Cost is not the
+constraint** — see [`VISUAL_SPEC.md §8`](./VISUAL_SPEC.md#8-model-selection) for why Gemini
+was chosen over the ~5× cheaper FLUX ladder, and what the fallback is.
 
 Ceiling for the whole one-shot: **`--max-spend 25`**. That leaves 3× headroom for iteration
 and keeps $75 of the project's $100 for later rounds. The ledger enforces it
@@ -215,10 +216,12 @@ These are expected to be missing. Do not "fix" them.
 
 ## Budget
 
-**`--max-spend 25`**, enforced in `pipeline/spend.py`. Expected actual **~$1.11** on FLUX.2
-Pro finals. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
+**`--max-spend 25`**, enforced in `pipeline/spend.py`. Expected actual **~$5.50** — drafts
+free, finals on Nano Banana Pro. The ceiling is 20× the expected spend deliberately — it exists to stop a runaway
 retry loop, not to constrain the build. **No agent may raise it**; if a build hits it,
 something is wrong, so stop and report.
 
-**Credentials required:** `FAL_KEY` in `.env` (gitignored). $5–10 of fal.ai credit covers the
-MVP many times over. `GOOGLE_API_KEY` optional, only as the style-consistency fallback.
+**Credentials required:** `GOOGLE_API_KEY` in `.env` (gitignored), from
+[aistudio.google.com](https://aistudio.google.com/) → Get API key. No credit card needed for
+the free tier; **enable billing on the linked Cloud project** for Nano Banana Pro finals.
+`FAL_KEY` optional, only if falling back to FLUX.
