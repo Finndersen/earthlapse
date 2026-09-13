@@ -5,11 +5,11 @@ import { EARTH_FORMATION, type Playback, type TimelineEvent } from '@/types/laye
 
 import type { TimelineCheckpoint } from './checkpoints'
 import { Timeline } from './Timeline'
-import type { TimeWindow } from './scale'
+import { createSymlogScale, type TimeWindow } from './scale'
 
-// jsdom does not implement requestAnimationFrame; useAnimatedScale only needs it to not
-// throw synchronously during render (the animation itself is exercised by scale.test.ts via
-// blendScales directly, not by driving real frames here).
+// jsdom does not implement requestAnimationFrame; the eased window transitions behind the zoom
+// buttons only need it to exist (the scale animation is exercised by scale.test.ts via
+// blendScales directly, and the scale itself is a prop here).
 beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
     return setTimeout(() => cb(performance.now()), 0) as unknown as number
@@ -23,6 +23,7 @@ afterEach(() => {
 })
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
+const FULL_DOMAIN_SCALE = createSymlogScale(FULL_DOMAIN)
 
 const events: TimelineEvent[] = [
   { id: 'e1', label: 'Big event', tMin: 2.5e8, tMax: 2.52e8, importance: 1, description: '', citation: '' },
@@ -41,6 +42,7 @@ describe('<Timeline>', () => {
         t={4.567e9}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
@@ -60,6 +62,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ playing: false })}
         onScrub={vi.fn()}
@@ -79,6 +82,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ speed: 1 })}
         onScrub={vi.fn()}
@@ -98,6 +102,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
@@ -117,6 +122,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={onScrub}
@@ -136,6 +142,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -156,6 +163,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -176,6 +184,7 @@ describe('<Timeline>', () => {
         t={0}
         window={FULL_DOMAIN}
         scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}

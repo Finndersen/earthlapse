@@ -29,6 +29,7 @@ import {
   followWindow,
   formatGeoTime,
   Timeline,
+  useAnimatedScale,
   usePlaybackLoop,
 } from '@/timeline'
 import type { TimelineCheckpoint } from '@/timeline'
@@ -76,10 +77,12 @@ export function Experience() {
   const expandedChartLayerId = useTimeStore((s) => s.expandedChartLayerId)
   const setExpandedChartLayerId = useTimeStore((s) => s.setExpandedChartLayerId)
 
-  // The chart dock's TimeScale, lifted from the timeline itself (Timeline.tsx's W12a
-  // `onScaleChange`) rather than recomputed here — see that prop's doc comment for why a
-  // second, independent `useAnimatedScale` instance would be the wrong move.
-  const [chartScale, setChartScale] = useState<TimeScale | null>(null)
+  // The timeline's animated scale lives here and is passed down to both <Timeline> and the chart
+  // dock, so the value under the chart's playhead sits directly above the timeline's. It must
+  // not be reported back up from an effect inside <Timeline>: that scheduled a second render on
+  // every minimap drag frame, which a fast pointer starved into "Maximum update depth exceeded".
+  const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
+  const timelineScale = useAnimatedScale(timeWindow, timelineScaleKind)
 
   // Where SceneView's caption is portalled: the shell's subtitle position above the timeline.
   // SceneView renders the caption inside its own full-window layer, which sits beneath the
@@ -145,7 +148,7 @@ export function Experience() {
       }
       if (next !== t) setT(next)
       if (following) {
-        const followed = followWindow(timeWindow, next, scaleKind === 'linear' ? 'linear' : 'symlog')
+        const followed = followWindow(timeWindow, next, timelineScaleKind)
         if (followed[0] !== timeWindow[0] || followed[1] !== timeWindow[1]) setWindow([followed[0], followed[1]])
       }
     },
@@ -263,15 +266,16 @@ export function Experience() {
       ancestor={<div data-testid="ancestor-readout">{nodeLayer ? <AncestorReadout layer={nodeLayer} t={t} /> : null}</div>}
       caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
       chart={
-        expandedChartLayer && chartScale ? (
-          <LayerChart layer={expandedChartLayer} t={t} scale={chartScale} onClose={() => setExpandedChartLayerId(null)} />
+        expandedChartLayer ? (
+          <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={() => setExpandedChartLayerId(null)} />
         ) : null
       }
       timeline={
         <Timeline
           t={t}
           window={timeWindow}
-          scaleKind={scaleKind === 'linear' ? 'linear' : 'symlog'}
+          scaleKind={timelineScaleKind}
+          scale={timelineScale}
           events={manifest.events}
           checkpoints={checkpoints}
           playback={playback}
@@ -289,7 +293,6 @@ export function Experience() {
             setPlaying(next.playing)
             setSpeed(next.speed)
           }}
-          onScaleChange={setChartScale}
           following={following}
         />
       }

@@ -22,12 +22,10 @@ const ANIMATION_DURATION_MS = 1200
  * between them (via `blendScales`) over `ANIMATION_DURATION_MS` whenever `targetKind`
  * changes. Re-renders the owning component on every animation frame.
  *
- * The returned `TimeScale` is memoised on `[window, k]` (W12a) so that two renders with an
- * unchanged `window` and an at-rest `k` return the *same* object — not just an equal one.
- * `Timeline` relies on this to expose its live scale via `onScaleChange` without that
- * exposure looping: a consumer that stores the callback's argument in state and passes an
- * unchanged `window`/`scaleKind` back down sees a referentially stable scale and therefore
- * does not re-trigger the effect that reported it.
+ * The returned `TimeScale` is memoised on `[window, k]`, so two renders with an unchanged
+ * `window` and an at-rest `k` return the *same* object. The caller (Experience.tsx) owns this
+ * hook and passes the one scale down to `<Timeline>` and to anything else drawn on the same
+ * axis (the chart dock), rather than `<Timeline>` computing it and reporting it back up.
  */
 export function useAnimatedScale(window: TimeWindow, targetKind: 'symlog' | 'linear'): TimeScale {
   const targetK = targetKind === 'linear' ? 1 : 0

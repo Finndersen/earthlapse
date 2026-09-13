@@ -14,14 +14,13 @@
  * - `onScaleKindChange(kind)` fires from the symlog/linear toggle button.
  * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, and the
  *   space-bar shortcut.
- * - `onScaleChange` (optional, W12a) fires whenever this component's own animated `TimeScale`
- *   — the same one driving its scrub track and event lanes — changes, including mid-animation
- *   frames of the symlog/linear toggle. A caller that needs to share the exact scale the
- *   timeline is drawing with (e.g. an expanded `LayerChart` in the chart dock, so the value
- *   under its playhead sits directly above the timeline's own) stores this in its own state
- *   rather than recomputing an independent `useAnimatedScale` instance, which would drift by a
- *   frame and needn't share `window`/`scaleKind` identity. See `useAnimatedScale`'s doc
- *   comment for why this doesn't loop.
+ * - `scale` is the animated `TimeScale` over `window` (`useAnimatedScale(window, scaleKind)`),
+ *   owned by the caller rather than computed here, so anything else drawn against the same
+ *   axis (the expanded `LayerChart` in the chart dock) shares the exact object this component
+ *   draws its scrub track, ticks and event lanes with. It is an input only, never reported back
+ *   up: an effect-driven "scale changed" callback made every minimap drag frame schedule a
+ *   second render from inside an effect, which a fast pointer starved into React's "Maximum
+ *   update depth exceeded".
  * - `following` (optional, default `false`): whether follow-during-playback is currently
  *   engaged (README §4) — purely a display flag for the subtle indicator in `ZoomControls`.
  *   The caller (Experience.tsx) owns the actual follow logic, next to its playback loop; this
@@ -46,7 +45,6 @@
  * collides with a button.
  */
 
-import { useEffect } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
 import { EARTH_FORMATION } from '@/types/layer'
@@ -61,7 +59,6 @@ import { ZoomControls } from './components/ZoomControls'
 import { timelineKeyIntent } from './keyboard'
 import type { TimeWindow } from './scale'
 import styles from './Timeline.module.css'
-import { useAnimatedScale } from './useAnimatedScale'
 import { frameEventWindow, zoomWindow } from './zoom'
 import { useWindowTransition } from './windowTransition'
 
@@ -75,6 +72,8 @@ export interface TimelineProps {
   /** `'density'` is out of scope for this package (see index.ts) — the caller must not pass
    *  it here. */
   scaleKind: 'symlog' | 'linear'
+  /** The animated scale over `window` — see the `scale` bullet in the doc comment above. */
+  scale: TimeScale
   events: readonly TimelineEvent[]
   /** The generated stills, plotted as scene checkpoint pips (W13) distinct from data-driven
    *  `events` — every one inside the visible window is always drawn, with no importance LOD,
@@ -85,7 +84,6 @@ export interface TimelineProps {
   onWindowChange: (window: TimeWindow) => void
   onScaleKindChange: (kind: 'symlog' | 'linear') => void
   onPlaybackChange: (playback: Playback) => void
-  onScaleChange?: (scale: TimeScale) => void
   /** Whether follow-during-playback is currently engaged (README §4) — display only. */
   following?: boolean
 }
@@ -94,6 +92,7 @@ export function Timeline({
   t,
   window: visibleWindow,
   scaleKind,
+  scale,
   events,
   checkpoints = [],
   playback,
@@ -101,15 +100,8 @@ export function Timeline({
   onWindowChange,
   onScaleKindChange,
   onPlaybackChange,
-  onScaleChange,
   following = false,
 }: TimelineProps) {
-  const scale = useAnimatedScale(visibleWindow, scaleKind)
-
-  useEffect(() => {
-    onScaleChange?.(scale)
-  }, [scale, onScaleChange])
-
   const animateWindowTo = useWindowTransition({ window: visibleWindow, scaleKind, onWindowChange })
 
   const zoomAroundPlayhead = (factor: number): void => {
