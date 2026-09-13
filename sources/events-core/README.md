@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 46 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 65 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -80,7 +80,15 @@ pollen claim), `earliest-pollinating-insects` (Melittosphex burmensis, originall
 the oldest bee, now reassessed as an aculeate wasp of uncertain position), `primates` (stem vs
 crown), `hominins` (contested classification), `control-of-fire` (sporadic vs habitual use
 span over 1 Myr), and `k-pg-aftermath` (the fern spike's own duration is not precisely
-bounded, so the scene's interval is kept deliberately narrow and conservative).
+bounded, so the scene's interval is kept deliberately narrow and conservative). Also contested, among the 19
+events added for the Cenozoic scene work package: `india-asia-collision` (59-34 Ma, one of
+the most debated timing questions in Earth science), `antarctic-circumpolar-current` (34 Ma
+classic view vs a 2023 study arguing for the late Miocene), `isthmus-of-panama` (~2.8 Ma
+final closure vs biological evidence for a complex emergence up to ~10 Ma earlier),
+`messinian-salinity-crisis` (well-dated onset and end, but how dry the basin got and how
+catastrophic the refill was remain disputed), and `toba-eruption` (well-dated eruption, but
+its "volcanic winter" severity and effect on contemporary humans is heavily contested and
+increasingly doubted).
 
 ## Event selection and density
 
@@ -109,7 +117,35 @@ because an existing event already covers the same ground with a citation that al
 supports the claim: "first eukaryotic algae" (`eukaryotes-origin`'s own citation, Bengtson et
 al. 2017, already describes 1.6 Ga crown-group red algae), "first vascular plants"
 (`land-plants`'s upper bound is already Cooksonia, ~425 Ma), and "first flowers"
-(`flowering-plants`, already present). The set totals 46 events.
+(`flowering-plants`, already present).
+
+A further 19 events were added by the "get the foundation right" Cenozoic scene work package
+(human-directed 2026-09-13, ADR-014), bringing the total to 65 and filling what had been the
+single largest gap in the set: 56 Ma (`primates`) to 6 Ma (`hominins`) held only two events
+across 50 Myr, and 6 Ma to 400 ka (`control-of-fire`) held none at all. All 19 sit strictly
+inside that same 66 Ma-present range this source already covers, in time order:
+`paleocene-mammal-radiation`, `petm`, `india-asia-collision`, `eocene-oligocene-transition`,
+`antarctic-circumpolar-current`, `grassland-spread`, `hipparion-dispersal`, `c4-expansion`,
+`isthmus-of-panama`, `messinian-salinity-crisis`, `lomekwi-stone-tools`,
+`australopithecus-afarensis`, `quaternary-glaciation-begins`, `homo-erectus`,
+`acheulean-technology`, `toba-eruption`, `earliest-cave-art`, `neanderthal-sapiens-overlap`,
+`younger-dryas`. Ten of these back a matching new scene in `data/scenes-draft-cenozoic.yaml`
+(not yet merged into `data/scenes.yaml`); the other nine (`india-asia-collision`,
+`antarctic-circumpolar-current`, `hipparion-dispersal`, `isthmus-of-panama`,
+`lomekwi-stone-tools`, `quaternary-glaciation-begins`, `toba-eruption`, `earliest-cave-art`,
+`younger-dryas`) stand alone, either because no single vantage suits them (a plate-tectonic
+process, an ocean current) or because this work package judged a dedicated scene redundant
+with a neighbouring one (see the work-package report for the reasoning per event). One
+citation in this batch is weaker than the rest and is flagged inline in
+`paleocene-mammal-radiation`'s own citation field: its Pantolambda detail rests on a
+paraphrased Wikipedia summary rather than primary literature, the one point in this batch
+where the session's WebSearch budget ran out before a stronger source could be found. Five
+topics named in that work package's brief — domestication of dogs, first cities, the Bronze
+Age, the start of the Holocene, and a broad "megafauna extinctions" event distinct from
+`younger-dryas` — were **not** added: the session's WebSearch budget (a session-wide cap
+shared across concurrent agents) was exhausted before they could be verified, and per this
+project's "verify, don't assert from memory" rule they were left out rather than guessed.
+They remain open follow-up work, not a judgement that they don't belong.
 
 ## Gotchas
 

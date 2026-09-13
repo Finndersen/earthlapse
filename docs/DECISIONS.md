@@ -473,6 +473,34 @@ that lived below the photic shoreline, not at its edge.
   content correction, not a contract change, and needed no ADR of its own beyond being
   recorded here per the brief's instruction.
 
+**Decision (Cenozoic scenes, 66 Ma to present).** None of the ten scenes drafted in
+`data/scenes-draft-cenozoic.yaml` need a new shot or chapter. Every subject in this range —
+a post-extinction recovery forest, a polar hothouse swamp forest, a calving ice coast, open
+grassland, a savanna waterhole, a drying salt basin, a rift-valley lakeshore, a land-bridge
+coastline, and two toolmaking lakesides — has a defensible water's edge in it, so all ten
+extend the existing `waters-edge` chapter (`WATER_EDGE` shot, `water-edge-series`
+composition) rather than introducing `CANOPY` or `GROUND` compositions. Concretely, this was
+possible only because `pipeline/prompts.py`'s `Composition` enum and
+`COMPOSITION_CONSTRAINTS` dict currently define composition text for just `WATER_EDGE`
+(`water-edge-series`) and `WIDE_RIDGE` (`ridge-vista`) — `CANOPY` and `GROUND` exist as
+`Shot` enum members (anticipating future use) but have no composition text wired up yet, so
+using either would have required an additive change to `pipeline/prompts.py`. This package
+found that change unnecessary rather than making it, in keeping with its brief's constraint
+against introducing new shot types.
+
+**Consequences.**
+- No change to `pipeline/prompts.py`, `pipeline/scenes.py`, or any NORMATIVE contract from
+  the Cenozoic scene work. `data/scenes-draft-cenozoic.yaml` merges into `data/scenes.yaml`
+  as a same-chapter extension — see that draft file's own header for the merge note.
+- `CANOPY` and `GROUND` remain unused by any chapter after this package. Wiring them up (new
+  `Composition` members and constraint text, additive) is still open work for whoever next
+  wants a non-water-edge chapter; this ADR does not close that door, it only reports that the
+  Cenozoic scenes didn't need it.
+- Ten new checkpoints extend `waters-edge` across 62 Ma-42 ka, six of them close enough
+  together in symlog time (see `data/scenes-draft-cenozoic.yaml`'s header) that ADR-012's
+  timeline-pacing tuning should revisit `SCENE_DWELL_SECONDS`/`MIN_TRANSITION_SECONDS` once
+  this draft is merged — flagged for whoever does that merge, not solved here.
+
 ---
 
 ## Pending

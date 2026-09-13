@@ -580,6 +580,23 @@ events:
       the Cretaceous-Tertiary boundary by New Zealand fern spike." Science, 294(5547),
       1700-1702.
 
+  - id: paleocene-mammal-radiation
+    label: Paleocene mammal radiation
+    t_min: 5.58e7
+    t_max: 6.6043e7
+    importance: 0.5
+    description: >
+      In the aftermath of the K-Pg extinction, placental mammals rapidly radiate to fill the
+      large-herbivore niches the non-avian dinosaurs left empty. Pantodonts such as
+      Pantolambda, a heavy-bodied browsing mammal, appear by the mid-Paleocene; the interval
+      here spans this radiation, from the extinction itself to the close of the Paleocene.
+    citation: >
+      Halliday, T.J.D., Upchurch, P. & Goswami, A. (2015). "Resolving the relationships of
+      Paleocene placental mammals." Biological Reviews, 92(1), 521-550. Pantolambda as an
+      early large-bodied pantodont per Wikipedia, "Pantolambda" (paraphrased tertiary
+      source, not a primary date reference — the weakest citation in this batch). K-Pg
+      boundary age 66.043 Ma per Renne et al. (2013), this file's k-pg-impact entry.
+
   - id: primates
     label: First primates
     t_min: 5.6e7
@@ -594,6 +611,124 @@ events:
       initial radiation of stem primates." Royal Society Open Science, 8(2), 210050
       (Purgatorius, ~65.9 Ma). Smith, T., Rose, K.D. & Gingerich, P.D. (2006) for
       Teilhardina, oldest crown primate, ~55.8 Ma.
+
+  - id: petm
+    label: Paleocene-Eocene Thermal Maximum (PETM)
+    t_min: 5.58e7
+    t_max: 5.60e7
+    importance: 0.55
+    description: >
+      A sudden release of isotopically light carbon drives several degrees of global warming
+      in geologically almost no time, the most extreme of several Cenozoic hyperthermals. The
+      rapid onset (on the order of 6 kyr) is followed by a ~100-170 kyr warm "body" phase and
+      a slower ~50-135 kyr recovery.
+    citation: >
+      "Constraints on the onset duration of the Paleocene-Eocene Thermal Maximum."
+      Philosophical Transactions of the Royal Society A, 376(2130), 20170082 (2018). Onset
+      dated to 55.9-56.0 Ma.
+
+  - id: india-asia-collision
+    label: India-Asia collision begins
+    t_min: 3.4e7
+    t_max: 5.9e7
+    importance: 0.6
+    description: >
+      India's continental margin collides with Asia, initiating the Himalayan orogeny and
+      the uplift of the Tibetan Plateau — a collision still ongoing today. Contested: the
+      timing of initial contact is one of the most debated questions in Earth science, with
+      proposals ranging from a middle-Paleocene 59 +/- 1 Ma sediment-provenance signal to
+      paleomagnetic estimates as young as 34 Ma.
+    citation: >
+      Aitchison, J.C., Ali, J.R. & Davis, A.M. (2007). "When and where did India and Asia
+      collide?" Journal of Geophysical Research: Solid Earth, 112, B05423 (review of
+      competing timing estimates spanning 70-34 Ma). Middle-Paleocene 59 +/- 1 Ma
+      sediment-provenance estimate per "The timing of India-Asia collision onset: facts,
+      theories, controversies," Earth-Science Reviews (2016).
+
+  - id: eocene-oligocene-transition
+    label: Eocene-Oligocene transition; first Antarctic ice sheet
+    t_min: 3.36e7
+    t_max: 3.41e7
+    importance: 0.75
+    description: >
+      Earth's climate steps from the early Cenozoic greenhouse into the modern icehouse: the
+      Antarctic ice sheet grows rapidly in two pulses, the EOT-1 cooling event (~34.1-33.9 Ma)
+      and the larger Oi-1 glaciation (~33.8-33.6 Ma), reaching the coastline for the first
+      time. The associated cooling drives a major mammalian faunal turnover in Europe known
+      as the Grande Coupure.
+    citation: >
+      Coxall, H.K. et al. (2005). "Rapid stepwise onset of Antarctic glaciation and deep-sea
+      acidification in the late Eocene." Nature, 433, 53-57. Eocene-Oligocene boundary age
+      33.9 Ma per the ICS International Chronostratigraphic Chart v2024/12. "Grande Coupure"
+      term coined by Stehlin, H.G. (1910).
+
+  - id: antarctic-circumpolar-current
+    label: Antarctic Circumpolar Current begins
+    t_min: 2.1e7
+    t_max: 3.4e7
+    importance: 0.45
+    description: >
+      The opening of the Drake Passage lets a continuous eastward current encircle
+      Antarctica, thermally isolating the continent and reinforcing its ice sheet. Contested
+      and poorly constrained: estimates for the current's onset range from the classic
+      Eocene-Oligocene boundary (~34 Ma) through 31-26 Ma to 23.5 +/- 2.5 Ma, and a 2023 study
+      proposes the modern, deep-reaching current did not fully establish until the late
+      Miocene, later still.
+    citation: >
+      "Late Miocene onset of the modern Antarctic Circumpolar Current." Nature Geoscience
+      (2023) (younger, contested estimate). "Drake Passage gateway opening and Antarctic
+      Circumpolar Current onset 31 Ma ago: The message of foraminifera and reconsideration of
+      the Neodymium isotope record." Chemical Geology (2021) (31-26 Ma estimate).
+
+  - id: grassland-spread
+    label: Spread of C3 grasslands
+    t_min: 1.55e7
+    t_max: 2.0e7
+    importance: 0.55
+    description: >
+      The first definitive grass-dominated open habitats appear in the early Miocene, though
+      forest and woodland remain globally dominant. Phytolith diversity in open-habitat
+      grasses rises through the late early Miocene and early late Miocene, roughly
+      19-15.5 Ma, marking the start of the multistage shift from a forested to a
+      grassland-dominated world that later culminates in the Late Neogene spread of C4
+      grasses.
+    citation: >
+      Stromberg, C.A.E. (2011). "Evolution of Grasses and Grassland Ecosystems." Annual
+      Review of Earth and Planetary Sciences, 39, 517-544.
+
+  - id: hipparion-dispersal
+    label: Hipparionine horses reach the Old World
+    t_min: 1.11e7
+    t_max: 1.14e7
+    importance: 0.4
+    description: >
+      Three-toed hipparionine horses disperse from North America across the Bering land
+      bridge into Eurasia and Africa, a rapid, near-synchronous "Hipparion datum" long taken
+      as a marker for the westward spread of open savanna — though open C3 grassland habitats
+      are now known to predate their arrival in some regions.
+    citation: >
+      "Old World first appearance datum of 'Hipparion' horses: Late Miocene large-mammal
+      dispersal and global events." Geology, 25(1), 19-22 (1997). First appearance at Chron
+      C5r, minimum age 11.1 Ma; Hippotherium primigenium at Atzelsdorf, Austria, ~11.2-11.4
+      Ma.
+
+  - id: c4-expansion
+    label: C4 grasses expand across the tropics
+    t_min: 6.0e6
+    t_max: 8.0e6
+    importance: 0.65
+    description: >
+      Carbon-isotope evidence from fossil soils and tooth enamel across multiple continents
+      records a rapid, near-global replacement of C3-dominated woodland and grassland by
+      C4-dominated open savanna in the late Miocene — a major shift in the base of
+      terrestrial food webs and the habitat in which the human lineage's own later evolution
+      plays out.
+    citation: >
+      Quade, J., Solounias, N. & Cerling, T.E. (1994), carbon-isotope reconstruction of Late
+      Miocene vegetation in Greece from paleosol carbonates and fossil tooth enamel, as
+      reported in the Miocene C4-isotope literature (e.g. "High-resolution isotopic record of
+      C4 photosynthesis in a Miocene grassland," Palaeogeography, Palaeoclimatology,
+      Palaeoecology).
 
   - id: hominins
     label: First hominins
@@ -610,6 +745,113 @@ events:
       Brunet, M. et al. (2002). "A new hominid from the Upper Miocene of Chad, Central
       Africa." Nature, 418, 145-151. Site dated 7.2-6.8 Ma via biostratigraphy and
       cosmogenic nuclide dating (Lebatard, A.-E. et al. 2008, PNAS, 105(9), 3226-3231).
+
+  - id: isthmus-of-panama
+    label: Isthmus of Panama forms
+    t_min: 2.8e6
+    t_max: 1.0e7
+    importance: 0.55
+    description: >
+      A continuous land connection rises between North and South America, closing the
+      Central American Seaway and triggering the Great American Biotic Interchange.
+      Contested: one synthesis dates final closure to ~2.8 Ma, while a separate biological
+      and paleontological analysis argues an emergent, complex land connection — and
+      substantial faunal interchange — was already underway up to roughly 10 million years
+      earlier.
+    citation: >
+      O'Dea, A. et al. (2016). "Formation of the Isthmus of Panama." Science Advances, 2(8),
+      e1600883 (~2.8 Ma final closure). Bacon, C.D. et al. (2015). "Biological evidence
+      supports an early and complex emergence of the Isthmus of Panama." PNAS, 112(19),
+      6110-6115 (contested, early-emergence hypothesis).
+
+  - id: messinian-salinity-crisis
+    label: Messinian salinity crisis
+    t_min: 5.33e6
+    t_max: 5.96e6
+    importance: 0.55
+    description: >
+      Tectonic restriction of the Strait of Gibraltar isolates the Mediterranean from the
+      Atlantic; extreme evaporation deposits kilometre-scale salt beds across the basin
+      floor. The crisis ends when the strait reopens at 5.33 Ma and Atlantic water refills
+      the basin in the Zanclean flood. Contested: how dry the basin actually became, and how
+      catastrophic the final refill was, remain disputed.
+    citation: >
+      Garcia-Castellanos, D. et al. (2009). "Catastrophic flood of the Mediterranean after
+      the Messinian Salinity Crisis." Nature, 462, 778-781. Onset 5.96 +/- 0.02 Ma; Atlantic
+      isolation established 5.59-5.33 Ma.
+
+  - id: lomekwi-stone-tools
+    label: Oldest known stone tools (Lomekwi 3)
+    t_min: 3.25e6
+    t_max: 3.35e6
+    importance: 0.6
+    description: >
+      Stone artefacts at Lomekwi 3, West Turkana, Kenya, predate the Oldowan industry by
+      roughly 700,000 years and are the oldest known deliberately flaked stone tools — made
+      500,000 years before the genus Homo appears in the fossil record, contradicting the
+      long-standing assumption that toolmaking began with Homo.
+    citation: >
+      Harmand, S. et al. (2015). "3.3-million-year-old stone tools from Lomekwi 3, West
+      Turkana, Kenya." Nature, 521, 310-315.
+
+  - id: australopithecus-afarensis
+    label: Australopithecus afarensis ("Lucy")
+    t_min: 3.18e6
+    t_max: 3.22e6
+    importance: 0.65
+    description: >
+      The AL 288-1 skeleton ("Lucy"), discovered at Hadar, Ethiopia in 1974, is the most
+      complete Australopithecus afarensis specimen known: an ape-sized skull paired with a
+      pelvis and leg bones built for upright bipedal walking.
+    citation: >
+      Discovered by Donald Johanson's team, Hadar, Ethiopia, 24 November 1974. Age and
+      description per the Natural History Museum, "Australopithecus afarensis, Lucy's
+      species," and Britannica, "Lucy | Australopithecus afarensis, 3.2 Million Years,
+      Ethiopia."
+
+  - id: quaternary-glaciation-begins
+    label: Quaternary glaciation begins
+    t_min: 2.58e6
+    t_max: 2.58e6
+    importance: 0.6
+    description: >
+      The base of the Gelasian Stage marks the start of the Quaternary Period and the
+      Pleistocene Series, and the onset of major, sustained Northern Hemisphere glaciation —
+      the beginning of the ice-age cycles the planet has lived through ever since.
+    citation: >
+      GSSP for the base of the Gelasian Stage, Monte San Nicola, Italy, per the ICS
+      International Chronostratigraphic Chart v2024/12: 2.58 Ma.
+
+  - id: homo-erectus
+    label: Homo erectus appears
+    t_min: 1.5e6
+    t_max: 2.04e6
+    importance: 0.7
+    description: >
+      Homo erectus, the first hominin with fully modern human body proportions, appears in
+      East Africa. The oldest confirmed fossil, KNM-ER 2598, is securely dated to older than
+      1.855 Ma; the species is conventionally held to have evolved roughly 2 million years
+      ago, and its fossils persist across Africa and Asia for well over a million years
+      afterward.
+    citation: >
+      "New hominin remains and revised context from the earliest Homo erectus locality in
+      East Turkana, Kenya." Nature Communications (2021), article s41467-021-22208-x
+      (KNM-ER 2598, >1.855 Ma).
+
+  - id: acheulean-technology
+    label: Acheulean handaxe technology begins
+    t_min: 1.72e6
+    t_max: 1.76e6
+    importance: 0.5
+    description: >
+      Symmetrical, bifacially flaked handaxes appear at Kokiselei, West Turkana, Kenya — the
+      oldest known Acheulean tools, roughly 350,000 years older than the previously accepted
+      start of the industry, and a marked advance in complexity over the simple Oldowan
+      flakes that preceded them.
+    citation: >
+      Lepre, C.J. et al. (2011). "An earlier origin for the Acheulian." Nature, 477, 82-85.
+      Kokiselei 4 dated to 1.76 Ma (nonlinear interpolation) / 1.72 Ma (linear interpolation)
+      via magnetostratigraphy bracketed by dated volcanic ash.
 
   - id: control-of-fire
     label: Habitual control of fire
@@ -644,6 +886,25 @@ events:
       (2017). "The age of the hominin fossils from Jebel Irhoud, Morocco, and the origins
       of the Middle Stone Age." Nature, 546, 293-296. Combined age estimate: 315 +/- 34 ka.
 
+  - id: toba-eruption
+    label: Toba supereruption
+    t_min: 7.356e4
+    t_max: 7.42e4
+    importance: 0.4
+    description: >
+      The Youngest Toba eruption in Sumatra is the largest known volcanic event of the last
+      2.5 million years. Its effect on global climate and on contemporary human populations
+      is heavily contested: the original "volcanic winter" hypothesis of a decade-long
+      hemispheric cooling has been challenged by more recent regional climate and
+      archaeological evidence showing human populations persisted through the eruption
+      without a severe bottleneck.
+    citation: >
+      Dated to 73.88 +/- 0.32 ka per reporting summarised by the Max Planck Institute for
+      Geoanthropology, "Human Populations Survived the Toba Volcanic Super-Eruption 74,000
+      Years Ago" (2020). Contested effects per "Understanding the overestimated impact of the
+      Toba volcanic super-eruption on global environments and ancient hominins,"
+      Earth-Science Reviews (2020).
+
   - id: out-of-africa-migration
     label: Out-of-Africa migration
     t_min: 5.0e4
@@ -659,6 +920,36 @@ events:
       Nature, 541, 302-310 (review, ~50-70 ka for the main out-of-Africa dispersal).
       Pagani, L. et al. (2015). "Tracing the route of modern humans out of Africa by using
       225 whole-genome sequences from Ethiopians and Egyptians." AJHG, 96(6), 986-991.
+
+  - id: earliest-cave-art
+    label: Earliest known cave and rock art
+    t_min: 5.12e4
+    t_max: 6.78e4
+    importance: 0.6
+    description: >
+      The oldest currently dated rock art is a hand stencil in Liang Metanduno cave,
+      Sulawesi, Indonesia, at least 67,800 years old; the oldest dated narrative scene —
+      humans and animals painted together to tell a story — is at Leang Karampuang, Sulawesi,
+      at least 51,200 years old. Both ages are laser-ablation U-series minimum ages, so the
+      true age of either artwork could be older still.
+    citation: >
+      "Rock art from at least 67,800 years ago in Sulawesi." Nature (2026). Aubert, M. et al.
+      (2024). "Narrative cave art in Indonesia by 51,200 years ago." Nature, 631, 813-818.
+
+  - id: neanderthal-sapiens-overlap
+    label: Neanderthals and Homo sapiens overlap in Europe
+    t_min: 3.9e4
+    t_max: 4.5e4
+    importance: 0.55
+    description: >
+      Homo sapiens is present in Europe from roughly 45 ka, while radiocarbon dating of
+      material from 40 Neanderthal sites across Europe shows Neanderthals disappearing from
+      the continent between about 41 and 39 ka. Rather than a single abrupt replacement,
+      populations vanish at different times in different regions, with the two species
+      overlapping there for an estimated 2,600-5,400 years before Neanderthal extinction.
+    citation: >
+      Higham, T. et al. (2014). "The timing and spatiotemporal patterning of Neanderthal
+      disappearance." Nature, 512, 306-309.
 
   - id: last-glacial-maximum
     label: Last Glacial Maximum
@@ -676,6 +967,19 @@ events:
       Clark, P.U. et al. (2009). "The Last Glacial Maximum." Science, 325(5941), 710-714.
       Most ice sheets reached their maximum extent between 26.5 and 19-20 ka, with
       deglaciation beginning ~19-20 ka.
+
+  - id: younger-dryas
+    label: Younger Dryas cold reversal
+    t_min: 1.17e4
+    t_max: 1.29e4
+    importance: 0.5
+    description: >
+      A sharp, roughly 1,300-year return to near-glacial cold interrupts the warming at the
+      end of the last ice age, onsetting in under a century and ending abruptly within
+      decades — one of the fastest, largest climate swings of the whole glacial termination.
+    citation: >
+      Younger Dryas dated to approximately 12,900-11,700 years ago per Britannica, "Younger
+      Dryas | Definition, Causes, & Termination."
 
   - id: agriculture
     label: Agriculture begins
