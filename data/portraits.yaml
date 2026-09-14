@@ -371,13 +371,14 @@ portraits:
       - "Chinsamy, A. & Hurum, J.H. (2006) 'Bone microstructure and growth patterns of early mammals', Acta Palaeontol. Pol. 51(2), 325-338: M. watsoni adult skull 20-30 mm, total body length about 150 mm (after Kermack et al. 1973, 1981)"
     gaps:
       - fur is not described by these sources
+      - body condition, ear shape and mouth posture are not described by these sources; rendered as a healthy, well-fleshed animal with ears reduced to small fur-covered bumps and a closed mouth, an unverified rendering choice chosen to keep the plate from reading as emaciated or open-mouthed, matching the calm, fleshed-out look of the neighbouring cynodontia and mammalia plates
     subject:
       organism: "Morganucodon watsoni, an early mammaliaform from around the Triassic-Jurassic boundary, photographed alone as a bare specimen against the plate's seamless black backdrop, not resting on any page or surface"
-      anatomy: "a small, low four-legged animal, shown standing on all four feet, with a low, rounded skull, small ears held flat and inconspicuous against the head, no whiskers, a pointed snout whose tip is the same muted tone as the rest of the body rather than bare pink skin, teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
+      anatomy: "a small, low four-legged animal, standing calmly on all four feet with a healthy, well-fleshed body covered in smooth, unbroken fur showing no ribs or skull bones beneath the skin, a low, rounded skull, ears reduced to small rounded bumps hidden in the fur rather than upright flaps standing off the head, no whiskers, a pointed snout whose tip is the same muted tone as the rest of the body rather than bare pink skin, its mouth closed, concealing teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "about 15 cm long overall, with a skull 2 to 3 cm long"
-      absent: ["scales", "a sail on the back", "feathers", "large fangs", "prominent external ear pinnae, whiskers, or a pink naked nose", "a modern shrew, mouse, rat or any other living animal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: null
+      absent: ["scales", "a sail on the back", "feathers", "large fangs", "prominent external ear pinnae, whiskers, or a pink naked nose", "an open mouth or bared teeth", "visible ribs or skull structure through the skin", "an emaciated or semi-flayed appearance", "upright ear flaps standing off the head", "a pale pink snout tip", "a modern shrew, mouse, rat or any other living animal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
+    pin: {asset_digest: "c667ad3310fcec37", path: "data/candidates/portraits/mammaliaformes/fff29ef96edf7717/01-c667ad3310fcec37.jpg"}
 
   - id: mammalia
     plate: SPECIMEN
@@ -495,12 +496,13 @@ portraits:
       - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (crown Primates, molecular date)"
     gaps:
       - a molecular-clock node; the plate bridges the Purgatorius and Teilhardina plates and adds no anatomy of its own
+      - ear shape and tail carriage are not described by these sources; rendered with small, flat-lying ears and a straight, uncurled trailing tail, an unverified rendering choice chosen to keep the plate from reading as a modern monkey
     subject:
       organism: "A reconstruction of the crown-primate ancestor, dated only by molecular clock, shown as a small tree-dwelling primate intermediate between the plates either side of it"
-      anatomy: "a small, lightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a flat, elongated, primitive muzzle rather than a short face, eyes set toward the front of the head but not large or fully forward-facing, and a long tail that tapers to a point and trails loosely behind it rather than curling or coiling; grasping hands and feet; a living animal covered in fur, not a fossil or bare skeleton"
+      anatomy: "a small, lightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a flat, elongated, primitive muzzle rather than a short face, eyes set toward the front of the head but not large or fully forward-facing, a face evenly covered in fur with no bare or dark skin around the eyes, small, low-set ears lying nearly flat against the head rather than standing up or rounded on top, and a long tail hanging down and trailing straight behind it along the ground, with no curl, hook or upward kink at its tip; grasping hands and feet; a living animal covered in fur, not a fossil or bare skeleton"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a curled or coiled prehensile tail", "a short, flat face", "large forward-facing binocular eyes", "prominent or tufted ears", "a fossil, skeleton, bones or a rock slab", "a modern lemur, tarsier, bushbaby, capuchin, monkey or any other living primate"]
+      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a curled or coiled prehensile tail", "a curled or hooked tail tip", "a short, flat face", "large forward-facing binocular eyes", "prominent or tufted ears", "rounded ears standing proud of the head", "bare or dark skin around the eyes", "a fossil, skeleton, bones or a rock slab", "a modern lemur, tarsier, bushbaby, capuchin, monkey or any other living primate"]
     pin: null
 
   - id: haplorhini
@@ -527,12 +529,13 @@ portraits:
       - "Beard, K.C., 'Eosimias', International Encyclopedia of Primatology (Wiley), doi:10.1002/9781119179313.wbprim0455: oldest widely recognised anthropoid, adult body mass under 100 g to about 200 g"
     gaps:
       - Eosimias is known mainly from jaws and teeth; its body is reconstructed
+      - face fur, eye size and eye placement are not described by these sources; rendered fully furred with small, moderately forward-set eyes, an unverified rendering choice chosen to keep the plate from reading as a modern baboon or macaque
     subject:
       organism: "A reconstruction of Eosimias sinensis, a tiny middle-Eocene anthropoid primate known mainly from jaws and teeth, so its face is kept plain and unremarkable rather than elaborated"
-      anatomy: "a tiny tree-dwelling four-legged primate, shown standing on all four limbs, with a short, blunt, rounded snout rather than an elongated muzzle, a plain face with no pronounced brow ridge, and small ears held close to the head; a long tail and grasping hands and feet"
+      anatomy: "a tiny, slightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a short, blunt, rounded snout rather than an elongated muzzle, a face fully covered in fur with no bare or dark skin around the eyes or muzzle, small eyes relative to the head set only moderately forward and not deep-set or dark-ringed, no pronounced brow ridge, and small ears held close to the head; a long tail and grasping hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
-      absent: ["claws", "a branch or tree", "a human-like face", "an elongated or protruding muzzle", "a heavy or ridged brow", "large or prominent ears", "ear tufts", "a striped or ringed tail", "a baboon's or macaque's face", "a marmoset's or tamarin's face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
+      absent: ["claws", "a branch or tree", "a human-like face", "an elongated or protruding muzzle", "a heavy or ridged brow", "large or prominent ears", "ear tufts", "a striped or ringed tail", "bare or dark skin around the eyes or muzzle", "deep-set or dark-ringed eyes", "a baboon's or macaque's face", "a marmoset's or tamarin's face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
     pin: null
 
   - id: catarrhini
@@ -559,14 +562,15 @@ portraits:
     gaps:
       - the lineage representative is a Morotopithecus-grade stem hominoid, not a named ancestor
       - whether early apes had already lost the tail was not confirmed against a source this session
-      - face shape and terrestrial hand posture are not described by these sources; rendered with a primitive, generalised ape face — a smooth, low brow and a narrow nose bridge — and palms pressed flat with fingers spread rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern chimpanzee or gorilla
+      - face shape and terrestrial hand posture are not described by these sources; rendered with a primitive, generalised ape face — no bony brow ridge, a smoothly sloping forehead, and a narrow nose with forward-facing nostrils — and palms pressed flat with fingers spread rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern chimpanzee or gorilla
+      - MacLatchy et al. describe Morotopithecus as large-bodied; the plate is rendered instead as a lean, moderately built ape, matching the hominidae plate's build and keeping it from reading as gorilla-sized, a deliberate rendering choice that departs from the source
     subject:
       organism: "A reconstruction of an early Miocene stem ape, modelled on Morotopithecus bishopi"
-      anatomy: "a large-bodied ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright; a primitive, generalised ape face with a smooth, low brow and a narrow nose bridge; its palms pressed fully flat on the ground with the fingers spread open, never curled into a fist or resting on the knuckles"
+      anatomy: "a lean, moderately built ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright; a primitive, generalised ape face with no bony ridge above the eyes, the forehead sloping smoothly back, and a narrow nose with nostrils narrow and forward-facing rather than flared; its palms pressed fully flat on the ground with the fingers spread open, never curled into a fist or resting on the knuckles"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "a heavy, shelf-like brow ridge", "a flattened wide nose bridge", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads"]
-    pin: null
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "a heavy, shelf-like brow ridge", "a heavy, deep-set brow", "a flattened wide nose bridge", "flared nostrils", "a large or heavily built body", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads"]
+    pin: {asset_digest: "4ad5d9260bdcb0dd", path: "data/candidates/portraits/hominoidea/22d1a3ce322ebe2e/01-4ad5d9260bdcb0dd.jpg"}
 
   - id: hominidae
     plate: SPECIMEN
@@ -593,12 +597,12 @@ portraits:
       - a molecular-clock node with no specimen; the plate holds the great-ape grade and adds no anatomy of its own
       - face shape, skull profile, coat pattern and terrestrial hand posture are not described by these sources; rendered as a leaner, moderately built ape with a low-domed, crestless skull, a slight brow, a narrow rounded muzzle, a uniformly coloured coat and palms pressed flat with fingers spread rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern gorilla or chimpanzee
     subject:
-      organism: "A reconstruction of the African-ape ancestor of gorillas, chimpanzees and humans, dated only by molecular clock, shown at the same ape grade as the plate before it"
-      anatomy: "a lean, moderately built ape with long arms built for hanging and climbing; a smooth, low-domed skull with no crest along its top, a slight, low brow, and a narrow, rounded muzzle; its palms pressed fully flat on the ground with the fingers spread open, never curled into a fist or resting on the knuckles"
+      organism: "A reconstruction of the African-ape ancestor of gorillas, chimpanzees and humans, dated only by molecular clock, shown at the same ape grade as the plate before it, photographed alone as a bare specimen against the plate's seamless black backdrop, not resting on any page or surface"
+      anatomy: "a lean, moderately built ape standing quadrupedally with long arms built for hanging and climbing; a smooth, low-domed skull with no crest along its top, a slight, low brow, and a narrow, rounded muzzle; its palms pressed fully flat on the ground, clearly bearing weight, with the fingers spread open, never curled into a fist, resting on the knuckles, or lifted in a one-arm crouch"
       surface: "a uniform coat of hair, the same muted tone all over with no lighter saddle patch; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "bare dark facial skin", "a crest along the top of the skull", "a silver or lighter saddle patch on the coat", "broad, flared lips", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads"]
-    pin: null
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "bare dark facial skin", "a crest along the top of the skull", "a silver or lighter saddle patch on the coat", "broad, flared lips", "pink or pale lips", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads", "sepia or antique photo-plate toning", "bevelled or rounded frame corners", "a one-arm crouching or grazing posture", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
+    pin: {asset_digest: "5ec8d9f137fdbd53", path: "data/candidates/portraits/homininae/5e56c0b838f1c3c1/01-5ec8d9f137fdbd53.jpg"}
 
   - id: hominini
     plate: SPECIMEN
@@ -691,10 +695,11 @@ portraits:
     gaps:
       - the body below the head is not described by the source; it follows modern human proportions
       - hair length and style are not described by the source; kept short or swept back off the skull is an unverified rendering choice so the diagnostic elongated, low braincase profile stays visible in silhouette rather than obscured by loose hair
+      - pose and lighting are not described by the source; rendered as a strict side profile with arms relaxed at the sides and low-key studio lighting that leaves the lower torso and hips in shadow, an unverified rendering choice adopted after the prior candidate was refused by the image generator as prohibited content, to keep the plate reading as a non-sexual scientific specimen study
     subject:
       organism: "Early Homo sapiens, as known from the roughly 300,000-year-old Jebel Irhoud fossils of Morocco"
-      anatomy: "a fully upright modern human whose face is almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded, rendered with hair kept short or swept back off the skull, not long or loose, so that the elongated, low braincase profile stays visible in silhouette; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out"
+      anatomy: "a fully upright modern human shown in a strict side profile with its arms relaxed at its sides and a neutral expression, its face almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded, rendered with hair kept short or swept back off the skull, not long or loose, so that the elongated, low braincase profile stays visible in silhouette; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out, lit by low-key studio lighting that leaves the lower torso and hips in deep shadow"
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: null
-      absent: ["clothing or tools", "jewellery, tattoos or body paint", "a modern hairstyle", "long or loose hair covering the skull outline", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
-    pin: null
+      absent: ["clothing or tools", "jewellery, tattoos or body paint", "a modern hairstyle", "long or loose hair covering the skull outline", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet", "a frontal or three-quarter facing pose", "bright, even lighting with no shadow across the lower body"]
+    pin: {asset_digest: "da1b756a2ace8f44", path: "data/candidates/portraits/homo-sapiens/81a33349e89ef33e/01-da1b756a2ace8f44.jpg"}

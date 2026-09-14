@@ -1840,6 +1840,54 @@
       "estimated_usd": 0.15423,
       "actual_usd": 0.139748,
       "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154212,
+      "actual_usd": 0.13847,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homininae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.139686,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominoidea.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154166,
+      "actual_usd": 0.13847,
+      "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154236,
+      "actual_usd": 0.138532,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154286,
+      "actual_usd": 0.138702,
+      "note": null
+    },
+    {
+      "node_id": "portrait.mammaliaformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154406,
+      "actual_usd": 0.138306,
+      "note": null
     }
   ]
 }
