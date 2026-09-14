@@ -30,8 +30,11 @@
  * - `<AncestorReadout layer t />` — label, representative organism, "since <t>".
  * - `<AncestorPortrait layer t assetBase />` — the ancestor's specimen plate, flow-morphing
  *   into the next across a band after each divergence (ADR-015); renders nothing when the
- *   lineage publishes no portrait at `t`. Place it above `<AncestorReadout>` in the ancestor
- *   slot. Its target is pure in `t`; the displayed morph is rate-limited to a minimum duration.
+ *   lineage publishes no portrait at `t`. Its target is pure in `t`; the displayed morph is
+ *   rate-limited to a minimum duration.
+ * - `<AncestorPanel layer t assetBase />` — `<AncestorPortrait>` above `<AncestorReadout>` in
+ *   the ancestor slot; use this rather than composing the two yourself, since it also carries
+ *   the alignment that keeps the portrait's edge locked to the readout text's.
  *
  * ## Portrait helpers (pure)
  * - `portraitAt(index, t)` / `indexPortraits(data)` — the portrait target; `MORPH_BAND_FRACTION`
@@ -52,6 +55,7 @@ export {
   type PortraitIndex,
 } from './portraits'
 
+export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
 export { AncestorReadout, type AncestorReadoutProps } from './components/AncestorReadout'
 export { DayLengthClock, type DayLengthClockProps } from './components/DayLengthClock'

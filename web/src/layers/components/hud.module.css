@@ -306,6 +306,19 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
+/* Portrait above readout, aligned as one column to whichever edge the slot around it uses
+   (flex-end on desktop, centred on a phone — see ShellLayout's `.ancestor`) via
+   `align-items: inherit`, same as `.ancestor` below does for its own text. This is what keeps
+   the portrait's edge locked to the readout text's edge regardless of specimen-line width;
+   see AncestorPanel's doc comment for why a plain unstyled wrapper let it drift. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 8px;
+  min-width: 0;
+}
+
 /* ------------------------------------------------------------------- ancestor portrait */
 
 /* A round plate feathered into the lens's dark periphery: the plate's own black backdrop and
