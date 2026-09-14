@@ -176,14 +176,14 @@ scenes:
     subject:
       setting: A shallow intertidal pool on a barren coast, in the long, climatically stable interval nicknamed the "Boring Billion"
       left_mass: a low, weathered ledge of pale grey-buff dolostone, undercut at the waterline by tidal action
-      vegetation: none on land; in the shallows, dense tufts of hair-fine, reddish-purple Bangiomorpha-like algal filaments grow anchored to the rock, their tips faintly banded where reproductive cells are differentiated, alongside plain microbial mats
+      vegetation: "none on land; in the shallows, dense mats of hair-fine, reddish-purple Bangiomorpha-like algal filaments lie slicked flat against the submerged rock like fine wet hair, their tips faintly banded where reproductive cells are differentiated, alongside plain microbial mats; nothing stands upright out of the water"
       fauna: none; no animals exist yet, nothing grazes or moves among the algae
-      main_subject: dense reddish-purple fringes of hair-fine Bangiomorpha-like algal filaments carpeting the submerged rocks of a broad tidal pool, their tips swaying just below the surface
+      main_subject: "dense reddish-purple fringes of hair-fine Bangiomorpha-like algal filaments carpeting the submerged rocks of a broad tidal pool, lying low and slicked flat by the water like fine wet hair, their tips swaying just below the surface"
       ground: bare, pale, ripple-marked dolostone, with a thin dried microbial crust above the tideline
       water: shallow, clear, still tidal water lying in rock pools
-      far_bank: a flat, barren tidal platform of pale rock running to a low grey coastline, utterly bare of anything green beyond the algae at the shore
+      far_bank: "a flat, barren tidal platform of pale rock running unbroken to a low grey coastline of bare rock only, utterly bare of anything green beyond the algae at the shore"
       sky_and_light: a clear, pale sky, less hazy than deep Archean time but not the saturated blue of a modern one; calm, even, cool light
-      absent: [land plants, trees, grass, moss on land, animals, fish, shells, insects, birds, people]
+      absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats"]
     pin: null
 
   # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
@@ -252,13 +252,13 @@ scenes:
       setting: The shore of a shallow, muddy Cambrian sea, its sea floor crowded with newly diversified animal life and plainly visible through the shallows beside a barren coast
       left_mass: a tall, bare bank of layered grey-green mudstone and siltstone with no plants on it
       vegetation: none on land, which is bare rock and mud; underwater, only sparse patches of microbial mat on the mud, with a low mound of settled debris colonised by upright vase-shaped and stalked sponges
-      fauna: numerous trilobites crawling and half-buried in the mud; a small, soft-bodied lobopodian with paired clawed legs and spines along its back (Hallucigenia-grade) clinging to debris; a loose shoal of tiny, slender, jawless swimmers about 2.5 cm long, each with a pair of large eyes, a row of small gill openings behind the head, a low fin fold along the back and zigzag muscle bands down the body
-      main_subject: an Amplectobelua-grade radiodont up to 90 cm long, a swimming predator with a segmented, finned body, two jointed grasping appendages at the front of its head and a circular, plate-ringed mouth, gliding low over the mud of the shallows toward a cluster of trilobites
+      fauna: "numerous trilobites crawling and half-buried in the mud; a small, soft-bodied, worm-like lobopodian with stubby paired clawed legs and spines along its back (Hallucigenia-grade) clinging to debris; a loose shoal of tiny, slender, translucent jawless swimmers about 2.5 cm long, eel-shaped with no separate tail fin and no paired fins, each with a pair of large eyes, a row of small gill openings behind the head, a single low fin fold along the back and zigzag muscle bands down the body"
+      main_subject: "an Amplectobelua-grade radiodont up to 90 cm long, a soft-bodied segmented swimming predator shaped like a flattened, tapering arthropod rather than a fish: a row of overlapping flexible swimming flaps runs down each side of its body, a small fan of paired tail flaps at the rear, large stalked eyes on the head, two jointed, spiny grasping appendages curling down from the front of the head, and on the underside of the head a round mouth ringed with overlapping hard plates; it glides low over the mud of the shallows toward a cluster of trilobites"
       ground: wet, soft grey-brown mud at the waterline, rippled and bare
       water: shallow, slightly silty, pale green-blue sea water, clear enough near the shore that the muddy sea floor and its animals are plainly visible
       far_bank: a low, barren coastline of grey mud and rock, with no green anywhere
       sky_and_light: a clear, pale-blue sky with thin high cloud; bright sunlight throwing soft caustics across the sea floor
-      absent: [land plants, green vegetation on land, jawed fish, scaled fish, ammonites, corals, crabs, lobsters, sharks, modern fish, reptiles, mammals, birds, people]
+      absent: ["land plants", "green vegetation on land", "jawed fish", "scaled fish", "ammonites", "corals", "crabs", "lobsters", "sharks", "modern fish", "reptiles", "mammals", "birds", "people", "fish-shaped predator", "dorsal fin", "forked tail fin", "gill slits on the predator", "shark-like shapes", "centipedes"]
     pin: null
 
   # ~450 Ma, inside events.yaml land-plants (425-470 Ma) on the cryptospore side: Rubinstein, C.V. et
@@ -285,7 +285,7 @@ scenes:
       far_bank: a barren grey limestone coastline rising to low hills, entirely bare rock but for a faint green tinge right at the waterline
       sky_and_light: a clear, warm, pale-blue sky with light high cloud; bright, warm, even sunlight
       absent: [trees, grass, ferns, flowers, vascular plants, jawed fish, insects, land animals, birds, people]
-    pin: null
+    pin: {asset_digest: "38be5a9c75c4f90a", path: "data/candidates/ordovician-reef-shore/2c83c3436cd15b3f/02-38be5a9c75c4f90a.jpg"}
 
   # ~425 Ma, at the Cooksonia end of events.yaml land-plants (t_min = 425 Ma): Edwards, D., Fanning,
   # U. & Richardson, J.B. (1994), Silurian Cooksonia macrofossils. Only one Cooksonia species shows
@@ -313,7 +313,7 @@ scenes:
       far_bank: a low, barren coastal plain of grey-tan rock and sand, with only the faint dark-green fringe of Cooksonia visible at its edge
       sky_and_light: a clear, pale-blue sky with a few high clouds; warm, even sunlight
       absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, modern fish, sharks, birds, people]
-    pin: null
+    pin: {asset_digest: "96cdc909da9135c5", path: "data/candidates/silurian-shore/55234bc3c9e472c6/03-96cdc909da9135c5.jpg"}
 
   # ~407 Ma, inside the Rhynie chert's radiometric age (events.yaml insects, 3.96e8-4.11e8;
   # Parry, S.F. et al. 2011, "A high-precision U-Pb age constraint on the Rhynie Chert,"
@@ -339,7 +339,7 @@ scenes:
       far_bank: a barren, pale mineral-crusted plain fading into low volcanic hills, bare but for scattered patches of the same low plant stems
       sky_and_light: a clear, pale-blue sky; bright, even sunlight; a faint shimmer of heat over the springs
       absent: [trees, ferns with true leaves, seed plants, grass, flowers, winged insects, land vertebrates, birds, people, spiders, spider webs]
-    pin: null
+    pin: {asset_digest: "7ea8b194c790ed34", path: "data/candidates/rhynie-chert/e37af28f8877ce17/02-7ea8b194c790ed34.jpg"}
 
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
   # Subject rewritten by diagnostic anatomy (ADR-014): no likeness to a crocodile, and "neck, no gill
@@ -357,15 +357,15 @@ scenes:
       mean_temp_c: 24  # rounded: Late Devonian greenhouse
     subject:
       setting: A Late Devonian estuary where a river meets a shallow sea, on the coastal lowland of a bare continent
-      left_mass: a stand of Archaeopteris, the first true trees, straight slender trunks up to 20 m tall carrying flat horizontal sprays of fern-like foliage, open and airy with sky visible between the branches
-      vegetation: Archaeopteris trees, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them
+      left_mass: "a stand of Archaeopteris, the first true trees: straight slender trunks up to 20 m tall with rough bark, carrying spirally arranged horizontal branches along the upper two-thirds of the trunk, each branch bearing flat sprays of small fern-like leaflets, giving a narrow, conical, conifer-like outline with sky visible between the tiers — never a bare trunk with a crown of fronds at the top"
+      vegetation: "Archaeopteris trees with branches tiered down the upper trunk, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them"
       fauna: lobe-finned fishes in the shallows; no land animals larger than a small arthropod
-      main_subject: a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, rough diamond-shaped overlapping scales down its flanks, a wide flattened head joined to the shoulders by a short distinct neck with no gill cover, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface
+      main_subject: "a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, rough diamond-shaped overlapping scales down its flanks, a wide flattened head joined to the shoulders by a short distinct neck with no gill cover, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface; its lobe-fins are flattened fleshy paddles with no toes, claws or elbow joint, lying in the water rather than propping the body up"
       ground: bare, wet grey-brown mud and sand
       water: shallow, calm, slightly silty brackish water
-      far_bank: a low upland of grey and ochre rock with dark stands of Archaeopteris trees along the distant river margins
+      far_bank: "a low upland of grey and ochre rock with dark, narrow, conical stands of Archaeopteris trees along the distant river margins"
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
-      absent: [flowers, grass, broadleaf trees, palms, conifers, cycads, dinosaurs, mammals, birds, flying insects, crocodile, legs, digits, claws, external gills]
+      absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "cycads", "dinosaurs", "mammals", "birds", "flying insects", "crocodile", "legs", "digits", "claws", "external gills", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk"]
     pin: null
 
   # ~365 Ma, exactly at events.yaml tetrapods (t_min = 3.65e8; Acanthostega/Ichthyostega,
@@ -383,15 +383,15 @@ scenes:
       mean_temp_c: 23  # rounded
     subject:
       setting: A weed-choked Late Devonian stream on a forested coastal lowland
-      left_mass: a dense stand of tall Archaeopteris trees with flat sprays of fern-like leafy branches shading a tangle of undergrowth
-      vegetation: Archaeopteris trees over a low tangle of horsetail relatives and, scattered among them, sprawling Elkinsia-like seed ferns bearing small cup-like structures that enclose single seeds at their frond tips — the first seeds
+      left_mass: "a dense stand of tall Archaeopteris trees, straight slender trunks up to 20 m tall with rough bark, carrying spirally arranged horizontal branches along the upper two-thirds of the trunk, each branch bearing flat sprays of small fern-like leaflets, giving a narrow, conical, conifer-like outline with sky visible between the tiers — never a bare trunk with a crown of fronds at the top, shading a tangle of undergrowth"
+      vegetation: "Archaeopteris trees over a low tangle of horsetail relatives and, scattered among them, sprawling Elkinsia-like seed ferns bearing small cup-like structures that enclose single seeds at their frond tips — plain, dull green-brown and unshowy, nothing like a flower — the first seeds"
       fauna: an early tetrapod with true limbs; small lobe-finned fish visible in the water; no larger land animals yet
       main_subject: an Acanthostega-like early tetrapod about 60 cm long, with four short paddle-like limbs, the front feet with eight slender digits, a broad flattened head, and a long tail edged with a fin, pushing along a submerged log in the shallow, weed-choked water
       ground: waterlogged black mud dense with rotting plant debris and fallen branches
-      water: still, shallow, weed-choked water, dark with tannins and thick with drifting plant debris
-      far_bank: Archaeopteris forest with low seed-fern thickets in its understory, fading into humid haze
+      water: "still, shallow, weed-choked stream water stained dark tea-brown by tannins and thick with drifting plant debris, not clear and not turquoise"
+      far_bank: "Archaeopteris forest of narrow, conical, tiered trees with low seed-fern thickets in its understory, fading into humid haze"
       sky_and_light: a warm, hazy sky with scattered cumulus; soft, humid, slightly diffused light
-      absent: [flowers, grass, broadleaf trees, palms, conifers, reptiles, dinosaurs, mammals, birds, flying insects, walking on land]
+      absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "reptiles", "dinosaurs", "mammals", "birds", "flying insects", "walking on land", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk", "yellow or coloured blooms", "sandy beach", "clear turquoise water"]
     pin: null
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
@@ -441,7 +441,7 @@ scenes:
       far_bank: open conifer woodland thinning toward a dry, dune-fringed horizon, drier and more open than any earlier scene
       sky_and_light: a clear, pale-blue sky with scattered fair-weather cloud; bright, dry sunlight, sharper-edged shadows than a humid swamp
       absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, dense swamp forest, giant lycopsid trees, dragonflies, damselflies]
-    pin: null
+    pin: {asset_digest: "56d38ae859aa81c6", path: "data/candidates/permian-conifer-forest/3b37de5bc38e6a7b/02-56d38ae859aa81c6.jpg"}
 
   # Middle Permian, before the end-Permian extinction (events.yaml permian-extinction: ~251.9 Ma).
   - id: permian-interior
@@ -490,7 +490,7 @@ scenes:
       far_bank: a barren red-brown plain stretching to the horizon, all but lifeless, broken only by scattered stands of Pleuromeia
       sky_and_light: a hazy, dust-laden, bleached sky, harsh and glaring; hard, flat light with little relief
       absent: [forests, lush vegetation, flowers, grass, dinosaurs, large predators, diverse fauna, birds, mammals]
-    pin: null
+    pin: {asset_digest: "47c14793925a8c37", path: "data/candidates/early-triassic-lystrosaurus/0b362bccb7291d9a/01-47c14793925a8c37.jpg"}
 
   # ~231 Ma, exactly at events.yaml dinosaurs (t_min = 2.31e8): Martinez, R.N. et al. (2011),
   # "A basal dinosaur from the dawn of the dinosaur era in southwestern Pangaea," Science
@@ -517,7 +517,7 @@ scenes:
       far_bank: an open plain of red-brown soil and scattered conifers, drier and more open than a dense forest
       sky_and_light: a cool, clear dry-season sky with high cloud; crisp, bright sunlight
       absent: [flowers, grass, broadleaf trees, palms, sauropods, long-necked dinosaurs, mammals, birds, modern reptiles]
-    pin: null
+    pin: {asset_digest: "0ea6dc80408755ae", path: "data/candidates/late-triassic-dinosaurs/433726cab98bc075/02-0ea6dc80408755ae.jpg"}
 
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
   # 165-155 Ma, Callovian-Oxfordian): Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al.
