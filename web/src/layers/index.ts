@@ -31,7 +31,7 @@
  *   `Layer<ScalarValue>` whose unit is hours.
  * - `<AncestorReadout layer t />` — label, representative organism, "since <t>".
  * - `<AncestorPortrait layer t assetBase />` — the ancestor's specimen plate, flow-morphing
- *   into the next across a band after each divergence (ADR-015); renders nothing when the
+ *   into the next across a band centred on each divergence (ADR-015); renders nothing when the
  *   lineage publishes no portrait at `t`. Its target is pure in `t`; the displayed morph is
  *   rate-limited to a minimum duration.
  * - `<AncestorPanel layer t assetBase />` — `<AncestorPortrait>` above `<AncestorReadout>` in

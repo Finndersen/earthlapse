@@ -51,8 +51,18 @@ export const PORTRAIT_TREE_DATA: TreeData = {
   },
 }
 
-/** `t` a fraction `u` of the way through the morph band below `current`'s divergence. */
-export function tInBand(current: number, youngerBoundary: number, bandFraction: number, u: number): number {
-  const band = bandFraction * (Math.log1p(current) - Math.log1p(youngerBoundary))
-  return Math.expm1(Math.log1p(current) - u * band)
+/** `t` a fraction `u` of the way through the half morph band *below* `current`'s divergence,
+ *  toward `youngerBoundary` (the next younger plate's divergence, or the present). `u = 0` is
+ *  the divergence itself (mix 0.5); `u = 1` is the band's lower edge (mix 1). */
+export function tBelowDivergence(current: number, youngerBoundary: number, bandFraction: number, u: number): number {
+  const half = (bandFraction / 2) * (Math.log1p(current) - Math.log1p(youngerBoundary))
+  return Math.expm1(Math.log1p(current) - u * half)
+}
+
+/** `t` a fraction `u` of the way through the half morph band *above* `current`'s divergence,
+ *  toward `olderDivergence`. `u = 0` is the divergence itself (mix 0.5); `u = 1` is the band's
+ *  upper edge (mix 0). */
+export function tAboveDivergence(current: number, olderDivergence: number, bandFraction: number, u: number): number {
+  const half = (bandFraction / 2) * (Math.log1p(olderDivergence) - Math.log1p(current))
+  return Math.expm1(Math.log1p(current) + u * half)
 }

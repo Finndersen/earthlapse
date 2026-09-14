@@ -542,9 +542,13 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
   - Cached by both pins' digests plus the algorithm version. Publish includes the cached morphs
     and warns about pairs without one, which the viewer crossfades.
 - **Viewer.** `<AncestorPortrait layer t assetBase />` in `web/src/layers`.
-  - The target mix is pure in `t`. It runs a smoothstep across a band that starts at each plate's
-    divergence and covers `MORPH_BAND_FRACTION = 0.25` of the log1p gap down to the next
-    younger plate (or the present).
+  - The target mix is pure in `t`. It runs a smoothstep across a band centred on each plate's
+    divergence — half-way between the two plates at the exact instant the ancestor readout's
+    label switches — reaching `MORPH_BAND_FRACTION / 2 = 0.125` of the log1p gap up into the
+    older plate's span and the same fraction down toward the next younger plate (or the
+    present). (Originally the band started at the divergence and ran the full `0.25` toward the
+    present, which left the image at 100% the older plate for a while after the label had
+    already switched; corrected 2026-09-14.)
   - The displayed mix is rate-limited to `MIN_PORTRAIT_TRANSITION_SECONDS = 1.2` by
     `web/src/lib/presentedMix.ts`: ADR-012's limiter, generalised over the item type so the
     layers package does not import the scene package.

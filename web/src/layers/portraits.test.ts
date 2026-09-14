@@ -4,7 +4,7 @@ import type { PortraitPlate } from '@/types/layer'
 
 import { createNodeLayer } from './factories'
 import { ANCESTOR_DATA, ANCESTOR_MANIFEST, deepFreeze } from './fixtures'
-import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA, tInBand } from './portraitFixtures'
+import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA, tAboveDivergence, tBelowDivergence } from './portraitFixtures'
 import {
   decodeFlowByte,
   indexPortraits,
@@ -27,6 +27,15 @@ function plateOf(nodeId: string): PortraitPlate {
 describe('indexPortraits', () => {
   it('is null for a lineage that publishes no portraits', () => {
     expect(indexPortraits(ANCESTOR_DATA)).toBeNull()
+  })
+
+  it('throws naming both node ids when two plates share a tDivergence', () => {
+    const tied = structuredClone(PORTRAIT_TREE_DATA)
+    const primate = tied.nodes.find((n) => n.id === 'primate')!
+    const tetrapod = tied.nodes.find((n) => n.id === 'tetrapod')!
+    tetrapod.tDivergence = primate.tDivergence // both have plates; portraitAt assumes strictly increasing divergences
+
+    expect(() => indexPortraits(tied)).toThrow(/primate.*tetrapod|tetrapod.*primate/)
   })
 
   it('joins plates to their divergence, youngest first, and attaches each computed morph to its younger plate', () => {
@@ -83,29 +92,38 @@ describe('portraitAt', () => {
     expect(portraitAt(index, 1e8)).toEqual({ from: plateOf('tetrapod'), to: plateOf('tetrapod'), mix: 0 })
   })
 
-  it('starts the morph at the divergence, from the older plate', () => {
-    expect(portraitAt(index, 6.6e7)).toEqual({ from: plateOf('tetrapod'), to: plateOf('primate'), mix: 0 })
+  it('is half-way between the two plates at the exact moment the label switches', () => {
+    // t = 6.6e7 is primate's own divergence -- where sampleTree flips the ancestor label to
+    // "Primates" -- so the image must already read as half tetrapod, half primate, not still
+    // 100% tetrapod.
+    expect(portraitAt(index, 6.6e7)).toEqual({ from: plateOf('tetrapod'), to: plateOf('primate'), mix: 0.5 })
   })
 
-  it('runs a smoothstep across MORPH_BAND_FRACTION of the log1p gap to the next younger plate', () => {
-    const quarter = portraitAt(index, tInBand(6.6e7, 3e5, MORPH_BAND_FRACTION, 0.25))!
-    const half = portraitAt(index, tInBand(6.6e7, 3e5, MORPH_BAND_FRACTION, 0.5))!
+  it('runs a smoothstep on each half-band either side of the divergence', () => {
+    const above = portraitAt(index, tAboveDivergence(6.6e7, 3.75e8, MORPH_BAND_FRACTION, 0.5))!
+    const below = portraitAt(index, tBelowDivergence(6.6e7, 3e5, MORPH_BAND_FRACTION, 0.5))!
 
-    expect(quarter.from).toBe(plateOf('tetrapod'))
-    expect(quarter.to).toBe(plateOf('primate'))
-    expect(quarter.mix).toBeCloseTo(0.15625)
-    expect(half.mix).toBeCloseTo(0.5)
+    expect(above.from).toBe(plateOf('tetrapod'))
+    expect(above.to).toBe(plateOf('primate'))
+    expect(above.mix).toBeCloseTo(0.25)
+    expect(below.mix).toBeCloseTo(0.75)
   })
 
-  it('settles on the younger plate alone once past the band', () => {
-    const past = tInBand(6.6e7, 3e5, MORPH_BAND_FRACTION, 1.01)
+  it('settles on the older plate alone once past the half-band above the divergence', () => {
+    const past = tAboveDivergence(6.6e7, 3.75e8, MORPH_BAND_FRACTION, 1.01)
+    expect(portraitAt(index, past)).toEqual({ from: plateOf('tetrapod'), to: plateOf('tetrapod'), mix: 0 })
+  })
+
+  it('settles on the younger plate alone once past the half-band below the divergence', () => {
+    const past = tBelowDivergence(6.6e7, 3e5, MORPH_BAND_FRACTION, 1.01)
     expect(portraitAt(index, past)).toEqual({ from: plateOf('primate'), to: plateOf('primate'), mix: 0 })
   })
 
   it('measures the youngest plate band down to the present', () => {
-    const inside = portraitAt(index, tInBand(3e5, 0, MORPH_BAND_FRACTION, 0.5))!
+    expect(portraitAt(index, 3e5)).toEqual({ from: plateOf('primate'), to: plateOf('human'), mix: 0.5 })
+    const inside = portraitAt(index, tBelowDivergence(3e5, 0, MORPH_BAND_FRACTION, 0.5))!
     expect(inside.from).toBe(plateOf('primate'))
-    expect(inside.mix).toBeCloseTo(0.5)
+    expect(inside.mix).toBeCloseTo(0.75)
     expect(portraitAt(index, 0)).toEqual({ from: plateOf('human'), to: plateOf('human'), mix: 0 })
   })
 })
@@ -113,7 +131,7 @@ describe('portraitAt', () => {
 describe('createNodeLayer with portraits', () => {
   it('adds the portrait target to the sampled node, purely, without touching the data', () => {
     const layer = createNodeLayer(PORTRAIT_MANIFEST, deepFreeze(structuredClone(PORTRAIT_TREE_DATA)))
-    const t = tInBand(6.6e7, 3e5, MORPH_BAND_FRACTION, 0.5)
+    const t = 6.6e7 // primate's own divergence: the label switches here, and the portrait is half-way.
 
     const value = layer.sample(t)
 

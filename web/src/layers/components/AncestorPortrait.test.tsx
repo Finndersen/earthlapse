@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createNodeLayer } from '../factories'
 import { ANCESTOR_DATA, ANCESTOR_MANIFEST } from '../fixtures'
-import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA, tInBand } from '../portraitFixtures'
-import { MORPH_BAND_FRACTION } from '../portraits'
+import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA } from '../portraitFixtures'
 import { AncestorPortrait } from './AncestorPortrait'
 
 // jsdom has no WebGL context, so every render here takes the crossfade fallback: two <img>s,
@@ -41,7 +40,7 @@ describe('<AncestorPortrait>', () => {
   })
 
   it('crossfades the two plates of a morph band at the eased alpha, resolving URLs against assetBase', () => {
-    const t = tInBand(6.6e7, 3e5, MORPH_BAND_FRACTION, 0.5)
+    const t = 6.6e7 // primate's own divergence: the band is centred here, so the mix is 0.5.
     const { container, getByTestId } = render(<AncestorPortrait layer={layer} t={t} assetBase="/media" />)
 
     const { older, younger } = images(container)

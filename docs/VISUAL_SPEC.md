@@ -286,6 +286,9 @@ the same as a scene.
 
 ### Morphing between plates
 
+- The viewer's morph band is centred on each plate's divergence — the same instant the
+  ancestor readout's label switches to it — so the image reads as half-way between the two
+  plates exactly when the label does, not still the older plate.
 - Consecutive pinned plates are joined by a dense optical-flow field computed offline
   (`earthtime morph`, free).
 - Both plates are normalised first: the subject box is taken from the dark backdrop, then centred

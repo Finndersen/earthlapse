@@ -3,20 +3,24 @@
  * how far the morph between them has run. Pure; closes over already-parsed `TreeData` only.
  *
  * The plate shown at `t` belongs to the youngest plate-bearing node that has already diverged
- * by `t`, so a lineage node without a plate shows the nearest older plate. Crossing a plate's
- * divergence toward the present morphs from the older plate into it, across a band that starts
- * at the divergence and spans `MORPH_BAND_FRACTION` of the log1p gap down to the next younger
- * plate's divergence (or to the present). log1p is the symlog timeline's warp, as in
- * `scene.ts`'s dissolve, so a band has a proportional on-screen width at any zoom.
+ * by `t`, so a lineage node without a plate shows the nearest older plate. The morph band is
+ * centred on each plate's divergence — the exact moment the ancestor readout's label switches
+ * to it — so the image reads as half-way between the two plates right when the label does,
+ * rather than lagging behind it. The band reaches `MORPH_BAND_FRACTION / 2` of the log1p gap
+ * up into the older plate's span (bounded by the older plate's own divergence) and the same
+ * fraction of the log1p gap down toward the next younger plate's divergence (or the present).
+ * log1p is the symlog timeline's warp, as in `scene.ts`'s dissolve, so a band has a
+ * proportional on-screen width at any zoom.
  */
 
 import type { PortraitMorphData, TreeData } from '@/data/curated'
 import type { MixKeying } from '@/lib/presentedMix'
 import type { GeoTime, PortraitMix, PortraitMorph, PortraitPlate } from '@/types/layer'
 
-/** The morph band as a fraction of the log1p gap below a plate's divergence. A quarter keeps
- *  each plate clear for three quarters of its span and gives the morph room to read on the
- *  timeline; the presentation limiter guarantees its wall-clock floor however fast `t` moves. */
+/** The full morph band as a fraction of the log1p gap either side of a plate's divergence —
+ *  half of it above, half below (see module doc). A quarter keeps each plate clear for three
+ *  quarters of its span to each neighbour and gives the morph room to read on the timeline; the
+ *  presentation limiter guarantees its wall-clock floor however fast `t` moves. */
 export const MORPH_BAND_FRACTION = 0.25
 
 /** A full morph never displays in less than this, however abruptly `t` jumps. Shorter than the
@@ -53,6 +57,15 @@ export function indexPortraits(data: TreeData): PortraitIndex | null {
     return plate
   })
   plates.sort((a, b) => a.tDivergence - b.tDivergence)
+  for (let i = 1; i < plates.length; i++) {
+    const prev = plates[i - 1]!
+    const curr = plates[i]!
+    if (prev.tDivergence === curr.tDivergence) {
+      throw new Error(
+        `portraits ${prev.nodeId} and ${curr.nodeId} share tDivergence ${curr.tDivergence}; portraitAt assumes strictly increasing divergences`,
+      )
+    }
+  }
   return { plates }
 }
 
@@ -77,19 +90,47 @@ function alone(plate: PortraitPlate): PortraitMix {
   return { from: plate, to: plate, mix: 0 }
 }
 
+/** Half the morph band above a plate's divergence, toward `older`'s — the room available before
+ *  the band would run past the older plate's own transition. `Infinity` for the oldest plate,
+ *  which has no older neighbour to bound against and is simply shown alone (see `portraitAt`). */
+function halfBandAbove(current: PortraitPlate, older: PortraitPlate | undefined): number {
+  if (older === undefined) return Infinity
+  return (MORPH_BAND_FRACTION / 2) * (Math.log1p(older.tDivergence) - Math.log1p(current.tDivergence))
+}
+
+/** Half the morph band below a plate's divergence, toward `youngerBoundary` — the next younger
+ *  plate's divergence, or the present (0). */
+function halfBandBelow(current: PortraitPlate, youngerBoundary: GeoTime): number {
+  return (MORPH_BAND_FRACTION / 2) * (Math.log1p(current.tDivergence) - Math.log1p(youngerBoundary))
+}
+
+/** How far `delta` (a log1p distance from the divergence, always >= 0) has run into a half-band
+ *  of width `half`: a smoothstep, saturating immediately once `half` leaves no room to blend. */
+function halfBandProgress(delta: number, half: number): number {
+  return half > 0 ? smoothstep01(delta / half) : delta > 0 ? 1 : 0
+}
+
 /** The portrait target at `t`: null before the oldest plate's divergence. */
 export function portraitAt(index: PortraitIndex, t: GeoTime): PortraitMix | null {
   const { plates } = index
-  const k = plates.findIndex((p) => p.tDivergence >= t)
-  if (k < 0) return null
+  const oldest = plates[plates.length - 1]
+  if (oldest === undefined || t > oldest.tDivergence) return null
+
+  // The band-shifted analogue of the old `p.tDivergence >= t`: a plate claims `t` through its
+  // own half-band above, into what would otherwise be the older plate's span. The oldest plate's
+  // bound is `Infinity`, so this always matches by the time the scan reaches it.
+  const logT = Math.log1p(t)
+  const k = plates.findIndex((p, i) => logT <= Math.log1p(p.tDivergence) + halfBandAbove(p, plates[i + 1]))
   const current = plates[k]!
   const older = plates[k + 1]
   if (older === undefined) return alone(current)
 
+  const logDiv = Math.log1p(current.tDivergence)
   const youngerBoundary = plates[k - 1]?.tDivergence ?? 0
-  const band = MORPH_BAND_FRACTION * (Math.log1p(current.tDivergence) - Math.log1p(youngerBoundary))
-  if (!(band > 0)) return alone(current)
-  const mix = smoothstep01((Math.log1p(current.tDivergence) - Math.log1p(t)) / band)
+  const mix =
+    logT >= logDiv
+      ? 0.5 - 0.5 * halfBandProgress(logT - logDiv, halfBandAbove(current, older))
+      : 0.5 + 0.5 * halfBandProgress(logDiv - logT, halfBandBelow(current, youngerBoundary))
   return mix >= 1 ? alone(current) : { from: older, to: current, mix }
 }
 
