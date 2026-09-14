@@ -1888,6 +1888,22 @@
       "estimated_usd": 0.154406,
       "actual_usd": 0.138306,
       "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154412,
+      "actual_usd": 0.14037,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154538,
+      "actual_usd": 0.138698,
+      "note": null
     }
   ]
 }
