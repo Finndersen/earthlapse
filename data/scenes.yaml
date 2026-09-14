@@ -1093,6 +1093,36 @@ scenes:
       absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
     pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
 
+  # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
+  # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"
+  # article: liftoff at 9:32 am EDT on a clear morning; Saturn V, white with the black
+  # roll-pattern band; large crowds watched from public viewing areas along the Banana River and
+  # Indian River, several kilometres from the pad. Artistic licence: no single documented
+  # spectator position is depicted; the far shore, cars and onlookers are composited as small,
+  # generic silhouettes consistent with contemporary photographs rather than any specific,
+  # identifiable people or vehicles. The Moon landing itself, four days later, is not shown — it
+  # cannot be seen from a water's edge on Earth — and is noted only in the caption.
+  - id: apollo-11-launch
+    t: 56.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire, watched from across the lagoon; four days later, Armstrong and Aldrin land on the Moon.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-20th-century global mean, still close to pre-industrial before post-1970s warming
+    subject:
+      setting: The shore of the Banana River / Indian River lagoon, several kilometres from Launch Complex 39A at Kennedy Space Center, Florida, on the clear morning of 16 July 1969
+      left_mass: a low hummock of Florida coastal scrub and palmetto rising at the water's edge, its silhouette dark against the sky
+      vegetation: coastal scrub, palmetto and scattered slash pines along the lagoon shore
+      fauna: a few wading birds in the shallows
+      main_subject: the Saturn V rocket, white with a black roll-pattern band, lifting off far across the water on a towering column of bright orange-white flame and a vast, billowing white exhaust cloud, its launch tower just visible at the base
+      ground: flat sandy scrubland at the waterline, with tufts of grass and bare sand
+      water: the calm, wide lagoon, faintly rippled, its surface catching the glow of the flame and cloud
+      far_bank: the distant, flat Florida shoreline, with a scatter of small, generic 1960s-era cars and onlookers reduced to dark silhouettes; no legible text, logos or identifiable faces
+      sky_and_light: a clear, pale-blue midsummer morning sky with a few small clouds; bright, warm morning sunlight
+      absent: [Space Shuttle, SpaceX rocket, modern rocket, modern launch tower, modern buildings, smartphone, camera phone, legible text, logo, flag shown close-up, identifiable face, modern car, high-rise building]
+    pin: {asset_digest: "a0da45cad76f825d", path: "data/candidates/apollo-11-launch/33045c4ababe91c8/03-a0da45cad76f825d.jpg"}
+
   # The present day (events.yaml present: t = 0).
   - id: modern-city
     t: 0.0

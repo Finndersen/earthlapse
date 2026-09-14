@@ -1952,6 +1952,30 @@
       "estimated_usd": 0.154676,
       "actual_usd": 0.139482,
       "note": null
+    },
+    {
+      "node_id": "apollo-11-launch.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154594,
+      "actual_usd": 0.139494,
+      "note": null
+    },
+    {
+      "node_id": "apollo-11-launch.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154594,
+      "actual_usd": 0.139974,
+      "note": null
+    },
+    {
+      "node_id": "apollo-11-launch.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154594,
+      "actual_usd": 0.140694,
+      "note": null
     }
   ]
 }

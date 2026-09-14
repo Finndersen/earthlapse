@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "e14732ec5fe65a42",
+  "buildId": "7d166f884a63ab1f",
   "assetBase": "/media",
   "scenes": [
     {
@@ -11,6 +11,17 @@
       "shot": "WATER_EDGE",
       "caption": "The present, where a city of glass and concrete lines a river and one species reshapes the planet's surface in a geological instant.",
       "pinned": "89b360bb4addcd58",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "apollo-11-launch",
+      "t": 56.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/apollo-11-launch.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire, watched from across the lagoon; four days later, Armstrong and Aldrin land on the Moon.",
+      "pinned": "a0da45cad76f825d",
       "width": 2752,
       "height": 1536
     },
