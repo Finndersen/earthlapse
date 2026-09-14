@@ -1,0 +1,355 @@
+{
+  "id": "co2",
+  "unit": "ppm",
+  "interpolation": "log-linear",
+  "samples": [
+    {
+      "t": 0.0,
+      "value": 276.631628,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 10000000.0,
+      "value": 277.23164,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 20000000.0,
+      "value": 323.85724,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 30000000.0,
+      "value": 396.93556,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 40000000.0,
+      "value": 578.59144,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 50000000.0,
+      "value": 889.55328,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 60000000.0,
+      "value": 784.60032,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 70000000.0,
+      "value": 896.0142800000001,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 80000000.0,
+      "value": 1171.82716,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 90000000.0,
+      "value": 1208.99492,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 100000000.0,
+      "value": 1484.2884,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 110000000.0,
+      "value": 1648.8416,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 120000000.0,
+      "value": 1707.14712,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 130000000.0,
+      "value": 1849.64304,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 140000000.0,
+      "value": 2295.59232,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 150000000.0,
+      "value": 2127.8054,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 160000000.0,
+      "value": 2554.657,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 170000000.0,
+      "value": 2400.5746799999997,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 180000000.0,
+      "value": 1356.31132,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 190000000.0,
+      "value": 1243.61888,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 200000000.0,
+      "value": 1523.795,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 210000000.0,
+      "value": 1375.4554799999999,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 220000000.0,
+      "value": 1632.7673599999998,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 230000000.0,
+      "value": 1455.2624799999999,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 240000000.0,
+      "value": 1989.15976,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 250000000.0,
+      "value": 1702.9272400000002,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 260000000.0,
+      "value": 524.25016,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 270000000.0,
+      "value": 403.36492,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 280000000.0,
+      "value": 351.49828,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 290000000.0,
+      "value": 371.36064,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 300000000.0,
+      "value": 349.99327999999997,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 310000000.0,
+      "value": 351.14324,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 320000000.0,
+      "value": 374.65904,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 330000000.0,
+      "value": 468.00124,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 340000000.0,
+      "value": 757.39076,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 350000000.0,
+      "value": 1214.51932,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 360000000.0,
+      "value": 1718.62964,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 370000000.0,
+      "value": 2251.20476,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 380000000.0,
+      "value": 4284.6188,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 390000000.0,
+      "value": 3767.274,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 400000000.0,
+      "value": 3170.398,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 410000000.0,
+      "value": 3090.8360000000002,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 420000000.0,
+      "value": 3892.4872,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 430000000.0,
+      "value": 4759.3168,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 440000000.0,
+      "value": 4672.0772,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 450000000.0,
+      "value": 4439.2488,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 460000000.0,
+      "value": 4331.4403999999995,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 470000000.0,
+      "value": 4963.341600000001,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 480000000.0,
+      "value": 4839.399600000001,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 490000000.0,
+      "value": 4843.09,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 500000000.0,
+      "value": 5289.7292,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 510000000.0,
+      "value": 6271.23,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 520000000.0,
+      "value": 7331.0216,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 530000000.0,
+      "value": 7147.5768,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 540000000.0,
+      "value": 4814.2696,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 550000000.0,
+      "value": 5026.4116,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 560000000.0,
+      "value": 4554.7152,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 570000000.0,
+      "value": 3277.0136,
+      "lower": null,
+      "upper": null
+    }
+  ]
+}

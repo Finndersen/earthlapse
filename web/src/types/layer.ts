@@ -26,6 +26,45 @@ export interface ScalarValue {
   bounds?: [number, number]
 }
 
+/**
+ * An additive globe visual keyed to an event (docs/GLOBE.md §6, ADR-013). Closed — a new kind
+ * is a new visual with its own envelope curve in `web/src/globe/effects/`, not a free-text
+ * label. Mirrors `pipeline.shapes.GlobeEffectKind` exactly; the string values are the wire
+ * values too.
+ */
+export type GlobeEffectKind =
+  | 'impact-winter'
+  | 'giant-impact'
+  | 'flood-basalt'
+  | 'ice-shell'
+  | 'regime-magma-ocean'
+  | 'regime-water-world'
+  | 'regime-archean'
+  | 'regime-unknown-geography'
+
+/** A present-day location; the globe reconstructs it to `t` with the plate model at build
+ *  time (docs/GLOBE.md §5.3). Absent on `GlobeEffect` for effects with no fixed location. */
+export interface GlobeEffectAnchor {
+  lat: number
+  lon: number
+}
+
+/** One active interval of a `GlobeEffect`. Distinct from the owning event's own `tMin`/`tMax`:
+ *  one event can drive several disjoint windows — Snowball Earth's Sturtian and Marinoan
+ *  glaciations are one `snowball-earth` event with two `ice-shell` windows (GLOBE.md §4.3). */
+export interface GlobeEffectWindow {
+  tMin: GeoTime
+  tMax: GeoTime
+}
+
+/** Mirrors `pipeline.shapes.GlobeEffect` / `pipeline.manifest.GlobeEffect` (docs/GLOBE.md §6,
+ *  ADR-013). Additive on `TimelineEvent`: absent on every event with no globe visual. */
+export interface GlobeEffect {
+  kind: GlobeEffectKind
+  anchor?: GlobeEffectAnchor
+  windows: GlobeEffectWindow[]
+}
+
 export interface TimelineEvent {
   id: string
   label: string
@@ -36,6 +75,8 @@ export interface TimelineEvent {
   importance: number
   description: string
   citation: string
+  /** Additive (docs/GLOBE.md §6). Absent for an event with no globe visual of its own. */
+  effect?: GlobeEffect
 }
 
 export interface EventsValue {

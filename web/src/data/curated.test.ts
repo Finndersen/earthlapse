@@ -8,11 +8,15 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  type EventsData,
+  parseEventsData,
   parseRasterData,
   parseSeriesData,
+  parseTimelineEvent,
   parseTreeData,
   pathToRoot,
   type RasterData,
+  sampleEvents,
   sampleRaster,
   sampleSeries,
   sampleTree,
@@ -322,5 +326,158 @@ describe('parseTreeData', () => {
 
   it('rejects an empty tree', () => {
     expect(() => parseTreeData({ id: 't', nodes: [] })).toThrow(/empty/)
+  })
+})
+
+// --------------------------------------------------------------------------- EventSet / effects
+
+const regimesData: EventsData = parseEventsData({
+  id: 'globe-regimes',
+  events: [
+    {
+      id: 'magma-ocean-regime',
+      label: 'Magma ocean',
+      tMin: 4.35e9,
+      tMax: 4.52e9,
+      importance: 0.9,
+      description: 'd',
+      citation: 'c',
+      effect: {
+        kind: 'regime-magma-ocean',
+        windows: [{ tMin: 4.35e9, tMax: 4.52e9 }],
+      },
+    },
+    {
+      id: 'proterozoic-unknown-geography-regime',
+      label: 'Proterozoic, geography unknown',
+      tMin: 1.0e9,
+      tMax: 2.4e9,
+      importance: 0.3,
+      description: 'd',
+      citation: 'c',
+    },
+  ],
+})
+
+describe('parseTimelineEvent', () => {
+  it('leaves effect undefined when the field is absent', () => {
+    const event = parseTimelineEvent(
+      { id: 'x', label: 'X', tMin: 0, tMax: 1, importance: 0.5, description: 'd', citation: 'c' },
+      'x',
+    )
+    expect(event.effect).toBeUndefined()
+  })
+
+  it('parses an effect with an anchor and several windows', () => {
+    const event = parseTimelineEvent(
+      {
+        id: 'k-pg-impact',
+        label: 'K-Pg impact',
+        tMin: 6.6032e7,
+        tMax: 6.6054e7,
+        importance: 1.0,
+        description: 'd',
+        citation: 'c',
+        effect: {
+          kind: 'impact-winter',
+          anchor: { lat: 21.3, lon: -89.5 },
+          windows: [{ tMin: 6.6032e7, tMax: 6.6054e7 }],
+        },
+      },
+      'x',
+    )
+    expect(event.effect).toEqual({
+      kind: 'impact-winter',
+      anchor: { lat: 21.3, lon: -89.5 },
+      windows: [{ tMin: 6.6032e7, tMax: 6.6054e7 }],
+    })
+  })
+
+  it('parses an anchor-less effect with several windows', () => {
+    const event = parseTimelineEvent(
+      {
+        id: 'snowball-earth',
+        label: 'Snowball Earth',
+        tMin: 6.35e8,
+        tMax: 7.2e8,
+        importance: 0.85,
+        description: 'd',
+        citation: 'c',
+        effect: {
+          kind: 'ice-shell',
+          windows: [
+            { tMin: 6.61e8, tMax: 7.17e8 },
+            { tMin: 6.35e8, tMax: 6.39e8 },
+          ],
+        },
+      },
+      'x',
+    )
+    expect(event.effect?.anchor).toBeUndefined()
+    expect(event.effect?.windows).toHaveLength(2)
+  })
+
+  it('rejects an unknown effect kind', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 1,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: { kind: 'volcano', windows: [{ tMin: 0, tMax: 1 }] },
+        },
+        'x',
+      ),
+    ).toThrow(/unknown GlobeEffectKind/)
+  })
+
+  it('rejects an effect with no windows', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 1,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: { kind: 'giant-impact', windows: [] },
+        },
+        'x',
+      ),
+    ).toThrow(/empty windows/)
+  })
+})
+
+describe('parseEventsData', () => {
+  it('parses a non-timeline EventSet, effect included', () => {
+    expect(regimesData.id).toBe('globe-regimes')
+    expect(regimesData.events.map((e) => e.id)).toEqual(['magma-ocean-regime', 'proterozoic-unknown-geography-regime'])
+    expect(regimesData.events[0]?.effect?.kind).toBe('regime-magma-ocean')
+  })
+
+  it('rejects an empty EventsData', () => {
+    expect(() => parseEventsData({ id: 'e', events: [] })).toThrow(/empty/)
+  })
+})
+
+describe('sampleEvents', () => {
+  it('returns every event whose interval contains t', () => {
+    expect(sampleEvents(regimesData, 4.4e9).events.map((e) => e.id)).toEqual(['magma-ocean-regime'])
+  })
+
+  it('returns an empty list — not null — in a gap between events', () => {
+    // Between the magma-ocean regime (ends 4.35 Ga) and the unknown-geography regime
+    // (starts 2.4 Ga): nothing is active, but the layer still has data at this t.
+    expect(sampleEvents(regimesData, 3e9)).toEqual({ kind: 'events', events: [] })
+  })
+
+  it('never returns null, even outside every event — EventsData declares no domain of its own', () => {
+    expect(sampleEvents(regimesData, 0).events).toEqual([])
   })
 })

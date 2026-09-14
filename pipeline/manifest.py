@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from pipeline.prompts import PlateType, Shot
-from pipeline.shapes import GeoTime, Interpolation
+from pipeline.shapes import GeoTime, GlobeEffectKind, Interpolation
 
 
 class _WireModel(BaseModel):
@@ -85,6 +85,27 @@ class LayerManifest(_WireModel):
         return self
 
 
+class GlobeEffectAnchor(_WireModel):
+    lat: float
+    lon: float
+
+
+class GlobeEffectWindow(_WireModel):
+    t_min: GeoTime
+    t_max: GeoTime
+
+
+class GlobeEffect(_WireModel):
+    """Mirrors `pipeline.shapes.GlobeEffect` and `web/src/types/layer.ts`'s `GlobeEffect`
+    (docs/GLOBE.md §6, ADR-013). `kind` is `pipeline.shapes.GlobeEffectKind` directly, not a
+    re-declared wire enum: its values already are the wire values, so re-declaring it would
+    be a synonym that could silently drift from the pipeline-side enum."""
+
+    kind: GlobeEffectKind
+    anchor: GlobeEffectAnchor | None = None
+    windows: tuple[GlobeEffectWindow, ...] = Field(min_length=1)
+
+
 class TimelineEvent(_WireModel):
     id: str
     label: str
@@ -93,6 +114,9 @@ class TimelineEvent(_WireModel):
     importance: float = Field(ge=0.0, le=1.0)
     description: str
     citation: str
+    # Additive (docs/GLOBE.md §6): absent on every event published before this field existed,
+    # and on any event with no globe visual of its own.
+    effect: GlobeEffect | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class Credit(_WireModel):
@@ -217,7 +241,16 @@ class TreeData(_WireModel):
     portraits: PortraitSetData | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
-LayerData = SeriesData | RasterData | TreeData
+class EventsData(_WireModel):
+    """A non-timeline `EventSet` published as its own layer file (docs/GLOBE.md §6) — e.g.
+    `globe-regimes`, which `Manifest.events` never lists (that field is `events-core` only,
+    the timeline's own event set). Mirrors `TimelineEvent` per event, effect included."""
+
+    id: str
+    events: tuple[TimelineEvent, ...] = Field(min_length=1)
+
+
+LayerData = SeriesData | RasterData | TreeData | EventsData
 
 
 def dump_layer_data(data: LayerData) -> str:

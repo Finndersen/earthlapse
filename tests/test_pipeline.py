@@ -32,8 +32,12 @@ from pipeline.paths import ProjectPaths
 from pipeline.prompts import UnsourcedConditions, render_conditions
 from pipeline.scenes import SceneBook, ScenePin, load_scene_book
 from pipeline.shapes import (
+    EffectAnchor,
+    EffectWindow,
     Event,
     EventSet,
+    GlobeEffect,
+    GlobeEffectKind,
     Interpolation,
     RasterFrame,
     RasterSequence,
@@ -178,12 +182,44 @@ EVENTS = EventSet(
             importance=0.95,
             description="Chicxulub.",
             citation="Renne et al. 2013",
+            # docs/GLOBE.md §6: the additive effect field, exercised end to end through
+            # publish here (see test_publish_emits_a_valid_manifest_and_layer_json_in_the_
+            # parser_formats' exact-match manifest assertion).
+            effect=GlobeEffect(
+                kind=GlobeEffectKind.IMPACT_WINTER,
+                anchor=EffectAnchor(lat=21.3, lon=-89.5),
+                windows=[EffectWindow(t_min=6.6e7, t_max=6.61e7)],
+            ),
+        )
+    ],
+)
+GLOBE_REGIMES = EventSet(
+    id="globe-regimes",
+    events=[
+        Event(
+            id="magma-ocean-regime",
+            label="Magma ocean and newborn Moon",
+            t_min=4.35e9,
+            t_max=4.52e9,
+            importance=0.9,
+            description="A cooling crust, a close Moon.",
+            citation="Barboni et al. 2017",
+            effect=GlobeEffect(
+                kind=GlobeEffectKind.REGIME_MAGMA_OCEAN,
+                windows=[EffectWindow(t_min=4.35e9, t_max=4.52e9)],
+            ),
         )
     ],
 )
 SOURCE_MANIFESTS = {
     "astronomy": ("Analytic astronomy", "Laskar 2004", "n/a", "https://example.org/astro"),
     "co2-o2": ("GEOCARB III", "Berner 2001", "public domain", "https://example.org/co2"),
+    "globe-regimes": (
+        "Pre-1 Ga globe regimes",
+        "Barboni et al. 2017",
+        "n/a",
+        "https://example.org/globe-regimes",
+    ),
 }
 
 
@@ -248,7 +284,7 @@ def root(tmp_path: Path) -> Path:
     paths = ProjectPaths(project)
     paths.scenes.parent.mkdir(parents=True)
     paths.scenes.write_text(SCENES_YAML)
-    for shape in (CO2, DAY_LENGTH, SOLAR_LUMINOSITY, LINEAGE, PALEODEM, EVENTS):
+    for shape in (CO2, DAY_LENGTH, SOLAR_LUMINOSITY, LINEAGE, PALEODEM, EVENTS, GLOBE_REGIMES):
         write_shape(shape, paths.curated)
     for name, (title, citation, licence, url) in SOURCE_MANIFESTS.items():
         source = paths.sources / name
@@ -704,7 +740,19 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "chartable": False,
                 "data": "layers/paleodem.json",
             },
+            {
+                "id": "globe-regimes",
+                "name": "Globe regimes",
+                "surface": "globe",
+                "dataKind": "events",
+                "timeDomain": [4.35e9, 4.52e9],
+                "source": "globe-regimes",
+                "chartable": False,
+                "data": "layers/globe-regimes.json",
+            },
         ],
+        # docs/GLOBE.md §6: only events-core reaches Manifest.events — globe-regimes is a
+        # manifest.layers entry instead (asserted below via _layer_json), never listed here.
         "events": [
             {
                 "id": "kpg",
@@ -714,6 +762,11 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "importance": 0.95,
                 "description": "Chicxulub.",
                 "citation": "Renne et al. 2013",
+                "effect": {
+                    "kind": "impact-winter",
+                    "anchor": {"lat": 21.3, "lon": -89.5},
+                    "windows": [{"tMin": 6.6e7, "tMax": 6.61e7}],
+                },
             }
         ],
         "credits": [
@@ -730,6 +783,13 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 "citation": "Berner 2001",
                 "licence": "public domain",
                 "url": "https://example.org/co2",
+            },
+            {
+                "sourceId": "globe-regimes",
+                "title": "Pre-1 Ga globe regimes",
+                "citation": "Barboni et al. 2017",
+                "licence": "n/a",
+                "url": "https://example.org/globe-regimes",
             },
         ],
     }
@@ -784,6 +844,25 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
         "frames": [
             {"t": 0.0, "ref": "textures/paleodem/0.png"},
             {"t": 1e8, "ref": "textures/paleodem/100.png"},
+        ],
+    }
+    assert _layer_json(media, "globe-regimes") == {
+        "id": "globe-regimes",
+        "events": [
+            {
+                "id": "magma-ocean-regime",
+                "label": "Magma ocean and newborn Moon",
+                "tMin": 4.35e9,
+                "tMax": 4.52e9,
+                "importance": 0.9,
+                "description": "A cooling crust, a close Moon.",
+                "citation": "Barboni et al. 2017",
+                "effect": {
+                    "kind": "regime-magma-ocean",
+                    "anchor": None,
+                    "windows": [{"tMin": 4.35e9, "tMax": 4.52e9}],
+                },
+            }
         ],
     }
     for layer_id in ("co2", "day_length", "lineage", "paleodem"):

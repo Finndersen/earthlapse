@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest'
 
 import type { RasterData } from '@/data/curated'
+import type { TimelineEvent } from '@/types/layer'
 
-import { globeBlendAt, globePreloadUrls, globeUniforms, travelDirection } from './blend'
+import {
+  globeBlendAt,
+  globeMultiBlendAt,
+  globeMultiCaptionFor,
+  globeMultiPreloadUrls,
+  globePreloadUrls,
+  globeUniforms,
+  NO_RECONSTRUCTION_CAPTION,
+  regimeEventsWithRasterFallback,
+  SEAM_BAND,
+  travelDirection,
+  type GlobeRasterLayers,
+} from './blend'
 
 const assetBase = 'https://cdn.example.com/assets'
 
@@ -126,5 +139,130 @@ describe('globePreloadUrls', () => {
   it('is empty outside the domain', () => {
     expect(globePreloadUrls(dense, 31e6, 'toPresent', { ahead: 3, behind: 1 }, assetBase)).toEqual([])
     expect(globePreloadUrls(dense, -1, 'toPast', { ahead: 3, behind: 1 }, assetBase)).toEqual([])
+  })
+})
+
+// ------------------------------------------------------------------- multi-source (G7)
+
+// Merdith frames every 10 Ma from 1000 down to 550, plus the 540 Ma seam frame.
+const neoproterozoicFrames: RasterData = {
+  id: 'plates_neoproterozoic',
+  frames: [1000e6, 990e6, 980e6, 560e6, 550e6, 540e6]
+    .sort((a, b) => a - b)
+    .map((t) => ({ t, ref: `textures/plates_neoproterozoic/${t / 1e6}Ma.webp` })),
+}
+
+const layers: GlobeRasterLayers = { paleodem: frames, neoproterozoic: neoproterozoicFrames }
+const layersUnusable: GlobeRasterLayers = { paleodem: frames, neoproterozoic: null }
+
+describe('globeMultiBlendAt', () => {
+  it('delegates to the paleodem source below the seam band', () => {
+    expect(globeMultiBlendAt(layers, 100e6, assetBase)).toEqual(globeBlendAt(frames, 100e6, assetBase))
+  })
+
+  it('delegates to the neoproterozoic source above the seam band', () => {
+    expect(globeMultiBlendAt(layers, 700e6, assetBase)).toEqual(globeBlendAt(neoproterozoicFrames, 700e6, assetBase))
+  })
+
+  it('crossfades paleodem’s 540 Ma frame into neoproterozoic’s 550 Ma frame across the seam band', () => {
+    const [seamStart, seamEnd] = SEAM_BAND
+    expect(globeMultiBlendAt(layers, seamStart, assetBase)).toEqual({
+      beforeUrl: `${assetBase}/textures/paleodem/540Ma.png`,
+      afterUrl: `${assetBase}/textures/plates_neoproterozoic/550Ma.webp`,
+      alpha: 0,
+    })
+    expect(globeMultiBlendAt(layers, (seamStart + seamEnd) / 2, assetBase)).toEqual({
+      beforeUrl: `${assetBase}/textures/paleodem/540Ma.png`,
+      afterUrl: `${assetBase}/textures/plates_neoproterozoic/550Ma.webp`,
+      alpha: 0.5,
+    })
+    expect(globeMultiBlendAt(layers, seamEnd, assetBase)).toEqual({
+      beforeUrl: `${assetBase}/textures/paleodem/540Ma.png`,
+      afterUrl: `${assetBase}/textures/plates_neoproterozoic/550Ma.webp`,
+      alpha: 1,
+    })
+  })
+
+  it('is null across and beyond the seam band when neoproterozoic is unusable', () => {
+    expect(globeMultiBlendAt(layersUnusable, 545e6, assetBase)).toBeNull()
+    expect(globeMultiBlendAt(layersUnusable, 900e6, assetBase)).toBeNull()
+  })
+
+  it('still resolves the plain paleodem domain when neoproterozoic is unusable', () => {
+    expect(globeMultiBlendAt(layersUnusable, 100e6, assetBase)).toEqual(globeBlendAt(frames, 100e6, assetBase))
+  })
+})
+
+describe('globeMultiPreloadUrls', () => {
+  const window = { ahead: 2, behind: 1 }
+
+  it('warms both seam edge frames when travelling toPast towards the band', () => {
+    const urls = globeMultiPreloadUrls(layers, 530e6, 'toPast', window, assetBase)
+    expect(urls).toContain(`${assetBase}/textures/paleodem/540Ma.png`)
+    expect(urls).toContain(`${assetBase}/textures/plates_neoproterozoic/550Ma.webp`)
+  })
+
+  it('does not warm the seam when far from it', () => {
+    const urls = globeMultiPreloadUrls(layers, 0, 'toPast', window, assetBase)
+    expect(urls.every((u) => !u.includes('plates_neoproterozoic'))).toBe(true)
+  })
+
+  it('warms both seam edge frames when travelling toPresent towards the band', () => {
+    const urls = globeMultiPreloadUrls(layers, 560e6, 'toPresent', window, assetBase)
+    expect(urls).toContain(`${assetBase}/textures/paleodem/540Ma.png`)
+    expect(urls).toContain(`${assetBase}/textures/plates_neoproterozoic/550Ma.webp`)
+  })
+
+  it('is empty when neoproterozoic is unusable and t is past the paleodem domain', () => {
+    expect(globeMultiPreloadUrls(layersUnusable, 700e6, 'toPast', window, assetBase)).toEqual([])
+  })
+})
+
+describe('globeMultiCaptionFor', () => {
+  it('is empty over real paleodem data', () => {
+    expect(globeMultiCaptionFor(layers, 0)).toBe('')
+  })
+
+  it('labels the seam band', () => {
+    expect(globeMultiCaptionFor(layers, 545e6)).toContain('seam')
+  })
+
+  it('labels plain neoproterozoic data as continents from a plate model', () => {
+    expect(globeMultiCaptionFor(layers, 700e6)).toBe('Continents from plate model · relief stylised')
+  })
+
+  it('is the no-reconstruction label wherever neither source covers t', () => {
+    expect(globeMultiCaptionFor(layers, 1.1e9)).toBe(NO_RECONSTRUCTION_CAPTION)
+    expect(globeMultiCaptionFor(layers, -1)).toBe(NO_RECONSTRUCTION_CAPTION)
+    expect(globeMultiCaptionFor(layersUnusable, 700e6)).toBe(NO_RECONSTRUCTION_CAPTION)
+  })
+})
+
+describe('regimeEventsWithRasterFallback', () => {
+  const regimeEvents: TimelineEvent[] = [
+    {
+      id: 'proterozoic-unknown-geography-regime',
+      label: 'Proterozoic, geography unknown',
+      tMin: 1.0e9,
+      tMax: 2.4e9,
+      importance: 0.5,
+      description: 'd',
+      citation: 'c',
+      effect: { kind: 'regime-unknown-geography', windows: [{ tMin: 1.0e9, tMax: 2.4e9 }] },
+    },
+  ]
+
+  it('returns the events unchanged when neoproterozoic is available', () => {
+    expect(regimeEventsWithRasterFallback(regimeEvents, true)).toBe(regimeEvents)
+  })
+
+  it('appends a synthetic geography-unknown regime spanning 540-1000 Ma when it is not', () => {
+    const result = regimeEventsWithRasterFallback(regimeEvents, false)
+    expect(result).toHaveLength(2)
+    const fallback = result[1]!
+    expect(fallback.effect).toEqual({
+      kind: 'regime-unknown-geography',
+      windows: [{ tMin: 540e6, tMax: 1000e6 }],
+    })
   })
 })

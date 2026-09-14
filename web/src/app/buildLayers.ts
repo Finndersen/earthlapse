@@ -3,16 +3,20 @@
  * `Layer` objects (DESIGN §10) for the shell to render. Pure and framework-free so it is easy
  * to unit test independently of the loading effect that produces its inputs.
  *
- * Raster layers (`paleodem`) are the one exception: the globe (DESIGN §7) is independent of
- * the `Layer` abstraction and consumes `RasterData` directly, so there is no
- * `createRasterLayer` in `@/layers` to call here — this just hands the parsed data through
- * next to its manifest entry.
+ * Raster and (non-timeline) events layers are the exception: the globe (DESIGN §7) is
+ * independent of the `Layer` abstraction and needs full, raw curated data rather than a
+ * `sample(t)` slice — `paleodem`/`plates_neoproterozoic` because there's no `createRasterLayer`
+ * to call, `globe-regimes` because its regime crossfade (`web/src/globe/effects/regimes.ts`)
+ * needs to see a regime's neighbour before `t` enters it, which `Layer<EventsValue>.sample(t)`
+ * can't supply. Both are handed through next to their manifest entry, keyed by id (ADR-013:
+ * "buildLayers.ts... must select raster layers by id once there are several", now true with
+ * `paleodem` and `plates_neoproterozoic` both on the globe surface).
  */
 
-import type { RasterData, SeriesData, TreeData } from '@/data/curated'
+import type { EventsData, RasterData, SeriesData, TreeData } from '@/data/curated'
 import { createNodeLayer, createScalarLayer } from '@/layers'
 import type { LayerData } from '@/shell'
-import type { Layer, NodeValue, ScalarValue } from '@/types/layer'
+import type { Layer, NodeValue, ScalarValue, TimelineEvent } from '@/types/layer'
 import type { LayerManifest, Manifest } from '@/types/manifest'
 
 export interface RasterLayerEntry {
@@ -20,21 +24,32 @@ export interface RasterLayerEntry {
   data: RasterData
 }
 
+export interface EventsLayerEntry {
+  entry: LayerManifest
+  data: EventsData
+}
+
 export interface AppLayers {
   scalarLayers: ReadonlyMap<string, Layer<ScalarValue>>
   nodeLayers: ReadonlyMap<string, Layer<NodeValue>>
-  /** The manifest's one raster layer (globe paleogeography), if it declares one. */
-  raster: RasterLayerEntry | null
+  /** Non-timeline event layers (docs/GLOBE.md §6), keyed by id — e.g. `globe-regimes`. Never
+   *  `events-core`, which is inlined in `Manifest.events` and reaches the timeline that way
+   *  instead. Raw, full event lists (see this module's doc comment), not `Layer<EventsValue>`. */
+  eventLayers: ReadonlyMap<string, EventsLayerEntry>
+  /** Every globe raster layer, keyed by curated id (`paleodem`, `plates_neoproterozoic`). */
+  rasters: ReadonlyMap<string, RasterLayerEntry>
 }
 
-const EMPTY_LAYERS: AppLayers = { scalarLayers: new Map(), nodeLayers: new Map(), raster: null }
+const EMPTY_LAYERS: AppLayers = {
+  scalarLayers: new Map(),
+  nodeLayers: new Map(),
+  eventLayers: new Map(),
+  rasters: new Map(),
+}
 
 /**
  * Builds every layer declared in `manifest.layers` from its already-fetched-and-parsed data
- * in `layerData` (keyed by layer id, as `loadLayerData` produces — see `useAppData`). An entry
- * with no matching `layerData` (only possible for `dataKind: 'events'`, which has no per-layer
- * data file — see `loadLayerData`'s own doc comment) is skipped rather than treated as an
- * error, since `Manifest.events` is its real home.
+ * in `layerData` (keyed by layer id, as `loadLayerData` produces — see `useAppData`).
  *
  * `manifest`/`layerData` are nullable so this can be called unconditionally from a component
  * that hasn't finished loading yet (`null` in, the empty `AppLayers` out) without the caller
@@ -45,7 +60,8 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
 
   const scalarLayers = new Map<string, Layer<ScalarValue>>()
   const nodeLayers = new Map<string, Layer<NodeValue>>()
-  let raster: RasterLayerEntry | null = null
+  const eventLayers = new Map<string, EventsLayerEntry>()
+  const rasters = new Map<string, RasterLayerEntry>()
 
   for (const entry of manifest.layers) {
     const parsed = layerData.get(entry.id)
@@ -62,12 +78,20 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
         nodeLayers.set(entry.id, createNodeLayer(entry, parsed as TreeData))
         break
       case 'raster':
-        raster = { entry, data: parsed as RasterData }
+        rasters.set(entry.id, { entry, data: parsed as RasterData })
         break
       case 'events':
+        eventLayers.set(entry.id, { entry, data: parsed as EventsData })
         break
     }
   }
 
-  return { scalarLayers, nodeLayers, raster }
+  return { scalarLayers, nodeLayers, eventLayers, rasters }
+}
+
+/** Every `TimelineEvent` a raw `eventLayers` entry carries, or `[]` when the layer isn't
+ *  published — the shape `web/src/globe/effects` wants for `globe-regimes` (its doc comment:
+ *  "the full, unfiltered event list", not a `sample(t)` slice). */
+export function rawEvents(eventLayers: AppLayers['eventLayers'], id: string): readonly TimelineEvent[] {
+  return eventLayers.get(id)?.data.events ?? []
 }

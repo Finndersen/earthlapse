@@ -22,6 +22,10 @@ from pipeline.graph import digest_of
 from pipeline.manifest import (
     Chapter,
     Credit,
+    EventsData,
+    GlobeEffect,
+    GlobeEffectAnchor,
+    GlobeEffectWindow,
     LayerData,
     LayerDataKind,
     LayerManifest,
@@ -53,13 +57,18 @@ from pipeline.portraits import (
     load_morph,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord
-from pipeline.shapes import EARTH_FORMATION, GeoTime, Interpolation
+from pipeline.shapes import EARTH_FORMATION, Event, GeoTime, Interpolation
+from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
 
 # Matches the committed stub's "/stub": web/src/shell/manifest.ts joins `${assetBase}/${data}`
 # for layer files, so a trailing slash would request "/media//layers/...".
 ASSET_BASE = "/media"
 MANIFEST_NAME = "manifest.json"
 EVENTS_ID = "events-core"
+# docs/GLOBE.md §6: the pre-1 Ga regimes, an EventSet with no timeline presence — it never
+# reaches Manifest.events (see _events below), only manifest.layers as an ordinary
+# dataKind="events" layer, so the timeline never lists it.
+GLOBE_REGIMES_ID = "globe-regimes"
 
 
 class PublishRefused(RuntimeError):
@@ -82,6 +91,21 @@ SCALAR_LAYERS = (
 NODE_LAYERS = (LayerSpec("lineage", "Your ancestor", LayerSurface.HUD, "lineage", chartable=False),)
 RASTER_LAYERS = (
     LayerSpec("paleodem", "Paleogeography", LayerSurface.GLOBE, "paleodem", chartable=False),
+    # docs/GLOBE.md §4.1 (G7): Merdith et al. 2021 continents, 1000-540 Ma, stylised relief.
+    # Crossfades against "paleodem" across a 540-550 Ma seam band -- a web-side concern
+    # (buildLayers.ts selecting raster layers by id, ADR-013's noted follow-up), not this spec.
+    LayerSpec(
+        "plates_neoproterozoic",
+        "Neoproterozoic continents",
+        LayerSurface.GLOBE,
+        "plates-neoproterozoic",
+        chartable=False,
+    ),
+)
+EVENT_LAYERS = (
+    LayerSpec(
+        GLOBE_REGIMES_ID, "Globe regimes", LayerSurface.GLOBE, GLOBE_REGIMES_ID, chartable=False
+    ),
 )
 
 
@@ -385,6 +409,15 @@ def _layers(
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
         entries.append(_layer_entry(spec, LayerDataKind.RASTER, raster.domain, None, None))
+    for spec in EVENT_LAYERS:
+        event_set = world.events.get(spec.curated_id)
+        if event_set is None:
+            continue
+        data = EventsData(
+            id=event_set.id, events=tuple(_timeline_event(e) for e in event_set.events)
+        )
+        files.append(LayerFile(published=_layer_path(spec), data=data))
+        entries.append(_layer_entry(spec, LayerDataKind.EVENTS, event_set.domain, None, None))
     return tuple(files), tuple(entries)
 
 
@@ -417,17 +450,31 @@ def _events(world: WorldModel) -> tuple[TimelineEvent, ...]:
     event_set = world.events.get(EVENTS_ID)
     if event_set is None:
         return ()
-    return tuple(
-        TimelineEvent(
-            id=e.id,
-            label=e.label,
-            t_min=e.t_min,
-            t_max=e.t_max,
-            importance=e.importance,
-            description=e.description,
-            citation=e.citation,
-        )
-        for e in event_set.events
+    return tuple(_timeline_event(e) for e in event_set.events)
+
+
+def _timeline_event(e: Event) -> TimelineEvent:
+    return TimelineEvent(
+        id=e.id,
+        label=e.label,
+        t_min=e.t_min,
+        t_max=e.t_max,
+        importance=e.importance,
+        description=e.description,
+        citation=e.citation,
+        effect=_effect(e.effect),
+    )
+
+
+def _effect(effect: CuratedGlobeEffect | None) -> GlobeEffect | None:
+    if effect is None:
+        return None
+    return GlobeEffect(
+        kind=effect.kind,
+        anchor=None
+        if effect.anchor is None
+        else GlobeEffectAnchor(lat=effect.anchor.lat, lon=effect.anchor.lon),
+        windows=tuple(GlobeEffectWindow(t_min=w.t_min, t_max=w.t_max) for w in effect.windows),
     )
 
 

@@ -1,0 +1,1043 @@
+{
+  "id": "lineage",
+  "nodes": [
+    {
+      "id": "homo-sapiens",
+      "parent": "homo-heidelbergensis",
+      "label": "Homo sapiens",
+      "tDivergence": 300000.0,
+      "representative": "Homo sapiens (Jebel Irhoud, Morocco, ~300-350 ka)",
+      "note": "Fossil-minimum age: fossils and stone tools from Jebel Irhoud, Morocco, dated to ~300-350 ka, are the oldest securely dated Homo sapiens material currently known, showing a modern-looking face and dentition combined with a more archaic, elongated braincase -- consistent with a pan-African, rather than single-region, origin for the species.\n",
+      "citation": "Hublin, J.-J., Ben-Ncer, A., Bailey, S.E. et al. (2017) \"New fossils from Jebel Irhoud, Morocco and the pan-African origin of Homo sapiens.\" Nature 546, 289-292. doi:10.1038/nature22336\n"
+    },
+    {
+      "id": "homo-heidelbergensis",
+      "parent": "homo-erectus",
+      "label": "Homo heidelbergensis / LCA with Neanderthals",
+      "tDivergence": 650000.0,
+      "representative": "Homo heidelbergensis sensu lato (Middle Pleistocene; e.g. Sima de los Huesos population)",
+      "note": "The population ancestral to both Neanderthals and Homo sapiens. Nuclear-genome analysis of the ~430 ka Sima de los Huesos hominins (Meyer et al. 2016), consistent with Prüfer et al.'s (2014) Altai Neanderthal genome, places this last common ancestor between 550 and 765 ka (midpoint 650 ka used here). Contested: this range is argued by some to be too old for \"Homo heidelbergensis\" sensu stricto to be the ancestral population, with Homo antecessor (from ~900 ka Spanish remains) proposed as an alternative candidate; the identity of the ancestral population remains an active, unresolved question even though the divergence *time* itself is comparatively well-bounded.\n",
+      "citation": "Meyer, M., Arsuaga, J.-L., de Filippo, C. et al. (2016) \"Nuclear DNA sequences from the Middle Pleistocene Sima de los Huesos hominins.\" Nature 531, 504-507. doi:10.1038/nature17405 Prüfer, K., Racimo, F., Patterson, N. et al. (2014) \"The complete genome sequence of a Neanderthal from the Altai Mountains.\" Nature 505, 43-49. doi:10.1038/nature12886\n"
+    },
+    {
+      "id": "homo-erectus",
+      "parent": "homo",
+      "label": "Homo erectus lineage",
+      "tDivergence": 1850000.0,
+      "representative": "Homo erectus (Dmanisi, Georgia, ~1.85-1.78 Ma)",
+      "note": "Fossil-minimum age: the Dmanisi hominin site, Georgia, has secure geochronology dating its first occupation layers to shortly after 1.85 Ma, documenting Homo erectus (sensu lato) at a time closely comparable to the oldest H. erectus localities in East Africa, and the oldest well-dated hominin fossils found outside Africa.\n",
+      "citation": "Ferring, R., Oms, O., Agustí, J. et al. (2011) \"Earliest human occupations at Dmanisi (Georgian Caucasus) dated to 1.85-1.78 Ma.\" Proceedings of the National Academy of Sciences 108(26), 10432-10436. doi:10.1073/pnas.1106638108\n"
+    },
+    {
+      "id": "homo",
+      "parent": "australopithecus",
+      "label": "Homo",
+      "tDivergence": 2800000.0,
+      "representative": "LD 350-1 (Ledi-Geraru, Ethiopia, ~2.8-2.75 Ma; earliest Homo)",
+      "note": "Fossil-minimum age: LD 350-1, a partial mandible from Ledi-Geraru, Afar, Ethiopia, securely dated to 2.80-2.75 Ma, is the oldest fossil combining derived Homo morphology with primitive Australopithecus-like traits -- extending the genus Homo's fossil record back by ~0.4 Myr from the previously oldest specimens. Its assignment to Homo rather than Australopithecus has been debated by some researchers.\n",
+      "citation": "Villmoare, B., Kimbel, W.H., Seyoum, C. et al. (2015) \"Early Homo at 2.8 Ma from Ledi-Geraru, Afar, Ethiopia.\" Science 347(6228), 1352-1355. doi:10.1126/science.aaa1343\n"
+    },
+    {
+      "id": "australopithecus",
+      "parent": "hominini",
+      "label": "Australopithecus",
+      "tDivergence": 4170000.0,
+      "representative": "Australopithecus anamensis (Kanapoi, Kenya, ~4.2-4.1 Ma)",
+      "note": "Fossil-minimum age: Australopithecus anamensis, the earliest known species of Australopithecus, from Kanapoi and Allia Bay, Kenya, with fossils bracketed between tephra dated to 4.17 and 4.12 Ma (broader site range ~4.2-3.9 Ma).\n",
+      "citation": "Leakey, M.G., Feibel, C.S., McDougall, I. & Walker, A. (1995) \"New four-million-year- old hominid species from Kanapoi and Allia Bay, Kenya.\" Nature 376, 565-571. doi:10.1038/376565a0\n"
+    },
+    {
+      "id": "hominini",
+      "parent": "homininae",
+      "label": "Hominins (Hominini)",
+      "tDivergence": 7500000.0,
+      "representative": "Sahelanthropus tchadensis (late Miocene, Chad, ~7 Ma)",
+      "note": "Hominini -- the chimpanzee/human lineage split. Using directly measured generation times in wild chimpanzees and gorillas (rather than assumed rates), Langergraber et al. (2012) revise the human-chimpanzee divergence to at least 7-8 Ma (midpoint 7.5 Ma used here), older than many earlier molecular estimates and consistent with Sahelanthropus tchadensis (~7 Ma) as a plausible early hominin near this split. Hominini's status/classification is itself contested in parts of the literature.\n",
+      "citation": "Langergraber, K.E., Prüfer, K., Rowney, C. et al. (2012) \"Generation times in wild chimpanzees and gorillas suggest earlier divergence times in great ape and human evolution.\" Proceedings of the National Academy of Sciences 109(39), 15716-15721. doi:10.1073/pnas.1211740109\n"
+    },
+    {
+      "id": "homininae",
+      "parent": "hominidae",
+      "label": "Hominines (Homininae)",
+      "tDivergence": 10000000.0,
+      "representative": "crown Homininae (molecular estimate; gorilla split)",
+      "note": "Homininae -- the gorilla / (chimpanzee+human) split. The gorilla genome paper places the human-chimpanzee-gorilla speciation event at approximately 10 Ma, synthesising genomic and fossil evidence.\n",
+      "citation": "Scally, A., Dutheil, J.Y., Hillier, L.W. et al. (2012) \"Insights into hominid evolution from the gorilla genome sequence.\" Nature 483, 169-175. doi:10.1038/nature10842\n"
+    },
+    {
+      "id": "hominidae",
+      "parent": "hominoidea",
+      "label": "Great apes / hominids (Hominidae)",
+      "tDivergence": 16000000.0,
+      "representative": "crown Hominidae (molecular estimate; orangutan / African-ape split)",
+      "note": "Crown Hominidae -- the orangutan (Ponginae) / African-ape (Homininae) split. Genomic analyses place this in the early-to-middle Miocene, commonly cited as ~16 Ma (spanning roughly 12-19 Ma across studies); Prado-Martinez et al.'s (2013) great-ape diversity survey frames the whole great-ape radiation as spanning \"the past 15 million years,\" consistent with this figure.\n",
+      "citation": "Locke, D.P., Hillier, L.W., Warren, W.C. et al. (2011) \"Comparative and demographic analysis of orang-utan genomes.\" Nature 469, 529-533. doi:10.1038/nature09687 Prado-Martinez, J., Sudmant, P.H., Kidd, J.M. et al. (2013) \"Great ape genetic diversity and population history.\" Nature 499, 471-475. doi:10.1038/nature12228\n"
+    },
+    {
+      "id": "hominoidea",
+      "parent": "catarrhini",
+      "label": "Hominoids / apes (Hominoidea)",
+      "tDivergence": 21500000.0,
+      "representative": "early Miocene stem hominoid (e.g. Morotopithecus-grade taxon)",
+      "note": "Crown Hominoidea -- the gibbon (Hylobatidae) / great-ape (Hominidae) split. Chatterjee et al. (2009): 21.5 Ma, consistent with the early Miocene fossil record of stem hominoids.\n",
+      "citation": "Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) \"Estimating the phylogeny and divergence times of primates using a supermatrix approach.\" BMC Evolutionary Biology 9, 259. doi:10.1186/1471-2148-9-259\n"
+    },
+    {
+      "id": "catarrhini",
+      "parent": "simiiformes",
+      "label": "Catarrhines (Catarrhini)",
+      "tDivergence": 24930000.0,
+      "representative": "Rukwapithecus fleaglei (Oligocene, Nsungwe Formation, Tanzania, ~24.9 Ma)",
+      "note": "Fossil-dated: Rukwapithecus fleaglei (stem hominoid) and a contemporaneous stem cercopithecoid, from a single radiometrically dated horizon (U-Pb, 24.93 +/- 0.49 Ma) of the Nsungwe Formation, Tanzania, directly bracket the catarrhine (Old World monkey / ape) split at ~24.9 Ma -- among the most precisely dated splits in this file.\n",
+      "citation": "Stevens, N.J., Seiffert, E.R., O'Connor, P.M., Roberts, E.M., Schmitz, M.D., Krause, C., Gorscak, E., Ngasala, S., Hieronymus, T.L. & Temu, J. (2013) \"Palaeontological evidence for an Oligocene divergence between Old World monkeys and apes.\" Nature 497, 611-614. doi:10.1038/nature12161\n"
+    },
+    {
+      "id": "simiiformes",
+      "parent": "haplorhini",
+      "label": "Simians / anthropoids (Simiiformes)",
+      "tDivergence": 43000000.0,
+      "representative": "Eosimias sinensis (middle Eocene stem anthropoid)",
+      "note": "Crown Simiiformes (Anthropoidea) -- the platyrrhine/catarrhine split. Chatterjee et al. (2009): 43 Ma, consistent with independent estimates placing this split in the middle-to-late Eocene (~40-44 Ma).\n",
+      "citation": "Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) \"Estimating the phylogeny and divergence times of primates using a supermatrix approach.\" BMC Evolutionary Biology 9, 259. doi:10.1186/1471-2148-9-259\n"
+    },
+    {
+      "id": "haplorhini",
+      "parent": "primates",
+      "label": "Haplorhines (Haplorhini)",
+      "tDivergence": 58600000.0,
+      "representative": "Teilhardina brandti (earliest omomyiform, early Eocene, ~56 Ma)",
+      "note": "Crown Haplorhini -- the tarsier/anthropoid split. Chatterjee et al. (2009) Bayesian mitochondrial supermatrix: 58.6 Ma.\n",
+      "citation": "Chatterjee, H.J., Ho, S.Y.W., Barnes, I. & Groves, C. (2009) \"Estimating the phylogeny and divergence times of primates using a supermatrix approach.\" BMC Evolutionary Biology 9, 259. doi:10.1186/1471-2148-9-259\n"
+    },
+    {
+      "id": "primates",
+      "parent": "primatomorpha",
+      "label": "Primates",
+      "tDivergence": 68200000.0,
+      "representative": "crown primate (molecular estimate; strepsirrhine-haplorhine split)",
+      "note": "Crown Primates -- the strepsirrhine/haplorhine split. dos Reis et al. (2012): 68.2 Ma (95% CI 67.3-69.1 Ma), broadly corroborated by an independent mitogenomic estimate of ~74 Ma (Pozzi et al. 2014).\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "primatomorpha",
+      "parent": "euarchontoglires",
+      "label": "Primatomorpha",
+      "tDivergence": 71000000.0,
+      "representative": "Purgatorius (Paleocene plesiadapiform; basal-primatomorph status contested)",
+      "note": "Primatomorpha (Primates + Dermoptera, i.e. colugos), the total-group split whose Primates branch later gives rise to crown Primates. Poorly constrained by direct fossils -- the affinities of Late Cretaceous/Paleocene plesiadapiforms such as Purgatorius are actively debated, and molecular estimates for the closely related crown-Primates node itself straddle the K-Pg boundary (one relaxed-clock analysis: 71.4-63.9 Ma, 80% posterior probability of a pre-K-Pg origin). 71 Ma is used as a representative point predating (and consistent with) the crown Primates estimate below; flagged as contested / poorly constrained.\n",
+      "citation": "Silcox, M.T., Bloch, J.I., Boyer, D.M., Chester, S.G.B. & López-Torres, S. (2017) \"The evolutionary radiation of plesiadapiforms.\" Evolutionary Anthropology 26(2), 74-94. doi:10.1002/evan.21526\n"
+    },
+    {
+      "id": "euarchontoglires",
+      "parent": "boreoeutheria",
+      "label": "Euarchontoglires",
+      "tDivergence": 75800000.0,
+      "representative": "crown Euarchontoglires (molecular estimate)",
+      "note": "Euarchontoglires (Primates + Dermoptera + Scandentia + Glires). dos Reis et al. (2012): 75.8 Ma (95% CI 74.9-76.7 Ma). This file follows the task's specified coverage list directly from Euarchontoglires to Primatomorpha, skipping the intermediate Euarchonta rank (Primates + Dermoptera + Scandentia) as a simplification appropriate to a single path rather than a full phylogeny.\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "boreoeutheria",
+      "parent": "placentalia",
+      "label": "Boreoeutheria",
+      "tDivergence": 83800000.0,
+      "representative": "crown Boreoeutheria (molecular estimate)",
+      "note": "Boreoeutheria (Laurasiatheria + Euarchontoglires), excluding Afrotheria and Xenarthra. dos Reis et al. (2012) report this node (as \"Boreotheria\", a synonym) at 83.8 Ma (95% CI 82.8-84.9 Ma).\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "placentalia",
+      "parent": "eutheria",
+      "label": "Placentals (Placentalia)",
+      "tDivergence": 89100000.0,
+      "representative": "crown placental (molecular estimate; post-K-Pg radiation)",
+      "note": "Crown Placentalia -- the last common ancestor of all living placental orders. dos Reis et al. (2012): 89.1 Ma (95% CI 87.9-90.4 Ma). The orders themselves radiate much later, within ~20 Myr after the K-Pg extinction (45-65 Ma), per the same study.\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "eutheria",
+      "parent": "theria",
+      "label": "Eutherians (Eutheria)",
+      "tDivergence": 160000000.0,
+      "representative": "Juramaia sinensis (late Jurassic, ~160 Ma; oldest known eutherian)",
+      "note": "Fossil-minimum age for the eutherian (placental-line) stem: Juramaia sinensis, from the late Jurassic of Liaoning, China, pushed the oldest eutherian body fossil back to ~160 Ma, closing much of the previous gap between the fossil record and the dos Reis et al. (2012) Theria molecular date above. Distinct from and younger than the Theria split itself, per this file's convention of dating stem-group nodes from their own oldest fossil rather than the (necessarily identical) divergence instant.\n",
+      "citation": "Luo, Z.-X., Yuan, C.-X., Meng, Q.-J. & Ji, Q. (2011) \"A Jurassic eutherian mammal and divergence of marsupials and placentals.\" Nature 476, 442-445. doi:10.1038/nature10291\n"
+    },
+    {
+      "id": "theria",
+      "parent": "mammalia",
+      "label": "Therians (Theria)",
+      "tDivergence": 172800000.0,
+      "representative": "crown therian (molecular estimate; marsupial-placental split)",
+      "note": "Theria -- the marsupial/placental split. dos Reis et al. (2012): 172.8 Ma (95% CI 168.4-177.8 Ma), same combined analysis as the Mammalia node above.\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "mammalia",
+      "parent": "mammaliaformes",
+      "label": "Mammals, crown (Mammalia)",
+      "tDivergence": 184600000.0,
+      "representative": "crown mammal (molecular estimate; oldest unambiguous crown fossil debated)",
+      "note": "Crown Mammalia -- the monotreme/therian split. dos Reis et al. (2012), combined nuclear+mitochondrial Bayesian analysis: 184.6 Ma (95% CI 174.1-191.9 Ma).\n",
+      "citation": "dos Reis, M., Inoue, J., Hasegawa, M., Asher, R.J., Donoghue, P.C.J. & Yang, Z. (2012) \"Phylogenomic datasets provide both precision and accuracy in estimating the timescale of placental mammal phylogeny.\" Proceedings of the Royal Society B 279(1742), 3491-3500. doi:10.1098/rspb.2012.0683\n"
+    },
+    {
+      "id": "mammaliaformes",
+      "parent": "cynodontia",
+      "label": "Mammaliaforms (Mammaliaformes)",
+      "tDivergence": 205000000.0,
+      "representative": "Morganucodon watsoni (Triassic-Jurassic boundary, ~205 Ma)",
+      "note": "Morganucodon and Sinoconodon are the standard reference mammaliaforms bracketing the Triassic-Jurassic boundary, ~205 Ma, used here following Luo's (2007) synthesis timeline of early mammal evolution.\n",
+      "citation": "Luo, Z.-X. (2007) \"Transformation and diversification in early mammal evolution.\" Nature 450, 1011-1019. doi:10.1038/nature06277\n"
+    },
+    {
+      "id": "cynodontia",
+      "parent": "therapsida",
+      "label": "Cynodonts (Cynodontia)",
+      "tDivergence": 255000000.0,
+      "representative": "Charassognathus gracilis (early Late Permian, Wuchiapingian, ~255 Ma)",
+      "note": "Fossil-minimum age: Charassognathus gracilis, from the Tropidostoma Assemblage Zone of the Karoo Supergroup, South Africa, is the oldest known cynodont, in the early Late Permian alongside the similarly basal Procynosuchus and Dvinia.\n",
+      "citation": "Botha, J., Abdala, F. & Smith, R. (2007) \"The oldest cynodont: new clues on the origin and early diversification of the Cynodontia.\" Zoological Journal of the Linnean Society 149(3), 477-492. doi:10.1111/j.1096-3642.2007.00268.x\n"
+    },
+    {
+      "id": "therapsida",
+      "parent": "synapsida",
+      "label": "Therapsids (Therapsida)",
+      "tDivergence": 275000000.0,
+      "representative": "early Permian gorgonopsian-grade therapsid (Kammerer et al. 2024)",
+      "note": "Therapsid origins are poorly resolved by direct fossils (the early-to-middle Permian record is sparse, \"Olson's Gap\"); currently known therapsid subclades (Biarmosuchia, Dinocephalia, Anomodontia, Gorgonopsia, Eutheriodontia) first appear in the record ~281-272 Ma. Contested: Tetraceratops, once proposed as the oldest therapsid (~283-274 Ma), is now generally regarded as a non-therapsid eupelycosaur. 275 Ma is used as a representative point within the currently accepted window.\n",
+      "citation": "Matamales-Andreu, R., Kammerer, C.F., Angielczyk, K.D., Simões, T.R., Mujal, E., Galobart, À. & Fortuny, J. (2024) \"Early-middle Permian Mediterranean gorgonopsian suggests an equatorial origin of therapsids.\" Nature Communications 15, 10346. doi:10.1038/s41467-024-54425-5\n"
+    },
+    {
+      "id": "synapsida",
+      "parent": "amniota",
+      "label": "Synapsids (Synapsida)",
+      "tDivergence": 308000000.0,
+      "representative": "Archaeothyris florensis (late Carboniferous, ~306-308 Ma)",
+      "note": "Fossil-minimum age: Archaeothyris (with the more fragmentary, slightly older Protoclepsydrops) is among the oldest undisputed synapsids, from the Late Carboniferous of Nova Scotia, ~306-308 Ma.\n",
+      "citation": "Reisz, R.R. (1972) \"Pelycosaurian reptiles from the middle Pennsylvanian of North America.\" Bulletin of the Museum of Comparative Zoology 144(2), 27-62. (Pre-DOI-era publication; no DOI assigned.)\n"
+    },
+    {
+      "id": "amniota",
+      "parent": "tetrapoda",
+      "label": "Amniotes (Amniota)",
+      "tDivergence": 318000000.0,
+      "representative": "Hylonomus lyelli (Bashkirian, late Carboniferous, ~318 Ma)",
+      "note": "Fossil-minimum age: Hylonomus lyelli, from the Joggins Formation, Nova Scotia, is the classic earliest reptile-grade amniote, redated by Falcon-Lang et al. (2007) to ~317-319 Ma. Contested: a 2025 phylogenetic reanalysis has questioned whether Hylonomus itself falls inside or outside crown Amniota, and Tournaisian trackway evidence has been argued to push the likely origin of the amniote lineage back by a further 35-40 Myr; 318 Ma is used here as the long-standing, well-attested body-fossil floor rather than a settled crown age.\n",
+      "citation": "Falcon-Lang, H.J., Benton, M.J. & Stimson, M. (2007) \"Ecology of earliest reptiles inferred from basal Pennsylvanian trackways.\" Journal of the Geological Society 164(6), 1113-1118. doi:10.1144/0016-76492007-015\n"
+    },
+    {
+      "id": "tetrapoda",
+      "parent": "tetrapodomorpha",
+      "label": "Tetrapods (Tetrapoda)",
+      "tDivergence": 365000000.0,
+      "representative": "Acanthostega gunnari / Ichthyostega stensioei (Famennian, late Devonian, ~365 Ma)",
+      "note": "Fossil-minimum age from the two best-known Devonian limbed tetrapods, Acanthostega and Ichthyostega (Famennian, East Greenland, ~365 Ma). Contested: these are widely regarded as stem tetrapods rather than members of crown Tetrapoda proper, and molecular/fossil estimates for the crown-tetrapod node itself span a wide range (~395-333 Ma across studies, median ~352 Ma); 365 Ma is used here as the best-attested fossil floor for \"limbed, unambiguously tetrapod-grade\" rather than a precise crown-node date.\n",
+      "citation": "Ahlberg, P.E., Clack, J.A. & Blom, H. (2005) \"The axial skeleton of the Devonian tetrapod Ichthyostega.\" Nature 437, 137-140. doi:10.1038/nature03893\n"
+    },
+    {
+      "id": "tetrapodomorpha",
+      "parent": "sarcopterygii",
+      "label": "Tetrapodomorphs (Tetrapodomorpha)",
+      "tDivergence": 375000000.0,
+      "representative": "Tiktaalik roseae (late Devonian, ~375 Ma)",
+      "note": "Represents the fish-to-tetrapod transitional grade. Tiktaalik roseae, from the late Devonian of Ellesmere Island, Canada, combines primitive sarcopterygian features with a shortened skull roof, mobile neck and functional wrist -- an elpistostegalian intermediate between fish and tetrapods, dated to ~375 Ma.\n",
+      "citation": "Daeschler, E.B., Shubin, N.H. & Jenkins, F.A. (2006) \"A Devonian tetrapod-like fish and the evolution of the tetrapod body plan.\" Nature 440, 757-763. doi:10.1038/nature04639\n"
+    },
+    {
+      "id": "sarcopterygii",
+      "parent": "osteichthyes",
+      "label": "Lobe-finned fishes (Sarcopterygii)",
+      "tDivergence": 410000000.0,
+      "representative": "basal sarcopterygian (e.g. Psarolepis-grade taxon, early Devonian)",
+      "note": "The first split within crown Sarcopterygii (separating the coelacanth/Actinistia line from the lineage leading to lungfish and tetrapods), placed in the early Devonian following Friedman & Brazeau's (2010) reappraisal of basal osteichthyan/sarcopterygian divergence ages, which argued for younger ages than earlier literature for this region of the tree. Treated as a fossil-minimum-style estimate consistent with that reappraisal rather than a single dated specimen.\n",
+      "citation": "Friedman, M. & Brazeau, M.D. (2010) \"A Reappraisal of the Origin and Basal Radiation of the Osteichthyes.\" Journal of Vertebrate Paleontology 30(1), 36-56. doi:10.1080/02724630903409071\n"
+    },
+    {
+      "id": "osteichthyes",
+      "parent": "gnathostomata",
+      "label": "Bony fishes (Osteichthyes)",
+      "tDivergence": 419000000.0,
+      "representative": "Guiyu oneiros (late Silurian, ~419 Ma; oldest articulated osteichthyan)",
+      "note": "Fossil-minimum age: Guiyu oneiros, the oldest near-complete articulated bony fish (Ludlow, late Silurian, Yunnan, China), shows the actinopterygian-sarcopterygian split had occurred by ~419 Ma.\n",
+      "citation": "Zhu, M., Zhao, W., Jia, L., Lu, J., Qiao, T. & Qu, Q. (2009) \"The oldest articulated osteichthyan reveals mosaic gnathostome characters.\" Nature 458, 469-474. doi:10.1038/nature07855\n"
+    },
+    {
+      "id": "gnathostomata",
+      "parent": "vertebrata",
+      "label": "Jawed vertebrates (Gnathostomata)",
+      "tDivergence": 439000000.0,
+      "representative": "Qianodus duplicis (early Silurian; isolated tooth whorls)",
+      "note": "Fossil-minimum age: isolated tooth whorls of Qianodus duplicis from the early Silurian of Guizhou, China are the oldest direct evidence of jawed-vertebrate dentition, dated to ~439 Ma -- extending the minimum age for gnathostomes by ~14 Myr over the previous oldest articulated remains.\n",
+      "citation": "Andreev, P.S., Sansom, I.J., Li, Q. et al. (2022) \"The oldest gnathostome teeth.\" Nature 609, 964-968. doi:10.1038/s41586-022-05166-2\n"
+    },
+    {
+      "id": "vertebrata",
+      "parent": "olfactores",
+      "label": "Vertebrates (Vertebrata)",
+      "tDivergence": 496550000.0,
+      "representative": "Haikouichthys ercaicunensis (early Cambrian jawless vertebrate)",
+      "note": "Crown Vertebrata (the cyclostome / gnathostome split) per dos Reis et al. (2015), composite range 533.8-459.3 Ma (midpoint used here).\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "olfactores",
+      "parent": "chordata",
+      "label": "Olfactores",
+      "tDivergence": 530000000.0,
+      "representative": "Shankouclava shankouense (early Cambrian tunicate, ~530 Ma)",
+      "note": "Olfactores (Tunicata + Vertebrata, sister to Cephalochordata) originates when the tunicate and vertebrate lineages split from each other -- a younger, separate event from the Chordata node above. Dated here as a fossil minimum: Shankouclava, the oldest unambiguous tunicate body fossil (Chengjiang biota, early Cambrian), implies the tunicate-vertebrate split had already occurred by ~530 Ma. The true split is very likely somewhat older than this minimum.\n",
+      "citation": "Chen, J.-Y., Huang, D.-Y., Peng, Q.-Q., Chi, H.-M., Wang, X.-Q. & Feng, M. (2003) \"The first tunicate from the Early Cambrian of South China.\" Proceedings of the National Academy of Sciences 100(14), 8314-8318. doi:10.1073/pnas.1431177100\n"
+    },
+    {
+      "id": "chordata",
+      "parent": "deuterostomia",
+      "label": "Chordates (Chordata)",
+      "tDivergence": 595550000.0,
+      "representative": "Pikaia gracilens (Cambrian stem chordate, ~508 Ma)",
+      "note": "Crown Chordata (the Cephalochordata / Olfactores split) per dos Reis et al. (2015) Strategy 1: 635.7-555.4 Ma (midpoint used here).\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "deuterostomia",
+      "parent": "bilateria",
+      "label": "Deuterostomes (Deuterostomia)",
+      "tDivergence": 624500000.0,
+      "representative": "Saccorhytus coronarius (early Cambrian; deuterostome affinity contested)",
+      "note": "Crown Deuterostomia per dos Reis et al. (2015), composite range 662-587 Ma (midpoint used here; their Strategy 3 gives an older 722-644 Ma). Saccorhytus's status as a stem-deuterostome has been disputed by subsequent work; flagged as contested.\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "bilateria",
+      "parent": "eumetazoa",
+      "label": "Bilaterians (Bilateria)",
+      "tDivergence": 642000000.0,
+      "representative": "Kimberella quadrata (Ediacaran bilaterian-grade fossil, ~558 Ma)",
+      "note": "Crown Bilateria per dos Reis et al. (2015), composite range 688-596 Ma (midpoint used here; their Strategy 3 gives an older 759-685 Ma). Kimberella is a widely cited candidate bilaterian body fossil, though its precise phylogenetic placement is itself debated.\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "eumetazoa",
+      "parent": "metazoa",
+      "label": "Eumetazoans (Eumetazoa)",
+      "tDivergence": 686000000.0,
+      "representative": "early cnidarian-grade animal (crown affinity of Ediacaran frondose fossils debated)",
+      "note": "Crown Eumetazoa (animals with true tissues, excluding sponges and placozoans) per dos Reis et al. (2015), composite range 746-626 Ma (midpoint used here), using the same calibration framework as the Metazoa node above.\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "metazoa",
+      "parent": "holozoa",
+      "label": "Animals (Metazoa)",
+      "tDivergence": 757000000.0,
+      "representative": "stem/early crown metazoan (Ediacaran sponge-grade animal)",
+      "note": "Crown Metazoa -- the last common ancestor of all living animals, including sponges. dos Reis et al. (2015) report a composite range of 833-681 Ma across their calibration strategies (midpoint used here; their most conservative strategy gives 834-795 Ma). This substantially predates the Ediacaran body-fossil record, consistent with a long cryptic stem lineage.\n",
+      "citation": "dos Reis, M., Thawornwattana, Y., Angelis, K., Telford, M.J., Donoghue, P.C.J. & Yang, Z. (2015) \"Uncertainty in the Timing of Origin of Animals and the Limits of Precision in Molecular Timescales.\" Current Biology 25(22), 2939-2950. doi:10.1016/j.cub.2015.09.066\n"
+    },
+    {
+      "id": "holozoa",
+      "parent": "opisthokonta",
+      "label": "Holozoa",
+      "tDivergence": 1000000000.0,
+      "representative": "stem holozoan (no diagnostic fossil; molecular-clock node only)",
+      "note": "Holozoa (animals plus their closest unicellular/colonial relatives, e.g. choanoflagellates, filastereans) split from Fungi (Holomycota) at the Opisthokonta node above; this node represents the first split *within* Holozoa. It is not separately, precisely dated in the literature consulted here: Parfrey et al. (2011) report only that the major opisthokont-level clades had diverged by ~1,000-1,200 Ma, with diversification within crown groups beginning closer to ~800 Ma -- consistent with a long stem lineage. 1.0 Ga is a representative point between the Opisthokonta split (~1.4 Ga) and crown Metazoa (~0.76 Ga) reflecting that pattern, not a independently measured age for this specific node -- flagged as contested / poorly constrained.\n",
+      "citation": "Parfrey, L.W., Lahr, D.J.G., Knoll, A.H. & Katz, L.A. (2011) \"Estimating the timing of early eukaryotic diversification with multigene molecular clocks.\" Proceedings of the National Academy of Sciences 108(33), 13624-13629. doi:10.1073/pnas.1110633108\n"
+    },
+    {
+      "id": "opisthokonta",
+      "parent": "leca",
+      "label": "Amorphea / Opisthokonta",
+      "tDivergence": 1416000000.0,
+      "representative": "stem opisthokont (no diagnostic fossil; molecular-clock node only)",
+      "note": "The split between Opisthokonta (animals, fungi and their close relatives) and the rest of the eukaryote crown, within the broader Amorphea supergroup. Betts et al. (2018) date the last common ancestor of extant Opisthokonta to 1,707-1,125 Ma (midpoint used here); Parfrey et al. (2011) independently estimate a similar but slightly younger 1,389-1,240 Ma for the same node.\n",
+      "citation": "Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D. (2018) \"Integrated genomic and fossil evidence illuminates life's early evolution and eukaryote origin.\" Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x\n"
+    },
+    {
+      "id": "leca",
+      "parent": "archaeal-host-lineage",
+      "label": "Eukaryotes (LECA)",
+      "tDivergence": 1526000000.0,
+      "representative": "LECA (hypothetical); candidate fossil proxy Grypania spiralis",
+      "note": "The last eukaryotic common ancestor -- crown Eukaryota, diverging \"considerably after both the Eukaryota-Asgardarchaeota split and the Great Oxidation Event, in the middle Proterozoic.\" Betts et al. (2018) date it to 1,842-1,210 Ma (midpoint used here); other studies converge on a similar Proterozoic window (e.g. Parfrey et al. 2011: 1,866-1,679 Ma).\n",
+      "citation": "Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D. (2018) \"Integrated genomic and fossil evidence illuminates life's early evolution and eukaryote origin.\" Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x\n"
+    },
+    {
+      "id": "archaeal-host-lineage",
+      "parent": "luca",
+      "label": "Archaeal host lineage (Asgard archaea)",
+      "tDivergence": 2600000000.0,
+      "representative": "Asgard archaea (e.g. extant Heimdallarchaeia / Lokiarchaeota)",
+      "note": "The archaeal lineage, within Asgardarchaeota, whose descendant eventually became the host cell of the eukaryotic symbiosis (the \"Eukaryota-Asgardarchaeota split\"). This is the single least well-dated node in this file: Betts et al. (2018) bound it only qualitatively (after their dated crown-Archaebacteria node in the Mesoarchaean- Neoarchaean, and before crown Eukaryota's 1,842-1,210 Ma), while more recent Asgard-focused molecular-clock work (Eme et al. 2023 and follow-on studies) proposes a wide range of candidate ages, loosely ~2.7-1.9 Ga. 2.6 Ga is a representative point within that spread, not a settled figure -- contested / poorly constrained.\n",
+      "citation": "Betts, H.C., Puttick, M.N., Clark, J.W., Williams, T.A., Donoghue, P.C.J. & Pisani, D. (2018) \"Integrated genomic and fossil evidence illuminates life's early evolution and eukaryote origin.\" Nature Ecology & Evolution 2, 1556-1562. doi:10.1038/s41559-018-0644-x Eme, L., Tamarit, D., Caceres, E.F. et al. (2023) \"Inference and reconstruction of the heimdallarchaeial ancestry of eukaryotes.\" Nature 618, 992-999. doi:10.1038/s41586-023-06186-2\n"
+    },
+    {
+      "id": "luca",
+      "parent": null,
+      "label": "LUCA",
+      "tDivergence": 4200000000.0,
+      "representative": "LUCA (hypothetical; no direct fossil)",
+      "note": "The last universal common ancestor of all cellular life. Dated to 4.2 Ga (95% CI 4.09-4.33 Ga under the ILN model, 4.18-4.33 Ga under GBM), implying life originated within ~100-200 Myr of Earth's formation. Contested: other analyses (e.g. Betts et al. 2018, using different calibrations) place LUCA close to the hard 4.52 Ga root constraint (the Moon-forming impact) rather than nearer 3.9-4.2 Ga; the age of LUCA remains one of the least settled dates in this file.\n",
+      "citation": "Moody, E.R.R., Álvarez-Carretero, S., Mahendrarajah, T.A. et al. (2024) \"The nature of the last universal common ancestor and its impact on the early Earth system.\" Nature Ecology & Evolution 8, 1654-1666. doi:10.1038/s41559-024-02461-1\n"
+    }
+  ],
+  "portraits": {
+    "plates": [
+      {
+        "nodeId": "homo-sapiens",
+        "image": "portraits/homo-sapiens.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "da1b756a2ace8f44",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "homo-heidelbergensis",
+        "image": "portraits/homo-heidelbergensis.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "d3058b63da2612c6",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "homo-erectus",
+        "image": "portraits/homo-erectus.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "13a1d771f6cbf79c",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "homo",
+        "image": "portraits/homo.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "3bcfe020f0937e57",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "australopithecus",
+        "image": "portraits/australopithecus.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "290c4a6e4303ba25",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "hominini",
+        "image": "portraits/hominini.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "244dcca8346a49e5",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "homininae",
+        "image": "portraits/homininae.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "5ec8d9f137fdbd53",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "hominidae",
+        "image": "portraits/hominidae.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "f1f208c897153062",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "hominoidea",
+        "image": "portraits/hominoidea.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "4ad5d9260bdcb0dd",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "catarrhini",
+        "image": "portraits/catarrhini.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "a9a1e7c3e6f639a1",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "haplorhini",
+        "image": "portraits/haplorhini.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "21ee1bb3c654829a",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "primatomorpha",
+        "image": "portraits/primatomorpha.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "46f1c6ce85e50a08",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "euarchontoglires",
+        "image": "portraits/euarchontoglires.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "b34fb2e0afe5ff64",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "boreoeutheria",
+        "image": "portraits/boreoeutheria.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "b265b8831e219686",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "placentalia",
+        "image": "portraits/placentalia.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "22ea1eed2c0700b5",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "eutheria",
+        "image": "portraits/eutheria.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "96512f40094b71c8",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "theria",
+        "image": "portraits/theria.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "9b7c50ee0bbda0a9",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "mammalia",
+        "image": "portraits/mammalia.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "7e3062f8c909a6a1",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "mammaliaformes",
+        "image": "portraits/mammaliaformes.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "c667ad3310fcec37",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "cynodontia",
+        "image": "portraits/cynodontia.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "7eb4b6337ccfa56e",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "therapsida",
+        "image": "portraits/therapsida.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "0a7fe284a0cc1bee",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "synapsida",
+        "image": "portraits/synapsida.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "53ede5a016046935",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "amniota",
+        "image": "portraits/amniota.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "60ead2448ece7209",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "tetrapoda",
+        "image": "portraits/tetrapoda.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "35d025bfba217b1d",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "tetrapodomorpha",
+        "image": "portraits/tetrapodomorpha.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "80fca4206846b113",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "sarcopterygii",
+        "image": "portraits/sarcopterygii.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "d4122fd21724b79b",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "osteichthyes",
+        "image": "portraits/osteichthyes.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "105148bcd6c22ae3",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "gnathostomata",
+        "image": "portraits/gnathostomata.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "d04c2b033a483f5b",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "vertebrata",
+        "image": "portraits/vertebrata.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "282ac709cbf7d26b",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "olfactores",
+        "image": "portraits/olfactores.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "bb4e4ac417942fa4",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "chordata",
+        "image": "portraits/chordata.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "a4ea5ba4af80ab2f",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "bilateria",
+        "image": "portraits/bilateria.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "9c9e32e0464f4648",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "eumetazoa",
+        "image": "portraits/eumetazoa.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "476499a62ca9c41a",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "metazoa",
+        "image": "portraits/metazoa.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "f3773bffa3cfab68",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "holozoa",
+        "image": "portraits/holozoa.jpg",
+        "plate": "MICROSCOPE",
+        "pinned": "5973dd6f36eff417",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "opisthokonta",
+        "image": "portraits/opisthokonta.jpg",
+        "plate": "MICROSCOPE",
+        "pinned": "03af3d822e3e05ae",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "leca",
+        "image": "portraits/leca.jpg",
+        "plate": "MICROSCOPE",
+        "pinned": "c276b4a3154b29a5",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "archaeal-host-lineage",
+        "image": "portraits/archaeal-host-lineage.jpg",
+        "plate": "MICROSCOPE",
+        "pinned": "cbaa84828438551c",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "luca",
+        "image": "portraits/luca.jpg",
+        "plate": "MICROSCOPE",
+        "pinned": "55a8a83a3e0b58ad",
+        "width": 1024,
+        "height": 1024
+      }
+    ],
+    "morphs": [
+      {
+        "older": "homo-heidelbergensis",
+        "younger": "homo-sapiens",
+        "forward": "portraits/morphs/homo-heidelbergensis--homo-sapiens.forward.png",
+        "backward": "portraits/morphs/homo-heidelbergensis--homo-sapiens.backward.png",
+        "forwardRange": 0.26171875,
+        "backwardRange": 0.39453125,
+        "size": 128
+      },
+      {
+        "older": "homo-erectus",
+        "younger": "homo-heidelbergensis",
+        "forward": "portraits/morphs/homo-erectus--homo-heidelbergensis.forward.png",
+        "backward": "portraits/morphs/homo-erectus--homo-heidelbergensis.backward.png",
+        "forwardRange": 0.0849609375,
+        "backwardRange": 0.09375,
+        "size": 128
+      },
+      {
+        "older": "homo",
+        "younger": "homo-erectus",
+        "forward": "portraits/morphs/homo--homo-erectus.forward.png",
+        "backward": "portraits/morphs/homo--homo-erectus.backward.png",
+        "forwardRange": 0.13671875,
+        "backwardRange": 0.138671875,
+        "size": 128
+      },
+      {
+        "older": "australopithecus",
+        "younger": "homo",
+        "forward": "portraits/morphs/australopithecus--homo.forward.png",
+        "backward": "portraits/morphs/australopithecus--homo.backward.png",
+        "forwardRange": 0.1328125,
+        "backwardRange": 0.126953125,
+        "size": 128
+      },
+      {
+        "older": "hominini",
+        "younger": "australopithecus",
+        "forward": "portraits/morphs/hominini--australopithecus.forward.png",
+        "backward": "portraits/morphs/hominini--australopithecus.backward.png",
+        "forwardRange": 0.2529296875,
+        "backwardRange": 0.2099609375,
+        "size": 128
+      },
+      {
+        "older": "homininae",
+        "younger": "hominini",
+        "forward": "portraits/morphs/homininae--hominini.forward.png",
+        "backward": "portraits/morphs/homininae--hominini.backward.png",
+        "forwardRange": 0.2333984375,
+        "backwardRange": 0.26953125,
+        "size": 128
+      },
+      {
+        "older": "hominidae",
+        "younger": "homininae",
+        "forward": "portraits/morphs/hominidae--homininae.forward.png",
+        "backward": "portraits/morphs/hominidae--homininae.backward.png",
+        "forwardRange": 0.1611328125,
+        "backwardRange": 0.16796875,
+        "size": 128
+      },
+      {
+        "older": "hominoidea",
+        "younger": "hominidae",
+        "forward": "portraits/morphs/hominoidea--hominidae.forward.png",
+        "backward": "portraits/morphs/hominoidea--hominidae.backward.png",
+        "forwardRange": 0.154296875,
+        "backwardRange": 0.201171875,
+        "size": 128
+      },
+      {
+        "older": "catarrhini",
+        "younger": "hominoidea",
+        "forward": "portraits/morphs/catarrhini--hominoidea.forward.png",
+        "backward": "portraits/morphs/catarrhini--hominoidea.backward.png",
+        "forwardRange": 0.1220703125,
+        "backwardRange": 0.1220703125,
+        "size": 128
+      },
+      {
+        "older": "haplorhini",
+        "younger": "catarrhini",
+        "forward": "portraits/morphs/haplorhini--catarrhini.forward.png",
+        "backward": "portraits/morphs/haplorhini--catarrhini.backward.png",
+        "forwardRange": 0.087890625,
+        "backwardRange": 0.2119140625,
+        "size": 128
+      },
+      {
+        "older": "primatomorpha",
+        "younger": "haplorhini",
+        "forward": "portraits/morphs/primatomorpha--haplorhini.forward.png",
+        "backward": "portraits/morphs/primatomorpha--haplorhini.backward.png",
+        "forwardRange": 0.244140625,
+        "backwardRange": 0.150390625,
+        "size": 128
+      },
+      {
+        "older": "euarchontoglires",
+        "younger": "primatomorpha",
+        "forward": "portraits/morphs/euarchontoglires--primatomorpha.forward.png",
+        "backward": "portraits/morphs/euarchontoglires--primatomorpha.backward.png",
+        "forwardRange": 0.1005859375,
+        "backwardRange": 0.083984375,
+        "size": 128
+      },
+      {
+        "older": "boreoeutheria",
+        "younger": "euarchontoglires",
+        "forward": "portraits/morphs/boreoeutheria--euarchontoglires.forward.png",
+        "backward": "portraits/morphs/boreoeutheria--euarchontoglires.backward.png",
+        "forwardRange": 0.451171875,
+        "backwardRange": 0.27734375,
+        "size": 128
+      },
+      {
+        "older": "placentalia",
+        "younger": "boreoeutheria",
+        "forward": "portraits/morphs/placentalia--boreoeutheria.forward.png",
+        "backward": "portraits/morphs/placentalia--boreoeutheria.backward.png",
+        "forwardRange": 0.2578125,
+        "backwardRange": 0.2568359375,
+        "size": 128
+      },
+      {
+        "older": "eutheria",
+        "younger": "placentalia",
+        "forward": "portraits/morphs/eutheria--placentalia.forward.png",
+        "backward": "portraits/morphs/eutheria--placentalia.backward.png",
+        "forwardRange": 0.1826171875,
+        "backwardRange": 0.16796875,
+        "size": 128
+      },
+      {
+        "older": "theria",
+        "younger": "eutheria",
+        "forward": "portraits/morphs/theria--eutheria.forward.png",
+        "backward": "portraits/morphs/theria--eutheria.backward.png",
+        "forwardRange": 0.1357421875,
+        "backwardRange": 0.1630859375,
+        "size": 128
+      },
+      {
+        "older": "mammalia",
+        "younger": "theria",
+        "forward": "portraits/morphs/mammalia--theria.forward.png",
+        "backward": "portraits/morphs/mammalia--theria.backward.png",
+        "forwardRange": 0.13671875,
+        "backwardRange": 0.2333984375,
+        "size": 128
+      },
+      {
+        "older": "mammaliaformes",
+        "younger": "mammalia",
+        "forward": "portraits/morphs/mammaliaformes--mammalia.forward.png",
+        "backward": "portraits/morphs/mammaliaformes--mammalia.backward.png",
+        "forwardRange": 0.0498046875,
+        "backwardRange": 0.04296875,
+        "size": 128
+      },
+      {
+        "older": "cynodontia",
+        "younger": "mammaliaformes",
+        "forward": "portraits/morphs/cynodontia--mammaliaformes.forward.png",
+        "backward": "portraits/morphs/cynodontia--mammaliaformes.backward.png",
+        "forwardRange": 0.044921875,
+        "backwardRange": 0.048828125,
+        "size": 128
+      },
+      {
+        "older": "therapsida",
+        "younger": "cynodontia",
+        "forward": "portraits/morphs/therapsida--cynodontia.forward.png",
+        "backward": "portraits/morphs/therapsida--cynodontia.backward.png",
+        "forwardRange": 0.1279296875,
+        "backwardRange": 0.140625,
+        "size": 128
+      },
+      {
+        "older": "synapsida",
+        "younger": "therapsida",
+        "forward": "portraits/morphs/synapsida--therapsida.forward.png",
+        "backward": "portraits/morphs/synapsida--therapsida.backward.png",
+        "forwardRange": 0.1376953125,
+        "backwardRange": 0.1552734375,
+        "size": 128
+      },
+      {
+        "older": "amniota",
+        "younger": "synapsida",
+        "forward": "portraits/morphs/amniota--synapsida.forward.png",
+        "backward": "portraits/morphs/amniota--synapsida.backward.png",
+        "forwardRange": 0.1396484375,
+        "backwardRange": 0.083984375,
+        "size": 128
+      },
+      {
+        "older": "tetrapoda",
+        "younger": "amniota",
+        "forward": "portraits/morphs/tetrapoda--amniota.forward.png",
+        "backward": "portraits/morphs/tetrapoda--amniota.backward.png",
+        "forwardRange": 0.060546875,
+        "backwardRange": 0.1533203125,
+        "size": 128
+      },
+      {
+        "older": "tetrapodomorpha",
+        "younger": "tetrapoda",
+        "forward": "portraits/morphs/tetrapodomorpha--tetrapoda.forward.png",
+        "backward": "portraits/morphs/tetrapodomorpha--tetrapoda.backward.png",
+        "forwardRange": 0.09375,
+        "backwardRange": 0.1005859375,
+        "size": 128
+      },
+      {
+        "older": "sarcopterygii",
+        "younger": "tetrapodomorpha",
+        "forward": "portraits/morphs/sarcopterygii--tetrapodomorpha.forward.png",
+        "backward": "portraits/morphs/sarcopterygii--tetrapodomorpha.backward.png",
+        "forwardRange": 0.1328125,
+        "backwardRange": 0.1181640625,
+        "size": 128
+      },
+      {
+        "older": "osteichthyes",
+        "younger": "sarcopterygii",
+        "forward": "portraits/morphs/osteichthyes--sarcopterygii.forward.png",
+        "backward": "portraits/morphs/osteichthyes--sarcopterygii.backward.png",
+        "forwardRange": 0.1865234375,
+        "backwardRange": 0.1708984375,
+        "size": 128
+      },
+      {
+        "older": "gnathostomata",
+        "younger": "osteichthyes",
+        "forward": "portraits/morphs/gnathostomata--osteichthyes.forward.png",
+        "backward": "portraits/morphs/gnathostomata--osteichthyes.backward.png",
+        "forwardRange": 0.16796875,
+        "backwardRange": 0.18359375,
+        "size": 128
+      },
+      {
+        "older": "vertebrata",
+        "younger": "gnathostomata",
+        "forward": "portraits/morphs/vertebrata--gnathostomata.forward.png",
+        "backward": "portraits/morphs/vertebrata--gnathostomata.backward.png",
+        "forwardRange": 0.1259765625,
+        "backwardRange": 0.1474609375,
+        "size": 128
+      },
+      {
+        "older": "olfactores",
+        "younger": "vertebrata",
+        "forward": "portraits/morphs/olfactores--vertebrata.forward.png",
+        "backward": "portraits/morphs/olfactores--vertebrata.backward.png",
+        "forwardRange": 0.16796875,
+        "backwardRange": 0.1328125,
+        "size": 128
+      },
+      {
+        "older": "chordata",
+        "younger": "olfactores",
+        "forward": "portraits/morphs/chordata--olfactores.forward.png",
+        "backward": "portraits/morphs/chordata--olfactores.backward.png",
+        "forwardRange": 0.1982421875,
+        "backwardRange": 0.2470703125,
+        "size": 128
+      },
+      {
+        "older": "bilateria",
+        "younger": "chordata",
+        "forward": "portraits/morphs/bilateria--chordata.forward.png",
+        "backward": "portraits/morphs/bilateria--chordata.backward.png",
+        "forwardRange": 0.0869140625,
+        "backwardRange": 0.1142578125,
+        "size": 128
+      },
+      {
+        "older": "eumetazoa",
+        "younger": "bilateria",
+        "forward": "portraits/morphs/eumetazoa--bilateria.forward.png",
+        "backward": "portraits/morphs/eumetazoa--bilateria.backward.png",
+        "forwardRange": 0.1015625,
+        "backwardRange": 0.1435546875,
+        "size": 128
+      },
+      {
+        "older": "metazoa",
+        "younger": "eumetazoa",
+        "forward": "portraits/morphs/metazoa--eumetazoa.forward.png",
+        "backward": "portraits/morphs/metazoa--eumetazoa.backward.png",
+        "forwardRange": 0.205078125,
+        "backwardRange": 0.1142578125,
+        "size": 128
+      },
+      {
+        "older": "holozoa",
+        "younger": "metazoa",
+        "forward": "portraits/morphs/holozoa--metazoa.forward.png",
+        "backward": "portraits/morphs/holozoa--metazoa.backward.png",
+        "forwardRange": 0.2490234375,
+        "backwardRange": 0.1201171875,
+        "size": 128
+      },
+      {
+        "older": "opisthokonta",
+        "younger": "holozoa",
+        "forward": "portraits/morphs/opisthokonta--holozoa.forward.png",
+        "backward": "portraits/morphs/opisthokonta--holozoa.backward.png",
+        "forwardRange": 1.96484375,
+        "backwardRange": 0.435546875,
+        "size": 128
+      },
+      {
+        "older": "leca",
+        "younger": "opisthokonta",
+        "forward": "portraits/morphs/leca--opisthokonta.forward.png",
+        "backward": "portraits/morphs/leca--opisthokonta.backward.png",
+        "forwardRange": 0.369140625,
+        "backwardRange": 1.0478515625,
+        "size": 128
+      },
+      {
+        "older": "archaeal-host-lineage",
+        "younger": "leca",
+        "forward": "portraits/morphs/archaeal-host-lineage--leca.forward.png",
+        "backward": "portraits/morphs/archaeal-host-lineage--leca.backward.png",
+        "forwardRange": 0.2744140625,
+        "backwardRange": 0.3349609375,
+        "size": 128
+      },
+      {
+        "older": "luca",
+        "younger": "archaeal-host-lineage",
+        "forward": "portraits/morphs/luca--archaeal-host-lineage.forward.png",
+        "backward": "portraits/morphs/luca--archaeal-host-lineage.backward.png",
+        "forwardRange": 0.3330078125,
+        "backwardRange": 0.1826171875,
+        "size": 128
+      }
+    ]
+  }
+}

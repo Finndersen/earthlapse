@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { Globe } from '@/globe'
+import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { resolveAssetUrl, scenePlaybackSegments, SceneView } from '@/scene'
 import { ShellLayout, useIdle } from '@/shell'
@@ -38,7 +39,7 @@ import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
-import { buildLayers } from './buildLayers'
+import { buildLayers, rawEvents } from './buildLayers'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
@@ -202,10 +203,21 @@ export function Experience() {
   // Hoisted above the loading/error branches below so every hook in this component runs
   // unconditionally regardless of load state (rules of hooks) — `buildLayers` tolerates the
   // `null`s that state implies and returns the empty `AppLayers` for them.
-  const { scalarLayers, nodeLayers, raster } = useMemo(
+  const { scalarLayers, nodeLayers, rasters, eventLayers } = useMemo(
     () => buildLayers(data.status === 'ready' ? data.manifest : null, data.status === 'ready' ? data.layerData : null),
     [data],
   )
+
+  // The globe's two raster sources (docs/GLOBE.md §4.1, G7), selected by id (ADR-013) —
+  // `paleodem` (0-540 Ma) and, when published, `plates_neoproterozoic` (540-1000 Ma, `null`
+  // when unusable: `Globe` then falls back to the "geography unknown" regime rather than
+  // faking continents). `globe-regimes`' raw event list feeds the same pre-1 Ga regime blend.
+  const paleodemRaster = rasters.get('paleodem')
+  const rasterLayers: GlobeRasterLayers | null =
+    paleodemRaster === undefined
+      ? null
+      : { paleodem: paleodemRaster.data, neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null }
+  const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
 
   // Every scene is a timeline checkpoint, so the stills themselves are marked and steppable on
   // the axis, not only the data-driven events. Memoised so the track's pip layout only reruns
@@ -267,11 +279,13 @@ export function Experience() {
         )
       }
       globe={
-        raster ? (
+        rasterLayers ? (
           <Globe
             t={t}
-            rasterData={raster.data}
+            rasterLayers={rasterLayers}
             assetBase={manifest.assetBase}
+            regimeEvents={regimeEvents}
+            effectEvents={manifest.events}
             expanded={globeExpanded}
             onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
           />

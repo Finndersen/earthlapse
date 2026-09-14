@@ -22,13 +22,6 @@ export type AppDataState =
   | { status: 'error'; error: Error }
   | { status: 'ready'; manifest: Manifest; isStub: boolean; layerData: ReadonlyMap<string, LayerData> }
 
-/** `dataKind: 'events'` has no per-layer data file — events live inlined in `Manifest.events`
- *  (see `loadLayerData`'s doc comment) — so it is excluded from the fetch batch rather than
- *  making every caller handle its guaranteed rejection. */
-function hasOwnDataFile(dataKind: Manifest['layers'][number]['dataKind']): boolean {
-  return dataKind !== 'events'
-}
-
 export function useAppData(): AppDataState {
   const [state, setState] = useState<AppDataState>({ status: 'loading' })
 
@@ -37,7 +30,10 @@ export function useAppData(): AppDataState {
 
     async function run(): Promise<void> {
       const { manifest, isStub } = await loadManifest()
-      const entries = manifest.layers.filter((l) => hasOwnDataFile(l.dataKind))
+      // Every declared layer publishes its own data file (docs/GLOBE.md §6 closed that last
+      // gap: a non-timeline `events`-kind layer, e.g. `globe-regimes`, now does too) — so
+      // nothing here is filtered out before the fetch.
+      const entries = manifest.layers
       const dataList = await Promise.all(entries.map((entry) => loadLayerData(manifest, entry)))
       if (cancelled) return
       const layerData = new Map(entries.map((entry, i) => [entry.id, dataList[i]!]))

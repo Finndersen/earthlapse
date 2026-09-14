@@ -1,0 +1,21 @@
+# See docs/DATA_SOURCES.md for field meanings.
+#
+# Zenodo record 4485738 (Merdith et al. 2021, v1.1b) ships one file, SM2_4485738_V2.zip
+# (13,912,790 bytes). `url` is the direct file-content endpoint resolved from the Zenodo API
+# (`https://zenodo.org/api/records/4485738`), not the record landing page -- the same
+# pattern as sources/paleodem/manifest.toml. Only three members of the zip's single `SM2_X/`
+# subdirectory are used: the continent and craton shape files and the 1000-0 Ma rotation
+# model (see README.md "What was and wasn't downloaded").
+
+name = "plates-neoproterozoic"
+title = "Merdith et al. 2021 continental polygons (1000-540 Ma), stylised relief"
+url = "https://zenodo.org/api/records/4485738/files/SM2_4485738_V2.zip/content"
+sha256 = "445f9991783fc63501acfa2e6ed45c816f4e581c3f0fef2575996eecc2b171a4"
+licence = "CC BY 4.0"
+citation = "Merdith, A.S., Collins, A.S., Williams, S.E., Pisarevsky, S., Foden, J.D., Archibald, D.B., Blades, M.L., Alessio, B.L., Armistead, S., Plavsa, D., Clark, C. and Muller, R.D. (2021). Extending full-plate tectonic models into deep time: Linking the Neoproterozoic and the Phanerozoic. Earth-Science Reviews 214, 103477. doi:10.1016/j.earscirev.2020.103477. Model: Zenodo 4485738 (CC-BY-4.0)."
+time_domain = [1.0e9, 5.4e8]  # years BP, [oldest, newest] -- docs/GLOBE.md §4.1 (G7)
+output_shape = "RasterSequence"
+interpolation = "n/a"  # RasterSequence blends via RasterBlend (crossfade); no TimeSeries here
+volume_bytes = 13912790     # measured: the zip itself (sha256 above); see README.md
+storage_tier = "git"        # curated parquet only -- textures are generated media, never committed
+outputs = ["data/media/textures/plates_neoproterozoic/*.webp"]  # 47 frames; written by normalise.py's write_outputs() hook; see docs/DATA_SOURCES.md § Directory layout per source

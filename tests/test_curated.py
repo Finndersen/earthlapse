@@ -11,8 +11,12 @@ import pytest
 from pipeline.curated import CuratedFormatError, load_world, path_for, read_shape, write_shape
 from pipeline.shapes import (
     CuratedShape,
+    EffectAnchor,
+    EffectWindow,
     Event,
     EventSet,
+    GlobeEffect,
+    GlobeEffectKind,
     Interpolation,
     RasterFrame,
     RasterSequence,
@@ -39,18 +43,45 @@ EVENTS = EventSet(
             importance=0.95,
             description="Chicxulub.",
             citation="Renne et al. 2013",
-        )
+            # Exercises the additive `effect` field (docs/GLOBE.md §6) through the round trip
+            # below, both the anchored case (this event) and the absent case ("no-effect").
+            effect=GlobeEffect(
+                kind=GlobeEffectKind.IMPACT_WINTER,
+                anchor=EffectAnchor(lat=21.3, lon=-89.5),
+                windows=[EffectWindow(t_min=6.6e7, t_max=6.61e7)],
+            ),
+        ),
+        Event(
+            id="no-effect",
+            label="An event with no globe visual",
+            t_min=0.0,
+            t_max=1.0,
+            importance=0.1,
+            description="d.",
+            citation="c.",
+        ),
     ],
 )
 PALEODEM = RasterSequence(
     id="paleodem",
-    frames=[RasterFrame(t=0.0, ref="textures/paleodem/0.png"), RasterFrame(t=1e8, ref="textures/paleodem/100.png")],
+    frames=[
+        RasterFrame(t=0.0, ref="textures/paleodem/0.png"),
+        RasterFrame(t=1e8, ref="textures/paleodem/100.png"),
+    ],
 )
 LINEAGE = Tree(
     id="lineage",
     nodes=[
-        TreeNode(id="luca", parent=None, label="LUCA", t_divergence=4.0e9, citation="Moody et al. 2024"),
-        TreeNode(id="human", parent="luca", label="Homo sapiens", t_divergence=3.0e5, representative="Homo sapiens"),
+        TreeNode(
+            id="luca", parent=None, label="LUCA", t_divergence=4.0e9, citation="Moody et al. 2024"
+        ),
+        TreeNode(
+            id="human",
+            parent="luca",
+            label="Homo sapiens",
+            t_divergence=3.0e5,
+            representative="Homo sapiens",
+        ),
     ],
 )
 
@@ -94,3 +125,17 @@ def test_load_world_registers_each_shape_by_id(tmp_path: Path) -> None:
 def test_load_world_on_missing_directory_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_world(tmp_path / "absent")
+
+
+def test_event_effect_is_stored_as_a_json_string_column(tmp_path: Path) -> None:
+    """A storage detail, not part of the NORMATIVE contract (pipeline.shapes.GlobeEffect is
+    a nested model there) — but locking it in here means a future refactor of write_shape's
+    encoding can't silently break round-tripping without a test failing here first."""
+    path = write_shape(EVENTS, tmp_path)
+    table = pq.read_table(path)
+    assert table.schema.field("effect").type == pa.string()
+    rows = table.to_pylist()
+    kpg = next(r for r in rows if r["id"] == "kpg")
+    no_effect = next(r for r in rows if r["id"] == "no-effect")
+    assert isinstance(kpg["effect"], str) and kpg["effect"].startswith("{")
+    assert no_effect["effect"] is None

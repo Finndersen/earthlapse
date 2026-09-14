@@ -64,7 +64,15 @@
   opacity: 1;
 }
 
-.outOfDomain {
+/* The regime caption slot under the orb (docs/GLOBE.md §7, §9 G2/G6/G8) — empty for plain
+   PaleoDEM data, otherwise whatever text `Globe`'s derived caption carries (the raster-domain
+   fallback, a regime label, or an overlay effect's own label). The text sits directly over the
+   sphere, whose colour ranges from near-black (magma ocean, impact winter) to near-white
+   (the ice shell, `iceShellColor` in shaders.ts) depending which look is active — a flat dim
+   colour alone is illegible against the bright end of that range, so a dark shadow/glow always
+   rides behind the light text, giving contrast against either extreme rather than tuning for
+   one. */
+.caption {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -77,10 +85,13 @@
   text-transform: uppercase;
   text-align: center;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.85),
+    0 0 10px rgba(0, 0, 0, 0.65);
   pointer-events: none;
 }
 
-.orbExpanded .outOfDomain {
+.orbExpanded .caption {
   font-size: 12px;
   width: 40%;
 }

@@ -1,0 +1,441 @@
+{
+  "id": "paleodem",
+  "frames": [
+    {
+      "t": 0.0,
+      "ref": "textures/paleodem/000.0Ma.webp"
+    },
+    {
+      "t": 5000000.0,
+      "ref": "textures/paleodem/005.0Ma.webp"
+    },
+    {
+      "t": 10000000.0,
+      "ref": "textures/paleodem/010.0Ma.webp"
+    },
+    {
+      "t": 15000000.0,
+      "ref": "textures/paleodem/015.0Ma.webp"
+    },
+    {
+      "t": 20000000.0,
+      "ref": "textures/paleodem/020.0Ma.webp"
+    },
+    {
+      "t": 25000000.0,
+      "ref": "textures/paleodem/025.0Ma.webp"
+    },
+    {
+      "t": 30000000.0,
+      "ref": "textures/paleodem/030.0Ma.webp"
+    },
+    {
+      "t": 35000000.0,
+      "ref": "textures/paleodem/035.0Ma.webp"
+    },
+    {
+      "t": 40000000.0,
+      "ref": "textures/paleodem/040.0Ma.webp"
+    },
+    {
+      "t": 45000000.0,
+      "ref": "textures/paleodem/045.0Ma.webp"
+    },
+    {
+      "t": 50000000.0,
+      "ref": "textures/paleodem/050.0Ma.webp"
+    },
+    {
+      "t": 55000000.0,
+      "ref": "textures/paleodem/055.0Ma.webp"
+    },
+    {
+      "t": 60000000.0,
+      "ref": "textures/paleodem/060.0Ma.webp"
+    },
+    {
+      "t": 65000000.0,
+      "ref": "textures/paleodem/065.0Ma.webp"
+    },
+    {
+      "t": 70000000.0,
+      "ref": "textures/paleodem/070.0Ma.webp"
+    },
+    {
+      "t": 75000000.0,
+      "ref": "textures/paleodem/075.0Ma.webp"
+    },
+    {
+      "t": 80000000.0,
+      "ref": "textures/paleodem/080.0Ma.webp"
+    },
+    {
+      "t": 85000000.0,
+      "ref": "textures/paleodem/085.0Ma.webp"
+    },
+    {
+      "t": 90000000.0,
+      "ref": "textures/paleodem/090.0Ma.webp"
+    },
+    {
+      "t": 95000000.0,
+      "ref": "textures/paleodem/095.0Ma.webp"
+    },
+    {
+      "t": 100000000.0,
+      "ref": "textures/paleodem/100.0Ma.webp"
+    },
+    {
+      "t": 105000000.0,
+      "ref": "textures/paleodem/105.0Ma.webp"
+    },
+    {
+      "t": 110000000.0,
+      "ref": "textures/paleodem/110.0Ma.webp"
+    },
+    {
+      "t": 115000000.0,
+      "ref": "textures/paleodem/115.0Ma.webp"
+    },
+    {
+      "t": 120000000.0,
+      "ref": "textures/paleodem/120.0Ma.webp"
+    },
+    {
+      "t": 125000000.0,
+      "ref": "textures/paleodem/125.0Ma.webp"
+    },
+    {
+      "t": 130000000.0,
+      "ref": "textures/paleodem/130.0Ma.webp"
+    },
+    {
+      "t": 135000000.0,
+      "ref": "textures/paleodem/135.0Ma.webp"
+    },
+    {
+      "t": 140000000.0,
+      "ref": "textures/paleodem/140.0Ma.webp"
+    },
+    {
+      "t": 145000000.0,
+      "ref": "textures/paleodem/145.0Ma.webp"
+    },
+    {
+      "t": 150000000.0,
+      "ref": "textures/paleodem/150.0Ma.webp"
+    },
+    {
+      "t": 155000000.0,
+      "ref": "textures/paleodem/155.0Ma.webp"
+    },
+    {
+      "t": 160000000.0,
+      "ref": "textures/paleodem/160.0Ma.webp"
+    },
+    {
+      "t": 165000000.0,
+      "ref": "textures/paleodem/165.0Ma.webp"
+    },
+    {
+      "t": 170000000.0,
+      "ref": "textures/paleodem/170.0Ma.webp"
+    },
+    {
+      "t": 175000000.0,
+      "ref": "textures/paleodem/175.0Ma.webp"
+    },
+    {
+      "t": 180000000.0,
+      "ref": "textures/paleodem/180.0Ma.webp"
+    },
+    {
+      "t": 185000000.0,
+      "ref": "textures/paleodem/185.0Ma.webp"
+    },
+    {
+      "t": 190000000.0,
+      "ref": "textures/paleodem/190.0Ma.webp"
+    },
+    {
+      "t": 195000000.0,
+      "ref": "textures/paleodem/195.0Ma.webp"
+    },
+    {
+      "t": 200000000.0,
+      "ref": "textures/paleodem/200.0Ma.webp"
+    },
+    {
+      "t": 205000000.0,
+      "ref": "textures/paleodem/205.0Ma.webp"
+    },
+    {
+      "t": 210000000.0,
+      "ref": "textures/paleodem/210.0Ma.webp"
+    },
+    {
+      "t": 215000000.0,
+      "ref": "textures/paleodem/215.0Ma.webp"
+    },
+    {
+      "t": 220000000.0,
+      "ref": "textures/paleodem/220.0Ma.webp"
+    },
+    {
+      "t": 225000000.0,
+      "ref": "textures/paleodem/225.0Ma.webp"
+    },
+    {
+      "t": 230000000.0,
+      "ref": "textures/paleodem/230.0Ma.webp"
+    },
+    {
+      "t": 235000000.0,
+      "ref": "textures/paleodem/235.0Ma.webp"
+    },
+    {
+      "t": 240000000.0,
+      "ref": "textures/paleodem/240.0Ma.webp"
+    },
+    {
+      "t": 245000000.0,
+      "ref": "textures/paleodem/245.0Ma.webp"
+    },
+    {
+      "t": 250000000.0,
+      "ref": "textures/paleodem/250.0Ma.webp"
+    },
+    {
+      "t": 255000000.0,
+      "ref": "textures/paleodem/255.0Ma.webp"
+    },
+    {
+      "t": 260000000.0,
+      "ref": "textures/paleodem/260.0Ma.webp"
+    },
+    {
+      "t": 265000000.0,
+      "ref": "textures/paleodem/265.0Ma.webp"
+    },
+    {
+      "t": 270000000.0,
+      "ref": "textures/paleodem/270.0Ma.webp"
+    },
+    {
+      "t": 275000000.0,
+      "ref": "textures/paleodem/275.0Ma.webp"
+    },
+    {
+      "t": 280000000.0,
+      "ref": "textures/paleodem/280.0Ma.webp"
+    },
+    {
+      "t": 285000000.0,
+      "ref": "textures/paleodem/285.0Ma.webp"
+    },
+    {
+      "t": 290000000.0,
+      "ref": "textures/paleodem/290.0Ma.webp"
+    },
+    {
+      "t": 295000000.0,
+      "ref": "textures/paleodem/295.0Ma.webp"
+    },
+    {
+      "t": 300000000.0,
+      "ref": "textures/paleodem/300.0Ma.webp"
+    },
+    {
+      "t": 305000000.0,
+      "ref": "textures/paleodem/305.0Ma.webp"
+    },
+    {
+      "t": 310000000.0,
+      "ref": "textures/paleodem/310.0Ma.webp"
+    },
+    {
+      "t": 315000000.0,
+      "ref": "textures/paleodem/315.0Ma.webp"
+    },
+    {
+      "t": 320000000.0,
+      "ref": "textures/paleodem/320.0Ma.webp"
+    },
+    {
+      "t": 325000000.0,
+      "ref": "textures/paleodem/325.0Ma.webp"
+    },
+    {
+      "t": 330000000.0,
+      "ref": "textures/paleodem/330.0Ma.webp"
+    },
+    {
+      "t": 335000000.0,
+      "ref": "textures/paleodem/335.0Ma.webp"
+    },
+    {
+      "t": 340000000.0,
+      "ref": "textures/paleodem/340.0Ma.webp"
+    },
+    {
+      "t": 345000000.0,
+      "ref": "textures/paleodem/345.0Ma.webp"
+    },
+    {
+      "t": 350000000.0,
+      "ref": "textures/paleodem/350.0Ma.webp"
+    },
+    {
+      "t": 355000000.0,
+      "ref": "textures/paleodem/355.0Ma.webp"
+    },
+    {
+      "t": 360000000.0,
+      "ref": "textures/paleodem/360.0Ma.webp"
+    },
+    {
+      "t": 365000000.0,
+      "ref": "textures/paleodem/365.0Ma.webp"
+    },
+    {
+      "t": 370000000.0,
+      "ref": "textures/paleodem/370.0Ma.webp"
+    },
+    {
+      "t": 375000000.0,
+      "ref": "textures/paleodem/375.0Ma.webp"
+    },
+    {
+      "t": 380000000.0,
+      "ref": "textures/paleodem/380.0Ma.webp"
+    },
+    {
+      "t": 385200000.0,
+      "ref": "textures/paleodem/385.2Ma.webp"
+    },
+    {
+      "t": 390500000.0,
+      "ref": "textures/paleodem/390.5Ma.webp"
+    },
+    {
+      "t": 395000000.0,
+      "ref": "textures/paleodem/395.0Ma.webp"
+    },
+    {
+      "t": 400000000.0,
+      "ref": "textures/paleodem/400.0Ma.webp"
+    },
+    {
+      "t": 405000000.0,
+      "ref": "textures/paleodem/405.0Ma.webp"
+    },
+    {
+      "t": 410000000.0,
+      "ref": "textures/paleodem/410.0Ma.webp"
+    },
+    {
+      "t": 415000000.0,
+      "ref": "textures/paleodem/415.0Ma.webp"
+    },
+    {
+      "t": 420000000.0,
+      "ref": "textures/paleodem/420.0Ma.webp"
+    },
+    {
+      "t": 425000000.0,
+      "ref": "textures/paleodem/425.0Ma.webp"
+    },
+    {
+      "t": 430000000.0,
+      "ref": "textures/paleodem/430.0Ma.webp"
+    },
+    {
+      "t": 435000000.0,
+      "ref": "textures/paleodem/435.0Ma.webp"
+    },
+    {
+      "t": 440000000.0,
+      "ref": "textures/paleodem/440.0Ma.webp"
+    },
+    {
+      "t": 445000000.0,
+      "ref": "textures/paleodem/445.0Ma.webp"
+    },
+    {
+      "t": 450000000.0,
+      "ref": "textures/paleodem/450.0Ma.webp"
+    },
+    {
+      "t": 455000000.0,
+      "ref": "textures/paleodem/455.0Ma.webp"
+    },
+    {
+      "t": 460000000.0,
+      "ref": "textures/paleodem/460.0Ma.webp"
+    },
+    {
+      "t": 465000000.0,
+      "ref": "textures/paleodem/465.0Ma.webp"
+    },
+    {
+      "t": 470000000.0,
+      "ref": "textures/paleodem/470.0Ma.webp"
+    },
+    {
+      "t": 475000000.0,
+      "ref": "textures/paleodem/475.0Ma.webp"
+    },
+    {
+      "t": 480000000.0,
+      "ref": "textures/paleodem/480.0Ma.webp"
+    },
+    {
+      "t": 485000000.0,
+      "ref": "textures/paleodem/485.0Ma.webp"
+    },
+    {
+      "t": 490000000.0,
+      "ref": "textures/paleodem/490.0Ma.webp"
+    },
+    {
+      "t": 495000000.0,
+      "ref": "textures/paleodem/495.0Ma.webp"
+    },
+    {
+      "t": 500000000.0,
+      "ref": "textures/paleodem/500.0Ma.webp"
+    },
+    {
+      "t": 505000000.0,
+      "ref": "textures/paleodem/505.0Ma.webp"
+    },
+    {
+      "t": 510000000.0,
+      "ref": "textures/paleodem/510.0Ma.webp"
+    },
+    {
+      "t": 515000000.0,
+      "ref": "textures/paleodem/515.0Ma.webp"
+    },
+    {
+      "t": 520000000.0,
+      "ref": "textures/paleodem/520.0Ma.webp"
+    },
+    {
+      "t": 525000000.0,
+      "ref": "textures/paleodem/525.0Ma.webp"
+    },
+    {
+      "t": 530000000.0,
+      "ref": "textures/paleodem/530.0Ma.webp"
+    },
+    {
+      "t": 535000000.0,
+      "ref": "textures/paleodem/535.0Ma.webp"
+    },
+    {
+      "t": 540000000.0,
+      "ref": "textures/paleodem/540.0Ma.webp"
+    }
+  ]
+}

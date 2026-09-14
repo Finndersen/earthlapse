@@ -6,7 +6,7 @@
  * sampling and rendering logic, not to publish.
  */
 
-import type { SeriesData, TreeData } from '@/data/curated'
+import type { EventsData, SeriesData, TreeData } from '@/data/curated'
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 import type { LayerManifest } from '@/types/manifest'
 
@@ -96,6 +96,41 @@ export const ANCESTOR_DATA: TreeData = {
     { id: 'animal', parent: 'eukaryote', label: 'First animal', tDivergence: 6e8, representative: null, note: null, citation: null },
     { id: 'eukaryote', parent: 'luca', label: 'First eukaryote', tDivergence: 2.1e9, representative: null, note: null, citation: null },
     { id: 'luca', parent: null, label: 'LUCA', tDivergence: 4.2e9, representative: 'Last universal common ancestor', note: null, citation: null },
+  ],
+}
+
+/** Mirrors `sources/globe-regimes` (docs/GLOBE.md §6) in shape: a non-timeline `EventSet`,
+ *  two regimes with a gap between them, one carrying a `GlobeEffect`. */
+export const GLOBE_REGIMES_MANIFEST: LayerManifest = baseManifestEntry({
+  id: 'globe-regimes',
+  name: 'Globe regimes',
+  surface: 'globe',
+  dataKind: 'events',
+  chartable: false,
+})
+
+export const GLOBE_REGIMES_DATA: EventsData = {
+  id: 'globe-regimes',
+  events: [
+    {
+      id: 'magma-ocean-regime',
+      label: 'Magma ocean and newborn Moon',
+      tMin: 4.35e9,
+      tMax: 4.52e9,
+      importance: 0.9,
+      description: 'A glowing, cracked crust; no oceans yet.',
+      citation: 'Barboni et al. 2017',
+      effect: { kind: 'regime-magma-ocean', windows: [{ tMin: 4.35e9, tMax: 4.52e9 }] },
+    },
+    {
+      id: 'proterozoic-unknown-geography-regime',
+      label: 'Proterozoic, geography unknown',
+      tMin: 1.0e9,
+      tMax: 2.4e9,
+      importance: 0.3,
+      description: 'No plate reconstruction reaches this far back.',
+      citation: 'Merdith et al. 2021',
+    },
   ],
 }
 

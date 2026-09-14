@@ -29,9 +29,16 @@ class CuratedFormatError(ValueError):
 
 
 class _Layout:
-    def __init__(self, items_field: str, schema: pa.Schema) -> None:
+    def __init__(
+        self, items_field: str, schema: pa.Schema, json_fields: frozenset[str] = frozenset()
+    ) -> None:
         self.items_field = items_field
         self.schema = schema
+        # Columns holding a nested model (or None) rather than a scalar. Parquet's column
+        # types are flat, so these round-trip as a JSON string column instead — encoded on
+        # write, decoded on read. Pydantic reconstructs the nested model from the resulting
+        # dict either way, so this is a storage detail, invisible above write_shape/read_shape.
+        self.json_fields = json_fields
 
 
 _LAYOUTS: Final[dict[type[CuratedShape], _Layout]] = {
@@ -57,8 +64,10 @@ _LAYOUTS: Final[dict[type[CuratedShape], _Layout]] = {
                 ("importance", pa.float64()),
                 ("description", pa.string()),
                 ("citation", pa.string()),
+                ("effect", pa.string()),  # JSON-encoded GlobeEffect, or null — see json_fields
             ]
         ),
+        json_fields=frozenset({"effect"}),
     ),
     RasterSequence: _Layout("frames", pa.schema([("t", pa.float64()), ("ref", pa.string())])),
     Tree: _Layout(
@@ -88,6 +97,10 @@ def write_shape(shape: CuratedShape, curated_dir: Path) -> Path:
     layout = _LAYOUTS[type(shape)]
     dumped = shape.model_dump(mode="json")
     rows = dumped.pop(layout.items_field)
+    for row in rows:
+        for field in layout.json_fields:
+            if row.get(field) is not None:
+                row[field] = json.dumps(row[field])
     metadata = {_METADATA_KEY: json.dumps({"shape": type(shape).__name__, "header": dumped})}
     table = pa.Table.from_pylist(rows, schema=layout.schema.with_metadata(metadata))
     path = path_for(shape.id, curated_dir)
@@ -112,7 +125,12 @@ def read_shape(path: Path) -> CuratedShape:
             f"{path}: columns {table.schema.names} do not match {cls.__name__} layout "
             f"{layout.schema.names}"
         )
-    shape = cls.model_validate({**meta["header"], layout.items_field: table.to_pylist()})
+    rows = table.to_pylist()
+    for row in rows:
+        for field in layout.json_fields:
+            if row.get(field) is not None:
+                row[field] = json.loads(row[field])
+    shape = cls.model_validate({**meta["header"], layout.items_field: rows})
     if shape.id != path.stem:
         raise CuratedFormatError(f"{path}: file name does not match shape id {shape.id!r}")
     return shape

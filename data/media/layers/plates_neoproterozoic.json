@@ -1,0 +1,193 @@
+{
+  "id": "plates_neoproterozoic",
+  "frames": [
+    {
+      "t": 540000000.0,
+      "ref": "textures/plates_neoproterozoic/0540.0Ma.webp"
+    },
+    {
+      "t": 550000000.0,
+      "ref": "textures/plates_neoproterozoic/0550.0Ma.webp"
+    },
+    {
+      "t": 560000000.0,
+      "ref": "textures/plates_neoproterozoic/0560.0Ma.webp"
+    },
+    {
+      "t": 570000000.0,
+      "ref": "textures/plates_neoproterozoic/0570.0Ma.webp"
+    },
+    {
+      "t": 580000000.0,
+      "ref": "textures/plates_neoproterozoic/0580.0Ma.webp"
+    },
+    {
+      "t": 590000000.0,
+      "ref": "textures/plates_neoproterozoic/0590.0Ma.webp"
+    },
+    {
+      "t": 600000000.0,
+      "ref": "textures/plates_neoproterozoic/0600.0Ma.webp"
+    },
+    {
+      "t": 610000000.0,
+      "ref": "textures/plates_neoproterozoic/0610.0Ma.webp"
+    },
+    {
+      "t": 620000000.0,
+      "ref": "textures/plates_neoproterozoic/0620.0Ma.webp"
+    },
+    {
+      "t": 630000000.0,
+      "ref": "textures/plates_neoproterozoic/0630.0Ma.webp"
+    },
+    {
+      "t": 640000000.0,
+      "ref": "textures/plates_neoproterozoic/0640.0Ma.webp"
+    },
+    {
+      "t": 650000000.0,
+      "ref": "textures/plates_neoproterozoic/0650.0Ma.webp"
+    },
+    {
+      "t": 660000000.0,
+      "ref": "textures/plates_neoproterozoic/0660.0Ma.webp"
+    },
+    {
+      "t": 670000000.0,
+      "ref": "textures/plates_neoproterozoic/0670.0Ma.webp"
+    },
+    {
+      "t": 680000000.0,
+      "ref": "textures/plates_neoproterozoic/0680.0Ma.webp"
+    },
+    {
+      "t": 690000000.0,
+      "ref": "textures/plates_neoproterozoic/0690.0Ma.webp"
+    },
+    {
+      "t": 700000000.0,
+      "ref": "textures/plates_neoproterozoic/0700.0Ma.webp"
+    },
+    {
+      "t": 710000000.0,
+      "ref": "textures/plates_neoproterozoic/0710.0Ma.webp"
+    },
+    {
+      "t": 720000000.0,
+      "ref": "textures/plates_neoproterozoic/0720.0Ma.webp"
+    },
+    {
+      "t": 730000000.0,
+      "ref": "textures/plates_neoproterozoic/0730.0Ma.webp"
+    },
+    {
+      "t": 740000000.0,
+      "ref": "textures/plates_neoproterozoic/0740.0Ma.webp"
+    },
+    {
+      "t": 750000000.0,
+      "ref": "textures/plates_neoproterozoic/0750.0Ma.webp"
+    },
+    {
+      "t": 760000000.0,
+      "ref": "textures/plates_neoproterozoic/0760.0Ma.webp"
+    },
+    {
+      "t": 770000000.0,
+      "ref": "textures/plates_neoproterozoic/0770.0Ma.webp"
+    },
+    {
+      "t": 780000000.0,
+      "ref": "textures/plates_neoproterozoic/0780.0Ma.webp"
+    },
+    {
+      "t": 790000000.0,
+      "ref": "textures/plates_neoproterozoic/0790.0Ma.webp"
+    },
+    {
+      "t": 800000000.0,
+      "ref": "textures/plates_neoproterozoic/0800.0Ma.webp"
+    },
+    {
+      "t": 810000000.0,
+      "ref": "textures/plates_neoproterozoic/0810.0Ma.webp"
+    },
+    {
+      "t": 820000000.0,
+      "ref": "textures/plates_neoproterozoic/0820.0Ma.webp"
+    },
+    {
+      "t": 830000000.0,
+      "ref": "textures/plates_neoproterozoic/0830.0Ma.webp"
+    },
+    {
+      "t": 840000000.0,
+      "ref": "textures/plates_neoproterozoic/0840.0Ma.webp"
+    },
+    {
+      "t": 850000000.0,
+      "ref": "textures/plates_neoproterozoic/0850.0Ma.webp"
+    },
+    {
+      "t": 860000000.0,
+      "ref": "textures/plates_neoproterozoic/0860.0Ma.webp"
+    },
+    {
+      "t": 870000000.0,
+      "ref": "textures/plates_neoproterozoic/0870.0Ma.webp"
+    },
+    {
+      "t": 880000000.0,
+      "ref": "textures/plates_neoproterozoic/0880.0Ma.webp"
+    },
+    {
+      "t": 890000000.0,
+      "ref": "textures/plates_neoproterozoic/0890.0Ma.webp"
+    },
+    {
+      "t": 900000000.0,
+      "ref": "textures/plates_neoproterozoic/0900.0Ma.webp"
+    },
+    {
+      "t": 910000000.0,
+      "ref": "textures/plates_neoproterozoic/0910.0Ma.webp"
+    },
+    {
+      "t": 920000000.0,
+      "ref": "textures/plates_neoproterozoic/0920.0Ma.webp"
+    },
+    {
+      "t": 930000000.0,
+      "ref": "textures/plates_neoproterozoic/0930.0Ma.webp"
+    },
+    {
+      "t": 940000000.0,
+      "ref": "textures/plates_neoproterozoic/0940.0Ma.webp"
+    },
+    {
+      "t": 950000000.0,
+      "ref": "textures/plates_neoproterozoic/0950.0Ma.webp"
+    },
+    {
+      "t": 960000000.0,
+      "ref": "textures/plates_neoproterozoic/0960.0Ma.webp"
+    },
+    {
+      "t": 970000000.0,
+      "ref": "textures/plates_neoproterozoic/0970.0Ma.webp"
+    },
+    {
+      "t": 980000000.0,
+      "ref": "textures/plates_neoproterozoic/0980.0Ma.webp"
+    },
+    {
+      "t": 990000000.0,
+      "ref": "textures/plates_neoproterozoic/0990.0Ma.webp"
+    },
+    {
+      "t": 1000000000.0,
+      "ref": "textures/plates_neoproterozoic/1000.0Ma.webp"
+    }
+  ]
+}

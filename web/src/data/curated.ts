@@ -2,12 +2,25 @@
  * TS twin of pipeline/shapes.py sampling (DATA_SOURCES § Contract). Mirrors the Python
  * bisect-based sampling in pipeline/shapes.py exactly — same numbers, same edge cases.
  *
- * Owns the on-disk JSON shapes published by `earthtime publish` for scalar, raster and node
- * layers (LayerManifest.data in manifest.ts) and the pure samplers that read them.
- * EventSet data is inlined in Manifest.events (see manifest.ts) and has no equivalent here.
+ * Owns the on-disk JSON shapes published by `earthtime publish` for scalar, raster, node and
+ * (docs/GLOBE.md §6) non-timeline events layers (LayerManifest.data in manifest.ts) and the
+ * pure samplers that read them. `events-core`, the timeline's own `EventSet`, is inlined in
+ * `Manifest.events` instead (see manifest.ts) and has no `EventsData` file of its own — but
+ * `parseTimelineEvent` here is exactly what parses each of those entries too, since
+ * `manifest.ts` already depends on this module.
  */
 
-import type { GeoTime, Interpolation, NodeValue, PortraitPlateType, RasterValue, ScalarValue } from '@/types/layer'
+import type {
+  EventsValue,
+  GeoTime,
+  GlobeEffect,
+  Interpolation,
+  NodeValue,
+  PortraitPlateType,
+  RasterValue,
+  ScalarValue,
+  TimelineEvent,
+} from '@/types/layer'
 
 // ------------------------------------------------------------------------------- shapes
 
@@ -52,6 +65,16 @@ export interface TreeData {
   portraits?: PortraitSetData
 }
 
+/**
+ * A non-timeline `EventSet`, published as its own layer file (docs/GLOBE.md §6) — e.g.
+ * `globe-regimes`, which `Manifest.events` never lists (that field is `events-core` only).
+ * Mirrors `pipeline.manifest.EventsData`.
+ */
+export interface EventsData {
+  id: string
+  events: TimelineEvent[]
+}
+
 /** Mirrors `PortraitPlateData` in pipeline/manifest.py. */
 export interface PortraitPlateData {
   nodeId: string
@@ -83,6 +106,16 @@ export interface PortraitSetData {
 
 const INTERPOLATIONS: ReadonlySet<string> = new Set(['linear', 'log-linear', 'step', 'nearest'])
 const PLATE_TYPES: ReadonlySet<string> = new Set(['SPECIMEN', 'MICROSCOPE'])
+const GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([
+  'impact-winter',
+  'giant-impact',
+  'flood-basalt',
+  'ice-shell',
+  'regime-magma-ocean',
+  'regime-water-world',
+  'regime-archean',
+  'regime-unknown-geography',
+])
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -206,6 +239,65 @@ export function parseTreeData(json: unknown): TreeData {
     tree.portraits = parsePortraitSet(root.portraits, id, nodes)
   }
   return tree
+}
+
+/** Validates the additive `effect` block on a `TimelineEvent` (docs/GLOBE.md §6). Returns
+ *  `undefined` when the field is absent, mirroring every other optional field here. */
+function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
+  if (v === undefined || v === null) return undefined
+  const root = expectRecord(v, path)
+  const kind = expectString(root.kind, `${path}.kind`)
+  if (!GLOBE_EFFECT_KINDS.has(kind)) {
+    throw new Error(`${path}.kind: unknown GlobeEffectKind "${kind}"`)
+  }
+  const rawWindows = expectArray(root.windows, `${path}.windows`)
+  if (rawWindows.length === 0) {
+    throw new Error(`${path}: empty windows`)
+  }
+  const windows = rawWindows.map((raw, i) => {
+    const w = expectRecord(raw, `${path}.windows[${i}]`)
+    return {
+      tMin: expectNumber(w.tMin, `${path}.windows[${i}].tMin`),
+      tMax: expectNumber(w.tMax, `${path}.windows[${i}].tMax`),
+    }
+  })
+  const effect: GlobeEffect = { kind: kind as GlobeEffect['kind'], windows }
+  if (root.anchor !== undefined && root.anchor !== null) {
+    const a = expectRecord(root.anchor, `${path}.anchor`)
+    effect.anchor = { lat: expectNumber(a.lat, `${path}.anchor.lat`), lon: expectNumber(a.lon, `${path}.anchor.lon`) }
+  }
+  return effect
+}
+
+/** Validates one `TimelineEvent` — shared by `manifest.ts` (each entry of `Manifest.events`)
+ *  and `parseEventsData` below (each entry of a non-timeline `EventsData` layer file), since
+ *  both are the same wire shape (`pipeline.manifest.TimelineEvent`). */
+export function parseTimelineEvent(v: unknown, path: string): TimelineEvent {
+  const r = expectRecord(v, path)
+  const event: TimelineEvent = {
+    id: expectString(r.id, `${path}.id`),
+    label: expectString(r.label, `${path}.label`),
+    tMin: expectNumber(r.tMin, `${path}.tMin`),
+    tMax: expectNumber(r.tMax, `${path}.tMax`),
+    importance: expectNumber(r.importance, `${path}.importance`),
+    description: expectString(r.description, `${path}.description`),
+    citation: expectString(r.citation, `${path}.citation`),
+  }
+  const effect = parseGlobeEffect(r.effect, `${path}.effect`)
+  if (effect !== undefined) event.effect = effect
+  return event
+}
+
+/** Validates a non-timeline `EventsData` layer file (docs/GLOBE.md §6), e.g. `globe-regimes`. */
+export function parseEventsData(json: unknown): EventsData {
+  const root = expectRecord(json, 'EventsData')
+  const id = expectString(root.id, 'EventsData.id')
+  const rawEvents = expectArray(root.events, `${id}.events`)
+  if (rawEvents.length === 0) {
+    throw new Error(`${id}: empty EventsData`)
+  }
+  const events = rawEvents.map((raw, i) => parseTimelineEvent(raw, `${id}.events[${i}]`))
+  return { id, events }
 }
 
 function expectPositiveNumber(v: unknown, path: string): number {
@@ -356,6 +448,17 @@ export function sampleRaster(data: RasterData, t: GeoTime): RasterValue | null {
   const a = frames[i - 1]!
   const b = frames[i]!
   return { kind: 'raster', before: a.ref, after: b.ref, alpha: (t - a.t) / (b.t - a.t) }
+}
+
+/**
+ * Mirrors `EventSet.sample`: every event whose `[tMin, tMax]` interval contains `t` — zero,
+ * one or several (docs/GLOBE.md's regimes deliberately overlap at their soft boundaries).
+ * Not domain-gated the way `sampleSeries`/`sampleRaster` are: `EventsData` has no declared
+ * sample range of its own, only its events' own intervals — an empty match is not "no data",
+ * it is "nothing active right now", so this never returns null.
+ */
+export function sampleEvents(data: EventsData, t: GeoTime): EventsValue {
+  return { kind: 'events', events: data.events.filter((e) => t >= e.tMin && t <= e.tMax) }
 }
 
 /**

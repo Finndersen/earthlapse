@@ -110,6 +110,66 @@ def _blend(a: float, b: float, f: float, how: Interpolation) -> float:
 # ----------------------------------------------------------------------------- EventSet
 
 
+class GlobeEffectKind(StrEnum):
+    """An additive globe visual keyed to an event (docs/GLOBE.md §6, ADR-013). Closed — a new
+    kind is a new visual and needs its own envelope curve in `web/src/globe/effects/`, so it
+    is a code change on both sides, not a free-text label.
+
+    Twinned exactly in `web/src/types/layer.ts`'s `GlobeEffectKind` — the string values are
+    the wire values too, so nothing translates them at the manifest boundary.
+    """
+
+    IMPACT_WINTER = "impact-winter"
+    GIANT_IMPACT = "giant-impact"
+    FLOOD_BASALT = "flood-basalt"
+    ICE_SHELL = "ice-shell"
+    REGIME_MAGMA_OCEAN = "regime-magma-ocean"
+    REGIME_WATER_WORLD = "regime-water-world"
+    REGIME_ARCHEAN = "regime-archean"
+    REGIME_UNKNOWN_GEOGRAPHY = "regime-unknown-geography"
+
+
+class EffectAnchor(BaseModel):
+    """A present-day location; the globe reconstructs it to `t` with the plate model at build
+    time (docs/GLOBE.md §5.3). Absent for effects with no fixed location (a regime, a giant
+    impact with no claimed site)."""
+
+    lat: float = Field(ge=-90.0, le=90.0)
+    lon: float = Field(ge=-180.0, le=180.0)
+
+
+class EffectWindow(BaseModel):
+    """One active interval of a `GlobeEffect`. Distinct from the owning `Event`'s own
+    `t_min`/`t_max`: one event can drive several disjoint windows — Snowball Earth's Sturtian
+    and Marinoan glaciations are one `snowball-earth` event with two `ice-shell` windows
+    (docs/GLOBE.md §4.3)."""
+
+    t_min: GeoTime  # nearer the present
+    t_max: GeoTime  # further into the past
+
+    @model_validator(mode="after")
+    def _ordered(self) -> Self:
+        if self.t_min > self.t_max:
+            raise ValueError(f"effect window: t_min {self.t_min} > t_max {self.t_max}")
+        return self
+
+
+class GlobeEffect(BaseModel):
+    """An optional, additive globe effect on an `Event` (docs/GLOBE.md §6, ADR-013). An event
+    without a timeline presence — a pre-1 Ga regime — carries this same field on an `Event` in
+    the separate `globe-regimes` `EventSet` instead of `events-core`, rather than a bespoke
+    table: every effect already has a date interval and a citation because it already is an
+    event.
+
+    Additive: `Event.effect` defaults to `None`, so a manifest written before this field
+    existed stays valid.
+    """
+
+    kind: GlobeEffectKind
+    anchor: EffectAnchor | None = None
+    windows: list[EffectWindow] = Field(min_length=1)
+
+
 class Event(BaseModel):
     """A labelled moment. `t_min`/`t_max` is a real interval, not decoration —
     most deep-time dates are contested and the UI renders the band."""
@@ -121,6 +181,7 @@ class Event(BaseModel):
     importance: float = Field(ge=0.0, le=1.0)
     description: str
     citation: str
+    effect: GlobeEffect | None = None
 
     @model_validator(mode="after")
     def _ordered(self) -> Self:

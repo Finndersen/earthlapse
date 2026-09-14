@@ -4,13 +4,19 @@ The globe view (DESIGN §7): what it shows across all 4.6 Gyr, where each piece 
 from, and how it moves. The decisions are recorded in [ADR-013](./DECISIONS.md). This document
 holds the detail, the measurements behind it and the build order.
 
-**Status.** §2 is implemented. §3–§8 are design, prototyped only where that was cheap. No
-image generation is involved anywhere in this document; every item costs $0 of the image
-budget.
+**Status.** §2 (G1), G2 (§2.3's sRGB fix, §7's caption slot), G5 (§6's `effect` field and the
+`globe-regimes` `EventSet`), G7 (§4.1's 1000–540 Ma Merdith continents) and G8 (§4.2's pre-1 Ga
+regimes) are implemented, and the globe now covers all 4.567 Ga — see §9 for what's still
+partial. §3 (motion-compensated plate rotation, G3/G4) and §5.1/§5.2 (ice sheets, clouds) are
+still design, prototyped only where that was cheap. No image generation is involved anywhere in
+this document; every item costs $0 of the image budget.
 
 Honesty rule for the whole globe: **real data is shown as data; everything else is labelled on
-the globe itself** ("stylised relief", "artistic reconstruction", "geography unknown"). This
-extends the existing "No reconstruction before 540 Ma" label.
+the globe itself** ("stylised relief", "artistic reconstruction", "geography unknown"). The old
+"No reconstruction before 540 Ma" label is gone — replaced by G7's per-span raster captions
+(§7) and G8's per-regime captions, with `NO_RECONSTRUCTION_CAPTION`
+(`web/src/globe/blend.ts`) as the generic fallback for a genuine gap (today, only the ~47 Myr
+between Earth's formation and the oldest cited regime, 4.567–4.52 Ga — see §9's G8 note).
 
 ---
 
@@ -92,6 +98,15 @@ Observation, not changed here: the globe shader samples sRGB textures, which thr
 linear, and writes `gl_FragColor` without re-encoding to sRGB. Deep ocean therefore renders
 darker than the texture's navy, and a Panthalassa-facing hemisphere reads almost black on the
 small orb. The behaviour predates v2 and is flagged for the globe look pass (§9, G2).
+
+**Fixed (G2).** `web/src/globe/shaders.ts`'s `GLOBE_FRAGMENT_SHADER` and `RIM_FRAGMENT_SHADER`
+now end with `#include <colorspace_fragment>`. A plain `THREE.ShaderMaterial` (what both use,
+via r3f's `<shaderMaterial>`) gets `linearToOutputTexel` made available in its compiled
+fragment shader, but — unlike three.js's own built-in materials — never gets a call to it for
+free; that chunk is the call. Confirmed against the installed three.js (0.186.0): the renderer
+r3f's `<Canvas>` creates defaults to `outputColorSpace = SRGBColorSpace`, and
+`textureCache.ts` already sets `texture.colorSpace = SRGBColorSpace` on every loaded PaleoDEM
+texture, so before this fix linear-space colour was written straight to the sRGB canvas.
 
 ---
 
@@ -317,10 +332,21 @@ the globe's.
 | **Siberian Traps** | main activity 252.3–251.4 Ma; extinction interval 251.94–251.88 Ma; ~⅔ of lava and pyroclastic volume in ~300 kyr before and during the extinction; sills continued ≥500 kyr after (Burgess & Bowring 2015, Sci. Adv. 1:e1500470) | `flood-basalt`: a glowing fissure field and volcanic haze at a Siberian anchor reconstructed to 252 Ma | intensity follows the volume timeline above |
 | **Deccan Traps** | four pulses: ~66.3–66.15, ~66.1–66.0, ~65.9–65.8 and ~65.6–65.5 Ma (Schoene et al. 2019, Science 363:862–866, U-Pb). Pulsed tempo **contested** by Sprain et al. 2019 (Science, ⁴⁰Ar/³⁹Ar) | `flood-basalt` at a western-India anchor reconstructed to 66 Ma | four windows |
 
-Anchors are present-day coordinates reconstructed with the plate model at build time. The
-Chicxulub coordinates above are the conventional crater centre. **Verify** them and the
-Siberian and Deccan anchor coordinates against a citable source when `effects` data is written;
-they are not yet in `events.yaml`.
+Anchors are present-day coordinates, intended to be reconstructed with the plate model at
+build time. The Chicxulub coordinates above are the conventional crater centre. **Verify**
+them and the Siberian and Deccan anchor coordinates against a citable source when `effects`
+data is written; they are not yet in `events.yaml`.
+
+**As shipped (G6), Chicxulub's anchor is not reconstructed.** `k-pg-impact`'s `effect.anchor`
+in `data/events.yaml` is placed at its present-day lat/lon and used exactly there by
+`web/src/globe/effects/overlays.ts`'s `impactWinterAnchor`/`anchorUv`, regardless of which `t`
+the globe is showing — reconstructing it to the 66 Ma plate position was out of scope for this
+pass (the same "no G4 plate-rotation shader" boundary that shaped G7). The Yucatán has moved
+only a little since the K-Pg, so the visible error is small next to the effect's own artistic
+license, but it is a known, flagged approximation, not an oversight — see that function's own
+doc comment. Flood basalts (Siberian/Deccan) are unimplemented (§9 G6), so this doesn't yet
+apply to them; whichever implements them should decide then whether to keep the same
+approximation or spend the reconstruction.
 
 ---
 
@@ -339,6 +365,11 @@ separate effects table, was rejected.
       - {t_min: 6.6043e7, t_max: 6.6043e7}
 ```
 
+As shipped (G5), `k-pg-impact`'s window is the event's own `[t_min, t_max]`
+(`{t_min: 6.6032e7, t_max: 6.6054e7}`, `data/events.yaml`) rather than the single point shown
+above — no narrower "flash duration" is claimed for it, so it reuses the event's own interval,
+the same choice made for `moon-forming-impact`'s `giant-impact` window.
+
 - **Why a field, not a table.** Every effect in §5.3 already is a timeline event with a date
   interval and a citation. A separate table would duplicate both and drift. An effect without a
   timeline presence (the §4.2 regimes) goes in a second `EventSet` (`globe-regimes`), which the
@@ -347,12 +378,30 @@ separate effects table, was rejected.
   `regime-magma-ocean`, `regime-water-world`, `regime-archean`, `regime-unknown-geography`.
   Each kind owns its envelope curve in `web/src/globe/effects/`, as pure functions of `t`.
   Durations come from the table above.
-- **Contract changes needed (additive, not yet made):**
-  - `pipeline/shapes.py` `Event.effect: GlobeEffect | None = None`
-  - `web/src/types/layer.ts` `TimelineEvent.effect?: GlobeEffect`
-  - `pipeline/publish.py` passes `effect` through
+- **Contract, implemented (G5):**
+  - `pipeline/shapes.py`: `GlobeEffectKind` (closed `StrEnum`), `EffectAnchor`, `EffectWindow`,
+    `GlobeEffect`, and `Event.effect: GlobeEffect | None = None`.
+  - `web/src/types/layer.ts`: the same shapes (`GlobeEffectKind`, `GlobeEffectAnchor`,
+    `GlobeEffectWindow`, `GlobeEffect`) and `TimelineEvent.effect?: GlobeEffect`.
+  - `pipeline/manifest.py` mirrors them as wire models (camelCase) and `pipeline/publish.py`
+    (`_timeline_event`/`_effect`) passes `effect` through into both `Manifest.events`
+    (`events-core`) and any `dataKind: "events"` layer file (`globe-regimes`).
+  - `pipeline/curated.py` stores `effect` as a JSON string column in the `events-core.parquet`
+    layout (a storage detail — the NORMATIVE shape is the nested `GlobeEffect` model, not its
+    on-disk encoding).
 
-  Old manifests without the field stay valid.
+  Old manifests without the field stay valid: it is `None`/absent unless an event sets it.
+  `sources/events-core`'s `data/events.yaml` sets it on `moon-forming-impact` (`giant-impact`),
+  `snowball-earth` (`ice-shell`, two windows — the event's own `t_min`/`t_max` are unchanged)
+  and `k-pg-impact` (`impact-winter`, anchored). `sources/globe-regimes` (`data/globe_regimes.yaml`)
+  is the second `EventSet` this section promised: five pre-1 Ga regimes (§4.2), every one
+  carrying an effect, published as a `dataKind: "events"` `LayerManifest` entry
+  (`EVENT_LAYERS`/`GLOBE_REGIMES_ID` in `pipeline/publish.py`) rather than through
+  `Manifest.events` — so it never reaches the timeline. On the web side,
+  `web/src/data/curated.ts`'s `parseEventsData`/`sampleEvents` and
+  `web/src/layers/factories.ts`'s `createEventsLayer` read it the same way any other layer is
+  read (`useAppData` → `buildLayers` → `AppLayers.eventLayers`); nothing yet *renders* from it
+  — that is G6/G7/G8.
 
 ---
 
@@ -362,6 +411,25 @@ A single caption slot under the orb shows the current regime label, or nothing f
 PaleoDEM data. Examples: "Continents from plate model · relief stylised", "Snowball Earth ·
 extent contested", "Geography unknown · artistic", "Impact winter · artistic reconstruction".
 The expanded globe adds the citation line from the event or source credit.
+
+**Implemented (G2, G7, G8; G6 partial).** The slot itself is `Globe`'s internal caption
+(`web/src/globe/Globe.tsx`, `.caption` in `Globe.module.css`), empty renders nothing — this
+replaced the old internal `OUT_OF_DOMAIN_LABEL` mechanism (G2). `Globe` no longer takes a
+`caption` prop at all: since G7/G8's integration, it derives the caption itself every frame,
+from `web/src/globe/effects`'s `useGlobeEffects` (priority, highest first: impact winter, then
+the ice shell, then the dominant pre-1 Ga regime, then `globeMultiCaptionFor`'s raster-domain
+fallback, which itself carries the seam and continents-from-plate-model cases from §4.1).
+Impact winter and the ice shell are both §6's closed "effect" kinds rather than a blended
+regime, and the ice shell in particular can sit *inside* a regime's own span with no weight of
+its own to out-compete it on — the Paleoproterozoic glaciation (2.426–2.46 Ga) is entirely
+inside `archean-haze-regime`'s 2.4–4.0 Ga span — so both are checked, and can win, ahead of the
+dominant-regime branch (`web/src/globe/effects/caption.ts`). All four examples above are
+real now: "Continents from plate model · relief stylised" (plain Merdith data, 550–1000 Ma),
+the same plus a seam note (540–550 Ma, `SEAM_BAND`), "Snowball Earth · extent contested" (and
+the same convention for "Paleoproterozoic glaciation · extent contested"), "Geography unknown ·
+artistic" (`globe-regimes`' regimes, and — G7's fallback rule — the 540–1000 Ma span too if the
+Merdith source is ever unusable), "Impact winter · artistic reconstruction". Not yet captioned:
+flood basalts (G6's remaining piece — see §9).
 
 ---
 
@@ -380,20 +448,24 @@ Image budget for every item: **$0**. Effort is in focused agent-days.
 | # | Item | Effort | Risk | Notes |
 |---|---|---|---|---|
 | G1 | Phase 1: 109 frames, LRU and preload | done | — | §2 |
-| G2 | Globe look pass: sRGB output encoding, regime caption slot | 0.5 d | low | fixes the too-dark ocean (§2.3) |
+| G2 | Globe look pass: sRGB output encoding, regime caption slot | done | — | fixed the too-dark ocean (§2.3); caption slot in §7 |
 | G3 | `sources/plates`: S&W 2018 id rasters + rotation tables, fixture, `PlateSnapshot` fields | 2 d | medium: plate-model-manager fetch pinning, id raster edge cases | §3.4 |
 | G4 | Motion-compensated shader + rotation `DataTexture`, `buildLayers` by id | 2–3 d | medium: seams at boundaries, fixed-point misses near fast plates | §3.3; verify visually against the IoU table |
-| G5 | `effect` field (shapes, types, publish) + `globe-regimes` EventSet | 1 d | low (additive) | §6 |
-| G6 | Snowball ice shell + Chicxulub impact winter + flood basalts | 2 d | low–medium: effect timescales need the timeline dwell | §4.3, §5.3; timeline dwell coordinated separately |
-| G7 | 1000–540 Ma Merdith continents, stylised relief, 540 Ma seam | 2–3 d | medium: seam, relief believability | §4.1 |
-| G8 | Pre-1 Ga regimes (magma ocean, water world, Archean, unknown) | 1.5 d | low technically, high on taste | §4.2 |
+| G5 | `effect` field (shapes, types, publish) + `globe-regimes` EventSet | done | — | §6 |
+| G6 | Snowball ice shell + Chicxulub impact winter + flood basalts | **partial** | low–medium: effect timescales need the timeline dwell | §4.3, §5.3; ice shell, impact winter and the Moon-forming giant impact are wired (`web/src/globe/effects/overlays.ts`) and live in `Globe.tsx`; flood basalts (Siberian/Deccan Traps) are not — neither event carries an `effect` in `data/events.yaml` yet, and there's no `flood-basalt` overlay/shader term. Timeline dwell still coordinated separately |
+| G7 | 1000–540 Ma Merdith continents, stylised relief, 540 Ma seam | done | — | §4.1; `sources/plates-neoproterozoic/`, curated id `plates_neoproterozoic`, published alongside `paleodem`. Web: `web/src/globe/blend.ts`'s `globeMultiBlendAt`/`globeMultiPreloadUrls`/`globeMultiCaptionFor` pick between the two raster sources by domain and crossfade `SEAM_BAND` (540–550 Ma); `regimeEventsWithRasterFallback` covers "Merdith unusable" with the geography-unknown regime rather than faking continents. No G4 plate-rotation shader — frames crossfade like PaleoDEM, per this ticket's brief |
+| G8 | Pre-1 Ga regimes (magma ocean, water world, Archean, unknown) | done | — | §4.2; `web/src/globe/effects/regimes.ts` (crossfade weights) + `overlays.ts`/`shaders.ts` (the four regime looks) + `caption.ts`. One known residual: the oldest regime (`magma-ocean-regime`, citable from 4.52 Ga) eases to zero weight by ~4.54 Ga, so the ~27 Myr before that and Earth's 4.567 Ga formation shows the neutral sphere with `NO_RECONSTRUCTION_CAPTION` rather than a regime look — deliberate (the honesty rule: no citation covers that sliver), not a bug |
 | G9 | Ice: ICE-6G_C last glacial cycle | 1 d | **licence unconfirmed** | §5.1; blocked on terms |
 | G10 | Ice: Phanerozoic polar caps from Scotese et al. 2021 | 1.5 d | medium: digitising and derivation rule | §5.1 |
 | G11 | Clouds + data-driven atmosphere tint | 1 d | low | §5.2 |
 
-**Recommended order:** G2 → G5 → G6 → G3 → G4 → G8 → G7 → G11 → G10 → G9.
+**Recommended order:** G2 → G5 → G6 → G3 → G4 → G8 → G7 → G11 → G10 → G9. G2, G5, G7 and G8 are
+done; G6 is partial (see its row above). G7 and G8 ended up landing without G3/G4 (no
+plate-rotation shader for either span — this ticket's brief explicitly excluded it), so the
+globe now covers all 4.567 Ga on plain crossfades; G3/G4's motion-compensated interpolation
+remains a quality upgrade over 0–1000 Ma, not a coverage gap.
 
-- G2 and G5 are cheap and unlock the rest.
+- G2 and G5 were cheap and unlock the rest.
 - G6 lands the most visible wins (Chicxulub, Snowball) without depending on the plate work.
 - G3 and G4 are the largest technical step, and Phase 1 already delivers most of their
   perceived benefit (§3.2), so they don't need to come first.

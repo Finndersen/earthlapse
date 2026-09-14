@@ -92,6 +92,50 @@ actually in?
 
 ---
 
+## `plates-neoproterozoic` — Merdith et al. 2021 continents, 1000–540 Ma
+
+The globe's second raster source (GLOBE.md §4.1, G7): continents reconstructed from plate
+polygons, with stylised (non-elevation) relief, crossfaded against `paleodem` across a
+540–550 Ma seam band. Not a `gplately`/`plate-model-manager` fetch — the pinned Zenodo zip is
+downloaded directly and verified against a recorded sha256, the same pattern `paleodem` uses.
+
+| | |
+|---|---|
+| **Source** | Merdith, A.S. et al. (2021), *Earth-Science Reviews* 214, 103477 |
+| **Access** | [Zenodo record 4485738](https://zenodo.org/records/4485738) (v1.1b) — direct HTTP download via the Zenodo API's file-content URL, no auth |
+| **Format** | GPML (GPlates Markup Language) continent/craton shape files + a GPlates `.rot` rotation file |
+| **Coverage** | 1000–540 Ma (rotation samples reach 1140 Ma; the model is published as 1000–0 Ma) |
+| **Volume** | 13.9 MB zip (sha256-pinned); extracts 3 of 37 members (continents 9.1 MB, cratons 5.1 MB, rotations 0.6 MB) — the rest (topologies, palaeomagnetic poles, a GPlates project file, an animation) is unused, per G7's "no G4 plate-rotation shader" scope |
+| **Licence** | CC BY 4.0 |
+| **Shape** | `RasterSequence`, id `"plates_neoproterozoic"` — 47 generated textures (10 Myr spacing, 1000–550 Ma, plus one extra 540 Ma seam frame), never committed (generated media) |
+| **Storage** | curated parquet: **git** (well under the 5 MB threshold); textures: gitignored, regenerated locally |
+
+**Processing required**
+1. `pygplates.PlatePartitioner` against the reconstructed `ContinentalPolygons`/`Cratons`
+   layers assigns a land/craton mask per target pixel at each frame age (`relief.py`).
+2. Stylised relief only — no elevation data exists this far back: land mask, cratons raised,
+   shelves from a `scipy.ndimage.distance_transform_edt` distance-to-coast transform,
+   per-plate-id-seeded procedural noise, uniform abyssal depth offshore.
+3. Coloured with the same hypsometric palette as `paleodem` (`pipeline/palette.py`, factored
+   out of `sources/paleodem/normalise.py` so both sources can't drift apart), so the two
+   sources' textures read as one continuous look across the seam.
+
+**Integration** — feeds `web/src/globe/blend.ts`'s `globeMultiBlendAt`/
+`globeMultiPreloadUrls`/`globeMultiCaptionFor`, which pick between this source and `paleodem`
+by domain and crossfade the shared 540–550 Ma seam band. `regimeEventsWithRasterFallback`
+covers "this source is unusable": the globe shows the `globe-regimes` "geography unknown"
+look for 540–1000 Ma instead of faking continents.
+
+**Gotchas** — `gplately`/`pygplates` are GPL-2.0 and stay in the pipeline only (never shipped
+to the browser). `write_outputs()` (the only code path that imports `pygplates`/`scipy`) is
+never exercised by the pytest suite, matching the "tests never import gplately" rule
+(§3.4); the committed fixture (`sources/plates-neoproterozoic/fixture/`, ~816 KB) is a real,
+narrow slice (one plate id whose features are valid across the full target range) used only
+to check `normalise()`'s fixed-age-list `RasterSequence` shape. Full detail, measurements and
+the visual spot-check against real data: `sources/plates-neoproterozoic/README.md`.
+
+---
+
 ## `gplately` — Plate rotations and paleo-coordinates
 
 | | |
@@ -172,6 +216,32 @@ descriptions and importance scores. **A human curates the final ~200.** Every ev
 ⚠️ **Do not let an LLM be the source of truth for dates.** It drafts and normalises; the
 citation is what makes a date real. Cross-check deep-time dates against the ICS chart and
 PBDB.
+
+---
+
+## `globe-regimes` — Pre-1 Ga globe regime captions
+
+A second, small, hand-curated `EventSet` (GLOBE.md §4.2, §6) — **not** an extension of
+`events-core`. It exists only so the globe has something to caption before any plate
+reconstruction exists (older than Merdith et al. 2021's 1 Ga start); `pipeline/publish.py`
+publishes it as an ordinary `dataKind: "events"` layer, never through `Manifest.events`, so
+it is never listed on the timeline. See `sources/globe-regimes/README.md` "Why a separate
+source from events-core" for the full reasoning.
+
+| | |
+|---|---|
+| **Source** | primary literature already cited in GLOBE.md §4.2/§References, hand-curated directly into YAML |
+| **Access** | none — no upstream file, `fetch.py` is a no-op (mirrors `sources/astronomy`) |
+| **Format** | hand-edited YAML |
+| **Coverage** | ~1.0–4.52 Ga |
+| **Volume** | tiny — 5 events, a few KB |
+| **Licence** | N/A — no dataset redistributed, only cited |
+| **Shape** | `EventSet`, id `"globe-regimes"` |
+| **Storage** | **git**, as YAML (`data/globe_regimes.yaml`) — this is *source*, not derived data |
+
+**Processing** — none: `normalise.py` parses `data/globe_regimes.yaml` directly, exactly like
+`events-core`'s `normalise.py` parses `data/events.yaml`. Every event carries a `GlobeEffect`
+(`effect`, docs/GLOBE.md §6) — a regime without one would be curated for nothing.
 
 ---
 

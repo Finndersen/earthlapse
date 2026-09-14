@@ -20,8 +20,18 @@ import type {
   Manifest,
   Scene,
 } from '@/types/manifest'
-import type { Interpolation, LayerSurface, TimelineEvent } from '@/types/layer'
-import { parseRasterData, parseSeriesData, parseTreeData, type RasterData, type SeriesData, type TreeData } from '@/data/curated'
+import type { Interpolation, LayerSurface } from '@/types/layer'
+import {
+  parseEventsData,
+  parseRasterData,
+  parseSeriesData,
+  parseTimelineEvent,
+  parseTreeData,
+  type EventsData,
+  type RasterData,
+  type SeriesData,
+  type TreeData,
+} from '@/data/curated'
 
 const MANIFEST_URL = '/media/manifest.json'
 const STUB_MANIFEST_URL = '/stub/manifest.json'
@@ -179,19 +189,6 @@ function validateLayerManifest(v: unknown, path: string): LayerManifest {
   return layer
 }
 
-function validateEvent(v: unknown, path: string): TimelineEvent {
-  const r = expectRecord(v, path)
-  return {
-    id: expectString(r.id, `${path}.id`),
-    label: expectString(r.label, `${path}.label`),
-    tMin: expectNumber(r.tMin, `${path}.tMin`),
-    tMax: expectNumber(r.tMax, `${path}.tMax`),
-    importance: expectNumber(r.importance, `${path}.importance`),
-    description: expectString(r.description, `${path}.description`),
-    citation: expectString(r.citation, `${path}.citation`),
-  }
-}
-
 function validateCredit(v: unknown, path: string): Credit {
   const r = expectRecord(v, path)
   return {
@@ -227,28 +224,23 @@ export function validateManifest(json: unknown): Manifest {
     layers: expectArray(root.layers, 'Manifest.layers').map((l, i) =>
       validateLayerManifest(l, `Manifest.layers[${i}]`),
     ),
-    events: expectArray(root.events, 'Manifest.events').map((e, i) => validateEvent(e, `Manifest.events[${i}]`)),
+    events: expectArray(root.events, 'Manifest.events').map((e, i) => parseTimelineEvent(e, `Manifest.events[${i}]`)),
     credits: expectArray(root.credits, 'Manifest.credits').map((c, i) => validateCredit(c, `Manifest.credits[${i}]`)),
   }
 }
 
 // ---------------------------------------------------------------------------- layer data
 
-export type LayerData = SeriesData | RasterData | TreeData
+export type LayerData = SeriesData | RasterData | TreeData | EventsData
 
 /**
  * Fetches and parses one layer's data file, dispatching on `dataKind` to the matching
- * curated.ts parser. `events` has no per-layer data file — events are inlined in
- * `Manifest.events` (see manifest.ts) — so a layer declaring that kind is a manifest bug and
- * this throws rather than silently returning nothing.
+ * curated.ts parser. `events-core`, the timeline's own `EventSet`, is inlined in
+ * `Manifest.events` instead and is never itself a `manifest.layers` entry — but a *non*-
+ * timeline `EventSet` (docs/GLOBE.md §6, e.g. `globe-regimes`) publishes exactly like any
+ * other layer, as an `EventsData` file this fetches and parses the same way.
  */
 export async function loadLayerData(manifest: Manifest, entry: LayerManifest): Promise<LayerData> {
-  if (entry.dataKind === 'events') {
-    throw new Error(
-      `${entry.id}: dataKind "events" has no per-layer data file — read Manifest.events directly`,
-    )
-  }
-
   const url = `${manifest.assetBase}/${entry.data}`
   const res = await fetch(url)
   if (!res.ok) {
@@ -263,5 +255,7 @@ export async function loadLayerData(manifest: Manifest, entry: LayerManifest): P
       return parseRasterData(json)
     case 'node':
       return parseTreeData(json)
+    case 'events':
+      return parseEventsData(json)
   }
 }

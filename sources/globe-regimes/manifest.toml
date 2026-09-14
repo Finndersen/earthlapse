@@ -1,0 +1,20 @@
+# See docs/DATA_SOURCES.md for field meanings.
+#
+# globe-regimes is hand-curated (DATA_SOURCES.md: "this is source, not derived data"), the
+# same way events-core is (see sources/events-core/manifest.toml). data/globe_regimes.yaml IS
+# the dataset; there is no upstream file this normalises from. It is a separate source from
+# events-core, not an extension of it, because it is a different EventSet with a different
+# audience: events-core is the timeline's spine, globe-regimes is pre-1 Ga globe captions the
+# timeline never lists (docs/GLOBE.md §6) and whose citations don't overlap events-core's.
+
+name = "globe-regimes"
+title = "Pre-1 Ga Globe Regimes"
+url = ""
+sha256 = ""
+licence = "N/A -- no dataset redistributed. Every regime is a literature-cited interval, hand-curated directly into data/globe_regimes.yaml; see README.md for the full citation list."
+citation = "Every regime in data/globe_regimes.yaml carries its own specific citation. See README.md for the full source list."
+time_domain = [4.52e9, 1.0e9]   # years BP, [oldest, newest]
+output_shape = "EventSet"
+interpolation = "n/a"            # EventSet is discrete events, not resampled between points
+volume_bytes = 9058              # measured: data/curated/globe-regimes.parquet, 5 events
+storage_tier = "git"

@@ -3,8 +3,17 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { NodeValue } from '@/types/layer'
 
-import { createNodeLayer, createScalarLayer } from './factories'
-import { ANCESTOR_DATA, ANCESTOR_MANIFEST, CO2_DATA, CO2_MANIFEST, deepFreeze, logSpace } from './fixtures'
+import { createEventsLayer, createNodeLayer, createScalarLayer } from './factories'
+import {
+  ANCESTOR_DATA,
+  ANCESTOR_MANIFEST,
+  CO2_DATA,
+  CO2_MANIFEST,
+  deepFreeze,
+  GLOBE_REGIMES_DATA,
+  GLOBE_REGIMES_MANIFEST,
+  logSpace,
+} from './fixtures'
 
 describe('createScalarLayer', () => {
   it('is pure: repeated and interleaved sample() calls give deep-equal results', () => {
@@ -114,5 +123,52 @@ describe('createNodeLayer', () => {
     // sanity check on the fixture itself: the root's tDivergence must be < EARTH_FORMATION
     // so "older than any node" is reachable without leaving the valid GeoTime range.
     expect(ANCESTOR_DATA.nodes[ANCESTOR_DATA.nodes.length - 1]?.tDivergence).toBeLessThan(EARTH_FORMATION)
+  })
+})
+
+describe('createEventsLayer', () => {
+  it('is pure: repeated and interleaved sample() calls give deep-equal results', () => {
+    const layer = createEventsLayer(GLOBE_REGIMES_MANIFEST, GLOBE_REGIMES_DATA)
+
+    const a1 = layer.sample(4.4e9)
+    const b1 = layer.sample(1.5e9)
+    const a2 = layer.sample(4.4e9)
+    const b2 = layer.sample(1.5e9)
+
+    expect(a1).toEqual(a2)
+    expect(b1).toEqual(b2)
+  })
+
+  it('never mutates the frozen data it closes over', () => {
+    const data = deepFreeze(structuredClone(GLOBE_REGIMES_DATA))
+    const layer = createEventsLayer(GLOBE_REGIMES_MANIFEST, data)
+
+    expect(() => {
+      layer.sample(4.4e9)
+      layer.sample(3e9) // a gap between regimes
+      layer.sample(6e9) // out of entry.timeDomain
+    }).not.toThrow()
+
+    expect(data).toEqual(GLOBE_REGIMES_DATA)
+  })
+
+  it('returns the active regime, effect included', () => {
+    const layer = createEventsLayer(GLOBE_REGIMES_MANIFEST, GLOBE_REGIMES_DATA)
+    const value = layer.sample(4.4e9)
+    expect(value).toEqual({
+      kind: 'events',
+      events: [GLOBE_REGIMES_DATA.events[0]],
+    })
+  })
+
+  it('returns an empty event list — not null — in a gap between regimes', () => {
+    const layer = createEventsLayer(GLOBE_REGIMES_MANIFEST, GLOBE_REGIMES_DATA)
+    expect(layer.sample(3e9)).toEqual({ kind: 'events', events: [] })
+  })
+
+  it('returns null outside entry.timeDomain', () => {
+    const narrowEntry = { ...GLOBE_REGIMES_MANIFEST, timeDomain: [0, 1e8] as [number, number] }
+    const layer = createEventsLayer(narrowEntry, GLOBE_REGIMES_DATA)
+    expect(layer.sample(4.4e9)).toBeNull()
   })
 })

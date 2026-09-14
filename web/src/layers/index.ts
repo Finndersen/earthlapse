@@ -7,6 +7,8 @@
  * - `createScalarLayer(entry, data)` — wraps a `SeriesData` series (CO₂, temperature, day
  *   length, ...) as `Layer<ScalarValue>`.
  * - `createNodeLayer(entry, data)` — wraps a `TreeData` lineage as `Layer<NodeValue>`.
+ * - `createEventsLayer(entry, data)` — wraps a non-timeline `EventsData` (docs/GLOBE.md §6,
+ *   e.g. `globe-regimes`) as `Layer<EventsValue>`.
  *
  * Both close only over `entry` and `data`, neither of which they ever mutate — `sample(t)`
  * is pure, and `null` outside `entry.timeDomain` or the data's own sample range, whichever
@@ -43,7 +45,7 @@
  * - `decodeFlowByte(byte, range)` — the flow texture encoding.
  */
 
-export { createNodeLayer, createScalarLayer } from './factories'
+export { createEventsLayer, createNodeLayer, createScalarLayer } from './factories'
 export {
   decodeFlowByte,
   indexPortraits,

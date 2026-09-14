@@ -13,7 +13,7 @@ import httpx
 import pytest
 
 from pipeline.fetching import FetchIntegrityError
-from pipeline.shapes import EARTH_FORMATION, EventSet
+from pipeline.shapes import EARTH_FORMATION, EventSet, GlobeEffectKind
 from tests.sources.support import load_source_module
 
 MINIMUM_COVERAGE_IDS = frozenset(
@@ -104,6 +104,51 @@ def test_present_event_is_at_t_zero(events_core: EventSet) -> None:
     present = next(e for e in events_core.events if e.id == "present")
     assert present.t_min == 0.0
     assert present.t_max == 0.0
+
+
+# ------------------------------------------------------------------------- docs/GLOBE.md §6
+#
+# The three events docs/GLOBE.md §5.3/§6 names for an effect. Most events carry none —
+# `effect` is optional and additive.
+
+
+def test_most_events_carry_no_effect(events_core: EventSet) -> None:
+    with_effect = [e.id for e in events_core.events if e.effect is not None]
+    assert set(with_effect) == {"moon-forming-impact", "snowball-earth", "k-pg-impact"}
+
+
+def test_moon_forming_impact_effect_is_a_giant_impact_matching_its_own_contested_dates(
+    events_core: EventSet,
+) -> None:
+    event = next(e for e in events_core.events if e.id == "moon-forming-impact")
+    assert event.effect is not None
+    assert event.effect.kind == GlobeEffectKind.GIANT_IMPACT
+    assert event.effect.anchor is None
+    assert [(w.t_min, w.t_max) for w in event.effect.windows] == [(event.t_min, event.t_max)]
+
+
+def test_snowball_earth_effect_carries_the_sturtian_and_marinoan_windows_separately(
+    events_core: EventSet,
+) -> None:
+    event = next(e for e in events_core.events if e.id == "snowball-earth")
+    assert event.effect is not None
+    assert event.effect.kind == GlobeEffectKind.ICE_SHELL
+    windows = sorted((w.t_min, w.t_max) for w in event.effect.windows)
+    assert windows == [(6.35e8, 6.39e8), (6.61e8, 7.17e8)]
+    # The event's own dates (the whole Cryogenian) are untouched by the narrower effect
+    # windows, per this work package's brief: "the Cryogenian event keeps its dates".
+    assert (event.t_min, event.t_max) == (6.35e8, 7.2e8)
+
+
+def test_k_pg_impact_effect_is_anchored_at_the_conventional_chicxulub_centre(
+    events_core: EventSet,
+) -> None:
+    event = next(e for e in events_core.events if e.id == "k-pg-impact")
+    assert event.effect is not None
+    assert event.effect.kind == GlobeEffectKind.IMPACT_WINTER
+    assert event.effect.anchor is not None
+    assert (event.effect.anchor.lat, event.effect.anchor.lon) == (21.3, -89.5)
+    assert [(w.t_min, w.t_max) for w in event.effect.windows] == [(event.t_min, event.t_max)]
 
 
 def test_descriptions_are_non_empty(events_core: EventSet) -> None:

@@ -50,6 +50,14 @@ events:
       Science Advances, 3, e1602365. Contested by: Nimmo, F., Kleine, T. & Morbidelli, A.
       (2024). "Tidally driven remelting around 4.35 billion years ago indicates the Moon
       is old." Nature, 636, 598-602.
+    # docs/GLOBE.md §5.3/§6: the flash itself, then the globe settles into the
+    # `magma-ocean-regime` regime in data/globe_regimes.yaml. No literature envelope is
+    # claimed for the flash's own duration (artistic), so the window is this event's own
+    # contested date range.
+    effect:
+      kind: giant-impact
+      windows:
+        - {t_min: 4.35e9, t_max: 4.52e9}
 
   - id: first-life
     label: Earliest evidence of life
@@ -171,7 +179,23 @@ events:
     citation: >
       Prave, A.R. et al. (2016). "A new rock-based definition for the Cryogenian Period
       (circa 720-635 Ma)." Episodes, 39(2), 1-7. Base and top ages of the Cryogenian
-      System per the ICS International Chronostratigraphic Chart v2024/12.
+      System per the ICS International Chronostratigraphic Chart v2024/12. Effect windows:
+      Rooney, A.D., Strauss, J.V., Brandon, A.D. & Macdonald, F.A. (2015). "A Cryogenian
+      chronology: Two long-lasting synchronous Neoproterozoic glaciations." Geology, 43,
+      459-462 (Sturtian, 56 Myr). Tasistro-Hart, A.R., Macdonald, F.A., Crowley, J.L. &
+      Schmitz, M.D. (2025). "Four-million-year Marinoan snowball shows multiple routes to
+      deglaciation." PNAS, 122(18), e2418281122 (Marinoan, duration contested).
+    # docs/GLOBE.md §4.3/§6: this event's own t_min/t_max stay the full Cryogenian span
+    # above; the effect carries the two glaciations as separate windows, each narrower and
+    # separately cited.
+    effect:
+      kind: ice-shell
+      windows:
+        # Sturtian, ~717-661 Ma, 56 Myr duration (radioisotopic ages).
+        - {t_min: 6.61e8, t_max: 7.17e8}
+        # Marinoan, termination 635 Ma; duration contested (4-15 Myr) — Tasistro-Hart et
+        # al. 2025's Namibian record gives ~4 Myr, i.e. roughly 639-635 Ma.
+        - {t_min: 6.35e8, t_max: 6.39e8}
 
   - id: ediacaran-biota
     label: Ediacaran biota
@@ -564,6 +588,17 @@ events:
       Renne, P.R. et al. (2013). "Time scales of critical events around the
       Cretaceous-Paleogene boundary." Science, 339(6120), 684-687. Chicxulub impact and
       K-Pg boundary dated to 66.043 +/- 0.011 Ma.
+    effect:
+      kind: impact-winter
+      # Conventional Chicxulub crater centre (Yucatan Peninsula, Mexico) — the coordinates
+      # docs/GLOBE.md §5.3 flags to verify against a citable source. Present-day lat/lon;
+      # as shipped (G6) the globe uses it exactly there, unreconstructed, rather than at
+      # Chicxulub's 66 Ma plate position — a flagged approximation, not a bug (see
+      # web/src/globe/effects/overlays.ts's `impactWinterAnchor` doc comment and
+      # docs/GLOBE.md §5.3's "As shipped" note).
+      anchor: {lat: 21.3, lon: -89.5}
+      windows:
+        - {t_min: 6.6032e7, t_max: 6.6054e7}
 
   - id: k-pg-aftermath
     label: K-Pg aftermath fern spike

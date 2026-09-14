@@ -1,0 +1,1205 @@
+{
+  "schemaVersion": 1,
+  "buildId": "6102971618834f5d",
+  "assetBase": "/media",
+  "scenes": [
+    {
+      "id": "modern-city",
+      "t": 0.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/modern-city.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The present, where a city of glass and concrete lines a river and one species reshapes the planet's surface in a geological instant.",
+      "pinned": "89b360bb4addcd58",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "neolithic-river-settlement",
+      "t": 9000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/neolithic-river-settlement.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Two thousand years after farming began, a Neolithic village of mudbrick houses tends small fields of wheat beside a slow river.",
+      "pinned": "3a0762558a1855b1",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "pleistocene-steppe",
+      "t": 20000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/pleistocene-steppe.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "At the height of the last ice age, woolly mammoths cross a cold, dry steppe beside a braided meltwater river.",
+      "pinned": "e5e38045d401cbd2",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "ice-age-europe-neanderthal",
+      "t": 42000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/ice-age-europe-neanderthal.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the last millennia before Neanderthals disappear from Europe, a hunter works a stone-tipped spear beside a cold river.",
+      "pinned": "3905f2c4c1a2641b",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "acheulean-erectus",
+      "t": 1760000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/acheulean-erectus.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "An early human shapes a symmetrical stone handaxe at a rift lake shore; handaxes like it will be made, and slowly refined, for more than a million years.",
+      "pinned": "23b1e972d4fa9690",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "lucy-afarensis",
+      "t": 3200000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/lucy-afarensis.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "A small, upright hominin of Lucy's species walks on two legs along a wooded Rift Valley river, still built with long, strong arms for climbing.",
+      "pinned": "347021bb25fb32ad",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "messinian-salt-flats",
+      "t": 5600000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/messinian-salt-flats.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Cut off from the Atlantic, the Mediterranean shrinks to brine lakes ringed by thick beds of salt; how far the sea actually fell is still debated.",
+      "pinned": "183125fa8e80ac2d",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "c4-savanna-hipparion",
+      "t": 7000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/c4-savanna-hipparion.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Coarse new grasses now carpet the plain, and three-toed horses crowd a shrinking waterhole in a drier, more open East Africa.",
+      "pinned": "00c097bfdd0c523f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "miocene-grassland",
+      "t": 18000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/miocene-grassland.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Where woodland once stood, grass now dominates the open plains, and three-toed horses graze a horizon no earlier scene has shown.",
+      "pinned": "93b44eb04685155f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "eocene-oligocene-icesheet",
+      "t": 33700000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/eocene-oligocene-icesheet.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "As Antarctica's first continent-scale ice sheet reaches the sea, Earth leaves the warm world of the early Cenozoic for the icehouse it has lived in ever since.",
+      "pinned": "a2fe73ed75939b32",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "eocene-jungle",
+      "t": 50000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/eocene-jungle.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.",
+      "pinned": "6fd97ed7b5dbfd9a",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "arctic-hothouse-forest",
+      "t": 52000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/arctic-hothouse-forest.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun disappears for months each winter, and heavy tusked Coryphodon wade its lakes.",
+      "pinned": "32b5e8d94688fbc7",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "paleocene-recovery",
+      "t": 62000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/paleocene-recovery.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Four million years after the impact that ended the dinosaurs, mammals have grown into the empty world: a heavy, long-tailed pantodont drinks at a Paleocene forest river.",
+      "pinned": "735c1240a8062713",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "kpg-aftermath",
+      "t": 66042900.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/kpg-aftermath.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "A century after the impact, ferns carpet the ground where a flowering forest and its dinosaurs stood; the sky has long since cleared, but the world has not recovered.",
+      "pinned": "7c2ff6fd148753d8",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "kpg-arrival",
+      "t": 66043000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/kpg-arrival.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "A composite moment: the asteroid that ends the age of dinosaurs, shown in a sky where, thousands of kilometres from its impact, it could never actually have been seen.",
+      "pinned": "40cf7c5b9d357780",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "cretaceous-forest",
+      "t": 68000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/cretaceous-forest.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Two million years before the asteroid, duck-billed dinosaurs gather at a humid Late Cretaceous swamp where flowering trees have spread.",
+      "pinned": "45461089a48f8e16",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "mid-cretaceous-pollinators",
+      "t": 100000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/mid-cretaceous-pollinators.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.",
+      "pinned": "cfa0c916e9ea3943",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "early-cretaceous-flowers",
+      "t": 125000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/early-cretaceous-flowers.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.",
+      "pinned": "fba843f413d942db",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "jurassic-floodplain",
+      "t": 150000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/jurassic-floodplain.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Sauropods wade a Late Jurassic braided river through a floodplain of conifers, cycads and ferns, without a single flower.",
+      "pinned": "fff98516543632ed",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "late-triassic-dinosaurs",
+      "t": 231000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/late-triassic-dinosaurs.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The first dinosaurs are still rare hunters in a world ruled by beaked rhynchosaurs and heavy-headed cynodonts.",
+      "pinned": "0ea6dc80408755ae",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "early-triassic-lystrosaurus",
+      "t": 251000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/early-triassic-lystrosaurus.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the super-greenhouse world that followed the worst extinction in Earth's history, one squat, tusked animal makes up nearly the entire land fauna.",
+      "pinned": "47c14793925a8c37",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "permian-interior",
+      "t": 260000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/permian-interior.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.",
+      "pinned": "736e79c67e650684",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "permian-conifer-forest",
+      "t": 294000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/permian-conifer-forest.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Where coal-swamp rainforest once stood, open woodland of early conifers now spreads across drier ground, and sail-backed synapsids hunt along its streams.",
+      "pinned": "56d38ae859aa81c6",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "carboniferous-swamp",
+      "t": 310000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/carboniferous-swamp.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Giant lycopsid trees wall a Carboniferous coal swamp, where oxygen-rich air lets insects and millipedes grow to record sizes.",
+      "pinned": "9d50ad8640e89aa9",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "late-devonian-tetrapod",
+      "t": 365000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/late-devonian-tetrapod.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Ten million years after Tiktaalik, a limbed but still fully aquatic animal paddles a forest stream where some of the first seed-bearing plants grow in the undergrowth.",
+      "pinned": "3b555e2bde09f75f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "devonian-estuary",
+      "t": 375000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/devonian-estuary.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The first forests of Archaeopteris shade a Devonian estuary where lobe-finned fishes haul themselves into the shallows.",
+      "pinned": "04b683b74388043c",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "rhynie-chert",
+      "t": 407000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/rhynie-chert.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.",
+      "pinned": "7ea8b194c790ed34",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "silurian-shore",
+      "t": 425000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/silurian-shore.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore where sea scorpions crawl and early bony fish swim in the shallows.",
+      "pinned": "96cdc909da9135c5",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "ordovician-reef-shore",
+      "t": 450000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/ordovician-reef-shore.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to the tideline while a reef of shelled animals builds offshore.",
+      "pinned": "38be5a9c75c4f90a",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "cambrian-seafloor",
+      "t": 518000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/cambrian-seafloor.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.",
+      "pinned": "18445a4ae4e6c53c",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "ediacaran-shallows",
+      "t": 560000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/ediacaran-shallows.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Soft-bodied Ediacaran organisms, among the first large living things, lie on microbial mats in clear, sunlit shallows beside a barren coast.",
+      "pinned": "bf667858e3d40d22",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "cryogenian-snowball",
+      "t": 650000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/cryogenian-snowball.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "During a Snowball Earth glaciation, ice reaches toward the equator and the sea survives only as dark leads between the ice.",
+      "pinned": "c9b3cf2decb2f0a6",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "boring-billion-shallows",
+      "t": 1047000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/boring-billion-shallows.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the climatically stable \"Boring Billion,\" Bangiomorpha — the oldest known organism with differentiated sexual cells — grows in tidal pools on an otherwise still-lifeless shore.",
+      "pinned": "ccbb5828638ef8de",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "great-oxidation",
+      "t": 2400000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/great-oxidation.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "As cyanobacteria flood the shallows with oxygen for the first time, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.",
+      "pinned": "a9f9e02cef236b42",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "archean-shore",
+      "t": 3450000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/archean-shore.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Microbial stromatolites crowd an Archean tidal shore under a faint young Sun and a hazy, oxygen-free sky.",
+      "pinned": "647c2acdb2e4a8ea",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "origin-of-life",
+      "t": 3900000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/origin-of-life.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "On a young, lifeless Earth, shallow volcanic pools cycle wet and dry in one of two contested settings where the first self-replicating chemistry may have begun.",
+      "pinned": "a9fede0cdaca2a7e",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "hadean-ocean",
+      "t": 4300000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/hadean-ocean.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The first ocean steams against black volcanic shores, a world of water and rock with no life anywhere.",
+      "pinned": "4d674a11701a39a0",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "magma-ocean",
+      "t": 4500000000.0,
+      "chapterId": "molten-earth",
+      "image": "scenes/magma-ocean.jpg",
+      "shot": "WIDE_RIDGE",
+      "caption": "In the aftermath of the Moon-forming impact, Earth's whole surface is a glowing ocean of magma beneath a looming, newborn Moon.",
+      "pinned": "28a947b4b5aa181a",
+      "width": 2752,
+      "height": 1536
+    }
+  ],
+  "chapters": [
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 0.0,
+      "tEnd": 4398863489.584821
+    },
+    {
+      "id": "molten-earth",
+      "label": "Molten Earth",
+      "tStart": 4398863489.584821,
+      "tEnd": 4567000000.0
+    }
+  ],
+  "layers": [
+    {
+      "id": "co2",
+      "name": "Atmospheric CO₂",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [
+        0.0,
+        570000000.0
+      ],
+      "source": "co2-o2",
+      "chartable": true,
+      "unit": "ppm",
+      "interpolation": "log-linear",
+      "data": "layers/co2.json"
+    },
+    {
+      "id": "day_length",
+      "name": "Day length",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [
+        0.0,
+        2460000000.0
+      ],
+      "source": "astronomy",
+      "chartable": false,
+      "unit": "h",
+      "interpolation": "linear",
+      "data": "layers/day_length.json"
+    },
+    {
+      "id": "lineage",
+      "name": "Your ancestor",
+      "surface": "hud",
+      "dataKind": "node",
+      "timeDomain": [
+        0.0,
+        4200000000.0
+      ],
+      "source": "lineage",
+      "chartable": false,
+      "data": "layers/lineage.json"
+    },
+    {
+      "id": "paleodem",
+      "name": "Paleogeography",
+      "surface": "globe",
+      "dataKind": "raster",
+      "timeDomain": [
+        0.0,
+        540000000.0
+      ],
+      "source": "paleodem",
+      "chartable": false,
+      "data": "layers/paleodem.json"
+    },
+    {
+      "id": "plates_neoproterozoic",
+      "name": "Neoproterozoic continents",
+      "surface": "globe",
+      "dataKind": "raster",
+      "timeDomain": [
+        540000000.0,
+        1000000000.0
+      ],
+      "source": "plates-neoproterozoic",
+      "chartable": false,
+      "data": "layers/plates_neoproterozoic.json"
+    },
+    {
+      "id": "globe-regimes",
+      "name": "Globe regimes",
+      "surface": "globe",
+      "dataKind": "events",
+      "timeDomain": [
+        1000000000.0,
+        4520000000.0
+      ],
+      "source": "globe-regimes",
+      "chartable": false,
+      "data": "layers/globe-regimes.json"
+    }
+  ],
+  "events": [
+    {
+      "id": "present",
+      "label": "Present day",
+      "tMin": 0.0,
+      "tMax": 0.0,
+      "importance": 1.0,
+      "description": "The reference instant against which every other event's years-before-present value is measured (t = 0). See the README for the fixed 2025 reference-year convention used to compute historical events' t values.\n",
+      "citation": "By definition. t = 0 is the timeline's present-day anchor; see sources/events-core/README.md for the reference-year convention.\n"
+    },
+    {
+      "id": "moon-landing",
+      "label": "Moon landing",
+      "tMin": 56.0,
+      "tMax": 56.0,
+      "importance": 0.35,
+      "description": "Apollo 11 lands the first humans on the Moon. Chosen as a precise, uncontested near-present anchor point for the timeline — the rare event in this set with effectively zero date uncertainty.\n",
+      "citation": "NASA (1969). Apollo 11 Mission Report. Neil Armstrong and Buzz Aldrin land at Mare Tranquillitatis on 20 July 1969 UTC.\n"
+    },
+    {
+      "id": "industrial-revolution",
+      "label": "Industrial Revolution",
+      "tMin": 185.0,
+      "tMax": 265.0,
+      "importance": 0.6,
+      "description": "Mechanised manufacturing, steam power and the factory system transform Britain's economy and, within a century, the rest of the industrialised world. Historians disagree on precise bounds — Ashton's 1760-1830 and the wider 1760-1840 convention are both in common use — so the interval reflects that disagreement.\n",
+      "citation": "Ashton, T.S. (1948). The Industrial Revolution 1760-1830. Oxford University Press. Conventional bracket widened to 1760-1840 by later historians (e.g. Encyclopaedia Britannica, \"Industrial Revolution\").\n"
+    },
+    {
+      "id": "writing",
+      "label": "Writing invented",
+      "tMin": 5025.0,
+      "tMax": 5425.0,
+      "importance": 0.75,
+      "description": "Proto-cuneiform, the earliest writing system, develops at Uruk in southern Mesopotamia as an administrative technology for tracking goods, labour and rations, before evolving into full logographic cuneiform script by ~3200 BC.\n",
+      "citation": "Englund, R.K. (1998). \"Texts from the Late Uruk Period.\" In Mesopotamien: Spaturuk-Zeit und Fruhdynastische Zeit (Orbis Biblicus et Orientalis 160/1). Proto-cuneiform administrative tablets from Uruk date to the Uruk IV-III periods, ~3400-3000 BC.\n"
+    },
+    {
+      "id": "agriculture",
+      "label": "Agriculture begins",
+      "tMin": 10025.0,
+      "tMax": 11525.0,
+      "importance": 0.85,
+      "description": "Plant domestication begins in the Fertile Crescent — the first of several independent origins of agriculture worldwide. The transition from cultivation of wild stands to fixed morphological domestication (non-shattering cereals) was gradual, spanning roughly two millennia, so the interval reflects that process rather than a single event.\n",
+      "citation": "Zeder, M.A. (2011). \"The Origins of Agriculture in the Near East.\" Current Anthropology, 52(S4), S221-S235. Domestication of founder crops (einkorn, emmer, barley) begins ~10,500-9,500 cal BC, with morphological domestication clearly established by ~8,000 cal BC.\n"
+    },
+    {
+      "id": "younger-dryas",
+      "label": "Younger Dryas cold reversal",
+      "tMin": 11700.0,
+      "tMax": 12900.0,
+      "importance": 0.5,
+      "description": "A sharp, roughly 1,300-year return to near-glacial cold interrupts the warming at the end of the last ice age, onsetting in under a century and ending abruptly within decades — one of the fastest, largest climate swings of the whole glacial termination.\n",
+      "citation": "Younger Dryas dated to approximately 12,900-11,700 years ago per Britannica, \"Younger Dryas | Definition, Causes, & Termination.\" Rasmussen, S.O. et al. (2006), GICC05 Greenland ice-core chronology (volume and pages UNVERIFIED).\n"
+    },
+    {
+      "id": "last-glacial-maximum",
+      "label": "Last Glacial Maximum",
+      "tMin": 19000.0,
+      "tMax": 26500.0,
+      "importance": 0.7,
+      "description": "The height of the last ice age: most of the great Northern Hemisphere ice sheets stand at their maximum extent, global sea level sits well over 100 m lower than today, and cold, dry mammoth steppe spreads across northern Eurasia. The interval is the span over which the ice sheets held near-maximum extent, not uncertainty about a single date. Ages are calibrated years before 1950; the 75-year offset from this file's 2025 reference year is far inside the interval.\n",
+      "citation": "Clark, P.U. et al. (2009). \"The Last Glacial Maximum.\" Science, 325(5941), 710-714. Most ice sheets reached their maximum extent between 26.5 and 19-20 ka, with deglaciation beginning ~19-20 ka.\n"
+    },
+    {
+      "id": "neanderthal-sapiens-overlap",
+      "label": "Neanderthals and Homo sapiens overlap in Europe",
+      "tMin": 39000.0,
+      "tMax": 45000.0,
+      "importance": 0.55,
+      "description": "Homo sapiens is present in Europe from roughly 45 ka, while radiocarbon dating of material from 40 Neanderthal sites across Europe shows Neanderthals disappearing from the continent between about 41 and 39 ka. Rather than a single abrupt replacement, populations vanish at different times in different regions, with the two species overlapping there for an estimated 2,600-5,400 years before Neanderthal extinction.\n",
+      "citation": "Higham, T. et al. (2014). \"The timing and spatiotemporal patterning of Neanderthal disappearance.\" Nature, 512, 306-309.\n"
+    },
+    {
+      "id": "out-of-africa-migration",
+      "label": "Out-of-Africa migration",
+      "tMin": 50000.0,
+      "tMax": 70000.0,
+      "importance": 0.6,
+      "description": "Genomic evidence dates the principal migration of modern humans out of Africa, ancestral to all non-African populations living today, to this window. Earlier, smaller dispersals (e.g. into the Levant by ~180 ka) did not leave a substantial genetic legacy in living non-African populations.\n",
+      "citation": "Nielsen, R. et al. (2017). \"Tracing the peopling of the world through genomics.\" Nature, 541, 302-310 (review, ~50-70 ka for the main out-of-Africa dispersal). Pagani, L. et al. (2015). \"Tracing the route of modern humans out of Africa by using 225 whole-genome sequences from Ethiopians and Egyptians.\" AJHG, 96(6), 986-991.\n"
+    },
+    {
+      "id": "earliest-cave-art",
+      "label": "Earliest known cave and rock art",
+      "tMin": 64000.0,
+      "tMax": 71600.0,
+      "importance": 0.6,
+      "description": "The oldest securely dated cave art is a hand stencil in Liang Metanduno, Muna Island, Sulawesi, at least 67,800 +/- 3,800 years old (a laser-ablation U-series minimum age). Narrative art, human-like figures with a pig, follows at Leang Karampuang, Sulawesi, by 51,200 years ago. Contested: U-Th ages of over 65,000 years for Iberian cave art attributed to Neanderthals have been disputed, with critics arguing for ~47,000 years.\n",
+      "citation": "Oktaviana, A.A. et al. (2026). \"Rock art from at least 67,800 years ago in Sulawesi.\" Nature, 650, 652-656. Oktaviana, A.A. et al. (2024). \"Narrative cave art in Indonesia by 51,200 years ago.\" Nature, 631, 814-818. Hoffmann, D.L. et al. (2018). Science, 359, 912-915. Slimak, L. et al. (2018). Science, 361, eaau1371 (comment).\n"
+    },
+    {
+      "id": "toba-eruption",
+      "label": "Toba supereruption",
+      "tMin": 73560.0,
+      "tMax": 74200.0,
+      "importance": 0.4,
+      "description": "The Youngest Toba eruption in Sumatra is the largest known volcanic event of the last 2.5 million years. Its effect on global climate and on contemporary human populations is heavily contested: the original \"volcanic winter\" hypothesis of a decade-long hemispheric cooling has been challenged by more recent regional climate and archaeological evidence showing human populations persisted through the eruption without a severe bottleneck.\n",
+      "citation": "Storey, M., Roberts, R.G. & Saidin, M. (2012). \"Astronomically calibrated 40Ar/39Ar age for the Toba supereruption and global synchronization of late Quaternary records.\" PNAS, 109, 18684-18688 (73.88 +/- 0.32 ka, 1 sigma). Contested effects per \"Understanding the overestimated impact of the Toba volcanic super-eruption on global environments and ancient hominins,\" Earth-Science Reviews (2020).\n"
+    },
+    {
+      "id": "homo-sapiens-origin",
+      "label": "Homo sapiens appears",
+      "tMin": 281000.0,
+      "tMax": 349000.0,
+      "importance": 0.9,
+      "description": "Fossils from Jebel Irhoud, Morocco, combine a modern-looking face with a more archaic braincase shape. They are the oldest known Homo sapiens remains, pushing the species' origin back roughly 100,000 years earlier than previously recognised and supporting a pan-African rather than single-region origin.\n",
+      "citation": "Hublin, J.-J. et al. (2017). \"New fossils from Jebel Irhoud, Morocco and the pan-African origin of Homo sapiens.\" Nature, 546, 289-292. Richter, D. et al. (2017). \"The age of the hominin fossils from Jebel Irhoud, Morocco, and the origins of the Middle Stone Age.\" Nature, 546, 293-296. Combined age estimate: 315 +/- 34 ka.\n"
+    },
+    {
+      "id": "control-of-fire",
+      "label": "Habitual control of fire",
+      "tMin": 400000.0,
+      "tMax": 1500000.0,
+      "importance": 0.5,
+      "description": "Evidence for hominin-controlled fire ranges from isolated early occurrences (~1.0-1.5 Ma) to unambiguous, habitual, everyday use only from around 400 ka onward. Contested: the gap between sporadic and habitual fire use spans over a million years and the transition is not sharply dated.\n",
+      "citation": "Berna, F. et al. (2012). \"Microstratigraphic evidence of in situ fire in the Acheulean strata of Wonderwerk Cave, Northern Cape province, South Africa.\" PNAS, 109(20), E1215-E1220 (~1.0 Ma). Roebroeks, W. & Villa, P. (2011). \"On the earliest evidence for habitual use of fire in Europe.\" PNAS, 108(13), 5209-5214 (habitual use not clearly established before ~300-400 ka).\n"
+    },
+    {
+      "id": "homo-erectus",
+      "label": "Homo erectus appears",
+      "tMin": 1500000.0,
+      "tMax": 2040000.0,
+      "importance": 0.7,
+      "description": "Homo erectus, the first hominin with fully modern human body proportions, appears in Africa. The oldest confirmed fossil, KNM-ER 2598, is securely dated to older than 1.855 Ma; the species is conventionally held to have evolved roughly 2 million years ago, and its fossils persist across Africa and Asia for well over a million years afterward.\n",
+      "citation": "\"New hominin remains and revised context from the earliest Homo erectus locality in East Turkana, Kenya.\" Nature Communications (2021), article s41467-021-22208-x (KNM-ER 2598, >1.855 Ma). Herries, A.I.R. et al. (2020). \"Contemporaneity of Australopithecus, Paranthropus, and early Homo erectus in South Africa.\" Science, 368, eaaw7293 (DNH 134, ~2.04-1.95 Ma). Mussi, M. et al. (2023). Science, eadd9115 (Melka Kunture mandible ca. 2 Ma).\n"
+    },
+    {
+      "id": "acheulean-technology",
+      "label": "Acheulean handaxe technology begins",
+      "tMin": 1720000.0,
+      "tMax": 1950000.0,
+      "importance": 0.5,
+      "description": "Symmetrical, bifacially flaked handaxes appear by about 1.95 Ma at Melka Kunture, Ethiopia, and by 1.76 Ma at Kokiselei, West Turkana, Kenya, a marked advance in complexity over the simple Oldowan flakes that preceded them.\n",
+      "citation": "Mussi, M. et al. (2023). \"Early Homo erectus lived at high altitudes and produced both Oldowan and Acheulean tools.\" Science, eadd9115. Lepre, C.J. et al. (2011). \"An earlier origin for the Acheulian.\" Nature, 477, 82-85. Kokiselei 4 dated to 1.76 Ma (nonlinear interpolation) / 1.72 Ma (linear interpolation) via magnetostratigraphy bracketed by dated volcanic ash.\n"
+    },
+    {
+      "id": "quaternary-glaciation-begins",
+      "label": "Quaternary Period begins",
+      "tMin": 2580000.0,
+      "tMax": 2580000.0,
+      "importance": 0.6,
+      "description": "The base of the Gelasian Stage marks the start of the Quaternary Period and the Pleistocene Series, and the onset of major, sustained Northern Hemisphere glaciation — the beginning of the ice-age cycles the planet has lived through ever since.\n",
+      "citation": "GSSP for the base of the Gelasian Stage, Monte San Nicola, Italy, per the ICS International Chronostratigraphic Chart v2024/12: 2.58 Ma.\n"
+    },
+    {
+      "id": "australopithecus-afarensis",
+      "label": "Lucy (AL 288-1), Australopithecus afarensis",
+      "tMin": 3180000.0,
+      "tMax": 3220000.0,
+      "importance": 0.65,
+      "description": "The AL 288-1 skeleton (\"Lucy\"), discovered at Hadar, Ethiopia in 1974, is the most complete Australopithecus afarensis specimen known: an ape-sized skull paired with a pelvis and leg bones built for upright bipedal walking.\n",
+      "citation": "Discovered by Donald Johanson's team, Hadar, Ethiopia, 24 November 1974. Age and description per the Natural History Museum, \"Australopithecus afarensis, Lucy's species,\" and Britannica, \"Lucy | Australopithecus afarensis, 3.2 Million Years, Ethiopia.\" Smithsonian National Museum of Natural History, Human Origins Program, \"Australopithecus afarensis\" (species range ~3.85-2.95 Ma).\n"
+    },
+    {
+      "id": "lomekwi-stone-tools",
+      "label": "Oldest known stone tools (Lomekwi 3)",
+      "tMin": 3250000.0,
+      "tMax": 3350000.0,
+      "importance": 0.6,
+      "description": "Stone artefacts at Lomekwi 3, West Turkana, Kenya, predate the Oldowan industry by roughly 700,000 years and are the oldest known deliberately flaked stone tools — made 500,000 years before the genus Homo appears in the fossil record, contradicting the long-standing assumption that toolmaking began with Homo. Questioned: some researchers remain sceptical that the artefacts are securely of Pliocene age.\n",
+      "citation": "Harmand, S. et al. (2015). \"3.3-million-year-old stone tools from Lomekwi 3, West Turkana, Kenya.\" Nature, 521, 310-315. Dominguez-Rodrigo, M. & Alcala, L. (2019). \"Pliocene Archaeology at Lomekwi 3? New Evidence Fuels More Skepticism.\" Journal of African Archaeology, doi:10.1163/21915784-20190006.\n"
+    },
+    {
+      "id": "messinian-salinity-crisis",
+      "label": "Messinian salinity crisis",
+      "tMin": 5330000.0,
+      "tMax": 5960000.0,
+      "importance": 0.55,
+      "description": "Tectonic closure of the Atlantic gateways, the Betic and Rifian corridors through southern Spain and northern Morocco, isolates the Mediterranean from the Atlantic; extreme evaporation deposits kilometre-scale salt beds across the basin floor. The crisis ends at 5.33 Ma when Atlantic water floods back through the Strait of Gibraltar in the Zanclean flood. Contested: how dry the basin actually became, and how catastrophic the final refill was, remain disputed.\n",
+      "citation": "Krijgsman, W., Hilgen, F.J., Raffi, I., Sierro, F.J. & Wilson, D.S. (1999). \"Chronology, causes and progression of the Messinian salinity crisis.\" Nature, 400, 652-655 (onset chronology). Garcia-Castellanos, D. et al. (2009). \"Catastrophic flood of the Mediterranean after the Messinian Salinity Crisis.\" Nature, 462, 778-781 (Zanclean reflooding).\n"
+    },
+    {
+      "id": "c4-expansion",
+      "label": "C4 grasses expand across the tropics",
+      "tMin": 5000000.0,
+      "tMax": 8000000.0,
+      "importance": 0.65,
+      "description": "Carbon-isotope evidence from fossil soils and tooth enamel across multiple continents records the late Miocene replacement of C3-dominated woodland and grassland by C4-dominated open savanna, a major shift in the base of terrestrial food webs and the habitat in which the human lineage's own later evolution plays out. Timing varied by region, and C3 woodland persisted in places such as Greece (Quade, Solounias & Cerling 1994).\n",
+      "citation": "Cerling, T.E., Harris, J.M., MacFadden, B.J., Leakey, M.G., Quade, J., Eisenmann, V. & Ehleringer, J.R. (1997). \"Global vegetation change through the Miocene/Pliocene boundary.\" Nature, 389, 153-158. Cerling, T.E., Ehleringer, J.R. & Harris, J.M. (1998). Phil. Trans. R. Soc. B, 353, 159-170 (C4 biomass in mammal diets in Asia, Africa, North and South America ~8-5 Ma). Uno, K.T. et al. (2011). PNAS, 108, 6509-6514 (East African bovids on C4-dominated diets by 7.4 Ma; equids taking significant C4 by ~9.9-9.6 Ma).\n"
+    },
+    {
+      "id": "hominins",
+      "label": "First hominins",
+      "tMin": 6000000.0,
+      "tMax": 7200000.0,
+      "importance": 0.8,
+      "description": "Sahelanthropus tchadensis, from Chad, is the earliest widely proposed hominin, with skeletal evidence interpreted by its describers as consistent with bipedalism. Contested: its age predates the molecular estimate for the human-chimpanzee split (~6.3-5.4 Ma), and its classification as a hominin rather than a stem great ape is actively debated.\n",
+      "citation": "Brunet, M. et al. (2002). \"A new hominid from the Upper Miocene of Chad, Central Africa.\" Nature, 418, 145-151. Site dated 7.2-6.8 Ma via biostratigraphy and cosmogenic nuclide dating (Lebatard, A.-E. et al. 2008, PNAS, 105(9), 3226-3231).\n"
+    },
+    {
+      "id": "isthmus-of-panama",
+      "label": "Isthmus of Panama forms",
+      "tMin": 2800000.0,
+      "tMax": 16000000.0,
+      "importance": 0.55,
+      "description": "A continuous land connection rises between North and South America, closing the Central American Seaway and triggering the Great American Biotic Interchange. Contested: one synthesis dates final closure to ~2.8 Ma (O'Dea et al. 2016), biological evidence argues for earlier, stepwise emergence (Bacon et al. 2015), and detrital-zircon evidence suggests the deep seaway had already closed by the middle Miocene (Montes et al. 2015).\n",
+      "citation": "O'Dea, A. et al. (2016). \"Formation of the Isthmus of Panama.\" Science Advances, 2(8), e1600883 (~2.8 Ma final closure). Bacon, C.D. et al. (2015). \"Biological evidence supports an early and complex emergence of the Isthmus of Panama.\" PNAS, 112(19), 6110-6115 (contested, early-emergence hypothesis). Montes, C. et al. (2015). \"Middle Miocene closure of the Central American Seaway.\" Science, 348, 226-229.\n"
+    },
+    {
+      "id": "hipparion-dispersal",
+      "label": "Hipparionine horses reach the Old World",
+      "tMin": 11100000.0,
+      "tMax": 11400000.0,
+      "importance": 0.4,
+      "description": "Three-toed hipparionine horses disperse from North America across the Bering land bridge into Eurasia and Africa, a rapid, near-synchronous \"Hipparion datum\" long taken as a marker for the westward spread of open savanna — though open C3 grassland habitats are now known to predate their arrival in some regions.\n",
+      "citation": "\"Old World first appearance datum of 'Hipparion' horses: Late Miocene large-mammal dispersal and global events.\" Geology, 25(1), 19-22 (1997). First appearance at Chron C5r, minimum age 11.1 Ma; Hippotherium primigenium at Atzelsdorf, Austria, ~11.2-11.4 Ma.\n"
+    },
+    {
+      "id": "grassland-spread",
+      "label": "Spread of C3 grasslands",
+      "tMin": 15500000.0,
+      "tMax": 23000000.0,
+      "importance": 0.55,
+      "description": "The first definitive grass-dominated open habitats appear in the early Miocene, though forest and woodland remain globally dominant. Phytolith diversity in open-habitat grasses rises through the late early Miocene and early late Miocene, roughly 19-15.5 Ma, marking the start of the multistage shift from a forested to a grassland-dominated world that later culminates in the Late Neogene spread of C4 grasses.\n",
+      "citation": "Stromberg, C.A.E. (2005). \"Decoupled taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North America.\" PNAS, 102, 11980-11984 (open-habitat grass dominance in North America by the late Oligocene-early Miocene). Stromberg, C.A.E. (2011). \"Evolution of Grasses and Grassland Ecosystems.\" Annual Review of Earth and Planetary Sciences, 39, 517-544.\n"
+    },
+    {
+      "id": "antarctic-circumpolar-current",
+      "label": "Drake Passage opens; proto-Antarctic Circumpolar Current",
+      "tMin": 21000000.0,
+      "tMax": 34000000.0,
+      "importance": 0.45,
+      "description": "The opening of the Drake Passage lets an eastward current begin to encircle Antarctica, thermally isolating the continent. Contested and poorly constrained: estimates for the onset range from the Eocene-Oligocene boundary (~34 Ma) through 31-26 Ma to 23.5 +/- 2.5 Ma for a proto-current. The modern, deep-reaching current came later: Evangelinos et al. (2024) place its onset in the late Miocene, so this interval marks the gateway opening, not the modern current.\n",
+      "citation": "Evangelinos, D. et al. (2024). \"Late Miocene onset of the modern Antarctic Circumpolar Current.\" Nature Geoscience, 17, 165-170. \"Drake Passage gateway opening and Antarctic Circumpolar Current onset 31 Ma ago: The message of foraminifera and reconsideration of the Neodymium isotope record.\" Chemical Geology (2021) (31-26 Ma estimate).\n"
+    },
+    {
+      "id": "eocene-oligocene-transition",
+      "label": "Eocene-Oligocene transition; first Antarctic ice sheet",
+      "tMin": 33650000.0,
+      "tMax": 34400000.0,
+      "importance": 0.75,
+      "description": "Earth's climate steps from the early Cenozoic greenhouse into the modern icehouse: the Antarctic ice sheet grows rapidly in two pulses, the EOT-1 cooling event (~34.1-33.9 Ma) and the larger Oi-1 glaciation (~33.8-33.6 Ma), reaching the coastline for the first time. The associated cooling drives a major mammalian faunal turnover in Europe known as the Grande Coupure.\n",
+      "citation": "Hutchinson, D.K. et al. (2021). \"The Eocene-Oligocene transition: a review of marine and terrestrial proxy data, models and model-data comparisons.\" Climate of the Past, 17, 269 (EOT 34.44-33.65 Ma). Coxall, H.K. et al. (2005). \"Rapid stepwise onset of Antarctic glaciation and deep-sea acidification in the late Eocene.\" Nature, 433, 53-57. Eocene-Oligocene boundary age 33.9 Ma per the ICS International Chronostratigraphic Chart v2024/12. \"Grande Coupure\" term coined by Stehlin, H.G. (1910).\n"
+    },
+    {
+      "id": "india-asia-collision",
+      "label": "India-Asia collision begins",
+      "tMin": 34000000.0,
+      "tMax": 59000000.0,
+      "importance": 0.6,
+      "description": "India's continental margin collides with Asia, initiating the Himalayan orogeny and the uplift of the Tibetan Plateau — a collision still ongoing today. Contested: the timing of initial contact is one of the most debated questions in Earth science, with proposals ranging from a middle-Paleocene 59 +/- 1 Ma sediment-provenance signal to paleomagnetic estimates as young as 34 Ma.\n",
+      "citation": "Aitchison, J.C., Ali, J.R. & Davis, A.M. (2007). \"When and where did India and Asia collide?\" Journal of Geophysical Research: Solid Earth, 112, B05423 (review of competing timing estimates spanning 70-34 Ma). Middle-Paleocene 59 +/- 1 Ma sediment-provenance estimate per \"The timing of India-Asia collision onset: facts, theories, controversies,\" Earth-Science Reviews (2016).\n"
+    },
+    {
+      "id": "early-eocene-climatic-optimum",
+      "label": "Early Eocene Climatic Optimum",
+      "tMin": 49000000.0,
+      "tMax": 54000000.0,
+      "importance": 0.55,
+      "description": "The warmest sustained interval of the last 66 million years. Swamp forests, crocodilians and year-round mammal residents such as Coryphodon live above the Arctic Circle. Published bounds vary, from about 53-50 Ma to about 54-49 Ma.\n",
+      "citation": "Woodburne, M.O., Gunnell, G.F. & Stucky, R.K. (2009). PNAS, 106(32), 13399-13403 (EECO 53-50 Ma). Eberle, J.J. et al. (2014). PLOS ONE, 9(5), e96079. Eberle, J.J., Fricke, H.C. & Humphrey, J.D. (2009). \"Lower-latitude mammals as year-round residents in Eocene Arctic forests.\" Geology, 37, 499-502.\n"
+    },
+    {
+      "id": "petm",
+      "label": "Paleocene-Eocene Thermal Maximum (PETM)",
+      "tMin": 55800000.0,
+      "tMax": 56000000.0,
+      "importance": 0.55,
+      "description": "A sudden release of isotopically light carbon drives several degrees of global warming in geologically almost no time, the most extreme of several Cenozoic hyperthermals. The rapid onset (on the order of 6 kyr) is followed by a ~100-170 kyr warm \"body\" phase and a slower ~50-135 kyr recovery.\n",
+      "citation": "Kirtland Turner, S. (2018). \"Constraints on the onset duration of the Paleocene-Eocene Thermal Maximum.\" Philosophical Transactions of the Royal Society A, 376(2130), 20170082. Onset dated to 55.9-56.0 Ma.\n"
+    },
+    {
+      "id": "primates",
+      "label": "First primates",
+      "tMin": 56000000.0,
+      "tMax": 65900000.0,
+      "importance": 0.7,
+      "description": "Purgatorius, a stem primate from Montana, appears within roughly 150,000 years of the K-Pg extinction. Crown-group primates (Euprimates, e.g. Teilhardina) are not securely documented until ~56 Ma — the interval spans this stem-vs-crown ambiguity.\n",
+      "citation": "Wilson Mantilla, G.P. et al. (2021). \"Earliest Palaeocene purgatoriids and the initial radiation of stem primates.\" Royal Society Open Science, 8(2), 210050 (Purgatorius, ~65.9 Ma). Smith, T., Rose, K.D. & Gingerich, P.D. (2006) for Teilhardina, oldest crown primate, ~55.8 Ma.\n"
+    },
+    {
+      "id": "paleocene-mammal-radiation",
+      "label": "Paleocene mammal radiation",
+      "tMin": 56000000.0,
+      "tMax": 66043000.0,
+      "importance": 0.5,
+      "description": "In the aftermath of the K-Pg extinction, placental mammals rapidly radiate to fill the large-herbivore niches the non-avian dinosaurs left empty: mammal maximum body size is near pre-extinction values within ~100 kyr and has tripled by ~300 kyr. Pantodonts such as Pantolambda, a heavy-bodied browsing mammal, appear by the mid-Paleocene; the interval spans the radiation from the extinction to the close of the Paleocene.\n",
+      "citation": "Lyson, T.R. et al. (2019). \"Exceptional continental record of biotic recovery after the Cretaceous-Paleogene mass extinction.\" Science, 366, 977-983. Halliday, T.J.D., Upchurch, P. & Goswami, A. (2017; online 2015). \"Resolving the relationships of Paleocene placental mammals.\" Biological Reviews, 92(1), 521-550. Pantolambda ~63-57 Ma per Wikipedia, \"Pantolambda\" (tertiary; the weakest source in this record).\n"
+    },
+    {
+      "id": "deccan-traps",
+      "label": "Deccan Traps eruptions",
+      "tMin": 65600000.0,
+      "tMax": 66300000.0,
+      "importance": 0.5,
+      "description": "Massive flood-basalt volcanism in west-central India straddles the K-Pg boundary, with the bulk of the eruptive volume concentrated in the ~66-65 Ma window. A long-running debate weighs Deccan volcanism against the Chicxulub impact (below) as a contributor to the end-Cretaceous extinction; a 2015 study argued the impact itself triggered a shift in Deccan's eruptive tempo.\n",
+      "citation": "Schoene, B. et al. (2021). \"An evaluation of Deccan Traps eruption rates using geochronologic data.\" Geochronology, 3(1), 181-198. Renne, P.R. et al. (2015). \"State shift in Deccan volcanism at the Cretaceous-Paleogene boundary, possibly induced by impact.\" Science, 350(6256), 76-78.\n"
+    },
+    {
+      "id": "k-pg-aftermath",
+      "label": "K-Pg aftermath fern spike",
+      "tMin": 66038000.0,
+      "tMax": 66043000.0,
+      "importance": 0.5,
+      "description": "Over roughly the first thousand years at well-dated sites after the Chicxulub impact, sections worldwide (most densely sampled in North America and New Zealand) record a sharp spike in fern spores — a \"fern spike\" — as ferns, opportunistic recolonisers of disturbed ground, dominate a landscape stripped of the forest that stood before impact.\n",
+      "citation": "Vajda, V., Raine, J.I. & Hollis, C.J. (2001). \"Indication of global deforestation at the Cretaceous-Tertiary boundary by New Zealand fern spike.\" Science, 294(5547), 1700-1702.\n"
+    },
+    {
+      "id": "k-pg-impact",
+      "label": "K-Pg impact",
+      "tMin": 66032000.0,
+      "tMax": 66054000.0,
+      "importance": 1.0,
+      "description": "The Chicxulub asteroid impacts the Yucatan Peninsula, triggering the Cretaceous-Paleogene mass extinction that ends the age of non-avian dinosaurs.\n",
+      "citation": "Renne, P.R. et al. (2013). \"Time scales of critical events around the Cretaceous-Paleogene boundary.\" Science, 339(6120), 684-687. Chicxulub impact and K-Pg boundary dated to 66.043 +/- 0.011 Ma.\n",
+      "effect": {
+        "kind": "impact-winter",
+        "anchor": {
+          "lat": 21.3,
+          "lon": -89.5
+        },
+        "windows": [
+          {
+            "tMin": 66032000.0,
+            "tMax": 66054000.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "angiosperm-radiation",
+      "label": "Flowering plants spread and radiate",
+      "tMin": 80000000.0,
+      "tMax": 125000000.0,
+      "importance": 0.55,
+      "description": "Within the \"Cretaceous Terrestrial Revolution,\" angiosperms spread from a marginal lake-edge presence to ecological dominance over roughly 45 million years, coevolving with pollinating insects and reshaping terrestrial food webs; the traditional bound is 125-80 Ma, though some authors extend the revolution's later phase into the Paleogene.\n",
+      "citation": "Lloyd, G.T. et al. (2008). \"Dinosaurs and the Cretaceous Terrestrial Revolution.\" Proceedings of the Royal Society B, 275(1650), 2483-2490. Benton, M.J., Wilf, P. & Sauquet, H. \"The Angiosperm Terrestrial Revolution and the origins of modern biodiversity.\" New Phytologist, 233(5), 2017-2035 (UNVERIFIED: year given as 2021; the volume may be dated 2022).\n"
+    },
+    {
+      "id": "earliest-pollinating-insects",
+      "label": "Earliest pollinating insects",
+      "tMin": 93000000.0,
+      "tMax": 165000000.0,
+      "importance": 0.5,
+      "description": "Long-proboscid scorpionflies (Aneuretopsychidae and kin, Jurassic-Cretaceous, ~165-93 Ma) carry a tubular mouthpart interpreted as adapted to drink the pollination droplets of insect-pollinated gymnosperms such as Bennettitales, evidence for insect pollination well before flowers existed. Contested: a separate ~100 Ma Burmese-amber specimen, Melittosphex burmensis, was described as the oldest bee, but is now reassessed as an aculeate wasp of uncertain position rather than a true bee.\n",
+      "citation": "Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al. (2009). \"A Probable Pollination Mode Before Angiosperms: Eurasian, Long-Proboscid Scorpionflies.\" Science, 326(5954), 840-847. Poinar, G.O. & Danforth, B.N. (2006). \"A fossil bee from Early Cretaceous Burmese amber.\" Science, 314(5799), 614 (original bee claim, contested reclassification).\n"
+    },
+    {
+      "id": "flowering-plants",
+      "label": "Flowering plants",
+      "tMin": 125000000.0,
+      "tMax": 133000000.0,
+      "importance": 0.75,
+      "description": "The oldest undisputed flowering plants (Montsechia vidalii, Archaefructus) appear in Early Cretaceous lake deposits. A disputed claim of Middle Triassic angiosperm-like pollen (~247-242 Ma) from the Alps has not been widely accepted, so the timing of angiosperm origin well before the Cretaceous remains unresolved.\n",
+      "citation": "Gomez, B. et al. (2015). \"Montsechia, an ancient aquatic angiosperm.\" PNAS, 112(35), 10985-10988 (~130 Ma, Barremian). Earliest undisputed angiosperm pollen spans the Hauterivian-Barremian, ~132.9-125 Ma.\n"
+    },
+    {
+      "id": "birds-origin",
+      "label": "First birds",
+      "tMin": 148500000.0,
+      "tMax": 150800000.0,
+      "importance": 0.6,
+      "description": "Archaeopteryx lithographica, from the Solnhofen limestone of Bavaria, is the earliest widely accepted bird — a feathered, winged theropod bridging non-avian dinosaurs and modern birds.\n",
+      "citation": "Foth, C. & Rauhut, O.W.M. (2017). \"Re-evaluation of the Haarlem Archaeopteryx and the radiation of maniraptoran theropod dinosaurs.\" BMC Evolutionary Biology, 17, 236. Archaeopteryx horizon within the Solnhofen Limestone (Late Jurassic, Tithonian), ~150.8-148.5 Ma.\n"
+    },
+    {
+      "id": "end-triassic-extinction",
+      "label": "End-Triassic mass extinction",
+      "tMin": 201000000.0,
+      "tMax": 201800000.0,
+      "importance": 0.8,
+      "description": "One of the \"Big Five\" mass extinctions, precisely dated to the Triassic-Jurassic boundary and tied to Central Atlantic Magmatic Province (CAMP) volcanism — the largest known flood-basalt province by area — which released enough CO2 and sulphur to drive intense warming, acidification and marine anoxia. Clears the way for dinosaurs to become dominant in the Jurassic.\n",
+      "citation": "Blackburn, T.J. et al. (2013). \"Zircon U-Pb Geochronology Links the End-Triassic Extinction with the Central Atlantic Magmatic Province.\" Science, 340(6135), 941-945.\n"
+    },
+    {
+      "id": "mammals-origin",
+      "label": "First mammals",
+      "tMin": 205000000.0,
+      "tMax": 225000000.0,
+      "importance": 0.55,
+      "description": "The earliest mammaliaforms — small, likely nocturnal insectivores — diverge from cynodont therapsids around the Triassic-Jurassic boundary.\n",
+      "citation": "Lucas, S.G. & Luo, Z. (1993). \"Adelobasileus from the Upper Triassic of West Texas: the oldest mammal.\" Journal of Vertebrate Paleontology, 13(3), 309-334 (~225 Ma). Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) for Morganucodon, ~205 Ma.\n"
+    },
+    {
+      "id": "dinosaurs",
+      "label": "First dinosaurs",
+      "tMin": 231000000.0,
+      "tMax": 243000000.0,
+      "importance": 0.8,
+      "description": "The oldest unambiguous dinosaurs (Eoraptor, Herrerasaurus) appear in the Ischigualasto Formation of Argentina ~231 Ma. Contested: the fragmentary Nyasasaurus parringtoni, if correctly identified as a dinosaur rather than a close relative, would push the origin back to ~243 Ma.\n",
+      "citation": "Martinez, R.N. et al. (2011). \"A basal dinosaur from the dawn of the dinosaur era in southwestern Pangaea.\" Science, 331(6014), 206-210 (Eoraptor, ~231 Ma). Nesbitt, S.J. et al. (2013). \"The oldest dinosaur? A Middle Triassic dinosauriform from Tanzania.\" Biology Letters, 9(1), 20120949 (Nyasasaurus, contested, ~243 Ma).\n"
+    },
+    {
+      "id": "permian-extinction",
+      "label": "End-Permian mass extinction",
+      "tMin": 251880000.0,
+      "tMax": 251941000.0,
+      "importance": 1.0,
+      "description": "The most severe mass extinction in Earth's history eliminates over 90% of marine species and roughly 70% of terrestrial vertebrate genera, over an interval as short as ~60,000 years — one of the most precisely dated events in deep time.\n",
+      "citation": "Burgess, S.D., Bowring, S. & Shen, S.Z. (2014). \"High-precision timeline for Earth's most severe extinction.\" PNAS, 111(9), 3316-3321. Extinction interval bracketed between 251.941 +/- 0.037 Ma and 251.880 +/- 0.031 Ma at the Meishan GSSP, Zhejiang, China.\n"
+    },
+    {
+      "id": "siberian-traps",
+      "label": "Siberian Traps eruptions",
+      "tMin": 250000000.0,
+      "tMax": 254000000.0,
+      "importance": 0.7,
+      "description": "One of the largest volcanic events in Earth's history: roughly two million years of flood-basalt eruptions across Siberia, releasing enormous volumes of CO2, sulphur and halogens. Widely held to be the principal driver of the end-Permian mass extinction (below), through some combination of runaway warming, ocean acidification and anoxia.\n",
+      "citation": "Burgess, S.D. & Bowring, S.A. (2015). \"High-precision geochronology confirms voluminous magmatism before, during, and after Earth's most severe extinction.\" Science Advances, 1(7), e1500470. Kamo, S.L. et al. (2003). \"Rapid eruption of Siberian flood-volcanic rocks and evidence for coincidence with the Permian-Triassic boundary and mass extinction at 251 Ma.\" Earth and Planetary Science Letters, 214(1-2), 75-91.\n"
+    },
+    {
+      "id": "gymnosperm-radiation",
+      "label": "Conifers and gymnosperms radiate",
+      "tMin": 290000000.0,
+      "tMax": 310000000.0,
+      "importance": 0.35,
+      "description": "As the coal-swamp lycopsids retreat with the Carboniferous rainforest collapse (above), walchian conifers (Voltziales, e.g. Walchia) spread across drier ground. They are among the earliest conifers, which first appear in the Middle Pennsylvanian, before this interval; it marks their spread within a broader seed-plant (gymnosperm) radiation that comes to dominate Permian and Triassic vegetation.\n",
+      "citation": "UNVERIFIED: no primary source confirmed yet. Walchian conifer ranges were checked only against encyclopaedia summaries (Wikipedia, \"Walchia\" and \"Voltziales\"); Looy, C.V. & Duijnstee, I.A.P. (2020) on voltzialean cone evolution has its authors and year confirmed but not its journal or volume.\n"
+    },
+    {
+      "id": "carboniferous-rainforest-collapse",
+      "label": "Carboniferous rainforest collapse",
+      "tMin": 300000000.0,
+      "tMax": 307000000.0,
+      "importance": 0.5,
+      "description": "Around 305 Ma the lycopsid-dominated coal-swamp rainforests of equatorial Euramerica fragment into isolated refugia and give way to tree-fern-dominated vegetation as the climate dries; in Cathaysia (China) such rainforests persist until the end of the Permian. The scale and ecological effects are contested.\n",
+      "citation": "Sahney, S., Benton, M.J. & Falcon-Lang, H.J. (2010). \"Rainforest collapse triggered Carboniferous tetrapod diversification in Euramerica.\" Geology, 38(12), 1079-1082. Dunne, E.M. et al. (2018). Proceedings of the Royal Society B (contests the effect on tetrapod diversity). Montanez, I.P. et al. (2007). \"CO2-forced climate and vegetation instability during late Paleozoic deglaciation.\" Science, 315(5808), 87-91.\n"
+    },
+    {
+      "id": "amniotes",
+      "label": "First amniotes",
+      "tMin": 307000000.0,
+      "tMax": 358900000.0,
+      "importance": 0.7,
+      "description": "The amniotic egg allows vertebrates to reproduce away from standing water. Hylonomus lyelli (~318-307 Ma) is the oldest uncontroversial amniote. Contested: fossil trackways from the Snowy Plains Formation, Victoria, Australia, attributed to a crown-group amniote with clawed feet and dated to the early Tournaisian (~358.9-354 Ma), would push the origin of crown Amniota back by 35-40 Myr if the attribution holds.\n",
+      "citation": "Carroll, R.L. (1964). \"The earliest reptiles.\" Zoological Journal of the Linnean Society, 45, 61-83 (Hylonomus lyelli). Contested pushback: Long, J.A. et al. (2025). \"Earliest amniote tracks recalibrate the timeline of tetrapod evolution.\" Nature, 641, 1193-1200 (Snowy Plains Formation track-bearing slab).\n"
+    },
+    {
+      "id": "first-seed-plants",
+      "label": "First seed plants",
+      "tMin": 360000000.0,
+      "tMax": 370000000.0,
+      "importance": 0.55,
+      "description": "Elkinsia polymorpha, a seed fern from the Late Devonian of West Virginia, bears the oldest well-documented seeds: an integumented ovule enclosed in a cupule, freeing reproduction from the standing water that spore-dispersal required. The precursor Runcaria (~385 Ma, Middle Devonian, Belgium) shows the integument evolving slightly earlier, without yet being a true seed.\n",
+      "citation": "Rothwell, G.W., Scheckler, S.E. & Gillespie, W.H. (1989). \"Elkinsia gen. nov., a Late Devonian gymnosperm with cupulate ovules.\" Botanical Gazette, 150(2), 170-189. UNVERIFIED: author, year and the Elkinsia/Late-Devonian/~370 Ma facts were confirmed live; the title, journal, volume and pages were not — see sources/events-core/README.md \"Verification method\".\n"
+    },
+    {
+      "id": "late-devonian-extinction",
+      "label": "Late Devonian mass extinction",
+      "tMin": 358860000.0,
+      "tMax": 372150000.0,
+      "importance": 0.75,
+      "description": "Two extinction pulses bracket the Late Devonian: the Kellwasser event at the Frasnian-Famennian boundary (~372.15 Ma), then the Hangenberg event ending the Devonian entirely (~358.86 Ma) — together one of the \"Big Five,\" severely reducing reef-building and marine vertebrate diversity and triggering marked body-size reduction among surviving fish lineages.\n",
+      "citation": "Becker, R.T. & House, M.R. \"Kellwasser Events and goniatite successions in the Devonian of the Montagne Noire.\" Courier Forschungsinstitut Senckenberg, 169, 45-77 (UNVERIFIED: the year is given as 1986 but looks inconsistent with that volume). Sallan, L. & Galimberti, A.K. (2015). \"Body-size reduction in vertebrates following the end-Devonian mass extinction.\" Science, 350(6262), 812-815. Percival, L.M.E. et al. (2018). \"Precisely dating the Frasnian-Famennian boundary.\" Scientific Reports, 8, 9578 (UNVERIFIED: bibliographic line not confirmed against its DOI page).\n"
+    },
+    {
+      "id": "tetrapods",
+      "label": "First tetrapods",
+      "tMin": 365000000.0,
+      "tMax": 395000000.0,
+      "importance": 0.85,
+      "description": "The oldest evidence of tetrapods — four-limbed vertebrates capable of terrestrial locomotion. Trackways from Zachelmie, Poland predate the oldest body fossils (Ichthyostega, Acanthostega) by roughly 20-30 Myr.\n",
+      "citation": "Niedzwiedzki, G. et al. (2010). \"Tetrapod trackways from the early Middle Devonian period of Poland.\" Nature, 463, 43-48 (recalibrated to ~390-391 Ma against GTS2012). Ahlberg, P.E. & Clack, J.A. (2006) for Ichthyostega/Acanthostega body fossils, ~365 Ma, Late Devonian.\n"
+    },
+    {
+      "id": "first-forests",
+      "label": "First forests",
+      "tMin": 378000000.0,
+      "tMax": 393000000.0,
+      "importance": 0.55,
+      "description": "The first forests appear in the Middle Devonian. The oldest known, ~390 Ma in Somerset, England, is a stand of Calamophyton, a small cladoxylopsid tree; at Gilboa, New York, slightly younger stumps preserve dense stands of the taller cladoxylopsid Eospermatopteris. Archaeopteris, the first tree with true wood and fern-like leafy branches, is present by ~385 Ma and dominates Late Devonian forests.\n",
+      "citation": "Davies, N.S., McMahon, W.J. & Berry, C.M. (2024). \"Earth's earliest forest: fossilized trees and vegetation-induced sedimentary structures from the Middle Devonian (Eifelian) Hangman Sandstone Formation, Somerset and Devon, SW England.\" Journal of the Geological Society, doi:10.1144/jgs2023-204. Stein, W.E., Mannolini, F., Hernick, L.V., Landing, E. & Berry, C.M. (2007). \"Giant cladoxylopsid trees resolve the enigma of the Earth's earliest forest stumps at Gilboa.\" Nature, 446(7138), 904-907.\n"
+    },
+    {
+      "id": "insects",
+      "label": "First insects",
+      "tMin": 396000000.0,
+      "tMax": 411000000.0,
+      "importance": 0.5,
+      "description": "Rhyniognatha hirsti, from the Rhynie chert, is the specimen most commonly cited as the oldest insect, based on mandible structure some interpret as diagnostic of a winged insect. Contested: the fragmentary specimen has also been reinterpreted as a myriapod rather than an insect.\n",
+      "citation": "Engel, M.S. & Grimaldi, D.A. (2004). \"New light shed on the oldest insect.\" Nature, 427, 627-630. Rhynie chert radiometrically dated to ~407-411 Ma (Parry, S.F. et al. 2011, Geology). Reinterpretation: Haug, C. & Haug, J.T. (2017). \"The presumed oldest flying insect: more likely a myriapod?\" PeerJ, 5, e3402.\n"
+    },
+    {
+      "id": "end-ordovician-extinction",
+      "label": "End-Ordovician mass extinction",
+      "tMin": 440000000.0,
+      "tMax": 445000000.0,
+      "importance": 0.8,
+      "description": "One of the \"Big Five\" mass extinctions, eliminating roughly 85% of marine species in two pulses: a first pulse tied to rapid Gondwanan glaciation and sea-level fall, a second later in the Hirnantian, tied to widespread ocean anoxia and euxinia that persisted into the earliest Silurian. Bracketing dates carry real uncertainty; the two-pulse structure is well established.\n",
+      "citation": "Sheehan, P.M. (2001). \"The Late Ordovician Mass Extinction.\" Annual Review of Earth and Planetary Sciences, 29(1), 331-364. Stockey, R.G. et al. (2020). \"Persistent global marine euxinia in the early Silurian.\" Nature Communications, 11(1), 1804.\n"
+    },
+    {
+      "id": "land-plants",
+      "label": "Land plants colonise land",
+      "tMin": 425000000.0,
+      "tMax": 470000000.0,
+      "importance": 0.8,
+      "description": "Embryophytes (land plants) colonise the terrestrial surface. Contested: the oldest fossil evidence is liverwort-like cryptospores at ~470 Ma (Dapingian, Ordovician), while the oldest unambiguous vascular macrofossils (Cooksonia) are ~425 Ma (Silurian).\n",
+      "citation": "Rubinstein, C.V. et al. (2010). \"Early Middle Ordovician evidence for land plants in Argentina (eastern Gondwana).\" New Phytologist, 188(2), 365-369. Edwards, D., Fanning, U. & Richardson, J.B. (1994) for Cooksonia macrofossils, Silurian, ~425 Ma.\n"
+    },
+    {
+      "id": "great-ordovician-biodiversification",
+      "label": "Great Ordovician Biodiversification Event",
+      "tMin": 467330000.0,
+      "tMax": 497050000.0,
+      "importance": 0.6,
+      "description": "Marine animal diversity rises sharply through the Ordovician as reef-building, suspension-feeding and pelagic clades radiate, tripling the number of marine families and replacing the sparser Cambrian fauna with a richer, more modern-looking Paleozoic one. Neither instantaneous nor globally synchronous — different clades diversify at different times in different places.\n",
+      "citation": "Fan, J. et al. (2020). \"A high-resolution summary of Cambrian to Early Triassic marine invertebrate biodiversity.\" Science, 367(6475), 272-277.\n"
+    },
+    {
+      "id": "cambrian-explosion",
+      "label": "Cambrian explosion",
+      "tMin": 521000000.0,
+      "tMax": 538800000.0,
+      "importance": 1.0,
+      "description": "Most modern animal phyla appear in the fossil record within a geologically short interval at the base of the Cambrian, as hard skeletons, complex eyes and burrowing behaviour become widespread for the first time.\n",
+      "citation": "Base of the Cambrian System (Ediacaran-Cambrian boundary, Fortune Head GSSP, Newfoundland) = 538.8 +/- 0.2 Ma, per the ICS International Chronostratigraphic Chart v2024/12. Erwin, D.H. & Valentine, J.W. (2013). The Cambrian Explosion: The Construction of Animal Biodiversity. Roberts and Company (main diversification pulse ends within Cambrian Stage 3, ~521 Ma).\n"
+    },
+    {
+      "id": "ediacaran-biota",
+      "label": "Ediacaran biota",
+      "tMin": 538800000.0,
+      "tMax": 571000000.0,
+      "importance": 0.75,
+      "description": "The Ediacara Biota — the first macroscopic, complex, soft-bodied multicellular organisms — appear worldwide (Avalon assemblage, ~571 Ma) and persist until the Ediacaran-Cambrian boundary. The interval here spans the biota's known stratigraphic range, not date uncertainty about a single origin event.\n",
+      "citation": "Narbonne, G.M. (2005). \"The Ediacara Biota: Neoproterozoic origin of animals and their ecosystems.\" Annual Review of Earth and Planetary Sciences, 33, 421-442. Top of Ediacaran Period (Fortune Head GSSP) = 538.8 +/- 0.2 Ma per the ICS International Chronostratigraphic Chart v2024/12.\n"
+    },
+    {
+      "id": "snowball-earth",
+      "label": "Snowball Earth glaciations",
+      "tMin": 635000000.0,
+      "tMax": 720000000.0,
+      "importance": 0.85,
+      "description": "Two near-global glaciations — the Sturtian (~717-660 Ma) and Marinoan (~650-635 Ma) — bracket the Cryogenian Period, with geological evidence of ice reaching equatorial latitudes (\"Snowball Earth\"). Onset and termination ages carry real uncertainty.\n",
+      "citation": "Prave, A.R. et al. (2016). \"A new rock-based definition for the Cryogenian Period (circa 720-635 Ma).\" Episodes, 39(2), 1-7. Base and top ages of the Cryogenian System per the ICS International Chronostratigraphic Chart v2024/12. Effect windows: Rooney, A.D., Strauss, J.V., Brandon, A.D. & Macdonald, F.A. (2015). \"A Cryogenian chronology: Two long-lasting synchronous Neoproterozoic glaciations.\" Geology, 43, 459-462 (Sturtian, 56 Myr). Tasistro-Hart, A.R., Macdonald, F.A., Crowley, J.L. & Schmitz, M.D. (2025). \"Four-million-year Marinoan snowball shows multiple routes to deglaciation.\" PNAS, 122(18), e2418281122 (Marinoan, duration contested).\n",
+      "effect": {
+        "kind": "ice-shell",
+        "windows": [
+          {
+            "tMin": 661000000.0,
+            "tMax": 717000000.0
+          },
+          {
+            "tMin": 635000000.0,
+            "tMax": 639000000.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "first-seaweeds",
+      "label": "Early green seaweeds",
+      "tMin": 790000000.0,
+      "tMax": 1000000000.0,
+      "importance": 0.4,
+      "description": "Proterocladus antiquus, a multicellular chlorophyte (green alga) from the Nanfen Formation, China, is described from over 1,000 specimens showing branching thalli, varied cell shapes and asexual resting spores — a fully multicellular seaweed body plan roughly a billion years old. Red algae (Bangiomorpha, ~1.05 Ga) had already become multicellular slightly earlier.\n",
+      "citation": "Tang, Q., Pang, K., Yuan, X. & Xiao, S. (2020). \"A one-billion-year-old multicellular chlorophyte.\" Nature Ecology & Evolution, 4(4), 543-549.\n"
+    },
+    {
+      "id": "multicellularity-sexual-reproduction",
+      "label": "Complex multicellularity and sex",
+      "tMin": 1030000000.0,
+      "tMax": 1064000000.0,
+      "importance": 0.55,
+      "description": "Bangiomorpha pubescens, a red alga from Arctic Canada, is the oldest fossil with differentiated reproductive cells and complex multicellular organisation — the earliest direct evidence of eukaryotic sexual reproduction.\n",
+      "citation": "Gibson, T.M. et al. (2018). \"Precise age of Bangiomorpha pubescens dates the origin of eukaryotic photosynthesis.\" Geology, 46(2), 135-138. Age 1047 +/- 17 Ma via Re-Os dating.\n"
+    },
+    {
+      "id": "eukaryotes-origin",
+      "label": "Eukaryotes originate",
+      "tMin": 1600000000.0,
+      "tMax": 2100000000.0,
+      "importance": 0.65,
+      "description": "The lineage bearing a nucleus and internal membrane-bound organelles diverges from other life. Contested: candidate fossils (the Francevillian Biota, Gabon) are dated to 2.1 Ga, but the oldest fossils with unambiguous crown-eukaryote features are ~1.6 Ga, closer to molecular-clock estimates for the last eukaryotic common ancestor.\n",
+      "citation": "El Albani, A. et al. (2010). \"Large colonial organisms with coordinated growth in oxygenated environments 2.1 Gyr ago.\" Nature, 466, 100-104 (contested, 2.1 Ga). Bengtson, S. et al. (2017). \"Three-dimensional preservation of cellular and subcellular structures suggests 1.6 billion-year-old crown-group red algae.\" PLOS Biology, 15(3), e2000735.\n"
+    },
+    {
+      "id": "great-oxidation-event",
+      "label": "Great Oxidation Event",
+      "tMin": 2100000000.0,
+      "tMax": 2400000000.0,
+      "importance": 0.95,
+      "description": "Atmospheric oxygen rises by orders of magnitude as cyanobacterial photosynthesis overwhelms reducing sinks in the crust and ocean — the first permanent oxygenation of Earth's atmosphere, ending the anoxic Archean.\n",
+      "citation": "Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). \"The rise of oxygen in Earth's early ocean and atmosphere.\" Nature, 506, 307-315.\n"
+    },
+    {
+      "id": "banded-iron-formations",
+      "label": "Banded iron formations peak",
+      "tMin": 1850000000.0,
+      "tMax": 2800000000.0,
+      "importance": 0.35,
+      "description": "Dissolved iron in the anoxic Archean ocean is oxidised by cyanobacterial oxygen and precipitates as banded iron formations, the main geochemical record of early oxygenation. Deposition peaks in the late Archean (2.8-2.5 Ga) with a second pulse around 1.85 Ga, after which the deposits largely stop — marking, it is generally argued, when the deep ocean itself finally became oxygenated.\n",
+      "citation": "Cloud, P. (1973). \"Paleoecological Significance of the Banded Iron-Formation.\" Economic Geology, 68(7), 1135-1143. Holland, H.D. (2006). \"The oxygenation of the atmosphere and oceans.\" Philosophical Transactions of the Royal Society B, 361(1470), 903-915.\n"
+    },
+    {
+      "id": "origin-of-photosynthesis",
+      "label": "Oxygenic photosynthesis evolves",
+      "tMin": 2430000000.0,
+      "tMax": 3400000000.0,
+      "importance": 0.55,
+      "description": "Cyanobacteria evolve oxygen-releasing (oxygenic) photosynthesis, the innovation that eventually oxygenates the atmosphere. It must predate the Great Oxidation Event (onset ~2.46-2.43 Ga), and most estimates put cyanobacteria at 2.7 Ga or earlier. Claims pushing the origin to ~3.4-3.0 Ga rest on disputed biomarkers and stromatolite evidence, so the upper bound is contested.\n",
+      "citation": "Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). \"The rise of oxygen in Earth's early ocean and atmosphere.\" Nature, 506, 307-315. Gumsley, A.P. et al. (2017). \"Timing and tempo of the Great Oxidation Event.\" PNAS, 114(8), 1811-1816.\n"
+    },
+    {
+      "id": "first-life",
+      "label": "Earliest evidence of life",
+      "tMin": 3400000000.0,
+      "tMax": 4100000000.0,
+      "importance": 1.0,
+      "description": "The oldest markers of biological activity on Earth. Contested and wide: robust stromatolite and microfossil evidence is secure at ~3.4-3.5 Ga (Pilbara, Australia), while claims of biogenic carbon in 4.1 Ga zircons and in 3.7-3.8 Ga Isua (Greenland) metasediments remain disputed and lack scientific consensus.\n",
+      "citation": "Allwood, A.C. et al. (2006). \"Stromatolite reef from the Early Archaean era of Australia.\" Nature, 441, 714-718 (~3.43 Ga, robust). Bell, E.A. et al. (2015). \"Potentially biogenic carbon preserved in a 4.1 billion-year-old zircon.\" PNAS, 112(47), 14518-14521 (contested upper bound).\n"
+    },
+    {
+      "id": "moon-forming-impact",
+      "label": "Moon-forming impact",
+      "tMin": 4350000000.0,
+      "tMax": 4520000000.0,
+      "importance": 0.9,
+      "description": "A Mars-sized protoplanet collides with the young Earth; debris from the collision accretes into the Moon. Contested: Hf-W and zircon U-Pb dating place the event at 4.51-4.52 Ga, but a 2024 tidal-remelting model argues most lunar rock ages instead record a later heating event around 4.35 Ga rather than the original crystallisation age, so the two camps disagree on which age the rock record actually preserves.\n",
+      "citation": "Barboni, M. et al. (2017). \"Early formation of the Moon 4.51 billion years ago.\" Science Advances, 3, e1602365. Contested by: Nimmo, F., Kleine, T. & Morbidelli, A. (2024). \"Tidally driven remelting around 4.35 billion years ago indicates the Moon is old.\" Nature, 636, 598-602.\n",
+      "effect": {
+        "kind": "giant-impact",
+        "windows": [
+          {
+            "tMin": 4350000000.0,
+            "tMax": 4520000000.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "earth-formation",
+      "label": "Earth forms",
+      "tMin": 4490000000.0,
+      "tMax": 4590000000.0,
+      "importance": 1.0,
+      "description": "Earth accretes from the solar nebula and differentiates into a metallic core and silicate mantle. Radiometric ages of the oldest meteorites and terrestrial/lunar samples converge on 4.54 +/- 0.05 Ga for the completion of accretion.\n",
+      "citation": "Dalrymple, G.B. (2001). \"The age of the Earth in the twentieth century: a problem (mostly) solved.\" Geological Society, London, Special Publications, 190, 205-221.\n"
+    }
+  ],
+  "credits": [
+    {
+      "sourceId": "astronomy",
+      "title": "Earth's Day Length, Lunar Distance, Solar Luminosity and Obliquity",
+      "citation": "Gough, D.O. (1981) 'Solar interior structure and luminosity variations', Solar Physics 74, 21-34. Williams, G.E. (2000) 'Geological constraints on the Precambrian history of Earth's rotation and the Moon's orbit', Reviews of Geophysics 38(1), 37-59. Mitchell, R.N. & Kirscher, U. (2023) 'Mid-Proterozoic day length stalled by tidal resonance', Nature Geoscience 16, 567-569. Lantink, M.L., Davies, J.H.F.L., Ovtcharova, M. & Hilgen, F.J. (2022) 'Milankovitch cycles in banded iron formations constrain the Earth-Moon system 2.46 billion years ago', PNAS 119(40), e2117146119. Laskar, J., Robutel, P., Joutel, F., Gastineau, M., Correia, A.C.M. & Levrard, B. (2004) 'A long-term numerical solution for the insolation quantities of the Earth', Astronomy & Astrophysics 428, 261-285. Full per-checkpoint citations in README.md.",
+      "licence": "N/A -- no dataset redistributed. Values are computed from published closed-form formulae and cited point measurements; see README.md for the citation attached to every checkpoint.",
+      "url": ""
+    },
+    {
+      "sourceId": "co2-o2",
+      "title": "GEOCARB III: Phanerozoic Atmospheric CO2",
+      "citation": "Berner, R.A. and Z. Kothavala, 2001. GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204.",
+      "licence": "US public domain (NOAA/NGDC Paleoclimatology Program)",
+      "url": "https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt"
+    },
+    {
+      "sourceId": "events-core",
+      "title": "Curated Earth History Events",
+      "citation": "Every event in data/events.yaml carries its own specific citation. This manifest's citation covers only the ICS International Chronostratigraphic Chart v2024/12, stratigraphy.org, used as a boundary-dating reference.",
+      "licence": "CC0 (Wikidata candidate pool, unused here) + ICS chart free-for-research/non-commercial-use-with-attribution (not modified beyond resizing) + per-event literature citations retain their own copyright, paraphrased not copied — see README.md",
+      "url": "https://stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf"
+    },
+    {
+      "sourceId": "globe-regimes",
+      "title": "Pre-1 Ga Globe Regimes",
+      "citation": "Every regime in data/globe_regimes.yaml carries its own specific citation. See README.md for the full source list.",
+      "licence": "N/A -- no dataset redistributed. Every regime is a literature-cited interval, hand-curated directly into data/globe_regimes.yaml; see README.md for the full citation list.",
+      "url": ""
+    },
+    {
+      "sourceId": "lineage",
+      "title": "The Ancestor Lineage: LUCA to Homo sapiens",
+      "citation": "Every node in data/lineage.yaml carries its own specific citation. Principal syntheses used across multiple adjacent nodes: Betts, H.C. et al. (2018) Nature Ecology & Evolution 2, 1556-1562 (early life); dos Reis, M. et al. (2015) Current Biology 25(22), 2939-2950 (animal origins); dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (placental mammal timescale); Chatterjee, H.J. et al. (2009) BMC Evolutionary Biology 9, 259 (primate divergence times).",
+      "licence": "CC BY 4.0 (this compilation); dates are facts cited from the listed publications",
+      "url": ""
+    },
+    {
+      "sourceId": "paleodem",
+      "title": "PALEOMAP PaleoDEMs (Scotese & Wright 2018) -- 1-degree, 0-540 Ma",
+      "citation": "Scotese, C.R. and Wright, N.M. (2018). PALEOMAP Paleodigital Elevation Models (PaleoDEMs) for the Phanerozoic. PALEOMAP Project. Dataset, Zenodo. https://doi.org/10.5281/zenodo.5460860",
+      "licence": "CC BY 4.0",
+      "url": "https://zenodo.org/api/records/5460860/files/Scotese_Wright_2018_Maps_1-88_1degX1deg_PaleoDEMS_nc.zip/content"
+    },
+    {
+      "sourceId": "plates-neoproterozoic",
+      "title": "Merdith et al. 2021 continental polygons (1000-540 Ma), stylised relief",
+      "citation": "Merdith, A.S., Collins, A.S., Williams, S.E., Pisarevsky, S., Foden, J.D., Archibald, D.B., Blades, M.L., Alessio, B.L., Armistead, S., Plavsa, D., Clark, C. and Muller, R.D. (2021). Extending full-plate tectonic models into deep time: Linking the Neoproterozoic and the Phanerozoic. Earth-Science Reviews 214, 103477. doi:10.1016/j.earscirev.2020.103477. Model: Zenodo 4485738 (CC-BY-4.0).",
+      "licence": "CC BY 4.0",
+      "url": "https://zenodo.org/api/records/4485738/files/SM2_4485738_V2.zip/content"
+    }
+  ]
+}

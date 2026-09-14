@@ -112,6 +112,41 @@ describe('validateManifest', () => {
     expect(manifest.scenes[0]?.pinned).toBe('sha256:abc')
     expect(manifest.chapters[0]?.anchorImage).toBe('anchor.svg')
   })
+
+  it('parses an event\'s additive globe effect (docs/GLOBE.md §6)', () => {
+    const withEffect = {
+      ...stubManifest,
+      events: [
+        {
+          id: 'k-pg-impact',
+          label: 'K-Pg impact',
+          tMin: 6.6032e7,
+          tMax: 6.6054e7,
+          importance: 1.0,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'impact-winter',
+            anchor: { lat: 21.3, lon: -89.5 },
+            windows: [{ tMin: 6.6032e7, tMax: 6.6054e7 }],
+          },
+        },
+      ],
+    }
+    const manifest = validateManifest(withEffect)
+    expect(manifest.events[0]?.effect).toEqual({
+      kind: 'impact-winter',
+      anchor: { lat: 21.3, lon: -89.5 },
+      windows: [{ tMin: 6.6032e7, tMax: 6.6054e7 }],
+    })
+  })
+
+  it('leaves effect undefined for an event with no globe visual', () => {
+    const manifest = validateManifest(stubManifest)
+    for (const event of manifest.events) {
+      expect(event.effect).toBeUndefined()
+    }
+  })
 })
 
 // ------------------------------------------------------------------------------- loadManifest
@@ -201,11 +236,31 @@ describe('loadLayerData', () => {
     expect(data).toHaveProperty('nodes')
   })
 
-  it('throws for an events-kind layer instead of fetching', async () => {
-    const eventsEntry = {
-      ...manifest.layers[0]!,
-      dataKind: 'events' as const,
-    }
-    await expect(loadLayerData(manifest, eventsEntry)).rejects.toThrow(/Manifest\.events/)
+  it('dispatches events layers to parseEventsData — docs/GLOBE.md §6, e.g. globe-regimes', async () => {
+    const eventsEntry = { ...manifest.layers[0]!, id: 'globe-regimes', dataKind: 'events' as const, data: 'layers/globe-regimes.json' }
+    mockFetchSequence([
+      {
+        url: '/stub/layers/globe-regimes.json',
+        status: 200,
+        body: {
+          id: 'globe-regimes',
+          events: [
+            {
+              id: 'magma-ocean-regime',
+              label: 'Magma ocean',
+              tMin: 4.35e9,
+              tMax: 4.52e9,
+              importance: 0.9,
+              description: 'd',
+              citation: 'c',
+              effect: { kind: 'regime-magma-ocean', windows: [{ tMin: 4.35e9, tMax: 4.52e9 }] },
+            },
+          ],
+        },
+      },
+    ])
+    const data = await loadLayerData(manifest, eventsEntry)
+    expect(data).toHaveProperty('events')
+    expect((data as { events: unknown[] }).events).toHaveLength(1)
   })
 })

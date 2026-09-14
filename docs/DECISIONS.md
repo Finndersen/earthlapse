@@ -370,11 +370,14 @@ impacts, flood basalts.
 - Every stylised or artistic globe state is labelled on the globe itself, extending the
   existing "No reconstruction before 540 Ma" label into a per-regime caption.
 
-**Contract changes these later phases need (all additive, not made yet).**
+**Contract changes these later phases need (all additive).**
 - `pipeline/shapes.py` `Event` and `web/src/types/layer.ts` `TimelineEvent`: optional
-  `effect`.
+  `effect`. **Made (G5, GLOBE.md §6):** `GlobeEffect`/`GlobeEffectKind`/`EffectAnchor`/
+  `EffectWindow` in `pipeline/shapes.py`, twinned in `web/src/types/layer.ts`; wired through
+  `pipeline/manifest.py`/`pipeline/publish.py` into both `Manifest.events` and the new
+  `globe-regimes` `dataKind: "events"` layer.
 - `pipeline/models.py` `PlateSnapshot`: optional `plate_ids` / `plate_rotations`
-  `RasterBlend` fields.
+  `RasterBlend` fields. Not made yet (G3/G4).
 - `web/src/app/buildLayers.ts` currently takes "the manifest's one raster layer". It must
   select raster layers by id once there are several. This is not a type change, but the
   globe's owner has to coordinate it with the app shell.

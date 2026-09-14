@@ -1,0 +1,39 @@
+# A small REAL slice of data/globe_regimes.yaml, committed for offline reference and any
+# future fixture-driven test. Not read by normalise.py — see its module docstring:
+# normalise() always parses the real data/globe_regimes.yaml, per the same working
+# convention as sources/events-core/fixture/events.yaml. Kept in the same schema so a test
+# can load it the same way as data/globe_regimes.yaml.
+
+events:
+  - id: magma-ocean-regime
+    label: Magma ocean and newborn Moon
+    t_min: 4.35e9
+    t_max: 4.52e9
+    importance: 0.9
+    description: >
+      The freshly accreted Earth, its surface a crust of cooling magma cracked by heat from
+      the Moon-forming impact, with the newly formed Moon still close and large in the sky.
+      Same contested date range as the `moon-forming-impact` event in events-core.
+    citation: >
+      Barboni, M. et al. (2017). "Early formation of the Moon 4.51 billion years ago."
+      Science Advances, 3, e1602365.
+    effect:
+      kind: regime-magma-ocean
+      windows:
+        - {t_min: 4.35e9, t_max: 4.52e9}
+
+  - id: paleoproterozoic-glaciation-regime
+    label: Paleoproterozoic glaciation
+    t_min: 2.426e9
+    t_max: 2.46e9
+    importance: 0.5
+    description: >
+      The first Paleoproterozoic global glaciation. Onset is dated to 2.46-2.426 Ga; global
+      extent is contested. Rendered with the same ice-shell effect as Snowball Earth.
+    citation: >
+      Gumsley, A.P. et al. (2017). "Timing and tempo of the Great Oxidation Event." PNAS,
+      114(8), 1811-1816.
+    effect:
+      kind: ice-shell
+      windows:
+        - {t_min: 2.426e9, t_max: 2.46e9}

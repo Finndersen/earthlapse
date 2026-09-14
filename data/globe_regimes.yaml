@@ -1,0 +1,119 @@
+# globe-regimes — the pre-1 Ga globe EventSet (EventSet "globe-regimes"), docs/GLOBE.md §4.2
+# and §6. Hand-curated source of truth, exactly like data/events.yaml is for events-core: this
+# file IS the data; sources/globe-regimes/normalise.py only parses and validates it into
+# pipeline.shapes.EventSet.
+#
+# This EventSet is NEVER listed on the timeline (docs/GLOBE.md §6): it carries no landmark
+# moments, only the coarse "regimes" the globe shows before any plate reconstruction exists
+# (before the Merdith et al. 2021 model's 1 Ga start). It publishes as an ordinary
+# dataKind="events" layer instead of going through Manifest.events — see
+# pipeline/publish.py's EVENT_LAYERS / GLOBE_REGIMES_ID.
+#
+# Time convention: t_min/t_max are years BEFORE PRESENT (GeoTime, see pipeline/shapes.py),
+# t_min nearer the present. Every regime's boundaries are soft (docs/GLOBE.md §4.2: "long
+# crossfades, never a hard switch") and several are contested, as noted in each description.
+#
+# Every date is verified against its citation, not invented, per this project's "an LLM must
+# not be the source of truth for dates" rule — see sources/globe-regimes/README.md.
+
+events:
+  - id: magma-ocean-regime
+    label: Magma ocean and newborn Moon
+    t_min: 4.35e9
+    t_max: 4.52e9
+    importance: 0.9
+    description: >
+      The freshly accreted Earth, its surface a crust of cooling magma cracked by heat from
+      the Moon-forming impact, with the newly formed Moon still close and large in the sky.
+      Same contested date range as the `moon-forming-impact` event in events-core: Hf-W and
+      zircon U-Pb dating place the impact at 4.51-4.52 Ga, while a 2024 tidal-remelting model
+      argues the lunar rock record instead reflects a later heating event around 4.35 Ga.
+    citation: >
+      Barboni, M. et al. (2017). "Early formation of the Moon 4.51 billion years ago."
+      Science Advances, 3, e1602365. Thiemens, M.M. et al. (2019). "Early Moon formation
+      inferred from hafnium-tungsten systematics." Nature Geoscience, 12, 696-700. Contested
+      by: Nimmo, F., Kleine, T. & Morbidelli, A. (2024). "Tidally driven remelting around
+      4.35 billion years ago indicates the Moon is old." Nature, 636, 598-602.
+    effect:
+      kind: regime-magma-ocean
+      windows:
+        - {t_min: 4.35e9, t_max: 4.52e9}
+
+  - id: hadean-water-world-regime
+    label: Hadean water world
+    t_min: 4.0e9
+    t_max: 4.4e9
+    importance: 0.7
+    description: >
+      A global ocean under a steam-veiled atmosphere, no continents yet drawn. Detrital
+      zircons from the Jack Hills, Australia, are the earliest evidence for continental crust
+      and liquid-water oceans, dated to 4.4 Gyr ago — this regime's upper (older) bound is
+      therefore a "by this date" bound, not a moment of origin.
+    citation: >
+      Wilde, S.A., Valley, J.W., Peck, W.H. & Graham, C.M. (2001). "Evidence from detrital
+      zircons for the existence of continental crust and oceans on the Earth 4.4 Gyr ago."
+      Nature, 409, 175-178.
+    effect:
+      kind: regime-water-world
+      windows:
+        - {t_min: 4.0e9, t_max: 4.4e9}
+
+  - id: archean-haze-regime
+    label: Archean haze, scattered protocrust
+    t_min: 2.4e9
+    t_max: 4.0e9
+    importance: 0.6
+    description: >
+      An anoxic ocean world with small scattered flecks of protocrust at procedural
+      positions (no plate reconstruction exists this far back). The atmosphere stays anoxic
+      until the Great Oxidation Event (onset 2.46-2.43 Ga). An orange-tan organic haze has
+      been proposed for episodes of the Neoarchean; this is contested and shown only as an
+      occasional tint, not a permanent state.
+    citation: >
+      Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). "The rise of oxygen in Earth's
+      early ocean and atmosphere." Nature, 506, 307-315. Zerkle, A.L. et al. (2012). "A
+      bistable organic-rich atmosphere on the Neoarchaean Earth." Nature Geoscience, 5,
+      359-363 (haze episodes, contested).
+    effect:
+      kind: regime-archean
+      windows:
+        - {t_min: 2.4e9, t_max: 4.0e9}
+
+  - id: paleoproterozoic-glaciation-regime
+    label: Paleoproterozoic glaciation
+    t_min: 2.426e9
+    t_max: 2.46e9
+    importance: 0.5
+    description: >
+      The first Paleoproterozoic global glaciation, dated by the Ongeluk Formation
+      (South Africa) and correlated units. Onset is dated to 2.46-2.426 Ga; global extent
+      (a true "Snowball Earth" versus a regional ice age) is contested, unlike the
+      better-constrained Cryogenian glaciations. Rendered with the same ice-shell effect as
+      Snowball Earth (docs/GLOBE.md §4.3), captioned "extent contested".
+    citation: >
+      Gumsley, A.P. et al. (2017). "Timing and tempo of the Great Oxidation Event." PNAS,
+      114(8), 1811-1816 ("first Paleoproterozoic global glaciation").
+    effect:
+      kind: ice-shell
+      windows:
+        - {t_min: 2.426e9, t_max: 2.46e9}
+
+  - id: proterozoic-unknown-geography-regime
+    label: Proterozoic, geography unknown
+    t_min: 1.0e9
+    t_max: 2.4e9
+    importance: 0.5
+    description: >
+      A dim land/sea noise field captioned "geography unknown" — no plate reconstruction
+      covers this span. It closes the gap between the end of Archean-haze coverage and the
+      1 Ga start of the Merdith et al. 2021 plate model, which is what makes true
+      reconstructed continents possible again from 1000 Ma onward (docs/GLOBE.md §4.1).
+    citation: >
+      Merdith, A.S. et al. (2021). "Extending full-plate tectonic models into deep time:
+      Linking the Neoproterozoic and the Phanerozoic." Earth-Science Reviews, 214, 103477
+      (model coverage begins at 1000 Ma). Gumsley, A.P. et al. (2017). PNAS, 114(8),
+      1811-1816 (Great Oxidation Event onset, ~2.4 Ga, bounds this regime's older edge).
+    effect:
+      kind: regime-unknown-geography
+      windows:
+        - {t_min: 1.0e9, t_max: 2.4e9}

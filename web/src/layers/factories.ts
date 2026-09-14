@@ -6,9 +6,9 @@
  * pure function of `t`.
  */
 
-import { sampleSeries, sampleTree } from '@/data/curated'
-import type { SeriesData, TreeData } from '@/data/curated'
-import type { GeoTime, Layer, NodeValue, ScalarValue } from '@/types/layer'
+import { sampleEvents, sampleSeries, sampleTree } from '@/data/curated'
+import type { EventsData, SeriesData, TreeData } from '@/data/curated'
+import type { EventsValue, GeoTime, Layer, NodeValue, ScalarValue } from '@/types/layer'
 import type { LayerManifest } from '@/types/manifest'
 
 import { indexPortraits, portraitAt } from './portraits'
@@ -61,6 +61,27 @@ export function createNodeLayer(entry: LayerManifest, data: TreeData): Layer<Nod
       if (node === null || portraits === null) return node
       const portrait = portraitAt(portraits, t)
       return portrait === null ? node : { ...node, portrait }
+    },
+  }
+}
+
+/**
+ * Wraps a curated non-timeline `EventsData` (docs/GLOBE.md §6, e.g. `globe-regimes`) as a
+ * `Layer<EventsValue>`. `sample(t)` is every event active at `t` (see `sampleEvents`) — an
+ * empty list is a legitimate value (nothing active right now), not "no data"; only outside
+ * `entry.timeDomain` does this return `null`.
+ */
+export function createEventsLayer(entry: LayerManifest, data: EventsData): Layer<EventsValue> {
+  return {
+    id: entry.id,
+    name: entry.name,
+    timeDomain: entry.timeDomain,
+    surface: entry.surface,
+    source: entry.source,
+    chartable: entry.chartable,
+    sample(t: GeoTime): EventsValue | null {
+      if (!withinTimeDomain(entry.timeDomain, t)) return null
+      return sampleEvents(data, t)
     },
   }
 }
