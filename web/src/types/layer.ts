@@ -145,12 +145,25 @@ export interface TimeScale {
   domain: [GeoTime, GeoTime]
 }
 
+/**
+ * Two playback modes (ADR-016), sharing one `speed` multiplier:
+ * - `'scenes'` (default) — the playhead paces itself so every scene gap takes the same
+ *   wall-clock time to cross regardless of how many years it spans, plus a small bonus for
+ *   gaps that cover a lot of the timeline. See `scene/pacing.ts`'s `scenePlaybackSegments`
+ *   and `timeline/playback.ts`'s `advancePlayhead`.
+ * - `'steady'` — constant velocity in the full-domain scale of whichever `ScaleKind` is
+ *   currently selected (symlog by default; linear when the linear toggle is on). No pacing.
+ */
+export type PlaybackMode = 'scenes' | 'steady'
+
 /** Playback advances at constant velocity in *warped* space — constant events per second,
  *  not years per second. A linear playthrough would spend 99.98% of its runtime in the
  *  Proterozoic. Speed control is a multiplier on this and nothing else changes. */
 export interface Playback {
   playing: boolean
-  /** Screen-space units per second, before the speed multiplier. */
+  /** Screen-space units per second, before the speed multiplier. Used directly in `'steady'`
+   *  mode and as the flat rate outside every scene's span in `'scenes'` mode. */
   baseRate: number
   speed: number
+  mode: PlaybackMode
 }

@@ -24,6 +24,7 @@ import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
 import {
   advancePlayhead,
+  createLinearScale,
   createSymlogScale,
   eraNameForTime,
   followWindow,
@@ -41,12 +42,26 @@ import { buildLayers } from './buildLayers'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
-/** The full-domain symlog `TimeScale`, shared by the two things in this component that must
- *  not track the timeline's current zoom/scale-kind: `advancePlayhead`'s pacing (its own
- *  contract — playback speed is independent of zoom) and the HUD sparklines (a trend line
- *  that reads as a fixed miniature of all of history, not a mirror of the user's current
- *  zoom). Module scope: one stable `TimeScale`, computed once, not per render. */
-const FULL_DOMAIN_SCALE: TimeScale = createSymlogScale([0, EARTH_FORMATION])
+/** The full-domain *symlog* `TimeScale`, shared by the three things in this component that
+ *  must not track the timeline's current zoom/scale-kind: `advancePlayhead`'s `'scenes'`-mode
+ *  pacing (always symlog, per ADR-016 — a scene's dwell/dissolve durations don't change when
+ *  the user flips the linear toggle), `'steady'`-mode playback while symlog is selected, and
+ *  the HUD sparklines (a trend line that reads as a fixed miniature of all of history, not a
+ *  mirror of the user's current zoom). Module scope: one stable `TimeScale`, computed once,
+ *  not per render. */
+const FULL_DOMAIN_SYMLOG_SCALE: TimeScale = createSymlogScale([0, EARTH_FORMATION])
+
+/** The full-domain *linear* `TimeScale` — only ever used for `'steady'`-mode playback while
+ *  the linear toggle is on (ADR-016: "constant velocity in the full-domain scale of the
+ *  CURRENTLY SELECTED scale kind"). Module scope for the same reason as its symlog sibling. */
+const FULL_DOMAIN_LINEAR_SCALE: TimeScale = createLinearScale([0, EARTH_FORMATION])
+
+/** Time constant, seconds, for smoothing the instantaneous years-per-second rate readout
+ *  (ADR-016's prototype) into something that doesn't flicker every frame — an exponential
+ *  moving average, `alpha = min(1, dtSeconds / this)` per frame. Small enough that the readout
+ *  still catches up to a speed change within about a second, large enough to hide per-frame
+ *  jitter from `requestAnimationFrame`'s own irregular deltas. */
+const RATE_SMOOTHING_SECONDS = 0.5
 
 /** How long playback runs untouched before the periphery HUD recedes (idle calm). */
 const IDLE_CALM_MS = 3000
@@ -72,6 +87,7 @@ export function Experience() {
   const playback = useTimeStore((s) => s.playback)
   const setPlaying = useTimeStore((s) => s.setPlaying)
   const setSpeed = useTimeStore((s) => s.setSpeed)
+  const setPlaybackMode = useTimeStore((s) => s.setPlaybackMode)
   const globeExpanded = useTimeStore((s) => s.globeExpanded)
   const setGlobeExpanded = useTimeStore((s) => s.setGlobeExpanded)
   const expandedChartLayerId = useTimeStore((s) => s.expandedChartLayerId)
@@ -124,21 +140,50 @@ export function Experience() {
     setInitialised(true)
   }, [data, initialised, setT])
 
-  // Playback pacing (ADR-012 update — `scene/pacing.ts`): the wall-clock durations the
-  // playhead itself must spend crossing each scene and each dissolve, so the picture stays a
-  // pure function of `t` throughout playback. Memoised so it's only recomputed when the
-  // manifest's scenes change, not every frame.
-  const pacing = useMemo(
+  // Playback pacing for 'scenes' mode (ADR-016 — `scene/pacing.ts`): the wall-clock durations
+  // the playhead spends crossing each scene and each dissolve, so the picture stays a pure
+  // function of `t` throughout 'scenes'-mode playback. Memoised so it's only recomputed when
+  // the manifest's scenes change, not every frame. `advancePlayhead` ignores this entirely in
+  // 'steady' mode, so it's harmless (if wasted) to always compute it rather than branch here.
+  const scenesPacing = useMemo(
     () => (data.status === 'ready' ? scenePlaybackSegments(data.manifest.scenes) : []),
     [data],
   )
 
-  // The playback loop (DESIGN §3): the one place `t` advances on its own. Always paced by the
-  // full-domain scale, per `advancePlayhead`'s contract, so speed is independent of zoom.
+  // ADR-016: 'scenes' mode always paces in full-domain *symlog* u, regardless of the display
+  // toggle; 'steady' mode moves at constant velocity in the full-domain scale of whichever
+  // ScaleKind is currently selected.
+  const playbackFullScale =
+    playback.mode === 'steady' && timelineScaleKind === 'linear' ? FULL_DOMAIN_LINEAR_SCALE : FULL_DOMAIN_SYMLOG_SCALE
+
+  // The rate readout beside the Transport mode toggle (ADR-016's prototype): the instantaneous
+  // years-per-second `t` is advancing at, smoothed (`RATE_SMOOTHING_SECONDS`) so it doesn't
+  // flicker every frame. `null` while not playing, so `Transport` shows nothing and a later
+  // resume doesn't ease in from a stale figure.
+  const [ratePerSecond, setRatePerSecond] = useState<number | null>(null)
+  const smoothedRateRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (!playback.playing) {
+      smoothedRateRef.current = null
+      setRatePerSecond(null)
+    }
+  }, [playback.playing])
+
+  // The playback loop (DESIGN §3): the one place `t` advances on its own. Always paced by a
+  // *full-domain* scale (never the current window's), per `advancePlayhead`'s contract, so
+  // playback speed is independent of zoom.
   usePlaybackLoop({
     playing: playback.playing,
     onFrame: (dtSeconds) => {
-      const next = advancePlayhead(t, dtSeconds, playback, FULL_DOMAIN_SCALE, pacing)
+      const next = advancePlayhead(t, dtSeconds, playback, playbackFullScale, scenesPacing)
+
+      const instantaneous = dtSeconds > 0 ? Math.abs(t - next) / dtSeconds : 0
+      const alpha = Math.min(1, dtSeconds / RATE_SMOOTHING_SECONDS)
+      const previousRate = smoothedRateRef.current ?? instantaneous
+      const smoothedRate = previousRate + (instantaneous - previousRate) * alpha
+      smoothedRateRef.current = smoothedRate
+      setRatePerSecond(smoothedRate)
+
       if (next === 0) {
         // Reached the present: stop cleanly rather than spend every subsequent frame
         // computing a no-op clamp against a "playing" flag that never advances anything.
@@ -301,8 +346,10 @@ export function Experience() {
           onPlaybackChange={(next) => {
             setPlaying(next.playing)
             setSpeed(next.speed)
+            setPlaybackMode(next.mode)
           }}
           following={following}
+          ratePerSecond={ratePerSecond}
         />
       }
     />
@@ -333,7 +380,7 @@ interface HudSparklineProps {
  *  which never reaches here — see `isClockLayer`) render the same sparkline without a
  *  click handler. */
 function HudSparkline({ layer, t, entryId, chartable, expanded, onToggle }: HudSparklineProps) {
-  const sparkline = <Sparkline layer={layer} t={t} scale={FULL_DOMAIN_SCALE} />
+  const sparkline = <Sparkline layer={layer} t={t} scale={FULL_DOMAIN_SYMLOG_SCALE} />
   if (!chartable) return <div className={styles.sparkline}>{sparkline}</div>
   return (
     <button

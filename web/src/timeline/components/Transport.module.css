@@ -59,3 +59,43 @@
   color: var(--hud-ink, #efe9dc);
   outline: none;
 }
+
+.modeToggle {
+  display: flex;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.modeButton {
+  background: transparent;
+  border: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+.modeButton:hover,
+.modeButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.modeButton[aria-pressed='true'] {
+  color: var(--hud-accent, #e8b06a);
+  background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
+}
+
+.rateReadout {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}

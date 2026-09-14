@@ -12,8 +12,8 @@
  * - `onWindowChange(window)` fires from wheel-zooming/panning the scrub track or dragging the
  *   minimap bracket — every *immediate*, continuous-gesture window change.
  * - `onScaleKindChange(kind)` fires from the symlog/linear toggle button.
- * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, and the
- *   space-bar shortcut.
+ * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, the
+ *   scenes/steady mode toggle (ADR-016), and the space-bar shortcut.
  * - `scale` is the animated `TimeScale` over `window` (`useAnimatedScale(window, scaleKind)`),
  *   owned by the caller rather than computed here, so anything else drawn against the same
  *   axis (the expanded `LayerChart` in the chart dock) shares the exact object this component
@@ -91,6 +91,9 @@ export interface TimelineProps {
   onPlaybackChange: (playback: Playback) => void
   /** Whether follow-during-playback is currently engaged (README §4) — display only. */
   following?: boolean
+  /** Instantaneous, smoothed years-per-second `t` is advancing at (ADR-016's prototype rate
+   *  readout) — passed straight through to `Transport`. `null`/omitted shows nothing. */
+  ratePerSecond?: number | null
 }
 
 export function Timeline({
@@ -106,6 +109,7 @@ export function Timeline({
   onScaleKindChange,
   onPlaybackChange,
   following = false,
+  ratePerSecond = null,
 }: TimelineProps) {
   // The first-use hint (brief §2): shown until either dismissed directly or the first
   // successful zoom/pan. Starts hidden and only flips on in an effect (not read synchronously
@@ -205,6 +209,7 @@ export function Timeline({
           playback={playback}
           onScrub={onScrub}
           onPlaybackChange={onPlaybackChange}
+          ratePerSecond={ratePerSecond}
         />
         <div className={styles.minimap}>
           <Minimap t={t} window={visibleWindow} checkpoints={checkpoints} onWindowChange={handleWindowChange} animateWindowTo={animateWindowTo} />

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import type { Scene } from '@/types/manifest'
 
+import { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
 import type { PlaybackSegment } from './pacing'
-import { scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
 import { MIN_TRANSITION_SECONDS } from './presentation'
 import { sceneAt } from './scene'
 
@@ -60,16 +60,16 @@ describe('scenePlaybackSegments: shape and coverage', () => {
     expect(segments[segments.length - 1]!.tOlder).toBe(s3.t)
   })
 
-  it('gives the hold segments SCENE_DWELL_SECONDS / 2 and the dissolve band MIN_TRANSITION_SECONDS', () => {
+  it('gives the dissolve band exactly MIN_TRANSITION_SECONDS regardless of the gap — the bonus never touches it', () => {
     for (let gap = 0; gap < scenes.length - 1; gap++) {
-      const [held, dissolve, held2] = segments.slice(gap * 3, gap * 3 + 3) as [
-        PlaybackSegment,
-        PlaybackSegment,
-        PlaybackSegment,
-      ]
-      expect(held.minSeconds).toBe(SCENE_DWELL_SECONDS / 2)
-      expect(dissolve.minSeconds).toBe(MIN_TRANSITION_SECONDS)
-      expect(held2.minSeconds).toBe(SCENE_DWELL_SECONDS / 2)
+      const dissolve = segments[gap * 3 + 1]!
+      expect(dissolve.durationSeconds).toBe(MIN_TRANSITION_SECONDS)
+    }
+  })
+
+  it('gives every hold segment at least SCENE_DWELL_SECONDS / 2 (the base dwell, before any bonus)', () => {
+    for (const seg of [...segments.filter((_, i) => i % 3 !== 1)]) {
+      expect(seg.durationSeconds).toBeGreaterThanOrEqual(SCENE_DWELL_SECONDS / 2)
     }
   })
 })
@@ -102,7 +102,7 @@ describe('scenePlaybackSegments: band edges agree with sceneAt', () => {
 })
 
 describe('scenePlaybackSegments: per-scene dwell split across neighbouring gaps', () => {
-  it('an interior scene gets SCENE_DWELL_SECONDS total, split 50/50 across its two gaps', () => {
+  it('an interior scene\'s two neighbouring holds sum to SCENE_DWELL_SECONDS plus half of each gap\'s own bonus', () => {
     const scenes = [s0, s1, s2, s3]
     const segments = scenePlaybackSegments(scenes)
     // s1 is scenes[1]: the "newer hold" of gap(0,1) plus the "older hold" of gap(1,2).
@@ -110,7 +110,10 @@ describe('scenePlaybackSegments: per-scene dwell split across neighbouring gaps'
     const olderHoldForS1 = segments[3]! // first segment of gap(1,2): [s1.t, bandNewerEdge]
     expect(newerHoldForS1.tOlder).toBe(s1.t)
     expect(olderHoldForS1.tNewer).toBe(s1.t)
-    expect(newerHoldForS1.minSeconds + olderHoldForS1.minSeconds).toBe(SCENE_DWELL_SECONDS)
+    // Each hold is at least the base half-dwell; the total is exactly SCENE_DWELL_SECONDS
+    // only when both neighbouring gaps happen to have zero bonus, so assert the floor rather
+    // than an exact figure here — the dedicated bonus tests below pin the bonus itself down.
+    expect(newerHoldForS1.durationSeconds + olderHoldForS1.durationSeconds).toBeGreaterThanOrEqual(SCENE_DWELL_SECONDS)
   })
 
   it('the newest scene has no outer half (no segment before scenes[0].t)', () => {
@@ -123,5 +126,60 @@ describe('scenePlaybackSegments: per-scene dwell split across neighbouring gaps'
     const scenes = [s0, s1, s2, s3]
     const segments = scenePlaybackSegments(scenes)
     expect(segments[segments.length - 1]!.tOlder).toBe(s3.t)
+  })
+})
+
+// --------------------------------------------------------------------------- gap bonus (ADR-016)
+
+describe('scenePlaybackSegments: gap bonus (ADR-016)', () => {
+  it('a dense gap (tiny full-domain symlog u-span) gets a bonus indistinguishable from zero', () => {
+    // t=0 to t=1: the smallest possible non-zero gap, deep inside the near-linear region —
+    // its share of the full domain's symlog span is on the order of 1e-5.
+    const dense = [scene('a', 0), scene('b', 1)]
+    const [held] = scenePlaybackSegments(dense)
+    expect(held!.durationSeconds).toBeCloseTo(SCENE_DWELL_SECONDS / 2, 3)
+  })
+
+  it('a gap spanning nearly the whole domain saturates at MAX_GAP_BONUS_SECONDS exactly', () => {
+    // t=1 to EARTH_FORMATION: covers essentially the entire domain, far past the ramp's
+    // saturation point (GAP_BONUS_SATURATION_U = 0.15 of the full domain) — Math.min(1, x)
+    // for x > 1 always returns exactly 1, so this is an exact figure, not an approximation.
+    const vast = [scene('a', 1), scene('b', 4.567e9)]
+    const segments = scenePlaybackSegments(vast)
+    const [newerHold, dissolve, olderHold] = segments as [PlaybackSegment, PlaybackSegment, PlaybackSegment]
+    expect(newerHold.durationSeconds).toBe(SCENE_DWELL_SECONDS / 2 + MAX_GAP_BONUS_SECONDS / 2)
+    expect(olderHold.durationSeconds).toBe(SCENE_DWELL_SECONDS / 2 + MAX_GAP_BONUS_SECONDS / 2)
+    // The bonus never reaches the dissolve band, however vast the gap.
+    expect(dissolve.durationSeconds).toBe(MIN_TRANSITION_SECONDS)
+  })
+
+  it('the bonus never exceeds MAX_GAP_BONUS_SECONDS combined across a gap\'s two holds, for any span', () => {
+    const spans = [1, 10, 1e3, 1e6, 1e9, 4.567e9]
+    for (const t of spans) {
+      const pair = [scene('a', 0), scene('b', t)]
+      const segments = scenePlaybackSegments(pair)
+      const [newerHold, , olderHold] = segments as [PlaybackSegment, PlaybackSegment, PlaybackSegment]
+      const combinedBonus = newerHold.durationSeconds + olderHold.durationSeconds - SCENE_DWELL_SECONDS
+      expect(combinedBonus).toBeGreaterThanOrEqual(-1e-9)
+      expect(combinedBonus).toBeLessThanOrEqual(MAX_GAP_BONUS_SECONDS + 1e-9)
+    }
+  })
+
+  it('the bonus grows monotonically with a gap\'s full-domain symlog u-span', () => {
+    const spans = [1, 1e3, 1e6, 1e9]
+    let previousHold = 0
+    for (const t of spans) {
+      const pair = [scene('a', 0), scene('b', t)]
+      const [held] = scenePlaybackSegments(pair)
+      expect(held!.durationSeconds).toBeGreaterThanOrEqual(previousHold)
+      previousHold = held!.durationSeconds
+    }
+  })
+
+  it('splits a gap\'s bonus evenly across its two neighbouring holds', () => {
+    const pair = [scene('a', 0), scene('b', 1e8)]
+    const segments = scenePlaybackSegments(pair)
+    const [newerHold, , olderHold] = segments as [PlaybackSegment, PlaybackSegment, PlaybackSegment]
+    expect(newerHold.durationSeconds).toBe(olderHold.durationSeconds)
   })
 })

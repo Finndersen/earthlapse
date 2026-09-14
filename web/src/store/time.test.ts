@@ -16,7 +16,7 @@ describe('useTimeStore initial state', () => {
     expect(s.t).toBe(0)
     expect(s.window).toEqual([0, EARTH_FORMATION])
     expect(s.scaleKind).toBe('symlog')
-    expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1 })
+    expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' })
     expect(s.globeExpanded).toBe(false)
     expect(s.expandedChartLayerId).toBeNull()
   })
@@ -69,10 +69,10 @@ describe('scaleKind', () => {
 })
 
 describe('playback actions', () => {
-  it('setPlaying sets playing without touching baseRate/speed', () => {
+  it('setPlaying sets playing without touching baseRate/speed/mode', () => {
     useTimeStore.getState().setSpeed(4)
     useTimeStore.getState().setPlaying(true)
-    expect(useTimeStore.getState().playback).toEqual({ playing: true, baseRate: 0.02, speed: 4 })
+    expect(useTimeStore.getState().playback).toEqual({ playing: true, baseRate: 0.02, speed: 4, mode: 'scenes' })
   })
 
   it('togglePlaying flips the current value', () => {
@@ -85,7 +85,15 @@ describe('playback actions', () => {
 
   it('setSpeed changes only the speed multiplier', () => {
     useTimeStore.getState().setSpeed(10)
-    expect(useTimeStore.getState().playback).toEqual({ playing: false, baseRate: 0.02, speed: 10 })
+    expect(useTimeStore.getState().playback).toEqual({ playing: false, baseRate: 0.02, speed: 10, mode: 'scenes' })
+  })
+
+  it('setPlaybackMode switches between scenes and steady, touching nothing else', () => {
+    useTimeStore.getState().setSpeed(4)
+    useTimeStore.getState().setPlaybackMode('steady')
+    expect(useTimeStore.getState().playback).toEqual({ playing: false, baseRate: 0.02, speed: 4, mode: 'steady' })
+    useTimeStore.getState().setPlaybackMode('scenes')
+    expect(useTimeStore.getState().playback.mode).toBe('scenes')
   })
 })
 

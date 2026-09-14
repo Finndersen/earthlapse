@@ -19,10 +19,11 @@
  * - `step(state, target, dtSeconds)` — rate-limits a *presented* `SceneMix` toward `sceneAt`'s
  *   target, at most `dtSeconds / MIN_TRANSITION_SECONDS` of `mix` per call.
  *   `usePresentedSceneMix(target)` drives it with `requestAnimationFrame`.
- * - `scenePlaybackSegments(scenes)` — the `PlaybackSegment`s (`{ tNewer, tOlder, minSeconds }`)
- *   that `timeline/playback.ts`'s `advancePlayhead` paces the *playhead* through during
- *   playback, so scenes dwell and dissolves take their minimum wall-clock time without ever
- *   desynchronising the picture from `t`. `SCENE_DWELL_SECONDS` is its one tunable.
+ * - `scenePlaybackSegments(scenes)` — the `PlaybackSegment`s
+ *   (`{ tNewer, tOlder, durationSeconds }`) that `timeline/playback.ts`'s `advancePlayhead`
+ *   paces the *playhead* through during `'scenes'`-mode playback (ADR-016), so scenes dwell
+ *   and dissolves take their exact wall-clock time without ever desynchronising the picture
+ *   from `t`. `SCENE_DWELL_SECONDS` and `MAX_GAP_BONUS_SECONDS` are its tunables.
  * - `dominantScene(mix)` / `captionOpacity(mix)` — which scene reads as "current", and that
  *   scene's caption cross-fade opacity.
  * - `driftAt(scenes, index, t)` — a scene's camera-drift uniforms (zoom + lateral pan).
@@ -32,7 +33,7 @@
 
 export { REST_DRIFT, driftAt } from './drift'
 export type { DriftUniforms } from './drift'
-export { scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
+export { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
 export type { PlaybackSegment } from './pacing'
 export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
 export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt } from './scene'

@@ -5,10 +5,14 @@
  *  baseline rather than a filled panel, per the shared visual language — the hit area
  *  (`.hitArea`) stays taller than anything drawn inside it so the track stays easy to grab.
  *  Each pip carries `data-checkpoint-pip`, a stable hook the shell uses to recede whatever sits
- *  where a pip's hover preview rises. */
+ *  where a pip's hover preview rises.
+ *
+ *  Wheel handling is a native `addEventListener('wheel', ..., { passive: false })` on the hit
+ *  area, not React's `onWheel` — see `handleWheel`'s doc comment for why a plain `onWheel`
+ *  cannot reliably `preventDefault` here. */
 
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 
 import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 
@@ -199,22 +203,47 @@ export function ScrubTrack({
   // already does the right thing for it without special-casing). shift+wheel or a wheel that's
   // mostly horizontal (deltaX dominant) pans instead — immediately, not eased: a pan gesture's
   // content should move 1:1 with it.
-  const handleWheel = (e: ReactWheelEvent<HTMLDivElement>): void => {
-    e.preventDefault()
-    const isPan = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
-    if (isPan) {
-      if (trackWidthPx === 0) return
-      // Shift turns a plain vertical scroll (deltaY, deltaX === 0) into a pan — reuse deltaY
-      // as the pan delta in that case rather than requiring the browser to have already
-      // remapped it to deltaX itself (some do, some don't).
-      const rawDeltaPx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX
-      onWindowChange(panWindow(visibleWindow, rawDeltaPx / trackWidthPx, scaleKind))
-      return
-    }
-    const anchorU = uFromClientX(e.clientX)
-    const factor = Math.exp(-e.deltaY * ZOOM_SENSITIVITY)
-    applyWheelZoom(anchorU, factor)
-  }
+  //
+  // A *native* listener, not React's `onWheel`: React attaches wheel (and touchstart/move) at
+  // the root as a passive listener for scroll-perf reasons, so `preventDefault` inside a plain
+  // `onWheel` handler silently fails with a console warning ("Unable to preventDefault inside
+  // passive event listener invocation") and the page scrolls under the track instead of the
+  // track consuming the gesture — a QA-reported defect. `{ passive: false }` here is what
+  // actually lets `preventDefault` take effect.
+  const handleWheel = useCallback(
+    (e: WheelEvent): void => {
+      e.preventDefault()
+      const isPan = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
+      if (isPan) {
+        if (trackWidthPx === 0) return
+        // Shift turns a plain vertical scroll (deltaY, deltaX === 0) into a pan — reuse deltaY
+        // as the pan delta in that case rather than requiring the browser to have already
+        // remapped it to deltaX itself (some do, some don't).
+        const rawDeltaPx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX
+        onWindowChange(panWindow(visibleWindow, rawDeltaPx / trackWidthPx, scaleKind))
+        return
+      }
+      const anchorU = uFromClientX(e.clientX)
+      const factor = Math.exp(-e.deltaY * ZOOM_SENSITIVITY)
+      applyWheelZoom(anchorU, factor)
+    },
+    [trackWidthPx, onWindowChange, visibleWindow, scaleKind, uFromClientX, applyWheelZoom],
+  )
+
+  // Kept fresh every render and read from inside the stable listener below, so the effect
+  // doesn't need to tear down and re-attach the native listener every time `handleWheel`'s own
+  // dependencies change (the same "ref mirrors the latest closure" idiom `usePlaybackLoop` and
+  // `useWheelZoomAccumulator` already use elsewhere in this package).
+  const handleWheelRef = useRef(handleWheel)
+  handleWheelRef.current = handleWheel
+
+  useEffect(() => {
+    const el = trackRef.current
+    if (!el) return
+    const listener = (e: WheelEvent): void => handleWheelRef.current(e)
+    el.addEventListener('wheel', listener, { passive: false })
+    return () => el.removeEventListener('wheel', listener)
+  }, [trackRef])
 
   /** Double-clicking anywhere within a visible event's uncertainty band frames it (README §2);
    *  double-clicking elsewhere on the track zooms x2 around that point instead (brief §2). */
@@ -247,7 +276,6 @@ export function ScrubTrack({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
-        onWheel={handleWheel}
         onDoubleClick={handleDoubleClick}
       >
         <div aria-hidden className={styles.baseline} />

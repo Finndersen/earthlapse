@@ -4,13 +4,21 @@
  * Playback (DESIGN §3): "the playhead moves at constant velocity in warped screen space...
  * Speed control is a scalar multiplier on that velocity; nothing else changes."
  *
- * > **v1 note (ADR-012).** Constant velocity is now capped, not flat: an optional `pacing`
- * > argument to `advancePlayhead` slows the playhead — never speeds it up — while crossing a
- * > stretch of `t` that must take at least a minimum wall-clock duration, so every scene
- * > dwells and every dissolve band takes its minimum time even where consecutive scenes sit
- * > only a percent or two of `u` apart. All of it is still scaled by `playback.speed`. See
- * > `scene/pacing.ts`'s `scenePlaybackSegments` for where the durations come from and why this
- * > paces the playhead rather than the displayed presentation.
+ * > **v1 note (ADR-016).** Two explicit modes, both scaled by `playback.speed`, replace the
+ * > single velocity-capped hybrid ADR-012 introduced:
+ * >
+ * > - **`'scenes'`** (default) — `advancePlayhead` moves through `scenesPacing`'s segments
+ * >   (`scene/pacing.ts`'s `scenePlaybackSegments`) at exactly the velocity that makes each one
+ * >   take its `durationSeconds`, in the *full-domain symlog* `u` of `fullScale` (the caller's
+ * >   contract, not this function's — see `usePlaybackLoop`'s caller). Unlike ADR-012, there is
+ * >   no `baseRate` cap inside a segment: a sparse gap simply moves faster than `baseRate` for
+ * >   its `durationSeconds`, which is the point (ADR-016 — "the fast-moving playhead ... conveys
+ * >   elapsed time in big gaps"). Outside every segment — before the first scene, after the
+ * >   last — `t` moves at the ordinary flat `baseRate * speed`, exactly as `'steady'` mode does
+ * >   everywhere.
+ * > - **`'steady'`** — flat `baseRate * speed` everywhere, no pacing at all. The caller is
+ * >   expected to pass whichever full-domain scale (symlog or linear) matches the currently
+ * >   selected `ScaleKind`, so speed reads as constant in whatever axis is on screen.
  */
 
 import { useEffect, useRef } from 'react'
@@ -20,54 +28,62 @@ import type { GeoTime, Playback, TimeScale } from '@/types/layer'
 import { clampUnit } from './util'
 
 /**
- * A stretch of `t` (`[tNewer, tOlder]`, `tNewer <= tOlder`) that `advancePlayhead` must spend
- * at least `minSeconds` of wall-clock time crossing, before `playback.speed` divides it down.
- * Structural, not imported from `@/scene` — `scene`'s `PlaybackSegment` satisfies this shape
- * exactly, so `scenePlaybackSegments(scenes)` can be passed straight through, but this package
- * does not depend on `@/scene` to name the type.
+ * A stretch of `t` (`[tNewer, tOlder]`, `tNewer <= tOlder`) that `'scenes'`-mode
+ * `advancePlayhead` spends exactly `durationSeconds` of wall-clock time crossing, before
+ * `playback.speed` divides it down. Structural, not imported from `@/scene` — `scene`'s
+ * `PlaybackSegment` satisfies this shape exactly, so `scenePlaybackSegments(scenes)` can be
+ * passed straight through, but this package does not depend on `@/scene` to name the type.
  */
 export interface PlaybackPacingSegment {
   tNewer: GeoTime
   tOlder: GeoTime
-  minSeconds: number
+  durationSeconds: number
 }
 
-/** One `pacing` segment converted into the `u` space `fullScale` measures, sorted ascending —
- *  the direction `u` increases while playback runs. `rate` is `u` per wall-clock second,
- *  already scaled by `speed`. */
+/** One `scenesPacing` segment converted into the `u` space `fullScale` measures, sorted
+ *  ascending — the direction `u` increases while playback runs. `rate` is `u` per wall-clock
+ *  second, already scaled by `speed`. */
 interface RatedUSegment {
   uLow: number
   uHigh: number
   rate: number
 }
 
-/** Converts and sorts `pacing` into `u`-space segments, capping each one's velocity at
- *  `baseRate` (never raising it — a sparse gap, wider in `u` than its `minSeconds` demands,
- *  simply runs at the ordinary `baseRate`) and scaling by `speed`. A degenerate (zero-width)
- *  segment cannot meaningfully cap anything, so it is left at the ordinary rate rather than
- *  dividing by zero. */
+/**
+ * Converts and sorts `segments` into `u`-space segments, each rated at exactly the velocity
+ * that spends `durationSeconds` crossing it (no cap — ADR-016 removed the ADR-012 hybrid's
+ * `Math.min(baseRate, ...)`), scaled by `speed`.
+ *
+ * A zero-width segment (`uSpan === 0`) would divide to an exact rate of 0, which — inside
+ * `integratePacedUnit` — is read as "cannot make progress" and stops integration dead rather
+ * than skipping past it (see that function's own doc comment). But a zero-width segment has
+ * nothing to cross: `integratePacedUnit` resolves it in a single, instant step regardless of
+ * the rate's actual value (`timeToBoundary` is `0 / rate = 0` either way). So the fallback
+ * here only needs to stay positive, not meaningful — `baseRate * speed` is a convenient one,
+ * not a cap making a comeback.
+ */
 function buildRatedUSegments(
-  pacing: readonly PlaybackPacingSegment[],
+  segments: readonly PlaybackPacingSegment[],
   fullScale: TimeScale,
   baseRate: number,
   speed: number,
 ): RatedUSegment[] {
-  const segments = pacing.map(({ tNewer, tOlder, minSeconds }): RatedUSegment => {
+  const rated = segments.map(({ tNewer, tOlder, durationSeconds }): RatedUSegment => {
     const uAtNewer = fullScale.toUnit(tNewer)
     const uAtOlder = fullScale.toUnit(tOlder)
     const uLow = Math.min(uAtNewer, uAtOlder)
     const uHigh = Math.max(uAtNewer, uAtOlder)
     const uSpan = uHigh - uLow
-    const cappedRate = uSpan > 0 && minSeconds > 0 ? Math.min(baseRate, uSpan / minSeconds) : baseRate
-    return { uLow, uHigh, rate: cappedRate * speed }
+    const rate = uSpan > 0 && durationSeconds > 0 ? (uSpan / durationSeconds) * speed : baseRate * speed
+    return { uLow, uHigh, rate }
   })
-  segments.sort((a, b) => a.uLow - b.uLow)
-  return segments
+  rated.sort((a, b) => a.uLow - b.uLow)
+  return rated
 }
 
 /**
  * Integrates `u` forward from `u0` by `dtSeconds` of wall-clock time, at `outsideRate`
- * (`baseRate * speed`) outside every segment and at that segment's own capped rate inside one,
+ * (`baseRate * speed`) outside every segment and at that segment's own exact rate inside one,
  * crossing as many segment boundaries as `dtSeconds` reaches within this one call (a large
  * `dtSeconds` — a stalled tab regaining focus — can cross several). A rate of exactly 0 (a
  * defensively-zeroed `baseRate` or `speed`) cannot make progress; rather than spin forever,
@@ -103,17 +119,21 @@ function integratePacedUnit(u0: number, dtSeconds: number, outsideRate: number, 
 }
 
 /**
- * Advances `t` by one frame of playback. Moves at constant velocity in the warped `u` of
- * `fullScale` — always the *full-domain* scale, never the current visible window's, so
- * playback speed does not change when the user zooms — toward the present (`u` increasing
- * toward 1, the newest edge per the package orientation), scaled by `playback.speed`.
+ * Advances `t` by one frame of playback. Always moves toward the present (`u` increasing
+ * toward 1, the newest edge per the package orientation) in `fullScale`'s warped `u` — the
+ * caller's job is to pass the right *full-domain* scale for `playback.mode` (never the current
+ * visible window's, so zoom never changes playback speed): the full-domain symlog scale for
+ * `'scenes'` mode always, and the full-domain scale of whichever `ScaleKind` is on screen for
+ * `'steady'` mode (ADR-016). Scaled by `playback.speed` throughout.
  *
- * `pacing`, if given (ADR-012), caps that velocity downward — never up — while `u` crosses one
- * of its segments, so each one takes at least its `minSeconds` (divided by `speed`) of
- * wall-clock time; `u` outside every segment moves at the ordinary `baseRate * speed`, exactly
- * as when `pacing` is omitted. `scene/pacing.ts`'s `scenePlaybackSegments(scenes)` is the
- * intended source of `pacing`, satisfying this package's structural `PlaybackPacingSegment`
- * without `timeline` importing `@/scene`.
+ * - **`playback.mode === 'scenes'`**: `scenesPacing` (intended to be `scene/pacing.ts`'s
+ *   `scenePlaybackSegments(scenes)`, satisfying this package's structural
+ *   `PlaybackPacingSegment` without `timeline` importing `@/scene`) is crossed at exactly the
+ *   velocity that spends each segment's `durationSeconds`; `u` outside every segment moves at
+ *   the ordinary `baseRate * speed`. An empty or omitted `scenesPacing` (no scenes loaded yet)
+ *   degrades to that same flat rate everywhere — there is nothing to pace.
+ * - **`playback.mode === 'steady'`**: flat `baseRate * speed` everywhere; `scenesPacing` is
+ *   ignored.
  *
  * Returns `t` unchanged when not playing. Every input is defensively finite-checked so no
  * combination of a huge `dtSeconds` (a stalled tab regaining focus) or an extreme `speed`
@@ -125,7 +145,7 @@ export function advancePlayhead(
   dtSeconds: number,
   playback: Playback,
   fullScale: TimeScale,
-  pacing?: readonly PlaybackPacingSegment[],
+  scenesPacing: readonly PlaybackPacingSegment[] = [],
 ): GeoTime {
   if (!playback.playing) return t
   if (!Number.isFinite(dtSeconds) || dtSeconds <= 0) return t
@@ -137,8 +157,8 @@ export function advancePlayhead(
   if (!Number.isFinite(u0)) return t
 
   const u1 =
-    pacing && pacing.length > 0
-      ? integratePacedUnit(u0, dtSeconds, baseRate * speed, buildRatedUSegments(pacing, fullScale, baseRate, speed))
+    playback.mode === 'scenes'
+      ? integratePacedUnit(u0, dtSeconds, baseRate * speed, buildRatedUSegments(scenesPacing, fullScale, baseRate, speed))
       : clampUnit(u0 + baseRate * speed * dtSeconds)
 
   const next = fullScale.fromUnit(u1)

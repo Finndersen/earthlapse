@@ -10,7 +10,7 @@
 
 import { create } from 'zustand'
 
-import { EARTH_FORMATION, type GeoTime, type Playback, type ScaleKind } from '@/types/layer'
+import { EARTH_FORMATION, type GeoTime, type Playback, type PlaybackMode, type ScaleKind } from '@/types/layer'
 
 const TIME_DOMAIN: [GeoTime, GeoTime] = [0, EARTH_FORMATION]
 
@@ -40,6 +40,7 @@ export interface TimeState {
   setPlaying: (playing: boolean) => void
   togglePlaying: () => void
   setSpeed: (speed: number) => void
+  setPlaybackMode: (mode: PlaybackMode) => void
   setGlobeExpanded: (expanded: boolean) => void
   setExpandedChartLayerId: (id: string | null) => void
 }
@@ -48,7 +49,7 @@ export const useTimeStore = create<TimeState>((set) => ({
   t: 0,
   window: TIME_DOMAIN,
   scaleKind: 'symlog',
-  playback: { playing: false, baseRate: 0.02, speed: 1 },
+  playback: { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' },
   globeExpanded: false,
   expandedChartLayerId: null,
 
@@ -58,6 +59,7 @@ export const useTimeStore = create<TimeState>((set) => ({
   setPlaying: (playing) => set((s) => ({ playback: { ...s.playback, playing } })),
   togglePlaying: () => set((s) => ({ playback: { ...s.playback, playing: !s.playback.playing } })),
   setSpeed: (speed) => set((s) => ({ playback: { ...s.playback, speed } })),
+  setPlaybackMode: (mode) => set((s) => ({ playback: { ...s.playback, mode } })),
   setGlobeExpanded: (globeExpanded) => set({ globeExpanded }),
   setExpandedChartLayerId: (expandedChartLayerId) => set({ expandedChartLayerId }),
 }))

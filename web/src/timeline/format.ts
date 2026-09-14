@@ -80,3 +80,23 @@ export function formatTimeRange([newest, oldest]: TimeWindow): string {
 
   return `${formatGeoTime(oldest)} – ${formatGeoTime(newest)}`
 }
+
+/**
+ * A rate readout for the playback speed indicator (ADR-016 — the prototype instantaneous
+ * years-per-second display beside the mode toggle): `4e7 -> "40 Myr/s"`, `2.1e5 -> "210 kyr/s"`,
+ * `0.4 -> "< 1 yr/s"`. Reuses `formatGeoTime`'s magnitude buckets (its divisors are the same
+ * "years per ka/Ma/Ga" figures) but labels them as durations (`yr`/`kyr`/`Myr`/`Gyr`) rather
+ * than points in time (`years ago`/`ka`/`Ma`/`Ga`) — a rate is a span of years crossed per
+ * second, not an age. The caller is responsible for the "≈" this is always an approximation
+ * (an instantaneous, smoothed rate, not an exact figure).
+ */
+export function formatRate(yearsPerSecond: number): string {
+  if (!Number.isFinite(yearsPerSecond) || yearsPerSecond < 0) {
+    throw new Error(`formatRate: yearsPerSecond must be finite and >= 0, got ${yearsPerSecond}`)
+  }
+  if (yearsPerSecond < 1) return '< 1 yr/s'
+  if (yearsPerSecond < YEARS_PER_KA) return `${trimmed(yearsPerSecond, 0)} yr/s`
+  if (yearsPerSecond < YEARS_PER_MA) return `${trimmed(yearsPerSecond / YEARS_PER_KA, 1)} kyr/s`
+  if (yearsPerSecond < YEARS_PER_GA) return `${trimmed(yearsPerSecond / YEARS_PER_MA, 0)} Myr/s`
+  return `${trimmed(yearsPerSecond / YEARS_PER_GA, 2)} Gyr/s`
+}

@@ -133,11 +133,26 @@ Playback rate is **constant events-per-second** — the playhead moves at consta
 *warped screen space*. A linear playthrough would spend 99.98% of its runtime in the
 Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else changes.
 
-> **v1 note (ADR-012).** Constant velocity is capped, not flat: consecutive scenes can sit as
-> little as ~1% of `u` apart, which a flat rate crosses in well under a dissolve's minimum
-> duration. `advancePlayhead` now caps the playhead's velocity downward while crossing a
-> scene's dwell or a dissolve band, so each takes at least its minimum wall-clock time (scaled
-> by speed); everywhere else the rate is exactly as flat as before.
+> **v1 note (ADR-016, superseding ADR-012's pacing bullet).** Two explicit modes share the one
+> speed multiplier, picked with a segmented control next to the speed selector:
+>
+> - **Scenes** (default) — every scene gap takes the same wall-clock time to cross regardless
+>   of how many years it spans: `SCENE_DWELL_SECONDS` split across the gap's two neighbouring
+>   holds, plus `MIN_TRANSITION_SECONDS` through the dissolve band, plus a small bonus (up to
+>   2 s, saturating) on the holds only for gaps that cover a lot of the timeline — so a vast
+>   deep-time gap feels slightly longer, and the fast-moving playhead on the track itself
+>   conveys the elapsed time, without breaking the rhythm of scenes closer together. Within a
+>   segment the playhead moves at exactly the velocity its duration demands; there is no cap
+>   against the ordinary rate (ADR-012's hybrid is gone). Outside every scene's span, and in
+>   every segment `scene/pacing.ts` doesn't cover, the playhead moves at the ordinary flat rate.
+> - **Steady** — constant velocity in the full-domain scale of whichever scale kind is
+>   currently selected (symlog by default, linear when the linear toggle is on); no pacing at
+>   all. Dense scene clusters are simply crossed as reached; `presentation.ts`'s existing
+>   minimum-transition rate limiter remains the visual backstop against a crossing too fast to
+>   read as a dissolve.
+>
+> See `scene/pacing.ts` (segment durations, the bonus) and `timeline/playback.ts`
+> (`advancePlayhead`'s two modes) for the mechanism, and ADR-016 for the full rationale.
 
 ---
 

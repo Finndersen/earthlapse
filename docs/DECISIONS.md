@@ -565,6 +565,113 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
 
 ---
 
+## ADR-016 — Two explicit playback modes replace the ADR-012 hybrid; a bounded gap bonus
+
+**Status:** accepted — human-directed 2026-09-14. Supersedes ADR-012's pacing bullet only; the
+smooth-crossfade and lens-layout bullets of ADR-012 stand.
+
+**Context.** ADR-012's hybrid pacing — constant symlog velocity, capped downward per scene so
+each dwell/dissolve takes at least a floor duration — reads as an irregular rhythm once the
+manifest holds real coverage: some gaps sit exactly at the floor, others run faster or slower
+depending on how their `u`-span happens to compare to it, with no single rule a viewer could
+learn. Speed semantics were muddy for the same reason — "2x" meant different things depending
+on how many segments a given stretch of playback happened to be capped in. With ADR-014's 40
+scenes (up from 14), the cap dominates almost everywhere: 33 of the original 39 paced segments
+were already floor-bound at 14 scenes, and denser coverage only pushes that fraction higher, so
+the "constant velocity" playback rate promised in DESIGN §3 had, in practice, degenerated to
+near-scene-mode already, just without being named as such or offering the honest alternative.
+
+**Decision.** Two explicit modes (`Playback.mode: 'scenes' | 'steady'`, additive), sharing one
+`speed` multiplier and a segmented control ("Scenes | Steady") next to the speed selector:
+
+- **`'scenes'`** (default). Every scene gap takes the same wall-clock time to cross regardless
+  of its span: `SCENE_DWELL_SECONDS` (3.0 s, split across the gap's two neighbouring holds, as
+  before) plus `MIN_TRANSITION_SECONDS` (1.6 s) through the dissolve band, plus a **bonus** on
+  the two holds only — never the dissolve — for a gap that covers a lot of the timeline: up to
+  `MAX_GAP_BONUS_SECONDS` (2.0 s), split evenly across the gap's two holds, ramping as
+  `2 · min(1, uSpan / 0.15)` where `uSpan` is the gap's span in full-domain symlog `u`. Chosen
+  and calibrated against the current 40-scene `data/scenes.yaml`: the widest gap
+  (`ice-age-europe-neanderthal` at 42 ka to `acheulean-erectus` at 1.76 Ma, `uSpan ≈ 0.27`) is
+  the only one that saturates the bonus; the next two (`c4-savanna-hipparion` ->
+  `miocene-grassland`, `≈0.072`, and `boring-billion-shallows` -> `great-oxidation`, `≈0.064`)
+  land around 90% and 80% of it; the median gap (`≈0.011`) gets a small, proportionate sliver.
+  The human's own framing: a fast-moving playhead on the track already conveys elapsed time
+  during a vast gap, so a small bonus reinforces that read without breaking the rhythm scenes
+  close together already establish. Inside a segment the playhead moves at *exactly* the
+  velocity that spends the segment's duration — `advancePlayhead` no longer caps that velocity
+  against the ordinary rate, so a sparse gap can now run faster than `'steady'` mode would for
+  its `durationSeconds`, which is the point (ADR-012's hybrid specifically prevented this).
+  Outside every scene's span — older than the oldest scene, newer than the newest — and outside
+  every paced segment, the playhead moves at the ordinary flat rate, unchanged from before.
+- **`'steady'`**. Constant velocity in the full-domain scale of whichever `ScaleKind` is
+  currently selected (symlog by default; linear years when the linear toggle is on); no pacing
+  at all. Dense scene clusters are simply crossed as reached, at whatever wall-clock speed the
+  warp and the speed multiplier produce; `presentation.ts`'s existing `MIN_TRANSITION_SECONDS`
+  rate limiter remains the visual backstop that keeps a too-fast crossing reading as a dissolve
+  rather than a hard cut, exactly as it already was the backstop for fast scrubbing.
+- **Speed** (0.25x–64x, unchanged range) applies identically to both: `'scenes'` divides every
+  segment's duration by `speed`; `'steady'` multiplies its flat velocity by `speed`.
+
+**Implementation.**
+- `advancePlayhead` (`timeline/playback.ts`) branches on `playback.mode`, not a boolean or an
+  "empty pacing array" convention — `scenesPacing` is ignored outright in `'steady'` mode. It
+  stays exactly integrated across segment boundaries for a single large `dtSeconds` (a stalled
+  tab regaining focus), matching the sum of many small steps to float precision — unchanged
+  from ADR-012's own integrator, only the per-segment rate computation lost its cap.
+- `scene/pacing.ts`'s `PlaybackSegment.minSeconds` is renamed `durationSeconds`: ADR-012's field
+  held a floor; ADR-016's holds an exact figure, and the old name would have been actively
+  misleading left as-is. `scenePlaybackSegments` now bakes each gap's bonus into its two hold
+  segments' `durationSeconds` directly, so `timeline/playback.ts` needs no "hold vs dissolve"
+  concept of its own — it only ever crosses segments at their exact duration, uniformly.
+- The ADR-012 hybrid's `Math.min(baseRate, uSpan / minSeconds)` cap, and the tests written
+  specifically to pin down capped-vs-uncapped behaviour, are deleted rather than left as dead
+  paths alongside the new logic.
+- The caller (`Experience.tsx`) selects `advancePlayhead`'s `fullScale` argument per mode:
+  always the full-domain symlog scale for `'scenes'` (a scene's dwell/dissolve durations do not
+  change when the user flips the linear toggle), and the full-domain scale matching the
+  timeline's current `symlog`/`linear` toggle for `'steady'`.
+- `Transport` (`timeline/components/Transport.tsx`) gained the segmented mode control, ghost
+  style with an amber active state (the existing `--hud-*` lens visual language, not a new
+  idiom), and an optional faint rate readout beside it while playing (`"≈ 40 Myr/s"`,
+  `formatRate` in `timeline/format.ts`) — `Experience.tsx` computes the instantaneous
+  years-per-second from the real per-frame `t` delta already available in the playback loop and
+  smooths it (0.5 s time constant) so it doesn't flicker. Screenshotted at 1440×900 and 400×850;
+  kept, since it reads as a small mono-font label beside the toggle at both sizes without
+  crowding the speed selector — narrower than the minimap it sits beside even at 400 px, and it
+  only ever appears while playing, so it adds nothing to the idle/scrubbing chrome.
+- The wheel-listener defect (QA-reported, unrelated to pacing but fixed in the same pass since
+  it lives in the same owned files): `ScrubTrack`'s wheel handling moved from React's `onWheel`
+  (attached passively at the root, so `preventDefault` silently failed and logged "Unable to
+  preventDefault inside passive event listener invocation" on every gesture) to a native
+  `addEventListener('wheel', ..., { passive: false })` on the track element, added in an effect
+  and kept current via a ref-mirrored closure. `AxisTicks`, `Minimap` and `Loupe` were audited
+  and use only pointer events for their own drag gestures — none of them touch `onWheel`, so
+  the fix is confined to `ScrubTrack`.
+
+**Consequences.**
+- A `'scenes'`-mode playthrough's length now scales with scene count, not just gap width: for
+  the current `data/scenes.yaml` (40 scenes, 39 gaps, all counted whether pinned or not), a full
+  1x playthrough takes **≈191 s** (`Σ(SCENE_DWELL_SECONDS + MIN_TRANSITION_SECONDS + bonus)`
+  over every gap) — about 179 s of it the flat per-gap floor (`3.0 + 1.6` s × 39), the remaining
+  ≈12 s the bonus, concentrated almost entirely in the one saturated gap above. This replaces
+  ADR-012's own "≈87 s for 14 scenes" figure; recompute again whenever the scene count changes
+  materially.
+- `'steady'` mode makes dense scene clusters (500–250 Ma, or the Cenozoic's closely-spaced
+  scenes) flash past at high speed, showing far fewer of them clearly than `'scenes'` mode would
+  at the same speed — an accepted, named trade-off of "no pacing at all", not a bug: it is the
+  literal, honest constant-velocity playback DESIGN §3 originally specified, now available
+  alongside the paced default rather than instead of it.
+- `PlaybackPacingSegment`/`PlaybackSegment`'s renamed `durationSeconds` field, and
+  `advancePlayhead`'s now-mode-driven branch, touch every existing consumer of the old
+  `minSeconds` name and the old "omit `pacing` for flat, pass it for capped" calling convention
+  — confined entirely to files this ADR's author owns (`timeline/**`, `scene/pacing.ts`), so no
+  cross-team coordination was needed.
+- `Playback.mode` is additive to the `Playback` type (DESIGN §3, not itself NORMATIVE); every
+  constructor of a `Playback` value in the codebase lived inside the same owned files and was
+  updated alongside it.
+
+---
+
 ## Pending
 
 Decisions deferred to Phase 1, to be recorded here once answered:

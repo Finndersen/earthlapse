@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EARTH_FORMATION, type Playback, type TimelineEvent } from '@/types/layer'
@@ -30,7 +30,7 @@ const events: TimelineEvent[] = [
 ]
 
 function playback(overrides: Partial<Playback> = {}): Playback {
-  return { playing: false, baseRate: 0.1, speed: 1, ...overrides }
+  return { playing: false, baseRate: 0.1, speed: 1, mode: 'scenes', ...overrides }
 }
 
 const checkpoints: TimelineCheckpoint[] = [{ id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' }]
@@ -93,6 +93,64 @@ describe('<Timeline>', () => {
     )
     fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
     expect(onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 8 }))
+  })
+
+  it('switches playback.mode via the Scenes/Steady toggle (ADR-016)', () => {
+    const onPlaybackChange = vi.fn()
+    render(
+      <Timeline
+        t={0}
+        window={FULL_DOMAIN}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        events={events}
+        playback={playback({ mode: 'scenes' })}
+        onScrub={vi.fn()}
+        onWindowChange={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={onPlaybackChange}
+      />,
+    )
+    const group = screen.getByRole('group', { name: 'Playback mode' })
+    expect(within(group).getByText('Scenes').getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(within(group).getByText('Steady'))
+    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'steady' }))
+  })
+
+  it('shows the rate readout only while playing and ratePerSecond is given', () => {
+    const { rerender } = render(
+      <Timeline
+        t={0}
+        window={FULL_DOMAIN}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        events={events}
+        playback={playback({ playing: false })}
+        onScrub={vi.fn()}
+        onWindowChange={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        ratePerSecond={4e7}
+      />,
+    )
+    expect(screen.queryByText(/Myr\/s/)).toBeNull()
+
+    rerender(
+      <Timeline
+        t={0}
+        window={FULL_DOMAIN}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        events={events}
+        playback={playback({ playing: true })}
+        onScrub={vi.fn()}
+        onWindowChange={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        ratePerSecond={4e7}
+      />,
+    )
+    expect(screen.getByText('≈ 40 Myr/s')).toBeTruthy()
   })
 
   it('calls onScaleKindChange when the symlog/linear toggle is clicked', () => {

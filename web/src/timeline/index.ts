@@ -40,14 +40,17 @@
  *   quadtree LOD (DESIGN §3): a wider visible span raises the importance floor for which
  *   events are drawn. `nearestNeighbourEvent` finds the next one in a direction (the
  *   transport's step buttons and the ←/→ keyboard shortcut).
- * - `advancePlayhead(t, dtSeconds, playback, fullScale, pacing?)` moves `t` toward the present
- *   at constant velocity in `fullScale`'s warped `u` (always the *full-domain* scale, never the
- *   current window's — so playback speed is independent of zoom), scaled by `playback.speed`,
- *   clamped at the present. An optional `pacing` (ADR-012 — `scene/pacing.ts`'s
- *   `scenePlaybackSegments`, structurally a `PlaybackPacingSegment[]`) caps that velocity
- *   downward while crossing a stretch of `t` that must take a minimum wall-clock time, so
- *   scenes dwell and dissolves take their minimum time at 1x without the picture ever falling
- *   out of sync with `t`. `usePlaybackLoop` drives it off `requestAnimationFrame`.
+ * - `advancePlayhead(t, dtSeconds, playback, fullScale, scenesPacing?)` moves `t` toward the
+ *   present in `fullScale`'s warped `u` (always the *full-domain* scale, never the current
+ *   window's — so playback speed is independent of zoom), scaled by `playback.speed`, clamped
+ *   at the present. Two modes (ADR-016, `playback.mode`): `'scenes'` (default) walks
+ *   `scenesPacing` (`scene/pacing.ts`'s `scenePlaybackSegments`, structurally a
+ *   `PlaybackPacingSegment[]`) at exactly the velocity that spends each segment's
+ *   `durationSeconds`, so scenes dwell and dissolves take their exact wall-clock time at 1x
+ *   without the picture ever falling out of sync with `t`; `'steady'` ignores `scenesPacing`
+ *   and moves at flat `baseRate * speed` throughout. The caller picks `fullScale` per mode —
+ *   always full-domain symlog for `'scenes'`, the full-domain scale of the current `ScaleKind`
+ *   for `'steady'`. `usePlaybackLoop` drives it off `requestAnimationFrame`.
  * - `followWindow(window, t, scaleKind)` — follow-during-playback (README §4): pans (never
  *   resizes) the window once the playhead nears its present-side edge. Pure; the caller
  *   (Experience.tsx, next to the playback loop) decides *whether* to apply the result and owns
@@ -87,7 +90,7 @@ export {
   type TimelineCheckpoint,
 } from './checkpoints'
 export { eraNameForTime, ERA_BANDS, type EraBand } from './eras'
-export { formatGeoTime, formatTimeRange } from './format'
+export { formatGeoTime, formatRate, formatTimeRange } from './format'
 export { FOLLOW_TARGET_U, FOLLOW_TRIGGER_U, followWindow } from './follow'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { minImportanceForSpan, nearestNeighbourEvent, visibleEvents, type EventStepDirection } from './lod'

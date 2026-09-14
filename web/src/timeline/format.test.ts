@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatGeoTime, formatTimeRange } from './format'
+import { formatGeoTime, formatRate, formatTimeRange } from './format'
 
 describe('formatGeoTime', () => {
   it('formats the present as "present"', () => {
@@ -65,5 +65,34 @@ describe('formatTimeRange', () => {
 
   it('never shares a bare unit-less number across the sub-millennium band', () => {
     expect(formatTimeRange([10, 250])).toBe('250 years ago – 10 years ago')
+  })
+})
+
+describe('formatRate', () => {
+  it('floors a sub-1-year-per-second rate to "< 1 yr/s" rather than "0 yr/s"', () => {
+    expect(formatRate(0)).toBe('< 1 yr/s')
+    expect(formatRate(0.4)).toBe('< 1 yr/s')
+  })
+
+  it('formats a bare years-per-second rate as a whole number', () => {
+    expect(formatRate(42)).toBe('42 yr/s')
+  })
+
+  it('formats thousands of years per second as kyr/s, to one decimal', () => {
+    expect(formatRate(2.1e5)).toBe('210 kyr/s')
+  })
+
+  it('formats millions of years per second as Myr/s, as a whole number', () => {
+    expect(formatRate(4e7)).toBe('40 Myr/s')
+  })
+
+  it('formats billions of years per second as Gyr/s, to two decimals', () => {
+    expect(formatRate(3.2e9)).toBe('3.2 Gyr/s')
+  })
+
+  it('rejects negative or non-finite rates', () => {
+    expect(() => formatRate(-1)).toThrow()
+    expect(() => formatRate(Number.NaN)).toThrow()
+    expect(() => formatRate(Infinity)).toThrow()
   })
 })
