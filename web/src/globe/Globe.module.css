@@ -141,6 +141,26 @@
     0 0 14px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
 }
 
+/* The "N"/"S" orientation label (Globe.tsx's `PoleAxisMarkers`), tiny so it reads as a tick at
+   the pole rather than a caption — captions live under the orb or in the shell's stage slot,
+   never drawn by Globe itself. Starts at opacity 0: `PoleAxisMarkers` sets it directly every
+   frame from `poles.ts`'s `isPoleVisible`, never through React state (see its own doc
+   comment) — this rule only supplies the resting value and the fade between states. */
+.poleLabel {
+  display: block;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--hud-ink, #efe9dc);
+  text-shadow:
+    0 0 5px rgba(0, 0, 0, 0.9),
+    0 0 1px rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  user-select: none;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -154,7 +174,8 @@
 
   .halo,
   .expandButton,
-  .closeButton {
+  .closeButton,
+  .poleLabel {
     transition: none;
   }
 }

@@ -1,16 +1,21 @@
 'use client'
 
-/** Back / play-pause / forward / speed / mode transport. Back and forward step to the nearest
- *  visible event *or* checkpoint (`nearestStepTarget`) rather than by a fixed number of years
- *  — a fixed step has no sane value across a domain that runs from 1 year to 4.6 billion, and
- *  a fixed step over events alone would skip past a scene sitting between two of them.
+/** Playback transport, split into two groups the caller (`Timeline.tsx`) lays out separately so
+ *  the primary one can sit centred over the track while the secondary one stays off to the
+ *  side, rather than both bunched into a single row whose visual centre would then depend on
+ *  the secondary controls' own width:
  *
- *  The mode toggle (ADR-016) is a compact two-state segmented control, ghost style with an
- *  amber active state — the shared lens visual language (`--hud-*` tokens) rather than a new
- *  idiom. The rate readout beside it (`ratePerSecond`) is an optional, purely presentational
- *  prop: the caller (Experience.tsx) computes and smooths the instantaneous years-per-second
- *  next to its playback loop, since that is where the real per-frame `t` deltas already are;
- *  this component only formats and shows it, and only while playing. */
+ *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
+ *    visible event *or* checkpoint (`nearestStepTarget`) rather than by a fixed number of years
+ *    — a fixed step has no sane value across a domain that runs from 1 year to 4.6 billion, and
+ *    a fixed step over events alone would skip past a scene sitting between two of them.
+ *  - `TransportSecondary` — speed select, the scenes/steady mode toggle (ADR-016) and the rate
+ *    readout. The mode toggle is a compact two-state segmented control, ghost style with an
+ *    amber active state — the shared lens visual language (`--hud-*` tokens) rather than a new
+ *    idiom. The rate readout (`ratePerSecond`) is an optional, purely presentational prop: the
+ *    caller (`Experience.tsx`) computes and smooths the instantaneous years-per-second next to
+ *    its playback loop, since that is where the real per-frame `t` deltas already are; this
+ *    component only formats and shows it, and only while playing. */
 
 import type { GeoTime, Playback, PlaybackMode, TimelineEvent } from '@/types/layer'
 
@@ -26,7 +31,7 @@ const PLAYBACK_MODES: readonly { value: PlaybackMode; label: string }[] = [
   { value: 'steady', label: 'Steady' },
 ]
 
-interface TransportProps {
+interface TransportCoreProps {
   t: GeoTime
   window: TimeWindow
   events: readonly TimelineEvent[]
@@ -34,22 +39,10 @@ interface TransportProps {
   playback: Playback
   onScrub: (t: GeoTime) => void
   onPlaybackChange: (playback: Playback) => void
-  /** Instantaneous, smoothed years-per-second `t` is currently advancing at — `null`/omitted
-   *  when there is nothing meaningful to show yet (not playing, or the first frame). Shown
-   *  beside the mode toggle only while `playback.playing`. */
-  ratePerSecond?: number | null
 }
 
-export function Transport({
-  t,
-  window: visibleWindow,
-  events,
-  checkpoints,
-  playback,
-  onScrub,
-  onPlaybackChange,
-  ratePerSecond = null,
-}: TransportProps) {
+/** Back / play-pause / forward — the group `Timeline.tsx` centres over the track. */
+export function TransportCore({ t, window: visibleWindow, events, checkpoints, playback, onScrub, onPlaybackChange }: TransportCoreProps) {
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
   // present (smaller t) — the same direction playback itself advances in.
   const jumpToNeighbour = (direction: 'back' | 'forward'): void => {
@@ -58,7 +51,7 @@ export function Transport({
   }
 
   return (
-    <div className={styles.transport}>
+    <div className={styles.core}>
       <button type="button" className={styles.ghostButton} aria-label="Back to previous event" onClick={() => jumpToNeighbour('back')}>
         {'⏮'}
       </button>
@@ -73,6 +66,24 @@ export function Transport({
       <button type="button" className={styles.ghostButton} aria-label="Forward to next event" onClick={() => jumpToNeighbour('forward')}>
         {'⏭'}
       </button>
+    </div>
+  )
+}
+
+interface TransportSecondaryProps {
+  playback: Playback
+  onPlaybackChange: (playback: Playback) => void
+  /** Instantaneous, smoothed years-per-second `t` is currently advancing at — `null`/omitted
+   *  when there is nothing meaningful to show yet (not playing, or the first frame). Shown
+   *  beside the mode toggle only while `playback.playing`. */
+  ratePerSecond?: number | null
+}
+
+/** Speed select, scenes/steady mode toggle and rate readout — secondary to `TransportCore`,
+ *  laid out beside it rather than centred. */
+export function TransportSecondary({ playback, onPlaybackChange, ratePerSecond = null }: TransportSecondaryProps) {
+  return (
+    <div className={styles.secondary}>
       <select
         className={styles.speedSelect}
         aria-label="Playback speed"

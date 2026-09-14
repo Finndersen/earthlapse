@@ -92,10 +92,6 @@ export function ShellLayout({
           {ancestor}
         </div>
 
-        <Link href="/credits" className={`${styles.credits} ${styles.peripheral}`}>
-          Credits
-        </Link>
-
         <div className={styles.bottom}>
           <div className={styles.stage}>
             <div className={styles.caption}>{caption}</div>
@@ -104,8 +100,16 @@ export function ShellLayout({
               {globeCaption}
             </div>
           </div>
-          <p className={styles.note}>Artistic reconstruction — plausibility, not accuracy.</p>
           <div className={styles.timeline}>{timeline}</div>
+          {/* Below the timeline, not above it: this disclosure (VISUAL_SPEC §9) applies to the
+              whole experience, not to whatever scene happens to be on screen, so it sits with
+              Credits in one dim footer row rather than riding the caption's spot. */}
+          <div className={styles.footer}>
+            <p className={styles.note}>Artistic reconstruction — plausibility, not accuracy.</p>
+            <Link href="/credits" className={`${styles.credits} ${styles.peripheral}`}>
+              Credits
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -11,24 +11,40 @@
   justify-content: center;
 }
 
+/* Three named tracks so `.controlsCore` (the transport's back/play/forward group) lands
+   visually centred over the track regardless of how wide `.controlsSecondary` (speed, mode
+   toggle, scale toggle) happens to be: `.controlsSpacer`, empty, mirrors that same track width
+   on the opposite side, so the centre track is centred in the row as a whole, not merely in
+   whatever space is left after the secondary controls. Named areas (not raw column order)
+   because `.controlsCore` and `.controlsSecondary` wrap components from `Transport.module.css`,
+   a different stylesheet this one can't safely target by its foreign (and hashed) class names. */
 .controlsRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas: 'spacer core secondary';
   align-items: center;
-  justify-content: space-between;
   gap: clamp(12px, 2vw, 28px);
-  /* Clears the minimap's range label, which rides above its strip into this gap. */
   margin-top: 12px;
 }
 
-.minimap {
-  flex: 1;
-  min-width: 0;
+.controlsSpacer {
+  grid-area: spacer;
 }
 
-.rightControls {
+.controlsCore {
+  grid-area: core;
+  display: flex;
+  justify-content: center;
+}
+
+.controlsSecondary {
+  grid-area: secondary;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-end;
+  justify-self: end;
+  gap: clamp(10px, 1.4vw, 18px);
+  min-width: 0;
 }
 
 .scaleToggle {
@@ -59,13 +75,26 @@
 }
 
 @media (max-width: 760px) {
+  /* Too narrow for three side-by-side tracks (the centred core group plus the secondary
+     controls at full size): stack the core group above the secondary row instead, both
+     centred. `.controlsSpacer` has nothing left to mirror once there's no side-by-side layout
+     to balance, so it collapses out. */
   .controlsRow {
-    flex-wrap: wrap;
-    row-gap: 18px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'core'
+      'secondary';
+    row-gap: 14px;
   }
 
-  .minimap {
-    order: 3;
-    flex-basis: 100%;
+  .controlsSpacer {
+    display: none;
+  }
+
+  .controlsSecondary {
+    justify-content: center;
+    justify-self: center;
+    flex-wrap: wrap;
+    row-gap: 10px;
   }
 }

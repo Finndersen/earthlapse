@@ -1,12 +1,18 @@
-.transport {
+.core {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.secondary {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .ghostButton {
-  width: 26px;
-  height: 26px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,7 +21,7 @@
   background: transparent;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
   cursor: pointer;
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1;
   padding: 0;
   transition:
@@ -31,15 +37,26 @@
 }
 
 .playButton {
-  width: 34px;
-  height: 34px;
-  font-size: 15px;
+  width: 44px;
+  height: 44px;
+  font-size: 19px;
 }
 
 .playButton.playing {
   color: var(--hud-accent, #e8b06a);
   border-color: var(--hud-accent, #e8b06a);
   box-shadow: 0 0 10px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+/* Back/forward read at 34px (above) on a mouse, but a touch target under 44px is easy to miss
+   — bump the hit area to the same 44px floor as the play button on a coarse pointer, without
+   growing the button on a mouse where the smaller ring reads better next to the larger play
+   button. */
+@media (pointer: coarse) {
+  .ghostButton {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .speedSelect {

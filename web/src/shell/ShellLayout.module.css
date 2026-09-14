@@ -190,9 +190,6 @@
 }
 
 .credits {
-  position: absolute;
-  top: var(--gutter-top);
-  right: var(--gutter);
   font-family: var(--hud-mono);
   font-size: 10px;
   letter-spacing: 0.24em;
@@ -287,8 +284,8 @@
   text-align: center;
 }
 
-/* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot,
-   already clear of the timeline (see .note's comment below) — only while the globe is
+/* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot, above
+   the timeline and clear of the playhead readout riding the track — only while the globe is
    expanded; the scene caption and chart take it back the instant it collapses. Empty text
    (no globe caption active) simply renders nothing, the same as an empty .caption. */
 .expandedGlobeCaption {
@@ -313,15 +310,27 @@
 }
 
 .note {
-  align-self: center;
-  /* Clears the playhead readout that rides above the scrub track at any playhead position. */
-  margin: 0 0 30px;
   font-family: var(--hud-mono);
   font-size: 9.5px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-align: center;
   color: var(--hud-faint);
+}
+
+/* Note + Credits share one dim row below the timeline (VISUAL_SPEC §9): the disclosure applies
+   to the whole experience, not to whatever scene happens to be on screen, so it no longer rides
+   above the track next to the caption. `flex-wrap` keeps both pieces on screen without spilling
+   past the frame at phone widths; `env(safe-area-inset-bottom)` clears a phone's home-indicator
+   gesture bar, on top of `.hud`'s own bottom padding. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 18px;
+  margin-top: 14px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* A checkpoint pip's hover preview rises into the caption's place (ScrubTrack marks its pips

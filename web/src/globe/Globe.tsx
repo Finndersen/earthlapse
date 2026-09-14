@@ -5,8 +5,8 @@
  * by `t`. See `index.ts` for the props contract.
  */
 
-import { OrbitControls } from '@react-three/drei'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Html, OrbitControls } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, type MouseEvent, type PointerEvent } from 'react'
 import * as THREE from 'three'
 
@@ -26,6 +26,7 @@ import {
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
 import styles from './Globe.module.css'
 import { isOrbClick } from './orbGesture'
+import { isPoleVisible, poleDirection, type PoleId } from './poles'
 import {
   ATMOSPHERE_SCALE,
   GLOBE_FRAGMENT_SHADER,
@@ -43,6 +44,9 @@ const RIM_COLOR = new THREE.Color('#8fc7ff')
  *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
  *  Globe.module.css's halo and expand ring are sized against. */
 const CAMERA_DISTANCE = 3.6
+/** `GlobeSphere`'s own `sphereGeometry` radius — named so the pole markers below (`poles.ts`,
+ *  `PoleAxisMarkers`) agree with the sphere on exactly where its surface sits. */
+const GLOBE_RADIUS = 1
 /** Frames are ~5-10 Myr apart across both raster sources; a few ahead covers fast playback
  *  through one network round trip, one behind covers a small scrub reversal. Must stay well
  *  inside textureCache's capacity. */
@@ -165,6 +169,7 @@ export function Globe({
             effects={effects.uniforms}
           />
           <AtmosphereRim />
+          <PoleAxisMarkers />
           <OrbitControls enableZoom={expanded} enablePan={false} enableRotate rotateSpeed={0.6} />
         </Canvas>
 
@@ -273,7 +278,7 @@ function GlobeSphere({ beforeTex, afterTex, mix, hasData, effects }: GlobeSphere
 
   return (
     <mesh ref={meshRef}>
-      <sphereGeometry args={[1, 64, 64]} />
+      <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
       <shaderMaterial
         uniforms={uniforms}
         vertexShader={GLOBE_VERTEX_SHADER}
@@ -316,5 +321,109 @@ function AtmosphereRim() {
         blending={THREE.AdditiveBlending}
       />
     </mesh>
+  )
+}
+
+// -------------------------------------------------------------------------------- poles
+
+const POLES: readonly PoleId[] = ['N', 'S']
+/** `--hud-ink` (globals.css) — three.js has no way to read a CSS custom property, so the hex is
+ *  kept in step with it by hand, the same precedent `RIM_COLOR` sets above. */
+const POLE_STUB_COLOR = new THREE.Color('#efe9dc')
+/** A hair past `GLOBE_RADIUS` rather than exactly on it, so the stub's own base vertex doesn't
+ *  z-fight against the sphere surface it's meant to sit on. */
+const POLE_STUB_START_RADIUS = GLOBE_RADIUS * 1.01
+/** Small enough to read as a tick at the pole, not a spike competing with the atmosphere rim
+ *  (`ATMOSPHERE_SCALE`, shaders.ts) or the ice-shell/impact-veil effects rendered over the
+ *  sphere (docs/GLOBE.md G6). */
+const POLE_STUB_END_RADIUS = GLOBE_RADIUS + 0.08
+/** Just outside the atmosphere shell (`ATMOSPHERE_SCALE` = 1.15), so the label reads against
+ *  the dim halo beyond it rather than fighting the rim's own bright fringe. */
+const POLE_LABEL_RADIUS = GLOBE_RADIUS + 0.18
+
+interface PoleGeometry {
+  labelPosition: readonly [number, number, number]
+  stub: THREE.Line
+}
+
+function buildPoleGeometry(pole: PoleId): PoleGeometry {
+  const [dx, dy, dz] = poleDirection(pole)
+  const stubGeometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(dx * POLE_STUB_START_RADIUS, dy * POLE_STUB_START_RADIUS, dz * POLE_STUB_START_RADIUS),
+    new THREE.Vector3(dx * POLE_STUB_END_RADIUS, dy * POLE_STUB_END_RADIUS, dz * POLE_STUB_END_RADIUS),
+  ])
+  const stubMaterial = new THREE.LineBasicMaterial({ color: POLE_STUB_COLOR, transparent: true, opacity: 0.55 })
+  return {
+    labelPosition: [dx * POLE_LABEL_RADIUS, dy * POLE_LABEL_RADIUS, dz * POLE_LABEL_RADIUS],
+    stub: new THREE.Line(stubGeometry, stubMaterial),
+  }
+}
+
+/** Sets a DOM element's opacity directly, bypassing React state — the same non-reactive,
+ *  per-frame-safe pattern `GlobeSphere`'s `uTime` uniform update uses above, applied here to a
+ *  real DOM node instead of a GPU uniform since the label is `Html`, not shader-drawn. */
+function setPoleLabelOpacity(el: HTMLElement | null, visible: boolean): void {
+  if (el === null) return
+  el.style.opacity = visible ? '1' : '0'
+}
+
+/**
+ * Orientation cue: a short axis stub at each pole (`shaders.ts`'s uv formula puts geographic
+ * north at `+Y` — see `poles.ts`'s doc comment) plus a small "N"/"S" label, so a viewer has a
+ * sense of which way is up on an otherwise ambiguous rotating sphere. Not a location claim
+ * (ADR-007 rules those out) — this only marks the sphere's own rotation axis, the same fact for
+ * every `t`.
+ *
+ * The stub is real depth-tested geometry (`THREE.Line`, default `depthTest`), so the sphere's
+ * own depth buffer hides it correctly when it's on the far side — no visibility logic needed.
+ * The label is a DOM overlay (`Html`) and isn't depth-tested, so it needs `poles.ts`'s pure
+ * `isPoleVisible`, checked every frame against the live (drag-rotated) camera and applied via
+ * `setPoleLabelOpacity` rather than React state, to stay cheap at 60fps. Both poles sit at a
+ * fixed world position regardless of the sphere's own auto-rotate (`poles.ts`'s doc comment on
+ * why), so neither the stub nor the label needs to track `GlobeSphere`'s `mesh.rotation.y`.
+ */
+function PoleAxisMarkers() {
+  const { camera } = useThree()
+  const labelRefs = useRef<Record<PoleId, HTMLSpanElement | null>>({ N: null, S: null })
+
+  const poleGeometry = useMemo<Record<PoleId, PoleGeometry>>(
+    () => ({ N: buildPoleGeometry('N'), S: buildPoleGeometry('S') }),
+    [],
+  )
+  useEffect(
+    () => () => {
+      for (const pole of POLES) {
+        poleGeometry[pole].stub.geometry.dispose()
+        ;(poleGeometry[pole].stub.material as THREE.Material).dispose()
+      }
+    },
+    [poleGeometry],
+  )
+
+  useFrame(() => {
+    const cameraPosition: readonly [number, number, number] = [camera.position.x, camera.position.y, camera.position.z]
+    for (const pole of POLES) {
+      setPoleLabelOpacity(labelRefs.current[pole], isPoleVisible(pole, cameraPosition, GLOBE_RADIUS))
+    }
+  })
+
+  return (
+    <>
+      {POLES.map((pole) => (
+        <group key={pole}>
+          <primitive object={poleGeometry[pole].stub} />
+          <Html position={poleGeometry[pole].labelPosition} center pointerEvents="none">
+            <span
+              ref={(el) => {
+                labelRefs.current[pole] = el
+              }}
+              className={styles.poleLabel}
+            >
+              {pole}
+            </span>
+          </Html>
+        </group>
+      ))}
+    </>
   )
 }

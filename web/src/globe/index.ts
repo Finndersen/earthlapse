@@ -44,7 +44,8 @@
  *
  * `globeBlendAt`/`globePreloadUrls` (single-source) and their `globeMulti*` generalisations,
  * `globeUniforms`, are exported separately because they're pure and worth reusing or testing
- * without a WebGL context. Likewise `./effects`'s own exports (`resolveGlobeEffects` etc.).
+ * without a WebGL context. Likewise `./effects`'s own exports (`resolveGlobeEffects` etc.) and
+ * `./poles`'s (the pole orientation cue's visibility test — see its own doc comment).
  */
 
 export {
@@ -63,3 +64,5 @@ export type { GlobeBlend, GlobeRasterLayers, GlobeUniformValues, PreloadWindow, 
 export * from './effects'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
+export { isPoleVisible, poleDirection, POLE_VISIBILITY_MARGIN } from './poles'
+export type { PoleId } from './poles'

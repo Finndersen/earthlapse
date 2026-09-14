@@ -49,7 +49,10 @@
  * exported from `eras.ts`, is what it reads that from). The transport and the scale toggle
  * share one row *beneath* the track, so the space above it belongs only to things that ride
  * the track (the playhead readout, checkpoint previews, a docked chart) and never collides
- * with a button.
+ * with a button. Within that row, `TransportCore` (back/play/forward) is centred over the
+ * track itself — a three-track grid, not a single flex row — while `TransportSecondary` (speed,
+ * mode toggle) and the scale toggle stay secondary, off to the side (`controlsRow`'s own doc
+ * comment in Timeline.module.css has the layout mechanics).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -62,7 +65,7 @@ import { nearestStepTarget, type TimelineCheckpoint } from './checkpoints'
 import { AxisTicks } from './components/AxisTicks'
 import { ScrubTrack } from './components/ScrubTrack'
 import { TimelineHint } from './components/TimelineHint'
-import { Transport } from './components/Transport'
+import { TransportCore, TransportSecondary } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { readHintDismissed, writeHintDismissed } from './hint'
 import { timelineKeyIntent } from './keyboard'
@@ -199,17 +202,24 @@ export function Timeline({
         </div>
       )}
       <div className={styles.controlsRow}>
-        <Transport
-          t={t}
-          window={FULL_DOMAIN}
-          events={events}
-          checkpoints={checkpoints}
-          playback={playback}
-          onScrub={onScrub}
-          onPlaybackChange={onPlaybackChange}
-          ratePerSecond={ratePerSecond}
-        />
-        <div className={styles.rightControls}>
+        {/* An empty spacer mirroring .controlsSecondary's own track (Timeline.module.css's
+            grid) so .controlsCore lands truly centred over the track regardless of the
+            secondary controls' width, rather than merely centred within whatever space happens
+            to be left after them. */}
+        <div className={styles.controlsSpacer} aria-hidden="true" />
+        <div className={styles.controlsCore}>
+          <TransportCore
+            t={t}
+            window={FULL_DOMAIN}
+            events={events}
+            checkpoints={checkpoints}
+            playback={playback}
+            onScrub={onScrub}
+            onPlaybackChange={onPlaybackChange}
+          />
+        </div>
+        <div className={styles.controlsSecondary}>
+          <TransportSecondary playback={playback} onPlaybackChange={onPlaybackChange} ratePerSecond={ratePerSecond} />
           <button
             type="button"
             className={styles.scaleToggle}

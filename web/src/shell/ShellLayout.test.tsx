@@ -90,6 +90,20 @@ describe('ShellLayout', () => {
     expect(screen.getByText('CAPTION_SLOT').parentElement?.contains(screen.getByText(/artistic reconstruction/i))).toBe(false)
   })
 
+  it('places the reconstruction note below the timeline, alongside Credits in one footer row, not above it next to the caption', () => {
+    renderShell()
+    const bottom = screen.getByText('TIMELINE_SLOT').closest(`.${styles.bottom}`) as HTMLElement
+    expect(bottom).not.toBeNull()
+    const children = Array.from(bottom.children)
+    const timelineIndex = children.findIndex((el) => el.classList.contains(styles.timeline ?? ''))
+    const footerIndex = children.findIndex((el) => el.classList.contains(styles.footer ?? ''))
+    expect(timelineIndex).toBeGreaterThanOrEqual(0)
+    expect(footerIndex).toBeGreaterThan(timelineIndex)
+    const footer = children[footerIndex] as HTMLElement
+    expect(footer.contains(screen.getByText(/artistic reconstruction/i))).toBe(true)
+    expect(footer.contains(screen.getByText('Credits'))).toBe(true)
+  })
+
   it('never marks the globe or ancestor slots peripheral, so idle calm cannot fade them (regression)', () => {
     renderShell()
     const globeWrap = screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)
