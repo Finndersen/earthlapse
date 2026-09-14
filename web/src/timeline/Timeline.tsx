@@ -171,12 +171,13 @@ export function Timeline({
   }
   const fitAll = (): void => animateWindowTo([0, EARTH_FORMATION])
   const handleFrameEvent = (event: TimelineEvent): void => animateWindowTo(frameEventWindow(event.tMin, event.tMax))
+  /** Clicking a checkpoint cluster marker (ADR-019) frames its members' combined time span,
+   *  mirroring `handleFrameEvent` over a `[tMin, tMax]` pair instead of a `TimelineEvent`. */
+  const handleFrameCluster = (tMin: GeoTime, tMax: GeoTime): void => animateWindowTo(frameEventWindow(tMin, tMax))
   /** Double-clicking the track away from any event marker zooms x2 around that point, eased
    *  (brief §2) — `anchorU` comes from `ScrubTrack` in its own 0..1 space, which is exactly
    *  `zoomWindow`'s `anchorU` contract. */
   const handleEmptyDoubleClick = (anchorU: number): void => animateWindowTo(zoomWindow(visibleWindow, anchorU, BUTTON_ZOOM_FACTOR, scaleKind))
-
-  const spanYears = visibleWindow[1] - visibleWindow[0]
 
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>): void => {
     const intent = timelineKeyIntent({ key: e.key, target: e.target })
@@ -197,7 +198,7 @@ export function Timeline({
         return
       case 'step': {
         const direction = intent.direction === 'prev' ? 'back' : 'forward'
-        const target = nearestStepTarget(events, checkpoints, visibleWindow, spanYears, t, direction)
+        const target = nearestStepTarget(events, checkpoints, visibleWindow, t, direction)
         if (target !== undefined) onScrub(target)
         return
       }
@@ -217,6 +218,7 @@ export function Timeline({
         onScrub={onScrub}
         onWindowChange={handleWindowChange}
         onFrameEvent={handleFrameEvent}
+        onFrameCluster={handleFrameCluster}
         onEmptyDoubleClick={handleEmptyDoubleClick}
         onLensPointer={fisheye.pointTo}
         onLensRelease={fisheye.release}

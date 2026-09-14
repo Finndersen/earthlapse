@@ -38,6 +38,20 @@
   background: var(--hud-event, rgba(140, 200, 255, 0.75));
   box-shadow: 0 0 10px var(--hud-event-glow, rgba(140, 200, 255, 0.35));
   pointer-events: none;
+  /* A cheap appearance fade (ADR-019, replacing the old importance-driven opacity ramp): plain
+     CSS `animation` runs once automatically whenever a band is newly mounted — e.g. the
+     declutter result changes and a previously-colliding event gets room — with no JS bookkeeping.
+     There is no equivalent cheap exit fade, since React unmounts a departing band immediately. */
+  animation: eventBandIn 200ms ease;
+}
+
+@keyframes eventBandIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .playhead {
@@ -77,8 +91,13 @@
   pointer-events: none;
 }
 
-.pip {
+/* Half the hit area's own height (48px, `.hitArea` above) — every checkpoint marker (a lone
+   pip or a cluster) sits on this baseline; no more per-row stagger (ADR-019 replaced that with
+   clustering, which resolves a tight group into one marker instead). */
+.pip,
+.cluster {
   position: absolute;
+  top: 24px;
   width: 18px;
   height: 18px;
   margin-left: -9px;
@@ -93,21 +112,28 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.pip:focus-visible {
+.pip:focus-visible,
+.cluster:focus-visible {
   outline: none;
 }
 
 .pip:hover,
-.pip:focus-visible {
+.pip:focus-visible,
+.cluster:hover,
+.cluster:focus-visible {
   z-index: 2;
 }
 
-/* A previewed pip already names its own time; the playhead readout steps aside for it, and so
-   does the fisheye hover readout (ADR-017) — a pip preview already shows its own time+label. */
+/* A previewed pip/cluster already names its own time; the playhead readout steps aside for it,
+   and so does the fisheye hover readout (ADR-017) — a preview already shows its own time+label. */
 .hitArea:has(.pip:hover) .timeLabel,
 .hitArea:has(.pip:focus-visible) .timeLabel,
 .hitArea:has(.pip:hover) .hoverReadout,
-.hitArea:has(.pip:focus-visible) .hoverReadout {
+.hitArea:has(.pip:focus-visible) .hoverReadout,
+.hitArea:has(.cluster:hover) .timeLabel,
+.hitArea:has(.cluster:focus-visible) .timeLabel,
+.hitArea:has(.cluster:hover) .hoverReadout,
+.hitArea:has(.cluster:focus-visible) .hoverReadout {
   opacity: 0;
 }
 
@@ -132,6 +158,40 @@
 .pip:focus-visible .pipDiamond {
   transform: rotate(45deg) scale(1.5);
   box-shadow: 0 0 12px 2px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+/* A cluster marker (ADR-019): the same diamond language as a lone pip, sized up so a group of
+   merged checkpoints still reads as "more than one thing" at a glance, with a small count badge
+   riding its corner. */
+.clusterDiamond {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  background: var(--hud-accent, #e8b06a);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.cluster:hover .clusterDiamond,
+.cluster:focus-visible .clusterDiamond {
+  transform: rotate(45deg) scale(1.35);
+  box-shadow: 0 0 14px 2px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.clusterCount {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--hud-bg, #0b0c0e);
+  white-space: nowrap;
 }
 
 .pipPreview {
@@ -177,8 +237,36 @@
 }
 
 .pip:hover .pipPreview,
-.pip:focus-visible .pipPreview {
+.pip:focus-visible .pipPreview,
+.cluster:hover .pipPreview,
+.cluster:focus-visible .pipPreview {
   opacity: 1;
+}
+
+/* A cluster's preview lists several members instead of one, so it widens slightly and left-
+   aligns each row (a centred list of differently-sized rows reads worse than one that lines up
+   consistently on the left edge). */
+.cluster .pipPreview {
+  width: 150px;
+  align-items: stretch;
+  text-align: left;
+}
+
+.clusterPreviewRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.clusterPreviewRow .pipLabel {
+  -webkit-line-clamp: 1;
+}
+
+.clusterPreviewMore {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 9.5px;
+  color: var(--hud-accent, #e8b06a);
+  opacity: 0.8;
 }
 
 .pipThumb {
@@ -254,7 +342,12 @@
   .timeLabel,
   .pipPreview,
   .pipDiamond,
+  .clusterDiamond,
   .hoverReadout {
     transition: none;
+  }
+
+  .eventBand {
+    animation: none;
   }
 }

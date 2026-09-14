@@ -48,7 +48,10 @@ export function nearestNeighbourCheckpoint(
 /**
  * The time to scrub to when stepping `direction` from `t` — shared by the transport's
  * back/forward buttons and the ←/→ keyboard shortcut, so every scene is reachable by stepping
- * even when it sits strictly between two `TimelineEvent`s (or has none nearby at all).
+ * even when it sits strictly between two `TimelineEvent`s (or has none nearby at all). Steps
+ * through every event overlapping `window`, not just the ones `declutter.ts` currently draws
+ * (ADR-019) — a keyboard/transport user must never be blocked by a marker that lost a room
+ * collision.
  *
  * Both `nearestNeighbourEvent` and `nearestNeighbourCheckpoint` already return *the* nearest
  * candidate from their own set, so the nearer of the two is simply the smaller time for
@@ -60,11 +63,10 @@ export function nearestStepTarget(
   events: readonly TimelineEvent[],
   checkpoints: readonly TimelineCheckpoint[],
   window: TimeWindow,
-  spanYears: number,
   t: GeoTime,
   direction: EventStepDirection,
 ): GeoTime | undefined {
-  const nearestEvent = nearestNeighbourEvent(events, window, spanYears, t, direction)
+  const nearestEvent = nearestNeighbourEvent(events, window, t, direction)
   const nearestCheckpoint = nearestNeighbourCheckpoint(checkpoints, window, t, direction)
   const eventT = nearestEvent ? (nearestEvent.tMin + nearestEvent.tMax) / 2 : undefined
   const checkpointT = nearestCheckpoint?.t

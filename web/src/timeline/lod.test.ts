@@ -2,9 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION, type TimelineEvent } from '@/types/layer'
 
-import { minImportanceAt, minImportanceForSpan, visibleEvents } from './lod'
+import { nearestNeighbourEvent } from './lod'
 import type { TimeWindow } from './scale'
-import { MIN_SPAN_YEARS } from './zoom'
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 
@@ -12,72 +11,37 @@ function event(id: string, tMin: number, tMax: number, importance: number): Time
   return { id, label: id, tMin, tMax, importance, description: '', citation: '' }
 }
 
-describe('minImportanceForSpan', () => {
-  it('is monotone: a wider span never lowers the threshold', () => {
-    const spans = [MIN_SPAN_YEARS, 1e2, 1e4, 1e6, 1e8, EARTH_FORMATION]
-    let previous = -Infinity
-    for (const span of spans) {
-      const threshold = minImportanceForSpan(span)
-      expect(threshold).toBeGreaterThanOrEqual(previous)
-      previous = threshold
-    }
-  })
-
-  it('is close to 0 at the narrowest span and close to 1 at the full domain', () => {
-    expect(minImportanceForSpan(MIN_SPAN_YEARS)).toBeCloseTo(0, 6)
-    expect(minImportanceForSpan(EARTH_FORMATION)).toBeCloseTo(1, 6)
-  })
-
-  it('clamps spans outside [MIN_SPAN_YEARS, EARTH_FORMATION]', () => {
-    expect(minImportanceForSpan(0)).toBe(minImportanceForSpan(MIN_SPAN_YEARS))
-    expect(minImportanceForSpan(EARTH_FORMATION * 10)).toBe(minImportanceForSpan(EARTH_FORMATION))
-  })
-})
-
-describe('minImportanceAt', () => {
-  it('equals minImportanceForSpan at magnification 1 (an undistorted track)', () => {
-    expect(minImportanceAt(1e8, 1)).toBe(minImportanceForSpan(1e8))
-  })
-
-  it('gives a lower-or-equal threshold at higher magnification, equal to the threshold for the shrunk span', () => {
-    const span = 1e8
-    expect(minImportanceAt(span, 5)).toBe(minImportanceForSpan(span / 5))
-    expect(minImportanceAt(span, 5)).toBeLessThanOrEqual(minImportanceForSpan(span))
-  })
-
-  it('treats magnification below 1 as 1', () => {
-    expect(minImportanceAt(1e8, 0.5)).toBe(minImportanceForSpan(1e8))
-    expect(minImportanceAt(1e8, 0)).toBe(minImportanceForSpan(1e8))
-  })
-})
-
-describe('visibleEvents', () => {
+describe('nearestNeighbourEvent', () => {
   const majorExtinction = event('extinction', 2.5e8, 2.52e8, 1.0)
   const minorEvent = event('minor', 1e5, 1.001e5, 0.3)
 
-  it('drops low-importance events when zoomed out (wide span)', () => {
-    const shown = visibleEvents([majorExtinction, minorEvent], FULL_DOMAIN, EARTH_FORMATION)
-    expect(shown.map((e) => e.id)).toEqual(['extinction'])
+  it('finds a low-importance event just as readily as a high-importance one (no LOD floor — ADR-019)', () => {
+    // Unlike the old importance-floor LOD, stepping must reach every event overlapping the
+    // window regardless of how low its importance is.
+    expect(nearestNeighbourEvent([majorExtinction, minorEvent], FULL_DOMAIN, 0, 'back')?.id).toBe('minor')
   })
 
-  it('shows the same low-importance event once zoomed in (narrow span around it)', () => {
-    // A 100-year visible span puts the importance floor (log-linear in span) below the
-    // minor event's 0.3, where the full-domain span put it above.
-    const window: TimeWindow = [1e5, 1e5 + 100]
-    const shown = visibleEvents([majorExtinction, minorEvent], window, window[1] - window[0])
-    expect(shown.map((e) => e.id)).toEqual(['minor'])
+  it('finds the nearest event further into the past (back)', () => {
+    expect(nearestNeighbourEvent([majorExtinction, minorEvent], FULL_DOMAIN, 2e8, 'back')?.id).toBe('extinction')
+  })
+
+  it('finds the nearest event toward the present (forward)', () => {
+    expect(nearestNeighbourEvent([majorExtinction, minorEvent], FULL_DOMAIN, 3e8, 'forward')?.id).toBe('extinction')
+  })
+
+  it('returns undefined when there is no event in that direction', () => {
+    expect(nearestNeighbourEvent([majorExtinction], FULL_DOMAIN, 2.6e8, 'back')).toBeUndefined()
+    expect(nearestNeighbourEvent([majorExtinction], FULL_DOMAIN, 2e8, 'forward')).toBeUndefined()
   })
 
   it('excludes events whose uncertainty band does not overlap the window', () => {
     const window: TimeWindow = [0, 1e3]
-    const shown = visibleEvents([majorExtinction, minorEvent], window, window[1] - window[0])
-    expect(shown).toEqual([])
+    expect(nearestNeighbourEvent([majorExtinction, minorEvent], window, 500, 'back')).toBeUndefined()
   })
 
   it('includes an event whose band only partially overlaps the window edge', () => {
     const straddling = event('straddling', 900, 1100, 1.0)
     const window: TimeWindow = [0, 1000]
-    const shown = visibleEvents([straddling], window, window[1] - window[0])
-    expect(shown.map((e) => e.id)).toEqual(['straddling'])
+    expect(nearestNeighbourEvent([straddling], window, 0, 'back')?.id).toBe('straddling')
   })
 })

@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EARTH_FORMATION, type TimelineEvent } from '@/types/layer'
 
 import type { TimelineCheckpoint } from '../checkpoints'
-import { fisheyeScale, RESTING_FISHEYE } from '../fisheye'
+import { fisheyeScale, RESTING_FISHEYE, type FisheyeScale } from '../fisheye'
 import { createSymlogScale, type TimeWindow } from '../scale'
 import { ScrubTrack } from './ScrubTrack'
 
@@ -64,6 +64,7 @@ function renderTrack(onWindowChange = vi.fn(), overrides: Partial<ComponentProps
       onScrub={vi.fn()}
       onWindowChange={onWindowChange}
       onFrameEvent={vi.fn()}
+      onFrameCluster={vi.fn()}
       onEmptyDoubleClick={vi.fn()}
       onLensPointer={vi.fn()}
       onLensRelease={vi.fn()}
@@ -177,6 +178,7 @@ describe('ScrubTrack fisheye integration (ADR-017)', () => {
         onScrub={vi.fn()}
         onWindowChange={vi.fn()}
         onFrameEvent={vi.fn()}
+        onFrameCluster={vi.fn()}
         onEmptyDoubleClick={vi.fn()}
         onLensPointer={vi.fn()}
         onLensRelease={vi.fn()}
@@ -184,5 +186,107 @@ describe('ScrubTrack fisheye integration (ADR-017)', () => {
     )
     const after = container.querySelector('[data-visible="false"]')
     expect(after?.textContent).toBe(textBefore)
+  })
+})
+
+describe('ScrubTrack checkpoint clustering (ADR-019)', () => {
+  it('renders a cluster marker instead of two colliding pips, and never renders both', () => {
+    // Two checkpoints a few years apart collide well within MIN_PIP_SEPARATION_PX at this
+    // track width — should merge into one cluster marker, not two pips.
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'A' },
+      { id: 'b', t: 1e8 + 10, label: 'B' },
+    ]
+    const { container } = renderTrack(vi.fn(), { checkpoints: close })
+    expect(container.querySelectorAll('[data-checkpoint-cluster]')).toHaveLength(1)
+    expect(container.querySelectorAll('[data-checkpoint-pip]')).toHaveLength(0)
+  })
+
+  it("frames the cluster's combined time span when its marker is clicked, not a plain scrub", () => {
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'A' },
+      { id: 'b', t: 1e8 + 10, label: 'B' },
+    ]
+    const onFrameCluster = vi.fn()
+    const onScrub = vi.fn()
+    const { container } = renderTrack(vi.fn(), { checkpoints: close, onFrameCluster, onScrub })
+    const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
+    fireEvent.click(cluster)
+    expect(onFrameCluster).toHaveBeenCalledWith(1e8, 1e8 + 10)
+    expect(onScrub).not.toHaveBeenCalled()
+  })
+
+  it("labels the cluster with the member count and its time range", () => {
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'A' },
+      { id: 'b', t: 1e8 + 10, label: 'B' },
+    ]
+    const { container } = renderTrack(vi.fn(), { checkpoints: close })
+    const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
+    expect(cluster.getAttribute('aria-label')).toContain('2 scenes')
+  })
+
+  it('resolves a cluster back into individual pips once the (distorted) scale gives its members room', () => {
+    // A real fisheye lens over these two nearly-adjacent times would take an enormous magnitude
+    // to visibly separate at this t — stand in for "a stretched region" directly, the same way
+    // `checkpointLayout.test.ts`'s own fisheye-reveal regression does, rather than relying on
+    // the real symlog derivative at 1e8 years to produce a many-orders-of-magnitude stretch.
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'A' },
+      { id: 'b', t: 1e8 + 10, label: 'B' },
+    ]
+    const stretched: FisheyeScale = {
+      ...baseScale,
+      toUnit: (t) => (t === 1e8 ? 0.2 : t === 1e8 + 10 ? 0.8 : baseScale.toUnit(t)),
+      magnificationAt: () => 1,
+    }
+    const { container } = renderTrack(vi.fn(), { checkpoints: close, scale: stretched })
+    expect(container.querySelectorAll('[data-checkpoint-pip]')).toHaveLength(2)
+    expect(container.querySelectorAll('[data-checkpoint-cluster]')).toHaveLength(0)
+  })
+})
+
+describe('ScrubTrack event declutter (ADR-019)', () => {
+  function event(id: string, tMin: number, tMax: number, importance: number): TimelineEvent {
+    return { id, label: id, tMin, tMax, importance, description: '', citation: '' }
+  }
+
+  it('draws a low-importance event that has room, unlike the old span-based LOD floor', () => {
+    // Far from the present at full zoom-out, the old `minImportanceForSpan` floor sat near 1 —
+    // only importance-1 events survived. A lone low-importance event with nothing to collide
+    // with must still draw.
+    const lonely = [event('minor', 2e8, 2.001e8, 0.05)]
+    const { container } = renderTrack(vi.fn(), { events: lonely })
+    expect(container.querySelectorAll('[title="minor"]')).toHaveLength(1)
+  })
+
+  it('drops the lower-importance event of a colliding pair, keeping the higher one', () => {
+    const high = event('high', 2e8, 2.001e8, 0.9)
+    const low = event('low', 2e8 + 1, 2.001e8 + 1, 0.1)
+    const { container } = renderTrack(vi.fn(), { events: [high, low] })
+    expect(container.querySelector('[title="high"]')).not.toBeNull()
+    expect(container.querySelector('[title="low"]')).toBeNull()
+  })
+
+  it('reveals the losing event once a stretched scale gives both room to draw', () => {
+    // Same rationale as the analogous checkpoint-cluster test above: stand in for "a stretched
+    // region" directly rather than relying on the real symlog derivative at 2e8 years, which
+    // would need an unrealistic magnification to separate two 1-year-apart bands on screen.
+    const high = event('high', 2e8, 2.001e8, 0.9)
+    const low = event('low', 2e8 + 1, 2.001e8 + 1, 0.1)
+    const stretched: FisheyeScale = {
+      ...baseScale,
+      toUnit: (t) => {
+        if (t === high.tMax) return 0.1
+        if (t === high.tMin) return 0.15
+        if (t === low.tMax) return 0.85
+        if (t === low.tMin) return 0.9
+        return baseScale.toUnit(t)
+      },
+      magnificationAt: () => 1,
+    }
+    const { container } = renderTrack(vi.fn(), { events: [high, low], scale: stretched })
+    expect(container.querySelector('[title="high"]')).not.toBeNull()
+    expect(container.querySelector('[title="low"]')).not.toBeNull()
   })
 })

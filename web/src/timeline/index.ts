@@ -35,11 +35,13 @@
  * - `panWindow(window, deltaU, scaleKind)` slides the window without resizing it — shift+wheel
  *   / horizontal wheel on the scrub track.
  * - `frameEventWindow(tMin, tMax)` — the window that frames an event's uncertainty band plus
- *   padding (double-clicking a marker).
- * - `minImportanceForSpan(spanYears)` / `visibleEvents(events, window, spanYears)` — the 1D
- *   quadtree LOD (DESIGN §3): a wider visible span raises the importance floor for which
- *   events are drawn. `nearestNeighbourEvent` finds the next one in a direction (the
- *   transport's step buttons and the ←/→ keyboard shortcut).
+ *   padding (double-clicking a marker, or clicking a checkpoint cluster marker).
+ * - `declutterEvents(events, window, scale, trackWidthPx)` (ADR-019, superseding DESIGN §3's
+ *   span-based importance-floor LOD for rendering) — every event overlapping `window` is a
+ *   candidate; importance only breaks a collision between two whose displayed bands would
+ *   otherwise overlap on screen. `nearestNeighbourEvent` (for stepping) reads every overlapping
+ *   event directly, not this decluttered subset — a keyboard/transport user must always be able
+ *   to reach an event that currently lost a room collision.
  * - `advancePlayhead(t, dtSeconds, playback, fullScale, scenesPacing?)` moves `t` toward the
  *   present in `fullScale`'s warped `u` (always the *full-domain* scale, never the current
  *   window's — so playback speed is independent of zoom), scaled by `playback.speed`, clamped
@@ -72,28 +74,36 @@
  * - `TimelineCheckpoint` (W13) — a generated still, plotted on the scrub track as a pip and on
  *   the minimap as a tick, distinct from data-driven `TimelineEvent`s: no importance/LOD, so
  *   `visibleCheckpoints` is a plain window-overlap filter. `layoutCheckpointPips` positions
- *   and (when several would render within `MIN_PIP_SEPARATION_PX` of each other) vertically
- *   staggers them so none is ever hidden. `nearestNeighbourCheckpoint` and the combined
- *   `nearestStepTarget` (events ∪ checkpoints) back the transport's step buttons and the ←/→
- *   shortcut, so every scene is reachable by stepping.
+ *   every checkpoint and (when several would render within `MIN_PIP_SEPARATION_PX` of each
+ *   other) merges them into one `CheckpointClusterLayout` marker instead of stacking rows
+ *   (ADR-019) — a checkpoint is never hidden, only merged. `nearestNeighbourCheckpoint` and the
+ *   combined `nearestStepTarget` (events ∪ checkpoints) back the transport's step buttons and
+ *   the ←/→ shortcut, so every checkpoint is reachable by stepping regardless of clustering.
  *
  * ## `<Timeline>` — props contract
  *
  * See the doc comment on `TimelineProps` in Timeline.tsx.
  */
 
-export { layoutCheckpointPips, MIN_PIP_SEPARATION_PX, type CheckpointPipLayout } from './checkpointLayout'
+export {
+  layoutCheckpointPips,
+  MIN_PIP_SEPARATION_PX,
+  type CheckpointClusterLayout,
+  type CheckpointLayoutEntry,
+  type CheckpointPipLayout,
+} from './checkpointLayout'
 export {
   nearestNeighbourCheckpoint,
   nearestStepTarget,
   visibleCheckpoints,
   type TimelineCheckpoint,
 } from './checkpoints'
+export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declutter'
 export { eraNameForTime, ERA_BANDS, type EraBand } from './eras'
 export { formatGeoTime, formatRate, formatTimeRange } from './format'
 export { FOLLOW_TARGET_U, FOLLOW_TRIGGER_U, followWindow } from './follow'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
-export { minImportanceForSpan, nearestNeighbourEvent, visibleEvents, type EventStepDirection } from './lod'
+export { nearestNeighbourEvent, type EventStepDirection } from './lod'
 export { minimapBracket, MINIMAP_FULL_DOMAIN, MIN_BRACKET_PX, type BracketLayout } from './minimapLayout'
 export { advancePlayhead, usePlaybackLoop, type PlaybackPacingSegment } from './playback'
 export {

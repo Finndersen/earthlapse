@@ -50,12 +50,10 @@ export function Transport({
   onPlaybackChange,
   ratePerSecond = null,
 }: TransportProps) {
-  const spanYears = visibleWindow[1] - visibleWindow[0]
-
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
   // present (smaller t) — the same direction playback itself advances in.
   const jumpToNeighbour = (direction: 'back' | 'forward'): void => {
-    const target = nearestStepTarget(events, checkpoints, visibleWindow, spanYears, t, direction)
+    const target = nearestStepTarget(events, checkpoints, visibleWindow, t, direction)
     if (target !== undefined) onScrub(target)
   }
 

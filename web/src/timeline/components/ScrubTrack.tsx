@@ -1,17 +1,20 @@
 'use client'
 
-/** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, event uncertainty bands with
- *  LOD fade, scene checkpoint pips, the playhead, and the fisheye hover readout (ADR-017).
- *  A luminous hairline baseline rather than a filled panel, per the shared visual language —
- *  the hit area (`.hitArea`) stays taller than anything drawn inside it so the track stays easy
- *  to grab. Each pip carries `data-checkpoint-pip`, a stable hook the shell uses to recede
- *  whatever sits where a pip's hover preview rises.
+/** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, room-decluttered event
+ *  uncertainty bands (ADR-019), clustered scene checkpoint pips (ADR-019), the playhead, and
+ *  the fisheye hover readout (ADR-017). A luminous hairline baseline rather than a filled
+ *  panel, per the shared visual language — the hit area (`.hitArea`) stays taller than anything
+ *  drawn inside it so the track stays easy to grab. Each pip carries `data-checkpoint-pip`
+ *  (a cluster marker carries `data-checkpoint-cluster` instead), a stable hook the shell uses
+ *  to recede whatever sits where a pip's hover preview rises.
  *
  *  `scale` is the fisheye-distorted track scale (`fisheyeScale`, owned by `Timeline`) — what
  *  is drawn and what pointer x maps through; `baseScale` is the same window undistorted, used
  *  only to convert a *displayed* anchor point back to undistorted `u` before handing it to
  *  something that zooms/pans the underlying window (wheel, double-click) — zooming is always
  *  in undistorted space, the lens is a pointer-time reading of it, not a new space to zoom in.
+ *  Because both the event declutter and the pip clustering run on this same distorted scale,
+ *  hovering the track reveals detail the resting (undistorted) layout had no room for.
  *
  *  Wheel handling is a native `addEventListener('wheel', ..., { passive: false })` on the hit
  *  area, not React's `onWheel` — see `handleWheel`'s doc comment for why a plain `onWheel`
@@ -24,9 +27,9 @@ import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 
 import { layoutCheckpointPips } from '../checkpointLayout'
 import type { TimelineCheckpoint } from '../checkpoints'
+import { declutterEvents } from '../declutter'
 import type { FisheyeScale } from '../fisheye'
 import { formatGeoTime } from '../format'
-import { minImportanceAt } from '../lod'
 import type { TimeWindow } from '../scale'
 import { findSnapTarget, snapCandidates } from '../snap'
 import { useTrackWidth } from '../useTrackWidth'
@@ -39,24 +42,23 @@ import styles from './ScrubTrack.module.css'
  *  by roughly 15%. Fed into the eased/accumulated wheel-zoom hook, not applied directly. */
 const ZOOM_SENSITIVITY = 0.0015
 
-/** Importance units above the LOD threshold over which a freshly-revealed event ramps from
- *  transparent to fully opaque, so events pop in as a fade rather than a hard cut. */
-const FADE_BAND = 0.12
-
-/** Half the hit area's own height (`.hitArea` in the CSS module) — where a row-0 checkpoint
- *  pip sits vertically, staggered rows climbing above it. Kept in sync with that height by
- *  hand since CSS custom properties can't drive inline pixel math here. */
-const PIP_BASELINE_PX = 24
-const PIP_ROW_STEP_PX = 11
+/** Most member rows a cluster's hover preview lists before collapsing the rest into "+N more"
+ *  — long enough to be useful, short enough to still read as a preview, not a panel. */
+const CLUSTER_PREVIEW_MAX_ITEMS = 4
 
 /** Half of `.pipPreview`'s (and the hover readout's) width in the CSS module: content closer
  *  than this to either end of the track anchors to that side instead of centring, so it is
  *  never clipped by the window edge. */
 const PREVIEW_HALF_WIDTH_PX = 60
 
-function previewAnchorClass(u: number, trackWidthPx: number): string {
-  if (u * trackWidthPx < PREVIEW_HALF_WIDTH_PX) return styles.previewStart ?? ''
-  if ((1 - u) * trackWidthPx < PREVIEW_HALF_WIDTH_PX) return styles.previewEnd ?? ''
+/** Half of `.cluster .pipPreview`'s own (wider, list-carrying) width in the CSS module — a
+ *  cluster preview anchored using the plain pip half-width would still overflow the track edge
+ *  in the 60-75px band, since it is 30px wider than a lone pip's preview. */
+const CLUSTER_PREVIEW_HALF_WIDTH_PX = 75
+
+function previewAnchorClass(u: number, trackWidthPx: number, halfWidthPx: number = PREVIEW_HALF_WIDTH_PX): string {
+  if (u * trackWidthPx < halfWidthPx) return styles.previewStart ?? ''
+  if ((1 - u) * trackWidthPx < halfWidthPx) return styles.previewEnd ?? ''
   return ''
 }
 
@@ -73,6 +75,9 @@ interface ScrubTrackProps {
   /** Double-clicking an event's marker frames its uncertainty band (README §2) instead of
    *  scrubbing to it. */
   onFrameEvent: (event: TimelineEvent) => void
+  /** Clicking a checkpoint cluster marker frames the members' combined time span (ADR-019),
+   *  the cluster analogue of `onFrameEvent`. */
+  onFrameCluster: (tMin: GeoTime, tMax: GeoTime) => void
   /** Double-clicking the track *away* from any event marker instead zooms x2, eased, around
    *  that point (brief §2). `anchorU` is undistorted — the click position in `baseScale`'s own
    *  0..1 space. */
@@ -97,6 +102,7 @@ export function ScrubTrack({
   onScrub,
   onWindowChange,
   onFrameEvent,
+  onFrameCluster,
   onEmptyDoubleClick,
   onLensPointer,
   onLensRelease,
@@ -115,33 +121,13 @@ export function ScrubTrack({
     [trackRef],
   )
 
-  const spanYears = visibleWindow[1] - visibleWindow[0]
+  // Room-based declutter (ADR-019): every event overlapping the window is a candidate, and
+  // importance only breaks a collision between two that would otherwise overlap on screen — see
+  // `declutterEvents`'s own doc comment. Reads the fisheye-distorted `scale`, so a stretched
+  // region reveals events that lacked room at the resting magnification.
+  const shown = useMemo(() => declutterEvents(events, visibleWindow, scale, trackWidthPx), [events, visibleWindow, scale, trackWidthPx])
 
-  // Per-event LOD (ADR-017): the importance floor is computed at each event's own midpoint
-  // magnification, not a single global threshold — a wider stretch under the lens reveals the
-  // detail a narrower span would, exactly where the lens is doing its job. `opacity` is derived
-  // alongside `threshold` here (not recomputed at render) since both come from the same
-  // per-event magnification lookup.
-  const shown = useMemo(() => {
-    const [newest, oldest] = visibleWindow
-    return events
-      .filter((e) => e.tMax >= newest && e.tMin <= oldest)
-      .map((event) => {
-        const midpoint = (event.tMin + event.tMax) / 2
-        const threshold = minImportanceAt(spanYears, scale.magnificationAt(midpoint))
-        // The fade ramps in from the LOD threshold, but never from above 1 - FADE_BAND: at
-        // full zoom-out the threshold reaches 1, which would otherwise fade the importance-1
-        // events — the only ones still let through there — to fully transparent.
-        const fadeFloor = Math.min(threshold, 1 - FADE_BAND)
-        return { event, threshold, opacity: clampUnit((event.importance - fadeFloor) / FADE_BAND) }
-      })
-      .filter((s) => s.event.importance >= s.threshold)
-  }, [events, visibleWindow, spanYears, scale])
-
-  const candidates = useMemo(
-    () => snapCandidates(shown.map((s) => s.event), checkpoints, visibleWindow),
-    [shown, checkpoints, visibleWindow],
-  )
+  const candidates = useMemo(() => snapCandidates(shown, checkpoints, visibleWindow), [shown, checkpoints, visibleWindow])
 
   const scrubToClientX = useCallback(
     (clientX: number): void => {
@@ -199,7 +185,7 @@ export function ScrubTrack({
 
   const playheadU = clampUnit(scale.toUnit(t))
 
-  const pips = useMemo(
+  const checkpointLayout = useMemo(
     () => layoutCheckpointPips(checkpoints, visibleWindow, scale, trackWidthPx),
     [checkpoints, visibleWindow, scale, trackWidthPx],
   )
@@ -279,9 +265,9 @@ export function ScrubTrack({
     const u = uFromClientX(e.clientX)
     const clickedT = scale.fromUnit(u)
     const hit = shown
-      .filter((s) => clickedT >= s.event.tMin && clickedT <= s.event.tMax)
+      .filter((event) => clickedT >= event.tMin && clickedT <= event.tMax)
       .reduce<TimelineEvent | null>(
-        (best, s) => (best === null || s.event.tMax - s.event.tMin < best.tMax - best.tMin ? s.event : best),
+        (best, event) => (best === null || event.tMax - event.tMin < best.tMax - best.tMin ? event : best),
         null,
       )
     if (hit) {
@@ -311,7 +297,7 @@ export function ScrubTrack({
     >
       <div aria-hidden className={styles.baseline} />
 
-      {shown.map(({ event, opacity }) => {
+      {shown.map((event) => {
         const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
         const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
         return (
@@ -319,39 +305,68 @@ export function ScrubTrack({
             key={event.id}
             title={event.label}
             className={styles.eventBand}
-            style={{
-              left: `${uStart * 100}%`,
-              width: `${Math.max(uEnd - uStart, 0.002) * 100}%`,
-              opacity,
-            }}
+            style={{ left: `${uStart * 100}%`, width: `${Math.max(uEnd - uStart, 0.002) * 100}%` }}
           />
         )
       })}
 
-      {pips.map((pip) => (
-        <button
-          key={pip.id}
-          type="button"
-          className={styles.pip}
-          data-checkpoint-pip
-          style={{ left: `${pip.u * 100}%`, top: PIP_BASELINE_PX - pip.row * PIP_ROW_STEP_PX }}
-          title={`${pip.label} — ${formatGeoTime(pip.t)}`}
-          aria-label={`${pip.label}, ${formatGeoTime(pip.t)}`}
-          onPointerDown={(e) => e.stopPropagation()}
-          onDoubleClick={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation()
-            onScrub(pip.t)
-          }}
-        >
-          <span aria-hidden className={styles.pipDiamond} />
-          <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(pip.u, trackWidthPx)}`}>
-            {pip.thumbnailUrl && <img className={styles.pipThumb} src={pip.thumbnailUrl} alt="" />}
-            <span className={styles.pipTime}>{formatGeoTime(pip.t)}</span>
-            <span className={styles.pipLabel}>{pip.label}</span>
-          </span>
-        </button>
-      ))}
+      {checkpointLayout.map((entry) =>
+        entry.kind === 'pip' ? (
+          <button
+            key={entry.id}
+            type="button"
+            className={styles.pip}
+            data-checkpoint-pip
+            style={{ left: `${entry.u * 100}%` }}
+            title={`${entry.label} — ${formatGeoTime(entry.t)}`}
+            aria-label={`${entry.label}, ${formatGeoTime(entry.t)}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              onScrub(entry.t)
+            }}
+          >
+            <span aria-hidden className={styles.pipDiamond} />
+            <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(entry.u, trackWidthPx)}`}>
+              {entry.thumbnailUrl && <img className={styles.pipThumb} src={entry.thumbnailUrl} alt="" />}
+              <span className={styles.pipTime}>{formatGeoTime(entry.t)}</span>
+              <span className={styles.pipLabel}>{entry.label}</span>
+            </span>
+          </button>
+        ) : (
+          <button
+            key={entry.id}
+            type="button"
+            className={styles.cluster}
+            data-checkpoint-cluster
+            style={{ left: `${entry.u * 100}%` }}
+            title={`${entry.members.length} scenes, ${formatGeoTime(entry.tMax)} – ${formatGeoTime(entry.tMin)}`}
+            aria-label={`${entry.members.length} scenes, ${formatGeoTime(entry.tMax)} to ${formatGeoTime(entry.tMin)}`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation()
+              onFrameCluster(entry.tMin, entry.tMax)
+            }}
+          >
+            <span aria-hidden className={styles.clusterDiamond}>
+              <span className={styles.clusterCount}>{entry.members.length}</span>
+            </span>
+            <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(entry.u, trackWidthPx, CLUSTER_PREVIEW_HALF_WIDTH_PX)}`}>
+              {entry.members.slice(0, CLUSTER_PREVIEW_MAX_ITEMS).map((member) => (
+                <span key={member.id} className={styles.clusterPreviewRow}>
+                  <span className={styles.pipTime}>{formatGeoTime(member.t)}</span>
+                  <span className={styles.pipLabel}>{member.label}</span>
+                </span>
+              ))}
+              {entry.members.length > CLUSTER_PREVIEW_MAX_ITEMS && (
+                <span className={styles.clusterPreviewMore}>+{entry.members.length - CLUSTER_PREVIEW_MAX_ITEMS} more</span>
+              )}
+            </span>
+          </button>
+        ),
+      )}
 
       <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
         <div className={styles.playheadKnob} />

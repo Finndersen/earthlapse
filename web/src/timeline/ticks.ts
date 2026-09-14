@@ -73,14 +73,32 @@ function linearStepTicks(window: TimeWindow, scale: TimeScale, trackWidthPx: num
   return []
 }
 
+/**
+ * `[left, right]` px bounds of a tick's rendered label, accounting for `tickLabelAlign` — an
+ * edge-anchored label (e.g. "present" at `u = 1`, right-aligned so it never overhangs the track)
+ * occupies a different span than a centred one would, so a collision test that assumed every
+ * label was centred could both miss a real overlap and report one that alignment already
+ * resolved (the present-edge defect this function exists to fix).
+ */
+function labelBoundsPx(u: number, label: string, trackWidthPx: number): [number, number] {
+  const px = u * trackWidthPx
+  const width = estimateLabelWidthPx(label)
+  switch (tickLabelAlign(u, label, trackWidthPx)) {
+    case 'start':
+      return [px, px + width]
+    case 'end':
+      return [px - width, px]
+    case 'center':
+      return [px - width / 2, px + width / 2]
+  }
+}
+
 function hasOverlap(ticks: readonly AxisTick[], trackWidthPx: number): boolean {
   const sorted = [...ticks].sort((a, b) => a.u - b.u)
   for (let i = 1; i < sorted.length; i++) {
-    const prevPx = sorted[i - 1]!.u * trackWidthPx
-    const prevHalf = estimateLabelWidthPx(sorted[i - 1]!.label) / 2
-    const curPx = sorted[i]!.u * trackWidthPx
-    const curHalf = estimateLabelWidthPx(sorted[i]!.label) / 2
-    if (curPx - curHalf < prevPx + prevHalf + MIN_LABEL_GAP_PX) return true
+    const [, prevRight] = labelBoundsPx(sorted[i - 1]!.u, sorted[i - 1]!.label, trackWidthPx)
+    const [curLeft] = labelBoundsPx(sorted[i]!.u, sorted[i]!.label, trackWidthPx)
+    if (curLeft < prevRight + MIN_LABEL_GAP_PX) return true
   }
   return false
 }
@@ -121,12 +139,10 @@ function symlogTicks(window: TimeWindow, scale: TimeScale, trackWidthPx: number)
 
   const accepted: AxisTick[] = []
   for (const candidate of candidates) {
-    const candidatePx = candidate.u * trackWidthPx
-    const candidateHalf = estimateLabelWidthPx(candidate.label) / 2
+    const [candidateLeft, candidateRight] = labelBoundsPx(candidate.u, candidate.label, trackWidthPx)
     const collides = accepted.some((t) => {
-      const tPx = t.u * trackWidthPx
-      const tHalf = estimateLabelWidthPx(t.label) / 2
-      return Math.abs(candidatePx - tPx) < candidateHalf + tHalf + MIN_LABEL_GAP_PX
+      const [tLeft, tRight] = labelBoundsPx(t.u, t.label, trackWidthPx)
+      return candidateLeft < tRight + MIN_LABEL_GAP_PX && tLeft < candidateRight + MIN_LABEL_GAP_PX
     })
     if (!collides) accepted.push({ t: candidate.t, label: candidate.label, u: candidate.u })
   }

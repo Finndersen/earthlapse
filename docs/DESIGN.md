@@ -121,6 +121,18 @@ Continuous zoom from a 4.6 Gyr span to a 1-year span. Every event carries
 `importance: 0..1`; events fade in as the visible span shrinks. A 1D quadtree — the same
 idea as map tile LOD.
 
+> **v1 note (ADR-019), superseding the paragraph above for rendering.** A global importance
+> floor keyed only to the visible span left most of the axis empty at full zoom-out (few events
+> clear a floor near 1) and hid markers a user had explicitly asked to see by hovering. Event
+> markers are now **room-based**: every event overlapping the window is a candidate, and
+> `importance` only breaks a collision between two whose displayed bands would otherwise overlap
+> — see `timeline/declutter.ts` and ADR-019. Scene checkpoint pips get the analogous treatment
+> (`timeline/checkpointLayout.ts`): pips too close to render individually merge into one cluster
+> marker instead of stacking into vertical rows. Both run on the fisheye-distorted scale
+> (ADR-017), so hovering the track reveals whatever lacked room at rest. Stepping (keyboard,
+> transport buttons) is unaffected either way — it always reaches every event/checkpoint
+> overlapping the window, never just what currently has room to draw.
+
 A persistent **linear-scale minimap** under the main axis keeps the warp legible and the
 distortion honest.
 

@@ -61,32 +61,32 @@ describe('nearestStepTarget', () => {
   const events = [event('agriculture', 12000, 11000, 1.0)]
 
   it('steps to the nearest event when there are no checkpoints to compare against', () => {
-    const target = nearestStepTarget(events, [], FULL_DOMAIN, EARTH_FORMATION, 5000, 'back')
+    const target = nearestStepTarget(events, [], FULL_DOMAIN, 5000, 'back')
     expect(target).toBe((11000 + 12000) / 2)
   })
 
   it('steps to whichever of the nearest event or nearest checkpoint is actually closer, back', () => {
     // Nearest event midpoint (11500) is closer than the checkpoint (20000) when stepping back
     // from t=5000.
-    expect(nearestStepTarget(events, checkpoints, FULL_DOMAIN, EARTH_FORMATION, 5000, 'back')).toBe(11500)
+    expect(nearestStepTarget(events, checkpoints, FULL_DOMAIN, 5000, 'back')).toBe(11500)
   })
 
   it('steps to whichever of the nearest event or nearest checkpoint is actually closer, forward', () => {
     // From t=30000, stepping forward: the checkpoint (20000) is closer to the present than
     // the event midpoint (11500).
-    expect(nearestStepTarget(events, checkpoints, FULL_DOMAIN, EARTH_FORMATION, 30000, 'forward')).toBe(20000)
+    expect(nearestStepTarget(events, checkpoints, FULL_DOMAIN, 30000, 'forward')).toBe(20000)
   })
 
   it('reaches a checkpoint that has no event near it at all', () => {
-    expect(nearestStepTarget([], checkpoints, FULL_DOMAIN, EARTH_FORMATION, 30000, 'forward')).toBe(20000)
+    expect(nearestStepTarget([], checkpoints, FULL_DOMAIN, 30000, 'forward')).toBe(20000)
   })
 
   it('reaches an event when there are no checkpoints at all', () => {
-    expect(nearestStepTarget(events, [], FULL_DOMAIN, EARTH_FORMATION, 30000, 'forward')).toBe(11500)
+    expect(nearestStepTarget(events, [], FULL_DOMAIN, 30000, 'forward')).toBe(11500)
   })
 
   it('returns undefined when neither set has a candidate in that direction', () => {
-    expect(nearestStepTarget([], [], FULL_DOMAIN, EARTH_FORMATION, 5000, 'back')).toBeUndefined()
+    expect(nearestStepTarget([], [], FULL_DOMAIN, 5000, 'back')).toBeUndefined()
   })
 
   it('makes every checkpoint reachable by stepping through a cluster near the present', () => {
@@ -97,7 +97,7 @@ describe('nearestStepTarget', () => {
     let t = EARTH_FORMATION
     const visited: number[] = []
     for (let i = 0; i < 3; i++) {
-      const next = nearestStepTarget([], cluster, FULL_DOMAIN, EARTH_FORMATION, t, 'forward')
+      const next = nearestStepTarget([], cluster, FULL_DOMAIN, t, 'forward')
       expect(next).toBeDefined()
       visited.push(next as number)
       t = next as number

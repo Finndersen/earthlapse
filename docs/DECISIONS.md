@@ -840,3 +840,96 @@ versioned with the project.
   at ~110 MB; serving from a CDN, if deployment lands, is a copy of `data/media/`, not a change
   of where it is stored.
 - Contributors still cannot add generated media; only its storage location changed.
+
+## ADR-019 — Scene pips cluster instead of stacking; events declutter by room instead of a span floor
+
+**Status:** accepted — human-directed 2026-09-14.
+
+**Context.** Three pieces of feedback on the fisheye-stretched track (ADR-017), all pointing at
+the same underlying problem — the track's static, non-interactive layout wasn't leaving enough
+of what it drew reachable:
+
+1. "Having event markers stacked vertically like this looks strange, maybe best to keep them
+   clustered and then can be expanded on hover (using fisheye approach)" — scene checkpoint pips,
+   which `checkpointLayout.ts` staggered into up to `MAX_PIP_ROWS` (4) vertical rows whenever two
+   sat within `MIN_PIP_SEPARATION_PX` of each other. A cluster of pips reading as a small
+   staircase, rather than as one group, looked unintentional rather than designed.
+2. "I can see an event entry for 'oldest known stone tools' and others when hovering on the
+   timeline but they don't show as markers" — `lod.ts`'s `minImportanceForSpan` set a single
+   importance floor from the visible span alone: at full zoom-out (span = the full 4.6 Gyr
+   domain) the floor sits near 1, so with ~66 events and only a handful at importance 1.0, most of
+   the axis rendered empty even though the events were real, dated and inside the window — they
+   just hadn't cleared a threshold that had nothing to do with whether they'd actually collide
+   with anything on screen.
+3. QA: at the present end, the edge-aligned "present" tick label overlapped its neighbour ("1 ka"
+   / "present"). `ticks.ts`'s collision checks (`hasOverlap`, `symlogTicks`'s accept loop) assumed
+   every label was centred on its own tick position, but `tickLabelAlign` right-aligns "present"
+   (and left-aligns the oldest tick) so it never overhangs the track edge — the collision math
+   and the render math disagreed about where "present"'s label actually sat.
+
+**Decision.**
+- **Scene pips cluster, they don't stack.** `checkpointLayout.ts`'s `layoutCheckpointPips` no
+  longer assigns rows. It single-link (chain) clusters consecutive *displayed* positions
+  (`scale.toUnit(t) × trackWidthPx`) closer than `MIN_PIP_SEPARATION_PX` (unchanged, 8px) into one
+  `CheckpointClusterLayout` — same diamond language as a lone pip, sized up, with a small count
+  badge, no panel. A cluster's hover preview lists its members' times and captions (capped at
+  `CLUSTER_PREVIEW_MAX_ITEMS`, "+N more" beyond that); clicking it frames the members' combined
+  `[tMin, tMax]` span via a new `onFrameCluster` prop threaded through `Timeline` (mirroring
+  `onFrameEvent`, reusing `frameEventWindow`/`animateWindowTo`). A checkpoint is never dropped,
+  only merged — `MAX_PIP_ROWS` and the row-stagger math are gone outright, not deprecated
+  alongside the new path. Layout runs on whatever scale the caller passes; `ScrubTrack` passes the
+  fisheye-distorted `trackScale` (ADR-017), so hovering near a cluster stretches its members apart
+  until they cross the separation threshold and resolve back into individual pips — no separate
+  "expand on hover" affordance needed, the fisheye lens already does exactly that job.
+- **Events declutter by room, not by a span-derived importance floor.** A new pure function,
+  `declutterEvents` (`timeline/declutter.ts`), replaces `ScrubTrack`'s per-event
+  `minImportanceAt`/`FADE_BAND` opacity ramp: every event overlapping the window is a candidate,
+  processed importance-descending (ties: narrower band first, then `id`, for a deterministic
+  result), and accepted unless its displayed band — widened to `MIN_EVENT_MARKER_PX` — comes
+  within `MIN_EVENT_GAP_PX` of an already-accepted band. Importance now only breaks a collision
+  between two events that would actually overlap on screen; an event with room to itself always
+  draws regardless of how low its importance is, which is what feedback point 2 asked for
+  directly. `lod.ts`'s `minImportanceForSpan`, `minImportanceAt` and `visibleEvents` are deleted
+  outright (checked against every consumer first — nothing outside `web/src/timeline` referenced
+  them; `web/src/app/Experience.tsx` imports only `Timeline` and unrelated helpers from this
+  package). `ScrubTrack.module.css` gets a cheap CSS `animation` fade-in on `.eventBand` mount in
+  place of the old importance-driven opacity ramp — appearance only; there is no equivalent cheap
+  exit fade, since React unmounts a departing band immediately, and adding one would need more
+  than "cheap" CSS.
+- **Stepping is unaffected by declutter.** `nearestNeighbourEvent` (`lod.ts`) now reads every
+  event overlapping the window directly rather than `visibleEvents`' LOD-filtered subset, and
+  drops the `spanYears` parameter that computation needed — a keyboard or transport user must
+  always be able to reach an event that currently lost a room collision against a
+  higher-importance neighbour. `nearestStepTarget` (`checkpoints.ts`) and its callers (`Timeline`'s
+  step handler, `Transport`'s back/forward buttons) drop `spanYears` too, since nothing downstream
+  of them needs it any more. `ScrubTrack`'s double-click frame hit-test and the hover-readout snap
+  (`snap.ts`) keep reading the *drawn* (decluttered) set, since both are about what's visibly under
+  the cursor, not what exists — the same event/decluttered-set split feedback point 2 asked for is
+  exactly what already distinguishes "reachable by stepping" from "drawn."
+- **Tick collision now accounts for label alignment.** `ticks.ts` gains `labelBoundsPx(u, label,
+  trackWidthPx)`, which resolves a tick's actual rendered `[left, right]` bounds through
+  `tickLabelAlign` (`'start'`/`'center'`/`'end'`) instead of assuming a centred half-width. Both
+  `hasOverlap` (linear ticks) and `symlogTicks`'s accept loop compare these bounds (with
+  `MIN_LABEL_GAP_PX` padding) instead of centred-half-width distances. A regression test exercises
+  the exact reported case: the "present" tick under a fully-engaged fisheye lens centred on it.
+
+**Consequences.**
+- DESIGN §3's "events fade in as the visible span shrinks... a 1D quadtree" wording is superseded
+  for rendering by this ADR (a `v1 note` block added in place, per that section's own convention —
+  §3 is not NORMATIVE, so the note lives alongside the original paragraph rather than requiring a
+  contract change); §3's stepping/keyboard behaviour is untouched.
+- `CheckpointPipLayout`'s `row` field and `MAX_PIP_ROWS` are gone; any future consumer of
+  `layoutCheckpointPips` must handle the `CheckpointLayoutEntry` union (`'pip' | 'cluster'`)
+  instead of a flat pip array. `ScrubTrack`'s pip keys stay stable across clustering transitions —
+  a cluster is keyed by its first member's own id, so hover state does not flicker as fisheye
+  stretching changes exactly which neighbours have merged.
+- Both `layoutCheckpointPips` and `declutterEvents` treat `trackWidthPx <= 0` (not yet measured)
+  as "no pixel space to judge proximity by" and skip clustering/decluttering entirely, returning
+  every checkpoint as its own pip / every overlapping event undeclined — the same guard, applied
+  identically in both modules after an initial pass without it collapsed every checkpoint into one
+  cluster on an unmeasured (0px) track, caught by `Experience.test.tsx`'s existing
+  "marks every scene as a timeline checkpoint" regression.
+- `web/src/globe/**`, `web/src/app/Experience.tsx` and the pipeline/sources/data trees were out of
+  scope for this pass (concurrent work) and were not touched; `Experience.tsx`'s own props and
+  behaviour toward `<Timeline>` are unchanged, since clustering/declutter are both internal to
+  `Timeline`/`ScrubTrack`.
