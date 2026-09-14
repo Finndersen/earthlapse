@@ -394,9 +394,11 @@ pixel width — no timer decides what shows. An event is a candidate once it is 
 playhead: its placement (`Event.placement_t`, ADR-022) has been reached on the forward march
 from deep time toward the present, and its *displayed* distance behind `t` — measured in
 pixels on the same warped scale the timeline itself draws against, not raw years — is within a
-lookback constant. Because the lookback is a pixel budget on a nonlinear axis, it automatically
-spans a handful of years near the dense present and hundreds of thousands of years in sparse
-deep time, with no separate branch for either regime. Cards are freshest-first, capped (a
+lookback constant, and the event is at most twice as old as the playhead (plus a 25-year floor).
+The pixel lookback follows whatever window the timeline shows, but on its own it fails near the
+present: the symlog axis is nearly linear below ~10 kyr, so at full-domain view all of human
+history fits in a few dozen pixels. The age ratio keeps "200 years ago" to the last few
+centuries while leaving deep time untouched. Cards are freshest-first, capped (a
 "+k more" line covers the rest of a dense cluster), each one's opacity and a small resting
 offset a function of how close it sits to falling out of the window. An event the current
 scene's caption already names (`Scene.events`, ADR-022) is skipped, never duplicated. The same

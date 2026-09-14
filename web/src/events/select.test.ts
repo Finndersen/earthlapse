@@ -87,6 +87,23 @@ describe('selectFeedEvents', () => {
     expect(deepTime.visible).toHaveLength(1) // the identical 500,000-year gap is imperceptible in deep time
   })
 
+  it("bounds the symlog's near-linear recent stretch by relative age, so 200 years ago doesn't sweep in all of human history", () => {
+    const symlogScale = createSymlogScale([0, EARTH_FORMATION])
+    const newcomen = event('newcomen', { tMin: 313, tMax: 313 })
+    const neolithic = event('neolithic', { tMin: 9000, tMax: 9000 })
+    const { visible, overflowCount } = selectFeedEvents([newcomen, neolithic], 200, symlogScale, 1440)
+    expect(ids(visible)).toEqual(['newcomen'])
+    expect(overflowCount).toBe(0)
+  })
+
+  it('reports distanceFraction as the larger of the pixel and relative-age fractions', () => {
+    // Linear 1:1 scale: 20 px of a 1000 px lookback is 0.02, but 75 -> 175 years ago is
+    // (175 + 25) / (75 + 25) = the full 2x age ratio.
+    const e = event('e', { tMin: 175, tMax: 175 })
+    const { visible } = selectFeedEvents([e], 75, SCALE, TRACK_PX, { lookbackPx: 5000, maxAgeRatio: 2 })
+    expect(visible).toEqual([{ event: e, distanceFraction: 1 }])
+  })
+
   it('caps visible cards and reports the rest as overflowCount, freshest first', () => {
     const events = [
       event('e1', { tMin: 505, tMax: 505 }),

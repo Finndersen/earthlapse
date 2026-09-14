@@ -20,13 +20,19 @@ import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 import { placementT } from './placement'
 
 /** Default lookback, in displayed track pixels — how far behind the playhead's own position
- *  an event's placement may sit and still show. Tuned against the real manifest's Holocene
- *  stretch (agriculture, writing, spaceflight sit a few displayed px apart at full zoom-out;
- *  this comfortably spans several of them without reaching all the way back to, say, the
- *  Neolithic) and its sparsest deep-time stretch (a single lookback window can span tens of
- *  millions of years there, which is the point — the window is defined in screen space, not
- *  years, exactly so both regimes work from the same constant). */
+ *  an event's placement may sit and still show. Defined in screen space so it follows whatever
+ *  window the timeline is showing. On its own it is not enough: the symlog axis is nearly
+ *  linear below its ~10 kyr knee, so at full-domain view the whole of human history fits in a
+ *  few dozen pixels and any useful pixel window sweeps all of it ("+55 more" at 200 years ago).
+ *  `DEFAULT_MAX_AGE_RATIO` bounds that case. */
 export const DEFAULT_LOOKBACK_PX = 220
+
+/** An event also drops out once it is more than this many times older than the playhead
+ *  (with `RECENCY_FLOOR_YEARS` added to both, so the present itself has a small window):
+ *  standing 200 years ago the feed reaches back to ~425 years ago, not to the Neolithic. */
+export const DEFAULT_MAX_AGE_RATIO = 2
+
+export const RECENCY_FLOOR_YEARS = 25
 
 /** Cards shown before the rest collapse into a "+k more" line, at rest (a narrow viewport
  *  shows fewer still — see `useIsCompactViewport`, consumed by `<EventFeed>`). Kept small
@@ -54,6 +60,7 @@ const EMPTY_SELECTION: FeedSelection = { visible: [], overflowCount: 0 }
 
 export interface SelectFeedEventsOptions {
   lookbackPx?: number
+  maxAgeRatio?: number
   maxVisible?: number
   /** Event ids to skip outright — `<EventFeed>` passes the ids the currently-captioned scene
    *  already names (`Scene.events`, ADR-022) here, via `sceneCaptionedEventIds`, so the feed
@@ -62,9 +69,10 @@ export interface SelectFeedEventsOptions {
 }
 
 /**
- * Every event behind `t` within `lookbackPx`, freshest first, capped at `maxVisible`.
- * `trackWidthPx <= 0` (not yet measured) or `lookbackPx <= 0` returns nothing rather than
- * dividing by zero or treating every event as infinitely close.
+ * Every event behind `t` within both `lookbackPx` and `maxAgeRatio`, freshest first, capped at
+ * `maxVisible`. `distanceFraction` is the larger of the two fractions, so a card fades toward
+ * whichever bound it will cross first. `trackWidthPx <= 0` (not yet measured), `lookbackPx <= 0`
+ * or `maxAgeRatio <= 1` returns nothing rather than dividing by zero.
  */
 export function selectFeedEvents(
   events: readonly TimelineEvent[],
@@ -73,19 +81,27 @@ export function selectFeedEvents(
   trackWidthPx: number,
   options: SelectFeedEventsOptions = {},
 ): FeedSelection {
-  const { lookbackPx = DEFAULT_LOOKBACK_PX, maxVisible = DEFAULT_MAX_VISIBLE, excludedEventIds } = options
-  if (trackWidthPx <= 0 || lookbackPx <= 0) return EMPTY_SELECTION
+  const {
+    lookbackPx = DEFAULT_LOOKBACK_PX,
+    maxAgeRatio = DEFAULT_MAX_AGE_RATIO,
+    maxVisible = DEFAULT_MAX_VISIBLE,
+    excludedEventIds,
+  } = options
+  if (trackWidthPx <= 0 || lookbackPx <= 0 || maxAgeRatio <= 1) return EMPTY_SELECTION
 
   const playheadU = scale.toUnit(t)
+  const logMaxAgeRatio = Math.log(maxAgeRatio)
 
   const candidates: FeedEntry[] = []
   for (const event of events) {
     if (excludedEventIds?.has(event.id)) continue
     const eventT = placementT(event)
     if (eventT < t) continue // ahead of t: hasn't happened yet from this vantage
-    const distancePx = Math.abs(playheadU - scale.toUnit(eventT)) * trackWidthPx
-    if (distancePx > lookbackPx) continue
-    candidates.push({ event, distanceFraction: distancePx / lookbackPx })
+    const pxFraction = (Math.abs(playheadU - scale.toUnit(eventT)) * trackWidthPx) / lookbackPx
+    const ageFraction = Math.log((eventT + RECENCY_FLOOR_YEARS) / (t + RECENCY_FLOOR_YEARS)) / logMaxAgeRatio
+    const distanceFraction = Math.max(pxFraction, ageFraction)
+    if (distanceFraction > 1) continue
+    candidates.push({ event, distanceFraction })
   }
 
   candidates.sort((a, b) => {

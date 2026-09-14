@@ -173,7 +173,7 @@ function EventFeedCard({ entry, expanded, reducedMotion, onActivate }: EventFeed
         />
         <span className={styles.body}>
           <span className={styles.headline}>
-            <span className={styles.label}>{event.label}</span>
+            <span className={`${styles.label} ${expanded ? styles.labelExpanded : ''}`}>{event.label}</span>
             <span className={styles.date}>{formatEventDate(event)}</span>
           </span>
           <span className={`${styles.description} ${expanded ? styles.descriptionExpanded : ''}`}>

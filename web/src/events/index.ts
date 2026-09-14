@@ -33,7 +33,9 @@ export { formatEventDate, placementT } from './placement'
 export { sceneCaptionedEventIds } from './sceneLink'
 export {
   DEFAULT_LOOKBACK_PX,
+  DEFAULT_MAX_AGE_RATIO,
   DEFAULT_MAX_VISIBLE,
+  RECENCY_FLOOR_YEARS,
   feedCardOffsetPx,
   feedCardOpacity,
   MAX_CARD_OFFSET_PX,
