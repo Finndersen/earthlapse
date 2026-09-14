@@ -21,6 +21,13 @@ export const PLACEHOLDER_TEXTURE: THREE.Texture = (() => {
   return texture
 })()
 
+/** Synchronous cache lookup — `undefined` unless `url` has already fully loaded. Lets a caller
+ *  bind a pair without the microtask/frame `loadSceneTexture`'s promise always costs, even on
+ *  a cache hit (`useScenePair` uses this to avoid a stale-pair flash at a scene checkpoint). */
+export function getCachedSceneTexture(url: string): THREE.Texture | undefined {
+  return cache.get(url)
+}
+
 export function loadSceneTexture(url: string): Promise<THREE.Texture> {
   const cached = cache.get(url)
   if (cached !== undefined) return Promise.resolve(cached)
