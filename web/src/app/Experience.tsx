@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { EventFeed } from '@/events'
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, DayLengthClock, LayerChart, ScalarReadout, Sparkline } from '@/layers'
@@ -319,6 +320,7 @@ export function Experience() {
           })}
         </div>
       }
+      feed={<EventFeed t={t} scale={timelineScale} events={manifest.events} scenes={manifest.scenes} onScrub={setT} />}
       title={<TimeTitle t={t} />}
       badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
       ancestor={nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} /> : null}

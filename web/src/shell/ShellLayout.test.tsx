@@ -24,6 +24,7 @@ function renderShell({
       globe={<div>GLOBE_SLOT</div>}
       globeCaption={globeCaption}
       readouts={<div>READOUTS_SLOT</div>}
+      feed={<div>FEED_SLOT</div>}
       title={<div>TITLE_SLOT</div>}
       badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
@@ -45,6 +46,7 @@ describe('ShellLayout', () => {
       'SCENE_SLOT',
       'GLOBE_SLOT',
       'READOUTS_SLOT',
+      'FEED_SLOT',
       'TITLE_SLOT',
       'BADGE_SLOT',
       'ANCESTOR_SLOT',
@@ -112,10 +114,12 @@ describe('ShellLayout', () => {
     expect(ancestorWrap?.className.split(' ')).not.toContain(styles.peripheral)
   })
 
-  it('still marks the readouts and credits peripheral, so idle calm keeps quieting them', () => {
+  it('still marks the readouts, feed and credits peripheral, so idle calm keeps quieting them', () => {
     renderShell()
     const readoutsWrap = screen.getByText('READOUTS_SLOT').closest(`.${styles.readouts}`)
     expect(readoutsWrap?.className.split(' ')).toContain(styles.peripheral)
+    const feedWrap = screen.getByText('FEED_SLOT').closest(`.${styles.feed}`)
+    expect(feedWrap?.className.split(' ')).toContain(styles.peripheral)
     expect(screen.getByText('Credits').className.split(' ')).toContain(styles.peripheral)
   })
 

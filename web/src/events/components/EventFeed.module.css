@@ -1,0 +1,171 @@
+/*
+ * Chrome-less, matching the shell's shared HUD language (ShellLayout.module.css's own doc
+ * comment): no panel background or border here, just unboxed type over the lens vignette.
+ * Sits in the shell's left column, below the layer readouts and above the transport — the one
+ * empty stretch of the periphery that never overlaps the globe orb, the ancestor panel or the
+ * scene caption (see `ShellLayout.tsx`'s `feed` slot).
+ */
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  max-width: 300px;
+  min-width: 0;
+  /* A firm ceiling, not just a generous upper bound: measured against the real shell layout at
+     1440x900, the row this sits in (below the readouts, above the transport) gave a
+     `DEFAULT_MAX_VISIBLE`-card resting list at its original tuning (3) barely 4px of its own
+     slack before the transport band began right where the feed's own resting bottom already
+     sat — there was essentially no room to grow into, which is what drove
+     `DEFAULT_MAX_VISIBLE` down to 2 (`select.ts`). An expanded card's full description +
+     citation scrolls *within* this cap rather than growing the box past it, so even a future
+     re-tuning of the visible-card count can't reopen the same overlap. `max-height`, not a
+     fixed `height`: a sparser feed (one card, or none at all) still shrinks to fit its actual
+     content instead of always reserving this much space. */
+  max-height: 150px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
+}
+
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.card {
+  min-width: 0;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.cardButton {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 5px 7px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: border-color 200ms ease;
+}
+
+.cardButton:hover,
+.cardButton:focus-visible {
+  border-color: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  outline: none;
+}
+
+.chip {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--hud-ink, #efe9dc);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.date {
+  flex: none;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}
+
+.description {
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.descriptionExpanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.citation {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  line-height: 1.45;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.overflow {
+  margin: 0 0 0 7px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+@media (max-width: 760px) {
+  .feed {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}

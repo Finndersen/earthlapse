@@ -24,6 +24,13 @@ export interface ShellLayoutProps {
   globeCaption: string
   /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). */
   readouts: ReactNode
+  /** Left edge, below the readouts: the event feed (DESIGN § Event feed) — recently-reached
+   *  events as cards, so they surface as playback passes them instead of only on a timeline
+   *  hover. The one empty stretch of the periphery on every breakpoint, so it never sits over
+   *  the globe orb, the ancestor panel or the scene caption. `<EventFeed>` shows no cards and
+   *  no visible text when there is nothing to show, so this slot silently takes up no visible
+   *  space at all then. */
+  feed: ReactNode
   /** Top-centre: the current time and the eon/era it falls in. */
   title: ReactNode
   /** Beside the title: a small status tag (e.g. stub data), or nothing. */
@@ -57,6 +64,7 @@ export function ShellLayout({
   globe,
   globeCaption,
   readouts,
+  feed,
   title,
   badge,
   ancestor,
@@ -81,6 +89,8 @@ export function ShellLayout({
         </div>
 
         <div className={`${styles.readouts} ${styles.peripheral}`}>{readouts}</div>
+
+        <div className={`${styles.feed} ${styles.peripheral}`}>{feed}</div>
 
         <header className={styles.title}>
           {title}

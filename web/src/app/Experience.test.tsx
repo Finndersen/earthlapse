@@ -5,7 +5,7 @@
  * wired together — see docs/ONESHOT_SCOPE.md.
  */
 
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { resolveAssetUrl } from '@/scene'
@@ -209,5 +209,41 @@ describe('Experience (W12a integration)', () => {
     }
 
     expect(seen.size).toBeGreaterThanOrEqual(5)
+  })
+
+  it('surfaces a recently-reached event as a feed card, and clicking it scrubs to it', async () => {
+    // jsdom's getBoundingClientRect defaults to a zero-size box, under which the feed (like the
+    // timeline track) treats itself as unmeasured and shows nothing — give its container a real
+    // width, as `events/components/EventFeed.test.tsx` does in isolation. Installed before
+    // `renderSettled` mounts the tree: `useElementWidth` has no ResizeObserver in jsdom, so it
+    // only ever reads this once, on mount.
+    const rectSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 40,
+      width: 300,
+      height: 40,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect)
+
+    await renderSettled()
+
+    act(() => {
+      // Exactly kpg-impact's own t (stub manifest): freshest possible, distanceFraction 0.
+      useTimeStore.getState().setT(66_000_000)
+    })
+
+    const card = await screen.findByTestId('event-feed-card-kpg-impact')
+    expect(card.textContent).toMatch(/impact/i)
+
+    act(() => {
+      fireEvent.click(card)
+    })
+    expect(useTimeStore.getState().t).toBe(66_000_000)
+
+    rectSpy.mockRestore()
   })
 })

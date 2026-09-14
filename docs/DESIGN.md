@@ -379,6 +379,39 @@ viewport. Scalar layers appear as sparklines that expand into full-width charts 
 the timeline; because the chart shares the timeline's warped x-axis, the value under the
 playhead is always directly above it. One chart component, N layers.
 
+### Event feed
+
+Surfaces events as playback reaches them, rather than only on a timeline hover — the roadmap's
+"non-intrusive playback pop-up cards" and "event card (description + citation)". Lives in
+`web/src/events` (`selectFeedEvents`, `<EventFeed>`), a self-contained prop-driven package like
+`timeline`, `scene` and `layers`; `ShellLayout`'s `feed` slot sits below the readouts, on the
+one stretch of the periphery that is never the globe orb, the ancestor panel or the scene
+caption, at every breakpoint (a compact single-card strip directly above the timeline on a
+phone).
+
+Selection is a pure function of `t`, the animated `TimeScale` and the feed's own measured
+pixel width — no timer decides what shows. An event is a candidate once it is "behind" the
+playhead: its placement (`Event.placement_t`, ADR-022) has been reached on the forward march
+from deep time toward the present, and its *displayed* distance behind `t` — measured in
+pixels on the same warped scale the timeline itself draws against, not raw years — is within a
+lookback constant. Because the lookback is a pixel budget on a nonlinear axis, it automatically
+spans a handful of years near the dense present and hundreds of thousands of years in sparse
+deep time, with no separate branch for either regime. Cards are freshest-first, capped (a
+"+k more" line covers the rest of a dense cluster), each one's opacity and a small resting
+offset a function of how close it sits to falling out of the window. An event the current
+scene's caption already names (`Scene.events`, ADR-022) is skipped, never duplicated. The same
+rule makes scrubbing backward well-behaved: revisiting a given `t` reproduces the exact same
+feed regardless of which direction it was reached from, and a paused/hovering viewer sees the
+same nearest-behind cards a playing one would.
+
+A card expands in place to its full description and citation on click/tap/Enter, and scrubs
+the timeline to that event via the same `onScrub` path `<Timeline>` itself uses — there is no
+second selection mechanism. A single polite `aria-live` announcement per newly-freshest event
+is throttled during fast playback rather than firing on every event a dense stretch crosses.
+`EVENT_TAG_PALETTE` (`web/src/events/tagPalette.ts`) is the one place an `EventTag` maps to a
+colour, so the timeline's own eventual colouring by tag (ADR-022, deferred) reuses it rather
+than inventing a second legend.
+
 ---
 
 ## 9. Generation pipeline (NORMATIVE)

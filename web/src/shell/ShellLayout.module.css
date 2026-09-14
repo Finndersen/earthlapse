@@ -102,7 +102,7 @@
   grid-template-areas:
     'globe    title    ancestor'
     'readouts .        ancestor'
-    '.        .        .'
+    'feed     .        .'
     'bottom   bottom   bottom';
   column-gap: var(--gutter);
   padding: var(--gutter-top) var(--gutter) clamp(12px, 1.8vw, 24px);
@@ -165,6 +165,24 @@
   justify-self: start;
   margin-top: clamp(18px, 3vh, 36px);
   min-width: 0;
+}
+
+/* Below the readouts, resting on the empty row above `.bottom` (`align-self: end`) — the one
+   stretch of the periphery that is never the globe orb, the ancestor panel or the scene
+   caption, on every breakpoint. Empty (no visible content) when nothing is behind the
+   playhead, so it never reserves visible space of its own.
+   `justify-self: stretch`, not `start`: `<EventFeed>` sizes its own cards from its wrapper's
+   *measured* pixel width (it has no static text content of its own to size a shrink-to-fit box
+   from, unlike `.readouts`' sparklines/numerals), so the wrapper needs a real width from the
+   grid track to measure in the first place — `start` would shrink it to its own content, which
+   depends circularly on that same width, collapsing to 0 and leaving the feed permanently
+   unable to show anything. `max-width` below still caps how wide that stretched box gets. */
+.feed {
+  grid-area: feed;
+  justify-self: stretch;
+  align-self: end;
+  min-width: 0;
+  max-width: 300px;
 }
 
 .title {
@@ -389,9 +407,17 @@
       'globe    title    .'
       'ancestor ancestor ancestor'
       'readouts readouts readouts'
-      '.        .        .'
+      'feed     feed     feed'
       'bottom   bottom   bottom';
     row-gap: 12px;
+  }
+
+  /* The brief's "compact single-card strip above the timeline": `<EventFeed>` itself caps to
+     one card at this breakpoint (`useIsCompactViewport`), so this only drops the desktop
+     column's width cap — full-width here reads as a strip, not a narrow stack. */
+  .feed {
+    align-self: auto;
+    max-width: none;
   }
 
   .globe .label {
