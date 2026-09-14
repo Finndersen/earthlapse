@@ -675,7 +675,7 @@ scenes:
       far_bank: swamp forest fading into haze, lit starkly from above
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
-    pin: {asset_digest: "6e602cdf8ffa94f1", path: "data/candidates/kpg-arrival/a400d626bc419b6d/03-6e602cdf8ffa94f1.jpg"}
+    pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
   # Raine, J.I. & Hollis, C.J. (2001), "Indication of global deforestation at the
@@ -703,7 +703,7 @@ scenes:
       far_bank: dead grey trunks standing and fallen along the far shore, ferns growing thickly around them
       sky_and_light: a clear, pale-blue sky with scattered cloud; ordinary bright sunlight
       absent: [dinosaurs, large animals, tall flowering canopy, blue-green conifer forest, people]
-    pin: {asset_digest: "07364f73673488bd", path: "data/candidates/kpg-aftermath/2e74a45036487abc/01-07364f73673488bd.jpg"}
+    pin: {asset_digest: "7c2ff6fd148753d8", path: "data/candidates/kpg-aftermath/2e74a45036487abc/02-7c2ff6fd148753d8.jpg"}
 
   # Paleocene mammal radiation (events.yaml paleocene-mammal-radiation), 62 Ma, about four million
   # years after k-pg-impact (66.043 Ma). Forests recovered fast: a diverse tropical rainforest stood
@@ -754,13 +754,13 @@ scenes:
       left_mass: a stand of very tall, straight deciduous swamp conifers with soft, feathery, bright green needles, their broad trunks standing in shallow water
       vegetation: tall deciduous swamp conifers and broadleaf trees in full green summer leaf, with a low fern understory
       fauna: a heavy semi-aquatic Coryphodon in the shallows; a blunt-snouted crocodilian and a large freshwater turtle basking on a fallen log in the middle distance
-      main_subject: "a Coryphodon: a massive, short-legged, barrel-bodied mammal about two and a half metres long and a metre tall at the shoulder, with a large low head and short tusks at the front of its mouth, wading knee-deep"
+      main_subject: "a Coryphodon: a massive, heavy-limbed early hoofed mammal about two and a half metres long and a metre tall at the shoulder, with a long, low, flat-topped skull held close to the water, small eyes on the sides of the head, long dagger-like upper tusks showing at the front of a long muzzle, broad feet spreading into five short blunt toes, and thick, dull brown, deeply wrinkled hide, wading knee-deep"
       ground: waterlogged peat scattered with fallen green needles and cones
       water: a still, dark, tannin-brown lake reflecting the forest
       far_bank: more swamp conifer forest fading into a low summer mist
       sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
-      absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, rhinoceros, tapir, trunk, people, buildings]
-    pin: {asset_digest: "c78a7db0fe4aae0c", path: "data/candidates/arctic-hothouse-forest/5705a781c5da90e7/01-c78a7db0fe4aae0c.jpg"}
+      absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, hippo-shaped head, eyes or nostrils raised on top of the head, smooth pink or grey hairless skin, rhinoceros, tapir, trunk, people, buildings]
+    pin: null
 
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
   - id: eocene-jungle
@@ -836,7 +836,7 @@ scenes:
       far_bank: open rolling grassland dotted with scattered trees and woodland patches, running to a distant horizon
       sky_and_light: a wide, bright blue sky with scattered fair-weather cumulus; clear, strong sunlight with a broad view to the horizon
       absent: [dense unbroken forest, dinosaurs, primates, modern-style farmland, fences, people, buildings]
-    pin: {asset_digest: "23dfb55698051631", path: "data/candidates/miocene-grassland/39127bbcdc1c4182/02-23dfb55698051631.jpg"}
+    pin: {asset_digest: "93b44eb04685155f", path: "data/candidates/miocene-grassland/39127bbcdc1c4182/03-93b44eb04685155f.jpg"}
 
   # Late Miocene, ~7 Ma, within the C4 grass expansion (events.yaml c4-expansion, ~8-5 Ma by
   # region): Cerling, T.E. et al. (1997), "Global vegetation change through the Miocene/Pliocene
@@ -855,14 +855,14 @@ scenes:
       setting: An open, sunburnt savanna in the East African rift at a shrinking waterhole, where coarse, wiry grasses have spread across what was mixed woodland
       left_mass: a single flat-topped acacia-like tree standing apart, its canopy thin, giving little shade over cracked bare ground
       vegetation: tough, wiry, straw-coloured grass covering the plain almost to the horizon, with only isolated trees
-      fauna: a herd of small, three-toed hipparionine horses and a few small horned grazing mammals drinking together
+      fauna: a herd of small, three-toed hipparionine horses with plain, unmarked sandy-brown coats and short upright manes, drinking together; no other animals
       main_subject: a pony-sized three-toed hipparionine horse, each foot with a large central hoof flanked by two small side toes, head down and drinking at the water's edge
       ground: cracked, sun-baked pale earth around the shrinking waterhole, hoofprints pressed into the drying mud
       water: a shallow, muddy, shrinking waterhole, its margins rimmed with dried mud
       far_bank: open, sunburnt savanna running flat to a hazy, heat-shimmered horizon
       sky_and_light: a bleached, almost white sky with a fierce, high sun; hard, short shadows and visible heat haze over the distance
-      absent: [dense forest, modern zebra, modern antelope, apes, hominins, people, fences, buildings]
-    pin: {asset_digest: "6dbfd3450bcd8b4b", path: "data/candidates/c4-savanna-hipparion/bb5550a029a53026/02-6dbfd3450bcd8b4b.jpg"}
+      absent: [dense forest, modern zebra, stripes, modern antelope, gazelles, horned animals, apes, hominins, people, fences, buildings]
+    pin: null
 
   # Messinian salinity crisis, 5.96-5.33 Ma, placed in the halite phase at 5.6 Ma (events.yaml
   # messinian-salinity-crisis): Krijgsman, W. et al. (1999), "Chronology, causes and progression of
@@ -916,7 +916,7 @@ scenes:
       far_bank: riverside woodland opening to grassland beyond, hazy with distance
       sky_and_light: a clear, warm, pale-blue East African sky with a few high clouds; bright, direct sunlight
       absent: [modern humans, clothing, stone tools, spears, fire, chimpanzees, gorillas, buildings]
-    pin: {asset_digest: "dff5ee126e47ca9b", path: "data/candidates/lucy-afarensis/50206163a975bec6/03-dff5ee126e47ca9b.jpg"}
+    pin: {asset_digest: "347021bb25fb32ad", path: "data/candidates/lucy-afarensis/50206163a975bec6/01-347021bb25fb32ad.jpg"}
 
   # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
   # 2(8), e1600883 (events.yaml isthmus-of-panama, contested: Bacon et al. 2015; Montes et al. 2015).
@@ -1000,7 +1000,7 @@ scenes:
       far_bank: open cold steppe rising to low hills, patched with dark conifer stands
       sky_and_light: a pale, cold, high sky with fast-moving cloud; a low sun and long, cool-toned light
       absent: [cave paintings, agriculture, farm animals, metal, modern humans, modern clothing, buildings]
-    pin: {asset_digest: "78eb69bb3ea0e8b2", path: "data/candidates/ice-age-europe-neanderthal/a2371d18426b995f/02-78eb69bb3ea0e8b2.jpg"}
+    pin: {asset_digest: "3905f2c4c1a2641b", path: "data/candidates/ice-age-europe-neanderthal/a2371d18426b995f/01-3905f2c4c1a2641b.jpg"}
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
   - id: pleistocene-steppe
