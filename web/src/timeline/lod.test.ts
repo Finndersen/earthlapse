@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION, type TimelineEvent } from '@/types/layer'
 
-import { minImportanceForSpan, visibleEvents } from './lod'
+import { minImportanceAt, minImportanceForSpan, visibleEvents } from './lod'
 import type { TimeWindow } from './scale'
 import { MIN_SPAN_YEARS } from './zoom'
 
@@ -31,6 +31,23 @@ describe('minImportanceForSpan', () => {
   it('clamps spans outside [MIN_SPAN_YEARS, EARTH_FORMATION]', () => {
     expect(minImportanceForSpan(0)).toBe(minImportanceForSpan(MIN_SPAN_YEARS))
     expect(minImportanceForSpan(EARTH_FORMATION * 10)).toBe(minImportanceForSpan(EARTH_FORMATION))
+  })
+})
+
+describe('minImportanceAt', () => {
+  it('equals minImportanceForSpan at magnification 1 (an undistorted track)', () => {
+    expect(minImportanceAt(1e8, 1)).toBe(minImportanceForSpan(1e8))
+  })
+
+  it('gives a lower-or-equal threshold at higher magnification, equal to the threshold for the shrunk span', () => {
+    const span = 1e8
+    expect(minImportanceAt(span, 5)).toBe(minImportanceForSpan(span / 5))
+    expect(minImportanceAt(span, 5)).toBeLessThanOrEqual(minImportanceForSpan(span))
+  })
+
+  it('treats magnification below 1 as 1', () => {
+    expect(minImportanceAt(1e8, 0.5)).toBe(minImportanceForSpan(1e8))
+    expect(minImportanceAt(1e8, 0)).toBe(minImportanceForSpan(1e8))
   })
 })
 

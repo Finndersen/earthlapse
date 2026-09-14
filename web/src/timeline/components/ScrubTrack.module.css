@@ -102,9 +102,18 @@
   z-index: 2;
 }
 
-/* A previewed pip already names its own time; the playhead readout steps aside for it. */
+/* A previewed pip already names its own time; the playhead readout steps aside for it, and so
+   does the fisheye hover readout (ADR-017) — a pip preview already shows its own time+label. */
 .hitArea:has(.pip:hover) .timeLabel,
-.hitArea:has(.pip:focus-visible) .timeLabel {
+.hitArea:has(.pip:focus-visible) .timeLabel,
+.hitArea:has(.pip:hover) .hoverReadout,
+.hitArea:has(.pip:focus-visible) .hoverReadout {
+  opacity: 0;
+}
+
+/* The fisheye hover readout names the pointer's own time; the playhead readout steps aside for
+   it so the two never overlap (ADR-017). */
+.hitArea[data-hover-active='true'] .timeLabel {
   opacity: 0;
 }
 
@@ -202,10 +211,50 @@
   overflow: hidden;
 }
 
+/* The fisheye hover readout (ADR-017, replacing the old floating loupe): rides the pointer's
+   displayed x above the track, in the same spot the playhead readout occupies — the two never
+   show at once (`.hitArea[data-hover-active='true'] .timeLabel` above). */
+.hoverReadout {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.hoverReadout[data-visible='true'] {
+  opacity: 1;
+}
+
+.snapLabel {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 10.5px;
+  color: var(--hud-accent, #e8b06a);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--hud-ink, #efe9dc);
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .timeLabel,
   .pipPreview,
-  .pipDiamond {
+  .pipDiamond,
+  .hoverReadout {
     transition: none;
   }
 }

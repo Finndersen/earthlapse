@@ -644,9 +644,11 @@ near-scene-mode already, just without being named as such or offering the honest
   (attached passively at the root, so `preventDefault` silently failed and logged "Unable to
   preventDefault inside passive event listener invocation" on every gesture) to a native
   `addEventListener('wheel', ..., { passive: false })` on the track element, added in an effect
-  and kept current via a ref-mirrored closure. `AxisTicks`, `Minimap` and `Loupe` were audited
-  and use only pointer events for their own drag gestures — none of them touch `onWheel`, so
-  the fix is confined to `ScrubTrack`.
+  and kept current via a ref-mirrored closure. `AxisTicks`, `Minimap` and `Loupe` (the hover
+  loupe this ADR's own track pips floated above — later removed outright by ADR-017, which
+  replaced it with a fisheye stretch of the track itself) were audited and use only pointer
+  events for their own drag gestures — none of them touch `onWheel`, so the fix is confined to
+  `ScrubTrack`.
 
 **Consequences.**
 - A `'scenes'`-mode playthrough's length now scales with scene count, not just gap width: for
@@ -672,7 +674,112 @@ near-scene-mode already, just without being named as such or offering the honest
 
 ---
 
-## Pending
+## ADR-017 — A fisheye stretch of the scrub track replaces the hover loupe
+
+**Status:** accepted — human-directed 2026-09-14.
+
+**Context.** The hover loupe (ADR-016's own `Loupe.tsx`/`loupe.ts`) showed a *linear* window of
+`mainWindow span / 12` centred on the cursor, floating independently above it. On the default
+symlog track at full zoom-out (`mainWindow` = the full 4.6 Gyr domain) that window is
+`4.567e9 / 12 ≈ 380` Myr wide — hovering at 73.9 ka, deep in the near-linear part of the symlog
+warp, showed the loupe spanning roughly "200 Ma → present": no resolution gain at all where the
+main track already has almost none. The loupe's own span was a fixed fraction of the *main*
+window regardless of where in the (nonlinear) warp the cursor actually sat, so it helped least
+exactly where the main track needed help most. The human's own framing: enlarge the main track
+itself around the hover area, rather than bolt on a second, separately-scaled overlay that has
+to be independently legible, positioned, and kept in sync with what it's magnifying.
+
+**Decision.** The scrub track distorts in place (`timeline/fisheye.ts`, pre-existing in this
+pass — see its own doc comment for the full derivation) instead of being duplicated into a
+floating overlay:
+
+- **Density/raised-cosine construction.** The distortion is a density over the undistorted
+  track's own `0..1` space, `1 + gain · bump(s)`, where `bump` is a raised cosine
+  (`(1 + cos(π·x / halfWidth)) / 2`) of half-width `FISHEYE_HALF_WIDTH_PX` (60 undistorted px)
+  centred on the lens focus — zero outside that window, so nothing beyond it moves at all, and
+  `C¹`-continuous at the window edge (a raised cosine's derivative vanishes at `±halfWidth`), so
+  the transition into and out of the stretched region has no visible kink. A displayed position
+  is that density's normalised integral: strictly increasing everywhere (the density is always
+  positive), so the distorted scale always inverts, and closed-form (`primitive`/`bumpIntegral`
+  are both elementary), so only `fromUnit` needs bisection, not `toUnit`. Peak magnification is
+  `(1 + FISHEYE_GAIN) / normaliser`, about 5x on a typical 1440px-wide track — enough that a
+  cluster of pips that used to be indistinguishable spreads to individually clickable, without
+  the track visibly ballooning.
+- **The dead zone.** A lens glued exactly to the pointer would make pointing *less* precise than
+  no lens at all: content under a moving lens slides past the pointer at the magnification rate,
+  so the very act of moving toward a target drags it sideways faster than the pointer approaches
+  it. `stepFisheye` instead holds the lens still while the pointer moves within
+  `FISHEYE_DEADZONE_PX` (48 displayed px) of the lens centre, and only eases the lens toward the
+  pointer once it leaves that zone — small, precise movements (aiming at a specific pip) never
+  perturb the magnified content at all; only a deliberate move to a new area of the track drags
+  the lens along.
+- **Magnification-aware LOD.** `lod.ts` gains `minImportanceAt(spanYears, magnification) =
+  minImportanceForSpan(spanYears / max(1, magnification))`: a point under the lens is treated as
+  though the visible span were narrower by exactly the local stretch factor, so the LOD floor
+  drops (more events become visible) precisely where the lens has made room for them on screen,
+  computed per event at its own uncertainty-band midpoint rather than once globally — two events
+  a few pixels apart on screen can now sit on either side of the threshold depending on which
+  one the lens happens to be centred over.
+- **Snapping kept, relocated.** The loupe's snap-to-nearby-event/checkpoint behaviour survives
+  as `timeline/snap.ts` (`snapCandidates`/`findSnapTarget`, a straight port of `loupe.ts`'s
+  `loupeCandidates`/`findLoupeSnapTarget` minus the loupe's own window/position math) — a click
+  or hover still resolves to an exact event/checkpoint within `SNAP_PX` (10 displayed px) when
+  one is close enough, just measured against the track's own now-distorted pixel space instead
+  of a separate loupe-local one.
+- **The ruler stretches too.** `AxisTicks` is handed the same distorted `TimeScale` the track
+  is, not the undistorted one, so tick spacing/labels spread apart in lockstep with the track
+  content sitting above them — the two would otherwise visibly disagree about where a given
+  time sits on screen.
+- **The chart dock stays undistorted, deliberately.** `LayerChart` (`Experience.tsx`'s expanded
+  chart) keeps reading the plain animated `scale`, never the fisheye one: a chart's x-axis
+  encodes a fixed correspondence between screen position and time that the reader is meant to
+  compare across the whole visible span (is this trend steeper here than there); a hover-driven
+  local stretch would make that comparison actively misleading (a flat trend crossing the lens
+  would visually flatten further, an already-steep one would visually steepen) for a component
+  whose entire job is showing shape, not aiding a click target. Out of scope for this pass to
+  change; noted here as a deliberate asymmetry rather than an oversight.
+
+**Implementation.**
+- `Timeline.tsx` owns the lens (`useFisheye`, a `requestAnimationFrame` loop around
+  `stepFisheye`/`isFisheyeSettled` following the same ref-mirrored-closure idiom as
+  `useAnimatedScale`/`useWheelZoomAccumulator`, snapping straight to the target with no rAF loop
+  at all under `prefers-reduced-motion: reduce`) and derives `trackScale =
+  fisheyeScale(scale, fisheye.lens, fisheye.trackWidthPx)`, memoised on the lens/track-width
+  actually changing. `trackScale` goes to `<ScrubTrack>` (as `scale`) and `<AxisTicks>`;
+  `<ScrubTrack>` also receives the undistorted `scale` back as `baseScale`. The zoom buttons,
+  keyboard shortcuts, fit-all and event-framing all continue to anchor on the undistorted
+  `scale` — the lens is a pointer-time reading of the window, never a new space to zoom in.
+- `ScrubTrack` reports every pointer position over the track to the lens
+  (`onLensPointer(u, trackWidthPx)`, `u` in the *displayed*, already-distorted space) and
+  releases it on leave/touch-up, mirroring exactly the mouse-vs-touch/pen visibility rule the
+  old loupe used (`activePointerTypeRef`: mouse gets a true hover, touch/pen only show for the
+  duration of an active drag). Any conversion from a displayed anchor back to the underlying
+  window's own space — the wheel-zoom anchor, the empty-track double-click zoom anchor — goes
+  through `baseScale.toUnit(scale.fromUnit(u))`; scrubbing itself does not, since the time under
+  a given screen position *is* `scale.fromUnit(u)` by construction.
+- The loupe's floating readout (`position: fixed`, independently positioned via
+  `loupePosition`/viewport clamping) is replaced by a small in-track readout riding the
+  pointer's own displayed x, styled from the loupe's old `.snapLabel`/`.time` (moved into
+  `ScrubTrack.module.css`) — no viewport math needed, since it now lives in the track's own
+  percentage-based coordinate space alongside the playhead label and pip previews. It fades
+  120ms, hides while a pip is hovered (`.hitArea:has(.pip:hover)`, extending the rule that
+  already recedes the playhead label for the same reason) and edge-anchors via the same
+  `previewAnchorClass` the pip preview already uses, so it never clips at either end of the
+  track. The playhead's own `.timeLabel` fades out while the readout is visible
+  (`.hitArea[data-hover-active='true']`), since the two would otherwise occupy the same spot.
+
+**Consequences.**
+- `loupe.ts`, `loupe.test.ts`, `components/Loupe.tsx` and `components/Loupe.module.css` are
+  deleted outright rather than kept alongside the new mechanism — see the note added to
+  ADR-016's own wheel-listener bullet, the only other place `Loupe` was mentioned by name.
+- The scrub track's hit-testing, event LOD and snap candidates now all read a `FisheyeScale`
+  (`TimeScale` plus `magnificationAt`) rather than a plain `TimeScale` — any future consumer of
+  `ScrubTrack`'s `scale` prop must supply one (`fisheyeScale` returns a flat `magnificationAt:
+  () => 1` with no lens, so a caller that wants no distortion still satisfies the type with
+  `RESTING_FISHEYE`'s own resting lens).
+- A viewer who never hovers the track (touch-primary, keyboard-only) sees no behavioural change
+  at all beyond the loupe's disappearance: the lens only distorts anything once `pointTo` has
+  been called, and every discrete window change still goes through the undistorted `scale`.
 
 Decisions deferred to Phase 1, to be recorded here once answered:
 

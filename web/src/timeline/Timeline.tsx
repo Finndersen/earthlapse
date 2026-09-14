@@ -14,13 +14,25 @@
  * - `onScaleKindChange(kind)` fires from the symlog/linear toggle button.
  * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, the
  *   scenes/steady mode toggle (ADR-016), and the space-bar shortcut.
- * - `scale` is the animated `TimeScale` over `window` (`useAnimatedScale(window, scaleKind)`),
- *   owned by the caller rather than computed here, so anything else drawn against the same
- *   axis (the expanded `LayerChart` in the chart dock) shares the exact object this component
- *   draws its scrub track, ticks and event lanes with. It is an input only, never reported back
- *   up: an effect-driven "scale changed" callback made every minimap drag frame schedule a
- *   second render from inside an effect, which a fast pointer starved into React's "Maximum
- *   update depth exceeded".
+ * - `scale` is the animated, undistorted `TimeScale` over `window` (`useAnimatedScale(window,
+ *   scaleKind)`), owned by the caller rather than computed here, so anything else drawn against
+ *   the same axis (the expanded `LayerChart` in the chart dock, deliberately left undistorted —
+ *   ADR-017) shares the exact object this component's zoom buttons, keyboard shortcuts and
+ *   window transitions use. It is an input only, never reported back up: an effect-driven
+ *   "scale changed" callback made every minimap drag frame schedule a second render from inside
+ *   an effect, which a fast pointer starved into React's "Maximum update depth exceeded".
+ * - The scrub track and ruler are drawn against a second, fisheye-distorted `trackScale`
+ *   instead (ADR-017): while the pointer hovers the track, a lens stretches the region around
+ *   it so nearby events/pips/ticks spread apart and the rest compresses toward both ends —
+ *   answering the old hover loupe's actual problem (a *linear* window of `span / 12` on a
+ *   *symlog* track showed a ~380 Myr span at full zoom-out) by enlarging the track itself
+ *   instead of floating a separate, differently-scaled overlay above it. `trackScale` is owned
+ *   here (`useFisheye` + `fisheyeScale(scale, fisheye.lens, fisheye.trackWidthPx)`) and passed
+ *   to `<ScrubTrack>` as `scale` and to `<AxisTicks>`, so the ruler stretches in lockstep with
+ *   the track; `<ScrubTrack>` also gets the undistorted `scale` back as `baseScale`, since
+ *   zooming/panning the underlying window always happens in undistorted space. Every *discrete*
+ *   window change below (zoom buttons, fit-all, event framing) anchors on `scale`, never
+ *   `trackScale` — the lens is a pointer-time reading of the window, not a new space to zoom in.
  * - `following` (optional, default `false`): whether follow-during-playback is currently
  *   engaged (README §4) — purely a display flag for the subtle indicator in `ZoomControls`.
  *   The caller (Experience.tsx) owns the actual follow logic, next to its playback loop; this
@@ -45,7 +57,7 @@
  * collides with a button.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
 import { EARTH_FORMATION } from '@/types/layer'
@@ -58,10 +70,12 @@ import { ScrubTrack } from './components/ScrubTrack'
 import { TimelineHint } from './components/TimelineHint'
 import { Transport } from './components/Transport'
 import { ZoomControls } from './components/ZoomControls'
+import { fisheyeScale } from './fisheye'
 import { readHintDismissed, writeHintDismissed } from './hint'
 import { timelineKeyIntent } from './keyboard'
 import type { TimeWindow } from './scale'
 import styles from './Timeline.module.css'
+import { useFisheye } from './useFisheye'
 import { frameEventWindow, zoomWindow } from './zoom'
 import { useWindowTransition } from './windowTransition'
 
@@ -127,6 +141,16 @@ export function Timeline({
     writeHintDismissed()
   }, [])
 
+  // The fisheye lens (ADR-017): owned here, not in `ScrubTrack`, so `AxisTicks` can be
+  // distorted by the exact same lens the track is. `trackScale` is memoised on the lens/track
+  // width actually changing, not recomputed from scratch on every unrelated re-render (a
+  // playhead tick while the pointer sits still over the track).
+  const fisheye = useFisheye()
+  const trackScale = useMemo(
+    () => fisheyeScale(scale, fisheye.lens, fisheye.trackWidthPx),
+    [scale, fisheye.lens, fisheye.trackWidthPx],
+  )
+
   // Every window change reaching this — wheel/pinch zoom, wheel/drag pan, a zoom/fit button, an
   // event frame, a minimap or ruler drag — counts as the "successful zoom/pan" that dismisses
   // the hint. Plain scrubbing (`onScrub`) deliberately does not: it's listed as its own bullet
@@ -185,7 +209,8 @@ export function Timeline({
       <ScrubTrack
         t={t}
         window={visibleWindow}
-        scale={scale}
+        scale={trackScale}
+        baseScale={scale}
         scaleKind={scaleKind}
         events={events}
         checkpoints={checkpoints}
@@ -193,8 +218,10 @@ export function Timeline({
         onWindowChange={handleWindowChange}
         onFrameEvent={handleFrameEvent}
         onEmptyDoubleClick={handleEmptyDoubleClick}
+        onLensPointer={fisheye.pointTo}
+        onLensRelease={fisheye.release}
       />
-      <AxisTicks window={visibleWindow} scale={scale} scaleKind={scaleKind} onWindowChange={handleWindowChange} />
+      <AxisTicks window={visibleWindow} scale={trackScale} scaleKind={scaleKind} onWindowChange={handleWindowChange} />
       {hintVisible && (
         <div className={styles.hintRow}>
           <TimelineHint onDismiss={dismissHint} />

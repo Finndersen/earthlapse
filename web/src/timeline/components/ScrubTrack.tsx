@@ -1,11 +1,17 @@
 'use client'
 
 /** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, event uncertainty bands with
- *  LOD fade, scene checkpoint pips, the playhead, and the hover loupe. A luminous hairline
- *  baseline rather than a filled panel, per the shared visual language — the hit area
- *  (`.hitArea`) stays taller than anything drawn inside it so the track stays easy to grab.
- *  Each pip carries `data-checkpoint-pip`, a stable hook the shell uses to recede whatever sits
- *  where a pip's hover preview rises.
+ *  LOD fade, scene checkpoint pips, the playhead, and the fisheye hover readout (ADR-017).
+ *  A luminous hairline baseline rather than a filled panel, per the shared visual language —
+ *  the hit area (`.hitArea`) stays taller than anything drawn inside it so the track stays easy
+ *  to grab. Each pip carries `data-checkpoint-pip`, a stable hook the shell uses to recede
+ *  whatever sits where a pip's hover preview rises.
+ *
+ *  `scale` is the fisheye-distorted track scale (`fisheyeScale`, owned by `Timeline`) — what
+ *  is drawn and what pointer x maps through; `baseScale` is the same window undistorted, used
+ *  only to convert a *displayed* anchor point back to undistorted `u` before handing it to
+ *  something that zooms/pans the underlying window (wheel, double-click) — zooming is always
+ *  in undistorted space, the lens is a pointer-time reading of it, not a new space to zoom in.
  *
  *  Wheel handling is a native `addEventListener('wheel', ..., { passive: false })` on the hit
  *  area, not React's `onWheel` — see `handleWheel`'s doc comment for why a plain `onWheel`
@@ -18,15 +24,15 @@ import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 
 import { layoutCheckpointPips } from '../checkpointLayout'
 import type { TimelineCheckpoint } from '../checkpoints'
+import type { FisheyeScale } from '../fisheye'
 import { formatGeoTime } from '../format'
-import { minImportanceForSpan, visibleEvents } from '../lod'
-import { findLoupeSnapTarget, loupeCandidates, loupePosition, loupeScale, loupeWindow, LOUPE_WIDTH_PX } from '../loupe'
+import { minImportanceAt } from '../lod'
 import type { TimeWindow } from '../scale'
+import { findSnapTarget, snapCandidates } from '../snap'
 import { useTrackWidth } from '../useTrackWidth'
 import { clamp, clampUnit } from '../util'
 import { useWheelZoomAccumulator } from '../wheelZoom'
 import { panWindow } from '../zoom'
-import { Loupe } from './Loupe'
 import styles from './ScrubTrack.module.css'
 
 /** Wheel `deltaY` -> zoom `factor`, tuned so a typical mouse-wheel notch (~100) changes span
@@ -43,9 +49,9 @@ const FADE_BAND = 0.12
 const PIP_BASELINE_PX = 24
 const PIP_ROW_STEP_PX = 11
 
-/** Half of `.pipPreview`'s width in the CSS module: a pip closer than this to either end of
- *  the track anchors its preview to that side instead of centring it, so it is never clipped
- *  by the window edge. */
+/** Half of `.pipPreview`'s (and the hover readout's) width in the CSS module: content closer
+ *  than this to either end of the track anchors to that side instead of centring, so it is
+ *  never clipped by the window edge. */
 const PREVIEW_HALF_WIDTH_PX = 60
 
 function previewAnchorClass(u: number, trackWidthPx: number): string {
@@ -57,7 +63,8 @@ function previewAnchorClass(u: number, trackWidthPx: number): string {
 interface ScrubTrackProps {
   t: GeoTime
   window: TimeWindow
-  scale: TimeScale
+  scale: FisheyeScale
+  baseScale: TimeScale
   scaleKind: 'symlog' | 'linear'
   events: readonly TimelineEvent[]
   checkpoints: readonly TimelineCheckpoint[]
@@ -67,22 +74,23 @@ interface ScrubTrackProps {
    *  scrubbing to it. */
   onFrameEvent: (event: TimelineEvent) => void
   /** Double-clicking the track *away* from any event marker instead zooms x2, eased, around
-   *  that point (brief §2). `anchorU` is the click position in the track's own 0..1 space. */
+   *  that point (brief §2). `anchorU` is undistorted — the click position in `baseScale`'s own
+   *  0..1 space. */
   onEmptyDoubleClick: (anchorU: number) => void
-}
-
-/** Viewport size for clamping the loupe, with an SSR/non-browser fallback (this component is
- *  client-only, but a fallback keeps `loupePosition` total rather than reaching for a global
- *  that may not exist during, e.g., a test render before any pointer event has fired). */
-function viewportSize(): { width: number; height: number } {
-  if (typeof window === 'undefined') return { width: 1440, height: 900 }
-  return { width: window.innerWidth, height: window.innerHeight }
+  /** The pointer is over the track at displayed unit `u` (a `trackWidthPx`-wide track) — feeds
+   *  `Timeline`'s fisheye lens (ADR-017). Fired on hover (mouse) and while dragging (any
+   *  pointer type), matching the hover-readout visibility rules below. */
+  onLensPointer: (u: number, trackWidthPx: number) => void
+  /** The pointer has left the track (or a non-mouse drag ended) — let the lens fade back to
+   *  rest. */
+  onLensRelease: () => void
 }
 
 export function ScrubTrack({
   t,
   window: visibleWindow,
   scale,
+  baseScale,
   scaleKind,
   events,
   checkpoints,
@@ -90,6 +98,8 @@ export function ScrubTrack({
   onWindowChange,
   onFrameEvent,
   onEmptyDoubleClick,
+  onLensPointer,
+  onLensRelease,
 }: ScrubTrackProps) {
   const [trackRef, trackWidthPx] = useTrackWidth<HTMLDivElement>()
   const applyWheelZoom = useWheelZoomAccumulator({ window: visibleWindow, scaleKind, onWindowChange })
@@ -105,76 +115,88 @@ export function ScrubTrack({
     [trackRef],
   )
 
-  /** The loupe's snap target (if any) for a raw pointer time — brief §3: "make a click scrub
-   *  exactly to it (instead of the raw pointer time)". Shared by the actual scrub (below) and
-   *  the loupe's own render (`hoverInfo`) so both agree on exactly the same candidate. */
-  const snapTargetFor = useCallback(
-    (rawT: GeoTime) => {
-      const win = loupeWindow(visibleWindow, rawT)
-      const candidates = loupeCandidates(events, checkpoints, win)
-      return findLoupeSnapTarget(candidates, loupeScale(win), rawT, LOUPE_WIDTH_PX)
-    },
-    [visibleWindow, events, checkpoints],
+  const spanYears = visibleWindow[1] - visibleWindow[0]
+
+  // Per-event LOD (ADR-017): the importance floor is computed at each event's own midpoint
+  // magnification, not a single global threshold — a wider stretch under the lens reveals the
+  // detail a narrower span would, exactly where the lens is doing its job. `opacity` is derived
+  // alongside `threshold` here (not recomputed at render) since both come from the same
+  // per-event magnification lookup.
+  const shown = useMemo(() => {
+    const [newest, oldest] = visibleWindow
+    return events
+      .filter((e) => e.tMax >= newest && e.tMin <= oldest)
+      .map((event) => {
+        const midpoint = (event.tMin + event.tMax) / 2
+        const threshold = minImportanceAt(spanYears, scale.magnificationAt(midpoint))
+        // The fade ramps in from the LOD threshold, but never from above 1 - FADE_BAND: at
+        // full zoom-out the threshold reaches 1, which would otherwise fade the importance-1
+        // events — the only ones still let through there — to fully transparent.
+        const fadeFloor = Math.min(threshold, 1 - FADE_BAND)
+        return { event, threshold, opacity: clampUnit((event.importance - fadeFloor) / FADE_BAND) }
+      })
+      .filter((s) => s.event.importance >= s.threshold)
+  }, [events, visibleWindow, spanYears, scale])
+
+  const candidates = useMemo(
+    () => snapCandidates(shown.map((s) => s.event), checkpoints, visibleWindow),
+    [shown, checkpoints, visibleWindow],
   )
 
   const scrubToClientX = useCallback(
     (clientX: number): void => {
       const rawT = scale.fromUnit(uFromClientX(clientX))
-      onScrub(snapTargetFor(rawT)?.t ?? rawT)
+      const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
+      onScrub(snap?.t ?? rawT)
     },
-    [onScrub, scale, uFromClientX, snapTargetFor],
+    [onScrub, scale, uFromClientX, candidates, trackWidthPx],
   )
 
-  // Hover loupe visibility (brief §3: "while the pointer is over the scrub track (and while
-  // drag-scrubbing, incl. touch)"). Mouse gets a true hover; touch/pen have none, so they only
-  // show the loupe for the duration of an active pointer-down (tracked via
+  // Hover readout visibility (ADR-017, brief §3: "while the pointer is over the scrub track
+  // (and while drag-scrubbing, incl. touch)"). Mouse gets a true hover; touch/pen have none, so
+  // they only show it for the duration of an active pointer-down (tracked via
   // `activePointerTypeRef`, since `pointerleave` does not fire for the pointer-capturing
   // element while a drag is in flight, but *is* the right cue to hide it for a released touch).
-  const [hover, setHover] = useState<{ clientX: number; clientY: number } | null>(null)
+  const [hoverU, setHoverU] = useState<number | null>(null)
   const activePointerTypeRef = useRef<string | null>(null)
-  // The loupe's last real position, kept across `hover` going back to `null` so a fade-out
-  // (brief: "fade in/out 120ms") shows its last real content shrinking away rather than
-  // snapping its content to the playhead the instant the pointer leaves. Also doubles as "has
-  // this track ever been hovered" — the loupe isn't mounted at all until it has, so a
-  // non-interactive render (tests, first paint) never carries hidden-but-present loupe markup.
-  const lastHoverRef = useRef<{ clientX: number; clientY: number } | null>(null)
 
-  const updateHover = (point: { clientX: number; clientY: number }): void => {
-    lastHoverRef.current = point
-    setHover(point)
+  const updateHover = (clientX: number): void => {
+    const u = uFromClientX(clientX)
+    setHoverU(u)
+    onLensPointer(u, trackWidthPx)
   }
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
     activePointerTypeRef.current = e.pointerType
     e.currentTarget.setPointerCapture(e.pointerId)
-    updateHover({ clientX: e.clientX, clientY: e.clientY })
+    updateHover(e.clientX)
     scrubToClientX(e.clientX)
   }
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
-    updateHover({ clientX: e.clientX, clientY: e.clientY })
+    updateHover(e.clientX)
     if (e.buttons === 0) return
     scrubToClientX(e.clientX)
   }
 
   const handlePointerUp = (): void => {
-    if (activePointerTypeRef.current !== 'mouse') setHover(null)
+    if (activePointerTypeRef.current !== 'mouse') {
+      setHoverU(null)
+      onLensRelease()
+    }
     activePointerTypeRef.current = null
   }
 
   const handlePointerLeave = (): void => {
     // Mid-drag, the capturing element keeps receiving move events even once the pointer has
-    // physically left it — don't hide the loupe out from under an active drag.
-    if (activePointerTypeRef.current === null) setHover(null)
+    // physically left it — don't hide the readout (or release the lens) out from under an
+    // active drag.
+    if (activePointerTypeRef.current === null) {
+      setHoverU(null)
+      onLensRelease()
+    }
   }
 
-  const spanYears = visibleWindow[1] - visibleWindow[0]
-  const threshold = minImportanceForSpan(spanYears)
-  // The fade ramps in from the LOD threshold, but never from above 1 - FADE_BAND: at full
-  // zoom-out the threshold reaches 1, which would otherwise fade the importance-1 events —
-  // the only ones `visibleEvents` still lets through there — to fully transparent.
-  const fadeFloor = Math.min(threshold, 1 - FADE_BAND)
-  const shown = visibleEvents(events, visibleWindow, spanYears)
   const playheadU = clampUnit(scale.toUnit(t))
 
   const pips = useMemo(
@@ -182,20 +204,22 @@ export function ScrubTrack({
     [checkpoints, visibleWindow, scale, trackWidthPx],
   )
 
-  // Computed from `lastHoverRef` (not `hover` directly) so the loupe's *content* freezes on
-  // its last real position during a fade-out rather than jumping to the playhead the instant
-  // `hover` clears — `visible` below is what actually gates the fade.
-  const displayHover = hover ?? lastHoverRef.current
+  // The readout's last real content, kept across `hoverU` going back to `null` so its fade-out
+  // shows that content shrinking away in place rather than drifting: `scale` keeps changing
+  // every frame while the lens relaxes after pointer-leave (`useFisheye`'s rAF loop), so once
+  // `hoverU` is null the whole result — not just the position it was read at — must freeze,
+  // or re-deriving `t`/`label` from the live scale each render would visibly slide the readout
+  // during the fade even though its position looks pinned. Also doubles as "has this track ever
+  // been hovered".
+  const lastHoverInfoRef = useRef<{ u: number; t: GeoTime; label: string | undefined } | null>(null)
   const hoverInfo = useMemo(() => {
-    if (!displayHover) return null
-    const rawT = scale.fromUnit(uFromClientX(displayHover.clientX))
-    const win = loupeWindow(visibleWindow, rawT)
-    const candidates = loupeCandidates(events, checkpoints, win)
-    const snap = findLoupeSnapTarget(candidates, loupeScale(win), rawT, LOUPE_WIDTH_PX)
-    const viewport = viewportSize()
-    const position = loupePosition(displayHover.clientX, displayHover.clientY, viewport.width, viewport.height)
-    return { rawT, win, candidates, snap, position }
-  }, [displayHover, scale, uFromClientX, visibleWindow, events, checkpoints])
+    if (hoverU === null) return lastHoverInfoRef.current
+    const rawT = scale.fromUnit(hoverU)
+    const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
+    const info = { u: hoverU, t: snap?.t ?? rawT, label: snap?.label }
+    lastHoverInfoRef.current = info
+    return info
+  }, [hoverU, scale, candidates, trackWidthPx])
 
   // Plain vertical wheel zooms around the cursor, eased and accumulated rather than applied as
   // a hard step per notch (also how ctrl+wheel / trackpad pinch reach this handler — the
@@ -223,11 +247,14 @@ export function ScrubTrack({
         onWindowChange(panWindow(visibleWindow, rawDeltaPx / trackWidthPx, scaleKind))
         return
       }
-      const anchorU = uFromClientX(e.clientX)
+      // The anchor must be undistorted `u`: `zoomWindow` (inside the accumulator) zooms
+      // `visibleWindow` itself, which is undistorted — anchoring on the displayed `u` directly
+      // would zoom around the wrong point in the underlying window whenever the lens is active.
+      const anchorU = baseScale.toUnit(scale.fromUnit(uFromClientX(e.clientX)))
       const factor = Math.exp(-e.deltaY * ZOOM_SENSITIVITY)
       applyWheelZoom(anchorU, factor)
     },
-    [trackWidthPx, onWindowChange, visibleWindow, scaleKind, uFromClientX, applyWheelZoom],
+    [trackWidthPx, onWindowChange, visibleWindow, scaleKind, uFromClientX, applyWheelZoom, baseScale, scale],
   )
 
   // Kept fresh every render and read from inside the stable listener below, so the effect
@@ -246,101 +273,104 @@ export function ScrubTrack({
   }, [trackRef])
 
   /** Double-clicking anywhere within a visible event's uncertainty band frames it (README §2);
-   *  double-clicking elsewhere on the track zooms x2 around that point instead (brief §2). */
+   *  double-clicking elsewhere on the track zooms x2 around that point instead (brief §2),
+   *  anchored in undistorted space like the wheel handler above. */
   const handleDoubleClick = (e: ReactMouseEvent<HTMLDivElement>): void => {
     const u = uFromClientX(e.clientX)
     const clickedT = scale.fromUnit(u)
     const hit = shown
-      .filter((ev) => clickedT >= ev.tMin && clickedT <= ev.tMax)
-      .reduce<TimelineEvent | null>((best, ev) => (best === null || ev.tMax - ev.tMin < best.tMax - best.tMin ? ev : best), null)
+      .filter((s) => clickedT >= s.event.tMin && clickedT <= s.event.tMax)
+      .reduce<TimelineEvent | null>(
+        (best, s) => (best === null || s.event.tMax - s.event.tMin < best.tMax - best.tMin ? s.event : best),
+        null,
+      )
     if (hit) {
       onFrameEvent(hit)
       return
     }
-    onEmptyDoubleClick(u)
+    onEmptyDoubleClick(baseScale.toUnit(clickedT))
   }
 
   return (
-    <>
-      <div
-        ref={trackRef}
-        role="slider"
-        aria-label="Scrub timeline"
-        aria-valuemin={visibleWindow[0]}
-        aria-valuemax={visibleWindow[1]}
-        aria-valuenow={t}
-        tabIndex={0}
-        className={styles.hitArea}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onPointerLeave={handlePointerLeave}
-        onDoubleClick={handleDoubleClick}
-      >
-        <div aria-hidden className={styles.baseline} />
+    <div
+      ref={trackRef}
+      role="slider"
+      aria-label="Scrub timeline"
+      aria-valuemin={visibleWindow[0]}
+      aria-valuemax={visibleWindow[1]}
+      aria-valuenow={t}
+      tabIndex={0}
+      className={styles.hitArea}
+      data-hover-active={hoverU !== null}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={handlePointerLeave}
+      onDoubleClick={handleDoubleClick}
+    >
+      <div aria-hidden className={styles.baseline} />
 
-        {shown.map((event) => {
-          const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
-          const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
-          const opacity = clampUnit((event.importance - fadeFloor) / FADE_BAND)
-          return (
-            <div
-              key={event.id}
-              title={event.label}
-              className={styles.eventBand}
-              style={{
-                left: `${uStart * 100}%`,
-                width: `${Math.max(uEnd - uStart, 0.002) * 100}%`,
-                opacity,
-              }}
-            />
-          )
-        })}
-
-        {pips.map((pip) => (
-          <button
-            key={pip.id}
-            type="button"
-            className={styles.pip}
-            data-checkpoint-pip
-            style={{ left: `${pip.u * 100}%`, top: PIP_BASELINE_PX - pip.row * PIP_ROW_STEP_PX }}
-            title={`${pip.label} — ${formatGeoTime(pip.t)}`}
-            aria-label={`${pip.label}, ${formatGeoTime(pip.t)}`}
-            onPointerDown={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation()
-              onScrub(pip.t)
+      {shown.map(({ event, opacity }) => {
+        const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
+        const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
+        return (
+          <div
+            key={event.id}
+            title={event.label}
+            className={styles.eventBand}
+            style={{
+              left: `${uStart * 100}%`,
+              width: `${Math.max(uEnd - uStart, 0.002) * 100}%`,
+              opacity,
             }}
-          >
-            <span aria-hidden className={styles.pipDiamond} />
-            <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(pip.u, trackWidthPx)}`}>
-              {pip.thumbnailUrl && <img className={styles.pipThumb} src={pip.thumbnailUrl} alt="" />}
-              <span className={styles.pipTime}>{formatGeoTime(pip.t)}</span>
-              <span className={styles.pipLabel}>{pip.label}</span>
-            </span>
-          </button>
-        ))}
+          />
+        )
+      })}
 
-        <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
-          <div className={styles.playheadKnob} />
-        </div>
-        <span aria-live="polite" className={styles.timeLabel} style={{ left: `${playheadU * 100}%` }}>
-          {formatGeoTime(t)}
-        </span>
+      {pips.map((pip) => (
+        <button
+          key={pip.id}
+          type="button"
+          className={styles.pip}
+          data-checkpoint-pip
+          style={{ left: `${pip.u * 100}%`, top: PIP_BASELINE_PX - pip.row * PIP_ROW_STEP_PX }}
+          title={`${pip.label} — ${formatGeoTime(pip.t)}`}
+          aria-label={`${pip.label}, ${formatGeoTime(pip.t)}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onDoubleClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onScrub(pip.t)
+          }}
+        >
+          <span aria-hidden className={styles.pipDiamond} />
+          <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(pip.u, trackWidthPx)}`}>
+            {pip.thumbnailUrl && <img className={styles.pipThumb} src={pip.thumbnailUrl} alt="" />}
+            <span className={styles.pipTime}>{formatGeoTime(pip.t)}</span>
+            <span className={styles.pipLabel}>{pip.label}</span>
+          </span>
+        </button>
+      ))}
+
+      <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
+        <div className={styles.playheadKnob} />
       </div>
+      <span aria-live="polite" className={styles.timeLabel} style={{ left: `${playheadU * 100}%` }}>
+        {formatGeoTime(t)}
+      </span>
 
       {hoverInfo && (
-        <Loupe
-          visible={hover !== null}
-          position={hoverInfo.position}
-          window={hoverInfo.win}
-          cursorT={hoverInfo.rawT}
-          candidates={hoverInfo.candidates}
-          snapTarget={hoverInfo.snap}
-        />
+        <div
+          aria-hidden
+          className={`${styles.hoverReadout} ${previewAnchorClass(hoverInfo.u, trackWidthPx)}`}
+          data-visible={hoverU !== null}
+          style={{ left: `${hoverInfo.u * 100}%` }}
+        >
+          {hoverInfo.label && <span className={styles.snapLabel}>{hoverInfo.label}</span>}
+          <span className={styles.time}>{formatGeoTime(hoverInfo.t)}</span>
+        </div>
       )}
-    </>
+    </div>
   )
 }

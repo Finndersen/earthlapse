@@ -26,6 +26,17 @@ export function minImportanceForSpan(spanYears: number): number {
 }
 
 /**
+ * `minImportanceForSpan`, but for a point inside the fisheye lens (ADR-017): `magnification`
+ * (displayed px per undistorted px at that point, 1 with no lens) shrinks the effective span
+ * the LOD threshold is computed from, so a stretched part of the track reveals the same detail
+ * a genuinely narrower span would — the whole point of the lens is to make room for that detail
+ * on screen, and the LOD floor should stop hiding it once there is room.
+ */
+export function minImportanceAt(spanYears: number, magnification: number): number {
+  return minImportanceForSpan(spanYears / Math.max(1, magnification))
+}
+
+/**
  * Events whose uncertainty band `[tMin, tMax]` overlaps `window` and whose `importance` clears
  * `minImportanceForSpan(spanYears)`. `spanYears` is taken as a parameter rather than derived
  * from `window` because the caller may be mid-zoom-animation, where the LOD threshold should
