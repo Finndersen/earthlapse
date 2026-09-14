@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "5e910f51df24e0da",
+  "buildId": "52ca41e0b1a57c45",
   "assetBase": "/media",
   "scenes": [
     {
@@ -35,6 +35,20 @@
       "height": 1536
     },
     {
+      "id": "trinity-test",
+      "t": 80.0,
+      "chapterId": "molten-earth",
+      "image": "scenes/trinity-test.jpg",
+      "shot": "WIDE_RIDGE",
+      "caption": "At 5:29 am on 16 July 1945, the Trinity device detonates over the Jornada del Muerto desert, its fireball briefly outshining the rising sun — the first nuclear explosion.",
+      "events": [
+        "trinity-test"
+      ],
+      "pinned": "f09e447d813c3ab1",
+      "width": 2752,
+      "height": 1536
+    },
+    {
       "id": "first-powered-flight",
       "t": 122.0,
       "chapterId": "open-ground",
@@ -54,6 +68,81 @@
       "height": 1536
     },
     {
+      "id": "industrial-mill-town",
+      "t": 195.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/industrial-mill-town.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By 1830, steam-powered cotton mills line a Lancashire canal, their tall brick chimneys darkening the sky with smoke as narrowboats carry coal in and cloth out.",
+      "events": [
+        "industrial-revolution"
+      ],
+      "sound": {
+        "stem": "machinery",
+        "mode": "loop",
+        "gain": 0.7
+      },
+      "pinned": "4ee06d67fed510e9",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "columbus-landfall-1492",
+      "t": 533.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/columbus-landfall-1492.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "On 12 October 1492, Columbus's three ships anchor off a Bahamian island the Taíno call Guanahani, as a dugout canoe puts out from shore to meet them.",
+      "events": [
+        "columbian-exchange"
+      ],
+      "pinned": "80840169388e234f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "giza-great-pyramid",
+      "t": 4585.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/giza-great-pyramid.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "The Great Pyramid stands newly complete at Giza, its casing of polished white limestone catching the sun above a harbour basin flooded by the Nile's annual inundation.",
+      "events": [
+        "great-pyramid-giza"
+      ],
+      "pinned": "ae2cd69144d41861",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "uruk-city",
+      "t": 5200.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/uruk-city.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "On the southern Mesopotamian delta, the mudbrick temples of Uruk rise above marsh and canal — the largest city the world has yet seen.",
+      "events": [
+        "uruk-first-city"
+      ],
+      "pinned": "0fc9645483b32d86",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "green-sahara",
+      "t": 8000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/green-sahara.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the \"Green Sahara\" of the African Humid Period, a shallow lake in what is now the world's largest desert supports fisherfolk, herded cattle, hippos and crocodiles.",
+      "events": [
+        "african-humid-period"
+      ],
+      "pinned": "69f1684c8d9654bb",
+      "width": 2752,
+      "height": 1536
+    },
+    {
       "id": "neolithic-river-settlement",
       "t": 9000.0,
       "chapterId": "waters-edge",
@@ -64,6 +153,20 @@
         "agriculture"
       ],
       "pinned": "3a0762558a1855b1",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "gobekli-tepe",
+      "t": 11500.0,
+      "chapterId": "open-ground",
+      "image": "scenes/gobekli-tepe.jpg",
+      "shot": "GROUND",
+      "caption": "Around 9500 BCE, centuries before farming reaches the region, hunter-gatherers raise and carve massive T-shaped limestone pillars on a hilltop ridge — the oldest known monumental architecture.",
+      "events": [
+        "gobekli-tepe"
+      ],
+      "pinned": "84e970ce9bbc7b8c",
       "width": 2752,
       "height": 1536
     },
@@ -348,6 +451,20 @@
       "caption": "Where coal-swamp rainforest once stood, open woodland of early conifers now spreads across drier ground, and sail-backed synapsids hunt along its streams.",
       "events": [],
       "pinned": "56d38ae859aa81c6",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "gondwana-ice-margin",
+      "t": 300000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/gondwana-ice-margin.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "At the height of the Late Paleozoic Ice Age, a Gondwanan glacier calves into a braided meltwater outwash plain, one of the coldest moments the planet has yet seen.",
+      "events": [
+        "late-paleozoic-ice-age"
+      ],
+      "pinned": "c79cd4f37d13d12f",
       "width": 2752,
       "height": 1536
     },

@@ -2000,6 +2000,198 @@
       "estimated_usd": 0.154772,
       "actual_usd": 0.140072,
       "note": null
+    },
+    {
+      "node_id": "gondwana-ice-margin.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.139084,
+      "note": null
+    },
+    {
+      "node_id": "gondwana-ice-margin.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.140272,
+      "note": null
+    },
+    {
+      "node_id": "gondwana-ice-margin.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.1405,
+      "note": null
+    },
+    {
+      "node_id": "gobekli-tepe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154666,
+      "actual_usd": 0.139276,
+      "note": null
+    },
+    {
+      "node_id": "gobekli-tepe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154666,
+      "actual_usd": 0.142096,
+      "note": null
+    },
+    {
+      "node_id": "gobekli-tepe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154666,
+      "actual_usd": 0.141028,
+      "note": null
+    },
+    {
+      "node_id": "green-sahara.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154486,
+      "actual_usd": 0.141228,
+      "note": null
+    },
+    {
+      "node_id": "green-sahara.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154486,
+      "actual_usd": 0.1395,
+      "note": null
+    },
+    {
+      "node_id": "green-sahara.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154486,
+      "actual_usd": 0.141504,
+      "note": null
+    },
+    {
+      "node_id": "uruk-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15444,
+      "actual_usd": 0.13922,
+      "note": null
+    },
+    {
+      "node_id": "uruk-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15444,
+      "actual_usd": 0.141116,
+      "note": null
+    },
+    {
+      "node_id": "uruk-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15444,
+      "actual_usd": 0.139244,
+      "note": null
+    },
+    {
+      "node_id": "giza-great-pyramid.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154572,
+      "actual_usd": 0.140034,
+      "note": null
+    },
+    {
+      "node_id": "giza-great-pyramid.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154572,
+      "actual_usd": 0.139962,
+      "note": null
+    },
+    {
+      "node_id": "giza-great-pyramid.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154572,
+      "actual_usd": 0.138834,
+      "note": null
+    },
+    {
+      "node_id": "columbus-landfall-1492.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154508,
+      "actual_usd": 0.140826,
+      "note": null
+    },
+    {
+      "node_id": "columbus-landfall-1492.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154508,
+      "actual_usd": 0.140322,
+      "note": null
+    },
+    {
+      "node_id": "columbus-landfall-1492.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154508,
+      "actual_usd": 0.139806,
+      "note": null
+    },
+    {
+      "node_id": "industrial-mill-town.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.140152,
+      "note": null
+    },
+    {
+      "node_id": "industrial-mill-town.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.139228,
+      "note": null
+    },
+    {
+      "node_id": "industrial-mill-town.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.138856,
+      "note": null
+    },
+    {
+      "node_id": "trinity-test.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154496,
+      "actual_usd": 0.140486,
+      "note": null
+    },
+    {
+      "node_id": "trinity-test.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154496,
+      "actual_usd": 0.14063,
+      "note": null
+    },
+    {
+      "node_id": "trinity-test.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154496,
+      "actual_usd": 0.139682,
+      "note": null
     }
   ]
 }

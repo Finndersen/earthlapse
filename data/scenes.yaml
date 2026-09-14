@@ -457,7 +457,7 @@ scenes:
       sky_and_light: a pale, cold, overcast white sky; flat, shadowless, cold light
       absent: [forest, established Glossopteris woodland, dinosaurs, mammals, reptiles, amphibians, any animal life, flowers, grass, tropical vegetation]
     events: [late-paleozoic-ice-age]
-    pin: null
+    pin: {asset_digest: "c79cd4f37d13d12f", path: "data/candidates/gondwana-ice-margin/3dab8c5cbfe609bb/03-c79cd4f37d13d12f.jpg"}
 
   # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
   # the range of walchian conifers (Walchia, ~310-290 Ma; the earliest walchians are Moscovian, so
@@ -1156,7 +1156,7 @@ scenes:
       sky_and_light: a clear, pale, early-autumn Anatolian sky; warm, low morning sunlight
       absent: [pottery, metal tools, domesticated animals, the plough, the wheel, writing, woven cloth, fired mudbrick buildings, modern clothing, identifiable faces]
     events: [gobekli-tepe]
-    pin: null
+    pin: {asset_digest: "84e970ce9bbc7b8c", path: "data/candidates/gobekli-tepe/178c1261980afdb4/02-84e970ce9bbc7b8c.jpg"}
 
   # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
   # writing (5,025-5,425 BP).
@@ -1213,7 +1213,7 @@ scenes:
       sky_and_light: a hazy, warm, pale-blue sky with a scatter of high cloud; bright, even midday light
       absent: [dry desert dunes, camels, modern nomad tents, metal tools, horses, writing, permanent mudbrick buildings, modern clothing, identifiable faces]
     events: [african-humid-period]
-    pin: null
+    pin: {asset_digest: "69f1684c8d9654bb", path: "data/candidates/green-sahara/c4113e71835e83e3/02-69f1684c8d9654bb.jpg"}
 
   # About 3200 BCE, late Uruk period, southern Mesopotamia; t = 2025 + 3200 = 5,225, rounded to 5,200,
   # matching the brief. This sits just before events.yaml's writing entry (5,025-5,425 BP): the
@@ -1244,7 +1244,7 @@ scenes:
       sky_and_light: a pale, hazy, warm sky over the delta; bright, dusty midday light
       absent: [stone buildings, wheeled carts, horses, metal armour, legible cuneiform writing, modern clothing, identifiable faces, camels]
     events: [uruk-first-city]
-    pin: null
+    pin: {asset_digest: "0fc9645483b32d86", path: "data/candidates/uruk-city/270ac38ccc5b268b/02-0fc9645483b32d86.jpg"}
 
   # About 2560 BCE, completion of the Great Pyramid of Khufu at Giza; t = 2025 + 2560 = 4,585, per the
   # brief. Linked to events.yaml great-pyramid-giza (t_min/t_max 4,602-4,638, the newer Ramsey et
@@ -1280,7 +1280,7 @@ scenes:
       sky_and_light: a clear, pale desert sky with a faint haze near the horizon; bright, hard midday sunlight
       absent: [visible erosion or missing casing stones, tourists, camels for hire, modern clothing, identifiable faces, modern boats, metal ships, paved modern roads]
     events: [great-pyramid-giza]
-    pin: null
+    pin: {asset_digest: "ae2cd69144d41861", path: "data/candidates/giza-great-pyramid/80ce6f75f4b98518/03-ae2cd69144d41861.jpg"}
 
   # 12 October 1492 (Julian calendar), Columbus's first landfall in the Americas; t = 2025 - 1492 =
   # 533. Wikipedia "Christopher Columbus", "Columbus's first voyage": three ships, the carrack (nao)
@@ -1310,7 +1310,7 @@ scenes:
       sky_and_light: a clear tropical morning sky with a scatter of trade-wind cumulus; bright, warm early light
       absent: [modern boats, engines, steel hulls, national flags shown close-up, weapons in use, violence, a landing party ashore, stereotyped costume, identifiable faces, modern clothing, text or logos]
     events: [columbian-exchange]
-    pin: null
+    pin: {asset_digest: "80840169388e234f", path: "data/candidates/columbus-landfall-1492/38463596228879c1/01-80840169388e234f.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
   # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
@@ -1343,7 +1343,7 @@ scenes:
     # ADR-023: `machinery` (its cataloged clip is itself a real industrial/traffic field
     # recording) as a continuous `loop`, matching the mill town's constant working noise.
     sound: {stem: machinery, mode: loop, gain: 0.7}
-    pin: null
+    pin: {asset_digest: "4ee06d67fed510e9", path: "data/candidates/industrial-mill-town/cc60ec69c5956c2c/03-4ee06d67fed510e9.jpg"}
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
   # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,
@@ -1417,7 +1417,7 @@ scenes:
       sky_and_light: a dark pre-dawn sky at the edges, the eastern horizon just beginning to pale, overwhelmed at centre by the fireball's own blinding white-orange light
       absent: [a city, buildings, roads, modern military vehicles, people close-up, identifiable faces, a mushroom cloud far larger than the scale of a single test, a second sun, other explosions]
     events: [trinity-test]
-    pin: null
+    pin: {asset_digest: "f09e447d813c3ab1", path: "data/candidates/trinity-test/8e82dc7b2a4afd06/02-f09e447d813c3ab1.jpg"}
 
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
   # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"
