@@ -130,10 +130,10 @@ portraits:
       - sponge body-wall anatomy (pores, a top opening) was not confirmed against a source this session
     subject:
       organism: "A reconstruction of an early sponge-grade animal from the base of the animal tree, no fossil of the ancestor itself is known"
-      anatomy: "a small, soft, upright sac-shaped body attached to the surface at its base, its wall perforated by many tiny pores, one larger opening at the top, entirely soft-bodied with no mineral spicules"
+      anatomy: "a small, soft, hollow body standing upright, attached to the surface at its base, its wall perforated by many tiny pores, one larger opening at the top, entirely soft-bodied with no mineral spicules"
       surface: "a pale, soft, slightly translucent body wall; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["glassy or chalky spicules", "tentacles", "a mouth or gut", "eyes", "limbs"]
+      absent: ["glassy or chalky spicules", "tentacles", "a head, face, mouth or eyes", "a gut", "limbs", "a coral, sea anemone or jellyfish", "a plant, seaweed, fungus or mushroom", "a vase, bottle, bag or any other made object"]
     pin: null
 
   - id: eumetazoa
@@ -145,10 +145,10 @@ portraits:
       - Auroralumina is the oldest known crown cnidarian, standing in for the eumetazoan grade; it is not the eumetazoan ancestor itself
     subject:
       organism: "A reconstruction of an early cnidarian-grade animal, modelled on the Ediacaran fossil Auroralumina attenboroughii, the oldest known crown-group cnidarian"
-      anatomy: "two goblet-shaped cups branching from a short central stalk, each cup a rigid, many-sided organic skeleton housing a polyp crowned with simple, densely packed tentacles; standing upright with the stalk at the bottom"
+      anatomy: "two cup-shaped skeletons branching in a Y from a short central stalk, each cup a rigid, many-sided organic wall housing a soft polyp crowned with simple, densely packed tentacles; standing upright with the stalk at the bottom"
       surface: "soft polyp tissue within a rigid, faceted cup wall; no source gives its colour, so muted natural tones"
       size: "about 20 cm tall"
-      absent: ["a stony or chalky coral skeleton", "a swimming bell", "eyes", "limbs", "a shell"]
+      absent: ["a stony or chalky coral skeleton", "a swimming bell", "a head, face or eyes", "limbs", "a shell", "a flower, plant or seaweed", "a drinking glass, goblet, vase or any other made object"]
     pin: null
 
   - id: bilateria
@@ -162,10 +162,10 @@ portraits:
       - the radula-like feeding organ is inferred from associated scratch marks, not preserved directly
     subject:
       organism: "Kimberella quadrata, an Ediacaran bilaterian-grade animal"
-      anatomy: "a bilaterally symmetrical, bottom-dwelling animal with a single elongated oval, shield-like shell over its back that is not mineralised, a broad creeping muscular foot beneath it, and at its front end a mouthpart that scraped microbial mats"
-      surface: "a tough, leathery, unmineralised shell over soft body tissue; no source gives its colour, so muted natural tones"
+      anatomy: "a soft-bodied, bilaterally symmetrical, bottom-dwelling animal with no head, no face and no eyes, shaped like a low, elongated oval dome: a single smooth, flexible, unmineralised oval covering over its whole back, a broad, flat, muscular creeping foot pressed to the surface beneath it, and at its narrower front end a short, soft, extendable proboscis reaching down to the surface"
+      surface: "a smooth, tough, flexible covering over soft body tissue, with no plates, ridges or segments; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a coiled shell", "a hard stony or chalky shell", "legs", "fins", "eyes on stalks"]
+      absent: ["a head, face, eyes or mouth", "a neck", "limbs, flippers or fins", "plates, scutes, ridges or segments on the covering", "a coiled shell", "a hard stony or chalky shell"]
     pin: null
 
   - id: chordata
@@ -177,10 +177,10 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "Pikaia gracilens, a Cambrian stem-group chordate"
-      anatomy: "a small, spindle-shaped, side-to-side flattened swimming body marked by about a hundred chevron-like muscle blocks, a small two-lobed head bearing two narrow tentacles, a thin dorsal fin without fin rays along the back, and a row of at least nine small paired appendages behind the head"
+      anatomy: "a small, spindle-shaped, side-to-side flattened soft body, shown swimming horizontally in side view, marked along its length by about a hundred chevron-shaped muscle blocks; a small two-lobed front end with no face, bearing two narrow tentacles; a thin dorsal fin without fin rays along the back; and at least nine small, soft paired appendages arranged along both sides just behind the front end"
       surface: "smooth, soft, slightly translucent skin; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["jaws", "eyes", "scales or bony plates", "paired fins with fin rays", "limbs"]
+      absent: ["a face, eyes or a mouth", "jaws or teeth", "legs or jointed limbs", "antennae or eyestalks like a snail's or an insect's", "scales or bony plates", "paired fins with fin rays", "a fish's tail fin", "the rings of a segmented worm"]
     pin: null
 
   - id: olfactores
@@ -192,10 +192,10 @@ portraits:
       - body size was not confirmed against a source this session
     subject:
       organism: "Shankouclava shankouense, an early Cambrian tunicate"
-      anatomy: "a solitary, soft, sac-like body, elongated and tapering to a point at its base, standing upright; an oral siphon with small oral tentacles at the top, an atrial siphon beside it, a large perforated branchial basket filling most of the body, and a simple U-shaped gut"
+      anatomy: "a solitary, soft, elongated body tapering to a point at its base, standing upright; an oral siphon bearing small oral tentacles at the top, an atrial siphon beside it, a large perforated branchial basket filling most of the body, and a simple U-shaped gut"
       surface: "a soft, slightly translucent body wall through which the branchial basket shows faintly; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a hard shell", "a tail", "eyes", "a colony of joined bodies", "limbs"]
+      absent: ["a hard shell", "a tail", "a face, eyes or a mouth with lips", "a colony of joined bodies", "limbs", "a crown of long tentacles like a sea anemone's", "a plant, bottle, vase or bag"]
     pin: null
 
   - id: vertebrata
@@ -208,10 +208,10 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "Haikouichthys ercaicunensis, an early Cambrian jawless vertebrate"
-      anatomy: "an elongate, side-to-side flattened jawless fish with repeated chevron-shaped muscle blocks along its body, a head with large eyes set high, a short gill region with at least six gill pouches, and a single continuous median fin-fold along the back, belly and tail, the dorsal fin's rays tilted forward"
+      anatomy: "an elongate, side-to-side flattened jawless fish, shown swimming horizontally in side view, with repeated chevron-shaped muscle blocks along its body, a head with large eyes set high, a short gill region with at least six gill pouches, and a single continuous median fin-fold along the back, belly and tail, the dorsal fin's rays tilted forward"
       surface: "smooth, unarmoured skin; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["jaws", "teeth", "paired fins", "bony armour plates", "limbs"]
+      absent: ["jaws", "teeth", "paired fins", "separate dorsal, anal and tail fins like a modern fish's", "a forked tail", "scales", "gill covers", "bony armour plates", "limbs", "a modern eel or lamprey"]
     pin: null
 
   - id: gnathostomata
@@ -223,10 +223,10 @@ portraits:
       - Qianodus is known only from isolated tooth whorls; body form, fins and size are unknown and entirely reconstructed
     subject:
       organism: "A reconstruction of an early Silurian jawed fish; its representative, Qianodus duplicis, is known only from isolated tooth whorls, so the body is not based on any specimen"
-      anatomy: "a small fish with hinged jaws, whorls of teeth set along the front of the lower jaw, and a streamlined body with fins"
+      anatomy: "a small fish, shown swimming horizontally in side view, with hinged jaws, whorls of teeth set along the front of the lower jaw, and a streamlined body with fins"
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
-      absent: ["limbs or digits", "a round jawless sucker mouth", "lungs or a neck"]
+      absent: ["limbs or digits", "a round jawless sucker mouth", "lungs or a neck", "a modern shark, perch, trout or any other living fish species"]
     pin: null
 
   - id: osteichthyes
@@ -239,10 +239,10 @@ portraits:
       - total body length was not confirmed against a source this session
     subject:
       organism: "Guiyu oneiros, the oldest articulated bony fish, from the late Silurian"
-      anatomy: "an early bony fish with a row of median plates along the back, the third carrying a long, hollow dorsal fin spine ridged along its length, and a body covered in roughly rhombic scales with fine parallel ridges on each scale"
+      anatomy: "an early bony fish, shown swimming horizontally in side view, with a row of median plates along the back, the third carrying a long, hollow dorsal fin spine ridged along its length, and a body covered in roughly rhombic scales with fine parallel ridges on each scale"
       surface: "glossy, ridged rhombic scales; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["limbs or digits", "smooth scaleless skin", "a neck"]
+      absent: ["limbs or digits", "smooth scaleless skin", "a neck", "a modern carp, perch, sturgeon or any other living fish species"]
     pin: null
 
   - id: sarcopterygii
@@ -257,10 +257,10 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "A reconstruction of a basal lobe-finned-grade fish of the early Devonian, modelled on Psarolepis romeri"
-      anatomy: "an early bony fish mixing lobe-finned and ray-finned features: a shoulder girdle carrying a stout pectoral spine, a bony cheek plate, and bone covered in glossy cosmine, with rhombic scales over the body"
+      anatomy: "an early bony fish, shown swimming horizontally in side view, mixing lobe-finned and ray-finned features: a shoulder girdle carrying a stout pectoral spine, a bony cheek plate, and bone covered in glossy cosmine, with rhombic scales over the body"
       surface: "glossy, enamel-like cosmine on the head bones and scales; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["limbs or digits", "a neck", "smooth scaleless skin"]
+      absent: ["limbs, legs, feet or digits", "standing or resting on its fins", "a neck", "smooth scaleless skin", "whiskers or barbels", "a modern coelacanth, lungfish, catfish or any other living fish species"]
     pin: null
 
   - id: tetrapodomorpha
@@ -273,10 +273,10 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "Tiktaalik roseae, a late Devonian tetrapodomorph fish"
-      anatomy: "a large, fish-bodied animal with a broad, flattened, triangular head, wider than it is deep, with a rounded snout, eyes on top of the skull, a spiracle opening behind each eye, a distinct mobile neck, stout pectoral fins with a jointed, wrist-like bony skeleton inside, gills, and a body covered in overlapping scales"
+      anatomy: "a large fish lying flat on its belly, its whole body resting on the surface: a broad, flattened, triangular head, wider than it is deep, with a rounded snout, eyes on top of the skull and a spiracle opening behind each eye; a gill region and a short, distinct neck behind the head; a long, scaly fish body tapering to a tail that ends in a fish's tail fin; stout pectoral fins, fleshy at the base with a jointed bony skeleton inside, ending in a broad fringe of fine fin rays, splayed out flat to either side; smaller pelvic fins further back"
       surface: "overlapping bony scales over the whole body; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["fingers or toes", "legs", "smooth amphibian skin", "claws"]
+      absent: ["fingers, toes or feet", "legs", "standing up with its belly raised off the surface", "claws", "smooth amphibian skin", "a head cropped or tail cropped by the frame edge"]
     pin: null
 
   - id: tetrapoda
@@ -289,10 +289,10 @@ portraits:
       - webbing between the digits, forelimbs that could not bend forward at the elbow, internal gills and the ~60 cm length come from a secondary encyclopedia summary only
     subject:
       organism: "Acanthostega gunnari, a late Devonian limbed tetrapod that still lived in water"
-      anatomy: "a salamander-shaped aquatic animal with four limbs, eight digits on each forelimb, forelimbs held out as paddles rather than weight-bearing legs, a long body, and a deep tail fin supported by fin rays above and below"
+      anatomy: "an aquatic four-limbed animal lying flat on its belly, its whole body resting on the surface: a long, low body; four limbs splayed out flat to either side as paddles rather than weight-bearing legs, with eight digits on each forelimb; and a long tail with a deep tail fin supported by fin rays above and below"
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
-      absent: ["claws", "hands or feet with five digits", "scales like a reptile's", "a neck frill"]
+      absent: ["claws", "hands or feet with five digits", "legs holding its belly off the surface", "scales like a reptile's", "a neck frill or feathery external gills", "a crocodile, salamander, newt or any other living animal", "a head cropped or tail cropped by the frame edge"]
     pin: null
 
   - id: amniota
@@ -305,10 +305,10 @@ portraits:
       - anatomy and size come from a secondary encyclopedia summary only; check against Carroll (1964) before approving
     subject:
       organism: "Hylonomus lyelli, one of the earliest reptile-grade amniotes, from the late Carboniferous"
-      anatomy: "a small four-legged animal with a slender body, limbs sprawling out to the sides, a long tapering tail, a small low head and small sharp teeth"
+      anatomy: "a small four-legged animal standing low, belly close to the ground, with a slender body, limbs sprawling out to the sides, a long tapering tail, a small low head and small sharp teeth"
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 20 cm long including the tail"
-      absent: ["fur", "feathers", "gills", "a tail fin"]
+      absent: ["fur", "feathers", "gills", "a tail fin", "crests, frills, spines or a dewlap", "a modern gecko, iguana, chameleon or any other living lizard species", "a tail cropped by the frame edge"]
     pin: null
 
   - id: synapsida
@@ -324,7 +324,7 @@ portraits:
       anatomy: "a four-legged predator with a long low body, limbs sprawling out to the sides, a long tail, a deep skull with strong jaws, rows of sharp teeth of similar shape and one pair of enlarged canine teeth"
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 50 cm long from head to tail"
-      absent: ["fur", "a sail on the back", "feathers", "gills"]
+      absent: ["fur", "a sail on the back", "feathers", "gills", "a crocodile's armoured back or long narrow snout", "crests or frills", "a monitor lizard or any other living reptile", "a tail cropped by the frame edge"]
     pin: null
 
   - id: therapsida
@@ -336,12 +336,13 @@ portraits:
     gaps:
       - the lineage representative is a gorgonopsian-grade therapsid, not a named species
       - limb posture and body size of the earliest forms come from secondary summaries only
+      - its skin covering is unknown; a fur coat, whiskers and ear flaps are excluded to keep the plate from reading as a cat or dog, not as a claim about its skin
     subject:
       organism: "A reconstruction of an early gorgonopsian-grade therapsid predator of the Permian"
-      anatomy: "a four-legged predator with a long, narrow skull, elongated sabre-like upper canine teeth, few cheek teeth, and a long tail"
+      anatomy: "a four-legged predator with a long, narrow skull, long, blade-shaped upper canine teeth, few cheek teeth, and a long tail"
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
-      absent: ["a sail on the back", "feathers", "horns", "a shell or armour plates"]
+      absent: ["a sail on the back", "feathers", "horns", "a shell or armour plates", "a sabre-toothed cat, dog, wolf or any other mammal", "a thick fur coat, whiskers or external ear flaps", "a tail cropped by the frame edge"]
     pin: null
 
   - id: cynodontia
@@ -358,7 +359,7 @@ portraits:
       anatomy: "a small, slender four-legged animal with a lightly built skull only a few centimetres long and a long tail"
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "a skull about 5 cm long"
-      absent: ["sabre-like fangs", "a sail on the back", "feathers", "a shell or armour plates"]
+      absent: ["long blade-shaped fangs", "a sail on the back", "feathers", "a shell or armour plates", "a modern rat, weasel, shrew, lizard or any other living animal", "a tail cropped by the frame edge"]
     pin: null
 
   - id: mammaliaformes
@@ -371,10 +372,10 @@ portraits:
       - fur is not described by these sources
     subject:
       organism: "Morganucodon watsoni, an early mammaliaform from around the Triassic-Jurassic boundary"
-      anatomy: "a small shrew- or mouse-like four-legged animal with a pointed snout, teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
-      surface: "the general appearance of a shrew or mouse; no source gives its colour, so muted natural tones"
+      anatomy: "a small, low four-legged animal, shown standing on all four feet, with a pointed snout, teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
+      surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "about 15 cm long overall, with a skull 2 to 3 cm long"
-      absent: ["scales", "a sail on the back", "feathers", "large fangs"]
+      absent: ["scales", "a sail on the back", "feathers", "large fangs", "a modern shrew, mouse, rat or any other living animal"]
     pin: null
 
   - id: mammalia
@@ -385,11 +386,11 @@ portraits:
     gaps:
       - a molecular-clock node with no agreed fossil; the plate bridges the Morganucodon and Juramaia plates either side and adds no anatomy of its own
     subject:
-      organism: "A reconstruction of the crown-mammal ancestor, dated only by molecular clock, shown as a small shrew-like Jurassic mammal"
-      anatomy: "a small shrew-like four-legged mammal with a pointed snout and a long tail"
+      organism: "A reconstruction of the crown-mammal ancestor, dated only by molecular clock, shown as a small, generalised Jurassic mammal"
+      anatomy: "a small four-legged mammal, shown standing on all four feet, with a pointed snout and a long tail"
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "large fangs", "a pouch with young"]
+      absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal"]
     pin: null
 
   - id: theria
@@ -400,11 +401,11 @@ portraits:
     gaps:
       - a molecular-clock node with no specimen; the plate bridges its neighbours and adds no anatomy of its own
     subject:
-      organism: "A reconstruction of the therian ancestor of marsupials and placentals, dated only by molecular clock, shown as a small shrew-like Jurassic mammal"
-      anatomy: "a small shrew-like four-legged mammal with a pointed snout and a long tail"
+      organism: "A reconstruction of the therian ancestor of marsupials and placentals, dated only by molecular clock, shown as a small, generalised Jurassic mammal"
+      anatomy: "a small four-legged mammal, shown standing on all four feet, with a pointed snout and a long tail"
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "large fangs", "a pouch with young"]
+      absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal"]
     pin: null
 
   - id: eutheria
@@ -417,10 +418,10 @@ portraits:
       - body length and mass (70-100 mm, 15-17 g) come from a secondary summary only
     subject:
       organism: "Juramaia sinensis, the oldest known eutherian mammal, from the late Jurassic"
-      anatomy: "a shrew-sized four-legged mammal with a pointed snout, a skull about 22 mm long, forelimbs built for climbing, and a long tail"
+      anatomy: "a very small four-legged mammal, shown standing on all four feet, with a pointed snout, a skull about 22 mm long, forelimbs built for climbing, and a long tail"
       surface: "short fur; no source gives its colour, so muted natural tones"
-      size: "shrew-sized, with a skull about 22 mm long"
-      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+      size: "very small, with a skull about 22 mm long"
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a modern shrew, mouse, rat or any other living mammal"]
     pin: null
 
   - id: placentalia
@@ -432,10 +433,10 @@ portraits:
       - a phylogenetic reconstruction, not a specimen
     subject:
       organism: "A reconstruction of the placental mammal ancestor, following the hypothetical ancestor inferred by O'Leary and colleagues"
-      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal, shown standing on all four feet, with a pointed snout and a long, furry tail"
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
-      size: "between a small shrew and a mid-sized rat, 6 to 245 grams"
-      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+      size: "6 to 245 grams"
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
     pin: null
 
   - id: boreoeutheria
@@ -448,10 +449,10 @@ portraits:
       - a molecular-clock node; the plate holds the placental-ancestor grade and adds no anatomy of its own
     subject:
       organism: "A reconstruction of the boreoeutherian ancestor, dated only by molecular clock, shown at the same grade as the placental ancestor"
-      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal, shown standing on all four feet, with a pointed snout and a long, furry tail"
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
     pin: null
 
   - id: euarchontoglires
@@ -464,10 +465,10 @@ portraits:
       - a molecular-clock node; the plate holds the placental-ancestor grade and adds no anatomy of its own
     subject:
       organism: "A reconstruction of the ancestor of primates and rodents, dated only by molecular clock, shown at the same grade as the placental ancestor"
-      anatomy: "a small tree-climbing, insect-eating four-legged mammal with a pointed snout and a long, furry tail"
+      anatomy: "a small tree-climbing, insect-eating four-legged mammal, shown standing on all four feet, with a pointed snout and a long, furry tail"
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "a pouch with young", "a branch or tree"]
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
     pin: null
 
   - id: primatomorpha
@@ -480,10 +481,10 @@ portraits:
       - Purgatorius's status as a basal primatomorph is contested
     subject:
       organism: "Purgatorius, a Paleocene plesiadapiform close to the origin of primates"
-      anatomy: "a small tree-dwelling four-legged mammal with a long tail and flexible ankles that let its feet rotate to grip branches; it ate fruit and insects"
+      anatomy: "a small tree-dwelling four-legged mammal, shown standing on all four feet, with a long tail and flexible ankles that let its feet rotate to grip branches; it ate fruit and insects"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "about 100 grams, the weight of a deck of cards"
-      absent: ["nails in place of claws", "large forward-facing eyes", "a branch or tree", "scales"]
+      absent: ["nails in place of claws", "large forward-facing eyes", "a branch or tree", "scales", "a squirrel's bushy tail", "a modern squirrel, tree shrew, lemur, monkey or any other living mammal"]
     pin: null
 
   - id: primates
@@ -495,10 +496,10 @@ portraits:
       - a molecular-clock node; the plate bridges the Purgatorius and Teilhardina plates and adds no anatomy of its own
     subject:
       organism: "A reconstruction of the crown-primate ancestor, dated only by molecular clock, shown as a small tree-dwelling primate"
-      anatomy: "a small, lightly built tree-dwelling four-legged primate with a long tail and grasping hands and feet"
+      anatomy: "a small, lightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and grasping hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "scales", "a human-like face"]
+      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a modern lemur, tarsier, bushbaby, monkey or any other living primate"]
     pin: null
 
   - id: haplorhini
@@ -511,10 +512,10 @@ portraits:
       - body size was not confirmed against a source this session
     subject:
       organism: "Teilhardina brandti, one of the oldest known euprimates, from the earliest Eocene"
-      anatomy: "a small, active tree-dwelling four-legged primate with a long tail and nails, not claws, at the tips of its fingers and toes"
+      anatomy: "a small, active tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and nails, not claws, at the tips of its fingers and toes"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["claws", "a branch or tree", "a human-like face"]
+      absent: ["claws", "a branch or tree", "a human-like face", "a modern tarsier, lemur, monkey or any other living primate"]
     pin: null
 
   - id: simiiformes
@@ -527,10 +528,10 @@ portraits:
       - Eosimias is known mainly from jaws and teeth; its body is reconstructed
     subject:
       organism: "A reconstruction of Eosimias sinensis, a tiny middle-Eocene anthropoid primate known mainly from jaws and teeth"
-      anatomy: "a tiny tree-dwelling four-legged primate, smaller than any living monkey, with a long tail and grasping hands and feet"
+      anatomy: "a tiny tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and grasping hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
-      absent: ["claws", "a branch or tree", "a human-like face"]
+      absent: ["claws", "a branch or tree", "a human-like face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
     pin: null
 
   - id: catarrhini
@@ -542,10 +543,10 @@ portraits:
       - Rukwapithecus is known only from a partial lower jaw; body form and size are entirely reconstructed
     subject:
       organism: "A reconstruction of a late-Oligocene catarrhine, the Old World monkey and ape lineage; its representative, Rukwapithecus fleaglei, is known only from a partial lower jaw"
-      anatomy: "a monkey-sized tree-dwelling primate with grasping hands and feet"
+      anatomy: "a tree-dwelling four-legged primate, shown standing on all four limbs, with grasping hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["claws", "a branch or tree", "a human-like face"]
+      absent: ["claws", "a branch or tree", "a human-like face", "a modern macaque, baboon or any other living monkey", "a modern ape"]
     pin: null
 
   - id: hominoidea
@@ -562,7 +563,7 @@ portraits:
       anatomy: "a large-bodied ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: hominidae
@@ -577,7 +578,7 @@ portraits:
       anatomy: "a large-bodied ape with a short, stiff lower back and long arms built for hanging and climbing"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: homininae
@@ -592,7 +593,7 @@ portraits:
       anatomy: "a large-bodied ape with long arms built for hanging and climbing"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: hominini
@@ -606,10 +607,10 @@ portraits:
       - its placement as a hominin, rather than a gorilla-line or stem hominid, is contested
     subject:
       organism: "A reconstruction of Sahelanthropus tchadensis, a late-Miocene ape near the chimpanzee-human split; only its skull, jaw fragments and teeth are known"
-      anatomy: "an ape-like head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs"
+      anatomy: "a head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face"]
+      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape"]
     pin: null
 
   - id: australopithecus
@@ -622,10 +623,10 @@ portraits:
       - overall body size was not given by the sources checked
     subject:
       organism: "Australopithecus anamensis, the earliest known species of Australopithecus"
-      anatomy: "an upright, two-legged ape-like hominin with a long, protruding face, forward-projecting cheekbones, a long and narrow braincase with a ridge along the top, long narrow jaws, long forearms, and hands built to climb as well as walk"
+      anatomy: "an upright, two-legged hominin with a long, protruding face, forward-projecting cheekbones, a long and narrow braincase with a ridge along the top, long narrow jaws, long forearms, and hands built to climb as well as walk"
       surface: "a coat of hair; no source gives its skin or hair colour, so muted natural tones"
       size: null
-      absent: ["clothing or tools", "a branch or tree", "a modern human face", "a tail"]
+      absent: ["clothing or tools", "a branch or tree", "a modern human face", "a modern human body", "a tail", "a modern chimpanzee, gorilla or any other living ape"]
     pin: null
 
   - id: homo
@@ -674,7 +675,7 @@ portraits:
       anatomy: "a fully upright early human with a short, wide, heavily built body, a very large browridge, a larger braincase and a flatter face than earlier humans"
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "males about 175 cm tall, females about 157 cm"
-      absent: ["clothing or tools", "jewellery or body paint", "a modern hairstyle", "a tail"]
+      absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a modern hairstyle", "a tail"]
     pin: null
 
   - id: homo-sapiens
