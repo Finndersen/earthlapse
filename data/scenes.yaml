@@ -108,7 +108,7 @@ scenes:
       far_bank: the lake's far shore, a rim of layered white and orange sinter terraces stepping up into a steaming volcanic hillside
       sky_and_light: a hazy, pale orange-brown sky, thicker and dimmer than a modern one, with a faint young Sun and a large, close Moon pale through the haze; dim, diffuse, warm light
       absent: [plants, algae, moss, lichen, any visible organism, animals, fish, birds, blue sky, snow, people, buildings]
-    pin: null
+    pin: {asset_digest: "a9fede0cdaca2a7e", path: "data/candidates/origin-of-life/85e0a4e2ead59aba/03-a9fede0cdaca2a7e.jpg"}
 
   # Oldest robust stromatolites, ~3.43 Ga Pilbara (events.yaml first-life, lower bound);
   # before the Great Oxidation Event (2.1-2.4 Ga).
@@ -158,7 +158,7 @@ scenes:
       far_bank: low grey-red hills of layered rock, banded where iron formation is exposed at the surface, with no green anywhere except the microbial mats at the shore
       sky_and_light: a sky in transition — still pale and hazy rather than a saturated blue, but faintly clearer than the thick orange-brown haze of deeper Archean time; soft, even light
       absent: [land plants, trees, grass, moss, animals, fish, shells, birds, people, a fully clear blue sky]
-    pin: null
+    pin: {asset_digest: "a9f9e02cef236b42", path: "data/candidates/great-oxidation/f46f815b31ff9226/03-a9f9e02cef236b42.jpg"}
 
   # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
   # Ga): Bangiomorpha pubescens, Somerset Island, Arctic Canada. Gibson, T.M. et al. (2018),
@@ -253,13 +253,13 @@ scenes:
       left_mass: a tall, bare bank of layered grey-green mudstone and siltstone with no plants on it
       vegetation: none on land, which is bare rock and mud; underwater, only sparse patches of microbial mat on the mud, with a low mound of settled debris colonised by upright vase-shaped and stalked sponges
       fauna: "numerous trilobites crawling and half-buried in the mud; a small, soft-bodied, worm-like lobopodian with stubby paired clawed legs and spines along its back (Hallucigenia-grade) clinging to debris; a loose shoal of tiny, slender, translucent jawless swimmers about 2.5 cm long, eel-shaped with no separate tail fin and no paired fins, each with a pair of large eyes, a row of small gill openings behind the head, a single low fin fold along the back and zigzag muscle bands down the body"
-      main_subject: "an Amplectobelua-grade radiodont up to 90 cm long, a soft-bodied segmented swimming predator shaped like a flattened, tapering arthropod rather than a fish: a row of overlapping flexible swimming flaps runs down each side of its body, a small fan of paired tail flaps at the rear, large stalked eyes on the head, two jointed, spiny grasping appendages curling down from the front of the head, and on the underside of the head a round mouth ringed with overlapping hard plates; it glides low over the mud of the shallows toward a cluster of trilobites"
+      main_subject: "an Amplectobelua-grade radiodont up to 90 cm long, a flattened, soft-bodied swimming arthropod, its body built from broad, low, overlapping segments running its length, each segment carrying a soft, flexible flap along its side; along its back the segments meet in a smooth, even line with no ridge or crest of any kind; at the rear, a small fan of short, paired tail flaps, quite unlike a single continuous tail; large stalked eyes on the head; two jointed, spiny appendages reaching down and forward from the front of the head to grasp prey; on the underside of the head, a round mouth ringed with overlapping hard plates; its flanks are a uniform mottled grey-green with no paler underside; it glides low over the mud of the shallows toward a cluster of trilobites"
       ground: wet, soft grey-brown mud at the waterline, rippled and bare
       water: shallow, slightly silty, pale green-blue sea water, clear enough near the shore that the muddy sea floor and its animals are plainly visible
       far_bank: a low, barren coastline of grey mud and rock, with no green anywhere
       sky_and_light: a clear, pale-blue sky with thin high cloud; bright sunlight throwing soft caustics across the sea floor
-      absent: ["land plants", "green vegetation on land", "jawed fish", "scaled fish", "ammonites", "corals", "crabs", "lobsters", "sharks", "modern fish", "reptiles", "mammals", "birds", "people", "fish-shaped predator", "dorsal fin", "forked tail fin", "gill slits on the predator", "shark-like shapes", "centipedes"]
-    pin: null
+      absent: ["land plants", "green vegetation on land", "jawed fish", "scaled fish", "ammonites", "corals", "crabs", "lobsters", "sharks", "modern fish", "reptiles", "mammals", "birds", "people", "fish-shaped predator", "dorsal fin", "dorsal ridge or crest", "forked tail fin", "two-lobed tail fin", "ray-striated tail rays", "fish-like countershading", "sleek torpedo-shaped body", "gill slits on the predator", "gill markings on the predator's head", "shark-like shapes", "centipedes"]
+    pin: {asset_digest: "18445a4ae4e6c53c", path: "data/candidates/cambrian-seafloor/94120c4582b2fe38/03-18445a4ae4e6c53c.jpg"}
 
   # ~450 Ma, inside events.yaml land-plants (425-470 Ma) on the cryptospore side: Rubinstein, C.V. et
   # al. (2010), "Early Middle Ordovician evidence for land plants in Argentina," New Phytologist
