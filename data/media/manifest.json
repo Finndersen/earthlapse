@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "162b8eb9df597efb",
+  "buildId": "e14732ec5fe65a42",
   "assetBase": "/media",
   "scenes": [
     {
@@ -154,6 +154,17 @@
       "shot": "WATER_EDGE",
       "caption": "A century after the impact, ferns carpet the ground where a flowering forest and its dinosaurs stood; the sky has long since cleared, but the world has not recovered.",
       "pinned": "7c2ff6fd148753d8",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "kpg-darkness",
+      "t": 66042999.99,
+      "chapterId": "waters-edge",
+      "image": "scenes/kpg-darkness.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Days after the impact, a pall of dust and soot blots out the sun over the same estuary; whether the impact's heat set forests alight this far away is still debated.",
+      "pinned": "ad31c5b96308e6e0",
       "width": 2752,
       "height": 1536
     },
@@ -346,7 +357,7 @@
     },
     {
       "id": "cryogenian-snowball",
-      "t": 650000000.0,
+      "t": 690000000.0,
       "chapterId": "waters-edge",
       "image": "scenes/cryogenian-snowball.jpg",
       "shot": "WATER_EDGE",
@@ -1044,7 +1055,7 @@
       "tMin": 635000000.0,
       "tMax": 720000000.0,
       "importance": 0.85,
-      "description": "Two near-global glaciations — the Sturtian (~717-660 Ma) and Marinoan (~650-635 Ma) — bracket the Cryogenian Period, with geological evidence of ice reaching equatorial latitudes (\"Snowball Earth\"). Onset and termination ages carry real uncertainty.\n",
+      "description": "Two near-global glaciations — the Sturtian (~717-661 Ma) and Marinoan (ending 635 Ma; ~4-15 Myr, duration contested) — bracket the Cryogenian Period, with geological evidence of ice reaching equatorial latitudes (\"Snowball Earth\"). Onset and termination ages carry real uncertainty.\n",
       "citation": "Prave, A.R. et al. (2016). \"A new rock-based definition for the Cryogenian Period (circa 720-635 Ma).\" Episodes, 39(2), 1-7. Base and top ages of the Cryogenian System per the ICS International Chronostratigraphic Chart v2024/12. Effect windows: Rooney, A.D., Strauss, J.V., Brandon, A.D. & Macdonald, F.A. (2015). \"A Cryogenian chronology: Two long-lasting synchronous Neoproterozoic glaciations.\" Geology, 43, 459-462 (Sturtian, 56 Myr). Tasistro-Hart, A.R., Macdonald, F.A., Crowley, J.L. & Schmitz, M.D. (2025). \"Four-million-year Marinoan snowball shows multiple routes to deglaciation.\" PNAS, 122(18), e2418281122 (Marinoan, duration contested).\n",
       "effect": {
         "kind": "ice-shell",

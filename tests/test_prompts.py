@@ -88,11 +88,17 @@ def test_no_scene_forbids_its_own_main_subject(book: SceneBook) -> None:
     assert offenders == []
 
 
-def test_kpg_pair_is_arrival_then_aftermath(book: SceneBook) -> None:
-    arrival, aftermath = book.scene("kpg-arrival"), book.scene("kpg-aftermath")
-    predecessor, successor = book.neighbours("kpg-arrival")
-    assert (predecessor is not None and predecessor.id, successor) == (
-        "cretaceous-forest",
-        aftermath,
+def test_kpg_trio_is_arrival_then_darkness_then_aftermath(book: SceneBook) -> None:
+    arrival, darkness, aftermath = (
+        book.scene("kpg-arrival"),
+        book.scene("kpg-darkness"),
+        book.scene("kpg-aftermath"),
     )
-    assert arrival.t > aftermath.t
+    arrival_predecessor, arrival_successor = book.neighbours("kpg-arrival")
+    darkness_predecessor, darkness_successor = book.neighbours("kpg-darkness")
+    assert (arrival_predecessor is not None and arrival_predecessor.id, arrival_successor) == (
+        "cretaceous-forest",
+        darkness,
+    )
+    assert (darkness_predecessor, darkness_successor) == (arrival, aftermath)
+    assert arrival.t > darkness.t > aftermath.t

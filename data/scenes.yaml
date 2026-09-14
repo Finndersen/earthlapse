@@ -186,9 +186,11 @@ scenes:
       absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats"]
     pin: {asset_digest: "ccbb5828638ef8de", path: "data/candidates/boring-billion-shallows/4726db66153e81cc/03-ccbb5828638ef8de.jpg"}
 
-  # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
+  # Mid-Sturtian glaciation (~717-661 Ma; events.yaml snowball-earth's first ice-shell window),
+  # so the globe shows the ice shell while this scene holds. 650 Ma fell in the ice-free
+  # interval between the Sturtian and Marinoan windows.
   - id: cryogenian-snowball
-    t: 6.5e8
+    t: 6.9e8
     chapter: waters-edge
     shot: WATER_EDGE
     caption: During a Snowball Earth glaciation, ice reaches toward the equator and the sea survives only as dark leads between the ice.
@@ -676,6 +678,50 @@ scenes:
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
     pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
+
+  # t = 6.604299999e7 (66,042,999.99 yr ago): ~3.65 days after kpg-arrival's impact instant
+  # (66,043,000 yr ago). Inside events.yaml's k-pg-impact window (66.032-66.054 Ma) and its
+  # k-pg-aftermath fern-spike window (66.038-66.043 Ma). The extra decimal digits are needed to
+  # keep this scene's t distinct and correctly ordered between its neighbours
+  # (pipeline/scenes.py forbids a duplicate t) while staying "a few days," not "a few years."
+  #
+  # By this point fine silicate dust, soot and sulfate aerosol lofted by the impact had spread
+  # worldwide and cut incoming light well below the photosynthesis threshold, a darkness
+  # modelled to last a year or more (Senel, C.B. et al. (2023), "Chicxulub impact winter
+  # sustained by fine silicate dust," Nature Geoscience — exact volume/page not verified this
+  # session; Tabor, C.R. et al. (2020), "Causes and climatic consequences of the impact winter
+  # at the Cretaceous-Paleogene boundary," Geophysical Research Letters 47(3) — issue/page not
+  # re-verified this session). The dead, part-scorched trees reflect the ejecta-spherule
+  # re-entry heat pulse in the hours after impact (Robertson, D.S. et al. (2004), "Survival in
+  # the first hours of the Cenozoic," GSA Bulletin 116(5-6), 760-768), but how far that pulse
+  # actually ignited vegetation worldwide is contested: Robertson's own 2013 reassessment (J.
+  # Geophys. Res. Biogeosci. 118(3), 1006-1014 — title not re-verified this session) and
+  # Belcher, C.M. et al. (2003), "Fireball passes and nothing burns... evidence from the
+  # charcoal record of North America," Geology 31(12), 1061-1064, argue the charcoal record
+  # does not support a truly global firestorm. Kept honestly open here: the forest reads as
+  # killed and part-scorched, not mid-blaze, and the caption says the fire's reach is debated.
+  # No dinosaur appears alive, at most a carcass, and no crater or asteroid is visible — this is
+  # the same ~3,300 km-distant Hell Creek-type coastal plain as kpg-arrival and cretaceous-forest.
+  - id: kpg-darkness
+    t: 6.604299999e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Days after the impact, a pall of dust and soot blots out the sun over the same estuary; whether the impact's heat set forests alight this far away is still debated.
+    unsourced:
+      o2_percent: 27  # rounded, unchanged from kpg-arrival: atmospheric O2 does not move on a scale of days
+      mean_temp_c: 18  # rounded: only days in, cooling has barely begun; the modelled impact winter deepens over the following months (Tabor et al. 2020)
+    subject:
+      setting: The same swampy estuary on the Late Cretaceous coastal plain, a few days after the asteroid strike, under a sunless amber-grey gloom
+      left_mass: the same forest of broadleaf trees and bald cypress as cretaceous-forest and kpg-arrival, now dead and leafless, some trunks scorched, all of it dusted grey with fallen ash
+      vegetation: the same broadleaf trees, bald cypress and fan palms, now bare and grey with ash, their leaves and needles gone
+      fauna: no living dinosaur; the carcass of one of the duck-billed dinosaurs from kpg-arrival's herd lies half in the shallows, undisturbed
+      main_subject: the carcass of one of the same duck-billed dinosaurs, its flat beak and heavy tail still recognisable, lying on its side half in the shallows where it died
+      ground: ash-grey mud littered with charred fallen branches and a thin drift of fine grey ash
+      water: still, ash-dulled swamp water, a grey film of fallen dust and soot collecting at its edges
+      far_bank: the same scorched, leafless forest receding into a murk that never fully lifts
+      sky_and_light: a sky closed edge to edge by a dense brown-grey pall of soot, sulfate and fine dust circling the globe; no sun or blue is visible, only a faint, cold, reddish-brown glow, dim enough to feel like dusk though it is midday; a fine ash sifts down like snow
+      absent: [a visible crater, the asteroid or any trail, a live dinosaur or any animal posed dramatically, direct sunlight, a blue sky, green living foliage, active flames, grass, people]
+    pin: {asset_digest: "ad31c5b96308e6e0", path: "data/candidates/kpg-darkness/be30de8f32a37bdb/03-ad31c5b96308e6e0.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
   # Raine, J.I. & Hollis, C.J. (2001), "Indication of global deforestation at the

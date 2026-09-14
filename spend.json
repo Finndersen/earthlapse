@@ -1928,6 +1928,30 @@
       "estimated_usd": 0.153898,
       "actual_usd": 0.138696,
       "note": null
+    },
+    {
+      "node_id": "kpg-darkness.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154676,
+      "actual_usd": 0.13893,
+      "note": null
+    },
+    {
+      "node_id": "kpg-darkness.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154676,
+      "actual_usd": 0.139974,
+      "note": null
+    },
+    {
+      "node_id": "kpg-darkness.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154676,
+      "actual_usd": 0.139482,
+      "note": null
     }
   ]
 }
