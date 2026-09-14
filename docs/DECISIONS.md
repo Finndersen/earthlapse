@@ -570,6 +570,24 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
 - Some subject texts rest only on secondary summaries, where the primary paper was unreachable.
   Those records say so in `gaps`, for review before pinning.
 
+**Amendment (2026-09-14): a zoom cap between neighbouring plates.** The morphs into and out of
+`opisthokonta` burst outward and back instead of dissolving. Subject detection reads the whole
+backdrop against the plate rim, so a microscope-style plate's dish rim, halo or vignette can
+count as subject: `holozoa`'s ring framed it at span 0.98 against `opisthokonta`'s lone cell at
+0.21. Normalising both to 70% fill baked a 4.5× zoom into the flow, and 95% of the plate moved
+up to 2.1 plate widths; every other pair stays under 0.43.
+- `compute_morph` now frames each pair as if both spans were pulled toward their geometric
+  mean, at most `MAX_MORPH_ZOOM = 1.4` apart. Every other pinned pair was already within 1.33,
+  so their fields are unchanged (within 0.002, byte rounding); the two bursting pairs drop to
+  0.27 and 0.39.
+- `refuse_bursting_flow` fails `earthtime morph` when a field's 95th-percentile displacement
+  exceeds 0.6 plate widths, naming the pair, so a badly framed plate is caught before it ships.
+- `MORPH_ALGORITHM_VERSION` is 2, so every cached morph recomputes.
+- **Rejected: correcting subject detection instead.** A rule dropping hollow rings fixed
+  `holozoa` but not `metazoa`, whose vignette disc is filled; the pair between them, matched
+  only because both boxes were wrong the same way, then smeared. Fixing detection would reframe
+  all 39 pairs at once; the cap bounds the one failure that is visible.
+
 ---
 
 ## ADR-016 — Two explicit playback modes replace the ADR-012 hybrid; a bounded gap bonus

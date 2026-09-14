@@ -10,6 +10,7 @@ asset graph; its output is cached by the two pins' digests (pipeline/portraits.p
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,6 +49,14 @@ NOISE_MADS = 4.0
 # Detached parts of one subject (a tentacle, a trailing flagellum) are kept; the scale bar,
 # a thin sliver removed by the opening below or far smaller than the subject, is not.
 COMPANION_AREA_FRACTION = 0.1
+# Neighbouring subjects are framed at most this much apart in scale. Past it the morph stops
+# reading as one organism becoming another and reads as the whole plate bursting outward (a
+# lone cell becoming a colony four times its size); body-plan changes that large dissolve better.
+MAX_MORPH_ZOOM = 1.4
+# 95th-percentile displacement, in plate widths, past which a field is refused. The worst
+# well-framed pair reaches 0.43; the two bursting pairs that motivated MAX_MORPH_ZOOM reached
+# 1.0 and 2.1.
+MAX_FLOW_P95 = 0.6
 # Two different organisms never correspond pixel for pixel; a smooth field bends one into the
 # other instead of tearing it.
 FLOW_SMOOTHING_SIGMA = 6.0
@@ -96,6 +105,22 @@ def detect_subject_box(gray: GrayImage) -> SubjectBox:
     )
 
 
+def bounded_fills(older: SubjectBox, younger: SubjectBox) -> tuple[float, float]:
+    """Per-plate framing fills that keep the two subjects within `MAX_MORPH_ZOOM` of each other.
+
+    Each subject is framed as if its span were pulled toward the pair's geometric mean, so a
+    well-matched pair keeps `SUBJECT_FILL` exactly and a mismatched one meets in the middle.
+    """
+    mean = math.sqrt(older.span * younger.span)
+    half_zoom = math.sqrt(MAX_MORPH_ZOOM)
+
+    def fill(span: float) -> float:
+        framed_span = min(max(span, mean / half_zoom), mean * half_zoom)
+        return SUBJECT_FILL * span / framed_span
+
+    return fill(older.span), fill(younger.span)
+
+
 def normalise_plate(gray: GrayImage, framing: Framing, size: int) -> GrayImage:
     """The plate resampled into normalised UV at `size` pixels, backdrop black beyond its edge."""
     side = gray.shape[0]
@@ -136,10 +161,21 @@ class PlateMorph:
     younger_box: SubjectBox
 
 
+def refuse_bursting_flow(field: FloatField) -> None:
+    """Raise if the field would fling most of the plate further than `MAX_FLOW_P95`."""
+    reach = float(np.percentile(np.hypot(field[..., 0], field[..., 1]), 95))
+    if reach > MAX_FLOW_P95:
+        raise MorphError(
+            f"the morph would burst: 95th-percentile displacement {reach:.2f} plate widths "
+            f"exceeds {MAX_FLOW_P95}; check both plates' subject boxes"
+        )
+
+
 def compute_morph(older: GrayImage, younger: GrayImage) -> PlateMorph:
     older_box, younger_box = detect_subject_box(older), detect_subject_box(younger)
-    older_framing = Framing.centring(older_box, SUBJECT_FILL)
-    younger_framing = Framing.centring(younger_box, SUBJECT_FILL)
+    older_fill, younger_fill = bounded_fills(older_box, younger_box)
+    older_framing = Framing.centring(older_box, older_fill)
+    younger_framing = Framing.centring(younger_box, younger_fill)
     older_normalised = normalise_plate(older, older_framing, COMPUTE_SIZE)
     younger_normalised = normalise_plate(younger, younger_framing, COMPUTE_SIZE)
     forward = compose_flow(
@@ -154,6 +190,8 @@ def compute_morph(older: GrayImage, younger: GrayImage) -> PlateMorph:
         older_framing,
         FLOW_TEXTURE_SIZE,
     )
+    refuse_bursting_flow(forward)
+    refuse_bursting_flow(backward)
     return PlateMorph(
         forward=forward, backward=backward, older_box=older_box, younger_box=younger_box
     )

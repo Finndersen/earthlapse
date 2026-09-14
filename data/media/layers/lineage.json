@@ -1024,8 +1024,8 @@
         "younger": "holozoa",
         "forward": "portraits/morphs/opisthokonta--holozoa.forward.png",
         "backward": "portraits/morphs/opisthokonta--holozoa.backward.png",
-        "forwardRange": 1.96484375,
-        "backwardRange": 0.435546875,
+        "forwardRange": 0.455078125,
+        "backwardRange": 0.2646484375,
         "size": 128
       },
       {
@@ -1033,8 +1033,8 @@
         "younger": "opisthokonta",
         "forward": "portraits/morphs/leca--opisthokonta.forward.png",
         "backward": "portraits/morphs/leca--opisthokonta.backward.png",
-        "forwardRange": 0.369140625,
-        "backwardRange": 1.0478515625,
+        "forwardRange": 0.177734375,
+        "backwardRange": 0.251953125,
         "size": 128
       },
       {

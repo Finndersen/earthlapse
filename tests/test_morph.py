@@ -10,12 +10,17 @@ from PIL import Image
 
 cv2 = pytest.importorskip("cv2")
 
-from pipeline.flowfield import FLOW_TEXTURE_SIZE, decode_flow, texel_centres
+from pipeline.flowfield import FLOW_TEXTURE_SIZE, SubjectBox, decode_flow, texel_centres
 from pipeline.morph import (
+    MAX_FLOW_P95,
+    MAX_MORPH_ZOOM,
+    SUBJECT_FILL,
     MorphError,
+    bounded_fills,
     compute_morph,
     detect_subject_box,
     load_plate,
+    refuse_bursting_flow,
     write_morph,
 )
 from pipeline.portraits import (
@@ -86,6 +91,46 @@ def test_the_morph_bends_each_plate_onto_the_other_far_better_than_no_morph() ->
         )
 
 
+def test_a_well_matched_pair_keeps_the_plate_style_fill() -> None:
+    older = SubjectBox(left=0.1, top=0.2, right=0.9, bottom=0.8)
+    younger = SubjectBox(left=0.15, top=0.1, right=0.85, bottom=0.9)
+
+    assert bounded_fills(older, younger) == pytest.approx((SUBJECT_FILL, SUBJECT_FILL))
+
+
+def test_a_lone_cell_and_a_plate_filling_colony_are_framed_at_most_max_morph_zoom_apart() -> None:
+    cell = SubjectBox(left=0.4, top=0.4, right=0.6, bottom=0.6)
+    colony = SubjectBox(left=0.05, top=0.05, right=0.95, bottom=0.95)
+
+    cell_fill, colony_fill = bounded_fills(cell, colony)
+
+    assert (cell_fill / cell.span) / (colony_fill / colony.span) == pytest.approx(MAX_MORPH_ZOOM)
+
+
+def test_a_small_subject_morphs_into_a_large_one_without_bursting() -> None:
+    cell = _plate(centre=(0.5, 0.5), radii=(0.06, 0.05))
+    colony = _plate(centre=(0.5, 0.5), radii=(0.42, 0.4))
+
+    morph = compute_morph(cell, colony)
+
+    for field in (morph.forward, morph.backward):
+        assert np.percentile(np.hypot(field[..., 0], field[..., 1]), 95) <= MAX_FLOW_P95
+
+
+@pytest.mark.parametrize(("reach", "refused"), [(0.9, False), (1.1, True)])
+def test_a_field_flinging_most_of_the_plate_past_the_bound_is_refused(
+    reach: float, refused: bool
+) -> None:
+    field = np.zeros((FLOW_TEXTURE_SIZE, FLOW_TEXTURE_SIZE, 2), dtype=np.float32)
+    field[..., 0] = reach * MAX_FLOW_P95
+
+    if refused:
+        with pytest.raises(MorphError, match="burst"):
+            refuse_bursting_flow(field)
+    else:
+        refuse_bursting_flow(field)
+
+
 def _warp_error(source: np.ndarray, target: np.ndarray, field: np.ndarray) -> float:
     """Mean |source(p) - target(p + F(p))| over the source plate's subject texels."""
     u, v = texel_centres(FLOW_TEXTURE_SIZE)
@@ -118,7 +163,9 @@ def test_write_morph_caches_both_textures_and_a_record_under_the_pin_digests(
     )
     assert load_morph(cache, key) == record
     directory = key.directory(cache)
-    assert directory == cache / "tetrapod--human" / f"{'a' * 16}-{'b' * 16}-v1"
+    assert directory == cache / "tetrapod--human" / (
+        f"{'a' * 16}-{'b' * 16}-v{MORPH_ALGORITHM_VERSION}"
+    )
     forward = decode_flow((directory / FORWARD_FLOW_NAME).read_bytes(), record.forward_range)
     assert np.abs(forward).max() <= record.forward_range
     assert (directory / BACKWARD_FLOW_NAME).is_file()

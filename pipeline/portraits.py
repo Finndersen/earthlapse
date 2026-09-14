@@ -38,7 +38,7 @@ from pipeline.scenes import SLUG_PATTERN, ScenePin, patch_pin_line
 from pipeline.shapes import Tree, TreeNode
 
 LINEAGE_TREE_ID = "lineage"
-MORPH_ALGORITHM_VERSION = "1"
+MORPH_ALGORITHM_VERSION = "2"
 FORWARD_FLOW_NAME = "forward.png"
 BACKWARD_FLOW_NAME = "backward.png"
 MORPH_RECORD_NAME = "morph.json"
