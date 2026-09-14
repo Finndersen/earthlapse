@@ -24,7 +24,7 @@ Every source normalises to exactly one of these. Adding a fifth requires an ADR.
 | Shape | Fields | Used for |
 |---|---|---|
 | `TimeSeries` | `t, value, [uncertainty]` + interpolation policy | scalar layers, `WorldState` fields |
-| `EventSet` | `t_min, t_max, label, importance, description, citation` | timeline events |
+| `EventSet` | `t_min, t_max, label, kind, t (moments only), tags, importance, description, citation` | timeline events |
 | `RasterSequence` | `t, georeferenced grid` | globe textures, gridded layers |
 | `Tree` | `node, parent, t_divergence, label` | ancestor lineage |
 
@@ -211,7 +211,12 @@ The spine of the timeline. **Partly hand-authored — this is not purely a scrap
 
 **Processing** — SPARQL gets you a candidate pool. An LLM pass drafts normalised
 descriptions and importance scores. **A human curates the final ~200.** Every event needs
-`t_min`/`t_max` and a citation.
+`t_min`/`t_max` and a citation, plus (ADR-022) a `kind` (`moment`, dated by a best-estimate `t`
+inside `[t_min, t_max]`, or `period`, whose `t_min`/`t_max` are its own span with no single `t`)
+and a non-empty, ordered `tags` list drawn from a closed set of six themes (`life`,
+`earth-climate`, `catastrophe`, `human-origins`, `society`, `science-technology`) — the first tag
+is primary and drives timeline colour. Both fields are required, not defaulted: a source whose
+YAML doesn't yet carry them fails to load loudly rather than being silently guessed at.
 
 ⚠️ **Do not let an LLM be the source of truth for dates.** It drafts and normalises; the
 citation is what makes a date real. Cross-check deep-time dates against the ICS chart and

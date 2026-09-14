@@ -19,8 +19,10 @@
 events:
   - id: magma-ocean-regime
     label: Magma ocean and newborn Moon
+    kind: period  # a long, soft-boundaried planetary state (docs/GLOBE.md §4.2), not one instant
     t_min: 4.35e9
     t_max: 4.52e9
+    tags: [earth-climate, catastrophe]  # mirrors events-core moon-forming-impact's own tags
     importance: 0.9
     description: >
       The freshly accreted Earth, its surface a crust of cooling magma cracked by heat from
@@ -41,8 +43,10 @@ events:
 
   - id: hadean-water-world-regime
     label: Hadean water world
+    kind: period
     t_min: 4.0e9
     t_max: 4.4e9
+    tags: [earth-climate]
     importance: 0.7
     description: >
       A global ocean under a steam-veiled atmosphere, no continents yet drawn. Detrital
@@ -60,8 +64,10 @@ events:
 
   - id: archean-haze-regime
     label: Archean haze, scattered protocrust
+    kind: period
     t_min: 2.4e9
     t_max: 4.0e9
+    tags: [earth-climate]
     importance: 0.6
     description: >
       An anoxic ocean world with small scattered flecks of protocrust at procedural
@@ -81,8 +87,10 @@ events:
 
   - id: paleoproterozoic-glaciation-regime
     label: Paleoproterozoic glaciation
+    kind: period
     t_min: 2.426e9
     t_max: 2.46e9
+    tags: [earth-climate]  # mirrors events-core snowball-earth's own single earth-climate tag
     importance: 0.5
     description: >
       The first Paleoproterozoic global glaciation, dated by the Ongeluk Formation
@@ -100,8 +108,11 @@ events:
 
   - id: proterozoic-unknown-geography-regime
     label: Proterozoic, geography unknown
+    kind: period
     t_min: 1.0e9
     t_max: 2.4e9
+    tags: [earth-climate]  # least-wrong pick, like events-core `present`: a placeholder
+    # geological-state regime with no life/human/catastrophe content of its own to tag
     importance: 0.5
     description: >
       A dim land/sea noise field captioned "geography unknown" — no plate reconstruction

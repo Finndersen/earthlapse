@@ -39,6 +39,10 @@ export interface Scene {
   /** Shot type from the camera grammar (VISUAL_SPEC §3). */
   shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND'
   caption: string
+  /** events-core event id(s) this scene visually anchors to (ADR-022). Optional for now: absent
+   *  on any manifest published before this field existed — timeline rendering of scene->event
+   *  links is a later task, this is parsed and passed through only. */
+  events?: string[]
   /** Digest of the approved asset. Present means pinned (ADR-005). */
   pinned?: string
   width: number

@@ -11,10 +11,15 @@ from pathlib import Path
 
 import httpx
 import pytest
+import yaml
 
 from pipeline.fetching import FetchIntegrityError
-from pipeline.shapes import EARTH_FORMATION, EventSet, GlobeEffectKind
+from pipeline.shapes import EARTH_FORMATION, Event, EventKind, EventSet, GlobeEffectKind
 from tests.sources.support import load_source_module
+
+FIXTURE_PATH = (
+    Path(__file__).resolve().parents[2] / "sources" / "events-core" / "fixture" / "events.yaml"
+)
 
 MINIMUM_COVERAGE_IDS = frozenset(
     {
@@ -154,6 +159,38 @@ def test_k_pg_impact_effect_is_anchored_at_the_conventional_chicxulub_centre(
 def test_descriptions_are_non_empty(events_core: EventSet) -> None:
     for event in events_core.events:
         assert event.description.strip(), f"{event.id}: empty description"
+
+
+# --------------------------------------------------------------------------------- ADR-022
+#
+# `kind`/`t`/`tags` are required, not defaulted (ADR-022), and data/events.yaml is not yet
+# migrated to carry them (see sources/events-core/README.md "Migration status") -- so the
+# `events_core` fixture above is expected to fail before these tests would even run. The
+# committed fixture/events.yaml slice (never read by normalise.py in production) is already in
+# the new shape, so this schema still gets exercised offline in the meantime.
+
+
+@pytest.fixture(scope="module")
+def fixture_events() -> EventSet:
+    document = yaml.safe_load(FIXTURE_PATH.read_text())
+    events = [Event(**record) for record in document["events"]]
+    return EventSet(id="events-core-fixture", events=events)
+
+
+def test_fixture_conforms_to_the_kind_t_tags_schema(fixture_events: EventSet) -> None:
+    assert len(fixture_events.events) == 5
+    for event in fixture_events.events:
+        assert event.tags, f"{event.id}: empty tags"
+        if event.kind is EventKind.MOMENT:
+            assert event.t is not None, f"{event.id}: moment with no t"
+            assert event.t_min <= event.t <= event.t_max
+        else:
+            assert event.t is None, f"{event.id}: period must not set t"
+
+
+def test_fixture_mixes_moment_and_period_kinds(fixture_events: EventSet) -> None:
+    kinds = {event.kind for event in fixture_events.events}
+    assert kinds == {EventKind.MOMENT, EventKind.PERIOD}
 
 
 # ----------------------------------------------------------------------------------- fetch

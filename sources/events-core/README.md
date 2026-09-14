@@ -12,15 +12,30 @@ data.** See its header comment for the full time convention.
 |---|---|---|
 | `id` | str | stable slug, unique |
 | `label` | str | short display name |
+| `kind` | `moment` \| `period` | ADR-022: `moment` is one happening, dated by `t` plus its `[t_min, t_max]` dating uncertainty; `period` genuinely lasted, and `t_min`/`t_max` are its own end/start |
 | `t_min` | float | years BP, **nearer the present** |
 | `t_max` | float | years BP, **further into the past** |
+| `t` | float, required iff `kind: moment` | best-estimate instant, must fall inside `[t_min, t_max]`; **absent** for a `period` |
+| `tags` | list of str, non-empty | ADR-022: closed set of six — `life`, `earth-climate`, `catastrophe`, `human-origins`, `society`, `science-technology` — ordered, first is primary and drives timeline colour |
 | `importance` | float, 0..1 | drives zoom LOD (planetary milestones ~0.9-1, minor ~0.3-0.5) |
 | `description` | str | 1-2 sentences; says "contested" explicitly where the date is disputed |
 | `citation` | str | a specific, checkable source — author/year/venue, or the ICS chart with its boundary age |
 
 `normalise.py` parses this directly into `pipeline.shapes.Event`/`EventSet`, which is where
-`t_min <= t_max` and `0 <= importance <= 1` are actually enforced (pydantic validators) — the
-YAML itself carries no schema enforcement beyond being well-formed.
+`t_min <= t_max`, `0 <= importance <= 1`, the `kind`/`t` consistency rule and `tags`'
+non-empty/closed-set/no-duplicates rules are actually enforced (pydantic validators) — the YAML
+itself carries no schema enforcement beyond being well-formed.
+
+**Migration status (ADR-022).** `kind` and `tags` are required fields with no default: they were
+added to the `Event` contract without being back-filled into the 66 events below, because
+assigning each event a kind, a best-estimate date and a primary theme is a curation judgement
+call for a human/agent to make per event, not something this contract change can do mechanically.
+Until that follow-up pass fills them in and reruns `make data`, `data/events.yaml` fails to load
+(loudly — a pydantic `ValidationError` naming the first event missing the field) and
+`sources/events-core`'s real-data test suite (`tests/sources/test_events.py`) fails at its
+module-scoped fixture accordingly. This is expected, not a regression. The small committed
+`fixture/events.yaml` below (never read by `normalise.py` in production) is already in the new
+shape, so the schema itself stays exercised offline in the meantime.
 
 ## The present-day reference year
 
@@ -168,12 +183,12 @@ The scientific review added one more, `early-eocene-climatic-optimum`, so the
   *span* — e.g. Ediacara biota are known from ~571 Ma to the end of the Ediacaran at 538.8 Ma.
   The description says so explicitly in each case; don't assume every interval is a plus/minus
   error bar.
-- **`Event.t` (the midpoint property in `pipeline/shapes.py`) is for placement only.** Never
-  present it as "the date" in the UI — several of these midpoints (e.g. `ediacaran-biota`,
-  `control-of-fire`) fall in the middle of a real span or a genuine scientific disagreement,
-  not at a meaningful instant.
-- **`EventSet.domain` is `(events[0].t_min, events[-1].t_max)` after sorting by midpoint**
-  (see `pipeline/shapes.py`). Because `present` has the smallest midpoint and
+- **`Event.placement_t` (`pipeline/shapes.py`; ADR-022) is for placement only** — a moment's own
+  best-estimate `t`, else the interval's midpoint. Never present it as "the date" in the UI —
+  several period midpoints (e.g. `ediacaran-biota`, `control-of-fire`) fall in the middle of a
+  real span or a genuine scientific disagreement, not at a meaningful instant.
+- **`EventSet.domain` is `(events[0].t_min, events[-1].t_max)` after sorting by `placement_t`**
+  (see `pipeline/shapes.py`). Because `present` has the smallest placement value and
   `earth-formation` the largest, this works out to `(0.0, 4.59e9)` here, but that is a property
   of this specific event set, not a guarantee — a future event with a very wide interval could
   make the true min/max span wider than `domain` reports if it weren't also the extremal

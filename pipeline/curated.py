@@ -59,8 +59,11 @@ _LAYOUTS: Final[dict[type[CuratedShape], _Layout]] = {
             [
                 ("id", pa.string()),
                 ("label", pa.string()),
+                ("kind", pa.string()),  # EventKind, ADR-022
                 ("t_min", pa.float64()),
                 ("t_max", pa.float64()),
+                ("t", pa.float64()),  # best-estimate instant for a moment; null for a period
+                ("tags", pa.list_(pa.string())),  # EventTag, non-empty, ordered — ADR-022
                 ("importance", pa.float64()),
                 ("description", pa.string()),
                 ("citation", pa.string()),

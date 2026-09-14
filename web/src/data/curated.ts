@@ -11,7 +11,9 @@
  */
 
 import type {
+  EventKind,
   EventsValue,
+  EventTag,
   GeoTime,
   GlobeEffect,
   Interpolation,
@@ -106,6 +108,15 @@ export interface PortraitSetData {
 
 const INTERPOLATIONS: ReadonlySet<string> = new Set(['linear', 'log-linear', 'step', 'nearest'])
 const PLATE_TYPES: ReadonlySet<string> = new Set(['SPECIMEN', 'MICROSCOPE'])
+const EVENT_KINDS: ReadonlySet<string> = new Set(['moment', 'period'])
+const EVENT_TAGS: ReadonlySet<string> = new Set([
+  'life',
+  'earth-climate',
+  'catastrophe',
+  'human-origins',
+  'society',
+  'science-technology',
+])
 const GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([
   'impact-winter',
   'giant-impact',
@@ -269,9 +280,36 @@ function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
   return effect
 }
 
+/** Validates the additive, optional `kind` field (ADR-022) — absent on any event published
+ *  before it existed. Returns `undefined` for that case, mirroring `parseGlobeEffect`. */
+function parseEventKind(v: unknown, path: string): EventKind | undefined {
+  if (v === undefined || v === null) return undefined
+  const s = expectString(v, path)
+  if (!EVENT_KINDS.has(s)) {
+    throw new Error(`${path}: unknown EventKind "${s}"`)
+  }
+  return s as EventKind
+}
+
+/** Validates the additive, optional `tags` field (ADR-022), same absent-is-fine rule as
+ *  `parseEventKind`. Every present tag must be in the closed set. */
+function parseEventTags(v: unknown, path: string): EventTag[] | undefined {
+  if (v === undefined || v === null) return undefined
+  return expectArray(v, path).map((raw, i) => {
+    const s = expectString(raw, `${path}[${i}]`)
+    if (!EVENT_TAGS.has(s)) {
+      throw new Error(`${path}[${i}]: unknown EventTag "${s}"`)
+    }
+    return s as EventTag
+  })
+}
+
 /** Validates one `TimelineEvent` — shared by `manifest.ts` (each entry of `Manifest.events`)
  *  and `parseEventsData` below (each entry of a non-timeline `EventsData` layer file), since
- *  both are the same wire shape (`pipeline.manifest.TimelineEvent`). */
+ *  both are the same wire shape (`pipeline.manifest.TimelineEvent`). `kind`/`t`/`tags`
+ *  (ADR-022) are parsed leniently — present-and-valid or absent, never required — because the
+ *  currently-published manifest and the committed stub both predate this field; rendering the
+ *  timeline by them is a later task. */
 export function parseTimelineEvent(v: unknown, path: string): TimelineEvent {
   const r = expectRecord(v, path)
   const event: TimelineEvent = {
@@ -283,6 +321,13 @@ export function parseTimelineEvent(v: unknown, path: string): TimelineEvent {
     description: expectString(r.description, `${path}.description`),
     citation: expectString(r.citation, `${path}.citation`),
   }
+  const kind = parseEventKind(r.kind, `${path}.kind`)
+  if (kind !== undefined) event.kind = kind
+  if (r.t !== undefined && r.t !== null) {
+    event.t = expectNumber(r.t, `${path}.t`)
+  }
+  const tags = parseEventTags(r.tags, `${path}.tags`)
+  if (tags !== undefined) event.tags = tags
   const effect = parseGlobeEffect(r.effect, `${path}.effect`)
   if (effect !== undefined) event.effect = effect
   return event

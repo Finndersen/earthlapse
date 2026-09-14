@@ -151,6 +151,11 @@ function validateScene(v: unknown, path: string): Scene {
   }
   const depth = expectOptionalString(r.depth, `${path}.depth`)
   if (depth !== undefined) scene.depth = depth
+  if (r.events !== undefined) {
+    scene.events = expectArray(r.events, `${path}.events`).map((e, i) =>
+      expectString(e, `${path}.events[${i}]`),
+    )
+  }
   const pinned = expectOptionalString(r.pinned, `${path}.pinned`)
   if (pinned !== undefined) scene.pinned = pinned
   return scene

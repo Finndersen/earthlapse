@@ -14,7 +14,9 @@ from pipeline.shapes import (
     EffectAnchor,
     EffectWindow,
     Event,
+    EventKind,
     EventSet,
+    EventTag,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
@@ -38,8 +40,11 @@ EVENTS = EventSet(
         Event(
             id="kpg",
             label="K-Pg impact",
+            kind=EventKind.MOMENT,
             t_min=6.6e7,
             t_max=6.61e7,
+            t=6.605e7,
+            tags=[EventTag.CATASTROPHE, EventTag.LIFE],
             importance=0.95,
             description="Chicxulub.",
             citation="Renne et al. 2013",
@@ -54,8 +59,10 @@ EVENTS = EventSet(
         Event(
             id="no-effect",
             label="An event with no globe visual",
+            kind=EventKind.PERIOD,
             t_min=0.0,
             t_max=1.0,
+            tags=[EventTag.SOCIETY],
             importance=0.1,
             description="d.",
             citation="c.",
@@ -139,3 +146,18 @@ def test_event_effect_is_stored_as_a_json_string_column(tmp_path: Path) -> None:
     no_effect = next(r for r in rows if r["id"] == "no-effect")
     assert isinstance(kpg["effect"], str) and kpg["effect"].startswith("{")
     assert no_effect["effect"] is None
+
+
+def test_kind_t_tags_round_trip_through_parquet(tmp_path: Path) -> None:
+    """ADR-022: `t` is nullable (absent for a period), `tags` is a plain list<string> column
+    (no JSON encoding needed, unlike the nested `effect` model above)."""
+    path = write_shape(EVENTS, tmp_path)
+    table = pq.read_table(path)
+    assert table.schema.field("kind").type == pa.string()
+    assert table.schema.field("t").type == pa.float64()
+    assert table.schema.field("tags").type == pa.list_(pa.string())
+    rows = table.to_pylist()
+    kpg = next(r for r in rows if r["id"] == "kpg")
+    no_effect = next(r for r in rows if r["id"] == "no-effect")
+    assert (kpg["kind"], kpg["t"], kpg["tags"]) == ("moment", 6.605e7, ["catastrophe", "life"])
+    assert (no_effect["kind"], no_effect["t"], no_effect["tags"]) == ("period", None, ["society"])

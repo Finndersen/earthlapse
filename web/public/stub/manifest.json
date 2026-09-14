@@ -98,8 +98,11 @@
     {
       "id": "earth-formation",
       "label": "Earth forms",
+      "kind": "moment",
       "tMin": 4.567e9,
       "tMax": 4.567e9,
+      "t": 4.567e9,
+      "tags": ["earth-climate"],
       "importance": 1.0,
       "description": "Accretion of the proto-Earth from the solar nebula.",
       "citation": "stub placeholder citation"
@@ -107,8 +110,11 @@
     {
       "id": "moon-forming-impact",
       "label": "Moon-forming impact",
-      "tMin": 4.51e9,
-      "tMax": 4.45e9,
+      "kind": "moment",
+      "tMin": 4.45e9,
+      "tMax": 4.51e9,
+      "t": 4.5e9,
+      "tags": ["catastrophe", "earth-climate"],
       "importance": 0.9,
       "description": "A Mars-sized body, Theia, collides with the proto-Earth; debris forms the Moon.",
       "citation": "stub placeholder citation"
@@ -116,8 +122,10 @@
     {
       "id": "great-oxidation",
       "label": "Great Oxidation Event",
-      "tMin": 2.45e9,
-      "tMax": 2.32e9,
+      "kind": "period",
+      "tMin": 2.32e9,
+      "tMax": 2.45e9,
+      "tags": ["earth-climate", "life"],
       "importance": 0.85,
       "description": "Cyanobacterial photosynthesis raises atmospheric oxygen for the first time.",
       "citation": "stub placeholder citation"
@@ -125,8 +133,10 @@
     {
       "id": "cambrian-explosion",
       "label": "Cambrian explosion",
-      "tMin": 5.41e8,
-      "tMax": 5.3e8,
+      "kind": "period",
+      "tMin": 5.3e8,
+      "tMax": 5.41e8,
+      "tags": ["life"],
       "importance": 0.9,
       "description": "Rapid diversification of animal body plans in the fossil record.",
       "citation": "stub placeholder citation"
@@ -134,8 +144,11 @@
     {
       "id": "kpg-impact",
       "label": "Chicxulub impact",
+      "kind": "moment",
       "tMin": 6.6e7,
       "tMax": 6.6e7,
+      "t": 6.6e7,
+      "tags": ["catastrophe", "life"],
       "importance": 0.95,
       "description": "An asteroid impact ends the Cretaceous and the age of non-avian dinosaurs.",
       "citation": "stub placeholder citation"
@@ -143,8 +156,10 @@
     {
       "id": "agriculture",
       "label": "Agriculture begins",
-      "tMin": 1.2e4,
-      "tMax": 1.0e4,
+      "kind": "period",
+      "tMin": 1.0e4,
+      "tMax": 1.2e4,
+      "tags": ["society"],
       "importance": 0.7,
       "description": "Independent domestication of crops and livestock across several regions.",
       "citation": "stub placeholder citation"

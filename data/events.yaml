@@ -23,8 +23,11 @@
 events:
   - id: earth-formation
     label: Earth forms
+    kind: moment
     t_min: 4.49e9
     t_max: 4.59e9
+    t: 4.54e9
+    tags: [earth-climate]
     importance: 1.0
     description: >
       Earth accretes from the solar nebula and differentiates into a metallic core and
@@ -36,8 +39,11 @@ events:
 
   - id: moon-forming-impact
     label: Moon-forming impact
+    kind: moment
     t_min: 4.35e9
     t_max: 4.52e9
+    t: 4.515e9
+    tags: [earth-climate, catastrophe]
     importance: 0.9
     description: >
       A Mars-sized protoplanet collides with the young Earth; debris from the collision
@@ -61,8 +67,11 @@ events:
 
   - id: first-life
     label: Earliest evidence of life
+    kind: moment
     t_min: 3.4e9
     t_max: 4.1e9
+    t: 3.45e9
+    tags: [life]
     importance: 1.0
     description: >
       The oldest markers of biological activity on Earth. Contested and wide: robust
@@ -77,8 +86,11 @@ events:
 
   - id: origin-of-photosynthesis
     label: Oxygenic photosynthesis evolves
+    kind: moment
     t_min: 2.43e9
     t_max: 3.4e9
+    t: 2.7e9
+    tags: [life, earth-climate]
     importance: 0.55
     description: >
       Cyanobacteria evolve oxygen-releasing (oxygenic) photosynthesis, the innovation that
@@ -93,8 +105,11 @@ events:
 
   - id: eukaryotes-origin
     label: Eukaryotes originate
+    kind: moment
     t_min: 1.6e9
     t_max: 2.1e9
+    t: 1.6e9
+    tags: [life]
     importance: 0.65
     description: >
       The lineage bearing a nucleus and internal membrane-bound organelles diverges from
@@ -110,8 +125,10 @@ events:
 
   - id: great-oxidation-event
     label: Great Oxidation Event
+    kind: period
     t_min: 2.1e9
     t_max: 2.4e9
+    tags: [earth-climate, life]
     importance: 0.95
     description: >
       Atmospheric oxygen rises by orders of magnitude as cyanobacterial photosynthesis
@@ -123,8 +140,10 @@ events:
 
   - id: banded-iron-formations
     label: Banded iron formations peak
+    kind: period
     t_min: 1.85e9
     t_max: 2.8e9
+    tags: [earth-climate]
     importance: 0.35
     description: >
       Dissolved iron in the anoxic Archean ocean is oxidised by cyanobacterial oxygen and
@@ -140,8 +159,11 @@ events:
 
   - id: multicellularity-sexual-reproduction
     label: Complex multicellularity and sex
+    kind: moment
     t_min: 1.030e9
     t_max: 1.064e9
+    t: 1.047e9
+    tags: [life]
     importance: 0.55
     description: >
       Bangiomorpha pubescens, a red alga from Arctic Canada, is the oldest fossil with
@@ -154,8 +176,11 @@ events:
 
   - id: first-seaweeds
     label: Early green seaweeds
+    kind: moment
     t_min: 7.9e8
     t_max: 1.0e9
+    t: 1.0e9
+    tags: [life]
     importance: 0.4
     description: >
       Proterocladus antiquus, a multicellular chlorophyte (green alga) from the Nanfen
@@ -169,8 +194,10 @@ events:
 
   - id: snowball-earth
     label: Snowball Earth glaciations
+    kind: period
     t_min: 6.35e8
     t_max: 7.2e8
+    tags: [earth-climate]
     importance: 0.85
     description: >
       Two near-global glaciations — the Sturtian (~717-661 Ma) and Marinoan (ending 635 Ma; ~4-15 Myr, duration contested)
@@ -199,8 +226,10 @@ events:
 
   - id: ediacaran-biota
     label: Ediacaran biota
+    kind: period
     t_min: 5.388e8
     t_max: 5.71e8
+    tags: [life]
     importance: 0.75
     description: >
       The Ediacara Biota — the first macroscopic, complex, soft-bodied multicellular
@@ -215,8 +244,10 @@ events:
 
   - id: cambrian-explosion
     label: Cambrian explosion
+    kind: period
     t_min: 5.21e8
     t_max: 5.388e8
+    tags: [life]
     importance: 1.0
     description: >
       Most modern animal phyla appear in the fossil record within a geologically short
@@ -231,8 +262,10 @@ events:
 
   - id: great-ordovician-biodiversification
     label: Great Ordovician Biodiversification Event
+    kind: period
     t_min: 4.6733e8
     t_max: 4.9705e8
+    tags: [life]
     importance: 0.6
     description: >
       Marine animal diversity rises sharply through the Ordovician as reef-building,
@@ -246,8 +279,11 @@ events:
 
   - id: land-plants
     label: Land plants colonise land
+    kind: moment
     t_min: 4.25e8
     t_max: 4.70e8
+    t: 4.475e8
+    tags: [life]
     importance: 0.8
     description: >
       Embryophytes (land plants) colonise the terrestrial surface. Contested: the oldest
@@ -260,8 +296,10 @@ events:
 
   - id: end-ordovician-extinction
     label: End-Ordovician mass extinction
+    kind: period
     t_min: 4.40e8
     t_max: 4.45e8
+    tags: [catastrophe]
     importance: 0.8
     description: >
       One of the "Big Five" mass extinctions, eliminating roughly 85% of marine species in
@@ -276,8 +314,11 @@ events:
 
   - id: insects
     label: First insects
+    kind: moment
     t_min: 3.96e8
     t_max: 4.11e8
+    t: 4.09e8
+    tags: [life]
     importance: 0.5
     description: >
       Rhyniognatha hirsti, from the Rhynie chert, is the specimen most commonly cited as
@@ -292,8 +333,11 @@ events:
 
   - id: tetrapods
     label: First tetrapods
+    kind: moment
     t_min: 3.65e8
     t_max: 3.95e8
+    t: 3.905e8
+    tags: [life]
     importance: 0.85
     description: >
       The oldest evidence of tetrapods — four-limbed vertebrates capable of terrestrial
@@ -307,8 +351,11 @@ events:
 
   - id: first-forests
     label: First forests
+    kind: moment
     t_min: 3.78e8
     t_max: 3.93e8
+    t: 3.90e8
+    tags: [life]
     importance: 0.55
     description: >
       The first forests appear in the Middle Devonian. The oldest known, ~390 Ma in Somerset,
@@ -326,8 +373,11 @@ events:
 
   - id: first-seed-plants
     label: First seed plants
+    kind: moment
     t_min: 3.6e8
     t_max: 3.7e8
+    t: 3.70e8
+    tags: [life]
     importance: 0.55
     description: >
       Elkinsia polymorpha, a seed fern from the Late Devonian of West Virginia, bears the
@@ -344,8 +394,10 @@ events:
 
   - id: late-devonian-extinction
     label: Late Devonian mass extinction
+    kind: period
     t_min: 3.5886e8
     t_max: 3.7215e8
+    tags: [catastrophe]
     importance: 0.75
     description: >
       Two extinction pulses bracket the Late Devonian: the Kellwasser event at the
@@ -363,8 +415,11 @@ events:
 
   - id: amniotes
     label: First amniotes
+    kind: moment
     t_min: 3.07e8
     t_max: 3.589e8
+    t: 3.125e8
+    tags: [life]
     importance: 0.7
     description: >
       The amniotic egg allows vertebrates to reproduce away from standing water. Hylonomus
@@ -379,10 +434,39 @@ events:
       "Earliest amniote tracks recalibrate the timeline of tetrapod evolution." Nature,
       641, 1193-1200 (Snowy Plains Formation track-bearing slab).
 
+  - id: late-paleozoic-ice-age
+    label: Late Paleozoic Ice Age
+    kind: period
+    t_min: 2.55e8
+    t_max: 3.6e8
+    tags: [earth-climate]
+    importance: 0.6
+    description: >
+      Repeated glacial-interglacial cycles build and melt ice sheets across Gondwana for
+      roughly a hundred million years, ice centres migrating from South America and
+      Africa early on to a final Australian centre as Gondwana drifts across the South
+      Pole. The ice age proper is usually dated from ~335-330 Ma, though isolated, more
+      transient glacial episodes reach back to ~360 Ma (hence the wide t_max); its last
+      alpine glaciers melt in eastern Australia around 255 Ma. Contested: whether the
+      record reflects one continuous glaciation or as many as 25 separate, diachronous
+      Gondwanan ice sheets is actively debated.
+    citation: >
+      Montanez, I.P. & Poulsen, C.J. (2013). "The Late Paleozoic Ice Age: An Evolving
+      Paradigm." Annual Review of Earth and Planetary Sciences, 41, 629-656. Scotese,
+      C.R. et al. (2021). "Phanerozoic paleotemperatures: The earth's changing climate
+      during the last 540 million years." Earth-Science Reviews, 215, 103503. Overall
+      360-255 Ma bracket and the one-event-vs-many-ice-sheets debate corroborated live
+      via Wikipedia, "Late Paleozoic icehouse" (2026-09-14), which cites Rosa & Isbell
+      (2021) and Kent & Muttoni (2020) for the same 360-255 Ma figures and Montanez
+      (2021) for the ~335-330 Ma proper-onset date.
+
   - id: carboniferous-rainforest-collapse
     label: Carboniferous rainforest collapse
+    kind: moment
     t_min: 3.0e8
     t_max: 3.07e8
+    t: 3.05e8
+    tags: [life, earth-climate]
     importance: 0.5
     description: >
       Around 305 Ma the lycopsid-dominated coal-swamp rainforests of equatorial Euramerica
@@ -398,8 +482,10 @@ events:
 
   - id: gymnosperm-radiation
     label: Conifers and gymnosperms radiate
+    kind: period
     t_min: 2.9e8
     t_max: 3.1e8
+    tags: [life, earth-climate]
     importance: 0.35
     description: >
       As the coal-swamp lycopsids retreat with the Carboniferous rainforest collapse (above),
@@ -413,10 +499,42 @@ events:
       Duijnstee, I.A.P. (2020) on voltzialean cone evolution has its authors and year
       confirmed but not its journal or volume.
 
+  # UNVERIFIED which source pair a curator should anchor the interval on: Scotese
+  # (2004)/Torsvik & Cocks (2017) vs. Wikipedia's own cited Rogers & Santosh (2004), which
+  # give the same broad shape but different precise assembly/breakup bounds.
+  - id: pangaea-supercontinent
+    label: Pangaea assembles and rifts apart
+    kind: period
+    t_min: 1.75e8
+    t_max: 3.35e8
+    tags: [earth-climate]
+    importance: 0.7
+    description: >
+      Nearly all of Earth's continental crust collides into the single supercontinent
+      Pangaea through the Carboniferous and into the Permian, then spends over 150
+      million years slowly rifting apart into the modern continents, opening the
+      Atlantic and Indian Oceans. Assembly begins around 335 Ma; when it counts as
+      complete is itself debated, with estimates ranging from the Early Permian (~300
+      Ma) to as late as ~270 Ma once Siberia's collision is counted. Breakup begins near
+      the Triassic-Jurassic boundary (~200 Ma); near-total fragmentation is dated to
+      ~175 Ma by some sources and not until the Middle Jurassic (~160 Ma) by others.
+    citation: >
+      Scotese, C.R. (2004). "A Continental Drift Flipbook." Journal of Geology, 112(6),
+      729-741 (assembly by ~335-320 Ma). Torsvik, T.H. & Cocks, L.R.M. (2017). Earth
+      History and Palaeogeography. Cambridge University Press (breakup onset ~200 Ma,
+      near-total fragmentation by ~175 Ma). Cross-checked live via Wikipedia, "Pangaea"
+      (2026-09-14), which instead names Rogers, J.J.W. & Santosh, M. (2004), Continents
+      and Supercontinents (Oxford University Press), for a ~335 Ma assembly start / ~300
+      Ma completion and a breakup running to the Middle Jurassic (~160 Ma) — the same
+      broad shape, different precise bounds; UNVERIFIED which pair of sources a curator
+      should anchor the interval on.
+
   - id: siberian-traps
     label: Siberian Traps eruptions
+    kind: period
     t_min: 2.5e8
     t_max: 2.54e8
+    tags: [catastrophe, earth-climate]
     importance: 0.7
     description: >
       One of the largest volcanic events in Earth's history: roughly two million years of
@@ -434,8 +552,10 @@ events:
 
   - id: permian-extinction
     label: End-Permian mass extinction
+    kind: period
     t_min: 2.5188e8
     t_max: 2.51941e8
+    tags: [catastrophe]
     importance: 1.0
     description: >
       The most severe mass extinction in Earth's history eliminates over 90% of marine
@@ -449,8 +569,11 @@ events:
 
   - id: dinosaurs
     label: First dinosaurs
+    kind: moment
     t_min: 2.31e8
     t_max: 2.43e8
+    t: 2.31e8
+    tags: [life]
     importance: 0.8
     description: >
       The oldest unambiguous dinosaurs (Eoraptor, Herrerasaurus) appear in the
@@ -465,8 +588,11 @@ events:
 
   - id: mammals-origin
     label: First mammals
+    kind: moment
     t_min: 2.05e8
     t_max: 2.25e8
+    t: 2.15e8
+    tags: [life]
     importance: 0.55
     description: >
       The earliest mammaliaforms — small, likely nocturnal insectivores — diverge from
@@ -478,8 +604,10 @@ events:
 
   - id: end-triassic-extinction
     label: End-Triassic mass extinction
+    kind: period
     t_min: 2.010e8
     t_max: 2.018e8
+    tags: [catastrophe]
     importance: 0.8
     description: >
       One of the "Big Five" mass extinctions, precisely dated to the Triassic-Jurassic
@@ -493,8 +621,11 @@ events:
 
   - id: birds-origin
     label: First birds
+    kind: moment
     t_min: 1.485e8
     t_max: 1.508e8
+    t: 1.4965e8
+    tags: [life]
     importance: 0.6
     description: >
       Archaeopteryx lithographica, from the Solnhofen limestone of Bavaria, is the
@@ -508,8 +639,10 @@ events:
 
   - id: earliest-pollinating-insects
     label: Earliest pollinating insects
+    kind: period
     t_min: 9.3e7
     t_max: 1.65e8
+    tags: [life]
     importance: 0.5
     description: >
       Long-proboscid scorpionflies (Aneuretopsychidae and kin, Jurassic-Cretaceous,
@@ -528,8 +661,11 @@ events:
 
   - id: flowering-plants
     label: Flowering plants
+    kind: moment
     t_min: 1.25e8
     t_max: 1.33e8
+    t: 1.30e8
+    tags: [life]
     importance: 0.75
     description: >
       The oldest undisputed flowering plants (Montsechia vidalii, Archaefructus) appear
@@ -543,8 +679,10 @@ events:
 
   - id: angiosperm-radiation
     label: Flowering plants spread and radiate
+    kind: period
     t_min: 8.0e7
     t_max: 1.25e8
+    tags: [life]
     importance: 0.55
     description: >
       Within the "Cretaceous Terrestrial Revolution," angiosperms spread from a marginal
@@ -559,10 +697,35 @@ events:
       biodiversity." New Phytologist, 233(5), 2017-2035 (UNVERIFIED: year given as 2021; the
       volume may be dated 2022).
 
+  # UNVERIFIED: Wikipedia's own reference list does not name Roberts & Kirschbaum (1995)
+  # directly, though its stated 100-66 Ma range matches it.
+  - id: western-interior-seaway
+    label: Western Interior Seaway
+    kind: period
+    t_min: 6.6e7
+    t_max: 1.0e8
+    tags: [earth-climate]
+    importance: 0.45
+    description: >
+      A shallow epicontinental sea floods the middle of North America through the
+      Cretaceous greenhouse's high sea level, splitting the continent into the western
+      landmass Laramidia and the eastern Appalachia for roughly 34 million years, before
+      draining at the very end of the Cretaceous. Its final closure lines up with the
+      K-Pg boundary already anchored elsewhere in this file by k-pg-impact.
+    citation: >
+      Roberts, L.N.R. & Kirschbaum, M.A. (1995). "Paleogeography of the Late Cretaceous
+      of the Western Interior of Middle North America — Coal Distribution and Sediment
+      Accumulation." USGS Professional Paper 1561. The 100-66 Ma bracket was
+      corroborated live via Wikipedia, "Western Interior Seaway" (2026-09-14);
+      UNVERIFIED — that article's own citations do not name the USGS paper directly,
+      though its stated 100-66 Ma range matches it.
+
   - id: deccan-traps
     label: Deccan Traps eruptions
+    kind: period
     t_min: 6.56e7
     t_max: 6.63e7
+    tags: [catastrophe, earth-climate]
     importance: 0.5
     description: >
       Massive flood-basalt volcanism in west-central India straddles the K-Pg boundary,
@@ -578,8 +741,11 @@ events:
 
   - id: k-pg-impact
     label: K-Pg impact
+    kind: moment
     t_min: 6.6032e7
     t_max: 6.6054e7
+    t: 6.6043e7
+    tags: [catastrophe, earth-climate]
     importance: 1.0
     description: >
       The Chicxulub asteroid impacts the Yucatan Peninsula, triggering the
@@ -602,8 +768,10 @@ events:
 
   - id: k-pg-aftermath
     label: K-Pg aftermath fern spike
+    kind: period
     t_min: 6.6038e7
     t_max: 6.6043e7
+    tags: [life, catastrophe]
     importance: 0.5
     description: >
       Over roughly the first thousand years at well-dated sites after the Chicxulub impact, sections worldwide (most
@@ -617,8 +785,10 @@ events:
 
   - id: paleocene-mammal-radiation
     label: Paleocene mammal radiation
+    kind: period
     t_min: 5.6e7
     t_max: 6.6043e7
+    tags: [life]
     importance: 0.5
     description: >
       In the aftermath of the K-Pg extinction, placental mammals rapidly radiate to fill the
@@ -635,8 +805,11 @@ events:
 
   - id: primates
     label: First primates
+    kind: moment
     t_min: 5.6e7
     t_max: 6.59e7
+    t: 6.59e7
+    tags: [life]
     importance: 0.7
     description: >
       Purgatorius, a stem primate from Montana, appears within roughly 150,000 years of
@@ -650,8 +823,10 @@ events:
 
   - id: petm
     label: Paleocene-Eocene Thermal Maximum (PETM)
+    kind: period
     t_min: 5.58e7
     t_max: 5.60e7
+    tags: [earth-climate]
     importance: 0.55
     description: >
       A sudden release of isotopically light carbon drives several degrees of global warming
@@ -666,8 +841,11 @@ events:
 
   - id: india-asia-collision
     label: India-Asia collision begins
+    kind: moment
     t_min: 3.4e7
     t_max: 5.9e7
+    t: 4.65e7
+    tags: [earth-climate]
     importance: 0.6
     description: >
       India's continental margin collides with Asia, initiating the Himalayan orogeny and
@@ -684,8 +862,10 @@ events:
 
   - id: early-eocene-climatic-optimum
     label: Early Eocene Climatic Optimum
+    kind: period
     t_min: 4.9e7
     t_max: 5.4e7
+    tags: [earth-climate]
     importance: 0.55
     description: >
       The warmest sustained interval of the last 66 million years. Swamp forests,
@@ -699,8 +879,10 @@ events:
 
   - id: eocene-oligocene-transition
     label: Eocene-Oligocene transition; first Antarctic ice sheet
+    kind: period
     t_min: 3.365e7
     t_max: 3.44e7
+    tags: [earth-climate]
     importance: 0.75
     description: >
       Earth's climate steps from the early Cenozoic greenhouse into the modern icehouse: the
@@ -718,8 +900,11 @@ events:
 
   - id: antarctic-circumpolar-current
     label: Drake Passage opens; proto-Antarctic Circumpolar Current
+    kind: moment
     t_min: 2.1e7
     t_max: 3.4e7
+    t: 2.75e7
+    tags: [earth-climate]
     importance: 0.45
     description: >
       The opening of the Drake Passage lets an eastward current begin to encircle Antarctica,
@@ -736,8 +921,10 @@ events:
 
   - id: grassland-spread
     label: Spread of C3 grasslands
+    kind: period
     t_min: 1.55e7
     t_max: 2.3e7
+    tags: [life, earth-climate]
     importance: 0.55
     description: >
       The first definitive grass-dominated open habitats appear in the early Miocene, though
@@ -755,8 +942,11 @@ events:
 
   - id: hipparion-dispersal
     label: Hipparionine horses reach the Old World
+    kind: moment
     t_min: 1.11e7
     t_max: 1.14e7
+    t: 1.125e7
+    tags: [life]
     importance: 0.4
     description: >
       Three-toed hipparionine horses disperse from North America across the Bering land
@@ -771,8 +961,10 @@ events:
 
   - id: c4-expansion
     label: C4 grasses expand across the tropics
+    kind: period
     t_min: 5.0e6
     t_max: 8.0e6
+    tags: [life, earth-climate]
     importance: 0.65
     description: >
       Carbon-isotope evidence from fossil soils and tooth enamel across multiple continents
@@ -791,8 +983,11 @@ events:
 
   - id: hominins
     label: First hominins
+    kind: moment
     t_min: 6.0e6
     t_max: 7.2e6
+    t: 7.0e6
+    tags: [human-origins]
     importance: 0.8
     description: >
       Sahelanthropus tchadensis, from Chad, is the earliest widely proposed hominin, with
@@ -807,8 +1002,11 @@ events:
 
   - id: isthmus-of-panama
     label: Isthmus of Panama forms
+    kind: moment
     t_min: 2.8e6
     t_max: 1.6e7
+    t: 2.8e6
+    tags: [earth-climate]
     importance: 0.55
     description: >
       A continuous land connection rises between North and South America, closing the
@@ -826,8 +1024,10 @@ events:
 
   - id: messinian-salinity-crisis
     label: Messinian salinity crisis
+    kind: period
     t_min: 5.33e6
     t_max: 5.96e6
+    tags: [earth-climate]
     importance: 0.55
     description: >
       Tectonic closure of the Atlantic gateways, the Betic and Rifian corridors through
@@ -845,8 +1045,11 @@ events:
 
   - id: lomekwi-stone-tools
     label: Oldest known stone tools (Lomekwi 3)
+    kind: moment
     t_min: 3.25e6
     t_max: 3.35e6
+    t: 3.3e6
+    tags: [human-origins, science-technology]
     importance: 0.6
     description: >
       Stone artefacts at Lomekwi 3, West Turkana, Kenya, predate the Oldowan industry by
@@ -862,8 +1065,11 @@ events:
 
   - id: australopithecus-afarensis
     label: "Lucy (AL 288-1), Australopithecus afarensis"
+    kind: moment
     t_min: 3.18e6
     t_max: 3.22e6
+    t: 3.2e6
+    tags: [human-origins]
     importance: 0.65
     description: >
       The AL 288-1 skeleton ("Lucy"), discovered at Hadar, Ethiopia in 1974, is the most
@@ -878,8 +1084,11 @@ events:
 
   - id: quaternary-glaciation-begins
     label: Quaternary Period begins
+    kind: moment
     t_min: 2.58e6
     t_max: 2.58e6
+    t: 2.58e6
+    tags: [earth-climate]
     importance: 0.6
     description: >
       The base of the Gelasian Stage marks the start of the Quaternary Period and the
@@ -891,8 +1100,11 @@ events:
 
   - id: homo-erectus
     label: Homo erectus appears
+    kind: moment
     t_min: 1.5e6
     t_max: 2.04e6
+    t: 2.0e6
+    tags: [human-origins]
     importance: 0.7
     description: >
       Homo erectus, the first hominin with fully modern human body proportions, appears in
@@ -910,8 +1122,11 @@ events:
 
   - id: acheulean-technology
     label: Acheulean handaxe technology begins
+    kind: moment
     t_min: 1.72e6
     t_max: 1.95e6
+    t: 1.835e6
+    tags: [human-origins, science-technology]
     importance: 0.5
     description: >
       Symmetrical, bifacially flaked handaxes appear by about 1.95 Ma at Melka Kunture,
@@ -926,8 +1141,10 @@ events:
 
   - id: control-of-fire
     label: Habitual control of fire
+    kind: period
     t_min: 4.0e5
     t_max: 1.5e6
+    tags: [human-origins, science-technology]
     importance: 0.5
     description: >
       Evidence for hominin-controlled fire ranges from isolated early occurrences
@@ -943,8 +1160,11 @@ events:
 
   - id: homo-sapiens-origin
     label: Homo sapiens appears
+    kind: moment
     t_min: 2.81e5
     t_max: 3.49e5
+    t: 3.15e5
+    tags: [human-origins]
     importance: 0.9
     description: >
       Fossils from Jebel Irhoud, Morocco, combine a modern-looking face with a more
@@ -957,10 +1177,36 @@ events:
       (2017). "The age of the hominin fossils from Jebel Irhoud, Morocco, and the origins
       of the Middle Stone Age." Nature, 546, 293-296. Combined age estimate: 315 +/- 34 ka.
 
+  - id: eemian-interglacial
+    label: Eemian last interglacial
+    kind: period
+    t_min: 1.15e5
+    t_max: 1.3e5
+    tags: [earth-climate]
+    importance: 0.45
+    description: >
+      The most recent interglacial before the present one: global temperatures rival or
+      exceed today's, peaking around 128,000-123,000 years ago and briefly averaging up
+      to ~2 degC warmer than the Holocene; ice sheets retreat further than modern
+      extents (part of the West Antarctic Ice Sheet is thought to have melted), and sea
+      level stands roughly 6-9 metres higher, before the planet tips back into the last
+      glacial period.
+    citation: >
+      Shackleton, N.J., Sanchez-Goni, M.F., Pailler, D. & Lancelot, Y. (2003). "Marine
+      Isotope Substage 5e and the Eemian Interglacial." Global and Planetary Change,
+      36(3), 151-155. van Leeuwen, J.F.N. et al. (2000), U/Th dating a late-Eemian age
+      of 118.2 +/- 6.3 ka. Full range and peak-warmth window corroborated live via
+      Wikipedia, "Last interglacial" (2026-09-14, the current article title for the
+      Eemian), which names Shackleton et al. and van Leeuwen et al. directly for the
+      same figures.
+
   - id: toba-eruption
     label: Toba supereruption
+    kind: moment
     t_min: 7.356e4
     t_max: 7.42e4
+    t: 7.388e4
+    tags: [catastrophe, earth-climate]
     importance: 0.4
     description: >
       The Youngest Toba eruption in Sumatra is the largest known volcanic event of the last
@@ -978,8 +1224,11 @@ events:
 
   - id: out-of-africa-migration
     label: Out-of-Africa migration
+    kind: moment
     t_min: 5.0e4
     t_max: 7.0e4
+    t: 6.0e4
+    tags: [human-origins]
     importance: 0.6
     description: >
       Genomic evidence dates the principal migration of modern humans out of Africa,
@@ -994,8 +1243,11 @@ events:
 
   - id: earliest-cave-art
     label: Earliest known cave and rock art
+    kind: moment
     t_min: 6.4e4
     t_max: 7.16e4
+    t: 6.78e4
+    tags: [human-origins, society]
     importance: 0.6
     description: >
       The oldest securely dated cave art is a hand stencil in Liang Metanduno, Muna Island,
@@ -1011,8 +1263,10 @@ events:
 
   - id: neanderthal-sapiens-overlap
     label: Neanderthals and Homo sapiens overlap in Europe
+    kind: period
     t_min: 3.9e4
     t_max: 4.5e4
+    tags: [human-origins]
     importance: 0.55
     description: >
       Homo sapiens is present in Europe from roughly 45 ka, while radiocarbon dating of
@@ -1024,10 +1278,40 @@ events:
       Higham, T. et al. (2014). "The timing and spatiotemporal patterning of Neanderthal
       disappearance." Nature, 512, 306-309.
 
+  # Divergence date is heavily contested across methods (Skoglund/Fan 2015-16
+  # Pleistocene-wolf recalibration vs. Thalmann 2013's own 19,000-32,000 YBP figure);
+  # t=27,000 is an illustrative midpoint, not an authoritative single value. Verified
+  # via Wikipedia only -- primary genomic papers not read directly.
+  - id: dog-domestication
+    label: Dog domestication
+    kind: moment
+    t_min: 17096
+    t_max: 40000
+    t: 27000
+    tags: [society, life]
+    importance: 0.35
+    description: >
+      Dogs diverge from grey wolves through close co-evolution with Late Pleistocene
+      humans, becoming the first domesticated species. Genetic divergence estimates
+      disagree sharply: mitochondrial-genome analysis puts the split at 19,000-32,000
+      years ago, recalibrated against a Pleistocene wolf's mutation rate to
+      27,000-40,000 years ago, while the oldest undisputed archaeological dog remains
+      (the Erralla dog, Spain) date to only ~17,100 years ago, already showing
+      selection-altered morphology. The geographic origin of domestication (Siberia,
+      Central Asia, Europe or East Asia) remains unresolved.
+    citation: >
+      Thalmann, O. et al. (2013). "Complete mitochondrial genomes of ancient canids
+      suggest a European origin of domestic dogs." Science, 342(6160), 871-874.
+      Skoglund, P. et al. (2015) / Fan, Z. et al. (2016), Pleistocene-wolf-calibrated
+      divergence of 27,000-40,000 YBP; Erralla dog dated 17,410-17,096 BP. Via Wikipedia
+      "Domestication of the dog"; primary genomic papers not read directly.
+
   - id: last-glacial-maximum
     label: Last Glacial Maximum
+    kind: period
     t_min: 1.9e4
     t_max: 2.65e4
+    tags: [earth-climate]
     importance: 0.7
     description: >
       The height of the last ice age: most of the great Northern Hemisphere ice sheets stand
@@ -1041,10 +1325,87 @@ events:
       Most ice sheets reached their maximum extent between 26.5 and 19-20 ka, with
       deglaciation beginning ~19-20 ka.
 
+  - id: peopling-of-americas
+    label: Peopling of the Americas
+    kind: period
+    t_min: 14000
+    t_max: 23180
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      Humans reach and spread across the Americas, the last continents to be peopled.
+      Fossilised footprints at White Sands, New Mexico, dated across two stratigraphic
+      layers to 22,860 +/- 320 and 21,130 +/- 250 calibrated years BP, push the earliest
+      secure evidence back to the Last Glacial Maximum, well before the long-standard
+      ~14,000-16,000 BP "Clovis-first" consensus; broad dispersal across both continents
+      was underway by ~14,000 BP. The seed-based radiocarbon method behind the White
+      Sands dates has been methodologically challenged, and still-older claimed sites
+      (Chiquihuite Cave, the Cerutti Mastodon site) remain without scientific consensus
+      — the interval's older bound reflects that live dispute, not settled measurement
+      error.
+    citation: >
+      Bennett, M.R. et al. (2021). "Evidence of humans in North America during the Last
+      Glacial Maximum." Science, 373(6562), 1528-1531 (White Sands footprints, 22,860
+      +/- 320 and 21,130 +/- 250 cal yr BP). Nielsen, R. et al. (2017). "Tracing the
+      peopling of the world through genomics." Nature, 541, 302-310 (general dispersal
+      by ~14,000 BP).
+
+  # A secondary human-origins tag is plausible (Beringia's role in peopling-of-americas)
+  # but this event's own description stays geographic, so it is left single-tagged.
+  - id: pleistocene-land-bridges
+    label: Beringia, Sunda and Doggerland exposed
+    kind: period
+    t_min: 7.0e3
+    t_max: 3.0e4
+    tags: [earth-climate]
+    importance: 0.55
+    description: >
+      Glacial-age sea level, over 100 metres below today's, exposes wide continental
+      shelves as dry land: Beringia connects Siberia to Alaska, the Sunda Shelf joins
+      Sumatra, Java and Borneo to mainland Southeast Asia, and Doggerland links Britain
+      to continental Europe — all drowned again as the ice sheets melt. Each bridge has
+      its own history and does not submerge at the same time (Beringia's main land-
+      bridge phase runs ~30,000-11,000 BP after intermittent earlier connection; Sunda
+      is exposed from the Last Glacial Maximum until a rapid meltwater flood around
+      14,300 BP; Doggerland's last remnants submerge by roughly 7,000 BP); the interval
+      given is the window over which all three stood substantially above water together,
+      not any one bridge's full individual span.
+    citation: >
+      Elias, S.A. & Brigham-Grette, J. (2007). "Beringia." In Encyclopedia of Quaternary
+      Science. Sathiamurthy, E. & Voris, H.K. (2006). "Pleistocene Sea Level and
+      Coastline Reconstructions of Sundaland." Natural History Journal of Chulalongkorn
+      University, 2, 1-43. Gaffney, V., Fitch, S. & Smith, D. (2009). Europe's Lost
+      World: The Rediscovery of Doggerland. Council for British Archaeology. Per-bridge
+      windows corroborated live via Wikipedia, "Beringia," "Sunda Shelf" and
+      "Doggerland" (all 2026-09-14).
+
+  - id: natufian-settlements
+    label: First permanent settlements (Natufian)
+    kind: period
+    t_min: 11500
+    t_max: 15000
+    tags: [society]
+    importance: 0.55
+    description: >
+      Natufian communities across the Levant (Ain Mallaha, El Wad and others) live in
+      sedentary or semi-sedentary villages with stone architecture and food-storage
+      facilities, sustained by wild-food abundance rather than farming — the earliest
+      known durable settlements anywhere, and likely ancestral to the region's first
+      Neolithic villages. They precede plant domestication (`agriculture`) by roughly
+      two millennia, laying the social groundwork — fixed residence, stored surplus —
+      that domestication would later intensify.
+    citation: >
+      Munro, N.D. (2003). "Small game, the Younger Dryas, and the transition to
+      agriculture in the southern Levant." Mitteilungen der Gesellschaft für
+      Urgeschichte, 12, 47-71. Via Wikipedia "Natufian culture" (15,000-11,500 BP);
+      primary source not read directly.
+
   - id: younger-dryas
     label: Younger Dryas cold reversal
+    kind: period
     t_min: 1.17e4
     t_max: 1.29e4
+    tags: [earth-climate]
     importance: 0.5
     description: >
       A sharp, roughly 1,300-year return to near-glacial cold interrupts the warming at the
@@ -1055,10 +1416,34 @@ events:
       Dryas | Definition, Causes, & Termination." Rasmussen, S.O. et al. (2006), GICC05
       Greenland ice-core chronology (volume and pages UNVERIFIED).
 
+  - id: livestock-domestication
+    label: Sheep and goat domestication
+    kind: period
+    t_min: 9500
+    t_max: 13025
+    tags: [society, life]
+    importance: 0.45
+    description: >
+      Sheep and goats become the first domesticated livestock in the Fertile Crescent,
+      herded alongside the earliest cultivated cereals — a pastoral counterpart to
+      `agriculture`'s plant domestication. Goat domestication is dated genetically to
+      ~9,900-9,500 BP in the Zagros/southeastern Anatolia region; sheep domestication,
+      in the same broader Mesopotamian window (~11,000-8,000 BCE, roughly 13,025-10,025
+      BP), is less precisely dated — two related but separately documented processes,
+      not one event, hence the wide combined interval.
+    citation: >
+      Naderi, S. et al. (2008). "The goat domestication process inferred from large-
+      scale mitochondrial DNA analysis of wild and domestic individuals." PNAS, 105(46),
+      17659-17664. Ensminger, M.E. & Parker, R.O. (1986). Sheep and Goat Science, 5th
+      ed. Interstate Printers & Publishers (sheep date range, via Wikipedia
+      "Domestication of the sheep").
+
   - id: agriculture
     label: Agriculture begins
+    kind: period
     t_min: 10025
     t_max: 11525
+    tags: [society]
     importance: 0.85
     description: >
       Plant domestication begins in the Fertile Crescent — the first of several
@@ -1072,10 +1457,94 @@ events:
       barley) begins ~10,500-9,500 cal BC, with morphological domestication clearly
       established by ~8,000 cal BC.
 
+  - id: gobekli-tepe
+    label: Göbekli Tepe monumental site
+    kind: period
+    t_min: 10025
+    t_max: 11525
+    tags: [society, science-technology]
+    importance: 0.4
+    description: >
+      Pre-Pottery Neolithic foragers without agriculture, pottery or metal tools raise
+      massive T-shaped limestone pillars into ring enclosures at Göbekli Tepe,
+      southeastern Anatolia — among the earliest monumental architecture anywhere —
+      before the site falls out of use roughly 1,500 years later. The long-standard idea
+      that the enclosures were deliberately backfilled has fallen out of favour since
+      excavator Klaus Schmidt's death; burial is now attributed to natural landslides,
+      with a severe one likely triggering the final abandonment.
+    citation: >
+      Dietrich, O. et al. (2013), radiocarbon dating Layer III to c. 9500 BC; Kinzel, M.
+      & Clare, L. (2020), continued use to c. 8000 BC. Via Wikipedia "Göbekli Tepe";
+      primary radiocarbon papers not read directly.
+
+  - id: african-humid-period
+    label: African Humid Period (Green Sahara)
+    kind: period
+    t_min: 5.0e3
+    t_max: 1.46e4
+    tags: [earth-climate]
+    importance: 0.5
+    description: >
+      Orbitally driven strengthening of the African monsoon turns the Sahara into
+      grassland, lakes and rivers, supporting hippos, crocodiles and human settlement
+      across what is now the world's largest hot desert, before the monsoon weakens and
+      the desert returns. The humid period begins around 14,600-14,500 years ago and
+      ends in stages between roughly 6,000 and 5,000 years ago; some researchers
+      subdivide it into a wetter early phase (AHP I, to ~8,000 years ago) and a drier
+      later phase (AHP II).
+    citation: >
+      deMenocal, P. et al. (2000). "Abrupt onset and termination of the African Humid
+      Period: rapid climate responses to gradual insolation forcing." Quaternary Science
+      Reviews, 19(1-5), 347-361. Liu, Z. et al. (2017). Journal of Geophysical Research:
+      Atmospheres (AHP I/AHP II subdivision at ~8 ka; full paper title UNVERIFIED).
+      Corroborated live via Wikipedia, "African humid period" (2026-09-14), which names
+      both papers directly for the same figures.
+
+  - id: uruk-first-city
+    label: Uruk becomes the first city
+    kind: period
+    t_min: 5125
+    t_max: 6025
+    tags: [society]
+    importance: 0.65
+    description: >
+      Over the Uruk period, small agricultural villages in southern Mesopotamia grow
+      into Uruk, a walled city reaching up to 250 ha with a population of around 50,000
+      (plus 80,000-90,000 more in its immediate hinterland) by its zenith around 3100 BC
+      — commonly credited as the world's first true city, and the largest urban
+      settlement on Earth at the time.
+    citation: >
+      Nissen, H.J. (2003), population estimates; Harmansah, Ö. (2007), chronology. Via
+      Wikipedia "Uruk" (Uruk period conventionally c. 4000-3200 BC, peak
+      extent/population c. 3100 BC); primary works not read directly.
+
+  - id: wheel-invented
+    label: The wheel is invented
+    kind: moment
+    t_min: 5375
+    t_max: 5656
+    t: 5525
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      The earliest evidence for the wheel clusters in the mid-4th millennium BC:
+      wheeled-cart pictographs on clay tablets from Uruk (c. 3500-3350 BC), a wheeled-
+      vehicle image on the Bronocice pot from southern Poland (3631-3380 BC), and wheel
+      tracks and the oldest surviving physical wheel-and-axle, from the Ljubljana
+      Marshes, Slovenia. Independent, near-simultaneous appearances across Mesopotamia
+      and central Europe leave the point of origin — and whether it was invented once or
+      several times — unresolved.
+    citation: >
+      Via Wikipedia "Wheel": Uruk (Eanna) pictographs c. 3500-3350 BC; Bronocice pot
+      3631-3380 BC; Ljubljana Marshes wheel 3340-3030 BC, axle radiocarbon-dated
+      3360-3045 BC. Underlying excavation reports not independently fetched.
+
   - id: writing
     label: Writing invented
+    kind: period
     t_min: 5025
     t_max: 5425
+    tags: [society, science-technology]
     importance: 0.75
     description: >
       Proto-cuneiform, the earliest writing system, develops at Uruk in southern
@@ -1087,10 +1556,230 @@ events:
       Proto-cuneiform administrative tablets from Uruk date to the Uruk IV-III periods,
       ~3400-3000 BC.
 
+  # Construction window (Ramsey et al. 2010 Bayesian reanalysis, 2613-2577 BC) is
+  # contested against conflicting mortar-radiocarbon evidence and one unexplained older
+  # cedar-plank date -- see description. The linked scene (giza-great-pyramid,
+  # data/scenes.yaml) instead uses the older conventional completion date, ~2560 BC.
+  - id: great-pyramid-giza
+    label: Great Pyramid of Giza built
+    kind: moment
+    t_min: 4602
+    t_max: 4638
+    t: 4620
+    tags: [society, science-technology]
+    importance: 0.35
+    description: >
+      The Great Pyramid of Giza, Khufu's tomb and the sole surviving Wonder of the
+      Ancient World, is built over roughly a 26-year span; a 2010 Bayesian re-analysis
+      of Egyptian radiocarbon chronology brackets construction to 2613-2577 BC. Earlier
+      mortar-sample radiocarbon dating gave a conflicting, older range (calibrated up to
+      2871 BC, later reanalysed to 2620-2484 BC using only the youngest samples), and a
+      2020-dated cedar plank from the Queen's Chamber shaft came back over 500 years too
+      old — both treated as unresolved anomalies here, not used to set the interval.
+    citation: >
+      Ramsey, C.B. et al. (2010), Egyptian radiocarbon chronology re-analysis, 2613-2577
+      BC. Via Wikipedia "Great Pyramid of Giza"; primary paper not independently read.
+
+  - id: phoenician-alphabet
+    label: Phoenician alphabet emerges
+    kind: moment
+    t_min: 3025
+    t_max: 3125
+    t: 3075
+    tags: [science-technology, society]
+    importance: 0.5
+    description: >
+      The Phoenician script — a 22-letter consonantal alphabet ancestral to Greek,
+      Latin, and most alphabets in use today — is conventionally dated to 1050 BC,
+      though this is an acknowledged gap-bridging convention: no Phoenician inscriptions
+      survive securely dated to the 11th century BC itself. The oldest securely dated,
+      fully developed inscriptions come from the 10th century BC (the Ahiram
+      sarcophagus, KAI 1); the al-Khader arrowheads (c. 1100 BC) provide transitional
+      evidence bridging it to the earlier Proto-Canaanite script.
+    citation: >
+      Via Wikipedia "Phoenician alphabet": conventional emergence 1050 BC; Ahiram
+      sarcophagus (KAI 1) ~1000 BC; al-Khader arrowheads ~1100 BC. Primary epigraphic
+      sources not independently checked.
+
+  - id: coinage-invented
+    label: Coinage invented in Lydia
+    kind: moment
+    t_min: 2585
+    t_max: 2650
+    t: 2625
+    tags: [society, science-technology]
+    importance: 0.4
+    description: >
+      Standardized metal coinage — electrum pieces stamped with an issuing authority's
+      mark — first appears in Iron Age Lydia and Ionia in the late 7th century BC,
+      replacing weighed bullion with a portable, trust-based medium of exchange.
+      Alyattes of Lydia is conventionally credited with early state-issued coinage, and
+      his son Croesus (r. c. 560-546 BC) with the first coins of standardized purity;
+      the earliest known inscribed coins come from Ephesus.
+    citation: >
+      Via Wikipedia "Coin", drawing on Herodotus, Aristotle and Pollux, plus the Ephesus
+      Artemision hoard; primary/archaeological sources not independently checked.
+
+  # t_max (1368) runs to the fall of the last successor state (Yuan dynasty), a
+  # "founding to final dissolution" framing choice broader than the unified empire's own
+  # life, which fragmented into four khanates after 1259.
+  - id: mongol-empire
+    label: Mongol Empire spans Eurasia
+    kind: period
+    t_min: 657
+    t_max: 819
+    tags: [society]
+    importance: 0.45
+    description: >
+      Genghis Khan is proclaimed khan of the united Mongol tribes in 1206, founding an
+      empire that becomes the largest contiguous land empire in history, spanning the
+      Pacific to Eastern Europe at its territorial peak around 1294. The politically
+      unified empire itself fragmented after Möngke Khan's death in 1259, splitting into
+      four khanates; the interval used here runs to 1368, when the last successor state,
+      the Yuan dynasty, fell to Ming forces — a "founding to final dissolution" span,
+      broader than the shorter life of the empire as a single unified polity.
+    citation: >
+      Via Wikipedia "Mongol Empire": proclaimed 1206; Möngke Khan's death and
+      fragmentation, 1259; territorial peak ~23.5M km^2 (1294); Yuan dynasty fall, 1368.
+
+  - id: black-death
+    label: Black Death pandemic
+    kind: period
+    t_min: 672
+    t_max: 679
+    tags: [catastrophe, society]
+    importance: 0.55
+    description: >
+      The Black Death, a plague pandemic carried along trade routes from Central/East
+      Asia, sweeps Europe, Western Asia and North Africa between 1346 and 1353, killing
+      an estimated 25-50 million people (some Eurasia-wide estimates run to 75-200
+      million) — 30-60% of Europe's population in a few years. Its demographic shock
+      reshaped labour markets, land tenure and social structure across the continent for
+      generations afterward.
+    citation: >
+      Via Wikipedia "Black Death": 1346-1353 across Europe, Western Asia and North
+      Africa; death toll 25-50M (Eurasia-wide estimates 75-200M); European mortality
+      30-60%. Underlying demographic studies not independently fetched.
+
+  - id: gutenberg-printing-press
+    label: Gutenberg's printing press
+    kind: period
+    t_min: 570
+    t_max: 577
+    tags: [science-technology, society]
+    importance: 0.7
+    description: >
+      Johannes Gutenberg develops a movable-type printing press in Mainz, combining
+      reusable metal type, oil-based ink and a wooden press adapted from a wine press.
+      He is documented back in Mainz taking out a loan, plausibly for press equipment,
+      by 1448; the press is in operation by 1450, and the 42-line Bible is being printed
+      by 1455. An earlier, unconfirmed tradition places experimental trials in
+      Strasbourg around 1440, but the surviving record does not establish what work he
+      was actually doing there, so the interval here starts at the better-documented
+      1448 Mainz loan rather than the Strasbourg claim.
+    citation: >
+      Wikipedia, "Johannes Gutenberg" and "Printing press" (accessed 2026-09-14). Merges
+      two independently drafted candidate events for the same milestone (workshop-
+      founding vs. operational vs. Bible- printing framings). UNVERIFIED beyond
+      Wikipedia: the ~1440 Strasbourg claim is flagged uncertain in the source itself
+      and was not used to set t_max.
+
+  - id: copernicus-heliocentrism
+    label: Copernicus publishes heliocentrism
+    kind: moment
+    t_min: 482
+    t_max: 482
+    t: 482
+    tags: [science-technology]
+    importance: 0.55
+    description: >
+      Nicolaus Copernicus's De revolutionibus orbium coelestium is printed in Nuremberg
+      shortly before his death, arguing that Earth and the other planets orbit the Sun —
+      the founding text of the shift away from an Earth-centred cosmos that drives the
+      wider scientific revolution.
+    citation: >
+      Wikipedia, "De revolutionibus orbium coelestium" (accessed 2026-09-14).
+      Publication year 1543; only the year, not an exact day, is recorded.
+
+  - id: galileo-telescope
+    label: Galileo's telescopic discoveries
+    kind: moment
+    t_min: 415
+    t_max: 416
+    t: 415
+    tags: [science-technology]
+    importance: 0.5
+    description: >
+      Galileo Galilei builds his own telescope in 1609 and, observing in January 1610,
+      discovers four moons orbiting Jupiter — direct evidence that not everything in the
+      sky orbits Earth. He publishes the findings in Sidereus Nuncius the following
+      March.
+    citation: >
+      Wikipedia, "Galileo Galilei" (accessed 2026-09-14). Telescope built 1609; Jupiter
+      observations 7-15 January 1610; Sidereus Nuncius published March 1610.
+
+  - id: columbian-exchange
+    label: Columbian Exchange begins
+    kind: period
+    t_min: 225
+    t_max: 533
+    tags: [society, life]
+    importance: 0.7
+    description: >
+      Following Columbus's 1492 landfall in the Caribbean, plants, animals, diseases and
+      people begin moving between the Americas and Afro-Eurasia for the first time since
+      the continents separated, reshaping diets, ecosystems and demographics on every
+      continent — with catastrophic population loss among Indigenous Americans from
+      introduced disease. The interval's end (1800 CE) is a curatorial round number
+      marking the close of the period of most intense early-modern transfer, not a
+      literature-defined boundary.
+    citation: >
+      Wikipedia, "Columbian exchange" (accessed 2026-09-14). Conventionally named after
+      Crosby, A.W. (1972). The Columbian Exchange: Biological and Cultural Consequences
+      of 1492. Greenwood Press (title/author/year only; not independently verified this
+      session).
+
+  - id: newton-principia
+    label: Newton publishes the Principia
+    kind: moment
+    t_min: 338
+    t_max: 338
+    t: 338
+    tags: [science-technology]
+    importance: 0.7
+    description: >
+      Isaac Newton's Philosophiae Naturalis Principia Mathematica appears in July 1687,
+      formulating the laws of motion and universal gravitation and unifying terrestrial
+      and celestial mechanics under one mathematical framework — a foundation for
+      classical physics for the following two centuries.
+    citation: >
+      Wikipedia, "Philosophiae Naturalis Principia Mathematica" (accessed 2026-09-14).
+      Royal Society authorised publication 30 June 1686; printed July 1687.
+
+  - id: newcomen-steam-engine
+    label: Newcomen's atmospheric steam engine
+    kind: moment
+    t_min: 312
+    t_max: 314
+    t: 313
+    tags: [science-technology]
+    importance: 0.55
+    description: >
+      Thomas Newcomen builds the first practical atmospheric steam engine, pumping water
+      from a flooded coalworks in the English West Midlands — the direct mechanical
+      ancestor of the engines that later power the Industrial Revolution. Only the
+      approximate year, not an exact date, is recorded.
+    citation: >
+      Wikipedia, "Thomas Newcomen" (accessed 2026-09-14). Dated "around 1712."
+      UNVERIFIED beyond Wikipedia — not cross-checked against a primary engineering-
+      history source (e.g. the Newcomen Society).
+
   - id: industrial-revolution
     label: Industrial Revolution
+    kind: period
     t_min: 185
     t_max: 265
+    tags: [science-technology, society]
     importance: 0.6
     description: >
       Mechanised manufacturing, steam power and the factory system transform Britain's
@@ -1102,11 +1791,237 @@ events:
       Conventional bracket widened to 1760-1840 by later historians (e.g. Encyclopaedia
       Britannica, "Industrial Revolution").
 
+  - id: darwin-natural-selection
+    label: Evolution by natural selection published
+    kind: moment
+    t_min: 166
+    t_max: 167
+    t: 166
+    tags: [science-technology, life]
+    importance: 0.8
+    description: >
+      Charles Darwin and Alfred Russel Wallace's joint paper on natural selection is
+      read to the Linnean Society in July 1858; Darwin's On the Origin of Species
+      follows in November 1859, proposing natural selection as evolution's mechanism —
+      the publication that establishes the theory underlying all subsequent biology,
+      though the biological events it describes (`hominins` onward, and the deep-time
+      entries elsewhere in this file) are each dated independently of this publication.
+    citation: >
+      Wikipedia, "On the Origin of Species" (accessed 2026-09-14). Linnean Society
+      reading 1 July 1858; Origin of Species published 24 November 1859.
+
+  - id: pasteur-koch-germ-theory
+    label: Germ theory of disease established
+    kind: period
+    t_min: 142
+    t_max: 166
+    tags: [science-technology, life]
+    importance: 0.75
+    description: >
+      Louis Pasteur's 1859 swan-neck flask experiments show that a sterilised broth does
+      not spontaneously generate life, undermining spontaneous generation; Robert Koch
+      then identifies the specific bacteria causing anthrax (1876) and tuberculosis
+      (1882), and his assistant Friedrich Loeffler formalises Koch's postulates in 1883
+      — together establishing that specific microorganisms cause specific infectious
+      diseases, a foundation of modern medicine and public health.
+    citation: >
+      Wikipedia, "Louis Pasteur" and "Robert Koch" (accessed 2026-09-14). Swan-neck
+      flask experiment dated 1859 per Wikipedia, "Spontaneous generation" (accessed
+      2026-09-14) — corrects an earlier draft's 1861. Koch's anthrax (1876) and
+      tuberculosis (1882) identifications, and the 1883 postulates credited to Loeffler,
+      confirmed live; the bounding interval is a curatorial choice among several
+      credible milestones in a continuous scientific development, not a single
+      literature-defined span.
+
+  - id: edison-electric-light
+    label: Edison's practical incandescent bulb
+    kind: moment
+    t_min: 146
+    t_max: 146
+    t: 146
+    tags: [science-technology]
+    importance: 0.5
+    description: >
+      Thomas Edison's laboratory arrives at a commercially viable carbon-filament
+      incandescent bulb, filing a patent weeks later and publicly demonstrating it at
+      Menlo Park that December — not the first electric light ever made, but the first
+      practical, long-lasting, mass-producible one.
+    citation: >
+      Wikipedia, "Thomas Edison" (accessed 2026-09-14). Viable design 21 October 1879;
+      patent filed 4 November 1879; public demonstration December 1879.
+
+  - id: wright-flyer-first-flight
+    label: First powered flight
+    kind: moment
+    t_min: 122
+    t_max: 122
+    t: 122
+    tags: [science-technology]
+    importance: 0.65
+    description: >
+      Orville Wright pilots the Wright Flyer roughly 120 feet over the dunes at Kitty
+      Hawk, North Carolina — the first sustained, controlled, powered flight of a
+      heavier-than-air aircraft, opening the age of aviation less than six decades
+      before the first orbital and human spaceflights below.
+    citation: >
+      Wright, O. (1903). Telegram to Bishop Milton Wright, 17 December 1903. Library of
+      Congress / World Digital Library. Uncontested.
+
+  - id: haber-bosch-process
+    label: Haber-Bosch fertiliser process
+    kind: period
+    t_min: 112
+    t_max: 116
+    tags: [science-technology, earth-climate]
+    importance: 0.65
+    description: >
+      Fritz Haber's bench-scale synthesis of ammonia from atmospheric nitrogen is scaled
+      by Carl Bosch into industrial production at BASF's Oppau plant — the process that
+      now fixes roughly half the nitrogen in living human bodies via synthetic
+      fertiliser, and a major driver of 20th-century population growth and cropland
+      expansion.
+    citation: >
+      Smil, V. (2001). Enriching the Earth: Fritz Haber, Carl Bosch, and the
+      Transformation of World Food Production. MIT Press. Lab demonstration summer 1909;
+      Oppau industrial-scale production begins 1913, reaching 20 t/day by 1914. The oft-
+      cited "feeds nearly half of humanity" figure traces to Smil and was not
+      independently re-derived here.
+
+  - id: general-relativity
+    label: General relativity published
+    kind: moment
+    t_min: 109
+    t_max: 110
+    t: 110
+    tags: [science-technology]
+    importance: 0.55
+    description: >
+      Albert Einstein presents the field equations of general relativity to the Prussian
+      Academy of Sciences, replacing Newtonian gravity with curved spacetime; the full
+      theory appears in print the following year.
+    citation: >
+      Einstein, A. (1915). Sitzungsberichte der Preussischen Akademie der
+      Wissenschaften, presented 25 November 1915. Full theory: Einstein, A. (1916). "Die
+      Grundlage der allgemeinen Relativitatstheorie." Annalen der Physik, 354(7),
+      769-822.
+
+  - id: penicillin-discovery
+    label: Penicillin discovered
+    kind: moment
+    t_min: 96
+    t_max: 97
+    t: 97
+    tags: [science-technology, life]
+    importance: 0.6
+    description: >
+      Alexander Fleming notices that a mould contaminating a bacterial culture plate at
+      St Mary's Hospital, London, has killed the surrounding bacteria — the observation
+      that opens the antibiotic era, though mass production waits until the 1940s.
+    citation: >
+      Fleming, A. (1929). "On the antibacterial action of cultures of a penicillium,
+      with special reference to their use in the isolation of B. influenzae." British
+      Journal of Experimental Pathology, 10(3), 226-236 (received 10 May 1929,
+      describing the culture-plate observation dated 3 September 1928).
+
+  - id: trinity-test
+    label: First nuclear weapon detonated
+    kind: moment
+    t_min: 80
+    t_max: 80
+    t: 80
+    tags: [science-technology, society]
+    importance: 0.6
+    description: >
+      The US Army detonates the first nuclear weapon, a plutonium implosion device, at
+      the Trinity site in the New Mexico desert, three weeks before the atomic bombings
+      of Hiroshima and Nagasaki — opening the nuclear age.
+    citation: >
+      US Department of Energy / Manhattan Project records. Trinity test, 16 July 1945,
+      05:29:21 Mountain War Time, Jornada del Muerto desert, New Mexico; yield ~24.8 kt.
+      Uncontested — among the most precisely documented events of the 20th century.
+
+  - id: transistor-invented
+    label: Transistor invented
+    kind: moment
+    t_min: 77
+    t_max: 78
+    t: 78
+    tags: [science-technology]
+    importance: 0.6
+    description: >
+      John Bardeen and Walter Brattain at Bell Labs get a point-contact germanium device
+      to amplify a signal, between 17 November and 23 December 1947 — the first working
+      transistor, which comes to replace the vacuum tube and underlies nearly all modern
+      solid-state electronics and computing. Bell Labs made no public announcement
+      before June 1948, but this session could not confirm an exact announcement date.
+    citation: >
+      Bardeen, J. & Brattain, W.H. (1948). "The transistor, a semi-conductor triode."
+      Physical Review, 74(2), 230-231. Point-contact device demonstrated 17 November-23
+      December 1947 at Bell Labs, Murray Hill, New Jersey. UNVERIFIED: the commonly
+      cited 30 June 1948 public-announcement date could not be confirmed live against
+      Wikipedia "Transistor" or "History of the transistor" — both state only "not
+      before June 1948," with no specific day. Dropped from the description per
+      instruction rather than asserted; flag for a direct check against Bell Labs' own
+      press-conference record or the Physical Review submission/publication dates before
+      relying on the day-level figure.
+
+  - id: dna-double-helix
+    label: DNA double helix described
+    kind: moment
+    t_min: 72
+    t_max: 72
+    t: 72
+    tags: [science-technology, life]
+    importance: 0.6
+    description: >
+      James Watson and Francis Crick publish the double-helix structure of DNA in
+      Nature, built on Rosalind Franklin's and Maurice Wilkins's X-ray diffraction data
+      — the structural discovery underlying all of modern molecular biology and
+      genetics.
+    citation: >
+      Watson, J.D. & Crick, F.H.C. (1953). "Molecular structure of nucleic acids: a
+      structure for deoxyribose nucleic acid." Nature, 171(4356), 737-738. Published 25
+      April 1953.
+
+  - id: sputnik-1-launch
+    label: First artificial satellite
+    kind: moment
+    t_min: 68
+    t_max: 68
+    t: 68
+    tags: [science-technology]
+    importance: 0.45
+    description: >
+      The Soviet Union launches Sputnik 1 from Baikonur, the first artificial satellite
+      to orbit Earth, opening the Space Age.
+    citation: >
+      Launch record, Sputnik 1, 4 October 1957, 19:28:34 UTC, Site No. 1, Baikonur
+      Cosmodrome; initial orbit 223 x 950 km. Uncontested.
+
+  - id: gagarin-first-spaceflight
+    label: First human spaceflight
+    kind: moment
+    t_min: 64
+    t_max: 64
+    t: 64
+    tags: [science-technology]
+    importance: 0.45
+    description: >
+      Yuri Gagarin completes a single orbit of Earth aboard Vostok 1, becoming the first
+      human in space, and returns safely to Earth the same day.
+    citation: >
+      Launch record, Vostok 1, 12 April 1961, 06:07 UTC, Baikonur Cosmodrome; single
+      orbit, landing 07:55 UTC the same day. Uncontested.
+
   - id: moon-landing
     label: Moon landing
+    kind: moment
     t_min: 56
     t_max: 56
-    importance: 0.35
+    t: 56
+    tags: [science-technology]
+    importance: 0.7  # raised from 0.35 (ADR-022 migration): comparable to the newly added
+    # wright-flyer-first-flight (0.65) rather than well below it, per USER DECISIONS
     description: >
       Apollo 11 lands the first humans on the Moon. Chosen as a precise, uncontested
       near-present anchor point for the timeline — the rare event in this set with
@@ -1115,10 +2030,45 @@ events:
       NASA (1969). Apollo 11 Mission Report. Neil Armstrong and Buzz Aldrin land at Mare
       Tranquillitatis on 20 July 1969 UTC.
 
+  - id: www-invented
+    label: World Wide Web invented
+    kind: period
+    t_min: 34
+    t_max: 36
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      Tim Berners-Lee proposes a hypertext system for information management at CERN,
+      then builds the first web browser, server and page, releasing it to the wider
+      Internet in 1991 — the technology underlying the information age's global reach.
+    citation: >
+      Berners-Lee, T. (1989). "Information Management: A Proposal." CERN, 12 March 1989.
+      First web page live 6 August 1991; released publicly 23 August 1991.
+
+  - id: human-genome-project-completed
+    label: Human Genome Project completed
+    kind: period
+    t_min: 22
+    t_max: 35
+    tags: [science-technology, life]
+    importance: 0.45
+    description: >
+      An international public consortium sequences the roughly 3 billion base pairs of
+      the human genome, from initial NIH funding through a working draft to a finished
+      sequence completed two years ahead of schedule — a foundational resource for
+      modern genomics and medicine.
+    citation: >
+      National Human Genome Research Institute, project timeline. Funding begins 1
+      October 1990; working draft announced 26 June 2000; completion announced 14 April
+      2003.
+
   - id: present
     label: Present day
+    kind: moment
     t_min: 0
     t_max: 0
+    t: 0
+    tags: [society]
     importance: 1.0
     description: >
       The reference instant against which every other event's years-before-present value

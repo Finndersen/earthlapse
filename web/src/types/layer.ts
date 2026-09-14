@@ -65,12 +65,35 @@ export interface GlobeEffect {
   windows: GlobeEffectWindow[]
 }
 
+/** ADR-022. `'moment'` is one happening, dated by a best-estimate `t` plus its `[tMin, tMax]`
+ *  dating uncertainty; `'period'` genuinely lasted, and `tMin`/`tMax` are its own end/start. */
+export type EventKind = 'moment' | 'period'
+
+/** Closed set of six themes (ADR-022), science and technology combined. An event's first tag
+ *  is its primary tag and will drive timeline colour — that rendering is a later task; for now
+ *  this field is only parsed and passed through. */
+export type EventTag =
+  | 'life'
+  | 'earth-climate'
+  | 'catastrophe'
+  | 'human-origins'
+  | 'society'
+  | 'science-technology'
+
 export interface TimelineEvent {
   id: string
   label: string
+  /** ADR-022. Optional for now: absent on any event published before this field existed
+   *  (the currently-published manifest and the committed stub both predate it). */
+  kind?: EventKind
   /** A real interval, not decoration — most deep-time dates are contested. */
   tMin: GeoTime
   tMax: GeoTime
+  /** Best-estimate instant for a `'moment'` event (ADR-022). Absent for a `'period'`, and on
+   *  any event published before this field existed. */
+  t?: GeoTime
+  /** Non-empty, first = primary, when present (ADR-022). Optional for now, see `kind`. */
+  tags?: EventTag[]
   /** 0..1. Drives zoom LOD: events fade in as the visible span shrinks. */
   importance: number
   description: string

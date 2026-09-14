@@ -212,6 +212,7 @@ scenes:
       far_bank: an endless flat white ice shelf along the horizon
       sky_and_light: a hard, clear, deep-blue cloudless sky; brilliant, cold, glaring sunlight reflecting off the ice; crisp, sharp shadows
       absent: [plants, trees, grass, moss, animals, birds, penguins, polar bears, seals, people, buildings, footprints]
+    events: [snowball-earth]
     pin: {asset_digest: "c9b3cf2decb2f0a6", path: "data/candidates/cryogenian-snowball/3dd3cbd08665a9aa/01-c9b3cf2decb2f0a6.jpg"}
 
   # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma).
@@ -421,6 +422,42 @@ scenes:
       sky_and_light: a low, even overcast of white-grey cloud; soft, diffuse, almost shadowless light; the air saturated and heavy, a dense humid haze tinted green-grey that swallows the distance
       absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
     pin: {asset_digest: "9d50ad8640e89aa9", path: "data/candidates/carboniferous-swamp/8db84df1af2f828c/01-9d50ad8640e89aa9.jpg"}
+
+  # About 300 Ma, Carboniferous-Permian boundary (298.9 Ma), near the coldest interval of the Late
+  # Paleozoic Ice Age; chosen to sit between carboniferous-swamp (310 Ma, equatorial coal swamp) and
+  # permian-conifer-forest (294 Ma) without colliding with either. Gondwanan ice sheets at this time
+  # covered large areas of present-day South America, southern Africa, India, Antarctica and
+  # Australia (Isbell et al. 2003, "Timing of late Paleozoic glaciation in Gondwana", Journal of
+  # African Earth Sciences; Montañez & Poulsen 2013, "The Late Paleozoic Ice Age: An Evolving
+  # Paradigm", Annual Review of Earth and Planetary Sciences; Wikipedia "Late Paleozoic icehouse").
+  # Direct glacial evidence — striated pavements, tillites, dropstones in marine sediment — is well
+  # documented at Gondwanan high latitudes for this interval. Glossopteris, the index seed-fern of
+  # the Gondwanan Permian flora, first appears close to the Carboniferous-Permian boundary and
+  # colonised freshly deglaciated ground; shown here sparse and pioneering, not as an established
+  # forest, since dense Glossopteris forests are better attested somewhat later in the Permian. No
+  # animal life is shown: no vertebrate body or trace fossils from a Gondwanan glacial-margin deposit
+  # of this exact age were confirmed for this scene.
+  - id: gondwana-ice-margin
+    t: 3.0e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: At the height of the Late Paleozoic Ice Age, a Gondwanan glacier calves into a braided meltwater outwash plain, one of the coldest moments the planet has yet seen.
+    unsourced:
+      o2_percent: 31  # rounded: near the Carboniferous-Permian oxygen peak
+      mean_temp_c: 10  # rounded: near the coldest interval of the Late Paleozoic Ice Age
+    subject:
+      setting: The margin of a Gondwanan ice sheet at high southern latitude, where a glacier front meets a braided meltwater outwash plain, about 300 million years ago
+      left_mass: a low, jumbled ridge of grey glacial moraine, boulders and gravel bulldozed up at the ice edge
+      vegetation: a few sparse, low, pioneering stands of early Glossopteris-type seed ferns colonising bare, recently deglaciated gravel; otherwise no plant cover
+      fauna: none
+      main_subject: a wall of dirty grey-white glacier ice calving into the meltwater channel, a chunk of ice just breaking away in a plume of spray
+      ground: bare, striated grey rock pavement and coarse glacial gravel, wet with meltwater
+      water: a shallow, braided, milky grey-blue meltwater stream threading between gravel bars
+      far_bank: a barren outwash plain of grey gravel running toward more ice in the distance, without a single tree anywhere
+      sky_and_light: a pale, cold, overcast white sky; flat, shadowless, cold light
+      absent: [forest, established Glossopteris woodland, dinosaurs, mammals, reptiles, amphibians, any animal life, flowers, grass, tropical vegetation]
+    events: [late-paleozoic-ice-age]
+    pin: null
 
   # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
   # the range of walchian conifers (Walchia, ~310-290 Ma; the earliest walchians are Moscovian, so
@@ -681,6 +718,7 @@ scenes:
       far_bank: swamp forest fading into haze, lit starkly from above
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
+    events: [k-pg-impact]
     pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
 
   # t = 6.604299999e7 (66,042,999.99 yr ago): ~3.65 days after kpg-arrival's impact instant
@@ -725,6 +763,7 @@ scenes:
       far_bank: the same scorched, leafless forest receding into a murk that never fully lifts
       sky_and_light: a sky closed edge to edge by a dense brown-grey pall of soot, sulfate and fine dust circling the globe; no sun or blue is visible, only a faint, cold, reddish-brown glow, dim enough to feel like dusk though it is midday; a fine ash sifts down like snow
       absent: [a visible crater, the asteroid or any trail, a live dinosaur or any animal posed dramatically, direct sunlight, a blue sky, green living foliage, active flames, grass, people]
+    events: [k-pg-impact]
     pin: {asset_digest: "ad31c5b96308e6e0", path: "data/candidates/kpg-darkness/be30de8f32a37bdb/03-ad31c5b96308e6e0.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
@@ -753,6 +792,7 @@ scenes:
       far_bank: dead grey trunks standing and fallen along the far shore, ferns growing thickly around them
       sky_and_light: a clear, pale-blue sky with scattered cloud; ordinary bright sunlight
       absent: [dinosaurs, large animals, tall flowering canopy, blue-green conifer forest, people]
+    events: [k-pg-aftermath]
     pin: {asset_digest: "7c2ff6fd148753d8", path: "data/candidates/kpg-aftermath/2e74a45036487abc/02-7c2ff6fd148753d8.jpg"}
 
   # Paleocene mammal radiation (events.yaml paleocene-mammal-radiation), 62 Ma, about four million
@@ -966,6 +1006,7 @@ scenes:
       far_bank: riverside woodland opening to grassland beyond, hazy with distance
       sky_and_light: a clear, warm, pale-blue East African sky with a few high clouds; bright, direct sunlight
       absent: [modern humans, clothing, stone tools, spears, fire, chimpanzees, gorillas, buildings]
+    events: [australopithecus-afarensis]
     pin: {asset_digest: "347021bb25fb32ad", path: "data/candidates/lucy-afarensis/50206163a975bec6/01-347021bb25fb32ad.jpg"}
 
   # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
@@ -1019,6 +1060,7 @@ scenes:
       far_bank: a dark volcanic escarpment rising beyond the lake plain
       sky_and_light: a bright, clear East African sky with scattered high cloud; strong, even daylight
       absent: [fire, clothing, spears, modern humans, metal, domesticated animals, buildings]
+    events: [acheulean-technology]
     pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
@@ -1074,6 +1116,40 @@ scenes:
       absent: [forest, farm fields, fences, roads, buildings, domestic animals, people]
     pin: {asset_digest: "e5e38045d401cbd2", path: "data/candidates/pleistocene-steppe/7c096c8ee716b05f/01-e5e38045d401cbd2.jpg"}
 
+  # About 9500 BCE, earliest construction phase (Pre-Pottery Neolithic A) at Göbekli Tepe, a hilltop
+  # sanctuary on the Germuş limestone ridge near Şanlıurfa, southeastern Turkey; t = 2025 + 9500 =
+  # 11,525, rounded to 11,500. This sits just before events.yaml's agriculture entry (10,025-11,525
+  # BP): the earliest enclosures were raised by hunter-gatherers, before domesticated crops or
+  # animals are attested at the site (Wikipedia "Göbekli Tepe"; Schmidt 2000, "Göbekli Tepe,
+  # Southeastern Turkey", Paléorient; Dietrich et al. 2012, "The role of cult and feasting in the
+  # emergence of Neolithic communities", Antiquity). Massive T-shaped limestone pillars, some over
+  # 5 m tall and weighing many tonnes, stand in circular/oval enclosures and are carved in low
+  # relief with wild animals — foxes, boars, vultures, snakes, scorpions, aurochs, cranes — never
+  # domesticated species. Framed on open ground on the ridge itself (ADR-020), not at water: the
+  # site sits on a dry hilltop with no permanent spring or river nearby, part of what makes its
+  # scale striking for a pre-agricultural society.
+  - id: gobekli-tepe
+    t: 1.15e4
+    chapter: open-ground
+    shot: GROUND
+    caption: Around 9500 BCE, centuries before farming reaches the region, hunter-gatherers raise and carve massive T-shaped limestone pillars on a hilltop ridge — the oldest known monumental architecture.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 13  # rounded: just after the Younger Dryas cold snap (ended ~11,700 BP), before the Holocene climatic optimum
+    subject:
+      setting: The hilltop sanctuary of Göbekli Tepe on the Germuş limestone ridge, southeastern Anatolia, about 9500 BCE, camera low beside a freshly carved pillar
+      left_mass: a massive T-shaped limestone pillar over 5 m tall, its broad "head" crossbar looming above, a fox carved in low relief running down the length of its shaft, ropes and wooden props still braced against its base
+      vegetation: open, park-like woodland-steppe of wild einkorn and wild barley grasses with scattered wild pistachio and oak trees, not yet cultivated
+      fauna: a small herd of wild gazelle grazing on the slope below the ridge, too far to disturb the builders
+      main_subject: hunter-gatherer builders in draped hide and leather clothing bound with plant-fibre cord, one crouched chiselling a boar in low relief into a second standing pillar with a flint tool, two others hauling a limestone block up an earthen ramp on log rollers with fibre ropes, none with a distinguishable face
+      ground: pale bedrock limestone terrace strewn with rubble, flint chips and freshly cut stone dust
+      water: none in the frame; the enclosure sits on the dry hilltop, with no spring or river nearby
+      far_bank: no far bank; the rolling limestone hills of the Germuş range fall away below the ridge, dotted with unexcavated mounds hiding further enclosures
+      sky_and_light: a clear, pale, early-autumn Anatolian sky; warm, low morning sunlight
+      absent: [pottery, metal tools, domesticated animals, the plough, the wheel, writing, woven cloth, fired mudbrick buildings, modern clothing, identifiable faces]
+    events: [gobekli-tepe]
+    pin: null
+
   # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
   # writing (5,025-5,425 BP).
   - id: neolithic-river-settlement
@@ -1095,7 +1171,168 @@ scenes:
       far_bank: a flat river plain of green and tan fields with low hills beyond
       sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
       absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
+    events: [agriculture]
     pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
+
+  # About 6000 BCE / 8,000 BP, within the African Humid Period ("Green Sahara"); distinct from
+  # neolithic-river-settlement's t = 9,000 (Fertile Crescent, unrelated region and story) as the
+  # brief requires. One of the many seasonal and permanent lakes that filled the central and eastern
+  # Sahara at this time, comparable to the lake documented at Gobero in the Ténéré Desert, Niger,
+  # where a fisher-forager community (the "Kiffian", to about 8,000 BP) and a later cattle-herding
+  # community (the "Tenerian", from about 7,000 BP) are both attested at the same lakeside site
+  # (Sereno et al. 2008, "Lakeside Cemeteries in the Sahara: Five Thousand Years of Holocene
+  # Population and Environmental Change", PLOS ONE; Wikipedia "African humid period", "Gobero").
+  # t = 8,000 sits at the transition between the two attested cultures, so this scene shows fishing
+  # and early cattle-herding together, both plausible at this date. Dromedary camels are excluded:
+  # they were not present in the Sahara until roughly the 1st millennium BCE.
+  - id: green-sahara
+    t: 8.0e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the "Green Sahara" of the African Humid Period, a shallow lake in what is now the world's largest desert supports fisherfolk, herded cattle, hippos and crocodiles.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: Holocene climatic optimum, slightly warmer than pre-industrial
+    subject:
+      setting: The shore of a shallow, permanent lake in the central Sahara during the African Humid Period, about 6000 BCE
+      left_mass: a stand of flat-topped acacia trees at the water's edge, their thin crowns giving little shade
+      vegetation: open savanna grassland studded with acacia and scattered doum palms, running back from the shore
+      fauna: a pod of hippopotamus wallowing offshore and a crocodile basking on a mudbank; a small herd of long-horned cattle at the water
+      main_subject: two herders in simple draped leather wraps standing with their cattle at the waterline, while a third pushes a light reed boat strung with fishing lines just offshore
+      ground: cracked grey lake-margin mud giving way to pale sand, scattered with fish bones and potsherds
+      water: a shallow, calm, pale green-brown freshwater lake, its surface broken by hippo backs
+      far_bank: open grassland savanna running to low dunes on the horizon, with no bare desert in view
+      sky_and_light: a hazy, warm, pale-blue sky with a scatter of high cloud; bright, even midday light
+      absent: [dry desert dunes, camels, modern nomad tents, metal tools, horses, writing, permanent mudbrick buildings, modern clothing, identifiable faces]
+    events: [african-humid-period]
+    pin: null
+
+  # About 3200 BCE, late Uruk period, southern Mesopotamia; t = 2025 + 3200 = 5,225, rounded to 5,200,
+  # matching the brief. This sits just before events.yaml's writing entry (5,025-5,425 BP): the
+  # earliest proto-cuneiform tablets belong to the following Uruk IV phase. Uruk (modern Warka, Iraq)
+  # was, by this date, the largest city in the world, with monumental mudbrick temple architecture in
+  # its Eanna precinct (dedicated to the goddess Inanna) and the raised White Temple platform
+  # (Wikipedia "Uruk", "Eanna District", "White Temple, Uruk"). The southern Mesopotamian delta was a
+  # landscape of marsh, canal and river channel; reed (Phragmites) boats are attested on Uruk-period
+  # cylinder seals and figurines. No writing is shown in frame: proto-cuneiform at this date was
+  # administrative tokens and tablets, not a landscape feature.
+  - id: uruk-city
+    t: 5.2e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: On the southern Mesopotamian delta, the mudbrick temples of Uruk rise above marsh and canal — the largest city the world has yet seen.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Bronze Age Near East, close to pre-industrial
+    subject:
+      setting: A canal in the marshy delta of southern Mesopotamia, with the mudbrick city of Uruk rising beyond, about 3200 BCE
+      left_mass: a dense stand of tall marsh reeds (Phragmites), taller than a person, growing thick along the canal bank
+      vegetation: reed beds and marsh grasses along the water, with date palms scattered on the drier ground beyond
+      fauna: herons and ibis wading in the shallows; a flock of ducks taking off from the reeds
+      main_subject: two figures in simple wool or linen wraps poling a bundled-reed boat loaded with pottery jars along the canal
+      ground: packed mud footpath along the canal bank, with reed matting and stacked mudbricks drying in the sun
+      water: a slow, brown, silt-laden canal, calm and reed-fringed
+      far_bank: the mudbrick city of Uruk in the middle distance, flat-roofed houses clustered below the raised, tiered platform of the White Temple and the walled Eanna precinct
+      sky_and_light: a pale, hazy, warm sky over the delta; bright, dusty midday light
+      absent: [stone buildings, wheeled carts, horses, metal armour, legible cuneiform writing, modern clothing, identifiable faces, camels]
+    events: [uruk-first-city]
+    pin: null
+
+  # About 2560 BCE, completion of the Great Pyramid of Khufu at Giza; t = 2025 + 2560 = 4,585, per the
+  # brief. Linked to events.yaml great-pyramid-giza (t_min/t_max 4,602-4,638, the newer Ramsey et
+  # al. 2010 Bayesian reanalysis, 2613-2577 BC): this scene's t sits ~20 years outside that window
+  # since it instead uses the older conventional completion date; both describe the same building's
+  # construction, so the link is kept despite the minor dating-convention mismatch. Wikipedia "Great
+  # Pyramid of Giza": built with a smooth outer casing of fine white Tura
+  # limestone, almost entirely stripped away since medieval times. Recent work on the Giza plateau
+  # (Tallet 2017, "Les papyrus de la Mer Rouge I: Le journal de Merer", on the Wadi al-Jarf finds;
+  # Ghoneim et al. 2024, "Nile waterscapes facilitated the construction of the Giza pyramids", PNAS
+  # Nexus — UNVERIFIED, a single recent study) describes a harbour and canal system linking the
+  # plateau to the Nile, navigable especially during the river's annual flood, used to float in
+  # limestone and granite blocks. Framed across that flooded harbour basin, as the brief specifies.
+  # Khafre's and Menkaure's pyramids are not shown: their construction dates relative to 2560 BCE are
+  # not settled enough to place with confidence.
+  - id: giza-great-pyramid
+    t: 4.585e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: The Great Pyramid stands newly complete at Giza, its casing of polished white limestone catching the sun above a harbour basin flooded by the Nile's annual inundation.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Old Kingdom Egypt, close to pre-industrial
+    subject:
+      setting: The edge of a flooded harbour basin on the Giza plateau, linked by canal to the Nile during its annual inundation, with the newly completed Great Pyramid beyond, about 2560 BCE
+      left_mass: a stand of tall date palms at the water's edge, their fronds still against the hot, still air
+      vegetation: papyrus reeds and date palms fringing the harbour basin, with dry desert scrub beyond
+      fauna: a pair of ibis wading at the water's edge
+      main_subject: labourers in simple linen kilts hauling a sledge loaded with a limestone block off a wide wooden barge moored at the harbour's edge, none with a distinguishable face
+      ground: packed sand and mudbrick quay stones at the water's edge, streaked with dried silt from the flood
+      water: the calm, brown, silt-laden floodwater of the harbour basin, reflecting the pyramid
+      far_bank: the Great Pyramid of Khufu, complete and sheathed in smooth, gleaming white Tura limestone, rising sharply from the plateau beyond the basin, its faces catching the sun; the bare desert escarpment stretches away on either side
+      sky_and_light: a clear, pale desert sky with a faint haze near the horizon; bright, hard midday sunlight
+      absent: [visible erosion or missing casing stones, tourists, camels for hire, modern clothing, identifiable faces, modern boats, metal ships, paved modern roads]
+    events: [great-pyramid-giza]
+    pin: null
+
+  # 12 October 1492 (Julian calendar), Columbus's first landfall in the Americas; t = 2025 - 1492 =
+  # 533. Wikipedia "Christopher Columbus", "Columbus's first voyage": three ships, the carrack (nao)
+  # Santa María and the caravels Pinta and Niña, anchored off an island in the Bahamas the Lucayan
+  # Taíno called Guanahani (the most widely accepted candidate is San Salvador Island, though the
+  # exact island remains contested). Local Lucayan Taíno people came out in dugout canoes to meet the
+  # ships. Framed as the ships at anchor with a Taíno canoe approaching, before any landing party goes
+  # ashore — no meeting, no staged encounter, no violence, no stereotyped costume, and no identifiable
+  # faces on either side, per the brief.
+  - id: columbus-landfall-1492
+    t: 533.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: On 12 October 1492, Columbus's three ships anchor off a Bahamian island the Taíno call Guanahani, as a dugout canoe puts out from shore to meet them.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: pre-industrial global mean
+    subject:
+      setting: A shallow turquoise bay off a low Bahamian island, seen from the beach, with three Spanish ships newly at anchor, on the morning of 12 October 1492
+      left_mass: a stand of tall coconut palms leaning over the beach, their fronds catching the onshore breeze
+      vegetation: coastal palms and low tropical scrub along the white sand shore
+      fauna: a few frigatebirds wheeling overhead; a school of small fish visible in the clear shallows
+      main_subject: two Taíno men paddling a long dugout canoe out toward the anchored ships, seen from behind and at a distance, faces not distinguishable
+      ground: pale coral sand at the tideline, with scattered dried seaweed and small shells
+      water: a clear, shallow, turquoise-blue bay, calm, over pale sand and coral rubble
+      far_bank: the carrack Santa María and the caravels Pinta and Niña at anchor further out in the bay, sails partly furled, a small boat being lowered from one side
+      sky_and_light: a clear tropical morning sky with a scatter of trade-wind cumulus; bright, warm early light
+      absent: [modern boats, engines, steel hulls, national flags shown close-up, weapons in use, violence, a landing party ashore, stereotyped costume, identifiable faces, modern clothing, text or logos]
+    events: [columbian-exchange]
+    pin: null
+
+  # About 1830, a composite/representative northern English cotton-mill town rather than one specific
+  # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
+  # Lancashire's cotton industry, driving multi-storey brick spinning mills with tall chimneys, and the
+  # region's canal network (Bridgewater Canal opened 1761, Rochdale Canal 1804, Leeds and Liverpool
+  # Canal completed 1816) carried coal in and finished cotton goods out by horse-drawn narrowboat
+  # (Wikipedia "Cotton mill", "Industrial Revolution", "Lancashire", "Canals of the United Kingdom").
+  # No specific named town or mill is depicted, to avoid an unverifiable claim of a documented, exact
+  # view.
+  - id: industrial-mill-town
+    t: 195.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: By 1830, steam-powered cotton mills line a Lancashire canal, their tall brick chimneys darkening the sky with smoke as narrowboats carry coal in and cloth out.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early Industrial Revolution, before the modern warming signal
+    subject:
+      setting: A canal basin in a Lancashire cotton-mill town, England, about 1830
+      left_mass: a six-storey red-brick spinning mill rising straight from the canal bank, rows of small square windows lit yellow, a tall brick chimney behind it trailing black coal smoke
+      vegetation: none within the built-up frame; a few weeds growing from cracks in the towpath
+      fauna: none
+      main_subject: a horse-drawn narrowboat low in the water, stacked with baled raw cotton, a boatman walking the towpath leading the horse
+      ground: a cobbled towpath along the canal, littered with coal dust and rope
+      water: a narrow, dark, oily-surfaced canal, calm, reflecting the mill's lit windows
+      far_bank: a dense row of further brick mills and workers' terraced housing, chimneys smoking along the skyline
+      sky_and_light: a heavy, soot-darkened grey sky with a low haze of coal smoke; flat, dim, overcast daylight
+      absent: [cars, tarmac roads, electric lighting, plastic, modern signage, steel-hulled ships, modern clothing, identifiable faces, motor vehicles]
+    events: [industrial-revolution]
+    pin: null
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
   # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,
@@ -1123,7 +1360,50 @@ scenes:
       far_bank: no far bank; a low wooden hangar shed and camp buildings stand small in the distance among the dunes, with a couple of further figures, surfmen from the nearby lifesaving station, watching near the buildings, none with a distinguishable face
       sky_and_light: a cold, grey-blue overcast winter sky with a stiff wind; flat, diffuse December light
       absent: [modern aircraft, jet, helicopter, airliner, propeller at the front of the aircraft, wheeled landing gear, paved runway, road, car, power line, radio mast, modern clothing, sunglasses, crowd of many people, water in frame, identifiable faces]
+    events: [wright-flyer-first-flight]
     pin: {asset_digest: "b82bc9f05d4f344e", path: "data/candidates/first-powered-flight/16cc2baae684243d/02-b82bc9f05d4f344e.jpg"}
+
+  # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
+  # Jornada del Muerto desert, New Mexico; t = 2025 - 1945 = 80. Wikipedia "Trinity (nuclear test)":
+  # the Gadget device, about 21 kilotons, detonated atop a 100-foot tower at first light. Besides the
+  # flat bunkers close in (S-10000 etc., about 5.7 miles out) and base camp (about 10 miles), a group
+  # of VIPs and senior scientists (Groves, Oppenheimer, Bush, Conant, Rabi, Chadwick among them)
+  # watched from Compania Hill, a low rise roughly 20 miles northwest of the tower, one of the most
+  # distant and most commonly cited observation points. This record now depicts that vantage, so the
+  # fixed ridge-vista composition (a dark rocky foreground ridge, an elevated view out across the
+  # land) matches the setting rather than fighting it — the previous version described a flat desert
+  # floor while using this composition, which a review flagged as a real inconsistency; fixed by
+  # moving the vantage to Compania Hill rather than inventing a new chapter, since the elevated,
+  # distant-sky-event framing fits an actual, well-attested observation point. Framed on the existing
+  # molten-earth chapter's ridge-vista composition (WIDE_RIDGE), not open-ground: VISUAL_SPEC §2 holds
+  # time of day constant within a chapter, and this pre-dawn fireball's light has nothing in common
+  # with open-ground's only other scene (first-powered-flight, a diffuse overcast winter morning) —
+  # the two also sit close in time (t = 80 and 122), so sharing open-ground would force one dissolve
+  # to cut between a flat grey morning and a blinding flash only decades apart. molten-earth's
+  # WIDE_RIDGE vista, by contrast, already holds one extreme, singular event (the Moon-forming impact)
+  # far from any neighbour in time — a chapter recurring as non-adjacent runs is exactly what ADR-020
+  # permits. No new chapter or composition was added.
+  - id: trinity-test
+    t: 80.0
+    chapter: molten-earth
+    shot: WIDE_RIDGE
+    caption: At 5:29 am on 16 July 1945, the Trinity device detonates over the Jornada del Muerto desert, its fireball briefly outshining the rising sun — the first nuclear explosion.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-20th-century global mean, close to pre-industrial
+    subject:
+      setting: Compania Hill, a low rocky rise about 20 miles northwest of ground zero, moments after the Trinity detonation at first light on 16 July 1945, the Jornada del Muerto desert spread out below
+      left_mass: a dark outcrop of rock and sparse desert scrub rising in silhouette at the hill's crest against the brightening sky
+      vegetation: sparse creosote bush and desert grass scattered across the rocky hillside
+      fauna: none
+      main_subject: an immense white-orange fireball, far brighter than the pre-dawn sky, boiling upward into a rising column and cap of dust and cloud above the distant desert floor
+      ground: a dark, rocky foreground ridge of high desert scrub and broken stone falling away from the hilltop, lit with a reddish glow from the fireball
+      water: none; the Jornada del Muerto is a dry desert basin with no water anywhere
+      far_bank: no far bank; the desert basin drops away below the hilltop to a broad, flat plain running to a low, distant line of mountains silhouetted at the horizon
+      sky_and_light: a dark pre-dawn sky at the edges, the eastern horizon just beginning to pale, overwhelmed at centre by the fireball's own blinding white-orange light
+      absent: [a city, buildings, roads, modern military vehicles, people close-up, identifiable faces, a mushroom cloud far larger than the scale of a single test, a second sun, other explosions]
+    events: [trinity-test]
+    pin: null
 
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
   # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"
@@ -1153,6 +1433,7 @@ scenes:
       far_bank: the distant, flat Florida shoreline, with a scatter of small, generic 1960s-era cars and onlookers reduced to dark silhouettes; no legible text, logos or identifiable faces
       sky_and_light: a clear, pale-blue midsummer morning sky with a few small clouds; bright, warm morning sunlight
       absent: [Space Shuttle, SpaceX rocket, modern rocket, modern launch tower, modern buildings, smartphone, camera phone, legible text, logo, flag shown close-up, identifiable face, modern car, high-rise building]
+    events: [moon-landing]
     pin: {asset_digest: "a0da45cad76f825d", path: "data/candidates/apollo-11-launch/33045c4ababe91c8/03-a0da45cad76f825d.jpg"}
 
   # The present day (events.yaml present: t = 0).

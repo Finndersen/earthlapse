@@ -57,7 +57,7 @@ from pipeline.portraits import (
     load_morph,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord
-from pipeline.shapes import EARTH_FORMATION, Event, GeoTime, Interpolation
+from pipeline.shapes import EARTH_FORMATION, Event, EventSet, GeoTime, Interpolation
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
 
 # Matches the committed stub's "/stub": web/src/shell/manifest.ts joins `${assetBase}/${data}`
@@ -175,6 +175,7 @@ def prepare_publication(
     pinned = [scene for scene in book.scenes if scene.pin is not None]
     if not pinned:
         raise PublishRefused("no scene is pinned; pick candidates with `earthtime review pick`")
+    _validate_scene_events(book, world.events.get(EVENTS_ID))
     scene_entries = [_scene_entry(scene, root) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
     chapters = tuple(c for c in chapter_spans(book) if c.id in published_chapters)
@@ -267,6 +268,20 @@ def _verified_pin(subject_id: str, pin: ScenePin, root: Path) -> tuple[Path, Ima
     return source, sniff_image(data)
 
 
+def _validate_scene_events(book: SceneBook, event_set: EventSet | None) -> None:
+    """Every scene->event link (ADR-022) must name a real events-core event id. Checked here,
+    against the whole book, rather than in SceneBook's own validator: parsing scenes.yaml has no
+    curated event data to check against (pipeline/scenes.py), and every other cross-file check
+    in this module (e.g. `_verified_pin`) already lives at publish time."""
+    known = frozenset(e.id for e in event_set.events) if event_set is not None else frozenset()
+    for scene in book.scenes:
+        unknown = [event_id for event_id in scene.events if event_id not in known]
+        if unknown:
+            raise PublishRefused(
+                f"{scene.id}: unknown event id(s) {unknown} -- not in {EVENTS_ID!r}"
+            )
+
+
 def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
     assert scene.pin is not None, scene.id
     source, info = _verified_pin(scene.id, scene.pin, root)
@@ -278,6 +293,7 @@ def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
         image=published,
         shot=scene.shot,
         caption=scene.caption,
+        events=scene.events,
         pinned=scene.pin.asset_digest,
         width=info.width,
         height=info.height,
@@ -461,8 +477,11 @@ def _timeline_event(e: Event) -> TimelineEvent:
     return TimelineEvent(
         id=e.id,
         label=e.label,
+        kind=e.kind,
         t_min=e.t_min,
         t_max=e.t_max,
+        t=e.t,
+        tags=e.tags,
         importance=e.importance,
         description=e.description,
         citation=e.citation,

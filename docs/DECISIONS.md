@@ -1279,3 +1279,157 @@ event, unaffected by any of the above.
 
 ---
 
+## ADR-022 — `EventSet` events gain `kind`, a best-estimate `t`, and a closed set of tags
+
+**Status:** accepted — human-directed 2026-09-14.
+
+**Context.** The timeline's event set (`EventSet`/`Event`, DATA_SOURCES.md § Contract,
+`pipeline/shapes.py`) has always carried a single dating primitive: `t_min`/`t_max`, an
+uncertainty interval, plus a `t` *property* computed as its midpoint "for placement only, never
+present this as the date." That single interval is used to mean two genuinely different things
+with no way to tell them apart from the data alone: for most events it is a dating error bar
+around one real happening (the K-Pg impact, the Cambrian explosion's onset); for a handful — the
+event's own gotcha list names `ediacaran-biota` and `snowball-earth` — it is the literature's
+*known span* of something that actually lasted, quoted verbatim as `t_min`/`t_max`. A concrete
+failure of this conflation: the Early Cretaceous seaweed event's uncertainty interval (a dating
+error bar on when the fossils were laid down) was read by the timeline's importance/room-based
+rendering as if it were 200 Myr of continuous seaweed, because nothing in the data distinguished
+"we're not sure exactly when" from "this genuinely went on for that long" — the bar for a moment
+and the bar for a period look identical today. Separately, curation of new events (agriculture,
+writing, spaceflight, the transistor, ...) has no way to say what an event is *about*: every
+timeline consumer that wants to filter or focus by theme (a "show me catastrophes", a coloured
+legend, a future per-theme view) would otherwise have to pattern-match on `label`/`description`
+text, which is exactly the "stringly-typed" trap CLAUDE.md's engineering guidance calls out.
+
+**Decision.**
+- **`kind: 'moment' | 'period'` (`pipeline.shapes.EventKind`), required on every `Event`.**
+  `'moment'` is one happening, dated by a best estimate plus its `[t_min, t_max]` dating
+  uncertainty; `'period'` is something that genuinely lasted, whose `t_min`/`t_max` *are* its
+  end and start. No other kind exists — a closed two-value enum, not a free-text label, so
+  "which reading applies" is answerable from the data itself rather than from the prose.
+- **`t: GeoTime | None`, required for a `'moment'`, forbidden for a `'period'`.** A moment's `t`
+  is the curator's best-estimate instant (not necessarily the interval's midpoint — a citation
+  may support a sharper date than the interval's own centre) and must fall within
+  `[t_min, t_max]`; a period has no single instant to name, so `t` stays `None` and its
+  `t_min`/`t_max` are read as the span directly. The old midpoint-for-placement computation
+  survives as `Event.placement_t` (`t` where a moment has one, else the interval's midpoint) —
+  every existing caller of the removed `Event.t` property (`EventSet`'s own sort) moves to it,
+  since something is still needed to order/place a period on an axis. `placement_t` carries the
+  same "never present this as the date" warning the old `t` property did.
+- **`tags: tuple[EventTag, ...]`, non-empty, no duplicates, ordered — first tag is primary.**
+  `EventTag` (`pipeline.shapes.EventTag`) is a closed set of **six** themes, science and
+  technology combined into one: `life`, `earth-climate`, `catastrophe`, `human-origins`,
+  `society`, `science-technology`. An event may carry more than one; the first is its primary
+  tag and is what drives timeline colour once that rendering work lands (a later task — see
+  IMPLEMENTATION.md). Closed-set edge calls made curating the new batch, for whoever tags the
+  rest: exploration events tag under their *mechanism* — spaceflight events (Apollo 11, the
+  Moon landing) are `science-technology`, peopling-of-continents events are `human-origins`;
+  `siberian-traps`, `deccan-traps` and `toba-eruption` are `[catastrophe, earth-climate]`
+  (a climate-forcing geological catastrophe, not a life-history event on its own); primates stay
+  `[life]` — `human-origins` begins at the hominins, ~7 Ma, not earlier.
+- **Both fields are additive to the *shape*, not migrated into existing data.** `data/events.yaml`
+  (66 events, hand-curated, `sources/events-core`) and `data/globe_regimes.yaml` (5 events,
+  `sources/globe-regimes`, sharing the same `Event` model) are **not** rewritten by this ADR —
+  assigning a kind, a best-estimate date and a primary theme to each existing event is a curation
+  judgement call, not a mechanical migration, and belongs to the agent that actually reviews each
+  event, not to this contract change. Both fields are therefore **required, not defaulted** on
+  `Event`: a source whose YAML doesn't yet carry them fails to load, loudly, with a pydantic
+  validation error naming the missing field and the event id — the existing "fail loudly, never
+  substitute" rule (CLAUDE.md) applied to a schema migration instead of a runtime path. This is a
+  deliberate choice against a temporary default (e.g. `kind: moment` for everything, `tags:
+  [life]` as a catch-all): a wrong default is worse than a loud failure here, because a
+  StrEnum-backed field silently gets the *wrong* invalid-state-unrepresentable guarantee it exists
+  to provide — every event would validate, but a fifth of them would carry a made-up theme no
+  curator ever chose. The two hand-curated sources stay unpublishable (`make data` fails) until
+  each event's `kind`/`tags` — and, for a moment, its best-estimate `t` — are filled in by hand;
+  `sources/events-core/fixture/events.yaml` (the small, committed, non-production reference slice)
+  is updated by this ADR to the new shape so the source's own test infrastructure keeps
+  exercising the schema offline in the meantime.
+- **Scene → event link.** `pipeline.scenes.SceneRecord` gains an optional `events: tuple[str, ...]`
+  (default empty) naming the `events-core` event id(s) a generated still visually anchors to —
+  the reverse of nothing previously existing: a scene could already be *dated* near an event's
+  interval, but nothing recorded that the connection was intentional. Validated against the
+  published `events-core` `EventSet`'s ids at `earthtime publish` time (`PublishRefused` on an
+  unknown id) rather than at `SceneBook` parse time, so `load_scene_book` (used by `plan`,
+  `review` and `build`, none of which load curated event data) keeps its current signature. The
+  field is invisible to the asset graph (`pipeline/assets.py` never reads `scene.events` when
+  building a prompt or image node's `inputs`), so it changes no digest and clears no pin — adding
+  or editing a scene's event links never triggers a rebuild of an already-approved image.
+- **Wire format.** `pipeline.manifest.TimelineEvent` mirrors `Event` exactly — `kind` and `tags`
+  reuse `pipeline.shapes.EventKind`/`EventTag` directly rather than re-declaring synonyms (the
+  same pattern `effect`'s `GlobeEffectKind` already uses), `t` is additive/omitted-when-absent
+  like `effect` already is. `pipeline.manifest.Scene` gains `events: tuple[str, ...] = ()`,
+  always emitted (unlike the single-value additive fields, an empty list is already a complete,
+  unambiguous "no links" on the wire). On the web side, `TimelineEvent.kind`/`t`/`tags` and
+  `Scene.events` are added as **optional** fields (`web/src/types/layer.ts`,
+  `web/src/types/manifest.ts`) and parsed leniently — present-and-valid or absent, never
+  required — because the currently-published manifest and the committed stub
+  (`web/public/stub/manifest.json`) predate this ADR and must keep loading without a republish.
+  Rendering the timeline by `kind`/`tags` (colour, filtering, a period rendered as a band rather
+  than a point) is explicitly deferred; this ADR only makes the data reach the browser intact.
+
+**Alternatives considered.**
+- **A single free-text `category` field instead of a closed tag set.** Rejected: it is exactly
+  the stringly-typed trap this project's own engineering guidance warns against — a category
+  spelled two ways by two curation passes silently stops matching, and nothing catches it until a
+  filter view quietly drops events. A closed `StrEnum` makes an unknown value a loud validation
+  error instead of a silent no-op.
+- **Eight tags, closer to a per-domain taxonomy** (splitting `science-technology` into science and
+  technology, and/or carving a separate `exploration` tag out of `human-origins`/
+  `science-technology`). Rejected on the human's own call: at ~200 curated events total (DESIGN
+  §1's non-goal is exhaustive coverage), eight thematic buckets is more categories than the
+  dataset has density to fill legibly, and every exploration event already reads cleanly under an
+  existing tag by its mechanism (peopling of continents under `human-origins`, spaceflight under
+  `science-technology`) without needing a bucket of its own. Six keeps the future colour legend
+  small enough to read at a glance, which is the actual reason a closed set exists.
+- **Keep one interval and add a boolean `is_span` flag instead of a `kind` enum.** Rejected as a
+  worse version of the same idea: a two-value closed enum documents itself at every call site
+  (`event.kind is EventKind.PERIOD`) where a boolean forces every reader back to the field's
+  definition to learn which state means what, and a `kind` enum leaves room for the contract to
+  grow a third reading later (it shouldn't need to, but nothing about the modelling forecloses it)
+  without renaming a field whose name no longer describes its values.
+- **Default `kind`/`tags` for the existing 66 + 5 events now** (e.g. `moment` for everything with
+  `t = placement midpoint`, a single catch-all tag), so every test stays green immediately.
+  Rejected — see Decision above: a plausible-looking default here is a silent lie a future reader
+  has no way to distinguish from a real curatorial choice, which is worse than the loud failure
+  a missing-field validation error already gives them.
+
+**Consequences.**
+- `tests/sources/test_events.py` and `tests/sources/test_globe_regimes.py` assert directly against
+  the real, committed `data/events.yaml` / `data/globe_regimes.yaml` (by design — see each file's
+  own docstring), so both fail loudly at their module-scoped fixture (a pydantic `ValidationError`
+  from the first event missing `kind`/`tags`) until a follow-up curation pass fills in every
+  event's `kind`, `tags`, and — for a moment — its best-estimate `t`, then reruns `make data`. This
+  is the intended, expected state immediately after this ADR, not a regression to silently work
+  around; `earthtime publish` is likewise blocked on `events-core` until that pass lands, since
+  `load_world` fails the same way `WorldModel.at` is expected to for a source that hasn't finished
+  migrating.
+- **This reaches further than the two sources' own tests.** `data/curated/events-core.parquet` and
+  `data/curated/globe-regimes.parquet` are themselves committed to git (`storage_tier = "git"`,
+  DATA_SOURCES.md's storage policy — both are well under the 5 MB threshold) rather than
+  regenerated on the fly, and `pipeline.curated.load_world` parses *every* `*.parquet` file in the
+  curated directory unconditionally, failing loudly (`CuratedFormatError`) on one whose on-disk
+  columns don't match its shape's current layout. Because this ADR adds `kind`/`t`/`tags` columns
+  to `_LAYOUTS[EventSet]` without regenerating either committed parquet (regenerating truthfully
+  requires the same curation pass named above — a placeholder migration of the derived parquet
+  alone, leaving the YAML un-migrated, would desync the committed artifact from the source that is
+  supposed to produce it, exactly the drift `pipeline/curated.py` exists to prevent), any code path
+  that calls `load_world` against this repo's real `data/curated/` — not only publish, anything
+  that loads the whole curated directory — fails the same way until that pass lands and reruns
+  `make data`. Two tests outside `sources/events-core`/`sources/globe-regimes` hit this directly:
+  `tests/test_pipeline.py::test_committed_scene_prompts_name_no_model_or_provider` and
+  `tests/test_portraits.py::test_committed_portraits_cover_the_lineage_as_square_1k_plates_naming_no_provider`,
+  both of which load the real curated directory for reasons unrelated to events. This is a real,
+  load-bearing consequence of choosing "required, no default" over a placeholder default (see
+  Decision and the rejected-alternatives entry above) — named here rather than worked around,
+  because working around it would mean exactly the kind of fabricated derived data this ADR
+  argues against.
+- `data/curated/events-core.parquet`'s and `data/curated/globe-regimes.parquet`'s on-disk column
+  layout (`pipeline/curated.py`'s `_LAYOUTS[EventSet]`) gains `kind`, `t` and `tags` columns; both
+  files are regenerated the next time either source's `normalise()` succeeds (i.e. after the
+  curation pass above), not by this ADR directly.
+- Any future consumer of `Event`/`TimelineEvent` (Python or TypeScript) that wants to read a
+  period's span versus a moment's date branches on `kind`, never on whether `t`/`t_min`/`t_max`
+  happen to differ — `kind` is the single source of truth for which reading applies, exactly the
+  gap this ADR closes.
+

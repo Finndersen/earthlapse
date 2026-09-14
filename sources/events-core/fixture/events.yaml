@@ -2,12 +2,22 @@
 # fixture-driven test. Not read by normalise.py — see its module docstring: normalise()
 # always parses the real data/events.yaml, per the working-conventions brief for this
 # source. Kept in the same schema so a test can load it the same way as data/events.yaml.
+#
+# kind/t/tags (ADR-022): this fixture is kept in the *current* schema even though the real
+# data/events.yaml is not yet migrated (see README.md "Migration status") — it exists so the
+# new schema stays exercised by an offline test regardless of that migration's progress. The
+# kind/t/tags choices below are illustrative of the schema (deliberately mixing moment and
+# period, and single- and multi-tag events), not a preview of what the real migration will
+# assign to these same events.
 
 events:
   - id: earth-formation
     label: Earth forms
+    kind: moment
     t_min: 4.49e9
     t_max: 4.59e9
+    t: 4.54e9
+    tags: [earth-climate]
     importance: 1.0
     description: >
       Earth accretes from the solar nebula and differentiates into a metallic core and
@@ -19,8 +29,10 @@ events:
 
   - id: cambrian-explosion
     label: Cambrian explosion
+    kind: period
     t_min: 5.21e8
     t_max: 5.388e8
+    tags: [life]
     importance: 1.0
     description: >
       Most modern animal phyla appear in the fossil record within a geologically short
@@ -33,8 +45,10 @@ events:
 
   - id: permian-extinction
     label: End-Permian mass extinction
+    kind: period
     t_min: 2.5188e8
     t_max: 2.51941e8
+    tags: [catastrophe, life]
     importance: 1.0
     description: >
       The most severe mass extinction in Earth's history eliminates over 90% of marine
@@ -46,8 +60,11 @@ events:
 
   - id: k-pg-impact
     label: K-Pg impact
+    kind: moment
     t_min: 6.6032e7
     t_max: 6.6054e7
+    t: 6.6043e7
+    tags: [catastrophe, life]
     importance: 1.0
     description: >
       The Chicxulub asteroid impacts the Yucatan Peninsula, triggering the
@@ -58,8 +75,11 @@ events:
 
   - id: present
     label: Present day
+    kind: moment
     t_min: 0
     t_max: 0
+    t: 0
+    tags: [society]
     importance: 1.0
     description: >
       The reference instant against which every other event's years-before-present value

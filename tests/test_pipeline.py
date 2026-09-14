@@ -37,7 +37,9 @@ from pipeline.shapes import (
     EffectAnchor,
     EffectWindow,
     Event,
+    EventKind,
     EventSet,
+    EventTag,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
@@ -179,8 +181,11 @@ EVENTS = EventSet(
         Event(
             id="kpg",
             label="K-Pg impact",
+            kind=EventKind.MOMENT,
             t_min=6.6e7,
             t_max=6.61e7,
+            t=6.605e7,
+            tags=[EventTag.CATASTROPHE, EventTag.LIFE],
             importance=0.95,
             description="Chicxulub.",
             citation="Renne et al. 2013",
@@ -201,8 +206,10 @@ GLOBE_REGIMES = EventSet(
         Event(
             id="magma-ocean-regime",
             label="Magma ocean and newborn Moon",
+            kind=EventKind.PERIOD,
             t_min=4.35e9,
             t_max=4.52e9,
+            tags=[EventTag.EARTH_CLIMATE],
             importance=0.9,
             description="A cooling crust, a close Moon.",
             citation="Barboni et al. 2017",
@@ -904,8 +911,11 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
             {
                 "id": "kpg",
                 "label": "K-Pg impact",
+                "kind": "moment",
                 "tMin": 6.6e7,
                 "tMax": 6.61e7,
+                "t": 6.605e7,
+                "tags": ["catastrophe", "life"],
                 "importance": 0.95,
                 "description": "Chicxulub.",
                 "citation": "Renne et al. 2013",
@@ -999,8 +1009,10 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
             {
                 "id": "magma-ocean-regime",
                 "label": "Magma ocean and newborn Moon",
+                "kind": "period",
                 "tMin": 4.35e9,
                 "tMax": 4.52e9,
+                "tags": ["earth-climate"],
                 "importance": 0.9,
                 "description": "A cooling crust, a close Moon.",
                 "citation": "Barboni et al. 2017",
@@ -1030,6 +1042,7 @@ def _published_scene(
         "image": f"scenes/{scene_id}.png",
         "shot": shot,
         "caption": caption,
+        "events": list(book.scene(scene_id).events),
         "pinned": pin.asset_digest,
         "width": 16,
         "height": 9,
@@ -1051,6 +1064,66 @@ def _key_paths(value: object, prefix: str = "") -> set[str]:
     if isinstance(value, list):
         return set().union(*(_key_paths(item, f"{prefix}[]") for item in value))
     return set()
+
+
+# -- scene -> event links (ADR-022) -----------------------------------------------------------
+
+
+def _link_city_to(text: str, event_id: str) -> str:
+    linked, count = re.subn(
+        r"caption: A city\.\n", f"caption: A city.\n    events: [{event_id}]\n", text, count=1
+    )
+    assert count == 1, "city scene's caption line not found"
+    return linked
+
+
+def test_scene_event_links_survive_pinning_and_appear_in_the_manifest(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+
+    paths.scenes.write_text(_link_city_to(paths.scenes.read_text(), "kpg"))
+
+    # A scene's event links play no part in the asset graph (pipeline/assets.py never reads
+    # SceneRecord.events), so every scene -- city included -- is still pinned, not stale.
+    _, plan_output = _run(backend, root, "plan")
+    assert "3 scenes: 3 pinned, 0 awaiting review, 0 stale" in plan_output
+
+    code, output = _run(backend, root, "publish")
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert scenes_by_id["city"]["events"] == ["kpg"]
+    assert scenes_by_id["devonian"]["events"] == []
+    assert scenes_by_id["hot-start"]["events"] == []
+
+
+def test_publish_refuses_a_scene_linked_to_an_unknown_event_id(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+
+    paths.scenes.write_text(_link_city_to(paths.scenes.read_text(), "not-a-real-event"))
+
+    code, output = _run(backend, root, "publish")
+    assert code != 0
+    assert "city" in output and "not-a-real-event" in output
+
+
+def test_publish_refuses_a_scene_linked_to_an_unknown_event_id_before_writing_media(
+    root: Path,
+) -> None:
+    """A refused publish must leave data/media/ exactly as it was (module docstring)."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    before = (paths.media / "manifest.json").read_bytes()
+
+    paths.scenes.write_text(_link_city_to(paths.scenes.read_text(), "not-a-real-event"))
+
+    assert _run(backend, root, "publish")[0] != 0
+    assert (paths.media / "manifest.json").read_bytes() == before
 
 
 def test_publish_refuses_a_pinned_image_that_no_longer_matches_its_digest(root: Path) -> None:

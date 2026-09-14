@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from pipeline.prompts import PlateType, Shot
-from pipeline.shapes import GeoTime, GlobeEffectKind, Interpolation
+from pipeline.shapes import EventKind, EventTag, GeoTime, GlobeEffectKind, Interpolation
 
 
 class _WireModel(BaseModel):
@@ -46,6 +46,9 @@ class Scene(_WireModel):
     depth: str | None = None  # deferred by ADR-009
     shot: Shot
     caption: str
+    # events-core event ids this scene visually anchors to (ADR-022). Always emitted, unlike the
+    # single-value additive fields below -- an empty list is already a complete "no links".
+    events: tuple[str, ...] = ()
     pinned: str | None = None
     width: int = Field(gt=0)
     height: int = Field(gt=0)
@@ -107,10 +110,19 @@ class GlobeEffect(_WireModel):
 
 
 class TimelineEvent(_WireModel):
+    """Mirrors `pipeline.shapes.Event` (ADR-022). `kind`/`tags` reuse the shapes-side enums
+    directly, the same way `effect`'s `GlobeEffectKind` already does, rather than re-declaring
+    synonyms that could drift."""
+
     id: str
     label: str
+    kind: EventKind
     t_min: GeoTime
     t_max: GeoTime
+    # Best-estimate instant for a moment; absent for a period, and additive (docs/GLOBE.md §6
+    # pattern): absent on every event published before this field existed.
+    t: GeoTime | None = Field(default=None, exclude_if=lambda value: value is None)
+    tags: tuple[EventTag, ...] = Field(min_length=1)
     importance: float = Field(ge=0.0, le=1.0)
     description: str
     citation: str

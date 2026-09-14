@@ -9,7 +9,15 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from pipeline.shapes import EffectAnchor, EffectWindow, Event, GlobeEffect, GlobeEffectKind
+from pipeline.shapes import (
+    EffectAnchor,
+    EffectWindow,
+    Event,
+    EventKind,
+    EventTag,
+    GlobeEffect,
+    GlobeEffectKind,
+)
 
 VALID_WINDOW = EffectWindow(t_min=6.6032e7, t_max=6.6054e7)
 
@@ -65,8 +73,10 @@ def test_event_effect_defaults_to_none() -> None:
     event = Event(
         id="no-effect",
         label="x",
+        kind=EventKind.PERIOD,
         t_min=0.0,
         t_max=1.0,
+        tags=[EventTag.LIFE],
         importance=0.1,
         description="d",
         citation="c",
@@ -78,8 +88,11 @@ def test_event_effect_round_trips_through_model_dump() -> None:
     event = Event(
         id="kpg-impact",
         label="K-Pg impact",
+        kind=EventKind.MOMENT,
         t_min=6.6032e7,
         t_max=6.6054e7,
+        t=6.6043e7,
+        tags=[EventTag.CATASTROPHE, EventTag.LIFE],
         importance=1.0,
         description="Chicxulub.",
         citation="Renne et al. 2013",
@@ -96,3 +109,68 @@ def test_event_effect_round_trips_through_model_dump() -> None:
         "windows": [{"t_min": 6.6032e7, "t_max": 6.6054e7}],
     }
     assert Event.model_validate(dumped) == event
+
+
+# ----------------------------------------------------------------- kind / t / tags (ADR-022)
+
+
+def _bare_event(**overrides: object) -> Event:
+    fields: dict[str, object] = {
+        "id": "x",
+        "label": "X",
+        "kind": EventKind.MOMENT,
+        "t_min": 0.0,
+        "t_max": 10.0,
+        "t": 5.0,
+        "tags": [EventTag.LIFE],
+        "importance": 0.5,
+        "description": "d",
+        "citation": "c",
+    }
+    fields.update(overrides)
+    return Event(**fields)
+
+
+def test_moment_requires_t() -> None:
+    with pytest.raises(ValidationError, match="requires t"):
+        _bare_event(kind=EventKind.MOMENT, t=None)
+
+
+def test_moment_t_must_fall_inside_the_interval() -> None:
+    with pytest.raises(ValidationError, match="outside"):
+        _bare_event(kind=EventKind.MOMENT, t=20.0)
+
+
+def test_period_must_not_set_t() -> None:
+    with pytest.raises(ValidationError, match="must not set t"):
+        _bare_event(kind=EventKind.PERIOD, t=5.0)
+
+
+def test_period_with_no_t_is_valid() -> None:
+    event = _bare_event(kind=EventKind.PERIOD, t=None)
+    assert event.t is None
+
+
+def test_tags_must_be_non_empty() -> None:
+    with pytest.raises(ValidationError):
+        _bare_event(tags=[])
+
+
+def test_tags_reject_duplicates() -> None:
+    with pytest.raises(ValidationError, match="duplicate tags"):
+        _bare_event(tags=[EventTag.LIFE, EventTag.LIFE])
+
+
+def test_tags_first_is_preserved_as_primary() -> None:
+    event = _bare_event(tags=[EventTag.CATASTROPHE, EventTag.EARTH_CLIMATE])
+    assert event.tags[0] is EventTag.CATASTROPHE
+
+
+def test_placement_t_is_the_best_estimate_for_a_moment() -> None:
+    event = _bare_event(kind=EventKind.MOMENT, t_min=0.0, t_max=10.0, t=1.0)
+    assert event.placement_t == 1.0
+
+
+def test_placement_t_is_the_midpoint_for_a_period() -> None:
+    event = _bare_event(kind=EventKind.PERIOD, t_min=0.0, t_max=10.0, t=None)
+    assert event.placement_t == 5.0

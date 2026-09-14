@@ -16,7 +16,9 @@ from pipeline.graph import AssetKind, AssetNode, Pin, Resolver, Status
 from pipeline.models import WorldModel
 from pipeline.shapes import (
     Event,
+    EventKind,
     EventSet,
+    EventTag,
     Interpolation,
     RasterFrame,
     RasterSequence,
@@ -83,8 +85,10 @@ def _event(eid: str, t_min: float, t_max: float, importance: float) -> Event:
     return Event(
         id=eid,
         label=eid,
+        kind=EventKind.PERIOD,
         t_min=t_min,
         t_max=t_max,
+        tags=[EventTag.LIFE],
         importance=importance,
         description=".",
         citation=".",

@@ -19,7 +19,7 @@ import math
 from enum import StrEnum
 from typing import Protocol, Self, runtime_checkable
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 GeoTime = float
 """Years before present. Positive into the past. Present = 0.0."""
@@ -170,14 +170,48 @@ class GlobeEffect(BaseModel):
     windows: list[EffectWindow] = Field(min_length=1)
 
 
+class EventKind(StrEnum):
+    """ADR-022. Which of two things an `Event`'s `t_min`/`t_max` interval means — the two were
+    previously conflated in one interval with no way to tell them apart (a dating error bar on
+    one happening vs. a literature-quoted span of something that genuinely lasted), which is
+    exactly how a fossil-dating uncertainty on the seaweed event was once misread by the
+    timeline as 200 Myr of continuous seaweed."""
+
+    MOMENT = "moment"  # one happening; t is the best estimate, [t_min, t_max] its dating error
+    PERIOD = "period"  # genuinely lasted; t_min/t_max are its own end/start, no single instant
+
+
+class EventTag(StrEnum):
+    """ADR-022. Closed set of six themes, science and technology combined. Multiple tags may
+    apply to one event; the first is its primary tag and drives timeline colour (a later task).
+    Stringly-typed free text was rejected for this precisely because an unknown value here must
+    be a loud validation error, not a silently-dropped filter match."""
+
+    LIFE = "life"
+    EARTH_CLIMATE = "earth-climate"
+    CATASTROPHE = "catastrophe"
+    HUMAN_ORIGINS = "human-origins"
+    SOCIETY = "society"
+    SCIENCE_TECHNOLOGY = "science-technology"
+
+
 class Event(BaseModel):
-    """A labelled moment. `t_min`/`t_max` is a real interval, not decoration —
-    most deep-time dates are contested and the UI renders the band."""
+    """A labelled moment or period. `t_min`/`t_max` is a real interval, not decoration — most
+    deep-time dates are contested and the UI renders the band. `kind` (ADR-022) says which of
+    two things that interval means: a dating uncertainty around one happening (`kind='moment'`,
+    with `t` the best-estimate instant), or the known span of something that genuinely lasted
+    (`kind='period'`, no single instant)."""
 
     id: str
     label: str
+    kind: EventKind
     t_min: GeoTime  # nearer the present
     t_max: GeoTime  # further into the past
+    # Best-estimate instant for a moment; None for a period, whose own t_min/t_max already are
+    # its span. Not necessarily the interval's midpoint -- a citation may support a sharper date.
+    t: GeoTime | None = None
+    # Closed set (EventTag), ADR-022. Non-empty; first tag is primary and drives timeline colour.
+    tags: tuple[EventTag, ...] = Field(min_length=1)
     importance: float = Field(ge=0.0, le=1.0)
     description: str
     citation: str
@@ -189,10 +223,33 @@ class Event(BaseModel):
             raise ValueError(f"{self.id}: t_min {self.t_min} > t_max {self.t_max}")
         return self
 
+    @model_validator(mode="after")
+    def _kind_and_t_consistent(self) -> Self:
+        if self.kind is EventKind.MOMENT:
+            if self.t is None:
+                raise ValueError(f"{self.id}: kind=moment requires t (best-estimate date)")
+            if not (self.t_min <= self.t <= self.t_max):
+                raise ValueError(
+                    f"{self.id}: t={self.t} outside [t_min, t_max]=[{self.t_min}, {self.t_max}]"
+                )
+        elif self.t is not None:
+            raise ValueError(f"{self.id}: kind=period must not set t; t_min/t_max are its span")
+        return self
+
+    @field_validator("tags")
+    @classmethod
+    def _tags_no_duplicates(cls, tags: tuple[EventTag, ...]) -> tuple[EventTag, ...]:
+        if len(set(tags)) != len(tags):
+            raise ValueError(f"duplicate tags: {tags}")
+        return tags
+
     @property
-    def t(self) -> GeoTime:
-        """Midpoint, for placement. Never present this as the date."""
-        return (self.t_min + self.t_max) / 2
+    def placement_t(self) -> GeoTime:
+        """Best single point for placement/sorting: a moment's own best-estimate `t`, else the
+        interval's midpoint. Never present this as the date -- several period midpoints
+        (`ediacaran-biota`, `control-of-fire`) fall in the middle of a real span or a genuine
+        scientific disagreement, not at a meaningful instant."""
+        return self.t if self.t is not None else (self.t_min + self.t_max) / 2
 
 
 class EventSet(BaseModel):
@@ -201,7 +258,7 @@ class EventSet(BaseModel):
 
     @model_validator(mode="after")
     def _sorted(self) -> Self:
-        self.events.sort(key=lambda e: e.t)
+        self.events.sort(key=lambda e: e.placement_t)
         return self
 
     @property

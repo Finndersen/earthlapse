@@ -58,7 +58,20 @@ class SceneRecord(BaseModel):
     caption: str = Field(min_length=1)
     unsourced: UnsourcedConditions
     subject: SceneSubject
+    # events-core event id(s) this scene visually anchors to (ADR-022). Optional, defaults to no
+    # links; checked against the published events-core EventSet at `earthtime publish` time
+    # (pipeline/publish.py), not here -- SceneBook parsing has no curated event data to check
+    # against. Invisible to the asset graph (pipeline/assets.py never reads it), so editing this
+    # field never changes a prompt/image node's digest or clears a pin.
+    events: tuple[str, ...] = Field(default=())
     pin: ScenePin | None
+
+    @field_validator("events")
+    @classmethod
+    def _events_no_duplicates(cls, events: tuple[str, ...]) -> tuple[str, ...]:
+        if len(set(events)) != len(events):
+            raise ValueError(f"duplicate event ids: {events}")
+        return events
 
 
 class SceneBook(BaseModel):
