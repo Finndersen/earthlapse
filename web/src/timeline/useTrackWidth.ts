@@ -1,8 +1,9 @@
 'use client'
 
 /** Tracks the rendered pixel width of a DOM node via `ResizeObserver`, for the layout math
- *  (tick generation, the minimap bracket) that needs real pixel widths rather than percentages.
- *  Shared by `AxisTicks` and `Minimap` so both measure their own track the same way. */
+ *  (tick generation, checkpoint pip clustering) that needs real pixel widths rather than
+ *  percentages. Shared by `AxisTicks` and `ScrubTrack` so both measure their own track the
+ *  same way. */
 
 import { useEffect, useRef, useState } from 'react'
 

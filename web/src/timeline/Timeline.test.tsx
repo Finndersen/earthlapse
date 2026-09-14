@@ -4,12 +4,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EARTH_FORMATION, type Playback, type TimelineEvent } from '@/types/layer'
 
 import type { TimelineCheckpoint } from './checkpoints'
+import * as fisheyeModule from './fisheye'
 import { Timeline } from './Timeline'
 import { createSymlogScale, type TimeWindow } from './scale'
 
-// jsdom does not implement requestAnimationFrame; the eased window transitions behind the zoom
-// buttons only need it to exist (the scale animation is exercised by scale.test.ts via
-// blendScales directly, and the scale itself is a prop here).
+// Spies through to the real implementation (the ADR-021 markers test below only needs to inspect
+// what Timeline calls fisheyeScale with, not to change its behaviour) — every other test in this
+// file exercises the genuine lens.
+vi.mock('./fisheye', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./fisheye')>()
+  return { ...actual, fisheyeScale: vi.fn(actual.fisheyeScale) }
+})
+
+// jsdom does not implement requestAnimationFrame; the fisheye lens's own settle loop only needs
+// it to exist (the scale animation is exercised by scale.test.ts via blendScales directly, and
+// the scale itself is a prop here).
 beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
     return setTimeout(() => cb(performance.now()), 0) as unknown as number
@@ -40,15 +49,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={4.567e9}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     expect(screen.getByText('4.57 Ga')).toBeTruthy()
@@ -60,15 +68,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ playing: false })}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Play'))
@@ -80,15 +87,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ speed: 1 })}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
@@ -100,15 +106,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ mode: 'scenes' })}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
+        onOpenCluster={vi.fn()}
       />,
     )
     const group = screen.getByRole('group', { name: 'Playback mode' })
@@ -121,15 +126,14 @@ describe('<Timeline>', () => {
     const { rerender } = render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ playing: false })}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
         ratePerSecond={4e7}
       />,
     )
@@ -138,15 +142,14 @@ describe('<Timeline>', () => {
     rerender(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback({ playing: true })}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
         ratePerSecond={4e7}
       />,
     )
@@ -158,15 +161,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
-        onWindowChange={vi.fn()}
         onScaleKindChange={onScaleKindChange}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByText('symlog'))
@@ -178,15 +180,14 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         playback={playback()}
         onScrub={onScrub}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Back to previous event'))
@@ -198,16 +199,15 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
         onScrub={onScrub}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Back to previous event'))
@@ -219,16 +219,15 @@ describe('<Timeline>', () => {
     const { container } = render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
         onScrub={onScrub}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     fireEvent.keyDown(container.firstChild as Element, { key: 'ArrowLeft' })
@@ -240,16 +239,15 @@ describe('<Timeline>', () => {
     render(
       <Timeline
         t={0}
-        window={FULL_DOMAIN}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
         onScrub={onScrub}
-        onWindowChange={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
       />,
     )
     const pip = screen.getByLabelText(/Pleistocene steppe/)
@@ -260,5 +258,32 @@ describe('<Timeline>', () => {
     // whatever jsdom's zero-size bounding rect resolves to) must never also fire.
     expect(onScrub).toHaveBeenCalledTimes(1)
     expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
+  })
+
+  it('builds the density-adaptive lens markers from every checkpoint and event range endpoint (ADR-021)', () => {
+    const spy = fisheyeModule.fisheyeScale as unknown as ReturnType<typeof vi.fn>
+    spy.mockClear()
+    render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        events={events}
+        checkpoints={checkpoints}
+        playback={playback()}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+      />,
+    )
+    expect(spy).toHaveBeenCalled()
+    const markers = spy.mock.calls.at(-1)![3] as number[]
+    const expected = [
+      FULL_DOMAIN_SCALE.toUnit(events[0]!.tMin),
+      FULL_DOMAIN_SCALE.toUnit(events[0]!.tMax),
+      FULL_DOMAIN_SCALE.toUnit(checkpoints[0]!.t),
+    ].sort((a, b) => a - b)
+    expect(markers).toEqual(expected)
   })
 })

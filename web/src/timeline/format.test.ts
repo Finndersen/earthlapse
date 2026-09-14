@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatGeoTime, formatRate, formatTimeRange } from './format'
+import { formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
 
 describe('formatGeoTime', () => {
   it('formats the present as "present"', () => {
@@ -65,6 +65,45 @@ describe('formatTimeRange', () => {
 
   it('never shares a bare unit-less number across the sub-millennium band', () => {
     expect(formatTimeRange([10, 250])).toBe('250 years ago – 10 years ago')
+  })
+})
+
+describe('formatGeoTimePrecise', () => {
+  it('falls back to formatGeoTime when the pixel budget is no finer than the bucket already resolves', () => {
+    expect(formatGeoTimePrecise(66_000_000, 1e7)).toBe(formatGeoTime(66_000_000))
+    expect(formatGeoTimePrecise(12_345, 100)).toBe(formatGeoTime(12_345))
+  })
+
+  it('falls back to formatGeoTime for a non-positive or non-finite precision', () => {
+    expect(formatGeoTimePrecise(66_000_000, 0)).toBe(formatGeoTime(66_000_000))
+    expect(formatGeoTimePrecise(66_000_000, -1)).toBe(formatGeoTime(66_000_000))
+    expect(formatGeoTimePrecise(66_000_000, Number.NaN)).toBe(formatGeoTime(66_000_000))
+  })
+
+  it('always formats present as "present", regardless of precision', () => {
+    expect(formatGeoTimePrecise(0, 1e-9)).toBe('present')
+  })
+
+  it('resolves the K-Pg trio to distinct readouts once the pixel budget is sub-year, unlike the shared "66 Ma" formatGeoTime gives all three', () => {
+    const arrival = formatGeoTimePrecise(66_043_000, 0.001)
+    const darkness = formatGeoTimePrecise(66_042_999.99, 0.001)
+    const aftermath = formatGeoTimePrecise(66_042_900, 0.001)
+    expect(new Set([arrival, darkness, aftermath]).size).toBe(3)
+    expect(darkness).toBe('66,042,999.990 years ago')
+  })
+
+  it('picks just enough decimals of raw years to resolve the given precision', () => {
+    expect(formatGeoTimePrecise(12_345, 50)).toBe('12,345 years ago')
+    expect(formatGeoTimePrecise(123.456, 0.01)).toBe('123.46 years ago')
+  })
+
+  it('caps the decimal count rather than printing an absurd number of digits for a vanishingly small precision', () => {
+    expect(formatGeoTimePrecise(66_043_000, 1e-9)).toBe('66,043,000.000000 years ago')
+  })
+
+  it('rejects negative or non-finite t, matching formatGeoTime', () => {
+    expect(() => formatGeoTimePrecise(-1, 1)).toThrow()
+    expect(() => formatGeoTimePrecise(Number.NaN, 1)).toThrow()
   })
 })
 

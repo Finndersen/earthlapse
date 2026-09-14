@@ -42,6 +42,51 @@ export function formatGeoTime(t: GeoTime): string {
   return `${trimmed(t / YEARS_PER_GA, 2)} Ga`
 }
 
+/** Extra decimal-digit budget `formatGeoTimePrecise` may reach for — enough for the K-Pg
+ *  trio's ~0.01yr sub-gaps (ADR-017/ADR-021) to resolve to well under a minute, capped so a
+ *  vanishingly small pixel budget can't produce an absurd digit count. */
+const MAX_PRECISE_DECIMALS = 6
+
+/** The number of years `formatGeoTime`'s own magnitude bucket already resolves to at `t` — its
+ *  fixed per-bucket decimal count (0 for years/Ma, 1 for ka, 2 for Ga), expressed as years.
+ *  `formatGeoTimePrecise` only reaches for extra precision once the local pixel budget needs to
+ *  resolve something finer than this. */
+function bucketResolutionYears(t: GeoTime): number {
+  if (t < YEARS_PER_KA) return 1
+  if (t < YEARS_PER_MA) return YEARS_PER_KA / 10
+  if (t < YEARS_PER_GA) return YEARS_PER_MA
+  return YEARS_PER_GA / 100
+}
+
+/**
+ * `formatGeoTime(t)`, but with extra decimal digits of raw years once the pointer's local
+ * resolution (`precisionYears` — years spanned by one displayed pixel, see
+ * `yearsPerDisplayedPixelAt` in `fisheye.ts`) is finer than what `formatGeoTime`'s own magnitude
+ * bucket already shows. Falls straight back to `formatGeoTime(t)` whenever the ambient bucket
+ * already resolves at least as finely as one pixel does (the common case at rest, away from the
+ * density-adaptive fisheye lens) or `precisionYears` isn't a usable positive number (an
+ * unmeasured track, say) — so a caller can use this everywhere `formatGeoTime` was used for a
+ * pointer-driven readout with no visible change outside a resolved gap. Inside one, it switches
+ * to comma-grouped raw years with just enough decimals that a 1px pointer move visibly changes
+ * the reading — e.g. the K-Pg trio reads as `"66,043,000 years ago"`, `"66,042,999.99 years
+ * ago"`, `"66,042,900 years ago"` once the lens has spread them past a pixel apart, rather than
+ * all three collapsing to `formatGeoTime`'s own `"66 Ma"`.
+ */
+export function formatGeoTimePrecise(t: GeoTime, precisionYears: number): string {
+  if (!Number.isFinite(t)) {
+    throw new Error(`formatGeoTimePrecise: t must be finite, got ${t}`)
+  }
+  if (t < 0) {
+    throw new Error(`formatGeoTimePrecise: t must be >= 0 (years before present), got ${t}`)
+  }
+  if (t === 0) return 'present'
+  if (!(precisionYears > 0) || precisionYears >= bucketResolutionYears(t)) return formatGeoTime(t)
+
+  const decimals = Math.min(MAX_PRECISE_DECIMALS, Math.max(0, Math.ceil(-Math.log10(precisionYears))))
+  const grouped = t.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+  return `${grouped} years ago`
+}
+
 type SharedUnitBucket = 'ka' | 'ma' | 'ga'
 
 function sharedUnitBucket(t: GeoTime): SharedUnitBucket | null {
@@ -56,8 +101,8 @@ const BUCKET_DIVISOR: Record<SharedUnitBucket, number> = { ka: YEARS_PER_KA, ma:
 const BUCKET_DECIMALS: Record<SharedUnitBucket, number> = { ka: 1, ma: 0, ga: 2 }
 
 /**
- * A compact label for a `TimeWindow`, for the minimap bracket (README §1): `"12 ka – present"`,
- * `"252–201 Ma"`. When both edges fall in the same magnitude bucket (ka/Ma/Ga) they share one
+ * A compact label for a `TimeWindow`: `"12 ka – present"`, `"252–201 Ma"`. When both edges fall
+ * in the same magnitude bucket (ka/Ma/Ga) they share one
  * unit suffix, geologic-notation style with the older value first (`"252–201 Ma"`, not
  * `"201–252 Ma"`); otherwise each edge renders in full via `formatGeoTime`. A window touching
  * the present renders its far edge plus `"present"` rather than `"present"`'s own bucket-less

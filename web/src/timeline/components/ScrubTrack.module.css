@@ -124,6 +124,19 @@
   z-index: 2;
 }
 
+/* Touch hit areas at least ~44px tall (brief §4) — the visual diamond stays small, but a coarse
+   pointer's own tap target grows to fill nearly the whole 48px track height, centred on the same
+   baseline. Horizontal size is untouched: two pips can sit as little as `MIN_PIP_SEPARATION_PX`
+   (8px) apart before they cluster, and widening the tap target sideways too would make their hit
+   areas overlap long before their diamonds do. */
+@media (pointer: coarse) {
+  .pip,
+  .cluster {
+    height: 44px;
+    margin-top: -22px;
+  }
+}
+
 /* A previewed pip/cluster already names its own time; the playhead readout steps aside for it,
    and so does the fisheye hover readout (ADR-017) — a preview already shows its own time+label. */
 .hitArea:has(.pip:hover) .timeLabel,
@@ -140,6 +153,23 @@
 /* The fisheye hover readout names the pointer's own time; the playhead readout steps aside for
    it so the two never overlap (ADR-017). */
 .hitArea[data-hover-active='true'] .timeLabel {
+  opacity: 0;
+}
+
+/* A cluster's member-list popover (ADR-021) names its own scenes; both the playhead readout and
+   the hover readout step aside so neither collides with it while it's open. */
+.hitArea[data-cluster-open='true'] .timeLabel,
+.hitArea[data-cluster-open='true'] .hoverReadout {
+  opacity: 0;
+}
+
+/* The touch/pen press-and-drag magnifier (`TouchMagnifier`, ADR-021) carries its own copy of
+   this same readout in its own panel, floating above the finger — while it's showing, this
+   in-track copy just duplicates it (and, unlike the magnifier, isn't edge-clamped against the
+   screen, so it could still clip past the viewport). Mouse hover never sets `data-touch-active`
+   (`ScrubTrack`'s `touchPoint` is `null` for a mouse pointer), so this only ever hides the
+   readout in favour of the magnifier, never during an ordinary hover. */
+.hitArea[data-touch-active='true'] .hoverReadout {
   opacity: 0;
 }
 

@@ -1,0 +1,114 @@
+/* One opaque panel for the whole bubble — strip, label and time — rather than a bare viewport
+   with unbacked text floating below it: the text used to print straight over the HUD/caption
+   with nothing behind it. `left` (the component's `clampedLeft`) clamps this element's own
+   centre to stay within the viewport, with a margin at both edges, assuming the rendered width
+   never exceeds `PANEL_WIDTH_PX` (the strip's own width plus this panel's padding) — the
+   component sets `maxWidth` inline from that same constant, and `.readout` is capped to the
+   strip's width too, so a long label truncates with ellipsis (`.label` below) rather than
+   growing the panel past what the clamp accounted for. */
+.magnifier {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(3, 4, 6, 0.88);
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  pointer-events: none;
+  z-index: 4;
+}
+
+.viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.baseline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.band {
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  border-radius: 999px;
+  background: var(--hud-event, rgba(140, 200, 255, 0.75));
+}
+
+.pipDot,
+.clusterDot {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  margin-top: -3px;
+  background: var(--hud-accent, #e8b06a);
+  transform: rotate(45deg);
+  box-shadow: 0 0 5px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+.clusterDot {
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  margin-top: -4.5px;
+}
+
+/* The exact touched instant, fixed at the viewport's own centre — everything else slides past
+   it as the finger moves, same as the real track's own playhead/lens relationship. */
+.crosshair {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--hud-accent, #e8b06a);
+  box-shadow: 0 0 6px 1px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+/* Fixed width (set inline, matching the strip's own `VIEWPORT_WIDTH_PX`) and no wrap: a long
+   label truncates with ellipsis (`.label`) rather than wrapping to a second line, so the panel
+   stays one predictable size instead of growing taller (and further covering whatever sits
+   behind it) whenever a label happens to be long. */
+.readout {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 10.5px;
+  color: var(--hud-accent, #e8b06a);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--hud-ink, #efe9dc);
+  flex: 0 0 auto;
+  white-space: nowrap;
+}

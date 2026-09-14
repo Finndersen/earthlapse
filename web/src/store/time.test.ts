@@ -11,10 +11,9 @@ beforeEach(() => {
 })
 
 describe('useTimeStore initial state', () => {
-  it('starts at present with the full domain as the window', () => {
+  it('starts at present', () => {
     const s = useTimeStore.getState()
     expect(s.t).toBe(0)
-    expect(s.window).toEqual([0, EARTH_FORMATION])
     expect(s.scaleKind).toBe('symlog')
     expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' })
     expect(s.globeExpanded).toBe(false)
@@ -47,15 +46,6 @@ describe('setT clamping', () => {
 
   it('throws on NaN rather than silently clamping', () => {
     expect(() => useTimeStore.getState().setT(Number.NaN)).toThrow(/NaN/)
-  })
-})
-
-describe('window', () => {
-  it('is set independently of t', () => {
-    useTimeStore.getState().setT(5e8)
-    useTimeStore.getState().setWindow([0, 1e9])
-    expect(useTimeStore.getState().window).toEqual([0, 1e9])
-    expect(useTimeStore.getState().t).toBe(5e8)
   })
 })
 

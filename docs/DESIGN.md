@@ -19,8 +19,10 @@ Companion documents:
 ## 1. Product statement
 
 A browser experience where a view of Earth's surface evolves across the whole of deep time.
-The user can sit back and watch it play, or grab the timeline and explore — scrubbing,
-zooming from 4.6 Gyr down to a single year, speeding up, slowing down, toggling data layers.
+The user can sit back and watch it play, or grab the timeline and explore — scrubbing across
+the whole 4.6 Gyr span, hovering to open a density-adaptive fisheye lens that resolves
+individual scenes and events down to whatever separates them, however close together, speeding
+up, slowing down, toggling data layers.
 
 Playback and exploration are the **same mechanism**: playback is just `t` advancing
 automatically. There is no separate "video mode".
@@ -115,9 +117,9 @@ The `linear` toggle is a **feature**. Animating symlog → linear collapses all 
 history to sub-pixel width. It is the most effective educational moment available and the
 most shareable thing in the product. Build it early.
 
-### Zoom and level of detail
+### Level of detail (no user zoom)
 
-Continuous zoom from a 4.6 Gyr span to a 1-year span. Every event carries
+~~Continuous zoom from a 4.6 Gyr span to a 1-year span.~~ Every event carries
 `importance: 0..1`; events fade in as the visible span shrinks. A 1D quadtree — the same
 idea as map tile LOD.
 
@@ -133,11 +135,40 @@ idea as map tile LOD.
 > transport buttons) is unaffected either way — it always reaches every event/checkpoint
 > overlapping the window, never just what currently has room to draw.
 
-A persistent **linear-scale minimap** under the main axis keeps the warp legible and the
-distortion honest.
+> **v1 note, further superseding both paragraphs above.** Zoom (buttons, wheel/pinch, double-
+> click, keyboard shortcuts, and window framing on event/cluster click) is removed outright, not
+> just deferred: the timeline's visible window is now a fixed constant, `[0, EARTH_FORMATION]`,
+> never state. Resolving events or checkpoints that sit arbitrarily close together in time —
+> down to individually clickable, regardless of how dense the surrounding stretch of history is
+> — is instead the job of the fisheye lens (ADR-017), whose magnification is density-adaptive
+> rather than a fixed factor: it stretches further where the pointer sits over a denser run of
+> markers. Clicking a checkpoint cluster (ADR-019) reports its members for a member-list surface
+> rather than zooming into it, since there is no window left to zoom. This was a deliberate,
+> human-directed product decision (the lens makes a second, separate "zoom" mechanism
+> redundant), not a temporary v1 cut — there is no plan to bring zoom back.
 
-> **v1 note (ADR-011).** The minimap ships as a **symlog overview** with a hairline linear
-> strip beneath it: a linear minimap renders any recent zoom window at sub-pixel width.
+> **v1 note (ADR-021), delivering on the density-adaptive promise above.** `Timeline` feeds the
+> lens a `markers` list — every checkpoint's instant and every event's range endpoints — so gap
+> insertion has every position on the track that might need room opened up around it, not only
+> the plain bump under the pointer; the K-Pg trio (ADR-017's own worked example) resolves to
+> individually hoverable, tappable scenes under it. The hover readout's own precision now
+> adapts too (`formatGeoTimePrecise`), so a 1px move inside a resolved gap visibly changes the
+> reading instead of both sides collapsing to the same rounded figure. The member-list surface a
+> cluster click reports into is a small in-track popover the track opens itself
+> (`ClusterPopover`): pick a member and it scrubs there and closes; Escape or a press elsewhere
+> closes it. On touch/pen, pressing the track additionally shows a floating magnifier above the
+> finger (`TouchMagnifier`, modelled on the mobile text-selection loupe) — a further-zoomed strip
+> of the track around the touch point plus the same precision readout — so the same "reachable
+> regardless of how close together" guarantee holds for a finger, which can't hover.
+
+~~A persistent **linear-scale minimap** under the main axis keeps the warp legible and the
+distortion honest.~~
+
+> **v1 note (ADR-011), itself now superseded.** The minimap shipped as a **symlog overview**
+> with a hairline linear strip beneath it (a "% of Earth's history" readout). It is removed
+> alongside zoom above: with the window fixed to the full domain there is no window position
+> left for a minimap to summarise, and the fisheye lens already shows, in place, how compressed
+> or expanded the pointer's neighbourhood currently reads.
 
 ### Playback
 
@@ -321,7 +352,6 @@ expands to fill; it is never the default focus.
 │  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  │
 ├──────────────────────────────────────────────────────────┤
 │  ◄◄  ▶  ►►   1×    [═══════════●══════════════════]      │
-│  linear minimap  ▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏▏     │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -333,6 +363,16 @@ expands to fill; it is never the default focus.
 > - caption as a subtitle above the timeline
 >
 > Scene checkpoints are marked on the timeline.
+
+> **v1 note (ADR-017/ADR-021), further superseding the transport row above.** There is no
+> minimap (the row shown above already dropped its "linear minimap" strip — ADR-011's symlog
+> overview + hairline linear readout was removed with zoom itself, DESIGN §3) and no zoom
+> controls: the timeline's window is fixed to the full `[0, EARTH_FORMATION]` domain and the
+> single track shown is a density-adaptive **fisheye lens** (`timeline/fisheye.ts`) that stretches
+> in place around the pointer (or a touch press) rather than a separate zoomed-in view. Scene
+> checkpoints and event markers that sit arbitrarily close together in time still resolve to
+> individually reachable — hovering (or, on touch, the press-and-drag magnifier) opens room for
+> them locally; nothing outside the lens moves as it does.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to

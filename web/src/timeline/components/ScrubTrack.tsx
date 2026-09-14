@@ -1,46 +1,42 @@
 'use client'
 
-/** The main scrub track: pointer-drag scrubbing, wheel-to-zoom, room-decluttered event
- *  uncertainty bands (ADR-019), clustered scene checkpoint pips (ADR-019), the playhead, and
- *  the fisheye hover readout (ADR-017). A luminous hairline baseline rather than a filled
- *  panel, per the shared visual language — the hit area (`.hitArea`) stays taller than anything
- *  drawn inside it so the track stays easy to grab. Each pip carries `data-checkpoint-pip`
- *  (a cluster marker carries `data-checkpoint-cluster` instead), a stable hook the shell uses
- *  to recede whatever sits where a pip's hover preview rises.
+/** The main scrub track: pointer-drag scrubbing, room-decluttered event uncertainty bands
+ *  (ADR-019), clustered scene checkpoint pips (ADR-019), the playhead, the fisheye hover
+ *  readout (ADR-017, precision-adaptive per ADR-021), a cluster's member-list popover and the
+ *  touch press-and-drag magnifier (both ADR-021). A luminous hairline baseline rather than a
+ *  filled panel, per the shared visual language — the hit area (`.hitArea`) stays taller than
+ *  anything drawn inside it so the track stays easy to grab. Each pip carries
+ *  `data-checkpoint-pip` (a cluster marker carries `data-checkpoint-cluster` instead), a stable
+ *  hook the shell uses to recede whatever sits where a pip's hover preview rises.
  *
- *  `scale` is the fisheye-distorted track scale (`fisheyeScale`, owned by `Timeline`) — what
- *  is drawn and what pointer x maps through; `baseScale` is the same window undistorted, used
- *  only to convert a *displayed* anchor point back to undistorted `u` before handing it to
- *  something that zooms/pans the underlying window (wheel, double-click) — zooming is always
- *  in undistorted space, the lens is a pointer-time reading of it, not a new space to zoom in.
- *  Because both the event declutter and the pip clustering run on this same distorted scale,
- *  hovering the track reveals detail the resting (undistorted) layout had no room for.
- *
- *  Wheel handling is a native `addEventListener('wheel', ..., { passive: false })` on the hit
- *  area, not React's `onWheel` — see `handleWheel`'s doc comment for why a plain `onWheel`
- *  cannot reliably `preventDefault` here. */
+ *  `scale` is the fisheye-distorted track scale (`fisheyeScale`, owned by `Timeline`) — what is
+ *  drawn and what pointer x maps through. The visible window is fixed to the full domain (no
+ *  zoom/pan), so unlike earlier passes there is no separate undistorted "base" scale to convert
+ *  a displayed anchor back into — every position on the track *is* `scale.fromUnit(u)`, full
+ *  stop. Because both the event declutter and the pip clustering run on this same distorted
+ *  scale, hovering the track reveals detail the resting (undistorted) layout had no room for —
+ *  that magnification, not zooming the window, is how a viewer resolves events sitting close
+ *  together in time. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react'
+import type { PointerEvent as ReactPointerEvent } from 'react'
 
-import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
+import type { GeoTime, TimelineEvent } from '@/types/layer'
 
-import { layoutCheckpointPips } from '../checkpointLayout'
+import { layoutCheckpointPips, type CheckpointClusterLayout, type CheckpointLayoutEntry } from '../checkpointLayout'
 import type { TimelineCheckpoint } from '../checkpoints'
 import { declutterEvents } from '../declutter'
 import type { FisheyeScale } from '../fisheye'
-import { formatGeoTime } from '../format'
+import { yearsPerDisplayedPixelAt } from '../fisheye'
+import { formatGeoTime, formatGeoTimePrecise } from '../format'
+import { hasExceededTapSlop } from '../markerGesture'
 import type { TimeWindow } from '../scale'
 import { findSnapTarget, snapCandidates } from '../snap'
 import { useTrackWidth } from '../useTrackWidth'
 import { clamp, clampUnit } from '../util'
-import { useWheelZoomAccumulator } from '../wheelZoom'
-import { panWindow } from '../zoom'
+import { ClusterPopover } from './ClusterPopover'
 import styles from './ScrubTrack.module.css'
-
-/** Wheel `deltaY` -> zoom `factor`, tuned so a typical mouse-wheel notch (~100) changes span
- *  by roughly 15%. Fed into the eased/accumulated wheel-zoom hook, not applied directly. */
-const ZOOM_SENSITIVITY = 0.0015
+import { TouchMagnifier } from './TouchMagnifier'
 
 /** Most member rows a cluster's hover preview lists before collapsing the rest into "+N more"
  *  — long enough to be useful, short enough to still read as a preview, not a panel. */
@@ -56,6 +52,21 @@ const PREVIEW_HALF_WIDTH_PX = 60
  *  in the 60-75px band, since it is 30px wider than a lone pip's preview. */
 const CLUSTER_PREVIEW_HALF_WIDTH_PX = 75
 
+/** Half of `ClusterPopover`'s own width (`.popover`, 210px, in its CSS module) — same edge-
+ *  anchoring role as `CLUSTER_PREVIEW_HALF_WIDTH_PX` above, for the interactive popover rather
+ *  than the passive hover preview. */
+const CLUSTER_POPOVER_HALF_WIDTH_PX = 105
+
+/** Half of the fisheye hover readout's own realistic worst-case width — wider than a lone pip
+ *  preview's `PREVIEW_HALF_WIDTH_PX`: a snapped checkpoint's `.snapLabel` can run up to its own
+ *  220px `max-width` (see `ScrubTrack.module.css`) alongside the time text, where a bare pip
+ *  preview never carries more than a short label. Anchoring the readout at the narrower,
+ *  pip-sized threshold let a long label still run past the viewport edge before the anchor class
+ *  kicked in — this is sized for the readout's own content, reusing the same
+ *  `previewAnchorClass` edge-anchoring `pipPreview`/`ClusterPopover` already use rather than a
+ *  new mechanism. */
+const HOVER_READOUT_HALF_WIDTH_PX = 150
+
 function previewAnchorClass(u: number, trackWidthPx: number, halfWidthPx: number = PREVIEW_HALF_WIDTH_PX): string {
   if (u * trackWidthPx < halfWidthPx) return styles.previewStart ?? ''
   if ((1 - u) * trackWidthPx < halfWidthPx) return styles.previewEnd ?? ''
@@ -66,22 +77,14 @@ interface ScrubTrackProps {
   t: GeoTime
   window: TimeWindow
   scale: FisheyeScale
-  baseScale: TimeScale
-  scaleKind: 'symlog' | 'linear'
   events: readonly TimelineEvent[]
   checkpoints: readonly TimelineCheckpoint[]
   onScrub: (t: GeoTime) => void
-  onWindowChange: (window: TimeWindow) => void
-  /** Double-clicking an event's marker frames its uncertainty band (README §2) instead of
-   *  scrubbing to it. */
-  onFrameEvent: (event: TimelineEvent) => void
-  /** Clicking a checkpoint cluster marker frames the members' combined time span (ADR-019),
-   *  the cluster analogue of `onFrameEvent`. */
-  onFrameCluster: (tMin: GeoTime, tMax: GeoTime) => void
-  /** Double-clicking the track *away* from any event marker instead zooms x2, eased, around
-   *  that point (brief §2). `anchorU` is undistorted — the click position in `baseScale`'s own
-   *  0..1 space. */
-  onEmptyDoubleClick: (anchorU: number) => void
+  /** Clicking or tapping a checkpoint cluster marker (ADR-019) opens its own in-track member-
+   *  list popover (`ClusterPopover`, ADR-021) — this component owns that surface itself, so
+   *  `onOpenCluster` is only a notification for a caller that wants to know (e.g. analytics); it
+   *  is not required to build any UI in response. */
+  onOpenCluster: (members: readonly TimelineCheckpoint[]) => void
   /** The pointer is over the track at displayed unit `u` (a `trackWidthPx`-wide track) — feeds
    *  `Timeline`'s fisheye lens (ADR-017). Fired on hover (mouse) and while dragging (any
    *  pointer type), matching the hover-readout visibility rules below. */
@@ -95,20 +98,14 @@ export function ScrubTrack({
   t,
   window: visibleWindow,
   scale,
-  baseScale,
-  scaleKind,
   events,
   checkpoints,
   onScrub,
-  onWindowChange,
-  onFrameEvent,
-  onFrameCluster,
-  onEmptyDoubleClick,
+  onOpenCluster,
   onLensPointer,
   onLensRelease,
 }: ScrubTrackProps) {
   const [trackRef, trackWidthPx] = useTrackWidth<HTMLDivElement>()
-  const applyWheelZoom = useWheelZoomAccumulator({ window: visibleWindow, scaleKind, onWindowChange })
 
   const uFromClientX = useCallback(
     (clientX: number): number => {
@@ -129,6 +126,20 @@ export function ScrubTrack({
 
   const candidates = useMemo(() => snapCandidates(shown, checkpoints, visibleWindow), [shown, checkpoints, visibleWindow])
 
+  // The decluttered events' own displayed bands, in the same `u` space everything else on the
+  // track positions against — computed once and shared by the main render below and the touch
+  // magnifier (ADR-021), rather than each re-deriving it from `shown`/`scale`.
+  const eventBandsU = useMemo(
+    () =>
+      shown.map((event) => ({
+        id: event.id,
+        label: event.label,
+        uStart: clamp(scale.toUnit(event.tMax), 0, 1),
+        uEnd: clamp(scale.toUnit(event.tMin), 0, 1),
+      })),
+    [shown, scale],
+  )
+
   const scrubToClientX = useCallback(
     (clientX: number): void => {
       const rawT = scale.fromUnit(uFromClientX(clientX))
@@ -146,31 +157,145 @@ export function ScrubTrack({
   const [hoverU, setHoverU] = useState<number | null>(null)
   const activePointerTypeRef = useRef<string | null>(null)
 
-  const updateHover = (clientX: number): void => {
-    const u = uFromClientX(clientX)
+  // A press that only dismisses an open cluster popover (the `handlePointerDown` early return
+  // below) must not also scrub if that same gesture goes on to drag before lifting — otherwise a
+  // touch drag that starts on a dismiss press moves the playhead as a side effect of what the
+  // user meant only as "close this popup". Tracks the pointer id for the remainder of that one
+  // gesture; `handlePointerMove` skips `scrubToClientX` while it matches, and it is cleared on
+  // pointer up/cancel.
+  const dismissingPopoverPointerIdRef = useRef<number | null>(null)
+
+  // Touch/pen press-and-drag arbitration for a press that starts on a pip/cluster marker
+  // (`markerGesture.ts`, ADR-021 follow-up) — a marker button's own `onPointerDown` (below, in
+  // the render) records which entry a non-mouse press landed on here, for the one tick before
+  // that same event reaches `handlePointerDown` (mouse never reaches this: its `onPointerDown`
+  // stops propagation before bubbling here, exactly as before this pass). `handlePointerDown`
+  // reads and clears it immediately, turning it into `pendingMarkerPressRef` below — this ref
+  // only ever holds a value for the instant between those two handlers running.
+  const pendingMarkerEntryRef = useRef<CheckpointLayoutEntry | null>(null)
+
+  // The still-undecided half of that same gesture: a touch/pen press that landed on a marker and
+  // has not yet moved past `hasExceededTapSlop`, so it could still resolve into either a tap
+  // (select the pip / open the cluster, on lift) or a scrub (once `handlePointerMove` sees it
+  // clear the slop). Cleared the instant either outcome is decided; `null` whenever no marker
+  // press is in this undecided state, which is true for the entire rest of the time (including
+  // every mouse gesture, and a touch/pen drag that started on empty track).
+  const pendingMarkerPressRef = useRef<{ pointerId: number; entry: CheckpointLayoutEntry; startX: number; startY: number } | null>(null)
+
+  // The touch/pen magnifier's own anchor (ADR-021, brief §4) — screen coordinates, since the
+  // bubble floats above the finger via `position: fixed`, not track-relative like everything
+  // else here. `null` for a mouse pointer (the magnifier is touch/pen-only) and whenever nothing
+  // is currently pressed.
+  const [touchPoint, setTouchPoint] = useState<{ clientX: number; clientY: number } | null>(null)
+
+  // The open checkpoint cluster's member-list popover (ADR-021) — tracked by id, not a frozen
+  // snapshot of its layout entry, so it stays in sync with `checkpointLayout` as the fisheye lens
+  // keeps moving: if the lens spreads the cluster's own members apart into individual pips while
+  // the popover is open, `openClusterEntry` below simply stops finding it and the effect after it
+  // closes the popover rather than going stale.
+  const [openClusterId, setOpenClusterId] = useState<string | null>(null)
+
+  const updateHover = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    const u = uFromClientX(e.clientX)
     setHoverU(u)
     onLensPointer(u, trackWidthPx)
+    setTouchPoint(e.pointerType === 'mouse' ? null : { clientX: e.clientX, clientY: e.clientY })
+  }
+
+  // A pip's or cluster's own select/open action (mouse's `onClick` below does the same thing
+  // directly; this is the touch/pen path's equivalent, reached from `handlePointerUp` once a
+  // pending marker press resolves into a tap rather than a scrub).
+  const commitMarkerTap = (entry: CheckpointLayoutEntry): void => {
+    if (entry.kind === 'pip') {
+      onScrub(entry.t)
+      return
+    }
+    setOpenClusterId(entry.id)
+    onOpenCluster(entry.members)
   }
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    // Consumed unconditionally, whichever branch below runs — a touch/pen press on a marker
+    // always sets this (in the marker button's own `onPointerDown`) just before this handler
+    // sees the same event, and it must never leak into a later, unrelated gesture (e.g. the
+    // dismiss-popover branch immediately below, which this press might instead fall into).
+    const markerEntry = pendingMarkerEntryRef.current
+    pendingMarkerEntryRef.current = null
+
+    // A press anywhere else on the track dismisses an open cluster popover rather than also
+    // scrubbing through it — the same "tap elsewhere closes it" convention any popover uses. That
+    // holds for the rest of this gesture too, not just this one event: see
+    // `dismissingPopoverPointerIdRef`.
+    if (openClusterId !== null) {
+      setOpenClusterId(null)
+      dismissingPopoverPointerIdRef.current = e.pointerId
+      return
+    }
+    dismissingPopoverPointerIdRef.current = null
     activePointerTypeRef.current = e.pointerType
     e.currentTarget.setPointerCapture(e.pointerId)
-    updateHover(e.clientX)
+    updateHover(e)
+
+    if (markerEntry) {
+      // Touch/pen gesture arbitration (`markerGesture.ts`, ADR-021 follow-up): don't scrub yet —
+      // this press might still turn out to be a tap on the marker it landed on. Suppress the
+      // compatibility `click` a real touch would otherwise fire on the marker button on lift
+      // (per the Pointer Events spec, `preventDefault()` on `pointerdown` does this), since
+      // `commitMarkerTap` above is this path's own equivalent, driven explicitly by
+      // `handlePointerUp` rather than that native click.
+      e.preventDefault()
+      pendingMarkerPressRef.current = { pointerId: e.pointerId, entry: markerEntry, startX: e.clientX, startY: e.clientY }
+      return
+    }
+    pendingMarkerPressRef.current = null
     scrubToClientX(e.clientX)
   }
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
-    updateHover(e.clientX)
+    updateHover(e)
+    if (dismissingPopoverPointerIdRef.current === e.pointerId) return
+    const pendingMarker = pendingMarkerPressRef.current
+    if (pendingMarker && pendingMarker.pointerId === e.pointerId) {
+      if (!hasExceededTapSlop(e.clientX - pendingMarker.startX, e.clientY - pendingMarker.startY)) return
+      // Committed to a scrub: the rest of this gesture behaves exactly like a drag that started
+      // on empty track, from here on (including this very move).
+      pendingMarkerPressRef.current = null
+    }
     if (e.buttons === 0) return
     scrubToClientX(e.clientX)
   }
 
-  const handlePointerUp = (): void => {
+  // Shared by both release paths below — everything that ends a gesture regardless of how it
+  // resolved (a tap, a scrub, or a cancelled pointer).
+  const releasePointerState = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    if (dismissingPopoverPointerIdRef.current === e.pointerId) {
+      dismissingPopoverPointerIdRef.current = null
+    }
     if (activePointerTypeRef.current !== 'mouse') {
       setHoverU(null)
       onLensRelease()
     }
+    setTouchPoint(null)
     activePointerTypeRef.current = null
+  }
+
+  const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    const pendingMarker = pendingMarkerPressRef.current
+    if (pendingMarker && pendingMarker.pointerId === e.pointerId) {
+      // Never exceeded the slop by the time it lifted — a tap, not a drag.
+      pendingMarkerPressRef.current = null
+      commitMarkerTap(pendingMarker.entry)
+    }
+    releasePointerState(e)
+  }
+
+  const handlePointerCancel = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    // A cancelled gesture (e.g. the system taking the pointer for its own gesture) is neither a
+    // tap nor a scrub — unlike `handlePointerUp`, this never commits a pending marker press.
+    if (pendingMarkerPressRef.current?.pointerId === e.pointerId) {
+      pendingMarkerPressRef.current = null
+    }
+    releasePointerState(e)
   }
 
   const handlePointerLeave = (): void => {
@@ -179,6 +304,7 @@ export function ScrubTrack({
     // active drag.
     if (activePointerTypeRef.current === null) {
       setHoverU(null)
+      setTouchPoint(null)
       onLensRelease()
     }
   }
@@ -190,92 +316,39 @@ export function ScrubTrack({
     [checkpoints, visibleWindow, scale, trackWidthPx],
   )
 
+  const openClusterEntry = useMemo(
+    () =>
+      openClusterId === null
+        ? null
+        : (checkpointLayout.find((e): e is CheckpointClusterLayout => e.kind === 'cluster' && e.id === openClusterId) ?? null),
+    [checkpointLayout, openClusterId],
+  )
+
+  useEffect(() => {
+    if (openClusterId !== null && openClusterEntry === null) setOpenClusterId(null)
+  }, [openClusterId, openClusterEntry])
+
   // The readout's last real content, kept across `hoverU` going back to `null` so its fade-out
   // shows that content shrinking away in place rather than drifting: `scale` keeps changing
   // every frame while the lens relaxes after pointer-leave (`useFisheye`'s rAF loop), so once
   // `hoverU` is null the whole result — not just the position it was read at — must freeze,
   // or re-deriving `t`/`label` from the live scale each render would visibly slide the readout
   // during the fade even though its position looks pinned. Also doubles as "has this track ever
-  // been hovered".
-  const lastHoverInfoRef = useRef<{ u: number; t: GeoTime; label: string | undefined } | null>(null)
+  // been hovered". `formattedTime` (ADR-021) is precomputed here too, at the precision the local
+  // pixel budget (`yearsPerDisplayedPixelAt`) actually resolves — so a 1px hover move inside a
+  // fisheye-resolved gap visibly changes what's shown, on both the in-track readout and the
+  // touch magnifier below, which both just render this string rather than reformatting it.
+  const lastHoverInfoRef = useRef<{ u: number; t: GeoTime; label: string | undefined; formattedTime: string } | null>(null)
   const hoverInfo = useMemo(() => {
     if (hoverU === null) return lastHoverInfoRef.current
     const rawT = scale.fromUnit(hoverU)
     const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
-    const info = { u: hoverU, t: snap?.t ?? rawT, label: snap?.label }
+    const t = snap?.t ?? rawT
+    const precisionYears = yearsPerDisplayedPixelAt(scale, hoverU, trackWidthPx)
+    const info = { u: hoverU, t, label: snap?.label, formattedTime: formatGeoTimePrecise(t, precisionYears) }
     lastHoverInfoRef.current = info
     return info
   }, [hoverU, scale, candidates, trackWidthPx])
-
-  // Plain vertical wheel zooms around the cursor, eased and accumulated rather than applied as
-  // a hard step per notch (also how ctrl+wheel / trackpad pinch reach this handler — the
-  // browser reports pinch as a wheel event with ctrlKey set, but the deltaY-driven zoom below
-  // already does the right thing for it without special-casing). shift+wheel or a wheel that's
-  // mostly horizontal (deltaX dominant) pans instead — immediately, not eased: a pan gesture's
-  // content should move 1:1 with it.
-  //
-  // A *native* listener, not React's `onWheel`: React attaches wheel (and touchstart/move) at
-  // the root as a passive listener for scroll-perf reasons, so `preventDefault` inside a plain
-  // `onWheel` handler silently fails with a console warning ("Unable to preventDefault inside
-  // passive event listener invocation") and the page scrolls under the track instead of the
-  // track consuming the gesture — a QA-reported defect. `{ passive: false }` here is what
-  // actually lets `preventDefault` take effect.
-  const handleWheel = useCallback(
-    (e: WheelEvent): void => {
-      e.preventDefault()
-      const isPan = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
-      if (isPan) {
-        if (trackWidthPx === 0) return
-        // Shift turns a plain vertical scroll (deltaY, deltaX === 0) into a pan — reuse deltaY
-        // as the pan delta in that case rather than requiring the browser to have already
-        // remapped it to deltaX itself (some do, some don't).
-        const rawDeltaPx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX
-        onWindowChange(panWindow(visibleWindow, rawDeltaPx / trackWidthPx, scaleKind))
-        return
-      }
-      // The anchor must be undistorted `u`: `zoomWindow` (inside the accumulator) zooms
-      // `visibleWindow` itself, which is undistorted — anchoring on the displayed `u` directly
-      // would zoom around the wrong point in the underlying window whenever the lens is active.
-      const anchorU = baseScale.toUnit(scale.fromUnit(uFromClientX(e.clientX)))
-      const factor = Math.exp(-e.deltaY * ZOOM_SENSITIVITY)
-      applyWheelZoom(anchorU, factor)
-    },
-    [trackWidthPx, onWindowChange, visibleWindow, scaleKind, uFromClientX, applyWheelZoom, baseScale, scale],
-  )
-
-  // Kept fresh every render and read from inside the stable listener below, so the effect
-  // doesn't need to tear down and re-attach the native listener every time `handleWheel`'s own
-  // dependencies change (the same "ref mirrors the latest closure" idiom `usePlaybackLoop` and
-  // `useWheelZoomAccumulator` already use elsewhere in this package).
-  const handleWheelRef = useRef(handleWheel)
-  handleWheelRef.current = handleWheel
-
-  useEffect(() => {
-    const el = trackRef.current
-    if (!el) return
-    const listener = (e: WheelEvent): void => handleWheelRef.current(e)
-    el.addEventListener('wheel', listener, { passive: false })
-    return () => el.removeEventListener('wheel', listener)
-  }, [trackRef])
-
-  /** Double-clicking anywhere within a visible event's uncertainty band frames it (README §2);
-   *  double-clicking elsewhere on the track zooms x2 around that point instead (brief §2),
-   *  anchored in undistorted space like the wheel handler above. */
-  const handleDoubleClick = (e: ReactMouseEvent<HTMLDivElement>): void => {
-    const u = uFromClientX(e.clientX)
-    const clickedT = scale.fromUnit(u)
-    const hit = shown
-      .filter((event) => clickedT >= event.tMin && clickedT <= event.tMax)
-      .reduce<TimelineEvent | null>(
-        (best, event) => (best === null || event.tMax - event.tMin < best.tMax - best.tMin ? event : best),
-        null,
-      )
-    if (hit) {
-      onFrameEvent(hit)
-      return
-    }
-    onEmptyDoubleClick(baseScale.toUnit(clickedT))
-  }
 
   return (
     <div
@@ -288,27 +361,24 @@ export function ScrubTrack({
       tabIndex={0}
       className={styles.hitArea}
       data-hover-active={hoverU !== null}
+      data-cluster-open={openClusterEntry !== null}
+      data-touch-active={touchPoint !== null}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerLeave}
-      onDoubleClick={handleDoubleClick}
     >
       <div aria-hidden className={styles.baseline} />
 
-      {shown.map((event) => {
-        const uStart = clamp(scale.toUnit(event.tMax), 0, 1)
-        const uEnd = clamp(scale.toUnit(event.tMin), 0, 1)
-        return (
-          <div
-            key={event.id}
-            title={event.label}
-            className={styles.eventBand}
-            style={{ left: `${uStart * 100}%`, width: `${Math.max(uEnd - uStart, 0.002) * 100}%` }}
-          />
-        )
-      })}
+      {eventBandsU.map((band) => (
+        <div
+          key={band.id}
+          title={band.label}
+          className={styles.eventBand}
+          style={{ left: `${band.uStart * 100}%`, width: `${Math.max(band.uEnd - band.uStart, 0.002) * 100}%` }}
+        />
+      ))}
 
       {checkpointLayout.map((entry) =>
         entry.kind === 'pip' ? (
@@ -320,8 +390,19 @@ export function ScrubTrack({
             style={{ left: `${entry.u * 100}%` }}
             title={`${entry.label} — ${formatGeoTime(entry.t)}`}
             aria-label={`${entry.label}, ${formatGeoTime(entry.t)}`}
-            onPointerDown={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => {
+              // Mouse keeps the old "commit immediately" behaviour — stopping propagation here
+              // keeps `handlePointerDown` from ever running for a mouse press on this pip, so
+              // only `onClick` below decides anything. Touch/pen instead hands this press to the
+              // track for gesture arbitration (`markerGesture.ts`, ADR-021 follow-up): letting
+              // the event bubble (no `stopPropagation`) so `handlePointerDown` picks it up via
+              // `pendingMarkerEntryRef`, set here.
+              if (e.pointerType === 'mouse') {
+                e.stopPropagation()
+                return
+              }
+              pendingMarkerEntryRef.current = entry
+            }}
             onClick={(e) => {
               e.stopPropagation()
               onScrub(entry.t)
@@ -343,29 +424,55 @@ export function ScrubTrack({
             style={{ left: `${entry.u * 100}%` }}
             title={`${entry.members.length} scenes, ${formatGeoTime(entry.tMax)} – ${formatGeoTime(entry.tMin)}`}
             aria-label={`${entry.members.length} scenes, ${formatGeoTime(entry.tMax)} to ${formatGeoTime(entry.tMin)}`}
-            onPointerDown={(e) => e.stopPropagation()}
-            onDoubleClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => {
+              // See the matching pip button's own comment above — identical arbitration, just
+              // for a cluster marker (which opens the member popover instead of scrubbing to a
+              // single `t`).
+              if (e.pointerType === 'mouse') {
+                e.stopPropagation()
+                return
+              }
+              pendingMarkerEntryRef.current = entry
+            }}
             onClick={(e) => {
               e.stopPropagation()
-              onFrameCluster(entry.tMin, entry.tMax)
+              setOpenClusterId(entry.id)
+              onOpenCluster(entry.members)
             }}
           >
             <span aria-hidden className={styles.clusterDiamond}>
               <span className={styles.clusterCount}>{entry.members.length}</span>
             </span>
-            <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(entry.u, trackWidthPx, CLUSTER_PREVIEW_HALF_WIDTH_PX)}`}>
-              {entry.members.slice(0, CLUSTER_PREVIEW_MAX_ITEMS).map((member) => (
-                <span key={member.id} className={styles.clusterPreviewRow}>
-                  <span className={styles.pipTime}>{formatGeoTime(member.t)}</span>
-                  <span className={styles.pipLabel}>{member.label}</span>
-                </span>
-              ))}
-              {entry.members.length > CLUSTER_PREVIEW_MAX_ITEMS && (
-                <span className={styles.clusterPreviewMore}>+{entry.members.length - CLUSTER_PREVIEW_MAX_ITEMS} more</span>
-              )}
-            </span>
+            {/* Suppressed while this cluster's own member-list popover is open — showing both
+                at once would just repeat the same members twice. */}
+            {openClusterId !== entry.id && (
+              <span aria-hidden className={`${styles.pipPreview} ${previewAnchorClass(entry.u, trackWidthPx, CLUSTER_PREVIEW_HALF_WIDTH_PX)}`}>
+                {entry.members.slice(0, CLUSTER_PREVIEW_MAX_ITEMS).map((member) => (
+                  <span key={member.id} className={styles.clusterPreviewRow}>
+                    <span className={styles.pipTime}>{formatGeoTime(member.t)}</span>
+                    <span className={styles.pipLabel}>{member.label}</span>
+                  </span>
+                ))}
+                {entry.members.length > CLUSTER_PREVIEW_MAX_ITEMS && (
+                  <span className={styles.clusterPreviewMore}>+{entry.members.length - CLUSTER_PREVIEW_MAX_ITEMS} more</span>
+                )}
+              </span>
+            )}
           </button>
         ),
+      )}
+
+      {openClusterEntry && (
+        <ClusterPopover
+          members={openClusterEntry.members}
+          anchorU={openClusterEntry.u}
+          edgeAnchorClass={previewAnchorClass(openClusterEntry.u, trackWidthPx, CLUSTER_POPOVER_HALF_WIDTH_PX)}
+          onSelect={(selectedT) => {
+            onScrub(selectedT)
+            setOpenClusterId(null)
+          }}
+          onClose={() => setOpenClusterId(null)}
+        />
       )}
 
       <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
@@ -378,13 +485,26 @@ export function ScrubTrack({
       {hoverInfo && (
         <div
           aria-hidden
-          className={`${styles.hoverReadout} ${previewAnchorClass(hoverInfo.u, trackWidthPx)}`}
+          className={`${styles.hoverReadout} ${previewAnchorClass(hoverInfo.u, trackWidthPx, HOVER_READOUT_HALF_WIDTH_PX)}`}
           data-visible={hoverU !== null}
           style={{ left: `${hoverInfo.u * 100}%` }}
         >
           {hoverInfo.label && <span className={styles.snapLabel}>{hoverInfo.label}</span>}
-          <span className={styles.time}>{formatGeoTime(hoverInfo.t)}</span>
+          <span className={styles.time}>{hoverInfo.formattedTime}</span>
         </div>
+      )}
+
+      {touchPoint && hoverInfo && openClusterEntry === null && (
+        <TouchMagnifier
+          clientX={touchPoint.clientX}
+          clientY={touchPoint.clientY}
+          trackWidthPx={trackWidthPx}
+          centerU={hoverInfo.u}
+          time={hoverInfo.formattedTime}
+          label={hoverInfo.label}
+          pips={checkpointLayout}
+          eventBands={eventBandsU}
+        />
       )}
     </div>
   )

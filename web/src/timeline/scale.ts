@@ -34,17 +34,6 @@ function unwarpSymlog(w: number): GeoTime {
   return SYMLOG_C * Math.expm1(w)
 }
 
-/** The `symlog`/`linear` warp of a raw `t`, unnormalised by any window. Internal — used by
- *  `zoomWindow` to zoom in warped space without needing a full `TimeScale`. */
-export function warpFor(kind: 'symlog' | 'linear', t: GeoTime): number {
-  return kind === 'symlog' ? warpSymlog(t) : t
-}
-
-/** Inverse of `warpFor`. */
-export function unwarpFor(kind: 'symlog' | 'linear', w: number): GeoTime {
-  return kind === 'symlog' ? unwarpSymlog(w) : w
-}
-
 function assertValidWindow(window: TimeWindow): void {
   const [newest, oldest] = window
   if (!Number.isFinite(newest) || !Number.isFinite(oldest)) {

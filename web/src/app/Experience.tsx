@@ -28,13 +28,12 @@ import {
   createLinearScale,
   createSymlogScale,
   eraNameForTime,
-  followWindow,
   formatGeoTime,
   Timeline,
   useAnimatedScale,
   usePlaybackLoop,
 } from '@/timeline'
-import type { TimelineCheckpoint } from '@/timeline'
+import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
@@ -43,19 +42,24 @@ import { buildLayers, rawEvents } from './buildLayers'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
-/** The full-domain *symlog* `TimeScale`, shared by the three things in this component that
- *  must not track the timeline's current zoom/scale-kind: `advancePlayhead`'s `'scenes'`-mode
- *  pacing (always symlog, per ADR-016 — a scene's dwell/dissolve durations don't change when
- *  the user flips the linear toggle), `'steady'`-mode playback while symlog is selected, and
- *  the HUD sparklines (a trend line that reads as a fixed miniature of all of history, not a
- *  mirror of the user's current zoom). Module scope: one stable `TimeScale`, computed once,
- *  not per render. */
-const FULL_DOMAIN_SYMLOG_SCALE: TimeScale = createSymlogScale([0, EARTH_FORMATION])
+/** The timeline has no zoom/pan (removed; DESIGN §3's v1 note) — its visible window is always
+ *  the full domain. One stable module-scope reference, not a literal recomputed per render, so
+ *  it can be passed straight into `useAnimatedScale`'s memoisation below without invalidating
+ *  it every frame. */
+const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
+
+/** The full-domain *symlog* `TimeScale`, shared by the two things in this component that must
+ *  not track the timeline's current scale-kind: `advancePlayhead`'s `'scenes'`-mode pacing
+ *  (always symlog, per ADR-016 — a scene's dwell/dissolve durations don't change when the user
+ *  flips the linear toggle), and the HUD sparklines (a trend line that reads as a fixed
+ *  miniature of all of history, not a mirror of the user's current scale-kind toggle). Module
+ *  scope: one stable `TimeScale`, computed once, not per render. */
+const FULL_DOMAIN_SYMLOG_SCALE: TimeScale = createSymlogScale(FULL_DOMAIN)
 
 /** The full-domain *linear* `TimeScale` — only ever used for `'steady'`-mode playback while
  *  the linear toggle is on (ADR-016: "constant velocity in the full-domain scale of the
  *  CURRENTLY SELECTED scale kind"). Module scope for the same reason as its symlog sibling. */
-const FULL_DOMAIN_LINEAR_SCALE: TimeScale = createLinearScale([0, EARTH_FORMATION])
+const FULL_DOMAIN_LINEAR_SCALE: TimeScale = createLinearScale(FULL_DOMAIN)
 
 /** Time constant, seconds, for smoothing the instantaneous years-per-second rate readout
  *  (ADR-016's prototype) into something that doesn't flicker every frame — an exponential
@@ -81,8 +85,6 @@ export function Experience() {
 
   const t = useTimeStore((s) => s.t)
   const setT = useTimeStore((s) => s.setT)
-  const timeWindow = useTimeStore((s) => s.window)
-  const setWindow = useTimeStore((s) => s.setWindow)
   const scaleKind = useTimeStore((s) => s.scaleKind)
   const setScaleKind = useTimeStore((s) => s.setScaleKind)
   const playback = useTimeStore((s) => s.playback)
@@ -95,11 +97,11 @@ export function Experience() {
   const setExpandedChartLayerId = useTimeStore((s) => s.setExpandedChartLayerId)
 
   // The timeline's animated scale lives here and is passed down to both <Timeline> and the chart
-  // dock, so the value under the chart's playhead sits directly above the timeline's. It must
-  // not be reported back up from an effect inside <Timeline>: that scheduled a second render on
-  // every minimap drag frame, which a fast pointer starved into "Maximum update depth exceeded".
+  // dock, so the value under the chart's playhead sits directly above the timeline's. Always
+  // over the full domain — the timeline has no zoom/pan — so `useAnimatedScale`'s own memoised
+  // scales only ever recompute when the symlog/linear toggle actually changes, not every render.
   const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
-  const timelineScale = useAnimatedScale(timeWindow, timelineScaleKind)
+  const timelineScale = useAnimatedScale(FULL_DOMAIN, timelineScaleKind)
 
   // Where SceneView's caption is portalled: the shell's subtitle position above the timeline.
   // SceneView renders the caption inside its own full-window layer, which sits beneath the
@@ -116,19 +118,6 @@ export function Experience() {
   // Idle calm is never armed with the globe expanded: the expanded globe lives inside the
   // periphery the calm fades, and a modal the viewer opened must not dim itself.
   const calm = useIdle({ armed: playback.playing && !globeExpanded, timeoutMs: IDLE_CALM_MS })
-
-  // Follow-during-playback (timeline README §4), wired here next to the playback loop below.
-  // Engages on every play press (the effect only ever turns it *on*); disengages the instant
-  // the user manually pans or zooms the window — that happens in the wrapped `onWindowChange`
-  // passed to <Timeline>, not here, since only a *user* gesture should disengage it, never
-  // `followWindow`'s own panning (which writes `window` directly in the playback loop below,
-  // bypassing that callback entirely).
-  const [following, setFollowing] = useState(false)
-  const wasPlayingRef = useRef(playback.playing)
-  useEffect(() => {
-    if (playback.playing && !wasPlayingRef.current) setFollowing(true)
-    wasPlayingRef.current = playback.playing
-  }, [playback.playing])
 
   useEffect(() => {
     installDevHook()
@@ -177,8 +166,7 @@ export function Experience() {
   }, [playback.playing])
 
   // The playback loop (DESIGN §3): the one place `t` advances on its own. Always paced by a
-  // *full-domain* scale (never the current window's), per `advancePlayhead`'s contract, so
-  // playback speed is independent of zoom.
+  // *full-domain* scale, per `advancePlayhead`'s contract.
   usePlaybackLoop({
     playing: playback.playing,
     onFrame: (dtSeconds) => {
@@ -199,10 +187,6 @@ export function Experience() {
         return
       }
       if (next !== t) setT(next)
-      if (following) {
-        const followed = followWindow(timeWindow, next, timelineScaleKind)
-        if (followed[0] !== timeWindow[0] || followed[1] !== timeWindow[1]) setWindow([followed[0], followed[1]])
-      }
     },
   })
 
@@ -240,6 +224,13 @@ export function Experience() {
         : [],
     [data],
   )
+
+  // Clicking or tapping a checkpoint cluster marker (ADR-019) reports its members here — purely
+  // as a notification. `<Timeline>`'s own `ScrubTrack` opens and owns an in-track member-list
+  // popover itself (ADR-021), so this component has no UI of its own to build in response; kept
+  // as a no-op rather than removed, since the prop still exists for a caller that wants to know
+  // (analytics, say).
+  const handleOpenCluster = (_members: readonly TimelineCheckpoint[]): void => {}
 
   if (data.status === 'loading' || (data.status === 'ready' && !initialised)) {
     return <main className={styles.centered}>Loading manifest…</main>
@@ -340,28 +331,19 @@ export function Experience() {
       timeline={
         <Timeline
           t={t}
-          window={timeWindow}
           scaleKind={timelineScaleKind}
           scale={timelineScale}
           events={manifest.events}
           checkpoints={checkpoints}
           playback={playback}
           onScrub={setT}
-          onWindowChange={(w) => {
-            // Every window change reaching this callback is a user gesture (wheel, drag,
-            // a zoom/fit button, minimap click, a keyboard shortcut) — `followWindow`'s own
-            // panning never goes through it, see the playback loop above — so disengaging
-            // follow unconditionally here is exactly README §4's rule.
-            setFollowing(false)
-            setWindow([w[0], w[1]])
-          }}
           onScaleKindChange={setScaleKind}
           onPlaybackChange={(next) => {
             setPlaying(next.playing)
             setSpeed(next.speed)
             setPlaybackMode(next.mode)
           }}
-          following={following}
+          onOpenCluster={handleOpenCluster}
           ratePerSecond={ratePerSecond}
         />
       }

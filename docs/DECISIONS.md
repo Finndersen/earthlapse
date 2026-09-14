@@ -965,6 +965,8 @@ of what it drew reachable:
   behaviour toward `<Timeline>` are unchanged, since clustering/declutter are both internal to
   `Timeline`/`ScrubTrack`.
 
+---
+
 ## ADR-020 — A chapter may recur as several non-adjacent runs
 
 **Status:** accepted — human-directed 2026-09-14. Supersedes the "no new chapter" half of
@@ -1041,3 +1043,239 @@ is scientifically wide (3.9 Ga to the present) forced through one narrow composi
 - A chapter that recurs many times produces many short runs and therefore many cuts; nothing in
   this ADR limits recurrence, so taste and the few-vs-many-chapters trade-off (DESIGN §14, still
   open) now applies per-run as well as per-chapter.
+
+## ADR-021 — Density-adaptive markers, a cluster popover and a touch magnifier finish the zoom-removal work
+
+**Status:** accepted — human-directed 2026-09-14.
+
+**Context.** The human asked whether the fisheye lens (ADR-017) could adjust its own zoom level
+to event density, so an individual scene or event stays resolvable by hovering (or, on a phone,
+by touch) "regardless of how close they are" — and, agreeing that this makes a second, separate
+zoom mechanism redundant, that the timeline's zoom (buttons, wheel/pinch, double-click, window
+framing on click) and the bottom minimap strip be removed outright, with a cluster click opening
+a member list instead of framing a window, and a mobile-text-selection-style magnifier for touch
+press-and-drag. Two foundation passes landed the pieces this ADR wires together: `fisheye.ts`
+gained density-adaptive gap insertion — given a sorted list of marker positions, any gap narrower
+than `MIN_MARKER_SEPARATION_PX` gets its own density spike, tapered and mass-capped so a crowded
+run of markers opens room for all of them without collapsing the rest of the track — and the
+zoom/minimap subsystem (`zoom.ts`, `wheelZoom.ts`, `windowTransition.ts`, `Minimap`,
+`ZoomControls`, `follow.ts`) was deleted, `Timeline`'s window fixed to the full domain, and
+`ScrubTrack`'s cluster click rewired from `onFrameCluster` (window-framing) to `onOpenCluster`
+(reports members, left as an unwired no-op stub pending this pass).
+
+**Decision.**
+- **Markers wiring.** `Timeline.tsx` builds `markers` — every checkpoint's `t` plus every event's
+  `tMin`/`tMax`, in undistorted (`scale.toUnit`) units — memoised alongside `trackScale`, and
+  passes it into `fisheyeScale(scale, fisheye.lens, fisheye.trackWidthPx, markers)`. Without this
+  the lens agent's own gap-insertion machinery had nothing to insert gaps around; with it, every
+  checkpoint and event range endpoint on the track is a candidate the lens keeps separated once
+  the pointer (or a touch drag) brings it near enough, regardless of how many years apart they
+  actually are — the K-Pg trio (ADR-017's own worked example, ~1e-6 displayed px apart at rest)
+  resolves to individually hoverable/tappable pips under the lens, same as any other cluster.
+- **Precision-adaptive hover readout.** `formatGeoTimePrecise(t, precisionYears)` (`format.ts`)
+  is `formatGeoTime` with extra decimal digits of raw years once `precisionYears` — the local
+  years-per-displayed-pixel, `yearsPerDisplayedPixelAt` (already exported by the lens agent's
+  pass) — resolves finer than `formatGeoTime`'s own fixed per-bucket decimal count. It falls
+  straight back to `formatGeoTime` whenever the ambient bucket is already at least as fine as a
+  pixel (the common case, away from a resolved gap), so this is safe to use everywhere a
+  pointer-driven readout previously called `formatGeoTime` directly. `ScrubTrack`'s hover readout
+  and the touch magnifier's own readout (below) both use it, so a 1px hover move inside a
+  fisheye-opened gap now visibly changes the reading instead of both sides of the gap reading
+  identically.
+- **Cluster member-list popover.** `ClusterPopover` (`timeline/components/`) is opened by
+  `ScrubTrack` itself — not the caller — when a cluster marker (ADR-019) is clicked or tapped:
+  a small list of the cluster's members (label + `formatGeoTime`), anchored to the cluster's own
+  `u` and edge-clamped the same way a pip's hover preview already is. Selecting a member scrubs
+  to its `t` and closes; Escape closes without scrubbing; a press anywhere else on the track
+  dismisses it without also scrubbing through it (the usual "tap outside a popover" convention);
+  focus lands on it the moment it opens. `Timeline`'s `onOpenCluster` prop is kept as a pure
+  notification — `ScrubTrack` still calls it, but nothing downstream is required to build UI in
+  response to it any more; `Experience.tsx`'s handler stays the no-op stub the removal pass left,
+  now correctly commented as intentional rather than a placeholder. Chrome-less, per the shared
+  visual language (`Timeline.tsx`'s own doc comment): no bordered card, the same soft shadow-pool
+  `::before` the pip/cluster hover preview already uses.
+- **Touch press-and-drag magnifier.** `TouchMagnifier` (`timeline/components/`), modelled on the
+  mobile text-selection loupe: while a `touch`/`pen` pointer is pressed on the track, a bubble
+  floats above the finger (`position: fixed`, never under it) showing a further-magnified strip
+  of the track around the touch point — `checkpointLayout`'s pips/clusters and the decluttered
+  event bands `ScrubTrack` already computed against the fisheye-distorted scale, re-projected
+  into the bubble's own narrower window at an extra `MAGNIFIER_ZOOM` (3x) on top of whatever the
+  lens itself has already opened up — plus the same precision-formatted time and nearest-marker
+  label the mouse hover readout shows. Dragging scrubs `t` continuously through the same lens a
+  mouse hover would (no separate math); lifting keeps `t` and hides the bubble. A quick tap on a
+  pip/cluster still selects/opens it unchanged (pointerdown `stopPropagation` on those buttons
+  already prevented the track's own scrub from also firing). The track's `touch-action: none`
+  (pre-existing, ADR-017) already keeps a drag from scrolling or pinch-zooming the page. Pip/
+  cluster touch targets grow to ~44px *tall* under `@media (pointer: coarse)` — height only, not
+  width, since two pips can sit as little as `MIN_PIP_SEPARATION_PX` (8px) apart before
+  `layoutCheckpointPips` merges them, and a wider hit box would make adjacent close markers'
+  tap targets overlap well before their diamonds do.
+- **Cross-references to ADR-017 and ADR-019, both of which described a zoom mechanism this pass
+  no longer has anything to point at.** ADR-017's Implementation section says "the zoom buttons,
+  keyboard shortcuts, fit-all and event-framing all continue to anchor on the undistorted
+  scale" — that whole apparatus is gone (removed in the pass this ADR's Context describes); the
+  lens itself, the coupling/dead-zone amendment, the snap port and the undistorted chart dock are
+  all still accurate as written. ADR-019's Decision says clicking a cluster "frames the members'
+  combined `[tMin, tMax]` span via a new `onFrameCluster` prop... reusing `frameEventWindow`/
+  `animateWindowTo`" — superseded by this ADR's popover and `onOpenCluster`, above; everything
+  else in ADR-019 (clustering itself, room-based declutter, the tick-label-bounds fix) is
+  unaffected and still current. Per this file's own rule ("do not edit history"), those two
+  ADRs' bodies are left as written; this paragraph is the correction, not an edit to either.
+
+**Alternatives considered.**
+- **Keep the old fixed-factor zoom alongside the density-adaptive lens**, e.g. as a coarse
+  "get to the right neighbourhood" tool before the lens does the fine work. Rejected on the
+  human's own framing before this pass began: the lens already resolves anything down to
+  individually clickable regardless of how close together it is, so a second mechanism for the
+  same job is redundant complexity, not a complementary one — two ways to reach the same result
+  is worse UX than committing to the one that actually scales to arbitrary density.
+- **A vertical (or radial) timeline layout**, so a dense cluster could spread across a second
+  dimension instead of fighting for horizontal room. Rejected: it would invalidate essentially
+  every geometric assumption this package's rendering and hit-testing make (declutter, pip
+  clustering, tick generation, the playhead, `uFromClientX`'s own horizontal math) for a benefit
+  the lens already delivers in place — resolving a dense run without ever leaving the horizontal
+  track a scrubbing gesture (mouse drag or touch swipe) naturally maps onto.
+
+**Implementation.**
+- `timeline/Timeline.tsx` — the `markers` memo (checkpoints ∪ event range endpoints, in base-scale
+  `u`), threaded into `fisheyeScale`'s new 4th parameter.
+- `timeline/format.ts` — `formatGeoTimePrecise`, `bucketResolutionYears` (internal).
+- `timeline/components/ClusterPopover.tsx` + `.module.css` — new.
+- `timeline/components/TouchMagnifier.tsx` + `.module.css` — new.
+- `timeline/components/ScrubTrack.tsx` — `openClusterId`/`touchPoint` state, the `eventBandsU`
+  memo (shared by the main render and the magnifier), `formatGeoTimePrecise` wired into the hover
+  readout, `data-cluster-open` (hides the playhead/hover readouts while a popover is open, same
+  pattern as the existing hover-preview rule), the pointerdown-elsewhere-dismisses-the-popover
+  branch.
+- `timeline/components/ScrubTrack.module.css` — the `data-cluster-open` rule, the
+  `@media (pointer: coarse)` pip/cluster touch-target rule.
+- `timeline/index.ts` — exports `formatGeoTimePrecise` alongside `formatGeoTime`.
+- `app/Experience.tsx` — `handleOpenCluster`'s comment corrected (it is not a placeholder
+  awaiting a follow-up any more; the follow-up is this ADR).
+- `docs/DESIGN.md` §3 — the zoom-removal v1 note extended to name the density-adaptive markers,
+  the cluster popover and the touch magnifier as what actually delivers "reachable ... regardless
+  of how close together" and the touch equivalent, rather than leaving those as forward-looking.
+
+**Tests.** `fisheye.test.ts`/`checkpointLayout.test.ts` (from the foundation passes) already cover
+the marker/gap-insertion math and the fisheye-reveal clustering behaviour directly; this pass adds
+`format.test.ts` (`formatGeoTimePrecise`: fallback threshold, the K-Pg trio resolving to three
+distinct readouts, decimal-count derivation, the `MAX_PRECISE_DECIMALS` cap, `"present"` and
+validation edge cases), a `Timeline.test.tsx` case asserting the exact `markers` array
+`fisheyeScale` is called with (spying through to the real implementation), and `ScrubTrack.test.tsx`
+coverage for the popover (opens with both members named, selects-and-closes, Escape-closes,
+outside-press-dismisses-without-scrubbing, focus-on-open) and the touch magnifier (shows while
+touch-pressed, absent on mouse hover, hides on lift, shows the same precision-formatted readout).
+`pnpm vitest run` — 690/690 passing; `pnpm typecheck` — clean.
+
+**Consequences.**
+- `markers` is rebuilt every render `checkpoints`/`events`/`scale` actually changes — `O(scenes +
+  2·events)` (order of a hundred entries for this product's real data), cheap next to the
+  `O(log n)`-per-query table `fisheyeScale` already builds from it.
+- A viewer who never hovers or touches the track sees no change at all — same as ADR-017's own
+  consequence: the lens (and now its markers) only matter once `pointTo` has been called.
+- `ClusterPopover`/`TouchMagnifier` are the first *interactive* (pointer-events: auto) floating
+  surfaces this package has added since the loupe's removal (ADR-017) — everything else riding
+  the track (previews, the hover readout) is `pointer-events: none` and purely presentational.
+  Both stay chrome-less per the shared visual language rather than introducing the package's
+  first bordered panel.
+
+**Amendment (2026-09-14) — the lens's own extra mass is now conserved, not just gap insertion's
+own additive cap.** Browser-verified reviewer finding: because the inserted mass this ADR's own
+gap insertion added depended on the focus position (which gaps were active, how tapered, and —
+independently of markers at all — how close the focus sat to a domain edge), the *normaliser*
+`fisheyeScale` divides every displayed position by changed as the lens moved between sparse and
+dense regions of the track, or simply as it approached either end of the domain. Every point on
+the track — including checkpoint pips and event bands 500–900px from the pointer, nowhere near
+the lens — slid by up to hundreds of px during an ordinary hover sweep, and unrelated clusters
+merged and split as a side effect. This directly contradicted ADR-017's own "anything outside the
+lens keeps its place as the lens moves" and reproduced the class of unprompted "jump" the human
+had already reported once against the dead zone (ADR-017's own amendment, above) — the module's
+doc comment had flagged the *plain*-bump half of this as a known, deliberately out-of-scope
+residual at the time density-adaptive gap insertion first landed (the "Known residual" paragraph
+that amendment's own commit added); this pass closes it, including that half.
+
+`timeline/fisheye.ts` is restructured around one invariant: the total extra mass the lens may add
+over the whole track is a fixed **budget** `B = gain · halfWidth` — exactly the mass an unclipped
+plain bump of that gain and half-width would carry — a pure function of `strength` and
+`trackWidthPx`, never of focus or `markers`. The scale's true normaliser (`FisheyeTable.total`) is
+therefore always exactly `1 + B`, so a point the lens's local support doesn't reach reduces to a
+closed form (`s / (1 + B)` or `(s + B) / (1 + B)`) that cannot depend on where the focus is or how
+the markers are laid out — not merely bounded to move "a little", provably identical to floating
+precision, which `fisheye.test.ts`'s new "mass conservation" tests check directly (a focus sweep
+through both dense and sparse marker sets, and across domain-edge clipping) rather than only
+bounding the shift as the previous cap's own tests did. Gap insertion no longer *adds* to the
+budget; it *reallocates* it: every candidate gap draws against `B` first (scaled down
+proportionally, continuously, if combined demand exceeds it — a saturated cluster can claim the
+entire budget, leaving the smooth bump nothing right at its own centre, which is accepted as the
+correct trade since the magnification is needed exactly there), and whatever `B` the gaps don't
+claim goes to the bump. Near a domain edge, where the bump's own natural support runs past
+`[0, 1]` and its in-domain integral would otherwise fall short of `B`, the bump's effective gain
+is scaled up so its in-domain mass still equals its share of `B` exactly — the same redistribution
+mechanism handles gap-competition and edge-clipping uniformly. `MAX_INSERTED_TOTAL_PX` is retired
+(its role is now `B` itself, derived from `FISHEYE_GAIN`/`FISHEYE_HALF_WIDTH_PX` rather than an
+independently-tuned pixel constant); `FISHEYE_GAIN`/`FISHEYE_HALF_WIDTH_PX`/`GAP_TAPER_HALF_WIDTH_PX`
+are unchanged — checked against the real data's own tightest clusters (the K-Pg trio and the last
+~200 years' several-scenes-and-events-within-2px cluster), the existing budget (~250 displayed px
+at full strength on a 1440px track) resolves both with room to spare, so raising either constant
+was not needed.
+
+Browser-verified (Playwright, 1440×900, hovering across the real track in 20px steps with 5
+intermediate sub-steps each so the pointer-coupled lens tracks continuously): a pip more than
+~350px from the pointer moves at most ~1.6px between consecutive hover positions (residual
+render/measurement noise, not the lens), dropping further with distance (~1px at 500px,
+under 1px at 700px) — down from up to hundreds of px before this fix. The one exception inside
+that margin, up to ~20px for a pip ~257px from the pointer, sits in the real timeline's single
+densest neighbourhood (68–62 Ma, several adjacent clusters within a few tens of screen px of each
+other); there the lens's *magnified* screen footprint genuinely extends past the raw 240px
+(undistorted-space) taper radius, which is expected and consistent with the invariant — the
+invariant is proven, and unit-tested, against the true local support in undistorted space, not a
+fixed screen-space radius. The K-Pg trio (three same-instant-ish scenes ~66.043–66.0429 Ma) and
+the present-day cluster (Wright Flyer, Apollo 11, present) both resolve to individually hoverable,
+clickable pips once the lens sits over them, confirmed live against the running app.
+
+**Amendment (2026-09-14) — touch/pen gesture arbitration for a press that starts on a marker
+(corrects a claim in this ADR's own Decision above).** The "Touch press-and-drag magnifier" bullet
+above claims a marker's pointerdown-time `stopPropagation` "already prevented the track's own
+scrub from also firing" for a tap, implying a drag was unaffected. That was wrong: on a phone,
+where a pip/cluster's `@media (pointer: coarse)` touch target (this ADR's own change, ~44px tall)
+covers most of the track, a real drag that happened to *start* on one stopped propagation
+unconditionally at `pointerdown` — so `ScrubTrack`'s own scrub handling never saw it, and the
+press committed to "select this marker" before the gesture had any chance to become a drag. A
+touch/pen drag beginning on any marker was therefore unscrubbable; only empty track worked.
+
+`timeline/markerGesture.ts` (new) fixes this without touching mouse behaviour at all. A marker
+button's `onPointerDown` now only stops propagation for `pointerType === 'mouse'`; for touch/pen it
+instead records the press (`pendingMarkerEntryRef`) and lets the event bubble to `ScrubTrack`,
+which holds it *pending* — neither a scrub nor a selection yet — until the gesture resolves:
+`hasExceededTapSlop` (Euclidean, `MARKER_TAP_SLOP_PX = 8`) is checked on every subsequent move;
+once movement clears it, the press commits to an ordinary scrub for the rest of the gesture
+(`pendingMarkerPressRef` cleared, falling through to the same `scrubToClientX` path a drag starting
+on empty track already used); short of that, lifting resolves it into a tap — `commitMarkerTap`
+selects the pip or opens the cluster popover, the same outcome `onClick` already gives a mouse
+click. A cancelled pointer (the system claiming the gesture) commits to neither. The touch
+magnifier is unaffected either way: it already shows for any pressed touch/pen pointer regardless
+of arbitration state, so a pending marker press previews it the same as a press on empty track.
+Mouse is provably unaffected — its `pointerdown` still stops propagation before any of this code
+runs, so `ScrubTrack`'s own `handlePointerDown` never even observes a mouse press on a marker.
+
+**Tests.** `markerGesture.test.ts` (`hasExceededTapSlop`: no movement, under/at/past the slop
+boundary on each axis, the Euclidean 6-8-10 case, a custom threshold, negative deltas) and a new
+`ScrubTrack.test.tsx` block, "touch/pen marker gesture arbitration (ADR-021 follow-up)": a mouse
+click still selects immediately; a touch tap (lift within the slop) selects a pip rather than
+scrubbing to the raw touch position; a touch drag exceeding the slop scrubs and does not select;
+the same pair of cases for a cluster (tap opens the popover, a drag scrubs past it); the magnifier
+shows immediately on a pending marker press, before slop is exceeded; a pending press never leaks
+into the next gesture on the same pointer id. `pnpm vitest run` — 726/726 passing; `pnpm
+typecheck` — clean.
+
+Browser-verified (Playwright + CDP touch dispatch, 390×844 coarse-pointer/`hasTouch` viewport): a
+touch drag starting on a pip and moving well past `MARKER_TAP_SLOP_PX` scrubs the playhead
+(`aria-valuenow` moves off its start value) while the magnifier stays visible throughout, including
+the instant right after `touchstart` before slop is exceeded; a touch press on a pip with only
+sub-slop jitter lands the playhead exactly on that pip's own `t` on lift; a touch press on a
+cluster marker under the same sub-slop condition opens `ClusterPopover` (`data-cluster-open`
+flips, the popover's member list renders); a plain mouse click on a pip still selects it in one
+event, unaffected by any of the above.
+
+---
+

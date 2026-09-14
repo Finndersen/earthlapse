@@ -1,0 +1,131 @@
+/* Unlike the passive pip/cluster preview, this is an interactive, keyboard-focusable dialog
+   sitting over a live photograph — the soft shadow pool `.pipPreview::before` uses reads fine
+   for a hover preview but left the member list itself as bare text over the scene, unreadable
+   over a bright plate or caption. One opaque panel instead, matching `TouchMagnifier`'s: the
+   same `rgba(3, 4, 6, 0.88)` background and hairline/shadow token pair already used there and
+   throughout this package. */
+.popover {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 0;
+  transform: translateX(-50%);
+  width: 210px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(3, 4, 6, 0.88);
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  isolation: isolate;
+  outline: none;
+  z-index: 3;
+}
+
+/* Focus lands here programmatically the instant the popover opens (see the component's own doc
+   comment) — visible only for the keyboard-driven case `:focus-visible` itself already
+   distinguishes from a mouse-triggered open, matching every other focus ring in this package
+   (`.close:focus-visible` below, `.hitArea:focus-visible::after` in `ScrubTrack`). */
+.popover:focus-visible {
+  box-shadow:
+    0 0 0 1.5px var(--hud-accent, #e8b06a),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+}
+
+.popover.start {
+  left: 0;
+  transform: none;
+}
+
+.popover.end {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 0 6px;
+}
+
+.count {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 10.5px;
+  color: var(--hud-accent, #e8b06a);
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  /* At least ~44px tall on touch (brief §4) — the label/time pair is shorter than that on its
+     own, so pad the row out rather than relying on font size alone. */
+  min-height: 44px;
+  padding: 4px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.item:hover .itemLabel,
+.item:focus-visible .itemLabel {
+  color: var(--hud-accent, #e8b06a);
+  outline: none;
+}
+
+.itemTime {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  color: var(--hud-accent, #e8b06a);
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+}
+
+.itemLabel {
+  font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--hud-ink, #efe9dc);
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  transition: color 150ms ease;
+}

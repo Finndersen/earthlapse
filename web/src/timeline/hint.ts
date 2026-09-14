@@ -1,5 +1,5 @@
 /**
- * Persistence for the first-use hint (brief §2: "shown until the first successful zoom/pan,
+ * Persistence for the first-use hint (brief §2: "shown until the first successful hover,
  * remembered in sessionStorage behind try/catch"). `sessionStorage` can throw (private
  * browsing, a blocked-storage policy, or simply not existing in a test/SSR environment) — every
  * access is wrapped so a storage failure degrades to "show the hint" rather than crashing the
@@ -18,8 +18,8 @@ function getSessionStorage(): Storage | null {
 }
 
 /** Whether the hint was already dismissed earlier this session (by an explicit dismiss, or a
- *  prior successful zoom/pan). Defaults to `false` (show the hint) whenever storage is
- *  unavailable or throws. */
+ *  prior successful hover over the track — the gesture that reveals the fisheye lens).
+ *  Defaults to `false` (show the hint) whenever storage is unavailable or throws. */
 export function readHintDismissed(): boolean {
   const storage = getSessionStorage()
   if (!storage) return false

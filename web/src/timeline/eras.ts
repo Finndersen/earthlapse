@@ -1,10 +1,9 @@
 /**
- * Eon/era boundaries for the minimap's background bands (README §"Overview minimap"). Cited,
- * not eyeballed — the numbers below are the major-boundary ages from the International
+ * Eon/era boundaries backing `eraNameForTime` — the shell's era/time title (Experience.tsx).
+ * Cited, not eyeballed — the numbers below are the major-boundary ages from the International
  * Commission on Stratigraphy's International Chronostratigraphic Chart, v2024/12
- * (https://stratigraphy.org/chart), converted from Ma/Ga to years BP. This package renders
- * three eons of Precambrian time and the three Phanerozoic eras (not every stage or period —
- * "thin, muted bands for orientation", not a full stratigraphic column).
+ * (https://stratigraphy.org/chart), converted from Ma/Ga to years BP. This package covers
+ * three eons of Precambrian time and the three Phanerozoic eras (not every stage or period).
  */
 
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
@@ -34,8 +33,7 @@ const CENOZOIC_BASE: GeoTime = 66.0 * MA
 
 /**
  * Oldest to newest, contiguous and covering `[0, EARTH_FORMATION]` exactly — each band's
- * `window[0]` is the previous band's `window[1]`, so there is no gap or overlap for the
- * minimap to render as a seam.
+ * `window[0]` is the previous band's `window[1]`, so `eraNameForTime` never falls into a gap.
  */
 export const ERA_BANDS: readonly EraBand[] = [
   { id: 'hadean', name: 'Hadean', window: [ARCHEAN_BASE, EARTH_FORMATION] },

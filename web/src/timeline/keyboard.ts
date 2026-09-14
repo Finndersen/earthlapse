@@ -1,10 +1,9 @@
 /**
- * Keyboard intents for the timeline (README §2: "+/− zoom, ←/→ step to the previous/next
- * event, space play/pause, 0 or Home fits all"). A pure key -> intent mapping, kept separate
- * from the DOM listener that wires it up (`Timeline`'s root `onKeyDown`, which fires only
- * while focus is somewhere inside the component — see that component for why that alone is
- * enough to not "hijack typing elsewhere" without a global listener) so the mapping itself is
- * directly unit-testable.
+ * Keyboard intents for the timeline (README §2: "←/→ step to the previous/next event, space
+ * play/pause"). A pure key -> intent mapping, kept separate from the DOM listener that wires it
+ * up (`Timeline`'s root `onKeyDown`, which fires only while focus is somewhere inside the
+ * component — see that component for why that alone is enough to not "hijack typing elsewhere"
+ * without a global listener) so the mapping itself is directly unit-testable.
  */
 
 /** Tag names that should swallow every key this module maps, even when a focusable timeline
@@ -13,12 +12,7 @@
  *  and future-proof — see README §2's own wording). */
 const TEXT_INPUT_TAGS = new Set(['INPUT', 'TEXTAREA'])
 
-export type TimelineKeyIntent =
-  | { type: 'zoom-in' }
-  | { type: 'zoom-out' }
-  | { type: 'step'; direction: 'prev' | 'next' }
-  | { type: 'toggle-play' }
-  | { type: 'fit-all' }
+export type TimelineKeyIntent = { type: 'step'; direction: 'prev' | 'next' } | { type: 'toggle-play' }
 
 /** The subset of a real `KeyboardEvent` this module needs, so tests can pass plain objects
  *  instead of constructing DOM events. */
@@ -41,12 +35,6 @@ export function timelineKeyIntent(event: TimelineKeyEvent): TimelineKeyIntent | 
   if (isTextInputTarget(event.target)) return null
 
   switch (event.key) {
-    case '+':
-    case '=':
-      return { type: 'zoom-in' }
-    case '-':
-    case '_':
-      return { type: 'zoom-out' }
     case 'ArrowLeft':
       return { type: 'step', direction: 'prev' }
     case 'ArrowRight':
@@ -54,9 +42,6 @@ export function timelineKeyIntent(event: TimelineKeyEvent): TimelineKeyIntent | 
     case ' ':
     case 'Spacebar': // legacy value some browsers still send
       return { type: 'toggle-play' }
-    case '0':
-    case 'Home':
-      return { type: 'fit-all' }
     default:
       return null
   }
