@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { EARTH_FORMATION, type TimeScale } from '@/types/layer'
 
 import {
-  FISHEYE_DEADZONE_PX,
+  FISHEYE_COUPLING_RADIUS_PX,
   RESTING_FISHEYE,
   fisheyeScale,
   isFisheyeSettled,
-  stepFisheye,
+  moveFisheyeLens,
+  stepFisheyeStrength,
   type FisheyeMotion,
 } from './fisheye'
 import { createLinearScale, createSymlogScale, type TimeWindow } from './scale'
@@ -142,96 +143,189 @@ describe('fisheyeScale', () => {
   })
 })
 
-describe('stepFisheye', () => {
-  it('fades in from rest with the centre directly under the pointer, not sweeping in from the old centre', () => {
-    const next = stepFisheye(RESTING_FISHEYE, 0.7, TRACK_WIDTH_PX, 0.016)
+describe('moveFisheyeLens', () => {
+  it('reappears directly under the pointer when there is no previous pointer position and the lens has faded', () => {
+    const next = moveFisheyeLens(RESTING_FISHEYE, null, 0.7, TRACK_WIDTH_PX)
     expect(next.lens.centreU).toBe(0.7)
+    // Moving the lens never touches strength — that is `stepFisheyeStrength`'s job alone.
+    expect(next.lens.strength).toBe(RESTING_FISHEYE.lens.strength)
+  })
+
+  it('does not snap a still-visible lens across the track on a quick leave/re-enter (no previous pointer position, strength ~1)', () => {
+    // Reviewer-verified bug: a leave/re-enter fast enough that `strength` hasn't faded used to
+    // snap `centreU` straight to the new pointer even though the lens was still fully visible —
+    // a sudden jump. It must instead move the same continuous, radius-clamped way any other move
+    // does.
+    const visible: FisheyeMotion = { lens: { centreU: 0.2, strength: 1 } }
+    const next = moveFisheyeLens(visible, null, 0.8, TRACK_WIDTH_PX)
+    // A treated-as-a-coupled-move re-entry lands within the coupling radius of the new pointer
+    // position (same as the existing "clamps the offset" case for an ordinary large jump) —
+    // never snapped exactly onto it.
+    const offsetFromPointerPx = Math.abs(0.8 - next.lens.centreU) * TRACK_WIDTH_PX
+    expect(next.lens.centreU).not.toBe(0.8)
+    expect(offsetFromPointerPx).toBeLessThanOrEqual(FISHEYE_COUPLING_RADIUS_PX + 1e-6)
+    expect(next.lens.strength).toBe(1)
+  })
+
+  it('reappears directly under the pointer once strength has faded to the settle threshold, even with no previous pointer position', () => {
+    const faded: FisheyeMotion = { lens: { centreU: 0.2, strength: 0.002 } }
+    const next = moveFisheyeLens(faded, null, 0.8, TRACK_WIDTH_PX)
+    expect(next.lens.centreU).toBe(0.8)
+    expect(next.lens.strength).toBe(0.002)
+  })
+
+  it('treats a lost pointer position as if the pointer had last been at the lens centre — same result as an explicit move from there', () => {
+    const visible: FisheyeMotion = { lens: { centreU: 0.35, strength: 0.9 } }
+    const viaNull = moveFisheyeLens(visible, null, 0.6, TRACK_WIDTH_PX)
+    const viaCentre = moveFisheyeLens(visible, visible.lens.centreU, 0.6, TRACK_WIDTH_PX)
+    expect(viaNull.lens.centreU).toBe(viaCentre.lens.centreU)
+  })
+
+  it('never moves the lens for a stationary pointer, however many times it is reported', () => {
+    const settled: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 } }
+    let motion = settled
+    for (let i = 0; i < 50; i++) {
+      motion = moveFisheyeLens(motion, 0.5, 0.5, TRACK_WIDTH_PX)
+    }
+    expect(motion.lens.centreU).toBe(0.5)
+  })
+
+  it('moves the centre less for a small move near the centre than for the same-size move once already at the coupling radius', () => {
+    const start: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 } }
+    const stepU = 4 / TRACK_WIDTH_PX
+
+    const nearCentre = moveFisheyeLens(start, 0.5, 0.5 + stepU, TRACK_WIDTH_PX)
+    const nearCentreMovedPx = (nearCentre.lens.centreU - 0.5) * TRACK_WIDTH_PX
+
+    const atRadius: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 } }
+    const pointerAtRadiusU = 0.5 + FISHEYE_COUPLING_RADIUS_PX / TRACK_WIDTH_PX
+    const farFromCentre = moveFisheyeLens(atRadius, pointerAtRadiusU, pointerAtRadiusU + stepU, TRACK_WIDTH_PX)
+    const farFromCentreMovedPx = (farFromCentre.lens.centreU - atRadius.lens.centreU) * TRACK_WIDTH_PX
+
+    expect(nearCentreMovedPx).toBeGreaterThan(0)
+    expect(nearCentreMovedPx).toBeLessThan(farFromCentreMovedPx)
+    // Once the pointer is already at (or beyond) the coupling radius, movement is 1:1.
+    expect(farFromCentreMovedPx).toBeCloseTo(4, 6)
+  })
+
+  it('clamps the offset to the coupling radius for a single large jump', () => {
+    const settled: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 } }
+    const next = moveFisheyeLens(settled, 0.5, 0.95, TRACK_WIDTH_PX)
+    const offsetPx = Math.abs(0.95 - next.lens.centreU) * TRACK_WIDTH_PX
+    expect(offsetPx).toBeLessThanOrEqual(FISHEYE_COUPLING_RADIUS_PX + 1e-6)
+  })
+
+  it('is independent of how a sweep is split into calls (1px substep integration)', () => {
+    const start: FisheyeMotion = { lens: { centreU: 0.1, strength: 1 } }
+
+    const oneCall = moveFisheyeLens(start, 0.1, 0.9, TRACK_WIDTH_PX)
+
+    const STEPS = 400
+    let manyCalls = start
+    for (let i = 1; i <= STEPS; i++) {
+      const from = 0.1 + ((0.9 - 0.1) * (i - 1)) / STEPS
+      const to = 0.1 + ((0.9 - 0.1) * i) / STEPS
+      manyCalls = moveFisheyeLens(manyCalls, from, to, TRACK_WIDTH_PX)
+    }
+
+    expect(manyCalls.lens.centreU).toBeCloseTo(oneCall.lens.centreU, 3)
+  })
+
+  describe('the time under the pointer, along a slow sweep across a marker', () => {
+    // The bug this replaces: re-centring on a timer could move the lens — and so the time
+    // under a now-*stationary* pointer — well after the gesture that triggered it, reading as
+    // a jump. With `moveFisheyeLens`, the lens (and the time under the pointer) may only change
+    // in response to the pointer's own movement, continuously and by a bounded amount per px.
+    const STEP_PX = 1
+    const TOTAL_STEPS = 800 // sweeps from u=0.1 to past u=0.9 in 1px increments
+
+    function sweep(): { deltas: number[]; times: number[] } {
+      let motion: FisheyeMotion = { lens: { centreU: 0.1, strength: 1 } }
+      let pointerU = 0.1
+      const times: number[] = [fisheyeScale(IDENTITY_SCALE, motion.lens, TRACK_WIDTH_PX).fromUnit(pointerU)]
+      const deltas: number[] = []
+      for (let i = 0; i < TOTAL_STEPS; i++) {
+        const nextPointerU = pointerU + STEP_PX / TRACK_WIDTH_PX
+        motion = moveFisheyeLens(motion, pointerU, nextPointerU, TRACK_WIDTH_PX)
+        pointerU = nextPointerU
+        const t = fisheyeScale(IDENTITY_SCALE, motion.lens, TRACK_WIDTH_PX).fromUnit(pointerU)
+        deltas.push(t - times[times.length - 1]!)
+        times.push(t)
+      }
+      return { deltas, times }
+    }
+
+    it('is strictly increasing', () => {
+      const { deltas } = sweep()
+      for (const delta of deltas) {
+        expect(delta).toBeGreaterThan(0)
+      }
+    })
+
+    it('never steps by more than a small, bounded amount for a single 1px pointer move', () => {
+      const { deltas } = sweep()
+      // A bound generous enough for the legitimate 1:1-tracking case (once outside the coupling
+      // radius, a 1px pointer move is close to a 1px time change) but far below the ~48px
+      // multi-marker jump the dead-zone catch-up used to produce in one go.
+      const MAX_STEP_PX = 6
+      for (const delta of deltas) {
+        expect(Math.abs(delta) * TRACK_WIDTH_PX).toBeLessThan(MAX_STEP_PX)
+      }
+    })
+  })
+})
+
+describe('stepFisheyeStrength', () => {
+  it('fades in from rest without moving the centre', () => {
+    const next = stepFisheyeStrength(RESTING_FISHEYE, true, 0.016)
+    expect(next.lens.centreU).toBe(RESTING_FISHEYE.lens.centreU)
     expect(next.lens.strength).toBeGreaterThan(0)
     expect(next.lens.strength).toBeLessThan(1)
-    expect(next.following).toBe(false)
-  })
-
-  it('leaves centreU unchanged for a pointer move inside the dead zone', () => {
-    const settled: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 }, following: false }
-    const offsetU = (FISHEYE_DEADZONE_PX - 8) / TRACK_WIDTH_PX
-    const next = stepFisheye(settled, 0.5 + offsetU, TRACK_WIDTH_PX, 0.016)
-    expect(next.lens.centreU).toBe(0.5)
-    expect(next.following).toBe(false)
-  })
-
-  it('follows and eases toward the pointer once it clears the dead zone, catching up exactly after enough steps', () => {
-    const settled: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 }, following: false }
-    const target = 0.5 + (FISHEYE_DEADZONE_PX + 12) / TRACK_WIDTH_PX
-
-    const afterOneStep = stepFisheye(settled, target, TRACK_WIDTH_PX, 0.016)
-    expect(afterOneStep.following).toBe(true)
-    expect(afterOneStep.lens.centreU).toBeGreaterThan(0.5)
-    expect(afterOneStep.lens.centreU).toBeLessThan(target)
-
-    let motion = afterOneStep
-    for (let i = 0; i < 200 && motion.following; i++) {
-      motion = stepFisheye(motion, target, TRACK_WIDTH_PX, 0.016)
-    }
-    expect(motion.following).toBe(false)
-    expect(motion.lens.centreU).toBe(target)
   })
 
   it('fades strength to 0 and keeps centreU when the pointer leaves', () => {
-    const settled: FisheyeMotion = { lens: { centreU: 0.7, strength: 1 }, following: true }
-    const next = stepFisheye(settled, null, TRACK_WIDTH_PX, 0.016)
+    const settled: FisheyeMotion = { lens: { centreU: 0.7, strength: 1 } }
+    const next = stepFisheyeStrength(settled, false, 0.016)
     expect(next.lens.centreU).toBe(0.7)
     expect(next.lens.strength).toBeLessThan(1)
     expect(next.lens.strength).toBeGreaterThan(0)
-    expect(next.following).toBe(false)
 
     let motion = next
     for (let i = 0; i < 200 && motion.lens.strength > 0; i++) {
-      motion = stepFisheye(motion, null, TRACK_WIDTH_PX, 0.016)
+      motion = stepFisheyeStrength(motion, false, 0.016)
     }
     expect(motion.lens.strength).toBe(0)
     expect(motion.lens.centreU).toBe(0.7)
   })
 
   it('jumps straight to the target with dtSeconds = Infinity: fade-in', () => {
-    const next = stepFisheye(RESTING_FISHEYE, 0.7, TRACK_WIDTH_PX, Infinity)
-    expect(next).toEqual({ lens: { centreU: 0.7, strength: 1 }, following: false })
-  })
-
-  it('jumps straight to the target with dtSeconds = Infinity: catch-up beyond the dead zone', () => {
-    const settled: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 }, following: false }
-    const target = 0.5 + (FISHEYE_DEADZONE_PX + 12) / TRACK_WIDTH_PX
-    const next = stepFisheye(settled, target, TRACK_WIDTH_PX, Infinity)
-    expect(next).toEqual({ lens: { centreU: target, strength: 1 }, following: false })
+    const next = stepFisheyeStrength(RESTING_FISHEYE, true, Infinity)
+    expect(next).toEqual({ lens: { centreU: RESTING_FISHEYE.lens.centreU, strength: 1 } })
   })
 
   it('jumps straight to the target with dtSeconds = Infinity: fade-out', () => {
-    const settled: FisheyeMotion = { lens: { centreU: 0.7, strength: 1 }, following: false }
-    const next = stepFisheye(settled, null, TRACK_WIDTH_PX, Infinity)
-    expect(next).toEqual({ lens: { centreU: 0.7, strength: 0 }, following: false })
+    const settled: FisheyeMotion = { lens: { centreU: 0.7, strength: 1 } }
+    const next = stepFisheyeStrength(settled, false, Infinity)
+    expect(next).toEqual({ lens: { centreU: 0.7, strength: 0 } })
   })
 })
 
 describe('isFisheyeSettled', () => {
   it('is true at rest with no pointer', () => {
-    expect(isFisheyeSettled(RESTING_FISHEYE, null)).toBe(true)
+    expect(isFisheyeSettled(RESTING_FISHEYE, false)).toBe(true)
   })
 
   it('is false at rest with a pointer present (strength has not faded in yet)', () => {
-    expect(isFisheyeSettled(RESTING_FISHEYE, 0.5)).toBe(false)
+    expect(isFisheyeSettled(RESTING_FISHEYE, true)).toBe(false)
   })
 
-  it('is true once fully faded in and not following', () => {
-    const motion: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 }, following: false }
-    expect(isFisheyeSettled(motion, 0.5)).toBe(true)
-  })
-
-  it('is false while following, even at full strength', () => {
-    const motion: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 }, following: true }
-    expect(isFisheyeSettled(motion, 0.6)).toBe(false)
+  it('is true once fully faded in', () => {
+    const motion: FisheyeMotion = { lens: { centreU: 0.5, strength: 1 } }
+    expect(isFisheyeSettled(motion, true)).toBe(true)
   })
 
   it('is false at partial strength', () => {
-    const motion: FisheyeMotion = { lens: { centreU: 0.5, strength: 0.5 }, following: false }
-    expect(isFisheyeSettled(motion, 0.5)).toBe(false)
+    const motion: FisheyeMotion = { lens: { centreU: 0.5, strength: 0.5 } }
+    expect(isFisheyeSettled(motion, true)).toBe(false)
   })
 })

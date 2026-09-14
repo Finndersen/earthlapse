@@ -784,6 +784,33 @@ floating overlay:
   at all beyond the loupe's disappearance: the lens only distorts anything once `pointTo` has
   been called, and every discrete window change still goes through the undistorted `scale`.
 
+**Amendment (2026-09-14) — the dead zone is replaced by pointer-coupled movement.** User report:
+"I'll be slowly approaching an event marker I want to select but then it will jump and skip past
+it, instead of a steady smooth progression along the timeline." Root cause: the dead zone held
+the lens still while the pointer moved within `FISHEYE_DEADZONE_PX` of its centre, then eased it
+toward the pointer *over time* (`FOLLOW_TIME_CONSTANT_S`) once the pointer left that zone. That
+catch-up ran on a timer, not on the pointer's own motion — so re-centring could keep moving the
+lens, and with it the time sitting under an already-*stationary* pointer, for several more frames
+after the gesture that triggered it. Around a 1440px track that moved the lens from ~10 undistorted
+px past the old focus to ~48 undistorted px past it in about 0.3s: several markers sliding past
+the pointer even though the pointer itself had stopped, which read exactly as "skip past it."
+`fisheye.ts` replaces the dead zone with a lens that moves *only* in direct response to pointer
+movement, never on its own: `moveFisheyeLens(motion, fromPointerU, toPointerU, trackWidthPx)`
+advances the centre by a coupling factor (0 at the centre, smoothstep-rising to 1 at
+`FISHEYE_COUPLING_RADIUS_PX` — the renamed, reinterpreted `FISHEYE_DEADZONE_PX`) times the
+pointer's own delta, integrated in ≤1px substeps so the result does not depend on how many
+pointer events a move arrives as, then clamped to the radius. A stationary pointer therefore never
+moves the lens, however much time passes, and a slow sweep changes the time under the pointer
+continuously and monotonically rather than in a late, oversized step. The previously combined
+`stepFisheye` (position *and* strength, gated by a `following` flag) splits along that same line:
+`moveFisheyeLens` is pointer-driven and synchronous — `useFisheye`'s `pointTo` calls it directly,
+no rAF involved — while `stepFisheyeStrength` remains the one genuinely time-driven piece (the
+fade in/out) and keeps the `requestAnimationFrame` loop. `FisheyeMotion`'s `following` field and
+`FOLLOW_TIME_CONSTANT_S`/`SETTLE_PX` are gone with it; `isFisheyeSettled` now checks strength
+alone. No consumer outside `timeline/fisheye.ts`/`useFisheye.ts` changed: `Timeline.tsx` and
+`ScrubTrack.tsx` still see the same `pointTo(u, trackWidthPx)`/`release()`/`lens`/`trackWidthPx`
+surface from `useFisheye`.
+
 Decisions deferred to Phase 1, to be recorded here once answered:
 
 - ~~**Image model selection**~~ **RESOLVED by ADR-010:** `gemini-3-pro-image-preview` for

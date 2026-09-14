@@ -1,14 +1,17 @@
 'use client'
 
-/** Drives the scrub track's fisheye lens (`fisheye.ts`) off real animation frames — the lens's
- *  own easing (`stepFisheye`) is pure and stateless, this hook is just the `requestAnimationFrame`
- *  loop and React state around it, the same split `useAnimatedScale`/`useWheelZoomAccumulator`
- *  use for their own easing. Owns none of the distortion math itself: the caller builds a
+/** Drives the scrub track's fisheye lens (`fisheye.ts`) off real pointer events and animation
+ *  frames. The lens's own math is pure and stateless, split in two: `moveFisheyeLens` reacts to
+ *  a pointer move and is applied synchronously, right here in `pointTo` — there is no rAF loop
+ *  involved in moving the lens, since it must never move on its own, only in response to the
+ *  pointer; `stepFisheyeStrength` is the one time-driven piece (the fade in/out) and runs off a
+ *  `requestAnimationFrame` loop, the same split `useAnimatedScale`/`useWheelZoomAccumulator` use
+ *  for their own easing. Owns none of the distortion math itself: the caller builds a
  *  `FisheyeScale` from the returned `lens`/`trackWidthPx` via `fisheyeScale`. */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { isFisheyeSettled, RESTING_FISHEYE, stepFisheye, type FisheyeLens, type FisheyeMotion } from './fisheye'
+import { isFisheyeSettled, moveFisheyeLens, RESTING_FISHEYE, stepFisheyeStrength, type FisheyeLens, type FisheyeMotion } from './fisheye'
 import { usePrefersReducedMotion } from './usePrefersReducedMotion'
 
 export interface UseFisheyeResult {
@@ -31,8 +34,10 @@ export function useFisheye(): UseFisheyeResult {
 
   const motionRef = useRef(motion)
   motionRef.current = motion
-  const trackWidthPxRef = useRef(trackWidthPx)
-  trackWidthPxRef.current = trackWidthPx
+  // The pointer position `motion.lens.centreU` was last moved from — `null` when there is none
+  // (at rest, or just released). The next `pointTo` then either reappears the lens under the
+  // pointer or moves it there as an ordinary coupled move, depending on whether the lens has
+  // actually faded by then (`moveFisheyeLens`'s own doc comment).
   const pointerURef = useRef<number | null>(null)
   const reducedMotionRef = useRef(reducedMotion)
   reducedMotionRef.current = reducedMotion
@@ -40,8 +45,8 @@ export function useFisheye(): UseFisheyeResult {
   const rafRef = useRef<number | null>(null)
   const lastTsRef = useRef<number | null>(null)
 
-  const applyStep = useCallback((dtSeconds: number): void => {
-    const next = stepFisheye(motionRef.current, pointerURef.current, trackWidthPxRef.current, dtSeconds)
+  const applyStrengthStep = useCallback((dtSeconds: number): void => {
+    const next = stepFisheyeStrength(motionRef.current, pointerURef.current !== null, dtSeconds)
     motionRef.current = next
     setMotion(next)
   }, [])
@@ -50,15 +55,15 @@ export function useFisheye(): UseFisheyeResult {
     (now: number) => {
       const dtSeconds = (now - (lastTsRef.current ?? now)) / 1000
       lastTsRef.current = now
-      applyStep(dtSeconds)
-      if (isFisheyeSettled(motionRef.current, pointerURef.current)) {
+      applyStrengthStep(dtSeconds)
+      if (isFisheyeSettled(motionRef.current, pointerURef.current !== null)) {
         rafRef.current = null
         lastTsRef.current = null
         return
       }
       rafRef.current = requestAnimationFrame(tick)
     },
-    [applyStep],
+    [applyStrengthStep],
   )
 
   // Reduced motion never schedules a frame at all — same idiom as `useAnimatedScale` and
@@ -66,13 +71,13 @@ export function useFisheye(): UseFisheyeResult {
   // to immediately settle it.
   const ensureLoop = useCallback((): void => {
     if (reducedMotionRef.current) {
-      applyStep(Infinity)
+      applyStrengthStep(Infinity)
       return
     }
     if (rafRef.current !== null) return
     lastTsRef.current = performance.now()
     rafRef.current = requestAnimationFrame(tick)
-  }, [applyStep, tick])
+  }, [applyStrengthStep, tick])
 
   useEffect(
     () => () => {
@@ -83,10 +88,12 @@ export function useFisheye(): UseFisheyeResult {
 
   const pointTo = useCallback(
     (u: number, widthPx: number): void => {
+      const next = moveFisheyeLens(motionRef.current, pointerURef.current, u, widthPx)
+      motionRef.current = next
+      setMotion(next)
       pointerURef.current = u
-      trackWidthPxRef.current = widthPx
       setTrackWidthPx(widthPx)
-      ensureLoop()
+      ensureLoop() // strength may still need to fade in, even though the move above was immediate
     },
     [ensureLoop],
   )
