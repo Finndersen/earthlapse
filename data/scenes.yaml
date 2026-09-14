@@ -595,7 +595,7 @@ scenes:
       far_bank: conifer-and-cycad woodland along the far shore
       sky_and_light: a clear, warm sky with scattered cumulus; bright, even sunlight
       absent: [large showy flowers, petals, grass, reeds, grasses, broadleaf trees, bees, butterflies, large mammals, birds, people]
-    pin: null
+    pin: {asset_digest: "fba843f413d942db", path: "data/candidates/early-cretaceous-flowers/278655d42b5c3618/01-fba843f413d942db.jpg"}
 
   # ~100 Ma, inside events.yaml's new angiosperm-radiation (8.0e7-1.25e8) and
   # earliest-pollinating-insects (9.3e7-1.65e8) events. Melittosphex burmensis, ~100 Ma Burmese
@@ -624,7 +624,7 @@ scenes:
       far_bank: mixed conifer-and-flowering forest, noticeably greener and denser with broadleaf growth than any earlier scene
       sky_and_light: a warm, hazy sky, hotter and more humid than the Early Cretaceous; soft, diffused sunlight
       absent: [true bees, butterflies, grass, large mammals, songbirds, parrots, pigeons, people]
-    pin: null
+    pin: {asset_digest: "cfa0c916e9ea3943", path: "data/candidates/mid-cretaceous-pollinators/09fd68c37857f488/01-cfa0c916e9ea3943.jpg"}
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
@@ -675,7 +675,7 @@ scenes:
       far_bank: swamp forest fading into haze, lit starkly from above
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
-    pin: null
+    pin: {asset_digest: "6e602cdf8ffa94f1", path: "data/candidates/kpg-arrival/a400d626bc419b6d/03-6e602cdf8ffa94f1.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
   # Raine, J.I. & Hollis, C.J. (2001), "Indication of global deforestation at the
@@ -703,7 +703,7 @@ scenes:
       far_bank: dead grey trunks standing and fallen along the far shore, ferns growing thickly around them
       sky_and_light: a clear, pale-blue sky with scattered cloud; ordinary bright sunlight
       absent: [dinosaurs, large animals, tall flowering canopy, blue-green conifer forest, people]
-    pin: null
+    pin: {asset_digest: "07364f73673488bd", path: "data/candidates/kpg-aftermath/2e74a45036487abc/01-07364f73673488bd.jpg"}
 
   # Paleocene mammal radiation (events.yaml paleocene-mammal-radiation), 62 Ma, about four million
   # years after k-pg-impact (66.043 Ma). Forests recovered fast: a diverse tropical rainforest stood
@@ -731,7 +731,7 @@ scenes:
       far_bank: unbroken mature forest along the far bank
       sky_and_light: a warm, hazy pale sky with scattered cumulus; soft, humid, even light
       absent: [dinosaurs, grassland, bears, pigs, dogs, cats, hippopotamus, primates, people, buildings]
-    pin: null
+    pin: {asset_digest: "735c1240a8062713", path: "data/candidates/paleocene-recovery/a4c8da90ae83a988/01-735c1240a8062713.jpg"}
 
   # Early Eocene Climatic Optimum (events.yaml early-eocene-climatic-optimum), Margaret Formation,
   # Ellesmere Island, ~52 Ma, ~77 degrees N palaeolatitude: Miller, K., Tietjen, K. & Beard, K.C.
@@ -760,7 +760,7 @@ scenes:
       far_bank: more swamp conifer forest fading into a low summer mist
       sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
       absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, rhinoceros, tapir, trunk, people, buildings]
-    pin: null
+    pin: {asset_digest: "c78a7db0fe4aae0c", path: "data/candidates/arctic-hothouse-forest/5705a781c5da90e7/01-c78a7db0fe4aae0c.jpg"}
 
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
   - id: eocene-jungle
@@ -809,7 +809,7 @@ scenes:
       far_bank: the glacier's calving front stretching along the coast, hazed by blowing spray
       sky_and_light: a cold, pale, high-latitude sky with fast-moving cloud; flat, diffuse, chilly light
       absent: [forest, palms, flowering plants in bloom, large mammals, penguins, polar bears, people, buildings, ships]
-    pin: null
+    pin: {asset_digest: "a2fe73ed75939b32", path: "data/candidates/eocene-oligocene-icesheet/3a8cb5b339ffec67/02-a2fe73ed75939b32.jpg"}
 
   # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
   # taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North
@@ -836,7 +836,7 @@ scenes:
       far_bank: open rolling grassland dotted with scattered trees and woodland patches, running to a distant horizon
       sky_and_light: a wide, bright blue sky with scattered fair-weather cumulus; clear, strong sunlight with a broad view to the horizon
       absent: [dense unbroken forest, dinosaurs, primates, modern-style farmland, fences, people, buildings]
-    pin: null
+    pin: {asset_digest: "23dfb55698051631", path: "data/candidates/miocene-grassland/39127bbcdc1c4182/02-23dfb55698051631.jpg"}
 
   # Late Miocene, ~7 Ma, within the C4 grass expansion (events.yaml c4-expansion, ~8-5 Ma by
   # region): Cerling, T.E. et al. (1997), "Global vegetation change through the Miocene/Pliocene
@@ -862,7 +862,7 @@ scenes:
       far_bank: open, sunburnt savanna running flat to a hazy, heat-shimmered horizon
       sky_and_light: a bleached, almost white sky with a fierce, high sun; hard, short shadows and visible heat haze over the distance
       absent: [dense forest, modern zebra, modern antelope, apes, hominins, people, fences, buildings]
-    pin: null
+    pin: {asset_digest: "6dbfd3450bcd8b4b", path: "data/candidates/c4-savanna-hipparion/bb5550a029a53026/02-6dbfd3450bcd8b4b.jpg"}
 
   # Messinian salinity crisis, 5.96-5.33 Ma, placed in the halite phase at 5.6 Ma (events.yaml
   # messinian-salinity-crisis): Krijgsman, W. et al. (1999), "Chronology, causes and progression of
@@ -888,7 +888,7 @@ scenes:
       far_bank: more bare white salt flat stretching unbroken to a shimmering horizon
       sky_and_light: a cloudless, bleached white sky; a fierce sun and blinding glare off the salt, with almost no shadow
       absent: [any plant, any animal, boats, fish, blue open sea, green colour anywhere, people, buildings]
-    pin: null
+    pin: {asset_digest: "183125fa8e80ac2d", path: "data/candidates/messinian-salt-flats/ed0e1dbfb478a938/02-183125fa8e80ac2d.jpg"}
 
   # Australopithecus afarensis, AL 288-1 ("Lucy"), Hadar, Ethiopia, ~3.2 Ma (events.yaml
   # australopithecus-afarensis). Anatomy per Smithsonian Human Origins Program, "Australopithecus
@@ -916,7 +916,7 @@ scenes:
       far_bank: riverside woodland opening to grassland beyond, hazy with distance
       sky_and_light: a clear, warm, pale-blue East African sky with a few high clouds; bright, direct sunlight
       absent: [modern humans, clothing, stone tools, spears, fire, chimpanzees, gorillas, buildings]
-    pin: null
+    pin: {asset_digest: "dff5ee126e47ca9b", path: "data/candidates/lucy-afarensis/50206163a975bec6/03-dff5ee126e47ca9b.jpg"}
 
   # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
   # 2(8), e1600883 (events.yaml isthmus-of-panama, contested: Bacon et al. 2015; Montes et al. 2015).
@@ -969,7 +969,7 @@ scenes:
       far_bank: a dark volcanic escarpment rising beyond the lake plain
       sky_and_light: a bright, clear East African sky with scattered high cloud; strong, even daylight
       absent: [fire, clothing, spears, modern humans, metal, domesticated animals, buildings]
-    pin: null
+    pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
@@ -1000,7 +1000,7 @@ scenes:
       far_bank: open cold steppe rising to low hills, patched with dark conifer stands
       sky_and_light: a pale, cold, high sky with fast-moving cloud; a low sun and long, cool-toned light
       absent: [cave paintings, agriculture, farm animals, metal, modern humans, modern clothing, buildings]
-    pin: null
+    pin: {asset_digest: "78eb69bb3ea0e8b2", path: "data/candidates/ice-age-europe-neanderthal/a2371d18426b995f/02-78eb69bb3ea0e8b2.jpg"}
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
   - id: pleistocene-steppe
