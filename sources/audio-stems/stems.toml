@@ -1,0 +1,170 @@
+# The audio-stems catalogue (ADR-023, pipeline/audio.py's StemBook). Ten CC0/public-domain
+# ambience loops, sourced 2026-09-14 per /audio-stem-wishlist.md (this task's sourcing brief).
+#
+# `url` is the direct, machine-fetchable download URL -- the same convention every other
+# source's manifest.toml `url` already follows (e.g. sources/co2-o2/manifest.toml), and what
+# `fetch.py`'s `ensure_verified_artefact(..., download=lambda: _download(stem.url))` actually
+# calls. It is also what ships to the web credits page as `AudioStem.source_url`. For a
+# Freesound clip that is the CDN URL of Freesound's own unauthenticated "-hq" preview transcode
+# (128 kbps MP3) -- Freesound's *original*-quality download requires a logged-in session and an
+# OAuth/API-key flow this offline pipeline cannot perform, so the HQ preview, the only bitstream
+# Freesound serves without auth, is what was fetched, hashed and shipped; this is still the
+# genuine CC0-dedicated recording, just Freesound's own lossy transcode of it rather than the
+# uploader's original file. Each entry's comment also cites the human-readable source page
+# (the credited "story" URL a person would open) since that differs from the download URL.
+#
+# See sources/audio-stems/README.md for the schema and "Why no automated loudness/trim pass".
+
+# https://freesound.org/people/Vrymaa/sounds/825860/ -- CC0 1.0, Vrymaa, "Desert sand - Dune
+# atmosphere". Open desert dune wind, no trees/leaves in the texture (tags: field-recording,
+# white-noise, wind, loop) -- matches the wishlist's "rocky, open, unvegetated wind" brief.
+[[stems]]
+id = "wind"
+title = "Desert Sand - Dune Atmosphere"
+author = "Vrymaa"
+url = "https://cdn.freesound.org/previews/825/825860_13973196-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "077abd6e63e97c67245b2bd2ed622d8691c70029feb353859c6a4d8ed855d915"
+raw_filename = "wind.mp3"
+format = "mp3"
+duration_seconds = 128.2
+loop_safe = true
+
+# https://freesound.org/people/kkenny101/sounds/852826/ -- CC0 1.0, kkenny101, "Gentle Ocean
+# Waves Loop". Open-ocean surf, explicitly authored as a seamless loop.
+[[stems]]
+id = "water"
+title = "Gentle Ocean Waves Loop"
+author = "kkenny101"
+url = "https://cdn.freesound.org/previews/852/852826_17997500-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "68cd94cdf360945f187e59ce583e45f7cd24dbf70e1cefac30b02e23a36035ed"
+raw_filename = "water.mp3"
+format = "mp3"
+duration_seconds = 21.77
+loop_safe = true
+
+# https://freesound.org/people/plyboard9/sounds/531873/ -- CC0 1.0, plyboard9,
+# "Rain&ThunderLoop1Light.wav". Steady rain with soft, distant ("Light") thunder -- no single
+# sharp startling clap, matching the wishlist's non-jarring-on-loop requirement.
+[[stems]]
+id = "storm"
+title = "Rain and Thunder Loop (Light)"
+author = "plyboard9"
+url = "https://cdn.freesound.org/previews/531/531873_1059037-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "9d6b402865ac5606b55967a0900073aa3c85b7c6f3d80bf5d1878f0c98ca45ff"
+raw_filename = "storm.mp3"
+format = "mp3"
+duration_seconds = 65.1
+loop_safe = true
+
+# https://freesound.org/people/Nox_Sound/sounds/829623/ -- CC0 1.0, Nox_Sound,
+# "Ambiance_Hot_Spring_Furnas_Caldeiras_Loop_Stereo_04". Geothermal hot-spring bubbling/hiss
+# field recording (Furnas caldeira, Azores), explicitly authored as a loop -- "standing near a
+# lava field" rather than an eruption explosion, per the wishlist brief. No CC0 real-eruption/
+# lava-flow field recording under 60 s was found; this geothermal-hiss recording was preferred
+# over the wishlist's synthesised-noise fallback because it is a genuine field recording.
+[[stems]]
+id = "volcanic"
+title = "Hot Spring Caldeira Ambience Loop"
+author = "Nox_Sound"
+url = "https://cdn.freesound.org/previews/829/829623_9250976-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "ac2576799abea471f358604e5c0703e56c63afec1e542ef2e56e0a5a6da54898"
+raw_filename = "volcanic.mp3"
+format = "mp3"
+duration_seconds = 30.0
+loop_safe = true
+
+# https://commons.wikimedia.org/wiki/File:%E8%9D%89%E9%B8%A3.ogg -- CC0 (Creative Commons Zero,
+# Public Domain Dedication), Wikimedia Commons user Ngguls, "蝉鸣" ("cicada calling"). Broad,
+# layered cicada chorus, not one close-mic'd insect.
+[[stems]]
+id = "insects"
+title = "Cicada Chorus"
+author = "Ngguls"
+url = "https://upload.wikimedia.org/wikipedia/commons/9/90/%E8%9D%89%E9%B8%A3.ogg"
+licence = "CC0 1.0"
+sha256 = "1dad0233d8ef729a489386857c938fabd7645f5ffc0e33e58cca7d940b1ff73f"
+raw_filename = "insects.ogg"
+format = "ogg"
+duration_seconds = 33.1
+loop_safe = true
+
+# https://freesound.org/people/Magnesus/sounds/723913/ -- CC0 1.0, Magnesus, "Forest birds -
+# ambient seamless loop". Layered daytime birdsong bed, explicitly authored as a seamless loop.
+[[stems]]
+id = "birds"
+title = "Forest Birds Ambient Loop"
+author = "Magnesus"
+url = "https://cdn.freesound.org/previews/723/723913_2008500-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "9aebcb869cf37040c4588fc05d72bed197951aaa1beacb6874b379c69e379dbb"
+raw_filename = "birds.mp3"
+format = "mp3"
+duration_seconds = 27.05
+loop_safe = true
+
+# https://commons.wikimedia.org/wiki/File:Herd_of_goats_bleating.ogg -- Public domain
+# (pdsounds.org: "you must agree to release the audio files you make into the public domain"),
+# credited to "stephan". Layered goat-herd bleating, not one close animal call -- the nearest
+# CC0/PD "distant herd" texture found; no savanna/grassland-specific CC0 herd recording turned
+# up (see stems.toml sourcing notes in the sourcing session report).
+[[stems]]
+id = "mammals"
+title = "Herd of Goats Bleating"
+author = "stephan (pdsounds.org, via Wikimedia Commons)"
+url = "https://upload.wikimedia.org/wikipedia/commons/b/bc/Herd_of_goats_bleating.ogg"
+licence = "Public domain"
+sha256 = "7fadfd47cff33fad6feb71f13d8076b50828919468e2c204bc2b428c9a93280e"
+raw_filename = "mammals.ogg"
+format = "ogg"
+duration_seconds = 42.81
+loop_safe = true
+
+# https://freesound.org/people/NickTayloe/sounds/813328/ -- CC0 1.0, NickTayloe, "Crackling
+# Flames (loop)". Campfire-scale crackling fire, explicitly authored as a loop.
+[[stems]]
+id = "fire"
+title = "Crackling Flames Loop"
+author = "NickTayloe"
+url = "https://cdn.freesound.org/previews/813/813328_11606594-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "b7a16eddcafa1218c331375d262fff427a84c4015ac5d50d207567108d261326"
+raw_filename = "fire.mp3"
+format = "mp3"
+duration_seconds = 35.0
+loop_safe = true
+
+# https://freesound.org/people/kyles/sounds/637466/ -- CC0 1.0, kyles, "crowd int show movement
+# walla murmur active whispers no steps nice smooth detailed sweetener". A professional
+# film/game-sound "walla" recording -- indistinct crowd murmur purpose-built as a background
+# texture layer, not a recording of any individual conversation; no single word is meant to
+# read as intelligible, matching the wishlist's "must not be intelligible speech" requirement.
+[[stems]]
+id = "settlement"
+title = "Crowd Walla Murmur"
+author = "kyles"
+url = "https://cdn.freesound.org/previews/637/637466_612689-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "1b9a4284d9d1169d70680ed07932eb0a2e9059c376bb5c6b61a7a8294b360d34"
+raw_filename = "settlement.mp3"
+format = "mp3"
+duration_seconds = 58.64
+loop_safe = true
+
+# https://freesound.org/people/vdr3/sounds/393702/ -- CC0 1.0, vdr3, "City ambience - Budapest
+# Keleti train station". Industrial/mechanical hum plus light urban traffic and station noise --
+# reads as "background industry/city", not one identifiable machine or vehicle.
+[[stems]]
+id = "machinery"
+title = "City Ambience - Budapest Keleti Station"
+author = "vdr3"
+url = "https://cdn.freesound.org/previews/393/393702_4994127-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "fa175afea58bf676b101c47eb1e5a9233a900d99a834a999363b34e1ab06027c"
+raw_filename = "machinery.mp3"
+format = "mp3"
+duration_seconds = 56.5
+loop_safe = true

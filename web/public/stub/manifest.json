@@ -31,7 +31,8 @@
       "shot": "WATER_EDGE",
       "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
       "width": 1600,
-      "height": 900
+      "height": 900,
+      "sound": { "stem": "water", "mode": "loop", "gain": 0.8 }
     }
   ],
   "chapters": [
@@ -163,6 +164,28 @@
       "importance": 0.7,
       "description": "Independent domestication of crops and livestock across several regions.",
       "citation": "stub placeholder citation"
+    }
+  ],
+  "audioStems": [
+    {
+      "id": "wind",
+      "file": "audio/wind.wav",
+      "title": "STUB — generated test tone (not a real ambience recording)",
+      "author": "test fixture",
+      "licence": "N/A (test fixture, not for publish)",
+      "sourceUrl": "",
+      "durationSeconds": 1.5,
+      "loopSafe": true
+    },
+    {
+      "id": "water",
+      "file": "audio/water.wav",
+      "title": "STUB — generated test tone (not a real ambience recording)",
+      "author": "test fixture",
+      "licence": "N/A (test fixture, not for publish)",
+      "sourceUrl": "",
+      "durationSeconds": 1.5,
+      "loopSafe": true
     }
   ],
   "credits": [

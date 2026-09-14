@@ -13,12 +13,15 @@
  */
 
 import type {
+  AudioStem,
   Chapter,
   Credit,
   LayerDataKind,
   LayerManifest,
   Manifest,
   Scene,
+  SceneSound,
+  SoundMode,
 } from '@/types/manifest'
 import type { Interpolation, LayerSurface } from '@/types/layer'
 import {
@@ -136,6 +139,16 @@ const SHOT_TYPES = ['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND'] as const
 const LAYER_SURFACES: readonly LayerSurface[] = ['globe', 'timeline-lane', 'hud', 'scene-overlay']
 const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node']
 const INTERPOLATIONS: readonly Interpolation[] = ['linear', 'log-linear', 'step', 'nearest']
+const SOUND_MODES: readonly SoundMode[] = ['loop', 'once']
+
+function validateSceneSound(v: unknown, path: string): SceneSound {
+  const r = expectRecord(v, path)
+  return {
+    stem: expectString(r.stem, `${path}.stem`),
+    mode: expectOneOf(r.mode, SOUND_MODES, `${path}.mode`),
+    gain: expectNumber(r.gain, `${path}.gain`),
+  }
+}
 
 function validateScene(v: unknown, path: string): Scene {
   const r = expectRecord(v, path)
@@ -155,6 +168,9 @@ function validateScene(v: unknown, path: string): Scene {
     scene.events = expectArray(r.events, `${path}.events`).map((e, i) =>
       expectString(e, `${path}.events[${i}]`),
     )
+  }
+  if (r.sound !== undefined) {
+    scene.sound = validateSceneSound(r.sound, `${path}.sound`)
   }
   const pinned = expectOptionalString(r.pinned, `${path}.pinned`)
   if (pinned !== undefined) scene.pinned = pinned
@@ -194,6 +210,20 @@ function validateLayerManifest(v: unknown, path: string): LayerManifest {
   return layer
 }
 
+function validateAudioStem(v: unknown, path: string): AudioStem {
+  const r = expectRecord(v, path)
+  return {
+    id: expectString(r.id, `${path}.id`),
+    file: expectString(r.file, `${path}.file`),
+    title: expectString(r.title, `${path}.title`),
+    author: expectString(r.author, `${path}.author`),
+    licence: expectString(r.licence, `${path}.licence`),
+    sourceUrl: expectString(r.sourceUrl, `${path}.sourceUrl`),
+    durationSeconds: expectNumber(r.durationSeconds, `${path}.durationSeconds`),
+    loopSafe: expectBoolean(r.loopSafe, `${path}.loopSafe`),
+  }
+}
+
 function validateCredit(v: unknown, path: string): Credit {
   const r = expectRecord(v, path)
   return {
@@ -230,6 +260,14 @@ export function validateManifest(json: unknown): Manifest {
       validateLayerManifest(l, `Manifest.layers[${i}]`),
     ),
     events: expectArray(root.events, 'Manifest.events').map((e, i) => parseTimelineEvent(e, `Manifest.events[${i}]`)),
+    // Lenient: absent on any manifest (or the committed stub) published before ADR-023, in
+    // which case there are no stems to report rather than a parse failure.
+    audioStems:
+      root.audioStems === undefined
+        ? []
+        : expectArray(root.audioStems, 'Manifest.audioStems').map((s, i) =>
+            validateAudioStem(s, `Manifest.audioStems[${i}]`),
+          ),
     credits: expectArray(root.credits, 'Manifest.credits').map((c, i) => validateCredit(c, `Manifest.credits[${i}]`)),
   }
 }

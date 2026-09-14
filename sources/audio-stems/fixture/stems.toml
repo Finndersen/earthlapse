@@ -1,0 +1,16 @@
+# Committed test fixture (DATA_SOURCES.md § Directory layout per source) -- a tiny, valid,
+# but synthetic WAV, not a real sourced clip (nothing has been sourced yet; see
+# /audio-stem-wishlist.md). Exercises the real StemBook/fetch/normalise code paths offline:
+# duplicate-id rejection, sha256 verification, and write_outputs()'s format-sniff check.
+
+[[stems]]
+id = "test-loop"
+title = "Silent test loop"
+author = "fixture"
+url = "https://example.invalid/test-loop"
+licence = "CC0 1.0"
+sha256 = "f9cb049e2c6f64284db73c45b84f359205f22110c784c33e99642faa86c7722b"
+raw_filename = "test-loop.wav"
+format = "wav"
+duration_seconds = 0.25
+loop_safe = true

@@ -147,6 +147,106 @@ describe('validateManifest', () => {
       expect(event.effect).toBeUndefined()
     }
   })
+
+  // ------------------------------------------------------------------------- audio (ADR-023)
+
+  it('defaults audioStems to [] when the field is absent (pre-ADR-023 manifest)', () => {
+    const { audioStems: _drop, ...rest } = stubManifest as Record<string, unknown>
+    const manifest = validateManifest(rest)
+    expect(manifest.audioStems).toEqual([])
+  })
+
+  it('parses a published audio stem', () => {
+    const withStems = {
+      ...stubManifest,
+      audioStems: [
+        {
+          id: 'wind',
+          file: 'audio/wind.ogg',
+          title: 'Ridge Wind',
+          author: 'Test Author',
+          licence: 'CC0 1.0',
+          sourceUrl: 'https://example.invalid/wind',
+          durationSeconds: 30,
+          loopSafe: true,
+        },
+      ],
+    }
+    const manifest = validateManifest(withStems)
+    expect(manifest.audioStems).toEqual([
+      {
+        id: 'wind',
+        file: 'audio/wind.ogg',
+        title: 'Ridge Wind',
+        author: 'Test Author',
+        licence: 'CC0 1.0',
+        sourceUrl: 'https://example.invalid/wind',
+        durationSeconds: 30,
+        loopSafe: true,
+      },
+    ])
+  })
+
+  it('rejects an audio stem missing a required field', () => {
+    const bad = {
+      ...stubManifest,
+      audioStems: [{ id: 'wind', file: 'audio/wind.ogg' }],
+    }
+    expect(() => validateManifest(bad)).toThrow(/title/)
+  })
+
+  it('parses a scene\'s optional sound', () => {
+    const withSound = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'GROUND',
+          caption: 'hi',
+          sound: { stem: 'wind', mode: 'loop', gain: 0.5 },
+          width: 10,
+          height: 10,
+        },
+      ],
+    }
+    const manifest = validateManifest(withSound)
+    expect(manifest.scenes[0]?.sound).toEqual({ stem: 'wind', mode: 'loop', gain: 0.5 })
+  })
+
+  it('leaves sound undefined for a scene with no associated stem', () => {
+    // The committed stub gives one scene (`archean-shore`) a `sound` (ADR-023 §3), to exercise
+    // the feature end to end against the stub manifest — every other stub scene still has none.
+    const manifest = validateManifest(stubManifest)
+    const withSound = manifest.scenes.filter((s) => s.sound !== undefined)
+    expect(withSound.map((s) => s.id)).toEqual(['archean-shore'])
+    for (const scene of manifest.scenes) {
+      if (scene.id === 'archean-shore') continue
+      expect(scene.sound).toBeUndefined()
+    }
+  })
+
+  it('rejects an unknown sound mode', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'GROUND',
+          caption: 'hi',
+          sound: { stem: 'wind', mode: 'fade', gain: 0.5 },
+          width: 10,
+          height: 10,
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/mode/)
+  })
 })
 
 // ------------------------------------------------------------------------------- loadManifest

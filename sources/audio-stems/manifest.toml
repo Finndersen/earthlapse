@@ -1,0 +1,29 @@
+# See docs/DATA_SOURCES.md for field meanings, and docs/DECISIONS.md ADR-023 for why this
+# source's shape differs from every other one here.
+#
+# audio-stems bundles several independently-sourced, independently-licensed files under one
+# source directory -- there is no single upstream url/sha256 a plain manifest.toml can name.
+# Per-stem provenance (url, licence, author, sha256) lives in stems.toml instead; this file
+# only carries what `discover_sources`/`_credit()` (pipeline/publish.py) need to list
+# "audio-stems" itself on the credits page, pointing at stems.toml for the per-file detail.
+
+name = "audio-stems"
+title = "CC0 Ambience Stems"
+url = "https://github.com/finndersen/earthview/blob/main/sources/audio-stems/stems.toml"
+sha256 = ""
+licence = "CC0 1.0 / public domain only -- every individual file's real licence and source URL is in stems.toml; see README.md"
+citation = "No single dataset. Each stem is an independently CC0/public-domain-licensed audio recording; see stems.toml for per-file author, URL and licence."
+time_domain = [0, 0]           # n/a -- not time-indexed data (ADR-023); stems are not one of the four curated shapes
+output_shape = "none (media only, see ADR-023)"
+interpolation = "n/a"
+volume_bytes = 11513738         # measured: sum of data/raw/audio-stems/* (10 stems, sourced 2026-09-14)
+storage_tier = "git-lfs"
+
+# Declared so `pipeline.databuild` treats this source as stale again if generated stem media
+# goes missing or shrinks in count. Written by normalise.py's write_outputs() hook.
+outputs = [
+  "data/media/audio/*.ogg",
+  "data/media/audio/*.m4a",
+  "data/media/audio/*.mp3",
+  "data/media/audio/*.wav",
+]

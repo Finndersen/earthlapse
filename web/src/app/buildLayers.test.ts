@@ -67,6 +67,7 @@ function manifestWith(layers: LayerManifest[]): Manifest {
     chapters: [],
     layers,
     events: [],
+    audioStems: [],
     credits: [],
   }
 }

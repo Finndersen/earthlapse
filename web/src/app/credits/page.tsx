@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 
 import { loadManifest } from '@/shell'
-import type { Credit } from '@/types/manifest'
+import type { AudioStem, Credit } from '@/types/manifest'
 
 import styles from './credits.module.css'
 
 type LoadState =
   | { status: 'loading' }
   | { status: 'error'; error: Error }
-  | { status: 'ready'; credits: Credit[]; isStub: boolean }
+  | { status: 'ready'; credits: Credit[]; audioStems: AudioStem[]; isStub: boolean }
 
 export default function CreditsPage() {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
@@ -19,7 +19,7 @@ export default function CreditsPage() {
     let cancelled = false
     loadManifest()
       .then(({ manifest, isStub }) => {
-        if (!cancelled) setState({ status: 'ready', credits: manifest.credits, isStub })
+        if (!cancelled) setState({ status: 'ready', credits: manifest.credits, audioStems: manifest.audioStems, isStub })
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -66,6 +66,32 @@ export default function CreditsPage() {
                 </li>
               ))}
             </ul>
+
+            {state.audioStems.length > 0 && (
+              <>
+                <h2 className={styles.sectionTitle}>Sound</h2>
+                <p className={styles.intro}>
+                  Ambience stems (ADR-023) — CC0/public-domain audio, credited individually since one source
+                  bundles several independently-licensed files.
+                </p>
+                <ul className={styles.list}>
+                  {state.audioStems.map((stem) => (
+                    <li key={stem.id} className={styles.item}>
+                      <h3 className={styles.itemTitle}>{stem.title}</h3>
+                      <p className={styles.itemCitation}>{stem.author}</p>
+                      <p className={styles.itemMeta}>
+                        <span>{stem.licence}</span>
+                        {stem.sourceUrl !== '' && (
+                          <a href={stem.sourceUrl} target="_blank" rel="noreferrer">
+                            {stem.sourceUrl}
+                          </a>
+                        )}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </>
         )}
       </div>

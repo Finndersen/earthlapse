@@ -6,7 +6,8 @@ world morphing rather than a cut. A chapter may recur as several non-adjacent **
 the timeline (ADR-020) — each run is its own consecutive stretch of scenes, and every run of
 the same chapter shares that chapter's shot and composition, but a run's neighbours in a
 *different* chapter still read as a cut at each boundary. The pin a human writes with
-`earthtime review pick` lives here too, so it survives every rebuild (ADR-005).
+`earthtime review pick` lives here too, so it survives every rebuild (ADR-005). A scene may
+also name an optional ambience stem (`sound`, ADR-023) it plays when on screen.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import json
 import re
 from collections import Counter
 from collections.abc import Sequence
+from enum import StrEnum
 from pathlib import Path
 
 import yaml
@@ -24,6 +26,34 @@ from pipeline.prompts import Composition, SceneSubject, Shot, UnsourcedCondition
 from pipeline.shapes import GeoTime
 
 SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
+
+
+class SoundMode(StrEnum):
+    """ADR-023. How a scene's optional ambience stem attaches to it.
+
+    `LOOP` ties the stem's gain to the scene's own on-screen presentation weight (the same
+    mix `web/src/scene/presentation.ts` already computes for the cross-dissolve) — pure in
+    `t`, so it is scrub-safe by construction. `ONCE` fires a single playback when the scene
+    becomes the settled on-screen scene during playback, not while scrubbing past it, and is
+    re-armed only after the viewer leaves and returns.
+    """
+
+    LOOP = "loop"
+    ONCE = "once"
+
+
+class SceneSound(BaseModel):
+    """A scene's optional associated ambience stem (ADR-023). `stem` names an id in the
+    audio-stems catalogue (`sources/audio-stems/stems.toml`, `pipeline.audio.StemBook`) —
+    checked at `earthtime publish` time, the same way `SceneRecord.events` is checked against
+    `events-core` (ADR-022), not here: parsing scenes.yaml has no stem catalogue to check
+    against."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    stem: str = Field(pattern=SLUG_PATTERN)
+    mode: SoundMode
+    gain: float = Field(gt=0.0, le=1.0)
 
 
 class UnknownScene(LookupError):
@@ -64,6 +94,10 @@ class SceneRecord(BaseModel):
     # against. Invisible to the asset graph (pipeline/assets.py never reads it), so editing this
     # field never changes a prompt/image node's digest or clears a pin.
     events: tuple[str, ...] = Field(default=())
+    # Optional ambience stem this scene plays (ADR-023). Invisible to the asset graph
+    # (pipeline/assets.py never reads it), so adding or editing it never changes a
+    # prompt/image node's digest or clears a pin -- the same guarantee `events` has.
+    sound: SceneSound | None = Field(default=None)
     pin: ScenePin | None
 
     @field_validator("events")

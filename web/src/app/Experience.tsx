@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { SoundToggle, useAudioEngine } from '@/audio'
 import { EventFeed } from '@/events'
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
@@ -199,6 +200,17 @@ export function Experience() {
     [data],
   )
 
+  // Audio (ADR-023): the one stateful hook owns Tone.js's lazy lifecycle plus the toggle's own
+  // persisted enabled/volume state (see `@/audio/engine.ts`'s doc comment) — `manifest` is
+  // `null` until `data.status === 'ready'`, the same "not loaded yet" contract `buildLayers`
+  // above already follows, and the engine stays fully inert until then.
+  const audio = useAudioEngine({
+    manifest: data.status === 'ready' ? data.manifest : null,
+    t,
+    playing: playback.playing,
+    scalarLayers,
+  })
+
   // The globe's two raster sources (docs/GLOBE.md §4.1, G7), selected by id (ADR-013) —
   // `paleodem` (0-540 Ma) and, when published, `plates_neoproterozoic` (540-1000 Ma, `null`
   // when unusable: `Globe` then falls back to the "geography unknown" regime rather than
@@ -266,90 +278,93 @@ export function Experience() {
         )
 
   return (
-    <ShellLayout
-      calm={calm}
-      globeExpanded={globeExpanded}
-      globeCaption={globeCaption}
-      scene={
-        manifest.scenes.length > 0 ? (
-          <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
-        ) : (
-          <div className={styles.placeholder}>No scenes in manifest.</div>
-        )
-      }
-      globe={
-        rasterLayers ? (
-          <Globe
+    <>
+      <SoundToggle {...audio} />
+      <ShellLayout
+        calm={calm}
+        globeExpanded={globeExpanded}
+        globeCaption={globeCaption}
+        scene={
+          manifest.scenes.length > 0 ? (
+            <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
+          ) : (
+            <div className={styles.placeholder}>No scenes in manifest.</div>
+          )
+        }
+        globe={
+          rasterLayers ? (
+            <Globe
+              t={t}
+              rasterLayers={rasterLayers}
+              assetBase={manifest.assetBase}
+              regimeEvents={regimeEvents}
+              effectEvents={manifest.events}
+              expanded={globeExpanded}
+              onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
+              onCaptionChange={setGlobeCaption}
+            />
+          ) : (
+            <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
+          )
+        }
+        readouts={
+          <div className={styles.readouts}>
+            {hudScalarEntries.map((entry) => {
+              const layer = scalarLayers.get(entry.id)
+              if (layer === undefined) return null
+              return (
+                <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
+                  {isClockLayer(entry.unit) ? (
+                    <DayLengthClock layer={layer} t={t} />
+                  ) : (
+                    <>
+                      <ScalarReadout layer={layer} t={t} />
+                      <HudSparkline
+                        layer={layer}
+                        t={t}
+                        entryId={entry.id}
+                        chartable={entry.chartable}
+                        expanded={expandedChartLayerId === entry.id}
+                        onToggle={setExpandedChartLayerId}
+                      />
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        }
+        feed={<EventFeed t={t} scale={timelineScale} events={manifest.events} scenes={manifest.scenes} onScrub={setT} />}
+        title={<TimeTitle t={t} />}
+        badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
+        ancestor={nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} /> : null}
+        caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
+        chart={
+          expandedChartLayer ? (
+            <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={() => setExpandedChartLayerId(null)} />
+          ) : null
+        }
+        timeline={
+          <Timeline
             t={t}
-            rasterLayers={rasterLayers}
-            assetBase={manifest.assetBase}
-            regimeEvents={regimeEvents}
-            effectEvents={manifest.events}
-            expanded={globeExpanded}
-            onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
-            onCaptionChange={setGlobeCaption}
+            scaleKind={timelineScaleKind}
+            scale={timelineScale}
+            events={manifest.events}
+            checkpoints={checkpoints}
+            playback={playback}
+            onScrub={setT}
+            onScaleKindChange={setScaleKind}
+            onPlaybackChange={(next) => {
+              setPlaying(next.playing)
+              setSpeed(next.speed)
+              setPlaybackMode(next.mode)
+            }}
+            onOpenCluster={handleOpenCluster}
+            ratePerSecond={ratePerSecond}
           />
-        ) : (
-          <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
-        )
-      }
-      readouts={
-        <div className={styles.readouts}>
-          {hudScalarEntries.map((entry) => {
-            const layer = scalarLayers.get(entry.id)
-            if (layer === undefined) return null
-            return (
-              <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
-                {isClockLayer(entry.unit) ? (
-                  <DayLengthClock layer={layer} t={t} />
-                ) : (
-                  <>
-                    <ScalarReadout layer={layer} t={t} />
-                    <HudSparkline
-                      layer={layer}
-                      t={t}
-                      entryId={entry.id}
-                      chartable={entry.chartable}
-                      expanded={expandedChartLayerId === entry.id}
-                      onToggle={setExpandedChartLayerId}
-                    />
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      }
-      feed={<EventFeed t={t} scale={timelineScale} events={manifest.events} scenes={manifest.scenes} onScrub={setT} />}
-      title={<TimeTitle t={t} />}
-      badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
-      ancestor={nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} /> : null}
-      caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
-      chart={
-        expandedChartLayer ? (
-          <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={() => setExpandedChartLayerId(null)} />
-        ) : null
-      }
-      timeline={
-        <Timeline
-          t={t}
-          scaleKind={timelineScaleKind}
-          scale={timelineScale}
-          events={manifest.events}
-          checkpoints={checkpoints}
-          playback={playback}
-          onScrub={setT}
-          onScaleKindChange={setScaleKind}
-          onPlaybackChange={(next) => {
-            setPlaying(next.playing)
-            setSpeed(next.speed)
-            setPlaybackMode(next.mode)
-          }}
-          onOpenCluster={handleOpenCluster}
-          ratePerSecond={ratePerSecond}
-        />
-      }
-    />
+        }
+      />
+    </>
   )
 }
 

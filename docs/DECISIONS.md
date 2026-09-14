@@ -1433,3 +1433,311 @@ text, which is exactly the "stringly-typed" trap CLAUDE.md's engineering guidanc
   happen to differ — `kind` is the single source of truth for which reading applies, exactly the
   gap this ADR closes.
 
+## ADR-023 — Audio: layered ambience stems, a procedural score, and per-scene sound effects
+
+**Status:** accepted — human-directed 2026-09-14. Elaborates DESIGN.md §11 (which named three
+tiers at a sentence each) into a precise, buildable contract; supersedes none of it.
+
+**Context.** DESIGN §11 committed to three audio tiers — layered ambience stems gained by
+`WorldState(t)`, a procedural score (Tone.js), and out-of-scope narration — but left every
+number and mapping undecided, and named no per-scene sound mechanism at all. The human asked
+for exactly the tier-1/tier-2 pairing DESIGN already sketched, plus a third thing DESIGN never
+mentioned: an optional sound effect attached to individual scenes, playing "when it's visible or
+first shown." This ADR fixes all three precisely enough to build against, and extends the scene
+record / manifest contract (alongside `events`, ADR-022) to carry the third.
+
+Checking what `WorldState` actually has data for today (`pipeline/models.py` against
+`data/curated/`) matters before mapping anything to it: only `co2` (`atmosphere.co2_ppm`),
+`day_length`, `solar_luminosity`, `moon_distance`, `obliquity` and `land_fraction` are curated,
+and of those only `co2` and `day_length` are published as `manifest.layers` today
+(`pipeline/publish.py`'s `SCALAR_LAYERS`) — `mean_temp_c`, `sea_level_m`, `ice_extent_frac`,
+`o2_percent`, `genus_count` and `population` are real `WorldState` fields with **no curated
+source wired in yet** (`paleoclimate`, `hyde`, `pbdb` are still `⚠️ TBD` per DATA_SOURCES.md).
+Any audio design that assumes temperature or biodiversity are available today would not build.
+What *is* real and already published, besides `t` itself: `co2`, `day_length`, and the
+`events-core` `EventSet` (66 dated, tagged events, `Manifest.events`) — including every
+`catastrophe`-tagged and `flood-basalt`/`impact-winter` `GlobeEffect`-carrying event. The design
+below is deliberately built only from what exists now, with every place a not-yet-curated
+scalar (temperature, biodiversity, population) would naturally join documented as an additive,
+non-breaking follow-up (see Consequences) — no field here is `WorldState`-shaped in a way a
+later scalar can't slot into.
+
+**Decision.**
+
+### 1. Ambience stems (tier 1)
+
+**Ten stems**, each a seamlessly-loopable CC0 clip, gained in `[0, 1]` by a pure function of
+`t` (a `stemGains(t): Record<StemId, number>` the web engine owns — see
+`audio-engine-spec.md`). Every curve is built from `Math.log1p(t)` — the timeline's own symlog
+display space (DESIGN §3) — using a shared raised-cosine ramp
+(`rampInLog(t, tStart, tEnd)`/`rampOutLog`, `0` before `tEnd`-ward of the ramp, `1` past
+`tStart`-ward of it, a smooth half-cosine between) so a fade reads as a fade at any playback
+speed or scrub rate, never a step — the reason DESIGN §11 gives for parameterising by `t` at
+all ("it responds correctly to scrubbing and speed changes — a fixed soundtrack cannot").
+Boundaries are literature dates already used elsewhere in this project (several are
+`events-core` event ids, cited so a stem's fade lines up with the event feed rather than
+drifting from it); none require a scalar that isn't curated yet.
+
+| id | character | baseline | boundary / driver |
+|---|---|---|---|
+| `wind` | rocky/atmospheric wind bed | 0.6 before land plants, ramps to 0.32 after | ramp 470→385 Ma (`land-plants` t_min 4.70e8 → `first-forests` t_min 3.78e8): a barren, unvegetated world carries wind sound further; closed forest canopy damps it. Always > 0 — wind exists even in the Hadean. |
+| `water` | surf / open ocean | flat 0.45 | always on — oceans since ~4.4 Ga (`moon-forming-impact` t_max). A modest +0.15 bump before 3.8 Ga (`great-oxidation-event`'s own `t_max` 2.4e9 is too late to use; instead ramp out 4.0→3.8 Ga, a conservative reading of the Archean "water world" era `globe-regimes`'s `water-world-regime` event covers) reflects a near-total-ocean planet, ramping to the flat baseline by 3.8 Ga. |
+| `storm` | rain / distant thunder | flat 0.22 | no differentiated deep-time precipitation series is curated yet (`paleoclimate`, DATA_SOURCES.md, not yet built) — flat baseline is the honest placeholder; **do not** invent a shape here (CLAUDE.md "if something is unusable, stop and report" applies to fabricated curves too). Revisit once `paleoclimate` lands (see Consequences). |
+| `volcanic` | tectonic rumble, distant lava | 0.75 in the Hadean/Archean, ramps to 0.15 by the Phanerozoic, **plus temporary bumps** | secular ramp-out 4.0→0.54 Ga (Hadean/Archean crustal instability cooling into the stable Phanerozoic); on top of it, a `rampInLog`/`rampOutLog` pulse to 0.6 across each `events-core` event whose `effect.kind === 'flood-basalt'` (`siberian-traps` t 2.5188e8, `deccan-traps` t 6.6032e7) — real, already-published event data drives this, not a hand-tuned date. |
+| `insects` | cicada / cricket chorus | 0 → 0.35 | ramp-in 400→370 Ma — land arthropods establish with early land ecosystems, matching DESIGN §11's own "insects fade in during the Devonian" and bracketing `land-plants`/`first-forests`. |
+| `birds` | birdsong | 0 → 0.28, then → 0.4 | ramp-in 145→100 Ma (Cretaceous crown birds, matching DESIGN §11's "birds in the Cretaceous"); a second ramp 66.06→65 Ma (around `k-pg-impact`, t 6.6043e7) lifts the baseline further — birds become the dominant flying-animal sound once non-avian dinosaurs are gone. |
+| `mammals` | calls, footfalls, herds | 0.04 → 0.32 | ramp 66.06→60 Ma (around `k-pg-impact`) — small, mostly-silent Mesozoic mammals give way to the Paleogene radiation. |
+| `fire` | crackle: wildfire, then hearth | 0 → 0.15, then → 0.32 | ramp-in 420→400 Ma (earliest wildfire evidence, once O2 and land fuel both exist) to a low wildfire baseline; a second ramp 1.5→0.28 Ma (around `control-of-fire`, t_min 4.0e5–t_max 1.5e6) lifts it further as controlled fire becomes part of the everyday soundscape. |
+| `settlement` | voices, murmur, communal ambience | 0 → 0.22, rising toward the present | ramp-in 11.5→10 ka (`agriculture`, t_min 1.0025e4) to a baseline that then rises smoothly toward `t = 0` as `1 − log1p(t) / log1p(11500)` for `t < 11.5 ka` — a coarse proxy for the same "more settled land, more people" trend `HYDE` population data would drive directly once curated (see Consequences); never negative, saturates near 0.5 at present. |
+| `machinery` | engines, then traffic | 0 → rising steeply toward the present | ramp-in 265→166 yr (`industrial-revolution`, t_min 185–t_max 265) to a curve rising as `1 − log1p(t) / log1p(250)` for `t < 250 yr`, reaching its max at `t = 0` — the same "hockey stick near the present" shape symlog display already makes legible for anything industrial-era. |
+
+Every ramp is written once as a small table of `(tStart, tEnd, from, to)` triples the shared
+helper consumes, not elsewhere in the codebase, precisely so it is auditable and testable at
+fixed checkpoints (IMPLEMENTATION.md A6: "stem gains match expected curves at checkpoints").
+Master gain (from the HUD toggle, see §3 below) multiplies every stem uniformly; per-stem gains
+above are relative to that master, not absolute loudness — final level balancing across the ten
+is a mixing pass against real audio, not something this contract can specify numerically.
+
+### 2. Procedural score (tier 2)
+
+**Tone.js, lazy-loaded, never bundled until sound is enabled.** DESIGN §12 already names
+Tone.js; its UMD bundle is non-trivial (hundreds of KB) and every other piece of this feature
+is silent by default (sound starts off — user decision, browsers require a gesture anyway), so
+importing it eagerly would tax every visitor who never turns sound on for a feature they may
+never use. The audio engine's entry point (`audio/engine.ts`, see `audio-engine-spec.md`) does
+`await import('tone')` **only** inside the handler the speaker-toggle's first "on" click calls,
+never at module top level and never from `Experience.tsx`'s own top-level imports — mirroring
+how the rest of the app treats anything costly and optional.
+
+**Never loops, never ends** (DESIGN §11): a slow low-frequency modulation source (a Tone.js LFO
+or a hand-rolled sine driven by wall-clock time, engine's choice) continuously nudges
+sub-parameters (detune, filter cutoff micro-drift) so the same `WorldState(t)` never produces
+the identical instant twice, the way DESIGN's "never loops" reads for a fundamentally
+parameter-driven, non-sample-based instrument.
+
+**Parameter mapping**, restricted to what is real today (see Context) — each explicitly a pure
+function of the already-published `co2` series, `day_length`, and `events-core`:
+
+| score parameter | driven by | mapping |
+|---|---|---|
+| drone root pitch | `t` itself, coarse register only | one octave lower in deep time than at present — a slow, continuous glide keyed to `log1p(t)`, not a WorldState scalar; register alone reads as "long ago" without implying a measurement. |
+| drone timbre / filter brightness | `co2_ppm` | higher CO2 → a slightly duller, more damped low-pass cutoff (a thicker, warmer atmosphere reads as a softer high end); `co2_ppm` is already published and needs no new plumbing. |
+| pulse density (rhythmic activity) | `day_length_hours` | shorter days → a faster underlying pulse/arpeggiation rate — day length is already published, real, and directly apt (the planet's own rotation *is* a rhythm). |
+| harmonic mood | proximity to a `catastrophe`-tagged `events-core` event | inside ± a few hundred kyr (scaled by the event's own `[t_min, t_max]` width) of any event whose `tags` include `catastrophe`, the chord set shifts from the ambient major/open-fifth default toward a minor/dissonant cluster, `rampInLog`/`rampOutLog`'d the same way stem gains are — so K-Pg, Siberian/Deccan Traps and Snowball Earth each cast an audible shadow that fades, rather than a hard cut. `events-core` is already published; no new data need be fetched. |
+
+**Deferred, additive, not implemented now:** biodiversity-driven density (`genus_count`,
+`pbdb`) and temperature-driven brightness in place of the CO2 proxy (`mean_temp_c`,
+`paleoclimate`) — both are real `WorldState` fields with no curated source yet (Context). The
+score's parameter list is written so adding either later is a new mapping row, never a
+signature change: `scoreParams(t, series)` takes whatever published series exist, and a series
+the current manifest doesn't carry simply isn't in the map it's passed (see
+`audio-engine-spec.md`).
+
+**Ducking under scene sound.** The score's overall output gain multiplies by
+`1 − 0.6 × max(activeSceneOnceGain, activeSceneLoopGain)` — i.e. it recedes, never mutes, by up
+to 60% while a scene's own sound (§3) is prominent, so a loud effect (once-mode) is legible
+without silence feeling like a dropout, and a soft ambience-mode scene sound barely ducks it at
+all. This is symmetric with how film scores duck under dialogue/SFX, and keeps the mapping pure
+in the same inputs (`t`, the scene mix) everything else here already reads.
+
+### 3. Scene sound effects
+
+**New optional `SceneRecord.sound` (`pipeline/scenes.py`, ADR-023):**
+
+```python
+class SoundMode(StrEnum):
+    LOOP = "loop"
+    ONCE = "once"
+
+class SceneSound(BaseModel):
+    stem: str                    # id in the audio-stems catalogue (pipeline.audio.StemBook)
+    mode: SoundMode
+    gain: float                  # (0, 1] — mixed against the stem's own master gain
+```
+
+`SceneRecord.sound: SceneSound | None = None`. Reuses the *same* stem catalogue as tier 1 — a
+scene doesn't get a bespoke one-off sound file, it names an existing ambience stem and asks for
+a different playback treatment than that stem's own default `t`-driven curve. This is why one
+catalogue (not two) is right: "loop mode" scene sound and "tier-1 ambience" are the same stem
+under two different gain functions, never two asset pipelines.
+
+- **`mode: loop`** — gain is the scene's own on-screen **presentation weight**: exactly the
+  `mix` value `web/src/scene/presentation.ts`'s `usePresentedSceneMix` already computes for the
+  cross-dissolve (0 off-screen, 1 fully on-screen, smoothly between during a dissolve),
+  multiplied by `sound.gain`. Pure in the same inputs the visual dissolve already is — scrub-safe
+  and speed-safe by construction, with no new state. `sceneSoundGains(presented: SceneMix):
+  Record<sceneId, number>` (see `audio-engine-spec.md`) is the one new pure function this needs.
+- **`mode: once`** — fires a single playback of the stem (independent of, and additive to, that
+  stem's own tier-1 gain — it is a foreground *event* sound, not a second ambience layer) when
+  the scene becomes the **settled** on-screen scene (`presented.mix` reaches exactly `1` for
+  this scene, the same "settled" `presentation.ts` already defines for its own case analysis)
+  **while playing**, not while scrubbing: scrubbing can sweep `mix` to `1` and back many times a
+  second, and a "first shown" effect firing on every such sweep would read as broken, not
+  ambient. The engine distinguishes the two the same way playback already does elsewhere in this
+  codebase (`timeline/playback.ts`'s own mode state is already available to `Experience.tsx`) —
+  scrubbing is any advance of `t` not driven by the playback clock. **At most once per arrival**:
+  a per-scene "already fired since last settling here" flag is set on fire and cleared the
+  moment `presented.mix` leaves `1` for this scene (i.e. the viewer moves on) — re-arming
+  exactly on return, so replaying the same stretch during playback plays the effect again, but a
+  single dwell never repeats it.
+- **Never affects image digests or pins** (mirrors `events`, ADR-022): `pipeline/assets.py`
+  never reads `scene.sound`, so adding, editing or removing it changes no prompt/image node
+  digest and clears no pin — verified directly
+  (`test_scene_sound_plays_no_part_in_the_asset_graph`).
+- **Validated at publish time**, not at `SceneBook` parse time — the same reasoning
+  `_validate_scene_events` gives: parsing `scenes.yaml` has no stem catalogue to check against.
+  `earthtime publish` refuses (`PublishRefused`) a scene naming an unknown `stem` id, and
+  separately refuses if a catalogued stem's own published file is missing from
+  `data/media/audio/` (`pipeline/publish.py`'s `_validate_scene_sound`/`_audio_stems`).
+
+### 4. Audio asset pipeline
+
+**`sources/audio-stems/`** exists as an ordinary `sources/<name>/` directory (`manifest.toml`,
+`fetch.py`, `normalise.py`, `fixture/`, `README.md`) so it gets the fetch/verify/credit
+machinery every externally-sourced dataset uses — but its `normalise()` returns **no
+`CuratedShape`**. Audio stems are not one of the four curated shapes (DATA_SOURCES.md §
+Contract): they are not `WorldState`-projectable, time-indexed data, just static, per-id media
+files with per-file provenance. They bypass `WorldModel`/`pipeline/curated.py` entirely, the
+same way `pipeline/portraits.py`'s hand-curated lineage plates already do — this is not a fifth
+curated shape, it is the same "asset data lives outside WorldState" precedent portraits already
+established, applied to a second kind of asset.
+
+Because one source directory here bundles several independently-licensed files (unlike every
+other source's single url/sha256/licence), per-stem provenance lives in a companion
+**`stems.toml`** (`pipeline.audio.StemBook`/`StemManifest`) rather than the generic
+`manifest.toml`, which keeps only what `pipeline.publish._credit`'s generic one-`Credit`-
+per-source-directory listing needs. `fetch.py` loops `ensure_verified_artefact` once per
+`[[stems]]` entry; `write_outputs()` (the `pipeline.databuild` post-normalise hook
+`sources/paleodem/normalise.py` already uses for its globe textures) copies each verified raw
+file to `data/media/audio/<id>.<format>` — placed directly at build time, like paleodem's
+textures, never staged and copied again at `earthtime publish` time.
+
+**No automated trimming, loudness normalisation or transcoding.** This machine has neither
+`ffmpeg` nor `sox`, and macOS's `afconvert` must **not** become a hard pipeline dependency
+(every source must build, and every source's tests must run, offline on any machine). `write_
+outputs()` therefore does a **verified copy only** — it checks (`pipeline.audio.sniff_audio`,
+mirroring `sniff_image`'s "trust bytes over declared type") that a stem's raw file's real
+container matches the `format` `stems.toml` declares, then copies it through unchanged. The
+consequence is a **sourcing requirement, not a pipeline gap**: whoever fills in `stems.toml`
+must pick clips that already arrive pre-trimmed to a clean loop point, ≥20s, and reasonably
+level-matched to the rest of the set — `duration_seconds`/`loop_safe` are curator-attested
+fields, entered by ear the same way `sources/astronomy`'s checkpoint values are cited numbers a
+human typed in, not something this pipeline measures. A local, optional `afconvert`-based
+sourcing convenience script may be added later, invoked by a human when picking clips, never by
+`earthtime build` or by any test.
+
+**Storage: `git-lfs`**, extending ADR-018's reasoning rather than paleodem's. Unlike paleodem's
+~100+ regenerable globe textures (deliberately left uncommitted — DATA_SOURCES.md "generated
+media... never committed" note on that source, regenerated locally by `make data`), a specific
+CC0 clip hand-picked from a specific archive is as irreplaceable as a pinned generated image if
+the archive later vanishes, and the total budget (DECIDED DEFAULTS: <~15 MB) is cheap to store.
+`.gitattributes` now tracks `data/media/**/*.{ogg,m4a,mp3,wav}` through LFS, alongside the
+existing image extensions.
+
+**Committed fixture**: `sources/audio-stems/fixture/` carries a tiny synthetic (not real —
+nothing has been sourced yet) WAV plus a matching `stems.toml`, enough to exercise
+`StemBook`/`fetch`/`normalise`/`sniff_audio` offline. The production `sources/audio-stems/
+stems.toml` ships **empty** until a human sources the ten stems above (this ADR's own
+`audio-stem-wishlist.md` is that brief) — `pipeline.audio.load_stem_book` treats a missing or
+empty catalogue as zero stems, not an error, the same "ships partially" pattern
+`data/portraits.yaml`/`data/scenes.yaml` already use before anything is pinned.
+
+### 5. Manifest and web types
+
+`pipeline/manifest.py` / `web/src/types/manifest.ts` (mirrored, per that module's own
+docstring):
+
+```python
+class SceneSound(_WireModel):        # pipeline/manifest.py
+    stem: str
+    mode: SoundMode                  # reused from pipeline.scenes, not re-declared
+    gain: float
+
+class AudioStem(_WireModel):
+    id: str
+    file: str                        # published path, relative to assetBase
+    title: str
+    author: str
+    licence: str
+    source_url: str
+    duration_seconds: float
+    loop_safe: bool
+
+class Manifest(_WireModel):
+    ...
+    audio_stems: tuple[AudioStem, ...] = ()   # wire: audioStems — always emitted, like events
+```
+
+`Scene` gains `sound: SceneSound | None = None`. **Per-stem credit lives on `AudioStem` itself**
+(`title`/`author`/`licence`/`sourceUrl`), not as N new entries in `Manifest.credits` — that
+array stays one `Credit` per `sources/<name>/` directory (unaffected), because a stems
+collection bundles several independently-licensed files under one source directory and each
+needs its own citation on the credits page (DECIDED DEFAULTS: "every file still credited...
+with source URL + licence"). `web/src/shell/manifest.ts`'s parser treats `Manifest.audioStems`
+leniently — absent (the committed stub, or any manifest published before this ADR) parses as
+`[]`, not a validation failure, the same additive discipline `events`/`effect` already use.
+
+**Alternatives considered.**
+- **A fifth curated shape for stems.** Rejected (§4): stems are not time-indexed,
+  `WorldState`-projectable data — there is nothing for `WorldModel.at(t)` to interpolate, so
+  forcing them through `pipeline/curated.py`'s parquet machinery would add ceremony
+  (`_LAYOUTS`, `write_shape`/`read_shape`) for no reader that needs it. The portraits precedent
+  (asset data with its own hand-curated book, outside `WorldModel`) already covers this shape of
+  problem.
+- **One `Credit` per stem in `Manifest.credits` instead of credit-on-`AudioStem`.** Rejected:
+  `Credit` (`sourceId`, `title`, `citation`, `licence`, `url`) is keyed one-per-`sources/<name>/`
+  directory everywhere else in the manifest; overloading it to also carry N per-file credits
+  from one directory would make `sourceId` ambiguous (one real source id, N credit rows) for no
+  benefit over reading credit straight off the stem that already needs `id`/`file` anyway.
+- **Driving stem gains and score parameters off scalars that aren't curated yet** (temperature,
+  biodiversity, population), inventing plausible-looking placeholder curated data to unblock it.
+  Rejected outright — CLAUDE.md: "if something is unusable, stop and report; do not silently
+  substitute a different dataset." Every stem/parameter above is built only from `t`, literature
+  boundary dates, and data that is genuinely published today; the not-yet-curated cases are
+  named as explicit follow-ups instead (Consequences), the same way ADR-022 named `paleoclimate`/
+  `hyde`/`pbdb` as still `⚠️ TBD` rather than faking their data.
+- **A bespoke one-off sound file per scene instead of reusing the stem catalogue.** Rejected:
+  DESIGN's own tier-1 stems already cover exactly the categories a scene-specific effect would
+  want (volcanic rumble for a lava scene, surf for a shore scene); a second, parallel asset
+  pipeline for "scene SFX" would duplicate `sources/audio-stems/` for no new capability — what a
+  scene actually needs is a *different envelope* on an existing stem (its own presentation
+  weight instead of the tier-1 `t`-curve), which `SceneRecord.sound.mode` already gives it.
+- **Firing `once` mode on scrub-reveal too**, on the theory that a fast-scrubbing user should
+  still hear scene sounds. Rejected per the DECIDED DEFAULTS-adjacent product read the human's
+  own phrasing implies ("when it's visible or first shown" — a viewer watching, not sweeping):
+  a stochastic effect firing every time a fast scrub crosses a scene's `mix = 1` point would
+  fire many times a second during a fast scrub and read as glitchy, not atmospheric; `loop` mode
+  already gives scrubbing a sound response (continuous, gain-following), which is the correct
+  one for that interaction.
+
+**Consequences.**
+- `pipeline/audio.py` is new: `StemManifest`, `StemBook`, `load_stem_book`, `AudioFormat`,
+  `sniff_audio`. `pipeline/scenes.py` gains `SoundMode`/`SceneSound`/`SceneRecord.sound`.
+  `pipeline/manifest.py` gains `SceneSound`/`AudioStem`/`Manifest.audio_stems`. `pipeline/
+  publish.py` gains `_validate_scene_sound`/`_scene_sound`/`_audio_stems`, wired into
+  `prepare_publication`. `sources/audio-stems/{manifest.toml, stems.toml, fetch.py,
+  normalise.py, README.md, fixture/}` are new. `.gitattributes` gains four audio extensions.
+  `web/src/types/manifest.ts` gains `SoundMode`/`SceneSound`/`AudioStem`/`Manifest.audioStems`/
+  `Scene.sound`; `web/src/shell/manifest.ts` parses both leniently.
+- **Not implemented by this ADR**: the web audio engine itself (`audio/engine.ts`,
+  `stemGains`/`scoreParams`/`sceneSoundGains`, the HUD speaker toggle, Tone.js wiring,
+  localStorage persistence) — that is a precise contract handed to the web engine agent
+  (`audio-engine-spec.md`), not pipeline/contract work. The manifest today publishes
+  `audioStems: []` (no stems sourced yet) and no scene carries a `sound` — both are wired,
+  tested, and ready for real content and real UI, but produce no audible change until both
+  land.
+- **Real stems must still be sourced** (`audio-stem-wishlist.md`) before tier 1 or scene sound
+  can be heard; `data/scenes.yaml` entries can add `sound:` referencing a stem id the moment
+  that stem exists in `stems.toml` and its file lands in `data/media/audio/` — `earthtime
+  publish` enforces the ordering (unknown-stem and missing-file refusals) so this can never
+  silently drift out of sync.
+- **When `paleoclimate`/`hyde`/`pbdb` land**, `storm`'s flat baseline and `settlement`'s
+  present-proximity proxy above are the two ambience curves most worth revisiting (real
+  precipitation and real population would replace their placeholders directly); the score's CO2-
+  as-temperature-proxy and t-as-density-proxy are the two score mappings worth the same
+  revisit. None of this requires a contract change — `stemGains`/`scoreParams` already take
+  whatever published series exist, so a new series is a new mapping row, not a new signature.
+- Publishing a manifest with scene sound links or stems now costs nothing extra in spend
+  (audio is free — DESIGN §13's budget table already lists "audio" at $0) and adds a bounded,
+  measured amount of LFS-tracked media (<~15 MB target, DECIDED DEFAULTS), not image-generation
+  budget.

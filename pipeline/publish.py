@@ -16,10 +16,12 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
+from pipeline.audio import StemBook, load_stem_book
 from pipeline.databuild import discover_sources
 from pipeline.generators.image import ImageInfo, asset_digest, sniff_image
 from pipeline.graph import digest_of
 from pipeline.manifest import (
+    AudioStem,
     Chapter,
     Credit,
     EventsData,
@@ -37,6 +39,7 @@ from pipeline.manifest import (
     RasterData,
     RasterFrameData,
     Scene,
+    SceneSound,
     SeriesData,
     SeriesSample,
     TimelineEvent,
@@ -57,6 +60,7 @@ from pipeline.portraits import (
     load_morph,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord
+from pipeline.scenes import SceneSound as SceneSoundRecord
 from pipeline.shapes import EARTH_FORMATION, Event, EventSet, GeoTime, Interpolation
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
 
@@ -65,6 +69,7 @@ from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
 ASSET_BASE = "/media"
 MANIFEST_NAME = "manifest.json"
 EVENTS_ID = "events-core"
+AUDIO_STEMS_SOURCE = "audio-stems"
 # docs/GLOBE.md §6: the pre-1 Ga regimes, an EventSet with no timeline presence — it never
 # reaches Manifest.events (see _events below), only manifest.layers as an ordinary
 # dataKind="events" layer, so the timeline never lists it.
@@ -176,6 +181,8 @@ def prepare_publication(
     if not pinned:
         raise PublishRefused("no scene is pinned; pick candidates with `earthtime review pick`")
     _validate_scene_events(book, world.events.get(EVENTS_ID))
+    stem_book = load_stem_book(sources_dir / AUDIO_STEMS_SOURCE / "stems.toml")
+    _validate_scene_sound(book, stem_book)
     scene_entries = [_scene_entry(scene, root) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
     chapters = tuple(c for c in chapter_spans(book) if c.id in published_chapters)
@@ -186,6 +193,7 @@ def prepare_publication(
         world, None if portrait_publication is None else portrait_publication.data
     )
     events = _events(world)
+    audio_stems = _audio_stems(stem_book, root)
     credits = tuple(
         _credit(source.path / "manifest.toml") for source in discover_sources(sources_dir)
     )
@@ -195,6 +203,7 @@ def prepare_publication(
         "layers": [layer.model_dump(mode="json") for layer in layers],
         "layer_data": {f.published: f.data.model_dump(mode="json") for f in layer_files},
         "events": [e.model_dump(mode="json") for e in events],
+        "audio_stems": [a.model_dump(mode="json") for a in audio_stems],
         "credits": [c.model_dump(mode="json") for c in credits],
     }
     manifest = Manifest(
@@ -205,6 +214,7 @@ def prepare_publication(
         chapters=chapters,
         layers=layers,
         events=events,
+        audio_stems=audio_stems,
         credits=credits,
     )
     return Publication(
@@ -282,6 +292,55 @@ def _validate_scene_events(book: SceneBook, event_set: EventSet | None) -> None:
             )
 
 
+def _validate_scene_sound(book: SceneBook, stem_book: StemBook) -> None:
+    """Every scene->stem link (ADR-023) must name a real audio-stems catalogue id. Checked
+    here, against the whole book, rather than in SceneBook's own validator -- the same
+    reasoning `_validate_scene_events` gives for `scene.events`: parsing scenes.yaml has no
+    stem catalogue to check against."""
+    known = frozenset(s.id for s in stem_book.stems)
+    for scene in book.scenes:
+        if scene.sound is not None and scene.sound.stem not in known:
+            raise PublishRefused(
+                f"{scene.id}: unknown stem id {scene.sound.stem!r} -- not in {AUDIO_STEMS_SOURCE!r}"
+            )
+
+
+def _scene_sound(sound: SceneSoundRecord | None) -> SceneSound | None:
+    if sound is None:
+        return None
+    return SceneSound(stem=sound.stem, mode=sound.mode, gain=sound.gain)
+
+
+def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
+    """Published stem files are not copied here -- `sources/audio-stems/normalise.py`'s
+    `write_outputs()` already placed them at their final `data/media/audio/` location as part
+    of `make data`, the same way `paleodem`'s globe textures are placed directly rather than
+    staged and copied at publish time. This only checks each catalogued stem's file actually
+    exists before it is referenced from the manifest."""
+    stems = []
+    for stem in stem_book.stems:
+        published = f"audio/{stem.id}.{stem.format}"
+        source = root / "data" / "media" / published
+        if not source.is_file():
+            raise PublishRefused(
+                f"stem {stem.id}: {source} is missing -- run `make data` "
+                f"(sources/audio-stems/normalise.py write_outputs)"
+            )
+        stems.append(
+            AudioStem(
+                id=stem.id,
+                file=published,
+                title=stem.title,
+                author=stem.author,
+                licence=stem.licence,
+                source_url=stem.url,
+                duration_seconds=stem.duration_seconds,
+                loop_safe=stem.loop_safe,
+            )
+        )
+    return tuple(stems)
+
+
 def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
     assert scene.pin is not None, scene.id
     source, info = _verified_pin(scene.id, scene.pin, root)
@@ -294,6 +353,7 @@ def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
         shot=scene.shot,
         caption=scene.caption,
         events=scene.events,
+        sound=_scene_sound(scene.sound),
         pinned=scene.pin.asset_digest,
         width=info.width,
         height=info.height,

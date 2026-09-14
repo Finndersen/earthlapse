@@ -505,6 +505,52 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 3. **Narration** (optional toggle). Local TTS — Piper or Kokoro — over generated event
    descriptions. Free.
 
+> **v1 note (ADR-023), making all three precise.** Sound is **off by default** and switched on
+> per viewer through a HUD speaker toggle (persisted in `localStorage`, a master volume
+> alongside it) — browsers require a gesture before audio anyway, and this also gates Tone.js
+> itself: it is dynamically imported only after that first "on" click, never bundled eagerly.
+>
+> - **Tier 1** is ten stems (`wind`, `water`, `storm`, `volcanic`, `insects`, `birds`,
+>   `mammals`, `fire`, `settlement`, `machinery`), each gained by a pure `stemGains(t)` built
+>   from smooth raised-cosine ramps in `log1p(t)` (symlog) space between cited boundary dates —
+>   several of them `events-core` event ids (`land-plants`, `first-forests`, `k-pg-impact`,
+>   `control-of-fire`, `agriculture`, `industrial-revolution`, the flood-basalt events), so a
+>   stem's fade lines up with the event feed instead of an independently-chosen date. Full curve
+>   table: ADR-023 §1.
+> - **Tier 2**'s mapping is restricted to what `WorldState` actually has curated data for today
+>   (`co2`, `day_length`) plus `events-core`'s `catastrophe` tag — not the temperature/
+>   biodiversity DESIGN sketched above, because `paleoclimate`/`hyde`/`pbdb` aren't built yet
+>   (DATA_SOURCES.md). CO2 stands in for atmospheric brightness, day length drives pulse
+>   density directly (a genuinely apt substitute — the planet's own rotation), and proximity to
+>   a catastrophe-tagged event shifts the harmonic mood toward minor/dissonant. The score ducks
+>   under an on-screen scene's own sound (§ below) rather than fighting it. Real temperature/
+>   biodiversity mappings are additive follow-ups once those sources land (ADR-023
+>   Consequences), not a redesign.
+> - **A fourth thing DESIGN never named**: optional per-scene sound (`SceneRecord.sound`,
+>   `data/scenes.yaml`) — a scene names a tier-1 stem id and a `mode`. `loop` ties the stem's
+>   gain to the scene's own on-screen presentation weight (pure in `t`, scrub-safe). `once`
+>   fires a single playback when the scene becomes the settled on-screen scene during playback
+>   (not while scrubbing), at most once per arrival. Reuses the tier-1 stem catalogue rather
+>   than a second asset pipeline — see ADR-023 §3.
+>
+> Full stem/score/pipeline/manifest design: ADR-023.
+>
+> **As-built web engine** (`web/src/audio/`, IMPLEMENTATION.md A6): `stemGains.ts`/`score.ts`/
+> `sceneSound.ts` are pure (`stemGains(t, flatBasaltWindows)`, `scoreParams(t, series,
+> catastropheWindows)`, `sceneSoundLoopGains(presented)`, the `nextOnceTriggerState`/
+> `useSceneSoundOnceTrigger` arrival state machine), built on one shared `ramp.ts` helper
+> (`rampLog`, `bump`) — none of the three import `tone`, so the math is unit-tested with no
+> Tone.js in the test bundle. `engine.ts`'s `useAudioEngine` is the one stateful, Tone.js-owning
+> hook: lazy `await import('tone')` behind the first "on" click, ten crossfade-looped
+> `Tone.Player`s (missing/failed stems skipped with one deduped `console.warn`, never a throw),
+> a small always-modulating drone/filter/tremolo score voice ducked under scene sound, an
+> `AudioContext` suspend/resume on tab visibility change, and — a deliberate, documented
+> departure from the drafted spec signature — ownership of the toggle's own persisted enabled/
+> master-volume state (`persistence.ts`, `localStorage`, try/catch), so `Experience.tsx` needs
+> exactly one hook call (`useAudioEngine`) and one component render (`<SoundToggle />`,
+> `toggle.tsx`, fixed top-right in the HUD periphery, `M` to mute). Public surface: `web/src/
+> audio/index.ts`.
+
 ---
 
 ## 12. Tech stack

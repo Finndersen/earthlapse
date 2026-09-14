@@ -719,6 +719,10 @@ scenes:
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
     events: [k-pg-impact]
+    # ADR-023: no dedicated "impact" stem exists (scene sound reuses the tier-1 catalogue,
+    # never a bespoke file) -- `volcanic`'s low rumble is the closest cataloged texture to a
+    # sudden violent tremor, fired once as the asteroid strikes.
+    sound: {stem: volcanic, mode: once, gain: 0.85}
     pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
 
   # t = 6.604299999e7 (66,042,999.99 yr ago): ~3.65 days after kpg-arrival's impact instant
@@ -764,6 +768,10 @@ scenes:
       sky_and_light: a sky closed edge to edge by a dense brown-grey pall of soot, sulfate and fine dust circling the globe; no sun or blue is visible, only a faint, cold, reddish-brown glow, dim enough to feel like dusk though it is midday; a fine ash sifts down like snow
       absent: [a visible crater, the asteroid or any trail, a live dinosaur or any animal posed dramatically, direct sunlight, a blue sky, green living foliage, active flames, grass, people]
     events: [k-pg-impact]
+    # ADR-023: the ash-laden gloom is an atmosphere, not a single event, so `loop` (tied to
+    # this scene's own on-screen presentation weight) rather than `once`; `wind` is the closest
+    # cataloged texture to the sifting-ash stillness described above.
+    sound: {stem: wind, mode: loop, gain: 0.55}
     pin: {asset_digest: "ad31c5b96308e6e0", path: "data/candidates/kpg-darkness/be30de8f32a37bdb/03-ad31c5b96308e6e0.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
@@ -1332,6 +1340,9 @@ scenes:
       sky_and_light: a heavy, soot-darkened grey sky with a low haze of coal smoke; flat, dim, overcast daylight
       absent: [cars, tarmac roads, electric lighting, plastic, modern signage, steel-hulled ships, modern clothing, identifiable faces, motor vehicles]
     events: [industrial-revolution]
+    # ADR-023: `machinery` (its cataloged clip is itself a real industrial/traffic field
+    # recording) as a continuous `loop`, matching the mill town's constant working noise.
+    sound: {stem: machinery, mode: loop, gain: 0.7}
     pin: null
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
@@ -1361,6 +1372,9 @@ scenes:
       sky_and_light: a cold, grey-blue overcast winter sky with a stiff wind; flat, diffuse December light
       absent: [modern aircraft, jet, helicopter, airliner, propeller at the front of the aircraft, wheeled landing gear, paved runway, road, car, power line, radio mast, modern clothing, sunglasses, crowd of many people, water in frame, identifiable faces]
     events: [wright-flyer-first-flight]
+    # ADR-023: `machinery` (engines) is the closest cataloged texture to the Flyer's own
+    # engine and twin propellers, fired once as it lifts off the rail.
+    sound: {stem: machinery, mode: once, gain: 0.5}
     pin: {asset_digest: "b82bc9f05d4f344e", path: "data/candidates/first-powered-flight/16cc2baae684243d/02-b82bc9f05d4f344e.jpg"}
 
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
@@ -1434,6 +1448,9 @@ scenes:
       sky_and_light: a clear, pale-blue midsummer morning sky with a few small clouds; bright, warm morning sunlight
       absent: [Space Shuttle, SpaceX rocket, modern rocket, modern launch tower, modern buildings, smartphone, camera phone, legible text, logo, flag shown close-up, identifiable face, modern car, high-rise building]
     events: [moon-landing]
+    # ADR-023: `machinery` (engines) is the closest cataloged texture to the Saturn V's own
+    # engine roar, fired once as it clears the tower.
+    sound: {stem: machinery, mode: once, gain: 0.9}
     pin: {asset_digest: "a0da45cad76f825d", path: "data/candidates/apollo-11-launch/33045c4ababe91c8/03-a0da45cad76f825d.jpg"}
 
   # The present day (events.yaml present: t = 0).

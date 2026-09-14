@@ -22,10 +22,30 @@ export interface Manifest {
   chapters: Chapter[]
   layers: LayerManifest[]
   events: TimelineEvent[]
+  /** The ambience stem catalogue (ADR-023). Always present, like `events` — an empty array is
+   *  already a complete "no stems published yet", not an absent field. */
+  audioStems: AudioStem[]
   credits: Credit[]
 }
 
 // --------------------------------------------------------------------------- scenes
+
+/** How a scene's optional ambience stem attaches to it (ADR-023). `'loop'` ties the stem's
+ *  gain to the scene's own on-screen presentation weight (the same mix
+ *  `scene/presentation.ts` computes for the cross-dissolve) — pure in `t`, scrub-safe by
+ *  construction. `'once'` fires a single playback when the scene becomes the settled
+ *  on-screen scene during playback (not while scrubbing past it), re-armed only after the
+ *  viewer leaves and returns. */
+export type SoundMode = 'loop' | 'once'
+
+/** A scene's optional associated ambience stem (ADR-023). `stem` names an id in
+ *  `Manifest.audioStems`. */
+export interface SceneSound {
+  stem: string
+  mode: SoundMode
+  /** 0..1, mixed against the stem's own master gain. */
+  gain: number
+}
 
 export interface Scene {
   id: string
@@ -43,6 +63,9 @@ export interface Scene {
    *  on any manifest published before this field existed — timeline rendering of scene->event
    *  links is a later task, this is parsed and passed through only. */
   events?: string[]
+  /** The scene's optional associated ambience stem (ADR-023). Additive: absent on any manifest
+   *  published before this field existed, and on any scene with no associated sound. */
+  sound?: SceneSound
   /** Digest of the approved asset. Present means pinned (ADR-005). */
   pinned?: string
   width: number
@@ -81,6 +104,25 @@ export interface LayerManifest {
   /** Where the layer's data lives, relative to assetBase. Scalars and trees are inlined
    *  as JSON; raster sequences are a frame index pointing at texture files. */
   data: string
+}
+
+// ----------------------------------------------------------------------------- audio
+
+/** One published ambience stem (ADR-023) — DESIGN.md §11 tier 1. Independently credited here
+ *  (`title`/`author`/`licence`/`sourceUrl`) rather than through `Credit`, which stays one
+ *  entry per source directory: a stems collection bundles several independently-licensed
+ *  files under one `sources/audio-stems/` directory, so per-file credit has to live on the
+ *  stem itself. */
+export interface AudioStem {
+  id: string
+  /** Published path, relative to `assetBase`. */
+  file: string
+  title: string
+  author: string
+  licence: string
+  sourceUrl: string
+  durationSeconds: number
+  loopSafe: boolean
 }
 
 // -------------------------------------------------------------------------- credits

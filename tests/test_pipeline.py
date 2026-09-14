@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 from PIL import Image
+from pydantic import ValidationError
 from typer.testing import CliRunner
 
 from pipeline.assets import build_scene_graph
@@ -32,7 +33,14 @@ from pipeline.models import AtmosphereState, SkyState, WorldModel, WorldState
 from pipeline.paths import ProjectPaths
 from pipeline.prompts import UnsourcedConditions, render_conditions
 from pipeline.publish import chapter_spans
-from pipeline.scenes import SceneBook, ScenePin, load_scene_book, parse_scene_book
+from pipeline.scenes import (
+    SceneBook,
+    ScenePin,
+    SceneSound,
+    SoundMode,
+    load_scene_book,
+    parse_scene_book,
+)
 from pipeline.shapes import (
     EffectAnchor,
     EffectWindow,
@@ -926,6 +934,7 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
                 },
             }
         ],
+        "audioStems": [],
         "credits": [
             {
                 "sourceId": "astronomy",
@@ -1124,6 +1133,150 @@ def test_publish_refuses_a_scene_linked_to_an_unknown_event_id_before_writing_me
 
     assert _run(backend, root, "publish")[0] != 0
     assert (paths.media / "manifest.json").read_bytes() == before
+
+
+def test_scene_sound_gain_must_be_in_unit_interval() -> None:
+    SceneSound(stem="wind", mode=SoundMode.LOOP, gain=1.0)  # boundary is inclusive, does not raise
+    with pytest.raises(ValidationError, match="gain"):
+        SceneSound(stem="wind", mode=SoundMode.LOOP, gain=0.0)
+    with pytest.raises(ValidationError, match="gain"):
+        SceneSound(stem="wind", mode=SoundMode.LOOP, gain=1.1)
+
+
+def test_scene_sound_mode_is_a_closed_enum() -> None:
+    with pytest.raises(ValidationError, match="mode"):
+        SceneSound.model_validate({"stem": "wind", "mode": "fade", "gain": 0.5})
+
+
+def test_scene_sound_stem_must_be_a_slug() -> None:
+    with pytest.raises(ValidationError, match="stem"):
+        SceneSound(stem="Not A Slug!", mode=SoundMode.LOOP, gain=0.5)
+
+
+# -- scene -> stem links (ADR-023) -------------------------------------------------------------
+
+
+def _link_city_to_stem(text: str, stem_id: str, mode: str = "loop", gain: float = 0.5) -> str:
+    linked, count = re.subn(
+        r"caption: A city\.\n",
+        f"caption: A city.\n    sound: {{stem: {stem_id}, mode: {mode}, gain: {gain}}}\n",
+        text,
+        count=1,
+    )
+    assert count == 1, "city scene's caption line not found"
+    return linked
+
+
+def _write_stem_catalogue(
+    paths: ProjectPaths, stem_id: str = "wind", publish_file: bool = True
+) -> None:
+    source_dir = paths.sources / "audio-stems"
+    source_dir.mkdir(parents=True, exist_ok=True)
+    (source_dir / "stems.toml").write_text(
+        f'[[stems]]\nid = "{stem_id}"\ntitle = "Ridge Wind"\nauthor = "Test Author"\n'
+        f'url = "https://example.invalid/{stem_id}"\nlicence = "CC0 1.0"\n'
+        f'sha256 = "{"0" * 64}"\nraw_filename = "{stem_id}.wav"\nformat = "wav"\n'
+        f"duration_seconds = 30.0\nloop_safe = true\n"
+    )
+    if publish_file:
+        audio_dir = paths.media / "audio"
+        audio_dir.mkdir(parents=True, exist_ok=True)
+        (audio_dir / f"{stem_id}.wav").write_bytes(b"RIFF....WAVEfmt ")
+
+
+def test_scene_stem_links_and_the_stem_catalogue_appear_in_the_manifest(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths)
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "wind"))
+
+    code, output = _run(backend, root, "publish")
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert scenes_by_id["city"]["sound"] == {"stem": "wind", "mode": "loop", "gain": 0.5}
+    assert "sound" not in scenes_by_id["devonian"]
+    assert raw["audioStems"] == [
+        {
+            "id": "wind",
+            "file": "audio/wind.wav",
+            "title": "Ridge Wind",
+            "author": "Test Author",
+            "licence": "CC0 1.0",
+            "sourceUrl": "https://example.invalid/wind",
+            "durationSeconds": 30.0,
+            "loopSafe": True,
+        }
+    ]
+
+
+def test_publish_omits_audio_stems_when_no_catalogue_exists(root: Path) -> None:
+    """No sources/audio-stems/stems.toml at all -- an ordinary project before any stem has
+    been sourced -- publishes cleanly with an empty stem list, not an error."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((ProjectPaths(root).media / "manifest.json").read_text())
+    assert raw["audioStems"] == []
+
+
+def test_publish_refuses_a_scene_linked_to_an_unknown_stem_id(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "not-a-real-stem"))
+
+    code, output = _run(backend, root, "publish")
+    assert code != 0
+    assert "city" in output and "not-a-real-stem" in output
+
+
+def test_publish_refuses_a_catalogued_stem_whose_published_file_is_missing(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths, publish_file=False)
+
+    code, output = _run(backend, root, "publish")
+    assert code != 0
+    assert "wind" in output
+
+
+def test_publish_refuses_a_scene_linked_to_an_unknown_stem_id_before_writing_media(
+    root: Path,
+) -> None:
+    """A refused publish must leave data/media/ exactly as it was (module docstring)."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    before = (paths.media / "manifest.json").read_bytes()
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "not-a-real-stem"))
+
+    assert _run(backend, root, "publish")[0] != 0
+    assert (paths.media / "manifest.json").read_bytes() == before
+
+
+def test_scene_sound_plays_no_part_in_the_asset_graph(root: Path) -> None:
+    """A scene's sound is invisible to the asset graph (pipeline/assets.py never reads it),
+    the same guarantee ADR-022 gives `scene.events` -- adding one must not make a pinned scene
+    stale."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths)
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "wind"))
+
+    _, plan_output = _run(backend, root, "plan")
+    assert "3 scenes: 3 pinned, 0 awaiting review, 0 stale" in plan_output
 
 
 def test_publish_refuses_a_pinned_image_that_no_longer_matches_its_digest(root: Path) -> None:

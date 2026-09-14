@@ -1,0 +1,73 @@
+/*
+ * Fixed to the viewport, not the shell's own grid (see toggle.tsx's doc comment) — top right,
+ * clear of `.ancestor`'s own `padding-top: 40px` gap in that same corner and of the bottom
+ * transport row. Matches the shell's chrome-less, unbordered visual language: no panel, no
+ * border, just HUD type/icon floating with a text-shadow for legibility over any plate.
+ */
+.wrap {
+  position: fixed;
+  top: clamp(14px, 2.2vw, 28px);
+  right: clamp(16px, 3vw, 48px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--hud-mono);
+  color: var(--hud-ink);
+  text-shadow: var(--hud-shadow);
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--hud-dim);
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  color: var(--hud-accent);
+}
+
+.button[data-just-changed='true'] {
+  transform: scale(1.12);
+}
+
+.button:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 4px;
+}
+
+.volume {
+  width: 64px;
+  height: 2px;
+  accent-color: var(--hud-accent);
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.volume:hover,
+.volume:focus-visible {
+  opacity: 1;
+}
+
+@media (max-width: 760px) {
+  .wrap {
+    top: 10px;
+    right: 12px;
+    gap: 8px;
+  }
+
+  .volume {
+    width: 48px;
+  }
+}

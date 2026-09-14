@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from pipeline.prompts import PlateType, Shot
+from pipeline.scenes import SoundMode
 from pipeline.shapes import EventKind, EventTag, GeoTime, GlobeEffectKind, Interpolation
 
 
@@ -38,6 +39,16 @@ class LayerDataKind(StrEnum):
     NODE = "node"
 
 
+class SceneSound(_WireModel):
+    """Mirrors `pipeline.scenes.SceneSound` (ADR-023). `mode` reuses
+    `pipeline.scenes.SoundMode` directly, the same way `TimelineEvent.kind` reuses
+    `pipeline.shapes.EventKind` rather than a re-declared synonym."""
+
+    stem: str
+    mode: SoundMode
+    gain: float = Field(gt=0.0, le=1.0)
+
+
 class Scene(_WireModel):
     id: str
     t: GeoTime
@@ -49,6 +60,9 @@ class Scene(_WireModel):
     # events-core event ids this scene visually anchors to (ADR-022). Always emitted, unlike the
     # single-value additive fields below -- an empty list is already a complete "no links".
     events: tuple[str, ...] = ()
+    # Optional ambience stem this scene plays (ADR-023). Additive: absent on every manifest
+    # published before this field existed, and on any scene with no associated sound.
+    sound: SceneSound | None = None
     pinned: str | None = None
     width: int = Field(gt=0)
     height: int = Field(gt=0)
@@ -131,6 +145,25 @@ class TimelineEvent(_WireModel):
     effect: GlobeEffect | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
+class AudioStem(_WireModel):
+    """One published ambience stem (ADR-023). Mirrors `pipeline.audio.StemManifest` plus the
+    file's published path; `duration_seconds`/`loop_safe` are the same curator-attested
+    values, passed through unchanged. Every stem is independently credited here (`title`,
+    `author`, `licence`, `source_url`) rather than through `Manifest.credits`, which stays
+    one entry per `sources/<name>/` directory -- a stems collection bundles several
+    independently-licensed files under one source directory, so per-file credit has to live
+    on the stem itself."""
+
+    id: str
+    file: str
+    title: str
+    author: str
+    licence: str
+    source_url: str
+    duration_seconds: float = Field(gt=0.0)
+    loop_safe: bool
+
+
 class Credit(_WireModel):
     source_id: str
     title: str
@@ -147,6 +180,9 @@ class Manifest(_WireModel):
     chapters: tuple[Chapter, ...]
     layers: tuple[LayerManifest, ...]
     events: tuple[TimelineEvent, ...]
+    # The ambience stem catalogue (ADR-023). Always emitted, like `events` -- an empty list is
+    # already a complete "no stems published yet", not an absent field.
+    audio_stems: tuple[AudioStem, ...] = ()
     credits: tuple[Credit, ...]
 
     @model_validator(mode="after")

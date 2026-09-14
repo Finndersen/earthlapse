@@ -1,0 +1,82 @@
+"""Place every catalogued stem's raw file at its published location, data/media/audio/.
+
+ADR-023: audio stems are not one of the four curated shapes (`docs/DATA_SOURCES.md` §
+Contract) -- they are not `WorldState`-projectable, time-indexed data, so `normalise()`
+returns no `CuratedShape` at all. The real work happens in `write_outputs()`, the same
+`pipeline.databuild` side-effect hook `sources/paleodem/normalise.py` uses for its globe
+textures: it runs after `normalise()`, writes outside `data/curated/`, and is declared via
+`manifest.toml`'s `outputs` globs.
+
+v1 does no trimming, loudness normalisation or transcoding -- this machine has neither
+ffmpeg nor sox, and macOS's `afconvert` must not become a hard pipeline dependency (every
+`sources/<name>/` source must build and test offline). Each raw file is therefore copied
+through unchanged, after checking its container format actually matches the `format` a
+`[[stems]]` entry declares -- see README.md "Why no automated loudness/trim pass" for the
+resulting sourcing requirement (pick clips that already arrive pre-trimmed, loop-ready and
+reasonably level-matched).
+"""
+
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+from pipeline.audio import StemManifest, load_stem_book, sniff_audio
+from pipeline.shapes import CuratedShape
+
+_STEMS_TOML = Path(__file__).resolve().parent / "stems.toml"
+_MEDIA_SUBDIR = Path("audio")
+
+
+def normalise(raw_dir: Path) -> list[CuratedShape]:
+    """Always empty -- see module docstring. `raw_dir` is unused; kept only so this matches
+    the `normalise(raw_dir: Path) -> list[CuratedShape]` convention every source's
+    `normalise.py` shares, so `earthtime build` can invoke every source the same way."""
+    del raw_dir
+    return []
+
+
+def _published_path(stem: StemManifest, media_dir: Path) -> Path:
+    return media_dir / _MEDIA_SUBDIR / f"{stem.id}.{stem.format}"
+
+
+def _place_stem(stem: StemManifest, raw_dir: Path, media_dir: Path) -> None:
+    raw_path = raw_dir / stem.raw_filename
+    if not raw_path.is_file():
+        raise FileNotFoundError(
+            f"stem {stem.id}: {raw_path} is missing -- run `earthtime` data fetch first"
+        )
+    data = raw_path.read_bytes()
+    actual = sniff_audio(data)
+    if actual.value != stem.format:
+        raise ValueError(
+            f"stem {stem.id}: raw file sniffs as {actual.value!r} but stems.toml declares "
+            f"format {stem.format!r} -- source a file already encoded the way it will be "
+            f"published, or correct the declared format"
+        )
+    target = _published_path(stem, media_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(raw_path, target)
+
+
+def write_outputs(raw_dir: Path, repo_root: Path) -> None:
+    """`pipeline.databuild`'s optional post-normalise side-effect hook (see CONTRIBUTING.md
+    "Optional write_outputs hook") -- called automatically after `normalise()` so `make data`
+    places every catalogued stem's published file too, not curated parquet only (there is
+    none here)."""
+    book = load_stem_book(_STEMS_TOML)
+    media_dir = repo_root / "data" / "media"
+    for stem in book.stems:
+        _place_stem(stem, raw_dir, media_dir)
+
+
+def main() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    raw_dir = repo_root / "data" / "raw" / "audio-stems"
+    assert normalise(raw_dir) == []
+    write_outputs(raw_dir, repo_root)
+    print(f"wrote stem media to {repo_root / 'data' / 'media' / _MEDIA_SUBDIR}")
+
+
+if __name__ == "__main__":
+    main()
