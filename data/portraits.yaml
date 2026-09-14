@@ -496,14 +496,14 @@ portraits:
       - "dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (crown Primates, molecular date)"
     gaps:
       - a molecular-clock node; the plate bridges the Purgatorius and Teilhardina plates and adds no anatomy of its own
-      - ear shape, muzzle covering, body proportions and tail carriage are not described by these sources; rendered with ears reduced to small skin-covered flaps that barely break the fur line, a muzzle furred to its tip with no bare skin, a body sized and proportioned to sit between the Purgatorius and Teilhardina plates, and a tail trailing straight down with its tip resting on the ground rather than lifted, an unverified rendering choice chosen to keep the plate from reading as a modern monkey
+      - body proportions, tail carriage and fur coverage are not described by these sources; rendered in the primatomorpha plate's style, a small quadrupedal body sized between the Purgatorius and Teilhardina plates, fully furred including the face
     subject:
       organism: "A reconstruction of the crown-primate ancestor, dated only by molecular clock, shown as a small tree-dwelling primate intermediate between the plates either side of it"
-      anatomy: "a small, lightly built primate close in size to the plesiadapiform and euprimate plates either side of it, its head modest relative to a slender body and its limbs a similar length fore and aft, shown walking on all four limbs with a level back; a flat, elongated, primitive muzzle whose tip and lips carry the same short, muted fur as the rest of the face, with no bare or dark patch of skin anywhere on it; eyes set toward the front of the head but not enlarged or fully forward-facing; small ears reduced to low, skin-covered flaps that barely break the fur line rather than a separate rounded shape standing clear of the head's outline; grasping hands and feet; a long, evenly furred tail hanging down and trailing straight along the ground behind it, its tip resting on the surface rather than lifted, flicked or curled; a living animal covered in fur, not a fossil or bare skeleton"
+      anatomy: "a small, lightly built primate similar in size to the plesiadapiform and euprimate plates either side of it, shown standing on all four feet with a level back and a long tail; fur covers its whole body, including its face; it climbed among branches, grasping with its hands and feet, and ate fruit and insects"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a curled or coiled prehensile tail", "a curled or hooked tail tip", "a tail lifted or flicked at the tip", "a short, flat face", "large forward-facing binocular eyes", "prominent or tufted ears", "rounded ears standing proud of the head", "bare or dark skin around the eyes", "a pale or pink nose or muzzle tip", "a baboon-like or vervet-like face", "a fossil, skeleton, bones or a rock slab", "a modern lemur, tarsier, bushbaby, capuchin, monkey or any other living primate"]
-    pin: null
+      absent: ["a branch or tree", "scales", "bare skin on the face", "a fossil, skeleton or rock slab", "a modern lemur, tarsier, monkey or any other living primate"]
+    pin: {asset_digest: "28a0d444e17fd0f0", path: "data/candidates/portraits/primates/141b4325c358e3bd/01-28a0d444e17fd0f0.jpg"}
 
   - id: haplorhini
     plate: SPECIMEN
@@ -514,12 +514,12 @@ portraits:
     gaps:
       - body size was not confirmed against a source this session
     subject:
-      organism: "Teilhardina brandti, one of the oldest known euprimates, from the earliest Eocene"
-      anatomy: "a small, active tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and nails, not claws, at the tips of its fingers and toes"
-      surface: "fur; no source gives its colour, so muted natural tones"
+      organism: "Teilhardina brandti, one of the oldest known euprimates, from the earliest Eocene, shown as a living, three-dimensional, furred animal photographed on the plate, never a fossil, skeleton, cast or rock slab"
+      anatomy: "a small, active tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and nails, not claws, at the tips of its fingers and toes; its body has the rounded, furred volume of a living animal, not the flattened profile of a fossil skeleton"
+      surface: "fur, with the texture and colour of a living animal's coat, not stone-grey or rock-textured; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["claws", "a branch or tree", "a human-like face", "a modern tarsier, lemur, monkey or any other living primate"]
-    pin: {asset_digest: "21ee1bb3c654829a", path: "data/candidates/portraits/haplorhini/2c24a37be4984afa/01-21ee1bb3c654829a.jpg"}
+      absent: ["claws", "a branch or tree", "a human-like face", "a modern tarsier, lemur, monkey or any other living primate", "a fossil, skeleton, cast or replica", "a flattened rock slab or stone impression", "grey rock texture or colouring"]
+    pin: {asset_digest: "0f2102e75a870b6e", path: "data/candidates/portraits/haplorhini/4b1aaa080b3a3554/01-0f2102e75a870b6e.jpg"}
 
   - id: simiiformes
     plate: SPECIMEN
@@ -529,13 +529,13 @@ portraits:
       - "Beard, K.C., 'Eosimias', International Encyclopedia of Primatology (Wiley), doi:10.1002/9781119179313.wbprim0455: oldest widely recognised anthropoid, adult body mass under 100 g to about 200 g"
     gaps:
       - Eosimias is known mainly from jaws and teeth; its body is reconstructed
-      - face fur, eye size, eye placement and the head-to-body proportion are not described by these sources; rendered fully furred, with small, moderately forward-set eyes free of a dark rim, and a head kept proportionally larger than its tiny body so it reads as smaller and more primitive than the catarrhini plate that follows it, an unverified rendering choice chosen to keep the plate from reading as a modern baboon or macaque
+      - body size and proportions relative to the haplorhini and catarrhini plates either side of it are not described by these sources; rendered in the primatomorpha plate's style, a tiny quadrupedal body smaller than either neighbour, fully furred including the face
     subject:
-      organism: "A reconstruction of Eosimias sinensis, a tiny middle-Eocene anthropoid primate known mainly from jaws and teeth, so its face is kept plain and unremarkable rather than elaborated"
-      anatomy: "a tiny, slightly built primate, its body distinctly smaller and its head proportionally larger relative to that small body than the plate that follows it, shown standing and walking on all four limbs with a level back; a short, blunt, rounded snout rather than an elongated muzzle, its tip and lips the same short, muted fur as the rest of the face, with no bare or dark skin anywhere on it; small eyes relative to the head, set only moderately forward and without a dark rim around them; no pronounced brow ridge; small ears held close to the head; a long, evenly furred tail; grasping hands and feet"
+      organism: "A reconstruction of Eosimias sinensis, a tiny middle-Eocene anthropoid primate known mainly from jaws and teeth"
+      anatomy: "a tiny, slightly built primate, smaller than the haplorhini and catarrhini plates either side of it, shown standing and walking on all four limbs with a level back and a long tail; fur covers its whole body, including its face; it climbed among branches, grasping with its hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
-      absent: ["claws", "a branch or tree", "a human-like face", "an elongated or protruding muzzle", "a heavy or ridged brow", "large or prominent ears", "ear tufts", "a striped or ringed tail", "bare or dark skin around the eyes or muzzle", "deep-set or dark-ringed eyes", "dark-rimmed eyes", "a pale or pink nose or muzzle tip", "proportions matching an adult baboon or macaque", "a baboon's or macaque's face", "a marmoset's or tamarin's face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
+      absent: ["claws", "a branch or tree", "bare skin on the face", "a fossil, skeleton or rock slab", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
     pin: null
 
   - id: catarrhini

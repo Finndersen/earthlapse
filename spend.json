@@ -1904,6 +1904,30 @@
       "estimated_usd": 0.154538,
       "actual_usd": 0.138698,
       "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153944,
+      "actual_usd": 0.13824,
+      "note": null
+    },
+    {
+      "node_id": "portrait.haplorhini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154004,
+      "actual_usd": 0.138992,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153898,
+      "actual_usd": 0.138696,
+      "note": null
     }
   ]
 }

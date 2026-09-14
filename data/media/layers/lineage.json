@@ -466,7 +466,15 @@
         "nodeId": "haplorhini",
         "image": "portraits/haplorhini.jpg",
         "plate": "SPECIMEN",
-        "pinned": "21ee1bb3c654829a",
+        "pinned": "0f2102e75a870b6e",
+        "width": 1024,
+        "height": 1024
+      },
+      {
+        "nodeId": "primates",
+        "image": "portraits/primates.jpg",
+        "plate": "SPECIMEN",
+        "pinned": "28a0d444e17fd0f0",
         "width": 1024,
         "height": 1024
       },
@@ -782,17 +790,26 @@
         "younger": "catarrhini",
         "forward": "portraits/morphs/haplorhini--catarrhini.forward.png",
         "backward": "portraits/morphs/haplorhini--catarrhini.backward.png",
-        "forwardRange": 0.087890625,
-        "backwardRange": 0.2119140625,
+        "forwardRange": 0.1708984375,
+        "backwardRange": 0.2373046875,
+        "size": 128
+      },
+      {
+        "older": "primates",
+        "younger": "haplorhini",
+        "forward": "portraits/morphs/primates--haplorhini.forward.png",
+        "backward": "portraits/morphs/primates--haplorhini.backward.png",
+        "forwardRange": 0.208984375,
+        "backwardRange": 0.1953125,
         "size": 128
       },
       {
         "older": "primatomorpha",
-        "younger": "haplorhini",
-        "forward": "portraits/morphs/primatomorpha--haplorhini.forward.png",
-        "backward": "portraits/morphs/primatomorpha--haplorhini.backward.png",
-        "forwardRange": 0.244140625,
-        "backwardRange": 0.150390625,
+        "younger": "primates",
+        "forward": "portraits/morphs/primatomorpha--primates.forward.png",
+        "backward": "portraits/morphs/primatomorpha--primates.backward.png",
+        "forwardRange": 0.16015625,
+        "backwardRange": 0.1689453125,
         "size": 128
       },
       {
