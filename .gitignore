@@ -1,8 +1,7 @@
 # Raw data — never committed, reproducible via sources/*/fetch.py + sha256
 data/raw/
 
-# Generated media — lives in R2, referenced by hash manifest
-data/media/
+# Generated candidates — local scratch; only pinned images are committed, via `make pins` (ADR-018)
 data/candidates/
 
 # Cached reconstruction models (gplately)
@@ -21,9 +20,6 @@ venv/
 *.egg-info/
 dist/
 build/
-
-# Spend ledger is local state, not shared
-spend.json
 
 # Secrets
 .env

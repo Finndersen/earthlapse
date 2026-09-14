@@ -1,0 +1,6 @@
+data/media/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+data/media/**/*.png filter=lfs diff=lfs merge=lfs -text
+data/media/**/*.webp filter=lfs diff=lfs merge=lfs -text
+data/candidates/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+data/candidates/**/*.png filter=lfs diff=lfs merge=lfs -text
+data/candidates/**/*.webp filter=lfs diff=lfs merge=lfs -text

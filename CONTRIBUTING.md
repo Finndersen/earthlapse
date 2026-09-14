@@ -13,8 +13,8 @@ Read [`docs/DESIGN.md`](docs/DESIGN.md) first.
 one of four shapes and the frontend renders it with no changes.
 
 **Generated media — maintainer only.** Images cost money to generate and are nondeterministic;
-approved outputs are pinned by hash (ADR-005) and live in R2, not git. A PR cannot add or
-change them. If you think a scene should be different, open an issue.
+approved outputs are pinned by hash (ADR-005) and committed through Git LFS (ADR-018) — clone
+with `git lfs install` done. A PR cannot add or change them. If you think a scene should be different, open an issue.
 
 This split is deliberate. Without it you get PRs nobody can merge.
 

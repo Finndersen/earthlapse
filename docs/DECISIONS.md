@@ -800,3 +800,40 @@ Decisions deferred to Phase 1, to be recorded here once answered:
   availability rather than a test — confirm once on the target Mac; and gplately/pygplates
   are GPL-2.0, fine for the offline pipeline but **must not be vendored into the shipped
   frontend**.
+
+## ADR-018 — Pinned images and published media are committed with Git LFS
+
+**Status:** accepted — human-directed 2026-09-14. Amends the generated-media row of
+DATA_SOURCES § Storage policy (NORMATIVE); the curated and raw tiers stand.
+
+**Context.** The storage policy put generated media in R2 only, but no upload was ever built:
+`earthtime publish` writes `data/media/` locally. A clone therefore had no images, and the pinned
+originals — paid for, human-picked and nondeterministic, so impossible to recreate — existed on
+one machine. The human asked for the images the app needs, and other relevant data, to be
+versioned with the project.
+
+**Decision.**
+- Git LFS (`.gitattributes`) for `*.jpg`, `*.png` and `*.webp` under `data/media/` and
+  `data/candidates/`.
+- Committed: all of `data/media/` (scene stills, portraits and their morph flow maps and globe
+  textures through LFS; `manifest.json` and `layers/*.json` as plain git), and every pinned
+  candidate image. `data/candidates/` stays gitignored; `make pins` force-adds the image each
+  pin in `data/scenes.yaml` and `data/portraits.yaml` points at and drops tracked candidates no
+  longer pinned. Published scene and portrait files are byte-identical copies of their pins, so
+  LFS stores each image once.
+- `spend.json` is committed, so every clone enforces the spend ceiling against the same ledger.
+- Not committed: unpinned candidates, candidate JSON sidecars, contact sheets, the morph cache and
+  `data/raw/`. Sidecar prompts add nothing for regeneration: `pipeline/prompts.py` is pure
+  templating over committed inputs, a regeneration only happens after one of those inputs
+  changes (a new digest and a new prompt), and resending an old prompt would not reproduce an
+  image anyway. Raw data stays reproducible through each source's `fetch.py` and sha256.
+
+**Consequences.**
+- A clone with `git lfs install` runs the frontend with every published image and can
+  `earthtime publish` from committed pins without a paid call; portrait morphs need a free,
+  local `earthtime morph` first (the cache is not committed).
+- After `earthtime review pick` or `clear`, run `make pins` before committing.
+- Republishing rewrites `data/media/`, which shows up as LFS object churn in history. Acceptable
+  at ~110 MB; serving from a CDN, if deployment lands, is a copy of `data/media/`, not a change
+  of where it is stored.
+- Contributors still cannot add generated media; only its storage location changed.

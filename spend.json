@@ -1,0 +1,1845 @@
+{
+  "ceiling_usd": 40.0,
+  "entries": [
+    {
+      "node_id": "gate-anchor",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15359,
+      "actual_usd": 0.138742,
+      "note": null
+    },
+    {
+      "node_id": "gate-late-triassic",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155052,
+      "actual_usd": 0.13914,
+      "note": null
+    },
+    {
+      "node_id": "gate-late-jurassic",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154978,
+      "actual_usd": 0.139554,
+      "note": null
+    },
+    {
+      "node_id": "gate-late-cretaceous",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15497,
+      "actual_usd": 0.139284,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-A-00-style-reference",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153158,
+      "actual_usd": 0.138224,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-A-01-devonian",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15585,
+      "actual_usd": 0.13946,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-A-02-carboniferous",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155852,
+      "actual_usd": 0.141024,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-A-03-permian",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15574,
+      "actual_usd": 0.14021,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-B-01-devonian",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154324,
+      "actual_usd": 0.140242,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-B-02-carboniferous",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154326,
+      "actual_usd": 0.138422,
+      "note": null
+    },
+    {
+      "node_id": "gate-v2-B-03-permian",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154214,
+      "actual_usd": 0.139696,
+      "note": null
+    },
+    {
+      "node_id": "modern-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15425,
+      "actual_usd": 0.139626,
+      "note": null
+    },
+    {
+      "node_id": "modern-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15425,
+      "actual_usd": 0.13887,
+      "note": null
+    },
+    {
+      "node_id": "modern-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15425,
+      "actual_usd": 0.13869,
+      "note": null
+    },
+    {
+      "node_id": "neolithic-river-settlement.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.141472,
+      "note": null
+    },
+    {
+      "node_id": "neolithic-river-settlement.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.13948,
+      "note": null
+    },
+    {
+      "node_id": "neolithic-river-settlement.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.14038,
+      "note": null
+    },
+    {
+      "node_id": "pleistocene-steppe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15432,
+      "actual_usd": 0.140694,
+      "note": null
+    },
+    {
+      "node_id": "pleistocene-steppe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15432,
+      "actual_usd": 0.139314,
+      "note": null
+    },
+    {
+      "node_id": "pleistocene-steppe.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15432,
+      "actual_usd": 0.140226,
+      "note": null
+    },
+    {
+      "node_id": "eocene-jungle.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154378,
+      "actual_usd": 0.139464,
+      "note": null
+    },
+    {
+      "node_id": "eocene-jungle.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154378,
+      "actual_usd": 0.140712,
+      "note": null
+    },
+    {
+      "node_id": "eocene-jungle.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154378,
+      "actual_usd": 0.139308,
+      "note": null
+    },
+    {
+      "node_id": "cretaceous-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154358,
+      "actual_usd": 0.14035,
+      "note": null
+    },
+    {
+      "node_id": "cretaceous-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154358,
+      "actual_usd": 0.13915,
+      "note": null
+    },
+    {
+      "node_id": "cretaceous-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154358,
+      "actual_usd": 0.138874,
+      "note": null
+    },
+    {
+      "node_id": "jurassic-floodplain.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154458,
+      "actual_usd": 0.139812,
+      "note": null
+    },
+    {
+      "node_id": "jurassic-floodplain.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154458,
+      "actual_usd": 0.140124,
+      "note": null
+    },
+    {
+      "node_id": "jurassic-floodplain.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154458,
+      "actual_usd": 0.139644,
+      "note": null
+    },
+    {
+      "node_id": "permian-interior.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.13993,
+      "note": null
+    },
+    {
+      "node_id": "permian-interior.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.13969,
+      "note": null
+    },
+    {
+      "node_id": "permian-interior.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154446,
+      "actual_usd": 0.13975,
+      "note": null
+    },
+    {
+      "node_id": "carboniferous-swamp.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154536,
+      "actual_usd": 0.139484,
+      "note": null
+    },
+    {
+      "node_id": "carboniferous-swamp.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154536,
+      "actual_usd": 0.140864,
+      "note": null
+    },
+    {
+      "node_id": "carboniferous-swamp.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154536,
+      "actual_usd": 0.139148,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.139846,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.139474,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.139714,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15446,
+      "actual_usd": 0.13918,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15446,
+      "actual_usd": 0.140608,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15446,
+      "actual_usd": 0.139408,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15434,
+      "actual_usd": 0.142682,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15434,
+      "actual_usd": 0.139286,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15434,
+      "actual_usd": 0.13937,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154348,
+      "actual_usd": 0.140296,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154348,
+      "actual_usd": 0.140404,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154348,
+      "actual_usd": 0.13864,
+      "note": null
+    },
+    {
+      "node_id": "hadean-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154302,
+      "actual_usd": 0.140212,
+      "note": null
+    },
+    {
+      "node_id": "hadean-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154302,
+      "actual_usd": 0.140704,
+      "note": null
+    },
+    {
+      "node_id": "hadean-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154302,
+      "actual_usd": 0.13978,
+      "note": null
+    },
+    {
+      "node_id": "magma-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154236,
+      "actual_usd": 0.138534,
+      "note": null
+    },
+    {
+      "node_id": "magma-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154236,
+      "actual_usd": 0.138714,
+      "note": null
+    },
+    {
+      "node_id": "magma-ocean.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154236,
+      "actual_usd": 0.140718,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-erectus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15387,
+      "actual_usd": 0.138454,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-erectus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15387,
+      "actual_usd": 0.13915,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapodomorpha.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153794,
+      "actual_usd": 0.139128,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapodomorpha.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153794,
+      "actual_usd": 0.139548,
+      "note": null
+    },
+    {
+      "node_id": "portrait.bilateria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153772,
+      "actual_usd": 0.13918,
+      "note": null
+    },
+    {
+      "node_id": "portrait.bilateria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153772,
+      "actual_usd": 0.138292,
+      "note": null
+    },
+    {
+      "node_id": "portrait.leca.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153652,
+      "actual_usd": 0.13842,
+      "note": null
+    },
+    {
+      "node_id": "portrait.leca.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153652,
+      "actual_usd": 0.137496,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapodomorpha.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154016,
+      "actual_usd": 0.138728,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapodomorpha.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154016,
+      "actual_usd": 0.139148,
+      "note": null
+    },
+    {
+      "node_id": "portrait.bilateria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153944,
+      "actual_usd": 0.139416,
+      "note": null
+    },
+    {
+      "node_id": "portrait.bilateria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153944,
+      "actual_usd": 0.138336,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153766,
+      "actual_usd": 0.003538,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153766,
+      "actual_usd": 0.138238,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-heidelbergensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15389,
+      "actual_usd": 0.139524,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153696,
+      "actual_usd": 0.138338,
+      "note": null
+    },
+    {
+      "node_id": "portrait.australopithecus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153792,
+      "actual_usd": 0.138938,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153784,
+      "actual_usd": 0.139412,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homininae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153798,
+      "actual_usd": 0.139252,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominidae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153814,
+      "actual_usd": 0.138498,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominoidea.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153784,
+      "actual_usd": 0.139896,
+      "note": null
+    },
+    {
+      "node_id": "portrait.catarrhini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153738,
+      "actual_usd": 0.139388,
+      "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153808,
+      "actual_usd": 0.13857,
+      "note": null
+    },
+    {
+      "node_id": "portrait.haplorhini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153716,
+      "actual_usd": 0.142508,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153748,
+      "actual_usd": 0.138308,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primatomorpha.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153872,
+      "actual_usd": 0.139484,
+      "note": null
+    },
+    {
+      "node_id": "portrait.euarchontoglires.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153782,
+      "actual_usd": 0.138564,
+      "note": null
+    },
+    {
+      "node_id": "portrait.boreoeutheria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153776,
+      "actual_usd": 0.138036,
+      "note": null
+    },
+    {
+      "node_id": "portrait.placentalia.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153852,
+      "actual_usd": 0.138068,
+      "note": null
+    },
+    {
+      "node_id": "portrait.eutheria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15382,
+      "actual_usd": 0.138866,
+      "note": null
+    },
+    {
+      "node_id": "portrait.theria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153724,
+      "actual_usd": 0.138582,
+      "note": null
+    },
+    {
+      "node_id": "portrait.mammalia.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153708,
+      "actual_usd": 0.139784,
+      "note": null
+    },
+    {
+      "node_id": "portrait.mammaliaformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153852,
+      "actual_usd": 0.138584,
+      "note": null
+    },
+    {
+      "node_id": "portrait.cynodontia.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153872,
+      "actual_usd": 0.138422,
+      "note": null
+    },
+    {
+      "node_id": "portrait.therapsida.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153756,
+      "actual_usd": 0.13861,
+      "note": null
+    },
+    {
+      "node_id": "portrait.synapsida.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153902,
+      "actual_usd": 0.139136,
+      "note": null
+    },
+    {
+      "node_id": "portrait.amniota.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153882,
+      "actual_usd": 0.138288,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapoda.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153916,
+      "actual_usd": 0.139574,
+      "note": null
+    },
+    {
+      "node_id": "portrait.sarcopterygii.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153878,
+      "actual_usd": 0.139816,
+      "note": null
+    },
+    {
+      "node_id": "portrait.osteichthyes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153804,
+      "actual_usd": 0.139184,
+      "note": null
+    },
+    {
+      "node_id": "portrait.gnathostomata.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153794,
+      "actual_usd": 0.138998,
+      "note": null
+    },
+    {
+      "node_id": "portrait.vertebrata.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153886,
+      "actual_usd": 0.140878,
+      "note": null
+    },
+    {
+      "node_id": "portrait.olfactores.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15386,
+      "actual_usd": 0.139174,
+      "note": null
+    },
+    {
+      "node_id": "portrait.chordata.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15395,
+      "actual_usd": 0.139364,
+      "note": null
+    },
+    {
+      "node_id": "portrait.eumetazoa.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153968,
+      "actual_usd": 0.138518,
+      "note": null
+    },
+    {
+      "node_id": "portrait.metazoa.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153862,
+      "actual_usd": 0.137902,
+      "note": null
+    },
+    {
+      "node_id": "portrait.holozoa.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153684,
+      "actual_usd": 0.137964,
+      "note": null
+    },
+    {
+      "node_id": "portrait.opisthokonta.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153624,
+      "actual_usd": 0.138958,
+      "note": null
+    },
+    {
+      "node_id": "portrait.archaeal-host-lineage.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153744,
+      "actual_usd": 0.138568,
+      "note": null
+    },
+    {
+      "node_id": "portrait.luca.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153622,
+      "actual_usd": 0.139028,
+      "note": null
+    },
+    {
+      "node_id": "ice-age-europe-neanderthal.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154402,
+      "actual_usd": 0.139646,
+      "note": null
+    },
+    {
+      "node_id": "ice-age-europe-neanderthal.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154402,
+      "actual_usd": 0.139346,
+      "note": null
+    },
+    {
+      "node_id": "ice-age-europe-neanderthal.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154402,
+      "actual_usd": 0.139982,
+      "note": null
+    },
+    {
+      "node_id": "acheulean-erectus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154396,
+      "actual_usd": 0.140418,
+      "note": null
+    },
+    {
+      "node_id": "acheulean-erectus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154396,
+      "actual_usd": 0.139086,
+      "note": null
+    },
+    {
+      "node_id": "acheulean-erectus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154396,
+      "actual_usd": 0.140274,
+      "note": null
+    },
+    {
+      "node_id": "lucy-afarensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.13961,
+      "note": null
+    },
+    {
+      "node_id": "lucy-afarensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.140306,
+      "note": null
+    },
+    {
+      "node_id": "lucy-afarensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15436,
+      "actual_usd": 0.13895,
+      "note": null
+    },
+    {
+      "node_id": "messinian-salt-flats.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15433,
+      "actual_usd": 0.140024,
+      "note": null
+    },
+    {
+      "node_id": "messinian-salt-flats.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15433,
+      "actual_usd": 0.139112,
+      "note": null
+    },
+    {
+      "node_id": "messinian-salt-flats.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15433,
+      "actual_usd": 0.140852,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154452,
+      "actual_usd": 0.13982,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154452,
+      "actual_usd": null,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154452,
+      "actual_usd": 0.139796,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154452,
+      "actual_usd": 0.13916,
+      "note": null
+    },
+    {
+      "node_id": "miocene-grassland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154478,
+      "actual_usd": 0.138934,
+      "note": null
+    },
+    {
+      "node_id": "miocene-grassland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154478,
+      "actual_usd": 0.139858,
+      "note": null
+    },
+    {
+      "node_id": "miocene-grassland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154478,
+      "actual_usd": 0.140038,
+      "note": null
+    },
+    {
+      "node_id": "eocene-oligocene-icesheet.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.140726,
+      "note": null
+    },
+    {
+      "node_id": "eocene-oligocene-icesheet.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.139418,
+      "note": null
+    },
+    {
+      "node_id": "eocene-oligocene-icesheet.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154372,
+      "actual_usd": 0.139838,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154592,
+      "actual_usd": 0.14061,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154592,
+      "actual_usd": 0.138858,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154592,
+      "actual_usd": 0.139434,
+      "note": null
+    },
+    {
+      "node_id": "paleocene-recovery.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154432,
+      "actual_usd": 0.139734,
+      "note": null
+    },
+    {
+      "node_id": "paleocene-recovery.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154432,
+      "actual_usd": 0.140466,
+      "note": null
+    },
+    {
+      "node_id": "paleocene-recovery.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154432,
+      "actual_usd": 0.138534,
+      "note": null
+    },
+    {
+      "node_id": "kpg-aftermath.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154316,
+      "actual_usd": 0.139398,
+      "note": null
+    },
+    {
+      "node_id": "kpg-aftermath.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154316,
+      "actual_usd": 0.140886,
+      "note": null
+    },
+    {
+      "node_id": "kpg-aftermath.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154316,
+      "actual_usd": 0.140142,
+      "note": null
+    },
+    {
+      "node_id": "kpg-arrival.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154468,
+      "actual_usd": 0.139702,
+      "note": null
+    },
+    {
+      "node_id": "kpg-arrival.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154468,
+      "actual_usd": 0.140158,
+      "note": null
+    },
+    {
+      "node_id": "kpg-arrival.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154468,
+      "actual_usd": 0.139402,
+      "note": null
+    },
+    {
+      "node_id": "mid-cretaceous-pollinators.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154502,
+      "actual_usd": 0.140232,
+      "note": null
+    },
+    {
+      "node_id": "mid-cretaceous-pollinators.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154502,
+      "actual_usd": 0.13866,
+      "note": null
+    },
+    {
+      "node_id": "mid-cretaceous-pollinators.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154502,
+      "actual_usd": 0.139404,
+      "note": null
+    },
+    {
+      "node_id": "early-cretaceous-flowers.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154438,
+      "actual_usd": 0.140296,
+      "note": null
+    },
+    {
+      "node_id": "early-cretaceous-flowers.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154438,
+      "actual_usd": 0.138808,
+      "note": null
+    },
+    {
+      "node_id": "early-cretaceous-flowers.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154438,
+      "actual_usd": 0.138964,
+      "note": null
+    },
+    {
+      "node_id": "late-triassic-dinosaurs.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15458,
+      "actual_usd": 0.141402,
+      "note": null
+    },
+    {
+      "node_id": "late-triassic-dinosaurs.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15458,
+      "actual_usd": 0.141858,
+      "note": null
+    },
+    {
+      "node_id": "late-triassic-dinosaurs.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15458,
+      "actual_usd": 0.14013,
+      "note": null
+    },
+    {
+      "node_id": "early-triassic-lystrosaurus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154514,
+      "actual_usd": 0.14011,
+      "note": null
+    },
+    {
+      "node_id": "early-triassic-lystrosaurus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154514,
+      "actual_usd": 0.139594,
+      "note": null
+    },
+    {
+      "node_id": "early-triassic-lystrosaurus.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154514,
+      "actual_usd": 0.139978,
+      "note": null
+    },
+    {
+      "node_id": "permian-conifer-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15477,
+      "actual_usd": 0.139566,
+      "note": null
+    },
+    {
+      "node_id": "permian-conifer-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15477,
+      "actual_usd": 0.139674,
+      "note": null
+    },
+    {
+      "node_id": "permian-conifer-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15477,
+      "actual_usd": 0.141126,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154604,
+      "actual_usd": 0.14217,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154604,
+      "actual_usd": 0.139314,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154604,
+      "actual_usd": 0.140418,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15473,
+      "actual_usd": 0.139542,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15473,
+      "actual_usd": 0.143454,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15473,
+      "actual_usd": 0.140454,
+      "note": null
+    },
+    {
+      "node_id": "rhynie-chert.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15475,
+      "actual_usd": 0.138966,
+      "note": null
+    },
+    {
+      "node_id": "rhynie-chert.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15475,
+      "actual_usd": 0.143262,
+      "note": null
+    },
+    {
+      "node_id": "rhynie-chert.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15475,
+      "actual_usd": 0.139878,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154638,
+      "actual_usd": 0.14038,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154638,
+      "actual_usd": 0.139516,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154638,
+      "actual_usd": 0.140656,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154576,
+      "actual_usd": 0.13983,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154576,
+      "actual_usd": 0.143358,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154576,
+      "actual_usd": 0.141858,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154868,
+      "actual_usd": 0.139794,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154868,
+      "actual_usd": 0.142158,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154868,
+      "actual_usd": 0.13917,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154532,
+      "actual_usd": 0.140412,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154532,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154554,
+      "actual_usd": 0.140996,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154554,
+      "actual_usd": 0.139484,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154554,
+      "actual_usd": 0.140084,
+      "note": null
+    },
+    {
+      "node_id": "origin-of-life.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154538,
+      "actual_usd": 0.145972,
+      "note": null
+    },
+    {
+      "node_id": "origin-of-life.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154538,
+      "actual_usd": 0.140512,
+      "note": null
+    },
+    {
+      "node_id": "origin-of-life.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154538,
+      "actual_usd": 0.139708,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154504,
+      "actual_usd": 0.140758,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154504,
+      "actual_usd": 0.141442,
+      "note": null
+    },
+    {
+      "node_id": "c4-savanna-hipparion.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154504,
+      "actual_usd": 0.138994,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154786,
+      "actual_usd": 0.140808,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154786,
+      "actual_usd": 0.139944,
+      "note": null
+    },
+    {
+      "node_id": "arctic-hothouse-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154786,
+      "actual_usd": 0.139212,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154986,
+      "actual_usd": 0.140724,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154986,
+      "actual_usd": 0.141972,
+      "note": null
+    },
+    {
+      "node_id": "late-devonian-tetrapod.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154986,
+      "actual_usd": 0.141648,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155032,
+      "actual_usd": 0.140322,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155032,
+      "actual_usd": 0.146454,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155032,
+      "actual_usd": 0.140982,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155192,
+      "actual_usd": 0.139168,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155192,
+      "actual_usd": 0.142036,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155192,
+      "actual_usd": 0.14014,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154696,
+      "actual_usd": 0.139376,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154696,
+      "actual_usd": 0.13964,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154696,
+      "actual_usd": 0.005228,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154696,
+      "actual_usd": 0.139484,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153854,
+      "actual_usd": 0.005424,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153854,
+      "actual_usd": 0.138048,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-heidelbergensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154022,
+      "actual_usd": 0.00466,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-heidelbergensis.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154022,
+      "actual_usd": 0.139312,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153822,
+      "actual_usd": 0.138242,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153916,
+      "actual_usd": 0.13944,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homininae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153992,
+      "actual_usd": 0.138126,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominidae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154008,
+      "actual_usd": 0.1382,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominoidea.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153978,
+      "actual_usd": 0.138962,
+      "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153854,
+      "actual_usd": 0.138426,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153818,
+      "actual_usd": 0.13825,
+      "note": null
+    },
+    {
+      "node_id": "portrait.boreoeutheria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153846,
+      "actual_usd": 0.138038,
+      "note": null
+    },
+    {
+      "node_id": "portrait.theria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153792,
+      "actual_usd": 0.138464,
+      "note": null
+    },
+    {
+      "node_id": "portrait.mammaliaformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153894,
+      "actual_usd": 0.139272,
+      "note": null
+    },
+    {
+      "node_id": "portrait.synapsida.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153964,
+      "actual_usd": 0.138134,
+      "note": null
+    },
+    {
+      "node_id": "portrait.tetrapoda.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154012,
+      "actual_usd": 0.13858,
+      "note": null
+    },
+    {
+      "node_id": "portrait.vertebrata.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15397,
+      "actual_usd": 0.14027,
+      "note": null
+    },
+    {
+      "node_id": "portrait.metazoa.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153946,
+      "actual_usd": 0.138208,
+      "note": null
+    },
+    {
+      "node_id": "portrait.archaeal-host-lineage.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153814,
+      "actual_usd": 0.138558,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155442,
+      "actual_usd": 0.14421,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155442,
+      "actual_usd": 0.14217,
+      "note": null
+    },
+    {
+      "node_id": "cambrian-seafloor.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155442,
+      "actual_usd": 0.140358,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154032,
+      "actual_usd": 0.005122,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154032,
+      "actual_usd": 0.003958,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homininae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154158,
+      "actual_usd": 0.13858,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominidae.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154132,
+      "actual_usd": 0.139944,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominoidea.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154046,
+      "actual_usd": 0.139682,
+      "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154072,
+      "actual_usd": 0.139148,
+      "note": null
+    },
+    {
+      "node_id": "portrait.primates.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154086,
+      "actual_usd": 0.139244,
+      "note": null
+    },
+    {
+      "node_id": "portrait.boreoeutheria.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154034,
+      "actual_usd": 0.138282,
+      "note": null
+    },
+    {
+      "node_id": "portrait.mammaliaformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15416,
+      "actual_usd": 0.13871,
+      "note": null
+    },
+    {
+      "node_id": "portrait.synapsida.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154192,
+      "actual_usd": 0.139178,
+      "note": null
+    },
+    {
+      "node_id": "portrait.vertebrata.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15423,
+      "actual_usd": 0.139748,
+      "note": null
+    }
+  ]
+}

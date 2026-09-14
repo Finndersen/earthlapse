@@ -1,12 +1,15 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: data data-force test web-dev web-build
+.PHONY: data data-force pins test web-dev web-build
 
 data:
 	$(PYTHON) -m pipeline.databuild
 
 data-force:
 	$(PYTHON) -m pipeline.databuild --force
+
+pins:
+	$(PYTHON) -m pipeline.stage_pins
 
 test:
 	.venv/bin/pytest
