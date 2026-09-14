@@ -964,3 +964,80 @@ of what it drew reachable:
   scope for this pass (concurrent work) and were not touched; `Experience.tsx`'s own props and
   behaviour toward `<Timeline>` are unchanged, since clustering/declutter are both internal to
   `Timeline`/`ScrubTrack`.
+
+## ADR-020 — A chapter may recur as several non-adjacent runs
+
+**Status:** accepted — human-directed 2026-09-14. Supersedes the "no new chapter" half of
+ADR-014's decision; ADR-014's "no new shot type" half (`UNDERWATER` not re-added) and its
+concrete scene/event decisions stand.
+
+**Context.** The human's direction: "Not every scene needs to be waterside if not relevant."
+`pipeline/scenes.py`'s `SceneBook` validator required each chapter id to appear as exactly one
+consecutive run of scenes (`_require_unique("chapter run ...")`). Combined with "every scene's
+shot equals its chapter's shot" (unchanged, see below), this meant giving even one scene a
+framing that didn't suit a waterside composition — a city skyline, a steppe, a toolmaking scene
+on open ground, an underwater seafloor — would fork the chapter it sat inside into two runs,
+which the validator forbade outright. ADR-014 hit exactly this wall: a single `UNDERWATER` scene
+at 518 Ma would have split `waters-edge` in two, so `UNDERWATER` was drafted and then withdrawn,
+and the human pre-approved only that one shot type, not a chapter split. The result was that
+every one of the 40 scenes in the current manifest shares one of two chapters, `molten-earth`
+(the one scene with no water to stand beside) and `waters-edge` (all 39 others) — coverage that
+is scientifically wide (3.9 Ga to the present) forced through one narrow composition.
+
+**Decision.**
+- `pipeline/scenes.py`'s `SceneBook._consistent` validator no longer requires a chapter's scenes
+  to form one consecutive run. The chapter-run uniqueness check (`_require_unique("chapter run
+  ...")`) is deleted outright. Everything else about a chapter is unchanged:
+  - **A scene's shot must still equal its chapter's shot** — a chapter still owns exactly one
+    `Shot` + `Composition` pair; recurrence is about *when* a chapter's scenes sit on the
+    timeline, not about a chapter holding more than one framing.
+  - **Every chapter must still have at least one scene** — the unused-chapter check
+    (`chapters with no scenes`) is untouched.
+  - **Chapter ids and scene ids stay unique**, as do scene `t` values — untouched.
+- No other pipeline code needed to change. `pipeline/publish.py`'s `chapter_spans` already
+  builds spans with `groupby(book.scenes, lambda s: s.chapter)`, which groups by *adjacency*,
+  not by id — a recurring chapter id already produced one `Chapter` span per run; the old
+  validator just never let that code path run. `pipeline/prompts.py`'s
+  `COMPOSITION_CONSTRAINTS` is keyed by `Composition`, not by chapter id, so it needed no change
+  either.
+- `pipeline/manifest.py`'s `Chapter` and `web/src/types/manifest.ts`'s `Chapter` gain a doc note:
+  `Manifest.chapters` may hold more than one entry with the same `id` (one per run), so nothing
+  may key or deduplicate that array by `id`. No field or schema changed, so this is not a
+  `schemaVersion` bump.
+- **The web app needed no behavioural change.** `web/src/scene/scene.ts`'s `sceneAt` already
+  treats every scene-to-scene gap identically regardless of chapter identity — ADR-011 and
+  ADR-012 removed the within/cross-chapter distinction from the dissolve entirely ("there is no
+  separate within- vs cross-chapter distinction any more"). `Manifest.chapters` is parsed by
+  `web/src/shell/manifest.ts` and otherwise unused by the running app (confirmed by search: no
+  other file under `web/src` reads `chapterId` or `Chapter`), so a chapter recurring changes
+  nothing downstream of validation. `docs/DESIGN.md §9`'s pipeline semantics (content-addressed
+  asset graph, pinning, budget guard) do not mention chapters and are unaffected.
+- **The trade-off stands, unchanged.** A change of chapter still reads as a cut (VISUAL_SPEC §3,
+  DESIGN §6): this ADR does not relax that, and does not itself add, remove, or reassign any
+  scene's chapter. It only removes the *structural* penalty — a forced chapter split and an
+  extra pair of cuts — that previously made giving one differently-framed scene its own
+  composition disproportionately expensive. Scenes should still be grouped into a chapter's run
+  only where dissolve continuity actually matters; a subject that doesn't suit the held framing
+  is now a normal curation choice (a new chapter, or a recurrence of an existing
+  differently-composed one) rather than something the validator makes impossible.
+
+**Consequences.**
+- `docs/VISUAL_SPEC.md §3` and `docs/DESIGN.md §6` are reworded to describe a chapter as a *held
+  composition* that may recur across the timeline, rather than a single contiguous span.
+- `data/scenes.yaml` is unchanged by this ADR — no scene's chapter, shot, or pin is touched.
+  Every existing pin (ADR-005) survives exactly as it was.
+- Which scenes would actually benefit from a non-waterside framing, and whether that reuses an
+  existing non-`WATER_EDGE` chapter (`molten-earth`, `WIDE_RIDGE`) or needs a new chapter (a new
+  `Composition`, which is itself still a contract change requiring its own ADR per DESIGN's
+  NORMATIVE list), is a separate, deliberate curation decision for a human to make — not decided
+  here. Candidates worth considering, none drafted or scheduled: `modern-city` (a skyline/street
+  framing rather than a forced waterfront), `neolithic-river-settlement`, `pleistocene-steppe`,
+  `acheulean-erectus` (toolmaking reads better low and close than at a waterline), and
+  `cambrian-seafloor`/an `UNDERWATER` framing for the Chengjiang biota — the exact scene ADR-014
+  withdrawn specifically because of the constraint this ADR lifts. Any such change is a respec:
+  it clears the scene's existing pin (ADR-005 gives the pipeline no "pinned but superseded"
+  state, precedent: ADR-014's `devonian-estuary`) and requires a new, human-approved generation
+  against the image budget (`pipeline/spend.py`) — never automatic.
+- A chapter that recurs many times produces many short runs and therefore many cuts; nothing in
+  this ADR limits recurrence, so taste and the few-vs-many-chapters trade-off (DESIGN §14, still
+  open) now applies per-run as well as per-chapter.

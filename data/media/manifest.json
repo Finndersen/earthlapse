@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "7d166f884a63ab1f",
+  "buildId": "f3a1e2a2ccca45cb",
   "assetBase": "/media",
   "scenes": [
     {
@@ -22,6 +22,17 @@
       "shot": "WATER_EDGE",
       "caption": "On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire, watched from across the lagoon; four days later, Armstrong and Aldrin land on the Moon.",
       "pinned": "a0da45cad76f825d",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "first-powered-flight",
+      "t": 122.0,
+      "chapterId": "open-ground",
+      "image": "scenes/first-powered-flight.jpg",
+      "shot": "GROUND",
+      "caption": "On a cold December morning at Kill Devil Hills, the Wright Flyer lifts off the sand for twelve seconds, the first sustained, controlled flight of a powered aircraft.",
+      "pinned": "b82bc9f05d4f344e",
       "width": 2752,
       "height": 1536
     },
@@ -449,6 +460,18 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 0.0,
+      "tEnd": 82.73171442171716
+    },
+    {
+      "id": "open-ground",
+      "label": "On open ground",
+      "tStart": 82.73171442171716,
+      "tEnd": 1051.19912564115
+    },
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 1051.19912564115,
       "tEnd": 4398863489.584821
     },
     {

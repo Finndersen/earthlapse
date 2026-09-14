@@ -230,8 +230,12 @@ def write_publication(publication: Publication, media_dir: Path) -> Path:
 
 
 def chapter_spans(book: SceneBook) -> tuple[Chapter, ...]:
-    """Chapters tiling [present, Earth's formation], each boundary at the midpoint in log1p(t)
-    between the chapters' facing scenes: where web/src/scene dissolves across that boundary."""
+    """Chapter *runs* tiling [present, Earth's formation], each boundary at the midpoint in
+    log1p(t) between the runs' facing scenes: where web/src/scene dissolves across that
+    boundary. A chapter may recur as several non-adjacent runs (ADR-020): `groupby` here groups
+    by adjacency, not by id, so a recurring chapter id yields one `Chapter` entry per run, each
+    with its own span — the manifest's `chapters` array is therefore a list of runs, not a
+    deduplicated-by-id list of chapters."""
     runs = [
         (chapter_id, list(scenes))
         for chapter_id, scenes in groupby(book.scenes, lambda s: s.chapter)

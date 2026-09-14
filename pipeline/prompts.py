@@ -34,6 +34,7 @@ class Composition(StrEnum):
 
     WATER_EDGE_SERIES = "water-edge-series"
     RIDGE_VISTA = "ridge-vista"
+    OPEN_GROUND = "open-ground"
 
 
 # The camera only (ADR-008). Anything describing the world belongs in conditions or subject.
@@ -82,6 +83,15 @@ COMPOSITION_CONSTRAINTS: dict[Composition, str] = {
         "fifth of the frame width. Open sky over the right half, above a low far bank on the "
         "horizon. The light comes from the upper left, the sun itself out of frame; any shadows "
         "fall to the right."
+    ),
+    Composition.OPEN_GROUND: (
+        "Composition, fixed for this chapter: the horizon is level at 45% of frame height from "
+        "the top, with flat open ground filling the lower half of the frame and no water in "
+        "view. A low line on the ground leads from the near foreground toward the main subject. "
+        "A tall mass occupies the left third, its top about 15% below the top edge. The main "
+        "subject is in the middle ground just right of centre, about a fifth of the frame width. "
+        "Open sky over the right half. The light comes from the upper left, the sun itself out "
+        "of frame; any shadows fall to the right."
     ),
     Composition.RIDGE_VISTA: (
         "Composition, fixed for this chapter: the horizon is level at one third of frame height "

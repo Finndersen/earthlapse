@@ -66,7 +66,10 @@ When those hold, a cross-dissolve reads as the world *morphing*. When they don't
 as a cut. This is enforced in the prompt template as explicit composition constraints, and
 verified by eye at review time.
 
-**At a chapter boundary** composition changes deliberately. See
+**At a chapter boundary** composition changes deliberately. A chapter may recur as several
+non-adjacent runs across the timeline — its subject doesn't have to be continuously relevant
+to earn a held composition (ADR-020) — but every boundary between two runs of *different*
+chapters still reads as a cut, whether or not either chapter has appeared before. See
 [`DESIGN.md §6`](./DESIGN.md#6-vantage-points) — how many such boundaries is an open
 question.
 

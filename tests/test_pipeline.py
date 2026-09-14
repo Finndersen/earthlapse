@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import itertools
 import json
 import math
 import re
@@ -30,7 +31,8 @@ from pipeline.manifest import Manifest, RasterData, SeriesData, TreeData
 from pipeline.models import AtmosphereState, SkyState, WorldModel, WorldState
 from pipeline.paths import ProjectPaths
 from pipeline.prompts import UnsourcedConditions, render_conditions
-from pipeline.scenes import SceneBook, ScenePin, load_scene_book
+from pipeline.publish import chapter_spans
+from pipeline.scenes import SceneBook, ScenePin, load_scene_book, parse_scene_book
 from pipeline.shapes import (
     EffectAnchor,
     EffectWindow,
@@ -628,13 +630,158 @@ def test_committed_scene_prompts_name_no_model_or_provider() -> None:
         assert [term for term in FORBIDDEN_IN_PROMPTS if term.lower() in lowered] == []
 
 
-def test_committed_scene_book_holds_one_composition_per_chapter_run() -> None:
+def test_committed_scene_book_mostly_holds_compositions_across_neighbours() -> None:
     book = load_scene_book(ProjectPaths(REPO_ROOT).scenes)
     chapters = [s.chapter for s in book.chronological()]
+    runs = [c for i, c in enumerate(chapters) if i == 0 or c != chapters[i - 1]]
 
-    assert len(set(chapters)) < len(chapters)  # never one chapter per scene
     assert chapters[0] == "molten-earth"
-    assert set(chapters[1:]) == {"waters-edge"}
+    assert set(chapters) == {c.id for c in book.chapters}
+    # Chapters may recur (ADR-020), but every change of chapter reads as a cut, so most scenes
+    # still continue their neighbour's composition.
+    assert len(runs) < len(chapters) / 2
+
+
+# A chapter recurring as two non-adjacent runs (ADR-020): "shore" (city, ..., devonian) is
+# interrupted by one "molten" scene, and "molten" itself recurs the same way around it. Scenes
+# are ascending in `t` (present first, DESIGN §6/`pipeline/scenes.py`), so this reads as
+# city (shore) -> interlude (molten) -> devonian (shore) -> hot-start (molten).
+RECURRING_CHAPTER_SCENES_YAML = """\
+chapters:
+  - id: molten
+    label: Molten
+    shot: WIDE_RIDGE
+    composition: ridge-vista
+  - id: shore
+    label: Shore
+    shot: WATER_EDGE
+    composition: water-edge-series
+
+scenes:
+  - id: city
+    t: 0
+    chapter: shore
+    shot: WATER_EDGE
+    caption: A city.
+    unsourced:
+      o2_percent: 21
+      mean_temp_c: 15
+    subject:
+      setting: A waterfront
+      left_mass: towers
+      vegetation: street trees
+      fauna: gulls
+      main_subject: a ferry
+      ground: an embankment
+      water: a river
+      far_bank: a skyline
+      sky_and_light: haze
+      absent: [flying cars]
+    pin: null
+
+  - id: interlude
+    t: 1.0e5
+    chapter: molten
+    shot: WIDE_RIDGE
+    caption: A stray molten interlude, for the test only.
+    unsourced:
+      o2_percent: 0
+      mean_temp_c: null
+    subject:
+      setting: A magma ocean
+      left_mass: black crust
+      vegetation: none
+      fauna: none
+      main_subject: a lava fountain
+      ground: hot crust
+      water: none
+      far_bank: none
+      sky_and_light: ash
+      absent: [water]
+    pin: null
+
+  - id: devonian
+    t: 3.75e8
+    chapter: shore
+    shot: WATER_EDGE
+    caption: An estuary.
+    unsourced:
+      o2_percent: 18
+      mean_temp_c: 24
+    subject:
+      setting: A Devonian estuary
+      left_mass: Archaeopteris trees
+      vegetation: Archaeopteris
+      fauna: lobe-finned fishes
+      main_subject: a tetrapodomorph
+      ground: mud
+      water: brackish
+      far_bank: bare upland
+      sky_and_light: clear
+      absent: [flowers, grass]
+    pin: null
+
+  - id: hot-start
+    t: 4.5e9
+    chapter: molten
+    shot: WIDE_RIDGE
+    caption: A molten world.
+    unsourced:
+      o2_percent: 0
+      mean_temp_c: null
+    subject:
+      setting: A magma ocean
+      left_mass: black crust
+      vegetation: none
+      fauna: none
+      main_subject: a lava fountain
+      ground: hot crust
+      water: none
+      far_bank: none
+      sky_and_light: ash
+      absent: [water]
+    pin: null
+"""
+
+
+def test_scene_book_allows_a_chapter_to_recur_as_non_adjacent_runs() -> None:
+    book = parse_scene_book(RECURRING_CHAPTER_SCENES_YAML)
+
+    # `scenes` is ascending in `t` (present first): city (shore) -> interlude (molten) ->
+    # devonian (shore) -> hot-start (molten), so "shore" and "molten" each recur as two
+    # non-adjacent runs. `chronological()` reverses that to oldest-first.
+    assert [s.chapter for s in book.scenes] == ["shore", "molten", "shore", "molten"]
+    assert [s.chapter for s in book.chronological()] == ["molten", "shore", "molten", "shore"]
+
+
+def test_scene_book_still_refuses_a_chapter_with_no_scenes() -> None:
+    unused = RECURRING_CHAPTER_SCENES_YAML.replace(
+        "  - id: shore\n    label: Shore\n    shot: WATER_EDGE\n    composition: water-edge-series\n",
+        "  - id: shore\n    label: Shore\n    shot: WATER_EDGE\n    composition: water-edge-series\n"
+        "  - id: unused\n    label: Unused\n    shot: GROUND\n    composition: ridge-vista\n",
+    )
+
+    with pytest.raises(ValueError, match="chapters with no scenes: \\['unused'\\]"):
+        parse_scene_book(unused)
+
+
+def test_chapter_spans_emits_one_span_per_run_for_a_recurring_chapter() -> None:
+    book = parse_scene_book(RECURRING_CHAPTER_SCENES_YAML)
+
+    spans = chapter_spans(book)
+
+    assert [c.id for c in spans] == ["shore", "molten", "shore", "molten"]
+    # Each run gets its own span, nearer-present first, tiling [present, Earth's formation]
+    # with no gaps: every run's tEnd is the next run's tStart, and the whole book is covered.
+    assert spans[0].t_start == 0.0
+    assert spans[-1].t_end == 4.567e9
+    for earlier, later in itertools.pairwise(spans):
+        assert earlier.t_end == later.t_start
+        assert earlier.t_start <= earlier.t_end
+    # The two "shore" runs and the two "molten" runs each keep their chapter's own label, even
+    # though they are unrelated stretches of the timeline.
+    assert spans[0].label == spans[2].label == "Shore"
+    assert spans[1].label == spans[3].label == "Molten"
 
 
 # -- publish ---------------------------------------------------------------------------------

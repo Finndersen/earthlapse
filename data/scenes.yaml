@@ -34,6 +34,10 @@ chapters:
     label: At the water's edge
     shot: WATER_EDGE
     composition: water-edge-series
+  - id: open-ground
+    label: On open ground
+    shot: GROUND
+    composition: open-ground
 
 scenes:
   # Moon-forming impact 4.35-4.52 Ga (events.yaml moon-forming-impact).
@@ -1092,6 +1096,34 @@ scenes:
       sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
       absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
     pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
+
+  # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
+  # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,
+  # John T. Daniels (who took the photograph) and four others. Canard biplane, forward elevator,
+  # twin rear rudders, two pusher propellers, muslin-covered spruce frame, no wheels (it ran along
+  # a wooden rail), pilot prone on the lower wing. Framed on open sand below Kill Devil Hill, as in
+  # Daniels' photograph, not at the water (ADR-020). The man at the rail end (Wilbur, as in the
+  # photograph) and distant onlookers are kept anonymous, like incidental figures elsewhere.
+  - id: first-powered-flight
+    t: 122.0
+    chapter: open-ground
+    shot: GROUND
+    caption: On a cold December morning at Kill Devil Hills, the Wright Flyer lifts off the sand for twelve seconds, the first sustained, controlled flight of a powered aircraft.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
+    subject:
+      setting: The flat sand flats at Kill Devil Hills, near Kitty Hawk, North Carolina, at about 10:35 am on the cold, windy morning of 17 December 1903, camera set low near the end of the wooden launching rail
+      left_mass: the tall bare sand dune of Kill Devil Hill rising in the middle distance, its slope streaked with sparse dune grass
+      vegetation: sparse tufts of dune grass and low scrub scattered across the bare sand; no trees anywhere
+      fauna: none
+      main_subject: the Wright Flyer aloft just a few feet above the sand, a fragile canard biplane with a forward elevator and twin rear rudders, its wings covered in taut muslin, two pusher propellers spinning behind the wings, the pilot lying prone on the lower wing; a second man stands near the end of the rail, mid-stride, having just released the wingtip, his face not distinguishable
+      ground: flat, hard-packed pale sand filling the foreground, the wooden launching rail running low across it from the near foreground toward the aircraft
+      water: none in the frame; the flats are dry sand, with the shallow water of Kitty Hawk Bay out of frame beyond the dune
+      far_bank: no far bank; a low wooden hangar shed and camp buildings stand small in the distance among the dunes, with a couple of further figures, surfmen from the nearby lifesaving station, watching near the buildings, none with a distinguishable face
+      sky_and_light: a cold, grey-blue overcast winter sky with a stiff wind; flat, diffuse December light
+      absent: [modern aircraft, jet, helicopter, airliner, propeller at the front of the aircraft, wheeled landing gear, paved runway, road, car, power line, radio mast, modern clothing, sunglasses, crowd of many people, water in frame, identifiable faces]
+    pin: {asset_digest: "b82bc9f05d4f344e", path: "data/candidates/first-powered-flight/16cc2baae684243d/02-b82bc9f05d4f344e.jpg"}
 
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
   # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"

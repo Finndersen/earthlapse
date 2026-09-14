@@ -1,8 +1,12 @@
 """Scene records: data/scenes.yaml, the curated source of truth for what gets generated.
 
-A scene is one still at one `t`. A chapter is a run of consecutive scenes sharing a composition
-(DESIGN §6): the viewer dissolves slowly within a chapter and cuts across a boundary. The pin a
-human writes with `earthtime review pick` lives here too, so it survives every rebuild (ADR-005).
+A scene is one still at one `t`. A chapter is a held composition (DESIGN §6): consecutive
+scenes in the same chapter share framing, so the viewer's dissolve between them reads as the
+world morphing rather than a cut. A chapter may recur as several non-adjacent **runs** across
+the timeline (ADR-020) — each run is its own consecutive stretch of scenes, and every run of
+the same chapter shares that chapter's shot and composition, but a run's neighbours in a
+*different* chapter still read as a cut at each boundary. The pin a human writes with
+`earthtime review pick` lives here too, so it survives every rebuild (ADR-005).
 """
 
 from __future__ import annotations
@@ -85,12 +89,16 @@ class SceneBook(BaseModel):
                     f"{scene.id}: shot {scene.shot} differs from chapter {chapter.id} "
                     f"shot {chapter.shot}; a chapter holds one composition"
                 )
+        # A chapter may recur as several non-adjacent runs (ADR-020): each maximal stretch of
+        # consecutive same-chapter scenes is one run, but the same chapter id may appear in more
+        # than one such stretch. Every run still gets its own span in the published manifest
+        # (`pipeline/publish.py`'s `chapter_spans`, which groups by adjacency the same way), so
+        # no chapter-run uniqueness is enforced here — only that every chapter has at least one.
         runs = [
             scene.chapter
             for i, scene in enumerate(self.scenes)
             if i == 0 or scene.chapter != self.scenes[i - 1].chapter
         ]
-        _require_unique("chapter run (a chapter must be one consecutive run of scenes)", runs)
         unused = chapters.keys() - set(runs)
         if unused:
             raise ValueError(f"chapters with no scenes: {sorted(unused)}")

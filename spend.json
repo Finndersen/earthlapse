@@ -1976,6 +1976,30 @@
       "estimated_usd": 0.154594,
       "actual_usd": 0.140694,
       "note": null
+    },
+    {
+      "node_id": "first-powered-flight.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154772,
+      "actual_usd": 0.139868,
+      "note": null
+    },
+    {
+      "node_id": "first-powered-flight.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154772,
+      "actual_usd": 0.139352,
+      "note": null
+    },
+    {
+      "node_id": "first-powered-flight.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154772,
+      "actual_usd": 0.140072,
+      "note": null
     }
   ]
 }

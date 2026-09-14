@@ -45,8 +45,11 @@ export interface Scene {
   height: number
 }
 
-/** A run of scenes sharing composition. Within a chapter the framing holds and only the
- *  world changes; a chapter boundary reads as a cut (DESIGN §6). */
+/** One run of scenes sharing composition. Within a chapter run the framing holds and only the
+ *  world changes; a boundary between two runs reads as a cut (DESIGN §6). A chapter id may
+ *  appear more than once in `Manifest.chapters` (ADR-020): each non-adjacent run of the same
+ *  chapter is its own entry with its own `tStart`/`tEnd` span, so `id` is not unique across
+ *  the array — treat each element as an independent run, never key this array by `id`. */
 export interface Chapter {
   id: string
   label: string

@@ -268,13 +268,20 @@ magma ocean → steaming shallow sea → Archean shore → Ediacaran seafloor
 → Pleistocene steppe → Neolithic valley → river settlement → city → metropolis
 ```
 
-Grouped into **chapters**. Within a chapter, composition is held constant and only the world
-changes — that is where the emotional weight lives. At a chapter boundary the composition
-changes, which reads as a cut.
+Grouped into **chapters**, each a held composition (one shot, one framing). Within a chapter's
+run of scenes, composition is held constant and only the world changes — that is where the
+emotional weight lives. At a boundary between two different chapters the composition changes,
+which reads as a cut. A chapter is not required to be a single contiguous stretch of the
+timeline: it may **recur as several non-adjacent runs** wherever its framing suits the subject
+again later (ADR-020) — e.g. a waterside chapter, an unrelated open-ground scene, then the
+waterside chapter again. Each run still reads as continuous in itself; it is still a cut at
+every boundary between runs of *different* chapters.
 
 **Open question (§14):** the trade-off is few chapters (each held long → very continuous but
 repetitive, less coverage) versus many chapters (better coverage of how Earth changed, but
-more cuts). Sweet spot is empirical; test 8 vs 14 in Phase 1.
+more cuts). Sweet spot is empirical; test 8 vs 14 in Phase 1. Recurrence (ADR-020) doesn't
+resolve this trade-off, only removes the structural penalty for forcing scenes into a framing
+that doesn't fit them just to avoid it.
 
 Because the vantage is conceptual, **there is no pin on the globe.** The globe shows
 planetary state only. (ADR-007)
