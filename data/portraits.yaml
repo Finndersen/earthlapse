@@ -49,7 +49,7 @@ portraits:
       surface: "translucent and colourless, glowing faintly against the black field"
       size: null
       absent: ["a nucleus", "visible organelles", "flagella or hairs of any kind", "a group of cells"]
-    pin: null
+    pin: {asset_digest: "55a8a83a3e0b58ad", path: "data/candidates/portraits/luca/bf40cc93c7d28d1b/01-55a8a83a3e0b58ad.jpg"}
 
   - id: archaeal-host-lineage
     plate: MICROSCOPE
@@ -63,7 +63,7 @@ portraits:
       anatomy: "a small round cell (a coccus) sending out long, thin, often branching membrane protrusions, with chains of small blebs and tiny membrane vesicles around it; non-motile"
       surface: "a translucent pale membrane, glowing faintly against the black field"
       size: "a cell body about 300 to 750 nanometres across"
-      absent: ["a nucleus", "a flagellum", "visible internal organelles"]
+      absent: ["a nucleus", "a flagellum", "visible internal organelles", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
     pin: null
 
   - id: leca
@@ -83,7 +83,7 @@ portraits:
       surface: "a translucent, colourless cell, its internal structures faintly lit in darkfield"
       size: null
       absent: ["chloroplasts or any green pigment", "a cell wall, shell or scales", "engulfed prey", "a group of cells"]
-    pin: null
+    pin: {asset_digest: "c276b4a3154b29a5", path: "data/candidates/portraits/leca/96d97bf5af289df9/01-c276b4a3154b29a5.jpg"}
 
   - id: opisthokonta
     plate: MICROSCOPE
@@ -98,7 +98,7 @@ portraits:
       surface: "translucent and colourless, glowing faintly against the black field"
       size: null
       absent: ["a second flagellum", "a flagellum at the front of the cell", "chloroplasts or any green pigment", "a group of cells"]
-    pin: null
+    pin: {asset_digest: "03af3d822e3e05ae", path: "data/candidates/portraits/opisthokonta/e98173c508960fc4/01-03af3d822e3e05ae.jpg"}
 
   - id: holozoa
     plate: MICROSCOPE
@@ -114,7 +114,7 @@ portraits:
       surface: "translucent, colourless cells with a faint sheen along the collars in darkfield"
       size: null
       absent: ["tissues or organs", "a shell or spicules", "chloroplasts or any green pigment"]
-    pin: null
+    pin: {asset_digest: "5973dd6f36eff417", path: "data/candidates/portraits/holozoa/b72835947554c506/01-5973dd6f36eff417.jpg"}
 
   # ------------------------------------------------------------------- specimen plates
 
@@ -130,10 +130,10 @@ portraits:
       - sponge body-wall anatomy (pores, a top opening) was not confirmed against a source this session
     subject:
       organism: "A reconstruction of an early sponge-grade animal from the base of the animal tree, no fossil of the ancestor itself is known"
-      anatomy: "a small, soft, hollow body standing upright, attached to the surface at its base, its wall perforated by many tiny pores, one larger opening at the top, entirely soft-bodied with no mineral spicules"
+      anatomy: "a small, soft, hollow body standing upright, attached to the surface at its base by a single flat attachment point, not forked or split into limbs, its wall perforated by many tiny pores, one larger opening at the top, entirely soft-bodied with no mineral spicules"
       surface: "a pale, soft, slightly translucent body wall; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["glassy or chalky spicules", "tentacles", "a head, face, mouth or eyes", "a gut", "limbs", "a coral, sea anemone or jellyfish", "a plant, seaweed, fungus or mushroom", "a vase, bottle, bag or any other made object"]
+      absent: ["glassy or chalky spicules", "tentacles", "a head, face, mouth or eyes", "a snout, nose or mouth-like mark", "a gut", "limbs", "a forked or foot-like base", "a coral, sea anemone or jellyfish", "a plant, seaweed, fungus or mushroom", "a vase, bottle, bag or any other made object"]
     pin: null
 
   - id: eumetazoa
@@ -149,7 +149,7 @@ portraits:
       surface: "soft polyp tissue within a rigid, faceted cup wall; no source gives its colour, so muted natural tones"
       size: "about 20 cm tall"
       absent: ["a stony or chalky coral skeleton", "a swimming bell", "a head, face or eyes", "limbs", "a shell", "a flower, plant or seaweed", "a drinking glass, goblet, vase or any other made object"]
-    pin: null
+    pin: {asset_digest: "476499a62ca9c41a", path: "data/candidates/portraits/eumetazoa/0df5b0207b6b539d/01-476499a62ca9c41a.jpg"}
 
   - id: bilateria
     plate: SPECIMEN
@@ -166,7 +166,7 @@ portraits:
       surface: "a smooth, tough, flexible covering over soft body tissue, with no plates, ridges or segments; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a head, face, eyes or mouth", "a neck", "limbs, flippers or fins", "plates, scutes, ridges or segments on the covering", "a coiled shell", "a hard stony or chalky shell"]
-    pin: null
+    pin: {asset_digest: "9c9e32e0464f4648", path: "data/candidates/portraits/bilateria/8890709556e8208c/02-9c9e32e0464f4648.jpg"}
 
   - id: chordata
     plate: SPECIMEN
@@ -181,7 +181,7 @@ portraits:
       surface: "smooth, soft, slightly translucent skin; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a face, eyes or a mouth", "jaws or teeth", "legs or jointed limbs", "antennae or eyestalks like a snail's or an insect's", "scales or bony plates", "paired fins with fin rays", "a fish's tail fin", "the rings of a segmented worm"]
-    pin: null
+    pin: {asset_digest: "a4ea5ba4af80ab2f", path: "data/candidates/portraits/chordata/f8a679f6acd65011/01-a4ea5ba4af80ab2f.jpg"}
 
   - id: olfactores
     plate: SPECIMEN
@@ -196,7 +196,7 @@ portraits:
       surface: "a soft, slightly translucent body wall through which the branchial basket shows faintly; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a hard shell", "a tail", "a face, eyes or a mouth with lips", "a colony of joined bodies", "limbs", "a crown of long tentacles like a sea anemone's", "a plant, bottle, vase or bag"]
-    pin: null
+    pin: {asset_digest: "bb4e4ac417942fa4", path: "data/candidates/portraits/olfactores/7314b508c63dc99a/01-bb4e4ac417942fa4.jpg"}
 
   - id: vertebrata
     plate: SPECIMEN
@@ -208,10 +208,10 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "Haikouichthys ercaicunensis, an early Cambrian jawless vertebrate"
-      anatomy: "an elongate, side-to-side flattened jawless fish, shown swimming horizontally in side view, with repeated chevron-shaped muscle blocks along its body, a head with large eyes set high, a short gill region with at least six gill pouches, and a single continuous median fin-fold along the back, belly and tail, the dorsal fin's rays tilted forward"
+      anatomy: "an elongate, side-to-side flattened jawless fish, shown swimming horizontally in side view, with repeated chevron-shaped muscle blocks along its body, a head with large eyes set high, a short gill region with at least six gill pouches and no fin of any kind below or behind it, and a single continuous median fin-fold running the full length of the back, belly and tail with nothing interrupting it, the dorsal fin's rays tilted forward"
       surface: "smooth, unarmoured skin; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["jaws", "teeth", "paired fins", "separate dorsal, anal and tail fins like a modern fish's", "a forked tail", "scales", "gill covers", "bony armour plates", "limbs", "a modern eel or lamprey"]
+      absent: ["jaws", "teeth", "paired fins", "a fin below or behind the gills", "separate dorsal, anal and tail fins like a modern fish's", "a forked tail", "scales", "gill covers", "bony armour plates", "limbs", "a modern eel or lamprey"]
     pin: null
 
   - id: gnathostomata
@@ -227,7 +227,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["limbs or digits", "a round jawless sucker mouth", "lungs or a neck", "a modern shark, perch, trout or any other living fish species"]
-    pin: null
+    pin: {asset_digest: "d04c2b033a483f5b", path: "data/candidates/portraits/gnathostomata/54a444a893fd4dae/01-d04c2b033a483f5b.jpg"}
 
   - id: osteichthyes
     plate: SPECIMEN
@@ -243,7 +243,7 @@ portraits:
       surface: "glossy, ridged rhombic scales; no source gives its colour, so muted natural tones"
       size: null
       absent: ["limbs or digits", "smooth scaleless skin", "a neck", "a modern carp, perch, sturgeon or any other living fish species"]
-    pin: null
+    pin: {asset_digest: "105148bcd6c22ae3", path: "data/candidates/portraits/osteichthyes/12c94bea931c39ff/01-105148bcd6c22ae3.jpg"}
 
   - id: sarcopterygii
     plate: SPECIMEN
@@ -261,7 +261,7 @@ portraits:
       surface: "glossy, enamel-like cosmine on the head bones and scales; no source gives its colour, so muted natural tones"
       size: null
       absent: ["limbs, legs, feet or digits", "standing or resting on its fins", "a neck", "smooth scaleless skin", "whiskers or barbels", "a modern coelacanth, lungfish, catfish or any other living fish species"]
-    pin: null
+    pin: {asset_digest: "d4122fd21724b79b", path: "data/candidates/portraits/sarcopterygii/cf982e773844e64d/01-d4122fd21724b79b.jpg"}
 
   - id: tetrapodomorpha
     plate: SPECIMEN
@@ -277,7 +277,7 @@ portraits:
       surface: "overlapping bony scales over the whole body; no source gives its colour, so muted natural tones"
       size: null
       absent: ["fingers, toes or feet", "legs", "standing up with its belly raised off the surface", "claws", "smooth amphibian skin", "a head cropped or tail cropped by the frame edge"]
-    pin: null
+    pin: {asset_digest: "80fca4206846b113", path: "data/candidates/portraits/tetrapodomorpha/fb8986de8d51a7b4/02-80fca4206846b113.jpg"}
 
   - id: tetrapoda
     plate: SPECIMEN
@@ -289,10 +289,10 @@ portraits:
       - webbing between the digits, forelimbs that could not bend forward at the elbow, internal gills and the ~60 cm length come from a secondary encyclopedia summary only
     subject:
       organism: "Acanthostega gunnari, a late Devonian limbed tetrapod that still lived in water"
-      anatomy: "an aquatic four-limbed animal lying flat on its belly, its whole body resting on the surface: a long, low body; four limbs splayed out flat to either side as paddles rather than weight-bearing legs, with eight digits on each forelimb; and a long tail with a deep tail fin supported by fin rays above and below"
+      anatomy: "an aquatic four-limbed animal lying flat on its belly, its whole body resting on the surface: a long, low body; four limbs splayed out flat to either side as paddles rather than weight-bearing legs, each paddle ending in a fan of eight digits joined together in the paddle rather than separated into individual fingers or toes; and a long tail with a deep tail fin supported by fin rays above and below"
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
-      absent: ["claws", "hands or feet with five digits", "legs holding its belly off the surface", "scales like a reptile's", "a neck frill or feathery external gills", "a crocodile, salamander, newt or any other living animal", "a head cropped or tail cropped by the frame edge"]
+      absent: ["claws", "hands or feet with five digits", "separate individual fingers, toes, hands or paws", "legs holding its belly off the surface", "scales like a reptile's", "a neck frill or feathery external gills", "a crocodile, salamander, newt or any other living animal", "a head cropped or tail cropped by the frame edge"]
     pin: null
 
   - id: amniota
@@ -309,7 +309,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 20 cm long including the tail"
       absent: ["fur", "feathers", "gills", "a tail fin", "crests, frills, spines or a dewlap", "a modern gecko, iguana, chameleon or any other living lizard species", "a tail cropped by the frame edge"]
-    pin: null
+    pin: {asset_digest: "60ead2448ece7209", path: "data/candidates/portraits/amniota/3fb8b5dd6e0e0ede/01-60ead2448ece7209.jpg"}
 
   - id: synapsida
     plate: SPECIMEN
@@ -324,7 +324,7 @@ portraits:
       anatomy: "a four-legged predator with a long low body, limbs sprawling out to the sides, a long tail, a deep skull with strong jaws, rows of sharp teeth of similar shape and one pair of enlarged canine teeth"
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 50 cm long from head to tail"
-      absent: ["fur", "a sail on the back", "feathers", "gills", "a crocodile's armoured back or long narrow snout", "crests or frills", "a monitor lizard or any other living reptile", "a tail cropped by the frame edge"]
+      absent: ["fur", "a sail on the back", "feathers", "gills", "a crocodile's armoured back or long narrow snout", "crests or frills", "loose wrinkled throat or neck skin folds", "a forked tongue", "an open-mouthed threat display", "a monitor lizard or any other living reptile", "a tail cropped by the frame edge"]
     pin: null
 
   - id: therapsida
@@ -343,7 +343,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["a sail on the back", "feathers", "horns", "a shell or armour plates", "a sabre-toothed cat, dog, wolf or any other mammal", "a thick fur coat, whiskers or external ear flaps", "a tail cropped by the frame edge"]
-    pin: null
+    pin: {asset_digest: "0a7fe284a0cc1bee", path: "data/candidates/portraits/therapsida/b41b211a6596c34f/01-0a7fe284a0cc1bee.jpg"}
 
   - id: cynodontia
     plate: SPECIMEN
@@ -360,7 +360,7 @@ portraits:
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "a skull about 5 cm long"
       absent: ["long blade-shaped fangs", "a sail on the back", "feathers", "a shell or armour plates", "a modern rat, weasel, shrew, lizard or any other living animal", "a tail cropped by the frame edge"]
-    pin: null
+    pin: {asset_digest: "7eb4b6337ccfa56e", path: "data/candidates/portraits/cynodontia/0f0d9560a125b457/01-7eb4b6337ccfa56e.jpg"}
 
   - id: mammaliaformes
     plate: SPECIMEN
@@ -375,7 +375,7 @@ portraits:
       anatomy: "a small, low four-legged animal, shown standing on all four feet, with a pointed snout, teeth differentiated into incisors, canines, premolars and molars, and a long tail; an insect-eater"
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "about 15 cm long overall, with a skull 2 to 3 cm long"
-      absent: ["scales", "a sail on the back", "feathers", "large fangs", "a modern shrew, mouse, rat or any other living animal"]
+      absent: ["scales", "a sail on the back", "feathers", "large fangs", "prominent external ear pinnae, whiskers, or a pink naked nose", "a modern shrew, mouse, rat or any other living animal"]
     pin: null
 
   - id: mammalia
@@ -391,7 +391,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal"]
-    pin: null
+    pin: {asset_digest: "7e3062f8c909a6a1", path: "data/candidates/portraits/mammalia/a8573b4a1e4fb10f/01-7e3062f8c909a6a1.jpg"}
 
   - id: theria
     plate: SPECIMEN
@@ -405,7 +405,7 @@ portraits:
       anatomy: "a small four-legged mammal, shown standing on all four feet, with a pointed snout and a long tail"
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal"]
+      absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
     pin: null
 
   - id: eutheria
@@ -422,7 +422,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: "very small, with a skull about 22 mm long"
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a modern shrew, mouse, rat or any other living mammal"]
-    pin: null
+    pin: {asset_digest: "96512f40094b71c8", path: "data/candidates/portraits/eutheria/5a62482f98ff1abf/01-96512f40094b71c8.jpg"}
 
   - id: placentalia
     plate: SPECIMEN
@@ -437,7 +437,7 @@ portraits:
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: "6 to 245 grams"
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
-    pin: null
+    pin: {asset_digest: "22ea1eed2c0700b5", path: "data/candidates/portraits/placentalia/1ad22aed0d266d08/01-22ea1eed2c0700b5.jpg"}
 
   - id: boreoeutheria
     plate: SPECIMEN
@@ -452,7 +452,7 @@ portraits:
       anatomy: "a small tree-climbing, insect-eating four-legged mammal, shown standing on all four feet, with a pointed snout and a long, furry tail"
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
+      absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
     pin: null
 
   - id: euarchontoglires
@@ -469,7 +469,7 @@ portraits:
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
-    pin: null
+    pin: {asset_digest: "b34fb2e0afe5ff64", path: "data/candidates/portraits/euarchontoglires/e2da8a10b002725f/01-b34fb2e0afe5ff64.jpg"}
 
   - id: primatomorpha
     plate: SPECIMEN
@@ -485,7 +485,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "about 100 grams, the weight of a deck of cards"
       absent: ["nails in place of claws", "large forward-facing eyes", "a branch or tree", "scales", "a squirrel's bushy tail", "a modern squirrel, tree shrew, lemur, monkey or any other living mammal"]
-    pin: null
+    pin: {asset_digest: "46f1c6ce85e50a08", path: "data/candidates/portraits/primatomorpha/773c443982a3bbd4/01-46f1c6ce85e50a08.jpg"}
 
   - id: primates
     plate: SPECIMEN
@@ -496,10 +496,10 @@ portraits:
       - a molecular-clock node; the plate bridges the Purgatorius and Teilhardina plates and adds no anatomy of its own
     subject:
       organism: "A reconstruction of the crown-primate ancestor, dated only by molecular clock, shown as a small tree-dwelling primate"
-      anatomy: "a small, lightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and grasping hands and feet"
+      anatomy: "a small, lightly built tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and grasping hands and feet; a living animal covered in fur, not a fossil or bare skeleton"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a modern lemur, tarsier, bushbaby, monkey or any other living primate"]
+      absent: ["a branch or tree", "scales", "a human-like face", "a ringed or banded tail", "a fossil, skeleton, bones or a rock slab", "a modern lemur, tarsier, bushbaby, monkey or any other living primate"]
     pin: null
 
   - id: haplorhini
@@ -516,7 +516,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["claws", "a branch or tree", "a human-like face", "a modern tarsier, lemur, monkey or any other living primate"]
-    pin: null
+    pin: {asset_digest: "21ee1bb3c654829a", path: "data/candidates/portraits/haplorhini/2c24a37be4984afa/01-21ee1bb3c654829a.jpg"}
 
   - id: simiiformes
     plate: SPECIMEN
@@ -531,7 +531,7 @@ portraits:
       anatomy: "a tiny tree-dwelling four-legged primate, shown standing on all four limbs, with a long tail and grasping hands and feet"
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
-      absent: ["claws", "a branch or tree", "a human-like face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
+      absent: ["claws", "a branch or tree", "a human-like face", "ear tufts", "a striped or ringed tail", "a marmoset's or tamarin's face", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
     pin: null
 
   - id: catarrhini
@@ -547,7 +547,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["claws", "a branch or tree", "a human-like face", "a modern macaque, baboon or any other living monkey", "a modern ape"]
-    pin: null
+    pin: {asset_digest: "a9a1e7c3e6f639a1", path: "data/candidates/portraits/catarrhini/c80f4dd89d90294c/01-a9a1e7c3e6f639a1.jpg"}
 
   - id: hominoidea
     plate: SPECIMEN
@@ -558,12 +558,13 @@ portraits:
     gaps:
       - the lineage representative is a Morotopithecus-grade stem hominoid, not a named ancestor
       - whether early apes had already lost the tail was not confirmed against a source this session
+      - face shape and terrestrial hand posture are not described by these sources; rendered as a more primitive, generalised ape face and flat-handed rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern chimpanzee or gorilla
     subject:
       organism: "A reconstruction of an early Miocene stem ape, modelled on Morotopithecus bishopi"
-      anatomy: "a large-bodied ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright"
+      anatomy: "a large-bodied ape with a short, stiff lower back and a shoulder built for hanging by the arms and climbing, able to hold its body upright; shown with a more primitive, generalised ape face rather than a gorilla's heavy brow ridge and jutting jaw or a chimpanzee's or bonobo's bare dark face, and hands placed flat on the ground rather than knuckle-walking"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "knuckle-walking posture", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: hominidae
@@ -573,12 +574,13 @@ portraits:
       - "Locke, D.P. et al. (2011) Nature 469, 529-533, doi:10.1038/nature09687 (orangutan/African-ape split, molecular)"
     gaps:
       - a molecular-clock node with no specimen; the plate holds the Morotopithecus ape grade and adds no anatomy of its own
+      - face shape and terrestrial hand posture are not described by these sources; rendered as a more primitive, generalised ape face and flat-handed rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern chimpanzee or gorilla
     subject:
       organism: "A reconstruction of the great-ape ancestor of orangutans and African apes, dated only by molecular clock, shown at the same large-bodied ape grade as the plate before it"
-      anatomy: "a large-bodied ape with a short, stiff lower back and long arms built for hanging and climbing"
+      anatomy: "a large-bodied ape with a short, stiff lower back and long arms built for hanging and climbing; shown with a more primitive, generalised ape face rather than a gorilla's heavy brow ridge and jutting jaw or a chimpanzee's or bonobo's bare dark face, and hands placed flat on the ground rather than knuckle-walking"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "knuckle-walking posture", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: homininae
@@ -588,12 +590,13 @@ portraits:
       - "Scally, A. et al. (2012) Nature 483, 169-175, doi:10.1038/nature10842 (gorilla/chimpanzee-human split, ~10 Ma)"
     gaps:
       - a molecular-clock node with no specimen; the plate holds the great-ape grade and adds no anatomy of its own
+      - face shape and terrestrial hand posture are not described by these sources; rendered as a more primitive, generalised ape face and flat-handed rather than knuckle-walking, an unverified rendering direction chosen to keep the plate distinct from a modern chimpanzee or gorilla
     subject:
       organism: "A reconstruction of the African-ape ancestor of gorillas, chimpanzees and humans, dated only by molecular clock, shown at the same large-bodied ape grade as the plate before it"
-      anatomy: "a large-bodied ape with long arms built for hanging and climbing"
+      anatomy: "a large-bodied ape with long arms built for hanging and climbing; shown with a more primitive, generalised ape face rather than a gorilla's heavy brow ridge and jutting jaw or a chimpanzee's or bonobo's bare dark face, and hands placed flat on the ground rather than knuckle-walking"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "an orangutan's long orange hair or cheek pads"]
+      absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "knuckle-walking posture", "an orangutan's long orange hair or cheek pads"]
     pin: null
 
   - id: hominini
@@ -607,10 +610,10 @@ portraits:
       - its placement as a hominin, rather than a gorilla-line or stem hominid, is contested
     subject:
       organism: "A reconstruction of Sahelanthropus tchadensis, a late-Miocene ape near the chimpanzee-human split; only its skull, jaw fragments and teeth are known"
-      anatomy: "a head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs"
+      anatomy: "a head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape"]
+      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
     pin: null
 
   - id: australopithecus
@@ -627,7 +630,7 @@ portraits:
       surface: "a coat of hair; no source gives its skin or hair colour, so muted natural tones"
       size: null
       absent: ["clothing or tools", "a branch or tree", "a modern human face", "a modern human body", "a tail", "a modern chimpanzee, gorilla or any other living ape"]
-    pin: null
+    pin: {asset_digest: "290c4a6e4303ba25", path: "data/candidates/portraits/australopithecus/4115e7cd87246643/01-290c4a6e4303ba25.jpg"}
 
   - id: homo
     plate: SPECIMEN
@@ -636,10 +639,11 @@ portraits:
       - "Villmoare, B. et al. (2015) 'Early Homo at 2.8 Ma from Ledi-Geraru, Afar, Ethiopia', Science 347(6228), 1352-1355, doi:10.1126/science.aaa1343: LD 350-1 partial mandible combining derived Homo and primitive Australopithecus-like traits (per data/lineage.yaml; not re-fetched this session)"
     gaps:
       - LD 350-1 is a partial lower jaw only; head and body are reconstructed between the Australopithecus and Homo erectus plates
+      - the face, skull profile and body hair are not preserved in LD 350-1; a sloping forehead, moderate browridge, forward-projecting face and a light coat of body hair are an unverified rendering direction chosen to keep the plate intermediate between Australopithecus and Homo erectus rather than reading as a modern human
     subject:
       organism: "A reconstruction of the earliest Homo, about 2.8 million years ago; its representative, LD 350-1, is only a partial lower jaw"
-      anatomy: "an upright, two-legged early human mixing features of Australopithecus and later Homo"
-      surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming"
+      anatomy: "an upright, two-legged early human, rendered with a sloping forehead, a moderate browridge and a face that projects more than a modern human's, intermediate in build between Australopithecus and Homo erectus"
+      surface: "no source gives its skin or hair; rendered with a light coat of body hair, intermediate between Australopithecus and Homo erectus, in muted natural tones"
       size: null
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
     pin: null
@@ -659,7 +663,7 @@ portraits:
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "145 to 185 cm tall across the species"
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
-    pin: null
+    pin: {asset_digest: "13a1d771f6cbf79c", path: "data/candidates/portraits/homo-erectus/d0401dd3974b3d35/02-13a1d771f6cbf79c.jpg"}
 
   - id: homo-heidelbergensis
     plate: SPECIMEN
@@ -672,10 +676,10 @@ portraits:
       - which population was the ancestor of Neanderthals and modern humans is contested; the plate follows the Homo heidelbergensis sensu lato description
     subject:
       organism: "Homo heidelbergensis in the broad sense, the Middle Pleistocene population ancestral to Neanderthals and modern humans"
-      anatomy: "a fully upright early human with a short, wide, heavily built body, a very large browridge, a larger braincase and a flatter face than earlier humans"
+      anatomy: "a fully upright early human with a short, wide, heavily built body, a very large browridge, a larger braincase and a flatter face than earlier humans; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out"
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "males about 175 cm tall, females about 157 cm"
-      absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a modern hairstyle", "a tail"]
+      absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a modern hairstyle", "a tail", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
     pin: null
 
   - id: homo-sapiens
@@ -685,9 +689,10 @@ portraits:
       - "Hublin, J.-J. et al. (2017) 'New fossils from Jebel Irhoud, Morocco and the pan-African origin of Homo sapiens', Nature 546, 289-292, doi:10.1038/nature22336: facial shape almost indistinguishable from living humans; braincase large but elongated and archaic, not globular"
     gaps:
       - the body below the head is not described by the source; it follows modern human proportions
+      - hair length and style are not described by the source; kept short or swept back off the skull is an unverified rendering choice so the diagnostic elongated, low braincase profile stays visible in silhouette rather than obscured by loose hair
     subject:
       organism: "Early Homo sapiens, as known from the roughly 300,000-year-old Jebel Irhoud fossils of Morocco"
-      anatomy: "a fully upright modern human whose face is almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded"
+      anatomy: "a fully upright modern human whose face is almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded, rendered with hair kept short or swept back off the skull so that the elongated, low braincase profile stays visible in silhouette"
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: null
       absent: ["clothing or tools", "jewellery, tattoos or body paint", "a modern hairstyle"]
