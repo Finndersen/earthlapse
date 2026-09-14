@@ -184,7 +184,7 @@ scenes:
       far_bank: "a flat, barren tidal platform of pale rock running unbroken to a low grey coastline of bare rock only, utterly bare of anything green beyond the algae at the shore"
       sky_and_light: a clear, pale sky, less hazy than deep Archean time but not the saturated blue of a modern one; calm, even, cool light
       absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats"]
-    pin: null
+    pin: {asset_digest: "ccbb5828638ef8de", path: "data/candidates/boring-billion-shallows/4726db66153e81cc/03-ccbb5828638ef8de.jpg"}
 
   # Marinoan glaciation, ~650-635 Ma, inside the Cryogenian (events.yaml snowball-earth: 635-720 Ma).
   - id: cryogenian-snowball
@@ -366,7 +366,7 @@ scenes:
       far_bank: "a low upland of grey and ochre rock with dark, narrow, conical stands of Archaeopteris trees along the distant river margins"
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
       absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "cycads", "dinosaurs", "mammals", "birds", "flying insects", "crocodile", "legs", "digits", "claws", "external gills", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk"]
-    pin: null
+    pin: {asset_digest: "04b683b74388043c", path: "data/candidates/devonian-estuary/df7a9ca914a91a0b/03-04b683b74388043c.jpg"}
 
   # ~365 Ma, exactly at events.yaml tetrapods (t_min = 3.65e8; Acanthostega/Ichthyostega,
   # Ahlberg & Clack 2006) and this file's new first-seed-plants event (3.6e8-3.7e8): Rothwell,
@@ -392,7 +392,7 @@ scenes:
       far_bank: "Archaeopteris forest of narrow, conical, tiered trees with low seed-fern thickets in its understory, fading into humid haze"
       sky_and_light: a warm, hazy sky with scattered cumulus; soft, humid, slightly diffused light
       absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "reptiles", "dinosaurs", "mammals", "birds", "flying insects", "walking on land", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk", "yellow or coloured blooms", "sandy beach", "clear turquoise water"]
-    pin: null
+    pin: {asset_digest: "3b555e2bde09f75f", path: "data/candidates/late-devonian-tetrapod/3bf3324c4e342562/02-3b555e2bde09f75f.jpg"}
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
   - id: carboniferous-swamp
@@ -760,7 +760,7 @@ scenes:
       far_bank: more swamp conifer forest fading into a low summer mist
       sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
       absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, hippo-shaped head, eyes or nostrils raised on top of the head, smooth pink or grey hairless skin, rhinoceros, tapir, trunk, people, buildings]
-    pin: null
+    pin: {asset_digest: "32b5e8d94688fbc7", path: "data/candidates/arctic-hothouse-forest/6b5ae1460b5130ea/03-32b5e8d94688fbc7.jpg"}
 
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
   - id: eocene-jungle
@@ -862,7 +862,7 @@ scenes:
       far_bank: open, sunburnt savanna running flat to a hazy, heat-shimmered horizon
       sky_and_light: a bleached, almost white sky with a fierce, high sun; hard, short shadows and visible heat haze over the distance
       absent: [dense forest, modern zebra, stripes, modern antelope, gazelles, horned animals, apes, hominins, people, fences, buildings]
-    pin: null
+    pin: {asset_digest: "00c097bfdd0c523f", path: "data/candidates/c4-savanna-hipparion/424c3aa573df2c94/01-00c097bfdd0c523f.jpg"}
 
   # Messinian salinity crisis, 5.96-5.33 Ma, placed in the halite phase at 5.6 Ma (events.yaml
   # messinian-salinity-crisis): Krijgsman, W. et al. (1999), "Chronology, causes and progression of

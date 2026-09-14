@@ -64,7 +64,7 @@ portraits:
       surface: "a translucent pale membrane, glowing faintly against the black field"
       size: "a cell body about 300 to 750 nanometres across"
       absent: ["a nucleus", "a flagellum", "visible internal organelles", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: null
+    pin: {asset_digest: "cbaa84828438551c", path: "data/candidates/portraits/archaeal-host-lineage/835f3602c6440e42/01-cbaa84828438551c.jpg"}
 
   - id: leca
     plate: MICROSCOPE
@@ -134,7 +134,7 @@ portraits:
       surface: "a pale, soft, slightly translucent body wall; no source gives its colour, so muted natural tones"
       size: null
       absent: ["glassy or chalky spicules", "tentacles", "a head, face, mouth or eyes", "a snout, nose or mouth-like mark", "a gut", "limbs", "a forked or foot-like base", "a coral, sea anemone or jellyfish", "a plant, seaweed, fungus or mushroom", "a vase, bottle, bag or any other made object"]
-    pin: null
+    pin: {asset_digest: "f3773bffa3cfab68", path: "data/candidates/portraits/metazoa/69c0eae5b5148527/01-f3773bffa3cfab68.jpg"}
 
   - id: eumetazoa
     plate: SPECIMEN
@@ -293,7 +293,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["claws", "hands or feet with five digits", "separate individual fingers, toes, hands or paws", "legs holding its belly off the surface", "scales like a reptile's", "a neck frill or feathery external gills", "a crocodile, salamander, newt or any other living animal", "a head cropped or tail cropped by the frame edge"]
-    pin: null
+    pin: {asset_digest: "35d025bfba217b1d", path: "data/candidates/portraits/tetrapoda/d323330332037f58/01-35d025bfba217b1d.jpg"}
 
   - id: amniota
     plate: SPECIMEN
@@ -406,7 +406,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: null
+    pin: {asset_digest: "9b7c50ee0bbda0a9", path: "data/candidates/portraits/theria/a9b1835b73547fef/01-9b7c50ee0bbda0a9.jpg"}
 
   - id: eutheria
     plate: SPECIMEN
@@ -614,7 +614,7 @@ portraits:
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
       absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
-    pin: null
+    pin: {asset_digest: "244dcca8346a49e5", path: "data/candidates/portraits/hominini/7d5a484348ed4f8e/01-244dcca8346a49e5.jpg"}
 
   - id: australopithecus
     plate: SPECIMEN
@@ -646,7 +646,7 @@ portraits:
       surface: "no source gives its skin or hair; rendered with a light coat of body hair, intermediate between Australopithecus and Homo erectus, in muted natural tones"
       size: null
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
-    pin: null
+    pin: {asset_digest: "3bcfe020f0937e57", path: "data/candidates/portraits/homo/2bb26facbba20146/01-3bcfe020f0937e57.jpg"}
 
   - id: homo-erectus
     plate: SPECIMEN
@@ -680,7 +680,7 @@ portraits:
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "males about 175 cm tall, females about 157 cm"
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a modern hairstyle", "a tail", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
-    pin: null
+    pin: {asset_digest: "d3058b63da2612c6", path: "data/candidates/portraits/homo-heidelbergensis/c2679d0f3224812f/01-d3058b63da2612c6.jpg"}
 
   - id: homo-sapiens
     plate: SPECIMEN
