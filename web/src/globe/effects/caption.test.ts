@@ -23,7 +23,7 @@ describe('globeEffectCaption', () => {
       { t: 4.45e9, regimeWeights: weights, iceShellEvents: ALL_EVENTS, iceShellIntensity: 0, impactWinterVeil: 0 },
       '',
     )
-    expect(caption).toBe('Magma ocean · artistic reconstruction')
+    expect(caption).toBe('Magma ocean')
   })
 
   it('matches docs/GLOBE.md §7 exact wording for the unknown-geography regime', () => {
@@ -32,7 +32,7 @@ describe('globeEffectCaption', () => {
       { t: 1.7e9, regimeWeights: weights, iceShellEvents: ALL_EVENTS, iceShellIntensity: 0, impactWinterVeil: 0 },
       '',
     )
-    expect(caption).toBe('Geography unknown · artistic')
+    expect(caption).toBe('Geography unknown')
   })
 
   it('does not caption a regime that is only a minority of a crossfade', () => {
@@ -66,7 +66,7 @@ describe('globeEffectCaption', () => {
       { t: 4.4e9, regimeWeights: weights, iceShellEvents: ALL_EVENTS, iceShellIntensity: 0, impactWinterVeil: 0.8 },
       '',
     )
-    expect(caption).toBe('Impact winter · artistic reconstruction')
+    expect(caption).toBe('Impact winter')
   })
 
   it('captions impact winter over ice shell too', () => {
@@ -74,6 +74,6 @@ describe('globeEffectCaption', () => {
       { t: 6.9e8, regimeWeights: NO_REGIME, iceShellEvents: ALL_EVENTS, iceShellIntensity: 1, impactWinterVeil: 0.5 },
       '',
     )
-    expect(caption).toBe('Impact winter · artistic reconstruction')
+    expect(caption).toBe('Impact winter')
   })
 })

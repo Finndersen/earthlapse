@@ -12,43 +12,55 @@
 
 import type { GeoTime, GlobeEffectAnchor, GlobeEffectKind, GlobeEffectWindow, TimelineEvent } from '@/types/layer'
 
-import { clamp01, smoothstep } from './math'
+import { clamp01, smoothstep, warpedEdgeProgress } from './math'
 
 /** Ease width applied outward from a window's own [tMin, tMax] — the cited interval itself
  *  stays at full intensity throughout; only the fade just outside it is artistic. "The easing
- *  widths are artistic and do not claim onset rates" (docs/GLOBE.md §4.3). */
-function windowEnvelope(window: GlobeEffectWindow, t: GeoTime, easeYears: number): number {
+ *  widths are artistic and do not claim onset rates" (docs/GLOBE.md §4.3).
+ *
+ *  The ease is sized in `easeWidthWarp` — a constant width on the timeline's symlog warp
+ *  (`math.ts`'s `symlogWarp`/`warpedEdgeProgress`), not a fixed number of years: a fixed-year
+ *  ease reads fine near the present but goes sub-pixel deep in time (at ~650 Ma, `symlogWarp`
+ *  compresses a 3 Myr span to well under one screen pixel), which is exactly what made the
+ *  Snowball ice shell above/below appear and disappear abruptly during playback instead of
+ *  fading (regression fixed for docs/GLOBE.md §4.3's "gradual transition"). */
+function windowEnvelope(window: GlobeEffectWindow, t: GeoTime, easeWidthWarp: number): number {
   if (t >= window.tMin && t <= window.tMax) return 1
-  const distanceOutside = t > window.tMax ? t - window.tMax : window.tMin - t
-  return 1 - smoothstep(0, easeYears, distanceOutside)
+  const edge = t > window.tMax ? window.tMax : window.tMin
+  return 1 - warpedEdgeProgress(t, edge, easeWidthWarp)
 }
 
 /** Max envelope across every window of every event carrying an effect of `kind` — a union,
  *  since e.g. Snowball Earth's Sturtian and Marinoan windows (and, separately, the
  *  Paleoproterozoic glaciation regime) all render with this same `ice-shell` kind and should
  *  each independently light it up. */
-function unionEnvelope(events: readonly TimelineEvent[], kind: GlobeEffectKind, t: GeoTime, easeYears: number): number {
+function unionEnvelope(events: readonly TimelineEvent[], kind: GlobeEffectKind, t: GeoTime, easeWidthWarp: number): number {
   let intensity = 0
   for (const event of events) {
     const effect = event.effect
     if (effect === undefined || effect.kind !== kind) continue
     for (const w of effect.windows) {
-      intensity = Math.max(intensity, windowEnvelope(w, t, easeYears))
+      intensity = Math.max(intensity, windowEnvelope(w, t, easeWidthWarp))
     }
   }
   return intensity
 }
 
-/** 3 Myr: brief next to every `ice-shell` window (Sturtian's 56 Myr, even Marinoan's cited
- *  ~4 Myr), matching "the shell... eases in and out at each window edge" (§4.3). */
-export const ICE_SHELL_EASE_YEARS = 3e6
+/** Warp-space ease width (see `windowEnvelope`'s doc comment) for the ice shell's window edges
+ *  — brief next to every `ice-shell` window (Sturtian's 56 Myr, even Marinoan's cited ~4 Myr),
+ *  matching "the shell... eases in and out at each window edge" (§4.3), but readable at any
+ *  era: at the Sturtian's ~717 Ma older edge this reads as ~11 Myr of real time, comparable to
+ *  the ~22 Myr Sturtian-Marinoan interglacial gap, so scrubbing across it reads as a fade
+ *  (and, where the Marinoan's own edges' fades reach into that gap, a gentle thaw rather than a
+ *  hard clear sky) rather than a cut. */
+export const ICE_SHELL_EASE_WARP = 0.015
 
 /** Ice-shell intensity (0..1) at `t`: 1 throughout any active window (Sturtian, Marinoan, or
  *  the Paleoproterozoic glaciation regime — whichever event(s) supplied it), eased at the
  *  edges. Callers pass both `events-core` (Snowball Earth) and `globe-regimes` (the
  *  Paleoproterozoic regime) — either can carry an `ice-shell` effect. */
 export function iceShellIntensity(events: readonly TimelineEvent[], t: GeoTime): number {
-  return unionEnvelope(events, 'ice-shell', t, ICE_SHELL_EASE_YEARS)
+  return unionEnvelope(events, 'ice-shell', t, ICE_SHELL_EASE_WARP)
 }
 
 /** How long the K-Pg veil holds near-black before beginning to recover, and how long full
@@ -62,7 +74,9 @@ export const IMPACT_WINTER_RECOVERY_YEARS = 15
  *  measured from each window's midpoint — for `k-pg-impact`'s own `[66.032, 66.054]` Ma
  *  window that lands exactly on Renne et al. 2013's 66.043 Ma central estimate, not (as the
  *  window's ~22 kyr width might suggest) something comparable to the veil's own few-year
- *  timescale. Zero before the impact: the veil does not anticipate it. */
+ *  timescale. Strictly zero at and before the impact instant (`yearsAfter <= 0`): the veil
+ *  does not anticipate it, and a scene sitting exactly on the impact moment (the pre-impact
+ *  `kpg-arrival` scene) must show the clear, pre-impact globe, not a post-impact one. */
 export function impactWinterVeil(events: readonly TimelineEvent[], t: GeoTime): number {
   let veil = 0
   for (const event of events) {
@@ -70,7 +84,7 @@ export function impactWinterVeil(events: readonly TimelineEvent[], t: GeoTime): 
     if (effect === undefined || effect.kind !== 'impact-winter') continue
     for (const w of effect.windows) {
       const yearsAfter = (w.tMin + w.tMax) / 2 - t
-      if (yearsAfter < 0) continue
+      if (yearsAfter <= 0) continue
       const v =
         yearsAfter <= IMPACT_WINTER_DARK_YEARS
           ? 1
@@ -88,7 +102,8 @@ const IMPACT_FLASH_DECAY_YEARS = 0.01
 
 /** The K-Pg flash's intensity (0..1) at `t`, decaying from the same event moment as
  *  `impactWinterVeil`'s veil. Kept separate from the veil (rather than folded into it) because
- *  the flash is anchor-local (`impactWinterAnchor`) while the veil is global. */
+ *  the flash is anchor-local (`impactWinterAnchor`) while the veil is global. Strictly zero at
+ *  and before the impact instant, for the same reason as `impactWinterVeil`. */
 export function impactWinterFlash(events: readonly TimelineEvent[], t: GeoTime): number {
   let flash = 0
   for (const event of events) {
@@ -96,7 +111,7 @@ export function impactWinterFlash(events: readonly TimelineEvent[], t: GeoTime):
     if (effect === undefined || effect.kind !== 'impact-winter') continue
     for (const w of effect.windows) {
       const yearsAfter = (w.tMin + w.tMax) / 2 - t
-      if (yearsAfter < 0) continue
+      if (yearsAfter <= 0) continue
       flash = Math.max(flash, Math.exp(-yearsAfter / IMPACT_FLASH_DECAY_YEARS))
     }
   }

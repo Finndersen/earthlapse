@@ -32,7 +32,7 @@ describe('resolveGlobeEffects', () => {
     const { uniforms, caption } = resolveGlobeEffects(4.45e9, REGIME_EVENTS, EFFECT_EVENTS, '')
     expect(uniforms.regimeWeights.magmaOcean).toBeCloseTo(1, 2)
     expect(uniforms.giantImpactFlash).toBeLessThan(0.01)
-    expect(caption).toBe('Magma ocean · artistic reconstruction')
+    expect(caption).toBe('Magma ocean')
   })
 
   it('resolves the Snowball Earth ice shell with its caption', () => {
@@ -51,11 +51,21 @@ describe('resolveGlobeEffects', () => {
   it('resolves the K-Pg impact winter veil, flash and anchor together', () => {
     const kPg = EFFECT_EVENTS.find((e) => e.id === 'k-pg-impact')!
     const tImpact = (kPg.tMin + kPg.tMax) / 2
-    const { uniforms, caption } = resolveGlobeEffects(tImpact, REGIME_EVENTS, EFFECT_EVENTS, '')
+    const { uniforms, caption } = resolveGlobeEffects(tImpact - 1e-8, REGIME_EVENTS, EFFECT_EVENTS, '')
     expect(uniforms.impactWinterVeil).toBe(1)
     expect(uniforms.impactFlash).toBeCloseTo(1, 5)
     expect(uniforms.impactFlashAnchorUv).not.toBeNull()
-    expect(caption).toBe('Impact winter · artistic reconstruction')
+    expect(caption).toBe('Impact winter')
+  })
+
+  it('is inert exactly at the impact instant (regression: the pre-impact kpg-arrival scene sits exactly here and must show the clear, pre-impact globe)', () => {
+    const kPg = EFFECT_EVENTS.find((e) => e.id === 'k-pg-impact')!
+    const tImpact = (kPg.tMin + kPg.tMax) / 2
+    const { uniforms, caption } = resolveGlobeEffects(tImpact, REGIME_EVENTS, EFFECT_EVENTS, 'fallback')
+    expect(uniforms.impactWinterVeil).toBe(0)
+    expect(uniforms.impactFlash).toBe(0)
+    expect(uniforms.impactFlashAnchorUv).toBeNull()
+    expect(caption).toBe('fallback')
   })
 
   it('is pure in t: identical inputs give identical output', () => {

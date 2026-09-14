@@ -11,7 +11,7 @@
  * importing the scene package; the scene package can adopt it without behaviour change.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 /** `to` drawn over `from` at `mix`: 0 shows `from` alone, 1 shows `to` alone. */
 export interface Mix<T> {
@@ -86,17 +86,30 @@ export function mixesEqual<T>(a: Mix<T>, b: Mix<T>, keying: MixKeying<T>): boole
 }
 
 /**
- * Drives `stepMix` with `requestAnimationFrame`, returning the presented mix. Mounts at
- * `target` exactly, and runs frames only while the presentation has not converged on it.
- * `keying` must be referentially stable (a module constant).
+ * Drives an arbitrary `step` function with `requestAnimationFrame`, returning the presented
+ * state. Mounts at `target` exactly, and runs frames only while `settled` says the presented
+ * state has not converged on `target` — no idle rAF loop once it has caught up. This is the
+ * rAF/dt-accounting loop every wall-clock presentation limiter in this codebase shares;
+ * `usePresentedMix` below and `usePresentedNumericRecord` are both thin `step`/`settled`
+ * bindings over it, so a second (or third) copy of the loop itself never needs writing.
+ * `step` and `settled` must be referentially stable (module constants, or memoised) — they run
+ * inside the rAF loop's closure, not as an effect dependency the loop restarts for.
  */
-export function usePresentedMix<T>(target: Mix<T>, minSeconds: number, keying: MixKeying<T>): Mix<T> {
-  const [presented, setPresented] = useState<Mix<T>>(target)
+export function useRateLimitedState<S>(
+  target: S,
+  step: (state: S, target: S, dtSeconds: number) => S,
+  settled: (state: S, target: S) => boolean,
+): S {
+  const [presented, setPresented] = useState<S>(target)
 
   const presentedRef = useRef(presented)
   presentedRef.current = presented
   const targetRef = useRef(target)
   targetRef.current = target
+  const stepRef = useRef(step)
+  stepRef.current = step
+  const settledRef = useRef(settled)
+  settledRef.current = settled
   const rafRef = useRef<number | null>(null)
   const lastFrameRef = useRef<number | null>(null)
 
@@ -109,18 +122,18 @@ export function usePresentedMix<T>(target: Mix<T>, minSeconds: number, keying: M
   )
 
   useEffect(() => {
-    if (rafRef.current !== null || mixesEqual(presentedRef.current, target, keying)) return
+    if (rafRef.current !== null || settledRef.current(presentedRef.current, target)) return
 
     lastFrameRef.current = null
     const tick = (now: number): void => {
       const last = lastFrameRef.current
       lastFrameRef.current = now
       const dtSeconds = last === null ? 0 : (now - last) / 1000
-      const next = stepMix(presentedRef.current, targetRef.current, dtSeconds, minSeconds, keying)
+      const next = stepRef.current(presentedRef.current, targetRef.current, dtSeconds)
       presentedRef.current = next
       setPresented(next)
 
-      if (mixesEqual(next, targetRef.current, keying)) {
+      if (settledRef.current(next, targetRef.current)) {
         rafRef.current = null
         lastFrameRef.current = null
         return
@@ -128,7 +141,64 @@ export function usePresentedMix<T>(target: Mix<T>, minSeconds: number, keying: M
       rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
-  }, [target, minSeconds, keying])
+  }, [target])
 
   return presented
+}
+
+/**
+ * Drives `stepMix` with `requestAnimationFrame`, returning the presented mix. Mounts at
+ * `target` exactly, and runs frames only while the presentation has not converged on it.
+ * `keying` must be referentially stable (a module constant).
+ */
+export function usePresentedMix<T>(target: Mix<T>, minSeconds: number, keying: MixKeying<T>): Mix<T> {
+  const step = useCallback(
+    (state: Mix<T>, target: Mix<T>, dtSeconds: number) => stepMix(state, target, dtSeconds, minSeconds, keying),
+    [minSeconds, keying],
+  )
+  const settled = useCallback((state: Mix<T>, target: Mix<T>) => mixesEqual(state, target, keying), [keying])
+  return useRateLimitedState(target, step, settled)
+}
+
+/**
+ * Rate-limits a plain numeric record — several independent scalar values, each moved toward its
+ * own target field by at most `dtSeconds / minSeconds` per wall-clock second via `moveToward`
+ * (no field's motion affects another's). Generalises `stepMix`/`usePresentedMix` above to values
+ * that aren't a keyed "from/to" transition between two named items — e.g. the globe's effect
+ * intensities (`web/src/globe/effects/presentation.ts`), which are just numbers that must not
+ * visibly snap when their target jumps (a fast scrub or playback tick crossing a whole
+ * ease/crossfade band in a handful of milliseconds), with no "other item" to name.
+ */
+export function stepNumericRecord<K extends string>(
+  state: Readonly<Record<K, number>>,
+  target: Readonly<Record<K, number>>,
+  dtSeconds: number,
+  minSeconds: number,
+): Record<K, number> {
+  if (!Number.isFinite(dtSeconds) || dtSeconds <= 0) return state
+  const maxDelta = dtSeconds / minSeconds
+  const next: Record<K, number> = { ...state }
+  let changed = false
+  for (const key of Object.keys(target) as K[]) {
+    const value = moveToward(state[key], target[key], maxDelta)
+    if (value !== state[key]) {
+      next[key] = value
+      changed = true
+    }
+  }
+  return changed ? next : state
+}
+
+function numericRecordSettled<K extends string>(state: Readonly<Record<K, number>>, target: Readonly<Record<K, number>>): boolean {
+  return (Object.keys(target) as K[]).every((key) => state[key] === target[key])
+}
+
+/** `useRateLimitedState` bound to `stepNumericRecord`/`numericRecordSettled` — see that
+ *  function's doc comment. */
+export function usePresentedNumericRecord<K extends string>(target: Readonly<Record<K, number>>, minSeconds: number): Record<K, number> {
+  const step = useCallback(
+    (state: Record<K, number>, target: Record<K, number>, dtSeconds: number) => stepNumericRecord(state, target, dtSeconds, minSeconds),
+    [minSeconds],
+  )
+  return useRateLimitedState(target, step, numericRecordSettled)
 }

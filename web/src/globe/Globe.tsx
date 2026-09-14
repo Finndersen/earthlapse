@@ -25,6 +25,7 @@ import {
 } from './blend'
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
 import styles from './Globe.module.css'
+import { isOrbClick } from './orbGesture'
 import {
   ATMOSPHERE_SCALE,
   GLOBE_FRAGMENT_SHADER,
@@ -65,9 +66,26 @@ export interface GlobeProps {
   effectEvents: readonly TimelineEvent[]
   expanded: boolean
   onToggleExpand: () => void
+  /** Reports the current caption text (docs/GLOBE.md §7) on every change, `''` for none. `Globe`
+   *  never draws this itself, in either state — the caller places it: under the minimised orb
+   *  (`ShellLayout`'s "Paleogeography" label slot) or, expanded, in `ShellLayout`'s `.stage`
+   *  slot (the scene caption's own spot, already reserved clear of the timeline — `Globe`'s own
+   *  fullscreen backdrop has no way to know where the timeline's playhead label actually sits,
+   *  so it can't safely place text near it itself). Optional: a caller that doesn't care about
+   *  the caption (e.g. a test harness) can omit it. */
+  onCaptionChange?: (caption: string) => void
 }
 
-export function Globe({ t, rasterLayers, assetBase, regimeEvents, effectEvents, expanded, onToggleExpand }: GlobeProps) {
+export function Globe({
+  t,
+  rasterLayers,
+  assetBase,
+  regimeEvents,
+  effectEvents,
+  expanded,
+  onToggleExpand,
+  onCaptionChange,
+}: GlobeProps) {
   const blend = useMemo(() => globeMultiBlendAt(rasterLayers, t, assetBase), [rasterLayers, t, assetBase])
   const domain = globeUniforms(blend)
   const direction = useTravelDirection(t)
@@ -93,6 +111,7 @@ export function Globe({ t, rasterLayers, assetBase, regimeEvents, effectEvents, 
   const effects = useGlobeEffects(t, effectiveRegimeEvents, effectEvents, fallbackCaption)
   const caption = effects.caption
 
+  useCaptionReport(caption, onCaptionChange)
   useCloseOnEscape(expanded, onToggleExpand)
 
   // Closing on a backdrop click only when the press also *started* on the backdrop: a drag
@@ -105,6 +124,24 @@ export function Globe({ t, rasterLayers, assetBase, regimeEvents, effectEvents, 
     if (pressStartedOnBackdrop.current && e.target === e.currentTarget) onToggleExpand()
   }
 
+  // Minimised orb: OrbitControls now rotates in both states (below), so a plain expand
+  // button covering the orb would swallow every drag. Instead the orb itself distinguishes a
+  // click from a drag by movement, the same "did the press move" test the backdrop uses above
+  // — a press-and-release under the threshold expands, anything that moved further is a
+  // rotate and must not. OrbitControls captures the pointer on the canvas (three.js's
+  // `setPointerCapture`), so pointerup still bubbles here with the right coordinates even when
+  // released outside the orb. `expandButton` below stays for keyboard activation only.
+  const orbPressStart = useRef<{ x: number; y: number } | null>(null)
+  const onOrbPointerDown = (e: PointerEvent<HTMLDivElement>): void => {
+    orbPressStart.current = { x: e.clientX, y: e.clientY }
+  }
+  const onOrbPointerUp = (e: PointerEvent<HTMLDivElement>): void => {
+    const start = orbPressStart.current
+    orbPressStart.current = null
+    if (start === null) return
+    if (isOrbClick(start, { x: e.clientX, y: e.clientY })) onToggleExpand()
+  }
+
   // The element types and order stay identical across both states so toggling restyles the
   // same <Canvas> rather than remounting it (a new WebGL context and texture re-upload).
   return (
@@ -113,7 +150,11 @@ export function Globe({ t, rasterLayers, assetBase, regimeEvents, effectEvents, 
       onPointerDown={expanded ? onBackdropPointerDown : undefined}
       onClick={expanded ? onBackdropClick : undefined}
     >
-      <div className={expanded ? styles.orbExpanded : styles.orb}>
+      <div
+        className={expanded ? styles.orbExpanded : styles.orb}
+        onPointerDown={expanded ? undefined : onOrbPointerDown}
+        onPointerUp={expanded ? undefined : onOrbPointerUp}
+      >
         <div className={styles.halo} aria-hidden="true" />
         <Canvas camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true }}>
           <GlobeSphere
@@ -124,14 +165,8 @@ export function Globe({ t, rasterLayers, assetBase, regimeEvents, effectEvents, 
             effects={effects.uniforms}
           />
           <AtmosphereRim />
-          <OrbitControls enableZoom={expanded} enablePan={false} enableRotate={expanded} rotateSpeed={0.6} />
+          <OrbitControls enableZoom={expanded} enablePan={false} enableRotate rotateSpeed={0.6} />
         </Canvas>
-
-        {caption !== '' && (
-          <div className={styles.caption} aria-live="polite">
-            {caption}
-          </div>
-        )}
 
         {!expanded && (
           <button type="button" className={styles.expandButton} onClick={onToggleExpand} aria-label="Expand globe" />
@@ -156,6 +191,15 @@ function useTravelDirection(t: GeoTime): TravelDirection {
     lastRef.current = { t, direction }
   })
   return direction
+}
+
+/** Reports `caption` to `onCaptionChange` whenever it changes (including to `''`), so a caller
+ *  that renders the caption elsewhere (the minimised orb's `ShellLayout` label slot) stays in
+ *  sync without Globe drawing anything itself. A no-op when `onCaptionChange` is omitted. */
+function useCaptionReport(caption: string, onCaptionChange: ((caption: string) => void) | undefined): void {
+  useEffect(() => {
+    onCaptionChange?.(caption)
+  }, [caption, onCaptionChange])
 }
 
 /** Escape collapses the expanded globe. The latest callback is read through a ref so the

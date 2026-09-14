@@ -107,6 +107,12 @@ export function Experience() {
   // never drift out of sync with the image) while placing it in the HUD above the vignette.
   const [captionHost, setCaptionHost] = useState<HTMLDivElement | null>(null)
 
+  // The globe's own regime/effect caption (docs/GLOBE.md §7), lifted here from `<Globe>`'s
+  // `onCaptionChange` so `ShellLayout` can place it under the minimised orb (its
+  // "Paleogeography" label slot) and, while the globe is expanded, in the stage slot above the
+  // timeline. `Globe` never draws a caption over the sphere itself in either state.
+  const [globeCaption, setGlobeCaption] = useState('')
+
   // Idle calm is never armed with the globe expanded: the expanded globe lives inside the
   // periphery the calm fades, and a modal the viewer opened must not dim itself.
   const calm = useIdle({ armed: playback.playing && !globeExpanded, timeoutMs: IDLE_CALM_MS })
@@ -271,6 +277,7 @@ export function Experience() {
     <ShellLayout
       calm={calm}
       globeExpanded={globeExpanded}
+      globeCaption={globeCaption}
       scene={
         manifest.scenes.length > 0 ? (
           <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
@@ -288,6 +295,7 @@ export function Experience() {
             effectEvents={manifest.events}
             expanded={globeExpanded}
             onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
+            onCaptionChange={setGlobeCaption}
           />
         ) : (
           <div className={styles.placeholder}>No paleogeographic data in manifest.</div>

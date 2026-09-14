@@ -12,11 +12,12 @@
  * already carries G7's "Continents from plate model" and 540 Ma seam captions and the generic
  * `NO_RECONSTRUCTION_CAPTION` for a genuine gap.
  *
- * Every string here matches a docs/GLOBE.md §7 example verbatim ("Magma ocean · artistic
- * reconstruction", "Geography unknown · artistic", "Impact winter · artistic
- * reconstruction") or its "· extent contested" convention (Snowball Earth, the
+ * Every string here matches a docs/GLOBE.md §7 example verbatim ("Magma ocean", "Geography
+ * unknown", "Impact winter") or its "· extent contested" convention (Snowball Earth, the
  * Paleoproterozoic glaciation) — this file is the one place that wording is assembled, so a
- * caption never drifts from its rendered effect.
+ * caption never drifts from its rendered effect. The shell's own bottom-of-screen note
+ * ("Artistic reconstruction — plausibility, not accuracy.", `ShellLayout.tsx`) already covers
+ * every still and reconstruction across the whole app, so these captions don't repeat it.
  */
 
 import type { GeoTime, TimelineEvent } from '@/types/layer'
@@ -24,10 +25,10 @@ import type { GeoTime, TimelineEvent } from '@/types/layer'
 import { dominantRegime, type RegimeKind, type RegimeWeights } from './regimes'
 
 const REGIME_CAPTIONS: Record<RegimeKind, string> = {
-  'regime-magma-ocean': 'Magma ocean · artistic reconstruction',
-  'regime-water-world': 'Hadean water world · artistic reconstruction',
-  'regime-archean': 'Archean haze · artistic reconstruction',
-  'regime-unknown-geography': 'Geography unknown · artistic',
+  'regime-magma-ocean': 'Magma ocean',
+  'regime-water-world': 'Hadean water world',
+  'regime-archean': 'Archean haze',
+  'regime-unknown-geography': 'Geography unknown',
 }
 
 /** Only caption a regime once it is more than half the blend — otherwise scrubbing through a
@@ -45,7 +46,7 @@ const ICE_SHELL_LABELS: Readonly<Record<string, string>> = {
 
 const ICE_SHELL_CAPTION_THRESHOLD = 0.5
 
-const IMPACT_WINTER_CAPTION = 'Impact winter · artistic reconstruction'
+const IMPACT_WINTER_CAPTION = 'Impact winter'
 
 /** Low: the veil is worth captioning as soon as it's visibly darkening, not only once it's
  *  gone fully near-black — most of a scrub through the recovery tail is still "impact winter". */

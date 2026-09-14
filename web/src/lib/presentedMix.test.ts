@@ -1,7 +1,17 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { dominantItem, type Mix, type MixKeying, mixesEqual, moveToward, stepMix, usePresentedMix } from './presentedMix'
+import {
+  dominantItem,
+  type Mix,
+  type MixKeying,
+  mixesEqual,
+  moveToward,
+  stepMix,
+  stepNumericRecord,
+  usePresentedMix,
+  usePresentedNumericRecord,
+} from './presentedMix'
 
 interface Item {
   id: string
@@ -118,5 +128,75 @@ describe('usePresentedMix', () => {
     expect(result.current.mix).toBeLessThan(1)
 
     await waitFor(() => expect(result.current).toEqual(alone(d)), { timeout: 3000, interval: 50 })
+  }, 10000)
+})
+
+const MIN_NUMERIC_SECONDS = 1.5
+
+describe('stepNumericRecord', () => {
+  it.each([0, -1, NaN, Infinity])('returns the state itself for dt = %p', (dt) => {
+    const state = { a: 0.2, b: 0.8 }
+    expect(stepNumericRecord(state, { a: 1, b: 0 }, dt, MIN_NUMERIC_SECONDS)).toBe(state)
+  })
+
+  it('moves every field independently by at most dt / minSeconds', () => {
+    const next = stepNumericRecord({ a: 0, b: 1 }, { a: 1, b: 0 }, 0.3, MIN_NUMERIC_SECONDS)
+    expect(next.a).toBeCloseTo(0.3 / MIN_NUMERIC_SECONDS)
+    expect(next.b).toBeCloseTo(1 - 0.3 / MIN_NUMERIC_SECONDS)
+  })
+
+  it('snaps a field onto its target once within reach, without waiting for the others', () => {
+    const next = stepNumericRecord({ a: 0.99, b: 0 }, { a: 1, b: 1 }, 0.3, MIN_NUMERIC_SECONDS)
+    expect(next.a).toBe(1)
+    expect(next.b).toBeLessThan(1)
+  })
+
+  it('returns the same reference once every field has already reached its target', () => {
+    const state = { a: 1, b: 0 }
+    expect(stepNumericRecord(state, { a: 1, b: 0 }, 0.3, MIN_NUMERIC_SECONDS)).toBe(state)
+  })
+
+  it('follows a target moving slower than the floor exactly', () => {
+    let state = { a: 0 }
+    for (let i = 1; i <= 50; i++) {
+      const target = { a: i * 0.02 }
+      state = stepNumericRecord(state, target, 0.1, MIN_NUMERIC_SECONDS)
+      expect(state.a).toBeCloseTo(target.a)
+    }
+  })
+})
+
+describe('usePresentedNumericRecord', () => {
+  beforeEach(() => {
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16) as unknown as number)
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('mounts at the target and takes real wall-clock time to catch a jump', async () => {
+    const { result, rerender } = renderHook(({ target }) => usePresentedNumericRecord(target, MIN_NUMERIC_SECONDS), {
+      initialProps: { target: { a: 0, b: 0 } },
+    })
+    expect(result.current).toEqual({ a: 0, b: 0 })
+
+    act(() => rerender({ target: { a: 1, b: 1 } }))
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    expect(result.current.a).toBeGreaterThan(0)
+    expect(result.current.a).toBeLessThan(1)
+
+    await waitFor(() => expect(result.current).toEqual({ a: 1, b: 1 }), { timeout: 3000, interval: 50 })
+  }, 10000)
+
+  it('never overshoots a full transition in under minSeconds', async () => {
+    const { result, rerender } = renderHook(({ target }) => usePresentedNumericRecord(target, MIN_NUMERIC_SECONDS), {
+      initialProps: { target: { intensity: 0 } },
+    })
+    act(() => rerender({ target: { intensity: 1 } }))
+    const start = performance.now()
+    await waitFor(() => expect(result.current.intensity).toBe(1), { timeout: 3000, interval: 10 })
+    expect((performance.now() - start) / 1000).toBeGreaterThanOrEqual(MIN_NUMERIC_SECONDS - 0.1)
   }, 10000)
 })

@@ -15,7 +15,7 @@
 
 import type { GeoTime, GlobeEffectKind, TimelineEvent } from '@/types/layer'
 
-import { smoothstep } from './math'
+import { smoothstep, symlogWarp } from './math'
 
 export type RegimeKind = Extract<
   GlobeEffectKind,
@@ -34,17 +34,22 @@ function isRegimeKind(kind: GlobeEffectKind): kind is RegimeKind {
 }
 
 /** Floor on how soft a boundary is, even where two regimes' cited windows only touch (zero
- *  overlap) rather than genuinely overlap. 20 Myr is imperceptible against every regime's own
- *  span (the shortest, `archean-haze-regime`, is 1.6 Gyr) but enough that scrubbing across a
- *  boundary reads as a fade, not a cut. Where two regimes' cited dates already overlap by
- *  more than this (magma-ocean/water-world's cited 50 Myr), the real overlap is used instead. */
-const MIN_CROSSFADE_HALF_WIDTH_YEARS = 1e7
+ *  overlap) rather than genuinely overlap. Sized in warp space (`math.ts`'s `symlogWarp`), not
+ *  a fixed number of years, for the same reason `overlays.ts`'s ice-shell ease is: these
+ *  regimes sit billions of years deep, where a fixed-year width goes sub-pixel and a boundary
+ *  that should read as a long crossfade instead reads as a cut. `MIN_CROSSFADE_HALF_WIDTH_WARP`
+ *  is imperceptible against every regime's own span (the shortest, `archean-haze-regime`, is
+ *  1.6 Gyr) but enough that scrubbing across a boundary reads as a fade, not a cut. Where two
+ *  regimes' cited dates already overlap by more than this (magma-ocean/water-world's cited
+ *  50 Myr), the real overlap — itself measured in warp space below — is used instead. */
+const MIN_CROSSFADE_HALF_WIDTH_WARP = 2.5e-3
 
 /** Ease width for a regime's own open edge — one with no neighbouring regime to crossfade
  *  against (magma-ocean's older edge: nothing precedes it; unknown-geography's younger edge:
  *  it hands off to the Merdith continents of §4.1/G7, not modelled here). Same order of
- *  magnitude as `MIN_CROSSFADE_HALF_WIDTH_YEARS` so the two kinds of edge read consistently. */
-const STANDALONE_EDGE_EASE_YEARS = 2e7
+ *  magnitude as `MIN_CROSSFADE_HALF_WIDTH_WARP`, in the same warp-space units, so the two kinds
+ *  of edge read consistently. */
+const STANDALONE_EDGE_EASE_WARP = 5e-3
 
 interface RegimeSpan {
   kind: RegimeKind
@@ -71,27 +76,41 @@ function regimeSpans(regimeEvents: readonly TimelineEvent[]): RegimeSpan[] {
 
 /** How much of `span`'s weight survives at its older edge (`tMax`), given its older neighbour
  *  `older` (or `undefined` for the oldest span, which has none). 1 deep inside `span`, 0 once
- *  `older` has fully taken over (or, standalone, once `t` has aged past `span.tMax`). */
+ *  `older` has fully taken over (or, standalone, once `t` has aged past `span.tMax`).
+ *
+ *  Every boundary here is computed in warp space (`symlogWarp`, `t`'s monotonic symlog warp),
+ *  not raw years — see `MIN_CROSSFADE_HALF_WIDTH_WARP`'s doc comment for why: a fixed-year
+ *  crossfade goes sub-pixel this deep in time. `symlogWarp` is monotonic increasing in `t`, so
+ *  substituting warped values throughout preserves the same "0 well inside, 1 once the
+ *  neighbour dominates" direction the original years-based `smoothstep` had. */
 function olderEdgeWeight(span: RegimeSpan, older: RegimeSpan | undefined, t: GeoTime): number {
+  const wT = symlogWarp(t)
   if (older === undefined) {
-    return 1 - smoothstep(span.tMax - STANDALONE_EDGE_EASE_YEARS, span.tMax, t)
+    const wSpanMax = symlogWarp(span.tMax)
+    return 1 - smoothstep(wSpanMax - STANDALONE_EDGE_EASE_WARP, wSpanMax, wT)
   }
-  const center = (span.tMax + older.tMin) / 2
-  const halfWidth = Math.max(MIN_CROSSFADE_HALF_WIDTH_YEARS, Math.abs(older.tMin - span.tMax) / 2)
+  const wSpanMax = symlogWarp(span.tMax)
+  const wOlderMin = symlogWarp(older.tMin)
+  const center = (wSpanMax + wOlderMin) / 2
+  const halfWidth = Math.max(MIN_CROSSFADE_HALF_WIDTH_WARP, Math.abs(wOlderMin - wSpanMax) / 2)
   // 0 well inside `span` (t small, i.e. younger than the boundary), 1 once `older` dominates.
-  return 1 - smoothstep(center - halfWidth, center + halfWidth, t)
+  return 1 - smoothstep(center - halfWidth, center + halfWidth, wT)
 }
 
 /** Mirror of `olderEdgeWeight` for `span`'s younger edge (`tMin`) against its younger
  *  neighbour. 1 deep inside `span`, 0 once the younger neighbour (or, standalone, "no
- *  regime") has taken over. */
+ *  regime") has taken over. Warp-space throughout, for the same reason. */
 function youngerEdgeWeight(span: RegimeSpan, younger: RegimeSpan | undefined, t: GeoTime): number {
+  const wT = symlogWarp(t)
   if (younger === undefined) {
-    return smoothstep(span.tMin, span.tMin + STANDALONE_EDGE_EASE_YEARS, t)
+    const wSpanMin = symlogWarp(span.tMin)
+    return smoothstep(wSpanMin, wSpanMin + STANDALONE_EDGE_EASE_WARP, wT)
   }
-  const center = (span.tMin + younger.tMax) / 2
-  const halfWidth = Math.max(MIN_CROSSFADE_HALF_WIDTH_YEARS, Math.abs(span.tMin - younger.tMax) / 2)
-  return smoothstep(center - halfWidth, center + halfWidth, t)
+  const wSpanMin = symlogWarp(span.tMin)
+  const wYoungerMax = symlogWarp(younger.tMax)
+  const center = (wSpanMin + wYoungerMax) / 2
+  const halfWidth = Math.max(MIN_CROSSFADE_HALF_WIDTH_WARP, Math.abs(wSpanMin - wYoungerMax) / 2)
+  return smoothstep(center - halfWidth, center + halfWidth, wT)
 }
 
 /** Blend weight for every `regime-*` kind at `t`, in a fixed shape so it maps directly onto a

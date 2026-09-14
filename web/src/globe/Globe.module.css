@@ -27,12 +27,24 @@
   position: relative;
   width: 100%;
   height: 100%;
+  /* Drag rotates (OrbitControls) and a plain press-and-release expands (Globe.tsx) — `grab`
+     matches .orbExpanded's own cursor for the same dual affordance. */
+  cursor: grab;
 }
 
 .orbExpanded {
   /* Sized so the sphere itself (≈76% of the canvas, see CAMERA_DISTANCE in Globe.tsx) fits
-     between the shell's title and its timeline band, which stay visible above the backdrop. */
-  --expanded-size: max(260px, min(84vmin, 820px, calc((100vh - 400px) / 0.76)));
+     between the shell's title and its timeline band, which stay visible above the backdrop.
+     Every bound here (the two constants and the 0.76 divisor) was measured against the shell's
+     real title/timeline positions, not just derived from the box's own centring — the box is
+     centred in the *whole* viewport (`.backdrop`'s `place-items: center`), not specifically
+     within the gap between title and timeline, so it must be smaller than that raw gap by a
+     margin on both sides, not merely no bigger than it (regression: a caption now lives in
+     that margin too — `ShellLayout.module.css`'s `.expandedGlobeCaption` — so the margin is no
+     longer just cosmetic slack). Even so, an 800px-tall mobile viewport's much taller
+     stacked-HUD rows (`ShellLayout.module.css`'s mobile media query) leave so little room that
+     some crowding there is a known residual, not something this constant alone can fix. */
+  --expanded-size: max(235px, min(64vmin, 740px, calc((100vh - 520px) / 0.76)));
 
   position: relative;
   width: var(--expanded-size);
@@ -64,39 +76,13 @@
   opacity: 1;
 }
 
-/* The regime caption slot under the orb (docs/GLOBE.md §7, §9 G2/G6/G8) — empty for plain
-   PaleoDEM data, otherwise whatever text `Globe`'s derived caption carries (the raster-domain
-   fallback, a regime label, or an overlay effect's own label). The text sits directly over the
-   sphere, whose colour ranges from near-black (magma ocean, impact winter) to near-white
-   (the ice shell, `iceShellColor` in shaders.ts) depending which look is active — a flat dim
-   colour alone is illegible against the bright end of that range, so a dark shadow/glow always
-   rides behind the light text, giving contrast against either extreme rather than tuning for
-   one. */
-.caption {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 64%;
-  transform: translate(-50%, -50%);
-  font-family: var(--hud-mono, ui-monospace, monospace);
-  font-size: 8.5px;
-  line-height: 1.5;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  text-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.85),
-    0 0 10px rgba(0, 0, 0, 0.65);
-  pointer-events: none;
-}
-
-.orbExpanded .caption {
-  font-size: 12px;
-  width: 40%;
-}
-
-/* Hugs the sphere's silhouette (see .halo) rather than the square canvas. */
+/* Hugs the sphere's silhouette (see .halo) rather than the square canvas. Not a hit target
+   for the pointer — `pointer-events: none` lets a mouse/touch press reach the canvas
+   underneath so OrbitControls can rotate the minimised orb (Globe.tsx's own
+   press-vs-drag threshold does the click-to-expand there instead). It stays in the tab
+   order and keyboard-activatable (Enter/Space fires a `click` regardless of
+   `pointer-events`), so it remains the keyboard path to expand. No `cursor` of its own:
+   `pointer-events: none` means it is never the hit target a cursor could be shown for. */
 .expandButton {
   position: absolute;
   inset: 11%;
@@ -104,11 +90,13 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  cursor: zoom-in;
+  pointer-events: none;
   transition: box-shadow 240ms ease;
 }
 
-.expandButton:hover {
+/* Hover is keyed off the whole orb, not the button itself (pointer-events: none above means
+   the button is never the hit target a :hover could key off directly). */
+.orb:hover .expandButton {
   box-shadow:
     0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
     0 0 26px rgba(143, 199, 255, 0.25);

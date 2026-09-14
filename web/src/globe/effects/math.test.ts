@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { clamp01, smoothstep } from './math'
+import { clamp01, smoothstep, symlogWarp, SYMLOG_C, warpedEdgeProgress } from './math'
 
 describe('clamp01', () => {
   it('clamps to the unit interval', () => {
@@ -24,5 +24,31 @@ describe('smoothstep', () => {
     for (let i = 1; i < samples.length; i++) {
       expect(samples[i]!).toBeGreaterThanOrEqual(samples[i - 1]!)
     }
+  })
+})
+
+describe('symlogWarp', () => {
+  it('is 0 at the present, ln 2 at the break-point, and increasing', () => {
+    expect(symlogWarp(0)).toBe(0)
+    expect(symlogWarp(SYMLOG_C)).toBeCloseTo(Math.LN2)
+    expect(symlogWarp(1e9)).toBeGreaterThan(symlogWarp(1e6))
+  })
+})
+
+describe('warpedEdgeProgress', () => {
+  const unwarp = (w: number): number => SYMLOG_C * Math.expm1(w)
+  const EASE = 0.015
+
+  it('is 0 at the edge and 1 once the warped distance reaches the ease width, on either side', () => {
+    expect(warpedEdgeProgress(6.61e8, 6.61e8, EASE)).toBe(0)
+    expect(warpedEdgeProgress(unwarp(symlogWarp(6.61e8) + EASE), 6.61e8, EASE)).toBe(1)
+    expect(warpedEdgeProgress(unwarp(symlogWarp(6.61e8) - EASE), 6.61e8, EASE)).toBe(1)
+  })
+
+  it('reads the same at the same warped offset in any era, unlike a fixed year width', () => {
+    const halfWay = (edge: number): number => warpedEdgeProgress(unwarp(symlogWarp(edge) + EASE / 2), edge, EASE)
+    expect(halfWay(2.0e4)).toBeCloseTo(0.5, 6)
+    expect(halfWay(6.61e8)).toBeCloseTo(0.5, 6)
+    expect(halfWay(2.4e9)).toBeCloseTo(0.5, 6)
   })
 })

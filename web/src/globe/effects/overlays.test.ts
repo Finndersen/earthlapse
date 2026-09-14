@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import type { TimelineEvent } from '@/types/layer'
+import type { GeoTime, TimelineEvent } from '@/types/layer'
 
 import { EFFECT_EVENTS, REGIME_EVENTS } from './fixtures'
+import { SYMLOG_C, symlogWarp } from './math'
 import {
   anchorUv,
   giantImpactFlash,
-  ICE_SHELL_EASE_YEARS,
+  ICE_SHELL_EASE_WARP,
   iceShellIntensity,
   IMPACT_WINTER_DARK_YEARS,
   IMPACT_WINTER_RECOVERY_YEARS,
@@ -19,6 +20,17 @@ const SNOWBALL = EFFECT_EVENTS.find((e) => e.id === 'snowball-earth')!
 const K_PG = EFFECT_EVENTS.find((e) => e.id === 'k-pg-impact')!
 const MOON_IMPACT = EFFECT_EVENTS.find((e) => e.id === 'moon-forming-impact')!
 const PALEOPROTEROZOIC = REGIME_EVENTS.find((e) => e.id === 'paleoproterozoic-glaciation-regime')!
+
+/** Inverse of `symlogWarp`, for building test times a given warp-space distance from an edge —
+ *  the same "constant width in warp space" the ease itself is now sized in (`overlays.ts`). */
+function unwarp(w: number): GeoTime {
+  return SYMLOG_C * Math.expm1(w)
+}
+
+/** `edge`, offset by `warpFraction` of a full ease width in warp space (toward older `t`). */
+function pastEdge(edge: GeoTime, warpFraction: number): GeoTime {
+  return unwarp(symlogWarp(edge) + warpFraction * ICE_SHELL_EASE_WARP)
+}
 
 describe('iceShellIntensity', () => {
   it('is 0 far from every ice-shell window', () => {
@@ -40,11 +52,21 @@ describe('iceShellIntensity', () => {
     expect(iceShellIntensity([SNOWBALL], 6.5e8)).toBe(0)
   })
 
-  it('eases out smoothly just past a window edge, reaching 0 by the ease width', () => {
-    const justOutside = iceShellIntensity([SNOWBALL], 7.17e8 + ICE_SHELL_EASE_YEARS / 2)
+  it('eases out smoothly just past a window edge, reaching 0 by the warp ease width', () => {
+    const justOutside = iceShellIntensity([SNOWBALL], pastEdge(7.17e8, 0.5))
     expect(justOutside).toBeGreaterThan(0)
     expect(justOutside).toBeLessThan(1)
-    expect(iceShellIntensity([SNOWBALL], 7.17e8 + ICE_SHELL_EASE_YEARS)).toBe(0)
+    expect(iceShellIntensity([SNOWBALL], pastEdge(7.17e8, 1))).toBe(0)
+  })
+
+  it('eases at a constant width in warp space, not a fixed number of years (regression: a fixed-year ease goes sub-pixel deep in time, which read as an abrupt Snowball on/off during playback)', () => {
+    // Sturtian's older edge (~717 Ma) vs the Paleoproterozoic glaciation's (~2.46 Ga): a fixed
+    // real-year ease width would put these tens of millions of years apart; a warp-space ease
+    // instead lands within the same fraction of a percent of full intensity at the same warp
+    // distance from each edge, at either era.
+    const sturtianHalfEase = iceShellIntensity([SNOWBALL], pastEdge(7.17e8, 0.5))
+    const paleoproterozoicHalfEase = iceShellIntensity([PALEOPROTEROZOIC], pastEdge(2.46e9, 0.5))
+    expect(sturtianHalfEase).toBeCloseTo(paleoproterozoicHalfEase, 2)
   })
 
   it('unions the Paleoproterozoic glaciation regime in when that event list is passed too', () => {
@@ -68,8 +90,12 @@ describe('impactWinterVeil', () => {
     expect(impactWinterVeil([K_PG], tImpact + 1)).toBe(0)
   })
 
-  it('is 1 (near-black) immediately after impact and through the dark phase', () => {
-    expect(impactWinterVeil([K_PG], tImpact)).toBe(1)
+  it('is 0 exactly at the impact instant (regression: the pre-impact kpg-arrival scene sits exactly here and must show the clear globe, not a post-impact one)', () => {
+    expect(impactWinterVeil([K_PG], tImpact)).toBe(0)
+  })
+
+  it('is 1 (near-black) moments after impact and through the dark phase', () => {
+    expect(impactWinterVeil([K_PG], tImpact - 1e-8)).toBe(1)
     expect(impactWinterVeil([K_PG], tImpact - IMPACT_WINTER_DARK_YEARS)).toBe(1)
   })
 
@@ -82,7 +108,10 @@ describe('impactWinterVeil', () => {
   })
 
   it('is monotonically non-increasing after the dark phase', () => {
-    const samples = [0, 3, 6, 9, 12, 15, 18].map((yearsAfter) => impactWinterVeil([K_PG], tImpact - yearsAfter))
+    // Starts a hair after the impact rather than exactly at it: `yearsAfter === 0` is the
+    // special-cased pre-impact instant (0, not the dark phase's 1), which would otherwise
+    // read as an increase into the very next sample.
+    const samples = [1e-6, 3, 6, 9, 12, 15, 18].map((yearsAfter) => impactWinterVeil([K_PG], tImpact - yearsAfter))
     for (let i = 1; i < samples.length; i++) {
       expect(samples[i]!).toBeLessThanOrEqual(samples[i - 1]!)
     }
@@ -100,8 +129,12 @@ describe('impactWinterFlash', () => {
     expect(impactWinterFlash([K_PG], tImpact + 1)).toBe(0)
   })
 
-  it('peaks at the impact moment and decays quickly (days, not years)', () => {
-    expect(impactWinterFlash([K_PG], tImpact)).toBeCloseTo(1, 5)
+  it('is 0 exactly at the impact instant (regression: the pre-impact kpg-arrival scene sits exactly here)', () => {
+    expect(impactWinterFlash([K_PG], tImpact)).toBe(0)
+  })
+
+  it('peaks moments after the impact and decays quickly (days, not years)', () => {
+    expect(impactWinterFlash([K_PG], tImpact - 1e-8)).toBeCloseTo(1, 5)
     const oneYearLater = impactWinterFlash([K_PG], tImpact - 1)
     expect(oneYearLater).toBeLessThan(0.01)
   })

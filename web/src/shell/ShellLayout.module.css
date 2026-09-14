@@ -143,6 +143,18 @@
   width: var(--orb-size);
 }
 
+/* The globe's own label, under the orb: "Paleogeography" by default, replaced by the globe's
+   live regime/effect caption while one is active (ShellLayout.tsx). Single-line and clipped
+   rather than wrapping — a long caption ("Snowball Earth · extent contested") next to the
+   narrow --orb-size column would otherwise wrap to two lines and grow this row, shifting
+   .readouts below it every time the caption appears or disappears. */
+.globeLabel {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .orb {
   width: var(--orb-size);
   height: var(--orb-size);
@@ -261,26 +273,43 @@
 
 .caption,
 .chart,
+.expandedGlobeCaption,
 .stage {
   transition:
     opacity 260ms ease,
     visibility 0s linear 0s;
 }
 
-.caption {
+.caption,
+.expandedGlobeCaption {
   justify-self: center;
   max-width: 62ch;
   text-align: center;
 }
 
+/* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot,
+   already clear of the timeline (see .note's comment below) — only while the globe is
+   expanded; the scene caption and chart take it back the instant it collapses. Empty text
+   (no globe caption active) simply renders nothing, the same as an empty .caption. */
+.expandedGlobeCaption {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .shell[data-chart-open='true'] .caption,
 .shell[data-chart-open='false'] .chart,
-.shell[data-globe-expanded='true'] .stage {
+.shell[data-globe-expanded='true'] .caption,
+.shell[data-globe-expanded='true'] .chart {
   opacity: 0;
   visibility: hidden;
   transition:
     opacity 260ms ease,
     visibility 0s linear 260ms;
+}
+
+.shell[data-globe-expanded='true'] .expandedGlobeCaption {
+  opacity: 1;
+  visibility: visible;
 }
 
 .note {

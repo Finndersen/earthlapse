@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import type { TimelineEvent } from '@/types/layer'
+
 import { REGIME_EVENTS } from './fixtures'
+import { symlogWarp, SYMLOG_C } from './math'
 import { dominantRegime, regimeWeightsAt } from './regimes'
 
 describe('regimeWeightsAt', () => {
@@ -104,5 +107,30 @@ describe('dominantRegime', () => {
       kind: 'regime-water-world',
       weight: 0.8,
     })
+  })
+})
+
+describe('regime edge easing across eras', () => {
+  const unwarp = (w: number): number => SYMLOG_C * Math.expm1(w)
+  const standalone = (tMin: number, tMax: number): TimelineEvent => ({
+    id: 'standalone-regime',
+    label: 'Standalone regime',
+    tMin,
+    tMax,
+    importance: 0.5,
+    description: 'placeholder',
+    citation: 'placeholder',
+    effect: { kind: 'regime-unknown-geography', windows: [{ tMin, tMax }] },
+  })
+  /** Weight a small, fixed warped distance inside a standalone regime's younger (`tMin`) edge. */
+  const justInsideYoungerEdge = (tMin: number): number =>
+    regimeWeightsAt([standalone(tMin, tMin * 3)], unwarp(symlogWarp(tMin) + 1e-3)).unknownGeography
+
+  it('eases a standalone edge over the same on-screen (warped) width at any era', () => {
+    const recent = justInsideYoungerEdge(2e5)
+    const deep = justInsideYoungerEdge(1e9)
+    expect(recent).toBeGreaterThan(0)
+    expect(recent).toBeLessThan(1)
+    expect(deep).toBeCloseTo(recent, 6)
   })
 })

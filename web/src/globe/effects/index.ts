@@ -8,7 +8,10 @@
  *
  * `useGlobeEffects(t, regimeEvents, effectEvents, fallbackCaption?)` is `Globe.tsx`'s
  * drop-in, called from inside it; `resolveGlobeEffects` is its pure core, safe to unit test
- * without React.
+ * without React. `useGlobeEffects` also rate-limits `resolveGlobeEffects`'s `uniforms` through
+ * `usePresentedGlobeEffectUniforms` (`presentation.ts`) before returning them, so a fast scrub
+ * or playback tick fades every intensity rather than snapping it (docs/GLOBE.md §4.3) — callers
+ * that need the raw, unrated target (tests, mostly) use `resolveGlobeEffects` directly.
  *
  * How `Globe.tsx` sources this package's inputs (recorded here since this package itself
  * stays framework/caller-agnostic):
@@ -38,7 +41,7 @@ export {
   anchorUv,
   type AnchorUv,
   giantImpactFlash,
-  ICE_SHELL_EASE_YEARS,
+  ICE_SHELL_EASE_WARP,
   iceShellIntensity,
   IMPACT_WINTER_DARK_YEARS,
   IMPACT_WINTER_RECOVERY_YEARS,
@@ -46,6 +49,7 @@ export {
   impactWinterFlash,
   impactWinterVeil,
 } from './overlays'
+export { MIN_EFFECT_TRANSITION_SECONDS, nextHeldAnchor, usePresentedGlobeEffectUniforms } from './presentation'
 export { dominantRegime, type RegimeKind, type RegimeWeights, regimeWeightsAt } from './regimes'
 export { type GlobeEffectUniforms, resolveGlobeEffects, type ResolvedGlobeEffects } from './resolve'
 export { useGlobeEffects } from './useGlobeEffects'

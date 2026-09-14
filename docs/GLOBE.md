@@ -286,6 +286,28 @@ underlying dates are contested, and the caption says so.
     "extent contested", and the shell keeps a faint equatorial darkening rather than asserting
     either.
   - The easing widths are artistic and do not claim onset rates.
+  - **The ease width is constant in the timeline's symlog warp space, not in years**
+    (user-reported regression: at ~650 Ma a fixed-year ease is well under one screen pixel on
+    the symlog timeline, so playback snapped the ice shell on and off instead of fading it).
+    `web/src/globe/effects/overlays.ts`'s `windowEnvelope`/`ICE_SHELL_EASE_WARP` and
+    `regimes.ts`'s crossfade/standalone-edge widths (`MIN_CROSSFADE_HALF_WIDTH_WARP`,
+    `STANDALONE_EDGE_EASE_WARP`) all measure distance through `math.ts`'s `symlogWarp` — the
+    same `log1p(t / SYMLOG_C)` warp as `web/src/timeline/scale.ts`'s `SYMLOG_C`, mirrored by
+    value rather than imported (this package stays self-contained in its own `t` math, the
+    convention `scene/pacing.ts` already follows) — so a fade reads the same width on screen at
+    any era, and the interglacial between Sturtian and Marinoan is a gentle thaw/refreeze
+    rather than a hard cut. Every target here stays pure in `t` (DESIGN §10); see below for the
+    separate wall-clock limiter that fixes the same glitch's other half.
+  - **A wall-clock presentation limiter** (`web/src/globe/effects/presentation.ts`'s
+    `usePresentedGlobeEffectUniforms`, generalised from the ancestor portrait's
+    `usePresentedMix`/`lib/presentedMix.ts`) holds a full 0 → 1 change in the ice shell (and
+    every other effect intensity: impact veil/flash, regime weights) to at least
+    `MIN_EFFECT_TRANSITION_SECONDS` (1.5 s) of real time, however fast `t` itself moves — a
+    warped-space ease band is still a fixed span of `t`, and a fast scrub or playback tick can
+    cross it in a handful of milliseconds regardless of how wide it reads on screen. The pure
+    `t → intensity` targets above are untouched; only what `Globe.tsx` actually displays is
+    rate-limited, the same "target stays pure, presentation catches up" split ADR-012 already
+    uses for the scene dissolve.
 - **Data.** The two windows become the `effect.windows` of `snowball-earth` (§6). No
   `events.yaml` date changes.
 
@@ -323,7 +345,11 @@ Effects are functions of `Δ = t_event − t` in years, so they are pure in `t`.
 a 15-year effect spans less than a pixel. Effects therefore only become visible when the
 timeline window is narrow enough. Playback pacing (ADR-012's `scenePlaybackSegments`) should
 gain an effect dwell so playback slows through them. That dwell is the timeline's change, not
-the globe's.
+the globe's. An effect timed from an event's own `[t_min, t_max]` dating-uncertainty window
+(`impactWinterVeil`/`impactWinterFlash` in `overlays.ts`) treats the window's midpoint as the
+instant and is strictly zero at and before it, never anticipating the event, so a scene placed
+exactly on that midpoint — `kpg-arrival` sits exactly on `k-pg-impact`'s — always renders the
+clear, pre-event globe.
 
 | Event | Date (years BP) | Effect | Envelope (literature) |
 |---|---|---|---|
@@ -407,17 +433,47 @@ the same choice made for `moon-forming-impact`'s `giant-impact` window.
 
 ## 7. Labelling
 
-A single caption slot under the orb shows the current regime label, or nothing for plain
-PaleoDEM data. Examples: "Continents from plate model · relief stylised", "Snowball Earth ·
-extent contested", "Geography unknown · artistic", "Impact winter · artistic reconstruction".
-The expanded globe adds the citation line from the event or source credit.
+A caption shows the current regime label, or nothing for plain PaleoDEM data. Examples:
+"Continents from plate model · relief stylised", "Snowball Earth · extent contested",
+"Geography unknown", "Impact winter". No caption repeats the shell's own bottom-of-screen note
+("Artistic reconstruction — plausibility, not accuracy.", `ShellLayout.tsx`), which already
+covers every still and reconstruction across the app. The expanded globe adds the citation
+line from the event or source credit.
 
-**Implemented (G2, G7, G8; G6 partial).** The slot itself is `Globe`'s internal caption
-(`web/src/globe/Globe.tsx`, `.caption` in `Globe.module.css`), empty renders nothing — this
-replaced the old internal `OUT_OF_DOMAIN_LABEL` mechanism (G2). `Globe` no longer takes a
-`caption` prop at all: since G7/G8's integration, it derives the caption itself every frame,
-from `web/src/globe/effects`'s `useGlobeEffects` (priority, highest first: impact winter, then
-the ice shell, then the dominant pre-1 Ga regime, then `globeMultiCaptionFor`'s raster-domain
+**It sits under the orb, never over it, in both states** (user follow-up: "don't want label
+on top of the globe, only underneath it if anything"). `Globe` itself never draws this text at
+all any more, in either state — it only reports it, via the `onCaptionChange` prop
+(`web/src/globe/Globe.tsx`); `Experience.tsx` lifts that into state (`globeCaption`) and hands
+it to `ShellLayout`, which places it:
+- **Minimised:** in place of the existing "Paleogeography" label under the orb
+  (`ShellLayout.tsx`) — replacing it while a caption is active, falling back to "Paleogeography"
+  once it isn't, one single-line slot either way so nothing shifts the readouts below it as the
+  caption appears or disappears (`ShellLayout.module.css`'s `.globeLabel`,
+  `white-space: nowrap` + ellipsis rather than wrapping to a second line).
+- **Expanded:** in the `.stage` cell above the timeline — the *scene* caption's own spot,
+  which already sits clear of the timeline's playhead label (`ShellLayout.module.css`'s
+  `.note` comment: "clears the playhead readout that rides above the scrub track at any
+  playhead position") and already yields while the globe is expanded
+  (`.expandedGlobeCaption`, shown only for `data-globe-expanded='true'`, in place of the scene
+  caption and chart). This was a deliberate choice over having `Globe`'s own fullscreen
+  backdrop position its own caption text: the backdrop has no way to know where the timeline's
+  playhead label actually sits (that label rides with the scrub position and isn't part of
+  `Globe`'s own layout), so a caption placed by `Globe` itself either collided with it
+  (regression caught mid-build, browser-verified) or, once nudged clear of the timeline, still
+  had nowhere reliably clear of the sphere itself: `.orbExpanded`'s own sizing formula centres
+  the sphere in the *whole* viewport, not specifically within the gap between the title and the
+  timeline, so at several real viewport sizes the sphere's own visible edge already reaches
+  into that "clear" margin (`--expanded-size`'s own comment in `Globe.module.css` has the
+  measured detail, including the constants this fix tightened). Routing through `ShellLayout`'s
+  already-solved, already-clear slot sidesteps both problems at once. A short, narrow mobile
+  viewport (~800px tall or less) is a documented residual: `ShellLayout`'s mobile layout stacks
+  enough extra HUD rows that there is little room left for the sphere at all, caption or not.
+
+**Implemented (G2, G7, G8; G6 partial).** Empty renders nothing — this replaced the old
+internal `OUT_OF_DOMAIN_LABEL` mechanism (G2). `Globe` no longer takes a `caption` prop at all:
+since G7/G8's integration, it derives the caption itself every frame, from
+`web/src/globe/effects`'s `useGlobeEffects` (priority, highest first: impact winter, then the
+ice shell, then the dominant pre-1 Ga regime, then `globeMultiCaptionFor`'s raster-domain
 fallback, which itself carries the seam and continents-from-plate-model cases from §4.1).
 Impact winter and the ice shell are both §6's closed "effect" kinds rather than a blended
 regime, and the ice shell in particular can sit *inside* a regime's own span with no weight of
@@ -426,10 +482,10 @@ inside `archean-haze-regime`'s 2.4–4.0 Ga span — so both are checked, and ca
 dominant-regime branch (`web/src/globe/effects/caption.ts`). All four examples above are
 real now: "Continents from plate model · relief stylised" (plain Merdith data, 550–1000 Ma),
 the same plus a seam note (540–550 Ma, `SEAM_BAND`), "Snowball Earth · extent contested" (and
-the same convention for "Paleoproterozoic glaciation · extent contested"), "Geography unknown ·
-artistic" (`globe-regimes`' regimes, and — G7's fallback rule — the 540–1000 Ma span too if the
-Merdith source is ever unusable), "Impact winter · artistic reconstruction". Not yet captioned:
-flood basalts (G6's remaining piece — see §9).
+the same convention for "Paleoproterozoic glaciation · extent contested"), "Geography unknown"
+(`globe-regimes`' regimes, and — G7's fallback rule — the 540–1000 Ma span too if the Merdith
+source is ever unusable), "Impact winter". Not yet captioned: flood basalts (G6's remaining
+piece — see §9).
 
 ---
 
