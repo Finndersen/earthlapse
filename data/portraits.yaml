@@ -273,7 +273,7 @@ portraits:
       - body length was not confirmed against a source this session
     subject:
       organism: "Tiktaalik roseae, a late Devonian tetrapodomorph fish"
-      anatomy: "a large, fish-bodied animal with a broad, flattened, crocodile-like head, eyes on top of the skull, a spiracle opening behind each eye, a distinct mobile neck, stout pectoral fins with a jointed, wrist-like bony skeleton inside, gills, and a body covered in overlapping scales"
+      anatomy: "a large, fish-bodied animal with a broad, flattened, triangular head, wider than it is deep, with a rounded snout, eyes on top of the skull, a spiracle opening behind each eye, a distinct mobile neck, stout pectoral fins with a jointed, wrist-like bony skeleton inside, gills, and a body covered in overlapping scales"
       surface: "overlapping bony scales over the whole body; no source gives its colour, so muted natural tones"
       size: null
       absent: ["fingers or toes", "legs", "smooth amphibian skin", "claws"]
@@ -305,7 +305,7 @@ portraits:
       - anatomy and size come from a secondary encyclopedia summary only; check against Carroll (1964) before approving
     subject:
       organism: "Hylonomus lyelli, one of the earliest reptile-grade amniotes, from the late Carboniferous"
-      anatomy: "a small, lizard-like four-legged animal with a long tail and small sharp teeth"
+      anatomy: "a small four-legged animal with a slender body, limbs sprawling out to the sides, a long tapering tail, a small low head and small sharp teeth"
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 20 cm long including the tail"
       absent: ["fur", "feathers", "gills", "a tail fin"]
@@ -321,7 +321,7 @@ portraits:
       - anatomy and size come from a secondary encyclopedia summary only; check against Reisz (1972) before approving
     subject:
       organism: "Archaeothyris florensis, one of the oldest undisputed synapsids, from the late Carboniferous"
-      anatomy: "a lizard-like four-legged predator with a long tail, strong jaws, rows of sharp teeth of similar shape and one pair of enlarged canine teeth"
+      anatomy: "a four-legged predator with a long low body, limbs sprawling out to the sides, a long tail, a deep skull with strong jaws, rows of sharp teeth of similar shape and one pair of enlarged canine teeth"
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 50 cm long from head to tail"
       absent: ["fur", "a sail on the back", "feathers", "gills"]
