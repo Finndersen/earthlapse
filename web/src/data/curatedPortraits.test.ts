@@ -40,7 +40,19 @@ describe('parseTreeData: portraits (ADR-015)', () => {
     })
   })
 
+  it("keeps a plate's exposure record, and leaves it absent for files from before exposure (ADR-015 amendment)", () => {
+    const exposed = { ...plate('human'), exposure: { highlight: 107, gain: 3.219 } }
+    const untouched = { ...plate('tetrapod'), exposure: { highlight: null, gain: 1 } }
+
+    const parsed = parseTreeData(tree({ plates: [plate('luca', 'MICROSCOPE'), untouched, exposed], morphs: [] }))
+
+    expect(parsed.portraits).toEqual({ plates: [exposed, untouched, plate('luca', 'MICROSCOPE')], morphs: [] })
+    expect(parsed.portraits?.plates[2]).not.toHaveProperty('exposure')
+  })
+
   it.each([
+    ['a darkening exposure gain', { plates: [{ ...plate('human'), exposure: { highlight: 107, gain: 0.8 } }], morphs: [] }, 'exposure never darkens a plate'],
+    ['a non-numeric exposure highlight', { plates: [{ ...plate('human'), exposure: { highlight: 'bright', gain: 1 } }], morphs: [] }, 'exposure.highlight'],
     ['an unknown node', { plates: [plate('dodo')], morphs: [] }, 'unknown node dodo'],
     ['an unknown plate type', { plates: [plate('human', 'SKETCH')], morphs: [] }, 'unknown plate type "SKETCH"'],
     ['a repeated node', { plates: [plate('human'), plate('human')], morphs: [] }, 'more than one plate'],

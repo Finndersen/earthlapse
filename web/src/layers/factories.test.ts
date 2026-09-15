@@ -46,13 +46,13 @@ describe('createScalarLayer', () => {
     expect(data).toEqual(CO2_DATA)
   })
 
-  it('shows ~277 ppm at t=0 from the fixture (not the raw 276.6 read as ~1)', () => {
+  it('shows ~427 ppm at t=0 from the fixture', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
     const value = layer.sample(0)
     expect(value).not.toBeNull()
     expect(value?.unit).toBe('ppm')
-    expect(value?.value).toBeCloseTo(276.6, 1)
-    expect(Math.round(value?.value ?? 0)).toBe(277)
+    expect(value?.value).toBeCloseTo(427.35, 1)
+    expect(Math.round(value?.value ?? 0)).toBe(427)
   })
 
   it('returns null outside the data domain, even though entry.timeDomain is wide open', () => {
@@ -61,6 +61,14 @@ describe('createScalarLayer', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
     expect(layer.sample(6e8)).toBeNull()
     expect(layer.sample(4e9)).toBeNull()
+  })
+
+  it('returns null strictly inside a declared gap, even though it is within the domain (ADR-027)', () => {
+    // CO2_DATA declares a gap between t=805,743.87 (samples[1]) and t=1e7 (samples[2]).
+    const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    expect(layer.sample(805_743.87)).not.toBeNull() // the gap's own edge: a real sample
+    expect(layer.sample(1e7)).not.toBeNull() // the other edge
+    expect(layer.sample(3.2e6)).toBeNull() // strictly inside
   })
 
   it('returns null outside entry.timeDomain even when the data would otherwise cover t', () => {

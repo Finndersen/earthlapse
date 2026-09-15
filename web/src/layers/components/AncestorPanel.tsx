@@ -4,7 +4,7 @@
  * `<AncestorPanel layer t assetBase />` — `<AncestorPortrait>` above `<AncestorReadout>` in
  * one column, for the shell's ancestor slot (DESIGN §10). This is the only place the two are
  * composed: it owns the flex column between them so the portrait's own edge always tracks the
- * text's, whichever way the slot aligns (flex-end on desktop, centred on a phone).
+ * text's, whichever way the slot aligns (flex-end at every breakpoint, desktop and phone alike).
  *
  * Without this wrapper, a plain `<div>` here shrink-wraps to its widest child — the portrait
  * plate, or the specimen line below it, whichever is wider at a given `t`. The plate itself

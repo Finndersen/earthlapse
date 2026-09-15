@@ -48,10 +48,10 @@ function usePortraitTextures(olderUrl: string, youngerUrl: string, flow: Portrai
     const [older, younger, forward, backward] = key.split('|') as [string, string, string, string]
     let cancelled = false
     void Promise.all([
-      loadPortraitTexture(older, 'colour'),
-      loadPortraitTexture(younger, 'colour'),
-      forward === '' ? Promise.resolve(null) : loadPortraitTexture(forward, 'flow'),
-      backward === '' ? Promise.resolve(null) : loadPortraitTexture(backward, 'flow'),
+      loadPortraitTexture(older),
+      loadPortraitTexture(younger),
+      forward === '' ? Promise.resolve(null) : loadPortraitTexture(forward),
+      backward === '' ? Promise.resolve(null) : loadPortraitTexture(backward),
     ])
       .then(([olderTex, youngerTex, forwardTex, backwardTex]) => {
         if (!cancelled) {

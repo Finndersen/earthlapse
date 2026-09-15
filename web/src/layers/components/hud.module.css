@@ -42,16 +42,6 @@
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
-.bounds {
-  display: block;
-  margin-top: 3px;
-  font-family: var(--hud-mono, ui-monospace, monospace);
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-}
-
 .noData {
   font-family: var(--hud-mono, ui-monospace, monospace);
   font-size: 11px;
@@ -306,8 +296,8 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
-/* Portrait above readout, aligned as one column to whichever edge the slot around it uses
-   (flex-end on desktop, centred on a phone — see ShellLayout's `.ancestor`) via
+/* Portrait above readout, aligned as one column to the edge the slot around it uses
+   (flex-end, both on desktop and on a phone — see ShellLayout's `.ancestor`) via
    `align-items: inherit`, same as `.ancestor` below does for its own text. This is what keeps
    the portrait's edge locked to the readout text's edge regardless of specimen-line width;
    see AncestorPanel's doc comment for why a plain unstyled wrapper let it drift. */
@@ -343,4 +333,63 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Phone: the ancestor panel shares row 1 with the globe orb (ShellLayout.module.css's
+   `.ancestor`) instead of its own wide band, so the plate matches the orb's own size and the
+   name/since text collapses to short caps lines under it — the same treatment as the globe's
+   own label under its orb. The italic secondary name (`.ancestorRepresentative`, e.g. "LUCA
+   (hypothetical; no direct fossil)") never fits a phone-width corner in 1-2 short lines
+   without reading as noise, so it is visually hidden rather than truncated mid-word — clipped
+   off-screen, not `display: none`, so a screen reader still gets it. */
+@media (max-width: 760px) {
+  .portrait {
+    width: var(--orb-size, 84px);
+  }
+
+  /* The readout span itself (this `.ancestor`, distinct from ShellLayout's own `.ancestor`
+     slot) must be capped to the corner's width before the name/since text's own `max-width:
+     100%` below means anything — as a non-stretched flex item (`.panel`'s `align-items:
+     inherit` → flex-end) its cross size otherwise shrink-to-fits its widest line, which is
+     exactly the overflow the text's own ellipsis rule is meant to prevent. ShellLayout's
+     `.ancestor` rule caps `.panel` (`[data-testid='ancestor-readout']`) the same way, one
+     level up. */
+  .ancestor {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .ancestorName,
+  .ancestorSince {
+    font-family: var(--hud-mono, ui-monospace, monospace);
+    font-weight: 400;
+    text-transform: uppercase;
+    max-width: 100%;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ancestorName {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+  }
+
+  .ancestorSince {
+    font-size: 8px;
+    letter-spacing: 0.18em;
+  }
+
+  .ancestorRepresentative {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 }

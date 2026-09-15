@@ -15,6 +15,16 @@ const SAMPLE_COUNT = 96
 const VIEW_WIDTH = 200
 const VIEW_HEIGHT = 36
 const PAD = 3
+/** A series whose max/min reaches this ratio is plotted on a log axis. On a linear axis CO₂'s
+ *  ~7,000 ppm Cambrian peak squashes the 277 -> 427 ppm industrial rise into under a pixel. */
+const LOG_AXIS_MIN_RATIO = 10
+
+function axisTransform(values: number[]): (value: number) => number {
+  if (values.length === 0) return (value) => value
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  return min > 0 && max / min >= LOG_AXIS_MIN_RATIO ? Math.log : (value) => value
+}
 
 export interface SparklineProps {
   layer: Layer<ScalarValue>
@@ -36,12 +46,14 @@ export function Sparkline({ layer, t, scale }: SparklineProps) {
   }
 
   const values = samples.flatMap((p) => (p === null ? [] : [p.value]))
-  const min = values.length > 0 ? Math.min(...values) : 0
-  const max = values.length > 0 ? Math.max(...values) : 1
+  const toAxis = axisTransform(values)
+  const axisValues = values.map(toAxis)
+  const min = axisValues.length > 0 ? Math.min(...axisValues) : 0
+  const max = axisValues.length > 0 ? Math.max(...axisValues) : 1
   const span = max - min || 1
 
   const x = (u: number): number => PAD + u * (VIEW_WIDTH - 2 * PAD)
-  const y = (value: number): number => VIEW_HEIGHT - PAD - ((value - min) / span) * (VIEW_HEIGHT - 2 * PAD)
+  const y = (value: number): number => VIEW_HEIGHT - PAD - ((toAxis(value) - min) / span) * (VIEW_HEIGHT - 2 * PAD)
 
   const segments: Point[][] = []
   let current: Point[] = []

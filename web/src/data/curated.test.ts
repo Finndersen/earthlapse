@@ -119,6 +119,124 @@ describe('parseSeriesData', () => {
   })
 })
 
+// ------------------------------------------------------------------------------------- Gap
+
+const FOUR_SAMPLES = [
+  { t: 0, value: 1, lower: null, upper: null },
+  { t: 1, value: 2, lower: null, upper: null },
+  { t: 2, value: 3, lower: null, upper: null },
+  { t: 3, value: 4, lower: null, upper: null },
+]
+
+describe('parseSeriesData gaps (ADR-027)', () => {
+  it('is absent when the payload has none', () => {
+    expect(parseSeriesData({ id: 'x', unit: 'u', interpolation: 'linear', samples: FOUR_SAMPLES }).gaps).toBeUndefined()
+  })
+
+  it('parses and sorts ascending by fromIndex', () => {
+    const parsed = parseSeriesData({
+      id: 'x',
+      unit: 'u',
+      interpolation: 'linear',
+      samples: FOUR_SAMPLES,
+      gaps: [
+        { fromIndex: 2, toIndex: 3 },
+        { fromIndex: 0, toIndex: 1 },
+      ],
+    })
+    expect(parsed.gaps).toEqual([
+      { fromIndex: 0, toIndex: 1 },
+      { fromIndex: 2, toIndex: 3 },
+    ])
+  })
+
+  it('rejects a gap whose indices are not adjacent', () => {
+    expect(() =>
+      parseSeriesData({
+        id: 'x',
+        unit: 'u',
+        interpolation: 'linear',
+        samples: FOUR_SAMPLES,
+        gaps: [{ fromIndex: 0, toIndex: 2 }],
+      }),
+    ).toThrow(/not adjacent/)
+  })
+
+  it('rejects a gap whose toIndex is out of range', () => {
+    expect(() =>
+      parseSeriesData({
+        id: 'x',
+        unit: 'u',
+        interpolation: 'linear',
+        samples: FOUR_SAMPLES,
+        gaps: [{ fromIndex: 3, toIndex: 4 }],
+      }),
+    ).toThrow(/out of range/)
+  })
+
+  it('rejects overlapping gaps', () => {
+    expect(() =>
+      parseSeriesData({
+        id: 'x',
+        unit: 'u',
+        interpolation: 'linear',
+        samples: FOUR_SAMPLES,
+        gaps: [
+          { fromIndex: 0, toIndex: 1 },
+          { fromIndex: 0, toIndex: 1 },
+        ],
+      }),
+    ).toThrow(/overlap/)
+  })
+
+  it('accepts two gaps that share one boundary sample', () => {
+    const parsed = parseSeriesData({
+      id: 'x',
+      unit: 'u',
+      interpolation: 'linear',
+      samples: FOUR_SAMPLES,
+      gaps: [
+        { fromIndex: 1, toIndex: 2 },
+        { fromIndex: 0, toIndex: 1 },
+      ],
+    })
+    expect(parsed.gaps).toEqual([
+      { fromIndex: 0, toIndex: 1 },
+      { fromIndex: 1, toIndex: 2 },
+    ])
+  })
+})
+
+describe('sampleSeries and gaps (ADR-027)', () => {
+  const withGap: SeriesData = {
+    id: 'x',
+    unit: 'u',
+    interpolation: 'linear',
+    samples: FOUR_SAMPLES,
+    gaps: [{ fromIndex: 1, toIndex: 2 }],
+  }
+
+  it('returns null strictly inside a gap', () => {
+    expect(sampleSeries(withGap, 1.5)).toBeNull()
+  })
+
+  it('returns the exact sample verbatim at each of the gap\'s own edges', () => {
+    expect(sampleSeries(withGap, 1)?.value).toBe(2)
+    expect(sampleSeries(withGap, 2)?.value).toBe(3)
+  })
+
+  it('still interpolates outside the gap', () => {
+    expect(sampleSeries(withGap, 0.5)?.value).toBeCloseTo(1.5)
+  })
+
+  it('is pure: repeated calls against the same data object give the same result', () => {
+    // Exercises the per-series WeakMap cache curated.ts builds to avoid rebuilding its time
+    // array on every call — same data, same t, must always agree.
+    expect(sampleSeries(withGap, 1.5)).toEqual(sampleSeries(withGap, 1.5))
+    expect(sampleSeries(withGap, 0.5)).toEqual(sampleSeries(withGap, 0.5))
+  })
+})
+
 // ----------------------------------------------------------------- bounds interpolation
 
 describe('sampleSeries bounds', () => {

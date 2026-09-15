@@ -62,6 +62,29 @@ class Sample(BaseModel):
     upper: float | None = None
 
 
+class Gap(BaseModel):
+    """An open interval with no data, spanning exactly one pair of adjacent samples in a
+    `TimeSeries` (post-sort). ADR-027.
+
+    Adjacency is structural (`to_index == from_index + 1`) rather than re-derived from ages:
+    a gap that skipped a sample, spanned zero or several sample pairs, or drifted off a real
+    sample boundary through float rounding cannot be constructed at all, so `TimeSeries` does
+    not need to re-check "bounded by two adjacent samples, nothing strictly inside" every time
+    it reads one -- the type only holds values where that is already true.
+    """
+
+    from_index: int = Field(ge=0)
+    to_index: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def _adjacent(self) -> Self:
+        if self.to_index != self.from_index + 1:
+            raise ValueError(
+                f"gap ({self.from_index}, {self.to_index}): to_index must be from_index + 1"
+            )
+        return self
+
+
 class TimeSeries(BaseModel):
     """A scalar quantity over time. Feeds WorldState fields and HUD sparklines."""
 
@@ -69,12 +92,30 @@ class TimeSeries(BaseModel):
     unit: str
     interpolation: Interpolation
     samples: list[Sample]
+    # Ordered, non-overlapping (ADR-027). Default empty: most series have no declared gap.
+    gaps: list[Gap] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _sorted(self) -> Self:
         if not self.samples:
             raise ValueError(f"{self.id}: empty TimeSeries")
         self.samples.sort(key=lambda s: s.t)
+        return self
+
+    @model_validator(mode="after")
+    def _gaps_valid(self) -> Self:
+        sample_count = len(self.samples)
+        self.gaps.sort(key=lambda g: g.from_index)
+        previous_to_index = -1
+        for gap in self.gaps:
+            if gap.to_index >= sample_count:
+                raise ValueError(
+                    f"{self.id}: gap to_index {gap.to_index} out of range for "
+                    f"{sample_count} samples"
+                )
+            if gap.from_index < previous_to_index:
+                raise ValueError(f"{self.id}: gaps overlap at sample index {gap.from_index}")
+            previous_to_index = gap.to_index
         return self
 
     @property
@@ -89,8 +130,13 @@ class TimeSeries(BaseModel):
         i = bisect.bisect_left(ts, t)
         if i < len(ts) and ts[i] == t:
             return self.samples[i].value
+        if self._in_gap(i - 1, i):
+            return None
         a, b = self.samples[i - 1], self.samples[i]
         return _blend(a.value, b.value, (t - a.t) / (b.t - a.t), self.interpolation)
+
+    def _in_gap(self, from_index: int, to_index: int) -> bool:
+        return any(g.from_index == from_index and g.to_index == to_index for g in self.gaps)
 
 
 def _blend(a: float, b: float, f: float, how: Interpolation) -> float:

@@ -58,6 +58,13 @@ class SubjectBox:
         """The longer side: framing scales uniformly, so one number fits the whole subject."""
         return max(self.right - self.left, self.bottom - self.top)
 
+    @property
+    def aspect(self) -> float:
+        """Height over width: how tall-and-narrow (>1) or short-and-wide (<1) the box is. A
+        uniform scale (`Framing`) cannot reconcile two very different aspects, which is why
+        `pipeline.morph.pose_divergence` reads it directly rather than through `span`."""
+        return (self.bottom - self.top) / (self.right - self.left)
+
 
 @dataclass(frozen=True)
 class Framing:

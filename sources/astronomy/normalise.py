@@ -285,12 +285,15 @@ def mean_obliquity_deg(t: GeoTime) -> Estimate | None:
 
 # ------------------------------------------------------------------------- dense grid
 
+
 def log_spaced_grid(hi: GeoTime, n: int) -> list[GeoTime]:
     """`n` points covering [0, hi] inclusive, log-spaced above a tiny floor so the
     grid is dense near the present and coarser in deep time -- every domain in this
     module starts at 0.0 (present), which is the only case this needs to handle."""
     if n < 3:
-        raise ValueError(f"n must be >= 3 to include both endpoints plus an interior point, got {n}")
+        raise ValueError(
+            f"n must be >= 3 to include both endpoints plus an interior point, got {n}"
+        )
     if hi <= 0.0:
         raise ValueError(f"hi must be positive, got {hi}")
     floor = hi * 1e-6
@@ -329,6 +332,7 @@ def _dense_samples(
 
 # ------------------------------------------------------------------------------- build
 
+
 def normalise(raw_dir: Path) -> list[CuratedShape]:
     """Sample all 4 formulae/checkpoint curves onto dense grids and return them as
     TimeSeries. `raw_dir` is unused: this source has no data/raw/ input."""
@@ -359,7 +363,9 @@ def normalise(raw_dir: Path) -> list[CuratedShape]:
             id="solar_luminosity",
             unit="relative",
             interpolation=Interpolation.LINEAR,
-            samples=_dense_samples(solar_luminosity_rel, SOLAR_LUMINOSITY_DOMAIN, _SAMPLES_PER_SERIES),
+            samples=_dense_samples(
+                solar_luminosity_rel, SOLAR_LUMINOSITY_DOMAIN, _SAMPLES_PER_SERIES
+            ),
         ),
         TimeSeries(
             id="obliquity",

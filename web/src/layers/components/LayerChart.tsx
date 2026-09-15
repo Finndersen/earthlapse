@@ -96,6 +96,9 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   const playheadU = clampUnit(scale.toUnit(t))
   const playheadValue = layer.sample(t)
   const unit = playheadValue?.unit ?? ''
+  // "no data" outside the layer's whole domain, "no record" inside it but in a declared gap
+  // (ADR-027) — the only other reason `sample()` returns null there, mirroring ScalarReadout.
+  const inDomain = t >= layer.timeDomain[0] && t <= layer.timeDomain[1]
 
   return (
     <div className={styles.chart}>
@@ -108,7 +111,11 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
       <div className={styles.chartHeader}>
         <span className={styles.label}>{layer.name}</span>
         <span className={styles.chartValue}>
-          {playheadValue === null ? 'no data' : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
+          {playheadValue === null
+            ? inDomain
+              ? 'no record'
+              : 'no data'
+            : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
         </span>
       </div>
       <div className={styles.chartPlot}>

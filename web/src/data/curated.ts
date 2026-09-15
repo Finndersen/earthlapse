@@ -33,11 +33,25 @@ export interface SeriesSample {
   upper: number | null
 }
 
+/**
+ * An open interval with no data, spanning exactly one pair of adjacent samples in a
+ * `SeriesData` (post-sort). Mirrors `pipeline.shapes.Gap` (ADR-027): adjacency
+ * (`toIndex === fromIndex + 1`) is checked once, by `parseSeriesData`, not re-derived from
+ * ages by every reader.
+ */
+export interface SeriesGap {
+  fromIndex: number
+  toIndex: number
+}
+
 export interface SeriesData {
   id: string
   unit: string
   interpolation: Interpolation
   samples: SeriesSample[]
+  /** Additive (ADR-027): ordered, non-overlapping. Absent or empty means no gap — the series
+   *  from before this field existed and every series with none stay indistinguishable. */
+  gaps?: SeriesGap[]
 }
 
 export interface RasterFrameData {
@@ -77,6 +91,14 @@ export interface EventsData {
   events: TimelineEvent[]
 }
 
+/** Mirrors `PortraitExposureData` in pipeline/manifest.py: how publish normalised a plate's
+ *  exposure. `highlight` is the pinned original's subject highlight (a luma code, null when no
+ *  subject stands out); `gain` the linear-light gain applied, 1 when `image` is the pinned file. */
+export interface PortraitExposureData {
+  highlight: number | null
+  gain: number
+}
+
 /** Mirrors `PortraitPlateData` in pipeline/manifest.py. */
 export interface PortraitPlateData {
   nodeId: string
@@ -85,6 +107,9 @@ export interface PortraitPlateData {
   pinned: string
   width: number
   height: number
+  /** Additive (ADR-015 amendment 2026-09-14), absent from layer files published before it.
+   *  Provenance only: `image` is already exposure-normalised, so the viewer draws it as is. */
+  exposure?: PortraitExposureData
 }
 
 /** Mirrors `PortraitMorphData` in pipeline/manifest.py. */
@@ -170,7 +195,40 @@ function expectRecord(v: unknown, path: string): Record<string, unknown> {
   return v
 }
 
-/** Validates and sorts ascending by `t`, mirroring `TimeSeries._sorted` in shapes.py. */
+function parseSeriesGap(v: unknown, path: string): SeriesGap {
+  const g = expectRecord(v, path)
+  return {
+    fromIndex: expectNumber(g.fromIndex, `${path}.fromIndex`),
+    toIndex: expectNumber(g.toIndex, `${path}.toIndex`),
+  }
+}
+
+/**
+ * Sorts ascending by `fromIndex` (mirroring `TimeSeries._gaps_valid` in shapes.py) and checks
+ * every invariant it does: each gap spans exactly one pair of adjacent sample indices, in
+ * range, and gaps do not overlap (though two may touch at one shared boundary sample).
+ */
+function validateGaps(gaps: SeriesGap[], sampleCount: number, id: string): void {
+  gaps.sort((a, b) => a.fromIndex - b.fromIndex)
+  let previousToIndex = -1
+  for (const gap of gaps) {
+    if (gap.toIndex !== gap.fromIndex + 1) {
+      throw new Error(`${id}: gap (${gap.fromIndex}, ${gap.toIndex}) is not adjacent`)
+    }
+    if (gap.toIndex >= sampleCount) {
+      throw new Error(`${id}: gap toIndex ${gap.toIndex} out of range for ${sampleCount} samples`)
+    }
+    if (gap.fromIndex < previousToIndex) {
+      throw new Error(`${id}: gaps overlap at sample index ${gap.fromIndex}`)
+    }
+    previousToIndex = gap.toIndex
+  }
+}
+
+/**
+ * Validates and sorts ascending by `t`, mirroring `TimeSeries._sorted` in shapes.py — then, if
+ * `gaps` is present, validates it the way `TimeSeries._gaps_valid` does (ADR-027).
+ */
 export function parseSeriesData(json: unknown): SeriesData {
   const root = expectRecord(json, 'SeriesData')
   const id = expectString(root.id, 'SeriesData.id')
@@ -193,7 +251,15 @@ export function parseSeriesData(json: unknown): SeriesData {
     }
   })
   samples.sort((a, b) => a.t - b.t)
-  return { id, unit, interpolation: interpolationRaw as Interpolation, samples }
+  const data: SeriesData = { id, unit, interpolation: interpolationRaw as Interpolation, samples }
+  if (root.gaps !== undefined && root.gaps !== null) {
+    const gaps = expectArray(root.gaps, `${id}.gaps`).map((raw, i) =>
+      parseSeriesGap(raw, `${id}.gaps[${i}]`),
+    )
+    validateGaps(gaps, samples.length, id)
+    data.gaps = gaps
+  }
+  return data
 }
 
 /** Validates and sorts ascending by `t`, mirroring `RasterSequence._sorted` in shapes.py. */
@@ -351,6 +417,13 @@ function expectPositiveNumber(v: unknown, path: string): number {
   return n
 }
 
+function parsePortraitExposure(json: unknown, path: string): PortraitExposureData {
+  const e = expectRecord(json, path)
+  const gain = expectNumber(e.gain, `${path}.gain`)
+  if (!(gain >= 1)) throw new Error(`${path}.gain: exposure never darkens a plate, got ${gain}`)
+  return { highlight: expectNullableNumber(e.highlight, `${path}.highlight`), gain }
+}
+
 /**
  * Validates the additive portrait block (ADR-015): every plate names a node of this tree once,
  * plates sort ascending by that node's `tDivergence`, and every morph joins a plate to the
@@ -368,7 +441,7 @@ function parsePortraitSet(json: unknown, treeId: string, nodes: readonly TreeNod
     if (!divergence.has(nodeId)) throw new Error(`${path}.plates[${i}]: unknown node ${nodeId}`)
     const plate = expectString(p.plate, `${path}.plates[${i}].plate`)
     if (!PLATE_TYPES.has(plate)) throw new Error(`${path}.plates[${i}]: unknown plate type "${plate}"`)
-    return {
+    const parsed: PortraitPlateData = {
       nodeId,
       image: expectString(p.image, `${path}.plates[${i}].image`),
       plate: plate as PortraitPlateType,
@@ -376,6 +449,8 @@ function parsePortraitSet(json: unknown, treeId: string, nodes: readonly TreeNod
       width: expectPositiveNumber(p.width, `${path}.plates[${i}].width`),
       height: expectPositiveNumber(p.height, `${path}.plates[${i}].height`),
     }
+    if (p.exposure !== undefined) parsed.exposure = parsePortraitExposure(p.exposure, `${path}.plates[${i}].exposure`)
+    return parsed
   })
   if (new Set(plates.map((p) => p.nodeId)).size !== plates.length) {
     throw new Error(`${path}: a node has more than one plate`)
@@ -436,9 +511,36 @@ function blend(a: number, b: number, f: number, how: Interpolation): number {
 }
 
 /**
+ * Per-series `t` array and gap lookup, built once and reused across every `sampleSeries` call
+ * against the same `data` object — `sampleSeries` used to rebuild `ts` with `.map` on every
+ * call, expensive once a series has real row counts (co2: 1,977). Keyed by object identity in
+ * a `WeakMap`, not a mutable field on `data`: `sampleSeries(data, t)` stays a pure function of
+ * `t` for a given `data`, this is purely a cache of work `data` alone already determines.
+ */
+interface SeriesIndex {
+  ts: number[]
+  gapFromIndices: ReadonlySet<number>
+}
+
+const seriesIndexCache = new WeakMap<SeriesData, SeriesIndex>()
+
+function indexOf(data: SeriesData): SeriesIndex {
+  let index = seriesIndexCache.get(data)
+  if (index === undefined) {
+    index = {
+      ts: data.samples.map((s) => s.t),
+      gapFromIndices: new Set((data.gaps ?? []).map((g) => g.fromIndex)),
+    }
+    seriesIndexCache.set(data, index)
+  }
+  return index
+}
+
+/**
  * Mirrors `TimeSeries.sample`: null outside the domain, the exact sample verbatim on an
- * exact match, otherwise blended by `data.interpolation`. Bounds are a TS-only extension —
- * carried when both bracketing samples (or the exact match itself) have lower/upper.
+ * exact match, null strictly inside a declared gap (ADR-027), otherwise blended by
+ * `data.interpolation`. Bounds are a TS-only extension — carried when both bracketing
+ * samples (or the exact match itself) have lower/upper.
  */
 export function sampleSeries(data: SeriesData, t: GeoTime): ScalarValue | null {
   const { samples } = data
@@ -446,7 +548,7 @@ export function sampleSeries(data: SeriesData, t: GeoTime): ScalarValue | null {
   const hi = samples[samples.length - 1]!.t
   if (t < lo || t > hi) return null
 
-  const ts = samples.map((s) => s.t)
+  const { ts, gapFromIndices } = indexOf(data)
   const i = bisectLeft(ts, t)
 
   if (i < samples.length && ts[i] === t) {
@@ -457,6 +559,8 @@ export function sampleSeries(data: SeriesData, t: GeoTime): ScalarValue | null {
     }
     return result
   }
+
+  if (gapFromIndices.has(i - 1)) return null
 
   const a = samples[i - 1]!
   const b = samples[i]!

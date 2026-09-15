@@ -36,8 +36,9 @@ function baseManifestEntry(overrides: Partial<LayerManifest>): LayerManifest {
   }
 }
 
-/** Mirrors `sources/co2-o2` (Phanerozoic-only CO₂, GEOCARB III) in shape: present-day value
- *  is pre-industrial (~277 ppm), coverage ends at the Phanerozoic boundary (5.7e8 yr BP). */
+/** Mirrors `sources/co2-o2` (ADR-026/027) in shape: present-day value is measured
+ *  (~427 ppm), coverage ends at the Phanerozoic boundary (5.7e8 yr BP), and a declared `Gap`
+ *  sits where the real source's ice-core segment ends and its GEOCARB segment begins. */
 export const CO2_MANIFEST: LayerManifest = baseManifestEntry({
   id: 'co2',
   name: 'Atmospheric CO2',
@@ -50,31 +51,14 @@ export const CO2_DATA: SeriesData = {
   unit: 'ppm',
   interpolation: 'log-linear',
   samples: [
-    { t: 0, value: 276.6, lower: null, upper: null },
-    { t: 1e7, value: 290, lower: null, upper: null },
+    { t: 0, value: 427.35, lower: 427.23, upper: 427.47 },
+    { t: 805_743.87, value: 222, lower: 220, upper: 224 },
+    { t: 1e7, value: 277, lower: null, upper: null },
     { t: 1e8, value: 1200, lower: 900, upper: 1600 },
     { t: 3e8, value: 300, lower: 200, upper: 450 },
     { t: 5.7e8, value: 4500, lower: 3000, upper: 6000 },
   ],
-}
-
-/** A day-length series in hours, for `DayLengthClock`. */
-export const DAY_LENGTH_MANIFEST: LayerManifest = baseManifestEntry({
-  id: 'day-length',
-  name: 'Day length',
-  unit: 'h',
-  interpolation: 'linear',
-})
-
-export const DAY_LENGTH_DATA: SeriesData = {
-  id: 'day-length',
-  unit: 'h',
-  interpolation: 'linear',
-  samples: [
-    { t: 0, value: 24, lower: null, upper: null },
-    { t: 1.4e9, value: 21.9, lower: null, upper: null },
-    { t: 4.5e9, value: 6, lower: null, upper: null },
-  ],
+  gaps: [{ fromIndex: 1, toIndex: 2 }],
 }
 
 /** A small lineage from LUCA to *H. sapiens*, sorted ascending by `tDivergence` as

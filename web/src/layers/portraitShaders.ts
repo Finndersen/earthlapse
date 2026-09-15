@@ -10,6 +10,10 @@
  *   older'(x)   = older(x - alpha * F(x))          F: older(p) ~ younger(p + F(p))
  *   younger'(x) = younger(x - (1 - alpha) * B(x))  B: younger(q) ~ older(q + B(q))
  *
+ * Plates sample as their stored sRGB-encoded bytes (`portraitTextures.ts` uploads every texture
+ * with `NoColorSpace`), so a settled plate is written out exactly as the published file, and
+ * `srgbToLinear` / `linearToSrgb` bracket only the blend. The output is never re-encoded.
+ *
  * Flow texels decode as (byte - 128) / 127 * range (`decodeFlowByte`), in plate UV with v down
  * the image; textures load with flipY, so v is negated to move in texture space.
  */

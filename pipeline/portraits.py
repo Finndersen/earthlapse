@@ -38,7 +38,7 @@ from pipeline.scenes import SLUG_PATTERN, ScenePin, patch_pin_line
 from pipeline.shapes import Tree, TreeNode
 
 LINEAGE_TREE_ID = "lineage"
-MORPH_ALGORITHM_VERSION = "2"
+MORPH_ALGORITHM_VERSION = "4"
 FORWARD_FLOW_NAME = "forward.png"
 BACKWARD_FLOW_NAME = "backward.png"
 MORPH_RECORD_NAME = "morph.json"
@@ -262,6 +262,12 @@ class MorphRecord(BaseModel):
     size: int = Field(gt=0)
     forward_range: float = Field(gt=0)
     backward_range: float = Field(gt=0)
+    # ADR-015 amendment (2026-09-15): True when `compute_morph` judged the flow too incoherent to
+    # trust (pipeline.morph.MAX_INVERSE_CONSISTENCY) and zeroed both fields. `forward`/`backward`
+    # are still written (an all-zero field is a valid, tiny encoding), but publish treats such a
+    # pair as if no morph existed at all, so it crossfades rather than shipping a meaningless
+    # near-zero-range flow texture.
+    fallback_dissolve: bool
 
 
 def load_morph(cache_root: Path, key: MorphKey) -> MorphRecord | None:

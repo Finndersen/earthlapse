@@ -11,9 +11,10 @@ import pytest
 from pydantic import ValidationError
 
 from pipeline.curated import load_world, write_shape
+from pipeline.exposure import expose_plate
 from pipeline.flowfield import encode_flow
 from pipeline.generators.gemini import MODEL_ID, PRICES, estimate_usd
-from pipeline.generators.image import ImageRequest
+from pipeline.generators.image import ImageRequest, asset_digest
 from pipeline.paths import ProjectPaths
 from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
@@ -25,11 +26,15 @@ from pipeline.portraits import (
     build_portrait_graph,
     load_portrait_book,
     parse_portrait_book,
+    write_portrait_pin,
 )
 from pipeline.prompts import PORTRAIT_STYLE
+from pipeline.scenes import ScenePin
 from pipeline.shapes import Tree, TreeNode
 from pipeline.spend import Ledger
 from pipeline.store import CandidateStore
+from tests.test_exposure import _jpeg
+from tests.test_exposure import _plate as _specimen_plate
 from tests.test_generators import _generator, _image_body, _png
 from tests.test_pipeline import (
     CO2,
@@ -362,12 +367,15 @@ def test_review_portraits_sheet_writes_neighbour_sheets_and_a_lineage_overview(r
 # -- publish --------------------------------------------------------------------------------
 
 
-def _cache_morph(root: Path, older: str, younger: str) -> MorphRecord:
+def _cache_morph(
+    root: Path, older: str, younger: str, *, fallback_dissolve: bool = False
+) -> MorphRecord:
     paths = ProjectPaths(root)
     book = load_portrait_book(paths.portraits)
     key = MorphKey.between(book.portrait(older), book.portrait(younger))
     field = np.zeros((4, 4, 2), dtype=np.float32)
-    field[0, 0] = [0.1, -0.05]
+    if not fallback_dissolve:
+        field[0, 0] = [0.1, -0.05]
     encoded = encode_flow(field)
     directory = key.directory(paths.portrait_morphs)
     directory.mkdir(parents=True)
@@ -379,6 +387,7 @@ def _cache_morph(root: Path, older: str, younger: str) -> MorphRecord:
         size=encoded.size,
         forward_range=encoded.range,
         backward_range=encoded.range,
+        fallback_dissolve=fallback_dissolve,
     )
     (directory / MORPH_RECORD_NAME).write_text(record.model_dump_json())
     return record
@@ -427,6 +436,37 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     ).read_bytes()
 
 
+def test_publish_skips_a_dissolved_morph_and_lists_it_separately(root: Path) -> None:
+    """A pair `earthtime morph` judged too incoherent to trust publishes exactly like an
+    uncomputed one -- no plate data, no copied files -- but is reported distinctly (`note`, not
+    `WARNING`) and tracked apart from `missing_morphs` (ADR-015 amendment, 2026-09-15)."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    _build_and_pick_portraits(backend, root)
+    dissolved = _cache_morph(root, "tetrapod", "human", fallback_dissolve=True)
+    paths = ProjectPaths(root)
+    book = load_portrait_book(paths.portraits)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    assert "portraits: 3 plates, 0 morphs, 0 unpinned skipped" in output
+    assert "note: tetrapod -> human falls back to a plain dissolve" in output
+    assert "WARNING: no morph for tetrapod -> human" not in output
+    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    assert lineage["portraits"] == {
+        "plates": [
+            _plate(book, "human", "SPECIMEN"),
+            _plate(book, "tetrapod", "SPECIMEN"),
+            _plate(book, "luca", "MICROSCOPE"),
+        ],
+        "morphs": [],
+    }
+    directory = dissolved.key.directory(paths.portrait_morphs)
+    assert directory.is_dir()  # the cache keeps the (tiny, all-zero) fields for inspection
+    assert not (paths.media / "portraits" / "morphs").exists()
+
+
 def _plate(book: object, node_id: str, plate: str) -> dict[str, object]:
     assert hasattr(book, "portrait")
     pin = book.portrait(node_id).pin
@@ -438,6 +478,8 @@ def _plate(book: object, node_id: str, plate: str) -> dict[str, object]:
         "pinned": pin.asset_digest,
         "width": 16,
         "height": 9,
+        # The fake generator's plates are a flat colour: no subject, so nothing to expose.
+        "exposure": {"highlight": None, "gain": 1.0},
     }
 
 
@@ -453,6 +495,50 @@ def test_publish_skips_unpinned_portraits_and_omits_the_block_when_none_is_pinne
     assert "portraits: 0 plates, 0 morphs, 3 unpinned skipped" in output
     lineage = json.loads((ProjectPaths(root).media / "layers" / "lineage.json").read_text())
     assert "portraits" not in lineage
+
+
+def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_untouched(
+    root: Path,
+) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    original = _jpeg(_specimen_plate(90))
+    digest = asset_digest(original)
+    pinned = paths.portrait_candidates / "human" / f"{digest}.jpg"
+    pinned.parent.mkdir(parents=True)
+    pinned.write_bytes(original)
+    write_portrait_pin(
+        paths.portraits,
+        "human",
+        ScenePin(asset_digest=digest, path=pinned.relative_to(root).as_posix()),
+    )
+    expected = expose_plate(original)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    assert expected.exposure.gain > 1.0
+    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    assert lineage["portraits"] == {
+        "plates": [
+            {
+                "nodeId": "human",
+                "image": "portraits/human.jpg",
+                "plate": "SPECIMEN",
+                "pinned": digest,
+                "width": 512,
+                "height": 512,
+                "exposure": {
+                    "highlight": expected.exposure.highlight,
+                    "gain": expected.exposure.gain,
+                },
+            }
+        ],
+        "morphs": [],
+    }
+    assert (paths.media / "portraits" / "human.jpg").read_bytes() == expected.data
+    assert pinned.read_bytes() == original
 
 
 def test_publish_refuses_a_portrait_whose_pinned_file_no_longer_matches(root: Path) -> None:

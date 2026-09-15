@@ -615,11 +615,11 @@ portraits:
       - its placement as a hominin, rather than a gorilla-line or stem hominid, is contested
     subject:
       organism: "A reconstruction of Sahelanthropus tchadensis, a late-Miocene ape near the chimpanzee-human split; only its skull, jaw fragments and teeth are known"
-      anatomy: "a head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out"
+      anatomy: "a head with very prominent browridges, a sloping face, small flat canine teeth, and a small, elongated braincase, held on an upright body as if walking on two legs; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out, lit by a bright, soft key light from the front-left that shows the face, browridges and hair texture clearly against the dark field"
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
-      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
-    pin: {asset_digest: "244dcca8346a49e5", path: "data/candidates/portraits/hominini/7d5a484348ed4f8e/01-244dcca8346a49e5.jpg"}
+      absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet", "a dim, underexposed figure that is hard to see against the dark field"]
+    pin: {asset_digest: "141ef7d153b9d351", path: "data/candidates/portraits/hominini/9dc253a9affb1c69/01-141ef7d153b9d351.jpg"}
 
   - id: australopithecus
     plate: SPECIMEN
@@ -695,7 +695,7 @@ portraits:
     gaps:
       - the body below the head is not described by the source; it follows modern human proportions
       - hair length and style are not described by the source; kept short or swept back off the skull is an unverified rendering choice so the diagnostic elongated, low braincase profile stays visible in silhouette rather than obscured by loose hair
-      - pose and lighting are not described by the source; rendered as a strict side profile with arms relaxed at the sides and low-key studio lighting that leaves the lower torso and hips in shadow, an unverified rendering choice adopted after the prior candidate was refused by the image generator as prohibited content, to keep the plate reading as a non-sexual scientific specimen study
+      - pose and lighting are not described by the source; rendered as a strict side profile with arms relaxed at the sides and low-key studio lighting that leaves the lower torso and hips in shadow, an unverified rendering choice adopted after the prior candidate was refused by the image generator as prohibited content, to keep the plate reading as a non-sexual scientific specimen study (a brighter key-light respec on 2026-09-15 was refused twice by the generator's safety filter, so the low-key version stands; brightness comes from publish-time exposure normalisation instead)
     subject:
       organism: "Early Homo sapiens, as known from the roughly 300,000-year-old Jebel Irhoud fossils of Morocco"
       anatomy: "a fully upright modern human shown in a strict side profile with its arms relaxed at its sides and a neutral expression, its face almost indistinguishable from people living today, but whose braincase is long and low at the back rather than rounded, rendered with hair kept short or swept back off the skull, not long or loose, so that the elongated, low braincase profile stays visible in silhouette; the whole standing body shown in frame from head to feet, with the legs and feet fully visible and nothing cropped out, lit by low-key studio lighting that leaves the lower torso and hips in deep shadow"

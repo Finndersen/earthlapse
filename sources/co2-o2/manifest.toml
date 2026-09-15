@@ -1,13 +1,47 @@
-# See docs/DATA_SOURCES.md for field meanings.
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the splice policy.
+#
+# co2-o2 splices three upstream files into one `co2` TimeSeries (instrumental -> ice core ->
+# GEOCARB III model), so there is no single upstream url/sha256 the top-level fields can name.
+# Per-file provenance (filename, url, sha256, licence, citation) lives in [[artefacts]] below,
+# which fetch.py loops over; the top-level title/citation/licence/url are the combined credit
+# `_credit()` (pipeline/publish.py) lists on the credits page. Same split as
+# sources/audio-stems (manifest.toml + stems.toml), kept in one file here because the set of
+# artefacts is fixed rather than a growing catalogue.
 
 name = "co2-o2"
-title = "GEOCARB III: Phanerozoic Atmospheric CO2"
+title = "Atmospheric CO2: Mauna Loa, Antarctic ice-core composite and GEOCARB III"
+url = "https://github.com/finndersen/earthview/blob/main/sources/co2-o2/README.md"
+sha256 = ""
+licence = "US public domain (NOAA NCEI Paleoclimatology) and NOAA GML data, freely available with credit; per-file detail in [[artefacts]]"
+citation = "Lan, X. (NOAA GML) and Keeling, R. (Scripps Institution of Oceanography): Mauna Loa annual mean CO2. Bereiter, B. et al., 2015: Revision of the EPICA Dome C CO2 record from 800 to 600 kyr before present, Geophysical Research Letters, doi:10.1002/2014GL061957. Berner, R.A. and Z. Kothavala, 2001: GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204."
+time_domain = [5.7e8, 0.0]  # years before the AD 2025 present, [oldest, newest]
+output_shape = "TimeSeries"
+interpolation = "log-linear"
+volume_bytes = 59310         # measured: sum of the three files below (3,696 + 50,236 + 5,378)
+storage_tier = "git"
+
+# Newest segment first -- the order normalise.py splices them in.
+
+[[artefacts]]
+filename = "co2_annmean_mlo.txt"
+url = "https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.txt"
+# Regenerated upstream monthly (header "File Creation" timestamp), so this pin goes stale
+# after each regeneration and `make data` fails loudly on a fresh raw dir. Re-pin by hand after
+# checking no year beyond the fixed AD 2025 present has appeared (see README.md).
+sha256 = "3eea72f254116cd43275fa33b0ed201b14550e6ba21e4d6b4482c24a95f98ab7"
+licence = "NOAA GML: made freely available to the public; credit requested (US Government work)"
+citation = "Lan, X. (NOAA GML, gml.noaa.gov/ccgg/trends/) and Keeling, R. (Scripps Institution of Oceanography, scrippsco2.ucsd.edu). Mauna Loa annual mean CO2; data from March 1958 through April 1974 from C. D. Keeling, SIO."
+
+[[artefacts]]
+filename = "antarctica2015co2composite.txt"
+url = "https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/antarctica2015co2composite.txt"
+sha256 = "de57b3967758725b9650717a71bd665ebc87e23d41d3d3ad05c9095a6e7e393f"
+licence = "US public domain (NOAA NCEI Paleoclimatology Program)"
+citation = "Bereiter, B., Eggleston, S., Schmitt, J., Nehrbass-Ahles, C., Stocker, T.F., Fischer, H., Kipfstuhl, S. and J. Chappellaz, 2015. Revision of the EPICA Dome C CO2 record from 800 to 600 kyr before present. Geophysical Research Letters, doi:10.1002/2014GL061957."
+
+[[artefacts]]
+filename = "phanerozoic_co2.txt"
 url = "https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt"
 sha256 = "4e7339d324c43b21fe0ce00654db2ed59fcd399d81cf5a082401b05a1d8f74ad"
 licence = "US public domain (NOAA/NGDC Paleoclimatology Program)"
 citation = "Berner, R.A. and Z. Kothavala, 2001. GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204."
-time_domain = [5.7e8, 0.0]  # years BP, [oldest, newest]
-output_shape = "TimeSeries"
-interpolation = "log-linear"
-volume_bytes = 5378          # measured, not estimated
-storage_tier = "git"

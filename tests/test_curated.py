@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pyarrow as pa
@@ -17,6 +18,7 @@ from pipeline.shapes import (
     EventKind,
     EventSet,
     EventTag,
+    Gap,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
@@ -146,6 +148,30 @@ def test_event_effect_is_stored_as_a_json_string_column(tmp_path: Path) -> None:
     no_effect = next(r for r in rows if r["id"] == "no-effect")
     assert isinstance(kpg["effect"], str) and kpg["effect"].startswith("{")
     assert no_effect["effect"] is None
+
+
+def test_gaps_round_trip_through_the_header_not_a_column(tmp_path: Path) -> None:
+    """ADR-027: `gaps` lives in `write_shape`'s JSON header alongside `unit`/`interpolation`,
+    not a per-sample parquet column, so it round-trips for free through the existing
+    header/rows split -- this pins that in place, and that a file with no gaps (every other
+    fixture in this module) keeps writing `"gaps": []` rather than omitting the key."""
+    with_gap = TimeSeries(
+        id="co2",
+        unit="ppm",
+        interpolation=Interpolation.LOG_LINEAR,
+        samples=[
+            Sample(t=0.0, value=280.0),
+            Sample(t=1.0, value=270.0),
+            Sample(t=2.0, value=260.0),
+        ],
+        gaps=[Gap(from_index=0, to_index=1)],
+    )
+    path = write_shape(with_gap, tmp_path)
+    table = pq.read_table(path)
+    assert set(table.schema.names) == {"t", "value", "lower", "upper"}  # unchanged, no new column
+    meta = json.loads((table.schema.metadata or {})[b"earthtime"])
+    assert meta["header"]["gaps"] == [{"from_index": 0, "to_index": 1}]
+    assert read_shape(path) == with_gap
 
 
 def test_kind_t_tags_round_trip_through_parquet(tmp_path: Path) -> None:
