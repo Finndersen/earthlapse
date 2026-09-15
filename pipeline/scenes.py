@@ -7,7 +7,8 @@ the timeline (ADR-020) — each run is its own consecutive stretch of scenes, an
 the same chapter shares that chapter's shot and composition, but a run's neighbours in a
 *different* chapter still read as a cut at each boundary. The pin a human writes with
 `earthtime review pick` lives here too, so it survives every rebuild (ADR-005). A scene may
-also name an optional ambience stem (`sound`, ADR-023) it plays when on screen.
+also name an optional stem (`sound`, ADR-023) it plays when on screen: an ambience stem it
+foregrounds, or a scene-only stem such as a one-shot, which publish allows only in `once` mode.
 """
 
 from __future__ import annotations

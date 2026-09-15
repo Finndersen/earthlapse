@@ -16,6 +16,8 @@ from pipeline.prompts import (
     Composition,
     ScenePrompt,
     Shot,
+    _co2_band,
+    _render_atmosphere,
     render_prompt,
     render_subject,
 )
@@ -102,3 +104,63 @@ def test_kpg_trio_is_arrival_then_darkness_then_aftermath(book: SceneBook) -> No
     )
     assert (darkness_predecessor, darkness_successor) == (arrival, aftermath)
     assert arrival.t > darkness.t > aftermath.t
+
+
+@pytest.mark.parametrize(
+    ("ppm", "band"),
+    [
+        (191.4, "a glacial low, well below today's level"),  # Last Glacial Maximum
+        (229.99, "a glacial low, well below today's level"),
+        (230.0, "near pre-industrial levels, well below today's"),
+        (277.2, "near pre-industrial levels, well below today's"),  # AD 1750
+        (299.99, "near pre-industrial levels, well below today's"),
+        (300.0, "close to today's level"),
+        (427.35, "close to today's level"),  # AD 2025
+        (449.99, "close to today's level"),
+        (450.0, "above today's level"),
+        (699.99, "above today's level"),
+        (700.0, "several times today's level"),
+        (1999.99, "several times today's level"),
+        (2000.0, "a greenhouse atmosphere, many times today's level"),
+    ],
+)
+def test_co2_band_boundaries(ppm: float, band: str) -> None:
+    assert _co2_band(ppm) == band
+
+
+_GLACIAL_QUOTE = (
+    "Atmosphere: CO2 222 ppm, a glacial low, well below today's level; no estimate of oxygen."
+)
+_GAP_NAMED = "Atmosphere: no CO2 record covers this interval; no estimate of oxygen."
+_NO_SOURCE = "Atmosphere: no CO2 record reaches this far back; no estimate of oxygen."
+
+# A stand-in gap boundary, mirroring sources/co2-o2's ice-core -> GEOCARB bridge in shape
+# without depending on it: `_render_atmosphere` reads only `co2_domain`, never a source.
+_GAP_DOMAIN = (805_743.87, 1.0e7)
+
+
+@pytest.mark.parametrize(
+    ("t", "co2_ppm", "co2_domain", "expected"),
+    [
+        # co2_ppm present always quotes it, regardless of domain.
+        (_GAP_DOMAIN[0], 222.0, _GAP_DOMAIN, _GLACIAL_QUOTE),  # a real sample at the gap's edge
+        (_GAP_DOMAIN[1], 222.0, _GAP_DOMAIN, _GLACIAL_QUOTE),  # the other edge
+        (
+            3.1e8,
+            351.14,
+            (0.0, 5.7e8),
+            "Atmosphere: CO2 351 ppm, close to today's level; no estimate of oxygen.",
+        ),
+        # co2_ppm=None inside a registered domain: a declared gap.
+        (_GAP_DOMAIN[0] + 1, None, _GAP_DOMAIN, _GAP_NAMED),
+        (3.2e6, None, _GAP_DOMAIN, _GAP_NAMED),  # Pliocene: the old bridge read a glacial low
+        (_GAP_DOMAIN[1] - 1, None, _GAP_DOMAIN, _GAP_NAMED),
+        # co2_ppm=None with no domain covering t, or no domain at all: no source, not a gap.
+        (4.5e9, None, None, _NO_SOURCE),
+        (4.5e9, None, (0.0, 5.7e8), _NO_SOURCE),
+    ],
+)
+def test_atmosphere_distinguishes_a_declared_gap_from_no_source(
+    t: float, co2_ppm: float | None, co2_domain: tuple[float, float] | None, expected: str
+) -> None:
+    assert _render_atmosphere(t, co2_ppm, co2_domain, None) == expected

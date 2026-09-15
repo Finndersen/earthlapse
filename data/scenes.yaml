@@ -14,11 +14,12 @@
 #
 # Chapters
 # --------
-# A chapter is a run of consecutive scenes sharing one composition (DESIGN §6). The viewer
-# dissolves slowly within a chapter and near-cuts across a boundary (web/src/scene/scene.ts),
-# so chapters follow composition, never one per scene. Gate v2 showed the WATER_EDGE framing
-# holding across very different worlds, so every scene that can stand at a water's edge does
-# (ADR-010). Only the magma ocean, which has no water, cannot.
+# A chapter is a held composition: one shot and one framing (DESIGN §6). It may recur as several
+# non-adjacent runs (ADR-020), but every boundary between runs of different chapters reads as a
+# cut, so chapters follow composition, never one per scene. Gate v2 showed the WATER_EDGE framing
+# holding across very different worlds (ADR-010), so waters-edge is the default. over-under holds
+# one early run, archean-shore to silurian-shore, where the story is life under the water
+# (ADR-025).
 #
 # Pins
 # ----
@@ -38,6 +39,10 @@ chapters:
     label: On open ground
     shot: GROUND
     composition: open-ground
+  - id: over-under
+    label: Above and below the surface
+    shot: SPLIT_LEVEL
+    composition: split-waterline
 
 scenes:
   # Moon-forming impact 4.35-4.52 Ga (events.yaml moon-forming-impact).
@@ -60,6 +65,9 @@ scenes:
       far_bank: no far bank; the magma ocean runs unbroken to the horizon under towering plumes of steam and ash
       sky_and_light: a dark, dense sky of vapour and ash lit orange from below by the glowing magma; an enormous Moon, many times its present apparent size, hangs low through a gap in the clouds
       absent: [water, snow, ice, plants, any living thing, green colour, people, buildings]
+    # ADR-023 (v2): `volcanic` (felix.blume's Yasur crater-rim roar and eruption bursts) as a
+    # `loop` above its 0.75 ambient -- the lava fountain in the foreground is the loudest thing here.
+    sound: {stem: volcanic, mode: loop, gain: 1.0}
     pin: {asset_digest: "28a947b4b5aa181a", path: "data/candidates/magma-ocean/6db41144a561b051/03-28a947b4b5aa181a.jpg"}
 
   # After the first ocean condensed (~4.4 Ga zircons) and before any evidence of life
@@ -112,145 +120,178 @@ scenes:
       far_bank: the lake's far shore, a rim of layered white and orange sinter terraces stepping up into a steaming volcanic hillside
       sky_and_light: a hazy, pale orange-brown sky, thicker and dimmer than a modern one, with a faint young Sun and a large, close Moon pale through the haze; dim, diffuse, warm light
       absent: [plants, algae, moss, lichen, any visible organism, animals, fish, birds, blue sky, snow, people, buildings]
+    # ADR-023 (v2): scene-only `geothermal` (a real hot-spring caldeira recording) as a `loop`:
+    # the setting is literally volcanic hot springs and an evaporating mineral pool.
+    sound: {stem: geothermal, mode: loop, gain: 1.0}
     pin: {asset_digest: "a9fede0cdaca2a7e", path: "data/candidates/origin-of-life/85e0a4e2ead59aba/03-a9fede0cdaca2a7e.jpg"}
 
   # Oldest robust stromatolites, ~3.43 Ga Pilbara (events.yaml first-life, lower bound);
-  # before the Great Oxidation Event (2.1-2.4 Ga).
+  # before the Great Oxidation Event (2.1-2.4 Ga). Coniform and domical Strelley Pool
+  # stromatolites, ~3.43 Ga: Allwood, A.C. et al. (2006), "Stromatolite reef from the Early
+  # Archaean era of Australia," Nature 441, 714-718 (cited identically in events.yaml first-life).
+  # Older claims of life are disputed, so the setting says "among the oldest", not "the oldest".
+  # In over-under (ADR-025), so the stromatolites stand in full on the sea floor. No oxygen
+  # bubbles: oxygenic photosynthesis is not clearly evidenced this early (contested; events.yaml
+  # origin-of-photosynthesis), and the bubbles are what set great-oxidation apart.
   - id: archean-shore
     t: 3.45e9
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: Microbial stromatolites crowd an Archean tidal shore under a faint young Sun and a hazy, oxygen-free sky.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: Microbial stromatolites crowd the floor of an Archean tidal sea under a faint young Sun and a hazy, oxygen-free sky.
     unsourced:
       o2_percent: 0  # below 0.001% of present levels before the Great Oxidation Event
       mean_temp_c: 30  # contested: isotope proxies argue hot (55-85 °C), models temperate
     subject:
-      setting: An Archean tidal flat on the edge of a small volcanic continent, the oldest shore with life on it
-      left_mass: a tall, weathered cliff of dark greenstone and banded red-and-grey rock
-      vegetation: none on land, which is bare rock; the only life is microbial, slimy olive-brown and dark green mats coating the wet rock in the shallows
+      setting: An Archean tidal shelf on the edge of a small volcanic continent, seen half above and half below the surface, among the oldest sea floors with convincing traces of life
+      left_mass: a tall, weathered cliff of dark greenstone and banded red-and-grey rock rising straight out of the sea, its submerged foot crusted with dark microbial mat
+      vegetation: none on land, which is bare rock; underwater, the only life is microbial, slimy olive-brown and dark-green mats coating every rock and ripple of the shallow sea floor
       fauna: none; no animals exist yet
-      main_subject: a cluster of dome-shaped stromatolites, knee-high rounded mounds of finely layered grey rock skinned with dark microbial mat, breaking the still surface of the shallows
-      ground: wet, rippled grey sand and flat grey rock slabs streaked with rusty orange iron staining
-      water: shallow, calm, warm tidal water, faintly green-grey
+      main_subject: underwater, a cluster of low conical and domed stromatolites from a hand-span to knee-high, finely layered grey rock skinned with dark olive microbial mat, rising from the rippled sea floor
+      ground: the shallow sea floor, rippled grey sand and flat rock slabs streaked with rusty orange iron staining, filmed with microbial mat
+      water: warm, calm, faintly green-grey, clear enough that the sea floor is plainly visible
       far_bank: low, bare volcanic hills in grey and rust tones, with no green anywhere
       sky_and_light: a hazy, pale orange sky rather than a blue one; soft, slightly dim, warm diffuse light
-      absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky]
-    pin: {asset_digest: "647c2acdb2e4a8ea", path: "data/candidates/archean-shore/94c954c71c1afb48/01-647c2acdb2e4a8ea.jpg"}
+      absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky, streams of rising bubbles, seaweed, kelp, sea grass, corals, sponges, anemones]
+    pin: {asset_digest: "5dc36fb18edad44f", path: "data/candidates/archean-shore/fef9a33e00974240/01-5dc36fb18edad44f.jpg"}
 
   # ~2.4 Ga, at the onset of the Great Oxidation Event: Gumsley, A.P. et al. (2017), "Timing and
   # tempo of the Great Oxidation Event," PNAS 114(8), 1811-1816 (onset 2.46-2.426 Ga); Lyons,
   # Reinhard & Planavsky (2014), Nature 506, 307-315. Banded iron formations are far older than
   # this scene (oldest ~3.7-3.8 Ga at Isua, peak 2.8-2.5 Ga; events.yaml banded-iron-formations),
   # so the cliff is shown as already-deposited rock, not forming now. The red banding and the
-  # oxygen bubbles are what set this frame apart from archean-shore (3.45 Ga).
+  # oxygen bubbles are what set this frame apart from archean-shore (3.45 Ga). Photosynthesising
+  # mats visibly release oxygen bubbles today; they rise through the water, not onto the lens, so
+  # they are consistent with over-under's composition (ADR-025). The caption avoids "for the first
+  # time": Lyons et al. (2014) review earlier transient oxygen "whiffs".
   - id: great-oxidation
     t: 2.4e9
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: As cyanobacteria flood the shallows with oxygen for the first time, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.
     unsourced:
       o2_percent: 2  # rounded: the GOE's early rise, a small fraction of modern levels, contested pace
       mean_temp_c: 20  # rounded, contested: some models tie the GOE's onset to Huronian glaciation, more securely dated slightly later, so this scene is kept temperate rather than icy
     subject:
-      setting: A shallow tidal shelf on the edge of a barren continent, beside cliffs of banded iron formation laid down on the sea floor over the preceding hundreds of millions of years
-      left_mass: a tall wave-cut cliff of banded iron formation, bold alternating stripes of rust-red iron oxide and silvery-grey silica
-      vegetation: none in the botanical sense; the only life is microbial — thick, wrinkled, olive-and-rust-coloured cyanobacterial mats coating the submerged rock and the pool margins
+      setting: A shallow tidal shelf on the edge of a barren continent, beside cliffs of banded iron formation laid down on the sea floor over the preceding hundreds of millions of years, seen half above and half below the surface
+      left_mass: a tall wave-cut cliff of banded iron formation, bold alternating stripes of rust-red iron oxide and silvery-grey silica, rising out of the sea, its submerged base draped in microbial mat
+      vegetation: none on land; the only life is microbial — underwater, thick, wrinkled, olive-and-rust-coloured cyanobacterial mats carpet the shelf and drape low stromatolite mounds
       fauna: none; no animals exist yet
-      main_subject: a broad, dark cyanobacterial mat in a tidal pool, its surface frothed with thousands of tiny trapped oxygen bubbles
-      ground: bare grey-red rock and coarse sand, fringed where it stays wet by slick, dark microbial mat
-      water: shallow, still, faintly cloudy pale-green water lying over the iron-banded rock shelf
-      far_bank: low grey-red hills of layered rock, banded where iron formation is exposed at the surface, with no green anywhere except the microbial mats at the shore
+      main_subject: underwater, a broad, dark, wrinkled cyanobacterial mat spread over low mounds on the shelf floor, its surface pearled with thousands of tiny trapped oxygen bubbles, thin silver threads of bubbles rising from it up through the clear water column toward the surface
+      ground: the sea floor, an iron-banded rock shelf and coarse red-grey sand fringed with microbial mat
+      water: shallow, still, clear, faintly green water
+      far_bank: low grey-red hills of layered rock, banded where iron formation is exposed at the surface, with no green anywhere
       sky_and_light: a sky in transition — still pale and hazy rather than a saturated blue, but faintly clearer than the thick orange-brown haze of deeper Archean time; soft, even light
-      absent: [land plants, trees, grass, moss, animals, fish, shells, birds, people, a fully clear blue sky]
-    pin: {asset_digest: "a9f9e02cef236b42", path: "data/candidates/great-oxidation/f46f815b31ff9226/03-a9f9e02cef236b42.jpg"}
+      absent: [land plants, trees, grass, moss, animals, fish, shells, birds, people, a fully clear blue sky, seaweed, kelp, sea grass, corals, sponges, anemones]
+    pin: {asset_digest: "295c1601ff5c1ece", path: "data/candidates/great-oxidation/d12c74dfe1906c2c/01-295c1601ff5c1ece.jpg"}
 
   # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
   # Ga): Bangiomorpha pubescens, Somerset Island, Arctic Canada. Gibson, T.M. et al. (2018),
   # "Precise age of Bangiomorpha pubescens dates the origin of eukaryotic photosynthesis,"
   # Geology 46(2), 135-138 — the oldest fossil with differentiated reproductive cells and
-  # complex multicellular organisation, a red alga.
+  # complex multicellular organisation, a red alga. In over-under (ADR-025): the filaments are a
+  # fraction of a millimetre wide, so the main subject is restated as a landscape-scale turf
+  # (ADR-014).
   - id: boring-billion-shallows
     t: 1.047e9
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: In the climatically stable "Boring Billion," Bangiomorpha — the oldest known organism with differentiated sexual cells — grows in tidal pools on an otherwise still-lifeless shore.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: In the climatically stable "Boring Billion," Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.
     unsourced:
       o2_percent: 4  # rounded, contested: pre-Neoproterozoic-oxygenation estimates for this interval are low and disputed
       mean_temp_c: 18  # rounded: the "Boring Billion" is generally characterised as climatically stable and non-glacial
     subject:
-      setting: A shallow intertidal pool on a barren coast, in the long, climatically stable interval nicknamed the "Boring Billion"
-      left_mass: a low, weathered ledge of pale grey-buff dolostone, undercut at the waterline by tidal action
-      vegetation: "none on land; in the shallows, dense mats of hair-fine, reddish-purple Bangiomorpha-like algal filaments lie slicked flat against the submerged rock like fine wet hair, their tips faintly banded where reproductive cells are differentiated, alongside plain microbial mats; nothing stands upright out of the water"
+      setting: A shallow, sheltered tidal inlet on a barren coast, in the long, climatically stable interval nicknamed the "Boring Billion", seen half above and half below the surface
+      left_mass: a weathered ledge of pale grey-buff dolostone, undercut at the waterline by tidal action, its submerged face bare pale rock filmed with thin microbial mat
+      vegetation: "none on land; underwater, dense reddish-purple turf of Bangiomorpha-like filaments on the boulders of the floor, plain microbial mats and a few low stromatolite domes on the floor; nothing stands upright out of the water"
       fauna: none; no animals exist yet, nothing grazes or moves among the algae
-      main_subject: "dense reddish-purple fringes of hair-fine Bangiomorpha-like algal filaments carpeting the submerged rocks of a broad tidal pool, lying low and slicked flat by the water like fine wet hair, their tips swaying just below the surface"
-      ground: bare, pale, ripple-marked dolostone, with a thin dried microbial crust above the tideline
-      water: shallow, clear, still tidal water lying in rock pools
-      far_bank: "a flat, barren tidal platform of pale rock running unbroken to a low grey coastline of bare rock only, utterly bare of anything green beyond the algae at the shore"
+      main_subject: "underwater, a low, rounded boulder mound on the sea floor, carpeted in a low, soft, velvety reddish-purple film of hair-fine Bangiomorpha-like algal filaments; each filament is a fraction of a millimetre wide, so the turf reads only as a soft coloured pelt"
+      ground: the sea floor, rippled pale dolostone under microbial mat
+      water: shallow, clear and still
+      far_bank: "a flat, barren tidal platform of pale rock running unbroken to a low grey coastline of utterly bare rock"
       sky_and_light: a clear, pale sky, less hazy than deep Archean time but not the saturated blue of a modern one; calm, even, cool light
-      absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats"]
-    pin: {asset_digest: "ccbb5828638ef8de", path: "data/candidates/boring-billion-shallows/4726db66153e81cc/03-ccbb5828638ef8de.jpg"}
+      absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats", "kelp", "seaweed fronds", "sea grass", "corals", "anemones", "sponges", "large upright fronds"]
+    pin: {asset_digest: "1a40aabd80b4def7", path: "data/candidates/boring-billion-shallows/c1c26ba80aa855dd/03-1a40aabd80b4def7.jpg"}
 
   # Mid-Sturtian glaciation (~717-661 Ma; events.yaml snowball-earth's first ice-shell window),
   # so the globe shows the ice shell while this scene holds. 650 Ma fell in the ice-free
-  # interval between the Sturtian and Marinoan windows.
+  # interval between the Sturtian and Marinoan windows. In over-under (ADR-025) to keep that
+  # chapter's run unbroken. Dropstones are characteristic of Cryogenian glacial deposits.
+  # Eukaryote lineages found before and after the glaciation imply life survived, but not where,
+  # so no organism is shown, above or below the surface. Whether any tropical sea stayed open is
+  # contested: a hard snowball allows none, slushball models a band of open water, and refugia such
+  # as polynyas are hypotheses. The broad polynya here is one such hypothesis, needed because the
+  # over-under composition requires calm open water out to the horizon; the caption hedges it.
   - id: cryogenian-snowball
     t: 6.9e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: During a Snowball Earth glaciation, ice reaches toward the equator and the sea survives only as dark leads between the ice.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: During a Snowball Earth glaciation, ice reaches toward the equator, open water may survive only in scattered gaps in the ice, and life hangs on out of sight.
     unsourced:
       o2_percent: 8  # contested: Neoproterozoic oxygen estimates span a few percent to near-modern
       mean_temp_c: -40  # rough: snowball climate models give global means of -40 to -50 °C
     subject:
-      setting: A frozen shore near the equator during a Snowball Earth glaciation
-      left_mass: a tall, sheer cliff of blue-white glacier ice, layered and streaked with dark wind-blown dust
-      vegetation: none visible; life survives only as microbial films in meltwater and in dark dust holes on the ice
+      setting: A frozen coast near the equator during a Snowball Earth glaciation, seen half above and half below the surface of a broad polynya of calm open water
+      left_mass: a tall, sheer cliff of blue-white glacier ice, layered and streaked with dark wind-blown dust, rising from the sea floor and plunging below the surface as a pale blue underwater wall
+      vegetation: none visible; life survives only as microbial films in meltwater and in dark dust holes on the ice, too thin to see
       fauna: none; no animals are visible
-      main_subject: a low, dark, frost-rimed boulder of ice-rafted rock at the edge of the open water
-      ground: hard, wind-scoured snow and bare blue ice with patches of dark dust and scattered gravel
-      water: a still meltwater lead, black and glassy, its edges skinned with thin new ice and small floating slabs
-      far_bank: an endless flat white ice shelf along the horizon
-      sky_and_light: a hard, clear, deep-blue cloudless sky; brilliant, cold, glaring sunlight reflecting off the ice; crisp, sharp shadows
-      absent: [plants, trees, grass, moss, animals, birds, penguins, polar bears, seals, people, buildings, footprints]
+      main_subject: underwater, a large ice-rafted dropstone boulder resting on the grey sea floor, its top dusted with fine silt, its shape plainly readable in the clear water
+      ground: the sea floor, grey glacial mud strewn with gravel and dropstones, with no visible life
+      water: clear, cold blue-green water, very still; the surface glassy and open all the way out to the distant ice
+      far_bank: a distant, low, endless flat white ice shelf along the horizon, beyond a wide stretch of open water
+      sky_and_light: a hard, clear, deep-blue cloudless sky; brilliant, cold, glaring sunlight reflecting off the ice; crisp, sharp shadows; below the surface, clear, cold blue-green light through open water, bright enough to show the sea floor
+      absent: [plants, trees, grass, moss, animals, birds, penguins, polar bears, seals, people, buildings, footprints, fish, jellyfish, seaweed, kelp, corals, sponges, any visible organism underwater]
     events: [snowball-earth]
-    pin: {asset_digest: "c9b3cf2decb2f0a6", path: "data/candidates/cryogenian-snowball/3dd3cbd08665a9aa/01-c9b3cf2decb2f0a6.jpg"}
+    # ADR-023 (v2): `wind` `loop` slightly above its 0.6 ambient -- a frozen, lifeless
+    # equatorial shore has nothing else to hear.
+    sound: {stem: wind, mode: loop, gain: 0.9}
+    pin: {asset_digest: "b282ea0ed3284209", path: "data/candidates/cryogenian-snowball/e4c60c03ecbe3687/02-b282ea0ed3284209.jpg"}
 
-  # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma).
+  # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma). In over-under
+  # (ADR-025), so these are the first animals the viewer clearly sees. Dickinsonia (567-550 Ma), a
+  # shallow-water mat feeder, is an animal by its cholesteroid biomarkers: Bobrovskiy, I. et al.
+  # (2018), Science 361(6408), 1246-1249 (volume and pages checked against Wikipedia's Dickinsonia
+  # article; the title's "steroids"/"sterols" wording is still unconfirmed). Charnia itself is not
+  # depicted: it is mainly a deep-water Avalon taxon, living well below the photic zone. The
+  # shallower White Sea assemblage (~560-550 Ma) does include rangeomorphs and other fronds
+  # (Wikipedia, Ediacaran biota), so the fronds are generic and small, standing behind the
+  # Dickinsonia. Their affinity is unresolved, hence "some of them early animals". Kimberella and
+  # Tribrachidium date ~555 Ma, after this t, and are not depicted.
   - id: ediacaran-shallows
     t: 5.6e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: Soft-bodied Ediacaran organisms, among the first large living things, lie on microbial mats in clear, sunlit shallows beside a barren coast.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in clear, sunlit shallows beside a barren coast.
     unsourced:
       o2_percent: 12  # contested: Ediacaran oxygen estimates range widely below modern
       mean_temp_c: 18  # rounded: post-glacial Ediacaran climate, poorly constrained
     subject:
-      setting: A shallow, sunlit Ediacaran sea floor seen through clear water at the edge of a barren coast
-      left_mass: a tall, bare outcrop of layered tan and grey sandstone with no plants on it
+      setting: A shallow, sunlit Ediacaran sea floor off a barren coast, seen half above and half below the surface
+      left_mass: a tall, bare outcrop of layered tan and grey sandstone with no plants on it, its base underwater
       vegetation: none on land, which is bare rock and sand; underwater, a wrinkled olive-brown microbial mat carpets the sea floor
-      fauna: soft-bodied Ediacaran organisms visible through the clear water, flat oval quilted Dickinsonia up to half a metre long, feather-like Charnia fronds standing up from the mat, and small disc-shaped holdfasts
-      main_subject: a group of tall, pale Charnia fronds rising from the mat in the clear shallows, just below the surface
-      ground: a wet beach of rippled pale sand and flat sandstone slabs, bare of any plants
-      water: very clear, calm, shallow turquoise water through which the textured sea floor is plainly visible
+      fauna: underwater, soft-bodied Ediacaran organisms, flat oval quilted Dickinsonia of several sizes lying on the mat, a few small, pale, frond-shaped organisms a hand-span tall standing up from the mat on disc holdfasts in the background, and small disc-shaped holdfasts
+      main_subject: underwater, a large, flat, quilted oval Dickinsonia about half a metre long lying on the mat, its fine rib-like segments running out from a central line and plainly readable in the clear water, with a few small, pale fronds standing on disc holdfasts behind it
+      ground: the sea floor, rippled pale sand under the microbial mat
+      water: very clear, calm turquoise water, soft dappled sunlight across the sea floor
       far_bank: a low, barren coastline of reddish rock and sand, with no green
-      sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight throwing sparkling caustics across the sea floor
-      absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people]
-    pin: {asset_digest: "bf667858e3d40d22", path: "data/candidates/ediacaran-shallows/9812bf36faf8a123/02-bf667858e3d40d22.jpg"}
+      sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight
+      absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people, jellyfish, seaweed, kelp, sea grass, corals, anemones, sponges, starfish]
+    pin: {asset_digest: "b1473d8e9161781f", path: "data/candidates/ediacaran-shallows/a0d529261ebaa4d5/02-b1473d8e9161781f.jpg"}
 
   # ~518 Ma, the Chengjiang biota (Yunnan, China): Yang, C., Li, X.-H., Zhu, M. & Condon, D.J.
   # (2018), "Geochronological constraint on the Cambrian Chengjiang biota, South China," Journal of
   # the Geological Society 175(4), 659-666. Shu, D. et al. (1999), "Lower Cambrian vertebrates from
   # south China," Nature 402, 42 (Haikouichthys, ~2.5 cm, on the vertebrate stem). Chengjiang was a
   # shallow, muddy, fast-sedimenting delta front (Maotianshan Shales), so the sea floor is shown
-  # through slightly silty shallows at a shoreline, the way ediacaran-shallows shows its fauna, in
-  # the one waters-edge chapter (ADR-014). Trilobites and Hallucigenia are documented at Chengjiang;
+  # beside a shoreline. Moved into over-under by chapter and shot only (ADR-025): the pinned image
+  # already has the split framing that chapter's composition was measured from, so its subject and
+  # caption are kept verbatim and its pin stays. Trilobites and Hallucigenia are documented at Chengjiang;
   # the radiodont is described as Amplectobelua-grade (up to ~90 cm), since the Chengjiang specimen
   # once assigned to Anomalocaris has been reclassified. Opabinia is Burgess Shale only and is not
   # depicted. No archaeocyathid reefs are recorded at Chengjiang.
   - id: cambrian-seafloor
     t: 5.18e8
-    chapter: waters-edge
-    shot: WATER_EDGE
+    chapter: over-under
+    shot: SPLIT_LEVEL
     caption: On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.
     unsourced:
       o2_percent: 12  # rounded, contested: rising but still well below modern by the mid-Cambrian
@@ -272,55 +313,72 @@ scenes:
   # al. (2010), "Early Middle Ordovician evidence for land plants in Argentina," New Phytologist
   # 188(2), 365-369. Ordovician land plants are known only from cryptospores (~470 Ma onward); the
   # earliest megafossils are Silurian, so the plants are shown as a millimetre-scale film. Reef life
-  # per great-ordovician-biodiversification (Fan et al. 2020, Science 367(6475), 272-277).
+  # per great-ordovician-biodiversification (Fan et al. 2020, Science 367(6475), 272-277). In
+  # over-under (ADR-025), so the reef becomes the subject below the surface and the plant film
+  # sits above it. Land plants came from freshwater green algae and the earliest ones needed
+  # waterlogged ground (Wikipedia, Evolutionary history of plants), so the film grows on damp
+  # rock by a freshwater seep above the splash zone, not in the salt-spray tideline. Late
+  # Ordovician tabulate and rugose corals, bryozoans and crinoids: Webby, B.D. et al., eds. (2004),
+  # The Great Ordovician Biodiversification Event, Columbia University Press (UNVERIFIED this
+  # session: not re-checked). Endoceras-type orthocone nautiloids are 470-443 Ma with shells to
+  # ~3 m; 1 m is deliberately smaller. Mature Endoceras were probably ambush predators lying on
+  # the sea floor, so the animal hovers low over the reef rather than cruising. Only the shell is
+  # known: tentacle count and form, and the shell's colour banding, are reconstructions from
+  # living cephalopods. Starfish and jawless fish both existed, so neither is forbidden.
   - id: ordovician-reef-shore
     t: 4.5e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: The first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to the tideline while a reef of shelled animals builds offshore.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: Beneath the surface a reef of crinoids, corals and shelled animals teems with life, while the first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to damp ground above the shore.
     unsourced:
       o2_percent: 14  # rounded, contested: rising through the Ordovician
       mean_temp_c: 26  # rounded: Ordovician greenhouse, before the end-Ordovician glaciation
     subject:
-      setting: A rocky Ordovician shoreline fringed by a shallow reef, on a continent that is otherwise entirely bare rock
-      left_mass: a low ridge of pale grey Ordovician limestone, its surface pocked with the borings and encrusting forms of an early reef community
-      vegetation: on the wet rock just above the waterline, a thin, dark-green crust of tiny liverwort-grade plants only millimetres tall, with no stems, leaves or roots; nothing grows further inland, which stays bare rock
-      fauna: straight-shelled nautiloid cephalopods drifting in the shallows; brachiopods and crinoids encrusting the reef rock; no animals on land
-      main_subject: a dark-green film of tiny liverwort-grade plants spreading across the wet rock at the tideline
-      ground: bare, pale, wave-smoothed limestone, grey everywhere but for the plant patches near the water
-      water: clear, calm, pale turquoise water over a reef of crinoids, brachiopods and coral-like tabulate colonies
-      far_bank: a barren grey limestone coastline rising to low hills, entirely bare rock but for a faint green tinge right at the waterline
+      setting: A rocky Ordovician shoreline fringed by a shallow reef, seen half above and half below the surface, on a continent that is otherwise entirely bare rock
+      left_mass: a ridge of pale grey Ordovician limestone breaking the surface, its submerged flank encrusted with reef life
+      vegetation: above the waterline only, a thin, dark-green crust of tiny liverwort-grade plants only millimetres tall, with no stems, leaves or roots, on damp rock high on the limestone ridge, well above the splash zone, where a thin trickle of fresh water seeps down the stone; the rest of the land stays bare rock; underwater there is no seaweed
+      fauna: "underwater, a crowded reef: stalked crinoids swaying in meadows, lacy and branching bryozoan colonies, ribbed brachiopods clustered on the rock, low honeycomb tabulate coral heads and solitary horn-shaped rugose corals, and trilobites on the sand between them; no animals on land"
+      main_subject: underwater, a straight-shelled orthocone nautiloid about a metre long, its long, narrow, gently tapering conical shell held horizontal and banded brown and cream, short tentacles trailing from the open end, hovering low over the crinoid reef
+      ground: the sea floor, pale sand and reef rubble between the colonies
+      water: clear, calm, pale turquoise water, sunlight throwing soft caustics across the reef
+      far_bank: a barren grey limestone coastline rising to low hills, entirely bare rock, with no green anywhere
       sky_and_light: a clear, warm, pale-blue sky with light high cloud; bright, warm, even sunlight
-      absent: [trees, grass, ferns, flowers, vascular plants, jawed fish, insects, land animals, birds, people]
-    pin: {asset_digest: "38be5a9c75c4f90a", path: "data/candidates/ordovician-reef-shore/2c83c3436cd15b3f/02-38be5a9c75c4f90a.jpg"}
+      absent: [trees, grass, ferns, flowers, vascular plants, jawed fish, insects, land animals, birds, people, modern fish, sharks, scleractinian corals such as brain or staghorn coral, sea anemones, kelp, seaweed, sea grass, coiled ammonite shells, octopus or squid, crabs, sea turtles]
+    pin: {asset_digest: "8f32a35b5ef95389", path: "data/candidates/ordovician-reef-shore/d9a34c3e4893e1c6/03-8f32a35b5ef95389.jpg"}
 
   # ~425 Ma, at the Cooksonia end of events.yaml land-plants (t_min = 425 Ma): Edwards, D., Fanning,
-  # U. & Richardson, J.B. (1994), Silurian Cooksonia macrofossils. Only one Cooksonia species shows
-  # conducting tissue and the plants were a few centimetres tall. Eurypterus-type sea scorpions were
-  # ~13-23 cm long. Guiyu oneiros, ~425.6 Ma: Zhu, M. et al. (2009), Nature 458, 469-474. Jawed
-  # vertebrates are older still: Zhu, Y.-a. et al. (2022), "The oldest complete jawed vertebrates
-  # from the early Silurian of China," Nature 609, 954-958 (Xiushanosteus, ~435 Ma), so the caption
-  # does not call these the first jawed fish.
+  # U. & Richardson, J.B. (1994), Silurian Cooksonia macrofossils. Cooksonia is a transitional
+  # stem-group form, not demonstrably vascular: only one species shows conducting tissue, the
+  # oldest species (C. barrandei) is ~432 Ma, and the plants were a few centimetres tall. In
+  # over-under (ADR-025), the last split scene before life comes ashore at rhynie-chert.
+  # One environment only: a shallow, restricted Euramerican lagoon. Eurypterus lived on the coasts
+  # and in the shallow, hypersaline inland seas of Laurussia, 432-418 Ma, 13-23 cm long (Wikipedia,
+  # Eurypterus), so there is no reef patch and no brachiopods. The fish are small anaspid-grade
+  # jawless fish like Birkenia (up to 10 cm, Silurian of Great Britain, Scandinavia and Estonia;
+  # Wikipedia, Birkenia), the same region as Estonian Eurypterus; direct co-occurrence in one bed
+  # is UNVERIFIED this session. Jawed fish are left out: Guiyu oneiros (~425 Ma; Zhu, M. et al.
+  # 2009, Nature 458, 469-474) comes from open-marine strata in South China, a different continent
+  # and setting.
   - id: silurian-shore
     t: 4.25e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore where sea scorpions crawl and early bony fish swim in the shallows.
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.
     unsourced:
       o2_percent: 16  # rounded
       mean_temp_c: 28  # rounded: warm Silurian greenhouse, high sea levels
     subject:
-      setting: A Silurian coastal margin, the shore itself now fringed for the first time by a true vascular plant
-      left_mass: a low bank of pale Silurian sandstone and shale, undercut where it meets the water
-      vegetation: a low, wiry fringe of Cooksonia, leafless branching stems only a few centimetres tall, forked at the tips into small rounded spore capsules, growing in a band just above the waterline; nothing grows more than a few steps inland
-      fauna: a eurypterid sea scorpion about 20 cm long, with a broad head shield, a pair of paddle-shaped rear legs and a narrow spine-like tail, resting half-buried in the sediment at the water's edge; small, bony-armoured jawed fish schooling in the shallows
-      main_subject: a slender, bony-armoured jawed fish about 25 cm long with paired fins and a simple jaw lined with small teeth, swimming just below the surface near the Cooksonia fringe
-      ground: bare, pale, ripple-marked sand and mud, with the Cooksonia fringe the only green in sight
-      water: shallow, clear, calm coastal water
+      setting: A sheltered, shallow Silurian coastal lagoon, seen half above and half below the surface, its shore fringed by Cooksonia, among the earliest upright, branching land plants
+      left_mass: a bank of pale Silurian sandstone and shale, undercut where it meets the water, its submerged face bare
+      vegetation: above the waterline, a low, wiry fringe of Cooksonia, leafless branching stems only a few centimetres tall, forked at the tips into small rounded spore capsules, growing in a band along the bank; nothing grows more than a few steps inland; underwater, only thin green algal films on the sand
+      fauna: underwater, a few more eurypterid sea scorpions on the sandy lagoon floor; a loose shoal of small, slender jawless fish about 10 cm long in mid-water, each with a small mouth and no jaws, a row of small gill openings behind the eye, a body covered in rows of narrow bony scales and a tail whose lower lobe is the larger
+      main_subject: underwater, a eurypterid sea scorpion about 20 cm long walking over the sand, with a broad, rounded head shield, a pair of paddle-shaped rear legs and a narrow spine-like tail, and two or three of the small jawless fish swimming just above it
+      ground: the lagoon floor, ripple-marked pale sand and mud
+      water: shallow, clear and calm
       far_bank: a low, barren coastal plain of grey-tan rock and sand, with only the faint dark-green fringe of Cooksonia visible at its edge
       sky_and_light: a clear, pale-blue sky with a few high clouds; warm, even sunlight
-      absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, modern fish, sharks, birds, people]
-    pin: {asset_digest: "96cdc909da9135c5", path: "data/candidates/silurian-shore/55234bc3c9e472c6/03-96cdc909da9135c5.jpg"}
+      absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, jawed fish, fish with teeth, modern fish, sharks, birds, people, kelp, seaweed, sea grass, coral reef, scleractinian corals, anemones, brachiopods, shells, crabs, lobsters]
+    pin: {asset_digest: "45f0b3f478c76df1", path: "data/candidates/silurian-shore/94e4eb2062d8286f/03-45f0b3f478c76df1.jpg"}
 
   # ~407 Ma, inside the Rhynie chert's radiometric age (events.yaml insects, 3.96e8-4.11e8;
   # Parry, S.F. et al. 2011, "A high-precision U-Pb age constraint on the Rhynie Chert,"
@@ -346,6 +404,9 @@ scenes:
       far_bank: a barren, pale mineral-crusted plain fading into low volcanic hills, bare but for scattered patches of the same low plant stems
       sky_and_light: a clear, pale-blue sky; bright, even sunlight; a faint shimmer of heat over the springs
       absent: [trees, ferns with true leaves, seed plants, grass, flowers, winged insects, land vertebrates, birds, people, spiders, spider webs]
+    # ADR-023 (v2): scene-only `geothermal` `loop` -- a hot-spring-fed wetland with silica pools;
+    # no stridulating insects yet (insects stay 0 until 300 Ma).
+    sound: {stem: geothermal, mode: loop, gain: 0.8}
     pin: {asset_digest: "7ea8b194c790ed34", path: "data/candidates/rhynie-chert/e37af28f8877ce17/02-7ea8b194c790ed34.jpg"}
 
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
@@ -373,6 +434,9 @@ scenes:
       far_bank: "a low upland of grey and ochre rock with dark, narrow, conical stands of Archaeopteris trees along the distant river margins"
       sky_and_light: a clear, pale blue sky with a few small fair-weather cumulus; bright, crisp sunlight with clean, defined shadows; clear air, the far distance sharp
       absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "cycads", "dinosaurs", "mammals", "birds", "flying insects", "crocodile", "legs", "digits", "claws", "external gills", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk"]
+    # ADR-023 (v2 review): `water` `loop` above its 0.25 Phanerozoic ambient -- a river meeting
+    # a shallow sea, where the surf that recedes inland after the first forests still belongs.
+    sound: {stem: water, mode: loop, gain: 0.8}
     pin: {asset_digest: "04b683b74388043c", path: "data/candidates/devonian-estuary/df7a9ca914a91a0b/03-04b683b74388043c.jpg"}
 
   # ~365 Ma, exactly at events.yaml tetrapods (t_min = 3.65e8; Acanthostega/Ichthyostega,
@@ -457,6 +521,8 @@ scenes:
       sky_and_light: a pale, cold, overcast white sky; flat, shadowless, cold light
       absent: [forest, established Glossopteris woodland, dinosaurs, mammals, reptiles, amphibians, any animal life, flowers, grass, tropical vegetation]
     events: [late-paleozoic-ice-age]
+    # ADR-023 (v2): `wind` `loop` above its 0.32 ambient -- katabatic wind off the ice-sheet margin.
+    sound: {stem: wind, mode: loop, gain: 0.8}
     pin: {asset_digest: "c79cd4f37d13d12f", path: "data/candidates/gondwana-ice-margin/3dab8c5cbfe609bb/03-c79cd4f37d13d12f.jpg"}
 
   # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
@@ -506,6 +572,9 @@ scenes:
       far_bank: flat-lying red beds and low dunes, bare to the horizon under dust
       sky_and_light: a cloudless sky bleached almost white by suspended dust; a hard, glaring sun and short, sharp, dark shadows; heat shimmer and a tan dust haze over the distance
       absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, swamp forest, lush green vegetation]
+    # ADR-023 (era-fit v3): `large-animal` `loop` -- two dinocephalian synapsids at the river,
+    # matching the new large-animal ambient stem's own ~270-260 Ma rise.
+    sound: {stem: large-animal, mode: loop, gain: 0.85}
     pin: {asset_digest: "736e79c67e650684", path: "data/candidates/permian-interior/f6afdfa062572f06/01-736e79c67e650684.jpg"}
 
   # ~251 Ma, just after events.yaml permian-extinction (2.5188e8-2.51941e8) and inside
@@ -533,6 +602,10 @@ scenes:
       far_bank: a barren red-brown plain stretching to the horizon, all but lifeless, broken only by scattered stands of Pleuromeia
       sky_and_light: a hazy, dust-laden, bleached sky, harsh and glaring; hard, flat light with little relief
       absent: [forests, lush vegetation, flowers, grass, dinosaurs, large predators, diverse fauna, birds, mammals]
+    # ADR-023 (era-fit v3, human direction 2026-09-15: "should be some large animal groaning...
+    # by this point" at 248 Ma): `large-animal` `loop` -- Lystrosaurus digging at the water's
+    # edge. Superseded the v2 `wind` (the pre-land ambient bed is silent by this era regardless).
+    sound: {stem: large-animal, mode: loop, gain: 0.85}
     pin: {asset_digest: "47c14793925a8c37", path: "data/candidates/early-triassic-lystrosaurus/0b362bccb7291d9a/01-47c14793925a8c37.jpg"}
 
   # ~231 Ma, exactly at events.yaml dinosaurs (t_min = 2.31e8): Martinez, R.N. et al. (2011),
@@ -612,6 +685,10 @@ scenes:
       far_bank: low, open fern prairie with scattered conifers under distant haze
       sky_and_light: a clear, deep blue sky with high thin cirrus and a bank of building cumulus on the horizon; crisp air with moderate distance haze
       absent: [flowers, flowering plants, grass, broadleaf trees, palms, large mammals, modern birds, people]
+    # ADR-023 (v2): `archosaurs` (public-domain USFWS alligator bellows: closed-mouth,
+    # low-frequency calls, Riede et al. 2016) as a `loop` above its 0.35 ambient -- sauropods
+    # in the foreground.
+    sound: {stem: archosaurs, mode: loop, gain: 0.9}
     pin: {asset_digest: "fff98516543632ed", path: "data/candidates/jurassic-floodplain/6633181a8f301dc0/01-fff98516543632ed.jpg"}
 
   # ~125 Ma, exactly inside events.yaml flowering-plants (1.25e8-1.33e8): Gomez, B. et al.
@@ -667,6 +744,11 @@ scenes:
       far_bank: mixed conifer-and-flowering forest, noticeably greener and denser with broadleaf growth than any earlier scene
       sky_and_light: a warm, hazy sky, hotter and more humid than the Early Cretaceous; soft, diffused sunlight
       absent: [true bees, butterflies, grass, large mammals, songbirds, parrots, pigeons, people]
+    # ADR-023 (era-fit v3, human direction 2026-09-15: "more pronounced buzzing instead of
+    # cricket insect noises... for the pollination scene"): `buzzing` `loop` -- the wasp/bee-like
+    # pollinators visiting the flowering shrub, dated to `earliest-pollinating-insects`
+    # (data/events.yaml, t_min 9.3e7-t_max 1.65e8; this scene's own t is inside that window).
+    sound: {stem: buzzing, mode: loop, gain: 0.9}
     pin: {asset_digest: "cfa0c916e9ea3943", path: "data/candidates/mid-cretaceous-pollinators/09fd68c37857f488/01-cfa0c916e9ea3943.jpg"}
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
@@ -689,6 +771,8 @@ scenes:
       far_bank: more swamp forest fading into humid haze
       sky_and_light: heavy milky haze and towering cumulus clouds; soft, diffused warm light; the air thick with humidity
       absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings]
+    # ADR-023 (v2): `archosaurs` `loop` above ambient -- the Edmontosaurus herd at the waterline.
+    sound: {stem: archosaurs, mode: loop, gain: 0.9}
     pin: {asset_digest: "45461089a48f8e16", path: "data/candidates/cretaceous-forest/3562b3bc257435a1/01-45461089a48f8e16.jpg"}
 
   # 66.043 Ma, events.yaml k-pg-impact (66.032-66.054 Ma): Renne, P.R. et al. (2013), Science
@@ -719,10 +803,10 @@ scenes:
       sky_and_light: a clear sky split by a blinding white-hot streak plunging steeply toward the horizon from the upper left, trailing smoke, far brighter than the sun; the whole scene thrown into hard, flash-lit relief
       absent: [a visible crater, an explosion or fireball filling the frame, mammals, birds as we know them, grass, people, ash, darkness]
     events: [k-pg-impact]
-    # ADR-023: no dedicated "impact" stem exists (scene sound reuses the tier-1 catalogue,
-    # never a bespoke file) -- `volcanic`'s low rumble is the closest cataloged texture to a
-    # sudden violent tremor, fired once as the asteroid strikes.
-    sound: {stem: volcanic, mode: once, gain: 0.85}
+    # ADR-023 (v2): scene-only one-shot `impact` (a vintage explosion rumble: a sharp attack, then
+    # ~20 s of low rolling rumble), fired `once` at full gain as the asteroid strikes. v1 fired the
+    # hot-spring `volcanic` clip here, which read as a sudden rush of water.
+    sound: {stem: impact, mode: once, gain: 1.0}
     pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
 
   # t = 6.604299999e7 (66,042,999.99 yr ago): ~3.65 days after kpg-arrival's impact instant
@@ -771,7 +855,7 @@ scenes:
     # ADR-023: the ash-laden gloom is an atmosphere, not a single event, so `loop` (tied to
     # this scene's own on-screen presentation weight) rather than `once`; `wind` is the closest
     # cataloged texture to the sifting-ash stillness described above.
-    sound: {stem: wind, mode: loop, gain: 0.55}
+    sound: {stem: wind, mode: loop, gain: 0.8}
     pin: {asset_digest: "ad31c5b96308e6e0", path: "data/candidates/kpg-darkness/be30de8f32a37bdb/03-ad31c5b96308e6e0.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
@@ -907,6 +991,8 @@ scenes:
       far_bank: the glacier's calving front stretching along the coast, hazed by blowing spray
       sky_and_light: a cold, pale, high-latitude sky with fast-moving cloud; flat, diffuse, chilly light
       absent: [forest, palms, flowering plants in bloom, large mammals, penguins, polar bears, people, buildings, ships]
+    # ADR-023 (v2): `wind` `loop` -- a cold outlet-glacier coast.
+    sound: {stem: wind, mode: loop, gain: 0.9}
     pin: {asset_digest: "a2fe73ed75939b32", path: "data/candidates/eocene-oligocene-icesheet/3a8cb5b339ffec67/02-a2fe73ed75939b32.jpg"}
 
   # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
@@ -934,6 +1020,9 @@ scenes:
       far_bank: open rolling grassland dotted with scattered trees and woodland patches, running to a distant horizon
       sky_and_light: a wide, bright blue sky with scattered fair-weather cumulus; clear, strong sunlight with a broad view to the horizon
       absent: [dense unbroken forest, dinosaurs, primates, modern-style farmland, fences, people, buildings]
+    # ADR-023 (v2): `mammals` (distant lions roaring in Gonarezhou; no livestock) as a `loop`
+    # above its ~0.15 ambient -- herds of three-toed horses on open plains.
+    sound: {stem: mammals, mode: loop, gain: 0.8}
     pin: {asset_digest: "93b44eb04685155f", path: "data/candidates/miocene-grassland/39127bbcdc1c4182/03-93b44eb04685155f.jpg"}
 
   # Late Miocene, ~7 Ma, within the C4 grass expansion (events.yaml c4-expansion, ~8-5 Ma by
@@ -960,6 +1049,9 @@ scenes:
       far_bank: open, sunburnt savanna running flat to a hazy, heat-shimmered horizon
       sky_and_light: a bleached, almost white sky with a fierce, high sun; hard, short shadows and visible heat haze over the distance
       absent: [dense forest, modern zebra, stripes, modern antelope, gazelles, horned animals, apes, hominins, people, fences, buildings]
+    # ADR-023 (v2): `mammals` `loop` -- an African savanna waterhole, the kind of open country
+    # the Gonarezhou lion recording itself comes from.
+    sound: {stem: mammals, mode: loop, gain: 0.9}
     pin: {asset_digest: "00c097bfdd0c523f", path: "data/candidates/c4-savanna-hipparion/424c3aa573df2c94/01-00c097bfdd0c523f.jpg"}
 
   # Messinian salinity crisis, 5.96-5.33 Ma, placed in the halite phase at 5.6 Ma (events.yaml
@@ -986,6 +1078,8 @@ scenes:
       far_bank: more bare white salt flat stretching unbroken to a shimmering horizon
       sky_and_light: a cloudless, bleached white sky; a fierce sun and blinding glare off the salt, with almost no shadow
       absent: [any plant, any animal, boats, fish, blue open sea, green colour anywhere, people, buildings]
+    # ADR-023 (v2): `wind` `loop` -- a hypersaline basin floor with no vegetation or animals.
+    sound: {stem: wind, mode: loop, gain: 0.9}
     pin: {asset_digest: "183125fa8e80ac2d", path: "data/candidates/messinian-salt-flats/ed0e1dbfb478a938/02-183125fa8e80ac2d.jpg"}
 
   # Australopithecus afarensis, AL 288-1 ("Lucy"), Hadar, Ethiopia, ~3.2 Ma (events.yaml
@@ -1042,6 +1136,8 @@ scenes:
       far_bank: open ocean to the horizon, with the forested spine of the isthmus curving away along the coast
       sky_and_light: a bright, clear tropical sky with scattered cumulus; strong, direct equatorial sunlight
       absent: [modern armadillos, tortoises, turtles, ostriches, rheas, emus, primates, people, boats, buildings]
+    # ADR-023 (v2): `water` `loop` above its 0.25 ambient -- surf on the new isthmus's coastal sand.
+    sound: {stem: water, mode: loop, gain: 0.9}
     pin: null
 
   # Homo erectus with Acheulean handaxes, Kokiselei 4, West Turkana, Kenya, ~1.76 Ma (events.yaml
@@ -1069,6 +1165,9 @@ scenes:
       sky_and_light: a bright, clear East African sky with scattered high cloud; strong, even daylight
       absent: [fire, clothing, spears, modern humans, metal, domesticated animals, buildings]
     events: [acheulean-technology]
+    # ADR-023 (era-fit v3, human direction 2026-09-15: "sound effect of early human using rock
+    # tools for that scene"): `knapping` `loop` -- the toolmaker striking flakes off the core.
+    sound: {stem: knapping, mode: loop, gain: 0.9}
     pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
@@ -1100,6 +1199,11 @@ scenes:
       far_bank: open cold steppe rising to low hills, patched with dark conifer stands
       sky_and_light: a pale, cold, high sky with fast-moving cloud; a low sun and long, cool-toned light
       absent: [cave paintings, agriculture, farm animals, metal, modern humans, modern clothing, buildings]
+    # ADR-023 (era-fit v3): `wind` `loop` -- open cold steppe, moved here from pleistocene-steppe
+    # (era-fit v3) so that scene's single `sound` slot can carry the mammoth call instead; the
+    # pre-land ambient bed is silent by this era regardless, so this is the only wind a viewer
+    # hears across either scene.
+    sound: {stem: wind, mode: loop, gain: 0.85}
     pin: {asset_digest: "3905f2c4c1a2641b", path: "data/candidates/ice-age-europe-neanderthal/a2371d18426b995f/01-3905f2c4c1a2641b.jpg"}
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
@@ -1122,6 +1226,13 @@ scenes:
       far_bank: a flat, treeless steppe running to a line of distant white glaciers on the horizon
       sky_and_light: a cold, clear, pale sky with a few thin clouds and a veil of wind-blown dust; crisp, bright light and long shadows
       absent: [forest, farm fields, fences, roads, buildings, domestic animals, people]
+    # ADR-023 (era-fit v3, human direction 2026-09-15: "woolly mammoth sound effect for ice age
+    # scene would be cool"): `mammoth` `once` -- no mammoth recording can exist (extinct ~4 ka
+    # before sound recording), so this is a documented substitution, a single modern elephant
+    # trumpet standing in for a mammoth's call (`sources/audio-stems/stems.toml`). Superseded the
+    # v2 `wind` loop, which moved to ice-age-europe-neanderthal (era-fit v3) -- a scene carries
+    # only one `sound`, and the mammoth call was the human's explicit ask for this scene.
+    sound: {stem: mammoth, mode: once, gain: 1.0}
     pin: {asset_digest: "e5e38045d401cbd2", path: "data/candidates/pleistocene-steppe/7c096c8ee716b05f/01-e5e38045d401cbd2.jpg"}
 
   # About 9500 BCE, earliest construction phase (Pre-Pottery Neolithic A) at Göbekli Tepe, a hilltop
@@ -1156,6 +1267,9 @@ scenes:
       sky_and_light: a clear, pale, early-autumn Anatolian sky; warm, low morning sunlight
       absent: [pottery, metal tools, domesticated animals, the plough, the wheel, writing, woven cloth, fired mudbrick buildings, modern clothing, identifiable faces]
     events: [gobekli-tepe]
+    # ADR-023 (v2): `settlement` (wordless crowd murmur) `loop` -- builders hauling and carving,
+    # human presence before farming.
+    sound: {stem: settlement, mode: loop, gain: 0.8}
     pin: {asset_digest: "84e970ce9bbc7b8c", path: "data/candidates/gobekli-tepe/178c1261980afdb4/02-84e970ce9bbc7b8c.jpg"}
 
   # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
@@ -1180,6 +1294,8 @@ scenes:
       sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
       absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
     events: [agriculture]
+    # ADR-023 (v2): `settlement` `loop` -- a farming village.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
     pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
 
   # About 6000 BCE / 8,000 BP, within the African Humid Period ("Green Sahara"); distinct from
@@ -1213,6 +1329,9 @@ scenes:
       sky_and_light: a hazy, warm, pale-blue sky with a scatter of high cloud; bright, even midday light
       absent: [dry desert dunes, camels, modern nomad tents, metal tools, horses, writing, permanent mudbrick buildings, modern clothing, identifiable faces]
     events: [african-humid-period]
+    # ADR-023 (v2): `livestock` (the goat-herd recording) `loop` -- Saharan pastoral-Neolithic
+    # herders with cattle; a near fit, kept quiet.
+    sound: {stem: livestock, mode: loop, gain: 0.8}
     pin: {asset_digest: "69f1684c8d9654bb", path: "data/candidates/green-sahara/c4113e71835e83e3/02-69f1684c8d9654bb.jpg"}
 
   # About 3200 BCE, late Uruk period, southern Mesopotamia; t = 2025 + 3200 = 5,225, rounded to 5,200,
@@ -1244,6 +1363,8 @@ scenes:
       sky_and_light: a pale, hazy, warm sky over the delta; bright, dusty midday light
       absent: [stone buildings, wheeled carts, horses, metal armour, legible cuneiform writing, modern clothing, identifiable faces, camels]
     events: [uruk-first-city]
+    # ADR-023 (v2): `settlement` `loop` above its 0.48 ambient -- the largest city yet.
+    sound: {stem: settlement, mode: loop, gain: 0.9}
     pin: {asset_digest: "0fc9645483b32d86", path: "data/candidates/uruk-city/270ac38ccc5b268b/02-0fc9645483b32d86.jpg"}
 
   # About 2560 BCE, completion of the Great Pyramid of Khufu at Giza; t = 2025 + 2560 = 4,585, per the
@@ -1280,7 +1401,130 @@ scenes:
       sky_and_light: a clear, pale desert sky with a faint haze near the horizon; bright, hard midday sunlight
       absent: [visible erosion or missing casing stones, tourists, camels for hire, modern clothing, identifiable faces, modern boats, metal ships, paved modern roads]
     events: [great-pyramid-giza]
+    # ADR-023 (v2): `settlement` `loop` -- labourers hauling stone at the harbour.
+    sound: {stem: settlement, mode: loop, gain: 0.9}
     pin: {asset_digest: "ae2cd69144d41861", path: "data/candidates/giza-great-pyramid/80ce6f75f4b98518/03-ae2cd69144d41861.jpg"}
+
+  # About AD 125, the height of Roman power; t = 2025 - 125 = 1900. Trajan's reign (AD 98-117)
+  # carried the empire to its greatest territorial extent (~5 million km^2); the Nerva-Antonine
+  # "Five Good Emperors" who followed (through AD 180) presided over the Pax Romana's most
+  # stable span (events.yaml roman-empire-peak, t_min/t_max 1845-1929, i.e. AD 96-180). Framed
+  # at the Pantheon's completion under Hadrian (probably dedicated c. AD 126, per Wikipedia
+  # "Pantheon, Rome"), specifically at the Tiber wharves per the brief: the Pantheon's granite
+  # columns were quarried in Egypt and shipped up the Tiber to Rome, so a river-trade setting is
+  # historically grounded, not just a composition convenience. No gladiatorial combat, no
+  # legible inscriptions: the brief's requested register is the city at its height, not a
+  # spectacle.
+  - id: imperial-rome-pantheon
+    t: 1.9e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In the 120s AD, at the height of Roman power, Hadrian's newly rebuilt Pantheon rises over the rooftops of the Campus Martius near the Tiber, its huge concrete dome the largest built anywhere for the next 1,300 years.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Roman Warm Period, close to pre-industrial
+    subject:
+      setting: The Tiber's riverside wharves in Rome, with the dome of Hadrian's newly completed Pantheon visible beyond, about AD 125, at the height of the Roman Empire's power
+      left_mass: a tall brick-faced Roman warehouse at the water's edge, arched storage bays open along its ground floor, an awning shading stacked amphorae
+      vegetation: a few planted umbrella pines and cypress along the embankment; none within the working wharf itself
+      fauna: gulls wheeling over the river; a few pigeons on the warehouse roof
+      main_subject: dockworkers in short wool tunics rolling amphorae of wine and oil off a broad-beamed river barge moored at a stone quay, none with a distinguishable face
+      ground: a paved stone quay worn smooth, stacked amphorae and coiled rope, a flight of stone steps down to the water
+      water: the calm, brown Tiber, its current slow near the bank, reflecting the wharf buildings
+      far_bank: the upper curve of the Pantheon's great dome, sheathed in dark bronze roof tiles, rising distantly above the tiled and terracotta rooftops of the Campus Martius about 600 metres from the river, with further temple roofs beyond
+      sky_and_light: a clear, pale Mediterranean sky with a little haze; bright, warm midday light
+      absent: [ruins or missing stonework, tourists, modern clothing, identifiable faces, gladiatorial combat, legible Latin inscriptions, the Pantheon's portico, columns or bronze entrance doors, a bare grey unweathered modern-looking dome, medieval or Renaissance buildings, electric light, modern boats]
+    events: [roman-empire-peak]
+    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
+    # ambient floor (t < 5.125 ka, `stemGains.ts`) -- dockworkers and river trade at a real city's
+    # height, louder than the generic murmur every other scene this side of Uruk already carries.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    pin: {asset_digest: "042036ae90c6428a", path: "data/candidates/imperial-rome-pantheon/586156545d27f4c8/01-042036ae90c6428a.jpg"}
+
+  # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =
+  # 2025 - 1150 = 875. Wikipedia "Angkor Wat": construction ran 1113-1150 (his reign), building
+  # work usually dated 1122-1150, close to his death; a Hindu temple to Vishnu, later converted
+  # to Buddhist use -- no Buddhist statuary shown, as it postdates this scene. The moat, over
+  # 5 km in perimeter, is a natural WATER_EDGE fit per the brief. Non-European per the task's
+  # requirement; chosen over another candidate medieval capital because the moat gives the
+  # composition an authentic water's edge rather than a forced one.
+  - id: angkor-wat
+    t: 875.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: By 1150, King Suryavarman II's temple-mountain of Angkor Wat nears completion at the heart of the Khmer Empire, its five towers mirrored in a moat more than five kilometres around.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Medieval Warm Period, close to pre-industrial
+    subject:
+      setting: The edge of Angkor Wat's great moat in the Khmer Empire, present-day Cambodia, with the newly completed temple-mountain rising beyond, about AD 1150
+      left_mass: a stand of tall sugar palms at the water's edge, their fan-shaped crowns dark against the sky
+      vegetation: dense tropical forest beyond the temple precinct, with lotus growing at the moat's edge
+      fauna: a pair of egrets wading at the moat's margin; a monitor lizard on a sunlit stone
+      main_subject: two robed temple attendants poling a narrow wooden boat across the moat toward the temple's western entrance, faces not distinguishable
+      ground: the moat's grassy near bank, with a stone landing step leading down to the water
+      water: the broad, still moat, more than five kilometres around, perfectly mirroring the temple
+      far_bank: the long outer enclosure wall of grey sandstone and laterite, newly built and still crisp-edged, with the western entrance gopura at its centre and Angkor Wat's five lotus-bud towers rising above and behind it
+      sky_and_light: a hazy, warm tropical sky with tall cumulus building; bright, humid midday light
+      absent: [ruins, missing stonework, moss or lichen staining the stone, modern tourists, modern clothing, identifiable faces, motorised boats, legible modern signage, Buddhist statuary, unfinished bare-stone galleries]
+    events: [angkor-wat-built]
+    # ADR-023 (2026-09-15 human-history scene sounds, corrected by that amendment's own
+    # 2026-09-15 re-review): `lake-water` `loop` -- quiet lapping at the moat's edge as the boat
+    # is poled across; the global `water` curve is 0 this late (past `TERRESTRIAL_BED_FADE_END`),
+    # so this is the only water this scene gets. Originally `water` itself, but that stem is
+    # Azores beach surf -- a continuous open-ocean roar, wrong for a still, mirrored moat at any
+    # gain -- so re-pointed at the new `lake-water` stem (gentle, irregular lapping) instead. Gain
+    # raised from 0.4 to 0.7 at the same time: 0.4 (-38.0 dB) sat *below* the flat 0.48
+    # (-36.4 dB) `settlement` floor this whole era carries, so the deliberate moat sound was never
+    # actually the loudest thing in the scene; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
+    sound: {stem: lake-water, mode: loop, gain: 0.7}
+    pin: {asset_digest: "93cb98d3b0226711", path: "data/candidates/angkor-wat/ede2ed7f4acc8ed1/01-93cb98d3b0226711.jpg"}
+
+  # October 1347, twelve Genoese trading galleys, fleeing Caffa, reach Messina, Sicily -- the
+  # first documented European landfall of the Black Death; t = 2025 - 1347 = 678, inside
+  # events.yaml black-death's existing t_min/t_max (672-679). The event's own description
+  # already states the sober death toll (25-50 million, Eurasia-wide estimates to 75-200
+  # million); this caption repeats only the low end for brevity, consistent with how other
+  # scenes summarise their linked event. Depicts the arrival itself, not a quarantine: formal
+  # maritime quarantine (a 30-day isolation) is a Ragusan innovation of 1377, three decades
+  # later, so no quarantine measures, warning signs or a shuttered town are shown -- the ships
+  # tie up at an ordinary, unsuspecting quay. Renamed from black-death-quarantine, which named a
+  # practice this scene predates; unpinned, so the rename is free. TONE: documentary and sombre
+  # per the brief -- no bodies, wounds or gore, no crowds, no panic; several moored galleys and a
+  # few distant, motionless sailors on deck stand in for the catastrophe rather than depicting
+  # suffering directly.
+  - id: black-death-messina-1347
+    t: 678.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In October 1347, twelve Genoese trading galleys fleeing Caffa put in at Messina, Sicily, carrying the Black Death into Europe; within six years the plague kills an estimated 25-50 million people across Europe, Western Asia and North Africa.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: late Medieval Warm Period cooling into the Little Ice Age, close to pre-industrial
+    subject:
+      setting: The quay of Messina, Sicily, as a fleet of Genoese trading galleys ties up in October 1347, an ordinary autumn day before anyone in the port knows what the ships carry
+      left_mass: a stone harbourside warehouse with closed wooden shutters and fishing nets hung to dry along its wall
+      vegetation: a few wind-bent cypress trees on the hillside above the port
+      fauna: gulls wheeling over the harbour
+      main_subject: several Genoese galleys moored at the quay, sails furled, a few sailors sitting motionless and slumped against the rail at a distance, no wounds or sores visible; a handful of townspeople on the quay keeping well back from the ships, uneasy but not yet fleeing
+      ground: a stone quay, mooring ropes and a few dropped crates of goods
+      water: the calm, pale grey-green water of Messina's harbour, the Strait of Messina beyond
+      far_bank: the hillside town of Messina rising above the harbour, ordinary terracotta roofs, a church tower and the city walls, no shutters closed
+      sky_and_light: an overcast, pale autumn sky over the sea; flat, cool, diffused light
+      absent: [bodies, visible wounds or sores, blood, gore, mass graves, violence, identifiable faces, modern clothing, modern medicine, flagellants, crowds, panic, quarantine flags or barriers, a shuttered or deserted town, an unmanned ghost ship, rats]
+    events: [black-death]
+    # ADR-023 (2026-09-15 human-history scene sounds, corrected by that amendment's own
+    # 2026-09-15 re-review): `lake-water` `loop`, subdued -- the quay's own quiet lapping, an
+    # ordinary-day harbour ambience rather than the crowd murmur a busier trade scene would
+    # carry. Deliberately not `settlement`: the moment is described as uneasy, held-back quiet
+    # ("keeping well back... not yet fleeing"), not a bustling waterfront. Originally `water`
+    # itself (Azores beach surf, a continuous open-ocean roar -- wrong for a sheltered strait
+    # quay at any gain), re-pointed at the calmer `lake-water` stem. Gain raised from 0.45 to
+    # 0.7: 0.45 (-36.9 dB) sat below the flat 0.48 (-36.4 dB) `settlement` floor this whole era
+    # carries, so the deliberate quay sound was never actually the loudest thing in the scene;
+    # 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
+    sound: {stem: lake-water, mode: loop, gain: 0.7}
+    pin: {asset_digest: "00a7df2296a29e50", path: "data/candidates/black-death-messina-1347/2ac51475d47929c0/01-00a7df2296a29e50.jpg"}
 
   # 12 October 1492 (Julian calendar), Columbus's first landfall in the Americas; t = 2025 - 1492 =
   # 533. Wikipedia "Christopher Columbus", "Columbus's first voyage": three ships, the carrack (nao)
@@ -1310,7 +1554,60 @@ scenes:
       sky_and_light: a clear tropical morning sky with a scatter of trade-wind cumulus; bright, warm early light
       absent: [modern boats, engines, steel hulls, national flags shown close-up, weapons in use, violence, a landing party ashore, stereotyped costume, identifiable faces, modern clothing, text or logos]
     events: [columbian-exchange]
+    # ADR-023 (v2): `water` `loop` -- surf in a shallow Bahamian bay (no CC0 ship-creak bed
+    # was found).
+    sound: {stem: water, mode: loop, gain: 0.9}
     pin: {asset_digest: "80840169388e234f", path: "data/candidates/columbus-landfall-1492/38463596228879c1/01-80840169388e234f.jpg"}
+
+  # About 1650, the Dutch Golden Age; t = 2025 - 1650 = 375. Fills the 338-year gap a review
+  # flagged between columbus-landfall-1492 (t = 533) and industrial-mill-town (t = 195) -- the
+  # early-modern world, a lifestyle bridge between agrarian/medieval life and the mill town's
+  # industrial one. Wikipedia "Dutch Golden Age": the era spans 1588-1672, Amsterdam "one of the
+  # most important ports and commercial centres in the world by 1630." Wikipedia "Dutch East
+  # India Company": VOC "one of the first joint-stock companies in the world" (not literally the
+  # first, corrected in review), its shares traded in open secondary markets "one of which became
+  # the Amsterdam Stock Exchange"; by 1669 "over 150 merchant ships, 40 warships, 50,000
+  # employees" -- a 1669 figure, stated in the caption as a forward reference from this 1650
+  # scene, the same convention giza-great-pyramid and green-revolution-fields already use.
+  # Wikipedia "Euronext Amsterdam": the exchange "is considered the oldest 'modern' securities
+  # market in the world" (Braudel's caveat: earlier share-like markets existed in Venice,
+  # Florence and Genoa; "modern" carries the claim, not literal first-ever). Review fix
+  # (2026-09-15): the ocean-going VOC East Indiamen that crossed the Zuiderzee bar drew too much
+  # water for the inner canals and anchored out in the IJ, cargo shuttled to the warehouse quays
+  # by flat-bottomed lighters -- general harbour-engineering practice of the period rather than a
+  # single citable sentence, so main_subject/water now show a lighter at the quay with the
+  # merchantman itself at anchor in far_bank, not moored at the canal-side warehouse directly.
+  # absent gained the modern fixtures a generative model reaches for on "Amsterdam canal" that the
+  # original list missed: bicycles, canal tour boats, houseboats, parked cars, street lamps. Kept
+  # in waters-edge (WATER_EDGE), continuing the run unbroken from columbus-landfall-1492 through
+  # to industrial-mill-town: no chapter cut is introduced by this scene. Composite VOC quay, like
+  # industrial-mill-town, not one surveyed sightline.
+  - id: amsterdam-voc-harbour
+    t: 375.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: "By 1650, Amsterdam dominates world trade through the Dutch East India Company (VOC), whose shares — traded from 1602 — gave the city what's often called the world's oldest modern stock market; by 1669 the VOC employs 50,000 people across over 150 merchant ships and 40 warships, and Amsterdam is the wealthiest city in the Western world."
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-17th-century global mean, close to pre-industrial
+    subject:
+      setting: A canal harbour in Amsterdam during the Dutch Golden Age, with Dutch East India Company (VOC) warehouses along the quay, about 1650
+      left_mass: a tall, narrow, step-gabled brick VOC warehouse rising straight from the quay, its top-floor loading beam jutting out with a rope and pulley, sacks of spice swinging up to an open loft door
+      vegetation: a single trimmed lime tree planted at the edge of the quay; otherwise bare stone and brick
+      fauna: a few gulls wheeling over the harbour; ducks paddling near the quay wall
+      main_subject: two merchants in dark wool coats and broad-brimmed hats standing at the quayside beside a clerk with a ledger and quill, counting barrels and bolts of cloth being unloaded from a flat-bottomed lighter moored at the quay, dockworkers rolling barrels past them, faces not distinguishable
+      ground: a stone quay of fitted cobbles, coiled rope, stacked barrels and crates, a mooring bollard worn smooth
+      water: the calm, dark, reflective water of an Amsterdam harbour canal, with lighters and small coastal barges moored along it
+      far_bank: a dense row of narrow, step-gabled brick merchant houses and further warehouses lining the far quay, the spires of several churches rising above the rooftops beyond, ocean-going VOC East Indiamen riding at anchor further out in the IJ
+      sky_and_light: a pale, cool, partly overcast North Sea sky with breaks of sun; soft, even daylight
+      absent: [steam power, steamships, motor vehicles, bicycles, canal tour boats, houseboats, cars parked along the canal, cast-iron street lamps, modern clothing, electric light, legible text or ledger writing, identifiable faces, factory chimneys, tourists, modern signage]
+    events: [dutch-golden-age-voc]
+    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
+    # ambient floor -- merchants, a clerk's ledger and dockworkers rolling barrels read as
+    # commerce, not a quiet canal; `industry`/`traffic` are both still 0 this early (t = 375,
+    # ahead of `industrial-revolution`).
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    pin: {asset_digest: "815e21329ccda9ba", path: "data/candidates/amsterdam-voc-harbour/8e29946d17ae807d/01-815e21329ccda9ba.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
   # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
@@ -1340,9 +1637,10 @@ scenes:
       sky_and_light: a heavy, soot-darkened grey sky with a low haze of coal smoke; flat, dim, overcast daylight
       absent: [cars, tarmac roads, electric lighting, plastic, modern signage, steel-hulled ships, modern clothing, identifiable faces, motor vehicles]
     events: [industrial-revolution]
-    # ADR-023: `machinery` (its cataloged clip is itself a real industrial/traffic field
-    # recording) as a continuous `loop`, matching the mill town's constant working noise.
-    sound: {stem: machinery, mode: loop, gain: 0.7}
+    # ADR-023 (v2): `industry` (a real large steam engine at work: a steady piston beat, no
+    # vehicles, sirens or whistles) as a continuous `loop` above its 0.5 ambient -- the steam-powered
+    # cotton mills' constant working noise.
+    sound: {stem: industry, mode: loop, gain: 1.0}
     pin: {asset_digest: "4ee06d67fed510e9", path: "data/candidates/industrial-mill-town/cc60ec69c5956c2c/03-4ee06d67fed510e9.jpg"}
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
@@ -1372,10 +1670,216 @@ scenes:
       sky_and_light: a cold, grey-blue overcast winter sky with a stiff wind; flat, diffuse December light
       absent: [modern aircraft, jet, helicopter, airliner, propeller at the front of the aircraft, wheeled landing gear, paved runway, road, car, power line, radio mast, modern clothing, sunglasses, crowd of many people, water in frame, identifiable faces]
     events: [wright-flyer-first-flight]
-    # ADR-023: `machinery` (engines) is the closest cataloged texture to the Flyer's own
-    # engine and twin propellers, fired once as it lifts off the rail.
-    sound: {stem: machinery, mode: once, gain: 0.5}
+    # ADR-023 (v2): scene-only one-shot `aircraft`, fired `once` as the Flyer lifts off the rail. No
+    # CC0/PD recording of the Flyer's engine exists, so this is a modern single-prop biplane flyby
+    # (a documented substitution), kept quiet so the substitution does not dominate.
+    sound: {stem: aircraft, mode: once, gain: 0.8}
     pin: {asset_digest: "b82bc9f05d4f344e", path: "data/candidates/first-powered-flight/16cc2baae684243d/02-b82bc9f05d4f344e.jpg"}
+
+  # 7 October 1913, Ford's Highland Park plant, Michigan, introduces the moving assembly line
+  # for the Model T; t = 2025 - 1913 = 112. Wikipedia "Ford Model T": all cars were painted
+  # midnight blue with black fenders from 1912; the "any colour so long as it is black" policy
+  # was not adopted until 1914, so this scene (1913) shows the earlier blue-and-black livery,
+  # not solid black. Assembly time for a chassis cut from over 12.5 hours to 93 minutes -- but
+  # not until 1914, a year after this scene, so the caption reads "within a year" rather than
+  # dating the 93-minute figure to 1913 itself. Detroit's municipal Motorbus Division dates
+  # only from 1925, so the street shows an electric streetcar (the rails were already in the
+  # ground field) rather than a motor bus, plus a horse-drawn wagon: horse-drawn traffic was
+  # still common alongside automobiles in 1913. Kept in open-ground (GROUND), continuing the
+  # run from first-powered-flight (t = 122): both are dry-land, no-water subjects and both hold
+  # daytime light, so the dissolve between them reads as a morph rather than a cut, per VISUAL_SPEC
+  # §2/§3. Electric street lighting (events.yaml edison-electric-light, t = 146) is shown unlit in
+  # daylight, consistent with the chapter's held time of day -- not glowing, as the brief's phrasing
+  # suggested, since that would need a night scene this chapter cannot hold.
+  - id: ford-model-t-street
+    t: 112.0
+    chapter: open-ground
+    shot: GROUND
+    caption: In 1913, Ford's new moving assembly line at Highland Park, Michigan, begins cutting the time to build a Model T chassis from twelve and a half hours to ninety-three minutes within a year, putting the automobile within reach of ordinary buyers.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
+    subject:
+      setting: A paved street outside Ford's Highland Park plant, Michigan, on a clear day in 1913, near the kerb
+      left_mass: the plant's long brick factory facade with tall multi-pane windows, a row of unlit cast-iron electric street lamps along the kerb in front of it
+      vegetation: none within the paved street frame; a few young street trees planted along the far kerb
+      fauna: none
+      main_subject: a line of dark midnight-blue Ford Model Ts with black fenders and an open-sided electric streetcar rolling down the street past the factory gate, a horse-drawn delivery wagon among them, drivers in flat caps and dusters at the wheel, faces not distinguishable
+      ground: a paved granite-sett street with streetcar rails running along it
+      water: none in the frame; no waterway runs near the plant
+      far_bank: no far bank; further factory buildings and telegraph poles recede down the street into a light haze
+      sky_and_light: a clear, pale industrial-city sky with a faint haze of coal smoke; bright, flat daylight
+      absent: [modern cars, motor buses, traffic lights, painted lane markings, neon signs, skyscrapers, identifiable faces, legible number plates, legible signage, solid-black Model Ts, night scene, lit electric streetlights]
+    events: [ford-model-t-assembly-line, edison-electric-light]
+    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.5, to
+    # carry the moment motor traffic arrives (the global `traffic` curve is only ~0.01 at
+    # t = 112). Dropped by that amendment's own 2026-09-15 re-review: the `traffic` stem is
+    # qubodup's "Seamless City Loop", a dense *modern* road-traffic bed (engine hum concentrated
+    # near 250 Hz, steady and continuous) -- it does not match a 1913 street of Model Ts, a
+    # streetcar and a horse-drawn wagon at any gain. No CC0/PD clip of period-correct early
+    # motor traffic (or streetcar bell/trolley) was sourced in the time this pass budgeted, so
+    # per CLAUDE.md ("if something is unusable, stop and report; do not silently substitute a
+    # different dataset") this scene carries no `sound` -- the flat 0.48 `settlement` floor every
+    # scene this side of Uruk already has is what plays here.
+    pin: {asset_digest: "1bb72621b940a4f0", path: "data/candidates/ford-model-t-street/839208a6ede59248/01-1bb72621b940a4f0.jpg"}
+
+  # 1 July - 18 November 1916, the Battle of the Somme, northern France; t = 2025 - 1916 = 109
+  # (events.yaml battle-of-the-somme, whose interval was tightened in review to the battle's
+  # actual 1 Jul-18 Nov 1916 span, t_min/t_max 108.12/108.50, rather than a zero-width
+  # calendar-year point -- see that event's comment). Wikipedia "Battle of the Somme": over 3
+  # million combatants, more than a million casualties on both sides for a few kilometres of
+  # ground. Kept in open-ground (GROUND), continuing the run from ford-model-t-street: no water
+  # anywhere near the Somme front line, so the main subject shows soldiers moving supplies along
+  # a trench rather than an attack -- the open-ground composition itself says "no water in
+  # view," so no crater pool is described either, and depicting an assault under fire would
+  # tilt toward combat drama rather than the documentary aftermath register the brief asks for.
+  # TONE per the brief: documentary and sombre -- no bodies, wounds, blood or gore; soldiers are
+  # distant, seen from behind, faces and unit insignia not distinguishable; no national flag
+  # shown. Tanks (first used at Flers-Courcelette, September 1916) are deliberately left out to
+  # keep the frame simple and representative of the battle as a whole, not one specific engagement
+  # within it.
+  - id: somme-1916
+    t: 109.0
+    chapter: open-ground
+    shot: GROUND
+    caption: On the Somme in 1916, four and a half months of Allied offensives against entrenched German lines cost more than a million men killed, wounded or missing on both sides for a few kilometres of ground.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
+    subject:
+      setting: A shell-cratered stretch of no-man's-land on the Somme battlefield, northern France, in the autumn of 1916, at the lip of a forward trench
+      left_mass: a collapsed section of trench wall reinforced with sandbags and timber, a coil of rusted barbed wire strung along its top
+      vegetation: a single blasted, leafless tree stump standing alone in the mud; no other living plant in view
+      fauna: none
+      main_subject: a file of soldiers in mud-caked greatcoats and helmets carrying duckboards and supply crates along a communication trench in the middle distance, seen from behind and at a distance, no face distinguishable, no unit insignia or flag visible
+      ground: a churned expanse of dried mud and empty shell craters stretching to the horizon, threaded with duckboards and more strung wire
+      water: none in the frame; only rainwater lying as wet mud in the low ground, no standing pool
+      far_bank: no far bank; the cratered ground rises gently toward a smoke-hazed ridge where the opposing line is dug in, unseen
+      sky_and_light: a low, grey overcast sky smudged with distant smoke; flat, dim autumn daylight
+      absent: [bodies, visible wounds, blood, gore, national flags or insignia shown prominently, tanks, modern military equipment, aircraft, identifiable faces, glorified heroic posing]
+    events: [battle-of-the-somme, world-war-i]
+    # ADR-023 (2026-09-15 human-history scene sounds): `artillery` `loop` -- a distant sustained
+    # bombardment bed, the scene's whole subject (a shell-cratered stretch of no-man's-land). New
+    # stem this amendment: no genuine CC0/PD period WWI/WWII field recording of distant shelling
+    # was found (searched Freesound and Wikimedia Commons); `artillery` is a documented
+    # substitution, a vintage optical-effects "Artillery Guns Firing" clip, the same precedent
+    # `impact`/`rocket`/`aircraft` already set for a library effect standing in for the real
+    # thing (`sources/audio-stems/stems.toml`). Gain raised from 0.55 to 0.9 by that amendment's
+    # own 2026-09-15 re-review: the `industry` ambience curve (a Victorian steam-engine bed,
+    # still ramping down through this era) sits at 0.6145 (-34.2 dB) at t = 109, above 0.55's
+    # -35.2 dB -- the deliberate bombardment was quieter than an incidental factory hum. 0.9
+    # (-30.9 dB) clears it by over 3 dB.
+    sound: {stem: artillery, mode: loop, gain: 0.9}
+    pin: {asset_digest: "9efe47ae999402d2", path: "data/candidates/somme-1916/ddd0a6e1361eaed0/01-9efe47ae999402d2.jpg"}
+
+  # About 1930, Tokyo's Ginza district at the height of its interwar "Ginbura" mass urban
+  # culture; t = 2025 - 1930 = 95. Fills the 1916-1944 hole a review flagged between somme-1916
+  # (t = 109) and normandy-landings-dday (t = 81) -- the 1920s-30s -- with the first modern mass
+  # urban lifestyle rather than more war, and deliberately does not repeat ford-model-t-street's
+  # 1913 Detroit street: different city, continent and decade. Wikipedia "Ginza": the custom of
+  # "killing time in Ginza" ("Ginbura") develops strongly between the two world wars. Wikipedia
+  # "Department store": "In 1924, Matsuzakaya store in Ginza allowed street shoes to be worn
+  # indoors" -- a real, dated Ginza department store, shown here as the chapter's left-mass
+  # building rather than an invented one. Wikipedia "NHK": Japan's first radio broadcasts begin
+  # in 1925. The Ginza subway (Wikipedia "Ginza Line": Ueno-Asakusa opens 30 December 1927,
+  # Asia's oldest subway line, reaching Shimbashi at Ginza's southern edge only on 21 June 1934)
+  # is not shown: 1930 predates its arrival at Ginza itself, so this scene shows the era's
+  # already-established streetcars instead -- the linked event (kind: period, 1924-1934) covers
+  # the fuller span; this scene is one moment within it. Caption figure: Wikipedia "Tokyo City",
+  # "Tokyo became the second-largest city in the world (population 4.9 million) upon absorbing
+  # several outlying districts in July 1932" -- a 1932 figure, stated as a forward reference from
+  # this 1930 scene, the same convention amsterdam-voc-harbour/giza-great-pyramid/
+  # green-revolution-fields use. TONE: no legible Japanese or English signage, no glowing neon --
+  # VISUAL_SPEC §2 holds this chapter's time of day to daylight, so the era's famous electric
+  # signs are shown unlit, exactly as ford-model-t-street's already are. Kept in open-ground
+  # (GROUND), continuing the run from somme-1916 before the existing cut to waters-edge at
+  # normandy-landings-dday: no water is intrinsic to a Ginza street. Review fix (2026-09-15):
+  # `setting` dropped its camera-position clause (ADR-008 -- shot/composition set the viewpoint,
+  # subject fields describe only the place); Tokyo's municipal bus service in fact dates to 1924
+  # (Wikipedia "Toei Bus": emergency routes started after streetcar lines were damaged in the
+  # 1923 Great Kanto earthquake), so "motor buses" is dropped from absent and the horse-drawn
+  # cart -- which also duplicated ford-model-t-street's vehicle mix -- is replaced with one.
+  - id: ginza-modern-tokyo
+    t: 95.0
+    chapter: open-ground
+    shot: GROUND
+    caption: "By the early 1930s, crowds of office clerks and shoppers throng Tokyo's Ginza for 'Ginbura' — streetcars, radio only five years old, and a department store letting shoppers keep their shoes on indoors — as Tokyo becomes the world's second-largest city, 4.9 million people, in 1932."
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
+    subject:
+      setting: A busy Ginza street in Tokyo, Japan, about 1930
+      left_mass: the stone-and-plate-glass facade of a large Ginza store rising several storeys, its display windows dressed with kimono and Western-style clothing, a plain unlettered stone band above the windows and a large round clock mounted above the entrance
+      vegetation: a few young street trees in iron tree-guards planted along the pavement
+      fauna: none
+      main_subject: a dense crowd of Ginza strollers out for "Ginbura" -- office clerks in Western suits and bowler hats, women in a mix of kimono and Western dress with short bobbed hair, several carrying department-store parcels -- passing a streetcar loading passengers at a stop, a motor bus and a black sedan sharing the street behind it, faces not distinguishable
+      ground: a paved street with streetcar rails and granite kerbstones, a wooden utility pole strung with wires at the edge of the pavement
+      water: none in the frame; no waterway runs through this stretch of Ginza
+      far_bank: no far bank; more pale stone commercial facades with plain, unlettered cornices and a columned Western-style building recede down the street into a light haze
+      sky_and_light: a clear, pale sky faintly hazed with coal smoke over the city; bright, flat daylight, streetlamps unlit in the daytime brightness
+      absent: [glowing neon signs, night scene, cars from after the 1930s, modern traffic lights, legible Japanese or English signage, any lettering or characters on facades, awnings, signboards, streetcars or buses, shop names, route numbers, modern clothing, identifiable faces, horse-drawn traffic, skyscrapers, post-war architecture, a visible subway or metro entrance]
+    events: [ginza-modern-urban-culture]
+    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.55, for
+    # the streetcars, motor bus and sedan sharing the street. Dropped by that amendment's own
+    # 2026-09-15 re-review: `traffic` is qubodup's "Seamless City Loop", a dense *modern*
+    # road-traffic bed (steady engine hum near 250 Hz) -- it does not match 1930 streetcars and a
+    # handful of early motor vehicles at any gain. No CC0/PD clip of a period streetcar bell/trolley
+    # or a single early motor vehicle was sourced in the time this pass budgeted, so per CLAUDE.md
+    # ("if something is unusable, stop and report; do not silently substitute a different dataset")
+    # this scene carries no `sound` -- the flat 0.48 `settlement` floor already covers the crowd
+    # murmur ("Ginbura" strollers) this scene's own subject calls for.
+    pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/candidates/ginza-modern-tokyo/80f535a685fb1887/01-81ccaf1dcc006f1f.jpg"}
+
+  # 6 June 1944, D-Day, the Normandy landings; t = 2025 - 1944 = 81 (events.yaml
+  # d-day-normandy-landings). Wikipedia "Normandy landings": the amphibious assault went in at
+  # about 06:30, roughly half an hour after that morning's ~05:58 sunrise -- shortly after
+  # sunrise, not at dawn or pre-dawn, and every other waters-edge scene is daylight, so this
+  # keeps the chapter's held time of day rather than breaking it. The often-quoted 156,000
+  # troops ashore "on the first day" is the whole day's total across sea and air -- 24,000 of
+  # them airborne troops who dropped inland overnight, not landing-craft arrivals -- so the
+  # caption states the seaborne and airborne figures separately rather than crediting the whole
+  # total to the beach landing craft this scene shows. The WATER_EDGE_SERIES composition fixes
+  # "calm water fills the bottom third of the frame," so the sea is described as a low swell,
+  # not the heavy breaking surf an earlier draft named, which flatly contradicted that fixed
+  # composition text; the invasion fleet is placed far out on the Channel horizon, not behind
+  # the beach's own bluff, where ships could not physically stand. Framed at the water's edge
+  # per the brief -- a landing craft grounding and troops wading ashore -- returning to the
+  # waters-edge chapter after the open-ground run (first-powered-flight/ford-model-t-street/
+  # somme-1916): a deliberate cut, appropriate for the shift from a static trench landscape to a
+  # seaborne invasion. TONE per the brief: documentary and sombre -- no bodies, wounds, blood or
+  # gore; troops seen from behind and at a distance, faces and unit insignia not distinguishable;
+  # no national flag shown.
+  - id: normandy-landings-dday
+    t: 81.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches — with a further 24,000 landing by parachute and glider overnight — opening the Western Front against Nazi Germany.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-20th-century global mean, close to pre-industrial
+    subject:
+      setting: A Normandy invasion beach shortly after sunrise on 6 June 1944, at the waterline as landing craft approach
+      left_mass: a steel beach obstacle, an angled iron "hedgehog" obstacle half-submerged at the tideline
+      vegetation: none on the open sand; low dune grass visible on the bluff far behind
+      fauna: none
+      main_subject: a landing craft grounding in the shallows just off the beach, its ramp dropping as soldiers in helmets and full kit wade forward through the surf, seen from behind and at a distance, no face distinguishable, no unit insignia or flag visible
+      ground: the wet, dark sand of the tideline in the immediate foreground, with tank tracks and churned ripples
+      water: a light chop on the grey Channel water, a low swell breaking around the landing craft's hull
+      far_bank: a low, smoke-hazed bluff above the beach, scarred with earthworks; more landing craft closer along the shore, with the invasion fleet lying far out on the grey Channel horizon
+      sky_and_light: a heavily overcast, grey early-morning sky with low broken cloud; flat, cool, diffused light
+      absent: [bodies, visible wounds, blood, gore, national flags or insignia shown prominently, identifiable faces, glorified heroic posing, modern military equipment, dropped kit or supplies]
+    events: [d-day-normandy-landings, world-war-ii]
+    # ADR-023 (2026-09-15 human-history scene sounds): `water` `loop` -- the scene is framed at
+    # the waterline as the ramp drops and soldiers wade through surf, the most immediate sound of
+    # the moment depicted. `artillery` (new this amendment, see `somme-1916`) was considered --
+    # the queue named this scene as an optional second use -- but the scene's own subject is the
+    # landing itself, not the bombardment; using `artillery` here too would also blur the two
+    # scenes' distinct character when they dissolve past each other on the timeline. Gain raised
+    # from 0.55 to 0.7 by that amendment's own 2026-09-15 re-review: 0.55 (-35.2 dB) led the flat
+    # 0.48 (-36.4 dB) `settlement` floor by only 1.2 dB, a weak margin for the deliberate surf cue
+    # over incidental background murmur; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
+    sound: {stem: water, mode: loop, gain: 0.7}
+    pin: {asset_digest: "3376a765c7aa7975", path: "data/candidates/normandy-landings-dday/88eb82ff981ae8cb/01-3376a765c7aa7975.jpg"}
 
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
   # Jornada del Muerto desert, New Mexico; t = 2025 - 1945 = 80. Wikipedia "Trinity (nuclear test)":
@@ -1391,12 +1895,15 @@ scenes:
   # distant-sky-event framing fits an actual, well-attested observation point. Framed on the existing
   # molten-earth chapter's ridge-vista composition (WIDE_RIDGE), not open-ground: VISUAL_SPEC §2 holds
   # time of day constant within a chapter, and this pre-dawn fireball's light has nothing in common
-  # with open-ground's only other scene (first-powered-flight, a diffuse overcast winter morning) —
-  # the two also sit close in time (t = 80 and 122), so sharing open-ground would force one dissolve
-  # to cut between a flat grey morning and a blinding flash only decades apart. molten-earth's
-  # WIDE_RIDGE vista, by contrast, already holds one extreme, singular event (the Moon-forming impact)
-  # far from any neighbour in time — a chapter recurring as non-adjacent runs is exactly what ADR-020
-  # permits. No new chapter or composition was added.
+  # with open-ground's scenes (daytime, per first-powered-flight/ford-model-t-street/somme-1916) or
+  # with its new immediate neighbour normandy-landings-dday (t = 81, an overcast early-morning
+  # waters-edge scene, shortly after sunrise rather than at dawn -- see that scene's own comment)
+  # -- molten-earth's WIDE_RIDGE vista, by contrast, already holds one extreme, singular event
+  # (the Moon-forming impact) far from any neighbour in time, and a chapter recurring as non-adjacent
+  # runs is exactly what ADR-020 permits. No new chapter or composition was added. (Updated
+  # 2026-09-15: this note originally compared only against first-powered-flight, t = 122; three human-
+  # era scenes were added between them, and this paragraph is corrected to describe the current
+  # neighbours rather than left to describe scenes that no longer sit adjacent.)
   - id: trinity-test
     t: 80.0
     chapter: molten-earth
@@ -1417,7 +1924,94 @@ scenes:
       sky_and_light: a dark pre-dawn sky at the edges, the eastern horizon just beginning to pale, overwhelmed at centre by the fireball's own blinding white-orange light
       absent: [a city, buildings, roads, modern military vehicles, people close-up, identifiable faces, a mushroom cloud far larger than the scale of a single test, a second sun, other explosions]
     events: [trinity-test]
+    # ADR-023 (v2): scene-only one-shot `impact` (a vintage explosion rumble: a sharp attack,
+    # then ~20 s of low rolling rumble), fired `once` at a lower gain than kpg-arrival -- the
+    # detonation as heard from ~20 miles away.
+    sound: {stem: impact, mode: once, gain: 0.8}
     pin: {asset_digest: "f09e447d813c3ab1", path: "data/candidates/trinity-test/8e82dc7b2a4afd06/02-f09e447d813c3ab1.jpg"}
+
+  # About 1957, postwar-suburban-boom (events.yaml, t_min/t_max 65-80, 1960-1945); t = 2025 - 1957 =
+  # 68. A composite American suburb, like industrial-mill-town, not one documented place. Wikipedia
+  # "Interstate Highway System": the Federal-Aid Highway Act of 1956, signed by Eisenhower in June
+  # 1956, authorised the construction of 40,000 miles of divided interstate highway. Wikipedia
+  # "Levittown, New York": built 1947-1951, 17,447 houses, at a peak rate of 30 houses a day, "the
+  # archetype for postwar suburbs throughout the country." Kept in open-ground (GROUND), a deliberate
+  # cut from trinity-test's molten-earth ridge vista (t = 80): no natural water is intrinsic to
+  # either an interstate cloverleaf or a tract-housing subdivision, and forcing a waterline would
+  # dilute the point (mass car ownership and mass home ownership, not a waterfront). No specific
+  # named town, road or model of car is depicted.
+  - id: post-war-boom-suburbia
+    t: 68.0
+    chapter: open-ground
+    shot: GROUND
+    caption: By the mid-1950s, America authorises 40,000 miles of new interstate highway in a single act while mass-built suburbs like Levittown — 17,447 houses raised in four years — put a car and a house within reach of millions of families for the first time.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-20th-century global mean, still close to pre-industrial before post-1970s warming
+    subject:
+      setting: A new tract-housing suburb going up beside a freshly opened highway cloverleaf interchange on the edge of an American city, about 1957
+      left_mass: a row of nearly identical newly built single-storey ranch houses in pale clapboard siding on a raw, still-treeless street, one with a blank wooden real-estate sign board staked in the yard, its face bare of any lettering
+      vegetation: a few spindly saplings staked upright in the new front yards; otherwise bare, graded earth
+      fauna: none
+      main_subject: a wide, freshly paved highway cloverleaf interchange, its curved ramps busy with chrome-bumper sedans and station wagons, one ramp still under construction with wooden formwork visible
+      ground: raw graded earth and a new pale concrete sidewalk running from the near foreground toward the interchange, a stack of lumber for another house frame at the kerb
+      water: none in the frame; no waterway runs near the interchange
+      far_bank: no far bank; more identical rooftops and a distant water tower recede into a light haze on the horizon
+      sky_and_light: a clear, pale-blue afternoon sky with a little industrial haze; bright, flat daylight
+      absent: [modern cars, SUVs, minivans, electric vehicles, cell-phone masts, LED traffic signals, shopping mall, satellite dishes, identifiable faces, modern clothing or branding, legible number plates, legible signage]
+    events: [postwar-suburban-boom]
+    # ADR-023 (2026-09-15 human-history scene sounds): `traffic` `loop` -- a busy highway
+    # cloverleaf of sedans and station wagons, above the curve's own ~0.26 at t = 68 (post-war
+    # motorisation is well underway but not yet at its curve peak).
+    sound: {stem: traffic, mode: loop, gain: 0.6}
+    pin: {asset_digest: "cb19517050596667", path: "data/candidates/post-war-boom-suburbia/daa81ccb61e8a25b/01-cb19517050596667.jpg"}
+
+  # Mid-1960s, the Green Revolution's spread through South Asia (events.yaml green-revolution,
+  # t_min/t_max 55-65, 1970-1960); t = 2025 - 1965 = 60, rounded to "the mid-1960s" rather than one
+  # year since the technology diffused over the decade. Wikipedia "Green Revolution": Norman
+  # Borlaug's short-stemmed, disease-resistant Mexican wheat lines and the new high-yield rice
+  # varieties bred alongside them (IR8 released 1966) roughly doubled to tripled regional cereal
+  # yields within a generation -- its wheat harvest rose from about 10 million tonnes a year in the
+  # 1960s to 73 million by 2006. Framed on a Punjab-style canal, a WATER_EDGE fit: the Green
+  # Revolution's yield gains depended on expanded irrigation as much as on the seed itself.
+  # Composite, generic farmland, like industrial-mill-town, not a documented specific field.
+  # Review fix (2026-09-15): the caption originally led with the Green Revolution page's claim of
+  # India's rice yields rising ~2 to ~6 t/ha (1960s to mid-1990s), a figure inconsistent both with
+  # the wheat field actually depicted and, independently, with Wikipedia "Rice production in India"'s
+  # own yield table (national average ~1.0 t/ha in the 1960s to ~1.9 t/ha in 1996-97/1997-98, roughly
+  # a third of the Green Revolution page's number) -- dropped in favour of the wheat figure, which
+  # matches the crop shown and is not contradicted elsewhere. The eucalyptus windbreak and dhoti were
+  # also swapped for a shisham windbreak and a kurta/tehmat, since large-scale eucalyptus planting and
+  # dhoti-style dress are not period- or region-typical for 1960s Punjab.
+  - id: green-revolution-fields
+    t: 60.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: By the mid-1960s, Norman Borlaug's short-stemmed high-yield wheat and the new rice varieties bred alongside it begin lifting Asian cereal yields severalfold within a generation — India's wheat harvest rising from about 10 million tonnes a year to 73 million by 2006 — work credited with saving up to a billion people from famine.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-1960s global mean, still close to pre-industrial before post-1970s warming
+    subject:
+      setting: An irrigation canal running through a ripening field of new short-stemmed, high-yield wheat in Punjab, at the height of the Green Revolution's spread through South Asia, about the mid-1960s
+      left_mass: a row of tall shisham (Indian rosewood) trees planted along the canal bank to mark the field boundary
+      vegetation: dense, waist-high, unusually short-stemmed wheat standing thick and uniform across the field, heavy-headed with grain, running back from the canal
+      fauna: a pair of cattle egrets stalking insects at the canal's edge
+      main_subject: a farmer in a plain cotton kurta and tehmat with a turban walking beside a small diesel pump set on the canal bank, its pipe feeding an earthen distributary channel into the wheat field, a grey tractor working the next field beyond him
+      ground: a packed-earth canal bank and narrow footpath, with a few sacks of chemical fertiliser stacked by the pump
+      water: a straight, narrow, brown irrigation canal, calm, its level held by an upstream head-regulator out of frame
+      far_bank: more high-yield wheat fields and a distant village of flat-roofed mud-brick houses, a few new brick ones rising among them
+      sky_and_light: a clear, hazy, hot pre-monsoon sky; bright, harsh midday light
+      absent: [combine harvesters, cabbed modern tractors, GPS-guided machinery, plastic irrigation pipe, motor scooters, modern clothing, identifiable faces, drought-stunted crop, tall traditional wheat varieties lodging in the field]
+    events: [green-revolution]
+    # ADR-023 (2026-09-15 human-history scene sounds): originally `industry` `loop`, gain 0.45,
+    # for a single diesel pump and a tractor working the next field. Dropped by that amendment's
+    # own 2026-09-15 re-review: the `industry` stem is blukotek's "Work of a Large Steam Engine",
+    # a Victorian piston beat at about 1.5 strokes/s (`sources/audio-stems/stems.toml`) -- it does
+    # not match a single 1960s diesel pump or tractor at any gain. No CC0/PD clip of a period
+    # diesel pump/tractor was sourced in the time this pass budgeted, so per CLAUDE.md ("if
+    # something is unusable, stop and report; do not silently substitute a different dataset")
+    # this scene carries no `sound` -- the flat 0.48 `settlement` floor covers the rural ambience.
+    pin: {asset_digest: "d6a9b3f322ea5a15", path: "data/candidates/green-revolution-fields/3a8b19dfb2466e51/01-d6a9b3f322ea5a15.jpg"}
 
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching
   # events.yaml moon-landing (t_min/t_max 56, four days later on 20 July). Wikipedia, "Apollo 11"
@@ -1448,29 +2042,371 @@ scenes:
       sky_and_light: a clear, pale-blue midsummer morning sky with a few small clouds; bright, warm morning sunlight
       absent: [Space Shuttle, SpaceX rocket, modern rocket, modern launch tower, modern buildings, smartphone, camera phone, legible text, logo, flag shown close-up, identifiable face, modern car, high-rise building]
     events: [moon-landing]
-    # ADR-023: `machinery` (engines) is the closest cataloged texture to the Saturn V's own
-    # engine roar, fired once as it clears the tower.
-    sound: {stem: machinery, mode: once, gain: 0.9}
+    # ADR-023 (v2): scene-only one-shot `rocket`, fired `once` as it clears the tower. No public-domain
+    # Saturn V recording was found, so this is NASA public-domain Space Shuttle launch audio
+    # (commentary removed) -- a documented substitution.
+    sound: {stem: rocket, mode: once, gain: 1.0}
     pin: {asset_digest: "a0da45cad76f825d", path: "data/candidates/apollo-11-launch/33045c4ababe91c8/03-a0da45cad76f825d.jpg"}
 
-  # The present day (events.yaml present: t = 0).
-  - id: modern-city
+  # About 1975, two decades into the container-shipping revolution (events.yaml containerization,
+  # t_min/t_max 21-69, 2004-1956); t = 2025 - 1975 = 50. Wikipedia "Containerization": Malcom
+  # McLean's SS Ideal X sailed the first successful container voyage, Newark to Houston, on 26 April
+  # 1956; by 2004 global container traffic reached 354 million TEU a year, and within a few years
+  # containers carried roughly nine-tenths of the world's non-bulk seaborne trade. A generic major
+  # port, composite like industrial-mill-town, not one named terminal. Kept in waters-edge
+  # (WATER_EDGE), continuing the run from apollo-11-launch and green-revolution-fields: a working
+  # harbour quay is a natural fit for the composition's water-filled lower third.
+  - id: containerisation-port
+    t: 50.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Two decades after Malcom McLean's first container voyage in 1956, standardised steel boxes and gantry cranes are remaking the world's ports; by 2004 they will handle 354 million TEU (twenty-foot container units) of traffic a year, carrying roughly nine-tenths of the world's non-bulk seaborne trade.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-1970s global mean, just entering the post-1970s warming trend
+    subject:
+      setting: A busy container terminal at a major port, gantry cranes loading a container ship at the quay, about 1975, two decades after the first container voyage
+      left_mass: a row of tall steel ship-to-shore gantry cranes striding the quay on rails, one reaching out over the ship's open holds
+      vegetation: none within the working terminal; a strip of scrub grass on the embankment beyond the perimeter fence
+      fauna: gulls wheeling over the water
+      main_subject: a mid-sized container ship moored at the quay, its deck stacked several containers high in mismatched colours, a gantry crane lowering another container into an open hold as dock workers in hard hats direct it from below
+      ground: a wide paved container yard, straddle carriers and stacked containers receding from the quay, criss-crossed by crane rails
+      water: the calm, grey-green water of the harbour basin at the quay wall, faintly oil-sheened
+      far_bank: further quays and more gantry cranes lining the harbour on the far side, with a few more ships waiting at anchor in the roads beyond
+      sky_and_light: a lightly hazy industrial harbour sky; bright, flat daylight
+      absent: [modern megamax container ships, automated straddle carriers, RFID gate scanners, legible shipping-line logos, legible container markings, identifiable faces, modern gantry-crane design, sailing ships]
+    events: [containerization]
+    # ADR-023 (2026-09-15 human-history scene sounds): originally `industry` `loop`, gain 0.7, for
+    # gantry cranes and dock machinery. Dropped by that amendment's own 2026-09-15 re-review: the
+    # `industry` stem is blukotek's "Work of a Large Steam Engine", a Victorian piston beat at
+    # about 1.5 strokes/s (`sources/audio-stems/stems.toml`) -- it does not match 1975 gantry
+    # cranes and dockside machinery at any gain. No CC0/PD clip of period crane/container-yard
+    # sound was sourced in the time this pass budgeted, so per CLAUDE.md ("if something is
+    # unusable, stop and report; do not silently substitute a different dataset") this scene
+    # carries no `sound` -- the flat 0.48 `settlement` floor covers the working-port ambience.
+    pin: {asset_digest: "8cc9c5451b9b81f3", path: "data/candidates/containerisation-port/9831bb0bdcdc23b8/01-8cc9c5451b9b81f3.jpg"}
+
+  # May 1980, Shenzhen Bay before the Special Economic Zone transforms it (events.yaml
+  # shenzhen-sez-designated, t = 45); t = 2025 - 1980 = 45. Wikipedia "Shenzhen": "In 1980, Shenzhen
+  # had a population of 30,000" when it was designated China's first Special Economic Zone that May;
+  # by 2025 the same city holds 18.2 million people -- the same figures already cited in
+  # shenzhen-bay-present's own comment, so this scene and that one are a deliberate before/after
+  # pair on the same bay, 45 years apart. Kept in waters-edge (WATER_EDGE): the composition is
+  # nearly identical to shenzhen-bay-present's own (a shoreline, a left-mass structure, open water,
+  # a low far bank), so the two frames should read as the same place transformed, not two different
+  # places.
+  # Review fix (2026-09-15): `absent` originally named "paved roads" and "electric lighting"
+  # outright, which overclaims -- 1980 Guangdong county towns had some basic grid power and road
+  # links even where surrounding villages did not. Narrowed to "multi-lane paved roads" and "modern
+  # streetlights", the genuinely anachronistic version of each. A reviewer also suggested the
+  # present-day Houhai shore was reclaimed from oyster-farming tidal flats, which would be a strong
+  # before/after cue; left unadded here, since neither a live WebFetch of Wikipedia "Shenzhen" nor
+  # this session's (exhausted) web-search budget could confirm it -- flagged for the lead to verify
+  # before adding.
+  - id: shenzhen-sez-1980
+    t: 45.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: In May 1980, the fishing villages and paddy fields around Shenzhen Bay — home to about 30,000 people — are designated China's first Special Economic Zone; within forty-five years the same shoreline carries a city of 18.2 million.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: 1980 global mean, at the start of the modern warming trend
+    subject:
+      setting: The shore of Shenzhen Bay, a market town of fishing villages and paddy fields in Guangdong, China, in May 1980, the month it is designated China's first Special Economic Zone
+      left_mass: a cluster of low, whitewashed brick-and-tile fishing houses on stilts at the water's edge, fishing nets hung out to dry along their eaves
+      vegetation: flooded rice paddies and banana groves running back from the shore, with a fringe of low mangrove scrub at the tideline
+      fauna: a flock of egrets working the paddy shallows; ducks paddling near the shore
+      main_subject: a fisherman wading out to push off a small wooden sampan at the waterline, while behind him surveyors in plain work clothes hammer a row of wooden stakes and string a boundary line across an empty paddy field marked for construction
+      ground: packed mud and cracked paddy dikes at the water's edge, a few upturned wooden boats and coiled fishing nets
+      water: the calm, brown-green, shallow water of Shenzhen Bay at low tide, mudflats showing at the margin
+      far_bank: open paddy fields and low wooded hills receding into haze, with no building taller than two storeys anywhere in view
+      sky_and_light: a hazy, humid subtropical sky with low cloud; soft, diffused midday light
+      absent: [skyscrapers, construction cranes for tall buildings, modern cars, multi-lane paved roads, modern streetlights, modern clothing, identifiable faces, container ships, bridges]
+    events: [shenzhen-sez-designated]
+    # ADR-023 (2026-09-15 human-history scene sounds): deliberately no `sound` -- this is the
+    # "before" half of Shenzhen's arc, a nearly empty shoreline (one fisherman, a few surveyors
+    # staking a boundary line), not yet the industry or crowd the SEZ will bring. The flat 0.48
+    # `settlement` floor every scene this side of Uruk already carries is enough presence; a
+    # foregrounded stem here (water, industry) would overstate how populated or busy this exact
+    # moment is, undercutting the irony the scene is framed to carry.
+    pin: {asset_digest: "4c3e176fe0fb71b8", path: "data/candidates/shenzhen-sez-1980/da809aa2a6f7a088/01-4c3e176fe0fb71b8.jpg"}
+
+  # 9 November 1989, fall of the Berlin Wall; t = 2025 - 1989 = 36 (events.yaml
+  # berlin-wall-falls). Wikipedia "Fall of the Berlin Wall": overwhelmed border guards opened
+  # the checkpoints that night after crowds gathered demanding passage. VISUAL_SPEC §2 holds
+  # time of day constant within a chapter, and open-ground's other scenes are all daytime, so
+  # this depicts the days immediately following rather than the night of the 9th itself: within
+  # days, Berliners were already climbing the Wall and chipping off fragments in broad daylight
+  # (the enduring, most-reproduced image of the Wall's fall), which is both historically
+  # attested and keeps the composition consistent -- the same fix trinity-test used (moving the
+  # depicted moment, not inventing a night-lit chapter). Kept in open-ground (GROUND): no natural
+  # water runs along this stretch of the Wall. The graffiti (Grenzmauer 75's painted face) was on
+  # the western, "outer" wall, so the camera stands in West Berlin, meaning the death strip, a
+  # watchtower and East Berlin -- not West Berlin's own rooftops -- lie beyond the wall; an
+  # earlier draft had this backwards. Review fix (2026-09-15): "graffiti-covered" no longer
+  # appears twice, and the paint is described as dense abstract colour with no lettering rather
+  # than just "graffiti," since the phrase alone tends to pull the model toward legible text; a
+  # separate `absent` entry cannot reliably suppress that pull on its own. "Others reaching down
+  # to help people climb over," which belongs to the crush of the night of 9-10 November rather
+  # than the open, policed crossings a few days on, is replaced with people simply standing atop
+  # the wall. "Modern clothing" in `absent` is sharpened to "post-1990s clothing" so it does not
+  # also suppress ordinary late-1980s dress. TONE per the brief: no national flags or political
+  # symbols shown prominently, no violence, faces not distinguishable.
+  - id: berlin-wall-fall
+    t: 36.0
+    chapter: open-ground
+    shot: GROUND
+    caption: Within days of the Berlin Wall's fall on 9 November 1989, crowds climb onto it in broad daylight, chiselling away souvenir fragments after overwhelmed border guards threw the checkpoints open overnight — the Cold War's defining collapse.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: late-1980s global mean (~14.3 °C)
+    subject:
+      setting: A stretch of the Berlin Wall's western face near a border crossing, on the West Berlin side, a few days after the border opened on 9 November 1989, in daylight
+      left_mass: a tall concrete wall panel covered in dense, overlapping layers of abstract spray-paint colour with no legible lettering, its rounded pipe coping along the top, a jagged gap already chipped through near its base
+      vegetation: none; a bare, trampled strip of ground runs along the wall's western side
+      fauna: none
+      main_subject: a crowd of East and West Berliners at the base of the wall and climbing onto its top, several swinging hammers and chisels at the concrete and prying off fragments, others standing along the coping atop the wall, faces turned away or not distinguishable, no flags or political symbols shown prominently
+      ground: the trampled, bare verge at the wall's foot, littered with chipped concrete fragments and a few dropped tools
+      water: none in the frame; no waterway runs near this stretch of the wall
+      far_bank: no far bank; beyond the wall, the death strip and a guard watchtower, with the East Berlin skyline -- apartment blocks and the distant Fernsehturm TV tower -- rising under the late-autumn sky
+      sky_and_light: a bright, cold, clear November sky with thin high cloud; crisp, direct daylight
+      absent: [post-1990s clothing, identifiable faces, national flags or political symbols shown prominently, legible graffiti text or lettering, violence, weapons, modern vehicles, night scene, floodlights]
+    events: [berlin-wall-falls]
+    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
+    # ambient floor -- a crowd at the wall, hammering and chiselling. `knapping` (stone-on-stone
+    # hits) was considered for the hammer/chisel strikes but rejected: it is a single rhythmic
+    # tapping loop built for one person's flintwork, not a crowd, and reusing it here would blur
+    # its own acheulean-erectus association; a foregrounded crowd murmur reads truer to a jubilant
+    # gathering than a mismatched percussion loop would.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    pin: {asset_digest: "04dcd886754a57cd", path: "data/candidates/berlin-wall-fall/93a53ee1d8d9e2ce/01-04dcd886754a57cd.jpg"}
+
+  # About 1998, the Aral Sea's collapse (events.yaml aral-sea-shrinkage, t_min/t_max 21-65,
+  # 2004-1960); t = 2025 - 1998 = 27. Wikipedia "Aral Sea": Soviet irrigation of the Amu Darya and
+  # Syr Darya, begun in the early 1960s, shrank the sea's surface area by 60% and its volume by 80%
+  # between 1960 and 1998; by 2004 it covered just 17,160 km^2, 25% of its 1960 extent of 68,000
+  # km^2. The fishing fleet, which once employed some 40,000 people and supplied a sixth of Soviet
+  # fish catches, had no commercial catch left by 1987; the port of Moynaq, Uzbekistan, now lies
+  # 30-90 km from the shore, its trawlers stranded on the dry bed. Kept in open-ground (GROUND),
+  # continuing the run from berlin-wall-fall: the whole point of the scene is a dry former seabed
+  # with no water anywhere in the frame, so waters-edge cannot make it. TONE: documentary, no
+  # people -- the abandoned vessels alone carry the scale of the loss.
+  - id: aral-sea-drying
+    t: 27.0
+    chapter: open-ground
+    shot: GROUND
+    caption: By 1998, Soviet-era irrigation of the Amu Darya and Syr Darya has shrunk the Aral Sea's surface area by 60% and its volume by 80% since 1960, stranding whole fishing fleets — once the source of a sixth of Soviet fish catches — kilometres from any water.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: late-1990s global mean
+    subject:
+      setting: The cracked, salt-crusted former seabed of the Aral Sea near the port town of Moynaq, Uzbekistan, about 1998, where the shoreline has retreated tens of kilometres
+      left_mass: a large rusted steel fishing trawler resting on its side in the sand, its hull streaked with corrosion, decades since it last floated
+      vegetation: sparse, salt-tolerant scrub and drought-killed reed stubble scattered across the dry lakebed
+      fauna: none
+      main_subject: two more fishing vessels sitting stranded and listing on the cracked, salt-white sand, their painted names faded and unreadable, far from any water
+      ground: a vast expanse of cracked, salt-crusted dry lakebed, ridged like a dry riverbed, littered with wind-scoured shells
+      water: none in the frame; the Aral Sea's shoreline has retreated far beyond the horizon
+      far_bank: no far bank; the flat, pale former seabed runs unbroken to a hazy horizon, with the outline of an abandoned fish-cannery building just visible in the distance
+      sky_and_light: a pale, dusty, wind-hazed sky; flat, harsh midday light
+      absent: [water, boats afloat, modern clothing, identifiable faces, vehicles, tourists, modern signage, green vegetation, healthy reed beds]
+    events: [aral-sea-shrinkage]
+    # ADR-023 (2026-09-15 human-history scene sounds): `wind` `loop` -- a bleak, desolate former
+    # seabed; the global `wind` curve is 0 this late (only its dated LGM bump near 20 ka is
+    # active), so without this the scene's own emptiness would be silent rather than carrying the
+    # desiccated, exposed character the subject calls for. Not `water` -- the whole point of the
+    # scene is the water's absence. Gain raised from 0.55 to 0.8 by that amendment's own
+    # 2026-09-15 re-review: the `traffic` ambience curve, purely incidental here, sits at 0.547
+    # (-35.2 dB) at t = 27, an effective tie with 0.55's own -35.2 dB -- the deliberate desolate-
+    # wind cue was no louder than background road noise. 0.8 (-31.9 dB) clears it by over 3 dB.
+    sound: {stem: wind, mode: loop, gain: 0.8}
+    pin: {asset_digest: "362287fda442033d", path: "data/candidates/aral-sea-drying/9e9e8d973f2352fa/01-362287fda442033d.jpg"}
+
+  # About 2014, mid-way through solar power's rapid scale-up (events.yaml renewable-energy-scaleup,
+  # t_min/t_max 10-15, 2015-2010); t = 2025 - 2014 = 11. Wikipedia "Growth of photovoltaics":
+  # cumulative global installed solar capacity grew from 41.6 GW in 2010 to 229.1 GW in 2015, more
+  # than fivefold in five years. Offshore wind grew alongside it over the same decade, but no single
+  # global figure for both 2010 and 2015 could be verified live (a WebFetch of Wikipedia "Offshore
+  # wind power" gives only a 2015 European total, 11,027 MW, not a global one for either year), so the
+  # caption states only the solar figures and describes the offshore turbines qualitatively rather than
+  # quantitatively (review fix, 2026-09-15: the original caption's "offshore wind farms multiply"
+  # implied a magnitude behind the same unverified claim its own comment disclaimed). The scene shows
+  # both, a representative renewable-buildout coastline like shenzhen-bay-present's composite Houhai
+  # shore, not one named wind farm or solar plant. Kept in waters-edge (WATER_EDGE), continuing the run
+  # through smartphone-seafront-2018, global-city-rush-hour and shenzhen-bay-present: an offshore turbine
+  # array needs a coastline, and it keeps this whole closing stretch of the timeline on one composition.
+  - id: energy-transition-solar-wind
+    t: 11.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: Between 2010 and 2015 the world's installed solar capacity grows more than fivefold, from 41.6 to 229.1 gigawatts, while offshore wind turbines begin to appear along temperate coastlines too — the leading edge of an energy transition still gathering pace.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: mid-2010s global mean
+    subject:
+      setting: A stretch of coastline with a large offshore wind farm on the horizon and a solar array on the shore behind it, about 2014, during the rapid worldwide scale-up of renewable power
+      left_mass: a bank of large ground-mounted solar panels angled toward the sun, rising just behind the shoreline dunes
+      vegetation: low, wind-bent coastal dune grass and scrub between the solar array and the shore
+      fauna: a few gulls resting on the rocks at the waterline
+      main_subject: rows of offshore wind turbines standing in the sea, their blades turning, a small maintenance crew-transfer vessel motoring between them
+      ground: a rocky, grass-tufted shoreline path running from the near foreground toward the solar array
+      water: a calm, grey-blue sea, gently rippled, stretching out to the turbines
+      far_bank: no far bank; the wind turbines themselves stand on the horizon, receding into a light sea haze
+      sky_and_light: a clear, cool, slightly hazy coastal sky with scattered cloud; bright, even daylight
+      absent: [oil rigs, coal-fired power station, smoke stacks, tall chimneys, legible turbine-brand markings, identifiable faces, modern electric cars, drones, futuristic architecture]
+    events: [renewable-energy-scaleup]
+    # ADR-023 (2026-09-15 human-history scene sounds): `wind` `loop` -- an open, breezy coastline
+    # with offshore turbines on the horizon, the curve itself silent this late. Thematically apt
+    # for a wind-energy scene as well as literally: the moving blades and open sea both read as
+    # wind, not surf. Gain raised from 0.5 to 0.8 by that amendment's own 2026-09-15 re-review:
+    # the `traffic` ambience curve, purely incidental here, sits at 0.55 (-35.2 dB) at t = 11,
+    # above 0.5's own -36.0 dB -- the deliberate coastal-wind cue was quieter than background
+    # road noise. 0.8 (-31.9 dB) clears it by over 3 dB.
+    sound: {stem: wind, mode: loop, gain: 0.8}
+    pin: {asset_digest: "744c0c444494da52", path: "data/candidates/energy-transition-solar-wind/3afccf1f8918ff05/01-744c0c444494da52.jpg"}
+
+  # End of 2018 (t = 2025 - 2018 = 7), matching events.yaml half-of-humanity-online (t 7): the ITU
+  # estimate that 51.2% of the world's population is online by the end of 2018. A composite,
+  # representative city seafront rather than one documented place and view, like
+  # industrial-mill-town. The technology is shown in use rather than as an object: touchscreen
+  # smartphones went mass-market with the iPhone in 2007 (events.yaml iphone-launch, Wikipedia
+  # "iPhone (1st generation)"); front-facing cameras (iPhone 4, 2010) popularised the selfie,
+  # "selfie" was Oxford Dictionaries' word of the year in November 2013, and selfie sticks were
+  # globally popular by the early-to-mid 2010s (Wikipedia "Selfie"). Held in waters-edge daylight
+  # like its neighbours, so the phones are legible by gesture (raised at arm's length, heads bowed
+  # over screens) rather than by a night-time glow. Everyone is seen from behind or the side, faces
+  # not distinguishable, screens not readable, no brand logos. Face masks are excluded as a
+  # 2020-onward anachronism.
+  - id: smartphone-seafront-2018
+    t: 7.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: By the end of 2018, more than half of humanity is online, much of it through touchscreen smartphones that reached the mass market only eleven years earlier.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: late-2010s global mean
+    subject:
+      setting: A busy seafront promenade along the top of a low sea wall that drops straight into calm water, on a bright summer afternoon in 2018, a representative coastal city rather than one specific place
+      left_mass: a tall modern seafront hotel and apartment tower of glass and pale concrete, with rows of balconies, rising from the promenade
+      vegetation: a few planted palms and clipped shrubs along the promenade
+      fauna: a few gulls over the water and on the sea-wall railing
+      main_subject: a small crowd of holidaymakers at the sea-wall railing directly above the water, nearly every one holding a touchscreen smartphone; two friends lean together for a selfie with a phone raised at arm's length, one person holds a phone out on a selfie stick, others film the sea or look down at their phone screens; all seen from behind or the side, no face distinguishable
+      ground: a wide paved promenade with a metal railing; in the near foreground a man sits on a bench, seen from the side, holding a large-screened touchscreen smartphone whose slim black glass slab is clearly visible in his hand, its screen content unreadable
+      water: a calm, blue-green sea lapping gently against the foot of the stone sea wall, with no beach
+      far_bank: a long, low curve of coastline with more hotel and apartment towers, a pier, and a slender mobile-phone mast on a hill
+      sky_and_light: a clear summer sky with a few small fair-weather clouds; bright afternoon sunlight
+      absent: [readable screen content, legible text, brand logos, identifiable faces, face masks, flip phones, phones with physical keyboards, landline telephones, bulky mobile phones, virtual-reality headsets, holograms, flying vehicles, futuristic architecture, historical costume, night scene]
+    events: [half-of-humanity-online]
+    # ADR-023 (v2): `settlement` (wordless crowd murmur) `loop` -- a busy holiday
+    # promenade; ambient `traffic` and `water` already carry the city and the sea.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    pin: {asset_digest: "e42a28ac748277c4", path: "data/candidates/smartphone-seafront-2018/e65d99544f509dce/02-e42a28ac748277c4.jpg"}
+
+  # The early 2020s, a composite/representative global city-centre morning rush hour, like
+  # industrial-mill-town, not one documented place; t = 2025 - 2021 = 4. Added at
+  # the user's request to capture "busy city centres, traffic, office/desk jobs" and how much
+  # lifestyle has changed in recent history, alongside ginza-modern-tokyo and amsterdam-voc-harbour
+  # as the human-era sequence's lifestyle-and-society arc. Spaced >= 3 years from both
+  # smartphone-seafront-2018 (t = 7) and shenzhen-bay-present (t = 0), per the brief. Wikipedia
+  # "Urbanization", citing UN population data: "just 15% of the world's population lived in
+  # cities" in 1900; "in 2007, more than 50% of the world population was living in cities, for
+  # the first time in human history" -- the sourced figure behind this scene's caption and its
+  # linked event, urban-majority-milestone. Kept in waters-edge (WATER_EDGE), continuing the run
+  # unbroken from smartphone-seafront-2018 through to shenzhen-bay-present: no chapter cut is
+  # introduced by this scene.
+  # Review fixes (2026-09-15): dated "about 2021" specifically, the setting contradicted the
+  # picture -- packed crowds and full office floors with no face masks read wrong for the
+  # pandemic-era low point in commuting -- so `t` keeps its 2021 value (the >=3-year spacing from
+  # smartphone-seafront-2018/shenzhen-bay-present) but setting/caption now read "the early 2020s"
+  # rather than naming the year. `setting` dropped its camera-position clause (ADR-008 -- the WATER_EDGE
+  # shot already fixes the viewpoint, and "along a crowded pedestrian bridge" contradicted its own
+  # "looking level along the shore"). The desk workers (the brief's "desk jobs shown from outside,
+  # keeping the outdoor shot") moved from the office tower's upper floors and the far bank's whole
+  # grid of windows -- both physically unreadable from a camera 1 m above the waterline, looking
+  # into daylight-lit glass across a wide river -- onto the lowest two floors of the near left_mass
+  # building, close enough and low enough to read at eye level; far_bank is now a plain skyline
+  # with no claimed interior detail. main_subject dropped the pedestrian bridge (composition caps
+  # it at about a fifth of frame width; a metro entrance, a crowd descending it, and a crowd also
+  # streaming onto a bridge above was three subjects competing for that space), leaving the metro
+  # entrance and its commuter stream. left_mass/vegetation/fauna/water were also reworded --
+  # different building height and material, different tree and bird species, a tidal river rather
+  # than a lake-calm one -- so the frame reads as its own place rather than a generic river
+  # embankment. It replaces the earlier generic `modern-city` waterfront (t = 15) outright, at
+  # the user's request (2026-09-15): the two frames were too alike to earn both slots.
+  - id: global-city-rush-hour
+    t: 4.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    caption: "By the early 2020s, more than half of humanity lives in a city — a threshold first crossed only in 2007, up from just 15% in 1900 — commuting by metro, bus and cycle lane past office towers filled with desks and screens."
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: early-2020s global mean
+    subject:
+      setting: A riverside embankment in a global city centre during the morning commute, the early 2020s
+      left_mass: a six-storey glass-and-steel office building standing close behind the embankment, near enough that its lowest two floors sit almost at eye level from the waterline, rows of desks and seated office workers at computer screens clearly visible behind the unshaded ground-floor glass, while the floors above recede into the morning glare, their interiors no longer readable
+      vegetation: a row of clipped hornbeam hedges in steel planters marking the edge of the cycle lane
+      fauna: sparrows pecking at dropped pastry crumbs outside a coffee kiosk on the embankment
+      main_subject: the glass-canopied entrance to a metro station built into the embankment wall at the waterline, a dense crowd of commuters in business dress streaming up its steps onto the embankment plaza, several holding paper coffee cups, more than one walking with a phone held up in front of them, faces not distinguishable
+      ground: a wide paved embankment plaza crossed by a marked cycle lane with cyclists threading through the rush, a queue of buses and taxis idling at the kerb behind the crowd
+      water: a broad, grey-brown tidal river with a light chop, reflecting the office building's glass front and the morning sky
+      far_bank: a dense skyline of glass office and apartment towers on the opposite bank, their windows a uniform grid of reflected morning light, receding into a haze
+      sky_and_light: a bright, slightly hazy morning sky over the city; clear daylight with long low shadows
+      absent: [futuristic architecture, flying vehicles, holograms, driverless robotaxis, legible text, logos or brand names, identifiable faces, face masks, historical costume, ruins, empty streets, a pedestrian bridge]
+    events: [urban-majority-milestone]
+    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
+    # ambient floor -- a dense rush-hour crowd streaming out of a metro station, at t = 4 the
+    # busiest human presence this catalogue depicts. Not `traffic`: the subject is pedestrians and
+    # a metro entrance, no road vehicles in frame, and `traffic`'s own curve is already near its
+    # post-2000 ceiling (~0.55) here regardless.
+    sound: {stem: settlement, mode: loop, gain: 0.75}
+    pin: {asset_digest: "4bddd2b3509ab4b6", path: "data/candidates/global-city-rush-hour/45b27d0bc71a4d1d/01-4bddd2b3509ab4b6.jpg"}
+
+  # The present day, t = 0 (events.yaml present), and the last scene of the timeline: Shenzhen,
+  # designated China's first Special Economic Zone in May 1980, when it was a largely rural area of
+  # about 30,000 people, and by 2025 a city of about 18.2 million, called "China's Silicon Valley"
+  # and home to Huawei, Tencent, DJI and Oppo (Wikipedia "Shenzhen"). Framed on the Shenzhen Bay
+  # waterfront, a composite of real landmarks rather than one surveyed sightline: Shenzhen Bay Park,
+  # 13 km along the bay's north shore across Nanshan and Futian, opened in full 6 August 2011, with
+  # mangroves and migrating birds (Wikipedia "Shenzhen Bay Park"); China Resources Headquarters,
+  # "Spring Bamboo", 392.5 m, 2018, Houhai, Nanshan (Wikipedia "China Resources Headquarters");
+  # Shenzhen Bay Sports Center, "Spring Cocoon", a perforated external steel skin on reclaimed land,
+  # opened April 2011 (Wikipedia "Shenzhen Bay Sports Center"); Shenzhen Bay Bridge, cable-stayed,
+  # opened 1 July 2007, from Nanshan to Ngau Hom Shek, Hong Kong (Wikipedia "Hong Kong–Shenzhen
+  # Western Corridor"). The left-to-right placement is composed, not surveyed, but `far_bank` holds
+  # only what really lies across the bay from the Houhai shore: the bridge and the New Territories
+  # hills. Ping An Finance Centre and the Futian skyline are left out because they stand about
+  # 10 km east, set back from the shore, not across the water, and a 599 m skyline would fight the
+  # composition's low far bank. The white CR HQ crown, the white "cocoon" shell and the mangroves
+  # carry the present-day read, not generic glass towers and a railed embankment. The drone is a generic small quadcopter: DJI is
+  # Shenzhen-based (Wikipedia "Shenzhen"), but Meituan's 2023 urban drone deliveries are sourced
+  # only to "first-tier cities" (Wikipedia "Meituan"), so no delivery service is claimed.
+  # "Futuristic" comes from real present-day architecture in waters-edge daylight, like every other
+  # scene in the chapter (VISUAL_SPEC §2 holds time of day within a chapter), not from a
+  # night-time LED light show or invented sci-fi forms.
+  - id: shenzhen-bay-present
     t: 0.0
     chapter: waters-edge
     shot: WATER_EDGE
-    caption: The present, where a city of glass and concrete lines a river and one species reshapes the planet's surface in a geological instant.
+    caption: "The present: Shenzhen, a largely rural area of about 30,000 people forty-five years ago, is now a city of some 18 million where glass supertalls, electric traffic and delivery drones crowd the bay, and one species reshapes the planet's surface in a geological instant."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: present global mean
+    # Respecified 2026-09-15 at the user's request: "the shenzen scene should be replaced with a more
+    # futuristic looking part of the city with skyscrapers, electric cars, maybe robots, etc, making it
+    # look like a sci-fi city (there are parts of it that do)". Houhai / Shenzhen Bay Super Headquarters
+    # is that real part: everything below exists today, so no invented architecture.
     subject:
-      setting: The waterfront of a large modern city on a wide river in the present day
-      left_mass: a cluster of tall modern glass-and-concrete high-rise towers
-      vegetation: planted street trees along the embankment promenade
-      fauna: a few gulls over the water and pigeons on the embankment
-      main_subject: a river ferry moored at a concrete pier at the waterline, with a few commuters on the pier
-      ground: a stone embankment with railings, a paved promenade and lamp posts
-      water: a wide, calm, grey-green river reflecting the buildings
-      far_bank: a dense skyline of apartment blocks, construction cranes and a bridge
-      sky_and_light: a lightly hazy pale-blue sky with a faint brown smog layer over the skyline; bright, slightly diffused daylight
-      absent: [futuristic architecture, flying vehicles, ruins, historical costume, dinosaurs, legible text, logos]
-    pin: {asset_digest: "89b360bb4addcd58", path: "data/candidates/modern-city/7b703b53d6eab5a8/02-89b360bb4addcd58.jpg"}
+      setting: the Houhai waterfront on Shenzhen Bay, Shenzhen, China, in the present day, seen from the edge of the bay looking along the shore towards the dense Houhai central business district
+      left_mass: a tight cluster of glass-and-steel supertalls rising close behind the waterfront, among them the 390-metre white China Resources Headquarters with fine vertical ribs tapering to a pointed bamboo-shoot crown, and the twin angular glass towers of a technology company's headquarters joined in mid-air by three enclosed glass skybridges
+      vegetation: planted palms and young banyan trees along the promenade, and a narrow fringe of dark-green mangroves at the water's edge
+      fauna: a few white egrets wading in the shallows by the mangroves
+      main_subject: a sweeping elevated pedestrian skywalk of white steel and glass curving between the towers above a waterfront boulevard, where a stream of electric cars and an electric bus with green number plates glide past; on the promenade in front, a small white wheeled autonomous delivery robot rolls between pedestrians and cyclists, and two small delivery drones cross the sky between the towers; no figure has a distinguishable face
+      ground: a wide paved promenade of pale stone with a low granite edge and inset lighting strips, running beside the mangrove fringe
+      water: the calm grey-green water of Shenzhen Bay, faintly rippled, reflecting the glass towers and skybridges
+      far_bank: further along the curving shore, more slender supertalls of the Shenzhen Bay Super Headquarters district rising in a hazy line
+      sky_and_light: a lightly hazy pale-blue subtropical sky with scattered cumulus; bright, warm, slightly diffused afternoon sunlight glinting off glass curtain walls, skybridges and car roofs
+      absent: [flying cars, holograms, invented science-fiction buildings, humanoid robots, night scene, neon-lit rain-soaked street, ruins, construction cranes, heavy smog hiding the skyline, petrol exhaust, traffic jams, advertising billboards, legible text, legible number plates, brand logos, identifiable faces]
+    # ADR-023 (v2): `traffic` `loop` above its 0.55 present-day ambient -- a busy megacity
+    # waterfront, heard as road traffic and city hum, never sirens.
+    sound: {stem: traffic, mode: loop, gain: 0.9}
+    pin: {asset_digest: "7381960301cd6f6e", path: "data/candidates/shenzhen-bay-present/a350076bdc37326f/01-7381960301cd6f6e.jpg"}

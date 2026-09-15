@@ -1620,6 +1620,43 @@ events:
       Via Wikipedia "Coin", drawing on Herodotus, Aristotle and Pollux, plus the Ephesus
       Artemision hoard; primary/archaeological sources not independently checked.
 
+  - id: roman-empire-peak
+    label: Roman Empire at its height
+    kind: period
+    t_min: 1845
+    t_max: 1929
+    tags: [society, science-technology]
+    importance: 0.6
+    description: >
+      Trajan's reign (AD 98-117) carries the Roman Empire to its greatest territorial
+      extent, about 5 million square kilometres from Britain to Mesopotamia; the
+      Nerva-Antonine "Five Good Emperors" who follow, through AD 180, preside over
+      the Pax Romana's most stable and prosperous span. Hadrian's rebuilt Pantheon in
+      Rome, its huge unreinforced-concrete dome the largest built anywhere for the
+      next 1,300 years, is dedicated within this period, around AD 126.
+    citation: >
+      Wikipedia, "Roman Empire" (accessed 2026-09-15): territorial peak under Trajan,
+      AD 98-117, ~5,000,000 km^2; Nerva-Antonine dynasty and Pax Romana, AD 96-180.
+      Wikipedia, "Pantheon, Rome" (accessed 2026-09-15): present building completed
+      and probably dedicated by Hadrian c. AD 126.
+
+  - id: angkor-wat-built
+    label: Angkor Wat built
+    kind: period
+    t_min: 875
+    t_max: 903
+    tags: [society, science-technology]
+    importance: 0.55
+    description: >
+      King Suryavarman II of the Khmer Empire commissions Angkor Wat, in present-day
+      Cambodia, as his state temple, dedicated to Vishnu. Construction runs through
+      his reign, completed close to his death around 1150 — the largest religious
+      monument in the world, surrounded by a moat over 5 km in perimeter.
+    citation: >
+      Wikipedia, "Angkor Wat" (accessed 2026-09-15): construction 1113-1150, building
+      work usually dated 1122-1150; Suryavarman II reigned 1113-c.1150; moat 190 m
+      wide, over 5 km in perimeter.
+
   # t_max (1368) runs to the fall of the last successor state (Yuan dynasty), a
   # "founding to final dissolution" framing choice broader than the unified empire's own
   # life, which fragmented into four khanates after 1259.
@@ -1738,6 +1775,38 @@ events:
       Crosby, A.W. (1972). The Columbian Exchange: Biological and Cultural Consequences
       of 1492. Greenwood Press (title/author/year only; not independently verified this
       session).
+
+  # Review fix (2026-09-15): retagged [society] only -- the description is entirely about trade
+  # and finance, with nothing science-technology describes. "The world's first company to trade
+  # its own shares on a public exchange" overstated the VOC Wikipedia page, which calls it only
+  # "one of the first joint-stock companies in the world"; the stock-exchange superlative is now
+  # attributed to, and phrased after, Wikipedia "Euronext Amsterdam" instead, and "roughly 150"
+  # corrected to "over 150" to match the source verbatim.
+  - id: dutch-golden-age-voc
+    label: Amsterdam's Dutch Golden Age
+    kind: period
+    t_min: 353
+    t_max: 437
+    tags: [society]
+    importance: 0.5
+    description: >
+      Amsterdam becomes Europe's foremost trading hub and, for a time, the wealthiest
+      city in the Western world, powered by the Dutch East India Company (VOC), one of
+      the world's first joint-stock companies: its shares, publicly traded from 1602,
+      helped give Amsterdam what is often called the world's oldest modern securities
+      market, and by 1669 the VOC had grown into a private commercial empire of some
+      50,000 employees, over 150 merchant ships and 40 warships.
+    citation: >
+      Wikipedia, "Dutch Golden Age" (accessed 2026-09-15): the era spans 1588-1672;
+      Amsterdam "one of the most important ports and commercial centres in the world
+      by 1630." Wikipedia, "Dutch East India Company" (accessed 2026-09-15): VOC "one
+      of the first joint-stock companies in the world," its shares traded in open
+      secondary markets "one of which became the Amsterdam Stock Exchange"; by 1669,
+      "over 150 merchant ships, 40 warships, 50,000 employees." Wikipedia, "Euronext
+      Amsterdam" (accessed 2026-09-15): the Amsterdam exchange "is considered the
+      oldest 'modern' securities market in the world." Wikipedia, "Amsterdam" (accessed
+      2026-09-15): the 17th-century Golden Age city "became the wealthiest city in
+      the Western world."
 
   - id: newton-principia
     label: Newton publishes the Principia
@@ -1887,6 +1956,25 @@ events:
       cited "feeds nearly half of humanity" figure traces to Smil and was not
       independently re-derived here.
 
+  - id: ford-model-t-assembly-line
+    label: Ford's moving assembly line
+    kind: moment
+    t_min: 112
+    t_max: 112
+    t: 112
+    tags: [science-technology, society]
+    importance: 0.5
+    description: >
+      Henry Ford's Highland Park plant in Michigan introduces the moving assembly
+      line for the Model T, cutting chassis assembly time from over twelve hours to
+      93 minutes by the following year. Combined with the internal combustion engine
+      it puts on the road, the technique makes the automobile a mass-market product
+      and becomes the template for 20th-century manufacturing.
+    citation: >
+      Wikipedia, "Ford Model T" (accessed 2026-09-15). Moving assembly line
+      introduced 7 October 1913 at the Highland Park plant; assembly time cut from
+      12+ hours to 93 minutes by 1914.
+
   - id: general-relativity
     label: General relativity published
     kind: moment
@@ -1904,6 +1992,84 @@ events:
       Wissenschaften, presented 25 November 1915. Full theory: Einstein, A. (1916). "Die
       Grundlage der allgemeinen Relativitatstheorie." Annalen der Physik, 354(7),
       769-822.
+
+  # Added in review (2026-09-15): the original human-history batch dated the Somme and D-Day as
+  # standalone battle events but named no First or Second World War event at all, so the wider
+  # war each sits inside was missing from the event feed entirely. t_min/t_max use the same
+  # day-counted GeoTime convention as battle-of-the-somme's own fix below.
+  - id: world-war-i
+    label: The First World War
+    kind: period
+    t_min: 106.14
+    t_max: 110.43
+    tags: [catastrophe, society]
+    importance: 0.65
+    description: >
+      Beginning with Austria-Hungary's declaration of war on Serbia after the
+      assassination of Archduke Franz Ferdinand, the First World War draws in every
+      major power and spreads across Europe, the Middle East, Africa and beyond,
+      fought largely from fixed trench lines on its Western Front — the Somme among
+      them. It ends with the Armistice of 11 November 1918. Estimates of the total
+      dead, military and civilian, range from 15 to 22 million.
+    citation: >
+      Wikipedia, "World War I" (accessed 2026-09-15): began 28 July 1914; ended with
+      the Armistice of 11 November 1918; estimated 15-22 million deaths, military and
+      civilian.
+
+  # Review fix (2026-09-15): t_min/t_max were originally both 109, the file's usual
+  # whole-year "t = 2025 - CE_year" rounding for a battle that starts and ends within the same
+  # calendar year -- a real interval collapsed to a point, which a `kind: period` event should
+  # never do (ADR-022: a period's own t_min/t_max are its span, read directly, so a genuinely
+  # months-long battle should not render identically to a single dated moment). Replaced with the
+  # actual day-counted span: 1 Jul 1916 is day 183 of a (leap) 366-day year, 1916 + 182/366 =
+  # 1916.497, t = 2025 - 1916.497 = 108.50; 18 Nov 1916 is day 323, 1916 + 322/366 = 1916.880,
+  # t = 2025 - 1916.880 = 108.12. GeoTime is a float, so this uses the same day-counted precision
+  # the file already uses for other well-dated spans, rather than the coarser whole-year
+  # shorthand.
+  - id: battle-of-the-somme
+    label: Battle of the Somme
+    kind: period
+    t_min: 108.12
+    t_max: 108.50
+    tags: [catastrophe, society]
+    importance: 0.55
+    description: >
+      Allied and German forces fight a four-and-a-half-month battle along the Somme
+      river in northern France, one of the largest and costliest battles of the
+      First World War. More than three million men take part; over a million are
+      killed, wounded or reported missing on both sides, for a front line that moves
+      only a few kilometres.
+    citation: >
+      Wikipedia, "Battle of the Somme" (accessed 2026-09-15): 1 July - 18 November
+      1916; over 3 million combatants; British casualties ~420,000, French ~200,000,
+      German 237,159-429,209.
+
+  # Review fix (2026-09-15): the subway clause read as if the line ran beneath Ginza's own
+  # streets across 1927-1934; in fact the 1927 opening was the Ueno-Asakusa section, and the line
+  # reached Ginza itself only in 1934 (Wikipedia "Ginza Line", already cited below) -- reworded to
+  # state both dates and places explicitly.
+  - id: ginza-modern-urban-culture
+    label: Ginza's mass urban culture
+    kind: period
+    t_min: 91
+    t_max: 101
+    tags: [society, science-technology]
+    importance: 0.5
+    description: >
+      Tokyo's Ginza district becomes interwar Japan's showcase of a new, first-of-its-
+      kind mass urban lifestyle: a Ginza department store lets customers keep their
+      shoes on indoors from 1924, Japan's first radio broadcasts begin the following
+      year, and Tokyo's first subway line — Asia's oldest, opened in 1927 — reaches
+      Ginza itself only in 1934, as crowds throng the district for "Ginbura," the
+      fashionable pastime of strolling Ginza simply to see and be seen.
+    citation: >
+      Wikipedia, "Department store" (accessed 2026-09-15): "In 1924, Matsuzakaya
+      store in Ginza allowed street shoes to be worn indoors." Wikipedia, "NHK"
+      (accessed 2026-09-15): Tokyo Broadcasting Station begins radio broadcasts in
+      1925. Wikipedia, "Ginza Line" (accessed 2026-09-15): Ueno-Asakusa section opens
+      30 December 1927, Asia's oldest subway line; reaches Shimbashi 21 June 1934.
+      Wikipedia, "Ginza" (accessed 2026-09-15): the "Ginbura" strolling custom
+      "developing strongly between the two world wars."
 
   - id: penicillin-discovery
     label: Penicillin discovered
@@ -1923,6 +2089,52 @@ events:
       Journal of Experimental Pathology, 10(3), 226-236 (received 10 May 1929,
       describing the culture-plate observation dated 3 September 1928).
 
+  # Added in review (2026-09-15): see world-war-i's comment -- the Second World War was likewise
+  # missing as its own event, with only its D-Day and Trinity moments individually dated.
+  - id: world-war-ii
+    label: The Second World War
+    kind: period
+    t_min: 79.33
+    t_max: 85.33
+    tags: [catastrophe, society]
+    importance: 0.7
+    description: >
+      Beginning with Germany's invasion of Poland, the Second World War becomes the
+      deadliest conflict in human history, fought across Europe, the Pacific, North
+      Africa and beyond and marked by genocide, including the Holocaust, and the
+      first use of nuclear weapons. It ends with Japan's surrender on 2 September
+      1945. Estimates of the total dead, the majority civilians, range from 60 to 75
+      million.
+    citation: >
+      Wikipedia, "World War II" (accessed 2026-09-15): began 1 September 1939; ended
+      2 September 1945; estimated 60-75 million deaths, military and civilian, a
+      majority of them civilian.
+
+  # Review fix (2026-09-15): the description originally credited "156,000 troops ashore on the
+  # first day alone" to the beach landings alone. That figure is the whole day's combined total
+  # across sea and air; Wikipedia "Normandy landings" gives 24,000 of the 156,000 as airborne
+  # troops dropped by parachute and glider overnight, so only about 132,000 actually came ashore
+  # by landing craft. Both figures are now stated separately.
+  - id: d-day-normandy-landings
+    label: D-Day, the Normandy landings
+    kind: moment
+    t_min: 81
+    t_max: 81
+    t: 81
+    tags: [catastrophe, society]
+    importance: 0.6
+    description: >
+      Allied forces land on five beaches along the Normandy coast in the largest
+      seaborne invasion in history, opening the Western Front against Nazi Germany.
+      About 132,000 troops come ashore by landing craft on the first day, alongside
+      a further 24,000 airborne troops dropped by parachute and glider overnight —
+      some 156,000 in total; the campaign that follows leads to the liberation of
+      Western Europe within a year.
+    citation: >
+      Wikipedia, "Normandy landings" (accessed 2026-09-15): 6 June 1944; Utah,
+      Omaha, Gold, Juno and Sword beaches; approximately 156,000 troops landed on
+      D-Day in total, including 24,000 airborne troops.
+
   - id: trinity-test
     label: First nuclear weapon detonated
     kind: moment
@@ -1939,6 +2151,127 @@ events:
       US Department of Energy / Manhattan Project records. Trinity test, 16 July 1945,
       05:29:21 Mountain War Time, Jornada del Muerto desert, New Mexico; yield ~24.8 kt.
       Uncontested — among the most precisely documented events of the 20th century.
+
+  - id: postwar-suburban-boom
+    label: Postwar highway and suburban boom
+    kind: period
+    t_min: 65
+    t_max: 80
+    tags: [society, science-technology]
+    importance: 0.55
+    description: >
+      In the fifteen years after the Second World War, the United States builds a new
+      mass-produced suburbia and the highways to connect it. Levittown, New York, the
+      first mass-produced suburb, raises 17,447 houses in under four years; the
+      Federal-Aid Highway Act of 1956 then authorises 40,000 miles of new divided
+      interstate highway, the largest public-works programme in the country's history.
+      Car and home ownership become mass-market goods within a single generation.
+    citation: >
+      Wikipedia, "Levittown, New York" and "Interstate Highway System" (both accessed
+      2026-09-15). Levittown built 1947-1951, 17,447 houses, peak rate 30 houses/day.
+      Federal-Aid Highway Act of 1956 signed June 1956, authorising 40,000 miles of
+      divided highway.
+
+  - id: green-revolution
+    label: Green Revolution
+    kind: period
+    t_min: 55
+    t_max: 65
+    tags: [science-technology, society]
+    importance: 0.65
+    description: >
+      Norman Borlaug's short-stemmed, disease-resistant Mexican wheat lines, and the
+      high-yield rice varieties (such as IR8, released 1966) bred alongside them,
+      spread through South Asia and are credited with saving perhaps a billion people
+      from famine. India's wheat harvest rises from about 10 million tonnes a year in
+      the 1960s to 73 million by 2006.
+    citation: >
+      Wikipedia, "Green Revolution" (accessed 2026-09-15). Borlaug hired 1940 to lead
+      Mexico's agricultural research; Nobel Peace Prize 1970; India wheat production
+      10 Mt (1960s) to 73 Mt (2006); IR8 rice released 1966, yielding up to ~10 t/ha
+      under optimal conditions by 1968. Review fix (2026-09-15): dropped this page's
+      separate claim of India rice yields rising ~2 to ~6 t/ha (1960s to mid-1990s) --
+      Wikipedia "Rice production in India"'s own yield table gives India's actual
+      national average as ~1.0 t/ha (1960s) to ~1.9 t/ha (1996-97/1997-98), roughly a
+      third of that figure, so it is not used as a national-average claim.
+
+  - id: containerization
+    label: Container shipping remakes world trade
+    kind: period
+    t_min: 45
+    t_max: 69
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      Malcom McLean's SS Ideal X sails the first successful container voyage, from
+      Newark to Houston. Standardised steel shipping containers and dedicated
+      gantry-crane terminals spread through the world's ports over the following
+      decades; by 2004 they carry 354 million TEU (twenty-foot container units) of
+      traffic a year, and within a few more years roughly nine-tenths of the world's
+      non-bulk seaborne trade moves in a box.
+    citation: >
+      Wikipedia, "Containerization" (accessed 2026-09-15). SS Ideal X voyage 26 April
+      1956; ISO container standardisation 1968-1970; global container traffic 354
+      million TEU in 2004, ~82% handled by the top 100 ports; roughly 90% of non-bulk
+      cargo moved by containers by 2009.
+
+  - id: shenzhen-sez-designated
+    label: Shenzhen designated first Special Economic Zone
+    kind: moment
+    t_min: 45
+    t_max: 45
+    t: 45
+    tags: [society]
+    importance: 0.5
+    description: >
+      China designates Shenzhen, then a market town of fishing villages and paddy
+      fields with about 30,000 people, as its first Special Economic Zone, opening it
+      to foreign investment and market reforms. Within forty-five years it grows into
+      a city of some 18.2 million and a global centre of electronics manufacturing.
+    citation: >
+      Wikipedia, "Shenzhen" (accessed 2026-09-15). Designated China's first Special
+      Economic Zone in May 1980; population about 30,000 in 1980; population 18.2
+      million in 2025.
+
+  - id: aral-sea-shrinkage
+    label: Aral Sea shrinks to a fraction of its former size
+    kind: period
+    t_min: 27
+    t_max: 65
+    tags: [earth-climate, catastrophe]
+    importance: 0.55
+    description: >
+      Soviet irrigation projects begun in the early 1960s divert the Amu Darya and Syr
+      Darya rivers, and the Aral Sea, once the world's fourth-largest lake, shrinks by
+      60% in surface area and 80% in volume between 1960 and 1998. Its fishing
+      industry, which once employed some 40,000 people, collapses entirely by 1987;
+      former port towns such as Moynaq now lie tens of kilometres from any water, their
+      fishing fleets stranded on the dry seabed.
+    citation: >
+      Wikipedia, "Aral Sea" (accessed 2026-09-15). Original area 68,000 km^2 (1960);
+      60% area / 80% volume loss 1960-1998; 17,160 km^2 (25% of original) by 2004;
+      fishing industry employed ~40,000 at its peak, commercial catch nonexistent by
+      1987; Moynaq now 30-90 km from shore.
+
+  - id: renewable-energy-scaleup
+    label: Solar and wind power scale up rapidly
+    kind: period
+    t_min: 10
+    t_max: 15
+    tags: [science-technology, earth-climate]
+    importance: 0.5
+    description: >
+      Global installed solar photovoltaic capacity grows more than fivefold in five
+      years, from 41.6 gigawatts in 2010 to 229.1 gigawatts in 2015, while offshore
+      wind turbines begin to spread along temperate coastlines too — the leading edge
+      of a still-early transition away from fossil-fuelled electricity.
+    citation: >
+      Wikipedia, "Growth of photovoltaics" (accessed 2026-09-15). Global cumulative
+      installed solar PV capacity 41.6 GW (2010, 76% YoY growth) to 229.1 GW (2015,
+      27% YoY growth). Review fix (2026-09-15): no global offshore-wind capacity
+      figure for both 2010 and 2015 could be verified live (Wikipedia "Offshore wind
+      power" gives only a 2015 European total, 11,027 MW, not a global one for either
+      year), so the offshore-wind clause is kept qualitative rather than quantitative.
 
   - id: transistor-invented
     label: Transistor invented
@@ -1998,6 +2331,29 @@ events:
       Launch record, Sputnik 1, 4 October 1957, 19:28:34 UTC, Site No. 1, Baikonur
       Cosmodrome; initial orbit 223 x 950 km. Uncontested.
 
+  # Digital-age batch (2026-09-14): integrated-circuit-invented and the ten events added with
+  # it (listed in sources/events-core/README.md) were each checked live against the page named
+  # in their citation, never asserted from model memory. Where a day-level date could not be
+  # confirmed, the event is dated to the year only and the citation says so.
+  - id: integrated-circuit-invented
+    label: Integrated circuit invented
+    kind: moment
+    t_min: 67
+    t_max: 67
+    t: 67
+    tags: [science-technology]
+    importance: 0.55
+    description: >
+      Jack Kilby demonstrates the first working integrated circuit, putting several
+      electronic components on a single piece of semiconductor; about six months later
+      Robert Noyce at Fairchild Semiconductor develops the first practical monolithic
+      chip. Every later computer, phone and network builds on the microchip.
+    citation: >
+      Wikipedia, "Integrated circuit" (accessed 2026-09-14). Kilby's first working
+      example demonstrated 12 September 1958; Noyce's monolithic IC about six months
+      later (1959). Kilby shared the 2000 Nobel Prize in Physics for the invention
+      (the nobelprize.org facts page refused a live fetch; confirmed via Wikipedia only).
+
   - id: gagarin-first-spaceflight
     label: First human spaceflight
     kind: moment
@@ -2030,6 +2386,123 @@ events:
       NASA (1969). Apollo 11 Mission Report. Neil Armstrong and Buzz Aldrin land at Mare
       Tranquillitatis on 20 July 1969 UTC.
 
+  - id: arpanet-first-message
+    label: First message over ARPANET
+    kind: moment
+    t_min: 56
+    t_max: 56
+    t: 56
+    tags: [science-technology]
+    importance: 0.5
+    description: >
+      UCLA student programmer Charley Kline sends the first message over ARPANET to SRI
+      programmer Bill Duvall at the Stanford Research Institute. The receiving computer
+      crashes after two characters, so the first transmission is just "lo", from
+      "login". ARPANET is the network the Internet grew out of.
+    citation: >
+      Wikipedia, "ARPANET" (accessed 2026-09-14), citing the first ARPANET IMP log: 29
+      October 1969, 10:30 pm PST (06:30 UTC, 30 October 1969), UCLA's SDS Sigma 7 host to
+      SRI's SDS 940 host.
+
+  - id: first-microprocessor
+    label: Intel 4004, first commercial microprocessor
+    kind: moment
+    t_min: 54
+    t_max: 54
+    t: 54
+    tags: [science-technology]
+    importance: 0.5
+    description: >
+      Intel releases the 4004, the first microprocessor sold as a stand-alone component: a
+      computer's whole central processor on one chip rather than spread across several.
+      Its designers were Federico Faggin, Marcian Hoff, Stanley Mazor and Masatoshi Shima.
+      The title of "first microprocessor" is contested, because earlier single-chip
+      processors existed (Texas Instruments' TMS0100, Four-Phase's AL1 and the
+      then-classified MP944).
+    citation: >
+      Wikipedia, "Intel 4004" (accessed 2026-09-14). Released 15 November 1971, announced
+      in Intel's "Announcing a new era of integrated electronics" advertisement in that
+      day's Electronic News; "the first commercially available (sold as a component)
+      microprocessor". The same page gives the competing claims: TI's TMS0100 (launched
+      17 September 1971), Four-Phase's AL1 (in a commercial product earlier) and the MP944
+      (finished 1970, classified until 1998).
+
+  - id: first-handheld-mobile-call
+    label: First public handheld mobile phone call
+    kind: moment
+    t_min: 52
+    t_max: 52
+    t: 52
+    tags: [science-technology]
+    importance: 0.45
+    description: >
+      Martin Cooper of Motorola, standing on a Manhattan sidewalk, places the first public
+      call from a handheld cellular phone to Joel Engel at rival AT&T. The prototype
+      is a 1.1 kg "brick"; a consumer version of the handset goes on sale a decade later,
+      in 1983.
+    citation: >
+      Wikipedia, "Martin Cooper (inventor)" (accessed 2026-09-14). Call placed 3 April
+      1973 on a DynaTAC prototype weighing 2.5 lb (1.1 kg); handset commercially available
+      by 1983 after four iterations.
+
+  - id: mass-market-personal-computers
+    label: Personal computers go mass-market
+    kind: moment
+    t_min: 48
+    t_max: 48
+    t: 48
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      The Apple II, Commodore PET 2001 and Tandy TRS-80 all reach the market in 1977 as
+      complete, ready-to-use machines rather than hobbyist kits. They are the first widely
+      successful mass-market personal computers, later called the "1977 Trinity" by Byte
+      magazine. IBM's PC of 1981 then sets the "IBM PC compatible" standard that most later
+      personal computers follow.
+    citation: >
+      Wikipedia, "History of personal computers" (accessed 2026-09-14): the 1977 Trinity,
+      Byte's naming, and dominance by late 1978. Wikipedia, "IBM Personal Computer"
+      (accessed 2026-09-14): released 12 August 1981, the basis of the IBM PC compatible de
+      facto standard. The three 1977 release months were not confirmed live, so the event
+      is dated to the year only. Dated to 1977 rather than 1981 because that is when
+      personal computers first became a mass-market product.
+
+  - id: internet-tcp-ip-switchover
+    label: ARPANET switches to TCP/IP
+    kind: moment
+    t_min: 42
+    t_max: 42
+    t: 42
+    tags: [science-technology, society]
+    importance: 0.6
+    description: >
+      On "flag day", ARPANET retires its original Network Control Protocol and makes the
+      TCP/IP protocols its standard. TCP/IP is the protocol suite for connecting separate
+      networks together, and the Internet still runs on it today.
+    citation: >
+      Wikipedia, "ARPANET" (accessed 2026-09-14). "On 1 January 1983, known as flag day,
+      TCP/IP protocols became the standard for the ARPANET, replacing the earlier Network
+      Control Protocol."
+
+  - id: berlin-wall-falls
+    label: Fall of the Berlin Wall
+    kind: moment
+    t_min: 36
+    t_max: 36
+    t: 36
+    tags: [society]
+    importance: 0.6
+    description: >
+      Overwhelmed East German border guards at Berlin's checkpoints open the gates
+      to crowds demanding passage, and the Wall that has divided the city since 1961
+      becomes passable overnight. Within days, Berliners are chipping souvenir
+      fragments from it in daylight; the Wall's fall becomes the defining image of
+      the Cold War's end and is followed within a year by German reunification.
+    citation: >
+      Wikipedia, "Fall of the Berlin Wall" (accessed 2026-09-15): checkpoints
+      opened the night of 9 November 1989 after crowds gathered demanding passage;
+      guards overwhelmed, held with little or no identity-checking.
+
   - id: www-invented
     label: World Wide Web invented
     kind: period
@@ -2044,6 +2517,50 @@ events:
     citation: >
       Berners-Lee, T. (1989). "Information Management: A Proposal." CERN, 12 March 1989.
       First web page live 6 August 1991; released publicly 23 August 1991.
+
+  - id: ibm-simon-first-smartphone
+    label: First smartphone (IBM Simon)
+    kind: moment
+    t_min: 31
+    t_max: 31
+    t: 31
+    tags: [science-technology]
+    importance: 0.4
+    description: >
+      The IBM Simon Personal Communicator goes on sale. It combines a mobile phone with
+      handheld-organiser (PDA) features and a touchscreen, and is now looked back on as the
+      first true smartphone, though General Magic's Magic Cap devices, released later in
+      1994, are also counted among the first commercial smartphones. Only about 50,000
+      Simons were sold in its six months on the market.
+    citation: >
+      Wikipedia, "IBM Simon" (accessed 2026-09-14). On sale through BellSouth Cellular
+      from 16 August 1994; prototype shown at COMDEX, 16 November 1992; about 50,000 units
+      sold; "retrospectively referred to as the first true smartphone." Wikipedia,
+      "Smartphone" (accessed 2026-09-14): "The first commercial smartphones are widely
+      recognized to be the IBM Simon Personal Communicator ... and General Magic's Magic
+      Cap devices released by Sony ('magic link') and Motorola ('envoy') in 1994."
+
+  - id: gps-fully-operational
+    label: GPS fully operational
+    kind: moment
+    t_min: 30
+    t_max: 30
+    t: 30
+    tags: [science-technology]
+    importance: 0.4
+    description: >
+      The US Air Force declares the Global Positioning System fully operational. Its
+      24-satellite constellation had been complete since December 1993, and a 1983
+      presidential directive had already promised it for free civilian use. Accurate
+      positioning for everyone follows on 2 May 2000, when the deliberate degrading of the
+      civilian signal ("Selective Availability") is switched off.
+    citation: >
+      Wikipedia, "Global Positioning System" (accessed 2026-09-14). Initial operational
+      capability December 1993; Full Operational Capability declared by Air Force Space
+      Command April 1995; Selective Availability discontinued 2 May 2000. UNVERIFIED: the
+      often-quoted 17 July 1995 date for Full Operational Capability could not be checked
+      live (the gps.gov page returned 404), so the event is dated to the year only (t = 30
+      for either date).
 
   - id: human-genome-project-completed
     label: Human Genome Project completed
@@ -2061,6 +2578,81 @@ events:
       National Human Genome Research Institute, project timeline. Funding begins 1
       October 1990; working draft announced 26 June 2000; completion announced 14 April
       2003.
+
+  - id: iphone-launch
+    label: iPhone brings smartphones to the mass market
+    kind: moment
+    t_min: 18
+    t_max: 18
+    t: 18
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      Apple announces the iPhone in January and releases it in the US in June. It is the
+      first phone with a multi-touch screen, and it does away with almost all physical
+      buttons. Not the first smartphone (see the IBM Simon, 1994), but the design that made
+      the touchscreen smartphone the industry standard.
+    citation: >
+      Wikipedia, "iPhone (1st generation)" (accessed 2026-09-14). Announced 9 January 2007
+      at Macworld, San Francisco; US release 29 June 2007; one millionth unit sold 74 days
+      after release; 6,124,000 units sold before discontinuation on 11 July 2008.
+
+  - id: urban-majority-milestone
+    label: Half of humanity lives in cities
+    kind: moment
+    t_min: 18
+    t_max: 18
+    t: 18
+    tags: [society]
+    importance: 0.5
+    description: >
+      For the first time in recorded history, more than half of the world's
+      population lives in cities, in 2007 — up from just 15% in 1900. The share
+      keeps rising, reshaping daily life around the metro systems, office towers and
+      mass transit that a century before did not exist.
+    citation: >
+      Wikipedia, "Urbanization" (accessed 2026-09-15), citing United Nations
+      population data: "just 15% of the world's population lived in cities" in 1900;
+      "in 2007, more than 50% of the world population was living in cities, for the
+      first time in human history."
+
+  - id: half-of-humanity-online
+    label: Half of humanity online
+    kind: moment
+    t_min: 7
+    t_max: 7
+    t: 7
+    tags: [society, science-technology]
+    importance: 0.5
+    description: >
+      The International Telecommunication Union estimates that by the end of 2018, 51.2%
+      of the world's population (3.9 billion people) is using the Internet. It is the
+      first time more than half of humanity is online. This is a statistical estimate
+      crossing a threshold, not a single observed moment. By 2025 an estimated 6 billion
+      people, about 74%, are online.
+    citation: >
+      International Telecommunication Union (2018). Press release, Geneva, 7 December 2018:
+      "at the end of 2018, 51.2 per cent of the global population, or 3.9 billion people,
+      will be using the Internet." 2025 figure: Wikipedia, "Global Internet usage"
+      (accessed 2026-09-14).
+
+  - id: chatgpt-release
+    label: ChatGPT released
+    kind: moment
+    t_min: 3
+    t_max: 3
+    t: 3
+    tags: [science-technology, society]
+    importance: 0.5
+    description: >
+      ChatGPT, a conversational artificial-intelligence chatbot, is released to the public.
+      It reaches an estimated 100 million users within two months and speeds up an ongoing
+      wave of investment in, and public attention to, AI. Its long-term significance is
+      still unfolding.
+    citation: >
+      Wikipedia, "ChatGPT" (accessed 2026-09-14). Released 30 November 2022; one million
+      users in five days and 100 million in two months; "accelerated the AI boom." The
+      developer's own announcement page refused a live fetch.
 
   - id: present
     label: Present day

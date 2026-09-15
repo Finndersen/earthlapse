@@ -27,6 +27,7 @@ class Shot(StrEnum):
     WATER_EDGE = "WATER_EDGE"
     CANOPY = "CANOPY"
     GROUND = "GROUND"
+    SPLIT_LEVEL = "SPLIT_LEVEL"
 
 
 class Composition(StrEnum):
@@ -35,6 +36,7 @@ class Composition(StrEnum):
     WATER_EDGE_SERIES = "water-edge-series"
     RIDGE_VISTA = "ridge-vista"
     OPEN_GROUND = "open-ground"
+    SPLIT_WATERLINE = "split-waterline"
 
 
 # The camera only (ADR-008). Anything describing the world belongs in conditions or subject.
@@ -66,6 +68,12 @@ SHOT_TYPE: dict[Shot, str] = {
     Shot.GROUND: (
         "Shot type: camera low and close to the ground, detail-forward, shallow depth of field on "
         "the nearest subject."
+    ),
+    Shot.SPLIT_LEVEL: (
+        "Shot type: a split-level over-under photograph through a half-submerged dome port, the "
+        "lens exactly level with the water surface, looking level along the shore: the upper "
+        "part of the frame shows the world above the water, the lower part the same place "
+        "underwater, both in sharp focus at once."
     ),
 }
 
@@ -100,6 +108,26 @@ COMPOSITION_CONSTRAINTS: dict[Composition, str] = {
         "in the middle distance just right of centre, about a fifth of the frame width. Open sky "
         "over the right half. The light comes from the upper left, the sun itself out of frame; "
         "any shadows fall to the right."
+    ),
+    # Geometry (waterline, horizon, left-mass top) measured from the pinned cambrian-seafloor
+    # image (ADR-025). Its light is not: its shadows fall below and slightly left, so the
+    # upper-left light is kept for consistency with the other compositions and checked at review.
+    # Under this layout `ground` is the sea floor and `main_subject` sits in the underwater part;
+    # the subject says so in words.
+    Composition.SPLIT_WATERLINE: (
+        "Composition, identical across this series of photographs: the water surface crosses the "
+        "whole frame as one straight, level, sharp line at 48% of frame height from the top, "
+        "dividing an above-water part from an underwater part, with no blurred band or wavy "
+        "meniscus at the line and no droplets, bubbles or splashes on the lens. Above the line: "
+        "calm water runs out to a level sea horizon at 35% of frame height from the top, with "
+        "open sky over the right half. A tall mass occupies the left third, its top about 10% "
+        "below the top edge; it rises from the sea floor, breaks the surface, and continues below "
+        "the line as a submerged face. A low far shore recedes from it toward the horizon right "
+        "of centre. Below the line: water over a sea floor that slopes gently away from the "
+        "camera; the near ground at the bottom of the frame is that sea floor. The main subject "
+        "is underwater, just right of centre in the lower part of the frame, about a quarter of "
+        "the frame width and near enough to read its shape. The light comes from the upper left, "
+        "the sun itself out of frame; any shadows, above or below the surface, fall to the right."
     ),
 }
 
@@ -167,7 +195,9 @@ def render_conditions(state: WorldState, unsourced: UnsourcedConditions) -> str:
     return " ".join(
         [
             _render_time(state.t),
-            _render_atmosphere(state.atmosphere.co2_ppm, unsourced.o2_percent),
+            _render_atmosphere(
+                state.t, state.atmosphere.co2_ppm, state.atmosphere.co2_domain, unsourced.o2_percent
+            ),
             _render_temperature(unsourced.mean_temp_c),
             _render_sky(state.sky.solar_luminosity_rel, state.sky.day_length_hours),
             _render_land(state.plates.land_fraction),
@@ -203,12 +233,21 @@ def _render_time(t: GeoTime) -> str:
     return f"About {t / 1e9:.1f} billion years ago."
 
 
-def _render_atmosphere(co2_ppm: float | None, o2_percent: float | None) -> str:
-    co2 = (
-        "no CO2 record reaches this far back"
-        if co2_ppm is None
-        else f"CO2 {co2_ppm:,.0f} ppm, {_co2_band(co2_ppm)}"
-    )
+def _render_atmosphere(
+    t: GeoTime,
+    co2_ppm: float | None,
+    co2_domain: tuple[GeoTime, GeoTime] | None,
+    o2_percent: float | None,
+) -> str:
+    """`co2_ppm=None` means either no `co2` source is registered this far back, or `t` sits
+    inside a declared gap (ADR-027) -- the `co2` series' own `domain` tells the two apart
+    without this module knowing anything about which source or splice produced the gap."""
+    if co2_ppm is not None:
+        co2 = f"CO2 {co2_ppm:,.0f} ppm, {_co2_band(co2_ppm)}"
+    elif co2_domain is not None and co2_domain[0] <= t <= co2_domain[1]:
+        co2 = "no CO2 record covers this interval"
+    else:
+        co2 = "no CO2 record reaches this far back"
     o2 = (
         "no estimate of oxygen"
         if o2_percent is None
@@ -255,8 +294,16 @@ def _render_ancestor(ancestor: TreeNode | None) -> str:
 
 
 def _co2_band(ppm: float) -> str:
-    if ppm < 700:
+    # "Today" is ~425 ppm (AD 2025). Bands are pure in ppm, so they avoid naming an era:
+    # Oligocene GEOCARB values fall in the same 300-450 band as the 20th century.
+    if ppm < 230:
+        return "a glacial low, well below today's level"
+    if ppm < 300:
+        return "near pre-industrial levels, well below today's"
+    if ppm < 450:
         return "close to today's level"
+    if ppm < 700:
+        return "above today's level"
     if ppm < 2000:
         return "several times today's level"
     return "a greenhouse atmosphere, many times today's level"

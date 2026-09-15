@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 66 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 121 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -175,6 +175,105 @@ They remain open follow-up work, not a judgement that they don't belong.
 
 The scientific review added one more, `early-eocene-climatic-optimum`, so the
 `arctic-hothouse-forest` scene (52 Ma) has a matching event. The set totals 66 events.
+
+A **digital-age batch** (2026-09-14) added 11 technology milestones, in time order:
+`integrated-circuit-invented`, `arpanet-first-message`, `first-microprocessor`,
+`first-handheld-mobile-call`, `mass-market-personal-computers`, `internet-tcp-ip-switchover`,
+`ibm-simon-first-smartphone`, `gps-fully-operational`, `iphone-launch`,
+`half-of-humanity-online`, `chatgpt-release`. Each was checked by fetching the page named in
+its citation (mostly Wikipedia; ITU's own press release for `half-of-humanity-online`).
+Importance follows the existing near-present scale: the Internet's TCP/IP switchover and
+the iPhone sit at 0.65, alongside `wright-flyer-first-flight`, just under `moon-landing`.
+Curation choices:
+- **Personal computers** are dated to 1977 (the Apple II / PET / TRS-80 "Trinity", the first
+  mass-market PCs) rather than the IBM PC of 1981. The IBM PC is named in the description as
+  the standard-setter.
+- **"First smartphone"** is two events: the IBM Simon (1994), the literal first, and the
+  iPhone (2007), the one that took smartphones to the mass market.
+- **GPS** is dated to 1995 only: Wikipedia gives April 1995 and the 17 July 1995 date could
+  not be confirmed. It is marked UNVERIFIED inline.
+
+Deliberately not added:
+- AlphaGo vs Lee Sedol (2016): a research demonstration. ChatGPT is the single AI milestone,
+  chosen because it reached a mass public.
+- Social media reaching billions: the only dated milestones are single-company user counts.
+  `half-of-humanity-online` covers the reach of the Internet instead.
+
+A **human-history gap-filling batch** (2026-09-15) added 6 events, each backing a new
+`data/scenes.yaml` scene, to close the largest remaining silent stretches in the historical
+half of the timeline: `roman-empire-peak`, `angkor-wat-built`, `ford-model-t-assembly-line`,
+`battle-of-the-somme`, `d-day-normandy-landings`, `berlin-wall-falls`. Each was checked by
+fetching the page named in its citation (Wikipedia throughout). Two new scenes link to
+existing events instead of adding new ones: `black-death-messina-1347` (the existing
+`black-death`) and `normandy-landings-dday`'s neighbour `somme-1916` needed no separate event
+beyond `battle-of-the-somme` above. Curation choices:
+- **`roman-empire-peak`** and **`angkor-wat-built`** are both `kind: period` rather than a
+  single dated moment: "the empire at its height" and "a temple built over decades" are
+  genuinely-lasted spans, not one happening with a dating error bar (ADR-022).
+- **`battle-of-the-somme`**, **`d-day-normandy-landings`** and **`berlin-wall-falls`** carry
+  war and mass-casualty content. Descriptions state casualty figures once, soberly, without
+  embellishment, matching this project's documentary, non-sensational register for these
+  topics; the linked scenes carry the same restraint in their `subject.absent` lists (no
+  bodies, wounds, gore, or prominent flags/insignia).
+- **Gutenberg's printing press vs. the Black Death**, and **Imperial Rome vs. classical
+  Athens**, and **Angkor Wat vs. another non-European medieval capital** were three-way
+  editorial choices made at the scene level, not here — see `data/scenes.yaml`'s comments on
+  `black-death-messina-1347`, `imperial-rome-pantheon` and `angkor-wat` for the reasoning. No
+  event for Gutenberg, Athens, or an alternative medieval capital was added, since the chosen
+  alternative already had (Black Death) or now has (Rome, Angkor Wat) a citable event.
+
+A **review-fix pass** (2026-09-15, later the same day) corrected several factual and
+compositional errors a review found in that batch, and added 2 more events:
+- **`battle-of-the-somme`** originally used `t_min == t_max == 109`: the battle (1 July-18
+  November 1916) genuinely lasted months, but both ends fell inside the same calendar year at
+  this file's usual whole-year historical resolution (see "The present-day reference year"
+  above), collapsing a `kind: period` event's interval to a point — exactly what ADR-022 says a
+  period must not do (a period is read by its span, not a single instant). Fixed by computing
+  `t_min`/`t_max` from the actual day of year (`t_min: 108.12`, `t_max: 108.50`) rather than the
+  file's usual whole-year shorthand; GeoTime is a float and nothing else about the schema
+  changed, so this is a data-precision fix, not a shape change.
+- **`d-day-normandy-landings`**'s description credited "156,000 troops ashore on the first day
+  alone" to the beach landings; Wikipedia's own figure is the whole day's combined sea-and-air
+  total, 24,000 of the 156,000 being airborne troops who dropped inland overnight rather than
+  coming ashore by landing craft. The description and `normandy-landings-dday`'s caption now
+  state the ~132,000 seaborne and 24,000 airborne figures separately.
+- **`world-war-i`** and **`world-war-ii`** (both `kind: period`, tags `[catastrophe, society]`)
+  were added: the original batch dated the Somme and D-Day as standalone battles but named no
+  event for either World War itself, so the wars they belong to had no entry in the event feed.
+  Both are linked from `somme-1916` and `normandy-landings-dday` respectively, alongside each
+  scene's own battle event. Their `t_min`/`t_max` use the same day-counted precision as the
+  `battle-of-the-somme` fix above (start/end dates from Wikipedia's "World War I"/"World War II").
+- **`black-death-messina-1347`** (`data/scenes.yaml`, renamed from `black-death-quarantine`,
+  unpinned so free to rename) no longer depicts a maritime quarantine: formal quarantine (a
+  30-day isolation) is a Ragusan practice first adopted in 1377, three decades after this
+  scene's October 1347 setting, so showing warning cloth, a shuttered town or an unmanned
+  "ghost ship" both invented a practice that did not yet exist and leaned on a myth (the ships
+  were crewed, not derelict — Wikipedia's "Black Death" describes twelve Genoese galleys
+  arriving, not one). It now shows several moored galleys and a few distant, motionless
+  sailors, with the port going about an ordinary day.
+- **`imperial-rome-pantheon`** and **`angkor-wat`** (`data/scenes.yaml`) both overstated what
+  their vantage could actually see: the Pantheon's north-facing portico and inscribed frieze
+  are invisible from a Tiber wharf some 600 m away (only the bronze-tiled dome's upper curve
+  would show), and Angkor Wat's 4.5 m outer wall would hide its inner galleries from someone
+  standing at the moat. Both `far_bank` fields now describe only what the geometry actually
+  permits.
+
+A **lifestyle-and-society batch** (2026-09-15) added 3 events, each backing a new
+`data/scenes.yaml` scene chosen to fill out the human-era sequence as an arc of how people
+live, work, move and gather, from hunter-gatherer bands to the present: `dutch-golden-age-voc`
+(backing `amsterdam-voc-harbour`, an early-modern merchant city bridging the agrarian/medieval
+world and the Industrial Revolution), `ginza-modern-urban-culture` (backing
+`ginza-modern-tokyo`, the first mass urban lifestyle of department stores, subways and radio,
+filling the 1916-1944 gap between `battle-of-the-somme` and `d-day-normandy-landings`), and
+`urban-majority-milestone` (backing `global-city-rush-hour`, present-day desk-job and commuter
+life). Each was checked by fetching the page named in its citation (Wikipedia throughout,
+accessed 2026-09-15). `dutch-golden-age-voc` and `ginza-modern-urban-culture` are `kind: period`
+— a lasting phase of a city's life, not one dated happening (ADR-022) — bounded by the hardest
+verified dates within each (VOC's 1602 founding and 1669 employee count; Ginza's 1924 department-
+store, 1925 radio and 1927-1934 subway dates). `urban-majority-milestone` is deliberately
+distinct from the existing `half-of-humanity-online` (Internet access, 2018): both are
+`society`-tagged threshold-crossing moments, but this one is about urbanisation itself, sourced
+to the same UN-cited 2007 figure Wikipedia's "Urbanization" article gives.
 
 ## Gotchas
 

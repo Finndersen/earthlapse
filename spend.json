@@ -1,5 +1,5 @@
 {
-  "ceiling_usd": 40.0,
+  "ceiling_usd": 100.0,
   "entries": [
     {
       "node_id": "gate-anchor",
@@ -2191,6 +2191,518 @@
       "n": 1,
       "estimated_usd": 0.154496,
       "actual_usd": 0.139682,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154806,
+      "actual_usd": 0.139206,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154806,
+      "actual_usd": 0.138666,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154806,
+      "actual_usd": 0.139254,
+      "note": null
+    },
+    {
+      "node_id": "smartphone-seafront-2018.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154846,
+      "actual_usd": 0.141876,
+      "note": null
+    },
+    {
+      "node_id": "smartphone-seafront-2018.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154846,
+      "actual_usd": 0.138828,
+      "note": null
+    },
+    {
+      "node_id": "smartphone-seafront-2018.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154846,
+      "actual_usd": 0.14028,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155052,
+      "actual_usd": 0.141404,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155052,
+      "actual_usd": 0.13946,
+      "note": null
+    },
+    {
+      "node_id": "ediacaran-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155052,
+      "actual_usd": 0.14198,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155376,
+      "actual_usd": 0.141092,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155376,
+      "actual_usd": 0.139412,
+      "note": null
+    },
+    {
+      "node_id": "ordovician-reef-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155376,
+      "actual_usd": 0.143588,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155336,
+      "actual_usd": 0.13977,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155336,
+      "actual_usd": 0.139134,
+      "note": null
+    },
+    {
+      "node_id": "silurian-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155336,
+      "actual_usd": 0.14043,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155094,
+      "actual_usd": 0.140148,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155094,
+      "actual_usd": 0.139716,
+      "note": null
+    },
+    {
+      "node_id": "cryogenian-snowball.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155094,
+      "actual_usd": 0.139944,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155142,
+      "actual_usd": 0.141176,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155142,
+      "actual_usd": 0.139676,
+      "note": null
+    },
+    {
+      "node_id": "boring-billion-shallows.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155142,
+      "actual_usd": 0.140144,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155148,
+      "actual_usd": 0.14066,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155148,
+      "actual_usd": 0.139664,
+      "note": null
+    },
+    {
+      "node_id": "great-oxidation.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155148,
+      "actual_usd": 0.141236,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155026,
+      "actual_usd": 0.139514,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155026,
+      "actual_usd": 0.140918,
+      "note": null
+    },
+    {
+      "node_id": "archean-shore.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155026,
+      "actual_usd": 0.139394,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155058,
+      "actual_usd": 0.140368,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155058,
+      "actual_usd": 0.139348,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155058,
+      "actual_usd": 0.140824,
+      "note": null
+    },
+    {
+      "node_id": "imperial-rome-pantheon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15472,
+      "actual_usd": 0.140476,
+      "note": null
+    },
+    {
+      "node_id": "angkor-wat.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154586,
+      "actual_usd": 0.138982,
+      "note": null
+    },
+    {
+      "node_id": "black-death-messina-1347.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154586,
+      "actual_usd": 0.139894,
+      "note": null
+    },
+    {
+      "node_id": "ford-model-t-street.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154442,
+      "actual_usd": 0.139544,
+      "note": null
+    },
+    {
+      "node_id": "somme-1916.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154486,
+      "actual_usd": 0.139854,
+      "note": null
+    },
+    {
+      "node_id": "normandy-landings-dday.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154528,
+      "actual_usd": 0.140012,
+      "note": null
+    },
+    {
+      "node_id": "berlin-wall-fall.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154628,
+      "actual_usd": 0.139042,
+      "note": null
+    },
+    {
+      "node_id": "post-war-boom-suburbia.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.1389,
+      "note": null
+    },
+    {
+      "node_id": "green-revolution-fields.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154664,
+      "actual_usd": 0.13999,
+      "note": null
+    },
+    {
+      "node_id": "containerisation-port.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154578,
+      "actual_usd": 0.138904,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-sez-1980.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154632,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "aral-sea-drying.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154422,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "energy-transition-solar-wind.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15447,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-sez-1980.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154632,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "aral-sea-drying.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154422,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "energy-transition-solar-wind.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15447,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-sez-1980.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154632,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "aral-sea-drying.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154422,
+      "actual_usd": 0.139574,
+      "note": null
+    },
+    {
+      "node_id": "energy-transition-solar-wind.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15447,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-sez-1980.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154632,
+      "actual_usd": 0.139566,
+      "note": null
+    },
+    {
+      "node_id": "energy-transition-solar-wind.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15447,
+      "actual_usd": 0.141338,
+      "note": null
+    },
+    {
+      "node_id": "amsterdam-voc-harbour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154826,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "ginza-modern-tokyo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154672,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "global-city-rush-hour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154872,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "amsterdam-voc-harbour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154826,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "ginza-modern-tokyo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154672,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "global-city-rush-hour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154872,
+      "actual_usd": 0.0,
+      "note": null
+    },
+    {
+      "node_id": "amsterdam-voc-harbour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154826,
+      "actual_usd": 0.14148,
+      "note": null
+    },
+    {
+      "node_id": "ginza-modern-tokyo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154672,
+      "actual_usd": 0.13944,
+      "note": null
+    },
+    {
+      "node_id": "global-city-rush-hour.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154872,
+      "actual_usd": 0.139082,
+      "note": null
+    },
+    {
+      "node_id": "ginza-modern-tokyo.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15474,
+      "actual_usd": 0.143006,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15433,
+      "actual_usd": 0.00523,
+      "note": null
+    },
+    {
+      "node_id": "portrait.homo-sapiens.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15433,
+      "actual_usd": 0.004822,
+      "note": null
+    },
+    {
+      "node_id": "portrait.hominini.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154052,
+      "actual_usd": 0.141332,
       "note": null
     }
   ]
