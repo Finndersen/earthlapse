@@ -19,6 +19,7 @@ from pipeline.shapes import (
     EventKind,
     EventSet,
     EventTag,
+    Gap,
     Interpolation,
     RasterFrame,
     RasterSequence,
@@ -78,6 +79,76 @@ def test_samples_are_sorted_on_construction() -> None:
     assert [s.t for s in ts.samples] == [0, 100]
 
 
+# ------------------------------------------------------------------------------------- Gap
+
+
+def _series(gaps: list[Gap]) -> TimeSeries:
+    return TimeSeries(
+        id="x",
+        unit="u",
+        interpolation=Interpolation.LINEAR,
+        samples=[
+            Sample(t=0, value=1),
+            Sample(t=1, value=2),
+            Sample(t=2, value=3),
+            Sample(t=3, value=4),
+        ],
+        gaps=gaps,
+    )
+
+
+def test_gap_defaults_to_empty() -> None:
+    assert (
+        TimeSeries(
+            id="x", unit="u", interpolation=Interpolation.LINEAR, samples=[Sample(t=0, value=1)]
+        ).gaps
+        == []
+    )
+
+
+def test_gap_must_span_adjacent_indices() -> None:
+    with pytest.raises(ValueError, match="to_index must be from_index \\+ 1"):
+        Gap(from_index=0, to_index=2)
+
+
+def test_gap_to_index_out_of_range_is_rejected() -> None:
+    with pytest.raises(ValueError, match="out of range"):
+        _series([Gap(from_index=3, to_index=4)])
+
+
+def test_overlapping_gaps_are_rejected() -> None:
+    with pytest.raises(ValueError, match="overlap"):
+        _series([Gap(from_index=0, to_index=1), Gap(from_index=0, to_index=1)])
+
+
+def test_adjoining_gaps_sharing_one_boundary_sample_are_accepted() -> None:
+    # samples[1] is both the end of the first gap and the start of the second -- a single real
+    # reading bridging two "no data" spans, not an overlap.
+    ts = _series([Gap(from_index=1, to_index=2), Gap(from_index=0, to_index=1)])
+    assert [(g.from_index, g.to_index) for g in ts.gaps] == [(0, 1), (1, 2)]
+
+
+def test_gaps_are_sorted_on_construction() -> None:
+    ts = _series([Gap(from_index=2, to_index=3), Gap(from_index=0, to_index=1)])
+    assert [(g.from_index, g.to_index) for g in ts.gaps] == [(0, 1), (2, 3)]
+
+
+def test_sample_is_none_strictly_inside_a_gap() -> None:
+    ts = _series([Gap(from_index=1, to_index=2)])
+    assert ts.sample(1.5) is None
+
+
+def test_sample_at_a_gap_edge_returns_the_real_sample() -> None:
+    ts = _series([Gap(from_index=1, to_index=2)])
+    assert ts.sample(1) == 2  # samples[1]
+    assert ts.sample(2) == 3  # samples[2]
+
+
+def test_sample_outside_a_gap_still_interpolates() -> None:
+    ts = _series([Gap(from_index=1, to_index=2)])
+    assert ts.sample(0.5) == pytest.approx(1.5)  # between samples[0] and samples[1], no gap here
+
+
 # ----------------------------------------------------------------------------- EventSet
 
 
@@ -96,7 +167,9 @@ def _event(eid: str, t_min: float, t_max: float, importance: float) -> Event:
 
 
 def test_window_filters_by_zoom_lod_importance() -> None:
-    es = EventSet(id="e", events=[_event("kpg", 6.60e7, 6.61e7, 0.95), _event("minor", 1e6, 2e6, 0.1)])
+    es = EventSet(
+        id="e", events=[_event("kpg", 6.60e7, 6.61e7, 0.95), _event("minor", 1e6, 2e6, 0.1)]
+    )
     assert len(es.window(0, 1e8)) == 2
     assert len(es.window(0, 1e8, min_importance=0.5)) == 1
 
@@ -111,7 +184,9 @@ def test_inverted_uncertainty_interval_is_rejected() -> None:
 
 def test_blend_alpha_is_continuous_between_frames() -> None:
     """This is what makes continental drift continuous rather than a slideshow of epochs."""
-    rs = RasterSequence(id="r", frames=[RasterFrame(t=0, ref="a.png"), RasterFrame(t=100, ref="b.png")])
+    rs = RasterSequence(
+        id="r", frames=[RasterFrame(t=0, ref="a.png"), RasterFrame(t=100, ref="b.png")]
+    )
     blend = rs.sample(25)
     assert blend is not None
     assert blend.before == "a.png" and blend.after == "b.png"
@@ -185,8 +260,12 @@ def test_upstream_change_propagates_to_downstream_digest() -> None:
 
 
 def test_digest_is_order_independent() -> None:
-    a = AssetNode(id="n", kind=AssetKind.IMAGE, generator="g", generator_version="1", config={"x": 1, "y": 2})
-    b = AssetNode(id="n", kind=AssetKind.IMAGE, generator="g", generator_version="1", config={"y": 2, "x": 1})
+    a = AssetNode(
+        id="n", kind=AssetKind.IMAGE, generator="g", generator_version="1", config={"x": 1, "y": 2}
+    )
+    b = AssetNode(
+        id="n", kind=AssetKind.IMAGE, generator="g", generator_version="1", config={"y": 2, "x": 1}
+    )
     assert a.digest() == b.digest()
 
 

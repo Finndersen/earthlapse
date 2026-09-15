@@ -45,7 +45,9 @@ class Ledger(BaseModel):
     def spent(self) -> float:
         """Actual where known, estimate where a call is still in flight. Deliberately
         pessimistic: an unresolved reservation counts against the budget."""
-        return sum(e.actual_usd if e.actual_usd is not None else e.estimated_usd for e in self.entries)
+        return sum(
+            e.actual_usd if e.actual_usd is not None else e.estimated_usd for e in self.entries
+        )
 
     @property
     def remaining(self) -> float:

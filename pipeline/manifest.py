@@ -145,14 +145,20 @@ class TimelineEvent(_WireModel):
     effect: GlobeEffect | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
+class AudioLoop(_WireModel):
+    """The span of a clip a looping player repeats (`pipeline.audio.LoopRegion`)."""
+
+    start_seconds: float = Field(ge=0.0)
+    end_seconds: float = Field(gt=0.0)
+
+
 class AudioStem(_WireModel):
-    """One published ambience stem (ADR-023). Mirrors `pipeline.audio.StemManifest` plus the
-    file's published path; `duration_seconds`/`loop_safe` are the same curator-attested
-    values, passed through unchanged. Every stem is independently credited here (`title`,
-    `author`, `licence`, `source_url`) rather than through `Manifest.credits`, which stays
-    one entry per `sources/<name>/` directory -- a stems collection bundles several
-    independently-licensed files under one source directory, so per-file credit has to live
-    on the stem itself."""
+    """One published stem (ADR-023). Mirrors `pipeline.audio.StemManifest` plus the file's
+    published path; `duration_seconds`/`loop_safe`/`loop` are the same curator-attested values,
+    passed through unchanged. Every stem is independently credited here (`title`, `author`,
+    `licence`, `source_url`) rather than through `Manifest.credits`, which stays one entry per
+    `sources/<name>/` directory -- a stems collection bundles several independently-licensed
+    files under one source directory, so per-file credit has to live on the stem itself."""
 
     id: str
     file: str
@@ -162,6 +168,13 @@ class AudioStem(_WireModel):
     source_url: str
     duration_seconds: float = Field(gt=0.0)
     loop_safe: bool
+    # Additive (ADR-023 amendment "stem levels"): dB the engine applies on top of every curve
+    # or scene gain so all stems reach the mix at their reference loudness.
+    level_trim_db: float
+    # Absent: the whole clip loops (or the stem is a one-shot, which never loops).
+    loop: AudioLoop | None = Field(default=None, exclude_if=lambda value: value is None)
+    # Absent: a one-shot starts at 0 (`pipeline.audio.StemManifest.start_seconds`).
+    start_seconds: float | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class Credit(_WireModel):
@@ -211,11 +224,22 @@ class SeriesSample(_WireModel):
     upper: float | None
 
 
+class SeriesGap(_WireModel):
+    """Mirrors `pipeline.shapes.Gap` (ADR-027): an open interval with no data, spanning
+    exactly one pair of adjacent samples (`toIndex == fromIndex + 1`, post-sort)."""
+
+    from_index: int
+    to_index: int
+
+
 class SeriesData(_WireModel):
     id: str
     unit: str
     interpolation: Interpolation
     samples: tuple[SeriesSample, ...] = Field(min_length=1)
+    # Additive (ADR-027): omitted entirely when the series declares no gap, so layer files
+    # from before this field existed stay byte-identical.
+    gaps: tuple[SeriesGap, ...] = Field(default=(), exclude_if=lambda value: not value)
 
 
 class RasterFrameData(_WireModel):
@@ -238,8 +262,21 @@ class TreeNodeData(_WireModel):
     citation: str | None
 
 
+class PortraitExposureData(_WireModel):
+    """How publish normalised a plate's exposure (ADR-015, amendment 2026-09-14).
+
+    `highlight` is the pinned original's subject highlight as a luma code, None when no subject
+    stands out; `gain` is the linear-light gain applied (pipeline/exposure.py). At gain 1 the
+    published image is the pinned file byte for byte; otherwise it is a derivative of it.
+    """
+
+    highlight: int | None = Field(ge=0, le=255)
+    gain: float = Field(ge=1)
+
+
 class PortraitPlateData(_WireModel):
-    """A pinned ancestor portrait (ADR-015), keyed by the lineage node it portrays."""
+    """A pinned ancestor portrait (ADR-015), keyed by the lineage node it portrays. `pinned` names
+    the pinned original; `image` is that original after `exposure`."""
 
     node_id: str
     image: str
@@ -247,6 +284,7 @@ class PortraitPlateData(_WireModel):
     pinned: str
     width: int = Field(gt=0)
     height: int = Field(gt=0)
+    exposure: PortraitExposureData
 
 
 class PortraitMorphData(_WireModel):

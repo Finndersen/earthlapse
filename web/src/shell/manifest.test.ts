@@ -63,6 +63,25 @@ describe('validateManifest', () => {
     expect(() => validateManifest(bad)).toThrow(/shot/)
   })
 
+  it('accepts the SPLIT_LEVEL shot type (ADR-025)', () => {
+    const withSplit = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'SPLIT_LEVEL',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+        },
+      ],
+    }
+    expect(validateManifest(withSplit).scenes[0]?.shot).toBe('SPLIT_LEVEL')
+  })
+
   it('rejects a non-object payload', () => {
     expect(() => validateManifest(null)).toThrow()
     expect(() => validateManifest('nope')).toThrow()
@@ -169,6 +188,8 @@ describe('validateManifest', () => {
           sourceUrl: 'https://example.invalid/wind',
           durationSeconds: 30,
           loopSafe: true,
+          levelTrimDb: 7.2,
+          loop: { startSeconds: 1.5, endSeconds: 28 },
         },
       ],
     }
@@ -183,8 +204,31 @@ describe('validateManifest', () => {
         sourceUrl: 'https://example.invalid/wind',
         durationSeconds: 30,
         loopSafe: true,
+        levelTrimDb: 7.2,
+        loop: { startSeconds: 1.5, endSeconds: 28 },
       },
     ])
+  })
+
+  it('rejects an audio stem loop region that ends before it starts', () => {
+    const bad = {
+      ...stubManifest,
+      audioStems: [
+        {
+          id: 'wind',
+          file: 'audio/wind.ogg',
+          title: 'Ridge Wind',
+          author: 'Test Author',
+          licence: 'CC0 1.0',
+          sourceUrl: '',
+          durationSeconds: 30,
+          loopSafe: true,
+          levelTrimDb: 0,
+          loop: { startSeconds: 20, endSeconds: 10 },
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/loop/)
   })
 
   it('rejects an audio stem missing a required field', () => {

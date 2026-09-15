@@ -394,10 +394,16 @@ def create_app(backend: ImageBackend) -> typer.Typer:
                 )
             except MorphError as err:
                 raise fail(f"{older.id} -> {younger.id}: {err}") from err
-            typer.echo(
-                f"{older.id} -> {younger.id}: computed (range {record.forward_range:.4f} / "
-                f"{record.backward_range:.4f})"
-            )
+            if record.fallback_dissolve:
+                typer.echo(
+                    f"{older.id} -> {younger.id}: falls back to a plain dissolve "
+                    "(flow incoherence exceeded the threshold)"
+                )
+            else:
+                typer.echo(
+                    f"{older.id} -> {younger.id}: computed (range {record.forward_range:.4f} / "
+                    f"{record.backward_range:.4f})"
+                )
 
     @app.command()
     def publish(
@@ -451,6 +457,11 @@ def format_portrait_publication(portraits: PortraitPublication) -> str:
         f"WARNING: no morph for {key.older} -> {key.younger}; run `earthtime morph` "
         "(the viewer crossfades this pair until then)"
         for key in portraits.missing_morphs
+    ]
+    lines += [
+        f"note: {key.older} -> {key.younger} falls back to a plain dissolve "
+        "(the flow was too incoherent to trust; see docs/DECISIONS.md ADR-015)"
+        for key in portraits.dissolved_morphs
     ]
     return "\n".join(lines)
 

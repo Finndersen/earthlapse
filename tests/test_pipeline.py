@@ -17,6 +17,7 @@ from pydantic import ValidationError
 from typer.testing import CliRunner
 
 from pipeline.assets import build_scene_graph
+from pipeline.audio import content_hashed_filename
 from pipeline.cli import create_app
 from pipeline.curated import load_world, write_shape
 from pipeline.generators.gemini import MODEL_ID
@@ -32,7 +33,7 @@ from pipeline.manifest import Manifest, RasterData, SeriesData, TreeData
 from pipeline.models import AtmosphereState, SkyState, WorldModel, WorldState
 from pipeline.paths import ProjectPaths
 from pipeline.prompts import UnsourcedConditions, render_conditions
-from pipeline.publish import chapter_spans
+from pipeline.publish import _layers, chapter_spans
 from pipeline.scenes import (
     SceneBook,
     ScenePin,
@@ -48,6 +49,7 @@ from pipeline.shapes import (
     EventKind,
     EventSet,
     EventTag,
+    Gap,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
@@ -780,6 +782,17 @@ def test_scene_book_still_refuses_a_chapter_with_no_scenes() -> None:
         parse_scene_book(unused)
 
 
+def test_scene_book_refuses_a_scene_whose_shot_differs_from_its_chapter() -> None:
+    # A split-level frame is its own chapter (ADR-025), never a second framing inside another.
+    mismatched = RECURRING_CHAPTER_SCENES_YAML.replace(
+        "  - id: devonian\n    t: 3.75e8\n    chapter: shore\n    shot: WATER_EDGE\n",
+        "  - id: devonian\n    t: 3.75e8\n    chapter: shore\n    shot: SPLIT_LEVEL\n",
+    )
+
+    with pytest.raises(ValueError, match="devonian: shot SPLIT_LEVEL differs from chapter shore"):
+        parse_scene_book(mismatched)
+
+
 def test_chapter_spans_emits_one_span_per_run_for_a_recurring_chapter() -> None:
     book = parse_scene_book(RECURRING_CHAPTER_SCENES_YAML)
 
@@ -1167,21 +1180,37 @@ def _link_city_to_stem(text: str, stem_id: str, mode: str = "loop", gain: float 
     return linked
 
 
+# A minimal byte string `pipeline.audio.sniff_audio` reads as MP3 (its own ID3-header check) --
+# `_write_stem_catalogue`'s synthetic published file, standing in for a real audio-stems clip.
+# WAV would sniff just as easily, but every publishable stem's `format` must now be
+# WebKit-decodable (`pipeline.audio.WEBKIT_DECODABLE_FORMATS`, 2026-09-15 audio re-review item
+# 7), and these tests exercise the scene->stem linking/publish-refusal machinery, not format
+# choice, so their synthetic fixture should be a format publish actually accepts.
+_FAKE_MP3_BYTES = b"ID3" + b"\x00" * 20
+
+
 def _write_stem_catalogue(
-    paths: ProjectPaths, stem_id: str = "wind", publish_file: bool = True
+    paths: ProjectPaths,
+    stem_id: str = "wind",
+    publish_file: bool = True,
+    loop_safe: bool = True,
+    format: str = "mp3",
 ) -> None:
     source_dir = paths.sources / "audio-stems"
     source_dir.mkdir(parents=True, exist_ok=True)
     (source_dir / "stems.toml").write_text(
         f'[[stems]]\nid = "{stem_id}"\ntitle = "Ridge Wind"\nauthor = "Test Author"\n'
         f'url = "https://example.invalid/{stem_id}"\nlicence = "CC0 1.0"\n'
-        f'sha256 = "{"0" * 64}"\nraw_filename = "{stem_id}.wav"\nformat = "wav"\n'
-        f"duration_seconds = 30.0\nloop_safe = true\n"
+        f'sha256 = "{"0" * 64}"\nraw_filename = "{stem_id}.{format}"\nformat = "{format}"\n'
+        f"duration_seconds = 30.0\nloop_safe = {str(loop_safe).lower()}\n"
+        f"loudness_db = -30.0\npeak_dbfs = -6.0\n"
     )
     if publish_file:
         audio_dir = paths.media / "audio"
         audio_dir.mkdir(parents=True, exist_ok=True)
-        (audio_dir / f"{stem_id}.wav").write_bytes(b"RIFF....WAVEfmt ")
+        (audio_dir / content_hashed_filename(stem_id, "mp3", _FAKE_MP3_BYTES)).write_bytes(
+            _FAKE_MP3_BYTES
+        )
 
 
 def test_scene_stem_links_and_the_stem_catalogue_appear_in_the_manifest(root: Path) -> None:
@@ -1201,13 +1230,14 @@ def test_scene_stem_links_and_the_stem_catalogue_appear_in_the_manifest(root: Pa
     assert raw["audioStems"] == [
         {
             "id": "wind",
-            "file": "audio/wind.wav",
+            "file": f"audio/{content_hashed_filename('wind', 'mp3', _FAKE_MP3_BYTES)}",
             "title": "Ridge Wind",
             "author": "Test Author",
             "licence": "CC0 1.0",
             "sourceUrl": "https://example.invalid/wind",
             "durationSeconds": 30.0,
             "loopSafe": True,
+            "levelTrimDb": 0.0,
         }
     ]
 
@@ -1237,11 +1267,68 @@ def test_publish_refuses_a_scene_linked_to_an_unknown_stem_id(root: Path) -> Non
     assert "city" in output and "not-a-real-stem" in output
 
 
+def test_publish_refuses_a_loop_mode_scene_sound_naming_a_one_shot_stem(root: Path) -> None:
+    """A one-shot gets no looping player in the web engine, so a loop would play nothing."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths, stem_id="impact", loop_safe=False)
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "impact", mode="loop"))
+
+    code, output = _run(backend, root, "publish")
+    assert code != 0
+    assert "city" in output and "impact" in output and "one-shot" in output
+
+
+def test_publish_accepts_a_once_mode_scene_sound_naming_a_one_shot_stem(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths, stem_id="impact", loop_safe=False)
+
+    paths.scenes.write_text(_link_city_to_stem(paths.scenes.read_text(), "impact", mode="once"))
+
+    code, output = _run(backend, root, "publish")
+    assert code == 0, output
+
+
+def test_publish_refuses_a_stem_whose_format_is_not_webkit_decodable(root: Path) -> None:
+    """OGG never decodes on Safari/iOS; WAV never ships as a real stem (2026-09-15 audio
+    re-review item 7) -- either must be caught at publish time, before a future source ships
+    silently and fails to decode for real users the way this exact gap once did."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths, format="ogg", publish_file=False)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code != 0
+    assert "wind" in output and "ogg" in output
+
+
 def test_publish_refuses_a_catalogued_stem_whose_published_file_is_missing(root: Path) -> None:
     backend = FakeBackend()
     _build_and_pick_all(backend, root)
     paths = ProjectPaths(root)
     _write_stem_catalogue(paths, publish_file=False)
+
+    code, output = _run(backend, root, "publish")
+    assert code != 0
+    assert "wind" in output
+
+
+def test_publish_refuses_a_catalogued_stem_with_more_than_one_published_file(root: Path) -> None:
+    """A stale file from a previous, since-changed source (content-hashed filenames, ADR-023
+    amendment "on-demand loading") must be caught, not silently published alongside the
+    current one or picked arbitrarily."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    _write_stem_catalogue(paths)
+    audio_dir = paths.media / "audio"
+    (audio_dir / "wind-0000000000.mp3").write_bytes(b"ID3 stale")
 
     code, output = _run(backend, root, "publish")
     assert code != 0
@@ -1319,3 +1406,23 @@ def test_the_committed_stub_layer_data_validates(
     layer_id: str, model: type[SeriesData | TreeData | RasterData]
 ) -> None:
     model.model_validate_json((STUB_DIR / "layers" / f"{layer_id}.json").read_text())
+
+
+def test_layer_publishing_carries_a_series_gap_into_the_wire_data() -> None:
+    """ADR-027: `_layers` (pipeline/publish.py) mirrors `TimeSeries.gaps` onto `SeriesData`,
+    unlike every other `WorldModel` field, which only surfaces sampled values."""
+    gappy_co2 = TimeSeries(
+        id="co2",
+        unit="ppm",
+        interpolation=Interpolation.LOG_LINEAR,
+        samples=[
+            Sample(t=0.0, value=420.0),
+            Sample(t=805_743.87, value=222.0),
+            Sample(t=1.0e7, value=277.0),
+        ],
+        gaps=[Gap(from_index=1, to_index=2)],
+    )
+    files, _entries = _layers(WorldModel(series={"co2": gappy_co2}), portraits=None)
+    co2_file = next(f for f in files if f.data.id == "co2")
+    assert isinstance(co2_file.data, SeriesData)
+    assert [(g.from_index, g.to_index) for g in co2_file.data.gaps] == [(1, 2)]

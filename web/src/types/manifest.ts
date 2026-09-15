@@ -57,7 +57,7 @@ export interface Scene {
    *  exists now so adding it later is a publish, not a schema migration. */
   depth?: string
   /** Shot type from the camera grammar (VISUAL_SPEC §3). */
-  shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND'
+  shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND' | 'SPLIT_LEVEL'
   caption: string
   /** events-core event id(s) this scene visually anchors to (ADR-022). Optional for now: absent
    *  on any manifest published before this field existed — timeline rendering of scene->event
@@ -122,7 +122,22 @@ export interface AudioStem {
   licence: string
   sourceUrl: string
   durationSeconds: number
+  /** `false` marks a one-shot: played only by a scene's `once` sound, never looped. */
   loopSafe: boolean
+  /** dB applied on top of every curve or scene gain so each stem reaches the mix at its
+   *  reference loudness (ADR-023 amendment "stem levels"). */
+  levelTrimDb: number
+  /** The span a looping player repeats. Absent: the whole clip. */
+  loop?: AudioLoop
+  /** Playback start offset in seconds, for a one-shot only — skips a silent (or otherwise
+   *  unwanted) lead-in so playback starts right on the scene's `once` trigger. Absent: starts
+   *  at 0. Additive: absent on any manifest published before this field existed. */
+  startSeconds?: number
+}
+
+export interface AudioLoop {
+  startSeconds: number
+  endSeconds: number
 }
 
 // -------------------------------------------------------------------------- credits

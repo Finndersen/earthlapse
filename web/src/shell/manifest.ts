@@ -13,6 +13,7 @@
  */
 
 import type {
+  AudioLoop,
   AudioStem,
   Chapter,
   Credit,
@@ -135,7 +136,7 @@ function expectTuple2(v: unknown, path: string): [number, number] {
   return [expectNumber(arr[0], `${path}[0]`), expectNumber(arr[1], `${path}[1]`)]
 }
 
-const SHOT_TYPES = ['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND'] as const
+const SHOT_TYPES = ['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND', 'SPLIT_LEVEL'] as const
 const LAYER_SURFACES: readonly LayerSurface[] = ['globe', 'timeline-lane', 'hud', 'scene-overlay']
 const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node']
 const INTERPOLATIONS: readonly Interpolation[] = ['linear', 'log-linear', 'step', 'nearest']
@@ -212,7 +213,7 @@ function validateLayerManifest(v: unknown, path: string): LayerManifest {
 
 function validateAudioStem(v: unknown, path: string): AudioStem {
   const r = expectRecord(v, path)
-  return {
+  const stem: AudioStem = {
     id: expectString(r.id, `${path}.id`),
     file: expectString(r.file, `${path}.file`),
     title: expectString(r.title, `${path}.title`),
@@ -221,7 +222,25 @@ function validateAudioStem(v: unknown, path: string): AudioStem {
     sourceUrl: expectString(r.sourceUrl, `${path}.sourceUrl`),
     durationSeconds: expectNumber(r.durationSeconds, `${path}.durationSeconds`),
     loopSafe: expectBoolean(r.loopSafe, `${path}.loopSafe`),
+    levelTrimDb: expectNumber(r.levelTrimDb, `${path}.levelTrimDb`),
   }
+  if (r.loop !== undefined) stem.loop = validateAudioLoop(r.loop, `${path}.loop`)
+  if (r.startSeconds !== undefined) {
+    stem.startSeconds = expectNumber(r.startSeconds, `${path}.startSeconds`)
+  }
+  return stem
+}
+
+function validateAudioLoop(v: unknown, path: string): AudioLoop {
+  const r = expectRecord(v, path)
+  const loop = {
+    startSeconds: expectNumber(r.startSeconds, `${path}.startSeconds`),
+    endSeconds: expectNumber(r.endSeconds, `${path}.endSeconds`),
+  }
+  if (!(loop.startSeconds >= 0 && loop.startSeconds < loop.endSeconds)) {
+    throw new Error(`${path}: expected 0 <= startSeconds < endSeconds, got ${loop.startSeconds}..${loop.endSeconds}`)
+  }
+  return loop
 }
 
 function validateCredit(v: unknown, path: string): Credit {

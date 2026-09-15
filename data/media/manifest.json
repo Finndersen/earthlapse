@@ -1,17 +1,145 @@
 {
   "schemaVersion": 1,
-  "buildId": "09f3fa5a70b7803f",
+  "buildId": "3874f8d5a319dd3e",
   "assetBase": "/media",
   "scenes": [
     {
-      "id": "modern-city",
+      "id": "shenzhen-bay-present",
       "t": 0.0,
       "chapterId": "waters-edge",
-      "image": "scenes/modern-city.jpg",
+      "image": "scenes/shenzhen-bay-present.jpg",
       "shot": "WATER_EDGE",
-      "caption": "The present, where a city of glass and concrete lines a river and one species reshapes the planet's surface in a geological instant.",
+      "caption": "The present: Shenzhen, a largely rural area of about 30,000 people forty-five years ago, is now a city of some 18 million where glass supertalls, electric traffic and delivery drones crowd the bay, and one species reshapes the planet's surface in a geological instant.",
       "events": [],
-      "pinned": "89b360bb4addcd58",
+      "sound": {
+        "stem": "traffic",
+        "mode": "loop",
+        "gain": 0.9
+      },
+      "pinned": "7381960301cd6f6e",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "global-city-rush-hour",
+      "t": 4.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/global-city-rush-hour.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By the early 2020s, more than half of humanity lives in a city — a threshold first crossed only in 2007, up from just 15% in 1900 — commuting by metro, bus and cycle lane past office towers filled with desks and screens.",
+      "events": [
+        "urban-majority-milestone"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.75
+      },
+      "pinned": "4bddd2b3509ab4b6",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "smartphone-seafront-2018",
+      "t": 7.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/smartphone-seafront-2018.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By the end of 2018, more than half of humanity is online, much of it through touchscreen smartphones that reached the mass market only eleven years earlier.",
+      "events": [
+        "half-of-humanity-online"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "pinned": "e42a28ac748277c4",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "energy-transition-solar-wind",
+      "t": 11.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/energy-transition-solar-wind.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Between 2010 and 2015 the world's installed solar capacity grows more than fivefold, from 41.6 to 229.1 gigawatts, while offshore wind turbines begin to appear along temperate coastlines too — the leading edge of an energy transition still gathering pace.",
+      "events": [
+        "renewable-energy-scaleup"
+      ],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.8
+      },
+      "pinned": "744c0c444494da52",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "aral-sea-drying",
+      "t": 27.0,
+      "chapterId": "open-ground",
+      "image": "scenes/aral-sea-drying.jpg",
+      "shot": "GROUND",
+      "caption": "By 1998, Soviet-era irrigation of the Amu Darya and Syr Darya has shrunk the Aral Sea's surface area by 60% and its volume by 80% since 1960, stranding whole fishing fleets — once the source of a sixth of Soviet fish catches — kilometres from any water.",
+      "events": [
+        "aral-sea-shrinkage"
+      ],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.8
+      },
+      "pinned": "362287fda442033d",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "berlin-wall-fall",
+      "t": 36.0,
+      "chapterId": "open-ground",
+      "image": "scenes/berlin-wall-fall.jpg",
+      "shot": "GROUND",
+      "caption": "Within days of the Berlin Wall's fall on 9 November 1989, crowds climb onto it in broad daylight, chiselling away souvenir fragments after overwhelmed border guards threw the checkpoints open overnight — the Cold War's defining collapse.",
+      "events": [
+        "berlin-wall-falls"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "pinned": "04dcd886754a57cd",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "shenzhen-sez-1980",
+      "t": 45.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/shenzhen-sez-1980.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In May 1980, the fishing villages and paddy fields around Shenzhen Bay — home to about 30,000 people — are designated China's first Special Economic Zone; within forty-five years the same shoreline carries a city of 18.2 million.",
+      "events": [
+        "shenzhen-sez-designated"
+      ],
+      "pinned": "4c3e176fe0fb71b8",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "containerisation-port",
+      "t": 50.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/containerisation-port.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Two decades after Malcom McLean's first container voyage in 1956, standardised steel boxes and gantry cranes are remaking the world's ports; by 2004 they will handle 354 million TEU (twenty-foot container units) of traffic a year, carrying roughly nine-tenths of the world's non-bulk seaborne trade.",
+      "events": [
+        "containerization"
+      ],
+      "pinned": "8cc9c5451b9b81f3",
       "width": 2752,
       "height": 1536
     },
@@ -26,11 +154,44 @@
         "moon-landing"
       ],
       "sound": {
-        "stem": "machinery",
+        "stem": "rocket",
         "mode": "once",
-        "gain": 0.9
+        "gain": 1.0
       },
       "pinned": "a0da45cad76f825d",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "green-revolution-fields",
+      "t": 60.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/green-revolution-fields.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By the mid-1960s, Norman Borlaug's short-stemmed high-yield wheat and the new rice varieties bred alongside it begin lifting Asian cereal yields severalfold within a generation — India's wheat harvest rising from about 10 million tonnes a year to 73 million by 2006 — work credited with saving up to a billion people from famine.",
+      "events": [
+        "green-revolution"
+      ],
+      "pinned": "d6a9b3f322ea5a15",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "post-war-boom-suburbia",
+      "t": 68.0,
+      "chapterId": "open-ground",
+      "image": "scenes/post-war-boom-suburbia.jpg",
+      "shot": "GROUND",
+      "caption": "By the mid-1950s, America authorises 40,000 miles of new interstate highway in a single act while mass-built suburbs like Levittown — 17,447 houses raised in four years — put a car and a house within reach of millions of families for the first time.",
+      "events": [
+        "postwar-suburban-boom"
+      ],
+      "sound": {
+        "stem": "traffic",
+        "mode": "loop",
+        "gain": 0.6
+      },
+      "pinned": "cb19517050596667",
       "width": 2752,
       "height": 1536
     },
@@ -44,7 +205,81 @@
       "events": [
         "trinity-test"
       ],
+      "sound": {
+        "stem": "impact",
+        "mode": "once",
+        "gain": 0.8
+      },
       "pinned": "f09e447d813c3ab1",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "normandy-landings-dday",
+      "t": 81.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/normandy-landings-dday.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches — with a further 24,000 landing by parachute and glider overnight — opening the Western Front against Nazi Germany.",
+      "events": [
+        "d-day-normandy-landings",
+        "world-war-ii"
+      ],
+      "sound": {
+        "stem": "water",
+        "mode": "loop",
+        "gain": 0.7
+      },
+      "pinned": "3376a765c7aa7975",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "ginza-modern-tokyo",
+      "t": 95.0,
+      "chapterId": "open-ground",
+      "image": "scenes/ginza-modern-tokyo.jpg",
+      "shot": "GROUND",
+      "caption": "By the early 1930s, crowds of office clerks and shoppers throng Tokyo's Ginza for 'Ginbura' — streetcars, radio only five years old, and a department store letting shoppers keep their shoes on indoors — as Tokyo becomes the world's second-largest city, 4.9 million people, in 1932.",
+      "events": [
+        "ginza-modern-urban-culture"
+      ],
+      "pinned": "81ccaf1dcc006f1f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "somme-1916",
+      "t": 109.0,
+      "chapterId": "open-ground",
+      "image": "scenes/somme-1916.jpg",
+      "shot": "GROUND",
+      "caption": "On the Somme in 1916, four and a half months of Allied offensives against entrenched German lines cost more than a million men killed, wounded or missing on both sides for a few kilometres of ground.",
+      "events": [
+        "battle-of-the-somme",
+        "world-war-i"
+      ],
+      "sound": {
+        "stem": "artillery",
+        "mode": "loop",
+        "gain": 0.9
+      },
+      "pinned": "9efe47ae999402d2",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "ford-model-t-street",
+      "t": 112.0,
+      "chapterId": "open-ground",
+      "image": "scenes/ford-model-t-street.jpg",
+      "shot": "GROUND",
+      "caption": "In 1913, Ford's new moving assembly line at Highland Park, Michigan, begins cutting the time to build a Model T chassis from twelve and a half hours to ninety-three minutes within a year, putting the automobile within reach of ordinary buyers.",
+      "events": [
+        "ford-model-t-assembly-line",
+        "edison-electric-light"
+      ],
+      "pinned": "1bb72621b940a4f0",
       "width": 2752,
       "height": 1536
     },
@@ -59,9 +294,9 @@
         "wright-flyer-first-flight"
       ],
       "sound": {
-        "stem": "machinery",
+        "stem": "aircraft",
         "mode": "once",
-        "gain": 0.5
+        "gain": 0.8
       },
       "pinned": "b82bc9f05d4f344e",
       "width": 2752,
@@ -78,11 +313,30 @@
         "industrial-revolution"
       ],
       "sound": {
-        "stem": "machinery",
+        "stem": "industry",
         "mode": "loop",
-        "gain": 0.7
+        "gain": 1.0
       },
       "pinned": "4ee06d67fed510e9",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "amsterdam-voc-harbour",
+      "t": 375.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/amsterdam-voc-harbour.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By 1650, Amsterdam dominates world trade through the Dutch East India Company (VOC), whose shares — traded from 1602 — gave the city what's often called the world's oldest modern stock market; by 1669 the VOC employs 50,000 people across over 150 merchant ships and 40 warships, and Amsterdam is the wealthiest city in the Western world.",
+      "events": [
+        "dutch-golden-age-voc"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "pinned": "815e21329ccda9ba",
       "width": 2752,
       "height": 1536
     },
@@ -96,7 +350,69 @@
       "events": [
         "columbian-exchange"
       ],
+      "sound": {
+        "stem": "water",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "80840169388e234f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "black-death-messina-1347",
+      "t": 678.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/black-death-messina-1347.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In October 1347, twelve Genoese trading galleys fleeing Caffa put in at Messina, Sicily, carrying the Black Death into Europe; within six years the plague kills an estimated 25-50 million people across Europe, Western Asia and North Africa.",
+      "events": [
+        "black-death"
+      ],
+      "sound": {
+        "stem": "lake-water",
+        "mode": "loop",
+        "gain": 0.7
+      },
+      "pinned": "00a7df2296a29e50",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "angkor-wat",
+      "t": 875.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/angkor-wat.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "By 1150, King Suryavarman II's temple-mountain of Angkor Wat nears completion at the heart of the Khmer Empire, its five towers mirrored in a moat more than five kilometres around.",
+      "events": [
+        "angkor-wat-built"
+      ],
+      "sound": {
+        "stem": "lake-water",
+        "mode": "loop",
+        "gain": 0.7
+      },
+      "pinned": "93cb98d3b0226711",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "imperial-rome-pantheon",
+      "t": 1900.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/imperial-rome-pantheon.jpg",
+      "shot": "WATER_EDGE",
+      "caption": "In the 120s AD, at the height of Roman power, Hadrian's newly rebuilt Pantheon rises over the rooftops of the Campus Martius near the Tiber, its huge concrete dome the largest built anywhere for the next 1,300 years.",
+      "events": [
+        "roman-empire-peak"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "pinned": "042036ae90c6428a",
       "width": 2752,
       "height": 1536
     },
@@ -110,6 +426,11 @@
       "events": [
         "great-pyramid-giza"
       ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "ae2cd69144d41861",
       "width": 2752,
       "height": 1536
@@ -124,6 +445,11 @@
       "events": [
         "uruk-first-city"
       ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "0fc9645483b32d86",
       "width": 2752,
       "height": 1536
@@ -138,6 +464,11 @@
       "events": [
         "african-humid-period"
       ],
+      "sound": {
+        "stem": "livestock",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "69f1684c8d9654bb",
       "width": 2752,
       "height": 1536
@@ -152,6 +483,11 @@
       "events": [
         "agriculture"
       ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
       "pinned": "3a0762558a1855b1",
       "width": 2752,
       "height": 1536
@@ -166,6 +502,11 @@
       "events": [
         "gobekli-tepe"
       ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "84e970ce9bbc7b8c",
       "width": 2752,
       "height": 1536
@@ -178,6 +519,11 @@
       "shot": "WATER_EDGE",
       "caption": "At the height of the last ice age, woolly mammoths cross a cold, dry steppe beside a braided meltwater river.",
       "events": [],
+      "sound": {
+        "stem": "mammoth",
+        "mode": "once",
+        "gain": 1.0
+      },
       "pinned": "e5e38045d401cbd2",
       "width": 2752,
       "height": 1536
@@ -190,6 +536,11 @@
       "shot": "WATER_EDGE",
       "caption": "In the last millennia before Neanderthals disappear from Europe, a hunter works a stone-tipped spear beside a cold river.",
       "events": [],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.85
+      },
       "pinned": "3905f2c4c1a2641b",
       "width": 2752,
       "height": 1536
@@ -204,6 +555,11 @@
       "events": [
         "acheulean-technology"
       ],
+      "sound": {
+        "stem": "knapping",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "23b1e972d4fa9690",
       "width": 2752,
       "height": 1536
@@ -230,6 +586,11 @@
       "shot": "WATER_EDGE",
       "caption": "Cut off from the Atlantic, the Mediterranean shrinks to brine lakes ringed by thick beds of salt; how far the sea actually fell is still debated.",
       "events": [],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "183125fa8e80ac2d",
       "width": 2752,
       "height": 1536
@@ -242,6 +603,11 @@
       "shot": "WATER_EDGE",
       "caption": "Coarse new grasses now carpet the plain, and three-toed horses crowd a shrinking waterhole in a drier, more open East Africa.",
       "events": [],
+      "sound": {
+        "stem": "mammals",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "00c097bfdd0c523f",
       "width": 2752,
       "height": 1536
@@ -254,6 +620,11 @@
       "shot": "WATER_EDGE",
       "caption": "Where woodland once stood, grass now dominates the open plains, and three-toed horses graze a horizon no earlier scene has shown.",
       "events": [],
+      "sound": {
+        "stem": "mammals",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "93b44eb04685155f",
       "width": 2752,
       "height": 1536
@@ -266,6 +637,11 @@
       "shot": "WATER_EDGE",
       "caption": "As Antarctica's first continent-scale ice sheet reaches the sea, Earth leaves the warm world of the early Cenozoic for the icehouse it has lived in ever since.",
       "events": [],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "a2fe73ed75939b32",
       "width": 2752,
       "height": 1536
@@ -333,7 +709,7 @@
       "sound": {
         "stem": "wind",
         "mode": "loop",
-        "gain": 0.55
+        "gain": 0.8
       },
       "pinned": "ad31c5b96308e6e0",
       "width": 2752,
@@ -350,9 +726,9 @@
         "k-pg-impact"
       ],
       "sound": {
-        "stem": "volcanic",
+        "stem": "impact",
         "mode": "once",
-        "gain": 0.85
+        "gain": 1.0
       },
       "pinned": "40cf7c5b9d357780",
       "width": 2752,
@@ -366,6 +742,11 @@
       "shot": "WATER_EDGE",
       "caption": "Two million years before the asteroid, duck-billed dinosaurs gather at a humid Late Cretaceous swamp where flowering trees have spread.",
       "events": [],
+      "sound": {
+        "stem": "archosaurs",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "45461089a48f8e16",
       "width": 2752,
       "height": 1536
@@ -378,6 +759,11 @@
       "shot": "WATER_EDGE",
       "caption": "Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.",
       "events": [],
+      "sound": {
+        "stem": "buzzing",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "cfa0c916e9ea3943",
       "width": 2752,
       "height": 1536
@@ -402,6 +788,11 @@
       "shot": "WATER_EDGE",
       "caption": "Sauropods wade a Late Jurassic braided river through a floodplain of conifers, cycads and ferns, without a single flower.",
       "events": [],
+      "sound": {
+        "stem": "archosaurs",
+        "mode": "loop",
+        "gain": 0.9
+      },
       "pinned": "fff98516543632ed",
       "width": 2752,
       "height": 1536
@@ -426,6 +817,11 @@
       "shot": "WATER_EDGE",
       "caption": "In the super-greenhouse world that followed the worst extinction in Earth's history, one squat, tusked animal makes up nearly the entire land fauna.",
       "events": [],
+      "sound": {
+        "stem": "large-animal",
+        "mode": "loop",
+        "gain": 0.85
+      },
       "pinned": "47c14793925a8c37",
       "width": 2752,
       "height": 1536
@@ -438,6 +834,11 @@
       "shot": "WATER_EDGE",
       "caption": "Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.",
       "events": [],
+      "sound": {
+        "stem": "large-animal",
+        "mode": "loop",
+        "gain": 0.85
+      },
       "pinned": "736e79c67e650684",
       "width": 2752,
       "height": 1536
@@ -464,6 +865,11 @@
       "events": [
         "late-paleozoic-ice-age"
       ],
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "c79cd4f37d13d12f",
       "width": 2752,
       "height": 1536
@@ -500,6 +906,11 @@
       "shot": "WATER_EDGE",
       "caption": "The first forests of Archaeopteris shade a Devonian estuary where lobe-finned fishes haul themselves into the shallows.",
       "events": [],
+      "sound": {
+        "stem": "water",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "04b683b74388043c",
       "width": 2752,
       "height": 1536
@@ -512,6 +923,11 @@
       "shot": "WATER_EDGE",
       "caption": "Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.",
       "events": [],
+      "sound": {
+        "stem": "geothermal",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "pinned": "7ea8b194c790ed34",
       "width": 2752,
       "height": 1536
@@ -519,33 +935,33 @@
     {
       "id": "silurian-shore",
       "t": 425000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/silurian-shore.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore where sea scorpions crawl and early bony fish swim in the shallows.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.",
       "events": [],
-      "pinned": "96cdc909da9135c5",
+      "pinned": "45f0b3f478c76df1",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "ordovician-reef-shore",
       "t": 450000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/ordovician-reef-shore.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "The first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to the tideline while a reef of shelled animals builds offshore.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "Beneath the surface a reef of crinoids, corals and shelled animals teems with life, while the first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to damp ground above the shore.",
       "events": [],
-      "pinned": "38be5a9c75c4f90a",
+      "pinned": "8f32a35b5ef95389",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "cambrian-seafloor",
       "t": 518000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/cambrian-seafloor.jpg",
-      "shot": "WATER_EDGE",
+      "shot": "SPLIT_LEVEL",
       "caption": "On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.",
       "events": [],
       "pinned": "18445a4ae4e6c53c",
@@ -555,62 +971,67 @@
     {
       "id": "ediacaran-shallows",
       "t": 560000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/ediacaran-shallows.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "Soft-bodied Ediacaran organisms, among the first large living things, lie on microbial mats in clear, sunlit shallows beside a barren coast.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in clear, sunlit shallows beside a barren coast.",
       "events": [],
-      "pinned": "bf667858e3d40d22",
+      "pinned": "b1473d8e9161781f",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "cryogenian-snowball",
       "t": 690000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/cryogenian-snowball.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "During a Snowball Earth glaciation, ice reaches toward the equator and the sea survives only as dark leads between the ice.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "During a Snowball Earth glaciation, ice reaches toward the equator, open water may survive only in scattered gaps in the ice, and life hangs on out of sight.",
       "events": [
         "snowball-earth"
       ],
-      "pinned": "c9b3cf2decb2f0a6",
+      "sound": {
+        "stem": "wind",
+        "mode": "loop",
+        "gain": 0.9
+      },
+      "pinned": "b282ea0ed3284209",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "boring-billion-shallows",
       "t": 1047000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/boring-billion-shallows.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "In the climatically stable \"Boring Billion,\" Bangiomorpha — the oldest known organism with differentiated sexual cells — grows in tidal pools on an otherwise still-lifeless shore.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "In the climatically stable \"Boring Billion,\" Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.",
       "events": [],
-      "pinned": "ccbb5828638ef8de",
+      "pinned": "1a40aabd80b4def7",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "great-oxidation",
       "t": 2400000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/great-oxidation.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "As cyanobacteria flood the shallows with oxygen for the first time, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.",
       "events": [],
-      "pinned": "a9f9e02cef236b42",
+      "pinned": "295c1601ff5c1ece",
       "width": 2752,
       "height": 1536
     },
     {
       "id": "archean-shore",
       "t": 3450000000.0,
-      "chapterId": "waters-edge",
+      "chapterId": "over-under",
       "image": "scenes/archean-shore.jpg",
-      "shot": "WATER_EDGE",
-      "caption": "Microbial stromatolites crowd an Archean tidal shore under a faint young Sun and a hazy, oxygen-free sky.",
+      "shot": "SPLIT_LEVEL",
+      "caption": "Microbial stromatolites crowd the floor of an Archean tidal sea under a faint young Sun and a hazy, oxygen-free sky.",
       "events": [],
-      "pinned": "647c2acdb2e4a8ea",
+      "pinned": "5dc36fb18edad44f",
       "width": 2752,
       "height": 1536
     },
@@ -622,6 +1043,11 @@
       "shot": "WATER_EDGE",
       "caption": "On a young, lifeless Earth, shallow volcanic pools cycle wet and dry in one of two contested settings where the first self-replicating chemistry may have begun.",
       "events": [],
+      "sound": {
+        "stem": "geothermal",
+        "mode": "loop",
+        "gain": 1.0
+      },
       "pinned": "a9fede0cdaca2a7e",
       "width": 2752,
       "height": 1536
@@ -646,6 +1072,11 @@
       "shot": "WIDE_RIDGE",
       "caption": "In the aftermath of the Moon-forming impact, Earth's whole surface is a glowing ocean of magma beneath a looming, newborn Moon.",
       "events": [],
+      "sound": {
+        "stem": "volcanic",
+        "mode": "loop",
+        "gain": 1.0
+      },
       "pinned": "28a947b4b5aa181a",
       "width": 2752,
       "height": 1536
@@ -656,18 +1087,42 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 0.0,
-      "tEnd": 66.94850991743677
-    },
-    {
-      "id": "molten-earth",
-      "label": "Molten Earth",
-      "tStart": 66.94850991743677,
-      "tEnd": 98.81482855768475
+      "tEnd": 17.33030277982336
     },
     {
       "id": "open-ground",
       "label": "On open ground",
-      "tStart": 98.81482855768475,
+      "tStart": 17.33030277982336,
+      "tEnd": 40.25530268947253
+    },
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 40.25530268947253,
+      "tEnd": 63.87680633323439
+    },
+    {
+      "id": "open-ground",
+      "label": "On open ground",
+      "tStart": 63.87680633323439,
+      "tEnd": 73.7596147662627
+    },
+    {
+      "id": "molten-earth",
+      "label": "Molten Earth",
+      "tStart": 73.7596147662627,
+      "tEnd": 80.49846624323678
+    },
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 80.49846624323678,
+      "tEnd": 87.7242920512753
+    },
+    {
+      "id": "open-ground",
+      "label": "On open ground",
+      "tStart": 87.7242920512753,
       "tEnd": 154.26751108973178
     },
     {
@@ -686,6 +1141,18 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 15165.789409759738,
+      "tEnd": 415902632.83633447
+    },
+    {
+      "id": "over-under",
+      "label": "Above and below the surface",
+      "tStart": 415902632.83633447,
+      "tEnd": 3668105778.193118
+    },
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 3668105778.193118,
       "tEnd": 4398863489.584821
     },
     {
@@ -795,6 +1262,79 @@
       "citation": "By definition. t = 0 is the timeline's present-day anchor; see sources/events-core/README.md for the reference-year convention.\n"
     },
     {
+      "id": "chatgpt-release",
+      "label": "ChatGPT released",
+      "kind": "moment",
+      "tMin": 3.0,
+      "tMax": 3.0,
+      "t": 3.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "ChatGPT, a conversational artificial-intelligence chatbot, is released to the public. It reaches an estimated 100 million users within two months and speeds up an ongoing wave of investment in, and public attention to, AI. Its long-term significance is still unfolding.\n",
+      "citation": "Wikipedia, \"ChatGPT\" (accessed 2026-09-14). Released 30 November 2022; one million users in five days and 100 million in two months; \"accelerated the AI boom.\" The developer's own announcement page refused a live fetch.\n"
+    },
+    {
+      "id": "half-of-humanity-online",
+      "label": "Half of humanity online",
+      "kind": "moment",
+      "tMin": 7.0,
+      "tMax": 7.0,
+      "t": 7.0,
+      "tags": [
+        "society",
+        "science-technology"
+      ],
+      "importance": 0.5,
+      "description": "The International Telecommunication Union estimates that by the end of 2018, 51.2% of the world's population (3.9 billion people) is using the Internet. It is the first time more than half of humanity is online. This is a statistical estimate crossing a threshold, not a single observed moment. By 2025 an estimated 6 billion people, about 74%, are online.\n",
+      "citation": "International Telecommunication Union (2018). Press release, Geneva, 7 December 2018: \"at the end of 2018, 51.2 per cent of the global population, or 3.9 billion people, will be using the Internet.\" 2025 figure: Wikipedia, \"Global Internet usage\" (accessed 2026-09-14).\n"
+    },
+    {
+      "id": "renewable-energy-scaleup",
+      "label": "Solar and wind power scale up rapidly",
+      "kind": "period",
+      "tMin": 10.0,
+      "tMax": 15.0,
+      "tags": [
+        "science-technology",
+        "earth-climate"
+      ],
+      "importance": 0.5,
+      "description": "Global installed solar photovoltaic capacity grows more than fivefold in five years, from 41.6 gigawatts in 2010 to 229.1 gigawatts in 2015, while offshore wind turbines begin to spread along temperate coastlines too — the leading edge of a still-early transition away from fossil-fuelled electricity.\n",
+      "citation": "Wikipedia, \"Growth of photovoltaics\" (accessed 2026-09-15). Global cumulative installed solar PV capacity 41.6 GW (2010, 76% YoY growth) to 229.1 GW (2015, 27% YoY growth). Review fix (2026-09-15): no global offshore-wind capacity figure for both 2010 and 2015 could be verified live (Wikipedia \"Offshore wind power\" gives only a 2015 European total, 11,027 MW, not a global one for either year), so the offshore-wind clause is kept qualitative rather than quantitative.\n"
+    },
+    {
+      "id": "iphone-launch",
+      "label": "iPhone brings smartphones to the mass market",
+      "kind": "moment",
+      "tMin": 18.0,
+      "tMax": 18.0,
+      "t": 18.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Apple announces the iPhone in January and releases it in the US in June. It is the first phone with a multi-touch screen, and it does away with almost all physical buttons. Not the first smartphone (see the IBM Simon, 1994), but the design that made the touchscreen smartphone the industry standard.\n",
+      "citation": "Wikipedia, \"iPhone (1st generation)\" (accessed 2026-09-14). Announced 9 January 2007 at Macworld, San Francisco; US release 29 June 2007; one millionth unit sold 74 days after release; 6,124,000 units sold before discontinuation on 11 July 2008.\n"
+    },
+    {
+      "id": "urban-majority-milestone",
+      "label": "Half of humanity lives in cities",
+      "kind": "moment",
+      "tMin": 18.0,
+      "tMax": 18.0,
+      "t": 18.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "For the first time in recorded history, more than half of the world's population lives in cities, in 2007 — up from just 15% in 1900. The share keeps rising, reshaping daily life around the metro systems, office towers and mass transit that a century before did not exist.\n",
+      "citation": "Wikipedia, \"Urbanization\" (accessed 2026-09-15), citing United Nations population data: \"just 15% of the world's population lived in cities\" in 1900; \"in 2007, more than 50% of the world population was living in cities, for the first time in human history.\"\n"
+    },
+    {
       "id": "human-genome-project-completed",
       "label": "Human Genome Project completed",
       "kind": "period",
@@ -807,6 +1347,34 @@
       "importance": 0.45,
       "description": "An international public consortium sequences the roughly 3 billion base pairs of the human genome, from initial NIH funding through a working draft to a finished sequence completed two years ahead of schedule — a foundational resource for modern genomics and medicine.\n",
       "citation": "National Human Genome Research Institute, project timeline. Funding begins 1 October 1990; working draft announced 26 June 2000; completion announced 14 April 2003.\n"
+    },
+    {
+      "id": "gps-fully-operational",
+      "label": "GPS fully operational",
+      "kind": "moment",
+      "tMin": 30.0,
+      "tMax": 30.0,
+      "t": 30.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.4,
+      "description": "The US Air Force declares the Global Positioning System fully operational. Its 24-satellite constellation had been complete since December 1993, and a 1983 presidential directive had already promised it for free civilian use. Accurate positioning for everyone follows on 2 May 2000, when the deliberate degrading of the civilian signal (\"Selective Availability\") is switched off.\n",
+      "citation": "Wikipedia, \"Global Positioning System\" (accessed 2026-09-14). Initial operational capability December 1993; Full Operational Capability declared by Air Force Space Command April 1995; Selective Availability discontinued 2 May 2000. UNVERIFIED: the often-quoted 17 July 1995 date for Full Operational Capability could not be checked live (the gps.gov page returned 404), so the event is dated to the year only (t = 30 for either date).\n"
+    },
+    {
+      "id": "ibm-simon-first-smartphone",
+      "label": "First smartphone (IBM Simon)",
+      "kind": "moment",
+      "tMin": 31.0,
+      "tMax": 31.0,
+      "t": 31.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.4,
+      "description": "The IBM Simon Personal Communicator goes on sale. It combines a mobile phone with handheld-organiser (PDA) features and a touchscreen, and is now looked back on as the first true smartphone, though General Magic's Magic Cap devices, released later in 1994, are also counted among the first commercial smartphones. Only about 50,000 Simons were sold in its six months on the market.\n",
+      "citation": "Wikipedia, \"IBM Simon\" (accessed 2026-09-14). On sale through BellSouth Cellular from 16 August 1994; prototype shown at COMDEX, 16 November 1992; about 50,000 units sold; \"retrospectively referred to as the first true smartphone.\" Wikipedia, \"Smartphone\" (accessed 2026-09-14): \"The first commercial smartphones are widely recognized to be the IBM Simon Personal Communicator ... and General Magic's Magic Cap devices released by Sony ('magic link') and Motorola ('envoy') in 1994.\"\n"
     },
     {
       "id": "www-invented",
@@ -823,6 +1391,106 @@
       "citation": "Berners-Lee, T. (1989). \"Information Management: A Proposal.\" CERN, 12 March 1989. First web page live 6 August 1991; released publicly 23 August 1991.\n"
     },
     {
+      "id": "berlin-wall-falls",
+      "label": "Fall of the Berlin Wall",
+      "kind": "moment",
+      "tMin": 36.0,
+      "tMax": 36.0,
+      "t": 36.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.6,
+      "description": "Overwhelmed East German border guards at Berlin's checkpoints open the gates to crowds demanding passage, and the Wall that has divided the city since 1961 becomes passable overnight. Within days, Berliners are chipping souvenir fragments from it in daylight; the Wall's fall becomes the defining image of the Cold War's end and is followed within a year by German reunification.\n",
+      "citation": "Wikipedia, \"Fall of the Berlin Wall\" (accessed 2026-09-15): checkpoints opened the night of 9 November 1989 after crowds gathered demanding passage; guards overwhelmed, held with little or no identity-checking.\n"
+    },
+    {
+      "id": "internet-tcp-ip-switchover",
+      "label": "ARPANET switches to TCP/IP",
+      "kind": "moment",
+      "tMin": 42.0,
+      "tMax": 42.0,
+      "t": 42.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.6,
+      "description": "On \"flag day\", ARPANET retires its original Network Control Protocol and makes the TCP/IP protocols its standard. TCP/IP is the protocol suite for connecting separate networks together, and the Internet still runs on it today.\n",
+      "citation": "Wikipedia, \"ARPANET\" (accessed 2026-09-14). \"On 1 January 1983, known as flag day, TCP/IP protocols became the standard for the ARPANET, replacing the earlier Network Control Protocol.\"\n"
+    },
+    {
+      "id": "shenzhen-sez-designated",
+      "label": "Shenzhen designated first Special Economic Zone",
+      "kind": "moment",
+      "tMin": 45.0,
+      "tMax": 45.0,
+      "t": 45.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "China designates Shenzhen, then a market town of fishing villages and paddy fields with about 30,000 people, as its first Special Economic Zone, opening it to foreign investment and market reforms. Within forty-five years it grows into a city of some 18.2 million and a global centre of electronics manufacturing.\n",
+      "citation": "Wikipedia, \"Shenzhen\" (accessed 2026-09-15). Designated China's first Special Economic Zone in May 1980; population about 30,000 in 1980; population 18.2 million in 2025.\n"
+    },
+    {
+      "id": "aral-sea-shrinkage",
+      "label": "Aral Sea shrinks to a fraction of its former size",
+      "kind": "period",
+      "tMin": 27.0,
+      "tMax": 65.0,
+      "tags": [
+        "earth-climate",
+        "catastrophe"
+      ],
+      "importance": 0.55,
+      "description": "Soviet irrigation projects begun in the early 1960s divert the Amu Darya and Syr Darya rivers, and the Aral Sea, once the world's fourth-largest lake, shrinks by 60% in surface area and 80% in volume between 1960 and 1998. Its fishing industry, which once employed some 40,000 people, collapses entirely by 1987; former port towns such as Moynaq now lie tens of kilometres from any water, their fishing fleets stranded on the dry seabed.\n",
+      "citation": "Wikipedia, \"Aral Sea\" (accessed 2026-09-15). Original area 68,000 km^2 (1960); 60% area / 80% volume loss 1960-1998; 17,160 km^2 (25% of original) by 2004; fishing industry employed ~40,000 at its peak, commercial catch nonexistent by 1987; Moynaq now 30-90 km from shore.\n"
+    },
+    {
+      "id": "mass-market-personal-computers",
+      "label": "Personal computers go mass-market",
+      "kind": "moment",
+      "tMin": 48.0,
+      "tMax": 48.0,
+      "t": 48.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "The Apple II, Commodore PET 2001 and Tandy TRS-80 all reach the market in 1977 as complete, ready-to-use machines rather than hobbyist kits. They are the first widely successful mass-market personal computers, later called the \"1977 Trinity\" by Byte magazine. IBM's PC of 1981 then sets the \"IBM PC compatible\" standard that most later personal computers follow.\n",
+      "citation": "Wikipedia, \"History of personal computers\" (accessed 2026-09-14): the 1977 Trinity, Byte's naming, and dominance by late 1978. Wikipedia, \"IBM Personal Computer\" (accessed 2026-09-14): released 12 August 1981, the basis of the IBM PC compatible de facto standard. The three 1977 release months were not confirmed live, so the event is dated to the year only. Dated to 1977 rather than 1981 because that is when personal computers first became a mass-market product.\n"
+    },
+    {
+      "id": "first-handheld-mobile-call",
+      "label": "First public handheld mobile phone call",
+      "kind": "moment",
+      "tMin": 52.0,
+      "tMax": 52.0,
+      "t": 52.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.45,
+      "description": "Martin Cooper of Motorola, standing on a Manhattan sidewalk, places the first public call from a handheld cellular phone to Joel Engel at rival AT&T. The prototype is a 1.1 kg \"brick\"; a consumer version of the handset goes on sale a decade later, in 1983.\n",
+      "citation": "Wikipedia, \"Martin Cooper (inventor)\" (accessed 2026-09-14). Call placed 3 April 1973 on a DynaTAC prototype weighing 2.5 lb (1.1 kg); handset commercially available by 1983 after four iterations.\n"
+    },
+    {
+      "id": "first-microprocessor",
+      "label": "Intel 4004, first commercial microprocessor",
+      "kind": "moment",
+      "tMin": 54.0,
+      "tMax": 54.0,
+      "t": 54.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.5,
+      "description": "Intel releases the 4004, the first microprocessor sold as a stand-alone component: a computer's whole central processor on one chip rather than spread across several. Its designers were Federico Faggin, Marcian Hoff, Stanley Mazor and Masatoshi Shima. The title of \"first microprocessor\" is contested, because earlier single-chip processors existed (Texas Instruments' TMS0100, Four-Phase's AL1 and the then-classified MP944).\n",
+      "citation": "Wikipedia, \"Intel 4004\" (accessed 2026-09-14). Released 15 November 1971, announced in Intel's \"Announcing a new era of integrated electronics\" advertisement in that day's Electronic News; \"the first commercially available (sold as a component) microprocessor\". The same page gives the competing claims: TI's TMS0100 (launched 17 September 1971), Four-Phase's AL1 (in a commercial product earlier) and the MP944 (finished 1970, classified until 1998).\n"
+    },
+    {
       "id": "moon-landing",
       "label": "Moon landing",
       "kind": "moment",
@@ -837,6 +1505,48 @@
       "citation": "NASA (1969). Apollo 11 Mission Report. Neil Armstrong and Buzz Aldrin land at Mare Tranquillitatis on 20 July 1969 UTC.\n"
     },
     {
+      "id": "arpanet-first-message",
+      "label": "First message over ARPANET",
+      "kind": "moment",
+      "tMin": 56.0,
+      "tMax": 56.0,
+      "t": 56.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.5,
+      "description": "UCLA student programmer Charley Kline sends the first message over ARPANET to SRI programmer Bill Duvall at the Stanford Research Institute. The receiving computer crashes after two characters, so the first transmission is just \"lo\", from \"login\". ARPANET is the network the Internet grew out of.\n",
+      "citation": "Wikipedia, \"ARPANET\" (accessed 2026-09-14), citing the first ARPANET IMP log: 29 October 1969, 10:30 pm PST (06:30 UTC, 30 October 1969), UCLA's SDS Sigma 7 host to SRI's SDS 940 host.\n"
+    },
+    {
+      "id": "containerization",
+      "label": "Container shipping remakes world trade",
+      "kind": "period",
+      "tMin": 45.0,
+      "tMax": 69.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Malcom McLean's SS Ideal X sails the first successful container voyage, from Newark to Houston. Standardised steel shipping containers and dedicated gantry-crane terminals spread through the world's ports over the following decades; by 2004 they carry 354 million TEU (twenty-foot container units) of traffic a year, and within a few more years roughly nine-tenths of the world's non-bulk seaborne trade moves in a box.\n",
+      "citation": "Wikipedia, \"Containerization\" (accessed 2026-09-15). SS Ideal X voyage 26 April 1956; ISO container standardisation 1968-1970; global container traffic 354 million TEU in 2004, ~82% handled by the top 100 ports; roughly 90% of non-bulk cargo moved by containers by 2009.\n"
+    },
+    {
+      "id": "green-revolution",
+      "label": "Green Revolution",
+      "kind": "period",
+      "tMin": 55.0,
+      "tMax": 65.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.65,
+      "description": "Norman Borlaug's short-stemmed, disease-resistant Mexican wheat lines, and the high-yield rice varieties (such as IR8, released 1966) bred alongside them, spread through South Asia and are credited with saving perhaps a billion people from famine. India's wheat harvest rises from about 10 million tonnes a year in the 1960s to 73 million by 2006.\n",
+      "citation": "Wikipedia, \"Green Revolution\" (accessed 2026-09-15). Borlaug hired 1940 to lead Mexico's agricultural research; Nobel Peace Prize 1970; India wheat production 10 Mt (1960s) to 73 Mt (2006); IR8 rice released 1966, yielding up to ~10 t/ha under optimal conditions by 1968. Review fix (2026-09-15): dropped this page's separate claim of India rice yields rising ~2 to ~6 t/ha (1960s to mid-1990s) -- Wikipedia \"Rice production in India\"'s own yield table gives India's actual national average as ~1.0 t/ha (1960s) to ~1.9 t/ha (1996-97/1997-98), roughly a third of that figure, so it is not used as a national-average claim.\n"
+    },
+    {
       "id": "gagarin-first-spaceflight",
       "label": "First human spaceflight",
       "kind": "moment",
@@ -849,6 +1559,20 @@
       "importance": 0.45,
       "description": "Yuri Gagarin completes a single orbit of Earth aboard Vostok 1, becoming the first human in space, and returns safely to Earth the same day.\n",
       "citation": "Launch record, Vostok 1, 12 April 1961, 06:07 UTC, Baikonur Cosmodrome; single orbit, landing 07:55 UTC the same day. Uncontested.\n"
+    },
+    {
+      "id": "integrated-circuit-invented",
+      "label": "Integrated circuit invented",
+      "kind": "moment",
+      "tMin": 67.0,
+      "tMax": 67.0,
+      "t": 67.0,
+      "tags": [
+        "science-technology"
+      ],
+      "importance": 0.55,
+      "description": "Jack Kilby demonstrates the first working integrated circuit, putting several electronic components on a single piece of semiconductor; about six months later Robert Noyce at Fairchild Semiconductor develops the first practical monolithic chip. Every later computer, phone and network builds on the microchip.\n",
+      "citation": "Wikipedia, \"Integrated circuit\" (accessed 2026-09-14). Kilby's first working example demonstrated 12 September 1958; Noyce's monolithic IC about six months later (1959). Kilby shared the 2000 Nobel Prize in Physics for the invention (the nobelprize.org facts page refused a live fetch; confirmed via Wikipedia only).\n"
     },
     {
       "id": "sputnik-1-launch",
@@ -880,6 +1604,20 @@
       "citation": "Watson, J.D. & Crick, F.H.C. (1953). \"Molecular structure of nucleic acids: a structure for deoxyribose nucleic acid.\" Nature, 171(4356), 737-738. Published 25 April 1953.\n"
     },
     {
+      "id": "postwar-suburban-boom",
+      "label": "Postwar highway and suburban boom",
+      "kind": "period",
+      "tMin": 65.0,
+      "tMax": 80.0,
+      "tags": [
+        "society",
+        "science-technology"
+      ],
+      "importance": 0.55,
+      "description": "In the fifteen years after the Second World War, the United States builds a new mass-produced suburbia and the highways to connect it. Levittown, New York, the first mass-produced suburb, raises 17,447 houses in under four years; the Federal-Aid Highway Act of 1956 then authorises 40,000 miles of new divided interstate highway, the largest public-works programme in the country's history. Car and home ownership become mass-market goods within a single generation.\n",
+      "citation": "Wikipedia, \"Levittown, New York\" and \"Interstate Highway System\" (both accessed 2026-09-15). Levittown built 1947-1951, 17,447 houses, peak rate 30 houses/day. Federal-Aid Highway Act of 1956 signed June 1956, authorising 40,000 miles of divided highway.\n"
+    },
+    {
       "id": "transistor-invented",
       "label": "Transistor invented",
       "kind": "moment",
@@ -909,6 +1647,49 @@
       "citation": "US Department of Energy / Manhattan Project records. Trinity test, 16 July 1945, 05:29:21 Mountain War Time, Jornada del Muerto desert, New Mexico; yield ~24.8 kt. Uncontested — among the most precisely documented events of the 20th century.\n"
     },
     {
+      "id": "d-day-normandy-landings",
+      "label": "D-Day, the Normandy landings",
+      "kind": "moment",
+      "tMin": 81.0,
+      "tMax": 81.0,
+      "t": 81.0,
+      "tags": [
+        "catastrophe",
+        "society"
+      ],
+      "importance": 0.6,
+      "description": "Allied forces land on five beaches along the Normandy coast in the largest seaborne invasion in history, opening the Western Front against Nazi Germany. About 132,000 troops come ashore by landing craft on the first day, alongside a further 24,000 airborne troops dropped by parachute and glider overnight — some 156,000 in total; the campaign that follows leads to the liberation of Western Europe within a year.\n",
+      "citation": "Wikipedia, \"Normandy landings\" (accessed 2026-09-15): 6 June 1944; Utah, Omaha, Gold, Juno and Sword beaches; approximately 156,000 troops landed on D-Day in total, including 24,000 airborne troops.\n"
+    },
+    {
+      "id": "world-war-ii",
+      "label": "The Second World War",
+      "kind": "period",
+      "tMin": 79.33,
+      "tMax": 85.33,
+      "tags": [
+        "catastrophe",
+        "society"
+      ],
+      "importance": 0.7,
+      "description": "Beginning with Germany's invasion of Poland, the Second World War becomes the deadliest conflict in human history, fought across Europe, the Pacific, North Africa and beyond and marked by genocide, including the Holocaust, and the first use of nuclear weapons. It ends with Japan's surrender on 2 September 1945. Estimates of the total dead, the majority civilians, range from 60 to 75 million.\n",
+      "citation": "Wikipedia, \"World War II\" (accessed 2026-09-15): began 1 September 1939; ended 2 September 1945; estimated 60-75 million deaths, military and civilian, a majority of them civilian.\n"
+    },
+    {
+      "id": "ginza-modern-urban-culture",
+      "label": "Ginza's mass urban culture",
+      "kind": "period",
+      "tMin": 91.0,
+      "tMax": 101.0,
+      "tags": [
+        "society",
+        "science-technology"
+      ],
+      "importance": 0.5,
+      "description": "Tokyo's Ginza district becomes interwar Japan's showcase of a new, first-of-its- kind mass urban lifestyle: a Ginza department store lets customers keep their shoes on indoors from 1924, Japan's first radio broadcasts begin the following year, and Tokyo's first subway line — Asia's oldest, opened in 1927 — reaches Ginza itself only in 1934, as crowds throng the district for \"Ginbura,\" the fashionable pastime of strolling Ginza simply to see and be seen.\n",
+      "citation": "Wikipedia, \"Department store\" (accessed 2026-09-15): \"In 1924, Matsuzakaya store in Ginza allowed street shoes to be worn indoors.\" Wikipedia, \"NHK\" (accessed 2026-09-15): Tokyo Broadcasting Station begins radio broadcasts in 1925. Wikipedia, \"Ginza Line\" (accessed 2026-09-15): Ueno-Asakusa section opens 30 December 1927, Asia's oldest subway line; reaches Shimbashi 21 June 1934. Wikipedia, \"Ginza\" (accessed 2026-09-15): the \"Ginbura\" strolling custom \"developing strongly between the two world wars.\"\n"
+    },
+    {
       "id": "penicillin-discovery",
       "label": "Penicillin discovered",
       "kind": "moment",
@@ -924,6 +1705,34 @@
       "citation": "Fleming, A. (1929). \"On the antibacterial action of cultures of a penicillium, with special reference to their use in the isolation of B. influenzae.\" British Journal of Experimental Pathology, 10(3), 226-236 (received 10 May 1929, describing the culture-plate observation dated 3 September 1928).\n"
     },
     {
+      "id": "world-war-i",
+      "label": "The First World War",
+      "kind": "period",
+      "tMin": 106.14,
+      "tMax": 110.43,
+      "tags": [
+        "catastrophe",
+        "society"
+      ],
+      "importance": 0.65,
+      "description": "Beginning with Austria-Hungary's declaration of war on Serbia after the assassination of Archduke Franz Ferdinand, the First World War draws in every major power and spreads across Europe, the Middle East, Africa and beyond, fought largely from fixed trench lines on its Western Front — the Somme among them. It ends with the Armistice of 11 November 1918. Estimates of the total dead, military and civilian, range from 15 to 22 million.\n",
+      "citation": "Wikipedia, \"World War I\" (accessed 2026-09-15): began 28 July 1914; ended with the Armistice of 11 November 1918; estimated 15-22 million deaths, military and civilian.\n"
+    },
+    {
+      "id": "battle-of-the-somme",
+      "label": "Battle of the Somme",
+      "kind": "period",
+      "tMin": 108.12,
+      "tMax": 108.5,
+      "tags": [
+        "catastrophe",
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Allied and German forces fight a four-and-a-half-month battle along the Somme river in northern France, one of the largest and costliest battles of the First World War. More than three million men take part; over a million are killed, wounded or reported missing on both sides, for a front line that moves only a few kilometres.\n",
+      "citation": "Wikipedia, \"Battle of the Somme\" (accessed 2026-09-15): 1 July - 18 November 1916; over 3 million combatants; British casualties ~420,000, French ~200,000, German 237,159-429,209.\n"
+    },
+    {
       "id": "general-relativity",
       "label": "General relativity published",
       "kind": "moment",
@@ -936,6 +1745,21 @@
       "importance": 0.55,
       "description": "Albert Einstein presents the field equations of general relativity to the Prussian Academy of Sciences, replacing Newtonian gravity with curved spacetime; the full theory appears in print the following year.\n",
       "citation": "Einstein, A. (1915). Sitzungsberichte der Preussischen Akademie der Wissenschaften, presented 25 November 1915. Full theory: Einstein, A. (1916). \"Die Grundlage der allgemeinen Relativitatstheorie.\" Annalen der Physik, 354(7), 769-822.\n"
+    },
+    {
+      "id": "ford-model-t-assembly-line",
+      "label": "Ford's moving assembly line",
+      "kind": "moment",
+      "tMin": 112.0,
+      "tMax": 112.0,
+      "t": 112.0,
+      "tags": [
+        "science-technology",
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Henry Ford's Highland Park plant in Michigan introduces the moving assembly line for the Model T, cutting chassis assembly time from over twelve hours to 93 minutes by the following year. Combined with the internal combustion engine it puts on the road, the technique makes the automobile a mass-market product and becomes the template for 20th-century manufacturing.\n",
+      "citation": "Wikipedia, \"Ford Model T\" (accessed 2026-09-15). Moving assembly line introduced 7 October 1913 at the Highland Park plant; assembly time cut from 12+ hours to 93 minutes by 1914.\n"
     },
     {
       "id": "haber-bosch-process",
@@ -1065,6 +1889,19 @@
       "citation": "Wikipedia, \"Columbian exchange\" (accessed 2026-09-14). Conventionally named after Crosby, A.W. (1972). The Columbian Exchange: Biological and Cultural Consequences of 1492. Greenwood Press (title/author/year only; not independently verified this session).\n"
     },
     {
+      "id": "dutch-golden-age-voc",
+      "label": "Amsterdam's Dutch Golden Age",
+      "kind": "period",
+      "tMin": 353.0,
+      "tMax": 437.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Amsterdam becomes Europe's foremost trading hub and, for a time, the wealthiest city in the Western world, powered by the Dutch East India Company (VOC), one of the world's first joint-stock companies: its shares, publicly traded from 1602, helped give Amsterdam what is often called the world's oldest modern securities market, and by 1669 the VOC had grown into a private commercial empire of some 50,000 employees, over 150 merchant ships and 40 warships.\n",
+      "citation": "Wikipedia, \"Dutch Golden Age\" (accessed 2026-09-15): the era spans 1588-1672; Amsterdam \"one of the most important ports and commercial centres in the world by 1630.\" Wikipedia, \"Dutch East India Company\" (accessed 2026-09-15): VOC \"one of the first joint-stock companies in the world,\" its shares traded in open secondary markets \"one of which became the Amsterdam Stock Exchange\"; by 1669, \"over 150 merchant ships, 40 warships, 50,000 employees.\" Wikipedia, \"Euronext Amsterdam\" (accessed 2026-09-15): the Amsterdam exchange \"is considered the oldest 'modern' securities market in the world.\" Wikipedia, \"Amsterdam\" (accessed 2026-09-15): the 17th-century Golden Age city \"became the wealthiest city in the Western world.\"\n"
+    },
+    {
       "id": "galileo-telescope",
       "label": "Galileo's telescopic discoveries",
       "kind": "moment",
@@ -1132,6 +1969,34 @@
       "importance": 0.45,
       "description": "Genghis Khan is proclaimed khan of the united Mongol tribes in 1206, founding an empire that becomes the largest contiguous land empire in history, spanning the Pacific to Eastern Europe at its territorial peak around 1294. The politically unified empire itself fragmented after Möngke Khan's death in 1259, splitting into four khanates; the interval used here runs to 1368, when the last successor state, the Yuan dynasty, fell to Ming forces — a \"founding to final dissolution\" span, broader than the shorter life of the empire as a single unified polity.\n",
       "citation": "Via Wikipedia \"Mongol Empire\": proclaimed 1206; Möngke Khan's death and fragmentation, 1259; territorial peak ~23.5M km^2 (1294); Yuan dynasty fall, 1368.\n"
+    },
+    {
+      "id": "angkor-wat-built",
+      "label": "Angkor Wat built",
+      "kind": "period",
+      "tMin": 875.0,
+      "tMax": 903.0,
+      "tags": [
+        "society",
+        "science-technology"
+      ],
+      "importance": 0.55,
+      "description": "King Suryavarman II of the Khmer Empire commissions Angkor Wat, in present-day Cambodia, as his state temple, dedicated to Vishnu. Construction runs through his reign, completed close to his death around 1150 — the largest religious monument in the world, surrounded by a moat over 5 km in perimeter.\n",
+      "citation": "Wikipedia, \"Angkor Wat\" (accessed 2026-09-15): construction 1113-1150, building work usually dated 1122-1150; Suryavarman II reigned 1113-c.1150; moat 190 m wide, over 5 km in perimeter.\n"
+    },
+    {
+      "id": "roman-empire-peak",
+      "label": "Roman Empire at its height",
+      "kind": "period",
+      "tMin": 1845.0,
+      "tMax": 1929.0,
+      "tags": [
+        "society",
+        "science-technology"
+      ],
+      "importance": 0.6,
+      "description": "Trajan's reign (AD 98-117) carries the Roman Empire to its greatest territorial extent, about 5 million square kilometres from Britain to Mesopotamia; the Nerva-Antonine \"Five Good Emperors\" who follow, through AD 180, preside over the Pax Romana's most stable and prosperous span. Hadrian's rebuilt Pantheon in Rome, its huge unreinforced-concrete dome the largest built anywhere for the next 1,300 years, is dedicated within this period, around AD 126.\n",
+      "citation": "Wikipedia, \"Roman Empire\" (accessed 2026-09-15): territorial peak under Trajan, AD 98-117, ~5,000,000 km^2; Nerva-Antonine dynasty and Pax Romana, AD 96-180. Wikipedia, \"Pantheon, Rome\" (accessed 2026-09-15): present building completed and probably dedicated by Hadrian c. AD 126.\n"
     },
     {
       "id": "coinage-invented",
@@ -2262,103 +3127,331 @@
   "audioStems": [
     {
       "id": "wind",
-      "file": "audio/wind.mp3",
+      "file": "audio/wind-077abd6e63.mp3",
       "title": "Desert Sand - Dune Atmosphere",
       "author": "Vrymaa",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/825/825860_13973196-hq.mp3",
       "durationSeconds": 128.2,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 7.2,
+      "loop": {
+        "startSeconds": 23.73998,
+        "endSeconds": 77.80567
+      }
     },
     {
       "id": "water",
-      "file": "audio/water.mp3",
-      "title": "Gentle Ocean Waves Loop",
-      "author": "kkenny101",
+      "file": "audio/water-53baa50944.mp3",
+      "title": "Ocean Surf Loop (Ribeira Grande)",
+      "author": "Nox_Sound",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://cdn.freesound.org/previews/852/852826_17997500-hq.mp3",
-      "durationSeconds": 21.77,
-      "loopSafe": true
+      "sourceUrl": "https://cdn.freesound.org/previews/829/829629_9250976-hq.mp3",
+      "durationSeconds": 60.0,
+      "loopSafe": true,
+      "levelTrimDb": -1.1
     },
     {
       "id": "storm",
-      "file": "audio/storm.mp3",
+      "file": "audio/storm-9d6b402865.mp3",
       "title": "Rain and Thunder Loop (Light)",
       "author": "plyboard9",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/531/531873_1059037-hq.mp3",
       "durationSeconds": 65.1,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 8.5
     },
     {
       "id": "volcanic",
-      "file": "audio/volcanic.mp3",
-      "title": "Hot Spring Caldeira Ambience Loop",
-      "author": "Nox_Sound",
+      "file": "audio/volcanic-711f8c54cb.mp3",
+      "title": "Volcano Mount Yasur, Tanna Island (excerpt)",
+      "author": "felix.blume (excerpt by pwigger0029)",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://cdn.freesound.org/previews/829/829623_9250976-hq.mp3",
-      "durationSeconds": 30.0,
-      "loopSafe": true
+      "sourceUrl": "https://cdn.freesound.org/previews/710/710561_15406682-hq.mp3",
+      "durationSeconds": 28.06,
+      "loopSafe": true,
+      "levelTrimDb": -10.1,
+      "loop": {
+        "startSeconds": 0.872,
+        "endSeconds": 26.94646
+      }
+    },
+    {
+      "id": "forest",
+      "file": "audio/forest-98937a7ce6.mp3",
+      "title": "Rain on Leaves",
+      "author": "SamsterBirdies",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/584/584272_5487341-hq.mp3",
+      "durationSeconds": 49.93,
+      "loopSafe": true,
+      "levelTrimDb": 5.4,
+      "loop": {
+        "startSeconds": 20.35,
+        "endSeconds": 49.92723
+      }
     },
     {
       "id": "insects",
-      "file": "audio/insects.ogg",
-      "title": "Cicada Chorus",
-      "author": "Ngguls",
+      "file": "audio/insects-4ee4af53ef.mp3",
+      "title": "Night Crickets Calm Loop",
+      "author": "Nox_Sound",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/9/90/%E8%9D%89%E9%B8%A3.ogg",
-      "durationSeconds": 33.1,
-      "loopSafe": true
+      "sourceUrl": "https://cdn.freesound.org/previews/637/637083_9250976-hq.mp3",
+      "durationSeconds": 59.79,
+      "loopSafe": true,
+      "levelTrimDb": 16.7
+    },
+    {
+      "id": "wing-hum",
+      "file": "audio/wing-hum-e9b0b7cd2d.mp3",
+      "title": "Blowflies!",
+      "author": "kangaroovindaloo",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/324/324590_1728127-hq.mp3",
+      "durationSeconds": 66.894,
+      "loopSafe": true,
+      "levelTrimDb": -5.7,
+      "loop": {
+        "startSeconds": 35.296,
+        "endSeconds": 47.919
+      }
+    },
+    {
+      "id": "large-animal",
+      "file": "audio/large-animal-10ebf79cf1.mp3",
+      "title": "Bison Bellowing (Yellowstone)",
+      "author": "Nivatius",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/519/519594_7143328-hq.mp3",
+      "durationSeconds": 30.37,
+      "loopSafe": true,
+      "levelTrimDb": -0.6,
+      "loop": {
+        "startSeconds": 1.34,
+        "endSeconds": 29.996
+      }
     },
     {
       "id": "birds",
-      "file": "audio/birds.mp3",
-      "title": "Forest Birds Ambient Loop",
-      "author": "Magnesus",
+      "file": "audio/birds-8a8b3f8682.mp3",
+      "title": "Dawn Chorus (Wicklow)",
+      "author": "Synge101",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://cdn.freesound.org/previews/723/723913_2008500-hq.mp3",
-      "durationSeconds": 27.05,
-      "loopSafe": true
+      "sourceUrl": "https://cdn.freesound.org/previews/611/611453_13531950-hq.mp3",
+      "durationSeconds": 96.17,
+      "loopSafe": true,
+      "levelTrimDb": 19.1,
+      "loop": {
+        "startSeconds": 1.84338,
+        "endSeconds": 93.34889
+      }
+    },
+    {
+      "id": "archosaurs",
+      "file": "audio/archosaurs-88aaf54f45.mp3",
+      "title": "Alligator Growl",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/437/437933_2524442-hq.mp3",
+      "durationSeconds": 37.27,
+      "loopSafe": true,
+      "levelTrimDb": 4.7,
+      "loop": {
+        "startSeconds": 7.122,
+        "endSeconds": 37.264
+      }
     },
     {
       "id": "mammals",
-      "file": "audio/mammals.ogg",
-      "title": "Herd of Goats Bleating",
-      "author": "stephan (pdsounds.org, via Wikimedia Commons)",
-      "licence": "Public domain",
-      "sourceUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Herd_of_goats_bleating.ogg",
-      "durationSeconds": 42.81,
-      "loopSafe": true
+      "file": "audio/mammals-facbb66331.mp3",
+      "title": "Lions in Gonarezhou",
+      "author": "KevZim",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/531/531439_7083541-hq.mp3",
+      "durationSeconds": 70.09,
+      "loopSafe": true,
+      "levelTrimDb": 8.9,
+      "loop": {
+        "startSeconds": 0.16408,
+        "endSeconds": 68.24245
+      }
+    },
+    {
+      "id": "livestock",
+      "file": "audio/livestock-c2481ee697.mp3",
+      "title": "Goats Moving and Bleating in a Pen",
+      "author": "felix.blume",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/779/779856_1661766-hq.mp3",
+      "durationSeconds": 96.31,
+      "loopSafe": true,
+      "levelTrimDb": -1.4,
+      "loop": {
+        "startSeconds": 50.92,
+        "endSeconds": 95.88
+      }
     },
     {
       "id": "fire",
-      "file": "audio/fire.mp3",
+      "file": "audio/fire-b7a16eddca.mp3",
       "title": "Crackling Flames Loop",
       "author": "NickTayloe",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/813/813328_11606594-hq.mp3",
       "durationSeconds": 35.0,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 4.0
     },
     {
       "id": "settlement",
-      "file": "audio/settlement.mp3",
+      "file": "audio/settlement-1b9a4284d9.mp3",
       "title": "Crowd Walla Murmur",
       "author": "kyles",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/637/637466_612689-hq.mp3",
       "durationSeconds": 58.64,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 7.4
     },
     {
-      "id": "machinery",
-      "file": "audio/machinery.mp3",
-      "title": "City Ambience - Budapest Keleti Station",
-      "author": "vdr3",
+      "id": "industry",
+      "file": "audio/industry-9df868c98c.mp3",
+      "title": "Work of a Large Steam Engine",
+      "author": "blukotek",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://cdn.freesound.org/previews/393/393702_4994127-hq.mp3",
-      "durationSeconds": 56.5,
-      "loopSafe": true
+      "sourceUrl": "https://cdn.freesound.org/previews/424/424942_4451798-hq.mp3",
+      "durationSeconds": 37.1,
+      "loopSafe": true,
+      "levelTrimDb": -7.1
+    },
+    {
+      "id": "traffic",
+      "file": "audio/traffic-f2ac02efee.mp3",
+      "title": "Seamless City Loop",
+      "author": "qubodup",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/223/223093_71257-hq.mp3",
+      "durationSeconds": 30.0,
+      "loopSafe": true,
+      "levelTrimDb": -10.5
+    },
+    {
+      "id": "geothermal",
+      "file": "audio/geothermal-ac2576799a.mp3",
+      "title": "Hot Spring Caldeira Ambience Loop",
+      "author": "Nox_Sound",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/829/829623_9250976-hq.mp3",
+      "durationSeconds": 30.0,
+      "loopSafe": true,
+      "levelTrimDb": -3.2
+    },
+    {
+      "id": "impact",
+      "file": "audio/impact-61eba76855.mp3",
+      "title": "Long Rumble for Earthquake or Explosion",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/483/483287_2524442-hq.mp3",
+      "durationSeconds": 23.23,
+      "loopSafe": false,
+      "levelTrimDb": 15.7
+    },
+    {
+      "id": "rocket",
+      "file": "audio/rocket-d4fcdf31c2.mp3",
+      "title": "Space Shuttle Launch",
+      "author": "klangfabrik (from NASA public-domain audio)",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/220/220127_181941-hq.mp3",
+      "durationSeconds": 132.42,
+      "loopSafe": false,
+      "levelTrimDb": 0.2
+    },
+    {
+      "id": "aircraft",
+      "file": "audio/aircraft-5a8cc3acf9.mp3",
+      "title": "Biplane Flyby",
+      "author": "itinerantmonk108",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/648/648720_2397507-hq.mp3",
+      "durationSeconds": 14.34,
+      "loopSafe": false,
+      "levelTrimDb": 3.6
+    },
+    {
+      "id": "buzzing",
+      "file": "audio/buzzing-0f7e37825f.mp3",
+      "title": "Bee Flying Loop",
+      "author": "fury12",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/496/496237_5898088-hq.mp3",
+      "durationSeconds": 5.75,
+      "loopSafe": true,
+      "levelTrimDb": 1.7,
+      "loop": {
+        "startSeconds": 1.276,
+        "endSeconds": 4.128
+      }
+    },
+    {
+      "id": "knapping",
+      "file": "audio/knapping-d0f9bbab9c.mp3",
+      "title": "Stone on Stone Hit",
+      "author": "xtra1",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/858/858891_18963922-hq.mp3",
+      "durationSeconds": 17.69,
+      "loopSafe": true,
+      "levelTrimDb": -7.0,
+      "loop": {
+        "startSeconds": 0.99215,
+        "endSeconds": 17.55596
+      }
+    },
+    {
+      "id": "mammoth",
+      "file": "audio/mammoth-c066a3a0c9.mp3",
+      "title": "Angry Elephant",
+      "author": "Danjocross",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/507/507467_2977885-hq.mp3",
+      "durationSeconds": 6.72,
+      "loopSafe": false,
+      "levelTrimDb": -5.3,
+      "startSeconds": 1.3
+    },
+    {
+      "id": "artillery",
+      "file": "audio/artillery-07e355cee5.mp3",
+      "title": "Artillery Guns Firing",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/486/486027_2524442-hq.mp3",
+      "durationSeconds": 46.56,
+      "loopSafe": true,
+      "levelTrimDb": -0.2,
+      "loop": {
+        "startSeconds": 13.269,
+        "endSeconds": 27.984
+      }
+    },
+    {
+      "id": "lake-water",
+      "file": "audio/lake-water-29adca4215.mp3",
+      "title": "Gentle waves on a lake",
+      "author": "TheFlyFishingFilmmaker",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/614/614299_6501596-hq.mp3",
+      "durationSeconds": 175.47,
+      "loopSafe": true,
+      "levelTrimDb": 8.2,
+      "loop": {
+        "startSeconds": 73.93,
+        "endSeconds": 84.929
+      }
     }
   ],
   "credits": [
@@ -2378,10 +3471,10 @@
     },
     {
       "sourceId": "co2-o2",
-      "title": "GEOCARB III: Phanerozoic Atmospheric CO2",
-      "citation": "Berner, R.A. and Z. Kothavala, 2001. GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204.",
-      "licence": "US public domain (NOAA/NGDC Paleoclimatology Program)",
-      "url": "https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt"
+      "title": "Atmospheric CO2: Mauna Loa, Antarctic ice-core composite and GEOCARB III",
+      "citation": "Lan, X. (NOAA GML) and Keeling, R. (Scripps Institution of Oceanography): Mauna Loa annual mean CO2. Bereiter, B. et al., 2015: Revision of the EPICA Dome C CO2 record from 800 to 600 kyr before present, Geophysical Research Letters, doi:10.1002/2014GL061957. Berner, R.A. and Z. Kothavala, 2001: GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204.",
+      "licence": "US public domain (NOAA NCEI Paleoclimatology) and NOAA GML data, freely available with credit; per-file detail in [[artefacts]]",
+      "url": "https://github.com/finndersen/earthview/blob/main/sources/co2-o2/README.md"
     },
     {
       "sourceId": "events-core",

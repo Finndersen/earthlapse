@@ -51,6 +51,11 @@ class AtmosphereState(BaseModel):
     co2_ppm: float | None = None
     o2_percent: float | None = None
     ch4_ppb: float | None = None
+    # (ADR-027) The `co2` series' own domain, when one is registered -- lets a consumer (e.g.
+    # `pipeline.prompts.render_conditions`) tell "no source reaches this far back" apart from
+    # "inside the source's domain but in a declared gap" without re-deriving source-specific
+    # knowledge: both read co2_ppm=None, but only the latter has t inside co2_domain.
+    co2_domain: tuple[GeoTime, GeoTime] | None = None
 
 
 class BiosphereState(BaseModel):
@@ -162,6 +167,7 @@ class WorldModel:
                 co2_ppm=self._s("co2", t),
                 o2_percent=self._s("o2", t),
                 ch4_ppb=self._s("ch4", t),
+                co2_domain=co2.domain if (co2 := self.series.get("co2")) is not None else None,
             ),
             biosphere=BiosphereState(
                 genus_count=int(g) if (g := self._s("genus_count", t)) is not None else None,

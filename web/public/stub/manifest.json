@@ -175,7 +175,8 @@
       "licence": "N/A (test fixture, not for publish)",
       "sourceUrl": "",
       "durationSeconds": 1.5,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 0
     },
     {
       "id": "water",
@@ -185,7 +186,8 @@
       "licence": "N/A (test fixture, not for publish)",
       "sourceUrl": "",
       "durationSeconds": 1.5,
-      "loopSafe": true
+      "loopSafe": true,
+      "levelTrimDb": 0
     }
   ],
   "credits": [

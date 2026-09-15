@@ -16,11 +16,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from pipeline.audio import StemBook, load_stem_book
+from pipeline.audio import WEBKIT_DECODABLE_FORMATS, StemBook, load_stem_book
 from pipeline.databuild import discover_sources
+from pipeline.exposure import ExposedPlate, ExposureError, expose_plate
 from pipeline.generators.image import ImageInfo, asset_digest, sniff_image
 from pipeline.graph import digest_of
 from pipeline.manifest import (
+    AudioLoop,
     AudioStem,
     Chapter,
     Credit,
@@ -33,6 +35,7 @@ from pipeline.manifest import (
     LayerManifest,
     LayerSurface,
     Manifest,
+    PortraitExposureData,
     PortraitMorphData,
     PortraitPlateData,
     PortraitSetData,
@@ -41,6 +44,7 @@ from pipeline.manifest import (
     Scene,
     SceneSound,
     SeriesData,
+    SeriesGap,
     SeriesSample,
     TimelineEvent,
     TreeData,
@@ -59,7 +63,7 @@ from pipeline.portraits import (
     lineage_order,
     load_morph,
 )
-from pipeline.scenes import SceneBook, ScenePin, SceneRecord
+from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
 from pipeline.scenes import SceneSound as SceneSoundRecord
 from pipeline.shapes import EARTH_FORMATION, Event, EventSet, GeoTime, Interpolation
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
@@ -121,6 +125,14 @@ class MediaCopy:
 
 
 @dataclass(frozen=True)
+class MediaBytes:
+    """A published file derived in memory rather than copied: an exposure-normalised plate."""
+
+    data: bytes
+    published: str  # relative to the media directory
+
+
+@dataclass(frozen=True)
 class LayerFile:
     published: str
     data: LayerData
@@ -138,11 +150,14 @@ class PortraitPublication:
     design: plates arrive a few at a time, and the viewer shows the nearest older plate."""
 
     data: PortraitSetData | None  # None until at least one portrait is pinned
-    files: tuple[MediaCopy, ...]
+    files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, then copied morph fields
     unpinned: tuple[str, ...]
     missing_morphs: tuple[
         MorphKey, ...
     ]  # consecutive pinned pairs `earthtime morph` has not run for
+    dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015
+    # amendment 2026-09-15): `earthtime morph` judged these fine to skip, not to rerun; the
+    # viewer crossfades them exactly as it would an ungenerated pair
 
 
 @dataclass(frozen=True)
@@ -227,10 +242,14 @@ def prepare_publication(
 
 def write_publication(publication: Publication, media_dir: Path) -> Path:
     portrait_files = () if publication.portraits is None else publication.portraits.files
-    for copy in (*publication.scene_files, *portrait_files):
-        target = media_dir / copy.published
+    for media in (*publication.scene_files, *portrait_files):
+        target = media_dir / media.published
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(copy.source, target)
+        match media:
+            case MediaCopy(source=source):
+                shutil.copyfile(source, target)
+            case MediaBytes(data=data):
+                target.write_bytes(data)
     for layer in publication.layer_files:
         target = media_dir / layer.published
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -296,12 +315,23 @@ def _validate_scene_sound(book: SceneBook, stem_book: StemBook) -> None:
     """Every scene->stem link (ADR-023) must name a real audio-stems catalogue id. Checked
     here, against the whole book, rather than in SceneBook's own validator -- the same
     reasoning `_validate_scene_events` gives for `scene.events`: parsing scenes.yaml has no
-    stem catalogue to check against."""
-    known = frozenset(s.id for s in stem_book.stems)
+    stem catalogue to check against.
+
+    A `loop`-mode sound must also name a loop-safe stem: a one-shot (`loop_safe = false`) gets
+    no looping player in the web engine, so the loop would publish and then play nothing."""
+    stems = {s.id: s for s in stem_book.stems}
     for scene in book.scenes:
-        if scene.sound is not None and scene.sound.stem not in known:
+        if scene.sound is None:
+            continue
+        stem = stems.get(scene.sound.stem)
+        if stem is None:
             raise PublishRefused(
                 f"{scene.id}: unknown stem id {scene.sound.stem!r} -- not in {AUDIO_STEMS_SOURCE!r}"
+            )
+        if scene.sound.mode is SoundMode.LOOP and not stem.loop_safe:
+            raise PublishRefused(
+                f"{scene.id}: stem {stem.id!r} is a one-shot (loop_safe = false) and cannot be "
+                f"a loop-mode scene sound -- use mode: once"
             )
 
 
@@ -313,19 +343,42 @@ def _scene_sound(sound: SceneSoundRecord | None) -> SceneSound | None:
 
 def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
     """Published stem files are not copied here -- `sources/audio-stems/normalise.py`'s
-    `write_outputs()` already placed them at their final `data/media/audio/` location as part
-    of `make data`, the same way `paleodem`'s globe textures are placed directly rather than
-    staged and copied at publish time. This only checks each catalogued stem's file actually
-    exists before it is referenced from the manifest."""
+    `write_outputs()` already placed them, content-hashed (ADR-023 amendment "on-demand
+    loading"), at their final `data/media/audio/` location as part of `make data`, the same way
+    `paleodem`'s globe textures are placed directly rather than staged and copied at publish
+    time. This discovers each catalogued stem's actual published filename -- `write_outputs()`
+    names it `<id>-<hash>.<format>` from its own content, so the hash is not re-derived here --
+    and refuses if it is missing, or if more than one candidate exists (a stale file
+    `write_outputs()` should have cleared; re-running `make data` fixes it). Also refuses a stem
+    whose declared format is not WebKit-decodable (`pipeline.audio.WEBKIT_DECODABLE_FORMATS`,
+    2026-09-15 audio re-review item 7) -- catches a future OGG- or WAV-only source before it
+    ships silently and fails to decode on Safari/iOS, the gap that same day's Safari re-sourcing
+    fixed by hand for two stems without anything stopping it from recurring."""
     stems = []
+    audio_dir = root / "data" / "media" / "audio"
     for stem in stem_book.stems:
-        published = f"audio/{stem.id}.{stem.format}"
-        source = root / "data" / "media" / published
-        if not source.is_file():
+        if stem.format not in WEBKIT_DECODABLE_FORMATS:
             raise PublishRefused(
-                f"stem {stem.id}: {source} is missing -- run `make data` "
+                f"stem {stem.id}: format {stem.format!r} is not decodable on Safari/iOS "
+                f"(WebKit) -- publishable stem formats are "
+                f"{sorted(f.value for f in WEBKIT_DECODABLE_FORMATS)}; re-source {stem.id} as "
+                f"one of those instead"
+            )
+        matches = sorted(audio_dir.glob(f"{stem.id}-*.{stem.format}"))
+        if not matches:
+            raise PublishRefused(
+                f"stem {stem.id}: no published file matching "
+                f"data/media/audio/{stem.id}-*.{stem.format} -- run `make data` "
                 f"(sources/audio-stems/normalise.py write_outputs)"
             )
+        if len(matches) > 1:
+            names = ", ".join(m.name for m in matches)
+            raise PublishRefused(
+                f"stem {stem.id}: {len(matches)} published files match "
+                f"data/media/audio/{stem.id}-*.{stem.format} ({names}) -- re-run `make data` "
+                f"to clear the stale one(s)"
+            )
+        published = f"audio/{matches[0].name}"
         stems.append(
             AudioStem(
                 id=stem.id,
@@ -336,6 +389,13 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
                 source_url=stem.url,
                 duration_seconds=stem.duration_seconds,
                 loop_safe=stem.loop_safe,
+                level_trim_db=stem.level_trim_db,
+                loop=None
+                if stem.loop is None
+                else AudioLoop(
+                    start_seconds=stem.loop.start_seconds, end_seconds=stem.loop.end_seconds
+                ),
+                start_seconds=stem.start_seconds,
             )
         )
     return tuple(stems)
@@ -375,6 +435,7 @@ def _portrait_publication(
     for record in pinned:
         assert record.pin is not None, record.id
         source, info = _verified_pin(record.id, record.pin, root)
+        exposed = _exposed_plate(record.id, source)
         published = f"portraits/{record.id}{info.extension}"
         plates.append(
             PortraitPlateData(
@@ -384,28 +445,49 @@ def _portrait_publication(
                 pinned=record.pin.asset_digest,
                 width=info.width,
                 height=info.height,
+                exposure=PortraitExposureData(
+                    highlight=exposed.exposure.highlight, gain=exposed.exposure.gain
+                ),
             )
         )
-        files.append(MediaCopy(source=source, published=published))
-    morphs, morph_files, missing = _portrait_morphs(pinned, inputs.morph_cache)
+        files.append(MediaBytes(data=exposed.data, published=published))
+    morphs, morph_files, missing, dissolved = _portrait_morphs(pinned, inputs.morph_cache)
     return PortraitPublication(
         data=PortraitSetData(plates=tuple(plates), morphs=morphs) if plates else None,
         files=(*files, *morph_files),
         unpinned=tuple(record.id for record in ordered if record.pin is None),
         missing_morphs=missing,
+        dissolved_morphs=dissolved,
     )
+
+
+def _exposed_plate(node_id: str, source: Path) -> ExposedPlate:
+    """The plate as published: its pinned original, exposure-normalised in memory (ADR-015
+    amendment). The pinned file itself is never rewritten (ADR-005), and morph fields stay computed
+    from it: exposure changes no geometry."""
+    try:
+        return expose_plate(source.read_bytes())
+    except ExposureError as err:
+        raise PublishRefused(f"{node_id}: {err}") from err
 
 
 def _portrait_morphs(
     pinned: list[PortraitRecord], cache: Path
-) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...]]:
-    """`pinned` is youngest first, so each pairwise step is (younger, older)."""
-    morphs, files, missing = [], [], []
+) -> tuple[
+    tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...], tuple[MorphKey, ...]
+]:
+    """`pinned` is youngest first, so each pairwise step is (younger, older). Returns
+    (morphs, files, missing, dissolved): `dissolved` pairs are computed but too incoherent to
+    trust (ADR-015 amendment), published as if no morph existed so the viewer crossfades them."""
+    morphs, files, missing, dissolved = [], [], [], []
     for younger, older in pairwise(pinned):
         key = MorphKey.between(older, younger)
         record = load_morph(cache, key)
         if record is None:
             missing.append(key)
+            continue
+        if record.fallback_dissolve:
+            dissolved.append(key)
             continue
         directory = key.directory(cache)
         base = f"portraits/morphs/{older.id}--{younger.id}"
@@ -428,7 +510,7 @@ def _portrait_morphs(
                 size=record.size,
             )
         )
-    return tuple(morphs), tuple(files), tuple(missing)
+    return tuple(morphs), tuple(files), tuple(missing), tuple(dissolved)
 
 
 def _layers(
@@ -447,6 +529,9 @@ def _layers(
             samples=tuple(
                 SeriesSample(t=s.t, value=s.value, lower=s.lower, upper=s.upper)
                 for s in series.samples
+            ),
+            gaps=tuple(
+                SeriesGap(from_index=g.from_index, to_index=g.to_index) for g in series.gaps
             ),
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
