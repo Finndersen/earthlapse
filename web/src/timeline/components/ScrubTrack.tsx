@@ -10,10 +10,10 @@
  *  hook the shell uses to recede whatever sits where a pip's hover preview rises.
  *
  *  `scale` is the fisheye-distorted track scale (`fisheyeScale`, owned by `Timeline`) — what is
- *  drawn and what pointer x maps through. The visible window is fixed to the full domain (no
- *  zoom/pan), so unlike earlier passes there is no separate undistorted "base" scale to convert
- *  a displayed anchor back into — every position on the track *is* `scale.fromUnit(u)`, full
- *  stop. Because both the event declutter and the pip clustering run on this same distorted
+ *  drawn and what pointer x maps through, over the selected era section's window (ADR-024;
+ *  there is no free zoom or pan). No separate undistorted "base" scale is needed to convert a
+ *  displayed anchor back: every position on the track *is* `scale.fromUnit(u)`, and dragging
+ *  can never leave the window. Because both the event declutter and the pip clustering run on this same distorted
  *  scale, hovering the track reveals detail the resting (undistorted) layout had no room for —
  *  that magnification, not zooming the window, is how a viewer resolves events sitting close
  *  together in time. */
@@ -66,6 +66,19 @@ const CLUSTER_POPOVER_HALF_WIDTH_PX = 105
  *  `previewAnchorClass` edge-anchoring `pipPreview`/`ClusterPopover` already use rather than a
  *  new mechanism. */
 const HOVER_READOUT_HALF_WIDTH_PX = 150
+
+/** Rough px per character of the playhead readout (12px monospace). */
+const PLAYHEAD_LABEL_CHAR_PX = 7.5
+
+/** Which edge the playhead readout hugs. Selecting an era section puts the playhead on the
+ *  track's left edge (ADR-024), where a centred label would hang off screen. */
+function playheadLabelAnchor(u: number, label: string, trackWidthPx: number): 'start' | 'center' | 'end' {
+  if (!(trackWidthPx > 0)) return 'center'
+  const halfWidthPx = (label.length * PLAYHEAD_LABEL_CHAR_PX) / 2
+  if (u * trackWidthPx < halfWidthPx) return 'start'
+  if ((1 - u) * trackWidthPx < halfWidthPx) return 'end'
+  return 'center'
+}
 
 function previewAnchorClass(u: number, trackWidthPx: number, halfWidthPx: number = PREVIEW_HALF_WIDTH_PX): string {
   if (u * trackWidthPx < halfWidthPx) return styles.previewStart ?? ''
@@ -478,7 +491,12 @@ export function ScrubTrack({
       <div aria-hidden className={styles.playhead} style={{ left: `${playheadU * 100}%` }}>
         <div className={styles.playheadKnob} />
       </div>
-      <span aria-live="polite" className={styles.timeLabel} style={{ left: `${playheadU * 100}%` }}>
+      <span
+        aria-live="polite"
+        className={styles.timeLabel}
+        data-anchor={playheadLabelAnchor(playheadU, formatGeoTime(t), trackWidthPx)}
+        style={{ left: `${playheadU * 100}%` }}
+      >
         {formatGeoTime(t)}
       </span>
 

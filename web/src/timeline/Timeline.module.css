@@ -12,23 +12,28 @@
 }
 
 /* Three named tracks so `.controlsCore` (the transport's back/play/forward group) lands
-   visually centred over the track regardless of how wide `.controlsSecondary` (speed, mode
-   toggle, scale toggle) happens to be: `.controlsSpacer`, empty, mirrors that same track width
-   on the opposite side, so the centre track is centred in the row as a whole, not merely in
-   whatever space is left after the secondary controls. Named areas (not raw column order)
+   visually centred over the track however wide `.controlsSecondary` (speed, mode toggle, scale
+   toggle) or `.controlsSections` (the era-section breadcrumb, ADR-024) happens to be. The two
+   side tracks share the leftover width equally, so the centre track is centred in the row as a
+   whole, not merely in whatever space is left after either side. Named areas (not raw column order)
    because `.controlsCore` and `.controlsSecondary` wrap components from `Transport.module.css`,
    a different stylesheet this one can't safely target by its foreign (and hashed) class names. */
 .controlsRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas: 'spacer core secondary';
+  grid-template-areas: 'sections core secondary';
   align-items: center;
   gap: clamp(12px, 2vw, 28px);
   margin-top: 12px;
 }
 
-.controlsSpacer {
-  grid-area: spacer;
+.controlsSections {
+  grid-area: sections;
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .controlsCore {
@@ -47,48 +52,78 @@
   min-width: 0;
 }
 
-.scaleToggle {
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+/* The scale toggle (follow-up pass item 1): a "Scale" label plus a segmented control showing
+   both options, so the choice — and that there is one — reads at a glance instead of the old
+   single button whose own current-value label ("symlog") gave no hint that "linear" existed.
+   Visually mirrors Transport.module.css's `.modeToggle`/`.modeButton` (same ghost/pill idiom,
+   amber active state) — duplicated rather than imported, since CSS Modules classes are scoped
+   per file and this toggle isn't part of `Transport.tsx`. */
+.scaleGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scaleLabel {
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  cursor: pointer;
-  padding: 3px 9px;
-  border-radius: 999px;
-  transition:
-    color 200ms ease,
-    border-color 200ms ease;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
-.scaleToggle:hover,
-.scaleToggle:focus-visible {
+.scaleOptions {
+  display: flex;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.scaleButton {
+  background: transparent;
+  border: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+.scaleButton:hover,
+.scaleButton:focus-visible {
   color: var(--hud-ink, #efe9dc);
-  border-color: var(--hud-hairline, rgba(239, 233, 220, 0.18));
   outline: none;
 }
 
-.scaleToggle[aria-pressed='true'] {
+.scaleButton[aria-pressed='true'] {
   color: var(--hud-accent, #e8b06a);
+  background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
 @media (max-width: 760px) {
-  /* Too narrow for three side-by-side tracks (the centred core group plus the secondary
-     controls at full size): stack the core group above the secondary row instead, both
-     centred. `.controlsSpacer` has nothing left to mirror once there's no side-by-side layout
-     to balance, so it collapses out. */
+  /* Too narrow for three side-by-side tracks: stack the breadcrumb, the core group and the
+     secondary row, all centred. The breadcrumb sits right under the section band strip it
+     navigates. */
   .controlsRow {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
+      'sections'
       'core'
       'secondary';
-    row-gap: 14px;
+    row-gap: 6px;
+    margin-top: 2px;
   }
 
-  .controlsSpacer {
-    display: none;
+  .timeline {
+    gap: 6px;
+  }
+
+  .controlsSections {
+    justify-self: center;
   }
 
   .controlsSecondary {
@@ -96,5 +131,19 @@
     justify-self: center;
     flex-wrap: wrap;
     row-gap: 10px;
+  }
+
+  /* The rate readout's own reserved-but-often-empty slot (`Transport.module.css`'s
+     `.rateReadout`) wraps onto the row with the scale toggle here rather than getting its own
+     row, and the two were centred together — so the scale toggle sat visibly off-centre from
+     the play group above it even though the readout has nothing to show most of the time
+     (re-review fix, 2026-09-15). Pulling it out of the centred flow into its own full-width row,
+     right-aligned within it, lets the sound/speed/mode/scale group centre on its own again while
+     still reserving the readout's width so play/pause starting or stopping never shifts anything
+     (item 10's own requirement, kept on phone too). */
+  .rateReadoutRow {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
   }
 }

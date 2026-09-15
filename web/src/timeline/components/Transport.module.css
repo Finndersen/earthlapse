@@ -59,7 +59,13 @@
   }
 }
 
+/* Fixed width (the widest option, "0.25x", plus padding) so a different selected speed never
+   changes this element's own rendered width — a native <select> otherwise sizes to its current
+   option's text, which would shift the mode toggle/scale toggle/sound controls beside it every
+   time the speed changes (follow-up pass item 10). Centred text reads fine at every width since
+   every option is short. */
 .speedSelect {
+  width: 46px;
   background: transparent;
   border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
   border-radius: 999px;
@@ -67,7 +73,9 @@
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10.5px;
   letter-spacing: 0.03em;
-  padding: 3px 6px;
+  text-align: center;
+  text-align-last: center;
+  padding: 3px 4px;
   cursor: pointer;
 }
 
@@ -109,10 +117,27 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
+/* A fixed-width slot, always present in the layout (follow-up pass item 10): 14ch comfortably
+   outlasts any real `formatRate` output ("≈ " plus up to three integer digits, a two-decimal
+   Gyr/s figure and its unit — e.g. "≈ 77.4 Gyr/s" measured near the oldest edge at 64x), with
+   `overflow`/`text-overflow` as a safety net rather than a promise this is ever reached. Right-
+   aligned so the numerals hug the row's own outer edge. `visibility`, not `display`, when
+   empty — the slot's width must never depend on whether there is anything to show. */
 .rateReadout {
+  display: inline-block;
+  width: 14ch;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
   white-space: nowrap;
+  visibility: hidden;
+}
+
+.rateReadout[data-visible='true'] {
+  visibility: visible;
 }

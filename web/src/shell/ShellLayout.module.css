@@ -12,6 +12,15 @@
   --gutter: clamp(16px, 3vw, 48px);
   --gutter-top: clamp(16px, 2.4vw, 34px);
   --orb-size: clamp(120px, 13vw, 196px);
+  /* Local override of the shared token (app/globals.css), a touch stronger than its default —
+     every HUD element under `.shell` reads `var(--hud-shadow)` and custom properties cascade
+     through the DOM like any inherited property, so this alone carries the item-9 "lean on
+     text-shadow instead of the vignette" compensation to the title, caption, readouts, era
+     strip and feed cards without editing any of their own files. The credits page keeps the
+     unmodified global token — it sits on its own solid background, never over a bright plate. */
+  --hud-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 1px 14px rgba(0, 0, 0, 0.92);
 
   position: fixed;
   inset: 0;
@@ -24,8 +33,7 @@
 
 /* Faint caps type needs a tighter, darker halo than --hud-shadow to survive a bright plate. */
 .label,
-.note,
-.credits {
+.aboutButton {
   text-shadow:
     0 0 6px rgba(0, 0, 0, 0.9),
     var(--hud-shadow);
@@ -39,7 +47,11 @@
 /* Stacked backgrounds, top to bottom: the elliptical aperture (centred a little above the
    middle, where the eye rests), side falloffs deep enough for the readouts and ancestor to
    read over a bright sky, a deep bottom falloff for the caption and timeline, and a gentler
-   top one for the title. The vignette also hides the drift's frame margins (DESIGN §5). */
+   top one for the title. The vignette also hides the drift's frame margins (DESIGN §5).
+   Lightened ~15-25% and pushed a little further out (2026-09-15, follow-up item 9: "more of the
+   scene visible") from an earlier pass, kept strongest only at the outer 10% so it still hides
+   the drift's frame-margin artefacts there; HUD text leans on `--hud-shadow` (strengthened
+   below) rather than the vignette for legibility over a bright plate. */
 .lens {
   position: absolute;
   inset: 0;
@@ -49,23 +61,23 @@
     radial-gradient(
       ellipse 62% 60% at 50% 44%,
       transparent 0%,
-      transparent 42%,
-      rgba(3, 4, 6, 0.26) 58%,
-      rgba(3, 4, 6, 0.64) 74%,
-      rgba(3, 4, 6, 0.88) 88%,
-      rgba(3, 4, 6, 0.96) 100%
+      transparent 46%,
+      rgba(3, 4, 6, 0.2) 61%,
+      rgba(3, 4, 6, 0.53) 77%,
+      rgba(3, 4, 6, 0.75) 90%,
+      rgba(3, 4, 6, 0.9) 100%
     ),
-    linear-gradient(to right, rgba(3, 4, 6, 0.72) 0%, rgba(3, 4, 6, 0.42) 15%, transparent 30%),
-    linear-gradient(to left, rgba(3, 4, 6, 0.55) 0%, rgba(3, 4, 6, 0.26) 14%, transparent 24%),
+    linear-gradient(to right, rgba(3, 4, 6, 0.58) 0%, rgba(3, 4, 6, 0.33) 15%, transparent 32%),
+    linear-gradient(to left, rgba(3, 4, 6, 0.44) 0%, rgba(3, 4, 6, 0.2) 14%, transparent 26%),
     linear-gradient(
       to top,
-      rgba(3, 4, 6, 0.94) 0%,
-      rgba(3, 4, 6, 0.84) 16%,
-      rgba(3, 4, 6, 0.5) 28%,
-      rgba(3, 4, 6, 0.16) 36%,
-      transparent 42%
+      rgba(3, 4, 6, 0.8) 0%,
+      rgba(3, 4, 6, 0.7) 16%,
+      rgba(3, 4, 6, 0.41) 28%,
+      rgba(3, 4, 6, 0.13) 36%,
+      transparent 44%
     ),
-    linear-gradient(to bottom, rgba(3, 4, 6, 0.6) 0%, rgba(3, 4, 6, 0.22) 12%, transparent 22%);
+    linear-gradient(to bottom, rgba(3, 4, 6, 0.48) 0%, rgba(3, 4, 6, 0.17) 12%, transparent 24%);
 }
 
 /* A barely-there warm rim where the aperture begins to fall off — the glass of the lens. */
@@ -113,17 +125,6 @@
   pointer-events: auto;
 }
 
-/* Idle calm: while playback runs untouched, the periphery recedes slowly — and returns
-   quickly the moment the viewer moves. */
-.peripheral {
-  transition: opacity 180ms ease-out;
-}
-
-.shell[data-calm='true'] .peripheral {
-  opacity: 0.25;
-  transition-duration: 700ms;
-}
-
 .label {
   display: block;
   font-family: var(--hud-mono);
@@ -167,22 +168,24 @@
   min-width: 0;
 }
 
-/* Below the readouts, resting on the empty row above `.bottom` (`align-self: end`) — the one
-   stretch of the periphery that is never the globe orb, the ancestor panel or the scene
-   caption, on every breakpoint. Empty (no visible content) when nothing is behind the
-   playhead, so it never reserves visible space of its own.
-   `justify-self: stretch`, not `start`: `<EventFeed>` sizes its own cards from its wrapper's
-   *measured* pixel width (it has no static text content of its own to size a shrink-to-fit box
-   from, unlike `.readouts`' sparklines/numerals), so the wrapper needs a real width from the
-   grid track to measure in the first place — `start` would shrink it to its own content, which
-   depends circularly on that same width, collapsing to 0 and leaving the feed permanently
-   unable to show anything. `max-width` below still caps how wide that stretched box gets. */
+/* Below the readouts, filling the empty row above `.bottom` — the one stretch of the periphery
+   that is never the globe orb, the ancestor panel or the scene caption, on every breakpoint.
+   Stretched on both axes, not shrink-to-fit: `<EventFeed>` measures its wrapper's pixel width
+   (to convert its lookback into time) and height (to decide how many cards fit), and a
+   content-sized box would make both depend circularly on the cards they decide — collapsing to
+   0 and leaving the feed permanently unable to show anything. The feed stacks its cards against
+   the bottom of this box itself. The padding keeps the tallest stack clear of the readouts
+   above and the caption/chart below. Transparent to the pointer (the cards re-enable it): the
+   box spans the whole row even when it shows nothing. */
 .feed {
   grid-area: feed;
   justify-self: stretch;
-  align-self: end;
+  align-self: stretch;
   min-width: 0;
-  max-width: 300px;
+  min-height: 0;
+  max-width: 340px;
+  padding-block: clamp(12px, 2vh, 24px) 6px;
+  pointer-events: none;
 }
 
 .title {
@@ -207,32 +210,29 @@
   text-align: right;
 }
 
-.credits {
+/* Small and muted so the top-left corner still reads as "globe orb", not "menu" — the same
+   caps-mono treatment the old footer Credits link used, now the trigger for the About &
+   credits panel (`Panel.tsx`) instead of a route navigation. */
+.aboutButton {
   font-family: var(--hud-mono);
   font-size: 10px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--hud-faint);
-  text-decoration: none;
+  background: none;
+  border: none;
   padding: 4px 0;
-  transition:
-    color 220ms ease,
-    opacity 180ms ease-out;
+  cursor: pointer;
+  transition: color 220ms ease;
 }
 
-.shell[data-calm='true'] .credits {
-  transition:
-    color 220ms ease,
-    opacity 700ms ease;
-}
-
-.credits:hover,
-.credits:focus-visible {
+.aboutButton:hover,
+.aboutButton:focus-visible {
   color: var(--hud-accent);
   text-shadow: 0 0 14px var(--hud-accent-glow);
 }
 
-.credits:focus-visible {
+.aboutButton:focus-visible {
   outline: 1px solid var(--hud-accent);
   outline-offset: 4px;
 }
@@ -327,30 +327,6 @@
   visibility: visible;
 }
 
-.note {
-  font-family: var(--hud-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-align: center;
-  color: var(--hud-faint);
-}
-
-/* Note + Credits share one dim row below the timeline (VISUAL_SPEC §9): the disclosure applies
-   to the whole experience, not to whatever scene happens to be on screen, so it no longer rides
-   above the track next to the caption. `flex-wrap` keeps both pieces on screen without spilling
-   past the frame at phone widths; `env(safe-area-inset-bottom)` clears a phone's home-indicator
-   gesture bar, on top of `.hud`'s own bottom padding. */
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px 18px;
-  margin-top: 14px;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
 /* A checkpoint pip's hover preview rises into the caption's place (ScrubTrack marks its pips
    with `data-checkpoint-pip` for exactly this); the caption recedes while it is shown. */
 .bottom:has([data-checkpoint-pip]:is(:hover, :focus-visible)) .stage {
@@ -363,8 +339,12 @@
   z-index: 60;
 }
 
+/* `env(safe-area-inset-bottom)` clears a phone's home-indicator gesture bar, on top of `.hud`'s
+   own bottom padding — carried over from the removed footer row (VISUAL_SPEC §9, ADR-012
+   amendment) now that `.timeline` is `.bottom`'s last child. */
 .timeline {
   min-width: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   font-family: var(--hud-mono);
   color: var(--hud-dim);
 }
@@ -375,49 +355,59 @@
   }
 
   /* On a phone the HUD stacks down the top third of the window, so the top falloff runs
-     deeper than on desktop, and the aperture narrows to the portrait frame. */
+     deeper than on desktop. The ancestor panel now shares that top row with the globe orb
+     (below) rather than claiming a wide band of its own mid-screen, so the aperture centres
+     on the scene itself, not on any one HUD element. Lightened to match the desktop `.lens`
+     pass above (item 9): ~20% less at the mid-falloff, less at the outer edge, pushed a little
+     further out. */
   .lens {
     background:
       radial-gradient(
         ellipse 80% 56% at 50% 50%,
         transparent 0%,
-        transparent 40%,
-        rgba(3, 4, 6, 0.4) 70%,
-        rgba(3, 4, 6, 0.9) 100%
+        transparent 44%,
+        rgba(3, 4, 6, 0.32) 73%,
+        rgba(3, 4, 6, 0.79) 100%
       ),
       linear-gradient(
         to bottom,
-        rgba(3, 4, 6, 0.9) 0%,
-        rgba(3, 4, 6, 0.78) 22%,
-        rgba(3, 4, 6, 0.4) 34%,
-        transparent 44%
+        rgba(3, 4, 6, 0.72) 0%,
+        rgba(3, 4, 6, 0.62) 22%,
+        rgba(3, 4, 6, 0.32) 34%,
+        transparent 46%
       ),
       linear-gradient(
         to top,
-        rgba(3, 4, 6, 0.95) 0%,
-        rgba(3, 4, 6, 0.86) 24%,
-        rgba(3, 4, 6, 0.5) 34%,
-        transparent 44%
+        rgba(3, 4, 6, 0.76) 0%,
+        rgba(3, 4, 6, 0.69) 24%,
+        rgba(3, 4, 6, 0.4) 34%,
+        transparent 46%
       );
   }
 
+  /* The ancestor panel joins row 1 (`globe title ancestor`), mirroring the globe orb it sits
+     opposite — its own full-width row (the bug this fixes) both hid the scene behind it and
+     pushed the readouts/caption/playhead into each other below. */
   .hud {
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'globe    title    .'
-      'ancestor ancestor ancestor'
+      'globe    title    ancestor'
       'readouts readouts readouts'
       'feed     feed     feed'
       'bottom   bottom   bottom';
-    row-gap: 12px;
+    row-gap: 8px;
   }
 
   /* The brief's "compact single-card strip above the timeline": `<EventFeed>` itself caps to
-     one card at this breakpoint (`useIsCompactViewport`), so this only drops the desktop
-     column's width cap — full-width here reads as a strip, not a narrow stack. */
+     one single-line card at this breakpoint (`useIsCompactViewport`), so this drops the desktop
+     column's width cap — full-width here reads as a strip, not a narrow stack — and its padding,
+     since the phone HUD leaves this row only a few dozen px and `row-gap` already separates it.
+     When the row is squeezed shorter than the strip, `<EventFeed>` draws nothing
+     (`feedStripCapacity`) rather than spilling over the readouts above. */
   .feed {
     align-self: auto;
     max-width: none;
+    padding-block: 0;
   }
 
   .globe .label {
@@ -430,24 +420,63 @@
     padding-top: 6px;
   }
 
+  /* Top-right corner, mirroring `.globe`'s top-left: the panel's own portrait shrinks to
+     `--orb-size` (AncestorPanel's hud.module.css) so the row balances, and its kicker/name/
+     since text (below) becomes a short right-aligned caps stack instead of the desktop's
+     prose column. No `padding-top` reservation any more: this used to clear the sound toggle's
+     own fixed top-right corner (ADR-023's `audio/toggle.module.css`), but that toggle now lives
+     inline in the timeline transport instead (follow-up pass item 2). This column has no "About
+     & credits"-style button of its own the way `.globe` does, so it starts flush at
+     `--gutter-top`; the *portrait* inside it (from the inherited desktop `.ancestor`'s own
+     `padding-top: 40px`, not overridden here) lands close to — but not exactly at, and not for
+     the reason a stale note here used to claim — where the globe orb starts, since that column's
+     own "About & credits" button plus its gap happens to add up to a similar offset (re-review
+     fix, 2026-09-15: corrected after measuring both in-browser rather than assuming the two
+     columns share one deliberate rule). `min-height` holds row 1 at the same height whether or
+     not the lineage has started (`<AncestorPortrait>` renders nothing before it has): sized for
+     the portrait-present case (portrait + panel gap + two text lines + ancestor gap + kicker),
+     it stops the CO2 readouts/feed below from jumping down the moment a portrait first appears. */
   .ancestor {
-    justify-self: center;
-    align-items: center;
-    max-width: 40ch;
-    padding-top: 0;
-    text-align: center;
+    justify-self: end;
+    align-items: flex-end;
+    max-width: 132px;
+    min-height: calc(var(--orb-size) + 8px + 30px + 4px + 12px);
+    text-align: right;
+    gap: 4px;
+  }
+
+  /* The kicker moves after the portrait+readout panel (`order`, not DOM order — desktop's
+     source order, label then panel, stays untouched) so the portrait leads, matching the
+     globe orb leading its own label. */
+  .ancestor > .label {
+    order: 1;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Caps the panel's own width to the column (`.ancestor`'s `max-width`) so the ellipsis rules
+     on the name/since text inside it (hud.module.css) have an actual limit to measure against
+     — without this, the panel and the readout span nested in it size to their own longest
+     text (a flex item's cross size, unlike a block's, isn't implicitly capped by the
+     container's width), and a long ancestor name spills out of the corner past the panel's
+     left edge instead of eliding. */
+  .ancestor > [data-testid='ancestor-readout'] {
+    order: 0;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .readouts {
     justify-self: center;
     margin-top: 0;
   }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peripheral,
-  .credits,
   .caption,
   .chart,
   .stage,

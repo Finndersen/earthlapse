@@ -1,0 +1,104 @@
+/*
+ * Content only — `Panel.module.css` owns the surface, header and close button. Same HUD type
+ * language as `EventFeed.module.css`'s card (mono date/citation, sans body) so the popout reads
+ * as the same feature, not a second visual system.
+ */
+
+/* `Panel`'s backdrop anchors near the top-left by default (its own doc comment) — right for the
+   About & credits panel, which opens from a top-left button, but this one opens from a feed
+   card lower down the left column and used to land on top of the globe orb and CO2 readouts
+   instead of anywhere near the feed it came from (re-review fix, 2026-09-15). Pushed down with
+   a margin rather than changing `Panel`'s own backdrop alignment (which the About panel still
+   wants): roughly level with where the feed itself sits (`ShellLayout.module.css`'s `.feed`
+   grid row starts below the readouts), so opening a card reads as "the feed grew a detail view"
+   rather than "a dialog appeared elsewhere on screen". */
+.panel {
+  width: min(440px, 100%);
+  margin-top: min(320px, 34vh);
+}
+
+/* The phone bottom sheet (`Panel.module.css`'s own `max-width: 760px` rule) already anchors to
+   the bottom of the screen regardless of any margin — cancel the desktop offset so it doesn't
+   also eat into the sheet's own height budget there. */
+@media (max-width: 760px) {
+  .panel {
+    margin-top: 0;
+  }
+}
+
+.date {
+  margin: 0 0 10px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tagDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentcolor;
+}
+
+.description {
+  margin: 0 0 14px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.citation {
+  margin: 0 0 18px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.showOnTimeline {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 8px;
+  background: transparent;
+  padding: 10px 14px;
+  color: var(--hud-accent, #e8b06a);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.showOnTimeline:hover,
+.showOnTimeline:focus-visible {
+  border-color: var(--hud-accent, #e8b06a);
+  background: color-mix(in srgb, var(--hud-accent, #e8b06a) 12%, transparent);
+  outline: none;
+}

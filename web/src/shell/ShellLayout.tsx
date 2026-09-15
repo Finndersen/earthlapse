@@ -1,8 +1,10 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 
+import { CreditsList } from './CreditsList'
+import { Panel } from './Panel'
 import styles from './ShellLayout.module.css'
 
 export interface ShellLayoutProps {
@@ -44,13 +46,13 @@ export interface ShellLayoutProps {
   chart: ReactNode | null
   /** Bottom band: the warped timeline with scrub, play and speed controls. */
   timeline: ReactNode
-  /** Idle calm: quiets the periphery (readouts, credits) while the caption, title and timeline
-   *  stay fully visible. The globe and ancestor never fade for idle calm — both can be
-   *  animating (globe rotation/effects, ancestor portrait) and are meant to be watched. */
-  calm: boolean
   /** The globe fills the lens: the title and timeline stay above its backdrop, still legible
    *  and scrubbable (watching the continents move is the point), while the rest recedes. */
   globeExpanded: boolean
+  /** The event colour legend, passed straight through to the About & credits panel's
+   *  `CreditsList` (re-review fix, 2026-09-15 — see `CreditsList.tsx`'s own doc comment for why
+   *  `shell` takes this as a prop rather than importing `@/events`'s `EventTagLegend` itself). */
+  eventLegend?: ReactNode
 }
 
 /**
@@ -71,16 +73,40 @@ export function ShellLayout({
   caption,
   chart,
   timeline,
-  calm,
   globeExpanded,
+  eventLegend,
 }: ShellLayoutProps) {
+  // The About & credits panel (VISUAL_SPEC §9, ADR-012 amendment): local, ShellLayout-owned UI
+  // state, not lifted to the `t` store — like the credits link it replaces, this is pure chrome
+  // with no bearing on playback or the timeline. No explicit focus wiring needed on either
+  // side: `Panel` captures `document.activeElement` (the button, mid-click) on mount and
+  // restores it on unmount by itself, and defaults its own initial focus to its dialog root.
+  const [aboutOpen, setAboutOpen] = useState(false)
+
   return (
-    <div className={styles.shell} data-calm={calm} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
+    <div className={styles.shell} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
       <div className={styles.scene}>{scene}</div>
       <div className={styles.lens} aria-hidden="true" />
 
       <div className={styles.hud}>
         <div className={styles.globe}>
+          {/* Top-left corner, above the orb: small and muted so it reads as a corner
+              affordance, not a competing headline (item 5). In-flow rather than fixed-position —
+              it shares this column's flex stack with the orb and its label, so the row simply
+              grows to fit it instead of needing a hand-tuned pixel reservation. (An earlier note
+              here compared this to a "fixed-position sound toggle" that needed a reservation
+              from `.ancestor` opposite it — stale: the sound toggle moved into the timeline
+              transport in the same follow-up pass, follow-up item 2, and never came back as a
+              fixed-position element.) */}
+          <button
+            type="button"
+            className={styles.aboutButton}
+            aria-haspopup="dialog"
+            aria-expanded={aboutOpen}
+            onClick={() => setAboutOpen(true)}
+          >
+            About &amp; credits
+          </button>
           <div className={styles.orb}>{globe}</div>
           {/* While expanded, `.expandedGlobeCaption` announces the caption; one live region at a time. */}
           <span className={`${styles.label} ${styles.globeLabel}`} aria-live={globeExpanded ? undefined : 'polite'}>
@@ -88,9 +114,9 @@ export function ShellLayout({
           </span>
         </div>
 
-        <div className={`${styles.readouts} ${styles.peripheral}`}>{readouts}</div>
+        <div className={styles.readouts}>{readouts}</div>
 
-        <div className={`${styles.feed} ${styles.peripheral}`}>{feed}</div>
+        <div className={styles.feed}>{feed}</div>
 
         <header className={styles.title}>
           {title}
@@ -111,17 +137,14 @@ export function ShellLayout({
             </div>
           </div>
           <div className={styles.timeline}>{timeline}</div>
-          {/* Below the timeline, not above it: this disclosure (VISUAL_SPEC §9) applies to the
-              whole experience, not to whatever scene happens to be on screen, so it sits with
-              Credits in one dim footer row rather than riding the caption's spot. */}
-          <div className={styles.footer}>
-            <p className={styles.note}>Artistic reconstruction — plausibility, not accuracy.</p>
-            <Link href="/credits" className={`${styles.credits} ${styles.peripheral}`}>
-              Credits
-            </Link>
-          </div>
         </div>
       </div>
+
+      {aboutOpen && (
+        <Panel label="About & credits" onClose={() => setAboutOpen(false)}>
+          <CreditsList eventLegend={eventLegend} />
+        </Panel>
+      )}
     </div>
   )
 }

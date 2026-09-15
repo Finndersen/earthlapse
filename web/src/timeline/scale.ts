@@ -26,12 +26,56 @@ export type TimeWindow = readonly [newest: GeoTime, oldest: GeoTime]
  */
 export const SYMLOG_C = 1e4
 
-function warpSymlog(t: GeoTime): number {
-  return Math.log1p(t / SYMLOG_C)
+/**
+ * ADR-024 amendment (follow-up pass item 7). `SYMLOG_C` alone is a fixed 10,000-year knee no
+ * matter what window is being drawn: fine when that window is the full 4.6 Gyr domain (its
+ * whole reason for being that value), but a knee ten times the Holocene's *own* span leaves
+ * everything inside the Holocene — first farmers through the present — in the near-linear
+ * region, i.e. drawn at close to its true proportion, which is exactly the "the labels are not
+ * visible" complaint the sub-Holocene sections (early modern, industrial age, modern) hit: each
+ * is a sliver of an already-small span.
+ *
+ * The fix generalises `SYMLOG_C`'s own reasoning one level at a time instead of hand-tuning a
+ * second constant: within a window narrower than `KNEE_ADAPTIVE_SPAN_THRESHOLD`, the knee is
+ * the window's own span divided by 1000, so whichever of *that* window's children sits nearest
+ * its present edge gets the same kind of room `SYMLOG_C` gives the Holocene against the full
+ * domain. The threshold is chosen so the two rules join with no discontinuity: it is exactly
+ * `SYMLOG_C * 1000`, the span at which `span / 1000` first equals `SYMLOG_C` itself. Above it —
+ * the full domain and every section down to the Neogene — nothing changes; `symlogKnee` returns
+ * plain `SYMLOG_C`, byte-identical to this file before the amendment. Below it — the Quaternary
+ * downward, and in particular every Holocene section and its own children — the knee shrinks
+ * with the window, which is also exactly where a section's own scale (`useAnimatedScale`, the
+ * `'steady'`-mode playback rate, `ticks.ts`'s near-linear check) is drawn from a window that
+ * size, so the visible track, the ruler and steady-mode pacing all move together automatically.
+ * What deliberately does *not* pick this up: the full-domain scale `Experience.tsx` keeps for
+ * the event feed's lookback, the HUD sparklines and `'scenes'`-mode pacing (ADR-024's own
+ * "stay full-domain on purpose" list) — its window is always `[0, EARTH_FORMATION]`, always at
+ * or above the threshold, so it is provably unaffected; likewise `scene/pacing.ts` and
+ * `globe/effects/math.ts`, which each keep their own fixed `SYMLOG_C` copy for an unrelated,
+ * always-full-domain purpose and were not touched.
+ */
+const KNEE_ADAPTIVE_SPAN_THRESHOLD = SYMLOG_C * 1000
+
+/** Defensive floor only: the section tree's own tiling invariant (`assertChildrenTileParents`)
+ *  already guarantees every real window has positive span, so this never engages in practice —
+ *  it exists so a span of exactly 0 divides to a knee of 0 (which would make `t / knee`
+ *  diverge) rather than propagating a `NaN`/`Infinity` into the scale. */
+const MIN_SYMLOG_KNEE = 1
+
+/** The symlog knee to warp `window` with — see the amendment note on `KNEE_ADAPTIVE_SPAN_THRESHOLD`
+ *  above. Exported so `ticks.ts`'s near-linear check uses the exact same knee the scale it is
+ *  classifying was actually built with. */
+export function symlogKnee(window: TimeWindow): GeoTime {
+  const span = window[1] - window[0]
+  return span >= KNEE_ADAPTIVE_SPAN_THRESHOLD ? SYMLOG_C : Math.max(span / 1000, MIN_SYMLOG_KNEE)
 }
 
-function unwarpSymlog(w: number): GeoTime {
-  return SYMLOG_C * Math.expm1(w)
+function warpSymlog(t: GeoTime, knee: GeoTime): number {
+  return Math.log1p(t / knee)
+}
+
+function unwarpSymlog(w: number, knee: GeoTime): GeoTime {
+  return knee * Math.expm1(w)
 }
 
 function assertValidWindow(window: TimeWindow): void {
@@ -68,8 +112,26 @@ function buildScale(kind: ScaleKind, window: TimeWindow, warp: (t: GeoTime) => n
  * `log(1 + t / SYMLOG_C)` over `window`, with the near-present region close to linear. See
  * `SYMLOG_C` for why that break-point.
  */
-export function createSymlogScale(window: TimeWindow): TimeScale {
-  return buildScale('symlog', window, warpSymlog, unwarpSymlog)
+/**
+ * `knee` defaults to `symlogKnee(window)`, but a caller that knows more about what `window`
+ * represents than a bare span can override it — `sections.ts`'s `sectionSymlogKnee` is the one
+ * real case (re-review fix, 2026-09-15): `symlogKnee`'s adaptive shrink below
+ * `KNEE_ADAPTIVE_SPAN_THRESHOLD` exists to give a window's *children* room near its present
+ * edge, so it should only fire for a section that actually has children. Called on a **leaf**
+ * section's own window (no children to make room for — every one of the Holocene's six, "Modern"
+ * among them), the plain default badly over-compresses: "Modern" (0-111 years) shrinks to a knee
+ * of `MIN_SYMLOG_KNEE` (1), so the last 10 years alone drew over half the track and steady-mode
+ * pacing spent the same share of wall-clock time there. `sectionSymlogKnee` passes the fixed
+ * `SYMLOG_C` instead for a leaf, which reads close to true-proportional across a span that small
+ * — see that function's own doc comment for the full reasoning.
+ */
+export function createSymlogScale(window: TimeWindow, knee: GeoTime = symlogKnee(window)): TimeScale {
+  return buildScale(
+    'symlog',
+    window,
+    (t) => warpSymlog(t, knee),
+    (w) => unwarpSymlog(w, knee),
+  )
 }
 
 /**
@@ -131,4 +193,28 @@ export function blendScales(a: TimeScale, b: TimeScale, k: number): TimeScale {
     toUnit,
     fromUnit: (u: number): GeoTime => clamp(invertMonotoneDecreasing(toUnit, newest, oldest, clampUnit(u)), newest, oldest),
   }
+}
+
+/**
+ * The window `k` of the way (0..1) from `from` to `to`, with each edge moving in space warped by
+ * the fixed `SYMLOG_C` — not the adaptive, window-dependent knee `createSymlogScale` now uses
+ * (the amendment above `KNEE_ADAPTIVE_SPAN_THRESHOLD`): the transition's own shape stays the
+ * same regardless of which two sections it runs between, only the *resting* scale afterwards
+ * adapts. This is how a section change animates (ADR-024). Going from the full 4.6 Gyr domain to
+ * the Holocene then reads as a steady zoom. A blend linear in years would spend nearly the whole
+ * animation at spans of billions of years. Both edges move monotonically along the same warp, so
+ * the result stays ordered.
+ */
+export function interpolateWindow(from: TimeWindow, to: TimeWindow, k: number): TimeWindow {
+  assertValidWindow(from)
+  assertValidWindow(to)
+  const kk = clampUnit(k)
+  if (kk === 0) return from
+  if (kk === 1) return to
+  const warp = (t: GeoTime): number => warpSymlog(t, SYMLOG_C)
+  const unwarp = (w: number): GeoTime => unwarpSymlog(w, SYMLOG_C)
+  const edge = (a: GeoTime, b: GeoTime): GeoTime => unwarp(warp(a) + (warp(b) - warp(a)) * kk)
+  const newest = edge(from[0], to[0])
+  const oldest = edge(from[1], to[1])
+  return [Math.min(newest, oldest), oldest]
 }

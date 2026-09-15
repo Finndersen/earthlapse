@@ -1,6 +1,13 @@
+/* The playhead and hover readouts ride above the track. The margin reserves their line inside
+   the timeline's own box, so whatever the shell stacks above (the scene caption) sits clear of
+   them without knowing their geometry. */
 .hitArea {
+  --readout-gap: 4px;
+  --readout-line: 14px;
+
   position: relative;
   height: 48px;
+  margin-top: calc(var(--readout-gap) + var(--readout-line));
   touch-action: none;
   cursor: ew-resize;
 }
@@ -80,10 +87,11 @@
 .timeLabel {
   position: absolute;
   transition: opacity 200ms ease;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + var(--readout-gap));
   transform: translateX(-50%);
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 12px;
+  line-height: var(--readout-line);
   letter-spacing: 0.02em;
   color: var(--hud-ink, #efe9dc);
   text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
@@ -139,6 +147,14 @@
 
 /* A previewed pip/cluster already names its own time; the playhead readout steps aside for it,
    and so does the fisheye hover readout (ADR-017) — a preview already shows its own time+label. */
+.timeLabel[data-anchor='start'] {
+  transform: none;
+}
+
+.timeLabel[data-anchor='end'] {
+  transform: translateX(-100%);
+}
+
 .hitArea:has(.pip:hover) .timeLabel,
 .hitArea:has(.pip:focus-visible) .timeLabel,
 .hitArea:has(.pip:hover) .hoverReadout,

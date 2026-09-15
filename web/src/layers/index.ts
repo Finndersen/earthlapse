@@ -27,8 +27,6 @@
  *   its `TimeScale` so the value under the playhead sits directly above it; renders the
  *   uncertainty band when the layer carries `bounds`. Always fully drawn — whether it is open
  *   is the caller's state; `onClose` is its own close button.
- * - `<DayLengthClock layer t />` — a small clock face plus the numeric reading, for a
- *   `Layer<ScalarValue>` whose unit is hours.
  * - `<AncestorReadout layer t />` — label, representative organism, "since <t>".
  * - `<AncestorPortrait layer t assetBase />` — the ancestor's specimen plate, flow-morphing
  *   into the next across a band centred on each divergence (ADR-015); renders nothing when the
@@ -60,7 +58,6 @@ export {
 export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
 export { AncestorReadout, type AncestorReadoutProps } from './components/AncestorReadout'
-export { DayLengthClock, type DayLengthClockProps } from './components/DayLengthClock'
 export { LayerChart, type LayerChartProps } from './components/LayerChart'
 export { ScalarReadout, type ScalarReadoutProps } from './components/ScalarReadout'
 export { Sparkline, type SparklineProps } from './components/Sparkline'

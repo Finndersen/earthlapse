@@ -51,12 +51,14 @@ describe('<Timeline>', () => {
         t={4.567e9}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     expect(screen.getByText('4.57 Ga')).toBeTruthy()
@@ -70,12 +72,14 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback({ playing: false })}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Play'))
@@ -89,12 +93,14 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback({ speed: 1 })}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
@@ -108,12 +114,14 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback({ mode: 'scenes' })}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={onPlaybackChange}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     const group = screen.getByRole('group', { name: 'Playback mode' })
@@ -128,12 +136,14 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback({ playing: false })}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
         ratePerSecond={4e7}
       />,
     )
@@ -144,34 +154,48 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback({ playing: true })}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
         ratePerSecond={4e7}
       />,
     )
     expect(screen.getByText('≈ 40 Myr/s')).toBeTruthy()
   })
 
-  it('calls onScaleKindChange when the symlog/linear toggle is clicked', () => {
+  it('shows a "Scale" label and a Symlog/Linear segmented control, and calls onScaleKindChange on click (follow-up pass item 1)', () => {
     const onScaleKindChange = vi.fn()
     render(
       <Timeline
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback()}
         onScrub={vi.fn()}
         onScaleKindChange={onScaleKindChange}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
-    fireEvent.click(screen.getByText('symlog'))
+    expect(screen.getByText('Scale')).toBeTruthy()
+    const group = screen.getByRole('group', { name: 'Timeline scale' })
+    const symlogButton = within(group).getByText('Symlog')
+    const linearButton = within(group).getByText('Linear')
+    expect(symlogButton.getAttribute('aria-pressed')).toBe('true')
+    expect(linearButton.getAttribute('aria-pressed')).toBe('false')
+    // Both options carry a short explanation of what they mean (item 1's ask), not just a label.
+    expect(symlogButton.getAttribute('title')).toMatch(/logarithmic/i)
+    expect(linearButton.getAttribute('title')).toMatch(/proportional/i)
+
+    fireEvent.click(linearButton)
     expect(onScaleKindChange).toHaveBeenCalledWith('linear')
   })
 
@@ -182,12 +206,14 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         playback={playback()}
         onScrub={onScrub}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Back to previous event'))
@@ -201,6 +227,7 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -208,6 +235,7 @@ describe('<Timeline>', () => {
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     fireEvent.click(screen.getByLabelText('Back to previous event'))
@@ -221,6 +249,7 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -228,6 +257,7 @@ describe('<Timeline>', () => {
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     fireEvent.keyDown(container.firstChild as Element, { key: 'ArrowLeft' })
@@ -241,6 +271,7 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -248,6 +279,7 @@ describe('<Timeline>', () => {
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     const pip = screen.getByLabelText(/Pleistocene steppe/)
@@ -260,6 +292,98 @@ describe('<Timeline>', () => {
     expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
   })
 
+  it('renders the sound control inside the transport secondary group, beside play/back/forward (follow-up pass item 2)', () => {
+    render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
+        events={events}
+        playback={playback()}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+        sound={<button type="button" data-testid="sound-slot">sound</button>}
+      />,
+    )
+    expect(screen.getByTestId('sound-slot')).toBeTruthy()
+  })
+
+  it.each([
+    ['[', 'down'],
+    ['-', 'down'],
+    [']', 'up'],
+    ['=', 'up'],
+  ] as const)('steps playback speed %s via the %s shortcut (follow-up pass item 3)', (key, direction) => {
+    const onPlaybackChange = vi.fn()
+    const { container } = render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
+        events={events}
+        playback={playback({ speed: 2 })}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={onPlaybackChange}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+      />,
+    )
+    fireEvent.keyDown(container.firstChild as Element, { key })
+    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ speed: direction === 'up' ? 4 : 1 }))
+  })
+
+  it('leaves the current section on Escape when no overlay is open', () => {
+    const onSelectSection = vi.fn()
+    const { container } = render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="cenozoic"
+        events={events}
+        playback={playback()}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={onSelectSection}
+      />,
+    )
+    fireEvent.keyDown(container.firstChild as Element, { key: 'Escape' })
+    expect(onSelectSection).toHaveBeenCalledWith('earth')
+  })
+
+  it('leaves Escape to the chart dock/globe instead of also leaving the section while overlayOpen (re-review fix)', () => {
+    const onSelectSection = vi.fn()
+    const { container } = render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="cenozoic"
+        events={events}
+        playback={playback()}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={onSelectSection}
+        overlayOpen
+      />,
+    )
+    fireEvent.keyDown(container.firstChild as Element, { key: 'Escape' })
+    expect(onSelectSection).not.toHaveBeenCalled()
+    // Backspace has no overlay binding, so it keeps working even while overlayOpen.
+    fireEvent.keyDown(container.firstChild as Element, { key: 'Backspace' })
+    expect(onSelectSection).toHaveBeenCalledWith('earth')
+  })
+
   it('builds the density-adaptive lens markers from every checkpoint and event range endpoint (ADR-021)', () => {
     const spy = fisheyeModule.fisheyeScale as unknown as ReturnType<typeof vi.fn>
     spy.mockClear()
@@ -268,6 +392,7 @@ describe('<Timeline>', () => {
         t={0}
         scaleKind="symlog"
         scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
         events={events}
         checkpoints={checkpoints}
         playback={playback()}
@@ -275,6 +400,7 @@ describe('<Timeline>', () => {
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
       />,
     )
     expect(spy).toHaveBeenCalled()

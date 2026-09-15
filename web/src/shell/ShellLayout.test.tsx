@@ -1,6 +1,8 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import type { ReactNode } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ShellLayout } from './ShellLayout'
 import styles from './ShellLayout.module.css'
@@ -10,10 +12,20 @@ import styles from './ShellLayout.module.css'
 // renders in one file collide.
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
+})
+
+// The About & credits panel loads the manifest itself (`CreditsList`) once opened; stub `fetch`
+// so opening it in a test never makes a real network request. The exact credits content is
+// `CreditsList.test.tsx`'s concern — these tests only need the panel's own chrome to render.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) }) as Response),
+  )
 })
 
 function renderShell({
-  calm = false,
   globeExpanded = false,
   chart = <div>CHART_SLOT</div> as ReactNode,
   globeCaption = '',
@@ -31,7 +43,6 @@ function renderShell({
       caption={<div>CAPTION_SLOT</div>}
       chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
-      calm={calm}
       globeExpanded={globeExpanded}
     />,
   )
@@ -58,22 +69,6 @@ describe('ShellLayout', () => {
     }
   })
 
-  it('always shows the artistic-reconstruction note (VISUAL_SPEC §9)', () => {
-    renderShell()
-    expect(screen.getByText(/artistic reconstruction/i).textContent).toMatch(/artistic reconstruction/i)
-  })
-
-  it('links to the credits page', () => {
-    renderShell()
-    const link = screen.getByText('Credits')
-    expect(link.getAttribute('href')).toBe('/credits')
-  })
-
-  it.each([true, false])('exposes calm=%s on the root for the periphery fade', (calm) => {
-    const { container } = renderShell({ calm })
-    expect((container.firstElementChild as HTMLElement).dataset.calm).toBe(String(calm))
-  })
-
   it.each([
     [<div key="chart">CHART_SLOT</div>, 'true'],
     [null, 'false'],
@@ -85,42 +80,6 @@ describe('ShellLayout', () => {
   it.each([true, false])('exposes globeExpanded=%s on the root', (globeExpanded) => {
     const { container } = renderShell({ globeExpanded })
     expect((container.firstElementChild as HTMLElement).dataset.globeExpanded).toBe(String(globeExpanded))
-  })
-
-  it('keeps the reconstruction note outside the caption slot, so it stays while a chart is open', () => {
-    renderShell()
-    expect(screen.getByText('CAPTION_SLOT').parentElement?.contains(screen.getByText(/artistic reconstruction/i))).toBe(false)
-  })
-
-  it('places the reconstruction note below the timeline, alongside Credits in one footer row, not above it next to the caption', () => {
-    renderShell()
-    const bottom = screen.getByText('TIMELINE_SLOT').closest(`.${styles.bottom}`) as HTMLElement
-    expect(bottom).not.toBeNull()
-    const children = Array.from(bottom.children)
-    const timelineIndex = children.findIndex((el) => el.classList.contains(styles.timeline ?? ''))
-    const footerIndex = children.findIndex((el) => el.classList.contains(styles.footer ?? ''))
-    expect(timelineIndex).toBeGreaterThanOrEqual(0)
-    expect(footerIndex).toBeGreaterThan(timelineIndex)
-    const footer = children[footerIndex] as HTMLElement
-    expect(footer.contains(screen.getByText(/artistic reconstruction/i))).toBe(true)
-    expect(footer.contains(screen.getByText('Credits'))).toBe(true)
-  })
-
-  it('never marks the globe or ancestor slots peripheral, so idle calm cannot fade them (regression)', () => {
-    renderShell()
-    const globeWrap = screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)
-    expect(globeWrap?.className.split(' ')).not.toContain(styles.peripheral)
-    const ancestorWrap = screen.getByText('ANCESTOR_SLOT').closest(`.${styles.ancestor}`)
-    expect(ancestorWrap?.className.split(' ')).not.toContain(styles.peripheral)
-  })
-
-  it('still marks the readouts, feed and credits peripheral, so idle calm keeps quieting them', () => {
-    renderShell()
-    const readoutsWrap = screen.getByText('READOUTS_SLOT').closest(`.${styles.readouts}`)
-    expect(readoutsWrap?.className.split(' ')).toContain(styles.peripheral)
-    const feedWrap = screen.getByText('FEED_SLOT').closest(`.${styles.feed}`)
-    expect(feedWrap?.className.split(' ')).toContain(styles.peripheral)
-    expect(screen.getByText('Credits').className.split(' ')).toContain(styles.peripheral)
   })
 
   it('labels the globe orb "Paleogeography" with no caption active', () => {
@@ -166,5 +125,102 @@ describe('ShellLayout', () => {
     renderShell({ globeExpanded: true })
     const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
     expect(stageCaption?.textContent).toBe('')
+  })
+})
+
+// About & credits (VISUAL_SPEC §9, ADR-012 amendment, follow-up item 5): the artistic-
+// reconstruction disclosure and the credits list live in an in-experience panel, opened from a
+// small top-left corner button, instead of the old always-on footer row and `/credits`
+// navigation. No idle-fade of any kind is involved (follow-up item 8) — opening/closing is a
+// direct click/Escape/outside-click, never on a timer.
+describe('ShellLayout — About & credits panel', () => {
+  it('shows a small "About & credits" button and no dialog before it is opened', () => {
+    renderShell()
+    const button = screen.getByRole('button', { name: /about & credits/i })
+    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('opens the panel on click, leading with the artistic-reconstruction disclosure', () => {
+    renderShell()
+    fireEvent.click(screen.getByRole('button', { name: /about & credits/i }))
+    expect(screen.getByRole('button', { name: /about & credits/i }).getAttribute('aria-expanded')).toBe('true')
+    const dialog = screen.getByRole('dialog')
+    expect(dialog.textContent).toMatch(/artistic reconstruction/i)
+  })
+
+  it('closes on Escape and returns focus to the button (no route change, no route navigated to)', () => {
+    renderShell()
+    const button = screen.getByRole('button', { name: /about & credits/i })
+    // A real click focuses the button before the handler runs (native button activation
+    // behaviour); `fireEvent.click` alone doesn't simulate that in jsdom, so focus it first —
+    // `Panel` captures whatever has focus at mount and restores it on unmount.
+    button.focus()
+    fireEvent.click(button)
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.activeElement).toBe(button)
+  })
+
+  it('places the button in the top-left globe column, not colliding with the ancestor corner', () => {
+    renderShell()
+    const button = screen.getByRole('button', { name: /about & credits/i })
+    expect(button.closest(`.${styles.globe}`)).not.toBeNull()
+    expect(button.closest(`.${styles.ancestor}`)).toBeNull()
+  })
+})
+
+// jsdom applies no layout or media queries, so a rendered assertion can't see which grid area
+// or breakpoint rule wins — these read the module's own source instead. Regression coverage
+// for the "ancestor sits centred mid-screen on a phone, hiding the scene" bug: the phone rule
+// used to give `.ancestor` its own full-width row (`'ancestor ancestor ancestor'`) with
+// `justify-self: center`, rather than sharing row 1 with the globe orb and title the way the
+// desktop layout already does.
+describe('ShellLayout phone ancestor placement (max-width: 760px)', () => {
+  const css = readFileSync(path.join(import.meta.dirname, 'ShellLayout.module.css'), 'utf-8')
+  const phoneQueryIndex = css.indexOf('@media (max-width: 760px)')
+  const phoneBlock = css.slice(phoneQueryIndex, css.indexOf('@media', phoneQueryIndex + 1))
+
+  it('is present in the stylesheet', () => {
+    expect(phoneQueryIndex).toBeGreaterThan(-1)
+  })
+
+  it('puts the ancestor panel in row 1 beside the globe and title, not its own full-width row', () => {
+    const areasMatch = phoneBlock.match(/grid-template-areas:\s*([\s\S]*?);/)
+    expect(areasMatch).not.toBeNull()
+    const rows = areasMatch![1]!.match(/'[^']*'/g)!.map((row) => row.slice(1, -1).trim())
+    expect(rows[0]!.split(/\s+/)).toEqual(['globe', 'title', 'ancestor'])
+    expect(rows).not.toContain('ancestor ancestor ancestor')
+  })
+
+  it('right-aligns the ancestor corner (mirroring the globe orb top-left) instead of centring it', () => {
+    const ancestorRule = phoneBlock.match(/(?<![\w.])\.ancestor\s*\{([^}]*)\}/)
+    expect(ancestorRule).not.toBeNull()
+    expect(ancestorRule![1]!).toMatch(/justify-self:\s*end/)
+    expect(ancestorRule![1]!).not.toMatch(/justify-self:\s*center/)
+  })
+
+  // Regression coverage for a follow-up QA pass on the fix above: a long lineage label (e.g.
+  // "Homo heidelbergensis / LCA with Neanderthals") spilled out of the corner because the
+  // panel's own width was never capped, so its `max-width: 100%` / ellipsis rules (hud.
+  // module.css) had nothing to measure against. jsdom applies no layout, so this can only check
+  // that the capping rule is present in source, not that text actually elides at a given
+  // width — that needs a real browser (Playwright rect check, run ad hoc; not part of this
+  // repo's committed toolchain).
+  it("caps the ancestor readout panel's own width to the corner, not just its text", () => {
+    const panelRule = phoneBlock.match(/\.ancestor\s*>\s*\[data-testid=(['"])ancestor-readout\1\]\s*\{([^}]*)\}/)
+    expect(panelRule).not.toBeNull()
+    expect(panelRule![2]!).toMatch(/max-width:\s*100%/)
+    expect(panelRule![2]!).toMatch(/min-width:\s*0/)
+  })
+
+  // Regression coverage for the row-height jump between "no ancestor yet" (before the lineage
+  // starts, `<AncestorPortrait>` renders nothing) and "portrait present": row 1 used to grow by
+  // the portrait's full height the moment one first appeared, pushing the readouts/feed rows
+  // below it down.
+  it('holds the ancestor corner at a fixed height so the readouts below it never jump when a portrait first appears', () => {
+    const ancestorRule = phoneBlock.match(/(?<![\w.])\.ancestor\s*\{([^}]*)\}/)
+    expect(ancestorRule).not.toBeNull()
+    expect(ancestorRule![1]!).toMatch(/min-height:/)
   })
 })

@@ -211,39 +211,127 @@ describe('Experience (W12a integration)', () => {
     expect(seen.size).toBeGreaterThanOrEqual(5)
   })
 
-  it('surfaces a recently-reached event as a feed card, and clicking it scrubs to it', async () => {
+  describe('event detail (W-followup item 12)', () => {
     // jsdom's getBoundingClientRect defaults to a zero-size box, under which the feed (like the
     // timeline track) treats itself as unmeasured and shows nothing — give its container a real
     // width, as `events/components/EventFeed.test.tsx` does in isolation. Installed before
-    // `renderSettled` mounts the tree: `useElementWidth` has no ResizeObserver in jsdom, so it
+    // `renderSettled` mounts the tree: `useElementSize` has no ResizeObserver in jsdom, so it
     // only ever reads this once, on mount.
-    const rectSpy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
-      left: 0,
-      top: 0,
-      right: 300,
-      bottom: 40,
-      width: 300,
-      height: 40,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    } as DOMRect)
+    function mockFeedRect(): () => void {
+      const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+        left: 0,
+        top: 0,
+        right: 300,
+        bottom: 40,
+        width: 300,
+        height: 40,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect)
+      return () => spy.mockRestore()
+    }
 
-    await renderSettled()
+    it('surfaces a recently-reached event as a feed card, opening a detail panel on click rather than scrubbing in place', async () => {
+      const restoreRect = mockFeedRect()
+      await renderSettled()
 
-    act(() => {
-      // Exactly kpg-impact's own t (stub manifest): freshest possible, distanceFraction 0.
-      useTimeStore.getState().setT(66_000_000)
+      act(() => {
+        // Exactly kpg-impact's own t (stub manifest): freshest possible, distanceFraction 0.
+        useTimeStore.getState().setT(66_000_000)
+      })
+
+      const card = await screen.findByTestId('event-feed-card-kpg-impact')
+      expect(card.textContent).toMatch(/impact/i)
+
+      act(() => {
+        fireEvent.click(card)
+      })
+
+      // Opening the card never moves t by itself — only "Show on timeline" does.
+      expect(useTimeStore.getState().t).toBe(66_000_000)
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toMatch(/impact/i)
+
+      act(() => {
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Show on timeline' }))
+      })
+      expect(useTimeStore.getState().t).toBe(66_000_000)
+      // "Show on timeline" also closes the panel (re-review fix, 2026-09-15) — it used to leave
+      // it open over the very scene the click asked to see.
+      expect(screen.queryByRole('dialog')).toBeNull()
+
+      restoreRect()
     })
 
-    const card = await screen.findByTestId('event-feed-card-kpg-impact')
-    expect(card.textContent).toMatch(/impact/i)
+    it('"Show on timeline" does not resume playback even if it was playing before the panel opened (re-review fix, 2026-09-15)', async () => {
+      const restoreRect = mockFeedRect()
+      await renderSettled()
 
-    act(() => {
-      fireEvent.click(card)
+      act(() => {
+        useTimeStore.getState().setT(66_000_000)
+        useTimeStore.getState().setPlaying(true)
+      })
+
+      const card = await screen.findByTestId('event-feed-card-kpg-impact')
+      act(() => {
+        fireEvent.click(card)
+      })
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      const dialog = screen.getByRole('dialog')
+      act(() => {
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Show on timeline' }))
+      })
+      expect(screen.queryByRole('dialog')).toBeNull()
+      // Resuming here would immediately carry the playhead away from the place just asked for.
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      restoreRect()
     })
-    expect(useTimeStore.getState().t).toBe(66_000_000)
 
-    rectSpy.mockRestore()
+    it('pauses playback on open and resumes it on close, only if it was playing', async () => {
+      const restoreRect = mockFeedRect()
+      await renderSettled()
+
+      act(() => {
+        useTimeStore.getState().setT(66_000_000)
+        useTimeStore.getState().setPlaying(true)
+      })
+
+      const card = await screen.findByTestId('event-feed-card-kpg-impact')
+      act(() => {
+        fireEvent.click(card)
+      })
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      })
+      expect(useTimeStore.getState().playback.playing).toBe(true)
+
+      restoreRect()
+    })
+
+    it('leaves playback paused on close when it was already paused before opening', async () => {
+      const restoreRect = mockFeedRect()
+      await renderSettled()
+
+      act(() => {
+        useTimeStore.getState().setT(66_000_000)
+      })
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      const card = await screen.findByTestId('event-feed-card-kpg-impact')
+      act(() => {
+        fireEvent.click(card)
+      })
+      act(() => {
+        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+      })
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      restoreRect()
+    })
   })
 })

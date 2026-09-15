@@ -13,11 +13,17 @@
  *  Whichever element had focus before the popover opened (typically the cluster button that
  *  triggered it) regains focus once it closes, on every close path — Escape, a member
  *  selection, the × button, or `ScrubTrack`'s own "press elsewhere dismisses it" branch — since
- *  all of them unmount this component and focus is restored from that one effect cleanup. */
+ *  all of them unmount this component and focus is restored from that one effect cleanup.
+ *
+ *  The trap/restore mechanics themselves are `@/lib/focusTrap`'s `useFocusTrap`, shared with
+ *  `shell/Panel` (re-review fix, 2026-09-15) rather than a second copy of the same logic — this
+ *  stays a distinct component because its content (a member list) and anchoring (relative to the
+ *  cluster's own track position, not a centred/bottom-sheet dialog) don't fit `Panel`'s shape. */
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
+import { useFocusTrap } from '@/lib/focusTrap'
 import type { GeoTime } from '@/types/layer'
 
 import type { TimelineCheckpoint } from '../checkpoints'
@@ -40,43 +46,22 @@ interface ClusterPopoverProps {
 export function ClusterPopover({ members, anchorU, edgeAnchorClass, onSelect, onClose }: ClusterPopoverProps) {
   const rootRef = useRef<HTMLDivElement>(null)
 
-  // Keyboard accessible (brief §3): focus lands here the moment it opens, so Escape and Tab work
-  // immediately without a separate click into the popover first — and, on close (Escape, a member
-  // selection, the × button, or a press elsewhere on the track dismissing it), focus returns to
+  // Focus entry/restore + Tab-cycling (brief §3): focus lands here the moment it opens, so
+  // Escape and Tab work immediately without a separate click into the popover first, and on
+  // unmount (every close path — Escape, a member selection, the × button, or a press elsewhere
+  // on the track — routes through `ScrubTrack` unmounting this component) focus returns to
   // whatever triggered the popover (the cluster button) rather than being dropped to `<body>`.
-  // Every close path routes through `ScrubTrack` unmounting this component, so a single effect
-  // cleanup — not a per-handler callback — is the one place that needs to restore it.
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    rootRef.current?.focus()
-    return () => {
-      if (previouslyFocused && document.contains(previouslyFocused)) previouslyFocused.focus()
-    }
-  }, [])
+  // This popover's own focusable elements are buttons only (the close button, then each member
+  // row), so the default selector is narrowed.
+  const handleTab = useFocusTrap(rootRef, { focusableSelector: 'button' })
 
-  // Focus trap: Tab/Shift+Tab cycles through the popover's own focusable elements (the close
-  // button, then each member row) rather than letting focus leave the still-open dialog.
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Escape') {
       e.stopPropagation()
       onClose()
       return
     }
-    if (e.key !== 'Tab') return
-    const focusable = rootRef.current?.querySelectorAll<HTMLElement>('button') ?? []
-    if (focusable.length === 0) return
-    const first = focusable[0]!
-    const last = focusable[focusable.length - 1]!
-    const active = document.activeElement
-    if (e.shiftKey) {
-      if (active === first || active === rootRef.current) {
-        e.preventDefault()
-        last.focus()
-      }
-    } else if (active === last) {
-      e.preventDefault()
-      first.focus()
-    }
+    handleTab(e)
   }
 
   return (

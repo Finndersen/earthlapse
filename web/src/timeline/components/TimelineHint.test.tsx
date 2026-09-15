@@ -30,6 +30,13 @@ describe('<TimelineHint>', () => {
     expect(getByText(/hover to spread out close events/)).toBeTruthy()
   })
 
+  it('mentions the era-navigation shortcuts in the mouse wording (follow-up pass item 6)', () => {
+    mockMatchMedia(false)
+    const { getByText } = render(<TimelineHint onDismiss={vi.fn()} />)
+    expect(getByText(/Escape or Backspace up a section/)).toBeTruthy()
+    expect(getByText(/Home or 0 for Earth/)).toBeTruthy()
+  })
+
   it('shows touch-appropriate wording once mounted on a coarse pointer', () => {
     mockMatchMedia(true)
     const { getByText } = render(<TimelineHint onDismiss={vi.fn()} />)

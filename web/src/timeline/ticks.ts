@@ -9,7 +9,7 @@
 import type { GeoTime, TimeScale } from '@/types/layer'
 
 import { formatGeoTime } from './format'
-import type { TimeWindow } from './scale'
+import { symlogKnee, type TimeWindow } from './scale'
 import { clampUnit } from './util'
 
 export interface AxisTick {
@@ -149,16 +149,41 @@ function symlogTicks(window: TimeWindow, scale: TimeScale, trackWidthPx: number)
   return accepted.sort((a, b) => a.u - b.u)
 }
 
+/** Symlog windows below this ratio between the warp's slope at the newest and oldest edges
+ *  (`(1 + oldest / knee) / (1 + newest / knee)`) draw close to linearly. Originally tuned
+ *  against the fixed `SYMLOG_C`; now measured against `symlogKnee(window)` — the same knee
+ *  `createSymlogScale` actually builds that window's scale with (`scale.ts`'s ADR-024
+ *  amendment) — so this stays correct now that the knee itself shrinks for a narrow-enough
+ *  window instead of staying fixed. Below the amendment's own threshold nothing changes here
+ *  either: `symlogKnee` still returns `SYMLOG_C` there, byte-identical to before. Below it, a
+ *  window's own children read as genuinely logarithmic against its now-smaller knee (that is
+ *  the amendment's point — the sub-Holocene sections stop being flat proportional slivers), so
+ *  this now correctly falls through to `symlogTicks`'s log-decade candidates there instead of
+ *  the evenly-spaced ones a merely-near-linear window gets. */
+const NEAR_LINEAR_SLOPE_RATIO = 4
+
+function isNearLinearSymlogWindow(window: TimeWindow, knee: GeoTime): boolean {
+  const [newest, oldest] = window
+  return (1 + oldest / knee) / (1 + newest / knee) < NEAR_LINEAR_SLOPE_RATIO
+}
+
 /**
  * Ticks for `window` as drawn by `scale` (which may be a `blendScales` result mid-toggle —
  * `scale.kind` picks the algorithm, matching how `blendScales` itself resolves `kind`),
- * guaranteed not to overlap within `trackWidthPx`. `'linear'` gets evenly-spaced nice-step
- * ticks; `'symlog'` (and, as a reasonable default, anything else) gets log-decade candidates
- * thinned by priority.
+ * guaranteed not to overlap within `trackWidthPx`. `'linear'`, and a symlog window narrow enough
+ * to draw almost linearly (`isNearLinearSymlogWindow`), get evenly spaced nice-step ticks, placed
+ * by `scale` itself. Any other symlog window gets log-decade candidates thinned by priority.
+ *
+ * `knee` defaults to `symlogKnee(window)`, but the caller should pass the *actual* knee `scale`
+ * was built with when it differs (re-review fix, 2026-09-15: `sections.ts`'s
+ * `sectionSymlogKnee` overrides the bare default for a leaf section) — otherwise this module's
+ * own near-linear judgement would disagree with the scale it's classifying, exactly the
+ * mismatch this module's own doc comment already warned an unsynchronised second copy would
+ * cause.
  */
-export function generateTicks(window: TimeWindow, scale: TimeScale, trackWidthPx: number): AxisTick[] {
+export function generateTicks(window: TimeWindow, scale: TimeScale, trackWidthPx: number, knee: GeoTime = symlogKnee(window)): AxisTick[] {
   if (!(trackWidthPx > 0)) return []
-  if (scale.kind === 'linear') return linearStepTicks(window, scale, trackWidthPx)
+  if (scale.kind === 'linear' || isNearLinearSymlogWindow(window, knee)) return linearStepTicks(window, scale, trackWidthPx)
   return symlogTicks(window, scale, trackWidthPx)
 }
 

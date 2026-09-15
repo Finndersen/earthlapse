@@ -3,11 +3,13 @@
  * `<Timeline>` control itself. Prop-driven throughout; nothing here imports the zustand store
  * (W11) or reads anything but its arguments.
  *
- * The visible window is always the full domain, `[0, EARTH_FORMATION]` — there is no zoom or
- * pan (removed; DESIGN §3's v1 note has the full rationale). Resolving events or checkpoints
- * that sit close together in time is instead the job of the density-adaptive fisheye lens
- * (`fisheye.ts`/`useFisheye.ts`, ADR-017 and its amendments), which stretches the region under
- * the pointer so nearby markers spread apart on hover.
+ * The visible window is the selected **era section**'s (`sections.ts`, ADR-024): the full domain,
+ * `[0, EARTH_FORMATION]`, at the root, or a named eon, era, period, epoch or Holocene
+ * human-history section below it. There is no free zoom or pan (removed in ADR-021; DESIGN §3).
+ * Within a window, resolving events or checkpoints that sit close together in time is the job
+ * of the density-adaptive fisheye lens (`fisheye.ts`/`useFisheye.ts`, ADR-017 and its
+ * amendments), which stretches the region under the pointer so nearby markers spread apart on
+ * hover.
  *
  * ## Orientation (applies to every `TimeScale` this package produces)
  *
@@ -20,10 +22,14 @@
  *
  * ## Scales
  *
- * - `createSymlogScale(window)` — `log(1 + t / SYMLOG_C)`. See `SYMLOG_C`'s doc comment in
- *   scale.ts for why the break-point sits at 10,000 years: it is the largest value that keeps
- *   the whole Holocene inside the near-linear region, so recorded history stays a legible
- *   band of the axis even at the full domain.
+ * - `createSymlogScale(window)` — `log(1 + t / knee)`. See `SYMLOG_C`'s doc comment in scale.ts
+ *   for why the break-point sits at 10,000 years at the full domain: it is the largest value
+ *   that keeps the whole Holocene inside the near-linear region, so recorded history stays a
+ *   legible band of the axis even at the full domain. Below `KNEE_ADAPTIVE_SPAN_THRESHOLD`
+ *   (ADR-024 amendment, follow-up pass item 7) the knee shrinks with the window's own span
+ *   instead of staying fixed, so a narrow section's own children — the Holocene's, in
+ *   particular — get the same kind of room the Holocene itself gets at the full domain, rather
+ *   than reading as flat proportional slivers.
  * - `createLinearScale(window)` — true proportional. Deliberately near-useless at the full
  *   domain (DESIGN §3): human history collapses to sub-pixel width. That collapse, animated
  *   via `blendScales`/`useAnimatedScale`, is a deliberate product feature, not a bug to design
@@ -42,15 +48,17 @@
  *   event directly, not this decluttered subset — a keyboard/transport user must always be able
  *   to reach an event that currently lost a room collision.
  * - `advancePlayhead(t, dtSeconds, playback, fullScale, scenesPacing?)` moves `t` toward the
- *   present in `fullScale`'s warped `u` (always the *full-domain* scale), scaled by
+ *   present in `fullScale`'s warped `u`, scaled by
  *   `playback.speed`, clamped at the present. Two modes (ADR-016, `playback.mode`): `'scenes'`
  *   (default) walks `scenesPacing` (`scene/pacing.ts`'s `scenePlaybackSegments`, structurally a
  *   `PlaybackPacingSegment[]`) at exactly the velocity that spends each segment's
  *   `durationSeconds`, so scenes dwell and dissolves take their exact wall-clock time at 1x
  *   without the picture ever falling out of sync with `t`; `'steady'` ignores `scenesPacing`
- *   and moves at flat `baseRate * speed` throughout. The caller picks `fullScale` per mode —
- *   always full-domain symlog for `'scenes'`, the full-domain scale of the current `ScaleKind`
- *   for `'steady'`. `usePlaybackLoop` drives it off `requestAnimationFrame`.
+ *   and moves at flat `baseRate * speed` throughout. `'scenes'` always paces on the full-domain
+ *   symlog scale. `'steady'` goes through `advanceSteadyPlayhead(t, dt, playback, sectionId,
+ *   scaleForWindow)` (ADR-024): constant velocity in the selected section's scale, carrying on
+ *   into `continuationSection` past its end. `usePlaybackLoop` drives either off
+ *   `requestAnimationFrame`.
  * - `formatGeoTime(t)` renders a `GeoTime` for humans (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`,
  *   `"250 years ago"`, `"present"`); `formatTimeRange(window)` does the same for a whole window
  *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
@@ -59,11 +67,18 @@
  *   years-per-displayed-pixel, e.g. `yearsPerDisplayedPixelAt` in `fisheye.ts` — is finer than
  *   what the plain bucket already resolves; `ScrubTrack`'s pointer-driven readouts use it so a
  *   1px move inside a fisheye-resolved gap visibly changes the reading.
- * - `ERA_BANDS` — the eon/era boundaries (ICS v2024/12). `eraNameForTime(t)` looks one up
- *   directly, for callers (the shell's era/time title) that just need the name.
+ * - Era sections (`sections.ts`, ADR-024): one fixed tree of `TimelineSection`s (ICS v2024/12
+ *   boundaries, plus cited Holocene human-history sections). The pure navigation functions:
+ *   `sectionById`, `childSections`, `sectionPath` (the breadcrumb), `childSectionAt`/`sectionAt`,
+ *   `nextSibling`, `continuationSection` (where playback goes past a section's end),
+ *   `sectionFollowingT` (the section to show once `t` moves, which the time store applies on
+ *   every `setT`) and `sectionEntryT` (`t` after selecting a section). `eraNameForTime(t)` is
+ *   the top-level name, for the shell's era/time title. `interpolateWindow` (scale.ts) eases a
+ *   window change in symlog-warped space, and `useAnimatedScale` animates both that and the
+ *   scale-kind toggle.
  * - `timelineKeyIntent(event)` maps a keydown to a `TimelineKeyIntent` (or `null`), ignoring
- *   text-input targets — the pure half of `Timeline`'s keyboard handling. Only stepping
- *   (←/→) and play/pause (space) remain; zoom shortcuts were removed alongside zoom itself.
+ *   text-input targets. It is the pure half of `Timeline`'s keyboard handling: stepping (←/→),
+ *   play/pause (space) and leaving the current section for its parent (Escape, ADR-024).
  * - `TimelineCheckpoint` (W13) — a generated still, plotted on the scrub track as a pip,
  *   distinct from data-driven `TimelineEvent`s: no importance/LOD, so `visibleCheckpoints` is a
  *   plain window-overlap filter. `layoutCheckpointPips` positions every checkpoint and (when
@@ -93,18 +108,36 @@ export {
   type TimelineCheckpoint,
 } from './checkpoints'
 export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declutter'
-export { eraNameForTime, ERA_BANDS, type EraBand } from './eras'
 export { formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { nearestNeighbourEvent, type EventStepDirection } from './lod'
-export { advancePlayhead, usePlaybackLoop, type PlaybackPacingSegment } from './playback'
+export { advancePlayhead, advanceSteadyPlayhead, usePlaybackLoop, type PlaybackPacingSegment } from './playback'
 export {
   blendScales,
   createLinearScale,
   createSymlogScale,
+  interpolateWindow,
   SYMLOG_C,
   type TimeWindow,
 } from './scale'
+export {
+  childSectionAt,
+  childSections,
+  continuationSection,
+  eraNameForTime,
+  nextSibling,
+  parentSection,
+  ROOT_SECTION_ID,
+  sectionAt,
+  sectionById,
+  sectionContains,
+  sectionEntryT,
+  sectionFollowingT,
+  sectionPath,
+  sectionSymlogKnee,
+  type SectionId,
+  type TimelineSection,
+} from './sections'
 export { generateTicks, tickLabelAlign, type AxisTick, type TickLabelAlign } from './ticks'
 export { Timeline, type TimelineProps } from './Timeline'
 export { useAnimatedScale } from './useAnimatedScale'

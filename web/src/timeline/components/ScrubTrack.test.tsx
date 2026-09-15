@@ -15,17 +15,6 @@ const scale = fisheyeScale(baseScale, RESTING_FISHEYE.lens, 1000)
 const events: TimelineEvent[] = []
 const checkpoints: TimelineCheckpoint[] = []
 
-// jsdom 30 doesn't implement `setPointerCapture`/`releasePointerCapture` at all (real touch
-// input establishes an active pointer the browser can capture; a synthetic `fireEvent.pointerDown`
-// never does) — polyfilled once, file-wide, as harmless no-ops rather than guarded defensively in
-// `ScrubTrack` itself, which is real application code, not a test-environment gap.
-if (typeof HTMLElement.prototype.setPointerCapture !== 'function') {
-  HTMLElement.prototype.setPointerCapture = () => {}
-}
-if (typeof HTMLElement.prototype.releasePointerCapture !== 'function') {
-  HTMLElement.prototype.releasePointerCapture = () => {}
-}
-
 beforeEach(() => {
   // jsdom's getBoundingClientRect always reports a zero-size box; the declutter/hover math
   // needs a real pixel width to divide by, so give every element a fixed one for this file.

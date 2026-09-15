@@ -3,13 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createLinearScale, createSymlogScale, type TimeWindow } from '@/timeline'
 import { EARTH_FORMATION, type TimelineEvent } from '@/types/layer'
 
-import {
-  DEFAULT_MAX_VISIBLE,
-  feedCardOffsetPx,
-  feedCardOpacity,
-  MAX_CARD_OFFSET_PX,
-  selectFeedEvents,
-} from './select'
+import { DEFAULT_MAX_VISIBLE, selectFeedEvents } from './select'
 
 // A plain linear scale over an exact window so displayed pixel positions are hand-checkable
 // (same trick as `timeline/declutter.test.ts`): `window = [0, 1000]`, `trackWidthPx = 1000`
@@ -135,13 +129,15 @@ describe('selectFeedEvents', () => {
     expect(ids(byId.visible)).toEqual(['a', 'b'])
   })
 
-  it('skips ids named in excludedEventIds outright — the scene-captioned exclusion', () => {
+  it('shows an event even when the current scene caption already names it — nothing is excluded', () => {
+    // W-followup item 4: the old `excludedEventIds` mechanism (`sceneCaptionedEventIds`) hid
+    // kpg-arrival/kpg-darkness's linked k-pg-impact event for as long as either scene was on
+    // screen, so the card never surfaced when the impact was actually reached. Every event
+    // behind the playhead shows, full stop.
     const captioned = event('captioned', { tMin: 505, tMax: 505 })
     const other = event('other', { tMin: 506, tMax: 506 })
-    const { visible } = selectFeedEvents([captioned, other], 500, SCALE, TRACK_PX, {
-      excludedEventIds: new Set(['captioned']),
-    })
-    expect(ids(visible)).toEqual(['other'])
+    const { visible } = selectFeedEvents([captioned, other], 500, SCALE, TRACK_PX)
+    expect(ids(visible)).toEqual(['captioned', 'other'])
   })
 
   it('returns nothing when the track has not been measured yet', () => {
@@ -155,34 +151,5 @@ describe('selectFeedEvents', () => {
     const { visible, overflowCount } = selectFeedEvents(events, 500, SCALE, TRACK_PX, { maxVisible: 0 })
     expect(visible).toEqual([])
     expect(overflowCount).toBe(2)
-  })
-})
-
-describe('feedCardOpacity', () => {
-  it('is fully opaque at distanceFraction 0 and fully transparent at 1', () => {
-    expect(feedCardOpacity(0)).toBe(1)
-    expect(feedCardOpacity(1)).toBe(0)
-  })
-
-  it('clamps outside [0, 1]', () => {
-    expect(feedCardOpacity(-1)).toBe(1)
-    expect(feedCardOpacity(2)).toBe(0)
-  })
-
-  it('eases out rather than fading linearly', () => {
-    expect(feedCardOpacity(0.5)).toBeCloseTo(0.75)
-  })
-})
-
-describe('feedCardOffsetPx', () => {
-  it('runs from 0 to MAX_CARD_OFFSET_PX across [0, 1]', () => {
-    expect(feedCardOffsetPx(0)).toBe(0)
-    expect(feedCardOffsetPx(1)).toBe(MAX_CARD_OFFSET_PX)
-    expect(feedCardOffsetPx(0.5)).toBeCloseTo(MAX_CARD_OFFSET_PX / 2)
-  })
-
-  it('clamps outside [0, 1]', () => {
-    expect(feedCardOffsetPx(-1)).toBe(0)
-    expect(feedCardOffsetPx(2)).toBe(MAX_CARD_OFFSET_PX)
   })
 })

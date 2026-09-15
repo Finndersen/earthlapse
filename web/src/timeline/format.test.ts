@@ -66,6 +66,14 @@ describe('formatTimeRange', () => {
   it('never shares a bare unit-less number across the sub-millennium band', () => {
     expect(formatTimeRange([10, 250])).toBe('250 years ago – 10 years ago')
   })
+
+  it('collapses to a single value when unequal edges round to the same printed number in a shared bucket (re-review fix, 2026-09-15)', () => {
+    // The K-Pg trio: [66,000,000, 66,043,000] both round to "66 Ma" under formatTimeRange's own
+    // whole-number-Ma rounding, so it must read "66 Ma", not the misleading "66–66 Ma".
+    expect(formatTimeRange([6.6e7, 6.6043e7])).toBe('66 Ma')
+    // A genuine range in the same bucket that does *not* round together still shows both edges.
+    expect(formatTimeRange([6.6e7, 6.7e7])).toBe('67–66 Ma')
+  })
 })
 
 describe('formatGeoTimePrecise', () => {

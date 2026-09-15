@@ -120,7 +120,15 @@ export function formatTimeRange([newest, oldest]: TimeWindow): string {
     const divisor = BUCKET_DIVISOR[newestBucket]
     const decimals = BUCKET_DECIMALS[newestBucket]
     const unit = BUCKET_UNIT[newestBucket]
-    return `${trimmed(oldest / divisor, decimals)}–${trimmed(newest / divisor, decimals)} ${unit}`
+    const newestPrinted = trimmed(newest / divisor, decimals)
+    const oldestPrinted = trimmed(oldest / divisor, decimals)
+    // Collapse to one value when both edges round to the same printed number (re-review fix,
+    // 2026-09-15 — e.g. a K-Pg-trio event's [66.000, 66.043] Ma both round to "66"): `newest !==
+    // oldest` is a real distinction (a 'period' still isn't a 'moment'), but once each edge's
+    // own bucket rounding can no longer tell them apart, printing both as "66–66 Ma" reads as a
+    // copy-paste glitch rather than a genuine range.
+    if (newestPrinted === oldestPrinted) return `${newestPrinted} ${unit}`
+    return `${oldestPrinted}–${newestPrinted} ${unit}`
   }
 
   return `${formatGeoTime(oldest)} – ${formatGeoTime(newest)}`

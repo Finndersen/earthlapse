@@ -19,9 +19,11 @@ import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
 
 import { placementT } from './placement'
 
-/** Default lookback, in displayed track pixels — how far behind the playhead's own position
- *  an event's placement may sit and still show. Defined in screen space so it follows whatever
- *  window the timeline is showing. On its own it is not enough: the symlog axis is nearly
+/** Default lookback, in pixels of `scale` across `trackWidthPx` — how far behind the playhead's
+ *  own position an event's placement may sit and still show. `Experience` passes the full-domain
+ *  symlog scale, not the timeline's section window: measured on a zoomed-in section, 220px of a
+ *  154-year Industrial age is a few decades and the feed goes empty (ADR-024). On its own it is
+ *  not enough: the symlog axis is nearly
  *  linear below its ~10 kyr knee, so at full-domain view the whole of human history fits in a
  *  few dozen pixels and any useful pixel window sweeps all of it ("+55 more" at 200 years ago).
  *  `DEFAULT_MAX_AGE_RATIO` bounds that case. */
@@ -34,13 +36,13 @@ export const DEFAULT_MAX_AGE_RATIO = 2
 
 export const RECENCY_FLOOR_YEARS = 25
 
-/** Cards shown before the rest collapse into a "+k more" line, at rest (a narrow viewport
- *  shows fewer still — see `useIsCompactViewport`, consumed by `<EventFeed>`). Kept small
- *  deliberately: the feed lives in a fixed, non-intrusive HUD slot (`EventFeed.module.css`'s
- *  own height cap, sized to fit under the layer readouts without touching them) rather than
- *  one that grows with content, so this is tuned to what that slot actually fits alongside the
- *  "+k more" line, not an arbitrary round number. */
-export const DEFAULT_MAX_VISIBLE = 2
+/** The most cards shown before the rest collapse into a "+k more" line. `<EventFeed>` shows
+ *  fewer when its HUD slot is shorter than that many cards (`feedCardCapacity`, from the slot's
+ *  measured height) and a single card on a narrow viewport (`useIsCompactViewport`). Four is
+ *  the most the slot between the layer readouts and the scene caption fits at 1440x900 (3-4
+ *  depending on caption length; 1280x720 fits one); past four the feed stops reading as "what
+ *  just happened". */
+export const DEFAULT_MAX_VISIBLE = 4
 
 export interface FeedEntry {
   event: TimelineEvent
@@ -62,10 +64,6 @@ export interface SelectFeedEventsOptions {
   lookbackPx?: number
   maxAgeRatio?: number
   maxVisible?: number
-  /** Event ids to skip outright — `<EventFeed>` passes the ids the currently-captioned scene
-   *  already names (`Scene.events`, ADR-022) here, via `sceneCaptionedEventIds`, so the feed
-   *  never repeats what the caption already says. */
-  excludedEventIds?: ReadonlySet<string>
 }
 
 /**
@@ -85,7 +83,6 @@ export function selectFeedEvents(
     lookbackPx = DEFAULT_LOOKBACK_PX,
     maxAgeRatio = DEFAULT_MAX_AGE_RATIO,
     maxVisible = DEFAULT_MAX_VISIBLE,
-    excludedEventIds,
   } = options
   if (trackWidthPx <= 0 || lookbackPx <= 0 || maxAgeRatio <= 1) return EMPTY_SELECTION
 
@@ -94,7 +91,6 @@ export function selectFeedEvents(
 
   const candidates: FeedEntry[] = []
   for (const event of events) {
-    if (excludedEventIds?.has(event.id)) continue
     const eventT = placementT(event)
     if (eventT < t) continue // ahead of t: hasn't happened yet from this vantage
     const pxFraction = (Math.abs(playheadU - scale.toUnit(eventT)) * trackWidthPx) / lookbackPx
@@ -115,21 +111,4 @@ export function selectFeedEvents(
     visible: candidates.slice(0, maxVisible),
     overflowCount: Math.max(0, candidates.length - maxVisible),
   }
-}
-
-/** A card's opacity at `distanceFraction` (0 fresh -> 1 about to fall out of range): eased
- *  rather than linear, so a card reads clearly for most of its time in the window and only
- *  dims sharply right at the edge, instead of visibly fading from the moment it appears. */
-export function feedCardOpacity(distanceFraction: number): number {
-  const clamped = Math.min(1, Math.max(0, distanceFraction))
-  return 1 - clamped * clamped
-}
-
-/** Cosmetic drift, in px, so a receding card visibly settles rather than only dimming in
- *  place — purely presentational, not part of the selection contract above. */
-export const MAX_CARD_OFFSET_PX = 10
-
-export function feedCardOffsetPx(distanceFraction: number): number {
-  const clamped = Math.min(1, Math.max(0, distanceFraction))
-  return clamped * MAX_CARD_OFFSET_PX
 }

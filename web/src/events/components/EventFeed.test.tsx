@@ -3,30 +3,63 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createLinearScale, type TimeWindow } from '@/timeline'
 import type { TimelineEvent } from '@/types/layer'
-import type { Scene } from '@/types/manifest'
 
+import { FEED_CARD_GAP_PX, FEED_CARD_HEIGHT_PX, FEED_OVERFLOW_LINE_PX, FEED_STRIP_HEIGHT_PX } from '../presentation'
+import { EVENT_TAG_PALETTE } from '../tagPalette'
 import { EventFeed } from './EventFeed'
+import styles from './EventFeed.module.css'
 
 // Same hand-checkable exact scale as `select.test.ts`: window [0, 1000], trackWidthPx from the
 // mocked getBoundingClientRect below, so px(t) = width * (1000 - t) / 1000.
 const WINDOW: TimeWindow = [0, 1000]
 const SCALE = createLinearScale(WINDOW)
 const TRACK_WIDTH = 400
+/** Tall enough for `DEFAULT_MAX_VISIBLE` cards, so only the cap itself limits the count. */
+const TALL_SLOT_HEIGHT = 600
+
+const REDUCED_MOTION_QUERY = 'prefers-reduced-motion'
+const COMPACT_QUERY = 'max-width'
+
+/** jsdom normalises an inline hex colour to `rgb(...)` on readback. */
+function asRgb(hex: string): string {
+  const [r, g, b] = hex
+    .replace('#', '')
+    .match(/.{2}/g)!
+    .map((h) => parseInt(h, 16))
+  return `rgb(${r}, ${g}, ${b})`
+}
 
 function event(id: string, overrides: Partial<TimelineEvent> = {}): TimelineEvent {
   return { id, label: id, tMin: 0, tMax: 0, importance: 0.5, description: `${id} description`, citation: `${id} citation`, ...overrides }
 }
 
-function scene(overrides: Partial<Scene>): Scene {
-  return { id: 'scene', t: 0, chapterId: 'c', image: 'i.jpg', shot: 'WATER_EDGE', caption: '', width: 1, height: 1, ...overrides }
+/** The slot height that fits exactly `cards` collapsed cards plus the "+k more" line. */
+function slotHeightFor(cards: number): number {
+  return cards * (FEED_CARD_HEIGHT_PX + FEED_CARD_GAP_PX) + FEED_OVERFLOW_LINE_PX
 }
 
-/** Same minimal `MediaQueryList` stand-in as `timeline/components/TimelineHint.test.tsx`. */
-function mockMatchMedia(matches: boolean): void {
+function mockFeedRect(height: number): void {
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+    left: 0,
+    top: 0,
+    right: TRACK_WIDTH,
+    bottom: height,
+    width: TRACK_WIDTH,
+    height,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  })
+}
+
+/** A minimal `MediaQueryList` stand-in (as in `timeline/components/TimelineHint.test.tsx`),
+ *  matching only queries containing one of `matching` — so reduced motion and the compact
+ *  viewport can be switched on independently. */
+function mockMatchMedia(...matching: string[]): void {
   vi.stubGlobal(
     'matchMedia',
     vi.fn().mockImplementation((query: string) => ({
-      matches,
+      matches: matching.some((fragment) => query.includes(fragment)),
       media: query,
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
@@ -34,18 +67,12 @@ function mockMatchMedia(matches: boolean): void {
   )
 }
 
+function emphasisOf(item: HTMLElement): number {
+  return Number(item.style.getPropertyValue('--feed-emphasis'))
+}
+
 beforeEach(() => {
-  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
-    left: 0,
-    top: 0,
-    right: TRACK_WIDTH,
-    bottom: 40,
-    width: TRACK_WIDTH,
-    height: 40,
-    x: 0,
-    y: 0,
-    toJSON: () => ({}),
-  })
+  mockFeedRect(TALL_SLOT_HEIGHT)
 })
 
 afterEach(() => {
@@ -56,9 +83,9 @@ afterEach(() => {
 
 describe('<EventFeed>', () => {
   it('renders no cards or overflow line when nothing is behind the playhead', () => {
-    const { getByTestId, queryByTestId } = render(<EventFeed t={500} scale={SCALE} events={[]} onScrub={vi.fn()} />)
+    const { getByTestId, queryByTestId } = render(<EventFeed t={500} scale={SCALE} events={[]} onEventActivate={vi.fn()} />)
     // The measuring wrapper itself stays mounted (see EventFeed.tsx's own doc comment: it needs
-    // its own width to select anything at all), but carries no cards and no visible text.
+    // its own size to select anything at all), but carries no cards and no visible text.
     const feed = getByTestId('event-feed')
     expect(feed.querySelector('[data-testid^="event-feed-card-"]')).toBeNull()
     expect(queryByTestId('event-feed-overflow')).toBeNull()
@@ -67,72 +94,130 @@ describe('<EventFeed>', () => {
 
   it('shows a card for an event just behind the playhead', () => {
     const a = event('a', { tMin: 510, tMax: 510, label: 'First thing' })
-    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onScrub={vi.fn()} />)
+    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
     expect(getByTestId('event-feed-card-a').textContent).toContain('First thing')
   })
 
-  it('excludes an event the currently-captioned scene already names (ADR-022 Scene.events)', () => {
-    const captioned = event('captioned', { tMin: 505, tMax: 505 })
-    const scenes = [scene({ id: 's', t: 500, events: ['captioned'] })]
-    const { queryByTestId } = render(<EventFeed t={500} scale={SCALE} events={[captioned]} scenes={scenes} onScrub={vi.fn()} />)
-    expect(queryByTestId('event-feed-card-captioned')).toBeNull()
+  it('shows the primary tag as a label in the tag colour next to the date', () => {
+    const a = event('a', { tMin: 505, tMax: 505, tags: ['catastrophe', 'life'] })
+    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+    const card = getByTestId('event-feed-card-a')
+    const tagLabel = card.querySelector<HTMLElement>(`.${styles.tag}`)
+    expect(tagLabel?.textContent).toBe(EVENT_TAG_PALETTE.catastrophe.label)
+    expect(tagLabel?.style.color).toBe(asRgb(EVENT_TAG_PALETTE.catastrophe.color))
   })
 
-  it('does not exclude an event a *different* scene names', () => {
-    const other = event('other-event', { tMin: 505, tMax: 505 })
-    const scenes = [scene({ id: 's', t: 500, events: ['some-other-id'] })]
-    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[other]} scenes={scenes} onScrub={vi.fn()} />)
-    expect(getByTestId('event-feed-card-other-event')).toBeTruthy()
+  it('shows no tag label for an untagged event', () => {
+    const a = event('a', { tMin: 505, tMax: 505 })
+    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+    expect(getByTestId('event-feed-card-a').querySelector(`.${styles.tag}`)).toBeNull()
   })
 
-  it('expands to the full description and citation on click, and scrubs to the event', () => {
-    const a = event('a', { tMin: 505, tMax: 505, description: 'Full description here.', citation: 'Some Citation, 2020.' })
-    const onScrub = vi.fn()
-    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onScrub={onScrub} />)
+  it('reports activation without scrubbing or opening anything in place — the caller owns the detail panel', () => {
+    const a = event('a', { tMin: 505, tMax: 505 })
+    const onEventActivate = vi.fn()
+    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={onEventActivate} />)
     const button = getByTestId('event-feed-card-a')
 
-    expect(button.getAttribute('aria-expanded')).toBe('false')
-    expect(button.textContent).not.toContain('Some Citation, 2020.')
+    expect(button.textContent).not.toContain('a citation')
 
     fireEvent.click(button)
-    expect(onScrub).toHaveBeenCalledWith(505)
-    expect(button.getAttribute('aria-expanded')).toBe('true')
-    expect(button.textContent).toContain('Some Citation, 2020.')
-
-    fireEvent.click(button)
-    expect(button.getAttribute('aria-expanded')).toBe('false')
+    expect(onEventActivate).toHaveBeenCalledWith(a)
+    expect(button.textContent).not.toContain('a citation')
+    expect(button.hasAttribute('aria-expanded')).toBe(false)
   })
 
-  it('collapses the expanded card on Escape', () => {
-    const a = event('a', { tMin: 505, tMax: 505 })
-    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onScrub={vi.fn()} />)
-    const card = getByTestId('event-feed-card-a')
-    fireEvent.click(card)
-    expect(card.getAttribute('aria-expanded')).toBe('true')
-
-    fireEvent.keyDown(card, { key: 'Escape' })
-    expect(card.getAttribute('aria-expanded')).toBe('false')
+  it('caps visible cards at DEFAULT_MAX_VISIBLE with a "+k more" line for a dense stretch', () => {
+    const events = Array.from({ length: 6 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
+    const { container, getByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onEventActivate={vi.fn()} />)
+    expect(container.querySelectorAll('[data-testid^="event-feed-card-"]')).toHaveLength(4)
+    expect(getByTestId('event-feed-overflow').textContent).toBe('+2 more')
   })
 
-  it('caps visible cards with a "+k more" line for a dense stretch', () => {
+  it("shows only as many cards as the slot's measured height fits", () => {
+    mockFeedRect(slotHeightFor(2))
     const events = Array.from({ length: 5 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
-    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onScrub={vi.fn()} />)
+    const { container, getByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onEventActivate={vi.fn()} />)
+    expect(container.querySelectorAll('[data-testid^="event-feed-card-"]')).toHaveLength(2)
     expect(getByTestId('event-feed-overflow').textContent).toBe('+3 more')
   })
 
   it('announces the freshest event once via a polite aria-live region', () => {
     const a = event('a', { tMin: 505, tMax: 505, label: 'Announced thing' })
-    const { container } = render(<EventFeed t={500} scale={SCALE} events={[a]} onScrub={vi.fn()} />)
+    const { container } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
     const live = container.querySelector('[aria-live="polite"]')
     expect(live?.textContent).toContain('Announced thing')
   })
 
   it('shows only one card in the compact (narrow-viewport) mode', () => {
-    mockMatchMedia(true)
+    mockMatchMedia(COMPACT_QUERY)
     const events = [event('e0', { tMin: 505, tMax: 505 }), event('e1', { tMin: 506, tMax: 506 })]
-    const { getByTestId, queryByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onScrub={vi.fn()} />)
+    const { getByTestId, queryByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onEventActivate={vi.fn()} />)
     expect(getByTestId('event-feed-card-e0')).toBeTruthy()
     expect(queryByTestId('event-feed-card-e1')).toBeNull()
     expect(getByTestId('event-feed-overflow').textContent).toBe('+1 more')
+  })
+
+  it('draws no strip at all in a compact row squeezed shorter than the strip', () => {
+    mockMatchMedia(COMPACT_QUERY)
+    mockFeedRect(FEED_STRIP_HEIGHT_PX - 1)
+    const events = [event('e0', { tMin: 505, tMax: 505 })]
+    const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={events} onEventActivate={vi.fn()} />)
+    expect(getByTestId('event-feed').querySelector('[data-testid^="event-feed-card-"]')).toBeNull()
+  })
+
+  describe('just-reached emphasis', () => {
+    it('emphasises only the freshest card, in its primary tag colour', () => {
+      const fresh = event('fresh', { tMin: 500, tMax: 500, tags: ['catastrophe', 'life'] })
+      const older = event('older', { tMin: 520, tMax: 520, tags: ['life'] })
+      const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[older, fresh]} onEventActivate={vi.fn()} />)
+
+      const freshItem = getByTestId('event-feed-item-fresh')
+      const olderItem = getByTestId('event-feed-item-older')
+      expect(freshItem.dataset.emphasised).toBe('true')
+      expect(emphasisOf(freshItem)).toBe(1)
+      expect(freshItem.style.getPropertyValue('--feed-accent')).toBe(EVENT_TAG_PALETTE.catastrophe.color)
+      expect(olderItem.dataset.emphasised).toBe('false')
+      expect(emphasisOf(olderItem)).toBe(0)
+    })
+
+    it('settles as the card recedes, and returns exactly when scrubbing back to the same t', () => {
+      const a = event('a', { tMin: 500, tMax: 500 })
+      const { getByTestId, rerender } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(1)
+
+      rerender(<EventFeed t={480} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      const receding = emphasisOf(getByTestId('event-feed-item-a'))
+      expect(receding).toBeGreaterThan(0)
+      expect(receding).toBeLessThan(1)
+
+      rerender(<EventFeed t={350} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      expect(getByTestId('event-feed-item-a').dataset.emphasised).toBe('false')
+
+      rerender(<EventFeed t={480} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(receding)
+    })
+
+    it('animates arrival, drift and inset when motion is allowed', () => {
+      const a = event('a', { tMin: 510, tMax: 510 })
+      const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      const item = getByTestId('event-feed-item-a')
+      expect(item.className.split(' ')).toContain(styles.cardAnimated)
+      expect(item.style.transform).toMatch(/^translateY\(/)
+      expect(item.querySelector<HTMLElement>(`.${styles.body}`)?.style.transform).toMatch(/^translateX\(/)
+    })
+
+    it('keeps a static highlight but no motion under prefers-reduced-motion', () => {
+      mockMatchMedia(REDUCED_MOTION_QUERY)
+      const a = event('a', { tMin: 510, tMax: 510 })
+      const { getByTestId } = render(<EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} />)
+      const item = getByTestId('event-feed-item-a')
+
+      expect(item.dataset.emphasised).toBe('true')
+      expect(emphasisOf(item)).toBeGreaterThan(0)
+      expect(item.className.split(' ')).not.toContain(styles.cardAnimated)
+      expect(item.style.transform).toBe('')
+      expect(item.querySelector<HTMLElement>(`.${styles.body}`)?.style.transform).toBe('')
+    })
   })
 })

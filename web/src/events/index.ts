@@ -12,33 +12,63 @@
  *   `t` (already reached, chronologically, regardless of scrub direction) within
  *   `options.lookbackPx` of `t`'s own position on `scale`, measured in *displayed* pixels so
  *   the window adapts to how dense the local stretch of the axis reads. Freshest first, capped
- *   at `options.maxVisible`; `options.excludedEventIds` skips ids outright (see
- *   `sceneCaptionedEventIds`). `feedCardOpacity`/`feedCardOffsetPx` turn a card's
- *   `distanceFraction` into presentation.
+ *   at `options.maxVisible`. An event the currently-captioned scene's own caption already names
+ *   (`Scene.events`, ADR-022) is **not** excluded — a past pass tried that and it back fired
+ *   (W-followup item 4): `kpg-arrival` and `kpg-darkness` both link `k-pg-impact`, so the event
+ *   stayed hidden from the feed for the whole span either scene was on screen, well past when
+ *   the impact itself should have surfaced. Every event reached by the playhead always shows.
+ * - `feedCardEmphases(visible)` / `feedCardOpacity` / `feedCardOffsetPx` / `feedCardCapacity`
+ *   (`presentation.ts`) — pure presentation: the freshest card's "just reached" emphasis easing
+ *   away across a band of its lookback, each card's fade and drift, and how many collapsed
+ *   cards the feed's measured slot height fits.
  * - `placementT(event)` / `formatEventDate(event)` — the frontend twin of ADR-022's
  *   `Event.placement_t`, and the date line a card prints from it (`formatGeoTime` for a
  *   `'moment'`, `formatTimeRange` for a `'period'`).
- * - `sceneCaptionedEventIds(scenes, t)` — the ids the currently-captioned scene already names
- *   (`Scene.events`), reusing `@/scene`'s own `sceneAt`/`dominantScene` rather than re-deriving
- *   "the current scene" a second way.
- * - `EVENT_TAG_PALETTE` / `primaryTag(event)` — the one place an `EventTag` maps to a colour
- *   (ADR-022 defers timeline colouring by tag to a later task; that later work should import
- *   this rather than invent its own).
+ * - `EVENT_TAG_PALETTE` / `primaryTag(event)` — the one place an `EventTag` maps to a colour.
+ *   `<EventFeed>`'s own card reads it for its primary-tag label and accent; `EventDetailPanel`
+ *   for every tag a card carries; `EventTagLegend` for the compact six-dot key. Any future
+ *   timeline colouring by tag (ADR-022, still deferred) should reuse it too rather than invent a
+ *   second legend.
+ * - `EventDetailPanel` — the full-detail popout a feed card opens on click/tap/Enter (label,
+ *   date/range, every tag, description, citation, "Show on timeline"), built on `@/shell`'s
+ *   shared `Panel` rather than a bespoke dialog — the one deliberate exception to this package's
+ *   usual self-containment (everything else here stays prop-driven with no store or
+ *   cross-package reads), per the explicit "one shared panel primitive, not three bespoke focus
+ *   traps" requirement. `shell` does not import back from `events` (re-review fix, 2026-09-15:
+ *   it used to, for `EventTagLegend` — see the next bullet — which meant the two packages
+ *   imported each other and only worked because `Panel` is used at render time, not import
+ *   time), so this remains a one-directional edge.
+ * - `EventTagLegend` — the compact six-dot "what the colours mean" key. Pure presentation, no
+ *   `@/shell` dependency of its own: the caller that already composes both packages
+ *   (`app/Experience.tsx`, and `/credits`' own page) passes it into `@/shell`'s `CreditsList` as
+ *   a plain `ReactNode` prop, so `CreditsList` mounts it inside the existing About & credits
+ *   panel without `shell` importing this package to do it.
  * - `useIsCompactViewport()` — mirrors `ShellLayout`'s own phone breakpoint, for the "compact
  *   single-card strip" the brief calls for at narrow widths.
  */
 
+export { EventDetailPanel, type EventDetailPanelProps } from './components/EventDetailPanel'
 export { EventFeed, type EventFeedProps } from './components/EventFeed'
+export { EventTagLegend } from './components/EventTagLegend'
 export { formatEventDate, placementT } from './placement'
-export { sceneCaptionedEventIds } from './sceneLink'
+export {
+  FEED_CARD_GAP_PX,
+  FEED_CARD_HEIGHT_PX,
+  FEED_OVERFLOW_LINE_PX,
+  FRESH_EMPHASIS_BAND,
+  MAX_CARD_OFFSET_PX,
+  MAX_FRESH_INSET_PX,
+  feedCardCapacity,
+  feedCardEmphases,
+  feedCardInsetPx,
+  feedCardOffsetPx,
+  feedCardOpacity,
+} from './presentation'
 export {
   DEFAULT_LOOKBACK_PX,
   DEFAULT_MAX_AGE_RATIO,
   DEFAULT_MAX_VISIBLE,
   RECENCY_FLOOR_YEARS,
-  feedCardOffsetPx,
-  feedCardOpacity,
-  MAX_CARD_OFFSET_PX,
   selectFeedEvents,
   type FeedEntry,
   type FeedSelection,

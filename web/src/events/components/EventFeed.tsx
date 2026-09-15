@@ -5,38 +5,52 @@
  * (description + citation)" (approved-roadmap-2026-09), surfacing events as the playhead
  * reaches them instead of requiring a hover over the timeline.
  *
- * Prop-driven and pure in `t` (`select.ts`'s `selectFeedEvents`) plus the OS reduced-motion
- * preference and a narrow-viewport check for the compact strip — the same "pure in `t`, plus
- * presentational chrome" split every other package in this app follows (`SceneView`,
- * `AncestorPortrait`). No timer decides what shows: revisiting the same `t` from either scrub
- * direction, or at any playback speed, reproduces the exact same cards.
+ * Prop-driven and pure in `t` (`select.ts`'s `selectFeedEvents`, `presentation.ts`'s card
+ * emphasis/opacity) plus the OS reduced-motion preference, a narrow-viewport check for the
+ * compact strip and the slot's own measured size — the same "pure in `t`, plus presentational
+ * chrome" split every other package in this app follows (`SceneView`, `AncestorPortrait`). No
+ * timer decides what shows or what is highlighted: revisiting the same `t` from either scrub
+ * direction, or at any playback speed, reproduces the exact same cards and the same emphasis.
  *
  * Renders no visible content when there is nothing to show, matching the package's chrome-less
  * convention (an empty feed is not a panel with no content) — but keeps its own measuring
  * wrapper mounted even then: `selectFeedEvents` needs the wrapper's real pixel width, and that
  * width can only be measured once the wrapper exists, so hiding the wrapper *because* there is
- * nothing to show would make there permanently be nothing to show (`widthPx` stuck at 0, the
- * `trackWidthPx <= 0` guard in `select.ts` never clearing). The wrapper carries no padding,
- * border or text of its own, so an empty one occupies no visible space regardless.
+ * nothing to show would make there permanently be nothing to show (`width` stuck at 0, the
+ * `trackWidthPx <= 0` guard in `select.ts` never clearing). The wrapper fills its slot's height
+ * (so that height can be measured for `feedCardCapacity`) but carries no padding, border, text
+ * or pointer target of its own, so an empty one occupies no visible or clickable space.
+ *
+ * A card no longer expands in place (W-followup item 12): clicking/tapping/Enter-ing one calls
+ * `onEventActivate` and the caller (`Experience.tsx`) owns what happens next — opening
+ * `EventDetailPanel`, pausing playback if it was running. This component never scrubs `t` on its
+ * own any more either; only the detail panel's own "Show on timeline" does that, so simply
+ * opening a card to read it can no longer move the playhead out from under a reader.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import { usePrefersReducedMotion } from '@/timeline'
 import type { GeoTime, TimeScale, TimelineEvent } from '@/types/layer'
-import type { Scene } from '@/types/manifest'
 
-import { formatEventDate, placementT } from '../placement'
-import { sceneCaptionedEventIds } from '../sceneLink'
-import { feedCardOffsetPx, feedCardOpacity, selectFeedEvents, type FeedEntry } from '../select'
+import { formatEventDate } from '../placement'
+import {
+  FEED_CARD_GAP_PX,
+  FEED_CARD_HEIGHT_PX,
+  FEED_OVERFLOW_LINE_PX,
+  FEED_STRIP_HEIGHT_PX,
+  feedCardCapacity,
+  feedCardEmphases,
+  feedCardInsetPx,
+  feedCardOffsetPx,
+  feedCardOpacity,
+  feedStripCapacity,
+} from '../presentation'
+import { DEFAULT_MAX_VISIBLE, selectFeedEvents, type FeedEntry } from '../select'
 import { EVENT_TAG_PALETTE, primaryTag } from '../tagPalette'
-import { useElementWidth } from '../useElementWidth'
+import { useElementSize } from '../useElementSize'
 import { useIsCompactViewport } from '../useIsCompactViewport'
 import styles from './EventFeed.module.css'
-
-/** On a narrow viewport the feed collapses to a single card — the brief's "compact single-card
- *  strip above the timeline" — rather than its default stack. */
-const COMPACT_MAX_VISIBLE = 1
 
 /** Minimum wall-clock gap between aria-live announcements: fast playback through a dense
  *  stretch (the Holocene, or a cluster like the K-Pg trio) reaches several events a second,
@@ -44,40 +58,42 @@ const COMPACT_MAX_VISIBLE = 1
  *  the brief. One announcement lands per window; the rest are silently skipped, not queued. */
 const ANNOUNCE_THROTTLE_MS = 3000
 
+/** Accent for an event with no tag (published before ADR-022's tags existed). */
+const UNTAGGED_ACCENT = 'rgba(239, 233, 220, 0.62)'
+
+/** `presentation.ts`'s geometry, handed to the stylesheet so the two can't disagree. */
+const GEOMETRY_STYLE = {
+  '--feed-card-height': `${FEED_CARD_HEIGHT_PX}px`,
+  '--feed-card-gap': `${FEED_CARD_GAP_PX}px`,
+  '--feed-overflow-line': `${FEED_OVERFLOW_LINE_PX}px`,
+  '--feed-strip-height': `${FEED_STRIP_HEIGHT_PX}px`,
+} as CSSProperties
+
 export interface EventFeedProps {
   t: GeoTime
-  /** The same animated `TimeScale` the timeline itself draws against, so "N displayed px"
-   *  means the same thing here as it does on the track. */
+  /** The scale the pixel lookback is measured on. `Experience` passes the full-domain symlog
+   *  scale, not the timeline's section-windowed one, so selecting a short era section never
+   *  shrinks the lookback to a few decades (ADR-024). */
   scale: TimeScale
   events: readonly TimelineEvent[]
-  /** `Manifest.scenes`, for `Scene.events` exclusion (ADR-022) — omit only where no scene data
-   *  exists yet (nothing is excluded). */
-  scenes?: readonly Scene[]
-  /** The existing scrub path (`useTimeStore`'s `setT`, threaded the same way `<Timeline>`'s
-   *  own `onScrub` is): activating a card scrubs/selects that event on the timeline. */
-  onScrub: (t: GeoTime) => void
+  /** A card was clicked/tapped/Enter-ed — the caller opens `EventDetailPanel` for it (and, per
+   *  W-followup item 12, pauses playback if it was running). This component neither opens a
+   *  panel nor scrubs `t` itself; it only reports the activation. */
+  onEventActivate: (event: TimelineEvent) => void
   className?: string
 }
 
-export function EventFeed({ t, scale, events, scenes = [], onScrub, className }: EventFeedProps) {
-  const [containerRef, widthPx] = useElementWidth<HTMLDivElement>()
+export function EventFeed({ t, scale, events, onEventActivate, className }: EventFeedProps) {
+  const [containerRef, size] = useElementSize<HTMLDivElement>()
   const compact = useIsCompactViewport()
   const reducedMotion = usePrefersReducedMotion()
 
-  const excludedEventIds = useMemo(() => sceneCaptionedEventIds(scenes, t), [scenes, t])
+  const maxVisible = compact ? feedStripCapacity(size.height) : feedCardCapacity(size.height, DEFAULT_MAX_VISIBLE)
   const selection = useMemo(
-    () =>
-      selectFeedEvents(events, t, scale, widthPx, {
-        excludedEventIds,
-        maxVisible: compact ? COMPACT_MAX_VISIBLE : undefined,
-      }),
-    [events, t, scale, widthPx, excludedEventIds, compact],
+    () => selectFeedEvents(events, t, scale, size.width, { maxVisible }),
+    [events, t, scale, size.width, maxVisible],
   )
-
-  // The one card showing its full description + citation, if any. Cleared implicitly whenever
-  // it ages out of `visible` (scrubbed past, or the excluding scene changed) — nothing re-opens
-  // a stale id, since a card only renders expanded when its own id matches this state.
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const emphases = useMemo(() => feedCardEmphases(selection.visible), [selection.visible])
 
   const [announcement, setAnnouncement] = useState('')
   const lastAnnouncedIdRef = useRef<string | null>(null)
@@ -93,44 +109,42 @@ export function EventFeed({ t, scale, events, scenes = [], onScrub, className }:
     setAnnouncement(`${freshest.event.label}, ${formatEventDate(freshest.event)}`)
   }, [selection.visible])
 
-  const handleActivate = (event: TimelineEvent): void => {
-    setExpandedId((current) => (current === event.id ? null : event.id))
-    onScrub(placementT(event))
-  }
-
   const hasCards = selection.visible.length > 0
 
   return (
-    <div ref={containerRef} className={[styles.feed, className].filter(Boolean).join(' ')} data-testid="event-feed">
+    <div
+      ref={containerRef}
+      className={[styles.feed, className].filter(Boolean).join(' ')}
+      style={GEOMETRY_STYLE}
+      data-testid="event-feed"
+    >
       <p className={styles.liveRegion} aria-live="polite" role="status">
         {announcement}
       </p>
       {hasCards && (
-        <>
-          <ul
-            className={styles.list}
-            onKeyDown={(e) => {
-              if (e.key !== 'Escape' || expandedId === null) return
-              e.stopPropagation()
-              setExpandedId(null)
-            }}
-          >
-            {selection.visible.map((entry) => (
+        <div className={styles.scroller}>
+          <ul className={styles.list}>
+            {selection.visible.map((entry, rank) => (
               <EventFeedCard
                 key={entry.event.id}
                 entry={entry}
-                expanded={entry.event.id === expandedId}
+                emphasis={emphases[rank] ?? 0}
                 reducedMotion={reducedMotion}
-                onActivate={() => handleActivate(entry.event)}
+                onActivate={() => onEventActivate(entry.event)}
               />
             ))}
           </ul>
-          {selection.overflowCount > 0 && (
+          {/* Always rendered (empty when nothing overflows) so the stack doesn't hop by a line
+              each time a dense stretch starts or stops overflowing, and a receding bottom card's
+              drift lands in this reserved space instead of spilling into a scrollbar. */}
+          {selection.overflowCount > 0 ? (
             <p className={styles.overflow} data-testid="event-feed-overflow">
               +{selection.overflowCount} more
             </p>
+          ) : (
+            <p className={styles.overflow} aria-hidden="true" />
           )}
-        </>
+        </div>
       )}
     </div>
   )
@@ -138,48 +152,59 @@ export function EventFeed({ t, scale, events, scenes = [], onScrub, className }:
 
 interface EventFeedCardProps {
   entry: FeedEntry
-  expanded: boolean
+  /** `feedCardEmphases` for this card: 1 as the playhead reaches it, 0 once settled. */
+  emphasis: number
   reducedMotion: boolean
+  /** Clicking/tapping/Enter-ing the card — opens `EventDetailPanel` one level up. The card
+   *  itself carries no open/closed state of its own any more (W-followup item 12). */
   onActivate: () => void
 }
 
-function EventFeedCard({ entry, expanded, reducedMotion, onActivate }: EventFeedCardProps) {
+function EventFeedCard({ entry, emphasis, reducedMotion, onActivate }: EventFeedCardProps) {
   const { event, distanceFraction } = entry
-  const opacity = feedCardOpacity(distanceFraction)
   const offsetPx = reducedMotion ? 0 : feedCardOffsetPx(distanceFraction)
+  const insetPx = reducedMotion ? 0 : feedCardInsetPx(emphasis)
   const tag = primaryTag(event)
   const swatch = tag ? EVENT_TAG_PALETTE[tag] : null
 
+  // The emphasis highlight (accent bar, tinted wash, title glow) is static styling keyed off
+  // `--feed-emphasis`, so it survives reduced motion; only the movement (drift, inset, the
+  // arrival slide-in) is dropped there.
+  const cardStyle = {
+    opacity: feedCardOpacity(distanceFraction),
+    transform: offsetPx === 0 ? undefined : `translateY(${offsetPx}px)`,
+    '--feed-emphasis': emphasis,
+    '--feed-accent': swatch?.color ?? UNTAGGED_ACCENT,
+  } as CSSProperties
+
   return (
     <li
-      className={styles.card}
-      style={{ opacity, transform: offsetPx === 0 ? undefined : `translateY(${offsetPx}px)` }}
+      className={[styles.card, reducedMotion ? '' : styles.cardAnimated].filter(Boolean).join(' ')}
+      style={cardStyle}
+      data-emphasised={emphasis > 0}
+      data-testid={`event-feed-item-${event.id}`}
     >
       <button
         type="button"
         className={styles.cardButton}
-        aria-expanded={expanded}
+        aria-haspopup="dialog"
         data-testid={`event-feed-card-${event.id}`}
         onClick={onActivate}
       >
-        <span
-          className={styles.chip}
-          aria-hidden="true"
-          title={swatch?.label}
-          style={{
-            background: swatch?.color ?? 'var(--hud-faint, rgba(239, 233, 220, 0.36))',
-            boxShadow: swatch ? `0 0 6px ${swatch.color}` : 'none',
-          }}
-        />
-        <span className={styles.body}>
-          <span className={styles.headline}>
-            <span className={`${styles.label} ${expanded ? styles.labelExpanded : ''}`}>{event.label}</span>
-            <span className={styles.date}>{formatEventDate(event)}</span>
+        <span className={styles.chip} aria-hidden="true" title={swatch?.label} />
+        <span className={styles.body} style={insetPx === 0 ? undefined : { transform: `translateX(${insetPx}px)` }}>
+          <span className={styles.label}>{event.label}</span>
+          <span className={styles.detail}>
+            {/* Primary tag only (item 11) — `EventDetailPanel` lists every tag an event carries.
+                Coloured and worded straight from `EVENT_TAG_PALETTE`, the one source both share. */}
+            {swatch && (
+              <span className={styles.tag} style={{ color: swatch.color }}>
+                {swatch.label}
+              </span>
+            )}
+            <span className={styles.date}>{formatEventDate(event)}</span>{' '}
+            <span className={styles.description}>{event.description}</span>
           </span>
-          <span className={`${styles.description} ${expanded ? styles.descriptionExpanded : ''}`}>
-            {event.description}
-          </span>
-          {expanded && <span className={styles.citation}>{event.citation}</span>}
         </span>
       </button>
     </li>

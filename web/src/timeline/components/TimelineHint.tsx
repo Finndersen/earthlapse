@@ -16,11 +16,14 @@
 
 import { useEffect, useState } from 'react'
 
+import { GO_TO_ROOT_KEY_HINT, LEAVE_SECTION_KEY_HINT } from '../keyboard'
 import styles from './TimelineHint.module.css'
 
 const COARSE_POINTER_QUERY = '(pointer: coarse)'
 
-const MOUSE_HINT = 'drag to scrub · hover to spread out close events · click a cluster to see them all'
+const MOUSE_HINT =
+  'drag to scrub · hover to spread out close events · click a cluster to see them all · [ ] or - = to change speed · ' +
+  `${LEAVE_SECTION_KEY_HINT} up a section · ${GO_TO_ROOT_KEY_HINT} for Earth · Shift + ←/→ for the previous/next section`
 const TOUCH_HINT = 'press and drag to scrub and magnify · tap a cluster to see them all'
 
 interface TimelineHintProps {

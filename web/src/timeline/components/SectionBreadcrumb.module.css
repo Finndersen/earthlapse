@@ -1,0 +1,136 @@
+/* One fixed row height at every depth: at the root the trail is plain text, deeper it holds
+   padded buttons, and letting that change the row's height would reflow the phone HUD above the
+   timeline every time the section changes. The row itself is now a flex line — the "‹ Up"/
+   "Earth" affordances before the trail, "‹"/"›" after it (follow-up pass item 6) — with the
+   trail the one flexible member so it keeps eliding onto "…" exactly as before. */
+.breadcrumb {
+  --crumb-line: 12px;
+  --crumb-pad-block: 3px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+
+.trail {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  height: calc(var(--crumb-line) + 2 * var(--crumb-pad-block));
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  line-height: var(--crumb-line);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.crumb + .crumb::before {
+  content: '›';
+  padding: 0 7px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.link {
+  padding: var(--crumb-pad-block) 2px;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.link:focus-visible {
+  box-shadow: 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--hud-accent, #e8b06a);
+}
+
+.actionButton {
+  flex: none;
+  padding: var(--crumb-pad-block) 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.actionButton:hover:not(:disabled),
+.actionButton:focus-visible:not(:disabled) {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.actionButton:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.actionButton:disabled {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .crumb[data-collapsible='true'] .linkLabel {
+    display: none;
+  }
+
+  .crumb[data-collapsible='true'] .link::before {
+    content: '…';
+  }
+}
+
+@media (pointer: coarse) {
+  .breadcrumb {
+    --crumb-pad-block: 6px;
+  }
+
+  .link,
+  .actionButton {
+    padding-inline: 6px;
+  }
+}

@@ -14,10 +14,12 @@ describe('useTimeStore initial state', () => {
   it('starts at present', () => {
     const s = useTimeStore.getState()
     expect(s.t).toBe(0)
+    expect(s.sectionId).toBe('earth')
     expect(s.scaleKind).toBe('symlog')
     expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' })
     expect(s.globeExpanded).toBe(false)
     expect(s.expandedChartLayerId).toBeNull()
+    expect(s.detailEventId).toBeNull()
   })
 })
 
@@ -98,5 +100,46 @@ describe('overlay state', () => {
     expect(useTimeStore.getState().expandedChartLayerId).toBe('co2')
     useTimeStore.getState().setExpandedChartLayerId(null)
     expect(useTimeStore.getState().expandedChartLayerId).toBeNull()
+  })
+
+  it('setDetailEventId tracks which event detail panel is open, or none', () => {
+    useTimeStore.getState().setDetailEventId('k-pg-impact')
+    expect(useTimeStore.getState().detailEventId).toBe('k-pg-impact')
+    useTimeStore.getState().setDetailEventId(null)
+    expect(useTimeStore.getState().detailEventId).toBeNull()
+  })
+})
+
+describe('era sections (ADR-024)', () => {
+  it('selectSection moves t to the section start when t was outside it', () => {
+    useTimeStore.getState().setT(66e6)
+    useTimeStore.getState().selectSection('holocene')
+    expect(useTimeStore.getState()).toMatchObject({ sectionId: 'holocene', t: 11_725 })
+  })
+
+  it('selectSection keeps t when it is already inside', () => {
+    useTimeStore.getState().setT(200)
+    useTimeStore.getState().selectSection('industrial-age')
+    expect(useTimeStore.getState()).toMatchObject({ sectionId: 'industrial-age', t: 200 })
+  })
+
+  it('setT keeps the section while t stays inside, edges included', () => {
+    useTimeStore.getState().selectSection('industrial-age')
+    useTimeStore.getState().setT(111)
+    expect(useTimeStore.getState().sectionId).toBe('industrial-age')
+  })
+
+  it('setT follows t into the next section and up to one that holds a jump', () => {
+    useTimeStore.getState().selectSection('industrial-age')
+    useTimeStore.getState().setT(50)
+    expect(useTimeStore.getState().sectionId).toBe('modern')
+    useTimeStore.getState().setT(66e6)
+    expect(useTimeStore.getState().sectionId).toBe('paleogene')
+  })
+
+  it('setT follows a clamped t', () => {
+    useTimeStore.getState().selectSection('modern')
+    useTimeStore.getState().setT(EARTH_FORMATION * 2)
+    expect(useTimeStore.getState()).toMatchObject({ sectionId: 'hadean', t: EARTH_FORMATION })
   })
 })

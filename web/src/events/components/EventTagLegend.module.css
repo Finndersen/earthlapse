@@ -1,0 +1,27 @@
+/* Matches `CreditsList.module.css`'s `.list`/`.item` rhythm — this renders as one more section
+   of that panel, not a visually distinct widget. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 6px currentcolor;
+}

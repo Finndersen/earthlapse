@@ -1,33 +1,49 @@
 /*
  * Chrome-less, matching the shell's shared HUD language (ShellLayout.module.css's own doc
- * comment): no panel background or border here, just unboxed type over the lens vignette.
- * Sits in the shell's left column, below the layer readouts and above the transport — the one
- * empty stretch of the periphery that never overlaps the globe orb, the ancestor panel or the
- * scene caption (see `ShellLayout.tsx`'s `feed` slot).
+ * comment): no panel background or border here, just unboxed type over the lens vignette. The
+ * one exception is the just-reached card's emphasis — a tag-coloured accent bar and a wash that
+ * fades to nothing across the card — which recedes back to plain type as the card settles.
+ * Sits in the shell's left column, below the layer readouts and above the scene caption — the
+ * one empty stretch of the periphery that never overlaps the globe orb, the ancestor panel or
+ * the scene caption (see `ShellLayout.tsx`'s `feed` slot).
+ *
+ * Geometry custom properties (`--feed-card-height`, `--feed-card-gap`, `--feed-overflow-line`)
+ * come from `presentation.ts` via `<EventFeed>`'s inline style — `feedCardCapacity` counts
+ * cards with the same numbers this sheet draws them with. Per-card `--feed-emphasis` (0..1) and
+ * `--feed-accent` (the primary tag's colour) are set inline on each card.
  */
 
+/* Fills the slot's full height, so `<EventFeed>` can measure how many cards fit, and stacks its
+   cards against the slot's bottom edge, nearest the timeline. No height cap of its own: the
+   slot (a `minmax(0, 1fr)` grid row between the readouts and the caption) is the cap, and the
+   card count is sized to it. Transparent to the pointer except over the cards themselves,
+   since the wrapper now spans that whole empty row. */
 .feed {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: flex-end;
   width: 100%;
-  max-width: 300px;
+  height: 100%;
+  max-width: 340px;
   min-width: 0;
-  /* A firm ceiling, not just a generous upper bound: measured against the real shell layout at
-     1440x900, the row this sits in (below the readouts, above the transport) gave a
-     `DEFAULT_MAX_VISIBLE`-card resting list at its original tuning (3) barely 4px of its own
-     slack before the transport band began right where the feed's own resting bottom already
-     sat — there was essentially no room to grow into, which is what drove
-     `DEFAULT_MAX_VISIBLE` down to 2 (`select.ts`). An expanded card's full description +
-     citation scrolls *within* this cap rather than growing the box past it, so even a future
-     re-tuning of the visible-card count can't reopen the same overlap. `max-height`, not a
-     fixed `height`: a sparser feed (one card, or none at all) still shrinks to fit its actual
-     content instead of always reserving this much space. */
-  max-height: 150px;
+  min-height: 0;
+  pointer-events: none;
+}
+
+/* Every card is the same fixed height (`feedCardCapacity` sizes the cap to it) — a click opens
+   `EventDetailPanel` instead of growing the card in place, so this never needs to scroll past
+   its own slot into the readouts above. */
+.scroller {
+  display: flex;
+  flex-direction: column;
+  gap: var(--feed-card-gap);
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
+  pointer-events: auto;
 }
 
 .liveRegion {
@@ -45,7 +61,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--feed-card-gap);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -53,27 +69,80 @@
 }
 
 .card {
+  flex: none;
   min-width: 0;
   transition:
     opacity 200ms ease,
     transform 200ms ease;
 }
 
+/* A newly mounted card slides down into the top of the stack. Mount-only, so it replays when a
+   scrub lands on a fresh set of events but never re-triggers on a card that is merely
+   re-rendered as the playhead moves. */
+.cardAnimated {
+  animation: arrive 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
 .cardButton {
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 9px;
   width: 100%;
+  height: var(--feed-card-height);
   min-width: 0;
+  overflow: hidden;
   border: 1px solid transparent;
   border-radius: 8px;
   background: transparent;
-  padding: 5px 7px;
+  padding: 6px 10px 6px 9px;
   text-align: left;
   cursor: pointer;
   color: inherit;
   font: inherit;
   transition: border-color 200ms ease;
+}
+
+/* The emphasis wash: the primary tag's colour, strongest behind the chip and title, gone by the
+   card's right edge. */
+.cardButton::before,
+.cardButton::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  opacity: var(--feed-emphasis, 0);
+  transition: opacity 360ms ease;
+}
+
+.cardButton::before {
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--feed-accent) 24%, transparent) 0%,
+    color-mix(in srgb, var(--feed-accent) 8%, transparent) 55%,
+    transparent 100%
+  );
+}
+
+/* The accent bar along the card's leading edge. */
+.cardButton::after {
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--feed-accent);
+  box-shadow: 0 0 8px var(--feed-accent);
 }
 
 .cardButton:hover,
@@ -88,6 +157,12 @@
   height: 7px;
   margin-top: 6px;
   border-radius: 50%;
+  background: var(--feed-accent);
+  box-shadow: 0 0 calc(6px + var(--feed-emphasis, 0) * 6px) var(--feed-accent);
+  transform: scale(calc(1 + var(--feed-emphasis, 0) * 0.4));
+  transition:
+    box-shadow 360ms ease,
+    transform 360ms ease;
 }
 
 .body {
@@ -95,78 +170,155 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
+  transition: transform 360ms ease;
 }
 
-.headline {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-}
-
+/* Brightens toward warm white and picks up a halo in the tag colour while emphasised. The title
+   gets the card's full width; the date leads the second line instead of competing with it. */
 .label {
+  display: block;
+  height: 19px;
   font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
-  font-size: 12.5px;
+  font-size: 13.5px;
+  line-height: 19px;
   font-weight: 500;
-  color: var(--hud-ink, #efe9dc);
+  color: color-mix(in srgb, #fffaf0 calc(var(--feed-emphasis, 0) * 100%), var(--hud-ink, #efe9dc));
+  text-shadow:
+    0 0 calc(var(--feed-emphasis, 0) * 14px) color-mix(in srgb, var(--feed-accent) calc(var(--feed-emphasis, 0) * 70%), transparent),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition:
+    color 360ms ease,
+    text-shadow 360ms ease;
 }
 
-.date {
-  flex: none;
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 9px;
-  letter-spacing: 0.06em;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-  white-space: nowrap;
-}
-
-.description {
+.detail {
+  display: block;
+  height: 17px;
   font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 17px;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.descriptionExpanded,
-.labelExpanded {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+/* Primary-tag label (item 11): coloured straight from `EVENT_TAG_PALETTE` via the inline
+   `color` style `EventFeedCard` sets — no second colour source to drift out of sync with the
+   chip/accent/wash, which all read the same swatch. */
+.tag {
+  margin-right: 6px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.citation {
-  display: block;
-  margin-top: 4px;
+.date {
+  margin-right: 4px;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 9px;
-  line-height: 1.45;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: color-mix(
+    in srgb,
+    var(--feed-accent) calc(var(--feed-emphasis, 0) * 100%),
+    var(--hud-faint, rgba(239, 233, 220, 0.36))
+  );
+  transition: color 360ms ease;
 }
 
 .overflow {
-  margin: 0 0 0 7px;
+  flex: none;
+  margin: 0 0 0 9px;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 9px;
+  font-size: 9.5px;
+  height: calc(var(--feed-overflow-line) - var(--feed-card-gap));
+  line-height: calc(var(--feed-overflow-line) - var(--feed-card-gap));
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
+/* The phone's "compact single-card strip": `<EventFeed>` caps to one card here, and the phone HUD
+   leaves the feed row only a few dozen px between the readouts and the caption, so the strip is
+   one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet (item
+   12) rather than growing the strip in place, so unlike the desktop card this one never has a
+   second, taller state to account for. */
 @media (max-width: 760px) {
   .feed {
     max-width: none;
   }
+
+  .scroller {
+    flex-direction: row;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 10px;
+    overflow: visible;
+  }
+
+  .list {
+    flex: 1;
+  }
+
+  .cardButton {
+    height: var(--feed-strip-height);
+  }
+
+  .body {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .label {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .detail {
+    flex: none;
+    height: auto;
+  }
+
+  /* Only the description drops here — no room for it alongside title and date on one line, but
+     it's still shown in full inside the detail panel a tap opens. The tag label stays (re-review
+     fix, 2026-09-15): item 11 asks every card to show its primary tag, never relying on the
+     colour chip alone, and hiding `.tag` here left exactly that — a coloured dot with no text —
+     as the phone strip's only category cue. `.detail`'s own `text-overflow: ellipsis` (the
+     un-mediaqueried rule above) truncates the tag+date pair together if the strip is too narrow
+     for both in full, rather than ever hiding the tag outright. */
+  .description {
+    display: none;
+  }
+
+  .overflow {
+    margin: 0;
+    height: auto;
+    line-height: 19px;
+    white-space: nowrap;
+  }
 }
 
+/* Motion is already withheld in `<EventFeed>` itself (no drift, inset or arrival animation);
+   this also stops the highlight easing in and out, leaving it a static state. */
 @media (prefers-reduced-motion: reduce) {
-  .card {
+  .card,
+  .cardButton::before,
+  .cardButton::after,
+  .chip,
+  .body,
+  .label,
+  .date {
     transition: none;
+  }
+
+  .chip {
+    transform: none;
   }
 }

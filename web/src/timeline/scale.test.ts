@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION } from '@/types/layer'
 
-import { blendScales, createLinearScale, createSymlogScale, SYMLOG_C, type TimeWindow } from './scale'
+import { blendScales, createLinearScale, createSymlogScale, interpolateWindow, symlogKnee, SYMLOG_C, type TimeWindow } from './scale'
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 
@@ -98,6 +98,61 @@ describe('createSymlogScale', () => {
     // screen (say 4000px) — 0.5% of the axis is 20px at that width.
     expect(fractionForRecordedHistory).toBeGreaterThan(0.005)
   })
+
+  it('accepts an explicit knee override instead of deriving one from the window (re-review fix, 2026-09-15)', () => {
+    const modern: TimeWindow = [0, 111]
+    // With no override, the bare adaptive knee (span / 1000, floored at 1) badly compresses a
+    // leaf-sized window: this is the bug `sectionSymlogKnee` exists to avoid for a leaf.
+    const bareDefault = createSymlogScale(modern)
+    const last10YearsBare = bareDefault.toUnit(0) - bareDefault.toUnit(10)
+    expect(last10YearsBare).toBeGreaterThan(0.45) // reproduces the reported ~51% share
+
+    // Overridden with the fixed SYMLOG_C (what a leaf section should draw with instead), the
+    // same span reads close to true-proportional.
+    const overridden = createSymlogScale(modern, SYMLOG_C)
+    const last10YearsOverridden = overridden.toUnit(0) - overridden.toUnit(10)
+    const trueProportion = 10 / 111
+    expect(last10YearsOverridden).toBeCloseTo(trueProportion, 2)
+  })
+})
+
+describe('symlogKnee (ADR-024 amendment, follow-up pass item 7)', () => {
+  it('is exactly SYMLOG_C at and above the adaptive threshold (SYMLOG_C * 1000), unchanged from before the amendment', () => {
+    expect(symlogKnee([0, 4.567e9])).toBe(SYMLOG_C) // the full domain
+    expect(symlogKnee([0, SYMLOG_C * 1000])).toBe(SYMLOG_C) // exactly at the threshold
+    expect(symlogKnee([0, 66e6])).toBe(SYMLOG_C) // Cenozoic
+  })
+
+  it('shrinks in proportion to the span below the threshold', () => {
+    const holocene: TimeWindow = [0, 11_725]
+    expect(symlogKnee(holocene)).toBeCloseTo(11_725 / 1000, 9)
+    expect(symlogKnee([0, 2.58e6])).toBeCloseTo(2.58e6 / 1000, 9) // Quaternary
+  })
+
+  it('joins continuously at the threshold: span/1000 and SYMLOG_C agree there, with no jump either side', () => {
+    const threshold = SYMLOG_C * 1000
+    const justBelow = symlogKnee([0, threshold - 1])
+    const atThreshold = symlogKnee([0, threshold])
+    const justAbove = symlogKnee([0, threshold + 1])
+    expect(atThreshold).toBe(SYMLOG_C)
+    expect(justBelow).toBeCloseTo(SYMLOG_C, 1)
+    expect(justAbove).toBe(SYMLOG_C)
+  })
+
+  it('never returns non-positive for a degenerate (zero-span) window', () => {
+    expect(symlogKnee([0, 0])).toBeGreaterThan(0)
+  })
+
+  it('gives a small recent section a legible share of its own axis, unlike the fixed pre-amendment knee', () => {
+    // Reproduces the follow-up pass complaint: under the fixed SYMLOG_C, "modern" (0-111 years,
+    // a sub-section of the Holocene) was drawn at close to its true linear proportion within
+    // the Holocene window — a sliver. The adaptive knee should give it comfortably more.
+    const holocene: TimeWindow = [0, 11_725]
+    const scale = createSymlogScale(holocene)
+    const modernFraction = scale.toUnit(0) - scale.toUnit(111)
+    const trueLinearFraction = 111 / 11_725
+    expect(modernFraction).toBeGreaterThan(trueLinearFraction * 5)
+  })
 })
 
 describe('createLinearScale', () => {
@@ -138,5 +193,37 @@ describe('blendScales', () => {
     const t = 5e7
     expect(blendScales(symlog, linear, -5).toUnit(t)).toBe(symlog.toUnit(t))
     expect(blendScales(symlog, linear, 5).toUnit(t)).toBe(linear.toUnit(t))
+  })
+})
+
+describe('interpolateWindow (ADR-024 section transitions)', () => {
+  const warp = (t: number): number => Math.log1p(t / SYMLOG_C)
+  const holocene: TimeWindow = [0, 11_725]
+  const pleistocene: TimeWindow = [11_725, 2.58e6]
+
+  it('returns the endpoints themselves at k = 0 and k = 1', () => {
+    expect(interpolateWindow(FULL_DOMAIN, holocene, 0)).toBe(FULL_DOMAIN)
+    expect(interpolateWindow(FULL_DOMAIN, holocene, 1)).toBe(holocene)
+  })
+
+  it('moves each edge linearly in symlog-warped space', () => {
+    const [newest, oldest] = interpolateWindow(holocene, pleistocene, 0.5)
+    expect(warp(newest)).toBeCloseTo((warp(0) + warp(11_725)) / 2, 10)
+    expect(warp(oldest)).toBeCloseTo((warp(11_725) + warp(2.58e6)) / 2, 10)
+  })
+
+  it('stays ordered and narrows monotonically when zooming in', () => {
+    let previousOldest = Infinity
+    for (let k = 0; k <= 1.0001; k += 0.1) {
+      const [newest, oldest] = interpolateWindow(FULL_DOMAIN, holocene, k)
+      expect(newest).toBeLessThanOrEqual(oldest)
+      expect(oldest).toBeLessThanOrEqual(previousOldest)
+      previousOldest = oldest
+    }
+  })
+
+  it('clamps k and rejects an invalid window', () => {
+    expect(interpolateWindow(FULL_DOMAIN, holocene, 2)).toBe(holocene)
+    expect(() => interpolateWindow([5, 1], holocene, 0.5)).toThrow()
   })
 })

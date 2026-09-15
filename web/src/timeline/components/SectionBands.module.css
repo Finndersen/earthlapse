@@ -1,0 +1,151 @@
+/* A row of ruler segments under the axis labels: hairline top edge and dividers, no panel
+   fill (the shared chrome-less HUD language). Horizontally scrollable so `.track` (below) can
+   grow past this element's own width without ever shrinking a band under its required floor
+   (re-review fix, 2026-09-15, `sectionLayout.ts`'s own doc comment) — a no-op scroll container
+   (nothing to scroll) whenever `.track` fits, which is every case this amendment's own original
+   verification already covered. */
+.strip {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  outline: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
+}
+
+/* The strip's actual content box: 100% of `.strip` in the ordinary case, or `contentWidthPx` in
+   px when `layoutSectionBands` reports the bands need more room than the strip measured
+   (`SectionBands.tsx`'s own `scrollable` check) — `.connectors` and `.bands` position themselves
+   against this, not `.strip` directly, so both scroll together with the bands they annotate. */
+.track {
+  position: relative;
+  height: 100%;
+}
+
+/* Thin leader lines from a widened band's shared boundary down to where it truly sits on the
+   drawn scale (follow-up pass item 7) — an SVG overlay so `vector-effect="non-scaling-stroke"`
+   keeps the stroke a constant 1px however the 0-100 viewBox gets stretched to the strip's real
+   pixel size. Confined to a slim band along the bottom edge, not the full height (re-review fix,
+   2026-09-15): at the label row's own height these lines used to run straight through the band
+   labels they sit behind, cutting through the very text item 7 was about keeping legible. */
+.connectors {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  pointer-events: none;
+}
+
+.connectors line {
+  stroke: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  stroke-width: 1;
+}
+
+.bands {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  min-width: 0;
+  transition:
+    left 160ms ease,
+    width 160ms ease;
+}
+
+.bandButton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 6px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-left: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease;
+}
+
+.band:first-child .bandButton {
+  border-left-color: transparent;
+}
+
+.label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bandButton[aria-current='time'] {
+  color: var(--hud-accent, #e8b06a);
+  border-top-color: var(--hud-accent, #e8b06a);
+  box-shadow: inset 0 1px 0 var(--hud-accent, #e8b06a);
+}
+
+.bandButton:hover,
+.bandButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  background-color: rgba(239, 233, 220, 0.06);
+  outline: none;
+}
+
+.bandButton:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.leaf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 0;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Taller for a finger, but kept compact: a phone's bottom block also holds the caption,
+   and every extra pixel here comes out of the event feed's row above it. */
+@media (pointer: coarse) {
+  .strip {
+    height: 28px;
+  }
+
+  .connectors {
+    height: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .band {
+    transition: none;
+  }
+}

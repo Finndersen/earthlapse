@@ -1,0 +1,126 @@
+/*
+ * The credits content's own typography — used inside both the About & credits panel (narrow,
+ * dark surface) and the `/credits` page (wider, its own background). Colour and type tokens
+ * (--hud-*) are global (app/globals.css), so both read as the same instrument.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.disclaimer {
+  margin: 0 0 14px;
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-accent);
+}
+
+.sectionTitle {
+  margin: 20px 0 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hud-hairline);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.intro {
+  max-width: 58ch;
+  margin: 0 0 18px;
+  font-family: var(--hud-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--hud-dim);
+}
+
+.status,
+.statusError {
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
+}
+
+.statusError {
+  color: #e8826a;
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+
+.stubNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-family: var(--hud-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hud-accent);
+}
+
+.stubNotice::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--hud-accent);
+  box-shadow: 0 0 8px var(--hud-accent-glow);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  padding: 16px 0;
+  border-top: 1px solid var(--hud-hairline);
+}
+
+.itemTitle {
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.itemCitation {
+  max-width: 60ch;
+  margin: 0 0 8px;
+  font-family: var(--hud-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--hud-dim);
+}
+
+.itemMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0;
+  font-family: var(--hud-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--hud-faint);
+  overflow-wrap: anywhere;
+}
+
+.itemMeta a {
+  color: var(--hud-dim);
+  text-decoration-color: var(--hud-hairline);
+  text-underline-offset: 3px;
+}
+
+.itemMeta a:hover,
+.itemMeta a:focus-visible {
+  color: var(--hud-accent);
+}

@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION, type Playback, type TimeScale } from '@/types/layer'
 
-import { advancePlayhead, type PlaybackPacingSegment } from './playback'
+import { advancePlayhead, advanceSteadyPlayhead, SPEED_OPTIONS, stepSpeed, type PlaybackPacingSegment } from './playback'
 import { createLinearScale, createSymlogScale } from './scale'
+import { sectionById } from './sections'
 
 const fullScale: TimeScale = createSymlogScale([0, EARTH_FORMATION])
 
@@ -218,5 +219,88 @@ describe('advancePlayhead: "scenes" mode pacing (ADR-016)', () => {
     const next = advancePlayhead(6e7, 3, pb, fullScale, segments)
     expect(Number.isFinite(next)).toBe(true)
     expect(next).toBeLessThan(6e7)
+  })
+})
+
+describe('advanceSteadyPlayhead: era sections (ADR-024)', () => {
+  const steady = (overrides: Partial<Playback> = {}): Playback => playback({ mode: 'steady', baseRate: 0.1, speed: 1, ...overrides })
+
+  it("moves at constant velocity in the section's own scale", () => {
+    const cenozoic = createSymlogScale(sectionById('cenozoic').window)
+    const t = 30e6
+    const next = advanceSteadyPlayhead(t, 2, steady({ baseRate: 0.02 }), 'cenozoic', createSymlogScale)
+    expect(cenozoic.toUnit(next) - cenozoic.toUnit(t)).toBeCloseTo(0.04, 10)
+  })
+
+  it('carries the rest of the frame into the next section past the edge', () => {
+    // Industrial age [111, 265] linear: from t=120 the edge is 0.0584 u away (0.584 s at 0.1 u/s);
+    // the remaining 0.416 s moves 0.0416 u into Modern [0, 111].
+    const next = advanceSteadyPlayhead(120, 1, steady(), 'industrial-age', createLinearScale)
+    const secondsToEdge = (1 - (265 - 120) / 154) / 0.1
+    expect(next).toBeCloseTo(111 - (1 - secondsToEdge) * 0.1 * 111, 8)
+  })
+
+  it('crosses at once when resting exactly on the edge', () => {
+    expect(advanceSteadyPlayhead(111, 0.1, steady(), 'industrial-age', createLinearScale)).toBeLessThan(111)
+  })
+
+  it("continues up to the parent's next sibling after the last child", () => {
+    const permian = sectionById('permian')
+    const mesozoic = createLinearScale(sectionById('mesozoic').window)
+    const next = advanceSteadyPlayhead(permian.window[0] + 1, 3, steady(), 'permian', createLinearScale)
+    expect(next).toBeLessThan(permian.window[0])
+    expect(mesozoic.toUnit(next)).toBeGreaterThan(0.25)
+  })
+
+  it('stops at the present', () => {
+    expect(advanceSteadyPlayhead(1, 1000, steady(), 'modern', createSymlogScale)).toBe(0)
+  })
+
+  it('is a no-op when paused or for a non-positive dt', () => {
+    expect(advanceSteadyPlayhead(150, 1, steady({ playing: false }), 'industrial-age', createLinearScale)).toBe(150)
+    expect(advanceSteadyPlayhead(150, 0, steady(), 'industrial-age', createLinearScale)).toBe(150)
+  })
+
+  it('rejects scenes mode and a t outside the section', () => {
+    expect(() => advanceSteadyPlayhead(150, 1, playback({ mode: 'scenes' }), 'industrial-age', createLinearScale)).toThrow(/steady/)
+    expect(() => advanceSteadyPlayhead(50, 1, steady(), 'industrial-age', createLinearScale)).toThrow(/outside/)
+  })
+})
+
+describe('stepSpeed', () => {
+  it('moves to the next faster option going up', () => {
+    expect(stepSpeed(1, 'up')).toBe(2)
+    expect(stepSpeed(0.25, 'up')).toBe(0.5)
+  })
+
+  it('moves to the next slower option going down', () => {
+    expect(stepSpeed(2, 'down')).toBe(1)
+    expect(stepSpeed(64, 'down')).toBe(32)
+  })
+
+  it('clamps at the fast end instead of wrapping', () => {
+    expect(stepSpeed(64, 'up')).toBe(64)
+  })
+
+  it('clamps at the slow end instead of wrapping', () => {
+    expect(stepSpeed(0.25, 'down')).toBe(0.25)
+  })
+
+  it('resolves an off-list value to the nearest option on the requested side', () => {
+    expect(stepSpeed(3, 'up')).toBe(4)
+    expect(stepSpeed(3, 'down')).toBe(2)
+    // Beyond either end: clamps to that end rather than to undefined.
+    expect(stepSpeed(1000, 'up')).toBe(64)
+    expect(stepSpeed(0.01, 'down')).toBe(0.25)
+  })
+
+  it('every SPEED_OPTIONS value is reachable by stepping up from the slowest', () => {
+    let speed: number = SPEED_OPTIONS[0]
+    const seen = [speed]
+    for (let i = 1; i < SPEED_OPTIONS.length; i++) {
+      speed = stepSpeed(speed, 'up')
+      seen.push(speed)
+    }
+    expect(seen).toEqual([...SPEED_OPTIONS])
   })
 })
