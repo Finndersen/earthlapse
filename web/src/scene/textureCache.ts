@@ -3,8 +3,15 @@
  * `globe/textureCache.ts`'s pattern: a URL is decoded onto the GPU at most once, so
  * re-scrubbing over already-seen scenes resolves instantly instead of re-fetching. Not part
  * of the pure `t -> value` contract (it does I/O and holds GPU-side state), so it lives
- * outside `transition.ts`/`drift.ts` and is exercised through `useScenePair`, not unit
- * tested directly (jsdom has no WebGL/image decoding).
+ * outside `transition.ts`/`drift.ts` and is exercised through `useScenePair`.
+ *
+ * Every texture uploads with `NoColorSpace`, so the sampler returns the stored bytes — the same
+ * contract as `layers/portraitTextures.ts`. `shaders.ts` owns the transfer: a settled scene is
+ * written out as sampled, which is what `SceneFallbackView`'s `<img>` shows, and only the
+ * crossfade between two scenes decodes to linear light. Tagging scenes `SRGBColorSpace` here
+ * would have the GPU decode them a second time on top of that, and the unencoded output would
+ * draw every scene at about (code/255)^2.2 — pinned by `textureCache.test.ts`, which also covers
+ * the load-once cache.
  */
 
 import * as THREE from 'three'
@@ -39,7 +46,7 @@ export function loadSceneTexture(url: string): Promise<THREE.Texture> {
     loader.load(
       url,
       (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace
+        texture.colorSpace = THREE.NoColorSpace
         texture.minFilter = THREE.LinearFilter
         texture.generateMipmaps = false
         cache.set(url, texture)

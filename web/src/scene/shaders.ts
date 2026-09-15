@@ -13,6 +13,13 @@
  *    `uToZoom`/`uToOffset`) on top of that crop.
  * 3. A smooth whole-image crossfade (ADR-012), gamma-correct so the midpoint of the blend
  *    doesn't read as darker/muddier than either endpoint.
+ *
+ * Scenes sample as their stored sRGB-encoded bytes (`textureCache.ts` uploads every texture
+ * with `NoColorSpace`, not `SRGBColorSpace` — the GPU must not decode them on sample), so a
+ * settled scene is written out exactly as the published file, matching `SceneFallbackView`'s
+ * `<img>`, and `srgbToLinear`/`linearToSrgb` below bracket only the crossfade. No renderer
+ * output encoding (`colorspace_fragment`) is applied — only the crossfade interior round-trips
+ * through linear light — mirroring `layers/portraitShaders.ts`'s plate blend.
  */
 
 export const SCENE_VERTEX_SHADER = /* glsl */ `
