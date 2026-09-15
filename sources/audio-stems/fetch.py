@@ -18,11 +18,16 @@ from pipeline.audio import load_stem_book
 from pipeline.fetching import ensure_verified_artefact
 
 _STEMS_TOML = Path(__file__).resolve().parent / "stems.toml"
+# Wikimedia's upload servers answer 403 to clients without a descriptive User-Agent
+# (https://meta.wikimedia.org/wiki/User-Agent_policy); Freesound's CDN accepts it too.
+_USER_AGENT = "earthview-audio-stems/2 (https://github.com/finndersen/earthview)"
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=1, max=10))
 def _download(url: str) -> bytes:
-    response = httpx.get(url, timeout=30.0, follow_redirects=True)
+    response = httpx.get(
+        url, timeout=30.0, follow_redirects=True, headers={"User-Agent": _USER_AGENT}
+    )
     response.raise_for_status()
     return response.content
 

@@ -14,3 +14,6 @@ raw_filename = "test-loop.wav"
 format = "wav"
 duration_seconds = 0.25
 loop_safe = true
+# Placeholder levels: the fixture is silence, so there is nothing for levels.py to measure.
+loudness_db = -30.0
+peak_dbfs = -6.0

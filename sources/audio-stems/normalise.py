@@ -7,13 +7,13 @@ returns no `CuratedShape` at all. The real work happens in `write_outputs()`, th
 textures: it runs after `normalise()`, writes outside `data/curated/`, and is declared via
 `manifest.toml`'s `outputs` globs.
 
-v1 does no trimming, loudness normalisation or transcoding -- this machine has neither
-ffmpeg nor sox, and macOS's `afconvert` must not become a hard pipeline dependency (every
-`sources/<name>/` source must build and test offline). Each raw file is therefore copied
+No decoding, trimming, loudness normalisation or transcoding happens here -- this machine has
+neither ffmpeg nor sox, and macOS's `afconvert` must not become a hard pipeline dependency
+(every `sources/<name>/` source must build and test offline). Each raw file is therefore copied
 through unchanged, after checking its container format actually matches the `format` a
-`[[stems]]` entry declares -- see README.md "Why no automated loudness/trim pass" for the
-resulting sourcing requirement (pick clips that already arrive pre-trimmed, loop-ready and
-reasonably level-matched).
+`[[stems]]` entry declares. Level matching and loop points are curator-attested `stems.toml`
+fields applied at playback instead -- see README.md "Why levels are attested, not measured at
+build time".
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from pipeline.audio import StemManifest, load_stem_book, sniff_audio
+from pipeline.audio import StemManifest, content_hashed_filename, load_stem_book, sniff_audio
 from pipeline.shapes import CuratedShape
 
 _STEMS_TOML = Path(__file__).resolve().parent / "stems.toml"
@@ -36,8 +36,12 @@ def normalise(raw_dir: Path) -> list[CuratedShape]:
     return []
 
 
-def _published_path(stem: StemManifest, media_dir: Path) -> Path:
-    return media_dir / _MEDIA_SUBDIR / f"{stem.id}.{stem.format}"
+def _published_path(stem: StemManifest, media_dir: Path, data: bytes) -> Path:
+    """Content-hashed (ADR-023 amendment "on-demand loading") -- `_place_stem` below is the
+    only writer of `<id>-*.<format>` files, so it also removes any other one for this id before
+    writing the current one: exactly one published file per catalogued stem always exists,
+    never a stale sibling left behind by an earlier run whose content has since changed."""
+    return media_dir / _MEDIA_SUBDIR / content_hashed_filename(stem.id, stem.format, data)
 
 
 def _place_stem(stem: StemManifest, raw_dir: Path, media_dir: Path) -> None:
@@ -54,8 +58,11 @@ def _place_stem(stem: StemManifest, raw_dir: Path, media_dir: Path) -> None:
             f"format {stem.format!r} -- source a file already encoded the way it will be "
             f"published, or correct the declared format"
         )
-    target = _published_path(stem, media_dir)
+    target = _published_path(stem, media_dir, data)
     target.parent.mkdir(parents=True, exist_ok=True)
+    for stale in target.parent.glob(f"{stem.id}-*.{stem.format}"):
+        if stale != target:
+            stale.unlink()
     shutil.copyfile(raw_path, target)
 
 

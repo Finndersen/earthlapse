@@ -1,32 +1,25 @@
 /*
- * Fixed to the viewport, not the shell's own grid (see toggle.tsx's doc comment) — top right,
- * clear of `.ancestor`'s own `padding-top: 40px` gap in that same corner and of the bottom
- * transport row. Matches the shell's chrome-less, unbordered visual language: no panel, no
- * border, just HUD type/icon floating with a text-shadow for legibility over any plate.
+ * Inline within the transport's secondary control group (see toggle.tsx's doc comment) —
+ * previously a fixed top-right corner of its own, before it moved beside play/back/forward
+ * (follow-up pass item 2). No panel, border or fill: matches the shell's chrome-less visual
+ * language, same as the transport's own ghost buttons beside it.
  */
 .wrap {
-  position: fixed;
-  top: clamp(14px, 2.2vw, 28px);
-  right: clamp(16px, 3vw, 48px);
-  z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--hud-mono);
-  color: var(--hud-ink);
-  text-shadow: var(--hud-shadow);
+  gap: 8px;
 }
 
 .button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   background: none;
   border: none;
-  color: var(--hud-dim);
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
   cursor: pointer;
   transition:
     color 180ms ease,
@@ -35,7 +28,7 @@
 
 .button:hover,
 .button:focus-visible {
-  color: var(--hud-accent);
+  color: var(--hud-accent, #e8b06a);
 }
 
 .button[data-just-changed='true'] {
@@ -43,16 +36,35 @@
 }
 
 .button:focus-visible {
-  outline: 1px solid var(--hud-accent);
-  outline-offset: 4px;
+  outline: 1px solid var(--hud-accent, #e8b06a);
+  outline-offset: 3px;
+}
+
+/* A touch target under 44px is easy to miss (mirrors Transport.module.css's own `.ghostButton`
+   coarse-pointer bump) — grow the hit area on a coarse pointer without enlarging the icon on a
+   mouse, where the smaller glyph reads better in this tightly packed row. */
+@media (pointer: coarse) {
+  .button {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .volume {
-  width: 64px;
+  width: 52px;
   height: 2px;
-  accent-color: var(--hud-accent);
+  accent-color: var(--hud-accent, #e8b06a);
   cursor: pointer;
   opacity: 0.85;
+}
+
+/* Always in the DOM now (re-review fix, 2026-09-15: toggle.tsx no longer mounts/unmounts this
+   element with `enabled`, since doing so shifted every sibling in the transport's secondary
+   group) — hidden this way instead, matching `Transport.module.css`'s `.rateReadout`: the slot
+   stays reserved even while invisible. */
+.volume[data-visible='false'] {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .volume:hover,
@@ -60,14 +72,47 @@
   opacity: 1;
 }
 
-@media (max-width: 760px) {
-  .wrap {
-    top: 10px;
-    right: 12px;
-    gap: 8px;
+/* A touch target under 44px is easy to miss. The visual track stays hairline-thin — a custom
+   track/thumb (`appearance: none`, re-review fix: the plain `width` bump alone left only the
+   native thumb's own render size, ~12px, actually hit-testable) — while the `<input>`'s own box
+   grows to a real 32px-tall touch target, centred over that thin track rather than changing how
+   it reads. */
+@media (pointer: coarse) {
+  .volume {
+    width: 64px;
+    height: 32px;
+    appearance: none;
+    background: transparent;
   }
 
-  .volume {
-    width: 48px;
+  .volume::-webkit-slider-runnable-track {
+    height: 2px;
+    border-radius: 1px;
+    background: currentcolor;
+    opacity: 0.5;
+  }
+
+  .volume::-moz-range-track {
+    height: 2px;
+    border-radius: 1px;
+    background: currentcolor;
+    opacity: 0.5;
+  }
+
+  .volume::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -6px;
+    border-radius: 50%;
+    background: var(--hud-accent, #e8b06a);
+  }
+
+  .volume::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 50%;
+    background: var(--hud-accent, #e8b06a);
   }
 }

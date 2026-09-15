@@ -1,38 +1,93 @@
 /**
- * The ten ambience stem ids (ADR-023 §1). Closed set — a new stem is a new id added here plus
- * a new row in `stemGains.ts`'s table, never a free-text string threaded through from
- * `Manifest.audioStems`/`SceneRecord.sound` (both of which are already typed to `string` on
- * the wire, since the pipeline's own `StemBook` is the source of truth for what ids exist —
- * this union is the web engine's compile-time mirror of that same closed set).
+ * The closed stem catalogue (ADR-023 §1, amended 2026-09-14, 2026-09-15 "era fit v3" and
+ * 2026-09-15 "human-history scene sounds, once-mode fix and Safari re-sourcing" — the last adds
+ * `artillery`, and that amendment's own 2026-09-15 re-review adds `lake-water`; a further
+ * 2026-09-15 amendment adds `wing-hum`, fixing the "era fit v3 fixes" amendment's own
+ * "Unresolved" gap). Two kinds:
+ *
+ * - **Ambience** stems have a `stemGains` row and always loop at their curve gain.
+ * - **Scene-only** stems have no curve and are reached only through a scene's `sound`. Whether
+ *   one may loop (`geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`) or is a
+ *   one-shot (`impact`, `rocket`, `aircraft`, `mammoth`) is the published `AudioStem.loopSafe`
+ *   flag, not a second web-side list — see `stemVoices.ts`.
+ *
+ * A new stem is a new id here (plus a `stemGains.ts` row if it is ambience), never a free-text
+ * string threaded through from `Manifest.audioStems`/`SceneRecord.sound`: both are `string` on
+ * the wire, because the pipeline's `StemBook` is the source of truth for what ids exist, and
+ * this union is the web engine's compile-time mirror of that same closed set.
  */
+
 export type AmbienceStemId =
   | 'wind'
   | 'water'
   | 'storm'
   | 'volcanic'
+  | 'forest'
+  | 'wing-hum'
   | 'insects'
+  | 'large-animal'
   | 'birds'
+  | 'archosaurs'
   | 'mammals'
+  | 'livestock'
   | 'fire'
   | 'settlement'
-  | 'machinery'
+  | 'industry'
+  | 'traffic'
 
-export const STEM_IDS: readonly AmbienceStemId[] = [
+export type SceneStemId =
+  | 'geothermal'
+  | 'impact'
+  | 'rocket'
+  | 'aircraft'
+  | 'buzzing'
+  | 'knapping'
+  | 'mammoth'
+  | 'artillery'
+  | 'lake-water'
+
+export type StemId = AmbienceStemId | SceneStemId
+
+export const AMBIENCE_STEM_IDS: readonly AmbienceStemId[] = [
   'wind',
   'water',
   'storm',
   'volcanic',
+  'forest',
+  'wing-hum',
   'insects',
+  'large-animal',
   'birds',
+  'archosaurs',
   'mammals',
+  'livestock',
   'fire',
   'settlement',
-  'machinery',
+  'industry',
+  'traffic',
 ]
 
-/** Each stem's gain, always in `[0, 1]`. */
+export const SCENE_STEM_IDS: readonly SceneStemId[] = [
+  'geothermal',
+  'impact',
+  'rocket',
+  'aircraft',
+  'buzzing',
+  'knapping',
+  'mammoth',
+  'artillery',
+  'lake-water',
+]
+
+export const STEM_IDS: readonly StemId[] = [...AMBIENCE_STEM_IDS, ...SCENE_STEM_IDS]
+
+/** Each ambience stem's gain, always in `[0, 1]`. Scene-only stems have no row by construction. */
 export type StemGains = Record<AmbienceStemId, number>
 
 export function isAmbienceStemId(id: string): id is AmbienceStemId {
+  return (AMBIENCE_STEM_IDS as readonly string[]).includes(id)
+}
+
+export function isStemId(id: string): id is StemId {
   return (STEM_IDS as readonly string[]).includes(id)
 }

@@ -16,25 +16,78 @@ url/sha256/licence a plain `manifest.toml` describes.
 
 from __future__ import annotations
 
+import hashlib
 import tomllib
 from collections import Counter
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+# Hex characters of `sha256(published bytes)` kept in a stem's published filename (ADR-023
+# amendment "on-demand loading"). Not cryptographic -- this catalogue holds dozens of files,
+# not billions, so 10 hex chars (40 bits) is far beyond its actual collision risk; the same
+# length webpack/Next.js content hashes commonly use.
+CONTENT_HASH_LENGTH = 10
+
+
+def content_hash(data: bytes) -> str:
+    """Short, stable hash of a stem's published bytes -- unrelated to `StemManifest.sha256`
+    (that one verifies the *raw fetch*, `pipeline.fetching`'s integrity check; this one names
+    the *published* file). Two different bytes essentially never collide at this length; the
+    same bytes always hash the same, so a rebuild that changes nothing about a stem's content
+    reuses the same published filename."""
+    return hashlib.sha256(data).hexdigest()[:CONTENT_HASH_LENGTH]
+
+
+def content_hashed_filename(stem_id: str, fmt: str, data: bytes) -> str:
+    """A stem's published filename, e.g. `wind-3a91cf02de.mp3` -- content-addressed so a CDN
+    can cache it `immutable` (ADR-023 amendment "on-demand loading"): the name only changes
+    when the published bytes do, so a long `max-age` never risks serving stale audio after a
+    re-source, and never needs a cache-busting query string or a build-wide path change either.
+    """
+    return f"{stem_id}-{content_hash(data)}.{fmt}"
+
 
 SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 
+# Loudness every stem is trimmed to (`StemManifest.level_trim_db`), so a curve or scene gain
+# means the same audible level whichever clip it drives. Loops -- ambience beds and loop-safe
+# scene stems -- share one reference; one-shots sit 10 dB above it so a foreground event reads
+# over the bed at the same scene gain. -30 dB leaves every loop within 1.5 dB of the reference
+# without pushing any clip's peak past full scale (ADR-023 amendment "stem levels").
+LOOP_REFERENCE_LOUDNESS_DB = -30.0
+ONE_SHOT_REFERENCE_LOUDNESS_DB = -20.0
+
+
+class LoopRegion(BaseModel):
+    """The span of a clip a looping player repeats, in seconds from the clip start. Chosen at
+    sourcing time to skip a silent head or tail, a fade, or an edit splice, with its two ends
+    at matched level and near-continuous samples so the wrap does not click."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    start_seconds: float = Field(ge=0.0)
+    end_seconds: float = Field(gt=0.0)
+
+    @model_validator(mode="after")
+    def _starts_before_it_ends(self) -> LoopRegion:
+        if self.start_seconds >= self.end_seconds:
+            raise ValueError(
+                f"loop start {self.start_seconds} s must be before its end {self.end_seconds} s"
+            )
+        return self
+
 
 class StemManifest(BaseModel):
-    """One ambience loop's provenance and published-file metadata.
+    """One stem's provenance and published-file metadata.
 
-    `duration_seconds` and `loop_safe` are curator-attested when the clip is sourced — the
-    same way `sources/astronomy`'s checkpoint values are cited numbers, not something this
-    pipeline measures (see `sources/audio-stems/README.md` "Why no automated loudness/trim
-    pass"). `licence` must read as CC0 or public domain (ADR-023); nothing here enforces that
-    string mechanically — the reviewing human does, same as every other source's `licence`
-    field.
+    `duration_seconds`, `loop_safe`, `loudness_db`, `peak_dbfs` and `loop` are curator-attested
+    when the clip is sourced -- the same way `sources/astronomy`'s checkpoint values are cited
+    numbers, not something this pipeline measures (`sources/audio-stems/levels.py` is the
+    sourcing-time tool; README "Why levels are attested, not measured at build time").
+    `licence` must read as CC0 or public domain (ADR-023); nothing here enforces that string
+    mechanically — the reviewing human does, same as every other source's `licence` field.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -54,6 +107,50 @@ class StemManifest(BaseModel):
     format: str = Field(pattern=r"^[a-z0-9]+$")  # published extension, e.g. "ogg", "m4a"
     duration_seconds: float = Field(gt=0.0)
     loop_safe: bool
+    loudness_db: float = Field(lt=0.0)  # gated A-weighted loudness, levels.py
+    peak_dbfs: float = Field(le=0.0)
+    # Absent: the whole clip loops. Only a loop-safe stem may name one.
+    loop: LoopRegion | None = None
+    # Absent: a one-shot starts at 0. Skips a silent (or otherwise unwanted) lead-in on a
+    # `loop_safe = false` clip so playback starts right on the scene's `once` trigger instead of
+    # lagging behind it -- the one-shot counterpart to `loop`'s head/tail trim for loops.
+    start_seconds: float | None = Field(default=None, ge=0.0)
+
+    @model_validator(mode="after")
+    def _loop_region_fits_a_loop_safe_clip(self) -> StemManifest:
+        if self.loop is None:
+            return self
+        if not self.loop_safe:
+            raise ValueError(f"stem {self.id}: a one-shot (loop_safe = false) has no loop region")
+        if self.loop.end_seconds > self.duration_seconds:
+            raise ValueError(
+                f"stem {self.id}: loop ends at {self.loop.end_seconds} s, after the clip's "
+                f"{self.duration_seconds} s"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _start_offset_fits_a_one_shot_clip(self) -> StemManifest:
+        if self.start_seconds is None:
+            return self
+        if self.loop_safe:
+            raise ValueError(
+                f"stem {self.id}: start_seconds is for one-shots only -- a loop_safe stem trims "
+                f"its head via `loop`"
+            )
+        if self.start_seconds >= self.duration_seconds:
+            raise ValueError(
+                f"stem {self.id}: start_seconds {self.start_seconds} s is at or after the clip's "
+                f"{self.duration_seconds} s"
+            )
+        return self
+
+    @property
+    def level_trim_db(self) -> float:
+        """dB that brings this clip to its reference loudness, capped so its peak never passes
+        full scale at unity gain -- the most any curve or scene gain asks for."""
+        reference = LOOP_REFERENCE_LOUDNESS_DB if self.loop_safe else ONE_SHOT_REFERENCE_LOUDNESS_DB
+        return round(min(reference - self.loudness_db, -self.peak_dbfs), 1)
 
 
 class StemBook(BaseModel):
@@ -92,6 +189,18 @@ class AudioFormat(StrEnum):
     OGG = "ogg"
     MP3 = "mp3"
     M4A = "m4a"
+
+
+# Formats a *published* stem may use (2026-09-15 audio re-review, item 7). Every current shipped
+# browser -- Safari/iOS included, the exact gap that same day's "human-history scene sounds,
+# once-mode fix and Safari re-sourcing" amendment re-sourced two stems by hand to close -- decodes
+# MP3 and M4A/AAC natively; WAV never ships as a real stem (only the fixture's synthesised silent
+# signal uses it, `sources/audio-stems/fixture/`, to exercise the sniff/copy/hash machinery
+# offline); OGG is not decodable on WebKit at all. Enforced at publish time
+# (`pipeline.publish._audio_stems`), not on `StemManifest.format` itself -- narrowing that field's
+# type would also reject the WAV fixture, which legitimately needs a format `numpy` can
+# synthesise without a real encoder this offline pipeline does not have.
+WEBKIT_DECODABLE_FORMATS = frozenset({AudioFormat.MP3, AudioFormat.M4A})
 
 
 def sniff_audio(data: bytes) -> AudioFormat:

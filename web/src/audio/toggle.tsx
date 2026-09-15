@@ -1,12 +1,14 @@
 /**
  * The HUD speaker toggle + master volume (ADR-023, DESIGN.md §11's v1 note: "a HUD speaker
- * toggle... a master volume alongside it"). Renders as its own fixed-position element rather
- * than through a `ShellLayout` slot — this package's scope boundary is "one hook call + one
- * component render inside `Experience.tsx`", and `ShellLayout.tsx`/`.module.css` are being
- * edited concurrently by another agent (never `Write`-replaced from here), so the toggle owns
- * a small chrome-less corner of its own instead of asking for a new named slot. Placed top
- * right, clear of the ancestor panel's own `padding-top` gap and of the bottom transport row
- * another agent is centring — see `toggle.module.css`.
+ * toggle... a master volume alongside it"). Rendered inline, as the first item of the timeline
+ * transport's secondary control group (`timeline/components/Transport.tsx`'s
+ * `<TransportSecondary sound={...}>`), right beside play/back/forward — follow-up pass item 2.
+ * It previously owned a small fixed-position corner of its own (top right, clear of the
+ * ancestor panel and the transport row) while `ShellLayout` was being edited concurrently by
+ * another agent; now that it lives inside the transport it needs no position of its own at all,
+ * and `ShellLayout.module.css`'s phone `.ancestor` rule no longer reserves room for it there.
+ * `M` still mutes/unmutes from anywhere in the document (`useMuteShortcut`, independent of
+ * `timeline/keyboard.ts`'s own, differently-scoped intent map — see that hook's own comment).
  */
 
 'use client'
@@ -64,18 +66,28 @@ export function SoundToggle({ enabled, masterVolume, setEnabled, setMasterVolume
       >
         <SpeakerIcon muted={!enabled} />
       </button>
-      {enabled && (
-        <input
-          type="range"
-          className={styles.volume}
-          min={0}
-          max={1}
-          step={0.01}
-          value={masterVolume}
-          aria-label="Master volume"
-          onChange={(event) => setMasterVolume(Number(event.target.value))}
-        />
-      )}
+      {/* Always rendered, not conditional on `enabled` (re-review fix, 2026-09-15): mounting/
+          unmounting the slider changed this control's own rendered width, which shifted every
+          sibling in the transport's secondary group — on desktop the sound button itself jumped
+          left, so a second click meant to mute instead landed on the now-relocated slider; on
+          phone the speed select and mode toggle shifted too. `visibility`/`pointer-events` hide
+          it while muted instead, the same "reserve the space, don't remove the element" pattern
+          `Transport.module.css`'s `.rateReadout` already uses for item 10 — `tabIndex={-1}` and
+          `aria-hidden` while muted keep it out of both the tab order and the accessibility tree,
+          since it controls a volume that has no audible effect until sound is on. */}
+      <input
+        type="range"
+        className={styles.volume}
+        min={0}
+        max={1}
+        step={0.01}
+        value={masterVolume}
+        aria-label="Master volume"
+        aria-hidden={!enabled}
+        tabIndex={enabled ? 0 : -1}
+        data-visible={enabled}
+        onChange={(event) => setMasterVolume(Number(event.target.value))}
+      />
     </div>
   )
 }

@@ -1,9 +1,12 @@
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Layer, ScalarValue } from '@/types/layer'
+import type { Layer, Playback, ScalarValue } from '@/types/layer'
 
 import { useAudioEngine } from './engine'
+
+const PLAYBACK: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'scenes' }
+const FULL_SECTION_WINDOW: [number, number] = [0, 4.567e9]
 
 // Regression coverage for the tick-loop lifecycle bug: the `useEffect` that owns the
 // `setInterval` writing `stemGains`/`sceneSoundLoopGains`/`scoreParams` into the live Tone.js
@@ -33,7 +36,7 @@ describe('useAudioEngine tick loop lifecycle', () => {
     const clearIntervalSpy = vi.spyOn(window, 'clearInterval')
 
     const { rerender, unmount } = renderHook(
-      ({ t }) => useAudioEngine({ manifest: null, t, playing: true, scalarLayers: emptyLayers }),
+      ({ t }) => useAudioEngine({ manifest: null, t, playing: true, playback: PLAYBACK, sectionWindow: FULL_SECTION_WINDOW, scalarLayers: emptyLayers }),
       { initialProps: { t: 0 } },
     )
 
@@ -62,7 +65,9 @@ describe('useAudioEngine tick loop lifecycle', () => {
   })
 
   it('the surviving interval still ticks at the 80ms cadence', async () => {
-    const { result } = renderHook(() => useAudioEngine({ manifest: null, t: 0, playing: true, scalarLayers: emptyLayers }))
+    const { result } = renderHook(() =>
+      useAudioEngine({ manifest: null, t: 0, playing: true, playback: PLAYBACK, sectionWindow: FULL_SECTION_WINDOW, scalarLayers: emptyLayers }),
+    )
     await vi.advanceTimersByTimeAsync(0)
     expect(result.current.enabled).toBe(true)
 
