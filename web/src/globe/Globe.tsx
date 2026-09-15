@@ -10,6 +10,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, type MouseEvent, type PointerEvent } from 'react'
 import * as THREE from 'three'
 
+import { supportsWebGL } from '@/lib/webgl'
 import type { GeoTime, TimelineEvent } from '@/types/layer'
 
 import {
@@ -25,6 +26,7 @@ import {
 } from './blend'
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
 import styles from './Globe.module.css'
+import { GlobeStaticOrb } from './GlobeStaticOrb'
 import { isOrbClick } from './orbGesture'
 import { isPoleVisible, poleDirection, type PoleId } from './poles'
 import {
@@ -90,6 +92,7 @@ export function Globe({
   onToggleExpand,
   onCaptionChange,
 }: GlobeProps) {
+  const webgl = useMemo(() => supportsWebGL(), [])
   const blend = useMemo(() => globeMultiBlendAt(rasterLayers, t, assetBase), [rasterLayers, t, assetBase])
   const domain = globeUniforms(blend)
   const direction = useTravelDirection(t)
@@ -97,7 +100,7 @@ export function Globe({
     () => globeMultiPreloadUrls(rasterLayers, t, direction, PRELOAD_WINDOW, assetBase),
     [rasterLayers, t, direction, assetBase],
   )
-  const pair = useGlobeTexturePair(blend, preloadUrls)
+  const pair = useGlobeTexturePair(blend, preloadUrls, webgl)
   // Gates the shader's textured look: even in-domain, don't show data until the first pair
   // has actually loaded. Distinct from `domain.hasData`, which alone decides the raster
   // fallback caption below — that must reflect the *domain*, not load state, or it would
@@ -155,23 +158,27 @@ export function Globe({
       onClick={expanded ? onBackdropClick : undefined}
     >
       <div
-        className={expanded ? styles.orbExpanded : styles.orb}
+        className={[expanded ? styles.orbExpanded : styles.orb, webgl ? '' : styles.orbNoWebgl].filter(Boolean).join(' ')}
         onPointerDown={expanded ? undefined : onOrbPointerDown}
         onPointerUp={expanded ? undefined : onOrbPointerUp}
       >
         <div className={styles.halo} aria-hidden="true" />
-        <Canvas camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true }}>
-          <GlobeSphere
-            beforeTex={pair.beforeTex}
-            afterTex={pair.afterTex}
-            mix={mix}
-            hasData={showTexture}
-            effects={effects.uniforms}
-          />
-          <AtmosphereRim />
-          <PoleAxisMarkers />
-          <OrbitControls enableZoom={expanded} enablePan={false} enableRotate rotateSpeed={0.6} />
-        </Canvas>
+        {webgl ? (
+          <Canvas camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }} dpr={[1, 2]} gl={{ alpha: true }}>
+            <GlobeSphere
+              beforeTex={pair.beforeTex}
+              afterTex={pair.afterTex}
+              mix={mix}
+              hasData={showTexture}
+              effects={effects.uniforms}
+            />
+            <AtmosphereRim />
+            <PoleAxisMarkers />
+            <OrbitControls enableZoom={expanded} enablePan={false} enableRotate rotateSpeed={0.6} />
+          </Canvas>
+        ) : (
+          <GlobeStaticOrb />
+        )}
 
         {!expanded && (
           <button type="button" className={styles.expandButton} onClick={onToggleExpand} aria-label="Expand globe" />

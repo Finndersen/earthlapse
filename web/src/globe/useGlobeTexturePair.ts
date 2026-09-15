@@ -32,14 +32,25 @@ export interface GlobeTexturePair {
 /**
  * `preloadUrls` should come from `globePreloadUrls`. Preloads are fire-and-forget: a failure
  * is logged and the frame is simply fetched again when it is actually needed.
+ *
+ * `enabled` (default `true`) gates every fetch and decode this hook does, bound pair and
+ * preload window alike — `Globe.tsx` passes `false` when `!supportsWebGL()`: without a GL
+ * context to ever display a texture, fetching and decoding PaleoDEM/Merdith frames is pure
+ * waste, worst on exactly the devices least able to afford it. `false` returns the same
+ * "nothing bound yet" shape `texturesReady: false` already means before the first pair loads,
+ * so a caller that ignores WebGL support entirely still gets a well-formed, inert result.
  */
-export function useGlobeTexturePair(blend: GlobeBlend | null, preloadUrls: readonly string[]): GlobeTexturePair {
+export function useGlobeTexturePair(
+  blend: GlobeBlend | null,
+  preloadUrls: readonly string[],
+  enabled = true,
+): GlobeTexturePair {
   const [bound, setBound] = useState<BoundTexturePair | null>(null)
   const requestIdRef = useRef(0)
   const frozenMixRef = useRef(0)
 
   useEffect(() => {
-    if (blend === null) return undefined
+    if (!enabled || blend === null) return undefined
     const alreadyBound =
       bound !== null && bound.beforeUrl === blend.beforeUrl && bound.afterUrl === blend.afterUrl
     if (alreadyBound) return undefined
@@ -61,17 +72,17 @@ export function useGlobeTexturePair(blend: GlobeBlend | null, preloadUrls: reado
     return () => {
       cancelled = true
     }
-  }, [blend, bound])
+  }, [enabled, blend, bound])
 
   // Keyed on the joined URLs, not the array: `Globe` recomputes the window every frame during
   // playback, but it only changes when `t` crosses into a new frame pair.
   const preloadKey = preloadUrls.join('\n')
   useEffect(() => {
-    if (preloadKey === '') return
+    if (!enabled || preloadKey === '') return
     for (const url of preloadKey.split('\n')) {
       loadTexture(url).catch((error: unknown) => console.error(error))
     }
-  }, [preloadKey])
+  }, [enabled, preloadKey])
 
   // Trim only once a pair is bound, keeping it, the pair being requested and the preload
   // window, so eviction can never dispose a texture that is on screen or about to be.

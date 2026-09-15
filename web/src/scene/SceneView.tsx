@@ -22,6 +22,7 @@
 
 import { type ReactNode, useMemo } from 'react'
 
+import { supportsWebGL } from '@/lib/webgl'
 import type { GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
@@ -32,7 +33,6 @@ import { SceneCanvasView } from './SceneCanvasView'
 import { SceneFallbackView } from './SceneFallbackView'
 import { crossfadeAlpha } from './transition'
 import { useReducedMotion } from './useReducedMotion'
-import { supportsWebGL } from './webgl'
 
 export interface SceneViewProps {
   t: GeoTime
