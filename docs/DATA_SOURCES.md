@@ -23,7 +23,7 @@ Every source normalises to exactly one of these. Adding a fifth requires an ADR.
 
 | Shape | Fields | Used for |
 |---|---|---|
-| `TimeSeries` | `t, value, [uncertainty]` + interpolation policy | scalar layers, `WorldState` fields |
+| `TimeSeries` | `t, value, [uncertainty]` + interpolation policy + `[gaps]` | scalar layers, `WorldState` fields |
 | `EventSet` | `t_min, t_max, label, kind, t (moments only), tags, importance, description, citation` | timeline events |
 | `RasterSequence` | `t, georeferenced grid` | globe textures, gridded layers |
 | `Tree` | `node, parent, t_divergence, label` | ancestor lineage |
@@ -170,26 +170,31 @@ Merdith 2021 are unconfirmed; check each deposit before republishing derived ras
 
 ---
 
-## `co2-o2` — Phanerozoic atmospheric composition
+## `co2-o2` — Atmospheric CO₂, 570 Ma → AD 2025
 
 Small, easy, and the ideal first layer for the vertical slice.
 
 | | |
 |---|---|
-| **Source** | GEOCARBSULF / Berner; plus Foster et al. compilations |
-| **Access** | **VERIFIED.** `https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt` (NOAA Paleo, plain HTTP, no auth) |
-| **Format** | fixed-width text, long human-readable header, 58 rows |
-| **Coverage** | 570 Ma → present, exactly 10 Myr spacing, no gaps |
-| **Volume** | tiny — < 100 KB |
-| **Licence** | US public domain (NOAA); cite Berner GEOCARB III / Royer |
-| **Shape** | `TimeSeries` × 2 (CO₂ ppm, O₂ %) |
+| **Source** | Spliced, newest first: NOAA GML Mauna Loa annual means (1959–2025); Bereiter et al. 2015 Antarctic ice-core composite (~806 ka–AD 2001); GEOCARB III (Berner & Kothavala 2001, 570–0 Ma) |
+| **Access** | **VERIFIED.** `https://gml.noaa.gov/webdata/ccgg/trends/co2/co2_annmean_mlo.txt`; `https://www.ncei.noaa.gov/pub/data/paleo/icecore/antarctica/antarctica2015co2composite.txt`; `https://www.ncei.noaa.gov/pub/data/paleo/climate_forcing/trace_gases/phanerozoic_co2.txt` (plain HTTP, no auth; per-file sha256 in `manifest.toml` `[[artefacts]]`) |
+| **Format** | three text files: whitespace columns (GML), tab-separated with BOM + CRLF (ice core), fixed-width with prose header (GEOCARB) |
+| **Coverage** | annual 1959–2025; ~1–700 yr spacing back to ~806 ka; then 10 Myr spacing from 10 Ma to 570 Ma. **806 ka–10 Ma has no data** and is declared a `TimeSeries.Gap` (ADR-027) rather than left for `sample()` to bridge log-linearly — that bridge read 207–277 ppm, a glacial low, where the Pliocene was ~350–400 ppm. `sample()` returns `None` inside it, scene conditions name the gap, and the HUD readout, sparkline and chart render it as absent rather than plot it. No verifiable Cenozoic proxy file was found to fill the span itself (see the source README) |
+| **Volume** | measured 59 KB raw; 1,977 curated rows |
+| **Licence** | NOAA NCEI paleo files US public domain; NOAA GML freely available with credit requested. Cite Lan/Keeling (GML/SIO), Bereiter 2015, Berner & Kothavala 2001 |
+| **Shape** | `TimeSeries` × 1 (`co2`, ppm). No O₂: none of the files has it |
 | **Storage** | **git**, committed parquet |
 
-**Processing** — parse, unit-normalise, attach uncertainty envelopes (these proxies have
-wide error bars and the chart should show them), define interpolation policy (linear in
-log-CO₂ is probably right ⚠️ VERIFY).
+**Processing** — parse each file, convert to years before the fixed AD 2025 present
+(GML `t = 2025 − year`, raising on a later year; ice core `t = age_BP1950 + 75`; GEOCARB
+`t = |Ma| × 1e6` and `ppm = RCO2 × 280`). Splice newest first: each segment keeps only samples
+strictly older than everything before it, which drops the ice core's AD 1959–2001 rows and
+GEOCARB's 0 Ma pre-industrial value. Uncertainty comes from each file's own sigma column;
+GEOCARB rows have none. Interpolation is **log-linear**. Splice points and the monthly
+re-pinning of the GML file are documented in `sources/co2-o2/README.md`.
 
-**Integration** — `WorldState.atmosphere`; two HUD sparklines; drives sky haze and colour in
+**Integration** — `WorldState.atmosphere.co2_ppm`; one HUD CO₂ sparkline and readout (an O₂
+layer needs a separate source); drives sky haze and colour in
 the variant half of the style spec (see `VISUAL_SPEC.md`).
 
 ---

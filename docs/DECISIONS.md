@@ -313,6 +313,57 @@ as a view into the world.
   symlog `u` to hit the per-scene/dissolve floor (33 of 39 paced segments), so a full 1x
   playthrough of the current manifest takes about 87 s. A future manifest with wider gaps
   would take less; nothing is slowed below the ordinary `baseRate`.
+- **Amendment — 2026-09-15: scene texture colour space.** "Blended in linear light" and
+  "pixel-exact at both ends" above describe the intended shader, not what shipped.
+  `scene/textureCache.ts` tagged every scene texture `SRGBColorSpace`, so the GPU decoded it to
+  linear on sample; `scene/shaders.ts`'s fragment shader then decoded it a second time
+  (`srgbToLinear`) for the blend and, at the two settled endpoints, wrote the already-decoded
+  linear texel straight to `gl_FragColor` with no re-encoding at all. Every scene rendered
+  darker than its file — measured at 1440×900, centre-crop means 30–64 codes below the
+  published JPEG across five scenes spanning the manifest (`ediacaran-shallows`,
+  `cambrian-seafloor`, `giza-great-pyramid`, `magma-ocean`, `shenzhen-bay-present`), consistent
+  with the same double-decode-no-re-encode bug ADR-015's portrait plates had. Textures now
+  upload `NoColorSpace`, matching `layers/portraitTextures.ts`; the shader is otherwise
+  unchanged, since its own `srgbToLinear`/`linearToSrgb` bracket was already correct for a
+  texture that samples as raw sRGB bytes. Re-measured directly off the WebGL canvas (not a
+  resized page screenshot) against a numpy emulation of `coverUV` plus bilinear sampling of the
+  published JPEG, across thirteen settled scenes spanning the manifest: per-pixel MAE
+  0.24–0.25 codes, mean signed delta 0.00, p99 |Δ| 0.5 — 8-bit rounding, not a colour-space
+  defect. (A same-day resized-screenshot comparison had reported up to 2.6 codes on
+  `magma-ocean`; that spread was resize/crop interpolation noise, not present in the raw
+  canvas.) The globe's fragment shader was checked against the same
+  failure mode (GLOBE.md §2.3/§9 G2) and was already correct — it decodes via `SRGBColorSpace`
+  deliberately and re-encodes once via `#include <colorspace_fragment>` at the end, so it was
+  left unchanged.
+- **Amendment — 2026-09-15: idle calm removed; an About & credits panel replaces the always-on
+  footer.** User (2026-09-14): "also the event feed shouldn't fade away when there is no mouse
+  movement - i dont think anything should automatically fade away"; and, on the footer, "maybe
+  the credit should just be a popover element/panel instead of what appears to be an entirely
+  new page? so the immersive experience isnt interupted so much. the 'Artistic reconstruction —
+  plausibility, not accuracy.' disclaimer can probably be removed entirely or moved into the
+  credits panel."
+  - Idle calm — this ADR's "the periphery dims while playback runs and the viewer is idle" — is
+    removed outright, not tuned: `useIdle`, the `calm` prop, `data-calm`, the `.peripheral` CSS
+    and `IDLE_CALM_MS` are gone from `shell/` and `app/Experience.tsx`. A repo-wide check found
+    no other inactivity-driven hide (the timeline hint dismisses on an explicit dismiss or a
+    successful hover, never a timer; nothing else in scene, globe or transport fades or hides on
+    its own). The event feed's own fade — cards receding as the playhead moves past them — is
+    unaffected: it was already pure in `t`, not tied to mouse inactivity, and was never idle
+    calm to begin with.
+  - The footer row this ADR put below the timeline (a Credits link plus the VISUAL_SPEC §9
+    disclosure) is removed with it. In its place: a small muted "About & credits" button,
+    top-left, in flow with the globe orb's own column rather than fixed-position (`ShellLayout.
+    tsx`), opening `shell/Panel.tsx` — the one shared accessible dialog primitive this
+    introduces (focus trap, Escape, focus restore, click-outside, a phone bottom-sheet layout,
+    one polite open announcement) — over `shell/CreditsList.tsx`, which now leads with the
+    disclosure as its first line rather than showing it permanently on screen. `/credits` stays
+    as a direct/bookmarkable route rendering the same `CreditsList`; nothing in the app links to
+    it any more, since the panel is now the way in.
+  - **Consequences.** VISUAL_SPEC §9 and DESIGN §1's non-goal wording no longer claim the
+    disclosure is always on screen — it is one click/tap away instead, still shown before any
+    credit. Neither section is marked NORMATIVE, so this amendment is the record of the decision
+    rather than a contract change. `Panel` is meant to be reused for the next panel-shaped UI
+    (an event detail popout) rather than a second bespoke dialog being built alongside it.
 
 ---
 
@@ -587,6 +638,413 @@ up to 2.1 plate widths; every other pair stays under 0.43.
   `holozoa` but not `metazoa`, whose vignette disc is filled; the pair between them, matched
   only because both boxes were wrong the same way, then smeared. Fixing detection would reframe
   all 39 pairs at once; the cap bounds the one failure that is visible.
+
+**Amendment (2026-09-14): publish normalises each plate's exposure.** The human found the Homo
+sapiens plate hard to see in the lens: a dark-skinned figure, lit low, on the black field, "very
+dark and should be brighter". Measured, the subject highlights of the 40 pinned plates spread 2×
+on the statistic below (sapiens 107 to holozoa 210; about 4× on a mid-tone measure). Most
+vertebrate and hominin plates were under-exposed and the microscope plates were not, so no single
+viewer-wide curve could serve both.
+- **Statistic.** `pipeline/exposure.py`, Pillow only, because publish must run without the
+  `morph` extra.
+  - Luma at 256 px. The backdrop is a 41 px morphological opening of it, which keeps the
+    vignette's glow and drops the organism.
+  - Subject pixels are more than 10 codes above that backdrop, inside a central disc of radius
+    0.42, so dish rims and vignette edges don't count.
+  - The highlight is the subject's 95th-percentile luma code.
+- **Curve.** Per pixel, one factor for all three channels, in gamma-2.2 linear light (the
+  shader's blend space), so every pixel keeps its hue and saturation.
+  - The factor is read from the pixel's brightest channel: the shoulder g·x / (1 + (g − 1)·x),
+    which reaches 1 only at white, so no channel clips. Below code 16 it blends in from the
+    identity by a smoothstep, so near-black and its JPEG noise keep their depth.
+  - It fades in over the first 20 codes by which that channel stands above the backdrop (the
+    same opening, taken of the brightest channel). The glow behind the subject is the backdrop,
+    so it keeps its level and grain, and the lift draws no outline around the subject.
+  - g lands the highlight on `TARGET_HIGHLIGHT = 160`, where the fossil fish and microscope
+    plates already sit. It is capped at `MAX_GAIN = 3.5` and never goes below 1. A grey highlight
+    lands exactly; a coloured one lands a few codes short (144–159 measured), because its
+    brightest channel sits above its luma.
+  - Tested: a grey code is monotonic, never darker, and keeps 0 and 255; the brightest channel
+    never clips; a dark coloured pixel keeps its channel ratios; the glow beside a subject moves
+    at most 3 codes.
+- **Where: a publish-time derivative, not a viewer gain.** `earthtime publish` writes the
+  normalised plate to `data/media/portraits/<id>.<ext>` from the untouched pinned candidate.
+  - Format: JPEG at quality 100 with the source's chroma subsampling; PNG stays PNG. At gain 1
+    the file is the pin byte for byte.
+  - The viewer draws the file. The WebGL morph (uAlpha 0 and 1) and the no-WebGL crossfade draw
+    the same pixels, and a mid-morph frame blends plates that are already normalised.
+  - That was not true when this amendment was first written. Since the portrait renderer landed,
+    `portraitTextures.ts` tagged plates `SRGBColorSpace`, so the GPU decoded them to linear
+    light, and the shader wrote the texel out without encoding it again. Every WebGL plate showed
+    at about (code/255)^2.2, a large part of what the human saw. Plates now upload with
+    `NoColorSpace`, and the shader's own transfer applies only to the blend. On settled plates
+    at 1440×900, the centre-disc mean of WebGL and the `<img>` fallback now agree within 1 code
+    (`homo-sapiens` 32.0 against 31.4; the double decode predicts 5.1).
+  - Morph fields are unaffected. `earthtime morph` still reads the pinned originals, keyed by
+    pin digests and `MORPH_ALGORITHM_VERSION`. Exposure moves no pixel, so flows and subject
+    boxes are unchanged and no morph recomputes.
+  - Pins are untouched (ADR-005), and `pinned` still names the original.
+- **Contract addition (additive).**
+  - The lineage layer file's `PortraitPlateData` gains `exposure: {highlight, gain}`.
+    `highlight` is null when no subject stands out, and such a plate publishes unchanged.
+  - `web/src/data/curated.ts` parses the field when present and accepts its absence (older layer
+    files), refusing a gain below 1.
+  - `PortraitPlate` in `web/src/types/layer.ts` is unchanged: the viewer never needs the number.
+- **Result.** 31 plates brightened (gain 1.02–3.22). 9 are unchanged: the 5 microscope plates,
+  `catarrhini`, `sarcopterygii`, `osteichthyes` and `metazoa`. The media churn is a one-off
+  rewrite of 31 LFS JPEGs of similar size (ADR-018). Publish takes about 10 s longer.
+- **Rejected: one LUT per channel with a toe below code 40 (this amendment's first version).**
+  - Dark subjects straddle the toe, so their channels took different gains and shifted hue:
+    `homo-sapiens` shadows went from R/G 0.876 to 0.815, and subject saturation from 0.26 to 0.33.
+  - The toe also left dark bodies mostly un-gained.
+  - Above the toe, the glow behind the subject (codes 25–40) took nearly the full gain:
+    `primates` rose from 39 to 54.
+- **Rejected: weighting the gain by a feathered subject mask.** Inside the mask the glow lifted
+  and outside it did not, which drew a halo in the subject's silhouette.
+- **Rejected: a per-plate gain in the viewer.** It would need a published number, a shader
+  uniform per plate and a CSS filter for the crossfade. CSS `brightness()` scales encoded sRGB,
+  so the two render paths would no longer match, all to do what one deterministic file does.
+- **Rejected: lifting the backdrop.** A specimen on a black field is the register (VISUAL_SPEC
+  §10). The field and the glow keep their level: their medians stay within 3 codes of the pin.
+- **Limit.** Normalisation cannot add light the generator never gave. `homo-sapiens` (gain
+  3.22) and `hominini` (3.07) remain the darkest plates. Their subject medians rise from 28 to 45
+  and from 32 to 53.
+  Regenerating them with a brighter key light is the human's call; nothing was regenerated.
+
+**Amendment (2026-09-15): incoherent pairs dissolve instead of tangling; the scale bar is
+excluded from flow estimation; pose-divergent pairs smooth harder.** Portrait QA flagged four
+mid-transition frames showing two offset bodies or tangled limbs, and the scale bar warped into
+a hook or squiggle: `boreoeutheria` → `euarchontoglires`, `haplorhini` → `catarrhini`, `holozoa`
+→ `metazoa`, `homininae` → `hominini`.
+
+- **Diagnosis, per pair, on the algorithm as it shipped (v2).** Four numbers: 95th-percentile
+  flow displacement (plate widths, the existing `refuse_bursting_flow` statistic); mean
+  round-trip error of the forward field composed through the backward field, over the whole
+  frame (an FB-consistency check `pipeline.morph` did not previously compute); `pose_divergence`
+  — the new `abs(log(older.aspect / younger.aspect))` statistic, 0 for identically-shaped subject
+  boxes; and the scale-bar region's mean displacement as a ratio of the rest of the frame's.
+
+  | pair | flow p95 (fwd/bwd) | round-trip error (fwd/bwd) | pose divergence | bar-region ratio (fwd/bwd) |
+  |---|---|---|---|---|
+  | `boreoeutheria`→`euarchontoglires` | 0.43 / 0.25 | 0.194 / 0.161 | 0.775 | 0.42 / 1.30 |
+  | `haplorhini`→`catarrhini` | 0.16 / 0.17 | 0.060 / 0.080 | 0.332 | 2.20 / 1.06 |
+  | `holozoa`→`metazoa` | 0.19 / 0.09 | 0.056 / 0.054 | 0.0 | 2.44 / 1.13 |
+  | `homininae`→`hominini` | 0.21 / 0.23 | 0.061 / 0.067 | 0.366 | 1.02 / 0.82 |
+
+  A bar-region ratio away from 1 (`holozoa`, `haplorhini`) confirms the bar itself is moving
+  differently from the rest of the frame — consistent with the reported hook/squiggle. The other
+  three numbers tell three different stories, not one:
+  - `boreoeutheria`→`euarchontoglires` is a large, genuinely divergent pose (0.775, four times
+    the next worst) **and** incoherent (round-trip error far above every other pair measured,
+    including the four in this table) — flow magnitude and disagreement agree it is the worst
+    pair.
+  - `haplorhini`→`catarrhini` and `homininae`→`hominini` have moderate pose divergence and
+    moderate round-trip error — not outliers on any one number, but the combination reads as
+    tangled limbs in the rendered frame.
+  - `holozoa`→`metazoa` has **zero** pose divergence (both boxes come out square) but is still
+    visibly doubled. Its subject box span is 0.98 — the same near-full-frame span the original
+    zoom-cap amendment measured for `holozoa` against `opisthokonta` ("the ring framed it… at
+    span 0.98"), here independent of which neighbour it pairs with: `holozoa`'s own radiating
+    filaments inflate its box regardless of partner, so a shape-based (aspect) statistic cannot
+    see this failure mode at all.
+  - Two of the four also have an **inflated subject box** feeding bad numbers upstream of flow
+    estimation entirely. `homininae`'s detected box is `(0.03, 0.03)`–`(0.97, 0.97)` in analysis
+    coordinates — 69% of the frame thresholded as "subject" — because its backdrop is very dark
+    and very clean (border median 1, MAD 1), which floors `detect_subject_box`'s threshold at
+    `MIN_CONTRAST = 18` (an absolute code value, not scaled to the vignette's own radial falloff)
+    while the vignette's natural glow already reads 26 at frame centre with no subject there at
+    all. `boreoeutheria`'s box similarly overshoots: its detected bottom (0.82) sits well below
+    where the animal's paws visibly end in the source plate (≈0.61–0.62), which is why its own
+    scale bar sits *above* the detected box rather than below it.
+
+- **Decision — three complementary, additive changes to `pipeline/morph.py`,** none of which
+  individually would have covered all four pairs (see above):
+
+  1. **Scale-bar exclusion by known layout, not detection.** `PORTRAIT_STYLE` places the bar "a
+     thin, pale grey horizontal scale bar… below the subject, left of centre" — a fixed
+     compositional rule, not something that needs to be found in the pixels. Detecting it by
+     contrast was tried and measured unreliable: on the pinned corpus, thresholding plus a
+     horizontal morphological opening (wide enough to keep a bar and drop noise) found nothing
+     in over half the plates spot-checked — the bar is too faint or too thin at generation size
+     to survive it. `scale_bar_band(box)` instead returns a fixed band under the subject's own
+     detected box (`SCALE_BAR_BAND_ABOVE = 0.08`, `SCALE_BAR_BAND_BELOW = 0.15` plate-UV above
+     and below `box.bottom`, `SCALE_BAR_BAND_RIGHT_MARGIN = 0.2` past the box's own horizontal
+     centre). `erase_band` paints it out (at the plate's own backdrop level) before DIS ever
+     sees it, so it cannot pollute correspondence for the real subject nearby either; `zero_band`
+     additionally zeroes the *composed* field there, so nothing under the band ever warps even
+     if a sliver of the bar survived normalisation at the band's edge. The "above" margin is
+     deliberately modest: reaching further would start eating real subject content for a
+     compact subject, and a box inflated enough to put the true bar further above its own
+     bottom edge (`homininae`, `boreoeutheria`, above) is already incoherent enough to dissolve
+     on its own, where the band's precision stops mattering.
+  2. **Pose-divergent pairs get more smoothing, not the same fixed kernel.** `SubjectBox` gains
+     an `aspect` property (height/width); `pose_divergence` is `abs(log(older.aspect /
+     younger.aspect))`, symmetric in which plate is older. `flow_smoothing_sigma` widens
+     `normalised_flow`'s Gaussian kernel by up to `POSE_DIVERGENCE_SMOOTHING_GAIN = 3.0`×,
+     capped at `MAX_FLOW_SMOOTHING_SIGMA = 16.0` (the unmodified sigma is 6.0). A squat,
+     off-centre subject and a large, centred one cannot be reconciled by DIS's local
+     correspondence at a sharp kernel — coherent bending needs to trade fine detail for
+     agreement, not fight for a precise match that does not exist.
+  3. **A pair whose flow is still incoherent after (1) and (2) dissolves instead of shipping.**
+     `inverse_consistency(forward, backward, region, size)` composes the forward field through
+     the backward field and measures how far the round trip lands from identity, restricted to
+     `region` (each plate's own subject box — the whole-frame statistic above is diluted by a
+     mostly-flat, near-zero-flow backdrop and was measurably less sensitive). `compute_morph`
+     takes the worse of the two directions; past `MAX_INVERSE_CONSISTENCY = 0.038` it zeroes
+     both fields and reports `PlateMorph.fallback_dissolve = True`. A zeroed field is not a
+     special case for the viewer: `olderUv = vUv - uAlpha * flowAt(...)` with an all-zero field
+     is exactly `vUv`, so the WebGL shader already renders it as the plain linear-light
+     crossfade `PORTRAIT_FRAGMENT_SHADER` uses when `uHasFlow` is unset — no shader change.
+     `write_morph` still writes both (tiny, all-zero) PNGs and the record for inspection, but
+     `pipeline.publish._portrait_morphs` treats a `fallback_dissolve` pair exactly as if
+     `earthtime morph` had not run for it yet: no `PortraitMorphData` entry, no files copied.
+     This reuses the contract this ADR already established rather than adding a new one — "A
+     plate without a pin, or a pair without a morph, degrades gracefully… crossfades" — so
+     `web/src/data/curated.ts` and `web/src/types/layer.ts` need no change. The one difference
+     from a genuinely missing morph: `earthtime publish` reports it as a `note`, not a
+     `WARNING`, and `earthtime morph`'s cache means it is never silently mistaken for
+     unfinished work (`portraits.dissolved_morphs` in `PortraitPublication`, distinct from
+     `missing_morphs`).
+
+- **`MORPH_ALGORITHM_VERSION` is now `3`.** Every cached morph recomputes; `earthtime morph`
+  reports each pair as computed or dissolved.
+
+- **Calibration of `MAX_INVERSE_CONSISTENCY`.** Measured against all 39 pinned-adjacent pairs,
+  through the shipped pipeline (band excluded, adaptive smoothing applied), the subject-box
+  round-trip statistic above: 23 pairs cluster at or under 0.035, then one real gap
+  (`osteichthyes`→`sarcopterygii` 0.0349, `holozoa`→`metazoa` 0.0407), then 16 pairs from 0.041
+  up to 0.186. `MAX_INVERSE_CONSISTENCY = 0.038` sits in that gap: it is the loosest threshold
+  that still catches all four reported pairs, and no threshold catches only those four — the
+  metric does not rank-order visual severity precisely enough for that (see Limit, below). The
+  16 that dissolve: `boreoeutheria`→`euarchontoglires` (0.186, worst by a wide margin),
+  `placentalia`→`boreoeutheria`, `opisthokonta`→`holozoa`, `archaeal-host-lineage`→`leca`,
+  `luca`→`archaeal-host-lineage`, `haplorhini`→`catarrhini`, `olfactores`→`vertebrata`,
+  `homininae`→`hominini`, `chordata`→`olfactores`, `primates`→`haplorhini`,
+  `gnathostomata`→`osteichthyes`, `synapsida`→`therapsida`, `mammalia`→`theria`,
+  `homo-heidelbergensis`→`homo-sapiens`, `sarcopterygii`→`tetrapodomorpha`, `holozoa`→`metazoa`.
+  `hominidae`→`homininae` (0.0379) stays just under and keeps a real morph, as does every
+  microscope-plate pair among the earliest nodes except the three named above.
+
+- **Rejected: fixing `detect_subject_box`'s threshold directly.** The vignette-glow inflation
+  behind `homininae` and `boreoeutheria`'s bad boxes (Diagnosis, above) is a real bug, but fixing
+  it — scaling `MIN_CONTRAST` to the vignette's own radial falloff rather than a flat code value
+  — would reframe every one of the 39 pairs at once, the same objection the original zoom-cap
+  amendment raised against "correcting subject detection instead" for `holozoa`. The dissolve
+  fallback already catches a badly-boxed pair's consequence (incoherent flow) without needing to
+  diagnose or fix its cause; a `detect_subject_box` fix, should the human want one, is a
+  separate, standalone change with its own review, not a rider on this one.
+- **Rejected: detecting the scale bar by contrast or shape instead of a known-layout band.**
+  Measured unreliable (Decision 1, above) — too faint or thin to survive thresholding in over
+  half the corpus spot-checked, including three of the four reported pairs' own plates.
+- **Rejected: a single flow-magnitude (p95 displacement) threshold as the dissolve trigger.**
+  It measures how far things moved, not whether forward and backward correspondence agree on
+  where. `homo-heidelbergensis`→`homo-sapiens`, which reads as a clean single-figure transition,
+  reaches 0.36 backward p95 — higher than every one of the four reported pairs' own worst
+  direction. A large but *coherent* pose change and a smaller but *tangled* one cannot be told
+  apart by magnitude alone.
+- **Rejected: the round-trip statistic over the whole plate rather than each subject's own box.**
+  A typical plate is mostly flat, near-zero-flow backdrop; averaging over all of it diluted the
+  signal from a badly-behaved subject region enough to blur the gap the threshold now sits in.
+- **Rejected: a photometric "ghosting score"** — mean pixel disagreement between the two plates
+  each half-warped to the midpoint, in the same output frame the shader itself produces. Tried
+  because it measures the visible symptom directly rather than a proxy in flow space, but it
+  did not separate the four reported pairs from clearly fine ones either: a translucent
+  microscope subject's radiating filaments (`luca`→`archaeal-host-lineage`) scored worse than a
+  solid, genuinely doubled quadruped body, because thin low-contrast structures always disagree
+  a little at their edges without ever reading as "two bodies." The subject-box round-trip
+  statistic, while still an imperfect proxy (below), was the most defensible of everything
+  tried.
+
+**Limit.** No statistic tried ranks all 39 pairs in exact agreement with how each one actually
+looks. `MAX_INVERSE_CONSISTENCY` is calibrated to catch the whole shoulder the four reported
+pairs sit in rather than to draw a perfect line — the deliberate choice, given a false positive
+(a fine pair loses its warp and shows a clean crossfade instead) costs far less than a false
+negative (a bad pair keeps shipping the reported defect). The known cost: `homo-heidelbergensis`
+→`homo-sapiens` measured 0.0422, just past the threshold, despite reading as a clean single-figure
+transition in the QA screenshots taken for this amendment — it now dissolves too. The other
+eleven pairs in the dissolved group were not individually visually re-verified; several sit at
+lineage nodes with historically awkward framing (`opisthokonta`, `holozoa`, the earliest
+microscope-plate transitions the original ADR's zoom-cap amendment already found fragile), so a
+conservative dissolve there is plausibly correct rather than merely cautious, but this amendment
+does not claim to have confirmed each one by eye.
+
+**Consequences.**
+- 23 of 39 pairs keep a computed, warped morph; 16 dissolve. Every one of the four queue-reported
+  pairs is in the dissolved group, so the reported defect (doubled bodies, tangled limbs, a
+  warped scale bar) cannot appear in the viewer for them: a dissolved pair's fields are
+  identically zero, which the shader already renders as `PORTRAIT_FRAGMENT_SHADER`'s plain
+  linear-light crossfade.
+- Media churn: 23 morph PNG pairs (46 files) recomputed under the new algorithm; the 16 pairs
+  that now dissolve are no longer part of the publication, so `earthtime publish` no longer
+  copies their PNGs into `data/media/portraits/morphs/` or lists them in `lineage.json`'s
+  `portraits.morphs`. The now-unpublished v2 files for those 16 pairs (32 files) are left as
+  orphans in the working tree by this change — `pipeline.publish.write_publication` has never
+  pruned media no longer referenced by a fresh publish, for scenes or portraits alike, which
+  predates this amendment and is out of scope for it; noted here so the churn is not mistaken
+  for an oversight.
+- No contract change reaches the web side: `PortraitMorphData`, `curated.ts` and `layer.ts` are
+  unchanged, because a dissolved pair reuses the "no morph yet" path this ADR already specified.
+  `MorphRecord.fallback_dissolve` (pipeline-only, the cache and CLI reporting) is the only new
+  field.
+- Pins are untouched (ADR-005): this amendment changes only derived, deterministic morph data,
+  never a pinned image or `data/portraits.yaml`.
+
+**Amendment (2026-09-16): the scale-bar band anchors on a vignette-robust extent, not
+`detect_subject_box`; the dissolve gate measures the same extent; two pairs the statistic cannot
+catch dissolve by an explicit list.** QA on the 2026-09-15 amendment (queue item 14, portrait
+morph QA round 2) found the scale-bar band it introduced anchored on the wrong thing and, on two
+pairs, erased real anatomy — a regression this amendment fixes — and that the dissolve gate it
+calibrated missed a pair that reads as visibly ghosted.
+
+- **Diagnosis.** `detect_subject_box`'s box is not merely wrong on the two plates the original
+  amendment named (`homininae`, `boreoeutheria`) — it is inflated on most of the pinned corpus.
+  Its threshold is a single value above the plate's own *rim* code; a strong vignette's own
+  central glow clears that threshold long before any real subject does, so the box swells toward
+  the frame's edge on plate after plate. Measured directly: `amniota`'s box bottom sits at 0.92 in
+  plate UV while the lizard's real belly sits around 0.6; `tetrapoda` similarly at 0.94 against a
+  real bottom near 0.68. A band anchored on `box.bottom ± SCALE_BAR_BAND_*` inherits that error
+  twice over — it misses the true bar on most plates (QA measured it outside the band on 27 of
+  40), and on plates where the inflated box happens to reach far enough, the band's own upper
+  margin lands *inside* real anatomy. Two pairs rendered visibly worse than the algorithm this
+  amendment replaces as a direct result: `theria` → `eutheria` (ghost legs and a doubled tail at
+  mid-transition) and `leca` → `opisthokonta` (a hard-edged ghost lobe beside the cell), both
+  confirmed live in WebGL by QA and reproduced here before the fix. The same inflation also
+  explains why `pose_divergence` read `holozoa` → `metazoa` as perfectly square-to-square
+  (zero divergence) despite a visibly doubled render: both boxes were inflated toward the frame's
+  own aspect, not the subjects'. Separately, the dissolve gate's round-trip statistic — measured
+  within `detect_subject_box`'s box — is diluted by that same inflation on most pairs, the same
+  failure mode the original amendment already rejected a whole-frame statistic for, just arrived
+  at by a different route; `metazoa` → `eumetazoa` (QA evidence: a torn, translucent ghost at
+  mid-transition, reproduced here) scores 0.0365, comfortably under any threshold that does not
+  also dissolve pairs that render cleanly.
+
+- **Decision.**
+  1. **A second, vignette-robust subject extent, `bar_search_extent`, anchors the scale-bar band
+     and gates the dissolve statistic — `detect_subject_box` keeps doing everything else.**
+     `pipeline.exposure.subject_mask` (promoted from private to a public function; `measure_highlight`
+     now calls it too, so the two publish-time normalisations share one subject-detection routine
+     instead of two) compares each pixel to a *local* backdrop — a wide morphological opening,
+     not a single frame-corner value — so a vignette's glow reads as backdrop wherever it falls
+     instead of inflating the mask. It is already calibrated against the full pinned corpus for
+     exposure normalisation; reusing it here needed no new tuning. Measured against the same four
+     plates: `amniota`'s extent lands at 0.67, `tetrapoda`'s at 0.68 — both close enough to the
+     real subject that `SCALE_BAR_BAND_*`'s fixed margins (widened slightly, 0.08→0.10 above,
+     0.15→0.16 below, to the largest offset measured on a small sample) bracket the true bar on
+     every plate checked. `detect_subject_box` is untouched and still drives framing, zoom
+     (`bounded_fills`/`Framing.centring`) and pose-divergence smoothing exactly as before — this
+     is deliberately not the rejected "fix `detect_subject_box`" alternative from either earlier
+     amendment: nothing about how a plate is cropped or zoomed changes, only where the bar gets
+     excluded and which region the dissolve gate reads.
+  2. **`erase_band` and `zero_band` take `bar_search_extent`'s own mask and never touch a pixel it
+     calls subject, regardless of where the band geometrically falls.** This is the actual fix for
+     the regression, independent of anchor accuracy: even a badly-placed band can no longer erase
+     anatomy, only backdrop. `zero_band`'s edge is now feathered (`ZERO_BAND_FEATHER_SIGMA`, a
+     Gaussian over the band indicator) rather than a hard cutoff, so the band's own boundary
+     cannot tear the field — the subject clip is still exact (applied to the alpha *after*
+     feathering), since that boundary is a real content edge, not a seam.
+  3. **The dissolve gate's `inverse_consistency` region is `bar_search_extent`'s box, not
+     `detect_subject_box`'s**, for the same dilution reason the whole-frame statistic was already
+     rejected for. Recalibrated against all 39 pairs through the fixed pipeline: scores run 0.007
+     to 0.038 with no clean gap, then `gnathostomata` → `osteichthyes` at 0.0397, then 0.041 up to
+     0.177. `MAX_INVERSE_CONSISTENCY = 0.039` sits just under that first pair — 20 pairs stay a
+     real, coherent morph; 18 dissolve. Every pair whose verdict *changed* from the previous
+     calibration, plus `gnathostomata` → `osteichthyes` itself and three previously-kept pairs
+     spot-checked as a regression guard, were rendered live in the running viewer and confirmed
+     by eye (16 pairs total, below); the rest of the unchanged majority — mostly pairs that were
+     already dissolving before this amendment and still do — were carried on the statistic alone,
+     the same practice the 2026-09-15 amendment used for its own unverified majority.
+  4. **`metazoa` → `eumetazoa` dissolves by an explicit `FORCED_DISSOLVE_PAIRS` list, not the
+     statistic.** At 0.0365 it sits inside the clean cluster, yet renders as a torn, translucent
+     ghost at mid-transition (QA evidence, reproduced here) — the same failure mode the round-trip
+     statistic already struggled with in the original amendment's "Limit" section (a translucent,
+     radially-symmetric microscope subject disagrees with its neighbour just enough, everywhere,
+     to read as visible ghosting without concentrating into a high round-trip error anywhere). No
+     threshold separates it from the clean cluster without also dissolving several genuinely fine
+     pairs, so it is listed by id instead and `write_morph` forces the dissolve regardless of what
+     `compute_morph` measured. The previous track's report named this pair as one of four
+     "previously-good" pairs that must not regress; that characterisation was wrong; it was never
+     clean, and this amendment corrects it rather than preserving it.
+  5. **`MORPH_ALGORITHM_VERSION` is now `4`.** Every cached morph recomputes.
+
+- **Recalibration changed the published set beyond the four originally reported pairs and the two
+  QA-flagged ones.** Three pairs the 2026-09-15 amendment dissolved now keep a real morph —
+  `mammalia` → `theria` (0.0204), `sarcopterygii` → `tetrapodomorpha` (0.0309), and `holozoa` →
+  `metazoa` (0.0340), one of the four originally reported pairs, now genuinely fixed by the band
+  correction rather than merely hidden behind a dissolve — all three rendered live in the viewer
+  and confirmed a single coherent body. Five pairs newly dissolve: `hominidae` → `homininae`
+  (0.0408), `catarrhini` → `hominoidea` (0.0452), `eutheria` → `placentalia` (0.0424), `eumetazoa`
+  → `bilateria` (0.0834), and `metazoa` → `eumetazoa` (forced) — all five rendered live and
+  confirmed doubled or ghosted before being accepted into the dissolved set. `gnathostomata` →
+  `osteichthyes`, the new threshold's anchor pair, was also rendered live and confirmed doubled.
+  `homo-heidelbergensis` → `homo-sapiens`, the previous amendment's named "conservative false
+  positive" at 0.0422, was rendered live too: it now scores 0.0794, comfortably inside the
+  dissolved group rather than borderline, so that characterisation no longer holds — it dissolves
+  because it is genuinely incoherent under the fixed pipeline, not as a defensible over-caution.
+  Three kept pairs the previous amendment called out as good — `tetrapodomorpha` → `tetrapoda`,
+  `hominini` → `australopithecus`, `osteichthyes` → `sarcopterygii` — were spot-checked live as a
+  regression guard and confirmed unchanged and coherent. The other twelve dissolved pairs and
+  fourteen of the remaining kept pairs carry an unchanged verdict from the previous calibration
+  and were not individually re-rendered for this amendment; final set: 20 real morphs, 19
+  dissolved.
+
+- **Rejected: fixing `detect_subject_box` itself.** Still rejected, now for a better-understood
+  reason than either earlier amendment had: the inflation this amendment diagnosed is not
+  confined to a couple of plates, so a fix would reframe most of the 39 pairs at once, not the
+  bounded few the earlier amendments discussed. `bar_search_extent` gets the two properties that
+  actually matter here — an accurate anchor for the band, and an undiluted region for the dissolve
+  gate — without touching framing at all.
+- **Rejected: a silhouette-mask IoU or similar new photometric statistic for the dissolve gate,**
+  as the QA report suggested. The original amendment already tried and rejected a photometric
+  ghosting score for the same reason it would fail again here: a translucent microscope subject's
+  edges disagree with its neighbour's a little everywhere without concentrating anywhere, which is
+  exactly what defeated the round-trip statistic for `metazoa` → `eumetazoa` too. An explicit,
+  narrow, visually-verified override list is more honest about the gate's actual limit than
+  another metric tuned to paper over the same blind spot.
+- **Rejected: dropping `erase_band`/`zero_band` and handling the bar only in the shader.** The
+  bar's plate-UV position varies by subject shape (a low reptile's bar sits far higher in the
+  frame, relative to its own subject, than a standing biped's), so there is no fixed screen
+  location a shader-side mask could use without the same per-plate anchor this amendment already
+  computes; moving the exclusion to render time would not remove the need for `bar_search_extent`,
+  only relocate where it is applied, at the cost of a shader change ADR-015 has otherwise avoided
+  throughout.
+
+**Limit.** `bar_search_extent`'s margins were checked against four plates measured by hand, not
+all 40; `erase_band`/`zero_band`'s subject clip is the actual safety net (a band overshoot now
+only ever costs precision, never anatomy), so an unmeasured plate degrades gracefully rather than
+regressing. The round-trip statistic still does not rank-order visual severity precisely — it is
+recalibrated, not perfected — and `FORCED_DISSOLVE_PAIRS` is a named, visually-justified admission
+of that limit for one pair rather than a claim the statistic now works everywhere. 16 of the 39
+pairs were individually re-verified by rendering the actual mid-transition frame in the running
+viewer, not the statistic alone — every pair whose verdict changed (the four originally reported,
+the two QA-flagged where distinct, the three restored, the five newly dissolved, with overlap
+between these groups), the new threshold's anchor pair (`gnathostomata` → `osteichthyes`), and
+three unchanged-kept pairs as a regression guard. The remaining 23 pairs, mostly ones that were
+already dissolving before this amendment and still do, were carried on the statistic and the same
+reasoning the 2026-09-15 amendment used for its own unverified majority.
+
+**Consequences.**
+- 20 of 39 pairs keep a computed, warped morph; 19 dissolve (18 by threshold, 1 forced). Cached
+  morphs and their published files fully recompute (`MORPH_ALGORITHM_VERSION` 3→4).
+- `pipeline/exposure.py` gains one public function, `subject_mask`; `measure_highlight` is
+  refactored to use it (behaviour-preserving — `tests/test_exposure.py` passes unchanged).
+- Media churn: 20 morph PNG pairs (40 files) published under the new algorithm. 66 unreferenced
+  files were measured in `data/media/portraits/morphs/` before this change (the previous
+  amendment's own orphans from algorithm versions 1-3, undercounted there as 32 — the actual
+  figure was 60 — plus this amendment's own churn); all are deleted as part of this change,
+  leaving exactly the 40 currently-published files, rather than left for a future cleanup.
+  `pipeline.publish.write_publication` still does not prune stale media on its own, which remains
+  out of scope for this amendment.
+- No contract change reaches the web side, same as the previous amendment: the shader, `curated.ts`
+  and `layer.ts` are unchanged.
+- Pins are untouched (ADR-005): this amendment changes only derived, deterministic morph data.
+- Two small robustness fixes, unrelated to the band or the gate: `inverse_consistency` now raises
+  on a region with no matching texel instead of silently falling back to the whole-frame
+  statistic (the exact dilution this amendment's own point 3 removes elsewhere), and
+  `normalised_flow`'s `sigma` is a required parameter — `compute_morph` was already its only
+  caller and always passed one explicitly.
+- `tests/test_portraits.py` gains a publish-time test for the dissolved-pair branch
+  (`test_publish_skips_a_dissolved_morph_and_lists_it_separately`), alongside the existing
+  computed-morph one it was missing a counterpart for.
 
 ---
 
@@ -1567,10 +2025,11 @@ class SoundMode(StrEnum):
     LOOP = "loop"
     ONCE = "once"
 
+
 class SceneSound(BaseModel):
-    stem: str                    # id in the audio-stems catalogue (pipeline.audio.StemBook)
+    stem: str  # id in the audio-stems catalogue (pipeline.audio.StemBook)
     mode: SoundMode
-    gain: float                  # (0, 1] — mixed against the stem's own master gain
+    gain: float  # (0, 1] — mixed against the stem's own master gain
 ```
 
 `SceneRecord.sound: SceneSound | None = None`. Reuses the *same* stem catalogue as tier 1 — a
@@ -1666,14 +2125,15 @@ empty catalogue as zero stems, not an error, the same "ships partially" pattern
 docstring):
 
 ```python
-class SceneSound(_WireModel):        # pipeline/manifest.py
+class SceneSound(_WireModel):  # pipeline/manifest.py
     stem: str
-    mode: SoundMode                  # reused from pipeline.scenes, not re-declared
+    mode: SoundMode  # reused from pipeline.scenes, not re-declared
     gain: float
+
 
 class AudioStem(_WireModel):
     id: str
-    file: str                        # published path, relative to assetBase
+    file: str  # published path, relative to assetBase
     title: str
     author: str
     licence: str
@@ -1681,9 +2141,10 @@ class AudioStem(_WireModel):
     duration_seconds: float
     loop_safe: bool
 
+
 class Manifest(_WireModel):
     ...
-    audio_stems: tuple[AudioStem, ...] = ()   # wire: audioStems — always emitted, like events
+    audio_stems: tuple[AudioStem, ...] = ()  # wire: audioStems — always emitted, like events
 ```
 
 `Scene` gains `sound: SceneSound | None = None`. **Per-stem credit lives on `AudioStem` itself**
@@ -1759,3 +2220,1931 @@ leniently — absent (the committed stub, or any manifest published before this 
   (audio is free — DESIGN §13's budget table already lists "audio" at $0) and adds a bounded,
   measured amount of LFS-tracked media (<~15 MB target, DECIDED DEFAULTS), not image-generation
   budget.
+
+**Amendment (2026-09-14): stem set v2 (era audit).** *Status: accepted, human-directed
+(listening feedback on v1).* The human reported insect and bird sounds too early, no dinosaurs, a
+"water" sound at the K-Pg impact, agriculture and industry arriving late, police sirens in 1830,
+and livestock and insects still prominent 100 years ago. A spectrogram audit (nobody could listen)
+confirmed the causes: `machinery` was a modern Budapest station recording whose loop is ~75%
+electronic siren; `volcanic` was a bubbling hot-spring recording, also fired as kpg-arrival's
+scene sound and swelled by the adjacent Deccan flood-basalt bump; `mammals` was a goat herd held at
+0.32 to the present; `insects` was a cicada chorus from 370 Ma; `birds` was a songbird chorus from
+100 Ma; and nothing attenuated wildlife under human noise.
+
+**Decision.** (1) Stems split into **ambience** stems, which have a `stemGains` row, and
+**scene-only** stems, reachable only through `SceneRecord.sound`. Ambience: `wind`, `water`,
+`storm`, `volcanic` (re-sourced as deep rumble), `insects` (re-sourced as an orthopteran chorus),
+`birds`, `archosaurs` (new; public-domain USFWS alligator bellows), `mammals` (re-sourced as a wild
+savanna bed), `livestock` (the former goat clip), `fire`, `settlement`, `industry` (new; steam
+engine, with no vehicles, sirens or electronic hum) and `traffic` (new; siren-free motor city).
+Scene-only: `geothermal` (the former hot-spring clip, loop) and the one-shots `impact`, `rocket` and
+`aircraft`. `machinery` is retired. A one-shot is a stem with `loop_safe = false`, and publish
+refuses a `loop`-mode scene sound that names one (`_validate_scene_sound`; it would get no looping
+player and play nothing). (2) Curves are re-dated to cited boundaries.
+Insect stridulation starts in the late Carboniferous–Permian (Song et al. 2020) and grows through
+Triassic ensiferans and the 165 Ma *Archaboilus* (Gu et al. 2012), with loud cicadas only from
+~59–56 Ma. Songbird chorus starts only after K-Pg (the 69 Ma *Vegavis* syrinx implies honks: Clarke
+et al. 2016) and rises with passerines (~47 Ma: Oliveros et al. 2019). Archosaur bellows run from
+243 Ma (`dinosaurs` t_max) to the impact itself, silent from `kpg-darkness` days later
+(closed-mouth low-frequency calls are plausible in dinosaurs: Riede et al. 2016).
+Wild mammals follow the Paleocene radiation and grassland spread, reduced by the Late Quaternary
+extinctions. Livestock follows `livestock-domestication`. Settlement follows `homo-sapiens-origin`
+(faint camp voices), `natufian-settlements`, `agriculture` and `uruk-first-city`. Industry follows
+`industrial-revolution`, reaching 0.5 by 1830, then declines with electrification. Traffic starts
+with the Model T (1908). (3) A pure `humanDominance(t)` (0 before 1761, 0.7 by ~1900, 1.0 by
+~2007) ducks insects, birds, wild mammals, livestock and fire. About 100 years ago is therefore
+industry-dominated, and the present is traffic and settlement with faint birds. (4) The
+flood-basalt `volcanic` bump drops from 0.6 to 0.45 so the `impact` one-shot owns the K-Pg moment.
+*The bump is dormant as shipped:* no published event carries a `flood-basalt` effect
+(`siberian-traps` and `deccan-traps` have none in `data/events.yaml`; docs/GLOBE.md §6 notes the
+same gap for G6), so `floodBasaltWindows(manifest)` is empty and only the unit tests, which pass
+hand-written windows, exercise it. Adding those effects is the globe work's call, and needs no
+audio change. (5) Scene sounds are re-assigned (53 scenes as of the 2026-09-15 review: 30 carry a
+sound, 26 loops and 4 once, and 23 are deliberately silent): kpg-arrival → `impact`,
+industrial-mill-town → `industry`, first-powered-flight → `aircraft`, apollo-11-launch → `rocket`,
+trinity-test → `impact`, modern-city → `traffic`, plus wind, water, settlement, archosaurs,
+mammals, livestock and geothermal loops where a scene's own setting calls for them. A once-mode
+voice now fades out when its scene is no longer dominant. (6) **No sirens in any stem,
+scene sound or era**, the present day included (human direction, 2026-09-14): modern city audio
+reads as busy road traffic and city hum.
+
+**Known substitutions (documented, not silent).** No public-domain Saturn V recording was found,
+so `rocket` is a CC0 re-edit of public-domain NASA **Space Shuttle** launch audio. No CC0/PD Wright
+Flyer engine recording exists, so `aircraft` is a modern single-prop biplane flyby at low gain. No
+acceptable CC0/PD large "dinosaur call" exists beyond alligator bellows; sound-designed roars built
+from lion and elk samples were rejected as mammalian. **Size:** v2 as shipped after the
+2026-09-15 review is ≈ 21.6 MB of LFS audio (17 files, `sources/audio-stems/manifest.toml`
+`volume_bytes`) against the "<~15 MB" default, **pending human sign-off**. No remaining fallback
+choice reaches 15 MB: the plan's ≈ 17 MB grew to 19.1 MB when sourced (the `mammals` fallback was
+taken for its loop quality, not size) and to 21.6 MB when `birds` and `mammals` were re-sourced
+below.
+
+**Consequences.** `StemGains` covers ambience ids only; `STEM_IDS` becomes the union of
+`AMBIENCE_STEM_IDS` and `SCENE_STEM_IDS`. The web engine plans voices with a pure
+`planStemVoices(manifest.audioStems)`: ambience and loop-safe scene-only stems get a looping
+player, one-shots get a buffer only and can never loop as ambience. No wire-format change in this
+amendment (`AudioStem` and `SceneSound` unchanged; the next amendment adds two fields). No image
+digests or pins are affected (`scene.sound` stays outside the asset graph).
+
+**Amendment (2026-09-15): stem levels and loop regions.** *Status: accepted as a fix for the v2
+review; the size figure above still needs sign-off.* A review measured the shipped clips at ~29 dB
+apart (gated A-weighted loudness: `mammals` -17.8 dB to `insects` -46.7 dB), so a gain value did
+not predict what was heard: most loop scene sounds changed the mix by ≤0.2 dB, `trinity-test`'s
+blast sat 10 dB under the bed, and the carefully dated `insects` curve was inaudible in every era.
+It also found `birds` was one songbird phrase repeating every ~2.8 s, `mammals` mostly a cricket
+drone, `volcanic`'s crater blasts under every Phanerozoic scene with a click at its wrap,
+`wind` with two edit splices and silent ends, surf under arid inland scenes, and archosaur bellows
+under `kpg-darkness`/`kpg-aftermath`.
+
+**Decision.** (1) **Per-stem level trim, attested at sourcing, applied at playback.** `stems.toml`
+gains required `loudness_db`/`peak_dbfs`, measured with `sources/audio-stems/levels.py` (numpy,
+run by hand on a decoded clip: 400 ms blocks, A-weighted, gated at -70 dB absolute and -10 dB
+relative, channels averaged). `StemManifest.level_trim_db` brings loops to -30 dB and one-shots to
+-20 dB, capped so no peak passes full scale at unity gain; every loop lands within 1.5 dB of -30
+(`rocket` stays 4.8 dB under its reference, its launch transient already at -0.2 dBFS). The
+pipeline still decodes nothing and ships the downloaded bytes (§4's no-DSP rule stands); the
+engine multiplies the trim into every curve, scene-loop and once gain. One-shots sit 10 dB above
+the bed reference so a foreground event reads over it at the same scene gain. (2) **Loop regions.**
+An optional `loop = { start_seconds, end_seconds }` (loop-safe stems only, inside the clip) is
+passed to the looping player's `loopStart`/`loopEnd`, chosen from the decoded samples at matched
+level and near-equal samples: `wind` 23.74–77.81 s between its splices, `volcanic` 0.87–26.95 s
+(its own ends jumped 0.05 against a 0.0016 median step), and the two re-sourced clips. (3)
+**Re-sourced (CC0, spectrogram-checked):** `birds` → Synge101 "Dawn chorus" (Freesound 611453, a
+96 s multi-species chorus, no hum); `mammals` → KevZim "Lions in Gonarezhou" (531439, a distant
+roaring bout with no insect bed). Rejected candidates and reasons are in each `stems.toml`
+comment. (4) **Curves.** `volcanic` fades from 0.15 to 0 across 540→420 Ma, so the crater-rim clip
+is a Precambrian bed plus the magma-ocean scene loop (and the dormant flood-basalt bump).
+`water` drops by 0.2 to 0.25 across the same `land-plants` → `first-forests` window that softens
+`wind`, and `devonian-estuary` gains a water loop; coastal scenes carry their own. Archosaurs
+start at 243 Ma and are silenced within days of the impact (`kpg-darkness`), not across
+`k-pg-impact`'s 11 kyr dating interval. (5) **Scene gains re-tuned** against trimmed levels
+(loops 0.8–1.0, `first-powered-flight` 0.8, `trinity-test` 0.8, `apollo-11-launch` 1.0), so in a
+power-sum estimate each scene's own sound is its loudest element: loops by 3–7 dB over the next
+stem, the impact 13.7 dB over the K-Pg bed, Trinity +9.7 dB, the launch +7.2 dB, the biplane
++7.3 dB. Nobody has listened; this is the measured estimate. (6) Dev-only
+`window.__earthtimeAudio` adds `getStemTargets()` and `getActiveOnceVoices()` for browser QA.
+
+**Contract addition (additive, wire).** `AudioStem` gains required `levelTrimDb` and optional
+`loop: {startSeconds, endSeconds}` (`pipeline/manifest.py`, `web/src/types/manifest.ts`,
+`web/src/shell/manifest.ts`, which rejects a region that ends before it starts). The stub manifest
+carries `levelTrimDb: 0`.
+
+**Rejected: loudness-normalising the published files.** It needs a decoder and encoder in the
+pipeline (§4), and a re-encode of lossy previews loses quality for what one number does.
+**Rejected: a web-side trim table keyed by stem id.** Levels belong to a specific clip; a table in
+the engine would silently go stale the next time a stem is re-sourced.
+
+**Consequences.** Re-sourcing a stem now means measuring it (README "Sourcing checks"). Other
+browsers may decode an MP3 with a different priming offset, moving a loop point by a few
+milliseconds; regions are picked at matched level so that degrades to a soft wrap, not a gap.
+
+**Amendment (2026-09-15): era fit v3.** *Status: accepted, human-directed (listening feedback on
+v2).* The human reported wind/storm/water surf-and-wind sound persisting through a forest scene
+at ~346 Ma and "through the whole timeline" generally, insects starting late and sounding too
+quiet at 248 Ma with nothing filling in for large animals by then, cricket texture (rather than a
+pronounced buzz) at the 90 Ma pollination scene, and three specific scene requests: stone-knapping
+sound for the early stone-tool scene, a mammoth call for the ice-age steppe scene, and (already
+satisfied, confirmed unchanged) that archosaurs at 154 Ma, the impact, ~12 Ma mammal calls,
+settlement voices and industry at ~162 yr stay as they are.
+
+**Diagnosis.** `stemGains(t)` was checked at each named checkpoint (`web/src/audio/
+stemGains.test.ts`) against the manifest's dominant scene at that `t` (`sceneAt`, `web/src/scene/
+scene.ts`, nearest-pair dissolve in `log1p(t)` space). At 346 Ma the dominant scene is
+`late-devonian-tetrapod` (a forested stream, `first-forests` already 32 Myr in the past) yet
+v2's `wind`/`water`/`storm` curves were still at 0.32/0.25/0.22 (corrected 2026-09-15: the "era
+fit v3 fixes" amendment's own adversarial review recomputed these directly from the v2 formulas
+and found this text understated them) — a real, measured bed, not a
+perception — because v2 only *softened* them across `land-plants` → `first-forests`
+(470 → 378 Ma) and then held them flat forever; nothing ever took them to 0. At 248 Ma
+(`early-triassic-lystrosaurus`, a Lystrosaurus synapsid scene) `insects` was already 0.1 — audible
+in isolation — but read as "late" and "too quiet" because it sat under a still-present pre-land
+bed roughly 6-9x louder in aggregate, and no stem existed for the large low animal the scene
+itself depicts. At 90 Ma (`mid-cretaceous-pollinators`) the only insect texture was the ambient
+`insects` stem's cricket clip; nothing gave the scene's own wasp/bee-like pollinators a
+foreground voice. `acheulean-erectus` and `pleistocene-steppe` had no scene sound naming a
+human-tool or megafauna-call stem because none existed in the catalogue.
+
+**Decision.** (1) **`wind`/`water`/`storm` become a pre-land bed only.** A new shared
+`terrestrialBedFade(t)`, `rampLog(t, 3.85e8, 3.5e8, 1, 0)` (385 Ma rounds `first-forests`'
+`t_min` 3.78e8; 350 Ma sits inside the Mississippian, past the 358.9 Ma Carboniferous boundary
+once `carboniferous-swamp`'s canopy at 310 Ma is closed), multiplies all three curves so each is
+**exactly 0** for every `t <= 350 Ma` — verified directly
+(`stemGains.test.ts` "wind/water/storm are exactly 0 for every t <= 350 Ma"). Past this window
+they are heard only where a scene's own `sound` names them. Every scene from ~360 Ma to present
+was audited (`data/scenes.yaml`): coastal/estuary/landfall scenes (`devonian-estuary`,
+`columbus-landfall-1492`) already carried or kept a `water` loop (corrected 2026-09-15: the
+original text also named `panama-land-bridge`, which is unpinned and absent from the published
+manifest — nothing there to check); ice/snowball/salt-flat/steppe scenes (`gondwana-ice-margin`,
+`eocene-oligocene-icesheet`, `messinian-salt-flats`, `kpg-darkness`) already carried or kept a
+`wind` loop; `pleistocene-steppe`'s wind moved to `ice-age-europe-neanderthal` (both are open
+cold steppe; see (4)) so pleistocene-steppe's one `sound` slot could carry the mammoth call
+instead. No forest, swamp, savanna or city scene gained a wind/water/storm loop. (2) **New
+ambience stem `forest`**: a humid, frog-free forest/swamp bed, `rampLog(t, 3.7e8, 3.5e8, 0, 0.3)`
+— rising as the pre-land bed fades, reaching its full 0.3 baseline by 350 Ma and holding as the
+terrestrial backdrop ever after, ducked by `humanDominance` (depth 0.8) like the other wildlife
+stems. Sourced with **no frog calls at all** (anuran calls are implausible before ~250 Ma —
+Permian-Triassic origin of Salientia/proto-frogs — so a clip used from the Carboniferous onward
+cannot carry them at any point) and no birdsong (the `birds` stem already owns that, dated
+separately).
+**Correction (2026-09-15, "era fit v3 fixes"): the clip sourced here was wrong, and both it and
+the ramp are superseded.** This text claimed the clip (craigsmith "Big Jungle Ambience", CC0)
+showed "continuous 150-4000 Hz rustle/hum texture, no FM bird chirps, no periodic frog croaking"
+— false: re-zoomed spectrograms found dozens of curved 3-6.5 kHz FM chirps and arched harmonic
+"hoop" calls, bird- or primate-like anachronisms 300+ Myr before anything could make that sound.
+It was replaced (SamsterBirdies "Rain on Leaves", CC0, verified frog- and bird-free by the same
+method) and the ramp moved to 385→370 Ma; see the fix amendment's own §2 for the corrected clip,
+dates and verification. The no-frogs/no-birdsong sourcing constraint above is unchanged and still
+applied to the replacement. (3) **`insects` re-dated earlier, in two
+new stages ahead of the existing ones.** A `terrestrialBedFade`-matched stage
+(`rampLog(t, 3.85e8, 3.5e8, 0, 0.1)`, general terrestrial-arthropod wing-hum, rising in lockstep
+with `forest`) plus a `rampLog(t, 3.25e8, 3.0e8, 0, 0.08)` stage for unambiguous winged insects
+and giant griffinflies (Grimaldi, D. & Engel, M.S. (2005). *Evolution of the Insects*. Cambridge
+University Press — Upper Carboniferous, ~325 Ma; Meganisoptera such as the `carboniferous-swamp`
+scene's own Meganeura by the Late Carboniferous), ahead of the existing Song et al. 2020
+stridulation, Gu et al. 2012 ensiferan and cicadid stages (unchanged). The existing single
+cricket-loop clip continues to stand in for "insect presence" across every stage, the same
+abstraction v2 already made for stridulation/ensiferan/cicada together — a literal wing-buzz vs.
+cricket-song split was considered (the sourcing brief asked "split if needed") but not built: the
+newly-sourced `buzzing` clip (4) is a bee/fly wingbeat, not a Carboniferous dragonfly-relative's,
+and reusing it as an ambient bed would be its own anachronism. Verified: insects audible (`> 0`)
+at every `t <= 350 Ma` tested down to 320 Ma, and exactly 0 for `t >= 385 Ma`.
+**Correction (2026-09-15, "era fit v3 fixes"): this whole paragraph is superseded.** Grimaldi &
+Engel 2005 dates unambiguous WINGED insects from ~325 Ma — it does not support a stridulating
+clip playing from 385 Ma, and the only clip catalogued (`Nox_Sound` "Night Crickets Calm Loop") is
+a cricket-stridulation loop, not a generic wing-hum: Song et al. 2020 dates that specific
+character (forewing stridulation) to ~300 Ma, 25-85 Myr after this paragraph started it. Both new
+stages here are dropped; `insects` starts at 300 Ma. See the fix amendment's own §3 for why no
+earlier-dated replacement clip was sourced. (4) **New ambience
+stem `large-animal`**: Nivatius "Bison Bellowing (Yellowstone)" (CC0, five discrete broadband
+bellows, no insect/bird bed), `rampLog(t, 2.7e8, 2.5e8, 0, 0.32) * rampLog(t, 2.01e8, 1.75e8, 1,
+0)` — audible from the Guadalupian large-synapsid radiation (Kemp, T.S. (2005). *The Origin and
+Evolution of Mammals*. Oxford University Press: dinocephalian/gorgonopsian megafauna dominant by
+~270-260 Ma) through the Triassic, then receding across the same `end-triassic-extinction` window
+(2.01e8-1.75e8) `archosaurs`' own second ramp rises across — a real handover, both stems present
+231-175 Ma, `large-animal` at exactly 0 by 175 Ma so it never lingers under Jurassic dinosaur
+scenes. Verified `large-animal(248 Ma) ≈ 0.32` (clearly audible, the checkpoint the human's
+feedback named) and `large-animal` exactly 0 both before 275 Ma and from 175 Ma on. A real bison
+stands in for an extinct large synapsid/reptile, the same "plausible modern proxy" precedent
+`archosaurs` (alligator bellows for archosaurs) already set — never a lion roar or a modern-bird
+call. `permian-interior` (260 Ma, two Moschops-like dinocephalians at a river) and
+`early-triassic-lystrosaurus` (251 Ma, superseding its v2 `wind` loop — the checkpoint the
+feedback named by t) both now carry `large-animal` as their scene sound.
+**Correction (2026-09-15, "era fit v3 fixes"): the recession window and one clause here are
+superseded.** "dinocephalian/gorgonopsian megafauna dominant by ~270-260 Ma" overstates Kemp
+2005: dinocephalians dominate the Guadalupian (~270-260 Ma), but large gorgonopsians are a later,
+Lopingian radiation, after the dinocephalians' own end-Guadalupian extinction — corrected wording
+in the fix amendment's own §4. Separately, `large-animal`'s recession window moved from
+2.01e8-1.75e8 to 2.31e8-2.01e8 (the fix amendment's own §4): the original window left
+`large-animal` still louder than `archosaurs` at `late-triassic-dinosaurs` (231 Ma) and for the
+~30 Myr after it, not just at that one checkpoint. (5) **Three new
+scene-only stems, one per explicit request:** `buzzing` (fury12 "Bee Flying Loop", CC0, a
+continuous wingbeat-harmonic drone) as `mid-cretaceous-pollinators`' `loop` sound, gain 0.9 —
+dated by the scene's own `earliest-pollinating-insects` window (data/events.yaml, 9.3e7-1.65e8);
+`knapping` (xtra1 "Stone on Stone Hit", CC0, ~15 evenly-spaced sharp broadband strikes) as
+`acheulean-erectus`'s `loop` sound, gain 0.9; `mammoth` (Danjocross "Angry Elephant", CC0, one
+rising-harmonic trumpet call) as `pleistocene-steppe`'s `once` sound, gain 1.0 — **no CC0/PD
+mammoth recording exists** (mammoths have been extinct since ~4 ka, millennia before sound
+recording), so this is a documented substitution, a single modern elephant trumpet standing in
+for a mammoth's, on the same "plausible proxy" precedent as `archosaurs`/`large-animal`; a
+25-blast 52 s craigsmith reel was rejected as reading like a stock-library sting rather than one
+call for a `once` trigger. (6) **Unchanged, verified by checkpoint:** `archosaurs(154 Ma) ≈ 0.35`
+(`jurassic-floodplain`, the sauropod scene), the `impact` one-shot, `mammals` at ~12 Ma
+(`miocene-grassland`/`c4-savanna-hipparion`), `settlement`'s Natufian/agriculture ramps, and
+`industry(195 yr) ≈ 0.5`, still clearly louder than every wildlife stem a century-plus ago —
+none of their formulas changed, so none of their values did either.
+
+**New sourcing this amendment (CC0, spectrogram-checked 2026-09-15):** `forest` (craigsmith,
+Freesound 479573 — **superseded 2026-09-15 by the "era fit v3 fixes" amendment**: SamsterBirdies,
+584272), `large-animal` (Nivatius, 519594), `buzzing` (fury12, 496237), `knapping` (xtra1, 858891),
+`mammoth` (Danjocross, 507467). Rejected candidates and reasons are in each `stems.toml` entry's
+own comment (frog/bird/cicada-tagged forest candidates; a heavier brick/concrete-slab "stone on
+stone" candidate for knapping; the multi-blast elephant reel for mammoth). **Size:** raw audio
+grows from ~21.6 MB to ~24.3 MB (22 stems) — still over the "<~15 MB" default, but the human has
+separately said audio size is not strictly budgeted and the 21.6 MB figure was already accepted,
+so this is reported, not trimmed.
+
+**Consequences.** `AMBIENCE_STEM_IDS` gains `forest` and `large-animal`; `SCENE_STEM_IDS` gains
+`buzzing`, `knapping` and `mammoth` (`web/src/audio/stemIds.ts`) — no wire-format change (`id` is
+already a plain string on `AudioStem`/`SceneSound`, checked against the catalogue at publish
+time, `_validate_scene_sound`). `pleistocene-steppe` and `ice-age-europe-neanderthal` trade which
+one carries the (moved, unchanged-gain) `wind` loop, since a scene's `sound` is one stem, not a
+list, and the mammoth call was the more specific ask. No image digests or pins are affected
+(`scene.sound` stays outside the asset graph, unchanged from v2).
+
+**Amendment (2026-09-15): era fit v3 fixes.** *Status: accepted, fixing a review of the "era fit
+v3" amendment above (adversarial audio sanity: recomputed `stemGains` at every named checkpoint
+and every scene's own `t`, spectrogram-checked the new clips, cross-checked the citations).* Every
+issue below is corrected in place in the amendment above (search "Correction (2026-09-15" for each
+one) as well as summarised here; `stemGains.ts`'s own comments carry the same citations inline.
+
+**1. `forest`'s clip was the anachronism it claimed not to be (high).** Re-zoomed spectrograms of
+craigsmith "Big Jungle Ambience" (479573) at 14-26 s and 66-73 s show dozens of curved 3-6.5 kHz
+FM chirps and arched harmonic "hoop" calls stacked at 1.4/2.8/4.2/5.6 kHz — bird- or primate-like,
+300+ Myr before anything could make that sound, and at 346 Ma (the human's own checkpoint) louder
+than `insects`. Replaced with SamsterBirdies "Rain on Leaves" (Freesound 584272, CC0 1.0): full
+spectrogram shows a continuous broadband rain-on-foliage patter, no tonal ridges or periodic calls
+anywhere across its 49.9 s (verified independently, not just re-trusted from the sourcing agent's
+own claim). A single louder gust at 19.5 s (-3.7 dBFS, otherwise a maximum of -5.4 dBFS anywhere)
+would have capped this loop's level trim 2.1 dB short of the -30 dB loop reference; the loop
+region instead starts at 20.35 s, found by scanning 19.7-21.5 s for the smallest two-channel
+sample jump against the clip's own natural end (0.0039, under the clip's own 0.0078 median
+sample-to-sample step).
+
+**2. The bed fade lagged the scene it was fixing for (medium).** `late-devonian-tetrapod` (a
+forested stream) is the dominant on-screen scene from 370.0 Ma (the `devonian-estuary`/
+`late-devonian-tetrapod` dissolve midpoint) to 336.4 Ma, but `terrestrialBedFade`'s 350 Ma
+floor left the pre-land bed audibly louder than `forest` for the first third of that dwell (at
+365 Ma: wind -47.7 dB vs. forest -57.5 dB, effective loudness). `TERRESTRIAL_BED_FADE_END` moves
+from 3.5e8 to 3.7e8 — the bed is now exactly 0, and `forest` already at its full baseline, from
+the instant the scene needs it, not 20 Myr later — and `forest`'s own ramp start moves from 3.7e8
+to 3.85e8 (matching `TERRESTRIAL_BED_FADE_START`) so the two cross-fade in lockstep. New checkpoint
+tests pin 370/365/360 Ma.
+
+**3. `insects`' two earliest stages misapplied their own citation (medium).** Grimaldi & Engel
+2005 dates unambiguous WINGED insects from ~325 Ma; the only clip catalogued is a cricket
+STRIDULATION loop, and Song et al. 2020 dates that specific character to ~300 Ma. The 385 Ma
+"general wing-hum" and 325 Ma "griffinfly" stages played this same stridulating clip 25-85 Myr
+before either citation actually supports. Both stages are dropped; `insects` now starts at
+300 Ma. No non-stridulating wing-drone clip was sourced to fill the 385-300 Ma gap a second
+search pass (freesound.org, "insect wings drone") turned up nothing usable, so per the standing
+"leave it out and say so" rule, `insects` is honestly silent there rather than carrying an
+anachronism — a real, partial concession against the human's literal "insects around 346 Ma" ask,
+weighed against not shipping a clip whose only citation contradicts that date. `forest` alone
+(present from 370 Ma) carries the "forest/swamp" half of that ask.
+
+**4. `large-animal` still outweighed `archosaurs` at the first-dinosaur scene (low), and one
+citation clause overstated its source (low).** At `late-triassic-dinosaurs` (231 Ma) and for
+~30 Myr after it, `large-animal` (0.32) was louder than `archosaurs` (0.18-0.24) under the old
+2.01e8-1.75e8 recession window. The window moves to 2.31e8-2.01e8 — starting the recession at
+the same instant `dinosaurs`' own radiation (and `archosaurs`' first ramp) does, clearing to
+exactly 0 by 201 Ma instead of 175 Ma. `large-animal` is still 0.32 at 231 Ma itself and
+unavoidably so: large synapsids/reptiles genuinely still dominated Triassic biomass at the very
+moment the first tiny dinosaurs appear (the scene's own `subject.fauna` names rhynchosaurs and a
+cynodont, not a big archosaur), so an `archosaurs` scene sound was considered and rejected as a
+worse content match, not adopted. Separately, "dinocephalian/gorgonopsian megafauna dominant by
+~270-260 Ma" is reworded to distinguish Guadalupian dinocephalians from the later, Lopingian
+gorgonopsian radiation (Kemp 2005) — the original wording implied both were co-dominant at the
+same date.
+
+**5. Nothing suppressed `forest`/`insects`/`birds`/`mammals` under lifeless, frozen or burnt
+scenes (medium) — including `pleistocene-steppe` losing its wind with nowhere else to put it
+(medium).** `sceneSoundLoopGains` only ever foregrounds a stem above its curve (`Math.max`), never
+suppresses it, so a scene whose own `subject.vegetation`/`fauna`/`absent` rules out all life still
+sat under the full ambient wildlife bed: `eocene-oligocene-icesheet` (33.7 Ma, "no forest anywhere
+in view... no animals in view"), `messinian-salt-flats` (5.6 Ma, "absent: any plant, any animal")
+and `gondwana-ice-margin` (300 Ma, "fauna: none") all measured `forest`≈0.30 and non-trivial
+`insects`/`birds`/`mammals` at their own `t`, and `kpg-darkness`/`kpg-aftermath` (K-Pg impact and
+its century-later aftermath) carried `forest`/`insects` when the scene itself shows a dead, ashen
+forest. Two mechanisms, chosen over extending `SceneSound` to a list or adding scene-aware
+parameters to `stemGains` (out of scope for a fix pass and this task's own file ownership):
+- `kpgVegetationDuck(t)` — the K-Pg impact was a genuine GLOBAL catastrophe, so a `t`-only curve
+  is the right model: falls from 1 to 0 across the ~4-day pyroclastic pulse (the same window
+  `archosaurs` already ducks across), stays there through `kpg-darkness` and `kpg-aftermath`, then
+  recovers to 1 by 64.1 Ma (Johnson & Ellis 2002's Castle Rock rainforest), a real dated citation
+  for the recovery point, not a screen-time guess.
+- Three `presenceNotch`-based ducks for the other three scenes, which were NOT global events at
+  the time (most of Earth still had rainforest at 33.7 Ma) — each is centred exactly on that one
+  scene's own `t`, bounded by its dominant span's dissolve-midpoints to its manifest neighbours on
+  each side, documented as approximating "what's on screen right now" rather than mis-citing the
+  real, longer duration of the geological event depicted.
+Both mechanisms use a new shared `presenceNotch(t, olderEdge, centerT, youngerEdge)` helper (1 at
+both edges, exactly 0 at `centerT`) rather than the existing `bump()`, whose arithmetic-mean-
+midpoint centring left the barren-scene ducks reaching only ~30% suppression at some scenes' own
+`t` in an earlier draft of this fix — `bump()` itself is unchanged (shared with `score.ts`'s
+catastrophe-proximity dissonance, out of this fix's scope). Separately, `pleistocene-steppe`
+(20 ka, "a cold, dry steppe") lost its `wind` loop to `ice-age-europe-neanderthal` in the v3
+amendment above so its one `sound` slot could carry the mammoth call — true, but the v3 text's
+claim that every ice/steppe scene "already carried or kept a `wind` loop" was not true of this
+one. A dated Last Glacial Maximum bump (Clark, P.U. et al. (2009). "The Last Glacial Maximum."
+*Science* 325(5941), 710-714: ~26.5-19 ka) adds `wind` back into the global curve — the same
+mechanism `volcanic`'s flood-basalt bump already uses — centred with `presenceNotch` exactly on
+20 ka so it peaks at its full gain right at the scene, without reaching into
+`ice-age-europe-neanderthal` (42 ka) or `gobekli-tepe` (11.5 ka).
+
+**6. Two low-severity provenance/measurement issues.** The mammoth one-shot's ~1.4 s near-silent
+lead-in is now actually skipped in playback, not just noted in `stems.toml`: `pipeline.audio.
+StemManifest` gains a `start_seconds` field (one-shots only — a loop trims its head via `loop`
+instead), threaded through `AudioStem.startSeconds` on the wire and applied as `Tone.Player.
+start(undefined, startSeconds)` in `engine.ts`'s `playOnce` — the v3 build had written
+`start_seconds = 1.3` into `stems.toml` without adding this field anywhere, so publish rejected
+the catalogue outright (`ValidationError: stems.21.start_seconds — Extra inputs are not
+permitted`) until this fix added it. Separately, `buzzing`'s attested near-zero wrap jump did not
+reproduce at 48 kHz (the engine's actual device rate) — decoded there it is 0.0142 against a
+0.0031 median step, ~4.7x, audible on this harmonic drone even where it would be fine on
+broadband noise (`forest`, `large-animal`, `knapping` all still hold up at 48 kHz, re-verified).
+A full grid search over every (start, end) pair at least 2 s apart, decoded at 48 kHz, found a new
+region (1.276-4.128 s) at a 1.6e-6 wrap jump against the same median — as tight as this clip has
+anywhere. `forest`'s own new loop region (above) was chosen and verified the same way from the
+start.
+
+**Unresolved.** A literal wing-buzz-vs-cricket-song split stem for `insects`' pre-300 Ma gap
+(item 3) was searched for but not sourced — flagged, not silently worked around. The "one global
+bed regardless of scene" pattern `forest`/`insects`/`birds`/`mammals` still have outside the four
+explicit ducks above (e.g. `forest` under a desert scene with no barren duck of its own) remains
+the same architectural gap the v3 amendment above already flagged as future debt; this fix widens
+the duck mechanism's precedent (four instances now, `presenceNotch` a reusable building block) but
+does not generalise it into a `SceneSound`-driven mute list, which would need a schema change
+outside an audio-only fix pass's file ownership.
+
+**Amendment (2026-09-15): on-demand loading.** *Status: accepted, human-directed ("how will
+they or could they be loaded when running as website after deploying, some way to efficiently
+dynamically load on demand instead of all upfront or something?").*
+
+**Context.** Every catalogued stem (22 clips, ~24 MB raw, ADR-023 §4/§1 amendment "era fit v3")
+was fetched and decoded **eagerly**, all at once, the moment sound was first switched on
+(`engine.ts`'s original `buildRuntime`: one `Tone.Player` per ambience/loop-safe scene stem,
+one bare buffer per one-shot, built in a loop over the whole catalogue). That is fine for ~24 MB
+on a fast connection, but does not scale: it is the wrong shape for a bigger stem set later, for
+a slow/metered mobile connection, and it holds every decoded buffer in memory for the whole
+session regardless of whether `t` ever revisits most of them.
+
+**Decision.** Three new pieces, kept as separate, independently-testable layers (mirroring how
+`globe/lru.ts`/`globe/textureCache.ts` already split "pure eviction bookkeeping" from "the
+component that drives it" for the globe's own bounded texture cache):
+
+1. **A pure planner, `loadPlan.ts`'s `stemsNeeded(input)`.** Given `t`, the live `Playback`
+   (`playing`/`baseRate`/`speed` — reused directly rather than inventing a parallel "rate and
+   direction" pair, since the store already has exactly this shape), the selected era section's
+   window (ADR-024) and the manifest's scenes/stems, returns the set of stem ids whose buffer
+   should be decoded right now: every ambience stem whose `stemGains` curve exceeds `0.01`
+   anywhere in a lookahead window, plus every stem named by a scene's `sound` whose own `t`
+   falls inside that window. The lookahead window (`lookaheadWindow`) is asymmetric while
+   playing — a few seconds of `baseRate * speed` in `log1p(t)` space (the same space every
+   curve is authored in) ahead of `t`, a smaller backstop behind — and a small **symmetric**
+   margin while not playing, since a paused, scrubbed or jumped `t` gives this function no way
+   to tell a slow drag from a discontinuous section jump; both are read the same way, from `t`
+   alone. Always clamped to the selected section's window: the hard backstop against the
+   symptom the human named directly ("scrubbing across eras must not trigger a burst of every
+   stem") — a big jump can move `t` a long way, but the window it asks the loader to fill never
+   reaches back across the ground it crossed to get there. Pure, `tone`-free, unit tested
+   (`loadPlan.test.ts`): the lookahead shape in both playback states, a stem provably silent
+   throughout a window is never returned (checked against real `stemGains` output at fixed `t`,
+   not a mock), scene stems in/out of the window, filtering to the published catalogue.
+2. **A loader, `bufferCache.ts`'s `StemBufferCache`.** Generic over the decoded buffer type
+   (no `tone` import here either), it turns `stemsNeeded`'s output into a bounded action list
+   each tick: `plan(needed, orderedByDistance, now)` returns `toFetch` (ids not yet `ready`,
+   capped at 3 concurrent, in `stemsNeeded`'s own nearest-`t`-first insertion order — a JS
+   `Set`'s iteration order *is* its insertion order, so `loadPlan.ts` produces the priority
+   ordering for free rather than the loader re-deriving "how urgent") and `toEvict`. `engine.ts`
+   drives it: `startLoadingStem` fetches+decodes (`fetchStemBuffer`, wrapping `new Tone.
+   ToneAudioBuffer(url, onload, onerror)` in a promise) and, once a loop-kind stem's buffer is
+   ready, builds its actual `Tone.Player` for the first time — starting at the gain node's
+   already-0 initial value with the player's own existing `fadeIn` (`AMBIENCE_FADE_SECONDS`),
+   so a late arrival is inaudible by construction, not a new mechanism. Unit tested as plain
+   state transitions (`bufferCache.test.ts`), no timers or I/O: concurrency capping, retrying an
+   `error` entry like an untracked one, and both eviction rules below.
+3. **Eviction, two independent rules inside the same `plan()` call, neither ever touching an id
+   in `needed`:** an idle timeout (a `ready` stem unneeded for >60s is evicted) and an LRU cap
+   on total decoded seconds across every ready buffer (least-recently-needed first, can fire
+   before the idle timeout if the cap alone requires it) — mobile memory, bounded independently
+   of how many distinct stems a long session passes through. `engine.ts` additionally stops (not
+   disposes) a loop voice's underlying `Tone.Player` once its target gain has sat at ~0 for 20s
+   (`SILENT_PLAYER_STOP_MS`) rather than looping a decoded, inaudible buffer indefinitely —
+   restarting it on demand is instant (same `fadeIn`) since the buffer itself stays decoded
+   until the cache's own rules evict it. A buffer still backing an active `once` voice is never
+   evicted even if `stemsNeeded` has moved past it — `runLoaderStep` filters `toEvict` against
+   `runtime.onceVoices` before acting, retrying the eviction next tick once that voice ends.
+
+   `DECODED_SECONDS_CAP` (`engine.ts`) is **measured, not guessed**: a live browser sweep across
+   the whole timeline (network panel + the dev hook's new `getLoaderState()`) found the real
+   floor — since the rule above can never evict something `needed`, the cap can only ever trim
+   *history* — is ~530 decoded seconds, around the K-Pg/Cenozoic transition where 11 stems
+   briefly overlap (the extinction, the recovery, and the mammal/bird radiations). Set to 650,
+   giving that floor headroom for a little retained history (smooth back-and-forth scrubbing)
+   while staying well under the full catalogue's ~1,040s. Tightening it further is a content
+   question (fewer simultaneously-overlapping curves in the densest eras), not a loader one.
+
+**Delivery: content-hashed filenames.** Checked first how scenes/portraits are versioned today
+(`pipeline/publish.py`): they are not — `f"scenes/{scene.id}{ext}"`, a stable per-id name, same
+for portraits, and `Manifest.assetBase` is today a fixed local constant (`"/media"`; DESIGN §9's
+original "upload to R2" line was never implemented — `earthtime publish` is local-only, per
+CLAUDE.md). So there is no existing hashing or CDN-path-versioning convention to "stay
+consistent" with; this amendment introduces one, scoped to audio only, since audio is the one
+media kind now fetched piecemeal, lazily, well after first paint, where immutable long-lived
+caching actually matters. `pipeline.audio.content_hashed_filename(id, format, data)` names a
+stem `<id>-<hash10>.<format>` from the first 10 hex characters of `sha256` of its **published**
+bytes (unrelated to `StemManifest.sha256`, which verifies the raw *fetch*); `sources/audio-
+stems/normalise.py`'s `write_outputs()` computes it once, at the same build-time placement step
+ADR-023 §4 already established (never staged and copied again at publish), and removes any
+other `<id>-*.<format>` sibling first, so exactly one published file per stem id ever exists.
+`pipeline.publish._audio_stems` discovers the actual filename by globbing rather than
+re-deriving the hash a second time (one implementation of the hash, not two that could drift),
+and refuses to publish if none or more than one candidate matches. The web side needed no
+change: `AudioStem.file` was already an opaque path string `resolveAssetUrl` joins against
+`assetBase`. A real CDN in front of `/media/audio/` can now serve these `Cache-Control: public,
+max-age=31536000, immutable` — recorded here for whoever wires up actual hosting, since this
+repo's own `publish` step stops at the local filesystem.
+
+**Encoding: not evaluated by transcoding, only by inspection.** This machine has neither
+`ffmpeg` nor `sox` (ADR-023 §4's own constraint, unchanged) — per this amendment's own
+instructions, that means stop and report rather than add a heavy dependency, not attempt a
+workaround. What was checked without decoding: 20 of 22 published stems are already MP3
+(universal decode support, including Safari/iOS WebKit); exactly two — `archosaurs` and
+`livestock` — are Ogg (Vorbis). WebKit has never supported Ogg-container audio in any form
+(`<audio>` or `decodeAudioData`) — a long-standing, well-documented platform gap, not something
+this environment can demonstrate directly (no Safari available here). On Safari/iOS today these
+two stems' `fetchStemBuffer` rejects, `bufferCache` marks them `error` (retried the next time
+they are `needed`, never permanently blacklisted), and `onUnusableStem` logs one deduped
+`console.warn` — the existing "skipped stem plays silent" contract already handles this
+gracefully, but it is a real, pre-existing content gap this amendment did not introduce and
+could not close. **Recommended, not done:** transcode `archosaurs.ogg`/`livestock.ogg` to `.m4a`
+(AAC) once `ffmpeg` is available — mirrors the other 20 stems' format, closing the gap with no
+web-engine change (`AudioStem.format`/`sniff_audio` already handle M4A). Broader re-encoding
+(mono for diffuse beds, Opus/WebM where supported, ~96 kbps across the board) is a further,
+separate optimisation pass once `ffmpeg` lands, not evaluated numerically here.
+
+**Rocket clip / wind loop region, checked, not changed.** The human's brief asked to trim the
+rocket clip (2:12) and confirm wind's loop-safe region "if not already". Both were already
+fine: `wind`'s `stems.toml` entry already carries a `loop` region (23.74-77.81s). `rocket`
+(`loop_safe = false`, a one-shot, 132.42s) was decoded and RMS/peak-measured across its first 20
+seconds (headless Chromium `OfflineAudioContext.decodeAudioData`, mirroring `levels.py`'s own
+"decode via a real Web Audio context" approach) — it opens at full loudness (-14.8 dB RMS/-1.6
+dBFS peak at `t=0`) with no silent lead-in, unlike `mammoth`'s ~1.4s one (the "era fit v3 fixes"
+amendment above). No `start_seconds` trim needed.
+
+**Verification.** Live browser checks (headless Chromium, network panel + `window.
+__earthtimeAudio.getLoaderState()`): enabling sound at 4.4 Ga fetches exactly `wind`/`water`/
+`storm`/`volcanic` (4 requests, matching `stemGains(4.4e9, [])` by hand) and nothing else;
+scrubbing straight from there to 195 yr (1830) fetches exactly the 8 stems active there
+(`forest`/`insects`/`birds`/`mammals`/`livestock`/`fire`/`settlement`/`industry`) with no burst
+of unrelated ones; a 13-checkpoint sweep across the *entire* timeline (Hadean to present) made
+only 17 total audio requests and never held more than 11 stems' buffers at once, `decodedSeconds
+Total` peaking at ~544s, under the (then-being-tuned) cap throughout; zero console errors in
+every check. `pnpm typecheck` and the full `pnpm vitest run` (1,065 tests) pass; `.venv/bin/
+python -m pytest -q tests` (426 tests) and `ruff check` on every touched Python file pass.
+
+**Alternatives considered.**
+- **Measuring `t`'s own frame-to-frame velocity** (an EMA over consecutive external `t` samples)
+  instead of reading `Playback` directly for the lookahead's rate. Rejected: a single
+  discontinuous jump (a timeline click, a section change) is indistinguishable, from a bare
+  sequence of `t` values, from one very fast tick of continuous dragging — an EMA would still
+  spike the lookahead window for a jump before decaying back down, reproducing exactly the
+  "scrubbing across eras bursts every stem" symptom this amendment exists to fix.
+  `playback.playing` already tells the engine, unambiguously, whether `t` is under the
+  deterministic playback clock (`sceneSound.ts`'s once-trigger contract already relies on the
+  same distinction) — reusing it needs no new state and has no jump-vs-drag ambiguity to
+  resolve at all.
+- **Reproducing `'scenes'`-mode's real local pacing rate** (`timeline/playback.ts`'s per-segment
+  velocity, which can run faster or slower than flat `baseRate * speed`) inside the lookahead
+  window, instead of the flat-rate approximation. Rejected as disproportionate to this
+  amendment's scope: it would pull `scenePlaybackSegments` and a `TimeScale` into what is
+  otherwise a small, dependency-light pure module, for a discrepancy the tick loop's own ~80ms
+  re-planning cadence already self-corrects within one tick.
+- **A hard cap on stems fetched regardless of need**, instead of a pure lookahead window.
+  Rejected: it would either under-fetch (an audible gap right as a stem's curve crosses
+  threshold) or over-fetch (padding the cap to be safe defeats the point) — the actual curves
+  already say precisely when a stem is needed; approximating that with a flat count throws away
+  information the engine already has for free.
+
+**Consequences.**
+- New: `web/src/audio/loadPlan.ts` (+ `.test.ts`), `web/src/audio/bufferCache.ts` (+ `.test.ts`).
+  `engine.ts` rewritten: `buildRuntime` no longer constructs any stem player/buffer eagerly;
+  the tick loop's loader step (`runLoaderStep`, `updateLoopVoices`) is new; `UseAudioEngineInput`
+  gains `playback`/`sectionWindow` (`Experience.tsx`'s one call site updated, `sectionById
+  (sectionId).window` — no other file needed to change). `AudioDevHook` gains `getLoaderState()`.
+  `pipeline/audio.py` gains `content_hash`/`content_hashed_filename`. `sources/audio-stems/
+  normalise.py`'s `_published_path`/`_place_stem` and `pipeline/publish.py`'s `_audio_stems`
+  updated for content-hashed filenames; `data/media/audio/*` republished under their hashed
+  names (old unhashed files removed), `data/media/manifest.json` republished
+  (`earthtime publish --allow-unpinned`, build `c4a56f4700d1e06f`).
+- Engine purity is unchanged and re-verified: `stemGains`/`sceneSoundLoopGains`/`scoreParams`
+  are still pure in `t` alone (DESIGN §11, CLAUDE.md's own hard rule) — `stemsNeeded` reads them
+  but adds no new impure dependency into them; every network/Tone.js side effect stays inside
+  `engine.ts`, `loadPlan.ts` and `bufferCache.ts` remain `tone`-free.
+- `archosaurs`/`livestock` (`.ogg`) not decoding on Safari/iOS is a real, open gap, unresolved
+  by this amendment (no `ffmpeg` available) — tracked above under Encoding, not silently
+  dropped.
+- DESIGN.md §11's "as-built web engine" paragraph is updated in place (below) to describe
+  on-demand loading in place of the retired "one player per stem, built eagerly" description.
+
+**Amendment (2026-09-15): re-review fixes.** *Status: accepted, fixing nine findings from a
+code review of the "on-demand loading" amendment above (evidence: Playwright against this
+build, request logs and `window.__earthtimeAudio`).* Severity as reported; each is fixed unless
+marked otherwise.
+
+1. **[high] No retry backoff — fixed.** `StemBufferCache` entries now carry `attempt`/
+   `retryAtMs`/`permanent`. `markFailed` doubles the delay each consecutive failure
+   (`INITIAL_RETRY_BACKOFF_MS` 2s, capped at `MAX_RETRY_BACKOFF_MS` 60s); `plan()` only offers
+   an `error` entry in `toFetch` once `nowMs >= retryAtMs`. A **decode** failure (the browser
+   cannot play this container/codec at all) is now distinguished from a **network** failure
+   (`engine.ts`'s `fetchAndDecodeStem` does the `fetch()` and `decodeAudioData` as two separate
+   `try`s, tagging which one failed via `StemLoadError.kind`) and marked
+   `markPermanentlyFailed` — never retried again this session. Live check: forcing every
+   `archosaurs` request to fail (route abort) for 8s produced 4 requests total (was 100/8s in
+   the review's evidence), `getLoaderState().error` holding `['archosaurs']` throughout.
+   `bufferCache.test.ts` gained backoff-doubling, backoff-reset-on-success and
+   never-retries-a-permanent-failure tests.
+
+2. **[high] Lookahead window unit mismatch — fixed.** `loadPlan.ts`'s `lookaheadWindow` no
+   longer advances raw `log1p(t)` by `baseRate * speed` seconds (a space `Playback.baseRate` is
+   not denominated in — it is screen-space `u` over the full-domain *symlog* scale, knee
+   `SYMLOG_C` = 1e4, span ≈ 13.03 warp units; the old code effectively advanced by a few
+   hundredths of one raw *year* per tick, not `PLAYING_LOOKAHEAD_SECONDS` of real playback).
+   It now calls `timeline/playback.ts`'s own `advancePlayhead` — pure, `tone`-free, already
+   exported — with the real full-domain symlog scale for `'scenes'` mode (always, per
+   `advancePlayhead`'s own contract) and a symlog scale of the *selected section* for
+   `'steady'` mode (a documented approximation of `advanceSteadyPlayhead`'s exact
+   per-section/`scaleKind` scale — this package has no `sectionId`/`scaleKind` to reproduce
+   that precisely, and the two differ only in knee/linear-toggle warp inside a window already
+   hard-clamped by `sectionWindow`). The backstop behind is a fraction of that same predicted
+   `u` distance, not a second approximation. `'scenes'`-mode pacing (`scene/pacing.ts`'s
+   `scenePlaybackSegments`) is now threaded through as `scenesPacing` — `loadPlan.ts` still
+   does not import `@/scene` for it, taking `timeline`'s structural `PlaybackPacingSegment`
+   type instead, the same decoupling `timeline/playback.ts` itself uses; `engine.ts` computes
+   it once per manifest (`useMemo`, like `flatBasalt`/`catastrophes`) and mirrors it into a
+   "latest ref". `loadPlan.test.ts` gained tests pinning the window against `advancePlayhead`
+   itself, in both modes, plus a regression test for the magnitude of the old bug.
+
+3. **[high] Scene loop stems not needed while presented — fixed.** `stemsNeeded` now also
+   samples `sceneSoundLoopGains(sceneAt(scenes, sampleT))` across the same window the ambience
+   curves are sampled at (including `t` itself, always, distance 0) — not just whether a
+   scene's own `t` falls in the window, which missed both the "held dominant past its own `t`
+   until the log-midpoint dissolve to the next scene" tail `sceneAt` has by design
+   (`scene/scene.ts`'s `DISSOLVE_WIDTH`) and the "ramping in before `t`" tail on the way in.
+   `loadPlan.test.ts` gained a property-test suite ("every audible stem is needed") sweeping
+   ambience gains at 14 checkpoints (paused and at 8x) plus a loop-mode scene stem sampled
+   across and beyond its dissolve bands, all checked against the real `stemGains`/`sceneAt`/
+   `sceneSoundLoopGains` output, never a hand-picked expectation.
+
+4. **[medium] Decoded-seconds cap not a real memory bound — fixed.** `StemBufferCache` now
+   tracks decoded **bytes** (`buffer.length * buffer.numberOfChannels * 4`, 32-bit float PCM),
+   not published `durationSeconds` — the old figure ignored channel count/sample rate
+   entirely, so a stereo 48 kHz stem and a mono 24 kHz one of the same duration counted the
+   same despite a 4x memory difference. `markFetching` now also takes an `estimatedBytes`
+   reservation (`engine.ts`'s `estimatedStemBytes`: duration × an assumed stereo-48kHz rate,
+   the catalogue's typical case) so `plan()`'s cap check sees fetches already in flight, not
+   only what has landed — several fetches starting together can no longer land and blow past
+   the budget before the next `plan()` call reacts. Density reduction at the source
+   ("mono downmix of diffuse beds", the review's own suggestion): `engine.ts` now calls
+   `ToneAudioBuffer.toMono()` on every `ambience-loop` stem's buffer right after decode —
+   client-side, so it needs no pipeline dependency (`sources/audio-stems/normalise.py`'s own
+   "no transcoding happens here" stays true). `DECODED_BYTES_CAP` is re-measured the same way
+   the old `DECODED_SECONDS_CAP` was, corrected for the unit fix: a Playwright sweep of 61
+   log-spaced checkpoints across the *entire* domain (4.5 Ga → present, post mono-downmix,
+   cumulative with the other live checks below so it reflects realistic reuse, not a cold
+   start) measured a peak of **148.5 MB decoded (13 buffers)**. Set to 190 MB (≈ 27% headroom
+   over the measured peak) — down from the old cap's real ~250-280 MB (stereo throughout, a
+   duration-only figure). `rocket` (a one-shot, kept stereo — one-shots are not mono-downmixed,
+   only `ambience-loop` stems are) was re-confirmed to need no trim (see item 7 below);
+   further density reduction is a content question (fewer simultaneously-overlapping curves),
+   as the original amendment already said.
+
+5. **[medium] Continuous drag bursts fetches; no abort; late arrival built a voice regardless
+   — fixed, three parts.** (a) `engine.ts`'s tick loop now gates *starting new fetches* (not
+   evictions, not gain writes — those stay live every tick) on `playback.playing ||
+   (t has sat still for >= IDLE_FETCH_SETTLE_MS)`, 300ms, tracked via a local "last seen `t`"
+   closure variable inside the tick effect (not a ref — nothing outside the interval reads it).
+   Live check: the review's own repro (a 3s, 75ms-stepped drag across 40 positions from 4e9 to
+   100) now produces **zero** fetches during the drag (was 10). (b) `engine.ts` now fetches via
+   its own `fetch()`+`AbortController`+`decodeAudioData` (`fetchAndDecodeStem`, item 1 above)
+   instead of `Tone.ToneAudioBuffer(url, ...)`, which had no cancellation of its own;
+   `runLoaderStep` aborts any `runtime.inFlight` fetch whose stem has left `needed` every tick
+   (not gated by the settle delay — aborting wastes nothing and is always correct). An abort
+   is treated as "never really tried" (`bufferCache.forget`, not `markFailed`) — no backoff
+   penalty for a fetch the loader itself cancelled. (c) A landed buffer only gets a
+   `createLoopVoice` built for it if its stem is still in `runtime.currentNeeded` (the most
+   recent `stemsNeeded` result, written at the top of every `runLoaderStep` and read
+   asynchronously by the fetch's own `.then()`) — a fetch can easily outlive the lookahead
+   window that asked for it.
+
+6. **[medium] `playOnce` fallback silently dropped a late arrival — fixed.** `runtime.pendingOnce`
+   (`Map<StemId, {sceneId, gain, firedAtMs}>`) records a trigger that fired before its buffer
+   was ready; `startLoadingStem`'s success handler resolves it — plays it
+   (`startOnceVoice`, factored out of the old inline `playOnce` body) only if
+   `!onceSoundOutlivedScene(runtime.currentPresented, pending.sceneId)` (the same "is this
+   scene still dominant" check `fadeOutlivedOnceVoices` already used for a *sounding* voice,
+   now reused for a *pending* one), else drops it deliberately with one deduped
+   `console.warn` ("missed its once-mode cue"). `runtime.currentPresented` is written every
+   tick from the same `presented` the gain-writing code already reads. Deliberately no
+   separate grace-period timeout on top of the dominance check: a scene that is still on
+   screen deserves its sound whenever it finally arrives (a long wait is a slow-network
+   symptom, not a reason to drop it), and a fixed timeout would only add an untested magic
+   number for no correctness gain. `loadPlan.ts` also now fetches once-mode scene stems at
+   higher priority *and* over a wider window (`ONCE_LOOKAHEAD_SECONDS` = 20s vs the ordinary
+   6s) — items 2 and 3's own fixes — so this fallback is reached far less often than before.
+   Live check confirms the prefetch half directly: jumping to a scene reusing the `impact`
+   stem and delaying its route by several seconds, `getLoaderState()` shows `impact` already
+   `loading` within the first tick, well before the scene settles. The "does it actually play
+   once landed" half could not be proven live in this environment — see item 9 below, a
+   separate, pre-existing, out-of-scope bug this review pass surfaced sharper evidence for.
+
+7. **[medium] Encoding (`archosaurs`/`livestock` `.ogg`, WebKit) — not transcoded; reasoned,
+   not silently skipped.** The review is right that this machine has `/usr/bin/afconvert`
+   (macOS-native, offline, reads MP3/AIFF/WAV, encodes AAC — `ffmpeg`/`sox` are still absent).
+   It is **not used** here, for two reasons neither this task nor the original amendment
+   named explicitly: (a) `sources/audio-stems/normalise.py`'s own module docstring is explicit
+   and deliberate — "this machine has neither `ffmpeg` nor `sox`, and macOS's `afconvert`
+   must not become a hard pipeline dependency (every `sources/<name>/` source must build and
+   test offline)" — making `normalise.py` depend on a macOS-only binary breaks that contract
+   for whoever builds this source on Linux CI or another contributor's machine, not just for
+   this session. (b) Independently of (a): CLAUDE.md's own hard rule is that
+   `data/raw/` is "gitignored — reproducible via `fetch.py` + sha256" — every raw file must be
+   re-downloadable from its recorded `url`. A locally `afconvert`-transcoded file has no such
+   URL; committing one as a stem's `raw_filename` would silently break that reproducibility
+   contract for anyone who wipes `data/raw/` and re-runs `fetch.py`, not merely add a
+   dependency. Both are pre-existing, deliberate constraints (DESIGN.md's pipeline semantics
+   are one of CLAUDE.md's four NORMATIVE contracts — "propose an ADR, do not unilaterally
+   edit"), so working around either unilaterally, even to close a real Safari/iOS gap, is out
+   of this task's scope. The actually-consistent fix — sourcing these two effects fresh from a
+   CC0/PD source that already publishes an MP3 or WAV, the same way 20 of the other 21 stems
+   are already sourced — is deliberately deferred to a follow-up pass rather than rushed inside
+   this one; see the Sourcing note below. Separately, this amendment's WebKit claim is softened:
+   the previous wording ("WebKit has never supported Ogg-container audio in any form") is
+   asserted without a citation the review correctly flagged; it is softened to "WebKit does
+   not support Ogg-container audio as of this writing, a long-standing and widely-reported
+   platform gap this environment has no Safari available to verify directly" — the practical
+   consequence (these two stems fail to decode on Safari/iOS, handled gracefully by the
+   existing `error`/`console.warn` path, item 1 above) is unchanged either way.
+
+8. **[low] `dispose()` left in-flight fetches running; toggling refetched everything; CDN
+   caching unconfigured — partly fixed, partly not this repo's to configure.** `dispose()` now
+   aborts every `runtime.inFlight` controller first (its `.catch()` still runs, asynchronously,
+   but `runtime.disposed` is already true by then, so it touches nothing further) — turning
+   sound off no longer lets an in-flight fetch decode into a buffer nothing then disposes.
+   Toggling sound off and back on still re-fetches everything (the whole `StemBufferCache` is
+   discarded with the runtime) — left as is: keeping a decoded-buffer cache alive across a
+   disabled session would need its own separate memory budget independent of
+   `DECODED_BYTES_CAP` (which only bounds an *active* runtime's cache), and `ADR-023` §2/§4's
+   own "pay nothing, including CPU or memory, while sound is off" contract argues against it;
+   not revisited here. Immutable `Cache-Control` on `/media/audio/*` remains unconfigured
+   because there is nothing in this repo to configure it on: `next.config.ts` sets
+   `output: 'export'` (a static export has no server for `next` `headers()` to run on), and
+   `earthtime publish` is local-filesystem-only (CLAUDE.md, DESIGN §9) — exactly as the
+   original amendment already documented ("recorded here for whoever wires up actual
+   hosting"). This is unchanged, correctly-scoped-out infrastructure work, not a gap this
+   pass introduced or could close from inside the repo.
+
+9. **[low] Priority-order contract implicit; stale comments; `plan()`'s two parameters could
+   disagree — fixed.** `StemBufferCache.plan()` now takes just `needed: ReadonlySet<StemId>` (no
+   separate `orderedByDistance`) and derives fetch order from `needed`'s own iteration order
+   internally — `loadPlan.ts`'s own doc comment already established that order as
+   nearest-priority-first, so a second, independently-supplied parameter that had to agree by
+   convention was pure risk with no benefit; `engine.ts`'s `runLoaderStep` updated to the new
+   single-argument call. The stale `loader.ts` reference in `loadPlan.ts`'s header comment (no
+   such file exists — the stateful layer is `bufferCache.ts` + `engine.ts`) and
+   `bufferCache.ts`'s comment misattributing the distance ordering to "the caller
+   (`engine.ts`) derives a distance order from `t`" (`engine.ts` never did — it only ever
+   spread the `Set` `loadPlan.ts` already ordered) are both corrected. `bufferCache.ts`'s
+   default constructor arguments are documented as generic bookkeeping-test fallbacks, not a
+   second copy of `engine.ts`'s own tuned production constants (which `buildRuntime` always
+   passes explicitly) — left in place, not removed, since several existing bookkeeping tests
+   construct a bare `new StemBufferCache<string>()` and rely on them.
+
+**A tenth finding, informational, not fixed — out of scope (`web/src/scene/**` is owned by a
+concurrent workflow this session; the fix, if any, belongs there).** The review noted some
+`once`-mode sounds never fire even with a ready buffer well before their scene, "cause not
+determined". This pass determined it, with stronger evidence than the review had: in
+`'scenes'`-mode playback, `scene/presentation.ts`'s `step()` rate-limits the *presented*
+`SceneMix` toward `sceneAt`'s target by at most `dtSeconds / MIN_TRANSITION_SECONDS` of `mix`
+per real wall-clock second (`MIN_TRANSITION_SECONDS` = 1.6s, a fixed floor independent of
+playback speed), while `scene/pacing.ts`'s `scenePlaybackSegments` can pace the *playhead*
+through a densely-scened stretch (several scenes with only a few years between them, common in
+the human-history chapters — `trinity-test`/`normandy-landings-dday` sit only a year apart,
+per that scene's own comment) faster than `MIN_TRANSITION_SECONDS` per scene. Live check
+(Playwright, two different densely-scened clusters — `trinity-test`'s WWII-era neighbours and
+`kpg-arrival`'s own tightly-dated sequence around the impact instant, both reusing the `impact`
+stem): sampled every 500ms across several real seconds of `'scenes'`-mode playback at 1x, `t`
+barely advances (dwelling, as designed) but `getActiveOnceVoices()` never once becomes
+non-empty — `presented.mix` appears to never actually land on exactly 0 or 1
+(`nextOnceTriggerState`'s `isSettled` gate) for either cluster in this environment, so
+`useSceneSoundOnceTrigger` never fires at all, independent of which stem or how long the
+buffer has been ready. This reads as more than "some closely-spaced scenes miss occasionally"
+— in this pass's live checks it reproduced on every densely-scened cluster tried. Recommended
+next step for whoever owns `web/src/scene/**`: either let `MIN_TRANSITION_SECONDS` scale down
+with `playback.speed` while playing (so it can never exceed a scene's own paced dwell), or
+give `nextOnceTriggerState` a small tolerance around exactly 0/1 instead of requiring an exact
+float match. Not fixed here: `web/src/audio/**` (this task's ownership) can only consume
+`presented`, not change how it is computed.
+
+**Sourcing note (audio-stems, 2026-09-15).** This task's rules would have permitted
+re-sourcing `archosaurs`/`livestock` from a fresh CC0/PD clip already published as MP3/WAV
+(the actually-consistent fix for item 7, sidestepping the `afconvert`/pipeline conflict
+entirely, since 20 of the other 21 stems are already sourced exactly that way). Given the
+scope already covered by the nine primary findings above and this pass's time budget, that
+search was not carried out to completion here — `stems.toml` is unchanged, nothing was
+substituted, and this is recorded as deliberately deprioritised (medium severity, with a
+reasoned architectural explanation already on record above) rather than silently dropped.
+Left for a follow-up pass scoped to sourcing alone, where it can get the same unhurried
+licence-verification and spectrogram scrutiny every other stem in this catalogue already has.
+
+**Verification (re-review pass).** `pnpm typecheck` clean. `pnpm vitest run src/audio src/shell
+src/app`: 227 passed (0 failed). `.venv/bin/python -m pytest -q tests`: 426 passed, unaffected
+(no Python touched by this pass beyond this doc). Live Playwright checks (headless Chromium):
+enabling sound at 4.4 Ga → exactly 4 requests (`wind`/`water`/`storm`/`volcanic`); jumping to
+195 yr (1830) → 13 stems fetched, all plausible for that era plus nearby `once`-mode scenes
+within the (now-correct) lookahead, never a burst of the full catalogue; a 3s/40-step
+continuous drag from 4e9 to 100 → zero fetches until it settles; forcing `archosaurs` to fail
+for 8s → 4 requests (was ~100); a 61-point log-spaced sweep of the whole domain → peak 148.5
+MB decoded across 13 buffers, zero console errors.
+
+**Amendment (2026-09-15): human-history scene sounds, once-mode fix and Safari re-sourcing.**
+*Status: accepted, human-directed (follow-up queue item 19, run after audio v3 and on-demand
+loading landed).* Three independent fixes, one pass.
+
+**(a) Scene sounds for the 16 new human-history scenes.** `imperial-rome-pantheon`,
+`angkor-wat`, `black-death-messina-1347`, `amsterdam-voc-harbour`, `ford-model-t-street`,
+`somme-1916`, `ginza-modern-tokyo`, `normandy-landings-dday`, `post-war-boom-suburbia`,
+`green-revolution-fields`, `containerisation-port`, `berlin-wall-fall`, `aral-sea-drying`,
+`energy-transition-solar-wind` and `global-city-rush-hour` each gained a `sound` (`data/scenes.yaml`,
+comments cite this amendment) — every choice checked against the on-screen ambient curve at the
+scene's own `t` (`web/src/audio/stemGains.ts`), not picked on subject alone: `settlement` is a
+**flat 0.48** for every `t` under 5.125 ka (the "flat afterwards until HYDE population is
+curated" note in `stemGains.ts`'s own comment), so it was only used where a scene reads as
+busier than the ambient default already implies (`imperial-rome-pantheon`, `amsterdam-voc-harbour`,
+`berlin-wall-fall`, `global-city-rush-hour`, each at gain 0.75-0.85), never as a default; `traffic`
+and `industry` both still ramp in this range and sit well under 0.5 at most of these scenes' own
+`t` (computed exactly, not eyeballed — e.g. `traffic(95) ≈ 0.15`, `industry(50) ≈ 0.23`), so a
+scene whose own subject calls for either (Model Ts, streetcars, gantry cranes, a highway
+cloverleaf) got it foregrounded specifically because the curve alone would have underserved it;
+`water`/`wind` are both 0 everywhere in this range (past `TERRESTRIAL_BED_FADE_END`), so any
+scene that wanted either got it only through its own `sound`. `shenzhen-sez-1980` deliberately
+got **no** `sound` — the scene's own subject (one fisherman, surveyors staking an empty paddy
+field, no crowd or machinery yet) is the quiet "before" half of the city's arc, and the flat
+0.48 `settlement` floor every scene this side of Uruk already carries reads truer than a
+foregrounded stem would.
+
+A new **`artillery`** stem (CC0, craigsmith, "R12-31-Artillery Guns Firing.wav" — the same
+trusted vintage-optical-effects source as `impact`) was sourced for `somme-1916`'s distant
+bombardment: searched Freesound and Wikimedia Commons for a genuine period WWI/WWII field
+recording of distant shelling (the brief's own preference) and found none licensed CC0/PD in
+the time this pass budgeted for sourcing — Commons' WWI/WWII audio holdings are almost entirely
+speeches, marches or unlicensed film audio. `artillery` is a documented substitution, the same
+"library effect stands in for the real thing" precedent `impact`/`rocket`/`aircraft` already
+set. Spectrogram-checked (`qa12-spectrogram-artillery-candidate.png` and its `-loop.png` zoom,
+this session's scratchpad): several sustained bursts of broadband low-mid rumble (many
+overlapping reports, not one shot), no siren sweep, speech or music. Loop region 20.831-24.623 s
+found by a full grid search over the whole clip for the tightest sample-matched wrap among
+candidates within 2 dB of each other's level (naive nearest-sample search alone landed twice on
+points that matched exactly but 12-17 dB apart in level — a quiet decaying tail against a loud
+one, which would read as an audible jump; the level constraint fixed this). `normandy-landings-dday`
+was considered for `artillery` too (the brief named it optional) but kept as `water` — the scene
+is framed at the waterline as the ramp drops, water is the immediate sound of the moment
+depicted, and reusing `artillery` there as well would blur the two scenes' distinct character
+where they dissolve past each other on the timeline.
+
+**(b) Once-mode scene sounds not firing in dense scene clusters — root cause fixed, not merely
+worked around.** The "re-review fixes" amendment above (finding 10) diagnosed but did not fix
+this: `MIN_TRANSITION_SECONDS` (1.6 s, a fixed wall-clock floor `scene/presentation.ts`'s `step`
+rate-limits every dissolve to) is independent of playback speed, while `scene/pacing.ts`'s
+`scenePlaybackSegments` paces the *target* through a dissolve band in `MIN_TRANSITION_SECONDS /
+speed` — less, above 1x — so in a densely-scened stretch the presented mix can fall behind and
+never land on the exact `0`/`1` the original trigger required. This pass's own live evidence
+(Playwright, headless Chromium, `getActiveOnceVoices()` sampled every 100-150 ms) reproduced it
+directly: at 1x-4x every tested once-mode scene (`kpg-arrival`/impact, `pleistocene-steppe`/
+mammoth, `first-powered-flight`/aircraft, `trinity-test`/impact, `apollo-11-launch`/rocket)
+fired reliably; from 8x up, `apollo-11-launch` specifically never fired even once across several
+full sweeps through its own neighbourhood (`green-revolution-fields` → `apollo-11-launch` →
+`containerisation-port`, `t` = 60 → 56 → 50).
+
+Fixed in two parts, both `web/src/audio/**`-only (no `scene/**` change):
+
+1. `sceneSound.ts`'s `nextOnceTriggerState` no longer requires `mix` to be exactly settled at
+   `0`/`1` — it fires the instant the *dominant* scene (`dominantScene`: `mix < 0.5 ? from :
+   to`) changes to a once-mode scene, while playing, not already armed off. `step`'s own rate
+   limiting still guarantees `state.mix` moves monotonically toward whatever it is chasing, so a
+   mix that ever starts heading toward a scene below `0.5` provably crosses `0.5` even if later
+   re-targeted away before reaching `1` — the one condition the old exact-float check could get
+   stuck short of forever. This alone fixed every reproduction case *except* `apollo-11-launch`.
+2. A second, independent failure mode surfaced investigating that holdout: `step`'s own
+   "different pair, settled" branch can rebase straight past an intervening scene without it
+   ever becoming `presented.to` at all (its own doc comment: "so playback never flashes through
+   whatever scenes lie between them") — confirmed directly by reading `[data-testid=
+   "scene-caption"]`'s text at 40 ms intervals during an 8x sweep: the presented caption sequence
+   read `green-revolution-fields` → `shenzhen-sez-1980` directly, `apollo-11-launch` never
+   dominant even once, so no fix to `nextOnceTriggerState` alone — however loose its condition on
+   `mix` — could make its cue fire; `presented` was never going to show it. `engine.ts` already
+   computes an independent, un-rate-limited `sceneTarget = sceneAt(manifest.scenes, t)` every
+   render (pure in `t`, DESIGN §3/§4, never skips a scene the playhead passes through) purely to
+   feed its own call to `usePresentedSceneMix`; the fix feeds `sceneTarget` to
+   `useSceneSoundOnceTrigger` instead of `presented`, while `sceneSoundLoopGains` kept reading the
+   rate-limited `presented` unchanged, since loop volume must stay visually synced to what is
+   actually on screen. This redefines "arrival" as `t`-driven (CLAUDE.md's "`Layer.sample()` must
+   be pure in `t`" extended here to a `t`-triggered event), not presentation-driven — the two were
+   previously assumed to coincide and, in a dense enough cluster at high enough speed, provably
+   do not.
+
+**Correction (2026-09-15, same-day re-review):** the paragraph above originally also claimed
+`onceSoundOutlivedScene`/`fadeOutlivedOnceVoices` "keep reading the rate-limited `presented`
+unchanged... a voice fired slightly ahead of what the picture has caught up to simply keeps
+sounding until the picture itself moves on, never cut short by the gap this opens". Live
+behaviour contradicted that claim outright: reading `presented` alone to decide whether a voice
+had "outlived" its scene made *every* voice fire and then fade within 40-175 ms, regardless of a
+clip's real duration (the 132 s `rocket` clip included) — the instant a voice fires off the raw
+*target* crossing into a scene, the rate-limited *presented* mix, still catching up by
+construction, almost always still shows the *previous* scene as dominant, so "outlived" read true
+from the very first tick, not once the picture had actually moved on. `sceneSound.ts` now exports
+`onceSoundOutlived(target, presented, sceneId, hasBeenPresented)` in place of
+`onceSoundOutlivedScene`: it trusts `presented` only once `presented` has actually shown `sceneId`
+dominant at least once (`onceVoiceHasBeenPresented`, a latch `engine.ts` carries per `OnceVoice`
+and per still-pending `once` trigger, updated every tick); until then it reads `target` instead,
+which is pure and instantaneous in `t` and so never itself skips past a scene the playhead
+actually visited — this also gives the `apollo-11-launch` rebase case (where `presented` may
+never show the scene at all) an explicit, reachable point to fade at, rather than either
+firing-then-instantly-fading (the bug) or never fading (the naive fix). Live-reverified with
+Playwright, polling `getActiveOnceVoices()` every 40 ms: at 1x and 8x every tested once-mode scene
+(`kpg-arrival`, `pleistocene-steppe`, `first-powered-flight`, `trinity-test`) now stays alive for
+several real seconds before fading, and a clean continuous 64x sweep from before `kpg-arrival`
+still fires all five once-mode scenes exactly once each. A new pure test
+(`sceneSound.test.ts`, "before the scene has ever been presented-dominant... reads target
+instead") replays the exact lagging-`presented`/leading-`target` sequence the bug depended on and
+asserts the voice is not faded.
+
+Live re-verification after both fixes (Playwright, `getActiveOnceVoices()` sampled every
+100-150 ms, both `'scenes'`-mode speeds 1x-64x and `'steady'` mode): every one of `kpg-arrival`,
+`pleistocene-steppe`, `first-powered-flight`, `trinity-test` and `apollo-11-launch` fires at
+every speed the sampling window actually reached the scene at, `apollo-11-launch` included, a
+sweep spanning `kpg-arrival` through `pleistocene-steppe` down to the present firing all five in
+one continuous 64x run. A pure-logic regression test
+(`sceneSound.test.ts`, "fires each once-mode scene in a dense cluster exactly once") replays the
+exact presented-mix sequence `step` produces when chasing a fast-moving target across three
+once-mode scenes without ever settling at any of them, asserting each fires exactly once, none
+skipped, none doubled. `'steady'`-mode note, unrelated to this fix, **retracted below (2026-09-15
+review pass) — the "plays and fires normally" half was wrong**: seeking into a narrow
+already-selected era section and switching to `'steady'` can complete near-instantly (real-time
+pacing within a small window), which the sound engine handles correctly (nothing fires or
+breaks) but leaves too little wall-clock time to exercise it meaningfully; this is
+`ADR-024`/`scene/**` territory, not touched here.
+
+**(d) Correction (2026-09-15, review pass) — steady mode does *not* "play and fire normally"
+seeked from the full, unsectioned domain either.** A later review pass (this pass's own
+`qa12-review-once.mjs`/`qa12-review-once.json`, this session's scratchpad) re-ran the once-mode
+matrix per scene/mode/speed rather than as one continuous multi-scene sweep, and found the (c)
+note above's "confirmed unrelated ... plays and fires normally" claim unsupported: seeked to just
+before each of the five once-mode scenes (`sectionId` left at its default `'earth'`, i.e. the
+full, unsectioned domain — nothing here selects a narrower section) and started in `'steady'`
+mode, 22 of 30 runs across `kpg-arrival`, `pleistocene-steppe`, `first-powered-flight`,
+`trinity-test` and `apollo-11-launch` at 1x/8x/64x ended with the once voice never firing at all.
+This is **not** the ADR-024 section-boundary stop the note above speculates: `tAtStop` in every
+failing run is exactly `0`, the true end of the domain, reached the ordinary way (`Experience.tsx`
+stopping playback once `t` reaches the present) — `sectionId` never leaves `'earth'` in any of
+these runs, so `advanceSteadyPlayhead`'s section-chaining path (`continuationSection`) is never
+even exercised. A direct repro (`once-repro.mjs`, this session's scratchpad) isolates the actual
+cause: from `t=60` (four years above `apollo-11-launch`'s `t=56`), `'steady'` mode at 1x moved
+`t` from `60` straight to `0` between two consecutive polls ~30 ms apart — under two animation
+frames. `baseRate * speed` (`0.02` u/sec) is flat in `fullScale`'s `u`, and the full 4.6 Gyr
+domain's symlog compresses the entire last few hundred years to a `u`-span small enough that
+`0.02` u/sec crosses all of it in under a frame; `nextOnceTriggerState` (§(b) above) is pure and
+instantaneous in `t`, but a render simply never lands with `t` inside the scene's dissolve band to
+read as dominant. ADR-024's whole premise — a section's own scale gives its window real
+resolution — assumes a *narrower* section is selected first; nothing here does that by default,
+so `'steady'` mode from the root section is fast enough, this close to the present, to blow past
+a several-decade-wide scene unobserved. Not fixed in this pass: it is a design question for
+`ADR-024`/`scene/**` (a per-section floor on `'steady'`-mode velocity, or requiring/prompting a
+narrower section before `'steady'` playback near the present), the same territory the retracted
+note above already deferred to, and outside a WebGL-gating pass's remit. Left as an open,
+accurately-described gap rather than re-asserting the retracted claim.
+
+**(c) Safari/iOS decode gap — `archosaurs`/`livestock` re-sourced as MP3, not transcoded.** The
+"re-review fixes" amendment above (finding 7) left this deferred with a documented reason
+(`normalise.py`'s "no `ffmpeg`/`sox`, `afconvert` must not become a hard pipeline dependency"
+contract) but had not actually re-checked `afconvert` beyond that policy argument. This pass
+did, and found the constraint is not merely a policy choice on this machine — it is not
+technically available either way: `afconvert -f m4af -d aac -b 128000` fails outright
+("The format 'aac' is unknown or an unparseable PCM format specifier") on *any* input, including
+a plain WAV, so AAC encoding cannot be produced here at all, deliberate dependency or not; and
+`afconvert -f WAVE -d LEI16` (decoding an MP3 to PCM, the *other* documented use of `afconvert`
+in this source, `levels.py`'s own module docstring) also fails on this machine
+("ExtAudioFileSetProperty ('cfmt') failed") — this `afconvert` build cannot decode MP3 either.
+Homebrew is present but installing `ffmpeg` was not attempted: CLAUDE.md's "never add heavy new
+dependencies without stopping to report" plus the pipeline's own offline-build-anywhere
+contract (§4 above, unchanged) rule it out unilaterally, and the actually-consistent fix was
+available anyway. `sources/audio-stems/fixture/` and its `.venv` were checked for a pure-Python
+audio decoder (`pydub`/`soundfile`/`librosa`/`av`/similar): none installed, none added.
+
+Both stems were instead **re-sourced fresh as CC0 clips already published as MP3** — the
+"sourcing note" the "re-review fixes" amendment left for a follow-up, now carried out: a
+Freesound preview is *always* an MP3 transcode regardless of the uploader's original format
+(this file's own header comment), the same way 20 of the other 21 stems already reached this
+catalogue, so re-sourcing sidesteps the transcoding question entirely rather than solving it.
+`archosaurs` → craigsmith's "Alligator Growl" (vintage optical effect, CC0): several discrete
+low-frequency growl/bellow bursts, silent gaps between, the same character (a real alligator
+standing in for an extinct archosaur) the retired clip had — the brief's own "the user likes the
+archosaurs clip, keep that character" is why this specific replacement was chosen over other
+candidates found in the same search (a "T-Rex Calls" pack, several other alligator/crocodile
+recordings). `livestock` → felix.blume's "Goats moving and bleating in a pen" (CC0, Arenbou,
+Morocco): dense, layered bleating and movement, matching the retired clip's own "layered
+goat-herd bleating, not one close animal call" character; needs an explicit loop region
+(50.92-95.88 s, wrap jump 4.3e-6 against a 0.0012 median step, both ends within 2.7 dB) unlike
+the retired clip, since this one opens already active rather than in silence. Both
+spectrogram-checked the same way every other stem in this catalogue is
+(`qa12-spectrogram-archosaurs-candidate.png`, `qa12-spectrogram-livestock-candidate.png` and a
+`-zoom.png`/`-loop.png` close pass on the busier region, this session's scratchpad) — no speech
+formant arcs despite `livestock`'s own Freesound "voices" tag (which Freesound applies to any
+animal-vocalisation recording, not only human ones), no sirens, no music. `loudness_db`/
+`peak_dbfs` for both — and for the new `artillery` loop — are measured with `levels.py` on the
+*loop region itself* where one exists, not the full raw clip (`forest`'s own precedent,
+`stems.toml`'s comment on each): `livestock` measured against its full 96.31 s clip would have
+capped its trim 1.8 dB short of the loop reference on a peak transient that sits inside the loop
+region regardless, so measuring the region directly is the honest figure, not merely the one
+that clears the catalogue's own 1.5 dB tolerance test. Every shipped stem is now `mp3` or `m4a`
+— no `ogg` remains in the catalogue — so every stem decodes on every browser this project ships
+to, Safari/iOS included, without narrowing what `sources/audio-stems/normalise.py` depends on.
+
+**Files.** `web/src/audio/sceneSound.ts`/`sceneSound.test.ts`, `web/src/audio/engine.ts`,
+`web/src/audio/stemIds.ts`, `sources/audio-stems/stems.toml`, `data/raw/audio-stems/`
+(`archosaurs.mp3`/`livestock.mp3`/`artillery.mp3` added, the retired `.ogg` raw files removed),
+`data/media/audio/` (re-published via `earthtime publish --allow-unpinned`, the retired `.ogg`
+published files removed by hand — `earthtime publish` does not prune stale media on a format
+change, queue item 19f, not fixed here), `data/scenes.yaml` (16 `sound` blocks, one deliberate
+omission), `tests/sources/test_audio_stems.py`, `docs/DESIGN.md` §11.
+
+**Never touched:** `web/src/scene/**` (presentation/pacing), scene subjects or pins (ADR-005;
+`earthtime plan` still reports 67 scenes pinned after this pass, unchanged), any image
+generation.
+
+**Verification.** `.venv/bin/python -m pytest -q tests`: 426 passed. `.venv/bin/ruff check`/
+`ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
+run src`: 1087 passed (0 failed), including a new dense-cluster regression test in
+`sceneSound.test.ts`. `earthtime plan`: 67 scenes pinned, unchanged; the two pre-existing stale
+scenes (`jurassic-cycad-pollination`, `panama-land-bridge`) predate this pass and are untouched
+by it. `earthtime publish --allow-unpinned`: succeeds, 67 scenes published, 23 audio stems
+credited. Live Playwright verification for (b) and spot-checks for (a) (`getStemTargets()`
+confirming each new scene's foregrounded stem reaches its declared gain once loaded, and that
+`shenzhen-sez-1980` shows only the ambient curve, no foregrounded stem) both reported above and
+in this session's own scratchpad screenshots/logs.
+
+**Amendment (2026-09-15): re-review fixes.** *Status: accepted, fixing an adversarial review of
+the amendment above (issue (b)'s own "never cut short" claim corrected in place there, search
+"Correction (2026-09-15, same-day re-review"; every other finding fixed here).*
+
+**1. `artillery`'s loop region clicked on every wrap (medium).** The attested "wrap jump 3.0e-7...
+effectively 0" did not reproduce: measured with `Tone.Player`'s actual loop semantics (last
+sample before `loopEnd` against the first sample at `loopStart`), the 20.831-24.623 s region
+jumped 0.101 at 48 kHz against a 0.00366 median step — about 27x the median, an audible click
+every 3.79 s. Re-searched the whole 46.56 s clip for a long, sample- and level-matched wrap:
+13.269-27.984 s (14.715 s) wraps at 3.97e-4 (48 kHz) / 4.56e-4 (44.1 kHz), both *under* each
+rate's own median step. `sources/audio-stems/stems.toml`'s `artillery` entry and its comment are
+corrected in place.
+
+**2. `archosaurs`' claimed "no loop needed" was wrong about its own head (medium).** The clip's
+first 6.8 s is a different edited segment the comment never described: broadband splice clicks,
+a 527→141 Hz harmonic sweep, then a 4.5 s constant-level hiss with a steady ~47 Hz buzz — none of
+it a growl burst, and playing the whole 37.27 s clip on loop repeated all of it every cycle. Given
+a loop region instead: 7.122-37.264 s (30.14 s), starting after the last splice in a genuinely
+quiet stretch (6.9-8.25 s, all near -58 dB) and ending at the clip's own tail, which fades to the
+same floor. `stems.toml` corrected in place; `loudness_db`/`peak_dbfs` re-measured on the region.
+
+**3. Eight of the fifteen new scene sounds were not actually the loudest thing in their scene
+(medium), and four of those eight named a clip that does not match what is depicted at any gain
+(medium).** Every loop stem is trimmed to the same -30 dB reference, so live gains compare
+directly; the builder's table checked only the flat 0.48 `settlement` floor and missed that
+`industry`/`traffic` still ramp through this whole era and can exceed a scene's own deliberate
+gain. Fixed per scene, `data/scenes.yaml`'s own per-scene comments carry the numbers and the
+same citations inline:
+
+- `ford-model-t-street`, `ginza-modern-tokyo`, `green-revolution-fields`, `containerisation-port`
+  — `traffic`/`industry` are respectively a *modern* dense-road-traffic bed and a *Victorian*
+  steam-engine beat (`stems.toml`'s own comments on those stems), matching none of a 1913 Model T
+  street, 1930 Ginza streetcars, a 1965 diesel pump/tractor or 1975 gantry cranes. No CC0/PD
+  period-fitting clip was sourced in the time this pass budgeted, so per CLAUDE.md ("if something
+  is unusable, stop and report; do not silently substitute a different dataset") all four scenes
+  had their `sound` block dropped rather than kept mismatched or merely turned up — the flat 0.48
+  `settlement` floor carries them instead.
+- `somme-1916` (`artillery` 0.55 → 0.9), `aral-sea-drying` and `energy-transition-solar-wind`
+  (`wind` 0.55/0.5 → 0.8 each), `normandy-landings-dday` (`water` 0.55 → 0.7) — gain raised so
+  each clears its scene's loudest competing ambience curve by comfortably over 3 dB (each scene's
+  own comment computes the exact before/after dB).
+- `angkor-wat` and `black-death-messina-1347` (`water` 0.4/0.45 → the new `lake-water` stem at
+  0.7 each) — see finding 4 below; re-pointing at a better-fitting stem made the gain fix and the
+  content fix the same change.
+
+**4. `angkor-wat`/`black-death-messina-1347` used open-ocean surf under scenes with no ocean
+(low).** `water` is Azores beach surf — "continuous broadband surf roar" (`stems.toml`'s own
+comment) — used for a still, mirrored temple moat and a sheltered strait quay; a poor fit at any
+gain, not merely a loudness problem. Searched Freesound for a calmer, lake/harbour-character CC0
+clip; sourced TheFlyFishingFilmmaker's "Gentle waves on a lake" (614299, CC0 1.0) as a new
+scene-only stem, `lake-water` — irregular, gentle broadband lapping, no tonal ridge, siren,
+speech or music (spectrogram-checked, full clip and loop region alike). Loop region
+73.930-84.929 s (11.0 s), chosen from a quiet, splash-peak-free stretch of the clip rather than a
+first, longer candidate that wrapped just as cleanly but crossed the clip's one loud splash and so
+could not clear the catalogue's own 1.5 dB loop-reference tolerance
+(`test_real_catalogue_trims_every_loop_to_within_1_5_db_of_the_reference` caught this, not
+eyeballing). Both scenes re-pointed from `water` to `lake-water`. `web/src/audio/stemIds.ts`
+gains `lake-water` in `SceneStemId`/`SCENE_STEM_IDS`.
+
+**5. Nothing stopped a future stem from publishing as OGG or WAV, the exact gap (c) above fixed
+by hand (low).** `pipeline.audio.StemManifest.format` accepted any string the sniffer recognised;
+only `sources/audio-stems/fixture/`'s deliberately-WAV test fixture and the real catalogue's own
+(now all-MP3) contents kept this from mattering. Restricting `StemManifest.format` itself was
+rejected — it would also reject that WAV fixture, which legitimately needs a format `numpy` can
+synthesise without a real encoder this offline pipeline does not have. Instead,
+`pipeline.audio.WEBKIT_DECODABLE_FORMATS` (`{mp3, m4a}`) is checked in
+`pipeline.publish._audio_stems`, refusing to publish any stem whose declared format is not in it
+— `PublishRefused`, before the missing/duplicate-published-file checks that follow it. A new test
+(`test_publish_refuses_a_stem_whose_format_is_not_webkit_decodable`) and a real-catalogue guard
+(`test_real_catalogue_uses_only_webkit_decodable_formats`) cover it; `tests/test_pipeline.py`'s
+own stem-catalogue test helper (`_write_stem_catalogue`) moved off its WAV-based synthetic
+fixture to a synthetic MP3 one so it keeps testing scene→stem linking and publish-refusal
+behaviour, not incidentally relying on a format the pipeline no longer publishes. `earthtime
+publish` still does not prune stale media on a format change (queue item 19f) — unchanged, and
+still not fixed here.
+
+**6. `stems.toml`'s `artillery` comment named `normandy-landings-dday` as a second consumer it
+never actually had (low).** `data/scenes.yaml` and this file both always kept
+`normandy-landings-dday` on `water` (the amendment text above says so directly); only the
+`stems.toml` comment drifted. Corrected in place alongside finding 1's loop-region fix.
+
+**7. Resuming playback while already sitting on a once-mode scene fired its cue, undocumented and
+untested (low).** Confirmed live: scrubbing onto a once-mode scene while paused, then pressing
+play, fired the cue immediately even though the user never played *into* the scene —
+`nextOnceTriggerState`'s `playing` check had no memory of whether `playing` had *just* turned
+true. Decided: pressing play must not itself count as an arrival — arrival is the playhead moving
+into a scene under playback, not playback merely starting while parked on one.
+`nextOnceTriggerState` gained a `wasPlaying` parameter (`useSceneSoundOnceTrigger` tracks it in a
+ref, the same pattern `armedOffRef` already uses); the render on which `playing` transitions
+`false → true` arms the current scene off without firing, whatever it is, while an arrival that
+happens on an *already-playing* render (including one driven by a scrub) still fires normally.
+New tests in `sceneSound.test.ts`: a `describe` block of five covering the play-transition gate
+itself (including mid-dissolve, no re-fire on the very next tick, pause/resume within a dwell, and
+an arrival on a genuinely-already-playing render), plus two on the `useSceneSoundOnceTrigger` hook
+(fires on a genuine arrival while already playing; does not fire on resume while already sitting
+on the scene).
+
+**Files.** `web/src/audio/sceneSound.ts`/`sceneSound.test.ts`, `web/src/audio/engine.ts`,
+`web/src/audio/stemIds.ts`, `sources/audio-stems/stems.toml`, `sources/audio-stems/README.md`,
+`data/raw/audio-stems/lake-water.mp3` (added), `data/media/audio/` (re-published),
+`data/scenes.yaml`, `pipeline/audio.py`, `pipeline/publish.py`, `tests/sources/test_audio_stems.py`,
+`tests/test_pipeline.py`.
+
+**Never touched:** `web/src/scene/**`, scene subjects or pins (`earthtime plan` still reports 67
+scenes pinned after this pass), any image generation.
+
+**Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
+`ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
+run src`: 1100 passed (0 failed). `earthtime plan`: 67 scenes pinned, unchanged (the same two
+pre-existing, unrelated stale scenes). `earthtime publish --allow-unpinned`: succeeds, 67 scenes
+published, 24 audio stems credited. Live Playwright re-verification of the once-mode voice-lifetime
+fix (finding in the amendment above) and of every touched scene's live `getStemTargets()` gain
+(both reported inline above); zero console errors across all of it.
+
+**Amendment (2026-09-15): wing-hum.** *Status: accepted, human-directed (further listening
+feedback, then "Yes to all" on the proposal below).* The human reported wind/storm/water surf
+sound still audible around 346 Ma under the forest scene ("doesnt really fit, should transition to
+'forest/swamp' sounds including insects etc around that point") and insect noises "starting a bit
+late around 248 Ma" — both already diagnosed and fixed by the "era fit v3 fixes" amendment above
+(`wind`/`water`/`storm` exactly 0 by 370 Ma, `forest` on by then; `insects`' own 300 Ma start is as
+early as its clip's citation supports). What that amendment's own "Unresolved" note left open was
+the 325-300 Ma gap: Grimaldi & Engel 2005 dates unambiguous WINGED insects to ~325 Ma, 25 Myr
+before `insects`' one clip's stridulation character (Song et al. 2020, ~300 Ma) — a gap that
+amendment declined to fill rather than reuse the stridulating clip anachronistically. A further
+review, confirming the gap, proposed adding a QUIET generic insect wing-hum from ~320 Ma using a
+NON-bee, NON-stridulating drone clip; the human approved it outright ("Yes to all").
+
+**Decision.** New ambience stem `wing-hum` (`AMBIENCE_STEM_IDS`/`AmbienceStemId`,
+`web/src/audio/stemIds.ts`): bruno.auzet "swarm of flies.wav" (Freesound 692840, CC0 1.0) — a
+230.25 s countryside-path field recording of a fly swarm, spectrogram-checked (continuous
+broadband 150 Hz-8 kHz texture, no discrete pulses, no FM bird chirps, no periodic frog croaking,
+no siren/speech/music) and confirmed to be a DIFFERENT clip from `buzzing` (fury12's bee-wingbeat
+loop, scene-only, reached only through `mid-cretaceous-pollinators`' own `sound`) so the new stem
+cannot be mistaken for reusing it. Candidates rejected in the same search and why: csaszi "Flies
+swarm" (528060, decays to full digital silence by 42 s of 50 s — an event, not a loop), studioste
+"Flies around an XY pair" (818691, 99% of its energy sits below 150 Hz — room/handling rumble, not
+the buzz), olius "Flies in window" (729432, 42% below -50 dB with intermittent glass-tap
+transients), antoineopeng "Dragonfly.wav" (447319, 61% below -50 dB, sparse discrete wing-flap
+transients rather than a continuous drone) — full reasoning and levels in `stems.toml`'s own entry
+comment.
+
+`stemGains.ts`'s new `wingHum(t, dominance, life)`: `rampLog(t, 3.25e8, 3.2e8, 0, 0.06)` — 0 for
+every t >= 325 Ma, rising to a quiet 0.06 plateau by 320 Ma (`WING_HUM_PLATEAU_GAIN`, a fifth of
+`forest`'s 0.3 baseline — a texture, not a foreground, matching the human's own "QUIET" framing in
+the approved proposal) — ducked by `duck(0.85, dominance)` and `lifePresence(t)` exactly like
+`insects` (same depth, same three barren-scene/K-Pg-aftermath ducks). **Persists rather than
+receding once `insects` itself starts at 300 Ma**: the two stems read as different characters (a
+continuous drone vs. discrete stridulation chirps, from two different clips), not a duplicate of
+the same sound, and winged insect lineages have flown continuously from the Carboniferous to the
+present (Grimaldi & Engel 2005) — an unfinished fade-out would be the less honest reading. The
+`insects` stem's own comment (both in `stemGains.ts` and DESIGN §11) is rewritten to no longer
+claim 385-300 Ma (nor, after this amendment, 325-300 Ma) is silent overall: `insects` itself is
+still silent before 300 Ma (there is still no citation for stridulation any earlier), but
+`wing-hum` now honestly covers the 325-300 Ma window on its own, different citation.
+
+Loop region 152.900-174.850 s, found the same way `artillery`/`buzzing`/`knapping`/`lake-water`
+were (`Tone.Player` semantics — last sample before `loopEnd` against the first at `loopStart` —
+decoded at both 44.1 and 48 kHz): wrap jump 3e-6 at 48 kHz against a 0.00378 median step, 2.4e-5 at
+44.1 kHz against a 0.00357 median step, both ends within 1 dB. `levels.py`, run on the loop region
+itself (`forest`'s own "measure what will actually loop" precedent, since the raw clip's peak
+elsewhere is louder): `loudness_db = -33.2`, `peak_dbfs = -12.4`, giving `level_trim_db = 3.2` (the
+loop reference, exactly).
+
+`loadPlan.ts` needed no code change — `stemsNeeded` already samples every id in
+`AMBIENCE_STEM_IDS` generically against `GAIN_THRESHOLD`, so `wing-hum` is loaded on demand the
+same way every other ambience stem is; verified directly (`loadPlan.test.ts`: absent from what's
+needed at 4.4 Ga and 346 Ma, present once the playhead nears 325-300 Ma).
+
+**Files.** `sources/audio-stems/stems.toml` (new `wing-hum` entry), `sources/audio-stems/README.md`
+(stem list, count, size), `web/src/audio/stemIds.ts`, `web/src/audio/stemGains.ts` (new `wingHum`/
+`WING_HUM_*`, rewritten `insects` comment, `lifePresence`'s own comment), `web/src/audio/
+stemGains.test.ts`, `web/src/audio/loadPlan.test.ts`, `tests/sources/test_audio_stems.py`,
+`data/raw/audio-stems/wing-hum.mp3` (fetched, gitignored), `data/media/audio/
+wing-hum-a5862d0fc3.mp3` (published), `docs/DESIGN.md` §11.
+
+**Never touched:** `web/src/scene/**`, `data/scenes.yaml`, any scene subject or pin, any image
+generation — `earthtime plan` reports the same 66 scenes pinned / 2 pre-existing stale
+(`jurassic-cycad-pollination`, `panama-land-bridge`, unrelated to audio) before and after, and the
+same 40 portraits pinned / 1 awaiting review.
+
+**Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
+`ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
+run src`: 1111 passed. `earthtime publish --allow-unpinned`: succeeds, 66 scenes, 25 audio stems
+credited (`wing-hum` among them, `levelTrimDb: 3.2`, its loop region on the wire). `make pins`:
+106 pinned images staged, 0 unpinned removed — unchanged by this task. **Correction (2026-09-15
+"wing-hum re-source" amendment below): no live `getStemTargets()` check was actually run for this
+amendment** — the paragraph originally claimed one at 346/320/300/250/90 Ma, but it was only a
+code read of `updateLoopVoices` (a direct passthrough of `stemGains(t, …)['wing-hum']` for an
+ambience-loop stem with no scene sound naming it) plus the vitest table above, never an actual
+browser check. The values it predicted turned out correct — see that amendment's own, genuinely
+run, live verification.
+
+---
+
+**Amendment (2026-09-15): wing-hum re-source (review correction).** *Status: accepted,
+review-directed.* A review of the "wing-hum" amendment above found five problems with its first
+pick (bruno.auzet "swarm of flies.wav", Freesound 692840), confirmed against a fresh
+headless-Chromium decode of the same clip:
+
+1. **Disproportionate decoded-memory footprint.** At 230.25 s it was, even after `engine.ts`'s
+   mono downmix, by far the heaviest ambience-loop stem (~44 MB) — a live sweep with the original
+   review's own method (`getStemTargets()`/`getLoaderState()` on a running dev server, this time
+   actually driven with Playwright rather than only claimed) found 12 Ma and 10 ka both
+   comfortably under `DECODED_BYTES_CAP` (95.5 MB and 122.8 MB decoded respectively, against the
+   190 MB cap) — the original review's own 198 MB/255 MB figures for those checkpoints omitted
+   the mono downmix `engine.ts` already applies to every `ambience-loop` stem, so its "already
+   over the cap" claim does not hold up — but `wing-hum` alone still ate roughly a third of the
+   cap's entire margin for a stem ducked ~13.5 dB under `forest`, functionally inaudible. No test
+   bounded this; `decodedBudget.test.ts` (new) now does, against every ambience stem's real
+   attested duration, across a dense sweep of the whole domain.
+2. **Faint tones inside the claimed clean loop region.** A tight -100..-25 dB re-inspection of
+   152.9-174.85 s found narrowband events around 2.8-4.2 kHz near 154.1 s and across
+   169.2-171.5 s, ~30-35 dB under the loop's own drone — plausibly explained by the clip's own
+   Freesound description, unread when it was first sourced: "Also birds, some faraway traffic
+   sometimes and cow presence." The original comment's "no FM bird chirps... confirmed... by a
+   zoomed pass across the loop region itself" did not hold up against a properly-scaled
+   spectrogram (the original PNGs saturated below 2 kHz and clipped at 0 dB, which is why the
+   zoomed pass missed them).
+3. **A recognisable repeat inside the loop.** A close fly-pass at 170.15-170.8 s (7-9 dB above
+   the loop's own median level) recurs every 21.95 s — inside the region the original comment
+   called "a long transient-free stretch."
+4. **Attested numbers that did not reproduce.** A fresh decode gave `loudness_db = -33.8`/
+   `peak_dbfs = -11.3` (attested: -33.2/-12.4, a 0.6 dB `level_trim_db` error) and a wrap jump two
+   orders of magnitude larger than attested (3e-6/2.4e-5 claimed vs. ~7e-4/1e-3 measured) — an
+   alignment-sensitive near-zero result on broadband noise, not a real margin; a ±600-sample
+   offset sweep put 98% of neighbouring alignments above the median step.
+5. **The live-verification claim above was false.** The previous amendment's own Verification
+   paragraph claimed a live `getStemTargets()` check that was never actually run (corrected in
+   place above) — caught by this review, not self-reported.
+
+**Decision.** Re-source `wing-hum` to kangaroovindaloo "Blowflies!" (Freesound 324590, CC0
+1.0) — already on record in the original amendment as the search's own documented fallback ("a
+clean, comparably continuous alternative... hotter... and a third the length"), rejected then
+only for being shorter, which turns out to be exactly the property this re-source needed. Full
+spectrogram/loudness/loop-region re-verification (this amendment, not inherited from the
+original search): continuous broadband texture to 8 kHz with steady harmonic bands at
+~280/560 Hz, no FM chirps, no periodic croaking, no siren/speech/music at a tight -100..-25 dB
+zoom of the chosen loop region; its own Freesound description ("The sweet sound of Australian
+blowflies in mass!") names no bird/traffic/cow content, unlike the clip it replaces. At 66.894 s
+(Chromium `decodeAudioData`, 44.1/48 kHz agree to the millisecond) its mono-downmixed decoded
+size is ~12.8 MB — about 3.5x smaller than the first pick's ~44 MB.
+
+New loop region 35.296-47.919 s (12.623 s — shorter than the original's 21.95 s, both because the
+clip itself is shorter and because a fully transient-free stretch that long does not exist in it;
+33.6-49.0 s is its longest transient-light run, and the region sits inside that, clear of the
+close fly-passes RMS-flagged nearby), found by a grid search (0.5 ms resolution, `Tone.Player`
+semantics — last sample before `loopEnd` vs. first at `loopStart`) minimising each channel's own
+wrap jump against its own median sample-to-sample step at both 44.1 and 48 kHz, subject to a
+< 1 dB RMS level match at the wrap: wrap jump ch0/ch1 0.6%/12.6% of median step at 48 kHz,
+2.2%/1.6% at 44.1 kHz (all genuinely far under the median, unlike the previous entry's
+unreproducible near-zero figures), level match 0.50 dB. `levels.py` on this loop region:
+`loudness_db = -24.3`, `peak_dbfs = -5.9`, giving `level_trim_db = -5.7` (an attenuation — this
+clip is louder than the -30 dB loop reference, unlike the first pick) — reproduced identically at
+both sample rates.
+
+`stemGains.ts`'s `wingHum()` curve, `WING_HUM_*` constants and every downstream stem
+(`insects`, `lifePresence`, etc.) are unchanged: this amendment only swaps the clip a fixed,
+already-reviewed curve plays, the same way `archosaurs`/`livestock`/`forest` were re-sourced in
+place by earlier amendments. `AmbienceStemId`/`AMBIENCE_STEM_IDS`/`SceneStemId` (`stemIds.ts`)
+are unaffected.
+
+**Files.** `sources/audio-stems/stems.toml` (rewritten `wing-hum` entry and comment),
+`sources/audio-stems/README.md` (size figures), `data/raw/audio-stems/wing-hum.mp3` (replaced,
+gitignored), `data/media/audio/wing-hum-e9b0b7cd2d.mp3` (published, replacing
+`wing-hum-a5862d0fc3.mp3`), `web/src/audio/stemGains.ts` (clip identity in `wingHum()`'s doc
+comment only), `web/src/audio/stemGains.test.ts` (+1 effective-level test), `web/src/audio/
+loadPlan.test.ts` (2 test names corrected, a citation to a nonexistent "DESIGN's 'flying insects
+never went away' call" replaced with the real `wingHum()` doc-comment reference),
+`web/src/audio/decodedBudget.test.ts` (new), `web/src/audio/loadPlan.ts` (`GAIN_THRESHOLD`
+exported, for the new test), `web/src/audio/engine.ts` (`DECODED_BYTES_CAP` exported, for the
+same), `docs/DECISIONS.md` (this amendment, plus the in-place correction above).
+
+**Never touched:** `web/src/scene/**`, `data/scenes.yaml`, any scene subject or pin, any image
+generation, `stemGains.ts`'s curve/duck logic. `earthtime plan` reports the same scenes and
+portraits pinned/stale before and after.
+
+**Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
+`ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
+run src`: 1113 passed. `make data`: `audio-stems: rebuilt`, every other source `fresh`.
+`earthtime publish --allow-unpinned`: 66 scenes, 25 audio stems credited (`wing-hum` now
+`durationSeconds: 66.894`, `levelTrimDb: -5.7`, loop `35.296-47.919`). **Live `getStemTargets()`/
+`getLoaderState()` checks, actually run this time** (Playwright driving the real dev server at
+`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthtime
+.setT` to position the playhead): 346/320/300/250/90 Ma reproduced exactly the previous
+amendment's predicted table (`wing-hum` silent at 346 Ma; 0.06 at 320/250/90 Ma; 0 exactly at
+300 Ma inside `gondwana-ice-margin`'s barren duck; `insects` present alongside it from 300 Ma on)
+— both against the old clip (confirming the previous, unverified claim happened to be correct)
+and again against the new one (confirming the re-source changed nothing about the curve, only the
+audio). Decoded-bytes totals dropped at every checkpoint: 320 Ma 78.2→49.4 MB, 250 Ma
+100.7→71.9 MB, 90 Ma 102.7→73.9 MB, 12 Ma 95.5→66.7 MB, 10 ka 122.8→94.0 MB — all now well under
+half the 190 MB cap. Zero console errors across every check.
+
+---
+
+## ADR-024 — Era sections bring back a bounded, section-driven window
+
+**Status:** accepted — human-directed 2026-09-14. The human asked whether the timeline should be
+divided into era sections "that can be selected to 'zoom in' and show more resolution", approved
+the proposal ("Playback should continue. Leave out human story for now if Holocene works as a
+proxy.") and later reported that no grouping or selector was visible yet.
+
+**Context.** ADR-021 removed zoom and fixed the window to `[0, EARTH_FORMATION]`. The fisheye
+lens resolves markers that sit close together, but only locally around the pointer. The viewer
+still cannot *read* a stretch of history as a whole. At 1440px the entire Holocene covers about
+100px and the last 250 years about 3px. Everything else drawn on the timeline scale inherits that
+resolution: the event feed measures its lookback in displayed pixels, and the chart dock plots
+against the same axis. The approved design was a clickable, hierarchical band strip with a
+breadcrumb, *not* a return of free zoom.
+
+**Decision.**
+- **One section tree** (`timeline/sections.ts`), validated at module load: every parent's children
+  must tile its window exactly, oldest first. The structure is Earth → Hadean · Archean ·
+  Proterozoic · Paleozoic · Mesozoic · Cenozoic → Proterozoic eras (Paleo/Meso/Neoproterozoic) →
+  Neoproterozoic periods (Tonian, Cryogenian, Ediacaran) · the six Paleozoic periods · Triassic,
+  Jurassic, Cretaceous · Paleogene, Neogene, Quaternary → Pleistocene, Holocene → First farmers,
+  Ancient civilisations, Medieval world, Early modern, Industrial age, Modern. The Hadean is a leaf
+  because the ICS chart gives it no subdivisions. The Archean is a leaf because its four eras hold
+  two scenes between them in the current manifest, so a level there would add clicks without
+  adding resolution. The Neoproterozoic is split because Snowball Earth and the Ediacaran biota are
+  separate scenes. Epochs appear only under the Quaternary, where the approved design asked for them.
+- **Boundaries are cited, not eyeballed.** Geological base ages are those printed on the ICS
+  International Chronostratigraphic Chart v2024/12, read from the chart PDF itself. Two of them
+  differ from widely copied older values: the Cretaceous base is ~143.1 Ma (not ~145.0) and the
+  Neogene base is 23.04 Ma. The chart dates the Holocene base 11,700 years b2k. It is shifted by
+  25 years onto the fixed AD 2025 present that `data/events.yaml` uses (`t = 2025 − CE_year`),
+  giving 11,725. The Holocene sections use the same conversion:
+  - First farmers: from the Holocene base (Zeder 2011 on early-Holocene Near Eastern agriculture).
+  - Ancient civilisations: from c. 3200 BCE, the first writing (Woods ed. 2010).
+  - Medieval world: from AD 500, the conventional close of antiquity (Wickham 2009).
+  - Early modern: from AD 1500 (Cameron ed. 2001).
+  - Industrial age: from 1760 (Ashton 1948, already the events set's source).
+  - Modern: from 1914, closing the "long nineteenth century" (Hobsbawm 1994).
+
+  Every section carries its own `citation`. `eras.ts`/`ERA_BANDS` duplicated the top level and are
+  removed. `eraNameForTime` is now `sectionAt(t, 1)`, and a shared boundary resolves to the
+  *younger* unit, following the stratigraphic convention that a boundary age is the base of the
+  unit above (66.0 Ma is the start of the Cenozoic). This deliberately reverses the previous
+  arbitrary older-wins tie-break.
+- **State.** The time store gains `sectionId` (default `'earth'`), and the window is derived from
+  it rather than stored. The store owns one invariant: *the selected section contains `t`*.
+  `selectSection(id)` moves `t` to the section's start (its oldest edge) when `t` was outside.
+  `setT` re-derives the section via `sectionFollowingT`: it stays put while `t` is inside (edges
+  included, so dragging onto an edge never switches). Otherwise it climbs from the current section
+  and takes the first sibling at any level that holds `t`. That one rule covers playback running
+  into the next sibling, and it covers an event-card jump outside the window, which keeps the
+  deepest level that still makes sense.
+- **Transitions.** `useAnimatedScale(window, kind)` now also animates its window over 700ms
+  (`interpolateWindow`). Each edge moves linearly in symlog-warped space, so Earth → Holocene
+  reads as a steady zoom instead of spending the whole animation at billion-year spans. Under
+  reduced motion the change is instant. Everything that already took `timelineScale` follows the
+  window with no changes of its own: the scrub track, ruler, bands and chart dock. The HUD
+  sparklines and scenes-mode pacing keep their full-domain scale on purpose, and so does the
+  event feed's lookback. The first pass fed the feed `timelineScale`, but its pixel lookback then
+  shrank with the window: at 1830 inside the Industrial age it reached back about 100 years
+  instead of about 220, and the feed showed nothing (Newcomen, Newton and the Columbian exchange
+  all fell outside it). What happened recently does not change because the ruler is zoomed.
+  During the animation the track still maps the wider, animated window, so `Timeline` clamps
+  every track target (drag, pip, cluster member) to the selected section's window. Otherwise a
+  press in those 700ms could land outside the section and make `setT` climb to another one.
+- **Scale within a section.** The symlog/linear toggle keeps applying, with symlog as the default.
+  No per-section special case is needed. The warp's slope differs by only 1% across Modern and
+  about 2× across the whole Holocene, so symlog already draws short historical sections almost
+  linearly, while the Cenozoic and Quaternary keep the log compression that makes them legible.
+  What did need changing is the ruler: 1/2/5×10^d candidates leave one or two labels in a
+  near-linear window. `generateTicks` therefore uses evenly spaced nice steps whenever a symlog
+  window's slope ratio is below 4 (every Holocene section, the Holocene itself, the Paleozoic).
+- **Playback continues.** `continuationSection` gives the next sibling, or, after the last child,
+  the parent's next sibling and so on up the tree (Permian → Mesozoic, not Triassic, as approved).
+  Only sections ending at the present have none. Scenes mode is unchanged: it paces on full-domain
+  symlog, and the store's `setT` rule moves the section along. Steady mode goes through
+  `advanceSteadyPlayhead`, which moves at constant velocity in the *selected section's* scale, so
+  every section takes the same wall-clock time at 1x. When a frame crosses the younger edge, the
+  rest of that frame continues in the next section's scale, so a crossing neither stalls nor
+  loses time. Dragging and stepping (transport, ←/→) stay inside the section's window.
+- **UI.**
+  - `SectionBands` is a `<nav aria-label="Sections of …">` placed under the ruler, with a hairline
+    ruler-segment button per child, laid out against the same fisheye-distorted scale as the track
+    and ruler. `layoutSectionBands` widens bands narrower than 28px, taking the room from wider
+    bands in proportion. On the full symlog domain the Hadean covers about 1% of the track, a few
+    pixels on a phone.
+  - Labels elide. Below 44px they are hidden, while the title and accessible name keep the full
+    name. The band holding the playhead gets `aria-current="time"` and the accent colour. A leaf
+    shows its own name and range instead of bands.
+  - `SectionBreadcrumb` is a `<nav aria-label="Timeline section">` `<ol>` with ancestor buttons
+    and `aria-current="location"` on the selected section. It takes the controls row's empty left
+    track, so the transport stays centred. Below 760px it is its own row, with middle ancestors
+    collapsed to "…".
+  - Escape, handled by `Timeline`'s existing focus-scoped key handler, goes up one level.
+    `ClusterPopover` already stops Escape propagating. After a band, breadcrumb or Escape change
+    removes the focused control, focus moves to the new band strip.
+  - The playhead readout now hugs the track edge. Selecting a section puts the playhead at u = 0,
+    where the centred label clipped.
+
+**Alternatives considered.**
+- **Bring back free zoom** (wheel/pinch/buttons, ADR-011's minimap). Rejected. ADR-021's reasons
+  still hold: the lens resolves arbitrary density in place, and two mechanisms for that same job
+  are worse than one. Sections do a different job. They are named, bounded, a few clicks deep,
+  meaningful to read, and they cannot strand the viewer in an arbitrary window with nothing for a
+  minimap to summarise. ADR-021's "no plan to bring zoom back" stays true and stays as written.
+- **Force a linear scale inside sections**, or switch scale per level. Rejected: symlog already
+  goes near-linear exactly where linear would be wanted, so one rule covers every level, and the
+  explicit toggle keeps meaning what it says.
+- **Stop playback at the section's end.** Rejected by the human ("Playback should continue").
+- **Descend into the next section's first child when climbing** (Permian → Triassic). Rejected: the
+  approved rule moves to the parent's next sibling, which keeps the level the viewer is at
+  predictable, and one click on a band descends again.
+- **Keep steady mode on full-domain pacing.** Rejected: at 1x the playhead would cross Modern in
+  about 0.04 s and flip through all six Holocene sections within a few seconds. That is exactly
+  the resolution sections exist to add.
+- **Holocene stages** (Greenlandian/Northgrippian/Meghalayan) as the Holocene's children. Rejected
+  for the approved human-history sections, which are what a viewer looks for in the last
+  11.7 kyr. A separate "Human story" shortcut was left out, as the human asked, with the Holocene
+  as its proxy.
+
+**Implementation.**
+- `web/src/timeline/sections.ts`: new (tree, citations, navigation and continuation rules,
+  `eraNameForTime`).
+- `web/src/timeline/sectionLayout.ts`: new.
+- `web/src/timeline/components/SectionBands.tsx` and `SectionBreadcrumb.tsx` (+ `.module.css`): new.
+- `web/src/timeline/eras.ts` and its test: removed.
+- `web/src/timeline/scale.ts`: `interpolateWindow`.
+- `web/src/timeline/useAnimatedScale.ts`: animated window.
+- `web/src/timeline/playback.ts`: `advanceSteadyPlayhead`.
+- `web/src/timeline/ticks.ts`: near-linear stepping.
+- `web/src/timeline/keyboard.ts`: Escape → `leave-section`.
+- `web/src/timeline/Timeline.tsx` (+ `.module.css`): `sectionId`/`onSelectSection` props, windowed
+  stepping, markers clipped to the window, focus restoration, controls-row `sections` track.
+- `web/src/timeline/components/ScrubTrack.tsx` (+ `.module.css`): edge-anchored playhead readout;
+  the readout's line reserved above the track.
+- `web/src/timeline/components/SectionBreadcrumb.module.css`: depth-independent row height.
+- `web/src/events/presentation.ts`, `components/EventFeed.tsx` (+ `.module.css`): `feedStripCapacity`.
+- `web/src/shell/ShellLayout.module.css`: tighter phone row-gap.
+- `web/src/timeline/index.ts`: exports and docs.
+- `web/src/store/time.ts`: `sectionId`, `selectSection`, section-following `setT`.
+- `web/src/app/Experience.tsx`: the window comes from the selected section; steady playback
+  through `advanceSteadyPlayhead`; `FULL_DOMAIN_LINEAR_SCALE` removed.
+- `docs/DESIGN.md`: §3 (window, playback) and §8 notes.
+
+**Tests.**
+- `sections.test.ts`: tiling, hierarchy, ICS and historical boundaries, `sectionPath`,
+  `parentSection`, `nextSibling`, `childSectionAt`/`sectionAt` tie-breaks, `eraNameForTime`,
+  `continuationSection` (including "none only at the present" across every section),
+  `sectionFollowingT`, `sectionEntryT`.
+- `sectionLayout.test.ts`: proportional, floored, equal-share, unmeasured and clipped layouts.
+- `scale.test.ts`: `interpolateWindow` endpoints, warped midpoint, monotone narrowing, validation.
+- `playback.test.ts`: `advanceSteadyPlayhead` constant velocity, carry-over across an edge,
+  resting-on-edge, parent's-next-sibling, stops at present, validation.
+- `keyboard.test.ts`: Escape.
+- `store/time.test.ts`: `selectSection` entry, edge stability, following into the next section and
+  up to one that holds a jump, clamped follow.
+- `components/SectionNav.test.tsx`: bands with `aria-current`, click, leaf, breadcrumb path and
+  click, Escape at a section and at the root, stepping bounded to the section, focus restoration,
+  track presses clamped to the section while the scale still spans the whole domain.
+- `events/presentation.test.ts` and `components/EventFeed.test.tsx`: `feedStripCapacity`, and no
+  strip drawn in a squeezed compact row.
+- Existing `Timeline.test.tsx` renders gain the new required props.
+- `pnpm vitest run`: 878/878 passing. `pnpm typecheck`: clean.
+- Browser-verified with Playwright at 1440×900 and 390×844 (touch): Earth → Cenozoic →
+  Quaternary → Holocene → Industrial age narrows the window each time and moves `t` to each start.
+  Events resolve individually in Industrial age, with distinct band widths and evenly stepped
+  "120 … 260 years ago" ticks. Steady playback from 118 years ago crosses into Modern with the
+  breadcrumb following. Scenes-mode playback crosses Pleistocene → Holocene. Escape from a focused
+  Holocene band goes to Quaternary with focus on its strip. The breadcrumb's Earth returns to the
+  full domain. The playhead readout at a section start sits on the track's left edge instead of
+  clipping. No console errors.
+
+**Consequences.**
+- The timeline's window is store-derived again. Anything added later that draws on
+  `timelineScale` follows the selected section automatically. Anything that must show all of
+  history (sparklines, scenes pacing) must keep using a full-domain scale explicitly, as those
+  two already do.
+- The bottom block gains a ~22px band strip on desktop (the breadcrumb reuses an empty track). On
+  a phone it gains a 28px strip plus a compact breadcrumb row. The phone HUD had no slack for
+  that, and review found three layout faults at 390×844:
+  - The playhead readout sat 12–14px inside the caption's last line. Desktop had the same fault
+    whenever the readout fell under the centred caption.
+  - The breadcrumb row grew from 11px at Earth to 23px deeper in the tree, so changing section
+    reflowed the HUD.
+  - The one-line feed strip spilled up to 18px over the CO₂ readout.
+
+  The fixes:
+  - `ScrubTrack`'s `.hitArea` reserves the readout's line as a top margin, next to the rule that
+    positions it, so the caption stops above it at every breakpoint.
+  - The breadcrumb trail has one fixed height at every depth.
+  - The phone's HUD row-gap, the timeline's inner gap and the controls row-gap are tightened to
+    pay for both.
+  - `<EventFeed>` draws no strip when its row is shorter than the strip (`feedStripCapacity`), so
+    a crowded phone HUD drops the strip instead of stacking it over the readouts.
+- Follow-ups, not done here:
+  - Historical sections still label times as "N years ago". A calendar-year (AD/BCE) reading for
+    windows inside the Holocene would read better.
+  - The shell's era title still names only the top level (`eraNameForTime`), not the deepest
+    section.
+  - Sections could later carry a short description or a representative scene for the band's
+    hover preview.
+
+**Amendment (2026-09-15) — visible shortcuts to move through the section tree; a legible
+label for every band, however small its true span.** User, follow-up pass (2026-09-14): "there
+should be shortcuts for going 'back' from the current era selection (to the previous parent in
+the breadcrumb), and shortcut for going back to full timeline/earth view (more accessible
+shortcuts than clicking on the breadcrumb entries to do this)... and there should be a shortcut
+to move/progress to the next sibling era of the current one"; and, separately: "otherwise the
+nested era selection feature is great!! except the 'early modern, industrial age and modern'
+ranges are so small that the labels are not visible, not sure what to do about that."
+
+**Item 6 — keyboard and visible affordances for moving through the tree.**
+- `keyboard.ts` gains four intents: `leave-section` (Escape or Backspace — up to
+  `parentSection(sectionId)`), `go-to-root` (Home or `0` — to `ROOT_SECTION_ID`), and
+  `step-sibling` (`previous`/`next`) on PageUp/PageDown or Shift+←/→. Plain ←/→ (no Shift) are
+  unchanged — they still step through events/checkpoints, per the human's own "plain arrow keys
+  already step through events and checkpoints, so don't clash with them." Checked against every
+  other in-app Escape/arrow handler: `ClusterPopover` and the shared `shell/Panel` (the credits
+  panel, and `EventDetailPanel` once follow-up item 12 replaced the feed's old in-place expand)
+  both stop `Escape` propagating while open, so this mapping never sees it until they've closed;
+  none of the three lives inside `Timeline`'s own DOM subtree regardless.
+- `sections.ts` gains `continuationSection` and `previousSiblingStep`: both climb from a section
+  through its ancestors for the first sibling any of them has, so running off either edge of the
+  tree's first/last branch at a given level moves to the *parent's* next/previous sibling — the
+  mirror image of each other, and `continuationSection` is the exact function playback already
+  used for "what's next" (this ADR's own "playback continues" decision above), so a viewer
+  stepping by hand always lands where playback would carry them. One function
+  (`climbToSibling`) is shared between them, parameterised only by which of `nextSibling`/
+  `previousSibling` to climb with.
+- `SectionBreadcrumb` gains four buttons flanking the trail — "‹ Up" and "Earth" before it, "‹"/
+  "›" after — each resolving its target the same way the keyboard shortcut does and reporting it
+  through the same `onSelectSection` the trail itself uses. Each carries its shortcut in `title`;
+  `TimelineHint`'s mouse-copy hint text lists all four. A button with nowhere to go (at the root
+  for "Up"/"Earth", at either end of the tree's first/last branch for "‹"/"›") is `disabled`, not
+  removed, so the breadcrumb row's width — already fixed at one height per this ADR's original
+  phone-layout fix — never jumps as the selection changes.
+- Verified in-browser (1440×900 and 390×844): Escape from a focused Holocene band goes to
+  Quaternary; Home from Industrial age returns to Earth without moving `t` (it was already
+  inside the root); PageDown from Cenozoic (which has no next sibling — it ends at the present)
+  does nothing, matching `continuationSection`'s "only the present has none"; PageDown from
+  Mesozoic reaches Cenozoic, PageUp from there returns to Mesozoic. The four breadcrumb buttons
+  render, disable correctly at the tree's edges, and their titles show the same shortcut text
+  `TimelineHint` does. No console errors at either size.
+
+**Item 7 — legible bands however small the section, and more room for the ones that need it.**
+Two changes, exactly as proposed to the human (who did not object):
+- **Band widths (`sectionLayout.ts`).** Every section gains a short `abbreviation` (never longer
+  than its `label`, always non-empty). `layoutSectionBands` gives each band at least the wider of
+  a 28px hit-target floor and its own abbreviation's estimated width, redistributing that room
+  from wider siblings in proportion to their own natural share; when even the sum of every
+  floor exceeds the strip (the narrowest phones, the most crowded parents), each band instead
+  gets a share proportional to its own floor rather than an equal split, so a longer label still
+  ends up wider than a shorter one even in that degraded case. `SectionBands` draws a band's
+  `abbreviation` in place of its `label` exactly when the band's own *rendered* width (not a
+  static breakpoint) no longer fits the full name — so the same section shows its full label on
+  a wide parent and its abbreviation once narrowed, and the choice always matches what was
+  actually measured, never a guess. The button's `title`/`aria-label` carry the full name
+  regardless of which form is drawn, satisfying "abbreviations on narrow screens with full name
+  on hover/press." Thin SVG connector lines (`vector-effect="non-scaling-stroke"`) fan from each
+  redrawn internal boundary down to where it truly sits on the drawn scale, so a band widened
+  past its natural share doesn't quietly misrepresent the section tree's real proportions — this
+  is what keeps the floor-proportional degraded case honest rather than merely legible.
+- **Section-adaptive symlog knee (`scale.ts`).** `SYMLOG_C` (1e4 years) is tuned so the *entire*
+  Holocene stays in the warp's near-linear region against the *full 4.6 Gyr domain* — exactly
+  right for that one comparison, and exactly why "early modern," "industrial age" and "modern"
+  read as slivers once selecting a section is itself drawn with that same fixed knee: a knee ten
+  times the Holocene's own span leaves every sub-Holocene section flattened toward its true
+  (tiny) proportion instead of gaining any of the log compression that makes the Cenozoic
+  legible against deep time. `symlogKnee(window)` generalises the same reasoning one level at a
+  time: within a window narrower than `SYMLOG_C * 1000` (exactly the span where `span / 1000`
+  first reaches `SYMLOG_C` itself, so the two rules join with no discontinuity), the knee is the
+  window's own span ÷ 1000. Above the threshold — the full domain and every section down through
+  the Neogene — `symlogKnee` returns plain `SYMLOG_C`, byte-identical to before this amendment.
+  Below it — the Quaternary downward, and every Holocene section — the knee shrinks with the
+  window, so whichever child sits nearest the section's own present edge gets room on the track,
+  the same way the Holocene itself gets room against the full domain. `createSymlogScale` (the
+  scale every window-drawing consumer already takes) is the only call site that changed; nothing
+  that deliberately stays full-domain — the event feed's lookback, the HUD sparklines,
+  scenes-mode pacing, `scene/pacing.ts`, `globe/effects/math.ts` — is affected, since each of
+  those keeps its own window at or above the threshold or its own fixed `SYMLOG_C` on purpose.
+  `ticks.ts`'s near-linear check (`isNearLinearSymlogWindow`) now measures the slope ratio
+  against `symlogKnee(window)` rather than the bare constant, so log-decade ticks correctly
+  replace evenly-spaced ones once a section's own children read as genuinely logarithmic against
+  its now-smaller knee.
+- **Verification (in-browser, 1440×900 and 390×844, per the queue's own checklist).**
+  - *The original complaint.* Selecting Holocene at 1440px now shows all six children — First
+    farmers, Ancient civilisations, Medieval world, Early modern, Industrial age, Modern — each
+    with its full label, and Modern (111 years, 111/11700ths of the Holocene by true proportion)
+    draws visibly wider than a proportional split would give it, purely from the adaptive knee;
+    no floor-widening or connector lines were even needed at that width. The original bug —
+    labels not rendering at all on a sliver a few pixels wide — is gone.
+  - *Fisheye.* Hovering the track inside Industrial age still spreads nearby markers and shows a
+    precise sub-year readout ("171.50 years ago"); nothing about the lens changed, since it
+    operates on whichever `TimeScale` it's handed, adaptive knee included.
+  - *Event feed.* Cards render normally inside a narrow section (Industrial age showed Newcomen's
+    engine, the Principia, the Columbian Exchange); the feed's own lookback stays full-domain by
+    design (this ADR's original decision), so it was never touched by the knee change.
+  - *Playback pacing.* Steady mode inside Industrial age advanced from 265 to 256 years ago over
+    2s of wall-clock play at 1x (rate readout "≈ 4 yr/s"), staying inside the section as
+    expected — `advanceSteadyPlayhead` paces on whichever scale it's given, so a smaller knee
+    inside a small section changes nothing about *how* it paces, only how that section's own
+    children would themselves be drawn if selected.
+  - *The floor-proportional degraded case, found at 390px.* Holocene's six children, each already
+    reduced to its `abbreviation`, sum to more floor (≈420px) than a real phone's band-strip
+    content width (≈358px) provides — `flooredWidths`'s "even the sum of every floor does not
+    fit" branch (already covered, for the Earth level's six eons, by
+    `sectionLayout.test.ts`'s own phone-width test) engages for the Holocene level too, and each
+    band renders a few px under its own floor. In the browser this reads as a further-truncated
+    abbreviation ("Early mod." clipping to "Early m…", "Industrial" to "Industr…"), not a blank
+    or invisible band: every band still has a positive, tappable width (35–72px measured), still
+    carries a partial but distinguishable label, still exposes its full name through `title` and
+    `aria-label`, and the connector lines still show its true (much smaller) proportion on the
+    track beneath. This is judged **not** the "proves poor" case the queue's own fallback note
+    anticipated: the original complaint — a label not rendering at all — does not recur, every
+    band remains individually selectable without regressing the nested-selection behaviour the
+    human explicitly loves, and the six-way split at this exact width is an intrinsically tight
+    packing problem (six legible labels in ~358px) rather than a defect in the approach. The
+    collapse-to-one-expandable-band fallback was therefore not built. Flagged here rather than
+    silently accepted: `sectionLayout.test.ts` gained a matching case for the Holocene's own real
+    children (mirroring its existing Earth-level phone-width test) so this specific, verified
+    trade-off is pinned by a test rather than only by this paragraph.
+- **Consequences.** The section tree's `SectionDefinition` type grew one required field
+  (`abbreviation`) that every one of the 26 sections must supply — enforced at the type level
+  (`as const satisfies Record<string, SectionDefinition>`), not by convention. Nothing else in
+  the tree's tiling or navigation invariants changed. `symlogKnee` is exported specifically so
+  `ticks.ts` and any future window-drawing consumer build their near-linear judgement from the
+  same knee the scale itself actually used, rather than risking a second copy of the threshold
+  logic drifting from the first.
+- **Files.** `web/src/timeline/sections.ts` (`abbreviation`, `continuationSection`,
+  `previousSiblingStep`), `sectionLayout.ts` (new), `scale.ts` (`symlogKnee`,
+  `KNEE_ADAPTIVE_SPAN_THRESHOLD`), `ticks.ts` (near-linear check against `symlogKnee`),
+  `keyboard.ts` (four new intents, key-hint constants), `components/SectionBands.tsx` (+
+  `.module.css`, new), `components/SectionBreadcrumb.tsx` (+ `.module.css`, new — the old
+  breadcrumb folds into it), `components/TimelineHint.tsx` (hint text), `Timeline.tsx` (wires the
+  new intents and the two new components in). Tests: `sections.test.ts`, `sectionLayout.test.ts`,
+  `scale.test.ts` (`symlogKnee`), `keyboard.test.ts`, `components/SectionNav.test.tsx`
+  (breadcrumb buttons, their disabled states). `docs/DESIGN.md` §3 carries a matching v1 note.
+
+**Amendment (2026-09-15) — re-review pass: five real bugs in the follow-up amendment above,
+found and fixed against the shipped code rather than the design.** A review pass against the
+live app (not just the diff) found the previous amendment's own verification section had missed
+several interactions. Fixed here, all within `web/src/timeline` unless noted:
+
+- **Escape fought the chart dock and the expanded globe.** The previous amendment's own
+  conflict check ("checked against every other in-app Escape/arrow handler") listed
+  `ClusterPopover` and `shell/Panel`, both of which `stopPropagation()` while open — but missed
+  two overlays that don't live in React's tree at all: `@/layers`'s `LayerChart` (the chart
+  dock) and the expanded `@/globe`'s `Globe`, which each close themselves via their own
+  `window`-level `keydown` listener. Neither can be reached by `stopPropagation()`, so with
+  focus anywhere inside the timeline, one Escape press closed the overlay *and* climbed a
+  section in the same keystroke. Separately, the claim that `ClusterPopover` "lives outside
+  `Timeline`'s DOM subtree" was also wrong — `ScrubTrack` renders it directly; it only works
+  because it stops propagation, same as `Panel`. Fixed without touching `layers` or `globe`
+  (outside this track's ownership): `Timeline` gained an `overlayOpen` prop — `Experience.tsx`
+  passes `globeExpanded || expandedChartLayerId !== null`, both already in `store/time.ts` — and
+  skips `'leave-section'` for a bare `Escape` (not `Backspace`, which no overlay binds) while
+  it's true, leaving the key entirely to whichever overlay's own listener owns it.
+- **The adaptive symlog knee badly skewed leaf sections, not just their parents.** The knee
+  amendment's own reasoning — shrink the knee so a window's *children* get room near the present
+  edge — was verified only inside Industrial age, which itself has no children and never reaches
+  `t = 0`. Selecting a genuine leaf that does (Modern, 0–111 years) shrank its own knee to
+  `MIN_SYMLOG_KNEE` (the amendment's own "never engages in practice" floor, engaging on every
+  Holocene leaf up to about 1,000-year spans): the last 10 years alone drew over half the track,
+  and 'steady'-mode pacing — which paces off the identical knee — spent the same lopsided share
+  of wall-clock time there. `sections.ts` gained `sectionSymlogKnee(id)`: `SYMLOG_C` for a leaf
+  (nothing below it needs room), `symlogKnee(section.window)` unchanged for anything with
+  children. `scale.ts`'s `createSymlogScale` and `ticks.ts`'s `generateTicks` both gained an
+  optional explicit `knee` parameter so a caller can override the bare per-window default without
+  either module needing to know about sections; `useAnimatedScale` threads it through, and
+  `Experience.tsx`/`Timeline.tsx` each compute `sectionSymlogKnee(sectionId)` once and pass it to
+  every consumer that needs to agree (the resting/animated scale, `AxisTicks`, and
+  `advanceSteadyPlayhead`'s own scale builder) — the same value held fixed for the duration of a
+  section-change animation, the same "transition shape decoupled from the resting knee"
+  simplification `interpolateWindow` already makes with its own fixed `SYMLOG_C`. Verified: the
+  reported ~51%/~15% shares for Modern's last 10/1 years are gone (now within a few percent of
+  true proportion, matching a leaf reading close to linear); Holocene and every section with
+  children are numerically unaffected (`sectionSymlogKnee` returns the exact prior value for
+  those). Known residual imprecision, accepted rather than chased further: `advanceSteadyPlayhead`
+  computes its scale once per section per call, so several section boundaries crossed within a
+  *single* frame (an extreme speed/dt combination) briefly uses the outgoing section's knee for
+  the whole catch-up; it self-corrects the next frame and was not reachable in verification at
+  any speed up to 64x.
+- **A band's floor was shrunk below itself, not merely "shared proportionally."** Item 7's own
+  "when even the sum of every floor does not fit, each band gets a share proportional to its own
+  floor" undersold what the code did: it *divided every band's floor by the overflow fraction*,
+  so at the Holocene's own phone width every band landed a few px under floor exactly as
+  documented — but the same branch also engages for the **Earth level's six eons** at 390px
+  (never checked in the original verification), where the overflow is closer to 15%, badly
+  enough that abbreviations that should have fit outright — `"Modern"`, `"Hadean"` — still
+  clipped to an ellipsis. `sectionLayout.ts`'s `layoutSectionBands` no longer shrinks any band
+  below its own floor: it now returns `{ bands, contentWidthPx }`, and when the sum of every
+  floor exceeds the measured strip, `contentWidthPx` grows to fit them all exactly instead.
+  `SectionBands` renders that content at its real pixel width inside a `.strip` that is now a
+  (no-op, in every case this ADR's own original verification covered) horizontal scroll
+  container, rather than ever rendering an illegibly-squeezed label. Every existing
+  `sectionLayout.test.ts` case that exercised the old "shrink" branch was rewritten to assert the
+  new "grow the content, never shrink the floor" behaviour instead, plus a new case for the
+  Earth-level six-eons regression.
+- **The connector lines cut through the labels they were meant to keep trustworthy.** Item 7's
+  own connector SVG spanned the band strip's full height (`inset: 0`), so a redrawn boundary's
+  leader line ran straight across the label text behind it — visible at both breakpoints, worst
+  at the Earth level where three of six labels were crossed. `SectionBands.module.css`'s
+  `.connectors` now occupies a slim 4px (5px on a coarse pointer) band pinned to the strip's own
+  bottom edge instead of the full height, clear of the vertically-centred label text in every
+  case checked in-browser.
+- **Minor:** a typo in this amendment's own verification bullet ("without moving `t`o") is
+  fixed, and two stale comments — `ShellLayout.tsx`'s About-button comment and the phone
+  `.ancestor` comment in `ShellLayout.module.css`, both still describing the fixed-position sound
+  toggle removed by follow-up pass item 2 as if it were current — are corrected to describe what
+  actually determines the current alignment.
+
+Also fixed in the same pass, outside this ADR's own scope but touching files it amended:
+`shell/Panel`'s backdrop closed on `pointerdown`, which a touch tap's synthesised `click` could
+then fall through onto whatever was newly underneath (a "ghost tap") — it now closes on `click`
+itself, checked against `e.target === e.currentTarget`; `shell/Panel` and `timeline/components/
+ClusterPopover` shared one focus-trap implementation (`@/lib/focusTrap`'s new `useFocusTrap`)
+instead of each carrying a byte-for-byte copy; and Space/Home/PageUp/PageDown, mapped by
+`keyboard.ts` since follow-up items 1–3 moved real buttons and a `<select>` into the timeline's
+own keydown subtree, now leave those controls' own native key handling alone instead of
+overriding it. See those files' own doc comments and this ADR's sibling amendments for the
+audio/events/shell-side fixes from the same pass.
+
+**Files (this amendment).** `web/src/timeline/Timeline.tsx` (`overlayOpen` prop),
+`web/src/app/Experience.tsx` (`overlayOpen`, `timelineKnee`), `web/src/timeline/sections.ts`
+(`sectionSymlogKnee`), `web/src/timeline/scale.ts` (`createSymlogScale`'s `knee` parameter),
+`web/src/timeline/ticks.ts` (`generateTicks`'s `knee` parameter),
+`web/src/timeline/components/AxisTicks.tsx` (`knee` prop), `web/src/timeline/useAnimatedScale.ts`
+(`knee` parameter), `web/src/timeline/sectionLayout.ts` (`contentWidthPx`, never-shrink-below-
+floor), `web/src/timeline/components/SectionBands.tsx` (+ `.module.css`, scrollable track,
+bottom-edge connectors), `web/src/timeline/components/SectionBreadcrumb.tsx` (reset button glyph,
+see the shell-side amendment for the rest), `web/src/timeline/keyboard.ts` (button/select
+guards), `web/src/lib/focusTrap.ts` (new). Tests: `Timeline.test.tsx`, `sections.test.ts`,
+`scale.test.ts`, `sectionLayout.test.ts`, `keyboard.test.ts`, `components/SectionNav.test.tsx`,
+`web/src/lib/focusTrap.test.ts` (new).
+
+## ADR-025 — An `over-under` chapter: a split-level shot for early life under water
+
+**Status:** accepted — human-directed 2026-09-14. Supersedes ADR-014's "no new shot type" half,
+and with it ADR-020's re-affirmation of that half. ADR-020's chapter rules are unchanged.
+
+**Context.** The human asked for more early underwater life, noting that the first creature the
+viewer clearly sees is a developed Cambrian swimmer. The human then asked to compress rather than
+add scenes, and to rework early scenes so each shows the world above and below the water, "similar
+to the Cambrian sea floor one". The pinned `cambrian-seafloor` image is a classic over-under
+photograph, but its spec never asked for one: it sits in `waters-edge`, whose `WATER_EDGE` shot
+puts the camera "about one metre above the waterline". A split framing has to be explicit to be
+repeatable, and it contradicts that shot text, so it cannot be a subject-level request inside
+`waters-edge`. ADR-014 withdrew a drafted `UNDERWATER` shot because one such scene would have
+split `waters-edge` into two runs. ADR-020 has since made that legal. Here the human asked for the
+over-under framing directly, and it covers a run of eight scenes rather than one.
+
+**Decision.**
+- **New camera and layout** in `pipeline/prompts.py`:
+  - `Shot.SPLIT_LEVEL`: a half-submerged dome port, lens level with the surface, both halves in
+    focus.
+  - `Composition.SPLIT_WATERLINE` (`split-waterline`): a straight, sharp waterline at 48% of frame
+    height, sea horizon at 35%, the left-third mass continuing below the line, the main subject
+    underwater just right of centre, light from the upper left.
+  - The geometry percentages were measured from the pinned `cambrian-seafloor` image, so that
+    image is the chapter's geometric reference. Its light is not: its shadows fall below and
+    slightly left. Upper-left light is kept for consistency with the other compositions, and
+    shadow direction is checked at review.
+- **New chapter** `over-under` ("Above and below the surface"). A chapter owns one shot and
+  composition pair (ADR-020), so a second framing is a second chapter. `render_subject` is
+  unchanged: under this composition `ground` is the sea floor and `main_subject` is underwater,
+  and each record says so in words.
+- **One contiguous run of 8 scenes**, archean-shore (3.45 Ga) to silurian-shore (425 Ma). Both
+  boundaries are narrative cuts: origin-of-life → archean-shore is life appearing, silurian-shore →
+  rhynie-chert is life coming ashore. The committed book goes from 7 to 9 chapter runs out of 53
+  scenes.
+- **Seven scenes re-specified in place** (id, `t`, `unsourced`, `events` and `pin` unchanged):
+  - archean-shore: stromatolites on the sea floor, deliberately no oxygen bubbles.
+  - great-oxidation: mats streaming oxygen bubbles; caption no longer says "for the first time".
+  - boring-billion-shallows: Bangiomorpha turf restated at landscape scale.
+  - cryogenian-snowball: a broad polynya (a contested refugium, hedged in the caption) with clear
+    water to a distant ice shelf and a dropstone, no visible life. It is included to keep the run
+    unbroken; leaving it in `waters-edge` would add two cuts. Whether a lifeless scene belongs in
+    this chapter is still a human call.
+  - ediacaran-shallows: Dickinsonia underwater, the first animals clearly seen, with small generic
+    fronds behind it. Charnia is not named because it is mainly a deep-water taxon.
+  - ordovician-reef-shore: crinoid, bryozoan and coral reef with a metre-long orthocone nautiloid
+    below; the liverwort film sits above, on damp rock by a freshwater seep, not at the tideline.
+  - silurian-shore: one restricted Euramerican lagoon, with eurypterids and small anaspid-grade
+    jawless fish below and Cooksonia above; no reef patch, no jawed fish.
+- **`cambrian-seafloor` moves by chapter and shot only.** Its image already has the framing, so
+  its subject, caption and pin are kept.
+- **Kept in `waters-edge`:** hadean-ocean and origin-of-life (nothing alive to show under water),
+  and rhynie-chert, devonian-estuary and late-devonian-tetrapod (the story is on land or the water
+  is opaque; a lone split scene would add two cuts).
+- **No new scenes.** A Nama Cloudina reef (~548 Ma) is the one candidate held in reserve, not
+  drafted.
+
+**Consequences.**
+- **Pins.** A pinned node reports PINNED before its digest is compared (ADR-005), so the move and
+  the re-specs leave every early scene pinned and `earthtime plan` unchanged in status. Each of the
+  seven re-specified scenes needs its pin cleared by a human before it regenerates; until a new
+  candidate is picked it leaves the published manifest (ADR-014 precedent).
+- **Prompt provenance.** `cambrian-seafloor`'s kept subject still says "plainly visible through
+  the shallows" and "mud at the waterline". It no longer matches its shot text word for word;
+  ADR-005 tolerates the drift while the pin holds. Align the subject if the pin is ever cleared.
+- **Web manifest.** A publish had already written `SPLIT_LEVEL` scenes into
+  `data/media/manifest.json` while the web validator still rejected that value. `loadManifest` falls
+  back to the stub only on a 404, so the app showed its error panel. `Scene.shot` in
+  `web/src/types/manifest.ts` and `SHOT_TYPES` in `web/src/shell/manifest.ts` now accept
+  `SPLIT_LEVEL`, and a validator test covers it. The change is additive, so no `schemaVersion`
+  bump. A new shot type needs the Python `Shot` enum and both web lists changed together.
+- **Interim chapter mismatch.** Until the seven re-specified scenes are regenerated and picked,
+  their pinned images are still one-metre-above-water shore frames. They sit in `over-under`
+  beside the split-frame `cambrian-seafloor`, so the viewer dissolves across mismatched framings
+  inside the chapter. The origin-of-life → archean-shore cut also falls between two shore frames
+  that match. Regenerate and pick all seven before a publish is treated as final; do not publish a
+  partial set as final.
+- **Docs.** VISUAL_SPEC §3 gains a `SPLIT_LEVEL` camera-grammar row. No NORMATIVE section changes.
+- **Risk.** 2.5D depth displacement may tear along the waterline, a depth discontinuity. Check the
+  live `cambrian-seafloor` render before building the seven.
+- **Citations.** Allwood 2006 now points to `events.yaml` first-life, and Bobrovskiy 2018's
+  volume and pages are checked. Two inline UNVERIFIED markers remain in `data/scenes.yaml`:
+  Webby et al. 2004, and direct co-occurrence of Eurypterus with anaspid-grade fish in a single
+  bed.
+
+## ADR-026 — CO₂ near the present comes from measurements, spliced onto GEOCARB III
+
+**Status:** accepted — 2026-09-14.
+
+**Context.** `co2-o2` read only GEOCARB III, a model with one sample every 10 Myr whose 0 Ma value
+(276.6 ppm) is a pre-industrial baseline. Every `t` inside the last 10 Myr therefore sampled a
+log-linear blend of 276.6 and 277.2 ppm. The HUD read 277 ppm at the present, the ice-age cycles
+were missing (the LGM read 277 instead of ~190), and scene prompts described 1750, the LGM and AD
+2018 alike as "close to today's level".
+
+**Decision.**
+- **One source, three segments.** `sources/co2-o2` splices NOAA GML Mauna Loa annual means
+  (1959–2025), the Bereiter et al. 2015 Antarctic ice-core composite (~806 ka to AD 2001) and
+  GEOCARB III (570 Ma to 10 Ma) into the single `co2` `TimeSeries`. It is not a sibling source:
+  curated files are keyed by shape id, so a second writer of `co2` would silently overwrite this
+  one. Per-file provenance moves to `[[artefacts]]` in the source manifest.
+- **Newest segment wins.** Each segment keeps only samples strictly older than every sample of
+  the segments before it. That drops the ice core's AD 1959–2001 rows and GEOCARB's 0 Ma value.
+  The series is disjoint in `t` by construction; the normaliser rejects duplicate `t` within a
+  segment because `TimeSeries` does not.
+- **Ice-core ages are re-based.** `age_gas_calBP` counts back from AD 1950. `t` counts back from
+  the fixed AD 2025 present (ADR-024, `data/events.yaml`), so `t = age + 75`. Mauna Loa years use
+  `t = 2025 − year`, and a year after 2025 raises: moving the present is project-wide, not a
+  re-pin of one file.
+- **Uncertainty only where published.** Measured rows carry their file's own sigma; GEOCARB rows
+  keep none.
+- **Prompt CO₂ bands** in `pipeline/prompts.py` split the old "< 700 ppm" band at 230, 300 and
+  450 ppm. They stay pure in ppm and name no era, because Oligocene GEOCARB values share the
+  300–450 band with the 20th century.
+
+**Consequences.**
+- **Pins.** Rendered conditions change for scenes inside roughly the last 10 Myr, and so do their
+  prompt digests. Pinned scenes report PINNED before the digest is compared (ADR-005), so no
+  pinned image is regenerated or dropped from publish.
+- **Gap.** ~806 ka to 10 Ma had no data; the log-linear bridge across it read 207–277 ppm, a
+  glacial low, where the Pliocene was ~350–400 ppm. `sources/co2-o2` now declares this span a
+  `TimeSeries.Gap` (ADR-027, accepted 2026-09-15), so `WorldState.atmosphere.co2_ppm` reads
+  `None` there instead of the blend, scene conditions name the gap, and the HUD readout,
+  sparkline and chart no longer plot it as a reading. No verifiable Cenozoic proxy file was
+  found to fill the span itself: see `sources/co2-o2/README.md` § Known gaps.
+- **Re-pinning.** NOAA regenerates the Mauna Loa file monthly, so its pinned sha256 goes stale and
+  `make data` fails loudly on a fresh raw directory until someone re-pins it by hand.
+- **Web.** The published `co2` layer grows from 58 to 1,977 samples and gains sub-ppm bounds on
+  recent rows. The HUD readout hides bounds that round to the same figure, and the sparkline
+  switches to a log axis for series spanning at least a decade, so the ice-age cycles and the
+  industrial rise stay visible next to the Cambrian peak. `sampleSeries` rebuilding its time
+  array on every call was fixed alongside the gap work (ADR-027): a per-series index is now
+  built once and cached by object identity.
+- **Docs.** DATA_SOURCES `co2-o2` and the source README document the splice. No NORMATIVE section
+  changes.
+
+## ADR-027 — `TimeSeries` can mark a span with no data
+
+**Status:** accepted — 2026-09-15. User decision (2026-09-14): "ok can just have no record for
+now, the co2 levels isnt a critical metric/feature" — accepting this ADR in place of sourcing a
+Cenozoic CO₂ proxy dataset (ADR-026 § Gap, `sources/co2-o2/README.md` § Known gaps).
+
+**Context.** `TimeSeries.sample` interpolates between any two neighbouring samples, however far
+apart they are. A spliced source cannot say "nothing is known here". `co2` has no data from
+~806 ka to 10 Ma (ADR-026), yet `WorldState` returned a log-linear bridge there. That bridge read
+207–277 ppm, a glacial low, where the Pliocene was ~350–400 ppm. The HUD plotted it as a reading.
+Scene conditions avoided it only through a hand-kept `CO2_UNRECORDED_SPAN` in `pipeline/prompts.py`,
+which duplicated source knowledge in a consumer and needed a cross-check test to stay honest.
+
+**Decision.**
+- `TimeSeries` gains `gaps: list[Gap]`, default empty, where `Gap` is `(from_index: int,
+  to_index: int)` rather than the originally proposed `(GeoTime, GeoTime)`. Two reasons:
+  - **A pair of ages needs a runtime check every time it is read** — "these two floats equal two
+    adjacent samples' `t`, in order, with nothing strictly between" — repeated by every
+    constructor, every `sample()` call, and independently by `sampleSeries` in web, wherever a
+    float mismatch (parquet round-trip, JSON, a re-pinned upstream file shifting a boundary by a
+    day) would silently turn a gap into a phantom no-op or a false rejection. A pair of indices
+    make "spans exactly one pair of adjacent samples" a structural invariant instead:
+    `Gap` itself rejects `to_index != from_index + 1` at construction, so a `Gap` that skips a
+    sample or spans zero pairs cannot be built, and no consumer re-derives the check.
+  - **Sample order is already a total, deterministic invariant.** `TimeSeries._sorted` always
+    sorts `samples` ascending by `t` before anything else runs (including gap validation), so an
+    index pair is a stable address into that order, not an accident of construction order —
+    and it round-trips through parquet's JSON header and the published layer JSON exactly like
+    any other field, no float formatting or epsilon comparison involved anywhere on the wire.
+  - The `TimeSeries`-level validator additionally rejects gaps that are out of range or overlap
+    (two gaps may touch at one shared boundary sample without overlapping). "Bounded by two
+    adjacent samples, nothing strictly inside" needs no separate check: it is what `to_index ==
+    from_index + 1` already means.
+  - `sample(t)` returns `None` strictly inside a gap (between its two bounding samples,
+    exclusive), exactly as it does outside `domain`; at either bounding sample it returns that
+    sample's real value.
+- The parquet schema is unchanged: `gaps` is a `TimeSeries` field, not a per-sample one, so it
+  travels in `write_shape`'s existing JSON header (`pipeline/curated.py`) alongside `unit` and
+  `interpolation`, the same way `EventSet`'s `effect` already rides in a row's JSON column. A
+  curated file written before this field existed has no `"gaps"` key in that header and reads
+  back with the field's default (`[]`) — no migration, no `schemaVersion` bump, no explicit
+  backward-compatibility branch anywhere in `curated.py`.
+- The published layer JSON mirrors this: `SeriesData.gaps` (camelCase `fromIndex`/`toIndex` on
+  the wire) is additive and omitted entirely when empty (`exclude_if`), so a layer file with no
+  gap stays byte-identical to one published before this ADR. Web's `parseSeriesData` validates
+  an incoming `gaps` array the same way `TimeSeries._gaps_valid` does, after sorting samples
+  ascending by `t` exactly as the Python side does.
+- `sampleSeries` in web returns `null` for a `t` strictly inside a gap. It also stops rebuilding
+  its `t` array with `.map` on every call (co2 now has 1,977 rows) — a small per-series
+  `{ts, gapFromIndices}` index, keyed by the `SeriesData` object's identity in a `WeakMap`, is
+  built once and reused; `sampleSeries(data, t)` stays a pure function of `t` for a given `data`,
+  this is only a cache of work `data` alone already determines.
+- The HUD sparkline already breaks its line on `null`; nothing there changes. The readout and the
+  chart dock's header now say **"no record"** when `t` is inside the layer's own domain but the
+  sample is `null` (a gap), and keep **"no data"** when `t` is outside the domain entirely — the
+  only two ways `sample()` returns `null`. Neither component reads `gaps` directly; both infer
+  which case applies from `layer.timeDomain`, which `earthtime publish` always sets to the
+  series' own `domain` (`pipeline/publish.py` `_layers`), so the inference is exact for every
+  real published layer.
+- `sources/co2-o2` declares the ice-core segment's oldest row and GEOCARB's oldest-surviving row
+  as a gap, located from the splice's real per-segment kept-row counts (`_splice` now returns
+  them alongside the flat sample list), not a hard-coded age — a re-pinned ice core or a future
+  Cenozoic segment moves the gap with it.
+- `CO2_UNRECORDED_SPAN` and its cross-check test are deleted. `AtmosphereState` gains
+  `co2_domain: tuple[GeoTime, GeoTime] | None`, the `co2` series' own `domain` when one is
+  registered. `pipeline.prompts._render_atmosphere` reads it, not a hard-coded span, to tell
+  "`co2_ppm=None` because `t` is inside `co2_domain` but in a gap" ("no CO2 record covers this
+  interval") apart from "`co2_ppm=None` because no source reaches this far, or none is
+  registered at all" ("no CO2 record reaches this far back") — without prompts knowing which
+  source or splice produced either. This is an additive field on `WorldState.atmosphere`
+  (NORMATIVE, DESIGN §4); no other field changes shape.
+
+**Consequences.** Every consumer of a series already handled `None`/`null`, so no new branch was
+needed downstream beyond the readout/chart wording split above. The contract table's `TimeSeries`
+row gains `[gaps]`. Prompt digests for scenes inside the gap (`lucy-afarensis`,
+`acheulean-erectus`, `messinian-salt-flats`, `c4-savanna-hipparion`, `panama-land-bridge`) change
+once more, but their wording — "no CO2 record covers this interval" — does not; pins hold
+regardless (ADR-005). No Cenozoic CO₂ proxy dataset is sourced under this ADR: the gap is named,
+not filled. Revisit if a verifiable compiled Cenozoic curve (CenCO2PIP or equivalent) is found —
+see `sources/co2-o2/README.md` § Known gaps.

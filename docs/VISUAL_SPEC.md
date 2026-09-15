@@ -84,6 +84,7 @@ perceived-consistency work.
 | `WATER_EDGE` | low, near the waterline, water occupying lower third |
 | `CANOPY` | mid-height, looking through vegetation, layered depth |
 | `GROUND` | low and close, detail-forward, shallow depth |
+| `SPLIT_LEVEL` | lens at the water surface, over-under: world above the waterline, the same place underwater below it (ADR-025) |
 
 ⚠️ **Open risk:** `WIDE_RIDGE` may not survive depth displacement — distant vistas have
 little depth variation and produce weak parallax, while foreground edges produce the worst
@@ -220,11 +221,18 @@ a per-model price table so `earthtime plan` can cost a build before spending any
 
 ## 9. Honesty
 
-The output is an artistic reconstruction and says so, visibly, in the UI. Photorealism
-implies a claim to accuracy that generated deep-time imagery cannot support — paleoart in
-particular will be wrong in ways specialists notice.
+The output is an artistic reconstruction and says so in the UI. Photorealism implies a claim
+to accuracy that generated deep-time imagery cannot support — paleoart in particular will be
+wrong in ways specialists notice.
 
 We are not claiming accuracy. We are claiming plausibility, and we say which is which.
+
+**Where it says so (ADR-012 amendment, 2026-09-15).** The disclosure — "Artistic reconstruction
+— plausibility, not accuracy." — is not pinned on screen throughout; it is the first line of
+the About & credits panel, reachable from a small button beside the globe orb (or the `/credits`
+route directly). A user-directed change from an always-visible footer note: the disclosure
+still reads before any credit, but no longer competes for space with the era sections it used to
+sit above.
 
 ---
 
@@ -301,6 +309,30 @@ the same as a scene.
   direction morphs badly.
 - Morphs between very different body plans (a micrograph into a sponge, a fish into a tetrapod)
   read as a warped dissolve, not an anatomical correspondence. That is expected.
+- A pair whose flow disagrees with itself too much to trust (ADR-015, amendments 2026-09-15 and
+  2026-09-16) is not warped at all: `earthtime morph` falls back to a plain linear-light crossfade
+  for it, the same thing the viewer already does for a pair it has no flow field for.
+
+### Exposure
+
+- The generator lights plates unevenly. `earthtime publish` normalises each plate so its
+  subject's highlight reads at a shared level (ADR-015, amendment 2026-09-14). The pinned
+  candidate is never altered.
+- The subject highlight is the 95th-percentile luma of pixels clearly brighter than the backdrop
+  inside the central disc.
+- A plate below 160 gets a linear-light gain toward it, capped at 3.5.
+  - Each pixel scales all three channels by one factor, so hue and saturation are kept.
+  - The factor never clips white and eases in below code 16.
+  - It applies only where a pixel stands above the backdrop, so the black field and the glow
+    behind the subject keep their level.
+- A plate already at or above the target publishes unchanged. That is every microscope plate so
+  far.
+- The lineage layer file records each plate's `exposure` (highlight and gain).
+- The viewer draws the published plate as it is. WebGL textures upload without colour
+  conversion, so a settled plate in the lens matches the file and the `<img>` fallback.
+- Morphs are computed from the pinned originals, whose geometry exposure does not change.
+- Normalisation does not rescue an underlit plate. A plate at or near the cap still reads dark:
+  judge it for regeneration with a brighter key light.
 
 ### Review
 

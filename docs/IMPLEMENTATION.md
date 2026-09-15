@@ -170,7 +170,8 @@ This is where the budget gets spent and where the project either looks good or d
 The human chose to note these after the first browser reviews, not to build them yet. Scene
 coverage, globe motion and ancestor portraits come first.
 
-- **Layer picker.** Hide day length by default: it reaches ~24 h early and then barely moves.
+- **Layer picker.** Day length is already off the HUD (2026-09-14: it reaches ~24 h early and
+  then barely moves, and the event feed took its space); a picker could offer it as opt-in.
   Moon distance and solar luminosity move behind the same picker.
 - **Global mean surface temperature.** The strongest candidate. Scotese et al. 2021 for the
   Phanerozoic, CENOGRID (Westerhold 2020) for the Cenozoic, EPICA/Vostok for the last 800 kyr.

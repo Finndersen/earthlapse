@@ -44,7 +44,8 @@ automatically. There is no separate "video mode".
 
 ### Non-goals
 
-- Scientific authority. A visible "artistic reconstruction" note ships with it.
+- Scientific authority. An "artistic reconstruction" disclosure ships with it, one click/tap
+  away in the About & credits panel (ADR-012 amendment) rather than pinned on screen throughout.
 - Exhaustive event coverage. ~200 curated events, not 5,000.
 - A backend. The viewer is fully static.
 - A 3D world. See §5 — the 3D is a thin parallax effect, nothing more.
@@ -161,6 +162,48 @@ idea as map tile LOD.
 > of the track around the touch point plus the same precision readout — so the same "reachable
 > regardless of how close together" guarantee holds for a finger, which can't hover.
 
+> **v1 note (ADR-024): the window is bounded again, by era section rather than by zoom.** The
+> timeline is divided into a fixed tree of **era sections** (`timeline/sections.ts`): Earth → the
+> six eons/eras (Hadean, Archean, Proterozoic, Paleozoic, Mesozoic, Cenozoic) → ICS periods where
+> subdividing helps (Proterozoic eras and the Neoproterozoic periods; every Phanerozoic period)
+> → Quaternary → Pleistocene/Holocene → six Holocene human-history sections (First farmers,
+> Ancient civilisations, Medieval world, Early modern, Industrial age, Modern). Geological
+> boundaries come from the ICS International Chronostratigraphic Chart v2024/12, and each
+> historical boundary carries its own citation. The selected section is store state, and the
+> visible window is that section's window, animated in symlog-warped space when it changes.
+> There is still **no free zoom**: a clickable band strip under the ruler shows the current
+> section's children, and a breadcrumb (Earth › Cenozoic › Quaternary › Holocene › Industrial
+> age) or Escape zooms back out. The scrub track, ruler, bands and chart dock all draw against
+> the windowed scale. Dragging and stepping stay inside the window, including mid-animation (track
+> targets are clamped to the section). The HUD sparklines, scenes-mode pacing and the event
+> feed's lookback stay full-domain. Within a section the symlog/linear toggle
+> still applies. Symlog stays the default, because `log(1 + t/10⁴)` already draws close to
+> linearly across a short historical section while still compressing the Cenozoic usefully. A
+> near-linear window gets evenly stepped ruler ticks.
+
+> **v1 note (ADR-024 amendment, follow-up pass items 6-7): reachable without a pointer, and
+> legible however small the section.** Escape/Backspace leaves the selected section for its
+> parent, Home/`0` returns to Earth, and PageUp/PageDown (or Shift+←/→) step to the previous/next
+> sibling section — wrapping to the parent's own next/previous sibling at either end of a branch,
+> the same rule playback's own section-continuation already used. The breadcrumb carries matching
+> "‹ Up"/"Earth"/"‹ ›" buttons, each disabled (not hidden) with nowhere to go, and a bare Escape
+> defers to the chart dock or the expanded globe instead when either is open (`Timeline`'s own
+> `overlayOpen` prop). Separately, every section now carries a short `abbreviation`, drawn once a
+> band's own rendered width no longer fits its full name, with a floor under every band's width
+> (fit to its abbreviation, redistributed from wider siblings) that is never shrunk below itself:
+> when even the sum of every floor exceeds the strip, the strip's own content grows past it and
+> becomes horizontally scrollable instead, so a label is never truncated below its abbreviation.
+> Thin connector lines, confined to a slim band along the strip's own bottom edge rather than the
+> full height, keep each band's true proportion legible regardless. The symlog knee itself is
+> section-adaptive (`symlogKnee`) for any section *with children* — a window narrower than 10⁷
+> years takes a knee scaled to its own span rather than the fixed constant tuned for the full
+> domain, so a section's youngest children (Modern within the Holocene, for instance) draw with
+> real width instead of collapsing toward their true, tiny proportion — but a **leaf** section
+> (Modern itself, say) draws with the fixed constant instead (`sectionSymlogKnee`), since there is
+> nothing below a leaf for the adaptive shrink to make room for. See the ADR-024 amendment and its
+> own re-review follow-up for the verification (fisheye, event feed, playback pacing) and the
+> full history of what changed and why.
+
 ~~A persistent **linear-scale minimap** under the main axis keeps the warp legible and the
 distortion honest.~~
 
@@ -188,14 +231,23 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 >   segment the playhead moves at exactly the velocity its duration demands; there is no cap
 >   against the ordinary rate (ADR-012's hybrid is gone). Outside every scene's span, and in
 >   every segment `scene/pacing.ts` doesn't cover, the playhead moves at the ordinary flat rate.
-> - **Steady** — constant velocity in the full-domain scale of whichever scale kind is
->   currently selected (symlog by default, linear when the linear toggle is on); no pacing at
->   all. Dense scene clusters are simply crossed as reached; `presentation.ts`'s existing
+> - **Steady** — constant velocity in ~~the full-domain scale~~ the selected era section's scale
+>   (ADR-024, note below) of whichever scale kind is currently selected (symlog by default,
+>   linear when the linear toggle is on); no pacing at all. Dense scene clusters are simply crossed as reached; `presentation.ts`'s existing
 >   minimum-transition rate limiter remains the visual backstop against a crossing too fast to
 >   read as a dissolve.
 >
 > See `scene/pacing.ts` (segment durations, the bonus) and `timeline/playback.ts`
 > (`advancePlayhead`'s two modes) for the mechanism, and ADR-016 for the full rationale.
+
+> **v1 note (ADR-024): playback continues across era sections.** When the playhead runs off the
+> younger edge of the selected section, the timeline moves into its next sibling. If the
+> section is the last child, it moves up to the parent's next sibling (Permian → Mesozoic), and
+> so on until the present, with the same animated window transition as a click. Any other jump
+> out of the window (an event card, say) climbs to the nearest section that holds the new `t`.
+> Scenes mode keeps its full-domain pacing. Steady mode moves at constant velocity in the
+> *selected section's* scale, so each section takes the same wall-clock time at 1x, carrying the
+> rest of a frame across an edge (`advanceSteadyPlayhead`).
 
 ---
 
@@ -207,13 +259,13 @@ directly.**
 
 ```python
 class WorldState(BaseModel):
-    t: float                       # years before present
-    plates:     PlateSnapshot      # continent positions, from gplately
-    climate:    ClimateState       # global mean temp, ice extent, sea level, Köppen grid
-    atmosphere: AtmosphereState    # O2 %, CO2 ppm, CH4, pressure
-    biosphere:  BiosphereState     # dominant clades, land cover class, marine/terrestrial
-    sky:        SkyState           # solar luminosity, moon distance, day length, obliquity
-    anthropo:   HumanState | None  # population, land use, tech level, settlement density
+    t: float  # years before present
+    plates: PlateSnapshot  # continent positions, from gplately
+    climate: ClimateState  # global mean temp, ice extent, sea level, Köppen grid
+    atmosphere: AtmosphereState  # O2 %, CO2 ppm, CH4, pressure
+    biosphere: BiosphereState  # dominant clades, land cover class, marine/terrestrial
+    sky: SkyState  # solar luminosity, moon distance, day length, obliquity
+    anthropo: HumanState | None  # population, land use, tech level, settlement density
 ```
 
 `WorldState.at(t)` interpolates from curated data. Pure function, unit tested against known
@@ -362,7 +414,10 @@ expands to fill; it is never the default focus.
 > - ancestor top-right
 > - caption as a subtitle above the timeline
 >
-> Scene checkpoints are marked on the timeline.
+> Scene checkpoints are marked on the timeline. Below 760px the ancestor panel stays in that
+> same top-right corner rather than claiming a wide band of its own — the portrait shrinks to
+> the globe orb's own size and its name/since text collapses to short right-aligned caps lines
+> under it, the same treatment the globe orb gives its own label.
 
 > **v1 note (ADR-017/ADR-021), further superseding the transport row above.** There is no
 > minimap (the row shown above already dropped its "linear minimap" strip — ADR-011's symlog
@@ -374,6 +429,20 @@ expands to fill; it is never the default focus.
 > individually reachable — hovering (or, on touch, the press-and-drag magnifier) opens room for
 > them locally; nothing outside the lens moves as it does.
 
+> **v1 note (ADR-024).** The timeline's window is now the selected era section's (DESIGN §3).
+> Under the ruler, a strip of hairline-bounded **section bands** (the current section's
+> children) sits aligned with the track. Bands too narrow to aim at are widened to a minimum,
+> and long labels are elided. The band holding the playhead is accent-coloured. The
+> **breadcrumb** takes the controls row's left track, opposite the speed/mode/scale controls,
+> so the transport stays centred. Below 760px it becomes its own row above the transport, with
+> middle ancestors collapsed to "…".
+
+> **v1 note (ADR-012 amendment, 2026-09-15).** The periphery no longer dims on idle — nothing in
+> the UI fades or hides on inactivity, only as a direct function of `t` or a direct user action.
+> The always-on footer row (the artistic-reconstruction note plus a Credits link) below the
+> transport is gone too: a small muted "About & credits" button sits above the globe orb,
+> top-left, opening an in-experience panel (VISUAL_SPEC §9) instead of navigating to `/credits`.
+
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to
 the timeline; because the chart shares the timeline's warped x-axis, the value under the
@@ -384,35 +453,73 @@ playhead is always directly above it. One chart component, N layers.
 Surfaces events as playback reaches them, rather than only on a timeline hover — the roadmap's
 "non-intrusive playback pop-up cards" and "event card (description + citation)". Lives in
 `web/src/events` (`selectFeedEvents`, `<EventFeed>`), a self-contained prop-driven package like
-`timeline`, `scene` and `layers`; `ShellLayout`'s `feed` slot sits below the readouts, on the
+`timeline`, `scene` and `layers` — with one deliberate exception, `EventDetailPanel` importing
+`@/shell`'s shared `Panel`, below; `ShellLayout`'s `feed` slot sits below the readouts, on the
 one stretch of the periphery that is never the globe orb, the ancestor panel or the scene
 caption, at every breakpoint (a compact single-card strip directly above the timeline on a
 phone).
 
-Selection is a pure function of `t`, the animated `TimeScale` and the feed's own measured
-pixel width — no timer decides what shows. An event is a candidate once it is "behind" the
+Selection is a pure function of `t`, the full-domain symlog `TimeScale` and the feed's own
+measured pixel width — no timer decides what shows. An event is a candidate once it is "behind" the
 playhead: its placement (`Event.placement_t`, ADR-022) has been reached on the forward march
-from deep time toward the present, and its *displayed* distance behind `t` — measured in
-pixels on the same warped scale the timeline itself draws against, not raw years — is within a
-lookback constant, and the event is at most twice as old as the playhead (plus a 25-year floor).
-The pixel lookback follows whatever window the timeline shows, but on its own it fails near the
+from deep time toward the present, and its distance behind `t` — measured in pixels on the
+full-domain warped scale, not raw years — is within a lookback constant, and the event is at
+most twice as old as the playhead (plus a 25-year floor). The lookback deliberately ignores the
+selected era section (ADR-024): measured on a zoomed-in section it would shrink with the window
+(a few decades inside the Industrial age) and leave the feed empty exactly where the viewer
+zoomed in to read history. The pixel lookback on its own fails near the
 present: the symlog axis is nearly linear below ~10 kyr, so at full-domain view all of human
 history fits in a few dozen pixels. The age ratio keeps "200 years ago" to the last few
-centuries while leaving deep time untouched. Cards are freshest-first, capped (a
-"+k more" line covers the rest of a dense cluster), each one's opacity and a small resting
-offset a function of how close it sits to falling out of the window. An event the current
-scene's caption already names (`Scene.events`, ADR-022) is skipped, never duplicated. The same
-rule makes scrubbing backward well-behaved: revisiting a given `t` reproduces the exact same
-feed regardless of which direction it was reached from, and a paused/hovering viewer sees the
-same nearest-behind cards a playing one would.
+centuries while leaving deep time untouched. Cards are freshest-first, capped at four or at
+however many collapsed cards the slot's measured height fits (a "+k more" line covers the rest
+of a dense cluster), each one's opacity and a small resting offset a function of how close it
+sits to falling out of the window. The freshest card alone carries a "just reached" emphasis —
+an accent bar, wash and title glow in its primary tag's colour — that eases away across the
+first third of its window, derived from the same distance, so it too reproduces on a scrub back;
+fast playback through a dense stretch hands the one highlight to each newly reached event
+rather than strobing several. Under reduced motion the highlight stays, static, and the arrival
+slide-in and drift are dropped. Revisiting a given `t` reproduces the exact same feed regardless
+of which direction it was reached from, and a paused/hovering viewer sees the same nearest-behind
+cards a playing one would — selection reads only `t`, the scale and the track width, nothing
+else. **No event is excluded because the current scene's caption already names it.** An earlier
+pass tried that (`Scene.events`, ADR-022) and it back-fired (W-followup item 4): `kpg-arrival`
+and `kpg-darkness` both link `k-pg-impact`, so the event stayed hidden from the feed for the
+entire span either scene was on screen — including well past the moment the impact itself was
+reached, exactly when a viewer would expect to see it surface. Every event behind the playhead
+always shows, full stop.
 
-A card expands in place to its full description and citation on click/tap/Enter, and scrubs
-the timeline to that event via the same `onScrub` path `<Timeline>` itself uses — there is no
-second selection mechanism. A single polite `aria-live` announcement per newly-freshest event
-is throttled during fast playback rather than firing on every event a dense stretch crosses.
 `EVENT_TAG_PALETTE` (`web/src/events/tagPalette.ts`) is the one place an `EventTag` maps to a
-colour, so the timeline's own eventual colouring by tag (ADR-022, deferred) reuses it rather
-than inventing a second legend.
+colour and a name. Each card shows its primary tag as a small muted label in that colour next to
+the date — never colour alone, the label text is what actually distinguishes tags for a viewer
+who can't see colour — read straight from the palette so the card, the detail panel and the
+legend below can never disagree with each other. Colouring the timeline's own event markers by
+tag is still deferred (ADR-022); until it happens, `EventTagLegend` (a plain six-dot key, mounted
+inside the About & credits panel rather than claiming any of the feed's own tight vertical
+budget permanently) stays scoped to what the feed shows.
+
+Clicking, tapping or Enter-ing a card no longer expands it in place — the roadmap's original
+"pop-up cards" instead open `EventDetailPanel`, one instance of `@/shell`'s shared `Panel`
+primitive (the same one the About & credits panel builds on — one focus trap, not several bespoke
+ones) showing the event's full label, date or range, *every* tag it carries (not only the primary
+one), the full description, the citation, and a "Show on timeline" action. Opening the panel
+never moves `t` by itself — the card that opened it is already recent, that's why it's showing —
+only "Show on timeline" scrubs, using the same store path `<Timeline>`'s own `onScrub` does, so
+there is still exactly one selection mechanism. Opening the panel pauses playback if it was
+running; closing it (×, Escape, or a click outside) resumes only then, as a direct consequence of
+the click that opened or closed it, never an idle-driven change (§8's ADR-012 amendment: nothing
+in the UI fades or hides on inactivity, only as a direct function of `t` or a direct user action).
+"Show on timeline" is one further close path, distinct from the other three (re-review fix,
+2026-09-15): it scrubs and closes the panel — a still-open panel over a ~35% backdrop was
+hiding the very scene the action asked to see — but deliberately does not resume playback even
+if it had been running before the panel opened, since resuming would immediately carry the
+playhead away from the place just asked for.
+A timeline event marker (the room-decluttered uncertainty band, ADR-019) does **not** open the
+same panel: unlike a checkpoint pip, an event band is deliberately `pointer-events: none` so the
+scrub track's hit area stays one continuous drag surface across a dense stretch of overlapping
+bands rather than acquiring a field of tiny dead zones; making bands clickable would fight that
+on purpose without a larger restructure, so the feed stays the one place a viewer opens an
+event's detail from. A single polite `aria-live` announcement per newly-freshest event is
+throttled during fast playback rather than firing on every event a dense stretch crosses.
 
 ---
 
@@ -466,7 +573,9 @@ biodiversity (genus count with the Big Five marked), human population, energy us
   one generated portrait each (~$5 total). A persistent corner portrait that changes as you
   scrub, expanding to a full lineage strip. Strongest hook in the product for the least
   effort in it.
-- **Day length** — 21-hour Precambrian days, as a small rotating clock.
+- **Day length** — 21-hour Precambrian days. Published (`day_length`, not chartable) and read
+  by the audio score, but not shown on the HUD: it reaches ~24 h early and then barely moves,
+  so its readout gave way to a larger event feed (2026-09-14).
 - **Moon's apparent size** — it was dramatically closer. Render it in the sky, not as a number.
 - **Solar luminosity** — the faint young Sun and the genuine unsolved puzzle it poses.
 - **What's under your feet** — user picks a modern city; gplately reconstructs its
@@ -497,9 +606,10 @@ other than `t` is a bug.
 
 Three tiers. Tier 1 is the highest value-per-effort item in the project.
 
-1. **Layered ambience stems.** ~10 CC0 loops (wind, water, rain, insects, birds, mammals,
-   fire, machinery, traffic, voices), each with gain driven by `WorldState(t)`. Insects fade
-   in during the Devonian, birds in the Cretaceous, cities in the Holocene. Cost: zero.
+1. **Layered ambience stems.** ~~~10 CC0 loops (wind, water, rain, insects, birds, mammals,
+   fire, machinery, traffic, voices)~~ (thirteen stems as built, no `machinery`: v1 note
+   below), each with gain driven by `WorldState(t)`. ~~Insects fade in during the Devonian,
+   birds in the Cretaceous~~ (re-dated by the ADR-023 amendment), cities in the Holocene. Cost: zero.
    Because it is parameterised by `t`, it responds correctly to scrubbing and speed changes
    — a fixed soundtrack cannot.
 2. **Procedural score** (Tone.js). Drone pitch and timbre from atmospheric composition,
@@ -512,13 +622,39 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 > alongside it) — browsers require a gesture before audio anyway, and this also gates Tone.js
 > itself: it is dynamically imported only after that first "on" click, never bundled eagerly.
 >
-> - **Tier 1** is ten stems (`wind`, `water`, `storm`, `volcanic`, `insects`, `birds`,
->   `mammals`, `fire`, `settlement`, `machinery`), each gained by a pure `stemGains(t)` built
->   from smooth raised-cosine ramps in `log1p(t)` (symlog) space between cited boundary dates —
->   several of them `events-core` event ids (`land-plants`, `first-forests`, `k-pg-impact`,
->   `control-of-fire`, `agriculture`, `industrial-revolution`, the flood-basalt events), so a
->   stem's fade lines up with the event feed instead of an independently-chosen date. Full curve
->   table: ADR-023 §1.
+> - **Tier 1** is sixteen ambience stems (`wind`, `water`, `storm`, `volcanic`, `forest`,
+>   `wing-hum`, `insects`, `large-animal`, `birds`, `archosaurs`, `mammals`, `livestock`, `fire`,
+>   `settlement`, `industry`, `traffic`), each gained by a pure `stemGains(t)` built from smooth
+>   raised-cosine ramps in `log1p(t)` (symlog) space between cited boundary dates — most of them
+>   `events-core` event ids (`land-plants`, `dinosaurs`, `k-pg-impact`, `livestock-domestication`,
+>   `agriculture`, `industrial-revolution`, the flood-basalt events, …), so a stem's fade lines up
+>   with the event feed instead of an independently-chosen date. `wind`/`water`/`storm` are a
+>   **pre-land bed only**, fading to exactly 0 by 370 Ma — the instant `late-devonian-tetrapod`
+>   becomes the dominant on-screen scene, not the Carboniferous boundary itself — as `forest` (a
+>   terrestrial rustle bed) rises in their place; `insects` only starts at 300 Ma, the date its
+>   one cricket-stridulation clip's own citation (Song et al. 2020) actually supports —
+>   `wing-hum`, a quiet, generic (non-stridulating, non-bee) wing-drone clip, instead covers the
+>   325 → 300 Ma gap on its own citation (Grimaldi & Engel 2005's unambiguous winged insects, not
+>   Song et al.'s stridulation date) and persists, rather than receding, once `insects` itself
+>   starts (2026-09-15 "wing-hum" amendment, closing the "era fit v3 fixes" amendment's own
+>   "Unresolved" item); three isolated, scene-local "nothing living is on screen" windows
+>   (`eocene-oligocene-icesheet`, `messinian-salt-flats`, `gondwana-ice-margin`) and a
+>   K-Pg-impact-and-aftermath window silence `forest`/`wing-hum`/`insects`/`birds`/`mammals`
+>   together; `large-animal` bridges the Permian-Triassic gap (~270 → 201 Ma) before handing off to
+>   `archosaurs`; a dated Last Glacial Maximum bump (Clark et al. 2009) restores `wind` for
+>   `pleistocene-steppe` alone, which has no free `sound` slot for it (era-fit v3, ADR-023
+>   amendment 2026-09-15, corrected by its "era fit v3 fixes" amendment, also 2026-09-15). A pure
+>   `humanDominance(t)` (0 before 1761, 1 at present) ducks `forest`, `wing-hum`, `insects`,
+>   `birds`, `mammals`, `livestock` and `fire` as industry and traffic take over. Nine further
+>   **scene-only** stems have no curve and are reached only through a scene's
+>   `sound`: `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water` (loop) and the
+>   one-shots `impact`, `rocket`, `aircraft`, `mammoth` (a one-shot is a stem published with
+>   `loopSafe: false`, and
+>   may name a `startSeconds` offset to skip a silent lead-in). `archosaurs`/`livestock` (both
+>   ambience stems) were re-sourced in place, same ids and curve, after their original Wikimedia
+>   Commons `.ogg` files were found not to decode in Safari/iOS (WebKit has no Ogg-container
+>   support); every published stem is now MP3, decoded by every shipped browser. Full curve
+>   table and citations: ADR-023 §1 and its 2026-09-14 and 2026-09-15 amendments.
 > - **Tier 2**'s mapping is restricted to what `WorldState` actually has curated data for today
 >   (`co2`, `day_length`) plus `events-core`'s `catastrophe` tag — not the temperature/
 >   biodiversity DESIGN sketched above, because `paleoclimate`/`hyde`/`pbdb` aren't built yet
@@ -531,27 +667,66 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 > - **A fourth thing DESIGN never named**: optional per-scene sound (`SceneRecord.sound`,
 >   `data/scenes.yaml`) — a scene names a tier-1 stem id and a `mode`. `loop` ties the stem's
 >   gain to the scene's own on-screen presentation weight (pure in `t`, scrub-safe). `once`
->   fires a single playback when the scene becomes the settled on-screen scene during playback
->   (not while scrubbing), at most once per arrival. Reuses the tier-1 stem catalogue rather
->   than a second asset pipeline — see ADR-023 §3.
+>   fires a single playback the instant the scene becomes **dominant** during playback (not
+>   while scrubbing), at most once per arrival — redefined from "becomes the *settled* on-screen
+>   scene" (as first built) by two 2026-09-15 amendments ("once-mode arrival is dominance, not
+>   settle", then a same-day "target-driven" follow-up): a wall-clock-rate-limited presentation
+>   can fail to ever fully settle in a densely-scened stretch at higher playback speeds, so the
+>   arrival trigger no longer waits for that. Reuses the tier-1 stem catalogue rather than a
+>   second asset pipeline — see ADR-023 §3.
 >
 > Full stem/score/pipeline/manifest design: ADR-023.
 >
 > **As-built web engine** (`web/src/audio/`, IMPLEMENTATION.md A6): `stemGains.ts`/`score.ts`/
 > `sceneSound.ts` are pure (`stemGains(t, flatBasaltWindows)`, `scoreParams(t, series,
 > catastropheWindows)`, `sceneSoundLoopGains(presented)`, the `nextOnceTriggerState`/
-> `useSceneSoundOnceTrigger` arrival state machine), built on one shared `ramp.ts` helper
+> `useSceneSoundOnceTrigger` arrival state machine — `engine.ts` feeds this one the raw,
+> un-rate-limited target `SceneMix` rather than the visually-throttled presented one everything
+> else here uses, so it can never miss a scene the playhead actually passes through), built on
+> one shared `ramp.ts` helper
 > (`rampLog`, `bump`) — none of the three import `tone`, so the math is unit-tested with no
-> Tone.js in the test bundle. `engine.ts`'s `useAudioEngine` is the one stateful, Tone.js-owning
-> hook: lazy `await import('tone')` behind the first "on" click, ten crossfade-looped
-> `Tone.Player`s (missing/failed stems skipped with one deduped `console.warn`, never a throw),
-> a small always-modulating drone/filter/tremolo score voice ducked under scene sound, an
+> Tone.js in the test bundle. **Stem buffers load on demand, not eagerly** (ADR-023 amendment
+> "on-demand loading", 2026-09-15, re-review fixes also 2026-09-15): `loadPlan.ts`'s pure
+> `stemsNeeded(input)` says which stems the next few seconds of *real, playback-paced* time (or
+> a small margin around a paused/scrubbed `t`) call for — calling `timeline/playback.ts`'s own
+> `advancePlayhead` rather than approximating its math — including a scene's own loop-mode gain
+> sampled across the window (not just its arrival `t`) and a wider, priority-ordered window for
+> scene stems (`once` ahead of everything else). `bufferCache.ts`'s `StemBufferCache` — also
+> `tone`-free, unit tested as plain state transitions — turns that into a bounded set of fetches
+> (nearest-priority-first, capped at 3 concurrent, a fetch not started until a paused/scrubbed
+> `t` has actually settled for ~300ms) and evictions (a 60s idle timeout, an LRU cap on total
+> *decoded bytes*, not seconds — channel count and sample rate vary per stem). A failed fetch or
+> decode backs off exponentially before retrying; a decode failure (an unsupported
+> container/codec on this browser) is never retried again this session. `engine.ts`'s
+> `useAudioEngine` is the one stateful, Tone.js-owning hook that drives it: lazy `await
+> import('tone')` behind the first "on" click, its own `fetch`+`AbortController`+
+> `decodeAudioData` (not `Tone.ToneAudioBuffer`'s own un-abortable fetch) so a fetch for a stem
+> that stops being needed is cancelled rather than left running, an ambience stem's decoded
+> buffer downmixed to mono client-side (roughly halves its memory, no pipeline dependency
+> needed), a `Tone.Player` built only once a loop-kind stem's buffer is actually decoded *and*
+> still needed — starting at the gain node's already-0 initial value with the player's own
+> existing `fadeIn`, so a late arrival is inaudible — and a bare buffer for a one-shot, read
+> straight from the loader by `playOnce`, which records a pending trigger and resolves it against
+> whatever is presented once the buffer actually lands, rather than assuming it always will be
+> the same scene (`stemVoices.ts`'s pure `planStemVoices` still decides ambience-loop vs
+> scene-loop vs one-shot vs unusable; missing/failed stems skipped with one deduped
+> `console.warn`, never a throw), each looping player confined to its stem's published `loop`
+> region when it has one, stopped (not disposed) once its target gain has sat at ~0 for 20s rather than looping silently,
+> every curve, scene-loop and once gain multiplied by the stem's published `levelTrimDb` (so a
+> gain means the same loudness whichever clip it drives: loops at a -30 dB reference, one-shots
+> 10 dB above), once-mode voices that fade out when their scene leaves the screen, a
+> development-only `window.__earthtimeAudio` snapshot (context state, the gain the last tick
+> wrote per looping stem, the once voices still playing, and the loader's own ready/loading/error
+> state), a small always-modulating drone/filter/tremolo score voice ducked under scene sound, an
 > `AudioContext` suspend/resume on tab visibility change, and — a deliberate, documented
 > departure from the drafted spec signature — ownership of the toggle's own persisted enabled/
 > master-volume state (`persistence.ts`, `localStorage`, try/catch), so `Experience.tsx` needs
-> exactly one hook call (`useAudioEngine`) and one component render (`<SoundToggle />`,
-> `toggle.tsx`, fixed top-right in the HUD periphery, `M` to mute). Public surface: `web/src/
-> audio/index.ts`.
+> exactly one hook call (`useAudioEngine`, now also passed `playback` and the selected section's
+> window) and one component render (`<SoundToggle />`, `toggle.tsx`, inline in the timeline
+> transport's secondary controls since the 2026-09 follow-up pass moved it there from a fixed
+> top-right corner, `M` to mute anywhere). Published stem filenames are content-hashed
+> (`<id>-<hash>.<format>`, same amendment) so a CDN can cache them `immutable`. Public surface:
+> `web/src/audio/index.ts`.
 
 ---
 
