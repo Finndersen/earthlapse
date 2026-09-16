@@ -87,21 +87,24 @@ match, rather than guessing.
 
 ## Measured volume
 
-~33.2 MB (25 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
+~31.0 MB (25 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
 re-sourced 2026-09-15, `large-animal`/`buzzing`/`knapping`/`mammoth` added 2026-09-15 "era fit v3",
 `forest` re-sourced again the same day by the "era fit v3 fixes" amendment after its first pick
 turned out to carry bird/primate-like FM chirps, `archosaurs`/`livestock` re-sourced and
 `artillery`/`lake-water` added the same day again, `wing-hum` added by a further 2026-09-15
 amendment and re-sourced the same day again after a review found its first pick carried faint
 bird tones, an audible in-loop repeat and a memory footprint out of proportion to its audible
-contribution — see its own `stems.toml` entry comment) — over ADR-023's "<~15 MB" default; the
-human has said audio size is not strictly budgeted and higher totals were already accepted, so
-this is reported rather than trimmed. The largest files are `lake-water` (4.5 MB, of which its
-own loop region plays), `rocket` (3.0 MB, a 2:12 launch) and `wind` (2.8 MB, of which its 54 s
-loop region plays); `wing-hum` is now 1.4 MB (a 66.9 s field recording, of which its
-35.3-47.9 s loop region plays) -- down from its first pick's 5.0 MB/230 s. `forest` is 1.2 MB
-(a 49.9 s ambience, of which its 20.35-49.93 s
-loop region plays). Every stem is CC0 or public domain.
+contribution — see its own `stems.toml` entry comment, `forest` re-sourced a THIRD time on
+2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
+rain recording, then a FOURTH time the same day after an independent review found the third pick
+was itself low-frequency wind rumble rather than genuine leaf rustle) — over ADR-023's "<~15 MB"
+default; the human has said audio size is not strictly budgeted and higher totals were already
+accepted, so this is reported rather than trimmed. The largest files are `lake-water` (4.5 MB, of
+which its own loop region plays), `rocket` (3.0 MB, a 2:12 launch) and `wind` (2.8 MB, of which
+its 54 s loop region plays); `wing-hum` is 1.4 MB (a 66.9 s field recording, of which its
+35.3-47.9 s loop region plays) -- down from its first pick's 5.0 MB/230 s. `forest` is 0.6 MB (a
+27.1 s field recording, of which its 17.308-26.224 s loop region plays) -- down from its third
+pick's 0.8 MB/43.5 s. Every stem is CC0 or public domain.
 
 ## Sourcing checks (nobody can listen)
 
@@ -118,6 +121,26 @@ and 0-1 kHz spectrograms with an RMS strip, and inspect for:
 - **frogs where frogs are an anachronism** (era-fit v3): periodic pulsed croaking, typically
   500-1500 Hz — checked against `forest`, which plays from 385 Ma, long before anuran calls are
   plausible (~250 Ma);
+- **rain/downpour character** (added 2026-09-16, after `forest`'s second pick passed every check
+  above yet still turned out to be rain): near-stationary broadband 1-8 kHz energy with a LOW
+  block-RMS envelope variance and no discrete events — checked quantitatively (400 ms blocks, the
+  same block size `levels.py` uses), not by ear or by spectrogram shape alone: rain measures well
+  under 1 dB of envelope standard deviation, because it has no gusts to swell and ease off;
+  genuine wind-driven leaf rustle swells several dB as gusts come and go, even though both share
+  the same broadband, no-tonal-ridge spectrum a bird/hum/siren check alone cannot tell apart. A
+  candidate's envelope variance must be checked **inside its own chosen loop region**, not just
+  over the whole clip — a dynamic clip can still have a flat, rain-like stretch that happens to be
+  its only cleanly-loopable span;
+- **spectral balance inside the loop region** (added 2026-09-16, after `forest`'s third pick
+  passed the rain check above yet turned out to be low-frequency wind rumble, not leaf rustle): a
+  Welch PSD (`nperseg` 2^15 or 2^16) over the candidate's own chosen loop region, not the whole
+  clip. Report the median-energy frequency and the fraction of power in 2-8 kHz — broadband and
+  non-stationary is necessary but not sufficient for "rustle": a directional mic in open wind
+  produces broadband, gusty, LOW-frequency noise (50-200 Hz dominant) that clears the rain check
+  above while still reading as rumble, not foliage. A bed meant to read as leaf rustle should clear
+  roughly a 1 kHz median frequency and 25% of its loop-region power in 2-8 kHz — `wind` (open-air
+  gusts, no foliage) sits at 696 Hz / 28.2% as a useful lower reference point for what "still mostly
+  wind" looks like;
 - **level and loop problems**: clipping, silence gaps, edit splices, and a level or sample step
   between the first and last 50 ms (fixed with a `loop` region, not by rejecting the clip);
 - **repetition**: one call or phrase repeating on a short cycle, which a loop multiplies.

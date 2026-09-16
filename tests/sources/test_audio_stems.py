@@ -8,6 +8,7 @@ write_outputs()'s verified copy into data/media/audio/.
 from __future__ import annotations
 
 import hashlib
+import re
 from pathlib import Path
 
 import httpx
@@ -415,6 +416,36 @@ def test_real_catalogue_trims_every_loop_to_within_1_5_db_of_the_reference() -> 
         assert trimmed <= reference + 0.05, stem.id
         if stem.loop_safe:
             assert reference - trimmed <= 1.5, (stem.id, reference - trimmed)
+
+
+def test_web_test_mirrors_of_forest_match_the_real_catalogue() -> None:
+    """`decodedBudget.test.ts` and `stemGains.test.ts` hand-copy `forest`'s attested
+    `duration_seconds` and `loudness_db`/`level_trim_db` as JS literals (comment discipline only
+    -- CLAUDE.md "No live API calls or large downloads in tests" keeps the web suite from reading
+    `stems.toml` directly). `forest` has now been re-sourced four times (ADR-023 amendment
+    "forest's SECOND pick was also rain" and its own 2026-09-16 correction); this guards the two
+    hand-copies against silently drifting out of sync with a future re-source, the way nothing
+    previously would have caught one of them being missed."""
+    book = load_stem_book(REAL_CATALOGUE)
+    forest = book.stem("forest")
+    assert forest is not None
+
+    web_audio_dir = Path(__file__).resolve().parents[2] / "web" / "src" / "audio"
+
+    decoded_budget_ts = (web_audio_dir / "decodedBudget.test.ts").read_text()
+    duration_match = re.search(r"\bforest:\s*([\d.]+),", decoded_budget_ts)
+    assert duration_match is not None, "forest duration mirror not found in decodedBudget.test.ts"
+    assert float(duration_match.group(1)) == pytest.approx(forest.duration_seconds, abs=0.005)
+
+    stem_gains_ts = (web_audio_dir / "stemGains.test.ts").read_text()
+    level_match = re.search(
+        r"FOREST_EFFECTIVE_LOUDNESS_DB = (-?[\d.]+) \+ (-?[\d.]+)", stem_gains_ts
+    )
+    assert level_match is not None, (
+        "FOREST_EFFECTIVE_LOUDNESS_DB mirror not found in stemGains.test.ts"
+    )
+    assert float(level_match.group(1)) == pytest.approx(forest.loudness_db, abs=0.005)
+    assert float(level_match.group(2)) == pytest.approx(forest.level_trim_db, abs=0.005)
 
 
 @pytest.fixture(scope="module")

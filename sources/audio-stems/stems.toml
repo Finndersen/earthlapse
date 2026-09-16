@@ -15,10 +15,17 @@
 # `archosaurs`/`livestock` re-sourced and `artillery` added the same day again by the
 # "human-history scene sounds, once-mode fix and Safari re-sourcing" amendment; that amendment's
 # `artillery` loop region and `archosaurs`' claimed "no loop needed" corrected, and `lake-water`
-# added, the same day again by its re-review): decoded in headless Chromium, drawn 0-8 kHz / 0-1
-# kHz with an RMS strip, and inspected for sirens (periodic tonal sweeps), speech (formant arcs),
-# music, vehicles, birds where birds would be an anachronism, frogs where frogs would be an
-# anachronism, clipping and silence gaps. The per-entry comment records what the check found.
+# added, the same day again by its re-review; `forest` re-sourced a THIRD time on 2026-09-16 after
+# listening feedback found its second pick, though frog/bird-free, was a literal rain recording):
+# decoded in headless Chromium, drawn 0-8 kHz / 0-1 kHz with an RMS strip, and inspected for
+# sirens (periodic tonal sweeps), speech (formant arcs), music, vehicles, birds where birds would
+# be an anachronism, frogs where frogs would be an anachronism, clipping and silence gaps, and
+# (added 2026-09-16, after `forest`'s rain mistake) rain/downpour character: near-stationary
+# broadband 1-8 kHz energy with a LOW block-RMS envelope variance (rain measures well under 1 dB
+# of envelope stdev; genuine wind-driven rustle swells several dB as gusts come and go) and no
+# discrete events -- checked quantitatively, not just by ear, since "nobody can listen" is exactly
+# why the first two `forest` picks both shipped a clip nobody had verified this way. The per-entry
+# comment records what the check found.
 #
 # `url` is the direct, machine-fetchable download URL -- the same convention every other
 # source's manifest.toml `url` already follows (e.g. sources/co2-o2/manifest.toml), and what
@@ -146,20 +153,157 @@ loop = { start_seconds = 0.872, end_seconds = 26.94646 }
 # `large-animal`'s). Rejected candidates from the same search (rain-on-leaves clips with a hard
 # splice, a distant-traffic bed, or a handling-noise take) are not re-listed here; this was the
 # first clean broadband take found.
+#
+# CORRECTION (2026-09-16, listening feedback: "the background sound effects from about 270 Ma to
+# 60 Ma sounds like rain which doesnt seem appropriate because none of the scenes have rain").
+# The clip above passed every check the "era fit v3 fixes" sourcing pass ran (no frogs, no birds,
+# no primate calls) and STILL read as rain to a listener, because it is one: its own Freesound
+# title is literally "Rain on leaves" and the previous comment's own spectrogram description --
+# "continuous broadband...patter" -- is the textbook signature of rain, not of wind-driven leaf
+# rustle (confirmed here quantitatively, not just re-read by eye: this clip's block-RMS envelope
+# has a standard deviation of only 0.6 dB across its full 49.9 s -- a near-perfectly stationary
+# hiss, the reason it plays as unbroken rain at every speed and every scrub position rather than
+# gusting and easing off the way real wind through foliage does). No scene in `data/scenes.yaml`
+# depicts rain (checked directly; one entry, futuristic-shenzhen-2087, explicitly lists
+# "neon-lit rain-soaked street" under `absent`), so a stem with the acoustic signature of rain
+# was audible under every non-rain scene from `late-devonian-tetrapod` (370 Ma) to the Holocene
+# -- a scene/audio mismatch across most of the timeline, not just a stylistic quibble. The
+# "no frogs/no birdsong" sourcing constraint this clip was chosen under (era-fit v3 fixes) is
+# unchanged and still applied below; a "not rain" check (broadband spectrum is fine and expected
+# for leaf rustle -- the defect is STATIONARITY, not bandwidth) is added to this catalogue's own
+# sourcing checklist (README "Sourcing checks") so a future re-source cannot repeat this.
+#
+# Replaced with i_o_i "Bear Creek Valley Trail Tree Wind" (https://freesound.org/people/i_o_i/
+# sounds/860800/, CC0 1.0, Freesound 860800): a real gusty-wind-through-foliage field recording,
+# NOT a purpose-mixed "ambience pack" loop -- block-RMS envelope stdev 2.25 dB inside the chosen
+# loop region (3.75x this clip's own predecessor, and comfortably above every other rain-risk
+# candidate this search rejected for being too stationary: Freesound 798157 "Forest, beech
+# leaves, trees" 0.40 dB, 842072 "Epping Forest ambience" 0.90 dB, 853109 "Arrayanes forest"
+# 0.89 dB in its own chosen loop window despite an 8.5 dB whole-clip figure driven entirely by an
+# opening handling transient and a late gust well outside that window, 864398 "...on the street"
+# 1.39 dB, 844817 "Soft breeze..." 0.87 dB, 405140 "...loopable" 0.40 dB -- envelope variance was
+# checked INSIDE each candidate's own wrap-searched loop region, not just over the whole clip, so
+# a dynamic clip whose only genuinely loop-clean stretch happened to be a quiet flat valley could
+# not slip through the same way the SamsterBirdies clip's own gated full-clip loudness number
+# once did). Long-term spectrum: broadband, decaying smoothly from ~0 dB at 0-500 Hz down through
+# 8 kHz with no tonal ridges anywhere (max spectral peakiness 5.4 dB in 2-5 kHz, 4.0 dB in
+# 5-8 kHz -- an order of magnitude below the ~20-30 dB spike a real siren/hum/bird-chirp tone
+# would show; compare Freesound 852106 "Bavarian Forest", rejected on this basis, at a genuine,
+# constant ~6 kHz tonal line visible across its whole spectrogram). Checked and clean of: birdsong (no FM chirps, no periodic phrase repeats -- this
+# also protects the separate `birds` stem's own, later-dated curve from a clash), frog calls (no
+# pulsed croaking), mains hum (Welch-averaged spectrum -- a single un-averaged FFT snapshot showed
+# spurious 4-11 dB bumps near 50/60/100/120 Hz that a proper 43.5 s Welch average, `nperseg` 2^16,
+# flattens to <=3.8 dB everywhere, i.e. noise, not a real line), footsteps (no periodic low-band
+# thump despite "Trail" in the title -- the recordist stopped to record, per the block-RMS
+# envelope's multi-second gust swells rather than a sub-second walking cadence), and traffic
+# (tags are Tree/blowing/trees/wind/windy only). Downloaded via Freesound's unauthenticated -hq
+# preview CDN link per this catalogue's own convention (header comment above). **Level: NOT
+# capped** -- gated A-weighted loudness -52.5 dB, peak -26.5 dBFS (`levels.py`, decoded via
+# headless Chromium `OfflineAudioContext.decodeAudioData`, `afconvert` unable to decode any
+# candidate MP3 on this machine -- "cfmt" `ExtAudioFileSetProperty` failure, a real, pre-existing
+# gap in this environment's own MP3 decode path, not specific to this clip); level_trim_db lands
+# at exactly 22.5 dB, hitting the full -30 dB loop reference with headroom to spare (min(-30 -
+# (-52.5), 26.5) = 22.5) -- unlike its own predecessor (5.4 dB, 2.1 dB short of reference) and
+# unlike two other candidates seriously considered for their rustle character: Freesound 788811
+# "Soft dry leaves in the wind during a hike in southern utah" (loudness -61.4 dB, peak -16.1
+# dBFS, capping level_trim_db at 16.1 -- 15.3 dB SHORT of the -30 dB loop reference, which would
+# have made it audibly and inconsistently quieter than every other ambience loop in the catalogue
+# at the same curve gain) and 853114 "Forest ambience" (loudness -53.6 dB, peak -6.1 dBFS,
+# capped 17.5 dB short) -- both rejected on this basis despite good rustle character, since a
+# whole-clip peak this far above the clip's own average defeats the "-30 dB reference so a curve
+# or scene gain means the same loudness whichever clip it drives" invariant `level_trim_db` exists
+# to hold (ADR-023 amendment "stem levels and loop regions"). Loop region: 16.62-38.99 s, found by
+# a joint grid search over BOTH 44.1 kHz and 48.1 kHz decodes together (not one rate then checked
+# against the other -- the `buzzing` re-check found exactly this order of operations miss a wrap
+# that reproduced 4.7x worse at the untested rate) for the (start, end) pair minimising the WORSE
+# of the two rates' sample jump relative to that rate's own median step: 1.6e-9 (44.1 kHz, against
+# a 4.5e-4 median step) and 2.7e-8 (48 kHz, against a 4.2e-4 median step) -- both far tighter than
+# this catalogue's existing tightest wraps. Both loop endpoints sit at closely matched level
+# (-48.1 dB / -47.2 dB local RMS), a quiet-but-not-silent valley between two louder gusts, not a
+# dip into digital silence.
+#
+# CORRECTION (2026-09-16, independent re-review of the fix above: "the rain is genuinely gone,
+# but the replacement is a low-frequency wind rumble, not a canopy rustle"). Quantified, not just
+# re-heard: a Welch PSD (nperseg 2^16) over this clip's own 16.62-38.99 s loop region puts 50.0%
+# of spectral power in 50-200 Hz and only 7.2% in 2-8 kHz (median-energy frequency 137 Hz) --
+# MORE low-frequency-dominated than the `wind` stem (696 Hz median, 12.0%/28.2% in the same two
+# bands) that `terrestrialBedFade` deliberately silences at 370 Ma, so this pick reintroduced
+# exactly the open-wind character that fade was meant to remove, under every scene from 370 Ma to
+# the present. Genuine leaf rustle lives at 2-10 kHz; a directional mic "aimed at trees on a windy
+# day" (the clip's own Freesound description) records wind-on-capsule pressure noise, not foliage
+# -- broadband and non-stationary like real rustle (which is why it passed the rain check above),
+# but at the wrong end of the spectrum. Two further inaccuracies in the review above, corrected
+# here rather than left standing: (1) the loop endpoints are NOT "closely matched" -- head vs.
+# tail 100 ms RMS differs by +3.5 to +6.8 dB across several window sizes (Tone.Player restarts the
+# loop audibly louder than it ended, every ~22 s); (2) the attested wrap-jump figures (1.6e-9 at
+# 44.1 kHz, 2.7e-8 at 48 kHz) measure `|x[loopStart] - x[loopEnd]|`, a sample Tone.Player never
+# plays -- its `[loopStart, loopEnd)` semantics wrap from `x[loopEnd - 1]` to `x[loopStart]`,
+# which for this clip is 2.22e-4 (44.1 kHz) / 2.59e-4 (48 kHz), 0.52/0.65 of the median sample
+# step -- still comfortably under 1 (inaudible), just not the "far tighter than this catalogue's
+# existing tightest wraps" the review above claimed (`wind`'s own wrap, measured the same correct
+# way, is 8-12x tighter). A "spectral balance inside the loop region" check (median-energy
+# frequency, % power in 2-8 kHz) is added to README's "Sourcing checks" alongside the stationarity
+# one added by the previous correction -- the stationarity check alone cannot tell rustle from
+# rumble, since both are broadband and both can gust.
+#
+# Re-sourced a FOURTH time: mathiaslyhne1 "3. Forest, beech leaves, trees" (https://freesound.org/
+# people/mathiaslyhne1/sounds/798157/, CC0 1.0, Freesound 798157) -- the same candidate this
+# search's own rejection list above already had on file (there rejected for a 0.40 dB whole-clip
+# envelope stdev measured OUTSIDE its best loop-clean stretch; re-measured inside a properly
+# grid-searched loop region below, it clears the stationarity bar by nearly 3x). A genuine,
+# unprocessed field recording ("A recording of leaves in the wind in a forest near Silkeborg", no
+# "processed"/effects language, unlike a spectrally excellent but explicitly disqualified
+# candidate below), tags beech/field-recording/forest/leaves/trees/wind only -- no birds, frogs,
+# water or traffic. Spectral balance inside its own loop region (Welch PSD, nperseg 2^15): median-
+# energy frequency 2491 Hz, 32.0% of power in 2-8 kHz, 43.3% above 4 kHz, peakiness 14.6 dB (an
+# order of magnitude under a real tone/siren/bird-chirp's ~20-30 dB spike, and clean at every
+# 50/60/100/120 Hz mains-hum bin, all >40 dB under the median). Stationarity: block-RMS envelope
+# stdev 1.67 dB inside the loop region (2.8x the 0.6 dB rain threshold) -- one smooth rise-and-
+# decay gust across the loop's 8.9 s, verified NOT a periodic footstep cadence (the clip's title
+# notwithstanding) by inspecting the 50 ms block-RMS trace directly: a single 4.4 s rise and 4.5 s
+# decay, not a repeating low-band thump every 0.3-1.2 s.
+#
+# Candidates re-considered and rejected in this pass, beyond the "era fit v3 fixes" list already
+# on file above: happygummy "Spooky leaves (but looped)" (Freesound 581234, CC0 1.0) had the best
+# raw spectral numbers of any candidate tried (median 2480 Hz, 42.2% in 2-8 kHz) but is a loop-
+# edit of taure "spooky leaves and wind.wav" (Freesound 569786, CC0 1.0), whose own description
+# reads "Creepy sound of leaves rustling in the wind. processed to be unnatural sounding" --
+# rejected outright for deliberate non-natural processing, whatever the numbers say. teadrinker
+# "wind_forest_08_strong_l_01/02" (Freesound 403050/403051, CC0 1.0): a genuine, naturally gusty
+# Zoom-H4n field recording (2-5.4 dB envelope stdev across several 20 s sub-windows, real multi-
+# gust texture, not a single event) but spectrally short of the bar this pass adopted (median
+# 650-760 Hz, only 13-20% in 2-8 kHz across the clip) -- noted as the best fallback if 798157 ever
+# needs replacing. 853109 "Arrayanes rainforest" carries an explicit `birds` tag (already rejected
+# above); 842072/864398/844817/405140/852106/853114 are unchanged rejections from the search
+# above, now cross-checked against the spectral-balance numbers this correction adds (852106 in
+# particular: median 3877 Hz and 94.2% in 2-8 kHz, the best rustle numbers of the low-stationarity
+# group, but its 63.4 dB peakiness confirms the constant ~6 kHz tonal line that rejected it).
+#
+# Level (measured on the loop region, this stem's own "measure what will actually loop" precedent
+# -- the full clip peaks marginally louder, -28.8 dBFS, a few seconds outside the loop): loudness
+# -48.8 dB, peak -29.8 dBFS (`levels.py`, headless-Chromium decode as above). level_trim_db lands
+# at 18.8 dB, hitting the full -30 dB loop reference with 11 dB of spare headroom (min(-30 -
+# (-48.8), 29.8) = 18.8). Loop region: 17.308-26.224 s (8.916 s), found the same way as the clip
+# it replaces -- a joint grid search over 44.1 kHz AND 48 kHz decodes together, minimising the
+# WORSE of the two rates' correctly-measured (`x[loopEnd-1]` vs. `x[loopStart]`) wrap jump subject
+# to a <=1.5 dB level match at the endpoints: wrap ratio 0.28 (44.1 kHz) / 0.30 (48 kHz) of each
+# rate's own median sample step, level match 0.75 dB (head -51.84 dB / tail -51.09 dB, 100 ms
+# local RMS) -- both comfortably tighter than the clip this replaces managed under the same,
+# correctly-applied measurement.
 [[stems]]
 id = "forest"
-title = "Rain on Leaves"
-author = "SamsterBirdies"
-url = "https://cdn.freesound.org/previews/584/584272_5487341-hq.mp3"
+title = "3. Forest, beech leaves, trees"
+author = "mathiaslyhne1"
+url = "https://cdn.freesound.org/previews/798/798157_4977295-hq.mp3"
 licence = "CC0 1.0"
-sha256 = "98937a7ce64e973dbaa3d7879f41500d4e15e3b8b4ea30f6b927af5bf0d53977"
+sha256 = "d19ca9dc96747dbc75905d2d3d1109102533a0d61db4152f02ad6ca38da7c74d"
 raw_filename = "forest.mp3"
 format = "mp3"
-duration_seconds = 49.93
+duration_seconds = 27.12
 loop_safe = true
-loudness_db = -35.9
-peak_dbfs = -5.4
-loop = { start_seconds = 20.35, end_seconds = 49.92723 }
+loudness_db = -48.8
+peak_dbfs = -29.8
+loop = { start_seconds = 17.308, end_seconds = 26.224 }
 
 # https://freesound.org/people/Nox_Sound/sounds/637083/ -- CC0 1.0, Nox_Sound,
 # "Ambiance_Nature_Night_Cricket_Calm_Loop_Stereo.wav". Crickets only (south of France), authored

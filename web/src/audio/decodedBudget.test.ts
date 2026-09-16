@@ -33,7 +33,7 @@ const AMBIENCE_DURATION_SECONDS: Record<AmbienceStemId, number> = {
   water: 60.0,
   storm: 65.1,
   volcanic: 28.06,
-  forest: 49.93,
+  forest: 27.12,
   'wing-hum': 66.894,
   insects: 59.79,
   'large-animal': 30.37,

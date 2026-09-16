@@ -297,10 +297,12 @@ describe('stemGains: wing-hum fills the 325-300 Ma gap insects cannot honestly c
     // own level trim erased the intended headroom -- this asserts what a listener actually
     // hears: loudness_db + level_trim_db (`pipeline.audio.StemManifest.level_trim_db`) +
     // 20*log10(curve gain). Mirrors sources/audio-stems/stems.toml's attested loudness_db/
-    // peak_dbfs for `forest` (-35.9 / -5.4, giving level_trim_db 5.4) and `wing-hum` (-24.3 /
-    // -5.9, giving level_trim_db -5.7) -- update these two pairs together if either entry's
-    // attested levels change.
-    const FOREST_EFFECTIVE_LOUDNESS_DB = -35.9 + 5.4
+    // peak_dbfs for `forest` (-48.8 / -29.8, giving level_trim_db 18.8 -- re-sourced a fourth
+    // time 2026-09-16 after an independent review found the third pick, though genuinely
+    // non-stationary and frog/bird-free, was low-frequency wind rumble rather than leaf rustle)
+    // and `wing-hum` (-24.3 / -5.9, giving level_trim_db -5.7) -- update these two pairs together
+    // if either entry's attested levels change.
+    const FOREST_EFFECTIVE_LOUDNESS_DB = -48.8 + 18.8
     const WING_HUM_EFFECTIVE_LOUDNESS_DB = -24.3 + -5.7
     const gains = stemGains(3.1e8, NO_FLOOD_BASALT)
     const forestLevelDb = FOREST_EFFECTIVE_LOUDNESS_DB + 20 * Math.log10(gains.forest)
