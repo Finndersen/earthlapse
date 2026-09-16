@@ -7,8 +7,8 @@ layers, fully scrubbable.
 Sit back and watch it play, or grab the timeline and explore: zoom from 4.6 billion years
 down to a single year, speed it up, slow it down, toggle layers.
 
-> **Status: design phase.** No implementation yet. The design is documented and agreed;
-> contracts are next.
+> **Status: in development.** The pipeline and viewer run end to end locally; see
+> [Local development](#local-development).
 
 ---
 
@@ -54,6 +54,74 @@ Start with `DESIGN.md`.
 Python 3.12 for the offline pipeline (pydantic, gplately, xarray, Typer). Next.js +
 TypeScript + react-three-fiber for the viewer. Fully static — media on Cloudflare R2, site
 on Pages, no backend.
+
+## Local development
+
+### Prerequisites
+
+- Python 3.12 ([uv](https://docs.astral.sh/uv/) recommended)
+- Node.js 24 and pnpm 10
+- [Git LFS](https://git-lfs.com/): published images and audio under `data/media/` are LFS objects
+
+### Setup
+
+```sh
+git lfs install
+git clone https://github.com/Finndersen/earthview.git && cd earthview
+git lfs pull
+
+# Python pipeline. Extras: dev = tests/lint, data = source normalisation,
+# geo = plate reconstructions, morph = portrait flow fields
+uv venv --python 3.12 .venv
+uv pip install --python .venv/bin/python -e '.[dev,data,geo,morph]'
+
+# Web viewer
+cd web && pnpm install && cd ..
+
+# Serve the published media to the viewer (gitignored symlink)
+ln -s ../../data/media web/public/media
+```
+
+### Run the viewer
+
+```sh
+make web-dev        # or: cd web && pnpm dev  →  http://localhost:3000
+make web-build      # static export to web/out/
+```
+
+The viewer loads `/media/manifest.json`. Without the `web/public/media` symlink it falls back
+to the placeholder manifest in `web/public/stub/`.
+
+### Tests and checks
+
+```sh
+make test                                   # Python tests (offline, fixture-backed)
+.venv/bin/ruff check . && .venv/bin/ruff format --check .
+
+cd web
+pnpm test                                   # vitest
+pnpm typecheck
+```
+
+### Pipeline
+
+Everything the viewer needs is already committed. You only need these to change data or media.
+
+```sh
+make data                                   # rebuild stale sources into data/curated/
+.venv/bin/python -m pipeline.databuild --only <source> --force   # rebuild one source
+
+.venv/bin/earthtime plan                    # what is stale and what it would cost (spends nothing)
+.venv/bin/earthtime build --max-spend <USD> --only images --candidates 1
+.venv/bin/earthtime review                  # pick candidates; `review portraits` for portraits
+.venv/bin/earthtime morph                   # portrait flow fields (local, free)
+make pins                                   # stage pinned candidates for commit
+.venv/bin/earthtime publish --allow-unpinned # write data/media/manifest.json + media
+```
+
+`build` calls a paid image generator. It needs generator credentials in a gitignored `.env`
+(see `pipeline/generators/`). Spend is capped by the ledger in `spend.json`. Adding a data
+layer needs neither: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Data
 
