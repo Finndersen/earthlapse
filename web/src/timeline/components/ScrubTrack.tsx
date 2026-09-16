@@ -280,11 +280,25 @@ export function ScrubTrack({
 
   // Shared by both release paths below — everything that ends a gesture regardless of how it
   // resolved (a tap, a scrub, or a cancelled pointer).
+  //
+  // Reads `e.pointerType` off the terminating event itself (re-review fix, 2026-09-15), not
+  // `activePointerTypeRef`: the ref is only ever written by `handlePointerDown`'s *own* main
+  // branch, which a mouse gesture that lands on a pip/cluster marker or on the "dismiss an open
+  // popover" early return never reaches — a pip/cluster button's own `onPointerDown` stops
+  // propagation before `.hitArea`'s handler runs at all (its `pointerup` is not stopped, though,
+  // and bubbles here same as any other), and the popover-dismiss branch returns before the ref
+  // assignment. Every one of those gestures then hit this function with the ref still at its
+  // resting `null` (every previous gesture's own end already reset it below), which read as
+  // "not a mouse" and released the lens/hover readout even though the mouse pointer was still
+  // resting on the track — reported as "the fisheye effect is cancelled... the cursor is still
+  // hovering there" when clicking a checkpoint pip, opening a cluster popover, or clicking the
+  // track to dismiss one. `e.pointerType` is intrinsic to the event and correct regardless of
+  // which element's handlers the matching pointerdown actually ran, so it needs no bookkeeping.
   const releasePointerState = (e: ReactPointerEvent<HTMLDivElement>): void => {
     if (dismissingPopoverPointerIdRef.current === e.pointerId) {
       dismissingPopoverPointerIdRef.current = null
     }
-    if (activePointerTypeRef.current !== 'mouse') {
+    if (e.pointerType !== 'mouse') {
       setHoverU(null)
       onLensRelease()
     }

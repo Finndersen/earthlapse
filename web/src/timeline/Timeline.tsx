@@ -59,7 +59,7 @@
  * layout mechanics; follow-up pass items 1/2/10 cover why the row is shaped this way).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
@@ -70,7 +70,7 @@ import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
 import { TimelineHint } from './components/TimelineHint'
-import { RateReadout, TransportCore, TransportSecondary } from './components/Transport'
+import { RateReadout, TimeCompressedBadge, TransportCore, TransportSecondary } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { readHintDismissed, writeHintDismissed } from './hint'
 import { timelineKeyIntent } from './keyboard'
@@ -122,6 +122,12 @@ export interface TimelineProps {
   /** Instantaneous, smoothed years-per-second `t` is advancing at (ADR-016's prototype rate
    *  readout) — passed straight through to `RateReadout`. `null`/omitted shows nothing. */
   ratePerSecond?: number | null
+  /** True exactly while `'steady'`-mode playback's own rate is floored below what `speed`
+   *  requested, to guarantee every scene a minimum on-screen dwell (ADR-029) — passed straight
+   *  through to the "time compressed" marker beside `RateReadout`. A direct function of playback
+   *  state (`Experience.tsx`'s own `steadyPacing` call inside its playback loop), never an idle
+   *  timer. Defaults to `false` (tests, and any caller with no steady-mode floor to report). */
+  timeCompressed?: boolean
   /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered inside
    *  `TransportSecondary` (follow-up pass item 2). Optional so a caller with no audio wired up
    *  (tests) can omit it. */
@@ -152,6 +158,7 @@ export function Timeline({
   onPlaybackChange,
   onOpenCluster,
   ratePerSecond = null,
+  timeCompressed = false,
   sound,
   overlayOpen = false,
 }: TimelineProps) {
@@ -160,6 +167,13 @@ export function Timeline({
   // teach). Starts hidden and only flips on in an effect (not read synchronously from
   // sessionStorage during render) so a server-rendered first paint never disagrees with the
   // client's own storage — avoiding a hydration mismatch.
+  // Visible name for the scale toggle's `role="group"`, stacked above its buttons rather than
+  // beside them (follow-up pass, user report 2026-09-15) — `aria-labelledby`, not a second,
+  // separate `aria-label` repeating the same text, so the group's one accessible name is sourced
+  // from what a sighted user actually reads (same convention `TransportSecondary`'s mode toggle
+  // now uses for the same reason).
+  const scaleLabelId = useId()
+
   const [hintVisible, setHintVisible] = useState(false)
   useEffect(() => {
     if (!readHintDismissed()) setHintVisible(true)
@@ -327,8 +341,10 @@ export function Timeline({
         <div className={styles.controlsSecondary}>
           <TransportSecondary playback={playback} onPlaybackChange={onPlaybackChange} sound={sound} />
           <div className={styles.scaleGroup}>
-            <span className={styles.scaleLabel}>Scale</span>
-            <div className={styles.scaleOptions} role="group" aria-label="Timeline scale">
+            <span id={scaleLabelId} className={styles.scaleLabel}>
+              Scale
+            </span>
+            <div className={styles.scaleOptions} role="group" aria-labelledby={scaleLabelId}>
               <button
                 type="button"
                 className={styles.scaleButton}
@@ -350,6 +366,7 @@ export function Timeline({
             </div>
           </div>
           <div className={styles.rateReadoutRow}>
+            <TimeCompressedBadge visible={timeCompressed} />
             <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} />
           </div>
         </div>

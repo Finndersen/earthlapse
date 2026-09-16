@@ -124,6 +124,12 @@ describe('<Timeline>', () => {
         onSelectSection={vi.fn()}
       />,
     )
+    // The group's accessible name comes from a *visible* "Playback mode" label above the
+    // buttons (user report, 2026-09-15 — the toggle used to carry only a decorative-looking
+    // `aria-label` with nothing sighted users could see), not a same-text `aria-label` repeating
+    // what the label already says — `getByRole` finding it by that name is proof the visible
+    // label and the group are actually associated (`aria-labelledby`), not merely both present.
+    expect(screen.getByText('Playback mode')).toBeTruthy()
     const group = screen.getByRole('group', { name: 'Playback mode' })
     expect(within(group).getByText('Scenes').getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(within(group).getByText('Steady'))
@@ -168,6 +174,78 @@ describe('<Timeline>', () => {
     expect(screen.getByText('≈ 40 Myr/s')).toBeTruthy()
   })
 
+  it('shows the "time compressed" marker only when timeCompressed is true (ADR-029)', () => {
+    const { rerender } = render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
+        events={events}
+        playback={playback({ playing: true, mode: 'steady' })}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText('Time compressed')).toBeNull()
+
+    rerender(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
+        events={events}
+        playback={playback({ playing: true, mode: 'steady' })}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+        timeCompressed
+      />,
+    )
+    expect(screen.getByText('Time compressed')).toBeTruthy()
+  })
+
+  it('keeps the "time compressed" marker\'s live region mounted across the toggle (re-review fix, ADR-029)', () => {
+    // A single playthrough can cross the floor threshold several times in quick succession
+    // (`TimeCompressedBadge`'s own doc comment) — unmounting/remounting a `role="status"` region
+    // that often both re-announces it more erratically than a live region is meant to and shifts
+    // its neighbours. The marker must stay the same node throughout, only its content/visibility
+    // toggling.
+    const props = {
+      t: 0,
+      scaleKind: 'symlog' as const,
+      scale: FULL_DOMAIN_SCALE,
+      sectionId: 'earth' as const,
+      events,
+      playback: playback({ playing: true, mode: 'steady' }),
+      onScrub: vi.fn(),
+      onScaleKindChange: vi.fn(),
+      onPlaybackChange: vi.fn(),
+      onOpenCluster: vi.fn(),
+      onSelectSection: vi.fn(),
+    }
+    const { rerender } = render(<Timeline {...props} />)
+    const marker = screen.getByRole('status')
+    expect(marker.getAttribute('data-visible')).toBe('false')
+    expect(marker.textContent).toBe('')
+
+    rerender(<Timeline {...props} timeCompressed />)
+    expect(screen.getByRole('status')).toBe(marker) // same node — never unmounted
+    expect(marker.getAttribute('data-visible')).toBe('true')
+    expect(marker.textContent).toBe('Time compressed')
+
+    rerender(<Timeline {...props} timeCompressed={false} />)
+    expect(screen.getByRole('status')).toBe(marker)
+    expect(marker.getAttribute('data-visible')).toBe('false')
+    expect(marker.textContent).toBe('')
+  })
+
   it('shows a "Scale" label and a Symlog/Linear segmented control, and calls onScaleKindChange on click (follow-up pass item 1)', () => {
     const onScaleKindChange = vi.fn()
     render(
@@ -185,8 +263,12 @@ describe('<Timeline>', () => {
         onSelectSection={vi.fn()}
       />,
     )
+    // The group's accessible name is the visible "Scale" label itself (`aria-labelledby`, user
+    // report 2026-09-15 — this used to carry a separate, same-meaning `aria-label="Timeline
+    // scale"` alongside a merely decorative "Scale" span with no accessibility relationship to
+    // the group at all), so finding it by that name proves the two are actually associated.
     expect(screen.getByText('Scale')).toBeTruthy()
-    const group = screen.getByRole('group', { name: 'Timeline scale' })
+    const group = screen.getByRole('group', { name: 'Scale' })
     const symlogButton = within(group).getByText('Symlog')
     const linearButton = within(group).getByText('Linear')
     expect(symlogButton.getAttribute('aria-pressed')).toBe('true')

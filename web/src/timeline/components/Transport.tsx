@@ -26,6 +26,7 @@
  *    that is where the real per-frame `t` deltas already are; this component only formats and
  *    shows it, and only while playing. */
 
+import { useId } from 'react'
 import type { ReactNode } from 'react'
 
 import type { GeoTime, Playback, PlaybackMode, TimelineEvent } from '@/types/layer'
@@ -91,8 +92,19 @@ interface TransportSecondaryProps {
 
 /** Sound toggle, speed select and scenes/steady mode toggle — secondary to `TransportCore`,
  *  laid out beside it rather than centred. The rate readout used to live here too; it is now a
- *  sibling (`RateReadout`, below) so its own width changes can never reflow these. */
+ *  sibling (`RateReadout`, below) so its own width changes can never reflow these.
+ *
+ *  The mode toggle carries its own visible "Playback mode" label above the buttons (follow-up
+ *  pass, user report 2026-09-15 — a bare two-state control read as unlabelled), in the shared
+ *  small-caps HUD label style `Timeline.module.css`'s `.scaleLabel` already established for the
+ *  scale toggle beside it — duplicated here as `.groupLabel` rather than imported, the same
+ *  reason `.scaleGroup`'s own doc comment gives for its own duplication (CSS Modules classes are
+ *  scoped per file, and the mode toggle lives in this file, not `Timeline.tsx`). The label is
+ *  wired to the group via `aria-labelledby`, not a second, separate `aria-label` repeating the
+ *  same text — one accessible name, sourced from the text a sighted user actually reads, per the
+ *  same convention `Timeline.tsx`'s scale toggle now uses. */
 export function TransportSecondary({ playback, onPlaybackChange, sound }: TransportSecondaryProps) {
+  const modeLabelId = useId()
   return (
     <div className={styles.secondary}>
       {sound}
@@ -109,20 +121,61 @@ export function TransportSecondary({ playback, onPlaybackChange, sound }: Transp
           </option>
         ))}
       </select>
-      <div className={styles.modeToggle} role="group" aria-label="Playback mode">
-        {PLAYBACK_MODES.map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            className={styles.modeButton}
-            aria-pressed={playback.mode === value}
-            onClick={() => onPlaybackChange({ ...playback, mode: value })}
-          >
-            {label}
-          </button>
-        ))}
+      <div className={styles.modeGroup}>
+        <span id={modeLabelId} className={styles.groupLabel}>
+          Playback mode
+        </span>
+        <div className={styles.modeToggle} role="group" aria-labelledby={modeLabelId}>
+          {PLAYBACK_MODES.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              className={styles.modeButton}
+              aria-pressed={playback.mode === value}
+              onClick={() => onPlaybackChange({ ...playback, mode: value })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
+  )
+}
+
+interface TimeCompressedBadgeProps {
+  /** Whether `'steady'`-mode playback's own rate is currently floored to guarantee every scene a
+   *  minimum on-screen dwell (ADR-029) — `Experience.tsx`'s `steadyPacing().floored`, a direct
+   *  function of playback state, never an idle timer. */
+  visible: boolean
+}
+
+/** "Time compressed" (ADR-029): shown only while the steady playhead's own rate is floored below
+ *  what `speed` requested to keep a dense cluster of scenes readable (WCAG 2.3.1's three-flashes
+ *  safety floor) — the numeric year readout keeps moving at whatever rate `t` implies either way
+ *  (see `advanceSteadyPlayhead`'s own doc comment), so this is the one place a viewer is told
+ *  playback has quietly slowed to protect that readability. Sits beside `RateReadout` in the same
+ *  fixed-width row (`rateReadoutRow`), amber like the playing state and the active mode-toggle
+ *  option — the shared `--hud-accent` lens language, not a new idiom.
+ *
+ *  A fixed-width slot, always mounted (re-review fix, 2026-09-15 — this originally unmounted via
+ *  `return null` while not visible, on the reasoning that a handful of years-dense clusters made
+ *  this rare enough not to bother reserving space for): a single steady-mode playthrough can
+ *  cross several scene territories whose dwell straddles the floor threshold in quick succession,
+ *  toggling `visible` up to ten times in a few seconds (live-measured) — unmounting and
+ *  remounting a `role="status"` region that often both re-announces it to screen readers more
+ *  erratically than a live region toggling its own text is meant to, and repeatedly shifts
+ *  `RateReadout`/the scale toggle beside it. `visibility`, not `display`, keeps the slot's width
+ *  constant either way (the same pattern `RateReadout` above already uses, for the same reason);
+ *  only the text content toggles between the real label and `''`, which is what actually
+ *  re-triggers a screen reader's live-region announcement on each genuine transition into the
+ *  floor — a permanently-static label, merely shown/hidden by CSS, would never re-announce at
+ *  all. */
+export function TimeCompressedBadge({ visible }: TimeCompressedBadgeProps) {
+  return (
+    <span className={styles.timeCompressed} role="status" data-visible={visible}>
+      {visible ? 'Time compressed' : ''}
+    </span>
   )
 }
 

@@ -42,14 +42,45 @@
   justify-content: center;
 }
 
+/* `flex-wrap: wrap` (with `row-gap` for when it does) is load-bearing, not decoration
+   (root-cause fix, 2026-09-15 — user report: "the mute/volume button overlaps with the next/fast
+   forward button"). `.controlsRow`'s two side tracks are `minmax(0, 1fr)` specifically so
+   `.controlsCore` stays exactly centred regardless of either side's content width (this file's
+   own doc comment on `.controlsRow`) — but a grid item's *automatic* minimum width defaults to
+   its content's own min-content size, which for a `nowrap` flex row is the sum of every child's
+   width. Once the sound toggle, speed select, mode toggle and scale toggle (each already
+   reserving a fixed slot) plus the two always-reserved-width badges in `.rateReadoutRow` add up
+   to more than this track's own `1fr` share — routinely true at 1440×900 and narrower, and only
+   grows as items are added — that min-content size overrode the track's `minmax(0, …)` cap (the
+   pre-existing `min-width: 0` below was not, on its own, enough to stop this — a flex row's
+   automatic minimum still comes from its content unless it is also allowed to wrap), so the item
+   rendered at its full, wider content width and (being right-anchored via `justify-self: end`)
+   spilled leftward out of its own track and straight into `.controlsCore`'s, painting the sound
+   icon and volume slider on top of the forward button. `flex-wrap: wrap` lets the overflow that
+   no longer fits on one line drop to a second line, still right-aligned and still fully inside
+   the track, rather than spilling sideways into the neighbour. The `@media (max-width: 760px)`
+   block below already established this same wrap behaviour for its own (differently laid out)
+   narrow breakpoint; this makes the same safety net apply at every width, not only below 760px. */
 .controlsSecondary {
   grid-area: secondary;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
+  flex-wrap: wrap;
   gap: clamp(10px, 1.4vw, 18px);
+  row-gap: 8px;
   min-width: 0;
+}
+
+/* Holds `TimeCompressedBadge` (ADR-029, shown rarely) beside `RateReadout` (a fixed-width slot,
+   always reserved). Flex at every width, not only the narrow media query below — the badge's own
+   occasional appearance already shifts nothing at rest, so there is no "reserve its width always"
+   requirement the way `RateReadout`'s own doc comment describes for itself. */
+.rateReadoutRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* The scale toggle (follow-up pass item 1): a "Scale" label plus a segmented control showing
@@ -57,11 +88,16 @@
    single button whose own current-value label ("symlog") gave no hint that "linear" existed.
    Visually mirrors Transport.module.css's `.modeToggle`/`.modeButton` (same ghost/pill idiom,
    amber active state) — duplicated rather than imported, since CSS Modules classes are scoped
-   per file and this toggle isn't part of `Transport.tsx`. */
+   per file and this toggle isn't part of `Transport.tsx`.
+   The label sits above the buttons, not beside them (follow-up pass, user report 2026-09-15,
+   matching `Transport.module.css`'s `.modeGroup`/`.groupLabel` treatment of the mode toggle
+   right beside this one) — `flex-direction: column` instead of a row, `align-items: flex-start`
+   so the label doesn't stretch to the segmented control's own (wider) width. */
 .scaleGroup {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .scaleLabel {

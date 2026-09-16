@@ -65,6 +65,79 @@ describe('ScrubTrack fisheye integration (ADR-017)', () => {
     expect(onLensRelease).toHaveBeenCalledTimes(1)
   })
 
+  // Root-cause fix, user report 2026-09-15: "sometimes when clicking on the timeline to
+  // position the cursor or select an event, the fisheye effect is cancelled or stops when it
+  // shouldn't — the cursor is still hovering there." A mouse press that lands on a pip/cluster
+  // marker never reaches `.hitArea`'s own `onPointerDown` at all (the marker's own handler
+  // stops propagation for a mouse pointer before returning), and the "dismiss an open popover"
+  // branch returns before recording anything either — so `activePointerTypeRef` was never set to
+  // `'mouse'` for that gesture, and the *matching* `pointerup` (which does still bubble to
+  // `.hitArea`, since only `pointerdown` was stopped) read the ref's resting `null` as "not a
+  // mouse" and wrongly released the lens/hover readout. The fix reads `e.pointerType` off the
+  // terminating event itself, which is correct regardless of which element's handlers the
+  // pointerdown actually reached.
+  it('keeps the lens engaged after a mouse click that lands on a checkpoint pip, even though `.hitArea` never saw the matching pointerdown', () => {
+    const onLensRelease = vi.fn()
+    const checkpoint: TimelineCheckpoint = { id: 'cp1', t: 1e8, label: 'Test Checkpoint' }
+    const { getByRole, container } = renderTrack({ checkpoints: [checkpoint], onLensRelease })
+    const track = getByRole('slider')
+    fireEvent.pointerMove(track, { clientX: 500, pointerId: 1, pointerType: 'mouse' })
+    const pip = container.querySelector('[data-checkpoint-pip]') as Element
+    // Mirrors the pip's own mouse-path contract (`ScrubTrack.tsx`'s pip `onPointerDown`):
+    // `stopPropagation()` on pointerdown only, exactly as the real DOM would do for the browser's
+    // own event, so `.hitArea`'s `onPointerDown` never runs for this gesture — the pointerup
+    // below is what must still keep the lens alive.
+    fireEvent.pointerDown(pip, { clientX: 500, clientY: 24, pointerId: 1, pointerType: 'mouse' })
+    fireEvent.pointerUp(pip, { clientX: 500, clientY: 24, pointerId: 1, pointerType: 'mouse' })
+    expect(onLensRelease).not.toHaveBeenCalled()
+  })
+
+  it('keeps the lens engaged after a mouse click that opens a cluster popover', () => {
+    const onLensRelease = vi.fn()
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'Scene A' },
+      { id: 'b', t: 1e8 + 10, label: 'Scene B' },
+    ]
+    const { getByRole, container } = renderTrack({ checkpoints: close, onLensRelease })
+    const track = getByRole('slider')
+    fireEvent.pointerMove(track, { clientX: 500, pointerId: 1, pointerType: 'mouse' })
+    const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
+    fireEvent.pointerDown(cluster, { clientX: 500, clientY: 24, pointerId: 1, pointerType: 'mouse' })
+    fireEvent.pointerUp(cluster, { clientX: 500, clientY: 24, pointerId: 1, pointerType: 'mouse' })
+    fireEvent.click(cluster)
+    expect(getByRole('dialog')).toBeTruthy()
+    expect(onLensRelease).not.toHaveBeenCalled()
+  })
+
+  it('keeps the lens engaged after a mouse click on the track that dismisses an open cluster popover', () => {
+    const onLensRelease = vi.fn()
+    const close: TimelineCheckpoint[] = [
+      { id: 'a', t: 1e8, label: 'Scene A' },
+      { id: 'b', t: 1e8 + 10, label: 'Scene B' },
+    ]
+    const { getByRole, queryByRole, container } = renderTrack({ checkpoints: close, onLensRelease })
+    const track = getByRole('slider')
+    const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
+    fireEvent.click(cluster)
+    expect(getByRole('dialog')).toBeTruthy()
+    fireEvent.pointerDown(track, { clientX: 900, pointerId: 2, pointerType: 'mouse' })
+    fireEvent.pointerUp(track, { clientX: 900, pointerId: 2, pointerType: 'mouse' })
+    expect(queryByRole('dialog')).toBeNull()
+    expect(onLensRelease).not.toHaveBeenCalled()
+  })
+
+  it('still releases the lens once a touch pointer lifts after tapping a checkpoint pip (unaffected by the fix above)', () => {
+    const onLensRelease = vi.fn()
+    const checkpoint: TimelineCheckpoint = { id: 'cp1', t: 1e8, label: 'Touch Pip' }
+    const { getByRole, container } = renderTrack({ checkpoints: [checkpoint], onLensRelease })
+    const track = getByRole('slider')
+    const pip = container.querySelector('[data-checkpoint-pip]') as Element
+    const x = scale.toUnit(checkpoint.t) * 1000
+    fireEvent.pointerDown(pip, { clientX: x, clientY: 24, pointerId: 7, pointerType: 'touch' })
+    fireEvent.pointerUp(track, { clientX: x, clientY: 24, pointerId: 7, pointerType: 'touch' })
+    expect(onLensRelease).toHaveBeenCalledTimes(1)
+  })
+
   it('shows a snapped checkpoint label in the hover readout when hovering near its pip', () => {
     const checkpoint: TimelineCheckpoint = { id: 'cp1', t: 1e8, label: 'Test Checkpoint' }
     const { getByRole, container } = renderTrack({ checkpoints: [checkpoint] })
