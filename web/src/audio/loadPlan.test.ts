@@ -44,6 +44,7 @@ function scene(id: string, t: number, sound?: SceneSound): Scene {
     chapterId: 'test',
     image: `${id}.jpg`,
     shot: 'WIDE_RIDGE',
+    title: id,
     caption: '',
     width: 1,
     height: 1,

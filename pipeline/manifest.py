@@ -56,6 +56,10 @@ class Scene(_WireModel):
     image: str
     depth: str | None = None  # deferred by ADR-009
     shot: Shot
+    # Short heading for the UI, distinct from `caption` below (2026-09 titles work). Always
+    # emitted, required on every scene -- unlike the additive fields below, it has no "absent"
+    # meaning to fall back to.
+    title: str
     caption: str
     # events-core event ids this scene visually anchors to (ADR-022). Always emitted, unlike the
     # single-value additive fields below -- an empty list is already a complete "no links".

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "3874f8d5a319dd3e",
+  "buildId": "333fb0d6a15680ba",
   "assetBase": "/media",
   "scenes": [
     {
@@ -9,6 +9,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/shenzhen-bay-present.jpg",
       "shot": "WATER_EDGE",
+      "title": "Shenzhen Today",
       "caption": "The present: Shenzhen, a largely rural area of about 30,000 people forty-five years ago, is now a city of some 18 million where glass supertalls, electric traffic and delivery drones crowd the bay, and one species reshapes the planet's surface in a geological instant.",
       "events": [],
       "sound": {
@@ -26,6 +27,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/global-city-rush-hour.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Morning Commute",
       "caption": "By the early 2020s, more than half of humanity lives in a city — a threshold first crossed only in 2007, up from just 15% in 1900 — commuting by metro, bus and cycle lane past office towers filled with desks and screens.",
       "events": [
         "urban-majority-milestone"
@@ -45,6 +47,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/smartphone-seafront-2018.jpg",
       "shot": "WATER_EDGE",
+      "title": "Half of Humanity Online",
       "caption": "By the end of 2018, more than half of humanity is online, much of it through touchscreen smartphones that reached the mass market only eleven years earlier.",
       "events": [
         "half-of-humanity-online"
@@ -64,6 +67,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/energy-transition-solar-wind.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Energy Transition",
       "caption": "Between 2010 and 2015 the world's installed solar capacity grows more than fivefold, from 41.6 to 229.1 gigawatts, while offshore wind turbines begin to appear along temperate coastlines too — the leading edge of an energy transition still gathering pace.",
       "events": [
         "renewable-energy-scaleup"
@@ -83,6 +87,7 @@
       "chapterId": "open-ground",
       "image": "scenes/aral-sea-drying.jpg",
       "shot": "GROUND",
+      "title": "The Shrinking Aral Sea",
       "caption": "By 1998, Soviet-era irrigation of the Amu Darya and Syr Darya has shrunk the Aral Sea's surface area by 60% and its volume by 80% since 1960, stranding whole fishing fleets — once the source of a sixth of Soviet fish catches — kilometres from any water.",
       "events": [
         "aral-sea-shrinkage"
@@ -102,6 +107,7 @@
       "chapterId": "open-ground",
       "image": "scenes/berlin-wall-fall.jpg",
       "shot": "GROUND",
+      "title": "Fall of the Berlin Wall",
       "caption": "Within days of the Berlin Wall's fall on 9 November 1989, crowds climb onto it in broad daylight, chiselling away souvenir fragments after overwhelmed border guards threw the checkpoints open overnight — the Cold War's defining collapse.",
       "events": [
         "berlin-wall-falls"
@@ -121,6 +127,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/shenzhen-sez-1980.jpg",
       "shot": "WATER_EDGE",
+      "title": "China's First Economic Zone",
       "caption": "In May 1980, the fishing villages and paddy fields around Shenzhen Bay — home to about 30,000 people — are designated China's first Special Economic Zone; within forty-five years the same shoreline carries a city of 18.2 million.",
       "events": [
         "shenzhen-sez-designated"
@@ -135,6 +142,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/containerisation-port.jpg",
       "shot": "WATER_EDGE",
+      "title": "Containerisation of World Trade",
       "caption": "Two decades after Malcom McLean's first container voyage in 1956, standardised steel boxes and gantry cranes are remaking the world's ports; by 2004 they will handle 354 million TEU (twenty-foot container units) of traffic a year, carrying roughly nine-tenths of the world's non-bulk seaborne trade.",
       "events": [
         "containerization"
@@ -149,6 +157,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/apollo-11-launch.jpg",
       "shot": "WATER_EDGE",
+      "title": "Apollo 11 Lifts Off",
       "caption": "On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire, watched from across the lagoon; four days later, Armstrong and Aldrin land on the Moon.",
       "events": [
         "moon-landing"
@@ -168,6 +177,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/green-revolution-fields.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Green Revolution",
       "caption": "By the mid-1960s, Norman Borlaug's short-stemmed high-yield wheat and the new rice varieties bred alongside it begin lifting Asian cereal yields severalfold within a generation — India's wheat harvest rising from about 10 million tonnes a year to 73 million by 2006 — work credited with saving up to a billion people from famine.",
       "events": [
         "green-revolution"
@@ -182,6 +192,7 @@
       "chapterId": "open-ground",
       "image": "scenes/post-war-boom-suburbia.jpg",
       "shot": "GROUND",
+      "title": "The Rise of Suburbia",
       "caption": "By the mid-1950s, America authorises 40,000 miles of new interstate highway in a single act while mass-built suburbs like Levittown — 17,447 houses raised in four years — put a car and a house within reach of millions of families for the first time.",
       "events": [
         "postwar-suburban-boom"
@@ -201,6 +212,7 @@
       "chapterId": "molten-earth",
       "image": "scenes/trinity-test.jpg",
       "shot": "WIDE_RIDGE",
+      "title": "The First Nuclear Explosion",
       "caption": "At 5:29 am on 16 July 1945, the Trinity device detonates over the Jornada del Muerto desert, its fireball briefly outshining the rising sun — the first nuclear explosion.",
       "events": [
         "trinity-test"
@@ -220,6 +232,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/normandy-landings-dday.jpg",
       "shot": "WATER_EDGE",
+      "title": "D-Day Landings",
       "caption": "Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches — with a further 24,000 landing by parachute and glider overnight — opening the Western Front against Nazi Germany.",
       "events": [
         "d-day-normandy-landings",
@@ -240,6 +253,7 @@
       "chapterId": "open-ground",
       "image": "scenes/ginza-modern-tokyo.jpg",
       "shot": "GROUND",
+      "title": "Tokyo's Ginza",
       "caption": "By the early 1930s, crowds of office clerks and shoppers throng Tokyo's Ginza for 'Ginbura' — streetcars, radio only five years old, and a department store letting shoppers keep their shoes on indoors — as Tokyo becomes the world's second-largest city, 4.9 million people, in 1932.",
       "events": [
         "ginza-modern-urban-culture"
@@ -254,6 +268,7 @@
       "chapterId": "open-ground",
       "image": "scenes/somme-1916.jpg",
       "shot": "GROUND",
+      "title": "Battle of the Somme",
       "caption": "On the Somme in 1916, four and a half months of Allied offensives against entrenched German lines cost more than a million men killed, wounded or missing on both sides for a few kilometres of ground.",
       "events": [
         "battle-of-the-somme",
@@ -274,6 +289,7 @@
       "chapterId": "open-ground",
       "image": "scenes/ford-model-t-street.jpg",
       "shot": "GROUND",
+      "title": "Ford's Moving Assembly Line",
       "caption": "In 1913, Ford's new moving assembly line at Highland Park, Michigan, begins cutting the time to build a Model T chassis from twelve and a half hours to ninety-three minutes within a year, putting the automobile within reach of ordinary buyers.",
       "events": [
         "ford-model-t-assembly-line",
@@ -289,6 +305,7 @@
       "chapterId": "open-ground",
       "image": "scenes/first-powered-flight.jpg",
       "shot": "GROUND",
+      "title": "The First Powered Flight",
       "caption": "On a cold December morning at Kill Devil Hills, the Wright Flyer lifts off the sand for twelve seconds, the first sustained, controlled flight of a powered aircraft.",
       "events": [
         "wright-flyer-first-flight"
@@ -308,6 +325,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/industrial-mill-town.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Industrial Revolution",
       "caption": "By 1830, steam-powered cotton mills line a Lancashire canal, their tall brick chimneys darkening the sky with smoke as narrowboats carry coal in and cloth out.",
       "events": [
         "industrial-revolution"
@@ -327,6 +345,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/amsterdam-voc-harbour.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Dutch Golden Age",
       "caption": "By 1650, Amsterdam dominates world trade through the Dutch East India Company (VOC), whose shares — traded from 1602 — gave the city what's often called the world's oldest modern stock market; by 1669 the VOC employs 50,000 people across over 150 merchant ships and 40 warships, and Amsterdam is the wealthiest city in the Western world.",
       "events": [
         "dutch-golden-age-voc"
@@ -346,6 +365,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/columbus-landfall-1492.jpg",
       "shot": "WATER_EDGE",
+      "title": "Columbus's Landfall",
       "caption": "On 12 October 1492, Columbus's three ships anchor off a Bahamian island the Taíno call Guanahani, as a dugout canoe puts out from shore to meet them.",
       "events": [
         "columbian-exchange"
@@ -365,6 +385,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/black-death-messina-1347.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Black Death Arrives",
       "caption": "In October 1347, twelve Genoese trading galleys fleeing Caffa put in at Messina, Sicily, carrying the Black Death into Europe; within six years the plague kills an estimated 25-50 million people across Europe, Western Asia and North Africa.",
       "events": [
         "black-death"
@@ -384,6 +405,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/angkor-wat.jpg",
       "shot": "WATER_EDGE",
+      "title": "Angkor Wat",
       "caption": "By 1150, King Suryavarman II's temple-mountain of Angkor Wat nears completion at the heart of the Khmer Empire, its five towers mirrored in a moat more than five kilometres around.",
       "events": [
         "angkor-wat-built"
@@ -403,6 +425,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/imperial-rome-pantheon.jpg",
       "shot": "WATER_EDGE",
+      "title": "Hadrian's Pantheon",
       "caption": "In the 120s AD, at the height of Roman power, Hadrian's newly rebuilt Pantheon rises over the rooftops of the Campus Martius near the Tiber, its huge concrete dome the largest built anywhere for the next 1,300 years.",
       "events": [
         "roman-empire-peak"
@@ -422,6 +445,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/giza-great-pyramid.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Great Pyramid",
       "caption": "The Great Pyramid stands newly complete at Giza, its casing of polished white limestone catching the sun above a harbour basin flooded by the Nile's annual inundation.",
       "events": [
         "great-pyramid-giza"
@@ -441,6 +465,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/uruk-city.jpg",
       "shot": "WATER_EDGE",
+      "title": "Uruk, the Largest City Yet",
       "caption": "On the southern Mesopotamian delta, the mudbrick temples of Uruk rise above marsh and canal — the largest city the world has yet seen.",
       "events": [
         "uruk-first-city"
@@ -460,6 +485,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/green-sahara.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Green Sahara",
       "caption": "In the \"Green Sahara\" of the African Humid Period, a shallow lake in what is now the world's largest desert supports fisherfolk, herded cattle, hippos and crocodiles.",
       "events": [
         "african-humid-period"
@@ -479,6 +505,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/neolithic-river-settlement.jpg",
       "shot": "WATER_EDGE",
+      "title": "A Neolithic Village",
       "caption": "Two thousand years after farming began, a Neolithic village of mudbrick houses tends small fields of wheat beside a slow river.",
       "events": [
         "agriculture"
@@ -498,6 +525,7 @@
       "chapterId": "open-ground",
       "image": "scenes/gobekli-tepe.jpg",
       "shot": "GROUND",
+      "title": "Monuments Before Farming",
       "caption": "Around 9500 BCE, centuries before farming reaches the region, hunter-gatherers raise and carve massive T-shaped limestone pillars on a hilltop ridge — the oldest known monumental architecture.",
       "events": [
         "gobekli-tepe"
@@ -517,6 +545,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/pleistocene-steppe.jpg",
       "shot": "WATER_EDGE",
+      "title": "Woolly Mammoths on the Steppe",
       "caption": "At the height of the last ice age, woolly mammoths cross a cold, dry steppe beside a braided meltwater river.",
       "events": [],
       "sound": {
@@ -534,6 +563,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/ice-age-europe-neanderthal.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Last Neanderthals",
       "caption": "In the last millennia before Neanderthals disappear from Europe, a hunter works a stone-tipped spear beside a cold river.",
       "events": [],
       "sound": {
@@ -551,6 +581,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/acheulean-erectus.jpg",
       "shot": "WATER_EDGE",
+      "title": "A Million Years of Handaxes",
       "caption": "An early human shapes a symmetrical stone handaxe at a rift lake shore; handaxes like it will be made, and slowly refined, for more than a million years.",
       "events": [
         "acheulean-technology"
@@ -570,6 +601,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/lucy-afarensis.jpg",
       "shot": "WATER_EDGE",
+      "title": "Lucy's Species",
       "caption": "A small, upright hominin of Lucy's species walks on two legs along a wooded Rift Valley river, still built with long, strong arms for climbing.",
       "events": [
         "australopithecus-afarensis"
@@ -584,6 +616,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/messinian-salt-flats.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Messinian Salinity Crisis",
       "caption": "Cut off from the Atlantic, the Mediterranean shrinks to brine lakes ringed by thick beds of salt; how far the sea actually fell is still debated.",
       "events": [],
       "sound": {
@@ -601,6 +634,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/c4-savanna-hipparion.jpg",
       "shot": "WATER_EDGE",
+      "title": "East Africa Dries Out",
       "caption": "Coarse new grasses now carpet the plain, and three-toed horses crowd a shrinking waterhole in a drier, more open East Africa.",
       "events": [],
       "sound": {
@@ -618,6 +652,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/miocene-grassland.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Rise of Grasslands",
       "caption": "Where woodland once stood, grass now dominates the open plains, and three-toed horses graze a horizon no earlier scene has shown.",
       "events": [],
       "sound": {
@@ -635,6 +670,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/eocene-oligocene-icesheet.jpg",
       "shot": "WATER_EDGE",
+      "title": "Antarctica's First Ice Sheet",
       "caption": "As Antarctica's first continent-scale ice sheet reaches the sea, Earth leaves the warm world of the early Cenozoic for the icehouse it has lived in ever since.",
       "events": [],
       "sound": {
@@ -652,6 +688,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/eocene-jungle.jpg",
       "shot": "WATER_EDGE",
+      "title": "A Hothouse Rainforest",
       "caption": "In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.",
       "events": [],
       "pinned": "6fd97ed7b5dbfd9a",
@@ -664,6 +701,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/arctic-hothouse-forest.jpg",
       "shot": "WATER_EDGE",
+      "title": "A High Arctic Forest",
       "caption": "In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun disappears for months each winter, and heavy tusked Coryphodon wade its lakes.",
       "events": [],
       "pinned": "32b5e8d94688fbc7",
@@ -676,6 +714,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/paleocene-recovery.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Age of Mammals Begins",
       "caption": "Four million years after the impact that ended the dinosaurs, mammals have grown into the empty world: a heavy, long-tailed pantodont drinks at a Paleocene forest river.",
       "events": [],
       "pinned": "735c1240a8062713",
@@ -688,6 +727,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/kpg-aftermath.jpg",
       "shot": "WATER_EDGE",
+      "title": "A Century After Impact",
       "caption": "A century after the impact, ferns carpet the ground where a flowering forest and its dinosaurs stood; the sky has long since cleared, but the world has not recovered.",
       "events": [
         "k-pg-aftermath"
@@ -702,6 +742,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/kpg-darkness.jpg",
       "shot": "WATER_EDGE",
+      "title": "Darkness After Impact",
       "caption": "Days after the impact, a pall of dust and soot blots out the sun over the same estuary; whether the impact's heat set forests alight this far away is still debated.",
       "events": [
         "k-pg-impact"
@@ -721,6 +762,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/kpg-arrival.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Asteroid Strikes",
       "caption": "A composite moment: the asteroid that ends the age of dinosaurs, shown in a sky where, thousands of kilometres from its impact, it could never actually have been seen.",
       "events": [
         "k-pg-impact"
@@ -740,6 +782,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/cretaceous-forest.jpg",
       "shot": "WATER_EDGE",
+      "title": "Before the Asteroid",
       "caption": "Two million years before the asteroid, duck-billed dinosaurs gather at a humid Late Cretaceous swamp where flowering trees have spread.",
       "events": [],
       "sound": {
@@ -757,6 +800,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/mid-cretaceous-pollinators.jpg",
       "shot": "WATER_EDGE",
+      "title": "Flowers and Their Pollinators",
       "caption": "Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.",
       "events": [],
       "sound": {
@@ -774,6 +818,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/early-cretaceous-flowers.jpg",
       "shot": "WATER_EDGE",
+      "title": "Early Flowering Plants",
       "caption": "Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.",
       "events": [],
       "pinned": "fba843f413d942db",
@@ -786,6 +831,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/jurassic-floodplain.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Sauropod Floodplain",
       "caption": "Sauropods wade a Late Jurassic braided river through a floodplain of conifers, cycads and ferns, without a single flower.",
       "events": [],
       "sound": {
@@ -803,6 +849,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/late-triassic-dinosaurs.jpg",
       "shot": "WATER_EDGE",
+      "title": "The First Dinosaurs",
       "caption": "The first dinosaurs are still rare hunters in a world ruled by beaked rhynchosaurs and heavy-headed cynodonts.",
       "events": [],
       "pinned": "0ea6dc80408755ae",
@@ -815,6 +862,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/early-triassic-lystrosaurus.jpg",
       "shot": "WATER_EDGE",
+      "title": "After the Worst Extinction",
       "caption": "In the super-greenhouse world that followed the worst extinction in Earth's history, one squat, tusked animal makes up nearly the entire land fauna.",
       "events": [],
       "sound": {
@@ -832,6 +880,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/permian-interior.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Heart of Pangaea",
       "caption": "Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.",
       "events": [],
       "sound": {
@@ -849,6 +898,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/permian-conifer-forest.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Sail-Backed Synapsids",
       "caption": "Where coal-swamp rainforest once stood, open woodland of early conifers now spreads across drier ground, and sail-backed synapsids hunt along its streams.",
       "events": [],
       "pinned": "56d38ae859aa81c6",
@@ -861,6 +911,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/gondwana-ice-margin.jpg",
       "shot": "WATER_EDGE",
+      "title": "The Late Paleozoic Ice Age",
       "caption": "At the height of the Late Paleozoic Ice Age, a Gondwanan glacier calves into a braided meltwater outwash plain, one of the coldest moments the planet has yet seen.",
       "events": [
         "late-paleozoic-ice-age"
@@ -880,6 +931,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/carboniferous-swamp.jpg",
       "shot": "WATER_EDGE",
+      "title": "Giants of the Coal Swamp",
       "caption": "Giant lycopsid trees wall a Carboniferous coal swamp, where oxygen-rich air lets insects and millipedes grow to record sizes.",
       "events": [],
       "pinned": "9d50ad8640e89aa9",
@@ -892,6 +944,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/late-devonian-tetrapod.jpg",
       "shot": "WATER_EDGE",
+      "title": "Limbs Before Land",
       "caption": "Ten million years after Tiktaalik, a limbed but still fully aquatic animal paddles a forest stream where some of the first seed-bearing plants grow in the undergrowth.",
       "events": [],
       "pinned": "3b555e2bde09f75f",
@@ -904,6 +957,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/devonian-estuary.jpg",
       "shot": "WATER_EDGE",
+      "title": "The First Forests",
       "caption": "The first forests of Archaeopteris shade a Devonian estuary where lobe-finned fishes haul themselves into the shallows.",
       "events": [],
       "sound": {
@@ -921,6 +975,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/rhynie-chert.jpg",
       "shot": "WATER_EDGE",
+      "title": "Early Plants and Arachnids",
       "caption": "Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.",
       "events": [],
       "sound": {
@@ -938,6 +993,7 @@
       "chapterId": "over-under",
       "image": "scenes/silurian-shore.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "Early Upright Plants",
       "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.",
       "events": [],
       "pinned": "45f0b3f478c76df1",
@@ -950,6 +1006,7 @@
       "chapterId": "over-under",
       "image": "scenes/ordovician-reef-shore.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "The First Land Plants",
       "caption": "Beneath the surface a reef of crinoids, corals and shelled animals teems with life, while the first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to damp ground above the shore.",
       "events": [],
       "pinned": "8f32a35b5ef95389",
@@ -962,6 +1019,7 @@
       "chapterId": "over-under",
       "image": "scenes/cambrian-seafloor.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "The Cambrian Explosion",
       "caption": "On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.",
       "events": [],
       "pinned": "18445a4ae4e6c53c",
@@ -974,6 +1032,7 @@
       "chapterId": "over-under",
       "image": "scenes/ediacaran-shallows.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "Life Grows Large",
       "caption": "Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in clear, sunlit shallows beside a barren coast.",
       "events": [],
       "pinned": "b1473d8e9161781f",
@@ -986,6 +1045,7 @@
       "chapterId": "over-under",
       "image": "scenes/cryogenian-snowball.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "Snowball Earth",
       "caption": "During a Snowball Earth glaciation, ice reaches toward the equator, open water may survive only in scattered gaps in the ice, and life hangs on out of sight.",
       "events": [
         "snowball-earth"
@@ -1005,6 +1065,7 @@
       "chapterId": "over-under",
       "image": "scenes/boring-billion-shallows.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "The Oldest Known Sexual Cells",
       "caption": "In the climatically stable \"Boring Billion,\" Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.",
       "events": [],
       "pinned": "1a40aabd80b4def7",
@@ -1017,6 +1078,7 @@
       "chapterId": "over-under",
       "image": "scenes/great-oxidation.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "The Great Oxidation",
       "caption": "As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.",
       "events": [],
       "pinned": "295c1601ff5c1ece",
@@ -1029,6 +1091,7 @@
       "chapterId": "over-under",
       "image": "scenes/archean-shore.jpg",
       "shot": "SPLIT_LEVEL",
+      "title": "A Stromatolite Shore",
       "caption": "Microbial stromatolites crowd the floor of an Archean tidal sea under a faint young Sun and a hazy, oxygen-free sky.",
       "events": [],
       "pinned": "5dc36fb18edad44f",
@@ -1041,6 +1104,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/origin-of-life.jpg",
       "shot": "WATER_EDGE",
+      "title": "Where Life May Have Begun",
       "caption": "On a young, lifeless Earth, shallow volcanic pools cycle wet and dry in one of two contested settings where the first self-replicating chemistry may have begun.",
       "events": [],
       "sound": {
@@ -1058,6 +1122,7 @@
       "chapterId": "waters-edge",
       "image": "scenes/hadean-ocean.jpg",
       "shot": "WATER_EDGE",
+      "title": "Earth's First Ocean",
       "caption": "The first ocean steams against black volcanic shores, a world of water and rock with no life anywhere.",
       "events": [],
       "pinned": "4d674a11701a39a0",
@@ -1070,6 +1135,7 @@
       "chapterId": "molten-earth",
       "image": "scenes/magma-ocean.jpg",
       "shot": "WIDE_RIDGE",
+      "title": "The Magma Ocean",
       "caption": "In the aftermath of the Moon-forming impact, Earth's whole surface is a glowing ocean of magma beneath a looming, newborn Moon.",
       "events": [],
       "sound": {
@@ -3179,17 +3245,17 @@
     },
     {
       "id": "forest",
-      "file": "audio/forest-98937a7ce6.mp3",
-      "title": "Rain on Leaves",
-      "author": "SamsterBirdies",
+      "file": "audio/forest-d19ca9dc96.mp3",
+      "title": "3. Forest, beech leaves, trees",
+      "author": "mathiaslyhne1",
       "licence": "CC0 1.0",
-      "sourceUrl": "https://cdn.freesound.org/previews/584/584272_5487341-hq.mp3",
-      "durationSeconds": 49.93,
+      "sourceUrl": "https://cdn.freesound.org/previews/798/798157_4977295-hq.mp3",
+      "durationSeconds": 27.12,
       "loopSafe": true,
-      "levelTrimDb": 5.4,
+      "levelTrimDb": 18.8,
       "loop": {
-        "startSeconds": 20.35,
-        "endSeconds": 49.92723
+        "startSeconds": 17.308,
+        "endSeconds": 26.224
       }
     },
     {

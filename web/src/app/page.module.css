@@ -159,6 +159,29 @@
   display: contents;
 }
 
+/* Heading (`.captionTitle`) and passage (`.caption`) share one wrapper so the caller can fade
+   both together with a single opacity (Experience.tsx's `renderCaption`) — no independent
+   fade of either piece. */
+.captionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The scene's short name. Sans, upright and medium-weight against the passage's serif italic-
+   free body below it — and against the top-centre time/era title (page.module.css `.time`/
+   `.era`, much larger and either tabular-numeral or caps-mono) — so the two headings never
+   read as the same kind of label. */
+.captionTitle {
+  margin: 0;
+  font-family: var(--hud-sans);
+  font-size: clamp(16px, 1.5vw, 21px);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--hud-ink);
+}
+
 .caption {
   margin: 0;
   font-family: var(--hud-serif);
@@ -202,8 +225,16 @@
     height: 20px;
   }
 
-  .caption {
+  .captionBlock {
+    gap: 3px;
+  }
+
+  .captionTitle {
     font-size: 14px;
+  }
+
+  .caption {
+    font-size: 13px;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;

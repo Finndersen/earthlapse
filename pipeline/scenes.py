@@ -86,6 +86,12 @@ class SceneRecord(BaseModel):
     t: GeoTime = Field(ge=0)
     chapter: str
     shot: Shot
+    # Short heading for the UI (2026-09 titles work): distinct from `caption`, which stays the
+    # detailed passage underneath it. Invisible to the asset graph (pipeline/assets.py never
+    # reads it), so adding or editing it never changes a prompt/image node's digest or clears a
+    # pin -- the same guarantee `events` and `sound` have. 40 chars is the curation guideline
+    # itself (2-5 words), enforced here rather than left to review discipline.
+    title: str = Field(min_length=1, max_length=40)
     caption: str = Field(min_length=1)
     unsourced: UnsourcedConditions
     subject: SceneSubject
@@ -100,6 +106,14 @@ class SceneRecord(BaseModel):
     # prompt/image node's digest or clears a pin -- the same guarantee `events` has.
     sound: SceneSound | None = Field(default=None)
     pin: ScenePin | None
+
+    @field_validator("title")
+    @classmethod
+    def _title_stripped_and_non_blank(cls, title: str) -> str:
+        stripped = title.strip()
+        if not stripped:
+            raise ValueError("title must not be blank")
+        return stripped
 
     @field_validator("events")
     @classmethod
@@ -127,6 +141,7 @@ class SceneBook(BaseModel):
         _require_unique("chapter id", [c.id for c in self.chapters])
         _require_unique("scene id", [s.id for s in self.scenes])
         _require_unique("scene t", [s.t for s in self.scenes])
+        _require_unique("scene title", [s.title for s in self.scenes])
         chapters = {c.id: c for c in self.chapters}
         for scene in self.scenes:
             chapter = chapters.get(scene.chapter)

@@ -44,6 +44,19 @@ describe('validateManifest', () => {
     expect(() => validateManifest(bad)).toThrow(/shot/)
   })
 
+  it('rejects a scene missing title', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [{ id: 'x', t: 0, chapterId: 'c', image: 'i.svg', shot: 'GROUND', caption: 'hi', width: 10, height: 10 }],
+    }
+    expect(() => validateManifest(bad)).toThrow(/title/)
+  })
+
+  it('parses a scene\'s title', () => {
+    const manifest = validateManifest(stubManifest)
+    expect(manifest.scenes.map((s) => s.title)).toEqual(['A Modern City', 'Carboniferous Swamp', 'Archean Shore'])
+  })
+
   it('rejects an unknown shot type', () => {
     const bad = {
       ...stubManifest,
@@ -73,6 +86,7 @@ describe('validateManifest', () => {
           chapterId: 'c',
           image: 'i.svg',
           shot: 'SPLIT_LEVEL',
+          title: 'Title',
           caption: 'hi',
           width: 10,
           height: 10,
@@ -118,6 +132,7 @@ describe('validateManifest', () => {
           image: 'i.svg',
           depth: 'd.png',
           shot: 'GROUND',
+          title: 'Title',
           caption: 'hi',
           pinned: 'sha256:abc',
           width: 10,
@@ -249,6 +264,7 @@ describe('validateManifest', () => {
           chapterId: 'c',
           image: 'i.svg',
           shot: 'GROUND',
+          title: 'Title',
           caption: 'hi',
           sound: { stem: 'wind', mode: 'loop', gain: 0.5 },
           width: 10,
@@ -282,6 +298,7 @@ describe('validateManifest', () => {
           chapterId: 'c',
           image: 'i.svg',
           shot: 'GROUND',
+          title: 'Title',
           caption: 'hi',
           sound: { stem: 'wind', mode: 'fade', gain: 0.5 },
           width: 10,

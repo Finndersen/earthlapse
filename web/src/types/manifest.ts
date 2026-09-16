@@ -58,6 +58,10 @@ export interface Scene {
   depth?: string
   /** Shot type from the camera grammar (VISUAL_SPEC §3). */
   shot: 'WIDE_RIDGE' | 'WATER_EDGE' | 'CANOPY' | 'GROUND' | 'SPLIT_LEVEL'
+  /** Short heading naming what the scene depicts — the timeline checkpoint pip's label and the
+   *  subtitle's headline above `caption`'s longer passage. Required, like `caption`: every
+   *  published scene names itself. */
+  title: string
   caption: string
   /** events-core event id(s) this scene visually anchors to (ADR-022). Optional for now: absent
    *  on any manifest published before this field existed — timeline rendering of scene->event

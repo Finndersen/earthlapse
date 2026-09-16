@@ -63,12 +63,14 @@ afterEach(() => {
 })
 
 /** Waits for the manifest + every layer's data to load and the initial-t effect (opens on the
- *  oldest scene) to have applied, using the archean-shore caption becoming visible as the
- *  settled signal. Scoped to the caption slot: the timeline's checkpoint pips repeat every
- *  scene caption in their hover previews. */
+ *  oldest scene) to have applied, using the archean-shore caption passage becoming visible as
+ *  the settled signal. Scoped to `scene-caption-text` specifically, not the whole caption
+ *  slot: the slot's own title ("Archean Shore") also matches this scene's name, and the
+ *  timeline's checkpoint pips repeat every scene's title in their hover previews — a query
+ *  against the whole slot would be ambiguous. */
 async function renderSettled() {
   render(<Experience />)
-  await within(await screen.findByTestId('scene-caption')).findByText(/Archean shore/i)
+  await waitFor(() => expect(screen.getByTestId('scene-caption-text').textContent).toMatch(/Archean shore/i))
 }
 
 describe('Experience (W12a integration)', () => {
@@ -185,11 +187,71 @@ describe('Experience (W12a integration)', () => {
     12000,
   )
 
-  it('marks every scene as a timeline checkpoint with its still as the thumbnail', async () => {
+  it(
+    'renders the dominant scene\'s title as a heading above its caption passage, fading both together at one shared opacity',
+    async () => {
+      await renderSettled()
+
+      const titleEl = screen.getByTestId('scene-caption-title')
+      const textEl = screen.getByTestId('scene-caption-text')
+      // A styled `<p>`, not `<h2>`: the page has no `<h1>` to root a heading hierarchy under.
+      expect(titleEl.tagName).toBe('P')
+      expect(titleEl.textContent).toBe('Archean Shore')
+      expect(textEl.tagName).toBe('P')
+      expect(textEl.textContent).toMatch(/Archean shore/i)
+
+      // Settled on one scene (no crossfade in progress): both share their wrapper's opacity 1,
+      // set once on the shared `.captionBlock` wrapper rather than on either element itself.
+      const wrapper = titleEl.parentElement as HTMLElement
+      expect(wrapper).toBe(textEl.parentElement)
+      expect(wrapper.style.opacity).toBe('1')
+    },
+    10000,
+  )
+
+  it(
+    'fades the title and passage together partway through a real crossfade, not only once settled',
+    async () => {
+      await renderSettled()
+      const base = screen.getByTestId('scene-base') as HTMLImageElement
+      await waitFor(() => expect(base.alt).toMatch(/Archean shore/i), { timeout: 3000, interval: 50 })
+
+      act(() => {
+        useTimeStore.getState().setT(0)
+      })
+
+      // MIN_TRANSITION_SECONDS (`scene/presentation.ts`) rate-limits this jump to 1.6s of real
+      // wall-clock time, so the wrapper's opacity must pass through some value strictly between
+      // 0 and 1 along the way — sampled directly (not via `waitFor`, which only reports the
+      // first sample that matches a predicate) so a title/text pair that jumped straight from 1
+      // to 0 without ever actually cross-fading would still be caught.
+      const samples: string[] = []
+      const deadline = Date.now() + 3000
+      while (Date.now() < deadline) {
+        const wrapper = screen.getByTestId('scene-caption-title').parentElement as HTMLElement
+        samples.push(wrapper.style.opacity)
+        if (Number(wrapper.style.opacity) > 0 && Number(wrapper.style.opacity) < 1) break
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+
+      const midDissolve = samples.map(Number).find((value) => value > 0 && value < 1)
+      expect(midDissolve, `sampled opacities: ${samples.join(', ')}`).toBeDefined()
+
+      // Title and text still share exactly one opacity value mid-dissolve, not two independently
+      // fading elements — the same invariant the settled-state assertion above checks at 1.
+      const titleEl = screen.getByTestId('scene-caption-title')
+      const textEl = screen.getByTestId('scene-caption-text')
+      expect(titleEl.parentElement).toBe(textEl.parentElement)
+    },
+    12000,
+  )
+
+  it('marks every scene as a timeline checkpoint, labelled with its title, with its still as the thumbnail', async () => {
     await renderSettled()
 
     for (const scene of stubManifest.scenes) {
-      const pip = screen.getByRole('button', { name: (name) => name.startsWith(`${scene.caption}, `) })
+      const pip = screen.getByRole('button', { name: (name) => name.startsWith(`${scene.title}, `) })
       expect(pip.querySelector('img')?.getAttribute('src')).toBe(resolveAssetUrl(stubManifest.assetBase, scene.image))
     }
   })

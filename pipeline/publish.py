@@ -411,6 +411,7 @@ def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
         chapter_id=scene.chapter,
         image=published,
         shot=scene.shot,
+        title=scene.title,
         caption=scene.caption,
         events=scene.events,
         sound=_scene_sound(scene.sound),

@@ -168,15 +168,24 @@
   min-width: 0;
 }
 
-/* Below the readouts, filling the empty row above `.bottom` — the one stretch of the periphery
-   that is never the globe orb, the ancestor panel or the scene caption, on every breakpoint.
-   Stretched on both axes, not shrink-to-fit: `<EventFeed>` measures its wrapper's pixel width
-   (to convert its lookback into time) and height (to decide how many cards fit), and a
-   content-sized box would make both depend circularly on the cards they decide — collapsing to
-   0 and leaving the feed permanently unable to show anything. The feed stacks its cards against
-   the bottom of this box itself. The padding keeps the tallest stack clear of the readouts
-   above and the caption/chart below. Transparent to the pointer (the cards re-enable it): the
-   box spans the whole row even when it shows nothing. */
+/* Below the readouts, filling the empty row above `.bottom` — the one *column* of the periphery
+   that is never the globe orb, the ancestor panel or the scene caption: `.feed`'s own grid area
+   (`'feed . .'`) never shares a cell with `.caption`'s (`'bottom bottom bottom'`), so the two
+   never draw over each other. That does not mean `.feed` always gets the height it wants,
+   though — this row is the grid's one `minmax(0, 1fr)` track, so it is what yields when
+   `.bottom` (an `auto` track, sized to fit the caption heading + passage + timeline) needs more
+   room than the fixed viewport has spare, right down to this track's `min-height: 0` floor. On
+   a short, wide window with a long caption (1280x720 is the worst case measured) that floor is
+   reached: `<EventFeed>` still renders (so no card ever draws over the caption), it simply has
+   no room to draw any cards in. Pre-existing — a 62ch single-line-clamped caption already came
+   close before scene titles added a heading row above it. Stretched on both axes, not
+   shrink-to-fit: `<EventFeed>` measures its wrapper's pixel width (to convert its lookback into
+   time) and height (to decide how many cards fit), and a content-sized box would make both
+   depend circularly on the cards they decide — collapsing to 0 and leaving the feed permanently
+   unable to show anything. The feed stacks its cards against the bottom of this box itself. The
+   padding keeps the tallest stack clear of the readouts above and the caption/chart below.
+   Transparent to the pointer (the cards re-enable it): the box spans the whole row even when it
+   shows nothing. */
 .feed {
   grid-area: feed;
   justify-self: stretch;
@@ -298,7 +307,16 @@
 .caption,
 .expandedGlobeCaption {
   justify-self: center;
-  max-width: 62ch;
+  /* Widened from 62ch (2026-09-15, scene titles): the scene name now leads as its own heading
+     (app/page.module.css `.captionTitle`), so the passage underneath can run a little wider
+     before wrapping — capped well short of the lens's own aperture width so it still reads as
+     a caption, not a column, at 1440x900 and 1280x720, and `min(…, 92vw)` keeps the same cap
+     from ever touching the side gutters on a narrow window. This slot sits in `.bottom`, its
+     own full-width row below `.readouts`/`.ancestor`/`.feed` (ShellLayout.tsx's grid), so a
+     wider box never overlaps `.readouts` or `.ancestor` beside it *horizontally* — but a taller
+     `.bottom` (this box plus the heading above it) does take height away from `.feed`'s track
+     above it in the same column; see `.feed`'s own comment for that trade-off and its floor. */
+  max-width: min(74ch, 92vw);
   text-align: center;
 }
 
@@ -473,6 +491,19 @@
   .readouts {
     justify-self: center;
     margin-top: 0;
+  }
+}
+
+/* A short, wide desktop window (1280x720 is the worst case measured) leaves `.feed`'s track very
+   little spare height once `.bottom` grows to fit the heading, a long caption passage and the
+   timeline (see `.feed`'s own comment, above `.feed {` earlier in this file). Only a partial
+   mitigation, not a fix for that trade-off: it just claws back a couple of px by tightening the
+   heading-to-passage gap, and costs nothing on a taller window. `min-width` excludes phones,
+   which already get their own `.captionBlock` gap above for their own, narrower-not-shorter,
+   reason. */
+@media (max-height: 760px) and (min-width: 761px) {
+  .captionBlock {
+    gap: 2px;
   }
 }
 

@@ -21,7 +21,8 @@ import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/event
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { resolveAssetUrl, scenePlaybackSegments, SceneView } from '@/scene'
+import { resolveAssetUrl, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
+import type { PresentationRegime } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
@@ -141,6 +142,15 @@ export function Experience() {
     [data],
   )
 
+  // Every scene's on-screen territory (ADR-029) — the shared geometry both 'steady'-mode pacing
+  // below (`advanceSteadyPlayhead`'s rate floor) and the presentation regime just below it
+  // (`steadyPacing`, crossfade vs. cut) derive from, so the two always agree about where one
+  // scene's dwell ends and the next begins. Memoised like `scenesPacing` above.
+  const steadyTerritories = useMemo(
+    () => (data.status === 'ready' ? sceneTerritories(data.manifest.scenes) : []),
+    [data],
+  )
+
   // 'steady' mode moves at constant velocity in the selected section's scale of whichever
   // ScaleKind is on screen (ADR-016, ADR-024). The symlog case is pinned to `timelineKnee`
   // (re-review fix, 2026-09-15), the same knee the visible track/ruler use, so a leaf section's
@@ -162,6 +172,35 @@ export function Experience() {
   const [ratePerSecond, setRatePerSecond] = useState<number | null>(null)
   const smoothedRateRef = useRef<number | null>(null)
 
+  // Steady-mode presentation regime and floor status (ADR-029): computed fresh inside the
+  // playback loop's own `onFrame`, below — never from a bare render. While playback is paused,
+  // `onFrame` never runs at all, so a scrub/click/keyboard step made while paused never sees
+  // anything but the default 'crossfade'/not-floored here (and the effect below resets it the
+  // instant playback actually stops, the same "idle state shows nothing stale" rule
+  // `ratePerSecond` above already follows — never an idle *timer*, a direct consequence of
+  // `playback.playing` itself, ADR-012 amendment). While playback *is* running, `onFrame` still
+  // runs every frame regardless of a concurrent scrub — `lastAdvancedTRef` (below) is what keeps
+  // such a frame reading 'crossfade' too (re-review fix, 2026-09-15): see its own comment.
+  const [steadyRegime, setSteadyRegime] = useState<{ regime: PresentationRegime; floored: boolean }>({
+    regime: 'crossfade',
+    floored: false,
+  })
+  // The `t` this component's own playback loop last advanced to and committed via `setT` — used
+  // by `onFrame` below to tell "the loop's own next tick" apart from "something else moved `t`
+  // since" (a scrub, a checkpoint/event jump, a keyboard step). `null` whenever there is no such
+  // reference to compare against: before the loop has ever advanced anything, and reset on every
+  // stop/(re)start so a resume never compares the fresh first frame against a many-seconds-stale
+  // value left over from before playback paused (re-review fix, HIGH-2/MEDIUM-1: a scrub or seek
+  // made while steady playback keeps running used to hard-cut with no rate limit at all, since
+  // the regime was read from whatever territory the scrubbed-to `t` happened to land in).
+  const lastAdvancedTRef = useRef<GeoTime | null>(null)
+  useEffect(() => {
+    if (!playback.playing) {
+      setSteadyRegime({ regime: 'crossfade', floored: false })
+      lastAdvancedTRef.current = null
+    }
+  }, [playback.playing])
+
   // Event detail panel (W-followup item 12): opening it pauses playback if it was running,
   // closing it resumes only then — a direct consequence of the click that opened/closed it, not
   // an idle-driven change. `useRef`, not `useTimeStore`, because this is a one-shot remembered
@@ -176,15 +215,38 @@ export function Experience() {
 
   // The playback loop (DESIGN §3): the one place `t` advances on its own. 'scenes' mode always
   // paces in full-domain symlog u, whatever the toggle or section (ADR-016). 'steady' mode
-  // carries on across section ends (ADR-024). Either way `setT` moves the selected section along
+  // carries on across section ends (ADR-024) and, per scene territory, floors its own rate
+  // against `steadyTerritories` (ADR-029). Either way `setT` moves the selected section along
   // with `t`.
   usePlaybackLoop({
     playing: playback.playing,
     onFrame: (dtSeconds) => {
+      // A frame whose starting `t` isn't what this loop's own previous tick last produced was
+      // moved by something else since — a scrub, a checkpoint/event jump, a keyboard step
+      // (`lastAdvancedTRef`'s own comment above). `null` (no prior tick to compare against, or
+      // just resumed) never reads as a seek.
+      const seeked = lastAdvancedTRef.current !== null && t !== lastAdvancedTRef.current
+
       const next =
         playback.mode === 'steady'
-          ? advanceSteadyPlayhead(t, dtSeconds, playback, sectionId, steadyScaleForWindow)
+          ? advanceSteadyPlayhead(t, dtSeconds, playback, sectionId, steadyScaleForWindow, steadyTerritories)
           : advancePlayhead(t, dtSeconds, playback, FULL_DOMAIN_SYMLOG_SCALE, scenesPacing)
+
+      if (playback.mode === 'steady') {
+        // Evaluated at `next` — the `t` this frame actually renders — not the pre-advance `t`,
+        // and forced to crossfade by `seeked` above: see `steadyFrameRegime`'s own doc comment
+        // for why both re-review fixes matter (MEDIUM-2 and HIGH-2, respectively). Recomputing
+        // `rawRate`/`scale` here (not reusing anything `advanceSteadyPlayhead` used internally)
+        // mirrors exactly what that call just integrated with, for whichever territory `next`
+        // itself landed in — a large dt crossing several territories in one call is a rare
+        // catch-up case (a stalled tab regaining focus); this only ever reads the *last* one.
+        const rawRate = playback.baseRate * playback.speed
+        const scale = steadyScaleForWindow(sectionById(sectionId).window)
+        const pacing = steadyFrameRegime(steadyTerritories, next, rawRate, scale, seeked)
+        setSteadyRegime({ regime: pacing.regime, floored: pacing.floored })
+      } else if (steadyRegime.regime !== 'crossfade' || steadyRegime.floored) {
+        setSteadyRegime({ regime: 'crossfade', floored: false })
+      }
 
       const instantaneous = dtSeconds > 0 ? Math.abs(t - next) / dtSeconds : 0
       const alpha = Math.min(1, dtSeconds / RATE_SMOOTHING_SECONDS)
@@ -198,9 +260,16 @@ export function Experience() {
         // computing a no-op clamp against a "playing" flag that never advances anything.
         if (t !== 0) setT(0)
         if (playback.playing) setPlaying(false)
+        // Same batch, not the separate `playback.playing` reset effect above (which would only
+        // clear it on the *next* render): the floor stops mattering the instant nothing is
+        // advancing any more, so the marker must not show for one extra committed frame after
+        // playback has already stopped.
+        setSteadyRegime({ regime: 'crossfade', floored: false })
+        lastAdvancedTRef.current = 0
         return
       }
       if (next !== t) setT(next)
+      lastAdvancedTRef.current = next
     },
   })
 
@@ -223,6 +292,11 @@ export function Experience() {
     playback,
     sectionWindow: sectionById(sectionId).window,
     scalarLayers,
+    // ADR-029: while steady playback is hard-cutting through a dense scene cluster, scene loop
+    // sounds mute and once-mode sounds don't trigger (see `useAudioEngine`'s own doc comment) —
+    // the same `steadyRegime` that drives `SceneView`'s presented mix and the "time compressed"
+    // marker below, so all three always agree about which frames are cutting.
+    presentationRegime: steadyRegime.regime,
   })
 
   // The globe's two raster sources (docs/GLOBE.md §4.1, G7), selected by id (ADR-013) —
@@ -245,7 +319,7 @@ export function Experience() {
         ? data.manifest.scenes.map((scene) => ({
             id: scene.id,
             t: scene.t,
-            label: scene.caption,
+            label: scene.title,
             thumbnailUrl: resolveAssetUrl(data.manifest.assetBase, scene.image),
           }))
         : [],
@@ -302,13 +376,24 @@ export function Experience() {
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
   const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
+  // The subtitle above the timeline: the scene's short `title` as a heading over its longer
+  // `caption` passage, sharing one opacity so they cross-fade together in step with SceneView's
+  // own dissolve — neither is individually faded.
   const renderCaption = (scene: Scene, opacity: number) =>
     captionHost === null
       ? null
       : createPortal(
-          <p className={styles.caption} style={{ opacity }}>
-            {scene.caption}
-          </p>,
+          // A styled `<p>`, not `<h2>`: the page has no `<h1>` to root a heading hierarchy under,
+          // and this slot is a visual heading (distinct font/weight/size from `.caption` below
+          // it), not a document-outline one.
+          <div className={styles.captionBlock} style={{ opacity }}>
+            <p className={styles.captionTitle} data-testid="scene-caption-title">
+              {scene.title}
+            </p>
+            <p className={styles.caption} data-testid="scene-caption-text">
+              {scene.caption}
+            </p>
+          </div>,
           captionHost,
         )
 
@@ -320,7 +405,13 @@ export function Experience() {
         eventLegend={<EventTagLegend />}
         scene={
           manifest.scenes.length > 0 ? (
-            <SceneView t={t} scenes={manifest.scenes} assetBase={manifest.assetBase} renderCaption={renderCaption} />
+            <SceneView
+              t={t}
+              scenes={manifest.scenes}
+              assetBase={manifest.assetBase}
+              renderCaption={renderCaption}
+              regime={steadyRegime.regime}
+            />
           ) : (
             <div className={styles.placeholder}>No scenes in manifest.</div>
           )
@@ -390,6 +481,7 @@ export function Experience() {
             }}
             onOpenCluster={handleOpenCluster}
             ratePerSecond={ratePerSecond}
+            timeCompressed={steadyRegime.floored}
             sound={<SoundToggle {...audio} />}
             overlayOpen={globeExpanded || expandedChartLayerId !== null}
           />

@@ -37,6 +37,7 @@ from pipeline.publish import _layers, chapter_spans
 from pipeline.scenes import (
     SceneBook,
     ScenePin,
+    SceneRecord,
     SceneSound,
     SoundMode,
     load_scene_book,
@@ -87,6 +88,7 @@ scenes:
     t: 4.5e9
     chapter: molten
     shot: WIDE_RIDGE
+    title: Hot Start
     caption: A molten world.
     unsourced:
       o2_percent: 0  # hand-written
@@ -108,6 +110,7 @@ scenes:
     t: 3.75e8
     chapter: shore
     shot: WATER_EDGE
+    title: Devonian Estuary
     caption: An estuary.
     unsourced:
       o2_percent: 18
@@ -129,6 +132,7 @@ scenes:
     t: 0
     chapter: shore
     shot: WATER_EDGE
+    title: A City
     caption: A city.
     unsourced:
       o2_percent: 21
@@ -679,6 +683,7 @@ scenes:
     t: 0
     chapter: shore
     shot: WATER_EDGE
+    title: A City
     caption: A city.
     unsourced:
       o2_percent: 21
@@ -700,6 +705,7 @@ scenes:
     t: 1.0e5
     chapter: molten
     shot: WIDE_RIDGE
+    title: Interlude
     caption: A stray molten interlude, for the test only.
     unsourced:
       o2_percent: 0
@@ -721,6 +727,7 @@ scenes:
     t: 3.75e8
     chapter: shore
     shot: WATER_EDGE
+    title: Devonian Estuary
     caption: An estuary.
     unsourced:
       o2_percent: 18
@@ -742,6 +749,7 @@ scenes:
     t: 4.5e9
     chapter: molten
     shot: WIDE_RIDGE
+    title: Hot Start
     caption: A molten world.
     unsourced:
       o2_percent: 0
@@ -1063,6 +1071,7 @@ def _published_scene(
         "chapterId": chapter,
         "image": f"scenes/{scene_id}.png",
         "shot": shot,
+        "title": book.scene(scene_id).title,
         "caption": caption,
         "events": list(book.scene(scene_id).events),
         "pinned": pin.asset_digest,
@@ -1086,6 +1095,88 @@ def _key_paths(value: object, prefix: str = "") -> set[str]:
     if isinstance(value, list):
         return set().union(*(_key_paths(item, f"{prefix}[]") for item in value))
     return set()
+
+
+# -- scene titles (2026-09, ADR-028) -----------------------------------------------------------
+
+
+def test_scene_title_is_required() -> None:
+    data = parse_scene_book(SCENES_YAML).scene("city").model_dump()
+    del data["title"]
+
+    with pytest.raises(ValidationError, match="title"):
+        SceneRecord.model_validate(data)
+
+
+def test_scene_title_must_not_be_blank_or_whitespace_only() -> None:
+    data = parse_scene_book(SCENES_YAML).scene("city").model_dump()
+
+    with pytest.raises(ValidationError, match="title must not be blank"):
+        SceneRecord.model_validate({**data, "title": "   "})
+
+
+def test_scene_title_is_stripped_of_surrounding_whitespace() -> None:
+    data = parse_scene_book(SCENES_YAML).scene("city").model_dump()
+
+    record = SceneRecord.model_validate({**data, "title": "  A City  "})
+
+    assert record.title == "A City"
+
+
+def test_scene_title_has_a_max_length() -> None:
+    data = parse_scene_book(SCENES_YAML).scene("city").model_dump()
+
+    with pytest.raises(ValidationError, match="title"):
+        SceneRecord.model_validate({**data, "title": "x" * 41})
+
+
+def test_scene_book_refuses_duplicate_titles() -> None:
+    duplicated = SCENES_YAML.replace("title: Devonian Estuary", "title: A City")
+
+    with pytest.raises(ValueError, match="duplicate scene title: A City"):
+        parse_scene_book(duplicated)
+
+
+def test_scene_title_never_changes_the_prompt_or_image_node_digest(root: Path) -> None:
+    """Like `events` (ADR-022) and `sound` (ADR-023), `title` is invisible to the asset graph
+    (pipeline/assets.py never reads SceneRecord.title): retitling a scene must never change its
+    prompt or image node's digest, or a rebuild would treat it as stale and clear its pin."""
+    paths = ProjectPaths(root)
+    world = load_world(paths.curated)
+    store = CandidateStore(paths.candidates)
+
+    def digests(book: SceneBook) -> dict[str, tuple[str, str]]:
+        graph = build_scene_graph(book, world, FakeBackend())
+        resolver = graph.resolver(store)
+        return {
+            a.scene.id: (resolver.digest(a.prompt.id), resolver.digest(a.image.id))
+            for a in graph.assets
+        }
+
+    base = digests(load_scene_book(paths.scenes))
+
+    retitled_text = paths.scenes.read_text().replace(
+        "title: Devonian Estuary", "title: A Wholly Different Heading"
+    )
+    paths.scenes.write_text(retitled_text)
+    retitled_book = load_scene_book(paths.scenes)
+    assert retitled_book.scene("devonian").title == "A Wholly Different Heading"
+
+    assert digests(retitled_book) == base
+
+
+def test_publish_emits_each_scenes_title(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    book = load_scene_book(paths.scenes)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    titles_by_id = {s["id"]: s["title"] for s in raw["scenes"]}
+    assert titles_by_id == {scene.id: scene.title for scene in book.scenes}
 
 
 # -- scene -> event links (ADR-022) -----------------------------------------------------------

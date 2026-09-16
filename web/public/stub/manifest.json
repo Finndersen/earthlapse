@@ -9,6 +9,7 @@
       "chapterId": "present",
       "image": "scenes/holocene-city.svg",
       "shot": "WIDE_RIDGE",
+      "title": "A Modern City",
       "caption": "A modern city at dusk, one species reshaping the planet's surface in a geological instant.",
       "width": 1600,
       "height": 900
@@ -19,6 +20,7 @@
       "chapterId": "deep-past",
       "image": "scenes/carboniferous-swamp.svg",
       "shot": "CANOPY",
+      "title": "Carboniferous Swamp",
       "caption": "A Carboniferous swamp, oxygen-rich air feeding forests taller than any before them.",
       "width": 1600,
       "height": 900
@@ -29,6 +31,7 @@
       "chapterId": "deep-past",
       "image": "scenes/archean-shore.svg",
       "shot": "WATER_EDGE",
+      "title": "Archean Shore",
       "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
       "width": 1600,
       "height": 900,
