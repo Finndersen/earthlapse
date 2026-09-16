@@ -233,9 +233,12 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 >   every segment `scene/pacing.ts` doesn't cover, the playhead moves at the ordinary flat rate.
 > - **Steady** — constant velocity in ~~the full-domain scale~~ the selected era section's scale
 >   (ADR-024, note below) of whichever scale kind is currently selected (symlog by default,
->   linear when the linear toggle is on); no pacing at all. Dense scene clusters are simply crossed as reached; `presentation.ts`'s existing
->   minimum-transition rate limiter remains the visual backstop against a crossing too fast to
->   read as a dissolve.
+>   linear when the linear toggle is on); no pacing at all. ~~Dense scene clusters are simply
+>   crossed as reached; `presentation.ts`'s existing minimum-transition rate limiter remains the
+>   visual backstop against a crossing too fast to read as a dissolve.~~ Superseded by ADR-029
+>   below — that unconditional backstop is exactly what turned a dense crossing into one long
+>   forced blur; steady mode now switches presentation regime and, only where even that isn't
+>   enough, floors its own rate, per scene.
 >
 > See `scene/pacing.ts` (segment durations, the bonus) and `timeline/playback.ts`
 > (`advancePlayhead`'s two modes) for the mechanism, and ADR-016 for the full rationale.
@@ -248,6 +251,45 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 > Scenes mode keeps its full-domain pacing. Steady mode moves at constant velocity in the
 > *selected section's* scale, so each section takes the same wall-clock time at 1x, carrying the
 > rest of a frame across an edge (`advanceSteadyPlayhead`).
+
+> **v1 note (ADR-029): steady mode's "no pacing at all" needs one exception — how long a scene
+> is actually looked at.** Measured: at 1x in the earth section, the last 12,000 years (28 of 66
+> scenes) crossed in 3.0 s and the last 500 years (19 scenes) in 0.19 s — `presentation.ts`'s
+> `MIN_TRANSITION_SECONDS` floor, applied unconditionally, forced every one of those crossings
+> into a multi-second dissolve regardless, which reads as a single blur skipping straight from
+> the Neolithic to the present; once-mode scene sounds (a rocket launch, say) never got the
+> chance to fire either. A generic rule, keyed to each scene's own on-screen dwell at the current
+> velocity — not a special case for recent centuries, and it applies identically in deep time at
+> high speed if a run of scenes is ever that dense there too:
+>
+> 1. Dwell ≥ `MIN_TRANSITION_SECONDS` (1.6 s): crossfade exactly as before.
+> 2. `MIN_CUT_DWELL_SECONDS` (0.35 s) ≤ dwell < 1.6 s: a hard cut instead of a dissolve — the
+>    pace visibly accelerates rather than blurring.
+> 3. Dwell would fall under 0.35 s: a **speed floor** — the steady playhead's own rate is slowed
+>    just enough that the scene still gets 0.35 s, so a full-frame image change never happens
+>    more than about 3 times a second at any speed. That figure is not just a comfortable
+>    round number: it is WCAG 2.3.1's three-flashes-per-second photosensitivity threshold, so
+>    the floor is a hard safety limit, not a taste call. The numeric year readout is unaffected —
+>    it is still exactly `t`, and this floor only ever engages for the genuinely dense stretch
+>    that needs it, not the whole playthrough.
+>
+> A small "time compressed" marker beside the speed/mode controls shows exactly while the floor
+> is active (a direct function of playback state, per the ADR-012 amendment above — never an
+> idle timer). Scrubbing, seeking, paused viewing and `'scenes'`-mode playback are untouched:
+> they always crossfade, exactly as before this ADR — a frame whose starting `t` wasn't produced
+> by the steady playhead's own previous advance (a scrub, a checkpoint/event jump, a keyboard
+> step) always reads as `'crossfade'`/not-floored for that frame, regardless of what the landed-on
+> scene's territory implies. Real `requestAnimationFrame` delivery is not perfectly uniform, so a
+> wall-clock backstop (`presentation.ts`) additionally never lets an actual displayed change land
+> sooner than `MIN_CUT_DWELL_SECONDS` after the last one, whatever `t`/the territory math say — the
+> floor above guarantees the dwell in *simulated* time, this is what guarantees it in the
+> wall-clock time a viewer actually experiences. See `scene/steadyPacing.ts` (the regime/floor
+> rule, keyed to each scene's *territory* — the stretch of `t` between the midpoints of its two
+> neighbouring gaps, exactly where `dominantScene` itself switches — and `steadyFrameRegime`, the
+> seek-aware wrapper `Experience.tsx` actually calls) and `timeline/playback.ts`'s
+> `advanceSteadyPlayhead` (which applies the floor to the playhead's own rate, stepping territory
+> by territory rather than by a numeric nudge in `u`) for the mechanism, and ADR-029 for the full
+> rationale, the audio consequences (§11) and the live-measured numbers.
 
 ---
 
@@ -418,6 +460,13 @@ expands to fill; it is never the default focus.
 > same top-right corner rather than claiming a wide band of its own — the portrait shrinks to
 > the globe orb's own size and its name/since text collapses to short right-aligned caps lines
 > under it, the same treatment the globe orb gives its own label.
+
+> **v1 note (ADR-028).** The caption slot is two parts, not one: `scene.title`, a short heading
+> (2-5 words) naming what the scene represents, above `scene.caption`, the detailed passage this
+> section originally described — both fade together as one opacity, driven by the same dissolve.
+> The passage's text box may be wider than an earlier fixed measure now that a heading sits above
+> it. Timeline checkpoint pips are labelled by `scene.title`, not `scene.caption` — a short unique
+> heading is what a pip label needs; the full passage stays in the caption slot only.
 
 > **v1 note (ADR-017/ADR-021), further superseding the transport row above.** There is no
 > minimap (the row shown above already dropped its "linear minimap" strip — ADR-011's symlog
@@ -727,6 +776,18 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 > top-right corner, `M` to mute anywhere). Published stem filenames are content-hashed
 > (`<id>-<hash>.<format>`, same amendment) so a CDN can cache them `immutable`. Public surface:
 > `web/src/audio/index.ts`.
+>
+> **ADR-029 amendment (2026-09-15).** `useAudioEngine` takes one further input,
+> `presentationRegime` (`'crossfade' | 'cut'`, default `'crossfade'` — `Experience.tsx`'s own
+> steady-mode `steadyPacing` result, §3's speed floor). While `'cut'`: `sceneSoundLoopGains` is not
+> called (every scene-loop voice's target gain drops to 0 and fades through its existing
+> `GAIN_SMOOTH_SECONDS` ramp, never a click) and the once-mode trigger is fed `playing &&
+> presentationRegime !== 'cut'` rather than bare `playing`, reusing `nextOnceTriggerState`'s own
+> `playing`/`wasPlaying` gate so a hard-cut stretch neither triggers a new one-shot nor piles up
+> several under images that are each on screen for a fraction of a second. The ambience curve
+> (`stemGains(t)`) is untouched either way — stretched over a slowed, floored playhead it reads as
+> a natural, unbroken settlement→industry→traffic build, exactly the "needs no change" this
+> section already promised for it.
 
 ---
 

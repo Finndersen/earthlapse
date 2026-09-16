@@ -3495,6 +3495,186 @@ audio). Decoded-bytes totals dropped at every checkpoint: 320 Ma 78.2→49.4 MB,
 100.7→71.9 MB, 90 Ma 102.7→73.9 MB, 12 Ma 95.5→66.7 MB, 10 ka 122.8→94.0 MB — all now well under
 half the 190 MB cap. Zero console errors across every check.
 
+**Amendment (2026-09-16): `forest`'s SECOND pick was also rain.** *Status: accepted,
+human-directed (listening feedback: "the background sound effects from about 270 Ma to 60Ma
+sounds like rain which doesnt seem appropriate because none of the scenes have rain, so may need
+adjusting").*
+
+**Diagnosis.** `stemGains(t, [])` was computed directly (not guessed) at the five checkpoints the
+feedback's own window brackets — 270, 200, 150, 100 and 60 Ma. `forest` is a flat 0.3 at every one
+of them (its curve has held a flat baseline from 370 Ma on since the "era fit v3 fixes" amendment;
+nothing about this amendment's fix changes that curve). Every other ambience stem active in this
+window was checked too: `insects` (0.066→0.28), `wing-hum` (flat 0.06), `fire` (flat 0.15),
+`large-animal` (0→0.63, scene-boosted at 270 Ma) and `archosaurs` (0→0.88, scene-boosted at
+100 Ma) — none of these is a continuous broadband texture the way `forest` is (bellows,
+stridulation and crackle are discrete-event or narrowband, not a stationary wash), so none of them
+is a plausible source of a "sounds like rain" report even where a scene's own loop-mode sound
+pushes their gain briefly above `forest`'s. `data/scenes.yaml` was checked directly for any
+`conditions`/weather field naming rain: none exists in the published window (one scene,
+`futuristic-shenzhen-2087`, explicitly lists "neon-lit rain-soaked street" under `absent`) — a
+rain-reading bed under every one of these scenes is a scene/audio mismatch, not a matter of taste.
+The clip itself settled the question: its own Freesound title is literally "Rain on leaves", and
+the previous amendment's own spectrogram comment — "continuous broadband...patter" — already
+described rain, in words, without the previous pass recognising that a frog/bird-free spectrogram
+is necessary but not sufficient for "not rain". Measured quantitatively for the first time here
+(400 ms block-RMS envelope, the same block size `levels.py` uses): the shipped clip's envelope
+has a standard deviation of 0.6 dB across its full 49.9 s — a near-perfectly stationary hiss,
+because rain has no gusts to swell and ease off the way real wind through foliage does. That 0.6
+dB figure is the number this amendment's fix is built around: it is what "sounds like rain" looks
+like in a block-RMS plot, and no candidate this pass shipped without first checking that its own
+chosen loop region (not just its whole clip) clears it by several dB.
+
+**Decision.** (1) **A rain/downpour check is added to `sources/audio-stems/README.md`'s own
+"Sourcing checks" list** (block-RMS envelope stdev, checked inside the candidate's own loop
+region, not just over the whole clip — a dynamic clip can still have a flat, rain-like stretch
+that happens to be its only cleanly-loopable span, which is exactly how the rejected candidates
+below were caught even where their whole-clip statistics looked fine). (2) **`forest` re-sourced a
+third time**: i_o_i "Bear Creek Valley Trail Tree Wind" (Freesound 860800, CC0 1.0,
+https://freesound.org/people/i_o_i/sounds/860800/) — a genuine gusty wind-through-foliage field
+recording, block-RMS envelope stdev 2.25 dB inside its own 16.62-38.99 s loop region (3.75x the
+previous clip's 0.6 dB whole-clip figure), broadband with no tonal ridges (max spectral peakiness
+5.4 dB, an order of magnitude under a real tone/siren/hum's ~20-30 dB spike), Welch-averaged
+spectrum clean of mains hum (<=3.8 dB at every 50/60/100/120 Hz bin — a single un-averaged FFT
+snapshot taken early in this search showed spurious 4-11 dB bumps at those same bins purely from
+periodogram variance, a false alarm a proper 43.5 s Welch average resolved), no birdsong, no frog
+calls, no footsteps (despite "Trail" in the title) and no traffic (tags: Tree, blowing, trees,
+wind, windy). Full sourcing/rejection detail, including why two candidates with excellent rustle
+character (Freesound 788811, 853114) were rejected anyway for a badly capped level trim, is in
+`stems.toml`'s own entry comment. `forest`'s `stemGains.ts` curve, `id`, role and every checkpoint
+test are unchanged — this is a clip swap, not a curve change. (3) **Level.** Loudness -52.5 dB,
+peak -26.5 dBFS, `level_trim_db` 22.5 — hits the full -30 dB loop reference with headroom to
+spare, unlike the clip it replaces (5.4 dB, 2.1 dB short) and unlike the two rejected
+better-sounding candidates above (16.1 dB/15.3 dB short and 6.1 dB/17.5 dB short respectively);
+`stemGains.test.ts`'s `FOREST_EFFECTIVE_LOUDNESS_DB` constant is updated to match. (4) **Loop
+region**, found by a joint grid search over 44.1 kHz AND 48 kHz decodes together (not one rate
+then checked against the other, after the "buzzing" re-check found exactly that ordering miss a
+wrap that reproduced 4.7x worse at the untested rate): 16.62-38.99 s, wrap jump 1.6e-9 at 44.1 kHz
+(median step 4.5e-4) and 2.7e-8 at 48 kHz (median step 4.2e-4) — comfortably under the median step
+at both rates. (5) **Size**: raw audio drops from ~33.2 MB to ~32.7 MB (25 stems; `forest` itself
+0.8 MB against its predecessor's 1.2 MB) — still over the "<~15 MB" default, unaffected by this
+amendment's own direction (the human has separately said audio size is not strictly budgeted).
+
+**Consequences.** No wire-format change (`AudioStem`/`SceneSound` schemas untouched); `_audio_stems`
+discovers the new content-hashed filename (`forest-cdac2ac432.mp3`) by globbing, same as every
+other re-source. No image digests or pins are affected (`scene.sound` and the tier-1 catalogue
+both stay outside the asset graph, unchanged since ADR-023 §3). `stemGains.ts`'s own `forest:`
+curve, comment and every checkpoint in `stemGains.test.ts` are untouched — only the clip, its
+`stems.toml` entry, `decodedBudget.test.ts`'s hand-maintained duration mirror (43.52, was 49.93)
+and the `FOREST_EFFECTIVE_LOUDNESS_DB` comparison constant changed. `data/scenes.yaml`,
+`pipeline/scenes.py`, `web/src/scene/**` and `web/src/timeline/**` are untouched (this is an
+audio-only fix; other uncommitted work lives there).
+
+**Verification.** `.venv/bin/python -m pipeline.databuild --only audio-stems --force`:
+`audio-stems: rebuilt` (fetched the new clip, verified its sha256, published
+`forest-cdac2ac432.mp3`, removed the stale `forest-98937a7ce6.mp3`). `earthtime publish
+--allow-unpinned`: 66 scenes, 25 audio stems credited, `forest` now `durationSeconds: 43.52`,
+`levelTrimDb: 22.5`, loop `16.62-38.99`. `make pins`: 106 pinned images staged, 0 removed (no
+image-graph effect, as expected). `.venv/bin/python -m pytest -q tests`: 435 passed. `ruff
+check`/`ruff format --check`: clean. `pnpm typecheck`: clean. `pnpm vitest run src`: 1167 passed
+(351 suites). **Live `getStemTargets()` check** (Playwright driving the real dev server at
+`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthtime
+.setT` to the five checkpoints the feedback's own window brackets): `forest` reads exactly 0.3 at
+270/200/150/100/60 Ma, matching `stemGains.ts`'s unchanged curve and confirming the new buffer
+loads and plays; zero unexpected console errors (two "Failed to load resource" entries are
+`bufferCache`'s own documented abort-in-flight behaviour when `t` jumps discontinuously between
+checkpoints, not a regression).
+
+**Amendment (2026-09-16): `forest`'s THIRD pick was low-frequency wind rumble, not rustle.**
+*Status: accepted, independent review of the amendment above.*
+
+**Diagnosis.** An independent review reproduced every number the previous amendment attested
+(sha256, `levels.py` loudness/peak, the 0.6 dB vs. 2.25 dB rain-envelope comparison, 435/1167
+tests) and confirmed the rain diagnosis and fix direction were correct, but found the replacement
+clip itself wrong: i_o_i "Bear Creek Valley Trail Tree Wind" (Freesound 860800) is a directional
+mic recording wind pressure on its own capsule, not canopy leaf rustle. Quantified here for the
+first time (a Welch PSD, `nperseg` 2^16, over the clip's own 16.62-38.99 s loop region — the
+stationarity check the previous amendment added never looked at *where* the energy sat, only
+*how steady* it was): 50.0% of power in 50-200 Hz, only 7.2% in 2-8 kHz, median-energy frequency
+137 Hz — more low-frequency-dominated than the `wind` stem itself (696 Hz median, 12.0%/28.2% in
+the same two bands), the open-air gust bed `terrestrialBedFade` deliberately silences at 370 Ma.
+The clip's own Freesound description — "Directional mic, aimed at trees on a windy day" — is
+consistent with mic-capsule wind noise rather than leaf-on-leaf rustle, which sits at 2-10 kHz.
+The review also corrected two smaller inaccuracies in the previous amendment's own numbers,
+both reproduced independently here: (1) the loop endpoints were claimed "closely matched
+level" (-48.1 / -47.2 dB) but a proper head-vs-tail RMS comparison across several window sizes
+shows a +3.5 to +6.8 dB step — the loop restarts audibly louder than it ends, every ~22 s;
+(2) the attested wrap-jump figures (1.6e-9 at 44.1 kHz, 2.7e-8 at 48 kHz) measure
+`|x[loopStart] - x[loopEnd]|`, a sample pair `Tone.Player` never actually plays — its
+`[loopStart, loopEnd)` semantics wrap from `x[loopEnd - 1]` to `x[loopStart]`, which for this
+clip is 2.22e-4 (44.1 kHz) / 2.59e-4 (48 kHz), 0.52/0.65 of the median sample step. Both are
+still comfortably under 1 (the wrap itself is inaudible either way), so this did not change the
+fix's outcome, only its bookkeeping — but "far tighter than this catalogue's existing tightest
+wraps" was false under the convention that actually plays (`wind`'s own wrap, measured the same
+correct way, is 8-12x tighter).
+
+**Decision.** (1) **A spectral-balance check is added to `sources/audio-stems/README.md`'s
+"Sourcing checks"**, alongside the stationarity check the previous amendment added: median-energy
+frequency and % power in 2-8 kHz inside the candidate's own loop region, because broadband and
+gusty (which is what the stationarity check verifies) is necessary but not sufficient for
+"rustle" — open-air wind noise is broadband and gusty too, just at the wrong end of the spectrum,
+and nothing before this caught that distinction. (2) **`forest` re-sourced a FOURTH time**:
+mathiaslyhne1 "3. Forest, beech leaves, trees" (Freesound 798157, CC0 1.0,
+https://freesound.org/people/mathiaslyhne1/sounds/798157/) — a genuine, unprocessed field
+recording ("A recording of leaves in the wind in a forest near Silkeborg"), tags
+beech/field-recording/forest/leaves/trees/wind only. This is the same candidate the previous
+amendment's own rejected-candidates list already had on file, there measured at only 0.40 dB
+whole-clip envelope stdev and rejected as rain-risk; re-measured inside a properly grid-searched
+loop region (below) rather than the whole clip, it clears the same stationarity bar the previous
+pick used by nearly 3x. Spectral balance inside its loop region (Welch PSD, `nperseg` 2^15):
+median-energy frequency 2491 Hz, 32.0% of power in 2-8 kHz, 43.3% above 4 kHz — clearing the new
+check by a wide margin — peakiness 14.6 dB (an order of magnitude under a real tone/siren/
+bird-chirp's ~20-30 dB spike), clean at every 50/60/100/120 Hz mains-hum bin (>40 dB under the
+median). Stationarity: 1.67 dB block-RMS envelope stdev inside the loop region (2.8x the 0.6 dB
+rain threshold) — one smooth rise-and-decay gust across the loop's 8.9 s, confirmed NOT a
+periodic footstep cadence (the clip's title notwithstanding) by inspecting the 50 ms block-RMS
+trace directly: a single 4.4 s rise and 4.5 s decay, not a repeat every 0.3-1.2 s. Full
+rejected-candidates list for this pass (happygummy 581234's disqualifying "processed to be
+unnatural sounding" provenance despite the best raw spectral numbers found; teadrinker
+403050/403051's genuinely multi-gust but spectrally short field recording, kept as the best
+fallback; 853109's `birds` tag; and cross-checked spectral numbers for the six candidates the
+previous amendment already rejected) is in `stems.toml`'s own entry comment.
+
+**Level.** Measured on the loop region (this stem's own "measure what will actually loop"
+precedent — the full clip peaks marginally louder, -28.8 dBFS, a few seconds outside the loop):
+loudness -48.8 dB, peak -29.8 dBFS. `level_trim_db` lands at 18.8 dB, hitting the full -30 dB loop
+reference with 11 dB of spare headroom (min(-30 - (-48.8), 29.8) = 18.8); `stemGains.test.ts`'s
+`FOREST_EFFECTIVE_LOUDNESS_DB` constant is updated to match.
+
+**Loop region**, found the same way as the clip it replaces — a joint grid search over 44.1 kHz
+AND 48 kHz decodes together, minimising the WORSE of the two rates' correctly-measured
+(`x[loopEnd-1]` vs. `x[loopStart]`) wrap jump subject to a <=1.5 dB level match at the endpoints:
+17.308-26.224 s (8.916 s), wrap ratio 0.28 (44.1 kHz) / 0.30 (48 kHz) of each rate's own median
+sample step, level match 0.75 dB (head -51.84 dB / tail -51.09 dB, 100 ms local RMS) — both
+tighter than the clip this replaces managed under the same, correctly-applied measurement.
+
+**Size.** Raw audio drops from ~32.7 MB to ~31.0 MB (`forest` itself 0.6 MB against its
+predecessor's 0.8 MB, and 27.1 s against 43.5 s) — still over the "<~15 MB" default, unaffected by
+this amendment's own direction (the human has separately said audio size is not strictly
+budgeted).
+
+**Consequences.** No wire-format change (`AudioStem`/`SceneSound` schemas untouched); `_audio_stems`
+discovers the new content-hashed filename (`forest-d19ca9dc96.mp3`) by globbing, same as every
+other re-source. No image digests or pins are affected (`scene.sound` and the tier-1 catalogue
+both stay outside the asset graph, unchanged since ADR-023 §3). `stemGains.ts`'s own `forest:`
+curve, comment and every checkpoint in `stemGains.test.ts` are untouched — only the clip, its
+`stems.toml` entry, `decodedBudget.test.ts`'s hand-maintained duration mirror (27.12, was 43.52)
+and the `FOREST_EFFECTIVE_LOUDNESS_DB` comparison constant changed. A new
+`test_web_test_mirrors_of_forest_match_the_real_catalogue` (`tests/sources/test_audio_stems.py`)
+now guards those two hand-copies against silently drifting out of sync with a future re-source —
+nothing previously would have caught one of them being missed. `data/scenes.yaml`,
+`pipeline/scenes.py`, `web/src/scene/**` and `web/src/timeline/**` are untouched (this is an
+audio-only fix; other uncommitted work lives there).
+
+**Verification.** `.venv/bin/python -m pipeline.databuild --only audio-stems --force`:
+`audio-stems: rebuilt` (fetched the new clip, verified its sha256, published
+`forest-d19ca9dc96.mp3`, removed the stale `forest-cdac2ac432.mp3`). `earthtime publish
+--allow-unpinned`: 66 scenes, `forest` now `durationSeconds: 27.12`, `levelTrimDb: 18.8`, loop
+`17.308-26.224`. `make pins`: 106 pinned images staged, 0 removed (no image-graph effect, as
+expected). `.venv/bin/python -m pytest -q tests`: 436 passed (435 plus the new mirror-guard
+test). `ruff check`/`ruff format --check`: clean. `pnpm typecheck`: clean. `pnpm vitest run src`:
+1167 passed (351 suites) — unchanged from the previous amendment, since `forest`'s curve and
+every checkpoint assertion are untouched, only its attested level constant.
+
 ---
 
 ## ADR-024 — Era sections bring back a bounded, section-driven window
@@ -4148,3 +4328,372 @@ once more, but their wording — "no CO2 record covers this interval" — does n
 regardless (ADR-005). No Cenozoic CO₂ proxy dataset is sourced under this ADR: the gap is named,
 not filled. Revisit if a verifiable compiled Cenozoic curve (CenCO2PIP or equivalent) is found —
 see `sources/co2-o2/README.md` § Known gaps.
+
+## ADR-028 — Scenes gain a short `title`, distinct from the caption passage
+
+**Status:** accepted — human-directed 2026-09-15.
+
+**Context.** `SceneRecord.caption` (DESIGN §8) is a full descriptive passage — a sentence or two
+of prose, e.g. "By 1650, Amsterdam dominates world trade through the Dutch East India Company
+(VOC) …". The web layout (ShellLayout's `caption` slot, a subtitle above the timeline) has
+always shown that passage alone. Nothing in the data names, in a couple of words, *what a scene
+is meant to represent* — the event, milestone or theme a viewer should immediately recognise
+before reading the passage underneath it. A user asked for exactly that: "a high-level
+heading/label/title that makes it immediately clear what its intended to represent, with the more
+detailed existing text passage description content underneath." The timeline's own checkpoint
+pips (`Experience.tsx`) had the same gap from the other direction: they already needed a short
+label and, lacking one, reused the full `caption` text, which reads as a stray sentence fragment
+rather than a name once truncated to pip width.
+
+**Decision.**
+- **`title: str`, required, on every `SceneRecord`** (`pipeline/scenes.py`), placed directly
+  above `caption` in `data/scenes.yaml` — the two fields are read together (heading, then
+  passage), so they sit together in the source. Stripped of surrounding whitespace, non-blank
+  after stripping, capped at 40 characters (validated in the model — see Consequences for how
+  that cap was reached). Unlike `events` (ADR-022) and `sound` (ADR-023), `title` is **required, not
+  optional-and-additive** — every scene needs a heading the moment this field exists, there is no
+  "no title" state analogous to "no linked event" or "no ambience stem" for a scene the UI is
+  about to show. `SceneBook` enforces uniqueness across every scene's title, the same way it
+  already enforces unique scene ids and unique `t` values, so two scenes can never present the
+  same heading.
+- **Invisible to the asset graph, like `events` and `sound`.** `pipeline/assets.py` builds a
+  scene's prompt and image node `inputs` from `scene.shot`, `scene.unsourced` (rendered
+  conditions) and `scene.subject` only; it has never read `caption`, and does not read `title`
+  either. Adding the field to all 68 existing scenes therefore changes no prompt/image digest and
+  clears no pin — verified by `.venv/bin/earthtime plan` reporting identical counts before and
+  after (68 scenes: 66 pinned, 0 awaiting review, 2 stale; 41 portraits: 40 pinned, 1 awaiting
+  review, 0 stale — the 2 stale scenes and 1 awaiting-review portrait are pre-existing, unrelated
+  to this change) and by a new test that retitles a pinned scene in an otherwise-identical
+  `SceneBook` and asserts every scene's resolved prompt/image digest is unchanged.
+  `pipeline.scenes.patch_pin_line` (the pin-writing helper `earthtime review pick` uses) already
+  edits only the single `pin:` line of a record by regex, leaving every other line — comments
+  included — untouched, so it needed no change to preserve `title`.
+- **Wire format.** `pipeline.manifest.Scene` gains `title: str`, required and always emitted
+  (unlike `events`'/`sound`'s additive-and-optional shape, there is no historical manifest
+  without it to stay compatible with — this is a coordinated pipeline+web change, not a
+  backward-compatible add to a field web already parses leniently). `pipeline/publish.py`'s
+  `_scene_entry` passes `scene.title` straight through.
+- **Curation.** All 68 scenes in `data/scenes.yaml` are titled by hand: 2-5 words, at most 40
+  characters (schema-enforced — see Consequences), Title Case throughout (chosen over sentence
+  case and applied to all 68), British spelling matching the captions. Each title names the
+  event, milestone or theme the scene represents (e.g. "The Great Oxidation", "Snowball Earth",
+  "The First Forests", "The Asteroid Strikes", "Battle of the Somme", "Fall of the Berlin Wall",
+  "The Morning Commute") — several of those are the scene's own established scientific or
+  historical name (the Cambrian Explosion, the Messinian Salinity Crisis, the Great American
+  Interchange) rather than a paraphrase, on the same footing as "Snowball Earth" and "The Great
+  Oxidation" above: the phenomenon each caption describes already *is* that named event. No title
+  asserts a claim its own caption (or, failing that, its `subject`/comment text) does not already
+  support; none was needed as a new fact. No historical title carries a year: an early pass put
+  one on nine of the twelve ("Angkor Wat, 1150", "D-Day, 1944", "Apollo 11, 1969" among them),
+  inconsistent with the other three ("Battle of the Somme", "Fall of the Berlin Wall", "The First
+  Powered Flight") and with the "used selectively" rule this bullet used to state — a
+  contradiction a review caught (see below); every year was dropped rather than added to the
+  other three, since the events are already unambiguous without one ("D-Day Landings", "Apollo 11
+  Lifts Off").
+- **Review pass (2026-09-15).** A review of the first cut of titles found, and this fixed: five
+  titles that claimed more than their own caption supports ("Earth's Hottest World" for a caption
+  that says only "hottest world of the *last 66 million years*" → "A Hothouse Rainforest"; "The
+  Origin of Life" for a caption that hedges "may have begun" → "Where Life May Have Begun"; three
+  others in the same vein); the year inconsistency above; and eleven further titles that named
+  their scene's backdrop rather than its milestone, leant on jargon ("The Acheulean Handaxe" →
+  "A Million Years of Handaxes") or an obscure place name ("Göbekli Tepe" → "Monuments Before
+  Farming"), or dropped a caption's own hedge ("The First Large Organisms", caption "among the
+  first" → "Life Grows Large"). All 68 titles stayed unique throughout.
+- **Web (agreed contract, implemented alongside this pipeline change — the two together are what
+  this ADR decides).** `ShellLayout`'s `caption` slot shows the title as a short heading with the
+  caption passage underneath it; title and passage fade together as one opacity, driven by the
+  same `SceneView` dissolve (`dominantScene`/`captionOpacity`) that already drove the caption
+  alone. The passage keeps its original `--hud-ink` colour and widens past the previous 62ch cap
+  (to `min(74ch, 92vw)`) now that a heading sits above it — a short desktop window (1280x720 is
+  the worst case measured) already left the event feed above little spare height with the old,
+  narrower, heading-less caption; the wider box makes that pre-existing squeeze a little worse
+  still, mitigated (not solved) by tightening the heading-to-passage gap on short viewports. The
+  heading itself is a styled `<p>`, not an `<h2>` — the page has no `<h1>` for a heading to root
+  under, and this slot is a visual heading (distinct font/weight/size from the passage below it
+  and from the top-centre time/era title beside it), not a document-outline one. Timeline
+  checkpoint pips (`Experience.tsx`) use `scene.title` for their label instead of `scene.caption`,
+  since a short unique heading is what a pip label is for.
+
+**Consequences.**
+- `data/scenes.yaml` grows by one required line per scene (68 lines); `data/media/manifest.json`
+  gains one `"title"` field per published scene. `earthtime publish --allow-unpinned` followed by
+  `make pins` was re-run to confirm a clean publish with the new field; the only manifest diff
+  beyond the new `title` lines is the nondeterministic `buildId`.
+- A future scene added to `data/scenes.yaml` without a `title` fails to parse, loudly, the same
+  way a scene missing `caption` or `subject` already does — no default, no silent fallback to the
+  caption text.
+- The 40-character curation guideline is schema-enforced (`Field(max_length=40)`) rather than left
+  to review discipline, tightened from an initial 60 once the review above showed 40 was never
+  actually needed in practice — the longest of all 68 titles is 31 characters.
+
+---
+
+## ADR-029 — Steady-mode presentation regime and speed floor, per scene dwell
+
+**Status:** accepted — human-directed 2026-09-15. Amends DESIGN §3's steady-mode "no pacing at
+all" and the ADR-023 audio notes; supersedes none of ADR-016 or ADR-024, which stay exactly as
+written for `'scenes'` mode and era-section continuation.
+
+**Context.** `'steady'` mode (ADR-016) is constant velocity in warped screen space with, by
+design, no pacing at all: `presentation.ts`'s `MIN_TRANSITION_SECONDS` rate limiter was meant only
+as a scrub/fast-playback backstop, never load-bearing. It became load-bearing anyway once the
+manifest's coverage grew dense near the present: measured at 1x in the earth section (66 scenes,
+`baseRate = 0.02`, `SYMLOG_C = 1e4`), the last 12,000 years (28 of 66 scenes) cross in 3.0 s and
+the last 500 years (19 scenes) in 0.19 s — far under the 1.6 s the rate limiter forces every
+dissolve to take regardless. The viewer sees one long forced blur from the Neolithic straight to
+the final scene, `step`'s own "different pair, settled: rebase" branch skipping every intervening
+scene as `presented.to` entirely (the same failure mode `sceneSound.ts`'s once-trigger amendments
+already diagnosed for `'scenes'`-mode fast playback), and once-mode scene sounds (the Apollo 11
+launch, say) never get the dwell to fire. The human's own framing, and the design this ADR
+implements: "playing back at constant speed with 0.19s for 500 years isn't great" — fixed with a
+**generic** rule keyed to each scene's own on-screen dwell at the current velocity, not a special
+case for recent history, so it applies identically to a dense run of scenes anywhere on the
+timeline, including deep time at high speed.
+
+**Decision.**
+
+1. **Dwell ≥ `MIN_TRANSITION_SECONDS` (1.6 s):** crossfade exactly as before — the common case,
+   unchanged.
+2. **`MIN_CUT_DWELL_SECONDS` (0.35 s) ≤ dwell < 1.6 s:** presentation switches from a crossfade to
+   a **hard cut** — an instant image swap instead of a forced multi-second dissolve, so the pace
+   visibly accelerates through a moderately dense run rather than blurring through it.
+3. **Dwell would fall under 0.35 s:** a **speed floor** on the steady playhead itself, per scene —
+   slowed just enough that the scene still gets exactly 0.35 s, so a full-frame image change never
+   happens more than ~3 times a second at *any* speed. `MIN_CUT_DWELL_SECONDS`'s value is not a
+   taste call: its reciprocal (~2.86/s) sits under WCAG 2.3.1's three-flashes-per-second
+   photosensitivity threshold, a hard safety limit — a full-frame content change is exactly the
+   kind of "flash" that guideline covers.
+   >
+   > **Re-review correction (2026-09-15).** The original text here claimed "at most 3 changes in
+   > any real 1-second window is a direct mathematical consequence... not a separate property to
+   > verify", and dismissed every observed shorter gap as a sampling artefact. A second review
+   > found that claim false in three concrete ways, all now fixed (see **Implementation** below):
+   > a fixed `1e-9`-in-`u` nudge used to step past a crossed territory boundary was, under a
+   > *linear* steady scale over a wide window, a nudge of several real years — comparable to or
+   > wider than some scene territories, so it could skip a territory's floored dwell almost
+   > entirely (live-measured up to 9 changes/s); a scrub or seek made while steady playback kept
+   > running read the regime for whatever territory the scrubbed-to `t` landed in and hard-cut it
+   > with **no** rate limit at all, not even the ordinary crossfade one (up to 10 changes/s while
+   > dragging); and even with both of those fixed, the *sim-time* floor genuinely does not imply a
+   > *wall-clock* one on its own — `advanceSteadyPlayhead` guarantees a territory's dwell in
+   > simulated `t`, but real `requestAnimationFrame` delivery is not perfectly uniform, so a run of
+   > slightly-early frames can still land two or three real displayed changes closer together than
+   > that (live-measured up to 4 changes/s, smallest real gap 232 ms), and a seek landing partway
+   > through an already-floored territory only inherits that territory's *remaining* fraction of
+   > the floor, not the full 0.35 s. The actual guarantee is enforced at the one place all three of
+   > those gaps converge on: `presentation.ts`'s `usePresentedSceneMix` now tracks the real
+   > (`performance.now`-scale) timestamp the presented scene's *dominant* member last actually
+   > changed, and holds any new change that would land sooner than `MIN_CUT_DWELL_SECONDS` after
+   > it, regardless of what `t`/the territory math computed — a wall-clock backstop at the point
+   > the property is actually observable (the pixels on screen), not only in the model that's
+   > supposed to produce it. See `playback.test.ts`'s new linear-scale and mid-territory-entry
+   > coverage and `presentation.test.ts`'s new backstop coverage.
+   >
+   > **Second re-review correction (2026-09-15).** The backstop above originally held only while
+   > `regime === 'cut'`, on the reasoning that a `'crossfade'`-regime change is always rate-limited
+   > by `MIN_TRANSITION_SECONDS` and so is never "too soon" on its own. That is true of a
+   > crossfade that starts fresh from a settled pair (`step`'s rebase/direct-transition branches
+   > always begin exactly at the settled endpoint, so its dominant scene cannot flip sooner than
+   > `MIN_TRANSITION_SECONDS / 2` = 0.8 s later) — but the *frame* rendering that flip can still
+   > land within `MIN_CUT_DWELL_SECONDS` of an unrelated `'cut'` change immediately before it: a
+   > seek forced to `'crossfade'` for exactly one frame right after a `'cut'` change
+   > (`Experience.tsx`'s own seek detection), or a `step` same-pair/reversed-pair continuation
+   > resuming from a presented mix that was already close to the `0.5` switch point (live-measured:
+   > one 266 ms gap / 4 changes in 1 s at 32x). The gate now applies to a change under *either*
+   > regime, tracked in a single, regime-neutral `lastDominantChangeAtRef` — holding can only ever
+   > delay a flip that would otherwise be too soon, so this adds no new latency to an ordinary,
+   > correctly-spaced crossfade. See `presentation.test.ts`'s reworked cut/crossfade coverage.
+4. **"Time compressed" marker.** A small, unobtrusive HUD label (`--hud-accent`, the same amber the
+   playing state and the active mode-toggle option already use) beside the speed/mode controls,
+   visible exactly while the floor (rule 3) is active — a direct function of playback state
+   (`Experience.tsx`'s own `steadyFrameRegime`/`steadyPacing` call inside its playback loop), never
+   an idle timer, per the ADR-012 amendment ("nothing in the UI fades or hides on inactivity").
+
+None of this touches `'scenes'` mode (already paced to a `SCENE_DWELL_SECONDS +
+MIN_TRANSITION_SECONDS` floor per scene, always comfortably above `MIN_CUT_DWELL_SECONDS`), and
+none of it touches scrubbing, seeking or paused viewing — those always crossfade, exactly as
+before this ADR.
+>
+> **Re-review correction (2026-09-15).** The original text here reasoned that this followed for
+> free because "the presentation regime is computed only from inside the steady-mode playback
+> loop's own `onFrame`... a manual drag... does not itself flip `playback.playing`/`mode`". That
+> reasoning doesn't hold: `onFrame` runs every frame *while playing* regardless of a concurrent
+> drag, and nothing stopped it reading whatever territory the scrubbed-to `t` had just landed in.
+> The guarantee is now explicit instead: `Experience.tsx` compares each frame's starting `t`
+> against what its own previous frame last produced, and treats any mismatch — a scrub, a
+> checkpoint/event jump, a keyboard step, or any other direct `setT` — as a seek, forcing
+> `'crossfade'`/not-floored for that frame regardless of what the landed-on territory implies (see
+> `scene/steadyPacing.ts`'s `steadyFrameRegime`, below).
+
+**Implementation.**
+
+- **A scene's *territory*** (`web/src/scene/steadyPacing.ts`) is the stretch of `t` between the
+  midpoints (`tAtLogP(a, b, 0.5)`, the same log1p interpolation `sceneAt` already uses, now
+  exported from `scene.ts` and shared by `scene/pacing.ts` too — one formula, three consumers,
+  where two independent copies stood before) of its two neighbouring gaps — exactly where
+  `dominantScene` itself switches, so a floor or cut decision for one scene's territory never
+  disagrees with the instant its caption and pip highlight also change. Open at the domain edges
+  (`0` for the newest scene, `EARTH_FORMATION` for the oldest). `sceneTerritories(scenes)` computes
+  every scene's territory once; `territoryAt(territories, t)` bisects to the one containing `t`,
+  with an exact shared boundary resolving to the *older* (higher-index) territory — reproducing
+  `dominantScene`'s own tie-break (`mix < 0.5 ? from : to`, `to` wins a tied `0.5`) without needing
+  scene identity at query time.
+- **`steadyPacing(territories, t, rawRate, scale)`** (same file) — pure, returns `{ regime:
+  'crossfade' | 'cut', floored: boolean }` for the territory containing `t`, from its dwell
+  (`uSpan / rawRate`) against the two thresholds above. `presentation.ts`'s `step` and
+  `usePresentedSceneMix` take an optional `regime` (default `'crossfade'`, every pre-ADR-029 call
+  site unchanged): `'cut'` skips the rate-limited `moveToward` chase entirely and snaps straight to
+  `target`'s own binarized dominant scene (`mix` 0 or 1) — one line, reusing `dominantScene`'s own
+  tie-break rather than adding a second one. `converged` (the rAF loop's own "nothing left to do"
+  check) is now regime-aware too: comparing against the *binarized* target mix in `'cut'` regime,
+  not the raw one, which was drifting inside the same binarized bucket every frame and would
+  otherwise have kept the loop busy-spinning for no visible change.
+- **The floor lives in `advanceSteadyPlayhead`** (`timeline/playback.ts`), not in presentation —
+  presentation only renders whatever `t` the floor already produced. `timeline` does not import
+  `@/scene` (an existing, deliberate boundary — `scenesPacing`/`PlaybackPacingSegment` already
+  cross it structurally); `SteadySceneTerritory` and a hand-mirrored `MIN_CUT_DWELL_SECONDS` (by
+  value, the same convention `scene/pacing.ts`'s own `SYMLOG_C` mirror already established) keep it
+  that way. `advanceSteadyPlayhead` gained an optional `sceneTerritories` parameter (default `[]`,
+  reproducing its pre-ADR-029 behaviour exactly — every existing call/test needed no change) and now
+  integrates `t` in sub-steps bounded by whichever comes first, a territory's own `tNewer` edge or
+  the section's: inside a territory whose natural dwell (`uSpan / rawRate`, recomputed fresh every
+  territory in the *current* section's scale) would fall under `MIN_CUT_DWELL_SECONDS`, the rate
+  for crossing just that stretch is `uSpan / MIN_CUT_DWELL_SECONDS` instead of the requested one — a
+  moving speed limit sign, re-evaluated exactly at each scene boundary, never applied more broadly
+  than the one scene that needs it. A boundary crossed mid-call (a huge `dtSeconds` — a stalled tab
+  regaining focus — crossing several territories in one call) steps to the next territory *by
+  index* (`territoryIndex -= 1`, `current = territory.tNewer` exactly), not by re-querying at a
+  nudged `t`.
+  >
+  > **Re-review correction (2026-09-15).** The original text here nudged `current` forward by a
+  > fixed `1e-9` in `u` and called it "physically meaningless at this scale" — false: under a
+  > *linear* steady scale over a wide window (the root `earth` section, say), `1e-9` of the ~4.6
+  > Gyr domain is several real years, comparable to or wider than some scene territories, so the
+  > nudge could jump clean over a whole territory's floored dwell (live-measured up to 9 image
+  > changes in a single second). Since `steadyTerritoryIndexAt` already knows exactly which
+  > territory is nearer the present the moment a boundary is crossed, stepping its index directly
+  > costs nothing to compute, needs no `u`-space tolerance at all, and terminates in at most
+  > `sceneTerritories.length` steps regardless of how the scale warps `t` — strictly better than
+  > the nudge it replaces, not merely a smaller one. See `playback.test.ts`'s new linear-scale
+  > coverage.
+- **`Experience.tsx`** computes the presentation regime once per playback-loop frame (`onFrame`,
+  steady mode only; reset to `{ crossfade, not floored }` the instant `playback.playing` goes
+  false, the same "idle state shows nothing stale" rule `ratePerSecond` already follows) against
+  the section's own scale and `sceneTerritories(manifest.scenes)` (memoised once, shared —
+  unchanged — with the same territories `advanceSteadyPlayhead` floors against), and threads the
+  one resulting `{ regime, floored }` to three places: `SceneView`'s new `regime` prop, the "time
+  compressed" marker (`Timeline`'s new `timeCompressed` prop → `TimeCompressedBadge`, beside
+  `RateReadout` in the same fixed row), and `useAudioEngine`'s new `presentationRegime` input
+  (below). The "reached the present, stop cleanly" branch (already there, pre-ADR-029) resets
+  `steadyRegime` in the same batch as `setPlaying(false)` rather than leaving it to the separate
+  `playback.playing` effect — live-verified this closes a one-committed-frame window where the
+  marker could otherwise still read floored for a moment after the playhead had already stopped
+  moving.
+  >
+  > **Re-review additions (2026-09-15), `scene/steadyPacing.ts`'s `steadyFrameRegime`.** Two fixes
+  > to what `Experience.tsx` feeds the regime computation, both folded into one small pure wrapper
+  > around `steadyPacing` so they're unit-testable without mounting the component:
+  >
+  > - **Evaluated at the `t` this frame actually renders** (`advanceSteadyPlayhead`'s own return
+  >   value), not the `t` playback started the frame at. The two used to differ by exactly one
+  >   frame's advance, invisible almost always (consecutive frames are usually in the same
+  >   territory) but wrong on the one frame `t` crosses from a comfortably-paced territory into a
+  >   dense `'cut'` one: the stale read still said `'crossfade'` for that frame, so a once-mode
+  >   sound landing on exactly that boundary (`kpg-arrival`, `first-powered-flight`) could fire
+  >   even though the frame it fired on was already rendering the hard-cut territory.
+  > - **A `seeked` flag** — `true` whenever a frame's starting `t` is not what this component's own
+  >   previous frame last produced (compared via a new `lastAdvancedTRef`) — forces
+  >   `'crossfade'`/not-floored regardless of what the landed-on territory implies. Without this, a
+  >   scrub or a keyboard step made while steady playback kept running read the regime for
+  >   whatever territory the moved-to `t` happened to land in and hard-cut it with no rate limit at
+  >   all — live-measured up to 10 image changes a second while dragging, and this ADR's own
+  >   "scrubbing... always crossfade" claim (above) was false until this fix. Reset to `null`
+  >   alongside `steadyRegime` whenever playback stops, so a resume never compares its first frame
+  >   against a stale value left over from before the pause.
+- **The wall-clock backstop lives in `presentation.ts`'s `usePresentedSceneMix`** (re-review
+  addition, 2026-09-15, made regime-neutral by a second same-day correction — see the
+  "Second re-review correction" above) — the point where a change actually becomes visible,
+  downstream of everything above. It tracks the real (`performance.now`-scale) timestamp the
+  presented *dominant* scene last actually changed under *any* regime (`lastDominantChangeAtRef`);
+  a freshly-`step`ped result — `'cut'` or `'crossfade'` alike — that would change the dominant
+  scene again sooner than `MIN_CUT_DWELL_SECONDS` (mirrored by value once more, as
+  `scene/pacing.ts`'s own `SYMLOG_C` mirror already established the convention) after that is held
+  at the previous presented value (same object reference, so `setPresented` is a no-op re-render)
+  instead of applied; `converged` then correctly keeps reporting "not yet", so the rAF loop keeps
+  retrying every frame until the gate opens. This is what actually closes the remaining gaps the
+  sim-time floor alone can't: real `requestAnimationFrame` jitter around it, a seek landing
+  partway through an already-floored territory (which only inherits that territory's *remaining*
+  fraction of the floor — measuring from the last real change rather than from territory entry
+  sidesteps that distinction entirely), and a `'crossfade'`-regime frame (a seek forced to
+  `'crossfade'` for one frame right after a `'cut'` change, or a `step` continuation resuming from
+  a mix already close to the switch point) landing within the same window as a preceding change
+  under either regime. See `presentation.test.ts`'s backstop coverage.
+- **The "time compressed" marker stays mounted** (`TimeCompressedBadge`, re-review fix,
+  2026-09-15) rather than unmounting via `return null` while not visible: a single playthrough can
+  cross the floor threshold several times in quick succession (live-measured up to 10 toggles in a
+  few seconds), and repeatedly mounting/unmounting a `role="status"` region that often both
+  re-announces it to screen readers more erratically than a live region toggling its own text is
+  meant to, and shifts `RateReadout`/the scale toggle beside it. `Transport.module.css`'s
+  `.timeCompressed` now reserves a fixed-width slot via `visibility` (mirroring `.rateReadout`'s
+  own pattern); the badge's *text content* still toggles between the label and `''`, which is what
+  actually re-triggers a screen reader's live-region announcement on each genuine transition into
+  the floor.
+- **Audio** (`web/src/audio/engine.ts`). While `presentationRegime === 'cut'`: `sceneSoundLoopGains`
+  is not called at all — an empty gains object is used instead, so every scene-loop voice's target
+  gain drops to 0 and ramps there through its *existing* `GAIN_SMOOTH_SECONDS` fade (never a click,
+  nothing new to build); the base ambience curve (`stemGains(t)`) is untouched, so an ambience-loop
+  stem a scene also foregrounds (`settlement`, `livestock`, …) still shows its ambient-curve gain
+  through the cut — only the scene's own foregrounding contribution mutes, exactly the "ambience
+  needs no change" DESIGN §11/ADR-023 note already promised. The once-mode trigger
+  (`useSceneSoundOnceTrigger`) is fed `playing && presentationRegime !== 'cut'` instead of bare
+  `playing` — reusing `nextOnceTriggerState`'s own, already-thoroughly-tested `playing`/`wasPlaying`
+  gate (`sceneSound.ts`, the 2026-09-15 "playing gate" correction) rather than adding a second,
+  bespoke condition: a `'cut'` regime reads to that state machine exactly like "not currently
+  playing", so nothing fires while it lasts, and the scene under the playhead the moment `'cut'`
+  ends is armed off rather than retroactively fired — the same treatment a scene already sitting
+  under the playhead gets when playback merely resumes on it. Verified live: at a playback rate that
+  spends its whole run cutting through a dense cluster, `getActiveOnceVoices()` never reported a
+  voice, and `getStemTargets()['lake-water']` (a genuinely scene-only stem with no ambience curve,
+  so any nonzero target for it can only come from `sceneSoundLoopGains`) read exactly 0 throughout
+  — including while `angkor-wat` (which names it) was the dominant scene, since at an ordinary
+  playback rate its own territory is itself under `MIN_TRANSITION_SECONDS` and so is also `'cut'`
+  regime, muted like every other scene passed through in the cluster. Slowed enough that
+  `angkor-wat`'s own territory clears the 1.6 s crossfade threshold instead (its own dwell there is
+  a direct, deterministic function of `speed`, the same territory geometry throughout), the same
+  stem's target rose above 0 while it was dominant — confirming the gate is a genuine on/off signal
+  tied to `presentationRegime`, not a stem that simply never sounds in this build.
+
+**Consequences.**
+
+- Steady-mode playthroughs through a dense cluster now take *longer* in wall-clock time than
+  before this ADR, not shorter — the floor trades "reads as one indecipherable blur, fast" for
+  "reads as a legible fast cut, slower" and that trade is the entire point. Measured: the earth
+  section's last 12,000 years, previously 3.0 s at 1x, now takes on the order of 10 s at 1x —
+  and, because the floor is speed-independent once it engages (a floored scene's dwell is always
+  exactly `MIN_CUT_DWELL_SECONDS`, regardless of `speed`), 8x and 64x cross the same cluster in
+  almost the same wall-clock time as 1x rather than 8x/64x faster — an accepted, load-bearing
+  consequence of the safety floor, not a bug: a viewer asking for 64x elsewhere on the timeline
+  still gets it: only a genuinely dense run of scenes, wherever it occurs, is held to the floor.
+- `presentation.ts`'s `step`/`usePresentedSceneMix`, `timeline/playback.ts`'s
+  `advanceSteadyPlayhead`, and `scene/pacing.ts` all gained an additional optional parameter with a
+  default reproducing today's exact behaviour — no existing caller needed to change, and the full
+  pre-existing test suites for all three pass unmodified alongside the new coverage this ADR adds
+  (1151 tests after the initial pass; 1162 after the 2026-09-15 re-review's fixes above added
+  linear-scale/mid-territory-entry coverage to `playback.test.ts`, wall-clock-backstop coverage to
+  `presentation.test.ts`, `steadyFrameRegime` coverage to `steadyPacing.test.ts`, and persistent-
+  live-region coverage to `Timeline.test.tsx`).
+- `sceneAt`'s own `tAtLogP` helper (previously private to `pacing.ts`, duplicated there rather than
+  imported) is now a single shared export of `scene.ts` — a small, deliberate de-duplication this
+  ADR's own third consumer (`steadyPacing.ts`) motivated, not a change in behaviour (`pacing.test.ts`
+  passes unmodified).
+- `prefers-reduced-motion` is unaffected: it already disables camera drift only, and both regimes
+  this ADR adds (an instant cut, and a crossfade slowed further by the floor) read as *less*
+  motion than the pre-ADR-029 forced-dissolve blur, never more.
+- The `'cut'` regime's own boundary case — a crossfade already mid-flight when `t` crosses into a
+  territory whose regime is `'cut'` can, rarely, show one visible "pop" (the presented mix jumping
+  from wherever the rate-limited chase had reached to the binarized 0/1) rather than a perfectly
+  smooth hand-off — noted, not fixed: it never produces more than the one additional image change
+  the transition was already going to make, so it cannot itself violate the 3/s safety floor, and
+  it is confined to the rare boundary between a comfortably-paced run of scenes and a dense one
+  immediately following it.
+
