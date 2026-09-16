@@ -33,6 +33,7 @@ function scene(id: string, t: number): Scene {
     chapterId: 'ch',
     image: `${id}.png`,
     shot: 'WIDE_RIDGE',
+    title: `title ${id}`,
     caption: `caption ${id}`,
     width: 1920,
     height: 1080,
@@ -150,5 +151,30 @@ describe('SceneView', () => {
       )
     },
     10000,
+  )
+
+  it(
+    'regime="cut" (ADR-029) switches to a distant scene on the next rendered frame, not over several seconds',
+    async () => {
+      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" regime="cut" />)
+      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
+
+      act(() => {
+        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" regime="cut" />)
+      })
+
+      // One stubbed rAF tick (16ms) away, not the multi-second `MIN_TRANSITION_SECONDS` catch-up
+      // the crossfade case immediately above needs — a tight timeout is the point of this test.
+      await waitFor(
+        () => {
+          expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s3')
+          expect((screen.getByTestId('scene-overlay') as HTMLImageElement).alt).toBe('caption s3')
+          expect(screen.getByTestId('scene-base').style.opacity).toBe('1')
+          expect(screen.getByTestId('scene-overlay').style.opacity).toBe('0')
+        },
+        { timeout: 200, interval: 10 },
+      )
+    },
+    2000,
   )
 })

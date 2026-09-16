@@ -28,7 +28,7 @@ import type { Scene } from '@/types/manifest'
 
 import { driftAt, REST_DRIFT } from './drift'
 import { usePresentedSceneMix } from './presentation'
-import { captionOpacity, dominantScene, resolveAssetUrl, sceneAt } from './scene'
+import { captionOpacity, dominantScene, resolveAssetUrl, sceneAt, type PresentationRegime } from './scene'
 import { SceneCanvasView } from './SceneCanvasView'
 import { SceneFallbackView } from './SceneFallbackView'
 import { crossfadeAlpha } from './transition'
@@ -45,6 +45,11 @@ export interface SceneViewProps {
    *  applies neither. */
   renderCaption?: (scene: Scene, opacity: number) => ReactNode
   className?: string
+  /** `'crossfade'` (default) or `'cut'` (ADR-029) — how far the presented mix follows `sceneAt`'s
+   *  target this frame (`usePresentedSceneMix`'s own doc comment). Only `Experience.tsx`'s
+   *  `'steady'`-mode playback loop ever passes `'cut'`; scrubbing, seeking, paused viewing and
+   *  `'scenes'`-mode playback always render `'crossfade'`, matching today's behaviour exactly. */
+  regime?: PresentationRegime
 }
 
 function sceneIndex(scenes: readonly Scene[], scene: Scene): number {
@@ -62,12 +67,12 @@ function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: num
   return urls
 }
 
-export function SceneView({ t, scenes, assetBase, renderCaption, className }: SceneViewProps): ReactNode {
+export function SceneView({ t, scenes, assetBase, renderCaption, className, regime = 'crossfade' }: SceneViewProps): ReactNode {
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
 
   const target = useMemo(() => sceneAt(scenes, t), [scenes, t])
-  const presented = usePresentedSceneMix(target)
+  const presented = usePresentedSceneMix(target, regime)
 
   const fromIndex = useMemo(() => sceneIndex(scenes, presented.from), [scenes, presented.from])
   const toIndex = useMemo(() => sceneIndex(scenes, presented.to), [scenes, presented.to])

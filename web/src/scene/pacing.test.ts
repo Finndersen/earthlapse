@@ -14,6 +14,7 @@ function scene(id: string, t: number): Scene {
     chapterId: 'ch',
     image: `${id}.png`,
     shot: 'WIDE_RIDGE',
+    title: `title ${id}`,
     caption: `caption ${id}`,
     width: 1920,
     height: 1080,

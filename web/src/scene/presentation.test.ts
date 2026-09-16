@@ -3,8 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Scene } from '@/types/manifest'
 
-import type { SceneMix } from './scene'
+import { dominantScene, type PresentationRegime, type SceneMix } from './scene'
 import { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
+
+/** Mirrors `presentation.ts`'s own (private, hand-mirrored) `MIN_CUT_DWELL_SECONDS` by value —
+ *  the same "shared value, no import" convention its own doc comment explains. */
+const MIN_CUT_DWELL_SECONDS = 0.35
 
 function scene(id: string, t: number): Scene {
   return {
@@ -13,6 +17,7 @@ function scene(id: string, t: number): Scene {
     chapterId: 'ch',
     image: `${id}.png`,
     shot: 'WIDE_RIDGE',
+    title: `title ${id}`,
     caption: `caption ${id}`,
     width: 1920,
     height: 1080,
@@ -27,6 +32,10 @@ const s4 = scene('s4', 800)
 
 function alone(s: Scene): SceneMix {
   return { from: s, to: s, mix: 0 }
+}
+
+function dominantId(mix: SceneMix): string {
+  return dominantScene(mix).id
 }
 
 // ------------------------------------------------------------------------- dt edge cases
@@ -257,6 +266,45 @@ describe('step: MIN_TRANSITION_SECONDS is a hard floor', () => {
   })
 })
 
+// -------------------------------------------------------------------------------- cut regime
+
+describe('step: "cut" regime (ADR-029)', () => {
+  it('snaps to the target dominant scene at mix 0/1 instantly, ignoring MIN_TRANSITION_SECONDS', () => {
+    const state: SceneMix = { from: s0, to: s1, mix: 0 }
+    const target: SceneMix = { from: s0, to: s1, mix: 0.6 }
+    const result = step(state, target, 1 / 60, 'cut')
+    expect(result).toEqual({ from: s0, to: s1, mix: 1 })
+  })
+
+  it('mix < 0.5 snaps to 0 (from), mix >= 0.5 snaps to 1 (to) — dominantScene\'s own tie-break', () => {
+    const below: SceneMix = { from: s0, to: s1, mix: 0.49 }
+    const atHalf: SceneMix = { from: s0, to: s1, mix: 0.5 }
+    expect(step({ from: s0, to: s1, mix: 0 }, below, 1 / 60, 'cut').mix).toBe(0)
+    expect(step({ from: s0, to: s1, mix: 0 }, atHalf, 1 / 60, 'cut').mix).toBe(1)
+  })
+
+  it('cuts straight to a distant target in one call — no gradual crossfade, no intermediate scenes', () => {
+    const state = alone(s0)
+    const target = alone(s4)
+    const result = step(state, target, 1 / 60, 'cut')
+    expect(result).toEqual({ from: s4, to: s4, mix: 0 })
+  })
+
+  it('is still a no-op for a non-positive/non-finite dt, same as crossfade', () => {
+    const state: SceneMix = { from: s0, to: s1, mix: 0.2 }
+    const target: SceneMix = { from: s0, to: s1, mix: 0.9 }
+    expect(step(state, target, 0, 'cut')).toBe(state)
+    expect(step(state, target, NaN, 'cut')).toBe(state)
+  })
+
+  it('defaults to "crossfade" when regime is omitted — every pre-ADR-029 call site unchanged', () => {
+    const state: SceneMix = { from: s0, to: s1, mix: 0 }
+    const target: SceneMix = { from: s0, to: s1, mix: 1 }
+    const result = step(state, target, 0.1)
+    expect(result.mix).toBeCloseTo(0.1 / MIN_TRANSITION_SECONDS)
+  })
+})
+
 // -------------------------------------------------------------------------- MIN_TRANSITION_SECONDS
 
 describe('MIN_TRANSITION_SECONDS', () => {
@@ -307,4 +355,110 @@ describe('usePresentedSceneMix', () => {
 
     await waitFor(() => expect(result.current).toEqual(jumpedTarget), { timeout: 3000, interval: 50 })
   }, 10000)
+
+  it('"cut" regime jumps straight to the binarized target — no multi-second catch-up', async () => {
+    const initialTarget = alone(s0)
+    const { result, rerender } = renderHook(({ target, regime }) => usePresentedSceneMix(target, regime), {
+      initialProps: { target: initialTarget as SceneMix, regime: 'cut' as const },
+    })
+    expect(result.current).toEqual(initialTarget)
+
+    const jumpedTarget: SceneMix = { from: s0, to: s4, mix: 0.9 }
+    act(() => rerender({ target: jumpedTarget, regime: 'cut' }))
+
+    await waitFor(() => expect(result.current).toEqual({ from: s0, to: s4, mix: 1 }), { timeout: 500, interval: 20 })
+  })
+
+  it('"cut" regime never displays a second dominant-scene change sooner than MIN_CUT_DWELL_SECONDS after the first (re-review fix, ADR-029/MEDIUM-1)', async () => {
+    const { result, rerender } = renderHook(({ target }) => usePresentedSceneMix(target, 'cut'), {
+      initialProps: { target: alone(s0) as SceneMix },
+    })
+
+    // First change: unconstrained (nothing to rate-limit against yet).
+    act(() => rerender({ target: alone(s1) }))
+    await waitFor(() => expect(result.current).toEqual(alone(s1)), { interval: 10 })
+    const firstChangeAt = performance.now()
+
+    // A second change requested immediately after — real `requestAnimationFrame` jitter, or a
+    // seek landing partway through an already-floored territory, can otherwise make this land
+    // far under MIN_CUT_DWELL_SECONDS after the first.
+    act(() => rerender({ target: alone(s2) }))
+
+    // Held for a little while: still showing s1, not yet s2.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(result.current).toEqual(alone(s1))
+
+    await waitFor(() => expect(result.current).toEqual(alone(s2)), { timeout: 2000, interval: 10 })
+    const secondChangeAt = performance.now()
+    // Generous slack for test-harness/poll timing noise around the two waitFor resolutions —
+    // still far stronger than "no gate at all" (which would pass at ~16-32ms).
+    expect(secondChangeAt - firstChangeAt).toBeGreaterThanOrEqual(MIN_CUT_DWELL_SECONDS * 1000 - 100)
+  })
+
+  it('"cut" regime does not hold back the very first dominant-scene change (nothing to rate-limit against yet)', async () => {
+    const { result, rerender } = renderHook(({ target }) => usePresentedSceneMix(target, 'cut'), {
+      initialProps: { target: alone(s0) as SceneMix },
+    })
+    const mountedAt = performance.now()
+
+    act(() => rerender({ target: { from: s0, to: s4, mix: 0.9 } }))
+    await waitFor(() => expect(result.current).toEqual({ from: s0, to: s4, mix: 1 }), { timeout: 200, interval: 10 })
+    expect(performance.now() - mountedAt).toBeLessThan(MIN_CUT_DWELL_SECONDS * 1000)
+  })
+
+  it('an ordinary "crossfade" retarget is never held by the wall-clock backstop, even right after a recorded "cut" change', async () => {
+    const { result, rerender } = renderHook(({ target, regime }: { target: SceneMix; regime: PresentationRegime }) => usePresentedSceneMix(target, regime), {
+      initialProps: { target: alone(s0) as SceneMix, regime: 'crossfade' as PresentationRegime },
+    })
+    // A crossfade started fresh from a settled pair is unaffected by the backstop even once one
+    // has recorded a "last change" — every branch that starts such a transition begins exactly at
+    // the settled endpoint (`step`'s own doc comment), so its dominant scene cannot flip sooner
+    // than MIN_TRANSITION_SECONDS / 2 (0.8s), comfortably clear of MIN_CUT_DWELL_SECONDS (0.35s):
+    // the gate can only ever hold a change that would otherwise land *too soon*, and this one
+    // never would.
+    act(() => rerender({ target: alone(s1), regime: 'cut' }))
+    await waitFor(() => expect(result.current).toEqual(alone(s1)))
+
+    act(() => rerender({ target: alone(s2), regime: 'crossfade' }))
+    // A crossfade obeys its own MIN_TRANSITION_SECONDS floor, not the (shorter) backstop window —
+    // shortly after the retarget it must still be mid-dissolve, not held frozen on s1.
+    await new Promise((resolve) => setTimeout(resolve, 200))
+    expect(result.current).not.toEqual(alone(s1))
+    expect(result.current).not.toEqual(alone(s2))
+  })
+
+  it('holds a "crossfade"-regime dominant change too, not only "cut" (regression: the backstop used to gate "cut" only)', async () => {
+    // Mounts with the presented mix already close to the 0.5 switch point — `usePresentedSceneMix`
+    // mounts at `target` exactly (no animation on mount, see its own doc comment), so this is a
+    // legitimate starting state, not an exploit of `step`'s own rate limit (which only bounds
+    // movement *after* mount). From here, `step`'s "same pair" branch only has to cross the last
+    // sliver of distance to flip dominance again, not a fresh MIN_TRANSITION_SECONDS sweep from an
+    // extreme — exactly the situation a `step` continuation resuming from a mix already close to
+    // the boundary produces in practice (`presentation.ts`'s own "wall-clock backstop" doc
+    // comment), and how the live 266 ms gap at 32x was reproduced.
+    const { result, rerender } = renderHook(({ target, regime }: { target: SceneMix; regime: PresentationRegime }) => usePresentedSceneMix(target, regime), {
+      initialProps: { target: { from: s0, to: s1, mix: 0.49 } as SceneMix, regime: 'crossfade' as PresentationRegime },
+    })
+    expect(result.current).toEqual({ from: s0, to: s1, mix: 0.49 })
+
+    // First change: unconstrained (nothing to rate-limit against yet) — a small "crossfade"
+    // retarget crosses the 0.5 boundary in one tick since the presented mix started right next to
+    // it.
+    act(() => rerender({ target: { from: s0, to: s1, mix: 0.9 }, regime: 'crossfade' }))
+    await waitFor(() => expect(dominantId(result.current)).toBe(s1.id), { interval: 10 })
+    const firstChangeAt = performance.now()
+
+    // Immediately, retarget back the other way, still "crossfade" — again only a sliver of mix
+    // separates the current presented state from flipping dominance back to s0.
+    act(() => rerender({ target: { from: s0, to: s1, mix: 0.1 }, regime: 'crossfade' }))
+
+    // Held for a little while: still showing s1 as dominant, not yet back to s0.
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(dominantId(result.current)).toBe(s1.id)
+
+    await waitFor(() => expect(dominantId(result.current)).toBe(s0.id), { timeout: 2000, interval: 10 })
+    const secondChangeAt = performance.now()
+    // Same generous slack for test-harness/poll timing noise the "cut" backstop test above uses.
+    expect(secondChangeAt - firstChangeAt).toBeGreaterThanOrEqual(MIN_CUT_DWELL_SECONDS * 1000 - 100)
+  })
 })

@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { PresentationRegime } from '@/scene'
 import type { Layer, Playback, ScalarValue } from '@/types/layer'
 
 import { useAudioEngine } from './engine'
@@ -72,11 +73,48 @@ describe('useAudioEngine tick loop lifecycle', () => {
     expect(result.current.enabled).toBe(true)
 
     // No assertion on audible effect here (manifest is null, so `runtimeRef.current` stays
-    // null and every tick is a no-op read) — this only guards that fake-timer advancement past
+    // null and every tick is a no-op read) — this mainly guards that fake-timer advancement past
     // several tick periods raises no error, i.e. the interval callback itself keeps running
     // rather than having been silently starved (the test would fail via an unhandled/thrown
-    // error inside the interval callback otherwise).
+    // error inside the interval callback otherwise); `enabled` staying `true` is the one concrete
+    // thing left to check on the hook's public surface with no real runtime to inspect.
     await vi.advanceTimersByTimeAsync(80 * 5)
-    expect(true).toBe(true)
+    expect(result.current.enabled).toBe(true)
+  })
+
+  it('accepts presentationRegime and keeps ticking through a "cut" regime (ADR-029) without error', async () => {
+    // manifest: null keeps the tick a no-op read (as above) — this only guards the new prop's
+    // wiring: `sceneLoop`'s cut-regime branch and the once-trigger's gated `playing` argument
+    // (see engine.ts's own comments at both call sites) run every tick without throwing,
+    // whichever regime is passed, and switching regime across renders tears nothing down (same
+    // "must not depend on the fast-changing tick inputs" contract the interval test above checks
+    // for `t`). Gating *correctness* itself is `nextOnceTriggerState`'s own contract
+    // (`sceneSound.test.ts`'s "playing gate" describe block — a 'cut' regime here is wired to
+    // read exactly like `playing: false` to that state machine) and is verified live via
+    // Playwright per the design brief, not re-derived here.
+    const { result, rerender } = renderHook(
+      ({ presentationRegime }: { presentationRegime: PresentationRegime }) =>
+        useAudioEngine({
+          manifest: null,
+          t: 0,
+          playing: true,
+          playback: PLAYBACK,
+          sectionWindow: FULL_SECTION_WINDOW,
+          scalarLayers: emptyLayers,
+          presentationRegime,
+        }),
+      { initialProps: { presentationRegime: 'crossfade' } },
+    )
+    await vi.advanceTimersByTimeAsync(0)
+
+    rerender({ presentationRegime: 'cut' })
+    await vi.advanceTimersByTimeAsync(80 * 3)
+
+    rerender({ presentationRegime: 'crossfade' })
+    await vi.advanceTimersByTimeAsync(80 * 3)
+
+    // As above: no real runtime to inspect (manifest is null), so `enabled` staying `true` is
+    // the one concrete thing left to check on the hook's public surface.
+    expect(result.current.enabled).toBe(true)
   })
 })

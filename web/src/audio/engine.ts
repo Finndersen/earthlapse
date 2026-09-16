@@ -36,7 +36,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { dominantScene, resolveAssetUrl, sceneAt, scenePlaybackSegments, usePresentedSceneMix, type SceneMix } from '@/scene'
+import {
+  dominantScene,
+  resolveAssetUrl,
+  sceneAt,
+  scenePlaybackSegments,
+  usePresentedSceneMix,
+  type PresentationRegime,
+  type SceneMix,
+} from '@/scene'
 import type { PlaybackPacingSegment } from '@/timeline'
 import type { GeoTime, Layer, Playback, ScalarValue } from '@/types/layer'
 import type { AudioStem, Manifest } from '@/types/manifest'
@@ -141,6 +149,17 @@ export interface UseAudioEngineInput {
    *  bound on how far the loader's lookahead ever reaches; see `loadPlan.ts`'s doc comment. */
   sectionWindow: readonly [GeoTime, GeoTime]
   scalarLayers: ReadonlyMap<string, Layer<ScalarValue>>
+  /** `'crossfade'` (default) or `'cut'` — `Experience.tsx`'s own `steadyPacing` result for the
+   *  current frame (ADR-029), the same value driving `SceneView`'s presented mix and the "time
+   *  compressed" marker. While `'cut'`: scene loop sounds mute (faded via the existing
+   *  `GAIN_SMOOTH_SECONDS` ramp, not clicked — see `sceneLoop`'s own comment in the tick loop
+   *  below) and once-mode scene sounds do not trigger, so a densely-scened stretch crossed in
+   *  hard cuts never piles up several overlapping one-shots under images on screen for a
+   *  fraction of a second each. The base ambience stems (`stemGains(t)`) are untouched either
+   *  way — stretched over a slowed, floored playhead they read as a natural, unbroken build
+   *  (ADR-023 amendment note). Optional so every existing caller (tests included) keeps today's
+   *  behaviour unchanged. */
+  presentationRegime?: PresentationRegime
 }
 
 function clampVolume(v: number): number {
@@ -188,6 +207,7 @@ const EMPTY_SCENE: Manifest['scenes'][number] = {
   chapterId: '',
   image: '',
   shot: 'WIDE_RIDGE',
+  title: '',
   caption: '',
   width: 1,
   height: 1,
@@ -195,6 +215,9 @@ const EMPTY_SCENE: Manifest['scenes'][number] = {
 /** The `SceneMix` `EMPTY_SCENE` alone forms — shared by the component-level `sceneTarget` and
  *  the tick loop's own `currentTarget` recompute, both for while `manifest` is `null`/empty. */
 const EMPTY_SCENE_MIX: SceneMix = { from: EMPTY_SCENE, to: EMPTY_SCENE, mix: 0 }
+/** `sceneSoundLoopGains`' own empty-result shape, reused (never recomputed) while ADR-029's
+ *  `'cut'` regime mutes every scene loop — see the tick loop's own comment at its call site. */
+const EMPTY_SCENE_LOOP_GAINS: Partial<Record<string, number>> = {}
 
 // -------------------------------------------------------------------------- Tone.js runtime
 //
@@ -783,7 +806,7 @@ function updateLoopVoices(runtime: ToneRuntime, ambient: Record<string, number>,
 // -------------------------------------------------------------------------------- the hook
 
 export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls {
-  const { manifest, t, playing, playback, sectionWindow, scalarLayers } = input
+  const { manifest, t, playing, playback, sectionWindow, scalarLayers, presentationRegime = 'crossfade' } = input
 
   const [prefs, setPrefs] = useState(() => ({ enabled: false, masterVolume: DEFAULT_MASTER_VOLUME }))
   useEffect(() => {
@@ -817,7 +840,15 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   // -- see that function's own doc comment for the same-day correction this needed: reading
   // `presented` alone here made a voice fire, then fade within a couple of ticks, almost every
   // time, since `presented` is still catching up to a scene the instant `sceneTarget` fires it.
-  const onceFired = useSceneSoundOnceTrigger(sceneTarget, playing)
+  // ADR-029: while steady playback is hard-cutting through a dense scene cluster, a once-mode
+  // scene's sound must not fire (no pile-up of several overlapping one-shots under images on
+  // screen for a fraction of a second each) — reusing `nextOnceTriggerState`'s existing
+  // `playing`/`wasPlaying` gate (its own doc comment) rather than adding a second, bespoke
+  // condition: `'cut'` reads exactly like "not currently playing" to the trigger, so nothing
+  // fires while it lasts, and the scene under the playhead the moment `'cut'` ends is armed off
+  // rather than fired (the same "just pressed play" treatment a scene already sitting under the
+  // playhead gets) instead of retroactively firing an arrival that never happened at normal pace.
+  const onceFired = useSceneSoundOnceTrigger(sceneTarget, playing && presentationRegime !== 'cut')
 
   const flatBasalt = useMemo(() => (manifest === null ? [] : floodBasaltWindows(manifest)), [manifest])
   const catastrophes = useMemo(() => (manifest === null ? [] : catastropheWindows(manifest)), [manifest])
@@ -852,6 +883,7 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   const scenesPacingRef = useRef(scenesPacing)
   const co2LayerRef = useRef(co2Layer)
   const dayLengthLayerRef = useRef(dayLengthLayer)
+  const presentationRegimeRef = useRef(presentationRegime)
   useEffect(() => {
     tRef.current = t
     playbackRef.current = playback
@@ -863,6 +895,7 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
     scenesPacingRef.current = scenesPacing
     co2LayerRef.current = co2Layer
     dayLengthLayerRef.current = dayLengthLayer
+    presentationRegimeRef.current = presentationRegime
   })
 
   const onUnusableStem = (id: string, reason: string): void => {
@@ -1007,7 +1040,12 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       }
 
       const ambient = stemGains(tickT, flatBasaltRef.current)
-      const sceneLoop = sceneSoundLoopGains(presentedNow)
+      // ADR-029: muted (not computed at all, so `updateLoopVoices` ramps every scene-loop voice's
+      // gain down through its existing `GAIN_SMOOTH_SECONDS` fade to 0 — never clicked) while
+      // hard-cutting through a dense cluster; the ambience curve in `ambient` above is untouched
+      // either way (`updateLoopVoices`'s own `Math.max(ambient[id] ?? 0, sceneGain)` for an
+      // ambience-loop stem still combines the two normally once `sceneLoop` isn't empty again).
+      const sceneLoop = presentationRegimeRef.current === 'cut' ? EMPTY_SCENE_LOOP_GAINS : sceneSoundLoopGains(presentedNow)
       updatePendingOncePresence(runtime, presentedNow)
       fadeOutlivedOnceVoices(runtime, targetNow, presentedNow)
       const duck = onceDuckRef.current

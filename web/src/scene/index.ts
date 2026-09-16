@@ -29,6 +29,17 @@
  * - `driftAt(scenes, index, t)` — a scene's camera-drift uniforms (zoom + lateral pan).
  * - `crossfadeAlpha(mix)` — the eased image-blend alpha (`shaders.ts`'s fragment shader mixes
  *   `uFrom`/`uTo` gamma-correctly by this amount).
+ * - `steadyPacing(territories, t, rawRate, scale)` (ADR-029) — the `'crossfade'`/`'cut'`
+ *   presentation regime and floor status for `'steady'`-mode playback, from `sceneTerritories(scenes)`
+ *   (every scene's on-screen territory). `step`/`usePresentedSceneMix` take the regime as an
+ *   optional last argument (default `'crossfade'`, i.e. today's behaviour unchanged).
+ *   `MIN_CUT_DWELL_SECONDS` is its floor tunable, mirrored by value in `timeline/playback.ts`'s
+ *   `advanceSteadyPlayhead`, which takes `sceneTerritories(scenes)`'s output structurally to floor
+ *   the playhead's own rate.
+ * - `steadyFrameRegime(territories, renderedT, rawRate, scale, seeked)` (ADR-029 re-review fix) —
+ *   `steadyPacing` evaluated at the `t` a playback frame actually renders rather than the `t` it
+ *   started at, and forced to `'crossfade'`/not-floored whenever `seeked` (the caller's own "did
+ *   something other than my last advance move `t`" check) is true — see its own doc comment.
  */
 
 export { REST_DRIFT, driftAt } from './drift'
@@ -36,8 +47,10 @@ export type { DriftUniforms } from './drift'
 export { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
 export type { PlaybackSegment } from './pacing'
 export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
-export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt } from './scene'
-export type { SceneMix } from './scene'
+export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt, tAtLogP } from './scene'
+export type { PresentationRegime, SceneMix } from './scene'
 export { SceneView } from './SceneView'
 export type { SceneViewProps } from './SceneView'
+export { MIN_CUT_DWELL_SECONDS, sceneTerritories, steadyFrameRegime, steadyPacing, territoryAt } from './steadyPacing'
+export type { SteadyPacing, SteadySceneTerritory } from './steadyPacing'
 export { crossfadeAlpha } from './transition'

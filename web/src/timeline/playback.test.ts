@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION, type Playback, type TimeScale } from '@/types/layer'
 
-import { advancePlayhead, advanceSteadyPlayhead, SPEED_OPTIONS, stepSpeed, type PlaybackPacingSegment } from './playback'
+import {
+  advancePlayhead,
+  advanceSteadyPlayhead,
+  SPEED_OPTIONS,
+  stepSpeed,
+  type PlaybackPacingSegment,
+  type SteadySceneTerritory,
+} from './playback'
 import { createLinearScale, createSymlogScale } from './scale'
 import { sectionById } from './sections'
 
@@ -264,6 +271,188 @@ describe('advanceSteadyPlayhead: era sections (ADR-024)', () => {
   it('rejects scenes mode and a t outside the section', () => {
     expect(() => advanceSteadyPlayhead(150, 1, playback({ mode: 'scenes' }), 'industrial-age', createLinearScale)).toThrow(/steady/)
     expect(() => advanceSteadyPlayhead(50, 1, steady(), 'industrial-age', createLinearScale)).toThrow(/outside/)
+  })
+})
+
+describe('advanceSteadyPlayhead: scene territory floor (ADR-029)', () => {
+  const steady = (overrides: Partial<Playback> = {}): Playback => playback({ mode: 'steady', baseRate: 0.02, speed: 1, ...overrides })
+
+  /** Sums the wall-clock time a small-step simulation spends crossing `territory` (from its
+   *  `tOlder` edge down to its `tNewer` edge) — the same "many small steps sum to the exact
+   *  duration" pattern the 'scenes'-mode tests above already use, applied here to measure the
+   *  floor's guarantee rather than an exact paced duration. */
+  function dwellCrossing(
+    territory: SteadySceneTerritory,
+    sectionId: Parameters<typeof advanceSteadyPlayhead>[3],
+    scaleForWindow: Parameters<typeof advanceSteadyPlayhead>[4],
+    territories: readonly SteadySceneTerritory[],
+    speed: number,
+  ): number {
+    const pb = steady({ speed })
+    let t = territory.tOlder
+    let elapsed = 0
+    const dt = 0.001
+    // Generous cap: at the fastest speed tested (64x) even an unfloored crossing takes a small
+    // fraction of a second; this only guards against a genuine infinite loop.
+    for (let i = 0; i < 5_000_000 && t > territory.tNewer; i++) {
+      t = advanceSteadyPlayhead(t, dt, pb, sectionId, scaleForWindow, territories)
+      elapsed += dt
+    }
+    return elapsed
+  }
+
+  it('a scene territory narrower than MIN_CUT_DWELL_SECONDS worth of dwell is floored to at least it, at 1x/8x/64x, in the earth section', () => {
+    // ~100 years wide, near the present — the measured "recent human history" shape (28 scenes
+    // in the last 12,000 years) without needing the real manifest.
+    const territories: SteadySceneTerritory[] = [
+      { tNewer: 0, tOlder: 100 },
+      { tNewer: 100, tOlder: 200 },
+      { tNewer: 200, tOlder: EARTH_FORMATION },
+    ]
+    for (const speed of [1, 8, 64]) {
+      const elapsed = dwellCrossing(territories[1]!, 'earth', createSymlogScale, territories, speed)
+      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01) // MIN_CUT_DWELL_SECONDS, minus one dt step's slack
+    }
+  })
+
+  it('floors correctly under a *linear* scale over the whole domain (re-review fix, HIGH-1)', () => {
+    // Under a linear scale spanning the whole `earth` section (EARTH_FORMATION years wide), a
+    // fixed nudge in `u` — the pre-fix implementation's way of stepping past a just-crossed
+    // territory boundary — is a nudge of several real *years* (order 1e-9 of a ~4.6e9-year
+    // domain), comparable to or wider than territories this narrow: it could skip a whole
+    // territory's floored dwell (or eat most of it) without ever billing any wall-clock time for
+    // it. Live-measured before this fix: up to 9 image changes in a single second, smallest gap
+    // 33ms, well over the 3/s safety limit the floor exists to guarantee. Reproduces that shape
+    // (~5-year-wide territories near the present) without needing the real manifest.
+    const territories: SteadySceneTerritory[] = [
+      { tNewer: 0, tOlder: 5 },
+      { tNewer: 5, tOlder: 10 },
+      { tNewer: 10, tOlder: 15 },
+      { tNewer: 15, tOlder: EARTH_FORMATION },
+    ]
+    for (const speed of [1, 8, 64]) {
+      const elapsed = dwellCrossing(territories[1]!, 'earth', createLinearScale, territories, speed)
+      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01)
+    }
+  })
+
+  it('advances territory by territory (index) rather than skipping any, across many narrow linear territories', () => {
+    // A denser run of 20 narrow (2-year) territories — every one of them must get its own
+    // floored dwell; the pre-fix `u`-space nudge could jump clean over several of these at once,
+    // so crossing all 20 could complete in far less than 20 * MIN_CUT_DWELL_SECONDS. A minimum
+    // total is a simple, strong check that no territory in the run was skipped.
+    const territories: SteadySceneTerritory[] = []
+    for (let i = 0; i < 20; i++) territories.push({ tNewer: i * 2, tOlder: (i + 1) * 2 })
+    territories.push({ tNewer: 40, tOlder: EARTH_FORMATION })
+
+    const pb = steady({ speed: 8 })
+    let t = 40 // the near edge of the run, i.e. about to cross all 20 territories down to t = 0
+    let elapsed = 0
+    const dt = 0.001
+    for (let i = 0; i < 200_000 && t > 0; i++) {
+      t = advanceSteadyPlayhead(t, dt, pb, 'earth', createLinearScale, territories)
+      elapsed += dt
+    }
+    expect(elapsed).toBeGreaterThanOrEqual(20 * (0.35 - 0.01))
+  })
+
+  it('floors just as well inside a narrower era section (industrial-age, ADR-024)', () => {
+    // A 5-year-wide territory inside the industrial age's own [111, 265] window.
+    const territories: SteadySceneTerritory[] = [
+      { tNewer: 111, tOlder: 150 },
+      { tNewer: 150, tOlder: 155 },
+      { tNewer: 155, tOlder: 265 },
+    ]
+    for (const speed of [1, 8, 64]) {
+      const elapsed = dwellCrossing(territories[1]!, 'industrial-age', createLinearScale, territories, speed)
+      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01)
+    }
+  })
+
+  it('entering a territory mid-way (not at its edge) prorates the remaining dwell, then floors the next territory fully', () => {
+    // The shape of a seek landing just before a boundary (HIGH-2's own "single seek just before
+    // a territory boundary" finding): entering territories[1] already 90% of the way through its
+    // own 50-year span. Its floor prices the *whole* territory at MIN_CUT_DWELL_SECONDS, so only
+    // ~10% remaining gets only ~10% of that — expected (not itself a bug: the presentation
+    // layer's own wall-clock backstop is what protects the *displayed* cadence regardless of
+    // where `t` enters a territory), but must stay positive and finite, and the *next* territory
+    // (reached by index, not by a nudge) must still get its own full floor.
+    const territories: SteadySceneTerritory[] = [
+      { tNewer: 0, tOlder: 50 },
+      { tNewer: 50, tOlder: 100 },
+      { tNewer: 100, tOlder: EARTH_FORMATION },
+    ]
+    const pb = steady({ speed: 1 })
+
+    let t = 55 // 10% of the way into territories[1] from its tNewer edge
+    let elapsedInEntered = 0
+    for (let i = 0; i < 2000 && t > territories[1]!.tNewer; i++) {
+      t = advanceSteadyPlayhead(t, 0.001, pb, 'earth', createLinearScale, territories)
+      elapsedInEntered += 0.001
+    }
+    expect(Math.abs(t - territories[1]!.tNewer)).toBeLessThan(0.01) // small-step simulation slack
+    expect(elapsedInEntered).toBeGreaterThan(0)
+    expect(elapsedInEntered).toBeLessThan(0.35)
+
+    let elapsedInNext = 0
+    for (let i = 0; i < 2000 && t > territories[0]!.tNewer; i++) {
+      t = advanceSteadyPlayhead(t, 0.001, pb, 'earth', createLinearScale, territories)
+      elapsedInNext += 0.001
+    }
+    expect(elapsedInNext).toBeGreaterThanOrEqual(0.35 - 0.01)
+  })
+
+  it('does not floor a territory that already dwells comfortably above the minimum', () => {
+    // A vast territory (most of the earth section) at an ordinary 1x rate.
+    const territories: SteadySceneTerritory[] = [{ tNewer: 0, tOlder: EARTH_FORMATION }]
+    const pb = steady({ speed: 1 })
+    const t0 = EARTH_FORMATION / 2
+    const scale = createSymlogScale([0, EARTH_FORMATION])
+    const withTerritory = advanceSteadyPlayhead(t0, 1, pb, 'earth', createSymlogScale, territories)
+    const withoutTerritory = advanceSteadyPlayhead(t0, 1, pb, 'earth', createSymlogScale)
+    expect(scale.toUnit(withTerritory)).toBeCloseTo(scale.toUnit(withoutTerritory), 9)
+  })
+
+  it('an empty (or omitted) sceneTerritories reproduces the pre-ADR-029 flat rate exactly', () => {
+    const pb = steady({ speed: 3 })
+    const withEmpty = advanceSteadyPlayhead(30e6, 2, pb, 'cenozoic', createSymlogScale, [])
+    const omitted = advanceSteadyPlayhead(30e6, 2, pb, 'cenozoic', createSymlogScale)
+    expect(withEmpty).toBe(omitted)
+  })
+
+  it('is a pure function: identical inputs produce identical output', () => {
+    const territories: SteadySceneTerritory[] = [{ tNewer: 100, tOlder: 300 }]
+    const pb = steady({ speed: 8 })
+    const a = advanceSteadyPlayhead(250, 0.05, pb, 'earth', createSymlogScale, territories)
+    const b = advanceSteadyPlayhead(250, 0.05, pb, 'earth', createSymlogScale, territories)
+    expect(a).toBe(b)
+  })
+
+  it('a huge single dt (a stalled tab regaining focus) crossing several dense territories stays finite and matches many small steps', () => {
+    const territories: SteadySceneTerritory[] = [
+      { tNewer: 0, tOlder: 50 },
+      { tNewer: 50, tOlder: 100 },
+      { tNewer: 100, tOlder: 150 },
+      { tNewer: 150, tOlder: EARTH_FORMATION },
+    ]
+    const pb = steady({ speed: 64 })
+    const scale = createSymlogScale([0, EARTH_FORMATION])
+
+    const viaOneHugeStep = advanceSteadyPlayhead(200, 5, pb, 'earth', createSymlogScale, territories)
+    expect(Number.isFinite(viaOneHugeStep)).toBe(true)
+
+    let viaManySmallSteps = 200
+    for (let i = 0; i < 5000; i++) {
+      viaManySmallSteps = advanceSteadyPlayhead(viaManySmallSteps, 5 / 5000, pb, 'earth', createSymlogScale, territories)
+    }
+    // Checked in *years* (`t`), not only in `u` (re-review fix: the original `u`-space
+    // `toBeCloseTo(..., 3)` tolerance was wide enough, near the present, to hide on the order of
+    // 65 years of discrepancy — wider than every territory in this test — so it could not have
+    // caught a wrong floor). Territory-boundary stepping is now exact by construction (assigning
+    // `current = territory.tNewer` directly rather than round-tripping through a nudged `u`, see
+    // `advanceSteadyPlayhead`'s own doc comment), so the two paths agree far tighter than that.
+    expect(Math.abs(viaOneHugeStep - viaManySmallSteps)).toBeLessThan(1e-6)
+    expect(scale.toUnit(viaOneHugeStep)).toBeCloseTo(scale.toUnit(viaManySmallSteps), 9)
   })
 })
 

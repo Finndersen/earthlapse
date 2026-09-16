@@ -56,9 +56,13 @@
  *   without the picture ever falling out of sync with `t`; `'steady'` ignores `scenesPacing`
  *   and moves at flat `baseRate * speed` throughout. `'scenes'` always paces on the full-domain
  *   symlog scale. `'steady'` goes through `advanceSteadyPlayhead(t, dt, playback, sectionId,
- *   scaleForWindow)` (ADR-024): constant velocity in the selected section's scale, carrying on
- *   into `continuationSection` past its end. `usePlaybackLoop` drives either off
- *   `requestAnimationFrame`.
+ *   scaleForWindow, sceneTerritories?)` (ADR-024, ADR-029): constant velocity in the selected
+ *   section's scale, carrying on into `continuationSection` past its end, with the rate floored
+ *   (`SteadySceneTerritory[]`, structurally `scene/steadyPacing.ts`'s `sceneTerritories(scenes)`)
+ *   inside whichever scene territory would otherwise dwell under `MIN_CUT_DWELL_SECONDS` at that
+ *   rate — a photosensitivity safety floor, independent of the `'crossfade'`/`'cut'` presentation
+ *   regime `scene/steadyPacing.ts`'s own `steadyPacing` decides for the same territory.
+ *   `usePlaybackLoop` drives either off `requestAnimationFrame`.
  * - `formatGeoTime(t)` renders a `GeoTime` for humans (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`,
  *   `"250 years ago"`, `"present"`); `formatTimeRange(window)` does the same for a whole window
  *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
@@ -111,7 +115,13 @@ export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declut
 export { formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { nearestNeighbourEvent, type EventStepDirection } from './lod'
-export { advancePlayhead, advanceSteadyPlayhead, usePlaybackLoop, type PlaybackPacingSegment } from './playback'
+export {
+  advancePlayhead,
+  advanceSteadyPlayhead,
+  usePlaybackLoop,
+  type PlaybackPacingSegment,
+  type SteadySceneTerritory,
+} from './playback'
 export {
   blendScales,
   createLinearScale,

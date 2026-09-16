@@ -28,7 +28,7 @@ import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { MIN_TRANSITION_SECONDS } from './presentation'
-import { DISSOLVE_WIDTH } from './scene'
+import { DISSOLVE_WIDTH, tAtLogP } from './scene'
 
 /**
  * Total seconds a single scene dwells on screen, held clear of any dissolve, at 1x — split
@@ -42,10 +42,10 @@ export const SCENE_DWELL_SECONDS = 3.0
 
 /**
  * Mirrors `timeline/scale.ts`'s `SYMLOG_C` by value (kept in sync by hand, not by importing
- * `@/timeline`) — this package stays self-contained in its own `t` math, the same reason
- * `tAtLogP` below reimplements log1p locally rather than reaching for a `TimeScale`. Only the
- * *relative* shape of the warp matters here (how much of the full domain's symlog range a gap
- * occupies), so a drift between the two constants would only mis-tune `gapBonusSeconds`'s
+ * `@/timeline`) — this package stays self-contained in its own `t` math, the same reason this
+ * file uses `scene.ts`'s `tAtLogP` (plain log1p, no `TimeScale`) rather than reaching for one.
+ * Only the *relative* shape of the warp matters here (how much of the full domain's symlog range
+ * a gap occupies), so a drift between the two constants would only mis-tune `gapBonusSeconds`'s
  * ramp, never break correctness or round-tripping.
  */
 const SYMLOG_C = 1e4
@@ -102,15 +102,6 @@ export interface PlaybackSegment {
   tNewer: GeoTime
   tOlder: GeoTime
   durationSeconds: number
-}
-
-/** `t` at position `p` (0..1) along the log1p-`t` interpolation between `a` and `b`, the
- *  inverse of the `p` computation inside `sceneAt` — used here to convert the dissolve band's
- *  edges (known in `p`) back into `GeoTime` boundaries. */
-function tAtLogP(a: GeoTime, b: GeoTime, p: number): GeoTime {
-  const logA = Math.log1p(a)
-  const logB = Math.log1p(b)
-  return Math.expm1(logA + p * (logB - logA))
 }
 
 /**

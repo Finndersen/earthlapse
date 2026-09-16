@@ -24,6 +24,21 @@
  * > into the next one. `'scenes'` mode is unchanged: scene durations belong to the scenes, not
  * > the window. `'steady'` mode moves at constant velocity in the *selected section's* scale
  * > (`advanceSteadyPlayhead`), so every section takes the same wall-clock time to cross at 1x.
+ * >
+ * > **ADR-029.** Constant `u`-velocity in `'steady'` mode means constant *screen-space* speed,
+ * > not constant on-screen dwell per scene — a scene-dense stretch (recent human history is the
+ * > worst case: 28 of 68 scenes in the last 12,000 years) can dwell under
+ * > `presentation.ts`'s `MIN_TRANSITION_SECONDS`, which then rate-limits every crossing to a
+ * > forced multi-second dissolve regardless, reading as one blur through the whole stretch.
+ * > `advanceSteadyPlayhead` now takes an optional `sceneTerritories` (`scene/steadyPacing.ts`'s
+ * > `sceneTerritories(scenes)`, structurally — this package does not import `@/scene`, the same
+ * > "shared shape, no cross-package import" convention `scenesPacing` above already established):
+ * > below `MIN_CUT_DWELL_SECONDS` of natural dwell for the scene `t` is currently in, the
+ * > playhead's own rate is floored to guarantee that dwell — a hard safety floor (WCAG 2.3.1's
+ * > three-flashes-per-second threshold), independent of whatever `scene/steadyPacing.ts` decides
+ * > to *render* (crossfade vs. a hard cut) at that rate; this package only needs the numeric
+ * > floor. `sceneTerritories` omitted (or `[]`, the default) reproduces this function's pre-
+ * > ADR-029 behaviour exactly — every existing caller/test needs no change.
  */
 
 import { useEffect, useRef } from 'react'
@@ -233,6 +248,50 @@ export function usePlaybackLoop({ playing, onFrame }: PlaybackLoopOptions): void
 }
 
 /**
+ * A scene's on-screen territory (ADR-029), structurally satisfied by `scene/steadyPacing.ts`'s
+ * `SteadySceneTerritory` without this package importing `@/scene` — the same convention
+ * `PlaybackPacingSegment` above already established for `scenePlaybackSegments`'s output.
+ */
+export interface SteadySceneTerritory {
+  /** Nearer-to-present edge of the territory. */
+  tNewer: GeoTime
+  /** Farther-into-the-past edge. */
+  tOlder: GeoTime
+}
+
+/**
+ * Mirrors `scene/steadyPacing.ts`'s `MIN_CUT_DWELL_SECONDS` by value (kept in sync by hand, not
+ * by importing `@/scene` — see `scene/pacing.ts`'s own `SYMLOG_C` mirror for the same "package
+ * stays self-contained" reasoning). Below this on-screen dwell even a hard cut would flash faster
+ * than WCAG 2.3.1's three-flashes-per-second threshold allows, so `advanceSteadyPlayhead` floors
+ * its own rate to guarantee it — independent of whatever `scene/steadyPacing.ts` decides to
+ * *render* (crossfade vs. cut) at that rate; this package only needs the numeric floor. */
+const MIN_CUT_DWELL_SECONDS = 0.35
+
+/** The *index* into `territories` of the territory containing `t` — mirrors
+ *  `scene/steadyPacing.ts`'s `territoryAt` by algorithm (not by import; see
+ *  `MIN_CUT_DWELL_SECONDS`'s own doc comment for why): `territories` must be contiguous and
+ *  ascending by `tNewer`, exactly `sceneTerritories`' own output, and an exact shared boundary
+ *  resolves to the *older* (higher-index) territory, reproducing `dominantScene`'s own tie-break
+ *  without needing scene identity at query time. `-1` for an empty array.
+ *
+ *  Returning the index rather than the territory object itself is what lets
+ *  `advanceSteadyPlayhead` below step to the next territory by decrementing it directly once it
+ *  crosses a boundary, instead of re-deriving the territory from a nudged `t` (re-review fix,
+ *  2026-09-15 — see that function's own doc comment for why a numeric nudge in `u` was wrong). */
+function steadyTerritoryIndexAt(territories: readonly SteadySceneTerritory[], t: GeoTime): number {
+  if (territories.length === 0) return -1
+  let lo = 0
+  let hi = territories.length
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1
+    if (territories[mid]!.tNewer <= t) lo = mid + 1
+    else hi = mid
+  }
+  return Math.max(0, lo - 1)
+}
+
+/**
  * `'steady'`-mode playback inside the era section `sectionId` (ADR-024). Speed is constant in
  * that section's own scale, `scaleForWindow(section.window)` (the selected `ScaleKind` over the
  * section), so crossing any section takes the same wall-clock time at 1x. When the playhead
@@ -243,6 +302,28 @@ export function usePlaybackLoop({ playing, onFrame }: PlaybackLoopOptions): void
  *
  * `t` must lie inside `sectionId` (the time store keeps that invariant), and `playback.mode`
  * must be `'steady'`. `'scenes'` mode always uses `advancePlayhead` on the full-domain scale.
+ *
+ * `sceneTerritories` (ADR-029, default `[]`): whenever `t` sits inside a territory whose natural
+ * dwell at the requested rate (`uSpan / (baseRate * speed)`, in the *current* section's scale —
+ * recomputed fresh every territory, so a section change mid-call picks up its own scale exactly
+ * like the un-floored edge-crossing below always has) would fall under `MIN_CUT_DWELL_SECONDS`,
+ * the rate for crossing that specific territory is floored to `uSpan / MIN_CUT_DWELL_SECONDS`
+ * instead — slowing `t` just enough that the scene still gets the minimum dwell, then resuming
+ * the requested rate once past it. `[]` (or omitted) finds no territory ever, so the loop below
+ * always uses the plain requested rate — byte-for-byte this function's pre-ADR-029 behaviour.
+ *
+ * Crossing a territory boundary steps `territoryIndex` directly (decrementing toward the
+ * newest/index-0 territory, the direction playback always moves) rather than re-deriving it by
+ * re-querying `steadyTerritoryIndexAt` at a `t` nudged past the boundary (re-review fix,
+ * 2026-09-15, replacing the original `TERRITORY_STEP_EPSILON_U` approach): a fixed nudge in `u`
+ * is not "physically meaningless" the way it was documented — under a *linear* steady scale over
+ * a wide window (the root `earth` section, say), a tiny `u` nudge is a large, real span of years
+ * (order 1e-9 of a 4.6 Gyr domain is several years), comparable to or wider than some scene
+ * territories a few years across, so the nudge could skip a whole territory (or eat most of its
+ * floored dwell) without ever billing any time for it — live-measured up to 9 image changes in a
+ * single second before this fix, well over the 3/s safety limit the floor exists to guarantee.
+ * Stepping the index costs nothing to compute, needs no `u`-space tolerance at all, and
+ * terminates in at most `sceneTerritories.length` steps regardless of how the scale warps `t`.
  */
 export function advanceSteadyPlayhead(
   t: GeoTime,
@@ -250,6 +331,7 @@ export function advanceSteadyPlayhead(
   playback: Playback,
   sectionId: SectionId,
   scaleForWindow: (window: TimeWindow) => TimeScale,
+  sceneTerritories: readonly SteadySceneTerritory[] = [],
 ): GeoTime {
   if (playback.mode !== 'steady') {
     throw new Error(`advanceSteadyPlayhead: playback.mode must be 'steady', got '${playback.mode}'`)
@@ -258,8 +340,8 @@ export function advanceSteadyPlayhead(
 
   const speed = Number.isFinite(playback.speed) ? playback.speed : 0
   const baseRate = Number.isFinite(playback.baseRate) ? playback.baseRate : 0
-  const rate = baseRate * speed
-  if (!(rate > 0)) return t
+  const rawRate = baseRate * speed
+  if (!(rawRate > 0)) return t
 
   let section = sectionById(sectionId)
   if (!sectionContains(section, t)) {
@@ -268,13 +350,45 @@ export function advanceSteadyPlayhead(
 
   let current = t
   let remaining = dtSeconds
+  // Looked up once, then stepped by index as boundaries are crossed (see this function's own
+  // doc comment) — never re-derived from `current` after a territory crossing, so no `u`-space
+  // tolerance is needed to avoid re-querying the territory just left. A section-continuation
+  // crossing (below) leaves `current` at the same real `t`, just re-scaled, so it never needs a
+  // fresh lookup either — only an actual territory-boundary crossing moves this.
+  let territoryIndex = steadyTerritoryIndexAt(sceneTerritories, current)
+
   for (;;) {
     const scale = scaleForWindow(section.window)
-    const next = continuationSection(section.id)
-    const secondsToEdge = (1 - clampUnit(scale.toUnit(current))) / rate
-    if (next === undefined || secondsToEdge > remaining) return advancePlayhead(current, remaining, playback, scale)
-    remaining -= secondsToEdge
-    current = section.window[0]
-    section = next
+    const currentU = clampUnit(scale.toUnit(current))
+
+    const territory = territoryIndex >= 0 ? sceneTerritories[territoryIndex] : undefined
+    let rate = rawRate
+    let boundaryU = 1
+    if (territory !== undefined) {
+      const uSpan = Math.abs(scale.toUnit(territory.tOlder) - scale.toUnit(territory.tNewer))
+      if (uSpan > 0 && uSpan / rawRate < MIN_CUT_DWELL_SECONDS) rate = uSpan / MIN_CUT_DWELL_SECONDS
+      boundaryU = Math.min(clampUnit(scale.toUnit(territory.tNewer)), 1)
+    }
+
+    const uToBoundary = Math.max(0, boundaryU - currentU)
+    const secondsToBoundary = uToBoundary / rate
+
+    if (secondsToBoundary >= remaining) {
+      return scale.fromUnit(clampUnit(currentU + rate * remaining))
+    }
+    remaining -= secondsToBoundary
+
+    if (boundaryU >= 1) {
+      const next = continuationSection(section.id)
+      if (next === undefined) return scale.fromUnit(1)
+      current = section.window[0]
+      section = next
+    } else {
+      // Exactly `territory.tNewer` — the boundary just paid for above, not a nudge past it — and
+      // the next territory nearer the present, by index, not by re-querying at this (exact,
+      // untainted-by-rounding) boundary value.
+      current = territory!.tNewer
+      territoryIndex -= 1
+    }
   }
 }

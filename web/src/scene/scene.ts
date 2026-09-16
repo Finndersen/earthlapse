@@ -28,6 +28,16 @@ export interface SceneMix {
 }
 
 /**
+ * How `presentation.ts`'s `step` renders the current transition (ADR-029): `'crossfade'` is
+ * today's rate-limited dissolve, unconditionally; `'cut'` is an instant switch instead, used
+ * only in `'steady'`-mode playback when a scene's on-screen dwell at the current speed is too
+ * short for a full `MIN_TRANSITION_SECONDS` dissolve to read as anything but a blur through
+ * several scenes (`scene/steadyPacing.ts` decides which, per scene). Scrubbing, seeking, paused
+ * viewing and `'scenes'`-mode playback are always `'crossfade'`.
+ */
+export type PresentationRegime = 'crossfade' | 'cut'
+
+/**
  * Width of the dissolve, as a fraction of the log1p gap between two consecutive scenes,
  * centred on the gap's midpoint. Each scene is held clear for `1 - DISSOLVE_WIDTH` of the
  * gap; the brief cross-dissolve happens only in the narrow band around the midpoint. One
@@ -46,6 +56,18 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   if (x >= edge1) return 1
   const u = (x - edge0) / (edge1 - edge0)
   return u * u * (3 - 2 * u)
+}
+
+/**
+ * `t` at position `p` (0..1) along the log1p-`t` interpolation between `a` and `b` — the inverse
+ * of `sceneAt`'s own position computation above. Shared by `scene/pacing.ts` (scenes-mode
+ * dissolve-band edges) and `scene/steadyPacing.ts` (steady-mode scene territories) so all three
+ * agree exactly on where a dissolve starts, ends and is centred.
+ */
+export function tAtLogP(a: GeoTime, b: GeoTime, p: number): GeoTime {
+  const logA = Math.log1p(a)
+  const logB = Math.log1p(b)
+  return Math.expm1(logA + p * (logB - logA))
 }
 
 /** `bisect.bisect_left` over scenes ascending by `t`: first index whose `t` is >= target. */
