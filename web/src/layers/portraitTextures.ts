@@ -25,6 +25,14 @@ export const PLATE_PLACEHOLDER: THREE.Texture = dataTexture([0, 0, 0, 255])
 /** A zero displacement everywhere. */
 export const FLOW_PLACEHOLDER: THREE.Texture = dataTexture([128, 128, 128, 255])
 
+/** Synchronous cache lookup — `undefined` unless `url` has already fully loaded. Lets a caller
+ *  bind a set without the microtask/frame `loadPortraitTexture`'s promise always costs, even on
+ *  a cache hit (`usePortraitPair` uses this to avoid a stale-set flash at a morph boundary,
+ *  mirroring `scene/textureCache.ts`'s `getCachedSceneTexture`). */
+export function getCachedPortraitTexture(url: string): THREE.Texture | undefined {
+  return cache.get(url)
+}
+
 export function loadPortraitTexture(url: string): Promise<THREE.Texture> {
   const cached = cache.get(url)
   if (cached !== undefined) return Promise.resolve(cached)

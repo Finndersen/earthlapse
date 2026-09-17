@@ -14,6 +14,7 @@
  */
 
 import type { PortraitMorphData, TreeData } from '@/data/curated'
+import { resolveAssetUrl } from '@/lib/assetUrl'
 import type { MixKeying } from '@/lib/presentedMix'
 import type { GeoTime, PortraitMix, PortraitMorph, PortraitPlate } from '@/types/layer'
 
@@ -163,6 +164,59 @@ export function portraitDrawState({ from, to, mix }: PortraitMix): PortraitDrawS
 /** The eased blend and warp amount: smoothstep, exact at both ends. */
 export function portraitEase(alpha: number): number {
   return smoothstep01(alpha)
+}
+
+/**
+ * URLs of the plates, and their flow textures, just outside the pair drawn at `t` — the next
+ * older plate past `older` and the next younger plate past `younger` — so ordinary
+ * playback/scrubbing across the next divergence lands on an already-cached set
+ * (`usePortraitPair`'s doc comment on the flash this prevents). Mirrors `SceneView.tsx`'s
+ * `neighbourUrls`, adapted for a plate's own morph carrying two flow textures rather than one
+ * shared crossfade. `[]` when `index` is `null` (no portraits published) or a neighbour doesn't
+ * exist (the oldest/youngest plate).
+ *
+ * A pair's flow textures live on its *younger* plate's `morphFromOlder` (`indexPortraits`
+ * attaches each morph to the plate named by its `younger` field) — so stepping one plate further
+ * into the past needs `older`'s own `morphFromOlder` (the flow for the (next-older, `older`)
+ * pair, where `older` is the younger end), not the next-older plate's own field, which would be
+ * the flow one step further still. Stepping one plate closer to the present is the mirror: the
+ * flow for the (`younger`, next-younger) pair lives on the next-younger plate's own
+ * `morphFromOlder`, since it is the younger end of that pair. `older`/`younger` are the same
+ * plate when the drawn pair is a single settled plate (`portraitDrawState`'s alone state); both
+ * rules still apply independently and add no duplicate — one uses `older`'s own field, the
+ * other the *different* next-younger plate's field.
+ */
+export function portraitNeighbourUrls(
+  index: PortraitIndex | null,
+  older: PortraitPlate,
+  younger: PortraitPlate,
+  assetBase: string,
+): string[] {
+  if (index === null) return []
+  const { plates } = index
+  const olderIndex = plates.findIndex((p) => p.nodeId === older.nodeId)
+  const youngerIndex = plates.findIndex((p) => p.nodeId === younger.nodeId)
+
+  const urls: string[] = []
+  const addFlow = (morph: PortraitMorph | undefined): void => {
+    if (morph === undefined) return
+    urls.push(resolveAssetUrl(assetBase, morph.forward))
+    urls.push(resolveAssetUrl(assetBase, morph.backward))
+  }
+
+  // plates is ascending by tDivergence (youngest first, see PortraitIndex), so the next-older
+  // plate sits one index past `older` and the next-younger one sits one index before `younger`.
+  const nextOlder = olderIndex === -1 ? undefined : plates[olderIndex + 1]
+  if (nextOlder !== undefined) {
+    urls.push(resolveAssetUrl(assetBase, nextOlder.image))
+    addFlow(older.morphFromOlder)
+  }
+  const nextYounger = youngerIndex === -1 ? undefined : plates[youngerIndex - 1]
+  if (nextYounger !== undefined) {
+    urls.push(resolveAssetUrl(assetBase, nextYounger.image))
+    addFlow(nextYounger.morphFromOlder)
+  }
+  return urls
 }
 
 /** A flow texture byte back to a displacement in plate UV (pipeline/flowfield.py's encoding). */

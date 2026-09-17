@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { loadPortraitTexture } from './portraitTextures'
+import { getCachedPortraitTexture, loadPortraitTexture } from './portraitTextures'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -36,5 +36,21 @@ describe('loadPortraitTexture', () => {
     expect(load).toHaveBeenCalledTimes(1)
     expect(second).toBe(first)
     expect(third).toBe(first)
+  })
+})
+
+describe('getCachedPortraitTexture', () => {
+  it('is undefined for a URL that has never resolved', () => {
+    expect(getCachedPortraitTexture('/media/portraits/never-loaded.jpg')).toBeUndefined()
+  })
+
+  it('returns the same texture loadPortraitTexture resolved, once it has loaded', async () => {
+    stubLoader()
+    const url = '/media/portraits/sync-check.jpg'
+
+    expect(getCachedPortraitTexture(url)).toBeUndefined()
+    const texture = await loadPortraitTexture(url)
+
+    expect(getCachedPortraitTexture(url)).toBe(texture)
   })
 })

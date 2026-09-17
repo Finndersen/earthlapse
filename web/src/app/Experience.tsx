@@ -276,7 +276,7 @@ export function Experience() {
   // Hoisted above the loading/error branches below so every hook in this component runs
   // unconditionally regardless of load state (rules of hooks) — `buildLayers` tolerates the
   // `null`s that state implies and returns the empty `AppLayers` for them.
-  const { scalarLayers, nodeLayers, rasters, eventLayers } = useMemo(
+  const { scalarLayers, nodeLayers, rasters, eventLayers, nodePortraits } = useMemo(
     () => buildLayers(data.status === 'ready' ? data.manifest : null, data.status === 'ready' ? data.layerData : null),
     [data],
   )
@@ -374,6 +374,7 @@ export function Experience() {
   const hudScalarEntries = manifest.layers.filter((l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable)
   const lineageEntry = manifest.layers.find((l) => l.dataKind === 'node')
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
+  const lineagePortraits = lineageEntry ? (nodePortraits.get(lineageEntry.id) ?? null) : null
   const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
   // The subtitle above the timeline: the scene's short `title` as a heading over its longer
@@ -455,7 +456,9 @@ export function Experience() {
         feed={<EventFeed t={t} scale={FULL_DOMAIN_SYMLOG_SCALE} events={manifest.events} onEventActivate={openEventDetail} />}
         title={<TimeTitle t={t} />}
         badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
-        ancestor={nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} /> : null}
+        ancestor={
+          nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
+        }
         caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
         chart={
           expandedChartLayer ? (

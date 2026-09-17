@@ -1,10 +1,11 @@
 'use client'
 
 /**
- * `<AncestorPanel layer t assetBase />` — `<AncestorPortrait>` above `<AncestorReadout>` in
- * one column, for the shell's ancestor slot (DESIGN §10). This is the only place the two are
- * composed: it owns the flex column between them so the portrait's own edge always tracks the
- * text's, whichever way the slot aligns (flex-end at every breakpoint, desktop and phone alike).
+ * `<AncestorPanel layer t assetBase portraits />` — `<AncestorPortrait>` above
+ * `<AncestorReadout>` in one column, for the shell's ancestor slot (DESIGN §10). This is the
+ * only place the two are composed: it owns the flex column between them so the portrait's own
+ * edge always tracks the text's, whichever way the slot aligns (flex-end at every breakpoint,
+ * desktop and phone alike).
  *
  * Without this wrapper, a plain `<div>` here shrink-wraps to its widest child — the portrait
  * plate, or the specimen line below it, whichever is wider at a given `t`. The plate itself
@@ -20,6 +21,7 @@
 
 import type { GeoTime, Layer, NodeValue } from '@/types/layer'
 
+import type { PortraitIndex } from '../portraits'
 import { AncestorPortrait } from './AncestorPortrait'
 import { AncestorReadout } from './AncestorReadout'
 import styles from './hud.module.css'
@@ -28,12 +30,14 @@ export interface AncestorPanelProps {
   layer: Layer<NodeValue>
   t: GeoTime
   assetBase: string
+  /** Forwarded to `<AncestorPortrait>` for neighbour preloading only — see its own doc comment. */
+  portraits: PortraitIndex | null
 }
 
-export function AncestorPanel({ layer, t, assetBase }: AncestorPanelProps) {
+export function AncestorPanel({ layer, t, assetBase, portraits }: AncestorPanelProps) {
   return (
     <div className={styles.panel} data-testid="ancestor-readout">
-      <AncestorPortrait layer={layer} t={t} assetBase={assetBase} />
+      <AncestorPortrait layer={layer} t={t} assetBase={assetBase} portraits={portraits} />
       <AncestorReadout layer={layer} t={t} />
     </div>
   )

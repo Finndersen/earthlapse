@@ -35,6 +35,17 @@ const LINEAGE_DATA: TreeData = {
   nodes: [{ id: 'luca', parent: null, label: 'LUCA', tDivergence: 4e9, representative: null, note: null, citation: null }],
 }
 
+// Same lineage id, but with a published portrait, for the `nodePortraits` coverage below.
+const PORTRAIT_LINEAGE_DATA: TreeData = {
+  ...LINEAGE_DATA,
+  portraits: {
+    plates: [
+      { nodeId: 'luca', image: 'portraits/luca.png', plate: 'MICROSCOPE', pinned: '0123456789abcdef', width: 1024, height: 1024 },
+    ],
+    morphs: [],
+  },
+}
+
 const PALEODEM_ENTRY = baseManifestEntry({ id: 'paleodem', surface: 'globe', dataKind: 'raster' })
 const PALEODEM_DATA = { id: 'paleodem', frames: [{ t: 0, ref: 'a.png' }] }
 
@@ -79,6 +90,7 @@ describe('buildLayers', () => {
     expect(empty.nodeLayers.size).toBe(0)
     expect(empty.eventLayers.size).toBe(0)
     expect(empty.rasters.size).toBe(0)
+    expect(empty.nodePortraits.size).toBe(0)
   })
 
   it('wraps a scalar entry as a Layer<ScalarValue>', () => {
@@ -93,6 +105,21 @@ describe('buildLayers', () => {
     const layerData = new Map<string, LayerData>([['lineage', LINEAGE_DATA]])
     const { nodeLayers } = buildLayers(manifest, layerData)
     expect(nodeLayers.get('lineage')?.sample(4e9)?.id).toBe('luca')
+  })
+
+  it('omits a node entry from nodePortraits when its lineage publishes no portraits', () => {
+    const manifest = manifestWith([LINEAGE_ENTRY])
+    const layerData = new Map<string, LayerData>([['lineage', LINEAGE_DATA]])
+    const { nodePortraits } = buildLayers(manifest, layerData)
+    expect(nodePortraits.has('lineage')).toBe(false)
+  })
+
+  it('indexes a node entry\'s published portraits into nodePortraits, keyed like nodeLayers', () => {
+    const manifest = manifestWith([LINEAGE_ENTRY])
+    const layerData = new Map<string, LayerData>([['lineage', PORTRAIT_LINEAGE_DATA]])
+    const { nodePortraits } = buildLayers(manifest, layerData)
+    expect(nodePortraits.get('lineage')?.plates).toHaveLength(1)
+    expect(nodePortraits.get('lineage')?.plates[0]?.nodeId).toBe('luca')
   })
 
   it('hands a raster entry through as parsed data, not a Layer, keyed by id', () => {

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createNodeLayer } from '../factories'
 import { ANCESTOR_DATA, ANCESTOR_MANIFEST } from '../fixtures'
+import { indexPortraits } from '../portraits'
 import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA } from '../portraitFixtures'
 import { AncestorPanel } from './AncestorPanel'
 
@@ -21,7 +22,8 @@ afterEach(() => {
 describe('<AncestorPanel>', () => {
   it('renders the portrait above the readout under one testid, in the same DOM order every time', () => {
     const layer = createNodeLayer(PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA)
-    const { getByTestId } = render(<AncestorPanel layer={layer} t={1e4} assetBase="/media" />)
+    const portraits = indexPortraits(PORTRAIT_TREE_DATA)
+    const { getByTestId } = render(<AncestorPanel layer={layer} t={1e4} assetBase="/media" portraits={portraits} />)
 
     const panel = getByTestId('ancestor-readout')
     const portrait = panel.querySelector('[data-testid="ancestor-portrait"]')
@@ -34,7 +36,7 @@ describe('<AncestorPanel>', () => {
 
   it('still renders the readout, under the same testid, for a lineage with no portraits at all', () => {
     const layer = createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)
-    const { getByTestId } = render(<AncestorPanel layer={layer} t={5e7} assetBase="/media" />)
+    const { getByTestId } = render(<AncestorPanel layer={layer} t={5e7} assetBase="/media" portraits={null} />)
 
     const panel = getByTestId('ancestor-readout')
     expect(panel.querySelector('[data-testid="ancestor-portrait"]')).toBeNull()

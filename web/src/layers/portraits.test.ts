@@ -14,6 +14,7 @@ import {
   portraitAt,
   portraitDrawState,
   portraitEase,
+  portraitNeighbourUrls,
 } from './portraits'
 
 const index = indexPortraits(PORTRAIT_TREE_DATA)!
@@ -174,6 +175,65 @@ describe('portraitDrawState', () => {
       alpha: 0,
       morph: null,
     })
+  })
+})
+
+describe('portraitNeighbourUrls', () => {
+  it('is empty with no index', () => {
+    expect(portraitNeighbourUrls(null, plateOf('tetrapod'), plateOf('primate'), '/media')).toEqual([])
+  })
+
+  it("uses the next-older plate's image but `older`'s OWN morphFromOlder for its flow — not the next-older plate's own field", () => {
+    // Drawn pair (primate, human): the next plate further back is tetrapod. The flow between
+    // (tetrapod, primate) lives on `primate.morphFromOlder` (primate is the *younger* end of
+    // that pair) — tetrapod has no morphFromOlder of its own; that would be the flow one step
+    // further still, toward luca.
+    expect(portraitNeighbourUrls(index, plateOf('primate'), plateOf('human'), '/media')).toEqual([
+      '/media/portraits/tetrapod.png',
+      '/media/portraits/morphs/tetrapod--primate.forward.png',
+      '/media/portraits/morphs/tetrapod--primate.backward.png',
+    ])
+  })
+
+  it("uses the next-younger plate's own morphFromOlder for its flow", () => {
+    // Drawn pair (tetrapod, primate): the next plate closer to the present is human, whose own
+    // morphFromOlder is the (primate, human) flow. tetrapod itself has no morphFromOlder, so
+    // the older side here contributes no flow.
+    expect(portraitNeighbourUrls(index, plateOf('tetrapod'), plateOf('primate'), '/media')).toEqual([
+      '/media/portraits/luca.png',
+      '/media/portraits/human.png',
+      '/media/portraits/morphs/primate--human.forward.png',
+      '/media/portraits/morphs/primate--human.backward.png',
+    ])
+  })
+
+  it('omits a side with no neighbour — the oldest plate has none further back, the youngest none closer to the present', () => {
+    expect(portraitNeighbourUrls(index, plateOf('luca'), plateOf('luca'), '/media')).toEqual(['/media/portraits/tetrapod.png'])
+    expect(portraitNeighbourUrls(index, plateOf('human'), plateOf('human'), '/media')).toEqual([
+      '/media/portraits/primate.png',
+      '/media/portraits/morphs/primate--human.forward.png',
+      '/media/portraits/morphs/primate--human.backward.png',
+    ])
+  })
+
+  it('handles the alone state (older === younger) without double-adding — both sides add their own, distinct flow exactly once', () => {
+    // primate alone: the older-side flow (toward tetrapod) lives on primate's own
+    // morphFromOlder; the younger-side flow (toward human) lives on human's own morphFromOlder.
+    // Both are present, both are different morphs, and older/younger being the same plate here
+    // must not cause either to be skipped or added twice.
+    expect(portraitNeighbourUrls(index, plateOf('primate'), plateOf('primate'), '/media')).toEqual([
+      '/media/portraits/tetrapod.png',
+      '/media/portraits/morphs/tetrapod--primate.forward.png',
+      '/media/portraits/morphs/tetrapod--primate.backward.png',
+      '/media/portraits/human.png',
+      '/media/portraits/morphs/primate--human.forward.png',
+      '/media/portraits/morphs/primate--human.backward.png',
+    ])
+  })
+
+  it('resolves every URL against assetBase, like the drawn plates themselves', () => {
+    const [nextOlder] = portraitNeighbourUrls(index, plateOf('primate'), plateOf('human'), 'https://cdn.example/media/')
+    expect(nextOlder).toBe('https://cdn.example/media/portraits/tetrapod.png')
   })
 })
 

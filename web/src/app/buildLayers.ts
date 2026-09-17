@@ -11,10 +11,18 @@
  * can't supply. Both are handed through next to their manifest entry, keyed by id (ADR-013:
  * "buildLayers.ts... must select raster layers by id once there are several", now true with
  * `paleodem` and `plates_neoproterozoic` both on the globe surface).
+ *
+ * `nodePortraits` is the same exception for a node layer's `PortraitIndex` (ADR-015): the
+ * ancestor portrait's neighbour preload (`layers/portraits.ts`'s `portraitNeighbourUrls`) needs
+ * to see the plates just outside whatever `t` is showing, which `Layer<NodeValue>.sample(t)`
+ * likewise can't supply. Indexed once here and passed into `createNodeLayer` too, so its own
+ * `sample()` closure and this map share the same `PortraitIndex` rather than each building an
+ * independent one from the same `TreeData`. Omitted entirely for a lineage with no portraits,
+ * same as `indexPortraits` itself.
  */
 
 import type { EventsData, RasterData, SeriesData, TreeData } from '@/data/curated'
-import { createNodeLayer, createScalarLayer } from '@/layers'
+import { createNodeLayer, createScalarLayer, indexPortraits, type PortraitIndex } from '@/layers'
 import type { LayerData } from '@/shell'
 import type { Layer, NodeValue, ScalarValue, TimelineEvent } from '@/types/layer'
 import type { LayerManifest, Manifest } from '@/types/manifest'
@@ -38,6 +46,9 @@ export interface AppLayers {
   eventLayers: ReadonlyMap<string, EventsLayerEntry>
   /** Every globe raster layer, keyed by curated id (`paleodem`, `plates_neoproterozoic`). */
   rasters: ReadonlyMap<string, RasterLayerEntry>
+  /** Each node layer's full `PortraitIndex`, keyed by the same id as `nodeLayers` — omitted for
+   *  a lineage that publishes no portraits (see this module's doc comment). */
+  nodePortraits: ReadonlyMap<string, PortraitIndex>
 }
 
 const EMPTY_LAYERS: AppLayers = {
@@ -45,6 +56,7 @@ const EMPTY_LAYERS: AppLayers = {
   nodeLayers: new Map(),
   eventLayers: new Map(),
   rasters: new Map(),
+  nodePortraits: new Map(),
 }
 
 /**
@@ -62,6 +74,7 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
   const nodeLayers = new Map<string, Layer<NodeValue>>()
   const eventLayers = new Map<string, EventsLayerEntry>()
   const rasters = new Map<string, RasterLayerEntry>()
+  const nodePortraits = new Map<string, PortraitIndex>()
 
   for (const entry of manifest.layers) {
     const parsed = layerData.get(entry.id)
@@ -74,9 +87,13 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
         // `LayerData` union back to the shape its own dispatch already picked.
         scalarLayers.set(entry.id, createScalarLayer(entry, parsed as SeriesData))
         break
-      case 'node':
-        nodeLayers.set(entry.id, createNodeLayer(entry, parsed as TreeData))
+      case 'node': {
+        const treeData = parsed as TreeData
+        const portraits = indexPortraits(treeData)
+        nodeLayers.set(entry.id, createNodeLayer(entry, treeData, portraits))
+        if (portraits !== null) nodePortraits.set(entry.id, portraits)
         break
+      }
       case 'raster':
         rasters.set(entry.id, { entry, data: parsed as RasterData })
         break
@@ -86,7 +103,7 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
     }
   }
 
-  return { scalarLayers, nodeLayers, eventLayers, rasters }
+  return { scalarLayers, nodeLayers, eventLayers, rasters, nodePortraits }
 }
 
 /** Every `TimelineEvent` a raw `eventLayers` entry carries, or `[]` when the layer isn't

@@ -28,18 +28,22 @@
  *   uncertainty band when the layer carries `bounds`. Always fully drawn — whether it is open
  *   is the caller's state; `onClose` is its own close button.
  * - `<AncestorReadout layer t />` — label, representative organism, "since <t>".
- * - `<AncestorPortrait layer t assetBase />` — the ancestor's specimen plate, flow-morphing
- *   into the next across a band centred on each divergence (ADR-015); renders nothing when the
- *   lineage publishes no portrait at `t`. Its target is pure in `t`; the displayed morph is
- *   rate-limited to a minimum duration.
- * - `<AncestorPanel layer t assetBase />` — `<AncestorPortrait>` above `<AncestorReadout>` in
- *   the ancestor slot; use this rather than composing the two yourself, since it also carries
- *   the alignment that keeps the portrait's edge locked to the readout text's.
+ * - `<AncestorPortrait layer t assetBase portraits />` — the ancestor's specimen plate,
+ *   flow-morphing into the next across a band centred on each divergence (ADR-015); renders
+ *   nothing when the lineage publishes no portrait at `t`. Its target is pure in `t`; the
+ *   displayed morph is rate-limited to a minimum duration. `portraits` (the lineage's
+ *   `PortraitIndex`, or `null`) is used only to preload neighbouring plates/flow textures.
+ * - `<AncestorPanel layer t assetBase portraits />` — `<AncestorPortrait>` above
+ *   `<AncestorReadout>` in the ancestor slot; use this rather than composing the two yourself,
+ *   since it also carries the alignment that keeps the portrait's edge locked to the readout
+ *   text's.
  *
  * ## Portrait helpers (pure)
  * - `portraitAt(index, t)` / `indexPortraits(data)` — the portrait target; `MORPH_BAND_FRACTION`
  *   is its one tunable.
  * - `portraitDrawState(mix)` — older/younger/alpha/morph in draw order.
+ * - `portraitNeighbourUrls(index, older, younger, assetBase)` — the plates/flow textures just
+ *   outside the drawn pair, for `<AncestorPortrait>`'s neighbour preload.
  * - `decodeFlowByte(byte, range)` — the flow texture encoding.
  */
 
@@ -51,6 +55,7 @@ export {
   MORPH_BAND_FRACTION,
   portraitAt,
   portraitDrawState,
+  portraitNeighbourUrls,
   type PortraitDrawState,
   type PortraitIndex,
 } from './portraits'

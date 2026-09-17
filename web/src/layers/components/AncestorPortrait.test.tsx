@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createNodeLayer } from '../factories'
 import { ANCESTOR_DATA, ANCESTOR_MANIFEST } from '../fixtures'
+import { indexPortraits } from '../portraits'
 import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA } from '../portraitFixtures'
 import { AncestorPortrait } from './AncestorPortrait'
 
@@ -10,6 +11,7 @@ import { AncestorPortrait } from './AncestorPortrait'
 // the older plate at full opacity and the younger over it at the eased alpha.
 
 const layer = createNodeLayer(PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA)
+const portraits = indexPortraits(PORTRAIT_TREE_DATA)
 
 function images(container: HTMLElement) {
   const older = container.querySelector<HTMLImageElement>('[data-testid="portrait-older"]')
@@ -30,18 +32,20 @@ afterEach(() => {
 
 describe('<AncestorPortrait>', () => {
   it('renders nothing for a lineage without portraits', () => {
-    const { container } = render(<AncestorPortrait layer={createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)} t={5e7} assetBase="/media" />)
+    const { container } = render(
+      <AncestorPortrait layer={createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)} t={5e7} assetBase="/media" portraits={null} />,
+    )
     expect(container.innerHTML).toBe('')
   })
 
   it('renders nothing before the oldest plate', () => {
-    const { container } = render(<AncestorPortrait layer={layer} t={4.4e9} assetBase="/media" />)
+    const { container } = render(<AncestorPortrait layer={layer} t={4.4e9} assetBase="/media" portraits={portraits} />)
     expect(container.innerHTML).toBe('')
   })
 
   it('crossfades the two plates of a morph band at the eased alpha, resolving URLs against assetBase', () => {
     const t = 6.6e7 // primate's own divergence: the band is centred here, so the mix is 0.5.
-    const { container, getByTestId } = render(<AncestorPortrait layer={layer} t={t} assetBase="/media" />)
+    const { container, getByTestId } = render(<AncestorPortrait layer={layer} t={t} assetBase="/media" portraits={portraits} />)
 
     const { older, younger } = images(container)
     expect(older.getAttribute('src')).toBe('/media/portraits/tetrapod.png')
@@ -54,15 +58,15 @@ describe('<AncestorPortrait>', () => {
   })
 
   it('marks a pair with no computed morph as a plain crossfade', () => {
-    const { getByTestId } = render(<AncestorPortrait layer={layer} t={3.75e8} assetBase="/media" />)
+    const { getByTestId } = render(<AncestorPortrait layer={layer} t={3.75e8} assetBase="/media" portraits={portraits} />)
     expect(getByTestId('ancestor-portrait').dataset.transition).toBe('crossfade')
   })
 
   it('rate-limits a jump across a boundary to a visible transition before settling', async () => {
-    const { container, rerender } = render(<AncestorPortrait layer={layer} t={1e8} assetBase="/media" />)
+    const { container, rerender } = render(<AncestorPortrait layer={layer} t={1e8} assetBase="/media" portraits={portraits} />)
     expect(images(container).younger.getAttribute('src')).toBe('/media/portraits/tetrapod.png')
 
-    act(() => rerender(<AncestorPortrait layer={layer} t={1e6} assetBase="/media" />))
+    act(() => rerender(<AncestorPortrait layer={layer} t={1e6} assetBase="/media" portraits={portraits} />))
     await new Promise((resolve) => setTimeout(resolve, 250))
     const midway = images(container)
     expect(midway.older.getAttribute('src')).toBe('/media/portraits/tetrapod.png')

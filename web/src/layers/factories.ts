@@ -11,7 +11,7 @@ import type { EventsData, SeriesData, TreeData } from '@/data/curated'
 import type { EventsValue, GeoTime, Layer, NodeValue, ScalarValue } from '@/types/layer'
 import type { LayerManifest } from '@/types/manifest'
 
-import { indexPortraits, portraitAt } from './portraits'
+import { indexPortraits, portraitAt, type PortraitIndex } from './portraits'
 
 function withinTimeDomain(timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): boolean {
   const [newest, oldest] = timeDomain
@@ -44,10 +44,16 @@ export function createScalarLayer(entry: LayerManifest, data: SeriesData): Layer
  * `sample(t)` is the ancestor alive at `t` — the youngest node whose divergence has already
  * happened by `t` (see `sampleTree`) — or `null` outside `entry.timeDomain` or before the
  * root has diverged. When the tree publishes portraits (ADR-015), the value also carries the
- * portrait target at `t` (`portraitAt`); the index is built once, here, not per sample.
+ * portrait target at `t` (`portraitAt`); the index is built once, not per sample.
+ *
+ * `portraits` defaults to `indexPortraits(data)` so every direct caller (tests build a `Layer`
+ * straight from fixture `TreeData` this way) keeps working unchanged, but a caller that also
+ * needs the index itself for something else — `buildLayers.ts`'s `nodePortraits`, built for
+ * `AncestorPortrait`'s neighbour preload, which needs the plates just outside `t` that
+ * `sample(t)` alone can't supply — can build it once and pass it in here too, rather than this
+ * function silently indexing the same `TreeData` a second time.
  */
-export function createNodeLayer(entry: LayerManifest, data: TreeData): Layer<NodeValue> {
-  const portraits = indexPortraits(data)
+export function createNodeLayer(entry: LayerManifest, data: TreeData, portraits: PortraitIndex | null = indexPortraits(data)): Layer<NodeValue> {
   return {
     id: entry.id,
     name: entry.name,
