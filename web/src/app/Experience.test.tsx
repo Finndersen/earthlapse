@@ -126,27 +126,30 @@ describe('Experience (W12a integration)', () => {
     12000,
   )
 
-  it('shows ~277 ppm for CO2 at t=0', async () => {
+  // These used to assert CO2's HUD readout rendered its sampled value ("~277 ppm at t=0") and
+  // "no data" past its coverage — real integration coverage that a fetched scalar layer's
+  // sample reaches a rendered `<ScalarReadout>`. CO2 is now hidden from the HUD entirely
+  // (`@/layers/hudVisibility.ts`, 2026-09-18: "remove co2 section so thers more room for events
+  // list"), so that specific readout never renders any more, at any `t` — replaced below with an
+  // assertion of exactly that (still fetched and sampled correctly under the hood; simply not
+  // shown). Note this stub fixture has no `population` layer (`public/stub/manifest.json` only
+  // ever declared co2/day_length/lineage/paleodem), so — with CO2 now excluded — there is no
+  // remaining chartable HUD scalar to repoint the original "value renders correctly" integration
+  // check at here; that specific coverage (a real sample flowing into a rendered readout, as
+  // opposed to a hidden-row check) now lives only in component-level tests
+  // (`src/layers/components/*.test.tsx`) and the real (non-stub) production manifest, not here.
+  it('never renders a CO2 HUD readout, at t=0 or well past its coverage', async () => {
     await renderSettled()
 
     act(() => {
       useTimeStore.getState().setT(0)
     })
-
-    const readout = screen.getByTestId('scalar-readout-co2')
-    expect(readout.textContent).toMatch(/277/)
-    expect(readout.textContent).toMatch(/ppm/)
-  })
-
-  it('shows "no data" for CO2 at t=6e8, beyond its coverage', async () => {
-    await renderSettled()
+    expect(screen.queryByTestId('scalar-readout-co2')).toBeNull()
 
     act(() => {
       useTimeStore.getState().setT(6e8)
     })
-
-    const readout = screen.getByTestId('scalar-readout-co2')
-    expect(readout.textContent).toMatch(/no data/i)
+    expect(screen.queryByTestId('scalar-readout-co2')).toBeNull()
   })
 
   it('titles the lens with the current time and its eon/era', async () => {

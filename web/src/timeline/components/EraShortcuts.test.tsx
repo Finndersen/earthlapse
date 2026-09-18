@@ -16,10 +16,9 @@ function renderShortcuts({
 }
 
 // The Earth/Dinosaurs/Humans shortcut group (user ask, 2026-09-18): a prominent, always-present
-// control, now inside `<Timeline>`'s own bottom-chrome controls row (moved from the shell's title
-// header in a later pass, same date — see `EraShortcuts.tsx`'s own doc comment). Every entry is a
-// plain alias for `onSelectSection(id)` — see `../eraShortcuts.ts` for why those three ids and no
-// others.
+// control, rendered by `Timeline.tsx` inside its own `.controlsSections` (`EraShortcuts.tsx`'s
+// own doc comment has the full four-placement history). Every entry is a plain alias for
+// `onSelectSection(id)` — see `../eraShortcuts.ts` for why those three ids and no others.
 describe('<EraShortcuts>', () => {
   it('renders exactly the Earth, Dinosaurs and Humans shortcuts, as one labelled group', () => {
     renderShortcuts()

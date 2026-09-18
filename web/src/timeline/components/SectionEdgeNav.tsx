@@ -76,7 +76,13 @@ export function SectionEdgeNav({ sectionId, onSelectSection, children }: Section
       >
         <span aria-hidden="true">{'‹'}</span>
       </button>
-      <div className={styles.stack}>{children}</div>
+      {/* `data-testid`: a stable QA-harness hook for "the timeline's own inset track bounds"
+          (user report, 2026-09-18: "constrain the horizontal layout of the bottom row... within
+          the horizontal bounds of the timeline" — `Timeline.module.css`'s `--timeline-gutter` doc
+          comment) — CSS Modules' hashed class names have nothing stable to select by otherwise. */}
+      <div className={styles.stack} data-testid="timeline-track-stack">
+        {children}
+      </div>
       <button
         type="button"
         className={styles.edgeButton}

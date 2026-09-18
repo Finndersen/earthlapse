@@ -4,7 +4,7 @@
   gap: 14px;
 }
 
-/* `flex-end`, not `center` (re-review fix, 2026-09-15): the mode toggle's own label-above-buttons
+/* `flex-end`, not `center`: the mode toggle's own label-above-buttons
    layout (`.modeGroup` below) makes it a 35px-tall column, while `sound`/`.speedSelect` beside it
    are bare ~20px controls with no label of their own. Centring the row vertically centred the
    *group's* own bounding box, not the interactive controls within it — the mode toggle's actual
@@ -43,10 +43,13 @@
   outline: none;
 }
 
+/* 48px: font-size scaled by the same ~9% so the glyph doesn't look small inside its own ring.
+   `Timeline.module.css`'s `.controlsRow` doc comment records this size as what sets that row's
+   own height. */
 .playButton {
-  width: 44px;
-  height: 44px;
-  font-size: 19px;
+  width: 48px;
+  height: 48px;
+  font-size: 21px;
 }
 
 .playButton.playing {
@@ -56,21 +59,21 @@
 }
 
 /* Back/forward read at 34px (above) on a mouse, but a touch target under 44px is easy to miss
-   — bump the hit area to the same 44px floor as the play button on a coarse pointer, without
-   growing the button on a mouse where the smaller ring reads better next to the larger play
-   button. */
+   — bump the hit area to the same floor as the play button (48px, up from 44px alongside that
+   button's own "slightly larger" nudge — `.playButton`'s own doc comment) on a coarse pointer,
+   without growing the button on a mouse where the smaller ring reads better next to the larger
+   play button. */
 @media (pointer: coarse) {
   .ghostButton {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
   }
 }
 
 /* Fixed width (the widest option, "0.25x", plus padding) so a different selected speed never
    changes this element's own rendered width — a native <select> otherwise sizes to its current
    option's text, which would shift the mode toggle/scale toggle/sound controls beside it every
-   time the speed changes (follow-up pass item 10). Centred text reads fine at every width since
-   every option is short. */
+   time the speed changes. Centred text reads fine at every width since every option is short. */
 .speedSelect {
   width: 46px;
   background: transparent;
@@ -92,14 +95,17 @@
   outline: none;
 }
 
-/* The mode toggle's own visible label, stacked above the buttons rather than beside them (user
-   report, 2026-09-15) — same small-caps HUD look as `Timeline.module.css`'s `.scaleLabel`
-   (mono, letter-spaced caps, faint), duplicated rather than imported since CSS Modules classes
-   are scoped per file and this toggle lives here, not in `Timeline.tsx`. */
+/* The mode toggle's own visible label, stacked above the buttons — same small-caps HUD look as
+   `Timeline.module.css`'s `.scaleLabel` (mono, letter-spaced caps, faint), duplicated rather than
+   imported since CSS Modules classes are scoped per file and this toggle lives here, not in
+   `Timeline.tsx`. `align-items: center` centres the label over the button pill specifically,
+   rather than left-aligning it against whichever of the label text or the pill happens to be
+   wider. `Timeline.module.css`'s `.scaleGroup` duplicates this same layout independently (this
+   file's own `.groupLabel` doc comment explains why it isn't a shared rule). */
 .modeGroup {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
 }
 
@@ -144,20 +150,18 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* A fixed-width slot, always present in the layout (follow-up pass item 10): 14ch comfortably
-   outlasts any real `formatRate` output ("≈ " plus up to three integer digits, a two-decimal
-   Gyr/s figure and its unit — e.g. "≈ 77.4 Gyr/s" measured near the oldest edge at 64x), with
-   `overflow`/`text-overflow` as a safety net rather than a promise this is ever reached. Right-
-   aligned so the numerals hug the row's own outer edge. `visibility`, not `display`, when
-   empty — the slot's width must never depend on whether there is anything to show.
-   `min-height` (re-review fix, 2026-09-15) for the same reason: an `inline-block` with a genuinely
-   empty text node (not just visually hidden) generates no line box at all, so this measured 0px
-   tall while `visible` was false — fine on its own, but `Timeline.tsx` places this in
-   `.rateReadoutRow`, which `.controlsSecondary`'s `flex-wrap: wrap` can push onto its own line;
-   a 0px-tall line there jumped to this element's real ~11px line height the moment playback
-   started and the readout got text, shifting the whole `.controlsRow` (and the track below it)
-   down by that much. Pinning the height to what it already renders at when visible removes the
-   jump instead of chasing it at the wrapping container. */
+/* A fixed-width slot, always present in the layout: 14ch comfortably outlasts any real
+   `formatRate` output ("≈ " plus up to three integer digits, a two-decimal Gyr/s figure and its
+   unit — e.g. "≈ 77.4 Gyr/s" measured near the oldest edge at 64x), with `overflow`/`text-overflow`
+   as a safety net rather than a promise this is ever reached. Right-aligned so the numerals hug
+   the row's own outer edge. `visibility`, not `display`, when empty — the slot's width must never
+   depend on whether there is anything to show. `min-height` for the same reason: an
+   `inline-block` with a genuinely empty text node generates no line box at all, so this would
+   measure 0px tall while `visible` is false; `Timeline.tsx` places this in `.rateReadoutRow`,
+   which `.controlsSecondary`'s `flex-wrap: wrap` can push onto its own line, and a 0px-tall line
+   there would jump to this element's real ~11px line height the moment playback started, shifting
+   `.controlsRow` (and the track below it) down by that much. Pinning the height to what it
+   already renders at when visible removes the jump. */
 .rateReadout {
   display: inline-block;
   width: 14ch;
@@ -180,19 +184,15 @@
 
 /* "Time compressed" (ADR-029) — amber like the playing state and the active mode-toggle option
    (`.playButton.playing`/`.modeButton[aria-pressed='true']` above), the shared `--hud-accent`
-   lens language rather than a new idiom. A fixed-width slot, always mounted (re-review fix,
-   2026-09-15, mirroring `.rateReadout`'s own reserved-slot pattern above, for the same reason).
-   `width`, not `min-width` (re-review fix, 2026-09-15): the label's own text — uppercase,
-   letter-spaced — renders at ~96px in this font stack, past what `15ch` (~90px) actually
-   computes to, so a `min-width` floor let the box grow those extra ~6px the moment the badge
-   became visible, shifting `RateReadout` beside it and everything before it on the line. `width`
-   is a hard cap instead of a floor (with `overflow: hidden` already in place as a safety net for
-   a narrower system font falling back), so the slot's own footprint never changes; 17ch keeps a
-   safety margin over the measured ~96px the same way `.rateReadout`'s 14ch outlasts its own
-   longest real output. `min-height` for the same reason as `.rateReadout` above: an empty text
-   node collapses this to 0px tall, which — inside `.rateReadoutRow`, which `.controlsSecondary`'s
-   `flex-wrap: wrap` can push onto its own line — jumped to the label's real ~11px line height the
-   moment it appeared, on top of `RateReadout`'s own version of the same jump. */
+   lens language rather than a new idiom. A fixed-width slot, always mounted, mirroring
+   `.rateReadout`'s own reserved-slot pattern above. `width`, not `min-width`: the label's own
+   text — uppercase, letter-spaced — renders at ~96px in this font stack, past what `15ch` (~90px)
+   actually computes to, so a `min-width` floor would let the box grow those extra ~6px the moment
+   the badge became visible, shifting `RateReadout` beside it and everything before it on the
+   line. `width` is a hard cap instead (with `overflow: hidden` as a safety net for a narrower
+   system font falling back); 17ch keeps a safety margin over the measured ~96px the same way
+   `.rateReadout`'s 14ch outlasts its own longest real output. `min-height` for the same reason as
+   `.rateReadout` above. */
 .timeCompressed {
   display: inline-flex;
   align-items: center;

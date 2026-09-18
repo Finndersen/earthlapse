@@ -30,6 +30,7 @@ function renderShell({
   globeExpanded = false,
   chart = <div>CHART_SLOT</div> as ReactNode,
   globeCaption = '',
+  viewModeToggleHeightPx = 0,
 } = {}) {
   return render(
     <ShellLayout
@@ -45,6 +46,7 @@ function renderShell({
       chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
       globeExpanded={globeExpanded}
+      viewModeToggleHeightPx={viewModeToggleHeightPx}
     />,
   )
 }
@@ -98,34 +100,44 @@ describe('ShellLayout', () => {
     expect(screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)?.textContent).not.toContain('Paleogeography')
   })
 
-  it("also shows the globe caption in the expanded stage slot — above the timeline, where Globe's own backdrop can't safely place it itself", () => {
+  // User ask, 2026-09-18: "the extra globe labels when fullscreen like 'Geography unknown',
+  // 'Snowball Earth · extent contested' etc can be removed" — scoped to expanded only, per
+  // `ShellLayout.tsx`'s own `globeCaption` doc comment. The slot itself stays mounted (it is
+  // `useChromeGap`'s own measurement anchor), just always empty while expanded.
+  it('never shows the globe caption in the expanded stage slot, however non-empty globeCaption is', () => {
     renderShell({ globeCaption: 'Impact winter', globeExpanded: true })
     const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
-    expect(stageCaption?.textContent).toBe('Impact winter')
-    // Not inside the .stage's scene-caption slot (which yields to it while the globe is
-    // expanded) or inside the orb itself.
-    const sceneCaptionSlot = screen.getByText('CAPTION_SLOT').closest(`.${styles.caption}`)
-    expect(sceneCaptionSlot?.contains(stageCaption ?? null)).toBe(false)
-    const orb = screen.getByText('GLOBE_SLOT').closest(`.${styles.orb}`)
-    expect(orb?.contains(stageCaption ?? null)).toBe(false)
+    expect(stageCaption).not.toBeNull()
+    expect(stageCaption?.textContent).toBe('')
+  })
+
+  it('still shows the globe caption under the minimised orb — only the expanded slot lost it', () => {
+    renderShell({ globeCaption: 'Impact winter', globeExpanded: false })
+    const orbLabel = document.querySelector(`.${styles.globeLabel}`)
+    expect(orbLabel?.textContent).toBe('Impact winter')
   })
 
   it.each([
-    [false, 'polite', null],
-    [true, null, 'polite'],
-  ])('announces the globe caption from exactly one live region (globeExpanded=%s)', (globeExpanded, orbLive, stageLive) => {
+    [false, 'polite'],
+    [true, null],
+  ])('keeps the orb label live only while collapsed (globeExpanded=%s)', (globeExpanded, orbLive) => {
     renderShell({ globeCaption: 'Impact winter', globeExpanded })
     const orbLabel = document.querySelector(`.${styles.globeLabel}`)
-    const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
     expect(orbLabel?.getAttribute('aria-live')).toBe(orbLive)
-    expect(stageCaption?.getAttribute('aria-live')).toBe(stageLive)
-    expect(document.querySelectorAll('[aria-live]').length).toBe(1)
   })
 
-  it('renders nothing in the expanded stage slot with no globe caption active', () => {
-    renderShell({ globeExpanded: true })
-    const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
-    expect(stageCaption?.textContent).toBe('')
+  // The expanded stage slot keeps its own `aria-live="polite"` while expanded (unchanged from
+  // before this content was removed) even though it now never has anything to announce — an
+  // always-empty live region is inert, not a second active announcer, so this is still exactly
+  // one *functioning* live region at a time (the orb label's, while collapsed; none while
+  // expanded, since there is nothing left to say).
+  it('never actually has two live regions announcing at once', () => {
+    for (const globeExpanded of [false, true]) {
+      const { unmount } = renderShell({ globeCaption: 'Impact winter', globeExpanded })
+      const liveWithText = Array.from(document.querySelectorAll('[aria-live]')).filter((el) => el.textContent !== '')
+      expect(liveWithText.length).toBeLessThanOrEqual(1)
+      unmount()
+    }
   })
 })
 

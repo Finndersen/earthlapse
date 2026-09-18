@@ -9,10 +9,13 @@
  * - The visible window is the selected **era section**'s (ADR-024): `scale.domain`, animated by
  *   the caller's `useAnimatedScale(sectionById(sectionId).window, scaleKind)`. There is still no
  *   free zoom or pan (ADR-021). The section band strip (`SectionBands`), the breadcrumb
- *   (`SectionBreadcrumb`), the always-visible Earth/Dinosaurs/Humans shortcuts (`EraShortcuts`)
- *   and the previous/next sibling-section buttons flanking the track itself (`SectionEdgeNav`,
- *   user ask, 2026-09-18 — these used to hang off the breadcrumb, see that component's own doc
- *   comment for why they moved) are the ways to change the window with a pointer; the keyboard
+ *   (`SectionBreadcrumb`) and the previous/next sibling-section buttons flanking the track itself
+ *   (`SectionEdgeNav`, user ask, 2026-09-18 — these used to hang off the breadcrumb, see that
+ *   component's own doc comment for why they moved) are the ways to change the window with a
+ *   pointer from inside this component; the always-visible Earth/Dinosaurs/Humans shortcuts
+ *   (`EraShortcuts`) are a fourth, but live outside it now, beside the shell's own title
+ *   (`ShellLayout.tsx`'s own doc comment) — this component's caller renders them directly and
+ *   feeds them the same `onSelectSection` below. The keyboard
  *   equivalents (`keyboard.ts`) are Escape/Backspace up a level, Home/`0` to Earth, and
  *   PageUp-PageDown/Shift+←→ to the previous/next sibling section. All of them report through
  *   `onSelectSection`. Stepping (transport buttons, plain ←/→) stays inside the selected
@@ -56,8 +59,9 @@
  * elsewhere (`eraNameForTime`). `SectionEdgeNav` flanks the scrub track, ruler and section bands
  * together (so all three stay pixel-aligned) with the previous/next sibling-section buttons at
  * its far left/right edges; below that sits one controls row. `TransportCore` (back/play/forward)
- * is centred in that row over the track; its left side holds `EraShortcuts` (Earth/Dinosaurs/
- * Humans, user ask, 2026-09-18) then the breadcrumb, and its right side — left to right, nearest
+ * is centred in that row over the track; its left side holds the breadcrumb alone now
+ * (`EraShortcuts` moved back up beside the shell's own title, user ask, 2026-09-18 — see
+ * `ShellLayout.tsx`'s own doc comment), and its right side — left to right, nearest
  * the core group first — holds `TransportSecondary` (sound toggle, speed select, mode toggle),
  * the scale toggle and `RateReadout` at the outer edge (`controlsRow`'s doc comment in
  * Timeline.module.css has the layout mechanics; follow-up pass items 1/2/10 cover why the row is
@@ -302,11 +306,16 @@ export function Timeline({
         <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
       </SectionEdgeNav>
       <div className={styles.controlsRow}>
-        <div className={styles.controlsSections}>
-          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
+        {/* `data-testid`s: stable QA-harness hooks for the row's own left/right edges (user
+            report, 2026-09-18: "constrain the horizontal layout of the bottom row... within the
+            horizontal bounds of the timeline" — `Timeline.module.css`'s `--timeline-gutter` doc
+            comment) — CSS Modules' hashed class names have nothing stable to select by
+            otherwise. */}
+        <div className={styles.controlsSections} data-testid="timeline-controls-sections">
           <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />
+          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
         </div>
-        <div className={styles.controlsCore}>
+        <div className={styles.controlsCore} data-testid="timeline-controls-core">
           <TransportCore
             t={t}
             window={sectionWindow}
@@ -317,7 +326,7 @@ export function Timeline({
             onPlaybackChange={onPlaybackChange}
           />
         </div>
-        <div className={styles.controlsSecondary}>
+        <div className={styles.controlsSecondary} data-testid="timeline-controls-secondary">
           <TransportSecondary playback={playback} onPlaybackChange={onPlaybackChange} sound={sound} />
           <div className={styles.scaleGroup}>
             <span id={scaleLabelId} className={styles.scaleLabel}>

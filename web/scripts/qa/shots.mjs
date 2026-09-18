@@ -12,19 +12,63 @@
  */
 
 import { rafTicks } from './hook.mjs'
-import { drawnBounds, drawnBoundsInClip, hiddenBoxOf } from './measure.mjs'
+import { boxOf, drawnBounds, drawnBoundsInClip, hiddenBoxOf } from './measure.mjs'
 import { waitForApproxUnfoldProgress, waitForFocusEaseSettle, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 import {
   BOTTOM_CHROME_SELECTOR,
   BREADCRUMB_CURRENT_SELECTOR,
+  BREADCRUMB_SELECTOR,
   CHECKPOINT_PIP_SELECTOR,
   ERA_SHORTCUTS_SELECTOR,
   GLOBE_CANVAS_SELECTOR,
   GLOBE_MAP_FIT_FRAME_SELECTOR,
+  EXPANDED_GLOBE_CAPTION_SELECTOR,
   GLOBE_SPHERE_FIT_FRAME_SELECTOR,
+  MINIMISED_GLOBE_LABEL_SELECTOR,
+  PIP_PREVIEW_SELECTOR,
   SCENE_CANVAS_SELECTOR,
   SECTION_BANDS_SELECTOR,
+  SHELL_FEED_SELECTOR,
+  SHELL_READOUTS_SELECTOR,
+  TIMELINE_CONTROLS_CORE_SELECTOR,
+  TIMELINE_CONTROLS_SECONDARY_SELECTOR,
+  TIMELINE_CONTROLS_SECTIONS_SELECTOR,
+  TIMELINE_TRACK_STACK_SELECTOR,
+  VIEW_MODE_TOGGLE_SELECTOR,
 } from './selectors.mjs'
+
+/** Whether two `{x, y, width, height}` CSS-pixel boxes (`measure.mjs`'s `PixelBox`) intersect —
+ *  used to prove two pieces of HUD chrome genuinely don't overlap, not just "look" clear in a
+ *  screenshot. Half-open on purpose (`<`/`>`, not `<=`/`>=`): two boxes exactly edge-to-edge, 0px
+ *  apart, read as clear, matching how CSS layout itself treats adjacency. */
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+}
+
+/**
+ * Runs inside the page (`page.evaluate`, self-contained — no closures over `shots.mjs`'s own
+ * module scope): the number of *distinct* direct-child pairs of `containerSelector`'s own element
+ * whose drawn boxes overlap — 0 means every child is clear of every other. Two children sitting on
+ * different wrapped flex lines never report an overlap here (their `y` ranges don't intersect),
+ * so this is a genuine "did content collide" check, not a "did the row wrap" one — root-cause
+ * regression coverage for the historical "mute/volume button overlaps the next/fast-forward
+ * button" bug (`Timeline.module.css`'s `.controlsSecondary` doc comment).
+ * @param {{ containerSelector: string }} args
+ */
+function countOverlappingChildPairs({ containerSelector }) {
+  const container = document.querySelector(containerSelector)
+  if (container === null) return 0
+  const boxes = Array.from(container.children).map((el) => el.getBoundingClientRect())
+  let overlaps = 0
+  for (let i = 0; i < boxes.length; i += 1) {
+    for (let j = i + 1; j < boxes.length; j += 1) {
+      const a = boxes[i]
+      const b = boxes[j]
+      if (a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y) overlaps += 1
+    }
+  }
+  return overlaps
+}
 
 /**
  * A thin horizontal strip through the expanded globe's own vertical centre, wide enough to prove
@@ -303,6 +347,31 @@ export default [
     t: 3_450_000_000,
   },
   {
+    name: 'expanded-globe-caption-removed',
+    description:
+      'User ask, 2026-09-18: "the extra globe labels when fullsreen like \'Geography unknown\', \'Snowball Earth · ' +
+      'extent contested\' etc can be reoved". `t: 3.45 Ga` is squarely inside the "geography unknown — artistic" ' +
+      'stylised-regime span (docs/GLOBE.md §1, 1.0-~4.4 Ga) — a real `t` that produced a caption before this ' +
+      'change, not an assumed one (this file\'s own `early-earth-archean-shore` shot already uses it for the same ' +
+      'deep-time reason). `EXPANDED_GLOBE_CAPTION_SELECTOR` must draw no text while expanded even here, and the ' +
+      'minimised orb\'s own label (unaffected, collapsed only) must still show the real caption — proving the ' +
+      "removal is scoped to *expanded* only, per the user's own \"when fullscreen\" wording.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 3_450_000_000,
+    measure: async ({ page, hook }) => {
+      await hook.setGlobeExpanded(true)
+      await hook.ready()
+      await rafTicks(page, 2)
+      const expandedText = (await page.locator(EXPANDED_GLOBE_CAPTION_SELECTOR).innerText()).trim()
+      await hook.setGlobeExpanded(false)
+      await hook.ready()
+      await rafTicks(page, 2)
+      const orbLabelText = (await page.locator(MINIMISED_GLOBE_LABEL_SELECTOR).innerText()).trim()
+      return { expandedCaptionLength: expandedText.length, hasOrbLabelText: orbLabelText.length > 0 ? 1 : 0 }
+    },
+    expect: { expandedCaptionLength: [0, 0], hasOrbLabelText: [1, 1] },
+  },
+  {
     name: 'globe-expanded-sphere',
     description:
       'Expanded globe, sphere mode, measured at its own real DEFAULT diameter — guards against the CSS-box/drawn-' +
@@ -320,12 +389,23 @@ export default [
       "the title's own height legitimately moves this band: ~528px before the 2026-09-18 bottom-chrome condensing " +
       'pass, ~592px after it, ~546px after the same-day Earth/Dinosaurs/Humans shortcut group added a row to the ' +
       'title, ~573-593px after the clip-removal architecture change (unaffected in itself — only the *room to zoom ' +
-      'in* changed) folded with the "make the globe slightly larger by default" nudge (`SPHERE_DEFAULT_SCALE`).',
+      'in* changed) folded with the "make the globe slightly larger by default" nudge (`SPHERE_DEFAULT_SCALE`), ' +
+      '~510px after issue 3\'s own follow-up, round 1 (user report: "the globe/map toggle is overlayed on top of ' +
+      'the globe... globe needs to be made a bit smaller") deliberately shrank the gap from *both* ends — ' +
+      "`ShellLayout.tsx`'s `reserveBottomPx` (the Globe/Map toggle's own real height, plus clearance) from the " +
+      "bottom, and the relocated era shortcuts, then still stacked *below* the title, from the top; ~540px after " +
+      'round 2 (user ask: "moving era shortcuts to the side of the current year instead of below, to save ' +
+      'vertical space" — `useChromeGap` sizes this purely off `.title`\'s own *height*, and a circle inscribed ' +
+      "in that gap has no use for width, so moving the shortcuts onto the title's own row recovers essentially " +
+      'all of the height they cost while stacked below it, without giving back the toggle\'s own bottom reservation ' +
+      '— see `ShellLayout.module.css`\'s `.title` doc comment for the layout itself). Real, intended movement ' +
+      'either way, not a regression: this is the number the coordinator asked to see and judge each time, not a ' +
+      'silently-reverted "larger globe" ask.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
-    expect: { 'sphere.width': [555, 595], 'sphere.height': [555, 595] },
+    expect: { 'sphere.width': [520, 560], 'sphere.height': [520, 560] },
   },
   {
     name: 'globe-expanded-map',
@@ -339,8 +419,10 @@ export default [
       "`mapHasPanRoom` is false here (the fit distance's own margin already shows slightly more than the whole " +
       'map, so there is genuinely nowhere to pan to yet). Same title-height dependency as ' +
       "`globe-expanded-sphere`'s own: ~1082px before the 2026-09-18 bottom-chrome condensing pass, ~1213px after " +
-      'it, ~1119px after the same-day Earth/Dinosaurs/Humans shortcut group grew the title by one row — unaffected ' +
-      "by the sphere-only `SPHERE_DEFAULT_SCALE` nudge (`globe-expanded-sphere`'s own description).",
+      'it, ~1119px after the same-day Earth/Dinosaurs/Humans shortcut group grew the title by one row, ~1045px ' +
+      "after issue 3's own follow-up round 1, ~1107px after round 2 (`globe-expanded-sphere`'s own description " +
+      'has the full reasoning for both rounds) — unaffected by the sphere-only `SPHERE_DEFAULT_SCALE` nudge ' +
+      'either way.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'map' },
@@ -349,11 +431,9 @@ export default [
       const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
       return { map, cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
     },
-    // ~1213px matches this shot's own description ("~1213px after [the 2026-09-18 bottom-chrome
-    // condensing pass]") — now measured directly against the real fit frame instead of via the
-    // full canvas, so this replaces the old [1090, 1150] band which was never actually re-derived
-    // after that pass (this fit-frame clip is new; the old band predates it and drifted stale).
-    expect: { 'map.width': [1195, 1230], cursorIsNotGrab: [1, 1] },
+    // ~1107px matches this shot's own description — see `globe-expanded-sphere`'s own comment on
+    // why this band moved (real, intended changes, not a regression).
+    expect: { 'map.width': [1087, 1127], cursorIsNotGrab: [1, 1] },
   },
   {
     name: 'globe-sphere-zoom-past-fit',
@@ -433,6 +513,318 @@ export default [
     expect: { 'globe.width': [50, 2000], 'globe.height': [50, 2000] },
   },
   {
+    name: 'globe-click-does-not-close',
+    description:
+      'BUG 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it which is probalby not ' +
+      'expected behaviour"). Root cause: `globeGeometry.ts`\'s mesh carries no `position` attribute, so three.js\'s ' +
+      'default raycast always misses it, and `Globe.tsx`\'s `<Canvas onPointerMissed>` trusted every miss to mean ' +
+      '"clicked the backdrop, close it" — so *every* plain click on the globe itself, not just the transparent ' +
+      "backdrop around it, closed the view. Fixed with an analytic proxy raycast (`camera.ts`'s " +
+      '`globeBodyProxyHit`). A single stationary click (`page.mouse.click`, no movement — matches r3f\'s own ' +
+      '`delta <= 2px` "was this a click or a drag" gate) dead-centre on the sphere\'s own drawn silhouette must ' +
+      'leave the globe expanded.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      // Settle first: `actions` runs *before* the runner's own `ready()`/`rafTicks` wait
+      // (`run.mjs`'s own comment on the order), so the sphere's real fit-frame box isn't
+      // guaranteed final yet here — reading it too early (mid fade-in, or before the
+      // `ResizeObserver` measurement that drives `GlobeCameraControls`'s own fit has fired) risks
+      // clicking a stale or degenerate box. Also waits out a full `waitForApproxUnfoldProgress(
+      // page, 1)`, not just a couple of `rafTicks`: this harness never reloads between shots
+      // (README), and the immediately-preceding `globe-transition-mid-unfold` shot deliberately
+      // leaves the page mid-tween under real (`no-preference`) motion — browser-verified
+      // regression this fix replaces: without the full settle wait, this shot's own click could
+      // land while `unfold` was still mid-transition, well before the sphere's fit-frame box (and
+      // the analytic proxy raycast's own sphere/map shape switch) had actually settled to sphere
+      // mode.
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      const box = await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+    },
+    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
+    expect: { expanded: [1, 1] },
+  },
+  {
+    name: 'globe-click-on-map-does-not-close',
+    description: 'Same as `globe-click-does-not-close`, in map mode — the proxy raycast swaps to the map\'s own flat rectangle there.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      // Settle first (`globe-click-does-not-close`'s own comment, including the shot-ordering
+      // "why a full unfold-progress wait, not just a couple of frames" reasoning).
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      const box = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+    },
+    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
+    expect: { expanded: [1, 1] },
+  },
+  {
+    name: 'globe-click-on-backdrop-still-closes',
+    description:
+      'Regression guard for the `globe-click-does-not-close` fix: a plain click on the dimmed, empty backdrop ' +
+      '*around* the globe (nowhere near the sphere\'s own drawn silhouette, the legend, or the bottom-centre ' +
+      'Globe/Map toggle) must still close the expanded view — the one intended use of `onPointerMissed`, which the ' +
+      "fix must not have broken by making the proxy raycast too generous. (150, 700) at 1440x900: well left of the " +
+      "sphere's own centred silhouette, well below the legend's own short content.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page }) => {
+      await page.mouse.click(150, 700)
+    },
+    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
+    expect: { expanded: [0, 0] },
+  },
+  {
+    name: 'globe-map-drag-pans-when-zoomed',
+    description:
+      'BUG 2 (user verbatim: "dragging of the expanded map doesnt work when zoomed in (shouldbe able to drag when ' +
+      'zoomed but not when fully zoomed out)"). Root cause: `OrbitControls`\'s own default `mouseButtons` routes a ' +
+      "plain left-drag to `ROTATE` unconditionally; map mode sets `enableRotate={false}`, so three.js's own " +
+      '`onMouseDown` hit that disabled-rotate early return and did *nothing* — not "panned with no room", never ' +
+      "even reaching `_handleMouseDownPan` — regardless of zoom level. `camera.ts`'s `mapHasPanRoom` was already " +
+      'correctly wired into the cursor (`globe-expanded-map`\'s own `cursorIsNotGrab` check); the gesture routing ' +
+      "was the actual gap. Fixed by setting `mouseButtons.LEFT`/`touches.ONE` to `PAN` while `mapMode`. Zooms in " +
+      'four steps (past the point `mapHasPanRoom` goes true), then drags and diffs the canvas\'s own drawn pixels ' +
+      "before/after (`drawnPixelDiff`, the same primitive `globe-zoom-button-changes-drawn-size` uses) — proof " +
+      'the drag actually moved the camera, not just that it failed to crash.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      const zoomIn = page.getByRole('button', { name: 'Zoom in' })
+      for (let i = 0; i < 4; i += 1) {
+        await zoomIn.click()
+        await rafTicks(page, 2)
+      }
+      await hook.ready()
+    },
+    measure: async ({ page, hook }) => {
+      const { diffPixels } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
+        const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
+        const cx = box.x + box.width / 2
+        const cy = box.y + box.height / 2
+        await page.mouse.move(cx, cy)
+        await page.mouse.down()
+        await page.mouse.move(cx + 180, cy, { steps: 12 })
+        await page.mouse.up()
+        await rafTicks(page, 2)
+      })
+      return { diffPixels, expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }
+    },
+    // Comfortably above `globe-zoom-button-changes-drawn-size`'s own noise floor; a drag this far
+    // (180px, well beyond the pan clamp at this zoom level) must redraw a real fraction of the map.
+    expect: { diffPixels: [5000, 2_000_000], expanded: [1, 1] },
+  },
+  {
+    name: 'globe-map-drag-does-nothing-when-fully-zoomed-out',
+    description:
+      'BUG 2\'s other half (user verbatim: "shouldbe able to drag when zoomed but not when fully zoomed out"): at ' +
+      "the default, fully-zoomed-out map view (`mapHasPanRoom` false — `globe-expanded-map`'s own `cursorIsNotGrab` " +
+      'check), dragging must still do nothing — panning has genuinely nowhere to go there, so the fix for BUG 2 ' +
+      "must not have also made a no-room drag do something. Same drag, no prior zoom; diffPixels stays in the " +
+      "screenshot/PNG round-trip noise floor `countDiffPixels`'s own threshold already filters, well below a real " +
+      'redraw. Forces a clean default zoom by round-tripping sphere->map (entering map mode always tweens the ' +
+      "camera to `mapFit`, `GlobeCameraControls`'s own settle logic) rather than trusting the page's starting zoom " +
+      "— this harness never reloads between shots (README), so without this reset a *previous* shot's own zoom " +
+      "(e.g. `globe-map-drag-pans-when-zoomed`, which zooms in on purpose) can still be sitting on the camera " +
+      'when this one starts, since neither `globeExpanded` nor `globeViewMode` actually change value between them ' +
+      '(`applyState`\'s own reset logic only fires on a real transition).',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      await hook.setGlobeViewMode('globe')
+      await hook.setGlobeViewMode('map')
+      await hook.ready()
+      // A full settle, not just a couple of frames (`globe-click-does-not-close`'s own "why" —
+      // this harness never reloads between shots, so the round-trip tween just triggered must be
+      // given its own real ~0.8s before the "fully zoomed out" premise below is trustworthy).
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const { diffPixels } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
+        const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
+        const cx = box.x + box.width / 2
+        const cy = box.y + box.height / 2
+        await page.mouse.move(cx, cy)
+        await page.mouse.down()
+        await page.mouse.move(cx + 180, cy, { steps: 12 })
+        await page.mouse.up()
+        await rafTicks(page, 2)
+      })
+      return { diffPixels }
+    },
+    expect: { diffPixels: [0, 3000] },
+  },
+  {
+    name: 'globe-view-mode-toggle-clear-of-sphere',
+    description:
+      'Issue 3 follow-up defect 1 (user report on the first pass: "the globe/map toggle is overlayed on top of ' +
+      'the globe (should be under, globe needs to be made a bit smaller)"). `sphere` is measured by drawn pixels ' +
+      "(`drawnBoundsInClip` over the real fit-frame rectangle, exactly `globe-expanded-sphere`'s own proven-sound " +
+      "technique — CLAUDE.md's own warning about `drawnBounds` over a busy photographic backdrop is about scanning " +
+      "an *unclipped* full-viewport canvas; clipped tightly to the fit frame, the clip's own corners are the " +
+      'dark backdrop just outside the circular silhouette, which is exactly what makes this technique sound here); ' +
+      '`toggle` is a plain CSS box (`boxOf`) since it is ordinary bordered-pill HUD chrome, not a canvas. The gap ' +
+      'between them must be strictly positive.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    // A full settle, not the default flow's couple of frames — this harness never reloads
+    // between shots (README), so a still-running sphere<->map tween left by whichever shot ran
+    // immediately before this one (view mode or `globeExpanded` can both trigger one) would
+    // otherwise still be moving when the fit-frame box below is read.
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height), sphereDiameterPx: sphere.height }
+    },
+    expect: { clearanceGapPx: [4, 400] },
+  },
+  {
+    name: 'globe-view-mode-toggle-clear-of-map',
+    description: 'Same as `globe-view-mode-toggle-clear-of-sphere`, in map mode, against the real map fit frame.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      return { clearanceGapPx: toggle.y - (map.y + map.height) }
+    },
+    expect: { clearanceGapPx: [4, 400] },
+  },
+  {
+    name: 'globe-view-mode-toggle-clear-of-sphere-narrow',
+    description: 'Same as `globe-view-mode-toggle-clear-of-sphere`, at the narrow 390x844 phone-portrait viewport.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height) }
+    },
+    expect: { clearanceGapPx: [4, 400] },
+  },
+  {
+    name: 'globe-view-mode-toggle-clear-of-sphere-short',
+    description:
+      'Same as `globe-view-mode-toggle-clear-of-sphere`, at the short 844x390 landscape-phone viewport — the ' +
+      'tightest of this feature\'s own required viewports for vertical chrome-gap headroom.',
+    viewport: { width: 844, height: 390 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height) }
+    },
+    expect: { clearanceGapPx: [4, 400] },
+  },
+  {
+    name: 'globe-view-mode-toggle-clickable',
+    description:
+      'Issue 3 follow-up defect 2 (user report: "and currnetly isnt clickable"). Root cause: `ShellLayout.module.' +
+      'css`\'s `.bottom > *` re-enabled `pointer-events` on the whole of `.stage`, a box deliberately sized to its ' +
+      "tallest grid-cell child including a hidden sibling nobody can see (`ShellLayout.tsx`'s own `useChromeGap` " +
+      'doc comment) — that invisible overflow, promoted to `z-index: 60` above the entire backdrop, sat over the ' +
+      "toggle and ate its clicks. A real Playwright `locator.click()` (not `devHook.ts`'s `setGlobeViewMode`, " +
+      "which drives the DOM `button.click()` API directly and so bypasses real hit-testing/`pointer-events` " +
+      "entirely — proving nothing about clickability) on the actual \"Map\" button, then reading the mode back " +
+      "through the hook: if anything still covers the button, Playwright's own actionability check fails the " +
+      'click outright (this shot errors, not just its `expect`) rather than silently clicking through.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      // Full settle first (the four `globe-view-mode-toggle-clear-of-*` shots' own comment) —
+      // not load-bearing for clickability itself, but the button's own position could still be
+      // mid-tween otherwise, which risks Playwright's actionability wait racing a moving target.
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.locator(VIEW_MODE_TOGGLE_SELECTOR).getByRole('button', { name: 'Map' }).click()
+    },
+    measure: async ({ hook }) => ({ mode: (await hook.getGlobeViewMode()) === 'map' ? 1 : 0 }),
+    expect: { mode: [1, 1] },
+  },
+  {
+    name: 'globe-view-mode-toggle-no-view-label',
+    description:
+      'User ask, 2026-09-18: "remove the redudantn \'view\' label on the globe/map toggle". The toggle\'s own ' +
+      "group keeps an accessible name (`aria-label=\"Globe/Map view\"`, replacing the removed label's " +
+      '`aria-labelledby`) but must draw no "View" text anywhere while expanded.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    measure: async ({ page }) => {
+      const toggleText = await page.locator(VIEW_MODE_TOGGLE_SELECTOR).innerText()
+      const hasViewWord = /\bview\b/i.test(toggleText)
+      // `aria-label` sits on the inner `[role="group"]` (the two buttons' own group), not the
+      // outer `VIEW_MODE_TOGGLE_SELECTOR` element (which only exists for height measurement).
+      const groupLabel = await page.locator(`${VIEW_MODE_TOGGLE_SELECTOR} [role="group"]`).getAttribute('aria-label')
+      return { hasViewWord: hasViewWord ? 1 : 0, hasAccessibleName: groupLabel !== null && groupLabel !== '' ? 1 : 0 }
+    },
+    expect: { hasViewWord: [0, 0], hasAccessibleName: [1, 1] },
+  },
+  {
+    name: 'view-mode-toggle-clear-of-pip-hover-preview',
+    description:
+      'User correction, 2026-09-18: "the globe/map toglge butotns cant go any further dowanrds closer to timeline ' +
+      'cause need space for the hover labels" — the scrub track\'s own checkpoint-pip hover preview ' +
+      "(`ScrubTrack.tsx`'s `.pipPreview`, the same one `timeline-pip-thumbnail-hover` already knows how to " +
+      'trigger, reused here rather than inventing a second hover mechanism) rides above the track and must clear ' +
+      "the expanded globe's own Globe/Map toggle beneath it — an intermittent, hover-only overlap no resting-" +
+      'layout screenshot would ever catch, which is exactly why a static assertion on the toggle\'s own position ' +
+      'alone is not enough here; this one actually triggers the hover and measures the real, visible preview card.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.locator(CHECKPOINT_PIP_SELECTOR).first().hover()
+    },
+    measure: async ({ page }) => {
+      const preview = await boxOf(page, PIP_PREVIEW_SELECTOR)
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      return { overlapsToggle: rectsOverlap(preview, toggle) ? 1 : 0 }
+    },
+    expect: { overlapsToggle: [0, 0] },
+  },
+  {
     name: 'green-sahara-bright-plate',
     description: 'Green Sahara (~8000 yr) — bright-plate scene, checks vignette/legibility over a light image.',
     viewport: DEFAULT_VIEWPORT,
@@ -455,11 +847,15 @@ export default [
       'transport row — not the scene caption above it, a separate ShellLayout slot) at 1440x900, ' +
       "present day. Was ~194px before the pass (the dismissible first-use hint's own row plus " +
       'generous inter-row gaps/margins); a regression back toward that — or an over-eager future ' +
-      'cut that starts clipping/overlapping rows — should fail this band. Measured 152px again ' +
-      '(same-day chrome-rearrange pass, user ask: move the era shortcuts into this row, delete the ' +
-      'breadcrumb\'s "‹ Up"/"⌂ Earth" buttons, move its "‹"/"›" onto the track edges) — folding a ' +
-      'whole new control (`EraShortcuts`) into `.controlsSections` alongside deleting two others ' +
-      "cost this band nothing: every row here is already sized by the 44px play button beside it.",
+      'cut that starts clipping/overlapping rows — should fail this band. Still measures 152px ' +
+      "through two later passes that each had a real chance to move it: era shortcuts' own third " +
+      'and final placement, landing back in `.controlsSections` alongside the breadcrumb rather ' +
+      "than adding a row (`EraShortcuts.tsx`'s own doc comment has the full placement history), " +
+      'and the play button\'s "slightly larger" nudge (user ask, 2026-09-18) from 44px to 48px — ' +
+      "checked, not assumed: `.controlsSecondary` (sound/speed/mode/scale/rate-badge) already " +
+      'wraps to 2 rows at 54px tall, taller than either the old or the new play button, so ' +
+      "`.controlsRow`'s own height was already set by that track, not `.core`'s — growing the play " +
+      'button by 4px genuinely cost this band nothing.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
@@ -487,44 +883,226 @@ export default [
   {
     name: 'era-shortcuts-group',
     description:
-      'The Earth/Dinosaurs/Humans "jump to an era" shortcut group (user ask, 2026-09-18), Earth active by default at ' +
-      't=0. Moved the same day, in a later chrome-rearrange pass (user ask: "move the earth/dinosaurs/humans era ' +
-      'shortcuts down to the bottom above the timeline"), from a row of its own beside the shell title into ' +
-      '`<Timeline>`\'s own `.controlsSections` — now INSIDE `BOTTOM_CHROME_SELECTOR`\'s own subtree (see ' +
-      '`insideChrome`), folded into the horizontal room the breadcrumb gave up when its "‹ Up"/"⌂ Earth" buttons were ' +
-      'deleted and its "‹"/"›" buttons moved onto the track edges — proof it is a genuine fold-in, not a row of its ' +
-      "own, is that the bottom-chrome height guard still reads the same [135, 175] band `bottom-chrome-height` " +
-      'already asserts.',
+      'The Earth/Dinosaurs/Humans "jump to an era" shortcut group, Earth active by default at t=0. Third and ' +
+      'final placement (user ask: "move it back down to below the timelie... justifeid to hte right so its ' +
+      'closer to the play/reiard/ff nav controls") — the group lives inside `TIMELINE_CONTROLS_SECTIONS_SELECTOR` ' +
+      "(`Timeline.tsx`'s `.controlsSections`, alongside the breadcrumb), inside `BOTTOM_CHROME_SELECTOR`, not " +
+      'inside the shell title (that placement is gone entirely — `ShellLayout.tsx` no longer even has an ' +
+      '`eraShortcuts` prop).',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     measure: async ({ page, hook }) => {
       const state = await hook.getState()
-      const insideChrome = await page.evaluate(
-        ([shortcutsSel, chromeSel]) => {
+      const insideSections = await page.evaluate(
+        ([shortcutsSel, sectionsSel]) => {
           const shortcuts = document.querySelector(shortcutsSel)
-          const chrome = document.querySelector(chromeSel)
-          return shortcuts !== null && chrome !== null && chrome.contains(shortcuts)
+          const sections = document.querySelector(sectionsSel)
+          return shortcuts !== null && sections !== null && sections.contains(shortcuts)
         },
-        [ERA_SHORTCUTS_SELECTOR, BOTTOM_CHROME_SELECTOR],
+        [ERA_SHORTCUTS_SELECTOR, TIMELINE_CONTROLS_SECTIONS_SELECTOR],
       )
       return {
         shortcuts: await drawnBounds(page, ERA_SHORTCUTS_SELECTOR),
-        timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR),
         earthActive: state?.sectionId === 'earth' ? 1 : 0,
-        insideChrome: insideChrome ? 1 : 0,
+        insideSections: insideSections ? 1 : 0,
       }
     },
     expect: {
       // Three pills wide enough to hold an icon and a caps-mono label, unmistakably present.
       'shortcuts.width': [140, 420],
       'shortcuts.height': [16, 60],
-      // Unchanged from `bottom-chrome-height`'s own desktop band — proof this group added no
-      // height to the timeline's own (2026-09-18 condensing pass) chrome, even now that it is
-      // folded inside it rather than sitting beside the title.
-      'timeline.height': [135, 175],
       earthActive: [1, 1],
-      insideChrome: [1, 1],
+      insideSections: [1, 1],
     },
+  },
+  {
+    name: 'era-shortcuts-clear-of-neighbours-wide',
+    description:
+      'The relocated era shortcuts (`era-shortcuts-group`\'s own description) must not overlap the breadcrumb ' +
+      "they now share `.controlsSections` with (`justify-content: space-between` keeps them apart — the whole " +
+      'point of this placement, user ask: "not so close to the breadcrumbs"), the transport core (play/back/' +
+      'forward) or the secondary controls (sound/speed/mode/scale). Plain CSS boxes (`boxOf`), not drawn-pixel ' +
+      "scans: every element here is ordinary HUD chrome over the shell's own layout, not a canvas whose CSS box " +
+      "could diverge from what's painted inside it.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => {
+      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
+        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
+        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
+      }
+    },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+  },
+  {
+    name: 'era-shortcuts-clear-of-neighbours-narrow',
+    description: 'Same as `era-shortcuts-clear-of-neighbours-wide`, at the narrow 390x844 phone-portrait viewport.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => {
+      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
+        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
+        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
+      }
+    },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+  },
+  {
+    name: 'era-shortcuts-clear-of-neighbours-short',
+    description:
+      'Same as `era-shortcuts-clear-of-neighbours-wide`, at the short 844x390 landscape-phone viewport (one of ' +
+      "docs/GLOBE.md's own required viewports for exactly this kind of tight-space check).",
+    viewport: { width: 844, height: 390 },
+    t: 0,
+    measure: async ({ page }) => {
+      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
+        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
+        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
+      }
+    },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+  },
+  {
+    name: 'controls-secondary-no-self-overlap-wide',
+    description:
+      'The specific regression risk the coordinator named for era shortcuts\' third placement: adding them ' +
+      "to `.controlsSecondary` first (measured, then rejected — that class's own Timeline.module.css doc comment " +
+      'has the numbers) pushed it from 2 wrapped rows to 3 at 1440x900; even with the shortcuts moved elsewhere, ' +
+      "this guards that `.controlsSecondary`'s own pre-existing children (sound toggle, speed select, mode " +
+      'group, scale group, rate readout row) never overlap each other — the root-cause fix for the historical ' +
+      '"the mute/volume button overlaps with the next/fast forward button" report, which this change sits ' +
+      'immediately next to. `countOverlappingChildPairs` counts overlapping direct-child pairs, not wrapped rows ' +
+      '(two children on different flex lines never overlap in `y`, so wrapping itself never trips this).',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => ({
+      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
+    }),
+    expect: { overlappingPairs: [0, 0] },
+  },
+  {
+    name: 'controls-secondary-no-self-overlap-narrow',
+    description: 'Same as `controls-secondary-no-self-overlap-wide`, at the narrow 390x844 phone-portrait viewport.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => ({
+      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
+    }),
+    expect: { overlappingPairs: [0, 0] },
+  },
+  {
+    name: 'controls-secondary-no-self-overlap-short',
+    description: 'Same as `controls-secondary-no-self-overlap-wide`, at the short 844x390 landscape-phone viewport.',
+    viewport: { width: 844, height: 390 },
+    t: 0,
+    measure: async ({ page }) => ({
+      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
+    }),
+    expect: { overlappingPairs: [0, 0] },
+  },
+  {
+    name: 'timeline-controls-inset-to-track-wide',
+    description:
+      'User report, 2026-09-18: "maybe cosntrian the horizotan layout of hte bottom row (breadcrumb, nav buttons, ' +
+      'mode/scale toggles) so tehy are constrained within the horizotanl boudns of the timeline and era selector ' +
+      "and dont flow beyond them (so theres more padding on the sides)\". Root cause: `SectionEdgeNav.module.css`'s " +
+      '`.stack` insets the scrub track/ruler/band strip by a real gutter (`--edge-button-size` + `--edge-button-' +
+      "gap`, for the prev/next edge buttons), but `.controlsRow` below it had no matching inset, so the breadcrumb " +
+      "(left) and mode/scale/sound controls (right) visibly overhung the track they sit under. Fixed with one " +
+      'shared `--timeline-gutter` custom property (`Timeline.module.css`\'s `.timeline`), consumed by both ' +
+      "`.stack` and `.controlsRow` instead of two hand-written copies of the same `calc()`. Measures the real " +
+      "rendered boxes (`boxOf` — ordinary flex/grid HUD chrome, ,not a canvas, so a CSS box is exactly what's " +
+      'painted): the breadcrumb\'s own left edge must sit at or inside the track\'s left edge, and the secondary ' +
+      "controls' own right edge at or inside the track's right edge. Also checks `.controlsCore` (the play-button " +
+      "group) stays centred on the *track*'s own centre, not just the row's — the coordinator's own explicit " +
+      'concern: a symmetric inset on a 3-track `minmax(0, 1fr) auto minmax(0, 1fr)` grid must not unbalance the ' +
+      'centring `.controlsRow`\'s own doc comment already relies on.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => {
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      return {
+        // Positive means the breadcrumb starts inside (to the right of) the track's own left
+        // edge; 0 means exactly flush; negative means it still overhangs.
+        leftInsetPx: sections.x - track.x,
+        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
+        coreCenterOffsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)),
+        secondaryHeightPx: secondary.height,
+      }
+    },
+    expect: {
+      leftInsetPx: [0, 400],
+      rightInsetPx: [0, 400],
+      coreCenterOffsetPx: [0, 3],
+      // A generous single/double-row ceiling — `.controlsSecondary`'s own load-bearing
+      // `flex-wrap` (this file's own doc comment) is allowed to wrap, but a real 1440x900
+      // regression would wrap far more than this.
+      secondaryHeightPx: [0, 90],
+    },
+  },
+  {
+    name: 'timeline-controls-inset-to-track-narrow',
+    description: 'Same as `timeline-controls-inset-to-track-wide`, at the narrow 390x844 phone-portrait viewport.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => {
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        leftInsetPx: sections.x - track.x,
+        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
+      }
+    },
+    // The narrow breakpoint stacks sections/core/secondary into one centred column (this file's
+    // own `@media (max-width: 760px)` rule) rather than a 3-track row, so both sides are centred
+    // within the same inset track width rather than pinned to its exact edges.
+    // `rightInsetPx`'s own floor is `-6`, not `0`: browser-verified, at this exact 390px floor
+    // `.controlsSecondary`'s own first wrapped line (`TransportSecondary` + `.scaleGroup`) is a
+    // genuine few px wider than the inset track even after `flex-wrap`/gap tightening
+    // (`Timeline.module.css`'s own `.controlsSecondary` narrow-breakpoint comment has the
+    // measured story) — a small, pre-existing content-fit characteristic at the single narrowest
+    // supported width, not the overhang the user actually reported (which was tens to hundreds
+    // of px, visible at ordinary/wide viewing, and is what this whole shot family exists to
+    // guard). `-6` still catches any *real* regression (an un-inset row here would overhang by
+    // roughly a whole `--timeline-gutter`, ~50-56px, not a handful).
+    expect: { leftInsetPx: [0, 400], rightInsetPx: [-6, 400] },
+  },
+  {
+    name: 'timeline-controls-inset-to-track-short',
+    description:
+      'Same as `timeline-controls-inset-to-track-wide`, at the short 844x390 landscape-phone viewport (one of ' +
+      "docs/GLOBE.md's own required viewports for tight horizontal/vertical space together).",
+    viewport: { width: 844, height: 390 },
+    t: 0,
+    measure: async ({ page }) => {
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        leftInsetPx: sections.x - track.x,
+        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
+      }
+    },
+    expect: { leftInsetPx: [0, 400], rightInsetPx: [0, 400] },
   },
   {
     name: 'era-shortcut-dinosaurs-selected',
@@ -679,46 +1257,17 @@ export default [
       showsMillion: [1, 1],
     },
   },
-  {
-    name: 'co2-chart-log-axis-regression',
-    description:
-      "CO2's own full chart, at present day, over the full Earth domain — `chartAxis.ts`'s shared ratio test now " +
-      "puts CO2's ~42x range (173-7,331 ppm) on a log axis too, where it was unconditionally linear before this " +
-      "pass. Guards that the change is a real improvement (labelled, still drawn, industrial-era rise no longer " +
-      "flattened to nothing) and that CO2's real declared gap (ADR-027, ice-core/GEOCARB join) still breaks the " +
-      'line rather than bridging it under the new axis math.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      // Explicitly back to the root "Earth" section (full 4.6 Gyr domain), not whatever a
-      // shot earlier in the same run left `sectionId` at — this harness runs every shot
-      // against one already-loaded page (README), and the CO2 chart's own axis choice is a
-      // function of the range actually visible under the *current* section's scale, not the
-      // layer's full range: opened under a narrowed section (e.g. this file's own "Humans"
-      // shots), the visible slice of CO2 can easily fail the log-axis ratio test even though
-      // the full-domain chart passes it, which would be this section's own scale leaking into
-      // the shot, not a real regression.
-      await page.getByRole('button', { name: 'Earth — the Earth' }).click()
-      const chartToggle = page.getByRole('button', { name: /^(Expand|Collapse) Atmospheric CO. chart$/ })
-      if ((await chartToggle.getAttribute('aria-pressed')) !== 'true') await chartToggle.click()
-    },
-    measure: async ({ page }) => {
-      const curve = await polylineTraceBounds(page, '[data-testid="layer-chart-svg"]')
-      const text = (await page.textContent('[data-testid="layer-chart"]')) ?? ''
-      return {
-        curveWidth: curve.width,
-        curveHeight: curve.height,
-        showsPpm: text.includes('ppm') ? 1 : 0,
-        showsLogScale: text.includes('log scale') ? 1 : 0,
-      }
-    },
-    expect: {
-      curveWidth: [1000, 1440],
-      curveHeight: [60, 110],
-      showsPpm: [1, 1],
-      showsLogScale: [1, 1],
-    },
-  },
+  // `co2-chart-log-axis-regression` (log axis for a wide-ratio scalar chart) removed 2026-09-18:
+  // CO2 left the HUD entirely (`@/layers/hudVisibility.ts`, "still remove co2 section so thers
+  // more room for events list"), so its `HudSparkline` toggle — the only way this chart ever
+  // opened — no longer exists; the chart itself is unreachable, not merely unshown. Checked
+  // first whether this was the log-axis behaviour's only coverage before dropping it: it is not
+  // — `axisTransform`'s own unit tests (`src/layers/chartAxis.test.ts`) cover the ratio-threshold
+  // math directly, including a population-scale (~1,600x) ratio well past CO2's own (~42x), and
+  // the `population-chart` shot just above already asserts `showsLogScale: [1, 1]` end-to-end on
+  // a real, still-reachable chart. This shot's only claim not duplicated elsewhere — that CO2's
+  // declared ADR-027 gap "still breaks the line rather than bridging it" — was never actually
+  // asserted in its own `expect` block despite the description; there is nothing here to repoint.
   {
     name: 'arrival-arc-mid-journey',
     description:
@@ -797,11 +1346,15 @@ export default [
       '12,015-year domain is under 6% of that span — of 97 evenly spaced full-domain samples only ~5 landed ' +
       "inside it, all older than 1450 BP, so the entire industrial-era-to-present explosion (the whole shape) " +
       "fell between two samples and was never drawn. Fixed in `Sparkline.tsx` by windowing its own sampling to " +
-      "`layer.timeDomain` instead of the passed scale's domain (still using that scale's `kind` — symlog). This " +
-      "shot asserts the population sparkline's DRAWN trace (not its SVG box) is comparably sized to CO2's own, " +
-      'sitting directly beneath its own value — not the coordinator\'s read of a collision with CO2\'s row (that ' +
-      "reading doesn't survive: `getBoundingClientRect` on both readouts shows two fully separate rows, ~110px " +
-      'apart, no overlap — see this shot\'s own `rowsOverlap`/`popBelowOwnValue` checks).',
+      "`layer.timeDomain` instead of the passed scale's domain (still using that scale's `kind` — symlog). " +
+      "UPDATED 2026-09-18 (CO2 hidden from the HUD, `@/layers/hudVisibility.ts`): this shot originally compared " +
+      "population's drawn trace against CO2's own as the \"legible, like CO2's\" reference bar, and checked the " +
+      "two readout rows never overlapped. CO2's readout no longer renders at all, so there is no other HUD " +
+      "readout left to compare against or collide with — `hudScalarEntries` now has exactly one chartable entry. " +
+      "Rather than fake a comparison against a row that no longer exists, this now asserts population's trace " +
+      "against the same absolute pixel band directly (unchanged from the original popWidth/popHeight bounds, " +
+      "which were never actually derived from a live co2Width/co2Height reading — see the removed measurement), " +
+      "plus that CO2's own readout is genuinely gone and population's is the one that remains.",
     viewport: DEFAULT_VIEWPORT,
     t: 10,
     measure: async ({ page }) => {
@@ -809,32 +1362,61 @@ export default [
       // photo with no opaque backing, and `drawnBounds`' own corner-sampled background check is
       // fooled by that photo's texture alone (see that helper's own doc comment) — a real risk
       // this exact shot could otherwise have papered over.
-      const co2 = await polylineTraceBounds(page, '[data-testid="scalar-readout-co2"] svg')
       const pop = await polylineTraceBounds(page, '[data-testid="scalar-readout-population"] svg')
-      const co2Box = await page.locator('[data-testid="scalar-readout-co2"]').boundingBox()
-      const popBox = await page.locator('[data-testid="scalar-readout-population"]').boundingBox()
       const popValue = await page
         .locator('[data-testid="scalar-readout-population"] [data-testid="scalar-readout-value"]')
         .boundingBox()
+      const co2ReadoutCount = await page.locator('[data-testid="scalar-readout-co2"]').count()
+      const popReadoutCount = await page.locator('[data-testid="scalar-readout-population"]').count()
       return {
-        co2Width: co2.width,
-        co2Height: co2.height,
         popWidth: pop.width,
         popHeight: pop.height,
-        // Two readouts stacked in their own column, never sharing a row.
-        rowsOverlap: co2Box && popBox && co2Box.y < popBox.y + popBox.height && popBox.y < co2Box.y + co2Box.height ? 1 : 0,
         // The sparkline's own drawn top sits below the population value text's own bottom —
-        // "beneath the current count", not beside CO2's.
+        // "beneath the current count".
         popBelowOwnValue: popValue && pop.y >= popValue.y + popValue.height - 1 ? 1 : 0,
+        co2ReadoutCount,
+        popReadoutCount,
       }
     },
     expect: {
-      // CO2's own drawn width/height as the reference "legible, like CO2's" bar — population
-      // should be in the same ballpark, not an order of magnitude smaller.
       popWidth: [120, 200],
       popHeight: [15, 32],
-      rowsOverlap: [0, 0],
       popBelowOwnValue: [1, 1],
+      co2ReadoutCount: [0, 0],
+      popReadoutCount: [1, 1],
+    },
+  },
+  {
+    name: 'feed-gets-space-co2-vacated',
+    description:
+      'The actual goal of hiding CO2 from the HUD (user: "still remove co2 section so thers more room for events ' +
+      'list") was never "delete a row" for its own sake — it was to give `<EventFeed>` more room. `.readouts` and ' +
+      "`.feed` share one column as consecutive grid rows (`ShellLayout.module.css`'s `.hud` grid: `.readouts` is " +
+      "an `auto` track sized to its own content, `.feed` is the one `minmax(0, 1fr)` track that absorbs whatever " +
+      "height the `auto` tracks don't need) — removing CO2's row shrinks `.readouts`, and this shot proves that " +
+      "shrink actually reaches `.feed` rather than becoming dead space, by asserting `.feed`'s own box (`boxOf`, " +
+      "a deliberate layout measurement — see `SHELL_FEED_SELECTOR`'s own doc comment for why a drawn-pixel " +
+      'measurement is the wrong tool here) grew by real, measured amounts. At this viewport (1440x900, t=10): ' +
+      'BEFORE (both co2 and population readout rows present) `.readouts` was 190.4px / `.feed` was 95.1px; AFTER ' +
+      '(co2 hidden, population only) `.readouts` is 79.9px / `.feed` is 205.6px — CO2\'s vacated row (~110px) ' +
+      "reached `.feed` in full, more than doubling its usable height, not merely shrinking `.readouts` and " +
+      'leaving the difference as dead space. Both numbers are asserted against the current (fixed) build\'s own ' +
+      'bands below; confirmed against the unfixed build (co2 still shown) that they read 190.4/95.1 and fail.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 10,
+    measure: async ({ page }) => {
+      const readouts = await boxOf(page, SHELL_READOUTS_SELECTOR)
+      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
+      return { readoutsHeight: readouts.height, feedHeight: feed.height }
+    },
+    expect: {
+      // `.readouts` now holds just the population row (co2's own row is gone) — measured 79.9px,
+      // versus 190.4px with both rows present (confirmed by temporarily un-hiding co2 and
+      // re-running this shot, which fails both bands below as expected).
+      readoutsHeight: [60, 110],
+      // Measured 205.6px with co2 hidden, versus 95.1px with it shown — a real, order-of-110px
+      // gain reaching `.feed`, not dead space left behind in `.readouts`'s old row.
+      feedHeight: [180, 240],
     },
   },
   {
@@ -1062,47 +1644,10 @@ export default [
       late: [120, 200],
     },
   },
-  {
-    name: 'co2-sparkline-grows-with-t',
-    description:
-      "Same growth check as `population-sparkline-grows-with-t`, for CO2's own sparkline — the user's ask named " +
-      'both graphs explicitly ("the population and co2 graph lines"). CO2\'s own real published domain is ' +
-      '[0, 5.7e8]; sweeps from just past that oldest edge through to present.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 5.7e8 + 1,
-    measure: async ({ page, hook }) => {
-      const widthAt = async (t) => {
-        await hook.setT(t)
-        await hook.ready()
-        await rafTicks(page, 2)
-        const trace = await polylineTraceBounds(page, '[data-testid="scalar-readout-co2"] svg')
-        return trace.width
-      }
-      // 3e8 (not right at CO2's own oldest edge, 5.7e8): same reasoning as the population
-      // shot's own "early" choice — enough reached points for a real, assertable width, not
-      // just the bare two-point minimum a coarse 97-sample grid needs to draw anything at all.
-      const beforeDomain = await widthAt(5.7e8 + 1)
-      const early = await widthAt(3e8)
-      const mid = await widthAt(1e8)
-      const late = await widthAt(0)
-      return {
-        beforeDomain,
-        early,
-        mid,
-        late,
-        earlyGrowth: early - beforeDomain,
-        midGrowth: mid - early,
-        lateGrowth: late - mid,
-      }
-    },
-    expect: {
-      beforeDomain: [0, 3],
-      earlyGrowth: [5, 200],
-      midGrowth: [5, 200],
-      lateGrowth: [5, 200],
-      late: [120, 200],
-    },
-  },
+  // `co2-sparkline-grows-with-t` removed 2026-09-18: its subject, CO2's own HUD sparkline, no
+  // longer exists (`@/layers/hudVisibility.ts` — CO2 is hidden from the HUD entirely). The
+  // sibling shot immediately above, `population-sparkline-grows-with-t`, still covers the same
+  // growth-reveal mechanism on the one HUD scalar sparkline that remains.
   {
     name: 'population-chart-ghost-future',
     description:

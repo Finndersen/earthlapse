@@ -20,7 +20,7 @@ import { SoundToggle, useAudioEngine } from '@/audio'
 import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/events'
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { dominantScene, resolveAssetUrl, sceneAt, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
 import type { PresentationRegime } from '@/scene'
 import { ShellLayout } from '@/shell'
@@ -114,6 +114,13 @@ export function Experience() {
   // "Paleogeography" label slot) and, while the globe is expanded, in the stage slot above the
   // timeline. `Globe` never draws a caption over the sphere itself in either state.
   const [globeCaption, setGlobeCaption] = useState('')
+
+  // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
+  // `onViewModeToggleHeightChange` doc comment), lifted here the same way `globeCaption` is so
+  // `ShellLayout`'s `useChromeGap` can reserve room for it (issue 3 follow-up, user report: "the
+  // globe/map toggle is overlayed on top of the globe... globe needs to be made a bit smaller").
+  // `0` while the toggle isn't mounted (collapsed, or no WebGL).
+  const [viewModeToggleHeightPx, setViewModeToggleHeightPx] = useState(0)
 
   // The globe's human-civilisation layer pulses an arrival's arc or marker in sympathy with its
   // own event-feed card (this feature's §4). `<EventFeed>` owns the selection rule
@@ -394,9 +401,12 @@ export function Experience() {
     }
   }
 
-  // Only chartable scalars get a HUD readout: each one opens the chart dock. Day length is
-  // still published (the audio score reads it) but no longer spends HUD space the event feed needs.
-  const hudScalarEntries = manifest.layers.filter((l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable)
+  // Only chartable scalars get a HUD readout: each one opens the chart dock. `isHiddenFromHud`
+  // additionally excludes a small, reversible set of layers (currently just CO2) from this list
+  // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
+  const hudScalarEntries = manifest.layers.filter(
+    (l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable && !isHiddenFromHud(l.id),
+  )
   const lineageEntry = manifest.layers.find((l) => l.dataKind === 'node')
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
   const lineagePortraits = lineageEntry ? (nodePortraits.get(lineageEntry.id) ?? null) : null
@@ -428,6 +438,7 @@ export function Experience() {
       <ShellLayout
         globeExpanded={globeExpanded}
         globeCaption={globeCaption}
+        viewModeToggleHeightPx={viewModeToggleHeightPx}
         eventLegend={<EventTagLegend />}
         scene={
           manifest.scenes.length > 0 ? (
@@ -458,6 +469,7 @@ export function Experience() {
               playbackBaseRate={playback.baseRate}
               feedEventIds={feedEventIds}
               hoveredFeedEventId={hoveredFeedEventId}
+              onViewModeToggleHeightChange={setViewModeToggleHeightPx}
             />
           ) : (
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>

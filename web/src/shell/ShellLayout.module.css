@@ -48,11 +48,9 @@
    middle, where the eye rests), side falloffs deep enough for the readouts and ancestor to
    read over a bright sky, a deep bottom falloff for the caption and timeline, and a gentler
    top one for the title. The vignette also hides the drift's frame margins (DESIGN §5).
-   Lightened ~15-25% and pushed a little further out (2026-09-15, follow-up item 9: "more of the
-   scene visible"), then lightened a further ~20% (2026-09-17, "reduce the vignette effect
-   slightly a bit more") from an earlier pass, kept strongest only at the outer 10% so it still hides
-   the drift's frame-margin artefacts there; HUD text leans on `--hud-shadow` (strengthened
-   below) rather than the vignette for legibility over a bright plate. */
+   Kept strongest only at the outer 10% so it still hides the drift's frame-margin artefacts
+   there; HUD text leans on `--hud-shadow` (strengthened below) rather than the vignette for
+   legibility over a bright plate. */
 .lens {
   position: absolute;
   inset: 0;
@@ -185,6 +183,11 @@
    depend circularly on the cards they decide — collapsing to 0 and leaving the feed permanently
    unable to show anything. The feed stacks its cards against the bottom of this box itself. The
    padding keeps the tallest stack clear of the readouts above and the caption/chart below.
+
+   This is also why hiding a HUD readout (`@/layers/hudVisibility.ts`) needs no change here:
+   `.readouts` above sits in the grid's row-2 `auto` track, so one fewer readout row shrinks that
+   track, and this `1fr` track simply claims whatever height that frees, same as it already claws
+   back space from a shorter caption.
    Transparent to the pointer (the cards re-enable it): the box spans the whole row even when it
    shows nothing. */
 .feed {
@@ -201,14 +204,12 @@
 .title {
   grid-area: title;
   /* Without this, the grid's default `align-items: stretch` grows this cell to match row 1's
-     tallest sibling (`.globe`'s minimised-orb column, or `.ancestor`'s portrait — whichever is
-     taller at a given width) — harmless visually, since this flex column already packs its own
-     children at its own top edge either way, but it means this element's own
-     `getBoundingClientRect()` reports the *row's* height, not the title's own (2026-09-18 lead
-     review: `ShellLayout.tsx`'s `useChromeGap` reads this element as the expanded globe's top
-     boundary, and a stretched box read tens to well over a hundred px past the visible glyphs
-     undersized the real free area by exactly that much). `align-self: start` makes this element
-     hug its own content instead, with no visible change (same top-packed position either way). */
+     tallest sibling (`.globe`'s minimised-orb column, or `.ancestor`'s portrait), so this
+     element's own `getBoundingClientRect()` would report the *row's* height, not the title's own
+     — `ShellLayout.tsx`'s `useChromeGap` reads this element as the expanded globe's top boundary,
+     and a stretched box undersizes the real free area by however far it reaches past the visible
+     glyphs. `align-self: start` makes this element hug its own content instead, with no visible
+     change (same top-packed position either way). */
   align-self: start;
   position: relative;
   display: flex;
@@ -270,9 +271,9 @@
   pointer-events: none;
 }
 
-.bottom > * {
-  pointer-events: auto;
-}
+/* `.timeline`'s own `pointer-events: auto` (further down this file, alongside its other
+   properties) replaces a blanket `.bottom > *` that used to live here — see that rule's own doc
+   comment for why. */
 
 /* A feathered darkening that rises behind an open chart so its trace reads over any plate,
    without a box: it fades in with the chart and has no edge of its own. */
@@ -301,9 +302,16 @@
   margin-bottom: 8px;
 }
 
+/* `pointer-events: auto` (`.timeline`'s own doc comment above has the full "why"): `.stage`
+   itself stays `pointer-events: none` by default (inherited from `.bottom`,
+   never overridden here), a deliberate layout-only box sized to its tallest child; each of its
+   three actual children re-enables the pointer individually so only whichever one is actually
+   visible (`.caption`/`.chart`/`.expandedGlobeCaption`'s own crossfade rule) can ever intercept a
+   click, never the empty space `.stage`'s own box reserves around it. */
 .stage > * {
   grid-area: 1 / 1;
   min-width: 0;
+  pointer-events: auto;
 }
 
 .caption,
@@ -315,7 +323,7 @@
     visibility 0s linear 0s;
 }
 
-/* Feathered local scrims (2026-09-17) behind the two blocks that sit over open sky — the caption
+/* Feathered local scrims behind the two blocks that sit over open sky — the caption
    and the left readout/feed column. Same device as `.bottom::before`: an edgeless gradient that
    carries legibility where the type actually is, so the global `.lens` vignette can stay light
    and show more of the plate. No fill, border or blur: a panel would read as app chrome against
@@ -360,9 +368,8 @@
 .caption,
 .expandedGlobeCaption {
   justify-self: center;
-  /* Widened from 62ch (2026-09-15, scene titles): the scene name now leads as its own heading
-     (app/page.module.css `.captionTitle`), so the passage underneath can run a little wider
-     before wrapping — capped well short of the lens's own aperture width so it still reads as
+  /* The scene name leads as its own heading (app/page.module.css `.captionTitle`), with the
+     passage underneath capped well short of the lens's own aperture width so it still reads as
      a caption, not a column, at 1440x900 and 1280x720, and `min(…, 92vw)` keeps the same cap
      from ever touching the side gutters on a narrow window. This slot sits in `.bottom`, its
      own full-width row below `.readouts`/`.ancestor`/`.feed` (ShellLayout.tsx's grid), so a
@@ -412,12 +419,21 @@
 
 /* `env(safe-area-inset-bottom)` clears a phone's home-indicator gesture bar, on top of `.hud`'s
    own bottom padding — carried over from the removed footer row (VISUAL_SPEC §9, ADR-012
-   amendment) now that `.timeline` is `.bottom`'s last child. */
+   amendment) now that `.timeline` is `.bottom`'s last child.
+   `pointer-events: auto`: `.bottom` itself is `pointer-events: none` (above), re-enabled per real
+   child instead of via a blanket `.bottom > *` — `.stage`, `.bottom`'s *other* child, is
+   deliberately sized to its own tallest grid-cell child, including a hidden sibling nobody can see
+   (`ShellLayout.tsx`'s own `useChromeGap` doc comment), so a blanket re-enable would let that
+   oversized, mostly-invisible box (promoted to `z-index: 60` above this entire backdrop) swallow
+   clicks meant for whatever actually sits underneath it, e.g. the expanded globe's own Globe/Map
+   toggle. `.stage`'s own children get their `pointer-events: auto` from `.stage > *` below
+   instead, so only whichever of the three is actually visible there ever intercepts a click. */
 .timeline {
   min-width: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   font-family: var(--hud-mono);
   color: var(--hud-dim);
+  pointer-events: auto;
 }
 
 @media (max-width: 760px) {
@@ -494,19 +510,16 @@
   /* Top-right corner, mirroring `.globe`'s top-left: the panel's own portrait shrinks to
      `--orb-size` (AncestorPanel's hud.module.css) so the row balances, and its kicker/name/
      since text (below) becomes a short right-aligned caps stack instead of the desktop's
-     prose column. No `padding-top` reservation any more: this used to clear the sound toggle's
-     own fixed top-right corner (ADR-023's `audio/toggle.module.css`), but that toggle now lives
-     inline in the timeline transport instead (follow-up pass item 2). This column has no "About
-     & credits"-style button of its own the way `.globe` does, so it starts flush at
-     `--gutter-top`; the *portrait* inside it (from the inherited desktop `.ancestor`'s own
-     `padding-top: 40px`, not overridden here) lands close to — but not exactly at, and not for
-     the reason a stale note here used to claim — where the globe orb starts, since that column's
-     own "About & credits" button plus its gap happens to add up to a similar offset (re-review
-     fix, 2026-09-15: corrected after measuring both in-browser rather than assuming the two
-     columns share one deliberate rule). `min-height` holds row 1 at the same height whether or
+     prose column. No `padding-top` reservation: the sound toggle that used to anchor here now
+     lives inline in the timeline transport instead. This column has no "About & credits"-style
+     button of its own the way `.globe` does, so it starts flush at `--gutter-top`; the *portrait*
+     inside it (from the inherited desktop `.ancestor`'s own `padding-top: 40px`, not overridden
+     here) lands close to, but not exactly at, where the globe orb starts, since that column's own
+     "About & credits" button plus its gap happens to add up to a similar offset. `min-height`
+     holds row 1 at the same height whether or
      not the lineage has started (`<AncestorPortrait>` renders nothing before it has): sized for
      the portrait-present case (portrait + panel gap + two text lines + ancestor gap + kicker),
-     it stops the CO2 readouts/feed below from jumping down the moment a portrait first appears. */
+     it stops the readouts/feed below from jumping down the moment a portrait first appears. */
   .ancestor {
     justify-self: end;
     align-items: flex-end;

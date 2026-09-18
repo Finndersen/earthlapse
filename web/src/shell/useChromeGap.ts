@@ -30,6 +30,21 @@
  * (`ShellLayout.tsx`'s own call site has the full story: an earlier version passed `.bottom`
  * itself, whose height a hidden-but-still-laid-out scene caption could inflate well past the
  * timeline's own top edge, undershooting the real free area).
+ *
+ * `reserveBottomPx` (issue 3 follow-up, user report: "the globe/map toggle is overlayed on top
+ * of the globe... globe needs to be made a bit smaller") carves additional pixels off the
+ * *bottom* of `--chrome-gap-height` alone, without moving `--chrome-gap-top` or the boundary
+ * `--chrome-gap-height` is measured *from* — for chrome that isn't `bottomRef`'s own element and
+ * so can't just be nested inside it (`ShellLayout.tsx`'s own call site: the expanded globe's own
+ * Globe/Map toggle, rendered by `Globe.tsx` inside its own fullscreen backdrop, a sibling
+ * subtree `ShellLayout` has no ref into). Also written out separately as `--chrome-gap-bottom-raw`
+ * (the *unreserved* `bottomTop`) so a consumer positioning itself relative to the real lower
+ * boundary — the toggle itself, sitting in the band this reservation frees up — doesn't have to
+ * reconstruct that boundary from the now-smaller `--chrome-gap-height` plus its own copy of
+ * whatever was reserved from it; `Globe.module.css`'s `.viewModeGroup` is exactly this consumer.
+ * Recomputes whenever `reserveBottomPx` itself changes (no separate `ResizeObserver` needed for
+ * it — a plain reactive number, unlike `topRef`/`bottomRef`'s own elements, so a change is always
+ * already a re-render).
  */
 
 import { useEffect } from 'react'
@@ -39,6 +54,7 @@ export function useChromeGap(
   hostRef: RefObject<HTMLElement | null>,
   topRef: RefObject<HTMLElement | null>,
   bottomRef: RefObject<HTMLElement | null>,
+  reserveBottomPx = 0,
 ): void {
   useEffect(() => {
     const host = hostRef.current
@@ -50,7 +66,8 @@ export function useChromeGap(
       const topBottom = top.getBoundingClientRect().bottom
       const bottomTop = bottom.getBoundingClientRect().top
       host.style.setProperty('--chrome-gap-top', `${Math.max(0, topBottom)}px`)
-      host.style.setProperty('--chrome-gap-height', `${Math.max(0, bottomTop - topBottom)}px`)
+      host.style.setProperty('--chrome-gap-height', `${Math.max(0, bottomTop - topBottom - reserveBottomPx)}px`)
+      host.style.setProperty('--chrome-gap-bottom-raw', `${Math.max(0, bottomTop)}px`)
     }
 
     recompute()
@@ -65,5 +82,5 @@ export function useChromeGap(
       window.removeEventListener('resize', recompute)
       observer?.disconnect()
     }
-  }, [hostRef, topRef, bottomRef])
+  }, [hostRef, topRef, bottomRef, reserveBottomPx])
 }

@@ -2,16 +2,21 @@
 
 /** The three always-visible "jump to an era" shortcuts — Earth / Dinosaurs / Humans, plain
  *  aliases for three existing sections (`../eraShortcuts.ts`'s own doc comment has the full
- *  reasoning for which three and why). Originally its own row beside the shell's title
- *  (ADR-012 amendment); moved here, into the timeline's own bottom-chrome controls row (user
- *  ask, 2026-09-18: "move the earth/dinosaurs/humans era shortcuts down to the bottom above the
- *  timeline") — specifically into `.controlsSections`, beside the breadcrumb, in the horizontal
- *  room that same pass freed there by deleting the breadcrumb's own "‹ Up"/"⌂ Earth" buttons and
- *  moving its "‹"/"›" sibling-step buttons onto the scrub track itself (`SectionEdgeNav.tsx`) —
- *  see `Timeline.tsx`'s own doc comment for the row layout. Every row in the controls row is
- *  already sized by the 44px play button beside it, and this group's own content (a 12px icon
- *  over an ~11px label line, single line here rather than the old two-line stack) sits well
- *  under that, so folding it in costs the row no extra height.
+ *  reasoning for which three and why).
+ *
+ *  **Placement history** (four homes, all user-driven, 2026-09-18): its own row beside the
+ *  shell's title (ADR-012 amendment) → folded into `Timeline.tsx`'s `.controlsSections`, beside
+ *  the breadcrumb ("move the earth/dinosaurs/humans era shortcuts down to the bottom above the
+ *  timeline") → back beside the title, first stacked under it then beside it in a three-track
+ *  grid ("i dont really like the era shrotcuts and breadcrumbs being close next to each other
+ *  like that, it looks a bit cluttered", then "moving era shortcuts to the side of the current
+ *  year... to save vertical space") → and finally back to `.controlsSections` once more, this
+ *  time actually landing where the second move was aiming ("move it back down to below the
+ *  timelie... not so close to the breadcrumbs... justifeid to hte right so its closer to the
+ *  play/reiard/ff nav controls") — `Timeline.module.css`'s `.controlsSections` doc comment has
+ *  the current `justify-content: space-between` layout that pins the breadcrumb left and this
+ *  group right, next to `.controlsCore`, without loading the already-crowded `.controlsSecondary`
+ *  track (measured and rejected first — that file's own comment has the numbers).
  *
  *  Every entry is a plain alias: clicking it calls the exact same `onSelectSection` a section
  *  band, breadcrumb crumb or edge-nav button already calls, with the section id

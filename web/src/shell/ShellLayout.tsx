@@ -3,11 +3,15 @@
 import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-
 import { CreditsList } from './CreditsList'
 import { Panel } from './Panel'
 import styles from './ShellLayout.module.css'
 import { useChromeGap } from './useChromeGap'
+
+/** Real clearance between the expanded globe's own Globe/Map toggle and `.expandedGlobeCaption`
+ *  (`viewModeToggleHeightPx`'s own doc comment) — the same "0px reads as touching, not clear"
+ *  reasoning `Globe.module.css`'s narrow-viewport rule gives for its own `+ 6px` margin. */
+const VIEW_MODE_TOGGLE_CLEARANCE_PX = 12
 
 export interface ShellLayoutProps {
   /** Full-window backdrop: the generated still, breathing and dissolving. */
@@ -17,14 +21,13 @@ export interface ShellLayoutProps {
   /** The globe's current regime/effect caption (docs/GLOBE.md §7), or `''` for none, sourced
    *  from `Globe`'s `onCaptionChange` — `Globe` itself never draws this, in either state, so it
    *  never overlaps the orb's own picture (the user-reported "label on top of the globe"
-   *  issue). Two places, depending on `globeExpanded`:
-   *  - minimised: replaces the "Paleogeography" label under the orb while non-empty, falling
-   *    back to it otherwise, in a single-line slot whose height never changes as the caption
-   *    appears/disappears;
-   *  - expanded: shown in the `caption`/`chart` stage above the timeline — the scene caption's
-   *    own spot, empty while the globe is expanded (below) — rather than placed by `Globe`'s
-   *    own fullscreen backdrop, which has no way to know where the timeline's playhead label
-   *    actually sits and so can't reliably avoid it. */
+   *  issue). One place now: the minimised orb's own label, replacing "Paleogeography" while
+   *  non-empty, in a single-line slot whose height never changes as the caption appears/
+   *  disappears. It used to also show, expanded, in the `caption`/`chart` stage above the
+   *  timeline — removed there by user ask, 2026-09-18 ("the extra globe labels when fullscreen
+   *  like 'Geography unknown', 'Snowball Earth · extent contested' etc can be removed"); that
+   *  slot (`.expandedGlobeCaption`) still exists, empty, purely as `useChromeGap`'s own
+   *  measurement anchor — see this component's own doc comment on `expandedGlobeCaptionRef`. */
   globeCaption: string
   /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). */
   readouts: ReactNode
@@ -51,6 +54,14 @@ export interface ShellLayoutProps {
   /** The globe fills the lens: the title and timeline stay above its backdrop, still legible
    *  and scrubbable (watching the continents move is the point), while the rest recedes. */
   globeExpanded: boolean
+  /** The expanded globe's own Globe/Map toggle's real rendered height in CSS px, `0` while it
+   *  isn't mounted (collapsed, or no WebGL) — reported up from `Globe.tsx` (its own
+   *  `onViewModeToggleHeightChange` doc comment) the same way `globeCaption` already crosses this
+   *  boundary. Fed to `useChromeGap` as `reserveBottomPx` (plus a fixed clearance margin) so the
+   *  expanded sphere/map sizes itself into what is genuinely left over once the toggle's own band
+   *  is set aside, rather than growing underneath it (user report: "the globe/map toggle is
+   *  overlayed on top of the globe... globe needs to be made a bit smaller"). */
+  viewModeToggleHeightPx: number
   /** The event colour legend, passed straight through to the About & credits panel's
    *  `CreditsList` (re-review fix, 2026-09-15 — see `CreditsList.tsx`'s own doc comment for why
    *  `shell` takes this as a prop rather than importing `@/events`'s `EventTagLegend` itself). */
@@ -76,6 +87,7 @@ export function ShellLayout({
   chart,
   timeline,
   globeExpanded,
+  viewModeToggleHeightPx,
   eventLegend,
 }: ShellLayoutProps) {
   // The About & credits panel (VISUAL_SPEC §9, ADR-012 amendment): local, ShellLayout-owned UI
@@ -108,10 +120,19 @@ export function ShellLayout({
   // content (nothing, when the globe's own caption is empty, exactly matching the timeline's own
   // top edge; its own text's height when it isn't) — which is exactly the boundary the expanded
   // globe needs to clear, in either case.
+  //
+  // The Globe/Map toggle can't use the same "just nest it in an existing measured element" trick
+  // (`viewModeToggleHeightPx`'s own doc comment: it isn't this component's own child — it lives
+  // inside `Globe`'s own fullscreen backdrop, a sibling subtree), so it goes through
+  // `useChromeGap`'s explicit `reserveBottomPx` instead.
   const shellRef = useRef<HTMLDivElement | null>(null)
   const titleRef = useRef<HTMLElement | null>(null)
   const expandedGlobeCaptionRef = useRef<HTMLDivElement | null>(null)
-  useChromeGap(shellRef, titleRef, expandedGlobeCaptionRef)
+  // `0` reservation, not `VIEW_MODE_TOGGLE_CLEARANCE_PX`, while the toggle isn't mounted at all
+  // (collapsed, or no WebGL), so a plain `viewModeToggleHeightPx` of `0` never costs the globe
+  // height it doesn't need to give up.
+  const reserveBottomPx = viewModeToggleHeightPx > 0 ? viewModeToggleHeightPx + VIEW_MODE_TOGGLE_CLEARANCE_PX : 0
+  useChromeGap(shellRef, titleRef, expandedGlobeCaptionRef, reserveBottomPx)
 
   return (
     <div ref={shellRef} className={styles.shell} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
@@ -138,15 +159,26 @@ export function ShellLayout({
             About &amp; credits
           </button>
           <div className={styles.orb}>{globe}</div>
-          {/* While expanded, `.expandedGlobeCaption` announces the caption; one live region at a time. */}
-          <span className={`${styles.label} ${styles.globeLabel}`} aria-live={globeExpanded ? undefined : 'polite'}>
+          {/* While expanded, `.expandedGlobeCaption` used to announce the caption (one live
+              region at a time); it no longer carries any text while expanded at all (below), so
+              this is now the *only* live announcer of `globeCaption`, full stop — there is
+              nothing left to be mutually exclusive with. */}
+          <span
+            className={`${styles.label} ${styles.globeLabel}`}
+            aria-live={globeExpanded ? undefined : 'polite'}
+            data-testid="minimised-globe-label"
+          >
             {globeCaption !== '' ? globeCaption : 'Paleogeography'}
           </span>
         </div>
 
-        <div className={styles.readouts}>{readouts}</div>
+        <div className={styles.readouts} data-testid="shell-readouts">
+          {readouts}
+        </div>
 
-        <div className={styles.feed}>{feed}</div>
+        <div className={styles.feed} data-testid="shell-feed">
+          {feed}
+        </div>
 
         <header ref={titleRef} className={styles.title}>
           {title}
@@ -162,13 +194,28 @@ export function ShellLayout({
           <div className={styles.stage}>
             <div className={styles.caption}>{caption}</div>
             <div className={styles.chart}>{chart}</div>
+            {/* User ask, 2026-09-18: "the extra globe labels when fullscreen like 'Geography
+                unknown', 'Snowball Earth · extent contested' etc can be removed" — scoped to
+                *expanded* only (the minimised orb's own label, above, still shows `globeCaption`
+                unchanged). This element itself must stay mounted either way: it is `useChromeGap`'s
+                own `bottomRef` (this component's own doc comment above has the full "why not
+                `.bottom` itself" story), and an empty-but-present element is that reasoning's own
+                already-designed-for case ("nothing, when the globe's own caption is empty, exactly
+                matching the timeline's own top edge") — this change just makes that the permanent
+                state while expanded, rather than only whenever `globeCaption` happened to be `''`.
+                `aria-live` stays wired exactly as before (still `'polite'` only while expanded):
+                with nothing ever written into it now, it never actually announces anything, which
+                is the correct behaviour here — the caption is gone for sighted and screen-reader
+                users alike, not just visually hidden from one of them. */}
+            {/* Always empty now, not just while collapsed — see the comment above this block.
+                `globeCaption` no longer has a reader here at all; the minimised orb's own label
+                (above) is its only remaining consumer. */}
             <div
               ref={expandedGlobeCaptionRef}
               className={styles.expandedGlobeCaption}
               aria-live={globeExpanded ? 'polite' : undefined}
-            >
-              {globeCaption}
-            </div>
+              data-testid="expanded-globe-caption"
+            />
           </div>
           <div className={styles.timeline}>{timeline}</div>
         </div>

@@ -48,6 +48,12 @@
  * - `portraitNeighbourUrls(index, older, younger, assetBase)` — the plates/flow textures just
  *   outside the drawn pair, for `<AncestorPortrait>`'s neighbour preload.
  * - `decodeFlowByte(byte, range)` — the flow texture encoding.
+ *
+ * ## HUD visibility (display-only, reversible)
+ * - `isHiddenFromHud(layerId)` / `HUD_HIDDEN_LAYER_IDS` — layers to exclude from the HUD's
+ *   scalar readout list despite being HUD-surfaced and chartable in the manifest (currently just
+ *   `co2`, see `./hudVisibility.ts`). The layer, its curated data, and its sampling are
+ *   untouched; only its presence in `Experience.tsx`'s `hudScalarEntries` is gated.
  */
 
 export { createEventsLayer, createNodeLayer, createScalarLayer } from './factories'
@@ -62,6 +68,8 @@ export {
   type PortraitDrawState,
   type PortraitIndex,
 } from './portraits'
+
+export { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud } from './hudVisibility'
 
 export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'

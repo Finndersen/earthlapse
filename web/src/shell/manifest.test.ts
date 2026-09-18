@@ -39,15 +39,49 @@ describe('validateManifest', () => {
   it('rejects a scene missing a required field', () => {
     const bad = {
       ...stubManifest,
-      scenes: [{ id: 'x', t: 0, chapterId: 'c', image: 'i.svg', caption: 'hi', width: 10, height: 10 }],
+      scenes: [
+        { id: 'x', t: 0, chapterId: 'c', image: 'i.svg', thumbnail: 'thumb.svg', caption: 'hi', width: 10, height: 10 },
+      ],
     }
     expect(() => validateManifest(bad)).toThrow(/shot/)
+  })
+
+  it('rejects a scene missing thumbnail', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/thumbnail/)
   })
 
   it('rejects a scene missing title', () => {
     const bad = {
       ...stubManifest,
-      scenes: [{ id: 'x', t: 0, chapterId: 'c', image: 'i.svg', shot: 'GROUND', caption: 'hi', width: 10, height: 10 }],
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          thumbnail: 'thumb.svg',
+          shot: 'GROUND',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+        },
+      ],
     }
     expect(() => validateManifest(bad)).toThrow(/title/)
   })
@@ -66,6 +100,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'DRONE_SHOT',
           caption: 'hi',
           width: 10,
@@ -85,6 +120,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'SPLIT_LEVEL',
           title: 'Title',
           caption: 'hi',
@@ -130,6 +166,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           depth: 'd.png',
           shot: 'GROUND',
           title: 'Title',
@@ -263,6 +300,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'GROUND',
           title: 'Title',
           caption: 'hi',
@@ -322,6 +360,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'GROUND',
           title: 'Title',
           caption: 'hi',
@@ -343,6 +382,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'GROUND',
           title: 'Title',
           caption: 'hi',
@@ -387,6 +427,7 @@ describe('validateManifest', () => {
           t: 0,
           chapterId: 'c',
           image: 'i.svg',
+          thumbnail: 'thumb.svg',
           shot: 'GROUND',
           title: 'Title',
           caption: 'hi',
