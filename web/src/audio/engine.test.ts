@@ -1,10 +1,72 @@
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { PresentationRegime } from '@/scene'
 import type { Layer, Playback, ScalarValue } from '@/types/layer'
+import type { Manifest } from '@/types/manifest'
 
 import { useAudioEngine } from './engine'
+
+// A minimal but real `Tone` stand-in for the "active" tests below (`vi.hoisted` so the mock
+// factory, which vitest hoists above these imports, can still close over it). Every node just
+// needs to survive `createScoreVoice`'s construction with an empty manifest — `connect`/`start`
+// chain and return `this`, `gain`/`frequency`/`detune` are ramped every tick once the tick loop
+// starts. Deliberately does NOT resolve `start` itself: the whole point of these tests is the
+// window between "sound preference is on" and "the browser has actually let audio start".
+const toneTestState = vi.hoisted(() => {
+  class FakeParam {
+    rampTo = vi.fn()
+  }
+  class FakeNode {
+    gain = new FakeParam()
+    frequency = new FakeParam()
+    detune = new FakeParam()
+    connect(): this {
+      return this
+    }
+    start(): this {
+      return this
+    }
+    toDestination(): this {
+      return this
+    }
+    dispose(): void {}
+  }
+  let resolveStart: (() => void) | null = null
+  return {
+    resolveStart: () => resolveStart?.(),
+    module: {
+      start: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveStart = resolve
+          }),
+      ),
+      Gain: FakeNode,
+      Filter: FakeNode,
+      Oscillator: FakeNode,
+      Tremolo: FakeNode,
+      LFO: FakeNode,
+      Player: FakeNode,
+      ToneAudioBuffer: FakeNode,
+      getContext: () => ({ state: 'running' as const }),
+    },
+  }
+})
+
+vi.mock('tone', () => toneTestState.module)
+
+const EMPTY_MANIFEST: Manifest = {
+  schemaVersion: 1,
+  buildId: 'test',
+  assetBase: '/media',
+  scenes: [],
+  chapters: [],
+  layers: [],
+  events: [],
+  audioStems: [],
+  credits: [],
+}
 
 const PLAYBACK: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'scenes' }
 const FULL_SECTION_WINDOW: [number, number] = [0, 4.567e9]
@@ -116,5 +178,97 @@ describe('useAudioEngine tick loop lifecycle', () => {
     // As above: no real runtime to inspect (manifest is null), so `enabled` staying `true` is
     // the one concrete thing left to check on the hook's public surface.
     expect(result.current.enabled).toBe(true)
+  })
+})
+
+// CLAUDE.md's "UI must not lie": with sound on by default, `enabled` can be `true` from the very
+// first render even though the browser has not yet granted a gesture for `Tone.start()`
+// (`context.resume()`) to actually resolve. `active` is the field `<SoundToggle>` must read
+// instead of `enabled` to know whether anything is genuinely audible yet.
+describe('useAudioEngine "active" — real audio state vs. the stored preference', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    window.localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('reports enabled but not active while Tone.start() is still waiting on a user gesture', async () => {
+    const { result } = renderHook(() =>
+      useAudioEngine({
+        manifest: EMPTY_MANIFEST,
+        t: 0,
+        playing: true,
+        playback: PLAYBACK,
+        sectionWindow: FULL_SECTION_WINDOW,
+        scalarLayers: emptyLayers,
+      }),
+    )
+
+    // No stored preference: on-by-default (persistence.test.ts covers the persistence rules
+    // themselves) — the mount effect has already asked Tone to start.
+    await vi.advanceTimersByTimeAsync(0)
+    expect(result.current.enabled).toBe(true)
+    expect(toneTestState.module.start).toHaveBeenCalledTimes(1)
+    expect(result.current.active).toBe(false)
+
+    // Still not active well after the tick loop would otherwise be running — Tone.start() has
+    // not resolved because no gesture has happened, exactly like a real cold page load.
+    await vi.advanceTimersByTimeAsync(80 * 5)
+    expect(result.current.active).toBe(false)
+    expect(result.current.enabled).toBe(true)
+  })
+
+  it('becomes active once Tone.start() resolves (the deferred "first gesture" case)', async () => {
+    const { result } = renderHook(() =>
+      useAudioEngine({
+        manifest: EMPTY_MANIFEST,
+        t: 0,
+        playing: true,
+        playback: PLAYBACK,
+        sectionWindow: FULL_SECTION_WINDOW,
+        scalarLayers: emptyLayers,
+      }),
+    )
+    await vi.advanceTimersByTimeAsync(0)
+    expect(result.current.active).toBe(false)
+
+    await act(async () => {
+      toneTestState.resolveStart()
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(result.current.active).toBe(true)
+    expect(result.current.enabled).toBe(true)
+  })
+
+  it('drops active back to false the instant the viewer mutes, even mid-start', async () => {
+    const { result } = renderHook(() =>
+      useAudioEngine({
+        manifest: EMPTY_MANIFEST,
+        t: 0,
+        playing: true,
+        playback: PLAYBACK,
+        sectionWindow: FULL_SECTION_WINDOW,
+        scalarLayers: emptyLayers,
+      }),
+    )
+    await vi.advanceTimersByTimeAsync(0)
+    await act(async () => {
+      toneTestState.resolveStart()
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(result.current.active).toBe(true)
+
+    act(() => {
+      result.current.setEnabled(false)
+    })
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(result.current.enabled).toBe(false)
+    expect(result.current.active).toBe(false)
   })
 })

@@ -5,8 +5,8 @@ import { SoundToggle } from './toggle'
 
 afterEach(cleanup)
 
-function renderToggle(enabled: boolean, setEnabled = vi.fn(), setMasterVolume = vi.fn()) {
-  const utils = render(<SoundToggle enabled={enabled} masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={setMasterVolume} />)
+function renderToggle(enabled: boolean, active = enabled, setEnabled = vi.fn(), setMasterVolume = vi.fn()) {
+  const utils = render(<SoundToggle enabled={enabled} active={active} masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={setMasterVolume} />)
   return { ...utils, setEnabled, setMasterVolume }
 }
 
@@ -22,9 +22,9 @@ describe('SoundToggle', () => {
 
   it('keeps the same slider element mounted (not remounted) when sound is toggled on', () => {
     const setEnabled = vi.fn()
-    const { rerender } = render(<SoundToggle enabled={false} masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={vi.fn()} />)
+    const { rerender } = render(<SoundToggle enabled={false} active={false} masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={vi.fn()} />)
     const before = screen.getByLabelText('Master volume')
-    rerender(<SoundToggle enabled masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={vi.fn()} />)
+    rerender(<SoundToggle enabled active masterVolume={0.5} setEnabled={setEnabled} setMasterVolume={vi.fn()} />)
     const after = screen.getByLabelText('Master volume')
     expect(after).toBe(before)
     expect(after.getAttribute('data-visible')).toBe('true')
@@ -42,5 +42,30 @@ describe('SoundToggle', () => {
     const { setMasterVolume } = renderToggle(true)
     fireEvent.change(screen.getByLabelText('Master volume'), { target: { value: '0.8' } })
     expect(setMasterVolume).toHaveBeenCalledWith(0.8)
+  })
+
+  describe('enabled but not yet active (waiting on the browser autoplay gesture)', () => {
+    it('never renders the same label/state as genuinely-playing sound', () => {
+      renderToggle(true, false)
+      expect(screen.queryByRole('button', { name: 'Mute ambience and score (M)' })).toBeNull()
+      const button = screen.getByRole('button', { name: 'Sound on — starts on your next click or key press (M)' })
+      expect(button.getAttribute('title')).toBe('Sound on — starting…')
+      expect(button.getAttribute('data-pending')).toBe('true')
+      // `aria-pressed` still tracks the stored preference (the button controls that), not
+      // whether sound happens to be audible this instant.
+      expect(button.getAttribute('aria-pressed')).toBe('true')
+    })
+
+    it('still lets a click mute the preference', () => {
+      const { setEnabled } = renderToggle(true, false)
+      fireEvent.click(screen.getByRole('button', { name: 'Sound on — starts on your next click or key press (M)' }))
+      expect(setEnabled).toHaveBeenCalledWith(false)
+    })
+  })
+
+  it('renders the genuinely-active label once the context has actually started', () => {
+    renderToggle(true, true)
+    const button = screen.getByRole('button', { name: 'Mute ambience and score (M)' })
+    expect(button.getAttribute('data-pending')).toBe('false')
   })
 })

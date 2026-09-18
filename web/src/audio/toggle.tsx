@@ -45,9 +45,16 @@ function useMuteShortcut(enabled: boolean, setEnabled: (enabled: boolean) => voi
   }, [setEnabled])
 }
 
-export function SoundToggle({ enabled, masterVolume, setEnabled, setMasterVolume }: SoundToggleProps) {
+export function SoundToggle({ enabled, active, masterVolume, setEnabled, setMasterVolume }: SoundToggleProps) {
   const [justChanged, setJustChanged] = useState(false)
   useMuteShortcut(enabled, setEnabled)
+
+  // The viewer has asked for sound, but the browser hasn't yet let `AudioContext` actually start
+  // (no gesture on the page yet — e.g. straight off a cold load, sound on by default). `enabled`
+  // alone would render this identically to genuinely-playing sound, which is exactly the lie
+  // CLAUDE.md's "UI must not lie" rule calls out: nothing is audible yet, so the button must not
+  // claim it is.
+  const pending = enabled && !active
 
   return (
     <div className={styles.wrap} data-expanded={enabled}>
@@ -55,16 +62,17 @@ export function SoundToggle({ enabled, masterVolume, setEnabled, setMasterVolume
         type="button"
         className={styles.button}
         aria-pressed={enabled}
-        aria-label={enabled ? 'Mute ambience and score (M)' : 'Play ambience and score (M)'}
-        title={enabled ? 'Mute (M)' : 'Sound (M)'}
+        aria-label={pending ? 'Sound on — starts on your next click or key press (M)' : enabled ? 'Mute ambience and score (M)' : 'Play ambience and score (M)'}
+        title={pending ? 'Sound on — starting…' : enabled ? 'Mute (M)' : 'Sound (M)'}
         onClick={() => {
           setEnabled(!enabled)
           setJustChanged(true)
           window.setTimeout(() => setJustChanged(false), 300)
         }}
         data-just-changed={justChanged}
+        data-pending={pending}
       >
-        <SpeakerIcon muted={!enabled} />
+        <SpeakerIcon muted={!enabled} pending={pending} />
       </button>
       {/* Always rendered, not conditional on `enabled` (re-review fix, 2026-09-15): mounting/
           unmounting the slider changed this control's own rendered width, which shifted every
@@ -92,12 +100,19 @@ export function SoundToggle({ enabled, masterVolume, setEnabled, setMasterVolume
   )
 }
 
-function SpeakerIcon({ muted }: { muted: boolean }) {
+/** Three distinct glyphs, not two — `muted` (crossed out), `pending` (one wave: sound is wanted
+ *  but the browser hasn't let it start yet), and neither (two waves: genuinely audible). Collapsing
+ *  `pending` into the same double-wave glyph as truly-active sound is exactly the lie CLAUDE.md's
+ *  "UI must not lie" rule forbids — the button would look identical whether or not anything is
+ *  actually playing. */
+function SpeakerIcon({ muted, pending }: { muted: boolean; pending: boolean }) {
   return (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
       <path d="M4 9v6h4l5 4V5L8 9H4Z" strokeLinejoin="round" />
       {muted ? (
         <path d="M16 9l5 6M21 9l-5 6" strokeLinecap="round" />
+      ) : pending ? (
+        <path d="M16.5 8.5a5 5 0 0 1 0 7" strokeLinecap="round" />
       ) : (
         <path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" strokeLinecap="round" />
       )}

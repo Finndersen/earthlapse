@@ -51,7 +51,7 @@ import type { AudioStem, Manifest } from '@/types/manifest'
 
 import { StemBufferCache } from './bufferCache'
 import { stemsNeeded } from './loadPlan'
-import { DEFAULT_MASTER_VOLUME, loadAudioPrefs, saveAudioEnabled, saveAudioMasterVolume } from './persistence'
+import { DEFAULT_ENABLED, DEFAULT_MASTER_VOLUME, loadAudioPrefs, saveAudioEnabled, saveAudioMasterVolume } from './persistence'
 import type { TimeWindow } from './ramp'
 import { scoreParams, type ScoreParams } from './score'
 import { onceSoundOutlived, onceVoiceHasBeenPresented, sceneSoundLoopGains, useSceneSoundOnceTrigger } from './sceneSound'
@@ -126,6 +126,15 @@ export const DECODED_BYTES_CAP = 190 * 1024 * 1024
 
 export interface AudioEngineControls {
   enabled: boolean
+  /** Whether sound is actually audible right now, distinct from `enabled` (the viewer's stored
+   *  preference). Browsers refuse to start an `AudioContext` before a user gesture (`Tone.start()`
+   *  below is just `context.resume()`), so `enabled` can be `true` — on page load, per the
+   *  on-by-default preference — for a stretch where nothing has actually made a sound yet.
+   *  `<SoundToggle>` must read this, not `enabled` alone, to avoid showing "on" while silent
+   *  (CLAUDE.md's UI-must-not-lie rule): true only once `Tone.start()` has resolved and the Tone
+   *  graph is actually built; false while `enabled` is false, while waiting on that first
+   *  gesture, or once disposed. */
+  active: boolean
   masterVolume: number
   setEnabled: (enabled: boolean) => void
   setMasterVolume: (volume: number) => void
@@ -809,10 +818,16 @@ function updateLoopVoices(runtime: ToneRuntime, ambient: Record<string, number>,
 export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls {
   const { manifest, t, playing, playback, sectionWindow, scalarLayers, presentationRegime = 'crossfade' } = input
 
-  const [prefs, setPrefs] = useState(() => ({ enabled: false, masterVolume: DEFAULT_MASTER_VOLUME }))
+  const [prefs, setPrefs] = useState(() => ({ enabled: DEFAULT_ENABLED, masterVolume: DEFAULT_MASTER_VOLUME }))
   useEffect(() => {
     setPrefs(loadAudioPrefs())
   }, [])
+
+  // True only once `Tone.start()` has actually resolved and the Tone graph exists — see
+  // `AudioEngineControls.active`'s own doc comment. Reset synchronously (not just in the lazy-load
+  // effect's cleanup) whenever `enabled` goes false or the effect below re-runs, so a re-enable
+  // never briefly shows the previous session's "active" state before its own gesture-gated start.
+  const [active, setActive] = useState(false)
 
   const sceneTarget = manifest !== null && manifest.scenes.length > 0 ? sceneAt(manifest.scenes, t) : EMPTY_SCENE_MIX
   const presented = usePresentedSceneMix(sceneTarget)
@@ -912,8 +927,18 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   // loads no stem buffers — the tick loop below starts doing that on its first run once the
   // runtime exists, per this module's own doc comment.
   useEffect(() => {
-    if (!prefs.enabled || manifest === null) return
+    if (!prefs.enabled || manifest === null) {
+      setActive(false)
+      return
+    }
     let cancelled = false
+    // `Tone.start()` (== `context.resume()`) will not resolve until the browser has seen a user
+    // gesture on the page — with sound on by default, this effect can run at page load with none
+    // yet, so this call is expected to sit pending rather than reject; nothing here assumes it
+    // settles promptly. `active` only flips once it actually does, and `enabled`/the toggle stay
+    // exactly as they were meanwhile — no error, no unhandled rejection, no stuck "on" state that
+    // outruns what's audible (the caller's own catch below still covers a real failure, e.g. a
+    // browser that rejects instead of deferring).
     loadTone()
       .then(async (Tone) => {
         await Tone.start()
@@ -921,6 +946,7 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
         const runtime = buildRuntime(Tone, manifest, onUnusableStem)
         runtimeRef.current = runtime
         installAudioDevHook(Tone, runtime)
+        setActive(true)
       })
       .catch((error: unknown) => {
         console.warn('audio: failed to start Tone.js', error)
@@ -929,6 +955,7 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       cancelled = true
       runtimeRef.current?.dispose()
       runtimeRef.current = null
+      setActive(false)
     }
     // Reacts only to `enabled` and to the null -> non-null transition of `manifest` (the
     // "still loading" -> "ready" edge) — not to every later manifest object identity change,
@@ -1069,6 +1096,7 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
 
   return {
     enabled: prefs.enabled,
+    active,
     masterVolume: prefs.masterVolume,
     setEnabled: (enabled) => {
       setPrefs((p) => ({ ...p, enabled }))

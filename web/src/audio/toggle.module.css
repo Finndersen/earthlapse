@@ -35,6 +35,31 @@
   transform: scale(1.12);
 }
 
+/* Sound is on but the browser hasn't let the AudioContext actually start yet (no gesture on the
+   page since load — the default-on case is the common one now). A soft pulse, distinct from both
+   the steady "on" and "muted" looks, so the button never reads as fully live before anything is
+   actually audible. */
+.button[data-pending='true'] {
+  animation: pending-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button[data-pending='true'] {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+@keyframes pending-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .button:focus-visible {
   outline: 1px solid var(--hud-accent, #e8b06a);
   outline-offset: 3px;
