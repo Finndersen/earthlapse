@@ -26,6 +26,23 @@
  * density too, so an empty ocean or desert shows the basemap untouched while a city core is
  * nearly opaque.
  *
+ * **2026-09 retune: discriminability, not just visibility** (user feedback, looking at the
+ * expanded globe over Africa: "the population density overlay doesn't seem quite right, it makes
+ * it look like a lot of central Africa is densely populated, is that accurate?"). Sampled directly
+ * against the published 2015 CE frame (`DENSITY_RAMP`'s own doc comment has the table): the Congo
+ * basin's true rainforest interior is genuinely sparse, ~5-15 people/km² — roughly a tenth of the
+ * Netherlands or Jiangsu, nowhere near the Ganges plain's 1,000+ — so the data was not the
+ * problem (verdict (c), "the data really is that dense", is false) and the mip/box-filter
+ * averaging noted below is the wrong direction to explain it (it under-, never over-, states
+ * density — also measured, also rejected as the cause). The *ramp* was: the old alpha curve
+ * reached 0.33 opacity by just 5 people/km² and 0.50 by 20/km², so most of its 0-0.95 range was
+ * already spent before a texel left "background rural" territory — a large, visually dominant
+ * area of faint-but-nonzero rainforest then reads the same as a small, genuinely dense delta,
+ * especially since every stop shares one hue family by design (above), so the only cue left is
+ * opacity, and opacity differences are hard to read at a glance. The fix pushes the low-to-mid
+ * alphas down and backloads the curve toward the stops that are actually dense (`DENSITY_RAMP`'s
+ * current alpha column) — retuned, not redesigned: no density breakpoint or hex colour moved.
+ *
  * **Mip strategy.** The overlay's texture cache uses `'boxFilter'` mips and `NoColorSpace`
  * (`humanEraTextureCache.ts`), for the reason that module's own doc comment gives: these bytes
  * are numeric, not gamma-encoded colour. The lesson that motivated it there (HYDE's sharp
@@ -71,21 +88,46 @@ function stop(density: number, hex: string, alpha: number): DensityRampStop {
  * seven stops into the top few bytes.
  *
  * The alpha curve was tuned against real sampled texels of the published 2015 CE frame rather
- * than by eye: remote Amazon 0.04-0.25/km² and Tibet 0.2 fall at or under the floor and draw
- * nothing; rural Iowa 6.7, the Argentine pampas 6.4 and the deep Congo 4.7 sit around a third
- * opaque, a visible tint with the terrain still reading through; the Netherlands 372 and
- * Jiangsu 1,154 are most of the way to opaque; Dhaka's own 0.35° cell, 8,204, is the ramp's
- * top. An earlier, flatter curve put rural Iowa at 0.62 and made most inhabited land read as
- * solid paint — the opposite failure to ADR-031's, and just as unreadable.
+ * than by eye — twice now. The first pass (tuned before the ramp shipped) put remote Amazon
+ * 0.04-0.25/km² and Tibet 0.2 at or under the floor, drawing nothing; rural Iowa 6.7, the
+ * Argentine pampas 6.4 and the deep Congo 4.7 around a third opaque; the Netherlands 372 and
+ * Jiangsu 1,154 most of the way to opaque; Dhaka's own 0.35° cell, 8,204, at the ramp's top. That
+ * undersold its own goal: "a third opaque" for values as low as 4-7 people/km² left sparse
+ * rainforest and truly dense farmland only a hue-shift apart in the same magenta family, which is
+ * exactly the "is central Africa really this dense?" report that prompted the 2026-09 retune (see
+ * the module doc comment above for the full verdict). Re-sampled then against a wider spread of
+ * points on the same 2015 CE frame — genuinely rural land now sits well under a third opaque, and
+ * only land in the hundreds-per-km² range or above earns real weight:
+ *
+ * | Location | people/km² | alpha before | alpha after |
+ * |---|---|---|---|
+ * | Congo basin interior (true rainforest, ~1°N 23°E) | ~7.6 | 0.38 | 0.13 |
+ * | Rural Iowa (point sample) | ~4.1 | 0.30 | 0.10 |
+ * | Amazon interior (deep, away from river towns) | ~2.7 | 0.25 | 0.07 |
+ * | Sahara | 0 | 0.00 | 0.00 |
+ * | Ethiopian highlands (rural, intensively farmed) | ~236-258 | 0.75-0.76 | 0.51-0.52 |
+ * | Jiangsu | ~466-615 | 0.80-0.82 | 0.60-0.64 |
+ * | Netherlands | ~563 | 0.81 | 0.62 |
+ * | Nigerian coastal belt / SE Nigeria (genuinely dense) | ~846-1,111 | 0.84-0.86 | 0.68-0.71 |
+ * | Ganges plain, rural Bihar | ~1,262-1,560 | 0.87-0.88 | 0.73-0.75 |
+ *
+ * Sparse land (Congo interior, rural Iowa, deep Amazon — all under 15 people/km²) now sits at
+ * 0.07-0.17 opacity, a faint tint the terrain reads clearly through; genuinely dense regions
+ * (several hundred people/km² and up — Netherlands, Jiangsu, the Ganges plain, the Nigerian
+ * coastal belt, all real, comparably dense places, not artefacts of this ramp) keep climbing
+ * toward the same 0.93 ceiling the top of the range always had. An even earlier, flatter curve
+ * than either of the above put rural Iowa at 0.62 and made most inhabited land read as solid
+ * paint — the opposite failure to ADR-031's, and just as unreadable; this retune moves toward
+ * that failure's *opposite* end of the trade-off, not back toward it.
  */
 export const DENSITY_RAMP: readonly DensityRampStop[] = [
   stop(0.5, '#3c1f63', 0),
-  stop(2, '#5a2180', 0.22),
-  stop(10, '#8a2599', 0.42),
-  stop(50, '#c92aa6', 0.6),
-  stop(250, '#f13fa8', 0.76),
-  stop(1500, '#ff7ecb', 0.88),
-  stop(8000, '#ffeaf6', 0.95),
+  stop(2, '#5a2180', 0.06),
+  stop(10, '#8a2599', 0.15),
+  stop(50, '#c92aa6', 0.3),
+  stop(250, '#f13fa8', 0.52),
+  stop(1500, '#ff7ecb', 0.75),
+  stop(8000, '#ffeaf6', 0.93),
 ]
 
 function rampPosition(density: number): number {
