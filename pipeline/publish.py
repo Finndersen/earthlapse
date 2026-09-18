@@ -10,11 +10,12 @@ from __future__ import annotations
 import math
 import shutil
 import tomllib
+from collections import Counter
 from dataclasses import dataclass, replace
 from itertools import groupby, pairwise
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from pipeline.audio import WEBKIT_DECODABLE_FORMATS, StemBook, load_stem_book
 from pipeline.databuild import discover_sources
@@ -62,7 +63,6 @@ from pipeline.manifest import (
 )
 from pipeline.manifest import SceneLocation as SceneLocationEntry
 from pipeline.models import WorldModel
-from pipeline.notability import notable_features
 from pipeline.paleogeography import PlateModelUnavailable, Reconstructor, load_reconstructor
 from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
@@ -77,7 +77,7 @@ from pipeline.portraits import (
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
 from pipeline.scenes import SceneLocation as SceneLocationRecord
 from pipeline.scenes import SceneSound as SceneSoundRecord
-from pipeline.shapes import EARTH_FORMATION, Event, EventSet, GeoTime, Interpolation
+from pipeline.shapes import EARTH_FORMATION, Event, EventSet, FeatureSet, GeoTime, Interpolation
 from pipeline.shapes import ArrivalEffect as CuratedArrivalEffect
 from pipeline.shapes import Feature as CuratedFeature
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
@@ -199,21 +199,69 @@ CITIES_ID = "cities"
 FEATURE_LAYERS = (
     LayerSpec(CITIES_ID, "Major cities", LayerSurface.GLOBE, CITIES_ID, chartable=False),
 )
-CITIES_NOTABLE_BUCKET_YEARS = 100.0
-"""ADR-035 "why only notable cities": era bucket width for `notable_features` -- century-wide,
-not per-exact-attested-date. `sources/cities`' merged dataset has ~825 distinct attested years
-(near-annual from the 16th century on), so a literal per-date top-N churns through a different
-25-or-so cities almost every year as populations fluctuate slightly near the cutoff, unioning
-into 600+ "notable" cities for any usable N. Bucketing to a century smooths that churn: the
-same handful of era-dominant cities persist across most of one bucket's own span. See
-sources/cities/README.md "Notability filter" for the measured effect of this and `TOP_N`."""
-CITIES_NOTABLE_TOP_N = 12
-"""ADR-035: top N cities by peak attested population within each `CITIES_NOTABLE_BUCKET_YEARS`
-bucket qualify as notable. 12 (with the 100-year bucket above) keeps 164 of the merged
-dataset's 1,736 cities -- comfortably inside the "roughly 100-200" target -- while including
-every one of the example cities named in the task brief (Uruk, Memphis, Babylon, Rome, Xian
-[Chang'an], Istanbul [Constantinople], Baghdad, Mexico City [Tenochtitlan], London, New York,
-Tokyo) and at least one city in every era bucket from the 4th millennium BC onward."""
+CITIES_ROSTER_FILENAME = "roster.toml"
+"""ADR-038: `sources/cities/roster.toml`, relative to that source's own directory -- a
+hand-curated significance roster (imperial/national capitals, great trading ports, religious
+centres, famous ancient sites, modern megacities) that replaces ADR-035's population-rank
+notability filter. See `load_city_roster`/`apply_city_roster` below and
+`sources/cities/README.md` "Significance roster"."""
+
+
+class CityRosterEntry(BaseModel):
+    """One curated roster entry (ADR-038): `id` names a `Feature.id` in the curated `cities`
+    `FeatureSet` (`data/curated/cities.parquet`) -- the same slug `sources/cities/normalise.py`
+    assigns (e.g. `uruk-iraq`) -- and `reason` is a short, human-written note on why this city
+    made the cut, kept so the roster stays reviewable as prose, not just a bare id list."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+
+class CityRoster(BaseModel):
+    """Every roster entry, loaded from `sources/cities/roster.toml` (ADR-038)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    cities: tuple[CityRosterEntry, ...] = Field(min_length=1)
+
+
+class CityRosterError(ValueError):
+    """`roster.toml` is malformed (a duplicate `id`), or names a city absent from the curated
+    `cities` `FeatureSet` -- both are authoring mistakes in the roster itself, not something a
+    publish should silently work around (`docs/DATA_SOURCES.md` "if something is unusable, stop
+    and report")."""
+
+
+def load_city_roster(path: Path) -> CityRoster:
+    with path.open("rb") as handle:
+        document = tomllib.load(handle)
+    roster = CityRoster.model_validate(document)
+    duplicates = sorted(
+        id_ for id_, count in Counter(entry.id for entry in roster.cities).items() if count > 1
+    )
+    if duplicates:
+        raise CityRosterError(f"{path}: duplicate roster id(s): {', '.join(duplicates)}")
+    return roster
+
+
+def apply_city_roster(feature_set: FeatureSet, roster: CityRoster) -> FeatureSet:
+    """The published `cities` layer (ADR-038): every curated feature the roster names, in
+    roster order's underlying set -- `FeatureSet`'s own validator re-sorts by id. Strict at the
+    boundary: a roster entry with no matching curated feature raises, naming every offending
+    entry at once, rather than silently dropping it (a roster typo should fail loudly, not
+    quietly shrink the published globe)."""
+    by_id = {feature.id: feature for feature in feature_set.features}
+    missing = [entry.id for entry in roster.cities if entry.id not in by_id]
+    if missing:
+        raise CityRosterError(
+            f"{feature_set.id}: roster names {len(missing)} cit"
+            f"{'y' if len(missing) == 1 else 'ies'} absent from the curated dataset: "
+            f"{', '.join(missing)}"
+        )
+    kept = [by_id[entry.id] for entry in roster.cities]
+    return FeatureSet(id=feature_set.id, features=kept)
 
 
 @dataclass(frozen=True)
@@ -311,6 +359,15 @@ def prepare_publication(
     _validate_scene_events(book, world.events.get(EVENTS_ID))
     stem_book = load_stem_book(sources_dir / AUDIO_STEMS_SOURCE / "stems.toml")
     _validate_scene_sound(book, stem_book)
+    # Only load the roster when there is a curated `cities` FeatureSet to filter -- a project
+    # with no cities data (every test fixture short of a full build, and any future build that
+    # simply hasn't run `databuild --only cities` yet) has no need of one, and shouldn't have to
+    # ship a `sources/cities/roster.toml` it will never read.
+    city_roster = (
+        load_city_roster(sources_dir / CITIES_ID / CITIES_ROSTER_FILENAME)
+        if world.features.get(CITIES_ID) is not None
+        else None
+    )
     reconstructor = _load_reconstructor_if_needed(pinned, root)
     scene_entries = [_scene_entry(scene, root, reconstructor) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
@@ -319,7 +376,9 @@ def prepare_publication(
         None if portraits is None else _portrait_publication(portraits, world, root)
     )
     layer_files, layers = _layers(
-        world, None if portrait_publication is None else portrait_publication.data
+        world,
+        None if portrait_publication is None else portrait_publication.data,
+        city_roster,
     )
     events = _events(world)
     audio_stems = _audio_stems(stem_book, root)
@@ -677,8 +736,13 @@ def _portrait_morphs(
 
 
 def _layers(
-    world: WorldModel, portraits: PortraitSetData | None
+    world: WorldModel,
+    portraits: PortraitSetData | None,
+    city_roster: CityRoster | None = None,
 ) -> tuple[tuple[LayerFile, ...], tuple[LayerManifest, ...]]:
+    """`city_roster` is `None` by default only for tests exercising the other layer kinds --
+    the real `prepare_publication` call site always loads and passes one (ADR-038). It has no
+    effect unless `world.features` actually holds a `cities` `FeatureSet`."""
     files: list[LayerFile] = []
     entries: list[LayerManifest] = []
     for spec in SCALAR_LAYERS:
@@ -752,15 +816,12 @@ def _layers(
         if feature_set is None:
             continue
         # The curated FeatureSet keeps every normalised record; only "cities" is filtered down
-        # to notable ones before publishing (coordinator direction, 2026-09-17) -- the same
-        # "special-case one entry in an otherwise-generic loop" pattern NODE_LAYERS already uses
-        # for portraits (`if spec.curated_id == LINEAGE_TREE_ID`).
-        if spec.curated_id == CITIES_ID:
-            feature_set = notable_features(
-                feature_set,
-                bucket_years=CITIES_NOTABLE_BUCKET_YEARS,
-                top_n=CITIES_NOTABLE_TOP_N,
-            )
+        # to the hand-curated significance roster before publishing (ADR-038, superseding
+        # ADR-035's population-rank notability filter) -- the same "special-case one entry in
+        # an otherwise-generic loop" pattern NODE_LAYERS already uses for portraits
+        # (`if spec.curated_id == LINEAGE_TREE_ID`).
+        if spec.curated_id == CITIES_ID and city_roster is not None:
+            feature_set = apply_city_roster(feature_set, city_roster)
         data = FeatureSetData(
             id=feature_set.id, features=tuple(_feature(f) for f in feature_set.features)
         )

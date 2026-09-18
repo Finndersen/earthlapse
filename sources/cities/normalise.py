@@ -16,8 +16,8 @@ merged record's own coordinates/certainty with Modelski's.
 The merged, *full* dataset (every city that survives the merge, no matter how minor) is what
 this module's `normalise()` curates -- ADR-035's own coordinator direction is explicit that the
 curated data keeps everything; only the *published* layer (`pipeline/publish.py`'s
-`FEATURE_LAYERS`, via `pipeline.notability.notable_features`) is filtered down to notable
-cities.
+`FEATURE_LAYERS`, via `pipeline.publish.apply_city_roster` and `sources/cities/roster.toml`,
+ADR-038) is filtered down to a hand-curated significance roster.
 """
 
 from __future__ import annotations

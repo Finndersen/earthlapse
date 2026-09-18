@@ -97,51 +97,65 @@ cities: 2044 raw rows across 3 datasets -> 0 dropped (no coordinates),
 1736 distinct cities kept
 ```
 
-## Notability filter (published layer only)
+## Significance roster (published layer only)
 
 The curated `FeatureSet` (`data/curated/cities.parquet`) keeps all 1,736 cities — nothing is
-lost. **Publishing all 1,736 would overwhelm a globe view** (per-user direction, 2026-09-17):
-"only need to include major notable cities, not everything." The published layer must therefore
-apply a documented, data-driven notability rule, target roughly 100–200 cities, and ensure every
-era has some (explicitly named test cases: Uruk, Memphis, Babylon, Rome, Chang'an [`Xian`],
-Constantinople [`Istanbul`], Baghdad, Tenochtitlan [`Mexico City`], London, New York, Tokyo).
+lost. **Publishing all 1,736 would overwhelm a globe view**, so the published layer is filtered
+down to a much smaller set before `pipeline/publish.py` writes `layers/cities.json`.
 
-**The rule** (`pipeline.notability.notable_features`, applied in `pipeline/publish.py`'s
-`FEATURE_LAYERS` loop): a city qualifies if, within any **100-year-wide era bucket** (`t` rounded
-to the nearest century), its **peak attested population within that bucket ranks in that
-bucket's own top 12**.
+**ADR-038 supersedes ADR-035's population-rank filter.** The original rule
+(`pipeline.notability.notable_features`, now deleted) picked, within each 100-year era bucket,
+whichever cities ranked in that bucket's own top 12 by peak attested population. That produced a
+globe with catastrophically bad spread: **zero** cities in sub-Saharan Africa, **zero** in
+Australia/New Zealand/the Pacific, only 4 in South-East Asia, 3 in South America and 7 in North
+America — 150 of 164 published cities were Europe, the Mediterranean, the Near East, India and
+China, dominated by ancient Mesopotamian city-states whose *attested* populations happened to
+survive in this particular dataset even when tiny (per-user direction, 2026-09-18: "the cities
+shown on the map shouldn't be based purely on population but perhaps significance").
 
-Two things this rule is deliberately *not*:
+**The mechanism is now a hand-curated roster, not a ranking rule.** `sources/cities/roster.toml`
+is a checked-in, reviewable list — one `[[cities]]` entry per city, each an `id` (the `Feature.id`
+this same source's `normalise()` assigns, e.g. `uruk-iraq`) and a short `reason` string.
+`pipeline.publish.load_city_roster` parses it into a `CityRoster`; `pipeline.publish.
+apply_city_roster` intersects it with the curated `FeatureSet`, keeping exactly the roster's
+cities (in `FeatureSet`'s own sorted-by-id order) and **raising `CityRosterError`, naming every
+offending entry, if any roster id has no match in the curated dataset** — a roster typo fails the
+build loudly rather than silently shrinking the published globe. `pipeline/publish.py`'s
+`_layers` applies this only to the `cities` `FeatureSet`, exactly where `notable_features` used
+to be called.
 
-- **Not a literal per-exact-attested-date top-25.** The merged dataset has ~825 distinct
-  attested years (near-annual for the last few centuries), and a literal per-date ranking churns
-  through a slightly different set of ~25 cities almost every year as populations near the
-  cutoff fluctuate — even at a much smaller N (5), the *union* across every date balloons past
-  600 cities (measured directly), overshooting the 100–200 target by 3–4x regardless of N.
-  Bucketing to a century is what keeps the same era-dominant cities in the set across most of
-  their own bucket's span, rather than rewarding one dataset's finer year-sampling in the recent
-  past with proportionally more "new" entrants.
-- **Not a global cutoff.** Ranking happens *within* each bucket, not against the dataset's own
-  all-time maximum — a Bronze Age city never has to out-rank a modern megacity; it only has to
-  out-rank its own contemporaries. This is what "era-relative" means here, and it is what lets a
-  city like Uruk (peak ~40,000) and Tokyo (peak ~37,000,000) both qualify from the same rule.
+**Selection criteria** (subjective, by design — this is a curated list, not a formula): imperial
+and national capitals, great trading ports, religious centres, famous ancient sites, and modern
+megacities, deliberately *not* every capital city (per-user direction: "not every single capital
+city"). Every inhabited continent is represented, spanning eras from the 3rd millennium BC
+(Uruk, Ur, Memphis) to the present (Lagos, Shanghai, São Paulo).
 
-**Measured effect** (real data, `CITIES_NOTABLE_BUCKET_YEARS = 100`, `CITIES_NOTABLE_TOP_N =
-12`, both in `pipeline/publish.py`): **164 of 1,736 cities published** — squarely inside the
-100–200 target. All eleven named test cities are present (`uruk-iraq`, `memphis-egypt`,
-`babylon-iraq`, `rome-italy`, `xian-china`, `istanbul-turkey`, `baghdad-iraq`,
-`mexico-city-mexico`, `london-united-kingdom`, `new-york-united-states-of-america`,
-`tokyo-japan`), and every era bucket back to the oldest (the 4th millennium BC) has at least one
-member (Uruk/Eridu-era Mesopotamian cities).
+**Measured effect** (real data, 2026-09-18): **242 of 1,736 cities published** — inside the
+150–250 target `docs/DATA_SOURCES.md` records. Region spread (broad buckets,
+`tests/sources/test_cities_roster.py`'s own classification): sub-Saharan Africa 30, Oceania/
+Pacific 8, South Asia 24, South-East Asia 20, Central Asia 11, East Asia 26, Russia 5, Europe 34,
+Middle East 39, North America 15, Mexico 6, Caribbean/Central America 8, South America 16 — every
+region the previous filter left empty now has real coverage. Every one of the ADR-035 era test
+cities is still published (`uruk-iraq`, `memphis-egypt`, `babylon-iraq`, `rome-italy`,
+`xian-china`, `istanbul-turkey`, `baghdad-iraq`, `mexico-city-mexico`, `london-united-kingdom`,
+`new-york-united-states-of-america`, `tokyo-japan`).
 
-`N=12`/`100y` was chosen empirically (`N` values of 5/8/10/12/15/20/25 with a 100-year bucket
-were measured directly; `N=12` was the smallest tried that still included every named example
-city while landing centrally in the target range — `N=10` also included every example city, at
-145 total, and would be an equally defensible choice). Re-run the measurement with
-`python -c "from pathlib import Path; from pipeline.curated import read_shape; from
-pipeline.notability import notable_features; fs = read_shape(Path('data/curated/cities.parquet'));
-print(len(notable_features(fs, bucket_years=100.0, top_n=12).features))"` after any upstream
-data change.
+**Cities the user asked for that the dataset cannot supply.** Checked directly against
+`data/curated/cities.parquet`, not assumed: **Mombasa** has no entry under any name. Three others
+the user believed absent are in fact present, filed under a different name than expected (see
+"Modern-name convention" above) and are included in the roster: **Timbuktu** is `tombouctou-mali`
+("Tombouctou"); **Benin City** is `benin-nigeria` ("Benin", coordinates match Benin City exactly);
+**Great Zimbabwe** is `zimbabwe-zimbabwe` ("Zimbabwe", coordinates match the Great Zimbabwe ruins
+near Masvingo, and its estimates span 1300–1450 CE — the historical Kingdom of Zimbabwe's own
+era, not the modern capital Harare, which is a separate entry). Tenochtitlan and Saigon are not
+missing either — both are filed under their modern names (`mexico-city-mexico`, `ho-chi-minh-
+vietnam`), already this source's documented convention.
+
+Re-run the measurement with `python -c "from pathlib import Path; from pipeline.curated import
+read_shape; from pipeline.publish import apply_city_roster, load_city_roster; fs =
+read_shape(Path('data/curated/cities.parquet')); roster =
+load_city_roster(Path('sources/cities/roster.toml')); print(len(apply_city_roster(fs,
+roster).features))"` after any upstream data or roster change.
 
 ## Time convention
 

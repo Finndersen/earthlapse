@@ -1,0 +1,1041 @@
+# The significance roster (ADR-038): a hand-curated set of cities a general audience would
+# recognise or that mattered historically -- imperial/national capitals, great trading ports,
+# religious centres, famous ancient sites, modern megacities. Deliberately NOT every capital
+# city, and NOT ranked by population (that was ADR-035's rule, which produced a globe with zero
+# markers in sub-Saharan Africa, Oceania and most of South-East Asia -- see README.md
+# "Significance roster" for the full account).
+#
+# `id` must match a `Feature.id` in the curated `cities` FeatureSet (data/curated/cities.parquet)
+# -- the slug sources/cities/normalise.py assigns, e.g. "uruk-iraq". `pipeline.publish.
+# apply_city_roster` raises naming any entry that doesn't resolve, so a typo here fails the build
+# loudly rather than silently shrinking the published globe.
+
+
+# ---- Mesopotamia / ancient Near East (trimmed to the handful a general audience would
+# recognise, not the dataset's full ~30-entry Sumerian city-state list)
+
+[[cities]]
+id = "uruk-iraq"
+reason = "Sumerian city-state, among the world's first cities"
+
+[[cities]]
+id = "ur-iraq"
+reason = "Sumerian royal capital, birthplace legend of Abraham"
+
+[[cities]]
+id = "babylon-iraq"
+reason = "Babylonian and Neo-Babylonian imperial capital"
+
+[[cities]]
+id = "nineveh-iraq"
+reason = "Assyrian imperial capital"
+
+[[cities]]
+id = "akkad-iraq"
+reason = "capital of the Akkadian Empire, the first known empire"
+
+[[cities]]
+id = "assur-iraq"
+reason = "namesake capital of ancient Assyria"
+
+[[cities]]
+id = "ctesiphon-iraq"
+reason = "Parthian and Sasanian imperial capital"
+
+[[cities]]
+id = "baghdad-iraq"
+reason = "Abbasid caliphal capital, medieval centre of learning"
+
+[[cities]]
+id = "basra-iraq"
+reason = "early Islamic port and garrison city"
+
+
+# ---- Egypt
+
+[[cities]]
+id = "memphis-egypt"
+reason = "capital of unified Old Kingdom Egypt"
+
+[[cities]]
+id = "thebes-egypt"
+reason = "New Kingdom Egyptian capital, Valley of the Kings"
+
+[[cities]]
+id = "giza-egypt"
+reason = "Great Pyramids and Sphinx"
+
+[[cities]]
+id = "alexandria-egypt"
+reason = "Hellenistic capital, ancient Mediterranean's great library city"
+
+[[cities]]
+id = "cairo-egypt"
+reason = "Fatimid, Mamluk and modern Egyptian capital"
+
+
+# ---- Levant
+
+[[cities]]
+id = "jerusalem-israel"
+reason = "holy city of Judaism, Christianity and Islam"
+
+[[cities]]
+id = "damascus-syria"
+reason = "one of the world's oldest continuously inhabited capitals"
+
+[[cities]]
+id = "aleppo-syria"
+reason = "ancient Silk Road trading hub"
+
+[[cities]]
+id = "tyre-lebanon"
+reason = "Phoenician maritime and trading capital"
+
+[[cities]]
+id = "sidon-lebanon"
+reason = "major Phoenician city-state"
+
+[[cities]]
+id = "beirut-lebanon"
+reason = "modern Lebanese capital"
+
+[[cities]]
+id = "ugarit-syria"
+reason = "Bronze Age Canaanite trading city, earliest known alphabet"
+
+[[cities]]
+id = "petra-jordan"
+reason = "Nabataean rock-cut caravan capital"
+
+[[cities]]
+id = "amman-jordan"
+reason = "modern Jordanian capital"
+
+
+# ---- Arabia
+
+[[cities]]
+id = "mecca-saudi-arabia"
+reason = "holiest city of Islam"
+
+[[cities]]
+id = "medina-saudi-arabia"
+reason = "second holiest city of Islam, Prophet's Mosque"
+
+[[cities]]
+id = "riyadh-saudi-arabia"
+reason = "modern Saudi Arabian capital"
+
+[[cities]]
+id = "aden-yemen"
+reason = "ancient Red Sea trading port"
+
+[[cities]]
+id = "sana-a-yemen"
+reason = "historic Yemeni capital"
+
+
+# ---- Anatolia
+
+[[cities]]
+id = "istanbul-turkey"
+reason = "Byzantine and Ottoman imperial capital (Constantinople)"
+
+[[cities]]
+id = "ankara-turkey"
+reason = "modern Turkish capital"
+
+[[cities]]
+id = "troy-turkey"
+reason = "legendary Bronze Age city of the Iliad"
+
+[[cities]]
+id = "ephesus-turkey"
+reason = "great classical Greco-Roman port city"
+
+[[cities]]
+id = "hattusa-turkey"
+reason = "Hittite imperial capital"
+
+
+# ---- Iran / Central plateau
+
+[[cities]]
+id = "perspolis-iran"
+reason = "Achaemenid Persian ceremonial capital (Persepolis)"
+
+[[cities]]
+id = "susa-iran"
+reason = "Elamite and Achaemenid Persian capital"
+
+[[cities]]
+id = "ecbatana-iran"
+reason = "Median and Achaemenid royal capital"
+
+[[cities]]
+id = "esfahan-iran"
+reason = "Safavid Persian imperial capital"
+
+[[cities]]
+id = "shiraz-iran"
+reason = "Persian centre of poetry and culture"
+
+[[cities]]
+id = "tehran-iran"
+reason = "modern Iranian capital"
+
+
+# ---- Sub-Saharan Africa
+
+[[cities]]
+id = "lagos-nigeria"
+reason = "Africa's largest megacity"
+
+[[cities]]
+id = "kano-nigeria"
+reason = "great Hausa trans-Saharan trading city"
+
+[[cities]]
+id = "ibadan-nigeria"
+reason = "largest Yoruba city"
+
+[[cities]]
+id = "benin-nigeria"
+reason = "capital of the Benin Kingdom, famed for its bronzes"
+
+[[cities]]
+id = "sokoto-nigeria"
+reason = "capital of the Sokoto Caliphate"
+
+[[cities]]
+id = "kinshasa-democratic-republic-of-the-congo"
+reason = "capital of the Democratic Republic of the Congo"
+
+[[cities]]
+id = "luanda-angola"
+reason = "Portuguese colonial and modern Angolan capital"
+
+[[cities]]
+id = "nairobi-kenya"
+reason = "modern East African hub"
+
+[[cities]]
+id = "addis-ababa-ethiopia"
+reason = "modern Ethiopian capital"
+
+[[cities]]
+id = "axum-ethiopia"
+reason = "capital of the ancient Aksumite Empire"
+
+[[cities]]
+id = "gondar-ethiopia"
+reason = "imperial Ethiopian capital"
+
+[[cities]]
+id = "harar-ethiopia"
+reason = "historic walled Islamic trading city"
+
+[[cities]]
+id = "khartoum-sudan"
+reason = "confluence capital of the Nile"
+
+[[cities]]
+id = "dakar-senegal"
+reason = "West African Atlantic port capital"
+
+[[cities]]
+id = "accra-ghana"
+reason = "modern Ghanaian capital"
+
+[[cities]]
+id = "abidjan-cote-d-ivoire"
+reason = "West African economic capital"
+
+[[cities]]
+id = "freetown-sierra-leone"
+reason = "modern Sierra Leonean capital"
+
+[[cities]]
+id = "conakry-guinea"
+reason = "modern Guinean capital"
+
+[[cities]]
+id = "harare-zimbabwe"
+reason = "modern Zimbabwean capital"
+
+[[cities]]
+id = "zimbabwe-zimbabwe"
+reason = "Great Zimbabwe, capital of a medieval trading empire"
+
+[[cities]]
+id = "antananarivo-madagascar"
+reason = "Madagascar's highland capital"
+
+[[cities]]
+id = "cape-town-south-africa"
+reason = "oldest European settlement in South Africa"
+
+[[cities]]
+id = "johannesburg-south-africa"
+reason = "South Africa's largest city, born of a gold rush"
+
+[[cities]]
+id = "dar-es-salaam-tanzania"
+reason = "Swahili-coast port, modern Tanzanian hub"
+
+[[cities]]
+id = "kilwa-tanzania"
+reason = "medieval Swahili-coast trading sultanate"
+
+[[cities]]
+id = "zanzibar-tanzania"
+reason = "Indian Ocean spice-trade island city"
+
+[[cities]]
+id = "gao-mali"
+reason = "capital of the Songhai Empire"
+
+[[cities]]
+id = "tombouctou-mali"
+reason = "medieval Saharan trade and scholarship centre (Timbuktu)"
+
+[[cities]]
+id = "segou-mali"
+reason = "capital of the Bamana Empire"
+
+[[cities]]
+id = "maputo-mozambique"
+reason = "modern Mozambican capital"
+
+
+# ---- Oceania / Pacific
+
+[[cities]]
+id = "sydney-australia"
+reason = "Australia's founding colonial city"
+
+[[cities]]
+id = "melbourne-australia"
+reason = "major Australian gold-rush metropolis"
+
+[[cities]]
+id = "brisbane-australia"
+reason = "major Australian east-coast city"
+
+[[cities]]
+id = "perth-australia"
+reason = "major Western Australian capital"
+
+[[cities]]
+id = "adelaide-australia"
+reason = "South Australian colonial capital"
+
+[[cities]]
+id = "auckland-new-zealand"
+reason = "New Zealand's largest city"
+
+[[cities]]
+id = "wellington-new-zealand"
+reason = "New Zealand's capital"
+
+[[cities]]
+id = "christchurch-new-zealand"
+reason = "major South Island New Zealand city"
+
+[[cities]]
+id = "honolulu-united-states-of-america"
+reason = "Hawaiian royal and modern Pacific capital"
+
+
+# ---- South America
+
+[[cities]]
+id = "cuzco-peru"
+reason = "capital of the Inca Empire"
+
+[[cities]]
+id = "tiahuanaco-bolivia"
+reason = "capital of the pre-Inca Tiwanaku civilisation"
+
+[[cities]]
+id = "chanchan-peru"
+reason = "capital of the Chimu Empire, largest pre-Columbian city in the Americas"
+
+[[cities]]
+id = "pachacamac-peru"
+reason = "major pre-Columbian Andean pilgrimage city"
+
+[[cities]]
+id = "lima-peru"
+reason = "Spanish viceregal capital of Peru"
+
+[[cities]]
+id = "potosi-bolivia"
+reason = "colonial silver-mining boomtown"
+
+[[cities]]
+id = "la-paz-bolivia"
+reason = "Bolivia's seat of government"
+
+[[cities]]
+id = "quito-ecuador"
+reason = "Inca northern capital, modern Ecuadorian capital"
+
+[[cities]]
+id = "bogota-columbia"
+reason = "modern Colombian capital"
+
+[[cities]]
+id = "caracas-venezuela"
+reason = "modern Venezuelan capital"
+
+[[cities]]
+id = "santiago-chile"
+reason = "modern Chilean capital"
+
+[[cities]]
+id = "buenos-aires-argentina"
+reason = "modern Argentine capital"
+
+[[cities]]
+id = "rio-de-janeiro-brazil"
+reason = "former Brazilian capital, iconic harbour city"
+
+[[cities]]
+id = "salvador-brazil"
+reason = "first colonial capital of Brazil"
+
+[[cities]]
+id = "sao-paolo-brazil"
+reason = "South America's largest city"
+
+[[cities]]
+id = "brasilia-brazil"
+reason = "modern planned Brazilian capital"
+
+
+# ---- Caribbean / Central America
+
+[[cities]]
+id = "havana-cuba"
+reason = "Spanish colonial Caribbean capital"
+
+[[cities]]
+id = "santo-domingo-dominican-republic"
+reason = "oldest continuously inhabited European city in the Americas"
+
+[[cities]]
+id = "kingston-jamaica"
+reason = "modern Jamaican capital"
+
+[[cities]]
+id = "port-au-prince-haiti"
+reason = "modern Haitian capital"
+
+[[cities]]
+id = "san-juan-puerto-rico"
+reason = "Spanish colonial Caribbean port capital"
+
+[[cities]]
+id = "panama-city-panama"
+reason = "isthmus crossing point, modern Panamanian capital"
+
+[[cities]]
+id = "guatemala-city-guatemala"
+reason = "modern Guatemalan capital"
+
+[[cities]]
+id = "tikal-guatemala"
+reason = "great Maya city-state"
+
+
+# ---- Mexico
+
+[[cities]]
+id = "mexico-city-mexico"
+reason = "Aztec (Tenochtitlan) and modern Mexican capital"
+
+[[cities]]
+id = "teotihuacan-mexico"
+reason = "vast pre-Aztec Mesoamerican metropolis"
+
+[[cities]]
+id = "monte-alban-mexico"
+reason = "capital of the Zapotec civilisation"
+
+[[cities]]
+id = "mayapan-mexico"
+reason = "late Maya political capital"
+
+[[cities]]
+id = "guadalajara-mexico"
+reason = "major Mexican colonial and modern city"
+
+[[cities]]
+id = "zacatecas-mexico"
+reason = "colonial Mexican silver-mining capital"
+
+
+# ---- North America
+
+[[cities]]
+id = "cahokia-united-states-of-america"
+reason = "largest pre-Columbian city north of Mexico"
+
+[[cities]]
+id = "new-york-united-states-of-america"
+reason = "largest US city, global financial capital"
+
+[[cities]]
+id = "washington-d-c-united-states-of-america"
+reason = "capital of the United States"
+
+[[cities]]
+id = "boston-united-states-of-america"
+reason = "colonial-era American port capital"
+
+[[cities]]
+id = "philadelphia-united-states-of-america"
+reason = "birthplace of American independence"
+
+[[cities]]
+id = "chicago-united-states-of-america"
+reason = "great American industrial metropolis"
+
+[[cities]]
+id = "new-orleans-united-states-of-america"
+reason = "French/Spanish colonial Gulf port city"
+
+[[cities]]
+id = "los-angeles-united-states-of-america"
+reason = "major Pacific-coast American metropolis"
+
+[[cities]]
+id = "san-francisco-united-states-of-america"
+reason = "Gold Rush port, Pacific gateway city"
+
+[[cities]]
+id = "seattle-united-states-of-america"
+reason = "major Pacific Northwest American city"
+
+[[cities]]
+id = "toronto-canada"
+reason = "Canada's largest city"
+
+[[cities]]
+id = "montreal-canada"
+reason = "historic French-Canadian metropolis"
+
+[[cities]]
+id = "vancouver-canada"
+reason = "major Canadian Pacific port city"
+
+[[cities]]
+id = "ottawa-canada"
+reason = "capital of Canada"
+
+
+# ---- South Asia
+
+[[cities]]
+id = "delhi-india"
+reason = "long-running Indian imperial capital"
+
+[[cities]]
+id = "mumbai-india"
+reason = "India's financial capital"
+
+[[cities]]
+id = "calcutta-india"
+reason = "British Raj colonial capital"
+
+[[cities]]
+id = "madras-india"
+reason = "major British colonial Indian port"
+
+[[cities]]
+id = "bangalore-india"
+reason = "modern Indian tech hub"
+
+[[cities]]
+id = "hyderabad-india"
+reason = "capital of the Nizams of Hyderabad"
+
+[[cities]]
+id = "agra-india"
+reason = "Mughal capital, home of the Taj Mahal"
+
+[[cities]]
+id = "varanasi-india"
+reason = "sacred Hindu city on the Ganges"
+
+[[cities]]
+id = "jaipur-india"
+reason = "Rajput 'Pink City' capital"
+
+[[cities]]
+id = "lucknow-india"
+reason = "capital of the Nawabs of Awadh"
+
+[[cities]]
+id = "pataliputra-india"
+reason = "capital of the Maurya and Gupta Empires"
+
+[[cities]]
+id = "vijayanagar-india"
+reason = "capital of the great Vijayanagara Empire"
+
+[[cities]]
+id = "rakhigarhi-india"
+reason = "one of the largest Indus Valley Civilisation sites"
+
+[[cities]]
+id = "dholavira-india"
+reason = "major planned Indus Valley Civilisation city"
+
+[[cities]]
+id = "harappa-pakistan"
+reason = "namesake city of the Harappan (Indus Valley) civilisation"
+
+[[cities]]
+id = "mohenjodaro-pakistan"
+reason = "great Bronze Age Indus Valley metropolis"
+
+[[cities]]
+id = "lahore-pakistan"
+reason = "Mughal cultural capital"
+
+[[cities]]
+id = "karachi-pakistan"
+reason = "modern Pakistani port megacity"
+
+[[cities]]
+id = "taxilla-pakistan"
+reason = "ancient centre of learning on the Silk Road"
+
+[[cities]]
+id = "dhaka-bangladesh"
+reason = "modern Bangladeshi capital"
+
+[[cities]]
+id = "kathmandu-nepal"
+reason = "Himalayan royal capital"
+
+[[cities]]
+id = "colombo-sri-lanka"
+reason = "modern Sri Lankan capital"
+
+[[cities]]
+id = "anuradhapura-sri-lanka"
+reason = "ancient Sinhalese royal capital"
+
+[[cities]]
+id = "polonnaruwa-sri-lanka"
+reason = "medieval Sinhalese royal capital"
+
+
+# ---- Southeast Asia
+
+[[cities]]
+id = "angkor-cambodia"
+reason = "capital of the Khmer Empire"
+
+[[cities]]
+id = "phnom-penh-cambodia"
+reason = "modern Cambodian capital"
+
+[[cities]]
+id = "bagan-myanmar"
+reason = "capital of the Pagan Kingdom, thousands of temples"
+
+[[cities]]
+id = "mandalay-myanmar"
+reason = "last royal capital of Burma"
+
+[[cities]]
+id = "yangon-myanmar"
+reason = "modern Myanmar's largest city (Rangoon)"
+
+[[cities]]
+id = "ayutthaya-thailand"
+reason = "capital of the Ayutthaya Kingdom"
+
+[[cities]]
+id = "sukhothai-thailand"
+reason = "capital of the first unified Thai kingdom"
+
+[[cities]]
+id = "bangkok-thailand"
+reason = "modern Thai capital"
+
+[[cities]]
+id = "jakarta-indonesia"
+reason = "modern Indonesian capital"
+
+[[cities]]
+id = "majapahit-indonesia"
+reason = "capital of the Majapahit Empire"
+
+[[cities]]
+id = "palembang-indonesia"
+reason = "capital of the maritime Srivijaya Empire"
+
+[[cities]]
+id = "yogyakarta-indonesia"
+reason = "historic Javanese royal capital"
+
+[[cities]]
+id = "surabaya-indonesia"
+reason = "major Indonesian port city"
+
+[[cities]]
+id = "kuala-lumpur-malaysia"
+reason = "modern Malaysian capital"
+
+[[cities]]
+id = "singapore-singapore"
+reason = "great modern Southeast Asian port city-state"
+
+[[cities]]
+id = "manila-philippines"
+reason = "modern Philippine capital"
+
+[[cities]]
+id = "hanoi-vietnam"
+reason = "historic and modern Vietnamese capital"
+
+[[cities]]
+id = "hue-vietnam"
+reason = "imperial capital of the Nguyen dynasty"
+
+[[cities]]
+id = "ho-chi-minh-vietnam"
+reason = "Vietnam's largest city (Saigon)"
+
+[[cities]]
+id = "bandar-seri-begawan-brunei"
+reason = "capital of the Sultanate of Brunei"
+
+
+# ---- Central Asia
+
+[[cities]]
+id = "samarkand-uzbekistan"
+reason = "great Silk Road city, Timurid imperial capital"
+
+[[cities]]
+id = "bukhara-uzbekistan"
+reason = "major Silk Road centre of Islamic learning"
+
+[[cities]]
+id = "khiva-uzbekistan"
+reason = "Silk Road oasis city and khanate capital"
+
+[[cities]]
+id = "tashkent-uzbekistan"
+reason = "modern Uzbek capital"
+
+[[cities]]
+id = "merv-turkmenistan"
+reason = "once among the world's largest cities, Silk Road hub"
+
+[[cities]]
+id = "kabul-afghanistan"
+reason = "modern Afghan capital"
+
+[[cities]]
+id = "balkh-afghanistan"
+reason = "ancient Silk Road city, 'mother of cities'"
+
+[[cities]]
+id = "herat-afghanistan"
+reason = "great medieval Persianate cultural capital"
+
+[[cities]]
+id = "kandahar-afghanistan"
+reason = "historic southern Afghan capital"
+
+[[cities]]
+id = "almaty-kazakhstan"
+reason = "former Kazakh capital, major Central Asian city"
+
+[[cities]]
+id = "ulaanbaatar-mongolia"
+reason = "modern Mongolian capital"
+
+
+# ---- East Asia — China
+
+[[cities]]
+id = "beijing-china"
+reason = "long-running Chinese imperial and modern capital"
+
+[[cities]]
+id = "xian-china"
+reason = "ancient Chinese imperial capital (Chang'an)"
+
+[[cities]]
+id = "luoyang-china"
+reason = "ancient Chinese imperial capital"
+
+[[cities]]
+id = "nanjing-china"
+reason = "historic southern Chinese imperial capital"
+
+[[cities]]
+id = "kaifeng-china"
+reason = "Song dynasty imperial capital"
+
+[[cities]]
+id = "shanghai-china"
+reason = "China's largest modern commercial metropolis"
+
+[[cities]]
+id = "guangzhou-china"
+reason = "great southern Chinese trading port (Canton)"
+
+[[cities]]
+id = "hangzhou-china"
+reason = "Southern Song imperial capital"
+
+[[cities]]
+id = "chengdu-china"
+reason = "major Sichuan basin metropolis"
+
+[[cities]]
+id = "wuhan-china"
+reason = "major central Chinese river-confluence city"
+
+[[cities]]
+id = "hong-kong-china"
+reason = "global financial hub, former British colony"
+
+[[cities]]
+id = "lhasa-china"
+reason = "sacred Tibetan capital"
+
+[[cities]]
+id = "anyang-china"
+reason = "capital of the Shang dynasty, earliest written Chinese"
+
+
+# ---- East Asia — Japan
+
+[[cities]]
+id = "tokyo-japan"
+reason = "modern Japanese capital (Edo)"
+
+[[cities]]
+id = "kyoto-japan"
+reason = "imperial Japanese capital for a thousand years"
+
+[[cities]]
+id = "osaka-japan"
+reason = "major historic Japanese merchant city"
+
+[[cities]]
+id = "nara-city-japan"
+reason = "Japan's first permanent imperial capital"
+
+[[cities]]
+id = "kamakura-japan"
+reason = "seat of Japan's first shogunate"
+
+[[cities]]
+id = "yokohama-japan"
+reason = "Japan's gateway port to the world"
+
+[[cities]]
+id = "nagoya-japan"
+reason = "major central Japanese city"
+
+[[cities]]
+id = "sapporo-japan"
+reason = "major northern Japanese city"
+
+
+# ---- East Asia — Korea / Taiwan
+
+[[cities]]
+id = "seoul-republic-of-korea"
+reason = "long-running Korean royal and modern capital"
+
+[[cities]]
+id = "gyeongju-republic-of-korea"
+reason = "capital of the ancient Silla kingdom"
+
+[[cities]]
+id = "busan-republic-of-korea"
+reason = "major Korean port city"
+
+[[cities]]
+id = "pyongyang-dem-people-s-republic-of-korea"
+reason = "ancient Korean capital, modern North Korean capital"
+
+[[cities]]
+id = "taipei-taiwan"
+reason = "modern Taiwanese capital"
+
+
+# ---- Russia
+
+[[cities]]
+id = "moscow-russian-federation"
+reason = "capital of Russia"
+
+[[cities]]
+id = "saint-petersburg-russian-federation"
+reason = "Imperial Russian capital built by Peter the Great"
+
+[[cities]]
+id = "novgorod-russian-federation"
+reason = "medieval Russian republic capital"
+
+[[cities]]
+id = "kazan-russian-federation"
+reason = "capital of the Khanate of Kazan"
+
+[[cities]]
+id = "vladivostok-russian-federation"
+reason = "Russia's great Pacific port city"
+
+
+# ---- Europe
+
+[[cities]]
+id = "london-united-kingdom"
+reason = "capital of England and the British Empire"
+
+[[cities]]
+id = "york-united-kingdom"
+reason = "Roman and Viking northern English capital"
+
+[[cities]]
+id = "edinburgh-united-kingdom"
+reason = "capital of Scotland"
+
+[[cities]]
+id = "paris-france"
+reason = "capital of France"
+
+[[cities]]
+id = "rome-italy"
+reason = "capital of the Roman Empire and modern Italy"
+
+[[cities]]
+id = "venice-italy"
+reason = "great medieval maritime trading republic"
+
+[[cities]]
+id = "florence-italy"
+reason = "cradle of the Italian Renaissance"
+
+[[cities]]
+id = "naples-italy"
+reason = "one of Europe's oldest continuously inhabited cities"
+
+[[cities]]
+id = "milan-italy"
+reason = "major northern Italian economic capital"
+
+[[cities]]
+id = "athens-greece"
+reason = "birthplace of Western democracy and philosophy"
+
+[[cities]]
+id = "madrid-spain"
+reason = "capital of Spain"
+
+[[cities]]
+id = "barcelona-spain"
+reason = "major Catalan Mediterranean capital"
+
+[[cities]]
+id = "cordoba-spain"
+reason = "capital of the Umayyad Caliphate of Cordoba"
+
+[[cities]]
+id = "granada-spain"
+reason = "last Islamic capital in Iberia (Alhambra)"
+
+[[cities]]
+id = "lisbon-portugal"
+reason = "capital of Portugal, age-of-exploration hub"
+
+[[cities]]
+id = "berlin-germany"
+reason = "capital of Germany"
+
+[[cities]]
+id = "munich-germany"
+reason = "major Bavarian cultural capital"
+
+[[cities]]
+id = "cologne-germany"
+reason = "ancient Roman-founded Rhineland city"
+
+[[cities]]
+id = "hamburg-germany"
+reason = "major Hanseatic League trading port"
+
+[[cities]]
+id = "vienna-austria"
+reason = "Habsburg imperial capital"
+
+[[cities]]
+id = "amsterdam-netherlands"
+reason = "capital of the Netherlands, Dutch Golden Age hub"
+
+[[cities]]
+id = "antwerp-belgium"
+reason = "major medieval and modern European trading port"
+
+[[cities]]
+id = "copenhagen-denmark"
+reason = "capital of Denmark"
+
+[[cities]]
+id = "stockholm-sweden"
+reason = "capital of Sweden"
+
+[[cities]]
+id = "oslo-norway"
+reason = "capital of Norway"
+
+[[cities]]
+id = "helsinki-finland"
+reason = "capital of Finland"
+
+[[cities]]
+id = "dublin-ireland"
+reason = "capital of Ireland"
+
+[[cities]]
+id = "warsaw-poland"
+reason = "capital of Poland"
+
+[[cities]]
+id = "krakow-poland"
+reason = "historic Polish royal capital"
+
+[[cities]]
+id = "prague-czech-republic"
+reason = "Bohemian royal and imperial capital"
+
+[[cities]]
+id = "budapest-hungary"
+reason = "capital of Hungary"
+
+[[cities]]
+id = "kiev-ukraine"
+reason = "capital of Kievan Rus and modern Ukraine"
+
+[[cities]]
+id = "zurich-switzerland"
+reason = "major Swiss financial capital"
+
+[[cities]]
+id = "geneva-switzerland"
+reason = "major Swiss diplomatic capital"
+

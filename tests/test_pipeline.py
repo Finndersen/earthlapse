@@ -50,11 +50,16 @@ from pipeline.publish import (
     HUMAN_ERA_BASEMAP_DOMAIN_END,
     RASTER_LAYERS,
     SCALAR_LAYERS,
+    CityRoster,
+    CityRosterEntry,
+    CityRosterError,
     PublishRefused,
     _effect,
     _layers,
     _scene_location,
+    apply_city_roster,
     chapter_spans,
+    load_city_roster,
     validated_asset_base,
 )
 from pipeline.scenes import (
@@ -1983,3 +1988,93 @@ def test_layers_publishes_cities_feature_entry() -> None:
     assert len(cities_data.features) == 1
     assert cities_data.features[0].id == "uruk"
     assert [e.population for e in cities_data.features[0].estimates] == [40_000, 14_000]
+
+
+# --------------------------------------------------------- city significance roster (ADR-038)
+
+
+def _city(feature_id: str) -> Feature:
+    return Feature(
+        id=feature_id,
+        name=feature_id,
+        country="Testland",
+        lat=0.0,
+        lon=0.0,
+        certainty=FeatureCertainty.HIGH,
+        estimates=[PopulationEstimate(t=0.0, population=1_000)],
+    )
+
+
+def test_apply_city_roster_keeps_only_the_named_cities() -> None:
+    feature_set = FeatureSet(
+        id="cities", features=[_city("uruk-iraq"), _city("babylon-iraq"), _city("rome-italy")]
+    )
+    roster = CityRoster(
+        cities=(
+            CityRosterEntry(id="uruk-iraq", reason="first city"),
+            CityRosterEntry(id="rome-italy", reason="imperial capital"),
+        )
+    )
+    result = apply_city_roster(feature_set, roster)
+    assert result.id == "cities"
+    assert {f.id for f in result.features} == {"uruk-iraq", "rome-italy"}
+
+
+def test_apply_city_roster_raises_naming_every_missing_entry() -> None:
+    feature_set = FeatureSet(id="cities", features=[_city("uruk-iraq")])
+    roster = CityRoster(
+        cities=(
+            CityRosterEntry(id="uruk-iraq", reason="first city"),
+            CityRosterEntry(id="atlantis-nowhere", reason="does not exist in the dataset"),
+            CityRosterEntry(id="el-dorado-nowhere", reason="also does not exist"),
+        )
+    )
+    with pytest.raises(CityRosterError) as excinfo:
+        apply_city_roster(feature_set, roster)
+    assert "atlantis-nowhere" in str(excinfo.value)
+    assert "el-dorado-nowhere" in str(excinfo.value)
+
+
+def test_load_city_roster_parses_a_real_file(tmp_path: Path) -> None:
+    path = tmp_path / "roster.toml"
+    path.write_text(
+        '[[cities]]\nid = "uruk-iraq"\nreason = "first city"\n\n'
+        '[[cities]]\nid = "rome-italy"\nreason = "imperial capital"\n'
+    )
+    roster = load_city_roster(path)
+    assert [entry.id for entry in roster.cities] == ["uruk-iraq", "rome-italy"]
+    assert roster.cities[0].reason == "first city"
+
+
+def test_load_city_roster_rejects_a_duplicate_id(tmp_path: Path) -> None:
+    path = tmp_path / "roster.toml"
+    path.write_text(
+        '[[cities]]\nid = "uruk-iraq"\nreason = "first city"\n\n'
+        '[[cities]]\nid = "uruk-iraq"\nreason = "duplicate entry"\n'
+    )
+    with pytest.raises(CityRosterError, match="uruk-iraq"):
+        load_city_roster(path)
+
+
+def test_layers_applies_the_city_roster_when_one_is_given() -> None:
+    cities = FeatureSet(id="cities", features=[_city("uruk-iraq"), _city("babylon-iraq")])
+    world = WorldModel(features={"cities": cities})
+    roster = CityRoster(cities=(CityRosterEntry(id="uruk-iraq", reason="first city"),))
+    files, _entries = _layers(world, portraits=None, city_roster=roster)
+    files_by_id = {f.data.id: f for f in files}
+    cities_data = files_by_id["cities"].data
+    assert isinstance(cities_data, FeatureSetData)
+    assert [f.id for f in cities_data.features] == ["uruk-iraq"]
+
+
+def test_layers_leaves_cities_unfiltered_when_no_roster_is_given() -> None:
+    """`city_roster` defaults to `None` for tests that don't care about cities at all -- when
+    omitted, `_layers` publishes every curated feature, matching every other layer kind's
+    default "no special-casing" behaviour."""
+    cities = FeatureSet(id="cities", features=[_city("uruk-iraq"), _city("babylon-iraq")])
+    world = WorldModel(features={"cities": cities})
+    files, _entries = _layers(world, portraits=None)
+    files_by_id = {f.data.id: f for f in files}
+    cities_data = files_by_id["cities"].data
+    assert isinstance(cities_data, FeatureSetData)
+    assert {f.id for f in cities_data.features} == {"uruk-iraq", "babylon-iraq"}
