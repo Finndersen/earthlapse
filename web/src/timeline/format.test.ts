@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
+import { formatCalendarYear, formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
 
 describe('formatGeoTime', () => {
   it('formats the present as "present"', () => {
@@ -141,5 +141,28 @@ describe('formatRate', () => {
     expect(() => formatRate(-1)).toThrow()
     expect(() => formatRate(Number.NaN)).toThrow()
     expect(() => formatRate(Infinity)).toThrow()
+  })
+})
+
+describe('formatCalendarYear', () => {
+  it('renders recent ages as calendar years', () => {
+    expect(formatCalendarYear(10)).toBe('2015 CE')
+    expect(formatCalendarYear(533)).toBe('1492 CE')
+    expect(formatCalendarYear(0)).toBe('2025 CE')
+  })
+
+  it('crosses into BCE without a year zero', () => {
+    expect(formatCalendarYear(2025)).toBe('1 BCE')
+    expect(formatCalendarYear(2024)).toBe('1 CE')
+    expect(formatCalendarYear(2225)).toBe('201 BCE')
+  })
+
+  it('returns null above the calendar horizon, where elapsed time reads better', () => {
+    expect(formatCalendarYear(3001)).toBeNull()
+    expect(formatCalendarYear(1.2e4)).toBeNull()
+  })
+
+  it('refuses a non-finite age', () => {
+    expect(() => formatCalendarYear(Number.NaN)).toThrow()
   })
 })

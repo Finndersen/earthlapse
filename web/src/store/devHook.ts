@@ -1,17 +1,80 @@
 /**
- * Development-only automation hook: exposes the time store on `window.__earthtime` so a
- * browser-driven check (the ONESHOT_SCOPE "Definition of done" pass) can set `t` precisely
- * and read state back, instead of approximating positions by dragging pixels.
+ * Development/QA automation hook: exposes the time store, plus a handful of DOM-driven
+ * conveniences, on `window.__earthtime` so a browser-driven check can set `t` precisely, pause
+ * playback, flip view toggles and read state back — all without reloading the page or
+ * approximating positions by dragging pixels.
  *
- * Gated on `process.env.NODE_ENV === 'development'`, which Next inlines at build time, so a
- * production build dead-code-eliminates the assignment and ships no debug surface.
+ * Gated on `process.env.NODE_ENV === 'development'` OR `process.env.NEXT_PUBLIC_EARTHTIME_QA
+ * === '1'`, both of which Next inlines at build time: an ordinary production build still
+ * dead-code-eliminates every line below the early return, and only a static export explicitly
+ * built with the QA env var carries this surface (`web/scripts/qa`, the visual-QA harness).
+ *
+ * Two different mechanisms back this surface:
+ * - `setT`/`getState` and the playback/globe-expand/section/scale setters below call straight
+ *   into `useTimeStore` — real store state, per DESIGN §12's "one piece of global state".
+ * - `getGlobeViewMode`/`setGlobeViewMode`/`setLayerToggle` do not: the Globe/Map toggle
+ *   (`globe/Globe.tsx`'s `mapMode`) and the legend's per-overlay toggles (e.g. `humanOn`) are
+ *   deliberately local component state, not lifted to the store (see `Globe.tsx`'s own doc
+ *   comment on `mapMode` — "pure chrome with no bearing on playback or `t`"). This module has no
+ *   access to them and must not gain one by reaching into React internals, so instead it drives
+ *   the same accessible controls a person would: reading `aria-pressed` and calling `.click()`
+ *   on the real "Globe"/"Map" and legend "On"/"Off" buttons. That makes these two functions
+ *   couple to `Globe.tsx`'s/`Legend.tsx`'s copy and ARIA structure rather than a stable prop —
+ *   if either component's button labels change, these break loudly (they throw when a control
+ *   isn't found) rather than silently no-op.
+ *
+ * There is deliberately no way to read the sphere<->map unfold tween's own numeric progress
+ * (`Globe.tsx`'s `unfold`, 0..1): it is local animation state with no DOM reflection (the
+ * panel's own CSS resize is a separate, independently-timed transition — see `Globe.tsx`'s
+ * `GlobeCameraControls` doc comment on the two having previously drifted apart), so there is no
+ * clean way to expose it without instrumenting `Globe.tsx` itself. A harness that needs a
+ * mid-transition frame has to trigger the toggle and sample after a calibrated wait instead.
  */
 
 import { useTimeStore } from './time'
+import type { PlaybackMode } from '@/types/layer'
+
+/** Selector present only once the app shell has actually mounted real content: `Experience.tsx`
+ *  renders nothing but a "Loading manifest…" string until the manifest has loaded and the
+ *  initial `t` has been applied (see that component's own `initialised` doc comment), so this
+ *  element's presence is already a true "ready" signal, not one this module invents. */
+const APP_READY_SELECTOR = '[data-testid="time-title"]'
+
+/** Stable keys a harness can pass to `setLayerToggle`, mapped to the legend row's own visible
+ *  label (`Legend.tsx`'s `LegendRow.label`) — the only thing that actually identifies a row in
+ *  the DOM, since toggle state itself is local to `Globe.tsx`. Extend this alongside any new
+ *  legend row. */
+const LAYER_TOGGLE_LABELS: Record<string, string> = {
+  'human-civilisation': 'Human civilisation',
+}
 
 export interface EarthtimeDevHook {
   setT: (t: number) => void
   getState: typeof useTimeStore.getState
+  /** Pauses (`false`) or resumes (`true`) playback — a still frame is otherwise never
+   *  guaranteed, since `usePlaybackLoop` keeps advancing `t` every animation frame while
+   *  `playback.playing` is true. */
+  setPlaying: (playing: boolean) => void
+  setPlaybackMode: (mode: PlaybackMode) => void
+  /** Expands or collapses the globe overlay (`useTimeStore`'s `globeExpanded`). */
+  setGlobeExpanded: (expanded: boolean) => void
+  /** Reads which of the expanded globe's "Globe"/"Map" toggle is currently pressed by
+   *  inspecting the real DOM control (see this module's own doc comment) — `null` when the
+   *  globe isn't expanded (WebGL-unavailable or collapsed), since the toggle doesn't exist then. */
+  getGlobeViewMode: () => 'globe' | 'map' | null
+  /** Clicks the corresponding "Globe"/"Map" button. Throws if the globe isn't expanded (the
+   *  toggle only renders then) — never silently no-ops. */
+  setGlobeViewMode: (mode: 'globe' | 'map') => void
+  /** Clicks a legend overlay row's On/Off control by stable key (see `LAYER_TOGGLE_LABELS`).
+   *  Throws for an unknown key or a row not currently in the DOM (out of its data domain, or
+   *  the globe isn't expanded — the legend only renders then). */
+  setLayerToggle: (key: string, on: boolean) => void
+  /** Resolves once the app shell has mounted, every image/texture fetch this module has seen
+   *  in flight has settled, and a couple of animation frames have had a chance to paint the
+   *  result — see `instrumentResourceLoading`'s own doc comment for exactly what "seen" covers.
+   *  A harness should always await this (plus, per shot, one or two more raw `rAF` ticks after
+   *  driving an action) instead of a blind `waitForTimeout`. */
+  ready: () => Promise<void>
 }
 
 declare global {
@@ -20,10 +83,145 @@ declare global {
   }
 }
 
+/** In-flight image/texture load count this module has actually observed — see
+ *  `instrumentResourceLoading`. Module-scoped rather than per-call state since it tracks the
+ *  whole page, not any one caller's request. */
+let pendingLoads = 0
+let instrumented = false
+
+function trackPendingLoad(): () => void {
+  pendingLoads += 1
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    pendingLoads = Math.max(0, pendingLoads - 1)
+  }
+}
+
+/**
+ * Patches `window.fetch` and `HTMLImageElement.prototype.src` to count in-flight loads, so
+ * `ready()` has a real signal for "every image/texture this page knows about has finished
+ * loading" without touching `Globe.tsx` or `scene/*` to add one directly.
+ *
+ * This covers both texture paths in the app: `globe/textureCache.ts`'s `fetch` +
+ * `createImageBitmap`, and `scene/textureCache.ts`'s `THREE.TextureLoader` (which — like
+ * `SceneFallbackView`'s own plain `<img>` — ultimately just sets `.src` on an `HTMLImageElement`,
+ * whether created via `new Image()` or `document.createElementNS(...)`; patching the shared
+ * `src` setter on the prototype catches all three call sites in one place rather than needing
+ * one per component). It does not, and cannot, know about a resource fetched some other way
+ * (Tone.js audio decode, say) — `ready()` is scoped to "the current scene image and globe
+ * textures", not every network effect this page has.
+ *
+ * Installed once per page load (`instrumented` guards a StrictMode/double-mount re-run); the
+ * patch itself is harmless to leave in place for the rest of the session.
+ */
+function instrumentResourceLoading(): void {
+  if (instrumented) return
+  instrumented = true
+
+  const originalFetch = window.fetch.bind(window)
+  window.fetch = ((...args: Parameters<typeof fetch>) => {
+    const release = trackPendingLoad()
+    return originalFetch(...args).finally(release)
+  }) as typeof fetch
+
+  const srcDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')
+  if (srcDescriptor?.set !== undefined) {
+    const originalSet = srcDescriptor.set
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+      ...srcDescriptor,
+      set(this: HTMLImageElement, value: string) {
+        const release = trackPendingLoad()
+        this.addEventListener('load', release, { once: true })
+        this.addEventListener('error', release, { once: true })
+        originalSet.call(this, value)
+      },
+    })
+  }
+}
+
+function pollUntil(predicate: () => boolean): Promise<void> {
+  return new Promise((resolve) => {
+    const tick = (): void => {
+      if (predicate()) {
+        resolve()
+        return
+      }
+      requestAnimationFrame(tick)
+    }
+    tick()
+  })
+}
+
+function nextFrames(count: number): Promise<void> {
+  if (count <= 0) return Promise.resolve()
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => nextFrames(count - 1).then(resolve))
+  })
+}
+
+async function ready(): Promise<void> {
+  await pollUntil(() => document.querySelector(APP_READY_SELECTOR) !== null)
+  // Settle twice with a couple of frames in between: a load that resolves and immediately
+  // starts another (the preload window both texture caches keep ahead of `t`) must not read as
+  // "done" off a single zero reading.
+  await pollUntil(() => pendingLoads === 0)
+  await nextFrames(2)
+  await pollUntil(() => pendingLoads === 0)
+  await nextFrames(2)
+}
+
+function findAccessibleButton(text: string, requireAriaPressed: boolean): HTMLButtonElement | undefined {
+  return Array.from(document.querySelectorAll('button')).find(
+    (button) => button.textContent?.trim() === text && (!requireAriaPressed || button.hasAttribute('aria-pressed')),
+  )
+}
+
+function getGlobeViewMode(): 'globe' | 'map' | null {
+  const mapButton = findAccessibleButton('Map', true)
+  if (mapButton === undefined) return null
+  return mapButton.getAttribute('aria-pressed') === 'true' ? 'map' : 'globe'
+}
+
+function setGlobeViewMode(mode: 'globe' | 'map'): void {
+  const label = mode === 'map' ? 'Map' : 'Globe'
+  const button = findAccessibleButton(label, true)
+  if (button === undefined) throw new Error(`globe view toggle "${label}" not found — is the globe expanded?`)
+  button.click()
+}
+
+function findLayerToggleGroup(label: string): HTMLElement {
+  const labelEl = Array.from(document.querySelectorAll('span')).find((span) => span.textContent?.trim() === label)
+  const group = labelEl?.parentElement?.querySelector('[role="group"]')
+  if (!(group instanceof HTMLElement)) {
+    throw new Error(`layer toggle "${label}" not found in the DOM — is the globe expanded and the row in its data domain?`)
+  }
+  return group
+}
+
+function setLayerToggle(key: string, on: boolean): void {
+  const label = LAYER_TOGGLE_LABELS[key]
+  if (label === undefined) throw new Error(`unknown layer toggle key "${key}"`)
+  const group = findLayerToggleGroup(label)
+  const buttonText = on ? 'On' : 'Off'
+  const button = Array.from(group.querySelectorAll('button')).find((b) => b.textContent?.trim() === buttonText)
+  if (button === undefined) throw new Error(`layer toggle "${label}" has no "${buttonText}" button`)
+  button.click()
+}
+
 export function installDevHook(): void {
-  if (process.env.NODE_ENV !== 'development') return
+  if (process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_EARTHTIME_QA !== '1') return
+  instrumentResourceLoading()
   window.__earthtime = {
     setT: (t) => useTimeStore.getState().setT(t),
     getState: useTimeStore.getState,
+    setPlaying: (playing) => useTimeStore.getState().setPlaying(playing),
+    setPlaybackMode: (mode) => useTimeStore.getState().setPlaybackMode(mode),
+    setGlobeExpanded: (expanded) => useTimeStore.getState().setGlobeExpanded(expanded),
+    getGlobeViewMode,
+    setGlobeViewMode,
+    setLayerToggle,
+    ready,
   }
 }

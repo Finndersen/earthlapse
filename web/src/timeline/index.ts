@@ -112,7 +112,7 @@ export {
   type TimelineCheckpoint,
 } from './checkpoints'
 export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declutter'
-export { formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
+export { formatCalendarYear, formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
 export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { nearestNeighbourEvent, type EventStepDirection } from './lod'
 export {

@@ -24,13 +24,11 @@
 
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 
+import { PRESENT_CE_YEAR } from './format'
 import { SYMLOG_C, symlogKnee, type TimeWindow } from './scale'
 
 const GA = 1e9
 const MA = 1e6
-
-/** `t = PRESENT_CE_YEAR - CE_year` — data/events.yaml's own fixed reference year. */
-const PRESENT_CE_YEAR = 2025
 
 function yearsBeforePresent(ceYear: number): GeoTime {
   return PRESENT_CE_YEAR - ceYear

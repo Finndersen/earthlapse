@@ -11,12 +11,12 @@
  *  sample sits some years before now, e.g. HYDE 3.2's population total ending 2015 CE) holds
  *  that newest sample for every `t` nearer than it, rather than reading "no data" — the same
  *  "data simply ends, hold" convention the population-density globe overlay already uses
- *  (`web/src/globe/density.ts`'s `densityBlendAt`) — annotated "as of <year>" since silently
+ *  (`web/src/globe/density.ts`'s `densityBlendAt`) — annotated "as of <year>" — a calendar year where one reads naturally since silently
  *  freezing the number would misrepresent a 2015 total as a live reading for right now. Driven
  *  by the domain, not a layer id, so this applies to any future layer whose data ends before the
  *  present the same way, not just this one. */
 
-import { formatGeoTime } from '@/timeline'
+import { formatCalendarYear, formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { formatScalarValue } from '../format'
@@ -46,7 +46,9 @@ export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
           {formatScalarValue(value.value, value.unit)} <span className={styles.unit}>{value.unit}</span>
         </span>
       )}
-      {held && value !== null && <span className={styles.ancestorSince}>as of {formatGeoTime(sampledT)}</span>}
+      {held && value !== null && (
+        <span className={styles.ancestorSince}>as of {formatCalendarYear(sampledT) ?? formatGeoTime(sampledT)}</span>
+      )}
     </span>
   )
 }

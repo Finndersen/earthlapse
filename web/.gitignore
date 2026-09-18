@@ -1,2 +1,3 @@
 next-env.d.ts
 *.tsbuildinfo
+scripts/qa/out/

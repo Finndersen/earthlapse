@@ -5,6 +5,15 @@ import type { GeoTime } from '@/types/layer'
 
 import type { TimeWindow } from './scale'
 
+/** `t = PRESENT_CE_YEAR - CE_year` — data/events.yaml's own fixed reference year, shared with
+ *  `sections.ts`'s historical boundaries so a calendar year printed here and a section edge drawn
+ *  there cannot drift apart. */
+export const PRESENT_CE_YEAR = 2025
+
+/** The age below which a reader thinks in calendar years rather than elapsed time. Above it,
+ *  "8,000 years ago" is the useful reading; below it, "1492 CE" is. */
+const CALENDAR_YEAR_HORIZON = 3000
+
 const YEARS_PER_KA = 1e3
 const YEARS_PER_MA = 1e6
 const YEARS_PER_GA = 1e9
@@ -152,4 +161,19 @@ export function formatRate(yearsPerSecond: number): string {
   if (yearsPerSecond < YEARS_PER_MA) return `${trimmed(yearsPerSecond / YEARS_PER_KA, 1)} kyr/s`
   if (yearsPerSecond < YEARS_PER_GA) return `${trimmed(yearsPerSecond / YEARS_PER_MA, 0)} Myr/s`
   return `${trimmed(yearsPerSecond / YEARS_PER_GA, 2)} Gyr/s`
+}
+
+/**
+ * `t` as a calendar year — `10 -> "2015 CE"`, `533 -> "1492 CE"`, `2225 -> "201 BCE"`. There is
+ * no year zero, so 1 BCE abuts 1 CE. Returns null above `CALENDAR_YEAR_HORIZON`, where elapsed
+ * time reads better than a date and the underlying data rarely justifies year precision anyway —
+ * a caller falls back to `formatGeoTime` there.
+ */
+export function formatCalendarYear(t: GeoTime): string | null {
+  if (!Number.isFinite(t)) {
+    throw new Error(`formatCalendarYear: t must be finite, got ${t}`)
+  }
+  if (t < 0 || t > CALENDAR_YEAR_HORIZON) return null
+  const ce = PRESENT_CE_YEAR - Math.round(t)
+  return ce > 0 ? `${ce} CE` : `${1 - ce} BCE`
 }
