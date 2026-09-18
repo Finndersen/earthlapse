@@ -338,8 +338,8 @@ scenes:
     t: 4.5e8
     chapter: over-under
     shot: SPLIT_LEVEL
-    title: "The First Land Plants"
-    caption: Beneath the surface a reef of crinoids, corals and shelled animals teems with life, while the first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to damp ground above the shore.
+    title: "A Bare Coast, a Crowded Sea"
+    caption: Beneath the surface a reef of crinoids, corals and shelled animals teems with life, hunted by a metre-long straight-shelled nautiloid. Above the waterline the continent is bare rock — the first land plants, known only from their spores, are no more than a green film on damp stone.
     unsourced:
       o2_percent: 14  # rounded, contested: rising through the Ordovician
       mean_temp_c: 26  # rounded: Ordovician greenhouse, before the end-Ordovician glaciation
@@ -373,7 +373,7 @@ scenes:
     t: 4.25e8
     chapter: over-under
     shot: SPLIT_LEVEL
-    title: "Early Upright Plants"
+    title: "Sea Scorpions and the First Stems"
     caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.
     unsourced:
       o2_percent: 16  # rounded
@@ -400,7 +400,7 @@ scenes:
     t: 4.07e8
     chapter: waters-edge
     shot: WATER_EDGE
-    title: "Early Plants and Arachnids"
+    title: "Life Comes Ashore"
     caption: Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.
     unsourced:
       o2_percent: 15  # rounded
@@ -458,33 +458,6 @@ scenes:
     sound: {stem: water, mode: loop, gain: 0.8}
     pin: {asset_digest: "04b683b74388043c", path: "data/candidates/devonian-estuary/df7a9ca914a91a0b/03-04b683b74388043c.jpg"}
 
-  # ~365 Ma, exactly at events.yaml tetrapods (t_min = 3.65e8; Acanthostega/Ichthyostega,
-  # Ahlberg & Clack 2006) and this file's new first-seed-plants event (3.6e8-3.7e8): Rothwell,
-  # G.W., Scheckler, S.E. & Gillespie, W.H. (1989), "Elkinsia gen. nov., a Late Devonian
-  # gymnosperm with cupulate ovules," Botanical Gazette 150(2), 170-189 — the oldest
-  # well-documented seed. Follows data/scenes.yaml's devonian-estuary (375 Ma) chronologically.
-  - id: late-devonian-tetrapod
-    t: 3.65e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "Limbs Before Land"
-    caption: Ten million years after Tiktaalik, a limbed but still fully aquatic animal paddles a forest stream where some of the first seed-bearing plants grow in the undergrowth.
-    unsourced:
-      o2_percent: 17  # rounded, close to devonian-estuary's 18 a little later
-      mean_temp_c: 23  # rounded
-    subject:
-      setting: A weed-choked Late Devonian stream on a forested coastal lowland
-      left_mass: "a dense stand of tall Archaeopteris trees, straight slender trunks up to 20 m tall with rough bark, carrying spirally arranged horizontal branches along the upper two-thirds of the trunk, each branch bearing flat sprays of small fern-like leaflets, giving a narrow, conical, conifer-like outline with sky visible between the tiers — never a bare trunk with a crown of fronds at the top, shading a tangle of undergrowth"
-      vegetation: "Archaeopteris trees over a low tangle of horsetail relatives and, scattered among them, sprawling Elkinsia-like seed ferns bearing small cup-like structures that enclose single seeds at their frond tips — plain, dull green-brown and unshowy, nothing like a flower — the first seeds"
-      fauna: an early tetrapod with true limbs; small lobe-finned fish visible in the water; no larger land animals yet
-      main_subject: an Acanthostega-like early tetrapod about 60 cm long, with four short paddle-like limbs, the front feet with eight slender digits, a broad flattened head, and a long tail edged with a fin, pushing along a submerged log in the shallow, weed-choked water
-      ground: waterlogged black mud dense with rotting plant debris and fallen branches
-      water: "still, shallow, weed-choked stream water stained dark tea-brown by tannins and thick with drifting plant debris, not clear and not turquoise"
-      far_bank: "Archaeopteris forest of narrow, conical, tiered trees with low seed-fern thickets in its understory, fading into humid haze"
-      sky_and_light: a warm, hazy sky with scattered cumulus; soft, humid, slightly diffused light
-      absent: ["flowers", "grass", "broadleaf trees", "palms", "conifers", "reptiles", "dinosaurs", "mammals", "birds", "flying insects", "walking on land", "palm trees", "tree ferns", "a crown of fronds on top of a bare trunk", "yellow or coloured blooms", "sandy beach", "clear turquoise water"]
-    pin: {asset_digest: "3b555e2bde09f75f", path: "data/candidates/late-devonian-tetrapod/3bf3324c4e342562/02-3b555e2bde09f75f.jpg"}
-
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
   - id: carboniferous-swamp
     t: 3.1e8
@@ -507,45 +480,6 @@ scenes:
       sky_and_light: a low, even overcast of white-grey cloud; soft, diffuse, almost shadowless light; the air saturated and heavy, a dense humid haze tinted green-grey that swallows the distance
       absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
     pin: {asset_digest: "9d50ad8640e89aa9", path: "data/candidates/carboniferous-swamp/8db84df1af2f828c/01-9d50ad8640e89aa9.jpg"}
-
-  # About 300 Ma, Carboniferous-Permian boundary (298.9 Ma), near the coldest interval of the Late
-  # Paleozoic Ice Age; chosen to sit between carboniferous-swamp (310 Ma, equatorial coal swamp) and
-  # permian-conifer-forest (294 Ma) without colliding with either. Gondwanan ice sheets at this time
-  # covered large areas of present-day South America, southern Africa, India, Antarctica and
-  # Australia (Isbell et al. 2003, "Timing of late Paleozoic glaciation in Gondwana", Journal of
-  # African Earth Sciences; Montañez & Poulsen 2013, "The Late Paleozoic Ice Age: An Evolving
-  # Paradigm", Annual Review of Earth and Planetary Sciences; Wikipedia "Late Paleozoic icehouse").
-  # Direct glacial evidence — striated pavements, tillites, dropstones in marine sediment — is well
-  # documented at Gondwanan high latitudes for this interval. Glossopteris, the index seed-fern of
-  # the Gondwanan Permian flora, first appears close to the Carboniferous-Permian boundary and
-  # colonised freshly deglaciated ground; shown here sparse and pioneering, not as an established
-  # forest, since dense Glossopteris forests are better attested somewhat later in the Permian. No
-  # animal life is shown: no vertebrate body or trace fossils from a Gondwanan glacial-margin deposit
-  # of this exact age were confirmed for this scene.
-  - id: gondwana-ice-margin
-    t: 3.0e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "The Late Paleozoic Ice Age"
-    caption: At the height of the Late Paleozoic Ice Age, a Gondwanan glacier calves into a braided meltwater outwash plain, one of the coldest moments the planet has yet seen.
-    unsourced:
-      o2_percent: 31  # rounded: near the Carboniferous-Permian oxygen peak
-      mean_temp_c: 10  # rounded: near the coldest interval of the Late Paleozoic Ice Age
-    subject:
-      setting: The margin of a Gondwanan ice sheet at high southern latitude, where a glacier front meets a braided meltwater outwash plain, about 300 million years ago
-      left_mass: a low, jumbled ridge of grey glacial moraine, boulders and gravel bulldozed up at the ice edge
-      vegetation: a few sparse, low, pioneering stands of early Glossopteris-type seed ferns colonising bare, recently deglaciated gravel; otherwise no plant cover
-      fauna: none
-      main_subject: a wall of dirty grey-white glacier ice calving into the meltwater channel, a chunk of ice just breaking away in a plume of spray
-      ground: bare, striated grey rock pavement and coarse glacial gravel, wet with meltwater
-      water: a shallow, braided, milky grey-blue meltwater stream threading between gravel bars
-      far_bank: a barren outwash plain of grey gravel running toward more ice in the distance, without a single tree anywhere
-      sky_and_light: a pale, cold, overcast white sky; flat, shadowless, cold light
-      absent: [forest, established Glossopteris woodland, dinosaurs, mammals, reptiles, amphibians, any animal life, flowers, grass, tropical vegetation]
-    events: [late-paleozoic-ice-age]
-    # ADR-023 (v2): `wind` `loop` above its 0.32 ambient -- katabatic wind off the ice-sheet margin.
-    sound: {stem: wind, mode: loop, gain: 0.8}
-    pin: {asset_digest: "c79cd4f37d13d12f", path: "data/candidates/gondwana-ice-margin/3dab8c5cbfe609bb/03-c79cd4f37d13d12f.jpg"}
 
   # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
   # the range of walchian conifers (Walchia, ~310-290 Ma; the earliest walchians are Moscovian, so
@@ -1378,7 +1312,7 @@ scenes:
     t: 9.0e3
     chapter: open-ground
     shot: GROUND
-    title: "A Town Without Streets"
+    title: "Çatalhöyük, a Town Without Streets"
     caption: By 7000 BCE, thousands of people live wall to wall in a honeycomb of mudbrick houses at Çatalhöyük with no streets at all — every home is entered by ladder through a hole in its roof, so the rooftops are the town's only thoroughfares.
     unsourced:
       o2_percent: 21  # modern
@@ -1543,7 +1477,7 @@ scenes:
     t: 4.525e3
     chapter: open-ground
     shot: GROUND
-    title: "A City Without a King"
+    title: "Mohenjo-daro, a City Without a King"
     caption: By 2500 BCE, Mohenjo-daro's grid of straight brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands on the Indus floodplain — with no palace, temple or evidence of a king anywhere yet found.
     unsourced:
       o2_percent: 21  # modern
@@ -1687,7 +1621,7 @@ scenes:
     t: 2.235e3
     chapter: open-ground
     shot: GROUND
-    title: "An Unfinished Palace"
+    title: "China's First Emperor"
     caption: In 210 BCE, the year Qin Shi Huang dies, forced labourers still raise the colossal earthen platform of his unfinished Epang Palace outside Xianyang, capital of a China unified only eleven years before under one law, one script and one currency.
     unsourced:
       o2_percent: 21  # modern

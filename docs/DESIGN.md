@@ -679,10 +679,19 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 3. **Narration** (optional toggle). Local TTS — Piper or Kokoro — over generated event
    descriptions. Free.
 
-> **v1 note (ADR-023), making all three precise.** Sound is **off by default** and switched on
-> per viewer through a HUD speaker toggle (persisted in `localStorage`, a master volume
-> alongside it) — browsers require a gesture before audio anyway, and this also gates Tone.js
-> itself: it is dynamically imported only after that first "on" click, never bundled eagerly.
+> **v1 note (ADR-023, amended 2026-09-18).** Sound is **on by default** and switched off per
+> viewer through a HUD speaker toggle (persisted in `localStorage`, a master volume alongside
+> it). A stored preference always wins, so a viewer who has turned sound off stays off; the
+> default applies only when nothing is stored.
+>
+> Browsers still require a gesture before any audio, so "on" is a preference, not a claim about
+> what is audible: the toggle carries a distinct **pending** state (on, but waiting for the
+> first click or key press) so it never shows sound that cannot yet be heard. What the default
+> costs on cold load is the Tone.js chunk — **79 KB gzipped**, now fetched at page load rather
+> than on a first "on" click, since `loadTone()` runs as soon as `enabled` is true. It remains a
+> separate dynamic chunk, not part of the main bundle. The sixteen ambience stems (~31 MB) are
+> **not** affected: `buildRuntime` only runs once `Tone.start()` has resolved, and stem buffers
+> load after that, so they still cost nothing until a viewer interacts.
 >
 > - **Tier 1** is sixteen ambience stems (`wind`, `water`, `storm`, `volcanic`, `forest`,
 >   `wing-hum`, `insects`, `large-animal`, `birds`, `archosaurs`, `mammals`, `livestock`, `fire`,
@@ -691,16 +700,16 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 >   `events-core` event ids (`land-plants`, `dinosaurs`, `k-pg-impact`, `livestock-domestication`,
 >   `agriculture`, `industrial-revolution`, the flood-basalt events, …), so a stem's fade lines up
 >   with the event feed instead of an independently-chosen date. `wind`/`water`/`storm` are a
->   **pre-land bed only**, fading to exactly 0 by 370 Ma — the instant `late-devonian-tetrapod`
->   becomes the dominant on-screen scene, not the Carboniferous boundary itself — as `forest` (a
->   terrestrial rustle bed) rises in their place; `insects` only starts at 300 Ma, the date its
+>   **pre-land bed only**, fading to exactly 0 by 370 Ma — inside the post-`first-forests` window,
+>   once land is vegetated enough for `forest` (a terrestrial rustle bed) to carry the bed in their
+>   place, rather than the Carboniferous boundary itself; `insects` only starts at 300 Ma, the date its
 >   one cricket-stridulation clip's own citation (Song et al. 2020) actually supports —
 >   `wing-hum`, a quiet, generic (non-stridulating, non-bee) wing-drone clip, instead covers the
 >   325 → 300 Ma gap on its own citation (Grimaldi & Engel 2005's unambiguous winged insects, not
 >   Song et al.'s stridulation date) and persists, rather than receding, once `insects` itself
 >   starts (2026-09-15 "wing-hum" amendment, closing the "era fit v3 fixes" amendment's own
->   "Unresolved" item); three isolated, scene-local "nothing living is on screen" windows
->   (`eocene-oligocene-icesheet`, `messinian-salt-flats`, `gondwana-ice-margin`) and a
+>   "Unresolved" item); two isolated, scene-local "nothing living is on screen" windows
+>   (`eocene-oligocene-icesheet`, `messinian-salt-flats`) and a
 >   K-Pg-impact-and-aftermath window silence `forest`/`wing-hum`/`insects`/`birds`/`mammals`
 >   together; `large-animal` bridges the Permian-Triassic gap (~270 → 201 Ma) before handing off to
 >   `archosaurs`; a dated Last Glacial Maximum bump (Clark et al. 2009) restores `wind` for

@@ -6236,3 +6236,89 @@ warp remained before `t = 0`, so any recent arrival was still lit at the present
 on the globe up until present moment and not fading" (user, 2026-09-18). The `squeezeToFit` helper
 the inhabited-marker fade already needed is now shared by both, so every arc reaches exactly zero by
 the present.
+
+---
+
+## ADR-023 amendment (2026-09-18): sound is on by default
+
+ADR-023 shipped sound **off by default**, on two grounds: browsers require a gesture before any
+audio, and keeping it off also gated Tone.js itself, which was "dynamically imported only after
+that first 'on' click, never bundled eagerly".
+
+The user asked for it on by default ("i htink sound should be enabled by default"). The first
+argument was never a reason to default off — a gesture requirement constrains when audio *starts*,
+not what the toggle's default *is* — so only the second carried real weight, and it is now a
+measured cost rather than an assumption: **79 KB gzipped**, the Tone.js chunk, fetched at page load
+because `loadTone()` runs as soon as `enabled` is true. It remains a separate dynamic chunk, not
+part of the main bundle.
+
+What the amendment deliberately does *not* change is the expensive half. The sixteen ambience stems
+(~31 MB) still cost nothing until a viewer interacts: `buildRuntime` runs only once `Tone.start()`
+resolves, and stem buffers load after that. Cold load was taken from 246.7 MiB to 3.17 MiB earlier
+in the same session, and defaulting sound on adds 79 KB to that, not 31 MB.
+
+Two constraints came with it:
+
+- **A stored preference always wins.** The default applies only when nothing is stored, so a viewer
+  who has turned sound off stays off across reloads. The previous code collapsed "nothing stored"
+  and "stored false" into the same `=== 'true'` test, which would have overridden a deliberate
+  choice on every load once the default flipped.
+- **The toggle must not lie.** "On" is a preference, not a claim about what is audible. The engine
+  now distinguishes `enabled` from `active` (true only once `Tone.start()` has resolved and the Tone
+  graph exists), and the toggle renders a distinct **pending** state — its own glyph, its own
+  aria-label, a reduced-motion-respecting pulse — for the window between the two. A toggle showing
+  "on" over silence would be a worse experience than defaulting off, which is the failure this
+  avoids.
+
+Audio resumes on the **first user gesture of any kind**, not on the play button specifically.
+Playback starts paused, so Play is almost always that gesture in practice — but scrubbing is equally
+a legal gesture, and binding to Play alone would have enforced silence the browser never asked for,
+with the toggle misreporting it throughout.
+
+---
+
+## 2026-09-18: two scenes cut, six retitled
+
+Six scene titles described an idea rather than the picture, which made unrelated scenes look
+interchangeable in the timeline and buried what each one was actually about.
+
+`ordovician-reef-shore` was "The First Land Plants", but its own prompt specifies those plants as
+a crust "only millimetres tall" — the title promised something the image deliberately cannot show.
+It is now "A Bare Coast, a Crowded Sea", with a caption that leads on the reef and treats the bare
+continent as the point. `silurian-shore` and `rhynie-chert` both led on "plants" and read as
+duplicates despite being a marine scene and the first terrestrial ecosystem 18 Myr apart; they are
+now "Sea Scorpions and the First Stems" and "Life Comes Ashore". `mohenjo-daro`, the Çatalhöyük
+scene and `qin-xianyang-epang-palace` named neither their subject nor their significance, and are
+now "Mohenjo-daro, a City Without a King", "Çatalhöyük, a Town Without Streets" and "China's First
+Emperor" — the last foregrounding the unification of China rather than the palace in frame.
+
+Two scenes were removed, taking the catalogue from 72 to 70.
+
+`late-devonian-tetrapod` (365 Ma) duplicated `devonian-estuary` (375 Ma) closely enough that their
+Archaeopteris prompt text was near-verbatim identical, both being `waters-edge`/`WATER_EDGE` shots
+of a low aquatic animal under the same trees. Its render also read as a painting rather than a
+photograph. `devonian-estuary` was kept: Tiktaalik is the more recognisable transitional animal.
+The fin-to-limb step and the first seed plants survive as timeline events, not as scenes.
+
+`gondwana-ice-margin` was cut as uninteresting.
+
+**Both removals broke something non-obvious in the audio, which is the lesson worth recording.**
+`stemGains.ts`'s `barrenSceneDuck()` carried a presence notch across ~297-305 Ma that existed only
+because `gondwana-ice-margin` showed no plants and no fauna; with the scene gone it was an
+unexplained eight-million-year hole in the soundscape. And `TERRESTRIAL_BED_FADE_END = 3.7e8` had
+been derived as the dissolve midpoint between `devonian-estuary` and `late-devonian-tetrapod`
+(369.97 Ma); with the latter deleted the true midpoint moves to 340.95 Ma, so the code asserted a
+derivation that was no longer true. The value stays at 370 Ma — it stands on its own as the point
+land is vegetated enough for `forest` to carry the bed, and re-anchoring it would have shifted
+audible behaviour across 29 Myr as a side effect of an unrelated deletion. Only the justification
+changed.
+
+Deleting a scene is therefore not a content-only edit: scene ids leak into audio gain curves as
+time anchors and as scene-local ducks. Grep for the id across `web/src/audio/` before removing one.
+
+**Separately**, `wing-hum`'s plateau gain went 0.06 -> 0.12. The user asked for insect sound at
+`carboniferous-swamp` (310 Ma) and heard none. The era was already modelled correctly — `wing-hum`
+ramps 325 -> 320 Ma on Grimaldi & Engel (2005) and is plateaued by then, while the `insects`
+cricket-stridulation clip correctly stays silent until 300 Ma because Meganeura-grade giants did
+not stridulate. The stem was simply mixed too quietly to hear. This is a mix change, not a claim
+about the era, and it needs no new citation.

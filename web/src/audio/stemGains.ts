@@ -24,18 +24,14 @@ const VOLCANIC_FLOOD_BASALT_BUMP_GAIN = 0.45
 
 /**
  * `wind`/`water`/`storm` stop being a global ambient bed once terrestrial ecosystems establish
- * (ADR-023 amendment "era fit v3", human direction 2026-09-15: "that ocean/storm sounds is
- * persisting for way too long through the whole timeline"). 385 Ma rounds `first-forests`'
- * `t_min` (3.78e8, Late Devonian *Archaeopteris* forests); 370 Ma is the manifest's own
- * `devonian-estuary` (375 Ma) -> `late-devonian-tetrapod` (365 Ma) dissolve midpoint in
- * `log1p(t)` space -- `late-devonian-tetrapod`, a forested stream, is the *dominant* on-screen
- * scene from this instant on, so the bed is fully gone by the moment it needs to be, not 20 Myr
- * later (the "era fit v3 fixes" amendment: the original 350 Ma end left the bed audibly louder
- * than `forest` for the first third of that scene's own dwell). `devonian-estuary` keeps its own
- * `water` scene sound throughout, so it needs no help from this global curve. Past this window
- * `wind`/`water`/`storm` are heard only where a scene's own `sound` names them (coastal, ice,
- * storm or open-wind scenes -- data/scenes.yaml), or where a real, dated climate event bumps
- * `wind` back in (`LGM_WIND_WINDOW` below) -- never as a global bed.
+ * (ADR-023 amendment "era fit v3"). 385 Ma rounds `first-forests`'s `t_min` (3.78e8, Late Devonian
+ * *Archaeopteris* forests, `data/events.yaml`); 370 Ma sits inside that same post-`first-forests`
+ * window and marks land as vegetated enough for a terrestrial rustle bed (`forest`) to fully take
+ * over. `devonian-estuary` (375 Ma) keeps its own `water` scene sound throughout, so it needs no
+ * help from this global curve. Past this window `wind`/`water`/`storm` are heard only where a
+ * scene's own `sound` names them (coastal, ice, storm or open-wind scenes -- data/scenes.yaml), or
+ * where a real, dated climate event bumps `wind` back in (`LGM_WIND_WINDOW` below) -- never as a
+ * global bed.
  */
 const TERRESTRIAL_BED_FADE_START = 3.85e8
 const TERRESTRIAL_BED_FADE_END = 3.7e8
@@ -83,7 +79,7 @@ const K_PG_END = 6.6032e7
 
 /**
  * A "presence" multiplier: 1 (unsuppressed) at and beyond `olderEdge`/`youngerEdge`, falling to
- * exactly 0 at `centerT` in between -- the shared shape both the K-Pg duck and the three barren-
+ * exactly 0 at `centerT` in between -- the shared shape both the K-Pg duck and the two barren-
  * scene ducks below need (a fall then a rise, which a single monotonic `rampLog` cannot express:
  * once one clamps flat at its floor it never recovers). The two `rampLog` calls have disjoint
  * domains that meet at exactly 0 at `centerT` (the first's floor, the second's ceiling), so
@@ -96,7 +92,7 @@ function presenceNotch(t: GeoTime, olderEdge: GeoTime, centerT: GeoTime, younger
 
 /**
  * Silences the vegetation/insect ambience across the K-Pg impact and its aftermath -- a real,
- * dated, GLOBAL catastrophe (unlike the three isolated scene-local ducks below), so a `t`-only
+ * dated, GLOBAL catastrophe (unlike the two isolated scene-local ducks below), so a `t`-only
  * curve is the right model, not an approximation (ADR-023 amendment "era fit v3 fixes"). Falls
  * from 1 (full presence, before the impact) to 0 across the ~4-day pyroclastic/thermal pulse
  * (the same `K_PG_IMPACT` -> `K_PG_IMPACT_DAYS_AFTER` window `archosaurs` already ducks across
@@ -109,10 +105,10 @@ function kpgVegetationDuck(t: GeoTime): number {
 }
 
 /**
- * Three isolated, scene-local "nothing living is on screen" windows (ADR-023 amendment "era fit
+ * Two isolated, scene-local "nothing living is on screen" windows (ADR-023 amendment "era fit
  * v3 fixes": the review found `forest`/`insects`/`birds`/`mammals` all still playing at full
  * strength under scenes whose own `subject.vegetation`/`fauna`/`absent` explicitly rule them
- * out). Unlike the K-Pg duck above, none of these was a global mass-extinction -- at 33.7 Ma
+ * out). Unlike the K-Pg duck above, neither of these is a global mass-extinction -- at 33.7 Ma
  * most of Earth still had rainforest; only Antarctica's freshly-calved coast did not. So each
  * uses `presenceNotch` centred exactly on that ONE scene's own `t`, bounded by its dominant
  * span in the published manifest (the `log1p(t)`-space dissolve midpoint to its neighbour on
@@ -130,23 +126,17 @@ function kpgVegetationDuck(t: GeoTime): number {
  *   trend, so a broad suppression here is not purely a screen-time artefact.
  * - `messinian-salt-flats` (5.6 Ma, "absent: any plant, any animal"): between
  *   `c4-savanna-hipparion` (7 Ma) and `lucy-afarensis` (3.2 Ma).
- * - `gondwana-ice-margin` (300 Ma, "fauna: none... vegetation: ...otherwise no plant cover"):
- *   between `carboniferous-swamp` (310 Ma) and `permian-conifer-forest` (294 Ma) -- a narrow
- *   window inside the Late Paleozoic Ice Age (Isbell, J.L. et al. (2003). "Timing of late
- *   Paleozoic glaciation in Gondwana." *Journal of African Earth Sciences* 37, 254-255) that
- *   does not reach into either full-canopy neighbour.
  */
 function barrenSceneDuck(t: GeoTime): number {
   return clampUnit(
     presenceNotch(t, 4.1049e7, 3.37e7, 2.4629e7) * // eocene-oligocene-icesheet
-      presenceNotch(t, 6.261e6, 5.6e6, 4.2332e6) * // messinian-salt-flats
-      presenceNotch(t, 3.0496e8, 3.0e8, 2.9698e8), // gondwana-ice-margin
+      presenceNotch(t, 6.261e6, 5.6e6, 4.2332e6), // messinian-salt-flats
   )
 }
 
 /** Multiplies `forest`/`wing-hum`/`insects`/`birds`/`mammals` -- everything that reads as
  *  "living things are audibly present" -- so all five go quiet together wherever the on-screen
- *  scene is a global catastrophe's immediate aftermath or one of the three barren, scene-local
+ *  scene is a global catastrophe's immediate aftermath or one of the two barren, scene-local
  *  windows above, instead of only `archosaurs` (which had its own, narrower K-Pg duck already). */
 function lifePresence(t: GeoTime): number {
   return kpgVegetationDuck(t) * barrenSceneDuck(t)
@@ -164,9 +154,10 @@ function lifePresence(t: GeoTime): number {
  * its own "Unresolved" note). `wing-hum` uses a DIFFERENT clip (`sources/audio-stems/stems.toml`:
  * kangaroovindaloo "Blowflies!", CC0 -- a diffuse, continuous swarm texture, spectrogram-checked
  * for the absence of discrete pulses, FM bird chirps or periodic frog croaking), so it can rise
- * on its own citation without inheriting `insects`' stridulation date. Ramps in
- * 325 -> 320 Ma to a quiet plateau, well under `forest`'s 0.3 baseline -- a texture, not a
- * foreground -- ducked by `humanDominance` and `lifePresence` exactly like `insects`.
+ * on its own citation without inheriting `insects`' stridulation date. Ramps in 325 -> 320 Ma to
+ * a plateau just under `fire`'s own 0.15 texture level -- clearly audible in the mix from
+ * `carboniferous-swamp` onwards without outweighing `forest`'s 0.3 baseline -- ducked by
+ * `humanDominance` and `lifePresence` exactly like `insects`.
  *
  * **Persists, rather than receding, once `insects` itself starts at 300 Ma.** The two read as
  * different characters (a continuous drone vs. discrete stridulation chirps), not a duplicate of
@@ -177,7 +168,7 @@ function lifePresence(t: GeoTime): number {
  */
 const WING_HUM_RAMP_START = 3.25e8
 const WING_HUM_RAMP_END = 3.2e8
-const WING_HUM_PLATEAU_GAIN = 0.06
+const WING_HUM_PLATEAU_GAIN = 0.12
 
 function wingHum(t: GeoTime, dominance: number, life: number): number {
   return rampLog(t, WING_HUM_RAMP_START, WING_HUM_RAMP_END, 0, WING_HUM_PLATEAU_GAIN) * duck(0.85, dominance) * life
@@ -219,8 +210,8 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
 
   return {
     // `land-plants`/`first-forests`: vegetation softens open wind (unchanged from v1), THEN the
-    // whole pre-land bed fades to 0 by the moment `late-devonian-tetrapod` becomes the dominant
-    // scene (`terrestrialBedFade`, era-fit v3) — past this a wind scene sound (ice-sheet,
+    // whole pre-land bed fades to 0 by 370 Ma, once land is vegetated enough for `forest` to carry
+    // the terrestrial bed (`terrestrialBedFade`) — past this a wind scene sound (ice-sheet,
     // salt-flat, steppe, storm scenes) or the dated LGM bump is what carries it.
     wind: clampUnit(
       rampLog(t, 4.7e8, 3.78e8, 0.6, 0.32) * bedFade +

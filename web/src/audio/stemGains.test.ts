@@ -82,14 +82,14 @@ function row(
 // Era-fit v3 checkpoints (ADR-023 amendment 2026-09-15 "era fit v3" and its "era fit v3 fixes"
 // amendment), covering the diagnostic checkpoints the listening feedback named plus the ones the
 // v3 review's fixes need pinned. `wind`/`water`/`storm` are the pre-land bed only — exactly 0 for
-// every t <= 370 Ma, the moment `late-devonian-tetrapod` becomes the dominant on-screen scene, not
+// every t <= 370 Ma, once land is vegetated enough for `forest` to carry the terrestrial bed, not
 // 350 Ma (the v3 build's original, laggy boundary); `forest`/`insects` pick up across the same
 // window; `insects` itself only starts at 300 Ma (Song et al. 2020's stridulation date — the only
 // character its one cricket-loop clip actually has, era fit v3 fixes); `large-animal` bridges the
-// Permian-Triassic gap before `archosaurs`, now clearing by 201 Ma instead of 175 Ma; three barren,
-// scene-local windows (`eocene-oligocene-icesheet`, `messinian-salt-flats`, `gondwana-ice-margin`)
-// and the K-Pg impact+aftermath silence `forest`/`insects`/`birds`/`mammals` exactly at their own
-// scene `t` and recover at the neighbouring scenes on each side.
+// Permian-Triassic gap before `archosaurs`, now clearing by 201 Ma instead of 175 Ma; two barren,
+// scene-local windows (`eocene-oligocene-icesheet`, `messinian-salt-flats`) and the K-Pg
+// impact+aftermath silence `forest`/`insects`/`birds`/`mammals` exactly at their own scene `t` and
+// recover at the neighbouring scenes on each side.
 //                                                wind  water storm volc  forest wnghm insct large-an birds archo mamml lvstk fire  settl indst traffic
 const CHECKPOINTS: Row[] = [
   row('4.4 Ga', 4.4e9, [0.6, 0.6, 0.22, 0.75, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
@@ -97,60 +97,61 @@ const CHECKPOINTS: Row[] = [
   row('700 Ma', 7e8, [0.6, 0.45, 0.22, 0.1745, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
   row('480 Ma', 4.8e8, [0.6, 0.45, 0.22, 0.0824, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
   row('400 Ma', 4.0e8, [0.3641, 0.2815, 0.22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
-  // 370 Ma: `late-devonian-tetrapod` (a forested stream) becomes the dominant scene right here —
-  // the pre-land bed must already be fully silent and `forest` already at its full baseline
-  // (era-fit v3 fix: previously the bed only finished fading 20 Myr later, at 350 Ma). `wing-hum`
-  // is still 0 here -- its own ramp only starts at 325 Ma (wing-hum amendment).
-  row('370 Ma (late-devonian-tetrapod becomes dominant)', 3.7e8, [0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
+  // 370 Ma: the pre-land bed must already be fully silent and `forest` already at its full
+  // baseline (era-fit v3 fix: previously the bed only finished fading 20 Myr later, at 350 Ma).
+  // `wing-hum` is still 0 here -- its own ramp only starts at 325 Ma (wing-hum amendment).
+  row('370 Ma (pre-land bed fully faded)', 3.7e8, [0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
   row('365 Ma', 3.65e8, [0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
   row('360 Ma', 3.6e8, [0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
-  // The user's own diagnostic point: a forest scene (late-devonian-tetrapod is dominant here), the
-  // pre-land bed must already read as silent and the forest bed must already be on. `insects` is
-  // still 0 here (era-fit v3 fix): the only clip is a cricket-stridulation loop, and stridulation
-  // is not dated earlier than ~300 Ma (Song et al. 2020) — see the "insects" describe block below
-  // for why this trades off part of the human's literal "insects at 346 Ma" ask for not playing an
-  // anachronistic clip. `wing-hum` is also still 0 at 346 Ma -- 21 Myr before its own 325 Ma start
-  // (wing-hum amendment); it is `forest` alone that answers the "forest/swamp" half of the human's
-  // 346 Ma ask, same as before this amendment.
+  // The user's own diagnostic point: a forest scene, the pre-land bed must already read as silent
+  // and the forest bed must already be on. `insects` is still 0 here (era-fit v3 fix): the only
+  // clip is a cricket-stridulation loop, and stridulation is not dated earlier than ~300 Ma (Song
+  // et al. 2020) — see the "insects" describe block below for why this trades off part of the
+  // human's literal "insects at 346 Ma" ask for not playing an anachronistic clip. `wing-hum` is
+  // also still 0 at 346 Ma -- 21 Myr before its own 325 Ma start (wing-hum amendment); it is
+  // `forest` alone that answers the "forest/swamp" half of the human's 346 Ma ask, same as before
+  // this amendment.
   row('346 Ma (forest scene)', 3.46e8, [0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
-  // 300 Ma: `gondwana-ice-margin`'s own t, inside the scene-local barren duck — forest, wing-hum
-  // and (the not-yet-started) insects all read as silent exactly here, not just "quieter".
-  row('300 Ma (gondwana-ice-margin)', 3.0e8, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
-  // 260 Ma: `wing-hum` is at its full quiet plateau here (325→320 Ma ramp long complete), well
-  // under `forest`'s 0.3 baseline -- see the "wing-hum" describe block below.
-  row('260 Ma (permian-interior)', 2.6e8, [0, 0, 0, 0, 0.3, 0.06, 0.0923, 0.1552, 0, 0, 0, 0, 0.15, 0, 0, 0]),
+  // 300 Ma: no scene-local barren duck applies here any more (the scene that once sat here,
+  // gondwana-ice-margin, was removed) -- `carboniferous-swamp` (310 Ma) is still the dominant
+  // scene, so `forest`/`wing-hum` read at their normal, unducked values; `insects` is still
+  // exactly 0 at its own ramp's start.
+  row('300 Ma (carboniferous-swamp still dominant)', 3.0e8, [0, 0, 0, 0, 0.3, 0.12, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
+  // 260 Ma: `wing-hum` is at its full quiet plateau here (325→320 Ma ramp long complete), clearly
+  // audible but still under `forest`'s 0.3 baseline -- see the "wing-hum" describe block below.
+  row('260 Ma (permian-interior)', 2.6e8, [0, 0, 0, 0, 0.3, 0.12, 0.0923, 0.1552, 0, 0, 0, 0, 0.15, 0, 0, 0]),
   // 248 Ma: the user's other diagnostic point -- large-animal (early-triassic-lystrosaurus, a
   // synapsid scene) must already be clearly audible.
-  row('248 Ma', 2.48e8, [0, 0, 0, 0, 0.3, 0.06, 0.1, 0.32, 0, 0, 0, 0, 0.15, 0, 0, 0]),
+  row('248 Ma', 2.48e8, [0, 0, 0, 0, 0.3, 0.12, 0.1, 0.32, 0, 0, 0, 0, 0.15, 0, 0, 0]),
   // 200 Ma: era-fit v3 fix -- `large-animal` now clears by 201 Ma (the same instant its recession
   // starts moving archosaurs' own second ramp on), so it no longer outweighs `archosaurs` here the
   // way the original 175 Ma-clearing window did.
-  row('200 Ma', 2.0e8, [0, 0, 0, 0, 0.3, 0.06, 0.1678, 0, 0, 0.1805, 0, 0, 0.15, 0, 0, 0]),
+  row('200 Ma', 2.0e8, [0, 0, 0, 0, 0.3, 0.12, 0.1678, 0, 0, 0.1805, 0, 0, 0.15, 0, 0, 0]),
   // 154 Ma: jurassic-floodplain, the sauropod scene the user liked (archosaurs loop) -- unchanged.
-  row('154 Ma (sauropods)', 1.54e8, [0, 0, 0, 0, 0.3, 0.06, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
+  row('154 Ma (sauropods)', 1.54e8, [0, 0, 0, 0, 0.3, 0.12, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
   // 90 Ma: mid-cretaceous-pollinators, the pollination scene -- ambient only; the pronounced
   // bee/fly buzz is a scene sound (sceneSound.test.ts / data/scenes.yaml), not an ambient row.
-  row('90 Ma (pollination scene)', 9.0e7, [0, 0, 0, 0, 0.3, 0.06, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
-  row('66.043 Ma (impact, just before)', 6.6043e7, [0, 0, 0, 0.3758, 0.3, 0.06, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
+  row('90 Ma (pollination scene)', 9.0e7, [0, 0, 0, 0, 0.3, 0.12, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
+  row('66.043 Ma (impact, just before)', 6.6043e7, [0, 0, 0, 0.3758, 0.3, 0.12, 0.28, 0, 0, 0.35, 0, 0, 0.15, 0, 0, 0]),
   // 66.0 Ma: era-fit v3 fix -- inside the K-Pg vegetation duck's still-near-0 recovery ramp
   // (`kpg-darkness`/`kpg-aftermath` both sit here too), not the untouched 0.3/0.46 the v3 build
   // originally left across the whole K-Pg window. `wing-hum` is ducked by the same `life`
   // multiplier as `forest`/`insects` (wing-hum amendment), so it is silenced here too.
-  row('66.0 Ma (K-Pg aftermath)', 6.6e7, [0, 0, 0, 0.4276, 0.0004, 0.0001, 0.0003, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
+  row('66.0 Ma (K-Pg aftermath)', 6.6e7, [0, 0, 0, 0.4276, 0.0004, 0.0002, 0.0003, 0, 0, 0, 0, 0, 0.15, 0, 0, 0]),
   // 30 Ma: inside `eocene-oligocene-icesheet`'s barren duck window (era-fit v3 fix) -- forest,
   // wing-hum, insects, birds and mammals are all measurably reduced here, not the untouched values
   // the v3 build originally left across the whole Eocene-Oligocene-to-Miocene span.
-  row('30 Ma', 3.0e7, [0, 0, 0, 0, 0.0908, 0.0182, 0.1059, 0, 0.0848, 0, 0.0242, 0, 0.15, 0, 0, 0]),
+  row('30 Ma', 3.0e7, [0, 0, 0, 0, 0.0908, 0.0364, 0.1059, 0, 0.0848, 0, 0.0242, 0, 0.15, 0, 0, 0]),
   // 12 Ma: miocene-grassland/c4-savanna, the mammal calls the user liked -- unchanged.
-  row('12 Ma (mammals liked)', 1.2e7, [0, 0, 0, 0, 0.3, 0.06, 0.35, 0, 0.28, 0, 0.22, 0, 0.15, 0, 0, 0]),
-  row('10 ka', 1.0e4, [0, 0, 0, 0, 0.3, 0.06, 0.35, 0, 0.28, 0, 0.132, 0.206, 0.32, 0.38, 0, 0]),
+  row('12 Ma (mammals liked)', 1.2e7, [0, 0, 0, 0, 0.3, 0.12, 0.35, 0, 0.28, 0, 0.22, 0, 0.15, 0, 0, 0]),
+  row('10 ka', 1.0e4, [0, 0, 0, 0, 0.3, 0.12, 0.35, 0, 0.28, 0, 0.132, 0.206, 0.32, 0.38, 0, 0]),
   // 195 yr (~1830): industrial-mill-town, the machinery the user liked -- unchanged. `wing-hum` is
   // ducked by `humanDominance` exactly like `insects` (wing-hum amendment), so it is already well
-  // below its 0.06 plateau here.
-  row('195 yr (1830, industry liked)', 195, [0, 0, 0, 0, 0.2398, 0.0472, 0.2753, 0, 0.2273, 0, 0.1005, 0.1703, 0.2585, 0.48, 0.5, 0]),
+  // below its 0.12 plateau here.
+  row('195 yr (1830, industry liked)', 195, [0, 0, 0, 0, 0.2398, 0.0944, 0.2753, 0, 0.2273, 0, 0.1005, 0.1703, 0.2585, 0.48, 0.5, 0]),
   // 162 yr: also industrial-mill-town (dominant scene) -- unchanged.
-  row('162 yr (industry liked)', 162, [0, 0, 0, 0, 0.1766, 0.0338, 0.197, 0, 0.172, 0, 0.0675, 0.1182, 0.194, 0.48, 0.5557, 0]),
-  row('present', 0, [0, 0, 0, 0, 0.06, 0.009, 0.0525, 0, 0.07, 0, 0.0066, 0.022, 0.075, 0.48, 0.1365, 0.55]),
+  row('162 yr (industry liked)', 162, [0, 0, 0, 0, 0.1766, 0.0676, 0.197, 0, 0.172, 0, 0.0675, 0.1182, 0.194, 0.48, 0.5557, 0]),
+  row('present', 0, [0, 0, 0, 0, 0.06, 0.018, 0.0525, 0, 0.07, 0, 0.0066, 0.022, 0.075, 0.48, 0.1365, 0.55]),
 ]
 
 const WILDLIFE = ['forest', 'wing-hum', 'insects', 'birds', 'mammals', 'livestock'] as const
@@ -274,22 +275,24 @@ describe('stemGains: wing-hum fills the 325-300 Ma gap insects cannot honestly c
   it('rises across 325 -> 320 Ma to its quiet plateau, then holds', () => {
     const mid = stemGains(3.22e8, NO_FLOOD_BASALT)['wing-hum']
     expect(mid).toBeGreaterThan(0)
-    expect(mid).toBeLessThan(0.06)
-    expect(stemGains(3.2e8, NO_FLOOD_BASALT)['wing-hum']).toBeCloseTo(0.06, 5)
-    expect(stemGains(3.1e8, NO_FLOOD_BASALT)['wing-hum']).toBeCloseTo(0.06, 5)
+    expect(mid).toBeLessThan(0.12)
+    expect(stemGains(3.2e8, NO_FLOOD_BASALT)['wing-hum']).toBeCloseTo(0.12, 5)
+    expect(stemGains(3.1e8, NO_FLOOD_BASALT)['wing-hum']).toBeCloseTo(0.12, 5)
   })
 
-  it('is well under forest across the 320-300 Ma window the human\'s "forest/swamp... insects" ask named', () => {
+  it('is audible but still under forest across the 320-300 Ma window the human\'s "forest/swamp... insects" ask named', () => {
     for (const t of [3.2e8, 3.15e8, 3.1e8, 3.05e8]) {
       const gains = stemGains(t, NO_FLOOD_BASALT)
-      expect(gains['wing-hum'], `t=${t}`).toBeCloseTo(0.06, 5)
+      expect(gains['wing-hum'], `t=${t}`).toBeCloseTo(0.12, 5)
       expect(gains['wing-hum']).toBeLessThan(gains.forest)
       expect(gains.forest, `forest at t=${t}`).toBeCloseTo(0.3, 5)
     }
   })
 
-  it('is quiet: its plateau sits an order of magnitude below forest, a texture not a foreground', () => {
-    expect(stemGains(3.1e8, NO_FLOOD_BASALT)['wing-hum']).toBeLessThan(0.1)
+  it('sits under forest, not a dominant foreground, but well above its old near-inaudible level', () => {
+    const gains = stemGains(3.1e8, NO_FLOOD_BASALT)
+    expect(gains['wing-hum']).toBeLessThan(gains.forest)
+    expect(gains['wing-hum']).toBeGreaterThan(0.1)
   })
 
   it('is at least 6 dB under forest at reference-trimmed playback level, not just raw curve gain', () => {
@@ -313,31 +316,33 @@ describe('stemGains: wing-hum fills the 325-300 Ma gap insects cannot honestly c
   it('persists, not recedes, once insects (stridulation) itself starts at 300 Ma -- both are audible together, not a handover', () => {
     for (const t of [2.9e8, 2.6e8, 2.48e8, 1.54e8, 9.0e7, 1.2e7, 1.0e4]) {
       const gains = stemGains(t, NO_FLOOD_BASALT)
-      expect(gains['wing-hum'], `wing-hum at t=${t}`).toBeCloseTo(0.06, 5)
+      expect(gains['wing-hum'], `wing-hum at t=${t}`).toBeCloseTo(0.12, 5)
       expect(gains.insects, `insects at t=${t}`).toBeGreaterThan(0)
     }
   })
 
   it('is ducked by humanDominance exactly like insects, ~50% by 1830 (195 yr)', () => {
     const gains = stemGains(195, NO_FLOOD_BASALT)
-    expect(gains['wing-hum']).toBeLessThan(0.06)
+    expect(gains['wing-hum']).toBeLessThan(0.12)
     expect(gains['wing-hum']).toBeGreaterThan(0)
-    expect(gains['wing-hum']).toBeCloseTo(0.06 * (1 - 0.85 * humanDominance(195)), 5)
+    expect(gains['wing-hum']).toBeCloseTo(0.12 * (1 - 0.85 * humanDominance(195)), 5)
   })
 
   it('is never fully silenced by human dominance alone, only by the life ducks below', () => {
     expect(stemGains(0, NO_FLOOD_BASALT)['wing-hum']).toBeGreaterThan(0)
   })
 
-  it('is silenced together with forest/insects/birds/mammals at the three barren, scene-local windows and through the K-Pg impact+aftermath', () => {
-    for (const t of [3.37e7, 5.6e6, 3.0e8, 6.6e7]) {
+  it('is silenced together with forest/insects/birds/mammals at the two barren, scene-local windows and through the K-Pg impact+aftermath', () => {
+    for (const t of [3.37e7, 5.6e6, 6.6e7]) {
       expect(stemGains(t, NO_FLOOD_BASALT)['wing-hum'], `t=${t}`).toBeLessThan(0.001)
     }
   })
 
-  it('recovers to its plateau at the neighbouring scenes on each side of gondwana-ice-margin', () => {
-    for (const t of [3.0496e8, 2.9698e8]) {
-      expect(stemGains(t, NO_FLOOD_BASALT)['wing-hum'], `t=${t}`).toBeCloseTo(0.06, 2)
+  it('is no longer ducked anywhere across the former gondwana-ice-margin window (297-305 Ma) now that scene is gone', () => {
+    for (const t of [3.04e8, 3.02e8, 3.0e8, 2.99e8, 2.98e8]) {
+      const gains = stemGains(t, NO_FLOOD_BASALT)
+      expect(gains.forest, `forest at t=${t}`).toBeCloseTo(0.3, 2)
+      expect(gains['wing-hum'], `wing-hum at t=${t}`).toBeCloseTo(0.12, 2)
     }
   })
 })
@@ -364,11 +369,10 @@ describe('stemGains: K-Pg impact silences forest/insects through the aftermath, 
   })
 })
 
-describe('stemGains: three barren, scene-local windows silence forest/insects/birds/mammals at their own scene t (era-fit v3 fixes)', () => {
+describe('stemGains: two barren, scene-local windows silence forest/insects/birds/mammals at their own scene t (era-fit v3 fixes)', () => {
   const BARREN_SCENES: [label: string, t: number][] = [
     ['eocene-oligocene-icesheet', 3.37e7],
     ['messinian-salt-flats', 5.6e6],
-    ['gondwana-ice-margin', 3.0e8],
   ]
 
   it.each(BARREN_SCENES)('forest/insects/birds/mammals are exactly 0 at %s\'s own t', (_label, t) => {
@@ -387,12 +391,6 @@ describe('stemGains: three barren, scene-local windows silence forest/insects/bi
 
   it('recovers at the neighbouring scenes on each side of messinian-salt-flats', () => {
     for (const t of [6.261e6, 4.2332e6]) {
-      expect(stemGains(t, NO_FLOOD_BASALT).forest, `t=${t}`).toBeCloseTo(0.3, 2)
-    }
-  })
-
-  it('recovers at the neighbouring scenes on each side of gondwana-ice-margin', () => {
-    for (const t of [3.0496e8, 2.9698e8]) {
       expect(stemGains(t, NO_FLOOD_BASALT).forest, `t=${t}`).toBeCloseTo(0.3, 2)
     }
   })

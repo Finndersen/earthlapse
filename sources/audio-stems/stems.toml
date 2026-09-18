@@ -166,7 +166,7 @@ loop = { start_seconds = 0.872, end_seconds = 26.94646 }
 # gusting and easing off the way real wind through foliage does). No scene in `data/scenes.yaml`
 # depicts rain (checked directly; one entry, futuristic-shenzhen-2087, explicitly lists
 # "neon-lit rain-soaked street" under `absent`), so a stem with the acoustic signature of rain
-# was audible under every non-rain scene from `late-devonian-tetrapod` (370 Ma) to the Holocene
+# was audible under every non-rain scene from 370 Ma to the Holocene
 # -- a scene/audio mismatch across most of the timeline, not just a stylistic quibble. The
 # "no frogs/no birdsong" sourcing constraint this clip was chosen under (era-fit v3 fixes) is
 # unchanged and still applied below; a "not rain" check (broadband spectrum is fine and expected
