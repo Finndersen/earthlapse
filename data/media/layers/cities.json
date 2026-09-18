@@ -524,6 +524,20 @@
       ]
     },
     {
+      "id": "algiers-algeria",
+      "name": "Algiers",
+      "country": "Algeria",
+      "lat": 36.7525,
+      "lon": 3.04197,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2562000
+        }
+      ]
+    },
+    {
       "id": "almaty-kazakhstan",
       "name": "Almaty",
       "country": "Kazakhstan",
@@ -804,6 +818,64 @@
       ]
     },
     {
+      "id": "antioch-syria-turkey",
+      "name": "Antioch",
+      "country": "Syria/Turkey",
+      "lat": 36.20655,
+      "lon": 36.15722,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 169.0,
+          "population": 21396
+        },
+        {
+          "t": 209.0,
+          "population": 10000
+        },
+        {
+          "t": 593.0,
+          "population": 1500
+        },
+        {
+          "t": 757.0,
+          "population": 27000
+        },
+        {
+          "t": 875.0,
+          "population": 40000
+        },
+        {
+          "t": 925.0,
+          "population": 30000
+        },
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1060.0,
+          "population": 30000
+        },
+        {
+          "t": 1525.0,
+          "population": 150000
+        },
+        {
+          "t": 1664.0,
+          "population": 150000
+        },
+        {
+          "t": 2125.0,
+          "population": 150000
+        },
+        {
+          "t": 2225.0,
+          "population": 120000
+        }
+      ]
+    },
+    {
       "id": "antwerp-belgium",
       "name": "Antwerp",
       "country": "Belgium",
@@ -1008,6 +1080,106 @@
         {
           "t": 3925.0,
           "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "astrakhan-russian-federation",
+      "name": "Astrakhan",
+      "country": "Russian Federation",
+      "lat": 46.366681,
+      "lon": 48.083239,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 270000
+        },
+        {
+          "t": 125.0,
+          "population": 121000
+        },
+        {
+          "t": 165.0,
+          "population": 44587
+        },
+        {
+          "t": 175.0,
+          "population": 44000
+        },
+        {
+          "t": 176.0,
+          "population": 44798
+        },
+        {
+          "t": 222.0,
+          "population": 14198
+        },
+        {
+          "t": 241.0,
+          "population": 18023
+        },
+        {
+          "t": 280.0,
+          "population": 18000
+        },
+        {
+          "t": 389.0,
+          "population": 18000
+        },
+        {
+          "t": 1078.0,
+          "population": 42000
+        },
+        {
+          "t": 1093.0,
+          "population": 50000
+        },
+        {
+          "t": 1122.0,
+          "population": 40000
+        },
+        {
+          "t": 1225.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "asuncion-paraguay",
+      "name": "Asuncion",
+      "country": "Paraguay",
+      "lat": -25.30066,
+      "lon": -57.63591,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 500000
+        },
+        {
+          "t": 75.0,
+          "population": 205000
+        },
+        {
+          "t": 125.0,
+          "population": 51000
+        },
+        {
+          "t": 168.0,
+          "population": 48000
+        },
+        {
+          "t": 175.0,
+          "population": 44000
+        },
+        {
+          "t": 232.0,
+          "population": 7088
+        },
+        {
+          "t": 385.0,
+          "population": 4000
         }
       ]
     },
@@ -1438,6 +1610,36 @@
         {
           "t": 1262.0,
           "population": 480000
+        }
+      ]
+    },
+    {
+      "id": "baku-azerbaijan",
+      "name": "Baku",
+      "country": "Azerbaijan",
+      "lat": 40.37767,
+      "lon": 49.89201,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1792000
+        },
+        {
+          "t": 50.0,
+          "population": 1383000
+        },
+        {
+          "t": 75.0,
+          "population": 840000
+        },
+        {
+          "t": 100.0,
+          "population": 416000
+        },
+        {
+          "t": 125.0,
+          "population": 179000
         }
       ]
     },
@@ -2070,6 +2272,84 @@
       ]
     },
     {
+      "id": "belgrade-serbia",
+      "name": "Belgrade",
+      "country": "Serbia",
+      "lat": 44.80401,
+      "lon": 20.46513,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1594000
+        },
+        {
+          "t": 50.0,
+          "population": 1275000
+        },
+        {
+          "t": 75.0,
+          "population": 445000
+        },
+        {
+          "t": 125.0,
+          "population": 69000
+        },
+        {
+          "t": 175.0,
+          "population": 13485
+        },
+        {
+          "t": 179.0,
+          "population": 17904
+        },
+        {
+          "t": 225.0,
+          "population": 26000
+        },
+        {
+          "t": 245.0,
+          "population": 30000
+        },
+        {
+          "t": 275.0,
+          "population": 30000
+        },
+        {
+          "t": 290.0,
+          "population": 30000
+        },
+        {
+          "t": 304.0,
+          "population": 30000
+        },
+        {
+          "t": 325.0,
+          "population": 40000
+        },
+        {
+          "t": 393.0,
+          "population": 40000
+        },
+        {
+          "t": 425.0,
+          "population": 40000
+        },
+        {
+          "t": 525.0,
+          "population": 30000
+        },
+        {
+          "t": 569.0,
+          "population": 30000
+        },
+        {
+          "t": 592.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
       "id": "benin-nigeria",
       "name": "Benin",
       "country": "Nigeria",
@@ -2328,6 +2608,72 @@
       ]
     },
     {
+      "id": "bratislava-slovakia",
+      "name": "Bratislava",
+      "country": "Slovakia",
+      "lat": 48.145892,
+      "lon": 17.107136,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 61000
+        },
+        {
+          "t": 174.0,
+          "population": 46527
+        },
+        {
+          "t": 175.0,
+          "population": 46000
+        },
+        {
+          "t": 224.0,
+          "population": 16952
+        },
+        {
+          "t": 225.0,
+          "population": 18000
+        },
+        {
+          "t": 238.0,
+          "population": 28740
+        },
+        {
+          "t": 252.0,
+          "population": 26486
+        },
+        {
+          "t": 275.0,
+          "population": 24000
+        },
+        {
+          "t": 325.0,
+          "population": 18000
+        },
+        {
+          "t": 360.0,
+          "population": 15000
+        },
+        {
+          "t": 474.0,
+          "population": 18000
+        },
+        {
+          "t": 525.0,
+          "population": 9000
+        },
+        {
+          "t": 573.0,
+          "population": 8000
+        },
+        {
+          "t": 675.0,
+          "population": 12000
+        }
+      ]
+    },
+    {
       "id": "brisbane-australia",
       "name": "Brisbane",
       "country": "Australia",
@@ -2354,6 +2700,88 @@
         {
           "t": 125.0,
           "population": 118000
+        }
+      ]
+    },
+    {
+      "id": "bucharest-romania",
+      "name": "Bucharest",
+      "country": "Romania",
+      "lat": 44.43225,
+      "lon": 26.10626,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2016000
+        },
+        {
+          "t": 50.0,
+          "population": 1500000
+        },
+        {
+          "t": 75.0,
+          "population": 1100000
+        },
+        {
+          "t": 100.0,
+          "population": 550000
+        },
+        {
+          "t": 125.0,
+          "population": 282000
+        },
+        {
+          "t": 165.0,
+          "population": 121734
+        },
+        {
+          "t": 175.0,
+          "population": 95000
+        },
+        {
+          "t": 188.0,
+          "population": 60788
+        },
+        {
+          "t": 193.0,
+          "population": 72595
+        },
+        {
+          "t": 220.0,
+          "population": 42000
+        },
+        {
+          "t": 225.0,
+          "population": 35000
+        },
+        {
+          "t": 227.0,
+          "population": 32185
+        },
+        {
+          "t": 275.0,
+          "population": 25000
+        },
+        {
+          "t": 309.0,
+          "population": 50000
+        },
+        {
+          "t": 370.0,
+          "population": 50000
+        },
+        {
+          "t": 385.0,
+          "population": 60000
+        },
+        {
+          "t": 425.0,
+          "population": 60000
+        },
+        {
+          "t": 450.0,
+          "population": 55000
         }
       ]
     },
@@ -3024,6 +3452,94 @@
         {
           "t": 418.0,
           "population": 3000
+        }
+      ]
+    },
+    {
+      "id": "carthage-tunisia",
+      "name": "Carthage",
+      "country": "Tunisia",
+      "lat": 36.858056,
+      "lon": 10.330833,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 270000
+        },
+        {
+          "t": 1664.0,
+          "population": 66000
+        },
+        {
+          "t": 1725.0,
+          "population": 300000
+        },
+        {
+          "t": 1825.0,
+          "population": 300000
+        },
+        {
+          "t": 1925.0,
+          "population": 250000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 200000
+        },
+        {
+          "t": 2325.0,
+          "population": 500000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2455.0,
+          "population": 50000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "casablanca-morocco",
+      "name": "Casablanca",
+      "country": "Morocco",
+      "lat": 33.58831,
+      "lon": -7.61138,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2943000
+        },
+        {
+          "t": 50.0,
+          "population": 1800000
+        },
+        {
+          "t": 75.0,
+          "population": 647000
         }
       ]
     },
@@ -4496,6 +5012,124 @@
         {
           "t": 1225.0,
           "population": 25000
+        }
+      ]
+    },
+    {
+      "id": "fez-morocco",
+      "name": "Fez",
+      "country": "Morocco",
+      "lat": 34.033333,
+      "lon": -5.01,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 78.0,
+          "population": 200000
+        },
+        {
+          "t": 125.0,
+          "population": 96000
+        },
+        {
+          "t": 175.0,
+          "population": 85000
+        },
+        {
+          "t": 185.0,
+          "population": 88000
+        },
+        {
+          "t": 225.0,
+          "population": 40000
+        },
+        {
+          "t": 226.0,
+          "population": 70000
+        },
+        {
+          "t": 275.0,
+          "population": 60000
+        },
+        {
+          "t": 298.0,
+          "population": 70000
+        },
+        {
+          "t": 325.0,
+          "population": 80000
+        },
+        {
+          "t": 375.0,
+          "population": 70000
+        },
+        {
+          "t": 425.0,
+          "population": 100000
+        },
+        {
+          "t": 450.0,
+          "population": 100000
+        },
+        {
+          "t": 475.0,
+          "population": 100000
+        },
+        {
+          "t": 512.0,
+          "population": 131000
+        },
+        {
+          "t": 525.0,
+          "population": 130000
+        },
+        {
+          "t": 575.0,
+          "population": 125000
+        },
+        {
+          "t": 625.0,
+          "population": 125000
+        },
+        {
+          "t": 675.0,
+          "population": 125000
+        },
+        {
+          "t": 685.0,
+          "population": 125000
+        },
+        {
+          "t": 725.0,
+          "population": 150000
+        },
+        {
+          "t": 775.0,
+          "population": 200000
+        },
+        {
+          "t": 825.0,
+          "population": 200000
+        },
+        {
+          "t": 875.0,
+          "population": 160000
+        },
+        {
+          "t": 925.0,
+          "population": 125000
+        },
+        {
+          "t": 956.0,
+          "population": 30000
+        },
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1217.0,
+          "population": 15000
         }
       ]
     },
@@ -7452,6 +8086,20 @@
       ]
     },
     {
+      "id": "kuwait-kuwait",
+      "name": "Kuwait",
+      "country": "Kuwait",
+      "lat": 29.369721,
+      "lon": 47.978324,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 800000
+        }
+      ]
+    },
+    {
       "id": "kyoto-japan",
       "name": "Kyoto",
       "country": "Japan",
@@ -7994,6 +8642,20 @@
       ]
     },
     {
+      "id": "ljubljana-slovenia",
+      "name": "Ljubljana",
+      "country": "Slovenia",
+      "lat": 46.056456,
+      "lon": 14.508064,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 36000
+        }
+      ]
+    },
+    {
       "id": "london-united-kingdom",
       "name": "London",
       "country": "United Kingdom",
@@ -8200,6 +8862,32 @@
       ]
     },
     {
+      "id": "luang-prabang-lao-people-s-democratic-republic",
+      "name": "Luang Prabang",
+      "country": "Lao People's Democratic Republic",
+      "lat": 19.884111,
+      "lon": 102.141633,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 155.0,
+          "population": 20000
+        },
+        {
+          "t": 158.0,
+          "population": 15000
+        },
+        {
+          "t": 525.0,
+          "population": 40000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
       "id": "lucknow-india",
       "name": "Lucknow",
       "country": "India",
@@ -8396,6 +9084,24 @@
         {
           "t": 3025.0,
           "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "lusaka-zambia",
+      "name": "Lusaka",
+      "country": "Zambia",
+      "lat": -15.40669,
+      "lon": 28.28713,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1270000
+        },
+        {
+          "t": 50.0,
+          "population": 501000
         }
       ]
     },
@@ -8622,6 +9328,20 @@
       ]
     },
     {
+      "id": "managua-nicaragua",
+      "name": "Managua",
+      "country": "Nicaragua",
+      "lat": 12.13282,
+      "lon": -86.2504,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 556000
+        }
+      ]
+    },
+    {
       "id": "mandalay-myanmar",
       "name": "Mandalay",
       "country": "Myanmar",
@@ -8732,6 +9452,132 @@
         {
           "t": 25.0,
           "population": 1015000
+        }
+      ]
+    },
+    {
+      "id": "marrakech-morocco",
+      "name": "Marrakech",
+      "country": "Morocco",
+      "lat": 31.63416,
+      "lon": -7.99994,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 224000
+        },
+        {
+          "t": 78.0,
+          "population": 238000
+        },
+        {
+          "t": 125.0,
+          "population": 120000
+        },
+        {
+          "t": 140.0,
+          "population": 55000
+        },
+        {
+          "t": 161.0,
+          "population": 45000
+        },
+        {
+          "t": 175.0,
+          "population": 50000
+        },
+        {
+          "t": 186.0,
+          "population": 60000
+        },
+        {
+          "t": 191.0,
+          "population": 50000
+        },
+        {
+          "t": 221.0,
+          "population": 30000
+        },
+        {
+          "t": 225.0,
+          "population": 30000
+        },
+        {
+          "t": 237.0,
+          "population": 30000
+        },
+        {
+          "t": 250.0,
+          "population": 25000
+        },
+        {
+          "t": 275.0,
+          "population": 30000
+        },
+        {
+          "t": 325.0,
+          "population": 25000
+        },
+        {
+          "t": 335.0,
+          "population": 25000
+        },
+        {
+          "t": 375.0,
+          "population": 125000
+        },
+        {
+          "t": 425.0,
+          "population": 125000
+        },
+        {
+          "t": 450.0,
+          "population": 100000
+        },
+        {
+          "t": 475.0,
+          "population": 75000
+        },
+        {
+          "t": 510.0,
+          "population": 50000
+        },
+        {
+          "t": 525.0,
+          "population": 50000
+        },
+        {
+          "t": 575.0,
+          "population": 50000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        },
+        {
+          "t": 675.0,
+          "population": 50000
+        },
+        {
+          "t": 725.0,
+          "population": 75000
+        },
+        {
+          "t": 775.0,
+          "population": 125000
+        },
+        {
+          "t": 825.0,
+          "population": 150000
+        },
+        {
+          "t": 875.0,
+          "population": 150000
+        },
+        {
+          "t": 925.0,
+          "population": 150000
         }
       ]
     },
@@ -9384,6 +10230,32 @@
       ]
     },
     {
+      "id": "minsk-belarus",
+      "name": "Minsk",
+      "country": "Belarus",
+      "lat": 53.9,
+      "lon": 27.56667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1677000
+        },
+        {
+          "t": 50.0,
+          "population": 1170000
+        },
+        {
+          "t": 75.0,
+          "population": 300000
+        },
+        {
+          "t": 125.0,
+          "population": 94000
+        }
+      ]
+    },
+    {
       "id": "mohenjodaro-pakistan",
       "name": "Mohenjodaro",
       "country": "Pakistan",
@@ -9432,6 +10304,20 @@
         {
           "t": 1225.0,
           "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "montevideo-uruguay",
+      "name": "Montevideo",
+      "country": "Uruguay",
+      "lat": -34.817311,
+      "lon": -56.158866,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 13303000
         }
       ]
     },
@@ -9812,6 +10698,36 @@
         {
           "t": 770.0,
           "population": 13000
+        }
+      ]
+    },
+    {
+      "id": "muscat-oman",
+      "name": "Muscat",
+      "country": "Oman",
+      "lat": 23.61387,
+      "lon": 58.5922,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 40000
+        },
+        {
+          "t": 175.0,
+          "population": 60000
+        },
+        {
+          "t": 195.0,
+          "population": 60000
+        },
+        {
+          "t": 215.0,
+          "population": 36000
+        },
+        {
+          "t": 225.0,
+          "population": 12000
         }
       ]
     },
@@ -10398,6 +11314,48 @@
       ]
     },
     {
+      "id": "nicosia-cyprus",
+      "name": "Nicosia",
+      "country": "Cyprus",
+      "lat": 35.16667,
+      "lon": 33.36667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 144.0,
+          "population": 14940
+        },
+        {
+          "t": 179.0,
+          "population": 11800
+        },
+        {
+          "t": 209.0,
+          "population": 17000
+        },
+        {
+          "t": 485.0,
+          "population": 16000
+        },
+        {
+          "t": 504.0,
+          "population": 16000
+        },
+        {
+          "t": 515.0,
+          "population": 16000
+        },
+        {
+          "t": 555.0,
+          "population": 18000
+        },
+        {
+          "t": 625.0,
+          "population": 18000
+        }
+      ]
+    },
+    {
       "id": "nineveh-iraq",
       "name": "Nineveh",
       "country": "Iraq",
@@ -10440,6 +11398,76 @@
         {
           "t": 3625.0,
           "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "nizhniy-novgorod-russian-federation",
+      "name": "Nizhniy Novgorod",
+      "country": "Russian Federation",
+      "lat": 56.3269,
+      "lon": 44.0075,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1357000
+        },
+        {
+          "t": 50.0,
+          "population": 1700000
+        },
+        {
+          "t": 75.0,
+          "population": 775000
+        },
+        {
+          "t": 125.0,
+          "population": 91000
+        },
+        {
+          "t": 167.0,
+          "population": 36354
+        },
+        {
+          "t": 175.0,
+          "population": 31000
+        },
+        {
+          "t": 176.0,
+          "population": 30710
+        },
+        {
+          "t": 191.0,
+          "population": 21687
+        },
+        {
+          "t": 243.0,
+          "population": 9000
+        },
+        {
+          "t": 280.0,
+          "population": 15000
+        },
+        {
+          "t": 376.0,
+          "population": 14000
+        },
+        {
+          "t": 406.0,
+          "population": 5000
+        },
+        {
+          "t": 575.0,
+          "population": 55000
+        },
+        {
+          "t": 625.0,
+          "population": 45000
+        },
+        {
+          "t": 675.0,
+          "population": 40000
         }
       ]
     },
@@ -10502,6 +11530,28 @@
         {
           "t": 1025.0,
           "population": 18000
+        }
+      ]
+    },
+    {
+      "id": "novosibirsk-russian-federation",
+      "name": "Novosibirsk",
+      "country": "Russian Federation",
+      "lat": 55.0415,
+      "lon": 82.9346,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1400000
+        },
+        {
+          "t": 50.0,
+          "population": 1385000
+        },
+        {
+          "t": 75.0,
+          "population": 605000
         }
       ]
     },
@@ -10628,6 +11678,20 @@
         {
           "t": 125.0,
           "population": 73000
+        }
+      ]
+    },
+    {
+      "id": "ougadougou-burkina-faso",
+      "name": "Ougadougou",
+      "country": "Burkina Faso",
+      "lat": 12.364636,
+      "lon": -1.533864,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 130.0,
+          "population": 5000
         }
       ]
     },
@@ -11108,6 +12172,36 @@
       ]
     },
     {
+      "id": "port-louis-mauritius",
+      "name": "Port Louis",
+      "country": "Mauritius",
+      "lat": -20.16194,
+      "lon": 57.504104,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 52000
+        },
+        {
+          "t": 174.0,
+          "population": 49909
+        },
+        {
+          "t": 175.0,
+          "population": 49000
+        },
+        {
+          "t": 179.0,
+          "population": 45212
+        },
+        {
+          "t": 224.0,
+          "population": 12000
+        }
+      ]
+    },
+    {
       "id": "potosi-bolivia",
       "name": "Potosi",
       "country": "Bolivia",
@@ -11344,6 +12438,84 @@
       ]
     },
     {
+      "id": "rabat-morocco",
+      "name": "Rabat",
+      "country": "Morocco",
+      "lat": 34.01325,
+      "lon": -6.83255,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1220000
+        },
+        {
+          "t": 50.0,
+          "population": 745000
+        },
+        {
+          "t": 75.0,
+          "population": 217000
+        },
+        {
+          "t": 125.0,
+          "population": 40000
+        },
+        {
+          "t": 175.0,
+          "population": 36000
+        },
+        {
+          "t": 190.0,
+          "population": 36000
+        },
+        {
+          "t": 225.0,
+          "population": 43000
+        },
+        {
+          "t": 226.0,
+          "population": 43000
+        },
+        {
+          "t": 250.0,
+          "population": 45000
+        },
+        {
+          "t": 262.0,
+          "population": 45000
+        },
+        {
+          "t": 275.0,
+          "population": 45000
+        },
+        {
+          "t": 325.0,
+          "population": 50000
+        },
+        {
+          "t": 400.0,
+          "population": 50000
+        },
+        {
+          "t": 695.0,
+          "population": 40000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        },
+        {
+          "t": 775.0,
+          "population": 40000
+        },
+        {
+          "t": 825.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
       "id": "rakhigarhi-india",
       "name": "Rakhigarhi",
       "country": "India",
@@ -11366,6 +12538,64 @@
         {
           "t": 4325.0,
           "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "riga-russian-federation",
+      "name": "Riga",
+      "country": "Russian Federation",
+      "lat": 56.946,
+      "lon": 24.10589,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 870000
+        },
+        {
+          "t": 75.0,
+          "population": 475000
+        },
+        {
+          "t": 100.0,
+          "population": 337000
+        },
+        {
+          "t": 125.0,
+          "population": 294000
+        },
+        {
+          "t": 175.0,
+          "population": 61543
+        },
+        {
+          "t": 221.0,
+          "population": 30219
+        },
+        {
+          "t": 225.0,
+          "population": 29000
+        },
+        {
+          "t": 231.0,
+          "population": 28801
+        },
+        {
+          "t": 249.0,
+          "population": 19058
+        },
+        {
+          "t": 315.0,
+          "population": 14000
+        },
+        {
+          "t": 475.0,
+          "population": 12500
+        },
+        {
+          "t": 575.0,
+          "population": 7000
         }
       ]
     },
@@ -11962,6 +13192,24 @@
       ]
     },
     {
+      "id": "san-salvador-el-salvador",
+      "name": "San Salvador",
+      "country": "El Salvador",
+      "lat": 13.706899,
+      "lon": -89.202258,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 750000
+        },
+        {
+          "t": 125.0,
+          "population": 59000
+        }
+      ]
+    },
+    {
       "id": "sana-a-yemen",
       "name": "Sana'a",
       "country": "Yemen",
@@ -12152,6 +13400,44 @@
       ]
     },
     {
+      "id": "sarajevo-bosnia-and-herzegovina",
+      "name": "Sarajevo",
+      "country": "Bosnia and Herzegovina",
+      "lat": 43.84864,
+      "lon": 18.35644,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 44000
+        },
+        {
+          "t": 130.0,
+          "population": 41543
+        },
+        {
+          "t": 146.0,
+          "population": 21377
+        },
+        {
+          "t": 175.0,
+          "population": 20000
+        },
+        {
+          "t": 225.0,
+          "population": 18000
+        },
+        {
+          "t": 328.0,
+          "population": 30000
+        },
+        {
+          "t": 425.0,
+          "population": 25000
+        }
+      ]
+    },
+    {
       "id": "seattle-united-states-of-america",
       "name": "Seattle",
       "country": "United States of America",
@@ -12298,6 +13584,32 @@
         {
           "t": 625.0,
           "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "sevastopol-russian-federation",
+      "name": "Sevastopol",
+      "country": "Russian Federation",
+      "lat": 44.58883,
+      "lon": 33.5224,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 57000
+        },
+        {
+          "t": 172.0,
+          "population": 45000
+        },
+        {
+          "t": 175.0,
+          "population": 43000
+        },
+        {
+          "t": 184.0,
+          "population": 41155
         }
       ]
     },
@@ -12514,6 +13826,76 @@
         {
           "t": 125.0,
           "population": 193000
+        }
+      ]
+    },
+    {
+      "id": "sofia-bulgaria",
+      "name": "Sofia",
+      "country": "Bulgaria",
+      "lat": 42.69751,
+      "lon": 23.32415,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 965000
+        },
+        {
+          "t": 75.0,
+          "population": 437000
+        },
+        {
+          "t": 100.0,
+          "population": 205000
+        },
+        {
+          "t": 125.0,
+          "population": 67000
+        },
+        {
+          "t": 154.0,
+          "population": 19000
+        },
+        {
+          "t": 194.0,
+          "population": 44739
+        },
+        {
+          "t": 225.0,
+          "population": 46000
+        },
+        {
+          "t": 325.0,
+          "population": 30000
+        },
+        {
+          "t": 375.0,
+          "population": 31000
+        },
+        {
+          "t": 389.0,
+          "population": 40000
+        },
+        {
+          "t": 425.0,
+          "population": 30000
+        },
+        {
+          "t": 475.0,
+          "population": 22000
+        },
+        {
+          "t": 495.0,
+          "population": 25910
+        },
+        {
+          "t": 525.0,
+          "population": 22000
+        },
+        {
+          "t": 625.0,
+          "population": 20000
         }
       ]
     },
@@ -12832,6 +14214,24 @@
       ]
     },
     {
+      "id": "tallinn-estonia",
+      "name": "Tallinn",
+      "country": "Estonia",
+      "lat": 59.436961,
+      "lon": 24.753575,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 225000
+        },
+        {
+          "t": 125.0,
+          "population": 66000
+        }
+      ]
+    },
+    {
       "id": "tashkent-uzbekistan",
       "name": "Tashkent",
       "country": "Uzbekistan",
@@ -12916,6 +14316,64 @@
         {
           "t": 2325.0,
           "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "tbilisi-georgia",
+      "name": "Tbilisi",
+      "country": "Georgia",
+      "lat": 41.709975,
+      "lon": 44.792989,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1268000
+        },
+        {
+          "t": 50.0,
+          "population": 1148000
+        },
+        {
+          "t": 75.0,
+          "population": 585000
+        },
+        {
+          "t": 100.0,
+          "population": 274000
+        },
+        {
+          "t": 125.0,
+          "population": 175000
+        },
+        {
+          "t": 175.0,
+          "population": 34890
+        },
+        {
+          "t": 215.0,
+          "population": 15000
+        },
+        {
+          "t": 250.0,
+          "population": 24000
+        },
+        {
+          "t": 325.0,
+          "population": 20000
+        },
+        {
+          "t": 798.0,
+          "population": 100000
+        },
+        {
+          "t": 825.0,
+          "population": 80000
+        },
+        {
+          "t": 875.0,
+          "population": 50000
         }
       ]
     },
@@ -13328,6 +14786,80 @@
       ]
     },
     {
+      "id": "tripoli-libya",
+      "name": "Tripoli",
+      "country": "Libya",
+      "lat": 32.876175,
+      "lon": 13.187508,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1500000
+        },
+        {
+          "t": 50.0,
+          "population": 800000
+        },
+        {
+          "t": 114.0,
+          "population": 29761
+        },
+        {
+          "t": 125.0,
+          "population": 30000
+        },
+        {
+          "t": 175.0,
+          "population": 25000
+        },
+        {
+          "t": 204.0,
+          "population": 25000
+        },
+        {
+          "t": 210.0,
+          "population": 25000
+        },
+        {
+          "t": 222.0,
+          "population": 13500
+        },
+        {
+          "t": 225.0,
+          "population": 20000
+        },
+        {
+          "t": 241.0,
+          "population": 14000
+        },
+        {
+          "t": 257.0,
+          "population": 16000
+        },
+        {
+          "t": 352.0,
+          "population": 20000
+        },
+        {
+          "t": 425.0,
+          "population": 15000
+        },
+        {
+          "t": 468.0,
+          "population": 25000
+        },
+        {
+          "t": 515.0,
+          "population": 16000
+        },
+        {
+          "t": 718.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
       "id": "troy-turkey",
       "name": "Troy",
       "country": "Turkey",
@@ -13338,6 +14870,112 @@
         {
           "t": 3325.0,
           "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "tunis-tunisia",
+      "name": "Tunis",
+      "country": "Tunisia",
+      "lat": 36.818811,
+      "lon": 10.165961,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 920000
+        },
+        {
+          "t": 75.0,
+          "population": 405000
+        },
+        {
+          "t": 125.0,
+          "population": 156000
+        },
+        {
+          "t": 130.0,
+          "population": 153000
+        },
+        {
+          "t": 158.0,
+          "population": 100000
+        },
+        {
+          "t": 165.0,
+          "population": 90000
+        },
+        {
+          "t": 175.0,
+          "population": 90000
+        },
+        {
+          "t": 200.0,
+          "population": 90000
+        },
+        {
+          "t": 220.0,
+          "population": 100000
+        },
+        {
+          "t": 225.0,
+          "population": 90000
+        },
+        {
+          "t": 245.0,
+          "population": 50000
+        },
+        {
+          "t": 275.0,
+          "population": 70000
+        },
+        {
+          "t": 295.0,
+          "population": 78000
+        },
+        {
+          "t": 325.0,
+          "population": 69000
+        },
+        {
+          "t": 352.0,
+          "population": 60000
+        },
+        {
+          "t": 425.0,
+          "population": 50000
+        },
+        {
+          "t": 510.0,
+          "population": 62000
+        },
+        {
+          "t": 525.0,
+          "population": 65000
+        },
+        {
+          "t": 575.0,
+          "population": 65000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        },
+        {
+          "t": 664.0,
+          "population": 35000
+        },
+        {
+          "t": 725.0,
+          "population": 50000
+        },
+        {
+          "t": 775.0,
+          "population": 70000
+        },
+        {
+          "t": 1025.0,
+          "population": 15000
         }
       ]
     },
@@ -13500,6 +15138,56 @@
         {
           "t": 5525.0,
           "population": 14000
+        }
+      ]
+    },
+    {
+      "id": "valletta-malta",
+      "name": "Valletta",
+      "country": "Malta",
+      "lat": 35.89972,
+      "lon": 14.51472,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 61000
+        },
+        {
+          "t": 175.0,
+          "population": 50000
+        },
+        {
+          "t": 199.0,
+          "population": 45806
+        },
+        {
+          "t": 218.0,
+          "population": 41222
+        },
+        {
+          "t": 225.0,
+          "population": 35000
+        },
+        {
+          "t": 227.0,
+          "population": 39000
+        },
+        {
+          "t": 243.0,
+          "population": 28500
+        },
+        {
+          "t": 275.0,
+          "population": 27000
+        },
+        {
+          "t": 325.0,
+          "population": 24000
+        },
+        {
+          "t": 393.0,
+          "population": 21075
         }
       ]
     },
@@ -13906,6 +15594,72 @@
       ]
     },
     {
+      "id": "vilnius-lithuania",
+      "name": "Vilnius",
+      "country": "Lithuania",
+      "lat": 54.683333,
+      "lon": 25.283333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 255000
+        },
+        {
+          "t": 125.0,
+          "population": 162000
+        },
+        {
+          "t": 175.0,
+          "population": 55916
+        },
+        {
+          "t": 225.0,
+          "population": 25430
+        },
+        {
+          "t": 255.0,
+          "population": 21320
+        },
+        {
+          "t": 275.0,
+          "population": 21000
+        },
+        {
+          "t": 325.0,
+          "population": 40000
+        },
+        {
+          "t": 375.0,
+          "population": 45000
+        },
+        {
+          "t": 425.0,
+          "population": 40000
+        },
+        {
+          "t": 475.0,
+          "population": 30000
+        },
+        {
+          "t": 525.0,
+          "population": 25000
+        },
+        {
+          "t": 625.0,
+          "population": 20000
+        },
+        {
+          "t": 638.0,
+          "population": 30000
+        },
+        {
+          "t": 675.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
       "id": "vladivostok-russian-federation",
       "name": "Vladivostok",
       "country": "Russian Federation",
@@ -13924,6 +15678,28 @@
         {
           "t": 125.0,
           "population": 38000
+        }
+      ]
+    },
+    {
+      "id": "volgograd-russian-federation",
+      "name": "Volgograd",
+      "country": "Russian Federation",
+      "lat": 48.71939,
+      "lon": 44.50184,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 1175000
+        },
+        {
+          "t": 75.0,
+          "population": 415000
+        },
+        {
+          "t": 125.0,
+          "population": 67000
         }
       ]
     },
@@ -14420,6 +16196,42 @@
       ]
     },
     {
+      "id": "yekaterinburg-russian-federation",
+      "name": "Yekaterinburg",
+      "country": "Russian Federation",
+      "lat": 56.833333,
+      "lon": 60.6,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1267000
+        },
+        {
+          "t": 125.0,
+          "population": 54000
+        }
+      ]
+    },
+    {
+      "id": "yerevan-armenia",
+      "name": "Yerevan",
+      "country": "Armenia",
+      "lat": 40.183333,
+      "lon": 44.516667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 910000
+        },
+        {
+          "t": 75.0,
+          "population": 315000
+        }
+      ]
+    },
+    {
       "id": "yogyakarta-indonesia",
       "name": "Yogyakarta",
       "country": "Indonesia",
@@ -14552,6 +16364,28 @@
         {
           "t": 477.0,
           "population": 12000
+        }
+      ]
+    },
+    {
+      "id": "zagreb-croatia",
+      "name": "Zagreb",
+      "country": "Croatia",
+      "lat": 45.81444,
+      "lon": 15.97798,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 635000
+        },
+        {
+          "t": 75.0,
+          "population": 325000
+        },
+        {
+          "t": 125.0,
+          "population": 61000
         }
       ]
     },

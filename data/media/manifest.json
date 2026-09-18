@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "8a03935d71181ae5",
+  "buildId": "53cefbbd174566c1",
   "assetBase": "/media",
   "scenes": [
     {
@@ -656,7 +656,7 @@
       "image": "scenes/qin-xianyang-epang-palace.webp",
       "thumbnail": "scenes/qin-xianyang-epang-palace-thumb.webp",
       "shot": "GROUND",
-      "title": "An Unfinished Palace",
+      "title": "China's First Emperor",
       "caption": "In 210 BCE, the year Qin Shi Huang dies, forced labourers still raise the colossal earthen platform of his unfinished Epang Palace outside Xianyang, capital of a China unified only eleven years before under one law, one script and one currency.",
       "events": [
         "qin-unification"
@@ -720,7 +720,7 @@
       "image": "scenes/mohenjo-daro.webp",
       "thumbnail": "scenes/mohenjo-daro-thumb.webp",
       "shot": "GROUND",
-      "title": "A City Without a King",
+      "title": "Mohenjo-daro, a City Without a King",
       "caption": "By 2500 BCE, Mohenjo-daro's grid of straight brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands on the Indus floodplain — with no palace, temple or evidence of a king anywhere yet found.",
       "events": [
         "indus-valley-urbanism"
@@ -837,7 +837,7 @@
       "image": "scenes/catalhoyuk.webp",
       "thumbnail": "scenes/catalhoyuk-thumb.webp",
       "shot": "GROUND",
-      "title": "A Town Without Streets",
+      "title": "Çatalhöyük, a Town Without Streets",
       "caption": "By 7000 BCE, thousands of people live wall to wall in a honeycomb of mudbrick houses at Çatalhöyük with no streets at all — every home is entered by ladder through a hole in its roof, so the rooftops are the town's only thoroughfares.",
       "events": [
         "agriculture"
@@ -1345,27 +1345,6 @@
       "height": 1536
     },
     {
-      "id": "gondwana-ice-margin",
-      "t": 300000000.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/gondwana-ice-margin.webp",
-      "thumbnail": "scenes/gondwana-ice-margin-thumb.webp",
-      "shot": "WATER_EDGE",
-      "title": "The Late Paleozoic Ice Age",
-      "caption": "At the height of the Late Paleozoic Ice Age, a Gondwanan glacier calves into a braided meltwater outwash plain, one of the coldest moments the planet has yet seen.",
-      "events": [
-        "late-paleozoic-ice-age"
-      ],
-      "sound": {
-        "stem": "wind",
-        "mode": "loop",
-        "gain": 0.8
-      },
-      "pinned": "c79cd4f37d13d12f",
-      "width": 2752,
-      "height": 1536
-    },
-    {
       "id": "carboniferous-swamp",
       "t": 310000000.0,
       "chapterId": "waters-edge",
@@ -1376,20 +1355,6 @@
       "caption": "Giant lycopsid trees wall a Carboniferous coal swamp, where oxygen-rich air lets insects and millipedes grow to record sizes.",
       "events": [],
       "pinned": "9d50ad8640e89aa9",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "late-devonian-tetrapod",
-      "t": 365000000.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/late-devonian-tetrapod.webp",
-      "thumbnail": "scenes/late-devonian-tetrapod-thumb.webp",
-      "shot": "WATER_EDGE",
-      "title": "Limbs Before Land",
-      "caption": "Ten million years after Tiktaalik, a limbed but still fully aquatic animal paddles a forest stream where some of the first seed-bearing plants grow in the undergrowth.",
-      "events": [],
-      "pinned": "3b555e2bde09f75f",
       "width": 2752,
       "height": 1536
     },
@@ -1419,7 +1384,7 @@
       "image": "scenes/rhynie-chert.webp",
       "thumbnail": "scenes/rhynie-chert-thumb.webp",
       "shot": "WATER_EDGE",
-      "title": "Early Plants and Arachnids",
+      "title": "Life Comes Ashore",
       "caption": "Around hot-spring pools that will one day preserve them in silica, leafless spore-bearing plants shelter the oldest known insect relatives and spiders' arachnid cousins.",
       "events": [],
       "sound": {
@@ -1449,7 +1414,7 @@
       "image": "scenes/silurian-shore.webp",
       "thumbnail": "scenes/silurian-shore-thumb.webp",
       "shot": "SPLIT_LEVEL",
-      "title": "Early Upright Plants",
+      "title": "Sea Scorpions and the First Stems",
       "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.",
       "events": [],
       "pinned": "45f0b3f478c76df1",
@@ -1463,8 +1428,8 @@
       "image": "scenes/ordovician-reef-shore.webp",
       "thumbnail": "scenes/ordovician-reef-shore-thumb.webp",
       "shot": "SPLIT_LEVEL",
-      "title": "The First Land Plants",
-      "caption": "Beneath the surface a reef of crinoids, corals and shelled animals teems with life, while the first land plants, known only from their spores and probably no bigger than a film on wet rock, cling to damp ground above the shore.",
+      "title": "A Bare Coast, a Crowded Sea",
+      "caption": "Beneath the surface a reef of crinoids, corals and shelled animals teems with life, hunted by a metre-long straight-shelled nautiloid. Above the waterline the continent is bare rock — the first land plants, known only from their spores, are no more than a green film on damp stone.",
       "events": [],
       "pinned": "8f32a35b5ef95389",
       "width": 2752,
