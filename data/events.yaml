@@ -2885,6 +2885,30 @@ events:
       the Armistice of 11 November 1918; estimated 15-22 million deaths, military and
       civilian.
 
+  # Added 2026-09-18, tag-balance pass (see amazon-deforestation's comment above): "the Black
+  # Death is currently the ONLY pandemic event anywhere in 4.6 billion years of this timeline,
+  # which is part of why this matters" (coordinator brief). Overlaps world-war-i's own span; no
+  # single day is documented for either the pandemic's start or its end, so dated to the month/
+  # year only, unlike the war's own day-counted neighbours below.
+  - id: influenza-1918-pandemic
+    label: 1918 influenza pandemic
+    kind: period
+    t_min: 105
+    t_max: 107
+    tags: [catastrophe, society]
+    importance: 0.6
+    description: >
+      An influenza pandemic spreads worldwide from February 1918 to April 1920,
+      infecting an estimated third of the global population, some 500 million people.
+      Death-toll estimates vary widely and are genuinely contested, from 17 million to
+      100 million, with 25-50 million most commonly cited — making it, by the low end
+      of that range alone, deadlier than the First World War it overlaps.
+    citation: >
+      Wikipedia, "1918 influenza pandemic" (accessed 2026-09-18): February 1918 -
+      April 1920; ~500 million infected (nearly a third of world population); deaths
+      "generally accepted" at 25-50 million, with cited estimates ranging 17-100
+      million.
+
   # Review fix (2026-09-15): t_min/t_max were originally both 109, the file's usual
   # whole-year "t = 2025 - CE_year" rounding for a battle that starts and ends within the same
   # calendar year -- a real interval collapsed to a point, which a `kind: period` event should
@@ -3041,6 +3065,32 @@ events:
       Federal-Aid Highway Act of 1956 signed June 1956, authorising 40,000 miles of
       divided highway.
 
+  # Added 2026-09-18, tag-balance pass (see amazon-deforestation's comment above). The app's own
+  # CO2 layer (sources/co2-o2) switches from an ice-core reconstruction to this exact instrumental
+  # record at t = 66 (AD 1959) -- `sources/co2-o2/README.md`: "Instrumental | co2_annmean_mlo.txt
+  # (NOAA GML) | Mauna Loa annual means, AD 1959-2025", credited there to "Lan/Keeling (GML/SIO)".
+  # So this event dates the moment the curated data this project already renders begins, not a
+  # separate claim about it. No single day is documented for the first reading, so this is dated
+  # to the month/year only, per the file's convention for imprecisely-dated moments (e.g.
+  # personal-computers).
+  - id: keeling-curve-begins
+    label: Keeling begins measuring atmospheric CO2
+    kind: moment
+    t_min: 67
+    t_max: 67
+    t: 67
+    tags: [science-technology, earth-climate]
+    importance: 0.45
+    description: >
+      Charles David Keeling, at the Scripps Institution of Oceanography, begins
+      continuous measurement of atmospheric CO2 at Mauna Loa Observatory, recording
+      313 parts per million. The resulting Keeling Curve becomes the foundational
+      record of humanity's own atmospheric measurement of itself, still running today.
+    citation: >
+      Wikipedia, "Keeling Curve" (accessed 2026-09-18): measurements begin March 1958,
+      Mauna Loa Observatory, Scripps Institution of Oceanography; initial reading 313
+      ppm; prior Kew Observatory measurements (1898-1901) averaged 274 ppm.
+
   - id: green-revolution
     label: Green Revolution
     kind: period
@@ -3102,25 +3152,81 @@ events:
       Economic Zone in May 1980; population about 30,000 in 1980; population 18.2
       million in 2025.
 
-  - id: aral-sea-shrinkage
-    label: Aral Sea shrinks to a fraction of its former size
+  # Removes aral-sea-shrinkage (2026-09-18: the user found "The Shrinking Aral Sea" too obscure
+  # and asked for "amazon deforestation and chernobyl" instead; see scenes.yaml
+  # chernobyl-exclusion-zone/amazon-deforestation-fishbone). This event backs
+  # chernobyl-exclusion-zone.
+  - id: chernobyl-disaster
+    label: Chernobyl disaster
+    kind: moment
+    t_min: 39
+    t_max: 39
+    t: 39
+    tags: [catastrophe, science-technology]
+    importance: 0.6
+    description: >
+      Reactor 4 at the Chernobyl Nuclear Power Plant in the Ukrainian SSR explodes and
+      catches fire, releasing radioactive material across the surrounding region and
+      much of Europe. The nearby city of Pripyat, home to 49,360 people, is evacuated
+      the next day and never resettled; a 30-kilometre exclusion zone is declared ten
+      days later and remains in force.
+    citation: >
+      Wikipedia, "Chernobyl disaster" (accessed 2026-09-18): explosion and fire at
+      01:23 on 26 April 1986, Reactor 4; exclusion zone expanded from 10 km to 30 km
+      within ten days. Wikipedia, "Pripyat" (accessed 2026-09-18): population 49,360;
+      evacuated 27 April 1986, one day after the disaster; never resettled.
+
+  # Added 2026-09-18, part of a tag-balance pass (coordinator audit: 25 of 32 events since 1925
+  # tagged science-technology, only 2 earth-climate). "The only optimistic entry available in this
+  # stretch -- a planetary-scale problem detected and then actually fixed" (brief). One event
+  # spanning both halves, not two: the discovery and the treaty are inseparable in the story this
+  # timeline tells (a problem found, then closed), and neither half alone would carry the
+  # "detected and fixed" arc the brief asks for. t_min/t_max span discovery to signing, the
+  # detect-to-fix interval itself, rather than reaching for the (still-running) recovery: full
+  # recovery is not yet observed, only forecast.
+  - id: ozone-hole-montreal-protocol
+    label: Ozone hole found, then closed by treaty
     kind: period
-    t_min: 27
-    t_max: 65
+    t_min: 38
+    t_max: 40
+    tags: [earth-climate, science-technology]
+    importance: 0.55
+    description: >
+      Farman, Gardiner and Shanklin report a dramatic springtime thinning of the ozone
+      layer over Antarctica — later found to reach 70% — the first clear evidence of a
+      man-made hole in the atmosphere. Within two years 46 nations sign the Montreal
+      Protocol, phasing out the CFCs responsible; ozone levels stabilise by the
+      mid-1990s and later assessments project the Antarctic hole recovering to 1980
+      levels by around 2066.
+    citation: >
+      Wikipedia, "Ozone depletion" (accessed 2026-09-18): Antarctic ozone hole first
+      reported 1985 (Farman et al.), reductions up to 70%; ozone levels stabilised by
+      the mid-1990s; recovery to 1980 levels projected by around 2066 (Antarctica),
+      2045 (Arctic), 2040 (rest of world). Wikipedia, "Montreal Protocol" (accessed
+      2026-09-18): agreed 16 September 1987 in Montreal, 46 original signatories,
+      entered into force 1 January 1989.
+
+  # This event backs scenes.yaml amazon-deforestation-fishbone; see that scene's own comment for
+  # the 1995 year choice.
+  - id: amazon-deforestation
+    label: Amazon deforestation accelerates
+    kind: period
+    t_min: 21
+    t_max: 37
     tags: [earth-climate, catastrophe]
     importance: 0.55
     description: >
-      Soviet irrigation projects begun in the early 1960s divert the Amu Darya and Syr
-      Darya rivers, and the Aral Sea, once the world's fourth-largest lake, shrinks by
-      60% in surface area and 80% in volume between 1960 and 1998. Its fishing
-      industry, which once employed some 40,000 people, collapses entirely by 1987;
-      former port towns such as Moynaq now lie tens of kilometres from any water, their
-      fishing fleets stranded on the dry seabed.
+      Brazil's national space agency INPE begins systematic satellite monitoring of
+      Amazon deforestation, recording 21,050 km² of forest cleared in 1988 alone.
+      Clearing peaks at 29,059 km² in 1995 — by far the highest annual total in the
+      record to that point, as new roads cut "fishbone" patterns of side-clearings into
+      primary forest, most of it converted to cattle pasture — before a second peak of
+      27,772 km² in 2004.
     citation: >
-      Wikipedia, "Aral Sea" (accessed 2026-09-15). Original area 68,000 km^2 (1960);
-      60% area / 80% volume loss 1960-1998; 17,160 km^2 (25% of original) by 2004;
-      fishing industry employed ~40,000 at its peak, commercial catch nonexistent by
-      1987; Moynaq now 30-90 km from shore.
+      Wikipedia, "Deforestation of the Amazon rainforest" (accessed 2026-09-18). INPE
+      PRODES annual clearing figures: 21,050 km² (1988), 29,059 km² (1995), 18,161 km²
+      (1996), 27,772 km² (2004); by 1995, 70% of previously forested land in the Amazon
+      (91% of land deforested since 1970) had been converted to cattle ranching.
 
   - id: renewable-energy-scaleup
     label: Solar and wind power scale up rapidly
@@ -3505,6 +3611,29 @@ events:
       will be using the Internet." 2025 figure: Wikipedia, "Global Internet usage"
       (accessed 2026-09-14).
 
+  # Added 2026-09-18, tag-balance pass (see amazon-deforestation's comment above). This event
+  # backs scenes.yaml covid-19-venice-lockdown; see that scene's own comment for the place and
+  # date chosen. t_min/t_max run PHEIC declaration to PHEIC end -- the WHO's own two dated
+  # emergency-status bookends -- not the epidemiologically fuzzier "pandemic is over" question,
+  # which WHO itself never declared on a single date.
+  - id: covid-19-pandemic
+    label: COVID-19 pandemic
+    kind: period
+    t_min: 2
+    t_max: 5
+    tags: [catastrophe, society]
+    importance: 0.65
+    description: >
+      The WHO declares SARS-CoV-2 a public health emergency of international concern
+      on 30 January 2020, then a pandemic on 11 March 2020, as it spreads worldwide;
+      the emergency declaration is lifted on 5 May 2023. More than 7 million confirmed
+      deaths are reported to the WHO over the course of the pandemic, with
+      excess-mortality estimates running several times higher.
+    citation: >
+      Wikipedia, "COVID-19 pandemic" (accessed 2026-09-18): PHEIC declared 30 January
+      2020; characterised a pandemic 11 March 2020; PHEIC ended 5 May 2023; over
+      7 million confirmed deaths reported to WHO.
+
   - id: chatgpt-release
     label: ChatGPT released
     kind: moment
@@ -3522,6 +3651,31 @@ events:
       Wikipedia, "ChatGPT" (accessed 2026-09-14). Released 30 November 2022; one million
       users in five days and 100 million in two months; "accelerated the AI boom." The
       developer's own announcement page refused a live fetch.
+
+  # Added 2026-09-18, tag-balance pass (see amazon-deforestation's comment above). "Connects
+  # directly to the population HUD layer and its new history graph, so the two reinforce each
+  # other" (coordinator brief) -- this event names the UN's own dated milestone; the layer itself
+  # is unaffected, since data/events.yaml is invisible to it. Day-counted like battle-of-the-somme:
+  # 15 Nov 2022 is day 319 of a 365-day year, 2022 + 318/365 = 2022.871, t = 2025 - 2022.871 =
+  # 2.13.
+  - id: world-population-8-billion
+    label: World population reaches 8 billion
+    kind: moment
+    t_min: 2.13
+    t_max: 2.13
+    t: 2.13
+    tags: [society]
+    importance: 0.5
+    description: >
+      The United Nations estimates that the world's population reaches 8 billion
+      people on 15 November 2022, up from 1 billion around 1804 — a sevenfold increase
+      achieved mostly within two centuries of the roughly 300,000-year history of
+      Homo sapiens.
+    citation: >
+      United Nations Department of Economic and Social Affairs, "World Population to
+      reach 8 billion on 15 November 2022" (press release, 2022), via Wikipedia,
+      "World population" (accessed 2026-09-18): UN-dated 8 billion milestone,
+      15 November 2022; 1 billion reached around 1804.
 
   - id: present
     label: Present day

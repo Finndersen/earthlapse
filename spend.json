@@ -2784,6 +2784,30 @@
       "estimated_usd": 0.15562,
       "actual_usd": 0.140884,
       "note": null
+    },
+    {
+      "node_id": "covid-19-venice-lockdown.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154556,
+      "actual_usd": 0.140288,
+      "note": null
+    },
+    {
+      "node_id": "amazon-deforestation-fishbone.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154544,
+      "actual_usd": 0.139518,
+      "note": null
+    },
+    {
+      "node_id": "chernobyl-exclusion-zone.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15457,
+      "actual_usd": 0.140288,
+      "note": null
     }
   ]
 }

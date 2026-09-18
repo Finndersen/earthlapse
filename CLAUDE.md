@@ -23,7 +23,13 @@ it, do not unilaterally edit.
 - **Never raise `--max-spend`.** Total generation budget is $100, enforced in
   `pipeline/spend.py`. If a build hits the ceiling, stop and report — do not work around it.
   Note the footgun: `--max-spend` **overwrites** the ledger's stored ceiling with an absolute
-  value, it does not add to it. Pass it only as `--max-spend 100`, or leave it off.
+  value, it does not add to it (`Ledger.load`: "CLI flag wins over whatever was stored"). It is a
+  **required** option on `earthtime build` — it cannot be left off — so every build retypes the
+  ceiling, and a typo silently rewrites it rather than erroring. Always pass exactly
+  `--max-spend 100`. Check `spend.json`'s `ceiling_usd` afterwards if you are unsure.
+  This is a known design wart: a safety rail you must re-state correctly on every use is one you
+  will eventually state wrongly. Making the flag optional and defaulting to the stored ceiling
+  needs an ADR, since `pipeline/spend.py` is NORMATIVE.
 - **No live API calls or large downloads in tests.** Every source ships a committed fixture
   at `sources/<name>/fixture/`. Use it.
 - **Nothing reads `data/curated/` directly.** Go through `WorldState.at(t)`. (ADR-002)

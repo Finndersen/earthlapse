@@ -2455,6 +2455,55 @@ scenes:
     # carries no `sound` -- the flat 0.48 `settlement` floor covers the working-port ambience.
     pin: {asset_digest: "8cc9c5451b9b81f3", path: "data/candidates/containerisation-port/9831bb0bdcdc23b8/01-8cc9c5451b9b81f3.jpg"}
 
+  # 26-27 April 1986, the Chernobyl disaster and Pripyat's evacuation (events.yaml
+  # chernobyl-disaster, t_min/t_max 39-39, t 39); t = 2025 - 1986 = 39. This sits chronologically
+  # before berlin-wall-fall (t = 36, 1989) rather than after aral-sea-drying's old slot: removing
+  # aral-sea-drying (2026-09-18, replaced by amazon-deforestation-fishbone further down this file)
+  # opened this gap in the open-ground chapter run, and 1986 falls inside it. Wikipedia "Chernobyl
+  # disaster" (accessed 2026-09-18): Reactor 4
+  # explodes and catches fire at 01:23 on 26 April 1986. Wikipedia "Pripyat" (accessed 2026-09-18):
+  # the city, population 49,360, is evacuated the next day, 27 April, and never resettled; its
+  # amusement park -- a Ferris wheel among its rides -- had been built for a May Day opening,
+  # 1 May 1986, that never happens, and stands as the town's best-known unused landmark. VISUAL_SPEC
+  # says these stills claim plausibility, not accuracy, and are not documentary reconstructions of
+  # an accident -- so the subject is deliberately the abandoned town and its sudden, ordinary
+  # emptiness (per the brief: "the abandoned town of Pripyat and the exclusion-zone landscape is a
+  # stronger and more defensible photoreal subject than depicting the accident itself"), not the
+  # reactor, fire or smoke, and not the overgrown ruin Pripyat has become decades later -- at t = 39
+  # this is days-old, not decayed. Kept in open-ground (GROUND), continuing the run into
+  # berlin-wall-fall: an abandoned street needs no water. TONE: documentary, no people, matching
+  # aral-sea-drying's own convention for a scene about absence and loss.
+  - id: chernobyl-exclusion-zone
+    t: 39.0
+    chapter: open-ground
+    shot: GROUND
+    title: "Pripyat Evacuated"
+    caption: At 01:23 on 26 April 1986, an explosion and fire destroy Reactor 4 at the Chernobyl Nuclear Power Plant; the nearby city of Pripyat, population 49,360, is evacuated by bus the following afternoon and never resettled, left standing empty inside the exclusion zone declared ten days later.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-1980s global mean, matching its late-1980s neighbours in this catalogue
+    subject:
+      setting: A residential street in Pripyat, Ukraine, in the days after its evacuation on 27 April 1986, following the explosion and fire at the nearby Chernobyl Nuclear Power Plant
+      left_mass: a nine-storey Soviet-era apartment block of the kind built for the plant's workers, its windows dark, net curtains still hanging in some, balconies bare and washing lines empty
+      vegetation: young street trees and mown grass verges planted when the city was built in the 1970s, ordinary and not yet overgrown
+      fauna: none; the street is empty of both people and animals
+      main_subject: the town's unopened Ferris wheel and amusement-park rides, built for a May Day opening five days away that will never happen, standing motionless behind a low fence at the end of the street
+      ground: a wide paved street and pavement, a few bicycles and a child's pram abandoned where they stood, no rubble or visible damage
+      water: none in the frame
+      far_bank: no far bank; more empty apartment blocks recede down the street, and the Chernobyl plant's distant cooling tower and chimney are just visible on the skyline beyond them
+      sky_and_light: a pale, hazy spring sky; flat, overcast daylight
+      absent: [visible structural decay, trees growing through buildings or pavement, collapsed roofs, rust stains, graffiti, looters, modern tourists, hazmat suits, soldiers, dosimeters or Geiger counters, glowing radiation, any date or timestamp, snow]
+    events: [chernobyl-disaster]
+    # No `sound` set: `wind` or `settlement` are the obvious candidates for a desolate, freshly
+    # emptied street, matching aral-sea-drying's/berlin-wall-fall's own use of the global stem
+    # catalogue, but checking a candidate gain against the traffic/settlement ambient floor at
+    # this t (the precision every other scene's own sound comment shows, e.g. berlin-wall-fall,
+    # aral-sea-drying, energy-transition-solar-wind) means reading web/src/audio/stemGains.ts,
+    # which this pass does not own (data/scenes.yaml and data/events.yaml only). Left unset
+    # rather than guessed; a follow-up owning web/src/audio can add it.
+    location: {lat: 51.4046, lon: 30.0538, label: "Pripyat, Ukraine"}
+    pin: {asset_digest: "73f83b86278a7119", path: "data/candidates/chernobyl-exclusion-zone/3a2329568381b2ef/01-73f83b86278a7119.jpg"}
+
   # 9 November 1989, fall of the Berlin Wall; t = 2025 - 1989 = 36 (events.yaml
   # berlin-wall-falls). Wikipedia "Fall of the Berlin Wall": overwhelmed border guards opened
   # the checkpoints that night after crowds gathered demanding passage. VISUAL_SPEC §2 holds
@@ -2511,51 +2560,53 @@ scenes:
     location: {lat: 52.5163, lon: 13.3777, label: "Berlin Wall, Germany"}
     pin: {asset_digest: "04dcd886754a57cd", path: "data/candidates/berlin-wall-fall/93a53ee1d8d9e2ce/01-04dcd886754a57cd.jpg"}
 
-  # About 1998, the Aral Sea's collapse (events.yaml aral-sea-shrinkage, t_min/t_max 21-65,
-  # 2004-1960); t = 2025 - 1998 = 27. Wikipedia "Aral Sea": Soviet irrigation of the Amu Darya and
-  # Syr Darya, begun in the early 1960s, shrank the sea's surface area by 60% and its volume by 80%
-  # between 1960 and 1998; by 2004 it covered just 17,160 km^2, 25% of its 1960 extent of 68,000
-  # km^2. The fishing fleet, which once employed some 40,000 people and supplied a sixth of Soviet
-  # fish catches, had no commercial catch left by 1987; the port of Moynaq, Uzbekistan, now lies
-  # 30-90 km from the shore, its trawlers stranded on the dry bed. Kept in open-ground (GROUND),
-  # continuing the run from berlin-wall-fall: the whole point of the scene is a dry former seabed
-  # with no water anywhere in the frame, so waters-edge cannot make it. TONE: documentary, no
-  # people -- the abandoned vessels alone carry the scale of the loss.
-  - id: aral-sea-drying
-    t: 27.0
+  # 1995, the Brazilian Amazon's worst year of satellite-recorded deforestation (events.yaml
+  # amazon-deforestation, t_min/t_max 21-37, 2004-1988); t = 2025 - 1995 = 30. Removes and replaces
+  # aral-sea-drying (2026-09-18, the user found "The Shrinking Aral Sea" too obscure and asked for
+  # "amazon deforestation and chernobyl" instead). Year chosen for having an actual per-year figure
+  # to cite, not a round guess: Wikipedia "Deforestation of the Amazon rainforest" (accessed
+  # 2026-09-18), citing INPE's PRODES satellite programme, gives annual clearing of 21,050 km^2
+  # (1988), 29,059 km^2 (1995) -- by a wide margin the highest annual total in the record up to
+  # then, roughly double every neighbouring year (18,161 km^2 in 1996, 13,227 km^2 in 1997) -- and
+  # 27,772 km^2 (2004), a second peak; by 1995, 70% of previously forested land in the Amazon (91%
+  # of land deforested since 1970) had been converted to cattle ranching. The brief's chosen
+  # subject: "the hard edge between cleared, burning or burnt ground and standing primary forest --
+  # the 'fishbone' pattern of roads and side-clearings is the visually distinctive signature."
+  # Rondônia is the standard example of this pattern (colonisation along highway BR-364 from the
+  # 1970s, Wikipedia "Rondônia"), used here as a representative setting for the fishbone signature
+  # rather than one surveyed clearing, like green-revolution-fields' composite Punjab field.
+  # GROUND's low, close, shallow-depth-of-field framing cannot show the pattern from above the way
+  # a satellite image does, so it is read in the frame instead as a freshly cut side-road opening
+  # into the forest wall at an angle, with more such cuts repeating into the middle distance -- the
+  # signature rendered at ground level rather than aerially. Kept in open-ground (GROUND),
+  # continuing the run from chernobyl-exclusion-zone and berlin-wall-fall. TONE: documentary, no
+  # people, matching aral-sea-drying's own convention for a scene about environmental loss.
+  - id: amazon-deforestation-fishbone
+    t: 30.0
     chapter: open-ground
     shot: GROUND
-    title: "The Shrinking Aral Sea"
-    caption: By 1998, Soviet-era irrigation of the Amu Darya and Syr Darya has shrunk the Aral Sea's surface area by 60% and its volume by 80% since 1960, stranding whole fishing fleets — once the source of a sixth of Soviet fish catches — kilometres from any water.
+    title: "Amazon Deforestation"
+    caption: In 1995, Brazil's INPE satellite-monitoring programme records 29,059 km² of Amazon rainforest cleared in a single year — by far its highest annual total to date — as new colonisation roads cut fishbone patterns of side-clearings into primary forest, most of the felled land converted to cattle pasture.
     unsourced:
       o2_percent: 21  # modern
-      mean_temp_c: 15  # rounded: late-1990s global mean
+      mean_temp_c: 14  # rounded: mid-1990s global mean, matching its late-1980s neighbours in this catalogue
     subject:
-      setting: The cracked, salt-crusted former seabed of the Aral Sea near the port town of Moynaq, Uzbekistan, about 1998, where the shoreline has retreated tens of kilometres
-      left_mass: a large rusted steel fishing trawler resting on its side in the sand, its hull streaked with corrosion, decades since it last floated
-      vegetation: sparse, salt-tolerant scrub and drought-killed reed stubble scattered across the dry lakebed
-      fauna: none
-      main_subject: two more fishing vessels sitting stranded and listing on the cracked, salt-white sand, their painted names faded and unreadable, far from any water
-      ground: a vast expanse of cracked, salt-crusted dry lakebed, ridged like a dry riverbed, littered with wind-scoured shells
-      water: none in the frame; the Aral Sea's shoreline has retreated far beyond the horizon
-      far_bank: no far bank; the flat, pale former seabed runs unbroken to a hazy horizon, with the outline of an abandoned fish-cannery building just visible in the distance
-      sky_and_light: a pale, dusty, wind-hazed sky; flat, harsh midday light
-      absent: [water, boats afloat, modern clothing, identifiable faces, vehicles, tourists, modern signage, green vegetation, healthy reed beds]
-    events: [aral-sea-shrinkage]
-    # ADR-023 (2026-09-15 human-history scene sounds): `wind` `loop` -- a bleak, desolate former
-    # seabed; the global `wind` curve is 0 this late (only its dated LGM bump near 20 ka is
-    # active), so without this the scene's own emptiness would be silent rather than carrying the
-    # desiccated, exposed character the subject calls for. Not `water` -- the whole point of the
-    # scene is the water's absence. Gain raised from 0.55 to 0.8 by that amendment's own
-    # 2026-09-15 re-review: the `traffic` ambience curve, purely incidental here, sits at 0.547
-    # (-35.2 dB) at t = 27, an effective tie with 0.55's own -35.2 dB -- the deliberate desolate-
-    # wind cue was no louder than background road noise. 0.8 (-31.9 dB) clears it by over 3 dB.
-    sound: {stem: wind, mode: loop, gain: 0.8}
-    # ADR-034: Moynaq, Uzbekistan -- the stranded fishing port named in this record's own comment
-    # above. t = 27 BP sits inside the human-era basemap domain (ADR-030), so publish marks these
-    # present-day coordinates directly.
-    location: {lat: 43.7742, lon: 59.0208, label: "Moynaq, Uzbekistan"}
-    pin: {asset_digest: "362287fda442033d", path: "data/candidates/aral-sea-drying/9e9e8d973f2352fa/01-362287fda442033d.jpg"}
+      setting: The raw edge of a fishbone-pattern forest clearing beside a dirt colonisation road in Rondônia, Brazil, in 1995, during the Brazilian Amazon's most intensive year of satellite-recorded deforestation
+      left_mass: a wall of intact primary rainforest canopy, dense and unbroken, towering at the clearing's edge
+      vegetation: on the cleared side, blackened stumps, felled trunks and ash-grey scorched undergrowth; on the forest side, dense vines, buttress roots and understorey palms
+      fauna: none visible; a haze of smoke drifts low across the clearing
+      main_subject: a freshly cut side-clearing running back at an angle from the road into the forest -- the fishbone pattern of colonisation roads -- cut logs stacked along its edge and a burn still smouldering across the newly cleared ground
+      ground: a rutted red-earth dirt road running along the clearing's edge, littered with fallen branches and burnt debris
+      water: none in the frame
+      far_bank: no far bank; more side-clearings recede into the forest in the middle distance, each cut at the same angle from the road, smoke rising from several
+      sky_and_light: a hazy, smoke-tinted tropical sky; hot, flat midday light
+      absent: [bulldozers, chainsaws in use, workers, vehicles, cattle, identifiable faces, large rectangular soy fields, standing water, green regrowth, road signage, modern satellite-era clear-cut geometry]
+    events: [amazon-deforestation]
+    # No `sound` set, for the same reason as chernobyl-exclusion-zone: `fire` is the obvious
+    # candidate for the smouldering burn, but verifying its gain against the traffic/settlement
+    # ambient floor at this t needs web/src/audio/stemGains.ts, which this pass does not own.
+    # Left unset rather than guessed.
+    pin: {asset_digest: "43a0d45ebd59fac5", path: "data/candidates/amazon-deforestation-fishbone/bdc5d5bdeca7942b/01-43a0d45ebd59fac5.jpg"}
 
   # About 2014, mid-way through solar power's rapid scale-up (events.yaml renewable-energy-scaleup,
   # t_min/t_max 10-15, 2015-2010); t = 2025 - 2014 = 11. Wikipedia "Growth of photovoltaics":
@@ -2638,6 +2689,58 @@ scenes:
     # promenade; ambient `traffic` and `water` already carry the city and the sea.
     sound: {stem: settlement, mode: loop, gain: 0.85}
     pin: {asset_digest: "e42a28ac748277c4", path: "data/candidates/smartphone-seafront-2018/e65d99544f509dce/02-e42a28ac748277c4.jpg"}
+
+  # 9-10 March 2020, Italy's national COVID-19 lockdown (events.yaml covid-19-pandemic, t_min/
+  # t_max 2-5, 2023-2020); t = 2025 - 2020 = 5. Added at the coordinator's request alongside a
+  # wider pass adding COVID-19, the 1918 influenza pandemic, the Keeling Curve, the ozone hole and
+  # Montreal Protocol, and 8 billion people to events.yaml, to correct a tagging imbalance in the
+  # last century of events (25 of 32 tagged science-technology, only 2 earth-climate) -- one
+  # generated scene was approved for this batch, chosen as "the one image essentially everyone
+  # alive shares": an empty city during a 2020 lockdown, per the brief "choose a specific, citable
+  # place and date rather than a generic 'a city'." Wikipedia "COVID-19 lockdown in Italy" (accessed
+  # 2026-09-18): Italy becomes the first country to impose a national lockdown, quarantine measures
+  # expanded to the whole country on the evening of 9 March 2020, effective the next day; Venice's
+  # Metropolitan City (population 857,841) was already under the preceding regional restrictions
+  # from 8 March. Wikipedia "COVID-19 pandemic" (accessed 2026-09-18): WHO characterises COVID-19 a
+  # pandemic on 11 March 2020, two days later. Venice's St Mark's Basin waterfront is used rather
+  # than a generic city, both for being one of the most widely reproduced "eerily empty" lockdown
+  # images worldwide and because it fits the waters-edge chapter's own water-in-frame composition
+  # without alteration -- unlike Times Square or a Milan piazza, which would need legible signage
+  # or branding this catalogue's `absent` convention (see smartphone-seafront-2018,
+  # global-city-rush-hour) always excludes. Placed here rather than folded into
+  # global-city-rush-hour (t = 4): that scene's own comment explicitly moved its setting to the
+  # "early 2020s" without a pandemic-era read and excludes "empty streets" from its own `absent`
+  # list, so a separate scene carries the lockdown moment instead of contradicting it. Kept in
+  # waters-edge (WATER_EDGE), continuing the run unbroken from smartphone-seafront-2018 through to
+  # shenzhen-bay-present. TONE: documentary, no crowds -- the emptiness itself is the subject.
+  - id: covid-19-venice-lockdown
+    t: 5.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Venice Under Lockdown"
+    caption: On 9 March 2020, Italy becomes the first country to impose a national COVID-19 lockdown, effective the next morning; two days later the WHO declares a pandemic, and Venice's waterfront, ordinarily thronged with visitors, stands empty — one scene repeated in cities worldwide.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: early-2020s global mean
+    subject:
+      setting: The Riva degli Schiavoni waterfront beside St Mark's Basin, Venice, Italy, in the days after Italy's national lockdown takes effect on 10 March 2020
+      left_mass: the Doge's Palace and the domes of St Mark's Basilica rising behind the waterfront, their pale stone and gilt mosaics catching the light
+      vegetation: none; a stone waterfront with no planting
+      fauna: pigeons picking at the empty paving, otherwise no animals
+      main_subject: the empty waterfront promenade itself, its mooring posts and gondola stops standing vacant, a stack of folded café chairs and a shuttered ticket kiosk the only sign of the crowds normally there
+      ground: the pale stone quay of the Riva degli Schiavoni, its usual souvenir stalls and café tables gone, a few stray flyers scattered on the ground
+      water: the calm, green-grey water of St Mark's Basin lapping at the mooring posts, a handful of gondolas tied up and unused, bobbing gently, empty of passengers
+      far_bank: the island of San Giorgio Maggiore and its campanile across the basin, hazy in the distance
+      sky_and_light: a pale, cool early-spring sky with thin cloud; flat, overcast daylight
+      absent: [tourists, crowds, gondoliers at work, legible shop signage, legible text, brand logos, face masks, identifiable faces, modern advertising, boats underway, snow]
+    events: [covid-19-pandemic]
+    # No `sound` set. `settlement`/`traffic` are the obvious candidates precisely because the
+    # scene needs their ABSENCE against the human-dominance-era floor every neighbouring scene's
+    # own comment computes (e.g. global-city-rush-hour, shenzhen-bay-present) -- there is no
+    # mechanism in the stem catalogue for muting the global bed locally to one scene, and this
+    # pass does not own web/src/audio to add one. Left unset rather than guessed.
+    location: {lat: 45.4340, lon: 12.3417, label: "Riva degli Schiavoni, Venice, Italy"}
+    pin: {asset_digest: "a1bd3a8153aa5efc", path: "data/candidates/covid-19-venice-lockdown/377247bc10128345/01-a1bd3a8153aa5efc.jpg"}
 
   # The early 2020s, a composite/representative global city-centre morning rush hour, like
   # industrial-mill-town, not one documented place; t = 2025 - 2021 = 4. Added at
