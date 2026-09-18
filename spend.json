@@ -2704,6 +2704,86 @@
       "estimated_usd": 0.154052,
       "actual_usd": 0.141332,
       "note": null
+    },
+    {
+      "node_id": "qin-xianyang-epang-palace.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154676,
+      "actual_usd": 0.139796,
+      "note": null
+    },
+    {
+      "node_id": "classical-athens-parthenon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154632,
+      "actual_usd": 0.138736,
+      "note": null
+    },
+    {
+      "node_id": "mohenjo-daro.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154652,
+      "actual_usd": 0.139874,
+      "note": null
+    },
+    {
+      "node_id": "catalhoyuk.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154862,
+      "actual_usd": 0.139888,
+      "note": null
+    },
+    {
+      "node_id": "panama-land-bridge.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154422,
+      "actual_usd": 0.138426,
+      "note": null
+    },
+    {
+      "node_id": "jurassic-cycad-pollination.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154532,
+      "actual_usd": 0.13993,
+      "note": null
+    },
+    {
+      "node_id": "classical-athens-parthenon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15517,
+      "actual_usd": 0.139498,
+      "note": null
+    },
+    {
+      "node_id": "classical-athens-parthenon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15517,
+      "actual_usd": 0.140998,
+      "note": null
+    },
+    {
+      "node_id": "classical-athens-parthenon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15562,
+      "actual_usd": 0.142132,
+      "note": null
+    },
+    {
+      "node_id": "classical-athens-parthenon.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15562,
+      "actual_usd": 0.140884,
+      "note": null
     }
   ]
 }

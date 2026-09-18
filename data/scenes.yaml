@@ -419,6 +419,12 @@ scenes:
     # ADR-023 (v2): scene-only `geothermal` `loop` -- a hot-spring-fed wetland with silica pools;
     # no stridulating insects yet (insects stay 0 until 300 Ma).
     sound: {stem: geothermal, mode: loop, gain: 0.8}
+    # ADR-034: a genuinely named site, not a generic environment -- the Rhynie chert locality,
+    # Rhynie village, Aberdeenshire, Scotland (commonly cited coordinates; not independently
+    # re-verified against a survey this session). t = 407 Ma is older than the human-era basemap
+    # domain (ADR-030), so publish reconstructs this to its Early Devonian plate position
+    # (Merdith et al. 2021) rather than marking modern Scotland.
+    location: {lat: 57.3300, lon: -3.2200, label: "Rhynie, Scotland"}
     pin: {asset_digest: "7ea8b194c790ed34", path: "data/candidates/rhynie-chert/e37af28f8877ce17/02-7ea8b194c790ed34.jpg"}
 
   # Tiktaalik, ~375 Ma (data/lineage.yaml tetrapodomorpha); inside events.yaml tetrapods (365-395 Ma).
@@ -684,7 +690,7 @@ scenes:
       far_bank: more cycad and conifer woodland, open and dry, fading into haze
       sky_and_light: a warm, hazy sky with high cirrus; soft, warm, slightly diffused sunlight
       absent: [flowers, flowering plants, grass, broadleaf trees, palms, palm trees, coconut palms, bees, butterflies, large mammals, people]
-    pin: null
+    pin: {asset_digest: "6219f8eaaaec486a", path: "data/candidates/jurassic-cycad-pollination/cdb6ac28d26839d2/01-6219f8eaaaec486a.jpg"}
 
   # Morrison Formation sauropods, ~150 Ma; before flowering plants (events.yaml: 125-133 Ma).
   - id: jurassic-floodplain
@@ -1145,6 +1151,12 @@ scenes:
       sky_and_light: a clear, warm, pale-blue East African sky with a few high clouds; bright, direct sunlight
       absent: [modern humans, clothing, stone tools, spears, fire, chimpanzees, gorillas, buildings]
     events: [australopithecus-afarensis]
+    # ADR-034: Hadar, Ethiopia -- the AL 288-1 ("Lucy") discovery locality named in this record's
+    # own comment above (commonly cited coordinates; not independently re-verified against a
+    # survey this session). t = 3.2 Ma is older than the human-era basemap domain (ADR-030), so
+    # publish reconstructs this to its Pliocene plate position (Merdith et al. 2021) rather than
+    # marking modern Ethiopia -- though at this age the African plate has moved only slightly.
+    location: {lat: 11.1600, lon: 40.6000, label: "Hadar, Ethiopia"}
     pin: {asset_digest: "347021bb25fb32ad", path: "data/candidates/lucy-afarensis/50206163a975bec6/01-347021bb25fb32ad.jpg"}
 
   # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
@@ -1175,7 +1187,17 @@ scenes:
       absent: [modern armadillos, tortoises, turtles, ostriches, rheas, emus, primates, people, boats, buildings]
     # ADR-023 (v2): `water` `loop` above its 0.25 ambient -- surf on the new isthmus's coastal sand.
     sound: {stem: water, mode: loop, gain: 0.9}
-    pin: null
+    # ADR-034: the Isthmus of Panama, near the modern Panama Canal (a representative point for
+    # the land bridge, not a single excavation site). t = 2.8 Ma is older than the human-era
+    # basemap domain (ADR-030), so publish would reconstruct this to its Pliocene plate position
+    # (Merdith et al. 2021) -- except no polygon in that model's ContinentalPolygons layer covers
+    # the isthmus at all (verified: `PlatePartitioner.partition_point` misses here, and at nearby
+    # Panama City), a genuine gap in that global-scale continental dataset around this young,
+    # arc-derived crust. Per CLAUDE.md ("if something is unusable, stop and report"), publish
+    # therefore marks no position for this scene rather than a wrong one; the present-day
+    # coordinates below still publish for audit, with no `marker`. See docs/DECISIONS.md ADR-034.
+    location: {lat: 9.0800, lon: -79.6800, label: "Isthmus of Panama"}
+    pin: {asset_digest: "ceb077358e2739f9", path: "data/candidates/panama-land-bridge/a262240ea02ea2bd/01-ceb077358e2739f9.jpg"}
 
   # Homo erectus with Acheulean handaxes, Kokiselei 4, West Turkana, Kenya, ~1.76 Ma (events.yaml
   # homo-erectus, acheulean-technology): Lepre, C.J. et al. (2011), Nature 477, 82-85. Older
@@ -1206,6 +1228,12 @@ scenes:
     # ADR-023 (era-fit v3, human direction 2026-09-15: "sound effect of early human using rock
     # tools for that scene"): `knapping` `loop` -- the toolmaker striking flakes off the core.
     sound: {stem: knapping, mode: loop, gain: 0.9}
+    # ADR-034: West Turkana, Kenya -- the Kokiselei 4 site named in this record's own comment
+    # above (Lepre et al. 2011); coordinates are an approximate regional value for the Kokiselei
+    # area, not surveyed to the exact excavation point. t = 1.76 Ma sits inside the human-era
+    # basemap domain (ADR-030, t <= 2.58 Ma), so publish marks these present-day coordinates
+    # directly -- continental drift since is imperceptible at globe scale.
+    location: {lat: 3.9900, lon: 35.8600, label: "West Turkana, Kenya"}
     pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
@@ -1311,34 +1339,70 @@ scenes:
     # ADR-023 (v2): `settlement` (wordless crowd murmur) `loop` -- builders hauling and carving,
     # human presence before farming.
     sound: {stem: settlement, mode: loop, gain: 0.8}
+    # ADR-034: Göbekli Tepe, on the Germuş ridge near Şanlıurfa, Turkey (named in `subject.setting`
+    # above). t = 11,500 BP sits inside the human-era basemap domain (ADR-030), so publish marks
+    # these present-day coordinates directly.
+    location: {lat: 37.2231, lon: 38.9224, label: "Göbekli Tepe, Turkey"}
     pin: {asset_digest: "84e970ce9bbc7b8c", path: "data/candidates/gobekli-tepe/178c1261980afdb4/02-84e970ce9bbc7b8c.jpg"}
 
-  # About 7000 BCE: after farming began (events.yaml agriculture: 10,025-11,525 BP), before
-  # writing (5,025-5,425 BP).
-  - id: neolithic-river-settlement
+  # About 7000 BCE, when Çatalhöyük "flourished" per the excavation record (occupation c.
+  # 7500-5600 BC; Wikipedia "Çatalhöyük", drawing on Mellaart's original 1961-1965 excavation
+  # and Ian Hodder's Çatalhöyük Research Project, Cambridge, 1993-2018 -- Hodder's own
+  # synthesis, "Çatalhöyük: The Leopard's Tale" (2006, Thames & Hudson), is the standard
+  # popular account and is cited below for the site's architecture and social organisation);
+  # t = 2025 + 7000 = 9,025, rounded to 9,000, the same slot neolithic-river-settlement held.
+  # Replaces that record outright (user direction 2026-09-17): its "Neolithic village... beside
+  # a slow river" was generic rather than naming a real site, and sat as the third of three
+  # near-identical reed-boat waterlines in a row with green-sahara and uruk-city either side of
+  # it. Çatalhöyük's own defining, attested feature is its layout, not a waterline: mudbrick
+  # houses built wall to wall in a dense honeycomb "with no footpaths or streets" between them,
+  # entered by ladder through a hole in the roof, so the rooftops served as the settlement's
+  # thoroughfares (Wikipedia "Çatalhöyük"; Hodder 2006). Framed at rooftop level on open ground
+  # (open-ground/GROUND), deliberately dry: this extends gobekli-tepe's open-ground run and
+  # breaks the waterside repetition either side of the old slot (green-sahara, uruk-city), and
+  # matches the site's own rooftop vantage rather than a riverbank. Wall paintings (hunting
+  # scenes, aurochs and vultures, a landscape sometimes read as the world's oldest map) and
+  # bucrania (cattle skulls mounted on walls) are both attested but are interior-room features
+  # of individual houses, not visible from an exterior rooftop view, so neither is shown, and
+  # both are named in `absent` against the model adding one to an outside wall. Obsidian tools
+  # were used and traded for Mediterranean shell and Syrian flint (Wikipedia "Çatalhöyük"); a
+  # hafted obsidian blade stands in for that trade, since a trade network itself has no visual
+  # form. Sheep and goats show "animal penning and dung remains" consistent with herding or
+  # management by this date; cattle are herded but not yet fully domesticated by the same
+  # evidence, so the scene shows penned sheep/goats close in and wild aurochs only at a
+  # distance, never a herded cattle herd. Retains the deleted record's start-of-farming story
+  # via the same `agriculture` event link (events.yaml, 10,025-11,525 BP): Çatalhöyük's own
+  # crops -- wheat, barley, peas, pistachio (Wikipedia "Çatalhöyük") -- sit squarely inside that
+  # established farming economy, so the link carries forward unchanged.
+  - id: catalhoyuk
     t: 9.0e3
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "A Neolithic Village"
-    caption: Two thousand years after farming began, a Neolithic village of mudbrick houses tends small fields of wheat beside a slow river.
+    chapter: open-ground
+    shot: GROUND
+    title: "A Town Without Streets"
+    caption: By 7000 BCE, thousands of people live wall to wall in a honeycomb of mudbrick houses at Çatalhöyük with no streets at all — every home is entered by ladder through a hole in its roof, so the rooftops are the town's only thoroughfares.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: early Holocene, near pre-industrial
     subject:
-      setting: A Neolithic farming village on the bank of a slow river in the Fertile Crescent, about 7000 BCE
-      left_mass: a cluster of flat-roofed mudbrick houses two storeys high, built wall to wall, with wooden ladders to the roofs and smoke rising from a cooking fire
-      vegetation: small fields of ripening einkorn, emmer wheat and barley, reed beds along the river, and a few poplars and tamarisks
-      fauna: a few goats and sheep grazing near the houses; a heron in the reeds
-      main_subject: two villagers in simple undyed wool and linen clothing loading bundles of reeds into a small reed boat at the waterline
-      ground: trampled earth, a footpath down to the water, clay pots and woven baskets
-      water: a slow, silty brown river, calm
-      far_bank: a flat river plain of green and tan fields with low hills beyond
-      sky_and_light: a warm, clear pale-blue sky with a few high clouds; warm, clear sunlight
-      absent: [metal tools, wheels, carts, horses, writing, stone temples, glass, plastic, modern clothing, power lines]
+      setting: The rooftop terraces of Çatalhöyük, a densely packed mudbrick town on the Konya Plain of central Anatolia, about 7000 BCE, looking across the settlement's honeycomb of flat roofs
+      left_mass: a taller cluster of raised clay storage bins beside an open roof hatch, a wooden ladder descending through it into the house below, the hatch doubling as doorway, chimney and stair
+      vegetation: beyond the rooftops, the open steppe of the Konya Plain with small fields of wheat, barley and pistachio trees running to the horizon; nothing grows on the roofs themselves
+      fauna: a couple of domestic dogs threading between hearths on the rooftops; wild aurochs grazing far out on the plain, too distant to disturb the town
+      main_subject: a woman climbing a wooden ladder up through a roof hatch with a hafted obsidian blade tucked in her belt, while a neighbour grinds grain on a rooftop quern beside a smoking hearth, sheep and goats penned in a reed-fenced enclosure on the roof behind them
+      ground: sun-baked clay and plaster rooftop terraces, packed wall to wall with no gap or path between houses, scattered with grinding stones, drying racks, storage bins and roof hatches
+      water: none in the frame; the town's own honeycomb of rooftops is deliberately dry-framed (ADR-020), with no river or spring in view from this vantage
+      far_bank: no far bank; the open Konya Plain steppe runs flat to a low, hazy line of distant hills on the horizon
+      sky_and_light: a clear, pale early-autumn Anatolian sky; warm, low morning sunlight
+      absent: [streets, footpaths between houses, doors or windows at ground level, exterior wall paintings, bucrania visible from outside, a herded or domesticated cattle herd, metal tools, the potter's wheel, wheeled carts, horses, camels, writing, monumental temples, modern clothing, identifiable faces]
     events: [agriculture]
-    # ADR-023 (v2): `settlement` `loop` -- a farming village.
+    # ADR-023 (v2, carried from the deleted neolithic-river-settlement, era-appropriate): `settlement`
+    # `loop` -- a dense town of thousands, louder than gobekli-tepe's small band of builders.
     sound: {stem: settlement, mode: loop, gain: 0.85}
-    pin: {asset_digest: "3a0762558a1855b1", path: "data/candidates/neolithic-river-settlement/0d53fb5b771d60fb/01-3a0762558a1855b1.jpg"}
+    # ADR-034: Çatalhöyük, Konya Province, Turkey (named in `subject.setting` above). t = 9,000 BP
+    # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
+    # coordinates directly.
+    location: {lat: 37.6667, lon: 32.8250, label: "Çatalhöyük, Turkey"}
+    pin: {asset_digest: "f29cdedc423a5aa5", path: "data/candidates/catalhoyuk/96bdf3f1aa8343c8/01-f29cdedc423a5aa5.jpg"}
 
   # About 6000 BCE / 8,000 BP, within the African Humid Period ("Green Sahara"); distinct from
   # neolithic-river-settlement's t = 9,000 (Fertile Crescent, unrelated region and story) as the
@@ -1409,6 +1473,10 @@ scenes:
     events: [uruk-first-city]
     # ADR-023 (v2): `settlement` `loop` above its 0.48 ambient -- the largest city yet.
     sound: {stem: settlement, mode: loop, gain: 0.9}
+    # ADR-034: Uruk (modern Warka), Iraq, named in this record's own comment above. t = 5,200 BP
+    # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
+    # coordinates directly.
+    location: {lat: 31.3225, lon: 45.6373, label: "Uruk, Iraq"}
     pin: {asset_digest: "0fc9645483b32d86", path: "data/candidates/uruk-city/270ac38ccc5b268b/02-0fc9645483b32d86.jpg"}
 
   # About 2560 BCE, completion of the Great Pyramid of Khufu at Giza; t = 2025 + 2560 = 4,585, per the
@@ -1448,7 +1516,202 @@ scenes:
     events: [great-pyramid-giza]
     # ADR-023 (v2): `settlement` `loop` -- labourers hauling stone at the harbour.
     sound: {stem: settlement, mode: loop, gain: 0.9}
+    # ADR-034: Giza, Egypt. t = 4,585 BP sits inside the human-era basemap domain (ADR-030), so
+    # publish marks these present-day coordinates directly.
+    location: {lat: 29.9792, lon: 31.1342, label: "Giza, Egypt"}
     pin: {asset_digest: "ae2cd69144d41861", path: "data/candidates/giza-great-pyramid/80ce6f75f4b98518/03-ae2cd69144d41861.jpg"}
+
+  # About 2500 BCE, the Mature ("Integration Era") Harappan phase of the Indus Valley
+  # Civilisation, conventionally c. 2600-1900 BCE (Wikipedia "Indus Valley Civilisation"); t =
+  # 2025 + 2500 = 4,525. New scene, filling the 2,700-year gap between giza-great-pyramid
+  # (t = 4,585) and imperial-rome-pantheon (t = 1,900), per the brief. Mohenjo-daro, on the
+  # Indus floodplain in Sindh, grew to tens of thousands of people in this phase (30,000-60,000
+  # is the commonly cited range for the largest Harappan cities) laid out on a strict street
+  # grid, with fired-brick houses drained by covered brick sewers running beneath the streets --
+  # "waste water was channeled to covered drains that lined the major streets" -- and served by
+  # over 700 wells, "one well for every three houses" (Wikipedia "Mohenjo-daro"). Framed on a
+  # street corner, not another riverbank: giza-great-pyramid already ends the run on water, and
+  # the brief asks for open ground/a street here. No palace or temple is shown, and no ruler:
+  # decades of excavation have found no monumental royal or religious architecture at
+  # Mohenjo-daro, and the so-called "Priest-King" is a modern archaeological label for a
+  # sculpture, not an attested title (Wikipedia "Mohenjo-daro") -- the absence of a visible
+  # elite is as distinctive and attested as the Great Bath itself, so the scene depicts
+  # ordinary street life, not a monument. The Indus script remains undeciphered, so no legible
+  # writing is shown. New event indus-valley-urbanism added (events.yaml) since no existing
+  # event covers the Indus civilisation.
+  - id: mohenjo-daro
+    t: 4.525e3
+    chapter: open-ground
+    shot: GROUND
+    title: "A City Without a King"
+    caption: By 2500 BCE, Mohenjo-daro's grid of straight brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands on the Indus floodplain — with no palace, temple or evidence of a king anywhere yet found.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: same broad era as giza-great-pyramid, close to pre-industrial
+    subject:
+      setting: A street corner in Mohenjo-daro on the Indus floodplain, Sindh, at the edge of the raised citadel mound, about 2500 BCE
+      left_mass: a fired-mudbrick house wall two storeys high, its corner rounded smooth by generations of cart traffic, a covered brick drain with an inspection hole running along its base
+      vegetation: a few date palms and scrubby acacia beyond the mudbrick perimeter wall; nothing growing within the paved street itself
+      fauna: a humped zebu bullock harnessed to a cart; pigeons on the flat rooftops
+      main_subject: a woman drawing water at a brick-lined public well on the street corner, a zebu-drawn cart loaded with sealed pottery jars waiting behind her while a covered brick drain runs past their feet along the street's edge
+      ground: a straight, gridded street of fired mudbrick paving over the covered drain, brick house walls rising directly from the street with no encroachment
+      water: none in the frame; the city's water runs underground through covered brick drains and a public well, not an open channel
+      far_bank: no far bank; the street runs straight to a crossing lane at a right angle in the distance, part of the city's grid, with the raised brick mass of the citadel mound visible beyond the rooftops
+      sky_and_light: a hot, hazy, pale sky over the Indus floodplain; bright, hard midday sunlight
+      absent: [temples, palaces, a ruler or throne, legible Indus script, wheeled war chariots, horses, metal armour, decorative stone statuary, modern clothing, identifiable faces]
+    events: [indus-valley-urbanism]
+    # ADR-023: `settlement` `loop` -- ordinary street life in one of the largest cities of its
+    # age, on the same footing as uruk-city's own `settlement` above its ambient floor.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Mohenjo-daro, Sindh, Pakistan (named in `subject.setting` above). t = 4,525 BP
+    # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
+    # coordinates directly.
+    location: {lat: 27.3286, lon: 68.1381, label: "Mohenjo-daro, Pakistan"}
+    pin: {asset_digest: "126ac8292443ad22", path: "data/candidates/mohenjo-daro/4748e9b0dc6f6053/01-126ac8292443ad22.jpg"}
+
+  # About 430 BCE, the Age of Pericles; t = 2025 + 430 = 2,455. New scene, continuing the gap
+  # between giza-great-pyramid and imperial-rome-pantheon. Pericles' building programme, funded
+  # from the Delian League's treasury, "generated most of the surviving structures on the
+  # Acropolis, including the Parthenon" (Wikipedia "Pericles"); the Parthenon itself was
+  # dedicated 438/439 BCE with its sculptural decoration finished by 432 BCE (Wikipedia
+  # "Parthenon"), so by 430 BCE it stands newly complete, its marble "originally coloured" --
+  # picked out in paint and gilding, not the bare white stone of today. The Propylaea gatehouse
+  # was likewise finished in 432 BCE and is shown complete; the Temple of Athena Nike (begun c.
+  # 427 BCE) and the Erechtheion (begun 421 BCE, after the Peace of Nicias) both postdate this
+  # scene and are named in `absent` against the model adding either by default. Framed from the
+  # Athenian Agora looking up at the Acropolis, per the brief, rather than at another riverbank:
+  # the Agora is Athens's inland civic marketplace, well back from the port at Piraeus, so no
+  # water belongs in the frame. New event periclean-athens added (events.yaml) since no existing
+  # event covers classical Greece.
+  #
+  # Revision 2026-09-17: the single candidate generated from the record above was rejected on
+  # review by both an agent and the human lead, for three reasons. (1) It read as a CGI/
+  # video-game render, not a photograph. (2) Several foreground men had individually
+  # distinguishable faces. (3) The large two-storey colonnaded building at left matched the Stoa
+  # of Attalos -- "built by and named after King Attalos II of Pergamon, who ruled between 159
+  # and 138 BC" (Wikipedia "Stoa of Attalos"), a Hellenistic building of roughly 150 BCE, about
+  # 280 years too late for this 430 BCE scene. Fixes:
+  # - `left_mass` now names the Stoa Poikile (Painted Stoa) instead of a generic "stoa": it was
+  #   "erected around 460 BC on the north side of the Ancient Agora of Athens" (Wikipedia "Stoa
+  #   Poikile") and combined "a Doric colonnade on the southern (front) facade" with an interior
+  #   Ionic order -- already three decades old and an unremarkable fixture of the square by 430
+  #   BCE, unlike the Stoa of Attalos, which did not yet exist. Two other period-appropriate
+  #   buildings named in the task brief were considered and set aside: the Royal Stoa (Stoa
+  #   Basileios), in continuous use since the Archaic period but "one of the smallest known Greek
+  #   stoas" at "17.72 metres long ... and 7.18 metres wide" (Wikipedia "Stoa Basileios"), too
+  #   modest to read as the composition's left mass; and the Hephaisteion, whose "construction
+  #   started in 449 BC" but whose cult images were only installed during "the Peace of Nicias
+  #   (421-415 BC)" (Wikipedia "Hephaestus Temple"), so it cannot honestly be shown finished in
+  #   430 BCE. The generic term "a colonnaded stoa" is itself suspected of pulling the model
+  #   toward the Stoa of Attalos, the only Agora stoa substantially reconstructed and
+  #   photographed today, so `left_mass` now also gives an explicit single-storey physical
+  #   description rather than relying on the building type alone, and `absent` forbids the
+  #   two-storey building by name.
+  # - `main_subject` no longer stages a man addressing two listeners -- a composition close to
+  #   genre-game promotional art for this exact setting (Athenian Agora, himation-wearing crowd,
+  #   Acropolis behind) -- and instead puts market-goers at a stall in the middle distance, backs
+  #   turned or in profile, incidental to the frame and too far and too obliquely angled for any
+  #   face to resolve. `absent` now also forbids any figure posed toward the camera or grouped in
+  #   conversation facing the viewer, rather than relying on "identifiable faces" alone to rule
+  #   out a failure the composition itself invited.
+  #
+  # Revision 2026-09-17 (b): the architecture and figure fixes above landed, but the human lead
+  # judged the pinned candidate still reads as an architectural/game render rather than a
+  # photograph -- compared side by side against mohenjo-daro and qin-xianyang-epang-palace, both
+  # of which pass. The two passing records share dust, haze, surface grime, uneven weathering and
+  # atmospheric depth that this record's `subject` fields lacked: its sky was a cloudless, evenly
+  # graded blue with no haze, its stoa plaster and ground read uniformly clean, and nothing
+  # anchored the scene in dust or grime the way the other two do. Fixes, all physical/in-world,
+  # none a camera or post-processing instruction: `left_mass` now gives the Stoa Poikile
+  # sun-bleached, stained plaster and chipped, dust-filmed stucco; `ground` adds chipped paving
+  # edges, cart ruts and hoofprints, dust haze underfoot, and discarded potsherds; `fauna` adds
+  # droppings near the tethered goats; `far_bank` adds a haze of dust and heat over the Acropolis
+  # rock (the Parthenon itself keeps its freshly painted marble -- it is newly finished, per the
+  # caption, so its own surfaces are not aged); `sky_and_light` changes from a clear cloudless sky
+  # to a hazy, sun-bleached one with dust in the air, matching the pale, hazy skies already used
+  # in mohenjo-daro and qin-xianyang-epang-palace. No architectural, crowd or composition change.
+  - id: classical-athens-parthenon
+    t: 2.455e3
+    chapter: open-ground
+    shot: GROUND
+    title: "The Parthenon Complete"
+    caption: By 430 BCE, Pericles' newly finished Parthenon crowns the Acropolis above the Athenian Agora, its marble still bright with paint and gilding, at the height of Athens's naval power and democracy.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Classical Greece, close to pre-industrial
+    subject:
+      setting: The Athenian Agora marketplace, looking up toward the Acropolis and the newly finished Parthenon, about 430 BCE
+      left_mass: the Stoa Poikile (Painted Stoa) on the Agora's north side, a modest single-storey Doric colonnade on a shallow three-stepped stone platform under a plain gabled roof, already three decades old and an unremarkable fixture of the square, its plaster sun-bleached and stained in patches with the run of old rainwater, its stucco chipped and flaking at the base of the columns and dulled with a film of dust; market stalls are set up in the shade beneath its colonnade, its famous painted panels visible only as dim shapes in the shadowed interior beyond the columns
+      vegetation: a few plane trees and olive trees, dusty-leaved, shading the edge of the marketplace
+      fauna: pigeons around the stalls; a couple of goats tethered near a market stand, droppings scattered on the ground near the tethering post
+      main_subject: market-goers at a stall of pottery and olives in the middle distance, backs turned or in profile as they inspect the wares and talk with the stallholder, incidental to the square and too far off and too obliquely angled for any face to be individually distinguishable, no one facing or posed toward the camera, dust scuffed up around their sandalled feet; the Parthenon's painted marble pediment and gilded roof ornament catch the sun on the rock of the Acropolis rising behind them
+      ground: packed earth and worn limestone paving of the open Agora square, its stone edges chipped and rounded by generations of cart traffic, scuffed and dust-hazed underfoot with cart ruts and hoofprints pressed into the dried mud, crossed by the diagonal course of the Panathenaic Way, market stalls of pottery, cloth and olives set out on low tables, a scatter of broken potsherds and wilted greens discarded at the stall edges
+      water: none in the frame; the Agora is Athens's inland marketplace, well back from the port at Piraeus
+      far_bank: no far bank; the steep rock of the Acropolis rises beyond the Agora's stoas, a faint haze of dust and heat softening its upper slopes, the Parthenon's freshly carved marble columns and pedimental sculpture bright with red, blue and gold paint, the completed Propylaea gatehouse visible at its western approach
+      sky_and_light: a hazy, sun-bleached Mediterranean sky, pale toward the horizon with dust hanging in the still midday air; strong, slightly diffused midday sunlight
+      absent: [a bare unpainted white Parthenon, ruins or missing columns, the Temple of Athena Nike, the Erechtheion or its caryatid porch, the two-storey Stoa of Attalos or any two-storey stoa with an upper colonnade (a Hellenistic building of about 150 BCE, not yet standing in 430 BCE), modern clothing, individually recognisable or distinguishable faces, any figure posed facing the camera or grouped in conversation facing the viewer, legible Greek inscriptions, Roman-style togas, medieval or later buildings]
+    events: [periclean-athens]
+    # ADR-023: `settlement` `loop` -- a busy civic marketplace, on the same footing as
+    # global-city-rush-hour's own crowd stem.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Athens, Greece (the Acropolis, named in `subject.setting`/`far_bank` above). t =
+    # 2,455 BP sits inside the human-era basemap domain (ADR-030), so publish marks these
+    # present-day coordinates directly.
+    location: {lat: 37.9715, lon: 23.7267, label: "Athens, Greece"}
+    pin: {asset_digest: "c5cc528bfc6d0344", path: "data/candidates/classical-athens-parthenon/df7ebae67dd7b2b1/02-c5cc528bfc6d0344.jpg"}
+
+  # 210 BCE, the year Qin Shi Huang dies; t = 2025 + 210 = 2,235 (within the Qin dynasty's own
+  # 221-206 BCE span, events.yaml qin-unification). Chosen over the alternatives the brief
+  # raised -- a Han Chang'an Silk Road caravan, or the Ming Great Wall everyone already
+  # pictures -- because neither fits 210 BCE: Han Chang'an did not yet exist (founded 202 BCE,
+  # its walls finished 191 BCE, Wikipedia "Chang'an"), and the Silk Road caravan trade the brief
+  # suggested only opens under Emperor Wu decades later, after Zhang Qian's mission of the
+  # 130s BCE -- roughly eighty years after this scene's date; the Great Wall the brief warns
+  # against is Ming-era stone, whereas the Qin wall itself (General Meng Tian's project) was
+  # "rock over mountain ranges, rammed earth over the plains" (Wikipedia "Qin Shi Huang") and,
+  # regardless of material, lies far to the north of the capital this scene frames. Xianyang,
+  # the actual Qin capital, is "the only capital city in China that did not require walls to be
+  # built around it" (Wikipedia "Qin dynasty") and by tradition held a network of "over 200"
+  # palaces across the Wei valley linked by covered elevated roads (Wikipedia "Qin Shi Huang",
+  # "Xianyang"). Framed instead on the one Qin building project that is both distinctive and
+  # precisely dateable to this year: the Epang (Efang) Palace, begun 212 BCE and still
+  # unfinished at Qin Shi Huang's death in 210 BCE -- 1950s-60s excavation of its rammed-earth
+  # foundation platform (1,320 m by 420 m, 8 m high) found "possibly only the front hall"
+  # raised on it, not the lavish completed palace later legend describes (Wikipedia "Epang
+  # Palace"). The scene therefore shows the platform still under construction, not a finished
+  # building. Black was the Qin state colour by the Mandate of the Five Elements, "the
+  # preferred colour for Qin garments, flags, and pennants" (Wikipedia "Qin Shi Huang"), worn
+  # here by the overseeing official. New event qin-unification added (events.yaml) since no
+  # existing event covers Qin China.
+  - id: qin-xianyang-epang-palace
+    t: 2.235e3
+    chapter: open-ground
+    shot: GROUND
+    title: "An Unfinished Palace"
+    caption: In 210 BCE, the year Qin Shi Huang dies, forced labourers still raise the colossal earthen platform of his unfinished Epang Palace outside Xianyang, capital of a China unified only eleven years before under one law, one script and one currency.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: Iron Age China, close to pre-industrial
+    subject:
+      setting: The rammed-earth construction platform of the Epang Palace, in the Wei valley outside Xianyang, capital of the Qin empire, in 210 BCE
+      left_mass: the rising rammed-earth platform of the unfinished Epang Palace, tamped up in horizontal courses already taller than a person, timber scaffolding and ramps climbing its face
+      vegetation: a few willows along an irrigation channel at the base of the platform; the valley beyond is otherwise cleared farmland
+      fauna: a pair of yoked oxen hauling a cart of rammed-earth aggregate
+      main_subject: a line of forced labourers in coarse hemp tunics passing baskets of earth up a ramp to others tamping it level with wooden pestles, a Qin official in a black robe and black cap overseeing them from a covered elevated walkway of the kind said to link the empire's palaces across the valley
+      ground: packed earth and timber scaffolding at the base of the rising platform, scattered baskets, ropes and wooden tamping tools
+      water: none in the frame; the Wei River lies out of view beyond the valley farmland
+      far_bank: no far bank; the Wei valley farmland recedes toward a line of distant palace roofs linked by a covered elevated road, hazy in the distance, with no city wall anywhere in view
+      sky_and_light: a dry, pale, dusty sky over the Wei valley in late summer; bright, hard midday sunlight
+      absent: [the Great Wall, stone fortifications, the Terracotta Army, a completed ornate palace, legible seal-script writing, horses ridden with stirrups, gunpowder, paper, modern clothing, identifiable faces]
+    events: [qin-unification]
+    # ADR-023: `settlement` `loop` -- a large forced-labour workforce, the closest catalogue fit
+    # for a crowd of this size (no dedicated construction-labour stem exists).
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Xianyang, Shaanxi, China (the Epang Palace site, named in `subject.setting`
+    # above). t = 2,235 BP sits inside the human-era basemap domain (ADR-030), so publish marks
+    # these present-day coordinates directly.
+    location: {lat: 34.3480, lon: 108.7093, label: "Xianyang, China"}
+    pin: {asset_digest: "d3dba0d3524723e2", path: "data/candidates/qin-xianyang-epang-palace/2acbfb8adb4deafb/01-d3dba0d3524723e2.jpg"}
 
   # About AD 125, the height of Roman power; t = 2025 - 125 = 1900. Trajan's reign (AD 98-117)
   # carried the empire to its greatest territorial extent (~5 million km^2); the Nerva-Antonine
@@ -1485,6 +1748,9 @@ scenes:
     # ambient floor (t < 5.125 ka, `stemGains.ts`) -- dockworkers and river trade at a real city's
     # height, louder than the generic murmur every other scene this side of Uruk already carries.
     sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Rome, Italy (the Pantheon). t = 1,900 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 41.8986, lon: 12.4769, label: "Rome, Italy"}
     pin: {asset_digest: "042036ae90c6428a", path: "data/candidates/imperial-rome-pantheon/586156545d27f4c8/01-042036ae90c6428a.jpg"}
 
   # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =
@@ -1525,6 +1791,9 @@ scenes:
     # (-36.4 dB) `settlement` floor this whole era carries, so the deliberate moat sound was never
     # actually the loudest thing in the scene; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
     sound: {stem: lake-water, mode: loop, gain: 0.7}
+    # ADR-034: Angkor Wat, Cambodia. t = 875 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 13.4125, lon: 103.8670, label: "Angkor Wat, Cambodia"}
     pin: {asset_digest: "93cb98d3b0226711", path: "data/candidates/angkor-wat/ede2ed7f4acc8ed1/01-93cb98d3b0226711.jpg"}
 
   # October 1347, twelve Genoese trading galleys, fleeing Caffa, reach Messina, Sicily -- the
@@ -1572,6 +1841,9 @@ scenes:
     # carries, so the deliberate quay sound was never actually the loudest thing in the scene;
     # 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
     sound: {stem: lake-water, mode: loop, gain: 0.7}
+    # ADR-034: Messina, Sicily, Italy. t = 678 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 38.1938, lon: 15.5540, label: "Messina, Sicily"}
     pin: {asset_digest: "00a7df2296a29e50", path: "data/candidates/black-death-messina-1347/2ac51475d47929c0/01-00a7df2296a29e50.jpg"}
 
   # 12 October 1492 (Julian calendar), Columbus's first landfall in the Americas; t = 2025 - 1492 =
@@ -1606,6 +1878,11 @@ scenes:
     # ADR-023 (v2): `water` `loop` -- surf in a shallow Bahamian bay (no CC0 ship-creak bed
     # was found).
     sound: {stem: water, mode: loop, gain: 0.9}
+    # ADR-034: San Salvador Island, Bahamas -- the most widely accepted candidate for Guanahani
+    # per this record's own comment above (the exact island remains contested). t = 533 BP sits
+    # inside the human-era basemap domain (ADR-030), so publish marks these present-day
+    # coordinates directly.
+    location: {lat: 24.0342, lon: -74.4986, label: "San Salvador Island, Bahamas"}
     pin: {asset_digest: "80840169388e234f", path: "data/candidates/columbus-landfall-1492/38463596228879c1/01-80840169388e234f.jpg"}
 
   # About 1650, the Dutch Golden Age; t = 2025 - 1650 = 375. Fills the 338-year gap a review
@@ -1657,6 +1934,9 @@ scenes:
     # commerce, not a quiet canal; `industry`/`traffic` are both still 0 this early (t = 375,
     # ahead of `industrial-revolution`).
     sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Amsterdam, Netherlands. t = 375 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 52.3730, lon: 4.8924, label: "Amsterdam, Netherlands"}
     pin: {asset_digest: "815e21329ccda9ba", path: "data/candidates/amsterdam-voc-harbour/8e29946d17ae807d/01-815e21329ccda9ba.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
@@ -1726,6 +2006,9 @@ scenes:
     # CC0/PD recording of the Flyer's engine exists, so this is a modern single-prop biplane flyby
     # (a documented substitution), kept quiet so the substitution does not dominate.
     sound: {stem: aircraft, mode: once, gain: 0.8}
+    # ADR-034: Kill Devil Hills, Kitty Hawk, North Carolina. t = 122 BP sits inside the human-era
+    # basemap domain (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 36.0142, lon: -75.6684, label: "Kill Devil Hills, North Carolina"}
     pin: {asset_digest: "b82bc9f05d4f344e", path: "data/candidates/first-powered-flight/16cc2baae684243d/02-b82bc9f05d4f344e.jpg"}
 
   # 7 October 1913, Ford's Highland Park plant, Michigan, introduces the moving assembly line
@@ -1774,6 +2057,10 @@ scenes:
     # per CLAUDE.md ("if something is unusable, stop and report; do not silently substitute a
     # different dataset") this scene carries no `sound` -- the flat 0.48 `settlement` floor every
     # scene this side of Uruk already has is what plays here.
+    # ADR-034: Highland Park, Michigan -- the Ford Highland Park Plant named in this record's own
+    # comment above. t = 112 BP sits inside the human-era basemap domain (ADR-030), so publish
+    # marks these present-day coordinates directly.
+    location: {lat: 42.4048, lon: -83.0966, label: "Highland Park, Michigan"}
     pin: {asset_digest: "1bb72621b940a4f0", path: "data/candidates/ford-model-t-street/839208a6ede59248/01-1bb72621b940a4f0.jpg"}
 
   # 1 July - 18 November 1916, the Battle of the Somme, northern France; t = 2025 - 1916 = 109
@@ -1824,6 +2111,11 @@ scenes:
     # -35.2 dB -- the deliberate bombardment was quieter than an incidental factory hum. 0.9
     # (-30.9 dB) clears it by over 3 dB.
     sound: {stem: artillery, mode: loop, gain: 0.9}
+    # ADR-034: the Somme battlefield, France -- Albert, the town at its historical centre, as a
+    # representative point along the front rather than one specific trench. t = 109 BP sits inside
+    # the human-era basemap domain (ADR-030), so publish marks these present-day coordinates
+    # directly.
+    location: {lat: 50.0022, lon: 2.6528, label: "The Somme, France"}
     pin: {asset_digest: "9efe47ae999402d2", path: "data/candidates/somme-1916/ddd0a6e1361eaed0/01-9efe47ae999402d2.jpg"}
 
   # About 1930, Tokyo's Ginza district at the height of its interwar "Ginbura" mass urban
@@ -1883,6 +2175,9 @@ scenes:
     # ("if something is unusable, stop and report; do not silently substitute a different dataset")
     # this scene carries no `sound` -- the flat 0.48 `settlement` floor already covers the crowd
     # murmur ("Ginbura" strollers) this scene's own subject calls for.
+    # ADR-034: Ginza, Tokyo, Japan. t = 95 BP sits inside the human-era basemap domain (ADR-030),
+    # so publish marks these present-day coordinates directly.
+    location: {lat: 35.6717, lon: 139.7650, label: "Ginza, Tokyo"}
     pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/candidates/ginza-modern-tokyo/80f535a685fb1887/01-81ccaf1dcc006f1f.jpg"}
 
   # 6 June 1944, D-Day, the Normandy landings; t = 2025 - 1944 = 81 (events.yaml
@@ -1935,6 +2230,10 @@ scenes:
     # 0.48 (-36.4 dB) `settlement` floor by only 1.2 dB, a weak margin for the deliberate surf cue
     # over incidental background murmur; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
     sound: {stem: water, mode: loop, gain: 0.7}
+    # ADR-034: Omaha Beach, Normandy, France, as a representative point among the five landing
+    # beaches. t = 81 BP sits inside the human-era basemap domain (ADR-030), so publish marks
+    # these present-day coordinates directly.
+    location: {lat: 49.3721, lon: -0.8256, label: "Normandy, France"}
     pin: {asset_digest: "3376a765c7aa7975", path: "data/candidates/normandy-landings-dday/88eb82ff981ae8cb/01-3376a765c7aa7975.jpg"}
 
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
@@ -1985,6 +2284,11 @@ scenes:
     # then ~20 s of low rolling rumble), fired `once` at a lower gain than kpg-arrival -- the
     # detonation as heard from ~20 miles away.
     sound: {stem: impact, mode: once, gain: 0.8}
+    # ADR-034: the Trinity Site ground zero, New Mexico (the event's own location, not the
+    # Compania Hill viewing vantage this record's subject is framed from). t = 80 BP sits inside
+    # the human-era basemap domain (ADR-030), so publish marks these present-day coordinates
+    # directly.
+    location: {lat: 33.6772, lon: -106.4753, label: "Trinity Site, New Mexico"}
     pin: {asset_digest: "f09e447d813c3ab1", path: "data/candidates/trinity-test/8e82dc7b2a4afd06/02-f09e447d813c3ab1.jpg"}
 
   # About 1957, postwar-suburban-boom (events.yaml, t_min/t_max 65-80, 1960-1945); t = 2025 - 1957 =
@@ -2106,6 +2410,10 @@ scenes:
     # Saturn V recording was found, so this is NASA public-domain Space Shuttle launch audio
     # (commentary removed) -- a documented substitution.
     sound: {stem: rocket, mode: once, gain: 1.0}
+    # ADR-034: Kennedy Space Center Launch Complex 39A, Florida. t = 56 BP sits inside the
+    # human-era basemap domain (ADR-030), so publish marks these present-day coordinates
+    # directly.
+    location: {lat: 28.6084, lon: -80.6043, label: "Kennedy Space Center, Florida"}
     pin: {asset_digest: "a0da45cad76f825d", path: "data/candidates/apollo-11-launch/33045c4ababe91c8/03-a0da45cad76f825d.jpg"}
 
   # About 1975, two decades into the container-shipping revolution (events.yaml containerization,
@@ -2146,52 +2454,6 @@ scenes:
     # unusable, stop and report; do not silently substitute a different dataset") this scene
     # carries no `sound` -- the flat 0.48 `settlement` floor covers the working-port ambience.
     pin: {asset_digest: "8cc9c5451b9b81f3", path: "data/candidates/containerisation-port/9831bb0bdcdc23b8/01-8cc9c5451b9b81f3.jpg"}
-
-  # May 1980, Shenzhen Bay before the Special Economic Zone transforms it (events.yaml
-  # shenzhen-sez-designated, t = 45); t = 2025 - 1980 = 45. Wikipedia "Shenzhen": "In 1980, Shenzhen
-  # had a population of 30,000" when it was designated China's first Special Economic Zone that May;
-  # by 2025 the same city holds 18.2 million people -- the same figures already cited in
-  # shenzhen-bay-present's own comment, so this scene and that one are a deliberate before/after
-  # pair on the same bay, 45 years apart. Kept in waters-edge (WATER_EDGE): the composition is
-  # nearly identical to shenzhen-bay-present's own (a shoreline, a left-mass structure, open water,
-  # a low far bank), so the two frames should read as the same place transformed, not two different
-  # places.
-  # Review fix (2026-09-15): `absent` originally named "paved roads" and "electric lighting"
-  # outright, which overclaims -- 1980 Guangdong county towns had some basic grid power and road
-  # links even where surrounding villages did not. Narrowed to "multi-lane paved roads" and "modern
-  # streetlights", the genuinely anachronistic version of each. A reviewer also suggested the
-  # present-day Houhai shore was reclaimed from oyster-farming tidal flats, which would be a strong
-  # before/after cue; left unadded here, since neither a live WebFetch of Wikipedia "Shenzhen" nor
-  # this session's (exhausted) web-search budget could confirm it -- flagged for the lead to verify
-  # before adding.
-  - id: shenzhen-sez-1980
-    t: 45.0
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "China's First Economic Zone"
-    caption: In May 1980, the fishing villages and paddy fields around Shenzhen Bay — home to about 30,000 people — are designated China's first Special Economic Zone; within forty-five years the same shoreline carries a city of 18.2 million.
-    unsourced:
-      o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: 1980 global mean, at the start of the modern warming trend
-    subject:
-      setting: The shore of Shenzhen Bay, a market town of fishing villages and paddy fields in Guangdong, China, in May 1980, the month it is designated China's first Special Economic Zone
-      left_mass: a cluster of low, whitewashed brick-and-tile fishing houses on stilts at the water's edge, fishing nets hung out to dry along their eaves
-      vegetation: flooded rice paddies and banana groves running back from the shore, with a fringe of low mangrove scrub at the tideline
-      fauna: a flock of egrets working the paddy shallows; ducks paddling near the shore
-      main_subject: a fisherman wading out to push off a small wooden sampan at the waterline, while behind him surveyors in plain work clothes hammer a row of wooden stakes and string a boundary line across an empty paddy field marked for construction
-      ground: packed mud and cracked paddy dikes at the water's edge, a few upturned wooden boats and coiled fishing nets
-      water: the calm, brown-green, shallow water of Shenzhen Bay at low tide, mudflats showing at the margin
-      far_bank: open paddy fields and low wooded hills receding into haze, with no building taller than two storeys anywhere in view
-      sky_and_light: a hazy, humid subtropical sky with low cloud; soft, diffused midday light
-      absent: [skyscrapers, construction cranes for tall buildings, modern cars, multi-lane paved roads, modern streetlights, modern clothing, identifiable faces, container ships, bridges]
-    events: [shenzhen-sez-designated]
-    # ADR-023 (2026-09-15 human-history scene sounds): deliberately no `sound` -- this is the
-    # "before" half of Shenzhen's arc, a nearly empty shoreline (one fisherman, a few surveyors
-    # staking a boundary line), not yet the industry or crowd the SEZ will bring. The flat 0.48
-    # `settlement` floor every scene this side of Uruk already carries is enough presence; a
-    # foregrounded stem here (water, industry) would overstate how populated or busy this exact
-    # moment is, undercutting the irony the scene is framed to carry.
-    pin: {asset_digest: "4c3e176fe0fb71b8", path: "data/candidates/shenzhen-sez-1980/da809aa2a6f7a088/01-4c3e176fe0fb71b8.jpg"}
 
   # 9 November 1989, fall of the Berlin Wall; t = 2025 - 1989 = 36 (events.yaml
   # berlin-wall-falls). Wikipedia "Fall of the Berlin Wall": overwhelmed border guards opened
@@ -2242,6 +2504,11 @@ scenes:
     # its own acheulean-erectus association; a foregrounded crowd murmur reads truer to a jubilant
     # gathering than a mismatched percussion loop would.
     sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Berlin, Germany, at the Brandenburg Gate -- a representative point on the wall's
+    # line, not the single unnamed crossing this record's subject depicts. t = 36 BP sits inside
+    # the human-era basemap domain (ADR-030), so publish marks these present-day coordinates
+    # directly.
+    location: {lat: 52.5163, lon: 13.3777, label: "Berlin Wall, Germany"}
     pin: {asset_digest: "04dcd886754a57cd", path: "data/candidates/berlin-wall-fall/93a53ee1d8d9e2ce/01-04dcd886754a57cd.jpg"}
 
   # About 1998, the Aral Sea's collapse (events.yaml aral-sea-shrinkage, t_min/t_max 21-65,
@@ -2284,6 +2551,10 @@ scenes:
     # (-35.2 dB) at t = 27, an effective tie with 0.55's own -35.2 dB -- the deliberate desolate-
     # wind cue was no louder than background road noise. 0.8 (-31.9 dB) clears it by over 3 dB.
     sound: {stem: wind, mode: loop, gain: 0.8}
+    # ADR-034: Moynaq, Uzbekistan -- the stranded fishing port named in this record's own comment
+    # above. t = 27 BP sits inside the human-era basemap domain (ADR-030), so publish marks these
+    # present-day coordinates directly.
+    location: {lat: 43.7742, lon: 59.0208, label: "Moynaq, Uzbekistan"}
     pin: {asset_digest: "362287fda442033d", path: "data/candidates/aral-sea-drying/9e9e8d973f2352fa/01-362287fda442033d.jpg"}
 
   # About 2014, mid-way through solar power's rapid scale-up (events.yaml renewable-energy-scaleup,
@@ -2477,4 +2748,7 @@ scenes:
     # ADR-023 (v2): `traffic` `loop` above its 0.55 present-day ambient -- a busy megacity
     # waterfront, heard as road traffic and city hum, never sirens.
     sound: {stem: traffic, mode: loop, gain: 0.9}
+    # ADR-034: Shenzhen Bay (Houhai), China. t = 0 sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 22.4800, lon: 113.9300, label: "Shenzhen Bay, China"}
     pin: {asset_digest: "7381960301cd6f6e", path: "data/candidates/shenzhen-bay-present/a350076bdc37326f/01-7381960301cd6f6e.jpg"}

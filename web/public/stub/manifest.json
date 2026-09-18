@@ -11,6 +11,11 @@
       "shot": "WIDE_RIDGE",
       "title": "A Modern City",
       "caption": "A modern city at dusk, one species reshaping the planet's surface in a geological instant.",
+      "location": {
+        "label": "Shenzhen, China",
+        "presentDay": { "lat": 22.54, "lon": 114.06 },
+        "marker": { "lat": 22.54, "lon": 114.06 }
+      },
       "width": 1600,
       "height": 900
     },
@@ -33,6 +38,11 @@
       "shot": "WATER_EDGE",
       "title": "Archean Shore",
       "caption": "An Archean shore under a young, dim sun and a hazy, oxygen-free sky.",
+      "location": {
+        "label": "Pilbara Craton, Australia",
+        "presentDay": { "lat": -21.2, "lon": 119.7 },
+        "marker": null
+      },
       "width": 1600,
       "height": 900,
       "sound": { "stem": "water", "mode": "loop", "gain": 0.8 }

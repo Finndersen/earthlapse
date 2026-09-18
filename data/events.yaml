@@ -1168,14 +1168,67 @@ events:
     importance: 0.9
     description: >
       Fossils from Jebel Irhoud, Morocco, combine a modern-looking face with a more
-      archaic braincase shape. They are the oldest known Homo sapiens remains, pushing the
-      species' origin back roughly 100,000 years earlier than previously recognised and
-      supporting a pan-African rather than single-region origin.
+      archaic braincase shape. They are among the earliest known members of the Homo
+      sapiens lineage, pushing the species' origins back roughly 100,000 years earlier
+      than previously recognised and supporting a pan-African rather than single-region
+      origin.
     citation: >
       Hublin, J.-J. et al. (2017). "New fossils from Jebel Irhoud, Morocco and the
       pan-African origin of Homo sapiens." Nature, 546, 289-292. Richter, D. et al.
       (2017). "The age of the hominin fossils from Jebel Irhoud, Morocco, and the origins
-      of the Middle Stone Age." Nature, 546, 293-296. Combined age estimate: 315 +/- 34 ka.
+      of the Middle Stone Age." Nature, 546, 293-296. doi:10.1038/nature22335. Combined
+      age estimate: 315 +/- 34 ka. Bergström, A., Stringer, C., Hajdinjak, M., Scerri,
+      E.M.L. & Skoglund, P. (2021). "Origins of modern human ancestry." Nature, 590,
+      229-237. doi:10.1038/s41586-021-03244-5 (pan-African population structure).
+    # ADR-032: a degenerate (zero-length) arrival arc marking where the species emerges,
+    # schematic per Hublin et al.'s own "pan-African" finding (deliberately not the single
+    # Jebel Irhoud site, which sits far north/west of the broader African range the paper
+    # itself argues against reading as the origin point).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 2.0, lon: 20.0}
+      destination: {lat: 2.0, lon: 20.0}
+      established: 3.15e5
+      windows:
+        - {t_min: 0.0, t_max: 3.49e5}
+
+  - id: levant-early-dispersal
+    label: Early dispersal into the Levant
+    kind: moment
+    t_min: 1.77e5
+    t_max: 1.94e5
+    t: 1.855e5
+    tags: [human-origins]
+    importance: 0.45
+    description: >
+      The Misliya-1 maxilla, from Misliya Cave on Mount Carmel, Israel, is among the
+      earliest known Homo sapiens fossils outside Africa, dated by combined U-Th/ESR
+      and thermoluminescence methods. An older, contested claim for Apidima 1, Greece
+      (>210 ka) is not treated as better-dated here. This early excursion predates the
+      main Out-of-Africa migration (out-of-africa-migration) by well over 100,000 years;
+      ancient-genome analysis indicates modern-human populations that left Africa before
+      about 50 ka, including this one, were genetically distinct from -- and did not
+      contribute ancestry to -- the population whose later expansion is ancestral to
+      living non-African humans.
+    citation: >
+      Hershkovitz, I. et al. (2018). "The earliest modern humans outside Africa."
+      Science, 359(6374), 456-459. doi:10.1126/science.aap8369. Misliya-1 dated to
+      177,000-194,000 years ago (95% CI), combined U-Th/ESR and thermoluminescence
+      dating. Harvati, K. et al. (2019). "Apidima Cave fossils provide earliest evidence
+      of Homo sapiens in Eurasia." Nature, 571, 500-504. doi:10.1038/s41586-019-1376-z
+      (contested >210 ka claim). Sumer, A.P. et al. (2025). "Earliest modern human
+      genomes constrain timing of Neanderthal admixture." Nature. doi:10.1038/s41586-024-08420-x
+      (early non-African lineages genetically distinct from the later out-of-Africa
+      expansion).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 15.0, lon: 33.0}
+      destination: {lat: 32.7, lon: 35.0}
+      established: 1.855e5
+      windows:
+        - {t_min: 0.0, t_max: 1.94e5}
 
   - id: eemian-interglacial
     label: Eemian last interglacial
@@ -1232,14 +1285,129 @@ events:
     importance: 0.6
     description: >
       Genomic evidence dates the principal migration of modern humans out of Africa,
-      ancestral to all non-African populations living today, to this window. Earlier,
-      smaller dispersals (e.g. into the Levant by ~180 ka) did not leave a substantial
-      genetic legacy in living non-African populations.
+      ancestral to all non-African populations living today, to this window. The exact
+      route (a northern crossing via Egypt and the Sinai, or a southern one via the Bab
+      el-Mandeb strait) is unresolved and not asserted here. Earlier, smaller dispersals
+      (e.g. into the Levant by ~180 ka, levant-early-dispersal) left populations
+      genetically distinct from this later, successful expansion.
     citation: >
-      Nielsen, R. et al. (2017). "Tracing the peopling of the world through genomics."
-      Nature, 541, 302-310 (review, ~50-70 ka for the main out-of-Africa dispersal).
-      Pagani, L. et al. (2015). "Tracing the route of modern humans out of Africa by using
-      225 whole-genome sequences from Ethiopians and Egyptians." AJHG, 96(6), 986-991.
+      Bergstrom, A., Stringer, C., Hajdinjak, M., Scerri, E.M.L. & Skoglund, P. (2021).
+      "Origins of modern human ancestry." Nature, 590, 229-237.
+      doi:10.1038/s41586-021-03244-5 ("worldwide expansion of modern humans between 40
+      and 60 thousand years ago"). Iasi, L.N.M. et al. (2024). "Neanderthal ancestry
+      through time: Insights from genomes of ancient and present-day humans." Science,
+      386(6727). doi:10.1126/science.adq3010 (the shared Neanderthal-admixture pulse
+      dating this population's spread to ~50,500-43,500 years ago).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 15.0, lon: 33.0}
+      destination: {lat: 28.0, lon: 42.0}
+      established: 6.0e4
+      windows:
+        - {t_min: 0.0, t_max: 7.0e4}
+
+  - id: south-southeast-asia-arrival
+    label: Arrival in South and Southeast Asia
+    kind: moment
+    t_min: 5.0e4
+    t_max: 6.0e4
+    t: 5.5e4
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      Modern humans following the main Out-of-Africa dispersal (out-of-africa-migration)
+      reach South and mainland Southeast Asia along a coastally oriented route roughly
+      60-50 thousand years ago, per genetic and archaeological synthesis. An older,
+      contested claim (Tam Pa Ling, Laos, 70 +/- 3 ka) would push a Southeast Asian
+      presence earlier still; it is not treated as the primary arrival date here.
+    citation: >
+      Mellars, P., Gori, K.C., Carr, M., Soares, P.A. & Richards, M.B. (2013). "Genetic
+      and archaeological perspectives on the initial modern human colonization of
+      southern Asia." PNAS, 110(26), 10699-10704. doi:10.1073/pnas.1306043110.
+      Coastally oriented dispersal dated to approximately 60-50 ka. Freidline, S.E. et
+      al. (2023). "Early presence of Homo sapiens in Southeast Asia by 86-68 kyr at Tam
+      Pa Ling, Northern Laos." Nature Communications, 14, 3193.
+      doi:10.1038/s41467-023-38715-y (contested older claim, TPL 6 dated to 70 +/- 3 ka).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 28.0, lon: 42.0}
+      destination: {lat: 15.0, lon: 100.0}
+      established: 5.5e4
+      windows:
+        - {t_min: 0.0, t_max: 6.0e4}
+
+  - id: sahul-arrival
+    label: Arrival in Sahul (Australia and New Guinea)
+    kind: moment
+    t_min: 4.7e4
+    t_max: 7.1e4
+    t: 5.0e4
+    tags: [human-origins]
+    importance: 0.55
+    description: >
+      Optically stimulated luminescence dating at Madjedbebe, in Australia's Northern
+      Territory, leads Clarkson et al. (2017) to state that "human occupation began
+      around 65,000 years ago" -- a long chronology also supported by a 2025
+      mitogenomic study proposing settlement "by ~60 ka via at least two distinct
+      routes." A shorter chronology of ~47,000-51,000 years is argued instead by
+      O'Connell et al. (2018), who question Madjedbebe's stratigraphic integrity, and
+      by Williams et al. (2020), who propose termite bioturbation could explain
+      anomalously old dates at the site; genetic evidence that Sahul's earliest
+      populations share a single pulse of Neanderthal admixture datable to roughly
+      45,000-50,500 years ago is also read as favouring the shorter chronology. Both
+      readings remain live in the literature -- the arc here is shown dashed across the
+      full contested range and solid from the shorter chronology's estimate.
+    citation: >
+      Clarkson, C. et al. (2017). "Human occupation of northern Australia by 65,000
+      years ago." Nature, 547, 306-310. doi:10.1038/nature22968. O'Connell, J.F. et al.
+      (2018). "When did Homo sapiens first reach Southeast Asia and Sahul?" PNAS,
+      115(34), 8482-8490. doi:10.1073/pnas.1808385115. Williams, M.A.J., Spooner, N.A.,
+      McDonnell, K. & O'Connell, J.F. (2020, published online; 2021 in print).
+      "Identifying disturbance in archaeological sites in tropical northern Australia."
+      Geoarchaeology. doi:10.1002/gea.21822. Sumer, A.P. et al. (2025). Nature.
+      doi:10.1038/s41586-024-08420-x (shared Neanderthal-admixture pulse ~45-49 ka).
+      Gandini, F. et al. (2025). "Genomic evidence supports the 'long chronology' for
+      the peopling of Sahul." Science Advances. doi:10.1126/sciadv.ady9493 (summarises
+      the long, ~60-65 ka, vs. short, 47-51 ka, debate).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: -5.0, lon: 110.0}
+      destination: {lat: -15.0, lon: 133.0}
+      established: 5.0e4
+      windows:
+        - {t_min: 0.0, t_max: 7.1e4}
+
+  - id: east-asia-arrival
+    label: Arrival in East Asia
+    kind: moment
+    t_min: 4.5e4
+    t_max: 5.0e4
+    t: 4.75e4
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      Ancient-DNA and multimethod redating (AMS radiocarbon, optically stimulated
+      luminescence) of purported early modern-human remains in southern China places
+      their actual arrival within the ~50,000-45,000-year window set by molecular data,
+      consistent with Tianyuan man (~42,000-39,000 years ago, near Beijing). This
+      contradicts much older contested claims for the region, including U-Th dating of
+      flowstones at Fuyan Cave (Daoxian) suggesting 120,000-80,000 years, which the
+      redating study found to be substantially younger, some Holocene in age.
+    citation: >
+      Sun, X. et al. (2021). "Ancient DNA and multimethod dating confirm the late
+      arrival of anatomically modern humans in southern China." PNAS, 118(8),
+      e2019158118. doi:10.1073/pnas.2019158118.
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 15.0, lon: 100.0}
+      destination: {lat: 35.0, lon: 110.0}
+      established: 4.75e4
+      windows:
+        - {t_min: 0.0, t_max: 5.0e4}
 
   - id: earliest-cave-art
     label: Earliest known cave and rock art
@@ -1265,18 +1433,42 @@ events:
     label: Neanderthals and Homo sapiens overlap in Europe
     kind: period
     t_min: 3.9e4
-    t_max: 4.5e4
+    t_max: 4.7e4
     tags: [human-origins]
     importance: 0.55
     description: >
-      Homo sapiens is present in Europe from roughly 45 ka, while radiocarbon dating of
+      Homo sapiens is present in Europe from roughly 45-47 ka, while radiocarbon dating of
       material from 40 Neanderthal sites across Europe shows Neanderthals disappearing from
       the continent between about 41 and 39 ka. Rather than a single abrupt replacement,
       populations vanish at different times in different regions, with the two species
       overlapping there for an estimated 2,600-5,400 years before Neanderthal extinction.
+      The earliest securely dated Homo sapiens presence in Europe is the Initial Upper
+      Palaeolithic layer at Bacho Kiro Cave, Bulgaria, radiocarbon-dated to 45,820-43,650
+      cal BP and probably present from as early as 46,940 cal BP. A contested, possibly
+      earlier incursion is claimed at Grotte Mandrin, France (Neronian layer E,
+      ~56,800-51,700 years ago), which would place Homo sapiens in Europe well before
+      Bacho Kiro if the association holds.
     citation: >
       Higham, T. et al. (2014). "The timing and spatiotemporal patterning of Neanderthal
-      disappearance." Nature, 512, 306-309.
+      disappearance." Nature, 512, 306-309. Fewlass, H. et al. (2020). "A 14C chronology
+      for the Middle to Upper Palaeolithic transition at Bacho Kiro Cave, Bulgaria."
+      Nature Ecology & Evolution, 4, 794-801. doi:10.1038/s41559-020-1136-3 (Initial
+      Upper Palaeolithic layer, 45,820-43,650 cal BP, probably from 46,940 cal BP).
+      Slimak, L. et al. (2022). "Modern human incursion into Neanderthal territories
+      54,000 years ago at Mandrin, France." Science Advances, 8, eabj9496.
+      doi:10.1126/sciadv.abj9496 (contested).
+    # ADR-032: `established` (~46 ka, Bacho Kiro) is independent of this event's own kind/t --
+    # this is a `period` (ADR-022) with no single instant of its own, but the arrival arc
+    # still needs one transition point. The window's t_max (47 ka) reflects Fewlass et
+    # al.'s "probably from 46,940 cal BP" figure (+75 yr cal-BP-to-project-t offset).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 35.0, lon: 38.0}
+      destination: {lat: 45.0, lon: 20.0}
+      established: 4.6e4
+      windows:
+        - {t_min: 0.0, t_max: 4.7e4}
 
   # Divergence date is heavily contested across methods (Skoglund/Fan 2015-16
   # Pleistocene-wolf recalibration vs. Thalmann 2013's own 19,000-32,000 YBP figure);
@@ -1306,6 +1498,43 @@ events:
       divergence of 27,000-40,000 YBP; Erralla dog dated 17,410-17,096 BP. Via Wikipedia
       "Domestication of the dog"; primary genomic papers not read directly.
 
+  - id: beringia-arrival
+    label: Arrival in Beringia
+    kind: moment
+    t_min: 2.0e4
+    t_max: 3.2e4
+    t: 2.5e4
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      Ancient-genome analysis of the Upward Sun River infant (USR1), Alaska, dates
+      population splits and the "Beringian standstill" rather than arrival directly: the
+      Ancient Beringian lineage diverges from the ancestral Native American lineage about
+      20,000 years ago, within a 20,000-25,000-year window for the formation of that
+      ancestral lineage itself. Direct archaeological evidence for people in the region
+      brackets this: the Yana Rhinoceros Horn Site, Siberia, dates human presence at the
+      Arctic edge of Beringia to about 32,000 years ago, while Bluefish Caves, Yukon --
+      on the Beringian side of the later ice-free corridor -- has a contested radiocarbon
+      case for human presence by about 24,000 years ago. The date used here, 25 ka, is a
+      judgement call within this bracket, not a single securely dated arrival.
+    citation: >
+      Moreno-Mayar, J.V. et al. (2018). "Terminal Pleistocene Alaskan genome reveals
+      first founding population of Native Americans." Nature, 553, 203-207.
+      doi:10.1038/nature25173. Pitulko, V.V. et al. (2004). "The Yana RHS Site: Humans
+      in the Arctic Before the Last Glacial Maximum." Science, 303(5654), 52-56.
+      doi:10.1126/science.1085219. Bourgeon, L., Burke, A. & Higham, T. (2017).
+      "Earliest Human Presence in North America Dated to the Last Glacial Maximum: New
+      Radiocarbon Dates from Bluefish Caves, Canada." PLOS ONE, 12(1), e0169486.
+      doi:10.1371/journal.pone.0169486 (contested).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 60.0, lon: 125.0}
+      destination: {lat: 65.0, lon: -170.0}
+      established: 2.5e4
+      windows:
+        - {t_min: 0.0, t_max: 3.2e4}
+
   - id: last-glacial-maximum
     label: Last Glacial Maximum
     kind: period
@@ -1329,26 +1558,46 @@ events:
     label: Peopling of the Americas
     kind: period
     t_min: 14000
-    t_max: 23180
+    t_max: 23255
     tags: [human-origins]
     importance: 0.5
     description: >
       Humans reach and spread across the Americas, the last continents to be peopled.
       Fossilised footprints at White Sands, New Mexico, dated across two stratigraphic
       layers to 22,860 +/- 320 and 21,130 +/- 250 calibrated years BP, push the earliest
-      secure evidence back to the Last Glacial Maximum, well before the long-standard
-      ~14,000-16,000 BP "Clovis-first" consensus; broad dispersal across both continents
-      was underway by ~14,000 BP. The seed-based radiocarbon method behind the White
-      Sands dates has been methodologically challenged, and still-older claimed sites
-      (Chiquihuite Cave, the Cerutti Mastodon site) remain without scientific consensus
-      — the interval's older bound reflects that live dispute, not settled measurement
-      error.
+      secure evidence back to the Last Glacial Maximum, still debated but independently
+      supported by two follow-up dating studies; that is well before the older
+      "Clovis-first" model, which placed first peopling at only around 13,000 BP. The
+      pre-Clovis consensus that superseded it -- sites such as Cooper's Ferry, Idaho,
+      dated to ~16,000 years ago -- already placed broad dispersal by roughly 14,000-
+      16,000 BP; still-older claimed sites (Chiquihuite Cave, the Cerutti Mastodon site)
+      remain without scientific consensus, which is what the interval's older bound
+      reflects, not settled measurement error.
     citation: >
       Bennett, M.R. et al. (2021). "Evidence of humans in North America during the Last
       Glacial Maximum." Science, 373(6562), 1528-1531 (White Sands footprints, 22,860
-      +/- 320 and 21,130 +/- 250 cal yr BP). Nielsen, R. et al. (2017). "Tracing the
-      peopling of the world through genomics." Nature, 541, 302-310 (general dispersal
-      by ~14,000 BP).
+      +/- 320 and 21,130 +/- 250 cal yr BP). Pigati, J.S. et al. (2023). "Independent
+      age estimates resolve the controversy of ancient human footprints at White
+      Sands." Science, 382(6666), 73-75. doi:10.1126/science.adh5007. Holliday, V.T.
+      et al. (2025). "Paleolake geochronology supports Last Glacial Maximum (LGM) age
+      for human tracks at White Sands, New Mexico." Science Advances.
+      doi:10.1126/sciadv.adv4951 (both corroborate, debate continues). Nielsen, R. et
+      al. (2017). "Tracing the peopling of the world through genomics." Nature, 541,
+      302-310. doi:10.1038/nature21347. Davis, L.G. et al. (2019). "Late Upper
+      Paleolithic occupation at Cooper's Ferry, Idaho, USA, ~16,000 years ago."
+      Science, 365(6456), 891-897. doi:10.1126/science.aax9830.
+    # ADR-032: `established` (15,000 BP) is independent of this event's own kind (a
+    # `period`, no single `t` of its own) -- a conservative point within the pre-Clovis
+    # dispersal range the description cites (~14,000-16,000 BP), not a re-derivation of
+    # this event's own t_min.
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 65.0, lon: -170.0}
+      destination: {lat: -10.0, lon: -65.0}
+      established: 15000.0
+      windows:
+        - {t_min: 0.0, t_max: 23255.0}
 
   # A secondary human-origins tag is plausible (Beringia's role in peopling-of-americas)
   # but this event's own description stays geographic, so it is left single-tagged.
@@ -1500,6 +1749,51 @@ events:
       Corroborated live via Wikipedia, "African humid period" (2026-09-14), which names
       both papers directly for the same figures.
 
+  # Later-migrations batch (2026-09-17): eleven new arrival events, distinct from the
+  # thirteen pre-existing `arrival_kind: peopling` arcs -- most (nine) are `migration`,
+  # a later movement of people into land already inhabited or previously settled,
+  # rather than first human settlement of an uninhabited region. A 2026-09-17
+  # fact-check (ADR-032 amendment, docs/DECISIONS.md) reclassified two of the eleven to
+  # `peopling` -- austronesian-expansion-taiwan, and norse-north-atlantic-settlement,
+  # which was also split into an Iceland-only event plus a new
+  # greenland-norse-settlement `peopling` event -- per the destination's prior-
+  # population status. See sources/events-core/README.md for the full batch list and
+  # verification method.
+  - id: neolithic-farmers-europe
+    label: Neolithic farmers spread from Anatolia into Europe
+    kind: period
+    t_min: 6925
+    t_max: 8525
+    tags: [human-origins, society]
+    importance: 0.5
+    description: >
+      Farming spreads from the Fertile Crescent through Anatolia into Europe as a
+      population movement, not merely a diffusion of ideas: ancient DNA shows migrating
+      farmers, genetically distinct from Europe's resident hunter-gatherers, crossing
+      into the Aegean and Balkans by around 6500 BC and reaching Central Europe's Linear
+      Pottery (LBK) culture by around 5500 BC. The farmers substantially replace, while
+      also admixing with, the Mesolithic populations they encounter, carrying
+      agriculture as far as Britain and Scandinavia over the following two millennia.
+    citation: >
+      Pinhasi, R., Fort, J. & Ammerman, A.J. (2005). "Tracing the Origin and Spread of
+      Agriculture in Europe." PLoS Biology, 3(12), e410. doi:10.1371/journal.pbio.0030410
+      (radiocarbon wave-of-advance model; farming reaches the Aegean by c. 6500 BC).
+      Haak, W. et al. (2010). "Ancient DNA from European Early Neolithic Farmers Reveals
+      Their Near Eastern Affinities." PLoS Biology, 8(11), e1000536.
+      doi:10.1371/journal.pbio.1000536 (Near Eastern-derived ancestry in Linear Pottery
+      culture farmers, central Germany, c. 5,500 BC). Mathieson, I. et al. (2018). "The
+      genomic history of southeastern Europe." Nature, 555, 197-203.
+      doi:10.1038/nature25778 (Anatolian-related ancestry spreading into the
+      Aegean/Balkans, with substantial genetic replacement of local hunter-gatherers).
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 38.5, lon: 35.0}
+      destination: {lat: 48.5, lon: 16.0}
+      established: 7525.0
+      windows:
+        - {t_min: 0.0, t_max: 8525.0}
+
   - id: uruk-first-city
     label: Uruk becomes the first city
     kind: period
@@ -1556,6 +1850,35 @@ events:
       Proto-cuneiform administrative tablets from Uruk date to the Uruk IV-III periods,
       ~3400-3000 BC.
 
+  - id: yamnaya-steppe-migration
+    label: Yamnaya steppe migration into Europe
+    kind: period
+    t_min: 4325
+    t_max: 5025
+    tags: [human-origins, society]
+    importance: 0.55
+    description: >
+      Pastoralist Yamnaya populations from the Pontic-Caspian steppe expand westward
+      into Europe from around 3000 BC, contributing up to three-quarters of the ancestry
+      of the subsequent Corded Ware culture across Central and Northern Europe by around
+      2500 BC. Ancient-DNA studies link this migration to the spread of Indo-European
+      languages and a marked, sex-biased genetic turnover among the resident Neolithic
+      farmer populations.
+    citation: >
+      Haak, W. et al. (2015). "Massive migration from the steppe was a source for
+      Indo-European languages in Europe." Nature, 522, 207-211. doi:10.1038/nature14317.
+      Allentoft, M.E. et al. (2015). "Population genomics of Bronze Age Eurasia."
+      Nature, 522, 167-172. doi:10.1038/nature14507 (up to ~75% Yamnaya-derived ancestry
+      in the subsequent Corded Ware culture).
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 48.0, lon: 45.0}
+      destination: {lat: 52.0, lon: 12.0}
+      established: 4525.0
+      windows:
+        - {t_min: 0.0, t_max: 5025.0}
+
   # Construction window (Ramsey et al. 2010 Bayesian reanalysis, 2613-2577 BC) is
   # contested against conflicting mortar-radiocarbon evidence and one unexplained older
   # cedar-plank date -- see description. The linked scene (giza-great-pyramid,
@@ -1580,6 +1903,100 @@ events:
       Ramsey, C.B. et al. (2010), Egyptian radiocarbon chronology re-analysis, 2613-2577
       BC. Via Wikipedia "Great Pyramid of Giza"; primary paper not independently read.
 
+  # Added for the mohenjo-daro scene (data/scenes.yaml), filling the gap between
+  # great-pyramid-giza and roman-empire-peak. No existing event covered the Indus Valley
+  # Civilisation.
+  - id: indus-valley-urbanism
+    label: Indus Valley Civilisation's Mature Harappan phase
+    kind: period
+    t_min: 3925
+    t_max: 4625
+    tags: [society]
+    importance: 0.5
+    description: >
+      The Indus Valley Civilisation's Mature ("Integration Era") Harappan phase, roughly
+      2600-1900 BC, sees Mohenjo-daro and Harappa grow into planned cities of tens of
+      thousands of people each, laid out on street grids with covered brick drains,
+      public wells and standardised fired-brick construction — a scale and uniformity of
+      urban planning with no known contemporary parallel, achieved without the
+      monumental palaces or temples that mark contemporary Egypt and Mesopotamia.
+    citation: >
+      Via Wikipedia "Indus Valley Civilisation" and "Mohenjo-daro" (accessed 2026-09-17):
+      Mature/Integration Era Harappan phase conventionally 2600-1900 BC; Mohenjo-daro and
+      Harappa populations of 30,000-60,000; covered street drains and over 700 wells at
+      Mohenjo-daro. Primary excavation reports not independently read.
+
+  - id: austronesian-expansion-taiwan
+    label: Austronesian expansion out of Taiwan
+    kind: period
+    t_min: 3525
+    t_max: 5025
+    tags: [human-origins, society]
+    importance: 0.45
+    description: >
+      Austronesian-speaking seafarers begin expanding out of Taiwan by around 3000 BC,
+      reaching the previously uninhabited Batanes Islands of the northernmost
+      Philippines — the first known human presence there — by about 2000 BC, per the
+      primary excavation record (no preceramic occupation found across fifty-one
+      radiocarbon-dated samples from seven sites) — the first leg of a maritime
+      dispersal that eventually stretches from Madagascar (madagascar-arrival) to East
+      Polynesia (east-polynesia-arrival) and Aotearoa (aotearoa-arrival). Linguistic and
+      Bayesian phylogenetic evidence corroborates the archaeological picture of a series
+      of expansion pulses moving outward from a Taiwanese homeland.
+    citation: >
+      Bellwood, P. & Dizon, E. (eds.) (2013). 4000 Years of Migration and Cultural
+      Exchange: The Archaeology of the Batanes Islands, Northern Philippines. Terra
+      Australis 40. Canberra: ANU Press. doi:10.22459/TA40.12.2013 (ch.5: no preceramic
+      occupation found at any of seven excavated sites; Batanes prehistory commenced by
+      2000 BC). Gray, R.D., Drummond, A.J. & Greenhill, S.J. (2009). "Language
+      Phylogenies Reveal Expansion Pulses and Pauses in Pacific Settlement." Science,
+      323(5913), 479-483. doi:10.1126/science.1166858.
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 22.0, lon: 120.85}
+      destination: {lat: 20.5, lon: 122.0}
+      established: 4025.0
+      windows:
+        - {t_min: 0.0, t_max: 5025.0}
+
+  - id: lapita-oceania-expansion
+    label: Lapita expansion into Remote Oceania
+    kind: period
+    t_min: 2800
+    t_max: 3325
+    tags: [human-origins]
+    importance: 0.45
+    description: >
+      Lapita seafarers, makers of the distinctive dentate-stamped pottery that names the
+      culture, expand out of the Bismarck Archipelago (already-settled Near Oceania)
+      into Remote Oceania: pottery appears at Mussau by around 3250 calibrated years BP,
+      then in Vanuatu and Fiji within a couple of centuries, reaching Samoa by roughly
+      2700 calibrated years BP. This was not the first human presence anywhere in Remote
+      Oceania -- the Mariana Islands were settled independently, and earlier, from the
+      Philippines, around 3500 BP -- but it is the wave that first reached most of Near
+      and Remote Oceania from the Solomons east to Samoa and Tonga.
+    citation: >
+      Denham, T., Bronk Ramsey, C. & Specht, J. (2012). "Dating the appearance of
+      Lapita pottery in the Bismarck Archipelago and its dispersal to Remote Oceania."
+      Archaeology in Oceania, 47(1), 39-46. doi:10.1002/j.1834-4453.2012.tb00113.x
+      (Mussau emergence 3470-3250 cal BP; Vanuatu by 3250-3100 cal BP; Fiji by
+      3130-3010 cal BP). Petchey, F. & Kirch, P.V. (2019). "The importance of shell:
+      Redating of the To'aga site (Ofu Island, Manu'a) and a revised chronology for the
+      Lapita to Polynesian Plainware transition in Tonga and Samoa." PLOS ONE, 14(9),
+      e0211990. doi:10.1371/journal.pone.0211990 (Samoa, 2785-2607 cal BP). Sefton,
+      J.P. et al. (2022). "Implications of anomalous relative sea-level rise for the
+      peopling of Remote Oceania." PNAS, 119(52), e2210863119.
+      doi:10.1073/pnas.2210863119.
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: -4.0, lon: 148.0}
+      destination: {lat: -18.0, lon: 178.0}
+      established: 3175.0
+      windows:
+        - {t_min: 0.0, t_max: 3325.0}
+
   - id: phoenician-alphabet
     label: Phoenician alphabet emerges
     kind: moment
@@ -1601,6 +2018,38 @@ events:
       sarcophagus (KAI 1) ~1000 BC; al-Khader arrowheads ~1100 BC. Primary epigraphic
       sources not independently checked.
 
+  - id: bantu-expansion
+    label: Bantu expansion across sub-Saharan Africa
+    kind: period
+    t_min: 1525
+    t_max: 4025
+    tags: [human-origins, society]
+    importance: 0.5
+    description: >
+      Bantu-speaking farmers and iron-workers originate in the Cameroon-Nigeria
+      borderlands and expand across most of sub-Saharan Africa over the following two
+      millennia, a demic migration that genomic evidence dates to roughly 4,000 years
+      ago. Eastern and southern branches of the expansion reach as far as modern
+      KwaZulu-Natal, South Africa, by around AD 300, in the process absorbing or
+      displacing many existing hunter-gatherer populations, ancestral to today's Khoisan
+      and Central African forest peoples.
+    citation: >
+      Fortes-Lima, C.A. et al. (2023). "The genetic legacy of the expansion of
+      Bantu-speaking peoples in Africa." Nature, 625, 540-547.
+      doi:10.1038/s41586-023-06770-6 (demic expansion begins roughly 4,000 years ago in
+      the Cameroon-Nigeria borderlands). Wikipedia, "Bantu expansion" (accessed
+      2026-09-17): eastern/southern branches reach modern KwaZulu-Natal, South Africa,
+      by around AD 300, citing Ehret (1998), Newman (1995) and Shillington (2005); those
+      secondary works not independently read this session.
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 6.0, lon: 10.5}
+      destination: {lat: -29.0, lon: 31.0}
+      established: 1725.0
+      windows:
+        - {t_min: 0.0, t_max: 4025.0}
+
   - id: coinage-invented
     label: Coinage invented in Lydia
     kind: moment
@@ -1619,6 +2068,53 @@ events:
     citation: >
       Via Wikipedia "Coin", drawing on Herodotus, Aristotle and Pollux, plus the Ephesus
       Artemision hoard; primary/archaeological sources not independently checked.
+
+  # Added for the classical-athens-parthenon scene (data/scenes.yaml), filling the gap
+  # between great-pyramid-giza and roman-empire-peak. No existing event covered classical
+  # Greece.
+  - id: periclean-athens
+    label: Age of Pericles in Athens
+    kind: period
+    t_min: 2454
+    t_max: 2486
+    tags: [society, science-technology]
+    importance: 0.55
+    description: >
+      From his political ascendancy in 461 BC to his death in 429 BC, Pericles dominates
+      Athenian politics and, drawing on the Delian League's treasury, funds the building
+      programme that produces most of the surviving structures on the Acropolis,
+      including the Parthenon (dedicated 438/439 BC, its sculptural decoration finished
+      by 432 BC) and the Propylaea gatehouse (finished 432 BC). This "Golden Age" also
+      sees Athenian naval power and direct democracy at their height, shortly before the
+      Peloponnesian War (431-404 BC) begins.
+    citation: >
+      Via Wikipedia "Pericles" and "Parthenon" (accessed 2026-09-17): Pericles' political
+      dominance 461-429 BC; Parthenon dedicated 438/439 BC, sculptures finished 432 BC;
+      Propylaea finished 432 BC. Primary sources (Thucydides, Plutarch) not independently
+      read.
+
+  # Added for the qin-xianyang-epang-palace scene (data/scenes.yaml), filling the gap
+  # between great-pyramid-giza and roman-empire-peak. No existing event covered Qin China.
+  - id: qin-unification
+    label: Qin dynasty unifies China
+    kind: period
+    t_min: 2231
+    t_max: 2246
+    tags: [society, science-technology]
+    importance: 0.55
+    description: >
+      King Zheng of Qin completes the conquest of China's rival Warring States in 221 BC,
+      becoming its first emperor (Qin Shi Huang) and standardising its currency, weights
+      and measures, and writing system across the newly unified territory. His capital,
+      Xianyang, is by tradition ringed by a network of over two hundred palaces across
+      the Wei valley, and needs no defensive wall of its own. The dynasty he founds
+      collapses within four years of his death in 210 BC, falling to rebellion in 206 BC.
+    citation: >
+      Via Wikipedia "Qin dynasty" and "Qin Shi Huang" (accessed 2026-09-17): unification
+      221 BC; dynasty ends 206 BC; standardisation of currency, weights/measures and
+      writing; Xianyang "the only capital city in China that did not require walls to be
+      built around it"; a network of "over 200" palaces linked by covered roads. Primary
+      sources (Sima Qian's Records of the Grand Historian) not independently read.
 
   - id: roman-empire-peak
     label: Roman Empire at its height
@@ -1640,6 +2136,152 @@ events:
       Wikipedia, "Pantheon, Rome" (accessed 2026-09-15): present building completed
       and probably dedicated by Hadrian c. AD 126.
 
+  - id: madagascar-arrival
+    label: Arrival in Madagascar
+    kind: moment
+    t_min: 1175
+    t_max: 2375
+    t: 2075
+    tags: [human-origins]
+    importance: 0.4
+    description: >
+      Madagascar is among the last major landmasses settled by humans. A critical review
+      of the island's radiocarbon record finds human presence by at least 2000 calibrated
+      years BP, with an earlier, isolated claim of cut-marked megafauna bone pushing
+      possible visits back to roughly 10,500 years ago -- contested, since the species
+      and even the human origin of those cut marks is not established. Definite,
+      continuous colonisation is dated to roughly 1350-1100 years BP. Genomic evidence
+      shows the Malagasy descend from an admixture of Austronesian and Bantu-speaking
+      African settlers; the Austronesian side is linguistically closest to the Barito
+      languages of southeast Borneo, the traditional source region shown here.
+    citation: >
+      Douglass, K. et al. (2019). "A critical review of radiocarbon dates clarifies the
+      human settlement of Madagascar." Quaternary Science Reviews, 221, 105878.
+      doi:10.1016/j.quascirev.2019.105878 (presence by at least 2000 cal BP). Burney,
+      D.A. et al. (2004). "A chronology for late prehistoric Madagascar." Journal of
+      Human Evolution, 47(1-2), 25-63. doi:10.1016/j.jhevol.2004.05.005. Anderson, A. et
+      al. (2018). "New evidence of megafaunal bone damage indicates late colonization of
+      Madagascar." PLOS ONE, 13(10), e0204368. doi:10.1371/journal.pone.0204368
+      (colonisation 1350-1100 BP; contested >10,500-year-old cut marks). Pierron, D. et
+      al. (2017). "Genomic landscape of human diversity across Madagascar." PNAS,
+      114(32), E6498-E6506. doi:10.1073/pnas.1704906114 (Austronesian/Bantu admixture).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: -2.5, lon: 115.0}
+      destination: {lat: -19.0, lon: 46.5}
+      established: 2075.0
+      windows:
+        - {t_min: 0.0, t_max: 2375.0}
+
+  - id: norse-north-atlantic-settlement
+    label: Norse settlement of Iceland
+    kind: moment
+    t_min: 1145
+    t_max: 1165
+    t: 1148
+    tags: [society]
+    importance: 0.4
+    description: >
+      Norse seafarers from Norway, together with enslaved and free Gaelic people from
+      Ireland and Scotland whom they captured or brought with them, settle Iceland,
+      previously uninhabited (medieval sources describe earlier Irish hermits, the
+      papar, but this is archaeologically unproven), from around AD 860, with a
+      tephra-dated landnam of AD 877 +/-1 — traditionally dated to AD 874 on saga
+      evidence (Ingolfr Arnarson's landnam at Reykjavik). Iceland's founding population
+      is genetically only around 56% Norse, with a majority-Gaelic maternal line,
+      reflecting this coerced component.
+    citation: >
+      Schmid, M.M.E., Dugmore, A.J., Vesteinsson, O. & Newton, A.J. (2017). "Tephra
+      isochrons and chronologies of colonisation." Quaternary Geochronology, 40, 56-66.
+      doi:10.1016/j.quageo.2016.08.002 (Landnam tephra dated AD 877 +/-1). Vesteinsson,
+      O. & McGovern, T.H. (2012). "The Peopling of Iceland." Norwegian Archaeological
+      Review, 45(2), 206-218. doi:10.1080/00293652.2012.721792. Ebenesersdottir, S.S. et
+      al. (2018). "Ancient genomes from Iceland reveal the making of a human
+      population." Science, 360(6392), 1028-1032. doi:10.1126/science.aar2625 (founding
+      population ~56% Norse ancestry; ~62% Gaelic mtDNA line).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 61.0, lon: 5.5}
+      destination: {lat: 64.15, lon: -21.9}
+      established: 1148.0
+      windows:
+        - {t_min: 0.0, t_max: 1165.0}
+
+  - id: greenland-norse-settlement
+    label: Norse settlement of Greenland
+    kind: period
+    t_min: 595
+    t_max: 1045
+    tags: [society]
+    importance: 0.4
+    description: >
+      Norse settlers from Iceland, led by Erik the Red, colonise Greenland's
+      south-western coast from around AD 985, founding the Eastern and Western
+      Settlements. Unlike Iceland, the region had no established prior population at the
+      time of Norse arrival: Dorset presence was concentrated far to the north, and
+      Thule Inuit reach and come into contact with the Norse settlement area only later,
+      in the 13th-14th century (thule-arctic-expansion). Cut off from Norway, the
+      settlements disappear by the mid-15th century — the most recent radiocarbon date
+      from the Eastern Settlement is AD 1430 +/-15 years — for reasons still debated
+      among climate change, resource depletion, economic/trade collapse and conflict
+      with expanding Thule Inuit populations.
+    citation: >
+      Arneborg, J. (2012). "Norse Greenland Dietary Economy ca. AD 980-ca. AD 1450:
+      Introduction." Journal of the North Atlantic, Special Volume 3, 1-39.
+      doi:10.3721/037.004.s303. Arneborg, J., Heinemeier, J., Lynnerup, N., Nielsen,
+      H.L., Rud, N. & Sveinbjornsdottir, A.E. (1999). "Change of Diet of the Greenland
+      Vikings Determined from Stable Carbon Isotope Analysis and 14C Dating of Their
+      Bones." Radiocarbon, 41(2), 157-168. doi:10.1017/S0033822200019512 (AD 1430 +/-15
+      years, most recent radiocarbon date, Eastern Settlement).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: 64.15, lon: -21.9}
+      destination: {lat: 60.7, lon: -46.0}
+      established: 1040.0
+      windows:
+        - {t_min: 0.0, t_max: 1045.0}
+
+  - id: east-polynesia-arrival
+    label: Arrival in East Polynesia
+    kind: moment
+    t_min: 905
+    t_max: 1125
+    t: 953
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      High-precision radiocarbon dating shows central East Polynesia (the Society
+      Islands) was first settled in a short window around AD 1025-1120 -- several
+      centuries later than older, less precise chronologies had suggested -- with a
+      second, rapid dispersal pulse around AD 1190-1290 then settling the remaining East
+      Polynesian islands, including Hawaii, Rapa Nui (Easter Island) and Aotearoa New
+      Zealand (aotearoa-arrival), within about a century. This short chronology is not
+      fully settled: other reconstructions, combining sea-level, palaeoenvironmental and
+      genomic evidence, argue for an earlier, more incremental settlement from around
+      AD 900.
+    citation: >
+      Wilmshurst, J.M., Hunt, T.L., Lipo, C.P. & Anderson, A.J. (2011). "High-precision
+      radiocarbon dating shows recent and rapid initial human colonization of East
+      Polynesia." PNAS, 108(5), 1815-1820. doi:10.1073/pnas.1015876108. Central East
+      Polynesia settled A.D. ~1025-1120; remaining islands reached in a single
+      dispersal pulse A.D. ~1190-1290. Sear, D.A. et al. (2020). "Human settlement of
+      East Polynesia earlier, incremental, and coincident with prolonged South Pacific
+      drought." PNAS, 117(16), 8813-8819. doi:10.1073/pnas.1920975117 (settlement from
+      ~AD 900). Ioannidis, A.G. et al. (2021). "Paths and timings of the peopling of
+      Polynesia inferred from genomic networks." Nature, 597, 522-526.
+      doi:10.1038/s41586-021-03902-8.
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: -14.0, lon: -172.0}
+      destination: {lat: -17.0, lon: -150.0}
+      established: 953.0
+      windows:
+        - {t_min: 0.0, t_max: 1125.0}
+
   - id: angkor-wat-built
     label: Angkor Wat built
     kind: period
@@ -1656,6 +2298,76 @@ events:
       Wikipedia, "Angkor Wat" (accessed 2026-09-15): construction 1113-1150, building
       work usually dated 1122-1150; Suryavarman II reigned 1113-c.1150; moat 190 m
       wide, over 5 km in perimeter.
+
+  - id: thule-arctic-expansion
+    label: Thule expansion across the Arctic
+    kind: period
+    t_min: 725
+    t_max: 800
+    tags: [human-origins, society]
+    importance: 0.45
+    description: >
+      The Thule culture, ancestral to modern Inuit, emerges among Bering Strait maritime
+      hunters in coastal Alaska and expands rapidly eastward across the Canadian Arctic
+      archipelago to Greenland, carrying skin boats, dog sleds and toggling harpoons
+      adapted to open-water whaling. Ancient-genome analysis shows Thule people almost
+      completely replaced, with little or no admixture, the earlier Palaeo-Inuit Dorset
+      culture, which had occupied the eastern Arctic for the previous two millennia and
+      had vanished within a few centuries of Thule contact.
+    citation: >
+      Friesen, T.M. & Arnold, C.D. (2008). "The Timing of the Thule Migration: New Dates
+      from the Western Canadian Arctic." American Antiquity, 73(3), 527-538.
+      doi:10.1017/S0002731600046850 (western Canadian Arctic transit corridor sites not
+      occupied before the 13th century AD, refuting an ~1000 CE onset for the eastward
+      migration). Raghavan, M. et al. (2014). "The Genetic Prehistory of the New World
+      Arctic." Science, 345(6200), 1255832. doi:10.1126/science.1255832 (Thule
+      populations largely replace, with no detected Dorset admixture, the earlier Dorset
+      culture across northern Canada and Greenland by about 1300 CE). Wikipedia, "Thule
+      people" (accessed 2026-09-17): Thule tradition develops in coastal Alaska by
+      1000 CE — a claim about the culture's Alaskan origin, not the eastward migration's
+      own start — and expands east across the Canadian Arctic, displacing the Dorset
+      culture by the 13th-15th century.
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 68.3, lon: -166.8}
+      destination: {lat: 77.5, lon: -69.0}
+      established: 725.0
+      windows:
+        - {t_min: 0.0, t_max: 800.0}
+
+  - id: aotearoa-arrival
+    label: Arrival in Aotearoa New Zealand
+    kind: moment
+    t_min: 725
+    t_max: 775
+    t: 745
+    tags: [human-origins]
+    importance: 0.5
+    description: >
+      Aotearoa New Zealand is the last major landmass settled by humans. Radiocarbon
+      dating of rat-gnawed seeds and Pacific rat (kiore) bone -- a reliable proxy for
+      human arrival, since the rat travelled only with Polynesian voyagers -- points to
+      settlement around AD 1280. A synthesis of archaeological, genealogical and
+      genetic evidence points to the same event: a single mass migration of Polynesian
+      settlers in the early 14th century, rather than the sporadic earlier arrivals some
+      older accounts proposed.
+    citation: >
+      Wilmshurst, J.M., Anderson, A.J., Higham, T.F.G. & Worthy, T.H. (2008). "Dating
+      the late prehistoric dispersal of Polynesians to New Zealand using the commensal
+      Pacific rat." PNAS, 105(22), 7676-7680. doi:10.1073/pnas.0801507105 (rat-bone
+      radiocarbon dating, ~AD 1280). Walter, R., Buckley, H., Jacomb, C. &
+      Matisoo-Smith, E. (2017). "Mass Migration and the Polynesian Settlement of New
+      Zealand." Journal of World Prehistory, 30, 351-376.
+      doi:10.1007/s10963-017-9110-y (single mass-migration event, early 14th century).
+    effect:
+      kind: arrival
+      arrival_kind: peopling
+      origin: {lat: -20.0, lon: -157.0}
+      destination: {lat: -41.0, lon: 173.0}
+      established: 745.0
+      windows:
+        - {t_min: 0.0, t_max: 775.0}
 
   # t_max (1368) runs to the fall of the last successor state (Yuan dynasty), a
   # "founding to final dissolution" framing choice broader than the unified empire's own
@@ -1755,6 +2467,34 @@ events:
       Wikipedia, "Galileo Galilei" (accessed 2026-09-14). Telescope built 1609; Jupiter
       observations 7-15 January 1610; Sidereus Nuncius published March 1610.
 
+  - id: russian-conquest-of-siberia
+    label: Russian conquest of Siberia
+    kind: period
+    t_min: 386
+    t_max: 444
+    tags: [society]
+    importance: 0.45
+    description: >
+      A Cossack force under Yermak Timofeyevich invades the Khanate of Sibir in 1581,
+      opening a rapid Russian conquest and colonisation of Siberia's forests and tundra;
+      Russian forces reach the Pacific coast by 1639, having subdued and imposed tribute
+      on numerous indigenous Siberian peoples (among them the Khanty, Mansi, Yakut and
+      Evenki) along the way. Russian and Cossack settlement, fur trading, and, from the
+      19th century, agricultural colonisation follow the same route east, reshaping
+      Siberia's demographic and political map.
+    citation: >
+      Wikipedia, "Russian conquest of Siberia" (accessed 2026-09-17): Yermak
+      Timofeyevich's Cossack force invades the Khanate of Sibir in July 1581; Russians
+      reach the Pacific Ocean in 1639 (citing Nationalencyklopedin).
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 55.75, lon: 37.6}
+      destination: {lat: 59.3, lon: 143.2}
+      established: 386.0
+      windows:
+        - {t_min: 0.0, t_max: 444.0}
+
   - id: columbian-exchange
     label: Columbian Exchange begins
     kind: period
@@ -1766,15 +2506,78 @@ events:
       Following Columbus's 1492 landfall in the Caribbean, plants, animals, diseases and
       people begin moving between the Americas and Afro-Eurasia for the first time since
       the continents separated, reshaping diets, ecosystems and demographics on every
-      continent — with catastrophic population loss among Indigenous Americans from
-      introduced disease. The interval's end (1800 CE) is a curatorial round number
-      marking the close of the period of most intense early-modern transfer, not a
-      literature-defined boundary.
+      continent. On Hispaniola, Spanish colonisation dispossesses and enslaves the
+      Indigenous Taino under the encomienda forced-labour system; combined with
+      introduced disease and violence, this drives an estimated 80-90% collapse of the
+      Taino population within three decades. The interval's end (1800 CE) is a
+      curatorial round number marking the close of the period of most intense
+      early-modern transfer, not a literature-defined boundary.
     citation: >
       Wikipedia, "Columbian exchange" (accessed 2026-09-14). Conventionally named after
       Crosby, A.W. (1972). The Columbian Exchange: Biological and Cultural Consequences
       of 1492. Greenwood Press (title/author/year only; not independently verified this
-      session).
+      session). Wikipedia, "Santo Domingo" (accessed 2026-09-17): founded 5 August 1496,
+      the oldest continuously inhabited European-established settlement in the Americas.
+      Stannard, D.E. (1992). American Holocaust: Columbus and the Conquest of the New
+      World. Oxford University Press. Resendez, A. (2016). The Other Slavery: The
+      Uncovered Story of Indian Enslavement in America. Houghton Mifflin Harcourt
+      (encomienda forced labour and enslavement as major, non-secondary co-drivers of
+      Indigenous population collapse, alongside disease). Fernandes, D.M. et al. (2021).
+      "A genetic history of the pre-contact Caribbean." Nature, 590, 103-110.
+      doi:10.1038/s41586-020-03053-2 (pre-1492 Hispaniola held a settled Indigenous
+      Taino population).
+    # Later-migrations batch (2026-09-17): `established` uses Santo Domingo's founding
+    # (1496), the oldest continuously inhabited European settlement in the Americas,
+    # rather than Columbus's 1492 landfall itself (already this event's own t_max),
+    # since the arc is meant to mark the point European presence became permanent.
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 37.2, lon: -6.9}
+      destination: {lat: 18.5, lon: -70.0}
+      established: 529.0
+      windows:
+        - {t_min: 0.0, t_max: 533.0}
+
+  - id: transatlantic-slave-trade
+    label: Transatlantic slave trade
+    kind: period
+    t_min: 137
+    t_max: 450
+    tags: [society]
+    importance: 0.6
+    description: >
+      From Portugal's 1575 colonisation of Angola, and decisively after the
+      Portuguese-Brazilian recapture of Luanda from the Dutch in 1648, European traders
+      and colonial powers force millions of captive West and Central Africans onto ships
+      bound for the Americas to work as forced labour, mostly on plantations and in
+      mines. Of an estimated 12.75 million people loaded onto slave ships over more than
+      three centuries, up to 2 million die during the Middle Passage; Portuguese Brazil
+      ultimately receives the largest single share, roughly 5.5 million people.
+    citation: >
+      Wikipedia, "Atlantic slave trade" (accessed 2026-09-17): ~12.75 million Africans
+      loaded onto slave ships, up to 2 million died in the Middle Passage. Wikipedia,
+      "Slavery in Brazil" (accessed 2026-09-17): approximately 5.5 million enslaved
+      Africans brought to Brazil between 1540 and the 1860s, out of an estimated 12
+      million transported to the Americas overall. Heywood, L.M. & Thornton, J.K.
+      (2007). Central Africans, Atlantic Creoles, and the Foundation of the Americas,
+      1585-1660. Cambridge University Press (Portugal's 1575 colonisation of
+      Angola/founding of Luanda). Alencastro, L.F. de (2018). The Trade in the Living:
+      The Formation of Brazil in the South Atlantic, Sixteenth to Seventeenth Centuries.
+      SUNY Press (the 1648 Portuguese-Brazilian recapture of Luanda from the Dutch
+      securing the Angola-Brazil slave axis). Borucki, A., Eltis, D. & Wheat, D. (2015).
+      "Atlantic History and the Slave Trade to Spanish America." American Historical
+      Review, 120(2), 433-461. doi:10.1093/ahr/120.2.433 (the 1525 Sao Tome-to-Hispaniola
+      voyage, the first transatlantic slave voyage, was Caribbean-bound and unrelated to
+      this Angola-Brazil route).
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: -8.8, lon: 13.2}
+      destination: {lat: -13.0, lon: -38.5}
+      established: 377.0
+      windows:
+        - {t_min: 0.0, t_max: 450.0}
 
   # Review fix (2026-09-15): retagged [society] only -- the description is entirely about trade
   # and finance, with nothing science-technology describes. "The world's first company to trade
@@ -1859,6 +2662,72 @@ events:
       Ashton, T.S. (1948). The Industrial Revolution 1760-1830. Oxford University Press.
       Conventional bracket widened to 1760-1840 by later historians (e.g. Encyclopaedia
       Britannica, "Industrial Revolution").
+
+  - id: british-colonisation-australia
+    label: British colonisation of Australia
+    kind: moment
+    t_min: 237
+    t_max: 238
+    t: 237
+    tags: [society]
+    importance: 0.5
+    description: >
+      The British First Fleet, eleven ships carrying convicts, marines and officials,
+      arrives at Port Jackson on 26 January 1788, founding the first European colony in
+      Australia and beginning permanent British settlement of a continent already
+      inhabited by Aboriginal and Torres Strait Islander peoples for tens of thousands
+      of years. A smallpox epidemic in April 1789 killed about half the Aboriginal
+      population of the Sydney region within a year of the colony's founding, one of the
+      earliest and starkest instances of the disease and frontier violence that sharply
+      reduced Aboriginal populations across the continent over the following century.
+    citation: >
+      Wikipedia, "History of Australia (1788-1850)" (accessed 2026-09-17): First Fleet
+      departs Portsmouth 13 May 1787, arrives at Port Jackson 26 January 1788, colony
+      formally proclaimed 7 February 1788; smallpox outbreak of April 1789 killed about
+      half the Aboriginal population of the Sydney region.
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 50.8, lon: -1.1}
+      destination: {lat: -33.85, lon: 151.2}
+      established: 237.0
+      windows:
+        - {t_min: 0.0, t_max: 238.0}
+
+  - id: mass-european-emigration
+    label: Mass European emigration to the Americas
+    kind: period
+    t_min: 92
+    t_max: 210
+    tags: [society]
+    importance: 0.45
+    description: >
+      From the end of the Napoleonic Wars to the Great Depression, roughly 65 million
+      people leave Europe, the majority of them for the Americas, one of the largest
+      voluntary mass migrations in recorded history; the United States alone receives
+      some 32 million arrivals between 1821 and 1932, with Argentina, Canada and Brazil
+      each receiving several million more. Economic historians date the era's
+      high-volume phase -- driven by famine, land pressure, industrialisation and cheap
+      steamship passage -- from around 1850, with Italians and other southern and
+      eastern Europeans joining the earlier-dominant British, Irish and German flows.
+    citation: >
+      Wikipedia, "European emigration" (accessed 2026-09-17): 65 million people leave
+      Europe 1815-1933, primarily to the Americas; United States receives 32,244,000
+      arrivals 1821-1932, Argentina 6,405,000 (1856-1932), Canada 5,206,000 (1831-1932),
+      Brazil 4,431,000 (1818-1932). Hatton, T.J. & Williamson, J.G. (1998). The Age of
+      Mass Migration: Causes and Economic Impact. Oxford University Press (dates the
+      era's high-volume phase from c. 1850; not independently read this session). O
+      Grada, C. (1999). Black '47 and Beyond: The Great Irish Famine in History,
+      Economy, and Memory. Princeton University Press (Irish Famine-era emigration
+      through Cobh/Queenstown peaking c. 1850).
+    effect:
+      kind: arrival
+      arrival_kind: migration
+      origin: {lat: 51.85, lon: -8.29}
+      destination: {lat: 40.7, lon: -74.0}
+      established: 175.0
+      windows:
+        - {t_min: 0.0, t_max: 210.0}
 
   - id: darwin-natural-selection
     label: Evolution by natural selection published
