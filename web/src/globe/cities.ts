@@ -14,14 +14,49 @@
 
 import type { FeatureData, GeoTime } from '@/types/layer'
 
+import { unfoldedLiftedPosition } from './projection'
+
 // -------------------------------------------------------------------------------- sampling
 
 /**
- * The city's population at `t`, or `null` before it has any attested reading at all — `t` older
- * than its oldest estimate. Eased log-linearly between bracketing readings (population is a
+ * How long past a city's last attested reading (`estimates[0]`, the newest — "ascending in `t`,
+ * oldest last") it keeps being drawn, before dropping out of the record entirely. Two shapes exist
+ * in the published data, and conflating them is a bug (2026-09 user report: "i see city like
+ * Cahokia staying on the map even when i dont think it existed anymore at that time").
+ *
+ * - **The dataset's own trailing edge** — ADR-031's rule for HYDE's near-present edge, "data
+ *   ends, held after": Memphis, Egypt's newest reading is `t=50` (~1976), right at the whole
+ *   published set's own most recent sampling (`t=25` is the earliest any city is attested).
+ *   Nothing in the data says Memphis stopped existing; the compilers simply haven't sampled past
+ *   that year, so holding it flat to the present is correct.
+ * - **The city's own record ending**, centuries before that edge: Cahokia's newest reading is
+ *   `t=625` (~1400 CE, 40,000 people) — an unconditional hold-flat drew it as a 40,000-person
+ *   city *today*, alongside Uruk (newest `t=3325`), Babylon (`t=2325`), Tikal (`t=1225`) and
+ *   Angkor (`t=621`), every one of them scattered across the modern map at full size. These are
+ *   not the dataset's edge; they are where each city's own record simply stops.
+ *
+ * The dataset cannot actually distinguish "genuinely abandoned" from "fell below the compilers'
+ * own inclusion threshold" — both look identical here, a reading that stops. What *can* be told
+ * apart is distance from the dataset's own most recent sampling: Memphis's newest reading is 50
+ * years back, Cahokia's is 625. 200 years draws that line wide enough that Memphis (50) is
+ * nowhere near it, narrow enough that Cahokia (625), Angkor (621), Tikal (1225), Babylon (2325)
+ * and Uruk (3325) all fall outside it by a wide margin.
+ *
+ * This is a rendering heuristic, not a historical claim — nothing here (nor the tooltip, which
+ * only ever reports an attested reading) says a city was "destroyed" or invents an end date it
+ * has no record of. The marker simply stops being drawn, fading out over this same window
+ * (`cityTrailingFadeAt`) rather than popping, and driven by `t`'s own distance from the newest
+ * reading — never a wall-clock timer — so scrubbing reproduces it exactly either direction.
+ */
+export const CITY_TRAILING_GRACE_T = 200
+
+/**
+ * The city's population at `t`, or `null` when it has no attested reading there at all — either
+ * `t` is older than its oldest estimate, or `t` is more than `CITY_TRAILING_GRACE_T` years past
+ * its newest one (see that constant's own doc comment for why both bounds exist and what
+ * distinguishes them). Eased log-linearly between bracketing readings (population is a
  * multiplicative quantity; a linear ramp across four orders of magnitude visibly lurches), and
- * held flat at the newest reading from there to the present, matching the "data ends, held after"
- * rule ADR-031 established for HYDE's own near-present edge.
+ * held flat at the newest reading across the grace window past it.
  *
  * `estimates` is ascending in `t` (oldest last) and deduplicated by `parseFeatureData`, so the
  * scan below needs no re-sorting.
@@ -31,7 +66,10 @@ export function cityPopulationAt(feature: FeatureData, t: GeoTime): number | nul
   const oldest = estimates[estimates.length - 1]!
   const newest = estimates[0]!
   if (t > oldest.t) return null
-  if (t <= newest.t) return newest.population
+  // Strictly `>`, not `>=`: matches `cityTrailingFadeAt`'s own `age >= CITY_TRAILING_GRACE_T -> 0`
+  // exactly, so a city's existence (population non-null) and its marker's visibility (fade > 0)
+  // end at precisely the same t rather than existence lingering one instant past full transparency.
+  if (t <= newest.t) return t > newest.t - CITY_TRAILING_GRACE_T ? newest.population : null
   for (let i = estimates.length - 1; i > 0; i--) {
     const older = estimates[i]!
     const younger = estimates[i - 1]!
@@ -42,6 +80,21 @@ export function cityPopulationAt(feature: FeatureData, t: GeoTime): number | nul
     }
   }
   return newest.population
+}
+
+/**
+ * 1 while `t` is at or before the city's newest attested reading (fully within the record, or
+ * still being interpolated between older readings); eases linearly to 0 as `t` moves up to
+ * `CITY_TRAILING_GRACE_T` years past it — reaching exactly 0 where `cityPopulationAt` itself
+ * starts returning `null`, so a marker fades out over the same window it disappears in rather
+ * than popping. Callers scale the marker's own draw alpha by this.
+ */
+export function cityTrailingFadeAt(feature: FeatureData, t: GeoTime): number {
+  const newest = feature.estimates[0]!
+  if (t >= newest.t) return 1
+  const age = newest.t - t
+  if (age >= CITY_TRAILING_GRACE_T) return 0
+  return 1 - age / CITY_TRAILING_GRACE_T
 }
 
 /** The `[newest, oldest]` span the city has attested readings for — the tooltip's date range,
@@ -64,7 +117,10 @@ export function cityEstimateRange(feature: FeatureData): readonly [GeoTime, GeoT
  * the tooltip carries the actual figure.
  */
 const CITY_MIN_RADIUS_PX = 2.4
-const CITY_MAX_RADIUS_PX = 9
+/** The biggest dots visibly merge into their neighbours in dense regions above this — part of
+ *  "looks cluttered" is dot size, not just dot count (see `declutterCities`/`citySignificanceFloorAt`
+ *  for the count side of that). */
+const CITY_MAX_RADIUS_PX = 7
 const CITY_MIN_POPULATION = 1e4
 const CITY_MAX_POPULATION = 2.4e7
 
@@ -75,39 +131,193 @@ export function cityRadiusPx(population: number): number {
   return CITY_MIN_RADIUS_PX + (CITY_MAX_RADIUS_PX - CITY_MIN_RADIUS_PX) * f
 }
 
+// ------------------------------------------------------------------------------ significance
+
+/**
+ * "Notable enough to draw" is era-relative: a town of 20,000 is a major city in 1500 and a suburb
+ * today. A single fixed population floor can't express that — it either hides every ancient city
+ * (Uruk peaked around 40,000) or admits every present-day village.
+ *
+ * Control points below (`t`, floor population), descending in `t` (deep antiquity first, present
+ * last), log-interpolated between neighbours (population is multiplicative, matching
+ * `cityPopulationAt`'s own reasoning) and clamped flat beyond both ends. Deliberately gentle: it
+ * only removes cities that were never notable at their own era, wherever they are — local
+ * crowding (a dense region reading as a solid mat of dots) is `declutterCities`'s job below, since
+ * a steeper floor can't tell "the only city for a thousand miles" from "a hamlet in a crowded
+ * region" and would strip sparse regions along with dense ones.
+ *
+ * A function of `t` alone, never of the currently-largest city or any other city's population.
+ * A threshold defined *relative to* other cities moves whenever they do, so a city holding steady
+ * at 30,000 would drop out the moment some other city grew past whatever multiple defined the
+ * cutoff, then return if that city later shrank — cities disappearing and reappearing, the exact
+ * failure mode `CITY_LIMIT_ORB` documents for a rank cap. Pinning the floor to `t` alone makes
+ * that impossible: two calls at the same `t` always agree regardless of which cities exist, so a
+ * city's own population crossing it depends only on that city's own history.
+ *
+ * At `t=300` (1725 CE) this floor sits above New York (~7,500), Buenos Aires (~3,100),
+ * Philadelphia (~7,700) and Boston (~11,600) — genuinely that small then.
+ */
+const CITY_SIGNIFICANCE_FLOOR_POINTS: readonly (readonly [GeoTime, number])[] = [
+  [10_000, 1_000],
+  [5_000, 2_000],
+  [2_000, 4_000],
+  [1_000, 6_000],
+  [500, 9_000],
+  [300, 12_000],
+  [125, 18_000],
+  [50, 25_000],
+  [0, 30_000],
+]
+
+/** Minimum population a city needs, at `t`, to count as notable enough to draw at all — see
+ *  `CITY_SIGNIFICANCE_FLOOR_POINTS` for the curve. Monotonic non-increasing in `t` (non-decreasing
+ *  moving forward through time), so a city's own population crossing it happens only as often as
+ *  that population itself is non-monotonic — never because another city's population changed. */
+export function citySignificanceFloorAt(t: GeoTime): number {
+  const points = CITY_SIGNIFICANCE_FLOOR_POINTS
+  const oldest = points[0]!
+  const newest = points[points.length - 1]!
+  if (t >= oldest[0]) return oldest[1]
+  if (t <= newest[0]) return newest[1]
+  for (let i = 1; i < points.length; i++) {
+    const [olderT, olderFloor] = points[i - 1]!
+    const [newerT, newerFloor] = points[i]!
+    if (t <= olderT && t >= newerT) {
+      const span = olderT - newerT
+      const f = span > 0 ? (olderT - t) / span : 1
+      return Math.exp(Math.log(olderFloor) + (Math.log(newerFloor) - Math.log(olderFloor)) * f)
+    }
+  }
+  return newest[1]
+}
+
 // ---------------------------------------------------------------------------------- culling
 
 /**
- * How many city markers may be drawn at once. The orb is a ~130px disc of which barely half
- * faces the viewer, so more than a handful of dots there is confetti, not information; expanded
- * (sphere or map) there is room for a real set. Both caps are far below the 164 published
- * cities, which is the point — the cap is what stops the late-modern frames turning solid.
+ * How many city markers the orb may draw at once. The orb is a ~130px disc of which barely half
+ * faces the viewer, so more than a handful of dots there is confetti, not information — top-N by
+ * population *at `t`* is exactly what makes it show Uruk in 3000 BCE and Tokyo today.
+ *
+ * Expanded (sphere or map) has no equivalent cap: a city that exists at `t` is drawn, full stop
+ * (bug report 2026-09, "im seeing some cities disappear and re-appear... if the city still exists
+ * then it shouldn't disappear"). Ranking by population and slicing to a fixed count — the
+ * previous behaviour, `CITY_LIMIT_EXPANDED = 45` against a published set of 242 — meant a city's
+ * presence depended on how it ranked against every *other* city at that instant, not on whether
+ * it existed: Mexico City, Rome, Lisbon and several more dropped out and back in as other cities'
+ * interpolated populations briefly overtook and then fell back behind them, and Africa held only
+ * 2-4 dots at any `t` because the ranking is dominated by a handful of megacities everywhere.
+ * `MarkerField`'s instance budget (`HumanCivilisation.tsx`'s `MARKER_CAPACITY`) is sized for the
+ * full 242-city set instead.
  */
 export const CITY_LIMIT_ORB = 10
-export const CITY_LIMIT_EXPANDED = 45
 
 export interface CityAtTime {
   feature: FeatureData
   /** Interpolated at `t` — see `cityPopulationAt`. */
   population: number
   radiusPx: number
+  /** 1..0 draw-alpha multiplier for the trailing edge of the city's own record — see
+   *  `cityTrailingFadeAt`'s own doc comment. Always 1 outside the grace window (either still
+   *  within the attested/interpolated span, or — since `population` is `null` and the city is
+   *  excluded entirely once past the grace window — never observed as a partial fade beyond it). */
+  trailingFade: number
 }
 
-/**
- * The `limit` largest cities that exist at `t`, largest first. Chosen by population *at `t`*, not
- * by any fixed ranking: at 3000 BCE that is Uruk and Memphis, at 1900 CE London and New York, and
- * the set turns over on its own as history does. Ties break on feature id so the selection is
- * deterministic and a scrub back to the same `t` reproduces it exactly.
- */
-export function selectCities(features: readonly FeatureData[], t: GeoTime, limit: number): CityAtTime[] {
+/** Every city that both exists at `t` (see `cityPopulationAt` — both the oldest-estimate bound
+ *  and the newest-reading trailing grace) and clears `citySignificanceFloorAt(t)`, largest
+ *  population first, ties broken on feature id so both the order and the set are deterministic
+ *  and a scrub back to the same `t` reproduces both exactly. Shared core for `selectCities` (the
+ *  orb's own ranked-and-capped view) and `allCitiesAt` (the expanded view's uncapped one) so the
+ *  two can never define "exists" or "population order" differently from each other. */
+function citiesAtTime(features: readonly FeatureData[], t: GeoTime): CityAtTime[] {
+  const floor = citySignificanceFloorAt(t)
   const present: CityAtTime[] = []
   for (const feature of features) {
     const population = cityPopulationAt(feature, t)
-    if (population === null) continue
-    present.push({ feature, population, radiusPx: cityRadiusPx(population) })
+    if (population === null || population < floor) continue
+    present.push({ feature, population, radiusPx: cityRadiusPx(population), trailingFade: cityTrailingFadeAt(feature, t) })
   }
   present.sort((a, b) => b.population - a.population || a.feature.id.localeCompare(b.feature.id))
+  return present
+}
+
+/**
+ * The `limit` largest cities that exist at `t`, largest first — the orb's own ranked view (pass
+ * `CITY_LIMIT_ORB`). Chosen by population *at `t`*, not by any fixed ranking: at 3000 BCE that is
+ * Uruk and Memphis, at 1900 CE London and New York, and the set turns over on its own as history
+ * does. Not for the expanded view — see `allCitiesAt`.
+ */
+export function selectCities(features: readonly FeatureData[], t: GeoTime, limit: number): CityAtTime[] {
+  const present = citiesAtTime(features, t)
   return present.length > limit ? present.slice(0, limit) : present
+}
+
+/**
+ * Every city that exists at `t` — no cap, no ranking cull. The expanded view's own city set: see
+ * `CITY_LIMIT_ORB`'s doc comment for why the expanded view deliberately has no equivalent limit.
+ */
+export function allCitiesAt(features: readonly FeatureData[], t: GeoTime): CityAtTime[] {
+  return citiesAtTime(features, t)
+}
+
+// ------------------------------------------------------------------------------- declutter
+
+/**
+ * The city's draw position, in the same object-space units `MarkerField` places the actual dot at
+ * (`unfoldedLiftedPosition` at `radius = 1`, no lift — the real lift is a fraction of a percent of
+ * the radius, immaterial to which cities crowd which).
+ *
+ * This is the *local* position, before `GlobeRotatingGroup`'s spin or the camera's orbit/pan are
+ * applied, so two cities' mutual distance here is a rigid-transform invariant: rotating or panning
+ * the view cannot change it. Only `unfold` (sphere <-> map) and zoom (the caller's `minSeparation`,
+ * converted from screen pixels using the live camera distance) can change which cities a caller
+ * keeps — camera rotation/pan cannot, so a marginal city on the silhouette's edge cannot flicker
+ * in and out as the globe spins or is dragged.
+ */
+export function cityLocalPosition(feature: FeatureData, unfold: number): readonly [number, number, number] {
+  return unfoldedLiftedPosition({ lon: feature.lon, lat: feature.lat }, unfold, 1, 0, 0)
+}
+
+/**
+ * Screen-space declutter: walks `cities` (expected already sorted largest-first, `citiesAtTime`'s
+ * own order) and keeps each one unless it falls within `minSeparation` of an already-kept, larger
+ * city. `positionOf` supplies each city's position in whatever space `minSeparation` is measured
+ * in (the caller converts a screen-pixel budget into that space once, using the live camera
+ * distance — see `cityLocalPosition` for why the positions themselves need no camera at all).
+ *
+ * Local and blind to rank, unlike a fixed top-N (`CITY_LIMIT_ORB`): a city is only ever removed
+ * for having a closer, bigger neighbour that was kept first, so a sparse region where no two
+ * cities are ever close together keeps every one of them, while a packed region thins hard. A
+ * global rank cap can't do this — it strips a sparse region bare while a crowded one still shows
+ * its own top N regardless of how unreadable they are packed together.
+ *
+ * Deterministic given a fixed `minSeparation`: the walk order is fixed, so the same `(cities,
+ * positionOf, minSeparation)` always keeps the same set — a scrub back to the same `t` at the same
+ * zoom reproduces it exactly.
+ */
+export function declutterCities<T>(cities: readonly T[], positionOf: (city: T) => readonly [number, number, number], minSeparation: number): T[] {
+  if (minSeparation <= 0 || cities.length === 0) return cities.slice()
+  const kept: T[] = []
+  const keptPositions: (readonly [number, number, number])[] = []
+  const thresholdSq = minSeparation * minSeparation
+  for (const city of cities) {
+    const pos = positionOf(city)
+    let tooClose = false
+    for (const keptPos of keptPositions) {
+      const dx = pos[0] - keptPos[0]
+      const dy = pos[1] - keptPos[1]
+      const dz = pos[2] - keptPos[2]
+      if (dx * dx + dy * dy + dz * dz < thresholdSq) {
+        tooClose = true
+        break
+      }
+    }
+    if (!tooClose) {
+      kept.push(city)
+      keptPositions.push(pos)
+    }
+  }
+  return kept
 }
 
 /** Whether any city exists at `t` — the "Human civilisation" legend row's own visibility test
@@ -118,4 +328,65 @@ export function citiesHaveDataAt(features: readonly FeatureData[] | null, t: Geo
     if (t <= feature.estimates[feature.estimates.length - 1]!.t) return true
   }
   return false
+}
+
+// ---------------------------------------------------------------------------------- labels
+
+/**
+ * How long, in years of `t` (`GeoTime` is always years before present — `@/types/layer`'s own
+ * doc comment), a city's name label stays on screen after it first appears: full opacity exactly
+ * at the city's oldest estimate, easing linearly to 0 as `t` moves this far *past* it (i.e.
+ * forward in time, toward the present — see `cityLabelOpacityAt`). A window in `t`, not
+ * wall-clock time: nothing here reads a clock, so scrubbing back to a city's founding always
+ * reproduces the same label at the same strength, matching the project's standing "nothing fades
+ * on inactivity, only `t` does" rule.
+ *
+ * Sized against the published set's own sampling grid: consecutive first-appearance times are as
+ * little as 25 years apart near the present and several hundred apart in antiquity (HYDE's own
+ * resolution), and as many as 34 cities share the *exact* same first-appearance `t`. 150 years is
+ * wide enough for the fade to read as a fade rather than a flash, without bleeding so far past a
+ * cohort that it starts to overlap the next distinct one.
+ */
+export const CITY_LABEL_FADE_WINDOW_T = 150
+
+/** How many name labels may render at once, largest population first (`newCityLabels`'s own
+ *  ordering). Several cities share one first-appearance `t` (see `CITY_LABEL_FADE_WINDOW_T`'s own
+ *  doc comment — up to 34 at once in the published set), so an uncapped label set would be a wall
+ *  of overlapping text; this is deterministic, not "however many fit", so a scrub back to the
+ *  same `t` always reproduces the same selection. */
+export const CITY_LABEL_CAP = 6
+
+export interface CityLabel {
+  feature: FeatureData
+  /** 1 right as the city first appears, easing to 0 over `CITY_LABEL_FADE_WINDOW_T` — see that
+   *  constant's own doc comment. */
+  opacity: number
+}
+
+/** The city's own label opacity at `t`: 0 before it exists, easing from 1 down to 0 across
+ *  `CITY_LABEL_FADE_WINDOW_T` years after its first appearance, 0 again beyond that window. */
+export function cityLabelOpacityAt(feature: FeatureData, t: GeoTime): number {
+  const oldest = feature.estimates[feature.estimates.length - 1]!.t
+  const age = oldest - t
+  if (age < 0 || age >= CITY_LABEL_FADE_WINDOW_T) return 0
+  return 1 - age / CITY_LABEL_FADE_WINDOW_T
+}
+
+/**
+ * Labels for the cities in `cities` that just appeared at `t`, capped at `CITY_LABEL_CAP` and
+ * largest population first. `cities` is expected already sorted that way — `allCitiesAt`'s own
+ * order, which the caller (`HumanCivilisation.tsx`) already has on hand as the expanded view's
+ * own city list — so the cap keeps the same priority the dots themselves draw in, rather than an
+ * independent (and possibly inconsistent) ranking.
+ */
+export function newCityLabels(cities: readonly CityAtTime[], t: GeoTime): CityLabel[] {
+  const labels: CityLabel[] = []
+  for (const city of cities) {
+    const opacity = cityLabelOpacityAt(city.feature, t)
+    if (opacity > 0) {
+      labels.push({ feature: city.feature, opacity })
+      if (labels.length >= CITY_LABEL_CAP) break
+    }
+  }
+  return labels
 }
