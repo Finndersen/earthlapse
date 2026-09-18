@@ -13,6 +13,21 @@
  * range is the motivating case). Whichever axis is chosen, the printed min/max stay in raw
  * units — `axisTransform` only ever changes where a value lands on the plot, never how it's
  * labelled — and a log axis says so inline (`chartAxisScale`) so the shape can't be misread.
+ *
+ * Unlike `Sparkline` (which simply stops drawing at `t`, 2026-09-18's first re-review), this
+ * chart is opened deliberately to inspect the data, so hiding the not-yet-reached portion
+ * outright would make the axis jump around as `t` moves and leave the chart unreadable at an
+ * early `t` (a chart with almost nothing on it). Instead the reached portion draws at full
+ * weight (`chartLine`/`chartArea`/`chartBand`) and the rest draws as a faint, fill-less "ghost"
+ * (`chartLineGhost` — thin, low-opacity, no area wash, no band) that shares its boundary point
+ * with the solid line so the two visually join with no gap, giving a stable "you are here, this
+ * is what has happened so far, this is what's coming" reading (2026-09-18, second re-review: "my
+ * idea... was for them to grow over time, not be fully visible upfront" — the sparkline was the
+ * primary target, but leaving this fully solid at every `t` would repeat the same complaint
+ * here). A genuine no-record gap (ADR-027) reads as a real break either way — a `null` sample
+ * still ends a segment outright (see `flushLine`/`flushBand` below) before the reached/future
+ * split below ever runs, so an absence (a gap: no line, reached or not) never gets confused with
+ * a faint-but-present ghost line (a future point: not real data yet, but not a data hole either).
  */
 
 import { useEffect } from 'react'
@@ -38,9 +53,24 @@ export interface LayerChartProps {
 
 interface ChartPoint {
   u: number
+  t: GeoTime
   value: number
   lower: number | null
   upper: number | null
+}
+
+/**
+ * Splits one continuous (gap-free) run of points into its already-reached prefix and its
+ * not-yet-reached remainder, sharing the boundary point between both so the solid and ghost
+ * lines touch with no visual gap. Points run in ascending `u`, i.e. descending `t` (oldest
+ * first) — playback runs oldest -> newest, so everything from the start up to the first point
+ * newer than `t` is reached.
+ */
+function splitAtPlayhead(segment: ChartPoint[], t: GeoTime): { reached: ChartPoint[]; future: ChartPoint[] } {
+  const splitIndex = segment.findIndex((p) => p.t < t)
+  if (splitIndex === -1) return { reached: segment, future: [] }
+  if (splitIndex === 0) return { reached: [], future: segment }
+  return { reached: segment.slice(0, splitIndex), future: segment.slice(splitIndex - 1) }
 }
 
 export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
@@ -59,8 +89,9 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   const samples: Array<ChartPoint | null> = []
   for (let i = 0; i <= SAMPLE_COUNT; i++) {
     const u = i / SAMPLE_COUNT
-    const v = layer.sample(scale.fromUnit(u))
-    samples.push(v === null ? null : { u, value: v.value, lower: v.bounds?.[0] ?? null, upper: v.bounds?.[1] ?? null })
+    const sampleT = scale.fromUnit(u)
+    const v = layer.sample(sampleT)
+    samples.push(v === null ? null : { u, t: sampleT, value: v.value, lower: v.bounds?.[0] ?? null, upper: v.bounds?.[1] ?? null })
   }
 
   const presentValues = samples.flatMap((p) => (p === null ? [] : [p.value, p.lower ?? p.value, p.upper ?? p.value]))
@@ -109,6 +140,14 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   flushLine()
   flushBand()
 
+  // Reached (full weight) vs. not-yet-reached (ghost) halves of each gap-free run — see this
+  // file's own doc comment. Bands are dropped entirely past the playhead rather than ghosted:
+  // an uncertainty range is itself a claim about a value, which is exactly what a not-yet-
+  // reached point must not assert.
+  const reachedLineSegments = lineSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
+  const futureLineSegments = lineSegments.map((seg) => splitAtPlayhead(seg, t).future).filter((seg) => seg.length > 1)
+  const reachedBandSegments = bandSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
+
   const playheadU = clampUnit(scale.toUnit(t))
   const playheadValue = layer.sample(t)
   const unit = playheadValue?.unit ?? ''
@@ -145,17 +184,23 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
           role="img"
           aria-label={isLog ? `${layer.name} chart, log scale` : `${layer.name} chart`}
         >
-          {lineSegments.map((seg, i) => {
+          {/* Area wash and band are only ever drawn for the reached portion — filling ahead of
+              the playhead would itself read as "there is a value here", the same overclaim a
+              ghost line's own "no fill" rule exists to avoid (this file's own doc comment). */}
+          {reachedLineSegments.map((seg, i) => {
             const top = seg.map((p) => `${x(p.u)},${y(p.value)}`)
             const base = [`${x(seg[seg.length - 1]!.u)},${VIEW_HEIGHT}`, `${x(seg[0]!.u)},${VIEW_HEIGHT}`]
             return <polygon key={i} className={styles.chartArea} points={[...top, ...base].join(' ')} />
           })}
-          {bandSegments.map((seg, i) => {
+          {reachedBandSegments.map((seg, i) => {
             const upperPath = seg.map((p) => `${x(p.u)},${y(p.upper ?? p.value)}`)
             const lowerPath = [...seg].reverse().map((p) => `${x(p.u)},${y(p.lower ?? p.value)}`)
             return <polygon key={i} className={styles.chartBand} points={[...upperPath, ...lowerPath].join(' ')} />
           })}
-          {lineSegments.map((seg, i) => (
+          {futureLineSegments.map((seg, i) => (
+            <polyline key={i} className={styles.chartLineGhost} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
+          ))}
+          {reachedLineSegments.map((seg, i) => (
             <polyline key={i} className={styles.chartLine} points={seg.map((p) => `${x(p.u)},${y(p.value)}`).join(' ')} />
           ))}
           <line className={styles.chartPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />

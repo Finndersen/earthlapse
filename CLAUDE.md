@@ -87,6 +87,17 @@ Screenshots are evidence, not verification. **Assert on drawn pixels, never on C
 element's layout box routinely differs from what is painted inside it, and a check that measures
 the box will pass while the thing on screen is wrong.
 
+**But pixel-diffing has its own trap: it needs something to diff against.** `drawnBounds` decides
+what is "drawn" by comparing against sampled corner background, which is sound over a flat panel and
+worthless over a busy photographic scene with no opaque backing — the photo's own texture registers
+as content. It measured 173px of "width" for a completely empty SVG and passed a check that should
+have failed. For an SVG trace (sparklines, charts), measure the real element geometry instead —
+`polylineTraceBounds` unions the actual `<polyline>` rects and cannot be fooled by the backdrop.
+Pick the measurement that matches what is underneath the thing you are measuring.
+
+A check that cannot fail proves nothing. Before trusting a new assertion, run it against the
+unfixed build and confirm it actually fails there.
+
 Use the harness at `web/scripts/qa/` (see its README) rather than writing a throwaway Playwright
 script: it loads the page once, drives it through `window.__earthtime` without reloading, measures
 rendered bounds, fails on console errors, and writes a screenshot contact sheet. Add a shot to its

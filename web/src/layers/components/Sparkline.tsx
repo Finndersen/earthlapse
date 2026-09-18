@@ -22,6 +22,16 @@
  * "the value under the playhead sits directly above it", its own doc comment), since it is
  * explicitly a view docked to whatever window the timeline is currently showing, not a
  * self-contained peek the way this component is.
+ *
+ * Never draws the future (2026-09-18, user: "my idea... was for them to grow over time, not be
+ * fully visible upfront"): a sample only draws once `t` has reached it, the same rule arrival
+ * arcs and city markers already apply on the globe — this is a `t`-driven reveal, not a fade on
+ * inactivity, so it doesn't run afoul of the project's "nothing hides on inactivity" rule. When
+ * `t` sits before the layer's domain even starts (the "NO DATA" case), nothing has been reached
+ * yet, so nothing draws — no trace, no dot; the always-present `sparkPlayhead` line is kept, the
+ * same bare "you are here" mark the timeline's own playhead gives regardless of data. The y-axis
+ * range is still computed from the LAYER'S WHOLE series, reached or not, so the sparkline doesn't
+ * visibly rescale as it grows while scrubbing — only which portion is traced changes.
  */
 
 import { createLinearScale, createSymlogScale } from '@/timeline'
@@ -50,14 +60,18 @@ interface Point {
 export function Sparkline({ layer, t, scale }: SparklineProps) {
   const layerScale = scale.kind === 'linear' ? createLinearScale(layer.timeDomain) : createSymlogScale(layer.timeDomain)
 
-  const samples: Array<Point | null> = []
+  const allSamples: Array<(Point & { t: GeoTime }) | null> = []
   for (let i = 0; i <= SAMPLE_COUNT; i++) {
     const u = i / SAMPLE_COUNT
-    const v = layer.sample(layerScale.fromUnit(u))
-    samples.push(v === null ? null : { u, value: v.value })
+    const sampleT = layerScale.fromUnit(u)
+    const v = layer.sample(sampleT)
+    allSamples.push(v === null ? null : { u, t: sampleT, value: v.value })
   }
 
-  const values = samples.flatMap((p) => (p === null ? [] : [p.value]))
+  // The axis range comes from every real sample regardless of whether `t` has reached it yet
+  // (see this file's own doc comment) — computed before the reached/future split below, which
+  // only decides what gets traced, never what the axis itself spans.
+  const values = allSamples.flatMap((p) => (p === null ? [] : [p.value]))
   const { toAxis } = axisTransform(values)
   const axisValues = values.map(toAxis)
   const min = axisValues.length > 0 ? Math.min(...axisValues) : 0
@@ -66,6 +80,15 @@ export function Sparkline({ layer, t, scale }: SparklineProps) {
 
   const x = (u: number): number => PAD + u * (VIEW_WIDTH - 2 * PAD)
   const y = (value: number): number => VIEW_HEIGHT - PAD - ((toAxis(value) - min) / span) * (VIEW_HEIGHT - 2 * PAD)
+
+  // Playback runs oldest -> newest (`t` decreases toward the present), so a sample has been
+  // reached once its own time is at or older than `t` — i.e. `u <= rawPlayheadU`, since `u`
+  // increases toward the present the same way `t` decreases toward it. Deliberately the raw,
+  // unclamped unit here (can go negative when `t` sits older than the whole domain): clamping it
+  // first would let the single sample at `u === 0` slip through as "reached" even when nothing
+  // has actually begun yet.
+  const rawPlayheadU = layerScale.toUnit(t)
+  const samples = allSamples.map((p) => (p !== null && p.u <= rawPlayheadU ? p : null))
 
   const segments: Point[][] = []
   let current: Point[] = []
@@ -81,7 +104,7 @@ export function Sparkline({ layer, t, scale }: SparklineProps) {
 
   // Clamped to the layer's own domain edge when `t` sits outside it — the same "this reading
   // doesn't apply right now" reading `ScalarReadout`'s "no data" already gives that case.
-  const playheadU = clampUnit(layerScale.toUnit(t))
+  const playheadU = clampUnit(rawPlayheadU)
   const playheadValue = layer.sample(t)
 
   return (

@@ -215,6 +215,19 @@
   opacity: 0.08;
 }
 
+/* The not-yet-reached portion of the trace (2026-09-18: "grow over time, not be fully visible
+   upfront") — a hairline, clearly subordinate to `.chartLine`: thinner, no glow, and dim enough
+   to read as "not real yet" without vanishing outright, since it still needs to carry the "this
+   is what's coming" reading the chart (unlike the sparkline) is meant to keep. No fill/band ever
+   pairs with it — see this file's own JSX comment for why. */
+.chartLineGhost {
+  fill: none;
+  stroke: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
 .chartAxis {
   position: absolute;
   left: 0;
