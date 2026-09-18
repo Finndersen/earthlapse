@@ -6192,3 +6192,47 @@ explicitly "not every single capital city".
 - The roster is a maintenance surface: adding a city is a one-line edit, but it is also a place
   where one person's sense of "well known" becomes the globe's. The `reason` field exists so a later
   reader can argue with a specific entry rather than with the whole list.
+
+## ADR-032 amendment — the arrival arc draws progressively, reversing this ADR's own refusal
+
+**Status:** accepted — human-directed 2026-09-18. Amends ADR-032; does not supersede it.
+
+**What changed.** The arrival arc now reveals from origin toward destination as `t` runs from the
+window's `tMax` down to `established`, with an arrowhead at the leading edge. The wall-clock "bright
+head" pulse that previously carried the sense of motion is removed — progressive reveal and the
+arrowhead do that job now.
+
+**This is a reversal, and it should be read as one.** ADR-032 considered exactly this and refused it:
+growing the arc's visible length from `t` "is exactly ADR-022's seaweed mistake, presenting a
+dating-uncertainty band as travel time". That objection is still technically correct. The span
+between `established` and `tMax` encodes *how unsure we are about when the arrival happened*, not
+*how long the journey took*. A progressive draw invites a viewer to read the second meaning off the
+first.
+
+**Why it was accepted anyway.** Direct user instruction, twice: the markers "should be animated
+(showing journey from origin to destination) with an arrow at the end (to make the direction
+obvious)". Against ADR-032's objection sit three things:
+- The arrivals this layer draws did, in fact, unfold over millennia. The *duration* a viewer infers
+  is the right order of magnitude even though it is derived from the wrong quantity — which makes
+  this a weaker version of the seaweed mistake than ADR-022's, where the inferred quantity was
+  simply fictitious.
+- The honest framing survives where it matters most: the hover tooltip still prints the span through
+  `formatTimeRange` as a *date range*, never as a duration.
+- The alternative that would be semantically clean — animating the journey on a wall clock,
+  independent of `t` — breaks the project's load-bearing rule that `Layer.sample()` and every globe
+  presentation are pure in `t`. Scrubbing correctness is worth more than this distinction.
+
+**What is NOT reversed.** ADR-032's actual core stands unchanged: arrivals remain transient rather
+than permanent marks, only first peopling leaves an inhabited marker behind, and the `established`
+date stays a hard dating fact that the presentation reads but never blends across.
+
+**Consequence worth watching.** If a future arrival is ever added whose dating uncertainty is wildly
+out of proportion to its real travel time — a single-year voyage with a 500-year dating band, say —
+this reveal will lie about it visibly, and that arrival will need its own treatment rather than a
+re-litigation of this amendment.
+
+**Related fix, same pass.** `arcAlpha`'s fade tail was measured in warp without checking how much
+warp remained before `t = 0`, so any recent arrival was still lit at the present — the arcs "persist
+on the globe up until present moment and not fading" (user, 2026-09-18). The `squeezeToFit` helper
+the inhabited-marker fade already needed is now shared by both, so every arc reaches exactly zero by
+the present.

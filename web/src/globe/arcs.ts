@@ -3,12 +3,25 @@
  * three.js, no React — the same "pure core, thin three.js/React consumer" split `blend.ts`,
  * `globeGeometry.ts` and `camera.ts` all follow; `HumanCivilisation.tsx` is the thin consumer.
  *
- * **Shown whole, never grown along its length.** The arc's *geometry*
- * (`greatCircleLonLatPoints`) never depends on `t` at all — animating draw progress from `t`
- * within the dating-uncertainty band would repeat ADR-022's "seaweed" mistake of reading dating
- * uncertainty as travel time. What `t` drives is the arc's *presence*: `arrivalPresentationAt`
- * below turns `t` into an alpha, a travel progress, a landing ripple and an "inhabited" weight
- * that itself rises then fades, and nothing else.
+ * **Geometry fixed, presentation animated (2026-09 amendment reversing part of ADR-032).** The
+ * arc's *points* (`greatCircleLonLatPoints`) never depend on `t` — built once from
+ * `origin`/`destination` alone, so the underlying shape can never drift or regrow. What *does* now
+ * depend on `t` is how much of that fixed shape is drawn: `arrivalPresentationAt`'s
+ * `travelProgress` (0 at the window's `tMax`, 1 at `established`) is read by
+ * `HumanCivilisation.tsx`'s arc shader as a reveal fraction against each point's own cumulative
+ * `DistancedAnchor.distance`, so the ribbon draws progressively from origin toward destination as
+ * the migration elapses, with an arrowhead at the leading edge (2026-09 direct user feedback: "the
+ * migration line markers should be animated ... with an arrow at the end"). **This is exactly the
+ * animation ADR-032 originally rejected** — its own words: "growing the arc's visible length from
+ * `t`... exactly ADR-022's seaweed mistake, presenting a dating-uncertainty band as travel time."
+ * The `[established, tMax]` span here genuinely is a dating-uncertainty band, not a measured
+ * journey duration, and reading it as one is still not literally true. The human asked for the
+ * animation anyway, in those terms, so this is an explicit, informed product reversal rather than
+ * a blind rediscovery of the mistake ADR-022 named — but it does mean **docs/DECISIONS.md needs an
+ * ADR-032 amendment recording it**, not made here since DECISIONS.md is a shared, serialised file
+ * (CLAUDE.md's "Working in parallel"). What `arrivalPresentationAt` still owns, unchanged: alpha,
+ * `travelProgress` itself, `settleProgress` and `inhabited` — every field stays a pure function of
+ * `t`, so scrubbing in either direction reproduces exactly the same reveal at a given `t`.
  *
  * **Transient, not permanent (2026-09 human-civilisation pass; further amended 2026-09 so the
  * "inhabited" marker fades too).** Every arc used to be drawn for all `t` at or below its
@@ -42,43 +55,98 @@ function clamp(x: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, x))
 }
 
+/** The two endpoints' unit vectors and their great-circle angular separation — computed once and
+ *  shared by every point sampled along one arc, whether on `greatCircleLonLatPoints`'s fixed grid
+ *  (`ARC_SEGMENTS + 1` evenly-spaced points) or `arrowheadPlacementAt`'s arbitrary `travelProgress`
+ *  fraction. */
+interface GreatCircleBasis {
+  a: readonly [number, number, number]
+  b: readonly [number, number, number]
+  theta: number
+  sinTheta: number
+}
+
+function greatCircleBasis(origin: GlobeEffectAnchor, destination: GlobeEffectAnchor): GreatCircleBasis {
+  const a = lonLatToSphere(origin)
+  const b = lonLatToSphere(destination)
+  const theta = Math.acos(clamp(dot3(a, b), -1, 1))
+  return { a, b, theta, sinTheta: Math.sin(theta) }
+}
+
+/** The point at fraction `f` (0 at `origin`, 1 at `destination`) of `basis`'s great circle —
+ *  spherical linear interpolation of the two endpoints' unit vectors, the shorter of the two
+ *  possible great-circle paths. `basis.theta` must be non-degenerate (checked by every caller
+ *  before this is reached — `basis.sinTheta` would otherwise be ~0). */
+function pointAtBasis(basis: GreatCircleBasis, f: number): GlobeEffectAnchor {
+  const { a, b, theta, sinTheta } = basis
+  const wa = Math.sin((1 - f) * theta) / sinTheta
+  const wb = Math.sin(f * theta) / sinTheta
+  const x = a[0] * wa + b[0] * wb
+  const y = a[1] * wa + b[1] * wb
+  const z = a[2] * wa + b[2] * wb
+  const len = Math.hypot(x, y, z)
+  const lat = Math.asin(clamp(y / len, -1, 1)) * RAD2DEG
+  // Inverts lonLatToSphere's own x = cos(lat)*sin(lon), z = cos(lat)*cos(lon) (projection.ts's
+  // doc comment on why lon 0 faces +Z) — atan2(x, z), the standard atan2(opposite, adjacent)
+  // recovery of an angle from its own sin/cos.
+  const lon = Math.atan2(x / len, z / len) * RAD2DEG
+  return { lat, lon }
+}
+
 /**
  * `segments + 1` points along the great-circle path from `origin` to `destination`, evenly
- * spaced in angle (spherical linear interpolation of the two points' unit vectors,
- * `lonLatToSphere`) — the shorter of the two possible great-circle paths, same as every
- * standard great-circle interpolation. Returns a single-point array (just `origin`) for the
- * degenerate origin === destination case, so a caller can detect "point, not arc" without a
- * separate check (`isDegenerate` below spells this out explicitly instead of relying on
- * `.length === 1`, since a 1-point return could otherwise read as a bug).
+ * spaced in angle. Returns a single-point array (just `origin`) for the degenerate origin ===
+ * destination case, so a caller can detect "point, not arc" without a separate check
+ * (`isDegenerate` below spells this out explicitly instead of relying on `.length === 1`, since a
+ * 1-point return could otherwise read as a bug).
  */
 export function greatCircleLonLatPoints(
   origin: GlobeEffectAnchor,
   destination: GlobeEffectAnchor,
   segments: number,
 ): GlobeEffectAnchor[] {
-  const a = lonLatToSphere(origin)
-  const b = lonLatToSphere(destination)
-  const theta = Math.acos(clamp(dot3(a, b), -1, 1))
-  if (theta < DEGENERATE_ANGLE_RADIANS) return [origin]
+  const basis = greatCircleBasis(origin, destination)
+  if (basis.theta < DEGENERATE_ANGLE_RADIANS) return [origin]
 
-  const sinTheta = Math.sin(theta)
   const points: GlobeEffectAnchor[] = []
   for (let i = 0; i <= segments; i++) {
-    const f = i / segments
-    const wa = Math.sin((1 - f) * theta) / sinTheta
-    const wb = Math.sin(f * theta) / sinTheta
-    const x = a[0] * wa + b[0] * wb
-    const y = a[1] * wa + b[1] * wb
-    const z = a[2] * wa + b[2] * wb
-    const len = Math.hypot(x, y, z)
-    const lat = Math.asin(clamp(y / len, -1, 1)) * RAD2DEG
-    // Inverts lonLatToSphere's own x = cos(lat)*sin(lon), z = cos(lat)*cos(lon) (projection.ts's
-    // doc comment on why lon 0 faces +Z) — atan2(x, z), the standard atan2(opposite, adjacent)
-    // recovery of an angle from its own sin/cos.
-    const lon = Math.atan2(x / len, z / len) * RAD2DEG
-    points.push({ lat, lon })
+    points.push(pointAtBasis(basis, i / segments))
   }
   return points
+}
+
+/** How far ahead of the arrowhead's own tip, as a fraction of the whole arc, `arrowheadPlacementAt`
+ *  samples a second point to hand the renderer a local tangent from — analytic rather than
+ *  grid-snapped to `ARC_SEGMENTS`, since the tip can sit at any `travelProgress`, not just one of
+ *  the fixed sample points. Mirrors `buildFatLineBuffers`'s own neighbour-based tangent
+ *  (`aDirA`/`aDirB`) in spirit: a short, nearby point on the same curve, not a bearing/heading, so
+ *  the renderer derives direction the same screen-space way the arc ribbon already does. */
+const ARROWHEAD_TANGENT_FRACTION = 0.02
+
+/** Where the migration arrowhead sits and points, at a given `travelProgress` (0 origin, 1
+ *  destination — `ArrivalPresentation.travelProgress`'s own range). */
+export interface ArrowheadPlacement {
+  /** The arrowhead's own tip: the head of the revealed arc while travelling, or the destination
+   *  once travel is complete (`travelProgress` is 1 either way — see its own doc comment). */
+  anchor: GlobeEffectAnchor
+  /** A point a short distance behind the tip, along the same great circle — not a bearing/heading,
+   *  so the renderer derives a local tangent the same way the arc ribbon's own vertex shader does
+   *  (project both points, take the screen-space direction between them), staying correct through
+   *  the sphere/map unfold exactly like the ribbon (both go through the same
+   *  `unfoldedLiftedPosition` twin). */
+  tail: GlobeEffectAnchor
+}
+
+/** `null` for a degenerate (point) arrival — ADR-032's African origin has no direction to show, so
+ *  it stays a plain marker with no arrowhead, same as it has no arc. Otherwise pure in its inputs,
+ *  same as everything else in this module. */
+export function arrowheadPlacementAt(effect: ArrivalGlobeEffect, travelProgress: number): ArrowheadPlacement | null {
+  if (isDegenerateArrival(effect)) return null
+  const basis = greatCircleBasis(effect.origin, effect.destination)
+  const progress = clamp01(travelProgress)
+  const anchor = pointAtBasis(basis, progress)
+  const tail = pointAtBasis(basis, Math.max(0, progress - ARROWHEAD_TANGENT_FRACTION))
+  return { anchor, tail }
 }
 
 /** Whether `effect` is the degenerate origin === destination case (ADR-032's Africa origin): a
@@ -200,6 +268,22 @@ const HIDDEN_ARRIVAL: ArrivalPresentation = {
  * a value blended across — but the arc's own opacity either side of it is continuous, so an arc
  * never pops out mid-flight.
  */
+/**
+ * Squeezes an envelope of total width `envelopeWarp` (in warp units) so it fits within
+ * `availableWarp` of warp still to come before the present, preserving its internal proportions —
+ * 1 (no squeeze) whenever the envelope already fits within what's available; `availableWarp /
+ * envelopeWarp` otherwise. Shared by every "settle/fade before `t = 0`" envelope below: a recent
+ * arrival (Iceland at 1148 BP, say) has very little warp left between `established` and the
+ * present, and left un-squeezed an envelope sized for the common case would still be lit at
+ * `t = 0` — exactly the permanent mark these fades exist to remove. Squeezing keeps the fade's
+ * *shape* and its purity in `t` rather than a hard clamp that would just truncate it. `symlogWarp(0)`
+ * is 0, so callers always pass `establishedWarp` itself as `availableWarp` — the warp still to come
+ * between `established` and the present.
+ */
+function squeezeToFit(envelopeWarp: number, availableWarp: number): number {
+  return envelopeWarp > availableWarp && envelopeWarp > 0 ? availableWarp / envelopeWarp : 1
+}
+
 export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, timing: ArrivalTiming): ArrivalPresentation {
   const window = persistentWindow(effect)
   if (t > window.tMax) return HIDDEN_ARRIVAL
@@ -209,19 +293,21 @@ export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, ti
   const currentWarp = symlogWarp(t)
   const travelWarp = Math.max(0, startWarp - establishedWarp)
   const tailWarp = Math.max(timing.minTailWarp, timing.minArcWarp - travelWarp)
+  // The tail itself needs warp between `established` and the present to fade across, same problem
+  // as the settle/fade envelope below and the same fix: squeeze it into what's actually left
+  // rather than letting a recently-established arrival's tail overrun into the present still lit
+  // (the bug this squeeze fixes — see `squeezeToFit`'s own doc comment).
+  const squeezedTailWarp = tailWarp * squeezeToFit(tailWarp, establishedWarp)
 
   const travelling = t >= effect.established
   const travelProgress = travelling && travelWarp > 0 ? clamp01((startWarp - currentWarp) / travelWarp) : 1
-  const arcAlpha = travelling ? 1 : clamp01(tailWarp > 0 ? (currentWarp - (establishedWarp - tailWarp)) / tailWarp : 0)
+  const arcAlpha = travelling
+    ? 1
+    : clamp01(squeezedTailWarp > 0 ? (currentWarp - (establishedWarp - squeezedTailWarp)) / squeezedTailWarp : 0)
 
   const distancePastEstablished = establishedWarp - currentWarp
-  // The settle-then-fade envelope needs warp between `established` and the present, and a recent
-  // arrival has very little: Iceland (1148 BP) has a fraction of what Beringia does. Left alone it
-  // would still be near-fully lit at t = 0 — exactly the permanent dot this fade exists to remove
-  // — so the envelope is squeezed into whatever warp remains, keeping its shape and its purity in
-  // `t`. `symlogWarp(0)` is 0, so the warp still to come is `establishedWarp` itself.
   const envelopeWarp = timing.landingWarp + timing.inhabitedFadeWarp
-  const squeeze = envelopeWarp > establishedWarp && envelopeWarp > 0 ? establishedWarp / envelopeWarp : 1
+  const squeeze = squeezeToFit(envelopeWarp, establishedWarp)
   const landingWarp = timing.landingWarp * squeeze
   const fadeWarp = timing.inhabitedFadeWarp * squeeze
 

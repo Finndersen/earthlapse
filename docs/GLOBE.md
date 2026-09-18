@@ -764,19 +764,33 @@ interpolates, so the two can never disagree.
 Every arc used to be drawn for the whole span from its window's `tMax` to the present (dashed,
 then solid at `established`), so by the present all twenty-five sat on screen together. An arc is
 now drawn only while its migration is actually happening — `t` from the window's `tMax` through
-`established` — with a bright head travelling `origin → destination` on a wall-clock loop
-(`ARC_FRAGMENT_SHADER`'s `uTravelling`, looped rather than driven by `t` itself, since a dating
-window is often a thousandth of the arc's own on-screen life). Past `established` a landing ripple
+`established` — **revealing progressively from origin toward destination** as `t` advances, with an
+arrowhead at the leading edge so the direction is unambiguous (`arcs.ts`'s `arrowheadPlacementAt`,
+`travelProgress` read against each vertex's `vDistance` in `ARC_FRAGMENT_SHADER`; the leading edge
+is a short soft gradient over ~4% of the arc's length, sized proportionally so it reads the same at
+orb and expanded scale — a hard cut looked like an abruptly clipped line). This replaced a
+wall-clock looped "bright head" and is a deliberate reversal of ADR-032's own refusal to grow the
+arc from `t`; read that ADR's amendment before changing it back, because the objection it records
+(a dating-uncertainty band is not a travel duration) is still technically correct and was overridden
+on purpose. Past `established` a landing ripple
 expands and fades at the destination, and the arc itself fades out over a tail (`arcs.ts`'s
 `arrivalPresentationAt`); an `arrivalKind: peopling` leaves a small persistent "inhabited" marker
 behind at the destination once the ripple settles, a `migration` leaves nothing. The tail's width
 is not fixed in years: it is derived from the timeline's own playback-rate model
 (`arrivalTimingFor`, in symlog-warp units) so every arrival gets at least `MIN_ARC_SECONDS` (1.1s)
 of legible wall-clock life at the default rate regardless of how narrow its own dating window is —
-a fixed year count would flicker at 60 ka and last forever at 700 BP. **Honest consequence:** near
-the present the remaining timeline is narrower than that minimum, so a few of the most recent
-arrivals are still partly drawn at `t = 0` — the fade simply runs out of timeline, not a bug to
-clamp away. Rendered as camera-facing ribbons (`buildFatLineBuffers`, `HumanCivilisation.tsx`'s
+a fixed year count would flicker at 60 ka and last forever at 700 BP. **Every arc reaches exactly
+zero by `t = 0`.** This paragraph previously claimed the opposite — that near the present the
+remaining timeline is narrower than the minimum, so recent arrivals staying partly drawn at `t = 0`
+was "the fade simply running out of timeline, not a bug to clamp away". A viewer reported it as
+precisely the bug it looked like ("the more modern migration paths are persisting on the globe up
+until present moment and not fading", 2026-09-18). The fix keeps the fade pure in `t`: `arcs.ts`'s
+`squeezeToFit` compresses the tail envelope into whatever warp actually remains before `t = 0`,
+preserving its shape rather than truncating it. The same helper does the same job for the inhabited
+marker, which had the identical defect. **The general lesson:** an envelope measured in warp needs
+checking against the warp that is actually left, not only against its own minimum width — and when
+a rendering rule produces something a viewer will read as broken, "correct by construction" is not
+a defence. Rendered as camera-facing ribbons (`buildFatLineBuffers`, `HumanCivilisation.tsx`'s
 `ARC_VERTEX_SHADER`), not `gl.LINE_STRIP`, through the shared `unfoldedLiftedPosition`/
 `PROJECTION_GLSL` twin (§1's v2 note) rather than the arc's own separate `mix(spherePos, mapPos, ...)`
 an earlier version used — so an arc can never drift from the mesh mid-unfold. **The parent chain

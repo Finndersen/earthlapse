@@ -9,11 +9,14 @@
  * uniforms), so it lives in `Globe.tsx`'s own material rather than here.
  *
  * Everything visible is a pure function of `t` (`arcs.ts`, `cities.ts` — both unit-tested without
- * a canvas). Three things animate on wall-clock time and none of them decides *what* is on
- * screen, only how it moves: the pulse travelling along an arc in flight, the sympathetic breathe
- * of a marker or arc whose event card is showing, and the scene-location ring's own breathe.
- * Scrubbing to a given `t` from either direction reproduces exactly the same set of drawables at
- * the same strengths.
+ * a canvas), **including how much of a travelling arc is drawn**: the ribbon reveals
+ * progressively from origin toward destination as `t` moves through the migration
+ * (`ArrivalPresentation.travelProgress`, `ARC_FRAGMENT_SHADER`'s own doc comment), with an
+ * arrowhead (`ArrowHead`) at its leading edge. Two things still animate on wall-clock time and
+ * neither decides *what* is on screen, only how it moves: the sympathetic breathe of a marker or
+ * arc whose event card is showing, and the scene-location ring's own breathe. Scrubbing to a
+ * given `t` from either direction reproduces exactly the same set of drawables at the same
+ * strengths and the same reveal.
  *
  * **One instanced field, not one mesh per dot.** Every marker — arrival ring, landing ripple,
  * inhabited, city, scene location — is an instance in a single `MarkerField`, so forty-five cities cost one draw call
@@ -38,15 +41,18 @@ import type { SceneCoordinates } from '@/types/manifest'
 import {
   arrivalPresentationAt,
   arrivalWindow,
+  arrowheadPlacementAt,
   buildArrivalIndex,
   buildFatLineBuffers,
   traceToOrigin,
   type ArrivalRecord,
   type ArrivalTiming,
+  type ArrowheadPlacement,
   type DistancedAnchor,
 } from './arcs'
 import { CITY_LIMIT_EXPANDED, CITY_LIMIT_ORB, cityEstimateRange, selectCities, type CityAtTime } from './cities'
 import { srgbHexToLinear } from './color'
+import { smoothstep as easeSmoothstep } from './effects/math'
 import { GlobeTooltip, useGlobeHitTest, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { glslFloat } from './glsl'
 import {
@@ -54,7 +60,6 @@ import {
   ARC_SPHERE_LIFT,
   ARRIVAL_COLOR,
   ARRIVAL_GHOST_COLOR,
-  ARRIVAL_PULSE_COLOR,
   CITY_COLOR,
   INHABITED_COLOR,
   MARKER_MAP_LIFT,
@@ -122,43 +127,43 @@ void main() {
 `
 
 /**
- * The arc's own colour is flat; everything that moves along it is additive light.
+ * The arc's own colour is flat; what moves is how much of the ribbon is lit.
  *
- * `uTravelling` gates a bright head that runs `origin -> destination` on a wall-clock loop — the
- * one place this layer deliberately does *not* read `t`. A migration's dating uncertainty is
- * often a thousandth of the arc's own on-screen life, so driving the head from `t` would make it
- * a single invisible frame at one playback speed and a crawl at another; looping it instead means
- * the direction of travel reads at every speed, including paused. What `t` decides is whether the
- * head runs at all, and how strongly the arc is drawn.
+ * `uReveal` is `ArrivalPresentation.travelProgress` (arcs.ts): 0 at the window's `tMax`, 1 at
+ * `established` and for the whole fade-out tail after it. Each vertex's own cumulative
+ * `vDistance` (0 at the origin, 1 at the destination — `arcs.ts`'s `DistancedAnchor`, carried
+ * through unchanged by `buildFatLineBuffers`) is compared against it: lit while `vDistance <=
+ * uReveal`, dark beyond, with a short soft gradient at the boundary (`REVEAL_SOFTNESS`) rather
+ * than a hard cut — a hard edge reads as an abruptly clipped line, especially right where the
+ * arrowhead (`ArrowHead` below) sits; the gradient reads instead as the ribbon trailing off into
+ * its own leading point, and it's sized as a *fraction of the arc's own length* (not CSS pixels),
+ * so it looks the same proportion of the journey at any physical zoom, orb or expanded.
+ * `doneMask` keeps the *whole* arc lit once travel is complete (`uReveal >= 1`) even right at
+ * `vDistance == 1`, where the plain gradient formula would otherwise clip the very last sliver —
+ * the tail's own fade-out (`uAlpha`) is what dims the arc from there, not this reveal term.
  *
- * `uSympathy` is the same idea for the event feed: while an arrival's card is on screen (stronger
+ * `uSympathy` is the event feed's own affordance: while an arrival's card is on screen (stronger
  * while the viewer hovers it) its arc breathes, so card and globe are visibly the same subject.
  */
 const ARC_FRAGMENT_SHADER = /* glsl */ `
 uniform vec3 uColor;
-uniform vec3 uPulseColor;
 uniform float uAlpha;
-uniform float uTravelling;
+uniform float uReveal;
 uniform float uSympathy;
 uniform float uTime;
 varying float vDistance;
 
-const float HEAD_SECONDS = 1.6;
-const float HEAD_WIDTH = 0.1;
-const float TRAIL_WIDTH = 0.34;
+const float REVEAL_SOFTNESS = 0.04;
 
 void main() {
-  float head = fract(uTime / HEAD_SECONDS);
-  float behind = head - vDistance;
-  float trail = behind >= 0.0 ? exp(-behind / TRAIL_WIDTH) : 0.0;
-  float core = exp(-abs(behind) * abs(behind) / (HEAD_WIDTH * HEAD_WIDTH));
-  float pulse = uTravelling * max(core, trail * 0.45);
+  float doneMask = step(0.999, uReveal);
+  float edgeFade = 1.0 - smoothstep(uReveal - REVEAL_SOFTNESS, uReveal, vDistance);
+  float reveal = max(doneMask, edgeFade);
 
   float breathe = sin(uTime * 4.2) * 0.5 + 0.5;
-  float alpha = clamp(uAlpha * (1.0 + 0.45 * uSympathy * breathe), 0.0, 1.0);
-  vec3 color = mix(uColor, uPulseColor, clamp(pulse, 0.0, 1.0));
+  float alpha = clamp(uAlpha * reveal * (1.0 + 0.45 * uSympathy * breathe), 0.0, 1.0);
 
-  gl_FragColor = vec4(color, clamp(alpha + pulse * 0.5 * uAlpha, 0.0, 1.0));
+  gl_FragColor = vec4(uColor, alpha);
 
   #include <colorspace_fragment>
 }
@@ -168,19 +173,19 @@ void main() {
 const ARC_HALF_WIDTH_PX = 1.3
 
 const ARC_COLOR = new THREE.Color(...srgbHexToLinear(ARRIVAL_COLOR))
-const ARC_PULSE_COLOR = new THREE.Color(...srgbHexToLinear(ARRIVAL_PULSE_COLOR))
 const ARC_GHOST_COLOR = new THREE.Color(...srgbHexToLinear(ARRIVAL_GHOST_COLOR))
 
 interface ArcSegmentProps {
   points: readonly DistancedAnchor[]
   color: THREE.Color
   alpha: number
-  travelling: boolean
+  /** `ArrivalPresentation.travelProgress` — see `ARC_FRAGMENT_SHADER`'s own doc comment. */
+  reveal: number
   sympathy: number
   unfold: number
 }
 
-function ArcSegment({ points, color, alpha, travelling, sympathy, unfold }: ArcSegmentProps) {
+function ArcSegment({ points, color, alpha, reveal, sympathy, unfold }: ArcSegmentProps) {
   const { size } = useThree()
 
   const mesh = useMemo(() => {
@@ -196,9 +201,8 @@ function ArcSegment({ points, color, alpha, travelling, sympathy, unfold }: ArcS
       uniforms: {
         uUnfold: { value: 0 },
         uColor: { value: ARC_COLOR },
-        uPulseColor: { value: ARC_PULSE_COLOR },
         uAlpha: { value: 0 },
-        uTravelling: { value: 0 },
+        uReveal: { value: 0 },
         uSympathy: { value: 0 },
         uTime: { value: 0 },
         uHalfWidthPx: { value: ARC_HALF_WIDTH_PX },
@@ -226,9 +230,144 @@ function ArcSegment({ points, color, alpha, travelling, sympathy, unfold }: ArcS
     material.uniforms.uUnfold!.value = unfold
     material.uniforms.uColor!.value = color
     material.uniforms.uAlpha!.value = alpha
-    material.uniforms.uTravelling!.value = travelling ? 1 : 0
+    material.uniforms.uReveal!.value = reveal
     material.uniforms.uSympathy!.value = sympathy
     material.uniforms.uTime!.value = state.clock.elapsedTime
+    ;(material.uniforms.uResolution!.value as THREE.Vector2).set(size.width, size.height)
+  })
+
+  return <primitive object={mesh} frustumCulled={false} />
+}
+
+// --------------------------------------------------------------------------------- arrowhead
+
+/**
+ * A small solid triangle marking the leading edge of a travelling arc — direction made explicit
+ * (2026-09 user feedback: "an arrow at the end ... to make the direction obvious"), rather than
+ * relying on the reveal animation alone, which reads clearly only while actively scrubbing.
+ *
+ * Sized in CSS pixels via the same screen-space technique the arc ribbon
+ * (`ARC_VERTEX_SHADER`) and the instanced marker field (`MarkerField.tsx`'s `MARKER_VERTEX_SHADER`)
+ * both already use — project two nearby points, take the *screen-space* direction between them,
+ * offset in pixels scaled by `1 / uResolution` — rather than a second, three-dimensional sizing
+ * mechanism: `uAnchorLonLat` is the tip (`ArrowheadPlacement.anchor`) and `uTailLonLat` a point a
+ * short distance behind it along the same great circle (`ArrowheadPlacement.tail`), and the
+ * triangle is built entirely from the screen-space tangent/normal between their projections, so it
+ * reads the same physical size on the small corner orb and the expanded globe alike, and rotates
+ * correctly through the sphere/map unfold (both project through the same `unfoldedLiftedPosition`
+ * twin the ribbon uses).
+ */
+const ARROW_VERTEX_SHADER = /* glsl */ `
+attribute vec2 aCorner;
+uniform vec2 uAnchorLonLat;
+uniform vec2 uTailLonLat;
+uniform float uUnfold;
+uniform float uSizePx;
+uniform vec2 uResolution;
+
+${PROJECTION_GLSL}
+
+vec3 arrowPosition(vec2 lonLat) {
+  return unfoldedLiftedPosition(lonLat, uUnfold, ${glslFloat(ARC_SPHERE_LIFT)}, ${glslFloat(ARC_MAP_LIFT)});
+}
+
+void main() {
+  vec4 clipAnchor = projectionMatrix * modelViewMatrix * vec4(arrowPosition(uAnchorLonLat), 1.0);
+  vec4 clipTail = projectionMatrix * modelViewMatrix * vec4(arrowPosition(uTailLonLat), 1.0);
+
+  vec2 ndcAnchor = clipAnchor.xy / clipAnchor.w;
+  vec2 ndcTail = clipTail.xy / clipTail.w;
+  vec2 screenDir = (ndcAnchor - ndcTail) * uResolution;
+  float screenLen = length(screenDir);
+  // Points "forward", tail -> anchor (the direction of travel) — falls back to an arbitrary axis
+  // when the two points coincide (arrival just starting, tail clamped to the same point as the
+  // anchor), the same degenerate-tangent guard the arc ribbon's own vertex shader uses.
+  vec2 tangent = screenLen > 1e-5 ? screenDir / screenLen : vec2(1.0, 0.0);
+  vec2 normal = vec2(-tangent.y, tangent.x);
+
+  // aCorner.x: 0 at the tip (sits exactly on the anchor), -1 at the back of the arrowhead.
+  // aCorner.y: perpendicular spread, so the back of the triangle is wider than its tip.
+  vec2 offsetPx = tangent * aCorner.x * uSizePx + normal * aCorner.y * uSizePx;
+  vec2 offsetNdc = (offsetPx / uResolution) * 2.0;
+
+  gl_Position = clipAnchor;
+  gl_Position.xy += offsetNdc * clipAnchor.w;
+}
+`
+
+const ARROW_FRAGMENT_SHADER = /* glsl */ `
+uniform vec3 uColor;
+uniform float uAlpha;
+
+void main() {
+  gl_FragColor = vec4(uColor, uAlpha);
+  #include <colorspace_fragment>
+}
+`
+
+/** Local arrow-space corners: a tip at the origin and two back corners, narrower than the ribbon's
+ *  own width is tall so the shape reads as an arrowhead rather than a wedge. One triangle, drawn
+ *  directly (not an instanced billboard quad + SDF mask like `MarkerField`'s round markers) since
+ *  an oriented triangle needs no soft-edge mask to read cleanly at this size. */
+const ARROW_CORNERS = new Float32Array([0, 0, -1, 0.42, -1, -0.42])
+const ARROW_INDICES = new Uint16Array([0, 1, 2])
+/** Length in CSS pixels, tip to back — comparable to the round markers' own diameters
+ *  (`ARRIVAL_RING_RADIUS_PX * 2 = 8.4`, `INHABITED_RADIUS_PX * 2 = 6.8`) so the arrowhead reads as
+ *  part of the same family rather than a mismatched accent. */
+const ARROW_SIZE_PX = 9
+/** How much of the journey (in `travelProgress`) the arrowhead takes to fade in from nothing —
+ *  avoids both a jarring pop-in right as travel begins and the degenerate zero-length tangent at
+ *  `travelProgress === 0`, where `tail` clamps to the same point as `anchor`. */
+const ARROW_FADE_IN_PROGRESS = 0.05
+
+interface ArrowHeadProps {
+  placement: ArrowheadPlacement
+  color: THREE.Color
+  alpha: number
+  unfold: number
+}
+
+function ArrowHead({ placement, color, alpha, unfold }: ArrowHeadProps) {
+  const { size } = useThree()
+
+  const mesh = useMemo(() => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('aCorner', new THREE.BufferAttribute(ARROW_CORNERS, 2))
+    geometry.setIndex(new THREE.BufferAttribute(ARROW_INDICES, 1))
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uUnfold: { value: 0 },
+        uAnchorLonLat: { value: new THREE.Vector2() },
+        uTailLonLat: { value: new THREE.Vector2() },
+        uColor: { value: color },
+        uAlpha: { value: 0 },
+        uSizePx: { value: ARROW_SIZE_PX },
+        uResolution: { value: new THREE.Vector2(1, 1) },
+      },
+      vertexShader: ARROW_VERTEX_SHADER,
+      fragmentShader: ARROW_FRAGMENT_SHADER,
+      side: THREE.DoubleSide,
+      transparent: true,
+      depthWrite: false,
+    })
+    return new THREE.Mesh(geometry, material)
+  }, [])
+
+  useEffect(
+    () => () => {
+      mesh.geometry.dispose()
+      ;(mesh.material as THREE.Material).dispose()
+    },
+    [mesh],
+  )
+
+  useFrame(() => {
+    const material = mesh.material as THREE.ShaderMaterial
+    material.uniforms.uUnfold!.value = unfold
+    material.uniforms.uColor!.value = color
+    material.uniforms.uAlpha!.value = alpha
+    ;(material.uniforms.uAnchorLonLat!.value as THREE.Vector2).set(placement.anchor.lon, placement.anchor.lat)
+    ;(material.uniforms.uTailLonLat!.value as THREE.Vector2).set(placement.tail.lon, placement.tail.lat)
     ;(material.uniforms.uResolution!.value as THREE.Vector2).set(size.width, size.height)
   })
 
@@ -363,7 +502,7 @@ export function HumanCivilisation({
     [index, t, timing],
   )
 
-  // Sympathy is read in three places (marker pulse, arc pulse, arc ghost strength); keeping it a
+  // Sympathy is read in three places (marker pulse, arc breathe, arc ghost strength); keeping it a
   // single memoised closure is what stops the three drifting into slightly different rules.
   const sympathyFor = useCallback(
     (eventId: string): number =>
@@ -506,6 +645,11 @@ export function HumanCivilisation({
         if (alpha <= 0 || record.geometry.isDegenerate) return null
         const color = presentation.arcAlpha > 0 ? ARC_COLOR : ARC_GHOST_COLOR
         const sympathy = Math.max(sympathyFor(record.eventId), traced ? 0.6 : 0)
+        // The arrowhead fades with the arc it belongs to (never outliving it, per the brief) and
+        // fades in over its own short opening stretch of travel rather than popping in at full
+        // strength the instant travel begins (`ARROW_FADE_IN_PROGRESS`'s own doc comment).
+        const arrowPlacement = arrowheadPlacementAt(record.effect, presentation.travelProgress)
+        const arrowAlpha = alpha * easeSmoothstep(0, ARROW_FADE_IN_PROGRESS, presentation.travelProgress)
         return (
           <group key={record.eventId}>
             {record.geometry.segments.map((points, i) => (
@@ -514,11 +658,14 @@ export function HumanCivilisation({
                 points={points}
                 color={color}
                 alpha={alpha}
-                travelling={presentation.travelling && presentation.arcAlpha > 0}
+                reveal={presentation.travelProgress}
                 sympathy={sympathy}
                 unfold={unfold}
               />
             ))}
+            {arrowPlacement !== null && arrowAlpha > 0 && (
+              <ArrowHead placement={arrowPlacement} color={color} alpha={arrowAlpha} unfold={unfold} />
+            )}
           </group>
         )
       })}

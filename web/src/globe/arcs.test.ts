@@ -8,6 +8,8 @@ import {
   arrivalPresentationAt,
   arrivalTimingFor,
   arrivalWindow,
+  type ArrowheadPlacement,
+  arrowheadPlacementAt,
   buildArrivalArcGeometry,
   buildArrivalIndex,
   buildFatLineBuffers,
@@ -19,6 +21,7 @@ import {
   traceToOrigin,
 } from './arcs'
 import { SYMLOG_C, symlogWarp } from './effects/math'
+import { lonLatToSphere } from './projection'
 
 /** `buildFatLineBuffers` takes `DistancedAnchor`s (docs/GLOBE.md §10); every test here
  *  builds its own points via `greatCircleLonLatPoints` alone (plain `GlobeEffectAnchor`s, no
@@ -295,6 +298,14 @@ describe('arrivalPresentationAt', () => {
     expect(arrivalPresentationAt(OUT_OF_AFRICA, established, timing).travelProgress).toBe(1)
   })
 
+  it('travelProgress stays 1 throughout the fade-out tail — the reveal (HumanCivilisation.tsx\'s arc shader reads travelProgress as its reveal fraction) stays complete while only the arc\'s opacity fades, never re-animating the journey', () => {
+    const { established } = OUT_OF_AFRICA
+    const fadeEnd = tailFadeEnd(OUT_OF_AFRICA, timing)
+    const midTail = (established + fadeEnd) / 2
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, midTail, timing).travelProgress).toBe(1)
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, fadeEnd, timing).travelProgress).toBe(1)
+  })
+
   it('decays arcAlpha monotonically to 0 across the tail below established', () => {
     const { established } = OUT_OF_AFRICA
     const fadeEnd = tailFadeEnd(OUT_OF_AFRICA, timing)
@@ -532,6 +543,48 @@ describe('buildArrivalIndex and traceToOrigin', () => {
   })
 })
 
+describe('arc fade near the present (BUG: a recently-established arc previously never reached 0)', () => {
+  // Root cause, confirmed by reading arrivalPresentationAt before this fix: `tailWarp` was sized
+  // only against `timing.minArcWarp`/`timing.minTailWarp`, never checked against how much warp is
+  // actually left between `established` and t = 0 (`establishedWarp`). For a recent arrival
+  // establishedWarp < tailWarp, so at t = 0 (currentWarp = 0) the old
+  // `(currentWarp - (establishedWarp - tailWarp)) / tailWarp` evaluated to
+  // `1 - establishedWarp / tailWarp` — a positive value, i.e. the arc was still lit at the
+  // present. The fix squeezes `tailWarp` into `establishedWarp` via the same `squeezeToFit` helper
+  // the "inhabited" marker's own envelope already used (`arrivalPresentationAt`'s own comment).
+  const timing = arrivalTimingFor(0.02)
+
+  function migration(established: GeoTime): ArrivalGlobeEffect {
+    return {
+      kind: 'arrival',
+      arrivalKind: 'migration',
+      origin: { lat: 9.0, lon: 42.0 },
+      destination: { lat: 64.0, lon: -21.0 },
+      established,
+      windows: [{ tMin: 0, tMax: established * 1.4 }],
+    }
+  }
+
+  // Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar, Beringia, the Levant — same table as the
+  // "inhabited" marker's own near-the-present fade test, since the bug and the fix are the same
+  // shape for both fields.
+  it.each([1148, 745, 953, 1040, 2075, 2.5e4, 1.85e5])(
+    'leaves the arc fully faded (arcAlpha === 0) at the present for an arrival established at %i',
+    (established) => {
+      expect(arrivalPresentationAt(migration(established), 0, timing).arcAlpha).toBeCloseTo(0, 5)
+    },
+  )
+
+  it('still draws the arc right after a recent arrival lands, before the tail fades it out', () => {
+    expect(arrivalPresentationAt(migration(1148), 900, timing).arcAlpha).toBeGreaterThan(0)
+  })
+
+  it('a `peopling` arrival gets the same treatment as a `migration` one — the bug and fix are independent of arrivalKind', () => {
+    const peopling: ArrivalGlobeEffect = { ...migration(1148), arrivalKind: 'peopling' }
+    expect(arrivalPresentationAt(peopling, 0, timing).arcAlpha).toBeCloseTo(0, 5)
+  })
+})
+
 describe('inhabited marker fade near the present', () => {
   const timing = arrivalTimingFor(0.02)
 
@@ -556,5 +609,57 @@ describe('inhabited marker fade near the present', () => {
 
   it('still raises the marker after a recent arrival, before fading it', () => {
     expect(arrivalPresentationAt(peopling(1148), 1000, timing).inhabited).toBeGreaterThan(0)
+  })
+})
+
+// --------------------------------------------------------------------------------- arrowhead
+
+function angularDistance(a: readonly [number, number, number], b: readonly [number, number, number]): number {
+  return Math.acos(Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])))
+}
+
+describe('arrowheadPlacementAt', () => {
+  it('is null for a degenerate (point) arrival — no direction to show', () => {
+    expect(arrowheadPlacementAt(DEGENERATE, 0.5)).toBeNull()
+  })
+
+  it('sits exactly at the origin at progress 0 and the destination at progress 1', () => {
+    const atStart = arrowheadPlacementAt(OUT_OF_AFRICA, 0) as ArrowheadPlacement
+    expect(atStart.anchor).toEqual(OUT_OF_AFRICA.origin)
+
+    const atEnd = arrowheadPlacementAt(OUT_OF_AFRICA, 1) as ArrowheadPlacement
+    expect(atEnd.anchor.lat).toBeCloseTo(OUT_OF_AFRICA.destination.lat, 6)
+    expect(atEnd.anchor.lon).toBeCloseTo(OUT_OF_AFRICA.destination.lon, 6)
+  })
+
+  it('clamps progress outside 0..1 rather than extrapolating past the endpoints', () => {
+    const belowZero = arrowheadPlacementAt(OUT_OF_AFRICA, -0.5) as ArrowheadPlacement
+    const atZero = arrowheadPlacementAt(OUT_OF_AFRICA, 0) as ArrowheadPlacement
+    expect(belowZero.anchor).toEqual(atZero.anchor)
+
+    const aboveOne = arrowheadPlacementAt(OUT_OF_AFRICA, 1.5) as ArrowheadPlacement
+    const atOne = arrowheadPlacementAt(OUT_OF_AFRICA, 1) as ArrowheadPlacement
+    expect(aboveOne.anchor.lat).toBeCloseTo(atOne.anchor.lat, 6)
+    expect(aboveOne.anchor.lon).toBeCloseTo(atOne.anchor.lon, 6)
+  })
+
+  it('places tail strictly behind the anchor along the same great circle once underway — a real tangent, not a coincident point', () => {
+    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.5) as ArrowheadPlacement
+    expect(placement.tail).not.toEqual(placement.anchor)
+  })
+
+  it('orients toward the destination: the anchor is angularly closer to the destination than the tail is', () => {
+    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.5) as ArrowheadPlacement
+    const destination = lonLatToSphere(OUT_OF_AFRICA.destination)
+    const anchorDistance = angularDistance(lonLatToSphere(placement.anchor), destination)
+    const tailDistance = angularDistance(lonLatToSphere(placement.tail), destination)
+    expect(anchorDistance).toBeLessThan(tailDistance)
+  })
+
+  it('clamps the tail at the origin rather than going negative when progress is near 0', () => {
+    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.005) as ArrowheadPlacement
+    const originDistance = angularDistance(lonLatToSphere(placement.tail), lonLatToSphere(OUT_OF_AFRICA.origin))
+    // The tail is at or beyond the origin's own position, never past it toward negative progress.
+    expect(originDistance).toBeCloseTo(0, 3)
   })
 })
