@@ -727,13 +727,29 @@ below, tells the "what does the globe show about people" story instead.
 **Population density (ADR-031's amendment).** `density.ts` decodes the published 8-bit log
 encoding (`decodeLogDensity`, the TS twin of `pipeline/density_encoding.py`) back to real people/
 km², then maps *that* — never the raw byte — through `DENSITY_RAMP`: seven stops, log10-spaced from
-0.5 to 8,000 people/km², dark violet → magenta → red → orange → pale amber. That hue family and
+0.5 to 8,000 people/km², dark violet → magenta → hot pink → near-white. That hue family and
 that spacing are both direct responses to why the cleared-land tint failed: a *linear* fraction
 spread thinly across a huge range, in ochre/olive hues that sit inside Natural Earth II's own
-greens/tans. The alpha curve is tuned against real sampled 2015 CE texels, not by eye: remote
-Amazon/Tibet fall at or under the floor and draw nothing; rural Iowa, the Argentine pampas and the
-Congo sit around a third opaque; the Netherlands and Jiangsu are most of the way to opaque; Dhaka
-is the ramp's own top. `densityStrengthAt` eases the overlay in from nothing across the 2,500 years
+greens/tans. (An intermediate violet → amber ramp was rejected in turn — 2026-09 user feedback,
+"looks a bit like an 'earthy' colour" — which is why nothing in this ramp reaches red or orange;
+lightness still rises monotonically end to end, so it reads as a scale in greyscale too.)
+
+The alpha curve is tuned against real sampled 2015 CE texels, not by eye. It was re-tuned once
+(2026-09-18) after a viewer reported that the overlay "makes it look like a lot of central Africa
+is densely populated": decoding the published frame settled that question against the data rather
+than by argument — the Congo basin interior is ~7.6 people/km², about an eightieth of the Ganges
+plain's ~1,300 — so the data was faithful and the *ramp* was the liar. It reached a third opaque by
+5 people/km² and half by 20, spending nearly its whole visible range before density left ordinary
+rural country; with every stop inside one hue family, opacity is the only cue a viewer has, so a
+continent-sized region at ~38% read exactly like a small genuinely-dense one. The stops and hues
+were left alone and only the alphas lowered across the bottom and middle. Now: the remote
+Amazon/Tibet fall at or under the floor and draw nothing; rural Iowa (4.1/km²) and the Congo
+interior sit near a tenth opaque; the Ethiopian highlands (~250) and the Netherlands (~563) are
+around half to three-fifths; the Ganges plain and Dhaka are the ramp's own top.
+
+The general lesson, worth keeping: **when an overlay's whole palette is one hue family, its alpha
+curve _is_ its scale** — spend that range where the data's own interesting variation is, not where
+it starts. `densityStrengthAt` eases the overlay in from nothing across the 2,500 years
 before HYDE's oldest (10,000 BCE) frame, and holds the newest (2015 CE) frame from there to the
 present — data ends, held after, the same rule ADR-031 established for cleared land. Reuses HYDE's
 own `'boxFilter'`-mip, `NoColorSpace` texture-cache instance (`humanEraTextureCache.ts`) for the
@@ -770,9 +786,9 @@ candidates count), and hovering a marker or feed card ghosts the whole chain bac
 origin (`traceToOrigin`) at a dimmed alpha. **Labels are still not drawn** — the shared tooltip
 (below) and the event feed cover the "what is this" need instead.
 
-**Cities (ADR-035's data, rendered this pass).** `cities.ts`'s `selectCities` culls the 164
-notability-filtered cities `FeatureData` publishes (DATA_SOURCES.md's own notability filter is a
-separate, publish-time cut) down to whichever are largest *at the current `t`* — 10 on the orb, 45
+**Cities (ADR-035's data, rendered this pass).** `cities.ts`'s `selectCities` culls the 242
+cities `FeatureData` publishes (the significance roster of ADR-038 is a separate, publish-time cut)
+down to whichever are largest *at the current `t`* — 10 on the orb, 45
 expanded — so the late-modern frames don't turn solid; a scrub to 3000 BCE surfaces Uruk and
 Memphis, to 1900 CE London and New York, with no separate ranking table. Marker radius is
 `log10(population)`-mapped (2.4–9 CSS px), a legibility trade against area-true bubble sizing:

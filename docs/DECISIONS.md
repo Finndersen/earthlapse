@@ -5926,3 +5926,269 @@ row and a key per part.
 - Nothing here changes any published data contract: `FeatureSetData` (ADR-035), `RasterData`/
   `RasterEncoding` (ADR-031's amendment) and `ArrivalGlobeEffect` (ADR-032) are all unchanged by
   this ADR, which is web-rendering-only.
+
+---
+
+## ADR-037 — `cliopatria`: historical empire territory, an era-relative area subset rule, and a generalised `PopulationEstimate`
+
+**Status:** accepted — human-directed 2026-09-18.
+
+**Context.** The roadmap called for a historical-empire-territory layer: real polity extents
+over time, sourced (not hand-drawn), shown as both a globe tint and named, hoverable labels.
+Cliopatria (Seshat Global History Databank / Complexity Science Hub Vienna / Alan Turing
+Institute / Oxford, Zenodo doi:10.5281/zenodo.13363121, CC BY 4.0 — confirmed against the
+Zenodo record's own metadata and the repository's committed `LICENSE.md`) is a single GeoJSON
+of ~1,600 political entities, 3400 BCE – 2024 CE, confirmed to match the task brief's summary
+schema (real `FromYear`/`ToYear` integers, ~508 distinct attested map years) with one addition
+the brief didn't mention (`Area`, already computed in km², spot-checked accurate against known
+peak empire sizes) and one thing discovered only by checking the real data (parenthesised
+duplicate aggregate entries — see below).
+
+**Decision.**
+
+- **Scope: an objective, era-relative top-N-by-area subset, computed inside `normalise.py`
+  itself** — not the full world political map. `sources/cliopatria/subset.py`'s
+  `select_notable_polities` is a small, pure, independently-unit-tested function: a polity
+  qualifies if its peak attested area within some 100-year-wide bucket of `t` ranks in that
+  bucket's own top 6 — the same era-relative shape `pipeline.notability.notable_features`
+  already gives `sources/cities` (a Bronze Age city-state never has to out-rank the British
+  Empire, only its own contemporaries), reimplemented rather than reused because the ranking
+  runs on raw `(name, years, area)` rows before any `Feature` exists, and forcing them through
+  `Feature`'s `lat`/`lon`/`certainty` fields just to reuse the loop would be a worse fit than a
+  second small function. `top_n = 6` was chosen empirically (a sweep from 3 to 10 is recorded
+  in `sources/cliopatria/README.md` "Subset rule") to land close to `sources/cities`' own
+  selected fraction of its total (cities 9.4%, polities 7.8%) while spanning every millennium
+  from 3400 BCE to the present and every inhabited continent — checked directly, not assumed;
+  the full 121-polity list, with each one's peak area and span, is recorded in that README and
+  was reported to the user before the rest of this source was built, per the task's own
+  instruction to report before proceeding.
+- **Unlike `sources/cities` (ADR-035), the curated data holds only the selected subset, not the
+  full normalised dataset.** `sources/cities` keeps its full 1,736-city dataset curated and
+  filters only at publish time, by explicit prior user direction that the curated parquet
+  should not need re-running for a different notability threshold. Cliopatria's raw data is
+  ~14,108 polity-window rows covering the entire world's political history at ~508 map years —
+  rasterising that in full would be a different, much larger product (a complete world
+  political atlas) than "a notable subset... for legibility", the task's own framing of this
+  source's scope. Filtering inside `normalise.py` is therefore a deliberate, reported departure
+  from the ADR-035 precedent, not an oversight.
+- **Duplicate aggregate entries, discovered and corrected before the subset rule ran on real
+  data.** Cliopatria uses a parenthesised `Name` (e.g. `"(Roman Empire)"`) for two unrelated
+  things: an aggregate spanning a named entity's own successive periods, with *identical*
+  geometry and area to its bare counterpart for every window checked (`"Han Dynasty"` /
+  `"(Han Dynasty)"`, confirmed directly) — and a genuinely distinct multi-state grouping with no
+  bare counterpart (`"(Spring and Autumn States)"`, aggregating eighteen separately-named
+  states). `normalise._canonical_name` merges only the first case, mechanically (a bare name
+  must actually exist in the dataset), never the second. Left unhandled, the first case would
+  have ranked the same physical empire twice in the same era bucket, consuming two of six slots
+  for one empire — an early, real skew the first ungated run of the rule surfaced (150 polities
+  selected, ~13 of them exact duplicate pairs) before this fix (121 polities, no exact-duplicate
+  pairs — one known residual near-duplicate, `"British Colonial Empire"` /
+  `"(British Empire)"`, reported rather than hidden: catching it would need either a
+  hand-authored synonym table or a fuzzy-matching pass, both out of scope).
+- **`PopulationEstimate` generalised, additively (`pipeline/shapes.py`).** A polity has no
+  population reading at all, and its territorial extent has a real, known end (`ToYear`) rather
+  than persisting until superseded or held to the present the way a city's population reading
+  is assumed to. `PopulationEstimate` gains `area_km2: float | None` and `t_end: GeoTime |
+  None`, and `population` becomes optional (a model validator requires at least one of
+  `population`/`area_km2`). Both new fields live inside the JSON-encoded `estimates` blob
+  `pipeline/curated.py`'s parquet layout already treats as opaque, so this is a genuinely
+  additive, zero-parquet-schema-change extension: every existing `cities.parquet` file,
+  `pipeline.manifest.FeatureEstimateData` (the published wire type, unchanged — `population`
+  stays required there, since `sources/cities` is the only source publishing today), and every
+  existing test/call site are unaffected.
+- **One `Feature` per surviving polity-window, not one per polity.** `FeatureSet`/`Feature`
+  (ADR-035) fixes one `lat`/`lon` per `Feature` — right for a city's stable location, wrong for
+  a polity, whose sensible label anchor moves as its territory does (sometimes drastically: the
+  Mongol Empire's early core is nowhere near its 1279 peak-extent centroid). Cliopatria's
+  `FeatureSet` (id `cliopatria_polities`) therefore emits one `Feature` per surviving
+  `(canonical name, FromYear, ToYear)` window — the task's own "an anchor per polity per
+  timestep" requirement, expressed at the shape's actual granularity. This is a genuine,
+  reported departure from how `sources/cities` uses the same shape and from what
+  `FeatureSet.sample(t)`'s generic "founded, then assumed to persist" semantics compute (no
+  awareness of `t_end`, no removal once a window ends) — not a defect introduced here, since
+  `sources/cities`' own real renderer (`web/src/globe/cities.ts`) already bypasses `.sample()`
+  entirely in favour of a bespoke reading of the estimates list, for the same underlying reason
+  (a generic shape method cannot express every source's own temporal semantics). A future
+  rendering pass for this layer needs the same kind of bespoke `t`-window check, reading
+  `estimates[0].t`/`estimates[0].t_end` directly.
+- **Representative point, not centroid, for label anchors** (`shapely`'s
+  `representative_point()`, guaranteed inside the geometry — including whichever part, for a
+  `MultiPolygon`) — a plain centroid can fall outside a concave or archipelagic territory
+  entirely (an ocean-spanning colonial empire's centroid can land in open ocean). `shapely`
+  (BSD, GEOS-backed, no system GDAL/PROJ dependency, not GPL) is this source's one new
+  dependency, used only for geometry parsing, an occasional `buffer(0)` self-intersection fix,
+  and this one interior-point computation.
+- **Raster is a coverage mask, not a per-polity identity map.** `cliopatria_extent`'s texture
+  encodes R = antialiased territorial coverage (0–255) of any selected polity, G = B = 0 — which
+  named polity occupies a pixel is left entirely to the `FeatureSet`'s label anchors, matching
+  the split `sources/hyde` already draws between its population-density raster and
+  `sources/cities`' named markers, and matching the task's own framing (labels/hover on the
+  `FeatureSet`, tinting on the raster). A frame is rendered at every selected window's own
+  start, plus every window's own end unless another selected window's start already coincides
+  with it — otherwise a fallen empire's last-rendered extent would silently persist on screen
+  indefinitely. `RasterSequence.sample(t)` still crossfades between bracketing frames
+  regardless — correct for continental drift or population density, an honest imperfection for
+  a political border that actually changes abruptly; `RasterBlend.alpha` is available to a
+  renderer that would rather threshold it, a rendering decision out of this source's scope.
+- **Certainty**: `FeatureCertainty.HIGH` when a window's row carries a Seshat databank
+  cross-reference (`SeshatID`), `MEDIUM` otherwise — no `LOW` tier, since the schema offers only
+  this one binary, data-provenance signal (not a border-accuracy one). The Cliopatria authors'
+  own stated caveat that steppe/nomadic polities' borders are more contested than settled
+  agrarian empires' (their example: the Avar Khaganate) is **not** encoded as per-feature data —
+  doing so would mean hand-classifying which selected polities count as "nomadic" from
+  historical knowledge, exactly the kind of hand-picking the subset rule itself exists to avoid
+  for *selection*. It is carried as explicit prose instead (`sources/cliopatria/README.md`
+  "Certainty"), naming every steppe/nomadic polity the subset rule actually selected.
+
+**Rejected.**
+- **Reusing `pipeline.notability.notable_features` directly** by constructing a throwaway
+  `FeatureSet` just to run its bucketing loop. Would force placeholder `lat`/`lon`/`certainty`
+  values through a model built for something else, for no benefit over a second, small,
+  equally-tested pure function operating on the data's own natural shape.
+- **Filtering only at publish time**, matching `sources/cities`' ADR-035 precedent exactly.
+  Rejected because Cliopatria's raw data is over an order of magnitude denser (14,108 vs. 1,736
+  rows) and covers the *entire* world's political map, not a curated urbanisation dataset — the
+  full data is a different product, not a superset a later notability threshold could cheaply
+  re-slice from a single already-rasterised sequence.
+- **Hand-authoring which polities are "the same empire" under a different name**, as a *general*
+  rule (a broad synonym table or fuzzy name-matching, to catch any future case like `"British
+  Colonial Empire"` / `"(British Empire)"` automatically). Would reintroduce, for merging,
+  exactly the historical-knowledge-baking-in problem the objective subset rule exists to avoid
+  for selection. Left as a named, reported limitation instead — though the 2026-09-18 amendment
+  below does fix this *one* confirmed pair with a small, explicit, commented alias, which is a
+  materially different thing from a general synonym-authoring policy: see the amendment.
+- **Encoding steppe/nomadic border uncertainty as a fabricated per-feature `FeatureCertainty`
+  value.** The schema has no field this could honestly derive from; inventing one from
+  historical knowledge of which polities are "nomadic" is exactly the hand-picking problem this
+  ADR's own subset rule was built to avoid elsewhere. Prose in the README instead.
+- **A sixth curated shape** for polity extents. Both existing candidates — `RasterSequence` for
+  the tinted extent, `FeatureSet` for label anchors — fit well enough once `PopulationEstimate`
+  is generalised; inventing a new shape for what is still "a georeferenced grid" and "a set of
+  labelled, dated geographic points" would duplicate machinery that already exists.
+- **A per-pixel polity-index raster** (so the raster itself could distinguish which empire
+  occupies a pixel, enabling per-empire colouring later without touching the `FeatureSet`).
+  Rejected as premature: it would need a stable, published index↔polity mapping this task's
+  scope (curated data only, no rendering, no publish wiring) has no consumer for yet, and the
+  task's own division of labour already puts polity identity on the `FeatureSet`.
+
+**Consequences.**
+- `docs/DATA_SOURCES.md`'s Contract table row for `FeatureSet` is updated to describe the
+  generalised `estimates` shape; a new `cliopatria` entry is added under Tier 2, and the stale
+  `seshat` placeholder under Tier 3 (which pre-dated this ADR, named `EventSet` as the shape and
+  flagged the licence as unverified and possibly restricted) is removed as superseded.
+- `pipeline/shapes.py`'s module docstring, which still said "the four curated data shapes"
+  after ADR-035 made it five, is corrected in passing.
+- Every existing `FeatureSet` consumer (`sources/cities`, `pipeline.notability`,
+  `pipeline.manifest`, `pipeline.publish`, every existing test, the web-side `FeatureSetData`
+  mirror) is unaffected — `population`/`area_km2`/`t_end` are additive fields inside an already
+  opaque JSON blob, not a parquet schema change.
+- `pyproject.toml` gains one new dependency, `shapely>=2.0`, used only by
+  `sources/cliopatria/normalise.py`.
+- Rendering `cliopatria_extent`/`cliopatria_polities` — a globe tint, label markers, hover
+  tooltips, and the `pipeline/publish.py` wiring (`RASTER_LAYERS`/`FEATURE_LAYERS` entries,
+  wire types) any of that needs — is explicitly out of scope for this ADR, matching
+  `sources/cities`' own original ADR-035 scoping (rendering followed later, in ADR-036).
+
+**Amendment 2026-09-18 — a provisional 1900 CE domain cutoff, and three label-artefact fixes.**
+The human reviewed the originally-selected 121-polity subset and flagged two problems: ranking
+"largest by area" all the way to the present had selected five modern nation-states (Canada,
+the People's Republic of China, Brazil, the Russian Federation, the USA) rather than the
+historical empires this layer exists to show; and three label artefacts — `"(British Empire)"`/
+`"British Colonial Empire"` duplicating one empire, several selected names left wrapped in
+parentheses (`"(Delhi Sultanate)"`, `"(Five Dynasties and Ten Kingdoms)"`), and `"Greek Dark
+Ages"` (a historical period, not an attested governing polity) presented as if it were a polity.
+
+- **Domain cutoff, provisional.** The human's own words: *"hmm yeh maybe stop at 1900 for now
+  and ill see what that looks like."* `sources/cliopatria/normalise.py`'s
+  `CUTOFF_CE_YEAR = 1900` (`CUTOFF_T = 125.0` years BP) excludes any polity-window material
+  after that year from both curated outputs, applied to raw rows before dedupe and before the
+  subset rule runs — so a modern nation-state's post-1900 growth never enters the top-N ranking
+  competition, rather than being selected and then hidden. A window straddling the cutoff is
+  **truncated**, not dropped (`_apply_cutoff`): a polity still alive in 1880 still appears, its
+  territory simply ending at 1900. This is one named, commented, module-level constant, marked
+  provisional in its own docstring — the human will look at the layer at this domain before
+  deciding whether to move or lift it; it is not treated as a permanent design constraint.
+- **Label normalisation, generalised rather than hardcoded to the three reported names.** The
+  raw `Name` field was re-examined across the *whole* dataset (not just the three examples)
+  before choosing a rule. `_canonical_name` now strips every wrapping `"(...)"` pair
+  unconditionally (96 of 1,613 distinct raw names are affected dataset-wide: 67 merge into an
+  existing bare name, as before this amendment; 29 — previously left untouched — are now plain
+  renames, since the parenthesis was never part of the polity's own name). A new, small,
+  explicit, commented `_NAME_ALIASES` mapping (`"(British Empire)"` → `"British Colonial
+  Empire"`) fixes the one confirmed same-empire-different-literal-name pair the general rule
+  cannot reach — not a broad synonym table (see "Rejected", above, for why that stays rejected as
+  a *general* policy). A new, small, explicit, commented `_EXCLUDED_NAMES` set drops `"Greek Dark
+  Ages"` — checked, before adding it, against every other raw `Name` for the same "period, not
+  polity" pattern (a `dark ages|period|era|age|interregnum|epoch` sweep); the one other match,
+  `"Early Dynastic Period of Egypt"`, names a real, continuous, unified pharaonic state (the same
+  sense `"Old/Middle/New Kingdom of Egypt"` do) and is not excluded.
+- **Measured effect.** 114 polities across 1,803 windows and 842 raster frames survive (down
+  from 121 / 2,010 / 921) — full before/after accounting, the complete list of every name changed
+  or dropped, and the two mechanical side-effects of re-running the ranking on the amended data
+  (`"Phoenicia"` and `"Brazilian Republic"` newly qualify in buckets the fixes vacated) are in
+  `sources/cliopatria/README.md` ("Domain cutoff: 1900 CE" and "Duplicate aggregate entries and
+  label normalisation").
+- **Fixture.** `sources/cliopatria/fixture/cliopatria.geojson` gains five more real, unmodified
+  features — `Kingdom of Monaco`'s real four windows (exercising all three `_apply_cutoff` cases:
+  unchanged, truncated, dropped) and one real `Greek Dark Ages` window (exercising the exclusion
+  list) — chosen the same "small real slice" way the original eight were. The British Empire
+  alias is tested with synthetic `_RawPolityRow`s instead of added to the fixture: its real
+  geometry is large (tens of KB per feature, a global colonial empire) and the mechanism needs
+  only plain data to verify.
+- **Not revisited by this amendment**: the subset rule's own parameters (`BUCKET_YEARS = 100`,
+  `TOP_N = 6`) are unchanged — the two fixes shift which windows compete for a bucket's slots,
+  not the rule itself; the re-measured parameter sweep confirms `top_n = 6` is still the smallest
+  value spanning every millennium (`sources/cliopatria/README.md` "Subset rule").
+
+## ADR-038 — City markers: a hand-curated significance roster replaces the population-rank filter
+
+**Status:** accepted — human-directed 2026-09-18. Supersedes ADR-035's notability filter (the rest
+of ADR-035, including the `FeatureSet` shape and its "curated data keeps everything" rule, stands).
+
+**Context.** ADR-035's `notable_features` picked, per 100-year era bucket, whichever cities ranked
+in that bucket's own top 12 by peak attested population. Measured on the real published layer, this
+produced catastrophically bad global spread: **zero** cities in sub-Saharan Africa, **zero** in
+Australia/New Zealand/the Pacific, 4 in South-East Asia, 3 in South America, 7 in North America —
+150 of 164 published cities were Europe, the Mediterranean, the Near East, India and China, heavy
+on ancient Mesopotamian tells (Adab, Akshak, Girsu, Dur-Kurigalzu) whose small attested populations
+happened to top thin early buckets. A viewer looking at Africa saw an empty continent.
+
+The failure is structural, not a bad parameter. Ranking by population inside a dataset whose
+attested-population *coverage* is itself geographically uneven can only ever rank what the sources
+happened to measure; no bucket width or N recovers a region the gazetteer barely records.
+
+User direction: city markers should reflect *significance* — capitals, well-known cities — and
+explicitly "not every single capital city".
+
+**Decision.**
+- **A checked-in, reviewable roster, not a formula.** `sources/cities/roster.toml` is a hand-curated
+  `[[cities]]` list: an `id` (the `Feature.id` slug `sources/cities/normalise.py` assigns) plus a
+  short `reason`. The criteria are deliberately subjective — imperial and national capitals, great
+  trading ports, religious centres, famous ancient sites, modern megacities. Being a judgement call
+  is the point; it is reviewable precisely because it is data a human can read line by line.
+- **`pipeline.publish.load_city_roster` / `apply_city_roster`** parse the roster and intersect it
+  with the curated `cities` `FeatureSet`, at the exact call site in `_layers`' `FEATURE_LAYERS` loop
+  that `notable_features` occupied.
+- **Strict at the boundary.** A roster entry matching no curated feature raises `CityRosterError`
+  naming every offending entry at once. A typo fails the build loudly rather than silently shrinking
+  the globe — the same failure mode this ADR exists to fix, so it must not be reintroducible by
+  accident. Covered by test.
+- **242 cities**, spanning every inhabited continent and every era from the 3rd millennium BC to the
+  present. `tests/sources/test_cities_roster.py` asserts minimum counts per broad region and per era
+  bucket against the real roster and real curated data, so the regression cannot come back silently.
+- **`pipeline/notability.py` and `tests/test_notability.py` are deleted.** No other consumer existed.
+  Leaving a second, unused selection mechanism beside the roster would only invite drift.
+
+**Rejected.**
+- **Retuning the rank filter** (different bucket width or N). Rejected for the structural reason
+  above: it cannot reach regions the dataset under-measures.
+- **A hybrid — roster as a floor, rank filter as a ceiling.** Rejected as unnecessary machinery; a
+  plain curated list is simpler, fully reviewable, and was the explicit direction.
+
+**Consequences.**
+- Three cities previously believed absent are in the dataset under other keys and are now included:
+  Timbuktu (`tombouctou-mali`), Benin City (`benin-nigeria`), Great Zimbabwe (`zimbabwe-zimbabwe`,
+  the ruins near Masvingo, distinct from modern Harare). Mombasa is genuinely absent.
+- The roster is a maintenance surface: adding a city is a one-line edit, but it is also a place
+  where one person's sense of "well known" becomes the globe's. The `reason` field exists so a later
+  reader can argue with a specific entry rather than with the whole list.

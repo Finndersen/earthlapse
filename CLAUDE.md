@@ -72,9 +72,14 @@ Checks — all four must pass before handing work back:
 ```
 .venv/bin/python -m pytest -q tests
 .venv/bin/ruff check . && .venv/bin/ruff format --check .
-pnpm -C web typecheck && pnpm -C web vitest run
+pnpm -C web typecheck && pnpm -C web exec vitest run
 pnpm -C web build
 ```
+
+Two traps in that third line, both of which have already produced falsely-green reports:
+
+- **`exec` is required.** `pnpm -C web vitest run` fails with `ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL: Command "web" not found` — and **still exits 0**, so the `&&` chain succeeds having run no tests at all. Only `pnpm -C web exec vitest run` (or the `test` script) actually runs the suite.
+- **The JSON report goes stale.** `web/.vitest/json/output.json` is not cleared between runs, so a crashed or skipped run leaves the previous run's passing report sitting there. `rm -f web/.vitest/json/output.json` before each run, and treat a missing file as a failure, not a pass.
 
 ## Verifying UI work
 

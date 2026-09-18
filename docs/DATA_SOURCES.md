@@ -27,7 +27,7 @@ Every source normalises to exactly one of these. Adding another requires an ADR.
 | `EventSet` | `t_min, t_max, label, kind, t (moments only), tags, importance, description, citation` | timeline events |
 | `RasterSequence` | `t, georeferenced grid` | globe textures, gridded layers |
 | `Tree` | `node, parent, t_divergence, label` | ancestor lineage |
-| `FeatureSet` | `id, name, country, lat, lon, certainty, estimates: [(t, population)]` | labelled, dated geographic points (ADR-035) — e.g. `sources/cities`' major historical cities |
+| `FeatureSet` | `id, name, country, lat, lon, certainty, estimates: [(t, population\|area_km2, [t_end])]` | labelled, dated geographic points (ADR-035) — e.g. `sources/cities`' major historical cities. `population`/`area_km2`/`t_end` generalised, additively, by ADR-037 for `sources/cliopatria`'s polity extents, which have no population reading |
 
 ### Directory layout per source
 
@@ -370,22 +370,93 @@ uniformly to both Modelski files (`sources/cities/README.md` "Dedupe policy"). R
 valid coordinates or with no population estimate at all are dropped (0 and 1 rows respectively,
 in the real data). The curated `FeatureSet` keeps all 1,736 cities that survive the merge.
 
-**Notability filter (published layer only)** — per-user direction (2026-09-17: "only need to
-include major notable cities, not everything"), `pipeline.notability.notable_features`
-(applied in `pipeline/publish.py`'s `FEATURE_LAYERS`) filters the published layer down to
-cities whose peak population, within any 100-year era bucket, ranks in that bucket's own top 12
-— era-relative (an ancient city only has to out-rank its own contemporaries, never a modern
-megacity) rather than a global cutoff. Measured effect: 164 of 1,736 cities published, including
-every era from the 4th millennium BC onward and every example city named in the task brief
-(Uruk, Memphis, Babylon, Rome, Xian [Chang'an], Istanbul [Constantinople], Baghdad, Mexico City
-[Tenochtitlan], London, New York, Tokyo). Full detail and the exact reproduction command:
-`sources/cities/README.md` "Notability filter".
+**Significance roster (published layer only, ADR-038)** — `sources/cities/roster.toml` is a
+hand-curated list of 242 cities (an `id` plus a short `reason` each), intersected with the curated
+`FeatureSet` by `pipeline.publish.apply_city_roster` in `pipeline/publish.py`'s `FEATURE_LAYERS`
+loop. An entry that matches no curated feature raises `CityRosterError` naming every offender, so a
+typo fails the build rather than silently shrinking the globe.
+
+This replaced a population-rank filter (`pipeline.notability.notable_features`, now deleted), which
+took each 100-year bucket's top 12 by peak attested population. That rule published 164 cities with
+**zero** in sub-Saharan Africa, **zero** in Australia/NZ/the Pacific, 4 in South-East Asia and 3 in
+South America — 150 of 164 in Europe, the Mediterranean, the Near East, India and China, heavy on
+ancient Mesopotamian tells. The defect is structural: ranking by population inside a gazetteer whose
+population *coverage* is geographically uneven can only rank what the sources happened to measure.
+See ADR-038 for the full reasoning.
+
+Measured spread of the 242: Middle East 39, Europe 34, sub-Saharan Africa 30, East Asia 26, South
+Asia 24, South-East Asia 20, South America 16, North America 15, Central Asia 11, Oceania/Pacific 8,
+Caribbean/Central America 8, Mexico 6, Russia 5; by era, 47 first attested pre-1 CE, 32 in 1–1000 CE,
+86 in 1000–1800 CE, 77 in 1800–2000 CE. `tests/sources/test_cities_roster.py` asserts per-region and
+per-era minimums against the real roster and real curated data. Full detail:
+`sources/cities/README.md` "Significance roster".
 
 **Integration** — the published `FeatureSetData` layer file is a self-contained, typed contract
 (`pipeline/manifest.py`, mirrored in `web/src/types/layer.ts`/`web/src/data/curated.ts`). Rendering
 was out of scope for this ADR but has since been built (ADR-036): `web/src/globe/cities.ts` culls
-the 164 published cities to whichever are largest at the current `t` for the on-screen marker
+the 242 published cities to whichever are largest at the current `t` for the on-screen marker
 field, with names on hover only, in the same shared tooltip arrival arcs and inhabited markers use.
+
+---
+
+## `cliopatria` — Historical empire/polity territory
+
+| | |
+|---|---|
+| **Source** | Cliopatria (Seshat Global History Databank / Complexity Science Hub Vienna / Alan Turing Institute / Oxford); Chalstrey, E., Bennett, J. & Mutch, E. (2024), Zenodo doi:10.5281/zenodo.13363121 (v0.0.1); methods paper Bennett, J. et al., SocArXiv preprint osf.io/24wd6 |
+| **Access** | **VERIFIED.** A single Zenodo file-content URL (`zenodo.org/api/records/13363121/files/.../content`), no auth — the Zenodo deposit is a snapshot of the `cliopatria` GitHub repo, containing one doubly-nested zip whose only real payload is `cliopatria.geojson` |
+| **Format** | one GeoJSON `FeatureCollection`, CRS84 (lon/lat WGS84) |
+| **Coverage** | curated domain 3400 BCE → 1900 CE (the raw dataset itself runs to 2024 CE; a provisional per-user cutoff excludes everything after 1900 CE — see "Processing" below and `sources/cliopatria/README.md` "Domain cutoff: 1900 CE"), ~508 distinct attested map years in the raw data |
+| **Volume** | measured: 49,215,745 bytes raw zip; 186,488,764 bytes extracted GeoJSON; 14,945 total features (14,108 `Type == "POLITY"`); curated (2026-09-18, after the label-normalisation and 1900-cutoff amendment) to 114 notable polities across 1,803 surviving windows, 842 raster frames (`sources/cliopatria/README.md` "Measured volume") |
+| **Licence** | **CC BY 4.0** — confirmed both via the Zenodo record's own `license.id` and the repository's committed `LICENSE.md` |
+| **Shape** | `RasterSequence` (id `cliopatria_extent`, territorial coverage) + `FeatureSet` (id `cliopatria_polities`, one label-anchor `Feature` per surviving polity-window — ADR-037) |
+| **Storage** | raw not committed (gitignored, re-fetched from Zenodo); both curated parquets → git (small); textures → generated media, git-lfs |
+
+**Processing** — `Type != "POLITY"` rows (`LEADER`/`GROUP`/`EVENT`/`ARMY`) are dropped first;
+Cliopatria's own precomputed `Area` (km², spot-checked against known peak empire sizes) feeds
+an objective, era-relative "top 6 by peak area per 100-year bucket" subset rule
+(`sources/cliopatria/subset.py`), applied inside `normalise.py` itself (curated data already
+holds only the notable subset — a deliberate departure from `sources/cities`' "curate
+everything, filter at publish" precedent, since the full world political map at ~508 map years
+is a different, much larger product than what was asked for). Every raw `Name`'s wrapping
+`"(...)"` pair is stripped unconditionally — a merge into an existing bare name when one exists
+(e.g. `"(Roman Empire)"` → `"Roman Empire"`, stopping the same physical empire consuming two
+ranking slots) or a plain rename when it doesn't (e.g. `"(Delhi Sultanate)"` →
+`"Delhi Sultanate"`) — plus a small explicit alias (`"(British Empire)"` →
+`"British Colonial Empire"`, two literal Names for one empire that paren-stripping alone can't
+unify) and a small explicit exclusion list (`"Greek Dark Ages"`, a historical period Cliopatria
+carries as a `POLITY` row despite not being an attested governing polity) — see
+`sources/cliopatria/README.md` "Duplicate aggregate entries and label normalisation" for the
+full account and every name affected. **Domain cutoff (added 2026-09-18, per-user, provisional):**
+`normalise.CUTOFF_CE_YEAR = 1900` drops any polity-window material after that year and truncates
+a straddling window to end there, applied before the subset rule runs — "largest by area" ranked
+all the way to the present had selected modern nation-states (Canada, the PRC, Brazil, the
+Russian Federation, the USA) rather than the historical empires this layer exists to show; see
+`sources/cliopatria/README.md` "Domain cutoff: 1900 CE". 114 polities selected, spanning every
+millennium 3400 BCE → 1900 CE and every inhabited continent — full list, peak areas and spans in
+`sources/cliopatria/README.md` "Subset rule".
+
+**Integration** — the raster is a plain coverage mask (R = antialiased territorial coverage
+0–255, G = B = 0; which named polity a pixel belongs to is left to the `FeatureSet`'s label
+anchors, the same split `sources/hyde` draws between its population-density raster and
+`sources/cities`' named markers). Each `Feature`'s single-element `estimates` list carries
+`area_km2` and `t_end` (ADR-037's additive extension to `PopulationEstimate`, not `population`
+— a polity has no population reading), because a polity's own representative point moves as its
+territory does, which the existing "one `Feature`, one fixed `lat`/`lon`" shape can only express
+at the granularity of one `Feature` per attested window, not one per polity — see
+`sources/cliopatria/README.md` "FeatureSet: one row per window, not per polity" for the full
+account of why this doesn't fit `FeatureSet` as cleanly as `sources/cities` does. Rendering is
+out of scope for this source, matching `sources/cities`' own original ADR-035 scoping.
+
+**Certainty and honesty** — `FeatureCertainty` is mapped from whether a window's row carries a
+Seshat databank cross-reference (`SeshatID`) — `HIGH` if present, `MEDIUM` otherwise, no `LOW`
+tier — a genuine data-provenance signal, not a border-accuracy one. The Cliopatria authors'
+own stated caveat that steppe/nomadic polities' borders (their example: the Avar Khaganate) are
+materially more contested than settled agrarian empires' is **not** encoded as per-feature data
+(doing so would mean hand-classifying which selected polities count as "nomadic" from
+historical knowledge — exactly what the objective subset rule exists to avoid doing for
+*selection*) — it is carried instead as explicit prose in `sources/cliopatria/README.md`
+"Certainty".
 
 ---
 
@@ -459,7 +530,6 @@ engineering one. Cross-check against OneZoom / Open Tree of Life for topology.
 |---|---|---|---|
 | `paleocoastlines` | [Zenodo 4297693](https://zenodo.org/records/4297693), shapefiles | `RasterSequence` | Sharper coastlines than PaleoDEM thresholding. ⚠️ VERIFY overlap/conflict with `paleodem` |
 | `ics-chart` | ICS chronostratigraphic chart, machine-readable | `EventSet` | Period/epoch boundaries for timeline chrome. Small, authoritative, easy |
-| `seshat` | Seshat Databank, CSV/API | `EventSet` | Polities and civilisations. ⚠️ VERIFY licence — has had restrictions |
 | `craters` | Earth Impact Database | `EventSet` | Impact events as a timeline lane. Small |
 | `magnetic` | Geomagnetic polarity timescale | `TimeSeries` | Reversals as a striped lane. Small, visually striking |
 | `astronomy` | computed, not sourced | `TimeSeries` | Day length, Moon distance, solar luminosity, galactic orbit — all **analytic formulae**, no dataset needed. Cheapest layers in the project |
@@ -467,6 +537,11 @@ engineering one. Cross-check against OneZoom / Open Tree of Life for topology.
 `astronomy` is worth calling out: day length, lunar recession and solar luminosity are all
 closed-form approximations. No fetch, no storage, no licence. An afternoon's work for three
 of the best layers.
+
+The `seshat` placeholder this table previously listed here (`EventSet`, "⚠️ VERIFY licence —
+has had restrictions") is superseded by `sources/cliopatria` (Tier 2, above) — the real
+dataset is CC BY 4.0, not restricted, and its own natural shape is `RasterSequence` +
+`FeatureSet` (territory and label anchors), not `EventSet`.
 
 ---
 
