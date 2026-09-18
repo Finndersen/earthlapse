@@ -118,6 +118,33 @@ export const GLOBE_REGIMES_DATA: EventsData = {
   ],
 }
 
+/** Mirrors `sources/hyde`'s derived "population" `TimeSeries` (ADR-031 amendment "global
+ *  population total"): domain ends 10 years BP (2015 CE, HYDE 3.2's last real timestep), not the
+ *  present — the near-present "hold the newest sample" case `<ScalarReadout>` handles. Real
+ *  sanity-check figures from `sources/hyde/README.md` "Global population total". */
+export const POPULATION_MANIFEST: LayerManifest = baseManifestEntry({
+  id: 'population',
+  name: 'Global population',
+  unit: 'people',
+  interpolation: 'log-linear',
+  timeDomain: [10, 12025],
+})
+
+export const POPULATION_DATA: SeriesData = {
+  id: 'population',
+  unit: 'people',
+  interpolation: 'log-linear',
+  samples: [
+    { t: 10, value: 7_256_964_920, lower: null, upper: null },
+    { t: 25, value: 6_110_442_981, lower: null, upper: null },
+    { t: 125, value: 1_642_028_156, lower: null, upper: null },
+    { t: 225, value: 943_431_063, lower: null, upper: null },
+    { t: 325, value: 591_722_989, lower: null, upper: null },
+    { t: 2025, value: 232_124_272, lower: null, upper: null },
+    { t: 12025, value: 4_432_265, lower: null, upper: null },
+  ],
+}
+
 export function logSpace(start: GeoTime, end: GeoTime, count: number): GeoTime[] {
   const logStart = Math.log10(start)
   const logEnd = Math.log10(end)

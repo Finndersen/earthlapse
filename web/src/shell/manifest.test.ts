@@ -288,6 +288,96 @@ describe('validateManifest', () => {
     }
   })
 
+  // --------------------------------------------------------------------- location (ADR-034)
+
+  it('parses a scene\'s location, marker included', () => {
+    const manifest = validateManifest(stubManifest)
+    const holoceneCity = manifest.scenes.find((s) => s.id === 'holocene-city')
+    expect(holoceneCity?.location).toEqual({
+      label: 'Shenzhen, China',
+      presentDay: { lat: 22.54, lon: 114.06 },
+      marker: { lat: 22.54, lon: 114.06 },
+    })
+  })
+
+  it('keeps an explicit null marker as null, never falling back to presentDay', () => {
+    const manifest = validateManifest(stubManifest)
+    const archeanShore = manifest.scenes.find((s) => s.id === 'archean-shore')
+    expect(archeanShore?.location?.marker).toBeNull()
+    expect(archeanShore?.location?.presentDay).toEqual({ lat: -21.2, lon: 119.7 })
+  })
+
+  it('leaves location absent for a scene with no published place', () => {
+    const manifest = validateManifest(stubManifest)
+    const swamp = manifest.scenes.find((s) => s.id === 'carboniferous-swamp')
+    expect(swamp?.location).toBeUndefined()
+  })
+
+  it('rejects an out-of-range latitude on presentDay', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          location: { label: 'Bad', presentDay: { lat: 91, lon: 0 }, marker: null },
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/lat/)
+  })
+
+  it('rejects an out-of-range longitude on the marker', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          location: { label: 'Bad', presentDay: { lat: 0, lon: 0 }, marker: { lat: 0, lon: 181 } },
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/lon/)
+  })
+
+  // -------------------------------------------------------------------- features (ADR-035)
+
+  it('accepts the features dataKind on a layer', () => {
+    const withFeatureLayer = {
+      ...stubManifest,
+      layers: [
+        ...stubManifest.layers,
+        {
+          id: 'cities',
+          name: 'Cities',
+          surface: 'globe',
+          dataKind: 'features',
+          timeDomain: [0, 4.567e9],
+          source: 'cities',
+          chartable: false,
+          data: 'layers/cities.json',
+        },
+      ],
+    }
+    const manifest = validateManifest(withFeatureLayer)
+    expect(manifest.layers.find((l) => l.id === 'cities')?.dataKind).toBe('features')
+  })
+
   it('rejects an unknown sound mode', () => {
     const bad = {
       ...stubManifest,

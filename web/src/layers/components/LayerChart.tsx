@@ -12,7 +12,7 @@ import { useEffect } from 'react'
 
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
-import { clampUnit, formatValue } from '../format'
+import { clampUnit, formatScalarValue } from '../format'
 import styles from './hud.module.css'
 
 const SAMPLE_COUNT = 240
@@ -115,7 +115,7 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
             ? inDomain
               ? 'no record'
               : 'no data'
-            : `${formatValue(playheadValue.value)} ${playheadValue.unit}`}
+            : `${formatScalarValue(playheadValue.value, playheadValue.unit)} ${playheadValue.unit}`}
         </span>
       </div>
       <div className={styles.chartPlot}>
@@ -146,10 +146,10 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
         {presentValues.length > 0 && (
           <>
             <span className={`${styles.chartAxis} ${styles.chartAxisMax}`} aria-hidden="true">
-              {formatValue(max)} {unit}
+              {formatScalarValue(max, unit)} {unit}
             </span>
             <span className={`${styles.chartAxis} ${styles.chartAxisMin}`} aria-hidden="true">
-              {formatValue(min)} {unit}
+              {formatScalarValue(min, unit)} {unit}
             </span>
           </>
         )}

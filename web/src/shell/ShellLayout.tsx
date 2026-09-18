@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { CreditsList } from './CreditsList'
 import { Panel } from './Panel'
 import styles from './ShellLayout.module.css'
+import { useChromeGap } from './useChromeGap'
 
 export interface ShellLayoutProps {
   /** Full-window backdrop: the generated still, breathing and dissolving. */
@@ -83,8 +84,36 @@ export function ShellLayout({
   // restores it on unmount by itself, and defaults its own initial focus to its dialog root.
   const [aboutOpen, setAboutOpen] = useState(false)
 
+  // The expanded globe's own real title-to-timeline gap (`Globe.module.css`'s `.orbExpanded`
+  // sizing) — measured here, not guessed there, since `.title` and `.expandedGlobeCaption` are
+  // this component's own children and `Globe`'s fullscreen backdrop (rendered elsewhere, inside
+  // `.globe`) has no way to see them (its own doc comment on why it can't place the caption
+  // itself makes the same point for a different element).
+  //
+  // The lower boundary is `.expandedGlobeCaption` itself, not `.bottom` (a first pass got this
+  // wrong, browser-verified regression, 2026-09-17 lead review): `.stage`'s three children
+  // (`.caption`, `.chart`, `.expandedGlobeCaption`) sit in the *same* CSS Grid cell so the
+  // caption/chart crossfade never reflows, which means `.stage` — and so `.bottom`, which
+  // contains it — is always sized to the *tallest* of the three, including whichever is hidden
+  // via `opacity: 0` (`ShellLayout.module.css`'s own crossfade rule): `visibility` isn't involved
+  // in that sizing, only `opacity`, so the hidden box still occupies its full layout height.
+  // While the globe is expanded, the scene's own `.caption` (a heading plus a paragraph, easily
+  // taller than the globe's own short regime caption, or empty) is exactly that hidden-but-still-
+  // sized sibling — measuring `.bottom`'s own top edge was therefore measuring space reserved for
+  // text nobody can see, undershooting the real free area by however much taller the scene
+  // caption happens to be. `.expandedGlobeCaption` has no such sibling inflating *it* — `align-
+  // items: end` on `.stage` sizes and bottom-aligns each grid-cell child independently within the
+  // shared row, so this element's own `getBoundingClientRect().top` reflects only its *own*
+  // content (nothing, when the globe's own caption is empty, exactly matching the timeline's own
+  // top edge; its own text's height when it isn't) — which is exactly the boundary the expanded
+  // globe needs to clear, in either case.
+  const shellRef = useRef<HTMLDivElement | null>(null)
+  const titleRef = useRef<HTMLElement | null>(null)
+  const expandedGlobeCaptionRef = useRef<HTMLDivElement | null>(null)
+  useChromeGap(shellRef, titleRef, expandedGlobeCaptionRef)
+
   return (
-    <div className={styles.shell} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
+    <div ref={shellRef} className={styles.shell} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
       <div className={styles.scene}>{scene}</div>
       <div className={styles.lens} aria-hidden="true" />
 
@@ -118,7 +147,7 @@ export function ShellLayout({
 
         <div className={styles.feed}>{feed}</div>
 
-        <header className={styles.title}>
+        <header ref={titleRef} className={styles.title}>
           {title}
           {badge}
         </header>
@@ -132,7 +161,11 @@ export function ShellLayout({
           <div className={styles.stage}>
             <div className={styles.caption}>{caption}</div>
             <div className={styles.chart}>{chart}</div>
-            <div className={styles.expandedGlobeCaption} aria-live={globeExpanded ? 'polite' : undefined}>
+            <div
+              ref={expandedGlobeCaptionRef}
+              className={styles.expandedGlobeCaption}
+              aria-live={globeExpanded ? 'polite' : undefined}
+            >
               {globeCaption}
             </div>
           </div>

@@ -21,23 +21,35 @@ import type {
   LayerManifest,
   Manifest,
   Scene,
+  SceneCoordinates,
+  SceneLocation,
   SceneSound,
   SoundMode,
 } from '@/types/manifest'
 import type { Interpolation, LayerSurface } from '@/types/layer'
 import {
   parseEventsData,
+  parseFeatureSetData,
   parseRasterData,
   parseSeriesData,
   parseTimelineEvent,
   parseTreeData,
   type EventsData,
+  type FeatureSetData,
   type RasterData,
   type SeriesData,
   type TreeData,
 } from '@/data/curated'
 
-const MANIFEST_URL = '/media/manifest.json'
+/**
+ * Where published media lives. Defaults to the dev server's own `/media` symlink; a deployment
+ * sets `NEXT_PUBLIC_MEDIA_BASE` to the R2 origin (Next inlines it at build time) so the export
+ * carries no media of its own. It must match the `--asset-base` the manifest was published with:
+ * this constant only finds the manifest, and every path inside it hangs off `manifest.assetBase`.
+ */
+const MEDIA_BASE = process.env.NEXT_PUBLIC_MEDIA_BASE ?? '/media'
+
+const MANIFEST_URL = `${MEDIA_BASE}/manifest.json`
 const STUB_MANIFEST_URL = '/stub/manifest.json'
 
 export interface ManifestLoadResult {
@@ -138,7 +150,7 @@ function expectTuple2(v: unknown, path: string): [number, number] {
 
 const SHOT_TYPES = ['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND', 'SPLIT_LEVEL'] as const
 const LAYER_SURFACES: readonly LayerSurface[] = ['globe', 'timeline-lane', 'hud', 'scene-overlay']
-const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node']
+const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node', 'features']
 const INTERPOLATIONS: readonly Interpolation[] = ['linear', 'log-linear', 'step', 'nearest']
 const SOUND_MODES: readonly SoundMode[] = ['loop', 'once']
 
@@ -148,6 +160,28 @@ function validateSceneSound(v: unknown, path: string): SceneSound {
     stem: expectString(r.stem, `${path}.stem`),
     mode: expectOneOf(r.mode, SOUND_MODES, `${path}.mode`),
     gain: expectNumber(r.gain, `${path}.gain`),
+  }
+}
+
+function validateSceneCoordinates(v: unknown, path: string): SceneCoordinates {
+  const r = expectRecord(v, path)
+  const lat = expectNumber(r.lat, `${path}.lat`)
+  if (!(lat >= -90 && lat <= 90)) throw new Error(`${path}.lat: out of range, got ${lat}`)
+  const lon = expectNumber(r.lon, `${path}.lon`)
+  if (!(lon >= -180 && lon <= 180)) throw new Error(`${path}.lon: out of range, got ${lon}`)
+  return { lat, lon }
+}
+
+/** ADR-034. `marker` is explicitly nullable on the wire (publish writes `null` when no plate
+ *  model covers the scene's age) — kept as a real `null` rather than collapsed to `undefined`,
+ *  so "this scene has a place but we cannot put it on the globe" stays distinguishable from
+ *  "this scene has no place at all" (an absent `location`). */
+function validateSceneLocation(v: unknown, path: string): SceneLocation {
+  const r = expectRecord(v, path)
+  return {
+    label: expectString(r.label, `${path}.label`),
+    presentDay: validateSceneCoordinates(r.presentDay, `${path}.presentDay`),
+    marker: r.marker === null || r.marker === undefined ? null : validateSceneCoordinates(r.marker, `${path}.marker`),
   }
 }
 
@@ -173,6 +207,9 @@ function validateScene(v: unknown, path: string): Scene {
   }
   if (r.sound !== undefined) {
     scene.sound = validateSceneSound(r.sound, `${path}.sound`)
+  }
+  if (r.location !== undefined && r.location !== null) {
+    scene.location = validateSceneLocation(r.location, `${path}.location`)
   }
   const pinned = expectOptionalString(r.pinned, `${path}.pinned`)
   if (pinned !== undefined) scene.pinned = pinned
@@ -294,7 +331,7 @@ export function validateManifest(json: unknown): Manifest {
 
 // ---------------------------------------------------------------------------- layer data
 
-export type LayerData = SeriesData | RasterData | TreeData | EventsData
+export type LayerData = SeriesData | RasterData | TreeData | EventsData | FeatureSetData
 
 /**
  * Fetches and parses one layer's data file, dispatching on `dataKind` to the matching
@@ -320,5 +357,7 @@ export async function loadLayerData(manifest: Manifest, entry: LayerManifest): P
       return parseTreeData(json)
     case 'events':
       return parseEventsData(json)
+    case 'features':
+      return parseFeatureSetData(json)
   }
 }

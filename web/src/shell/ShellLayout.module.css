@@ -49,7 +49,8 @@
    read over a bright sky, a deep bottom falloff for the caption and timeline, and a gentler
    top one for the title. The vignette also hides the drift's frame margins (DESIGN §5).
    Lightened ~15-25% and pushed a little further out (2026-09-15, follow-up item 9: "more of the
-   scene visible") from an earlier pass, kept strongest only at the outer 10% so it still hides
+   scene visible"), then lightened a further ~20% (2026-09-17, "reduce the vignette effect
+   slightly a bit more") from an earlier pass, kept strongest only at the outer 10% so it still hides
    the drift's frame-margin artefacts there; HUD text leans on `--hud-shadow` (strengthened
    below) rather than the vignette for legibility over a bright plate. */
 .lens {
@@ -62,22 +63,22 @@
       ellipse 62% 60% at 50% 44%,
       transparent 0%,
       transparent 46%,
-      rgba(3, 4, 6, 0.2) 61%,
-      rgba(3, 4, 6, 0.53) 77%,
-      rgba(3, 4, 6, 0.75) 90%,
-      rgba(3, 4, 6, 0.9) 100%
+      rgba(3, 4, 6, 0.14) 61%,
+      rgba(3, 4, 6, 0.41) 77%,
+      rgba(3, 4, 6, 0.65) 90%,
+      rgba(3, 4, 6, 0.88) 100%
     ),
-    linear-gradient(to right, rgba(3, 4, 6, 0.58) 0%, rgba(3, 4, 6, 0.33) 15%, transparent 32%),
-    linear-gradient(to left, rgba(3, 4, 6, 0.44) 0%, rgba(3, 4, 6, 0.2) 14%, transparent 26%),
+    linear-gradient(to right, rgba(3, 4, 6, 0.33) 0%, rgba(3, 4, 6, 0.16) 13%, transparent 26%),
+    linear-gradient(to left, rgba(3, 4, 6, 0.25) 0%, rgba(3, 4, 6, 0.1) 12%, transparent 21%),
     linear-gradient(
       to top,
-      rgba(3, 4, 6, 0.8) 0%,
-      rgba(3, 4, 6, 0.7) 16%,
-      rgba(3, 4, 6, 0.41) 28%,
-      rgba(3, 4, 6, 0.13) 36%,
-      transparent 44%
+      rgba(3, 4, 6, 0.54) 0%,
+      rgba(3, 4, 6, 0.44) 16%,
+      rgba(3, 4, 6, 0.22) 28%,
+      rgba(3, 4, 6, 0.06) 36%,
+      transparent 42%
     ),
-    linear-gradient(to bottom, rgba(3, 4, 6, 0.48) 0%, rgba(3, 4, 6, 0.17) 12%, transparent 24%);
+    linear-gradient(to bottom, rgba(3, 4, 6, 0.28) 0%, rgba(3, 4, 6, 0.09) 12%, transparent 22%);
 }
 
 /* A barely-there warm rim where the aperture begins to fall off — the glass of the lens. */
@@ -199,6 +200,16 @@
 
 .title {
   grid-area: title;
+  /* Without this, the grid's default `align-items: stretch` grows this cell to match row 1's
+     tallest sibling (`.globe`'s minimised-orb column, or `.ancestor`'s portrait — whichever is
+     taller at a given width) — harmless visually, since this flex column already packs its own
+     children at its own top edge either way, but it means this element's own
+     `getBoundingClientRect()` reports the *row's* height, not the title's own (2026-09-18 lead
+     review: `ShellLayout.tsx`'s `useChromeGap` reads this element as the expanded globe's top
+     boundary, and a stretched box read tens to well over a hundred px past the visible glyphs
+     undersized the real free area by exactly that much). `align-self: start` makes this element
+     hug its own content instead, with no visible change (same top-packed position either way). */
+  align-self: start;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -302,6 +313,48 @@
   transition:
     opacity 260ms ease,
     visibility 0s linear 0s;
+}
+
+/* Feathered local scrims (2026-09-17) behind the two blocks that sit over open sky — the caption
+   and the left readout/feed column. Same device as `.bottom::before`: an edgeless gradient that
+   carries legibility where the type actually is, so the global `.lens` vignette can stay light
+   and show more of the plate. No fill, border or blur: a panel would read as app chrome against
+   the photograph (DESIGN §8). */
+.caption,
+.readouts,
+.feed {
+  position: relative;
+  isolation: isolate;
+}
+
+.caption::before,
+.readouts::before,
+.feed::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.caption::before {
+  inset: -14px -52px -18px;
+  background: radial-gradient(
+    ellipse 58% 62% at 50% 50%,
+    rgba(3, 4, 6, 0.46) 0%,
+    rgba(3, 4, 6, 0.34) 46%,
+    transparent 78%
+  );
+}
+
+.readouts::before,
+.feed::before {
+  inset: -16px -56px -20px -48px;
+  background: radial-gradient(
+    ellipse 62% 60% at 30% 50%,
+    rgba(3, 4, 6, 0.42) 0%,
+    rgba(3, 4, 6, 0.3) 48%,
+    transparent 80%
+  );
 }
 
 .caption,
