@@ -2808,6 +2808,94 @@
       "estimated_usd": 0.15457,
       "actual_usd": 0.140288,
       "note": null
+    },
+    {
+      "node_id": "icon-concept-strata-globe",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15304,
+      "actual_usd": 0.137806,
+      "note": null
+    },
+    {
+      "node_id": "icon-concept-motion-trail-orbit",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153116,
+      "actual_usd": 0.137672,
+      "note": null
+    },
+    {
+      "node_id": "icon-concept-ghost-frame-stack",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153082,
+      "actual_usd": 0.137628,
+      "note": null
+    },
+    {
+      "node_id": "icon-concept-sundial",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153022,
+      "actual_usd": 0.13736,
+      "note": null
+    },
+    {
+      "node_id": "icon-concept-eclipse-strip",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153058,
+      "actual_usd": 0.137968,
+      "note": null
+    },
+    {
+      "node_id": "icon-concept-core-sample-slices",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153024,
+      "actual_usd": 0.137286,
+      "note": null
+    },
+    {
+      "node_id": "icon-r2-hands-inside-disc",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153808,
+      "actual_usd": 0.138968,
+      "note": null
+    },
+    {
+      "node_id": "icon-r2-hand-overhangs-limb",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153904,
+      "actual_usd": 0.138984,
+      "note": null
+    },
+    {
+      "node_id": "icon-r2-graticule-markers",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15396,
+      "actual_usd": 0.139496,
+      "note": null
+    },
+    {
+      "node_id": "icon-r2-terminator-as-hand",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154014,
+      "actual_usd": 0.139844,
+      "note": null
+    },
+    {
+      "node_id": "icon-r2-dial-ring",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153852,
+      "actual_usd": 0.138888,
+      "note": null
     }
   ]
 }
