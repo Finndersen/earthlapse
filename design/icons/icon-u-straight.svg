@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Earthlapse">
+  <defs>
+    <radialGradient id="sea" cx="34%" cy="28%" r="78%">
+      <stop offset="0" stop-color="#5aa6d2"/><stop offset="1" stop-color="#17405c"/>
+    </radialGradient>
+    <clipPath id="ball"><circle cx="32" cy="32" r="22"/></clipPath>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0a0f16"/>
+  <circle cx="32" cy="32" r="22" fill="url(#sea)"/>
+  <g clip-path="url(#ball)" fill="#55a557">
+    <path d="M18 14c5-2 9 0 10 4s-2 6-1 9 4 4 3 8-5 5-8 3-6-6-7-11 0-11 3-13Z"/>
+    <path d="M38 16c5-1 9 1 11 4s-1 6-4 7-8 0-10-3 0-7 3-8Z"/>
+    <path d="M40 34c6-1 10 2 10 6s-4 8-9 8-8-3-8-7 2-6 7-7Z"/>
+    <ellipse cx="19" cy="44" rx="6" ry="4" transform="rotate(-20 19 44)"/>
+  </g>
+  <path d="M32 10A10 22 0 0 1 32 54A22 22 0 0 0 32 10Z" clip-path="url(#ball)" fill="#04080d" opacity=".58"/>
+  <!-- Straight hands of constant width, no taper: fewer ideas per pixel, and every pixel of
+       the hand carries full weight right to the tip, which is what survives downsampling.
+       Length still differentiates hour from minute. -->
+  <g transform="translate(32 32)" stroke-linecap="round">
+    <g stroke="#06101a" stroke-width="6.4" opacity=".85">
+      <path d="M0 0 0 -12.5" transform="rotate(305)"/>
+    </g>
+    <g stroke="#06101a" stroke-width="5.8" opacity=".85">
+      <path d="M0 0 0 -19" transform="rotate(60)"/>
+    </g>
+    <path d="M0 0 0 -12.5" transform="rotate(305)" stroke="#f0bd7c" stroke-width="3.0"/>
+    <path d="M0 0 0 -19" transform="rotate(60)" stroke="#f7d7a4" stroke-width="2.4"/>
+    <circle r="3.2" fill="#06101a"/>
+    <circle r="2.2" fill="#f7d7a4"/>
+    <circle r="0.85" fill="#0a0f16"/>
+  </g>
+</svg>
