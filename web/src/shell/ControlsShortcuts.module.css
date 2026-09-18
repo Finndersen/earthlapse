@@ -1,0 +1,98 @@
+/*
+ * `ControlsShortcuts`'s own typography, nested one level below `CreditsList.module.css`'s
+ * `.sectionTitle` heading it sits under. Same hairline-rule-between-rows idiom as
+ * `CreditsList.module.css`'s `.item`, sized down for a denser two-column row instead of a
+ * title/citation/meta stack.
+ */
+
+.groupLabel {
+  margin: 0 0 8px;
+  font-family: var(--hud-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
+}
+
+.groupLabel:not(:first-child) {
+  margin-top: 18px;
+}
+
+.pointerList,
+.keyList {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.pointerItem,
+.keyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  padding: 9px 0;
+  border-top: 1px solid var(--hud-hairline);
+}
+
+.pointerItem:first-child,
+.keyRow:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.pointerLabel {
+  flex: none;
+  min-width: 132px;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  color: var(--hud-ink);
+}
+
+.pointerDescription,
+.keyDescription {
+  flex: 1 1 180px;
+  min-width: 0;
+  font-family: var(--hud-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--hud-dim);
+}
+
+.keyCaps {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 108px;
+  gap: 4px;
+}
+
+.keyAlt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keyCap {
+  padding: 2px 6px;
+  border: 1px solid var(--hud-hairline);
+  border-radius: 4px;
+  background: rgba(239, 233, 220, 0.05);
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.01em;
+  color: var(--hud-ink);
+}
+
+.keyOr {
+  font-family: var(--hud-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
+}

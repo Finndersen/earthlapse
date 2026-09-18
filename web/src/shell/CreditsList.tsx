@@ -1,16 +1,23 @@
 'use client'
 
 /**
- * The credits content itself — every real dataset behind the project plus audio stem credits —
- * self-contained (it loads the manifest itself) so it can be dropped into either surface that
- * shows it: the About & credits panel and the `/credits` route (`app/credits/page.tsx`), with
- * one implementation instead of two. Leads with the artistic-reconstruction disclosure
- * (VISUAL_SPEC §9), which used to sit in `ShellLayout`'s always-on footer row and now shows only
- * here, the first time a viewer actually opens credits. Also carries a slot for the event colour
- * legend (W-followup item 11) — a small reference a viewer wants at most occasionally, so it
- * lives here rather than claiming any of the event feed's own tight vertical budget permanently.
- * See `CreditsListProps.eventLegend` below for why this component doesn't import
- * `EventTagLegend` itself.
+ * The shared About/Controls/Credits content — self-contained (it loads the manifest itself) so
+ * it can be dropped into either surface that shows it: the About & credits panel and the
+ * `/credits` route (`app/credits/page.tsx`), with one implementation instead of two. Three
+ * sections, in order:
+ *
+ * 1. **About** — what the project is, what it covers, and the artistic-reconstruction
+ *    disclosure (VISUAL_SPEC §9), which used to sit in `ShellLayout`'s always-on footer row and
+ *    now shows only here, as the first line a viewer sees on opening this content.
+ * 2. **Controls & shortcuts** (`ControlsShortcuts.tsx`) — added because the timeline's first-use
+ *    hint, previously the only place interactions and keyboard shortcuts were explained, was
+ *    removed (ADR-012 amendment follow-up, 2026-09-18); this is now the one place they're
+ *    documented, kept in sync with `timeline/keyboard.ts` by `controlsData.test.ts`.
+ * 3. **Credits** — every real dataset behind the project, audio stem credits, and a slot for the
+ *    event colour legend (W-followup item 11) — a small reference a viewer wants at most
+ *    occasionally, so it lives here rather than claiming any of the event feed's own tight
+ *    vertical budget permanently. See `CreditsListProps.eventLegend` below for why this
+ *    component doesn't import `EventTagLegend` itself.
  */
 
 import { useEffect, useState } from 'react'
@@ -18,6 +25,7 @@ import type { ReactNode } from 'react'
 
 import type { AudioStem, Credit } from '@/types/manifest'
 
+import { ControlsShortcuts } from './ControlsShortcuts'
 import { loadManifest } from './manifest'
 import styles from './CreditsList.module.css'
 
@@ -57,9 +65,18 @@ export function CreditsList({ eventLegend }: CreditsListProps = {}) {
     <div className={styles.wrap}>
       <p className={styles.disclaimer}>Artistic reconstruction — plausibility, not accuracy.</p>
       <p className={styles.intro}>
-        Every real dataset behind this project, with its citation and licence. The view of Earth's surface is
-        generated; the data underneath it is not.
+        Earth Timeline is a scrubbable view of the planet's surface across all 4.6 billion years of its history,
+        from the molten Hadean to the present — one continuous timeline, not a slideshow. The scenes above are
+        generated; the data driving everything else — continents, climate, atmosphere, the tree of life,
+        population — is real, drawn from paleoclimate proxies, geological and satellite surveys, phylogenetic
+        trees and historical records, each cited below.
       </p>
+
+      <h3 className={styles.sectionTitle}>Controls &amp; shortcuts</h3>
+      <ControlsShortcuts />
+
+      <h3 className={styles.sectionTitle}>Credits</h3>
+      <p className={styles.intro}>Every real dataset behind this project, with its citation and licence.</p>
 
       {state.status === 'loading' && <p className={styles.status}>Loading…</p>}
 

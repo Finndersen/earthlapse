@@ -4,7 +4,10 @@
  * `/credits` — kept as a direct/bookmarkable link (nothing in the app links here any more; the
  * in-experience "About & credits" panel, `ShellLayout`'s `Panel`, is the primary way to reach
  * this content now — see the ADR-012 amendment and VISUAL_SPEC §9 for why). Renders the same
- * `CreditsList` the panel does, in its own full-page frame with a way back to the timeline.
+ * `CreditsList` the panel does — about, controls & shortcuts, then credits — in its own
+ * full-page frame with a way back to the timeline. The heading matches the panel's own title
+ * (`ShellLayout`'s `<Panel label="About & credits">`) since this page now covers the same three
+ * sections, not credits alone.
  */
 
 import { EventTagLegend } from '@/events'
@@ -19,7 +22,7 @@ export default function CreditsPage() {
         <a className={styles.back} href="/">
           ← Back to the timeline
         </a>
-        <h1 className={styles.title}>Credits</h1>
+        <h1 className={styles.title}>About &amp; credits</h1>
         <CreditsList eventLegend={<EventTagLegend />} />
       </div>
     </main>

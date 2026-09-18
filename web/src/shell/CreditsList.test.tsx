@@ -33,8 +33,37 @@ describe('CreditsList', () => {
     render(<CreditsList />)
     await waitFor(() => expect(screen.getByText(stubManifest.credits[0]!.title)).toBeTruthy())
     const disclaimer = screen.getByText(/artistic reconstruction/i)
-    // It's the very first thing in the wrap, ahead of the intro paragraph and the list.
+    // It's the very first thing in the wrap, ahead of the About copy, Controls & shortcuts,
+    // Credits heading and the list.
     expect(disclaimer.previousElementSibling).toBeNull()
+  })
+
+  it('renders About, Controls & shortcuts, then Credits, in that order', async () => {
+    mockFetchSequence([{ url: '/media/manifest.json', status: 200, body: stubManifest }])
+    render(<CreditsList />)
+    await waitFor(() => expect(screen.getByText(stubManifest.credits[0]!.title)).toBeTruthy())
+
+    // About: says what the project covers and that scenes are generated while data is real,
+    // without a section heading of its own (it's the lead content, same as before this change).
+    expect(screen.getByText(/4\.6 billion years/i)).toBeTruthy()
+
+    const controlsHeading = screen.getByRole('heading', { name: /controls & shortcuts/i })
+    const creditsHeading = screen.getByRole('heading', { name: 'Credits' })
+    expect(controlsHeading.compareDocumentPosition(creditsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    // Controls & shortcuts covers the pointer interactions and shows at least one keyboard row,
+    // regardless of manifest load state (it doesn't depend on the manifest at all).
+    expect(screen.getByText(/drag the timeline/i)).toBeTruthy()
+    expect(screen.getByText(/play or pause/i)).toBeTruthy()
+  })
+
+  it('shows Controls & shortcuts immediately, before the manifest resolves', () => {
+    mockFetchSequence([{ url: '/media/manifest.json', status: 200, body: stubManifest }])
+    render(<CreditsList />)
+    // No `waitFor` — this section renders synchronously on mount, independent of the credits
+    // list's own loading state.
+    expect(screen.getByRole('heading', { name: /controls & shortcuts/i })).toBeTruthy()
+    expect(screen.getByText(/drag the timeline/i)).toBeTruthy()
   })
 
   it('renders every credit once the manifest loads', async () => {
