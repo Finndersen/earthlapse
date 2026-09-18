@@ -26,7 +26,13 @@ ROSTER_PATH = REPO_ROOT / "sources" / "cities" / "roster.toml"
 CURATED_PATH = REPO_ROOT / "data" / "curated" / "cities.parquet"
 
 MIN_ROSTER_SIZE = 150
-MAX_ROSTER_SIZE = 250
+# Widened 2026-09-18 (from 250) when a user report of missing "well known" cities in Africa, the
+# Middle East, Europe and Russia turned up real gaps: every Balkan/Baltic European capital, most
+# of Russia's largest cities beyond Moscow/St Petersburg, the Maghreb, the Caucasus, and several
+# Gulf/Levant capitals were simply never added to the roster. Not a formula change -- still a
+# hand-curated, reviewable list; the ceiling exists to keep the globe legible, not to cap honesty
+# about what "well known" means.
+MAX_ROSTER_SIZE = 320
 
 # Every country the roster is expected to draw from, grouped into the broad regions the task
 # that created this roster was measuring. A country missing from this map fails the spread test
@@ -50,6 +56,16 @@ _REGION_BY_COUNTRY = {
     "Tanzania": "sub-saharan-africa",
     "Mali": "sub-saharan-africa",
     "Mozambique": "sub-saharan-africa",
+    "Zambia": "sub-saharan-africa",
+    "Burkina Faso": "sub-saharan-africa",
+    "Mauritius": "sub-saharan-africa",
+    # North Africa (Maghreb) -- distinct from "Middle East" below: Chandler/Modelski file these
+    # under their own country names, and they were entirely absent from the roster until the
+    # 2026-09-18 pass that added this region.
+    "Morocco": "north-africa",
+    "Algeria": "north-africa",
+    "Tunisia": "north-africa",
+    "Libya": "north-africa",
     # Oceania / Pacific
     "Australia": "oceania-pacific",
     "New Zealand": "oceania-pacific",
@@ -63,6 +79,8 @@ _REGION_BY_COUNTRY = {
     "Chile": "south-america",
     "Argentina": "south-america",
     "Brazil": "south-america",
+    "Uruguay": "south-america",
+    "Paraguay": "south-america",
     # Caribbean / Central America
     "Cuba": "caribbean-central-america",
     "Dominican Republic": "caribbean-central-america",
@@ -71,6 +89,8 @@ _REGION_BY_COUNTRY = {
     "Puerto Rico": "caribbean-central-america",
     "Panama": "caribbean-central-america",
     "Guatemala": "caribbean-central-america",
+    "El Salvador": "caribbean-central-america",
+    "Nicaragua": "caribbean-central-america",
     # Mexico
     "Mexico": "mexico",
     # North America
@@ -92,6 +112,7 @@ _REGION_BY_COUNTRY = {
     "Philippines": "southeast-asia",
     "Vietnam": "southeast-asia",
     "Brunei": "southeast-asia",
+    "Lao People's Democratic Republic": "southeast-asia",
     # Central Asia
     "Uzbekistan": "central-asia",
     "Turkmenistan": "central-asia",
@@ -104,8 +125,16 @@ _REGION_BY_COUNTRY = {
     "Republic of Korea": "east-asia",
     "Dem. People's Republic of Korea": "east-asia",
     "Taiwan": "east-asia",
-    # Russia
+    # Russia. Note: this dataset's own `country` field, not modern political geography -- Riga
+    # (`riga-russian-federation`, Latvia's capital) is filed under "Russian Federation" in the
+    # source data, so it counts here, not under Europe/Baltic states.
     "Russian Federation": "russia",
+    # Caucasus -- Council of Europe members, but UN M49 classifies them as Western Asia; kept as
+    # its own bucket rather than folded into "europe" or "middle-east" so neither test can be
+    # satisfied by the other's cities.
+    "Georgia": "caucasus",
+    "Armenia": "caucasus",
+    "Azerbaijan": "caucasus",
     # Europe
     "United Kingdom": "europe",
     "France": "europe",
@@ -127,7 +156,18 @@ _REGION_BY_COUNTRY = {
     "Hungary": "europe",
     "Ukraine": "europe",
     "Switzerland": "europe",
-    # Middle East / North Africa
+    "Belarus": "europe",
+    "Lithuania": "europe",
+    "Estonia": "europe",
+    "Bulgaria": "europe",
+    "Romania": "europe",
+    "Serbia": "europe",
+    "Bosnia and Herzegovina": "europe",
+    "Croatia": "europe",
+    "Slovenia": "europe",
+    "Slovakia": "europe",
+    "Malta": "europe",
+    # Middle East (Near East + Gulf + Eastern Mediterranean; UN Western Asia minus the Caucasus)
     "Iraq": "middle-east",
     "Egypt": "middle-east",
     "Israel": "middle-east",
@@ -138,22 +178,30 @@ _REGION_BY_COUNTRY = {
     "Yemen": "middle-east",
     "Turkey": "middle-east",
     "Iran": "middle-east",
+    "Cyprus": "middle-east",
+    "Syria/Turkey": "middle-east",  # Antioch straddles the modern Turkey/Syria border
+    "Kuwait": "middle-east",
+    "Oman": "middle-east",
 }
 
 MIN_PER_REGION = {
-    "sub-saharan-africa": 15,
+    "sub-saharan-africa": 30,
+    "north-africa": 5,
     "oceania-pacific": 5,
-    "south-america": 8,
-    "caribbean-central-america": 3,
+    "south-america": 15,
+    "caribbean-central-america": 5,
     "mexico": 3,
     "north-america": 8,
-    "south-asia": 8,
-    "southeast-asia": 10,
+    "south-asia": 12,
+    "southeast-asia": 15,
     "central-asia": 3,
-    "east-asia": 10,
-    "russia": 3,
-    "europe": 10,
-    "middle-east": 10,
+    "east-asia": 15,
+    # Bumped 2026-09-18 (from 3, 10, 10) as the direct fix for the user report this pass
+    # addressed: "many missing from ... europe and russia etc", "missing from middle east".
+    "russia": 8,
+    "caucasus": 3,
+    "europe": 25,
+    "middle-east": 25,
 }
 
 # Broad era buckets, keyed by each city's *oldest* attested estimate (the deepest antiquity the
@@ -249,6 +297,12 @@ def test_named_example_cities_are_still_published() -> None:
         "jakarta-indonesia",
         "rio-de-janeiro-brazil",
         "cuzco-peru",
+        # closing the gaps the 2026-09-18 user report identified (Africa/Middle East/Europe/
+        # Russia): a Maghreb capital, a Russian city beyond Moscow/St Petersburg, and a Balkan
+        # national capital that was entirely absent before this pass
+        "casablanca-morocco",
+        "yekaterinburg-russian-federation",
+        "sofia-bulgaria",
     ):
         assert expected in ids, f"{expected} missing from the published roster"
 

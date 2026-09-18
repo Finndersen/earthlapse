@@ -357,7 +357,7 @@ whose data ends before the present.
 | **Access** | **VERIFIED.** SEDAC's own listing (doi:10.7927/H4ZG6QBX) is a dead end — it gates bulk downloads behind a NASA Earthdata login and ships no direct CSV. The paper's own "Data Records" section names the real distribution: three CSVs (Chandler, Modelski Ancient, Modelski Modern) independently deposited on figshare, downloadable via `ndownloader.figshare.com` with no auth (`sources/cities/README.md` "Licence and access") |
 | **Format** | three wide CSVs (latin-1 encoded), one row per city, one column per dated population estimate (`BC_<year>`/`AD_<year>`) |
 | **Coverage** | 3700 BCE → 2000 CE (curated); published (notable-only) layer's actual domain follows whichever notable cities' own estimates span |
-| **Volume** | measured: 1,448,474 bytes raw (three CSVs); 1,736 curated features; 164 published (see "Notability filter" below) |
+| **Volume** | measured: 1,448,474 bytes raw (three CSVs); 1,736 curated features; 283 published (see "Significance roster" below) |
 | **Licence** | **CC BY 4.0** — each of the three figshare deposits independently, confirmed via the figshare API's own `license` field |
 | **Shape** | `FeatureSet` (ADR-035), id `cities` — one record per city: stable slug id, name, modern country, lat/lon, source certainty (`FeatureCertainty`, mapped from the raw dataset's 1/2/3 geocoding-confidence code), and a list of dated population estimates |
 | **Storage** | raw not committed (gitignored, re-fetched from figshare); curated parquet → git (small) |
@@ -371,7 +371,7 @@ valid coordinates or with no population estimate at all are dropped (0 and 1 row
 in the real data). The curated `FeatureSet` keeps all 1,736 cities that survive the merge.
 
 **Significance roster (published layer only, ADR-038)** — `sources/cities/roster.toml` is a
-hand-curated list of 242 cities (an `id` plus a short `reason` each), intersected with the curated
+hand-curated list of 283 cities (an `id` plus a short `reason` each), intersected with the curated
 `FeatureSet` by `pipeline.publish.apply_city_roster` in `pipeline/publish.py`'s `FEATURE_LAYERS`
 loop. An entry that matches no curated feature raises `CityRosterError` naming every offender, so a
 typo fails the build rather than silently shrinking the globe.
@@ -384,12 +384,20 @@ ancient Mesopotamian tells. The defect is structural: ranking by population insi
 population *coverage* is geographically uneven can only rank what the sources happened to measure.
 See ADR-038 for the full reasoning.
 
-Measured spread of the 242: Middle East 39, Europe 34, sub-Saharan Africa 30, East Asia 26, South
-Asia 24, South-East Asia 20, South America 16, North America 15, Central Asia 11, Oceania/Pacific 8,
-Caribbean/Central America 8, Mexico 6, Russia 5; by era, 47 first attested pre-1 CE, 32 in 1–1000 CE,
-86 in 1000–1800 CE, 77 in 1800–2000 CE. `tests/sources/test_cities_roster.py` asserts per-region and
-per-era minimums against the real roster and real curated data. Full detail:
-`sources/cities/README.md` "Significance roster".
+Measured spread of the 283: Europe 45, Middle East 43, sub-Saharan Africa 33, East Asia 26, South
+Asia 24, South-East Asia 21, South America 18, North America 15, Russia 12, Central Asia 11,
+Caribbean/Central America 10, North Africa 8, Oceania/Pacific 8, Mexico 6, Caucasus 3; by era, 49
+first attested pre-1 CE, 34 in 1–1000 CE, 103 in 1000–1800 CE, 97 in 1800–2000 CE.
+`tests/sources/test_cities_roster.py` asserts per-region and per-era minimums against the real
+roster and real curated data. Full detail: `sources/cities/README.md` "Significance roster".
+
+**What the roster cannot reach.** Chandler and Modelski are "largest cities in the world at each
+snapshot year" datasets ending at AD 2000, not gazetteers, so a city that was never among the
+world's largest is simply absent from the curated 1,736 and no roster entry can summon it. This
+is most visible in modern sub-Saharan Africa and the Gulf: Kampala, Kigali, Brazzaville,
+N'Djamena, Niamey, Nouakchott, Gaborone, Windhoek, Yaoundé, Mogadishu, Doha, Dubai, Abu Dhabi and
+Manama have no record here, as do Tirana, Vientiane, San José and Tegucigalpa. Closing that gap
+means adding a gazetteer source, not loosening the roster.
 
 **Integration** — the published `FeatureSetData` layer file is a self-contained, typed contract
 (`pipeline/manifest.py`, mirrored in `web/src/types/layer.ts`/`web/src/data/curated.ts`). Rendering

@@ -130,15 +130,17 @@ megacities, deliberately *not* every capital city (per-user direction: "not ever
 city"). Every inhabited continent is represented, spanning eras from the 3rd millennium BC
 (Uruk, Ur, Memphis) to the present (Lagos, Shanghai, São Paulo).
 
-**Measured effect** (real data, 2026-09-18): **242 of 1,736 cities published** — inside the
-150–250 target `docs/DATA_SOURCES.md` records. Region spread (broad buckets,
-`tests/sources/test_cities_roster.py`'s own classification): sub-Saharan Africa 30, Oceania/
-Pacific 8, South Asia 24, South-East Asia 20, Central Asia 11, East Asia 26, Russia 5, Europe 34,
-Middle East 39, North America 15, Mexico 6, Caribbean/Central America 8, South America 16 — every
-region the previous filter left empty now has real coverage. Every one of the ADR-035 era test
-cities is still published (`uruk-iraq`, `memphis-egypt`, `babylon-iraq`, `rome-italy`,
-`xian-china`, `istanbul-turkey`, `baghdad-iraq`, `mexico-city-mexico`, `london-united-kingdom`,
-`new-york-united-states-of-america`, `tokyo-japan`).
+**Measured effect** (real data, 2026-09-18): **283 of 1,736 cities published** — widened from the
+original 242 (see "2026-09-18 expansion" below); `MAX_ROSTER_SIZE` in
+`tests/sources/test_cities_roster.py` was raised from 250 to 320 to accommodate. Region spread
+(broad buckets, `tests/sources/test_cities_roster.py`'s own classification): sub-Saharan Africa
+33, North Africa 8, Oceania/Pacific 8, South Asia 24, South-East Asia 21, Central Asia 11, East
+Asia 26, Russia 12, Caucasus 3, Europe 45, Middle East 43, North America 15, Mexico 6, Caribbean/
+Central America 10, South America 18 — every region the original population-rank filter left
+empty now has real coverage. Every one of the ADR-035 era test cities is still published
+(`uruk-iraq`, `memphis-egypt`, `babylon-iraq`, `rome-italy`, `xian-china`, `istanbul-turkey`,
+`baghdad-iraq`, `mexico-city-mexico`, `london-united-kingdom`, `new-york-united-states-of-america`,
+`tokyo-japan`).
 
 **Cities the user asked for that the dataset cannot supply.** Checked directly against
 `data/curated/cities.parquet`, not assumed: **Mombasa** has no entry under any name. Three others
@@ -150,6 +152,47 @@ near Masvingo, and its estimates span 1300–1450 CE — the historical Kingdom 
 era, not the modern capital Harare, which is a separate entry). Tenochtitlan and Saigon are not
 missing either — both are filed under their modern names (`mexico-city-mexico`, `ho-chi-minh-
 vietnam`), already this source's documented convention.
+
+**2026-09-18 expansion.** A follow-up user report ("no cities in Africa in modern time, and some
+missing from middle east and many from europe and russia") turned out to be two separate issues:
+a rendering-side cull in `web/src/globe/cities.ts` (fixed separately, not in this source), and a
+real roster gap, closed here by adding 41 cities: every Balkan and Baltic national capital
+(Belarus, Bulgaria, Romania, Serbia, Bosnia and Herzegovina, Croatia, Slovenia, Slovakia, Malta,
+Lithuania, Estonia, plus Latvia's Riga — filed under "Russian Federation" in this historical
+dataset, not Latvia), the Caucasus (Tbilisi, Yerevan, Baku), the Maghreb (Casablanca, Marrakech,
+Fez, Rabat, Algiers, Tunis, Carthage, Tripoli), six more Russian cities beyond Moscow/St
+Petersburg/Novgorod/Kazan/Vladivostok (Yekaterinburg, Novosibirsk, Nizhny Novgorod, Volgograd,
+Astrakhan, Sevastopol), Kuwait, Oman, Cyprus, Antioch, three more sub-Saharan capitals (Lusaka,
+Ouagadougou, Port Louis), and a handful of Latin American/South-East Asian capitals sanity-checked
+along the way (Montevideo, Asunción, San Salvador, Managua, Luang Prabang).
+
+**Well-known cities that remain absent because the source has never heard of them** (checked
+directly against the full curated `data/curated/cities.parquet`, not assumed — this is a
+Chandler + Modelski "largest cities" dataset ending at AD 2000, not a gazetteer, so a city can be
+famous today and simply not appear if it was never among the world's largest): **Kampala**
+(Uganda), **Kigali** (Rwanda), **Bujumbura** (Burundi), **Dar es Salaam**'s neighbours aside,
+**Brazzaville** (Republic of the Congo — only a mislabelled duplicate `kinshasa-congo` and the
+historical `loango-congo` exist for that country), **N'Djamena** (Chad — only the historical
+Bagirmi capital `masenya-chad` exists), **Niamey** (Niger — only the historical trade city
+`agades-niger`, not added, exists), **Nouakchott** (Mauritania — only the historical
+`oualata-mauritania` exists), **Porto-Novo**/**Cotonou** (Benin), **Gaborone** (Botswana),
+**Windhoek** (Namibia), **Lilongwe**/**Blantyre** (Malawi), **Maseru** (Lesotho), **Mbabane**
+(Eswatini), **Libreville** (Gabon), **Yaoundé** (Cameroon), **Malabo** (Equatorial Guinea),
+**Bangui** (Central African Republic), **Juba** (South Sudan), **Asmara** (Eritrea), **Djibouti**
+City, **Mogadishu** (Somalia); **Doha** (Qatar), **Dubai**/**Abu Dhabi** (UAE), **Manama**
+(Bahrain) — Qatar, the UAE and Bahrain have no rows at all; **Tirana** (Albania — only the
+historical `shkoder-albania` exists); **Vientiane** (Laos — only the historical royal capital
+`luang-prabang`, which is what was added instead); **San José** (Costa Rica) and **Tegucigalpa**
+(Honduras) — both countries have zero rows. None of these were substituted with invented
+coordinates or a different dataset; they are simply not in Chandler/Modelski.
+
+**Data-quality artefacts noticed but not fixed (out of this source's scope).** The curated
+dataset carries a small number of duplicate cities filed under differently-spelled or
+differently-named country values for the same underlying place — a known limitation of the exact
+`(City, Country)` dedupe key documented above, not something the 2026-09-18 pass introduced or
+corrected: `kinshasa-democratic-republic-of-the-congo` and `kinshasa-congo` are the same city;
+`algiers-algeria` and `algiers-algiers` are the same city; `montevideo-uruguay` and
+`montevideo-uraguay` are the same city (only the correctly-spelled id was added to the roster).
 
 Re-run the measurement with `python -c "from pathlib import Path; from pipeline.curated import
 read_shape; from pipeline.publish import apply_city_roster, load_city_roster; fs =

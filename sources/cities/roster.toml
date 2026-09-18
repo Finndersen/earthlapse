@@ -51,6 +51,43 @@ id = "basra-iraq"
 reason = "early Islamic port and garrison city"
 
 
+# ---- North Africa (Maghreb) -- absent from the roster entirely until 2026-09-18; the user
+# report that prompted this pass named the Middle East and Africa specifically, and these are
+# some of the most globally recognisable cities on the continent.
+
+[[cities]]
+id = "casablanca-morocco"
+reason = "Morocco's largest city and economic capital"
+
+[[cities]]
+id = "marrakech-morocco"
+reason = "historic Moroccan imperial city, major caravan trade hub"
+
+[[cities]]
+id = "fez-morocco"
+reason = "oldest of Morocco's imperial capitals, ancient centre of learning"
+
+[[cities]]
+id = "rabat-morocco"
+reason = "modern Moroccan capital"
+
+[[cities]]
+id = "algiers-algeria"
+reason = "modern Algerian capital, historic Barbary Coast port"
+
+[[cities]]
+id = "tunis-tunisia"
+reason = "modern Tunisian capital"
+
+[[cities]]
+id = "carthage-tunisia"
+reason = "capital of ancient Carthage, Rome's great Punic rival"
+
+[[cities]]
+id = "tripoli-libya"
+reason = "modern Libyan capital, historic Barbary Coast port"
+
+
 # ---- Egypt
 
 [[cities]]
@@ -135,6 +172,14 @@ reason = "ancient Red Sea trading port"
 id = "sana-a-yemen"
 reason = "historic Yemeni capital"
 
+[[cities]]
+id = "kuwait-kuwait"
+reason = "modern Kuwaiti capital, Gulf trading port"
+
+[[cities]]
+id = "muscat-oman"
+reason = "modern Omani capital, historic Indian Ocean trading port"
+
 
 # ---- Anatolia
 
@@ -157,6 +202,17 @@ reason = "great classical Greco-Roman port city"
 [[cities]]
 id = "hattusa-turkey"
 reason = "Hittite imperial capital"
+
+[[cities]]
+id = "antioch-syria-turkey"
+reason = "great classical city, early centre of Christianity"
+
+
+# ---- Cyprus
+
+[[cities]]
+id = "nicosia-cyprus"
+reason = "modern Cypriot capital"
 
 
 # ---- Iran / Central plateau
@@ -184,6 +240,21 @@ reason = "Persian centre of poetry and culture"
 [[cities]]
 id = "tehran-iran"
 reason = "modern Iranian capital"
+
+
+# ---- Caucasus
+
+[[cities]]
+id = "tbilisi-georgia"
+reason = "modern Georgian capital"
+
+[[cities]]
+id = "yerevan-armenia"
+reason = "modern Armenian capital, among the world's oldest continuously inhabited cities"
+
+[[cities]]
+id = "baku-azerbaijan"
+reason = "modern Azerbaijani capital, Caspian oil port"
 
 
 # ---- Sub-Saharan Africa
@@ -308,6 +379,18 @@ reason = "capital of the Bamana Empire"
 id = "maputo-mozambique"
 reason = "modern Mozambican capital"
 
+[[cities]]
+id = "lusaka-zambia"
+reason = "modern Zambian capital"
+
+[[cities]]
+id = "ougadougou-burkina-faso"
+reason = "modern Burkinabe capital (Ouagadougou)"
+
+[[cities]]
+id = "port-louis-mauritius"
+reason = "modern Mauritian capital, Indian Ocean island port"
+
 
 # ---- Oceania / Pacific
 
@@ -399,6 +482,14 @@ id = "buenos-aires-argentina"
 reason = "modern Argentine capital"
 
 [[cities]]
+id = "montevideo-uruguay"
+reason = "modern Uruguayan capital"
+
+[[cities]]
+id = "asuncion-paraguay"
+reason = "modern Paraguayan capital"
+
+[[cities]]
 id = "rio-de-janeiro-brazil"
 reason = "former Brazilian capital, iconic harbour city"
 
@@ -444,6 +535,14 @@ reason = "isthmus crossing point, modern Panamanian capital"
 [[cities]]
 id = "guatemala-city-guatemala"
 reason = "modern Guatemalan capital"
+
+[[cities]]
+id = "san-salvador-el-salvador"
+reason = "modern Salvadoran capital"
+
+[[cities]]
+id = "managua-nicaragua"
+reason = "modern Nicaraguan capital"
 
 [[cities]]
 id = "tikal-guatemala"
@@ -717,6 +816,10 @@ reason = "Vietnam's largest city (Saigon)"
 id = "bandar-seri-begawan-brunei"
 reason = "capital of the Sultanate of Brunei"
 
+[[cities]]
+id = "luang-prabang-lao-people-s-democratic-republic"
+reason = "former royal capital of Laos (modern capital Vientiane is absent from the dataset)"
+
 
 # ---- Central Asia
 
@@ -900,6 +1003,30 @@ reason = "capital of the Khanate of Kazan"
 id = "vladivostok-russian-federation"
 reason = "Russia's great Pacific port city"
 
+[[cities]]
+id = "yekaterinburg-russian-federation"
+reason = "major Ural industrial city, site of the Romanovs' execution"
+
+[[cities]]
+id = "novosibirsk-russian-federation"
+reason = "Siberia's largest city"
+
+[[cities]]
+id = "nizhniy-novgorod-russian-federation"
+reason = "historic Volga trading city, one of Russia's largest"
+
+[[cities]]
+id = "volgograd-russian-federation"
+reason = "site of the decisive WWII Battle of Stalingrad"
+
+[[cities]]
+id = "astrakhan-russian-federation"
+reason = "capital of the Khanate of Astrakhan, Caspian river-delta trading port"
+
+[[cities]]
+id = "sevastopol-russian-federation"
+reason = "historic Black Sea naval port city in Crimea"
+
 
 # ---- Europe
 
@@ -1038,4 +1165,52 @@ reason = "major Swiss financial capital"
 [[cities]]
 id = "geneva-switzerland"
 reason = "major Swiss diplomatic capital"
+
+[[cities]]
+id = "minsk-belarus"
+reason = "modern Belarusian capital"
+
+[[cities]]
+id = "vilnius-lithuania"
+reason = "modern Lithuanian capital"
+
+[[cities]]
+id = "riga-russian-federation"
+reason = "modern Latvian capital (Riga; filed under 'Russian Federation' in this historical dataset, not Latvia)"
+
+[[cities]]
+id = "tallinn-estonia"
+reason = "modern Estonian capital"
+
+[[cities]]
+id = "sofia-bulgaria"
+reason = "modern Bulgarian capital"
+
+[[cities]]
+id = "bucharest-romania"
+reason = "modern Romanian capital"
+
+[[cities]]
+id = "belgrade-serbia"
+reason = "modern Serbian capital"
+
+[[cities]]
+id = "sarajevo-bosnia-and-herzegovina"
+reason = "modern Bosnian capital"
+
+[[cities]]
+id = "zagreb-croatia"
+reason = "modern Croatian capital"
+
+[[cities]]
+id = "ljubljana-slovenia"
+reason = "modern Slovenian capital"
+
+[[cities]]
+id = "bratislava-slovakia"
+reason = "modern Slovak capital"
+
+[[cities]]
+id = "valletta-malta"
+reason = "modern Maltese capital"
 
