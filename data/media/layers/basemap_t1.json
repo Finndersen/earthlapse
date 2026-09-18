@@ -1,0 +1,13 @@
+{
+  "id": "basemap_t1",
+  "frames": [
+    {
+      "t": 0.0,
+      "ref": "textures/basemap/basemap_t1.webp"
+    },
+    {
+      "t": 2580000.0,
+      "ref": "textures/basemap/basemap_t1.webp"
+    }
+  ]
+}

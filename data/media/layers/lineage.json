@@ -901,6 +901,15 @@
         "size": 128
       },
       {
+        "older": "hominidae",
+        "younger": "homininae",
+        "forward": "portraits/morphs/hominidae--homininae.forward.png",
+        "backward": "portraits/morphs/hominidae--homininae.backward.png",
+        "forwardRange": 0.1552734375,
+        "backwardRange": 0.1376953125,
+        "size": 128
+      },
+      {
         "older": "hominoidea",
         "younger": "hominidae",
         "forward": "portraits/morphs/hominoidea--hominidae.forward.png",
@@ -914,8 +923,8 @@
         "younger": "primates",
         "forward": "portraits/morphs/primatomorpha--primates.forward.png",
         "backward": "portraits/morphs/primatomorpha--primates.backward.png",
-        "forwardRange": 0.20703125,
-        "backwardRange": 0.201171875,
+        "forwardRange": 0.162109375,
+        "backwardRange": 0.107421875,
         "size": 128
       },
       {
@@ -924,7 +933,16 @@
         "forward": "portraits/morphs/euarchontoglires--primatomorpha.forward.png",
         "backward": "portraits/morphs/euarchontoglires--primatomorpha.backward.png",
         "forwardRange": 0.08984375,
-        "backwardRange": 0.0849609375,
+        "backwardRange": 0.078125,
+        "size": 128
+      },
+      {
+        "older": "eutheria",
+        "younger": "placentalia",
+        "forward": "portraits/morphs/eutheria--placentalia.forward.png",
+        "backward": "portraits/morphs/eutheria--placentalia.backward.png",
+        "forwardRange": 0.1455078125,
+        "backwardRange": 0.33984375,
         "size": 128
       },
       {
@@ -932,8 +950,8 @@
         "younger": "eutheria",
         "forward": "portraits/morphs/theria--eutheria.forward.png",
         "backward": "portraits/morphs/theria--eutheria.backward.png",
-        "forwardRange": 0.111328125,
-        "backwardRange": 0.1171875,
+        "forwardRange": 0.1171875,
+        "backwardRange": 0.115234375,
         "size": 128
       },
       {
@@ -941,8 +959,8 @@
         "younger": "theria",
         "forward": "portraits/morphs/mammalia--theria.forward.png",
         "backward": "portraits/morphs/mammalia--theria.backward.png",
-        "forwardRange": 0.109375,
-        "backwardRange": 0.0966796875,
+        "forwardRange": 0.11328125,
+        "backwardRange": 0.107421875,
         "size": 128
       },
       {
@@ -950,8 +968,8 @@
         "younger": "mammalia",
         "forward": "portraits/morphs/mammaliaformes--mammalia.forward.png",
         "backward": "portraits/morphs/mammaliaformes--mammalia.backward.png",
-        "forwardRange": 0.15234375,
-        "backwardRange": 0.1337890625,
+        "forwardRange": 0.0986328125,
+        "backwardRange": 0.041015625,
         "size": 128
       },
       {
@@ -960,7 +978,7 @@
         "forward": "portraits/morphs/cynodontia--mammaliaformes.forward.png",
         "backward": "portraits/morphs/cynodontia--mammaliaformes.backward.png",
         "forwardRange": 0.0439453125,
-        "backwardRange": 0.044921875,
+        "backwardRange": 0.0439453125,
         "size": 128
       },
       {
@@ -968,8 +986,17 @@
         "younger": "cynodontia",
         "forward": "portraits/morphs/therapsida--cynodontia.forward.png",
         "backward": "portraits/morphs/therapsida--cynodontia.backward.png",
-        "forwardRange": 0.2001953125,
-        "backwardRange": 0.251953125,
+        "forwardRange": 0.1162109375,
+        "backwardRange": 0.1474609375,
+        "size": 128
+      },
+      {
+        "older": "synapsida",
+        "younger": "therapsida",
+        "forward": "portraits/morphs/synapsida--therapsida.forward.png",
+        "backward": "portraits/morphs/synapsida--therapsida.backward.png",
+        "forwardRange": 0.17578125,
+        "backwardRange": 0.0986328125,
         "size": 128
       },
       {
@@ -977,8 +1004,8 @@
         "younger": "synapsida",
         "forward": "portraits/morphs/amniota--synapsida.forward.png",
         "backward": "portraits/morphs/amniota--synapsida.backward.png",
-        "forwardRange": 0.0927734375,
-        "backwardRange": 0.0908203125,
+        "forwardRange": 0.09375,
+        "backwardRange": 0.255859375,
         "size": 128
       },
       {
@@ -986,8 +1013,8 @@
         "younger": "amniota",
         "forward": "portraits/morphs/tetrapoda--amniota.forward.png",
         "backward": "portraits/morphs/tetrapoda--amniota.backward.png",
-        "forwardRange": 0.0908203125,
-        "backwardRange": 0.1044921875,
+        "forwardRange": 0.0849609375,
+        "backwardRange": 0.111328125,
         "size": 128
       },
       {
@@ -995,8 +1022,8 @@
         "younger": "tetrapoda",
         "forward": "portraits/morphs/tetrapodomorpha--tetrapoda.forward.png",
         "backward": "portraits/morphs/tetrapodomorpha--tetrapoda.backward.png",
-        "forwardRange": 0.1142578125,
-        "backwardRange": 0.091796875,
+        "forwardRange": 0.09375,
+        "backwardRange": 0.0927734375,
         "size": 128
       },
       {
@@ -1004,8 +1031,8 @@
         "younger": "tetrapodomorpha",
         "forward": "portraits/morphs/sarcopterygii--tetrapodomorpha.forward.png",
         "backward": "portraits/morphs/sarcopterygii--tetrapodomorpha.backward.png",
-        "forwardRange": 0.123046875,
-        "backwardRange": 0.1220703125,
+        "forwardRange": 0.283203125,
+        "backwardRange": 0.1181640625,
         "size": 128
       },
       {
@@ -1013,8 +1040,17 @@
         "younger": "sarcopterygii",
         "forward": "portraits/morphs/osteichthyes--sarcopterygii.forward.png",
         "backward": "portraits/morphs/osteichthyes--sarcopterygii.backward.png",
-        "forwardRange": 0.1728515625,
+        "forwardRange": 0.1474609375,
         "backwardRange": 0.15625,
+        "size": 128
+      },
+      {
+        "older": "gnathostomata",
+        "younger": "osteichthyes",
+        "forward": "portraits/morphs/gnathostomata--osteichthyes.forward.png",
+        "backward": "portraits/morphs/gnathostomata--osteichthyes.backward.png",
+        "forwardRange": 0.2109375,
+        "backwardRange": 0.134765625,
         "size": 128
       },
       {
@@ -1022,17 +1058,8 @@
         "younger": "gnathostomata",
         "forward": "portraits/morphs/vertebrata--gnathostomata.forward.png",
         "backward": "portraits/morphs/vertebrata--gnathostomata.backward.png",
-        "forwardRange": 0.1298828125,
-        "backwardRange": 0.12109375,
-        "size": 128
-      },
-      {
-        "older": "bilateria",
-        "younger": "chordata",
-        "forward": "portraits/morphs/bilateria--chordata.forward.png",
-        "backward": "portraits/morphs/bilateria--chordata.backward.png",
-        "forwardRange": 0.15234375,
-        "backwardRange": 0.1025390625,
+        "forwardRange": 0.11328125,
+        "backwardRange": 0.1376953125,
         "size": 128
       },
       {
@@ -1040,8 +1067,8 @@
         "younger": "metazoa",
         "forward": "portraits/morphs/holozoa--metazoa.forward.png",
         "backward": "portraits/morphs/holozoa--metazoa.backward.png",
-        "forwardRange": 0.1455078125,
-        "backwardRange": 0.1328125,
+        "forwardRange": 0.1376953125,
+        "backwardRange": 0.107421875,
         "size": 128
       }
     ]

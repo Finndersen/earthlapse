@@ -1,0 +1,10145 @@
+{
+  "id": "cities",
+  "features": [
+    {
+      "id": "adab-iraq",
+      "name": "Adab",
+      "country": "Iraq",
+      "lat": 31.94700807,
+      "lon": 45.96842134,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 10000
+        },
+        {
+          "t": 3925.0,
+          "population": 10000
+        },
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 20000
+        },
+        {
+          "t": 4825.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "agra-india",
+      "name": "Agra",
+      "country": "India",
+      "lat": 27.18333,
+      "lon": 78.01667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 650000
+        },
+        {
+          "t": 75.0,
+          "population": 364000
+        },
+        {
+          "t": 100.0,
+          "population": 207000
+        },
+        {
+          "t": 125.0,
+          "population": 186000
+        },
+        {
+          "t": 173.0,
+          "population": 125262
+        },
+        {
+          "t": 175.0,
+          "population": 108000
+        },
+        {
+          "t": 179.0,
+          "population": 76570
+        },
+        {
+          "t": 212.0,
+          "population": 60000
+        },
+        {
+          "t": 225.0,
+          "population": 60000
+        },
+        {
+          "t": 304.0,
+          "population": 60000
+        },
+        {
+          "t": 325.0,
+          "population": 70000
+        },
+        {
+          "t": 367.0,
+          "population": 120000
+        },
+        {
+          "t": 375.0,
+          "population": 120000
+        },
+        {
+          "t": 387.0,
+          "population": 400000
+        },
+        {
+          "t": 415.0,
+          "population": 500000
+        },
+        {
+          "t": 425.0,
+          "population": 500000
+        },
+        {
+          "t": 450.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "ahmedabad-india",
+      "name": "Ahmedabad",
+      "country": "India",
+      "lat": 23.039568,
+      "lon": 72.566004,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 2000000
+        },
+        {
+          "t": 75.0,
+          "population": 758000
+        },
+        {
+          "t": 100.0,
+          "population": 293000
+        },
+        {
+          "t": 125.0,
+          "population": 181000
+        },
+        {
+          "t": 153.0,
+          "population": 116873
+        },
+        {
+          "t": 174.0,
+          "population": 97048
+        },
+        {
+          "t": 175.0,
+          "population": 96000
+        },
+        {
+          "t": 179.0,
+          "population": 94390
+        },
+        {
+          "t": 201.0,
+          "population": 87000
+        },
+        {
+          "t": 208.0,
+          "population": 80000
+        },
+        {
+          "t": 225.0,
+          "population": 89000
+        },
+        {
+          "t": 245.0,
+          "population": 100000
+        },
+        {
+          "t": 275.0,
+          "population": 101000
+        },
+        {
+          "t": 325.0,
+          "population": 385000
+        },
+        {
+          "t": 375.0,
+          "population": 275000
+        },
+        {
+          "t": 387.0,
+          "population": 266000
+        },
+        {
+          "t": 425.0,
+          "population": 190000
+        },
+        {
+          "t": 429.0,
+          "population": 180000
+        },
+        {
+          "t": 441.0,
+          "population": 180000
+        },
+        {
+          "t": 450.0,
+          "population": 165000
+        },
+        {
+          "t": 475.0,
+          "population": 140000
+        },
+        {
+          "t": 496.0,
+          "population": 120000
+        },
+        {
+          "t": 525.0,
+          "population": 100000
+        },
+        {
+          "t": 538.0,
+          "population": 60000
+        },
+        {
+          "t": 575.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "akkad-iraq",
+      "name": "Akkad",
+      "country": "Iraq",
+      "lat": 32.77156192,
+      "lon": 44.32045916,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 4225.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "akrotiri-greece",
+      "name": "Akrotiri",
+      "country": "Greece",
+      "lat": 36.351389,
+      "lon": 25.403611,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3525.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "akshak-iraq",
+      "name": "Akshak",
+      "country": "Iraq",
+      "lat": 33.94720142,
+      "lon": 44.24471719,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 4425.0,
+          "population": 20000
+        },
+        {
+          "t": 4525.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "al-ahsa-saudi-arabia",
+      "name": "Al Ahsa",
+      "country": "Saudi Arabia",
+      "lat": 25.429444,
+      "lon": 49.621944,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1025.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "al-hasa-saudi-arabia",
+      "name": "Al-Hasa",
+      "country": "Saudi Arabia",
+      "lat": 25.429444,
+      "lon": 49.621944,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 974.0,
+          "population": 110000
+        },
+        {
+          "t": 1025.0,
+          "population": 110000
+        }
+      ]
+    },
+    {
+      "id": "aleppo-syria",
+      "name": "Aleppo",
+      "country": "Syria",
+      "lat": 36.2167,
+      "lon": 37.1667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1582000
+        },
+        {
+          "t": 50.0,
+          "population": 740000
+        },
+        {
+          "t": 75.0,
+          "population": 362000
+        },
+        {
+          "t": 125.0,
+          "population": 130000
+        },
+        {
+          "t": 169.0,
+          "population": 99383
+        },
+        {
+          "t": 175.0,
+          "population": 90000
+        },
+        {
+          "t": 180.0,
+          "population": 80000
+        },
+        {
+          "t": 185.0,
+          "population": 75000
+        },
+        {
+          "t": 203.0,
+          "population": 77000
+        },
+        {
+          "t": 225.0,
+          "population": 72000
+        },
+        {
+          "t": 235.0,
+          "population": 70000
+        },
+        {
+          "t": 275.0,
+          "population": 70000
+        },
+        {
+          "t": 288.0,
+          "population": 70000
+        },
+        {
+          "t": 325.0,
+          "population": 67000
+        },
+        {
+          "t": 346.0,
+          "population": 66000
+        },
+        {
+          "t": 375.0,
+          "population": 64000
+        },
+        {
+          "t": 425.0,
+          "population": 61000
+        },
+        {
+          "t": 450.0,
+          "population": 59000
+        },
+        {
+          "t": 475.0,
+          "population": 58000
+        },
+        {
+          "t": 495.0,
+          "population": 57000
+        },
+        {
+          "t": 505.0,
+          "population": 67000
+        },
+        {
+          "t": 525.0,
+          "population": 67000
+        },
+        {
+          "t": 575.0,
+          "population": 70000
+        },
+        {
+          "t": 625.0,
+          "population": 75000
+        },
+        {
+          "t": 626.0,
+          "population": 75000
+        },
+        {
+          "t": 675.0,
+          "population": 70000
+        },
+        {
+          "t": 775.0,
+          "population": 55000
+        },
+        {
+          "t": 825.0,
+          "population": 45000
+        },
+        {
+          "t": 979.0,
+          "population": 35000
+        },
+        {
+          "t": 1025.0,
+          "population": 40000
+        },
+        {
+          "t": 1034.0,
+          "population": 40000
+        },
+        {
+          "t": 1063.0,
+          "population": 40000
+        },
+        {
+          "t": 1075.0,
+          "population": 42000
+        },
+        {
+          "t": 1388.0,
+          "population": 72000
+        },
+        {
+          "t": 1403.0,
+          "population": 72000
+        },
+        {
+          "t": 3725.0,
+          "population": 10000
+        },
+        {
+          "t": 3825.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "alexandria-egypt",
+      "name": "Alexandria",
+      "country": "Egypt",
+      "lat": 31.200092,
+      "lon": 29.918739,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 3339000
+        },
+        {
+          "t": 50.0,
+          "population": 2800000
+        },
+        {
+          "t": 55.0,
+          "population": 2250000
+        },
+        {
+          "t": 75.0,
+          "population": 1100000
+        },
+        {
+          "t": 100.0,
+          "population": 540000
+        },
+        {
+          "t": 125.0,
+          "population": 314000
+        },
+        {
+          "t": 150.0,
+          "population": 212000
+        },
+        {
+          "t": 163.0,
+          "population": 164400
+        },
+        {
+          "t": 175.0,
+          "population": 138000
+        },
+        {
+          "t": 177.0,
+          "population": 134000
+        },
+        {
+          "t": 197.0,
+          "population": 12528
+        },
+        {
+          "t": 227.0,
+          "population": 4000
+        },
+        {
+          "t": 332.0,
+          "population": 15000
+        },
+        {
+          "t": 525.0,
+          "population": 35000
+        },
+        {
+          "t": 625.0,
+          "population": 40000
+        },
+        {
+          "t": 641.0,
+          "population": 50000
+        },
+        {
+          "t": 675.0,
+          "population": 60000
+        },
+        {
+          "t": 725.0,
+          "population": 65000
+        },
+        {
+          "t": 775.0,
+          "population": 65000
+        },
+        {
+          "t": 825.0,
+          "population": 50000
+        },
+        {
+          "t": 850.0,
+          "population": 45000
+        },
+        {
+          "t": 875.0,
+          "population": 40000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1144.0,
+          "population": 160000
+        },
+        {
+          "t": 1165.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1295.0,
+          "population": 90000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 94000
+        },
+        {
+          "t": 1425.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 200000
+        },
+        {
+          "t": 1625.0,
+          "population": 200000
+        },
+        {
+          "t": 1664.0,
+          "population": 125000
+        },
+        {
+          "t": 1725.0,
+          "population": 500000
+        },
+        {
+          "t": 1825.0,
+          "population": 600000
+        },
+        {
+          "t": 1925.0,
+          "population": 500000
+        },
+        {
+          "t": 2024.0,
+          "population": 400000
+        },
+        {
+          "t": 2125.0,
+          "population": 1000000
+        },
+        {
+          "t": 2225.0,
+          "population": 600000
+        },
+        {
+          "t": 2325.0,
+          "population": 300000
+        }
+      ]
+    },
+    {
+      "id": "amarna-egypt",
+      "name": "Amarna",
+      "country": "Egypt",
+      "lat": 27.64528963,
+      "lon": 30.89624244,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3385.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "angkor-cambodia",
+      "name": "Angkor",
+      "country": "Cambodia",
+      "lat": 13.412417,
+      "lon": 103.86705,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 621.0,
+          "population": 40000
+        },
+        {
+          "t": 625.0,
+          "population": 40000
+        },
+        {
+          "t": 668.0,
+          "population": 90000
+        },
+        {
+          "t": 675.0,
+          "population": 90000
+        },
+        {
+          "t": 725.0,
+          "population": 90000
+        },
+        {
+          "t": 775.0,
+          "population": 125000
+        },
+        {
+          "t": 825.0,
+          "population": 150000
+        },
+        {
+          "t": 875.0,
+          "population": 140000
+        },
+        {
+          "t": 925.0,
+          "population": 125000
+        },
+        {
+          "t": 1025.0,
+          "population": 200000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1136.0,
+          "population": 90000
+        }
+      ]
+    },
+    {
+      "id": "anshan-iran",
+      "name": "Anshan",
+      "country": "Iran",
+      "lat": 30.01201958,
+      "lon": 52.40857658,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 10000
+        },
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 10000
+        },
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 10000
+        },
+        {
+          "t": 4825.0,
+          "population": 10000
+        },
+        {
+          "t": 5025.0,
+          "population": 10000
+        },
+        {
+          "t": 5325.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "antioch-syria-turkey",
+      "name": "Antioch",
+      "country": "Syria/Turkey",
+      "lat": 36.20655,
+      "lon": 36.15722,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 169.0,
+          "population": 21396
+        },
+        {
+          "t": 209.0,
+          "population": 10000
+        },
+        {
+          "t": 593.0,
+          "population": 1500
+        },
+        {
+          "t": 757.0,
+          "population": 27000
+        },
+        {
+          "t": 875.0,
+          "population": 40000
+        },
+        {
+          "t": 925.0,
+          "population": 30000
+        },
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1060.0,
+          "population": 30000
+        },
+        {
+          "t": 1525.0,
+          "population": 150000
+        },
+        {
+          "t": 1664.0,
+          "population": 150000
+        },
+        {
+          "t": 2125.0,
+          "population": 150000
+        },
+        {
+          "t": 2225.0,
+          "population": 120000
+        }
+      ]
+    },
+    {
+      "id": "antioch-turkey",
+      "name": "Antioch",
+      "country": "Turkey",
+      "lat": 36.20655,
+      "lon": 36.15722,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 1425.0,
+          "population": 125000
+        },
+        {
+          "t": 1525.0,
+          "population": 250000
+        },
+        {
+          "t": 1625.0,
+          "population": 270000
+        },
+        {
+          "t": 1725.0,
+          "population": 330000
+        },
+        {
+          "t": 1825.0,
+          "population": 400000
+        },
+        {
+          "t": 1925.0,
+          "population": 330000
+        },
+        {
+          "t": 2024.0,
+          "population": 270000
+        },
+        {
+          "t": 2125.0,
+          "population": 125000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "anuradhapura-sri-lanka",
+      "name": "Anuradhapura",
+      "country": "Sri Lanka",
+      "lat": 8.35,
+      "lon": 80.383333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 70000
+        },
+        {
+          "t": 1425.0,
+          "population": 100000
+        },
+        {
+          "t": 1725.0,
+          "population": 100000
+        },
+        {
+          "t": 1825.0,
+          "population": 200000
+        },
+        {
+          "t": 1925.0,
+          "population": 200000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "anyang-china",
+      "name": "Anyang",
+      "country": "China",
+      "lat": 36.09944,
+      "lon": 114.32889,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "anyi-china",
+      "name": "Anyi",
+      "country": "China",
+      "lat": 28.8389,
+      "lon": 115.599,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "ao-china",
+      "name": "Ao",
+      "country": "China",
+      "lat": 34.766667,
+      "lon": 113.65,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 1271000
+        },
+        {
+          "t": 3385.0,
+          "population": 32000
+        },
+        {
+          "t": 3425.0,
+          "population": 32000
+        }
+      ]
+    },
+    {
+      "id": "apamea-turkey",
+      "name": "Apamea",
+      "country": "Turkey",
+      "lat": 35.41853326,
+      "lon": 36.40475674,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1825.0,
+          "population": 120000
+        },
+        {
+          "t": 1925.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 130000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "assur-iraq",
+      "name": "Assur",
+      "country": "Iraq",
+      "lat": 35.456667,
+      "lon": 43.2625,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3025.0,
+          "population": 12000
+        },
+        {
+          "t": 3125.0,
+          "population": 12000
+        },
+        {
+          "t": 3225.0,
+          "population": 20000
+        },
+        {
+          "t": 3325.0,
+          "population": 15000
+        },
+        {
+          "t": 3425.0,
+          "population": 10000
+        },
+        {
+          "t": 3525.0,
+          "population": 10000
+        },
+        {
+          "t": 3625.0,
+          "population": 10000
+        },
+        {
+          "t": 3725.0,
+          "population": 10000
+        },
+        {
+          "t": 3825.0,
+          "population": 15000
+        },
+        {
+          "t": 3925.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "athens-greece",
+      "name": "Athens",
+      "country": "Greece",
+      "lat": 37.97945,
+      "lon": 23.71622,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 3300000
+        },
+        {
+          "t": 55.0,
+          "population": 2450000
+        },
+        {
+          "t": 75.0,
+          "population": 1140000
+        },
+        {
+          "t": 100.0,
+          "population": 571000
+        },
+        {
+          "t": 125.0,
+          "population": 181000
+        },
+        {
+          "t": 174.0,
+          "population": 31125
+        },
+        {
+          "t": 175.0,
+          "population": 30000
+        },
+        {
+          "t": 180.0,
+          "population": 27800
+        },
+        {
+          "t": 225.0,
+          "population": 12000
+        },
+        {
+          "t": 356.0,
+          "population": 9000
+        },
+        {
+          "t": 361.0,
+          "population": 22000
+        },
+        {
+          "t": 425.0,
+          "population": 33000
+        },
+        {
+          "t": 447.0,
+          "population": 36000
+        },
+        {
+          "t": 525.0,
+          "population": 35000
+        },
+        {
+          "t": 625.0,
+          "population": 35000
+        },
+        {
+          "t": 655.0,
+          "population": 30000
+        },
+        {
+          "t": 725.0,
+          "population": 25000
+        },
+        {
+          "t": 2125.0,
+          "population": 75000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 155000
+        }
+      ]
+    },
+    {
+      "id": "avaris-egypt",
+      "name": "Avaris",
+      "country": "Egypt",
+      "lat": 30.78629566,
+      "lon": 31.82221773,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3625.0,
+          "population": 50000
+        },
+        {
+          "t": 3725.0,
+          "population": 20000
+        },
+        {
+          "t": 3825.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "babylon-iraq",
+      "name": "Babylon",
+      "country": "Iraq",
+      "lat": 32.536389,
+      "lon": 44.420833,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2455.0,
+          "population": 200000
+        },
+        {
+          "t": 2525.0,
+          "population": 200000
+        },
+        {
+          "t": 2625.0,
+          "population": 200000
+        },
+        {
+          "t": 2675.0,
+          "population": 60000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 100000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        },
+        {
+          "t": 3025.0,
+          "population": 100000
+        },
+        {
+          "t": 3125.0,
+          "population": 75000
+        },
+        {
+          "t": 3225.0,
+          "population": 75000
+        },
+        {
+          "t": 3625.0,
+          "population": 60000
+        },
+        {
+          "t": 3725.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "bagan-myanmar",
+      "name": "Bagan",
+      "country": "Myanmar",
+      "lat": 21.172111,
+      "lon": 94.8602,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 775.0,
+          "population": 180000
+        },
+        {
+          "t": 825.0,
+          "population": 180000
+        },
+        {
+          "t": 875.0,
+          "population": 150000
+        },
+        {
+          "t": 925.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "baghdad-iraq",
+      "name": "Baghdad",
+      "country": "Iraq",
+      "lat": 33.34058,
+      "lon": 44.40088,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 3841000
+        },
+        {
+          "t": 50.0,
+          "population": 2900000
+        },
+        {
+          "t": 55.0,
+          "population": 2138000
+        },
+        {
+          "t": 75.0,
+          "population": 579000
+        },
+        {
+          "t": 100.0,
+          "population": 200000
+        },
+        {
+          "t": 125.0,
+          "population": 145000
+        },
+        {
+          "t": 173.0,
+          "population": 60000
+        },
+        {
+          "t": 175.0,
+          "population": 60000
+        },
+        {
+          "t": 177.0,
+          "population": 60000
+        },
+        {
+          "t": 200.0,
+          "population": 105000
+        },
+        {
+          "t": 221.0,
+          "population": 80000
+        },
+        {
+          "t": 225.0,
+          "population": 80000
+        },
+        {
+          "t": 275.0,
+          "population": 65000
+        },
+        {
+          "t": 325.0,
+          "population": 50000
+        },
+        {
+          "t": 362.0,
+          "population": 16000
+        },
+        {
+          "t": 373.0,
+          "population": 14000
+        },
+        {
+          "t": 387.0,
+          "population": 30000
+        },
+        {
+          "t": 624.0,
+          "population": 90000
+        },
+        {
+          "t": 625.0,
+          "population": 90000
+        },
+        {
+          "t": 675.0,
+          "population": 100000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        },
+        {
+          "t": 775.0,
+          "population": 100000
+        },
+        {
+          "t": 825.0,
+          "population": 100000
+        },
+        {
+          "t": 875.0,
+          "population": 10000
+        },
+        {
+          "t": 925.0,
+          "population": 150000
+        },
+        {
+          "t": 1025.0,
+          "population": 1500000
+        },
+        {
+          "t": 1093.0,
+          "population": 1100000
+        },
+        {
+          "t": 1125.0,
+          "population": 900000
+        },
+        {
+          "t": 1192.0,
+          "population": 900000
+        },
+        {
+          "t": 1225.0,
+          "population": 700000
+        },
+        {
+          "t": 1262.0,
+          "population": 480000
+        }
+      ]
+    },
+    {
+      "id": "basra-iraq",
+      "name": "Basra",
+      "country": "Iraq",
+      "lat": 30.5,
+      "lon": 47.816667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 900000
+        },
+        {
+          "t": 171.0,
+          "population": 5000
+        },
+        {
+          "t": 187.0,
+          "population": 12000
+        },
+        {
+          "t": 215.0,
+          "population": 60000
+        },
+        {
+          "t": 225.0,
+          "population": 60000
+        },
+        {
+          "t": 267.0,
+          "population": 65000
+        },
+        {
+          "t": 275.0,
+          "population": 50000
+        },
+        {
+          "t": 325.0,
+          "population": 45000
+        },
+        {
+          "t": 364.0,
+          "population": 60000
+        },
+        {
+          "t": 375.0,
+          "population": 60000
+        },
+        {
+          "t": 500.0,
+          "population": 10000
+        },
+        {
+          "t": 825.0,
+          "population": 50000
+        },
+        {
+          "t": 875.0,
+          "population": 60000
+        },
+        {
+          "t": 902.0,
+          "population": 60000
+        },
+        {
+          "t": 925.0,
+          "population": 60000
+        },
+        {
+          "t": 1025.0,
+          "population": 50000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1308.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 200000
+        },
+        {
+          "t": 1354.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "beijing-china",
+      "name": "Beijing",
+      "country": "China",
+      "lat": 39.9075,
+      "lon": 116.39723,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 7362000
+        },
+        {
+          "t": 50.0,
+          "population": 5200000
+        },
+        {
+          "t": 55.0,
+          "population": 4800000
+        },
+        {
+          "t": 75.0,
+          "population": 2031000
+        },
+        {
+          "t": 100.0,
+          "population": 1266000
+        },
+        {
+          "t": 111.0,
+          "population": 1000000
+        },
+        {
+          "t": 125.0,
+          "population": 1100000
+        },
+        {
+          "t": 150.0,
+          "population": 900000
+        },
+        {
+          "t": 164.0,
+          "population": 1310000
+        },
+        {
+          "t": 175.0,
+          "population": 1648000
+        },
+        {
+          "t": 180.0,
+          "population": 1648000
+        },
+        {
+          "t": 200.0,
+          "population": 1350000
+        },
+        {
+          "t": 204.0,
+          "population": 1300000
+        },
+        {
+          "t": 225.0,
+          "population": 1100000
+        },
+        {
+          "t": 275.0,
+          "population": 900000
+        },
+        {
+          "t": 325.0,
+          "population": 650000
+        },
+        {
+          "t": 375.0,
+          "population": 470000
+        },
+        {
+          "t": 425.0,
+          "population": 706000
+        },
+        {
+          "t": 446.0,
+          "population": 706861
+        },
+        {
+          "t": 450.0,
+          "population": 706000
+        },
+        {
+          "t": 475.0,
+          "population": 690000
+        },
+        {
+          "t": 525.0,
+          "population": 672000
+        },
+        {
+          "t": 533.0,
+          "population": 669033
+        },
+        {
+          "t": 575.0,
+          "population": 600000
+        },
+        {
+          "t": 606.0,
+          "population": 150000
+        },
+        {
+          "t": 625.0,
+          "population": 150000
+        },
+        {
+          "t": 675.0,
+          "population": 400000
+        },
+        {
+          "t": 725.0,
+          "population": 401000
+        },
+        {
+          "t": 755.0,
+          "population": 401350
+        },
+        {
+          "t": 760.0,
+          "population": 160369
+        },
+        {
+          "t": 775.0,
+          "population": 140000
+        },
+        {
+          "t": 825.0,
+          "population": 130000
+        },
+        {
+          "t": 874.0,
+          "population": 130000
+        },
+        {
+          "t": 875.0,
+          "population": 100000
+        },
+        {
+          "t": 902.0,
+          "population": 48000
+        },
+        {
+          "t": 925.0,
+          "population": 50000
+        },
+        {
+          "t": 1025.0,
+          "population": 60000
+        },
+        {
+          "t": 1089.0,
+          "population": 60000
+        },
+        {
+          "t": 1125.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "berlin-germany",
+      "name": "Berlin",
+      "country": "Germany",
+      "lat": 52.52437,
+      "lon": 13.41053,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 3387000
+        },
+        {
+          "t": 75.0,
+          "population": 3707000
+        },
+        {
+          "t": 100.0,
+          "population": 4013000
+        },
+        {
+          "t": 111.0,
+          "population": 3500000
+        },
+        {
+          "t": 125.0,
+          "population": 2707000
+        },
+        {
+          "t": 150.0,
+          "population": 1045000
+        },
+        {
+          "t": 175.0,
+          "population": 446000
+        },
+        {
+          "t": 200.0,
+          "population": 222000
+        },
+        {
+          "t": 225.0,
+          "population": 172132
+        },
+        {
+          "t": 275.0,
+          "population": 113289
+        },
+        {
+          "t": 316.0,
+          "population": 56600
+        },
+        {
+          "t": 325.0,
+          "population": 26000
+        },
+        {
+          "t": 327.0,
+          "population": 22400
+        },
+        {
+          "t": 425.0,
+          "population": 14000
+        }
+      ]
+    },
+    {
+      "id": "bijapur-india",
+      "name": "Bijapur",
+      "country": "India",
+      "lat": 16.82442,
+      "lon": 75.71537,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 173.0,
+          "population": 11000
+        },
+        {
+          "t": 375.0,
+          "population": 340000
+        },
+        {
+          "t": 377.0,
+          "population": 340000
+        },
+        {
+          "t": 386.0,
+          "population": 300000
+        },
+        {
+          "t": 425.0,
+          "population": 200000
+        },
+        {
+          "t": 450.0,
+          "population": 150000
+        },
+        {
+          "t": 460.0,
+          "population": 60000
+        },
+        {
+          "t": 475.0,
+          "population": 60000
+        },
+        {
+          "t": 525.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "bo-china",
+      "name": "Bo",
+      "country": "China",
+      "lat": 34.733333,
+      "lon": 112.783333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3625.0,
+          "population": 24000
+        }
+      ]
+    },
+    {
+      "id": "buenos-aires-argentina",
+      "name": "Buenos Aires",
+      "country": "Argentina",
+      "lat": -34.61315,
+      "lon": -58.37723,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2965000
+        },
+        {
+          "t": 50.0,
+          "population": 8400000
+        },
+        {
+          "t": 55.0,
+          "population": 8625000
+        },
+        {
+          "t": 75.0,
+          "population": 5000000
+        },
+        {
+          "t": 100.0,
+          "population": 2410000
+        },
+        {
+          "t": 111.0,
+          "population": 1630000
+        },
+        {
+          "t": 125.0,
+          "population": 806000
+        },
+        {
+          "t": 150.0,
+          "population": 213000
+        },
+        {
+          "t": 173.0,
+          "population": 76000
+        },
+        {
+          "t": 175.0,
+          "population": 74000
+        },
+        {
+          "t": 187.0,
+          "population": 65344
+        },
+        {
+          "t": 215.0,
+          "population": 41643
+        },
+        {
+          "t": 219.0,
+          "population": 36000
+        },
+        {
+          "t": 225.0,
+          "population": 34000
+        },
+        {
+          "t": 247.0,
+          "population": 28232
+        },
+        {
+          "t": 275.0,
+          "population": 13840
+        },
+        {
+          "t": 281.0,
+          "population": 9656
+        },
+        {
+          "t": 287.0,
+          "population": 4436
+        },
+        {
+          "t": 325.0,
+          "population": 1600
+        },
+        {
+          "t": 423.0,
+          "population": 500
+        }
+      ]
+    },
+    {
+      "id": "cairo-egypt",
+      "name": "Cairo",
+      "country": "Egypt",
+      "lat": 30.06263,
+      "lon": 31.24967,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 6801000
+        },
+        {
+          "t": 50.0,
+          "population": 8400000
+        },
+        {
+          "t": 55.0,
+          "population": 6600000
+        },
+        {
+          "t": 75.0,
+          "population": 2750000
+        },
+        {
+          "t": 100.0,
+          "population": 1000000
+        },
+        {
+          "t": 111.0,
+          "population": 735000
+        },
+        {
+          "t": 125.0,
+          "population": 595000
+        },
+        {
+          "t": 150.0,
+          "population": 355000
+        },
+        {
+          "t": 153.0,
+          "population": 349883
+        },
+        {
+          "t": 175.0,
+          "population": 260000
+        },
+        {
+          "t": 177.0,
+          "population": 254000
+        },
+        {
+          "t": 200.0,
+          "population": 250000
+        },
+        {
+          "t": 225.0,
+          "population": 186000
+        },
+        {
+          "t": 227.0,
+          "population": 186000
+        },
+        {
+          "t": 250.0,
+          "population": 215000
+        },
+        {
+          "t": 275.0,
+          "population": 175000
+        },
+        {
+          "t": 325.0,
+          "population": 175000
+        },
+        {
+          "t": 375.0,
+          "population": 175000
+        },
+        {
+          "t": 425.0,
+          "population": 200000
+        },
+        {
+          "t": 450.0,
+          "population": 275000
+        },
+        {
+          "t": 475.0,
+          "population": 360000
+        },
+        {
+          "t": 525.0,
+          "population": 400000
+        },
+        {
+          "t": 575.0,
+          "population": 380000
+        },
+        {
+          "t": 625.0,
+          "population": 360000
+        },
+        {
+          "t": 675.0,
+          "population": 350000
+        },
+        {
+          "t": 677.0,
+          "population": 500000
+        },
+        {
+          "t": 725.0,
+          "population": 400000
+        },
+        {
+          "t": 775.0,
+          "population": 300000
+        },
+        {
+          "t": 825.0,
+          "population": 200000
+        },
+        {
+          "t": 875.0,
+          "population": 175000
+        },
+        {
+          "t": 925.0,
+          "population": 150000
+        },
+        {
+          "t": 979.0,
+          "population": 135000
+        },
+        {
+          "t": 1025.0,
+          "population": 200000
+        },
+        {
+          "t": 1056.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 150000
+        },
+        {
+          "t": 1141.0,
+          "population": 150000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "capua-italy",
+      "name": "Capua",
+      "country": "Italy",
+      "lat": 41.09971,
+      "lon": 14.22013,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1725.0,
+          "population": 170000
+        },
+        {
+          "t": 1825.0,
+          "population": 240000
+        },
+        {
+          "t": 1925.0,
+          "population": 170000
+        },
+        {
+          "t": 2125.0,
+          "population": 36000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "caracol-mexico",
+      "name": "Caracol",
+      "country": "Mexico",
+      "lat": 20.6792,
+      "lon": -88.5707,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1425.0,
+          "population": 140000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        },
+        {
+          "t": 2725.0,
+          "population": 140000
+        },
+        {
+          "t": 2825.0,
+          "population": 100000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "carchemish-turkey-syria",
+      "name": "Carchemish",
+      "country": "Turkey/Syria",
+      "lat": 36.829722,
+      "lon": 38.015,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3325.0,
+          "population": 10000
+        },
+        {
+          "t": 3425.0,
+          "population": 10000
+        },
+        {
+          "t": 3525.0,
+          "population": 10000
+        },
+        {
+          "t": 3625.0,
+          "population": 20000
+        },
+        {
+          "t": 3725.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "carthage-tunisia",
+      "name": "Carthage",
+      "country": "Tunisia",
+      "lat": 36.858056,
+      "lon": 10.330833,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 270000
+        },
+        {
+          "t": 1664.0,
+          "population": 66000
+        },
+        {
+          "t": 1725.0,
+          "population": 300000
+        },
+        {
+          "t": 1825.0,
+          "population": 300000
+        },
+        {
+          "t": 1925.0,
+          "population": 250000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 200000
+        },
+        {
+          "t": 2325.0,
+          "population": 500000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2455.0,
+          "population": 50000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "chengdu-china",
+      "name": "Chengdu",
+      "country": "China",
+      "lat": 30.66667,
+      "lon": 104.06667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2954000
+        },
+        {
+          "t": 50.0,
+          "population": 1401000
+        },
+        {
+          "t": 75.0,
+          "population": 647000
+        },
+        {
+          "t": 100.0,
+          "population": 385000
+        },
+        {
+          "t": 111.0,
+          "population": 306423
+        },
+        {
+          "t": 125.0,
+          "population": 300000
+        },
+        {
+          "t": 150.0,
+          "population": 240000
+        },
+        {
+          "t": 175.0,
+          "population": 200000
+        },
+        {
+          "t": 200.0,
+          "population": 150000
+        },
+        {
+          "t": 225.0,
+          "population": 97000
+        },
+        {
+          "t": 275.0,
+          "population": 74000
+        },
+        {
+          "t": 297.0,
+          "population": 62000
+        },
+        {
+          "t": 325.0,
+          "population": 50000
+        },
+        {
+          "t": 376.0,
+          "population": 120000
+        },
+        {
+          "t": 425.0,
+          "population": 100000
+        },
+        {
+          "t": 450.0,
+          "population": 95000
+        },
+        {
+          "t": 475.0,
+          "population": 90000
+        },
+        {
+          "t": 525.0,
+          "population": 85000
+        },
+        {
+          "t": 575.0,
+          "population": 65000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        },
+        {
+          "t": 655.0,
+          "population": 33000
+        },
+        {
+          "t": 675.0,
+          "population": 50000
+        },
+        {
+          "t": 725.0,
+          "population": 54000
+        },
+        {
+          "t": 735.0,
+          "population": 54000
+        },
+        {
+          "t": 775.0,
+          "population": 54000
+        },
+        {
+          "t": 825.0,
+          "population": 46000
+        },
+        {
+          "t": 875.0,
+          "population": 42000
+        },
+        {
+          "t": 948.0,
+          "population": 37000
+        },
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 75000
+        },
+        {
+          "t": 1139.0,
+          "population": 75000
+        },
+        {
+          "t": 1144.0,
+          "population": 75000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 81000
+        },
+        {
+          "t": 1425.0,
+          "population": 81000
+        },
+        {
+          "t": 2024.0,
+          "population": 250000
+        },
+        {
+          "t": 2125.0,
+          "population": 70000
+        }
+      ]
+    },
+    {
+      "id": "cordoba-spain",
+      "name": "Cordoba",
+      "country": "Spain",
+      "lat": 38.046133,
+      "lon": -4.893564,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 115.0,
+          "population": 55514
+        },
+        {
+          "t": 125.0,
+          "population": 52000
+        },
+        {
+          "t": 168.0,
+          "population": 31000
+        },
+        {
+          "t": 175.0,
+          "population": 34000
+        },
+        {
+          "t": 176.0,
+          "population": 34000
+        },
+        {
+          "t": 225.0,
+          "population": 28000
+        },
+        {
+          "t": 238.0,
+          "population": 28000
+        },
+        {
+          "t": 275.0,
+          "population": 22000
+        },
+        {
+          "t": 325.0,
+          "population": 27000
+        },
+        {
+          "t": 331.0,
+          "population": 27000
+        },
+        {
+          "t": 379.0,
+          "population": 34000
+        },
+        {
+          "t": 425.0,
+          "population": 32000
+        },
+        {
+          "t": 431.0,
+          "population": 32000
+        },
+        {
+          "t": 495.0,
+          "population": 30000
+        },
+        {
+          "t": 525.0,
+          "population": 30000
+        },
+        {
+          "t": 617.0,
+          "population": 36000
+        },
+        {
+          "t": 625.0,
+          "population": 36000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        },
+        {
+          "t": 825.0,
+          "population": 60000
+        },
+        {
+          "t": 875.0,
+          "population": 60000
+        },
+        {
+          "t": 922.0,
+          "population": 60000
+        },
+        {
+          "t": 925.0,
+          "population": 60000
+        },
+        {
+          "t": 1025.0,
+          "population": 450000
+        },
+        {
+          "t": 1125.0,
+          "population": 200000
+        },
+        {
+          "t": 1225.0,
+          "population": 160000
+        }
+      ]
+    },
+    {
+      "id": "ctesiphon-iraq",
+      "name": "Ctesiphon",
+      "country": "Iraq",
+      "lat": 33.09378746,
+      "lon": 44.58006701,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1403.0,
+          "population": 500000
+        },
+        {
+          "t": 1425.0,
+          "population": 500000
+        },
+        {
+          "t": 1525.0,
+          "population": 400000
+        },
+        {
+          "t": 1625.0,
+          "population": 250000
+        },
+        {
+          "t": 1664.0,
+          "population": 250000
+        },
+        {
+          "t": 1725.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "damascus-syria",
+      "name": "Damascus",
+      "country": "Syria",
+      "lat": 33.5102,
+      "lon": 36.29128,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1394000
+        },
+        {
+          "t": 50.0,
+          "population": 1100000
+        },
+        {
+          "t": 75.0,
+          "population": 335000
+        },
+        {
+          "t": 125.0,
+          "population": 165000
+        },
+        {
+          "t": 175.0,
+          "population": 108599
+        },
+        {
+          "t": 200.0,
+          "population": 100000
+        },
+        {
+          "t": 215.0,
+          "population": 100000
+        },
+        {
+          "t": 225.0,
+          "population": 90000
+        },
+        {
+          "t": 240.0,
+          "population": 80000
+        },
+        {
+          "t": 275.0,
+          "population": 80000
+        },
+        {
+          "t": 325.0,
+          "population": 70000
+        },
+        {
+          "t": 375.0,
+          "population": 65000
+        },
+        {
+          "t": 425.0,
+          "population": 60000
+        },
+        {
+          "t": 450.0,
+          "population": 60000
+        },
+        {
+          "t": 475.0,
+          "population": 60000
+        },
+        {
+          "t": 500.0,
+          "population": 57000
+        },
+        {
+          "t": 525.0,
+          "population": 60000
+        },
+        {
+          "t": 575.0,
+          "population": 65000
+        },
+        {
+          "t": 625.0,
+          "population": 74000
+        },
+        {
+          "t": 675.0,
+          "population": 74000
+        },
+        {
+          "t": 725.0,
+          "population": 64000
+        },
+        {
+          "t": 775.0,
+          "population": 90000
+        },
+        {
+          "t": 825.0,
+          "population": 90000
+        },
+        {
+          "t": 855.0,
+          "population": 80000
+        },
+        {
+          "t": 875.0,
+          "population": 57000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1310.0,
+          "population": 300000
+        },
+        {
+          "t": 1320.0,
+          "population": 300000
+        },
+        {
+          "t": 1325.0,
+          "population": 300000
+        },
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1525.0,
+          "population": 50000
+        },
+        {
+          "t": 1664.0,
+          "population": 40000
+        },
+        {
+          "t": 2455.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "datong-china",
+      "name": "Datong",
+      "country": "China",
+      "lat": 40.083333,
+      "lon": 113.3,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1277000
+        },
+        {
+          "t": 87.0,
+          "population": 70000
+        },
+        {
+          "t": 125.0,
+          "population": 55000
+        },
+        {
+          "t": 175.0,
+          "population": 40000
+        },
+        {
+          "t": 195.0,
+          "population": 35000
+        },
+        {
+          "t": 225.0,
+          "population": 35000
+        },
+        {
+          "t": 1525.0,
+          "population": 200000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "delhi-india",
+      "name": "Delhi",
+      "country": "India",
+      "lat": 28.65381,
+      "lon": 77.22897,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 7207000
+        },
+        {
+          "t": 50.0,
+          "population": 4400000
+        },
+        {
+          "t": 55.0,
+          "population": 4300000
+        },
+        {
+          "t": 75.0,
+          "population": 1306000
+        },
+        {
+          "t": 100.0,
+          "population": 375000
+        },
+        {
+          "t": 125.0,
+          "population": 207000
+        },
+        {
+          "t": 172.0,
+          "population": 152406
+        },
+        {
+          "t": 175.0,
+          "population": 156000
+        },
+        {
+          "t": 179.0,
+          "population": 160279
+        },
+        {
+          "t": 189.0,
+          "population": 151000
+        },
+        {
+          "t": 200.0,
+          "population": 150000
+        },
+        {
+          "t": 205.0,
+          "population": 150000
+        },
+        {
+          "t": 225.0,
+          "population": 140000
+        },
+        {
+          "t": 244.0,
+          "population": 190000
+        },
+        {
+          "t": 275.0,
+          "population": 150000
+        },
+        {
+          "t": 286.0,
+          "population": 180000
+        },
+        {
+          "t": 318.0,
+          "population": 60000
+        },
+        {
+          "t": 344.0,
+          "population": 60000
+        },
+        {
+          "t": 359.0,
+          "population": 400000
+        },
+        {
+          "t": 429.0,
+          "population": 8000
+        },
+        {
+          "t": 495.0,
+          "population": 130000
+        },
+        {
+          "t": 499.0,
+          "population": 90000
+        },
+        {
+          "t": 525.0,
+          "population": 80000
+        },
+        {
+          "t": 575.0,
+          "population": 50000
+        },
+        {
+          "t": 627.0,
+          "population": 125000
+        },
+        {
+          "t": 650.0,
+          "population": 1250000
+        },
+        {
+          "t": 671.0,
+          "population": 125000
+        },
+        {
+          "t": 675.0,
+          "population": 125000
+        },
+        {
+          "t": 698.0,
+          "population": 40000
+        },
+        {
+          "t": 725.0,
+          "population": 100000
+        },
+        {
+          "t": 775.0,
+          "population": 80000
+        },
+        {
+          "t": 825.0,
+          "population": 60000
+        },
+        {
+          "t": 832.0,
+          "population": 30000
+        },
+        {
+          "t": 973.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "dholavira-india",
+      "name": "Dholavira",
+      "country": "India",
+      "lat": 23.886111,
+      "lon": 70.216667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 15000
+        },
+        {
+          "t": 4325.0,
+          "population": 15000
+        }
+      ]
+    },
+    {
+      "id": "dilmun-iraq",
+      "name": "Dilmun",
+      "country": "Iraq",
+      "lat": 26.12163972,
+      "lon": 50.49894117,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3925.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "dur-kurigalzu-iraq",
+      "name": "Dur-Kurigalzu",
+      "country": "Iraq",
+      "lat": 33.35355825,
+      "lon": 44.20235367,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 40000
+        },
+        {
+          "t": 3385.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "ebla-syria",
+      "name": "Ebla",
+      "country": "Syria",
+      "lat": 35.79839754,
+      "lon": 36.79872812,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3725.0,
+          "population": 10000
+        },
+        {
+          "t": 3825.0,
+          "population": 10000
+        },
+        {
+          "t": 3925.0,
+          "population": 10000
+        },
+        {
+          "t": 4275.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 30000
+        },
+        {
+          "t": 4425.0,
+          "population": 30000
+        },
+        {
+          "t": 4525.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "ecbatana-iran",
+      "name": "Ecbatana",
+      "country": "Iran",
+      "lat": 34.8053317919,
+      "lon": 48.51738769,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 90000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "elephantine-egypt",
+      "name": "Elephantine",
+      "country": "Egypt",
+      "lat": 24.083333,
+      "lon": 32.883333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3725.0,
+          "population": 16000
+        },
+        {
+          "t": 3825.0,
+          "population": 16000
+        },
+        {
+          "t": 3925.0,
+          "population": 16000
+        }
+      ]
+    },
+    {
+      "id": "ephesus-turkey",
+      "name": "Ephesus",
+      "country": "Turkey",
+      "lat": 37.94049284,
+      "lon": 27.34104109,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1425.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1725.0,
+          "population": 125000
+        },
+        {
+          "t": 1825.0,
+          "population": 200000
+        },
+        {
+          "t": 1925.0,
+          "population": 200000
+        },
+        {
+          "t": 2024.0,
+          "population": 200000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "eridu-iraq",
+      "name": "Eridu",
+      "country": "Iraq",
+      "lat": 30.8158379,
+      "lon": 45.99607031,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 5025.0,
+          "population": 10000
+        },
+        {
+          "t": 5325.0,
+          "population": 10000
+        },
+        {
+          "t": 5525.0,
+          "population": 10000
+        },
+        {
+          "t": 5725.0,
+          "population": 6000
+        }
+      ]
+    },
+    {
+      "id": "erlitou-china",
+      "name": "Erlitou",
+      "country": "China",
+      "lat": 34.701758,
+      "lon": 112.697078,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3725.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "esfahan-iran",
+      "name": "Esfahan",
+      "country": "Iran",
+      "lat": 32.651389,
+      "lon": 51.679192,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1266000
+        },
+        {
+          "t": 50.0,
+          "population": 648000
+        },
+        {
+          "t": 75.0,
+          "population": 204000
+        },
+        {
+          "t": 125.0,
+          "population": 80000
+        },
+        {
+          "t": 143.0,
+          "population": 73654
+        },
+        {
+          "t": 156.0,
+          "population": 76000
+        },
+        {
+          "t": 175.0,
+          "population": 67000
+        },
+        {
+          "t": 214.0,
+          "population": 60000
+        },
+        {
+          "t": 225.0,
+          "population": 50000
+        },
+        {
+          "t": 228.0,
+          "population": 50000
+        },
+        {
+          "t": 275.0,
+          "population": 45000
+        },
+        {
+          "t": 281.0,
+          "population": 45000
+        },
+        {
+          "t": 325.0,
+          "population": 350000
+        },
+        {
+          "t": 352.0,
+          "population": 360000
+        },
+        {
+          "t": 375.0,
+          "population": 350000
+        },
+        {
+          "t": 397.0,
+          "population": 325000
+        },
+        {
+          "t": 425.0,
+          "population": 100000
+        },
+        {
+          "t": 426.0,
+          "population": 80000
+        },
+        {
+          "t": 427.0,
+          "population": 40000
+        },
+        {
+          "t": 525.0,
+          "population": 45000
+        },
+        {
+          "t": 551.0,
+          "population": 50000
+        },
+        {
+          "t": 638.0,
+          "population": 70000
+        },
+        {
+          "t": 675.0,
+          "population": 70000
+        },
+        {
+          "t": 705.0,
+          "population": 62000
+        },
+        {
+          "t": 725.0,
+          "population": 62000
+        },
+        {
+          "t": 775.0,
+          "population": 70000
+        },
+        {
+          "t": 825.0,
+          "population": 70000
+        },
+        {
+          "t": 875.0,
+          "population": 75000
+        },
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1122.0,
+          "population": 25000
+        },
+        {
+          "t": 1225.0,
+          "population": 25000
+        }
+      ]
+    },
+    {
+      "id": "fez-morocco",
+      "name": "Fez",
+      "country": "Morocco",
+      "lat": 34.033333,
+      "lon": -5.01,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 78.0,
+          "population": 200000
+        },
+        {
+          "t": 125.0,
+          "population": 96000
+        },
+        {
+          "t": 175.0,
+          "population": 85000
+        },
+        {
+          "t": 185.0,
+          "population": 88000
+        },
+        {
+          "t": 225.0,
+          "population": 40000
+        },
+        {
+          "t": 226.0,
+          "population": 70000
+        },
+        {
+          "t": 275.0,
+          "population": 60000
+        },
+        {
+          "t": 298.0,
+          "population": 70000
+        },
+        {
+          "t": 325.0,
+          "population": 80000
+        },
+        {
+          "t": 375.0,
+          "population": 70000
+        },
+        {
+          "t": 425.0,
+          "population": 100000
+        },
+        {
+          "t": 450.0,
+          "population": 100000
+        },
+        {
+          "t": 475.0,
+          "population": 100000
+        },
+        {
+          "t": 512.0,
+          "population": 131000
+        },
+        {
+          "t": 525.0,
+          "population": 130000
+        },
+        {
+          "t": 575.0,
+          "population": 125000
+        },
+        {
+          "t": 625.0,
+          "population": 125000
+        },
+        {
+          "t": 675.0,
+          "population": 125000
+        },
+        {
+          "t": 685.0,
+          "population": 125000
+        },
+        {
+          "t": 725.0,
+          "population": 150000
+        },
+        {
+          "t": 775.0,
+          "population": 200000
+        },
+        {
+          "t": 825.0,
+          "population": 200000
+        },
+        {
+          "t": 875.0,
+          "population": 160000
+        },
+        {
+          "t": 925.0,
+          "population": 125000
+        },
+        {
+          "t": 956.0,
+          "population": 30000
+        },
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1217.0,
+          "population": 15000
+        }
+      ]
+    },
+    {
+      "id": "gauda-india",
+      "name": "Gauda",
+      "country": "India",
+      "lat": 24.866667,
+      "lon": 88.133333,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 153.0,
+          "population": 11492
+        },
+        {
+          "t": 206.0,
+          "population": 18000
+        },
+        {
+          "t": 225.0,
+          "population": 20000
+        },
+        {
+          "t": 475.0,
+          "population": 100000
+        },
+        {
+          "t": 511.0,
+          "population": 200000
+        },
+        {
+          "t": 525.0,
+          "population": 200000
+        },
+        {
+          "t": 529.0,
+          "population": 210000
+        },
+        {
+          "t": 575.0,
+          "population": 150000
+        },
+        {
+          "t": 625.0,
+          "population": 40000
+        },
+        {
+          "t": 725.0,
+          "population": 100000
+        },
+        {
+          "t": 775.0,
+          "population": 90000
+        },
+        {
+          "t": 800.0,
+          "population": 90000
+        },
+        {
+          "t": 825.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "gelibolu-turkey",
+      "name": "Gelibolu",
+      "country": "Turkey",
+      "lat": 40.333333,
+      "lon": 26.499992,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 185.0,
+          "population": 8500
+        },
+        {
+          "t": 215.0,
+          "population": 15000
+        },
+        {
+          "t": 225.0,
+          "population": 17000
+        },
+        {
+          "t": 332.0,
+          "population": 6000
+        },
+        {
+          "t": 350.0,
+          "population": 18000
+        },
+        {
+          "t": 495.0,
+          "population": 8925
+        },
+        {
+          "t": 507.0,
+          "population": 6000
+        },
+        {
+          "t": 551.0,
+          "population": 5000
+        },
+        {
+          "t": 825.0,
+          "population": 150000
+        },
+        {
+          "t": 1025.0,
+          "population": 300000
+        }
+      ]
+    },
+    {
+      "id": "girsu-iraq",
+      "name": "Girsu",
+      "country": "Iraq",
+      "lat": 31.56002579,
+      "lon": 46.1754283,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4025.0,
+          "population": 40000
+        },
+        {
+          "t": 4125.0,
+          "population": 80000
+        },
+        {
+          "t": 4225.0,
+          "population": 50000
+        },
+        {
+          "t": 4325.0,
+          "population": 80000
+        },
+        {
+          "t": 4425.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "granada-spain",
+      "name": "Granada",
+      "country": "Spain",
+      "lat": 37.177336,
+      "lon": -3.598558,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 75000
+        },
+        {
+          "t": 168.0,
+          "population": 63113
+        },
+        {
+          "t": 175.0,
+          "population": 58000
+        },
+        {
+          "t": 182.0,
+          "population": 55000
+        },
+        {
+          "t": 221.0,
+          "population": 54962
+        },
+        {
+          "t": 225.0,
+          "population": 53000
+        },
+        {
+          "t": 228.0,
+          "population": 52000
+        },
+        {
+          "t": 238.0,
+          "population": 52345
+        },
+        {
+          "t": 261.0,
+          "population": 52000
+        },
+        {
+          "t": 275.0,
+          "population": 45000
+        },
+        {
+          "t": 325.0,
+          "population": 35000
+        },
+        {
+          "t": 387.0,
+          "population": 45000
+        },
+        {
+          "t": 414.0,
+          "population": 53000
+        },
+        {
+          "t": 425.0,
+          "population": 68000
+        },
+        {
+          "t": 431.0,
+          "population": 68000
+        },
+        {
+          "t": 450.0,
+          "population": 60000
+        },
+        {
+          "t": 475.0,
+          "population": 70000
+        },
+        {
+          "t": 525.0,
+          "population": 70000
+        },
+        {
+          "t": 531.0,
+          "population": 70000
+        },
+        {
+          "t": 534.0,
+          "population": 200000
+        },
+        {
+          "t": 549.0,
+          "population": 200000
+        },
+        {
+          "t": 575.0,
+          "population": 165000
+        },
+        {
+          "t": 625.0,
+          "population": 90000
+        },
+        {
+          "t": 675.0,
+          "population": 60000
+        },
+        {
+          "t": 725.0,
+          "population": 90000
+        },
+        {
+          "t": 775.0,
+          "population": 75000
+        },
+        {
+          "t": 825.0,
+          "population": 60000
+        },
+        {
+          "t": 875.0,
+          "population": 60000
+        },
+        {
+          "t": 922.0,
+          "population": 60000
+        },
+        {
+          "t": 925.0,
+          "population": 60000
+        },
+        {
+          "t": 1025.0,
+          "population": 22000
+        }
+      ]
+    },
+    {
+      "id": "guangzhou-china",
+      "name": "Guangzhou",
+      "country": "China",
+      "lat": 23.11667,
+      "lon": 113.25,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 3935000
+        },
+        {
+          "t": 50.0,
+          "population": 3000000
+        },
+        {
+          "t": 75.0,
+          "population": 1495000
+        },
+        {
+          "t": 100.0,
+          "population": 789000
+        },
+        {
+          "t": 111.0,
+          "population": 700000
+        },
+        {
+          "t": 113.0,
+          "population": 675000
+        },
+        {
+          "t": 125.0,
+          "population": 585000
+        },
+        {
+          "t": 130.0,
+          "population": 550000
+        },
+        {
+          "t": 150.0,
+          "population": 670000
+        },
+        {
+          "t": 162.0,
+          "population": 850000
+        },
+        {
+          "t": 175.0,
+          "population": 875000
+        },
+        {
+          "t": 187.0,
+          "population": 850000
+        },
+        {
+          "t": 190.0,
+          "population": 900000
+        },
+        {
+          "t": 200.0,
+          "population": 900000
+        },
+        {
+          "t": 225.0,
+          "population": 800000
+        },
+        {
+          "t": 275.0,
+          "population": 400000
+        },
+        {
+          "t": 325.0,
+          "population": 200000
+        },
+        {
+          "t": 360.0,
+          "population": 116000
+        },
+        {
+          "t": 375.0,
+          "population": 200000
+        },
+        {
+          "t": 378.0,
+          "population": 200000
+        },
+        {
+          "t": 425.0,
+          "population": 180000
+        },
+        {
+          "t": 450.0,
+          "population": 170000
+        },
+        {
+          "t": 475.0,
+          "population": 160000
+        },
+        {
+          "t": 525.0,
+          "population": 150000
+        },
+        {
+          "t": 575.0,
+          "population": 175000
+        },
+        {
+          "t": 625.0,
+          "population": 150000
+        },
+        {
+          "t": 675.0,
+          "population": 150000
+        },
+        {
+          "t": 725.0,
+          "population": 150000
+        },
+        {
+          "t": 746.0,
+          "population": 150000
+        },
+        {
+          "t": 750.0,
+          "population": 165000
+        },
+        {
+          "t": 775.0,
+          "population": 140000
+        },
+        {
+          "t": 825.0,
+          "population": 110000
+        },
+        {
+          "t": 875.0,
+          "population": 80000
+        },
+        {
+          "t": 925.0,
+          "population": 55000
+        },
+        {
+          "t": 948.0,
+          "population": 40000
+        },
+        {
+          "t": 958.0,
+          "population": 40000
+        },
+        {
+          "t": 1025.0,
+          "population": 40000
+        },
+        {
+          "t": 1225.0,
+          "population": 200000
+        },
+        {
+          "t": 1325.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "handan-china",
+      "name": "Handan",
+      "country": "China",
+      "lat": 36.6,
+      "lon": 114.4833,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1152000
+        },
+        {
+          "t": 50.0,
+          "population": 615000
+        },
+        {
+          "t": 1525.0,
+          "population": 200000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1664.0,
+          "population": 120000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "hangzhou-china",
+      "name": "Hangzhou",
+      "country": "China",
+      "lat": 30.25,
+      "lon": 120.1667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1276000
+        },
+        {
+          "t": 50.0,
+          "population": 1112000
+        },
+        {
+          "t": 75.0,
+          "population": 517000
+        },
+        {
+          "t": 81.0,
+          "population": 606136
+        },
+        {
+          "t": 100.0,
+          "population": 380000
+        },
+        {
+          "t": 125.0,
+          "population": 350000
+        },
+        {
+          "t": 150.0,
+          "population": 200000
+        },
+        {
+          "t": 175.0,
+          "population": 434000
+        },
+        {
+          "t": 200.0,
+          "population": 410000
+        },
+        {
+          "t": 225.0,
+          "population": 387000
+        },
+        {
+          "t": 275.0,
+          "population": 340000
+        },
+        {
+          "t": 294.0,
+          "population": 322300
+        },
+        {
+          "t": 325.0,
+          "population": 303000
+        },
+        {
+          "t": 344.0,
+          "population": 292420
+        },
+        {
+          "t": 368.0,
+          "population": 281851
+        },
+        {
+          "t": 375.0,
+          "population": 281000
+        },
+        {
+          "t": 400.0,
+          "population": 275000
+        },
+        {
+          "t": 425.0,
+          "population": 270000
+        },
+        {
+          "t": 450.0,
+          "population": 260000
+        },
+        {
+          "t": 475.0,
+          "population": 260000
+        },
+        {
+          "t": 525.0,
+          "population": 250000
+        },
+        {
+          "t": 575.0,
+          "population": 250000
+        },
+        {
+          "t": 625.0,
+          "population": 240000
+        },
+        {
+          "t": 665.0,
+          "population": 230000
+        },
+        {
+          "t": 675.0,
+          "population": 432000
+        },
+        {
+          "t": 725.0,
+          "population": 432000
+        },
+        {
+          "t": 752.0,
+          "population": 432046
+        },
+        {
+          "t": 775.0,
+          "population": 320489
+        },
+        {
+          "t": 824.0,
+          "population": 260000
+        },
+        {
+          "t": 825.0,
+          "population": 255000
+        },
+        {
+          "t": 855.0,
+          "population": 145808
+        },
+        {
+          "t": 875.0,
+          "population": 145000
+        },
+        {
+          "t": 925.0,
+          "population": 90000
+        },
+        {
+          "t": 948.0,
+          "population": 85000
+        },
+        {
+          "t": 1025.0,
+          "population": 80000
+        },
+        {
+          "t": 1225.0,
+          "population": 70000
+        },
+        {
+          "t": 1403.0,
+          "population": 60000
+        },
+        {
+          "t": 1434.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "harappa-pakistan",
+      "name": "Harappa",
+      "country": "Pakistan",
+      "lat": 30.62983646,
+      "lon": 72.86614561,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 15000
+        },
+        {
+          "t": 4225.0,
+          "population": 20000
+        },
+        {
+          "t": 4325.0,
+          "population": 20000
+        },
+        {
+          "t": 4425.0,
+          "population": 20000
+        },
+        {
+          "t": 4525.0,
+          "population": 15000
+        }
+      ]
+    },
+    {
+      "id": "hattusa-turkey",
+      "name": "Hattusa",
+      "country": "Turkey",
+      "lat": 40.019722,
+      "lon": 34.615278,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 60000
+        },
+        {
+          "t": 3325.0,
+          "population": 60000
+        },
+        {
+          "t": 3385.0,
+          "population": 45000
+        },
+        {
+          "t": 3625.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "hazor-israel",
+      "name": "Hazor",
+      "country": "Israel",
+      "lat": 33.01745538,
+      "lon": 35.5685014,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3385.0,
+          "population": 24000
+        },
+        {
+          "t": 3625.0,
+          "population": 20000
+        },
+        {
+          "t": 3825.0,
+          "population": 16000
+        }
+      ]
+    },
+    {
+      "id": "heliopolis-egypt",
+      "name": "Heliopolis",
+      "country": "Egypt",
+      "lat": 30.129528,
+      "lon": 31.288889,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 3025.0,
+          "population": 20000
+        },
+        {
+          "t": 3125.0,
+          "population": 20000
+        },
+        {
+          "t": 3225.0,
+          "population": 30000
+        },
+        {
+          "t": 3325.0,
+          "population": 30000
+        },
+        {
+          "t": 3385.0,
+          "population": 30000
+        },
+        {
+          "t": 3425.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "hermopolis-egypt",
+      "name": "Hermopolis",
+      "country": "Egypt",
+      "lat": 27.781389,
+      "lon": 30.803889,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 30000
+        },
+        {
+          "t": 3325.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "isin-iraq",
+      "name": "Isin",
+      "country": "Iraq",
+      "lat": 31.88487801,
+      "lon": 45.2692575,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 40000
+        },
+        {
+          "t": 3825.0,
+          "population": 20000
+        },
+        {
+          "t": 3925.0,
+          "population": 40000
+        },
+        {
+          "t": 4025.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "istanbul-turkey",
+      "name": "Istanbul",
+      "country": "Turkey",
+      "lat": 41.005275,
+      "lon": 28.976944,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8260000
+        },
+        {
+          "t": 50.0,
+          "population": 3200000
+        },
+        {
+          "t": 55.0,
+          "population": 2825000
+        },
+        {
+          "t": 75.0,
+          "population": 1035000
+        },
+        {
+          "t": 100.0,
+          "population": 817000
+        },
+        {
+          "t": 111.0,
+          "population": 1125000
+        },
+        {
+          "t": 125.0,
+          "population": 900000
+        },
+        {
+          "t": 140.0,
+          "population": 873565
+        },
+        {
+          "t": 150.0,
+          "population": 873000
+        },
+        {
+          "t": 175.0,
+          "population": 785000
+        },
+        {
+          "t": 177.0,
+          "population": 778000
+        },
+        {
+          "t": 195.0,
+          "population": 700000
+        },
+        {
+          "t": 200.0,
+          "population": 675000
+        },
+        {
+          "t": 210.0,
+          "population": 597600
+        },
+        {
+          "t": 225.0,
+          "population": 570000
+        },
+        {
+          "t": 231.0,
+          "population": 560000
+        },
+        {
+          "t": 275.0,
+          "population": 625000
+        },
+        {
+          "t": 325.0,
+          "population": 700000
+        },
+        {
+          "t": 335.0,
+          "population": 750000
+        },
+        {
+          "t": 375.0,
+          "population": 700000
+        },
+        {
+          "t": 425.0,
+          "population": 700000
+        },
+        {
+          "t": 450.0,
+          "population": 680000
+        },
+        {
+          "t": 473.0,
+          "population": 660000
+        },
+        {
+          "t": 475.0,
+          "population": 660000
+        },
+        {
+          "t": 497.0,
+          "population": 400000
+        },
+        {
+          "t": 510.0,
+          "population": 300000
+        },
+        {
+          "t": 515.0,
+          "population": 250000
+        },
+        {
+          "t": 525.0,
+          "population": 200000
+        },
+        {
+          "t": 548.0,
+          "population": 98000
+        },
+        {
+          "t": 572.0,
+          "population": 45000
+        },
+        {
+          "t": 575.0,
+          "population": 45000
+        },
+        {
+          "t": 600.0,
+          "population": 70000
+        },
+        {
+          "t": 625.0,
+          "population": 75000
+        },
+        {
+          "t": 675.0,
+          "population": 80000
+        },
+        {
+          "t": 685.0,
+          "population": 80000
+        },
+        {
+          "t": 725.0,
+          "population": 100000
+        },
+        {
+          "t": 764.0,
+          "population": 100000
+        },
+        {
+          "t": 775.0,
+          "population": 100000
+        },
+        {
+          "t": 825.0,
+          "population": 150000
+        },
+        {
+          "t": 925.0,
+          "population": 200000
+        },
+        {
+          "t": 1025.0,
+          "population": 600000
+        },
+        {
+          "t": 1081.0,
+          "population": 330000
+        },
+        {
+          "t": 1125.0,
+          "population": 500000
+        },
+        {
+          "t": 1225.0,
+          "population": 400000
+        },
+        {
+          "t": 1325.0,
+          "population": 400000
+        },
+        {
+          "t": 1403.0,
+          "population": 400000
+        },
+        {
+          "t": 1425.0,
+          "population": 600000
+        },
+        {
+          "t": 1525.0,
+          "population": 500000
+        },
+        {
+          "t": 1625.0,
+          "population": 400000
+        },
+        {
+          "t": 2125.0,
+          "population": 36000
+        }
+      ]
+    },
+    {
+      "id": "jakarta-indonesia",
+      "name": "Jakarta",
+      "country": "Indonesia",
+      "lat": -6.21462,
+      "lon": 106.84513,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 9373000
+        },
+        {
+          "t": 50.0,
+          "population": 5300000
+        },
+        {
+          "t": 55.0,
+          "population": 4300000
+        },
+        {
+          "t": 75.0,
+          "population": 1452000
+        },
+        {
+          "t": 100.0,
+          "population": 290000
+        },
+        {
+          "t": 125.0,
+          "population": 115000
+        },
+        {
+          "t": 132.0,
+          "population": 110000
+        },
+        {
+          "t": 145.0,
+          "population": 96957
+        },
+        {
+          "t": 167.0,
+          "population": 60000
+        },
+        {
+          "t": 175.0,
+          "population": 60000
+        },
+        {
+          "t": 181.0,
+          "population": 60850
+        },
+        {
+          "t": 212.0,
+          "population": 49683
+        },
+        {
+          "t": 225.0,
+          "population": 53000
+        },
+        {
+          "t": 232.0,
+          "population": 55000
+        },
+        {
+          "t": 246.0,
+          "population": 50000
+        },
+        {
+          "t": 275.0,
+          "population": 44000
+        },
+        {
+          "t": 302.0,
+          "population": 33000
+        },
+        {
+          "t": 325.0,
+          "population": 35000
+        },
+        {
+          "t": 352.0,
+          "population": 33687
+        }
+      ]
+    },
+    {
+      "id": "jarkutan-uzbekistan",
+      "name": "Jarkutan",
+      "country": "Uzbekistan",
+      "lat": 39.750833,
+      "lon": 68.775833,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 3325.0,
+          "population": 20000
+        },
+        {
+          "t": 3425.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "jerusalem-israel",
+      "name": "Jerusalem",
+      "country": "Israel",
+      "lat": 31.76904,
+      "lon": 35.21633,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 56000
+        },
+        {
+          "t": 169.0,
+          "population": 18000
+        },
+        {
+          "t": 245.0,
+          "population": 13000
+        },
+        {
+          "t": 412.0,
+          "population": 10000
+        },
+        {
+          "t": 537.0,
+          "population": 4000
+        },
+        {
+          "t": 782.0,
+          "population": 30000
+        },
+        {
+          "t": 838.0,
+          "population": 50000
+        },
+        {
+          "t": 875.0,
+          "population": 40000
+        },
+        {
+          "t": 926.0,
+          "population": 70000
+        },
+        {
+          "t": 1025.0,
+          "population": 60000
+        },
+        {
+          "t": 1395.0,
+          "population": 62000
+        },
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1425.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1664.0,
+          "population": 50000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 49000
+        },
+        {
+          "t": 2675.0,
+          "population": 45000
+        },
+        {
+          "t": 2825.0,
+          "population": 36000
+        }
+      ]
+    },
+    {
+      "id": "kaifeng-china",
+      "name": "Kaifeng",
+      "country": "China",
+      "lat": 34.7986,
+      "lon": 114.30742,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 600000
+        },
+        {
+          "t": 75.0,
+          "population": 280000
+        },
+        {
+          "t": 100.0,
+          "population": 233000
+        },
+        {
+          "t": 125.0,
+          "population": 150000
+        },
+        {
+          "t": 155.0,
+          "population": 100000
+        },
+        {
+          "t": 175.0,
+          "population": 90000
+        },
+        {
+          "t": 225.0,
+          "population": 80000
+        },
+        {
+          "t": 259.0,
+          "population": 79000
+        },
+        {
+          "t": 274.0,
+          "population": 79000
+        },
+        {
+          "t": 275.0,
+          "population": 78000
+        },
+        {
+          "t": 383.0,
+          "population": 80000
+        },
+        {
+          "t": 425.0,
+          "population": 80000
+        },
+        {
+          "t": 450.0,
+          "population": 80000
+        },
+        {
+          "t": 475.0,
+          "population": 80000
+        },
+        {
+          "t": 525.0,
+          "population": 80000
+        },
+        {
+          "t": 575.0,
+          "population": 80000
+        },
+        {
+          "t": 625.0,
+          "population": 90000
+        },
+        {
+          "t": 675.0,
+          "population": 90000
+        },
+        {
+          "t": 695.0,
+          "population": 90000
+        },
+        {
+          "t": 725.0,
+          "population": 90000
+        },
+        {
+          "t": 775.0,
+          "population": 90000
+        },
+        {
+          "t": 793.0,
+          "population": 120000
+        },
+        {
+          "t": 825.0,
+          "population": 100000
+        },
+        {
+          "t": 875.0,
+          "population": 150000
+        },
+        {
+          "t": 899.0,
+          "population": 420000
+        },
+        {
+          "t": 923.0,
+          "population": 442000
+        },
+        {
+          "t": 925.0,
+          "population": 442000
+        },
+        {
+          "t": 1025.0,
+          "population": 400000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1283.0,
+          "population": 50000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "kalyan-india",
+      "name": "Kalyan",
+      "country": "India",
+      "lat": 19.2437,
+      "lon": 73.13554,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 124.0,
+          "population": 11191
+        },
+        {
+          "t": 875.0,
+          "population": 125000
+        },
+        {
+          "t": 882.0,
+          "population": 125000
+        },
+        {
+          "t": 925.0,
+          "population": 150000
+        }
+      ]
+    },
+    {
+      "id": "kamakura-japan",
+      "name": "Kamakura",
+      "country": "Japan",
+      "lat": 35.30889,
+      "lon": 139.55028,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 725.0,
+          "population": 200000
+        },
+        {
+          "t": 775.0,
+          "population": 200000
+        },
+        {
+          "t": 825.0,
+          "population": 175000
+        }
+      ]
+    },
+    {
+      "id": "kanauji-india",
+      "name": "Kanauji",
+      "country": "India",
+      "lat": 27.05519,
+      "lon": 79.91808,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 177.0,
+          "population": 16486
+        },
+        {
+          "t": 875.0,
+          "population": 92000
+        },
+        {
+          "t": 925.0,
+          "population": 80000
+        },
+        {
+          "t": 1007.0,
+          "population": 60000
+        },
+        {
+          "t": 1024.0,
+          "population": 72000
+        },
+        {
+          "t": 1025.0,
+          "population": 72000
+        },
+        {
+          "t": 1125.0,
+          "population": 80000
+        },
+        {
+          "t": 1175.0,
+          "population": 80000
+        },
+        {
+          "t": 1225.0,
+          "population": 80000
+        },
+        {
+          "t": 1395.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 120000
+        }
+      ]
+    },
+    {
+      "id": "kanauji-kanauj-india",
+      "name": "Kanauji, Kanauj",
+      "country": "India",
+      "lat": 27.05519,
+      "lon": 79.91808,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 200000
+        },
+        {
+          "t": 1425.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "kayseri-turkey",
+      "name": "Kayseri",
+      "country": "Turkey",
+      "lat": 38.73222,
+      "lon": 35.48528,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 60000
+        },
+        {
+          "t": 133.0,
+          "population": 71000
+        },
+        {
+          "t": 176.0,
+          "population": 18413
+        },
+        {
+          "t": 186.0,
+          "population": 18522
+        },
+        {
+          "t": 212.0,
+          "population": 25000
+        },
+        {
+          "t": 775.0,
+          "population": 50000
+        },
+        {
+          "t": 825.0,
+          "population": 40000
+        },
+        {
+          "t": 875.0,
+          "population": 50000
+        },
+        {
+          "t": 1025.0,
+          "population": 40000
+        },
+        {
+          "t": 1403.0,
+          "population": 60000
+        },
+        {
+          "t": 1475.0,
+          "population": 60000
+        },
+        {
+          "t": 1525.0,
+          "population": 50000
+        },
+        {
+          "t": 1825.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "kish-iraq",
+      "name": "Kish",
+      "country": "Iraq",
+      "lat": 32.55217989,
+      "lon": 44.5856425,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4525.0,
+          "population": 20000
+        },
+        {
+          "t": 4825.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "kition-cyprus",
+      "name": "Kition",
+      "country": "Cyprus",
+      "lat": 34.916667,
+      "lon": 33.633333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3325.0,
+          "population": 30000
+        },
+        {
+          "t": 3425.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "knossos-greece",
+      "name": "Knossos",
+      "country": "Greece",
+      "lat": 35.2979516,
+      "lon": 25.16329744,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3385.0,
+          "population": 30000
+        },
+        {
+          "t": 3525.0,
+          "population": 50000
+        },
+        {
+          "t": 3625.0,
+          "population": 15000
+        },
+        {
+          "t": 3725.0,
+          "population": 15000
+        }
+      ]
+    },
+    {
+      "id": "kufa-iraq",
+      "name": "Kufa",
+      "country": "Iraq",
+      "lat": 32.033333,
+      "lon": 44.4,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1225.0,
+          "population": 200000
+        },
+        {
+          "t": 1271.0,
+          "population": 110000
+        },
+        {
+          "t": 1285.0,
+          "population": 90000
+        },
+        {
+          "t": 1310.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 200000
+        },
+        {
+          "t": 1329.0,
+          "population": 200000
+        },
+        {
+          "t": 1354.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "kyoto-japan",
+      "name": "Kyoto",
+      "country": "Japan",
+      "lat": 35.02107,
+      "lon": 135.75385,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1468000
+        },
+        {
+          "t": 111.0,
+          "population": 517000
+        },
+        {
+          "t": 173.0,
+          "population": 316784
+        },
+        {
+          "t": 175.0,
+          "population": 323000
+        },
+        {
+          "t": 179.0,
+          "population": 337842
+        },
+        {
+          "t": 200.0,
+          "population": 350000
+        },
+        {
+          "t": 225.0,
+          "population": 377000
+        },
+        {
+          "t": 227.0,
+          "population": 379274
+        },
+        {
+          "t": 275.0,
+          "population": 362000
+        },
+        {
+          "t": 309.0,
+          "population": 350367
+        },
+        {
+          "t": 325.0,
+          "population": 350000
+        },
+        {
+          "t": 329.0,
+          "population": 350986
+        },
+        {
+          "t": 393.0,
+          "population": 410098
+        },
+        {
+          "t": 401.0,
+          "population": 410000
+        },
+        {
+          "t": 425.0,
+          "population": 300000
+        },
+        {
+          "t": 454.0,
+          "population": 300000
+        },
+        {
+          "t": 475.0,
+          "population": 100000
+        },
+        {
+          "t": 525.0,
+          "population": 40000
+        },
+        {
+          "t": 558.0,
+          "population": 150000
+        },
+        {
+          "t": 625.0,
+          "population": 150000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        },
+        {
+          "t": 775.0,
+          "population": 70000
+        },
+        {
+          "t": 825.0,
+          "population": 100000
+        },
+        {
+          "t": 875.0,
+          "population": 150000
+        },
+        {
+          "t": 1025.0,
+          "population": 175000
+        },
+        {
+          "t": 1125.0,
+          "population": 200000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "lagash-iraq",
+      "name": "Lagash",
+      "country": "Iraq",
+      "lat": 31.41480316,
+      "lon": 46.40981591,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4425.0,
+          "population": 30000
+        },
+        {
+          "t": 4525.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "lahore-pakistan",
+      "name": "Lahore",
+      "country": "Pakistan",
+      "lat": 31.54972,
+      "lon": 74.34361,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 5143000
+        },
+        {
+          "t": 50.0,
+          "population": 2400000
+        },
+        {
+          "t": 75.0,
+          "population": 600000
+        },
+        {
+          "t": 100.0,
+          "population": 355000
+        },
+        {
+          "t": 125.0,
+          "population": 200000
+        },
+        {
+          "t": 170.0,
+          "population": 94143
+        },
+        {
+          "t": 175.0,
+          "population": 94000
+        },
+        {
+          "t": 318.0,
+          "population": 54000
+        },
+        {
+          "t": 325.0,
+          "population": 54000
+        },
+        {
+          "t": 375.0,
+          "population": 360000
+        },
+        {
+          "t": 394.0,
+          "population": 84000
+        },
+        {
+          "t": 398.0,
+          "population": 500000
+        },
+        {
+          "t": 403.0,
+          "population": 500000
+        },
+        {
+          "t": 425.0,
+          "population": 34000
+        },
+        {
+          "t": 435.0,
+          "population": 300000
+        },
+        {
+          "t": 925.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "larak-iraq",
+      "name": "Larak",
+      "country": "Iraq",
+      "lat": 32.31273751,
+      "lon": 45.66099799,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 10000
+        },
+        {
+          "t": 4825.0,
+          "population": 40000
+        },
+        {
+          "t": 5025.0,
+          "population": 10000
+        },
+        {
+          "t": 5325.0,
+          "population": 10000
+        },
+        {
+          "t": 5525.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "larsa-iraq",
+      "name": "Larsa",
+      "country": "Iraq",
+      "lat": 31.28397535,
+      "lon": 45.85304653,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 40000
+        },
+        {
+          "t": 3925.0,
+          "population": 40000
+        },
+        {
+          "t": 4025.0,
+          "population": 40000
+        },
+        {
+          "t": 4525.0,
+          "population": 10000
+        },
+        {
+          "t": 4825.0,
+          "population": 16000
+        }
+      ]
+    },
+    {
+      "id": "linzi-china",
+      "name": "Linzi",
+      "country": "China",
+      "lat": 36.8167,
+      "lon": 118.3,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        },
+        {
+          "t": 2325.0,
+          "population": 350000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2525.0,
+          "population": 200000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "london-united-kingdom",
+      "name": "London",
+      "country": "United Kingdom",
+      "lat": 51.51121,
+      "lon": -0.11983,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 7074000
+        },
+        {
+          "t": 50.0,
+          "population": 10500000
+        },
+        {
+          "t": 55.0,
+          "population": 10875000
+        },
+        {
+          "t": 75.0,
+          "population": 8860000
+        },
+        {
+          "t": 100.0,
+          "population": 7742000
+        },
+        {
+          "t": 111.0,
+          "population": 7419000
+        },
+        {
+          "t": 125.0,
+          "population": 6480000
+        },
+        {
+          "t": 150.0,
+          "population": 4241000
+        },
+        {
+          "t": 174.0,
+          "population": 2362236
+        },
+        {
+          "t": 175.0,
+          "population": 2320000
+        },
+        {
+          "t": 184.0,
+          "population": 1948417
+        },
+        {
+          "t": 200.0,
+          "population": 1335000
+        },
+        {
+          "t": 224.0,
+          "population": 864845
+        },
+        {
+          "t": 225.0,
+          "population": 861000
+        },
+        {
+          "t": 275.0,
+          "population": 676000
+        },
+        {
+          "t": 325.0,
+          "population": 550000
+        },
+        {
+          "t": 335.0,
+          "population": 527000
+        },
+        {
+          "t": 375.0,
+          "population": 410000
+        },
+        {
+          "t": 425.0,
+          "population": 187000
+        },
+        {
+          "t": 430.0,
+          "population": 152000
+        },
+        {
+          "t": 432.0,
+          "population": 152000
+        },
+        {
+          "t": 450.0,
+          "population": 112000
+        },
+        {
+          "t": 475.0,
+          "population": 74000
+        },
+        {
+          "t": 493.0,
+          "population": 62000
+        },
+        {
+          "t": 525.0,
+          "population": 50000
+        },
+        {
+          "t": 575.0,
+          "population": 60000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        },
+        {
+          "t": 648.0,
+          "population": 50000
+        },
+        {
+          "t": 677.0,
+          "population": 65000
+        },
+        {
+          "t": 725.0,
+          "population": 45000
+        },
+        {
+          "t": 825.0,
+          "population": 40000
+        },
+        {
+          "t": 826.0,
+          "population": 40000
+        },
+        {
+          "t": 2125.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "los-angeles-united-states-of-america",
+      "name": "Los Angeles",
+      "country": "United States of America",
+      "lat": 34.05223,
+      "lon": -118.244,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 3695000
+        },
+        {
+          "t": 50.0,
+          "population": 8900000
+        },
+        {
+          "t": 55.0,
+          "population": 8712000
+        },
+        {
+          "t": 75.0,
+          "population": 3986000
+        },
+        {
+          "t": 100.0,
+          "population": 1147000
+        },
+        {
+          "t": 111.0,
+          "population": 480000
+        },
+        {
+          "t": 125.0,
+          "population": 107000
+        }
+      ]
+    },
+    {
+      "id": "luoyang-china",
+      "name": "Luoyang",
+      "country": "China",
+      "lat": 34.6697,
+      "lon": 112.4422,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1202000
+        },
+        {
+          "t": 50.0,
+          "population": 887000
+        },
+        {
+          "t": 125.0,
+          "population": 30000
+        },
+        {
+          "t": 212.0,
+          "population": 27000
+        },
+        {
+          "t": 325.0,
+          "population": 35000
+        },
+        {
+          "t": 825.0,
+          "population": 50000
+        },
+        {
+          "t": 864.0,
+          "population": 50000
+        },
+        {
+          "t": 948.0,
+          "population": 40000
+        },
+        {
+          "t": 1025.0,
+          "population": 50000
+        },
+        {
+          "t": 1125.0,
+          "population": 200000
+        },
+        {
+          "t": 1225.0,
+          "population": 400000
+        },
+        {
+          "t": 1325.0,
+          "population": 500000
+        },
+        {
+          "t": 1403.0,
+          "population": 200000
+        },
+        {
+          "t": 1425.0,
+          "population": 500000
+        },
+        {
+          "t": 1497.0,
+          "population": 240000
+        },
+        {
+          "t": 1525.0,
+          "population": 500000
+        },
+        {
+          "t": 1625.0,
+          "population": 200000
+        },
+        {
+          "t": 1725.0,
+          "population": 250000
+        },
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 420000
+        },
+        {
+          "t": 2024.0,
+          "population": 260000
+        },
+        {
+          "t": 2125.0,
+          "population": 200000
+        },
+        {
+          "t": 2225.0,
+          "population": 200000
+        },
+        {
+          "t": 2325.0,
+          "population": 250000
+        },
+        {
+          "t": 2425.0,
+          "population": 200000
+        },
+        {
+          "t": 2455.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 200000
+        },
+        {
+          "t": 2625.0,
+          "population": 200000
+        },
+        {
+          "t": 2675.0,
+          "population": 70000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 50000
+        },
+        {
+          "t": 3025.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "maoling-china",
+      "name": "Maoling",
+      "country": "China",
+      "lat": 34.335853,
+      "lon": 108.570328,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 2024.0,
+          "population": 180000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "mareb-yemen",
+      "name": "Mareb",
+      "country": "Yemen",
+      "lat": 15.40427477,
+      "lon": 45.355823,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2675.0,
+          "population": 45000
+        }
+      ]
+    },
+    {
+      "id": "mari-syria",
+      "name": "Mari",
+      "country": "Syria",
+      "lat": 34.54962872,
+      "lon": 40.88925833,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 60000
+        },
+        {
+          "t": 3925.0,
+          "population": 30000
+        },
+        {
+          "t": 4025.0,
+          "population": 30000
+        },
+        {
+          "t": 4125.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 50000
+        },
+        {
+          "t": 4425.0,
+          "population": 50000
+        },
+        {
+          "t": 4525.0,
+          "population": 50000
+        },
+        {
+          "t": 4825.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "marrakech-morocco",
+      "name": "Marrakech",
+      "country": "Morocco",
+      "lat": 31.63416,
+      "lon": -7.99994,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 224000
+        },
+        {
+          "t": 78.0,
+          "population": 238000
+        },
+        {
+          "t": 125.0,
+          "population": 120000
+        },
+        {
+          "t": 140.0,
+          "population": 55000
+        },
+        {
+          "t": 161.0,
+          "population": 45000
+        },
+        {
+          "t": 175.0,
+          "population": 50000
+        },
+        {
+          "t": 186.0,
+          "population": 60000
+        },
+        {
+          "t": 191.0,
+          "population": 50000
+        },
+        {
+          "t": 221.0,
+          "population": 30000
+        },
+        {
+          "t": 225.0,
+          "population": 30000
+        },
+        {
+          "t": 237.0,
+          "population": 30000
+        },
+        {
+          "t": 250.0,
+          "population": 25000
+        },
+        {
+          "t": 275.0,
+          "population": 30000
+        },
+        {
+          "t": 325.0,
+          "population": 25000
+        },
+        {
+          "t": 335.0,
+          "population": 25000
+        },
+        {
+          "t": 375.0,
+          "population": 125000
+        },
+        {
+          "t": 425.0,
+          "population": 125000
+        },
+        {
+          "t": 450.0,
+          "population": 100000
+        },
+        {
+          "t": 475.0,
+          "population": 75000
+        },
+        {
+          "t": 510.0,
+          "population": 50000
+        },
+        {
+          "t": 525.0,
+          "population": 50000
+        },
+        {
+          "t": 575.0,
+          "population": 50000
+        },
+        {
+          "t": 625.0,
+          "population": 50000
+        },
+        {
+          "t": 675.0,
+          "population": 50000
+        },
+        {
+          "t": 725.0,
+          "population": 75000
+        },
+        {
+          "t": 775.0,
+          "population": 125000
+        },
+        {
+          "t": 825.0,
+          "population": 150000
+        },
+        {
+          "t": 875.0,
+          "population": 150000
+        },
+        {
+          "t": 925.0,
+          "population": 150000
+        }
+      ]
+    },
+    {
+      "id": "memphis-egypt",
+      "name": "Memphis",
+      "country": "Egypt",
+      "lat": 29.844722,
+      "lon": 31.250833,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 846000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 100000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        },
+        {
+          "t": 3025.0,
+          "population": 100000
+        },
+        {
+          "t": 3125.0,
+          "population": 100000
+        },
+        {
+          "t": 3225.0,
+          "population": 75000
+        },
+        {
+          "t": 3385.0,
+          "population": 32000
+        },
+        {
+          "t": 3825.0,
+          "population": 30000
+        },
+        {
+          "t": 4025.0,
+          "population": 60000
+        },
+        {
+          "t": 4225.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 30000
+        },
+        {
+          "t": 4425.0,
+          "population": 30000
+        },
+        {
+          "t": 4525.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "merv-turkmenistan",
+      "name": "Merv",
+      "country": "Turkmenistan",
+      "lat": 37.6628,
+      "lon": 62.1925,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 875.0,
+          "population": 200000
+        },
+        {
+          "t": 884.0,
+          "population": 180000
+        },
+        {
+          "t": 925.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 120000
+        },
+        {
+          "t": 1225.0,
+          "population": 120000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1725.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "mexico-city-mexico",
+      "name": "Mexico City",
+      "country": "Mexico",
+      "lat": 19.42847,
+      "lon": -99.1277,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8235000
+        },
+        {
+          "t": 50.0,
+          "population": 11300000
+        },
+        {
+          "t": 55.0,
+          "population": 9000000
+        },
+        {
+          "t": 75.0,
+          "population": 2872000
+        },
+        {
+          "t": 100.0,
+          "population": 772000
+        },
+        {
+          "t": 111.0,
+          "population": 600000
+        },
+        {
+          "t": 125.0,
+          "population": 368000
+        },
+        {
+          "t": 150.0,
+          "population": 250000
+        },
+        {
+          "t": 169.0,
+          "population": 185000
+        },
+        {
+          "t": 175.0,
+          "population": 170000
+        },
+        {
+          "t": 197.0,
+          "population": 165000
+        },
+        {
+          "t": 200.0,
+          "population": 165000
+        },
+        {
+          "t": 222.0,
+          "population": 132000
+        },
+        {
+          "t": 225.0,
+          "population": 128000
+        },
+        {
+          "t": 235.0,
+          "population": 120000
+        },
+        {
+          "t": 253.0,
+          "population": 120000
+        },
+        {
+          "t": 275.0,
+          "population": 102000
+        },
+        {
+          "t": 283.0,
+          "population": 98000
+        },
+        {
+          "t": 325.0,
+          "population": 85000
+        },
+        {
+          "t": 344.0,
+          "population": 75000
+        },
+        {
+          "t": 391.0,
+          "population": 40000
+        },
+        {
+          "t": 400.0,
+          "population": 60000
+        },
+        {
+          "t": 425.0,
+          "population": 58500
+        },
+        {
+          "t": 450.0,
+          "population": 55000
+        },
+        {
+          "t": 475.0,
+          "population": 50000
+        },
+        {
+          "t": 501.0,
+          "population": 30000
+        },
+        {
+          "t": 505.0,
+          "population": 80000
+        },
+        {
+          "t": 525.0,
+          "population": 80000
+        }
+      ]
+    },
+    {
+      "id": "miletus-turkey",
+      "name": "Miletus",
+      "country": "Turkey",
+      "lat": 37.530278,
+      "lon": 27.278333,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 2675.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "mohenjodaro-pakistan",
+      "name": "Mohenjodaro",
+      "country": "Pakistan",
+      "lat": 27.32533494,
+      "lon": 68.13293014,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 20000
+        },
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 20000
+        },
+        {
+          "t": 4225.0,
+          "population": 40000
+        },
+        {
+          "t": 4325.0,
+          "population": 40000
+        },
+        {
+          "t": 4425.0,
+          "population": 40000
+        },
+        {
+          "t": 4525.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "montevideo-uruguay",
+      "name": "Montevideo",
+      "country": "Uruguay",
+      "lat": -34.817311,
+      "lon": -56.158866,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 13303000
+        }
+      ]
+    },
+    {
+      "id": "moscow-russian-federation",
+      "name": "Moscow",
+      "country": "Russian Federation",
+      "lat": 55.75222,
+      "lon": 37.61556,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8297000
+        },
+        {
+          "t": 50.0,
+          "population": 10700000
+        },
+        {
+          "t": 55.0,
+          "population": 9800000
+        },
+        {
+          "t": 75.0,
+          "population": 5100000
+        },
+        {
+          "t": 100.0,
+          "population": 1764000
+        },
+        {
+          "t": 111.0,
+          "population": 1805000
+        },
+        {
+          "t": 125.0,
+          "population": 1120000
+        },
+        {
+          "t": 150.0,
+          "population": 600000
+        },
+        {
+          "t": 175.0,
+          "population": 373800
+        },
+        {
+          "t": 200.0,
+          "population": 257000
+        },
+        {
+          "t": 214.0,
+          "population": 270184
+        },
+        {
+          "t": 225.0,
+          "population": 248000
+        },
+        {
+          "t": 243.0,
+          "population": 213000
+        },
+        {
+          "t": 255.0,
+          "population": 152790
+        },
+        {
+          "t": 275.0,
+          "population": 146000
+        },
+        {
+          "t": 280.0,
+          "population": 145000
+        },
+        {
+          "t": 293.0,
+          "population": 135000
+        },
+        {
+          "t": 324.0,
+          "population": 114000
+        },
+        {
+          "t": 325.0,
+          "population": 114000
+        },
+        {
+          "t": 375.0,
+          "population": 105000
+        },
+        {
+          "t": 414.0,
+          "population": 130000
+        },
+        {
+          "t": 425.0,
+          "population": 80000
+        },
+        {
+          "t": 450.0,
+          "population": 60000
+        },
+        {
+          "t": 455.0,
+          "population": 120000
+        },
+        {
+          "t": 472.0,
+          "population": 75000
+        },
+        {
+          "t": 475.0,
+          "population": 75000
+        },
+        {
+          "t": 505.0,
+          "population": 90000
+        },
+        {
+          "t": 525.0,
+          "population": 80000
+        },
+        {
+          "t": 625.0,
+          "population": 30000
+        },
+        {
+          "t": 682.0,
+          "population": 35000
+        },
+        {
+          "t": 688.0,
+          "population": 22000
+        }
+      ]
+    },
+    {
+      "id": "mumbai-india",
+      "name": "Mumbai",
+      "country": "India",
+      "lat": 19.07283,
+      "lon": 72.88261,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 9926000
+        },
+        {
+          "t": 50.0,
+          "population": 7000000
+        },
+        {
+          "t": 55.0,
+          "population": 6610000
+        },
+        {
+          "t": 75.0,
+          "population": 2680000
+        },
+        {
+          "t": 100.0,
+          "population": 1170000
+        },
+        {
+          "t": 111.0,
+          "population": 1080000
+        },
+        {
+          "t": 125.0,
+          "population": 780000
+        },
+        {
+          "t": 150.0,
+          "population": 718000
+        },
+        {
+          "t": 161.0,
+          "population": 816562
+        },
+        {
+          "t": 175.0,
+          "population": 580000
+        },
+        {
+          "t": 176.0,
+          "population": 566119
+        },
+        {
+          "t": 199.0,
+          "population": 162000
+        },
+        {
+          "t": 200.0,
+          "population": 162000
+        },
+        {
+          "t": 222.0,
+          "population": 150000
+        },
+        {
+          "t": 225.0,
+          "population": 140000
+        },
+        {
+          "t": 261.0,
+          "population": 60000
+        },
+        {
+          "t": 266.0,
+          "population": 88000
+        },
+        {
+          "t": 274.0,
+          "population": 77000
+        },
+        {
+          "t": 275.0,
+          "population": 77000
+        },
+        {
+          "t": 281.0,
+          "population": 70000
+        },
+        {
+          "t": 307.0,
+          "population": 16000
+        },
+        {
+          "t": 325.0,
+          "population": 38000
+        },
+        {
+          "t": 351.0,
+          "population": 60000
+        },
+        {
+          "t": 364.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "mundigak-afghanistan",
+      "name": "Mundigak",
+      "country": "Afghanistan",
+      "lat": 31.90671754,
+      "lon": 65.49785591,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 10000
+        },
+        {
+          "t": 3925.0,
+          "population": 10000
+        },
+        {
+          "t": 4025.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "mycenae-greece",
+      "name": "Mycenae",
+      "country": "Greece",
+      "lat": 37.73038721,
+      "lon": 22.75788116,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 30000
+        },
+        {
+          "t": 3385.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "nagar-syria",
+      "name": "Nagar",
+      "country": "Syria",
+      "lat": 36.66739231,
+      "lon": 41.05865393,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3925.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 15000
+        },
+        {
+          "t": 4325.0,
+          "population": 20000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 15000
+        },
+        {
+          "t": 4825.0,
+          "population": 20000
+        },
+        {
+          "t": 5025.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "namazga-tepe-turkmenistan",
+      "name": "Namazga-Tepe",
+      "country": "Turkmenistan",
+      "lat": 37.372778,
+      "lon": 59.556944,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4025.0,
+          "population": 10000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 10000
+        },
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "nanjing-china",
+      "name": "Nanjing",
+      "country": "China",
+      "lat": 32.05,
+      "lon": 118.7667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1200000
+        },
+        {
+          "t": 50.0,
+          "population": 2000000
+        },
+        {
+          "t": 55.0,
+          "population": 200000
+        },
+        {
+          "t": 75.0,
+          "population": 1020000
+        },
+        {
+          "t": 100.0,
+          "population": 395000
+        },
+        {
+          "t": 125.0,
+          "population": 270000
+        },
+        {
+          "t": 147.0,
+          "population": 130000
+        },
+        {
+          "t": 175.0,
+          "population": 50000
+        },
+        {
+          "t": 225.0,
+          "population": 50000
+        },
+        {
+          "t": 240.0,
+          "population": 50000
+        },
+        {
+          "t": 275.0,
+          "population": 100000
+        },
+        {
+          "t": 290.0,
+          "population": 130000
+        },
+        {
+          "t": 325.0,
+          "population": 140000
+        },
+        {
+          "t": 359.0,
+          "population": 173000
+        },
+        {
+          "t": 375.0,
+          "population": 178000
+        },
+        {
+          "t": 425.0,
+          "population": 194000
+        },
+        {
+          "t": 433.0,
+          "population": 194000
+        },
+        {
+          "t": 450.0,
+          "population": 188000
+        },
+        {
+          "t": 475.0,
+          "population": 182000
+        },
+        {
+          "t": 510.0,
+          "population": 147013
+        },
+        {
+          "t": 525.0,
+          "population": 147000
+        },
+        {
+          "t": 575.0,
+          "population": 150000
+        },
+        {
+          "t": 625.0,
+          "population": 487000
+        },
+        {
+          "t": 634.0,
+          "population": 473200
+        },
+        {
+          "t": 675.0,
+          "population": 95000
+        },
+        {
+          "t": 681.0,
+          "population": 95000
+        },
+        {
+          "t": 725.0,
+          "population": 95000
+        },
+        {
+          "t": 728.0,
+          "population": 95000
+        },
+        {
+          "t": 775.0,
+          "population": 130000
+        },
+        {
+          "t": 825.0,
+          "population": 130000
+        },
+        {
+          "t": 875.0,
+          "population": 130000
+        },
+        {
+          "t": 895.0,
+          "population": 160000
+        },
+        {
+          "t": 923.0,
+          "population": 67000
+        },
+        {
+          "t": 925.0,
+          "population": 67000
+        },
+        {
+          "t": 1025.0,
+          "population": 70000
+        },
+        {
+          "t": 1050.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1525.0,
+          "population": 500000
+        },
+        {
+          "t": 1625.0,
+          "population": 300000
+        },
+        {
+          "t": 1664.0,
+          "population": 150000
+        },
+        {
+          "t": 1725.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "naples-italy",
+      "name": "Naples",
+      "country": "Italy",
+      "lat": 40.85178,
+      "lon": 14.26812,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1046000
+        },
+        {
+          "t": 50.0,
+          "population": 1900000
+        },
+        {
+          "t": 55.0,
+          "population": 1930000
+        },
+        {
+          "t": 75.0,
+          "population": 1210000
+        },
+        {
+          "t": 100.0,
+          "population": 852000
+        },
+        {
+          "t": 111.0,
+          "population": 691000
+        },
+        {
+          "t": 125.0,
+          "population": 563000
+        },
+        {
+          "t": 150.0,
+          "population": 450000
+        },
+        {
+          "t": 174.0,
+          "population": 416475
+        },
+        {
+          "t": 175.0,
+          "population": 413000
+        },
+        {
+          "t": 180.0,
+          "population": 400813
+        },
+        {
+          "t": 200.0,
+          "population": 350000
+        },
+        {
+          "t": 224.0,
+          "population": 426339
+        },
+        {
+          "t": 225.0,
+          "population": 430000
+        },
+        {
+          "t": 228.0,
+          "population": 438000
+        },
+        {
+          "t": 259.0,
+          "population": 322786
+        },
+        {
+          "t": 275.0,
+          "population": 310000
+        },
+        {
+          "t": 283.0,
+          "population": 305021
+        },
+        {
+          "t": 318.0,
+          "population": 220000
+        },
+        {
+          "t": 325.0,
+          "population": 207000
+        },
+        {
+          "t": 337.0,
+          "population": 186759
+        },
+        {
+          "t": 375.0,
+          "population": 265000
+        },
+        {
+          "t": 425.0,
+          "population": 224110
+        },
+        {
+          "t": 450.0,
+          "population": 215000
+        },
+        {
+          "t": 472.0,
+          "population": 208000
+        },
+        {
+          "t": 475.0,
+          "population": 209000
+        },
+        {
+          "t": 478.0,
+          "population": 209637
+        },
+        {
+          "t": 525.0,
+          "population": 114000
+        },
+        {
+          "t": 575.0,
+          "population": 75000
+        },
+        {
+          "t": 590.0,
+          "population": 60000
+        },
+        {
+          "t": 625.0,
+          "population": 40000
+        },
+        {
+          "t": 626.0,
+          "population": 40000
+        },
+        {
+          "t": 675.0,
+          "population": 40000
+        },
+        {
+          "t": 685.0,
+          "population": 60000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        },
+        {
+          "t": 747.0,
+          "population": 33500
+        },
+        {
+          "t": 825.0,
+          "population": 35000
+        },
+        {
+          "t": 1025.0,
+          "population": 30000
+        },
+        {
+          "t": 1225.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "nara-city-japan",
+      "name": "Nara City",
+      "country": "Japan",
+      "lat": 34.685333,
+      "lon": 135.832742,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 148.0,
+          "population": 22746
+        },
+        {
+          "t": 525.0,
+          "population": 10000
+        },
+        {
+          "t": 625.0,
+          "population": 8000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1241.0,
+          "population": 200000
+        },
+        {
+          "t": 1316.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "new-york-united-states-of-america",
+      "name": "New York",
+      "country": "United States of America",
+      "lat": 40.71435,
+      "lon": -74.006,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8008000
+        },
+        {
+          "t": 50.0,
+          "population": 17100000
+        },
+        {
+          "t": 55.0,
+          "population": 17252000
+        },
+        {
+          "t": 75.0,
+          "population": 12463000
+        },
+        {
+          "t": 100.0,
+          "population": 7774000
+        },
+        {
+          "t": 111.0,
+          "population": 6700000
+        },
+        {
+          "t": 125.0,
+          "population": 4242000
+        },
+        {
+          "t": 150.0,
+          "population": 1900000
+        },
+        {
+          "t": 175.0,
+          "population": 645845
+        },
+        {
+          "t": 200.0,
+          "population": 170000
+        },
+        {
+          "t": 225.0,
+          "population": 63735
+        },
+        {
+          "t": 276.0,
+          "population": 13296
+        },
+        {
+          "t": 322.0,
+          "population": 4436
+        }
+      ]
+    },
+    {
+      "id": "nimrud-iraq",
+      "name": "Nimrud",
+      "country": "Iraq",
+      "lat": 36.09813154,
+      "lon": 43.32875612,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2675.0,
+          "population": 40000
+        },
+        {
+          "t": 2825.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "nineveh-iraq",
+      "name": "Nineveh",
+      "country": "Iraq",
+      "lat": 36.359444,
+      "lon": 43.152778,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2675.0,
+          "population": 120000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 3025.0,
+          "population": 10000
+        },
+        {
+          "t": 3125.0,
+          "population": 10000
+        },
+        {
+          "t": 3225.0,
+          "population": 10000
+        },
+        {
+          "t": 3325.0,
+          "population": 10000
+        },
+        {
+          "t": 3425.0,
+          "population": 10000
+        },
+        {
+          "t": 3525.0,
+          "population": 10000
+        },
+        {
+          "t": 3625.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "nippur-iraq",
+      "name": "Nippur",
+      "country": "Iraq",
+      "lat": 32.12693858,
+      "lon": 45.23078534,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 20000
+        },
+        {
+          "t": 3325.0,
+          "population": 30000
+        },
+        {
+          "t": 3425.0,
+          "population": 20000
+        },
+        {
+          "t": 3825.0,
+          "population": 20000
+        },
+        {
+          "t": 3925.0,
+          "population": 20000
+        },
+        {
+          "t": 4025.0,
+          "population": 30000
+        },
+        {
+          "t": 4125.0,
+          "population": 30000
+        },
+        {
+          "t": 4225.0,
+          "population": 30000
+        },
+        {
+          "t": 4275.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 30000
+        },
+        {
+          "t": 4425.0,
+          "population": 20000
+        },
+        {
+          "t": 4525.0,
+          "population": 20000
+        },
+        {
+          "t": 4825.0,
+          "population": 10000
+        },
+        {
+          "t": 5025.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "nishapur-iran",
+      "name": "Nishapur",
+      "country": "Iran",
+      "lat": 36.213333,
+      "lon": 58.795833,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 156.0,
+          "population": 8000
+        },
+        {
+          "t": 203.0,
+          "population": 5000
+        },
+        {
+          "t": 805.0,
+          "population": 70000
+        },
+        {
+          "t": 817.0,
+          "population": 25000
+        },
+        {
+          "t": 875.0,
+          "population": 90000
+        },
+        {
+          "t": 925.0,
+          "population": 100000
+        },
+        {
+          "t": 991.0,
+          "population": 120000
+        },
+        {
+          "t": 1025.0,
+          "population": 130000
+        },
+        {
+          "t": 1125.0,
+          "population": 130000
+        },
+        {
+          "t": 1525.0,
+          "population": 50000
+        },
+        {
+          "t": 1664.0,
+          "population": 50000
+        }
+      ]
+    },
+    {
+      "id": "osaka-japan",
+      "name": "Osaka",
+      "country": "Japan",
+      "lat": 34.693216,
+      "lon": 135.502082,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2599000
+        },
+        {
+          "t": 50.0,
+          "population": 15500000
+        },
+        {
+          "t": 55.0,
+          "population": 12000000
+        },
+        {
+          "t": 75.0,
+          "population": 3480000
+        },
+        {
+          "t": 100.0,
+          "population": 2219000
+        },
+        {
+          "t": 111.0,
+          "population": 1480000
+        },
+        {
+          "t": 125.0,
+          "population": 970000
+        },
+        {
+          "t": 150.0,
+          "population": 320000
+        },
+        {
+          "t": 175.0,
+          "population": 320000
+        },
+        {
+          "t": 200.0,
+          "population": 350000
+        },
+        {
+          "t": 225.0,
+          "population": 383000
+        },
+        {
+          "t": 275.0,
+          "population": 413000
+        },
+        {
+          "t": 325.0,
+          "population": 380000
+        },
+        {
+          "t": 360.0,
+          "population": 338128
+        },
+        {
+          "t": 375.0,
+          "population": 346000
+        },
+        {
+          "t": 425.0,
+          "population": 360000
+        },
+        {
+          "t": 445.0,
+          "population": 45000
+        }
+      ]
+    },
+    {
+      "id": "paris-france",
+      "name": "Paris",
+      "country": "France",
+      "lat": 48.85661,
+      "lon": 2.352222,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2152000
+        },
+        {
+          "t": 50.0,
+          "population": 9400000
+        },
+        {
+          "t": 55.0,
+          "population": 8875000
+        },
+        {
+          "t": 75.0,
+          "population": 5900000
+        },
+        {
+          "t": 100.0,
+          "population": 4800000
+        },
+        {
+          "t": 111.0,
+          "population": 4000000
+        },
+        {
+          "t": 125.0,
+          "population": 3330000
+        },
+        {
+          "t": 150.0,
+          "population": 2250000
+        },
+        {
+          "t": 174.0,
+          "population": 1325000
+        },
+        {
+          "t": 175.0,
+          "population": 1314000
+        },
+        {
+          "t": 179.0,
+          "population": 1270000
+        },
+        {
+          "t": 200.0,
+          "population": 855000
+        },
+        {
+          "t": 224.0,
+          "population": 547756
+        },
+        {
+          "t": 225.0,
+          "population": 547000
+        },
+        {
+          "t": 250.0,
+          "population": 600600
+        },
+        {
+          "t": 269.0,
+          "population": 576630
+        },
+        {
+          "t": 275.0,
+          "population": 556000
+        },
+        {
+          "t": 277.0,
+          "population": 553000
+        },
+        {
+          "t": 311.0,
+          "population": 509640
+        },
+        {
+          "t": 325.0,
+          "population": 530000
+        },
+        {
+          "t": 342.0,
+          "population": 559000
+        },
+        {
+          "t": 350.0,
+          "population": 540000
+        },
+        {
+          "t": 375.0,
+          "population": 455000
+        },
+        {
+          "t": 388.0,
+          "population": 412000
+        },
+        {
+          "t": 425.0,
+          "population": 245000
+        },
+        {
+          "t": 429.0,
+          "population": 230000
+        },
+        {
+          "t": 435.0,
+          "population": 220000
+        },
+        {
+          "t": 450.0,
+          "population": 220000
+        },
+        {
+          "t": 475.0,
+          "population": 210000
+        },
+        {
+          "t": 525.0,
+          "population": 185000
+        },
+        {
+          "t": 558.0,
+          "population": 174000
+        },
+        {
+          "t": 575.0,
+          "population": 150000
+        },
+        {
+          "t": 607.0,
+          "population": 280000
+        },
+        {
+          "t": 625.0,
+          "population": 280000
+        },
+        {
+          "t": 643.0,
+          "population": 300000
+        },
+        {
+          "t": 675.0,
+          "population": 215000
+        },
+        {
+          "t": 697.0,
+          "population": 274000
+        },
+        {
+          "t": 725.0,
+          "population": 228000
+        },
+        {
+          "t": 733.0,
+          "population": 216000
+        },
+        {
+          "t": 775.0,
+          "population": 160000
+        },
+        {
+          "t": 825.0,
+          "population": 110000
+        },
+        {
+          "t": 875.0,
+          "population": 50000
+        },
+        {
+          "t": 1025.0,
+          "population": 20000
+        },
+        {
+          "t": 1225.0,
+          "population": 25000
+        }
+      ]
+    },
+    {
+      "id": "pataliputra-india",
+      "name": "Pataliputra",
+      "country": "India",
+      "lat": 25.611,
+      "lon": 85.144,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 200000
+        },
+        {
+          "t": 2225.0,
+          "population": 350000
+        },
+        {
+          "t": 2325.0,
+          "population": 400000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "patna-india",
+      "name": "Patna",
+      "country": "India",
+      "lat": 25.610533,
+      "lon": 85.14145,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 635000
+        },
+        {
+          "t": 153.0,
+          "population": 230000
+        },
+        {
+          "t": 175.0,
+          "population": 226000
+        },
+        {
+          "t": 188.0,
+          "population": 225000
+        },
+        {
+          "t": 195.0,
+          "population": 198000
+        },
+        {
+          "t": 200.0,
+          "population": 207000
+        },
+        {
+          "t": 203.0,
+          "population": 212000
+        },
+        {
+          "t": 214.0,
+          "population": 204000
+        },
+        {
+          "t": 225.0,
+          "population": 170000
+        },
+        {
+          "t": 264.0,
+          "population": 50000
+        },
+        {
+          "t": 275.0,
+          "population": 60000
+        },
+        {
+          "t": 325.0,
+          "population": 100000
+        },
+        {
+          "t": 354.0,
+          "population": 170000
+        },
+        {
+          "t": 355.0,
+          "population": 170000
+        },
+        {
+          "t": 393.0,
+          "population": 100000
+        },
+        {
+          "t": 425.0,
+          "population": 80000
+        },
+        {
+          "t": 1664.0,
+          "population": 150000
+        },
+        {
+          "t": 2225.0,
+          "population": 350000
+        },
+        {
+          "t": 2455.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "pergamum-turkey",
+      "name": "Pergamum",
+      "country": "Turkey",
+      "lat": 39.13225127,
+      "lon": 27.1836318,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1825.0,
+          "population": 170000
+        },
+        {
+          "t": 1925.0,
+          "population": 140000
+        },
+        {
+          "t": 2024.0,
+          "population": 160000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "philadelphia-united-states-of-america",
+      "name": "Philadelphia",
+      "country": "United States of America",
+      "lat": 39.95,
+      "lon": -75.1667,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1518000
+        },
+        {
+          "t": 50.0,
+          "population": 5200000
+        },
+        {
+          "t": 55.0,
+          "population": 5279000
+        },
+        {
+          "t": 75.0,
+          "population": 2900000
+        },
+        {
+          "t": 100.0,
+          "population": 2085000
+        },
+        {
+          "t": 111.0,
+          "population": 17600000
+        },
+        {
+          "t": 125.0,
+          "population": 1418000
+        },
+        {
+          "t": 150.0,
+          "population": 791000
+        },
+        {
+          "t": 175.0,
+          "population": 426221
+        },
+        {
+          "t": 200.0,
+          "population": 138000
+        },
+        {
+          "t": 225.0,
+          "population": 68200
+        },
+        {
+          "t": 272.0,
+          "population": 14563
+        },
+        {
+          "t": 325.0,
+          "population": 4400
+        }
+      ]
+    },
+    {
+      "id": "pi-ramesses-egypt",
+      "name": "Pi-Ramesses",
+      "country": "Egypt",
+      "lat": 30.798889,
+      "lon": 31.835833,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 3125.0,
+          "population": 120000
+        },
+        {
+          "t": 3225.0,
+          "population": 160000
+        }
+      ]
+    },
+    {
+      "id": "pyongyang-dem-people-s-republic-of-korea",
+      "name": "Pyongyang",
+      "country": "Dem. People's Republic of Korea",
+      "lat": 39.03385,
+      "lon": 125.7543,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2741000
+        },
+        {
+          "t": 75.0,
+          "population": 400000
+        },
+        {
+          "t": 125.0,
+          "population": 30000
+        },
+        {
+          "t": 144.0,
+          "population": 75938
+        },
+        {
+          "t": 175.0,
+          "population": 62000
+        },
+        {
+          "t": 225.0,
+          "population": 68000
+        },
+        {
+          "t": 275.0,
+          "population": 65000
+        },
+        {
+          "t": 325.0,
+          "population": 55000
+        },
+        {
+          "t": 1025.0,
+          "population": 50000
+        },
+        {
+          "t": 1403.0,
+          "population": 60000
+        },
+        {
+          "t": 1525.0,
+          "population": 60000
+        },
+        {
+          "t": 1664.0,
+          "population": 50000
+        },
+        {
+          "t": 2675.0,
+          "population": 30000
+        },
+        {
+          "t": 2825.0,
+          "population": 25000
+        },
+        {
+          "t": 3025.0,
+          "population": 25000
+        }
+      ]
+    },
+    {
+      "id": "qatna-syria",
+      "name": "Qatna",
+      "country": "Syria",
+      "lat": 34.835,
+      "lon": 36.865833,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3625.0,
+          "population": 20000
+        },
+        {
+          "t": 3725.0,
+          "population": 20000
+        },
+        {
+          "t": 3825.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "qufu-china",
+      "name": "Qufu",
+      "country": "China",
+      "lat": 35.6,
+      "lon": 117.033333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2024.0,
+          "population": 170000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2325.0,
+          "population": 180000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "rayy-iran",
+      "name": "Rayy",
+      "country": "Iran",
+      "lat": 35.5833,
+      "lon": 51.4333,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 825.0,
+          "population": 80000
+        },
+        {
+          "t": 875.0,
+          "population": 80000
+        },
+        {
+          "t": 925.0,
+          "population": 85000
+        },
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 200000
+        }
+      ]
+    },
+    {
+      "id": "rome-italy",
+      "name": "Rome",
+      "country": "Italy",
+      "lat": 41.89474,
+      "lon": 12.4839,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2648000
+        },
+        {
+          "t": 50.0,
+          "population": 3600000
+        },
+        {
+          "t": 55.0,
+          "population": 2960000
+        },
+        {
+          "t": 75.0,
+          "population": 1665000
+        },
+        {
+          "t": 100.0,
+          "population": 758000
+        },
+        {
+          "t": 111.0,
+          "population": 570000
+        },
+        {
+          "t": 125.0,
+          "population": 438000
+        },
+        {
+          "t": 150.0,
+          "population": 252000
+        },
+        {
+          "t": 175.0,
+          "population": 158000
+        },
+        {
+          "t": 200.0,
+          "population": 125000
+        },
+        {
+          "t": 216.0,
+          "population": 134242
+        },
+        {
+          "t": 225.0,
+          "population": 142000
+        },
+        {
+          "t": 275.0,
+          "population": 146000
+        },
+        {
+          "t": 325.0,
+          "population": 138000
+        },
+        {
+          "t": 375.0,
+          "population": 110000
+        },
+        {
+          "t": 425.0,
+          "population": 102000
+        },
+        {
+          "t": 450.0,
+          "population": 70000
+        },
+        {
+          "t": 475.0,
+          "population": 58000
+        },
+        {
+          "t": 512.0,
+          "population": 40000
+        },
+        {
+          "t": 525.0,
+          "population": 38000
+        },
+        {
+          "t": 567.0,
+          "population": 33500
+        },
+        {
+          "t": 625.0,
+          "population": 33000
+        },
+        {
+          "t": 648.0,
+          "population": 17000
+        },
+        {
+          "t": 725.0,
+          "population": 30000
+        },
+        {
+          "t": 825.0,
+          "population": 35000
+        },
+        {
+          "t": 827.0,
+          "population": 35000
+        },
+        {
+          "t": 1025.0,
+          "population": 35000
+        },
+        {
+          "t": 1055.0,
+          "population": 35000
+        },
+        {
+          "t": 1125.0,
+          "population": 40000
+        },
+        {
+          "t": 1225.0,
+          "population": 50000
+        },
+        {
+          "t": 1325.0,
+          "population": 50000
+        },
+        {
+          "t": 1403.0,
+          "population": 50000
+        },
+        {
+          "t": 1425.0,
+          "population": 50000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 800000
+        },
+        {
+          "t": 1664.0,
+          "population": 150000
+        },
+        {
+          "t": 1725.0,
+          "population": 1000000
+        },
+        {
+          "t": 1825.0,
+          "population": 1200000
+        },
+        {
+          "t": 1925.0,
+          "population": 1000000
+        },
+        {
+          "t": 2024.0,
+          "population": 800000
+        },
+        {
+          "t": 2125.0,
+          "population": 400000
+        },
+        {
+          "t": 2225.0,
+          "population": 210000
+        },
+        {
+          "t": 2325.0,
+          "population": 250000
+        },
+        {
+          "t": 2425.0,
+          "population": 150000
+        },
+        {
+          "t": 2455.0,
+          "population": 35000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "saint-petersburg-russian-federation",
+      "name": "Saint Petersburg",
+      "country": "Russian Federation",
+      "lat": 59.89444,
+      "lon": 30.26417,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 4678000
+        },
+        {
+          "t": 50.0,
+          "population": 4200000
+        },
+        {
+          "t": 55.0,
+          "population": 4350000
+        },
+        {
+          "t": 75.0,
+          "population": 2700000
+        },
+        {
+          "t": 100.0,
+          "population": 1430000
+        },
+        {
+          "t": 125.0,
+          "population": 1439000
+        },
+        {
+          "t": 150.0,
+          "population": 764000
+        },
+        {
+          "t": 173.0,
+          "population": 532241
+        },
+        {
+          "t": 175.0,
+          "population": 502000
+        },
+        {
+          "t": 177.0,
+          "population": 473437
+        },
+        {
+          "t": 200.0,
+          "population": 438000
+        },
+        {
+          "t": 225.0,
+          "population": 220200
+        },
+        {
+          "t": 275.0,
+          "population": 74200
+        }
+      ]
+    },
+    {
+      "id": "sais-egypt",
+      "name": "Sais",
+      "country": "Egypt",
+      "lat": 30.96485438,
+      "lon": 30.76872699,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2675.0,
+          "population": 48000
+        }
+      ]
+    },
+    {
+      "id": "samaria-palestine",
+      "name": "Samaria",
+      "country": "Palestine",
+      "lat": 32.2761695611,
+      "lon": 35.19040505,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2825.0,
+          "population": 27000
+        }
+      ]
+    },
+    {
+      "id": "samarkand-uzbekistan",
+      "name": "Samarkand",
+      "country": "Uzbekistan",
+      "lat": 39.6576,
+      "lon": 66.947561,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 58000
+        },
+        {
+          "t": 155.0,
+          "population": 30000
+        },
+        {
+          "t": 191.0,
+          "population": 8000
+        },
+        {
+          "t": 450.0,
+          "population": 50000
+        },
+        {
+          "t": 475.0,
+          "population": 60000
+        },
+        {
+          "t": 515.0,
+          "population": 60000
+        },
+        {
+          "t": 525.0,
+          "population": 60000
+        },
+        {
+          "t": 528.0,
+          "population": 60000
+        },
+        {
+          "t": 575.0,
+          "population": 75000
+        },
+        {
+          "t": 620.0,
+          "population": 150000
+        },
+        {
+          "t": 625.0,
+          "population": 130000
+        },
+        {
+          "t": 804.0,
+          "population": 26000
+        },
+        {
+          "t": 805.0,
+          "population": 106000
+        },
+        {
+          "t": 825.0,
+          "population": 60000
+        },
+        {
+          "t": 875.0,
+          "population": 50000
+        },
+        {
+          "t": 925.0,
+          "population": 40000
+        },
+        {
+          "t": 975.0,
+          "population": 40000
+        },
+        {
+          "t": 1025.0,
+          "population": 200000
+        },
+        {
+          "t": 1045.0,
+          "population": 80000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1225.0,
+          "population": 75000
+        },
+        {
+          "t": 1403.0,
+          "population": 45000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2737.0,
+          "population": 45000
+        }
+      ]
+    },
+    {
+      "id": "samarra-iraq",
+      "name": "Samarra",
+      "country": "Iraq",
+      "lat": 34.198333,
+      "lon": 43.874167,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 182.0,
+          "population": 900
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1136.0,
+          "population": 280000
+        },
+        {
+          "t": 1167.0,
+          "population": 270000
+        },
+        {
+          "t": 1189.0,
+          "population": 280000
+        }
+      ]
+    },
+    {
+      "id": "sanxingdui-china",
+      "name": "Sanxingdui",
+      "country": "China",
+      "lat": 30.993,
+      "lon": 104.2,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 35000
+        }
+      ]
+    },
+    {
+      "id": "sao-paolo-brazil",
+      "name": "Sao Paolo",
+      "country": "Brazil",
+      "lat": -23.5475,
+      "lon": -46.63611,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 10009000
+        },
+        {
+          "t": 50.0,
+          "population": 10000000
+        },
+        {
+          "t": 55.0,
+          "population": 8050000
+        },
+        {
+          "t": 75.0,
+          "population": 2227000
+        },
+        {
+          "t": 100.0,
+          "population": 740000
+        },
+        {
+          "t": 125.0,
+          "population": 239000
+        }
+      ]
+    },
+    {
+      "id": "sapinuwa-turkey",
+      "name": "Sapinuwa",
+      "country": "Turkey",
+      "lat": 40.266667,
+      "lon": 35.25,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 60000
+        },
+        {
+          "t": 3325.0,
+          "population": 75000
+        }
+      ]
+    },
+    {
+      "id": "sarai-russian-federation",
+      "name": "Sarai",
+      "country": "Russian Federation",
+      "lat": 53.74577,
+      "lon": 41.02126,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 675.0,
+          "population": 120000
+        },
+        {
+          "t": 695.0,
+          "population": 117000
+        },
+        {
+          "t": 725.0,
+          "population": 100000
+        },
+        {
+          "t": 772.0,
+          "population": 80000
+        },
+        {
+          "t": 775.0,
+          "population": 80000
+        }
+      ]
+    },
+    {
+      "id": "seleucia-iraq",
+      "name": "Seleucia",
+      "country": "Iraq",
+      "lat": 33.094444,
+      "lon": 44.522222,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 1925.0,
+          "population": 400000
+        },
+        {
+          "t": 2024.0,
+          "population": 400000
+        },
+        {
+          "t": 2125.0,
+          "population": 300000
+        },
+        {
+          "t": 2225.0,
+          "population": 200000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "seoul-republic-of-korea",
+      "name": "Seoul",
+      "country": "Republic of Korea",
+      "lat": 37.56826,
+      "lon": 126.97783,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 10231000
+        },
+        {
+          "t": 50.0,
+          "population": 6800000
+        },
+        {
+          "t": 55.0,
+          "population": 5900000
+        },
+        {
+          "t": 75.0,
+          "population": 1550000
+        },
+        {
+          "t": 100.0,
+          "population": 297000
+        },
+        {
+          "t": 125.0,
+          "population": 195000
+        },
+        {
+          "t": 144.0,
+          "population": 199127
+        },
+        {
+          "t": 150.0,
+          "population": 196000
+        },
+        {
+          "t": 175.0,
+          "population": 183000
+        },
+        {
+          "t": 182.0,
+          "population": 190027
+        },
+        {
+          "t": 200.0,
+          "population": 192000
+        },
+        {
+          "t": 225.0,
+          "population": 194000
+        },
+        {
+          "t": 275.0,
+          "population": 187000
+        },
+        {
+          "t": 325.0,
+          "population": 158000
+        },
+        {
+          "t": 375.0,
+          "population": 150000
+        },
+        {
+          "t": 450.0,
+          "population": 125000
+        },
+        {
+          "t": 475.0,
+          "population": 125000
+        },
+        {
+          "t": 525.0,
+          "population": 125000
+        },
+        {
+          "t": 575.0,
+          "population": 125000
+        },
+        {
+          "t": 622.0,
+          "population": 103328
+        },
+        {
+          "t": 625.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "shanghai-china",
+      "name": "Shanghai",
+      "country": "China",
+      "lat": 31.22222,
+      "lon": 121.45806,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8214000
+        },
+        {
+          "t": 50.0,
+          "population": 8000000
+        },
+        {
+          "t": 55.0,
+          "population": 7900000
+        },
+        {
+          "t": 75.0,
+          "population": 5406000
+        },
+        {
+          "t": 100.0,
+          "population": 1500000
+        },
+        {
+          "t": 111.0,
+          "population": 1000000
+        },
+        {
+          "t": 125.0,
+          "population": 619000
+        },
+        {
+          "t": 150.0,
+          "population": 255000
+        },
+        {
+          "t": 160.0,
+          "population": 146232
+        },
+        {
+          "t": 166.0,
+          "population": 300000
+        },
+        {
+          "t": 172.0,
+          "population": 225000
+        },
+        {
+          "t": 175.0,
+          "population": 185000
+        },
+        {
+          "t": 180.0,
+          "population": 120000
+        },
+        {
+          "t": 200.0,
+          "population": 115000
+        },
+        {
+          "t": 225.0,
+          "population": 90000
+        },
+        {
+          "t": 275.0,
+          "population": 60000
+        },
+        {
+          "t": 295.0,
+          "population": 48209
+        },
+        {
+          "t": 325.0,
+          "population": 45000
+        },
+        {
+          "t": 471.0,
+          "population": 25000
+        }
+      ]
+    },
+    {
+      "id": "shangqi-china",
+      "name": "Shangqi",
+      "country": "China",
+      "lat": 31.22222,
+      "lon": 121.45806,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 130000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "shuruppak-iraq",
+      "name": "Shuruppak",
+      "country": "Iraq",
+      "lat": 31.77736278,
+      "lon": 45.50976115,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 30000
+        },
+        {
+          "t": 4825.0,
+          "population": 30000
+        }
+      ]
+    },
+    {
+      "id": "smyrna-turkey",
+      "name": "Smyrna",
+      "country": "Turkey",
+      "lat": 38.41273,
+      "lon": 27.13838,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 760000
+        },
+        {
+          "t": 75.0,
+          "population": 231000
+        },
+        {
+          "t": 125.0,
+          "population": 201000
+        },
+        {
+          "t": 175.0,
+          "population": 150000
+        },
+        {
+          "t": 200.0,
+          "population": 135000
+        },
+        {
+          "t": 211.0,
+          "population": 120000
+        },
+        {
+          "t": 225.0,
+          "population": 125000
+        },
+        {
+          "t": 275.0,
+          "population": 130000
+        },
+        {
+          "t": 325.0,
+          "population": 135000
+        },
+        {
+          "t": 350.0,
+          "population": 111000
+        },
+        {
+          "t": 361.0,
+          "population": 90000
+        },
+        {
+          "t": 375.0,
+          "population": 75000
+        },
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 125000
+        },
+        {
+          "t": 2125.0,
+          "population": 90000
+        }
+      ]
+    },
+    {
+      "id": "susa-iran",
+      "name": "Susa",
+      "country": "Iran",
+      "lat": 32.19085,
+      "lon": 48.246028,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2455.0,
+          "population": 70000
+        },
+        {
+          "t": 2675.0,
+          "population": 30000
+        },
+        {
+          "t": 2825.0,
+          "population": 27000
+        },
+        {
+          "t": 3025.0,
+          "population": 25000
+        },
+        {
+          "t": 3225.0,
+          "population": 20000
+        },
+        {
+          "t": 3325.0,
+          "population": 10000
+        },
+        {
+          "t": 3425.0,
+          "population": 10000
+        },
+        {
+          "t": 3525.0,
+          "population": 10000
+        },
+        {
+          "t": 3625.0,
+          "population": 10000
+        },
+        {
+          "t": 3725.0,
+          "population": 10000
+        },
+        {
+          "t": 3825.0,
+          "population": 10000
+        },
+        {
+          "t": 4025.0,
+          "population": 25000
+        },
+        {
+          "t": 4125.0,
+          "population": 10000
+        },
+        {
+          "t": 4225.0,
+          "population": 10000
+        },
+        {
+          "t": 4325.0,
+          "population": 10000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "suzhou-china",
+      "name": "Suzhou",
+      "country": "China",
+      "lat": 31.3,
+      "lon": 120.6,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 50.0,
+          "population": 825000
+        },
+        {
+          "t": 75.0,
+          "population": 511000
+        },
+        {
+          "t": 77.0,
+          "population": 381288
+        },
+        {
+          "t": 85.0,
+          "population": 270000
+        },
+        {
+          "t": 100.0,
+          "population": 350000
+        },
+        {
+          "t": 125.0,
+          "population": 280000
+        },
+        {
+          "t": 162.0,
+          "population": 330000
+        },
+        {
+          "t": 175.0,
+          "population": 330000
+        },
+        {
+          "t": 195.0,
+          "population": 317000
+        },
+        {
+          "t": 200.0,
+          "population": 302000
+        },
+        {
+          "t": 215.0,
+          "population": 257000
+        },
+        {
+          "t": 225.0,
+          "population": 243000
+        },
+        {
+          "t": 275.0,
+          "population": 173000
+        },
+        {
+          "t": 290.0,
+          "population": 152000
+        },
+        {
+          "t": 325.0,
+          "population": 140000
+        },
+        {
+          "t": 368.0,
+          "population": 127000
+        },
+        {
+          "t": 375.0,
+          "population": 128000
+        },
+        {
+          "t": 425.0,
+          "population": 134000
+        },
+        {
+          "t": 450.0,
+          "population": 130000
+        },
+        {
+          "t": 475.0,
+          "population": 128000
+        },
+        {
+          "t": 503.0,
+          "population": 146000
+        },
+        {
+          "t": 525.0,
+          "population": 122000
+        },
+        {
+          "t": 534.0,
+          "population": 112000
+        },
+        {
+          "t": 575.0,
+          "population": 121000
+        },
+        {
+          "t": 625.0,
+          "population": 129000
+        },
+        {
+          "t": 632.0,
+          "population": 129000
+        },
+        {
+          "t": 647.0,
+          "population": 122000
+        },
+        {
+          "t": 654.0,
+          "population": 105000
+        },
+        {
+          "t": 675.0,
+          "population": 96000
+        },
+        {
+          "t": 725.0,
+          "population": 91000
+        },
+        {
+          "t": 775.0,
+          "population": 77000
+        },
+        {
+          "t": 825.0,
+          "population": 63000
+        },
+        {
+          "t": 841.0,
+          "population": 59000
+        },
+        {
+          "t": 875.0,
+          "population": 72000
+        },
+        {
+          "t": 923.0,
+          "population": 89000
+        },
+        {
+          "t": 925.0,
+          "population": 88000
+        },
+        {
+          "t": 945.0,
+          "population": 75000
+        },
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1215.0,
+          "population": 84000
+        },
+        {
+          "t": 1225.0,
+          "population": 100000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1425.0,
+          "population": 120000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "syracuse-greece",
+      "name": "Syracuse",
+      "country": "Greece",
+      "lat": 37.06082237,
+      "lon": 15.29420264,
+      "certainty": "medium",
+      "estimates": [
+        {
+          "t": 125.0,
+          "population": 108000
+        },
+        {
+          "t": 167.0,
+          "population": 19590
+        },
+        {
+          "t": 194.0,
+          "population": 16805
+        },
+        {
+          "t": 312.0,
+          "population": 17205
+        },
+        {
+          "t": 410.0,
+          "population": 12432
+        },
+        {
+          "t": 477.0,
+          "population": 11000
+        },
+        {
+          "t": 651.0,
+          "population": 8000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        },
+        {
+          "t": 2325.0,
+          "population": 200000
+        },
+        {
+          "t": 2425.0,
+          "population": 120000
+        },
+        {
+          "t": 2455.0,
+          "population": 125000
+        },
+        {
+          "t": 2525.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "tabriz-iran",
+      "name": "Tabriz",
+      "country": "Iran",
+      "lat": 38.08,
+      "lon": 46.2919,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1191000
+        },
+        {
+          "t": 50.0,
+          "population": 568000
+        },
+        {
+          "t": 75.0,
+          "population": 274000
+        },
+        {
+          "t": 125.0,
+          "population": 175000
+        },
+        {
+          "t": 144.0,
+          "population": 165000
+        },
+        {
+          "t": 156.0,
+          "population": 110000
+        },
+        {
+          "t": 175.0,
+          "population": 70000
+        },
+        {
+          "t": 183.0,
+          "population": 50000
+        },
+        {
+          "t": 216.0,
+          "population": 40000
+        },
+        {
+          "t": 225.0,
+          "population": 40000
+        },
+        {
+          "t": 295.0,
+          "population": 30000
+        },
+        {
+          "t": 325.0,
+          "population": 75000
+        },
+        {
+          "t": 352.0,
+          "population": 75000
+        },
+        {
+          "t": 425.0,
+          "population": 80000
+        },
+        {
+          "t": 450.0,
+          "population": 150000
+        },
+        {
+          "t": 475.0,
+          "population": 150000
+        },
+        {
+          "t": 525.0,
+          "population": 250000
+        },
+        {
+          "t": 575.0,
+          "population": 250000
+        },
+        {
+          "t": 620.0,
+          "population": 200000
+        },
+        {
+          "t": 625.0,
+          "population": 150000
+        },
+        {
+          "t": 675.0,
+          "population": 100000
+        },
+        {
+          "t": 705.0,
+          "population": 110000
+        },
+        {
+          "t": 725.0,
+          "population": 125000
+        },
+        {
+          "t": 1025.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "tanis-egypt",
+      "name": "Tanis",
+      "country": "Egypt",
+      "lat": 30.976944,
+      "lon": 31.88,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3025.0,
+          "population": 35000
+        }
+      ]
+    },
+    {
+      "id": "taxilla-pakistan",
+      "name": "Taxilla",
+      "country": "Pakistan",
+      "lat": 33.75743141,
+      "lon": 72.82952293,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1725.0,
+          "population": 100000
+        },
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 150000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 150000
+        },
+        {
+          "t": 2225.0,
+          "population": 150000
+        },
+        {
+          "t": 2325.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "teotihuacan-mexico",
+      "name": "Teotihuacan",
+      "country": "Mexico",
+      "lat": 19.69291001,
+      "lon": -98.84606,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1403.0,
+          "population": 60000
+        },
+        {
+          "t": 1425.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 150000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1664.0,
+          "population": 90000
+        },
+        {
+          "t": 2125.0,
+          "population": 45000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        },
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 150000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "thebes-egypt",
+      "name": "Thebes",
+      "country": "Egypt",
+      "lat": 25.720556,
+      "lon": 32.610278,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2725.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 100000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        },
+        {
+          "t": 3025.0,
+          "population": 120000
+        },
+        {
+          "t": 3125.0,
+          "population": 100000
+        },
+        {
+          "t": 3225.0,
+          "population": 150000
+        },
+        {
+          "t": 3325.0,
+          "population": 80000
+        },
+        {
+          "t": 3385.0,
+          "population": 80000
+        },
+        {
+          "t": 3425.0,
+          "population": 80000
+        },
+        {
+          "t": 3525.0,
+          "population": 60000
+        },
+        {
+          "t": 3625.0,
+          "population": 10000
+        },
+        {
+          "t": 3725.0,
+          "population": 10000
+        },
+        {
+          "t": 3825.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "tikal-guatemala",
+      "name": "Tikal",
+      "country": "Guatemala",
+      "lat": 17.222094,
+      "lon": -89.623614,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1225.0,
+          "population": 40000
+        },
+        {
+          "t": 1274.0,
+          "population": 63000
+        },
+        {
+          "t": 1325.0,
+          "population": 100000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 2625.0,
+          "population": 100000
+        },
+        {
+          "t": 2825.0,
+          "population": 100000
+        },
+        {
+          "t": 2925.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "tokyo-japan",
+      "name": "Tokyo",
+      "country": "Japan",
+      "lat": 35.6895,
+      "lon": 139.69171,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 8130000
+        },
+        {
+          "t": 50.0,
+          "population": 23000000
+        },
+        {
+          "t": 55.0,
+          "population": 20450000
+        },
+        {
+          "t": 75.0,
+          "population": 7000000
+        },
+        {
+          "t": 100.0,
+          "population": 5300000
+        },
+        {
+          "t": 111.0,
+          "population": 3500000
+        },
+        {
+          "t": 125.0,
+          "population": 1497000
+        },
+        {
+          "t": 150.0,
+          "population": 780621
+        },
+        {
+          "t": 171.0,
+          "population": 788000
+        },
+        {
+          "t": 175.0,
+          "population": 780000
+        },
+        {
+          "t": 181.0,
+          "population": 769000
+        },
+        {
+          "t": 200.0,
+          "population": 732000
+        },
+        {
+          "t": 221.0,
+          "population": 685000
+        },
+        {
+          "t": 225.0,
+          "population": 685000
+        },
+        {
+          "t": 227.0,
+          "population": 685000
+        },
+        {
+          "t": 275.0,
+          "population": 694000
+        },
+        {
+          "t": 304.0,
+          "population": 700000
+        },
+        {
+          "t": 324.0,
+          "population": 689000
+        },
+        {
+          "t": 325.0,
+          "population": 688000
+        },
+        {
+          "t": 375.0,
+          "population": 500000
+        },
+        {
+          "t": 416.0,
+          "population": 150000
+        },
+        {
+          "t": 421.0,
+          "population": 60000
+        },
+        {
+          "t": 425.0,
+          "population": 60000
+        }
+      ]
+    },
+    {
+      "id": "tyre-lebanon",
+      "name": "Tyre",
+      "country": "Lebanon",
+      "lat": 33.27333,
+      "lon": 35.19389,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2455.0,
+          "population": 35000
+        },
+        {
+          "t": 3025.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "umma-sumer",
+      "name": "Umma",
+      "country": "Sumer",
+      "lat": 31.6211048,
+      "lon": 45.93344587,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3825.0,
+          "population": 40000
+        },
+        {
+          "t": 4025.0,
+          "population": 25000
+        },
+        {
+          "t": 4125.0,
+          "population": 20000
+        },
+        {
+          "t": 4225.0,
+          "population": 10000
+        },
+        {
+          "t": 4325.0,
+          "population": 40000
+        },
+        {
+          "t": 4425.0,
+          "population": 40000
+        },
+        {
+          "t": 4525.0,
+          "population": 40000
+        },
+        {
+          "t": 4825.0,
+          "population": 20000
+        }
+      ]
+    },
+    {
+      "id": "ur-iraq",
+      "name": "Ur",
+      "country": "Iraq",
+      "lat": 30.962659,
+      "lon": 46.10321,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3925.0,
+          "population": 10000
+        },
+        {
+          "t": 4025.0,
+          "population": 20000
+        },
+        {
+          "t": 4125.0,
+          "population": 100000
+        },
+        {
+          "t": 4225.0,
+          "population": 40000
+        },
+        {
+          "t": 4325.0,
+          "population": 20000
+        },
+        {
+          "t": 4425.0,
+          "population": 10000
+        },
+        {
+          "t": 4525.0,
+          "population": 10000
+        },
+        {
+          "t": 4825.0,
+          "population": 12000
+        }
+      ]
+    },
+    {
+      "id": "urkesh-syria",
+      "name": "Urkesh",
+      "country": "Syria",
+      "lat": 37.056944,
+      "lon": 40.997222,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 4325.0,
+          "population": 20000
+        },
+        {
+          "t": 4425.0,
+          "population": 30000
+        },
+        {
+          "t": 4525.0,
+          "population": 30000
+        },
+        {
+          "t": 4825.0,
+          "population": 10000
+        }
+      ]
+    },
+    {
+      "id": "uruk-iraq",
+      "name": "Uruk",
+      "country": "Iraq",
+      "lat": 31.322222,
+      "lon": 45.636111,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3325.0,
+          "population": 30000
+        },
+        {
+          "t": 3385.0,
+          "population": 25000
+        },
+        {
+          "t": 3425.0,
+          "population": 30000
+        },
+        {
+          "t": 3925.0,
+          "population": 30000
+        },
+        {
+          "t": 4025.0,
+          "population": 30000
+        },
+        {
+          "t": 4125.0,
+          "population": 30000
+        },
+        {
+          "t": 4325.0,
+          "population": 30000
+        },
+        {
+          "t": 4425.0,
+          "population": 30000
+        },
+        {
+          "t": 4525.0,
+          "population": 40000
+        },
+        {
+          "t": 4825.0,
+          "population": 80000
+        },
+        {
+          "t": 5025.0,
+          "population": 40000
+        },
+        {
+          "t": 5325.0,
+          "population": 40000
+        },
+        {
+          "t": 5525.0,
+          "population": 14000
+        }
+      ]
+    },
+    {
+      "id": "vaishali-india",
+      "name": "Vaishali",
+      "country": "India",
+      "lat": 25.6833,
+      "lon": 85.081782,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 1725.0,
+          "population": 200000
+        },
+        {
+          "t": 1825.0,
+          "population": 100000
+        },
+        {
+          "t": 1925.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 100000
+        },
+        {
+          "t": 2125.0,
+          "population": 100000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        },
+        {
+          "t": 2325.0,
+          "population": 200000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        },
+        {
+          "t": 2455.0,
+          "population": 45000
+        }
+      ]
+    },
+    {
+      "id": "venice-italy",
+      "name": "Venice",
+      "country": "Italy",
+      "lat": 45.440847,
+      "lon": 12.315514,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 75.0,
+          "population": 354000
+        },
+        {
+          "t": 100.0,
+          "population": 226000
+        },
+        {
+          "t": 125.0,
+          "population": 171000
+        },
+        {
+          "t": 175.0,
+          "population": 141000
+        },
+        {
+          "t": 200.0,
+          "population": 99000
+        },
+        {
+          "t": 223.0,
+          "population": 146000
+        },
+        {
+          "t": 225.0,
+          "population": 146000
+        },
+        {
+          "t": 235.0,
+          "population": 148000
+        },
+        {
+          "t": 264.0,
+          "population": 161000
+        },
+        {
+          "t": 275.0,
+          "population": 158000
+        },
+        {
+          "t": 325.0,
+          "population": 144000
+        },
+        {
+          "t": 329.0,
+          "population": 143000
+        },
+        {
+          "t": 375.0,
+          "population": 134000
+        },
+        {
+          "t": 401.0,
+          "population": 156000
+        },
+        {
+          "t": 425.0,
+          "population": 151000
+        },
+        {
+          "t": 432.0,
+          "population": 150000
+        },
+        {
+          "t": 450.0,
+          "population": 157000
+        },
+        {
+          "t": 462.0,
+          "population": 182000
+        },
+        {
+          "t": 475.0,
+          "population": 171000
+        },
+        {
+          "t": 516.0,
+          "population": 115000
+        },
+        {
+          "t": 525.0,
+          "population": 115000
+        },
+        {
+          "t": 575.0,
+          "population": 100000
+        },
+        {
+          "t": 625.0,
+          "population": 110000
+        },
+        {
+          "t": 646.0,
+          "population": 110000
+        },
+        {
+          "t": 675.0,
+          "population": 85000
+        },
+        {
+          "t": 678.0,
+          "population": 110000
+        },
+        {
+          "t": 725.0,
+          "population": 110000
+        },
+        {
+          "t": 775.0,
+          "population": 90000
+        },
+        {
+          "t": 825.0,
+          "population": 70000
+        },
+        {
+          "t": 855.0,
+          "population": 64000
+        },
+        {
+          "t": 875.0,
+          "population": 60000
+        },
+        {
+          "t": 925.0,
+          "population": 55000
+        },
+        {
+          "t": 1025.0,
+          "population": 100000
+        },
+        {
+          "t": 1119.0,
+          "population": 37500
+        }
+      ]
+    },
+    {
+      "id": "vienna-austria",
+      "name": "Vienna",
+      "country": "Austria",
+      "lat": 48.20849,
+      "lon": 16.37208,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 1560000
+        },
+        {
+          "t": 50.0,
+          "population": 1600000
+        },
+        {
+          "t": 55.0,
+          "population": 1968000
+        },
+        {
+          "t": 75.0,
+          "population": 1755000
+        },
+        {
+          "t": 100.0,
+          "population": 1865000
+        },
+        {
+          "t": 125.0,
+          "population": 1698000
+        },
+        {
+          "t": 150.0,
+          "population": 1020000
+        },
+        {
+          "t": 175.0,
+          "population": 426415
+        },
+        {
+          "t": 200.0,
+          "population": 288000
+        },
+        {
+          "t": 225.0,
+          "population": 231079
+        },
+        {
+          "t": 271.0,
+          "population": 175460
+        },
+        {
+          "t": 275.0,
+          "population": 169000
+        },
+        {
+          "t": 315.0,
+          "population": 113800
+        },
+        {
+          "t": 325.0,
+          "population": 105000
+        },
+        {
+          "t": 342.0,
+          "population": 90000
+        },
+        {
+          "t": 375.0,
+          "population": 65000
+        },
+        {
+          "t": 388.0,
+          "population": 60000
+        },
+        {
+          "t": 406.0,
+          "population": 40000
+        },
+        {
+          "t": 417.0,
+          "population": 30000
+        },
+        {
+          "t": 425.0,
+          "population": 30000
+        },
+        {
+          "t": 525.0,
+          "population": 40000
+        },
+        {
+          "t": 602.0,
+          "population": 24000
+        },
+        {
+          "t": 625.0,
+          "population": 30000
+        },
+        {
+          "t": 725.0,
+          "population": 21000
+        },
+        {
+          "t": 825.0,
+          "population": 12000
+        }
+      ]
+    },
+    {
+      "id": "vijayanagar-india",
+      "name": "Vijayanagar",
+      "country": "India",
+      "lat": 15.335,
+      "lon": 76.462,
+      "certainty": "low",
+      "estimates": [
+        {
+          "t": 460.0,
+          "population": 480000
+        },
+        {
+          "t": 475.0,
+          "population": 480000
+        },
+        {
+          "t": 525.0,
+          "population": 500000
+        },
+        {
+          "t": 575.0,
+          "population": 455000
+        },
+        {
+          "t": 582.0,
+          "population": 450000
+        },
+        {
+          "t": 625.0,
+          "population": 400000
+        },
+        {
+          "t": 650.0,
+          "population": 350000
+        },
+        {
+          "t": 675.0,
+          "population": 100000
+        },
+        {
+          "t": 725.0,
+          "population": 40000
+        }
+      ]
+    },
+    {
+      "id": "xian-china",
+      "name": "Xian",
+      "country": "China",
+      "lat": 34.341485,
+      "lon": 108.940404,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 25.0,
+          "population": 2873000
+        },
+        {
+          "t": 50.0,
+          "population": 1800000
+        },
+        {
+          "t": 75.0,
+          "population": 559000
+        },
+        {
+          "t": 77.0,
+          "population": 391990
+        },
+        {
+          "t": 95.0,
+          "population": 200000
+        },
+        {
+          "t": 100.0,
+          "population": 250000
+        },
+        {
+          "t": 125.0,
+          "population": 250000
+        },
+        {
+          "t": 150.0,
+          "population": 251000
+        },
+        {
+          "t": 175.0,
+          "population": 275000
+        },
+        {
+          "t": 200.0,
+          "population": 259000
+        },
+        {
+          "t": 202.0,
+          "population": 259100
+        },
+        {
+          "t": 213.0,
+          "population": 231530
+        },
+        {
+          "t": 225.0,
+          "population": 224000
+        },
+        {
+          "t": 275.0,
+          "population": 195000
+        },
+        {
+          "t": 325.0,
+          "population": 167000
+        },
+        {
+          "t": 360.0,
+          "population": 147109
+        },
+        {
+          "t": 375.0,
+          "population": 147000
+        },
+        {
+          "t": 425.0,
+          "population": 138000
+        },
+        {
+          "t": 450.0,
+          "population": 135000
+        },
+        {
+          "t": 475.0,
+          "population": 132000
+        },
+        {
+          "t": 525.0,
+          "population": 127000
+        },
+        {
+          "t": 575.0,
+          "population": 120000
+        },
+        {
+          "t": 625.0,
+          "population": 115000
+        },
+        {
+          "t": 655.0,
+          "population": 112000
+        },
+        {
+          "t": 675.0,
+          "population": 114000
+        },
+        {
+          "t": 713.0,
+          "population": 118000
+        },
+        {
+          "t": 725.0,
+          "population": 118000
+        },
+        {
+          "t": 775.0,
+          "population": 100000
+        },
+        {
+          "t": 925.0,
+          "population": 45000
+        },
+        {
+          "t": 948.0,
+          "population": 45000
+        },
+        {
+          "t": 1125.0,
+          "population": 100000
+        },
+        {
+          "t": 1220.0,
+          "population": 600000
+        },
+        {
+          "t": 1225.0,
+          "population": 800000
+        },
+        {
+          "t": 1325.0,
+          "population": 1000000
+        },
+        {
+          "t": 1403.0,
+          "population": 400000
+        },
+        {
+          "t": 1425.0,
+          "population": 400000
+        },
+        {
+          "t": 1525.0,
+          "population": 100000
+        },
+        {
+          "t": 1625.0,
+          "population": 100000
+        },
+        {
+          "t": 1664.0,
+          "population": 80000
+        },
+        {
+          "t": 1925.0,
+          "population": 100000
+        },
+        {
+          "t": 2024.0,
+          "population": 420000
+        },
+        {
+          "t": 2125.0,
+          "population": 400000
+        },
+        {
+          "t": 2225.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "xinzheng-china",
+      "name": "Xinzheng",
+      "country": "China",
+      "lat": 34.233333,
+      "lon": 113.433333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2325.0,
+          "population": 120000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        }
+      ]
+    },
+    {
+      "id": "yin-china",
+      "name": "Yin",
+      "country": "China",
+      "lat": 36.139444,
+      "lon": 114.303056,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 3225.0,
+          "population": 120000
+        },
+        {
+          "t": 3325.0,
+          "population": 120000
+        }
+      ]
+    },
+    {
+      "id": "yiyang-china",
+      "name": "Yiyang",
+      "country": "China",
+      "lat": 28.583333,
+      "lon": 112.333333,
+      "certainty": "high",
+      "estimates": [
+        {
+          "t": 2325.0,
+          "population": 200000
+        },
+        {
+          "t": 2425.0,
+          "population": 100000
+        }
+      ]
+    }
+  ]
+}
