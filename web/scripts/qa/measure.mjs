@@ -42,19 +42,40 @@ export async function drawnBounds(page, selector, { threshold = 24 } = {}) {
   await locator.waitFor({ state: 'visible' })
   const box = await locator.boundingBox()
   if (box === null) throw new Error(`drawnBounds: "${selector}" has no box (display:none?)`)
+  return drawnBoundsInClip(page, { x: box.x, y: box.y, width: box.width, height: box.height }, { threshold })
+}
 
-  const clip = { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) }
-  if (clip.width === 0 || clip.height === 0) return { x: clip.x, y: clip.y, width: 0, height: 0, fractionOfViewport: 0 }
+/**
+ * `drawnBounds`'s own pixel scan, over an explicit page-absolute `clip` rectangle instead of a
+ * selector's own bounding box. For the one case `drawnBounds` itself can't handle: an element
+ * whose CSS box is deliberately much bigger than the region actually worth scanning — a
+ * full-viewport `<canvas>` sitting behind unrelated chrome that also happens to fall inside that
+ * box (`Globe.tsx`'s expanded `<canvas>`, `Globe.module.css`'s own doc comment on why it now fills
+ * the whole backdrop) is exactly this: scanning the *element's* box would pick up the "Globe/Map"
+ * toggle, the legend, the close button and the zoom controls as "drawn" pixels too, none of which
+ * answer "how big is the sphere." Passing the known-clear centred sub-rectangle instead scopes the
+ * scan to just the sphere and its immediate surroundings — no chrome, no elements to exclude by
+ * name. `clip`'s coordinates are page-absolute CSS pixels, matching `boundingBox()`'s own.
+ * @param {import('playwright').Page} page
+ * @param {PixelBox} clip
+ * @param {{ threshold?: number }} [options]
+ * @returns {Promise<DrawnBounds>}
+ */
+export async function drawnBoundsInClip(page, clip, { threshold = 24 } = {}) {
+  const roundedClip = { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) }
+  if (roundedClip.width === 0 || roundedClip.height === 0) {
+    return { x: roundedClip.x, y: roundedClip.y, width: 0, height: 0, fractionOfViewport: 0 }
+  }
 
-  const png = await page.screenshot({ clip })
+  const png = await page.screenshot({ clip: roundedClip })
   const dataUrl = `data:image/png;base64,${png.toString('base64')}`
   const local = await page.evaluate(scanDrawnPixels, { dataUrl, threshold })
 
   const viewport = page.viewportSize()
   const viewportArea = viewport === null ? 1 : viewport.width * viewport.height
   return {
-    x: clip.x + local.x,
-    y: clip.y + local.y,
+    x: roundedClip.x + local.x,
+    y: roundedClip.y + local.y,
     width: local.width,
     height: local.height,
     fractionOfViewport: (local.width * local.height) / viewportArea,
@@ -137,6 +158,30 @@ export async function boxOf(page, selector) {
   const box = await locator.boundingBox()
   if (box === null) throw new Error(`boxOf: "${selector}" has no box (display:none?)`)
   return { x: box.x, y: box.y, width: box.width, height: box.height }
+}
+
+/**
+ * The plain layout box of the first element matching `selector`, read via a direct
+ * `getBoundingClientRect()` rather than `locator.boundingBox()` — the latter first waits for
+ * Playwright's "visible" actionability state, which a deliberately `visibility: hidden` element
+ * (`Globe.tsx`'s `.orbFitFrameSphere`/`.orbFitFrameMap` — real geometry probes, never painted)
+ * never reaches, so `boxOf`/`drawnBounds` can't target them at all. `visibility: hidden` still
+ * lays out normally (unlike `display: none`), so this still returns a real box. Throws if the
+ * element isn't in the DOM at all, the one case `getBoundingClientRect` can't distinguish from a
+ * genuine zero-size box on its own.
+ * @param {import('playwright').Page} page
+ * @param {string} selector
+ * @returns {Promise<PixelBox>}
+ */
+export async function hiddenBoxOf(page, selector) {
+  const box = await page.evaluate((sel) => {
+    const el = document.querySelector(sel)
+    if (el === null) return null
+    const rect = el.getBoundingClientRect()
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+  }, selector)
+  if (box === null) throw new Error(`hiddenBoxOf: "${selector}" not found in the DOM`)
+  return box
 }
 
 /**

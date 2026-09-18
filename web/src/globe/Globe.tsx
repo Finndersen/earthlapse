@@ -8,13 +8,15 @@
 import { Html, OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {
+  forwardRef,
   useEffect,
   useId,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
   type ComponentRef,
-  type MouseEvent,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent,
   type ReactNode,
   type RefObject,
@@ -46,7 +48,17 @@ import {
   type PreloadWindow,
   type TravelDirection,
 } from './blend'
-import { clampPanTarget, fitDistance, slerpDirection, sphereFitDistance } from './camera'
+import {
+  clampedDollyDistance,
+  clampPanTarget,
+  fitDistance,
+  isSubFrameOf,
+  mapHasPanRoom,
+  slerpDirection,
+  sphereFitDistance,
+  subFrameFovY,
+  verticalCenterOffset,
+} from './camera'
 import { selectBasemapTier, supportsBasemapT1, useIsPhoneViewport } from './deviceTier'
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
 import styles from './Globe.module.css'
@@ -75,6 +87,33 @@ const RIM_COLOR = new THREE.Color('#8fc7ff')
  *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
  *  Globe.module.css's halo and expand ring are sized against. */
 const CAMERA_DISTANCE = 3.6
+/** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap.
+ *  Unchanged from before this file's full-bleed-canvas change (issue 1). */
+const MINIMISED_DPR: [number, number] = [1, 2]
+/** The *expanded* canvas's device pixel ratio, pinned to exactly `1` rather than
+ *  `MINIMISED_DPR`'s `[1, 2]` range — measured trade-off for the "responsive dragging" follow-up
+ *  (user verbatim: "the click-dragging of the globe in expanded view doesn't feel very
+ *  responsive... not sure if this is a 'weight'/friction setting or a performance issue").
+ *  Measured both candidates before changing anything (a `git worktree` checkout of the pre-
+ *  clip-removal commit as the "before" build, same drag simulation against both): input tuning
+ *  (`rotateSpeed`/`dampingFactor`) was not it — idle (no interaction at all) render pace dropped
+ *  by the same amount as during a drag, which a damping/speed setting cannot explain. Frame rate
+ *  was it, and it *was* newly caused by issue 1's canvas covering the whole backdrop instead of a
+ *  ~550px box (this file's own git history has the exact numbers): at this file's default test
+ *  viewport (1440x900) with `deviceScaleFactor: 2` (retina) the expanded canvas's drawing buffer
+ *  went from ~1090x1090 to ~2880x1800 px, and measured idle frame pace in a headless/software-
+ *  rendered browser fell from ~5.5 fps to ~0.4 fps — a ~13x hit, not the ~4x the raw pixel-area
+ *  ratio alone would suggest (this environment's software rasteriser is not linear in pixel
+ *  count). Even at `deviceScaleFactor: 1` the *area* increase alone (~4.3x, 1440x900 vs the old
+ *  ~550x550 box) cost a real, repeatable ~30% (three alternating trials against the same
+ *  worktree baseline). Pinning to `1` removes the DPR half of that multiplier — the dominant
+ *  factor on any real retina display — while leaving the canvas genuinely full-bleed (issue 1's
+ *  own point: zooming must have real room to grow into, including behind the chrome), rather than
+ *  recapping its *extent* back down to a fixed box and reintroducing some version of the same
+ *  clip this file exists to remove. The trade-off is real: the sphere/map render at native
+ *  resolution instead of retina-doubled, a soft-lit globe with no fine text on it, not the same
+ *  cost a sharp-edged UI element would pay for this. */
+const EXPANDED_DPR = 1
 /** `GlobeSphere`'s own `sphereGeometry` radius — named so the pole markers below (`poles.ts`,
  *  `PoleAxisMarkers`) agree with the sphere on exactly where its surface sits. */
 const GLOBE_RADIUS = 1
@@ -116,6 +155,63 @@ const MAP_MIN_ZOOM_FRACTION = 0.12
  *  minimised orb, whose own `CAMERA_DISTANCE` is a separate, looser framing (see that constant's
  *  own doc comment for why it stays that way). */
 const SPHERE_FIT_MARGIN = 0.05
+/** The default expanded sphere's own "slightly larger" nudge (user follow-up, 2026-09-18: "make
+ *  the globe slightly larger by default when in fullscreen view") — a named, commented constant
+ *  rather than another incidental side effect of a chrome-height change (this sphere has already
+ *  been resized twice this week purely as a consequence of those). Applied by *dividing* the
+ *  fitted idle distance (`GlobeCameraControls`), which moves the camera closer without touching
+ *  `SPHERE_FIT_MARGIN`'s own, separate meaning (breathing room at the box edge) — the two would
+ *  otherwise be easy to conflate into one "how big is the sphere" knob when they answer different
+ *  questions. `1.05` measured 546px -> 573px drawn diameter at 1440x900 (`globe-expanded-sphere`
+ *  QA shot) — a nudge, not a redesign. */
+const SPHERE_DEFAULT_SCALE = 1.05
+/** One press of the zoom-in/zoom-out buttons (`ZoomControls`, docs/GLOBE.md's ADR-033 map mode)
+ *  — the same ~20% step a scroll-wheel tick reads as roughly, discrete enough to feel like a
+ *  deliberate move rather than a barely-perceptible nudge. `zoomIn` uses this factor directly
+ *  (distance shrinks -> object grows); `zoomOut` uses its reciprocal. */
+const ZOOM_STEP_FACTOR = 0.8
+/** Float-roundoff slack for "is this button at its range limit" checks (`GlobeCameraControls`'s
+ *  `reportZoomBounds`) — without it, a distance that lands a hair inside a bound after repeated
+ *  multiplication could read as still-zoomable when a further press would immediately clamp to
+ *  the same value again. */
+const ZOOM_BOUNDS_EPSILON = 1e-4
+
+/** A measured `.orbFitFrameSphere`/`.orbFitFrameMap` rectangle's size (`Globe.module.css`'s own
+ *  doc comment) — width/height only; `GlobeCameraControls` never needs the raw top/left, just the
+ *  aspect and the height ratio `subFrameFovY` (`camera.ts`) wants. */
+interface FitFrameSize {
+  width: number
+  height: number
+}
+
+/** `Globe.tsx`'s own DOM-layer measurement of the two invisible fit-target rectangles plus the
+ *  pixel shift (`verticalCenterOffset`, `camera.ts`) needed to re-centre the rendered sphere/map
+ *  on them — see `GlobeCameraControls`'s doc comment for how all three are used. `null` until the
+ *  first `ResizeObserver` pass (or when a frame isn't mounted, e.g. before `expanded`). */
+interface FitMeasurements {
+  sphereFit: FitFrameSize | null
+  mapFit: FitFrameSize | null
+  verticalOffsetPx: number
+}
+const EMPTY_FIT_MEASUREMENTS: FitMeasurements = { sphereFit: null, mapFit: null, verticalOffsetPx: 0 }
+
+/** Whether the zoom-in/zoom-out buttons (`ZoomControls`) can still do anything — mirrors
+ *  `OrbitControls`'s own `minDistance`/`maxDistance` for the current mode, reported by
+ *  `GlobeCameraControls` so the buttons can grey out at a real limit rather than clicking with no
+ *  visible effect (requirement 4: "disable ... a button when its end of the range is reached"). */
+interface ZoomBounds {
+  canZoomIn: boolean
+  canZoomOut: boolean
+}
+
+/** Imperative escape hatch for `ZoomControls` (plain DOM, outside the `<Canvas>`'s own
+ *  react-three-fiber tree) to drive `GlobeCameraControls`'s camera — see that component's own doc
+ *  comment for why this goes through the *same* clamped dolly path scroll/pinch already use
+ *  rather than a second, parallel zoom state. */
+interface GlobeCameraApi {
+  zoomIn: () => void
+  zoomOut: () => void
+}
 
 export interface GlobeProps {
   t: GeoTime
@@ -322,33 +418,13 @@ export function Globe({
   // frame — but it still guards the fallback path above.
   const unfold = useUnfold(mapMode, reducedMotion || !expanded)
 
-  // `.orbExpanded[data-animate-resize]`'s CSS transition (`Globe.module.css`) is meant to carry
-  // *only* the map-mode reshape (width/height, timed to match `unfold`'s own ~0.8s), not the
-  // orb's initial reveal: `.orb` and `.orbExpanded` are two states of the *same* element (see
-  // this component's own "element types and order stay identical" note below), so the very first
-  // frame of expanding is itself a width/height change on that element — without this guard, a
-  // bare `transition` on `.orbExpanded` fires on that jump too (from the small minimised-orb box
-  // straight to the full expanded one) — browser-verified as a real regression, caught mid-grow
-  // in a screenshot taken partway through that jump. Deferring the transition by one frame after
-  // `expanded` turns true is well before a viewer could possibly reach the toggle, so it never
-  // delays or skips the transition it's actually meant for.
-  const [allowResizeTransition, setAllowResizeTransition] = useState(false)
-  useEffect(() => {
-    if (!expanded) {
-      setAllowResizeTransition(false)
-      return undefined
-    }
-    const frame = requestAnimationFrame(() => setAllowResizeTransition(true))
-    return () => cancelAnimationFrame(frame)
-  }, [expanded])
-
   // Closing on a backdrop click only when the press also *started* on the backdrop: a drag
   // that rotates the globe and happens to be released outside it must not dismiss it.
   const pressStartedOnBackdrop = useRef(false)
   const onBackdropPointerDown = (e: PointerEvent<HTMLDivElement>): void => {
     pressStartedOnBackdrop.current = e.target === e.currentTarget
   }
-  const onBackdropClick = (e: MouseEvent<HTMLDivElement>): void => {
+  const onBackdropClick = (e: ReactMouseEvent<HTMLDivElement>): void => {
     if (pressStartedOnBackdrop.current && e.target === e.currentTarget) onCollapse()
   }
 
@@ -385,6 +461,15 @@ export function Globe({
   const backdropRef = useRef<HTMLDivElement | null>(null)
   const viewModeToggleBoundsRef = useRef<HTMLDivElement | null>(null)
   const legendBoundsRef = useRef<HTMLDivElement | null>(null)
+  // `Globe.module.css`'s `.orbFitFrameSphere`/`.orbFitFrameMap` — invisible, `pointer-events:
+  // none` boxes carrying the *old* `.orbExpanded` sizing formulas verbatim (that class's own doc
+  // comment on why: the canvas itself is now full-bleed, so something else has to say what size
+  // the default sphere/map framing should still look). Measured the same way as
+  // `--overlay-clear-bottom` just below — `GlobeCameraControls` (inside the `<Canvas>`, a
+  // separate react-three-fiber tree with no DOM access of its own) receives the numbers as props.
+  const sphereFitFrameRef = useRef<HTMLDivElement | null>(null)
+  const mapFitFrameRef = useRef<HTMLDivElement | null>(null)
+  const [fitMeasurements, setFitMeasurements] = useState<FitMeasurements>(EMPTY_FIT_MEASUREMENTS)
   useEffect(() => {
     const host = backdropRef.current
     if (host === null) return undefined
@@ -392,23 +477,64 @@ export function Globe({
       const toggleBottom = viewModeToggleBoundsRef.current?.getBoundingClientRect().bottom ?? 0
       const legendBottom = legendBoundsRef.current?.getBoundingClientRect().bottom ?? 0
       host.style.setProperty('--overlay-clear-bottom', `${Math.max(toggleBottom, legendBottom)}px`)
+
+      const canvasRect = host.getBoundingClientRect()
+      // `?? null` down to a real, non-degenerate rect only: browser-verified, a frame's *very
+      // first* `ResizeObserver` pass can report a real-but-zero-height rect for the one paint
+      // before its ancestor's `--chrome-gap-height` custom property has resolved — treating that
+      // as "measured" fed a bogus, full-canvas-fallback `idleSphereDistance` into
+      // `GlobeCameraControls`'s one-shot "reframe on this transition" logic, which then never got
+      // a second chance to correct itself (the actual bug behind the "opens zoomed in a lot"
+      // report). Keeping it `null` here instead means every consumer's own existing "not measured
+      // yet" fallback — already written for the ordinary pre-mount case — also covers this one,
+      // rather than needing its own separate `height > 0` guard against a state this makes
+      // unrepresentable in the first place.
+      const sphereRectRaw = sphereFitFrameRef.current?.getBoundingClientRect() ?? null
+      const sphereRect = sphereRectRaw !== null && sphereRectRaw.height > 0 ? sphereRectRaw : null
+      const mapRectRaw = mapFitFrameRef.current?.getBoundingClientRect() ?? null
+      const mapRect = mapRectRaw !== null && mapRectRaw.height > 0 ? mapRectRaw : null
+      setFitMeasurements({
+        sphereFit: sphereRect !== null ? { width: sphereRect.width, height: sphereRect.height } : null,
+        mapFit: mapRect !== null ? { width: mapRect.width, height: mapRect.height } : null,
+        // Both frames are centred in the same real chrome gap regardless of their own
+        // width/height (`verticalCenterOffset`'s own doc comment proves this algebraically), so
+        // one offset — read from whichever frame is currently mounted — serves both sphere and
+        // map framing; `sphereFit` is measured first, but either would agree.
+        verticalOffsetPx:
+          sphereRect !== null
+            ? verticalCenterOffset(sphereRect.top, sphereRect.height, canvasRect.top, canvasRect.height)
+            : mapRect !== null
+              ? verticalCenterOffset(mapRect.top, mapRect.height, canvasRect.top, canvasRect.height)
+              : 0,
+      })
     }
     recompute()
     window.addEventListener('resize', recompute)
     let observer: ResizeObserver | null = null
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(recompute)
-      if (viewModeToggleBoundsRef.current !== null) observer.observe(viewModeToggleBoundsRef.current)
-      if (legendBoundsRef.current !== null) observer.observe(legendBoundsRef.current)
+      observer.observe(host)
+      for (const ref of [viewModeToggleBoundsRef, legendBoundsRef, sphereFitFrameRef, mapFitFrameRef]) {
+        if (ref.current !== null) observer.observe(ref.current)
+      }
     }
     return () => {
       window.removeEventListener('resize', recompute)
       observer?.disconnect()
     }
-    // Re-runs whenever either element could have just mounted or unmounted (a `ResizeObserver`
-    // can only watch a node once it exists) — `expanded`/`webgl` gate both, `humanHasData` alone
-    // gates the legend's one row today (`Legend` itself renders nothing once no row is visible).
+    // Re-runs whenever any observed element could have just mounted or unmounted (a
+    // `ResizeObserver` can only watch a node once it exists) — `expanded`/`webgl` gate all of
+    // them, `humanHasData` alone gates the legend's one row today (`Legend` itself renders
+    // nothing once no row is visible).
   }, [expanded, webgl, humanHasData])
+
+  // Imperative zoom (requirement 4, user verbatim: "might be good to add zoom in/out magnifying
+  // icons/buttons to the fullscreen map/globe view") — `ZoomControls` below is plain DOM, outside
+  // the `<Canvas>`'s own react-three-fiber tree, so it drives `GlobeCameraControls`'s camera
+  // through this imperative ref rather than a second, parallel zoom state; `zoomBounds` is
+  // reported back the same way `caption`/`onWebglContextRestored` already cross that boundary.
+  const cameraApiRef = useRef<GlobeCameraApi>(null)
+  const [zoomBounds, setZoomBounds] = useState<ZoomBounds>({ canZoomIn: true, canZoomOut: true })
 
   // The element types and order stay identical across both states so toggling restyles the
   // same <Canvas> rather than remounting it (a new WebGL context and texture re-upload).
@@ -422,24 +548,51 @@ export function Globe({
       <div
         className={[expanded ? styles.orbExpanded : styles.orb, webgl ? '' : styles.orbNoWebgl].filter(Boolean).join(' ')}
         data-map-mode={mapMode}
-        data-animate-resize={allowResizeTransition}
         onPointerDown={expanded ? undefined : onOrbPointerDown}
         onPointerUp={expanded ? undefined : onOrbPointerUp}
       >
-        <div className={styles.halo} aria-hidden="true" />
+        {/* The two invisible fit-target rectangles (`Globe.module.css`'s own doc comment) —
+            mounted only while expanded, since the minimised orb has no clip to remove and keeps
+            its own simple 100%/100% `.orb` sizing untouched below. `.halo` and the no-WebGL
+            fallback both nest inside the sphere one specifically, so they keep sitting exactly
+            where the sphere's default silhouette does rather than growing to the now-full-bleed
+            canvas (`.orbFitFrameSphere`'s own doc comment). Each is its own top-level slot (not
+            nested inside a single shared conditional with the `<Canvas>` below) precisely so
+            `<Canvas>` keeps the same sibling index regardless of `expanded` — see this
+            component's own "element types and order stay identical" note below. */}
+        {expanded && (
+          <div ref={sphereFitFrameRef} className={styles.orbFitFrameSphere} aria-hidden="true" data-testid="globe-sphere-fit-frame">
+            <div className={styles.halo} aria-hidden="true" />
+            {!webgl && <GlobeStaticOrb />}
+          </div>
+        )}
+        {expanded && (
+          <div ref={mapFitFrameRef} className={styles.orbFitFrameMap} aria-hidden="true" data-testid="globe-map-fit-frame" />
+        )}
+        {!expanded && <div className={styles.halo} aria-hidden="true" />}
         {webgl ? (
           <Canvas
             camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }}
-            dpr={[1, 2]}
+            dpr={expanded ? EXPANDED_DPR : MINIMISED_DPR}
             gl={{ alpha: true }}
-            // No resize debounce needed: `Globe.module.css`'s `.orbExpanded[data-animate-resize]`
-            // snaps the panel to its target width/height the instant a Globe/Map toggle starts
-            // (see that rule's own doc comment) rather than animating them, so the map-mode
-            // reshape triggers exactly one `ResizeObserver` callback, not one per animation frame.
-            // An earlier version debounced a *continuously* resizing panel instead — that traded
-            // one problem for another: the canvas kept its old drawing-buffer size (and so the
-            // wrong aspect) for the whole debounce window, rendering the mesh off-centre and
-            // clipped until the panel finally settled and the debounce fired.
+            // The full-bleed canvas (`Globe.module.css`'s `.orbExpanded` doc comment) is mostly
+            // transparent (`alpha: true`) around the sphere/map, so a click there must still read
+            // as "clicked the dimmed backdrop, close the view" the way it did when a bare
+            // `.backdrop` click handler (below) could still see raw backdrop pixels around a much
+            // smaller box. r3f's own `onPointerMissed` is the right primitive for exactly this: it
+            // fires only for a `click`/`contextmenu`/`dblclick`-type event whose raycast hit
+            // nothing, gated by r3f's own `delta <= 2px` movement check since pointerdown — so a
+            // rotate-drag that happens to release over empty canvas (a real risk once the canvas
+            // is this large) never triggers it, matching the existing backdrop-click guard's own
+            // "a drag must not dismiss it" rule one level down, at the canvas itself. `onCollapse`
+            // only while `expanded`: minimised, a miss must do nothing (the orb's own
+            // `onOrbPointerDown`/`onOrbPointerUp` below already own click-to-expand there, and
+            // calling `onCollapse` — which unconditionally toggles — while collapsed would flip it
+            // open by mistake). Only plain clicks close it, not right-click/double-click, matching
+            // the old `onClick`-only backdrop handler.
+            onPointerMissed={(event) => {
+              if (expanded && event.type === 'click') onCollapse()
+            }}
           >
             <GlobeRotatingGroup unfold={unfold} reducedMotion={reducedMotion} focusRotationY={sceneFocusRotationY}>
               <GlobeSphere
@@ -485,10 +638,21 @@ export function Globe({
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />
             <PoleAxisMarkers unfold={unfold} />
-            <GlobeCameraControls expanded={expanded} mapMode={mapMode} unfold={unfold} />
+            <GlobeCameraControls
+              ref={cameraApiRef}
+              expanded={expanded}
+              mapMode={mapMode}
+              unfold={unfold}
+              sphereFit={fitMeasurements.sphereFit}
+              mapFit={fitMeasurements.mapFit}
+              verticalOffsetPx={fitMeasurements.verticalOffsetPx}
+              onZoomBoundsChange={setZoomBounds}
+            />
           </Canvas>
         ) : (
-          <GlobeStaticOrb />
+          // Expanded, the no-WebGL fallback instead renders inside `.orbFitFrameSphere` above
+          // (that block's own comment) — this slot only fires minimised, unchanged from before.
+          !expanded && <GlobeStaticOrb />
         )}
 
         {/* Persistent "this expands" affordance (user follow-up, 2026-09-18: "make it more
@@ -540,6 +704,15 @@ export function Globe({
         />
       )}
 
+      {expanded && webgl && (
+        <ZoomControls
+          onZoomIn={() => cameraApiRef.current?.zoomIn()}
+          onZoomOut={() => cameraApiRef.current?.zoomOut()}
+          canZoomIn={zoomBounds.canZoomIn}
+          canZoomOut={zoomBounds.canZoomOut}
+        />
+      )}
+
       {expanded && (
         <button type="button" className={styles.closeButton} onClick={onCollapse} aria-label="Collapse globe">
           ✕
@@ -583,6 +756,60 @@ function ViewModeToggle({ mapMode, onChange, boundsRef }: ViewModeToggleProps) {
   )
 }
 
+// ----------------------------------------------------------------------------- zoom controls
+
+interface ZoomControlsProps {
+  onZoomIn: () => void
+  onZoomOut: () => void
+  canZoomIn: boolean
+  canZoomOut: boolean
+}
+
+/** Zoom in/out (requirement 4, user verbatim: "might be good to add zoom in/out magnifying
+ *  icons/buttons to the fullscreen map/globe view") — a vertical pill of two buttons, same
+ *  hairline/pill idiom as `ViewModeToggle`/`Legend`'s own toggles rather than a new button
+ *  language (`Globe.module.css`'s `.zoomGroup`/`.zoomButton` doc comment). Both buttons call
+ *  straight into `GlobeCameraControls`'s imperative `zoomIn`/`zoomOut` (via `Globe`'s
+ *  `cameraApiRef`), which dollies the *same* camera distance scroll/pinch already drives through
+ *  the *same* `minDistance`/`maxDistance` clamp — never a second, parallel zoom state. Works
+ *  identically in sphere and map mode (`Globe` renders this once, not per mode); `disabled`
+ *  reflects `GlobeCameraControls`'s own live-reported `zoomBounds`, so a press that can't move the
+ *  camera any further visibly flattens rather than doing nothing unexplained. Never hidden while
+ *  the expanded view is open (project rule: nothing fades/hides on inactivity). */
+function ZoomControls({ onZoomIn, onZoomOut, canZoomIn, canZoomOut }: ZoomControlsProps) {
+  return (
+    <div className={styles.zoomGroup}>
+      <button type="button" className={styles.zoomButton} onClick={onZoomIn} disabled={!canZoomIn} aria-label="Zoom in">
+        <MagnifierIcon glyph="+" />
+      </button>
+      <div className={styles.zoomDivider} aria-hidden="true" />
+      <button type="button" className={styles.zoomButton} onClick={onZoomOut} disabled={!canZoomOut} aria-label="Zoom out">
+        <MagnifierIcon glyph="−" />
+      </button>
+    </div>
+  )
+}
+
+/** A magnifying-glass glyph with a `+`/`−` mark, matching `.expandGlyph`'s own stroke-based,
+ *  `currentColor` SVG style (`Globe.tsx`'s expand-affordance glyph) rather than a filled icon
+ *  font, so it inherits `.zoomButton`'s colour/hover/disabled treatment for free. */
+function MagnifierIcon({ glyph }: { glyph: '+' | '−' }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <line x1="15.3" y1="15.3" x2="21" y2="21" />
+      {glyph === '+' ? (
+        <>
+          <line x1="10.5" y1="7.5" x2="10.5" y2="13.5" />
+          <line x1="7.5" y1="10.5" x2="13.5" y2="10.5" />
+        </>
+      ) : (
+        <line x1="7.5" y1="10.5" x2="13.5" y2="10.5" />
+      )}
+    </svg>
+  )
+}
+
 // --------------------------------------------------------------------------------- camera
 
 interface GlobeCameraControlsProps {
@@ -590,6 +817,15 @@ interface GlobeCameraControlsProps {
   mapMode: boolean
   /** 0 (sphere) .. 1 (map) — the same tween driving `GlobeSphere`'s `uUnfold`. */
   unfold: number
+  /** The live-measured `.orbFitFrameSphere`/`.orbFitFrameMap` rectangles and the pixel shift to
+   *  re-centre on them — `null`/`0` before the first `ResizeObserver` pass. See this component's
+   *  own doc comment for how they're used. */
+  sphereFit: FitFrameSize | null
+  mapFit: FitFrameSize | null
+  verticalOffsetPx: number
+  /** Reported every time the zoom-button bounds could have changed (`ZoomBounds`'s own doc
+   *  comment) — mirrors `onCaptionChange`'s "cross the Canvas/DOM boundary via a callback" shape. */
+  onZoomBoundsChange: (bounds: ZoomBounds) => void
 }
 
 /**
@@ -686,20 +922,112 @@ interface GlobeCameraControlsProps {
  * Disabling damping for precisely the tween's own span (`!settled`) makes `update()` fully drain
  * that delta on its very next call instead of decaying it, leaving nothing to fight; damping
  * resumes once settled, for the ordinary smooth-drag feel a viewer gets outside the tween.
+ *
+ * **`sphereFit`/`mapFit`/`verticalOffsetPx` (docs/GLOBE.md, user follow-up 2026-09-18: "currently
+ * when zooming in on the globe, it's constrained by a square bounding window... can this be
+ * removed").** `Globe.tsx`'s `<Canvas>` now fills the whole backdrop (`Globe.module.css`'s
+ * `.orbExpanded` doc comment) instead of a chrome-gap-sized box, removing the square clip a
+ * zoomed-in sphere used to hit — but the *default*, un-zoomed framing must still look the size it
+ * did in that smaller box. These three props (`Globe.tsx`'s own DOM-layer measurement of two
+ * invisible reference rectangles) let `idleSphereDistance`/`mapFit` below fit against that
+ * rectangle instead of the canvas's own now-much-larger one, and a `camera.setViewOffset` re-
+ * centres the render on it — see `idleSphereDistance`'s own comment and the `setViewOffset` effect
+ * for the maths. Everything else in this component (the pan clamp, the mid-tween required-
+ * distance floor, the cursor's pan-room check) keeps reasoning about the *real* canvas frustum
+ * (`aspect`/`fovYRadians`, unchanged) — only the idle target distances are special-cased.
+ *
+ * **The imperative `zoomIn`/`zoomOut` handle (requirement 4).** `ZoomControls` (`Globe.tsx`) is
+ * plain DOM, outside this react-three-fiber tree, so it can't touch `camera`/`controlsRef`
+ * directly — `useImperativeHandle` below exposes exactly two methods, each going through the same
+ * `zoomMinDistance`/`zoomMaxDistance` clamp `OrbitControls`' own scroll/pinch zoom already uses,
+ * so the two input paths can never disagree. `onZoomBoundsChange` reports whether either button
+ * would currently do anything, the same "cross the Canvas/DOM boundary via a callback" shape
+ * `onCaptionChange` already uses for the caption text.
  */
-function GlobeCameraControls({ expanded, mapMode, unfold }: GlobeCameraControlsProps) {
+const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>(function GlobeCameraControls(
+  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, verticalOffsetPx, onZoomBoundsChange },
+  ref,
+) {
   const controlsRef = useRef<ComponentRef<typeof OrbitControls> | null>(null)
-  const { camera, size } = useThree()
+  const { camera, gl, size } = useThree()
 
   const aspect = size.width / size.height
   const fovYRadians = THREE.MathUtils.degToRad((camera as THREE.PerspectiveCamera).fov)
-  const mapFit = fitDistance(MAP_HALF_WIDTH, MAP_HALF_HEIGHT, aspect, fovYRadians, MAP_FIT_MARGIN) + GLOBE_RADIUS
+
+  // **The default (settled, idle) sphere/map framing fits against the measured
+  // `.orbFitFrameSphere`/`.orbFitFrameMap` rectangle, not the canvas's own (now much larger —
+  // `Globe.module.css`'s `.orbExpanded` doc comment) `aspect`/`fovYRadians` above.** `subFrameFovY`
+  // (`camera.ts`) treats that smaller rectangle as if it were the camera's *whole* frustum at the
+  // same distance, so `sphereFitDistance`/`fitDistance` below compute the distance that makes the
+  // object fill *that* rectangle — the exact size it filled back when the canvas *was* that
+  // rectangle — while `aspect`/`fovYRadians` above (unchanged) keep governing everything that
+  // must still reason about the *real*, full-canvas frustum: the pan clamp, the mid-tween
+  // required-distance floor, and the cursor's pan-room check, all further down. Falls back to the
+  // real canvas aspect/FOV when a frame hasn't been measured yet (`null`, before the first
+  // `ResizeObserver` pass in `Globe.tsx`) — a one-frame full-size fallback is preferable to a
+  // divide-by-zero or NaN distance.
+  //
+  // **`isSubFrameOf` also rejects a frame bigger than the canvas it's supposedly a sub-region of
+  // (browser-verified regression, 2026-09-18: "opens zoomed in a lot, need to press zoom out 6
+  // times").** `Globe.tsx`'s DOM measurement (`sphereFitFrame`) and r3f's own canvas measurement
+  // (`size`, from `useThree()`) update on two *independent* `ResizeObserver`s, so there is no
+  // guarantee they catch up in the same render: on the first render(s) after `expanded` flips
+  // true, `sphereFitFrame` can already report the correct ~570px box while `size` still reports
+  // the *minimised* orb's old, much smaller canvas dimensions (r3f hasn't re-measured `.orbExpanded`'s
+  // now-full-viewport box yet). `subFrameFovY` has no way to tell a genuinely-smaller sub-frame
+  // apart from this transient inconsistency — fed a `subHeightPx` larger than `canvasHeightPx`, it
+  // computes an effective FOV *wider* than the real camera's own, which `sphereFitDistance` then
+  // answers with a camera far too close. `canReframeSphere` below reuses this same check so that
+  // one-shot "reframe on this transition" logic also waits out this window rather than consuming
+  // it with a bogus distance it can never revisit.
+  const sphereFrameReady = isSubFrameOf(sphereFitFrame, size)
+  const mapFrameReady = isSubFrameOf(mapFitFrame, size)
+  const sphereFrameAspect = sphereFrameReady && sphereFitFrame !== null ? sphereFitFrame.width / sphereFitFrame.height : aspect
+  const sphereFovY = sphereFrameReady && sphereFitFrame !== null ? subFrameFovY(fovYRadians, sphereFitFrame.height, size.height) : fovYRadians
+  const mapFrameAspect = mapFrameReady && mapFitFrame !== null ? mapFitFrame.width / mapFitFrame.height : aspect
+  const mapFovY = mapFrameReady && mapFitFrame !== null ? subFrameFovY(fovYRadians, mapFitFrame.height, size.height) : fovYRadians
+
+  const mapFit = fitDistance(MAP_HALF_WIDTH, MAP_HALF_HEIGHT, mapFrameAspect, mapFovY, MAP_FIT_MARGIN) + GLOBE_RADIUS
   // The sphere's own idle framing: `CAMERA_DISTANCE`'s loose, halo-friendly fit while minimised,
   // a tight fill-the-panel fit (`sphereFitDistance`) once expanded — see `wasExpandedRef` below
   // for how a plain expand/collapse (no map mode involved) re-triggers this the same way
-  // entering/leaving map mode already re-triggers `mapFit`.
-  const idleSphereDistance = expanded ? sphereFitDistance(GLOBE_RADIUS, aspect, fovYRadians, SPHERE_FIT_MARGIN) : CAMERA_DISTANCE
+  // entering/leaving map mode already re-triggers `mapFit`. Divided by `SPHERE_DEFAULT_SCALE`
+  // (that constant's own doc comment): a smaller distance is a closer camera, so dividing (not
+  // multiplying) is what makes the default sphere "slightly larger."
+  const idleSphereDistance = expanded
+    ? sphereFitDistance(GLOBE_RADIUS, sphereFrameAspect, sphereFovY, SPHERE_FIT_MARGIN) / SPHERE_DEFAULT_SCALE
+    : CAMERA_DISTANCE
   const settled = unfold === (mapMode ? 1 : 0)
+
+  // Re-centres the rendered sphere/map on the fit frame's own vertical centre rather than the
+  // (now much larger, and differently-centred — the chrome gap isn't centred in the viewport
+  // either) full canvas's — `camera.ts`'s `verticalCenterOffset` computes the raw pixel shift in
+  // `Globe.tsx`; this turns it into a real parallel (lens-shift) `setViewOffset`, not a target/
+  // camera-position offset. A `target`/camera-position offset was considered and rejected: with
+  // `controls.target` a few tenths of a world unit from the sphere's own true centre, orbiting
+  // (dragging to rotate) would visibly wobble the sphere across the screen as the camera swings
+  // around a point that isn't quite where the sphere actually is — `setViewOffset` shifts the
+  // *projection*, independent of camera position/orientation, so the same constant screen shift
+  // applies at every rotation/zoom with no such coupling. Sign: three.js's own
+  // `updateProjectionMatrix` computes `top -= view.offsetY * height / view.fullHeight`; working
+  // through where a world point at the sphere's own Y=0 then lands on screen gives
+  // `screenY = canvasCenterY - offsetYParam` — so reproducing a *downward* shift of
+  // `verticalOffsetPx` (this file's own sign convention, `camera.ts`'s doc comment) needs
+  // `offsetYParam = -verticalOffsetPx`, negated below. `fullWidth`/`fullHeight` equal to the
+  // canvas's own real size (not a genuinely larger virtual frame) means this is a pure shift, not
+  // a crop — three.js's own multiview/tiled-rendering use of this API is the crop case; this is
+  // the same primitive used for the other, less common purpose it's equally built for (a
+  // shift-lens style off-centre projection). Cleared whenever minimised: `camera`/`gl` are shared
+  // between the minimised and expanded views (this component's own doc comment above), so a
+  // stale offset left on from a previous expand would otherwise skew the small orb too.
+  useEffect(() => {
+    const perspectiveCamera = camera as THREE.PerspectiveCamera
+    if (!expanded || size.width <= 0 || size.height <= 0) {
+      perspectiveCamera.clearViewOffset()
+      return
+    }
+    perspectiveCamera.setViewOffset(size.width, size.height, 0, -verticalOffsetPx, size.width, size.height)
+  }, [camera, expanded, size.width, size.height, verticalOffsetPx])
 
   const wasSettledRef = useRef(settled)
   const tweenStartDirectionRef = useRef(new THREE.Vector3(0, 0, 1))
@@ -739,7 +1067,37 @@ function GlobeCameraControls({ expanded, mapMode, unfold }: GlobeCameraControlsP
   // fully during and after its own tween, so this must never also fire mid-toggle. Also resets
   // the idle sphere distance a viewer may have zoomed away from: collapsing back to the minimised
   // orb should never leave it stuck at whatever zoom level the expanded sphere was left at.
-  if (!mapMode && expanded !== wasExpandedRef.current) {
+  //
+  // **Waits for a real `sphereFitFrame` measurement before consuming an *expanding* transition
+  // (browser-verified regression, 2026-09-18).** `Globe.tsx` can only measure
+  // `.orbFitFrameSphere`'s real rectangle once it has actually mounted, which — like any DOM
+  // effect — happens one or more renders *after* the very first render where `expanded` flips
+  // true; that first render still sees `sphereFitFrame === null` and so falls back to fitting the
+  // *whole canvas* (`idleSphereDistance`'s own comment above). Snapping to that fallback distance
+  // immediately would work exactly once, on the frame the transition happened, and this same `if`
+  // is only entered again on the *next* `expanded` transition — so a viewer opening the expanded
+  // globe would see it balloon to fill the entire viewport and stay there permanently once the
+  // real, tight measurement arrived a frame later, since nothing would ever re-trigger a reframe
+  // after this ref had already been marked consumed. Only advancing `wasExpandedRef` once a real
+  // measurement exists (never gating the *collapsing* direction, which needs no measurement at
+  // all — `CAMERA_DISTANCE` is a constant) means this block simply tries again on every
+  // subsequent render until the measurement lands, then snaps exactly once with the right number.
+  //
+  // A plain `!== null` check here wasn't the whole story (browser-verified, user report
+  // 2026-09-18: "opens zoomed in a lot, need to press zoom out 6 times") — two distinct ways for
+  // `sphereFitFrame` to be non-null but still not trustworthy, both now folded into
+  // `sphereFrameReady` above:
+  // - `Globe.tsx`'s own measurement effect could store a real-but-degenerate `{width: 0,
+  //   height: 0}` rect on the one paint before its ancestor's `--chrome-gap-height` custom
+  //   property resolved — fixed at the source (that effect now only ever stores a real,
+  //   non-degenerate rect, so `null` already means "not ready" here without this needing to know
+  //   why a rect was untrustworthy).
+  // - Even a correctly-measured, real-sized `sphereFitFrame` could arrive *before* `size` (r3f's
+  //   own, independently-updating canvas measurement) had caught up from the minimised orb's old,
+  //   much smaller canvas — `isSubFrameOf`'s own doc comment above has the full story; this is the
+  //   one that actually reproduced the reported bug.
+  const canReframeSphere = !expanded || sphereFrameReady
+  if (!mapMode && canReframeSphere && expanded !== wasExpandedRef.current) {
     wasExpandedRef.current = expanded
     preUnfoldDistanceRef.current = idleSphereDistance
     if (settled) snapPendingRef.current = true
@@ -794,23 +1152,104 @@ function GlobeCameraControls({ expanded, mapMode, unfold }: GlobeCameraControlsP
     controls.update()
   })
 
+  // Shared by the `OrbitControls` props below, `zoomBy` and `reportZoomBounds` — one definition
+  // of "how far can this mode's zoom go" that scroll/pinch, the zoom buttons and their own
+  // disabled state can never disagree about.
+  const zoomMinDistance = mapMode ? mapFit * MAP_MIN_ZOOM_FRACTION : 0
+  const zoomMaxDistance = mapMode ? mapFit : Infinity
+
+  /** Issue 3 (user verbatim: "when it's expanded to a map it still has the 'drag hand' mouse
+   *  icon... dragging doesn't do anything in this mode"). Checked what map mode actually supports
+   *  before changing this (see `camera.ts`'s `mapHasPanRoom` own doc comment): panning is enabled
+   *  in map mode, but has zero range at the settled default view (`mapFit`'s own margin already
+   *  shows slightly *more* than the whole map), so `grab` was genuinely wrong at the exact moment
+   *  reported. Written directly onto the canvas element's own `style.cursor` (bypassing React
+   *  state/CSS class churn on every zoom tick, the same non-reactive-DOM-write discipline
+   *  `setPoleLabelOpacity`/`--overlay-clear-bottom` already use elsewhere in this feature) —
+   *  `Globe.module.css`'s `.orbExpanded[data-map-mode='true']` supplies the `default` resting
+   *  value this clears back to. Sphere mode is untouched (`''`, inherits `.orbExpanded`'s own
+   *  unconditional `grab` — rotate is always meaningful there). */
+  const updateCursor = (): void => {
+    if (!mapMode) {
+      gl.domElement.style.cursor = ''
+      return
+    }
+    const controls = controlsRef.current
+    if (controls === null) return
+    const distance = controls.target.distanceTo(camera.position)
+    gl.domElement.style.cursor = mapHasPanRoom(distance, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT) ? 'grab' : ''
+  }
+
+  /** Reports whether the zoom buttons (`ZoomControls`, requirement 4) can still do anything —
+   *  `ZOOM_BOUNDS_EPSILON` absorbs float roundoff right at a bound rather than reading as
+   *  perpetually "one step left" there. `zoomMaxDistance === Infinity` (sphere mode, today's
+   *  actual, pre-existing bound — not tightened by this feature) never disables zoom-out. */
+  const reportZoomBounds = (): void => {
+    const controls = controlsRef.current
+    if (controls === null) return
+    const distance = controls.target.distanceTo(camera.position)
+    onZoomBoundsChange({
+      canZoomIn: distance > zoomMinDistance + ZOOM_BOUNDS_EPSILON,
+      canZoomOut: zoomMaxDistance === Infinity ? true : distance < zoomMaxDistance - ZOOM_BOUNDS_EPSILON,
+    })
+  }
+
   const onControlsChange = (): void => {
     const controls = controlsRef.current
-    if (controls === null || !mapMode) return
-    // `controls.target` sits at the same `z = 0` it always has (see this component's own doc
-    // comment on why); the flattened map itself sits `GLOBE_RADIUS` closer to the camera, at
-    // `z = GLOBE_RADIUS`. Subtracting it here recovers the true camera-to-plane distance
-    // `clampPanTarget`'s own FOV math needs — without it, every pan-visible-extent calculation
-    // would read as `GLOBE_RADIUS` further away than the plane actually is, letting a viewer pan
-    // slightly past the map's true edge.
-    const planeDistance = camera.position.distanceTo(controls.target) - GLOBE_RADIUS
-    const [x, y] = clampPanTarget([controls.target.x, controls.target.y], planeDistance, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
-    if (x === controls.target.x && y === controls.target.y) return
-    camera.position.x += x - controls.target.x
-    camera.position.y += y - controls.target.y
-    controls.target.set(x, y, 0)
-    controls.update()
+    if (controls !== null && mapMode) {
+      // `controls.target` sits at the same `z = 0` it always has (see this component's own doc
+      // comment on why); the flattened map itself sits `GLOBE_RADIUS` closer to the camera, at
+      // `z = GLOBE_RADIUS`. Subtracting it here recovers the true camera-to-plane distance
+      // `clampPanTarget`'s own FOV math needs — without it, every pan-visible-extent calculation
+      // would read as `GLOBE_RADIUS` further away than the plane actually is, letting a viewer
+      // pan slightly past the map's true edge.
+      const planeDistance = camera.position.distanceTo(controls.target) - GLOBE_RADIUS
+      const [x, y] = clampPanTarget([controls.target.x, controls.target.y], planeDistance, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+      if (x !== controls.target.x || y !== controls.target.y) {
+        camera.position.x += x - controls.target.x
+        camera.position.y += y - controls.target.y
+        controls.target.set(x, y, 0)
+        controls.update()
+      }
+    }
+    updateCursor()
+    reportZoomBounds()
   }
+
+  // Entering/leaving map mode (or a resize) changes `zoomMinDistance`/`zoomMaxDistance`/the
+  // pan-room check's own geometry without necessarily firing `OrbitControls`'s own 'change' event
+  // first (e.g. the very first frame after the toggle) — this keeps the cursor and the zoom
+  // buttons correct even before the viewer's next drag/scroll/click does.
+  useEffect(() => {
+    updateCursor()
+    reportZoomBounds()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `updateCursor`/`reportZoomBounds`
+    // are redefined every render (they close over `controlsRef`/`camera`/`gl`, not memoized); the
+    // dependency list below is deliberately just their real *inputs*, not the functions themselves.
+  }, [mapMode, aspect, fovYRadians, zoomMinDistance, zoomMaxDistance])
+
+  /** One press of `ZoomControls`' `+`/`−` (requirement 4) — dollies `camera.position` toward or
+   *  away from `controls.target` by `factor`, clamped through the exact same
+   *  `zoomMinDistance`/`zoomMaxDistance` (and so `camera.ts`'s `clampedDollyDistance`) that
+   *  `OrbitControls`' own `minDistance`/`maxDistance` props below already enforce for scroll/
+   *  pinch — never a second, parallel notion of "how far this mode can zoom." No-op mid-tween
+   *  (`!settled`): the per-frame tween above already drives `camera.position` every frame then,
+   *  and would simply overwrite a manual zoom on its very next tick. */
+  const zoomBy = (factor: number): void => {
+    const controls = controlsRef.current
+    if (controls === null || !settled) return
+    const distance = controls.target.distanceTo(camera.position)
+    if (distance <= 1e-6) return
+    const nextDistance = clampedDollyDistance(distance, factor, zoomMinDistance, zoomMaxDistance)
+    camera.position.sub(controls.target).multiplyScalar(nextDistance / distance).add(controls.target)
+    controls.update()
+    onControlsChange()
+  }
+
+  useImperativeHandle(ref, () => ({
+    zoomIn: () => zoomBy(ZOOM_STEP_FACTOR),
+    zoomOut: () => zoomBy(1 / ZOOM_STEP_FACTOR),
+  }))
 
   return (
     <OrbitControls
@@ -820,12 +1259,12 @@ function GlobeCameraControls({ expanded, mapMode, unfold }: GlobeCameraControlsP
       enableRotate={!mapMode}
       enableDamping={settled}
       rotateSpeed={0.6}
-      minDistance={mapMode ? mapFit * MAP_MIN_ZOOM_FRACTION : 0}
-      maxDistance={mapMode ? mapFit : Infinity}
+      minDistance={zoomMinDistance}
+      maxDistance={zoomMaxDistance}
       onChange={onControlsChange}
     />
   )
-}
+})
 
 // ------------------------------------------------------------------------------- rotation
 

@@ -52,6 +52,95 @@ function clampAbs(value: number, max: number): number {
   return Math.min(max, Math.max(-max, value))
 }
 
+/**
+ * The vertical FOV a `subHeightPx`-tall rectangle subtends within a camera whose real vertical
+ * FOV (`fovYRadians`) spans the *whole* canvas (`canvasHeightPx`) — i.e. "what FOV would a camera
+ * need on its own to make an object exactly fill just this sub-rectangle, at the same distance."
+ * Feeding the result into `sphereFitDistance`/`fitDistance` (in place of the camera's real
+ * `fovYRadians`) computes the distance that fits an object into that sub-rectangle specifically,
+ * while the camera's actual FOV/aspect keep covering the full canvas around it.
+ *
+ * Exists because `Globe.tsx`'s expanded canvas now fills the whole backdrop (removing the old
+ * square clip on zoom — docs/GLOBE.md), but the *default* sphere/map framing must still look the
+ * size it did when the canvas was only the chrome-gap-sized panel: `Globe.tsx` measures that
+ * panel's live rectangle in the DOM (an invisible reference frame, not the canvas) and passes its
+ * height here rather than the canvas's own, now much taller, one. Derived from the standard
+ * perspective mapping "screen position is proportional to tan(angle-from-axis)": a sub-rectangle
+ * `subHeightPx` tall out of a `canvasHeightPx`-tall canvas subtends `tan(halfFov) =
+ * (subHeightPx/canvasHeightPx) * tan(realHalfFov)` — the derivation (and its horizontal
+ * counterpart, reproduced for free via `aspect` in the caller) is in `camera.test.ts`.
+ */
+export function subFrameFovY(fovYRadians: number, subHeightPx: number, canvasHeightPx: number): number {
+  return 2 * Math.atan((subHeightPx / canvasHeightPx) * Math.tan(fovYRadians / 2))
+}
+
+/**
+ * The screen-pixel shift needed to re-centre content at `targetRect`'s own vertical centre
+ * instead of `canvasRect`'s — positive means the target sits *below* the canvas's centre (screen
+ * Y grows downward). `Globe.tsx`'s `GlobeCameraControls` negates this into a
+ * `camera.setViewOffset` Y offset (see that call's own doc comment for the sign derivation): a
+ * sphere/map that sits at the world origin renders at the canvas's own centre by default, but the
+ * chrome-gap rectangle it should visually sit in generally isn't centred in the *canvas* now that
+ * the canvas is the whole backdrop (the gap itself isn't centred in the viewport either — the
+ * title band above it is shorter than the caption-plus-timeline band below,
+ * `Globe.module.css`'s own doc comment).
+ */
+export function verticalCenterOffset(targetTopPx: number, targetHeightPx: number, canvasTopPx: number, canvasHeightPx: number): number {
+  const targetCenterY = targetTopPx + targetHeightPx / 2
+  const canvasCenterY = canvasTopPx + canvasHeightPx / 2
+  return targetCenterY - canvasCenterY
+}
+
+/** The visible half-width/half-height at `distance`, shared by `clampPanTarget` (below) and
+ *  `mapHasPanRoom` — both need the same "how much of the map plane is on screen right now" figure. */
+function visibleHalfExtents(distance: number, aspect: number, fovYRadians: number): { halfWidth: number; halfHeight: number } {
+  const halfHeight = distance * Math.tan(fovYRadians / 2)
+  return { halfWidth: halfHeight * aspect, halfHeight }
+}
+
+/**
+ * Whether the map has any room to pan at `distance` — false at (and above) `mapFit`, since the
+ * fit distance's own margin already shows slightly *more* than the whole map on every axis
+ * (`clampPanTarget`'s `maxX`/`maxY` are both exactly 0 there); true only once zoomed in enough
+ * that the viewport shows less than the map's own extent on at least one axis.
+ *
+ * `Globe.tsx`'s `GlobeCameraControls` uses this to choose the map-mode cursor (issue 3, user
+ * verbatim: "when it's expanded to a map it still has the 'drag hand' mouse icon... dragging
+ * doesn't do anything in this mode") — at the default, fully-zoomed-out map view this is false
+ * (dragging truly does nothing, matching the report), and only flips true once the viewer zooms
+ * in, at which point panning starts doing something and `grab` becomes the honest cursor again.
+ */
+export function mapHasPanRoom(distance: number, aspect: number, fovYRadians: number, mapHalfWidth: number, mapHalfHeight: number): boolean {
+  const { halfWidth, halfHeight } = visibleHalfExtents(distance, aspect, fovYRadians)
+  return halfWidth < mapHalfWidth || halfHeight < mapHalfHeight
+}
+
+/** Whether `frame` is a trustworthy sub-region of a `canvasSize`-sized canvas — non-null and no
+ *  bigger, on either axis, than the canvas it's supposedly measured within. `Globe.tsx`'s
+ *  `GlobeCameraControls` uses this to gate `subFrameFovY`'s own fallback (and, via
+ *  `sphereFrameReady`, whether a plain expand/collapse is allowed to reframe the camera at all)
+ *  against a specific browser-verified race: `Globe.tsx` measures the fit-target rectangle via
+ *  its own DOM-layer `ResizeObserver`, while `size` (the canvas's real drawing-buffer dimensions)
+ *  comes from r3f's own, *independent* `ResizeObserver` — on the render(s) right after `expanded`
+ *  flips true, the DOM measurement can already report the correct ~570px box while r3f's own
+ *  `size` still reports the *minimised* orb's old, much smaller canvas, before r3f has re-measured
+ *  the now-full-viewport `.orbExpanded`. Fed a `frame` larger than the canvas it's meant to be a
+ *  sub-region of, `subFrameFovY` computes an effective FOV *wider* than the camera's own real one,
+ *  which produces a camera distance far too close — the root cause behind a real regression (user
+ *  report: "opens zoomed in a lot, need to press zoom out 6 times to get it back to reasonable
+ *  original size"). */
+export function isSubFrameOf(frame: { width: number; height: number } | null, canvasSize: { width: number; height: number }): boolean {
+  return frame !== null && frame.height > 0 && frame.width <= canvasSize.width && frame.height <= canvasSize.height
+}
+
+/** A single scroll/pinch step's worth of camera dolly, scaled by `factor` (< 1 moves closer / in,
+ *  > 1 moves away / out) and clamped to `[minDistance, maxDistance]` — the same bounds
+ *  `OrbitControls`'s own `minDistance`/`maxDistance` props already enforce for scroll/pinch, so a
+ *  zoom button (`Globe.tsx`'s `ZoomControls`) can never disagree with them. */
+export function clampedDollyDistance(currentDistance: number, factor: number, minDistance: number, maxDistance: number): number {
+  return Math.min(maxDistance, Math.max(minDistance, currentDistance * factor))
+}
+
 function cross3(a: readonly [number, number, number], b: readonly [number, number, number]): [number, number, number] {
   return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
 }
@@ -129,8 +218,7 @@ export function clampPanTarget(
   mapHalfWidth: number,
   mapHalfHeight: number,
 ): [number, number] {
-  const visibleHalfHeight = distance * Math.tan(fovYRadians / 2)
-  const visibleHalfWidth = visibleHalfHeight * aspect
+  const { halfWidth: visibleHalfWidth, halfHeight: visibleHalfHeight } = visibleHalfExtents(distance, aspect, fovYRadians)
   const maxX = Math.max(0, mapHalfWidth - visibleHalfWidth)
   const maxY = Math.max(0, mapHalfHeight - visibleHalfHeight)
   return [clampAbs(target[0], maxX), clampAbs(target[1], maxY)]

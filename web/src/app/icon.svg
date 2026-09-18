@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Earthlapse">
+  <!--
+    The Earthlapse mark: a planet with a sweep arc running around it, ending in the same
+    amber playhead dot the timeline uses. Earth, plus time passing over it — the name, literally.
+
+    Authored by hand rather than generated, for three reasons: a favicon is read at 16px where
+    generated raster detail turns to mush, an SVG stays exact at every size a browser asks for,
+    and it costs nothing from the image budget.
+
+    Everything here is sized against the 16px floor. No stroke is thinner than 2.5 units (= 0.6px
+    at 16px, which still survives antialiasing), the arc clears the globe by a full stroke width
+    so the two never merge into one blob when downsampled, and the palette is only three tones —
+    at 16px, subtlety reads as mud. The dark plate is deliberate: a transparent favicon vanishes
+    into a light browser tab, and this must work in both.
+  -->
+  <rect width="64" height="64" rx="14" fill="#0a0f16" />
+
+  <!-- The planet, offset down-left to leave the arc room to pass over its shoulder. -->
+  <circle cx="29" cy="36" r="17" fill="#2f5d7c" />
+  <!-- Two bands, not a coastline: at 16px a real landmass silhouette is noise, but a lit
+       equator and a terminator curve still read as "sphere" rather than "flat disc". -->
+  <path d="M13.2 31.5a17 17 0 0 1 31.6 0Z" fill="#3f7a9a" />
+  <path d="M29 19a17 17 0 0 0 0 34a13 17 0 0 1 0-34Z" fill="#26506c" />
+
+  <!-- The sweep: a comet arc over the top, thinning into the leading dot. Open at the lower
+       left so it reads as motion continuing, not as a closed ring around the planet. -->
+  <path
+    d="M9 44A23 23 0 0 1 48 16.5"
+    fill="none"
+    stroke="#e8b06a"
+    stroke-width="4.5"
+    stroke-linecap="round"
+  />
+  <circle cx="49.5" cy="17.5" r="6" fill="#f2c88a" />
+</svg>

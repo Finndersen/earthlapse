@@ -43,3 +43,16 @@ export const BREADCRUMB_CURRENT_SELECTOR = 'nav[aria-label="Timeline section"] [
  *  <parent label>", so reading it proves which section's *children* are actually on screen after
  *  a shortcut click, the same thing a viewer would see by eye. */
 export const SECTION_BANDS_SELECTOR = '[data-section-bands]'
+
+/** The expanded globe's two invisible fit-target rectangles (`Globe.tsx`/`Globe.module.css`'s
+ *  `.orbFitFrameSphere`/`.orbFitFrameMap`) — `GlobeCameraControls` fits the *default* sphere/map
+ *  view against these, not the canvas's own now-full-viewport box (`Globe.module.css`'s
+ *  `.orbExpanded` doc comment). `visibility: hidden`, so `measure.mjs`'s `drawnBounds` (which
+ *  waits for Playwright's "visible" actionability state) can't target them directly — a shot
+ *  reads their real rect with a plain `page.evaluate(() => el.getBoundingClientRect())` (that
+ *  works regardless of CSS visibility) and feeds it to `drawnBoundsInClip` instead, to scope a
+ *  sphere-size measurement to a region clear of the surrounding chrome (the "Globe/Map" toggle,
+ *  legend, close button and zoom controls) that the now-full-viewport `GLOBE_CANVAS_SELECTOR`
+ *  box would otherwise also sweep in. */
+export const GLOBE_SPHERE_FIT_FRAME_SELECTOR = '[data-testid="globe-sphere-fit-frame"]'
+export const GLOBE_MAP_FIT_FRAME_SELECTOR = '[data-testid="globe-map-fit-frame"]'

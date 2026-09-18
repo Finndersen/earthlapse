@@ -41,109 +41,117 @@
   cursor: grab;
 }
 
-.orbExpanded {
-  /* Fills as much of the *real* gap between the shell's title and its timeline band as it can
-     without touching either (user follow-up, 2026-09-17: "there is room for the globe and map to
-     be larger... make it as large as possible to fill empty space"). `--chrome-gap-height` is
-     that gap's own live height, measured by `ShellLayout`'s `useChromeGap` from the title's and
-     timeline band's actual `getBoundingClientRect()`s — not a guessed pixel allowance subtracted
-     from `100vh`, the earlier approach this replaces after a fresh review still found the globe
-     undersized against it (a guessed constant necessarily either under- or over-estimates the
-     shell's real chrome at any width/height it wasn't hand-tuned against; a live measurement is
-     correct at all of them by construction). `8px` is breathing room, not a chrome estimate: the
-     sphere's own halo glow (`.halo`, below) bleeds a further 12% beyond whatever box this
-     resolves to, and this keeps that bleed from visibly grazing the title or caption text, which
-     already renders with a heavy text-shadow regardless — kept small (down from an initial 18px,
-     2026-09-18 lead review) since every one of these pixels is subtracted from the panel's own
-     size and the ask is explicitly to fill the space, not to spend it on margin beyond what the
-     halo actually needs. `min(94vw, ...)` guards the one axis `--chrome-gap-height` says nothing
-     about: a viewport narrower than it is tall (a phone portrait) is width-, not height-, bound.
-     `900px` caps how big the orb is ever allowed to get on a very tall/short-chrome window,
-     independent of how much space is technically free. */
-  --expanded-size: max(235px, min(94vw, 900px, calc(var(--chrome-gap-height, 560px) - 8px)));
+/* **Fills the whole backdrop (user follow-up, 2026-09-18: "currently when zooming in on the
+   globe, it's constrained by a square bounding window which cuts it off, can this be removed...
+   and the globe can go behind the overlay content elements if needed").** Until this change,
+   `.orbExpanded` was itself the chrome-gap-fitted box below (`--expanded-size`), and the
+   `<canvas>` filled exactly that box — so zooming the camera in past the default fit grew the
+   rendered sphere past the box's own edge, and since the box *was* the canvas, the excess was
+   simply never drawn: a visible square crop. Decoupling "how big the canvas is" from "how big the
+   sphere/map look at rest" fixes this at the root: the canvas now covers the same full-viewport
+   area `.backdrop` already does (both `position: fixed`/`absolute; inset: 0`), so a sphere zoomed
+   past its default size has real room to grow into — including, deliberately, *underneath* the
+   title/timeline/legend/close-button chrome, all of which stay `z-index`-above this backdrop
+   already (`ShellLayout.module.css`'s `.title`, and this file's own `.viewModeGroup`/
+   `.legendGroup`/`.closeButton`/`.zoomGroup`, each later in DOM order than this element too) —
+   "go behind the overlay content" is a consequence of the canvas simply being large enough to
+   reach that content, not a new stacking rule.
 
-  position: relative;
-  width: var(--expanded-size);
-  height: var(--expanded-size);
-  /* Centres the box in the *real* gap (`--chrome-gap-top` + `--chrome-gap-height`) rather than
-     in the whole viewport (`.backdrop` no longer uses `place-items: center` for this axis — see
-     its own rule below): exact, not a per-breakpoint guessed offset like the `translateY` nudges
-     this replaces (`-3vh`/`-12vh` for the sphere, `-9vh`/`-16vh` for the map, below), each of
-     which was only ever an approximation of the same "recover the whole-viewport centring's
-     wasted top slack" idea, hand-tuned against a handful of viewports rather than correct at
-     every one of them by construction. `[data-animate-resize='true']`'s `transition: margin-top`
-     still carries this smoothly on the one path that does animate it (folding back from map
-     mode, whose own larger `margin-top` blends down to this). */
-  margin-top: calc(var(--chrome-gap-top, 120px) + (var(--chrome-gap-height, 560px) - var(--expanded-size)) / 2);
+   The *default* (settled, un-zoomed) framing still needs to look the size it did in the old,
+   smaller box, or every existing "the sphere is ~546px" expectation (this feature's own QA shots,
+   docs/GLOBE.md) breaks by ballooning to fill the whole viewport. Rather than have the CSS layout
+   *drive* that size (the old approach — a bigger canvas naturally rendered a bigger default
+   sphere too, since the camera fit the canvas it was actually given), sizing is now a pure
+   `Globe.tsx`/`camera.ts` concern: `.orbFitFrameSphere`/`.orbFitFrameMap` below carry the *exact*
+   sizing formulas `.orbExpanded` used to have (verbatim, just renamed and never painted),
+   `Globe.tsx` measures their real rendered rectangles the same way it already measures
+   `.viewModeGroup`/`.legendGroup` for `--overlay-clear-bottom` (`ResizeObserver` +
+   `getBoundingClientRect`, ADR/doc comment on that effect), and `GlobeCameraControls` feeds those
+   measurements into `camera.ts`'s `subFrameFovY` so the default fit targets that *rectangle*
+   instead of the canvas's own now-much-larger one — see that component's own doc comment for the
+   maths. A `camera.setViewOffset` shift (also in `GlobeCameraControls`, using
+   `verticalCenterOffset`) then re-centres the rendered sphere/map on that rectangle's own centre
+   rather than the canvas's, since the two generally differ (the chrome gap isn't centred in the
+   viewport either — the title band above it is shorter than the caption-plus-timeline band
+   below). Net effect: the default view is pixel-for-pixel where it always was; only the *room to
+   zoom into* changed.
+
+   One consequence worth naming: the old `[data-animate-resize]`/`[data-map-mode]` `width`/
+   `height`/`margin-top` formulas this rule used to carry existed largely to keep the *canvas's
+   own CSS box* in step with the camera's map-mode reframe (their own removed doc comments have
+   the debounce story). Now that the canvas is a static full-bleed box that never resizes on a
+   map-mode toggle at all, that whole synchronisation problem — and the transition it needed —
+   stops existing; `GlobeCameraControls`'s own per-frame camera tween is the *only* thing that
+   carries the sphere<->map motion now, exactly as it already carried the camera's distance/
+   direction/pan-target throughout. */
+.orbExpanded {
+  position: absolute;
+  inset: 0;
   cursor: grab;
 }
 
-/* Only `margin-top` animates here — `width`/`height` deliberately do not (see the map-mode rule
-   below for why: they snap to their target size instantly instead). `margin-top` alone still
-   needs its own transition for the map-mode re-centring (below) to read as a smooth slide rather
-   than a jump, and for that motion to line up with `uUnfold`'s own ~0.8s eased duration
-   (`unfoldAnimation.ts`'s `UNFOLD_DURATION_SECONDS`) so it reads as part of the same overall
-   motion as the mesh morph and the camera's reframe (`GlobeCameraControls`).
-
-   Deliberately scoped to `[data-animate-resize='true']`, not the bare `.orbExpanded` rule above:
-   `.orb` and `.orbExpanded` are two states of the *same* element (`Globe.tsx`'s own "element
-   types and order stay identical" note), so a transition on the bare class would also fire on
-   the very first frame of expanding — the orb's own reveal jump from its small minimised box to
-   this one, an unrelated and much bigger size change that used to be instant. `Globe.tsx` only
-   sets `data-animate-resize` one frame after `expanded` turns true, well before a viewer could
-   reach the toggle, so the expand reveal stays instant and only a later map-mode toggle (while
-   already settled at the full expanded size) animates — without this guard, a screenshot taken
-   mid-expand-reveal shows the panel still small and off-centre, a real regression this was
-   verified against. */
-.orbExpanded[data-animate-resize='true'] {
-  transition: margin-top 800ms cubic-bezier(0.65, 0, 0.35, 1);
+/* Map mode's cursor (issue 3, user verbatim: "when it's expanded to a map it still has the 'drag
+   hand' mouse icon... dragging doesn't do anything in this mode"). Checked against what map mode
+   actually supports before changing this: `GlobeCameraControls` enables `OrbitControls` panning
+   in map mode, but only usefully — `camera.ts`'s `mapHasPanRoom` is false at (and above) the
+   settled default `mapFit` distance, since the fit's own margin already shows slightly *more*
+   than the whole map, i.e. there is nowhere to pan to at the view a viewer actually lands on. So
+   `grab` was wrong at exactly the moment reported. This base rule is the honest default for that
+   moment (`default`, no drag affordance implied); `GlobeCameraControls` writes `grab` directly
+   onto the canvas element's own `cursor` (overriding this) once the viewer has zoomed in past the
+   fit distance and panning genuinely does something, and clears that override back to this rule
+   on leaving map mode. Sphere mode is untouched — rotate is always meaningful there, so
+   `.orbExpanded`'s own base `grab` above stands unconditionally. */
+.orbExpanded[data-map-mode='true'] {
+  cursor: default;
 }
 
-/* Map mode (docs/GLOBE.md's ADR-033): the sphere's square box (above) wastes roughly half
-   its area once flattened into a ~2:1 world map — `GlobeCameraControls`'s camera fit already
-   frames the map correctly *within whatever aspect this box ends up being*, but a viewer asked
-   to "see everything at once" deserves more than a small map floating in a mostly-empty square.
-   Widens toward the Equal Earth map's own bounding-box aspect (`projection.ts`'s
-   `EQUAL_EARTH_HALF_WIDTH / EQUAL_EARTH_HALF_HEIGHT`, ~2.05) — approximate on purpose, since the
-   camera math self-corrects to whatever this resolves to, this only needs to be close enough
-   that the old square margin doesn't linger. Both `width` and `height` repeat the same viewport/
-   chrome-clearance bounds `--expanded-size` uses above (96vw / `--chrome-gap-height`, the real
-   title-to-timeline gap), scaled by the target aspect on whichever axis needs it, rather than
-   deriving one from the other (`height: auto` does not transition smoothly in every browser) —
-   every width term here is exactly its height counterpart times 2.05, so whichever term `min()`
-   picks is the same index on both sides and the aspect stays exactly 2.05 regardless of which
-   term binds.
+/* The reference rectangles `GlobeCameraControls` fits the *default* sphere/map view against —
+   see `.orbExpanded`'s own doc comment above for why these exist at all (the canvas itself is now
+   full-bleed, not sized to either of these). Never painted (`visibility: hidden`, which — unlike
+   `display: none` — still lays out and stays measurable via `getBoundingClientRect`, exactly what
+   `Globe.tsx`'s `ResizeObserver` needs) and never a hit target (`pointer-events: none`); pure
+   geometry probes. `.halo`/`.staticOrb` are nested inside `.orbFitFrameSphere` specifically (not
+   duplicated per frame) so they keep sitting exactly where the *sphere's* default silhouette
+   does, `visibility: visible` overriding the hidden ancestor for just those two — map mode reuses
+   the same sphere-anchored halo rather than a second, map-shaped one: both frames share the same
+   centre by construction (each is centred in the same real chrome gap regardless of its own
+   width/height — `verticalCenterOffset`'s own doc comment), so a circular halo behind the
+   flattened map is a small, pre-existing, low-stakes mismatch (the map is a rectangle, the halo a
+   circle) rather than a new one this change introduces. */
+.orbFitFrameSphere,
+.orbFitFrameMap {
+  position: absolute;
+  /* Horizontal centring: the old `.orbExpanded` got this for free from `.backdrop`'s own
+     `display: flex; align-items: center` (it was a normal-flow child) — an absolutely positioned
+     element like this one is taken out of flow entirely and flex alignment no longer applies to
+     it, so it needs its own explicit centring (browser-verified regression: without this, both
+     frames pinned to the container's left edge instead of the viewport's horizontal centre,
+     though this alone wouldn't have explained the *sphere itself* filling the viewport — see
+     `GlobeCameraControls`'s own `canReframeSphere` doc comment for that separate bug). */
+  left: 50%;
+  transform: translateX(-50%);
+  visibility: hidden;
+  pointer-events: none;
+}
 
-   **`width`/`height` are not in `[data-animate-resize='true']`'s own `transition` list above —
-   they snap to this rule's target size the instant `data-map-mode` changes.** An earlier version
-   animated them over the same ~800ms as `margin-top` below; browser-verified regression: the
-   panel's own CSS box and the `<canvas>` it contains are two different things that resize on two
-   different clocks — the box's width/height animated smoothly frame-by-frame, but r3f only
-   reallocates the canvas's actual drawing buffer (and the aspect `GlobeCameraControls` frames
-   against) on its own `ResizeObserver` callback, debounced (`Globe.tsx`'s own `<Canvas resize>`)
-   to avoid dozens of reallocations across one 800ms animation. The result: the canvas stayed at
-   its *old* pixel size and aspect, letterboxed/cropped inside the now-differently-shaped box,
-   until the debounce finally fired near the end of the transition and the picture snapped —
-   visibly off-centre and clipped (top/bottom/right) the whole time in between. Snapping the box
-   to its final size (and aspect) up front removes the debounce's own reason to exist (`Globe.tsx`
-   no longer sets one at all) and leaves the *mesh's own morph* (`uUnfold`) and the camera's own
-   tween (`GlobeCameraControls`) — both already frame-accurate, GPU-side motions with no separate
-   clock to fall out of step with — to carry the entire visible transition.
+/* Verbatim copy of the old `.orbExpanded` sizing formula (this file's own git history has the
+   original doc comment in full) — only the selector and the visibility above changed. */
+.orbFitFrameSphere {
+  --expanded-size: max(235px, min(94vw, 900px, calc(var(--chrome-gap-height, 560px) - 8px)));
 
-   `margin-top` re-centres this differently-sized box in the same real gap `.orbExpanded`'s own
-   `margin-top` centres the sphere in (`--chrome-gap-top`/`--chrome-gap-height`) — no separate
-   guessed offset needed here the way the sphere rule's old `-3vh` and this rule's old `-9vh`
-   needed two different hand-tuned constants: both are now the same exact formula, just against
-   this rule's own (wider, shorter) `height` instead of `--expanded-size`.
+  width: var(--expanded-size);
+  height: var(--expanded-size);
+  margin-top: calc(var(--chrome-gap-top, 120px) + (var(--chrome-gap-height, 560px) - var(--expanded-size)) / 2);
+}
 
-   `max(160px, ...)` / `max(328px, ...)` floors: every term inside the
-   inner `min()` shrinks toward 0 as the gap gets short enough — `--chrome-gap-height` alone
-   reaching 0 would otherwise produce a zero-size map box with no floor to catch it (unlike sphere
-   mode's own `--expanded-size` above, which already has a `max(235px, ...)` floor). 160px/328px
-   keep the same ~2.05 aspect the two `min()`s already target (328 / 2.05 = 160), so the floor
-   itself never distorts the map's own shape — it only stops the box shrinking past a size the
-   "View" toggle and legend can still sit over legibly. */
-.orbExpanded[data-map-mode='true'] {
+/* Verbatim copy of the old `.orbExpanded[data-map-mode='true']` sizing formula. Rendered
+   unconditionally alongside `.orbFitFrameSphere` (not gated on the live `data-map-mode` state)
+   because `GlobeCameraControls` needs *both* fit targets at once — the tween between sphere and
+   map framing interpolates toward whichever is the current target while still reading the other
+   as where it started (the same "measure both, blend continuously" shape the camera's own
+   distance/direction tween already uses elsewhere in that component). */
+.orbFitFrameMap {
   --map-height: max(160px, min(calc(96vw / 2.05), 94vh, calc(var(--chrome-gap-height, 560px) - 8px), calc(1800px / 2.05)));
 
   width: max(328px, min(96vw, calc(94vh * 2.05), calc((var(--chrome-gap-height, 560px) - 8px) * 2.05), 1800px));
@@ -153,10 +161,13 @@
 
 /* A wide, faint scatter beyond the shader's own atmosphere. With `inset: -12%` the planet's
    silhouette (≈76% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈62%
-   of this gradient's radius. */
+   of this gradient's radius. `visibility: visible` overrides the hidden `.orbFitFrameSphere`
+   ancestor it's nested inside while expanded (that class's own doc comment) — the minimised
+   `.orb` never hides it in the first place, so this is a no-op there. */
 .halo {
   position: absolute;
   inset: -12%;
+  visibility: visible;
   border-radius: 50%;
   background: radial-gradient(
     circle closest-side,
@@ -179,10 +190,15 @@
    (`supportsWebGL()`, `@/lib/webgl`) — no raster data, rotation or effects, just a plausible
    orb silhouette that fills the same box the sphere would, sized against the same ≈76%
    figure CAMERA_DISTANCE produces (see Globe.tsx), so the surrounding halo/expand/close
-   buttons and backdrop never have to be laid out any differently. */
+   buttons and backdrop never have to be laid out any differently. Expanded, it's nested inside
+   `.orbFitFrameSphere` rather than the (now full-bleed) `.orbExpanded` — the static fallback has
+   no camera/zoom of its own to make the clip-removal in `.orbExpanded`'s doc comment relevant, so
+   it keeps the old chrome-gap-fitted box; `visibility: visible` overrides that ancestor's own
+   hidden state the same way `.halo`'s does, immediately above. */
 .staticOrb {
   position: absolute;
   inset: 12%;
+  visibility: visible;
   border-radius: 50%;
   /* Opaque throughout — translucent stops let the dimmed scene show through the expanded orb,
      reading as a glass bubble rather than a solid planet — only the highlight softens at its own
@@ -484,6 +500,80 @@
     0 0 14px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
 }
 
+/* Zoom in/out (user follow-up, 2026-09-18: "might be good to add zoom in/out magnifying
+   icons/buttons to the fullscreen map/globe view"). Right edge, vertically centred — every
+   corner is already spoken for (`.viewModeGroup`/`.legendGroup` top-left, `.closeButton` top-
+   right) and bottom-right collides for real: with the globe expanded, `ShellLayout`'s own
+   timeline band stays promoted above this backdrop the same way the title does (project rule —
+   the chrome must stay clickable over the full-bleed canvas), and `SectionEdgeNav`'s "next
+   section" edge button sits close enough to the viewport's right edge to intercept clicks meant
+   for a bottom-right zoom control there (browser-verified: a real `locator.click()` timeout in
+   the QA harness, not a hypothetical). Centred vertically on the right edge clears both the top
+   overlay stack and the bottom timeline at every required viewport, including the narrowest
+   (390x844) where the timeline's own band is tallest. Same hairline/pill-group idiom as
+   `.viewModeToggle`/`.legendToggle` (a bordered, translucent pill of buttons) rather than a new
+   button language, just stacked vertically (`+` over `−`, like a physical zoom rocker) instead of
+   side-by-side, since these two are mutually exclusive directions rather than a pressed/unpressed
+   pair. Never hidden or faded on inactivity (project rule) — visible for the whole time the
+   expanded view is open, in both sphere and map mode alike (`Globe.tsx` renders this once,
+   unconditioned on `mapMode`, since `GlobeCameraControls`'s zoom drives the same camera distance
+   either way). */
+.zoomGroup {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: clamp(16px, 3vw, 48px);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(3, 4, 6, 0.35);
+}
+
+.zoomButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+
+.zoomButton:hover:not(:disabled),
+.zoomButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.zoomButton:focus-visible {
+  box-shadow:
+    inset 0 0 0 1px var(--hud-accent, #e8b06a),
+    0 0 14px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+/* "Visibly flatten" rather than remove (user's own phrasing) at a range limit — `disabled`
+   also stops the click from reaching `camera.ts`'s already-clamping `clampedDollyDistance`, but
+   the dim/no-pointer treatment is what tells a viewer *why* nothing happened. */
+.zoomButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.zoomDivider {
+  height: 1px;
+  background: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
 /* The "N"/"S" orientation label (Globe.tsx's `PoleAxisMarkers`), tiny so it reads as a tick at
    the pole rather than a caption — captions live under the orb or in the shell's stage slot,
    never drawn by Globe itself. Starts at opacity 0: `PoleAxisMarkers` sets it directly every
@@ -517,11 +607,12 @@
    panel's own default top-left position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
    (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides `compact`
    for `<Legend>`.
-   No per-breakpoint vertical nudge is needed here any more: `.orbExpanded`'s and the map-mode
-   rule's own `margin-top` already centre each box in the shell's *real*, live-measured gap
-   (`--chrome-gap-top`/`--chrome-gap-height`) at every width and height, including this one — the
-   guessed `-3vh`/`-9vh`/`-12vh`/`-16vh` per-breakpoint corrections this replaced existed only to
-   patch that formula up for viewports its flat guessed constants didn't already fit. */
+   No per-breakpoint vertical nudge is needed here any more: `.orbFitFrameSphere`'s and
+   `.orbFitFrameMap`'s own `margin-top` already centre each fit target in the shell's *real*,
+   live-measured gap (`--chrome-gap-top`/`--chrome-gap-height`) at every width and height,
+   including this one — the guessed `-3vh`/`-9vh`/`-12vh`/`-16vh` per-breakpoint corrections this
+   replaced existed only to patch that formula up for viewports its flat guessed constants didn't
+   already fit. */
 
 /* The top-left overlay stack (the Globe/Map toggle, and beneath it the legend —
    `--overlay-clear-bottom`, `Globe.tsx`'s own measurement of whichever sits lower) is fixed in
@@ -543,7 +634,7 @@
     top: 86px;
   }
 
-  .orbExpanded {
+  .orbFitFrameSphere {
     /* `+ 6px`: a real, visible gap from the overlay stack's own bottom edge, not just
        non-intersection — without it a box that consumes the *entire* remaining space (no
        leftover to centre into) lands exactly tangent to the legend/toggle, a 0px gap that reads
@@ -567,7 +658,7 @@
    can't express; this is real coverage for this feature's own required viewport matrix and every
    more-landscape shape a real device is likely to present, not a proof for every aspect ratio. */
 @media (max-width: 1150px) {
-  .orbExpanded[data-map-mode='true'] {
+  .orbFitFrameMap {
     --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
     --map-height: max(
       160px,
@@ -595,9 +686,7 @@
   .poleLabel,
   .viewModeButton,
   .legendToggleButton,
-  /* Matches `[data-animate-resize='true']`'s own specificity (0,2,0) — a bare `.orbExpanded`
-     here would lose to that more specific rule regardless of source order. */
-  .orbExpanded[data-animate-resize='true'] {
+  .zoomButton {
     transition: none;
   }
 }

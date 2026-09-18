@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 
-import { clampPanTarget, fitDistance, slerpDirection, sphereFitDistance } from './camera'
+import {
+  clampedDollyDistance,
+  clampPanTarget,
+  fitDistance,
+  isSubFrameOf,
+  mapHasPanRoom,
+  slerpDirection,
+  sphereFitDistance,
+  subFrameFovY,
+  verticalCenterOffset,
+} from './camera'
 
 describe('fitDistance', () => {
   const fovYRadians = (40 * Math.PI) / 180
@@ -103,6 +113,108 @@ describe('clampPanTarget', () => {
     const clamped = clampPanTarget([-100, -100], distance, 1.6, fovYRadians, mapHalfWidth, mapHalfHeight)
     const [posX, posY] = clampPanTarget([100, 100], distance, 1.6, fovYRadians, mapHalfWidth, mapHalfHeight)
     expect(clamped).toEqual([-posX, -posY])
+  })
+})
+
+describe('subFrameFovY', () => {
+  const fovYRadians = (40 * Math.PI) / 180
+
+  it('returns the full FOV unchanged when the sub-frame is the whole canvas', () => {
+    expect(subFrameFovY(fovYRadians, 900, 900)).toBeCloseTo(fovYRadians)
+  })
+
+  it('shrinks as the sub-frame shrinks relative to the canvas', () => {
+    const half = subFrameFovY(fovYRadians, 450, 900)
+    const quarter = subFrameFovY(fovYRadians, 225, 900)
+    expect(half).toBeLessThan(fovYRadians)
+    expect(quarter).toBeLessThan(half)
+  })
+
+  it('fitting an object against the sub-FOV at a given canvas height reproduces the sub-frame pixel size', () => {
+    // Independent check of the whole point of this function: fit a unit sphere against a
+    // 560px-tall sub-frame within a 900px-tall canvas, then verify the sphere's own apparent
+    // radius, mapped through the *real* canvas height/FOV, lands on 560px * apparentTangent/tan(fovY/2)
+    // — i.e. the sub-frame's own fraction of the canvas, not the whole canvas.
+    const canvasHeightPx = 900
+    const subHeightPx = 560
+    const effectiveFovY = subFrameFovY(fovYRadians, subHeightPx, canvasHeightPx)
+    const distance = sphereFitDistance(1, 1, effectiveFovY, 0)
+    const apparentTangent = 1 / Math.sqrt(distance * distance - 1)
+    const pixelsAtRealFov = canvasHeightPx * (apparentTangent / Math.tan(fovYRadians / 2))
+    expect(pixelsAtRealFov).toBeCloseTo(subHeightPx, 5)
+  })
+})
+
+describe('verticalCenterOffset', () => {
+  it('is zero when the target and canvas share a centre', () => {
+    expect(verticalCenterOffset(0, 900, 0, 900)).toBeCloseTo(0)
+    expect(verticalCenterOffset(170, 560, 0, 900)).toBeCloseTo(0)
+  })
+
+  it('is positive when the target sits below the canvas centre', () => {
+    // Target centred at y=400 (120..680), canvas centred at y=450 (0..900): target is above
+    // centre here, so this should be negative — flip the target down to check the positive case.
+    expect(verticalCenterOffset(120, 560, 0, 900)).toBeLessThan(0)
+    expect(verticalCenterOffset(220, 560, 0, 900)).toBeGreaterThan(0)
+  })
+})
+
+describe('mapHasPanRoom', () => {
+  const fovYRadians = (40 * Math.PI) / 180
+  const mapHalfWidth = 2.7
+  const mapHalfHeight = 1.3
+
+  it('is false at the fit distance — nothing to pan to when the whole map already fits', () => {
+    const distance = fitDistance(mapHalfWidth, mapHalfHeight, 1.6, fovYRadians, 0.03)
+    expect(mapHasPanRoom(distance, 1.6, fovYRadians, mapHalfWidth, mapHalfHeight)).toBe(false)
+  })
+
+  it('is true once zoomed in past the fit distance', () => {
+    const distance = fitDistance(mapHalfWidth, mapHalfHeight, 1.6, fovYRadians, 0.03) / 2
+    expect(mapHasPanRoom(distance, 1.6, fovYRadians, mapHalfWidth, mapHalfHeight)).toBe(true)
+  })
+})
+
+describe('isSubFrameOf', () => {
+  it('is false for null', () => {
+    expect(isSubFrameOf(null, { width: 900, height: 900 })).toBe(false)
+  })
+
+  it('is false for a zero-height frame (the degenerate-measurement case)', () => {
+    expect(isSubFrameOf({ width: 0, height: 0 }, { width: 900, height: 900 })).toBe(false)
+  })
+
+  it('is true for a frame genuinely smaller than the canvas on both axes', () => {
+    expect(isSubFrameOf({ width: 570, height: 570 }, { width: 1440, height: 900 })).toBe(true)
+  })
+
+  it('is true at exact equality (a frame the same size as its canvas)', () => {
+    expect(isSubFrameOf({ width: 900, height: 900 }, { width: 900, height: 900 })).toBe(true)
+  })
+
+  it('is false when the frame is taller than the canvas — the stale-canvas-size race this guards against', () => {
+    // Reproduces the actual browser-verified bug: a correctly-measured ~570px fit frame arriving
+    // before r3f's own canvas measurement has caught up from the minimised orb's small size.
+    expect(isSubFrameOf({ width: 570, height: 570 }, { width: 250, height: 250 })).toBe(false)
+  })
+
+  it('is false when only the width exceeds the canvas', () => {
+    expect(isSubFrameOf({ width: 1000, height: 500 }, { width: 900, height: 900 })).toBe(false)
+  })
+})
+
+describe('clampedDollyDistance', () => {
+  it('scales by the factor within bounds', () => {
+    expect(clampedDollyDistance(10, 0.8, 0, Infinity)).toBeCloseTo(8)
+    expect(clampedDollyDistance(10, 1.25, 0, Infinity)).toBeCloseTo(12.5)
+  })
+
+  it('clamps to the minimum', () => {
+    expect(clampedDollyDistance(10, 0.1, 2, Infinity)).toBeCloseTo(2)
+  })
+
+  it('clamps to the maximum', () => {
+    expect(clampedDollyDistance(10, 5, 0, 20)).toBeCloseTo(20)
   })
 })
 

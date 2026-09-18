@@ -12,26 +12,37 @@
  */
 
 import { rafTicks } from './hook.mjs'
-import { drawnBounds } from './measure.mjs'
+import { drawnBounds, drawnBoundsInClip, hiddenBoxOf } from './measure.mjs'
 import { waitForApproxUnfoldProgress } from './timeouts.mjs'
 import {
   BOTTOM_CHROME_SELECTOR,
   BREADCRUMB_CURRENT_SELECTOR,
   ERA_SHORTCUTS_SELECTOR,
   GLOBE_CANVAS_SELECTOR,
+  GLOBE_MAP_FIT_FRAME_SELECTOR,
+  GLOBE_SPHERE_FIT_FRAME_SELECTOR,
   SCENE_CANVAS_SELECTOR,
   SECTION_BANDS_SELECTOR,
 } from './selectors.mjs'
 
-const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
+/**
+ * A thin horizontal strip through the expanded globe's own vertical centre, wide enough to prove
+ * real horizontal growth but narrow (in height) enough to clear every piece of chrome that could
+ * otherwise contaminate a `drawnBounds`-style scan of the now-full-viewport `<canvas>` — the top-
+ * left "Globe/Map" toggle and legend, the top-right close button, and the right-centre zoom
+ * controls (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why `GLOBE_CANVAS_SELECTOR`
+ * alone can no longer isolate the sphere from any of them). Deliberately a *width*-only proof: at
+ * `DEFAULT_VIEWPORT`, the default sphere already fills nearly the whole real vertical gap between
+ * the title and the timeline (by design — `Globe.module.css`'s `.orbFitFrameSphere` "fill the real
+ * gap" formula) with only ~20px to spare, so there is no meaningful *vertical* chrome-free room
+ * left to prove growth into even before zooming in further — but a circle that grows wider
+ * necessarily grows taller by the same factor, so a width-only proof is not a weaker one. Margins
+ * were picked by eye against this file's own screenshots, not derived from CSS — a chrome change
+ * that moves into this band will need this constant nudged.
+ */
+const GLOBE_CHROME_FREE_STRIP = { x: 20, y: 360, width: 1320, height: 100 }
 
-/** Closure state for `globe-zoom-button-changes-drawn-size` alone: `actions` and `measure` are
- *  two separate callbacks with no direct way to pass a value between them, and a true "before vs.
- *  after a single press" comparison needs both a pre-click and a post-click measurement — captured
- *  here rather than plumbed through the `Shot` contract itself, since no other shot needs this.
- *  Safe as module state: shots run one at a time against a single page (README, "one browser, one
- *  page load"), never concurrently. */
-let zoomButtonBeforeBounds = null
+const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
 
 /**
  * Screenshots the first element matching `selector`, clipped to its own drawn box — the same box
@@ -179,29 +190,39 @@ export default [
   {
     name: 'globe-expanded-sphere',
     description:
-      'Expanded globe, sphere mode — guards against the CSS-box/drawn-pixel mix-up that shrank the sphere to ~226px. ' +
+      'Expanded globe, sphere mode, measured at its own real DEFAULT diameter — guards against the CSS-box/drawn-' +
+      'pixel mix-up that shrank the sphere to ~226px, and (2026-09-18, user report: "opens zoomed in a lot, need to ' +
+      'press zoom out 6 times to get it back to reasonable original size") the camera-fit regression from the same ' +
+      "day's \"remove the square zoom clip\" change: moving the expanded `<canvas>` to cover the whole backdrop " +
+      "(`Globe.module.css`'s `.orbExpanded` doc comment) means `GlobeCameraControls` must fit the *default* view " +
+      "against the measured `.orbFitFrameSphere` rectangle instead of the canvas's own now-viewport-sized one, and " +
+      'two distinct bugs in getting that measurement right both briefly left the camera far too close — see that ' +
+      "component's own `sphereFrameReady`/`isSubFrameOf` doc comments for the root causes. Clipped to the real fit-" +
+      "frame rectangle (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why `GLOBE_CANVAS_SELECTOR` " +
+      'alone no longer isolates the sphere from the surrounding chrome) rather than measured at zoom-interaction ' +
+      'time at all, so this is a true zero-interaction "does it open at the right size" check, not a proxy for it. ' +
       "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, so anything that changes " +
       "the title's own height legitimately moves this band: ~528px before the 2026-09-18 bottom-chrome condensing " +
       'pass, ~592px after it, ~546px after the same-day Earth/Dinosaurs/Humans shortcut group added a row to the ' +
-      "title, ~573px after the same-day \"currently when zooming in on the globe, it's constrained by a square " +
-      'bounding window\" fix (the canvas itself now fills the whole backdrop — `Globe.module.css`\'s `.orbExpanded` ' +
-      'doc comment — so this band no longer bounds a clip, only the *default* framing) folded together with the ' +
-      '"make the globe slightly larger by default" nudge (`SPHERE_DEFAULT_SCALE`, `Globe.tsx`) — none of it a ' +
-      "regression; see `globe-sphere-zoom-past-fit` for the clip removal itself.",
+      'title, ~573-593px after the clip-removal architecture change (unaffected in itself — only the *room to zoom ' +
+      'in* changed) folded with the "make the globe slightly larger by default" nudge (`SPHERE_DEFAULT_SCALE`).',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
-    measure: async ({ page }) => ({ sphere: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
+    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
     expect: { 'sphere.width': [555, 595], 'sphere.height': [555, 595] },
   },
   {
     name: 'globe-expanded-map',
     description:
-      'Expanded globe, unrolled Equal Earth map mode — guards the map-mode fit-to-panel framing (ADR-033), and ' +
-      '(2026-09-18, user report: "when it\'s expanded to a map it still has the \'drag hand\' mouse icon... ' +
-      'dragging doesn\'t do anything in this mode") that the default, fully-zoomed-out map cursor is *not* `grab`: ' +
-      "`camera.ts`'s `mapHasPanRoom` is false here (the fit distance's own margin already shows slightly more than " +
-      'the whole map, so there is genuinely nowhere to pan to yet). Same title-height dependency as ' +
+      'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size — guards the map-mode ' +
+      'fit-to-panel framing (ADR-033) the same way `globe-expanded-sphere` guards the sphere\'s (same clip-to-real-' +
+      "fit-frame reasoning, against `GLOBE_MAP_FIT_FRAME_SELECTOR` — see that shot's own description for why " +
+      "`GLOBE_CANVAS_SELECTOR` alone can no longer isolate the map from the surrounding chrome), and (2026-09-18, " +
+      'user report: "when it\'s expanded to a map it still has the \'drag hand\' mouse icon... dragging doesn\'t do ' +
+      'anything in this mode") that the default, fully-zoomed-out map cursor is *not* `grab`: `camera.ts`\'s ' +
+      "`mapHasPanRoom` is false here (the fit distance's own margin already shows slightly more than the whole " +
+      'map, so there is genuinely nowhere to pan to yet). Same title-height dependency as ' +
       "`globe-expanded-sphere`'s own: ~1082px before the 2026-09-18 bottom-chrome condensing pass, ~1213px after " +
       'it, ~1119px after the same-day Earth/Dinosaurs/Humans shortcut group grew the title by one row — unaffected ' +
       "by the sphere-only `SPHERE_DEFAULT_SCALE` nudge (`globe-expanded-sphere`'s own description).",
@@ -210,20 +231,25 @@ export default [
     state: { globeExpanded: true, globeViewMode: 'map' },
     measure: async ({ page }) => {
       const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
-      return { map: await drawnBounds(page, GLOBE_CANVAS_SELECTOR), cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
+      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
+      return { map, cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
     },
-    expect: { 'map.width': [1090, 1150], cursorIsNotGrab: [1, 1] },
+    // ~1213px matches this shot's own description ("~1213px after [the 2026-09-18 bottom-chrome
+    // condensing pass]") — now measured directly against the real fit frame instead of via the
+    // full canvas, so this replaces the old [1090, 1150] band which was never actually re-derived
+    // after that pass (this fit-frame clip is new; the old band predates it and drifted stale).
+    expect: { 'map.width': [1195, 1230], cursorIsNotGrab: [1, 1] },
   },
   {
     name: 'globe-sphere-zoom-past-fit',
     description:
       'BUG (user report, 2026-09-18: "currently when zooming in on the globe, it\'s constrained by a square ' +
       'bounding window which cuts it off") — pressing "Zoom in" (`ZoomControls`) several times must keep growing ' +
-      'the drawn sphere well past `globe-expanded-sphere`\'s own ~573px default; the old bug capped it there ' +
-      'exactly regardless of zoom, since the `<canvas>` itself *was* that square box. Also proves the growth reads ' +
-      'as a plain, uncropped circle rather than a flat-edged silhouette: a genuinely square-windowed crop caps both ' +
-      "axes at the box's own fixed size, so `sphere.width` failing to clear that old ceiling would be the tell — a " +
-      'circle simply being wider than it is tall never happens on its own, so no separate aspect check is needed.',
+      'the drawn sphere well past `globe-expanded-sphere`\'s own ~592px default; the old bug capped it there ' +
+      'exactly regardless of zoom, since the `<canvas>` itself *was* that square box. Measured over ' +
+      '`GLOBE_CHROME_FREE_STRIP`, not the real fit frame (which the sphere legitimately grows past here) or the raw ' +
+      'canvas (which would sweep in the surrounding chrome — see that constant\'s own doc comment); width-only, ' +
+      "per that constant's own reasoning.",
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -235,39 +261,44 @@ export default [
       }
       await hook.ready()
     },
-    measure: async ({ page }) => ({ sphere: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
+    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP) }),
     // Comfortably above `globe-expanded-sphere`'s own [555, 595] default band — the old bug would
-    // have failed this by capping at ~573px regardless of how many times "Zoom in" was pressed.
-    expect: { 'sphere.width': [750, 1440], 'sphere.height': [750, 900] },
+    // have failed this by capping at ~592px regardless of how many times "Zoom in" was pressed.
+    // Capped by `GLOBE_CHROME_FREE_STRIP`'s own width (1320), not the sphere itself, past that point.
+    expect: { 'sphere.width': [750, 1320] },
   },
   {
     name: 'globe-zoom-button-changes-drawn-size',
     description:
       'Requirement 4 (user ask, 2026-09-18: "add zoom in/out magnifying icons/buttons to the fullscreen map/globe ' +
-      'view") — proves a single press of "Zoom in" actually changes the *drawn* globe size, not just some CSS box, ' +
-      "matching CLAUDE.md's \"assert on drawn pixels, never on CSS boxes\" rule. Map mode, not sphere: this is the " +
-      "mode where the default view has zero pan room but real zoom room (`globe-expanded-map`'s own cursor check), " +
-      'so it also stands as a second, independent proof (alongside `globe-sphere-zoom-past-fit`) that the zoom ' +
-      'buttons drive the same real camera distance in both modes.',
+      'view") — proves a single press of "Zoom in" actually changes the *drawn* globe content, not just some CSS ' +
+      "box, matching CLAUDE.md's \"assert on drawn pixels, never on CSS boxes\" rule. Map mode, not sphere: this is " +
+      "the mode where the default view has zero pan room but real zoom room (`globe-expanded-map`'s own cursor " +
+      'check), so it also stands as a second, independent proof (alongside `globe-sphere-zoom-past-fit`) that the ' +
+      'zoom buttons drive the same real camera distance in both modes. Uses `drawnPixelDiff` (the same primitive ' +
+      "the arrival-arc shots below use) rather than a `drawnBounds` width comparison: map mode's own default view " +
+      "already fills nearly all of `GLOBE_CHROME_FREE_STRIP`'s own safe width (`globe-expanded-map`'s ~1213px own " +
+      'default, against the strip\'s 1320px), leaving too little headroom for one zoom step to show as further ' +
+      "*growth* there (browser-verified: both before and after saturated the strip identically). A pixel diff has " +
+      'no such ceiling — zooming the camera in changes what the *whole* globe render shows regardless of how much ' +
+      "spare width remains, while any *unchanged* chrome pixels a wider clip might otherwise sweep in (the " +
+      '"Globe/Map" toggle, legend, close button, zoom controls) contribute nothing to the diff either way, so the ' +
+      'full canvas can be diffed directly with no clip needed at all.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      zoomButtonBeforeBounds = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
-      await page.getByRole('button', { name: 'Zoom in' }).click()
-      await rafTicks(page, 2)
-      await hook.ready()
+    measure: async ({ page, hook }) => {
+      const { diffPixels, diffFraction } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
+        await page.getByRole('button', { name: 'Zoom in' }).click()
+        await rafTicks(page, 2)
+        await hook.ready()
+      })
+      return { diffPixels, diffFraction }
     },
-    measure: async ({ page }) => {
-      const after = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
-      const before = zoomButtonBeforeBounds
-      return {
-        beforeWidth: before?.width ?? 0,
-        afterWidth: after.width,
-        grew: before !== null && after.width > before.width ? 1 : 0,
-      }
-    },
-    expect: { grew: [1, 1] },
+    // A single zoom step moves the camera enough to redraw a large fraction of the map — set
+    // well below this shot's own measured count, comfortably above screenshot/PNG round-trip
+    // noise (`countDiffPixels`'s own threshold already filters that).
+    expect: { diffPixels: [5000, 2_000_000] },
   },
   {
     name: 'globe-transition-mid-unfold',
