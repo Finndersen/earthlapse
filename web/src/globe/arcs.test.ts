@@ -531,3 +531,30 @@ describe('buildArrivalIndex and traceToOrigin', () => {
     expect(traceToOrigin(index, 'no-such-arrival')).toEqual([])
   })
 })
+
+describe('inhabited marker fade near the present', () => {
+  const timing = arrivalTimingFor(0.02)
+
+  function peopling(established: GeoTime): ArrivalGlobeEffect {
+    return {
+      kind: 'arrival',
+      arrivalKind: 'peopling',
+      origin: { lat: 9.0, lon: 42.0 },
+      destination: { lat: 64.0, lon: -21.0 },
+      established,
+      windows: [{ tMin: 0, tMax: established * 1.4 }],
+    }
+  }
+
+  // Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar, Beringia, the Levant.
+  it.each([1148, 745, 953, 1040, 2075, 2.5e4, 1.85e5])(
+    'leaves nothing lit at the present for an arrival established at %i',
+    (established) => {
+      expect(arrivalPresentationAt(peopling(established), 0, timing).inhabited).toBeCloseTo(0, 5)
+    },
+  )
+
+  it('still raises the marker after a recent arrival, before fading it', () => {
+    expect(arrivalPresentationAt(peopling(1148), 1000, timing).inhabited).toBeGreaterThan(0)
+  })
+})

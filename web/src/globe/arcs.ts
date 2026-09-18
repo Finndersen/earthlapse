@@ -124,13 +124,12 @@ const MIN_TAIL_SECONDS = 0.4
 const LANDING_SECONDS = 0.45
 /** Width, past the landing above, over which the "inhabited" marker fades back out — so a
  *  `peopling` arrival reads as an event that happens and passes rather than leaving a permanent
- *  mark (2026-09 user feedback: "I don't think it makes sense for them to persist forever"). Same
- *  "runs out of timeline near the present" honest floor as `MIN_ARC_SECONDS` above applies here
- *  too: a `peopling` arrival established only a few hundred or thousand years ago (Iceland,
- *  Aotearoa, Rapa Nui, Greenland, Madagascar) has less real-year timeline left between its
- *  `established` and `t = 0` than this width needs, so its marker is still partway through fading
- *  — sometimes barely faded at all — at the present. Older peopling arrivals (Beringia, the
- *  Levant, ≳4 ka) have ample timeline and fade to exactly 0 well before `t = 0`. */
+ *  mark (2026-09 user feedback: "I don't think it makes sense for them to persist forever").
+ *  Unlike `MIN_ARC_SECONDS`'s tail, this width is not allowed to run out of timeline: an arrival
+ *  with less warp left than it needs (Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar) has the
+ *  whole settle-then-fade envelope squeezed to fit, in `arrivalPresentationAt`, so every marker
+ *  reaches 0 by `t = 0`. A recent arrival's marker therefore comes and goes faster than an
+ *  ancient one's — the alternative is the permanent dot this fade exists to remove. */
 const INHABITED_FADE_SECONDS = 0.8
 
 /** The arrival timing widths, in symlog-warp units — see `MIN_ARC_SECONDS`'s doc comment. */
@@ -216,14 +215,21 @@ export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, ti
   const arcAlpha = travelling ? 1 : clamp01(tailWarp > 0 ? (currentWarp - (establishedWarp - tailWarp)) / tailWarp : 0)
 
   const distancePastEstablished = establishedWarp - currentWarp
-  const settleProgress = easeSmoothstep(0, timing.landingWarp, distancePastEstablished)
+  // The settle-then-fade envelope needs warp between `established` and the present, and a recent
+  // arrival has very little: Iceland (1148 BP) has a fraction of what Beringia does. Left alone it
+  // would still be near-fully lit at t = 0 — exactly the permanent dot this fade exists to remove
+  // — so the envelope is squeezed into whatever warp remains, keeping its shape and its purity in
+  // `t`. `symlogWarp(0)` is 0, so the warp still to come is `establishedWarp` itself.
+  const envelopeWarp = timing.landingWarp + timing.inhabitedFadeWarp
+  const squeeze = envelopeWarp > establishedWarp && envelopeWarp > 0 ? establishedWarp / envelopeWarp : 1
+  const landingWarp = timing.landingWarp * squeeze
+  const fadeWarp = timing.inhabitedFadeWarp * squeeze
+
+  const settleProgress = landingWarp > 0 ? easeSmoothstep(0, landingWarp, distancePastEstablished) : 1
   // Fades out starting only once settleProgress has fully risen (distancePastEstablished >=
   // landingWarp), so the marker never starts disappearing before it has finished appearing.
-  const inhabitedFadeOut = easeSmoothstep(
-    timing.landingWarp,
-    timing.landingWarp + timing.inhabitedFadeWarp,
-    distancePastEstablished,
-  )
+  const inhabitedFadeOut =
+    fadeWarp > 0 ? easeSmoothstep(landingWarp, landingWarp + fadeWarp, distancePastEstablished) : 1
   const inhabited = effect.arrivalKind === 'peopling' ? settleProgress * (1 - inhabitedFadeOut) : 0
 
   return { arcAlpha, travelling, travelProgress, settleProgress, inhabited }
