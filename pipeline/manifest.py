@@ -83,6 +83,12 @@ class Scene(_WireModel):
     t: GeoTime
     chapter_id: str
     image: str
+    # A small (`pipeline.transcode.THUMBNAIL_SIZE`-square) derivative of `image`, published
+    # alongside it, backing the timeline checkpoint pip's hover preview
+    # (`ScrubTrack.module.css`'s `.pipThumb`) -- never `image` itself, which would fetch every
+    # scene's full still on first load to back a 44px circular preview almost nobody hovers.
+    # Always emitted, like `image` -- every published scene gets one.
+    thumbnail: str
     depth: str | None = None  # deferred by ADR-009
     shot: Shot
     # Short heading for the UI, distinct from `caption` below (2026-09 titles work). Always
@@ -344,8 +350,9 @@ class PortraitExposureData(_WireModel):
     """How publish normalised a plate's exposure (ADR-015, amendment 2026-09-14).
 
     `highlight` is the pinned original's subject highlight as a luma code, None when no subject
-    stands out; `gain` is the linear-light gain applied (pipeline/exposure.py). At gain 1 the
-    published image is the pinned file byte for byte; otherwise it is a derivative of it.
+    stands out; `gain` is the linear-light gain applied (pipeline/exposure.py). The published
+    image is always a WebP transcode of the pinned file (pipeline/transcode.py); at gain 1 no
+    exposure gain was applied on top of that.
     """
 
     highlight: int | None = Field(ge=0, le=255)

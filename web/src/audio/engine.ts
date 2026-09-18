@@ -206,6 +206,7 @@ const EMPTY_SCENE: Manifest['scenes'][number] = {
   t: 0,
   chapterId: '',
   image: '',
+  thumbnail: '',
   shot: 'WIDE_RIDGE',
   title: '',
   caption: '',

@@ -12,6 +12,7 @@ function scene(id: string, overrides: Partial<Scene> = {}): Scene {
     t: 0,
     chapterId: 'chapter',
     image: `${id}.png`,
+    thumbnail: `${id}-thumb.png`,
     shot: 'WIDE_RIDGE',
     title: id,
     caption: id,

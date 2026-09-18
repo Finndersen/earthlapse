@@ -56,6 +56,7 @@ from pipeline.publish import (
     PublishRefused,
     _effect,
     _layers,
+    _prune_stale_media,
     _scene_location,
     apply_city_roster,
     chapter_spans,
@@ -98,6 +99,13 @@ from pipeline.shapes import (
 )
 from pipeline.spend import Entry, Ledger
 from pipeline.store import CandidateRecord, CandidateStore
+from pipeline.transcode import (
+    SCENE_WEBP_QUALITY,
+    THUMBNAIL_SIZE,
+    THUMBNAIL_WEBP_QUALITY,
+    to_thumbnail_webp,
+    to_webp,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STUB_DIR = REPO_ROOT / "web" / "public" / "stub"
@@ -1036,8 +1044,11 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
     }
     for scene in book.scenes:
         assert scene.pin is not None
-        published = (media / "scenes" / f"{scene.id}.png").read_bytes()
-        assert published == (root / scene.pin.path).read_bytes()
+        published = (media / "scenes" / f"{scene.id}.webp").read_bytes()
+        pinned = (root / scene.pin.path).read_bytes()
+        assert published == to_webp(pinned, SCENE_WEBP_QUALITY)
+        thumbnail = (media / "scenes" / f"{scene.id}-thumb.webp").read_bytes()
+        assert thumbnail == to_thumbnail_webp(pinned, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY)
 
     assert _layer_json(media, "co2") == {
         "id": "co2",
@@ -1114,6 +1125,98 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
         )
 
 
+def test_prune_stale_media_removes_only_files_not_in_keep(tmp_path: Path) -> None:
+    directory = tmp_path / "scenes"
+    directory.mkdir()
+    (directory / "city.webp").write_bytes(b"new")
+    (directory / "city.jpg").write_bytes(b"old format")
+    (directory / "removed-scene.jpg").write_bytes(b"no longer pinned")
+    (directory / "morphs").mkdir()  # a subdirectory must never be touched, only files
+    (directory / "morphs" / "untouched.png").write_bytes(b"x")
+
+    removed = _prune_stale_media(directory, frozenset({"city.webp"}))
+
+    assert removed == ("city.jpg", "removed-scene.jpg")
+    assert sorted(p.name for p in directory.iterdir()) == ["city.webp", "morphs"]
+    assert (directory / "morphs" / "untouched.png").is_file()
+
+
+def test_prune_stale_media_is_a_no_op_on_a_missing_directory(tmp_path: Path) -> None:
+    assert _prune_stale_media(tmp_path / "does-not-exist", frozenset()) == ()
+
+
+def test_publish_removes_a_scenes_stale_file_from_a_previous_format_or_a_dropped_scene(
+    root: Path,
+) -> None:
+    """`write_publication` is otherwise purely additive; without `_prune_stale_media` a scene
+    whose published extension changes (this WebP transcode) or that is no longer pinned at all
+    would leave its old file in data/media/scenes/ forever, silently growing it on every publish."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    stale = paths.media / "scenes" / "no-longer-a-scene.jpg"
+    stale.write_bytes(b"orphaned from a previous publish")
+
+    assert _run(backend, root, "publish")[0] == 0
+
+    assert not stale.exists()
+    assert sorted(p.name for p in (paths.media / "scenes").iterdir()) == [
+        "city-thumb.webp",
+        "city.webp",
+        "devonian-thumb.webp",
+        "devonian.webp",
+        "hot-start-thumb.webp",
+        "hot-start.webp",
+    ]
+
+
+def test_publish_always_transcodes_scenes_from_the_pin_not_from_its_own_output(root: Path) -> None:
+    """A publish must never read back its own previously published WebP and re-encode it: that
+    would silently compound generation loss a little further on every single run, with nothing
+    erroring (pipeline.transcode's module docstring). Proven directly, not just by determinism:
+    corrupt a previously published scene file, republish, and confirm the new output is exactly
+    the pin transcoded fresh -- untouched by the corruption that sat where the output goes."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    pin = load_scene_book(paths.scenes).scene("city").pin
+    assert pin is not None
+    published_path = paths.media / "scenes" / "city.webp"
+    published_path.write_bytes(b"not a real image -- simulates a corrupted/stale previous output")
+
+    assert _run(backend, root, "publish")[0] == 0
+
+    assert published_path.read_bytes() == to_webp(
+        (root / pin.path).read_bytes(), SCENE_WEBP_QUALITY
+    )
+
+
+def test_publish_always_transcodes_thumbnails_from_the_pin_not_from_its_own_output(
+    root: Path,
+) -> None:
+    """The thumbnail's own version of the guard above: it must always be derived from the pin's
+    own bytes, never from a previously published thumbnail (which would be a lossy encode of a
+    lossy encode) nor from the full-resolution published WebP (a second, independent lossy
+    generation on top of that). Corrupt a previously published thumbnail, republish, and confirm
+    the new output is exactly the pin's own bytes transcoded fresh."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    pin = load_scene_book(paths.scenes).scene("city").pin
+    assert pin is not None
+    published_path = paths.media / "scenes" / "city-thumb.webp"
+    published_path.write_bytes(b"not a real image -- simulates a corrupted/stale previous output")
+
+    assert _run(backend, root, "publish")[0] == 0
+
+    assert published_path.read_bytes() == to_thumbnail_webp(
+        (root / pin.path).read_bytes(), THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY
+    )
+
+
 def _published_scene(
     book: SceneBook, scene_id: str, t: float, chapter: str, shot: str, caption: str
 ) -> dict[str, object]:
@@ -1123,7 +1226,8 @@ def _published_scene(
         "id": scene_id,
         "t": t,
         "chapterId": chapter,
-        "image": f"scenes/{scene_id}.png",
+        "image": f"scenes/{scene_id}.webp",
+        "thumbnail": f"scenes/{scene_id}-thumb.webp",
         "shot": shot,
         "title": book.scene(scene_id).title,
         "caption": caption,

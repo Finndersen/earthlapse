@@ -13,10 +13,11 @@
 
 import { rafTicks } from './hook.mjs'
 import { drawnBounds, drawnBoundsInClip, hiddenBoxOf } from './measure.mjs'
-import { waitForApproxUnfoldProgress } from './timeouts.mjs'
+import { waitForApproxUnfoldProgress, waitForFocusEaseSettle, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 import {
   BOTTOM_CHROME_SELECTOR,
   BREADCRUMB_CURRENT_SELECTOR,
+  CHECKPOINT_PIP_SELECTOR,
   ERA_SHORTCUTS_SELECTOR,
   GLOBE_CANVAS_SELECTOR,
   GLOBE_MAP_FIT_FRAME_SELECTOR,
@@ -150,6 +151,120 @@ async function polylineTraceBounds(page, containerSelector) {
   const minY = Math.min(...boxes.map((b) => b.y))
   const maxY = Math.max(...boxes.map((b) => b.y + b.height))
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+}
+
+/**
+ * Runs inside the page (`page.evaluate`, must be self-contained): decodes a screenshot and
+ * returns the centroid (in the screenshot's own local pixel coordinates) of every pixel that
+ * looks like the scene-location marker (`HumanCivilisation.tsx`'s `SCENE_RGB`,
+ * `humanStyle.ts`'s `SCENE_LOCATION_COLOR = '#fdf6e8'`) — a warm off-white distinguishable from
+ * the globe's own pure-white highlights (clouds, ice: `r === g === b`) by a small but
+ * consistent red-over-blue skew. `count === 0` means no matching pixel was found at all.
+ * @param {{ dataUrl: string }} args
+ * @returns {Promise<{ x: number, y: number, count: number }>}
+ */
+async function scanForSceneMarkerColor({ dataUrl }) {
+  const image = await new Promise((resolve, reject) => {
+    const el = new Image()
+    el.onload = () => resolve(el)
+    el.onerror = () => reject(new Error('scanForSceneMarkerColor: failed to decode the probe screenshot'))
+    el.src = dataUrl
+  })
+  const canvas = document.createElement('canvas')
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) throw new Error('scanForSceneMarkerColor: 2D canvas context unavailable')
+  ctx.drawImage(image, 0, 0)
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+
+  let sumX = 0
+  let sumY = 0
+  let count = 0
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4
+      const r = data[i]
+      const g = data[i + 1]
+      const b = data[i + 2]
+      const a = data[i + 3]
+      const redOverBlue = r - b
+      const redOverGreen = r - g
+      if (a > 200 && r > 220 && g > 205 && redOverBlue > 6 && redOverBlue < 50 && redOverGreen >= 0 && redOverGreen < 30) {
+        sumX += x
+        sumY += y
+        count += 1
+      }
+    }
+  }
+  return count === 0 ? { x: 0, y: 0, count: 0 } : { x: sumX / count, y: sumY / count, count }
+}
+
+/**
+ * The scene-location marker's own screen centroid (page-absolute CSS px), found by colour
+ * (`scanForSceneMarkerColor`) inside `clip` — `null` when nothing matched. Used instead of
+ * `drawnPixelDiff`'s "toggle something off and diff" approach because the one thing that would
+ * need toggling here, the "Human civilisation" legend row, only exists in the DOM while the
+ * globe is *expanded* (`Legend.tsx` renders nothing minimised) — and expanding, even briefly,
+ * resets the camera's own azimuth to its default framing (`Globe.tsx`'s `GlobeCameraControls`,
+ * "a plain expand/collapse... reframes" doc comment), which would destroy exactly the camera
+ * state ADR-034's centring is being measured against. Colour-matching the marker directly avoids
+ * ever touching `expanded` during a measurement.
+ * @param {import('playwright').Page} page
+ * @param {{x: number, y: number, width: number, height: number}} clip
+ * @returns {Promise<{ x: number, y: number, count: number } | null>}
+ */
+async function sceneMarkerCentroid(page, clip) {
+  const roundedClip = { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) }
+  const png = await page.screenshot({ clip: roundedClip })
+  const dataUrl = `data:image/png;base64,${png.toString('base64')}`
+  const local = await page.evaluate(scanForSceneMarkerColor, { dataUrl })
+  if (local.count === 0) return null
+  return { x: roundedClip.x + local.x, y: roundedClip.y + local.y, count: local.count }
+}
+
+/**
+ * How far off-centre (degrees) the scene-location marker currently sits, horizontally, on the
+ * *minimised* orb — the one measurement ADR-034's centring claim and this file's own
+ * `useGlobeAutoRotation.ts` fix are actually about. Converts the measured pixel offset from the
+ * drawn sphere's own centre (`drawnBounds` on `GLOBE_CANVAS_SELECTOR` — the sphere's circular
+ * silhouette, not the canvas element's CSS box) to degrees via the standard "point on a sphere
+ * viewed from outside" relation `screenOffsetPx ≈ apparentRadiusPx * sin(angleFromCentre)`: exact
+ * for an orthographic projection and a close enough approximation this near the sphere's own
+ * centre under this app's 40° perspective FOV. Positive means the marker sits to the right of
+ * centre. Returns `null` (rather than throwing) when no marker pixel was found at all, so a shot
+ * can assert on that directly instead of getting a misleading `0`.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<{ offsetDeg: number, markerPixelCount: number } | null>}
+ */
+async function globeOrbMarkerOffsetDeg(page) {
+  const sphere = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
+  if (sphere.width === 0) throw new Error('globeOrbMarkerOffsetDeg: the minimised orb drew nothing')
+  const centreX = sphere.x + sphere.width / 2
+  const apparentRadiusPx = sphere.width / 2
+  const marker = await sceneMarkerCentroid(page, sphere)
+  if (marker === null) return null
+  const sinAngle = Math.max(-1, Math.min(1, (marker.x - centreX) / apparentRadiusPx))
+  return { offsetDeg: (Math.asin(sinAngle) * 180) / Math.PI, markerPixelCount: marker.count }
+}
+
+/**
+ * Drags the minimised orb (real `page.mouse` events, so `OrbitControls` sees a genuine drag, not
+ * a click — `orbGesture.ts`'s `ORB_CLICK_DRAG_THRESHOLD_PX` is 4px, far below this) far enough to
+ * leave the camera's azimuth well away from its default 0 — the precondition for the "moves but
+ * doesn't go all the way" report (docs/GLOBE.md's ADR-034 section): a viewer who has ever dragged
+ * the orb before a scene's location becomes the focus target.
+ * @param {import('playwright').Page} page
+ */
+async function dragGlobeOrb(page) {
+  const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
+  if (box === null) throw new Error('dragGlobeOrb: globe canvas has no box')
+  const cx = box.x + box.width / 2
+  const cy = box.y + box.height / 2
+  await page.mouse.move(cx, cy)
+  await page.mouse.down()
+  await page.mouse.move(cx + Math.min(90, box.width * 0.5), cy, { steps: 12 })
+  await page.mouse.up()
 }
 
 /**
@@ -1013,6 +1128,140 @@ export default [
     expect: {
       solid: [1, 10],
       ghost: [1, 10],
+    },
+  },
+  {
+    name: 'timeline-pip-thumbnail-hover',
+    description:
+      'Hovering a timeline checkpoint pip must still show a crisp, correctly-framed circular preview backed by ' +
+      "its own dedicated thumbnail (`Scene.thumbnail`, `pipeline.transcode.THUMBNAIL_SIZE`-square) -- never the " +
+      'full-resolution scene still (`Scene.image`) the pip used to fetch unconditionally on every page load ' +
+      "regardless of hover (the bug `Experience.tsx`'s `thumbnailUrl` and this thumbnail field both fix). " +
+      "`.pipThumb` is a 44 CSS-px circle (`ScrubTrack.module.css`); reduced motion (this harness's default) " +
+      "makes `.pipPreview`'s opacity transition instant, so a plain hover is enough -- no transition wait needed.",
+    viewport: DEFAULT_VIEWPORT,
+    actions: async ({ page }) => {
+      await page.locator(CHECKPOINT_PIP_SELECTOR).first().hover()
+    },
+    measure: async ({ page }) => ({
+      thumb: await drawnBounds(page, `${CHECKPOINT_PIP_SELECTOR} img`),
+    }),
+    expect: {
+      'thumb.width': [38, 48],
+      'thumb.height': [38, 48],
+    },
+  },
+  {
+    // West Turkana, Kenya (`acheulean-erectus`, t = 1.76 Ma): inside the human-era basemap
+    // domain (so the marker renders against real geography) but centuries before any arrival
+    // arc/city/population-density data exists, so the "Human civilisation" layer draws *only*
+    // the scene marker at this `t` — nothing else in `HumanCivilisation.tsx`'s own marker list
+    // can be mistaken for it by `scanForSceneMarkerColor`.
+    name: 'globe-scene-focus-centred',
+    description:
+      'ADR-034 centring, baseline case (docs/GLOBE.md, user report: "the automatic movement of the globe to ' +
+      'position of the current scene location... moves but doesn\'t actually go all the way to centre the ' +
+      'view"). No prior drag: the camera sits at its default azimuth (0) when West Turkana becomes the ' +
+      "dominant scene, so even the pre-fix formula (`focusRotationY(lon)`, assuming azimuth 0) landed here " +
+      'correctly — this shot is the control proving the fix did not regress the already-working case, measured ' +
+      'the same way (`globeOrbMarkerOffsetDeg`, colour-matching the marker against the drawn sphere\'s own ' +
+      'centre) as the two shots below that exercise the actual bugs.',
+    viewport: DEFAULT_VIEWPORT,
+    reducedMotion: 'reduce',
+    // No shot-level `t`, so this doesn't silently depend on running first (or on whatever `t`
+    // an earlier shot in the full suite happened to leave behind) for the "camera is at its
+    // default azimuth" premise the description above relies on — see the other two shots' own
+    // comments on why re-setting an unchanged `t` never starts a fresh ease at all. Parking on
+    // the no-location `archean-shore` frame first, with no drag in between, guarantees a clean
+    // null -> lon transition with the camera genuinely still at its own default azimuth.
+    actions: async ({ page, hook }) => {
+      await hook.setT(3.45e9)
+      await waitForSceneCrossfadeSettle(page)
+      await hook.setT(1.76e6)
+      await waitForSceneCrossfadeSettle(page)
+    },
+    measure: async ({ page }) => {
+      const result = await globeOrbMarkerOffsetDeg(page)
+      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
+    },
+    expect: {
+      markerPixelCount: [4, 100000],
+      offsetDeg: [-2, 2],
+    },
+  },
+  {
+    name: 'globe-scene-focus-after-drag',
+    description:
+      'ADR-034 centring, hypothesis 1 (this brief\'s own diagnosis): "the camera azimuth is unaccounted for" — ' +
+      '`OrbitControls` rotates the camera on the minimised orb (`Globe.tsx`\'s own "OrbitControls now rotates ' +
+      'in both states" note), so a viewer who dragged the orb before a scene\'s location becomes the focus ' +
+      'target leaves the camera at some azimuth the old `focusRotationY(lon)` (which assumed azimuth 0) had no ' +
+      'way to know about — landing the ease exactly that far short of centred. Drags the orb (`dragGlobeOrb`) ' +
+      'while a scene with no location is current, *then* sets `t` to West Turkana so the (now camera-azimuth-' +
+      'aware) ease target is computed against the already-rotated camera, matching the real "drag, then scrub ' +
+      'onto a located scene" sequence the report describes. `reducedMotion: reduce` snaps the ease instantly ' +
+      'rather than animating it — the landing formula is what this shot checks, not the tween.',
+    viewport: DEFAULT_VIEWPORT,
+    reducedMotion: 'reduce',
+    // No shot-level `t`: this must force a genuine *new* focus target itself rather than lean on
+    // whatever the previous shot already left `t` at, since re-setting `t` to a value the store
+    // already holds is a no-op that would never trigger a fresh ease at all (the hook only starts
+    // one when `focusLon` actually changes — `useGlobeAutoRotation.ts`'s own doc comment). First
+    // parking on `archean-shore` (3.45 Ga, no `location` at all — too far back for any plate
+    // model, ADR-034's own "no marker" rule) clears any prior focus target, so the drag below
+    // happens with nothing eased and the subsequent jump to West Turkana is unambiguously the
+    // transition that starts the ease this shot is measuring.
+    actions: async ({ page, hook }) => {
+      await hook.setT(3.45e9)
+      await waitForSceneCrossfadeSettle(page)
+      await dragGlobeOrb(page)
+      await hook.setT(1.76e6)
+      await waitForSceneCrossfadeSettle(page)
+      await waitForFocusEaseSettle(page)
+    },
+    measure: async ({ page }) => {
+      const result = await globeOrbMarkerOffsetDeg(page)
+      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
+    },
+    expect: {
+      markerPixelCount: [4, 100000],
+      offsetDeg: [-2, 2],
+    },
+  },
+  {
+    name: 'globe-scene-focus-holds-after-dwell',
+    description:
+      'ADR-034 centring, hypothesis 2 (this brief\'s own diagnosis): "drift pulls it back off after it lands" — ' +
+      '`useGlobeAutoRotationY` used to resume `AUTO_ROTATE_RADIANS_PER_SECOND` drift the instant the focus ease ' +
+      'finished, regardless of whether the located scene was still on screen, sliding the marker back off-centre ' +
+      'over a scene\'s own dwell (~1.4 deg/s -> ~14 deg over a 10s dwell). The fix ties drift suppression to ' +
+      '"is a scene location currently the target" rather than "is an ease currently running" (see that hook\'s ' +
+      'own doc comment for why a fixed extra delay was rejected). `reducedMotion: no-preference` — unlike the ' +
+      'two shots above, this one needs real animated drift to have something to (not) accumulate — waits for ' +
+      'the ease to land and then a further 8s of simulated dwell before measuring, well past the ~1.2s ease ' +
+      'itself.',
+    viewport: DEFAULT_VIEWPORT,
+    reducedMotion: 'no-preference',
+    // No shot-level `t`, for the same reason `globe-scene-focus-after-drag` gives: re-setting `t`
+    // to a value the store already holds would never start a fresh ease. Parking on the same
+    // no-location `archean-shore` frame first guarantees the jump to West Turkana below is a real
+    // null -> lon transition, so the ease this shot then waits out and measures after is one this
+    // shot itself actually triggered, not a leftover from whichever shot happened to run first.
+    actions: async ({ page, hook }) => {
+      await hook.setT(3.45e9)
+      await waitForSceneCrossfadeSettle(page)
+      await hook.setT(1.76e6)
+      await waitForSceneCrossfadeSettle(page)
+      await waitForFocusEaseSettle(page)
+      await page.waitForTimeout(8_000)
+    },
+    measure: async ({ page }) => {
+      const result = await globeOrbMarkerOffsetDeg(page)
+      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
+    },
+    expect: {
+      markerPixelCount: [4, 100000],
+      offsetDeg: [-2, 2],
     },
   },
 ]

@@ -2,7 +2,10 @@
 
 Everything is assembled and validated in memory first (`prepare_publication`) and only then
 written (`write_publication`), so a refused publish leaves data/media/ as it was. All world
-data comes through `WorldModel` (ADR-002).
+data comes through `WorldModel` (ADR-002). `write_publication` also prunes `data/media/scenes/`
+and `data/media/portraits/` down to exactly what this publish wrote (`_prune_stale_media`), so a
+scene or portrait whose published filename changes -- a format change, or no longer being pinned
+at all -- never leaves an orphaned file behind.
 """
 
 from __future__ import annotations
@@ -81,6 +84,15 @@ from pipeline.shapes import EARTH_FORMATION, Event, EventSet, FeatureSet, GeoTim
 from pipeline.shapes import ArrivalEffect as CuratedArrivalEffect
 from pipeline.shapes import Feature as CuratedFeature
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
+from pipeline.transcode import (
+    PORTRAIT_WEBP_QUALITY,
+    SCENE_WEBP_QUALITY,
+    THUMBNAIL_SIZE,
+    THUMBNAIL_WEBP_QUALITY,
+    TranscodeError,
+    to_thumbnail_webp,
+    to_webp,
+)
 
 # Matches the committed stub's "/stub": web/src/shell/manifest.ts joins `${assetBase}/${data}`
 # for layer files, so a trailing slash would request "/media//layers/...".
@@ -272,7 +284,8 @@ class MediaCopy:
 
 @dataclass(frozen=True)
 class MediaBytes:
-    """A published file derived in memory rather than copied: an exposure-normalised plate."""
+    """A published file derived in memory rather than copied: an exposure-normalised, WebP-
+    transcoded portrait plate, or a WebP-transcoded scene still."""
 
     data: bytes
     published: str  # relative to the media directory
@@ -309,7 +322,9 @@ class PortraitPublication:
 @dataclass(frozen=True)
 class Publication:
     manifest: Manifest
-    scene_files: tuple[MediaCopy, ...]
+    scene_files: tuple[
+        MediaBytes, ...
+    ]  # WebP-transcoded, in memory from the pin (pipeline.transcode)
     layer_files: tuple[LayerFile, ...]
     portraits: PortraitPublication | None  # None when the project has no data/portraits.yaml
 
@@ -407,10 +422,32 @@ def prepare_publication(
     )
     return Publication(
         manifest=manifest,
-        scene_files=tuple(copy for _, copy in scene_entries),
+        scene_files=tuple(media for _, files in scene_entries for media in files),
         layer_files=layer_files,
         portraits=portrait_publication,
     )
+
+
+def _prune_stale_media(directory: Path, keep: frozenset[str]) -> tuple[str, ...]:
+    """Removes every file directly in `directory` (non-recursive: a subdirectory, e.g.
+    `portraits/morphs/`, is left alone) whose name is not in `keep`. Returns what was removed.
+
+    A publish is otherwise purely additive (this module's own docstring covers the in-memory-
+    then-written half, not this): without this, a scene or portrait whose published filename
+    changes -- a format change (the WebP transcode, `pipeline.transcode`), or the scene/portrait
+    no longer being pinned at all -- leaves its previous file sitting in `data/media/` forever,
+    silently growing it on every publish. Safe by ADR-005: this only ever touches derived output
+    under `data/media/`, never `data/candidates/` -- deleting all of `data/media/` and
+    republishing always reproduces it from the pins.
+    """
+    if not directory.is_dir():
+        return ()
+    removed = sorted(
+        entry.name for entry in directory.iterdir() if entry.is_file() and entry.name not in keep
+    )
+    for name in removed:
+        (directory / name).unlink()
+    return tuple(removed)
 
 
 def write_publication(publication: Publication, media_dir: Path) -> Path:
@@ -423,6 +460,19 @@ def write_publication(publication: Publication, media_dir: Path) -> Path:
                 shutil.copyfile(source, target)
             case MediaBytes(data=data):
                 target.write_bytes(data)
+    _prune_stale_media(
+        media_dir / "scenes", frozenset(Path(m.published).name for m in publication.scene_files)
+    )
+    if publication.portraits is not None:
+        # Top-level plate files only -- `portraits/morphs/` is a directory, not a file, so
+        # `_prune_stale_media`'s own `is_file()` check already leaves it (and everything in it)
+        # alone regardless.
+        plate_names = frozenset(
+            Path(m.published).name
+            for m in publication.portraits.files
+            if Path(m.published).parent.name == "portraits"
+        )
+        _prune_stale_media(media_dir / "portraits", plate_names)
     for layer in publication.layer_files:
         target = media_dir / layer.published
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -458,7 +508,12 @@ def _log_midpoint(a: GeoTime, b: GeoTime) -> GeoTime:
     return math.expm1((math.log1p(a) + math.log1p(b)) / 2)
 
 
-def _verified_pin(subject_id: str, pin: ScenePin, root: Path) -> tuple[Path, ImageInfo]:
+def _verified_pin(subject_id: str, pin: ScenePin, root: Path) -> tuple[bytes, ImageInfo]:
+    """The pin's own bytes, verified against its recorded digest, plus its sniffed format/size.
+
+    Every publish-time derivative (WebP transcode, exposure normalisation) must be built from
+    these bytes -- computed fresh here, in memory, for this publish -- never from a file already
+    written under `data/media/`. See `pipeline.transcode`'s module docstring for why."""
     source = root / pin.path
     if not source.is_file():
         raise PublishRefused(f"{subject_id}: pinned image {pin.path} does not exist")
@@ -467,7 +522,26 @@ def _verified_pin(subject_id: str, pin: ScenePin, root: Path) -> tuple[Path, Ima
         raise PublishRefused(
             f"{subject_id}: {pin.path} no longer matches pinned digest {pin.asset_digest}"
         )
-    return source, sniff_image(data)
+    return data, sniff_image(data)
+
+
+def _to_webp(subject_id: str, data: bytes, quality: int) -> bytes:
+    """`data` (already decoded from a pin, or an in-memory derivative of one, for this publish)
+    as WebP, or a refusal naming `subject_id` if it cannot be decoded."""
+    try:
+        return to_webp(data, quality)
+    except TranscodeError as err:
+        raise PublishRefused(f"{subject_id}: {err}") from err
+
+
+def _to_thumbnail_webp(subject_id: str, data: bytes) -> bytes:
+    """`data` (the pinned original's own bytes, never a previously published derivative --
+    `pipeline.transcode`'s module docstring) as a `THUMBNAIL_SIZE`-square WebP thumbnail, or a
+    refusal naming `subject_id` if it cannot be decoded."""
+    try:
+        return to_thumbnail_webp(data, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY)
+    except TranscodeError as err:
+        raise PublishRefused(f"{subject_id}: {err}") from err
 
 
 def _validate_scene_events(book: SceneBook, event_set: EventSet | None) -> None:
@@ -620,15 +694,21 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
 
 def _scene_entry(
     scene: SceneRecord, root: Path, reconstructor: Reconstructor | None
-) -> tuple[Scene, MediaCopy]:
+) -> tuple[Scene, tuple[MediaBytes, MediaBytes]]:
     assert scene.pin is not None, scene.id
-    source, info = _verified_pin(scene.id, scene.pin, root)
-    published = f"scenes/{scene.id}{info.extension}"
+    data, info = _verified_pin(scene.id, scene.pin, root)
+    published = f"scenes/{scene.id}.webp"
+    thumbnail_published = f"scenes/{scene.id}-thumb.webp"
+    webp = _to_webp(scene.id, data, SCENE_WEBP_QUALITY)
+    # Always derived from `data` (the pin's own bytes) -- never from `webp` above, which would
+    # be a lossy encode of a lossy encode (this module's own docstring; `pipeline.transcode`'s).
+    thumbnail_webp = _to_thumbnail_webp(scene.id, data)
     entry = Scene(
         id=scene.id,
         t=scene.t,
         chapter_id=scene.chapter,
         image=published,
+        thumbnail=thumbnail_published,
         shot=scene.shot,
         title=scene.title,
         caption=scene.caption,
@@ -639,7 +719,10 @@ def _scene_entry(
         width=info.width,
         height=info.height,
     )
-    return entry, MediaCopy(source=source, published=published)
+    return entry, (
+        MediaBytes(data=webp, published=published),
+        MediaBytes(data=thumbnail_webp, published=thumbnail_published),
+    )
 
 
 def _portrait_publication(
@@ -655,9 +738,9 @@ def _portrait_publication(
     plates, files = [], []
     for record in pinned:
         assert record.pin is not None, record.id
-        source, info = _verified_pin(record.id, record.pin, root)
-        exposed = _exposed_plate(record.id, source)
-        published = f"portraits/{record.id}{info.extension}"
+        data, info = _verified_pin(record.id, record.pin, root)
+        exposed = _exposed_plate(record.id, data)
+        published = f"portraits/{record.id}.webp"
         plates.append(
             PortraitPlateData(
                 node_id=record.id,
@@ -682,15 +765,18 @@ def _portrait_publication(
     )
 
 
-def _exposed_plate(node_id: str, source: Path) -> ExposedPlate:
-    """The plate as published: its pinned original, exposure-normalised and scale-bar-erased in
-    memory (ADR-015 amendments 2026-09-14, 2026-09-17). The pinned file itself is never rewritten
-    (ADR-005), and morph fields stay computed from it: neither step changes geometry."""
+def _exposed_plate(node_id: str, data: bytes) -> ExposedPlate:
+    """The plate as published: `data` (the pin's own bytes, for this publish -- see
+    `_verified_pin`), exposure-normalised, scale-bar-erased and WebP-transcoded, all in memory
+    (ADR-015 amendments 2026-09-14, 2026-09-17; WebP transcode, `pipeline.transcode`). The pinned
+    file itself is never rewritten (ADR-005), and morph fields stay computed from it: none of
+    these steps change geometry."""
     try:
-        exposed = expose_plate(source.read_bytes())
-        return replace(exposed, data=erase_scale_bar(exposed.data))
+        exposed = expose_plate(data)
+        erased_data = erase_scale_bar(exposed.data)
     except ExposureError as err:
         raise PublishRefused(f"{node_id}: {err}") from err
+    return replace(exposed, data=_to_webp(node_id, erased_data, PORTRAIT_WEBP_QUALITY))
 
 
 def _portrait_morphs(

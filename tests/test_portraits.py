@@ -33,6 +33,7 @@ from pipeline.scenes import ScenePin
 from pipeline.shapes import Tree, TreeNode
 from pipeline.spend import Ledger
 from pipeline.store import CandidateStore
+from pipeline.transcode import PORTRAIT_WEBP_QUALITY, to_webp
 from tests.test_exposure import _jpeg
 from tests.test_exposure import _plate as _specimen_plate
 from tests.test_generators import _generator, _image_body, _png
@@ -428,12 +429,70 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     for node_id in ("luca", "tetrapod", "human"):
         pin = book.portrait(node_id).pin
         assert pin is not None
-        published = paths.media / "portraits" / f"{node_id}.png"
-        assert published.read_bytes() == (root / pin.path).read_bytes()
+        published = paths.media / "portraits" / f"{node_id}.webp"
+        # The fake generator's plates are a flat colour: no subject to expose and no scale bar
+        # to erase, so the published bytes are exactly the pin, WebP-transcoded.
+        assert published.read_bytes() == to_webp(
+            (root / pin.path).read_bytes(), PORTRAIT_WEBP_QUALITY
+        )
     directory = morph.key.directory(paths.portrait_morphs)
     assert (paths.media / "portraits" / "morphs" / "tetrapod--human.forward.png").read_bytes() == (
         directory / FORWARD_FLOW_NAME
     ).read_bytes()
+
+
+def test_publish_removes_a_portraits_stale_file_but_leaves_morphs_directory_alone(
+    root: Path,
+) -> None:
+    """Same guard as scenes (tests/test_pipeline.py `test_publish_removes_a_scenes_stale_file...`):
+    a format change or a portrait no longer being pinned must not leave an orphaned file in
+    data/media/portraits/ forever. `portraits/morphs/` is a directory sitting in that same
+    listing, not a file -- it and everything in it must survive untouched."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    _build_and_pick_portraits(backend, root)
+    _cache_morph(root, "tetrapod", "human")
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    morph_file = next((paths.media / "portraits" / "morphs").iterdir())
+    stale = paths.media / "portraits" / "no-longer-a-portrait.jpg"
+    stale.write_bytes(b"orphaned from a previous publish")
+
+    assert _run(backend, root, "publish")[0] == 0
+
+    assert not stale.exists()
+    assert morph_file.is_file()
+    assert sorted(p.name for p in (paths.media / "portraits").iterdir()) == [
+        "human.webp",
+        "luca.webp",
+        "morphs",
+        "tetrapod.webp",
+    ]
+
+
+def test_publish_always_transcodes_portraits_from_the_pin_not_from_its_own_output(
+    root: Path,
+) -> None:
+    """Same guard as scenes (tests/test_pipeline.py): a publish must never read back its own
+    previously published plate and re-encode it, which would silently compound generation loss
+    (exposure gain, scale-bar erase, WebP transcode) a little further on every run. Proven
+    directly: corrupt a previously published plate, republish, and confirm the new output is
+    exactly the pin re-derived fresh -- untouched by the corruption that sat where it goes."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    _build_and_pick_portraits(backend, root)
+    paths = ProjectPaths(root)
+    assert _run(backend, root, "publish")[0] == 0
+    pin = load_portrait_book(paths.portraits).portrait("human").pin
+    assert pin is not None
+    published_path = paths.media / "portraits" / "human.webp"
+    published_path.write_bytes(b"not a real image -- simulates a corrupted/stale previous output")
+
+    assert _run(backend, root, "publish")[0] == 0
+
+    assert published_path.read_bytes() == to_webp(
+        erase_scale_bar(expose_plate((root / pin.path).read_bytes()).data), PORTRAIT_WEBP_QUALITY
+    )
 
 
 def test_publish_skips_a_dissolved_morph_and_lists_it_separately(root: Path) -> None:
@@ -473,7 +532,7 @@ def _plate(book: object, node_id: str, plate: str) -> dict[str, object]:
     assert pin is not None
     return {
         "nodeId": node_id,
-        "image": f"portraits/{node_id}.png",
+        "image": f"portraits/{node_id}.webp",
         "plate": plate,
         "pinned": pin.asset_digest,
         "width": 16,
@@ -524,7 +583,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         "plates": [
             {
                 "nodeId": "human",
-                "image": "portraits/human.jpg",
+                "image": "portraits/human.webp",
                 "plate": "SPECIMEN",
                 "pinned": digest,
                 "width": 512,
@@ -537,7 +596,9 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         ],
         "morphs": [],
     }
-    assert (paths.media / "portraits" / "human.jpg").read_bytes() == erase_scale_bar(expected.data)
+    assert (paths.media / "portraits" / "human.webp").read_bytes() == to_webp(
+        erase_scale_bar(expected.data), PORTRAIT_WEBP_QUALITY
+    )
     assert pinned.read_bytes() == original
 
 

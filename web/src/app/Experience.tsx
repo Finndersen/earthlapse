@@ -338,7 +338,7 @@ export function Experience() {
             id: scene.id,
             t: scene.t,
             label: scene.title,
-            thumbnailUrl: resolveAssetUrl(data.manifest.assetBase, scene.image),
+            thumbnailUrl: resolveAssetUrl(data.manifest.assetBase, scene.thumbnail),
           }))
         : [],
     [data],

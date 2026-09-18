@@ -72,6 +72,11 @@ export interface Scene {
   chapterId: string
   /** The generated still. */
   image: string
+  /** A small (`pipeline.transcode.THUMBNAIL_SIZE`-square) derivative of `image`, backing the
+   *  timeline checkpoint pip's hover preview (`ScrubTrack.module.css`'s `.pipThumb`). Always
+   *  emitted, like `image` — use this, never `image`, for the pip preview: fetching the full
+   *  still to back a 44px circular preview is the bug this field exists to fix. */
+  thumbnail: string
   /** Depth map for 2.5D displacement. Absent in v1 — deferred by ADR-009. The field
    *  exists now so adding it later is a publish, not a schema migration. */
   depth?: string

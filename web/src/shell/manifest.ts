@@ -192,6 +192,7 @@ function validateScene(v: unknown, path: string): Scene {
     t: expectNumber(r.t, `${path}.t`),
     chapterId: expectString(r.chapterId, `${path}.chapterId`),
     image: expectString(r.image, `${path}.image`),
+    thumbnail: expectString(r.thumbnail, `${path}.thumbnail`),
     shot: expectOneOf(r.shot, SHOT_TYPES, `${path}.shot`),
     title: expectString(r.title, `${path}.title`),
     caption: expectString(r.caption, `${path}.caption`),

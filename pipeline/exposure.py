@@ -16,9 +16,10 @@
                     backdrop or subject around it
 
 The pinned candidate is never rewritten (ADR-005): `earthtime publish` writes this derivative to
-data/media/portraits/. Geometry is untouched, so morph fields computed from the pinned originals
-(pipeline/morph.py) stay valid, and a plate that needs no gain and no scale-bar erase publishes
-byte for byte.
+data/media/portraits/, WebP-transcoded (pipeline/transcode.py) on top of whatever this module
+does. Geometry is untouched, so morph fields computed from the pinned originals (pipeline/
+morph.py) stay valid, and a plate that needs no gain and no scale-bar erase still gets that one
+transcode -- see `expose_plate`'s own docstring for what "gain 1" means for this module alone.
 """
 
 from __future__ import annotations

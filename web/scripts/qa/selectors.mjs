@@ -56,3 +56,7 @@ export const SECTION_BANDS_SELECTOR = '[data-section-bands]'
  *  box would otherwise also sweep in. */
 export const GLOBE_SPHERE_FIT_FRAME_SELECTOR = '[data-testid="globe-sphere-fit-frame"]'
 export const GLOBE_MAP_FIT_FRAME_SELECTOR = '[data-testid="globe-map-fit-frame"]'
+
+/** A single-scene timeline checkpoint marker (`ScrubTrack.tsx`'s `data-checkpoint-pip`) — not a
+ *  cluster marker (`data-checkpoint-cluster`), which has no hover thumbnail of its own. */
+export const CHECKPOINT_PIP_SELECTOR = '[data-checkpoint-pip]'

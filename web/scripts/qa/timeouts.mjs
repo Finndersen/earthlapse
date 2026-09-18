@@ -43,3 +43,20 @@ export function waitForApproxUnfoldProgress(page, fractionOfDuration) {
   const UNFOLD_DURATION_MS = 800
   return page.waitForTimeout(Math.round(UNFOLD_DURATION_MS * fractionOfDuration))
 }
+
+/**
+ * `sceneLocation.ts`'s `FOCUS_EASE_SECONDS` (ADR-034): how long the minimised orb's own
+ * auto-rotate takes to centre a scene's location once it becomes the target. Local `useFrame`
+ * animation state with no DOM/store reflection (the same reason `waitForApproxUnfoldProgress`
+ * exists), mirrored as a plain number for the same "this harness has no TS/build step" reason
+ * `waitForSceneCrossfadeSettle` gives — if `FOCUS_EASE_SECONDS` changes, this needs a matching
+ * bump. Under `prefers-reduced-motion: reduce` the ease snaps instantly instead of animating
+ * (`sceneLocation.ts`'s own rule), so this wait is a safe upper bound in both modes, not a
+ * precise sync point.
+ * @param {import('playwright').Page} page
+ */
+export function waitForFocusEaseSettle(page) {
+  const FOCUS_EASE_SECONDS_MIRROR = 1.2
+  const SAFETY_MARGIN_MS = 200
+  return page.waitForTimeout(Math.round(FOCUS_EASE_SECONDS_MIRROR * 1000 + SAFETY_MARGIN_MS))
+}

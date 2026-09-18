@@ -43,6 +43,7 @@ function scene(id: string, t: number, sound?: SceneSound): Scene {
     t,
     chapterId: 'test',
     image: `${id}.jpg`,
+    thumbnail: `${id}-thumb.jpg`,
     shot: 'WIDE_RIDGE',
     title: id,
     caption: '',

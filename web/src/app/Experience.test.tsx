@@ -247,12 +247,12 @@ describe('Experience (W12a integration)', () => {
     12000,
   )
 
-  it('marks every scene as a timeline checkpoint, labelled with its title, with its still as the thumbnail', async () => {
+  it('marks every scene as a timeline checkpoint, labelled with its title, with its dedicated thumbnail — never the full still', async () => {
     await renderSettled()
 
     for (const scene of stubManifest.scenes) {
       const pip = screen.getByRole('button', { name: (name) => name.startsWith(`${scene.title}, `) })
-      expect(pip.querySelector('img')?.getAttribute('src')).toBe(resolveAssetUrl(stubManifest.assetBase, scene.image))
+      expect(pip.querySelector('img')?.getAttribute('src')).toBe(resolveAssetUrl(stubManifest.assetBase, scene.thumbnail))
     }
   })
 
