@@ -1,0 +1,445 @@
+{
+  "id": "population",
+  "unit": "people",
+  "interpolation": "log-linear",
+  "samples": [
+    {
+      "t": 10.0,
+      "value": 7256964920.325113,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 11.0,
+      "value": 7182065891.868496,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 12.0,
+      "value": 7107166863.413059,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 13.0,
+      "value": 7032267834.957041,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 14.0,
+      "value": 6957368806.501307,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 15.0,
+      "value": 6882469778.045413,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 16.0,
+      "value": 6805267098.305929,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 17.0,
+      "value": 6728064418.563638,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 18.0,
+      "value": 6650861738.824831,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 19.0,
+      "value": 6573659059.08394,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 20.0,
+      "value": 6496456379.343974,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 21.0,
+      "value": 6419253699.603079,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 22.0,
+      "value": 6342051019.862483,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 23.0,
+      "value": 6264848340.12296,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 24.0,
+      "value": 6187645660.383127,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 25.0,
+      "value": 6110442980.6420355,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 35.0,
+      "value": 5297834762.773861,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 45.0,
+      "value": 4447156633.999329,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 55.0,
+      "value": 3694116914.7994957,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 65.0,
+      "value": 3022818382.3013916,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 75.0,
+      "value": 2529780696.986363,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 85.0,
+      "value": 2289230913.229164,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 95.0,
+      "value": 2073194065.8193855,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 105.0,
+      "value": 1895515880.583067,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 115.0,
+      "value": 1764997481.354452,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 125.0,
+      "value": 1642028156.4769173,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 135.0,
+      "value": 1522755129.9579406,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 145.0,
+      "value": 1405165679.1812687,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 155.0,
+      "value": 1326920427.4053001,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 165.0,
+      "value": 1327627275.2529643,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 175.0,
+      "value": 1270604250.7701147,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 185.0,
+      "value": 1194345163.9958372,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 195.0,
+      "value": 1134774174.1799695,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 205.0,
+      "value": 1052788209.4193447,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 215.0,
+      "value": 1016655588.5856507,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 225.0,
+      "value": 943431062.7321327,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 235.0,
+      "value": 931580329.7755051,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 245.0,
+      "value": 891050588.912937,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 255.0,
+      "value": 818831030.4907826,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 265.0,
+      "value": 779895506.2918813,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 275.0,
+      "value": 745666885.4887394,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 285.0,
+      "value": 695347602.961243,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 295.0,
+      "value": 664736102.1800396,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 305.0,
+      "value": 642720096.8279808,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 315.0,
+      "value": 613191888.5422122,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 325.0,
+      "value": 591722988.9969668,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 425.0,
+      "value": 515752389.35122687,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 525.0,
+      "value": 503241482.3745008,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 625.0,
+      "value": 442481219.9545694,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 725.0,
+      "value": 456389978.27862453,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 825.0,
+      "value": 444751403.7655611,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 925.0,
+      "value": 397923999.0349903,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1025.0,
+      "value": 323407924.95435554,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1125.0,
+      "value": 310968506.310675,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1225.0,
+      "value": 285713509.8245317,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1325.0,
+      "value": 278185305.9623383,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1425.0,
+      "value": 271479136.4663761,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1525.0,
+      "value": 253237170.9335885,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1625.0,
+      "value": 241540168.1667442,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1725.0,
+      "value": 227549643.3072711,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1825.0,
+      "value": 240611925.22138137,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 1925.0,
+      "value": 236904579.69163805,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 2025.0,
+      "value": 232124271.8716429,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 3025.0,
+      "value": 110419613.71735209,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 4025.0,
+      "value": 72585982.14751184,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 5025.0,
+      "value": 44487191.07362241,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 6025.0,
+      "value": 28774630.31656028,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 7025.0,
+      "value": 19075747.986762337,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 8025.0,
+      "value": 13201843.575028885,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 9025.0,
+      "value": 9577908.562434502,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 10025.0,
+      "value": 7242890.29812254,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 11025.0,
+      "value": 5616991.784568855,
+      "lower": null,
+      "upper": null
+    },
+    {
+      "t": 12025.0,
+      "value": 4432265.04566433,
+      "lower": null,
+      "upper": null
+    }
+  ]
+}

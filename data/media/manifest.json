@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "ebec6ead94f8f4ec",
+  "buildId": "1fab0033e5cbd7df",
   "assetBase": "/media",
   "scenes": [
     {
@@ -1628,6 +1628,21 @@
       "unit": "h",
       "interpolation": "linear",
       "data": "layers/day_length.json"
+    },
+    {
+      "id": "population",
+      "name": "Global population",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [
+        10.0,
+        12025.0
+      ],
+      "source": "hyde",
+      "chartable": true,
+      "unit": "people",
+      "interpolation": "log-linear",
+      "data": "layers/population.json"
     },
     {
       "id": "lineage",
