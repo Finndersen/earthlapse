@@ -1,0 +1,30 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the schema deep-dive,
+# subset rule and licence verification.
+#
+# Cliopatria (Seshat Global History Databank / Complexity Science Hub Vienna / Alan Turing
+# Institute / Oxford): a single GeoJSON of ~1,600 political entities, 3400 BCE - 2024 CE,
+# confirmed directly against the real data (README.md "Schema"). This source keeps only
+# Type == "POLITY" rows (14,108 of 14,945 features -- LEADER/GROUP/EVENT/ARMY rows are a
+# different kind of record entirely, out of scope here) and, of those, only the polities an
+# objective, era-relative top-N-by-area rule selects (`sources/cliopatria/subset.py`,
+# README.md "Subset rule") -- not the full world political map, which would be both far too
+# dense to render on a globe and far too large to rasterise at every one of the ~508 distinct
+# map years.
+
+name = "cliopatria"
+title = "Cliopatria: worldwide political entities, 3400 BCE - 1900 CE (notable subset)"
+url = "https://zenodo.org/api/records/13363121/files/Seshat-Global-History-Databank/cliopatria-v0.0.1.zip/content"
+sha256 = "8ecffea9a5fe4b52e497886f56eabe6188d91c7cd1cdf7dd01054762112337ef"
+licence = "CC BY 4.0 (confirmed both via the Zenodo record's own metadata, license.id == \"cc-by-4.0\", and the repository's committed LICENSE.md)"
+citation = "Chalstrey, E., Bennett, J. & Mutch, E. (2024). Cliopatria: A geospatial database of world-wide political entities from 3400BCE to 2024CE (v0.0.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.13363121. Methods: Bennett, J. et al., \"Cliopatria: a geospatial dataset of world historical polities\", SocArXiv preprint osf.io/24wd6. Seshat Global History Databank: https://seshatdatabank.info/"
+# years BP, [oldest, newest] -- 3400 BCE .. 1900 CE against the fixed AD 2025 present (README.md
+# "Time convention"). The raw dataset itself runs to 2024 CE; the curated domain stops at 1900 CE
+# (t = 125.0), a provisional per-user cutoff -- README.md "Domain cutoff: 1900 CE".
+time_domain = [5.425e3, 1.25e2]
+output_shape = "RasterSequence + FeatureSet"  # cliopatria_extent (raster) + cliopatria_polities (labelled anchors)
+interpolation = "n/a"  # RasterSequence crossfades between frames; FeatureSet has no interpolation policy of its own -- see README.md "Doesn't fit cleanly"
+volume_bytes = 49215745  # measured: the Zenodo repository-archive zip actually downloaded (see README.md "Measured volume" -- the ~44 MB the task brief estimated was close but not exact)
+storage_tier = "git"  # curated FeatureSet parquet is small; RasterSequence parquet (frame refs only) is tiny too -- textures are generated media (see below)
+outputs = [
+    "data/media/textures/cliopatria_extent/*.webp",  # written by normalise.py's write_outputs() hook
+]

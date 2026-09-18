@@ -1,6 +1,8 @@
-"""The four curated data shapes. NORMATIVE — see docs/DATA_SOURCES.md.
+"""The five curated data shapes. NORMATIVE — see docs/DATA_SOURCES.md.
 
-Every data source normalises into exactly one of these. Adding a fifth requires an ADR.
+Every data source normalises into exactly one of these (`FeatureSet`, the fifth, added by
+ADR-035 -- this docstring previously still said "four" and was corrected in passing by
+ADR-037). Adding a sixth requires an ADR.
 
 Time convention
 ---------------
@@ -536,13 +538,44 @@ class FeatureCertainty(StrEnum):
 
 
 class PopulationEstimate(BaseModel):
-    """One dated population reading for a `Feature` (ADR-034). Not an interpolation policy of
-    its own — unlike `TimeSeries`, consecutive estimates for a city are not assumed to blend
-    linearly (a city's population can collapse or rebound between attested readings), so no
-    `sample`-style interpolation is offered here; a consumer reads the estimates list directly."""
+    """One dated reading for a `Feature` (ADR-034, generalised by ADR-037). Not an
+    interpolation policy of its own — unlike `TimeSeries`, consecutive estimates for a feature
+    are not assumed to blend linearly (a city's population can collapse or rebound between
+    attested readings; a polity's territory can be lost and retaken), so no `sample`-style
+    interpolation is offered here; a consumer reads the estimates list directly.
+
+    Originally `population`-only (`sources/cities`). ADR-037 (`sources/cliopatria`, whose
+    polity extents have no population figure at all) adds `area_km2` and makes `population`
+    optional, additively: every existing `cities` estimate keeps setting only `population` and
+    round-trips identically (the JSON blob simply omits `area_km2`/`t_end`, which default to
+    `None`), and every existing call site, test and the published wire type
+    (`pipeline.manifest.FeatureEstimateData`, which still requires `population`) are
+    unaffected. At least one of `population`/`area_km2` must be set — an estimate that
+    measures neither is not a reading of anything.
+
+    `t_end`, also additive, is the nearer-to-present bound of this specific reading's own
+    validity, for data (like a polity's attested extent) where a reading has a real, known end
+    rather than persisting until superseded by the next reading or held to the present the way
+    a city's population is assumed to (`web/src/globe/cities.ts`'s `cityPopulationAt`). `None`
+    for a reading with no declared end -- `sources/cities` never sets it, preserving that
+    existing "holds until the next reading, or to the present" convention exactly."""
 
     t: GeoTime
-    population: int = Field(gt=0)
+    population: int | None = Field(default=None, gt=0)
+    area_km2: float | None = Field(default=None, gt=0)
+    t_end: GeoTime | None = None
+
+    @model_validator(mode="after")
+    def _has_a_measured_value(self) -> Self:
+        if self.population is None and self.area_km2 is None:
+            raise ValueError("PopulationEstimate needs population or area_km2")
+        return self
+
+    @model_validator(mode="after")
+    def _t_end_precedes_t(self) -> Self:
+        if self.t_end is not None and self.t_end > self.t:
+            raise ValueError(f"t_end={self.t_end} is further into the past than t={self.t}")
+        return self
 
 
 class Feature(BaseModel):
