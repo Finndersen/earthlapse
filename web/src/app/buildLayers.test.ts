@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { EventsData, SeriesData, TreeData } from '@/data/curated'
+import type { EventsData, FeatureSetData, SeriesData, TreeData } from '@/data/curated'
 import type { LayerData } from '@/shell'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { LayerManifest, Manifest } from '@/types/manifest'
@@ -69,6 +69,24 @@ const GLOBE_REGIMES_DATA: EventsData = {
   ],
 }
 
+// Mirrors sources/cities (ADR-035): a FeatureSet layer, surfaced on the globe, handed through
+// raw like rasters and non-timeline events — no Layer<V> could supply per-feature estimates.
+const CITIES_ENTRY = baseManifestEntry({ id: 'cities', surface: 'globe', dataKind: 'features' })
+const CITIES_DATA: FeatureSetData = {
+  id: 'cities',
+  features: [
+    {
+      id: 'uruk-iraq',
+      name: 'Uruk',
+      country: 'Iraq',
+      lat: 31.32,
+      lon: 45.64,
+      certainty: 'high',
+      estimates: [{ t: 5700, population: 40_000 }],
+    },
+  ],
+}
+
 function manifestWith(layers: LayerManifest[]): Manifest {
   return {
     schemaVersion: 1,
@@ -90,6 +108,7 @@ describe('buildLayers', () => {
     expect(empty.nodeLayers.size).toBe(0)
     expect(empty.eventLayers.size).toBe(0)
     expect(empty.rasters.size).toBe(0)
+    expect(empty.featureSets.size).toBe(0)
     expect(empty.nodePortraits.size).toBe(0)
   })
 
@@ -134,6 +153,13 @@ describe('buildLayers', () => {
     const layerData = new Map<string, LayerData>([['globe-regimes', GLOBE_REGIMES_DATA]])
     const { eventLayers } = buildLayers(manifest, layerData)
     expect(eventLayers.get('globe-regimes')).toEqual({ entry: GLOBE_REGIMES_ENTRY, data: GLOBE_REGIMES_DATA })
+  })
+
+  it('hands a features entry (ADR-035) through as parsed data, not a Layer, keyed by id', () => {
+    const manifest = manifestWith([CITIES_ENTRY])
+    const layerData = new Map<string, LayerData>([['cities', CITIES_DATA]])
+    const { featureSets } = buildLayers(manifest, layerData)
+    expect(featureSets.get('cities')).toEqual({ entry: CITIES_ENTRY, data: CITIES_DATA })
   })
 
   it('rawEvents reads a raw eventLayers entry’s full event list, or [] when unpublished', () => {

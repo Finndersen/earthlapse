@@ -79,7 +79,9 @@ export function loadTexture(url: string): Promise<THREE.Texture> {
   return promise
 }
 
-/** Evicts least-recently-used textures beyond capacity, never one whose URL is in `keep`. */
-export function trimGlobeTextures(keep: ReadonlySet<string>): void {
-  cache.trim(keep)
+/** Evicts least-recently-used textures beyond capacity, never one whose URL is in `keep`.
+ *  `aggressive` (ADR-030) evicts everything not in `keep` regardless of capacity — see
+ *  `lru.ts`'s own doc comment on `LruCache.trim` for why the human-era basemap needs this. */
+export function trimGlobeTextures(keep: ReadonlySet<string>, options?: { aggressive?: boolean }): void {
+  cache.trim(keep, options)
 }

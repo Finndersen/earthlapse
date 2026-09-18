@@ -41,9 +41,12 @@ export type GlobeEffectKind =
   | 'regime-water-world'
   | 'regime-archean'
   | 'regime-unknown-geography'
+  | 'arrival'
 
 /** A present-day location; the globe reconstructs it to `t` with the plate model at build
- *  time (docs/GLOBE.md §5.3). Absent on `GlobeEffect` for effects with no fixed location. */
+ *  time (docs/GLOBE.md §5.3). Absent on `PointGlobeEffect` for effects with no fixed location.
+ *  Also used, always present, for `ArrivalGlobeEffect`'s `origin`/`destination` — there it is
+ *  a curated *schematic region centroid*, never a real route or precise geography (ADR-032). */
 export interface GlobeEffectAnchor {
   lat: number
   lon: number
@@ -57,13 +60,48 @@ export interface GlobeEffectWindow {
   tMax: GeoTime
 }
 
-/** Mirrors `pipeline.shapes.GlobeEffect` / `pipeline.manifest.GlobeEffect` (docs/GLOBE.md §6,
- *  ADR-013). Additive on `TimelineEvent`: absent on every event with no globe visual. */
-export interface GlobeEffect {
-  kind: GlobeEffectKind
+/** The eight "point" effect kinds (docs/GLOBE.md §6, ADR-013): at most one fixed anchor, no
+ *  arc. Mirrors `pipeline.shapes.GlobeEffect` / `pipeline.manifest.GlobeEffect`. `kind='arrival'`
+ *  is `ArrivalGlobeEffect` instead (ADR-032) — see the `GlobeEffect` union below. */
+export interface PointGlobeEffect {
+  kind: Exclude<GlobeEffectKind, 'arrival'>
   anchor?: GlobeEffectAnchor
   windows: GlobeEffectWindow[]
 }
+
+/**
+ * Whether an `ArrivalGlobeEffect` is the first human settlement of a region with no prior human
+ * presence, or a later movement into land that was already inhabited (ADR-032 amendment).
+ * Mirrors `pipeline.shapes.ArrivalKind` exactly; the string values are the wire values too.
+ * Load-bearing for rendering, not a label: `'peopling'` leaves a persistent "inhabited" marker
+ * at its destination once its arc has established, `'migration'` leaves nothing behind — which
+ * is why the data asserts it rather than the globe inferring it from dates or tags.
+ */
+export type ArrivalKind = 'peopling' | 'migration'
+
+/** A schematic human-dispersal arrival (ADR-032, docs/GLOBE.md §6): an arc from an origin
+ *  region centroid to a destination region centroid — schematic, never a real route — that
+ *  persists on the globe from the arrival's earliest defensible date through to the present
+ *  (`windows` always includes one reaching `tMin: 0`), rather than vanishing once `t` leaves
+ *  the owning event's own dating-uncertainty interval. `established` is the best-estimate
+ *  date the arc turns solid (dashed before it); it is independent of the owning
+ *  `TimelineEvent`'s own `kind`/`t`, since some events this attaches to are `kind: 'period'`
+ *  with no single instant of their own (e.g. `peopling-of-americas`). Mirrors
+ *  `pipeline.shapes.ArrivalEffect` / `pipeline.manifest.ArrivalEffect`. */
+export interface ArrivalGlobeEffect {
+  kind: 'arrival'
+  arrivalKind: ArrivalKind
+  origin: GlobeEffectAnchor
+  destination: GlobeEffectAnchor
+  established: GeoTime
+  windows: GlobeEffectWindow[]
+}
+
+/** Mirrors `pipeline.shapes.AnyGlobeEffect` / `pipeline.manifest.AnyGlobeEffect` (docs/GLOBE.md
+ *  §6, ADR-013/ADR-032). Additive on `TimelineEvent`: absent on every event with no globe
+ *  visual. Discriminate on `kind` — `kind === 'arrival'` narrows to `ArrivalGlobeEffect`,
+ *  every other kind to `PointGlobeEffect`. */
+export type GlobeEffect = PointGlobeEffect | ArrivalGlobeEffect
 
 /** ADR-022. `'moment'` is one happening, dated by a best-estimate `t` plus its `[tMin, tMax]`
  *  dating uncertainty; `'period'` genuinely lasted, and `tMin`/`tMax` are its own end/start. */
@@ -165,6 +203,34 @@ export interface PortraitMix {
   from: PortraitPlate
   to: PortraitPlate
   mix: number
+}
+
+/** ADR-035. How confidently a `FeatureData`'s coordinates are known — mirrors
+ *  `pipeline.shapes.FeatureCertainty` exactly (its values are the wire values too), translated
+ *  once from the source dataset's own raw geocoding-confidence code at the pipeline boundary. */
+export type FeatureCertainty = 'high' | 'medium' | 'low'
+
+/** One dated population reading for a `FeatureData` (ADR-035). Mirrors
+ *  `pipeline.shapes.PopulationEstimate`. Estimates for one feature are not assumed to
+ *  interpolate between each other — a population can collapse or rebound between attested
+ *  readings — so there is no sampling/interpolation helper for this, unlike `SeriesData`. */
+export interface PopulationEstimateData {
+  t: GeoTime
+  population: number
+}
+
+/** One labelled, dated geographic point (ADR-035) — e.g. a historical city. Mirrors
+ *  `pipeline.shapes.Feature`. `country` is the *modern* country the coordinates fall in, not
+ *  whatever polity existed at any given estimate's own date. */
+export interface FeatureData {
+  id: string
+  name: string
+  country: string
+  lat: number
+  lon: number
+  certainty: FeatureCertainty
+  /** Sorted ascending by `t`, unique `t` — mirrors `Feature._estimates_sorted_and_unique`. */
+  estimates: PopulationEstimateData[]
 }
 
 export type LayerValue = ScalarValue | EventsValue | RasterValue | NodeValue

@@ -7,6 +7,13 @@
  * `trim(keep)` evicts least-recently-used entries until the cache is back within capacity,
  * never touching a key in `keep` (so a cache can briefly exceed capacity when everything in
  * it is in use).
+ *
+ * `trim(keep, { aggressive: true })` (ADR-030) evicts every entry not in `keep`
+ * regardless of capacity, rather than only once the cache exceeds it, once `t` is well inside the
+ * human-era basemap span. Ordinary `trim` alone would leave up to `capacity` PaleoDEM frames
+ * resident (each still under the cap) even while the globe is showing the basemap and none of
+ * them are on screen or about to be — cheap to hold in isolation, but a trimmed-down PaleoDEM
+ * cache is load-bearing headroom for the human-era textures at that point, not a nice-to-have.
  */
 
 export class LruCache<V> {
@@ -46,9 +53,10 @@ export class LruCache<V> {
     this.entries.set(key, value)
   }
 
-  trim(keep: ReadonlySet<string>): void {
+  trim(keep: ReadonlySet<string>, options?: { aggressive?: boolean }): void {
+    const aggressive = options?.aggressive ?? false
     for (const [key, value] of this.entries) {
-      if (this.entries.size <= this.capacity) return
+      if (!aggressive && this.entries.size <= this.capacity) return
       if (keep.has(key)) continue
       this.entries.delete(key)
       this.onEvict(value, key)

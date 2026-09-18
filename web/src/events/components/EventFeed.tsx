@@ -80,10 +80,26 @@ export interface EventFeedProps {
    *  W-followup item 12, pauses playback if it was running). This component neither opens a
    *  panel nor scrubs `t` itself; it only reports the activation. */
   onEventActivate: (event: TimelineEvent) => void
+  /** The ids currently showing as cards, reported whenever that set changes (not per frame). The
+   *  globe's human-civilisation layer pulses an arrival's arc or marker while its own card is on
+   *  screen, so the two read as the same subject; reporting the selection rather than
+   *  re-deriving it there is what keeps one selection rule (`selectFeedEvents`) in the app. */
+  onVisibleEventsChange?: (eventIds: readonly string[]) => void
+  /** The card the pointer is over, or `null`. Drives the stronger of the globe's two sympathetic
+   *  pulses. */
+  onCardHoverChange?: (eventId: string | null) => void
   className?: string
 }
 
-export function EventFeed({ t, scale, events, onEventActivate, className }: EventFeedProps) {
+export function EventFeed({
+  t,
+  scale,
+  events,
+  onEventActivate,
+  onVisibleEventsChange,
+  onCardHoverChange,
+  className,
+}: EventFeedProps) {
   const [containerRef, size] = useElementSize<HTMLDivElement>()
   const compact = useIsCompactViewport()
   const reducedMotion = usePrefersReducedMotion()
@@ -109,6 +125,18 @@ export function EventFeed({ t, scale, events, onEventActivate, className }: Even
     setAnnouncement(`${freshest.event.label}, ${formatEventDate(freshest.event)}`)
   }, [selection.visible])
 
+  // Keyed on the joined ids, not the array: `selectFeedEvents` returns a fresh array every frame
+  // of playback, but the *set* only changes when the playhead actually reaches or drops an event.
+  const visibleIds = selection.visible.map((entry) => entry.event.id)
+  const visibleIdsKey = visibleIds.join('\n')
+  const visibleIdsRef = useRef(visibleIds)
+  visibleIdsRef.current = visibleIds
+  const onVisibleEventsChangeRef = useRef(onVisibleEventsChange)
+  onVisibleEventsChangeRef.current = onVisibleEventsChange
+  useEffect(() => {
+    onVisibleEventsChangeRef.current?.(visibleIdsRef.current)
+  }, [visibleIdsKey])
+
   const hasCards = selection.visible.length > 0
 
   return (
@@ -131,6 +159,7 @@ export function EventFeed({ t, scale, events, onEventActivate, className }: Even
                 emphasis={emphases[rank] ?? 0}
                 reducedMotion={reducedMotion}
                 onActivate={() => onEventActivate(entry.event)}
+                onHoverChange={onCardHoverChange}
               />
             ))}
           </ul>
@@ -158,9 +187,12 @@ interface EventFeedCardProps {
   /** Clicking/tapping/Enter-ing the card — opens `EventDetailPanel` one level up. The card
    *  itself carries no open/closed state of its own any more (W-followup item 12). */
   onActivate: () => void
+  /** Reported on pointer enter/leave and on focus/blur, so a keyboard user gets the same globe
+   *  highlight a mouse user does. */
+  onHoverChange: ((eventId: string | null) => void) | undefined
 }
 
-function EventFeedCard({ entry, emphasis, reducedMotion, onActivate }: EventFeedCardProps) {
+function EventFeedCard({ entry, emphasis, reducedMotion, onActivate, onHoverChange }: EventFeedCardProps) {
   const { event, distanceFraction } = entry
   const offsetPx = reducedMotion ? 0 : feedCardOffsetPx(distanceFraction)
   const insetPx = reducedMotion ? 0 : feedCardInsetPx(emphasis)
@@ -183,6 +215,10 @@ function EventFeedCard({ entry, emphasis, reducedMotion, onActivate }: EventFeed
       style={cardStyle}
       data-emphasised={emphasis > 0}
       data-testid={`event-feed-item-${event.id}`}
+      onPointerEnter={() => onHoverChange?.(event.id)}
+      onPointerLeave={() => onHoverChange?.(null)}
+      onFocus={() => onHoverChange?.(event.id)}
+      onBlur={() => onHoverChange?.(null)}
     >
       <button
         type="button"

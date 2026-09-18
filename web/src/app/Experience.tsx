@@ -13,7 +13,7 @@
  * failure is a loud full-page error, never a half-rendered page.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { SoundToggle, useAudioEngine } from '@/audio'
@@ -21,7 +21,7 @@ import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/event
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { resolveAssetUrl, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
+import { dominantScene, resolveAssetUrl, sceneAt, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
 import type { PresentationRegime } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { installDevHook } from '@/store/devHook'
@@ -114,6 +114,14 @@ export function Experience() {
   // "Paleogeography" label slot) and, while the globe is expanded, in the stage slot above the
   // timeline. `Globe` never draws a caption over the sphere itself in either state.
   const [globeCaption, setGlobeCaption] = useState('')
+
+  // The globe's human-civilisation layer pulses an arrival's arc or marker in sympathy with its
+  // own event-feed card (this feature's §4). `<EventFeed>` owns the selection rule
+  // (`selectFeedEvents`) and reports it here rather than the globe re-deriving a second one; both
+  // callbacks fire on a real change, never per frame.
+  const [feedEventIds, setFeedEventIds] = useState<ReadonlySet<string>>(() => new Set())
+  const [hoveredFeedEventId, setHoveredFeedEventId] = useState<string | null>(null)
+  const onVisibleEventsChange = useCallback((ids: readonly string[]) => setFeedEventIds(new Set(ids)), [])
 
   useEffect(() => {
     installDevHook()
@@ -276,7 +284,7 @@ export function Experience() {
   // Hoisted above the loading/error branches below so every hook in this component runs
   // unconditionally regardless of load state (rules of hooks) — `buildLayers` tolerates the
   // `null`s that state implies and returns the empty `AppLayers` for them.
-  const { scalarLayers, nodeLayers, rasters, eventLayers, nodePortraits } = useMemo(
+  const { scalarLayers, nodeLayers, rasters, eventLayers, featureSets, nodePortraits } = useMemo(
     () => buildLayers(data.status === 'ready' ? data.manifest : null, data.status === 'ready' ? data.layerData : null),
     [data],
   )
@@ -299,16 +307,26 @@ export function Experience() {
     presentationRegime: steadyRegime.regime,
   })
 
-  // The globe's two raster sources (docs/GLOBE.md §4.1, G7), selected by id (ADR-013) —
-  // `paleodem` (0-540 Ma) and, when published, `plates_neoproterozoic` (540-1000 Ma, `null`
-  // when unusable: `Globe` then falls back to the "geography unknown" regime rather than
-  // faking continents). `globe-regimes`' raw event list feeds the same pre-1 Ga regime blend.
+  // The globe's raster sources (docs/GLOBE.md §4.1, G7; ADR-030), selected by id
+  // (ADR-013) — `paleodem` (0-540 Ma) and, when published, `plates_neoproterozoic` (540-1000 Ma,
+  // `null` when unusable: `Globe` then falls back to the "geography unknown" regime rather than
+  // faking continents), plus the human-era basemap tiers, each `null` when its layer isn't
+  // published (an older manifest). `globe-regimes`' raw event list feeds the pre-1 Ga regime
+  // blend.
   const paleodemRaster = rasters.get('paleodem')
   const rasterLayers: GlobeRasterLayers | null =
     paleodemRaster === undefined
       ? null
-      : { paleodem: paleodemRaster.data, neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null }
+      : {
+          paleodem: paleodemRaster.data,
+          neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null,
+          basemapT0: rasters.get('basemap_t0')?.data ?? null,
+          basemapT1: rasters.get('basemap_t1')?.data ?? null,
+          populationDensity: rasters.get('hyde_population_density')?.data ?? null,
+        }
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
+  // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
+  const cities = featureSets.get('cities')?.data.features ?? null
 
   // Every scene is a timeline checkpoint, so the stills themselves are marked and steppable on
   // the axis, not only the data-driven events. Memoised so the track's pip layout only reruns
@@ -354,6 +372,13 @@ export function Experience() {
   // rather than kept as the `TimelineEvent` itself, so the store only ever holds a plain id, the
   // same "what's expanded, not the expanded thing" shape `expandedChartLayerId` already uses.
   const detailEvent = detailEventId !== null ? (manifest.events.find((e) => e.id === detailEventId) ?? null) : null
+
+  // ADR-034: the globe plots the *dominant* scene's location — the same scene whose caption and
+  // image are on screen (`dominantScene`, the one rule `SceneView` already uses), so the marker
+  // and the picture can never disagree about which place is being shown. `?? null` covers both a
+  // scene with no `location` at all and an empty scene list.
+  const currentSceneLocation =
+    manifest.scenes.length > 0 ? (dominantScene(sceneAt(manifest.scenes, t)).location ?? null) : null
 
   const openEventDetail = (event: TimelineEvent): void => {
     wasPlayingBeforeDetailRef.current = playback.playing
@@ -428,6 +453,11 @@ export function Experience() {
               expanded={globeExpanded}
               onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
               onCaptionChange={setGlobeCaption}
+              cities={cities}
+              sceneLocation={currentSceneLocation}
+              playbackBaseRate={playback.baseRate}
+              feedEventIds={feedEventIds}
+              hoveredFeedEventId={hoveredFeedEventId}
             />
           ) : (
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
@@ -453,7 +483,16 @@ export function Experience() {
             })}
           </div>
         }
-        feed={<EventFeed t={t} scale={FULL_DOMAIN_SYMLOG_SCALE} events={manifest.events} onEventActivate={openEventDetail} />}
+        feed={
+          <EventFeed
+            t={t}
+            scale={FULL_DOMAIN_SYMLOG_SCALE}
+            events={manifest.events}
+            onEventActivate={openEventDetail}
+            onVisibleEventsChange={onVisibleEventsChange}
+            onCardHoverChange={setHoveredFeedEventId}
+          />
+        }
         title={<TimeTitle t={t} />}
         badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
         ancestor={

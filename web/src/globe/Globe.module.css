@@ -13,8 +13,17 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: grid;
-  place-items: center;
+  /* Horizontal centring only (`align-items`) — vertical placement is `.orbExpanded`'s own
+     `margin-top`, computed against the shell's real title-to-timeline gap
+     (`--chrome-gap-top`/`--chrome-gap-height`, `ShellLayout`'s `useChromeGap`) rather than
+     centred in the whole viewport: that gap is not itself centred in the viewport (the title
+     band above it is shorter than the caption-plus-timeline band below), so a plain
+     `place-items: center` needed a per-breakpoint guessed offset to correct for it — see
+     `.orbExpanded`'s own doc comment for why an exact `margin-top` replaces that guess instead
+     of refining it further. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   /* Dims the scene enough to focus the orb without blacking out the periphery: the shell keeps
      the title and timeline above this backdrop, so they stay legible and usable. */
   background: radial-gradient(ellipse at 50% 50%, rgba(3, 4, 6, 0.55), rgba(3, 4, 6, 0.8) 75%);
@@ -33,23 +42,113 @@
 }
 
 .orbExpanded {
-  /* Sized so the sphere itself (≈76% of the canvas, see CAMERA_DISTANCE in Globe.tsx) fits
-     between the shell's title and its timeline band, which stay visible above the backdrop.
-     Every bound here (the two constants and the 0.76 divisor) was measured against the shell's
-     real title/timeline positions, not just derived from the box's own centring — the box is
-     centred in the *whole* viewport (`.backdrop`'s `place-items: center`), not specifically
-     within the gap between title and timeline, so it must be smaller than that raw gap by a
-     margin on both sides, not merely no bigger than it (regression: a caption now lives in
-     that margin too — `ShellLayout.module.css`'s `.expandedGlobeCaption` — so the margin is no
-     longer just cosmetic slack). Even so, an 800px-tall mobile viewport's much taller
-     stacked-HUD rows (`ShellLayout.module.css`'s mobile media query) leave so little room that
-     some crowding there is a known residual, not something this constant alone can fix. */
-  --expanded-size: max(235px, min(64vmin, 740px, calc((100vh - 520px) / 0.76)));
+  /* Fills as much of the *real* gap between the shell's title and its timeline band as it can
+     without touching either (user follow-up, 2026-09-17: "there is room for the globe and map to
+     be larger... make it as large as possible to fill empty space"). `--chrome-gap-height` is
+     that gap's own live height, measured by `ShellLayout`'s `useChromeGap` from the title's and
+     timeline band's actual `getBoundingClientRect()`s — not a guessed pixel allowance subtracted
+     from `100vh`, the earlier approach this replaces after a fresh review still found the globe
+     undersized against it (a guessed constant necessarily either under- or over-estimates the
+     shell's real chrome at any width/height it wasn't hand-tuned against; a live measurement is
+     correct at all of them by construction). `8px` is breathing room, not a chrome estimate: the
+     sphere's own halo glow (`.halo`, below) bleeds a further 12% beyond whatever box this
+     resolves to, and this keeps that bleed from visibly grazing the title or caption text, which
+     already renders with a heavy text-shadow regardless — kept small (down from an initial 18px,
+     2026-09-18 lead review) since every one of these pixels is subtracted from the panel's own
+     size and the ask is explicitly to fill the space, not to spend it on margin beyond what the
+     halo actually needs. `min(94vw, ...)` guards the one axis `--chrome-gap-height` says nothing
+     about: a viewport narrower than it is tall (a phone portrait) is width-, not height-, bound.
+     `900px` caps how big the orb is ever allowed to get on a very tall/short-chrome window,
+     independent of how much space is technically free. */
+  --expanded-size: max(235px, min(94vw, 900px, calc(var(--chrome-gap-height, 560px) - 8px)));
 
   position: relative;
   width: var(--expanded-size);
   height: var(--expanded-size);
+  /* Centres the box in the *real* gap (`--chrome-gap-top` + `--chrome-gap-height`) rather than
+     in the whole viewport (`.backdrop` no longer uses `place-items: center` for this axis — see
+     its own rule below): exact, not a per-breakpoint guessed offset like the `translateY` nudges
+     this replaces (`-3vh`/`-12vh` for the sphere, `-9vh`/`-16vh` for the map, below), each of
+     which was only ever an approximation of the same "recover the whole-viewport centring's
+     wasted top slack" idea, hand-tuned against a handful of viewports rather than correct at
+     every one of them by construction. `[data-animate-resize='true']`'s `transition: margin-top`
+     still carries this smoothly on the one path that does animate it (folding back from map
+     mode, whose own larger `margin-top` blends down to this). */
+  margin-top: calc(var(--chrome-gap-top, 120px) + (var(--chrome-gap-height, 560px) - var(--expanded-size)) / 2);
   cursor: grab;
+}
+
+/* Only `margin-top` animates here — `width`/`height` deliberately do not (see the map-mode rule
+   below for why: they snap to their target size instantly instead). `margin-top` alone still
+   needs its own transition for the map-mode re-centring (below) to read as a smooth slide rather
+   than a jump, and for that motion to line up with `uUnfold`'s own ~0.8s eased duration
+   (`unfoldAnimation.ts`'s `UNFOLD_DURATION_SECONDS`) so it reads as part of the same overall
+   motion as the mesh morph and the camera's reframe (`GlobeCameraControls`).
+
+   Deliberately scoped to `[data-animate-resize='true']`, not the bare `.orbExpanded` rule above:
+   `.orb` and `.orbExpanded` are two states of the *same* element (`Globe.tsx`'s own "element
+   types and order stay identical" note), so a transition on the bare class would also fire on
+   the very first frame of expanding — the orb's own reveal jump from its small minimised box to
+   this one, an unrelated and much bigger size change that used to be instant. `Globe.tsx` only
+   sets `data-animate-resize` one frame after `expanded` turns true, well before a viewer could
+   reach the toggle, so the expand reveal stays instant and only a later map-mode toggle (while
+   already settled at the full expanded size) animates — without this guard, a screenshot taken
+   mid-expand-reveal shows the panel still small and off-centre, a real regression this was
+   verified against. */
+.orbExpanded[data-animate-resize='true'] {
+  transition: margin-top 800ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Map mode (docs/GLOBE.md's ADR-033): the sphere's square box (above) wastes roughly half
+   its area once flattened into a ~2:1 world map — `GlobeCameraControls`'s camera fit already
+   frames the map correctly *within whatever aspect this box ends up being*, but a viewer asked
+   to "see everything at once" deserves more than a small map floating in a mostly-empty square.
+   Widens toward the Equal Earth map's own bounding-box aspect (`projection.ts`'s
+   `EQUAL_EARTH_HALF_WIDTH / EQUAL_EARTH_HALF_HEIGHT`, ~2.05) — approximate on purpose, since the
+   camera math self-corrects to whatever this resolves to, this only needs to be close enough
+   that the old square margin doesn't linger. Both `width` and `height` repeat the same viewport/
+   chrome-clearance bounds `--expanded-size` uses above (96vw / `--chrome-gap-height`, the real
+   title-to-timeline gap), scaled by the target aspect on whichever axis needs it, rather than
+   deriving one from the other (`height: auto` does not transition smoothly in every browser) —
+   every width term here is exactly its height counterpart times 2.05, so whichever term `min()`
+   picks is the same index on both sides and the aspect stays exactly 2.05 regardless of which
+   term binds.
+
+   **`width`/`height` are not in `[data-animate-resize='true']`'s own `transition` list above —
+   they snap to this rule's target size the instant `data-map-mode` changes.** An earlier version
+   animated them over the same ~800ms as `margin-top` below; browser-verified regression: the
+   panel's own CSS box and the `<canvas>` it contains are two different things that resize on two
+   different clocks — the box's width/height animated smoothly frame-by-frame, but r3f only
+   reallocates the canvas's actual drawing buffer (and the aspect `GlobeCameraControls` frames
+   against) on its own `ResizeObserver` callback, debounced (`Globe.tsx`'s own `<Canvas resize>`)
+   to avoid dozens of reallocations across one 800ms animation. The result: the canvas stayed at
+   its *old* pixel size and aspect, letterboxed/cropped inside the now-differently-shaped box,
+   until the debounce finally fired near the end of the transition and the picture snapped —
+   visibly off-centre and clipped (top/bottom/right) the whole time in between. Snapping the box
+   to its final size (and aspect) up front removes the debounce's own reason to exist (`Globe.tsx`
+   no longer sets one at all) and leaves the *mesh's own morph* (`uUnfold`) and the camera's own
+   tween (`GlobeCameraControls`) — both already frame-accurate, GPU-side motions with no separate
+   clock to fall out of step with — to carry the entire visible transition.
+
+   `margin-top` re-centres this differently-sized box in the same real gap `.orbExpanded`'s own
+   `margin-top` centres the sphere in (`--chrome-gap-top`/`--chrome-gap-height`) — no separate
+   guessed offset needed here the way the sphere rule's old `-3vh` and this rule's old `-9vh`
+   needed two different hand-tuned constants: both are now the same exact formula, just against
+   this rule's own (wider, shorter) `height` instead of `--expanded-size`.
+
+   `max(160px, ...)` / `max(328px, ...)` floors: every term inside the
+   inner `min()` shrinks toward 0 as the gap gets short enough — `--chrome-gap-height` alone
+   reaching 0 would otherwise produce a zero-size map box with no floor to catch it (unlike sphere
+   mode's own `--expanded-size` above, which already has a `max(235px, ...)` floor). 160px/328px
+   keep the same ~2.05 aspect the two `min()`s already target (328 / 2.05 = 160), so the floor
+   itself never distorts the map's own shape — it only stops the box shrinking past a size the
+   "View" toggle and legend can still sit over legibly. */
+.orbExpanded[data-map-mode='true'] {
+  --map-height: max(160px, min(calc(96vw / 2.05), 94vh, calc(var(--chrome-gap-height, 560px) - 8px), calc(1800px / 2.05)));
+
+  width: max(328px, min(96vw, calc(94vh * 2.05), calc((var(--chrome-gap-height, 560px) - 8px) * 2.05), 1800px));
+  height: var(--map-height);
+  margin-top: calc(var(--chrome-gap-top, 120px) + (var(--chrome-gap-height, 560px) - var(--map-height)) / 2);
 }
 
 /* A wide, faint scatter beyond the shader's own atmosphere. With `inset: -12%` the planet's
@@ -85,9 +184,9 @@
   position: absolute;
   inset: 12%;
   border-radius: 50%;
-  /* Opaque throughout (re-review fix: the earlier translucent stops let the dimmed scene show
-     through the expanded orb, reading as a glass bubble rather than a solid planet) — only the
-     highlight softens at its own edge, never letting the backdrop show through. */
+  /* Opaque throughout — translucent stops let the dimmed scene show through the expanded orb,
+     reading as a glass bubble rather than a solid planet — only the highlight softens at its own
+     edge, never letting the backdrop show through. */
   background: radial-gradient(circle at 34% 30%, #5a7896 0%, #2e3e52 40%, #141a24 72%, #05070a 100%);
   box-shadow: inset 0 0 clamp(20px, 6%, 60px) rgba(0, 0, 0, 0.65);
 }
@@ -130,6 +229,191 @@
   box-shadow:
     0 0 0 1px var(--hud-accent, #e8b06a),
     0 0 20px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
+}
+
+/* The Globe/Map toggle (ADR-033): top-left of the backdrop, mirroring `.closeButton`'s
+   top-right offsets. Not top-centre: `ShellLayout.module.css` lifts the shell's own time/era
+   title to `z-index: 60` — above this backdrop's `z-index: 50` — exactly there while the globe
+   is expanded ("the title and timeline stay above its backdrop"), so a centred toggle would sit
+   underneath it and steal its clicks. Top-left is otherwise empty in the expanded layout (the
+   ancestor panel, `ShellLayout`'s other top corner, recedes behind this same backdrop), and
+   stays clear of the title at every width down to the ~400px phone floor. Same small-caps-
+   label-above-a-pill idiom as `timeline/components/Transport.module.css`'s `.modeGroup`/
+   `.groupLabel`/`.modeToggle`/`.modeButton` — duplicated rather than imported, the same reason
+   that file's own `.modeGroup` comment gives for its own duplication (CSS Modules classes are
+   scoped per file, and this toggle lives here, not in `timeline`). */
+.viewModeGroup {
+  position: absolute;
+  top: clamp(16px, 2.4vw, 34px);
+  left: clamp(16px, 3vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  z-index: 1;
+}
+
+.viewModeLabel {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}
+
+.viewModeToggle {
+  display: flex;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(3, 4, 6, 0.35);
+}
+
+.viewModeButton {
+  background: transparent;
+  border: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+.viewModeButton:hover,
+.viewModeButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.viewModeButton[aria-pressed='true'] {
+  color: var(--hud-accent, #e8b06a);
+  background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
+}
+
+/* The overlay legend/toggle panel (docs/GLOBE.md §10): stacked directly beneath
+   `.viewModeGroup` in the same top-left column rather than independently positioned — at the
+   ~400px phone floor two independently-placed absolute boxes are the easiest way to end up
+   overlapping each other, while a fixed vertical offset from a sibling of known approximate
+   height stays clear by construction. Narrower than the toggle above it is required to be
+   (`max-width`), so a long hint line wraps rather than pushing off the (also ~400px) right
+   edge of a phone viewport. */
+.legendGroup {
+  position: absolute;
+  top: clamp(70px, 9vw, 96px);
+  left: clamp(16px, 3vw, 48px);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(240px, 62vw);
+}
+
+.legendRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 10px;
+  background: rgba(3, 4, 6, 0.4);
+}
+
+.legendRowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.legendRowLabel {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  white-space: nowrap;
+}
+
+.legendToggle {
+  display: flex;
+  flex-shrink: 0;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(3, 4, 6, 0.35);
+}
+
+.legendToggleButton {
+  background: transparent;
+  border: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
+}
+
+.legendToggleButton:hover,
+.legendToggleButton:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.legendToggleButton[aria-pressed='true'] {
+  color: var(--hud-accent, #e8b06a);
+  background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
+}
+
+/* Compact variant (docs/GLOBE.md §10): single-line rows with a short hint below,
+   not the desktop card's wrapping paragraph — see Legend.tsx's own doc comment. Positioned lower
+   than `.viewModeGroup`'s own default top offset and given a phone-specific override of that
+   offset too (media query below) so neither sits under the shell's time/era title, which is
+   promoted above this backdrop (`z-index: 60`, `ShellLayout.module.css`) and paints over
+   whatever's beneath it rather than being clipped by it. */
+.legendGroupCompact {
+  position: absolute;
+  top: 132px;
+  left: clamp(16px, 3vw, 48px);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(210px, 76vw);
+}
+
+.legendRowCompact {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 9px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 8px;
+  background: rgba(3, 4, 6, 0.45);
+}
+
+.legendHintCompact {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.legendHint {
+  margin: 0;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
 .closeButton {
@@ -190,6 +474,79 @@
   }
 }
 
+/* At the ~400px phone floor the shell's time/era title
+   (`ShellLayout.module.css`'s `.title`, promoted to `z-index: 60` while expanded — above this
+   backdrop's own `z-index: 50`, so it paints over rather than being clipped by anything here)
+   can run wide enough (a long geological-age or "N years ago" string, centred) to reach this
+   panel's own default top-left position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
+   (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides `compact`
+   for `<Legend>`.
+   No per-breakpoint vertical nudge is needed here any more: `.orbExpanded`'s and the map-mode
+   rule's own `margin-top` already centre each box in the shell's *real*, live-measured gap
+   (`--chrome-gap-top`/`--chrome-gap-height`) at every width and height, including this one — the
+   guessed `-3vh`/`-9vh`/`-12vh`/`-16vh` per-breakpoint corrections this replaced existed only to
+   patch that formula up for viewports its flat guessed constants didn't already fit. */
+
+/* The top-left overlay stack (the Globe/Map toggle, and beneath it the legend —
+   `--overlay-clear-bottom`, `Globe.tsx`'s own measurement of whichever sits lower) is fixed in
+   place regardless of the box's own size, while the box itself is centred — so on any viewport
+   narrow enough for a *tall* box to still reach a good way up and to the left (a portrait phone's
+   generous vertical gap does this at every width up to the general phone breakpoint, not only the
+   narrowest ones: browser-verified overlap at 470-760px wide with a 900px-tall viewport, not just
+   390px), the box's own radius, not just its centre, can reach back under the stack. Short of
+   exact circle-vs-rectangle geometry (not worth the complexity for a corner case this narrow), the
+   only way to guarantee no overlap is to keep the box's own top edge clear of the whole stack, not
+   just clear of the title — i.e. treat `--overlay-clear-bottom` as a second candidate top boundary
+   alongside `--chrome-gap-top` and take whichever is lower, `usable-top`, then size against the
+   shrunk remainder down to the timeline (`--chrome-gap-top` + `--chrome-gap-height`, unaffected).
+   Scoped to the same 760px phone breakpoint `useIsPhoneViewport` and `<Legend>`'s own `compact`
+   prop already use — the sphere's own risk genuinely ends there (browser-verified clear at every
+   width from 760px up, including 844x390, one of this feature's own required viewports). */
+@media (max-width: 760px) {
+  .viewModeGroup {
+    top: 86px;
+  }
+
+  .orbExpanded {
+    /* `+ 6px`: a real, visible gap from the overlay stack's own bottom edge, not just
+       non-intersection — without it a box that consumes the *entire* remaining space (no
+       leftover to centre into) lands exactly tangent to the legend/toggle, a 0px gap that reads
+       as touching rather than clear (browser-verified at 390x844, this rule's own worst case). */
+    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
+
+    --expanded-size: max(235px, min(94vw, 900px, calc(var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top))));
+    margin-top: calc(var(--usable-top) + (var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--expanded-size)) / 2);
+  }
+}
+
+/* The map needs the same `--overlay-clear-bottom` safety net (this file's own doc comment,
+   above) at a *wider* breakpoint than the sphere's: locked to ~2.05:1, the map's own box grows in
+   *width* right along with whatever height the real vertical gap allows, so for a given height it
+   reaches roughly twice as far to each side as the sphere's square box does — browser-verified
+   overlap with the legend as wide as ~1100px (900x900, 1024x768 and 844x390 among the checked
+   combinations; 844x390 is one of this feature's own required viewports and does *not* clear the
+   stack unaided, unlike the sphere at the same size), clear again by 1150px. `1150px` is chosen
+   from that measured crossover, not derived in closed form — an exact width threshold would need
+   the map's own current height too (itself gap-dependent), which a plain `max-width` media query
+   can't express; this is real coverage for this feature's own required viewport matrix and every
+   more-landscape shape a real device is likely to present, not a proof for every aspect ratio. */
+@media (max-width: 1150px) {
+  .orbExpanded[data-map-mode='true'] {
+    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
+    --map-height: max(
+      160px,
+      min(calc(96vw / 2.05), 94vh, calc(var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top)), calc(1800px / 2.05))
+    );
+
+    /* Re-derived from the (possibly now smaller) `--map-height` above, not left at the base
+       rule's own independent formula — `width`/`height` must stay in the same ~2.05 aspect this
+       whole feature depends on (this file's earlier doc comment on the map-mode rule), and only
+       `--map-height` is guaranteed to reflect the overlay clamp here. */
+    width: calc(var(--map-height) * 2.05);
+    margin-top: calc(var(--usable-top) + (var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--map-height)) / 2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .backdrop {
     animation: none;
@@ -198,7 +555,95 @@
   .halo,
   .expandButton,
   .closeButton,
-  .poleLabel {
+  .poleLabel,
+  .viewModeButton,
+  .legendToggleButton,
+  /* Matches `[data-animate-resize='true']`'s own specificity (0,2,0) — a bare `.orbExpanded`
+     here would lose to that more specific rule regardless of source order. */
+  .orbExpanded[data-animate-resize='true'] {
     transition: none;
   }
+}
+
+/* The population-density colour key (DensityRampKey.tsx), under the "Human civilisation" toggle's
+   own hint. Deliberately small: it is a scale for one overlay, not a second legend panel. The
+   tick row is positioned rather than flex-spaced because the ticks sit at the ramp's own
+   log positions, which are not evenly spread. */
+.rampKey {
+  position: relative;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rampBar {
+  height: 7px;
+  border-radius: 3px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.rampTicks {
+  position: relative;
+  height: 11px;
+}
+
+.rampTick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8px;
+  line-height: 11px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}
+
+.rampUnit {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+/* The shared globe tooltip (GlobeTooltip.tsx), drawn through drei's `Html` at the hovered
+   target's own 3D position so it tracks the globe as it rotates and unfolds. Offset up and right
+   of the anchor so the dot or arc under the pointer stays visible, and `pointer-events: none`
+   throughout: it must never become a hover target of its own, which would make it flicker as the
+   pointer entered it. */
+.tooltip {
+  pointer-events: none;
+  transform: translate(12px, -50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 7px 9px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 8px;
+  background: rgba(3, 4, 6, 0.86);
+  backdrop-filter: blur(3px);
+}
+
+.tooltipTitle {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.tooltipDate {
+  margin: 2px 0 0;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  color: var(--hud-accent, #e8b06a);
+}
+
+.tooltipDescription {
+  margin: 4px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

@@ -175,6 +175,11 @@ describe('anchorUv', () => {
     const wrappedDelta = Math.min(rawDelta, 1 - rawDelta)
     expect(wrappedDelta).toBeLessThan(0.02)
   })
+
+  it('places positive (east) longitude at u > 0.5, matching GLOBE_VERTEX_SHADER\'s own vUv varying', () => {
+    expect(anchorUv({ lat: 0, lon: 90 }).u).toBeGreaterThan(0.5)
+    expect(anchorUv({ lat: 0, lon: -90 }).u).toBeLessThan(0.5)
+  })
 })
 
 describe('giantImpactFlash', () => {

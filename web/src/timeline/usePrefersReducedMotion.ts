@@ -3,30 +3,14 @@
 /** Shared by every UI-chrome animation in this package (the symlog/linear toggle, eased
  *  window changes) so `prefers-reduced-motion: reduce` is honoured consistently everywhere
  *  rather than per-component. `t` itself never animates regardless — this only ever gates
- *  chrome, per the package's animation rule. */
+ *  chrome, per the package's animation rule.
+ *
+ *  A thin re-export of `@/lib/useReducedMotion`: this package's own
+ *  copy of the `matchMedia` listener was one of three near-identical implementations
+ *  (`globe/useReducedMotion.ts`, `scene/useReducedMotion.ts` were the other two, both now
+ *  deleted in favour of importing `@/lib/useReducedMotion` directly). Kept under this file's own
+ *  name, rather than switched to a bare re-export from every call site, since `timeline/
+ *  index.ts` already publishes `usePrefersReducedMotion` as this package's own public API and
+ *  `events/components/EventFeed.tsx` imports it under that name across the package boundary. */
 
-import { useEffect, useState } from 'react'
-
-const QUERY = '(prefers-reduced-motion: reduce)'
-
-/** Feature-detects `matchMedia` (absent in some test environments) rather than assuming a
- *  browser DOM, so this hook degrades to "motion allowed" instead of throwing. */
-function readsPrefersReducedMotion(): boolean {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-  return window.matchMedia(QUERY).matches
-}
-
-export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(readsPrefersReducedMotion)
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
-    const mql = window.matchMedia(QUERY)
-    const onChange = (): void => setReduced(mql.matches)
-    onChange()
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-
-  return reduced
-}
+export { useReducedMotion as usePrefersReducedMotion } from '@/lib/useReducedMotion'

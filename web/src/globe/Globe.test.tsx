@@ -18,7 +18,12 @@ afterEach(() => {
 const rasterLayers: GlobeRasterLayers = {
   paleodem: { id: 'paleodem', frames: [{ t: 0, ref: 'paleodem/000.png' }] },
   neoproterozoic: null,
+  basemapT0: null,
+  basemapT1: null,
+  populationDensity: null,
 }
+
+const EMPTY_FEED_IDS: ReadonlySet<string> = new Set()
 
 function renderGlobe(overrides: Partial<GlobeProps> = {}) {
   const onToggleExpand = vi.fn()
@@ -33,6 +38,11 @@ function renderGlobe(overrides: Partial<GlobeProps> = {}) {
       expanded={false}
       onToggleExpand={onToggleExpand}
       onCaptionChange={onCaptionChange}
+      cities={null}
+      sceneLocation={null}
+      playbackBaseRate={0.02}
+      feedEventIds={EMPTY_FEED_IDS}
+      hoveredFeedEventId={null}
       {...overrides}
     />,
   )

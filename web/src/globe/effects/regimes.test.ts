@@ -16,6 +16,18 @@ describe('regimeWeightsAt', () => {
     expect(weights).toEqual({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })
   })
 
+  // Regression guard for a real investigation: a faint procedural pattern spotted on the present
+  // (t=0) globe over open ocean was traced to Natural Earth II's own baked-in bathymetric shaded
+  // relief (visible in the raw source texture itself, `sources/basemap`) — not a leaking regime
+  // weight — but `unknownGeographyColor`'s own uv-noise look (`shaders.ts`) would produce exactly
+  // that kind of pale, wavy, contour-like pattern if `uRegimeWeights.w` were ever even slightly
+  // nonzero at the present, so this pins the youngest regime's own edge at `t=0` exactly, not
+  // just "well after" some arbitrary later point.
+  it('is exactly zero at the present (t=0), where the youngest regime (unknown-geography) has long since faded', () => {
+    const weights = regimeWeightsAt(REGIME_EVENTS, 0)
+    expect(weights).toEqual({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })
+  })
+
   it('is pure in t — the same input twice gives the same result', () => {
     const a = regimeWeightsAt(REGIME_EVENTS, 3.1e9)
     const b = regimeWeightsAt(REGIME_EVENTS, 3.1e9)

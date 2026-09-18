@@ -220,4 +220,65 @@ describe('<EventFeed>', () => {
       expect(item.querySelector<HTMLElement>(`.${styles.body}`)?.style.transform).toBe('')
     })
   })
+
+  describe('onVisibleEventsChange', () => {
+    it('fires with the visible event ids, and again only once the set itself changes', () => {
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const b = event('b', { tMin: 510, tMax: 510 })
+      const onVisibleEventsChange = vi.fn()
+      const { rerender } = render(
+        <EventFeed t={500} scale={SCALE} events={[a, b]} onEventActivate={vi.fn()} onVisibleEventsChange={onVisibleEventsChange} />,
+      )
+      // Mounting settles the measured size from unmeasured (nothing visible) to its real value
+      // (`useElementSize`'s own doc comment), so the callback fires once per settled set — the
+      // final one is what matters here, not the exact count a two-phase mount produces.
+      expect(onVisibleEventsChange).toHaveBeenLastCalledWith(['a', 'b'])
+      const callsAfterMount = onVisibleEventsChange.mock.calls.length
+
+      // t moves, but both events are still behind the playhead — the visible set is unchanged.
+      rerender(
+        <EventFeed t={501} scale={SCALE} events={[a, b]} onEventActivate={vi.fn()} onVisibleEventsChange={onVisibleEventsChange} />,
+      )
+      expect(onVisibleEventsChange).toHaveBeenCalledTimes(callsAfterMount)
+
+      // t moves past a's own placement: it drops out of the visible set entirely.
+      rerender(
+        <EventFeed t={506} scale={SCALE} events={[a, b]} onEventActivate={vi.fn()} onVisibleEventsChange={onVisibleEventsChange} />,
+      )
+      expect(onVisibleEventsChange).toHaveBeenCalledTimes(callsAfterMount + 1)
+      expect(onVisibleEventsChange).toHaveBeenLastCalledWith(['b'])
+    })
+  })
+
+  describe('onCardHoverChange', () => {
+    it('fires the event id on pointer enter and null on pointer leave', () => {
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const onCardHoverChange = vi.fn()
+      const { getByTestId } = render(
+        <EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} onCardHoverChange={onCardHoverChange} />,
+      )
+      const item = getByTestId('event-feed-item-a')
+
+      fireEvent.pointerEnter(item)
+      expect(onCardHoverChange).toHaveBeenLastCalledWith('a')
+
+      fireEvent.pointerLeave(item)
+      expect(onCardHoverChange).toHaveBeenLastCalledWith(null)
+    })
+
+    it('fires the event id on focus and null on blur, for a keyboard user', () => {
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const onCardHoverChange = vi.fn()
+      const { getByTestId } = render(
+        <EventFeed t={500} scale={SCALE} events={[a]} onEventActivate={vi.fn()} onCardHoverChange={onCardHoverChange} />,
+      )
+      const item = getByTestId('event-feed-item-a')
+
+      fireEvent.focus(item)
+      expect(onCardHoverChange).toHaveBeenLastCalledWith('a')
+
+      fireEvent.blur(item)
+      expect(onCardHoverChange).toHaveBeenLastCalledWith(null)
+    })
+  })
 })

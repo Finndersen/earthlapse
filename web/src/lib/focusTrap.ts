@@ -7,9 +7,9 @@
  * back. Returns a `Tab`-only `onKeyDown` handler that cycles focus within the overlay's own
  * focusable elements instead of letting it leak to the rest of the page.
  *
- * `Panel` and `ClusterPopover` used to each carry a byte-for-byte copy of this (a re-review
- * finding, 2026-09-15) — two bespoke focus traps where the brief asked for one shared primitive.
- * It lives here, in `lib`, rather than either package importing the other's component, the same
+ * `Panel` and `ClusterPopover` used to each carry a byte-for-byte copy of this — two bespoke focus
+ * traps where one shared primitive was wanted. It lives here, in `lib`, rather than either
+ * package importing the other's component, the same
  * reason `resolveAssetUrl`/`usePresentedMix`/`supportsWebGL` do (see those files' own doc
  * comments): `shell` and `timeline` stay decoupled from each other, and a third future overlay
  * gets this for free too.

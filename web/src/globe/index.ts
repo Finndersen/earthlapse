@@ -37,6 +37,20 @@
  *   whatever size its parent gives it (the corner-widget case, DESIGN §8).
  * - `onToggleExpand` — called when the user clicks the expand/collapse button; the caller
  *   owns the `expanded` boolean and flips it.
+ * - `cities` — the `cities` `FeatureSet`'s features (ADR-035), `null` when unpublished.
+ * - `sceneLocation` — the current scene's `location` (ADR-034), `null` for a scene with no
+ *   place. Only its `marker` is ever plotted, never `presentDay`.
+ * - `playbackBaseRate` — `Playback.baseRate`. The human layer derives its arrival timing from
+ *   the timeline's own rate model so an arc is legible rather than a flicker at 1x.
+ * - `feedEventIds` / `hoveredFeedEventId` — which event cards are showing and which is hovered,
+ *   so an arrival's arc and marker pulse in sympathy with its own card.
+ *
+ * 4. **The human-civilisation layer** (ADR-031 amendment / ADR-032 / ADR-035), under one legend
+ *    toggle: arrival arcs that are drawn only while their migration is happening and then fade
+ *    (`arcs.ts`), the "inhabited" markers first settlement leaves at its destination and which
+ *    themselves fade out once the arrival has played (not persisted to the present), the HYDE
+ *    population-density overlay (`density.ts`, a shader term on the sphere itself) and major-city
+ *    markers (`cities.ts`), with one shared tooltip (`GlobeTooltip.tsx`) across all of them.
  *
  * Textures are loaded on demand into a bounded LRU cache, with a few frames preloaded in the
  * direction `t` is travelling (ADR-013), including across `SEAM_BAND`; the last bound pair
@@ -45,7 +59,9 @@
  * `globeBlendAt`/`globePreloadUrls` (single-source) and their `globeMulti*` generalisations,
  * `globeUniforms`, are exported separately because they're pure and worth reusing or testing
  * without a WebGL context. Likewise `./effects`'s own exports (`resolveGlobeEffects` etc.) and
- * `./poles`'s (the pole orientation cue's visibility test — see its own doc comment).
+ * `./poles`'s (the pole orientation cue's visibility test — see its own doc comment). The human
+ * layer's own pure cores (`arcs.ts`, `cities.ts`, `density.ts`, `sceneLocation.ts`) follow the
+ * same rule and are unit-tested without a canvas.
  */
 
 export {
@@ -60,9 +76,21 @@ export {
   SEAM_BAND,
   travelDirection,
 } from './blend'
-export type { GlobeBlend, GlobeRasterLayers, GlobeUniformValues, PreloadWindow, TravelDirection } from './blend'
 export * from './effects'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
 export { isPoleVisible, poleDirection, POLE_VISIBILITY_MARGIN } from './poles'
 export type { PoleId } from './poles'
+// Sphere<->Equal Earth map projection (docs/GLOBE.md's ADR-033): exported for future
+// lat/lon-placed overlay work (arcs, points) drawn on top of both the globe and the map — see
+// this module's own doc comment.
+export {
+  EQUAL_EARTH_HALF_HEIGHT,
+  EQUAL_EARTH_HALF_WIDTH,
+  lonLatToMap,
+  lonLatToSphere,
+  PROJECTION_GLSL,
+  splitAtAntimeridian,
+  unfoldedPosition,
+} from './projection'
+export type { GlobeBlend, GlobeRasterLayers, GlobeUniformValues, PreloadWindow, TravelDirection } from './blend'

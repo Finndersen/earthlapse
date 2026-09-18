@@ -140,19 +140,23 @@ export function impactWinterAnchor(events: readonly TimelineEvent[]): GlobeEffec
   return null
 }
 
-/** A lat/lon anchor's position in the globe shader's own UV space, inverting the mapping
- *  documented on `GLOBE_FRAGMENT_SHADER` in `shaders.ts` (`u = 0.5 − lonRad/2π`,
- *  `v = 0.5 − latRad/π`): this is the same equirectangular unwrap the PaleoDEM textures are
- *  authored in, so a present-day anchor lands over the right stretch of coastline on the 0 Ma
- *  frame. `u` wraps at the antimeridian; `v` is clamped rather than wrapped (there's no "other
- *  side" of a pole to wrap to). */
+/** A lat/lon anchor's position in the globe shader's own UV space — `u = 0.5 + lon/360`,
+ *  `v = 0.5 - lat/180`, matching `GLOBE_VERTEX_SHADER`'s own `vUv` varying (`shaders.ts`) exactly
+ *  (both compute uv straight from lon/lat, not via the sphere position/atan2): this is the same
+ *  equirectangular unwrap the PaleoDEM textures are authored in, so a present-day anchor lands
+ *  over the right stretch of coastline on the 0 Ma frame. `u` wraps at the antimeridian; `v` is
+ *  clamped rather than wrapped (there's no "other side" of a pole to wrap to).
+ *
+ *  Was `u = 0.5 - lon/360` before the globe mesh's own winding/chirality fix (`projection.ts`'s
+ *  `lonLatToSphere` doc comment) — that sign placed the Chicxulub impact flash at the anchor's
+ *  mirror longitude, a bug masked by the sphere itself also rendering mirrored at the time. */
 export interface AnchorUv {
   u: number
   v: number
 }
 
 export function anchorUv(anchor: GlobeEffectAnchor): AnchorUv {
-  const u = 0.5 - anchor.lon / 360
+  const u = 0.5 + anchor.lon / 360
   const v = 0.5 - anchor.lat / 180
   return { u: ((u % 1) + 1) % 1, v: clamp01(v) }
 }

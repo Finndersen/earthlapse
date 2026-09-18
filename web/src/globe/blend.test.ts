@@ -4,12 +4,17 @@ import type { RasterData } from '@/data/curated'
 import type { TimelineEvent } from '@/types/layer'
 
 import {
+  BASEMAP_CROSSFADE_BAND,
+  BASEMAP_GRADE_GAMMA,
+  BASEMAP_GRADE_SCALE,
+  basemapStrengthAt,
   globeBlendAt,
   globeMultiBlendAt,
   globeMultiCaptionFor,
   globeMultiPreloadUrls,
   globePreloadUrls,
   globeUniforms,
+  gradeBasemapColor,
   NO_RECONSTRUCTION_CAPTION,
   regimeEventsWithRasterFallback,
   SEAM_BAND,
@@ -152,8 +157,14 @@ const neoproterozoicFrames: RasterData = {
     .map((t) => ({ t, ref: `textures/plates_neoproterozoic/${t / 1e6}Ma.webp` })),
 }
 
-const layers: GlobeRasterLayers = { paleodem: frames, neoproterozoic: neoproterozoicFrames }
-const layersUnusable: GlobeRasterLayers = { paleodem: frames, neoproterozoic: null }
+const layers: GlobeRasterLayers = {
+  paleodem: frames,
+  neoproterozoic: neoproterozoicFrames,
+  basemapT0: null,
+  basemapT1: null,
+  populationDensity: null,
+}
+const layersUnusable: GlobeRasterLayers = { ...layers, neoproterozoic: null }
 
 describe('globeMultiBlendAt', () => {
   it('delegates to the paleodem source below the seam band', () => {
@@ -266,3 +277,86 @@ describe('regimeEventsWithRasterFallback', () => {
     })
   })
 })
+
+// --------------------------------------------------------------- human-era base (ADR-030)
+
+describe('basemapStrengthAt', () => {
+  it('is 0 at and above the crossfade band’s far edge — "before 400 ka behaviour unchanged"', () => {
+    const [, farEdge] = BASEMAP_CROSSFADE_BAND
+    expect(basemapStrengthAt(farEdge)).toBe(0)
+    expect(basemapStrengthAt(farEdge + 1)).toBe(0)
+    expect(basemapStrengthAt(100e6)).toBe(0)
+  })
+
+  it('is 1 at and below the crossfade band’s near edge — pure basemap', () => {
+    const [nearEdge] = BASEMAP_CROSSFADE_BAND
+    expect(basemapStrengthAt(nearEdge)).toBe(1)
+    expect(basemapStrengthAt(0)).toBe(1)
+  })
+
+  it('ramps linearly across the band', () => {
+    const [nearEdge, farEdge] = BASEMAP_CROSSFADE_BAND
+    expect(basemapStrengthAt((nearEdge + farEdge) / 2)).toBeCloseTo(0.5)
+  })
+})
+
+// Pinned against the real, browser-measured basemap/PaleoDEM samples (ADR-030 amendment,
+// gradeBasemapColor's own doc comment) — a rendered-vs-source pixel check first ruled out a
+// colour-space bug (the render already matches the source file), so the fix is this deliberate
+// tone-match grade, not a decode/encode correction.
+describe('gradeBasemapColor', () => {
+  it('darkens a pale ocean blue close to PaleoDEM’s own dark, saturated ocean — not just slightly dimmer', () => {
+    const paleOcean: readonly [number, number, number] = [99 / 255, 152 / 255, 190 / 255]
+    const [r, g, b] = gradeBasemapColor(paleOcean)
+    // PaleoDEM’s own measured ocean sample was (12, 42, 112)/255 — this doesn’t have to land on
+    // that exact stylised colour, but it must read as a comparably dark, blue-dominant ocean, not
+    // the original pale sky-blue.
+    expect(r).toBeLessThan(paleOcean[0] * 0.5)
+    expect(b).toBeGreaterThan(r)
+    expect(b).toBeGreaterThan(g)
+    expect(b).toBeLessThan(paleOcean[2] * 0.8)
+  })
+
+  it('pulls a blown-out highlight (bright sand/cloud) well clear of display white', () => {
+    const blownSand: readonly [number, number, number] = [245 / 255, 240 / 255, 215 / 255]
+    const [r, g, b] = gradeBasemapColor(blownSand)
+    expect(Math.max(r, g, b)).toBeLessThan(0.9)
+  })
+
+  it('is 0 at 0 and bounded by BASEMAP_GRADE_SCALE at 1 (never reaches display white)', () => {
+    expect(gradeBasemapColor([0, 0, 0])).toEqual([0, 0, 0])
+    const [r, g, b] = gradeBasemapColor([1, 1, 1])
+    expect(r).toBeCloseTo(BASEMAP_GRADE_SCALE, 6)
+    expect(g).toBeCloseTo(BASEMAP_GRADE_SCALE, 6)
+    expect(b).toBeCloseTo(BASEMAP_GRADE_SCALE, 6)
+  })
+
+  it('leaves true grey unaffected by the saturation term', () => {
+    const [r, g, b] = gradeBasemapColor([0.5, 0.5, 0.5])
+    expect(r).toBeCloseTo(g, 10)
+    expect(g).toBeCloseTo(b, 10)
+  })
+
+  it('boosts saturation — the graded colour is further from its own luminance than a plain gamma/scale alone would be', () => {
+    const input: readonly [number, number, number] = [0.6, 0.3, 0.2]
+    const [r, g, b] = gradeBasemapColor(input)
+    const ungradedR = BASEMAP_GRADE_SCALE * 0.6 ** BASEMAP_GRADE_GAMMA
+    const ungradedG = BASEMAP_GRADE_SCALE * 0.3 ** BASEMAP_GRADE_GAMMA
+    const ungradedB = BASEMAP_GRADE_SCALE * 0.2 ** BASEMAP_GRADE_GAMMA
+    const spreadBefore = Math.max(ungradedR, ungradedG, ungradedB) - Math.min(ungradedR, ungradedG, ungradedB)
+    const spreadAfter = Math.max(r, g, b) - Math.min(r, g, b)
+    expect(spreadAfter).toBeGreaterThan(spreadBefore)
+  })
+
+  it('clamps out-of-range input and never produces NaN or a negative/over-1 channel', () => {
+    for (const input of [[-0.5, 2, 0.5], [1.5, -1, 0.5]] as const) {
+      const [r, g, b] = gradeBasemapColor(input)
+      for (const v of [r, g, b]) {
+        expect(Number.isFinite(v)).toBe(true)
+        expect(v).toBeGreaterThanOrEqual(0)
+        expect(v).toBeLessThanOrEqual(1)
+      }
+    }
+  })
+})
+

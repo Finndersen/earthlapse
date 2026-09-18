@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest'
 import {
   type EventsData,
   parseEventsData,
+  parseFeatureSetData,
   parseRasterData,
   parseSeriesData,
   parseTimelineEvent,
@@ -398,6 +399,49 @@ describe('parseRasterData', () => {
   })
 })
 
+describe('parseRasterData encoding (ADR-031 amendment)', () => {
+  it('parses with no encoding at all — additive, colour-only rasters are unaffected', () => {
+    const parsed = parseRasterData({ id: 'paleodem', frames: [{ t: 0, ref: 'a.png' }] })
+    expect(parsed.encoding).toBeUndefined()
+  })
+
+  it('carries a published encoding through', () => {
+    const parsed = parseRasterData({
+      id: 'hyde_population_density',
+      frames: [{ t: 0, ref: 'a.png' }],
+      encoding: { channel: 'r', unit: 'people/km2', dMax: 15000 },
+    })
+    expect(parsed.encoding).toEqual({ channel: 'r', unit: 'people/km2', dMax: 15000 })
+  })
+
+  it('rejects an unknown channel', () => {
+    expect(() =>
+      parseRasterData({
+        id: 'r',
+        frames: [{ t: 0, ref: 'a.png' }],
+        encoding: { channel: 'alpha', unit: 'people/km2', dMax: 15000 },
+      }),
+    ).toThrow(/channel/)
+  })
+
+  it('rejects a non-positive dMax', () => {
+    expect(() =>
+      parseRasterData({
+        id: 'r',
+        frames: [{ t: 0, ref: 'a.png' }],
+        encoding: { channel: 'r', unit: 'people/km2', dMax: 0 },
+      }),
+    ).toThrow(/dMax/)
+    expect(() =>
+      parseRasterData({
+        id: 'r',
+        frames: [{ t: 0, ref: 'a.png' }],
+        encoding: { channel: 'r', unit: 'people/km2', dMax: -5 },
+      }),
+    ).toThrow(/dMax/)
+  })
+})
+
 // --------------------------------------------------------------------------------- Tree
 
 describe('sampleTree', () => {
@@ -531,8 +575,9 @@ describe('parseTimelineEvent', () => {
       },
       'x',
     )
-    expect(event.effect?.anchor).toBeUndefined()
-    expect(event.effect?.windows).toHaveLength(2)
+    if (event.effect?.kind !== 'ice-shell') throw new Error('expected a point globe effect')
+    expect(event.effect.anchor).toBeUndefined()
+    expect(event.effect.windows).toHaveLength(2)
   })
 
   it('rejects an unknown effect kind', () => {
@@ -570,6 +615,192 @@ describe('parseTimelineEvent', () => {
       ),
     ).toThrow(/empty windows/)
   })
+
+  // ------------------------------------------------------------- arrival effect (ADR-032)
+
+  it('parses an arrival effect with origin, destination, established and arrivalKind', () => {
+    const event = parseTimelineEvent(
+      {
+        id: 'levant-early-dispersal',
+        label: 'Levant early dispersal',
+        tMin: 177000,
+        tMax: 194000,
+        importance: 0.5,
+        description: 'd',
+        citation: 'c',
+        effect: {
+          kind: 'arrival',
+          arrivalKind: 'peopling',
+          origin: { lat: 2.0, lon: 20.0 },
+          destination: { lat: 31.5, lon: 35.0 },
+          established: 185500,
+          windows: [{ tMin: 0, tMax: 194000 }],
+        },
+      },
+      'x',
+    )
+    expect(event.effect).toEqual({
+      kind: 'arrival',
+      arrivalKind: 'peopling',
+      origin: { lat: 2.0, lon: 20.0 },
+      destination: { lat: 31.5, lon: 35.0 },
+      established: 185500,
+      windows: [{ tMin: 0, tMax: 194000 }],
+    })
+  })
+
+  it('rejects an arrival effect missing origin or destination', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 1,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            arrivalKind: 'migration',
+            destination: { lat: 0, lon: 0 },
+            established: 0,
+            windows: [{ tMin: 0, tMax: 1 }],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/origin/)
+  })
+
+  it('rejects an arrival effect whose windows never reach the present', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 10,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            arrivalKind: 'migration',
+            origin: { lat: 0, lon: 0 },
+            destination: { lat: 1, lon: 1 },
+            established: 5,
+            windows: [{ tMin: 1, tMax: 10 }],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/present/)
+  })
+
+  it('rejects an arrival effect whose established date falls outside every window', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 10,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            arrivalKind: 'migration',
+            origin: { lat: 0, lon: 0 },
+            destination: { lat: 1, lon: 1 },
+            established: 500,
+            windows: [{ tMin: 0, tMax: 10 }],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/established/)
+  })
+
+  it('rejects an arrival effect with more than one window reaching the present (exactly one is required)', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 10,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            arrivalKind: 'migration',
+            origin: { lat: 0, lon: 0 },
+            destination: { lat: 1, lon: 1 },
+            established: 5,
+            windows: [
+              { tMin: 0, tMax: 10 },
+              { tMin: 0, tMax: 20 },
+            ],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/exactly one window/)
+  })
+
+  // ------------------------------------------------------------- arrivalKind (ADR-032 amendment)
+
+  it('rejects an arrival effect with a missing arrivalKind', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 1,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            origin: { lat: 0, lon: 0 },
+            destination: { lat: 1, lon: 1 },
+            established: 0,
+            windows: [{ tMin: 0, tMax: 1 }],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/arrivalKind/)
+  })
+
+  it('rejects an arrival effect with an unknown arrivalKind', () => {
+    expect(() =>
+      parseTimelineEvent(
+        {
+          id: 'x',
+          label: 'X',
+          tMin: 0,
+          tMax: 1,
+          importance: 0.5,
+          description: 'd',
+          citation: 'c',
+          effect: {
+            kind: 'arrival',
+            arrivalKind: 'colonisation',
+            origin: { lat: 0, lon: 0 },
+            destination: { lat: 1, lon: 1 },
+            established: 0,
+            windows: [{ tMin: 0, tMax: 1 }],
+          },
+        },
+        'x',
+      ),
+    ).toThrow(/arrivalKind/)
+  })
 })
 
 describe('parseEventsData', () => {
@@ -597,5 +828,94 @@ describe('sampleEvents', () => {
 
   it('never returns null, even outside every event — EventsData declares no domain of its own', () => {
     expect(sampleEvents(regimesData, 0).events).toEqual([])
+  })
+})
+
+// ------------------------------------------------------------------------- FeatureSet (ADR-035)
+
+function validCity(overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+  return {
+    id: 'uruk-iraq',
+    name: 'Uruk',
+    country: 'Iraq',
+    lat: 31.32,
+    lon: 45.64,
+    certainty: 'high',
+    estimates: [
+      { t: 6700, population: 14_000 },
+      { t: 5700, population: 40_000 },
+    ],
+    ...overrides,
+  }
+}
+
+describe('parseFeatureSetData', () => {
+  it('parses a FeatureSet, sorting features by id and estimates by t', () => {
+    const data = parseFeatureSetData({
+      id: 'cities',
+      features: [validCity({ id: 'zanzibar-tanzania', name: 'Zanzibar' }), validCity()],
+    })
+    expect(data.id).toBe('cities')
+    expect(data.features.map((f) => f.id)).toEqual(['uruk-iraq', 'zanzibar-tanzania'])
+    expect(data.features[0]?.estimates.map((e) => e.t)).toEqual([5700, 6700])
+  })
+
+  it('rejects an empty FeatureSetData', () => {
+    expect(() => parseFeatureSetData({ id: 'cities', features: [] })).toThrow(/empty/)
+  })
+
+  it('rejects a duplicate feature id', () => {
+    expect(() =>
+      parseFeatureSetData({ id: 'cities', features: [validCity(), validCity()] }),
+    ).toThrow(/duplicate feature id/)
+  })
+
+  it('rejects a feature with no estimates', () => {
+    expect(() =>
+      parseFeatureSetData({ id: 'cities', features: [validCity({ estimates: [] })] }),
+    ).toThrow(/empty estimates/)
+  })
+
+  it('rejects a duplicate estimate t within one feature', () => {
+    expect(() =>
+      parseFeatureSetData({
+        id: 'cities',
+        features: [
+          validCity({
+            estimates: [
+              { t: 100, population: 1 },
+              { t: 100, population: 2 },
+            ],
+          }),
+        ],
+      }),
+    ).toThrow(/duplicate estimate t/)
+  })
+
+  it('rejects an out-of-range latitude', () => {
+    expect(() => parseFeatureSetData({ id: 'cities', features: [validCity({ lat: 91 })] })).toThrow(
+      /lat/,
+    )
+  })
+
+  it('rejects an out-of-range longitude', () => {
+    expect(() => parseFeatureSetData({ id: 'cities', features: [validCity({ lon: 181 })] })).toThrow(
+      /lon/,
+    )
+  })
+
+  it('rejects an unknown certainty value', () => {
+    expect(() =>
+      parseFeatureSetData({ id: 'cities', features: [validCity({ certainty: 'very sure' })] }),
+    ).toThrow(/FeatureCertainty/)
+  })
+
+  it('rejects a non-positive population', () => {
+    expect(() =>
+      parseFeatureSetData({
+        id: 'cities',
+        features: [validCity({ estimates: [{ t: 0, population: 0 }] })],
+      }),
+    ).toThrow()
   })
 })

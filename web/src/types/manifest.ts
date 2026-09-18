@@ -47,6 +47,25 @@ export interface SceneSound {
   gain: number
 }
 
+export interface SceneCoordinates {
+  lat: number
+  lon: number
+}
+
+/**
+ * A scene's real-world place (ADR-034). `presentDay` is the curated present-day coordinates,
+ * published alongside the reconstruction so it stays auditable. `marker` is what the globe
+ * actually plots: identical to `presentDay` inside the human-era basemap domain, a plate-
+ * reconstructed paleo position for an older scene, and `null` when no plate model covers that
+ * scene's age. The globe must show **no marker at all** for a `null` marker — never falling
+ * back to `presentDay`, which would place an ancient scene on a modern coastline.
+ */
+export interface SceneLocation {
+  label: string
+  presentDay: SceneCoordinates
+  marker: SceneCoordinates | null
+}
+
 export interface Scene {
   id: string
   t: GeoTime
@@ -70,6 +89,9 @@ export interface Scene {
   /** The scene's optional associated ambience stem (ADR-023). Additive: absent on any manifest
    *  published before this field existed, and on any scene with no associated sound. */
   sound?: SceneSound
+  /** The scene's real-world place, if it depicts one (ADR-034). Additive: absent on any manifest
+   *  published before this field existed, and on any scene with no specific location. */
+  location?: SceneLocation
   /** Digest of the approved asset. Present means pinned (ADR-005). */
   pinned?: string
   width: number
@@ -92,7 +114,8 @@ export interface Chapter {
 
 // --------------------------------------------------------------------------- layers
 
-export type LayerDataKind = 'scalar' | 'events' | 'raster' | 'node'
+/** ADR-035 added `'features'` (a `FeatureSet` layer file, e.g. `cities`). */
+export type LayerDataKind = 'scalar' | 'events' | 'raster' | 'node' | 'features'
 
 export interface LayerManifest {
   id: string

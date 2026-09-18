@@ -11,13 +11,18 @@
  */
 
 import type {
+  ArrivalKind,
   EventKind,
   EventsValue,
   EventTag,
+  FeatureCertainty,
+  FeatureData,
   GeoTime,
   GlobeEffect,
   Interpolation,
   NodeValue,
+  PointGlobeEffect,
+  PopulationEstimateData,
   PortraitPlateType,
   RasterValue,
   ScalarValue,
@@ -59,9 +64,43 @@ export interface RasterFrameData {
   ref: string
 }
 
+/** Which single byte channel of a raster's texture carries the quantity. Mirrors
+ *  `pipeline.manifest.RasterEncoding.channel`. */
+export type RasterChannel = 'r' | 'g' | 'b'
+
+/**
+ * How a `RasterData`'s texture bytes decode to a real physical quantity (ADR-031 amendment).
+ * Additive: absent for a colour-only raster (`paleodem`, the two `basemap` tiers,
+ * `plates_neoproterozoic`) and on every layer file published before this field existed. Mirrors
+ * `pipeline.manifest.RasterEncoding`; `decodeLogDensity` below is the TS twin of
+ * `pipeline.density_encoding.decode_log_density` and must produce the same numbers from the same
+ * published `dMax`.
+ */
+export interface RasterEncoding {
+  channel: RasterChannel
+  unit: string
+  /** The value that encodes to the top of the 8-bit range. Strictly positive. */
+  dMax: number
+}
+
 export interface RasterData {
   id: string
   frames: RasterFrameData[]
+  /** Additive (ADR-031 amendment): absent on a colour-only raster. */
+  encoding?: RasterEncoding
+}
+
+/**
+ * The inverse of `pipeline.density_encoding.encode_log_density`, for one normalised sample:
+ * `unit` is the texel's own byte divided by 255 (0..1), `dMax` the published ceiling. Written
+ * against the normalised sample rather than the raw byte because that is what both callers
+ * actually hold — a GLSL `texture2D` read, and a canvas `ImageData` byte already divided down —
+ * and it keeps the formula identical on both sides.
+ */
+export function decodeLogDensity(unit: number, dMax: number): number {
+  if (!(dMax > 0)) throw new Error(`decodeLogDensity: dMax must be > 0, got ${dMax}`)
+  const logMax = Math.log10(1 + dMax)
+  return Math.pow(10, Math.min(1, Math.max(0, unit)) * logMax) - 1
 }
 
 export interface TreeNodeData {
@@ -89,6 +128,15 @@ export interface TreeData {
 export interface EventsData {
   id: string
   events: TimelineEvent[]
+}
+
+/**
+ * A `FeatureSet` published as its own layer file (ADR-035) — e.g. `cities`. Mirrors
+ * `pipeline.manifest.FeatureSetData`.
+ */
+export interface FeatureSetData {
+  id: string
+  features: FeatureData[]
 }
 
 /** Mirrors `PortraitExposureData` in pipeline/manifest.py: how publish normalised a plate's
@@ -142,7 +190,7 @@ const EVENT_TAGS: ReadonlySet<string> = new Set([
   'society',
   'science-technology',
 ])
-const GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([
+const POINT_GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([
   'impact-winter',
   'giant-impact',
   'flood-basalt',
@@ -152,6 +200,9 @@ const GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([
   'regime-archean',
   'regime-unknown-geography',
 ])
+const ARRIVAL_GLOBE_EFFECT_KIND = 'arrival'
+const ARRIVAL_KINDS: ReadonlySet<string> = new Set(['peopling', 'migration'])
+const GLOBE_EFFECT_KINDS: ReadonlySet<string> = new Set([...POINT_GLOBE_EFFECT_KINDS, ARRIVAL_GLOBE_EFFECT_KIND])
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v)
@@ -262,6 +313,23 @@ export function parseSeriesData(json: unknown): SeriesData {
   return data
 }
 
+const RASTER_CHANNELS: ReadonlySet<string> = new Set(['r', 'g', 'b'])
+
+/** Validates the additive `encoding` block (ADR-031 amendment), mirroring
+ *  `pipeline.manifest.RasterEncoding`'s own field constraints. */
+function parseRasterEncoding(v: unknown, path: string): RasterEncoding {
+  const r = expectRecord(v, path)
+  const channel = expectString(r.channel, `${path}.channel`)
+  if (!RASTER_CHANNELS.has(channel)) {
+    throw new Error(`${path}.channel: unknown RasterChannel "${channel}"`)
+  }
+  return {
+    channel: channel as RasterChannel,
+    unit: expectString(r.unit, `${path}.unit`),
+    dMax: expectPositiveNumber(r.dMax, `${path}.dMax`),
+  }
+}
+
 /** Validates and sorts ascending by `t`, mirroring `RasterSequence._sorted` in shapes.py. */
 export function parseRasterData(json: unknown): RasterData {
   const root = expectRecord(json, 'RasterData')
@@ -278,7 +346,11 @@ export function parseRasterData(json: unknown): RasterData {
     }
   })
   frames.sort((a, b) => a.t - b.t)
-  return { id, frames }
+  const data: RasterData = { id, frames }
+  if (root.encoding !== undefined && root.encoding !== null) {
+    data.encoding = parseRasterEncoding(root.encoding, `${id}.encoding`)
+  }
+  return data
 }
 
 /**
@@ -318,8 +390,31 @@ export function parseTreeData(json: unknown): TreeData {
   return tree
 }
 
-/** Validates the additive `effect` block on a `TimelineEvent` (docs/GLOBE.md §6). Returns
- *  `undefined` when the field is absent, mirroring every other optional field here. */
+function parseGlobeEffectAnchor(v: unknown, path: string): { lat: number; lon: number } {
+  const a = expectRecord(v, path)
+  return { lat: expectNumber(a.lat, `${path}.lat`), lon: expectNumber(a.lon, `${path}.lon`) }
+}
+
+function parseGlobeEffectWindows(v: unknown, path: string): { tMin: GeoTime; tMax: GeoTime }[] {
+  const rawWindows = expectArray(v, path)
+  if (rawWindows.length === 0) {
+    throw new Error(`${path}: empty windows`)
+  }
+  return rawWindows.map((raw, i) => {
+    const w = expectRecord(raw, `${path}[${i}]`)
+    return {
+      tMin: expectNumber(w.tMin, `${path}[${i}].tMin`),
+      tMax: expectNumber(w.tMax, `${path}[${i}].tMax`),
+    }
+  })
+}
+
+/** Validates the additive `effect` block on a `TimelineEvent` (docs/GLOBE.md §6, ADR-032).
+ *  Returns `undefined` when the field is absent, mirroring every other optional field here.
+ *  Dispatches on `kind`: `'arrival'` parses as `ArrivalGlobeEffect` (required origin/
+ *  destination, no optional anchor), every other kind as `PointGlobeEffect` — mirroring
+ *  `pipeline.shapes.AnyGlobeEffect`'s discriminated union exactly, so an `arrival` block
+ *  missing `origin`/`destination` fails loudly here too, not just on the pipeline side. */
 function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
   if (v === undefined || v === null) return undefined
   const root = expectRecord(v, path)
@@ -327,21 +422,42 @@ function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
   if (!GLOBE_EFFECT_KINDS.has(kind)) {
     throw new Error(`${path}.kind: unknown GlobeEffectKind "${kind}"`)
   }
-  const rawWindows = expectArray(root.windows, `${path}.windows`)
-  if (rawWindows.length === 0) {
-    throw new Error(`${path}: empty windows`)
-  }
-  const windows = rawWindows.map((raw, i) => {
-    const w = expectRecord(raw, `${path}.windows[${i}]`)
-    return {
-      tMin: expectNumber(w.tMin, `${path}.windows[${i}].tMin`),
-      tMax: expectNumber(w.tMax, `${path}.windows[${i}].tMax`),
+  const windows = parseGlobeEffectWindows(root.windows, `${path}.windows`)
+
+  if (kind === ARRIVAL_GLOBE_EFFECT_KIND) {
+    // Mirrors pipeline.shapes.ArrivalEffect: exactly one window reaches the present
+    // (tMin === 0), not merely "at least one" — a second, coincidentally-present-reaching
+    // window would be ambiguous about which one `arcs.ts`'s persistentWindow should use.
+    const presentWindows = windows.filter((w) => w.tMin === 0)
+    if (presentWindows.length !== 1) {
+      throw new Error(
+        `${path}: arrival effect must have exactly one window with tMin === 0 (present), found ${presentWindows.length}`,
+      )
     }
-  })
-  const effect: GlobeEffect = { kind: kind as GlobeEffect['kind'], windows }
+    const established = expectNumber(root.established, `${path}.established`)
+    if (!windows.some((w) => w.tMin <= established && established <= w.tMax)) {
+      throw new Error(`${path}.established: ${established} falls outside every window`)
+    }
+    // Required, never defaulted, mirroring `pipeline.shapes.ArrivalEffect` (ADR-032 amendment):
+    // it decides whether the destination keeps a persistent "inhabited" marker, so a default
+    // would silently mis-render the first arrival that omitted it.
+    const arrivalKind = expectString(root.arrivalKind, `${path}.arrivalKind`)
+    if (!ARRIVAL_KINDS.has(arrivalKind)) {
+      throw new Error(`${path}.arrivalKind: unknown ArrivalKind "${arrivalKind}"`)
+    }
+    return {
+      kind: 'arrival',
+      arrivalKind: arrivalKind as ArrivalKind,
+      origin: parseGlobeEffectAnchor(root.origin, `${path}.origin`),
+      destination: parseGlobeEffectAnchor(root.destination, `${path}.destination`),
+      established,
+      windows,
+    }
+  }
+
+  const effect: PointGlobeEffect = { kind: kind as PointGlobeEffect['kind'], windows }
   if (root.anchor !== undefined && root.anchor !== null) {
-    const a = expectRecord(root.anchor, `${path}.anchor`)
-    effect.anchor = { lat: expectNumber(a.lat, `${path}.anchor.lat`), lon: expectNumber(a.lon, `${path}.anchor.lon`) }
+    effect.anchor = parseGlobeEffectAnchor(root.anchor, `${path}.anchor`)
   }
   return effect
 }
@@ -409,6 +525,84 @@ export function parseEventsData(json: unknown): EventsData {
   }
   const events = rawEvents.map((raw, i) => parseTimelineEvent(raw, `${id}.events[${i}]`))
   return { id, events }
+}
+
+const FEATURE_CERTAINTIES: ReadonlySet<string> = new Set(['high', 'medium', 'low'])
+
+function parseFeatureCertainty(v: unknown, path: string): FeatureCertainty {
+  const s = expectString(v, path)
+  if (!FEATURE_CERTAINTIES.has(s)) {
+    throw new Error(`${path}: unknown FeatureCertainty "${s}"`)
+  }
+  return s as FeatureCertainty
+}
+
+/** Mirrors `pipeline.shapes.PopulationEstimate` (ADR-035). */
+function parsePopulationEstimate(v: unknown, path: string): PopulationEstimateData {
+  const r = expectRecord(v, path)
+  return {
+    t: expectNumber(r.t, `${path}.t`),
+    population: expectPositiveNumber(r.population, `${path}.population`),
+  }
+}
+
+/**
+ * Validates one `FeatureData` (ADR-035), mirroring `pipeline.shapes.Feature`'s own validators:
+ * lat/lon range checks, a non-empty estimates list, and estimates sorted ascending by `t` with
+ * no duplicate `t` (matching `Feature._estimates_sorted_and_unique` — the sort happens here
+ * too, not just a check, since a producer that already sorted correctly must round-trip
+ * unchanged and one that didn't must not silently ship out of order).
+ */
+function parseFeatureData(v: unknown, path: string): FeatureData {
+  const r = expectRecord(v, path)
+  const id = expectString(r.id, `${path}.id`)
+  const lat = expectNumber(r.lat, `${path}.lat`)
+  if (!(lat >= -90 && lat <= 90)) throw new Error(`${path}.lat: out of range, got ${lat}`)
+  const lon = expectNumber(r.lon, `${path}.lon`)
+  if (!(lon >= -180 && lon <= 180)) throw new Error(`${path}.lon: out of range, got ${lon}`)
+  const rawEstimates = expectArray(r.estimates, `${path}.estimates`)
+  if (rawEstimates.length === 0) {
+    throw new Error(`${id}: empty estimates`)
+  }
+  const estimates = rawEstimates.map((raw, i) =>
+    parsePopulationEstimate(raw, `${path}.estimates[${i}]`),
+  )
+  estimates.sort((a, b) => a.t - b.t)
+  const seenT = new Set<number>()
+  for (const estimate of estimates) {
+    if (seenT.has(estimate.t)) throw new Error(`${id}: duplicate estimate t ${estimate.t}`)
+    seenT.add(estimate.t)
+  }
+  return {
+    id,
+    name: expectString(r.name, `${path}.name`),
+    country: expectString(r.country, `${path}.country`),
+    lat,
+    lon,
+    certainty: parseFeatureCertainty(r.certainty, `${path}.certainty`),
+    estimates,
+  }
+}
+
+/**
+ * Validates a `FeatureSet` layer file (ADR-035), e.g. `cities` — sorts features by `id` and
+ * rejects a duplicate id, mirroring `pipeline.shapes.FeatureSet._sorted_and_unique`.
+ */
+export function parseFeatureSetData(json: unknown): FeatureSetData {
+  const root = expectRecord(json, 'FeatureSetData')
+  const id = expectString(root.id, 'FeatureSetData.id')
+  const rawFeatures = expectArray(root.features, `${id}.features`)
+  if (rawFeatures.length === 0) {
+    throw new Error(`${id}: empty FeatureSetData`)
+  }
+  const features = rawFeatures.map((raw, i) => parseFeatureData(raw, `${id}.features[${i}]`))
+  features.sort((a, b) => a.id.localeCompare(b.id))
+  const seenIds = new Set<string>()
+  for (const feature of features) {
+    if (seenIds.has(feature.id)) throw new Error(`${id}: duplicate feature id ${feature.id}`)
+    seenIds.add(feature.id)
+  }
+  return { id, features }
 }
 
 function expectPositiveNumber(v: unknown, path: string): number {

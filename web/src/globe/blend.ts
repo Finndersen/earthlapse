@@ -114,6 +114,16 @@ export function globePreloadUrls(
 export interface GlobeRasterLayers {
   paleodem: RasterData
   neoproterozoic: RasterData | null
+  /** The Natural Earth II human-era basemap (ADR-030), by tier — `null` when a tier isn't
+   *  published (an older manifest). `basemapT0` gates the whole feature: `globeBaseBlendAt`
+   *  falls back to plain `globeMultiBlendAt` when it's `null`, regardless of `basemapT1`. */
+  basemapT0: RasterData | null
+  basemapT1: RasterData | null
+  /** HYDE 3.2 population density (ADR-031 amendment), 10,000 BCE - 2015 CE — `null` when the
+   *  layer isn't published. Unlike every other entry here it is an *overlay*, not a base: it
+   *  carries its own published `encoding` and is composited over whatever base is showing
+   *  (`density.ts`). */
+  populationDensity: RasterData | null
 }
 
 /** 540-550 Ma: PaleoDEM and Merdith don't place continents identically there (docs/GLOBE.md
@@ -235,6 +245,96 @@ export function globeMultiCaptionFor(layers: GlobeRasterLayers, t: GeoTime): str
  *  own constant rather than reading `SEAM_BAND` (a different, narrower concern: the crossfade
  *  band at the *edge* of this domain, not the domain itself). */
 const NEOPROTEROZOIC_DOMAIN: readonly [GeoTime, GeoTime] = [540e6, 1000e6]
+
+// ------------------------------------------------------------------- human-era base (ADR-030)
+
+/**
+ * Years BP over which the globe's base crosses from PaleoDEM's 0 Ma frame to the human-era
+ * basemap (Natural Earth II, `sources/basemap`) — `[nearEdge, farEdge]`, same `[younger, older]`
+ * convention as `SEAM_BAND`. Fixed directly by the user (ADR-030), a narrower span than the wider
+ * 90/80 ka recommendation an earlier design proposal made, which covered a broader scope than
+ * this feature builds (ice/sea level/dispersal overlays). Not manifest data, for the same reason
+ * `SEAM_BAND` isn't: a raster crossfade boundary the web side alone owns.
+ */
+export const BASEMAP_CROSSFADE_BAND: readonly [GeoTime, GeoTime] = [300_000, 400_000]
+
+/**
+ * The basemap's crossfade weight at `t` (ADR-030): 0 at and above
+ * `BASEMAP_CROSSFADE_BAND`'s far edge (400 ka — "before 400 ka behaviour unchanged"), 1 at and
+ * below its near edge (300 ka — pure basemap), linear between. This is deliberately *not*
+ * folded into `GlobeBlend`/the existing `uBefore`/`uAfter`/`uMix` uniforms the way `SEAM_BAND`'s
+ * crossfade is: the basemap is a single, time-invariant texture per tier (not a sequence of
+ * dated frames to bracket), so it gets its own uniform slot (`Globe.tsx`'s `uBasemapTex`/
+ * `uBasemapStrength`) mixed *over* the ordinary PaleoDEM `dataColor` in the shader, rather than
+ * reusing that slot for two different kinds of thing. This also keeps the two textures on their
+ * own caches (`textureCache.ts` for PaleoDEM, `humanEraTextureCache.ts`'s mipmapped instance for
+ * the basemap) without needing one `GlobeTexturePair` to somehow serve both.
+ */
+export function basemapStrengthAt(t: GeoTime): number {
+  const [nearEdge, farEdge] = BASEMAP_CROSSFADE_BAND
+  if (t >= farEdge) return 0
+  if (t <= nearEdge) return 1
+  return (farEdge - t) / (farEdge - nearEdge)
+}
+
+function clamp01(x: number): number {
+  return Math.min(1, Math.max(0, x))
+}
+
+/**
+ * Tone-match grade for the Natural Earth II basemap (ADR-030 amendment, user report 2026-09-17:
+ * "significantly lighter than the previous texture and appears over-exposed... washed-out pale
+ * land and pale blue oceans"). **Not a colour-space bug** — checked directly: both the PaleoDEM
+ * and basemap textures set `texture.colorSpace = THREE.SRGBColorSpace` identically
+ * (`textureCache.ts`, `humanEraTextureCache.ts`), both decode via a plain `createImageBitmap`
+ * with no extra options, `GLOBE_FRAGMENT_SHADER` ends with the same `#include <colorspace_fragment>`
+ * for both, and sampling the *rendered* globe against the *source* `basemap_t0.webp` file at four
+ * points (mid-Atlantic, Sahara, Amazon, Himalaya, `scratchpad/globe-fixes-notes.md`) matched within
+ * a few percent at every one — the render is a faithful reproduction of the source file. The
+ * mismatch is real but sits one level up: Natural Earth II's own photographic palette is simply
+ * far paler and less saturated than PaleoDEM's stylised hypsometric tint, so swapping one for the
+ * other at `BASEMAP_CROSSFADE_BAND` reads as a brightness jump even though neither is rendered
+ * wrong. Measured side by side (reduced-motion, same camera, same regions) at 434.8 ka (PaleoDEM,
+ * just outside the crossfade band) vs 216.8 ka (basemap, fully crossfaded in):
+ *
+ * | region | PaleoDEM relative luminance | basemap relative luminance (ungraded) |
+ * |---|---|---|
+ * | mid-Atlantic / South Atlantic ocean | ~0.03 | ~0.26 (~9x brighter) |
+ * | Sahel/Sahara land | 0.25 (stylised green) | 0.86 (blown-out pale sand) |
+ * | Amazon land | 0.17 (stylised green) | 0.36 (~2x brighter, desaturated) |
+ *
+ * `gradeBasemapColor` is a plain levels/gamma/saturation grade applied to the basemap texture's
+ * own colour only (never PaleoDEM's, never a regime look) — `BASEMAP_GRADE_SCALE` pulls the output
+ * ceiling down so even a blown-out highlight (bright sand, cloud) can't reach display white,
+ * `BASEMAP_GRADE_GAMMA` (`> 1`) darkens the midtones a `scale`-only correction wouldn't reach, and
+ * `BASEMAP_GRADE_SATURATION` (`> 1`) restores the saturation the darkening alone would otherwise
+ * leave looking flat. Tuned against the measurements above (`blend.test.ts` pins the ocean sample
+ * landing close to PaleoDEM's own dark, saturated blue) rather than a global "looks nice" guess;
+ * land does not attempt to chase PaleoDEM's own arbitrary green hypsometric tint — a real desert
+ * should still read as sand-coloured, just not blown out to near-white.
+ */
+export const BASEMAP_GRADE_SCALE = 0.6
+export const BASEMAP_GRADE_GAMMA = 1.7
+export const BASEMAP_GRADE_SATURATION = 1.2
+
+function basemapGradeChannel(c: number): number {
+  return BASEMAP_GRADE_SCALE * Math.pow(clamp01(c), BASEMAP_GRADE_GAMMA)
+}
+
+/** `GLOBE_FRAGMENT_SHADER`'s own basemap grade (`shaders.ts`), as a pure TS function — the GLSL
+ *  applies this exact formula per-fragment on the GPU; this is that formula, callable from a
+ *  plain unit test instead. Takes and returns a `[r, g, b]` triple in 0..1. */
+export function gradeBasemapColor([r, g, b]: readonly [number, number, number]): readonly [number, number, number] {
+  const gr = basemapGradeChannel(r)
+  const gg = basemapGradeChannel(g)
+  const gb = basemapGradeChannel(b)
+  const luminance = 0.2126 * gr + 0.7152 * gg + 0.0722 * gb
+  return [
+    clamp01(luminance + (gr - luminance) * BASEMAP_GRADE_SATURATION),
+    clamp01(luminance + (gg - luminance) * BASEMAP_GRADE_SATURATION),
+    clamp01(luminance + (gb - luminance) * BASEMAP_GRADE_SATURATION),
+  ]
+}
 
 /**
  * docs/GLOBE.md G7's fallback rule: if the Merdith source is unusable (`neoproterozoicAvailable
