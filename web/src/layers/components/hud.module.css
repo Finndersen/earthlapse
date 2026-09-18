@@ -230,6 +230,13 @@
   top: 0;
 }
 
+/* Discloses a log-scaled axis inline with its max label, dimmer than the value it follows so it
+   reads as a qualifier rather than competing with the number. */
+.chartAxisScale {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-style: italic;
+}
+
 .chartAxisMin {
   bottom: 0;
 }

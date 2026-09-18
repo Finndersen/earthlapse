@@ -42,7 +42,7 @@ export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
           {inDomain ? 'no record' : 'no data'}
         </span>
       ) : (
-        <span className={styles.value} aria-live="polite">
+        <span className={styles.value} data-testid="scalar-readout-value" aria-live="polite">
           {formatScalarValue(value.value, value.unit)} <span className={styles.unit}>{value.unit}</span>
         </span>
       )}

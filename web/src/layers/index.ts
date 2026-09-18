@@ -20,8 +20,11 @@
  * warp) `scale` come in as props. Nothing is read from a store, a ref, or a fetch. `t`
  * outside a layer's domain renders as "no data" text — never a false `0`.
  *
- * - `<Sparkline layer t scale />` — small inline SVG trend line across `scale`'s full span,
- *   with a playhead marker; gaps where the layer has no data are simply not drawn.
+ * - `<Sparkline layer t scale />` — small inline SVG trend line across the layer's OWN domain
+ *   (warped in `scale`'s `kind`, not `scale`'s own domain — see that component's doc comment for
+ *   why: a shared full-Earth-domain `scale`, sampled directly, starves a narrow-domain layer like
+ *   population of any usable resolution), with a playhead marker; gaps where the layer has no
+ *   data are simply not drawn.
  * - `<ScalarReadout layer t />` — `value unit` (+ bounds if present), or "no data".
  * - `<LayerChart layer t scale onClose />` — full-width chart docked to the timeline, sharing
  *   its `TimeScale` so the value under the playhead sits directly above it; renders the

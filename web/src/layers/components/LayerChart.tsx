@@ -6,12 +6,20 @@
  * independently computed. Renders the uncertainty band wherever the layer carries `bounds`.
  * Whether it is shown at all is the caller's state (the HUD sparkline opens it); the chart
  * only offers a way to close itself, so opening a chart is always a single gesture.
+ *
+ * The y-axis is log or linear per `../chartAxis`'s `axisTransform` — the same data-driven
+ * ratio test `Sparkline` already used, applied here too so the full-size chart never contradicts
+ * the sparkline that opened it. See that module's doc comment for why (population's ~1,600x
+ * range is the motivating case). Whichever axis is chosen, the printed min/max stay in raw
+ * units — `axisTransform` only ever changes where a value lands on the plot, never how it's
+ * labelled — and a log axis says so inline (`chartAxisScale`) so the shape can't be misread.
  */
 
 import { useEffect } from 'react'
 
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
+import { axisTransform } from '../chartAxis'
 import { clampUnit, formatScalarValue } from '../format'
 import styles from './hud.module.css'
 
@@ -58,10 +66,18 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   const presentValues = samples.flatMap((p) => (p === null ? [] : [p.value, p.lower ?? p.value, p.upper ?? p.value]))
   const min = presentValues.length > 0 ? Math.min(...presentValues) : 0
   const max = presentValues.length > 0 ? Math.max(...presentValues) : 1
-  const span = max - min || 1
+  // Same ratio-driven log/linear policy as `Sparkline` (`../chartAxis`'s doc comment has the
+  // full justification): a series spanning enough orders of magnitude — population's ~1,600x
+  // between its oldest and newest samples chief among them — gets a log axis so its whole
+  // history's shape is visible, not just a spike at the present. `min`/`max` above stay in raw
+  // units for the printed axis labels below; only the plotted position runs through `toAxis`.
+  const { toAxis, isLog } = axisTransform(presentValues)
+  const axisMin = toAxis(min)
+  const axisMax = toAxis(max)
+  const span = axisMax - axisMin || 1
 
   const x = (u: number): number => PAD_X + u * (VIEW_WIDTH - 2 * PAD_X)
-  const y = (value: number): number => VIEW_HEIGHT - PAD_Y - ((value - min) / span) * (VIEW_HEIGHT - 2 * PAD_Y)
+  const y = (value: number): number => VIEW_HEIGHT - PAD_Y - ((toAxis(value) - axisMin) / span) * (VIEW_HEIGHT - 2 * PAD_Y)
 
   const lineSegments: ChartPoint[][] = []
   const bandSegments: ChartPoint[][] = []
@@ -101,7 +117,7 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   const inDomain = t >= layer.timeDomain[0] && t <= layer.timeDomain[1]
 
   return (
-    <div className={styles.chart}>
+    <div className={styles.chart} data-testid="layer-chart" data-layer-id={layer.id}>
       <button type="button" className={styles.chartClose} onClick={onClose} aria-label={`Close ${layer.name} chart`}>
         <span className={styles.chartCloseGlyph} aria-hidden="true">
           {'✕'}
@@ -123,10 +139,11 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
             timeline's width and the playhead lines up with the timeline's own. */}
         <svg
           className={styles.chartSvg}
+          data-testid="layer-chart-svg"
           viewBox={`0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`}
           preserveAspectRatio="none"
           role="img"
-          aria-label={`${layer.name} chart`}
+          aria-label={isLog ? `${layer.name} chart, log scale` : `${layer.name} chart`}
         >
           {lineSegments.map((seg, i) => {
             const top = seg.map((p) => `${x(p.u)},${y(p.value)}`)
@@ -147,6 +164,9 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
           <>
             <span className={`${styles.chartAxis} ${styles.chartAxisMax}`} aria-hidden="true">
               {formatScalarValue(max, unit)} {unit}
+              {/* Labelled whenever the axis is log, not just for population: readers must never
+                  have to guess the curve's real shape from an unmarked axis. */}
+              {isLog && <span className={styles.chartAxisScale}> · log scale</span>}
             </span>
             <span className={`${styles.chartAxis} ${styles.chartAxisMin}`} aria-hidden="true">
               {formatScalarValue(min, unit)} {unit}
