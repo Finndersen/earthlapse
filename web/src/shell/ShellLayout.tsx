@@ -3,50 +3,11 @@
 import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
-import { ERA_SHORTCUTS, formatTimeRange, isEraShortcutActive, type SectionId } from '@/timeline'
 
 import { CreditsList } from './CreditsList'
 import { Panel } from './Panel'
 import styles from './ShellLayout.module.css'
 import { useChromeGap } from './useChromeGap'
-
-/** A restrained line-glyph per shortcut (DESIGN §8: this floats over a photograph, so no filled
- *  icon, no colour of its own — `currentColor` only, matching the caps-mono label beside it).
- *  Deliberately abstract rather than literal so none of the three risks reading as kitsch (the
- *  human's own worry about the dinosaur entry): a globe for the whole planet, a three-toed
- *  fossil track for the dinosaur era, and a plain standing figure for the human one. A `switch`
- *  over `ERA_SHORTCUTS`' own ids, not a lookup table, so a shortcut added without a matching
- *  case throws immediately instead of silently rendering an empty slot. */
-function eraShortcutIcon(id: SectionId): ReactNode {
-  switch (id) {
-    case 'earth':
-      return (
-        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.1">
-          <circle cx="8" cy="8" r="6.5" />
-          <ellipse cx="8" cy="8" rx="2.6" ry="6.5" />
-          <line x1="1.6" y1="8" x2="14.4" y2="8" />
-        </svg>
-      )
-    case 'mesozoic':
-      return (
-        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round">
-          <ellipse cx="8" cy="10.6" rx="3.3" ry="2.8" />
-          <ellipse cx="4.5" cy="5.6" rx="1.1" ry="1.8" transform="rotate(-20 4.5 5.6)" />
-          <ellipse cx="8" cy="4.4" rx="1.1" ry="2" />
-          <ellipse cx="11.5" cy="5.6" rx="1.1" ry="1.8" transform="rotate(20 11.5 5.6)" />
-        </svg>
-      )
-    case 'holocene':
-      return (
-        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round">
-          <circle cx="8" cy="3.2" r="1.55" />
-          <path d="M8 5.1 V10 M8 6.6 L4.8 8.3 M8 6.6 L11.2 8.3 M8 10 L5.4 14.3 M8 10 L10.6 14.3" />
-        </svg>
-      )
-    default:
-      throw new Error(`eraShortcutIcon: no icon for era shortcut '${id}'`)
-  }
-}
 
 export interface ShellLayoutProps {
   /** Full-window backdrop: the generated still, breathing and dissolving. */
@@ -78,15 +39,6 @@ export interface ShellLayoutProps {
   title: ReactNode
   /** Beside the title: a small status tag (e.g. stub data), or nothing. */
   badge: ReactNode
-  /** The era section the timeline currently shows (ADR-024) — read only to decide which of the
-   *  Earth/Dinosaurs/Humans shortcuts below the title reads as selected (`isEraShortcutActive`).
-   *  `ShellLayout` never derives a window or citation from this itself; that stays `Timeline`'s
-   *  job, the same `sectionId` it already takes. */
-  sectionId: SectionId
-  /** Fires the same `selectSection` action a section band or breadcrumb click does — see the
-   *  Earth/Dinosaurs/Humans shortcut group below the title. Never a second selection mechanism:
-   *  every shortcut is a plain alias for an id `Timeline`'s own `sectionById` already knows. */
-  onSelectSection: (id: SectionId) => void
   /** Top-right: the ancestor-at-`t` readout (DESIGN §10). */
   ancestor: ReactNode
   /** Bottom-centre, above the timeline: the scene caption as a subtitle. */
@@ -119,8 +71,6 @@ export function ShellLayout({
   feed,
   title,
   badge,
-  sectionId,
-  onSelectSection,
   ancestor,
   caption,
   chart,
@@ -201,39 +151,6 @@ export function ShellLayout({
         <header ref={titleRef} className={styles.title}>
           {title}
           {badge}
-          {/* The Earth/Dinosaurs/Humans shortcut group (user ask, 2026-09-18): a prominent,
-              always-present control, deliberately not folded into the timeline's own already-
-              condensed bottom chrome (`Timeline.module.css`'s own recent trim) nor styled like a
-              section band or a breadcrumb link — each is its own accent-bordered pill so it
-              reads as a shortcut, not as one more geological unit to keep track of. Every entry
-              is a plain alias: clicking it calls the exact same `onSelectSection` a band or
-              breadcrumb click does, so the result is byte-identical to having navigated there by
-              hand (same window, same breadcrumb, same Escape/Up reversal). */}
-          <div className={styles.eraShortcuts} role="group" aria-label="Jump to an era" data-testid="era-shortcuts">
-            {ERA_SHORTCUTS.map((shortcut) => {
-              const active = isEraShortcutActive(shortcut, sectionId)
-              // Short form for the accessible name ("Dinosaurs — the Mesozoic"), the exact unit
-              // named so the nickname never masquerades as a geological name of its own; the
-              // hover `title` adds the section's own cited span for anyone who wants it.
-              const unitName = `${shortcut.nickname} — the ${shortcut.section.label}`
-              return (
-                <button
-                  key={shortcut.id}
-                  type="button"
-                  className={styles.eraShortcut}
-                  aria-current={active ? 'location' : undefined}
-                  aria-label={unitName}
-                  title={`${unitName} (${formatTimeRange(shortcut.section.window)})`}
-                  onClick={() => onSelectSection(shortcut.id)}
-                >
-                  <span className={styles.eraShortcutIcon} aria-hidden="true">
-                    {eraShortcutIcon(shortcut.id)}
-                  </span>
-                  <span className={styles.eraShortcutLabel}>{shortcut.nickname}</span>
-                </button>
-              )
-            })}
-          </div>
         </header>
 
         <div className={styles.ancestor}>

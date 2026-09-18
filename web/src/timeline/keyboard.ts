@@ -76,11 +76,13 @@ function isTextInputTarget(target: EventTarget | null): boolean {
   return target instanceof Element && TEXT_INPUT_TAGS.has(target.tagName)
 }
 
-/** Display strings for each era-navigation shortcut's key(s), shown in `SectionBreadcrumb`'s
- *  button tooltips — one source so they can't drift from what `timelineKeyIntent` actually maps
- *  below. */
-export const LEAVE_SECTION_KEY_HINT = 'Escape or Backspace'
-export const GO_TO_ROOT_KEY_HINT = 'Home or 0'
+/** Display strings for the previous/next sibling-section shortcut's keys, shown in
+ *  `SectionEdgeNav`'s own button tooltips — one source so they can't drift from what
+ *  `timelineKeyIntent` actually maps below. `SectionBreadcrumb` used to carry a matching pair for
+ *  "leave section" (Escape/Backspace) and "go to root" (Home/`0`) on its own now-deleted "‹ Up"/
+ *  "⌂ Earth" buttons (user ask, 2026-09-18: both removed outright, not replaced — the parent and
+ *  root are always one click away as trail crumbs already); those two hint strings went with
+ *  them, since nothing else displayed them. The keyboard shortcuts themselves are untouched. */
 export const NEXT_SECTION_KEY_HINT = 'Shift+→ or Page Down'
 export const PREVIOUS_SECTION_KEY_HINT = 'Shift+← or Page Up'
 

@@ -79,9 +79,10 @@
  *   every `setT`) and `sectionEntryT` (`t` after selecting a section). `eraNameForTime(t)` is
  *   the top-level name, for the shell's era/time title. `interpolateWindow` (scale.ts) eases a
  *   window change in symlog-warped space, and `useAnimatedScale` animates both that and the
- *   scale-kind toggle. `ERA_SHORTCUTS`/`isEraShortcutActive` (`eraShortcuts.ts`) back the shell's
- *   always-visible Earth/Dinosaurs/Humans shortcut group — plain nicknames for three existing
- *   sections (the root, the Mesozoic, the Holocene), never a new node or window.
+ *   scale-kind toggle. `ERA_SHORTCUTS`/`isEraShortcutActive` (`eraShortcuts.ts`) back
+ *   `<Timeline>`'s own always-visible Earth/Dinosaurs/Humans shortcut group (`components/
+ *   EraShortcuts.tsx`) — plain nicknames for three existing sections (the root, the Mesozoic,
+ *   the Holocene), never a new node or window.
  * - `timelineKeyIntent(event)` maps a keydown to a `TimelineKeyIntent` (or `null`), ignoring
  *   text-input targets. It is the pure half of `Timeline`'s keyboard handling: stepping (←/→),
  *   play/pause (space) and leaving the current section for its parent (Escape, ADR-024).

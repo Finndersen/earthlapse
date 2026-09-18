@@ -9,6 +9,7 @@ import { sectionById, type SectionId } from '../sections'
 import { Timeline } from '../Timeline'
 import { SectionBands } from './SectionBands'
 import { SectionBreadcrumb } from './SectionBreadcrumb'
+import { SectionEdgeNav } from './SectionEdgeNav'
 
 beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 0) as unknown as number)
@@ -113,40 +114,65 @@ describe('<SectionBreadcrumb>', () => {
     expect(within(trail).getByText('Earth').getAttribute('aria-current')).toBe('location')
   })
 
-  it('offers up/root/sibling shortcut buttons matching the keyboard shortcuts (follow-up pass item 6)', () => {
-    const onSelectSection = vi.fn()
-    render(<SectionBreadcrumb sectionId="industrial-age" onSelectSection={onSelectSection} />)
+  it('renders no shortcut buttons of its own (user ask, 2026-09-18: Up/Home deleted, prev/next moved to SectionEdgeNav)', () => {
+    render(<SectionBreadcrumb sectionId="industrial-age" onSelectSection={vi.fn()} />)
     const nav = screen.getByRole('navigation', { name: 'Timeline section' })
+    const trail = within(nav).getByRole('list')
+    // Every button inside the nav belongs to the trail itself (an ancestor crumb) — none of the
+    // four "‹ Up"/"⌂ Earth"/"‹"/"›" buttons this used to carry.
+    expect(within(nav).getAllByRole('button')).toEqual(within(trail).getAllByRole('button'))
+  })
+})
 
-    const up = within(nav).getByRole('button', { name: 'Up to Holocene' }) as HTMLButtonElement
-    expect(up.disabled).toBe(false)
-    fireEvent.click(up)
-    expect(onSelectSection).toHaveBeenLastCalledWith('holocene')
+// The previous/next sibling-section buttons that used to flank the breadcrumb (user ask,
+// 2026-09-18: moved onto the scrub track itself, at the far edges of the selected section's own
+// range — see `SectionEdgeNav.tsx`'s own doc comment for the full reasoning).
+describe('<SectionEdgeNav>', () => {
+  it('renders its children between the previous and next buttons', () => {
+    render(
+      <SectionEdgeNav sectionId="industrial-age" onSelectSection={vi.fn()}>
+        <div data-testid="stack-content">STACK</div>
+      </SectionEdgeNav>,
+    )
+    expect(screen.getByTestId('stack-content').textContent).toBe('STACK')
+  })
 
-    const earth = within(nav).getByRole('button', { name: 'Back to Earth' })
-    // Not the word "Earth" (re-review fix, 2026-09-15) — the root crumb right beside this
-    // button is itself always labelled "Earth", so the two used to read "EARTH EARTH".
-    expect(earth.textContent).not.toBe('Earth')
-    fireEvent.click(earth)
-    expect(onSelectSection).toHaveBeenLastCalledWith('earth')
-
-    const previous = within(nav).getByRole('button', { name: 'Previous section: Early modern' })
+  it('steps to the previous/next sibling section, matching the keyboard shortcuts, and reports through onSelectSection', () => {
+    const onSelectSection = vi.fn()
+    render(
+      <SectionEdgeNav sectionId="industrial-age" onSelectSection={onSelectSection}>
+        <div />
+      </SectionEdgeNav>,
+    )
+    const previous = screen.getByRole('button', { name: 'Previous section: Early modern' })
     fireEvent.click(previous)
     expect(onSelectSection).toHaveBeenLastCalledWith('early-modern')
 
-    const next = within(nav).getByRole('button', { name: 'Next section: Modern' })
+    const next = screen.getByRole('button', { name: 'Next section: Modern' })
     fireEvent.click(next)
     expect(onSelectSection).toHaveBeenLastCalledWith('modern')
   })
 
-  it('disables the up/root/sibling buttons that have nowhere to go, without removing them', () => {
-    render(<SectionBreadcrumb sectionId="earth" onSelectSection={vi.fn()} />)
-    const nav = screen.getByRole('navigation', { name: 'Timeline section' })
-    const disabled = (name: string): boolean => (within(nav).getByRole('button', { name }) as HTMLButtonElement).disabled
-    expect(disabled('Already at the top level')).toBe(true)
-    expect(disabled('Already showing the full timeline')).toBe(true)
-    expect(disabled('No previous section')).toBe(true)
-    expect(disabled('No next section')).toBe(true)
+  it("names each button's own keyboard shortcut in its title", () => {
+    render(
+      <SectionEdgeNav sectionId="industrial-age" onSelectSection={vi.fn()}>
+        <div />
+      </SectionEdgeNav>,
+    )
+    expect(screen.getByRole('button', { name: 'Previous section: Early modern' }).getAttribute('title')).toMatch(
+      /Shift\+← or Page Up/,
+    )
+    expect(screen.getByRole('button', { name: 'Next section: Modern' }).getAttribute('title')).toMatch(/Shift\+→ or Page Down/)
+  })
+
+  it('disables the buttons that have nowhere to go, without removing them', () => {
+    render(
+      <SectionEdgeNav sectionId="earth" onSelectSection={vi.fn()}>
+        <div />
+      </SectionEdgeNav>,
+    )
+    expect((screen.getByRole('button', { name: 'No previous section' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'No next section' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
 

@@ -8,9 +8,11 @@
  *   (`useFisheye`) and focus restoration after a section change.
  * - The visible window is the selected **era section**'s (ADR-024): `scale.domain`, animated by
  *   the caller's `useAnimatedScale(sectionById(sectionId).window, scaleKind)`. There is still no
- *   free zoom or pan (ADR-021). The section band strip (`SectionBands`) and the breadcrumb
- *   (`SectionBreadcrumb`, which also carries the "‹ Up"/"Earth"/"‹ ›" affordance buttons,
- *   follow-up pass item 6) are the only ways to change the window with a pointer; the keyboard
+ *   free zoom or pan (ADR-021). The section band strip (`SectionBands`), the breadcrumb
+ *   (`SectionBreadcrumb`), the always-visible Earth/Dinosaurs/Humans shortcuts (`EraShortcuts`)
+ *   and the previous/next sibling-section buttons flanking the track itself (`SectionEdgeNav`,
+ *   user ask, 2026-09-18 — these used to hang off the breadcrumb, see that component's own doc
+ *   comment for why they moved) are the ways to change the window with a pointer; the keyboard
  *   equivalents (`keyboard.ts`) are Escape/Backspace up a level, Home/`0` to Earth, and
  *   PageUp-PageDown/Shift+←→ to the previous/next sibling section. All of them report through
  *   `onSelectSection`. Stepping (transport buttons, plain ←/→) stays inside the selected
@@ -20,9 +22,9 @@
  * - `onScrub(t)` fires from dragging the scrub track, clicking a checkpoint pip, jumping to a
  *   neighbouring event or checkpoint via the transport's back/forward buttons, or the ←/→
  *   keyboard shortcuts.
- * - `onSelectSection(id)` fires from a section band, a breadcrumb ancestor or Escape. The caller
- *   is expected to move `t` into the section when it was outside (the time store's
- *   `selectSection`).
+ * - `onSelectSection(id)` fires from a section band, a breadcrumb ancestor, an era shortcut, an
+ *   edge-nav button or Escape. The caller is expected to move `t` into the section when it was
+ *   outside (the time store's `selectSection`).
  * - `onScaleKindChange(kind)` fires from the Symlog/Linear segmented scale toggle.
  * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, the
  *   scenes/steady mode toggle (ADR-016), and the space-bar shortcut.
@@ -51,12 +53,15 @@
  * Chrome-less by design (W13, SHARED VISUAL LANGUAGE): no panel background here or in any
  * child; this floats over whatever darkened surround the shell provides. The current-time
  * readout rides above the playhead on the scrub track. The shell shows the large era/time title
- * elsewhere (`eraNameForTime`). Under the track sit the ruler, then the section bands, then one
- * controls row. `TransportCore` (back/play/forward) is centred in that row over the track, the
- * breadcrumb is on its left, and on its right — left to right, nearest the core group first —
- * sit `TransportSecondary` (sound toggle, speed select, mode toggle), the scale toggle and
- * `RateReadout` at the outer edge (`controlsRow`'s doc comment in Timeline.module.css has the
- * layout mechanics; follow-up pass items 1/2/10 cover why the row is shaped this way).
+ * elsewhere (`eraNameForTime`). `SectionEdgeNav` flanks the scrub track, ruler and section bands
+ * together (so all three stay pixel-aligned) with the previous/next sibling-section buttons at
+ * its far left/right edges; below that sits one controls row. `TransportCore` (back/play/forward)
+ * is centred in that row over the track; its left side holds `EraShortcuts` (Earth/Dinosaurs/
+ * Humans, user ask, 2026-09-18) then the breadcrumb, and its right side — left to right, nearest
+ * the core group first — holds `TransportSecondary` (sound toggle, speed select, mode toggle),
+ * the scale toggle and `RateReadout` at the outer edge (`controlsRow`'s doc comment in
+ * Timeline.module.css has the layout mechanics; follow-up pass items 1/2/10 cover why the row is
+ * shaped this way).
  */
 
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
@@ -66,9 +71,11 @@ import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
 
 import { nearestStepTarget, type TimelineCheckpoint } from './checkpoints'
 import { AxisTicks } from './components/AxisTicks'
+import { EraShortcuts } from './components/EraShortcuts'
 import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
+import { SectionEdgeNav } from './components/SectionEdgeNav'
 import { RateReadout, TimeCompressedBadge, TransportCore, TransportSecondary } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { timelineKeyIntent } from './keyboard'
@@ -279,21 +286,24 @@ export function Timeline({
 
   return (
     <div ref={rootRef} className={styles.timeline} data-testid="timeline-root" onKeyDown={handleKeyDown}>
-      <ScrubTrack
-        t={t}
-        window={visibleWindow}
-        scale={trackScale}
-        events={events}
-        checkpoints={checkpoints}
-        onScrub={scrubWithinSection}
-        onOpenCluster={onOpenCluster}
-        onLensPointer={fisheye.pointTo}
-        onLensRelease={fisheye.release}
-      />
-      <AxisTicks window={visibleWindow} scale={trackScale} knee={sectionKnee} />
-      <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
+      <SectionEdgeNav sectionId={sectionId} onSelectSection={selectSection}>
+        <ScrubTrack
+          t={t}
+          window={visibleWindow}
+          scale={trackScale}
+          events={events}
+          checkpoints={checkpoints}
+          onScrub={scrubWithinSection}
+          onOpenCluster={onOpenCluster}
+          onLensPointer={fisheye.pointTo}
+          onLensRelease={fisheye.release}
+        />
+        <AxisTicks window={visibleWindow} scale={trackScale} knee={sectionKnee} />
+        <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
+      </SectionEdgeNav>
       <div className={styles.controlsRow}>
         <div className={styles.controlsSections}>
+          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
           <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />
         </div>
         <div className={styles.controlsCore}>

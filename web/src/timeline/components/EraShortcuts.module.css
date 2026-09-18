@@ -1,0 +1,74 @@
+/* A compact, single-line pill per shortcut (unlike the old title-row treatment this replaced,
+   which stacked icon over label across two lines) — sized to sit inline with the breadcrumb in
+   `.controlsSections` without pushing the controls row past the height its 44px play button
+   already sets. */
+.group {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  cursor: pointer;
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.icon {
+  display: flex;
+}
+
+.label {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.shortcut:hover,
+.shortcut:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  border-color: var(--hud-accent, #e8b06a);
+  outline: none;
+}
+
+.shortcut:focus-visible {
+  box-shadow: 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+/* "You are here": a filled wash rather than only the hover outline, so the active shortcut reads
+   at a glance even with no pointer nearby — the same distinction `SectionBands`' current-band
+   accent and `SectionBreadcrumb`'s `.current` crumb already draw between "selected" and
+   "selectable". */
+.shortcut[aria-current='location'] {
+  color: var(--hud-accent, #e8b06a);
+  border-color: var(--hud-accent, #e8b06a);
+  background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
+}
+
+@media (max-width: 760px) {
+  .group {
+    gap: 3px;
+  }
+
+  .shortcut {
+    padding: 3px 6px;
+  }
+
+  .label {
+    font-size: 9px;
+  }
+}

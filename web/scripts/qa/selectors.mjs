@@ -21,9 +21,13 @@ export const SCENE_CANVAS_SELECTOR = `canvas:not(${GLOBE_CANVAS_SELECTOR}):not($
  *  requires. */
 export const BOTTOM_CHROME_SELECTOR = '[data-testid="timeline-root"]'
 
-/** The Earth/Dinosaurs/Humans "jump to an era" shortcut group (`ShellLayout.tsx`, user ask
- *  2026-09-18) — lives beside the title, deliberately outside `BOTTOM_CHROME_SELECTOR`'s own
- *  subtree, so it costs the timeline's own (recently condensed) bottom chrome no height at all. */
+/** The Earth/Dinosaurs/Humans "jump to an era" shortcut group. Originally lived beside the shell
+ *  title, outside the bottom chrome; a later pass the same day (`timeline/components/
+ *  EraShortcuts.tsx`) moved it into `<Timeline>`'s own controls row, so it is now INSIDE
+ *  `BOTTOM_CHROME_SELECTOR`'s own subtree — folded into the room freed by deleting the
+ *  breadcrumb's "‹ Up"/"⌂ Earth" buttons and moving its "‹"/"›" buttons onto the track edges
+ *  (`SectionEdgeNav`), rather than adding a row, so it still costs the chrome's measured height
+ *  nothing (see `bottom-chrome-height`/`era-shortcuts-group` in shots.mjs for the actual numbers). */
 export const ERA_SHORTCUTS_SELECTOR = '[data-testid="era-shortcuts"]'
 
 /** The current crumb in the era-section breadcrumb (`SectionBreadcrumb.tsx`) — its text is the

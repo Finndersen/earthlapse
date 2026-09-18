@@ -1,0 +1,99 @@
+/* `.row` is the positioning context for the two edge buttons (`position: absolute`, this file's
+   own `.edgeButton`) — its own height comes entirely from `.stack`, the one thing left in normal
+   flow, so an edge button's own size can never push the bottom chrome taller (2026-09-18
+   refinement pass: "larger icons... do not let the larger size push the bottom chrome taller").
+   Every custom property both `.stack` and `.edgeButton` need lives here, not on either of those
+   (siblings, so neither can see a value the other declares) — see each property's own comment. */
+.row {
+  /* Real geometry, not a hand-picked offset (2026-09-18 refinement pass: "moved down a bit... to
+     be in between the timeline and era header lines"). These three mirror fixed pixel heights
+     declared elsewhere — `ScrubTrack.module.css`'s `.hitArea` (`--readout-gap` 2px +
+     `--readout-line` 13px margin, plus its own 48px height = 63px) and `AxisTicks.module.css`'s
+     `.ticks` (12px) — rather than being invented here; none of the three rows they describe
+     scales with viewport width, so neither does the anchor built from them below. A future
+     change to either row's own height must update the matching constant here too — the same
+     cross-module pixel coupling `ScrubTrack.tsx`'s own `_PX` constants already carry a comment
+     for. `--stack-row-gap` doubles as `.stack`'s own row gap, so the two stay in sync by
+     construction. */
+  --track-box-height: 63px;
+  --stack-row-gap: 2px;
+  --ticks-height: 12px;
+
+  /* The hit target and the glyph inside it, sized together (refinement pass: "keep the hit
+     target and the glyph proportionate to each other") — up from a bare 15px glyph with no
+     dedicated box of its own, and further from the track than before ("further separated/away
+     from the timeline"). */
+  --edge-button-size: 34px;
+  --edge-button-gap: 16px;
+
+  position: relative;
+}
+
+/* Insets the scrub track/ruler/band strip by a real, reserved gutter on each side — not a visual
+   overlap — sized to `--edge-button-size` + `--edge-button-gap` above. `useTrackWidth`'s
+   `ResizeObserver` (unchanged) then measures and draws all three children genuinely narrower,
+   exactly as it would at an equivalently narrower viewport, so there is no shared horizontal
+   space for a drag gesture and a button click to ever contend over. */
+.stack {
+  margin-inline: calc(var(--edge-button-size) + var(--edge-button-gap));
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-row-gap);
+}
+
+.edgeButton {
+  position: absolute;
+  /* Centred on the real boundary between the scrub track's own box and the section-band strip —
+     the same band the ruler's numeric ticks occupy (`.row`'s own doc comment above has the
+     pixel sources). */
+  top: calc(var(--track-box-height) + var(--stack-row-gap) + (var(--ticks-height) + var(--stack-row-gap)) / 2);
+  transform: translateY(-50%);
+  width: var(--edge-button-size);
+  height: var(--edge-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.8));
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+
+.edgeButton[data-edge='previous'] {
+  left: 0;
+}
+
+.edgeButton[data-edge='next'] {
+  right: 0;
+}
+
+.edgeButton:hover:not(:disabled),
+.edgeButton:focus-visible:not(:disabled) {
+  color: var(--hud-ink, #efe9dc);
+  outline: none;
+}
+
+.edgeButton:focus-visible:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--hud-accent, #e8b06a);
+}
+
+.edgeButton:disabled {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .row {
+    --edge-button-size: 40px;
+  }
+
+  .edgeButton {
+    font-size: 26px;
+  }
+}

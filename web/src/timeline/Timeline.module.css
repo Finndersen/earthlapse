@@ -2,9 +2,11 @@
   display: flex;
   flex-direction: column;
   /* Tightened from 8px (condensing pass, 2026-09-18 — user report: "reduce the vertical
-     footprint of the bottom chrome"): a hairline-scale row separator between the ruler, the
-     section-band strip and the controls row, not a content margin — none of those rows has its
-     own legible content within 4px of its edge, so this was pure dead space stacked three times. */
+     footprint of the bottom chrome"): a hairline-scale row separator between the track stack
+     (`SectionEdgeNav`'s own child — the scrub track, ruler and section-band strip together) and
+     the controls row below it, not a content margin. The same gap used to sit between all four
+     rows individually; `SectionEdgeNav.module.css`'s `.stack` now carries it between the three it
+     wraps, so the total is unchanged. */
   gap: 2px;
   width: 100%;
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
@@ -29,10 +31,20 @@
   margin-top: 4px;
 }
 
+/* Holds `EraShortcuts` (Earth/Dinosaurs/Humans) then the breadcrumb trail — the room for the
+   pair came from this same pass deleting the breadcrumb's own "‹ Up"/"⌂ Earth" buttons and
+   moving its "‹"/"›" sibling-step buttons onto the track itself (`SectionEdgeNav`), so this track
+   is markedly lighter than it was. `EraShortcuts` is `flex: none` (fixed, never shrinks); the
+   breadcrumb is the one flexible member, exactly as before, eliding its own middle ancestors
+   before anything here would need to wrap. `flex-wrap` is a safety net, not the intended path, at
+   any width down to a phone's own stacked layout below. */
 .controlsSections {
   grid-area: sections;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
+  gap: 10px;
   justify-self: start;
   min-width: 0;
   max-width: 100%;
@@ -161,6 +173,7 @@
   }
 
   .controlsSections {
+    justify-content: center;
     justify-self: center;
   }
 

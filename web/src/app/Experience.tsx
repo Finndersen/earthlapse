@@ -495,8 +495,6 @@ export function Experience() {
         }
         title={<TimeTitle t={t} />}
         badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
-        sectionId={sectionId}
-        onSelectSection={selectSection}
         ancestor={
           nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
         }
