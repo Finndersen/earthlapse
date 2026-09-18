@@ -1,6 +1,9 @@
 .ticks {
   position: relative;
-  height: 16px;
+  /* Tightened from 16px (condensing pass, 2026-09-18): the 10px mono label below has no
+     descenders (`.label`'s `font-size`/`letter-spacing`), so a 16px box was carrying ~4px of
+     dead space above/below the glyphs themselves. */
+  height: 12px;
   width: 100%;
 }
 

@@ -52,8 +52,7 @@ function mockFeedRect(height: number): void {
   })
 }
 
-/** A minimal `MediaQueryList` stand-in (as in `timeline/components/TimelineHint.test.tsx`),
- *  matching only queries containing one of `matching` — so reduced motion and the compact
+/** A minimal `MediaQueryList` stand-in, matching only queries containing one of `matching` — so reduced motion and the compact
  *  viewport can be switched on independently. */
 function mockMatchMedia(...matching: string[]): void {
   vi.stubGlobal(

@@ -13,7 +13,7 @@
 
 import { drawnBounds } from './measure.mjs'
 import { waitForApproxUnfoldProgress } from './timeouts.mjs'
-import { GLOBE_CANVAS_SELECTOR, SCENE_CANVAS_SELECTOR } from './selectors.mjs'
+import { BOTTOM_CHROME_SELECTOR, GLOBE_CANVAS_SELECTOR, SCENE_CANVAS_SELECTOR } from './selectors.mjs'
 
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
 
@@ -54,21 +54,28 @@ export default [
   },
   {
     name: 'globe-expanded-sphere',
-    description: 'Expanded globe, sphere mode — guards against the CSS-box/drawn-pixel mix-up that shrank the sphere to ~226px.',
+    description:
+      'Expanded globe, sphere mode — guards against the CSS-box/drawn-pixel mix-up that shrank the sphere to ~226px. ' +
+      'Band widened by the 2026-09-18 bottom-chrome condensing pass: `useChromeGap` fits this panel to the shell\'s ' +
+      "actual live title-to-timeline gap, and the timeline's own shorter box now legitimately leaves it more room " +
+      '(measured ~528px before the pass, ~592px after).',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'sphere.width': [480, 560], 'sphere.height': [480, 560] },
+    expect: { 'sphere.width': [560, 620], 'sphere.height': [560, 620] },
   },
   {
     name: 'globe-expanded-map',
-    description: 'Expanded globe, unrolled Equal Earth map mode — guards the map-mode fit-to-panel framing (ADR-033).',
+    description:
+      'Expanded globe, unrolled Equal Earth map mode — guards the map-mode fit-to-panel framing (ADR-033). Band ' +
+      "widened for the same reason as `globe-expanded-sphere`'s own (measured ~1082px before the 2026-09-18 " +
+      'bottom-chrome condensing pass, ~1213px after).',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'map' },
     measure: async ({ page }) => ({ map: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'map.width': [1000, 1150] },
+    expect: { 'map.width': [1180, 1250] },
   },
   {
     name: 'globe-transition-mid-unfold',
@@ -103,15 +110,36 @@ export default [
     state: { globeExpanded: true, layerToggles: { 'human-civilisation': true } },
   },
   {
+    name: 'bottom-chrome-height',
+    description:
+      'Condensing pass (2026-09-18, user report: "reduce the vertical footprint of the bottom ' +
+      'chrome"): the <Timeline> control\'s own drawn height (scrub track, ruler, section bands, ' +
+      'transport row — not the scene caption above it, a separate ShellLayout slot) at 1440x900, ' +
+      "present day. Was ~194px before the pass (the dismissible first-use hint's own row plus " +
+      'generous inter-row gaps/margins); a regression back toward that — or an over-eager future ' +
+      'cut that starts clipping/overlapping rows — should fail this band.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
+    expect: { 'timeline.height': [135, 175] },
+  },
+  {
     name: 'viewport-1024x768',
-    description: 'Common laptop viewport sanity check — default view.',
+    description: 'Common laptop viewport sanity check — default view, plus the same bottom-chrome height guard at this width.',
     viewport: { width: 1024, height: 768 },
     t: 0,
+    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
+    expect: { 'timeline.height': [150, 205] },
   },
   {
     name: 'viewport-390x844-phone-portrait',
-    description: 'Phone portrait sanity check — default view, ancestor panel collapse behaviour.',
+    description:
+      'Phone portrait sanity check — default view, ancestor panel collapse behaviour, plus the same ' +
+      'bottom-chrome height guard (a taller band here: the breadcrumb and secondary controls stack ' +
+      'into their own rows below 760px, DESIGN §8).',
     viewport: { width: 390, height: 844 },
     t: 0,
+    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
+    expect: { 'timeline.height': [230, 310] },
   },
 ]

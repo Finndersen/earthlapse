@@ -7,7 +7,11 @@
 .strip {
   position: relative;
   width: 100%;
-  height: 22px;
+  /* Tightened from 22px (condensing pass, 2026-09-18): every band label is short, uppercase,
+     single-line caps mono at 9.5px (`.bandButton`/`.leaf` below) with no descenders — 22px was
+     centring that text in a box roughly twice its own line height. `@media (pointer: coarse)`
+     below still bumps this back up for a touch target, unaffected by this base value. */
+  height: 13px;
   overflow-x: auto;
   overflow-y: hidden;
   outline: none;

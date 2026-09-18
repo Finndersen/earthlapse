@@ -77,8 +77,8 @@ function isTextInputTarget(target: EventTarget | null): boolean {
 }
 
 /** Display strings for each era-navigation shortcut's key(s), shown in `SectionBreadcrumb`'s
- *  button tooltips and `TimelineHint`'s hint text — one source so neither can drift from what
- *  `timelineKeyIntent` actually maps below. */
+ *  button tooltips — one source so they can't drift from what `timelineKeyIntent` actually maps
+ *  below. */
 export const LEAVE_SECTION_KEY_HINT = 'Escape or Backspace'
 export const GO_TO_ROOT_KEY_HINT = 'Home or 0'
 export const NEXT_SECTION_KEY_HINT = 'Shift+→ or Page Down'

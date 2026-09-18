@@ -2,8 +2,12 @@
    the timeline's own box, so whatever the shell stacks above (the scene caption) sits clear of
    them without knowing their geometry. */
 .hitArea {
-  --readout-gap: 4px;
-  --readout-line: 14px;
+  /* Tightened from 4px/14px (condensing pass, 2026-09-18): the hit area itself (48px, below)
+     is untouched — scrubbing and the fisheye hover keep the exact same target — this only trims
+     the reserved room for the floating playhead/hover time label above it. --readout-line stays
+     ≥ the label's own 12px font-size, so no glyph is clipped. */
+  --readout-gap: 2px;
+  --readout-line: 13px;
 
   position: relative;
   height: 48px;

@@ -1,14 +1,13 @@
 .timeline {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* Tightened from 8px (condensing pass, 2026-09-18 — user report: "reduce the vertical
+     footprint of the bottom chrome"): a hairline-scale row separator between the ruler, the
+     section-band strip and the controls row, not a content margin — none of those rows has its
+     own legible content within 4px of its edge, so this was pure dead space stacked three times. */
+  gap: 2px;
   width: 100%;
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
-}
-
-.hintRow {
-  display: flex;
-  justify-content: center;
 }
 
 /* Three named tracks so `.controlsCore` (the transport's back/play/forward group) lands
@@ -24,7 +23,10 @@
   grid-template-areas: 'sections core secondary';
   align-items: center;
   gap: clamp(12px, 2vw, 28px);
-  margin-top: 12px;
+  /* Tightened from 12px (condensing pass, 2026-09-18): this row's own height is already fixed by
+     the 44px play button (`Transport.module.css`'s `.playButton`), so this margin was pure gap
+     above it, not room any control needs. */
+  margin-top: 4px;
 }
 
 .controlsSections {
@@ -155,7 +157,7 @@
   }
 
   .timeline {
-    gap: 6px;
+    gap: 2px;
   }
 
   .controlsSections {

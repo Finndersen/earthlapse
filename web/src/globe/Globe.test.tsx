@@ -62,10 +62,21 @@ describe('Globe without WebGL', () => {
     expect(screen.queryByRole('button', { name: 'Collapse globe' })).toBeNull()
   })
 
-  it('keeps the expanded layout — close button present, no expand button', () => {
-    renderGlobe({ expanded: true })
+  it('shows a persistent, decorative expand glyph on the minimised orb, not just a hover ring', () => {
+    const { container } = renderGlobe({ expanded: false })
+    const glyph = container.querySelector('[class*="expandGlyph"]')
+    expect(glyph).toBeTruthy()
+    // Decorative: the one accessible name for this control stays on `.expandButton` (asserted
+    // above) so the glyph must never duplicate or replace it.
+    expect(glyph?.getAttribute('aria-hidden')).toBe('true')
+    expect(glyph?.hasAttribute('aria-label')).toBe(false)
+  })
+
+  it('keeps the expanded layout — close button present, no expand button or glyph', () => {
+    const { container } = renderGlobe({ expanded: true })
     expect(screen.getByRole('button', { name: 'Collapse globe' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Expand globe' })).toBeNull()
+    expect(container.querySelector('[class*="expandGlyph"]')).toBeNull()
   })
 
   it('still toggles expand on a plain click on the minimised orb (no OrbitControls needed)', () => {

@@ -491,6 +491,25 @@ export function Globe({
           <GlobeStaticOrb />
         )}
 
+        {/* Persistent "this expands" affordance (user follow-up, 2026-09-18: "make it more
+            obvious the globe can be selected"). `.expandButton`'s own ring below only shows on
+            hover/focus, which is invisible to a viewer who never hovers — exactly the viewer the
+            affordance is for. Decorative only (`aria-hidden`): the accessible name and the
+            keyboard/focus-ring path both stay on `.expandButton` immediately below, unchanged. */}
+        {!expanded && (
+          <svg
+            className={styles.expandGlyph}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+          </svg>
+        )}
         {!expanded && (
           <button type="button" className={styles.expandButton} onClick={onToggleExpand} aria-label="Expand globe" />
         )}

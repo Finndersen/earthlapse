@@ -59,7 +59,7 @@
  * layout mechanics; follow-up pass items 1/2/10 cover why the row is shaped this way).
  */
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
@@ -69,10 +69,8 @@ import { AxisTicks } from './components/AxisTicks'
 import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
-import { TimelineHint } from './components/TimelineHint'
 import { RateReadout, TimeCompressedBadge, TransportCore, TransportSecondary } from './components/Transport'
 import { fisheyeScale } from './fisheye'
-import { readHintDismissed, writeHintDismissed } from './hint'
 import { timelineKeyIntent } from './keyboard'
 import { stepSpeed } from './playback'
 import type { TimeWindow } from './scale'
@@ -162,29 +160,12 @@ export function Timeline({
   sound,
   overlayOpen = false,
 }: TimelineProps) {
-  // The first-use hint (brief §2): shown until either dismissed directly or the first
-  // successful hover (the gesture that reveals the fisheye lens — the thing this hint exists to
-  // teach). Starts hidden and only flips on in an effect (not read synchronously from
-  // sessionStorage during render) so a server-rendered first paint never disagrees with the
-  // client's own storage — avoiding a hydration mismatch.
   // Visible name for the scale toggle's `role="group"`, stacked above its buttons rather than
   // beside them (follow-up pass, user report 2026-09-15) — `aria-labelledby`, not a second,
   // separate `aria-label` repeating the same text, so the group's one accessible name is sourced
   // from what a sighted user actually reads (same convention `TransportSecondary`'s mode toggle
   // now uses for the same reason).
   const scaleLabelId = useId()
-
-  const [hintVisible, setHintVisible] = useState(false)
-  useEffect(() => {
-    if (!readHintDismissed()) setHintVisible(true)
-  }, [])
-  const hintDismissedRef = useRef(false)
-  const dismissHint = useCallback((): void => {
-    setHintVisible(false)
-    if (hintDismissedRef.current) return
-    hintDismissedRef.current = true
-    writeHintDismissed()
-  }, [])
 
   // The window being drawn (mid-animation during a section change) versus the selected
   // section's own window, which stepping stays inside.
@@ -231,13 +212,6 @@ export function Timeline({
     [scale, fisheye.lens, fisheye.trackWidthPx, markers],
   )
 
-  const handleLensPointer = useCallback(
-    (u: number, trackWidthPx: number): void => {
-      dismissHint()
-      fisheye.pointTo(u, trackWidthPx)
-    },
-    [dismissHint, fisheye.pointTo],
-  )
 
   // A band or breadcrumb click (or Escape) swaps out the very element that had focus. When
   // focus was inside the timeline at that moment, it goes to the new band strip rather than
@@ -304,7 +278,7 @@ export function Timeline({
   }
 
   return (
-    <div ref={rootRef} className={styles.timeline} onKeyDown={handleKeyDown}>
+    <div ref={rootRef} className={styles.timeline} data-testid="timeline-root" onKeyDown={handleKeyDown}>
       <ScrubTrack
         t={t}
         window={visibleWindow}
@@ -313,16 +287,11 @@ export function Timeline({
         checkpoints={checkpoints}
         onScrub={scrubWithinSection}
         onOpenCluster={onOpenCluster}
-        onLensPointer={handleLensPointer}
+        onLensPointer={fisheye.pointTo}
         onLensRelease={fisheye.release}
       />
       <AxisTicks window={visibleWindow} scale={trackScale} knee={sectionKnee} />
       <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
-      {hintVisible && (
-        <div className={styles.hintRow}>
-          <TimelineHint onDismiss={dismissHint} />
-        </div>
-      )}
       <div className={styles.controlsRow}>
         <div className={styles.controlsSections}>
           <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />

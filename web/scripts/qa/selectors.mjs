@@ -12,3 +12,11 @@
 export const GLOBE_CANVAS_SELECTOR = 'div[data-map-mode] canvas'
 export const ANCESTOR_CANVAS_SELECTOR = '[data-testid="ancestor-portrait"] canvas'
 export const SCENE_CANVAS_SELECTOR = `canvas:not(${GLOBE_CANVAS_SELECTOR}):not(${ANCESTOR_CANVAS_SELECTOR})`
+
+/** The `<Timeline>` control's own root — scrub track, ruler, section bands and the transport row
+ *  (back/play/forward, breadcrumb, speed/mode/scale/sound, rate readout) — the "bottom chrome"
+ *  the brief means (CLAUDE.md's condensing task): everything below the scene caption, which is a
+ *  separate `ShellLayout` slot and not part of this stack. Carries this `data-testid` itself
+ *  (`Timeline.tsx`), so no exclusion-selector workaround is needed the way the scene canvas above
+ *  requires. */
+export const BOTTOM_CHROME_SELECTOR = '[data-testid="timeline-root"]'

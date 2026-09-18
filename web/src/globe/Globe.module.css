@@ -231,6 +231,42 @@
     0 0 20px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
 }
 
+/* The persistent expand affordance: a small "fullscreen" corner-bracket glyph, always visible
+   at low contrast (never hover-only — see its doc comment in Globe.tsx) so a viewer who never
+   hovers still sees the orb is interactive. Sits in the ~12% margin between the box edge and the
+   sphere's own silhouette (`.halo`'s doc comment above has the measurement), so it never draws
+   over the globe itself regardless of viewport. Decorative (`aria-hidden`) and
+   `pointer-events: none`, same as `.halo`/`.expandButton`: it never becomes a second hit target
+   or a second accessible name, only a visual echo of the one `.expandButton` already provides.
+   The double `drop-shadow` mirrors `--hud-shadow` (`ShellLayout.module.css`) so the glyph stays
+   legible over a bright plate, not just a dark one, without the light/dark split every other HUD
+   text token needs — `filter` (not `text-shadow`) is what actually darkens an SVG stroke's edges. */
+.expandGlyph {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  width: clamp(13px, 13%, 20px);
+  height: clamp(13px, 13%, 20px);
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  opacity: 0.85;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.85));
+  pointer-events: none;
+  transition:
+    color 200ms ease,
+    opacity 200ms ease,
+    filter 200ms ease;
+}
+
+/* Brightens on hover (mouse) and on focus (keyboard, via `.expandButton`'s focus landing inside
+   this same `.orb`) — the same two triggers `.expandButton`'s own ring already responds to,
+   keyed the same way (`.orb:hover .halo`/`.expandButton` above) so all three move together. */
+.orb:hover .expandGlyph,
+.orb:focus-within .expandGlyph {
+  color: var(--hud-accent, #e8b06a);
+  opacity: 1;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 10px var(--hud-accent-glow, rgba(232, 176, 106, 0.55)));
+}
+
 /* The Globe/Map toggle (ADR-033): top-left of the backdrop, mirroring `.closeButton`'s
    top-right offsets. Not top-centre: `ShellLayout.module.css` lifts the shell's own time/era
    title to `z-index: 60` — above this backdrop's `z-index: 50` — exactly there while the globe
@@ -554,6 +590,7 @@
 
   .halo,
   .expandButton,
+  .expandGlyph,
   .closeButton,
   .poleLabel,
   .viewModeButton,
