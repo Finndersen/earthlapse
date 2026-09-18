@@ -133,6 +133,29 @@ export function isSubFrameOf(frame: { width: number; height: number } | null, ca
   return frame !== null && frame.height > 0 && frame.width <= canvasSize.width && frame.height <= canvasSize.height
 }
 
+/**
+ * The device pixel ratio to render at, given a `BUDGET_PIXELS`-sized ceiling on the drawing
+ * buffer's total pixel count (`widthPx * heightPx * dpr^2`) — `Globe.tsx`'s replacement for a
+ * flat DPR pin on the expanded canvas (2026-09-18 follow-up, user verbatim: "the click-dragging
+ * of the globe in expanded view doesn't feel very responsive"). A flat pin (`dpr = 1` always) has
+ * a flaw independent of whatever frame-rate figure justified it: it bounds nothing. On a small
+ * canvas (the minimised orb, or an ordinary laptop's expanded view) it throws away real
+ * sharpness the GPU never even struggled to render; on a 5K display it still leaves millions more
+ * pixels than the case that prompted the pin in the first place, since it never looks at how
+ * large the canvas actually is. A budget on the buffer itself is viewport-independent instead:
+ * full `devicePixelRatio` while the buffer is small, tapering smoothly — via `sqrt`, since pixel
+ * count grows with the *square* of a linear DPR change — only once it would cross the budget, and
+ * bounded on any display. Never below `1` (a `dpr` under 1 would upscale a genuinely
+ * under-resolved buffer, not save anything meaningful at this scene's pixel counts) and never
+ * above the display's own real `devicePixelRatio` (this only ever trades sharpness for pixels,
+ * never invents resolution the display can't show).
+ */
+export function budgetedDpr(devicePixelRatio: number, widthPx: number, heightPx: number, budgetPixels: number): number {
+  const areaPx = widthPx * heightPx
+  if (areaPx <= 0) return 1
+  return Math.max(1, Math.min(devicePixelRatio, Math.sqrt(budgetPixels / areaPx)))
+}
+
 /** A single scroll/pinch step's worth of camera dolly, scaled by `factor` (< 1 moves closer / in,
  *  > 1 moves away / out) and clamped to `[minDistance, maxDistance]` — the same bounds
  *  `OrbitControls`'s own `minDistance`/`maxDistance` props already enforce for scroll/pinch, so a

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  budgetedDpr,
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
@@ -200,6 +201,47 @@ describe('isSubFrameOf', () => {
 
   it('is false when only the width exceeds the canvas', () => {
     expect(isSubFrameOf({ width: 1000, height: 500 }, { width: 900, height: 900 })).toBe(false)
+  })
+})
+
+describe('budgetedDpr', () => {
+  const BUDGET = 5_200_000
+
+  it('returns the full device pixel ratio while the buffer is well under budget', () => {
+    // The minimised orb, ~250px square: budget is nowhere near binding.
+    expect(budgetedDpr(2, 250, 250, BUDGET)).toBeCloseTo(2)
+  })
+
+  it('returns the full device pixel ratio right at the reference viewport the budget was set from', () => {
+    // 1440x900 at dpr 2 is exactly the ~5.2M px case this budget was measured against.
+    expect(budgetedDpr(2, 1440, 900, BUDGET)).toBeCloseTo(2, 1)
+  })
+
+  it('tapers below the device pixel ratio once the buffer would exceed budget', () => {
+    const dpr = budgetedDpr(2, 2560, 1440, BUDGET) // a ~5K-class viewport
+    expect(dpr).toBeLessThan(2)
+    expect(dpr).toBeGreaterThan(1)
+  })
+
+  it('bounds the resulting buffer at (approximately) the budget once tapering', () => {
+    const width = 2560
+    const height = 1440
+    const dpr = budgetedDpr(2, width, height, BUDGET)
+    const bufferPixels = width * dpr * height * dpr
+    expect(bufferPixels).toBeLessThanOrEqual(BUDGET * 1.001)
+  })
+
+  it('never goes below 1 even for a huge viewport (no upscaling)', () => {
+    expect(budgetedDpr(2, 8000, 4000, BUDGET)).toBeCloseTo(1)
+  })
+
+  it('never exceeds the display’s own device pixel ratio', () => {
+    // A tiny buffer with a huge nominal device pixel ratio should still clamp to the device's own.
+    expect(budgetedDpr(3, 100, 100, BUDGET)).toBeCloseTo(3)
+  })
+
+  it('is a no-op (always 1) on a non-retina display', () => {
+    expect(budgetedDpr(1, 2560, 1440, BUDGET)).toBeCloseTo(1)
   })
 })
 

@@ -49,6 +49,7 @@ import {
   type TravelDirection,
 } from './blend'
 import {
+  budgetedDpr,
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
@@ -90,30 +91,48 @@ const CAMERA_DISTANCE = 3.6
 /** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap.
  *  Unchanged from before this file's full-bleed-canvas change (issue 1). */
 const MINIMISED_DPR: [number, number] = [1, 2]
-/** The *expanded* canvas's device pixel ratio, pinned to exactly `1` rather than
- *  `MINIMISED_DPR`'s `[1, 2]` range — measured trade-off for the "responsive dragging" follow-up
- *  (user verbatim: "the click-dragging of the globe in expanded view doesn't feel very
- *  responsive... not sure if this is a 'weight'/friction setting or a performance issue").
- *  Measured both candidates before changing anything (a `git worktree` checkout of the pre-
- *  clip-removal commit as the "before" build, same drag simulation against both): input tuning
- *  (`rotateSpeed`/`dampingFactor`) was not it — idle (no interaction at all) render pace dropped
- *  by the same amount as during a drag, which a damping/speed setting cannot explain. Frame rate
- *  was it, and it *was* newly caused by issue 1's canvas covering the whole backdrop instead of a
- *  ~550px box (this file's own git history has the exact numbers): at this file's default test
- *  viewport (1440x900) with `deviceScaleFactor: 2` (retina) the expanded canvas's drawing buffer
- *  went from ~1090x1090 to ~2880x1800 px, and measured idle frame pace in a headless/software-
- *  rendered browser fell from ~5.5 fps to ~0.4 fps — a ~13x hit, not the ~4x the raw pixel-area
- *  ratio alone would suggest (this environment's software rasteriser is not linear in pixel
- *  count). Even at `deviceScaleFactor: 1` the *area* increase alone (~4.3x, 1440x900 vs the old
- *  ~550x550 box) cost a real, repeatable ~30% (three alternating trials against the same
- *  worktree baseline). Pinning to `1` removes the DPR half of that multiplier — the dominant
- *  factor on any real retina display — while leaving the canvas genuinely full-bleed (issue 1's
- *  own point: zooming must have real room to grow into, including behind the chrome), rather than
- *  recapping its *extent* back down to a fixed box and reintroducing some version of the same
- *  clip this file exists to remove. The trade-off is real: the sphere/map render at native
- *  resolution instead of retina-doubled, a soft-lit globe with no fine text on it, not the same
- *  cost a sharp-edged UI element would pay for this. */
-const EXPANDED_DPR = 1
+/**
+ * The pixel budget `budgetedDpr` (`camera.ts`) sizes the *expanded* canvas's device pixel ratio
+ * against — a measured trade-off for the "responsive dragging" follow-up (user verbatim: "the
+ * click-dragging of the globe in expanded view doesn't feel very responsive... not sure if this
+ * is a 'weight'/friction setting or a performance issue"), revised after a first pass pinned this
+ * to a flat `1` and was asked to be re-measured and replaced.
+ *
+ * **The diagnosis, unchanged across both passes.** Input tuning (`rotateSpeed`/`dampingFactor`)
+ * was not the cause — idle (no interaction at all) render pace dropped by the same amount as
+ * during a drag, which a damping/speed setting cannot explain. Frame rate was it, and it *was*
+ * newly caused by issue 1's canvas covering the whole backdrop instead of a ~550px box.
+ *
+ * **The magnitude, re-measured on a quiet machine.** The first pass's ~13x figure at
+ * `deviceScaleFactor: 2` was measured while the test machine was also on a video call — a real
+ * confound neither the earlier pass nor the headless/software-rasteriser caveat it carried
+ * accounted for. Re-measured with the same method (a `git worktree` checkout of the pre-clip-
+ * removal commit as the "before" build, alternating trials against the current build, `--port
+ * 4322 --out globe-frame`) on an otherwise-idle machine: at 1440x900 with `deviceScaleFactor: 2`
+ * the regression was ~1.6x (idle fps 7.34 -> 4.57 across five alternating trials each), not ~13x;
+ * at `deviceScaleFactor: 1` the area increase alone cost ~1.3x (18.04 -> 13.50), matching the
+ * first pass's own DPR-1 figure closely. A third data point at a larger buffer (1728x1117 @
+ * `deviceScaleFactor: 2`, ~7.72M px, approximating a 16" MacBook Pro) measured 3.05 fps — cost
+ * scales roughly linearly with pixel count *once past* ~5M px, not the sharply superlinear curve
+ * the confounded figure implied.
+ *
+ * **Why a budget instead of reinstating the flat pin.** A flat `dpr = 1` has a flaw independent
+ * of whichever figure justified it: it bounds nothing. It's needlessly soft on a small buffer (an
+ * ordinary laptop's expanded view has real headroom the measurements above confirm) and still
+ * unbounded on a large one (a 5K display's own ~14M-px buffer at `dpr: 1` is considerably worse
+ * than the ~5.2M-px case a pin was introduced to fix, since a flat pin never looks at how big the
+ * canvas actually is). `EXPANDED_DPR_BUDGET_PIXELS` bounds the *buffer* itself, so it holds at any
+ * display size instead of only the one it happened to be tuned against.
+ *
+ * **Why this specific number.** Chosen from the measurements above, not guessed: 1440x900 at
+ * `dpr: 2` is ~5.18M px and measured an acceptable, non-catastrophic ~1.6x cost — so the budget is
+ * set to keep that *exact* common case at full retina sharpness (this is deliberately the same
+ * reference point the re-measure request itself used), while a 5K-class display's own ~14.7M-px
+ * request now tapers smoothly down to fit the same budget instead of paying for triple that many
+ * pixels outright. The floor stays "the visual centrepiece" first: nothing here trims quality at
+ * ordinary sizes, only at the sizes the data says actually cost something.
+ */
+const EXPANDED_DPR_BUDGET_PIXELS = 5_200_000
 /** `GlobeSphere`'s own `sphereGeometry` radius — named so the pole markers below (`poles.ts`,
  *  `PoleAxisMarkers`) agree with the sphere on exactly where its surface sits. */
 const GLOBE_RADIUS = 1
@@ -535,6 +554,7 @@ export function Globe({
   // reported back the same way `caption`/`onWebglContextRestored` already cross that boundary.
   const cameraApiRef = useRef<GlobeCameraApi>(null)
   const [zoomBounds, setZoomBounds] = useState<ZoomBounds>({ canZoomIn: true, canZoomOut: true })
+  const expandedDpr = useExpandedCanvasDpr(expanded)
 
   // The element types and order stay identical across both states so toggling restyles the
   // same <Canvas> rather than remounting it (a new WebGL context and texture re-upload).
@@ -573,7 +593,7 @@ export function Globe({
         {webgl ? (
           <Canvas
             camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }}
-            dpr={expanded ? EXPANDED_DPR : MINIMISED_DPR}
+            dpr={expanded ? expandedDpr : MINIMISED_DPR}
             gl={{ alpha: true }}
             // The full-bleed canvas (`Globe.module.css`'s `.orbExpanded` doc comment) is mostly
             // transparent (`alpha: true`) around the sphere/map, so a click there must still read
@@ -1321,6 +1341,30 @@ function useCaptionReport(caption: string, onCaptionChange: ((caption: string) =
   useEffect(() => {
     onCaptionChange?.(caption)
   }, [caption, onCaptionChange])
+}
+
+/**
+ * The expanded canvas's own budgeted DPR (`EXPANDED_DPR_BUDGET_PIXELS`'s own doc comment) — reads
+ * `window.innerWidth`/`innerHeight` directly rather than waiting on a `ResizeObserver` measurement
+ * of `.orbExpanded` itself: that element is `position: absolute; inset: 0` inside a
+ * `position: fixed; inset: 0` backdrop (`Globe.module.css`'s own doc comment), so it always
+ * exactly matches the viewport, known synchronously on the very first render — no "not measured
+ * yet" fallback state to get wrong the way `sphereFitFrame`'s own DOM measurement needs one for
+ * (`sphereFrameReady`'s own doc comment has that story). Only tracked while `expanded`: the
+ * minimised orb keeps `MINIMISED_DPR` unconditionally and never needs this at all. */
+function useExpandedCanvasDpr(expanded: boolean): number {
+  const [size, setSize] = useState<{ width: number; height: number }>(() =>
+    typeof window === 'undefined' ? { width: 0, height: 0 } : { width: window.innerWidth, height: window.innerHeight },
+  )
+  useEffect(() => {
+    if (!expanded) return undefined
+    const recompute = (): void => setSize({ width: window.innerWidth, height: window.innerHeight })
+    recompute()
+    window.addEventListener('resize', recompute)
+    return () => window.removeEventListener('resize', recompute)
+  }, [expanded])
+  const devicePixelRatio = typeof window === 'undefined' ? 1 : window.devicePixelRatio
+  return budgetedDpr(devicePixelRatio, size.width, size.height, EXPANDED_DPR_BUDGET_PIXELS)
 }
 
 /** Escape collapses the expanded globe. The latest callback is read through a ref so the

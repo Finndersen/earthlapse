@@ -1,35 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Earthlapse">
-  <!--
-    The Earthlapse mark: a planet with a sweep arc running around it, ending in the same
-    amber playhead dot the timeline uses. Earth, plus time passing over it — the name, literally.
-
-    Authored by hand rather than generated, for three reasons: a favicon is read at 16px where
-    generated raster detail turns to mush, an SVG stays exact at every size a browser asks for,
-    and it costs nothing from the image budget.
-
-    Everything here is sized against the 16px floor. No stroke is thinner than 2.5 units (= 0.6px
-    at 16px, which still survives antialiasing), the arc clears the globe by a full stroke width
-    so the two never merge into one blob when downsampled, and the palette is only three tones —
-    at 16px, subtlety reads as mud. The dark plate is deliberate: a transparent favicon vanishes
-    into a light browser tab, and this must work in both.
-  -->
-  <rect width="64" height="64" rx="14" fill="#0a0f16" />
-
-  <!-- The planet, offset down-left to leave the arc room to pass over its shoulder. -->
-  <circle cx="29" cy="36" r="17" fill="#2f5d7c" />
-  <!-- Two bands, not a coastline: at 16px a real landmass silhouette is noise, but a lit
-       equator and a terminator curve still read as "sphere" rather than "flat disc". -->
-  <path d="M13.2 31.5a17 17 0 0 1 31.6 0Z" fill="#3f7a9a" />
-  <path d="M29 19a17 17 0 0 0 0 34a13 17 0 0 1 0-34Z" fill="#26506c" />
-
-  <!-- The sweep: a comet arc over the top, thinning into the leading dot. Open at the lower
-       left so it reads as motion continuing, not as a closed ring around the planet. -->
-  <path
-    d="M9 44A23 23 0 0 1 48 16.5"
-    fill="none"
-    stroke="#e8b06a"
-    stroke-width="4.5"
-    stroke-linecap="round"
-  />
-  <circle cx="49.5" cy="17.5" r="6" fill="#f2c88a" />
+  <defs>
+    <radialGradient id="sea" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#57a0cb"/><stop offset="1" stop-color="#1a4059"/>
+    </radialGradient>
+    <clipPath id="ball"><circle cx="32" cy="32" r="21"/></clipPath>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0a0f16"/>
+  <circle cx="32" cy="32" r="21" fill="url(#sea)"/>
+  <g clip-path="url(#ball)" fill="#57a55a">
+    <ellipse cx="21" cy="24" rx="11" ry="7.5" transform="rotate(-18 21 24)"/>
+    <ellipse cx="38" cy="42" rx="9.5" ry="7" transform="rotate(12 38 42)"/>
+    <ellipse cx="47" cy="23" rx="6" ry="4.5"/>
+  </g>
+  <path d="M32 11A9 21 0 0 1 32 53A21 21 0 0 0 32 11Z" clip-path="url(#ball)" fill="#04080d" opacity=".62"/>
+  <!-- A dark casing under the hands, drawn first and slightly wider: the amber then reads
+       against flat dark in every direction instead of fighting whatever continent is beneath
+       it. Standard trick, and the only reason this survives being laid over a busy sphere. -->
+  <g stroke="#06101a" stroke-width="7.4" stroke-linecap="round" opacity=".85">
+    <path d="M32 32 21 22.5"/><path d="M32 32 43.5 20"/>
+  </g>
+  <g stroke="#f0bd7c" stroke-width="4" stroke-linecap="round">
+    <path d="M32 32 21 22.5"/><path d="M32 32 43.5 20"/>
+  </g>
+  <circle cx="32" cy="32" r="3.6" fill="#06101a"/>
+  <circle cx="32" cy="32" r="2.4" fill="#f7d7a4"/>
 </svg>
