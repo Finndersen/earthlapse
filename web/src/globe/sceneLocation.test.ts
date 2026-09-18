@@ -50,14 +50,21 @@ describe('wrapAngle', () => {
 describe('focusRotationY', () => {
   const DEG2RAD = Math.PI / 180
 
-  it('needs rotation -L (radians) to bring a point at longitude L to face the camera', () => {
-    expect(focusRotationY(30)).toBeCloseTo(-30 * DEG2RAD)
-    expect(focusRotationY(-45)).toBeCloseTo(45 * DEG2RAD)
-    expect(focusRotationY(0)).toBeCloseTo(0)
+  it('needs rotation -L (radians) to bring a point at longitude L to face a camera at azimuth 0', () => {
+    expect(focusRotationY(30, 0)).toBeCloseTo(-30 * DEG2RAD)
+    expect(focusRotationY(-45, 0)).toBeCloseTo(45 * DEG2RAD)
+    expect(focusRotationY(0, 0)).toBeCloseTo(0)
+  })
+
+  it('accounts for a camera azimuth away from 0 (a viewer who has dragged the globe)', () => {
+    // A camera sitting 40 degrees around from its default azimuth needs that same 40 degrees
+    // added to the rotation, or the target lands 40 degrees short of actually centred.
+    expect(focusRotationY(30, 40 * DEG2RAD)).toBeCloseTo(10 * DEG2RAD)
+    expect(focusRotationY(0, -90 * DEG2RAD)).toBeCloseTo(-90 * DEG2RAD)
   })
 
   it('wraps the result into [-pi, pi)', () => {
-    const rotation = focusRotationY(-179)
+    const rotation = focusRotationY(-179, 0)
     expect(rotation).toBeGreaterThanOrEqual(-Math.PI)
     expect(rotation).toBeLessThan(Math.PI)
     expect(Math.cos(rotation)).toBeCloseTo(Math.cos(179 * DEG2RAD), 5)

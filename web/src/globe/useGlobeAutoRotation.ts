@@ -25,16 +25,39 @@
  * interpolating from any angle already in range toward a target is automatically the shorter of
  * the two possible directions.
  *
- * **The scene-location focus (ADR-034) rides this same accumulator.** `focusRotationY` is the
- * angle that centres a scene's place; passing one here starts an ease toward it and suppresses
- * drift until it settles, then drift resumes from where it landed. It is emphatically not a
- * second rotation source — see `sceneLocation.ts`'s own doc comment.
+ * **The scene-location focus (ADR-034) rides this same accumulator.** `focusLon` is the current
+ * scene's longitude, or `null`; passing a new one starts an ease toward whatever `rotation.y`
+ * actually centres it and suppresses drift until it settles. It is emphatically not a second
+ * rotation source — see `sceneLocation.ts`'s own doc comment.
+ *
+ * **The camera's own azimuth, read from the one place that owns it.** Centring has to account
+ * for wherever `OrbitControls` (`Globe.tsx`'s `GlobeCameraControls`) has actually left the
+ * camera — it rotates the camera about this same `+Y` axis in both the minimised orb and the
+ * expanded sphere, so a viewer who has dragged the globe leaves it at some azimuth other than 0
+ * (`sceneLocation.ts`'s `focusRotationY` doc comment has the full "moves but doesn't go all the
+ * way" story). This hook already runs inside the `<Canvas>` (as `GlobeRotatingGroup`'s child),
+ * so `useThree()` here reads the *same* camera object `GlobeCameraControls` drives — not a copy,
+ * not a value threaded down through `Globe.tsx`'s own props, which would be a second source of
+ * truth for something already owned by three.js's own scene graph. Read once, at the instant a
+ * new focus target is set (not every frame) — sampling continuously would restart the ease on
+ * every tick of a viewer's own drag while a scene's location is already the target, fighting the
+ * very input this feature must not fight.
+ *
+ * **Drift stays suppressed for as long as a scene location is the target, not just while the
+ * ease runs.** An ease alone only guarantees a perfect landing at one instant; the scene stays
+ * on screen for its own dwell afterward, and this hook has no way to know how long that will be.
+ * Tying suppression to "is `focusLon` currently non-null" — the same signal that starts the ease
+ * — rather than a fixed extra delay means the globe stays exactly on the scene's place for
+ * exactly as long as that place is what's being shown, with no separate timer to invent, tune
+ * against a dwell length that varies per scene, or let drift out of sync with. Ambient drift
+ * resumes, from wherever the ease landed, the moment the dominant scene has no location (or the
+ * orb expands, which already clears `focusLon` at the call site) — never mid-scene.
  */
 
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, type MutableRefObject } from 'react'
 
-import { FOCUS_EASE_SECONDS, REST_ROTATION, startFocusEase, stepGlobeRotation } from './sceneLocation'
+import { FOCUS_EASE_SECONDS, focusRotationY, REST_ROTATION, startFocusEase, stepGlobeRotation } from './sceneLocation'
 
 export const AUTO_ROTATE_RADIANS_PER_SECOND = 0.025
 
@@ -45,25 +68,31 @@ export interface GlobeRotationOptions {
   /** `prefers-reduced-motion`: stops drift outright (a continuous, non-essential motion effect)
    *  and snaps the scene-location focus instead of easing it. */
   reducedMotion: boolean
-  /** The angle that centres the current scene's location, or `null` for none — only ever passed
-   *  while the orb is minimised (`Globe.tsx`'s own gate: expanded, the viewer steers). */
-  focusRotationY: number | null
+  /** The current scene's location longitude, or `null` for none — only ever passed while the
+   *  orb is minimised (`Globe.tsx`'s own gate: expanded, the viewer steers). The `rotation.y`
+   *  that actually centres it depends on the camera's own azimuth at the moment the ease
+   *  starts, which this hook reads itself (see this file's own doc comment) — `sceneLocation.ts`
+   *  stays pure and never reaches for it. */
+  focusLon: number | null
 }
 
 /** The live `rotation.y` for `GlobeRotatingGroup`, updated in place every frame. */
-export function useGlobeAutoRotationY({ unfold, reducedMotion, focusRotationY }: GlobeRotationOptions): MutableRefObject<number> {
+export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon }: GlobeRotationOptions): MutableRefObject<number> {
+  const { camera } = useThree()
   const stateRef = useRef(REST_ROTATION)
-  const focusTargetRef = useRef<number | null>(null)
+  const focusLonRef = useRef<number | null>(null)
   const rotationYRef = useRef(0)
 
   useFrame((_state, delta) => {
-    if (focusRotationY !== focusTargetRef.current) {
-      focusTargetRef.current = focusRotationY
-      if (focusRotationY !== null) {
-        stateRef.current = startFocusEase(stateRef.current, focusRotationY, reducedMotion ? 0 : FOCUS_EASE_SECONDS)
+    if (focusLon !== focusLonRef.current) {
+      focusLonRef.current = focusLon
+      if (focusLon !== null) {
+        const cameraAzimuthY = Math.atan2(camera.position.x, camera.position.z)
+        const target = focusRotationY(focusLon, cameraAzimuthY)
+        stateRef.current = startFocusEase(stateRef.current, target, reducedMotion ? 0 : FOCUS_EASE_SECONDS)
       }
     }
-    const drift = unfold === 0 && !reducedMotion ? AUTO_ROTATE_RADIANS_PER_SECOND : 0
+    const drift = unfold === 0 && !reducedMotion && focusLon === null ? AUTO_ROTATE_RADIANS_PER_SECOND : 0
     stateRef.current = stepGlobeRotation(stateRef.current, delta, drift)
     rotationYRef.current = stateRef.current.rotationY * (1 - unfold)
   })

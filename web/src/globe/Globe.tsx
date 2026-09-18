@@ -33,7 +33,7 @@ import { citiesHaveDataAt } from './cities'
 import { densityBlendAt, densityChannelMask, densityHasDataAt, densityStrengthAt } from './density'
 import { DensityRampKey } from './DensityRampKey'
 import { HumanCivilisation } from './HumanCivilisation'
-import { sceneMarkerCoordinates, focusRotationY } from './sceneLocation'
+import { sceneMarkerCoordinates } from './sceneLocation'
 import {
   basemapStrengthAt,
   globeBlendAt,
@@ -383,9 +383,12 @@ export function Globe({
   // ADR-034: the scene's own plotted position. `sceneMarkerCoordinates` is the single place the
   // "never fall back to presentDay" rule lives. The small orb eases its rotation to centre it;
   // expanded or unfolded as a map the viewer is steering, so no focus target is passed at all and
-  // the camera is left entirely alone.
+  // the camera is left entirely alone. Only the longitude crosses this boundary — the rotation
+  // that actually centres it also depends on the camera's own current azimuth, which
+  // `useGlobeAutoRotationY` reads itself, inside the `<Canvas>`, from the one place that owns the
+  // camera (see that hook's own doc comment).
   const sceneMarker = sceneMarkerCoordinates(sceneLocation ?? undefined)
-  const sceneFocusRotationY = !expanded && sceneMarker !== null ? focusRotationY(sceneMarker.lon) : null
+  const sceneFocusLon = !expanded && sceneMarker !== null ? sceneMarker.lon : null
 
   // Set while a touch press lands on one of the human layer's own targets, so the orb's
   // tap-to-expand gesture stands down and the tap opens a tooltip instead.
@@ -614,7 +617,7 @@ export function Globe({
               if (expanded && event.type === 'click') onCollapse()
             }}
           >
-            <GlobeRotatingGroup unfold={unfold} reducedMotion={reducedMotion} focusRotationY={sceneFocusRotationY}>
+            <GlobeRotatingGroup unfold={unfold} reducedMotion={reducedMotion} focusLon={sceneFocusLon}>
               <GlobeSphere
                 beforeTex={pair.beforeTex}
                 afterTex={pair.afterTex}
@@ -1293,9 +1296,11 @@ interface GlobeRotatingGroupProps {
    *  behaviour over this same span. */
   unfold: number
   reducedMotion: boolean
-  /** The angle that centres the current scene's location (ADR-034), or `null` for none. Handed
-   *  to the same accumulator that owns the drift rather than applied as a second rotation. */
-  focusRotationY: number | null
+  /** The current scene's location longitude (ADR-034), or `null` for none. Handed to the same
+   *  accumulator that owns the drift rather than applied as a second rotation — see
+   *  `useGlobeAutoRotation.ts`'s own doc comment for why the rotation itself (which also needs
+   *  the camera's live azimuth) is computed inside that hook, not here. */
+  focusLon: number | null
   children: ReactNode
 }
 
@@ -1313,9 +1318,9 @@ interface GlobeRotatingGroupProps {
  * `PoleAxisMarkers` deliberately stays *outside* this group (its own doc comment) — both poles
  * sit on the rotation axis itself, so spinning them is a no-op not worth the extra nesting.
  */
-function GlobeRotatingGroup({ unfold, reducedMotion, focusRotationY, children }: GlobeRotatingGroupProps) {
+function GlobeRotatingGroup({ unfold, reducedMotion, focusLon, children }: GlobeRotatingGroupProps) {
   const groupRef = useRef<THREE.Group>(null)
-  const rotationYRef = useGlobeAutoRotationY({ unfold, reducedMotion, focusRotationY })
+  const rotationYRef = useGlobeAutoRotationY({ unfold, reducedMotion, focusLon })
   useFrame(() => {
     const group = groupRef.current
     if (group !== null) group.rotation.y = rotationYRef.current

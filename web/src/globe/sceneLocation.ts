@@ -34,14 +34,29 @@ export function wrapAngle(angle: number): number {
 }
 
 /**
- * The `rotation.y` that brings `lon` to face the camera. `lonLatToSphere` puts longitude `L` at
- * angle `L` about `+Y` from `+Z` (the camera's own direction, `projection.ts`'s doc comment), and
- * a `rotation.y` of `θ` carries a point at `L` to `L + θ`, so `θ = -L` is what lands it dead
- * centre. Latitude is deliberately ignored: the globe's single rotation axis is `Y`, and tilting
+ * The `rotation.y` that brings `lon` to face the camera, given the camera's own current
+ * azimuth about `+Y` (`cameraAzimuthY`, radians, measured the same way — angle from `+Z` toward
+ * `+X`). `lonLatToSphere` puts longitude `L` at angle `L` about `+Y` from `+Z`, and a
+ * `rotation.y` of `θ` carries a point at `L` to `L + θ`; that point faces the camera exactly
+ * when it lines up with the camera's own azimuth, i.e. `L + θ = cameraAzimuthY`, so
+ * `θ = cameraAzimuthY - L` is what lands it dead centre.
+ *
+ * **Why the camera's azimuth has to be an argument, not an assumed constant.** An earlier
+ * version of this function assumed the camera always sits at azimuth 0 (`θ = -L`), true only
+ * the instant the globe first mounts. `OrbitControls` (`Globe.tsx`'s `GlobeCameraControls`)
+ * rotates the camera around the same `+Y` axis in both the minimised orb and the expanded
+ * sphere, so a viewer who has ever dragged the globe leaves the camera sitting at some other
+ * azimuth the old formula had no way to know about — landing the ease exactly that far short of
+ * actually centred (browser-verified: the whole of the "moves but doesn't go all the way"
+ * report). The camera is owned by three.js's own scene graph, read once by the caller
+ * (`useGlobeAutoRotation.ts`, via `useThree()`) at the moment a new focus target is set, and
+ * passed in here — this module stays pure and canvas-free, never reaching for the camera itself.
+ *
+ * Latitude is deliberately still ignored: the globe's single rotation axis is `Y`, and tilting
  * it to chase a latitude would mean a second rotation source, which this feature must not add.
  */
-export function focusRotationY(lon: number): number {
-  return wrapAngle(-lon * DEG2RAD)
+export function focusRotationY(lon: number, cameraAzimuthY: number): number {
+  return wrapAngle(cameraAzimuthY - lon * DEG2RAD)
 }
 
 /** The signed shortest way round from `from` to `to`, in `[-π, π)`. Easing along this rather than

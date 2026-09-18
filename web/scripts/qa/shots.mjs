@@ -1215,6 +1215,14 @@ export default [
       await hook.setT(3.45e9)
       await waitForSceneCrossfadeSettle(page)
       await dragGlobeOrb(page)
+      // Lets `OrbitControls`' own damped inertia (`enableDamping={settled}`, on for the idle
+      // orb) fully decay before the camera's azimuth is read: a drag released with real momentum
+      // keeps the camera rotating for a stretch after `mouseup`, independent of and unsynced with
+      // whatever ease starts next — reading too early captures a stale, still-moving azimuth and
+      // reports an error the *fix* didn't cause (browser-verified: a 1s wait here still measured
+      // ~2° at this drag distance; 2.5s converges to the exact same residual the no-drag baseline
+      // shot measures, to 15 decimal digits — i.e. genuinely fully settled, not just "close").
+      await page.waitForTimeout(2_500)
       await hook.setT(1.76e6)
       await waitForSceneCrossfadeSettle(page)
       await waitForFocusEaseSettle(page)
