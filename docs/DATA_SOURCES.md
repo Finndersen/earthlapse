@@ -17,9 +17,9 @@ Measure before committing to a storage strategy.
 
 ## Contract
 
-### The four curated shapes (NORMATIVE)
+### The five curated shapes (NORMATIVE)
 
-Every source normalises to exactly one of these. Adding a fifth requires an ADR.
+Every source normalises to exactly one of these. Adding another requires an ADR.
 
 | Shape | Fields | Used for |
 |---|---|---|
@@ -27,6 +27,7 @@ Every source normalises to exactly one of these. Adding a fifth requires an ADR.
 | `EventSet` | `t_min, t_max, label, kind, t (moments only), tags, importance, description, citation` | timeline events |
 | `RasterSequence` | `t, georeferenced grid` | globe textures, gridded layers |
 | `Tree` | `node, parent, t_divergence, label` | ancestor lineage |
+| `FeatureSet` | `id, name, country, lat, lon, certainty, estimates: [(t, population)]` | labelled, dated geographic points (ADR-035) — e.g. `sources/cities`' major historical cities |
 
 ### Directory layout per source
 
@@ -257,27 +258,134 @@ source from events-core" for the full reasoning.
 
 # Tier 2 — needed for the full experience
 
-## `hyde` — Population and land use
+## `basemap` — Human-era globe base (Natural Earth II)
 
-The sleeper. Gridded, so it animates civilisation spreading across the globe from real data.
+Replaces the PaleoDEM reconstruction for the recent past, where continental drift is
+imperceptible (ADR-030). Idealised pre-modern land cover by design, so it doesn't
+double-count the `hyde` cleared-land overlay below.
 
 | | |
 |---|---|
-| **Source** | [HYDE 3.3, PBL Netherlands](https://www.pbl.nl/en/image/links/hyde) |
-| **Access** | Direct download from PBL; also mirrored on Kaggle |
-| **Format** | ASCII grid / netCDF, gridded at 5 arcmin |
-| **Coverage** | 10,000 BC → present, sub-millennial early then decadal |
-| **Volume** | ⚠️ VERIFY — **large**, plausibly several GB for the full gridded set |
-| **Licence** | ⚠️ VERIFY — believed CC BY, confirm on PBL site |
-| **Shape** | `RasterSequence` (gridded) + `TimeSeries` (global population total) |
-| **Storage** | raw not committed; **derived low-res textures → R2**; global total → git |
+| **Source** | Natural Earth II, "with Shaded Relief, Water, and Drainages", 1:10m — [naturalearthdata.com](https://www.naturalearthdata.com/downloads/10m-raster-data/10m-natural-earth-2/) |
+| **Access** | **VERIFIED.** The download page's own links are broken (resolve to a doubled-origin URL, a template bug); the real file is served from Natural Earth's CDN, `naciscdn.org/naturalearth/10m/raster/NE2_LR_LC_SR_W_DR.zip` — see `sources/basemap/README.md` "What was and wasn't downloaded" |
+| **Format** | GeoTIFF, 16200×8100, plain equirectangular WGS84 |
+| **Coverage** | temporally flat (not per-epoch data); published domain `[0, 2,580,000]` years BP (the Gelasian/Quaternary-Pleistocene boundary, ICS chart) — informational, not the product's own paleodem↔basemap crossfade band (300–400 ka, fixed by the user, web-side only — see `sources/basemap/README.md` "Time domain vs. the crossfade window") |
+| **Volume** | measured: 194,338,220 bytes (194.3 MB) raw zip; 1,711,130 bytes (1.71 MB) published across both tiers — see `sources/basemap/README.md` "Measured volume" |
+| **Licence** | **Public domain** (confirmed live: "All versions of Natural Earth raster + vector map data found on this website are in the public domain") |
+| **Shape** | `RasterSequence` × 2 (`basemap_t0` 2048×1024, `basemap_t1` 4096×2048 — two resolution tiers, each its own curated id rather than a shape change — see `sources/basemap/README.md` "Why two curated ids") |
+| **Storage** | raw not committed (gitignored); curated parquet → git; textures → generated media, committed via git-lfs into `data/media/` |
 
-**Processing** — heavy downsampling is essential. We do not need 5 arcmin for a corner
-globe. Extract: (a) global population as a `TimeSeries` for the HUD, (b) heavily downsampled
-cropland/pasture/population-density grids as globe overlay textures.
+**Processing** — the source GeoTIFF is resized (Lanczos) directly to each tier's target
+resolution and saved as lossy WebP (imagery, not a data layer, so CONTRIBUTING.md's higher
+accuracy bar for data layers doesn't apply). Full detail: `sources/basemap/README.md`.
 
-⚠️ **Scope risk:** it is easy to spend a week here. The global total alone is a day's work
-and delivers most of the value. Do that first, treat the gridded overlay as a stretch.
+## `hyde` — Cleared land (curated, not published), and population density (published)
+
+The sleeper. Gridded, so it animates civilisation spreading across the globe from real data.
+
+**Population density is implemented and published** (`sources/hyde/`, id
+`hyde_population_density`, ADR-031 amendment "population density"). **Cleared land is
+implemented but no longer published** (id `hyde_cleared_land`; the human found it not
+discernible on the globe — ADR-031 amendment) — it stays curated (fetch/normalise/tests all
+still run, the parquet still builds) so it can be re-published later by re-adding one
+`LayerSpec` line to `pipeline/publish.py`'s `RASTER_LAYERS`. **Global population as a
+`TimeSeries` for the HUD is now implemented and published** (id `population`, ADR-031 amendment
+"global population total") — the world total at each of the same 73 timesteps, a HUD readout and
+sparkline/chart alongside `co2`.
+
+| | |
+|---|---|
+| **Source** | **HYDE 3.2 only** (Klein Goldewijk et al. 2017), DANS: [doi:10.17026/DANS-25G-GEZ3](https://doi.org/10.17026/dans-25g-gez3). **HYDE 3.3 is CC BY-NC-SA 4.0 (confirmed via DataCite) and must NOT be used** — corrected from an earlier draft of this entry, which named 3.3 with an unverified "believed CC BY" licence |
+| **Access** | **VERIFIED.** Selective HTTP Range extraction directly against the DANS access endpoint (`archaeology.datastations.nl/api/access/datafile/5490328`, `HYDE3_2_1-baseline.zip`) — see `sources/hyde/README.md` "Fetch strategy" for why the whole 5.3 GB archive is never downloaded, and its Deflate64/`unzip` platform dependency |
+| **Format** | ASCII grid (`.asc`), 5 arcmin (4320×2160) |
+| **Coverage** | 10,000 BCE → 2015 CE, 73 real timesteps at HYDE's own native spacing (millennial → centennial → decadal → annual) — same 73 timesteps for cleared land and population density |
+| **Volume** | measured — see `sources/hyde/README.md` "Measured volume" (cleared land: cropland + pasture + rangeland + conv_rangeland) and "Population density encoding" (population: `popc`, plus the downsampled-texture `D_MAX` measurement) |
+| **Licence** | **CC0-1.0** (DANS deposit); the dataset's own bundled readme separately states CC BY 3.0 for the data itself — both recorded, both permissive |
+| **Shape** | `RasterSequence` × 2 + `TimeSeries`. `hyde_cleared_land` (curated only): R = cropland fraction, G = (pasture + conv_rangeland) fraction, B = rangeland fraction, per-cell, analytically area-weighted — see `sources/hyde/README.md` "Which HYDE variable is 'pasture'" for two sequential corrections: (1) `grazing` alone, used in an earlier revision, wrongly painted natural rangeland as cleared land; (2) `conv_rangeland`, initially left unfetched, was confirmed against the primary source (Klein Goldewijk et al. 2017) to be forest-biome grazing land the authors themselves define as assumed-cleared, so it is now fetched and summed into G. `hyde_population_density` (published): R = 8-bit log-scale-encoded people/km² (G = B = 0), decoded via this layer's own published `RasterEncoding` metadata (`channel`, `unit`, `dMax`) — see `sources/hyde/README.md` "Population density" for the encoding formula, how `D_MAX` (15,000) was measured from the real downsampled data, and why the area-weighted downsample sums people and area separately rather than averaging per-cell densities. `population` (published, id `population` — not `hyde_population_total`, so it slots directly into `WorldModel.at()`'s existing `self._s("population", t)` lookup and `HumanState.population`): a scalar `people` `TimeSeries`, `log-linear` interpolation, one sample per real HYDE timestep — a plain sum of the full-resolution `popc` grid (no area weighting: `popc` is already people per cell, so summing every valid cell directly *is* the world total, unlike the density raster above) |
+| **Storage** | raw not committed (gitignored, selectively re-fetched); curated parquet → git; textures → generated media, committed via git-lfs into `data/media/` |
+
+**Processing (cleared land)** — per timestep, `cropland<yr>.asc`, `pasture<yr>.asc`,
+`rangeland<yr>.asc` and `conv_rangeland<yr>.asc` (km² per cell) are each converted to a fraction
+of each cell's true (latitude-dependent) surface area, with ocean/no-data cells folded to 0,
+then downsampled to a 1024×512 lossless WebP: R = cropland, G = pasture + conv_rangeland
+(clipped to 1), B = rangeland (meant to be rendered fainter than R/G — it is natural,
+non-forest-biome grazing land HYDE's own authors say was not cleared). Full detail:
+`sources/hyde/README.md`.
+
+**Processing (population density)** — `popc<yr>.asc` (inhabitants per cell, fetched from a
+differently-shaped in-archive path than the land-use variables — confirmed directly from the
+archive's own central directory, not assumed) is divided by the same true per-cell surface area
+used for cleared land, then downsampled to 1024×512 *area-correctly*: total people divided by
+total area per output pixel's footprint (Pillow's `BOX` filter applied separately to the raw
+people-count and area grids, then divided), not a mean of already-computed per-cell densities,
+which would under-weight the small-area cells that hold most of a dense city's population.
+Encoded 8-bit per `pipeline/density_encoding.py`'s shared log-scale formula (documented in the
+layer's own published metadata so the web can decode an exact density, not just a relative
+shade). World totals sanity-checked directly against the full-resolution `popc` sums: 4.4M at
+10,000 BCE, 232M at 1 CE, 7.26B at 2015 CE — all within the expected order of magnitude. Full
+detail: `sources/hyde/README.md` "Population density".
+
+**Processing (global population total)** — for each of the same 73 timesteps, the
+full-resolution `popc<yr>.asc` grid (people per cell) is summed directly, with ocean/no-data
+folded to 0 and the handful of cells carrying small negative rounding noise clipped to 0 —
+matching the population-density raster's own two conventions exactly, so the two outputs can
+never silently disagree about what counts as "no people here". No area weighting: `popc` is
+already an absolute count per cell, so a plain sum over every valid cell is the world total.
+World totals sanity-checked directly against the full-resolution sums: 4.4M at 10,000 BCE, 232M
+at 1 CE, 943M at 1800 CE, 1.6B at 1900 CE, 6.1B at 2000 CE, 7.26B at 2015 CE — monotonically
+increasing and within the expected order of magnitude at every checkpoint (Klein Goldewijk et al.
+2017; UN World Population Prospects). Published as an ordinary `SCALAR_LAYERS` HUD entry
+(`pipeline/publish.py`), chartable like `co2`. **Out-of-domain treatment** (ADR-031 amendment
+"global population total"): the series' own domain is `[10, 12025]` years BP (2015 CE →
+10,000 BCE), same as the two rasters. Older than 10,000 BCE the readout reads absent ("no data"),
+same as every other scalar layer — never fabricated. Nearer than 2015 CE (`t < 10`, i.e. today)
+the web-side `<ScalarReadout>` holds the 2015 CE total rather than reading "no data", mirroring
+the population-density globe overlay's own "data simply ends, hold" convention
+(`web/src/globe/density.ts`'s `densityBlendAt`) — but annotates it "as of <year>" (`web/src/layers
+/components/ScalarReadout.tsx`), since silently freezing the number would misrepresent a 2015
+total as a live reading for right now. This hold is driven by the layer's own declared domain,
+not a special case for this one layer id, so it applies identically to any future scalar layer
+whose data ends before the present.
+
+---
+
+## `cities` — Major historical cities
+
+| | |
+|---|---|
+| **Source** | Reba, M., Reitsma, F. & Seto, K.C. (2016), "Spatializing 6,000 years of global urbanization from 3700 BC to AD 2000", *Scientific Data* 3:160034, doi:10.1038/sdata.2016.34 |
+| **Access** | **VERIFIED.** SEDAC's own listing (doi:10.7927/H4ZG6QBX) is a dead end — it gates bulk downloads behind a NASA Earthdata login and ships no direct CSV. The paper's own "Data Records" section names the real distribution: three CSVs (Chandler, Modelski Ancient, Modelski Modern) independently deposited on figshare, downloadable via `ndownloader.figshare.com` with no auth (`sources/cities/README.md` "Licence and access") |
+| **Format** | three wide CSVs (latin-1 encoded), one row per city, one column per dated population estimate (`BC_<year>`/`AD_<year>`) |
+| **Coverage** | 3700 BCE → 2000 CE (curated); published (notable-only) layer's actual domain follows whichever notable cities' own estimates span |
+| **Volume** | measured: 1,448,474 bytes raw (three CSVs); 1,736 curated features; 164 published (see "Notability filter" below) |
+| **Licence** | **CC BY 4.0** — each of the three figshare deposits independently, confirmed via the figshare API's own `license` field |
+| **Shape** | `FeatureSet` (ADR-035), id `cities` — one record per city: stable slug id, name, modern country, lat/lon, source certainty (`FeatureCertainty`, mapped from the raw dataset's 1/2/3 geocoding-confidence code), and a list of dated population estimates |
+| **Storage** | raw not committed (gitignored, re-fetched from figshare); curated parquet → git (small) |
+
+**Processing** — Chandler (the only dataset spanning the full range) is the base layer; Modelski
+Ancient is merged on top, then Modelski Modern on top of that, overwriting Chandler's
+coordinates/certainty/estimate for any (city, country) match and any exact-year estimate
+conflict — the paper's own stated precedent for the Chandler/Modelski-Ancient overlap, applied
+uniformly to both Modelski files (`sources/cities/README.md` "Dedupe policy"). Rows without
+valid coordinates or with no population estimate at all are dropped (0 and 1 rows respectively,
+in the real data). The curated `FeatureSet` keeps all 1,736 cities that survive the merge.
+
+**Notability filter (published layer only)** — per-user direction (2026-09-17: "only need to
+include major notable cities, not everything"), `pipeline.notability.notable_features`
+(applied in `pipeline/publish.py`'s `FEATURE_LAYERS`) filters the published layer down to
+cities whose peak population, within any 100-year era bucket, ranks in that bucket's own top 12
+— era-relative (an ancient city only has to out-rank its own contemporaries, never a modern
+megacity) rather than a global cutoff. Measured effect: 164 of 1,736 cities published, including
+every era from the 4th millennium BC onward and every example city named in the task brief
+(Uruk, Memphis, Babylon, Rome, Xian [Chang'an], Istanbul [Constantinople], Baghdad, Mexico City
+[Tenochtitlan], London, New York, Tokyo). Full detail and the exact reproduction command:
+`sources/cities/README.md` "Notability filter".
+
+**Integration** — the published `FeatureSetData` layer file is a self-contained, typed contract
+(`pipeline/manifest.py`, mirrored in `web/src/types/layer.ts`/`web/src/data/curated.ts`). Rendering
+was out of scope for this ADR but has since been built (ADR-036): `web/src/globe/cities.ts` culls
+the 164 published cities to whichever are largest at the current `t` for the on-screen marker
+field, with names on hover only, in the same shared tooltip arrival arcs and inhabited markers use.
 
 ---
 

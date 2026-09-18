@@ -411,6 +411,14 @@ that doesn't fit them just to avoid it.
 Because the vantage is conceptual, **there is no pin on the globe.** The globe shows
 planetary state only. (ADR-007)
 
+**Narrow exception (ADR-034):** a scene may optionally name a genuinely known real place it
+depicts — Giza, the Somme, Lucy's discovery site at Hadar — never a plausible-sounding stand-in
+for a generic environment. For such a scene, the globe centres on and briefly pulses that
+location: present-day coordinates directly inside the human-era basemap domain (`t <= 2.58 Ma`,
+§7/ADR-030), a plate-reconstructed paleo position for an older scene, or no marker at all where
+no plate model covers it. This does not change ADR-007's default for every other scene, which
+remains conceptual and pin-free.
+
 ---
 
 ## 7. The globe view
@@ -491,6 +499,11 @@ expands to fill; it is never the default focus.
 > The always-on footer row (the artistic-reconstruction note plus a Credits link) below the
 > transport is gone too: a small muted "About & credits" button sits above the globe orb,
 > top-left, opening an in-experience panel (VISUAL_SPEC §9) instead of navigating to `/credits`.
+
+> **v2 note (ADR-033).** The expanded globe (§7) gains a "Globe / Map" segmented toggle,
+> top-left of the fullscreen panel — not top-centre, which is the time/era title's own spot,
+> lifted above this panel's backdrop while expanded. It unfolds the sphere into an Equal Earth
+> map over ~0.8s eased; see `docs/GLOBE.md`'s own v2 note and ADR-033 for the mechanism.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to
@@ -640,7 +653,7 @@ interface Layer {
   name: string
   timeDomain: [number, number]          // years BP
   surface: 'globe' | 'timeline-lane' | 'hud' | 'scene-overlay'
-  source: CuratedRef                    // one of the four shapes
+  source: CuratedRef                    // one of the five shapes (DATA_SOURCES § Contract)
   sample(t: number): LayerValue         // PURE, interpolated
   render(value: LayerValue): ReactNode
 }

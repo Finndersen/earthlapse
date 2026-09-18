@@ -18,12 +18,50 @@ the globe itself** ("stylised relief", "artistic reconstruction", "geography unk
 (`web/src/globe/blend.ts`) as the generic fallback for a genuine gap (today, only the ~47 Myr
 between Earth's formation and the oldest cited regime, 4.567–4.52 Ga — see §9's G8 note).
 
+> **v2 note (ADR-033): the expanded globe unfolds into an Equal Earth map.** A "Globe / Map"
+> toggle, only shown expanded, morphs the sphere into an Equal Earth projection (Šavrič, Jenny &
+> Jenny 2018) over ~0.8s eased — the same mesh, the same textures/effects/captions, no second
+> flat-map view to keep in sync. The morph is a **curvature unroll**, not a per-axis lerp of the
+> two projections' xyz output (that faceted the sphere's silhouette into a hexagon one way and a
+> literal square the other — ADR-033's amendment has the root cause and the frame-capture
+> evidence): projection coordinates blend equirectangular→Equal Earth while curvature `k` eases
+> 1→0, tangent to the camera-facing point at every `k`, so the silhouette stays a spherical cap
+> throughout. It lives once in `web/src/globe/projection.ts` as a pure TS module with a GLSL twin
+> (`lonLatToSphere`/`lonLatToMap`/`curvatureUnroll`/`unfoldedPosition`/`unfoldedLiftedPosition`,
+> plus `splitAtAntimeridian` for lat/lon-placed overlays), consumed by `GLOBE_VERTEX_SHADER`'s
+> `uUnfold` uniform (`shaders.ts`, `globeGeometry.ts`). **Anything drawn on the globe must go
+> through this one shared twin** — every lat/lon-anchored geometry (§5.3's K-Pg impact flash's
+> anchor dot, §10's arrival arcs, markers and city dots) projects through `unfoldedPosition`/
+> `unfoldedLiftedPosition` directly and lands at the geographically correct point in both modes
+> automatically, and can never drift from the mesh mid-unfold — including texture sampling: the
+> vertex shader's `vUv` is computed straight from each vertex's own `aLonLat`, identically in both
+> modes, so there is no separate map-mode uv term to keep in sync with the sphere's own (§10 has
+> the chirality bug this replaced). N/S pole markers (`poles.ts`) fade out with the sphere rather
+> than relocate: Equal Earth flattens each pole to a line, not a point, so there is no single
+> correct map-mode position for them. Auto-rotate, the camera and the human-civilisation overlay
+> (§10) all share one rotating scene-graph group rather than each tracking rotation independently.
+> The camera's own mid-tween framing is sized against the unrolled mesh's real, numerically-sampled
+> half-extents (`unrolledHalfWidth`/`unrolledHalfHeight`), not a linear lerp of the sphere's and
+> map's own bounding boxes — that lerp overshot the real, slower-growing-at-first silhouette and
+> read as a shrink-then-grow jump (ADR-033's amendment). Map mode disables rotation, enables pan,
+> and clamps both pan and zoom so the map can never be lost off-screen (`camera.ts`). See ADR-033
+> and its amendment for the full rationale, including why Equal Earth over equirectangular.
+
+> **v2 note (ADR-030/ADR-031/ADR-032/ADR-035/ADR-036): the basemap and the human-civilisation
+> layer are rendered.** See §10 below for the full write-up — base crossfade and tone grade, tier
+> selection, mipmapped/byte-capped caches, arrival arcs, population density, city markers, the
+> shared tooltip and the one "Human civilisation" legend toggle. The cleared-land tint ADR-031
+> originally specified is built and curated but no longer rendered (ADR-031's amendment) —
+> superseded on screen by population density.
+
 ---
 
 ## 1. Time coverage at a glance
 
 | Interval | What the globe shows | Source | Label |
 |---|---|---|---|
+| 0–300 ka | Natural Earth II human-era basemap, tone-graded, crossfading in from 400 ka (§10) | Natural Earth II (public domain) | none (no special-case caption; same as plain PaleoDEM) |
+| 300–400 ka | crossfade: PaleoDEM's 0 Ma frame → the basemap (§10) | as above, blended with the row below | as above |
 | 0–540 Ma | PaleoDEM elevation + bathymetry, 109 epochs; plate-rotated interpolation (§3) | Scotese & Wright 2018 PaleoDEMs + plate model | none (data) |
 | last 26 kyr | ICE-6G_C ice mask over the 0 Ma frame (§5.1) | Peltier et al. 2015 | none (data) |
 | 540–1000 Ma | continents from plate polygons, stylised relief (§4.1) | Merdith et al. 2021 | "continents from plate model; relief stylised" |
@@ -429,6 +467,50 @@ the same choice made for `moon-forming-impact`'s `giant-impact` window.
   read (`useAppData` → `buildLayers` → `AppLayers.eventLayers`); nothing yet *renders* from it
   — that is G6/G7/G8.
 
+**Arrivals (ADR-032).** A ninth kind, `arrival`, shows a
+schematic Homo sapiens dispersal as an arc between a curated origin and destination region
+centroid (never a real route). It does not fit the eight kinds above: they carry at most one
+optional `anchor`, while an arrival needs a required *pair*. Rather than add two more optional
+fields to `GlobeEffect` ("optional-field soup"), `kind: 'arrival'` is a separate shape
+(`ArrivalEffect` in `pipeline/shapes.py` / `pipeline/manifest.py`, `ArrivalGlobeEffect` in
+`web/src/types/layer.ts`), and `Event.effect`'s type is now the discriminated union of the two
+(`pipeline.shapes.AnyGlobeEffect`, `web/src/types/layer.ts`'s `GlobeEffect` union) — dispatched
+on `kind`, so a `GlobeEffect(kind='arrival', ...)` is a validation error rather than a
+representable-but-wrong state. `ArrivalEffect` adds `origin`/`destination` (`EffectAnchor`,
+required) and `established: GeoTime` — the best-estimate date the arc turns solid (dashed
+before it) — independent of the owning event's own `kind`/`t` (ADR-022), since several events
+this attaches to are `kind: 'period'` with no single instant of their own.
+
+`windows` solves the "arc disappears once `t` leaves the interval" problem: `EventSet.sample(t)`
+only returns events whose own `[t_min, t_max]` contains `t`, but an arrival should stay visible
+from its earliest defensible date through to the present, long after that dating-uncertainty
+window. Every `ArrivalEffect` therefore carries *exactly one* window reaching `t_min: 0`
+(validated by both `pipeline.shapes.ArrivalEffect` and `web/src/data/curated.ts`'s own parser) —
+not merely "at least one": `arcs.ts`'s `persistentWindow` needs a single, unambiguous
+present-reaching window to read the arc's visible span from, e.g.:
+
+```yaml
+- id: out-of-africa-migration
+  ...existing fields unchanged...
+  effect:
+    kind: arrival
+    origin: {lat: 15.0, lon: 33.0}          # schematic NE-Africa centroid, route-neutral
+    destination: {lat: 28.0, lon: 42.0}     # schematic Sinai/Red Sea gateway centroid
+    established: 6.0e4                      # best estimate — arc solid from here
+    windows:
+      - {t_min: 0.0, t_max: 7.0e4}          # exactly one window must reach t_min: 0 (validated);
+                                             # rendering itself is transient, not persistent — §10
+```
+
+Curated in `data/events.yaml`: about a dozen arrivals, attached to the four pre-existing
+`human-origins` events that already represented one (`homo-sapiens-origin`,
+`out-of-africa-migration`, `neanderthal-sapiens-overlap`, `peopling-of-americas`) plus nine new
+events for arrivals not previously curated (Levant, South/Southeast Asia, Sahul, East Asia,
+Beringia, Lapita/Remote Oceania, Madagascar, East Polynesia, Aotearoa New Zealand) — every date
+traceable to a cited source, contested dates said so in the description. Rendering the arcs on
+the globe (the transient fade/pulse/ripple, the arc geometry itself) is §10, not this section —
+this section is the data/contract side only.
+
 ---
 
 ## 7. Labelling
@@ -527,6 +609,240 @@ remains a quality upgrade over 0–1000 Ma, not a coverage gap.
   perceived benefit (§3.2), so they don't need to come first.
 - G7 needs G4's machinery.
 - The ice items wait on data terms and digitising.
+
+---
+
+## 10. Human-era rendering: basemap, arrivals, population density, cities
+
+Renders the data ADR-030 (basemap), ADR-031's amendment (HYDE population density; the original
+cleared-land tint is curated but no longer rendered — see below), ADR-032 and its amendment
+(arrivals, now transient), and ADR-035 (cities, published but not rendered until this pass).
+ADR-036 records the "Human civilisation" layer these four are unified into: one legend toggle,
+one shared hit-test and tooltip, one screen-space marker field. Image budget: **$0** (everything
+here is shaders/geometry over already-published data, same as the rest of this document).
+Web-only work — no pipeline/data change.
+
+**Base crossfade (ADR-030).** `web/src/globe/blend.ts`'s `BASEMAP_CROSSFADE_BAND = [300_000,
+400_000]` (years BP) and `basemapStrengthAt(t)`: 0 at and above 400 ka (PaleoDEM/Merdith
+unchanged), 1 at and below 300 ka, linear between. The basemap is a single, time-invariant
+texture per tier — not a dated sequence — so it is *not* folded into the existing
+`uBefore`/`uAfter`/`uMix` pair `SEAM_BAND`'s crossfade reuses; it gets its own shader slot
+(`uBasemapTex`/`uBasemapStrength`, `shaders.ts`) mixed *over* the ordinary PaleoDEM `dataColor`.
+`Globe.tsx` only fetches/binds a basemap texture once `t` is within `BASEMAP_FETCH_MARGIN_YEARS`
+(600 ka) of the present — a session that never scrubs that close never pays for a texture it
+would never show. Tier selection (`web/src/globe/deviceTier.ts`): T0 (`basemap_t0`, 2048×1024)
+for the minimised orb and for phone-expanded (`useIsPhoneViewport`, a thin re-export of the
+shared `lib/useIsCompactViewport`, `events/useIsCompactViewport`'s own 760px breakpoint); T1
+(`basemap_t1`, 4096×2048) only expanded on a non-phone device whose GPU reports
+`MAX_TEXTURE_SIZE >= 4096` (`supportsBasemapT1`, a pure function fed by `lib/webgl.ts`'s
+`probeWebgl()` — one throwaway WebGL context answers both "does WebGL work at all" and this,
+rather than each opening its own). The basemap and HYDE textures load through a second,
+byte-capped cache (`humanEraTextureCache.ts`, `ByteCappedCache` — `byteCappedCache.ts`), separate
+from the PaleoDEM LRU (`textureCache.ts`): mipmapped + sRGB for the basemap (built with a manual,
+high-quality mip chain — `buildHighQualityMipmaps`'s own doc comment on the Moiré artefact
+`WebGLRenderer`'s own implicit `gl.generateMipmap()` produced on Natural Earth II's fine
+bathymetric striations otherwise), un-mipmapped + `NoColorSpace` for HYDE (its R/G/B channels are
+cropland/pasture/natural-rangeland *fractions*, not colour — an sRGB decode, or the browser's own
+default `createImageBitmap` colour-space conversion/alpha premultiplication, would corrupt them
+before the shader ever reads them, so HYDE's cache instance disables both at decode time). The
+PaleoDEM LRU is trimmed *aggressively*
+(`lru.ts`'s `LruCache.trim(keep, {aggressive:true})`, evicting below capacity, not only above it)
+once `t` is at or below the crossfade band's near edge — `Globe.tsx`'s `wellInsideHumanEra` — so
+idle deep-time frames don't sit resident once the basemap is the whole picture. On a WebGL
+context loss, both human-era caches are cleared and every pair that reads them is forced to
+re-fetch (`useGlobeTexturePair`'s `resetKey` option) rather than trying to re-upload from an
+`ImageBitmap` this module has already closed (see below) — the PaleoDEM cache needs no such
+handling, since its own textures keep their backing bitmap open for as long as they stay cached,
+which three.js's own automatic re-upload-on-restore already relies on successfully. **No special-case caption.** An earlier
+version showed "Idealised present-day terrain" once the basemap had loaded; that wrapper
+(`HUMAN_ERA_BASE_CAPTION`/`globeBaseCaptionFor`) is gone — `Globe.tsx` now calls the ordinary
+raster-domain fallback caption (`globeMultiCaptionFor`) across the basemap's own domain too,
+which is empty there, exactly as it already is over plain PaleoDEM data (not "satellite" either
+way — Natural Earth II is "deliberately idealized to a pre-modern land-cover baseline", chosen
+over Blue Marble for exactly that reason, ADR-030).
+
+**Tone-match grade (ADR-030's amendment).** Natural Earth II's photographic palette reads
+markedly paler than PaleoDEM's stylised hypsometric tint once the crossfade brings it in — a real
+tonal mismatch, checked first and confirmed *not* a colour-space bug: both textures decode
+identically (`SRGBColorSpace`, plain `createImageBitmap`, the same `#include <colorspace_fragment>`
+shader tail), and sampling the rendered globe against the source `basemap_t0.webp` file directly
+matched within a few percent at four test points. Measured side by side at matched camera/regions:
+ocean relative luminance ~9× brighter than PaleoDEM's, Sahara blown out to near-white, Amazon ~2×
+brighter and desaturated. `gradeBasemapColor` (`blend.ts`, mirrored in `shaders.ts`'s GLSL) applies
+a levels/gamma/saturation grade — `scale * pow(c, gamma)` per channel, then a saturation boost
+around the result's luminance — to the basemap sample only, before it mixes into `baseColor`;
+never to PaleoDEM or a regime look. Tuned against the sampled measurements above, not derived from
+a physical model — land does not chase PaleoDEM's own arbitrary green tint, it just stops being
+blown out.
+
+**Tier-swap texture discipline.** The T0/T1 texture pair is bound through the *same*
+`useGlobeTexturePair` hook the PaleoDEM pair already uses (parameterised by an options object —
+cache instance, `aggressiveTrim`, `resetKey` — not positional booleans), so switching tiers on
+expand/collapse gets the same "keep the old texture bound until the new one is ready" behaviour
+for free — never a blank or flashed frame.
+
+**Sphere/map geometry and texturing share one projection, with no map-mode-specific uv term.**
+`web/src/globe/projection.ts`'s `lonLatToSphere`/`unfoldedPosition` is the one place the base mesh
+(`globeGeometry.ts`) and every lat/lon-anchored overlay (arrival arcs, inhabited/city/scene-location
+markers in `HumanCivilisation.tsx`/`MarkerField.tsx`, the K-Pg impact flash's anchor) derive a 3D
+position from; `GLOBE_VERTEX_SHADER` computes its texture-sampling
+`vUv` varying directly from each vertex's own `aLonLat`, identically whether `uUnfold` is 0, 1 or
+between — there is no separate sphere-vs-map uv formula to keep in sync, and no per-fragment
+`atan2` (which discontinuity at ±180° previously drove GPU mipmap-LOD selection into picking the
+wrong mip right at the dateline, a visible seam line independent of the chirality bug below).
+`lonLatToSphere`'s own `z = -radius*cos(lat)*sin(lon)` sign is load-bearing, not arbitrary: it is
+the sign that pairs correctly with `globeGeometry.ts`'s triangle winding (inherited from
+`THREE.SphereGeometry`'s own convention) to produce outward-facing normals — a same-magnitude,
+wrong-sign `z` still builds a topologically valid sphere, just with every triangle's front face
+pointing *inward*, which renders as a mirrored globe (east and west swapped) with dimmer lighting
+(front-facing normals pointing away from the camera). `globeGeometry.test.ts` pins this
+numerically (cross product of each triangle's own edges against its outward radius direction).
+
+**One rotating scene-graph group owns the sphere's auto-rotate.** `Globe.tsx`'s
+`GlobeRotatingGroup` wraps `GlobeSphere` and `HumanCivilisation` (the arcs/markers/tooltip
+component that superseded the old, arrivals-only `ArrivalArcs.tsx`) in a single `<group>` and is
+the only place `useGlobeAutoRotationY` is called; both children inherit its `rotation.y` through
+three.js's own matrix composition, with no JS-level angle to read back out of a ref.
+`useGlobeAutoRotationY` itself wraps its accumulated angle into `(-π, π]` every frame (`wrapAngle`)
+rather than letting it grow without bound across a long session, and stops accumulating altogether
+under `prefers-reduced-motion`; a scene with a real-world location (ADR-034) eases this same
+accumulator to face it (`sceneLocation.ts`) rather than adding a second rotation source. `PoleAxisMarkers`
+stays outside the group deliberately: both poles sit on the rotation axis itself, so spinning them
+is a no-op. The camera (`GlobeCameraControls`) tweens from wherever the viewer actually left it —
+direction, distance and pan target captured the instant a Globe/Map tween starts — rather than
+snapping to a fixed starting pose first, restores the sphere's own pre-unfold distance on folding
+back rather than always the default framing, and sizes its map-mode framing from the unrolled
+mesh's own real half-extents, not a linear lerp (§1's v2 note, ADR-033's amendment).
+
+**Cleared land — curated, no longer rendered (ADR-031's amendment).** The overlay this ADR
+originally specified (HYDE cropland/pasture tinting, a curve/cap/colour retune of its own) was
+built, then removed from `web/` entirely once rendered: the human found the tint indiscernible on
+the globe, not a data or licence problem. `blend.ts`'s `hydeClearedLandBlendAt`/
+`clearedLandTintAlpha`, `shaders.ts`'s cropland/pasture shader term, `humanEraTextureCache.ts`'s
+dedicated HYDE cache instance, `Globe.tsx`'s wiring and its own legend row are all deleted; the
+underlying `hyde_cleared_land` data stays curated and published-*able* (`pipeline/publish.py`'s
+`RASTER_LAYERS` just no longer registers it — DATA_SOURCES.md's `hyde` entry). Population density,
+below, tells the "what does the globe show about people" story instead.
+
+**Population density (ADR-031's amendment).** `density.ts` decodes the published 8-bit log
+encoding (`decodeLogDensity`, the TS twin of `pipeline/density_encoding.py`) back to real people/
+km², then maps *that* — never the raw byte — through `DENSITY_RAMP`: seven stops, log10-spaced from
+0.5 to 8,000 people/km², dark violet → magenta → red → orange → pale amber. That hue family and
+that spacing are both direct responses to why the cleared-land tint failed: a *linear* fraction
+spread thinly across a huge range, in ochre/olive hues that sit inside Natural Earth II's own
+greens/tans. The alpha curve is tuned against real sampled 2015 CE texels, not by eye: remote
+Amazon/Tibet fall at or under the floor and draw nothing; rural Iowa, the Argentine pampas and the
+Congo sit around a third opaque; the Netherlands and Jiangsu are most of the way to opaque; Dhaka
+is the ramp's own top. `densityStrengthAt` eases the overlay in from nothing across the 2,500 years
+before HYDE's oldest (10,000 BCE) frame, and holds the newest (2015 CE) frame from there to the
+present — data ends, held after, the same rule ADR-031 established for cleared land. Reuses HYDE's
+own `'boxFilter'`-mip, `NoColorSpace` texture-cache instance (`humanEraTextureCache.ts`) for the
+same reason cleared land needed it — population density is spatially sharper still, a city core
+beside an empty hinterland — with one honest caveat: box-filtering the *encoded* log bytes means a
+minified texel reads a little under the true area average (a geometric, not arithmetic, mean),
+which errs toward under- rather than over-claiming. The legend's own colour key
+(`DensityRampKey.tsx`, below) is generated from the same `DENSITY_RAMP` stops the shader
+interpolates, so the two can never disagree.
+
+**Arrivals — now transient, not permanent (ADR-032's amendment; the data/contract side is §6).**
+Every arc used to be drawn for the whole span from its window's `tMax` to the present (dashed,
+then solid at `established`), so by the present all twenty-five sat on screen together. An arc is
+now drawn only while its migration is actually happening — `t` from the window's `tMax` through
+`established` — with a bright head travelling `origin → destination` on a wall-clock loop
+(`ARC_FRAGMENT_SHADER`'s `uTravelling`, looped rather than driven by `t` itself, since a dating
+window is often a thousandth of the arc's own on-screen life). Past `established` a landing ripple
+expands and fades at the destination, and the arc itself fades out over a tail (`arcs.ts`'s
+`arrivalPresentationAt`); an `arrivalKind: peopling` leaves a small persistent "inhabited" marker
+behind at the destination once the ripple settles, a `migration` leaves nothing. The tail's width
+is not fixed in years: it is derived from the timeline's own playback-rate model
+(`arrivalTimingFor`, in symlog-warp units) so every arrival gets at least `MIN_ARC_SECONDS` (1.1s)
+of legible wall-clock life at the default rate regardless of how narrow its own dating window is —
+a fixed year count would flicker at 60 ka and last forever at 700 BP. **Honest consequence:** near
+the present the remaining timeline is narrower than that minimum, so a few of the most recent
+arrivals are still partly drawn at `t = 0` — the fade simply runs out of timeline, not a bug to
+clamp away. Rendered as camera-facing ribbons (`buildFatLineBuffers`, `HumanCivilisation.tsx`'s
+`ARC_VERTEX_SHADER`), not `gl.LINE_STRIP`, through the shared `unfoldedLiftedPosition`/
+`PROJECTION_GLSL` twin (§1's v2 note) rather than the arc's own separate `mix(spherePos, mapPos, ...)`
+an earlier version used — so an arc can never drift from the mesh mid-unfold. **The parent chain
+for trace-back is derived, not curated:** `findParentEventId` picks the strictly-older arrival
+whose own destination sits nearest this one's origin (a DAG by construction, since only older
+candidates count), and hovering a marker or feed card ghosts the whole chain back to the African
+origin (`traceToOrigin`) at a dimmed alpha. **Labels are still not drawn** — the shared tooltip
+(below) and the event feed cover the "what is this" need instead.
+
+**Cities (ADR-035's data, rendered this pass).** `cities.ts`'s `selectCities` culls the 164
+notability-filtered cities `FeatureData` publishes (DATA_SOURCES.md's own notability filter is a
+separate, publish-time cut) down to whichever are largest *at the current `t`* — 10 on the orb, 45
+expanded — so the late-modern frames don't turn solid; a scrub to 3000 BCE surfaces Uruk and
+Memphis, to 1900 CE London and New York, with no separate ranking table. Marker radius is
+`log10(population)`-mapped (2.4–9 CSS px), a legibility trade against area-true bubble sizing:
+below about a million a proportional dot would be indistinguishable from the floor for most of
+history. A city's size between two attested readings eases log-linearly (population is
+multiplicative) rather than jumping; the tooltip always states the actual attested reading it sits
+between, never the interpolated figure. **Names appear on hover only, in the shared tooltip below
+— never as drawn labels:** the same call ADR-032 already made for arrival labels, for the same
+reason (the labelled set overlaps constantly at globe scale, and a silent collision cull is worse
+than a tooltip that always answers).
+
+**One shared screen-space hit-test and tooltip (`GlobeTooltip.tsx`).** Every drawable in this
+layer — arcs, inhabited/city/scene-location markers — registers a `GlobeHitCandidate` (a point or
+a polyline, its own lift and pixel tolerance) rather than getting its own raycast target; none of
+them has a real `position` geometry attribute for three.js's raycaster to hit; they are placed
+entirely on the GPU from an `aLonLat` attribute. `useGlobeHitTest` projects every candidate to
+screen space on each pointer move (cheap — it runs on pointer events, not frames) through the same
+`unfoldedLiftedPosition`, and scores a hit by distance-over-tolerance, so a thin arc and a 2px city
+dot compete on "how close, relative to how close it had to be" rather than raw pixels. One tooltip
+component renders whichever target won, tracking it through `drei`'s `Html` with a clamp so it is
+never cut off at the panel's own rounded edge.
+
+**One instanced field for every dot (`MarkerField.tsx`).** Inhabited markers, city dots, arrival
+landing ripples and the scene-location indicator are all one instance in a single
+`InstancedBufferGeometry` — one draw call, not one mesh (and one `useFrame`) per marker, which is
+what an earlier `ArrivalArcs.tsx` did and does not survive going from thirteen destinations to
+forty-odd cities plus everything else. The one animated quantity, a sympathetic pulse for a marker
+whose event card is on screen or is part of a traced chain, is a `uTime` uniform read on the GPU;
+instance buffers are rewritten only when the marker *set* changes (a render), never per frame.
+
+**Scene location on the orb (ADR-034; the single-toggle framing is ADR-036).** A scene naming a
+real place eases the orb's own auto-rotation to face it and shows a small pulsing marker
+(`sceneLocation.ts`'s `startFocusEase`/`stepGlobeRotation`, extending the same rotation accumulator
+above rather than adding a second one). **Expanded or unfolded, the marker still shows but the
+camera never moves** — the viewer is steering by then, so re-centring on their behalf would fight
+their own input; this is a caller-side gate in `Globe.tsx` (no focus target is handed down while
+expanded), not a branch inside `sceneLocation.ts` itself. **No marker at all** when the plate model
+cannot place the scene (ADR-034's own Isthmus-of-Panama gap) — never a present-day fallback
+position, which would be a specific, avoidable factual error on a paleo-textured globe.
+
+**`ImageBitmap` closed only after a forced, synchronous GPU upload.** `humanEraTextureCache.ts`'s
+`initAndCloseHumanEraTexture` calls `WebGLRenderer.initTexture` — a synchronous, forced GPU
+upload three.js documents for exactly this "preload before first render" use case — before
+closing the texture's backing `ImageBitmap`, so the close is provably safe rather than a
+best-effort guess timed against a fixed frame count (which was tried first, and browser-verified
+to race three.js's own deferred upload on a cold cache's first expand, leaving the globe
+permanently blank). `GlobeSphere` (the one place in `Globe.tsx` with `useThree()` access to the
+renderer) calls it once per texture, tracked by a `WeakSet` so a texture already handled is never
+re-initialised — and that same `WeakSet` is cleared on `webglcontextrestored` (see above) so a
+texture that *does* survive a context loss (freshly re-fetched into an already-cleared cache) is
+force-uploaded again rather than skipped as "already handled".
+
+**Legend — one "Human civilisation" toggle, not one per overlay (ADR-036).** `Legend.tsx`,
+expanded-view only, same labelled-toggle idiom as `ViewModeToggle`/the timeline transport's own
+controls, now shows a single row governing arcs, population density and cities together, per the
+user's own framing ("a more global toggle for 'human civilisation' ... which covers that as well
+as population density and cities") — not a toggle and a colour key per part. The row is shown only
+when at least one of the three has data at the current `t` (`hasVisibleArrivals ||
+densityHasDataAt || citiesHaveDataAt`) — omitted entirely rather than greyed out, the same rule
+the old per-overlay rows already followed. **Arrivals carry no colour key at all** (their colour is
+fixed, not a scale); **density gets one** (`DensityRampKey.tsx`, generated from `DENSITY_RAMP`),
+shown in the row's own `footer` slot only while the layer is on and actually painting a density —
+a key for a switched-off or out-of-domain overlay would be chrome explaining nothing. Toggle state
+is local `Globe.tsx` state (not persisted to `localStorage` — a reasonable follow-up). Hidden
+outright (not shown disabled) in the WebGL-off static-orb fallback, matching `ViewModeToggle`'s own
+precedent. A row's own toggle can disappear out from under a keyboard user's focus the instant it
+leaves the current `t`'s domain; the legend redirects focus back to its own container rather than
+letting the browser drop it to `<body>` with no indication of where it went. On a phone viewport
+(`compact`) rows are single-line with a short alternative hint rather than a truncated one, so an
+honesty caveat ("modelled", "data ends 2015") is never the part that gets cut off.
 
 ---
 

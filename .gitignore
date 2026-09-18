@@ -45,3 +45,8 @@ web/public/media
 web/.vitest/
 web/AGENTS.md
 web/CLAUDE.md
+
+# Tooling scratch
+.claude/
+Claude outputs/
+*.log

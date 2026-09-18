@@ -1046,6 +1046,110 @@ reasoning the 2026-09-15 amendment used for its own unverified majority.
   (`test_publish_skips_a_dissolved_morph_and_lists_it_separately`), alongside the existing
   computed-morph one it was missing a counterpart for.
 
+**Amendment (2026-09-17): the scale bar is removed from every published plate; the generator no
+longer draws one.** The human found the bar inconsistent — faint on most plates, thick and bright
+on `boreoeutheria` and `cynodontia` — and not helpful, and asked for it gone.
+
+- **`PORTRAIT_STYLE` no longer asks for a scale bar.** The sentence ("A thin, pale grey horizontal
+  scale bar sits below the subject, left of centre, with no numbers or letters") is removed from
+  `pipeline/prompts.py`. This is safe for the 41 already-pinned plates without regenerating any of
+  them: `Resolver.status` (`pipeline/graph.py`) reports `PINNED` before it ever computes a digest,
+  and `build_images` only acts on nodes the resolver reports `STALE` — a pinned portrait can never
+  rebuild regardless of prompt drift (ADR-005). All 41 pins survive untouched; nothing rebuilds; no
+  spend. Any future portrait (`deuterostomia`, still without a representative) generates without a
+  bar.
+- **The 40 already-pinned plates still carry a bar, so `earthtime publish` erases it from the
+  published derivative** — the same place exposure normalisation already runs
+  (`pipeline/exposure.py`, the 2026-09-14 amendment above). The pinned candidate is untouched.
+- **The band geometry and the connected-component subject-extent finder move into a new shared
+  module, `pipeline/scale_bar.py`** (`scale_bar_band`, `SCALE_BAR_BAND_*`, `band_pixels`,
+  `box_from_mask`, `COMPANION_AREA_FRACTION`), imported by both `pipeline.morph` (byte-identical
+  box output; framing, zoom and pose-divergence smoothing are unaffected) and `pipeline.exposure`
+  — one connected-component technique shared by the two publish-time consumers that both need to
+  know where the bar sits, rather than a second copy that could drift from the first.
+  `SCALE_BAR_BAND_BELOW` widens from 0.16 to 0.32: measured against all 40 pinned plates (the
+  bar's own row, found by the same brightness-above-local-backdrop statistic
+  `pipeline.exposure.subject_mask` already uses), 37 plates need at most 0.10 below the subject
+  extent's bottom, but three microscope plates — `opisthokonta` (0.188), `eumetazoa` (0.195),
+  `gnathostomata` (0.230) — sit well past it. 0.32 gives every plate's bar comfortable clearance;
+  widening it is harmless, since nothing inside the band is erased unless it also passes the erase's
+  own line-shape-and-colour test below, and the subject is separately protected regardless of the
+  band's size. `MORPH_ALGORITHM_VERSION` is now `"5"`; every cached morph recomputes. Recalibrated
+  against all 39 pairs, the wider band no longer dilutes the round-trip statistic with bar pixels
+  the same way: 23 pairs now keep a real, computed morph (was 20) and 16 dissolve (was 19) —
+  `eutheria`→`placentalia`, `gnathostomata`→`osteichthyes`, `hominidae`→`homininae` and
+  `synapsida`→`therapsida` newly keep a morph, and `bilateria`→`chordata` newly dissolves. None of
+  the five were individually re-verified in the running viewer for this change; the same practice
+  earlier amendments used for their own bulk reclassifications.
+- **OpenCV and numpy are now core dependencies**, not the optional `morph` extra: the erase needs
+  them directly in `pipeline.exposure`, which `earthtime publish` always runs, so they can no
+  longer be optional. `pyproject.toml`'s `morph` extra is removed; `opencv-python-headless` and
+  `numpy` move to `dependencies`.
+- **Only a thin, colourless, horizontal-line-shaped mask inside the band is touched — never the
+  band's whole area.** `erase_scale_bar` (`pipeline/exposure.py`) requires a candidate pixel to be
+  simultaneously: brighter than a heavily blurred local backdrop estimate by at least
+  `BAR_EXCESS_THRESHOLD` (14 codes); colourless, `BAR_MAX_CHROMA = 20` (`PORTRAIT_STYLE` draws the
+  bar "pale grey"; every organism in the corpus keeps some warmth — real anatomy measured the same
+  way never fell under 23); and part of a solid, long, thin, horizontal connected component after a
+  wide morphological opening, bounded by `BAR_MIN_WIDTH_FRACTION = 0.08` (a real bar's own
+  narrowest measured fragment sits comfortably above it), `BAR_MAX_HEIGHT_FRACTION = 0.025` (clears
+  `boreoeutheria`'s own 1.66%-tall bar with margin, well under a foot or leg fragment's own 15–40%)
+  and `BAR_MIN_FILL_RATIO = 0.85` (a real bar fragment measures 1.0; a gently sloped vignette or
+  shadow edge surviving the opening as a staircase of short segments measured 0.13–0.62). Only that
+  mask, dilated by `BAR_MASK_DILATE_PX = 3`, is inpainted (`cv2.inpaint`, `cv2.INPAINT_TELEA`) and
+  re-grained with Gaussian noise scaled to the plate's own local backdrop noise, seeded by a fixed
+  `GRAIN_SEED = 20260917` so `earthtime publish` stays deterministic.
+- **The search band's own anchor and the subject's own protection each need a stricter,
+  gain-robust threshold than `subject_mask`'s ordinary `SUBJECT_CONTRAST`,** because this erase
+  runs on the *exposure-gained* published derivative (unlike `pipeline.morph`, which reads the
+  pinned candidate directly) and gain can lift a soft contact shadow's contrast enough to bridge it
+  to the organism. `EXTENT_CONTRAST = 40` anchors the search band (measured on `opisthokonta`: 90%
+  of plate height at `SUBJECT_CONTRAST`, the vignette's own glow; 57% at `EXTENT_CONTRAST`,
+  matching the cell). `PROTECT_CONTRAST = 60`, independently calibrated, protects the subject
+  (measured on `amniota`: 70% of plate height at `SUBJECT_CONTRAST`; 61% at `PROTECT_CONTRAST`,
+  clear of the bar) — the largest connected component at that threshold, dilated by
+  `SUBJECT_PROTECT_DILATE_PX = 6`, is subtracted from the candidate mask regardless of a
+  candidate's own shape or colour, so a foot or tail that happens to be both bright and colourless
+  is never erasable in the first place.
+- **`pipeline.morph` is otherwise unaffected.** `detect_subject_box` and `bar_search_extent` are
+  numerically unchanged beyond importing the relocated `box_from_mask`/`scale_bar_band`.
+- **Rejected: filling the whole band, or a whole "presumed companion" region's own shape, from a
+  smoothed backdrop estimate**, gated by a seeded region-growth classifier deciding whether each
+  companion region was "the bar" wholesale. An earlier version of this change took that approach;
+  inspecting the published result found visible geometric patches where the classifier's decision
+  followed a connected component's own irregular silhouette, replacing real backdrop or shadow
+  texture rather than only the bar's own pixels. Replaced by the narrow line-mask test above, which
+  only ever touches pixels a positive line-shape-and-colour test finds, regardless of what region
+  they sit inside.
+- **Rejected: detecting the scale bar directly, by contrast, colour or shape, as the primary way to
+  locate it** — still the wrong tool for that job, per the 2026-09-15 amendment's own finding.
+  Colour, shape and local-backdrop-relative brightness are used only to decide, among pixels
+  already inside the known-layout band, which are the bar — a narrower question than locating the
+  band itself.
+- **Rejected: making `pipeline.morph`'s own `bar_search_extent` and subject protection
+  gain-robust too.** Not needed: `pipeline.morph` never runs on a gain-adjusted plate, so the
+  gain-driven bridging problem this amendment fixes does not occur there. Changing it regardless
+  would risk the same reframing-every-pair regression earlier ADR-015 amendments already rejected.
+
+**Limit.** The line-shape-and-colour filter is tuned against this corpus's actual bars and actual
+companions, not a general guarantee for any future plate — though `PORTRAIT_STYLE` no longer asks
+for a bar at all, so there should be no future plate to test it against. Subject protection is the
+hard backstop regardless: a missed or partially-erased bar is a visual shortfall, not a risk to the
+corpus's real anatomy, since protection is independent of whatever the line-shape-and-colour test
+decides.
+
+**Consequences.**
+- All 40 published plates lose their scale bar; the pinned candidates are untouched (ADR-005).
+- `pyproject.toml`: `opencv-python-headless` and `numpy` move from the `morph` extra to core
+  `dependencies`; the `morph` extra is removed.
+- `pipeline/scale_bar.py` (new): `scale_bar_band`, `SCALE_BAR_BAND_*`, `band_pixels`,
+  `box_from_mask`, `COMPANION_AREA_FRACTION` (moved from `pipeline.morph`, unchanged).
+- `pipeline/exposure.py` gains `erase_scale_bar` and its supporting constants and helpers.
+- Media churn: all 40 published plate JPEGs rewritten. 23 of 39 morph pairs keep a real, computed
+  morph (46 PNG files); 16 dissolve, including `bilateria`→`chordata`, newly so under the widened
+  band.
+- `docs/VISUAL_SPEC.md` §10 drops the scale-bar bullet and notes published plates carry none.
+
 ---
 
 ## ADR-016 — Two explicit playback modes replace the ADR-012 hybrid; a bounded gap bonus
@@ -4697,3 +4801,1128 @@ before this ADR.
   it is confined to the rare boundary between a comfortably-paced run of scenes and a dense one
   immediately following it.
 
+---
+
+## ADR-030 — The human-era globe base swaps to Natural Earth II
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Context.** The globe's only surface texture through all of deep time is PaleoDEM (Scotese &
+Wright 2018), 0–540 Ma. Continental drift over the last ~2 Myr is imperceptible at globe scale, so
+reusing PaleoDEM's 0 Ma frame for the whole Pleistocene/Holocene leaves the globe showing a
+stylised elevation/bathymetry tint through the human era, exactly where a viewer's own geographic
+intuition is sharpest and a cartoon-ish hypsometric tint reads noticeably worse than everywhere
+else on the timeline. The human chose **Natural Earth II** ("with Shaded Relief, Water, and
+Drainages", 1:10m, public domain) as the base from a crossfade band onward — specifically because
+it is deliberately idealised to a pre-modern land-cover baseline ("the world environment ... as it
+looked before the modern era", Natural Earth's own description), unlike a literal satellite
+composite: it does not double-count the `hyde` cleared-land overlay (ADR-031) — the overlay tells
+the "clearing" story, the base doesn't pre-empt it.
+
+**Decision.**
+- **New source, `sources/basemap/`.** Fetches Natural Earth II's "LR" raster
+  (`naciscdn.org/naturalearth/10m/raster/NE2_LR_LC_SR_W_DR.zip`, 16200×8100 GeoTIFF, public
+  domain, confirmed against `naturalearthdata.com/about/terms-of-use/` directly) via its CDN —
+  Natural Earth's own download-page links are broken (a template bug doubling the origin), and the
+  CDN URL is what those links themselves redirect to for every other asset on the site.
+- **Two resolution tiers, each its own curated `RasterSequence` id, not a tier field.**
+  `RasterSequence` (one of the four NORMATIVE curated shapes) has no notion of "tier"; adding one
+  would be a shape change needing its own ADR. Since this source has no genuine time variation in
+  the first place, publishing two tiers as two ids — `basemap_t0` (2048×1024) and `basemap_t1`
+  (4096×2048) — follows the exact pattern `sources/paleodem` and `sources/plates-neoproterozoic`
+  already use for two *time* domains of a similar raster, reused here for two *resolution*
+  domains instead. A caller selects a tier by id, the same way any other raster layer is selected
+  by id.
+- **Each tier's `RasterSequence` carries two frames, `t=0` and `t=2,580,000` years BP (the
+  Gelasian/Quaternary-Pleistocene boundary, ICS chart), both referencing the same texture.**
+  `RasterSequence.sample(t)` needs a genuine `[frames[0].t, frames[-1].t]` domain; a
+  temporally-flat texture still needs two frames to have one at zero extra storage cost.
+- **The published domain and the product's crossfade window are deliberately two different
+  numbers.** The published domain (`[0, 2,580,000]`) is informational — how far back the base is
+  presented as roughly geographically correct, pinned to a citable geological boundary. The
+  product's actual paleodem → basemap crossfade is a separate, narrower band, fixed directly by
+  the user at roughly 400 ka → 300 ka — a narrower span than an earlier design proposal's own
+  90/80 ka recommendation, which covered a broader scope (ice/sea level/dispersal overlays) than
+  this feature builds. It is not read from the published domain: following this codebase's
+  existing precedent for a raster
+  crossfade boundary (`web/src/globe/blend.ts`'s `SEAM_BAND`, the 540–550 Ma paleodem/
+  plates-neoproterozoic seam), `BASEMAP_CROSSFADE_BAND = [300_000, 400_000]` is a plain TS
+  constant on the web side, not manifest data — `paleodem` itself keeps its full, un-truncated
+  domain (`[0, 5.4e8]`).
+- **No new `WorldState`/`Layer` field.** The two raster layers publish through the existing,
+  already-generic raster-layer path (`pipeline/publish.py`'s `RASTER_LAYERS` + `LayerManifest`/
+  `RasterData`), the same path `paleodem` and `plates_neoproterozoic` already use.
+- **Web: tier selection, a second texture cache, and the basemap's own shader blend.** Tier
+  selection (`web/src/globe/deviceTier.ts`'s `selectBasemapTier`) is view-state-dependent — T0 for
+  the minimised orb and for a phone's expanded view, T1 only expanded on a non-phone device whose
+  GPU can hold a 4096px texture (`supportsBasemapT1`) — so it lives in `Globe.tsx`'s own render,
+  not the data-loading layer. The basemap and the HYDE overlay (ADR-031) share a second,
+  byte-capped texture cache (`web/src/globe/humanEraTextureCache.ts`), separate from the PaleoDEM
+  LRU: mipmapped (needed at the basemap's higher resolution, where PaleoDEM's own LRU correctly
+  leaves mipmaps off at its lower resolution) and sRGB for the basemap's photographic colour
+  (unlike HYDE's data-fraction texture, which uses `NoColorSpace`). Each texture's backing
+  `ImageBitmap` is force-uploaded to the GPU (`WebGLRenderer.initTexture`) before being closed, not
+  merely after a guessed number of animation frames — a genuine race, not just a theoretical one,
+  left a texture permanently blank on a cold first expand. A WebGL context loss clears this cache
+  and forces a re-fetch, since a closed `ImageBitmap` cannot be re-uploaded the way three.js's
+  automatic context-restore recovery expects. The basemap is not folded into the existing
+  `uBefore`/`uAfter`/`uMix` crossfade slot — it is a single time-invariant texture per tier, not a
+  dated sequence — so it gets its own shader uniforms (`uBasemapTex`/`uBasemapStrength`) mixed over
+  the ordinary PaleoDEM colour. Caption: "Idealised present-day terrain", shown across the whole
+  basemap domain.
+
+- **Rejected: NASA Blue Marble (2004 MODIS composite) as the base texture.** It already shows
+  modern land use (farmland, a cleared Amazon basin), which would double-count the `hyde`
+  cleared-land overlay rather than let the overlay tell that story on its own.
+- **Rejected: EOX Sentinel-2 cloudless.** Its licence is non-commercial/share-alike, incompatible
+  with this project's licence gate.
+- **Rejected (for now): KTX2 texture compression.** Not pursued this pass — the basemap's two
+  tiers are small enough (1.71 MB published, both tiers together) that the added build-time
+  complexity isn't justified yet.
+
+**Consequences.**
+- Credits publish automatically via the existing generic `_credit()` path — no code change needed
+  on the credits page.
+- Whoever wants a desktop-zoomed T2 tier, or an opt-in literal-satellite "satellite view" toggle,
+  can add either later without a contract change; neither is built here.
+
+**Amendment (2026-09-17) — tone-match grade for the basemap; the special-case caption is gone.**
+User report: the basemap read "significantly lighter than the previous texture and appears
+over-exposed... washed-out pale land and pale blue oceans" once the crossfade brought it in.
+
+Checked end to end first, per CLAUDE.md's "if something is unusable, stop and report — do not
+silently substitute," before assuming a fix was even the right move: **not a colour-space bug.**
+PaleoDEM and the basemap both set `texture.colorSpace = THREE.SRGBColorSpace` identically
+(`textureCache.ts`, `humanEraTextureCache.ts`), both decode via a bare `createImageBitmap` with no
+extra options, and `GLOBE_FRAGMENT_SHADER` ends with the same `#include <colorspace_fragment>` for
+both. Sampling the *rendered* globe against the *source* `basemap_t0.webp` file directly, at four
+points (mid-Atlantic, Sahara, Amazon, Himalaya, in map mode where `uUnfold=1` zeroes the lighting
+term for a clean read), matched within a few percent at every one — the render is a faithful
+reproduction of the source file.
+
+The mismatch is real but sits one level up: Natural Earth II's own photographic palette is simply
+far paler and less saturated than PaleoDEM's stylised hypsometric tint. Measured side by side
+(same camera/regions, 434.8 ka vs 216.8 ka): ocean relative luminance ~0.03 (PaleoDEM) vs
+~0.26–0.29 (basemap, ~9× brighter); Sahara ~0.25 (PaleoDEM's stylised green) vs ~0.86 (basemap,
+blown out near-white); Amazon ~0.17 vs ~0.36 (~2× brighter, desaturated).
+
+- **`gradeBasemapColor`** (`web/src/globe/blend.ts`, mirrored in `shaders.ts`'s GLSL):
+  `scale * pow(clamp01(c), gamma)` per channel (`BASEMAP_GRADE_SCALE = 0.6`,
+  `BASEMAP_GRADE_GAMMA = 1.7` — pulls the reachable ceiling down so even a blown highlight can't
+  reach display white, and darkens midtones a scale-only correction wouldn't reach), then a
+  saturation boost around the resulting luminance (`BASEMAP_GRADE_SATURATION = 1.2`). Applied to
+  the basemap texture sample only, before it mixes into `baseColor` — never to PaleoDEM, a regime
+  look, or anything else. Re-measured after the grade: ocean ~0.065–0.08, Sahara ~0.46, Amazon
+  ~0.14 — each now reads in PaleoDEM's own tonal register rather than washed out, without literally
+  recolouring the basemap to match PaleoDEM's arbitrary green hypsometric tint (a real desert still
+  reads as sand-coloured, just not blown out). Tuned against the measurements above, not derived
+  from a physical model — a reasonable follow-up is retuning against biomes this pass didn't sample
+  (tundra, ice sheets, deep desert interiors) if the grade ever looks off there.
+- **The special-case caption is removed, not fixed.** `blend.ts`'s `HUMAN_ERA_BASE_CAPTION`/
+  `globeBaseCaptionFor` wrapper — which showed "Idealised present-day terrain" once the basemap had
+  loaded — is deleted outright: it had no purpose once that string was gone, and its own
+  `hasBasemap`/`basemapPair.texturesReady` gating existed only to time that caption correctly.
+  `Globe.tsx` now calls `globeMultiCaptionFor` (the ordinary raster-domain fallback) directly across
+  the basemap's own domain, which reads as empty there, the same as it already is over plain
+  PaleoDEM data.
+
+**Consequences (amendment).** `docs/GLOBE.md`'s §1 table and §10 basemap write-up drop the
+"Idealised present-day terrain" caption and gain the grade's own short paragraph, parallel to the
+cleared-land curve/cap retuning history it already documented (ADR-031).
+
+---
+
+## ADR-031 — Cleared land overlay from HYDE 3.2 only, never 3.3
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Context.** `docs/DATA_SOURCES.md`'s `hyde` entry named HYDE 3.3 with an unverified "believed CC
+BY" licence. Checked directly: HYDE 3.3 (doi:10.24416/UU01-AEZZIT) is **CC BY-NC-SA 4.0** (DataCite
+rights field) — a share-alike, non-commercial licence this project's licence gate rejects outright
+(CLAUDE.md: "if something is unusable, stop and report — do not silently substitute"). **HYDE
+3.2** (doi:10.17026/DANS-25G-GEZ3) is a materially different, older release with its own DANS
+deposit, and is **CC0-1.0** — the version this source actually uses. Using 3.2 instead of 3.3 is a
+user-approved choice (2026-09-17), not a CLAUDE.md rule: a future release under a compatible
+licence could still replace it. HYDE 3.2 ends at 2015 CE (2017 CE in the raw files; this pass caps
+at 2015 CE).
+
+**Decision.**
+- **`sources/hyde/`, id `hyde_cleared_land` — HYDE 3.2 only.** Cropland + pasture + rangeland +
+  converted rangeland, one `RasterSequence`, 73 real timesteps at HYDE's own native spacing
+  (millennial → centennial → decadal → annual), 10,000 BCE → 2015 CE. The web-side blend clamps
+  to the 2015 frame afterward rather than treating the domain edge as "no data".
+- **R/G/B encoding, revised twice on 2026-09-17 after rendering reviews.**
+  1. The originally-shipped encoding used `grazing` (HYDE's own "total land used for grazing")
+     as the G channel, reasoning it equalled `pasture + rangeland`. Checked directly against
+     real 0 CE data and found wrong: `grazing == pasture + rangeland + conv_rangeland` exactly
+     (max abs diff 0.0 across the whole grid), not `pasture + rangeland` alone (max abs diff
+     57.5 km² per cell). Rendered, this painted nearly all of Africa's Sahel/savanna,
+     Madagascar and much of Europe mustard — the same colour as cleared cropland — because
+     `grazing` includes natural, essentially unmanaged rangeland, not just intensively-managed
+     pasture. Fixed by splitting `pasture` and `rangeland` into separate channels.
+  2. That fix left `conv_rangeland` ("converted rangeland") unfetched, reasoning from its name
+     alone that where it belonged was ambiguous. Checked against the primary source (Klein
+     Goldewijk et al. 2017, *Earth Syst. Sci. Data* 9:927–953, doi:10.5194/essd-9-927-2017) and
+     found it precisely defined, not ambiguous: "for rangeland, the natural vegetation remains
+     intact if it is non-forest, but is cleared if it is forest ... Rangeland-converted is
+     located in forest biomes ... and is assumed to have undergone conversion of natural
+     vegetation" — i.e. `conv_rangeland` *is* cleared land, by HYDE's own authors' definition,
+     while `rangeland` ("rangeland-natural", non-forest biomes) is explicitly "assumed not to
+     have undergone conversion". **Final encoding: R = cropland fraction, G = (pasture +
+     conv_rangeland) fraction (summed, then clipped to `[0, 1]`), B = rangeland fraction.**
+     Full quotes and reasoning: `sources/hyde/README.md` "Which HYDE variable is 'pasture'".
+  3. **Layer name.** `pipeline/publish.py`'s `LayerSpec` name stays "Cleared land (cropland +
+     pasture)" — "pasture" used as a short umbrella term for the whole managed/cleared-grazing
+     G channel, matching how "cleared land" itself is already a short umbrella for the whole
+     layer, rather than spelling out every HYDE category name in the UI-facing label. The exact
+     composition is documented in `manifest.toml`, `docs/DATA_SOURCES.md` and the README.
+- **Selective fetch, not a whole-archive download.** `HYDE3_2_1-baseline.zip` is 5.3 GB and ships
+  every HYDE variable (population, built-up area, irrigated/rainfed splits, ...) for three
+  scenarios; this project needs exactly four ASCII grids per timestep. `sources/hyde/fetch.py`
+  extracts only those via HTTP Range requests against the DANS access endpoint, which forwards
+  `Range` through its own redirect to the underlying object store. The four fetched members form
+  two physically-adjacent pairs in the archive (`conv_rangeland`+`cropland`, `pasture`+
+  `rangeland`), each merging into one Range GET — two HTTP requests per timestep, unchanged from
+  when only three variables were fetched. HYDE's archive uses zip compression method 9
+  (Deflate64), which Python's `zipfile` cannot decompress and no viable Python package adds for
+  this platform, so `fetch.py` shells out to the system `unzip` (macOS's own Info-ZIP fork
+  supports it, as does Info-ZIP UnZip >= 5.5 generally); `check_deflate64_support()` preflights
+  this once before any download, failing loudly rather than partway through one. Each extracted
+  member is verified against its own CRC-32, pinned ahead of time in `_expected_members.json` —
+  so a normal `fetch()` run that finds everything already on disk and CRC-verified never touches
+  the network at all, honouring the "no live API calls in tests" rule with a real offline fixture
+  path.
+- **No new curated shape, no `WorldState` field.** `hyde_cleared_land` is an ordinary
+  `RasterSequence`, published through the existing generic raster-layer path, exactly like
+  `paleodem`.
+- **Cell-area weighting is analytic, not from HYDE's own `garea_cr.asc`.** HYDE's supplementary
+  per-cell-area grid is never fetched — on a plain regular lat/lon grid, true cell area is a
+  closed-form function of latitude alone, computed directly rather than fetched. A documented,
+  small (under 0.3%) accuracy trade for skipping a whole extra fetch dependency, acceptable for a
+  coarse globe-overlay tint.
+- **Web: decodes all three channels, draws two.** `GLOBE_FRAGMENT_SHADER`
+  (`web/src/globe/shaders.ts`) samples `texture2D(...).rgb` from both bracketing frames (was
+  `.rg`, back when G alone was `grazing`), takes the crossfade-mixed result's own `.rg` for
+  tinting, and decodes `.b` (natural rangeland) without ever drawing it — grazed, but not cleared,
+  so it gets no colour term at all, per this ADR's own reasoning above. An earlier version tinted
+  the whole combined grazing signal (before the R/G/B split above), painting the Sahel, the
+  Eurasian steppe and most other savanna/grassland biomes — typically ~90%+ natural rangeland by
+  area — the same colour as genuine farmland; not rendering B is what fixes that at the root, not
+  a fainter tint for it. The shared human-era texture cache (ADR-030) still uses
+  `THREE.NoColorSpace` for this source, since it is data (fractions), not colour, and would
+  otherwise be silently corrupted by an sRGB decode; that cache now also builds a `'boxFilter'` mip
+  chain for HYDE specifically (`web/src/globe/humanEraTextureCache.ts`), and the shader's two HYDE
+  samples take an explicit small mip LOD bias (`CLEARED_LAND_MIP_BIAS`) — both browser-verified
+  fixes for a real texel-aliasing artefact (HYDE's fraction data can flip sharply between adjacent
+  texels at a land-use boundary; without them, an isolated high-fraction texel could read as a
+  solid, saturated hit at orb size even where the true regional fraction was tiny).
+
+  **Curve/colour retune (two rounds, both browser-verified against Playwright screenshots, not
+  just reasoned about).** The first web pass used a `sqrt` gamma curve (exponent 0.5), one shared
+  85%-of-full-colour cap, and a more saturated amber/orange cropland colour — this read, at orb
+  size, as a solid saturated yellow wash across nearly all of Africa, Europe and South America,
+  hiding the terrain under farming that mostly wasn't there: a real ~10% fraction (thin, patchy
+  farming) came out ~27%-opaque, visually indistinguishable from a much higher real fraction. A
+  bare-linear retune (exponent 1.0) fixed the saturation but overcorrected the other way — at orb
+  size it read as barely-there even over Germany's real ~47% cropland fraction. The settled tuning:
+  `CLEARED_LAND_CURVE_EXPONENT = 0.8` (a mild sub-linear curve, `web/src/globe/blend.ts`'s
+  `clearedLandTintAlpha`, a plain, unit-tested TS function shared into the shader by value, the
+  same `glslFloat`-interpolation convention `projection.ts`'s Equal Earth coefficients use); two
+  separate caps, cropland higher than pasture (`CLEARED_LAND_CROPLAND_MAX_ALPHA` 0.75,
+  `CLEARED_LAND_PASTURE_MAX_ALPHA` 0.45) so the two stay visually distinct at an equal fraction; and
+  desaturated colours — cropland a warm ochre/amber-brown (`CROPLAND_COLOR`, deliberately not a
+  saturated lemon/mustard yellow), pasture a muted olive-tan clearly lighter than cropland
+  (`PASTURE_COLOR`, renamed from `GRAZING_COLOR`). Verified against real 2015 HYDE values and
+  Playwright screenshots at both orb and expanded/map scale: Sahel (R 0.4%, G 0%, B 99%) and other
+  natural-rangeland-dominated biomes read as plain base terrain; Germany (R 47%, G 9%), the US
+  Midwest (R 63%, G 6%), India, eastern China, the Nigerian/Sahel farming belt and the Argentine
+  pampas read as clearly farmed; the Amazon's own deforestation edge, Pará (R 4%, G 5%), reads as
+  faintly but genuinely tinted, not vanished; 1700 CE and 1 CE read as visibly less farmed than the
+  present at the same locations. The legend states "Cleared land (cropland + pasture)" (matching
+  this ADR's own layer-name decision above) and "modelled (HYDE 3.2)" explicitly, and says outright
+  that natural rangeland isn't shown.
+
+- **Rejected: HYDE 3.3.** CC BY-NC-SA 4.0, incompatible with this project's licence gate;
+  explicitly not used anywhere in this source.
+- **Rejected: fetching the whole `HYDE3_2_1-baseline.zip` archive.** 5.3 GB for four variables
+  this project needs out of a dozen it does not.
+- **Rejected: `grazing` as a single combined channel.** Superseded by the R/G/B revision above —
+  it silently equated natural rangeland with cleared land.
+- **Rejected: leaving `conv_rangeland` unfetched.** Superseded once its definition was confirmed
+  against the primary source — it is forest-biome grazing land HYDE's own authors define as
+  assumed-cleared, so leaving it out was itself an (unintentional) undercount of cleared land.
+- **Rejected: folding `conv_rangeland` into B (`rangeland`) instead of G.** The primary source is
+  explicit that "rangeland-natural" (`rangeland`, non-forest biomes) is assumed *not* converted,
+  while `conv_rangeland` (forest biomes) is assumed converted — the opposite of `rangeland`'s own
+  defining property, so it belongs with the cleared channel, not the natural one.
+- **Rejected: fetching HYDE's own per-cell-area grid** for exact cell-area weighting. An extra
+  fetch dependency for well under 0.3% accuracy, not worth it for a coarse overlay tint.
+- **Rejected: a new curated shape or `WorldState` field.** Neither is needed just to *publish*
+  the data, only to *consume* it on the globe (out of scope for this source); `hyde_cleared_land`
+  fits the existing `RasterSequence` shape and generic raster-layer path exactly.
+
+**Consequences.**
+- `docs/DATA_SOURCES.md`'s `hyde` entry no longer needs a "VERIFY" on licence for the cleared-land
+  half of the source; population remains unbuilt and its own scope-risk note is kept.
+- Credits publish automatically via the existing generic `_credit()` path.
+- The Deflate64/`unzip` dependency is a genuine, documented platform requirement of
+  `sources/hyde/fetch.py` specifically, not the rest of the pipeline, and has not been verified on
+  Linux — flagged in `sources/hyde/README.md` rather than silently assumed portable.
+
+**Amendment (2026-09-17): cleared land unpublished; population density added, from the same
+deposit.** The human replaced the cleared-land globe overlay with a human-civilisation layer
+(transient arrival animations, persistent population density, major-city markers) and found the
+cleared-land tint itself not discernible on the globe once rendered — not a licence, data-quality
+or scope problem, just a visual one.
+- **`hyde_cleared_land` stays curated, but `pipeline/publish.py`'s `RASTER_LAYERS` no longer
+  registers it.** `sources/hyde/fetch.py`/`normalise.py` still produce it exactly as before (same
+  four variables, same R/G/B encoding, same tests), and a fresh `make data` build still writes
+  `data/curated/hyde_cleared_land.parquet` — only the publish step's layer registration changed,
+  a one-line removal (plus its previously-published `data/media/textures/hyde_cleared_land/*.webp`
+  and `data/media/layers/hyde_cleared_land.json`, deleted from this pass's outputs). Re-publishing
+  it later, if a future rendering treatment makes it legible, is one `LayerSpec` line, not a
+  rebuild.
+- **`hyde_population_density` added and published**, from `popc_<tag>.asc` (population count per
+  cell) in the same HYDE 3.2 deposit already fetched for cleared land — same 73 timesteps, same
+  licence, no new source directory. People per km² is computed from `popc` divided by this
+  source's own already-established true-cell-area calculation (not HYDE's own `popd` density
+  grid, and not the never-fetched `garea_cr.asc`), downsampled to 1024×512 by summing people and
+  area separately over each output pixel's footprint and only then dividing — an unweighted mean
+  of already-computed per-cell densities would under-weight the small-area cells that hold most of
+  a dense city's population (`sources/hyde/README.md` "Population density" has the worked
+  example). Encoded 8-bit on a documented log scale (`pipeline/density_encoding.py`,
+  `v = round(255 · clamp(log10(1+d)/log10(1+D_MAX), 0, 1))`), `D_MAX = 15,000` people/km² measured
+  directly from the real, *published* (downsampled) data's own maximum (13,779.5, at 2015AD) —
+  not the much higher raw full-resolution single-cell maximum (~48,600), which never survives the
+  downsample. The decode parameters (`channel`, `unit`, `dMax`) publish in a new additive
+  `RasterData.encoding` (`pipeline/manifest.py`'s `RasterEncoding`, mirrored in
+  `web/src/types/layer.ts`/`web/src/data/curated.ts`) so a consumer can recover an *exact* density
+  from a sampled pixel rather than only a relative shade — the first HYDE raster to need this,
+  since cleared land publishes plain fractions readable without any decode step.
+- **Rejected: fetching HYDE's own `popd` (density) grid directly**, instead of deriving density
+  from `popc`. Would introduce a second, unverified area convention alongside this source's own
+  already-built and tested true-cell-area calculation, for no accuracy benefit.
+- **Rejected: choosing `D_MAX` from the raw full-resolution grid's maximum.** Would concentrate
+  the 8-bit range's precision around single-cell values that never appear in the actually-published
+  (downsampled) texture, wasting most of the encoding's precision on values below the real,
+  much-lower published maximum.
+- **Rejected: deleting `hyde_cleared_land` outright.** It is real, correctly-encoded, tested data
+  that cost real fetch/compute time to build; unpublishing costs nothing to keep reversible, while
+  deleting the source would throw away working code and data for a purely presentational
+  complaint.
+
+**Consequences (amendment).** `docs/DATA_SOURCES.md`'s `hyde` entry is updated: population density
+implemented and published, cleared land implemented but not published, global population as a
+`TimeSeries` for the HUD still not built. No change to the curated shapes contract — both rasters
+are ordinary `RasterSequence`s through the existing generic raster-layer path; `RasterEncoding` is
+an additive field on the *publish-time* `RasterData` wire shape, not a new curated shape.
+
+**Amendment (2026-09-17) — cleared-land rendering removed from `web/` entirely.** The amendment
+above unpublished `hyde_cleared_land` on the pipeline side (`RASTER_LAYERS` no longer registers
+it). This further amendment records that the same "Human civilisation" pass (ADR-036) removed the
+overlay's *rendering* from `web/` as well, for the same reason — the human found the tint
+indiscernible once rendered, not a data, colour or licence problem. Deleted: `blend.ts`'s
+`hydeClearedLandBlendAt`/`hydeClearedLandHasDataAt`/`CLEARED_LAND_*` constants/
+`clearedLandTintAlpha`; `shaders.ts`'s `uClearedLandBefore`/`After`/`Mix`/`Strength` uniforms and
+the cropland/pasture tint block in `GLOBE_FRAGMENT_SHADER`; `humanEraTextureCache.ts`'s dedicated
+`hydeTextureCache` instance; `Globe.tsx`'s cleared-land state/texture-pair/uniform wiring and its
+own legend row; the `GlobeRasterLayers.hydeClearedLand` field and `Experience.tsx`'s corresponding
+construction; and every cleared-land-specific test. `pipeline/`, `sources/`, and `data/` are
+untouched — the HYDE data/pipeline side stays intact, exactly as the previous amendment left it,
+and can still be re-published later by re-adding the one `LayerSpec` line.
+
+Population density (already added by the previous amendment) plus the new "Human civilisation"
+legend toggle (ADR-036) now carry the "what does the globe show about people" story on screen.
+`humanEraTextureCache.ts`'s generic cache/mip machinery (`createHumanEraTextureCache`,
+`MipmapStrategy` incl. `'boxFilter'`, `buildHighQualityMipmaps`) is kept deliberately — population
+density reuses it — and the module's own doc comment now frames the `'boxFilter'`/`NoColorSpace`
+rationale as a worked example (cleared land, "formerly") rather than a live consumer, so a future
+overlay author has the reasoning without a stale "HYDE cleared land does X" claim.
+
+**Consequences (this amendment).** `docs/GLOBE.md` §10's cleared-land section is marked superseded
+rather than describing a live shader term; its legend write-up drops the two-row ("Cleared land"/
+"Human arrivals") toggle in favour of ADR-036's single row. No further pipeline or data change.
+
+**Amendment (2026-09-18) — global population total, closing the last "not yet built" gap.** The
+previous amendments left one item open (`docs/DATA_SOURCES.md`'s `hyde` entry, "Not yet built"):
+a global population `TimeSeries` for the HUD, distinct from the gridded density raster above. This
+amendment builds it.
+
+- **A third curated output, id `population`** — a `TimeSeries` (the first non-`RasterSequence`
+  output this source produces), from `sources/hyde/normalise.py`'s new
+  `_world_population_total(raw_dir, tag)`: a plain sum of the full-resolution `popc_<tag>.asc`
+  grid at each of the same 73 real timesteps `hyde_population_density` already iterates. No area
+  weighting — `popc` is people *per cell* already, so summing every valid cell directly *is* the
+  world total, unlike the density raster (which must divide by area to combine cells correctly).
+  NODATA (-9999) folds to 0 people and small negative rounding noise clips to 0, exactly
+  `_population_density_grid`'s own two conventions, so the two population outputs can never
+  silently disagree about what counts as "no people here". `unit = "people"`,
+  `interpolation = "log-linear"` (population growth is multiplicative — `Interpolation
+  .LOG_LINEAR`'s own docstring already names "populations" as a worked example alongside CO2).
+- **Named `population`, not `hyde_population_total`.** `pipeline/models.py`'s `WorldModel.at()`
+  already reads `self._s("population", t)` into `HumanState.population` — a pre-existing hook
+  with nothing to fill it until now. Matches `sources/paleodem`'s own `land_fraction`: a source's
+  *derived* scalar series takes the plain semantic name a consumer already looks up, not a
+  source-prefixed one. No change to `pipeline/models.py` or `pipeline/curated.py` was needed —
+  `load_world()`'s curated-file loader already registers every `TimeSeries` by its own id
+  generically.
+- **Verified against real data, not the small committed fixture alone**: a full (non-fixture)
+  `.venv/bin/python -m pipeline.databuild --only hyde --force` rebuild against the already-fetched
+  `data/raw/hyde/popc_*.asc` files (73 real timesteps, no new download) produced these world
+  totals, matching `sources/hyde/README.md`'s own pre-existing ad hoc sanity-check table exactly
+  at every shared checkpoint:
+
+  | Timestep | World total population |
+  |---|---|
+  | 10,000 BCE | 4,432,265 |
+  | 1 CE | 232,124,272 |
+  | 1800 CE | 943,431,063 |
+  | 1900 CE | 1,642,028,156 |
+  | 2000 CE | 6,110,442,981 |
+  | 2015 CE | 7,256,964,920 |
+
+  Monotonically increasing; ~1B around 1800 CE and ~7.3B in 2015 both match published HYDE/UN
+  figures at the order-of-magnitude the task brief asked to eyeball against.
+- **Published as an ordinary `SCALAR_LAYERS` entry** (`pipeline/publish.py`), `chartable=True`
+  like `co2` (unlike `day_length`, which is `chartable=False`) — this is the readout column's own
+  number, not merely an audio-score input, so it earns a sparkline/chart the same way `co2`'s own
+  does. No special-casing in `_layers`: a `TimeSeries` keyed `"population"` in `WorldModel.series`
+  publishes through the exact generic path `co2`/`day_length` already use.
+- **Out-of-domain treatment.** The series' domain is `[10, 12,025]` years BP — identical to the
+  two rasters', since all three come from the same 73 HYDE timesteps. Older than 10,000 BCE the
+  readout reads absent ("no data"), the ordinary out-of-domain behaviour every scalar layer
+  already has — never fabricated. Nearer than 2015 CE (`t < 10`, i.e. "today"), the literal
+  out-of-domain result is also "no data" — technically honest, but a poor HUD experience for
+  exactly the stretch of `t` a viewer is most likely to be looking at. Mirroring the
+  population-density globe overlay's own precedent (`web/src/globe/density.ts`'s
+  `densityBlendAt`, "held from 2015 CE to the present — the data simply ends"),
+  `web/src/layers/components/ScalarReadout.tsx` now holds the newest real sample for any `t`
+  nearer than a layer's own declared domain, rather than reading absent — but, unlike the raster
+  overlay (a colour tint with no room for a caveat), annotates it "as of `<year>`" so a held
+  reading is never mistaken for a live one. Driven by the layer's own domain
+  (`timeDomain[0] > 0`), not a case keyed to this one layer's id, so any future scalar layer whose
+  data similarly ends before the present gets the same treatment for free, and `co2` (whose domain
+  already reaches `t = 0`) is provably unaffected — the hold condition is never true for it. The
+  hold clamps *which* `t` `ScalarReadout` passes to `layer.sample()`, not `TimeSeries.sample()`
+  itself: the shared shape's out-of-domain-returns-null contract (DESIGN §10, "`Layer.sample()`
+  must be pure in `t`") is untouched, exactly the pattern `densityBlendAt` already established for
+  the raster case.
+- **Formatting.** A plain `formatValue` render of a global population (e.g. "7256964920") is not
+  "human-scale and unambiguous", so `web/src/layers/format.ts` gains `formatPopulation` — one
+  decimal while the scaled value is under 10 ("2.4 million", "1.0 billion"), a whole number once
+  it reaches double digits ("232 million") — dispatched by a small `formatScalarValue(value,
+  unit)` wherever a scalar layer's declared `unit` is `"people"`, so `ScalarReadout`/`LayerChart`
+  stay generic (dispatched by unit, never by layer id) and `formatValue` itself is unchanged for
+  every other layer (co2, day length, ...). Unit-tested directly against the sanity-check figures
+  above (`web/src/layers/format.test.ts`).
+- **Rejected: extending `TimeSeries.sample()` itself to clamp near the present.** Would apply to
+  every consumer of every `TimeSeries`, not just a HUD readout, and would make "outside domain
+  returns null" a conditional rather than an absolute contract — the NORMATIVE property DESIGN
+  §10 states plainly. The hold belongs at the display call site, exactly where the raster
+  overlay's own equivalent already lives.
+- **Rejected: a `hyde_population_total`-prefixed id.** Would leave `WorldModel.at()`'s existing
+  `self._s("population", t)` hook unfillable without also editing `pipeline/models.py`, for no
+  benefit — `land_fraction` already established that a derived scalar series takes the plain name
+  a consumer looks up.
+
+**Consequences (this amendment).** `docs/DATA_SOURCES.md`'s `hyde` entry no longer lists a "not
+yet built" item — population density, cleared land (curated only) and the global population total
+are all now implemented, with only cleared land unpublished. `sources/hyde/manifest.toml`'s
+`output_shape` becomes `"RasterSequence x2 + TimeSeries"` and `interpolation` becomes
+`"log-linear"` (previously `"n/a"`, since only `TimeSeries` outputs use that field). No change to
+the curated shapes contract: `population` is an ordinary `TimeSeries` through the existing
+generic scalar-layer path, the same way `hyde_population_density` is an ordinary `RasterSequence`
+through the generic raster-layer path.
+
+---
+
+## ADR-032 — Human-dispersal arrivals as an `arrival` globe effect
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Context.** The human approved a globe overlay showing human dispersal around the world, choosing
+"cited human-dispersal arrivals with schematic arcs" as the first of two overlays to build (the
+second, the HYDE-derived cleared-land tint, is ADR-031). `docs/GLOBE.md`'s `Event.effect`
+(ADR-013) already gives an event an optional, additive `GlobeEffect` — a closed
+`GlobeEffectKind` enum, an optional single `anchor`, and one or more dated `windows` — used today
+for `impact-winter`, `giant-impact`, `flood-basalt`, `ice-shell` and four `regime-*` kinds. An
+arrival does not fit that shape for two independent reasons. First, **anchor cardinality**: every
+existing kind has at most one fixed location; an arrival is inherently a *pair* — where the
+dispersal started, where it reached — and both ends are required, not optional. Bolting
+`origin`/`destination` onto `GlobeEffect` as two more optional fields would make a `GlobeEffect`
+with `kind: 'impact-winter'` and a populated `destination` constructible and meaningless, with
+nothing in the type saying so. Second, **visibility window vs. dating uncertainty**:
+`EventSet.sample(t)` returns events whose *dating*-uncertainty interval contains `t` — correct for
+a moment or a period, but wrong for an arrival, whose dispersal is still true at `t = 0` long after
+its own `[t_min, t_max]` dating window has passed. There is a third, presentational requirement:
+the arc must render whole, dashed from its earliest defensible date and turning solid at the best
+estimate, never grown along its length as `t` moves through the event's own uncertainty band —
+ADR-022 exists precisely because a dating-uncertainty interval was once misread by the timeline as
+continuous growth (`ediacaran-biota`'s "200 Myr of seaweed" gotcha); animating draw-progress from
+`t` would repeat that mistake by presenting dating uncertainty as travel time.
+
+**Decision.**
+- **A new `GlobeEffectKind` value, `arrival` (the ninth kind), backed by a separate model — not
+  more optional fields on `GlobeEffect`.** `pipeline.shapes.GlobeEffect` is unchanged except that
+  its `kind` is now restricted to a `Literal` of the original eight "point" kinds
+  (`POINT_EFFECT_KINDS`); a new `pipeline.shapes.ArrivalEffect` model owns `kind:
+  Literal[GlobeEffectKind.ARRIVAL]` plus `origin`/`destination` (both required, both schematic
+  region centroids, reusing the existing `EffectAnchor` type), `established: GeoTime` (the best-
+  estimate date the arc turns solid — a field of its own, not a re-read of the owning `Event.t`,
+  since several attached events are `kind: 'period'`, ADR-022, with no single instant of their
+  own), and `windows: list[EffectWindow]` validated to contain **exactly one** window with `t_min
+  == 0.0` (present) — not merely "at least one": two present-reaching windows would be redundant
+  and ambiguous about which one rendering code should treat as "the" persistent window. The
+  dashed phase is `[established, t_max]` of that window, the solid phase `[0, established]`.
+  `Event.effect`'s annotation becomes `AnyGlobeEffect = Annotated[GlobeEffect | ArrivalEffect,
+  Field(discriminator="kind")]` — constructing a `GlobeEffect(kind="arrival", ...)` is now a
+  validation error, the invalid state made unrepresentable rather than merely undocumented. The
+  wire side (`pipeline/manifest.py`) and the TypeScript twin (`web/src/types/layer.ts`,
+  `web/src/data/curated.ts`'s `parseGlobeEffect`) mirror the same split and the same "exactly one
+  present-reaching window" validation, so a malformed `arrival` block fails loudly at parse time on
+  both sides, not just in Python.
+- **Thirteen arrivals curated in `data/events.yaml`**: Africa origin, an early Levant excursion,
+  the main Out-of-Africa dispersal, South/Southeast Asia, Sahul, Europe (attached to
+  `neanderthal-sapiens-overlap`), East Asia, Beringia, the Americas (`peopling-of-americas`),
+  Lapita/Remote Oceania (`kind: period`), Madagascar, East Polynesia and Aotearoa New Zealand.
+  Every arrival's `established` date was independently fact-checked (2026-09-17) against primary
+  sources, replacing several wrong or unverifiable citations, correcting one factual error (the
+  peopling-of-the-Americas description had misattributed the 14,000–16,000 BP pre-Clovis range to
+  the superseded "Clovis-first" model, which placed first peopling at ~13,000 BP), fixing an
+  inter-event ordering problem (Sahul's `established` originally sat before Out-of-Africa's own),
+  and correcting several schematic anchors that had implied a specific route rather than a
+  centroid. The corrected chain is strictly monotonic in real time: Africa origin 315 ka → Levant
+  185.5 ka → Out-of-Africa 60 ka → South/SE Asia 55 ka → Sahul 50 ka → East Asia 47.5 ka → Europe
+  46 ka → Beringia 25 ka → Americas 15 ka → Lapita 3175 BP → Madagascar 2075 BP → East Polynesia
+  953 BP → Aotearoa 745 BP.
+- **Rendering.** Arc geometry (`web/src/globe/arcs.ts`) is a pure function of `origin`/
+  `destination` alone, never of `t` — built once and never regrown, so the dating-uncertainty-as-
+  travel-time mistake this ADR's Context describes has no way to recur. `established` is read
+  directly as the dashed→solid transition, independent of the owning event's `kind`/`t`. The
+  degenerate origin === destination arrival (the African origin) renders as a point marker, not a
+  line. Arcs render as screen-space-constant-width "fat" ribbons (a dedicated per-vertex buffer
+  layout, not `THREE.Line`'s hairlines), split at the antimeridian
+  (`projection.ts`'s `splitAtAntimeridian`, ADR-033) so a polyline never stretches across the map
+  as one long segment, and hidden correctly at the sphere's own limb via a view-dependent term
+  combined with ordinary WebGL depth-testing. Arcs and their markers are children of the same
+  rotating scene-graph group the sphere mesh itself belongs to (`Globe.tsx`), so both inherit the
+  planet's auto-rotate and the unfold tween for free rather than each independently tracking
+  rotation. Labels are not rendered — the event feed, which surfaces these automatically as
+  ordinary `events-core` events, covers the "what is this" need instead.
+
+- **Rejected: a single `GlobeEffect` with every field optional** (`anchor?`, `origin?`,
+  `destination?`, `established?`). The textbook optional-field-soup: valid combinations would be
+  implicit and enforced only by a runtime cross-field validator, not by the type itself.
+- **Rejected: reusing the existing `anchor` field as "origin" and adding only `destination`.**
+  Would leave the field misleadingly named for every other kind, and would not by itself solve the
+  windows-persist-to-present problem, the harder half of this change.
+- **Rejected: growing the arc's visible length from `t`** as a "draw progress" animation. Exactly
+  ADR-022's seaweed mistake, presenting a dating-uncertainty band as travel time.
+- **Rejected: a separate `EventSet`** (the `globe-regimes` pattern) for arrivals. Unlike the pre-1
+  Ga regimes, every arrival is a dated, cited, single happening that belongs on the timeline
+  exactly like any other event.
+- **Rejected: a fifth curated shape** for dispersal arcs. Unjustified complexity for something that
+  already fits `Event` plus one additive field.
+
+**Consequences.**
+- Every existing `GlobeEffect(kind=..., ...)` construction is unaffected: the class keeps its name
+  and its eight-kind, optional-anchor shape, restricted only in its `kind` type.
+- `Event.effect`'s Python/TS type is now a union; every consumer that already pattern-matches on
+  `effect.kind` before touching kind-specific fields continues to type-check and behave
+  identically.
+- `pipeline/curated.py`'s JSON-string storage of `effect` needed no change: pydantic's
+  discriminated-union serialisation round-trips through `model_dump(mode="json")`/`model_validate`
+  generically.
+- Megafauna-extinction events that could pair with an arrival (Sahul, the Americas, Aotearoa moa)
+  were evaluated and skipped this pass for lack of a citable primary source within budget; nothing
+  in the contract blocks adding them later as ordinary events, with or without an `effect`.
+- **Amendment — 2026-09-17: later-migrations batch fact-checked; two events reclassified
+  `migration` -> `peopling`, one split in two.** The later-migrations batch this same day added
+  eleven `arrival_kind: migration` events to `data/events.yaml` (ten new, plus the pre-existing
+  `columbian-exchange` gaining an effect) on top of the thirteen original `peopling` arrivals.
+  A same-day fact-check against primary literature (sources/events-core/README.md's
+  "later-migrations fact-check pass" has the full account) found two of the eleven misclassified
+  against this ADR's own destination-based test (`ArrivalKind`'s docstring: peopling is "first
+  human settlement of a region with no prior population") and one further, unrelated dating error:
+  - **`austronesian-expansion-taiwan`** moves `migration` -> `peopling`. The primary excavation
+    report (Bellwood & Dizon 2013, ch. 5) finds no preceramic occupation anywhere in the Batanes
+    Islands — the destination — across fifty-one radiocarbon-dated samples at seven sites, so this
+    is first settlement of an uninhabited region, matching the file's own `lapita-oceania-expansion`
+    precedent (out of already-settled Near Oceania into uninhabited Remote Oceania).
+  - **`norse-north-atlantic-settlement` is split into two events**, both `peopling`. The original
+    single arc conflated two settlements 111 years and a landmass apart — Iceland (~AD 877) and
+    Greenland (~AD 985) — under one id and one set of dates, with `effect.destination` naming
+    Greenland while every date field encoded Iceland's chronology. It keeps its id, repurposed as
+    Iceland-only (`peopling`: Iceland was genuinely uninhabited before Norse arrival — the only
+    counter-claim, Irish papar hermits, is archaeologically unproven). A new event,
+    `greenland-norse-settlement` (`kind: period`), covers the Greenland leg on its own correct
+    dates, also `peopling`: the Eastern/Western Settlement area had no established population at
+    Norse contact either (Dorset presence was concentrated further north; Thule contact came only
+    in the 13th-14th century, `thule-arctic-expansion`). This is the same per-landmass-leg pattern
+    the file already uses for `austronesian-expansion-taiwan` / `madagascar-arrival` /
+    `east-polynesia-arrival` / `aotearoa-arrival`, rather than one arc spanning two settlements.
+  - **`thule-arctic-expansion`**'s dating-uncertainty window start moves from ~975 CE to ~1200 CE
+    (unrelated to `arrival_kind`): the ~1000 CE figure it inherited from Wikipedia describes Thule
+    culture's own origin in coastal Alaska, not the start of its eastward migration, which the
+    dedicated radiocarbon study (Friesen & Arnold 2008) places no earlier than the 13th century.
+  - Three further events (`columbian-exchange`, `transatlantic-slave-trade`,
+    `mass-european-emigration`) had description, citation or coordinate corrections with no
+    `arrival_kind` or classification impact — see the README for the full list. No event from this
+    batch was dropped.
+  - Per `CLAUDE.md`'s rule that a change to a NORMATIVE contract field goes through an ADR rather
+    than a silent data edit, this amendment is the record for both `arrival_kind` reclassifications
+    — each one changes whether the destination gets a persistent "inhabited" marker on the globe,
+    this ADR's own rendering contract.
+
+**Amendment (2026-09-17) — arrivals are now transient; the rendering contract above is
+superseded.** Every arc used to be drawn for the whole span from its window's own `tMax` through
+to the present, so by the present all twenty-five sat on screen at once. As part of the "Human
+civilisation" pass (ADR-036) the human found that unreadable and asked for arrivals to animate
+only while each migration is actually happening.
+
+- **An arc is now drawn only from its window's `tMax` through `established`**, i.e. exactly the
+  span this ADR's own `windows` model already calls the dispersal itself — hidden before `tMax`
+  (hasn't happened on any defensible dating), then fading out over a tail past `established`
+  rather than staying solid to the present. The dashed/solid distinction the original decision
+  specified is gone with it: there is no dashed phase any more, only a continuous alpha
+  (`web/src/globe/arcs.ts`'s `arrivalPresentationAt`).
+- **A travelling pulse and a landing ripple, not a static line.** While `t` is inside
+  `[established, tMax]` a bright head runs `origin → destination` on a wall-clock loop
+  (`HumanCivilisation.tsx`'s `ARC_FRAGMENT_SHADER`, `uTravelling`) — looped rather than driven by
+  `t` itself, because a dating window is frequently a thousandth of the arc's own on-screen life,
+  which would make the head either a single invisible frame or a crawl depending on playback speed.
+  Once `t` passes `established` a ripple expands and fades at the destination
+  (`presentation.settleProgress`).
+- **The fade-out tail's width is derived from the timeline's own playback-rate model, not fixed in
+  years.** `arrivalTimingFor(baseRate)` converts a wall-clock second count
+  (`MIN_ARC_SECONDS = 1.1`, `MIN_TAIL_SECONDS = 0.4`) into symlog-warp widths once, statically, so
+  every arrival gets at least that much legible wall-clock life at the default playback rate
+  regardless of how narrow its own dating window is — a fixed year count would flicker at 60 ka and
+  last forever at 700 BP.
+- **`arrivalKind: peopling` leaves a persistent "inhabited" marker at the destination once the
+  ripple settles; `migration` leaves nothing at all once its own tail ends** — the same
+  distinction the previous amendment's reclassifications were already keyed on, now given a
+  concrete on-screen difference: first settlement of an empty region marks the globe permanently,
+  a subsequent migration into an already-settled one does not.
+- **The parent chain for hover trace-back is derived, not curated.** `findParentEventId` picks the
+  strictly-older arrival whose own destination sits nearest this arrival's origin (a DAG by
+  construction — only strictly-earlier `established` dates count, so no chain can cycle);
+  hovering a marker or a feed card ghosts the whole resulting chain back to the African origin at a
+  dimmed alpha (`traceToOrigin`). The data does not carry an explicit parent link, and this
+  derivation is unambiguous on the curated set: nine of the arrivals' origins match an ancestor's
+  destination exactly, and the widest genuine hop (Beringia, 27° from East Asia) is still far
+  closer than any wrong candidate.
+- **Honest consequence, not a bug to clamp away:** near the present the remaining timeline is
+  narrower than `MIN_ARC_SECONDS` of warp, so an arrival established a few hundred years ago cannot
+  be given its full tail — its fade simply runs out of timeline and it is still partly drawn at
+  `t = 0`. That is the honest floor (there is no more timeline left to give it), flagged rather
+  than silently accepted.
+- **Rendering now goes through the shared morph twin (ADR-033's amendment)**, not a separate
+  `mix(spherePos, mapPos, uUnfold)` the arc/marker shader previously computed on its own — so an
+  arc or marker can never drift from the mesh mid-unfold.
+
+**Rejected.**
+- **Keeping arcs permanent and only adding the pulse/ripple.** Twenty-five permanently-drawn arcs
+  by the present was exactly what the human found unreadable; a pulse on top of a permanent line
+  doesn't address that.
+- **A fixed-year fade-out tail.** Sized in years rather than playback-rate-derived warp, it would
+  be imperceptible at 60 ka and effectively permanent at 700 BP — the same "a year count is not a
+  screen-time count" problem `arrivalTimingFor`'s own design solves.
+- **Curating an explicit parent field.** The curated data has no natural "which arrival does this
+  one continue from" field, and the destination-nearest-origin derivation above is unambiguous on
+  the real data; adding a curated field would be one more thing to keep consistent by hand for no
+  behavioural gain.
+
+**Consequences.** `docs/GLOBE.md` §10's arrivals write-up is rewritten for the transient model —
+the dashed/solid description no longer applies. `ArrivalArcs.tsx` (arrivals-only) is superseded by
+`HumanCivilisation.tsx` (arcs, markers, cities and the scene-location indicator together,
+ADR-036) and `MarkerField.tsx` (the shared instanced marker field) — see ADR-036 for the full
+layer-level change this arrivals rework is part of.
+
+---
+
+## ADR-033 — The expanded globe unfolds into an Equal Earth map
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Context.** The globe (DESIGN §7) is a rotating sphere. Rotation is the right default — it reads
+as a planet — but it also means a viewer can only ever see one hemisphere at a time, and
+paleogeography that only makes sense in relation to the *whole* Earth (a Snowball Earth ice shell,
+a Cretaceous ocean gateway, Pangaea assembling) has to be inferred by spinning it around. The human
+asked for a way to "see everything at once": an option, only in the expanded view, to unfold the
+sphere into a flat map.
+
+**Decision.**
+- **A Globe / Map segmented toggle** on the expanded globe panel (`Globe.tsx`), matching the
+  timeline transport's existing labelled-toggle idiom. It is local, `Globe`-owned UI state, reset
+  to "Globe" every time the panel collapses, so re-expanding never resumes a stale map view.
+  `GlobeStaticOrb` (the no-WebGL placeholder) has no map to unfold into, so the toggle is hidden
+  outright when WebGL is unavailable, never shown disabled.
+- **Projection: Equal Earth, not equirectangular.** Equirectangular was the simpler default (a
+  literal reshaping of the same textures, no projection math) but stretches polar regions into
+  nonsensical bands and reads as a placeholder. Equal Earth (Šavrič, Jenny & Jenny 2018) has a
+  closed-form forward projection — cheap enough to evaluate per-vertex every frame — is area-true,
+  and its curved meridians read as an actual world map. It lives once, in
+  `web/src/globe/projection.ts`, as a pure TS module (`lonLatToSphere`, `lonLatToMap`,
+  `unfoldedPosition`) with a GLSL twin (`PROJECTION_GLSL`) whose numeric coefficients are
+  interpolated directly from the TS constants, not hand-copied, so the two cannot drift apart.
+- **One mesh morphs continuously; nothing is swapped.** The sphere's geometry is a custom
+  `BufferGeometry` carrying a single per-vertex attribute, `aLonLat` (degrees) — no `position`/
+  `normal` attribute at all. The vertex shader computes both the sphere and map positions from
+  `aLonLat` and mixes them with a `uUnfold` uniform (0 = sphere, 1 = map), animated over ~0.8s
+  eased (instant under `prefers-reduced-motion`). Grid columns run the full −180°→+180° range
+  (the same closing convention `THREE.SphereGeometry` itself uses) and no triangle joins the last
+  column back to the first, so the seam simply opens up as `uUnfold` rises rather than one
+  triangle stretching across the whole map. The sphere frame and the map share the same centre
+  meridian, and the mesh's triangle winding is chosen so every face stays outward-facing in that
+  frame.
+- **Texture sampling reads identically in both modes, with no per-fragment branch.** `vUv` comes
+  from each vertex's own `aLonLat` in the vertex shader rather than the fragment shader deriving
+  it from the interpolated normal — one formula serves both sphere and map mode, and computing it
+  per-vertex avoids the GPU's derivative-based mip selection seeing a discontinuity at the ±180°
+  seam, which a per-fragment normal-derived formula would hit. Every lat/lon-anchored effect (the
+  K-Pg impact flash's anchor, the arrival arcs and markers, ADR-032) projects through the same
+  `unfoldedPosition`/`vUv` machinery and lands at the geographically correct point in both modes
+  automatically. The only fragment-shader term that genuinely depends on `uUnfold` is the
+  directional diffuse light, neutralised to a flat 1.0 as the map takes over (a flat map has no
+  honest reading of a directional light); the atmosphere rim shell fades out the same way, for the
+  same reason.
+- **The poles.** Equal Earth flattens each pole to a line, not a point, so there is no single
+  correct map-mode position for the N/S point markers to relocate to. Rather than build edge-label
+  layout, the pole stub and label simply fade out with the sphere as `uUnfold` rises, and back in
+  as it folds.
+- **Camera.** `OrbitControls` disables rotation and enables pan in map mode (there is no "up" to
+  spin toward on a flat map); both pan and zoom are clamped so the map can never be zoomed out past
+  its own "whole map fits" framing or panned off-screen. The camera steers its own distance to
+  match the unfold tween while it is under way, and the expanded panel's own box widens from the
+  sphere's square toward the map's roughly 2:1 aspect over the same ~0.8s.
+
+- **Rejected: equirectangular projection.** Simpler, but reads as a distorted placeholder near the
+  poles rather than a map.
+- **Rejected: a second, separate flat-map component/scene**, swapped in for the sphere. Would
+  duplicate every texture/effect/caption integration the globe already has, and would need its own
+  generated/animated transition rather than getting one from a single `uUnfold` uniform.
+- **Rejected: edge labels for the poles**, instead of fading the point markers out. Not ruled out
+  for later, but not worth building for comparatively little payoff against the map's own pinched
+  top/bottom shape already reading as "up is north".
+
+**Consequences.**
+- `web/src/globe/projection.ts` is now the one place any future lat/lon-placed overlay should
+  project through, in both TS (CPU-placed markers) and GLSL (GPU-drawn overlays) — including
+  `splitAtAntimeridian`, which the arrival arcs (ADR-032) use directly.
+- One more uniform (`uUnfold`) and one more per-vertex attribute (`aLonLat`) on the globe shader —
+  cheap, since the mesh is small and the projection math is closed-form.
+
+**Amendment (2026-09-17) — the per-axis lerp faceted the silhouette and jumped the camera; fixed
+with a curvature unroll.** Browser-verified regression, from frame-capture contact sheets
+(`scratchpad/transition-before/*.png`): the original `unfoldedPosition` mixed `lonLatToSphere`'s
+and `lonLatToMap`'s xyz *output* directly, `lerp(sphere, map, unfold)`. **Root cause:** a per-vertex
+straight-line interpolation between two unrelated 3D points has no reason to trace a silhouette
+that stays round and convex — each vertex just walks a straight line between two unrelated points.
+The contact sheets show the sphere's own silhouette visibly faceting into a hexagon/octagon partway
+through unfolding, and a literal flat *square* partway through folding back — exactly the "phases
+into a square" and non-smooth-shrink complaints that prompted this fix. A second, independent bug
+compounded it: `GlobeCameraControls` sized the mid-tween camera distance against
+`lerp(GLOBE_RADIUS, MAP_HALF_WIDTH/HEIGHT, unfold)` — a linear guess at the mesh's own bounding
+box — which didn't match how the real (faceted) silhouette actually grew, so the camera briefly
+overshot then had to visibly race the mesh's own real, slower-growing-at-first width, reading as a
+shrink-then-grow "jump".
+
+- **Fix: a "curvature unroll".** `projection.ts`'s `curvatureUnroll` treats the sphere as a surface
+  of curvature `k` (`k = 1` the ordinary unit sphere, `k → 0` the flat plane), tangent to the fixed
+  point `(0, 0, radius)` — the point facing the camera — at every `k`; unrolling the map is then
+  easing `k` from 1 to 0 while blending each vertex's flat-projection coordinates from
+  equirectangular (`lonLatToSphere`'s own angle inputs) to Equal Earth's `(x, y)`. Endpoints are
+  exact and proved algebraically (`k = 1` reduces to `lonLatToSphere` exactly; `k → 0` reduces to
+  the flat plane exactly; the centre point sits at the same position for every `k`, needing no
+  camera refit for it alone), and the silhouette stays a spherical cap throughout — confirmed
+  smooth in `scratchpad/transition-after/*.png` (no faceting, no square, monotonic growth/shrink).
+  Mirrored in GLSL (`PROJECTION_GLSL`) and now the *only* place the mesh, the arrival arcs and every
+  marker compute this morph — `HumanCivilisation.tsx`'s arc/marker shader previously had its own,
+  separate `mix(spherePos, mapPos, uUnfold)`; it now calls the shared `unfoldedLiftedPosition`/
+  `curvatureNormal` GLSL twin instead.
+- **Invariant: anything drawn on the globe must go through this one shared twin
+  (`unfoldedPosition`/`unfoldedLiftedPosition`, TS and GLSL), never its own morph.** That is what
+  the previous bug actually was — a second, independently-computed morph that could (and did)
+  disagree with the mesh's own. There is now exactly one implementation of "where does this lon/lat
+  point sit at this unfold", consumed identically by the sphere mesh, arcs and markers.
+- **Camera fixed the same way: sized from the mesh's real extents, not a linear lerp.**
+  `unrolledHalfWidth`/`unrolledHalfHeight` (`projection.ts`) numerically sample the curvature
+  unroll's own current half-extents at the live `unfold` (the true widest point moves between an
+  interior longitude and the map's own edge as the unroll progresses, so a closed form isn't used)
+  — `GlobeCameraControls` sizes its mid-tween camera fit against these instead of a lerp of the
+  sphere's and map's own bounding boxes.
+- **Consequence of the fix: the fully-unrolled map's own vertices sit at `z = radius`, not `z = 0`**
+  — `lonLatToMap` alone still returns `z = 0` unchanged, but the curvature construction keeps its
+  tangent point `(0, 0, radius)` fixed for every `k`, so the whole sheet flattens around it, not
+  around `z = 0`. `GlobeCameraControls` accounts for this with a `+ GLOBE_RADIUS` offset on every
+  map-mode camera-distance calculation (`mapFit`, the mid-tween `requiredDistance`, the settled
+  `minDistance`/`maxDistance`) and the same offset subtracted back out of the pan-clamp distance —
+  `controls.target` itself stays at `z = 0` throughout, so ordinary sphere-mode orbiting is
+  unaffected.
+- **Residual, not fully explained:** `unrolledHalfHeight` has a real, tiny (<0.2% relative,
+  `projection.test.ts`'s own comment) non-monotonic wobble very close to `unfold = 1`, from easing
+  the equirect-to-Equal-Earth coordinate blend and the curvature at the same plain linear rate —
+  confirmed sub-visual, not a real shrink. Left as a known residual rather than chased further this
+  pass; a smoother handoff near the very end of the unroll would remove it.
+
+**Rejected.**
+- **A smaller per-axis-lerp tweak** (easing curve, clamping). Rejected because the fault is
+  structural — a straight-line interpolation between two unrelated points cannot trace a convex
+  silhouette by construction, regardless of the easing applied to the blend factor.
+- **Keeping the arc/marker shader's own separate morph**, just fixed to match the new mesh formula.
+  Would reintroduce exactly the class of bug this amendment fixes the moment the two formulas next
+  drift, for no benefit over sharing one twin outright.
+
+**Consequences (amendment).** `docs/GLOBE.md`'s §1 v2 note and §10 are updated for the curvature
+unroll and the shared-twin invariant; `docs/GLOBE.md`'s "chirality bug" cross-reference and the
+rotating-group camera write-up gain the `unrolledHalfWidth`/`unrolledHalfHeight` framing detail.
+
+---
+
+## ADR-034 — Scenes gain an optional real-world location, reconstructed to paleo coordinates
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Numbering note.** A concurrent agent's work (`FeatureSet`, a fifth curated shape) also claimed
+"ADR-034" independently while both were in flight; that decision moved itself to ADR-035 once the
+collision surfaced, leaving this number free for the work actually specified as ADR-034 in its own
+task brief. See ADR-035's own numbering note.
+
+**Context.** The user asked for the expanded globe to rotate/pan to centre on a scene's real
+location and show a brief pulse, for scenes that depict one — Giza, the Somme, Lucy's discovery
+site — while a generic deep-time environment (a Carboniferous swamp, a Devonian estuary) has no
+such place: DESIGN §6 and ADR-007 already establish that most scenes are a **conceptual** vantage,
+not a real one, and "there is therefore no pin on the globe." This ADR does not revisit that
+default — it narrows it for the specific, small set of scenes that genuinely name a known real
+place, without disturbing ADR-007's rule for every other scene.
+
+The harder problem is *which* coordinates to publish. The globe renders paleogeography: a scene
+set hundreds of millions of years ago sits on a continent that has since drifted, so its modern
+coordinates are not where a viewer would be looking if they could stand there at that `t`. Marking
+modern coordinates on a paleo-textured globe would be a specific, avoidable factual error, not an
+artistic simplification — exactly what CLAUDE.md's "if something is unusable, stop and report; do
+not silently substitute a different dataset" is written against.
+
+**Decision.**
+- **`SceneLocation`, optional, on `SceneRecord`** (`pipeline/scenes.py`): `lat`
+  (`-90..90`), `lon` (`-180..180`), and a non-empty, stripped `label`. `None` is the default and
+  correct value for a scene with no specific real place — the overwhelming majority. Modelled as
+  its own small validated type, the same way `ScenePin`/`SceneSound` already are, rather than three
+  loose optional fields on `SceneRecord` itself: the three values are only ever meaningful
+  together, and a type makes "has a location" a single conditional (`is not None`) instead of three
+  fields that could individually be set or missing.
+- **Invisible to the asset graph, exactly like `title` (ADR-028), `events` (ADR-022) and `sound`
+  (ADR-023).** `pipeline/assets.py` builds a scene's prompt/image node inputs from `scene.shot`,
+  `scene.unsourced` and `scene.subject` only; it was not touched by this change and does not read
+  `location`. Verified two ways: `.venv/bin/earthtime plan` reports the identical `68 scenes: 66
+  pinned, 0 awaiting review, 2 stale` before and after all 23 scenes in `data/scenes.yaml` gained a
+  `location` (byte-identical `plan` output, not just the summary line), and
+  `test_scene_location_plays_no_part_in_the_asset_graph` (`tests/test_pipeline.py`) adds a location
+  to a pinned scene and asserts it is still pinned, not stale, the same shape
+  `test_scene_sound_plays_no_part_in_the_asset_graph` already has for `sound`.
+- **Present-day coordinates only on the curated record; `pipeline/publish.py` derives what the
+  globe should actually mark.** A scene's `location.lat`/`lon` are always today's coordinates for
+  that place — the only coordinates a human curator can look up — never a paleo position hand-
+  computed once and frozen into YAML, which would silently go stale if the plate model or the scene
+  moved. Publish decides the marker from `t`:
+  - **`t <= 2,580,000` years BP (the Gelasian/Quaternary-Pleistocene boundary, `pipeline.publish
+    .HUMAN_ERA_BASEMAP_DOMAIN_END`) — the marker is the present-day coordinates unchanged.** This
+    is exactly the domain ADR-030 already established for the globe's own present-day-terrain
+    basemap (`sources/basemap`'s `PLEISTOCENE_START`, the same 2,580,000 value): continental drift
+    within it is imperceptible at globe scale, so reconstruction would add cost and a second source
+    of error for no visible gain. The constant is deliberately duplicated rather than imported from
+    `sources/basemap` — `pipeline/` never statically imports a `sources/<name>` module, only loads
+    one dynamically (`pipeline.databuild.load_source_module`), and introducing the first exception
+    for one shared number was judged worse than one comment tying the two together.
+  - **Older — the marker is a plate-reconstructed paleo position, or no marker at all.**
+    `pipeline/paleogeography.py` is a thin wrapper: present-day `(lat, lon)` plus `t` in, paleo
+    `(lat, lon)` or `None` out. It reuses the Merdith et al. 2021 rotation model and continental
+    polygons already fetched for `sources/plates-neoproterozoic` (`relief.py`'s own pygplates
+    usage is the template) — no new download, no new model, and the same files this project
+    already depends on. That source's raw directory holds a *continuous* 0–1000 Ma rotation model,
+    even though its own texture output only reconstructs 540–1000 Ma of it (0–540 Ma already has
+    real elevation data from `sources/paleodem`, needing no reconstruction of *positions*); this ADR
+    is the first thing in the pipeline that reconstructs a point, so it uses that model across its
+    full published domain. Confirmed against the real fetched model this session (`fetch.py` run
+    once, live, to obtain it — the only network access this feature needed): Rhynie, Scotland
+    (57.33°N) reconstructs to roughly 22°S at 407 Ma, consistent with the Old Red Sandstone
+    continent's published near-equatorial-to-southern position in the Early Devonian; Giza at
+    `t = 0` round-trips to itself exactly.
+  - **No polygon under the point is a real, reportable gap, not an error to paper over.** The
+    Isthmus of Panama (`panama-land-bridge`, `t = 2.8` Ma) has no match in Merdith's
+    `ContinentalPolygons` at all — confirmed by direct query, not assumed — because that
+    global-scale deep-time model has no representation for this young, arc-derived terrane. Per
+    CLAUDE.md ("if something is unusable, stop and report; do not silently substitute a different
+    dataset"), `reconstruct()` returns `None` rather than defaulting to plate id 0 (which would
+    silently mean "treat this point as fixed to the reference plate", a wrong assumption dressed up
+    as a neutral default), and publish marks no position for that scene rather than a wrong one.
+  - **`pipeline.paleogeography` never imports `pygplates` at module scope** — only inside
+    `load_reconstructor`, guarded and turned into a `PlateModelUnavailable` (→ `PublishRefused`) if
+    the `geo` extra isn't installed or the Merdith raw files aren't fetched. This mirrors
+    `sources/plates-neoproterozoic/normalise.py`'s own `write_outputs` pattern and keeps this
+    module — and everything that imports it, including `pipeline.publish` unconditionally —
+    importable without the extra. The model, once loaded, is reused for every scene needing it in
+    one `earthtime publish` run rather than reloaded per scene (`_load_reconstructor_if_needed`
+    loads it at most once, and not at all when no pinned scene needs it — most publishes still
+    need no `geo` extra and touch no raw Merdith file at all).
+- **Both coordinate pairs publish, clearly named, so the reconstruction is auditable.**
+  `pipeline.manifest.SceneLocation` carries `label`, `presentDay` (the curated source value, always
+  present when the scene has a location) and `marker` (what the globe should plot, or `null`).
+  `presentDay` is never itself the thing to render for an older scene — only `marker` is — but
+  publishing it lets anyone check a reconstruction against the coordinates it started from without
+  re-deriving them from `data/scenes.yaml`.
+- **Curation is conservative: a location names a genuinely known, real place, never a plausible
+  stand-in for a generic environment.** Of 68 scenes, 23 gained one — the human-era landmarks and
+  events the task specified (Giza, Uruk, Göbekli Tepe, Angkor Wat, the Somme, D-Day, Trinity, Apollo
+  11, both Shenzhen scenes, and others), plus West Turkana (the Kokiselei 4 site the record already
+  cited) and Highland Park (Ford's plant, likewise already named), added on the same test; three
+  pre-Quaternary scenes with a specific cited discovery site (Rhynie chert; Hadar for `lucy-
+  afarensis`; the Isthmus of Panama, unreconstructable per above). Explicitly excluded:
+  `messinian-salt-flats` (a brine lake somewhere in the drying Mediterranean, not one named site),
+  `industrial-mill-town`/`green-revolution-fields`/`containerisation-port`/
+  `energy-transition-solar-wind`/`smartphone-seafront-2018`/`global-city-rush-hour`/
+  `post-war-boom-suburbia` (each explicitly written as a composite, representative scene, not one
+  documented place), `ice-age-europe-neanderthal`/`pleistocene-steppe`/`devonian-estuary`/
+  `late-devonian-tetrapod` (generic environments, even where an anatomical model like Tiktaalik has
+  a real type locality the scene itself does not claim to depict), and the three K-Pg scenes
+  (`kpg-arrival`/`kpg-darkness`/`kpg-aftermath`): Chicxulub already has a location mechanism of its
+  own, `events.yaml`'s `effect.anchor` (GLOBE.md §5.3, unreconstructed as shipped), and giving the
+  same crater a second, independent marker system risked two globe mechanisms disagreeing over one
+  place rather than clarifying it.
+
+**Consequences.**
+- `data/scenes.yaml` gains one `location:` line on 23 records; `data/media/manifest.json` gains a
+  `"location"` object on each of their published entries (additive — `Scene.location` defaults to
+  absent, so a manifest predating this field, or a scene with none, stays valid). A later web agent
+  renders the pulse/rotation from `marker` only, treating its absence (or a `null` `marker` inside a
+  present `location`) as "no globe marker for this scene", never falling back to `presentDay`.
+- `earthtime publish` now needs the `geo` extra and a fetched `sources/plates-neoproterozoic` raw
+  directory *only* when some pinned scene's location is older than the human-era basemap domain —
+  every other publish, including every one before this ADR, is unaffected.
+- `web/public/stub/manifest.json` was not extended: the stub's job is to validate against
+  `pipeline.manifest.Manifest`'s shape and give the frontend something to build against before a
+  real publish exists, and `location` is optional and additive, so an unextended stub already
+  round-trips. Whoever builds the globe-marker rendering should add a `location` to at least one
+  stub scene once they want to develop against it — a web-side follow-up, not a pipeline one.
+- Reconstruction is exercised for real only manually (this ADR's own Rhynie/Giza checks above, and
+  the one live `sources/plates-neoproterozoic/fetch.py` run needed to obtain the raw model for
+  them) — the automated suite (`tests/test_paleogeography.py`, `tests/test_pipeline.py`) uses a
+  `Reconstructor` test double throughout, the same "tests never import gplately" convention
+  `sources/plates-neoproterozoic`'s own suite already keeps.
+
+---
+
+## ADR-035 — `FeatureSet`: a fifth curated shape for labelled, dated geographic points
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Numbering note.** This was specified as "ADR-034" in the originating task brief. A concurrent
+agent's work (scene real-world locations / globe markers, `pipeline.scenes.SceneLocation`) also
+claimed "ADR-034" independently while this work was in flight, discovered only once both had
+already committed code comments to their own number. Rather than let two unrelated decisions
+collide on one ADR number, this decision takes the next free number, **ADR-035**; the other
+agent's own decision should keep ADR-034 (or whichever number is free once both land) —
+reconciling the two is a follow-up for whoever integrates both branches, not resolved here.
+
+**Context.** The human approved a "human civilisation" globe layer with three parts: transient
+arrival animations (ADR-032, already built), persistent population density (ADR-031 amendment,
+already built) and major-city markers with hover tooltips (this ADR's own data side — no
+rendering). A major city is a labelled place with a stable position and a set of *independently
+dated* population readings — not a scalar over time (`TimeSeries`, one value per `t`, one
+interpolation policy), not a timeline happening (`EventSet`, a `[t_min, t_max]` interval), not a
+georeferenced grid (`RasterSequence`), and not a lineage (`Tree`, one parent per node, one
+divergence date). None of the four existing curated shapes fit without distorting the data:
+forcing ~1,700 cities into ~1,700 independent `TimeSeries` would scatter one dataset across a
+hierarchy owned by the "layer" ID space; forcing each population reading into an `EventSet`
+event would misuse `t_min`/`t_max` (dating uncertainty) for what is actually a set of discrete,
+independently-attested readings with no uncertainty interval of their own.
+
+**Decision.**
+- **A fifth curated shape, `FeatureSet`** (`pipeline/shapes.py`), added to the NORMATIVE
+  contract table (`docs/DATA_SOURCES.md` § Contract). A `Feature` is a stable `id`, `name`,
+  modern `country`, `lat`/`lon` (validated to real ranges), a closed `FeatureCertainty` enum
+  (`high`/`medium`/`low` — not the source dataset's raw 1/2/3 codes, translated once at the
+  source boundary), and a non-empty, `t`-sorted, `t`-deduplicated list of `PopulationEstimate`
+  (`t`, `population: int > 0`). `FeatureSet` itself validates non-empty, unique feature ids
+  (sorted by id for determinism), and exposes `domain` (min/max `t` across every feature's every
+  estimate) and `sample(t)` (every feature already attested by `t` — the same "not yet existing"
+  semantics `Tree.sample` gives a not-yet-diverged node), matching every other shape's
+  `Sampler`-shaped surface even though no rendering consumes it yet.
+- **Storage**: `pipeline/curated.py`'s `_LAYOUTS` gains a `FeatureSet` entry — one parquet row
+  per feature, `estimates` JSON-encoded (the same "nested list round-trips as a JSON string
+  column" pattern `EventSet.effect` already uses, since parquet's columns are flat).
+  `pipeline.models.WorldModel` gains a `features: dict[str, FeatureSet]` registry, read by
+  `load_world` and by the generic publish path — not by `WorldState.at()`/`WorldState` itself,
+  since a set of cities isn't a planetary-snapshot field the way `atmosphere`/`climate` are (the
+  same reasoning `globe-regimes`, an `EventSet`, already gets: registered on `WorldModel`,
+  never reaching `WorldState`).
+- **Publish**: `pipeline/manifest.py` gains the wire twins (`FeatureEstimateData`, `FeatureData`,
+  `FeatureSetData`, plus `LayerDataKind.FEATURES`), and `pipeline/publish.py` gains a
+  `FEATURE_LAYERS` tuple and a `_layers()` loop reading `world.features` — structurally
+  identical to the `EVENT_LAYERS`/`RASTER_LAYERS`/`NODE_LAYERS` loops already there. No special
+  casing needed in the generic path itself.
+- **Only "cities" is filtered before publishing, not the curated data.** Per direct user
+  direction after this ADR's own scope was already set ("only need to include major notable
+  cities, not everything... keep the full normalised dataset in the curated parquet"), the
+  `cities` entry in `FEATURE_LAYERS` is special-cased in `_layers()` (`if spec.curated_id ==
+  CITIES_ID`) — the same "special-case one entry in an otherwise-generic loop" shape
+  `NODE_LAYERS`' own portrait handling already uses — to run
+  `pipeline.notability.notable_features` before building `FeatureSetData`. That function itself
+  is generic (any `FeatureSet`, any bucket width, any top-N), factored into `pipeline/` rather
+  than `sources/cities/` so a future second `FeatureSet` source could reuse it without a
+  cross-`sources/` import. See `sources/cities/README.md` "Notability filter" for the concrete
+  parameters and measured effect (164 of 1,736 cities published).
+- **`sources/cities/`** (Reba, Reitsma & Seto 2016) is the first, and so far only, `FeatureSet`
+  source. Licence and access verified directly before writing any code: SEDAC's own listing
+  requires a NASA Earthdata login and ships no direct download, but the paper's own "Data
+  Records" section names the real distribution — three CSVs on figshare, each independently
+  CC BY 4.0 (confirmed via the figshare API), downloadable with no auth. Full account:
+  `sources/cities/README.md`.
+- **Web contract, no rendering.** `web/src/types/layer.ts` gains `FeatureCertainty`,
+  `PopulationEstimateData` (wire-cased `t`/`population`), `FeatureData` and `FeatureSetData`
+  types mirroring the Python side exactly; `web/src/data/curated.ts` gains `parseFeatureSetData`
+  following the file's existing `expect*`/`parse*Data` validation idiom (sorted-and-unique
+  estimate `t` per feature mirroring `Feature._estimates_sorted_and_unique`, non-empty
+  feature/estimate lists, lat/lon range checks), with vitest tests. No component renders a
+  marker or tooltip from it — that is explicitly out of scope for this pass.
+
+**Rejected.**
+- **Reusing `EventSet`** for cities, treating each population estimate as an `Event` with
+  `t_min == t_max == t`. Would misuse `EventSet.window()`'s zoom-LOD `importance` semantics for
+  something that isn't dating uncertainty at all, and would need a separate grouping mechanism
+  (which events belong to the same city) that `EventSet` has no concept of.
+- **Reusing `TimeSeries`**, one per city. Would need ~1,700 separate curated ids for one
+  dataset, each carrying an `interpolation` policy that makes no sense for population readings
+  that can collapse or rebound between attested dates (a city's population is not assumed to
+  interpolate linearly, or at all, between two readings — `PopulationEstimate` deliberately
+  offers no `sample()`/interpolation of its own).
+- **A denormalised `RasterSequence`** (a rasterised "city mask" per timestep). Throws away the
+  actual labelled, queryable per-city data (name, exact coordinates, a specific population
+  reading) for a decorative texture — wrong shape for something a hover tooltip needs to read
+  back out.
+- **Filtering to "notable" cities in `sources/cities/normalise.py`** (the curated shape).
+  Explicitly rejected by direct user direction: the curated parquet must keep the full
+  normalised dataset so a future rendering pass, or a different notability threshold, doesn't
+  need to re-run the merge — only the publish-time filter needs to change.
+- **A per-feature notability predicate** (`Callable[[Feature], bool]` on `LayerSpec`) instead of
+  a whole-`FeatureSet` transform. Notability here is inherently relational (a feature's rank
+  among its era's *other* features), not a property of one feature in isolation, so a
+  per-feature predicate signature can't express it.
+
+**Consequences.**
+- `docs/DATA_SOURCES.md`'s Contract table now lists five shapes; `docs/DESIGN.md` §10 and
+  `docs/IMPLEMENTATION.md`'s own "the four curated shapes" references are updated to five/match.
+- Every existing shape, its storage layout, and every existing `LayerSpec`/`RASTER_LAYERS`/
+  `EVENT_LAYERS`/`NODE_LAYERS`/`SCALAR_LAYERS` entry is unaffected — this is a purely additive
+  change to the shapes union, the storage layouts dict, the wire `LayerData` union, and the
+  publish loops.
+- A second `FeatureSet` source, if one is ever added, reuses `pipeline.notability.notable_features`
+  directly rather than re-deriving an era-relative filter; if its own notability semantics differ,
+  that is a new, separate function, not a change to this one.
+
+---
+
+## ADR-036 — The "Human civilisation" globe layer: one toggle, one hit-test, one tooltip
+
+**Status:** accepted — human-directed 2026-09-17.
+
+**Context.** Arrivals (ADR-032), population density (ADR-031's amendment) and city markers
+(ADR-035's data, unrendered until now) were three separately-built pieces, each with its own
+would-be toggle and, for arrivals, its own colour key. The user asked for one legend control
+instead: "a more global toggle for 'human civilisation' ... which covers that as well as
+population density and cities" — a single on/off switch for everything this layer draws, not a
+row and a key per part.
+
+**Decision.**
+- **One `HumanCivilisation` component, one `enabled` prop, nothing rendered at all when it's
+  off.** `web/src/globe/HumanCivilisation.tsx` supersedes the old, arrivals-only
+  `ArrivalArcs.tsx`: it owns arcs, inhabited/city/scene-location markers and the one shared
+  tooltip. `Globe.tsx` gates the whole subtree on a single `humanOn` boolean (also gating the
+  population-density shader uniform, since that overlay is a texture on the sphere's own material
+  rather than a child of this component) — there is exactly one control surface for "is the human
+  layer showing", not three.
+- **One legend row, `Legend.tsx`'s `"human-civilisation"`**, replacing what would otherwise have
+  been three rows (or, as originally shipped for cleared land/arrivals, two — ADR-031's amendment
+  removed the cleared-land row rather than ever having three). Visibility is the disjunction of the
+  three parts' own domain checks (`hasVisibleArrivals(...) || densityHasDataAt(...) ||
+  citiesHaveDataAt(...)`) — the row disappears only when *none* of the three has anything to show
+  at the current `t`, and stays present as long as any one does. **Arrivals carry no colour key at
+  all** (their colour is fixed, not a scale, and doesn't need one); **density gets one**
+  (`DensityRampKey.tsx`) in the row's own `footer` slot, shown only while the layer is on and a
+  density is actually painting — a key for a switched-off overlay would explain nothing.
+- **The density ramp itself is log-spaced and hand-tuned against real sampled texels, not derived
+  from a formula.** `density.ts`'s `DENSITY_RAMP`: seven stops from 0.5 to 8,000 people/km²,
+  interpolated in `log10(1 + d)` (the same space the publish-side 8-bit encoding already spreads
+  its precision over), running dark violet → magenta → red → orange → pale amber — a hue family
+  with no counterpart in Natural Earth II's greens, tans and blues, so even a faint inhabited band
+  reads as an overlay rather than terrain. The alpha curve was tuned against real sampled texels of
+  the published 2015 CE frame: remote Amazon (0.04–0.25/km²) and Tibet (0.2) fall at or under the
+  floor and draw nothing; rural Iowa (6.7), the Argentine pampas (6.4) and the Congo (4.7) land
+  around a third opaque; the Netherlands (372) and Jiangsu (1,154) are most of the way to opaque;
+  Dhaka (8,204) is the ramp's own top. This directly answers why the cleared-land tint it replaced
+  failed: a *linear* fraction spread thinly across a huge range, in earthy hues that sat inside the
+  terrain's own palette.
+- **City cull is two independent cuts, at two different times, for two different reasons.**
+  Notability is decided once, at publish (`pipeline.notability.notable_features`, ADR-035): a
+  city's peak population must rank in its own 100-year era bucket's top 12, cutting 1,736 curated
+  cities to 164 published ones, era-relative so an ancient city only has to out-rank its own
+  contemporaries. On top of that, the screen itself culls further at render time
+  (`cities.ts`'s `selectCities`): the `limit` largest of the published cities *at the current `t`*
+  — 10 on the orb, 45 expanded — so a dense late-modern frame doesn't turn solid with dots. Marker
+  radius is `log10(population)`-mapped, not area-true, a deliberate legibility trade: an
+  area-proportional dot would put nearly every pre-industrial city indistinguishable from the
+  floor. **Names appear on hover only, in the shared tooltip below, never as drawn labels** — the
+  same call already made for arrival labels (ADR-032), for the same reason: the labelled set
+  overlaps constantly at globe scale, and a screen-space collision cull that silently drops half of
+  them is worse than a tooltip that always answers.
+- **One shared screen-space hit-test and one tooltip for arcs, markers and cities**
+  (`GlobeTooltip.tsx`). Nothing this layer draws has a real `position` geometry attribute a
+  three.js raycaster could hit — every drawable is placed on the GPU from an `aLonLat` attribute
+  through the shared projection twin (ADR-033's amendment) — so `useGlobeHitTest` instead projects
+  every registered candidate (`GlobeHitCandidate`: a point for a marker, a whole polyline for an
+  arc, its own lift and pixel tolerance) to screen space on each pointer move and scores a hit by
+  distance divided by tolerance, letting a thin arc and a 2px city dot compete fairly on "how close,
+  relative to how close it had to be". One `<GlobeTooltip>` renders whichever target won.
+- **One instanced marker field (`MarkerField.tsx`), not one mesh per dot.** Inhabited markers, city
+  dots, arrival landing ripples and the scene-location indicator and its ring are all instances in
+  a single `InstancedBufferGeometry` — one draw call and zero per-frame JS regardless of how many
+  are on screen, unlike the previous arrivals-only implementation's one `<mesh>` (and one
+  `useFrame`) per marker, which does not survive going from thirteen destinations to forty-odd
+  cities plus everything else. The one animated quantity — a sympathetic pulse for a marker whose
+  event card is on screen, or which is part of a traced arrival chain (ADR-032's amendment) — is
+  driven by a `uTime` uniform on the GPU; instance buffers are rewritten only when the marker *set*
+  changes, never per frame.
+- **Scene-location behaviour (ADR-034), restated precisely now that it shares this layer's group.**
+  The small orb eases its own rotation to centre a scene's real-world location and shows a small
+  pulsing marker there (`sceneLocation.ts`, extending the one rotation accumulator
+  `docs/GLOBE.md` §10 already documents rather than adding a second rotation source). **Expanded or
+  unfolded, the marker still shows but the camera never moves** — the viewer is steering by then,
+  and re-centring on their behalf would fight their own input; this is a caller-side gate in
+  `Globe.tsx` (no focus target handed down while expanded), not a branch inside `sceneLocation.ts`.
+  **No marker at all when the plate model cannot place the scene** (ADR-034's own
+  Isthmus-of-Panama gap) — never a present-day fallback, which would be a specific, avoidable
+  factual error on a paleo-textured globe, not an approximation.
+
+**Rejected.**
+- **A toggle and colour key per overlay** (arrivals, density, cities each with their own row). What
+  the user explicitly asked to move away from — three controls for one conceptual layer.
+- **A colour key for arrivals.** Arrivals use one fixed colour, not a scale; a key would explain a
+  colour that never varies.
+- **One global marker cull instead of the publish-time/screen-time split.** Would either force
+  every future notability decision to be re-litigated per render (slow, and inconsistent frame to
+  frame as `t` scrubs) or bake screen-density limits into the published data (wrong layer for a
+  purely rendering concern).
+- **Raycasting each drawable individually.** Would require giving every arc and marker a real,
+  CPU-side geometry to intersect, rebuilt every frame of the unfold tween — exactly the cost the
+  shared GPU-placed projection twin (ADR-033's amendment) exists to avoid.
+
+**Consequences.**
+- `docs/GLOBE.md` §10 is rewritten around this layer: one legend section, a population-density
+  section, a rewritten arrivals section (ADR-032's amendment), new cities/tooltip/marker-field
+  sections, and a short scene-location cross-reference.
+- The cleared-land legend row and its colour key (ADR-031) no longer exist in `web/` at all
+  (ADR-031's further amendment) — superseded by the density row this ADR describes.
+- Nothing here changes any published data contract: `FeatureSetData` (ADR-035), `RasterData`/
+  `RasterEncoding` (ADR-031's amendment) and `ArrivalGlobeEffect` (ADR-032) are all unchanged by
+  this ADR, which is web-rendering-only.

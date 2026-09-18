@@ -261,10 +261,11 @@ Stated once in `pipeline/prompts.py` (`PORTRAIT_STYLE`), before the plate type a
   width**, whatever the organism's real size. `pipeline/morph.py` normalises to the same fill.
 - A seamless near-black backdrop falling off to black in a soft **circular vignette**. The
   viewer masks the plate to a feathered circle, so nothing important sits in the corners.
-- A thin pale scale bar below the subject, left of centre, **with no numbers or letters**. It
-  is a register cue, not a measurement; a real size, where a source gives one, goes into the
-  subject text instead.
 - No text, labels, watermark, border, grade, HDR, bloom or flare.
+- Published plates carry no scale bar (ADR-015 amendment 2026-09-17). Earlier plates were
+  generated with one; `earthtime publish` erases it from every published plate, `pipeline/
+  exposure.py`, the same known-layout band `pipeline/morph.py` already excludes from flow
+  estimation. A real size, where a source gives one, goes into the subject text instead.
 
 ### Subjects — one record per lineage node in `data/portraits.yaml`
 

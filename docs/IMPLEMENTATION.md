@@ -42,7 +42,7 @@ disaster — so it exists before any fan-out.
 Deliverables:
 
 - `pipeline/models.py` — `WorldState` and its component models (DESIGN §4)
-- `pipeline/shapes.py` — the four curated shapes (DATA_SOURCES § Contract)
+- `pipeline/shapes.py` — the five curated shapes (DATA_SOURCES § Contract)
 - `pipeline/graph.py` — asset-graph node protocol, hashing, staleness, pinning
 - `pipeline/spend.py` — the ledger and ceiling
 - `web/src/types/layer.ts` — the `Layer` interface (DESIGN §10)
