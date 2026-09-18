@@ -33,7 +33,8 @@
 
 /* Faint caps type needs a tighter, darker halo than --hud-shadow to survive a bright plate. */
 .label,
-.aboutButton {
+.aboutButton,
+.eraShortcutLabel {
   text-shadow:
     0 0 6px rgba(0, 0, 0, 0.9),
     var(--hud-shadow);
@@ -216,6 +217,81 @@
   align-items: center;
   gap: 10px;
   text-align: center;
+}
+
+/* The Earth/Dinosaurs/Humans shortcut group (user ask, 2026-09-18): lives beside the title —
+   top-centre, the single most prominent fixed spot in the HUD — rather than in the timeline's
+   own bottom chrome, so it costs that block no vertical space at all. `flex-wrap` rather than a
+   hard requirement to fit one line: three short pills already fit comfortably at 390px, but a
+   future addition (or a very narrow window) degrades to two lines instead of overflowing. */
+.eraShortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Accent-bordered pills, deliberately unlike `.aboutButton`'s muted corner treatment and unlike
+   `SectionBreadcrumb.module.css`'s plain text links — this is a shortcut to reach for, not a
+   passive readout or a fellow geological unit, so it carries its own outline and glow even at
+   rest instead of only on hover. The `--hud-hairline` border reads clearly over the dark/mid
+   plates every other hairline in this file was tuned against, but this control sits at the very
+   top of the vignette's gentle falloff, closer to open sky than any of them — a bright plate
+   (this file's own `green-sahara-bright-plate` QA shot is exactly this case) needs its own dark
+   halo the same way `.label`/`.aboutButton`'s text already gets one, so `filter: drop-shadow`
+   (the one shadow mechanism that also reaches an SVG icon's stroke, which `text-shadow` cannot)
+   gives the border and icon that same protection. */
+.eraShortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 56px;
+  padding: 4px 10px 3px;
+  background: transparent;
+  border: 1px solid var(--hud-hairline);
+  border-radius: 10px;
+  color: var(--hud-dim);
+  cursor: pointer;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 8px rgba(0, 0, 0, 0.7));
+  transition:
+    color 200ms ease,
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.eraShortcutIcon {
+  display: flex;
+}
+
+.eraShortcutLabel {
+  font-family: var(--hud-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eraShortcut:hover,
+.eraShortcut:focus-visible {
+  color: var(--hud-ink);
+  border-color: var(--hud-accent);
+}
+
+.eraShortcut:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 2px;
+}
+
+/* "You are here": a filled wash rather than only the hover outline, so the active shortcut reads
+   at a glance even with no pointer nearby — the same distinction `SectionBands`' current-band
+   accent and `SectionBreadcrumb`'s `.current` crumb already draw between "selected" and
+   "selectable". */
+.eraShortcut[aria-current='location'] {
+  color: var(--hud-accent);
+  border-color: var(--hud-accent);
+  background: var(--hud-accent-glow);
+  text-shadow: 0 0 10px var(--hud-accent-glow);
 }
 
 .ancestor {
@@ -489,6 +565,17 @@
   .title {
     gap: 6px;
     padding-top: 6px;
+  }
+
+  /* A touch tighter so three pills plus their labels never crowd the 390px gutter; still one
+     row at every phone width checked (390-428px). */
+  .eraShortcuts {
+    gap: 4px;
+  }
+
+  .eraShortcut {
+    min-width: 48px;
+    padding: 3px 7px 2px;
   }
 
   /* Top-right corner, mirroring `.globe`'s top-left: the panel's own portrait shrinks to

@@ -13,7 +13,14 @@
 
 import { drawnBounds } from './measure.mjs'
 import { waitForApproxUnfoldProgress } from './timeouts.mjs'
-import { BOTTOM_CHROME_SELECTOR, GLOBE_CANVAS_SELECTOR, SCENE_CANVAS_SELECTOR } from './selectors.mjs'
+import {
+  BOTTOM_CHROME_SELECTOR,
+  BREADCRUMB_CURRENT_SELECTOR,
+  ERA_SHORTCUTS_SELECTOR,
+  GLOBE_CANVAS_SELECTOR,
+  SCENE_CANVAS_SELECTOR,
+  SECTION_BANDS_SELECTOR,
+} from './selectors.mjs'
 
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
 
@@ -56,26 +63,28 @@ export default [
     name: 'globe-expanded-sphere',
     description:
       'Expanded globe, sphere mode — guards against the CSS-box/drawn-pixel mix-up that shrank the sphere to ~226px. ' +
-      'Band widened by the 2026-09-18 bottom-chrome condensing pass: `useChromeGap` fits this panel to the shell\'s ' +
-      "actual live title-to-timeline gap, and the timeline's own shorter box now legitimately leaves it more room " +
-      '(measured ~528px before the pass, ~592px after).',
+      "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, so anything that changes " +
+      "the title's own height legitimately moves this band: ~528px before the 2026-09-18 bottom-chrome condensing " +
+      'pass, ~592px after it, ~546px after the same-day Earth/Dinosaurs/Humans shortcut group added a row to the ' +
+      "title (the group's own real estate, not a regression — see `era-shortcuts-group`).",
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'sphere.width': [560, 620], 'sphere.height': [560, 620] },
+    expect: { 'sphere.width': [520, 570], 'sphere.height': [520, 570] },
   },
   {
     name: 'globe-expanded-map',
     description:
-      'Expanded globe, unrolled Equal Earth map mode — guards the map-mode fit-to-panel framing (ADR-033). Band ' +
-      "widened for the same reason as `globe-expanded-sphere`'s own (measured ~1082px before the 2026-09-18 " +
-      'bottom-chrome condensing pass, ~1213px after).',
+      'Expanded globe, unrolled Equal Earth map mode — guards the map-mode fit-to-panel framing (ADR-033). Same ' +
+      "title-height dependency as `globe-expanded-sphere`'s own: ~1082px before the 2026-09-18 bottom-chrome " +
+      'condensing pass, ~1213px after it, ~1119px after the same-day Earth/Dinosaurs/Humans shortcut group grew ' +
+      'the title by one row.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'map' },
     measure: async ({ page }) => ({ map: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'map.width': [1180, 1250] },
+    expect: { 'map.width': [1090, 1150] },
   },
   {
     name: 'globe-transition-mid-unfold',
@@ -141,5 +150,67 @@ export default [
     t: 0,
     measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
     expect: { 'timeline.height': [230, 310] },
+  },
+  {
+    name: 'era-shortcuts-group',
+    description:
+      'The Earth/Dinosaurs/Humans "jump to an era" shortcut group (user ask, 2026-09-18) — always visible beside the ' +
+      'title, Earth active by default at t=0. Lives outside <Timeline> entirely (ShellLayout, not the bottom chrome), ' +
+      'so the bottom-chrome height guard below must read the same [135, 175] band `bottom-chrome-height` already ' +
+      'asserts — this group costs it 0px.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const state = await hook.getState()
+      return {
+        shortcuts: await drawnBounds(page, ERA_SHORTCUTS_SELECTOR),
+        timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR),
+        earthActive: state?.sectionId === 'earth' ? 1 : 0,
+      }
+    },
+    expect: {
+      // Three pills wide enough to hold an icon and a caps-mono label, unmistakably present.
+      'shortcuts.width': [140, 420],
+      'shortcuts.height': [16, 60],
+      // Unchanged from `bottom-chrome-height`'s own desktop band — proof this group added no
+      // height to the timeline's own (2026-09-18 condensing pass) chrome.
+      'timeline.height': [135, 175],
+      earthActive: [1, 1],
+    },
+  },
+  {
+    name: 'era-shortcut-dinosaurs-selected',
+    description:
+      'Clicking the "Dinosaurs" shortcut behaves exactly like selecting the Mesozoic band by hand: the breadcrumb ' +
+      'shows the real geological name (never the nickname), the section-band strip switches to the Mesozoic\'s own ' +
+      'children (Triassic/Jurassic/Cretaceous), and `t` jumps to the section\'s oldest edge — the same "zoom in and ' +
+      'narrow" ADR-024 already gives every band/breadcrumb selection.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    actions: async ({ page }) => {
+      await page.getByRole('button', { name: /^Dinosaurs — /, exact: false }).click()
+    },
+    measure: async ({ page, hook }) => {
+      const state = await hook.getState()
+      const breadcrumbCurrent = (await page.textContent(BREADCRUMB_CURRENT_SELECTOR))?.trim() ?? null
+      const bandsAriaLabel = await page.getAttribute(SECTION_BANDS_SELECTOR, 'aria-label')
+      return {
+        sectionId: state?.sectionId ?? null,
+        t: state?.t ?? null,
+        breadcrumbCurrent,
+        bandsAriaLabel,
+        sectionIsMesozoic: state?.sectionId === 'mesozoic' ? 1 : 0,
+        breadcrumbShowsMesozoic: breadcrumbCurrent === 'Mesozoic' ? 1 : 0,
+        bandsShowMesozoicChildren: bandsAriaLabel === 'Sections of Mesozoic' ? 1 : 0,
+      }
+    },
+    expect: {
+      sectionIsMesozoic: [1, 1],
+      breadcrumbShowsMesozoic: [1, 1],
+      bandsShowMesozoicChildren: [1, 1],
+      // The Mesozoic's own cited base age (sections.ts: 251.902 Ma) — `t` lands on the
+      // section's oldest edge, matching `sectionEntryT`'s "outside -> jump to start" rule.
+      t: [251_901_000, 251_903_000],
+    },
   },
 ]

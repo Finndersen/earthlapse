@@ -4,6 +4,8 @@ import path from 'node:path'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { ROOT_SECTION_ID, type SectionId } from '@/timeline'
+
 import { ShellLayout } from './ShellLayout'
 import styles from './ShellLayout.module.css'
 
@@ -29,6 +31,8 @@ function renderShell({
   globeExpanded = false,
   chart = <div>CHART_SLOT</div> as ReactNode,
   globeCaption = '',
+  sectionId = ROOT_SECTION_ID as SectionId,
+  onSelectSection = vi.fn<(id: SectionId) => void>(),
 } = {}) {
   return render(
     <ShellLayout
@@ -39,6 +43,8 @@ function renderShell({
       feed={<div>FEED_SLOT</div>}
       title={<div>TITLE_SLOT</div>}
       badge={<div>BADGE_SLOT</div>}
+      sectionId={sectionId}
+      onSelectSection={onSelectSection}
       ancestor={<div>ANCESTOR_SLOT</div>}
       caption={<div>CAPTION_SLOT</div>}
       chart={chart}
@@ -222,5 +228,63 @@ describe('ShellLayout phone ancestor placement (max-width: 760px)', () => {
     const ancestorRule = phoneBlock.match(/(?<![\w.])\.ancestor\s*\{([^}]*)\}/)
     expect(ancestorRule).not.toBeNull()
     expect(ancestorRule![1]!).toMatch(/min-height:/)
+  })
+})
+
+// The Earth/Dinosaurs/Humans shortcut group (user ask, 2026-09-18): a prominent, always-present
+// control beside the title, distinct from the timeline's own section bands and breadcrumb. Every
+// entry is a plain alias for `onSelectSection(id)` — see `eraShortcuts.ts` for why those three
+// ids and no others.
+describe('ShellLayout — era shortcuts', () => {
+  it('renders exactly the Earth, Dinosaurs and Humans shortcuts, inside the title header', () => {
+    renderShell()
+    const group = screen.getByRole('group', { name: 'Jump to an era' })
+    expect(group.closest('header')?.textContent).toContain('TITLE_SLOT')
+    for (const nickname of ['Earth', 'Dinosaurs', 'Humans']) {
+      expect(screen.getByRole('button', { name: new RegExp(`^${nickname} — `) })).not.toBeNull()
+    }
+  })
+
+  it("names each shortcut's real geological unit, not just its nickname", () => {
+    renderShell()
+    expect(screen.getByRole('button', { name: /^Dinosaurs — the Mesozoic/ })).not.toBeNull()
+    expect(screen.getByRole('button', { name: /^Humans — the Holocene/ })).not.toBeNull()
+    expect(screen.getByRole('button', { name: /^Earth — the Earth/ })).not.toBeNull()
+  })
+
+  it('marks only the shortcut matching the current section as current, exact-root for Earth', () => {
+    renderShell({ sectionId: ROOT_SECTION_ID })
+    expect(screen.getByRole('button', { name: /^Earth —/ }).getAttribute('aria-current')).toBe('location')
+    expect(screen.getByRole('button', { name: /^Dinosaurs —/ }).getAttribute('aria-current')).toBeNull()
+    expect(screen.getByRole('button', { name: /^Humans —/ }).getAttribute('aria-current')).toBeNull()
+  })
+
+  it('marks Dinosaurs current for the Mesozoic itself and for a descendant section', () => {
+    renderShell({ sectionId: 'cretaceous' as SectionId })
+    expect(screen.getByRole('button', { name: /^Dinosaurs —/ }).getAttribute('aria-current')).toBe('location')
+    expect(screen.getByRole('button', { name: /^Earth —/ }).getAttribute('aria-current')).toBeNull()
+  })
+
+  it('marks Humans current for the Holocene itself and for a human-history child', () => {
+    renderShell({ sectionId: 'industrial-age' as SectionId })
+    expect(screen.getByRole('button', { name: /^Humans —/ }).getAttribute('aria-current')).toBe('location')
+  })
+
+  it('calls onSelectSection with the aliased section id, not the nickname, when clicked', () => {
+    const onSelectSection = vi.fn<(id: SectionId) => void>()
+    renderShell({ onSelectSection })
+    fireEvent.click(screen.getByRole('button', { name: /^Dinosaurs —/ }))
+    expect(onSelectSection).toHaveBeenCalledTimes(1)
+    expect(onSelectSection).toHaveBeenCalledWith('mesozoic')
+  })
+
+  it('is keyboard-reachable as ordinary buttons (native Tab order, no bespoke handler)', () => {
+    renderShell()
+    for (const nickname of ['Earth', 'Dinosaurs', 'Humans']) {
+      const button = screen.getByRole('button', { name: new RegExp(`^${nickname} — `) })
+      expect(button.tagName).toBe('BUTTON')
+      expect(button.getAttribute('type')).toBe('button')
+      expect(button.hasAttribute('disabled')).toBe(false)
+    }
   })
 })
