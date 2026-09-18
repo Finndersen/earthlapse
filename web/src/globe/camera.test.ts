@@ -5,8 +5,11 @@ import {
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
+  globeBodyProxyHit,
   isSubFrameOf,
   mapHasPanRoom,
+  rayBoxIntersection,
+  raySphereIntersection,
   slerpDirection,
   sphereFitDistance,
   subFrameFovY,
@@ -342,5 +345,123 @@ describe('slerpDirection', () => {
     const above = slerpDirection(a, b, 2)
     expect(below[0]).toBeCloseTo(a[0])
     expect(above[2]).toBeCloseTo(b[2])
+  })
+})
+
+// Issue 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it") —
+// `globeBodyProxyHit` and its two shape tests are `Globe.tsx`'s replacement for three.js's own
+// broken default raycast against a mesh with no `position` attribute (`globeGeometry.ts`'s own
+// doc comment); see that file's `mesh.raycast` doc comment for the full story.
+describe('raySphereIntersection', () => {
+  it('hits a sphere dead centre, from outside it', () => {
+    const hit = raySphereIntersection([0, 0, 5], [0, 0, -1], 1)
+    expect(hit).not.toBeNull()
+    expect(hit![0]).toBeCloseTo(0)
+    expect(hit![1]).toBeCloseTo(0)
+    expect(hit![2]).toBeCloseTo(1)
+  })
+
+  it('misses a sphere the ray passes well clear of', () => {
+    expect(raySphereIntersection([5, 5, 5], [0, 0, -1], 1)).toBeNull()
+  })
+
+  it('misses a sphere entirely behind the ray origin', () => {
+    expect(raySphereIntersection([0, 0, -5], [0, 0, -1], 1)).toBeNull()
+  })
+
+  it('returns the near intersection point, not the far one, from outside the sphere', () => {
+    const hit = raySphereIntersection([0, 0, 5], [0, 0, -1], 1)!
+    // The near face (z = +1), not the far face (z = -1) the ray would exit through.
+    expect(hit[2]).toBeCloseTo(1)
+  })
+
+  it('returns the exit point when the ray origin starts inside the sphere', () => {
+    const hit = raySphereIntersection([0, 0, 0], [0, 0, -1], 1)!
+    expect(hit[2]).toBeCloseTo(-1)
+  })
+
+  it('grazes the sphere at exactly the tangent point without reporting a miss', () => {
+    const hit = raySphereIntersection([1, 0, 5], [0, 0, -1], 1)!
+    expect(hit[0]).toBeCloseTo(1)
+    expect(hit[1]).toBeCloseTo(0)
+  })
+})
+
+describe('rayBoxIntersection', () => {
+  const min: [number, number, number] = [-1, -1, 0.5]
+  const max: [number, number, number] = [1, 1, 1.5]
+
+  it('hits the box dead centre, from outside it along z', () => {
+    const hit = rayBoxIntersection([0, 0, 5], [0, 0, -1], min, max)
+    expect(hit).not.toBeNull()
+    expect(hit![0]).toBeCloseTo(0)
+    expect(hit![1]).toBeCloseTo(0)
+    expect(hit![2]).toBeCloseTo(1.5)
+  })
+
+  it('misses a box the ray passes well clear of (both x and y outside the box)', () => {
+    expect(rayBoxIntersection([5, 5, 5], [0, 0, -1], min, max)).toBeNull()
+  })
+
+  it('misses when the ray points away from the box entirely', () => {
+    expect(rayBoxIntersection([0, 0, 5], [0, 0, 1], min, max)).toBeNull()
+  })
+
+  it('hits right at the box edge, not just its interior', () => {
+    const hit = rayBoxIntersection([1, 1, 5], [0, 0, -1], min, max)
+    expect(hit).not.toBeNull()
+    expect(hit![2]).toBeCloseTo(1.5)
+  })
+
+  it('misses just past the box edge', () => {
+    expect(rayBoxIntersection([1.001, 1.001, 5], [0, 0, -1], min, max)).toBeNull()
+  })
+
+  it('returns the exit face when the ray origin starts inside the box', () => {
+    const hit = rayBoxIntersection([0, 0, 1], [0, 0, -1], min, max)!
+    expect(hit[2]).toBeCloseTo(0.5)
+  })
+})
+
+describe('globeBodyProxyHit', () => {
+  const mapHalfWidth = 2.7
+  const mapHalfHeight = 1.35
+  const mapLocalHalfDepth = 0.05
+
+  it('tests against the unit sphere below the 0.5 unfold midpoint', () => {
+    // A point well outside the sphere (radius 1) but inside the map's own much wider footprint —
+    // hits only once `unfold` crosses into map-shape territory.
+    const origin: [number, number, number] = [2, 0, 5]
+    const direction: [number, number, number] = [0, 0, -1]
+    expect(globeBodyProxyHit(origin, direction, 0, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)).toBeNull()
+    expect(globeBodyProxyHit(origin, direction, 0.49, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)).toBeNull()
+  })
+
+  it('tests against the map rectangle at and above the 0.5 unfold midpoint', () => {
+    const origin: [number, number, number] = [2, 0, 5]
+    const direction: [number, number, number] = [0, 0, -1]
+    const hit = globeBodyProxyHit(origin, direction, 0.5, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)
+    expect(hit).not.toBeNull()
+    expect(hit![0]).toBeCloseTo(2)
+    expect(hit![1]).toBeCloseTo(0)
+
+    const hitAtOne = globeBodyProxyHit(origin, direction, 1, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)
+    expect(hitAtOne).not.toBeNull()
+  })
+
+  it('hits dead centre at every unfold value — both shapes are centred on the same point', () => {
+    const origin: [number, number, number] = [0, 0, 5]
+    const direction: [number, number, number] = [0, 0, -1]
+    for (const unfold of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(globeBodyProxyHit(origin, direction, unfold, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)).not.toBeNull()
+    }
+  })
+
+  it('misses a point beyond both the sphere and the map footprint, at every unfold value', () => {
+    const origin: [number, number, number] = [10, 10, 5]
+    const direction: [number, number, number] = [0, 0, -1]
+    for (const unfold of [0, 0.25, 0.5, 0.75, 1]) {
+      expect(globeBodyProxyHit(origin, direction, unfold, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)).toBeNull()
+    }
   })
 })

@@ -75,7 +75,10 @@ interface Projected {
   visible: boolean
 }
 
-function projectAnchor(
+/** Exported for `GlobeTooltip.test.ts`: `pickCandidate`'s own scoring is the one hit-test this
+ *  layer has, and it is worth pinning against real candidate data (a real arc's real geometry, a
+ *  real city's real position) rather than only ever exercised indirectly through a browser. */
+export function projectAnchor(
   anchor: GlobeEffectAnchor,
   candidate: GlobeHitCandidate,
   unfold: number,
@@ -124,7 +127,7 @@ function distanceToSegment(px: number, py: number, ax: number, ay: number, bx: n
  * rather than on raw pixels — which is what makes a 2px dot winnable at all next to an arc whose
  * whole length is a target.
  */
-function pickCandidate(
+export function pickCandidate(
   candidates: readonly GlobeHitCandidate[],
   pointerX: number,
   pointerY: number,

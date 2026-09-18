@@ -246,3 +246,103 @@ export function clampPanTarget(
   const maxY = Math.max(0, mapHalfHeight - visibleHalfHeight)
   return [clampAbs(target[0], maxX), clampAbs(target[1], maxY)]
 }
+
+// ---------------------------------------------------------------------- body proxy raycast
+
+type Vec3 = readonly [number, number, number]
+
+function dot3(a: Vec3, b: Vec3): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+function pointAt(origin: Vec3, direction: Vec3, t: number): Vec3 {
+  return [origin[0] + direction[0] * t, origin[1] + direction[1] * t, origin[2] + direction[2] * t]
+}
+
+/**
+ * Nearest non-negative intersection of the ray (`origin` + `t` * `direction`) with a sphere of
+ * `radius` centred at the local origin, or `null` for a miss. `direction` must be unit length —
+ * every caller here feeds it a `THREE.Ray` already run through `applyMatrix4` (`Vector3.
+ * transformDirection`'s own doc comment: it re-normalises), the same precondition three.js's own
+ * `Ray.intersectSphere` relies on for the identical `b^2 - c` reduction of the ray-sphere
+ * quadratic. Hand-rolled rather than calling that three.js method directly — this module's own
+ * "no three.js, no React" convention (this file's own top doc comment), the same reason
+ * `slerpDirection`'s `cross3`/`normalize3` above are hand-rolled instead of using `THREE.Vector3`.
+ */
+export function raySphereIntersection(origin: Vec3, direction: Vec3, radius: number): Vec3 | null {
+  const b = dot3(origin, direction)
+  const c = dot3(origin, origin) - radius * radius
+  const discriminant = b * b - c
+  if (discriminant < 0) return null
+  const sqrtDiscriminant = Math.sqrt(discriminant)
+  const nearT = -b - sqrtDiscriminant
+  const farT = -b + sqrtDiscriminant
+  if (farT < 0) return null // the whole sphere is behind the ray's origin
+  return pointAt(origin, direction, nearT >= 0 ? nearT : farT)
+}
+
+/**
+ * Nearest non-negative intersection of the ray with an axis-aligned box (`min`..`max`), or `null`
+ * for a miss — the standard "slab" test, hand-rolled for the same "no three.js" reason
+ * `raySphereIntersection` above is. Unlike that function, this one has no unit-length
+ * precondition on `direction`.
+ */
+export function rayBoxIntersection(origin: Vec3, direction: Vec3, min: Vec3, max: Vec3): Vec3 | null {
+  let tMin = -Infinity
+  let tMax = Infinity
+  for (let axis = 0; axis < 3; axis += 1) {
+    const o = origin[axis]!
+    const d = direction[axis]!
+    const lo = min[axis]!
+    const hi = max[axis]!
+    if (Math.abs(d) < 1e-12) {
+      if (o < lo || o > hi) return null
+      continue
+    }
+    const t1 = (lo - o) / d
+    const t2 = (hi - o) / d
+    tMin = Math.max(tMin, Math.min(t1, t2))
+    tMax = Math.min(tMax, Math.max(t1, t2))
+    if (tMin > tMax) return null
+  }
+  const t = tMin >= 0 ? tMin : tMax
+  if (t < 0) return null
+  return pointAt(origin, direction, t)
+}
+
+/**
+ * Issue 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it") — whether
+ * a local-space ray hits the globe body's own analytic hit-test proxy at a given `unfold`, or
+ * `null` for a miss. `Globe.tsx`'s `GlobeSphere` overrides its mesh's own `raycast` with this
+ * (transforming the click ray into local space first): `globeGeometry.ts`'s grid deliberately
+ * carries no `position` attribute (every vertex is computed on the GPU from `aLonLat`), so
+ * three.js's own default triangle-level raycast always reports a miss there — the same "no
+ * `position` attribute for a raycaster to intersect" gap `GlobeTooltip.tsx`'s own doc comment
+ * documents for the human layer's markers/arcs, worked around there with screen-space hit-testing
+ * instead. This is the equivalent fix for the body mesh itself: a unit sphere at `unfold` 0
+ * (`GLOBE_RADIUS` scale is applied by the mesh's own `matrixWorld`, not baked in here — the same
+ * `radius = 1` convention `projection.ts` uses throughout), the map's own flat rectangle
+ * (`mapHalfWidth`/`mapHalfHeight`, thickened by `mapLocalHalfDepth` along `z` so a grazing ray
+ * still registers) at 1 — `projection.ts`'s `unfoldedPosition` doc comment: "the flat endpoint
+ * sits at z = radius" — swapped at the tween's midpoint rather than blended continuously, good
+ * enough to tell "on the globe" from "off it" without rebuilding real per-vertex geometry every
+ * tween frame just for hit-testing.
+ */
+export function globeBodyProxyHit(
+  origin: Vec3,
+  direction: Vec3,
+  unfold: number,
+  mapHalfWidth: number,
+  mapHalfHeight: number,
+  mapLocalHalfDepth: number,
+): Vec3 | null {
+  if (unfold >= 0.5) {
+    return rayBoxIntersection(
+      origin,
+      direction,
+      [-mapHalfWidth, -mapHalfHeight, 1 - mapLocalHalfDepth],
+      [mapHalfWidth, mapHalfHeight, 1 + mapLocalHalfDepth],
+    )
+  }
+  return raySphereIntersection(origin, direction, 1)
+}
