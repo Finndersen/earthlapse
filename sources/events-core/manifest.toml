@@ -15,5 +15,5 @@ citation = "Every event in data/events.yaml carries its own specific citation. T
 time_domain = [4.59e9, 0]    # years BP, [oldest, newest] — earth-formation.t_max .. present
 output_shape = "EventSet"
 interpolation = "n/a"         # EventSet is discrete events, not resampled between points
-volume_bytes = 63238          # measured: data/curated/events-core.parquet, 115 events, incl. the additive effect column (docs/GLOBE.md §6)
+volume_bytes = 91059          # measured: data/curated/events-core.parquet, 152 events, incl. the additive effect column (docs/GLOBE.md §6, ADR-032) and its required arrival_kind field (later-migrations batch, 2026-09-17, and its same-day fact-check amendment)
 storage_tier = "git"

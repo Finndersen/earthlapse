@@ -358,9 +358,7 @@ PORTRAIT_STYLE = (
     "centred and its longest dimension spans about 70% of the frame width. A seamless near-black "
     "backdrop with no texture, horizon, props or ground, falling off evenly to pure black in a soft "
     "circular vignette towards the corners. Fine, even grain; natural, true-to-life colour; no "
-    "colour grade, no HDR, no bloom, no lens flare. A thin, pale grey horizontal scale bar sits "
-    "below the subject, left of centre, with no numbers or letters. No text, no labels, no "
-    "watermark, no border."
+    "colour grade, no HDR, no bloom, no lens flare. No text, no labels, no watermark, no border."
 )
 
 PLATE_TYPE: dict[PlateType, str] = {

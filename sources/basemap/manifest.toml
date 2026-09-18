@@ -1,0 +1,28 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the tier/time-domain rationale.
+#
+# Natural Earth II ("with Shaded Relief, Water, and Drainages", 1:10m) -- the human-era globe
+# base, replacing PaleoDEM once continental drift is imperceptible (ADR-030). Idealised
+# pre-modern land cover by design, so it does not double-count the HYDE cleared-land
+# overlay (sources/hyde, ADR-031).
+#
+# Natural Earth ships this raster at naturalearthdata.com, but that page's own download links
+# are broken (they resolve to "naturalearthdata.com/http//naturalearthdata.com/..." -- a
+# template bug, confirmed live). The real files are served from Natural Earth's CDN,
+# naciscdn.org, which naturalearthdata.com itself redirects to for every other asset; `url`
+# below is the direct CDN link for the "LR" (low-resolution, 16200x8100) raster -- the "HR"
+# (large, 21600x10800-class) variant is unnecessary: our largest published tier (T1,
+# 4096x2048) needs well under 16200x8100 of source detail. See README.md "What was and wasn't
+# downloaded".
+
+name = "basemap"
+title = "Natural Earth II with Shaded Relief, Water, and Drainages (1:10m)"
+url = "https://naciscdn.org/naturalearth/10m/raster/NE2_LR_LC_SR_W_DR.zip"
+sha256 = "73eb7a00b182c702e69892332cbd380edc7aa00ccaf68ae0111deefb87303a0e"
+licence = "Public domain (Natural Earth: \"All versions of Natural Earth raster + vector map data found on this website are in the public domain\")"
+citation = "Natural Earth. Free vector and raster map data @ naturalearthdata.com. Natural Earth II with Shaded Relief, Water, and Drainages, 1:10m raster."
+time_domain = [2.58e6, 0.0]  # years BP -- the Gelasian/Quaternary-Pleistocene boundary (ICS chart), not the product's own paleodem<->basemap crossfade band (that's web-side, see README.md "Time domain vs. the crossfade window")
+output_shape = "RasterSequence"
+interpolation = "n/a"  # RasterSequence blends via RasterBlend (crossfade); no TimeSeries here
+volume_bytes = 194338220    # measured: the zip itself (sha256 above)
+storage_tier = "git"        # curated parquet only; textures are generated media, committed via git-lfs into data/media/ (see README.md "Storage tier chosen")
+outputs = ["data/media/textures/basemap/*.webp"]  # 2 tiers (t0, t1); written by normalise.py's write_outputs() hook

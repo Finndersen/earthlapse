@@ -10,7 +10,7 @@ from __future__ import annotations
 import math
 import shutil
 import tomllib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import groupby, pairwise
 from pathlib import Path
 
@@ -18,15 +18,21 @@ from pydantic import BaseModel, ConfigDict
 
 from pipeline.audio import WEBKIT_DECODABLE_FORMATS, StemBook, load_stem_book
 from pipeline.databuild import discover_sources
-from pipeline.exposure import ExposedPlate, ExposureError, expose_plate
+from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
+from pipeline.exposure import ExposedPlate, ExposureError, erase_scale_bar, expose_plate
 from pipeline.generators.image import ImageInfo, asset_digest, sniff_image
 from pipeline.graph import digest_of
 from pipeline.manifest import (
+    AnyGlobeEffect,
+    ArrivalEffect,
     AudioLoop,
     AudioStem,
     Chapter,
     Credit,
     EventsData,
+    FeatureData,
+    FeatureEstimateData,
+    FeatureSetData,
     GlobeEffect,
     GlobeEffectAnchor,
     GlobeEffectWindow,
@@ -40,8 +46,10 @@ from pipeline.manifest import (
     PortraitPlateData,
     PortraitSetData,
     RasterData,
+    RasterEncoding,
     RasterFrameData,
     Scene,
+    SceneLocationCoordinates,
     SceneSound,
     SeriesData,
     SeriesGap,
@@ -52,7 +60,10 @@ from pipeline.manifest import (
     dump_layer_data,
     dump_manifest,
 )
+from pipeline.manifest import SceneLocation as SceneLocationEntry
 from pipeline.models import WorldModel
+from pipeline.notability import notable_features
+from pipeline.paleogeography import PlateModelUnavailable, Reconstructor, load_reconstructor
 from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
     FORWARD_FLOW_NAME,
@@ -64,12 +75,19 @@ from pipeline.portraits import (
     load_morph,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
+from pipeline.scenes import SceneLocation as SceneLocationRecord
 from pipeline.scenes import SceneSound as SceneSoundRecord
 from pipeline.shapes import EARTH_FORMATION, Event, EventSet, GeoTime, Interpolation
+from pipeline.shapes import ArrivalEffect as CuratedArrivalEffect
+from pipeline.shapes import Feature as CuratedFeature
 from pipeline.shapes import GlobeEffect as CuratedGlobeEffect
 
 # Matches the committed stub's "/stub": web/src/shell/manifest.ts joins `${assetBase}/${data}`
 # for layer files, so a trailing slash would request "/media//layers/...".
+#
+# The default serves media from the dev server's own origin. A deployment passes the R2 origin
+# instead (`earthtime publish --asset-base https://media.example.org`), which is the only thing
+# that has to change for media to move off the site host -- see deploy/README.md.
 ASSET_BASE = "/media"
 MANIFEST_NAME = "manifest.json"
 EVENTS_ID = "events-core"
@@ -78,6 +96,16 @@ AUDIO_STEMS_SOURCE = "audio-stems"
 # reaches Manifest.events (see _events below), only manifest.layers as an ordinary
 # dataKind="events" layer, so the timeline never lists it.
 GLOBE_REGIMES_ID = "globe-regimes"
+PLATES_NEOPROTEROZOIC_SOURCE = "plates-neoproterozoic"
+
+HUMAN_ERA_BASEMAP_DOMAIN_END: GeoTime = 2_580_000.0
+"""years BP -- the Gelasian/Quaternary-Pleistocene boundary, matching
+`sources/basemap/normalise.py`'s `PLEISTOCENE_START` (ADR-030): the globe's present-day-terrain
+basemap covers `t <= 2,580,000`, so a scene's `location` at or inside that domain (ADR-034)
+publishes its present-day coordinates as the marker directly, with no plate reconstruction.
+Duplicated here rather than imported -- `pipeline/` never statically imports a `sources/<name>`
+module (sources are loaded dynamically, `pipeline.databuild.load_source_module`); if the two
+constants ever need to move together, that import boundary is the seam to reconsider."""
 
 
 class PublishRefused(RuntimeError):
@@ -91,11 +119,20 @@ class LayerSpec:
     surface: LayerSurface
     source: str  # sources/<name>/, matched to a Credit
     chartable: bool
+    # Additive (ADR-031 amendment "population density"): how to decode this raster's texture
+    # bytes into a real physical quantity. None for every colour-only raster layer -- the vast
+    # majority, and every one published before this field existed.
+    raster_encoding: RasterEncoding | None = None
 
 
 SCALAR_LAYERS = (
     LayerSpec("co2", "Atmospheric CO₂", LayerSurface.HUD, "co2-o2", chartable=True),
     LayerSpec("day_length", "Day length", LayerSurface.HUD, "astronomy", chartable=False),
+    # ADR-031 amendment "global population total": HYDE 3.2's derived world-population-total
+    # series, from the same source as the population-density globe overlay. chartable=True
+    # (unlike day_length) -- this is the one HUD number the readout column has nothing else
+    # covering, so it earns a sparkline/chart the way co2's own does.
+    LayerSpec("population", "Global population", LayerSurface.HUD, "hyde", chartable=True),
 )
 NODE_LAYERS = (LayerSpec("lineage", "Your ancestor", LayerSurface.HUD, "lineage", chartable=False),)
 RASTER_LAYERS = (
@@ -110,12 +147,73 @@ RASTER_LAYERS = (
         "plates-neoproterozoic",
         chartable=False,
     ),
+    # ADR-030: the human-era globe base (Natural Earth II), replacing "paleodem" once
+    # continental drift is imperceptible. Two resolution tiers, each its own curated id
+    # (sources/basemap/normalise.py "Why two curated ids"). The product crossfades this
+    # against "paleodem" across a 300-400 ka band -- entirely a web-side concern
+    # (`BASEMAP_CROSSFADE_BAND`, same pattern as the seam band above), not this spec; this
+    # source's own published time domain is a different, independently-justified number (the
+    # Pleistocene start), not the crossfade band itself -- see sources/basemap/normalise.py's
+    # `PLEISTOCENE_START`.
+    LayerSpec(
+        "basemap_t0", "Human-era basemap (orb)", LayerSurface.GLOBE, "basemap", chartable=False
+    ),
+    LayerSpec(
+        "basemap_t1",
+        "Human-era basemap (expanded)",
+        LayerSurface.GLOBE,
+        "basemap",
+        chartable=False,
+    ),
+    # ADR-031 amendment: cleared land (HYDE 3.2, id "hyde_cleared_land") stays curated
+    # (sources/hyde/normalise.py still produces it, and its tests still pass) but is no longer
+    # published/rendered -- the human found it not discernible on the globe. Re-add a LayerSpec
+    # here to republish it; nothing else needs to change.
+    # ADR-031 amendment: population density, from the same HYDE 3.2 deposit. R channel only
+    # (people per km^2, 8-bit log-scale encoded -- see sources/hyde/README.md "Population
+    # density encoding" for how D_MAX was chosen and pipeline/density_encoding.py for the exact
+    # formula, shared with sources/hyde/normalise.py so the two can never disagree). The decode
+    # parameters are published in this layer's own RasterData.encoding so the web can recover
+    # an exact density, not just a relative shade.
+    LayerSpec(
+        "hyde_population_density",
+        "Population density",
+        LayerSurface.GLOBE,
+        "hyde",
+        chartable=False,
+        raster_encoding=RasterEncoding(
+            channel="r", unit="people_per_km2", d_max=POPULATION_DENSITY_D_MAX
+        ),
+    ),
 )
 EVENT_LAYERS = (
     LayerSpec(
         GLOBE_REGIMES_ID, "Globe regimes", LayerSurface.GLOBE, GLOBE_REGIMES_ID, chartable=False
     ),
 )
+CITIES_ID = "cities"
+# ADR-035: major historical cities (Reba, Reitsma & Seto 2016), published as a `FeatureSet`
+# layer. `surface` is "globe" like the point-anchored GlobeEffect kinds -- rendering (hover
+# tooltips, markers) is out of this pass's scope, but the surface a future renderer would use
+# is already the right one to declare.
+FEATURE_LAYERS = (
+    LayerSpec(CITIES_ID, "Major cities", LayerSurface.GLOBE, CITIES_ID, chartable=False),
+)
+CITIES_NOTABLE_BUCKET_YEARS = 100.0
+"""ADR-035 "why only notable cities": era bucket width for `notable_features` -- century-wide,
+not per-exact-attested-date. `sources/cities`' merged dataset has ~825 distinct attested years
+(near-annual from the 16th century on), so a literal per-date top-N churns through a different
+25-or-so cities almost every year as populations fluctuate slightly near the cutoff, unioning
+into 600+ "notable" cities for any usable N. Bucketing to a century smooths that churn: the
+same handful of era-dominant cities persist across most of one bucket's own span. See
+sources/cities/README.md "Notability filter" for the measured effect of this and `TOP_N`."""
+CITIES_NOTABLE_TOP_N = 12
+"""ADR-035: top N cities by peak attested population within each `CITIES_NOTABLE_BUCKET_YEARS`
+bucket qualify as notable. 12 (with the 100-year bucket above) keeps 164 of the merged
+dataset's 1,736 cities -- comfortably inside the "roughly 100-200" target -- while including
+every one of the example cities named in the task brief (Uruk, Memphis, Babylon, Rome, Xian
+[Chang'an], Istanbul [Constantinople], Baghdad, Mexico City [Tenochtitlan], London, New York,
+Tokyo) and at least one city in every era bucket from the 4th millennium BC onward."""
 
 
 @dataclass(frozen=True)
@@ -184,21 +282,37 @@ def unpinned_scene_ids(book: SceneBook) -> list[str]:
     return [scene.id for scene in book.chronological() if scene.pin is None]
 
 
+def validated_asset_base(value: str) -> str:
+    """The origin (or absolute path) the manifest's media paths are joined onto.
+
+    Rejects a trailing slash rather than normalising one away: the join is a bare f-string in the
+    viewer, and a doubled slash produces a 404 that only shows up at runtime.
+    """
+    if value.endswith("/"):
+        raise PublishRefused(f"asset base must not end in '/': {value!r}")
+    if not value.startswith(("/", "https://")):
+        raise PublishRefused(f"asset base must be an absolute path or https:// origin: {value!r}")
+    return value
+
+
 def prepare_publication(
     book: SceneBook,
     world: WorldModel,
     sources_dir: Path,
     root: Path,
     portraits: PortraitInputs | None,
+    asset_base: str = ASSET_BASE,
 ) -> Publication:
     """Pinned scenes only; the caller decides whether unpinned ones are acceptable."""
+    asset_base = validated_asset_base(asset_base)
     pinned = [scene for scene in book.scenes if scene.pin is not None]
     if not pinned:
         raise PublishRefused("no scene is pinned; pick candidates with `earthtime review pick`")
     _validate_scene_events(book, world.events.get(EVENTS_ID))
     stem_book = load_stem_book(sources_dir / AUDIO_STEMS_SOURCE / "stems.toml")
     _validate_scene_sound(book, stem_book)
-    scene_entries = [_scene_entry(scene, root) for scene in pinned]
+    reconstructor = _load_reconstructor_if_needed(pinned, root)
+    scene_entries = [_scene_entry(scene, root, reconstructor) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
     chapters = tuple(c for c in chapter_spans(book) if c.id in published_chapters)
     portrait_publication = (
@@ -224,7 +338,7 @@ def prepare_publication(
     manifest = Manifest(
         schema_version=1,
         build_id=digest_of(content),
-        asset_base=ASSET_BASE,
+        asset_base=asset_base,
         scenes=tuple(entry for entry, _ in scene_entries),
         chapters=chapters,
         layers=layers,
@@ -341,6 +455,50 @@ def _scene_sound(sound: SceneSoundRecord | None) -> SceneSound | None:
     return SceneSound(stem=sound.stem, mode=sound.mode, gain=sound.gain)
 
 
+def _load_reconstructor_if_needed(pinned: list[SceneRecord], root: Path) -> Reconstructor | None:
+    """Most publishes need no plate reconstruction at all: no scene has a `location`, or every
+    located scene sits inside the human-era basemap domain. Loading the Merdith model parses two
+    GPML files, so it's skipped entirely unless some pinned scene's `location` actually needs
+    it (ADR-034), and built at most once per publish, then reused for every such scene."""
+    needs_reconstruction = any(
+        scene.location is not None and scene.t > HUMAN_ERA_BASEMAP_DOMAIN_END for scene in pinned
+    )
+    if not needs_reconstruction:
+        return None
+    raw_dir = root / "data" / "raw" / PLATES_NEOPROTEROZOIC_SOURCE
+    try:
+        return load_reconstructor(raw_dir)
+    except PlateModelUnavailable as err:
+        raise PublishRefused(f"scene location reconstruction unavailable: {err}") from err
+
+
+def _scene_location(
+    t: GeoTime, location: SceneLocationRecord | None, reconstructor: Reconstructor | None
+) -> SceneLocationEntry | None:
+    """ADR-034. `present_day` always publishes the curated coordinates, so the reconstruction
+    stays auditable. `marker` -- what the globe should actually plot -- is `present_day`
+    unchanged for a scene at or inside the human-era basemap domain (`t <=
+    HUMAN_ERA_BASEMAP_DOMAIN_END`, ADR-030: real geography at that scale, no reconstruction
+    needed), the plate-reconstructed position for an older one the model covers, or `None` when
+    it doesn't -- a genuine gap (e.g. no Merdith continental polygon under the Isthmus of
+    Panama) published as "no marker" rather than a silently wrong present-day guess (CLAUDE.md
+    "if something is unusable, stop and report")."""
+    if location is None:
+        return None
+    present_day = SceneLocationCoordinates(lat=location.lat, lon=location.lon)
+    if t <= HUMAN_ERA_BASEMAP_DOMAIN_END:
+        marker = present_day
+    else:
+        assert reconstructor is not None, "prepare_publication loads one whenever needed"
+        reconstructed = reconstructor.reconstruct(location.lat, location.lon, t)
+        marker = (
+            None
+            if reconstructed is None
+            else SceneLocationCoordinates(lat=reconstructed[0], lon=reconstructed[1])
+        )
+    return SceneLocationEntry(label=location.label, present_day=present_day, marker=marker)
+
+
 def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
     """Published stem files are not copied here -- `sources/audio-stems/normalise.py`'s
     `write_outputs()` already placed them, content-hashed (ADR-023 amendment "on-demand
@@ -401,7 +559,9 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
     return tuple(stems)
 
 
-def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
+def _scene_entry(
+    scene: SceneRecord, root: Path, reconstructor: Reconstructor | None
+) -> tuple[Scene, MediaCopy]:
     assert scene.pin is not None, scene.id
     source, info = _verified_pin(scene.id, scene.pin, root)
     published = f"scenes/{scene.id}{info.extension}"
@@ -415,6 +575,7 @@ def _scene_entry(scene: SceneRecord, root: Path) -> tuple[Scene, MediaCopy]:
         caption=scene.caption,
         events=scene.events,
         sound=_scene_sound(scene.sound),
+        location=_scene_location(scene.t, scene.location, reconstructor),
         pinned=scene.pin.asset_digest,
         width=info.width,
         height=info.height,
@@ -463,11 +624,12 @@ def _portrait_publication(
 
 
 def _exposed_plate(node_id: str, source: Path) -> ExposedPlate:
-    """The plate as published: its pinned original, exposure-normalised in memory (ADR-015
-    amendment). The pinned file itself is never rewritten (ADR-005), and morph fields stay computed
-    from it: exposure changes no geometry."""
+    """The plate as published: its pinned original, exposure-normalised and scale-bar-erased in
+    memory (ADR-015 amendments 2026-09-14, 2026-09-17). The pinned file itself is never rewritten
+    (ADR-005), and morph fields stay computed from it: neither step changes geometry."""
     try:
-        return expose_plate(source.read_bytes())
+        exposed = expose_plate(source.read_bytes())
+        return replace(exposed, data=erase_scale_bar(exposed.data))
     except ExposureError as err:
         raise PublishRefused(f"{node_id}: {err}") from err
 
@@ -572,6 +734,7 @@ def _layers(
         data = RasterData(
             id=raster.id,
             frames=tuple(RasterFrameData(t=f.t, ref=f.ref) for f in raster.frames),
+            encoding=spec.raster_encoding,
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
         entries.append(_layer_entry(spec, LayerDataKind.RASTER, raster.domain, None, None))
@@ -584,6 +747,25 @@ def _layers(
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
         entries.append(_layer_entry(spec, LayerDataKind.EVENTS, event_set.domain, None, None))
+    for spec in FEATURE_LAYERS:
+        feature_set = world.features.get(spec.curated_id)
+        if feature_set is None:
+            continue
+        # The curated FeatureSet keeps every normalised record; only "cities" is filtered down
+        # to notable ones before publishing (coordinator direction, 2026-09-17) -- the same
+        # "special-case one entry in an otherwise-generic loop" pattern NODE_LAYERS already uses
+        # for portraits (`if spec.curated_id == LINEAGE_TREE_ID`).
+        if spec.curated_id == CITIES_ID:
+            feature_set = notable_features(
+                feature_set,
+                bucket_years=CITIES_NOTABLE_BUCKET_YEARS,
+                top_n=CITIES_NOTABLE_TOP_N,
+            )
+        data = FeatureSetData(
+            id=feature_set.id, features=tuple(_feature(f) for f in feature_set.features)
+        )
+        files.append(LayerFile(published=_layer_path(spec), data=data))
+        entries.append(_layer_entry(spec, LayerDataKind.FEATURES, feature_set.domain, None, None))
     return tuple(files), tuple(entries)
 
 
@@ -619,6 +801,18 @@ def _events(world: WorldModel) -> tuple[TimelineEvent, ...]:
     return tuple(_timeline_event(e) for e in event_set.events)
 
 
+def _feature(f: CuratedFeature) -> FeatureData:
+    return FeatureData(
+        id=f.id,
+        name=f.name,
+        country=f.country,
+        lat=f.lat,
+        lon=f.lon,
+        certainty=f.certainty,
+        estimates=tuple(FeatureEstimateData(t=e.t, population=e.population) for e in f.estimates),
+    )
+
+
 def _timeline_event(e: Event) -> TimelineEvent:
     return TimelineEvent(
         id=e.id,
@@ -635,15 +829,25 @@ def _timeline_event(e: Event) -> TimelineEvent:
     )
 
 
-def _effect(effect: CuratedGlobeEffect | None) -> GlobeEffect | None:
+def _effect(effect: CuratedGlobeEffect | CuratedArrivalEffect | None) -> AnyGlobeEffect | None:
     if effect is None:
         return None
+    windows = tuple(GlobeEffectWindow(t_min=w.t_min, t_max=w.t_max) for w in effect.windows)
+    if isinstance(effect, CuratedArrivalEffect):
+        return ArrivalEffect(
+            kind=effect.kind,
+            arrival_kind=effect.arrival_kind,
+            origin=GlobeEffectAnchor(lat=effect.origin.lat, lon=effect.origin.lon),
+            destination=GlobeEffectAnchor(lat=effect.destination.lat, lon=effect.destination.lon),
+            established=effect.established,
+            windows=windows,
+        )
     return GlobeEffect(
         kind=effect.kind,
         anchor=None
         if effect.anchor is None
         else GlobeEffectAnchor(lat=effect.anchor.lat, lon=effect.anchor.lon),
-        windows=tuple(GlobeEffectWindow(t_min=w.t_min, t_max=w.t_max) for w in effect.windows),
+        windows=windows,
     )
 
 

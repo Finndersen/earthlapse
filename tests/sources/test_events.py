@@ -14,7 +14,15 @@ import pytest
 import yaml
 
 from pipeline.fetching import FetchIntegrityError
-from pipeline.shapes import EARTH_FORMATION, Event, EventKind, EventSet, GlobeEffectKind
+from pipeline.shapes import (
+    EARTH_FORMATION,
+    ArrivalEffect,
+    ArrivalKind,
+    Event,
+    EventKind,
+    EventSet,
+    GlobeEffectKind,
+)
 from tests.sources.support import load_source_module
 
 FIXTURE_PATH = (
@@ -113,13 +121,71 @@ def test_present_event_is_at_t_zero(events_core: EventSet) -> None:
 
 # ------------------------------------------------------------------------- docs/GLOBE.md §6
 #
-# The three events docs/GLOBE.md §5.3/§6 names for an effect. Most events carry none —
-# `effect` is optional and additive.
+# The three "point" effects docs/GLOBE.md §5.3/§6 names, plus (ADR-032) the twenty-five
+# human-dispersal `arrival` effects curated below. Most events carry none — `effect` is
+# optional and additive.
+
+POINT_EFFECT_EVENT_IDS = frozenset({"moon-forming-impact", "snowball-earth", "k-pg-impact"})
+
+# ADR-032: about a dozen cited Homo sapiens arrivals, attached to the four pre-existing
+# human-origins events where one already represented that arrival (homo-sapiens-origin,
+# out-of-africa-migration, neanderthal-sapiens-overlap, peopling-of-americas) plus nine new
+# events for arrivals not previously curated -- the original thirteen, all
+# `arrival_kind: peopling` (first human settlement of a previously uninhabited region).
+#
+# A later-migrations batch (2026-09-17) added eleven more arrivals; a fact-check that same
+# day (ADR-032 amendment, docs/DECISIONS.md) found two of the eleven misclassified against
+# their own destination's prior-population status and reclassified them to `peopling`:
+# austronesian-expansion-taiwan (the Batanes Islands had no prior human population, per the
+# primary excavation record), and norse-north-atlantic-settlement, which conflated Iceland
+# (uninhabited before Norse arrival) and Greenland (also uninhabited at Norse contact) under
+# one arc/date -- split into an Iceland-only event (keeping this id) plus a new
+# `greenland-norse-settlement` event, both `peopling`.
+PEOPLING_EFFECT_EVENT_IDS = frozenset(
+    {
+        "homo-sapiens-origin",
+        "levant-early-dispersal",
+        "out-of-africa-migration",
+        "south-southeast-asia-arrival",
+        "sahul-arrival",
+        "neanderthal-sapiens-overlap",
+        "east-asia-arrival",
+        "beringia-arrival",
+        "peopling-of-americas",
+        "lapita-oceania-expansion",
+        "madagascar-arrival",
+        "east-polynesia-arrival",
+        "aotearoa-arrival",
+        "austronesian-expansion-taiwan",
+        "norse-north-atlantic-settlement",
+        "greenland-norse-settlement",
+    }
+)
+
+# The later-migrations batch's remaining nine `arrival_kind: migration` events (see the
+# comment above `PEOPLING_EFFECT_EVENT_IDS` for the two reclassified out of this set), each a
+# later movement of people into land already inhabited or previously settled, distinct from
+# the sixteen `peopling` arrivals above.
+MIGRATION_EFFECT_EVENT_IDS = frozenset(
+    {
+        "neolithic-farmers-europe",
+        "yamnaya-steppe-migration",
+        "bantu-expansion",
+        "thule-arctic-expansion",
+        "columbian-exchange",
+        "transatlantic-slave-trade",
+        "russian-conquest-of-siberia",
+        "british-colonisation-australia",
+        "mass-european-emigration",
+    }
+)
+
+ARRIVAL_EFFECT_EVENT_IDS = PEOPLING_EFFECT_EVENT_IDS | MIGRATION_EFFECT_EVENT_IDS
 
 
-def test_most_events_carry_no_effect(events_core: EventSet) -> None:
-    with_effect = [e.id for e in events_core.events if e.effect is not None]
-    assert set(with_effect) == {"moon-forming-impact", "snowball-earth", "k-pg-impact"}
+def test_only_expected_events_carry_an_effect(events_core: EventSet) -> None:
+    with_effect = {e.id for e in events_core.events if e.effect is not None}
+    assert with_effect == POINT_EFFECT_EVENT_IDS | ARRIVAL_EFFECT_EVENT_IDS
 
 
 def test_moon_forming_impact_effect_is_a_giant_impact_matching_its_own_contested_dates(
@@ -154,6 +220,63 @@ def test_k_pg_impact_effect_is_anchored_at_the_conventional_chicxulub_centre(
     assert event.effect.anchor is not None
     assert (event.effect.anchor.lat, event.effect.anchor.lon) == (21.3, -89.5)
     assert [(w.t_min, w.t_max) for w in event.effect.windows] == [(event.t_min, event.t_max)]
+
+
+def test_every_arrival_effect_is_the_arrival_kind_with_a_schematic_origin_and_destination(
+    events_core: EventSet,
+) -> None:
+    for event_id in ARRIVAL_EFFECT_EVENT_IDS:
+        event = next(e for e in events_core.events if e.id == event_id)
+        assert event.effect is not None, event_id
+        assert isinstance(event.effect, ArrivalEffect), event_id
+        assert event.effect.kind == GlobeEffectKind.ARRIVAL, event_id
+        for anchor in (event.effect.origin, event.effect.destination):
+            assert -90.0 <= anchor.lat <= 90.0
+            assert -180.0 <= anchor.lon <= 180.0
+
+
+def test_every_arrival_effect_persists_to_the_present(events_core: EventSet) -> None:
+    """ADR-032: `EventSet.sample(t)` only returns events whose own `[t_min, t_max]` contains
+    `t`, but an arrival arc should stay visible long after that dating-uncertainty interval —
+    so every `arrival` effect carries its own window reaching `t_min=0`, independent of the
+    owning event's interval."""
+    for event_id in ARRIVAL_EFFECT_EVENT_IDS:
+        event = next(e for e in events_core.events if e.id == event_id)
+        assert event.effect is not None, event_id
+        assert min(w.t_min for w in event.effect.windows) == 0.0, event_id
+
+
+def test_every_arrival_established_date_is_within_the_events_own_uncertainty_when_a_moment(
+    events_core: EventSet,
+) -> None:
+    """For an arrival attached to a `kind='moment'` event, the arc's own best estimate
+    (`established`) should agree with the event's own best estimate `t` -- they describe the
+    same arrival. `kind='period'` events (peopling-of-americas, neanderthal-sapiens-overlap,
+    lapita-oceania-expansion) have no single `t` of their own, so are exempt by construction
+    (ArrivalEffect.established is independent of the owning event's kind, ADR-032)."""
+    for event_id in ARRIVAL_EFFECT_EVENT_IDS:
+        event = next(e for e in events_core.events if e.id == event_id)
+        assert event.effect is not None, event_id
+        if event.kind is EventKind.MOMENT:
+            assert event.effect.established == event.t, event_id
+
+
+def test_every_arrival_effect_has_the_expected_arrival_kind(events_core: EventSet) -> None:
+    """The later-migrations batch (2026-09-17) added `arrival_kind` as a required field on
+    `ArrivalEffect`. Every one of the original thirteen arrivals, plus three of the
+    later-migrations batch reclassified/added by the same-day ADR-032 amendment
+    (austronesian-expansion-taiwan, norse-north-atlantic-settlement,
+    greenland-norse-settlement), is `peopling` (first human settlement of a previously
+    uninhabited region); the batch's remaining nine arrivals are `migration` (a later
+    movement into land already inhabited or previously settled)."""
+    for event_id in PEOPLING_EFFECT_EVENT_IDS:
+        event = next(e for e in events_core.events if e.id == event_id)
+        assert isinstance(event.effect, ArrivalEffect), event_id
+        assert event.effect.arrival_kind == ArrivalKind.PEOPLING, event_id
+    for event_id in MIGRATION_EFFECT_EVENT_IDS:
+        event = next(e for e in events_core.events if e.id == event_id)
+        assert isinstance(event.effect, ArrivalEffect), event_id
+        assert event.effect.arrival_kind == ArrivalKind.MIGRATION, event_id
 
 
 def test_descriptions_are_non_empty(events_core: EventSet) -> None:

@@ -16,6 +16,7 @@ from pipeline.exposure import (
     ExposedPlate,
     ExposureError,
     PlateExposure,
+    erase_scale_bar,
     expose_plate,
     exposure_curve,
     exposure_gain,
@@ -256,3 +257,55 @@ def test_a_png_plate_stays_png_and_exposing_is_deterministic() -> None:
 def test_a_plate_that_is_not_rgb_is_refused() -> None:
     with pytest.raises(ExposureError, match="expected an RGB plate, got mode RGBA"):
         expose_plate(_png(_plate(90).convert("RGBA")))
+
+
+# -- erasing the scale bar (ADR-015 amendment 2026-09-17) -------------------------------------
+
+# A tail-like appendage, touching the subject and dipping well below it -- must never be erased.
+TAIL_BOX = (230, 291, 280, 350)
+# A separate, uniform "scale bar" below both the subject and the tail, clear of either -- wide
+# and thin enough to pass `pipeline.exposure`'s line-shape filter (>= 8% of plate width, <= 2.5%
+# of plate height).
+BAR_BOX = (150, 380, 350, 387)
+BAR_LEVEL = 200
+
+
+def _plate_with_bar_and_tail(peak: int = 200, *, glow: int = 20) -> Image.Image:
+    """`_plate` plus a tail dipping low and a separate, flat, bar-like rectangle below it, both
+    well inside `SUBJECT_DISC_RADIUS` so `subject_mask` sees them."""
+    plane, _, _ = _plate(peak, glow=glow).split()
+    draw = ImageDraw.Draw(plane)
+    draw.rectangle(TAIL_BOX, fill=peak)
+    draw.rectangle(BAR_BOX, fill=BAR_LEVEL)
+    return Image.merge("RGB", (plane, plane, plane))
+
+
+def test_erase_scale_bar_removes_the_bar_and_leaves_the_subject_and_tail_untouched() -> None:
+    before = _plate_with_bar_and_tail()
+    data = _jpeg(before)
+
+    erased = erase_scale_bar(data)
+
+    assert erased != data
+    with Image.open(io.BytesIO(erased)) as out:
+        after = out.convert("RGB")
+    # The bar is gone: no pixel in its box is anywhere near BAR_LEVEL any more.
+    bar_after = [
+        after.getpixel((x, y)) for x in range(*BAR_BOX[0::2]) for y in range(*BAR_BOX[1::2])
+    ]
+    assert max(max(pixel) for pixel in bar_after) < BAR_LEVEL - 40
+    # The subject and its tail are byte-identical to the un-erased plate.
+    for point in [(256, 256), (240, 280), (250, 340), (260, 349)]:
+        assert after.getpixel(point) == before.getpixel(point)
+
+
+def test_erase_scale_bar_is_a_no_op_with_no_subject() -> None:
+    blank = Image.new("RGB", (SIZE, SIZE), (5, 5, 5))
+    data = _jpeg(blank)
+
+    assert erase_scale_bar(data) == data
+
+
+def test_erase_scale_bar_refuses_a_non_rgb_plate() -> None:
+    with pytest.raises(ExposureError, match="expected an RGB plate, got mode RGBA"):
+        erase_scale_bar(_png(_plate(90).convert("RGBA")))

@@ -57,6 +57,32 @@ class SceneSound(BaseModel):
     gain: float = Field(gt=0.0, le=1.0)
 
 
+class SceneLocation(BaseModel):
+    """A scene's real-world present-day place (ADR-034). Optional: most scenes depict a
+    conceptual vantage with no real geographic referent (DESIGN §6, ADR-007) -- this narrowly
+    names the exceptions where a scene genuinely depicts a known, named real place (Giza, the
+    Somme, Hadar), not a plausible-sounding stand-in for a generic environment. Present-day
+    coordinates only -- `pipeline.publish` reconstructs a paleo position for scenes older than
+    the human-era basemap domain (ADR-030); this type carries no notion of `t`, so it can't be
+    reconstructed by itself. Invisible to the asset graph, like `title`/`events`/`sound`:
+    `pipeline/assets.py` never reads it, so adding or editing a scene's location never changes
+    a prompt/image node's digest or clears a pin."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    lat: float = Field(ge=-90.0, le=90.0)
+    lon: float = Field(ge=-180.0, le=180.0)
+    label: str = Field(min_length=1)
+
+    @field_validator("label")
+    @classmethod
+    def _label_stripped_and_non_blank(cls, label: str) -> str:
+        stripped = label.strip()
+        if not stripped:
+            raise ValueError("label must not be blank")
+        return stripped
+
+
 class UnknownScene(LookupError):
     """A scene id that data/scenes.yaml does not define."""
 
@@ -105,6 +131,9 @@ class SceneRecord(BaseModel):
     # (pipeline/assets.py never reads it), so adding or editing it never changes a
     # prompt/image node's digest or clears a pin -- the same guarantee `events` has.
     sound: SceneSound | None = Field(default=None)
+    # This scene's real-world present-day place, if it depicts one (ADR-034). None for every
+    # conceptual vantage -- most scenes. Invisible to the asset graph, like `sound`/`events`.
+    location: SceneLocation | None = Field(default=None)
     pin: ScenePin | None
 
     @field_validator("title")

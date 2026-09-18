@@ -180,17 +180,19 @@ gplately."
   archive extracts to (docs/GLOBE.md §3.1), since only three of its members are kept.
 - Curated `data/curated/plates_neoproterozoic.parquet` (47 frames: `t`, `ref`): well under
   the git-tier threshold.
-- Generated textures (`data/media/textures/plates_neoproterozoic/*.webp`, gitignored, never
-  committed): **47 files, 1.14 MB total** (21-32 KB each, mean ~24.3 KB), rendered in ~96 s
-  on an M-series Mac (dominated by the ~2 s/frame `PlatePartitioner` grid queries, not image
-  encoding).
+- Generated textures (`data/media/textures/plates_neoproterozoic/*.webp`): **47 files, 1.14 MB
+  total** (21-32 KB each, mean ~24.3 KB), rendered in ~96 s on an M-series Mac (dominated by
+  the ~2 s/frame `PlatePartitioner` grid queries, not image encoding).
 
 ## Storage tier chosen
 
 **git** for the curated parquet — tiny (well under the 5 MB threshold), same tier as
 `sources/paleodem`. Textures are **generated media**, per `docs/DATA_SOURCES.md`'s storage
-policy, written to `data/media/textures/plates_neoproterozoic/` (gitignored, regenerated
-locally by `render_textures`), never committed.
+policy ("generated media | git-lfs: pinned images + data/media/"), written to
+`data/media/textures/plates_neoproterozoic/` and committed via git-lfs (`.gitattributes`
+covers `data/media/**/*.webp`). *Correction, 2026-09-17: an earlier revision of this README
+claimed these textures were "gitignored, never committed", which was simply wrong — see
+`sources/paleodem/README.md`'s own correction for the same mistake.*
 
 ## New dependency: `scipy`
 

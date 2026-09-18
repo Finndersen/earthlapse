@@ -11,6 +11,8 @@ import pytest
 
 from pipeline.curated import CuratedFormatError, load_world, path_for, read_shape, write_shape
 from pipeline.shapes import (
+    ArrivalEffect,
+    ArrivalKind,
     CuratedShape,
     EffectAnchor,
     EffectWindow,
@@ -18,10 +20,14 @@ from pipeline.shapes import (
     EventKind,
     EventSet,
     EventTag,
+    Feature,
+    FeatureCertainty,
+    FeatureSet,
     Gap,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
+    PopulationEstimate,
     RasterFrame,
     RasterSequence,
     Sample,
@@ -69,6 +75,28 @@ EVENTS = EventSet(
             description="d.",
             citation="c.",
         ),
+        Event(
+            id="arrival-example",
+            label="An event with a schematic arrival",
+            kind=EventKind.MOMENT,
+            t_min=1.0,
+            t_max=2.0,
+            t=1.5,
+            tags=[EventTag.HUMAN_ORIGINS],
+            importance=0.2,
+            description="d.",
+            citation="c.",
+            # ADR-032: exercises the discriminated `arrival` variant through the same JSON
+            # column path as the anchored `impact-winter` case above.
+            effect=ArrivalEffect(
+                kind=GlobeEffectKind.ARRIVAL,
+                arrival_kind=ArrivalKind.PEOPLING,
+                origin=EffectAnchor(lat=2.0, lon=20.0),
+                destination=EffectAnchor(lat=31.5, lon=35.0),
+                established=1.5,
+                windows=[EffectWindow(t_min=0.0, t_max=2.0)],
+            ),
+        ),
     ],
 )
 PALEODEM = RasterSequence(
@@ -93,9 +121,28 @@ LINEAGE = Tree(
         ),
     ],
 )
+CITIES = FeatureSet(
+    id="cities",
+    features=[
+        Feature(
+            id="uruk",
+            name="Uruk",
+            country="Iraq",
+            lat=31.32,
+            lon=45.64,
+            certainty=FeatureCertainty.HIGH,
+            estimates=[
+                PopulationEstimate(t=6700.0, population=14_000),
+                PopulationEstimate(t=5700.0, population=40_000),
+            ],
+        ),
+    ],
+)
 
 
-@pytest.mark.parametrize("shape", [CO2, EVENTS, PALEODEM, LINEAGE], ids=lambda s: type(s).__name__)
+@pytest.mark.parametrize(
+    "shape", [CO2, EVENTS, PALEODEM, LINEAGE, CITIES], ids=lambda s: type(s).__name__
+)
 def test_every_shape_round_trips_exactly(shape: CuratedShape, tmp_path: Path) -> None:
     path = write_shape(shape, tmp_path)
     assert path == path_for(shape.id, tmp_path)
@@ -134,6 +181,16 @@ def test_load_world_registers_each_shape_by_id(tmp_path: Path) -> None:
 def test_load_world_on_missing_directory_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_world(tmp_path / "absent")
+
+
+def test_load_world_registers_feature_sets(tmp_path: Path) -> None:
+    """ADR-034: `FeatureSet` is registered into `WorldModel.features`, the same way
+    `EventSet`/`RasterSequence`/`Tree` are registered into their own dicts -- a separate test
+    from `test_load_world_registers_each_shape_by_id` above so it doesn't need to touch that
+    test's own multi-shape tuple assertion."""
+    write_shape(CITIES, tmp_path)
+    world = load_world(tmp_path)
+    assert world.features == {"cities": CITIES}
 
 
 def test_event_effect_is_stored_as_a_json_string_column(tmp_path: Path) -> None:

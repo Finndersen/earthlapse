@@ -6,7 +6,7 @@
     earthtime review [sheet | pick <scene_id> <n> | clear <scene_id>]
     earthtime review portraits [sheet | pick <node_id> <n> | clear <node_id>]
     earthtime morph
-    earthtime publish [--allow-unpinned]
+    earthtime publish [--allow-unpinned] [--asset-base URL]
 
 The generator comes from pipeline/generators/registry.py; nothing here names a provider.
 """
@@ -47,6 +47,7 @@ from pipeline.portraits import (
     pinned_pairs,
 )
 from pipeline.publish import (
+    ASSET_BASE,
     PortraitInputs,
     PortraitPublication,
     PublishRefused,
@@ -365,15 +366,14 @@ def create_app(backend: ImageBackend) -> typer.Typer:
 
     @app.command()
     def morph(ctx: typer.Context) -> None:
-        """Flow fields between consecutive pinned portraits. Local and free; needs `.[morph]`."""
+        """Flow fields between consecutive pinned portraits. Local and free."""
+        # OpenCV and numpy are core dependencies (ADR-015 amendment 2026-09-17: `pipeline.exposure`
+        # needs them directly too), but the import stays deferred and defensive so a broken
+        # installation fails with a clear message here rather than at CLI start-up.
         try:
-            # The one deferred import: OpenCV is an optional extra, and every other command
-            # must run without it.
             from pipeline.morph import MorphError, write_morph
         except ModuleNotFoundError as err:
-            raise fail(
-                f"REFUSED: {err}; install the morph extra: pip install -e '.[morph]'"
-            ) from err
+            raise fail(f"REFUSED: {err}; install with: pip install -e .") from err
         paths: ProjectPaths = ctx.obj
         pws = portrait_workspace(paths, load_world(paths.curated))
         pairs = pinned_pairs(pws.book, pws.tree)
@@ -411,6 +411,13 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         allow_unpinned: Annotated[
             bool, typer.Option(help="Skip unpinned scenes instead of refusing.")
         ] = False,
+        asset_base: Annotated[
+            str,
+            typer.Option(
+                help="Origin the manifest's media paths hang off, e.g. https://media.example.org. "
+                "Defaults to the local dev server's own /media.",
+            ),
+        ] = ASSET_BASE,
     ) -> None:
         """Write data/media/manifest.json and the media it references."""
         paths: ProjectPaths = ctx.obj
@@ -429,7 +436,7 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         )
         try:
             publication = prepare_publication(
-                book, load_world(paths.curated), paths.sources, paths.root, portraits
+                book, load_world(paths.curated), paths.sources, paths.root, portraits, asset_base
             )
         except PublishRefused as err:
             raise fail(f"REFUSED: {err}") from err

@@ -10,6 +10,8 @@ import pytest
 from pydantic import ValidationError
 
 from pipeline.shapes import (
+    ArrivalEffect,
+    ArrivalKind,
     EffectAnchor,
     EffectWindow,
     Event,
@@ -109,6 +111,124 @@ def test_event_effect_round_trips_through_model_dump() -> None:
         "windows": [{"t_min": 6.6032e7, "t_max": 6.6054e7}],
     }
     assert Event.model_validate(dumped) == event
+
+
+# --------------------------------------------------------------- arrival effect (ADR-032)
+
+ARRIVAL_ANCHORS = {
+    "origin": EffectAnchor(lat=2.0, lon=20.0),
+    "destination": EffectAnchor(lat=31.5, lon=35.0),
+}
+
+
+def test_globe_effect_rejects_arrival_kind() -> None:
+    """`kind='arrival'` needs `ArrivalEffect`'s required origin/destination pair, not
+    `GlobeEffect`'s optional single anchor -- an invalid state made unrepresentable rather
+    than merely undocumented."""
+    with pytest.raises(ValidationError):
+        GlobeEffect(kind="arrival", windows=[VALID_WINDOW])  # type: ignore[arg-type]
+
+
+def test_arrival_effect_requires_origin_and_destination() -> None:
+    with pytest.raises(ValidationError):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            established=1.0,
+            windows=[VALID_WINDOW],
+        )  # type: ignore[call-arg]
+
+
+def test_arrival_effect_requires_arrival_kind() -> None:
+    """`arrival_kind` (peopling vs. migration) is required, not defaulted -- a new arrival
+    with no explicit answer must fail loudly rather than silently becoming one or the other."""
+    with pytest.raises(ValidationError, match="arrival_kind"):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            established=1.5,
+            windows=[EffectWindow(t_min=0.0, t_max=2.0)],
+            **ARRIVAL_ANCHORS,
+        )  # type: ignore[call-arg]
+
+
+def test_arrival_effect_must_persist_to_the_present() -> None:
+    with pytest.raises(ValidationError, match="present"):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            established=1.5,
+            windows=[EffectWindow(t_min=1.0, t_max=2.0)],
+            **ARRIVAL_ANCHORS,
+        )
+
+
+def test_arrival_effect_established_must_fall_within_a_window() -> None:
+    with pytest.raises(ValidationError, match="established"):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            established=500.0,
+            windows=[EffectWindow(t_min=0.0, t_max=2.0)],
+            **ARRIVAL_ANCHORS,
+        )
+
+
+def test_arrival_effect_accepts_a_persisting_window_and_established_date() -> None:
+    effect = ArrivalEffect(
+        kind=GlobeEffectKind.ARRIVAL,
+        arrival_kind=ArrivalKind.PEOPLING,
+        established=1.5,
+        windows=[EffectWindow(t_min=0.0, t_max=2.0)],
+        **ARRIVAL_ANCHORS,
+    )
+    assert effect.origin == ARRIVAL_ANCHORS["origin"]
+    assert effect.destination == ARRIVAL_ANCHORS["destination"]
+
+
+def test_arrival_effect_accepts_the_migration_kind() -> None:
+    effect = ArrivalEffect(
+        kind=GlobeEffectKind.ARRIVAL,
+        arrival_kind=ArrivalKind.MIGRATION,
+        established=1.5,
+        windows=[EffectWindow(t_min=0.0, t_max=2.0)],
+        **ARRIVAL_ANCHORS,
+    )
+    assert effect.arrival_kind == ArrivalKind.MIGRATION
+
+
+def test_event_effect_accepts_an_arrival_effect_and_round_trips() -> None:
+    event = Event(
+        id="levant-early-dispersal",
+        label="Levant early dispersal",
+        kind=EventKind.MOMENT,
+        t_min=177000.0,
+        t_max=194000.0,
+        t=185500.0,
+        tags=[EventTag.HUMAN_ORIGINS],
+        importance=0.5,
+        description="d.",
+        citation="c.",
+        effect=ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            established=185500.0,
+            windows=[EffectWindow(t_min=0.0, t_max=194000.0)],
+            **ARRIVAL_ANCHORS,
+        ),
+    )
+    assert isinstance(event.effect, ArrivalEffect)
+    dumped = event.model_dump(mode="json")
+    assert dumped["effect"] == {
+        "kind": "arrival",
+        "arrival_kind": "peopling",
+        "origin": {"lat": 2.0, "lon": 20.0},
+        "destination": {"lat": 31.5, "lon": 35.0},
+        "established": 185500.0,
+        "windows": [{"t_min": 0.0, "t_max": 194000.0}],
+    }
+    roundtripped = Event.model_validate(dumped)
+    assert roundtripped == event
+    assert isinstance(roundtripped.effect, ArrivalEffect)
 
 
 # ----------------------------------------------------------------- kind / t / tags (ADR-022)

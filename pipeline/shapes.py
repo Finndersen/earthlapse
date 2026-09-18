@@ -17,7 +17,7 @@ from __future__ import annotations
 import bisect
 import math
 from enum import StrEnum
-from typing import Protocol, Self, runtime_checkable
+from typing import Annotated, Literal, Protocol, Self, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -173,6 +173,28 @@ class GlobeEffectKind(StrEnum):
     REGIME_WATER_WORLD = "regime-water-world"
     REGIME_ARCHEAN = "regime-archean"
     REGIME_UNKNOWN_GEOGRAPHY = "regime-unknown-geography"
+    # ADR-032: a schematic human-dispersal arrival arc, origin -> destination. Distinct shape
+    # from every kind above (a required anchor *pair*, not an optional single anchor), so it
+    # is split into its own model (`ArrivalEffect`) rather than added as more optional fields
+    # on `GlobeEffect` -- see that class's docstring.
+    ARRIVAL = "arrival"
+
+
+POINT_EFFECT_KINDS: tuple[GlobeEffectKind, ...] = (
+    GlobeEffectKind.IMPACT_WINTER,
+    GlobeEffectKind.GIANT_IMPACT,
+    GlobeEffectKind.FLOOD_BASALT,
+    GlobeEffectKind.ICE_SHELL,
+    GlobeEffectKind.REGIME_MAGMA_OCEAN,
+    GlobeEffectKind.REGIME_WATER_WORLD,
+    GlobeEffectKind.REGIME_ARCHEAN,
+    GlobeEffectKind.REGIME_UNKNOWN_GEOGRAPHY,
+)
+"""Every `GlobeEffectKind` except `ARRIVAL` -- the "point" kinds `GlobeEffect.kind` accepts
+(each with at most one fixed anchor), as opposed to `ArrivalEffect.kind`'s single value. The
+one place this list is written out; `GlobeEffect.kind` below and `pipeline.manifest.GlobeEffect
+.kind` (the wire twin) both build their `Literal` from it (`Literal[*POINT_EFFECT_KINDS]`)
+rather than repeating the eight names, so the two can't silently drift apart."""
 
 
 class EffectAnchor(BaseModel):
@@ -201,19 +223,100 @@ class EffectWindow(BaseModel):
 
 
 class GlobeEffect(BaseModel):
-    """An optional, additive globe effect on an `Event` (docs/GLOBE.md §6, ADR-013). An event
-    without a timeline presence — a pre-1 Ga regime — carries this same field on an `Event` in
-    the separate `globe-regimes` `EventSet` instead of `events-core`, rather than a bespoke
-    table: every effect already has a date interval and a citation because it already is an
-    event.
+    """An optional, additive globe effect on an `Event` (docs/GLOBE.md §6, ADR-013): the eight
+    "point" kinds (an impact, a flood basalt, an ice shell, a pre-1 Ga regime), each with at
+    most one fixed location. `kind='arrival'` is a different shape — a required origin +
+    destination pair, never an optional single anchor — and lives in `ArrivalEffect` instead
+    (ADR-032); `Event.effect`'s annotation is the discriminated union of the two, so
+    constructing a `GlobeEffect` with `kind='arrival'` is a validation error, not a
+    representable-but-wrong state. An event without a timeline presence — a pre-1 Ga regime —
+    carries this same field on an `Event` in the separate `globe-regimes` `EventSet` instead of
+    `events-core`, rather than a bespoke table: every effect already has a date interval and a
+    citation because it already is an event.
 
     Additive: `Event.effect` defaults to `None`, so a manifest written before this field
     existed stays valid.
     """
 
-    kind: GlobeEffectKind
+    kind: Literal[*POINT_EFFECT_KINDS]
     anchor: EffectAnchor | None = None
     windows: list[EffectWindow] = Field(min_length=1)
+
+
+class ArrivalKind(StrEnum):
+    """Whether an `ArrivalEffect` is the first human settlement of a region with no prior
+    human presence, or a later movement into land that was already inhabited or previously
+    settled. The globe rendering treats the two differently -- `PEOPLING` leaves a persistent
+    "inhabited" marker at the destination once the arc's dashed phase ends, `MIGRATION` stays
+    a transient arc only -- so this has to be a fact the data asserts, not something rendering
+    code infers from dates or tags. Closed and required: every arrival is unambiguously one or
+    the other."""
+
+    PEOPLING = "peopling"
+    MIGRATION = "migration"
+
+
+class ArrivalEffect(BaseModel):
+    """A schematic human-dispersal arrival (ADR-032, docs/GLOBE.md §6): an arc from an origin
+    region centroid to a destination region centroid — both schematic (a curated approximate
+    centroid, never a real route or a claim of precise geography) — that persists on the globe
+    from the arrival's earliest defensible date through to the present, rather than vanishing
+    once `t` passes the event's own dating-uncertainty interval the way `EventSet.sample`
+    would otherwise imply.
+
+    `established` is the arrival's best-estimate date: the arc is dashed/uncertain from
+    `windows`' own `t_max` (the earliest defensible date) and turns solid from `established`
+    onward. It is a field of its own here, not a re-read of the owning `Event.t` -- several
+    events this attaches to are `kind='period'` (ADR-022, e.g. `peopling-of-americas`,
+    `neanderthal-sapiens-overlap`) and so have no single instant of their own, but the arc
+    still needs exactly one transition point regardless of the owning event's kind.
+
+    `arrival_kind` (`ArrivalKind`) distinguishes first settlement of previously uninhabited
+    land (`peopling`) from a later movement into already-inhabited or previously-settled land
+    (`migration`). Required, not defaulted: every one of the thirteen original arrivals is
+    `peopling`, curated explicitly rather than left to an implicit default that would silently
+    mis-tag the first later `migration` arrival added.
+    """
+
+    kind: Literal[GlobeEffectKind.ARRIVAL]
+    arrival_kind: ArrivalKind
+    origin: EffectAnchor
+    destination: EffectAnchor
+    established: GeoTime
+    windows: list[EffectWindow] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _exactly_one_window_reaches_present(self) -> Self:
+        """Exactly one, not merely "at least one": two windows both reaching t_min=0 would be
+        redundant (the arc already persists to the present through either), and ambiguous for
+        whatever web-side code picks "the" present-reaching window. `t_min == 0.0` is an exact
+        match, not `<= 0.0` -- `EffectWindow`'s own `t_min`/`t_max` naming convention treats 0
+        (the present) as the domain floor, so a window can't legitimately claim a negative
+        t_min in the first place; requiring the equality catches a float/typo bug instead of
+        silently accepting it the way `<= 0` would."""
+        reaching_present = [w for w in self.windows if w.t_min == 0.0]
+        if len(reaching_present) != 1:
+            raise ValueError(
+                f"arrival effect must have exactly one window with t_min=0 (present), so the "
+                f"arc persists rather than vanishing once t leaves the event's own dating-"
+                f"uncertainty interval -- found {len(reaching_present)}"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _established_within_a_window(self) -> Self:
+        if not any(w.t_min <= self.established <= w.t_max for w in self.windows):
+            raise ValueError(
+                f"established={self.established} falls outside every window {self.windows}"
+            )
+        return self
+
+
+AnyGlobeEffect = Annotated[GlobeEffect | ArrivalEffect, Field(discriminator="kind")]
+"""The full closed set of globe effects an `Event` may carry — `GlobeEffect`'s eight point
+kinds or `ArrivalEffect`'s `arrival` kind, dispatched on `kind` (ADR-032). Named separately
+from `GlobeEffect` itself so every existing `GlobeEffect(kind=..., ...)` call site (tests,
+`pipeline/publish.py`) keeps constructing the point-effect model directly, unchanged."""
 
 
 class EventKind(StrEnum):
@@ -261,7 +364,7 @@ class Event(BaseModel):
     importance: float = Field(ge=0.0, le=1.0)
     description: str
     citation: str
-    effect: GlobeEffect | None = None
+    effect: AnyGlobeEffect | None = None
 
     @model_validator(mode="after")
     def _ordered(self) -> Self:
@@ -418,4 +521,82 @@ class Tree(BaseModel):
         return list(reversed(out))
 
 
-CuratedShape = TimeSeries | EventSet | RasterSequence | Tree
+# ---------------------------------------------------------------------------- FeatureSet
+
+
+class FeatureCertainty(StrEnum):
+    """How confidently a feature's coordinates are known (ADR-034). Closed, not a raw 1/2/3
+    code or free-text string: `sources/cities/normalise.py` translates the Reba/Reitsma/Seto
+    dataset's own numeric geocoding-confidence codes into this enum once, at the source
+    boundary, so nothing downstream needs to know the raw dataset's own numbering."""
+
+    HIGH = "high"  # geolocation agreed by three independent sources
+    MEDIUM = "medium"  # agreed by two independent sources
+    LOW = "low"  # required repeated attempts; the least reliable tier
+
+
+class PopulationEstimate(BaseModel):
+    """One dated population reading for a `Feature` (ADR-034). Not an interpolation policy of
+    its own — unlike `TimeSeries`, consecutive estimates for a city are not assumed to blend
+    linearly (a city's population can collapse or rebound between attested readings), so no
+    `sample`-style interpolation is offered here; a consumer reads the estimates list directly."""
+
+    t: GeoTime
+    population: int = Field(gt=0)
+
+
+class Feature(BaseModel):
+    """One labelled, dated geographic point (ADR-034) — e.g. a historical city. `id` is stable
+    across rebuilds (used for dedup and for referencing a specific feature elsewhere), `country`
+    is the *modern* country the coordinates fall in (not the polity that existed at any given
+    estimate's own date, which `sources/cities` does not attempt to resolve)."""
+
+    id: str
+    name: str
+    country: str
+    lat: float = Field(ge=-90.0, le=90.0)
+    lon: float = Field(ge=-180.0, le=180.0)
+    certainty: FeatureCertainty
+    estimates: list[PopulationEstimate] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _estimates_sorted_and_unique(self) -> Self:
+        if len({e.t for e in self.estimates}) != len(self.estimates):
+            raise ValueError(f"{self.id}: duplicate estimate t values")
+        self.estimates.sort(key=lambda e: e.t)
+        return self
+
+
+class FeatureSet(BaseModel):
+    """A named collection of dated geographic points (ADR-034) — the fifth curated shape,
+    for data that is neither a scalar series, a timeline event, a georeferenced grid, nor a
+    lineage: a set of *places*, each independently dated and labelled. Used for
+    `sources/cities`' major historical cities."""
+
+    id: str
+    features: list[Feature]
+
+    @model_validator(mode="after")
+    def _sorted_and_unique(self) -> Self:
+        if not self.features:
+            raise ValueError(f"{self.id}: empty FeatureSet")
+        if len({f.id for f in self.features}) != len(self.features):
+            raise ValueError(f"{self.id}: duplicate feature ids")
+        self.features.sort(key=lambda f: f.id)
+        return self
+
+    @property
+    def domain(self) -> tuple[GeoTime, GeoTime]:
+        newest = min(e.t for f in self.features for e in f.estimates)
+        oldest = max(e.t for f in self.features for e in f.estimates)
+        return newest, oldest
+
+    def sample(self, t: GeoTime) -> list[Feature]:
+        """Every feature already attested by time t -- i.e. whose oldest (largest-t) estimate
+        is at or before t on the "years before present" axis, meaning it existed that far back.
+        A feature founded after t (every one of its estimates newer than t) is excluded, the
+        same "not yet existing" semantics `Tree.sample` gives a not-yet-diverged node."""
+        return [f for f in self.features if f.estimates[-1].t >= t]
+
+
+CuratedShape = TimeSeries | EventSet | RasterSequence | Tree | FeatureSet

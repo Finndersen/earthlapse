@@ -9,14 +9,23 @@ layer data keeps its explicit `null`s, because curated.ts expects them.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from pipeline.prompts import PlateType, Shot
 from pipeline.scenes import SoundMode
-from pipeline.shapes import EventKind, EventTag, GeoTime, GlobeEffectKind, Interpolation
+from pipeline.shapes import (
+    POINT_EFFECT_KINDS,
+    ArrivalKind,
+    EventKind,
+    EventTag,
+    FeatureCertainty,
+    GeoTime,
+    GlobeEffectKind,
+    Interpolation,
+)
 
 
 class _WireModel(BaseModel):
@@ -37,6 +46,7 @@ class LayerDataKind(StrEnum):
     EVENTS = "events"
     RASTER = "raster"
     NODE = "node"
+    FEATURES = "features"  # ADR-034
 
 
 class SceneSound(_WireModel):
@@ -47,6 +57,25 @@ class SceneSound(_WireModel):
     stem: str
     mode: SoundMode
     gain: float = Field(gt=0.0, le=1.0)
+
+
+class SceneLocationCoordinates(_WireModel):
+    lat: float
+    lon: float
+
+
+class SceneLocation(_WireModel):
+    """A scene's real-world place (ADR-034). `present_day` is always the curated coordinates
+    from `pipeline.scenes.SceneLocation`, published alongside the reconstruction so it stays
+    auditable. `marker` is what the globe should actually plot: identical to `present_day` for
+    a scene inside the human-era basemap domain (`t <= 2,580,000`, ADR-030), a plate-
+    reconstructed paleo position for an older one, or -- when no plate model covers that
+    scene's `t`, or reconstruction genuinely isn't feasible -- `None`, so the globe shows no
+    marker rather than a wrong one."""
+
+    label: str
+    present_day: SceneLocationCoordinates
+    marker: SceneLocationCoordinates | None = None
 
 
 class Scene(_WireModel):
@@ -67,6 +96,9 @@ class Scene(_WireModel):
     # Optional ambience stem this scene plays (ADR-023). Additive: absent on every manifest
     # published before this field existed, and on any scene with no associated sound.
     sound: SceneSound | None = None
+    # This scene's real-world place, if it depicts one (ADR-034). Additive: absent on every
+    # manifest published before this field existed, and on any scene with no specific location.
+    location: SceneLocation | None = None
     pinned: str | None = None
     width: int = Field(gt=0)
     height: int = Field(gt=0)
@@ -118,13 +150,37 @@ class GlobeEffectWindow(_WireModel):
 
 class GlobeEffect(_WireModel):
     """Mirrors `pipeline.shapes.GlobeEffect` and `web/src/types/layer.ts`'s `GlobeEffect`
-    (docs/GLOBE.md §6, ADR-013). `kind` is `pipeline.shapes.GlobeEffectKind` directly, not a
-    re-declared wire enum: its values already are the wire values, so re-declaring it would
-    be a synonym that could silently drift from the pipeline-side enum."""
+    (docs/GLOBE.md §6, ADR-013): the eight "point" kinds, each with at most one fixed anchor.
+    `kind='arrival'` is `ArrivalEffect` instead (ADR-032) — a required origin/destination pair,
+    not this shape's optional single anchor. `kind` reuses `pipeline.shapes.GlobeEffectKind`
+    directly, not a re-declared wire enum: its values already are the wire values, so
+    re-declaring it would be a synonym that could silently drift from the pipeline-side enum."""
 
-    kind: GlobeEffectKind
+    kind: Literal[*POINT_EFFECT_KINDS]
     anchor: GlobeEffectAnchor | None = None
     windows: tuple[GlobeEffectWindow, ...] = Field(min_length=1)
+
+
+class ArrivalEffect(_WireModel):
+    """Mirrors `pipeline.shapes.ArrivalEffect` and `web/src/types/layer.ts`'s
+    `ArrivalGlobeEffect` (ADR-032): a schematic human-dispersal arrival arc, origin ->
+    destination, that persists to the present. `established` is the best-estimate date the
+    arc turns solid (dashed before it) — independent of the owning event's own `kind`/`t`,
+    since some owning events are `kind='period'` with no single instant of their own.
+    `arrival_kind` reuses `pipeline.shapes.ArrivalKind` directly, the same way `kind` reuses
+    `GlobeEffectKind`: `peopling` (first settlement of previously uninhabited land, leaves a
+    persistent inhabited marker) vs. `migration` (a later movement into already-inhabited or
+    previously-settled land, transient arc only). Required, not defaulted."""
+
+    kind: Literal[GlobeEffectKind.ARRIVAL]
+    arrival_kind: ArrivalKind
+    origin: GlobeEffectAnchor
+    destination: GlobeEffectAnchor
+    established: GeoTime
+    windows: tuple[GlobeEffectWindow, ...] = Field(min_length=1)
+
+
+AnyGlobeEffect = Annotated[GlobeEffect | ArrivalEffect, Field(discriminator="kind")]
 
 
 class TimelineEvent(_WireModel):
@@ -146,7 +202,7 @@ class TimelineEvent(_WireModel):
     citation: str
     # Additive (docs/GLOBE.md §6): absent on every event published before this field existed,
     # and on any event with no globe visual of its own.
-    effect: GlobeEffect | None = Field(default=None, exclude_if=lambda value: value is None)
+    effect: AnyGlobeEffect | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class AudioLoop(_WireModel):
@@ -251,9 +307,27 @@ class RasterFrameData(_WireModel):
     ref: str
 
 
+class RasterEncoding(_WireModel):
+    """How a `RasterSequence`'s texture bytes decode to a real physical quantity, additive:
+    absent for a colour-only raster (`paleodem`, the two `basemap` tiers,
+    `plates_neoproterozoic`, `hyde_cleared_land`) and on every layer file published before this
+    field existed. ADR-031 amendment ("population density"): a single 8-bit channel, log10-
+    scaled between 0 and `dMax` -- mirrors `pipeline.density_encoding.encode_log_density`
+    exactly, the one place the formula itself is written out:
+
+        pixel = round(255 * clamp(log10(1 + value) / log10(1 + dMax), 0, 1))
+        value = 10 ** (pixel / 255 * log10(1 + dMax)) - 1
+    """
+
+    channel: Literal["r", "g", "b"]
+    unit: str
+    d_max: float = Field(gt=0.0)
+
+
 class RasterData(_WireModel):
     id: str
     frames: tuple[RasterFrameData, ...] = Field(min_length=1)
+    encoding: RasterEncoding | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class TreeNodeData(_WireModel):
@@ -340,7 +414,36 @@ class EventsData(_WireModel):
     events: tuple[TimelineEvent, ...] = Field(min_length=1)
 
 
-LayerData = SeriesData | RasterData | TreeData | EventsData
+class FeatureEstimateData(_WireModel):
+    """Mirrors `pipeline.shapes.PopulationEstimate` (ADR-034)."""
+
+    t: GeoTime
+    population: int = Field(gt=0)
+
+
+class FeatureData(_WireModel):
+    """Mirrors `pipeline.shapes.Feature` (ADR-034). `certainty` reuses
+    `pipeline.shapes.FeatureCertainty` directly, the same way `TimelineEvent.kind` reuses
+    `EventKind` — its values already are the wire values."""
+
+    id: str
+    name: str
+    country: str
+    lat: float
+    lon: float
+    certainty: FeatureCertainty
+    estimates: tuple[FeatureEstimateData, ...] = Field(min_length=1)
+
+
+class FeatureSetData(_WireModel):
+    """A `FeatureSet` published as its own layer file (ADR-034) — e.g. `cities`. Mirrors
+    `pipeline.shapes.FeatureSet`."""
+
+    id: str
+    features: tuple[FeatureData, ...] = Field(min_length=1)
+
+
+LayerData = SeriesData | RasterData | TreeData | EventsData | FeatureSetData
 
 
 def dump_layer_data(data: LayerData) -> str:

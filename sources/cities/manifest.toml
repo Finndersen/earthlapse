@@ -1,0 +1,43 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the dedupe policy and
+# notability filter.
+#
+# Reba, Reitsma & Seto (2016), "Spatializing 6,000 years of global urbanization from 3700 BC
+# to AD 2000", Scientific Data 3:160034, doi:10.1038/sdata.2016.34. SEDAC's own listing
+# (doi:10.7927/H4ZG6QBX) requires a NASA Earthdata login for bulk access and ships no plain
+# CSV download -- the paper's own "Data Records" section names the real distribution: three
+# CSVs on figshare (Chandler, Modelski Ancient, Modelski Modern), each independently CC BY 4.0
+# (confirmed via the figshare API's own licence field), downloadable with no auth via
+# ndownloader.figshare.com. See README.md "Licence and access" for the full verification.
+
+name = "cities"
+title = "Historical Urban Population, 3700 BC - AD 2000 (Chandler + Modelski)"
+url = "https://www.nature.com/articles/sdata201634"
+sha256 = ""  # not applicable -- three independent artefacts, see [[artefacts]]
+licence = "CC BY 4.0 (each of the three figshare deposits independently, confirmed via the figshare API)"
+citation = "Reba, M., Reitsma, F. & Seto, K.C. Spatializing 6,000 years of global urbanization from 3700 BC to AD 2000. Sci Data 3, 160034 (2016). https://doi.org/10.1038/sdata.2016.34"
+time_domain = [5.725e3, 25.0]  # years BP, [oldest, newest] -- 3700 BCE .. AD 2000, against the fixed AD 2025 present
+output_shape = "FeatureSet"
+interpolation = "n/a"  # FeatureSet has no interpolation policy -- each estimate is a discrete attested reading
+volume_bytes = 1448474  # measured: sum of the three raw CSVs (see README.md "Measured volume")
+storage_tier = "git"  # curated parquet is small (see README.md); raw CSVs are gitignored, re-fetched from figshare
+
+[[artefacts]]
+filename = "chandlerV2.csv"
+url = "https://ndownloader.figshare.com/files/5407640"
+sha256 = "5b8df64e46988b216988eef18b46ebc2cba57ecc1adc8a5c2e1e6d5b78068031"
+licence = "CC BY 4.0 (figshare doi:10.6084/m9.figshare.2059494)"
+citation = "Reba, M., Reitsma, F. & Seto, K.C. Chandler Population Data. figshare. Dataset. https://doi.org/10.6084/m9.figshare.2059494"
+
+[[artefacts]]
+filename = "modelskiAncientV2.csv"
+url = "https://ndownloader.figshare.com/files/5356132"
+sha256 = "71beafaacbdeb8d8fc156951521e9a14e20d6704b0d77be5528511c52fad3e1d"
+licence = "CC BY 4.0 (figshare doi:10.6084/m9.figshare.2059497)"
+citation = "Reba, M., Reitsma, F. & Seto, K.C. Modelski Ancient Period Data. figshare. Dataset. https://doi.org/10.6084/m9.figshare.2059497"
+
+[[artefacts]]
+filename = "modelskiModernV2.csv"
+url = "https://ndownloader.figshare.com/files/5407637"
+sha256 = "927ee6a9122be6aded1a2f71ff5bb6f36312aae6a778574af47f4e8c65265726"
+licence = "CC BY 4.0 (figshare doi:10.6084/m9.figshare.2059500)"
+citation = "Reba, M., Reitsma, F. & Seto, K.C. Modelski Modern Period Data. figshare. Dataset. https://doi.org/10.6084/m9.figshare.2059500"

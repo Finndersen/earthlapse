@@ -23,6 +23,7 @@ from pydantic import BaseModel
 
 from pipeline.shapes import (
     EventSet,
+    FeatureSet,
     GeoTime,
     RasterBlend,
     RasterSequence,
@@ -129,11 +130,17 @@ class WorldModel:
         rasters: dict[str, RasterSequence] | None = None,
         events: dict[str, EventSet] | None = None,
         trees: dict[str, Tree] | None = None,
+        # ADR-034: FeatureSets (e.g. `sources/cities`). Not read by `at()`/`WorldState` --
+        # major cities aren't a planetary-snapshot field -- only by the generic publish path
+        # (`pipeline/publish.py`'s `FEATURE_LAYERS`), the same way `events`/`trees` are read by
+        # publish but `globe-regimes` never reaches `WorldState` either.
+        features: dict[str, FeatureSet] | None = None,
     ) -> None:
         self.series = series or {}
         self.rasters = rasters or {}
         self.events = events or {}
         self.trees = trees or {}
+        self.features = features or {}
 
     # -- lookups tolerating an absent source, so a partial MVP still builds ------------
 

@@ -1,5 +1,5 @@
 """Optical flow between consecutive pinned portrait plates (ADR-015, amendments 2026-09-15,
-2026-09-16). Needs the `morph` extra.
+2026-09-16, 2026-09-17).
 
     plate -> subject box (from the dark backdrop) -> framing that centres and scales it
           -> a *separate*, vignette-robust subject extent anchors and clips a scale-bar band
@@ -51,6 +51,7 @@ from pipeline.portraits import (
     MorphKey,
     MorphRecord,
 )
+from pipeline.scale_bar import Extent, ScaleBarBand, box_from_mask, scale_bar_band
 
 GrayImage = NDArray[np.uint8]
 
@@ -62,9 +63,6 @@ ANALYSIS_SIZE = 256
 BORDER_FRACTION = 0.04
 MIN_CONTRAST = 18.0
 NOISE_MADS = 4.0
-# Detached parts of one subject (a tentacle, a trailing flagellum) are kept; the scale bar,
-# a thin sliver removed by the opening below or far smaller than the subject, is not.
-COMPANION_AREA_FRACTION = 0.1
 # Neighbouring subjects are framed at most this much apart in scale. Past it the morph stops
 # reading as one organism becoming another and reads as the whole plate bursting outward (a
 # lone cell becoming a colony four times its size); body-plan changes that large dissolve better.
@@ -77,14 +75,18 @@ MAX_FLOW_P95 = 0.6
 # other instead of tearing it.
 FLOW_SMOOTHING_SIGMA = 6.0
 
-# VISUAL_SPEC §10 / `PORTRAIT_STYLE` (pipeline/prompts.py): "a thin, pale grey horizontal scale
-# bar sits below the subject, left of centre, with no numbers or letters." It is a register cue,
-# not anatomy, and its position drifts differently between two independently normalised plates
-# (each centred and scaled to its own subject box), so optical flow bends it into a hook or
-# squiggle rather than leaving it straight (queue item 14 evidence). A band anchored to a subject
-# extent brackets it by position rather than trying to detect the bar itself (measured unreliable
-# in practice, both by the original 2026-09-15 amendment and a second check that tried a wider
-# search window: still too faint or thin at generation size to separate reliably from a
+# `PORTRAIT_STYLE` (pipeline/prompts.py) no longer asks the generator for a scale bar (ADR-015
+# amendment 2026-09-17: the human found it inconsistent -- faint on most plates, thick and bright
+# on a couple -- and not helpful, and it is erased from every *published* plate, `pipeline.exposure`).
+# But the 40 already-pinned plates this module reads still carry one (a pin is never regenerated,
+# ADR-005), and its position drifts differently between two independently normalised plates (each
+# centred and scaled to its own subject box), so optical flow still bends it into a hook or
+# squiggle rather than leaving it straight if left in (queue item 14 evidence) -- this module's own
+# exclusion stays needed regardless of what publish does with the result. The band is anchored to
+# a subject extent (`SCALE_BAR_BAND_*`, `scale_bar_band`, `pipeline.scale_bar` -- shared with
+# `pipeline.exposure`'s publish-time erase) rather than trying to detect the bar itself (measured
+# unreliable in practice, both by the original 2026-09-15 amendment and a second check that tried a
+# wider search window: still too faint or thin at generation size to separate reliably from a
 # subject's own edges and shadow). The anchor is `bar_search_extent`, *not* `detect_subject_box`:
 # the latter's single frame-corner threshold reads a strong vignette's own radial glow as subject
 # on most plates (measured 2026-09-16: e.g. `amniota`'s box bottom at 0.92 with the lizard's real
@@ -97,9 +99,6 @@ FLOW_SMOOTHING_SIGMA = 6.0
 # extent's own bottom edge). Either margin can still overshoot on an individual plate; `erase_band`
 # and `zero_band` additionally never touch a pixel `bar_search_extent`'s own mask calls subject,
 # so an overshoot only ever costs band precision, never anatomy.
-SCALE_BAR_BAND_ABOVE = 0.10  # how far above the extent's bottom the excluded band starts
-SCALE_BAR_BAND_BELOW = 0.16  # how far below it the band ends
-SCALE_BAR_BAND_RIGHT_MARGIN = 0.2  # how far past the subject's own centre it reaches
 
 # `zero_band`'s edge, in FLOW_TEXTURE_SIZE texels: a hard cutoff in the composed flow field is a
 # discontinuity the shader renders as a visible tear at the band's boundary. This Gaussian eases
@@ -178,28 +177,12 @@ class BarSearchExtent:
     docstring)."""
 
     box: SubjectBox
-    band: SubjectBox  # scale_bar_band(box), precomputed so callers need not repeat it
+    band: ScaleBarBand  # scale_bar_band(box), precomputed so callers need not repeat it
     mask: GrayImage  # the subject silhouette at ANALYSIS_SIZE (pipeline.exposure), 0/255
 
 
-def _box_from_mask(mask: GrayImage, size: int) -> SubjectBox | None:
-    """The bounding box of `mask`'s significant components against a `size`x`size` grid: the
-    largest connected component and any companion at least `COMPANION_AREA_FRACTION` of its
-    area (a detached part of one subject -- a tentacle, a trailing flagellum -- is kept; a speck
-    of noise is not), after a 3x3 opening. None when nothing survives -- callers with a fallback
-    should use it; `detect_subject_box` has none, so it raises instead."""
-    opened = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), dtype=np.uint8))
-    count, _, stats, _ = cv2.connectedComponentsWithStats(opened, connectivity=8)
-    if count < 2:
-        return None
-    components = stats[1:]
-    largest = int(components[:, cv2.CC_STAT_AREA].max())
-    kept = components[components[:, cv2.CC_STAT_AREA] >= COMPANION_AREA_FRACTION * largest]
-    left = int(kept[:, cv2.CC_STAT_LEFT].min())
-    top = int(kept[:, cv2.CC_STAT_TOP].min())
-    right = int((kept[:, cv2.CC_STAT_LEFT] + kept[:, cv2.CC_STAT_WIDTH]).max())
-    bottom = int((kept[:, cv2.CC_STAT_TOP] + kept[:, cv2.CC_STAT_HEIGHT]).max())
-    return SubjectBox(left=left / size, top=top / size, right=right / size, bottom=bottom / size)
+def _subject_box(extent: Extent) -> SubjectBox:
+    return SubjectBox(left=extent.left, top=extent.top, right=extent.right, bottom=extent.bottom)
 
 
 def detect_subject_box(gray: GrayImage) -> SubjectBox:
@@ -211,10 +194,10 @@ def detect_subject_box(gray: GrayImage) -> SubjectBox:
     level, spread = _backdrop_statistics(small)
     threshold = level + max(MIN_CONTRAST, NOISE_MADS * spread)
     mask = (small > threshold).astype(np.uint8)
-    box = _box_from_mask(mask, ANALYSIS_SIZE)
-    if box is None:
+    extent = box_from_mask(mask, ANALYSIS_SIZE)
+    if extent is None:
         raise MorphError("no subject stands out from the plate's backdrop")
-    return box
+    return _subject_box(extent)
 
 
 def bar_search_extent(gray: GrayImage) -> BarSearchExtent | None:
@@ -226,9 +209,10 @@ def bar_search_extent(gray: GrayImage) -> BarSearchExtent | None:
     threshold does. None when nothing stands out, so callers skip masking rather than guess."""
     with Image.fromarray(gray, mode="L") as plate:
         mask = np.asarray(exposure_subject_mask(plate), dtype=np.uint8)
-    box = _box_from_mask(mask, mask.shape[0])
-    if box is None:
+    extent = box_from_mask(mask, mask.shape[0])
+    if extent is None:
         return None
+    box = _subject_box(extent)
     return BarSearchExtent(box=box, band=scale_bar_band(box), mask=mask)
 
 
@@ -257,28 +241,14 @@ def bounded_fills(older: SubjectBox, younger: SubjectBox) -> tuple[float, float]
     return fill(older.span), fill(younger.span)
 
 
-def scale_bar_band(box: SubjectBox) -> SubjectBox:
-    """A generous band below `box` that brackets the plate's scale bar (see the module-level
-    `SCALE_BAR_BAND_*` comment), in plate UV. `SubjectBox` always has `bottom <= 1.0` and
-    `left < right`, so `top < bottom` and `right > 0.0` always hold: the band is never empty.
-
-    A purely geometric helper: `box` should be `bar_search_extent(gray).box`, not
-    `detect_subject_box`'s, but this function does not care which it is given."""
-    centre_u = (box.left + box.right) / 2
-    top = max(0.0, box.bottom - SCALE_BAR_BAND_ABOVE)
-    bottom = min(1.0, box.bottom + SCALE_BAR_BAND_BELOW)
-    right = min(1.0, centre_u + SCALE_BAR_BAND_RIGHT_MARGIN)
-    return SubjectBox(left=0.0, top=top, right=right, bottom=bottom)
-
-
-def _band_slice(band: SubjectBox, size: int) -> tuple[slice, slice]:
+def _band_slice(band: ScaleBarBand, size: int) -> tuple[slice, slice]:
     top, bottom = int(band.top * size), min(size, math.ceil(band.bottom * size))
     left, right = int(band.left * size), min(size, math.ceil(band.right * size))
     return slice(top, bottom), slice(left, right)
 
 
 def erase_band(
-    gray: GrayImage, band: SubjectBox, level: float, subject_mask: NDArray[np.bool_]
+    gray: GrayImage, band: ScaleBarBand, level: float, subject_mask: NDArray[np.bool_]
 ) -> GrayImage:
     """`gray` with `band` painted over at the backdrop's own `level`, so DIS never treats the
     scale bar as texture to correspond -- except wherever `subject_mask` (same resolution as
@@ -293,7 +263,7 @@ def erase_band(
 
 
 def zero_band(
-    field: FloatField, band: SubjectBox, size: int, subject_mask: NDArray[np.bool_]
+    field: FloatField, band: ScaleBarBand, size: int, subject_mask: NDArray[np.bool_]
 ) -> FloatField:
     """`field` with displacement faded to zero inside `band` (never where `subject_mask` says
     the real subject stands, for the same reason as `erase_band`), so the scale bar never warps

@@ -198,18 +198,22 @@ instead of) the automatic `databuild` path, mirroring `sources/co2-o2/normalise.
 - Curated `data/curated/paleodem.parquet` (109 frames: `t`, `ref`) and
   `data/curated/land_fraction.parquet` (109 samples: `t`, `value`, `lower`, `upper`), both
   far under the git-tier threshold.
-- Generated textures (`data/media/textures/paleodem/*.webp`, gitignored, never committed):
-  109 files, 1024x512 RGB lossy WebP, **3.91 MB total** (20-70 KB each, mean 35 KB), rendered
-  in ~4 s on an M-series Mac. See "Texture encoding".
+- Generated textures (`data/media/textures/paleodem/*.webp`): 109 files, 1024x512 RGB lossy
+  WebP, **3.91 MB total** (20-70 KB each, mean 35 KB), rendered in ~4 s on an M-series Mac.
+  See "Texture encoding".
 
 ## Storage tier chosen
 
 **git** for both curated parquet files — tiny (well under the 5 MB threshold). Textures are
-**generated media**, per `docs/DATA_SOURCES.md`'s storage policy ("generated media | R2
-only") and the task brief's own instruction — written to `data/media/textures/paleodem/`
-(gitignored, regenerated locally by `render_textures`), never committed, matching how
+**generated media**, per `docs/DATA_SOURCES.md`'s storage policy ("generated media | git-lfs:
+pinned images + data/media/") — written to `data/media/textures/paleodem/` and committed via
+git-lfs (`.gitattributes` covers `data/media/**/*.webp`), matching how
 `docs/ONESHOT_SCOPE.md` describes the MVP's media serving (`data/media/`, local dev server,
-no R2/Cloudflare wiring yet).
+no R2/Cloudflare wiring yet). *Correction, 2026-09-17: an earlier revision of this README
+claimed these textures were "gitignored, never committed" — `data/media/` itself is not
+gitignored, and the storage policy calls for git-lfs here; that claim was simply wrong, not a
+deliberate choice. Whether they have actually been `git add`ed in a given checkout is a
+separate, unrelated fact from what tier they belong in.*
 
 ## Fixture
 

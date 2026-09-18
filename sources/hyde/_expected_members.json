@@ -1,0 +1,516 @@
+{
+  "_comment": "Expected CRC-32 (zlib.crc32, unsigned decimal) of each timestep's cropland/pasture/rangeland/conv_rangeland/popc members inside HYDE3_2_1-baseline.zip, pinned from that archive's own central directory -- see sources/hyde/README.md 'Fetch strategy'. Regenerate with sources/hyde/_regenerate_expected_members.py if the pinned HYDE 3.2.1 deposit is ever superseded (it is a fixed, versioned DANS deposit, not expected to change), or if `fetch.VARIABLES` changes.",
+  "members": {
+    "0AD": {
+      "conv_rangeland": 3552928549,
+      "cropland": 1427364071,
+      "pasture": 1702229747,
+      "popc": 4086128640,
+      "rangeland": 3810955182
+    },
+    "10000BC": {
+      "conv_rangeland": 2433329726,
+      "cropland": 3379446756,
+      "pasture": 3379446756,
+      "popc": 2649751924,
+      "rangeland": 3379446756
+    },
+    "1000AD": {
+      "conv_rangeland": 2987632894,
+      "cropland": 482674312,
+      "pasture": 2114753117,
+      "popc": 1564479838,
+      "rangeland": 3668139184
+    },
+    "1000BC": {
+      "conv_rangeland": 1749137360,
+      "cropland": 3148483681,
+      "pasture": 2863053178,
+      "popc": 2594360841,
+      "rangeland": 4141818336
+    },
+    "100AD": {
+      "conv_rangeland": 70744954,
+      "cropland": 1104579477,
+      "pasture": 2230471638,
+      "popc": 303588914,
+      "rangeland": 1789581969
+    },
+    "1100AD": {
+      "conv_rangeland": 1665767661,
+      "cropland": 3970194961,
+      "pasture": 1215495359,
+      "popc": 3018791814,
+      "rangeland": 2699263293
+    },
+    "1200AD": {
+      "conv_rangeland": 138128468,
+      "cropland": 883155921,
+      "pasture": 3355239006,
+      "popc": 3277852406,
+      "rangeland": 4164276735
+    },
+    "1300AD": {
+      "conv_rangeland": 3797707619,
+      "cropland": 908478484,
+      "pasture": 692244542,
+      "popc": 1028953630,
+      "rangeland": 2004939361
+    },
+    "1400AD": {
+      "conv_rangeland": 983452830,
+      "cropland": 756025022,
+      "pasture": 872127102,
+      "popc": 3842119969,
+      "rangeland": 1510921759
+    },
+    "1500AD": {
+      "conv_rangeland": 724539349,
+      "cropland": 2624227862,
+      "pasture": 3939519520,
+      "popc": 461119949,
+      "rangeland": 452235496
+    },
+    "1600AD": {
+      "conv_rangeland": 3868905658,
+      "cropland": 3099245203,
+      "pasture": 2818202021,
+      "popc": 842036926,
+      "rangeland": 2826037562
+    },
+    "1700AD": {
+      "conv_rangeland": 3549296298,
+      "cropland": 2787796600,
+      "pasture": 2041841006,
+      "popc": 2562782153,
+      "rangeland": 4069739142
+    },
+    "1710AD": {
+      "conv_rangeland": 2697673294,
+      "cropland": 655457396,
+      "pasture": 3042756949,
+      "popc": 1984778372,
+      "rangeland": 4195494773
+    },
+    "1720AD": {
+      "conv_rangeland": 4139744798,
+      "cropland": 2870118523,
+      "pasture": 1719782372,
+      "popc": 969437795,
+      "rangeland": 1028223952
+    },
+    "1730AD": {
+      "conv_rangeland": 3827194466,
+      "cropland": 2082655183,
+      "pasture": 2183592495,
+      "popc": 3656285379,
+      "rangeland": 2492523575
+    },
+    "1740AD": {
+      "conv_rangeland": 4208667034,
+      "cropland": 988524647,
+      "pasture": 2079549689,
+      "popc": 364303646,
+      "rangeland": 4220646999
+    },
+    "1750AD": {
+      "conv_rangeland": 4137387839,
+      "cropland": 1853466391,
+      "pasture": 3882855736,
+      "popc": 3244487464,
+      "rangeland": 515009061
+    },
+    "1760AD": {
+      "conv_rangeland": 1532446063,
+      "cropland": 1164627259,
+      "pasture": 2426712268,
+      "popc": 323156526,
+      "rangeland": 3880252788
+    },
+    "1770AD": {
+      "conv_rangeland": 382966288,
+      "cropland": 3571005338,
+      "pasture": 1745564152,
+      "popc": 2472277684,
+      "rangeland": 2209226452
+    },
+    "1780AD": {
+      "conv_rangeland": 1243113915,
+      "cropland": 4043090532,
+      "pasture": 2644391675,
+      "popc": 141897259,
+      "rangeland": 3016546743
+    },
+    "1790AD": {
+      "conv_rangeland": 965785151,
+      "cropland": 3555383678,
+      "pasture": 173434541,
+      "popc": 2865846449,
+      "rangeland": 2542563845
+    },
+    "1800AD": {
+      "conv_rangeland": 3995040835,
+      "cropland": 2737530466,
+      "pasture": 3660097454,
+      "popc": 2852630935,
+      "rangeland": 1089230339
+    },
+    "1810AD": {
+      "conv_rangeland": 3795253579,
+      "cropland": 848235491,
+      "pasture": 1476953567,
+      "popc": 3976960308,
+      "rangeland": 3664228286
+    },
+    "1820AD": {
+      "conv_rangeland": 3472039190,
+      "cropland": 202035074,
+      "pasture": 3294059139,
+      "popc": 3945434264,
+      "rangeland": 2254127107
+    },
+    "1830AD": {
+      "conv_rangeland": 3698069015,
+      "cropland": 3760896860,
+      "pasture": 1246594235,
+      "popc": 2278866982,
+      "rangeland": 413937835
+    },
+    "1840AD": {
+      "conv_rangeland": 3335413238,
+      "cropland": 649885258,
+      "pasture": 150482061,
+      "popc": 951327210,
+      "rangeland": 4146421132
+    },
+    "1850AD": {
+      "conv_rangeland": 2820273094,
+      "cropland": 2569045025,
+      "pasture": 357610608,
+      "popc": 3724118286,
+      "rangeland": 2291331396
+    },
+    "1860AD": {
+      "conv_rangeland": 779933638,
+      "cropland": 1998983039,
+      "pasture": 3988136027,
+      "popc": 1434091292,
+      "rangeland": 1457650563
+    },
+    "1870AD": {
+      "conv_rangeland": 304499309,
+      "cropland": 3419444429,
+      "pasture": 1516079472,
+      "popc": 193045036,
+      "rangeland": 3448130301
+    },
+    "1880AD": {
+      "conv_rangeland": 3776214875,
+      "cropland": 2573701669,
+      "pasture": 4178561097,
+      "popc": 2461729994,
+      "rangeland": 1138834670
+    },
+    "1890AD": {
+      "conv_rangeland": 4182806413,
+      "cropland": 2814614499,
+      "pasture": 2057906989,
+      "popc": 3272763996,
+      "rangeland": 633397462
+    },
+    "1900AD": {
+      "conv_rangeland": 3520500259,
+      "cropland": 96850689,
+      "pasture": 2535694440,
+      "popc": 2106294593,
+      "rangeland": 3306891031
+    },
+    "1910AD": {
+      "conv_rangeland": 2265137994,
+      "cropland": 1698766707,
+      "pasture": 15529419,
+      "popc": 3543659270,
+      "rangeland": 2144783806
+    },
+    "1920AD": {
+      "conv_rangeland": 4203192418,
+      "cropland": 3972241030,
+      "pasture": 2079801236,
+      "popc": 2348171265,
+      "rangeland": 1609238341
+    },
+    "1930AD": {
+      "conv_rangeland": 292411047,
+      "cropland": 1902247456,
+      "pasture": 3068756618,
+      "popc": 2360974884,
+      "rangeland": 593028362
+    },
+    "1940AD": {
+      "conv_rangeland": 588332935,
+      "cropland": 185552082,
+      "pasture": 387869493,
+      "popc": 2843954810,
+      "rangeland": 686391005
+    },
+    "1950AD": {
+      "conv_rangeland": 2625331908,
+      "cropland": 3170580779,
+      "pasture": 2353332067,
+      "popc": 3520958539,
+      "rangeland": 230918307
+    },
+    "1960AD": {
+      "conv_rangeland": 2125039172,
+      "cropland": 2919883156,
+      "pasture": 3140626481,
+      "popc": 3175470665,
+      "rangeland": 185347620
+    },
+    "1970AD": {
+      "conv_rangeland": 2321866758,
+      "cropland": 2726123802,
+      "pasture": 3467954486,
+      "popc": 81955964,
+      "rangeland": 4213479970
+    },
+    "1980AD": {
+      "conv_rangeland": 2058949886,
+      "cropland": 2073181012,
+      "pasture": 96971634,
+      "popc": 4163256567,
+      "rangeland": 1505722907
+    },
+    "1990AD": {
+      "conv_rangeland": 2002098669,
+      "cropland": 3603609786,
+      "pasture": 693065511,
+      "popc": 1218317338,
+      "rangeland": 3799529527
+    },
+    "2000AD": {
+      "conv_rangeland": 2896081369,
+      "cropland": 3997540599,
+      "pasture": 2229640056,
+      "popc": 2733035132,
+      "rangeland": 1722090854
+    },
+    "2000BC": {
+      "conv_rangeland": 482701740,
+      "cropland": 3015532579,
+      "pasture": 1155307876,
+      "popc": 1052574623,
+      "rangeland": 2811694923
+    },
+    "2001AD": {
+      "conv_rangeland": 2723881913,
+      "cropland": 3393662204,
+      "pasture": 3993262944,
+      "popc": 2901176658,
+      "rangeland": 4103036770
+    },
+    "2002AD": {
+      "conv_rangeland": 994985019,
+      "cropland": 2744934629,
+      "pasture": 3368289444,
+      "popc": 38206028,
+      "rangeland": 2546852248
+    },
+    "2003AD": {
+      "conv_rangeland": 3203732906,
+      "cropland": 4093347712,
+      "pasture": 316550244,
+      "popc": 1498422453,
+      "rangeland": 3940386967
+    },
+    "2004AD": {
+      "conv_rangeland": 2441909918,
+      "cropland": 3531373842,
+      "pasture": 1895755537,
+      "popc": 1691226168,
+      "rangeland": 2573508045
+    },
+    "2005AD": {
+      "conv_rangeland": 2988752364,
+      "cropland": 63823590,
+      "pasture": 3678559102,
+      "popc": 195933157,
+      "rangeland": 2434139046
+    },
+    "2006AD": {
+      "conv_rangeland": 3979623410,
+      "cropland": 257534284,
+      "pasture": 2071980782,
+      "popc": 193718115,
+      "rangeland": 728515131
+    },
+    "2007AD": {
+      "conv_rangeland": 1263961477,
+      "cropland": 820056388,
+      "pasture": 2493529600,
+      "popc": 3520275243,
+      "rangeland": 1266711429
+    },
+    "2008AD": {
+      "conv_rangeland": 3530833789,
+      "cropland": 3232833510,
+      "pasture": 3200120652,
+      "popc": 3958296455,
+      "rangeland": 732887825
+    },
+    "2009AD": {
+      "conv_rangeland": 3947963896,
+      "cropland": 2664983739,
+      "pasture": 567881354,
+      "popc": 863899362,
+      "rangeland": 3188546774
+    },
+    "200AD": {
+      "conv_rangeland": 3040440500,
+      "cropland": 3415804159,
+      "pasture": 1958691919,
+      "popc": 388537676,
+      "rangeland": 2655385273
+    },
+    "2010AD": {
+      "conv_rangeland": 3294527170,
+      "cropland": 1953853343,
+      "pasture": 767506328,
+      "popc": 2647260346,
+      "rangeland": 1501380962
+    },
+    "2011AD": {
+      "conv_rangeland": 2879315874,
+      "cropland": 3898345456,
+      "pasture": 2253281177,
+      "popc": 296858834,
+      "rangeland": 4190690844
+    },
+    "2012AD": {
+      "conv_rangeland": 1323294292,
+      "cropland": 3687136221,
+      "pasture": 1021128523,
+      "popc": 3903154182,
+      "rangeland": 1019798480
+    },
+    "2013AD": {
+      "conv_rangeland": 3931341070,
+      "cropland": 39099370,
+      "pasture": 2441531158,
+      "popc": 6408485,
+      "rangeland": 4265337870
+    },
+    "2014AD": {
+      "conv_rangeland": 204339526,
+      "cropland": 906061339,
+      "pasture": 3995933553,
+      "popc": 3087365949,
+      "rangeland": 2967152541
+    },
+    "2015AD": {
+      "conv_rangeland": 1471131216,
+      "cropland": 2121671488,
+      "pasture": 3205874517,
+      "popc": 878523448,
+      "rangeland": 1469902007
+    },
+    "3000BC": {
+      "conv_rangeland": 3440469917,
+      "cropland": 334031497,
+      "pasture": 62792490,
+      "popc": 2295614518,
+      "rangeland": 3119460635
+    },
+    "300AD": {
+      "conv_rangeland": 446572489,
+      "cropland": 3877068574,
+      "pasture": 1744194669,
+      "popc": 3093030849,
+      "rangeland": 3874453103
+    },
+    "4000BC": {
+      "conv_rangeland": 978109944,
+      "cropland": 883229759,
+      "pasture": 3846404840,
+      "popc": 3407611453,
+      "rangeland": 1474997416
+    },
+    "400AD": {
+      "conv_rangeland": 2302811468,
+      "cropland": 442587287,
+      "pasture": 2241272273,
+      "popc": 3557443799,
+      "rangeland": 3463332090
+    },
+    "5000BC": {
+      "conv_rangeland": 4099193447,
+      "cropland": 2939077212,
+      "pasture": 1065658122,
+      "popc": 3775984119,
+      "rangeland": 1978912340
+    },
+    "500AD": {
+      "conv_rangeland": 3554929497,
+      "cropland": 3426355361,
+      "pasture": 4210066860,
+      "popc": 18113567,
+      "rangeland": 3369148321
+    },
+    "6000BC": {
+      "conv_rangeland": 3061548513,
+      "cropland": 3611436622,
+      "pasture": 1570221054,
+      "popc": 2301541811,
+      "rangeland": 3371167921
+    },
+    "600AD": {
+      "conv_rangeland": 311499308,
+      "cropland": 879721716,
+      "pasture": 1593546660,
+      "popc": 1789412773,
+      "rangeland": 1734771253
+    },
+    "7000BC": {
+      "conv_rangeland": 2888850071,
+      "cropland": 1977591509,
+      "pasture": 1048879239,
+      "popc": 3099909570,
+      "rangeland": 3588555307
+    },
+    "700AD": {
+      "conv_rangeland": 605786144,
+      "cropland": 3516427573,
+      "pasture": 2631871582,
+      "popc": 3965462047,
+      "rangeland": 2314854654
+    },
+    "8000BC": {
+      "conv_rangeland": 2469763694,
+      "cropland": 3490636845,
+      "pasture": 3343483483,
+      "popc": 1493812153,
+      "rangeland": 2107043917
+    },
+    "800AD": {
+      "conv_rangeland": 1791388350,
+      "cropland": 3046566461,
+      "pasture": 94010737,
+      "popc": 2069676193,
+      "rangeland": 1733126614
+    },
+    "9000BC": {
+      "conv_rangeland": 2374763802,
+      "cropland": 3379446756,
+      "pasture": 4243664594,
+      "popc": 3572657937,
+      "rangeland": 2599405724
+    },
+    "900AD": {
+      "conv_rangeland": 4009986444,
+      "cropland": 1412005305,
+      "pasture": 4027560414,
+      "popc": 474478671,
+      "rangeland": 4018445903
+    }
+  }
+}

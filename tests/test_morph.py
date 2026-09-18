@@ -16,9 +16,6 @@ from pipeline.morph import (
     MAX_FLOW_P95,
     MAX_INVERSE_CONSISTENCY,
     MAX_MORPH_ZOOM,
-    SCALE_BAR_BAND_ABOVE,
-    SCALE_BAR_BAND_BELOW,
-    SCALE_BAR_BAND_RIGHT_MARGIN,
     SUBJECT_FILL,
     ZERO_BAND_FEATHER_SIGMA,
     BarSearchExtent,
@@ -35,7 +32,6 @@ from pipeline.morph import (
     normalised_flow,
     pose_divergence,
     refuse_bursting_flow,
-    scale_bar_band,
     write_morph,
     zero_band,
 )
@@ -46,6 +42,12 @@ from pipeline.portraits import (
     MorphKey,
     MorphRecord,
     load_morph,
+)
+from pipeline.scale_bar import (
+    SCALE_BAR_BAND_ABOVE,
+    SCALE_BAR_BAND_BELOW,
+    SCALE_BAR_BAND_RIGHT_MARGIN,
+    scale_bar_band,
 )
 
 PLATE_SIZE = 512

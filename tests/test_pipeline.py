@@ -20,6 +20,7 @@ from pipeline.assets import build_scene_graph
 from pipeline.audio import content_hashed_filename
 from pipeline.cli import create_app
 from pipeline.curated import load_world, write_shape
+from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
 from pipeline.generators.gemini import MODEL_ID
 from pipeline.generators.image import (
     GeneratedImage,
@@ -29,13 +30,36 @@ from pipeline.generators.image import (
     sniff_image,
 )
 from pipeline.graph import AssetNode
-from pipeline.manifest import Manifest, RasterData, SeriesData, TreeData
+from pipeline.manifest import ArrivalEffect as WireArrivalEffect
+from pipeline.manifest import (
+    FeatureSetData,
+    LayerDataKind,
+    LayerSurface,
+    Manifest,
+    RasterData,
+    SeriesData,
+    TreeData,
+)
+from pipeline.manifest import GlobeEffect as WireGlobeEffect
+from pipeline.manifest import SceneLocation as WireSceneLocation
 from pipeline.models import AtmosphereState, SkyState, WorldModel, WorldState
 from pipeline.paths import ProjectPaths
 from pipeline.prompts import UnsourcedConditions, render_conditions
-from pipeline.publish import _layers, chapter_spans
+from pipeline.publish import (
+    FEATURE_LAYERS,
+    HUMAN_ERA_BASEMAP_DOMAIN_END,
+    RASTER_LAYERS,
+    SCALAR_LAYERS,
+    PublishRefused,
+    _effect,
+    _layers,
+    _scene_location,
+    chapter_spans,
+    validated_asset_base,
+)
 from pipeline.scenes import (
     SceneBook,
+    SceneLocation,
     ScenePin,
     SceneRecord,
     SceneSound,
@@ -44,16 +68,22 @@ from pipeline.scenes import (
     parse_scene_book,
 )
 from pipeline.shapes import (
+    ArrivalEffect,
+    ArrivalKind,
     EffectAnchor,
     EffectWindow,
     Event,
     EventKind,
     EventSet,
     EventTag,
+    Feature,
+    FeatureCertainty,
+    FeatureSet,
     Gap,
     GlobeEffect,
     GlobeEffectKind,
     Interpolation,
+    PopulationEstimate,
     RasterFrame,
     RasterSequence,
     Sample,
@@ -851,6 +881,25 @@ def test_publish_allow_unpinned_skips_them_with_a_warning(root: Path) -> None:
     assert [c.id for c in manifest.chapters] == ["shore"]
 
 
+def test_publish_asset_base_moves_media_to_another_origin(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+
+    code, output = _run(backend, root, "publish", "--asset-base", "https://media.example.org")
+
+    assert code == 0, output
+    raw = json.loads((ProjectPaths(root).media / "manifest.json").read_text())
+    assert raw["assetBase"] == "https://media.example.org"
+
+
+@pytest.mark.parametrize(
+    "value", ["https://media.example.org/", "/media/", "media.example.org", "ftp://example.org"]
+)
+def test_publish_refuses_an_asset_base_that_would_build_broken_urls(value: str) -> None:
+    with pytest.raises(PublishRefused):
+        validated_asset_base(value)
+
+
 def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(root: Path) -> None:
     backend = FakeBackend()
     _build_and_pick_all(backend, root)
@@ -1257,6 +1306,186 @@ def test_scene_sound_stem_must_be_a_slug() -> None:
         SceneSound(stem="Not A Slug!", mode=SoundMode.LOOP, gain=0.5)
 
 
+# -- scene location (ADR-034) -----------------------------------------------------------------
+
+
+def test_scene_location_lat_lon_must_be_in_range() -> None:
+    SceneLocation(lat=90.0, lon=180.0, label="A Place")  # boundaries are inclusive
+    SceneLocation(lat=-90.0, lon=-180.0, label="A Place")
+    with pytest.raises(ValidationError, match="lat"):
+        SceneLocation(lat=90.1, lon=0.0, label="A Place")
+    with pytest.raises(ValidationError, match="lon"):
+        SceneLocation(lat=0.0, lon=180.1, label="A Place")
+
+
+def test_scene_location_label_must_not_be_blank() -> None:
+    with pytest.raises(ValidationError, match="label must not be blank"):
+        SceneLocation(lat=0.0, lon=0.0, label="   ")
+
+
+def test_scene_location_label_is_stripped_of_surrounding_whitespace() -> None:
+    location = SceneLocation(lat=0.0, lon=0.0, label="  A Place  ")
+    assert location.label == "A Place"
+
+
+class FakeReconstructor:
+    """A `Reconstructor` (pipeline.paleogeography) test double: never touches pygplates, so
+    these tests stay offline and geo-extra-independent."""
+
+    def __init__(self, result: tuple[float, float] | None) -> None:
+        self.result = result
+        self.calls: list[tuple[float, float, float]] = []
+
+    def reconstruct(self, lat: float, lon: float, t: float) -> tuple[float, float] | None:
+        self.calls.append((lat, lon, t))
+        return self.result
+
+
+def test_scene_location_is_none_when_the_scene_has_none() -> None:
+    assert _scene_location(0.0, None, reconstructor=None) is None
+
+
+def test_scene_location_marks_present_day_inside_the_human_era_basemap_domain() -> None:
+    """ADR-030/ADR-034: at or inside `HUMAN_ERA_BASEMAP_DOMAIN_END`, no reconstruction is
+    needed -- the marker is the curated present-day coordinates unchanged, and no reconstructor
+    call is ever made."""
+    location = SceneLocation(lat=29.9792, lon=31.1342, label="Giza, Egypt")
+    reconstructor = FakeReconstructor(result=(999.0, 999.0))  # would prove a real call happened
+
+    entry = _scene_location(HUMAN_ERA_BASEMAP_DOMAIN_END, location, reconstructor)
+
+    assert entry == WireSceneLocation(
+        label="Giza, Egypt",
+        present_day={"lat": 29.9792, "lon": 31.1342},
+        marker={"lat": 29.9792, "lon": 31.1342},
+    )
+    assert reconstructor.calls == []
+
+
+def test_scene_location_reconstructs_an_older_scene(root: Path) -> None:
+    """Older than the human-era basemap domain: the marker is whatever the plate model
+    reconstructs, published alongside the unchanged present-day coordinates for audit."""
+    location = SceneLocation(lat=57.33, lon=-3.22, label="Rhynie, Scotland")
+    reconstructor = FakeReconstructor(result=(-21.6, -41.4))
+
+    entry = _scene_location(4.07e8, location, reconstructor)
+
+    assert entry == WireSceneLocation(
+        label="Rhynie, Scotland",
+        present_day={"lat": 57.33, "lon": -3.22},
+        marker={"lat": -21.6, "lon": -41.4},
+    )
+    assert reconstructor.calls == [(57.33, -3.22, 4.07e8)]
+
+
+def test_scene_location_publishes_no_marker_when_the_model_has_no_coverage() -> None:
+    """CLAUDE.md "if something is unusable, stop and report": a model gap (e.g. no Merdith
+    continental polygon under the Isthmus of Panama) publishes `marker: null`, never a
+    present-day coordinate standing in for an unknown paleo position."""
+    location = SceneLocation(lat=9.08, lon=-79.68, label="Isthmus of Panama")
+    reconstructor = FakeReconstructor(result=None)
+
+    entry = _scene_location(2.8e6, location, reconstructor)
+
+    assert entry == WireSceneLocation(
+        label="Isthmus of Panama", present_day={"lat": 9.08, "lon": -79.68}, marker=None
+    )
+
+
+def _add_location(text: str, caption_line: str, location_yaml: str) -> str:
+    linked, count = re.subn(
+        re.escape(caption_line) + r"\n",
+        f"{caption_line}\n    location: {location_yaml}\n",
+        text,
+        count=1,
+    )
+    assert count == 1, f"{caption_line!r} not found"
+    return linked
+
+
+def test_scene_location_plays_no_part_in_the_asset_graph(root: Path) -> None:
+    """A scene's location is invisible to the asset graph (pipeline/assets.py never reads it),
+    the same guarantee ADR-022's `events` and ADR-023's `sound` have -- adding one must not make
+    a pinned scene stale."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+
+    located = _add_location(
+        paths.scenes.read_text(),
+        "caption: A city.",
+        '{lat: 29.9792, lon: 31.1342, label: "Giza, Egypt"}',
+    )
+    paths.scenes.write_text(located)
+    assert load_scene_book(paths.scenes).scene("city").location == SceneLocation(
+        lat=29.9792, lon=31.1342, label="Giza, Egypt"
+    )
+
+    _, plan_output = _run(backend, root, "plan")
+    assert "3 scenes: 3 pinned, 0 awaiting review, 0 stale" in plan_output
+
+
+def test_publish_omits_location_for_a_scene_with_none(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((ProjectPaths(root).media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert "location" not in scenes_by_id["city"]
+
+
+def test_publish_marks_present_day_for_a_human_era_scene_location(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    paths.scenes.write_text(
+        _add_location(
+            paths.scenes.read_text(),
+            "caption: A city.",
+            '{lat: 29.9792, lon: 31.1342, label: "Giza, Egypt"}',
+        )
+    )
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert scenes_by_id["city"]["location"] == {
+        "label": "Giza, Egypt",
+        "presentDay": {"lat": 29.9792, "lon": 31.1342},
+        "marker": {"lat": 29.9792, "lon": 31.1342},
+    }
+
+
+def test_publish_refuses_an_older_scene_location_when_the_plate_model_is_unavailable(
+    root: Path,
+) -> None:
+    """`devonian` (t = 3.75e8) is older than the human-era basemap domain, so publish needs the
+    Merdith plate model (`pipeline.paleogeography`) to reconstruct it -- unavailable here since
+    the test project has no `data/raw/plates-neoproterozoic` (CLAUDE.md "if something is
+    unusable, stop and report": refuse, don't guess a present-day position)."""
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    paths.scenes.write_text(
+        _add_location(
+            paths.scenes.read_text(),
+            "caption: An estuary.",
+            '{lat: 57.33, lon: -3.22, label: "Rhynie, Scotland"}',
+        )
+    )
+
+    code, output = _run(backend, root, "publish")
+
+    assert code != 0
+    assert "scene location reconstruction unavailable" in output
+    assert not (paths.media / "manifest.json").exists()
+
+
 # -- scene -> stem links (ADR-023) -------------------------------------------------------------
 
 
@@ -1517,3 +1746,240 @@ def test_layer_publishing_carries_a_series_gap_into_the_wire_data() -> None:
     co2_file = next(f for f in files if f.data.id == "co2")
     assert isinstance(co2_file.data, SeriesData)
     assert [(g.from_index, g.to_index) for g in co2_file.data.gaps] == [(1, 2)]
+
+
+# ------------------------------------------------------------------- ADR-032 arrival effect
+
+
+def test_effect_publishes_a_point_effect_as_the_wire_globe_effect() -> None:
+    """Contrast case for `test_effect_publishes_an_arrival_effect_as_the_wire_arrival_effect`
+    below: an ordinary point effect (one of the eight `POINT_EFFECT_KINDS`) still round-trips
+    through `_effect` as `pipeline.manifest.GlobeEffect`, not `ArrivalEffect`."""
+    point = GlobeEffect(
+        kind=GlobeEffectKind.IMPACT_WINTER,
+        anchor=EffectAnchor(lat=21.3, lon=-89.5),
+        windows=[EffectWindow(t_min=6.6e7, t_max=6.61e7)],
+    )
+    wire = _effect(point)
+    assert isinstance(wire, WireGlobeEffect)
+    assert wire.kind == GlobeEffectKind.IMPACT_WINTER
+    assert wire.anchor is not None
+    assert (wire.anchor.lat, wire.anchor.lon) == (21.3, -89.5)
+
+
+def test_effect_publishes_an_arrival_effect_as_the_wire_arrival_effect() -> None:
+    """ADR-032: `_effect` (pipeline/publish.py) dispatches `kind='arrival'` to the wire
+    `ArrivalEffect` (origin/destination/established), not the ordinary `GlobeEffect` shape --
+    the two-branch `isinstance` check this test pins."""
+    arrival = ArrivalEffect(
+        kind=GlobeEffectKind.ARRIVAL,
+        arrival_kind=ArrivalKind.MIGRATION,
+        origin=EffectAnchor(lat=8.0, lon=38.0),
+        destination=EffectAnchor(lat=-33.9, lon=151.2),
+        established=5.0e4,
+        windows=[EffectWindow(t_min=0.0, t_max=6.5e4)],
+    )
+    wire = _effect(arrival)
+    assert isinstance(wire, WireArrivalEffect)
+    assert wire.kind == GlobeEffectKind.ARRIVAL
+    assert wire.arrival_kind == ArrivalKind.MIGRATION
+    assert (wire.origin.lat, wire.origin.lon) == (8.0, 38.0)
+    assert (wire.destination.lat, wire.destination.lon) == (-33.9, 151.2)
+    assert wire.established == 5.0e4
+    assert [(w.t_min, w.t_max) for w in wire.windows] == [(0.0, 6.5e4)]
+
+
+def test_arrival_effect_requires_exactly_one_window_at_t_min_zero() -> None:
+    """The curated-side validator (pipeline/shapes.py): a second window also claiming t_min=0
+    is rejected, not silently accepted as "at least one" would allow."""
+    with pytest.raises(ValidationError, match="exactly one window"):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            origin=EffectAnchor(lat=8.0, lon=38.0),
+            destination=EffectAnchor(lat=-33.9, lon=151.2),
+            established=5.0e4,
+            windows=[
+                EffectWindow(t_min=0.0, t_max=6.5e4),
+                EffectWindow(t_min=0.0, t_max=1.0e5),
+            ],
+        )
+
+
+def test_arrival_effect_rejects_no_window_reaching_the_present() -> None:
+    with pytest.raises(ValidationError, match="exactly one window"):
+        ArrivalEffect(
+            kind=GlobeEffectKind.ARRIVAL,
+            arrival_kind=ArrivalKind.PEOPLING,
+            origin=EffectAnchor(lat=8.0, lon=38.0),
+            destination=EffectAnchor(lat=-33.9, lon=151.2),
+            established=5.0e4,
+            windows=[EffectWindow(t_min=1.0e3, t_max=6.5e4)],
+        )
+
+
+# --------------------------------------------------------------- RASTER_LAYERS (ADR-030/031)
+
+
+def test_raster_layers_includes_the_human_era_globe_sources() -> None:
+    """ADR-030 (basemap) and ADR-031 (hyde population density): both sources' curated ids are
+    registered in `RASTER_LAYERS` alongside the pre-existing `paleodem`/`plates_neoproterozoic`
+    entries, each matched to its own `sources/<name>/` credit directory. `hyde_cleared_land`
+    stays curated (sources/hyde/normalise.py still produces it) but is no longer registered
+    here -- the ADR-031 amendment unpublished it -- see `test_raster_layers_no_longer_publishes_
+    cleared_land` below."""
+    by_id = {spec.curated_id: spec for spec in RASTER_LAYERS}
+    assert by_id["basemap_t0"].source == "basemap"
+    assert by_id["basemap_t1"].source == "basemap"
+    assert by_id["hyde_population_density"].source == "hyde"
+    for curated_id in ("basemap_t0", "basemap_t1", "hyde_population_density"):
+        assert by_id[curated_id].surface == LayerSurface.GLOBE
+        assert by_id[curated_id].chartable is False
+
+
+def test_raster_layers_no_longer_publishes_cleared_land() -> None:
+    """ADR-031 amendment: the human found the cleared-land overlay not discernible on the
+    globe. It stays curated (sources/hyde/normalise.py and its tests are untouched) but is no
+    longer registered in `RASTER_LAYERS`, so `_layers` never publishes it even when
+    `WorldModel.rasters` holds it (a fresh `make data` build still produces the parquet)."""
+    assert "hyde_cleared_land" not in {spec.curated_id for spec in RASTER_LAYERS}
+    hyde = RasterSequence(
+        id="hyde_cleared_land",
+        frames=[
+            RasterFrame(t=10.0, ref="textures/hyde_cleared_land/2015AD.webp"),
+            RasterFrame(t=12025.0, ref="textures/hyde_cleared_land/10000BC.webp"),
+        ],
+    )
+    world = WorldModel(rasters={"hyde_cleared_land": hyde})
+    files, entries = _layers(world, portraits=None)
+    assert "hyde_cleared_land" not in {e.id for e in entries}
+    assert "hyde_cleared_land" not in {f.data.id for f in files}
+
+
+def test_layers_publishes_basemap_and_hyde_population_density_raster_entries() -> None:
+    """`_layers` (pipeline/publish.py) treats these two sources exactly like any other
+    `RasterSequence` in `WorldModel.rasters` -- no special-casing needed, the same generic
+    path `paleodem`/`plates_neoproterozoic` already go through -- except that the population
+    density layer also carries its `RasterEncoding` decode metadata (ADR-031 amendment)."""
+    basemap_t0 = RasterSequence(
+        id="basemap_t0",
+        frames=[
+            RasterFrame(t=0.0, ref="textures/basemap/basemap_t0.webp"),
+            RasterFrame(t=2.58e6, ref="textures/basemap/basemap_t0.webp"),
+        ],
+    )
+    population = RasterSequence(
+        id="hyde_population_density",
+        frames=[
+            RasterFrame(t=10.0, ref="textures/hyde_population_density/2015AD.webp"),
+            RasterFrame(t=12025.0, ref="textures/hyde_population_density/10000BC.webp"),
+        ],
+    )
+    world = WorldModel(rasters={"basemap_t0": basemap_t0, "hyde_population_density": population})
+    files, entries = _layers(world, portraits=None)
+
+    entries_by_id = {e.id: e for e in entries}
+    assert entries_by_id["basemap_t0"].data_kind == LayerDataKind.RASTER
+    assert entries_by_id["basemap_t0"].time_domain == (0.0, 2.58e6)
+    assert entries_by_id["hyde_population_density"].data_kind == LayerDataKind.RASTER
+    assert entries_by_id["hyde_population_density"].time_domain == (10.0, 12025.0)
+
+    files_by_id = {f.data.id: f for f in files}
+    assert isinstance(files_by_id["basemap_t0"].data, RasterData)
+    assert files_by_id["basemap_t0"].published == "layers/basemap_t0.json"
+    assert files_by_id["basemap_t0"].data.encoding is None
+    population_data = files_by_id["hyde_population_density"].data
+    assert isinstance(population_data, RasterData)
+    assert files_by_id["hyde_population_density"].published == "layers/hyde_population_density.json"
+    assert population_data.encoding is not None
+    assert population_data.encoding.channel == "r"
+    assert population_data.encoding.unit == "people_per_km2"
+    assert population_data.encoding.d_max == pytest.approx(POPULATION_DENSITY_D_MAX)
+
+
+# ------------------------------------------------ SCALAR_LAYERS (ADR-031 amendment "global
+# population total")
+
+
+def test_scalar_layers_includes_global_population_total() -> None:
+    by_id = {spec.curated_id: spec for spec in SCALAR_LAYERS}
+    assert by_id["population"].source == "hyde"
+    assert by_id["population"].surface == LayerSurface.HUD
+    # Unlike day_length, this is chartable -- it is the readout column's own number, not just an
+    # input the audio score reads, so it earns a sparkline/chart the way co2's own does.
+    assert by_id["population"].chartable is True
+
+
+def test_layers_publishes_population_scalar_entry() -> None:
+    """`_layers` treats the "population" TimeSeries exactly like any other scalar layer in
+    `WorldModel.series` -- no special-casing needed, the same generic path `co2`/`day_length`
+    already go through."""
+    population = TimeSeries(
+        id="population",
+        unit="people",
+        interpolation=Interpolation.LOG_LINEAR,
+        samples=[
+            Sample(t=10.0, value=7_256_964_920.0, lower=None, upper=None),
+            Sample(t=12025.0, value=4_432_265.0, lower=None, upper=None),
+        ],
+    )
+    world = WorldModel(series={"population": population})
+    files, entries = _layers(world, portraits=None)
+
+    entries_by_id = {e.id: e for e in entries}
+    assert entries_by_id["population"].data_kind == LayerDataKind.SCALAR
+    assert entries_by_id["population"].time_domain == (10.0, 12025.0)
+    assert entries_by_id["population"].unit == "people"
+    assert entries_by_id["population"].interpolation == Interpolation.LOG_LINEAR
+
+    files_by_id = {f.data.id: f for f in files}
+    population_data = files_by_id["population"].data
+    assert isinstance(population_data, SeriesData)
+    assert files_by_id["population"].published == "layers/population.json"
+    assert population_data.samples[0].value == pytest.approx(7_256_964_920.0)
+
+
+# ------------------------------------------------------------------- FEATURE_LAYERS (ADR-034)
+
+
+def test_feature_layers_registers_cities() -> None:
+    by_id = {spec.curated_id: spec for spec in FEATURE_LAYERS}
+    assert by_id["cities"].source == "cities"
+    assert by_id["cities"].surface == LayerSurface.GLOBE
+    assert by_id["cities"].chartable is False
+
+
+def test_layers_publishes_cities_feature_entry() -> None:
+    """`_layers` treats a `FeatureSet` exactly like any other curated shape in `WorldModel` --
+    no special-casing beyond reading `world.features` instead of `world.rasters`/`world.events`."""
+    cities = FeatureSet(
+        id="cities",
+        features=[
+            Feature(
+                id="uruk",
+                name="Uruk",
+                country="Iraq",
+                lat=31.32,
+                lon=45.64,
+                certainty=FeatureCertainty.HIGH,
+                estimates=[
+                    PopulationEstimate(t=6700.0, population=14_000),
+                    PopulationEstimate(t=5700.0, population=40_000),
+                ],
+            ),
+        ],
+    )
+    world = WorldModel(features={"cities": cities})
+    files, entries = _layers(world, portraits=None)
+
+    entries_by_id = {e.id: e for e in entries}
+    assert entries_by_id["cities"].data_kind == LayerDataKind.FEATURES
+    assert entries_by_id["cities"].time_domain == (5700.0, 6700.0)
+
+    files_by_id = {f.data.id: f for f in files}
+    cities_data = files_by_id["cities"].data
+    assert isinstance(cities_data, FeatureSetData)
+    assert files_by_id["cities"].published == "layers/cities.json"
+    assert len(cities_data.features) == 1
+    assert cities_data.features[0].id == "uruk"
+    assert [e.population for e in cities_data.features[0].estimates] == [40_000, 14_000]

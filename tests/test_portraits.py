@@ -11,7 +11,7 @@ import pytest
 from pydantic import ValidationError
 
 from pipeline.curated import load_world, write_shape
-from pipeline.exposure import expose_plate
+from pipeline.exposure import erase_scale_bar, expose_plate
 from pipeline.flowfield import encode_flow
 from pipeline.generators.gemini import MODEL_ID, PRICES, estimate_usd
 from pipeline.generators.image import ImageRequest, asset_digest
@@ -537,7 +537,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         ],
         "morphs": [],
     }
-    assert (paths.media / "portraits" / "human.jpg").read_bytes() == expected.data
+    assert (paths.media / "portraits" / "human.jpg").read_bytes() == erase_scale_bar(expected.data)
     assert pinned.read_bytes() == original
 
 

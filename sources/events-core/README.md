@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 121 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 152 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -275,6 +275,117 @@ distinct from the existing `half-of-humanity-online` (Internet access, 2018): bo
 `society`-tagged threshold-crossing moments, but this one is about urbanisation itself, sourced
 to the same UN-cited 2007 figure Wikipedia's "Urbanization" article gives.
 
+A **later-migrations batch** (2026-09-17) made `ArrivalEffect.arrival_kind` (`pipeline/shapes.py`)
+a required, closed-enum field distinguishing `peopling` (first human settlement of a previously
+uninhabited region, leaving a persistent inhabited marker on the globe) from `migration` (a later
+movement into land already inhabited or previously settled, transient arc only) -- see ADR-032.
+All thirteen pre-existing arrivals were set to `peopling`. Ten new events, plus the pre-existing
+`columbian-exchange`, were curated as `migration`, in time order: `neolithic-farmers-europe`,
+`yamnaya-steppe-migration`, `austronesian-expansion-taiwan`, `bantu-expansion`,
+`norse-north-atlantic-settlement`, `thule-arctic-expansion`, `columbian-exchange`,
+`transatlantic-slave-trade`, `russian-conquest-of-siberia`, `british-colonisation-australia`,
+`mass-european-emigration`. Each was checked by fetching the page named in its citation
+(Wikipedia throughout, accessed 2026-09-17) plus, where genetic or archaeological ancient-DNA
+literature exists, the primary paper itself (DOIs verified live against Crossref): Pinhasi et
+al. 2005 and Haak et al. 2010 and Mathieson et al. 2018 (Anatolian farmers), Haak et al. 2015
+and Allentoft et al. 2015 (Yamnaya), Gray et al. 2009 (Austronesian), Fortes-Lima et al. 2023
+(Bantu), Raghavan et al. 2014 (Thule). Curation choices and open judgement calls:
+- **Norse settlement of Iceland was originally curated as `migration`, not `peopling`, even
+  though Iceland itself was genuinely uninhabited before Norse arrival** (unlike every other
+  `migration` in this batch, which moved into already-inhabited land), on the judgement call
+  that the thirteen pre-existing arrivals were a closed narrative of humanity's original
+  prehistoric dispersal, already concluded at `aotearoa-arrival` (~1280 CE), and that a Viking
+  Age seafaring colonisation was a different kind of event thematically. This was flagged for
+  review at the time as not a mechanical application of the `arrival_kind` contract's own
+  wording ("first human settlement of a previously uninhabited region" would, read literally,
+  make Iceland `peopling`) — and the same-day fact-check pass below overturned it: see
+  "later-migrations fact-check pass" for the correction and the Iceland/Greenland split.
+- **`british-colonisation-australia` and `columbian-exchange`'s new `arrival_kind: migration`
+  effect** both state plainly, per this batch's brief, the disease and violence existing
+  populations suffered (the April 1789 Sydney-region smallpox epidemic; "catastrophic population
+  loss among Indigenous Americans" already in `columbian-exchange`'s own description).
+  **`transatlantic-slave-trade`** states plainly that European traders and colonial powers
+  forced millions of captive Africans across the Atlantic.
+- **`columbian-exchange`'s `established` (1496, Santo Domingo's founding)** is deliberately not
+  1492 (Columbus's landfall, already this event's own `t_max`) -- the arc is meant to mark when
+  European presence became permanent, not the first sighting of land.
+- Five of the ten new events (`neolithic-farmers-europe`, `yamnaya-steppe-migration`,
+  `austronesian-expansion-taiwan`, `bantu-expansion`, `thule-arctic-expansion`) are tagged
+  `[human-origins, society]` rather than `[society]` alone: each is evidenced by ancient-DNA or
+  comparable population-genetic data, the same character as the pre-existing
+  `human-origins`-tagged arrivals, not merely a cultural or political development. The
+  remaining five (`norse-north-atlantic-settlement`, `transatlantic-slave-trade`,
+  `russian-conquest-of-siberia`, `british-colonisation-australia`, `mass-european-emigration`)
+  are `[society]` only, as is the pre-existing `columbian-exchange`.
+
+A **later-migrations fact-check pass** (2026-09-17, later the same day, ADR-032 amendment)
+independently verified every one of the eleven events above against primary literature
+(WebFetch against journal/publisher pages and Crossref/EuropePMC metadata; the session's
+WebSearch budget was already exhausted). Six needed no change (`neolithic-farmers-europe`,
+`yamnaya-steppe-migration`, `bantu-expansion`, `russian-conquest-of-siberia`,
+`british-colonisation-australia`) or only a citation upgrade with no factual correction. Five
+needed a real fix:
+- **`austronesian-expansion-taiwan`** was reclassified `migration` -> `peopling`: the primary
+  excavation report (Bellwood & Dizon 2013, ch. 5, fifty-one radiocarbon dates across seven
+  sites) finds no preceramic occupation anywhere in the Batanes Islands before this arrival, so
+  the destination — not the Taiwan origin — was genuinely uninhabited, matching this file's own
+  `lapita-oceania-expansion` precedent (classification keys on the destination). Its origin
+  coordinate also moved off an inland Taiwanese mountain range onto the Hengchun
+  Peninsula/Eluanbi, the shortest and most-cited embarkation point toward the Batanes, and its
+  `established` date moved from 2200 BC to 2000 BC to match the excavators' own stated
+  precision limit ("further precision at the moment would be unwarranted"). Citation replaced
+  with the primary excavation monograph (DOI-bearing, fetched and read directly) in place of an
+  unread secondary paraphrase.
+- **`norse-north-atlantic-settlement` was split into two events**, both `peopling`: the single
+  arc had conflated Iceland (~AD 877) and Greenland (~AD 985) — 111 years and a different
+  landmass apart — under one id, with every numeric field encoding Iceland's chronology while
+  `effect.destination` pointed at Greenland. `norse-north-atlantic-settlement` keeps its id
+  (avoiding an orphaned pin) and is repurposed as Iceland-only: `established` moves from the
+  saga-traditional AD 874 to the tephra-dated AD 877 ± 1 (Schmid et al. 2017), its destination
+  moves to Iceland, and `arrival_kind` becomes `peopling` (Iceland was genuinely uninhabited;
+  the only counter-claim, Irish papar hermits, is archaeologically unproven). Its description
+  now also names the enslaved and free Gaelic component of Iceland's founding population
+  (Ebenesersdóttir et al. 2018: ~56% Norse ancestry, majority-Gaelic maternal line), previously
+  omitted. A new event, **`greenland-norse-settlement`** (`kind: period`, `established` AD 985),
+  covers the Greenland leg on its own correct dates: also `peopling`, since the Eastern/Western
+  Settlement area had no established population at Norse contact (Dorset presence was
+  concentrated further north; Thule contact came only in the 13th-14th century, per
+  `thule-arctic-expansion`).
+- **`thule-arctic-expansion`**'s window start moved from ~975 CE to ~1200 CE: the ~1000 CE
+  figure it inherited from Wikipedia describes Thule culture's own origin in coastal Alaska, not
+  the start of its eastward migration. The dedicated radiocarbon study of that migration
+  (Friesen & Arnold 2008) finds the western Canadian Arctic transit corridor "was not occupied
+  before the thirteenth century A.D.," added as a citation. `established` (~1275 CE) needed no
+  change.
+- **`columbian-exchange`**'s description attributed Taíno population collapse solely to
+  "introduced disease," a euphemism by omission: mainstream scholarship (Stannard 1992,
+  Reséndez 2016, both added as citations) treats the encomienda forced-labour system and direct
+  violence as major, non-secondary co-drivers. The description now names them and the ~80-90%
+  population collapse they drove within three decades.
+- **`transatlantic-slave-trade`**'s `t_max`/`established` were each borrowed from unrelated
+  facts: the 1525 "first direct transatlantic voyage" was São Tomé-to-Hispaniola, Caribbean-
+  bound and unconnected to this event's Angola-origin/Brazil-destination arc, and 1549 marks
+  Tomé de Sousa's arrival as Brazil's first royal governor — general crown administration, not
+  anything specific to the Angola-Brazil slave axis. Moved to Portugal's 1575 colonisation of
+  Angola (`t_max`) and the 1648 Portuguese-Brazilian recapture of Luanda from the Dutch
+  (`established`), which the literature treats as the point the axis became indispensable (the
+  contemporary maxim "Sem Angola, não há Brasil," 1646). Citations added: Heywood & Thornton
+  (2007) and Alencastro (2018), both independently confirmed this session (Crossref/publisher
+  pages) rather than taken from the review's own uncertain recollection of them.
+- **`mass-european-emigration`**'s literal origin (Naples) was inconsistent with its own
+  `established` date (1850): Italian mass emigration through Naples did not begin until roughly
+  1880 (Naples was not a legally designated Italian emigration port until 1903), while 1850 is
+  the aggregate era's onset, dominated by Irish/German/British flows per the event's own
+  description. Origin moved to Cobh (Queenstown), Ireland, the single largest emigration port
+  of that era; description reworded so "65 million... for the Americas" (the four listed
+  destinations sum to only ~48 million) reads "the majority of them for the Americas."
+
+No event was dropped. The `arrival_kind` reclassifications (`austronesian-expansion-taiwan`,
+and the Iceland/Greenland split) change globe rendering — a persistent "inhabited" marker
+appears where none did before — so they are recorded as an ADR-032 amendment in
+`docs/DECISIONS.md`, not merged as a silent data edit (`CLAUDE.md`'s rule for NORMATIVE
+contract fields).
+
 ## Gotchas
 
 - **`t_min`/`t_max` is not always "measurement uncertainty about one moment."** For a few
@@ -304,9 +415,9 @@ to the same UN-cited 2007 figure Wikipedia's "Urbanization" article gives.
 
 ## Measured volume
 
-`data/curated/events-core.parquet`: **25,921 bytes** (25.3 KB) for 46 events, regenerated from
+`data/curated/events-core.parquet`: **91,059 bytes** (89.0 KB) for 152 events, regenerated from
 the current `data/events.yaml` via `normalise.main()`. `data/events.yaml` itself (the actual
-source of truth, git-tracked separately): **36,672 bytes** (35.8 KB).
+source of truth, git-tracked separately): **169,929 bytes** (166.0 KB).
 
 ## Storage tier chosen
 

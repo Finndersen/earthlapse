@@ -19,7 +19,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from pipeline.models import WorldModel
-from pipeline.shapes import CuratedShape, EventSet, RasterSequence, TimeSeries, Tree
+from pipeline.shapes import CuratedShape, EventSet, FeatureSet, RasterSequence, TimeSeries, Tree
 
 _METADATA_KEY: Final = b"earthtime"
 
@@ -87,6 +87,24 @@ _LAYOUTS: Final[dict[type[CuratedShape], _Layout]] = {
             ]
         ),
     ),
+    # ADR-034: one row per feature (city); `estimates` (a list of {t, population} readings)
+    # has no fixed column shape, so it round-trips as a JSON string column like EventSet's
+    # `effect` above.
+    FeatureSet: _Layout(
+        "features",
+        pa.schema(
+            [
+                ("id", pa.string()),
+                ("name", pa.string()),
+                ("country", pa.string()),
+                ("lat", pa.float64()),
+                ("lon", pa.float64()),
+                ("certainty", pa.string()),  # FeatureCertainty
+                ("estimates", pa.string()),  # JSON-encoded list[{t, population}]
+            ]
+        ),
+        json_fields=frozenset({"estimates"}),
+    ),
 }
 
 _SHAPES_BY_NAME: Final[dict[str, type[CuratedShape]]] = {cls.__name__: cls for cls in _LAYOUTS}
@@ -148,6 +166,7 @@ def load_world(curated_dir: Path) -> WorldModel:
     rasters: dict[str, RasterSequence] = {}
     events: dict[str, EventSet] = {}
     trees: dict[str, Tree] = {}
+    features: dict[str, FeatureSet] = {}
     for path in sorted(curated_dir.glob("*.parquet")):
         match read_shape(path):
             case TimeSeries() as ts:
@@ -158,4 +177,6 @@ def load_world(curated_dir: Path) -> WorldModel:
                 events[es.id] = es
             case Tree() as tree:
                 trees[tree.id] = tree
-    return WorldModel(series=series, rasters=rasters, events=events, trees=trees)
+            case FeatureSet() as fs:
+                features[fs.id] = fs
+    return WorldModel(series=series, rasters=rasters, events=events, trees=trees, features=features)

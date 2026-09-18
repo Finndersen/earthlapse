@@ -1,0 +1,49 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the fetch strategy and
+# licence findings.
+#
+# HYDE 3.2.1 cleared land: cropland + pasture & converted rangeland (managed/cleared grazing),
+# plus (natural) rangeland published as a separate, fainter channel -- not folded into
+# "cleared land" -- 10,000 BCE -> 2015 CE. **3.2 only** -- HYDE 3.3 is CC BY-NC-SA 4.0
+# (confirmed via DataCite, doi:10.24416/UU01-AEZZIT) and must NOT be used (user-approved
+# 2026-09-17; ADR-031). docs/DATA_SOURCES.md's `hyde` entry previously named 3.3 with a
+# "VERIFY" licence; corrected alongside this source.
+#
+# This source does NOT download the whole `HYDE3_2_1-baseline.zip` (5,339,653,974 bytes --
+# every variable HYDE ships: population, built-up area, irrigated/rainfed splits, etc, none of
+# which this project needs). Only `cropland<year>.asc`, `pasture<year>.asc`,
+# `rangeland<year>.asc` and `conv_rangeland<year>.asc`, per timestep, are fetched -- via HTTP
+# Range requests directly against the DANS access URL below, which forwards Range through its
+# own redirect to the underlying object store (confirmed live). See README.md "Fetch strategy"
+# for why, and why there is no single top-level sha256 to record for `url` the way every other
+# source's manifest.toml has one.
+#
+# Two sequential corrections (2026-09-17), both documented in full in README.md "Which HYDE
+# variable is 'pasture'": (1) the original two-variable encoding (cropland + `grazing`) painted
+# natural rangeland as cleared land, because `grazing` = `pasture` + `rangeland` +
+# `conv_rangeland`; (2) `conv_rangeland` ("converted rangeland") was then checked against the
+# primary source (Klein Goldewijk et al. 2017, ESSD 9:927-953) and found to be forest-biome
+# grazing land the paper's own authors define as assumed-cleared -- so it is fetched and folded
+# into the cleared-land channel (with `pasture`), not left aside and not folded into the
+# natural-rangeland channel.
+#
+# ADR-031 amendment "global population total": a third curated output, id "population" (a
+# `TimeSeries`, unlike the two `RasterSequence`s above) -- the world total at each of the same
+# 73 timesteps, a plain sum of the full-resolution `popc` grid (no area weighting, since `popc`
+# is people per cell already, not a density). Published as an ordinary HUD scalar layer
+# (`pipeline/publish.py`'s `SCALAR_LAYERS`) alongside `co2`/`day_length`.
+
+name = "hyde"
+title = "HYDE 3.2.1 cleared land and population density: cropland, pasture, converted rangeland, rangeland and population count, 10,000 BCE - 2015 CE"
+url = "https://archaeology.datastations.nl/api/access/datafile/5490328"  # HYDE3_2_1-baseline.zip, range-fetched selectively -- see README.md
+sha256 = ""  # not applicable to a selectively range-fetched archive -- see README.md "Fetch strategy"; each member is verified against its own CRC-32, pinned in _expected_members.json, instead
+licence = "CC0-1.0 (DANS deposit doi:10.17026/DANS-25G-GEZ3). The dataset's own bundled readme separately states CC BY 3.0 for the data; both are permissive, and the citation field of this manifest is given regardless of which applies. HYDE 3.3 is CC BY-NC-SA 4.0 and is explicitly NOT used."
+citation = "Klein Goldewijk, K., A. Beusen, J. Doelman and E. Stehfest (2017). Anthropogenic land-use estimates for the Holocene; HYDE 3.2. Earth System Science Data 9, 927-953. https://doi.org/10.5194/essd-9-927-2017. Data: Klein Goldewijk, C.G.M. (2017). Anthropogenic land-use estimates for the Holocene; HYDE 3.2 [dataset]. DANS. https://doi.org/10.17026/DANS-25G-GEZ3"
+time_domain = [1.2025e4, 10.0]  # years BP, [oldest, newest] -- 10000 BCE .. 2015 CE against the fixed AD 2025 present (README.md "Calendar year -> t")
+output_shape = "RasterSequence x2 + TimeSeries"  # hyde_cleared_land + hyde_population_density (rasters) + population (derived world-total series, ADR-031 amendment "global population total") -- matches docs/DATA_SOURCES.md's own "+" notation for other dual-shape sources (paleodem, paleoclimate)
+interpolation = "log-linear"  # only the "population" TimeSeries uses this; both RasterSequences blend via RasterBlend (crossfade) instead, no interpolation enum applies to them
+volume_bytes = 1669478521  # measured: total compressed bytes actually downloaded via Range requests -- 980,119,062 (cropland/pasture/rangeland/conv_rangeland, 4 variables x 73 timesteps) + 689,359,459 (popc, 1 variable x 73 timesteps, ADR-031 amendment "population density") -- see README.md "Measured volume"
+storage_tier = "git"  # curated parquet only; textures are generated media, committed via git-lfs into data/media/ (see README.md "Storage tier chosen")
+outputs = [
+    "data/media/textures/hyde_cleared_land/*.webp",  # written by normalise.py's write_outputs() hook -- curated, no longer published (ADR-031 amendment)
+    "data/media/textures/hyde_population_density/*.webp",  # ADR-031 amendment "population density"
+]
