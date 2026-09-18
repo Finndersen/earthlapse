@@ -1035,6 +1035,8 @@ scenes:
   # so the scene shows a brine lake among salt flats and the caption says the extent is debated.
   - id: messinian-salt-flats
     t: 5.6e6
+    # ADR-034: a representative point in the deep Algero-Provençal basin, where the halite beds
+    # are thickest, rather than a single site. Publish reconstructs it to its Messinian position.
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Messinian Salinity Crisis"
@@ -1055,6 +1057,7 @@ scenes:
       absent: [any plant, any animal, boats, fish, blue open sea, green colour anywhere, people, buildings]
     # ADR-023 (v2): `wind` `loop` -- a hypersaline basin floor with no vegetation or animals.
     sound: {stem: wind, mode: loop, gain: 0.9}
+    location: {lat: 39.0000, lon: 5.0000, label: "Mediterranean basin"}
     pin: {asset_digest: "183125fa8e80ac2d", path: "data/candidates/messinian-salt-flats/ed0e1dbfb478a938/02-183125fa8e80ac2d.jpg"}
 
   # Australopithecus afarensis, AL 288-1 ("Lucy"), Hadar, Ethiopia, ~3.2 Ma (events.yaml
