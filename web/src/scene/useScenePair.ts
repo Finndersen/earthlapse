@@ -6,21 +6,19 @@
  *
  * When both of a newly requested pair's textures are already in `textureCache`'s cache (the
  * common case right at a scene checkpoint: the incoming texture was the outgoing pair's other
- * half, or a neighbour preloaded ahead of time — see `SceneView`'s `neighbourUrls`), the bind
- * happens synchronously during render rather than through the effect below. Deferring even a
- * cache hit through `Promise.all(...).then(...)` costs a microtask, so the caller's `mix`/drift
- * uniforms — driven by the same `t` this pair switch is — would land in a render before the
- * rebind, painting the OLD pair's textures under the NEW state: a one-frame flash of the
- * previous scene. `SceneFallbackView`'s `useDecodedSrc` uses the same render-phase pattern
- * against its own shared decoded-URL cache for the same reason.
+ * half, or a preloaded neighbour — see `SceneView`'s `neighbourUrls`), the bind happens
+ * synchronously during render rather than through the effect below. Deferring even a cache hit
+ * through `Promise.all(...).then(...)` costs a microtask, so the caller's `mix`/drift uniforms —
+ * driven by the same `t` — would land in a render before the rebind, painting the OLD pair's
+ * textures under the NEW state: a one-frame flash of the previous scene. `SceneFallbackView`'s
+ * `useDecodedSrc` uses the same render-phase pattern for the same reason.
  *
- * That render-phase fast path only closes the flash for the cache-hit case. When the newly
- * requested pair's texture genuinely is not loaded yet (fast playback, rapid scrubs, a cold
- * cache), `fromTex`/`toTex` below keep describing the *previous* pair while a caller computing
- * mix/drift straight from `t` has already moved on to the newly requested one — the same
- * stale-texture/new-uniform mismatch, just via the effect below instead of the fast path.
- * `boundFromUrl`/`boundToUrl` exist so a caller can tell the two apart: `sceneRender.ts`'s
- * `resolveSceneRender` reconciles them, and `SceneCanvasView` is the one that calls it.
+ * That fast path only closes the flash for the cache-hit case. When the newly requested pair's
+ * texture genuinely isn't loaded yet (fast playback, rapid scrubs, a cold cache), `fromTex`/
+ * `toTex` below keep describing the *previous* pair while `t`-driven mix/drift have already
+ * moved on — the same mismatch via the effect below instead of the fast path.
+ * `boundFromUrl`/`boundToUrl` let a caller tell the two apart: `sceneRender.ts`'s
+ * `resolveSceneRender` reconciles them, called by `SceneCanvasView`.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -38,11 +36,9 @@ interface BoundPair {
 export interface ScenePair {
   fromTex: THREE.Texture | null
   toTex: THREE.Texture | null
-  /** URLs of the pair `fromTex`/`toTex` actually belong to — `null` until the very first pair
-   *  has bound (mirrors `ready`). May lag the `fromUrl`/`toUrl` most recently requested of the
-   *  hook: this only updates once a newly requested pair's textures have *both* loaded, so a
-   *  caller that also drives other state (mix, drift) off the requested pair needs this to
-   *  tell the two apart — see `sceneRender.ts`'s `resolveSceneRender`, which reconciles them. */
+  /** URLs of the pair `fromTex`/`toTex` actually belong to — `null` until the first pair has
+   *  bound. May lag the most recently requested `fromUrl`/`toUrl`: only updates once a newly
+   *  requested pair's textures have *both* loaded — see `sceneRender.ts`'s `resolveSceneRender`. */
   boundFromUrl: string | null
   boundToUrl: string | null
   /** Whether any pair has ever loaded — false only before the very first pair resolves. */
@@ -57,10 +53,9 @@ export function useScenePair(fromUrl: string, toUrl: string): ScenePair {
   if (!alreadyBound) {
     const cachedFrom = getCachedSceneTexture(fromUrl)
     const cachedTo = getCachedSceneTexture(toUrl)
-    // Render-phase update: both halves are already on the GPU, so bind them in this same
-    // render instead of waiting for the effect + promise below (see the module doc comment).
-    // React re-renders synchronously off this before painting, so `alreadyBound` above sees
-    // the new pair on the very next check rather than looping.
+    // Render-phase update: both halves are already on the GPU, so bind them in this same render
+    // instead of the effect + promise below (see module doc). React re-renders synchronously off
+    // this before painting, so `alreadyBound` sees the new pair on the next check, not a loop.
     if (cachedFrom !== undefined && cachedTo !== undefined) {
       setBound({ fromUrl, toUrl, fromTex: cachedFrom, toTex: cachedTo })
     }

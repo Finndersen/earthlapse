@@ -170,6 +170,14 @@ export function pickCandidate(
   return best
 }
 
+/** Whether two hit targets are the "same" for the purpose of bailing out of a `setState` — by id,
+ *  not object reference, since `candidatesRef` can rebuild with a fresh target object for a
+ *  target the pointer hasn't actually left (a `t` change during playback). Exported for
+ *  `GlobeTooltip.test.ts`. */
+export function sameHitTarget(a: GlobeHitTarget | null, b: GlobeHitTarget | null): boolean {
+  return (a?.id ?? null) === (b?.id ?? null)
+}
+
 export interface GlobeHitTestOptions {
   /** Read fresh on every pointer event — the caller keeps it in a ref so rebuilding the
    *  candidate list every render costs nothing but an assignment. */
@@ -220,11 +228,21 @@ export function useGlobeHitTest({
       return pickCandidate(candidatesRef.current, clientX - rect.left, clientY - rect.top, u, r, group, camera, width, height)
     }
 
+    // Bails without a re-render when the resolved target is the same one already shown — by id,
+    // not object reference, since `candidatesRef` can rebuild with fresh target objects (a `t`
+    // change during playback) for a target the pointer hasn't actually left. A drag or a fast
+    // sweep across empty space between candidates would otherwise re-render this layer's whole
+    // subtree (and, upstream, force `HumanCivilisation.tsx`'s marker set to be treated as changed)
+    // on every single pointermove rather than only on an actual change of hover target.
+    const applyTarget = (next: GlobeHitTarget | null): void => {
+      setTarget((prev) => (sameHitTarget(prev, next) ? prev : next))
+    }
+
     const onPointerMove = (event: PointerEvent): void => {
       if (event.pointerType === 'touch') return
-      setTarget(resolve(event.clientX, event.clientY))
+      applyTarget(resolve(event.clientX, event.clientY))
     }
-    const onPointerLeave = (): void => setTarget(null)
+    const onPointerLeave = (): void => applyTarget(null)
     const onPointerDown = (event: PointerEvent): void => {
       pressStart.x = event.clientX
       pressStart.y = event.clientY
@@ -234,7 +252,7 @@ export function useGlobeHitTest({
     const onPointerUp = (event: PointerEvent): void => {
       if (!pressStart.touch) return
       const moved = Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y)
-      if (moved <= TAP_SLOP_PX) setTarget(resolve(event.clientX, event.clientY))
+      if (moved <= TAP_SLOP_PX) applyTarget(resolve(event.clientX, event.clientY))
       touchHitRef.current = false
     }
 

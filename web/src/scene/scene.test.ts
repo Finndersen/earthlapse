@@ -103,11 +103,8 @@ describe('mix across a gap', () => {
       const p = 0.02 + (i / 48) * 0.96
       return sceneAt(scenes, tAtP(s1.t, s2.t, p)).mix
     })
-    // Sanity bound on the step between adjacent samples, not a precise number: with 49
-    // samples over p in [0.02, 0.98] (step ~0.02) and the smoothstep's steepest point (slope
-    // 1.5 / DISSOLVE_WIDTH in p) landing exactly on a sample at p = 0.5, the true max step is
-    // ~0.208 — comfortably below "jumps by half the mix range in one sample" (0.5), which is
-    // what this guards against; it is not meant to pin DISSOLVE_WIDTH's exact value.
+    // Sanity bound (~0.208 is the true max step here), not a precise figure — guards against a
+    // jump of half the mix range in one sample, not meant to pin DISSOLVE_WIDTH's exact value.
     for (let i = 1; i < mixes.length; i++) {
       expect(mixes[i]!).toBeGreaterThanOrEqual(mixes[i - 1]!)
       expect(mixes[i]! - mixes[i - 1]!).toBeLessThan(0.25)

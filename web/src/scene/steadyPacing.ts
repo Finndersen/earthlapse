@@ -1,32 +1,28 @@
 /**
- * Steady-mode presentation pacing (ADR-029): the generic "how long is each scene actually on
- * screen" rule that decides whether a scene-to-scene transition crossfades (today's unconditional
- * behaviour), hard-cuts (visibly faster — no forced-minimum dissolve eating into a brief dwell),
- * or needs the steady playhead's own rate floored so even a hard cut never flashes faster than is
- * safe (WCAG 2.3.1's three-flashes-per-second photosensitivity threshold).
+ * Steady-mode presentation pacing (ADR-029): decides whether a scene-to-scene transition
+ * crossfades, hard-cuts (no forced-minimum dissolve eating into a brief dwell), or needs the
+ * steady playhead's own rate floored so even a hard cut never flashes faster than is safe
+ * (WCAG 2.3.1's three-flashes-per-second photosensitivity threshold).
  *
- * Applies only to `'steady'`-mode playback while actually playing — the problem this fixes
- * (`presentation.ts`'s `MIN_TRANSITION_SECONDS` forcing a multi-second crossfade through a
- * cluster of scenes a few years apart, at whatever speed makes each scene's *natural* dwell fall
- * under that floor) is specific to unpaced steady playback. `'scenes'` mode paces itself
- * (`scene/pacing.ts`) so every scene already gets its exact `SCENE_DWELL_SECONDS` +
- * `MIN_TRANSITION_SECONDS`, always well above `MIN_CUT_DWELL_SECONDS`, and always crossfades.
- * Scrubbing, seeking and paused viewing crossfade too: while paused, `onFrame` never runs at
- * all, so nothing here is ever consulted; while playing, `steadyFrameRegime` (below) is what
- * keeps a scrub/seek/keyboard step reading `'crossfade'` regardless of what territory it lands
- * in (`Experience.tsx`'s own `lastAdvancedTRef` comparison feeds it `seeked`) — see that
- * function's own doc comment for the 2026-09-15 re-review fix this replaced a simpler, and
- * false, "onFrame never runs during a drag" claim with.
+ * Applies only to `'steady'`-mode playback while actually playing: unpaced steady playback is
+ * the only mode where `presentation.ts`'s `MIN_TRANSITION_SECONDS` can force a multi-second
+ * crossfade through a cluster of scenes a few years apart, at a speed whose *natural* dwell
+ * falls under that floor. `'scenes'` mode paces itself (`scene/pacing.ts`) so every scene gets
+ * its exact `SCENE_DWELL_SECONDS` + `MIN_TRANSITION_SECONDS`, always well above
+ * `MIN_CUT_DWELL_SECONDS`, and always crossfades. Scrubbing, seeking and paused viewing
+ * crossfade too: while paused, `onFrame` never runs, so nothing here is consulted; while
+ * playing, `steadyFrameRegime` (below) keeps a scrub/seek/keyboard step reading `'crossfade'`
+ * regardless of what territory it lands in (`Experience.tsx`'s `lastAdvancedTRef` comparison
+ * feeds it `seeked`).
  *
  * A scene's **territory** is the stretch of `t` between the midpoints (in the same log1p space
- * `sceneAt` interpolates in) of its two neighbouring gaps — exactly where `dominantScene` itself
- * switches, so flooring the rate across one scene's territory never disagrees with the instant the
- * caption and pip highlight also change. `sceneTerritories` computes every scene's territory once;
- * `timeline/playback.ts`'s `advanceSteadyPlayhead` takes that array *structurally* (its own
- * `SteadySceneTerritory`, satisfied by this module's output without importing it — the same
- * "shared shape, no cross-package import" convention `scene/pacing.ts`'s `PlaybackSegment` /
- * `timeline/playback.ts`'s `PlaybackPacingSegment` already established) so it can floor the
- * playhead's own rate without either package depending on the other.
+ * `sceneAt` interpolates in) of its two neighbouring gaps — exactly where `dominantScene`
+ * switches, so flooring the rate across one scene's territory never disagrees with the instant
+ * the caption and pip highlight also change. `sceneTerritories` computes every scene's territory
+ * once; `timeline/playback.ts`'s `advanceSteadyPlayhead` takes that array *structurally* (its
+ * own `SteadySceneTerritory`, satisfied by this module's output without importing it — the same
+ * "shared shape, no cross-package import" convention `scene/pacing.ts`'s `PlaybackSegment` uses)
+ * so it can floor the playhead's own rate without either package depending on the other.
  */
 
 import { EARTH_FORMATION, type GeoTime, type TimeScale } from '@/types/layer'
@@ -40,10 +36,10 @@ export type { PresentationRegime }
 /**
  * Below this on-screen dwell, even a hard cut would flash faster than WCAG 2.3.1's
  * three-flashes-per-second threshold allows (a full-frame content change counts as a "flash"
- * there) — the steady playhead's own rate is floored so no scene is ever crossed faster than
- * this; its reciprocal, ~2.86 changes/s, leaves a small margin under the 3/s limit.
- * `timeline/playback.ts` mirrors this constant by value (see its own doc comment) so the floor it
- * actually applies to `t` agrees with the regime this module reports for the same territory.
+ * there) — the steady playhead's rate is floored so no scene is ever crossed faster than this;
+ * its reciprocal, ~2.86 changes/s, leaves a small margin under the 3/s limit.
+ * `timeline/playback.ts` mirrors this constant by value so the floor it applies to `t` agrees
+ * with the regime this module reports for the same territory.
  */
 export const MIN_CUT_DWELL_SECONDS = 0.35
 
@@ -66,8 +62,7 @@ export interface SteadySceneTerritory {
 
 /**
  * Every scene's territory (see the module doc comment), in the same order as `scenes` (ascending
- * `t`, `sceneAt`'s own convention — nearest the present first). `[]` for fewer than two scenes:
- * there is no gap to place a territory boundary in, so nothing here can ever need a floor.
+ * `t`). `[]` for fewer than two scenes: no gap to place a territory boundary in.
  */
 export function sceneTerritories(scenes: readonly Scene[]): SteadySceneTerritory[] {
   if (scenes.length < 2) return []
@@ -80,11 +75,9 @@ export function sceneTerritories(scenes: readonly Scene[]): SteadySceneTerritory
 /**
  * The territory containing `t` — `territories` must be contiguous and ascending by `tNewer`
  * (exactly `sceneTerritories`' own output). At an exact shared boundary, returns the *older*
- * (higher-index) territory: `sceneTerritories`' boundaries are built from `tAtLogP(..., 0.5)`,
- * the same formula `sceneAt` computes its own dissolve position from, and `dominantScene`'s tie-
- * break (`mix < 0.5 ? from : to`) picks `to` — the older scene of the pair — when `mix` lands
- * exactly on `0.5`; this reproduces that tie-break without needing `sceneAt`/`dominantScene`
- * (or `Scene` identity) at query time. `undefined` for an empty `territories` — nothing to floor.
+ * (higher-index) territory, reproducing `dominantScene`'s own tie-break (`mix < 0.5 ? from : to`
+ * picks the older scene when `mix` lands exactly on `0.5`) without needing `sceneAt`/
+ * `dominantScene` at query time. `undefined` for an empty `territories`.
  */
 export function territoryAt(territories: readonly SteadySceneTerritory[], t: GeoTime): SteadySceneTerritory | undefined {
   if (territories.length === 0) return undefined
@@ -119,28 +112,23 @@ export function steadyPacing(territories: readonly SteadySceneTerritory[], t: Ge
 }
 
 /**
- * `steadyPacing`, wrapped with the two re-review fixes `Experience.tsx`'s playback loop needs
- * every frame (2026-09-15):
+ * `steadyPacing`, wrapped for `Experience.tsx`'s playback loop:
  *
- * - **Evaluated at `renderedT`**, the `t` this frame actually commits and renders (i.e.
- *   `advanceSteadyPlayhead`'s own return value), not the `t` playback started the frame at.
- *   Reading the pre-advance `t` left the regime one frame stale relative to what `SceneView` and
- *   the once-mode sound trigger actually see: on the one frame `t` crosses from a comfortably-
- *   paced territory into a dense `'cut'` one, the stale read still said `'crossfade'`, so a once-
- *   mode sound landing exactly on that boundary could fire even though the frame it fired on was
- *   already rendering the hard-cut territory (confirmed: `kpg-arrival`/`first-powered-flight`).
+ * - **Evaluated at `renderedT`**, the `t` this frame actually commits and renders
+ *   (`advanceSteadyPlayhead`'s return value), not the `t` playback started the frame at. Reading
+ *   the pre-advance `t` leaves the regime one frame stale relative to what `SceneView` and the
+ *   once-mode sound trigger see: on the frame `t` crosses from a comfortably-paced territory
+ *   into a dense `'cut'` one, a stale read would still say `'crossfade'`, so a once-mode sound
+ *   landing exactly on that boundary could fire against the wrong regime.
  * - **`seeked`**: `true` for a frame whose *starting* `t` was not the previous frame's own
  *   `advanceSteadyPlayhead` output — a scrub, a checkpoint/event jump, a keyboard step, or any
- *   other direct `setT` between the two — forces `'crossfade'`/not-floored regardless of what the
- *   landed-on territory would otherwise imply, exactly reproducing pre-ADR-029 scrub/seek
- *   behaviour (`Experience.tsx`'s own doc comment: "keep the existing dissolve rate limit for
- *   scrubs and seeks"). Without this, steady playback continuing to hard-cut through whatever
- *   territory a drag or a keyboard step happened to land in showed up live as up to 10 image
- *   changes a second while dragging — this function is what keeps that always reading as the
- *   ordinary rate-limited crossfade instead, letting `presentation.ts`'s own `MIN_TRANSITION_SECONDS`
- *   floor (never this file's `MIN_CUT_DWELL_SECONDS` one) govern it, the same as before this ADR.
+ *   other direct `setT` between the two — forces `'crossfade'`/not-floored regardless of what
+ *   the landed-on territory implies. Without this, steady playback would hard-cut through
+ *   whatever territory a drag or keyboard step landed in; this keeps it reading as the ordinary
+ *   rate-limited crossfade, governed by `presentation.ts`'s `MIN_TRANSITION_SECONDS` rather than
+ *   this file's `MIN_CUT_DWELL_SECONDS`.
  *
- * Pure in its five inputs — `seeked` is the caller's own comparison against whatever it tracked
+ * Pure in its five inputs — `seeked` is the caller's own comparison against what it tracked
  * last frame, not computed here.
  */
 export function steadyFrameRegime(

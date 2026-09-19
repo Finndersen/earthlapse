@@ -1,21 +1,22 @@
 'use client'
 
 /**
- * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does
- * the smooth whole-image crossfade (`shaders.ts`, ADR-012) and each layer's own camera drift
- * (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go
- * through `textureCache`/`useScenePair`, which keep the previously bound pair on screen until
- * a newly requested pair has fully loaded, so this never shows a blank or black frame; the
- * scenes just outside the current pair are preloaded speculatively. `sceneRender.ts`'s
- * `resolveSceneRender` reconciles that bound pair against `mix`/`fromDrift`/`toDrift` (computed
- * for the pair being *requested*, which can outrun what's actually bound) so the uniforms
- * rendered always describe the bound pair, never a stale texture under a newer pair's drift.
+ * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does the
+ * smooth whole-image crossfade (`shaders.ts`, ADR-012) and each layer's own camera drift
+ * (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
+ * `textureCache`/`useScenePair`, which keep the previously bound pair on screen until a newly
+ * requested pair has fully loaded, so this never shows a blank or black frame; scenes just
+ * outside the current pair are preloaded speculatively. `sceneRender.ts`'s `resolveSceneRender`
+ * reconciles that bound pair against `mix`/`fromDrift`/`toDrift` (computed for the pair being
+ * *requested*, which can outrun what's bound) so the rendered uniforms always describe the
+ * bound pair, never a stale texture under a newer pair's drift.
  */
 
 import { Canvas, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, type CSSProperties } from 'react'
 import * as THREE from 'three'
 
+import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
@@ -36,6 +37,13 @@ export interface SceneCanvasViewProps {
   /** `from.width / from.height` — assumed shared across scenes (the generation pipeline
    *  renders every shot at the same dimensions, per VISUAL_SPEC's camera grammar). */
   imageAspect: number
+  /** False while something else fully covers this canvas — today, only the expanded globe/map
+   *  backdrop (`ShellLayout`'s `data-globe-expanded`, z-index 50 over `.scene`). Switches the
+   *  canvas to `frameloop="never"` so a fully hidden canvas costs nothing per frame, without
+   *  unmounting it — unmounting would drop the WebGL context and force a full texture
+   *  re-upload on the next scene shown, a visible hitch worse than the CPU cost being fixed
+   *  here. Default `true`. */
+  visible?: boolean
 }
 
 function usePreloadTextures(urls: readonly string[]): void {
@@ -48,17 +56,34 @@ function usePreloadTextures(urls: readonly string[]): void {
   }, [key])
 }
 
-export function SceneCanvasView({ baseUrl, overlayUrl, preloadUrls, mix, fromDrift, toDrift, imageAspect }: SceneCanvasViewProps) {
+export function SceneCanvasView({
+  baseUrl,
+  overlayUrl,
+  preloadUrls,
+  mix,
+  fromDrift,
+  toDrift,
+  imageAspect,
+  visible = true,
+}: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
   usePreloadTextures(preloadUrls)
+  const dpr = useSceneCanvasDpr()
 
   // The uniforms below must always describe whichever pair `pair` actually has textures bound
   // for, not the (baseUrl, overlayUrl) pair `t` is currently requesting — see `sceneRender.ts`'s
   // doc comment for why the two can disagree, and `useScenePair`'s for why `pair` itself can lag.
   const render = resolveSceneRender({ fromUrl: baseUrl, toUrl: overlayUrl }, pair, { mix, fromDrift, toDrift })
 
+  // 'demand' while visible: every uniform below is set as a JSX prop (`uniforms-x-value`), which
+  // r3f's own prop-diffing invalidates on change (`uFromOffset`/`uToOffset` are the one
+  // exception — mutated in place inside `SceneQuad`, which requests its own frame explicitly;
+  // see its own comment). A `t`-driven re-render — playback, scrubbing, the drift breathe, the
+  // dissolve's own rAF catch-up (`presentation.ts`) — always changes at least one such prop, so
+  // 'demand' renders exactly the frames 'always' would while something is actually moving, and
+  // none of the ones it wouldn't (paused, settled, fully covered).
   return (
-    <Canvas orthographic dpr={[1, 2]} gl={{ antialias: false, alpha: false }} style={canvasStyle}>
+    <Canvas orthographic dpr={dpr} frameloop={visible ? 'demand' : 'never'} gl={{ antialias: false, alpha: false }} style={canvasStyle}>
       <SceneQuad
         fromTex={render?.fromTex ?? null}
         toTex={render?.toTex ?? null}
@@ -81,7 +106,7 @@ interface SceneQuadProps {
 }
 
 function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect }: SceneQuadProps) {
-  const { size } = useThree()
+  const { size, invalidate } = useThree()
   const viewportAspect = size.height > 0 ? size.width / size.height : 1
   const aspect = imageAspect > 0 ? viewportAspect / imageAspect : 1
 
@@ -104,6 +129,16 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect }: Sce
   // `new THREE.Vector2(...)` here would be a per-frame allocation in a hot path.
   uniforms.uFromOffset.value.set(fromDrift.dx, fromDrift.dy)
   uniforms.uToOffset.value.set(toDrift.dx, toDrift.dy)
+
+  // The mutation above is the one uniform update in this component that does *not* go through a
+  // JSX prop (every other one below is `uniforms-x-value={...}`, which r3f's own prop-diffing
+  // invalidates on change automatically) — so on a `frameloop="demand"` canvas, request this
+  // frame explicitly rather than lean on `driftAt` (drift.ts) happening to move `uFromZoom`/
+  // `uToZoom` by the same render, which is true only because offset scales with the zoom
+  // margin today, not a contract this file should depend on.
+  useEffect(() => {
+    invalidate()
+  }, [fromDrift.dx, fromDrift.dy, toDrift.dx, toDrift.dy, invalidate])
 
   return (
     <mesh>

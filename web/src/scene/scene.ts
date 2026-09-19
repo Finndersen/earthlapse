@@ -2,12 +2,11 @@
  * Scene sequencing and cross-dissolve mixing (DESIGN §5, v1 note / ADR-009).
  *
  * v1 renders stills — no depth maps, no displacement. `sceneAt` is the pure, instantaneous
- * heart of it: given the manifest's scenes and a time cursor, it says which two scenes to
- * show and how far to dissolve between them — a *target*, not what is necessarily on screen
- * this frame. `presentation.ts` (ADR-012) sits downstream, rate-limiting how fast the
- * displayed mix can follow that target so a transition never completes in under a minimum
- * wall-clock duration; `<SceneView>` and its WebGL/fallback renderers consume the presented
- * result, not `sceneAt`'s output directly.
+ * heart of it: given the manifest's scenes and a time cursor, it says which two scenes to show
+ * and how far to dissolve between them — a *target*, not what is necessarily on screen this
+ * frame. `presentation.ts` (ADR-012) sits downstream, rate-limiting how fast the displayed mix
+ * can follow that target; `<SceneView>` and its renderers consume the presented result, not
+ * `sceneAt`'s output directly.
  */
 
 import type { GeoTime } from '@/types/layer'
@@ -28,25 +27,22 @@ export interface SceneMix {
 }
 
 /**
- * How `presentation.ts`'s `step` renders the current transition (ADR-029): `'crossfade'` is
- * today's rate-limited dissolve, unconditionally; `'cut'` is an instant switch instead, used
- * only in `'steady'`-mode playback when a scene's on-screen dwell at the current speed is too
- * short for a full `MIN_TRANSITION_SECONDS` dissolve to read as anything but a blur through
- * several scenes (`scene/steadyPacing.ts` decides which, per scene). Scrubbing, seeking, paused
- * viewing and `'scenes'`-mode playback are always `'crossfade'`.
+ * How `presentation.ts`'s `step` renders the current transition (ADR-029): `'crossfade'` is the
+ * rate-limited dissolve; `'cut'` is an instant switch instead, used only in `'steady'`-mode
+ * playback when a scene's on-screen dwell at the current speed is too short for a full
+ * `MIN_TRANSITION_SECONDS` dissolve to read as anything but a blur (`steadyPacing.ts` decides
+ * which). Scrubbing, seeking, paused viewing and `'scenes'`-mode playback are always `'crossfade'`.
  */
 export type PresentationRegime = 'crossfade' | 'cut'
 
 /**
  * Width of the dissolve, as a fraction of the log1p gap between two consecutive scenes,
- * centred on the gap's midpoint. Each scene is held clear for `1 - DISSOLVE_WIDTH` of the
- * gap; the brief cross-dissolve happens only in the narrow band around the midpoint. One
- * tunable, reused everywhere a dissolve window is needed — there is no separate within- vs
- * cross-chapter distinction any more (a 50/50 blend of two generated worlds reads as a muddy
- * double exposure regardless of which side of a chapter boundary it falls on). This is
- * `sceneAt`'s *target* window in `t`; `presentation.ts` (ADR-012) separately guarantees the
- * blend actually takes a minimum amount of wall-clock time to cross, however fast `t` itself
- * moves through it.
+ * centred on the gap's midpoint. Each scene is held clear for `1 - DISSOLVE_WIDTH` of the gap;
+ * the brief cross-dissolve happens only in the narrow band around the midpoint. One tunable,
+ * reused everywhere a dissolve window is needed — a 50/50 blend of two generated worlds reads
+ * as a muddy double exposure regardless of chapter boundaries, so there's no separate within-
+ * vs cross-chapter distinction. This is `sceneAt`'s *target* window in `t`; `presentation.ts`
+ * (ADR-012) separately guarantees the blend takes a minimum wall-clock time to cross.
  */
 export const DISSOLVE_WIDTH = 0.14
 
@@ -60,9 +56,8 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
 
 /**
  * `t` at position `p` (0..1) along the log1p-`t` interpolation between `a` and `b` — the inverse
- * of `sceneAt`'s own position computation above. Shared by `scene/pacing.ts` (scenes-mode
- * dissolve-band edges) and `scene/steadyPacing.ts` (steady-mode scene territories) so all three
- * agree exactly on where a dissolve starts, ends and is centred.
+ * of `sceneAt`'s own position computation. Shared by `scene/pacing.ts` and `scene/steadyPacing.ts`
+ * so all three agree exactly on where a dissolve starts, ends and is centred.
  */
 export function tAtLogP(a: GeoTime, b: GeoTime, p: number): GeoTime {
   const logA = Math.log1p(a)
@@ -93,13 +88,12 @@ function alone(scene: Scene): SceneMix {
  * Which two scenes to show at `t`, and how far to dissolve between them.
  *
  * `scenes` must be sorted ascending by `t` — newest (closest to present) first, oldest last.
- * Outside `[scenes[0].t, scenes[last].t]` this clamps to the nearer end scene alone, mix 0.
- * At exactly a scene's own `t` it returns that scene alone, mix 0. Between two consecutive
- * scenes `a` (newer) and `b` (older) it computes position `p` in `log1p(t)` space — matching
- * the symlog timeline warp (DESIGN §3) so a dissolve spans a proportional *screen* distance
- * rather than a proportional span of years — then dissolves through a `DISSOLVE_WIDTH`-wide
- * smoothstep window centred on the midpoint (`p = 0.5`): held at `a` alone for most of the
- * gap, a brief dissolve, held at `b` alone for the rest.
+ * Outside `[scenes[0].t, scenes[last].t]` this clamps to the nearer end scene alone, mix 0. At
+ * exactly a scene's own `t` it returns that scene alone, mix 0. Between two consecutive scenes
+ * `a` (newer) and `b` (older) it computes position `p` in `log1p(t)` space — matching the
+ * symlog timeline warp (DESIGN §3) so a dissolve spans a proportional *screen* distance rather
+ * than a proportional span of years — then dissolves through a `DISSOLVE_WIDTH`-wide smoothstep
+ * window centred on the midpoint.
  */
 export function sceneAt(scenes: readonly Scene[], t: GeoTime): SceneMix {
   if (scenes.length === 0) {
@@ -130,12 +124,10 @@ export function dominantScene({ from, to, mix }: SceneMix): Scene {
 }
 
 /**
- * Caption cross-fade opacity for whichever scene is currently dominant, a pure function of
- * the same `mix` that drives the image dissolve — so the caption text fades out and back in
- * exactly in sync with it, dipping to 0 right at `mix = 0.5`, the instant `dominantScene`
- * switches which scene's caption is being shown, and back to 1 by the time `mix` settles at
- * either end. No separate width constant: `mix` is already 0 or 1 outside the dissolve band
- * around a gap's midpoint (see `DISSOLVE_WIDTH`), so this only ever moves within that band.
+ * Caption cross-fade opacity for whichever scene is currently dominant, a pure function of the
+ * same `mix` that drives the image dissolve — dipping to 0 right at `mix = 0.5`, the instant
+ * `dominantScene` switches, and back to 1 by the time `mix` settles at either end. No separate
+ * width constant: `mix` is already 0 or 1 outside the dissolve band (see `DISSOLVE_WIDTH`).
  */
 export function captionOpacity(mix: number): number {
   const distanceFromSwitch = Math.abs(mix - 0.5) * 2

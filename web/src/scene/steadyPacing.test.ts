@@ -157,10 +157,9 @@ describe('steadyPacing: regime boundaries', () => {
 })
 
 describe('steadyPacing: real scene geometry, dense human-history-style cluster', () => {
-  // Five scenes a couple hundred years apart, all within the near-linear region of a symlog-like
-  // domain — the shape of the measured problem (28 scenes in the last 12 kyr) without needing the
-  // real manifest. At a brisk rate over a narrow window, every territory here is far too small
-  // for MIN_TRANSITION_SECONDS and needs the floor.
+  // Five scenes a couple hundred years apart, standing in for a dense real cluster without
+  // needing the full manifest. At a brisk rate over a narrow window, every territory here is
+  // far too small for MIN_TRANSITION_SECONDS and needs the floor.
   const scenes = [s0, s1, s2, s3, s4]
   const territories = sceneTerritories(scenes)
   const scale = linearScale([0, 2e6])

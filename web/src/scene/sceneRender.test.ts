@@ -53,9 +53,7 @@ describe('resolveSceneRender', () => {
     () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'b.png', toUrl: 'c.png' }, bound, target)
-      // b alone: both channels sample b's texture, mix pinned to 0 (pixel-exact per
-      // shaders.ts), drift is target.fromDrift — the drift SceneView computed for scene b,
-      // since requested.fromUrl is the same scene b.
+      // b alone, mix pinned to 0 (pixel-exact per shaders.ts), drift is target.fromDrift.
       expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 0, fromDrift, toDrift: fromDrift })
     },
   )
@@ -67,8 +65,7 @@ describe('resolveSceneRender', () => {
     () => {
       const bound = pair('b.png', 'c.png', bTex, texture('c'))
       const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, bound, target)
-      // b alone: both channels sample b's texture, mix pinned to 1, drift is target.toDrift —
-      // the drift SceneView computed for scene b, since requested.toUrl is the same scene b.
+      // b alone, mix pinned to 1, drift is target.toDrift.
       expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 1, fromDrift: toDrift, toDrift })
     },
   )
@@ -81,10 +78,7 @@ describe('resolveSceneRender', () => {
     () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'c.png' }, bound, target)
-      // a alone: both channels sample a's texture, mix pinned to 0, drift is target.fromDrift —
-      // the drift SceneView computed for scene a, since requested.fromUrl is the same scene a.
-      // Before this branch existed, this fell through to the freeze below and hard-cut to b,
-      // even though a was exactly what should have kept showing.
+      // a alone, mix pinned to 0, drift is target.fromDrift.
       expect(render).toEqual({ fromTex: aTex, toTex: aTex, mix: 0, fromDrift, toDrift: fromDrift })
     },
   )
@@ -97,10 +91,7 @@ describe('resolveSceneRender', () => {
     () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'c.png', toUrl: 'b.png' }, bound, target)
-      // b alone: both channels sample b's texture, mix pinned to 1, drift is target.toDrift —
-      // the drift SceneView computed for scene b, since requested.toUrl is the same scene b.
-      // The old fallback rendered the right texture here only by coincidence (it always
-      // freezes on the bound `to` texture) but the wrong — frozen, zero — drift.
+      // b alone, mix pinned to 1, drift is target.toDrift.
       expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 1, fromDrift: toDrift, toDrift })
     },
   )

@@ -1,11 +1,10 @@
 /**
  * Camera drift (DESIGN §5 v1 note — "subtle life without depth maps"). A slow zoom + tiny
- * lateral pan, standing in for the eventual depth-driven parallax breathing. Pure in `t`:
- * each scene's drift is derived only from its own position within its own "hold span" (the
- * stretch of `t` between the dissolve midpoints with its neighbours — see `sceneAt`), so it
- * animates continuously through a dissolve rather than resetting at it, and is identical on
- * every render at the same `t` whether scrubbing forward, backward, or jumping straight to
- * it.
+ * lateral pan, standing in for the eventual depth-driven parallax breathing. Pure in `t`: each
+ * scene's drift is derived only from its own position within its own "hold span" (the stretch
+ * of `t` between the dissolve midpoints with its neighbours — see `sceneAt`), so it animates
+ * continuously through a dissolve rather than resetting at it, and is identical on every render
+ * at the same `t` regardless of scrub direction.
  *
  * Deliberately not the DESIGN §5 parallax: no depth map, no displacement, just a 2D
  * scale/translate kept inside the crop margin the zoom itself creates, so it can never reveal
@@ -59,12 +58,11 @@ function logMidpointT(a: GeoTime, b: GeoTime): GeoTime {
 }
 
 /**
- * The span of `t` over which `scenes[index]` is nominally on screen: from the dissolve
- * midpoint with its newer neighbour to the dissolve midpoint with its older neighbour (the
- * scene's own `t`, at the domain edge, for the first/last scene). This is deliberately wider
- * than any single dissolve — it is the scene's whole visible lifetime, hold plus the two
- * dissolves bracketing it — which is what makes drift keep moving smoothly through a
- * dissolve instead of restarting at it.
+ * The span of `t` over which `scenes[index]` is nominally on screen: from the dissolve midpoint
+ * with its newer neighbour to the dissolve midpoint with its older neighbour (the scene's own
+ * `t` for the first/last scene). Deliberately wider than any single dissolve — the scene's
+ * whole visible lifetime, hold plus the two dissolves bracketing it — which is what keeps drift
+ * moving smoothly through a dissolve instead of restarting at it.
  */
 function holdSpan(scenes: readonly Scene[], index: number): [GeoTime, GeoTime] {
   const scene = scenes[index]!
@@ -74,13 +72,11 @@ function holdSpan(scenes: readonly Scene[], index: number): [GeoTime, GeoTime] {
 }
 
 /**
- * Drift uniforms for `scenes[index]` at `t`. Playback moves `t` toward the present (DESIGN
- * §3 / `advancePlayhead`), i.e. from a scene's `end` toward its `start`, so progress — and
- * with it the zoom — reads as a push-in across the time the scene is actually being watched,
- * settling at its widest right as the scene fades in and reaching its closest right as the
- * next dissolve completes. `t` outside `[start, end]` clamps to the nearer edge rather than
- * extrapolating, so a scene not yet or no longer on screen just holds at rest or at its
- * fully-driven pose.
+ * Drift uniforms for `scenes[index]` at `t`. Playback moves `t` toward the present (DESIGN §3 /
+ * `advancePlayhead`), from a scene's `end` toward its `start`, so progress — and with it the
+ * zoom — reads as a push-in across the time the scene is being watched, widest as it fades in
+ * and closest as the next dissolve completes. `t` outside `[start, end]` clamps to the nearer
+ * edge rather than extrapolating.
  */
 export function driftAt(scenes: readonly Scene[], index: number, t: GeoTime): DriftUniforms {
   const scene = scenes[index]!

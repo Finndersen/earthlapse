@@ -1,14 +1,13 @@
 /**
- * GLSL for the scene viewport's full-viewport quad. Plain strings, not `.glsl` files, so no
- * extra build-time loader is needed for one small shader (mirrors `globe/shaders.ts`).
+ * GLSL for the scene viewport's full-viewport quad. Plain strings, not `.glsl` files (mirrors
+ * `globe/shaders.ts`).
  *
- * The vertex shader bypasses the camera entirely — `position.xy` is already in clip space —
- * the standard "full-screen quad" trick, paired with a `[2, 2]` `planeGeometry`. The fragment
+ * The vertex shader bypasses the camera entirely — `position.xy` is already in clip space — the
+ * standard "full-screen quad" trick, paired with a `[2, 2]` `planeGeometry`. The fragment
  * shader does three things, all pure functions of the uniforms computed in `presentation.ts`
  * (`mix`, via `transition.ts`'s `crossfadeAlpha`) and `drift.ts`:
  *
- * 1. `coverUV` reproduces CSS `object-fit: cover` — crop, don't letterbox, to fill the
- *    viewport regardless of its aspect ratio relative to the source images.
+ * 1. `coverUV` reproduces CSS `object-fit: cover` — crop, don't letterbox.
  * 2. `driftUV` applies each layer's own camera drift (`uFromZoom`/`uFromOffset`,
  *    `uToZoom`/`uToOffset`) on top of that crop.
  * 3. A smooth whole-image crossfade (ADR-012), gamma-correct so the midpoint of the blend
@@ -17,9 +16,9 @@
  * Scenes sample as their stored sRGB-encoded bytes (`textureCache.ts` uploads every texture
  * with `NoColorSpace`, not `SRGBColorSpace` — the GPU must not decode them on sample), so a
  * settled scene is written out exactly as the published file, matching `SceneFallbackView`'s
- * `<img>`, and `srgbToLinear`/`linearToSrgb` below bracket only the crossfade. No renderer
- * output encoding (`colorspace_fragment`) is applied — only the crossfade interior round-trips
- * through linear light — mirroring `layers/portraitShaders.ts`'s plate blend.
+ * `<img>`; `srgbToLinear`/`linearToSrgb` below bracket only the crossfade. No renderer output
+ * encoding (`colorspace_fragment`) is applied, mirroring `layers/portraitShaders.ts`'s plate
+ * blend.
  */
 
 export const SCENE_VERTEX_SHADER = /* glsl */ `

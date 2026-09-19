@@ -1,23 +1,21 @@
 'use client'
 
 /**
- * `<SceneView>` — the scene viewport (DESIGN §5 v1 note / ADR-009: still no depth maps).
- * Picks between two renderers of the same presented scene pair: `SceneCanvasView`, a WebGL
+ * `<SceneView>` — the scene viewport (DESIGN §5 v1 note / ADR-009: still no depth maps). Picks
+ * between two renderers of the same presented scene pair: `SceneCanvasView`, a WebGL
  * full-viewport quad whose fragment shader does a smooth whole-image crossfade (`shaders.ts`,
  * ADR-012), or `SceneFallbackView`, a two-`<img>` opacity cross-fade, when WebGL is
- * unavailable. Both renderers apply each scene's own camera drift (`drift.ts`) for a slow
- * "3D photo" breathe.
+ * unavailable. Both apply each scene's own camera drift (`drift.ts`) for a slow "3D photo"
+ * breathe.
  *
- * `sceneAt(scenes, t)` is the pure, instantaneous target — which two scenes and how far to
- * dissolve, a function of `t` alone. What is actually *displayed* goes through
- * `usePresentedSceneMix` (`presentation.ts`, ADR-012) first, which rate-limits how fast the
- * presentation can move so a full transition never completes in under
- * `MIN_TRANSITION_SECONDS` of wall-clock time, however abruptly `t` itself jumps.
+ * `sceneAt(scenes, t)` is the pure, instantaneous target. What is actually *displayed* goes
+ * through `usePresentedSceneMix` (`presentation.ts`, ADR-012) first, which rate-limits how fast
+ * the presentation can move so a full transition never completes in under
+ * `MIN_TRANSITION_SECONDS`, however abruptly `t` itself jumps.
  *
  * Prop-driven and pure in `t`, plus the OS reduced-motion preference and the presentation
- * catch-up's own wall-clock pacing — UI view state, not part of the `t -> pixels` contract,
- * per `useReducedMotion`'s doc comment. No store import, matches DESIGN §10 / the Layer
- * convention.
+ * catch-up's own pacing (UI view state, not part of the `t -> pixels` contract, per
+ * `useReducedMotion`'s doc comment). No store import, matches DESIGN §10 / the Layer convention.
  */
 
 import { type ReactNode, useMemo } from 'react'
@@ -45,11 +43,16 @@ export interface SceneViewProps {
    *  applies neither. */
   renderCaption?: (scene: Scene, opacity: number) => ReactNode
   className?: string
-  /** `'crossfade'` (default) or `'cut'` (ADR-029) — how far the presented mix follows `sceneAt`'s
-   *  target this frame (`usePresentedSceneMix`'s own doc comment). Only `Experience.tsx`'s
-   *  `'steady'`-mode playback loop ever passes `'cut'`; scrubbing, seeking, paused viewing and
-   *  `'scenes'`-mode playback always render `'crossfade'`, matching today's behaviour exactly. */
+  /** `'crossfade'` (default) or `'cut'` (ADR-029) — see `usePresentedSceneMix`'s doc comment.
+   *  Only `Experience.tsx`'s `'steady'`-mode playback loop ever passes `'cut'`; scrubbing,
+   *  seeking, paused viewing and `'scenes'`-mode playback always render `'crossfade'`. */
   regime?: PresentationRegime
+  /** False while something else fully covers this view — today, `Experience.tsx` passes
+   *  `!globeExpanded`. Only affects the WebGL renderer (`SceneCanvasView`'s own doc comment):
+   *  it stops rendering new frames while covered, without unmounting. The DOM fallback
+   *  (`SceneFallbackView`) has no per-frame render loop to stop, so it ignores this. Default
+   *  `true`. */
+  visible?: boolean
 }
 
 function sceneIndex(scenes: readonly Scene[], scene: Scene): number {
@@ -67,7 +70,15 @@ function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: num
   return urls
 }
 
-export function SceneView({ t, scenes, assetBase, renderCaption, className, regime = 'crossfade' }: SceneViewProps): ReactNode {
+export function SceneView({
+  t,
+  scenes,
+  assetBase,
+  renderCaption,
+  className,
+  regime = 'crossfade',
+  visible = true,
+}: SceneViewProps): ReactNode {
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
 
@@ -104,6 +115,7 @@ export function SceneView({ t, scenes, assetBase, renderCaption, className, regi
           fromDrift={fromDrift}
           toDrift={toDrift}
           imageAspect={presented.from.width / presented.from.height}
+          visible={visible}
         />
       ) : (
         <SceneFallbackView

@@ -1,25 +1,29 @@
 'use client'
 
 /** `value unit` for a scalar layer at `t`. Bounds are deliberately not printed: they come and go
- *  between samples and reflowed the HUD, and are usually narrower than the value's own precision
- *  (the chart dock still draws them as a band). Never `0`
- *  when the layer has nothing at `t`: "no data" when `t` sits outside the layer's whole
- *  domain, or "no record" when it is inside the domain but in a declared gap (ADR-027) — the
- *  only other reason `sample()` returns null there.
+ *  between samples and reflow the HUD, and are usually narrower than the value's own precision
+ *  (the chart dock still draws them as a band). Never `0` when the layer has nothing at `t`:
+ *  "no data" when `t` sits outside the layer's whole domain, or "no record" when it is inside
+ *  the domain but in a declared gap (ADR-027) — the only other reason `sample()` returns null
+ *  there.
  *
  *  A layer whose own domain doesn't reach the present (`timeDomain[0] > 0` — its newest real
  *  sample sits some years before now, e.g. HYDE 3.2's population total ending 2015 CE) holds
  *  that newest sample for every `t` nearer than it, rather than reading "no data" — the same
  *  "data simply ends, hold" convention the population-density globe overlay already uses
- *  (`web/src/globe/density.ts`'s `densityBlendAt`) — annotated "as of <year>" — a calendar year where one reads naturally since silently
- *  freezing the number would misrepresent a 2015 total as a live reading for right now. Driven
- *  by the domain, not a layer id, so this applies to any future layer whose data ends before the
- *  present the same way, not just this one. */
+ *  (`web/src/globe/density.ts`'s `densityBlendAt`), annotated "as of <year>" (a calendar year,
+ *  since that reads naturally for a recent date) because silently freezing the number would
+ *  misrepresent a 2015 total as a live reading for right now. Driven by the domain, not a layer
+ *  id, so this applies to any future layer whose data ends before the present the same way, not
+ *  just this one. */
+
+import { memo } from 'react'
 
 import { formatCalendarYear, formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { formatScalarValue } from '../format'
+import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '../useThrottledValue'
 import styles from './hud.module.css'
 
 export interface ScalarReadoutProps {
@@ -27,7 +31,16 @@ export interface ScalarReadoutProps {
   t: GeoTime
 }
 
+/** Throttles `t` (see `useThrottledValue`'s own doc comment) before handing off to the memoised
+ *  body below, so playback's per-frame `t` writes only re-run the sampling/formatting work a few
+ *  times a second, not every frame. This wrapper itself still re-renders every frame — it's the
+ *  body doing the real work that skips renders when the throttled `t` hasn't moved. */
 export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
+  const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
+  return <ScalarReadoutBody layer={layer} t={throttledT} />
+}
+
+const ScalarReadoutBody = memo(function ScalarReadoutBody({ layer, t }: ScalarReadoutProps) {
   const [newest, oldest] = layer.timeDomain
   const held = t < newest
   const sampledT = held ? newest : t
@@ -51,4 +64,4 @@ export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
       )}
     </span>
   )
-}
+})

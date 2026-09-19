@@ -2,25 +2,22 @@ import * as THREE from 'three'
 import { describe, expect, it } from 'vitest'
 
 import { arrivalPresentationAt, arrivalTimingFor, buildArrivalArcGeometry } from './arcs'
-import { pickCandidate, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
+import { pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { ARC_MAP_LIFT, ARC_SPHERE_LIFT, MARKER_MAP_LIFT, MARKER_SPHERE_LIFT } from './humanStyle'
 import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unfoldedLiftedPosition } from './projection'
 import type { ArrivalGlobeEffect } from '@/types/layer'
 
 /**
- * Diagnosis for the user report "the tooltip hover for Melbourne doesn't seem to work properly."
- * Real data, no browser: the *"British colonisation of Australia"* arrival (`data/events.yaml`)
- * is a `migration` from Portsmouth (50.8, -1.1) to a schematic Sydney destination (-33.85, 151.2)
- * — 2 km from the real, curated Sydney city point (-33.86785, 151.20732) — while Melbourne
- * (-37.814, 144.96332) sits ~713 km further southwest. `HumanCivilisation.tsx` registers that
- * arc's *whole polyline* as one `GlobeHitCandidate` whenever `arcAlpha > 0`
- * (`arrivalPresentationAt`), with `ARC_TOLERANCE_PX = 7` — `GlobeTooltip.tsx`'s own doc comment
- * names exactly this shape of collision as the theory worth checking. This file checks it against
- * the real geometry rather than a screen scan (a screenshot-and-hover QA shot was tried first —
- * `web/scripts/qa/shots.mjs`'s `globe-tooltip-melbourne` — but a colour-based pixel scan over a
- * photoreal basemap is exactly the "drawnBounds is worthless over a busy backdrop" trap
- * `CLAUDE.md` warns about, and it never reliably resolved Melbourne's own dot; this is the
- * grounded, reliable version of the same question).
+ * Regression coverage for a Melbourne hover reported as unreliable. Real data, no browser: the
+ * "British colonisation of Australia" arrival (`data/events.yaml`) is a `migration` from
+ * Portsmouth (50.8, -1.1) to a schematic Sydney destination (-33.85, 151.2) — 2 km from the real,
+ * curated Sydney city point (-33.86785, 151.20732) — while Melbourne (-37.814, 144.96332) sits
+ * ~713 km further southwest. `HumanCivilisation.tsx` registers that arc's *whole polyline* as one
+ * `GlobeHitCandidate` whenever `arcAlpha > 0` (`arrivalPresentationAt`), with `ARC_TOLERANCE_PX =
+ * 7` — a plausible collision with Melbourne's own dot. This checks it against the real geometry
+ * rather than a screen scan: a colour-based pixel scan over a photoreal basemap is exactly the
+ * "drawnBounds is worthless over a busy backdrop" trap `CLAUDE.md` warns about, and never reliably
+ * resolved Melbourne's own dot.
  */
 
 // `data/events.yaml`'s `british-colonisation-australia` `effect:` block, verbatim.
@@ -38,19 +35,16 @@ const BRITISH_COLONISATION_EFFECT: ArrivalGlobeEffect = {
 const MELBOURNE = { lat: -37.814, lon: 144.96332 }
 const SYDNEY = { lat: -33.86785, lon: 151.20732 }
 
-// `HumanCivilisation.tsx`'s own tolerance constants (not exported — it's another agent's file
-// mid-edit right now; these are copied verbatim from the values read there, `ARC_TOLERANCE_PX =
-// 7` / `MARKER_TOLERANCE_PX = 11`, and this test's own assertions would simply be testing the
-// wrong numbers if that file's copy ever drifts from these).
+// `HumanCivilisation.tsx`'s own tolerance constants, copied verbatim (not exported): this test's
+// own assertions would simply test the wrong numbers if that file's copy ever drifts from these.
 const ARC_TOLERANCE_PX = 7
 const MARKER_TOLERANCE_PX = 11
 
 const GLOBE_RADIUS = 1 // Globe.tsx's own GLOBE_RADIUS
 // Globe.tsx's own map-mode fit: a PerspectiveCamera at fov 40 backed off far enough that the
 // Equal Earth map's own half-extents (+3% margin, Globe.tsx's MAP_FIT_MARGIN) fill the viewport —
-// reproduced by hand (not imported) since Globe.tsx is off-limits to edit right now and its own
-// camera-framing constants aren't exported; camera.ts's pure `fitDistance` is the same formula
-// `GlobeCameraControls` calls.
+// reproduced by hand since Globe.tsx's own camera-framing constants aren't exported; camera.ts's
+// pure `fitDistance` is the same formula `GlobeCameraControls` calls.
 function mapFitDistance(aspect: number): number {
   const fovYRadians = (40 * Math.PI) / 180
   const margin = 0.03
@@ -107,8 +101,7 @@ function arrivalArcCandidates(): GlobeHitCandidate[] {
 describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
   const WIDTH = 1440
   const HEIGHT = 900
-  const unfold = 1 // fully-unfolded map — the user report gave no `t`/view, this is the simpler,
-  // fully-on-screen-at-once case to rule in or out first.
+  const unfold = 1 // fully-unfolded map — the simpler, fully-on-screen-at-once case to rule in or out first.
   const group = new THREE.Group()
   group.updateMatrixWorld(true)
   const camera = makeMapCamera(WIDTH, HEIGHT)
@@ -178,5 +171,30 @@ describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
     }
     console.log(`arc's nearest vertex to Melbourne: ${nearestToMelbourne.toFixed(1)}px (tolerance ${ARC_TOLERANCE_PX}px)`)
     expect(Number.isFinite(nearestToMelbourne)).toBe(true)
+  })
+})
+
+describe('sameHitTarget', () => {
+  it('is true for two null targets', () => {
+    expect(sameHitTarget(null, null)).toBe(true)
+  })
+
+  it('is true for two distinct objects sharing the same id — candidatesRef rebuilds target objects on every t change without the pointer having moved off them', () => {
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
+    const b = { ...a } // a fresh object, same id, as a t-driven candidate rebuild would produce
+    expect(a).not.toBe(b)
+    expect(sameHitTarget(a, b)).toBe(true)
+  })
+
+  it('is false when one side is null and the other is not', () => {
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
+    expect(sameHitTarget(a, null)).toBe(false)
+    expect(sameHitTarget(null, a)).toBe(false)
+  })
+
+  it('is false for two different targets', () => {
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
+    const b = cityCandidate('sydney-australia', 'Sydney', SYDNEY).target
+    expect(sameHitTarget(a, b)).toBe(false)
   })
 })

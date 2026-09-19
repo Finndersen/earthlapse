@@ -3,11 +3,11 @@
 /**
  * Fallback scene renderer for browsers without WebGL: a plain two-`<img>` cross-fade (base
  * fixed at opacity 1, overlay at `mix` — never both faded at once) with a CSS transform
- * standing in for camera drift. No CSS filter is applied — `mix` is already the eased
- * crossfade alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole
- * effect (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM
- * before swapping to it and keeps showing its last decoded image while the next one decodes;
- * the scenes just outside the current pair are preloaded speculatively.
+ * standing in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
+ * alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole effect
+ * (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
+ * swapping to it, keeping its last decoded image up while the next one decodes; scenes just
+ * outside the current pair are preloaded speculatively.
  */
 
 import { useEffect, useState, type CSSProperties } from 'react'

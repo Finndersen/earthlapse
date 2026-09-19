@@ -22,11 +22,10 @@ describe('loadSceneTexture', () => {
 
     const texture = await loadSceneTexture('/media/scenes/colour-space-check.jpg')
 
-    // NoColorSpace: the GPU must not decode the texel on sample. shaders.ts's srgbToLinear /
-    // linearToSrgb bracket only the crossfade; a settled scene (uMix 0 or 1) writes the sampled
-    // texel straight to gl_FragColor. Tagging SRGBColorSpace here would have the GPU decode it
-    // a second time, on top of that manual decode, and the unencoded output would then draw
-    // every scene at about (code/255)^2.2 — much darker than the published file.
+    // NoColorSpace: the GPU must not decode the texel on sample — shaders.ts's srgbToLinear/
+    // linearToSrgb bracket only the crossfade. Tagging SRGBColorSpace here would have the GPU
+    // decode it a second time, drawing every scene at about (code/255)^2.2 — much darker than
+    // the published file.
     expect(texture.colorSpace).toBe(THREE.NoColorSpace)
     expect(texture.colorSpace).not.toBe(THREE.SRGBColorSpace)
   })

@@ -5,27 +5,21 @@
  * no data (outside its domain) the line simply stops — the absent region is empty, never drawn
  * as a false zero.
  *
- * The x-axis is warped over `layer.timeDomain` itself, NOT `scale`'s own domain (2026-09-18
- * re-review: population's sparkline was rendering as barely more than a single dot). `scale` is
- * only read for its `kind`, to build a same-kind scale windowed to the layer — every caller in
- * this codebase passes the app's one shared full-Earth-domain scale (`FULL_DOMAIN_SYMLOG_SCALE`)
- * here, so this component previously sampled every layer against 4.6 Gyr regardless of how much
- * of that the layer's own data actually covers. That's a coincidence-only fit for CO2 (570 Myr —
- * 84% of the full domain's own warped width) and a near-total failure for population (12,015 yr —
- * under 6% of it): of 97 evenly-spaced full-domain samples, only 5 landed inside population's
- * domain at all, and every one of them predates 1450 BP — the entire industrial-era-to-present
- * explosion, the whole reason the shape is interesting, fell between two adjacent samples and
- * was never drawn. No sample density fixes that; the samples have to be windowed to the layer's
- * own domain in the first place. Rescoped this way, population goes from 5 unusable points to 95
- * well-distributed ones spanning its full ~1,345x range (verified against the real published
- * data) — `LayerChart` keeps sharing the timeline's own scale unchanged (that's load-bearing:
- * "the value under the playhead sits directly above it", its own doc comment), since it is
- * explicitly a view docked to whatever window the timeline is currently showing, not a
+ * The x-axis is warped over `layer.timeDomain` itself, NOT `scale`'s own domain. `scale` is only
+ * read for its `kind`, to build a same-kind scale windowed to the layer — every caller passes the
+ * app's one shared full-Earth-domain scale (`FULL_DOMAIN_SYMLOG_SCALE`), so sampling directly
+ * against it would waste nearly every sample on a layer whose data covers only a sliver of that
+ * domain: population's ~12,000-year span is under 6% of the full 4.6 Gyr domain's warped width, so
+ * most full-domain samples land outside it and the industrial-era-to-present shape — the whole
+ * reason the trend is interesting — can fall between two adjacent samples and never draw. Windowing
+ * the samples to the layer's own domain instead keeps them well distributed across its actual
+ * range. `LayerChart` deliberately keeps sharing the timeline's own scale unchanged (that's
+ * load-bearing: "the value under the playhead sits directly above it", its own doc comment), since
+ * it is explicitly a view docked to whatever window the timeline is currently showing, not a
  * self-contained peek the way this component is.
  *
- * Never draws the future (2026-09-18, user: "my idea... was for them to grow over time, not be
- * fully visible upfront"): a sample only draws once `t` has reached it, the same rule arrival
- * arcs and city markers already apply on the globe — this is a `t`-driven reveal, not a fade on
+ * Never draws the future: a sample only draws once `t` has reached it, the same rule arrival arcs
+ * and city markers already apply on the globe — this is a `t`-driven reveal, not a fade on
  * inactivity, so it doesn't run afoul of the project's "nothing hides on inactivity" rule. When
  * `t` sits before the layer's domain even starts (the "NO DATA" case), nothing has been reached
  * yet, so nothing draws — no trace, no dot; the always-present `sparkPlayhead` line is kept, the
@@ -34,11 +28,14 @@
  * visibly rescale as it grows while scrubbing — only which portion is traced changes.
  */
 
+import { memo } from 'react'
+
 import { createLinearScale, createSymlogScale } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
 import { axisTransform } from '../chartAxis'
 import { clampUnit } from '../format'
+import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '../useThrottledValue'
 import styles from './hud.module.css'
 
 const SAMPLE_COUNT = 96
@@ -57,7 +54,16 @@ interface Point {
   value: number
 }
 
+/** Throttles `t` (see `useThrottledValue`'s own doc comment) before handing off to the memoised
+ *  body below, so playback's per-frame `t` writes only re-run the `SAMPLE_COUNT`-point resample
+ *  a few times a second, not every frame. This wrapper itself still re-renders every frame — it's
+ *  the body doing the real work that skips renders when the throttled `t` hasn't moved. */
 export function Sparkline({ layer, t, scale }: SparklineProps) {
+  const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
+  return <SparklineBody layer={layer} t={throttledT} scale={scale} />
+}
+
+const SparklineBody = memo(function SparklineBody({ layer, t, scale }: SparklineProps) {
   const layerScale = scale.kind === 'linear' ? createLinearScale(layer.timeDomain) : createSymlogScale(layer.timeDomain)
 
   const allSamples: Array<(Point & { t: GeoTime }) | null> = []
@@ -125,4 +131,4 @@ export function Sparkline({ layer, t, scale }: SparklineProps) {
       )}
     </svg>
   )
-}
+})

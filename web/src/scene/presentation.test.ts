@@ -380,9 +380,8 @@ describe('usePresentedSceneMix', () => {
     await waitFor(() => expect(result.current).toEqual(alone(s1)), { interval: 10 })
     const firstChangeAt = performance.now()
 
-    // A second change requested immediately after — real `requestAnimationFrame` jitter, or a
-    // seek landing partway through an already-floored territory, can otherwise make this land
-    // far under MIN_CUT_DWELL_SECONDS after the first.
+    // A second change requested immediately after, which without the gate could land far under
+    // MIN_CUT_DWELL_SECONDS after the first (rAF jitter, a seek mid-territory).
     act(() => rerender({ target: alone(s2) }))
 
     // Held for a little while: still showing s1, not yet s2.
@@ -411,12 +410,9 @@ describe('usePresentedSceneMix', () => {
     const { result, rerender } = renderHook(({ target, regime }: { target: SceneMix; regime: PresentationRegime }) => usePresentedSceneMix(target, regime), {
       initialProps: { target: alone(s0) as SceneMix, regime: 'crossfade' as PresentationRegime },
     })
-    // A crossfade started fresh from a settled pair is unaffected by the backstop even once one
-    // has recorded a "last change" — every branch that starts such a transition begins exactly at
-    // the settled endpoint (`step`'s own doc comment), so its dominant scene cannot flip sooner
-    // than MIN_TRANSITION_SECONDS / 2 (0.8s), comfortably clear of MIN_CUT_DWELL_SECONDS (0.35s):
-    // the gate can only ever hold a change that would otherwise land *too soon*, and this one
-    // never would.
+    // A crossfade started fresh from a settled pair can't flip dominance sooner than
+    // MIN_TRANSITION_SECONDS / 2 (0.8s), clear of MIN_CUT_DWELL_SECONDS (0.35s) — the gate can
+    // only ever hold a change that would land too soon, and this one never would.
     act(() => rerender({ target: alone(s1), regime: 'cut' }))
     await waitFor(() => expect(result.current).toEqual(alone(s1)))
 
@@ -429,28 +425,21 @@ describe('usePresentedSceneMix', () => {
   })
 
   it('holds a "crossfade"-regime dominant change too, not only "cut" (regression: the backstop used to gate "cut" only)', async () => {
-    // Mounts with the presented mix already close to the 0.5 switch point — `usePresentedSceneMix`
-    // mounts at `target` exactly (no animation on mount, see its own doc comment), so this is a
-    // legitimate starting state, not an exploit of `step`'s own rate limit (which only bounds
-    // movement *after* mount). From here, `step`'s "same pair" branch only has to cross the last
-    // sliver of distance to flip dominance again, not a fresh MIN_TRANSITION_SECONDS sweep from an
-    // extreme — exactly the situation a `step` continuation resuming from a mix already close to
-    // the boundary produces in practice (`presentation.ts`'s own "wall-clock backstop" doc
-    // comment), and how the live 266 ms gap at 32x was reproduced.
+    // Mounts with the presented mix already close to the 0.5 switch point (`usePresentedSceneMix`
+    // mounts at `target` exactly, no animation on mount) — a legitimate starting state, not an
+    // exploit of `step`'s rate limit, which only bounds movement after mount.
     const { result, rerender } = renderHook(({ target, regime }: { target: SceneMix; regime: PresentationRegime }) => usePresentedSceneMix(target, regime), {
       initialProps: { target: { from: s0, to: s1, mix: 0.49 } as SceneMix, regime: 'crossfade' as PresentationRegime },
     })
     expect(result.current).toEqual({ from: s0, to: s1, mix: 0.49 })
 
-    // First change: unconstrained (nothing to rate-limit against yet) — a small "crossfade"
-    // retarget crosses the 0.5 boundary in one tick since the presented mix started right next to
-    // it.
+    // First change unconstrained: a small retarget crosses the 0.5 boundary in one tick since
+    // the presented mix started right next to it.
     act(() => rerender({ target: { from: s0, to: s1, mix: 0.9 }, regime: 'crossfade' }))
     await waitFor(() => expect(dominantId(result.current)).toBe(s1.id), { interval: 10 })
     const firstChangeAt = performance.now()
 
-    // Immediately, retarget back the other way, still "crossfade" — again only a sliver of mix
-    // separates the current presented state from flipping dominance back to s0.
+    // Immediately retarget back the other way, still "crossfade".
     act(() => rerender({ target: { from: s0, to: s1, mix: 0.1 }, regime: 'crossfade' }))
 
     // Held for a little while: still showing s1 as dominant, not yet back to s0.

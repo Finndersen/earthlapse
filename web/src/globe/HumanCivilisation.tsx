@@ -22,7 +22,7 @@
  * inhabited, city, scene location — is an instance in a single `MarkerField`, so the full
  * 242-city expanded set costs one draw call and zero per-frame JS. Arcs stay individual meshes
  * because each is its own ribbon geometry, but only the handful actually in flight (or ghosted by
- * a trace) render at all, where the previous implementation drew all twenty-five permanently.
+ * a trace) render at all.
  *
  * **Labels.** A city's full name/country/population still only ever appears in the shared
  * tooltip, on hover — ADR-032's call against permanent screen-space labels stands: at globe scale
@@ -34,19 +34,16 @@
  * always brings its label back. Capped (`CITY_LABEL_CAP`) since the published set has cohorts of
  * cities sharing the exact same first-appearance `t`.
  *
- * A label only ever shows for a city that can actually be seen (2026-09 user follow-up: "dont
- * show the initial city label... if the city isnt visible on the globe at the time") —
- * `cityLabelVisibility` multiplies the `t`-driven fade above by the same limb test the dot itself
- * is already subject to (`sphereMarkerVisibility`, `arcs.ts` — round the back of the sphere in
- * globe mode, skipped once unfolded past the midpoint, exactly `GlobeTooltip.tsx`'s own
- * `projectAnchor`) and a hard off-screen discard when the marker falls outside the camera's
- * frustum (zoomed map, panned sphere). Never clamped back into view the way the pointer-following
- * tooltip deliberately is — an unrequested label dragged to the screen edge would point at
- * nothing. Both are about the *camera*, not the clock, so they need their own per-frame
- * `useFrame` (`CityLabelItem`) rather than the plain-render-time computation everything else in
- * this file uses — camera drag/auto-rotate moves the view without `t` changing or this component
- * re-rendering, the same reason the dot's own limb fade lives in a shader uniform re-read every
- * frame rather than a React prop.
+ * A label only ever shows for a city that can actually be seen: `cityLabelVisibility` multiplies
+ * the `t`-driven fade above by the same limb test the dot itself is already subject to
+ * (`sphereMarkerVisibility`, `arcs.ts` — round the back of the sphere in globe mode, skipped once
+ * unfolded past the midpoint, exactly `GlobeTooltip.tsx`'s own `projectAnchor`) and a hard
+ * off-screen discard when the marker falls outside the camera's frustum (zoomed map, panned
+ * sphere). Never clamped back into view the way the pointer-following tooltip deliberately is — an
+ * unrequested label dragged to the screen edge would point at nothing. Both are about the
+ * *camera*, not the clock, so they need their own per-frame `useFrame` (`CityLabelItem`) rather
+ * than the plain-render-time computation everything else in this file uses: camera drag/auto-rotate
+ * moves the view without `t` changing or this component re-rendering.
  */
 
 import { Html } from '@react-three/drei'
@@ -66,6 +63,7 @@ import {
   buildFatLineBuffers,
   sphereMarkerVisibility,
   traceToOrigin,
+  type ArrivalIndex,
   type ArrivalRecord,
   type ArrivalTiming,
   type ArrowheadPlacement,
@@ -273,9 +271,9 @@ function ArcSegment({ points, color, alpha, reveal, sympathy, unfold }: ArcSegme
 // --------------------------------------------------------------------------------- arrowhead
 
 /**
- * A small solid triangle marking the leading edge of a travelling arc — direction made explicit
- * (2026-09 user feedback: "an arrow at the end ... to make the direction obvious"), rather than
- * relying on the reveal animation alone, which reads clearly only while actively scrubbing.
+ * A small solid triangle marking the leading edge of a travelling arc, making its direction
+ * explicit rather than relying on the reveal animation alone, which reads clearly only while
+ * actively scrubbing.
  *
  * Sized in CSS pixels via the same screen-space technique the arc ribbon
  * (`ARC_VERTEX_SHADER`) and the instanced marker field (`MarkerField.tsx`'s `MARKER_VERTEX_SHADER`)
@@ -505,6 +503,26 @@ function formatPopulation(population: number): string {
   return Math.round(population).toLocaleString('en-US')
 }
 
+/** The stable "nothing traced" value — see `resolveTracedIds`'s own doc comment on why reusing one
+ *  reference here (rather than a fresh `new Set()`) matters. */
+const EMPTY_TRACED_IDS: ReadonlySet<string> = new Set()
+
+/**
+ * The traced-chain id set for whatever `eventId` is currently hovered, keyed on that `eventId`
+ * alone rather than on the hovered target object: `candidatesRef` rebuilds with fresh target
+ * objects on every `t` change (playback), and a city target's `eventId` is always `null` — keying
+ * on the target object itself would mint a new `Set` on every distinct city hovered across the
+ * map's ~280 dots despite the traced chain always being empty, which in turn gives a caller's own
+ * memo (`HumanCivilisation`'s `markers`) a new identity on every pointermove and forces
+ * `MarkerField` to rewrite and re-upload its GPU buffers on every hover flicker during a drag, not
+ * just when the marker set actually changed. `EMPTY_TRACED_IDS` keeps the "nothing traced" case a
+ * single stable reference across renders, so a caller's `useMemo` keyed on this return value only
+ * ever re-runs for an actual change in what is traced. Exported for `HumanCivilisation.test.tsx`.
+ */
+export function resolveTracedIds(index: ArrivalIndex, hoveredEventId: string | null): ReadonlySet<string> {
+  return hoveredEventId === null ? EMPTY_TRACED_IDS : new Set(traceToOrigin(index, hoveredEventId))
+}
+
 /** `dateRange` names this as the span of attested population readings, not the city's lifespan —
  *  a city can (and often does) keep being drawn past its newest reading (`CITY_TRAILING_GRACE_T`,
  *  `cities.ts`), so a range worded like a start/end of existence would contradict the marker. */
@@ -524,15 +542,14 @@ export function cityTarget(city: CityAtTime, t: GeoTime): GlobeHitTarget {
 // ------------------------------------------------------------------------------- city labels
 
 /**
- * The small transient name tag a city gets when it first appears (bug report 2026-09: "when a
- * city first appears, its name should briefly show as a small label"). Positioned exactly like
+ * The small transient name tag a city gets when it first appears. Positioned exactly like
  * `GlobeTooltip.tsx`'s own tooltip — drei's `Html` at the marker's `unfoldedLiftedPosition`, so it
  * tracks the globe through rotation and the sphere/map unfold without re-deriving a screen
  * position itself — but with no edge clamp: these are decorative and small, drawn several at
  * once, and the tooltip's own clamp logic exists for a single larger panel that must never be cut
- * off, which isn't this. Styled inline (not a `Globe.module.css` class) since this component does
- * not own that file right now; the values mirror `.tooltip`'s own (mono HUD font, near-black
- * translucent chip) so it reads as the same family rather than a new visual language.
+ * off, which isn't this. Styled inline rather than through `Globe.module.css`; the values mirror
+ * `.tooltip`'s own (mono HUD font, near-black translucent chip) so it reads as the same family
+ * rather than a new visual language.
  */
 const CITY_LABEL_STYLE: CSSProperties = {
   pointerEvents: 'none',
@@ -690,10 +707,8 @@ export function HumanCivilisation({
   const hovered = useGlobeHitTest({ candidatesRef, unfold, radius, groupRef, enabled, touchHitRef })
 
   const index = useMemo(() => buildArrivalIndex(effectEvents), [effectEvents])
-  const tracedIds = useMemo(() => {
-    const source = hovered !== null && hovered.eventId !== null ? hovered.eventId : null
-    return source === null ? new Set<string>() : new Set(traceToOrigin(index, source))
-  }, [hovered, index])
+  const hoveredEventId = hovered?.eventId ?? null
+  const tracedIds = useMemo(() => resolveTracedIds(index, hoveredEventId), [index, hoveredEventId])
 
   // Converts `CITY_DECLUTTER_MIN_SEPARATION_PX` (a screen-pixel budget) into the object-space
   // distance `declutterCities` compares cities by, via the standard perspective scale-at-distance
@@ -721,10 +736,9 @@ export function HumanCivilisation({
     ;(window as unknown as { __declutterDebug?: readonly string[] }).__declutterDebug = visibleCities.map((c) => c.feature.id)
   }
 
-  // A brief name tag for a city that just appeared — expanded only, per the brief ("only when in
-  // fullscreen globe/map view"); the orb never has visibleCities and dots aren't ranked by
-  // recency there anyway. `visibleCities` is already population-ordered, so the cap this applies
-  // keeps the same priority the dots themselves draw in.
+  // A brief name tag for a city that just appeared — expanded only; the orb never has
+  // visibleCities and dots aren't ranked by recency there anyway. `visibleCities` is already
+  // population-ordered, so the cap this applies keeps the same priority the dots themselves draw in.
   const cityLabels = useMemo(() => (expanded ? newCityLabels(visibleCities, t) : []), [expanded, visibleCities, t])
 
   const arrivals = useMemo(
@@ -795,8 +809,7 @@ export function HumanCivilisation({
         color: CITY_RGB,
         // `trailingFade` (cities.ts) fades a marker out over CITY_TRAILING_GRACE_T years past its
         // own newest attested reading, rather than popping it away the instant it's excluded —
-        // see that constant's own doc comment (bug report: Cahokia et al. rendering as modern
-        // cities under the old unconditional hold-flat).
+        // see CITY_TRAILING_GRACE_T's own doc comment.
         alpha: CITY_ALPHA * city.trailingFade,
         innerFraction: 0,
         pulse: 0,
@@ -879,9 +892,9 @@ export function HumanCivilisation({
         if (alpha <= 0 || record.geometry.isDegenerate) return null
         const color = presentation.arcAlpha > 0 ? ARC_COLOR : ARC_GHOST_COLOR
         const sympathy = Math.max(sympathyFor(record.eventId), traced ? 0.6 : 0)
-        // The arrowhead fades with the arc it belongs to (never outliving it, per the brief) and
-        // fades in over its own short opening stretch of travel rather than popping in at full
-        // strength the instant travel begins (`ARROW_FADE_IN_PROGRESS`'s own doc comment).
+        // The arrowhead fades with the arc it belongs to, never outliving it, and fades in over its
+        // own short opening stretch of travel rather than popping in at full strength the instant
+        // travel begins (`ARROW_FADE_IN_PROGRESS`'s own doc comment).
         const arrowPlacement = arrowheadPlacementAt(record.effect, presentation.travelProgress)
         const arrowAlpha = alpha * easeSmoothstep(0, ARROW_FADE_IN_PROGRESS, presentation.travelProgress)
         return (

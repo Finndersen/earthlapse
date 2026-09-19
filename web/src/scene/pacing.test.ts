@@ -112,9 +112,7 @@ describe('scenePlaybackSegments: per-scene dwell split across neighbouring gaps'
     const olderHoldForS1 = segments[3]! // first segment of gap(1,2): [s1.t, bandNewerEdge]
     expect(newerHoldForS1.tOlder).toBe(s1.t)
     expect(olderHoldForS1.tNewer).toBe(s1.t)
-    // Each hold is at least the base half-dwell; the total is exactly SCENE_DWELL_SECONDS
-    // only when both neighbouring gaps happen to have zero bonus, so assert the floor rather
-    // than an exact figure here — the dedicated bonus tests below pin the bonus itself down.
+    // Asserts the floor, not an exact figure — the dedicated bonus tests below pin that down.
     expect(newerHoldForS1.durationSeconds + olderHoldForS1.durationSeconds).toBeGreaterThanOrEqual(SCENE_DWELL_SECONDS)
   })
 

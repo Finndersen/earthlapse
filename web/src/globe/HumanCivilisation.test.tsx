@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import type { FeatureData } from '@/types/layer'
+import type { ArrivalGlobeEffect, FeatureData, TimelineEvent } from '@/types/layer'
 
+import { buildArrivalIndex } from './arcs'
 import { cityRadiusPx, type CityAtTime } from './cities'
-import { cityLabelVisibility, cityTarget } from './HumanCivilisation'
+import { cityLabelVisibility, cityTarget, resolveTracedIds } from './HumanCivilisation'
 
 // Same conventions arcs.test.ts's own `sphereMarkerVisibility` suite uses, since
 // `cityLabelVisibility` wraps that exact function for its limb half.
@@ -101,5 +102,40 @@ describe('cityTarget', () => {
     // stretched or reinterpreted to reach t=81.
     const target = cityTarget(cityAt(SANAA, 18_000), 81)
     expect(target.dateRange).toBe('Records: 522 years ago – 115 years ago')
+  })
+})
+
+describe('resolveTracedIds', () => {
+  const ORIGIN: ArrivalGlobeEffect = {
+    kind: 'arrival',
+    arrivalKind: 'peopling',
+    origin: { lat: 9.0, lon: 34.0 },
+    destination: { lat: 9.0, lon: 34.0 },
+    established: 3.15e5,
+    windows: [{ tMin: 0, tMax: 3.15e5 }],
+  }
+  const DESCENDANT: ArrivalGlobeEffect = {
+    kind: 'arrival',
+    arrivalKind: 'peopling',
+    origin: { lat: 9.0, lon: 34.0 },
+    destination: { lat: 31.5, lon: 35.0 },
+    established: 1.9e5,
+    windows: [{ tMin: 0, tMax: 2.0e5 }],
+  }
+  function eventFor(id: string, effect: ArrivalGlobeEffect): TimelineEvent {
+    return { id, label: id, tMin: effect.established, tMax: effect.windows[0]!.tMax, importance: 0.5, description: 'd', citation: 'c', effect }
+  }
+  const index = buildArrivalIndex([eventFor('origin', ORIGIN), eventFor('descendant', DESCENDANT)])
+
+  it('returns the exact same reference every time nothing is hovered — hovering a city, whose eventId is always null, must not mint a new Set', () => {
+    const a = resolveTracedIds(index, null)
+    const b = resolveTracedIds(index, null)
+    expect(a).toBe(b)
+    expect(a.size).toBe(0)
+  })
+
+  it('returns a real traced chain for an actual arrival hover', () => {
+    const traced = resolveTracedIds(index, 'descendant')
+    expect([...traced]).toEqual(['descendant', 'origin'])
   })
 })
