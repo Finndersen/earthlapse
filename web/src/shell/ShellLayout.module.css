@@ -170,24 +170,19 @@
 /* Below the readouts, filling the empty row above `.bottom` — the one *column* of the periphery
    that is never the globe orb, the ancestor panel or the scene caption: `.feed`'s own grid area
    (`'feed . .'`) never shares a cell with `.caption`'s (`'bottom bottom bottom'`), so the two
-   never draw over each other. That does not mean `.feed` always gets the height it wants,
-   though — this row is the grid's one `minmax(0, 1fr)` track, so it is what yields when
-   `.bottom` (an `auto` track, sized to fit the caption heading + passage + timeline) needs more
-   room than the fixed viewport has spare, right down to this track's `min-height: 0` floor. On
-   a short, wide window with a long caption (1280x720 is the worst case measured) that floor is
-   reached: `<EventFeed>` still renders (so no card ever draws over the caption), it simply has
-   no room to draw any cards in. Pre-existing — a 62ch single-line-clamped caption already came
-   close before scene titles added a heading row above it. Stretched on both axes, not
-   shrink-to-fit: `<EventFeed>` measures its wrapper's pixel width (to convert its lookback into
-   time) and height (to decide how many cards fit), and a content-sized box would make both
-   depend circularly on the cards they decide — collapsing to 0 and leaving the feed permanently
-   unable to show anything. The feed stacks its cards against the bottom of this box itself. The
-   padding keeps the tallest stack clear of the readouts above and the caption/chart below.
+   never draw over each other. `.feed` does not always get the height it wants, though — this row
+   is the grid's one `minmax(0, 1fr)` track, so it yields whatever `.bottom` (an `auto` track,
+   sized to fit the caption heading + passage + timeline) needs. `.caption`'s own `max-height`
+   below bounds how much that can be. `<EventFeed>` caps its own card count at a fixed number
+   (`DEFAULT_MAX_VISIBLE`, `select.ts`) rather than deriving it from this box's measured height,
+   so it never depends on how much of this track a given viewport or caption leaves — the feed
+   stacks its (up to three) cards against the bottom of this box, scrolling within it if a very
+   short viewport leaves less room than that. The padding keeps the stack clear of the readouts
+   above and the caption/chart below.
 
    This is also why hiding a HUD readout (`@/layers/hudVisibility.ts`) needs no change here:
    `.readouts` above sits in the grid's row-2 `auto` track, so one fewer readout row shrinks that
-   track, and this `1fr` track simply claims whatever height that frees, same as it already claws
-   back space from a shorter caption.
+   track, and this `1fr` track simply claims whatever height that frees.
    Transparent to the pointer (the cards re-enable it): the box spans the whole row even when it
    shows nothing. */
 .feed {
@@ -375,9 +370,25 @@
      own full-width row below `.readouts`/`.ancestor`/`.feed` (ShellLayout.tsx's grid), so a
      wider box never overlaps `.readouts` or `.ancestor` beside it *horizontally* — but a taller
      `.bottom` (this box plus the heading above it) does take height away from `.feed`'s track
-     above it in the same column; see `.feed`'s own comment for that trade-off and its floor. */
-  max-width: min(74ch, 92vw);
+     above it in the same column; see `.caption`'s own `max-height` below and `.feed`'s own
+     comment for how that's bounded. */
+  max-width: min(90ch, 94vw);
   text-align: center;
+}
+
+/* Bounds how tall a scene caption (heading + passage, `app/page.module.css`) can grow, so a
+   wordy scene cannot squeeze `.feed`'s `minmax(0, 1fr)` track above it in the same column.
+   Sized to hold the heading plus five passage lines at the largest clamped type (heading
+   ~26px, passage 19px at line-height 1.5), which clears the longest real caption (~340
+   characters) at this `max-width`. `overflow-y: auto` is the backstop for anything longer,
+   scrolling rather than clipping. Not applied to `.expandedGlobeCaption`, which never carries
+   text long enough to need it. */
+.caption {
+  max-height: clamp(128px, 20vh, 184px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
 }
 
 /* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot, above
@@ -488,9 +499,7 @@
   /* The brief's "compact single-card strip above the timeline": `<EventFeed>` itself caps to
      one single-line card at this breakpoint (`useIsCompactViewport`), so this drops the desktop
      column's width cap — full-width here reads as a strip, not a narrow stack — and its padding,
-     since the phone HUD leaves this row only a few dozen px and `row-gap` already separates it.
-     When the row is squeezed shorter than the strip, `<EventFeed>` draws nothing
-     (`feedStripCapacity`) rather than spilling over the readouts above. */
+     since the phone HUD leaves this row only a few dozen px and `row-gap` already separates it. */
   .feed {
     align-self: auto;
     max-width: none;

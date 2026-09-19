@@ -110,9 +110,9 @@ describe('Experience (W12a integration)', () => {
         useTimeStore.getState().setT(0)
       })
 
-      // The scene package now rate-limits how fast the *displayed* pair can follow a jump
-      // this large (ADR-012 / `presentation.ts`'s `MIN_TRANSITION_SECONDS`), so it settles
-      // over real wall-clock time rather than the instant this store update used to produce.
+      // The scene package rate-limits how fast the *displayed* pair can follow a jump this
+      // large (ADR-012 / `presentation.ts`'s `MIN_TRANSITION_SECONDS`), so it settles over
+      // real wall-clock time rather than instantly.
       await waitFor(
         () => {
           const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
@@ -126,18 +126,11 @@ describe('Experience (W12a integration)', () => {
     12000,
   )
 
-  // These used to assert CO2's HUD readout rendered its sampled value ("~277 ppm at t=0") and
-  // "no data" past its coverage — real integration coverage that a fetched scalar layer's
-  // sample reaches a rendered `<ScalarReadout>`. CO2 is now hidden from the HUD entirely
-  // (`@/layers/hudVisibility.ts`, 2026-09-18: "remove co2 section so thers more room for events
-  // list"), so that specific readout never renders any more, at any `t` — replaced below with an
-  // assertion of exactly that (still fetched and sampled correctly under the hood; simply not
-  // shown). Note this stub fixture has no `population` layer (`public/stub/manifest.json` only
-  // ever declared co2/day_length/lineage/paleodem), so — with CO2 now excluded — there is no
-  // remaining chartable HUD scalar to repoint the original "value renders correctly" integration
-  // check at here; that specific coverage (a real sample flowing into a rendered readout, as
-  // opposed to a hidden-row check) now lives only in component-level tests
-  // (`src/layers/components/*.test.tsx`) and the real (non-stub) production manifest, not here.
+  // CO2 is hidden from the HUD entirely (`@/layers/hudVisibility.ts`), so no CO2 scalar readout
+  // ever renders, at any `t`, even though the layer is still fetched and sampled under the hood.
+  // The stub fixture has no `population` layer either, so there is no remaining chartable HUD
+  // scalar here; a real sample reaching a rendered readout is covered by component-level tests
+  // (`src/layers/components/*.test.tsx`) and the production manifest.
   it('never renders a CO2 HUD readout, at t=0 or well past its coverage', async () => {
     await renderSettled()
 
@@ -276,29 +269,8 @@ describe('Experience (W12a integration)', () => {
     expect(seen.size).toBeGreaterThanOrEqual(5)
   })
 
-  describe('event detail (W-followup item 12)', () => {
-    // jsdom's getBoundingClientRect defaults to a zero-size box, under which the feed (like the
-    // timeline track) treats itself as unmeasured and shows nothing — give its container a real
-    // width, as `events/components/EventFeed.test.tsx` does in isolation. Installed before
-    // `renderSettled` mounts the tree: `useElementSize` has no ResizeObserver in jsdom, so it
-    // only ever reads this once, on mount.
-    function mockFeedRect(): () => void {
-      const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
-        left: 0,
-        top: 0,
-        right: 300,
-        bottom: 40,
-        width: 300,
-        height: 40,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      } as DOMRect)
-      return () => spy.mockRestore()
-    }
-
+  describe('event detail panel', () => {
     it('surfaces a recently-reached event as a feed card, opening a detail panel on click rather than scrubbing in place', async () => {
-      const restoreRect = mockFeedRect()
       await renderSettled()
 
       act(() => {
@@ -322,15 +294,11 @@ describe('Experience (W12a integration)', () => {
         fireEvent.click(within(dialog).getByRole('button', { name: 'Show on timeline' }))
       })
       expect(useTimeStore.getState().t).toBe(66_000_000)
-      // "Show on timeline" also closes the panel (re-review fix, 2026-09-15) — it used to leave
-      // it open over the very scene the click asked to see.
+      // "Show on timeline" also closes the panel, rather than leaving it open over the scene.
       expect(screen.queryByRole('dialog')).toBeNull()
-
-      restoreRect()
     })
 
-    it('"Show on timeline" does not resume playback even if it was playing before the panel opened (re-review fix, 2026-09-15)', async () => {
-      const restoreRect = mockFeedRect()
+    it('"Show on timeline" does not resume playback even if it was playing before the panel opened', async () => {
       await renderSettled()
 
       act(() => {
@@ -351,12 +319,9 @@ describe('Experience (W12a integration)', () => {
       expect(screen.queryByRole('dialog')).toBeNull()
       // Resuming here would immediately carry the playhead away from the place just asked for.
       expect(useTimeStore.getState().playback.playing).toBe(false)
-
-      restoreRect()
     })
 
     it('pauses playback on open and resumes it on close, only if it was playing', async () => {
-      const restoreRect = mockFeedRect()
       await renderSettled()
 
       act(() => {
@@ -374,12 +339,9 @@ describe('Experience (W12a integration)', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Close' }))
       })
       expect(useTimeStore.getState().playback.playing).toBe(true)
-
-      restoreRect()
     })
 
     it('leaves playback paused on close when it was already paused before opening', async () => {
-      const restoreRect = mockFeedRect()
       await renderSettled()
 
       act(() => {
@@ -395,8 +357,6 @@ describe('Experience (W12a integration)', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Close' }))
       })
       expect(useTimeStore.getState().playback.playing).toBe(false)
-
-      restoreRect()
     })
   })
 })

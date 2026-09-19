@@ -89,11 +89,10 @@ export function Experience() {
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
 
-  // The timeline's animated scale lives here and is passed down to <Timeline>, the chart dock
-  // and the event feed, so all of them follow the selected era section's window (ADR-024) and
-  // the value under the chart's playhead sits directly above the timeline's. Section windows
-  // are constants from `sections.ts`, so `useAnimatedScale`'s memoised scales only recompute
-  // while the window or the symlog/linear toggle is actually animating.
+  // The timeline's animated scale lives here and is passed down to <Timeline> and the chart
+  // dock, so the value under the chart's playhead sits directly above the timeline's. Section
+  // windows are constants from `sections.ts`, so `useAnimatedScale`'s memoised scales only
+  // recompute while the window or the symlog/linear toggle is actually animating.
   const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
   // A leaf section (no children — e.g. the Holocene's own "Modern") draws with the fixed
   // `SYMLOG_C` rather than `symlogKnee`'s own adaptive shrink, which is meant for a section that
@@ -448,6 +447,11 @@ export function Experience() {
               assetBase={manifest.assetBase}
               renderCaption={renderCaption}
               regime={steadyRegime.regime}
+              // The expanded globe/map's backdrop sits at z-index 50, fully covering `.scene`
+              // (`ShellLayout.module.css`), so the scene canvas need not render while it's up —
+              // see `SceneView`'s own `visible` doc comment for why this stops short of
+              // unmounting it.
+              visible={!globeExpanded}
             />
           ) : (
             <div className={styles.placeholder}>No scenes in manifest.</div>
@@ -498,7 +502,6 @@ export function Experience() {
         feed={
           <EventFeed
             t={t}
-            scale={FULL_DOMAIN_SYMLOG_SCALE}
             events={manifest.events}
             onEventActivate={openEventDetail}
             onVisibleEventsChange={onVisibleEventsChange}
