@@ -29,7 +29,7 @@
  * data hole either).
  */
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
@@ -58,33 +58,21 @@ interface ChartPoint {
   upper: number | null
 }
 
-/**
- * Splits one continuous (gap-free) run of points into its already-reached prefix and its
- * not-yet-reached remainder, sharing the boundary point between both so the solid and ghost
- * lines touch with no visual gap. Points run in ascending `u`, i.e. descending `t` (oldest
- * first) — playback runs oldest -> newest, so everything from the start up to the first point
- * newer than `t` is reached.
- */
-function splitAtPlayhead(segment: ChartPoint[], t: GeoTime): { reached: ChartPoint[]; future: ChartPoint[] } {
-  const splitIndex = segment.findIndex((p) => p.t < t)
-  if (splitIndex === -1) return { reached: segment, future: [] }
-  if (splitIndex === 0) return { reached: [], future: segment }
-  return { reached: segment.slice(0, splitIndex), future: segment.slice(splitIndex - 1) }
+/** Everything about the plotted curve that depends only on `layer` and `scale`, never on `t` —
+ *  the 240-sample resample and every derived shape (segments, axis transform). Memoised as a
+ *  unit so a `t`-only render (scrubbing, playback) never re-samples the layer. */
+interface ChartCurve {
+  lineSegments: ChartPoint[][]
+  bandSegments: ChartPoint[][]
+  min: number
+  max: number
+  isLog: boolean
+  hasData: boolean
+  x: (u: number) => number
+  y: (value: number) => number
 }
 
-export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
-  // Escape closes the chart from anywhere — scoped to this listener's own lifetime (mounted
-  // only while the chart is open, per the caller), so it never competes with the timeline's
-  // own keydown handling, which is a React handler on the timeline's root and only fires
-  // while focus is inside it (see `timeline/keyboard.ts`).
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
+function buildChartCurve(layer: Layer<ScalarValue>, scale: TimeScale): ChartCurve {
   const samples: Array<ChartPoint | null> = []
   for (let i = 0; i <= SAMPLE_COUNT; i++) {
     const u = i / SAMPLE_COUNT
@@ -139,13 +127,46 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
   flushLine()
   flushBand()
 
+  return { lineSegments, bandSegments, min, max, isLog, hasData: presentValues.length > 0, x, y }
+}
+
+/**
+ * Splits one continuous (gap-free) run of points into its already-reached prefix and its
+ * not-yet-reached remainder, sharing the boundary point between both so the solid and ghost
+ * lines touch with no visual gap. Points run in ascending `u`, i.e. descending `t` (oldest
+ * first) — playback runs oldest -> newest, so everything from the start up to the first point
+ * newer than `t` is reached.
+ */
+function splitAtPlayhead(segment: ChartPoint[], t: GeoTime): { reached: ChartPoint[]; future: ChartPoint[] } {
+  const splitIndex = segment.findIndex((p) => p.t < t)
+  if (splitIndex === -1) return { reached: segment, future: [] }
+  if (splitIndex === 0) return { reached: [], future: segment }
+  return { reached: segment.slice(0, splitIndex), future: segment.slice(splitIndex - 1) }
+}
+
+export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
+  // Escape closes the chart from anywhere — scoped to this listener's own lifetime (mounted
+  // only while the chart is open, per the caller), so it never competes with the timeline's
+  // own keydown handling, which is a React handler on the timeline's root and only fires
+  // while focus is inside it (see `timeline/keyboard.ts`).
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
+  const curve = useMemo(() => buildChartCurve(layer, scale), [layer, scale])
+  const { x, y, min, max, isLog, hasData } = curve
+
   // Reached (full weight) vs. not-yet-reached (ghost) halves of each gap-free run — see this
   // file's own doc comment. Bands are dropped entirely past the playhead rather than ghosted:
   // an uncertainty range is itself a claim about a value, which is exactly what a not-yet-
   // reached point must not assert.
-  const reachedLineSegments = lineSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
-  const futureLineSegments = lineSegments.map((seg) => splitAtPlayhead(seg, t).future).filter((seg) => seg.length > 1)
-  const reachedBandSegments = bandSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
+  const reachedLineSegments = curve.lineSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
+  const futureLineSegments = curve.lineSegments.map((seg) => splitAtPlayhead(seg, t).future).filter((seg) => seg.length > 1)
+  const reachedBandSegments = curve.bandSegments.map((seg) => splitAtPlayhead(seg, t).reached).filter((seg) => seg.length > 1)
 
   const playheadU = clampUnit(scale.toUnit(t))
   const playheadValue = layer.sample(t)
@@ -204,7 +225,7 @@ export function LayerChart({ layer, t, scale, onClose }: LayerChartProps) {
           ))}
           <line className={styles.chartPlayhead} x1={x(playheadU)} x2={x(playheadU)} y1={0} y2={VIEW_HEIGHT} />
         </svg>
-        {presentValues.length > 0 && (
+        {hasData && (
           <>
             <span className={`${styles.chartAxis} ${styles.chartAxisMax}`} aria-hidden="true">
               {formatScalarValue(max, unit)} {unit}

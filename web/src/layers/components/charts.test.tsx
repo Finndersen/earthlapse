@@ -318,4 +318,21 @@ describe('<LayerChart>', () => {
     // POPULATION_DATA's real max, formatted the same way ScalarReadout formats it.
     expect(container.textContent).toMatch(/7\.3 billion/)
   })
+
+  // The curve (240-sample resample, segments, axis) is a pure function of `layer`/`scale`, not
+  // `t` — only the playhead value and the reached/future split depend on it. A render that only
+  // moves `t` must not redo the resample: this is what an unmemoised regression would break.
+  it('does not re-sample the layer when only `t` changes', () => {
+    const base = createScalarLayer(CO2_MANIFEST, CO2_DATA)
+    const sample = vi.fn(base.sample)
+    const layer = { ...base, sample }
+    const { rerender } = render(<LayerChart layer={layer} t={1e8} scale={FULL_SCALE} onClose={() => {}} />)
+    const afterMount = sample.mock.calls.length
+    sample.mockClear()
+    rerender(<LayerChart layer={layer} t={2e8} scale={FULL_SCALE} onClose={() => {}} />)
+    // Only the playhead's own `layer.sample(t)` call — never another full resample.
+    expect(sample.mock.calls.length).toBe(1)
+    expect(sample.mock.calls[0]?.[0]).toBe(2e8)
+    expect(afterMount).toBeGreaterThan(1)
+  })
 })
