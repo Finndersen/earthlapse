@@ -11,6 +11,7 @@ function row(overrides: Partial<LegendRow> = {}): LegendRow {
   return {
     id: 'cleared-land',
     label: 'Cleared land',
+    compactLabel: 'Land',
     hint: 'Full hint text with a caveat.',
     compactHint: 'Short hint',
     on: true,
@@ -83,5 +84,14 @@ describe('Legend', () => {
   it('renders nothing extra for a row with no footer', () => {
     const { container } = render(<Legend rows={[row()]} />)
     expect(container.querySelector('[data-testid="ramp-key"]')).toBeNull()
+  })
+
+  it('shows the short label in the compact layout and the full one otherwise', () => {
+    const { unmount } = render(<Legend rows={[row({ label: 'Human civilisation', compactLabel: 'People' })]} compact />)
+    expect(screen.getByText('People')).toBeTruthy()
+    expect(screen.queryByText('Human civilisation')).toBeNull()
+    unmount()
+    render(<Legend rows={[row({ label: 'Human civilisation', compactLabel: 'People' })]} />)
+    expect(screen.getByText('Human civilisation')).toBeTruthy()
   })
 })

@@ -427,7 +427,10 @@ export function Globe({
 
   // `viewModeToggleRef`'s own doc comment (`useViewModeToggleHeightReport`, below).
   const viewModeToggleRef = useRef<HTMLDivElement | null>(null)
-  useViewModeToggleHeightReport(viewModeToggleRef, expanded && webgl, onViewModeToggleHeightChange)
+  // Not on a phone: there the toggle is a top-corner control beside the title, not a bar sitting
+  // in the band above the timeline, so it costs the sphere no height and reserving any would
+  // leave dead space under the globe.
+  useViewModeToggleHeightReport(viewModeToggleRef, expanded && webgl && !isPhoneViewport, onViewModeToggleHeightChange)
 
   // The Globe/Map toggle (docs/GLOBE.md's ADR-033): local, Globe-owned UI state rather
   // than lifted to the time store — like the About & credits panel's own `aboutOpen`
@@ -718,6 +721,7 @@ export function Globe({
             {
               id: 'human-civilisation',
               label: 'Human civilisation',
+              compactLabel: 'People',
               hint: 'Dispersal arcs while each migration happens, settled markers after, cities, and modelled population density (HYDE 3.2, from 10,000 BCE).',
               compactHint: 'Arcs, settlements, cities, density',
               on: humanOn,

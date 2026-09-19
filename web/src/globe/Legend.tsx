@@ -17,10 +17,12 @@
  * crossing a domain edge or a viewer pressing a toggle, never an idle timer.
  *
  * `compact` (phone viewports, decided by `Globe.tsx` from the same `useIsPhoneViewport()` it uses
- * for basemap tier, so "phone" means one thing across the feature) puts label and toggle on one
- * line and swaps in `compactHint`. That is a separate short string rather than a CSS truncation of
- * `hint`, because truncating would cut off exactly the honesty caveats ("modelled", "data ends
- * 2015") the hints exist to carry.
+ * for basemap tier, so "phone" means one thing across the feature) strips the panel to a short
+ * label above its On/Off pill — no hint text, no density ramp — so it stays narrow enough to sit
+ * beside the era shortcuts. `compactLabel` and `compactHint` are separate short strings rather
+ * than CSS truncations, because truncating would cut off exactly the honesty caveats
+ * ("modelled", "data ends 2015") the hints exist to carry; the hint survives as screen-reader
+ * text even where it is not drawn.
  */
 
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react'
@@ -36,6 +38,9 @@ export interface LegendRow {
   /** A one-line alternative to `hint`, shown instead of it when `compact` — never a CSS
    *  truncation of `hint`, so the caveat it carries is never what gets cut off. */
   compactHint: string
+  /** A shorter `label` for the compact panel, which is narrow enough that the full name wraps
+   *  or runs into the era shortcuts beside it. */
+  compactLabel: string
   on: boolean
   onChange: (on: boolean) => void
   /** Optional extra content under the hint — the population-density colour key
@@ -51,7 +56,7 @@ interface LegendToggleProps extends Omit<LegendRow, 'id' | 'visible'> {
   compact: boolean
 }
 
-function LegendToggle({ label, hint, compactHint, on, onChange, footer, compact }: LegendToggleProps) {
+function LegendToggle({ label, compactLabel, hint, compactHint, on, onChange, footer, compact }: LegendToggleProps) {
   const labelId = useId()
   // Read by the toggle group below via aria-describedby so a screen reader announces the honesty
   // caveat the hint carries ("modelled", "data ends 2015") right alongside the control, not only
@@ -61,7 +66,7 @@ function LegendToggle({ label, hint, compactHint, on, onChange, footer, compact 
     <div className={compact ? styles.legendRowCompact : styles.legendRow}>
       <div className={styles.legendRowHeader}>
         <span id={labelId} className={styles.legendRowLabel}>
-          {label}
+          {compact ? compactLabel : label}
         </span>
         <div className={styles.legendToggle} role="group" aria-labelledby={labelId} aria-describedby={hintId}>
           <button type="button" className={styles.legendToggleButton} aria-pressed={on} onClick={() => onChange(true)}>

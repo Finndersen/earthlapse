@@ -429,7 +429,17 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-width: min(210px, 76vw);
+  /* Narrow enough to clear the era shortcuts, which are centred and start around x=117 at the
+     ~390px phone floor. The stacked header below is what lets it be this narrow. */
+  max-width: 104px;
+}
+
+/* Label above, On/Off beneath — not the desktop row's label-and-toggle-on-one-line, which needs
+   width this panel no longer has. */
+.legendRowCompact .legendRowHeader {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 
 .legendRowCompact {
@@ -631,10 +641,11 @@
   }
 
   .orbFitFrameSphere {
-    /* `+ 6px`: a real, visible gap from the legend's own bottom edge, not just non-intersection —
-       without it a box that consumes the entire remaining space lands exactly tangent to the
-       legend, a 0px gap that reads as touching rather than clear. */
-    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
+    /* The legend is not a top boundary here, unlike every wider viewport: compact, it is a ~104px
+       panel in the left corner, while the drawn sphere is ~76% of this frame's width and centred
+       — at the phone floor it starts around x=110, clear of the panel's right edge. Clamping to
+       the panel's bottom cost ~30px of height to an overlap that does not happen. */
+    --usable-top: var(--chrome-gap-top, 120px);
 
     /* `--bottom-overlay-reserve` (ShellLayout.module.css, phone + expanded only) keeps the event
        strip and the zoom rocker above it free at the bottom, the same way `--usable-top` keeps
@@ -667,20 +678,21 @@
     transform: none;
   }
 
-  /* Pushed below the Globe/Map toggle now occupying this corner. The sphere follows without
-     further help: it sizes against `--overlay-clear-bottom`, this panel's *measured* bottom
-     edge, so moving the panel moves the boundary. */
-  .legendGroup {
-    top: calc(clamp(16px, 2.4vw, 34px) + var(--corner-control-size) + 8px);
+  /* Smaller than the desktop pill: at full size this reached across into the centred time
+     title beside it. */
+  .viewModeButton {
+    padding: 3px 9px;
+    font-size: 9.5px;
   }
 
-  /* Down into the bottom band, directly above the event strip, instead of the vertically-centred
-     right edge where it overlapped the sphere. Side by side rather than the base rule's stacked
-     rocker: a vertical pair is twice as tall and would reach back up into the sphere. */
+  /* Shares the event strip's band at its right end rather than taking a band of its own above it
+     — two stacked bands cost the sphere ~90px on a viewport that has none to spare. Side by side
+     rather than the base rule's stacked rocker, for the same reason. `.feed` stops short of it
+     (`ShellLayout.module.css`), so the strip and these buttons never overlap. */
   .zoomGroup {
     top: auto;
     transform: none;
-    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px + var(--feed-reserve, 0px));
+    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
     flex-direction: row;
   }
 }

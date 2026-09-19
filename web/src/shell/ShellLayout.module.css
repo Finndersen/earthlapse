@@ -55,7 +55,9 @@
    top one for the title. The vignette also hides the drift's frame margins (DESIGN §5).
    Kept strongest only at the outer 10% so it still hides the drift's frame-margin artefacts
    there; HUD text leans on `--hud-shadow` (strengthened below) rather than the vignette for
-   legibility over a bright plate. */
+   legibility over a bright plate. Because legibility does not depend on it, every stop is set
+   about a third lighter than it first was — the darkening was reading as a heavy frame around
+   the photograph, most visibly on a phone where the plate is small. */
 .lens {
   position: absolute;
   inset: 0;
@@ -66,22 +68,22 @@
       ellipse 62% 60% at 50% 44%,
       transparent 0%,
       transparent 46%,
-      rgba(3, 4, 6, 0.14) 61%,
-      rgba(3, 4, 6, 0.41) 77%,
-      rgba(3, 4, 6, 0.65) 90%,
-      rgba(3, 4, 6, 0.88) 100%
+      rgba(3, 4, 6, 0.09) 61%,
+      rgba(3, 4, 6, 0.26) 77%,
+      rgba(3, 4, 6, 0.43) 90%,
+      rgba(3, 4, 6, 0.6) 100%
     ),
-    linear-gradient(to right, rgba(3, 4, 6, 0.33) 0%, rgba(3, 4, 6, 0.16) 13%, transparent 26%),
-    linear-gradient(to left, rgba(3, 4, 6, 0.25) 0%, rgba(3, 4, 6, 0.1) 12%, transparent 21%),
+    linear-gradient(to right, rgba(3, 4, 6, 0.22) 0%, rgba(3, 4, 6, 0.1) 13%, transparent 26%),
+    linear-gradient(to left, rgba(3, 4, 6, 0.17) 0%, rgba(3, 4, 6, 0.07) 12%, transparent 21%),
     linear-gradient(
       to top,
-      rgba(3, 4, 6, 0.54) 0%,
-      rgba(3, 4, 6, 0.44) 16%,
-      rgba(3, 4, 6, 0.22) 28%,
-      rgba(3, 4, 6, 0.06) 36%,
+      rgba(3, 4, 6, 0.38) 0%,
+      rgba(3, 4, 6, 0.3) 16%,
+      rgba(3, 4, 6, 0.15) 28%,
+      rgba(3, 4, 6, 0.04) 36%,
       transparent 42%
     ),
-    linear-gradient(to bottom, rgba(3, 4, 6, 0.28) 0%, rgba(3, 4, 6, 0.09) 12%, transparent 22%);
+    linear-gradient(to bottom, rgba(3, 4, 6, 0.19) 0%, rgba(3, 4, 6, 0.06) 12%, transparent 22%);
 }
 
 /* A barely-there warm rim where the aperture begins to fall off — the glass of the lens. */
@@ -589,13 +591,11 @@
      and the toggle's offset, keeping one source for a distance three rules depend on. Only while
      expanded: collapsed, the globe is a corner orb and reserves nothing. */
   .shell[data-globe-expanded='true'] {
-    /* The event strip's own band, directly above the timeline. */
-    --feed-reserve: 43px;
-    /* Everything stacked in that bottom band — the strip plus the zoom rocker sitting above it.
-       This is what the sphere must leave free; `--feed-reserve` alone only places the strip.
-       `Globe.module.css` reads both: the sizing rules take this one, the zoom offset takes the
-       other. */
-    --bottom-overlay-reserve: 89px;
+    /* The event strip's own band, directly above the timeline. The zoom rocker shares it. */
+    --feed-reserve: 46px;
+    /* What the sphere must leave free at the bottom. One band now, not two: the zoom rocker sits
+       at the right end of the strip's row rather than above it. */
+    --bottom-overlay-reserve: 46px;
   }
 
   /* Expanded, the strip leaves the grid and pins itself to the same lower boundary the Globe/Map
@@ -609,10 +609,11 @@
        An absolutely positioned strip resolves against `.hud`'s padding box instead and lands
        nowhere near it. */
     position: fixed;
-    right: var(--gutter);
+    /* Stops short of the zoom rocker sharing this row at the right edge (`Globe.module.css`'s own
+       phone `.zoomGroup` rule): its ~74px plus a gap. */
+    right: calc(var(--gutter) + 84px);
     bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
     left: var(--gutter);
-    z-index: 2;
   }
 
   .globe .label {
