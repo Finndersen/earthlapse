@@ -186,44 +186,59 @@ historical `shkoder-albania` exists); **Vientiane** (Laos — only the historica
 (Honduras) — both countries have zero rows. None of these were substituted with invented
 coordinates or a different dataset; they are simply not in Chandler/Modelski.
 
-**Data-quality artefacts noticed but not fixed (out of this source's scope).** The curated
-dataset carries a small number of duplicate cities filed under differently-spelled or
-differently-named country values for the same underlying place — a known limitation of the exact
-`(City, Country)` dedupe key documented above, not something the 2026-09-18 pass introduced or
-corrected: `kinshasa-democratic-republic-of-the-congo` and `kinshasa-congo` are the same city;
-`algiers-algeria` and `algiers-algiers` are the same city; `montevideo-uruguay` and
+**Data-quality artefacts noticed.** The curated dataset carries a small number of duplicate
+cities filed under differently-spelled or differently-named country values for the same
+underlying place — a known limitation of the exact `(City, Country)` dedupe key documented above,
+not something the 2026-09-18 pass introduced or corrected, and still not fixed (out of this
+source's scope): `kinshasa-democratic-republic-of-the-congo` and `kinshasa-congo` are the same
+city; `algiers-algeria` and `algiers-algiers` are the same city; `montevideo-uruguay` and
 `montevideo-uraguay` are the same city (only the correctly-spelled id was added to the roster).
+Separately, three confirmed exact-10x population misreadings *have* now been corrected — see
+below.
 
-**`montevideo-uruguay`'s published figure is wrong, and the error is upstream, not a merge
-artefact.** Its only estimate, `AD_2000` = 13,303,000, comes from a single row in
+**`montevideo-uruguay`'s published figure was wrong, and the error is upstream, not a merge
+artefact — now corrected.** Its only estimate, `AD_2000` = 13,303,000, comes from a single row in
 `modelskiModernV2.csv` (`Montevideo,,Uruguay,-34.817311,-56.158866,1,13303000`) — confirmed
-directly against the raw file, so this is not something `merge_datasets`'s overwrite rule
+directly against the raw file, so this was not something `merge_datasets`'s overwrite rule
 introduced. Real Montevideo was on the order of 1.3 million people in 2000, roughly a tenth of
-the published figure; the pattern (a single reading exactly, or very nearly, 10x too large, with
-no such distortion in the readings around it) recurs elsewhere in these same three CSVs — see
-below. This is the largest population figure the whole `cities` FeatureSet publishes at `t=25`
-(year 2000), ahead of Seoul, São Paulo and Mumbai, which is how it surfaces on the globe. The
+the published figure; the pattern (a single reading exactly 10x too large, with no such
+distortion in the readings around it) recurs elsewhere in these same three CSVs — see below. This
+was the largest population figure the whole `cities` FeatureSet published at `t=25` (year 2000),
+ahead of Seoul, São Paulo and Mumbai, which is how it surfaced on the globe. The
 `montevideo-uraguay` duplicate does not carry this error, but it also has no `AD_2000` reading of
 its own (its newest is `AD_1975`, 1,430,000) — it is not a case of "the duplicate has the right
-number for this year", it simply predates the bad reading. Not hand-corrected here (that would
-be fabricating source data); flagging for whoever next touches this entry. Note also that fixing
-the `Uruguay`/`Uraguay` dedupe-key mismatch in `normalise.py` would not, by itself, fix this
+number for this year", it simply predates the bad reading. Note also that fixing the
+`Uruguay`/`Uraguay` dedupe-key mismatch in `normalise.py` would not, by itself, have fixed this
 figure — Modelski Modern is merged in with `overwrite=True`, so its `AD_2000` reading would still
 land in the merged record even if the two rows keyed together.
 
-**The same shape of error recurs at least twice more.** `philadelphia-united-states-of-america`'s
-`AD_1914` reading (`chandlerV2.csv`) is 17,600,000, bracketed in the same row by 1,418,000
-(`AD_1900`) and 2,085,000 (`AD_1925`) — again exactly 10x an otherwise plausible trajectory, and
-again confirmed directly in the raw CSV, not introduced by this source. Philadelphia is in the
-roster, so this is a second real bug affecting the published globe (a marker that balloons to
-17.6 million people for one attested year, more than any city has ever held, then drops back).
-`delhi-india`'s `AD_1375` reading is 1,250,000, bracketed by two readings of exactly 125,000
-(`AD_1350`, `AD_1398`) either side, in the same `chandlerV2.csv` row — the same exact-10x
-signature; Delhi is also in the roster. A fourth, lower-confidence instance: the unpublished
-`algiers-algiers` duplicate's `AD_1925` reading (2,220,000) is roughly 8x its neighbours
-(140,000 in 1900, 430,000 in 1950) — the same shape, weaker match, and not published since the
-roster uses `algiers-algeria` instead. None of these four have been hand-corrected, for the same
-reason as Montevideo above.
+**The same shape of error recurs at least three times more, two of them now also corrected.**
+`philadelphia-united-states-of-america`'s `AD_1914` reading (`chandlerV2.csv`) was 17,600,000,
+bracketed in the same row by 1,418,000 (`AD_1900`) and 2,085,000 (`AD_1925`) — again exactly 10x
+an otherwise plausible trajectory, and again confirmed directly in the raw CSV, not introduced by
+this source. Philadelphia is in the roster, so this was a second real bug affecting the published
+globe (a marker that ballooned to 17.6 million people for one attested year, more than any city
+has ever held, then dropped back). `delhi-india`'s `AD_1375` reading was 1,250,000, bracketed by
+two readings of exactly 125,000 (`AD_1350`, `AD_1398`) either side, in the same `chandlerV2.csv`
+row — the same exact-10x signature; Delhi is also in the roster. A fourth, lower-confidence
+instance: the unpublished `algiers-algiers` duplicate's `AD_1925` reading (2,220,000) is roughly
+8x its neighbours (140,000 in 1900, 430,000 in 1950) — the same shape, but a weaker match (not
+exactly 10x) and not published, since the roster uses `algiers-algeria` instead.
+
+**Three of these four are now corrected by `POPULATION_ERRATA`, an explicit errata table in
+`sources/cities/normalise.py`.** Each entry names the feature id, the raw `AD_<year>` column, the
+exact wrong value it expects to find, and the corrected value, with a one-line reason.
+`normalise()` applies the table after feature ids are assigned: for any erratum whose feature is
+present in the run, it first asserts the reading at that feature's column is *exactly* the
+recorded wrong value, and only then substitutes the correction — raising `CitiesErratumError`
+(not silently dividing) if a present feature's reading has already changed, e.g. because a
+re-fetch fixed it upstream. (An erratum whose feature isn't present at all in a given run — such
+as this source's own trimmed test fixture, which doesn't include any of these three cities — is
+a no-op, not an error, since a partial dataset legitimately doesn't cover every named city.) The
+fourth case, `algiers-algiers`'s `AD_1925` reading, is deliberately **not** in the table and
+remains uncorrected: it is ~8x its neighbours rather than exactly 10x, its neighbours are a
+weaker match, and it isn't published in the first place — not worth the same confidence bar as
+the other three.
 
 Re-run the measurement with `python -c "from pathlib import Path; from pipeline.curated import
 read_shape; from pipeline.publish import apply_city_roster, load_city_roster; fs =

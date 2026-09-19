@@ -18,6 +18,11 @@ this module's `normalise()` curates -- ADR-035's own coordinator direction is ex
 curated data keeps everything; only the *published* layer (`pipeline/publish.py`'s
 `FEATURE_LAYERS`, via `pipeline.publish.apply_city_roster` and `sources/cities/roster.toml`,
 ADR-038) is filtered down to a hand-curated significance roster.
+
+`normalise()` also applies `POPULATION_ERRATA`, a small table of confirmed exact-10x upstream
+misreadings (README.md "Data-quality artefacts noticed but not fixed") -- each entry asserts the
+exact wrong value it expects to find before substituting the corrected one, and raises
+`CitiesErratumError` otherwise.
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ from __future__ import annotations
 import csv
 import re
 import unicodedata
+from dataclasses import dataclass
 from pathlib import Path
 
 from pipeline.curated import write_shape
@@ -52,6 +58,11 @@ _YEAR_COLUMN_RE = re.compile(r"^(BC|AD)_(\d+)$")
 
 class CitiesFormatError(ValueError):
     """A raw CSV's schema or a value in it did not match what this source expects."""
+
+
+class CitiesErratumError(CitiesFormatError):
+    """A `_PopulationErratum` no longer matches the merged data it expects to correct -- raised
+    instead of applying a stale correction blind (see POPULATION_ERRATA)."""
 
 
 def _year_column_to_t(column: str) -> float:
@@ -207,12 +218,78 @@ def _feature_id(record: _MergedRecord, seen: dict[str, tuple[str, str]]) -> str:
     return slug
 
 
+@dataclass(frozen=True)
+class _PopulationErratum:
+    """One upstream reading confirmed exactly 10x an otherwise plausible trajectory
+    (README.md "Data-quality artefacts noticed but not fixed"). `column` is the raw AD_/BC_
+    column the wrong reading came from, used to derive the `t` it applies at."""
+
+    feature_id: str
+    column: str
+    wrong_population: int
+    corrected_population: int
+    reason: str
+
+
+POPULATION_ERRATA: tuple[_PopulationErratum, ...] = (
+    _PopulationErratum(
+        feature_id="montevideo-uruguay",
+        column="AD_2000",
+        wrong_population=13_303_000,
+        corrected_population=1_330_300,
+        reason="modelskiModernV2.csv reading is exactly 10x Montevideo's real AD 2000 population",
+    ),
+    _PopulationErratum(
+        feature_id="philadelphia-united-states-of-america",
+        column="AD_1914",
+        wrong_population=17_600_000,
+        corrected_population=1_760_000,
+        reason="chandlerV2.csv reading is exactly 10x the AD_1900/AD_1925 readings either side",
+    ),
+    _PopulationErratum(
+        feature_id="delhi-india",
+        column="AD_1375",
+        wrong_population=1_250_000,
+        corrected_population=125_000,
+        reason="chandlerV2.csv reading is exactly 10x the AD_1350/AD_1398 readings either side",
+    ),
+)
+
+
+def _apply_population_errata(records_by_feature_id: dict[str, _MergedRecord]) -> None:
+    """Applies POPULATION_ERRATA in place, to whichever entries have a matching feature in this
+    run's merged data -- a partial dataset (the committed test fixture, in particular) may
+    legitimately not include a given erratum's city at all, which is not an error. Once a
+    feature *is* found, though, its targeted reading must carry exactly the expected wrong
+    value, or this raises `CitiesErratumError` rather than correcting blind: if the upstream
+    CSVs are ever re-fetched and fixed, a blind divide-by-10 would otherwise silently corrupt a
+    now-correct reading."""
+    for erratum in POPULATION_ERRATA:
+        record = records_by_feature_id.get(erratum.feature_id)
+        if record is None:
+            continue
+        t = _year_column_to_t(erratum.column)
+        found = record.estimates.get(t)
+        if found is None:
+            raise CitiesErratumError(
+                f"cities errata: {erratum.feature_id!r} has no {erratum.column} (t={t}) estimate"
+            )
+        if found != erratum.wrong_population:
+            raise CitiesErratumError(
+                f"cities errata: {erratum.feature_id!r} {erratum.column} is {found}, expected "
+                f"{erratum.wrong_population} -- erratum no longer matches upstream data"
+            )
+        record.estimates[t] = erratum.corrected_population
+
+
 def normalise(raw_dir: Path) -> list[CuratedShape]:
     records, _counts = merge_datasets(raw_dir)
     seen: dict[str, tuple[str, str]] = {}
+    records_by_feature_id = {_feature_id(record, seen): record for record in records}
+    _apply_population_errata(records_by_feature_id)
     features = [
         Feature(
-            id=_feature_id(record, seen),
+            id=feature_id,
             name=record.name,
             country=record.country,
             lat=record.lat,
@@ -223,7 +300,7 @@ def normalise(raw_dir: Path) -> list[CuratedShape]:
                 for t, population in record.estimates.items()
             ],
         )
-        for record in records
+        for feature_id, record in records_by_feature_id.items()
     ]
     return [FeatureSet(id=CURATED_ID, features=features)]
 

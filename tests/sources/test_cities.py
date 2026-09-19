@@ -155,6 +155,94 @@ def test_feature_ids_are_url_safe_slugs(feature_set: FeatureSet) -> None:
         assert re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", feature.id), feature.id
 
 
+# ------------------------------------------------------------------------------- errata
+
+
+def _record(cities_normalise, *, estimates: dict[float, int]):
+    return cities_normalise._MergedRecord(
+        name="Test City",
+        country="Testland",
+        lat=0.0,
+        lon=0.0,
+        certainty=FeatureCertainty.HIGH,
+        estimates=estimates,
+        source="chandler",
+    )
+
+
+def test_population_errata_covers_exactly_the_three_confirmed_cases(cities_normalise) -> None:
+    assert {e.feature_id for e in cities_normalise.POPULATION_ERRATA} == {
+        "montevideo-uruguay",
+        "philadelphia-united-states-of-america",
+        "delhi-india",
+    }
+    # the fourth suspected case (algiers-algiers AD_1925) is a weaker, non-exact match and is
+    # not published -- README.md "Data-quality artefacts noticed but not fixed" documents why it
+    # stays uncorrected.
+    assert "algiers-algiers" not in {e.feature_id for e in cities_normalise.POPULATION_ERRATA}
+
+
+@pytest.mark.parametrize(
+    ("feature_id", "column", "wrong", "corrected"),
+    [
+        ("montevideo-uruguay", "AD_2000", 13_303_000, 1_330_300),
+        ("philadelphia-united-states-of-america", "AD_1914", 17_600_000, 1_760_000),
+        ("delhi-india", "AD_1375", 1_250_000, 125_000),
+    ],
+)
+def test_each_erratum_corrects_its_target_reading(
+    cities_normalise, feature_id: str, column: str, wrong: int, corrected: int
+) -> None:
+    t = cities_normalise._year_column_to_t(column)
+    neighbour_t = t - 1.0
+    record = _record(cities_normalise, estimates={neighbour_t: 111_000, t: wrong})
+    records_by_feature_id = {feature_id: record}
+    cities_normalise._apply_population_errata(records_by_feature_id)
+    assert record.estimates[t] == corrected
+    # the untouched neighbouring reading is unchanged
+    assert record.estimates[neighbour_t] == 111_000
+
+
+def test_erratum_raises_when_the_expected_wrong_value_is_absent(cities_normalise) -> None:
+    """A value that no longer matches the erratum's expectation (e.g. because a re-fetch fixed
+    it upstream) must fail loudly rather than being blindly divided by 10."""
+    (erratum,) = (
+        e for e in cities_normalise.POPULATION_ERRATA if e.feature_id == "montevideo-uruguay"
+    )
+    t = cities_normalise._year_column_to_t(erratum.column)
+    record = _record(cities_normalise, estimates={t: 1_330_300})  # already correct, not 10x
+    records_by_feature_id = {"montevideo-uruguay": record}
+    with pytest.raises(cities_normalise.CitiesErratumError):
+        cities_normalise._apply_population_errata(records_by_feature_id)
+    assert record.estimates[t] == 1_330_300  # left untouched
+
+
+def test_erratum_raises_when_the_targeted_year_is_missing(cities_normalise) -> None:
+    record = _record(cities_normalise, estimates={1.0: 999})  # no AD_1375 reading at all
+    records_by_feature_id = {"delhi-india": record}
+    with pytest.raises(cities_normalise.CitiesErratumError):
+        cities_normalise._apply_population_errata(records_by_feature_id)
+
+
+def test_erratum_is_a_no_op_when_its_feature_is_absent_from_this_run(cities_normalise) -> None:
+    """A trimmed dataset (such as this source's own committed fixture) legitimately omits some
+    of the cities POPULATION_ERRATA names -- that must not raise."""
+    cities_normalise._apply_population_errata({})  # must not raise
+
+
+def test_feature_set_from_the_fixture_carries_no_errata_corrected_cities(
+    feature_set: FeatureSet,
+) -> None:
+    # the committed fixture does not include any of the three erratum cities, so normalise()
+    # over it exercises the "feature absent" no-op path, not an actual correction.
+    ids = {f.id for f in feature_set.features}
+    assert not ids & {
+        "montevideo-uruguay",
+        "philadelphia-united-states-of-america",
+        "delhi-india",
+    }
+
+
 # ------------------------------------------------------------------------- year parsing
 
 
