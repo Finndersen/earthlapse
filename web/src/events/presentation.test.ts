@@ -2,31 +2,12 @@ import { describe, expect, it } from 'vitest'
 
 import type { TimelineEvent } from '@/types/layer'
 
-import {
-  FEED_CARD_GAP_PX,
-  FEED_CARD_HEIGHT_PX,
-  FEED_OVERFLOW_LINE_PX,
-  FEED_STRIP_HEIGHT_PX,
-  FRESH_EMPHASIS_BAND,
-  MAX_CARD_OFFSET_PX,
-  MAX_FRESH_INSET_PX,
-  feedCardCapacity,
-  feedCardEmphases,
-  feedCardInsetPx,
-  feedCardOffsetPx,
-  feedCardOpacity,
-  feedStripCapacity,
-} from './presentation'
+import { FRESH_EMPHASIS_BAND, MAX_FRESH_INSET_PX, feedCardEmphases, feedCardInsetPx, feedCardOpacity } from './presentation'
 import type { FeedEntry } from './select'
 
 function entry(id: string, distanceFraction: number): FeedEntry {
   const event: TimelineEvent = { id, label: id, tMin: 0, tMax: 0, importance: 0.5, description: '', citation: '' }
   return { event, distanceFraction }
-}
-
-/** The exact height `n` collapsed cards plus the reserved "+k more" line occupy. */
-function heightFor(cards: number): number {
-  return cards * (FEED_CARD_HEIGHT_PX + FEED_CARD_GAP_PX) + FEED_OVERFLOW_LINE_PX
 }
 
 describe('feedCardOpacity', () => {
@@ -42,47 +23,6 @@ describe('feedCardOpacity', () => {
 
   it('eases out rather than fading linearly', () => {
     expect(feedCardOpacity(0.5)).toBeCloseTo(0.75)
-  })
-})
-
-describe('feedCardOffsetPx', () => {
-  it('runs from 0 to MAX_CARD_OFFSET_PX across [0, 1]', () => {
-    expect(feedCardOffsetPx(0)).toBe(0)
-    expect(feedCardOffsetPx(1)).toBe(MAX_CARD_OFFSET_PX)
-    expect(feedCardOffsetPx(0.5)).toBeCloseTo(MAX_CARD_OFFSET_PX / 2)
-  })
-
-  it('clamps outside [0, 1]', () => {
-    expect(feedCardOffsetPx(-1)).toBe(0)
-    expect(feedCardOffsetPx(2)).toBe(MAX_CARD_OFFSET_PX)
-  })
-})
-
-describe('feedCardCapacity', () => {
-  it('fits exactly as many cards as the height holds alongside the overflow line', () => {
-    expect(feedCardCapacity(heightFor(3), 4)).toBe(3)
-    expect(feedCardCapacity(heightFor(3) - 1, 4)).toBe(2)
-  })
-
-  it('caps at maxVisible however tall the slot is', () => {
-    expect(feedCardCapacity(heightFor(10), 4)).toBe(4)
-  })
-
-  it('always leaves room for the freshest card, even in an unmeasured or squeezed slot', () => {
-    expect(feedCardCapacity(0, 4)).toBe(1)
-    expect(feedCardCapacity(FEED_CARD_HEIGHT_PX / 2, 4)).toBe(1)
-  })
-})
-
-describe('feedStripCapacity', () => {
-  it('fits the one-line strip once the row is at least as tall as it', () => {
-    expect(feedStripCapacity(FEED_STRIP_HEIGHT_PX)).toBe(1)
-    expect(feedStripCapacity(FEED_STRIP_HEIGHT_PX * 3)).toBe(1)
-  })
-
-  it('shows nothing in a row squeezed shorter than the strip, or not yet measured', () => {
-    expect(feedStripCapacity(FEED_STRIP_HEIGHT_PX - 1)).toBe(0)
-    expect(feedStripCapacity(0)).toBe(0)
   })
 })
 

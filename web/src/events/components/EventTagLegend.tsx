@@ -1,5 +1,5 @@
 /**
- * The compact "what the event colours mean" key (W-followup item 11): six dots and names, read
+ * The compact "what the event colours mean" key: six dots and names, read
  * straight from `EVENT_TAG_PALETTE` so it can never drift from what a feed card's primary-tag
  * label or `EventDetailPanel`'s full tag list actually shows. Pure presentation, no state of its
  * own — `CreditsList` mounts it once, inside the About & credits panel, rather than this package

@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * The event detail popout (W-followup item 12), replacing the feed card's old in-place expand.
+ * The event detail popout, replacing the feed card's old in-place expand.
  * Built on `@/shell`'s shared `Panel` — the one deliberate cross-package import this package
  * makes (see `events/index.ts`'s own doc comment) rather than a second bespoke focus trap.
  *
@@ -24,10 +24,9 @@ import styles from './EventDetailPanel.module.css'
 export interface EventDetailPanelProps {
   event: TimelineEvent
   onClose: () => void
-  /** Scrubs the timeline to this event's placement and closes the panel (re-review fix,
-   *  2026-09-15: it used to only scrub, leaving the panel open over the very scene the click
-   *  asked to see) — the only thing in this panel that moves `t`. Opening the panel itself never
-   *  does (the event is already recent; that's why a card for it is showing). The caller
+  /** Scrubs the timeline to this event's placement and closes the panel — the only thing in this
+   *  panel that moves `t`. Opening the panel itself never does (the event is already recent;
+   *  that's why a card for it is showing). The caller
    *  (`Experience.tsx`) does not resume playback on this particular close, even if it had been
    *  playing before the panel opened, since doing so would immediately carry the playhead away
    *  from the place just asked for. */

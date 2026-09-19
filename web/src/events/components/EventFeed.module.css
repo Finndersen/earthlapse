@@ -7,17 +7,17 @@
  * one empty stretch of the periphery that never overlaps the globe orb, the ancestor panel or
  * the scene caption (see `ShellLayout.tsx`'s `feed` slot).
  *
- * Geometry custom properties (`--feed-card-height`, `--feed-card-gap`, `--feed-overflow-line`)
- * come from `presentation.ts` via `<EventFeed>`'s inline style — `feedCardCapacity` counts
- * cards with the same numbers this sheet draws them with. Per-card `--feed-emphasis` (0..1) and
+ * Geometry custom properties (`--feed-card-height`, `--feed-card-gap`, `--feed-strip-height`)
+ * come from `presentation.ts` via `<EventFeed>`'s inline style, so this sheet can't drift from
+ * the numbers the component itself reasons about. Per-card `--feed-emphasis` (0..1) and
  * `--feed-accent` (the primary tag's colour) are set inline on each card.
  */
 
-/* Fills the slot's full height, so `<EventFeed>` can measure how many cards fit, and stacks its
-   cards against the slot's bottom edge, nearest the timeline. No height cap of its own: the
-   slot (a `minmax(0, 1fr)` grid row between the readouts and the caption) is the cap, and the
-   card count is sized to it. Transparent to the pointer except over the cards themselves,
-   since the wrapper now spans that whole empty row. */
+/* Fills the slot's full height and stacks its cards against the slot's bottom edge, nearest the
+   timeline. No height cap of its own: the slot (a `minmax(0, 1fr)` grid row between the
+   readouts and the caption) is the cap, and up to three cards render into whatever room that
+   leaves, scrolling within the slot if it's shorter than three cards tall. Transparent to the
+   pointer except over the cards themselves, since the wrapper spans that whole empty row. */
 .feed {
   display: flex;
   flex-direction: column;
@@ -30,9 +30,9 @@
   pointer-events: none;
 }
 
-/* Every card is the same fixed height (`feedCardCapacity` sizes the cap to it) — a click opens
-   `EventDetailPanel` instead of growing the card in place, so this never needs to scroll past
-   its own slot into the readouts above. */
+/* Every card is the same fixed height (`--feed-card-height`) — a click opens `EventDetailPanel`
+   instead of growing the card in place, so this never needs to scroll past its own slot into
+   the readouts above. */
 .scroller {
   display: flex;
   flex-direction: column;
@@ -71,9 +71,7 @@
 .card {
   flex: none;
   min-width: 0;
-  transition:
-    opacity 200ms ease,
-    transform 200ms ease;
+  transition: opacity 200ms ease;
 }
 
 /* A newly mounted card slides down into the top of the stack. Mount-only, so it replays when a
@@ -232,18 +230,6 @@
   transition: color 360ms ease;
 }
 
-.overflow {
-  flex: none;
-  margin: 0 0 0 9px;
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 9.5px;
-  height: calc(var(--feed-overflow-line) - var(--feed-card-gap));
-  line-height: calc(var(--feed-overflow-line) - var(--feed-card-gap));
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-}
-
 /* The phone's "compact single-card strip": `<EventFeed>` caps to one card here, and the phone HUD
    leaves the feed row only a few dozen px between the readouts and the caption, so the strip is
    one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet (item
@@ -287,26 +273,19 @@
   }
 
   /* Only the description drops here — no room for it alongside title and date on one line, but
-     it's still shown in full inside the detail panel a tap opens. The tag label stays (re-review
-     fix, 2026-09-15): item 11 asks every card to show its primary tag, never relying on the
-     colour chip alone, and hiding `.tag` here left exactly that — a coloured dot with no text —
-     as the phone strip's only category cue. `.detail`'s own `text-overflow: ellipsis` (the
-     un-mediaqueried rule above) truncates the tag+date pair together if the strip is too narrow
-     for both in full, rather than ever hiding the tag outright. */
+     it's still shown in full inside the detail panel a tap opens. The tag label stays: every
+     card shows its primary tag, never relying on the colour chip alone, so hiding `.tag` here
+     would leave a coloured dot with no text as the phone strip's only category cue.
+     `.detail`'s own `text-overflow: ellipsis` (the un-mediaqueried rule above) truncates the
+     tag+date pair together if the strip is too narrow for both in full, rather than ever
+     hiding the tag outright. */
   .description {
     display: none;
   }
-
-  .overflow {
-    margin: 0;
-    height: auto;
-    line-height: 19px;
-    white-space: nowrap;
-  }
 }
 
-/* Motion is already withheld in `<EventFeed>` itself (no drift, inset or arrival animation);
-   this also stops the highlight easing in and out, leaving it a static state. */
+/* Motion is already withheld in `<EventFeed>` itself (no inset or arrival animation); this also
+   stops the highlight easing in and out, leaving it a static state. */
 @media (prefers-reduced-motion: reduce) {
   .card,
   .cardButton::before,
