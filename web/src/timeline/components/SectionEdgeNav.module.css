@@ -1,53 +1,9 @@
-/* `.row` is the positioning context for the two edge buttons (`position: absolute`, this file's
-   own `.edgeButton`) — its own height comes entirely from `.stack`, the one thing left in normal
-   flow, so an edge button's own size can never push the bottom chrome taller (2026-09-18
-   refinement pass: "larger icons... do not let the larger size push the bottom chrome taller").
-   Every custom property both `.stack` and `.edgeButton` need lives here, not on either of those
-   (siblings, so neither can see a value the other declares) — see each property's own comment.
-   `--edge-button-size`/`--edge-button-gap` themselves are declared one level further up though
-   (`Timeline.module.css`'s own `--timeline-gutter` doc comment): `.controlsRow`, a sibling of
-   `<SectionEdgeNav>` rather than a descendant, needs the identical two numbers to inset itself by
-   the same gutter this file's own `.stack` uses, and a custom property declared here would be
-   invisible to a sibling — only a shared ancestor's declaration reaches both. */
-.row {
-  /* Real geometry, not a hand-picked offset (2026-09-18 refinement pass: "moved down a bit... to
-     be in between the timeline and era header lines"). These three mirror fixed pixel heights
-     declared elsewhere — `ScrubTrack.module.css`'s `.hitArea` (`--readout-gap` 2px +
-     `--readout-line` 13px margin, plus its own 48px height = 63px) and `AxisTicks.module.css`'s
-     `.ticks` (12px) — rather than being invented here; none of the three rows they describe
-     scales with viewport width, so neither does the anchor built from them below. A future
-     change to either row's own height must update the matching constant here too — the same
-     cross-module pixel coupling `ScrubTrack.tsx`'s own `_PX` constants already carry a comment
-     for. `--stack-row-gap` doubles as `.stack`'s own row gap, so the two stay in sync by
-     construction. */
-  --track-box-height: 63px;
-  --stack-row-gap: 2px;
-  --ticks-height: 12px;
-
-  position: relative;
-}
-
-/* Insets the scrub track/ruler/band strip by a real, reserved gutter on each side — not a visual
-   overlap — the same `--timeline-gutter` (`Timeline.module.css`'s `.timeline`) `.controlsRow`
-   insets itself by, so the two rows share one genuine width rather than two hand-synchronised
-   copies of the same `calc()`. `useTrackWidth`'s `ResizeObserver` (unchanged) then measures and
-   draws all three children genuinely narrower, exactly as it would at an equivalently narrower
-   viewport, so there is no shared horizontal space for a drag gesture and a button click to ever
-   contend over. */
-.stack {
-  margin-inline: var(--timeline-gutter);
-  display: flex;
-  flex-direction: column;
-  gap: var(--stack-row-gap);
-}
-
+/* `.edgeButton` is a direct grid child of `.timeline` (Timeline.module.css) — `grid-area` alone
+   places it, and reassigning that one property per breakpoint is what moves the same DOM node
+   between flanking the track (wide) and sitting beside the transport buttons (phone portrait),
+   as `SectionEdgeNav.tsx`'s own doc comment explains. `--edge-button-size` is declared on
+   `.timeline` (that file's own doc comment on why it lives there, not here). */
 .edgeButton {
-  position: absolute;
-  /* Centred on the real boundary between the scrub track's own box and the section-band strip —
-     the same band the ruler's numeric ticks occupy (`.row`'s own doc comment above has the
-     pixel sources). */
-  top: calc(var(--track-box-height) + var(--stack-row-gap) + (var(--ticks-height) + var(--stack-row-gap)) / 2);
-  transform: translateY(-50%);
   width: var(--edge-button-size);
   height: var(--edge-button-size);
   display: flex;
@@ -65,12 +21,34 @@
   transition: color 200ms ease;
 }
 
+/* Real geometry, not a hand-picked offset (2026-09-18 refinement pass: "moved down a bit... to
+   be in between the timeline and era header lines"). `--track-box-height`/`--stack-row-gap`/
+   `--ticks-height` mirror fixed pixel heights declared elsewhere — `ScrubTrack.module.css`'s
+   `.hitArea` (`--readout-gap` 2px + `--readout-line` 13px margin, plus its own 48px height =
+   63px) and `AxisTicks.module.css`'s `.ticks` (12px) — rather than being invented here; none of
+   the three rows they describe scales with viewport width, so neither does the anchor built from
+   them. A future change to either row's own height must update the matching constant on
+   `.timeline` too — the same cross-module pixel coupling `ScrubTrack.tsx`'s own `_PX` constants
+   already carry a comment for. `align-self: start` plus this `margin-top` (rather than the old
+   `position: absolute; top: …; transform: translateY(-50%)`) is the grid-item equivalent:
+   `margin-top` here is that same calc *minus half the button's own size*, since it now offsets
+   the button's own top edge instead of centring via a transform — the two put the glyph at the
+   identical pixel row. Centred on the real boundary between the scrub track's own box and the
+   section-band strip beneath it — the same band the ruler's numeric ticks occupy. */
+.edgeButton[data-edge='previous'],
+.edgeButton[data-edge='next'] {
+  align-self: start;
+  margin-top: calc(
+    var(--track-box-height) + var(--stack-row-gap) + (var(--ticks-height) + var(--stack-row-gap)) / 2 - var(--edge-button-size) / 2
+  );
+}
+
 .edgeButton[data-edge='previous'] {
-  left: 0;
+  grid-area: edgePrev;
 }
 
 .edgeButton[data-edge='next'] {
-  right: 0;
+  grid-area: edgeNext;
 }
 
 .edgeButton:hover:not(:disabled),
@@ -88,12 +66,24 @@
   cursor: default;
 }
 
-/* `--edge-button-size`'s own `40px` coarse-pointer bump lives in `Timeline.module.css` now (this
-   file's own `.row` doc comment) — `.edgeButton` still reads it via `var()`, so it grows to match
-   without redeclaring the number here; only the glyph's own `font-size` (a property with no
-   shared-gutter consumer elsewhere) stays local to this file. */
+/* `--edge-button-size`'s own coarse-pointer bump lives on `.timeline` (Timeline.module.css) —
+   `.edgeButton` still reads it via `var()`, so it grows to match without redeclaring the number
+   here; only the glyph's own `font-size` (a property with no shared-gutter consumer elsewhere)
+   stays local to this file. */
 @media (pointer: coarse) {
   .edgeButton {
     font-size: 26px;
+  }
+}
+
+/* Phone portrait (`Timeline.module.css`'s own `max-width: 760px` breakpoint): the button now
+   sits beside the play/back/forward transport in one compact row, not flanking a multi-row track
+   stack above it, so the ruler-boundary offset above no longer means anything here — centre it
+   in its own grid cell instead, matching its row neighbours. */
+@media (max-width: 760px) {
+  .edgeButton[data-edge='previous'],
+  .edgeButton[data-edge='next'] {
+    align-self: center;
+    margin-top: 0;
   }
 }

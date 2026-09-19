@@ -28,7 +28,7 @@ const DEV_SERVER_URL = 'http://localhost:3000'
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
 
 const HELP = `
-Visual-QA harness for the Earth Timeline web app.
+Visual-QA harness for the Earthlapse web app.
 
 Usage:
   pnpm qa [options]              build + serve + run the full (or filtered) shot list

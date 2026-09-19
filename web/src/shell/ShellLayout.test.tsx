@@ -31,6 +31,8 @@ function renderShell({
   chart = <div>CHART_SLOT</div> as ReactNode,
   globeCaption = '',
   viewModeToggleHeightPx = 0,
+  feedbackLink = undefined as ReactNode,
+  sound = undefined as ReactNode,
 } = {}) {
   return render(
     <ShellLayout
@@ -42,11 +44,13 @@ function renderShell({
       title={<div>TITLE_SLOT</div>}
       badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
+      sound={sound}
       caption={<div>CAPTION_SLOT</div>}
       chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
       globeExpanded={globeExpanded}
       viewModeToggleHeightPx={viewModeToggleHeightPx}
+      feedbackLink={feedbackLink}
     />,
   )
 }
@@ -131,6 +135,23 @@ describe('ShellLayout', () => {
   // always-empty live region is inert, not a second active announcer, so this is still exactly
   // one *functioning* live region at a time (the orb label's, while collapsed; none while
   // expanded, since there is nothing left to say).
+  it('places the sound control at the top of the ancestor column, not in the timeline transport', () => {
+    renderShell({ sound: <button type="button" data-testid="sound-slot">sound</button> })
+    const ancestorColumn = screen.getByText('ANCESTOR_SLOT').closest(`.${styles.ancestor}`)
+    const soundSlot = screen.getByTestId('sound-slot')
+    expect(ancestorColumn?.contains(soundSlot)).toBe(true)
+    // First in the column, so it lands on the "About & credits" button's row opposite. It is
+    // taken out of flow in CSS, so leading the stack costs the panel below no position.
+    const children = Array.from(ancestorColumn?.children ?? [])
+    expect(children.indexOf(soundSlot.parentElement as Element)).toBe(0)
+    expect(screen.getByText('TIMELINE_SLOT').textContent).not.toContain('sound')
+  })
+
+  it('renders no sound slot at all when the caller supplies none', () => {
+    renderShell()
+    expect(screen.queryByTestId('sound-slot')).toBeNull()
+  })
+
   it('never actually has two live regions announcing at once', () => {
     for (const globeExpanded of [false, true]) {
       const { unmount } = renderShell({ globeCaption: 'Impact winter', globeExpanded })
@@ -180,6 +201,12 @@ describe('ShellLayout — About & credits panel', () => {
     const button = screen.getByRole('button', { name: /about & credits/i })
     expect(button.closest(`.${styles.globe}`)).not.toBeNull()
     expect(button.closest(`.${styles.ancestor}`)).toBeNull()
+  })
+
+  it('threads a caller-supplied feedback link through to the panel content', () => {
+    renderShell({ feedbackLink: <a href="https://example.com/issues/new">Report a bug or give feedback</a> })
+    fireEvent.click(screen.getByRole('button', { name: /about & credits/i }))
+    expect(screen.getByRole('link', { name: /report a bug or give feedback/i })).toBeTruthy()
   })
 })
 

@@ -42,8 +42,22 @@ export interface ShellLayoutProps {
   title: ReactNode
   /** Beside the title: a small status tag (e.g. stub data), or nothing. */
   badge: ReactNode
+  /** Directly under the title: the Dinosaurs/Humans era shortcuts (`@/timeline`'s
+   *  `<EraShortcuts>`). Here rather than in the timeline's own control row so the space below
+   *  the track carries only playback controls, and so they sit beside the time readout they
+   *  jump. */
+  eraShortcuts?: ReactNode
   /** Top-right: the ancestor-at-`t` readout (DESIGN §10). */
   ancestor: ReactNode
+  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered beneath the ancestor
+   *  panel in the same top-right corner column — moved out of the timeline transport row
+   *  entirely (`Timeline.tsx`'s own doc comment) so it can never contribute to that row's width
+   *  or height. This corner, not a new fixed-position element top-right of its own, because
+   *  `.ancestor` already owns the shell's top-right column and simply appending here is the
+   *  smallest change to an existing, already-measured layout; it sits after the panel rather than
+   *  before it so the panel's own position (tuned to align with the globe orb opposite it) is
+   *  undisturbed. Optional so a caller with no audio wired up (tests) can omit it. */
+  sound?: ReactNode
   /** Bottom-centre, above the timeline: the scene caption as a subtitle. */
   caption: ReactNode
   /** The open layer chart, or `null`. It takes the caption's place above the timeline (the
@@ -66,6 +80,9 @@ export interface ShellLayoutProps {
    *  `CreditsList` (re-review fix, 2026-09-15 — see `CreditsList.tsx`'s own doc comment for why
    *  `shell` takes this as a prop rather than importing `@/events`'s `EventTagLegend` itself). */
   eventLegend?: ReactNode
+  /** The "Report a bug or give feedback" link, passed straight through to `CreditsList` the same
+   *  way `eventLegend` is — see `CreditsList.tsx`'s own doc comment. */
+  feedbackLink?: ReactNode
 }
 
 /**
@@ -82,13 +99,16 @@ export function ShellLayout({
   feed,
   title,
   badge,
+  eraShortcuts,
   ancestor,
+  sound,
   caption,
   chart,
   timeline,
   globeExpanded,
   viewModeToggleHeightPx,
   eventLegend,
+  feedbackLink,
 }: ShellLayoutProps) {
   // The About & credits panel (VISUAL_SPEC §9, ADR-012 amendment): local, ShellLayout-owned UI
   // state, not lifted to the `t` store — like the credits link it replaces, this is pure chrome
@@ -154,9 +174,18 @@ export function ShellLayout({
             className={styles.aboutButton}
             aria-haspopup="dialog"
             aria-expanded={aboutOpen}
+            aria-label="About & credits"
             onClick={() => setAboutOpen(true)}
           >
-            About &amp; credits
+            <svg className={styles.aboutIcon} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              <circle cx="8" cy="4.9" r="0.85" fill="currentColor" />
+              <path d="M8 7.2v4.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            {/* "About", not "About & credits": the long label wrapped to two lines in the narrow
+                orb column on a phone. The panel it opens is still titled in full, and the
+                accessible name below keeps the credits discoverable by name. */}
+            About
           </button>
           <div className={styles.orb}>{globe}</div>
           {/* While expanded, `.expandedGlobeCaption` used to announce the caption (one live
@@ -183,9 +212,11 @@ export function ShellLayout({
         <header ref={titleRef} className={styles.title}>
           {title}
           {badge}
+          {eraShortcuts !== undefined && <div className={styles.eraShortcuts}>{eraShortcuts}</div>}
         </header>
 
         <div className={styles.ancestor}>
+          {sound !== undefined && <div className={styles.ancestorSound}>{sound}</div>}
           <span className={styles.label}>Your ancestor</span>
           {ancestor}
         </div>
@@ -223,7 +254,7 @@ export function ShellLayout({
 
       {aboutOpen && (
         <Panel label="About & credits" onClose={() => setAboutOpen(false)}>
-          <CreditsList eventLegend={eventLegend} />
+          <CreditsList eventLegend={eventLegend} feedbackLink={feedbackLink} />
         </Panel>
       )}
     </div>

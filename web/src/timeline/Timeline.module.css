@@ -1,72 +1,81 @@
+/* One CSS Grid for the whole component — the scrub track/ruler/band strip, the previous/next
+   section-edge buttons, the breadcrumb, the transport (back/play/forward) and the era/mode/scale/
+   speed controls are all direct children of `.timeline` itself, not nested in per-row wrapper
+   divs. That is deliberate, not incidental: a grid item's `grid-area` can only reposition a
+   *direct* child of the grid, so the one thing that genuinely moves between breakpoints — the
+   section-edge buttons, flanking the track on a wide viewport but joining the transport row on
+   phone portrait (`SectionEdgeNav.tsx`'s own doc comment) — has to live at this level to be
+   movable via CSS alone. No JS viewport branching and no duplicated controls: one DOM node per
+   control, one `grid-template-areas` per breakpoint, `Timeline.tsx` renders the same tree either
+   way.
+
+   `--edge-button-size`/`--edge-button-gap` are declared here (not in `SectionEdgeNav.module.css`)
+   since `SectionEdgeButton` is now this grid's own direct child — a value a sibling needs must
+   live on their shared ancestor, not on either sibling itself. `--track-box-height`/
+   `--stack-row-gap`/`--ticks-height` (`SectionEdgeNav.module.css`'s own `.edgeButton` doc comment
+   has the pixel sources) live here for the identical reason: `.edgeButton`'s wide-viewport
+   vertical offset reads them via `var()`. */
 .timeline {
-  /* The one shared horizontal gutter for this whole component: both `SectionEdgeNav.module.css`'s
-     `.stack` (the scrub track/ruler/band strip) and `.controlsRow` below need the same inset
-     (`--edge-button-size` + `--edge-button-gap`, the edge-button footprint), so it's declared once
-     here, on their common ancestor, rather than copy-pasted as a literal `calc()` in each.
-     `--edge-button-size`/`--edge-button-gap` stay real, independently named properties (not folded
-     away into the sum alone) since `SectionEdgeNav.module.css`'s `.edgeButton` still needs
-     `--edge-button-size` on its own, for its own `width`/`height`. */
+  /* Shared by the speed select's slot and the rate readout, which flank the transport buttons in
+     `.core`. One value for both is what centres those buttons: the rate slot is reserved wide
+     (it must not reflow the row when playback starts) and the select is narrow, so unequal
+     flanks would push the transport off centre by half the difference. */
+  --transport-flank: 33ch;
+
   --edge-button-size: 34px;
   --edge-button-gap: 16px;
-  --timeline-gutter: calc(var(--edge-button-size) + var(--edge-button-gap));
+  --track-box-height: 63px;
+  --stack-row-gap: 2px;
+  --ticks-height: 12px;
 
-  display: flex;
-  flex-direction: column;
-  /* A hairline-scale row separator between the track stack (`SectionEdgeNav`'s own child — the
-     scrub track, ruler and section-band strip together) and the controls row below it, not a
-     content margin. `SectionEdgeNav.module.css`'s `.stack` carries the matching gap between the
-     three rows it wraps. */
-  gap: 2px;
+  display: grid;
+  /* Row 1: the edge buttons flank the track, each in its own `--edge-button-size` column; `track`
+     spans the three middle columns, the same total width `sections`/`core`/`secondary` share
+     between them one row down — this is what keeps `core` optically centred on the track (below). */
+  /* `secondary`'s column floors at its own content (`minmax(auto, 1fr)`) rather than being a
+     plain `1fr`: its controls are all fixed-width, and a purely fractional column caps it below
+     that and stacks them into rows. It still takes `1fr` whenever that is the larger of the two,
+     which is what keeps `core` centred between the two flexible columns; only when the controls
+     genuinely need more does it grow, and `sections` (the breadcrumb, the row's one freely
+     shrinking column) gives up the difference. Paired with `.secondary`'s own `nowrap` below —
+     the floor only means anything if the flex container cannot collapse itself by wrapping. */
+  grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(auto, 1fr) var(--edge-button-size);
+  grid-template-areas:
+    'edgePrev track    track track    edgeNext'
+    '.        sections core  secondary .';
+  column-gap: clamp(12px, 1.6vw, 24px);
+  row-gap: 2px;
   width: 100%;
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
 }
 
 /* Larger touch target on a coarse pointer (`SectionEdgeNav.module.css`'s own `.edgeButton`
-   glyph grows to match, in that file, under the same query) — declared here, not duplicated
-   there, since this is `--edge-button-size`'s one canonical source now (this rule's own doc
-   comment). */
+   glyph grows to match, in that file, under the same query) — declared here, this property's
+   one canonical source. */
 @media (pointer: coarse) {
   .timeline {
     --edge-button-size: 40px;
   }
 }
 
-/* Three named tracks so `.controlsCore` (the transport's back/play/forward group) lands
-   visually centred over the track however wide `.controlsSecondary` (speed, mode toggle, scale
-   toggle) or `.controlsSections` (the era-section breadcrumb, ADR-024) happens to be. The two
-   side tracks share the leftover width equally, so the centre track is centred in the row as a
-   whole, not merely in whatever space is left after either side. Named areas (not raw column order)
-   because `.controlsCore` and `.controlsSecondary` wrap components from `Transport.module.css`,
-   a different stylesheet this one can't safely target by its foreign (and hashed) class names. */
-.controlsRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas: 'sections core secondary';
-  align-items: center;
-  gap: clamp(12px, 2vw, 28px);
-  /* Pure gap above the row, not room any control needs. `.controlsSecondary`
-     (era-shortcuts/speed/mode/scale/rate-badge) wraps to 2 rows at 54px, taller than the play
-     button (`Transport.module.css`'s `.playButton`, 48px), so that track sets this row's real
-     height, not `.core`'s (`bottom-chrome-height`'s own QA-shot comment has the measured total). */
-  margin-top: 4px;
-  /* `.timeline`'s own `--timeline-gutter` doc comment: insets this row by the same amount
-     `SectionEdgeNav.module.css`'s `.stack` already insets the track above it, symmetrically on
-     both sides — the two side tracks (`minmax(0, 1fr)` each) simply have that much less width to
-     share, which keeps `.controlsCore` exactly centred on the now-narrower row exactly as before
-     (this rule's own doc comment: the two side tracks share leftover width *equally*, so a
-     symmetric inset on the row as a whole can't unbalance that) — centred on the *track*'s own
-     centre now, not just the row's, since both are inset by the identical amount. */
-  margin-inline: var(--timeline-gutter);
+.trackStack {
+  grid-area: track;
+  display: flex;
+  flex-direction: column;
+  /* A hairline-scale row separator between the scrub track, the ruler and the section-band strip
+     — not a content margin. Doubles as the vertical anchor `SectionEdgeNav.module.css`'s
+     `.edgeButton` reads via `--stack-row-gap`, so the two stay in sync by construction. */
+  gap: var(--stack-row-gap);
 }
 
-/* Holds the breadcrumb trail alone — the row's one flexible column (`minmax(0, 1fr)` below),
+/* Holds the breadcrumb trail alone — the row's one flexible column (`minmax(0, 1fr)` above),
    free to grow or shrink with the trail's own length without disturbing anything else in the row:
-   the sound toggle, era shortcuts, speed/mode/scale controls and rate badge all live in
-   `.controlsSecondary`'s fixed-width track instead, specifically so none of them shifts position
-   as this one does. The room this track has traces back to deleting the breadcrumb's own
-   "‹ Up"/"⌂ Earth" buttons and moving its "‹"/"›" sibling-step buttons onto the track itself
-   (`SectionEdgeNav`). */
-.controlsSections {
+   speed/rate, transport, era shortcuts, mode/scale controls all live in `.core`'s or
+   `.secondary`'s fixed-width tracks instead, specifically so none of them shifts position as this
+   one does. The room this track has traces back to deleting the breadcrumb's own "‹ Up"/"⌂ Earth"
+   buttons and moving its "‹"/"›" sibling-step buttons onto the grid itself
+   (`SectionEdgeNav.tsx`/`SectionEdgeButton`). */
+.sections {
   grid-area: sections;
   display: flex;
   align-items: center;
@@ -75,13 +84,14 @@
   max-width: 100%;
 }
 
-/* The centre cluster: the sound toggle, `TransportCore` (back/play/forward) and the speed
-   select, in that order — all fixed-width, so this whole `auto`-sized column's own width is
-   constant regardless of the breadcrumb in `.controlsSections`, which keeps it centred on the
-   track (`.controlsRow`'s own doc comment). Sound and speed sit either side of the nav buttons
-   deliberately, not off in the row's right-hand cluster with the era shortcuts/mode/scale
-   toggles, so both stay visually anchored to the nav controls a viewer's eye already goes to. */
-.controlsCore {
+/* The centre cluster: the speed select, `TransportCore` (back/play/forward) and the rate readout,
+   in that order — speed sets the rate, the transport runs it, the readout shows the result, so the
+   three read as one group. Every one is fixed-width, so this `auto`-sized column's own width is
+   constant regardless of the breadcrumb in `.sections`, which keeps it centred on the track
+   (`.timeline`'s own doc comment: `sections`/`core`/`secondary` share the exact same three columns
+   `track` spans one row up). The sound/volume control is not part of this cluster
+   (`ShellLayout.tsx`'s own `sound` slot). */
+.core {
   grid-area: core;
   display: flex;
   align-items: center;
@@ -89,14 +99,12 @@
   gap: clamp(10px, 1.4vw, 18px);
 }
 
-/* The right-hand cluster: era shortcuts, the playback-mode toggle and the scale toggle, in that
-   order, then `RateReadout` trailing last. Every control here is fixed-width (each already
-   reserves its own slot; `RateReadout` reserves its own even when showing nothing), so this whole
-   cluster's total width is independent of the breadcrumb in `.controlsSections` — the two
-   `minmax(0, 1fr)` tracks (`.controlsRow`'s own doc comment) already get an equal share of the
-   row regardless of either side's content. `justify-self: end` / `justify-content: flex-end`
-   anchor the cluster to this track's own right edge, flush with `--timeline-gutter`, mirroring
-   the breadcrumb's own left anchor on the opposite side.
+/* The right-hand cluster: the playback-mode toggle then the scale toggle. Every control here is
+   fixed-width, so this whole cluster's total width is
+   independent of the breadcrumb in `.sections` — the two `minmax(0, 1fr)` tracks (`.timeline`'s
+   own doc comment) already get an equal share of the row regardless of either side's content.
+   `justify-self: end` / `justify-content: flex-end` anchor the cluster to this track's own right
+   edge, mirroring the breadcrumb's own left anchor on the opposite side.
 
    `flex-wrap: wrap` (with `row-gap` for when it does) is a safety net, not decoration. A grid
    item's *automatic* minimum width defaults to its content's own min-content size, which for a
@@ -105,36 +113,41 @@
    would spill out of its own track (`min-width: 0` below is not, on its own, enough to stop this).
    `flex-wrap: wrap` lets any overflow that no longer fits on one line drop to a second line,
    still anchored right and still fully inside the track, rather than spilling into the neighbour.
-   `align-items: flex-end` bottom-aligns every control's own interactive row regardless of whether
-   a label sits above it (era shortcuts, mode toggle and scale toggle all carry one; the rate
-   readout doesn't).
-
-   `.rateReadoutRow` trailing last is deliberately the one child allowed to fall onto its own
-   second line at this track's own narrowest real widths: it is two always-reserved, usually-
-   *empty* slots (`RateReadout`/`TimeCompressedBadge`'s own doc comments — visibility-hidden,
-   not display-none, so starting/stopping playback never shifts anything beside them), not an
-   interactive control a viewer would notice dropping. Era shortcuts, the mode toggle and the
-   scale toggle — the three a viewer actually looks at and clicks — are what must never wrap. */
-.controlsSecondary {
+   `align-items: flex-end` bottom-aligns every control's own interactive row (each carries a label
+   above its buttons except the era shortcuts and the rate readout, which have none). */
+.secondary {
   grid-area: secondary;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   justify-self: end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: clamp(8px, 1vw, 14px);
   row-gap: 8px;
   min-width: 0;
 }
 
 /* Holds `TimeCompressedBadge` (ADR-029, shown rarely) beside `RateReadout` (a fixed-width slot,
-   always reserved). Flex at every width, not only the narrow media query below — the badge's own
-   occasional appearance already shifts nothing at rest, so there is no "reserve its width always"
+   always reserved) inside `.core`. Flex at every width — the badge's own occasional
+   appearance already shifts nothing at rest, so there is no "reserve its width always"
    requirement the way `RateReadout`'s own doc comment describes for itself. */
 .rateReadoutRow {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  width: var(--transport-flank);
   gap: 8px;
+}
+
+/* The speed select's own slot, the mirror of `.rateReadoutRow` on the other side of the transport
+   buttons: same reserved width, contents pushed toward the buttons so the small control sits
+   beside them rather than stranded at the far edge. The select itself stays its own narrow size —
+   this slot exists only to balance the row. */
+.speedSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: var(--transport-flank);
 }
 
 /* The scale toggle: a "Scale" label plus a segmented control showing both options, so the choice
@@ -191,54 +204,55 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
+/* Phone portrait: the era-edge buttons leave the track (row 1 collapses to just `track`) and
+   join `core` in one compact transport row — `‹` and `›` either side of back/play/forward — so
+   the track/ruler/band strip above no longer needs a horizontal gutter reserved for them and can
+   use the panel's full width (user ask, 2026-09-19: "the bigger win is horizontal... `‹` and `›`
+   sit outside the era band strip... insetting it... from both edges"). `sections` and `secondary`
+   each get their own full-width row, stacked, matching the pre-existing narrow layout. Kept at
+   the package's existing `max-width: 760px` breakpoint (`deviceTier.ts`'s `useIsPhoneViewport`),
+   not a new one. */
 @media (max-width: 760px) {
-  /* Too narrow for three side-by-side tracks: stack the breadcrumb, the core group and the
-     secondary row, all centred. The breadcrumb sits right under the section band strip it
-     navigates. */
-  .controlsRow {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'sections'
-      'core'
-      'secondary';
-    row-gap: 6px;
-    margin-top: 2px;
-  }
-
   .timeline {
-    gap: 2px;
+    /* Far narrower than the desktop value: this row carries five controls across ~390px. */
+    --transport-flank: 44px;
+
+    grid-template-columns: var(--edge-button-size) 1fr var(--edge-button-size);
+    grid-template-areas:
+      'sections   sections sections'
+      'track      track    track'
+      'edgePrev   core     edgeNext'
+      'secondary  secondary secondary';
+    column-gap: 8px;
+    row-gap: 6px;
+    /* At least 44px in the smallest dimension for every control in the consolidated transport
+       row (touch-target floor, independent of `@media (pointer: coarse)`'s own separate 40px
+       bump above — this breakpoint is phone portrait specifically, so it holds regardless of
+       how a given test harness or device reports pointer coarseness). `TransportCore`'s own
+       back/play/forward buttons meet this already (`Transport.module.css`'s `.ghostButton`'s own
+       coarse-pointer rule, plus a matching non-coarse floor added there for this breakpoint). */
+    --edge-button-size: 44px;
   }
 
-  .controlsSections {
+  .sections {
     justify-content: center;
     justify-self: center;
   }
 
-  .controlsSecondary {
+  /* Tight gaps: this row carries five controls plus two reserved flanks across ~390px, and the
+     default `clamp(10px, 1.4vw, 18px)` alone spends ~70px of it — enough to push the section-edge
+     arrows past the screen edge. */
+  .core {
+    gap: 6px;
+  }
+
+  .secondary {
     justify-content: center;
     justify-self: center;
     flex-wrap: wrap;
     row-gap: 10px;
-    /* Tightened from the base `clamp(10px, 1.4vw, 18px)` (already clamped to its own 10px floor
-       at this width) purely for a little extra breathing room at the 390px floor now that
-       `.controlsRow` is inset (`.timeline`'s own `--timeline-gutter` doc comment) — browser-
-       verified *not* to be what a small (~5px) residual right-edge overflow at this exact width
-       traces back to (`timeline-controls-inset-to-track-narrow`'s own QA-shot comment has the
-       measured story), so this alone doesn't close that gap; kept anyway as a real, if smaller,
-       improvement on its own terms. */
+    /* Tightened from the base `clamp(8px, 1vw, 14px)` for a little extra breathing room at the
+       ~390px floor. */
     gap: 6px;
-  }
-
-  /* The rate readout's own reserved-but-often-empty slot (`Transport.module.css`'s
-     `.rateReadout`) gets its own full-width row, right-aligned within it, rather than wrapping
-     onto the row with the scale toggle and centring together with it — the readout has nothing to
-     show most of the time, so centring the two together would leave the scale toggle visibly
-     off-centre from the play group above it. This lets the era-shortcuts/mode/scale group centre
-     on its own while still reserving the readout's width so play/pause starting or stopping never
-     shifts anything. */
-  .rateReadoutRow {
-    display: flex;
-    justify-content: flex-end;
-    width: 100%;
   }
 }

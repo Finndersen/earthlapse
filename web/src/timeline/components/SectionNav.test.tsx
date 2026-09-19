@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Playback, TimelineEvent } from '@/types/layer'
 
 import { createSymlogScale } from '../scale'
-import { sectionById, type SectionId } from '../sections'
+import { continuationSection, previousSiblingStep, sectionById, type SectionId } from '../sections'
 import { Timeline } from '../Timeline'
 import { SectionBands } from './SectionBands'
 import { SectionBreadcrumb } from './SectionBreadcrumb'
-import { SectionEdgeNav } from './SectionEdgeNav'
+import { SectionEdgeButton } from './SectionEdgeNav'
 
 beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 0) as unknown as number)
@@ -124,25 +124,20 @@ describe('<SectionBreadcrumb>', () => {
   })
 })
 
-// The previous/next sibling-section buttons that used to flank the breadcrumb (user ask,
-// 2026-09-18: moved onto the scrub track itself, at the far edges of the selected section's own
-// range — see `SectionEdgeNav.tsx`'s own doc comment for the full reasoning).
-describe('<SectionEdgeNav>', () => {
-  it('renders its children between the previous and next buttons', () => {
-    render(
-      <SectionEdgeNav sectionId="industrial-age" onSelectSection={vi.fn()}>
-        <div data-testid="stack-content">STACK</div>
-      </SectionEdgeNav>,
-    )
-    expect(screen.getByTestId('stack-content').textContent).toBe('STACK')
-  })
-
+// The previous/next sibling-section buttons that used to flank the breadcrumb, then moved onto
+// the scrub track itself (user ask, 2026-09-18), then became a plain per-edge button
+// (`SectionEdgeButton`) placed by `Timeline.tsx` itself rather than a wrapper owning both buttons
+// plus everything they flank as `children` — see `SectionEdgeNav.tsx`'s own doc comment for why
+// (a shared CSS Grid, so one `grid-area` reassignment can move a button between flanking the
+// track and joining the phone-portrait transport row).
+describe('<SectionEdgeButton>', () => {
   it('steps to the previous/next sibling section, matching the keyboard shortcuts, and reports through onSelectSection', () => {
     const onSelectSection = vi.fn()
     render(
-      <SectionEdgeNav sectionId="industrial-age" onSelectSection={onSelectSection}>
-        <div />
-      </SectionEdgeNav>,
+      <>
+        <SectionEdgeButton edge="previous" target={previousSiblingStep('industrial-age')} onSelectSection={onSelectSection} />
+        <SectionEdgeButton edge="next" target={continuationSection('industrial-age')} onSelectSection={onSelectSection} />
+      </>,
     )
     const previous = screen.getByRole('button', { name: 'Previous section: Early modern' })
     fireEvent.click(previous)
@@ -155,9 +150,10 @@ describe('<SectionEdgeNav>', () => {
 
   it("names each button's own keyboard shortcut in its title", () => {
     render(
-      <SectionEdgeNav sectionId="industrial-age" onSelectSection={vi.fn()}>
-        <div />
-      </SectionEdgeNav>,
+      <>
+        <SectionEdgeButton edge="previous" target={previousSiblingStep('industrial-age')} onSelectSection={vi.fn()} />
+        <SectionEdgeButton edge="next" target={continuationSection('industrial-age')} onSelectSection={vi.fn()} />
+      </>,
     )
     expect(screen.getByRole('button', { name: 'Previous section: Early modern' }).getAttribute('title')).toMatch(
       /Shift\+← or Page Up/,
@@ -165,11 +161,12 @@ describe('<SectionEdgeNav>', () => {
     expect(screen.getByRole('button', { name: 'Next section: Modern' }).getAttribute('title')).toMatch(/Shift\+→ or Page Down/)
   })
 
-  it('disables the buttons that have nowhere to go, without removing them', () => {
+  it('disables the button that has nowhere to go, without removing it', () => {
     render(
-      <SectionEdgeNav sectionId="earth" onSelectSection={vi.fn()}>
-        <div />
-      </SectionEdgeNav>,
+      <>
+        <SectionEdgeButton edge="previous" target={previousSiblingStep('earth')} onSelectSection={vi.fn()} />
+        <SectionEdgeButton edge="next" target={continuationSection('earth')} onSelectSection={vi.fn()} />
+      </>,
     )
     expect((screen.getByRole('button', { name: 'No previous section' }) as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: 'No next section' }) as HTMLButtonElement).disabled).toBe(true)

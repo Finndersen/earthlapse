@@ -170,7 +170,7 @@ describe('<Timeline>', () => {
         ratePerSecond={4e7}
       />,
     )
-    expect(screen.getByText('≈ 40 Myr/s')).toBeTruthy()
+    expect(screen.getByText('40 Myr/s')).toBeTruthy()
   })
 
   it('shows the "time compressed" marker only when timeCompressed is true (ADR-029)', () => {
@@ -393,7 +393,7 @@ describe('<Timeline>', () => {
     expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
   })
 
-  it('renders the sound control as the leading item in controls-core, before the nav buttons', () => {
+  it('puts the speed selector and rate readout in the transport cluster, flanking the controls, and accepts no sound prop', () => {
     render(
       <Timeline
         t={0}
@@ -401,18 +401,69 @@ describe('<Timeline>', () => {
         scale={FULL_DOMAIN_SCALE}
         sectionId="earth"
         events={events}
+        playback={playback({ playing: true })}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+        ratePerSecond={4e7}
+      />,
+    )
+    const core = screen.getByTestId('timeline-controls-core')
+    const secondary = screen.getByTestId('timeline-controls-secondary')
+    const speedSelect = screen.getByLabelText('Playback speed')
+    const rateReadout = screen.getByText('40 Myr/s')
+
+    expect(core.contains(speedSelect)).toBe(true)
+    expect(core.contains(rateReadout)).toBe(true)
+    expect(secondary.contains(speedSelect)).toBe(false)
+    expect(secondary.contains(rateReadout)).toBe(false)
+
+    // Speed leads the cluster and the rate readout trails it, so the transport buttons sit
+    // between the control that sets the rate and the readout that reports it.
+    const children = Array.from(core.children)
+    const speedIndex = children.findIndex((child) => child.contains(speedSelect))
+    const rateIndex = children.findIndex((child) => child.contains(rateReadout))
+    expect(speedIndex).toBe(0)
+    expect(rateIndex).toBe(children.length - 1)
+  })
+
+  it('orders the section-edge buttons around the transport row in the DOM, so the phone-portrait row tabs left to right', () => {
+    // Grid-area placement (Timeline.module.css) repositions these per breakpoint without
+    // touching DOM order — this asserts the DOM order itself, which is what tab sequence
+    // actually follows regardless of viewport (this component's own doc comment explains the
+    // choice: phone portrait's `‹ ⏮ ▶ ⏭ ›` row tabs in that visual order because the section-edge
+    // buttons sandwich `core` here, at the cost of not being DOM-adjacent to the track on wide
+    // viewports).
+    render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="industrial-age"
+        events={events}
         playback={playback()}
         onScrub={vi.fn()}
         onScaleKindChange={vi.fn()}
         onPlaybackChange={vi.fn()}
         onOpenCluster={vi.fn()}
         onSelectSection={vi.fn()}
-        sound={<button type="button" data-testid="sound-slot">sound</button>}
       />,
     )
+    const root = screen.getByTestId('timeline-root')
+    const sections = screen.getByTestId('timeline-controls-sections')
+    const track = screen.getByTestId('timeline-track-stack')
+    const edgePrev = screen.getByRole('button', { name: /^Previous section:/ })
     const core = screen.getByTestId('timeline-controls-core')
-    expect(core.contains(screen.getByTestId('sound-slot'))).toBe(true)
-    expect(core.firstElementChild).toBe(screen.getByTestId('sound-slot'))
+    const edgeNext = screen.getByRole('button', { name: /^Next section:/ })
+    const secondary = screen.getByTestId('timeline-controls-secondary')
+    const domOrder = Array.from(root.children)
+    expect(domOrder.indexOf(sections)).toBeLessThan(domOrder.indexOf(track))
+    expect(domOrder.indexOf(track)).toBeLessThan(domOrder.indexOf(edgePrev))
+    expect(domOrder.indexOf(edgePrev)).toBeLessThan(domOrder.indexOf(core))
+    expect(domOrder.indexOf(core)).toBeLessThan(domOrder.indexOf(edgeNext))
+    expect(domOrder.indexOf(edgeNext)).toBeLessThan(domOrder.indexOf(secondary))
   })
 
   it.each([

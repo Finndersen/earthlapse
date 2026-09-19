@@ -77,7 +77,7 @@ function isTextInputTarget(target: EventTarget | null): boolean {
 }
 
 /** Display strings for the previous/next sibling-section shortcut's keys, shown in
- *  `SectionEdgeNav`'s own button tooltips — one source so they can't drift from what
+ *  `SectionEdgeButton`'s own tooltips — one source so they can't drift from what
  *  `timelineKeyIntent` actually maps below. `SectionBreadcrumb` used to carry a matching pair for
  *  "leave section" (Escape/Backspace) and "go to root" (Home/`0`) on its own now-deleted "‹ Up"/
  *  "⌂ Earth" buttons (user ask, 2026-09-18: both removed outright, not replaced — the parent and

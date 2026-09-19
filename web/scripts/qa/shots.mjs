@@ -2033,4 +2033,267 @@ export default [
       offsetDeg: [-2, 2],
     },
   },
+  {
+    name: 'DIAG-transport-row-no-shift-on-play',
+    description: 'DIAGNOSTIC: measure scrub-track top edge paused vs playing.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { playing: false },
+    measure: async ({ page, hook }) => {
+      await hook.ready()
+      await rafTicks(page, 3)
+      const pausedTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
+      const pausedSecondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      await hook.setPlaying(true)
+      await rafTicks(page, 10)
+      const playingTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
+      const playingSecondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      await hook.setPlaying(false)
+      return {
+        pausedTop,
+        playingTop,
+        shiftPx: Math.abs(playingTop - pausedTop),
+        pausedSecondaryHeight: pausedSecondary.height,
+        playingSecondaryHeight: playingSecondary.height,
+      }
+    },
+    expect: { shiftPx: [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-minimised-globe-size',
+    description: 'DIAGNOSTIC: measure minimised globe drawn bounds.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => ({ orb: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
+    expect: { 'orb.width': [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-core-width-narrow',
+    description: 'DIAGNOSTIC: controlsCore box width/rows and viewport at narrow widths.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => {
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const rows = await page.evaluate(countDistinctRows, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
+      const overlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
+      return { coreWidth: core.width, coreHeight: core.height, coreX: core.x, trackWidth: track.width, trackX: track.x, rows, overlaps }
+    },
+    expect: { coreWidth: [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-narrow-play-shift',
+    description: 'DIAGNOSTIC: narrow viewport paused vs playing top-edge shift.',
+    viewport: { width: 390, height: 844 },
+    t: 500,
+    state: { playing: false },
+    reducedMotion: 'no-preference',
+    measure: async ({ page, hook }) => {
+      await hook.ready()
+      await rafTicks(page, 3)
+      const pausedTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
+      const pausedBottom = (await boxOf(page, BOTTOM_CHROME_SELECTOR))
+      await hook.setPlaying(true)
+      await page.waitForTimeout(1200)
+      const playingTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
+      const playingBottom = (await boxOf(page, BOTTOM_CHROME_SELECTOR))
+      await hook.setPlaying(false)
+      return {
+        pausedTop,
+        playingTop,
+        shiftPx: Math.abs(playingTop - pausedTop),
+        pausedHeight: pausedBottom.height,
+        playingHeight: playingBottom.height,
+      }
+    },
+    expect: { shiftPx: [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-wrap-sweep',
+    description: 'DIAGNOSTIC: check controlsSecondary row-wrap at rest across several t/viewport combos.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const combos = [
+        { width: 1440, t: 0 },
+        { width: 1440, t: 500 },
+        { width: 1440, t: 3_450_000_000 },
+        { width: 1600, t: 0 },
+        { width: 1920, t: 0 },
+        { width: 1280, t: 0 },
+        { width: 1150, t: 0 },
+        { width: 1050, t: 0 },
+      ]
+      const results = []
+      for (const combo of combos) {
+        await page.setViewportSize({ width: combo.width, height: 900 })
+        await hook.setT(combo.t)
+        await hook.ready()
+        const tops = await page.evaluate(() => {
+          const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
+          return secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
+        })
+        results.push({ ...combo, rows: new Set(tops).size, tops })
+      }
+      console.log('WRAP SWEEP', JSON.stringify(results, null, 2))
+      return { done: 1 }
+    },
+    expect: { done: [1, 1] },
+  },
+  {
+    name: 'DIAG-rate-readout-state',
+    description: 'DIAGNOSTIC: inspect the rate readout DOM state while playing.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { playing: false },
+    reducedMotion: 'no-preference',
+    measure: async ({ page, hook }) => {
+      await hook.ready()
+      const before = await page.evaluate(() => {
+        const el = document.querySelector('[class*="rateReadout"]:not([class*="Row"])')
+        const row = document.querySelector('[class*="rateReadoutRow"]')
+        const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
+        const tops = secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
+        return {
+          elText: el ? el.textContent : null,
+          elVisible: el ? getComputedStyle(el).visibility : null,
+          elRect: el ? el.getBoundingClientRect() : null,
+          rowRect: row ? row.getBoundingClientRect() : null,
+          secondaryRect: secondary ? secondary.getBoundingClientRect() : null,
+          childTops: tops,
+        }
+      })
+      await hook.setPlaying(true)
+      await page.waitForTimeout(1500)
+      const after = await page.evaluate(() => {
+        const el = document.querySelector('[class*="rateReadout"]:not([class*="Row"])')
+        const row = document.querySelector('[class*="rateReadoutRow"]')
+        const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
+        const tops = secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
+        return {
+          elText: el ? el.textContent : null,
+          elVisible: el ? getComputedStyle(el).visibility : null,
+          elRect: el ? el.getBoundingClientRect() : null,
+          rowRect: row ? row.getBoundingClientRect() : null,
+          secondaryRect: secondary ? secondary.getBoundingClientRect() : null,
+          childTops: tops,
+        }
+      })
+      await hook.setPlaying(false)
+      console.log('BEFORE', JSON.stringify(before))
+      console.log('AFTER', JSON.stringify(after))
+      return {
+        beforeText: before.elText ?? '',
+        afterText: after.elText ?? '',
+        beforeSecondaryTop: before.secondaryRect ? before.secondaryRect.top : -1,
+        afterSecondaryTop: after.secondaryRect ? after.secondaryRect.top : -1,
+      }
+    },
+    expect: { 'beforeText': [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-minimised-globe-size-narrow',
+    description: 'DIAGNOSTIC: measure minimised globe drawn bounds at phone floor, and collision with neighbours.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => {
+      const orb = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
+      const label = await boxOf(page, MINIMISED_GLOBE_LABEL_SELECTOR)
+      const title = await boxOf(page, '[data-testid="time-title"]')
+      const transport = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      return {
+        orb,
+        title,
+        label,
+        overlapsTitle: rectsOverlap(orb, title) ? 1 : 0,
+        labelGapPx: label.y - (orb.y + orb.height),
+        transportGapPx: transport.y - (orb.y + orb.height),
+      }
+    },
+    expect: { 'orb.width': [-99999, 99999] },
+  },
+  {
+    name: 'DIAG-caption-heading-visibility',
+    description: 'DIAGNOSTIC: heading vs caption box bounds at the longest real caption, several viewports.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 9000,
+    measure: async ({ page, hook }) => {
+      const viewports = [
+        { width: 1440, height: 900 },
+        { width: 390, height: 844 },
+        { width: 844, height: 390 },
+      ]
+      const results = []
+      for (const vp of viewports) {
+        await page.setViewportSize(vp)
+        await hook.ready()
+        const data = await page.evaluate(() => {
+          const heading = document.querySelector('[data-testid="scene-caption-title"]')
+          const text = document.querySelector('[data-testid="scene-caption-text"]')
+          const host = document.querySelector('[data-testid="scene-caption"]')
+          const box = host ? host.parentElement : null
+          if (!heading || !box) return null
+          const h = heading.getBoundingClientRect()
+          const b = box.getBoundingClientRect()
+          const t = text ? text.getBoundingClientRect() : null
+          return {
+            headingText: heading.textContent,
+            headingTop: h.top,
+            headingBottom: h.bottom,
+            boxTop: b.top,
+            boxBottom: b.bottom,
+            boxHeight: b.height,
+            headingFullyVisible: h.top >= b.top - 0.5 && h.bottom <= b.bottom + 0.5,
+            passageBottom: t ? t.bottom : null,
+            passageOverflows: t ? t.bottom > b.bottom + 0.5 : null,
+            overflowStyle: getComputedStyle(box).overflowY,
+          }
+        })
+        results.push({ viewport: vp, data })
+      }
+      console.log('CAPTION SWEEP', JSON.stringify(results, null, 2))
+      return { done: 1 }
+    },
+    expect: { done: [1, 1] },
+  },
+  {
+    name: 'DIAG-title-width-sweep-narrow',
+    description: 'DIAGNOSTIC: title box across several t values at 390px, to find worst-case left column room.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const ts = [0, 500, 8000, 1_760_000, 66_000_000, 251_902_000, 3_450_000_000, 4_500_000_000]
+      const results = []
+      for (const t of ts) {
+        await hook.setT(t)
+        await hook.ready()
+        const title = await boxOf(page, '[data-testid="time-title"]')
+        results.push({ t, x: title.x, width: title.width })
+      }
+      console.log('TITLE SWEEP', JSON.stringify(results, null, 2))
+      return { done: 1 }
+    },
+    expect: { done: [1, 1] },
+  },
+  {
+    name: 'DIAG-minimised-globe-size-wide-collision',
+    description: 'DIAGNOSTIC: same collision checks at 1440x900.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => {
+      const orb = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
+      const label = await boxOf(page, MINIMISED_GLOBE_LABEL_SELECTOR)
+      const title = await boxOf(page, '[data-testid="time-title"]')
+      const transport = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      return {
+        orb,
+        title,
+        label,
+        overlapsTitle: rectsOverlap(orb, title) ? 1 : 0,
+        labelGapPx: label.y - (orb.y + orb.height),
+        transportGapPx: transport.y - (orb.y + orb.height),
+      }
+    },
+    expect: { 'orb.width': [-99999, 99999] },
+  },
 ]

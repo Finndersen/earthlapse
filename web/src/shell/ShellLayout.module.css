@@ -11,7 +11,12 @@
 .shell {
   --gutter: clamp(16px, 3vw, 48px);
   --gutter-top: clamp(16px, 2.4vw, 34px);
-  --orb-size: clamp(120px, 13vw, 196px);
+  /* +~54% over the previous clamp(120px, 13vw, 196px) at every breakpoint it applies at (user
+     ask: at least 50%, aiming 50-60% larger drawn orb) — verified against the sphere's real
+     drawn pixels, not this box (`globe/Globe.tsx` frames the WebGL sphere to fill almost exactly
+     this container, so the drawn silhouette tracks it 1:1; `scripts/qa/shots.mjs`'s
+     `minimised-globe-size*` shots hold both the 1440x900 and narrow-phone numbers). */
+  --orb-size: clamp(165px, 20vw, 300px);
   /* Local override of the shared token (app/globals.css), a touch stronger than its default —
      every HUD element under `.shell` reads `var(--hud-shadow)` and custom properties cascade
      through the DOM like any inherited property, so this alone carries the item-9 "lean on
@@ -214,9 +219,24 @@
   text-align: center;
 }
 
+/* The era shortcuts sit under the time title rather than in the timeline's control row, so the
+   band below the track carries playback controls alone. `pointer-events: auto` because `.title`
+   is inert above the scene (its own rule), and these are real buttons. Scaled down from their
+   original row: they are a secondary jump, not a primary control, and must not compete with the
+   time readout directly above them. */
+.eraShortcuts {
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+  font-size: 0.85em;
+  margin-top: -2px;
+}
+
 .ancestor {
   grid-area: ancestor;
   justify-self: end;
+  /* Containing block for `.ancestorSound`, which pins itself to this column's top edge. */
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -224,6 +244,20 @@
   max-width: 34ch;
   padding-top: 40px;
   text-align: right;
+}
+
+/* The sound/volume control (`ShellLayout.tsx`'s own `sound` slot doc comment), pinned to the top
+   of this column so it sits on the same line as the "About & credits" button in the `.globe`
+   column opposite. Out of the flex flow rather than first in it: this column's `padding-top`
+   aligns the portrait below with that orb, and an in-flow first child would push the whole stack
+   down by its own height plus the gap, undoing that. Absolute placement resolves against the
+   padding box, i.e. the column's own top edge, which is exactly the button's row.
+   Present only when `sound` is supplied. */
+.ancestorSound {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
 }
 
 /* Small and muted so the top-left corner still reads as "globe orb", not "menu" — the same
@@ -240,6 +274,20 @@
   padding: 4px 0;
   cursor: pointer;
   transition: color 220ms ease;
+  /* One line, glyph beside label. `nowrap` matters at the phone floor specifically: this button
+     sits in the narrow `--orb-size` column, which is where the old two-word label wrapped. */
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.aboutIcon {
+  width: 12px;
+  height: 12px;
+  /* The glyph is drawn on a 16px grid but set beside 10px caps type; `flex: none` keeps it from
+     being squeezed when the column is at its narrowest. */
+  flex: none;
 }
 
 .aboutButton:hover,
@@ -365,30 +413,40 @@
   justify-self: center;
   /* The scene name leads as its own heading (app/page.module.css `.captionTitle`), with the
      passage underneath capped well short of the lens's own aperture width so it still reads as
-     a caption, not a column, at 1440x900 and 1280x720, and `min(…, 92vw)` keeps the same cap
-     from ever touching the side gutters on a narrow window. This slot sits in `.bottom`, its
-     own full-width row below `.readouts`/`.ancestor`/`.feed` (ShellLayout.tsx's grid), so a
-     wider box never overlaps `.readouts` or `.ancestor` beside it *horizontally* — but a taller
-     `.bottom` (this box plus the heading above it) does take height away from `.feed`'s track
-     above it in the same column; see `.caption`'s own `max-height` below and `.feed`'s own
-     comment for how that's bounded. */
-  max-width: min(90ch, 94vw);
+     a caption, not a column, at 1440x900 and 1280x720, and `min(…, 94vw)` keeps the same cap
+     from ever touching the side gutters on a narrow window. `120ch`, not `90ch` (raised so the
+     longest real caption — `data/scenes.yaml`'s "Çatalhöyük, a Town Without Streets", 213
+     combined heading+passage characters — needs fewer lines, which is what actually lets
+     `.caption`'s own `max-height` below come down without clipping it). This slot sits in
+     `.bottom`, its own full-width row below `.readouts`/`.ancestor`/`.feed` (ShellLayout.tsx's
+     grid), so a wider box never overlaps `.readouts` or `.ancestor` beside it *horizontally* —
+     but a taller `.bottom` (this box plus the heading above it) does take height away from
+     `.feed`'s track above it in the same column; see `.caption`'s own `max-height` below and
+     `.feed`'s own comment for how that's bounded. */
+  max-width: min(120ch, 94vw);
   text-align: center;
 }
 
 /* Bounds how tall a scene caption (heading + passage, `app/page.module.css`) can grow, so a
-   wordy scene cannot squeeze `.feed`'s `minmax(0, 1fr)` track above it in the same column.
-   Sized to hold the heading plus five passage lines at the largest clamped type (heading
-   ~26px, passage 19px at line-height 1.5), which clears the longest real caption (~340
-   characters) at this `max-width`. `overflow-y: auto` is the backstop for anything longer,
-   scrolling rather than clipping. Not applied to `.expandedGlobeCaption`, which never carries
-   text long enough to need it. */
+   wordy scene cannot squeeze `.feed`'s `minmax(0, 1fr)` track above it in the same column —
+   `overflow: hidden`, never `auto`: a caption that changes on its own as playback advances is
+   not something a viewer can be expected to scroll, and `auto` was the actual bug (a caption
+   taller than this box scrolled its own heading out of view, invisible at every viewport).
+   `overflow: hidden` cannot reproduce that failure mode — the heading is `.captionBlock`'s own
+   first flex child, so it is always the first content clipped *last*, never the first thing to
+   go, regardless of how much of the passage's tail a pathologically long future caption might
+   lose. Sized generously enough that this cap is never actually reached by any caption this app
+   ships today: `scripts/qa/shots.mjs`'s `caption-fits-without-scroll*` shots hold the heading
+   full-frame at the longest real caption (`data/scenes.yaml`'s Çatalhöyük record, 213 combined
+   characters) at every viewport this app supports, so any shorter caption is always safe too —
+   real measured heights there are 86px (1440x900), 79px (390x844) and 71px (844x390 landscape,
+   the tightest case — deliberately not shrunk further than the other two despite the room a
+   pure `vh` term would take from it, per the standing caution against deepening that viewport's
+   already-tight vertical budget), each with 20-30px of margin baked into this clamp rather than
+   sized flush to them. */
 .caption {
-  max-height: clamp(128px, 20vh, 184px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
+  max-height: clamp(100px, 12vh, 120px);
+  overflow: hidden;
 }
 
 /* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot, above
@@ -454,7 +512,20 @@
 
 @media (max-width: 760px) {
   .shell {
-    --orb-size: 84px;
+    /* Short of the desktop pass's +~54% (this rule's own doc comment on the wide `--orb-size`
+       has the full story): at the ~390px phone floor, `.title`'s own grid column sits only
+       ~123px from this column's left edge (`grid-template-columns: minmax(0, 1fr) auto
+       minmax(0, 1fr)` — both `1fr` tracks are exactly this wide once the centred title column
+       claims its own content width), and the original 84px orb was already most of the way
+       into that budget. 116px (+38%) is the largest value that stays clear of `.title` with a
+       real margin across the title texts this app actually renders at this width
+       (`scripts/qa/shots.mjs`'s `minimised-globe-size-narrow` holds the measured numbers);
+       going further would start overlapping the title text itself. A `Stub data` badge
+       (`Experience.tsx`'s `badge` slot) widens the title further still and was already only
+       ~9px clear of the *original* 84px orb — a pre-existing tightness this change doesn't
+       introduce and doesn't attempt to fix, since doing so would mean restructuring the title/
+       ancestor grid columns rather than resizing this one property. */
+    --orb-size: 116px;
   }
 
   /* On a phone the HUD stacks down the top third of the window, so the top falloff runs
@@ -506,9 +577,42 @@
      column's width cap — full-width here reads as a strip, not a narrow stack — and its padding,
      since the phone HUD leaves this row only a few dozen px and `row-gap` already separates it. */
   .feed {
-    align-self: auto;
+    align-self: end;
     max-width: none;
     padding-block: 0;
+  }
+
+  /* The band the expanded globe must leave free below itself, over and above the Globe/Map
+     toggle's own reservation: the feed's one-card strip (`events/presentation.ts`'s
+     `FEED_STRIP_HEIGHT_PX`) plus a real gap. Declared on the shell so `Globe.module.css` — a
+     different module, but a descendant in the DOM — inherits it for both the sphere's own sizing
+     and the toggle's offset, keeping one source for a distance three rules depend on. Only while
+     expanded: collapsed, the globe is a corner orb and reserves nothing. */
+  .shell[data-globe-expanded='true'] {
+    /* The event strip's own band, directly above the timeline. */
+    --feed-reserve: 43px;
+    /* Everything stacked in that bottom band — the strip plus the zoom rocker sitting above it.
+       This is what the sphere must leave free; `--feed-reserve` alone only places the strip.
+       `Globe.module.css` reads both: the sizing rules take this one, the zoom offset takes the
+       other. */
+    --bottom-overlay-reserve: 89px;
+  }
+
+  /* Expanded, the strip leaves the grid and pins itself to the same lower boundary the Globe/Map
+     toggle uses. In flow it sits above the caption stage, a band whose height varies with the
+     caption's own text, so no fixed reservation could track where it actually lands — and the
+     sphere, sized against a reservation, grew straight through it. Pinned, its position is
+     exactly `--feed-reserve` below the toggle and the arithmetic closes. */
+  .shell[data-globe-expanded='true'] .feed {
+    /* `fixed`, not `absolute`: the offset below is expressed against the viewport (`100vh` minus
+       a viewport-space boundary), which is the basis `Globe.module.css`'s own toggle rule uses.
+       An absolutely positioned strip resolves against `.hud`'s padding box instead and lands
+       nowhere near it. */
+    position: fixed;
+    right: var(--gutter);
+    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
+    left: var(--gutter);
+    z-index: 2;
   }
 
   .globe .label {
@@ -568,8 +672,12 @@
     min-width: 0;
   }
 
+  /* Stays last regardless of the portrait/label reorder above — explicit rather than relying on
+     the default `order: 0` tie (which would otherwise sort it before the readout). */
+  /* Under the globe orb in the column above it, not centred across the row: centred, the figure
+     floated mid-screen with nothing either side of it and read as unrelated to anything. */
   .readouts {
-    justify-self: center;
+    justify-self: start;
     margin-top: 0;
   }
 }
@@ -584,6 +692,17 @@
 @media (max-height: 760px) and (min-width: 761px) {
   .captionBlock {
     gap: 2px;
+  }
+
+  /* The 50%+ desktop enlargement (this file's own `--orb-size` doc comment) must not apply here:
+     a short, wide window (844x390 landscape-phone is the case that matters) already pushes the
+     bottom chrome toward the edge of the viewport before this orb grows at all — a bigger orb
+     would only deepen that, and fixing the cut-off itself is a separate, out-of-scope pass.
+     Reverts to the exact pre-enlargement formula (not "smaller than that" — there's no evidence
+     a further shrink is warranted, only that growth is off the table here) rather than a new
+     number, so this is provably a no-op versus the orb's own size before this change. */
+  .shell {
+    --orb-size: clamp(120px, 13vw, 196px);
   }
 }
 

@@ -72,10 +72,22 @@ function LegendToggle({ label, hint, compactHint, on, onChange, footer, compact 
           </button>
         </div>
       </div>
-      <p id={hintId} className={compact ? styles.legendHintCompact : styles.legendHint}>
-        {compact ? compactHint : hint}
-      </p>
-      {footer}
+      {/* Compact keeps the hint in the accessibility tree but off the screen: the phone panel is
+          title + On/Off only, and the caveat the hint carries ("modelled", "data ends 2015") must
+          still reach a screen reader through `aria-describedby` rather than disappearing with the
+          pixels. `footer` (the density ramp) has no such text equivalent and is simply dropped. */}
+      {compact ? (
+        <span id={hintId} className={styles.visuallyHidden}>
+          {compactHint}
+        </span>
+      ) : (
+        <>
+          <p id={hintId} className={styles.legendHint}>
+            {hint}
+          </p>
+          {footer}
+        </>
+      )}
     </div>
   )
 }

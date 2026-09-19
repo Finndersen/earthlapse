@@ -367,6 +367,28 @@
     width: var(--orb-size, 84px);
   }
 
+  /* The scalar readouts share a full-width row with nothing else on a phone, so the desktop
+     `clamp(20px, 1.7vw, 26px)` value type is far larger than it needs to be for a figure that is
+     glanced at, not read. Left-aligned explicitly rather than relying on the slot's own
+     `justify-self: start`, so the text inside each readout lines up with the column edge. */
+  .readout {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .value {
+    font-size: 13px;
+  }
+
+  .label {
+    font-size: 8px;
+    letter-spacing: 0.16em;
+  }
+
+  .noData {
+    font-size: 8.5px;
+  }
+
   /* The readout span itself (this `.ancestor`, distinct from ShellLayout's own `.ancestor`
      slot) must be capped to the corner's width before the name/since text's own `max-width:
      100%` below means anything — as a non-stretched flex item (`.panel`'s `align-items:

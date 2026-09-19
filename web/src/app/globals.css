@@ -33,3 +33,15 @@ body {
   font-family: var(--hud-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+/* The platform tap flash is an opaque rectangle that ignores `border-radius`, so on a phone it
+   draws a blue box around controls that are round or pill-shaped — every interactive element in
+   the HUD. Each carries its own hover/active/focus-visible treatment, so suppressing the flash
+   removes no feedback. */
+button,
+a,
+select,
+summary,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+}

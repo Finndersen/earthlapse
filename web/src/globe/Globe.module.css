@@ -442,14 +442,19 @@
   background: rgba(3, 4, 6, 0.45);
 }
 
-.legendHintCompact {
-  margin: 0;
-  font-size: 9px;
-  line-height: 1.3;
-  white-space: nowrap;
+/* The compact legend's hint is read, never drawn (`Legend.tsx`'s own comment on why it stays in
+   the accessibility tree). Clipped rather than `display: none`, which would take it out of the
+   tree along with the `aria-describedby` that points at it. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .legendHint {
@@ -459,19 +464,22 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
+/* `--corner-control-size` is the shared height of both top-corner controls — this button and the
+   Globe/Map toggle opposite it on a phone — so the two stay optically on one line with the time
+   title between them instead of each carrying its own copy of the number. */
 .closeButton {
   position: absolute;
   top: clamp(16px, 2.4vw, 34px);
   right: clamp(16px, 3vw, 48px);
-  width: 40px;
-  height: 40px;
+  width: var(--corner-control-size, 40px);
+  height: var(--corner-control-size, 40px);
   padding: 0;
   border: none;
   border-radius: 50%;
   background: transparent;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  font-size: 15px;
-  line-height: 40px;
+  font-size: calc(var(--corner-control-size, 40px) * 0.42);
+  line-height: var(--corner-control-size, 40px);
   cursor: pointer;
   transition:
     color 200ms ease,
@@ -615,14 +623,65 @@
    `--chrome-gap-height`, unaffected). Scoped to the same 760px phone breakpoint
    `useIsPhoneViewport` and `<Legend>`'s own `compact` prop already use. */
 @media (max-width: 760px) {
+  .backdrop {
+    /* Bigger than the desktop 40px: this is the one control that gets a viewer back out of the
+       fullscreen view, and at 40px it was a small glyph in a corner on the device where it is
+       hit with a thumb. Declared on the backdrop so both corner controls inherit it. */
+    --corner-control-size: 54px;
+  }
+
   .orbFitFrameSphere {
     /* `+ 6px`: a real, visible gap from the legend's own bottom edge, not just non-intersection —
        without it a box that consumes the entire remaining space lands exactly tangent to the
        legend, a 0px gap that reads as touching rather than clear. */
     --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
 
-    --expanded-size: max(235px, min(94vw, 900px, calc(var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top))));
-    margin-top: calc(var(--usable-top) + (var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--expanded-size)) / 2);
+    /* `--bottom-overlay-reserve` (ShellLayout.module.css, phone + expanded only) keeps the event
+       strip and the zoom rocker above it free at the bottom, the same way `--usable-top` keeps
+       the legend clear at the top: without it the sphere grows straight through both. Defaults
+       to `0px` so every other breakpoint is untouched. */
+    --usable-height: calc(
+      var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--bottom-overlay-reserve, 0px)
+    );
+
+    /* A lower floor than the base rule's 235px, which on a short phone is taller than the space
+       that is actually free and so pushed the sphere straight back through the legend above and
+       the event strip below — a floor that overflows its own container defeats the clearances
+       either side of it. 225px still reads as a globe rather than a thumbnail. */
+    --expanded-size: max(225px, min(94vw, 900px, var(--usable-height)));
+    margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--expanded-size)) / 2);
+  }
+
+  /* Top-left, into the space beside the centred title that nothing else claims on a phone. It
+     used to sit centred just above the timeline, where the event strip drew straight over it.
+     The legend below moves down to make room rather than this stacking on top of it. */
+  .viewModeGroup {
+    top: clamp(16px, 2.4vw, 34px);
+    bottom: auto;
+    left: clamp(16px, 3vw, 48px);
+    /* Same box as `.closeButton` opposite, contents centred in it: sharing only a top edge
+       leaves this shorter pill visibly riding high against that button and the time title
+       between them. */
+    height: var(--corner-control-size);
+    justify-content: center;
+    transform: none;
+  }
+
+  /* Pushed below the Globe/Map toggle now occupying this corner. The sphere follows without
+     further help: it sizes against `--overlay-clear-bottom`, this panel's *measured* bottom
+     edge, so moving the panel moves the boundary. */
+  .legendGroup {
+    top: calc(clamp(16px, 2.4vw, 34px) + var(--corner-control-size) + 8px);
+  }
+
+  /* Down into the bottom band, directly above the event strip, instead of the vertically-centred
+     right edge where it overlapped the sphere. Side by side rather than the base rule's stacked
+     rocker: a vertical pair is twice as tall and would reach back up into the sphere. */
+  .zoomGroup {
+    top: auto;
+    transform: none;
+    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px + var(--feed-reserve, 0px));
+    flex-direction: row;
   }
 }
 
@@ -635,9 +694,18 @@
 @media (max-width: 1150px) {
   .orbFitFrameMap {
     --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
+    /* `--bottom-overlay-reserve` as in the sphere's own rule above — `0px` above the phone
+       breakpoint that sets it, so this wider query keeps its behaviour on a tablet or desktop. */
     --map-height: max(
       160px,
-      min(calc(96vw / 2.05), 94vh, calc(var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top)), calc(1800px / 2.05))
+      min(
+        calc(96vw / 2.05),
+        94vh,
+        calc(
+          var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--bottom-overlay-reserve, 0px)
+        ),
+        calc(1800px / 2.05)
+      )
     );
 
     /* Re-derived from the (possibly now smaller) `--map-height` above, not left at the base
@@ -645,7 +713,13 @@
        whole feature depends on (this file's earlier doc comment on the map-mode rule), and only
        `--map-height` is guaranteed to reflect the overlay clamp here. */
     width: calc(var(--map-height) * 2.05);
-    margin-top: calc(var(--usable-top) + (var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--map-height)) / 2);
+    margin-top: calc(
+      var(--usable-top) +
+        (
+          var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) -
+            var(--bottom-overlay-reserve, 0px) - var(--map-height)
+        ) / 2
+    );
   }
 }
 

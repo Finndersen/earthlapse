@@ -79,11 +79,23 @@
 }
 
 @media (max-width: 760px) {
-  /* This group is one flex item of `Timeline.module.css`'s `.controlsSecondary`, which already
-     wraps (`flex-wrap: wrap`) if its contents don't all fit on one line. Tighter padding/gap/font
-     here is just fitting more comfortably at the phone floor. */
+  /* Stacked, not a pill row: the shell renders this group under the time title
+     (`ShellLayout.tsx`'s `eraShortcuts` slot), where a horizontal row runs wide enough to reach
+     the minimised orb on one side and the sound toggle on the other. Tighter padding/gap/font
+     below is just fitting more comfortably at the phone floor. */
   .group {
+    flex-direction: column;
+    align-items: stretch;
     gap: 3px;
+  }
+
+  /* Back to one row while the globe fills the lens: stacked, these two pills cost ~30px of the
+     vertical space the sphere is sized against, and the expanded view has none to spare. The
+     title row is uncrowded here — the minimised orb and its label are gone — so the width the
+     stacked layout was avoiding is available again. */
+  :global([data-globe-expanded='true']) .group {
+    flex-direction: row;
+    align-items: center;
   }
 
   .shortcut {

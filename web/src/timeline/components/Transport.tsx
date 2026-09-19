@@ -1,10 +1,12 @@
 'use client'
 
 /** Playback transport controls. `Timeline.tsx` arranges these into three clusters across its
- *  `.controlsRow` grid — breadcrumbs (the one flexible column) on the left, `sound` +
- *  `TransportCore` + `SpeedSelect` centred over the track, and `EraShortcuts` +
- *  `PlaybackModeToggle` + the scale toggle right-aligned to the gutter — so nothing here ever
- *  shifts position when the breadcrumb's own length changes:
+ *  `.controlsRow` grid — breadcrumbs (the one flexible column) on the left; `SpeedSelect` paired
+ *  with `RateReadout`/`TimeCompressedBadge` (one logical "speed + its result" group) followed by
+ *  `TransportCore`, both centred over the track; and `EraShortcuts` + `PlaybackModeToggle` + the
+ *  scale toggle right-aligned to the gutter — so nothing here ever shifts position when the
+ *  breadcrumb's own length changes. The sound/volume control is not part of this row at all
+ *  (`ShellLayout.tsx`'s own `sound` slot, beneath the ancestor panel):
  *
  *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
  *    visible scene (`nearestStepTarget`) rather than by a fixed number of years — a fixed step
@@ -16,15 +18,17 @@
  *  - `PlaybackModeToggle` — the scenes/steady mode toggle (ADR-016): a compact two-state
  *    segmented control, ghost style with an amber active state — the shared lens visual language
  *    (`--hud-*` tokens) rather than a new idiom.
- *  - `RateReadout` — its changing text must never reflow the scale toggle beside it, so
- *    `Timeline.tsx` places it last, past everything whose position must stay pixel-identical
- *    while the rate readout's own width does not (a fixed-width slot, always reserved — see its
- *    own doc comment). It is optional and purely presentational: the caller (`Experience.tsx`)
- *    computes and smooths the instantaneous years-per-second next to its playback loop, since
- *    that is where the real per-frame `t` deltas already are; this component only formats and
- *    shows it, and only while playing. */
+ *  - `RateReadout` — grouped directly beside `SpeedSelect` (`Timeline.module.css`'s
+ *    `.speedGroup`): the select sets the rate, the readout shows the result, so the two read as
+ *    one control. A fixed-width slot, always reserved (see its own doc comment), so starting or
+ *    stopping playback never moves `TransportCore` beside it or anything past it in the row. It
+ *    is optional and purely presentational: the caller (`Experience.tsx`) computes and smooths
+ *    the instantaneous years-per-second next to its playback loop, since that is where the real
+ *    per-frame `t` deltas already are; this component only formats and shows it, and only while
+ *    playing. */
 
 import { useId } from 'react'
+import type { ReactNode } from 'react'
 
 import type { GeoTime, Playback, PlaybackMode } from '@/types/layer'
 
@@ -48,6 +52,43 @@ interface TransportCoreProps {
   onPlaybackChange: (playback: Playback) => void
 }
 
+/* Drawn, not typed. The transport used to render the literal characters `⏮ ▶ ⏸ ⏭`, which are all
+   emoji-presentation candidates: Android resolves `⏸` through the colour emoji font, painting a
+   blue rounded square instead of a monochrome glyph, so the pause state showed a coloured box
+   inside the HUD's own ring. A variation selector only asks for text presentation; an inline path
+   does not depend on which fonts a device happens to ship. Sized in `em` so the existing
+   `font-size` step between `.ghostButton` and the larger `.playButton` still scales them. */
+function TransportIcon({ children }: { children: ReactNode }) {
+  return (
+    <svg viewBox="0 0 16 16" width="1em" height="1em" fill="currentColor" aria-hidden="true" focusable="false">
+      {children}
+    </svg>
+  )
+}
+
+const BACK_ICON = (
+  <>
+    <rect x="2.6" y="3.2" width="1.7" height="9.6" rx="0.5" />
+    <path d="M13.4 3.9v8.2a.5.5 0 0 1-.77.42L5.9 8.42a.5.5 0 0 1 0-.84l6.73-4.1a.5.5 0 0 1 .77.42Z" />
+  </>
+)
+
+const FORWARD_ICON = (
+  <>
+    <path d="M2.6 3.9v8.2a.5.5 0 0 0 .77.42l6.73-4.1a.5.5 0 0 0 0-.84L3.37 3.48a.5.5 0 0 0-.77.42Z" />
+    <rect x="11.7" y="3.2" width="1.7" height="9.6" rx="0.5" />
+  </>
+)
+
+const PLAY_ICON = <path d="M4.2 3.3v9.4a.5.5 0 0 0 .76.43l7.7-4.7a.5.5 0 0 0 0-.86l-7.7-4.7a.5.5 0 0 0-.76.43Z" />
+
+const PAUSE_ICON = (
+  <>
+    <rect x="4.2" y="3.2" width="2.7" height="9.6" rx="0.6" />
+    <rect x="9.1" y="3.2" width="2.7" height="9.6" rx="0.6" />
+  </>
+)
+
 /** Back / play-pause / forward — the group `Timeline.tsx` centres over the track. */
 export function TransportCore({ t, window: visibleWindow, checkpoints, playback, onScrub, onPlaybackChange }: TransportCoreProps) {
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
@@ -66,7 +107,7 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
         title="Back to previous scene"
         onClick={() => jumpToNeighbour('back')}
       >
-        {'⏮'}
+        <TransportIcon>{BACK_ICON}</TransportIcon>
       </button>
       <button
         type="button"
@@ -74,7 +115,7 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
         aria-label={playback.playing ? 'Pause' : 'Play'}
         onClick={() => onPlaybackChange({ ...playback, playing: !playback.playing })}
       >
-        {playback.playing ? '⏸' : '▶'}
+        <TransportIcon>{playback.playing ? PAUSE_ICON : PLAY_ICON}</TransportIcon>
       </button>
       <button
         type="button"
@@ -83,7 +124,7 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
         title="Forward to next scene"
         onClick={() => jumpToNeighbour('forward')}
       >
-        {'⏭'}
+        <TransportIcon>{FORWARD_ICON}</TransportIcon>
       </button>
     </div>
   )
@@ -94,8 +135,9 @@ interface SpeedSelectProps {
   onPlaybackChange: (playback: Playback) => void
 }
 
-/** The playback speed `<select>`, alone — sits centred over the track beside `TransportCore`
- *  (`Timeline.tsx`'s `.controlsCore`), not beside the mode/scale toggles on the row's right. */
+/** The playback speed `<select>`, alone — sits centred over the track grouped with `RateReadout`
+ *  (`Timeline.tsx`'s `.speedGroup`, itself inside `.controlsCore` beside `TransportCore`), not
+ *  beside the mode/scale toggles on the row's right. */
 export function SpeedSelect({ playback, onPlaybackChange }: SpeedSelectProps) {
   return (
     <select
@@ -198,17 +240,16 @@ interface RateReadoutProps {
 }
 
 /** The playback rate readout (ADR-016's prototype), in a fixed-width slot reserved whether or
- *  not it currently has anything to show: `Timeline.module.css` sizes `.rateReadout` to
+ *  not it currently has anything to show: `Transport.module.css` sizes `.rateReadout` to
  *  comfortably outlast any `formatRate` output this app can produce, so starting/stopping
- *  playback never shifts the mode toggle or scale toggle beside it — `visibility`, not
- *  `display: none`, keeps the slot in the layout even empty. Placed by the caller (`Timeline.tsx`)
- *  last in the row's right-hand cluster, past everything whose position must stay
- *  pixel-identical. */
+ *  playback never shifts `TransportCore` beside it — `visibility`, not `display: none`, keeps the
+ *  slot in the layout even empty. Placed by the caller (`Timeline.tsx`) grouped with `SpeedSelect`
+ *  in `.speedGroup`, to the left of `TransportCore`. */
 export function RateReadout({ ratePerSecond = null, playing }: RateReadoutProps) {
   const visible = playing && ratePerSecond !== null
   return (
     <span className={styles.rateReadout} aria-hidden data-visible={visible}>
-      {visible ? `≈ ${formatRate(ratePerSecond)}` : ''}
+      {visible ? formatRate(ratePerSecond) : ''}
     </span>
   )
 }

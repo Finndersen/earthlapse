@@ -73,7 +73,6 @@
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .close:hover,
@@ -105,7 +104,6 @@
   background: transparent;
   cursor: pointer;
   text-align: left;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .item:hover .itemLabel,

@@ -30,9 +30,7 @@
   outline: none;
 }
 
-/* 48px: font-size scaled by the same ~9% so the glyph doesn't look small inside its own ring.
-   `Timeline.module.css`'s `.controlsRow` doc comment records this size as what sets that row's
-   own height. */
+/* 48px: font-size scaled by the same ~9% so the glyph doesn't look small inside its own ring. */
 .playButton {
   width: 48px;
   height: 48px;
@@ -57,6 +55,18 @@
   }
 }
 
+/* Same 44px+ touch-target floor as the section-edge buttons it now shares a row with on phone
+   portrait (`Timeline.module.css`'s own `max-width: 760px` doc comment) — independent of the
+   `@media (pointer: coarse)` bump above, since that query is about *pointer type*, not viewport,
+   and this breakpoint must hold the floor regardless of how a given device or test harness
+   reports pointer coarseness. */
+@media (max-width: 760px) {
+  .ghostButton {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* Fixed width (the widest option, "0.25x", plus padding) so a different selected speed never
    changes this element's own rendered width — a native <select> otherwise sizes to its current
    option's text, which would shift the mode toggle/scale toggle beside it every time the speed
@@ -64,7 +74,10 @@
 .speedSelect {
   width: 46px;
   background: transparent;
-  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  /* Chrome-less like the transport buttons beside it, rather than a pill: this sits inside the
+     transport cluster now, and a bordered control there read as the odd one out. The caret the
+     native <select> draws is affordance enough. */
+  border: none;
   border-radius: 999px;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
@@ -76,10 +89,15 @@
   cursor: pointer;
 }
 
-.speedSelect:hover,
+.speedSelect:hover {
+  color: var(--hud-ink, #efe9dc);
+}
+
+/* Keeps a visible keyboard ring now that there is no border to thicken or recolour instead. */
 .speedSelect:focus-visible {
   color: var(--hud-ink, #efe9dc);
-  outline: none;
+  outline: 1px solid var(--hud-accent, #e8b06a);
+  outline-offset: 2px;
 }
 
 /* The mode toggle's own visible label, stacked above the buttons — same small-caps HUD look as
@@ -137,21 +155,27 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* A fixed-width slot, always present in the layout: 14ch comfortably outlasts any real
-   `formatRate` output ("≈ " plus up to three integer digits, a two-decimal Gyr/s figure and its
-   unit — e.g. "≈ 77.4 Gyr/s" measured near the oldest edge at 64x), with `overflow`/`text-overflow`
-   as a safety net rather than a promise this is ever reached. Right-aligned so the numerals hug
-   the row's own outer edge. `visibility`, not `display`, when empty — the slot's width must never
-   depend on whether there is anything to show. `min-height` for the same reason: an
-   `inline-block` with a genuinely empty text node generates no line box at all, so this would
-   measure 0px tall while `visible` is false; `Timeline.tsx` places this in `.rateReadoutRow`,
-   which `.controlsSecondary`'s `flex-wrap: wrap` can push onto its own line, and a 0px-tall line
-   there would jump to this element's real ~11px line height the moment playback started, shifting
-   `.controlsRow` (and the track below it) down by that much. Pinning the height to what it
-   already renders at when visible removes the jump. */
+/* A fixed-width slot, always present in the layout, sized off `formatRate`'s own bucket-by-bucket
+   worst case, not the single "≈ 77.4 Gyr/s" figure a real run happened to hit: `trimmed` strips
+   trailing zeros, so the longest string each bucket can produce is "≈ < 1 yr/s" (rate < 1),
+   "≈ 999 yr/s" (rate < 1e3), "≈ 999.9 kyr/s" (rate < 1e6), "≈ 999 Myr/s" (rate < 1e9), or
+   "≈ 999.99 Gyr/s" (rate >= 1e9, three integer digits kept as headroom above the ~77 Gyr/s this
+   app has actually measured near the oldest edge, for a slower frame or a higher future top
+   speed) — 14 visible characters at its widest. `16ch`, not `14ch`, keeps a 2-character margin
+   over that exact count: `ch` is the advance width of the font's own "0" glyph, and a fallback
+   font in the stack below can still render "≈" or "/" at a different width than a digit even
+   though the stack is nominally monospace, so an exact-fit box risks clipping the very case it
+   was sized for. `overflow`/`text-overflow` stay as a safety net, not a promise this margin is
+   ever reached. Right-aligned so the numerals hug the row's own outer edge. `visibility`, not
+   `display`, when empty — the slot's width must never depend on whether there is anything to
+   show. `min-height` for the same reason: an `inline-block` with a genuinely empty text node
+   generates no line box at all, so this would measure 0px tall while `visible` is false, jumping
+   to this element's real ~11px line height the moment playback started and shifting whatever
+   comes after it. Pinning the height to what it already renders at when visible removes the
+   jump. */
 .rateReadout {
   display: inline-block;
-  width: 14ch;
+  width: 16ch;
   min-height: 11px;
   overflow: hidden;
   text-align: right;
@@ -197,4 +221,36 @@
 
 .timeCompressed[data-visible='true'] {
   visibility: visible;
+}
+
+/* Phone portrait: `RateReadout` and `TimeCompressedBadge` now ride in the transport row itself
+   (`Timeline.module.css`'s `.core`), flanked by the speed select and the two section-edge
+   buttons. Their desktop slots reserve ~33ch between them, which alone is wider than the whole
+   ~390px row, so both shrink here. The slot stays reserved — just narrower — so the row still
+   cannot reflow when playback starts. `overflow: hidden` keeps a long rate string clipped to the
+   slot rather than widening it. */
+@media (max-width: 760px) {
+  /* Matched to `.speedSelect`'s own phone width below, deliberately: the two sit on opposite
+     sides of the transport buttons, so equal widths are what keep those buttons centred in the
+     row — and keep the two section-edge arrows equidistant from the screen edges — whether or
+     not the readout currently has anything to show. */
+  .rateReadout {
+    width: 100%;
+    font-size: 9px;
+    overflow: hidden;
+  }
+
+  /* No native caret at this breakpoint: it reserves a fixed chunk of the control's width for a
+     glyph, which is most of this slot, and tapping opens the platform picker regardless. */
+  .speedSelect {
+    width: 100%;
+    appearance: none;
+    padding: 3px 2px;
+  }
+
+  .timeCompressed {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
 }

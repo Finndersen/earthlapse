@@ -154,6 +154,7 @@ export {
   type TimelineSection,
 } from './sections'
 export { generateTicks, tickLabelAlign, type AxisTick, type TickLabelAlign } from './ticks'
+export { EraShortcuts } from './components/EraShortcuts'
 export { Timeline, type TimelineProps } from './Timeline'
 export { useAnimatedScale } from './useAnimatedScale'
 export { usePrefersReducedMotion } from './usePrefersReducedMotion'

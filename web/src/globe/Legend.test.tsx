@@ -67,9 +67,17 @@ describe('Legend', () => {
     expect(screen.getByTestId('ramp-key')).toBeTruthy()
   })
 
-  it("renders a row's footer inside the row, in the compact layout too", () => {
+  it("omits a row's footer in the compact layout", () => {
     render(<Legend rows={[row({ footer: <div data-testid="ramp-key">key</div> })]} compact />)
-    expect(screen.getByTestId('ramp-key')).toBeTruthy()
+    expect(screen.queryByTestId('ramp-key')).toBeNull()
+  })
+
+  it('keeps the compact hint readable by a screen reader while showing no hint text', () => {
+    render(<Legend rows={[row({ hint: 'full hint', compactHint: 'short hint' })]} compact />)
+    const group = screen.getByRole('group')
+    const describedBy = group.getAttribute('aria-describedby')
+    expect(describedBy).toBeTruthy()
+    expect(document.getElementById(describedBy ?? '')?.textContent).toBe('short hint')
   })
 
   it('renders nothing extra for a row with no footer', () => {

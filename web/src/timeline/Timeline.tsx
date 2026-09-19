@@ -9,9 +9,10 @@
  * - The visible window is the selected **era section**'s (ADR-024): `scale.domain`, animated by
  *   the caller's `useAnimatedScale(sectionById(sectionId).window, scaleKind)`. There is still no
  *   free zoom or pan (ADR-021). The section band strip (`SectionBands`), the breadcrumb
- *   (`SectionBreadcrumb`), the previous/next sibling-section buttons flanking the track itself
- *   (`SectionEdgeNav`) and the Dinosaurs/Humans shortcuts (`EraShortcuts`, rendered in
- *   `.controlsSecondary` below) are the ways to change the window with a pointer.
+ *   (`SectionBreadcrumb`) and the previous/next sibling-section buttons (`SectionEdgeButton`) are
+ *   the ways to change the window with a pointer from inside this component. The Dinosaurs/Humans
+ *   shortcuts (`EraShortcuts`) report through the same `onSelectSection` but are rendered by the
+ *   shell under the time title, not here.
  *   The keyboard equivalents (`keyboard.ts`) are Escape/Backspace up a level, Home/`0` to Earth,
  *   and PageUp-PageDown/Shift+←→ to the previous/next sibling section. All of them report through
  *   `onSelectSection`. Stepping (transport buttons, plain ←/→) stays inside the selected
@@ -52,30 +53,47 @@
  * Chrome-less by design (W13, SHARED VISUAL LANGUAGE): no panel background here or in any
  * child; this floats over whatever darkened surround the shell provides. The current-time
  * readout rides above the playhead on the scrub track. The shell shows the large era/time title
- * elsewhere (`eraNameForTime`). `SectionEdgeNav` flanks the scrub track, ruler and section bands
- * together (so all three stay pixel-aligned) with the previous/next sibling-section buttons at
- * its far left/right edges; below that sits one controls row, three clusters across
- * `.controlsRow`'s grid: the breadcrumb alone in `.controlsSections` (the row's one flexible
- * column, free to grow or shrink with the trail); the sound toggle, `TransportCore`
- * (back/play/forward) and `SpeedSelect` centred in `.controlsCore`; and `EraShortcuts`,
- * `PlaybackModeToggle`, the scale toggle and `RateReadout` right-aligned in `.controlsSecondary`.
+ * elsewhere (`eraNameForTime`).
+ *
+ * One CSS Grid (`Timeline.module.css`'s own `.timeline` doc comment has the full mechanics) holds
+ * every piece as a direct child: the scrub track/ruler/band strip (`.trackStack`), the previous/
+ * next section-edge buttons (`SectionEdgeButton`), the breadcrumb (`.sections`, the row's one
+ * flexible column, free to grow or shrink with the trail), the transport cluster of speed select,
+ * `TransportCore` (back/play/forward) and rate readout (`.core`), and the mode/scale controls
+ * (`.secondary`). At a wide viewport the edge
+ * buttons flank the track exactly as before; at phone-portrait width (the package's existing
+ * `max-width: 760px` breakpoint) they instead join `.core`'s row, freeing the track's own
+ * horizontal gutter and the transport's own vertical row for a full-width track. Same DOM either
+ * way — only `grid-template-areas` changes — so there is no viewport-driven React branch to cause
+ * a hydration mismatch on this static export, and no control is ever rendered twice.
+ *
  * Every control outside the breadcrumb is fixed-width, so none of them ever shifts position when
- * the breadcrumb's own length changes (`controlsRow`'s doc comment in Timeline.module.css has the
- * layout mechanics).
- */
+ * the breadcrumb's own length changes. The sound/volume control is not part of this row at all
+ * (`ShellLayout.tsx`'s own `sound` slot, beneath the ancestor panel).
+ *
+ * DOM order (and so tab order) is `sections, trackStack, edgePrev, core, edgeNext, secondary` —
+ * chosen so the phone-portrait transport row, the one place two originally-unrelated groups
+ * (section-edge buttons and scene transport) end up visually interleaved, tabs in the same order
+ * it reads: `‹ ⏮ ▶ ⏭ ›`. The trade-off is the wide-viewport order no longer walks the track's own
+ * flanking buttons immediately before/after the track itself; it instead reads breadcrumb, track,
+ * then the whole prev-section/scene-transport/next-section cluster together, then era/mode/scale/
+ * speed — a different grouping from the track-adjacent one this component used before this pass,
+ * but not a scrambled one; the alternative (DOM order matching the wide layout) would have made
+ * the phone row's own five buttons tab out of visual order, which is the specific defect a purely
+ * CSS-reordered layout cannot avoid on some viewport when a control's neighbours themselves
+ * change per breakpoint. */
 
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
 
 import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
 
 import { nearestStepTarget, type TimelineCheckpoint } from './checkpoints'
 import { AxisTicks } from './components/AxisTicks'
-import { EraShortcuts } from './components/EraShortcuts'
 import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
-import { SectionEdgeNav } from './components/SectionEdgeNav'
+import { SectionEdgeButton } from './components/SectionEdgeNav'
 import { PlaybackModeToggle, RateReadout, SpeedSelect, TimeCompressedBadge, TransportCore } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { timelineKeyIntent } from './keyboard'
@@ -132,12 +150,6 @@ export interface TimelineProps {
    *  state (`Experience.tsx`'s own `steadyPacing` call inside its playback loop), never an idle
    *  timer. Defaults to `false` (tests, and any caller with no steady-mode floor to report). */
   timeCompressed?: boolean
-  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered as the first item in
-   *  `.controlsCore` — immediately before `TransportCore`'s play/back/forward, in the row's
-   *  centred, fixed-width `auto` column rather than sharing a flex row with the breadcrumb, so it
-   *  never shifts position as the breadcrumb trail grows or shrinks. Optional so a caller with no
-   *  audio wired up (tests) can omit it. */
-  sound?: ReactNode
   /** Whether some other overlay outside this component's own DOM subtree — the chart dock
    *  (`@/layers`'s `LayerChart`) or the expanded globe (`@/globe`'s `Globe`) — is currently open.
    *  Both close themselves on `Escape` via their own `window`-level listener, outside React's
@@ -164,7 +176,6 @@ export function Timeline({
   onOpenCluster,
   ratePerSecond = null,
   timeCompressed = false,
-  sound,
   overlayOpen = false,
 }: TimelineProps) {
   // Visible name for the scale toggle's `role="group"`, stacked above its buttons rather than
@@ -183,6 +194,13 @@ export function Timeline({
   // `sectionSymlogKnee`'s own doc comment for why a leaf section's knee isn't the bare
   // `symlogKnee(window)` default.
   const sectionKnee = sectionSymlogKnee(sectionId)
+
+  // The same two targets `SectionEdgeButton`'s own clicks resolve to, and `handleKeyDown`'s
+  // `'step-sibling'` case below independently recomputes for the keyboard path — computed here,
+  // not inside `SectionEdgeButton` itself, since `Timeline.tsx` is what places one button on
+  // either side of whatever it needs to flank per breakpoint (this component's own doc comment).
+  const previousSibling = previousSiblingStep(sectionId)
+  const nextSibling = continuationSection(sectionId)
 
   // For 700ms after a section change the track still maps the wider animated window, so a press
   // there could land outside the section just chosen and make the store climb to another one.
@@ -285,7 +303,14 @@ export function Timeline({
 
   return (
     <div ref={rootRef} className={styles.timeline} data-testid="timeline-root" onKeyDown={handleKeyDown}>
-      <SectionEdgeNav sectionId={sectionId} onSelectSection={selectSection}>
+      {/* `data-testid`s: stable QA-harness hooks — CSS Modules' hashed class names have nothing
+          stable to select by otherwise. DOM order (not visual order, which `grid-template-areas`
+          controls per breakpoint) is `sections, trackStack, edgePrev, core, edgeNext, secondary`
+          — this component's own doc comment explains the tab-order trade-off that order makes. */}
+      <div className={styles.sections} data-testid="timeline-controls-sections">
+        <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />
+      </div>
+      <div className={styles.trackStack} data-testid="timeline-track-stack">
         <ScrubTrack
           t={t}
           window={visibleWindow}
@@ -299,57 +324,51 @@ export function Timeline({
         />
         <AxisTicks window={visibleWindow} scale={trackScale} knee={sectionKnee} />
         <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
-      </SectionEdgeNav>
-      <div className={styles.controlsRow}>
-        {/* `data-testid`s: stable QA-harness hooks for the row's own left/right edges
-            (`Timeline.module.css`'s `--timeline-gutter` doc comment) — CSS Modules' hashed class
-            names have nothing stable to select by otherwise. */}
-        <div className={styles.controlsSections} data-testid="timeline-controls-sections">
-          <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />
-        </div>
-        <div className={styles.controlsCore} data-testid="timeline-controls-core">
-          {sound}
-          <TransportCore
-            t={t}
-            window={sectionWindow}
-            checkpoints={checkpoints}
-            playback={playback}
-            onScrub={onScrub}
-            onPlaybackChange={onPlaybackChange}
-          />
+      </div>
+      <SectionEdgeButton edge="previous" target={previousSibling} onSelectSection={selectSection} />
+      <div className={styles.core} data-testid="timeline-controls-core">
+        <div className={styles.speedSlot}>
           <SpeedSelect playback={playback} onPlaybackChange={onPlaybackChange} />
         </div>
-        <div className={styles.controlsSecondary} data-testid="timeline-controls-secondary">
-          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
-          <PlaybackModeToggle playback={playback} onPlaybackChange={onPlaybackChange} />
-          <div className={styles.scaleGroup}>
-            <span id={scaleLabelId} className={styles.scaleLabel}>
-              Scale
-            </span>
-            <div className={styles.scaleOptions} role="group" aria-labelledby={scaleLabelId}>
-              <button
-                type="button"
-                className={styles.scaleButton}
-                aria-pressed={scaleKind === 'symlog'}
-                title={SYMLOG_SCALE_HINT}
-                onClick={() => onScaleKindChange('symlog')}
-              >
-                Symlog
-              </button>
-              <button
-                type="button"
-                className={styles.scaleButton}
-                aria-pressed={scaleKind === 'linear'}
-                title={LINEAR_SCALE_HINT}
-                onClick={() => onScaleKindChange('linear')}
-              >
-                Linear
-              </button>
-            </div>
-          </div>
-          <div className={styles.rateReadoutRow}>
-            <TimeCompressedBadge visible={timeCompressed} />
-            <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} />
+        <TransportCore
+          t={t}
+          window={sectionWindow}
+          checkpoints={checkpoints}
+          playback={playback}
+          onScrub={onScrub}
+          onPlaybackChange={onPlaybackChange}
+        />
+        <div className={styles.rateReadoutRow}>
+          <TimeCompressedBadge visible={timeCompressed} />
+          <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} />
+        </div>
+      </div>
+      <SectionEdgeButton edge="next" target={nextSibling} onSelectSection={selectSection} />
+      <div className={styles.secondary} data-testid="timeline-controls-secondary">
+        <PlaybackModeToggle playback={playback} onPlaybackChange={onPlaybackChange} />
+        <div className={styles.scaleGroup}>
+          <span id={scaleLabelId} className={styles.scaleLabel}>
+            Scale
+          </span>
+          <div className={styles.scaleOptions} role="group" aria-labelledby={scaleLabelId}>
+            <button
+              type="button"
+              className={styles.scaleButton}
+              aria-pressed={scaleKind === 'symlog'}
+              title={SYMLOG_SCALE_HINT}
+              onClick={() => onScaleKindChange('symlog')}
+            >
+              Symlog
+            </button>
+            <button
+              type="button"
+              className={styles.scaleButton}
+              aria-pressed={scaleKind === 'linear'}
+              title={LINEAR_SCALE_HINT}
+              onClick={() => onScaleKindChange('linear')}
+            >
+              Linear
+            </button>
           </div>
         </div>
       </div>
