@@ -339,12 +339,19 @@ export function citiesHaveDataAt(features: readonly FeatureData[] | null, t: Geo
  */
 export const CITY_LABEL_FADE_WINDOW_T = 150
 
-/** How many name labels may render at once, largest population first (`newCityLabels`'s own
- *  ordering). Several cities share one first-appearance `t` (see `CITY_LABEL_FADE_WINDOW_T`'s own
- *  doc comment — up to 34 at once in the published set), so an uncapped label set would be a wall
- *  of overlapping text; this is deterministic, not "however many fit", so a scrub back to the
- *  same `t` always reproduces the same selection. */
-export const CITY_LABEL_CAP = 6
+/** How many name labels may render at once, most recently appeared first (`newCityLabels`'s own
+ *  ordering).
+ *
+ *  Labelling every new marker is the behaviour to want and the data will not support it: HYDE's
+ *  sampling grid puts up to 42 cities at the *exact* same first-appearance `t`, and up to 76
+ *  inside the fade window at once, so an uncapped set is a wall of overlapping text. The cap is
+ *  deterministic rather than "however many fit", so scrubbing back to the same `t` always
+ *  reproduces the same labels.
+ *
+ *  Twelve covers every cohort that fits on screen without stacking: it is enough for the whole
+ *  t=225 cohort, whose smallest member (Sydney, 2,000 people in 1800) would otherwise be dropped
+ *  purely for being small at the moment it appeared. */
+export const CITY_LABEL_CAP = 12
 
 export interface CityLabel {
   feature: FeatureData
@@ -363,20 +370,30 @@ export function cityLabelOpacityAt(feature: FeatureData, t: GeoTime): number {
 }
 
 /**
- * Labels for the cities in `cities` that just appeared at `t`, capped at `CITY_LABEL_CAP` and
- * largest population first. `cities` is expected already sorted that way — `allCitiesAt`'s own
- * order, which the caller (`HumanCivilisation.tsx`) already has on hand as the expanded view's
- * own city list — so the cap keeps the same priority the dots themselves draw in, rather than an
- * independent (and possibly inconsistent) ranking.
+ * Labels for the cities in `cities` that just appeared at `t`, capped at `CITY_LABEL_CAP`.
+ *
+ * Ranked by `opacity` — that is, by how recently the city appeared — and only then by population.
+ * Recency has to lead: the label announces an arrival, and a city is at its smallest the moment
+ * it arrives. Ranking by population instead let large cities from the same cohort take every
+ * slot, so a newly founded one was labelled only once it had grown enough to win one, decoupling
+ * the label from the event it exists to mark. Melbourne appeared 30th of 31 candidates and was
+ * labelled 25 years late; Sydney 29th of 29, and a century late.
+ *
+ * Population still breaks ties within one appearance time (up to 34 cities share an exact
+ * first-appearance `t` on HYDE's grid), and the id breaks the remainder, so the result stays a
+ * pure function of `t`.
  */
 export function newCityLabels(cities: readonly CityAtTime[], t: GeoTime): CityLabel[] {
-  const labels: CityLabel[] = []
+  const candidates: { label: CityLabel; population: number }[] = []
   for (const city of cities) {
     const opacity = cityLabelOpacityAt(city.feature, t)
-    if (opacity > 0) {
-      labels.push({ feature: city.feature, opacity })
-      if (labels.length >= CITY_LABEL_CAP) break
-    }
+    if (opacity > 0) candidates.push({ label: { feature: city.feature, opacity }, population: city.population })
   }
-  return labels
+  candidates.sort(
+    (a, b) =>
+      b.label.opacity - a.label.opacity ||
+      b.population - a.population ||
+      a.label.feature.id.localeCompare(b.label.feature.id),
+  )
+  return candidates.slice(0, CITY_LABEL_CAP).map((c) => c.label)
 }

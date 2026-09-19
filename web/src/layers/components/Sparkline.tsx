@@ -35,7 +35,7 @@ import type { GeoTime, Layer, ScalarValue, TimeScale } from '@/types/layer'
 
 import { axisTransform } from '../chartAxis'
 import { clampUnit } from '../format'
-import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '../useThrottledValue'
+import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './hud.module.css'
 
 const SAMPLE_COUNT = 96

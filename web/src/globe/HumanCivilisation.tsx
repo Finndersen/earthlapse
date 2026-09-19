@@ -737,8 +737,8 @@ export function HumanCivilisation({
   }
 
   // A brief name tag for a city that just appeared — expanded only; the orb never has
-  // visibleCities and dots aren't ranked by recency there anyway. `visibleCities` is already
-  // population-ordered, so the cap this applies keeps the same priority the dots themselves draw in.
+  // visibleCities. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
+  // the least-recent arrivals rather than the smallest ones.
   const cityLabels = useMemo(() => (expanded ? newCityLabels(visibleCities, t) : []), [expanded, visibleCities, t])
 
   const arrivals = useMemo(

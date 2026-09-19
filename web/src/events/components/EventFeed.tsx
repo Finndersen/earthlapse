@@ -26,6 +26,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
+import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import { usePrefersReducedMotion } from '@/timeline'
 import type { GeoTime, TimelineEvent } from '@/types/layer'
 
@@ -82,7 +83,14 @@ export function EventFeed({ t, events, onEventActivate, onVisibleEventsChange, o
   const reducedMotion = usePrefersReducedMotion()
 
   const maxVisible = compact ? 1 : DEFAULT_MAX_VISIBLE
-  const selection = useMemo(() => selectFeedEvents(events, t, { maxVisible }), [events, t, maxVisible])
+  // Every card's opacity is a function of `t`, so an unthrottled feed restyles itself on every
+  // frame of playback. Over the expanded globe's `backdrop-filter` backdrop that churn is
+  // disproportionately expensive, and at this size it is imperceptible either way.
+  const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
+  const selection = useMemo(
+    () => selectFeedEvents(events, throttledT, { maxVisible }),
+    [events, throttledT, maxVisible],
+  )
   const emphases = useMemo(() => feedCardEmphases(selection.visible), [selection.visible])
 
   const [announcement, setAnnouncement] = useState('')

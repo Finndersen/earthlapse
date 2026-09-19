@@ -1,12 +1,29 @@
-import { cleanup, fireEvent, render } from '@testing-library/react'
+import { act, cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { HUD_READOUT_THROTTLE_MS } from '@/lib/useThrottledValue'
 import type { TimelineEvent } from '@/types/layer'
 
 import { DEFAULT_MAX_VISIBLE } from '../select'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
 import { EventFeed } from './EventFeed'
 import styles from './EventFeed.module.css'
+
+/** The feed renders from a throttled `t` (`@/lib/useThrottledValue`), so a `t` change made by a
+ *  synchronous rerender reaches the DOM only once the throttle window elapses. Runs `body` with
+ *  fake timers and hands it a flush to call after each such rerender. */
+function withThrottledT(body: (flush: () => void) => void): void {
+  vi.useFakeTimers()
+  try {
+    body(() => {
+      act(() => {
+        vi.advanceTimersByTime(HUD_READOUT_THROTTLE_MS)
+      })
+    })
+  } finally {
+    vi.useRealTimers()
+  }
+}
 
 const REDUCED_MOTION_QUERY = 'prefers-reduced-motion'
 const COMPACT_QUERY = 'max-width'
@@ -151,20 +168,25 @@ describe('<EventFeed>', () => {
     })
 
     it('settles as the card recedes, and returns exactly when scrubbing back to the same t', () => {
-      const a = event('a', { tMin: 500, tMax: 500 })
-      const { getByTestId, rerender } = render(<EventFeed t={500} events={[a]} onEventActivate={vi.fn()} />)
-      expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(1)
+      withThrottledT((flush) => {
+        const a = event('a', { tMin: 500, tMax: 500 })
+        const { getByTestId, rerender } = render(<EventFeed t={500} events={[a]} onEventActivate={vi.fn()} />)
+        expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(1)
 
-      rerender(<EventFeed t={480} events={[a]} onEventActivate={vi.fn()} />)
-      const receding = emphasisOf(getByTestId('event-feed-item-a'))
-      expect(receding).toBeGreaterThan(0)
-      expect(receding).toBeLessThan(1)
+        rerender(<EventFeed t={480} events={[a]} onEventActivate={vi.fn()} />)
+        flush()
+        const receding = emphasisOf(getByTestId('event-feed-item-a'))
+        expect(receding).toBeGreaterThan(0)
+        expect(receding).toBeLessThan(1)
 
-      rerender(<EventFeed t={350} events={[a]} onEventActivate={vi.fn()} />)
-      expect(getByTestId('event-feed-item-a').dataset.emphasised).toBe('false')
+        rerender(<EventFeed t={350} events={[a]} onEventActivate={vi.fn()} />)
+        flush()
+        expect(getByTestId('event-feed-item-a').dataset.emphasised).toBe('false')
 
-      rerender(<EventFeed t={480} events={[a]} onEventActivate={vi.fn()} />)
-      expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(receding)
+        rerender(<EventFeed t={480} events={[a]} onEventActivate={vi.fn()} />)
+        flush()
+        expect(emphasisOf(getByTestId('event-feed-item-a'))).toBe(receding)
+      })
     })
 
     it('animates arrival and inset when motion is allowed', () => {
@@ -190,6 +212,7 @@ describe('<EventFeed>', () => {
 
   describe('onVisibleEventsChange', () => {
     it('fires with the visible event ids, and again only once the set itself changes', () => {
+      withThrottledT((flush) => {
       const a = event('a', { tMin: 505, tMax: 505 })
       const b = event('b', { tMin: 510, tMax: 510 })
       const onVisibleEventsChange = vi.fn()
@@ -201,12 +224,15 @@ describe('<EventFeed>', () => {
 
       // t moves, but both events are still behind the playhead — the visible set is unchanged.
       rerender(<EventFeed t={501} events={[a, b]} onEventActivate={vi.fn()} onVisibleEventsChange={onVisibleEventsChange} />)
+      flush()
       expect(onVisibleEventsChange).toHaveBeenCalledTimes(callsAfterMount)
 
       // t moves past a's own placement: it drops out of the visible set entirely.
       rerender(<EventFeed t={506} events={[a, b]} onEventActivate={vi.fn()} onVisibleEventsChange={onVisibleEventsChange} />)
+      flush()
       expect(onVisibleEventsChange).toHaveBeenCalledTimes(callsAfterMount + 1)
       expect(onVisibleEventsChange).toHaveBeenLastCalledWith(['b'])
+      })
     })
   })
 

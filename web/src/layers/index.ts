@@ -16,7 +16,7 @@
  * `HUD_HIDDEN_LAYER_IDS`/`isHiddenFromHud` (`./hudVisibility.ts`) is a display-only, reversible
  * HUD filter — the layer, its data, and its sampling are untouched.
  *
- * `useThrottledValue` (`./useThrottledValue.ts`) is a generic, reusable throttle — `ScalarReadout`
+ * `useThrottledValue` (`@/lib/useThrottledValue`) is a generic, reusable throttle — `ScalarReadout`
  * and `Sparkline` each use it internally on the `t` they're given, so the per-frame `t` writes
  * `Experience.tsx`'s playback loop produces only redo their sampling/rendering a few times a
  * second, not every frame. Purely a render-rate optimisation: it never changes what a component
@@ -37,7 +37,6 @@ export {
 } from './portraits'
 
 export { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud } from './hudVisibility'
-export { HUD_READOUT_THROTTLE_MS, useThrottledValue } from './useThrottledValue'
 
 export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
