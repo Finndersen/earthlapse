@@ -1,9 +1,8 @@
 /**
  * The HUD speaker toggle + master volume (ADR-023, DESIGN.md §11's v1 note: "a HUD speaker
- * toggle... a master volume alongside it"). Rendered inline, as the first item of the timeline
- * transport's secondary control group (`timeline/components/Transport.tsx`'s
- * `<TransportSecondary sound={...}>`), right beside play/back/forward — it needs no position of
- * its own. `M` still mutes/unmutes from anywhere in the document (`useMuteShortcut`, independent
+ * toggle... a master volume alongside it"). Rendered in `ShellLayout.tsx`'s own `sound` slot,
+ * beneath the ancestor panel — it needs no position of its own. `M` still mutes/unmutes from
+ * anywhere in the document (`useMuteShortcut`, independent
  * of `timeline/keyboard.ts`'s own, differently-scoped intent map — see that hook's own comment).
  */
 

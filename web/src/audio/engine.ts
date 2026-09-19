@@ -785,6 +785,27 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   // session's "active" state before its own gesture-gated start.
   const [active, setActive] = useState(false)
 
+  // A `Tone.start()` issued with no user gesture yet does not resolve on its own once one finally
+  // arrives: a context blocked by the autoplay policy only starts when `resume()` is called from
+  // *inside* a gesture handler. With sound on by default the first attempt always runs at mount,
+  // before any gesture, so without this the toggle sits in `pending` forever and only an explicit
+  // off-then-on cycle ever produces sound — while the button promises the opposite. Bumping this
+  // re-runs the start effect below from within the gesture that set it.
+  const [gestureNonce, setGestureNonce] = useState(0)
+  useEffect(() => {
+    if (!prefs.enabled || active) return
+    function onGesture(): void {
+      setGestureNonce((nonce) => nonce + 1)
+    }
+    const options = { capture: true } as const
+    document.addEventListener('pointerdown', onGesture, options)
+    document.addEventListener('keydown', onGesture, options)
+    return () => {
+      document.removeEventListener('pointerdown', onGesture, options)
+      document.removeEventListener('keydown', onGesture, options)
+    }
+  }, [prefs.enabled, active])
+
   const sceneTarget = manifest !== null && manifest.scenes.length > 0 ? sceneAt(manifest.scenes, t) : EMPTY_SCENE_MIX
   const presented = usePresentedSceneMix(sceneTarget)
   // The once-mode arrival trigger reads the raw, un-rate-limited `sceneTarget` — a pure function
@@ -873,12 +894,12 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       return
     }
     let cancelled = false
-    // `Tone.start()` (== `context.resume()`) will not resolve until the browser has seen a user
-    // gesture on the page — with sound on by default, this effect can run at page load with none
-    // yet, so this call is expected to sit pending rather than reject. `active` only flips once
-    // it actually does, and `enabled`/the toggle stay exactly as they were meanwhile (the
-    // caller's own catch below still covers a real failure, e.g. a browser that rejects instead
-    // of deferring).
+    // `Tone.start()` (== `context.resume()`) does nothing audible until the browser has seen a
+    // user gesture — with sound on by default this effect first runs at page load with none yet,
+    // so the call sits pending rather than rejecting. `active` only flips once it resolves, and
+    // `enabled`/the toggle stay exactly as they were meanwhile (the catch below still covers a
+    // real failure, e.g. a browser that rejects instead of deferring). `gestureNonce` re-runs
+    // this effect from inside the first gesture, which is what actually unblocks the context.
     loadTone()
       .then(async (Tone) => {
         await Tone.start()
@@ -897,10 +918,12 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       runtimeRef.current = null
       setActive(false)
     }
-    // Reacts only to `enabled` and the null -> non-null transition of `manifest` (the "still
-    // loading" -> "ready" edge), not to later manifest identity changes — one load per page, so
-    // re-running this lazy-construct/dispose cycle on every render would only add churn.
-  }, [prefs.enabled, manifest !== null])
+    // Reacts only to `enabled`, the null -> non-null transition of `manifest` (the "still
+    // loading" -> "ready" edge) and `gestureNonce`, not to later manifest identity changes — one
+    // load per page, so re-running this lazy-construct/dispose cycle on every render would only
+    // add churn. `gestureNonce` advances only while the context is still blocked, so a running
+    // graph is never torn down by a stray click.
+  }, [prefs.enabled, manifest !== null, gestureNonce])
 
   // Suspend the AudioContext while the tab is hidden — no sense spending CPU on audio no one
   // can hear, and resume promptly when it becomes visible again.
