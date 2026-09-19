@@ -21,9 +21,17 @@ import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/event
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
-import { dominantScene, resolveAssetUrl, sceneAt, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
+import {
+  dominantScene,
+  resolveAssetUrl,
+  sceneAt,
+  scenePlaybackSegments,
+  sceneTerritories,
+  SceneView,
+  steadyFrameRegime,
+  yearsForPlaybackSeconds,
+} from '@/scene'
 import type { PresentationRegime } from '@/scene'
-import { yearsForPlaybackSeconds } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
@@ -33,6 +41,7 @@ import {
   createLinearScale,
   createSymlogScale,
   eraNameForTime,
+  EraShortcuts,
   formatGeoTime,
   sectionById,
   sectionSymlogKnee,
@@ -46,6 +55,7 @@ import type { GeoTime, Layer, ScalarValue, TimelineEvent, TimeScale } from '@/ty
 import type { Scene } from '@/types/manifest'
 
 import { buildLayers, rawEvents } from './buildLayers'
+import { FeedbackLink } from './FeedbackLink'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
@@ -467,6 +477,7 @@ export function Experience() {
         globeCaption={globeCaption}
         viewModeToggleHeightPx={viewModeToggleHeightPx}
         eventLegend={<EventTagLegend />}
+        feedbackLink={<FeedbackLink />}
         scene={
           manifest.scenes.length > 0 ? (
             <SceneView
@@ -535,9 +546,11 @@ export function Experience() {
         }
         title={<TimeTitle t={t} />}
         badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
+        eraShortcuts={<EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />}
         ancestor={
           nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
         }
+        sound={<SoundToggle {...audio} />}
         caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
         chart={
           expandedChartLayer ? (
@@ -564,7 +577,6 @@ export function Experience() {
             onOpenCluster={handleOpenCluster}
             ratePerSecond={ratePerSecond}
             timeCompressed={steadyRegime.floored}
-            sound={<SoundToggle {...audio} />}
             overlayOpen={globeExpanded || expandedChartLayerId !== null}
           />
         }

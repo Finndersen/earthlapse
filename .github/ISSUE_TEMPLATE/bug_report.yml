@@ -1,0 +1,28 @@
+name: Bug report
+description: Report a problem, or share feedback about a specific moment in the app.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: false
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: >-
+        Paste the diagnostic block from "Report a bug or give feedback" in the app's About &
+        credits panel, if you opened this from there — current time, playback state, viewport,
+        browser.
+      render: text
+    validations:
+      required: false

@@ -104,4 +104,26 @@ describe('CreditsList', () => {
     await waitFor(() => expect(screen.getByText(stubManifest.credits[0]!.title)).toBeTruthy())
     expect(screen.queryByText(/event colours/i)).toBeNull()
   })
+
+  it('links to the project repository, regardless of manifest load state', () => {
+    mockFetchSequence([{ url: '/media/manifest.json', status: 200, body: stubManifest }])
+    render(<CreditsList />)
+    const link = screen.getByRole('link', { name: /view source on github/i })
+    expect(link.getAttribute('href')).toBe('https://github.com/Finndersen/earthview')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+  })
+
+  it('renders a caller-supplied feedback link, so shell need not import the time store to build it', () => {
+    mockFetchSequence([{ url: '/media/manifest.json', status: 200, body: stubManifest }])
+    render(<CreditsList feedbackLink={<a href="https://example.com/issues/new">Report a bug or give feedback</a>} />)
+    expect(screen.getByRole('link', { name: /report a bug or give feedback/i })).toBeTruthy()
+  })
+
+  it('omits the feedback link when none is supplied, keeping only the repo link', () => {
+    mockFetchSequence([{ url: '/media/manifest.json', status: 200, body: stubManifest }])
+    render(<CreditsList />)
+    expect(screen.queryByRole('link', { name: /report a bug or give feedback/i })).toBeNull()
+    expect(screen.getByRole('link', { name: /view source on github/i })).toBeTruthy()
+  })
 })

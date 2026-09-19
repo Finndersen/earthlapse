@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Earth Timeline',
+  title: 'Earthlapse',
   description: "An interactive visualisation of Earth's history.",
 }
 

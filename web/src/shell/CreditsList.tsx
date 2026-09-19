@@ -8,7 +8,10 @@
  *
  * 1. **About** — what the project is, what it covers, and the artistic-reconstruction
  *    disclosure (VISUAL_SPEC §9), which used to sit in `ShellLayout`'s always-on footer row and
- *    now shows only here, as the first line a viewer sees on opening this content.
+ *    now shows only here, as the first line a viewer sees on opening this content. Followed by
+ *    the repo link and a slot for the feedback link (`CreditsListProps.feedbackLink`) — the same
+ *    "supplied by the caller" reasoning as `eventLegend` below, since only the feedback link
+ *    needs live store state.
  * 2. **Controls & shortcuts** (`ControlsShortcuts.tsx`) — added because the timeline's first-use
  *    hint, previously the only place interactions and keyboard shortcuts were explained, was
  *    removed (ADR-012 amendment follow-up, 2026-09-18); this is now the one place they're
@@ -40,9 +43,14 @@ export interface CreditsListProps {
    *  2026-09-15: `shell` no longer imports `@/events` at all — see this file's own doc comment).
    *  Optional so a caller with nothing to show there can omit the section entirely. */
   eventLegend?: ReactNode
+  /** The "Report a bug or give feedback" link, supplied by the caller for the same reason as
+   *  `eventLegend` above: it needs the live time-store state at the moment of the click, and
+   *  `shell` must not import the store itself. Optional so a caller with nothing to show there
+   *  (e.g. the standalone `/credits` page) can omit it — the static GitHub link still shows. */
+  feedbackLink?: ReactNode
 }
 
-export function CreditsList({ eventLegend }: CreditsListProps = {}) {
+export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
 
   useEffect(() => {
@@ -65,11 +73,18 @@ export function CreditsList({ eventLegend }: CreditsListProps = {}) {
     <div className={styles.wrap}>
       <p className={styles.disclaimer}>Artistic reconstruction — plausibility, not accuracy.</p>
       <p className={styles.intro}>
-        Earth Timeline is a scrubbable view of the planet's surface across all 4.6 billion years of its history,
+        Earthlapse is a scrubbable view of the planet's surface across all 4.6 billion years of its history,
         from the molten Hadean to the present — one continuous timeline, not a slideshow. The scenes above are
         generated; the data driving everything else — continents, climate, atmosphere, the tree of life,
         population — is real, drawn from paleoclimate proxies, geological and satellite surveys, phylogenetic
         trees and historical records, each cited below.
+      </p>
+
+      <p className={styles.links}>
+        <a href="https://github.com/Finndersen/earthview" target="_blank" rel="noopener noreferrer">
+          View source on GitHub
+        </a>
+        {feedbackLink}
       </p>
 
       <h3 className={styles.sectionTitle}>Controls &amp; shortcuts</h3>

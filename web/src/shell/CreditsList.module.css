@@ -36,6 +36,28 @@
   color: var(--hud-dim);
 }
 
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin: 0 0 18px;
+}
+
+.links a {
+  font-family: var(--hud-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  color: var(--hud-dim);
+  text-decoration-color: var(--hud-hairline);
+  text-underline-offset: 3px;
+}
+
+.links a:hover,
+.links a:focus-visible {
+  color: var(--hud-accent);
+}
+
 .status,
 .statusError {
   font-family: var(--hud-mono);

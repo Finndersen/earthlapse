@@ -1,4 +1,4 @@
-# Earth Timeline
+# Earthlapse
 
 An interactive, immersive visualisation of Earth's history — a continuously evolving
 photoreal view of the planet's surface across 4.6 billion years, surrounded by live data
