@@ -96,6 +96,11 @@ export const VIEW_MODE_TOGGLE_SELECTOR = '[data-testid="globe-view-mode-group"]'
 export const SHELL_READOUTS_SELECTOR = '[data-testid="shell-readouts"]'
 export const SHELL_FEED_SELECTOR = '[data-testid="shell-feed"]'
 
+/** One `<li>` per visible card inside `<EventFeed>` (`EventFeed.tsx`'s `data-testid={\`event-feed-
+ *  item-${event.id}\`}`) — a plain attribute-prefix selector rather than a per-event id, since
+ *  what a QA shot cares about is how many cards are showing, not which events they are. */
+export const EVENT_FEED_ITEM_SELECTOR = '[data-testid^="event-feed-item-"]'
+
 /** The bottom chrome's shared horizontal gutter (`Timeline.module.css`'s `--timeline-gutter`,
  *  user report: "constrain the horizontal layout of the bottom row... within the horizontal
  *  bounds of the timeline"): the scrub track/ruler/band strip's own inset box

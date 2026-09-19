@@ -1,43 +1,37 @@
 /**
- * Development/QA automation hook: exposes the time store, plus a handful of DOM-driven
- * conveniences, on `window.__earthtime` so a browser-driven check can set `t` precisely, pause
- * playback, flip view toggles and read state back — all without reloading the page or
- * approximating positions by dragging pixels.
+ * Development/QA automation hook: exposes the time store, plus DOM-driven conveniences, on
+ * `window.__earthtime` so a browser-driven check can set `t`, pause playback, flip view toggles
+ * and read state back without reloading the page or approximating positions via pixel drags.
  *
- * Gated on `process.env.NODE_ENV === 'development'` OR `process.env.NEXT_PUBLIC_EARTHTIME_QA
- * === '1'`, both of which Next inlines at build time: an ordinary production build still
- * dead-code-eliminates every line below the early return, and only a static export explicitly
- * built with the QA env var carries this surface (`web/scripts/qa`, the visual-QA harness).
+ * Gated on `process.env.NODE_ENV === 'development'` OR `NEXT_PUBLIC_EARTHTIME_QA === '1'`, both
+ * inlined by Next at build time: an ordinary production build dead-code-eliminates everything
+ * below the early return, and only a static export built with the QA env var carries this
+ * surface (`web/scripts/qa`).
  *
- * Two different mechanisms back this surface:
- * - `setT`/`getState` and the playback/globe-expand/section/scale setters below call straight
- *   into `useTimeStore` — real store state, per DESIGN §12's "one piece of global state".
- * - `getGlobeViewMode`/`setGlobeViewMode`/`setLayerToggle` do not: the Globe/Map toggle
- *   (`globe/Globe.tsx`'s `mapMode`) and the legend's per-overlay toggles (e.g. `humanOn`) are
- *   deliberately local component state, not lifted to the store (see `Globe.tsx`'s own doc
- *   comment on `mapMode` — "pure chrome with no bearing on playback or `t`"). This module has no
- *   access to them and must not gain one by reaching into React internals, so instead it drives
- *   the same accessible controls a person would: reading `aria-pressed` and calling `.click()`
- *   on the real "Globe"/"Map" and legend "On"/"Off" buttons. That makes these two functions
- *   couple to `Globe.tsx`'s/`Legend.tsx`'s copy and ARIA structure rather than a stable prop —
- *   if either component's button labels change, these break loudly (they throw when a control
- *   isn't found) rather than silently no-op.
+ * Two mechanisms back this surface:
+ * - `setT`/`getState` and the playback/globe-expand setters call straight into `useTimeStore`
+ *   — real store state (DESIGN §12).
+ * - `getGlobeViewMode`/`setGlobeViewMode`/`setLayerToggle` do not: the Globe/Map toggle and the
+ *   legend's per-overlay toggles are deliberately local component state, not lifted to the store
+ *   (`Globe.tsx`'s `mapMode` doc comment: "pure chrome with no bearing on playback or `t`"). This
+ *   module has no access to them and must not reach into React internals, so it drives the same
+ *   accessible controls a person would — reading `aria-pressed` and calling `.click()` on the
+ *   real buttons. That couples these functions to `Globe.tsx`'s/`Legend.tsx`'s copy and ARIA
+ *   structure: a label change breaks them loudly (they throw) rather than silently no-op.
  *
- * There is deliberately no way to read the sphere<->map unfold tween's own numeric progress
- * (`Globe.tsx`'s `unfold`, 0..1): it is local animation state with no DOM reflection (the
- * panel's own CSS resize is a separate, independently-timed transition — see `Globe.tsx`'s
- * `GlobeCameraControls` doc comment on the two having previously drifted apart), so there is no
- * clean way to expose it without instrumenting `Globe.tsx` itself. A harness that needs a
- * mid-transition frame has to trigger the toggle and sample after a calibrated wait instead.
+ * The sphere<->map unfold tween's own progress (`Globe.tsx`'s `unfold`, 0..1) is deliberately not
+ * exposed: it is local animation state with no DOM reflection, and the panel's own CSS resize is
+ * a separate, independently-timed transition (see `GlobeCameraControls`'s doc comment on the two
+ * having drifted apart). A harness needing a mid-transition frame must trigger the toggle and
+ * sample after a calibrated wait instead.
  */
 
 import { useTimeStore } from './time'
 import type { PlaybackMode } from '@/types/layer'
 
-/** Selector present only once the app shell has actually mounted real content: `Experience.tsx`
- *  renders nothing but a "Loading manifest…" string until the manifest has loaded and the
- *  initial `t` has been applied (see that component's own `initialised` doc comment), so this
- *  element's presence is already a true "ready" signal, not one this module invents. */
+/** Present only once the app shell has actually mounted real content: `Experience.tsx` renders
+ *  nothing but a "Loading manifest…" string until the manifest has loaded and the initial `t`
+ *  has been applied (see that component's own `initialised` doc comment). */
 const APP_READY_SELECTOR = '[data-testid="time-title"]'
 
 /** Stable keys a harness can pass to `setLayerToggle`, mapped to the legend row's own visible
@@ -101,20 +95,17 @@ function trackPendingLoad(): () => void {
 
 /**
  * Patches `window.fetch` and `HTMLImageElement.prototype.src` to count in-flight loads, so
- * `ready()` has a real signal for "every image/texture this page knows about has finished
- * loading" without touching `Globe.tsx` or `scene/*` to add one directly.
+ * `ready()` knows when every image/texture this page knows about has finished loading, without
+ * touching `Globe.tsx` or `scene/*` directly.
  *
- * This covers both texture paths in the app: `globe/textureCache.ts`'s `fetch` +
- * `createImageBitmap`, and `scene/textureCache.ts`'s `THREE.TextureLoader` (which — like
- * `SceneFallbackView`'s own plain `<img>` — ultimately just sets `.src` on an `HTMLImageElement`,
- * whether created via `new Image()` or `document.createElementNS(...)`; patching the shared
- * `src` setter on the prototype catches all three call sites in one place rather than needing
- * one per component). It does not, and cannot, know about a resource fetched some other way
- * (Tone.js audio decode, say) — `ready()` is scoped to "the current scene image and globe
- * textures", not every network effect this page has.
+ * Covers both texture paths: `globe/textureCache.ts`'s `fetch` + `createImageBitmap`, and
+ * `scene/textureCache.ts`'s `THREE.TextureLoader` (like `SceneFallbackView`'s plain `<img>`, both
+ * ultimately set `.src` on an `HTMLImageElement`) — patching the shared `src` setter on the
+ * prototype catches all three call sites at once. It cannot see a resource loaded some other way
+ * (Tone.js audio decode, say): `ready()` is scoped to the current scene image and globe textures.
  *
- * Installed once per page load (`instrumented` guards a StrictMode/double-mount re-run); the
- * patch itself is harmless to leave in place for the rest of the session.
+ * Installed once per page load (`instrumented` guards a StrictMode double-mount); harmless to
+ * leave patched for the rest of the session.
  */
 function instrumentResourceLoading(): void {
   if (instrumented) return

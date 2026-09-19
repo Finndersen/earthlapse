@@ -1,9 +1,5 @@
 /**
- * The closed stem catalogue (ADR-023 §1, amended 2026-09-14, 2026-09-15 "era fit v3" and
- * 2026-09-15 "human-history scene sounds, once-mode fix and Safari re-sourcing" — the last adds
- * `artillery`, and that amendment's own 2026-09-15 re-review adds `lake-water`; a further
- * 2026-09-15 amendment adds `wing-hum`, fixing the "era fit v3 fixes" amendment's own
- * "Unresolved" gap). Two kinds:
+ * The closed stem catalogue (ADR-023 §1). Two kinds:
  *
  * - **Ambience** stems have a `stemGains` row and always loop at their curve gain.
  * - **Scene-only** stems have no curve and are reached only through a scene's `sound`. Whether

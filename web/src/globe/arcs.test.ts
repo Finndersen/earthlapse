@@ -544,14 +544,9 @@ describe('buildArrivalIndex and traceToOrigin', () => {
 })
 
 describe('arc fade near the present (BUG: a recently-established arc previously never reached 0)', () => {
-  // Root cause, confirmed by reading arrivalPresentationAt before this fix: `tailWarp` was sized
-  // only against `timing.minArcWarp`/`timing.minTailWarp`, never checked against how much warp is
-  // actually left between `established` and t = 0 (`establishedWarp`). For a recent arrival
-  // establishedWarp < tailWarp, so at t = 0 (currentWarp = 0) the old
-  // `(currentWarp - (establishedWarp - tailWarp)) / tailWarp` evaluated to
-  // `1 - establishedWarp / tailWarp` — a positive value, i.e. the arc was still lit at the
-  // present. The fix squeezes `tailWarp` into `establishedWarp` via the same `squeezeToFit` helper
-  // the "inhabited" marker's own envelope already used (`arrivalPresentationAt`'s own comment).
+  // A recently-established arrival has less warp left before t = 0 than `tailWarp` wants, so the
+  // tail must be squeezed into `establishedWarp` (`squeezeToFit`); sizing it against
+  // `minArcWarp`/`minTailWarp` alone leaves the arc still lit at the present.
   const timing = arrivalTimingFor(0.02)
 
   function migration(established: GeoTime): ArrivalGlobeEffect {

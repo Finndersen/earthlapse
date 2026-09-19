@@ -1,16 +1,13 @@
 /**
  * Regression guard for `DECODED_BYTES_CAP` (`engine.ts`) against the ambience-stem catalogue
- * itself, not just the loader's own bookkeeping (`bufferCache.test.ts` covers that in
- * isolation with synthetic sizes). Added by the 2026-09-15 "wing-hum re-source" amendment,
- * after a review found the *previous* `wing-hum` clip (230.25 s) was, on its own, close to a
- * third of the cap once every stem needed alongside it at a busy checkpoint was summed --
- * nothing here would have caught a regression like that before it shipped.
+ * itself, not just the loader's own bookkeeping (`bufferCache.test.ts` covers that in isolation
+ * with synthetic sizes) — catches a single oversized clip pushing the peak simultaneous decode
+ * near the cap once every stem needed alongside it at a busy checkpoint is summed.
  *
  * `engine.ts` downmixes every `ambience-loop` stem to mono right after decode
- * (`buffer.toMono()`, `startLoadingStem`'s own comment: "roughly halves decoded memory"), so a
- * stem's decoded size is `duration * assumed sample rate * 4 bytes (float32) * 1 channel` -- the
- * same 48 kHz assumption `engine.ts`'s `ASSUMED_BYTES_PER_SECOND`/`estimatedStemBytes` use for a
- * fetch still in flight.
+ * (`buffer.toMono()`), so a stem's decoded size is `duration * assumed sample rate * 4 bytes
+ * (float32) * 1 channel` — the same 48 kHz assumption `engine.ts`'s
+ * `ASSUMED_BYTES_PER_SECOND`/`estimatedStemBytes` use for a fetch still in flight.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -22,12 +19,11 @@ import { GAIN_THRESHOLD } from './loadPlan'
 import { stemGains } from './stemGains'
 import { AMBIENCE_STEM_IDS, type AmbienceStemId } from './stemIds'
 
-// Mirrors sources/audio-stems/stems.toml's attested `duration_seconds` for every ambience stem
-// (as of the 2026-09-15 "wing-hum re-source" amendment) -- update this table, in the same
-// change, whenever a duration there changes. Not derived from the published manifest: this
-// package's tests stay pure/offline (CLAUDE.md "no live API calls or large downloads in
-// tests"), and a hand-cited table matches how `stemGains.ts`'s own boundary constants already
-// cite real dates without deriving them from a data file.
+// Mirrors sources/audio-stems/stems.toml's attested `duration_seconds` for every ambience stem —
+// update this table, in the same change, whenever a duration there changes. Not derived from the
+// published manifest: this package's tests stay pure/offline (CLAUDE.md "no live API calls or
+// large downloads in tests"), and a hand-cited table matches how `stemGains.ts`'s own boundary
+// constants already cite real dates without deriving them from a data file.
 const AMBIENCE_DURATION_SECONDS: Record<AmbienceStemId, number> = {
   wind: 128.2,
   water: 60.0,
@@ -56,9 +52,8 @@ const MONO_DECODED_BYTES: Record<AmbienceStemId, number> = Object.fromEntries(
 
 const NO_FLOOD_BASALT: never[] = []
 
-/** A dense log1p-spaced sweep of the whole domain, plus a handful of checkpoints the audio
- *  review itself measured live (`getStemTargets()`, "wing-hum re-source" amendment) -- included
- *  explicitly so this test's coverage of the busiest, most human-era-adjacent stretch does not
+/** A dense log1p-spaced sweep of the whole domain, plus a handful of checkpoints in the busiest,
+ *  most human-era-adjacent stretch, included explicitly so this test's coverage there does not
  *  depend only on where the log-spaced grid happens to land. A gap in the sweep can only ever
  *  make this test *more* permissive, never less (a missed narrow bump undercounts a peak; a
  *  missed narrow duck overcounts one and so still yields a valid, if slightly pessimistic, upper

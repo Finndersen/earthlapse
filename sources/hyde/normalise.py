@@ -1,15 +1,15 @@
 """Normalise data/raw/hyde/ into two curated `RasterSequence`s, one frame per real HYDE
 timestep each (73, 10000 BCE - 2015 CE — README.md "Coverage"), plus one derived `TimeSeries`:
 
-- `hyde_cleared_land.parquet` -- cropland/pasture/rangeland, unchanged by this pass.
-- `hyde_population_density.parquet` -- ADR-031 amendment "population density".
-- `population.parquet` -- ADR-031 amendment "global population total": the world total at each
-  of the same 73 timesteps, a plain sum of the full-resolution `popc` grid (people per cell, so
-  a sum over every valid cell *is* the world total -- no area weighting, unlike the density
-  raster above). Named "population", not "hyde_population_total", to slot directly into
-  `WorldModel.at()`'s existing `self._s("population", t)` lookup (`pipeline/models.py`) and
-  `HumanState.population` -- the same "derived TimeSeries takes the plain semantic name, not a
-  source-prefixed one" convention `sources/paleodem`'s own `land_fraction` already set.
+- `hyde_cleared_land.parquet` -- cropland/pasture/rangeland.
+- `hyde_population_density.parquet` (ADR-031).
+- `population.parquet` (ADR-031): the world total at each of the same 73 timesteps, a plain sum
+  of the full-resolution `popc` grid (people per cell, so a sum over every valid cell *is* the
+  world total -- no area weighting, unlike the density raster above). Named "population", not
+  "hyde_population_total", to slot directly into `WorldModel.at()`'s existing
+  `self._s("population", t)` lookup (`pipeline/models.py`) and `HumanState.population` -- the
+  same "derived TimeSeries takes the plain semantic name, not a source-prefixed one" convention
+  `sources/paleodem`'s own `land_fraction` already set.
 
 Each cleared-land frame's texture encodes three fraction values in one RGB image (README.md
 "Encoding"): **R = cropland fraction**, **G = (pasture + converted-rangeland) fraction**, **B =
@@ -17,24 +17,13 @@ Each cleared-land frame's texture encodes three fraction values in one RGB image
 converted to a fraction of the cell's true (not constant-area) surface area, computed
 analytically from latitude (README.md "Cell area") — not from HYDE's own supplementary
 `garea_cr.asc` grid, which this source deliberately never fetches (README.md "Why no General
-files").
-
-Two corrections, in sequence (full account: README.md "Which HYDE variable is 'pasture'"):
-1. The original encoding (R = cropland, G = `grazing`) painted natural rangeland (Sahel/
-   savanna, Madagascar, much of Europe's semi-natural grassland) the same mustard as cleared
-   cropland, because `grazing` = `pasture` + `rangeland` + `conv_rangeland` lumps intensively
-   managed pasture together with barely-touched natural rangeland. Fixed by splitting
-   `pasture` and `rangeland` into their own channels.
-2. Checking the primary source (Klein Goldewijk et al. 2017, ESSD 9:927-953) for what
-   `conv_rangeland` ("converted rangeland") actually means found it is grazing land in *forest*
-   biomes, which the paper's own authors say should be treated as cleared: "for rangeland, the
-   natural vegetation remains intact if it is non-forest, but is cleared if it is forest ...
-   Rangeland-converted is located in forest biomes ... and is assumed to have undergone
-   conversion of natural vegetation." So `conv_rangeland` belongs with the *cleared* channel
-   (`pasture`), not the *natural* one (`rangeland` — "rangeland-natural" in the paper's own
-   terms) — hence G sums `pasture` and `conv_rangeland` (clipped to 1 after summing, since
-   each is independently clipped-then-summed floats can exceed 1 at a coastal/rounding edge
-   cell), and B is `rangeland` alone.
+files"). The three channels are `cropland`, `pasture` + `conv_rangeland`, and `rangeland` alone
+(not HYDE's own `grazing` aggregate, which lumps all three together and would paint natural
+rangeland the same mustard as cleared cropland) -- full account, including why
+`conv_rangeland` joins the cleared channel rather than the natural one, in README.md "Which HYDE
+variable is 'pasture'" and fetch.py's `LAND_USE_VARIABLES`. G sums `pasture` and
+`conv_rangeland` clipped to 1 after summing, since each is independently clipped-then-summed
+floats can exceed 1 at a coastal/rounding-edge cell.
 
 Each population-density frame's texture encodes one 8-bit log-scale channel (README.md
 "Population density encoding", `pipeline.density_encoding`): **R = encode_log_density(people

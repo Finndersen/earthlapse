@@ -105,11 +105,10 @@ export function globePreloadUrls(
 // ------------------------------------------------------------------- multi-source (G7)
 
 /**
- * The globe's two raster sources (docs/GLOBE.md §4.1, ADR-013's "buildLayers.ts... must
- * select raster layers by id once there are several" — now true). `paleodem` covers 0-540 Ma
- * (real data); `neoproterozoic` covers 540-1000 Ma (Merdith et al. 2021 continents, stylised
- * relief) or is `null` when that source is unusable — see `regimeEventsWithRasterFallback`
- * for what the globe shows instead of faking continents in that case.
+ * The globe's raster sources (docs/GLOBE.md §4.1), selected by id per ADR-013. `paleodem` covers
+ * 0-540 Ma (real data); `neoproterozoic` covers 540-1000 Ma (Merdith et al. 2021 continents,
+ * stylised relief) or is `null` when unusable — `regimeEventsWithRasterFallback` decides what the
+ * globe shows instead of faking continents.
  */
 export interface GlobeRasterLayers {
   paleodem: RasterData
@@ -161,13 +160,12 @@ export function globeMultiBlendAt(layers: GlobeRasterLayers, t: GeoTime, assetBa
   return { beforeUrl: before.beforeUrl, afterUrl: after.beforeUrl, alpha: (t - seamStart) / (seamEnd - seamStart) }
 }
 
-/** The two exact edge-frame textures `globeMultiBlendAt` binds as soon as `t` enters
- *  `SEAM_BAND` (PaleoDEM's 540 Ma frame, Merdith's 550 Ma frame) — `[]` when `neoproterozoic`
- *  is `null`. Resolved via `globeBlendAt` at each source's own edge age, where it collapses to
- *  a single texture (`beforeUrl === afterUrl`, `alpha` 0), rather than duplicating the ref
- *  lookup. Exists so `globeMultiPreloadUrls` can warm these two specifically: `globePreloadUrls`
- *  never returns a source's own bracketing frame (by design — that's a load, not a preload),
- *  but here that excluded frame is exactly what the impending seam-band pair needs. */
+/** The two edge-frame textures `globeMultiBlendAt` binds as soon as `t` enters `SEAM_BAND`
+ *  (PaleoDEM's 540 Ma, Merdith's 550 Ma); `[]` when `neoproterozoic` is `null`. Resolved via
+ *  `globeBlendAt` at each source's edge age, where it collapses to a single texture
+ *  (`beforeUrl === afterUrl`, `alpha` 0). Needed because `globePreloadUrls` deliberately never
+ *  returns a source's own bracketing frame — but that excluded frame is exactly what the
+ *  impending seam-band pair needs. */
 function seamFrameUrls(layers: GlobeRasterLayers, assetBase: string): string[] {
   if (layers.neoproterozoic === null) return []
   const [seamStart, seamEnd] = SEAM_BAND
@@ -215,10 +213,9 @@ export function globeMultiPreloadUrls(
     : globePreloadUrls(paleodem, seamStart, 'toPresent', window, assetBase)
 }
 
-/** Shown when nothing — no raster source, no regime, no overlay effect — covers `t`. Generic
- *  rather than naming a boundary (the old "before 540 Ma" wording, removed with G7): the only
- *  span this can still apply to is the sliver before any cited regime starts (docs/GLOBE.md
- *  §9 G8), which isn't "before 540 Ma" any more. */
+/** Shown when nothing — no raster source, no regime, no overlay effect — covers `t`. Worded
+ *  generically rather than naming a boundary, since the span it applies to depends on which
+ *  sources and regimes are published. */
 export const NO_RECONSTRUCTION_CAPTION = 'No reconstruction'
 
 const PLATE_MODEL_CAPTION = 'Continents from plate model · relief stylised'
@@ -251,24 +248,19 @@ const NEOPROTEROZOIC_DOMAIN: readonly [GeoTime, GeoTime] = [540e6, 1000e6]
 /**
  * Years BP over which the globe's base crosses from PaleoDEM's 0 Ma frame to the human-era
  * basemap (Natural Earth II, `sources/basemap`) — `[nearEdge, farEdge]`, same `[younger, older]`
- * convention as `SEAM_BAND`. Fixed directly by the user (ADR-030), a narrower span than the wider
- * 90/80 ka recommendation an earlier design proposal made, which covered a broader scope than
- * this feature builds (ice/sea level/dispersal overlays). Not manifest data, for the same reason
- * `SEAM_BAND` isn't: a raster crossfade boundary the web side alone owns.
+ * convention as `SEAM_BAND`. Fixed by ADR-030. Not manifest data, for the same reason `SEAM_BAND`
+ * isn't: a raster crossfade boundary the web side alone owns.
  */
 export const BASEMAP_CROSSFADE_BAND: readonly [GeoTime, GeoTime] = [300_000, 400_000]
 
 /**
- * The basemap's crossfade weight at `t` (ADR-030): 0 at and above
- * `BASEMAP_CROSSFADE_BAND`'s far edge (400 ka — "before 400 ka behaviour unchanged"), 1 at and
- * below its near edge (300 ka — pure basemap), linear between. This is deliberately *not*
- * folded into `GlobeBlend`/the existing `uBefore`/`uAfter`/`uMix` uniforms the way `SEAM_BAND`'s
- * crossfade is: the basemap is a single, time-invariant texture per tier (not a sequence of
- * dated frames to bracket), so it gets its own uniform slot (`Globe.tsx`'s `uBasemapTex`/
- * `uBasemapStrength`) mixed *over* the ordinary PaleoDEM `dataColor` in the shader, rather than
- * reusing that slot for two different kinds of thing. This also keeps the two textures on their
- * own caches (`textureCache.ts` for PaleoDEM, `humanEraTextureCache.ts`'s mipmapped instance for
- * the basemap) without needing one `GlobeTexturePair` to somehow serve both.
+ * The basemap's crossfade weight at `t` (ADR-030): 0 at and above `BASEMAP_CROSSFADE_BAND`'s far
+ * edge (400 ka), 1 at and below its near edge (300 ka), linear between. Deliberately *not* folded
+ * into `GlobeBlend`'s `uBefore`/`uAfter`/`uMix` the way `SEAM_BAND`'s crossfade is: the basemap is
+ * a single time-invariant texture per tier, not a sequence of dated frames to bracket, so it gets
+ * its own uniform slot (`uBasemapTex`/`uBasemapStrength`) mixed *over* the PaleoDEM `dataColor`.
+ * That also lets the two live on separate caches (`textureCache.ts` vs `humanEraTextureCache.ts`'s
+ * mipmapped instance) without one `GlobeTexturePair` serving both.
  */
 export function basemapStrengthAt(t: GeoTime): number {
   const [nearEdge, farEdge] = BASEMAP_CROSSFADE_BAND
@@ -282,36 +274,24 @@ function clamp01(x: number): number {
 }
 
 /**
- * Tone-match grade for the Natural Earth II basemap (ADR-030 amendment, user report 2026-09-17:
- * "significantly lighter than the previous texture and appears over-exposed... washed-out pale
- * land and pale blue oceans"). **Not a colour-space bug** — checked directly: both the PaleoDEM
- * and basemap textures set `texture.colorSpace = THREE.SRGBColorSpace` identically
- * (`textureCache.ts`, `humanEraTextureCache.ts`), both decode via a plain `createImageBitmap`
- * with no extra options, `GLOBE_FRAGMENT_SHADER` ends with the same `#include <colorspace_fragment>`
- * for both, and sampling the *rendered* globe against the *source* `basemap_t0.webp` file at four
- * points (mid-Atlantic, Sahara, Amazon, Himalaya, `scratchpad/globe-fixes-notes.md`) matched within
- * a few percent at every one — the render is a faithful reproduction of the source file. The
- * mismatch is real but sits one level up: Natural Earth II's own photographic palette is simply
- * far paler and less saturated than PaleoDEM's stylised hypsometric tint, so swapping one for the
- * other at `BASEMAP_CROSSFADE_BAND` reads as a brightness jump even though neither is rendered
- * wrong. Measured side by side (reduced-motion, same camera, same regions) at 434.8 ka (PaleoDEM,
- * just outside the crossfade band) vs 216.8 ka (basemap, fully crossfaded in):
+ * Tone-match grade for the Natural Earth II basemap (ADR-030 amendment). This is *not* a
+ * colour-space bug, and should not be "fixed" as one: PaleoDEM and basemap textures set
+ * `THREE.SRGBColorSpace` identically, both decode via a plain `createImageBitmap`, and
+ * `GLOBE_FRAGMENT_SHADER` ends with the same `#include <colorspace_fragment>` for both — the
+ * render faithfully reproduces the source file. The mismatch is one level up: Natural Earth II's
+ * photographic palette is far paler and less saturated than PaleoDEM's stylised hypsometric tint,
+ * so crossing `BASEMAP_CROSSFADE_BAND` reads as a brightness jump though neither is rendered
+ * wrong. Measured ungraded (same camera/regions, PaleoDEM at 434.8 ka vs basemap at 216.8 ka):
+ * ocean relative luminance ~0.03 vs ~0.26 (~9x), Sahara 0.25 vs 0.86 (blown-out), Amazon 0.17
+ * vs 0.36.
  *
- * | region | PaleoDEM relative luminance | basemap relative luminance (ungraded) |
- * |---|---|---|
- * | mid-Atlantic / South Atlantic ocean | ~0.03 | ~0.26 (~9x brighter) |
- * | Sahel/Sahara land | 0.25 (stylised green) | 0.86 (blown-out pale sand) |
- * | Amazon land | 0.17 (stylised green) | 0.36 (~2x brighter, desaturated) |
- *
- * `gradeBasemapColor` is a plain levels/gamma/saturation grade applied to the basemap texture's
- * own colour only (never PaleoDEM's, never a regime look) — `BASEMAP_GRADE_SCALE` pulls the output
- * ceiling down so even a blown-out highlight (bright sand, cloud) can't reach display white,
- * `BASEMAP_GRADE_GAMMA` (`> 1`) darkens the midtones a `scale`-only correction wouldn't reach, and
- * `BASEMAP_GRADE_SATURATION` (`> 1`) restores the saturation the darkening alone would otherwise
- * leave looking flat. Tuned against the measurements above (`blend.test.ts` pins the ocean sample
- * landing close to PaleoDEM's own dark, saturated blue) rather than a global "looks nice" guess;
- * land does not attempt to chase PaleoDEM's own arbitrary green hypsometric tint — a real desert
- * should still read as sand-coloured, just not blown out to near-white.
+ * `gradeBasemapColor` applies a levels/gamma/saturation grade to the basemap's colour only, never
+ * PaleoDEM's or a regime look: `BASEMAP_GRADE_SCALE` pulls the output ceiling down so a blown-out
+ * highlight can't reach display white, `BASEMAP_GRADE_GAMMA` (`> 1`) darkens the midtones a
+ * scale-only correction can't reach, and `BASEMAP_GRADE_SATURATION` (`> 1`) restores the
+ * saturation that darkening costs. Tuned against those measurements, with `blend.test.ts` pinning
+ * the ocean sample near PaleoDEM's dark saturated blue. Land deliberately does not chase
+ * PaleoDEM's green hypsometric tint — a desert should read as sand, just not near-white.
  */
 export const BASEMAP_GRADE_SCALE = 0.6
 export const BASEMAP_GRADE_GAMMA = 1.7
@@ -337,14 +317,12 @@ export function gradeBasemapColor([r, g, b]: readonly [number, number, number]):
 }
 
 /**
- * docs/GLOBE.md G7's fallback rule: if the Merdith source is unusable (`neoproterozoicAvailable
- * = false`), the globe must not fake continents for 540-1000 Ma — it shows the same
- * "geography unknown" regime look that already covers 1000 Ma and older instead. Additive: this
- * appends one synthetic regime event rather than editing `globe-regimes`' own hand-curated,
- * citation-backed data (§4.2's regimes are all literature-dated; "the build failed" is not a
- * citation) — `regimeWeightsAt` (`effects/regimes.ts`) treats it like any other regime event, so
- * it crossfades against its neighbours (`proterozoic-unknown-geography-regime`, right next to
- * it at 1000 Ma) the normal way.
+ * docs/GLOBE.md G7's fallback rule: an unusable Merdith source must not lead the globe to fake
+ * continents for 540-1000 Ma — it shows the same "geography unknown" regime look that covers
+ * 1000 Ma and older. Additive by design: this appends one synthetic regime event rather than
+ * editing `globe-regimes`' hand-curated, citation-backed data, since every regime there is
+ * literature-dated and "the build failed" is not a citation. `regimeWeightsAt`
+ * (`effects/regimes.ts`) then crossfades it against its neighbours like any other regime.
  */
 export function regimeEventsWithRasterFallback(
   regimeEvents: readonly TimelineEvent[],

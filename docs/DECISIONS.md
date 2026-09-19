@@ -6322,3 +6322,62 @@ ramps 325 -> 320 Ma on Grimaldi & Engel (2005) and is plateaued by then, while t
 cricket-stridulation clip correctly stays silent until 300 Ma because Meganeura-grade giants did
 not stridulate. The stem was simply mixed too quietly to hear. This is a mix change, not a claim
 about the era, and it needs no new citation.
+
+### `cretaceous-forest` re-specified around Tyrannosaurus
+
+The scene at 68 Ma was an Edmontosaurus herd at a swamp margin. So was `kpg-arrival` at 66.043 Ma,
+two scenes later: the same coastal plain, the same duck-billed dinosaurs at the same waterline. The
+pair read as one image shown twice, and the timeline had no Tyrannosaurus anywhere.
+
+The 68 Ma slot takes the Tyrannosaurus because the animal genuinely belongs there — Maastrichtian
+Hell Creek-type coastal plain of the Western Interior Seaway, within *T. rex*'s own 68-66 Ma range,
+with Edmontosaurus as its attested prey (healed tyrannosaur bite marks on Edmontosaurus caudals).
+The hadrosaurs stay in the scene as distant fauna, so the ecological relationship is the subject
+rather than the animal alone. `kpg-arrival` keeps its hadrosaurs and is now visually distinct from
+its predecessor rather than a near-duplicate.
+
+**The generation lesson, which is about style drift, not content.** The first candidate came back
+as a palaeoart painting, complete with a rendered artist's signature in the corner — despite
+`prompts.py`'s invariant style block already stating "not concept art, not digital painting, not
+illustration" and "no watermark". A strongly iconic subject can pull the model out of the global
+style contract on its own. The fix stayed inside the existing structure rather than amending the
+NORMATIVE style split: the scene's own `subject.absent` list now names the failure modes directly
+(painted or illustrated palaeoart look, visible brush strokes, an artist's signature, museum-mural
+framing). The second candidate is photographic.
+
+Worth expecting the same drift on any other famous-organism scene. `absent` is the per-scene lever
+for it; VISUAL_SPEC §2 does not need changing.
+
+### ADR-024 amendment: the event feed no longer measures a pixel lookback
+
+ADR-024's context notes that "the event feed measures its lookback in displayed pixels", and the
+feed carried two independent gates: an event had to sit within `DEFAULT_LOOKBACK_PX` of the
+playhead *on the full-domain symlog scale*, and within `DEFAULT_MAX_AGE_RATIO` of its age. The
+pixel gate is now gone. Only the age ratio remains, and the card count is a fixed three.
+
+**Why.** The pixel gate forced the feed to depend on a `TimeScale` and on its own measured width,
+and the card count to depend on its measured *height* — which is what made the feed visibly
+unstable. Three defects traced back to that measurement:
+
+- The visible card count changed with the length of the current scene's caption, because a wordier
+  caption grew `.bottom`'s auto-sized row and stole height from the feed's `1fr` track. The feed
+  would drop from three cards to two with no change in viewport or events. A hysteresis hook was
+  added to damp this and is now deleted along with the cause.
+- Each card carried a `translateY` of up to `MAX_CARD_OFFSET_PX = 10`, driven by a
+  `distanceFraction` that changes every frame of playback, so the whole stack drifted continuously
+  against a 58px card pitch. Measured at 1.96px of drift between two times with an identical
+  visible set; now exactly 0 (`web/scripts/qa/shots.mjs`,
+  `event-feed-card-position-stable-across-t`).
+- The "+N more" line was not clickable and offered no action, while reserving 20px that
+  `feedCardCapacity` subtracted from the slot before dividing it into cards — so it cost a card to
+  display information nobody could act on.
+
+The age-ratio gate survives because it needs no measurement at all: it is a pure function of `t`
+and the event's own time, so it cannot be destabilised by layout. It is also the gate that does
+the work ADR-024 cared about — stopping the feed reaching back to the Neolithic from 200 years
+ago — since the symlog axis is nearly linear below its ~10 kyr knee.
+
+**Consequence.** `selectFeedEvents` no longer takes a scale or a track width, `useElementSize` is
+deleted, and the feed is `minmax(0, 1fr)`-independent: caption length can no longer affect it.
+`.caption`'s own `max-height` in `ShellLayout.module.css` therefore stops being a correctness
+constraint and remains only as a guard against a caption squeezing the feed's track.

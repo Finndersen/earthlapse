@@ -1,5 +1,5 @@
 """Sourcing-time level measurement for one stem clip: the `loudness_db` and `peak_dbfs` a
-`stems.toml` entry attests (ADR-023, amendment "stem levels and loop regions").
+`stems.toml` entry attests (ADR-023).
 
 Run by a human when a clip is sourced, never by `earthtime build`, `make data` or a test that
 touches a real clip: the pipeline still does no decoding (README "Why levels are attested, not

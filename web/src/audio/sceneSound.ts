@@ -1,9 +1,8 @@
 /**
- * Per-scene sound (ADR-023 §3 and its 2026-09-14 amendment, DESIGN.md §11's "a fourth thing
- * DESIGN never named"). A scene names a stem in the one published catalogue: an ambience stem,
- * which it foregrounds above that stem's own `t`-driven curve, or a scene-only stem with no curve
- * at all (`geothermal`, or the one-shots `impact`, `rocket`, `aircraft`, which only `once` may
- * name).
+ * Per-scene sound (ADR-023 §3, DESIGN.md §11's "a fourth thing DESIGN never named"). A scene
+ * names a stem in the one published catalogue: an ambience stem, which it foregrounds above that
+ * stem's own `t`-driven curve, or a scene-only stem with no curve at all (`geothermal`, or the
+ * one-shots `impact`, `rocket`, `aircraft`, which only `once` may name).
  *
  * `sceneSoundLoopGains` is pure. `useSceneSoundOnceTrigger` is the one small hook this module
  * exports; its edge-triggering logic is factored into `nextOnceTriggerState`, a pure function,
@@ -11,9 +10,9 @@
  *
  * `nextOnceTriggerState`/`useSceneSoundOnceTrigger` take whichever `SceneMix` their caller hands
  * them — `engine.ts` feeds them the raw, un-rate-limited target mix, not the visually-throttled
- * *presented* one `sceneSoundLoopGains` always uses (2026-09-15 amendment; see
- * `nextOnceTriggerState`'s own doc comment and `engine.ts`'s call site). `onceSoundOutlived`
- * reads *both* mixes at once, for a reason its own doc comment explains.
+ * *presented* one `sceneSoundLoopGains` always uses (see `nextOnceTriggerState`'s own doc comment
+ * and `engine.ts`'s call site). `onceSoundOutlived` reads *both* mixes at once, for a reason its
+ * own doc comment explains.
  */
 
 'use client'
@@ -54,69 +53,55 @@ export interface OnceTriggerResult {
 }
 
 /**
- * The pure core of the once-mode arrival trigger (ADR-023 §3, redefined by its 2026-09-15
- * "once-mode arrival is dominance, not settle" amendment, then its "target-driven, not
- * presentation-driven" follow-up the same day, then its "playing gate" correction). Fires when
- * `sceneMix`'s **dominant** scene (`dominantScene`: `mix < 0.5 ? from : to`, the same "current"
- * reading every other single-scene readout in this codebase already uses) is a scene whose
- * `sound?.mode === 'once'`, `playing` is true, this call is not itself the render on which
- * `playing` just turned true (see `wasPlaying` below), and this scene's id is not already in
- * `prevArmedOff` (fired since the last time it was the dominant scene) — at most once per
- * arrival. Deliberately generic in what `SceneMix` it is handed: `sceneSoundLoopGains`/
- * `onceSoundOutlived` are always called with the *presented* (rate-limited) mix once a voice has
- * been shown, since loop volume and an already-sounding voice's fade must stay visually synced,
- * but `engine.ts` calls this one with the raw, un-throttled *target* mix instead — see its own
- * call site for why.
+ * The pure core of the once-mode arrival trigger (ADR-023 §3). Fires when `sceneMix`'s
+ * **dominant** scene (`dominantScene`: `mix < 0.5 ? from : to`, the same "current" reading every
+ * other single-scene readout in this codebase uses) is a scene whose `sound?.mode === 'once'`,
+ * `playing` is true, this call is not itself the render on which `playing` just turned true (see
+ * `wasPlaying` below), and this scene's id is not already in `prevArmedOff` (fired since the last
+ * time it was the dominant scene) — at most once per arrival. Deliberately generic in what
+ * `SceneMix` it is handed: `sceneSoundLoopGains`/`onceSoundOutlived` are always called with the
+ * *presented* (rate-limited) mix once a voice has been shown, since loop volume and an
+ * already-sounding voice's fade must stay visually synced, but `engine.ts` calls this one with
+ * the raw, un-throttled *target* mix instead — see its own call site for why.
  *
  * `wasPlaying` — whether `playing` was already true on the previous call — gates out a second,
- * independent false arrival (2026-09-15 "playing gate" correction, queue item 19, finding 7):
- * pressing play while already sitting on a once-mode scene is not an arrival, since the playhead
- * did not move into it under playback, so it must not fire. Without this gate a scene reached by
- * scrubbing while paused, or simply sitting under the playhead when the page loads, fires the
- * instant playback starts even though nothing was ever "arrived at". The scene is armed off
- * (not fired) on exactly the render where `playing` transitions `false` -> `true`, whatever the
- * dominant scene is; every other render is unaffected — a scene reached by scrubbing *while
- * already playing* still fires normally, since that transition never happens on such a call.
+ * independent false arrival: pressing play while already sitting on a once-mode scene is not an
+ * arrival, since the playhead did not move into it under playback, so it must not fire. Without
+ * this gate a scene reached by scrubbing while paused, or simply sitting under the playhead when
+ * the page loads, fires the instant playback starts even though nothing was ever "arrived at".
+ * The scene is armed off (not fired) on exactly the render where `playing` transitions `false`
+ * -> `true`, whatever the dominant scene is; every other render is unaffected — a scene reached
+ * by scrubbing *while already playing* still fires normally, since that transition never happens
+ * on such a call.
  *
- * Earlier this additionally required `mix` to be exactly settled at 0 or 1 (nothing still
- * dissolving) before firing — the ADR-023 §3 text this amends ("the scene becomes the *settled*
- * on-screen scene"). Fed the rate-limited presented mix (as this function originally always
- * was), that never fires reliably: `scene/presentation.ts`'s `step` rate-limits it to take at
- * least `MIN_TRANSITION_SECONDS` of *wall-clock* time to cross a dissolve, a fixed floor
- * independent of playback speed, while `scene/pacing.ts`'s `scenePlaybackSegments` paces the
- * *target* `t` through a dissolve band in `MIN_TRANSITION_SECONDS / speed` — less, at any speed
- * above 1x. In a densely-scened stretch (human-history scenes a year or two apart are common),
- * the target keeps moving on to the next dissolve before the rate-limited presented mix ever
- * finishes catching up and lands on the exact float `0`/`1` the old check required — diagnosed
- * with Playwright evidence (ADR-023's "re-review fixes" amendment, finding 10): the presented
- * mix never once reached exactly 0 or 1 across several real seconds of `'scenes'`-mode playback
- * through `trinity-test`'s and `kpg-arrival`'s own densely-scened neighbours, so the once
- * trigger never fired at all, for any stem, independent of how early its buffer was ready.
- * Requiring the *dominant* scene to change instead — rather than requiring `mix` to reach an
- * exact 0/1 — is the weaker, always-reachable condition even the rate-limited presented mix
- * still guarantees eventually: `step`'s `state.mix` moves toward its target strictly
- * monotonically (`moveToward` never overshoots or reverses within one pursuit) whenever a scene
- * is anywhere in the chase, so a mix that ever starts heading toward a scene below `0.5`
- * provably crosses `0.5` even if it is later re-targeted past that scene before reaching `1`.
- * But engine.ts's own follow-up amendment found a second, independent way the presented mix can
- * fail a once-mode scene even with this looser condition: `step`'s "different pair, settled"
- * branch can rebase straight past an intervening scene without that scene ever becoming
- * `presented.to` at all (its own doc comment: "so playback never flashes through whatever
- * scenes lie between them") — a scene `dominantScene` then never reports as dominant, however
+ * Firing on the *dominant* scene changing, rather than on `mix` reaching an exact 0/1, is what
+ * makes this reliable: `scene/presentation.ts`'s `step` rate-limits a dissolve to take at least
+ * `MIN_TRANSITION_SECONDS` of *wall-clock* time, a fixed floor independent of playback speed,
+ * while `scene/pacing.ts`'s `scenePlaybackSegments` paces the *target* `t` through a dissolve
+ * band in `MIN_TRANSITION_SECONDS / speed` — less, at any speed above 1x. In a densely-scened
+ * stretch the target keeps moving on to the next dissolve before the rate-limited presented mix
+ * ever lands on the exact float `0`/`1` an exact-settle check would require, so such a check
+ * would rarely or never fire. The dominant-scene condition is weaker but always reachable:
+ * `step`'s `state.mix` moves toward its target strictly monotonically, so a mix that ever starts
+ * heading toward a scene below `0.5` provably crosses `0.5` even if later re-targeted past that
+ * scene before reaching `1`.
+ *
+ * The presented mix can still fail a once-mode scene even with this looser condition: `step`'s
+ * "different pair, settled" branch can rebase straight past an intervening scene without that
+ * scene ever becoming `presented.to` at all (its own doc comment: "so playback never flashes
+ * through whatever scenes lie between them") — such a scene never reports as dominant, however
  * loose the condition on `mix`. Feeding this function the raw *target* mix instead sidesteps
- * both failure modes at once: `sceneAt` is pure and instantaneous in `t` (DESIGN §3/§4), so it
- * never skips a scene the playhead actually passes through and never needs a wall-clock rate
- * limit to "catch up" with in the first place. `dominantScene`'s own crossing-based reading is
- * still what makes that reliable rather than merely "less unreliable" — see engine.ts's call
- * site for the live evidence.
+ * both failure modes: `sceneAt` is pure and instantaneous in `t` (DESIGN §3/§4), so it never
+ * skips a scene the playhead actually passes through and never needs a wall-clock rate limit to
+ * "catch up" with in the first place.
  *
  * Re-arming happens unconditionally, every call, not only on a fire: any id in `prevArmedOff`
  * that is no longer the dominant scene is dropped from the returned set, so leaving and
  * returning to a scene always re-arms it even if the effect never fired on the way out (e.g.
  * scrubbing straight past it without ever becoming dominant while playing). This is also what
  * still guarantees "not re-fire while dwelling": once a scene fires and is added to `armedOff`,
- * it stays there — and stays dominant, since nothing else is; the dissolve is mid-flight, not
- * mid-oscillation — for the whole rest of its dwell, so the same arrival never fires twice.
+ * it stays there — and stays dominant, since nothing else is — for the whole rest of its dwell,
+ * so the same arrival never fires twice.
  *
  * A scrub that happens to leave the dominant scene sitting on a once-mode scene must never fire
  * this — `playing` gates that out: `playing` must be whether `t` is currently being advanced by
@@ -151,9 +136,8 @@ export function nextOnceTriggerState(
 /**
  * Whether `presented` has, as of this call, ever shown `sceneId` as its dominant scene since the
  * once-mode voice/pending trigger for it fired — a one-way latch: call with the previous return
- * value as `prev` and it stays `true` forever once it goes `true` (2026-09-15 "outlived tracks
- * presentation, not just target" correction; see `onceSoundOutlived`'s own doc comment for why
- * this exists). Pure in `presented`/`prev`.
+ * value as `prev` and it stays `true` forever once it goes `true` (see `onceSoundOutlived`'s own
+ * doc comment for why this exists). Pure in `presented`/`prev`.
  */
 export function onceVoiceHasBeenPresented(presented: SceneMix, sceneId: string, prev: boolean): boolean {
   return prev || dominantScene(presented).id === sceneId
@@ -161,20 +145,15 @@ export function onceVoiceHasBeenPresented(presented: SceneMix, sceneId: string, 
 
 /**
  * Whether a `once`-mode voice/pending trigger fired for `sceneId` has outlived its scene and
- * should be faded/dropped rather than kept sounding (ADR-023 amendment 2026-09-14; a launch clip
- * runs over two minutes) — a same-day (2026-09-15) correction of the "target-driven trigger"
- * amendment above, from a re-review of it.
+ * should be faded/dropped rather than kept sounding (ADR-023; a launch clip runs over two
+ * minutes).
  *
- * That amendment made `nextOnceTriggerState` fire off the raw, un-rate-limited *target* mix, but
- * left this check reading the rate-limited *presented* mix alone, on the reasoning "a voice fired
- * slightly ahead of what the picture has caught up to must keep sounding until the picture itself
- * moves on". In practice the two mixes disagree about more than just *when* a voice fires: the
- * instant a voice fires off `target` crossing into a scene, `presented` — which is still catching
- * up, by construction, whenever it lags — almost always still shows the *previous* scene as
- * dominant. Reading `presented` alone therefore reports "outlived" from the very first tick after
- * firing, not once the picture has moved on: live-verified (Playwright, `getActiveOnceVoices()`
- * polled every 40 ms) every once voice was marked `leaving` within 40-175 ms of firing and fully
- * gone within ~1.7-1.8 s, regardless of a clip's real duration (the 132 s `rocket` clip included).
+ * `nextOnceTriggerState` fires off the raw, un-rate-limited *target* mix, but the two mixes
+ * disagree about more than just *when* a voice fires: the instant a voice fires off `target`
+ * crossing into a scene, `presented` — which is still catching up, by construction, whenever it
+ * lags — almost always still shows the *previous* scene as dominant. Reading `presented` alone
+ * would therefore report "outlived" from the very first tick after firing, not once the picture
+ * has actually moved on.
  *
  * The fix: only trust `presented` once it has actually shown `sceneId` as dominant at some point
  * (`hasBeenPresented`, latched via `onceVoiceHasBeenPresented`) — that is what "the picture has
@@ -183,9 +162,9 @@ export function onceVoiceHasBeenPresented(presented: SceneMix, sceneId: string, 
  * voice/pending trigger for a scene `presented` may never show at all — `engine.ts`'s own
  * apollo-11-launch rebase case, where `step`'s "different pair, settled" branch can skip a scene
  * as `presented.to` entirely — still gets an explicit, reachable point at which it stops, instead
- * of either firing-then-instantly-fading or (the naive fix) never fading at all. Once `presented`
- * has shown the scene, outlived reverts to `presented` alone, so anything already visually synced
- * with an on-screen once sound keeps behaving exactly as the 2026-09-14 amendment intended.
+ * of either firing-then-instantly-fading or never fading at all. Once `presented` has shown the
+ * scene, outlived reverts to `presented` alone, so anything already visually synced with an
+ * on-screen once sound behaves exactly as expected.
  */
 export function onceSoundOutlived(target: SceneMix, presented: SceneMix, sceneId: string, hasBeenPresented: boolean): boolean {
   if (hasBeenPresented) return dominantScene(presented).id !== sceneId

@@ -1,14 +1,12 @@
 /**
  * A least-recently-used cache bounded by total *decoded bytes* rather than entry count
- * (`lru.ts`'s `LruCache`) — the human-era globe textures (`humanEraTextureCache.ts`) vary a
- * lot in size between tiers (T0 2048x1024 vs T1 4096x2048, roughly 4x the bytes), so a fixed
- * slot count would either waste headroom at T0 or blow the budget at T1. `sizeOf` is supplied
- * by the caller rather than assumed (this module has no three.js dependency, so it stays unit
- * testable without a texture at all — mirrors `lru.ts`'s own "pure bookkeeping" split from
- * `textureCache.ts`).
+ * (`lru.ts`'s `LruCache`). The human-era globe textures (`humanEraTextureCache.ts`) vary widely
+ * between tiers (T0 2048x1024 vs T1 4096x2048, roughly 4x the bytes), so a fixed slot count would
+ * either waste headroom at T0 or blow the budget at T1. The caller supplies `sizeOf`, keeping this
+ * module three.js-free and unit-testable without a texture.
  *
- * Same eviction discipline as `LruCache`: nothing is evicted on insert, only on `trim(keep)`,
- * so a texture still bound to the screen is never disposed out from under a render.
+ * Same eviction discipline as `LruCache`: nothing is evicted on insert, only on `trim(keep)`, so
+ * a texture still bound to the screen is never disposed out from under a render.
  */
 
 export class ByteCappedCache<V> {

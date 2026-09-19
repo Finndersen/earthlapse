@@ -314,9 +314,9 @@ class PortraitPublication:
     missing_morphs: tuple[
         MorphKey, ...
     ]  # consecutive pinned pairs `earthtime morph` has not run for
-    dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015
-    # amendment 2026-09-15): `earthtime morph` judged these fine to skip, not to rerun; the
-    # viewer crossfades them exactly as it would an ungenerated pair
+    dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015):
+    # `earthtime morph` judged these fine to skip, not to rerun; the viewer crossfades them
+    # exactly as it would an ungenerated pair
 
 
 @dataclass(frozen=True)
@@ -641,10 +641,9 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
     names it `<id>-<hash>.<format>` from its own content, so the hash is not re-derived here --
     and refuses if it is missing, or if more than one candidate exists (a stale file
     `write_outputs()` should have cleared; re-running `make data` fixes it). Also refuses a stem
-    whose declared format is not WebKit-decodable (`pipeline.audio.WEBKIT_DECODABLE_FORMATS`,
-    2026-09-15 audio re-review item 7) -- catches a future OGG- or WAV-only source before it
-    ships silently and fails to decode on Safari/iOS, the gap that same day's Safari re-sourcing
-    fixed by hand for two stems without anything stopping it from recurring."""
+    whose declared format is not WebKit-decodable (`pipeline.audio.WEBKIT_DECODABLE_FORMATS`) --
+    catches a future OGG- or WAV-only source before it ships silently and fails to decode on
+    Safari/iOS."""
     stems = []
     audio_dir = root / "data" / "media" / "audio"
     for stem in stem_book.stems:
@@ -768,9 +767,8 @@ def _portrait_publication(
 def _exposed_plate(node_id: str, data: bytes) -> ExposedPlate:
     """The plate as published: `data` (the pin's own bytes, for this publish -- see
     `_verified_pin`), exposure-normalised, scale-bar-erased and WebP-transcoded, all in memory
-    (ADR-015 amendments 2026-09-14, 2026-09-17; WebP transcode, `pipeline.transcode`). The pinned
-    file itself is never rewritten (ADR-005), and morph fields stay computed from it: none of
-    these steps change geometry."""
+    (ADR-015; WebP transcode, `pipeline.transcode`). The pinned file itself is never rewritten
+    (ADR-005), and morph fields stay computed from it: none of these steps change geometry."""
     try:
         exposed = expose_plate(data)
         erased_data = erase_scale_bar(exposed.data)

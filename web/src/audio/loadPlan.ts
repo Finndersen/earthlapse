@@ -1,9 +1,8 @@
 /**
- * Which stem buffers should be loaded right now (ADR-023 amendment "on-demand loading",
- * 2026-09-15, re-review fixes 2026-09-15). Pure and Tone-free, like `stemGains.ts`/`ramp.ts` —
- * `bufferCache.ts` is the stateful fetch/evict bookkeeping layer and `engine.ts` is the one
- * that actually performs I/O, so this module never does either and is unit testable without
- * mounting anything.
+ * Which stem buffers should be loaded right now (ADR-023 amendment "on-demand loading"). Pure
+ * and Tone-free, like `stemGains.ts`/`ramp.ts` — `bufferCache.ts` is the stateful fetch/evict
+ * bookkeeping layer and `engine.ts` is the one that actually performs I/O, so this module never
+ * does either and is unit testable without mounting anything.
  *
  * `stemsNeeded` answers one question: given where `t` is and where playback is about to carry
  * it, which stems' buffers does the engine need decoded in memory? Three contributions, unioned:
@@ -17,25 +16,20 @@
  *   way as an ambience curve, deliberately not by checking `scene.t` alone: `sceneAt` holds a
  *   scene dominant well past its own `t`, until the dissolve reaches the log-midpoint of the gap
  *   to the next one (`scene/scene.ts`'s `DISSOLVE_WIDTH`), and ramps it in similarly before `t`
- *   — a `scene.t`-only check misses both tails (re-review fix: "every stem audible at t is
- *   needed").
+ *   — a `scene.t`-only check would miss both tails.
  * - Every **scene** stem (loop or `once`) whose scene's own `t` falls inside a second, wider
  *   `sceneArrivalWindow` — a `once` voice must have its buffer ready the instant the scene
  *   settles (there is no fallback fade-in the way a loop's gain ramp gives it), so scene stems
- *   get their own longer runway and are fetched ahead of ambience (re-review fix).
+ *   get their own longer runway and are fetched ahead of ambience.
  *
  * The lookahead window (`lookaheadWindow`) is deliberately NOT "however far a computed velocity
  * says t will travel": `playback.mode === 'scenes'` paces at whatever rate fits each segment's
  * `durationSeconds` (`scene/pacing.ts`'s `scenePlaybackSegments`), and `'steady'` mode paces at
  * flat `baseRate * speed` in the *selected section's* own scale, not the full domain's. Both are
- * exactly what `timeline/playback.ts`'s `advancePlayhead` computes — and it is pure and
- * Tone-free, so this module calls it directly rather than re-deriving an approximation of its
- * own math (re-review fix: the previous approximation advanced `log1p(t)` — unwarped, un-knee'd,
- * un-normalised raw-t log space — by `baseRate * speed` seconds' worth as if that were the same
- * space `Playback.baseRate` is denominated in, which is screen-space `u` in `[0, 1]` over a
- * *warped* domain; the two differ by several orders of magnitude almost everywhere, so the old
- * window covered a small fraction of a second of real playback, not `PLAYING_LOOKAHEAD_SECONDS`
- * of it — see DECISIONS.md's amendment for the measured discrepancy):
+ * exactly what `timeline/playback.ts`'s `advancePlayhead` computes, so this module calls it
+ * directly rather than re-deriving an approximation: `Playback.baseRate` is denominated in
+ * screen-space `u` in `[0, 1]` over a *warped* domain, not raw `log1p(t)` seconds, and the two
+ * differ by several orders of magnitude almost everywhere.
  *
  * - **Playing**: `advancePlayhead(t, lookaheadSeconds, ..., scale, scenesPacing)` predicts
  *   exactly where `t` will be after `lookaheadSeconds` of wall-clock playback, on the same scale
@@ -55,11 +49,10 @@
  *   in both directions — this is what keeps a big scrub or a section jump from bursting every
  *   stem it technically passed through: the window only ever covers a small neighbourhood of
  *   wherever `t` currently sits, never the ground crossed to get there. Direction cannot be
- *   inferred from a single external `t` value ("did this tick's `t` come from a drag, or a
- *   discontinuous jump?"), so this deliberately does not try — see DECISIONS.md's amendment for
- *   the alternative considered and rejected (measuring `t`'s own frame-to-frame velocity); the
- *   companion fix for a *continuous* drag (many small jumps in a row) is `engine.ts`'s own
- *   fetch-start settle delay, not a wider window here.
+ *   inferred from a single external `t` value, so this deliberately does not try to (the
+ *   alternative considered — measuring `t`'s own frame-to-frame velocity — is in
+ *   DECISIONS.md); the companion fix for a *continuous* drag (many small jumps in a row) is
+ *   `engine.ts`'s own fetch-start settle delay, not a wider window here.
  *
  * Both cases are clamped to `sectionWindow` (ADR-024's selected section): playback and ordinary
  * scrubbing stay inside it by construction, so this is the hard backstop against a runaway
@@ -79,8 +72,8 @@ import { AMBIENCE_STEM_IDS, isStemId, type StemId } from './stemIds'
 
 /** A stem's curve (or scene loop gain) counts as "needed" once it clears this — below it the
  *  stem is inaudible under any reasonable master/system volume, so loading it early buys
- *  nothing (ADR-023 amendment: "whose gain exceeds ~0.01"). Matches `engine.ts`'s own
- *  `SILENCE_GAIN_THRESHOLD`, so "needed" and "audible" always agree. */
+ *  nothing. Matches `engine.ts`'s own `SILENCE_GAIN_THRESHOLD`, so "needed" and "audible" always
+ *  agree. */
 export const GAIN_THRESHOLD = 0.01
 
 /** How many wall-clock seconds of *playing* playback the ordinary lookahead window covers, in
@@ -95,9 +88,7 @@ export const PLAYING_LOOKAHEAD_SECONDS = 6
 
 /** How far ahead a scene's own arrival (`scene.t`) is searched for — wider than the ordinary
  *  lookahead specifically because a scene stem's buffer must be fully ready *before* the scene
- *  settles: a `once` voice has no gain ramp to hide a late arrival behind (re-review fix: the
- *  ordinary 6s window left one-shot clips still fetching, sometimes past their own scene, on a
- *  throttled connection). */
+ *  settles: a `once` voice has no gain ramp to hide a late arrival behind. */
 export const ONCE_LOOKAHEAD_SECONDS = 20
 
 /** The backstop span behind the direction of travel while playing, as a fraction of the
@@ -248,7 +239,7 @@ export function stemsNeeded(input: StemsNeededInput): ReadonlySet<StemId> {
 
   // Ambience curves and scene *loop* gains, sampled together across the ordinary window —
   // `t` itself is always included (distance 0) so whatever is audible this instant is always
-  // "needed" regardless of where the sample grid happens to land (re-review fix).
+  // "needed" regardless of where the sample grid happens to land.
   const orderedSamples = [t, ...sampleLogSpace(window)]
     .map((sampleT) => ({ sampleT, distance: Math.abs(sampleT - t) }))
     .sort((a, b) => a.distance - b.distance)

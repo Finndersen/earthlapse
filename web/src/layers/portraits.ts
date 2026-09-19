@@ -3,14 +3,13 @@
  * how far the morph between them has run. Pure; closes over already-parsed `TreeData` only.
  *
  * The plate shown at `t` belongs to the youngest plate-bearing node that has already diverged
- * by `t`, so a lineage node without a plate shows the nearest older plate. The morph band is
- * centred on each plate's divergence — the exact moment the ancestor readout's label switches
- * to it — so the image reads as half-way between the two plates right when the label does,
- * rather than lagging behind it. The band reaches `MORPH_BAND_FRACTION / 2` of the log1p gap
- * up into the older plate's span (bounded by the older plate's own divergence) and the same
- * fraction of the log1p gap down toward the next younger plate's divergence (or the present).
- * log1p is the symlog timeline's warp, as in `scene.ts`'s dissolve, so a band has a
- * proportional on-screen width at any zoom.
+ * by `t` (a plate-less node shows the nearest older plate). The morph band is centred on each
+ * plate's divergence — the moment the ancestor readout's label switches to it — so the image
+ * reads half-way between the two plates exactly when the label does. It reaches
+ * `MORPH_BAND_FRACTION / 2` of the log1p gap up into the older plate's span and the same
+ * fraction down toward the next younger plate's divergence (or the present); log1p matches the
+ * symlog timeline's warp (as in `scene.ts`'s dissolve) so a band keeps a proportional on-screen
+ * width at any zoom.
  */
 
 import type { PortraitMorphData, TreeData } from '@/data/curated'
@@ -172,19 +171,14 @@ export function portraitEase(alpha: number): number {
  * playback/scrubbing across the next divergence lands on an already-cached set
  * (`usePortraitPair`'s doc comment on the flash this prevents). Mirrors `SceneView.tsx`'s
  * `neighbourUrls`, adapted for a plate's own morph carrying two flow textures rather than one
- * shared crossfade. `[]` when `index` is `null` (no portraits published) or a neighbour doesn't
- * exist (the oldest/youngest plate).
+ * shared crossfade. `[]` when `index` is `null` or a neighbour doesn't exist (oldest/youngest
+ * plate).
  *
  * A pair's flow textures live on its *younger* plate's `morphFromOlder` (`indexPortraits`
- * attaches each morph to the plate named by its `younger` field) — so stepping one plate further
- * into the past needs `older`'s own `morphFromOlder` (the flow for the (next-older, `older`)
- * pair, where `older` is the younger end), not the next-older plate's own field, which would be
- * the flow one step further still. Stepping one plate closer to the present is the mirror: the
- * flow for the (`younger`, next-younger) pair lives on the next-younger plate's own
- * `morphFromOlder`, since it is the younger end of that pair. `older`/`younger` are the same
- * plate when the drawn pair is a single settled plate (`portraitDrawState`'s alone state); both
- * rules still apply independently and add no duplicate — one uses `older`'s own field, the
- * other the *different* next-younger plate's field.
+ * attaches each morph to the plate named by its `younger` field): stepping further into the past
+ * needs `older`'s own `morphFromOlder` (the flow for the (next-older, `older`) pair), not the
+ * next-older plate's field. Stepping closer to the present is the mirror: that flow lives on the
+ * next-younger plate's own `morphFromOlder`, since it is the younger end of that pair.
  */
 export function portraitNeighbourUrls(
   index: PortraitIndex | null,

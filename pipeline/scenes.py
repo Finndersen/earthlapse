@@ -112,11 +112,11 @@ class SceneRecord(BaseModel):
     t: GeoTime = Field(ge=0)
     chapter: str
     shot: Shot
-    # Short heading for the UI (2026-09 titles work): distinct from `caption`, which stays the
-    # detailed passage underneath it. Invisible to the asset graph (pipeline/assets.py never
-    # reads it), so adding or editing it never changes a prompt/image node's digest or clears a
-    # pin -- the same guarantee `events` and `sound` have. 40 chars is the curation guideline
-    # itself (2-5 words), enforced here rather than left to review discipline.
+    # Short heading for the UI: distinct from `caption`, which stays the detailed passage
+    # underneath it. Invisible to the asset graph (pipeline/assets.py never reads it), so adding
+    # or editing it never changes a prompt/image node's digest or clears a pin -- the same
+    # guarantee `events` and `sound` have. 40 chars is the curation guideline itself (2-5 words),
+    # enforced here rather than left to review discipline.
     title: str = Field(min_length=1, max_length=40)
     caption: str = Field(min_length=1)
     unsourced: UnsourcedConditions

@@ -1,12 +1,11 @@
 /**
- * Binds a `GlobeBlend`'s two refs to loaded `THREE.Texture`s, without ever handing the caller
- * a blank frame, and warms the frames about to be needed. `Globe.tsx` is the only consumer —
- * of this hook directly for the PaleoDEM/Merdith pair, and (via the optional `cache` param) for
- * the human-era basemap and the HYDE population-density overlay too (ADR-030, ADR-031 amendment),
- * which need different cache instances (mipmapped, differently byte-capped, a different
- * `colorSpace` — `humanEraTextureCache.ts`) but exactly the same "never blank, trim once bound"
- * discipline.
- * Parameterising the cache rather than duplicating this hook keeps that discipline in one place.
+ * Binds a `GlobeBlend`'s two refs to loaded `THREE.Texture`s without ever handing the caller a
+ * blank frame, and warms the frames about to be needed. `Globe.tsx` is the only consumer:
+ * directly for the PaleoDEM/Merdith pair, and via the `cache` option for the human-era basemap
+ * and HYDE density overlay (ADR-030, ADR-031 amendment), which need different cache instances
+ * (mipmapped, differently byte-capped, different `colorSpace` — `humanEraTextureCache.ts`) but
+ * the same "never blank, trim once bound" discipline. Parameterising the cache rather than
+ * duplicating the hook keeps that discipline in one place.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -44,44 +43,32 @@ export interface GlobeTexturePair {
 }
 
 /**
- * `preloadUrls` should come from `globePreloadUrls`. Preloads are fire-and-forget: a failure
- * is logged and the frame is simply fetched again when it is actually needed.
+ * `preloadUrls` should come from `globePreloadUrls`. Preloads are fire-and-forget: a failure is
+ * logged and the frame is fetched again when it is actually needed.
  *
- * `enabled` (default `true`) gates every fetch and decode this hook does, bound pair and
- * preload window alike — `Globe.tsx` passes `false` when `!supportsWebGL()`: without a GL
- * context to ever display a texture, fetching and decoding PaleoDEM/Merdith frames is pure
- * waste, worst on exactly the devices least able to afford it. `false` returns the same
- * "nothing bound yet" shape `texturesReady: false` already means before the first pair loads,
- * so a caller that ignores WebGL support entirely still gets a well-formed, inert result.
- *
- * `options.cache` (default the PaleoDEM/Merdith LRU, `textureCache.ts`) lets the same binding
- * logic serve a different texture cache — the human-era basemap and HYDE overlay each get their
- * own instance (`humanEraTextureCache.ts`) rather than sharing PaleoDEM's, per this module's own
- * doc comment. `options.aggressiveTrim` (ADR-030) is threaded straight into `cache.trimTextures`'s
- * own `aggressive` option — `Globe.tsx` sets it once `t` is well inside the human-era basemap
- * span, so the PaleoDEM cache doesn't idle-hold frames nothing on screen needs (`lru.ts`'s own
- * doc comment on `LruCache.trim`). An options object, not two more positional booleans/objects
- * tacked onto the end: `useGlobeTexturePair(blend, preload, webgl, undefined, true)` reads as
- * "what are the third and fifth arguments" at every call site otherwise.
+ * Options are an object rather than trailing positional arguments, which would leave call sites
+ * reading as `useGlobeTexturePair(blend, preload, webgl, undefined, true)`.
  */
 export interface UseGlobeTexturePairOptions {
   /** Gates every fetch and decode this hook does, bound pair and preload window alike —
-   *  `Globe.tsx` passes `false` when `!supportsWebGL()`: without a GL context to ever display a
-   *  texture, fetching and decoding frames is pure waste, worst on exactly the devices least
-   *  able to afford it. `false` returns the same "nothing bound yet" shape `texturesReady: false`
-   *  already means before the first pair loads. Defaults to `true`. */
+   *  `Globe.tsx` passes `false` when `!supportsWebGL()`, since without a GL context to display a
+   *  texture, fetching and decoding frames is pure waste, worst on the devices least able to
+   *  afford it. `false` returns the same "nothing bound yet" shape as before the first pair
+   *  loads. Defaults to `true`. */
   enabled?: boolean
+  /** Defaults to the PaleoDEM/Merdith LRU (`textureCache.ts`); the human-era basemap and HYDE
+   *  overlay pass their own instances (`humanEraTextureCache.ts`). */
   cache?: GlobeTextureCache
+  /** Threaded into `cache.trimTextures`'s `aggressive` option (ADR-030). `Globe.tsx` sets it once
+   *  `t` is well inside the human-era basemap span, so the PaleoDEM cache stops idle-holding
+   *  frames nothing on screen needs (see `LruCache.trim`). */
   aggressiveTrim?: boolean
-  /** Bumped by the caller to force a fresh fetch of the currently bound pair even though its
-   *  URLs haven't changed — the `beforeUrl`/`afterUrl` match that normally short-circuits
-   *  re-fetching says nothing about whether the *cache's* copy of those textures is still
-   *  usable. `Globe.tsx` bumps this after a WebGL context loss for the two human-era pairs
-   *  (basemap, population density), whose cache was just cleared (`HumanEraTextureCache.clear`) because their
-   *  textures' backing `ImageBitmap`s were already closed and unrecoverable
-   *  (`humanEraTextureCache.ts`'s own doc comment) — without this, `bound` would keep pointing
-   *  at the same (now permanently blank) `THREE.Texture` objects forever, since their URLs never
-   *  changed. Only its identity across renders matters, not its value; defaults to `0`. */
+  /** Bumped by the caller to force a fresh fetch of the bound pair even though its URLs haven't
+   *  changed: a `beforeUrl`/`afterUrl` match says nothing about whether the *cache's* copy is
+   *  still usable. `Globe.tsx` bumps this after a WebGL context loss for the two human-era pairs,
+   *  whose cache was just cleared because their textures' backing `ImageBitmap`s were closed and
+   *  unrecoverable. Without it, `bound` would point at the same permanently-blank `THREE.Texture`
+   *  objects forever. Only its identity across renders matters; defaults to `0`. */
   resetKey?: number
 }
 
@@ -95,16 +82,13 @@ export function useGlobeTexturePair(
   const requestIdRef = useRef(0)
   const frozenMixRef = useRef(0)
 
-  // A bound pair whose own `resetKey` doesn't match the caller's current one is stale — the
-  // caller only bumps `resetKey` after a WebGL context loss, once the cache's own copy of these
-  // exact textures is unrecoverable (`UseGlobeTexturePairOptions.resetKey`'s own doc comment).
-  // Treated as "nothing bound" everywhere below, not just to trigger the refetch this also
-  // causes: the shader must stop sampling a texture whose backing `ImageBitmap` is already closed
-  // the instant the context is restored, not only once the replacement finishes loading — left
-  // bound in the meantime, every frame in between samples a detached `ImageBitmap` and logs
-  // "source data has been detached". `bound` itself is left untouched (still holds the stale
-  // texture, in case the refetch below fails and there is nothing better to fall back to) —
-  // `effectiveBound` is just what every *consumer* of it, including the returned pair, sees.
+  // A bound pair whose `resetKey` doesn't match the caller's current one is stale (see
+  // `UseGlobeTexturePairOptions.resetKey`). It reads as "nothing bound" to every consumer, not
+  // merely as a refetch trigger: the shader must stop sampling a texture whose backing
+  // `ImageBitmap` is closed the instant the context is restored, not once the replacement has
+  // loaded — otherwise every frame in between samples a detached `ImageBitmap` and logs "source
+  // data has been detached". `bound` itself is left holding the stale texture as a last-resort
+  // fallback if the refetch fails.
   const effectiveBound = bound !== null && bound.resetKey === resetKey ? bound : null
 
   useEffect(() => {

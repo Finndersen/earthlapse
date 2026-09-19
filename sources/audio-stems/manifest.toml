@@ -16,7 +16,7 @@ citation = "No single dataset. Each stem is an independently CC0/public-domain-l
 time_domain = [0, 0]           # n/a -- not time-indexed data (ADR-023); stems are not one of the four curated shapes
 output_shape = "none (media only, see ADR-023)"
 interpolation = "n/a"
-volume_bytes = 24248533         # measured: sum of data/raw/audio-stems/* (22 stems, era fit v3 + fixes, 2026-09-15)
+volume_bytes = 24248533         # measured: sum of data/raw/audio-stems/* (22 stems)
 storage_tier = "git-lfs"
 
 # Declared so `pipeline.databuild` treats this source as stale again if generated stem media

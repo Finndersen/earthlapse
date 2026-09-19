@@ -1,28 +1,24 @@
 /**
- * Binds an older/younger plate pair, plus the forward/backward flow textures between them
- * when a morph is computed, to loaded `THREE.Texture`s — without ever handing the caller a
- * blank frame: the previously bound set stays visible until the newly requested set has
- * *every* texture it needs fully loaded (mirrors `scene/useScenePair.ts`). `flow` being `null`
- * requests a plain crossfade: only the two plate textures are awaited, and the bound set's
- * `forwardUrl`/`backwardUrl` are `null` too.
+ * Binds an older/younger plate pair, plus the forward/backward flow textures between them when a
+ * morph is computed, to loaded `THREE.Texture`s — without ever handing the caller a blank frame:
+ * the previously bound set stays visible until the newly requested set has *every* texture it
+ * needs fully loaded (mirrors `scene/useScenePair.ts`). `flow` being `null` requests a plain
+ * crossfade: only the two plate textures are awaited, and the bound set's `forwardUrl`/
+ * `backwardUrl` are `null` too.
  *
  * When every texture a newly requested set needs is already in `portraitTextures`'s cache (the
- * common case right at a morph boundary: the incoming plate was the outgoing pair's other half,
- * or a neighbour preloaded ahead of time — see `AncestorPortrait`'s `portraitNeighbourUrls`),
- * the bind happens synchronously during render rather than through the effect below. Deferring
- * even a cache hit through `Promise.all(...).then(...)` costs a microtask, so a caller's
- * `alpha`/flow-range uniforms — driven by the same `t` this set switch is — would land in a
- * render before the rebind, painting the OLD set's textures under the NEW state: a one-frame
- * flash of the previous ancestor.
+ * common case at a morph boundary: the incoming plate was the outgoing pair's other half, or a
+ * preloaded neighbour — `AncestorPortrait`'s `portraitNeighbourUrls`), the bind happens
+ * synchronously during render rather than through the effect below — deferring even a cache hit
+ * through `Promise.all(...).then(...)` costs a microtask, long enough for a caller's `alpha`/
+ * flow-range uniforms (driven by the same `t`) to paint the OLD set's textures under the NEW
+ * state: a one-frame flash of the previous ancestor.
  *
- * That render-phase fast path only closes the flash for the cache-hit case. When the newly
- * requested set genuinely is not loaded yet (fast playback, rapid scrubs, a cold cache),
- * `olderTex`/`youngerTex`/etc. below keep describing the *previous* set while a caller computing
- * alpha/flow-range straight from `t` has already moved on to the newly requested one — the same
- * stale-texture/new-uniform mismatch, just via the effect below instead of the fast path.
- * `boundOlderUrl`/`boundYoungerUrl`/`boundForwardUrl`/`boundBackwardUrl` exist so a caller can
- * tell the two apart: `portraitRender.ts`'s `resolvePortraitRender` reconciles them, and
- * `PortraitCanvas` is the one that calls it.
+ * That fast path only closes the flash for the cache-hit case; a genuinely unloaded set (fast
+ * playback, rapid scrubs, a cold cache) still has this stale-texture/new-uniform mismatch via the
+ * effect path. `boundOlderUrl`/`boundYoungerUrl`/`boundForwardUrl`/`boundBackwardUrl` let a
+ * caller tell bound from requested — `portraitRender.ts`'s `resolvePortraitRender` reconciles
+ * them, called by `PortraitCanvas`.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -31,10 +27,10 @@ import type * as THREE from 'three'
 import { getCachedPortraitTexture, loadPortraitTexture } from './portraitTextures'
 
 /** Two PNG data textures bending the older plate into the younger one. Mirrors `PortraitMorph`
- *  (`@/types/layer`) but carries resolved URLs rather than manifest-relative paths — this is
- *  what `AncestorPortrait` hands to `PortraitCanvas` after `resolveAssetUrl`. Defined here, not
- *  in `portraitRender.ts`, so that module can depend on this one (for `PortraitPair`) without a
- *  cycle back — one-directional, like `scene/sceneRender.ts`'s dependency on `useScenePair.ts`. */
+ *  (`@/types/layer`) but carries resolved URLs rather than manifest-relative paths — what
+ *  `AncestorPortrait` hands to `PortraitCanvas` after `resolveAssetUrl`. Defined here rather than
+ *  in `portraitRender.ts` so that module can depend on this one without a cycle back —
+ *  one-directional, like `scene/sceneRender.ts`'s dependency on `useScenePair.ts`. */
 export interface PortraitFlow {
   forwardUrl: string
   backwardUrl: string
@@ -58,13 +54,11 @@ export interface PortraitPair {
   youngerTex: THREE.Texture | null
   forwardTex: THREE.Texture | null
   backwardTex: THREE.Texture | null
-  /** URLs the bound textures actually belong to — `null` until the very first set has bound
-   *  (mirrors `ready`). May lag the URLs most recently requested of the hook: this only updates
-   *  once a newly requested set's textures have *all* loaded, so a caller that also drives
-   *  other state (alpha, flow ranges) off the requested set needs these to tell the two apart —
-   *  see `portraitRender.ts`'s `resolvePortraitRender`, which reconciles them. `boundForwardUrl`/
-   *  `boundBackwardUrl` are `null` both before the first bind and whenever the bound set has no
-   *  morph (its own `flow` was `null`). */
+  /** URLs the bound textures actually belong to — `null` until the first set has bound (mirrors
+   *  `ready`). May lag the most recently requested URLs, since this only updates once a newly
+   *  requested set's textures have *all* loaded (`portraitRender.ts`'s `resolvePortraitRender`
+   *  reconciles the two). `boundForwardUrl`/`boundBackwardUrl` are `null` before the first bind
+   *  and whenever the bound set has no morph. */
   boundOlderUrl: string | null
   boundYoungerUrl: string | null
   boundForwardUrl: string | null

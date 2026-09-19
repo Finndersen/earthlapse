@@ -1,11 +1,10 @@
 /**
  * Which stem buffers are loaded, loading, or errored, and what to fetch or evict each tick —
  * the stateful counterpart to `loadPlan.ts`'s pure `stemsNeeded` (ADR-023 amendment "on-demand
- * loading", re-review fixes 2026-09-15). Generic over the decoded buffer type (`Handle`) so this
- * module owns no Tone.js import of its own and is exercised directly, the same way
- * `globe/lru.ts` is: plain bookkeeping methods with no I/O and no timers of their own —
- * `engine.ts` is the only caller that does the actual fetch/decode/dispose and supplies the wall
- * clock.
+ * loading"). Generic over the decoded buffer type (`Handle`) so this module owns no Tone.js
+ * import of its own and is exercised directly, the same way `globe/lru.ts` is: plain bookkeeping
+ * methods with no I/O and no timers of their own — `engine.ts` is the only caller that does the
+ * actual fetch/decode/dispose and supplies the wall clock.
  *
  * Three eviction/retry rules, all applied every `plan()` call, none ever touching an id in
  * `needed`:
@@ -20,7 +19,7 @@
  *   until back under budget. This can evict a stem before its idle timeout if the cap alone
  *   requires it. Measured in bytes, not seconds — a stereo 48 kHz stem decodes to roughly 4x the
  *   memory of a mono 24 kHz one of the same duration, so a duration-only figure is not a real
- *   memory bound (re-review fix).
+ *   memory bound.
  * - **Error backoff** — a failed fetch/decode does not retry on the very next `plan()` call
  *   (~80ms later, `engine.ts`'s tick cadence): each consecutive failure doubles the delay before
  *   the next attempt (`INITIAL_RETRY_BACKOFF_MS`, capped at `MAX_RETRY_BACKOFF_MS`), and a
@@ -71,9 +70,8 @@ const DEFAULT_EVICT_AFTER_MS = 60_000
 const DEFAULT_DECODED_BYTES_CAP = 200_000_000
 
 /** First retry delay after a failure; doubles each consecutive failure up to
- *  `MAX_RETRY_BACKOFF_MS` (re-review fix: an unthrottled retry loop hammered a permanently
- *  broken stem — an unsupported codec on that browser — up to 12x/second for as long as it
- *  stayed in `needed`). */
+ *  `MAX_RETRY_BACKOFF_MS` — without this, a broken stem (an unsupported codec on that browser)
+ *  would retry every tick, up to 12x/second, for as long as it stayed in `needed`. */
 const INITIAL_RETRY_BACKOFF_MS = 2_000
 const MAX_RETRY_BACKOFF_MS = 60_000
 
@@ -168,8 +166,7 @@ export class StemBufferCache<Handle> {
    * `needed` is also the fetch-priority order: a JS `Set`'s iteration order is its insertion
    * order, and `loadPlan.ts`'s `stemsNeeded` documents that order as nearest-priority-first, so
    * `plan()` takes just the one `Set` rather than a second, independently-supplied ordering that
-   * could disagree with it (re-review fix — the two used to be separate parameters the caller
-   * had to keep in sync by construction).
+   * could disagree with it.
    */
   plan(needed: ReadonlySet<StemId>, nowMs: number): StemFetchPlan {
     for (const id of needed) {

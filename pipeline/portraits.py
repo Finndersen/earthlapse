@@ -38,18 +38,17 @@ from pipeline.scenes import SLUG_PATTERN, ScenePin, patch_pin_line
 from pipeline.shapes import Tree, TreeNode
 
 LINEAGE_TREE_ID = "lineage"
-# 4 -> 5 (2026-09-17 ADR-015 amendment): `pipeline.scale_bar.SCALE_BAR_BAND_BELOW` widened
-# 0.16 -> 0.32 so `pipeline.exposure`'s publish-time erase reaches the bar on every plate;
-# `pipeline.morph` shares the constant, so its own pre-DIS erase and post-composition zeroing of
-# the same band now cover more of it too -- on some plates the old, narrower band left a sliver
-# of the bar inside the region `inverse_consistency` measures, inflating its round-trip error.
-# Recomputed against all 39 pairs and compared to the previous cache: 23 now keep a real morph
-# (was 20) and 16 dissolve (was 19). Four pairs newly cross MAX_INVERSE_CONSISTENCY (0.039) the
-# wider band no longer dilutes -- `eutheria`->`placentalia` (0.0366), `gnathostomata`->
-# `osteichthyes` (0.0345), `hominidae`->`homininae` (0.0372), `synapsida`->`therapsida` (0.0332)
-# -- and one, `bilateria`->`chordata` (0.0390), newly falls just past it. None of the five were
-# individually re-verified live in the viewer for this amendment; the same practice the
-# 2026-09-15 and 2026-09-16 amendments used for their own bulk reclassifications.
+# Bumped when `pipeline.scale_bar.SCALE_BAR_BAND_BELOW` widened 0.16 -> 0.32 (ADR-015) so
+# `pipeline.exposure`'s publish-time erase reaches the bar on every plate; `pipeline.morph` shares
+# the constant, so its own pre-DIS erase and post-composition zeroing of the same band now cover
+# more of it too -- a narrower band can leave a sliver of the bar inside the region
+# `inverse_consistency` measures, inflating its round-trip error. Recomputing against all 39 pairs
+# changed the classification of five pairs relative to the previous version: four newly cross
+# MAX_INVERSE_CONSISTENCY (0.039) the wider band no longer dilutes -- `eutheria`->`placentalia`
+# (0.0366), `gnathostomata`->`osteichthyes` (0.0345), `hominidae`->`homininae` (0.0372),
+# `synapsida`->`therapsida` (0.0332) -- and one, `bilateria`->`chordata` (0.0390), newly falls just
+# past it. Bumping this version forces every pair to recompute against the new band rather than
+# reuse a stale cached result keyed on the old one.
 MORPH_ALGORITHM_VERSION = "5"
 FORWARD_FLOW_NAME = "forward.png"
 BACKWARD_FLOW_NAME = "backward.png"
@@ -274,7 +273,7 @@ class MorphRecord(BaseModel):
     size: int = Field(gt=0)
     forward_range: float = Field(gt=0)
     backward_range: float = Field(gt=0)
-    # ADR-015 amendment (2026-09-15): True when `compute_morph` judged the flow too incoherent to
+    # ADR-015: True when `compute_morph` judged the flow too incoherent to
     # trust (pipeline.morph.MAX_INVERSE_CONSISTENCY) and zeroed both fields. `forward`/`backward`
     # are still written (an all-zero field is a valid, tiny encoding), but publish treats such a
     # pair as if no morph existed at all, so it crossfades rather than shipping a meaningless

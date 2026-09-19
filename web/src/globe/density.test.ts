@@ -74,7 +74,7 @@ function luma(hex: string): number {
   return 0.299 * r + 0.587 * g + 0.114 * b
 }
 
-describe('DENSITY_RAMP hue and lightness (2026-09: the ramp must read as an artificial overlay, not terrain)', () => {
+describe('DENSITY_RAMP hue and lightness — reads as an artificial overlay, not terrain', () => {
   it('is monotonically non-decreasing in luma from the darkest to the palest stop', () => {
     let previous = -Infinity
     for (const s of DENSITY_RAMP) {

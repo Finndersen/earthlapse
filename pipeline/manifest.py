@@ -91,9 +91,8 @@ class Scene(_WireModel):
     thumbnail: str
     depth: str | None = None  # deferred by ADR-009
     shot: Shot
-    # Short heading for the UI, distinct from `caption` below (2026-09 titles work). Always
-    # emitted, required on every scene -- unlike the additive fields below, it has no "absent"
-    # meaning to fall back to.
+    # Short heading for the UI, distinct from `caption` below. Always emitted, required on every
+    # scene -- unlike the additive fields below, it has no "absent" meaning to fall back to.
     title: str
     caption: str
     # events-core event ids this scene visually anchors to (ADR-022). Always emitted, unlike the
@@ -347,7 +346,7 @@ class TreeNodeData(_WireModel):
 
 
 class PortraitExposureData(_WireModel):
-    """How publish normalised a plate's exposure (ADR-015, amendment 2026-09-14).
+    """How publish normalised a plate's exposure (ADR-015).
 
     `highlight` is the pinned original's subject highlight as a luma code, None when no subject
     stands out; `gain` is the linear-light gain applied (pipeline/exposure.py). The published

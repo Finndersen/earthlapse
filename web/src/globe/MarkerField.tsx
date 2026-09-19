@@ -3,9 +3,8 @@
 /**
  * One instanced billboard field for every dot the human-civilisation layer draws: inhabited
  * markers, city markers, arrival landing ripples and the scene-location indicator. One draw call,
- * one shader, one geometry — not one `<mesh>` (and one `useFrame`) per marker, which is what the
- * old `ArrivalArcs.tsx` did and which does not survive going from thirteen destinations to
- * forty-odd cities plus everything else.
+ * one shader, one geometry — not one `<mesh>` (and one `useFrame`) per marker, which does not
+ * scale to the full published city set.
  *
  * **Nothing here allocates or computes per frame.** Positions are projected on the GPU through
  * `projection.ts`'s own GLSL twin (so a marker can never drift from the mesh mid-unfold), the

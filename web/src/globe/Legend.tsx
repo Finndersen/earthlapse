@@ -1,33 +1,26 @@
 'use client'
 
 /**
- * The expanded globe's compact overlay legend/toggle panel (docs/GLOBE.md §10): today one row,
- * "Human civilisation", which governs the whole layer — arrival arcs, population density and city
- * markers together — rather than a toggle and a colour key per part (the user's own framing: "a
- * more global toggle for 'human civilisation' ... which covers that as well as population density
- * and cities"). Arrivals carry no colour key at all; density does, because a density colour is
- * meaningless without a scale, and it rides in the row's own `footer` slot. A labelled toggle in the
- * same idiom as `ViewModeToggle` (`Globe.tsx`) and the timeline transport's "Playback mode"/
- * "Scale" controls — a small-caps label, a pill of pressed/unpressed buttons, `aria-labelledby`
- * rather than a second repeated `aria-label`. A row is omitted entirely (not shown disabled) when
- * its overlay has no data at the current `t` — `Globe.tsx` passes each row's own visibility as a
- * plain boolean it already had to compute anyway (`hasVisibleArrivals` or `densityHasDataAt` or
- * `citiesHaveDataAt`), so this component stays a pure rendering concern with no `t`-domain
- * knowledge of its own.
+ * The expanded globe's compact overlay legend/toggle panel (docs/GLOBE.md §10). One row,
+ * "Human civilisation", governs the whole layer — arrival arcs, population density and city
+ * markers together — rather than a toggle per part. Arrivals carry no colour key; density does,
+ * because a density colour is meaningless without a scale, and it rides in the row's `footer`
+ * slot. Same toggle idiom as `ViewModeToggle` and the timeline transport controls: small-caps
+ * label, a pill of pressed/unpressed buttons, `aria-labelledby` rather than a repeated
+ * `aria-label`.
  *
- * Toggle state itself lives in `Globe.tsx` (`useState`, not persisted — a reasonable follow-up if
- * the product wants `localStorage` persistence for a wider overlay set than this one). Nothing
- * here fades on inactivity (project rule): every visibility change here is a direct consequence
- * of `t` moving past a domain edge or a viewer pressing a toggle, never an idle timer.
+ * A row is omitted entirely, not shown disabled, when its overlay has no data at the current `t`.
+ * `Globe.tsx` passes each row's visibility as a boolean it already computes (`hasVisibleArrivals`,
+ * `densityHasDataAt`, `citiesHaveDataAt`), so this component stays a pure rendering concern with
+ * no `t`-domain knowledge. Toggle state also lives in `Globe.tsx` (`useState`, not persisted).
+ * Nothing here fades on inactivity (project rule): every visibility change follows from `t`
+ * crossing a domain edge or a viewer pressing a toggle, never an idle timer.
  *
- * **`compact`.** On a phone viewport the two-card, multi-line layout took up roughly a third of
- * the screen and pushed everything below it around. Compact rows are single-line — label and
- * toggle side by side, no wrapping description paragraph — and use `compactHint`, a short (one
- * short line, no truncation needed) alternative to the full `hint` rather than truncating the
- * long one with an ellipsis (which would have cut off exactly the honesty caveats, "modelled" /
- * "data ends 2015", those hints exist to carry). `Globe.tsx` decides `compact` from the same
- * `useIsPhoneViewport()` it already reads for basemap tier selection, so "phone" means one thing
- * everywhere in this feature.
+ * `compact` (phone viewports, decided by `Globe.tsx` from the same `useIsPhoneViewport()` it uses
+ * for basemap tier, so "phone" means one thing across the feature) puts label and toggle on one
+ * line and swaps in `compactHint`. That is a separate short string rather than a CSS truncation of
+ * `hint`, because truncating would cut off exactly the honesty caveats ("modelled", "data ends
+ * 2015") the hints exist to carry.
  */
 
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react'
@@ -40,20 +33,17 @@ export interface LegendRow {
   /** A short description shown under the label — the overlay's colour key and any honesty
    *  caveat it carries. */
   hint: string
-  /** A one-short-line alternative to `hint`, shown instead of it when `compact` (this module's
-   *  own doc comment) — never CSS-truncated from the full `hint`, so the caveat it carries is
-   *  never the part that gets cut off. */
+  /** A one-line alternative to `hint`, shown instead of it when `compact` — never a CSS
+   *  truncation of `hint`, so the caveat it carries is never what gets cut off. */
   compactHint: string
   on: boolean
   onChange: (on: boolean) => void
   /** Optional extra content under the hint — the population-density colour key
-   *  (`DensityRampKey.tsx`), since a density colour means nothing without a scale. Kept as a slot
-   *  rather than a `kind` discriminator so this component stays a pure rendering concern with no
-   *  knowledge of which overlay a row belongs to. Shown in both layouts; the key is already
-   *  compact enough not to need a phone variant. */
+   *  (`DensityRampKey.tsx`). A slot rather than a `kind` discriminator, so this component needs no
+   *  knowledge of which overlay a row belongs to. Shown in both layouts. */
   footer?: ReactNode
-  /** Whether this overlay has data at the current `t` — a row with `visible: false` is omitted
-   *  entirely rather than shown greyed out (this module's own doc comment). */
+  /** Whether this overlay has data at the current `t`; `false` omits the row entirely rather than
+   *  greying it out. */
   visible: boolean
 }
 
@@ -103,19 +93,15 @@ export interface LegendProps {
   boundsRef?: RefObject<HTMLDivElement | null>
 }
 
-/** Renders nothing at all when every row is currently out of its data domain — an empty legend
- *  box would just be chrome with nothing to say. Filtering here
- *  keeps `Globe.tsx` from needing to know the panel collapses to nothing; it only ever passes
- *  every row it has and lets this component decide what's currently relevant.
+/** Renders nothing when every row is out of its data domain — an empty legend box is chrome with
+ *  nothing to say. Filtering here means `Globe.tsx` passes every row it has and never needs to
+ *  know the panel can collapse to nothing.
  *
- * **Focus on a row's own disappearance.** A row's "On"/"Off" buttons can
- * vanish out from under a keyboard user mid-interaction — `t` moving past a domain edge flips
- * `visible` to `false` and the row is filtered out entirely, same as above — leaving the browser
- * to drop focus onto `<body>` with no indication of where it went. `hadFocusRef` tracks (via the
- * container's own bubbling `onFocus`/`onBlur`, not a native listener) whether focus was genuinely
- * inside this legend; the effect below redirects it back to the container itself only in that
- * case, on the render after a row set change — never stealing focus a viewer had already moved
- * elsewhere on their own. */
+ *  A row's buttons can vanish under a keyboard user mid-interaction when `t` crosses a domain
+ *  edge, and the browser then drops focus onto `<body>` with no indication of where it went.
+ *  `hadFocusRef` tracks whether focus was genuinely inside the legend (via the container's
+ *  bubbling `onFocus`/`onBlur`); the effect redirects focus back to the container only in that
+ *  case, on the render after a row-set change, so focus a viewer moved elsewhere is never stolen. */
 export function Legend({ rows, compact = false, boundsRef }: LegendProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hadFocusRef = useRef(false)

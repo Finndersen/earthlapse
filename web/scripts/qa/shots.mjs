@@ -20,6 +20,7 @@ import {
   BREADCRUMB_SELECTOR,
   CHECKPOINT_PIP_SELECTOR,
   ERA_SHORTCUTS_SELECTOR,
+  EVENT_FEED_ITEM_SELECTOR,
   GLOBE_CANVAS_SELECTOR,
   GLOBE_MAP_FIT_FRAME_SELECTOR,
   EXPANDED_GLOBE_CAPTION_SELECTOR,
@@ -68,6 +69,56 @@ function countOverlappingChildPairs({ containerSelector }) {
     }
   }
   return overlaps
+}
+
+/**
+ * Runs inside the page (`page.evaluate`, self-contained): the number of distinct rows
+ * `containerSelector`'s own direct children fall into, grouped by rounded `top` — 1 means every
+ * child sits on one line (no wrap), 2+ means the flex row has wrapped. A generic "did this
+ * flex-wrap row actually wrap" check, independent of `countOverlappingChildPairs`'s "did two
+ * children collide" one: a wrapped row is fine as long as nothing overlaps, but the coordinator's
+ * ask here is specifically that the row does *not* wrap at all at the widths this guards.
+ * @param {{ containerSelector: string }} args
+ */
+function countDistinctRows({ containerSelector }) {
+  const container = document.querySelector(containerSelector)
+  if (container === null) return 0
+  const tops = Array.from(container.children).map((el) => Math.round(el.getBoundingClientRect().top))
+  return new Set(tops).size
+}
+
+/**
+ * Runs inside the page (`page.evaluate`): whether the first `n` direct children of
+ * `containerSelector`'s own element all share one row (rounded `top`). Used where a *trailing*
+ * child is allowed to wrap onto its own line (`.controlsSecondary`'s `rateReadoutRow` — two
+ * always-reserved, usually-empty slots, not a control a viewer would notice dropping) but the
+ * children before it must not.
+ * @param {{ containerSelector: string, n: number }} args
+ */
+function firstChildrenShareRow({ containerSelector, n }) {
+  const container = document.querySelector(containerSelector)
+  if (container === null) return false
+  const tops = Array.from(container.children)
+    .slice(0, n)
+    .map((el) => Math.round(el.getBoundingClientRect().top))
+  return new Set(tops).size === 1
+}
+
+/**
+ * Runs inside the page (`page.evaluate`, self-contained): the rounded `{x, y}` of every direct
+ * child of `containerSelector`'s own element, in DOM order — used to prove a fixed-width cluster
+ * (`.controlsSecondary`'s sound/speed/mode/era-shortcuts/scale/rate-badge group) sits at the exact
+ * same pixel positions regardless of the breadcrumb's own length in the sibling track, not merely
+ * "looks about right" in one screenshot.
+ * @param {{ containerSelector: string }} args
+ */
+function childPositions({ containerSelector }) {
+  const container = document.querySelector(containerSelector)
+  if (container === null) return []
+  return Array.from(container.children).map((el) => {
+    const r = el.getBoundingClientRect()
+    return { x: Math.round(r.x), y: Math.round(r.y) }
+  })
 }
 
 /**
@@ -374,55 +425,30 @@ export default [
   {
     name: 'globe-expanded-sphere',
     description:
-      'Expanded globe, sphere mode, measured at its own real DEFAULT diameter — guards against the CSS-box/drawn-' +
-      'pixel mix-up that shrank the sphere to ~226px, and (2026-09-18, user report: "opens zoomed in a lot, need to ' +
-      'press zoom out 6 times to get it back to reasonable original size") the camera-fit regression from the same ' +
-      "day's \"remove the square zoom clip\" change: moving the expanded `<canvas>` to cover the whole backdrop " +
-      "(`Globe.module.css`'s `.orbExpanded` doc comment) means `GlobeCameraControls` must fit the *default* view " +
-      "against the measured `.orbFitFrameSphere` rectangle instead of the canvas's own now-viewport-sized one, and " +
-      'two distinct bugs in getting that measurement right both briefly left the camera far too close — see that ' +
-      "component's own `sphereFrameReady`/`isSubFrameOf` doc comments for the root causes. Clipped to the real fit-" +
-      "frame rectangle (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why `GLOBE_CANVAS_SELECTOR` " +
-      'alone no longer isolates the sphere from the surrounding chrome) rather than measured at zoom-interaction ' +
-      'time at all, so this is a true zero-interaction "does it open at the right size" check, not a proxy for it. ' +
+      'Expanded globe, sphere mode, measured at its own real DEFAULT diameter (drawn pixels, not a CSS box) — ' +
+      "clipped to the real fit-frame rectangle (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why " +
+      '`GLOBE_CANVAS_SELECTOR` alone no longer isolates the sphere from the surrounding chrome) rather than ' +
+      'measured at zoom-interaction time, so this is a zero-interaction "does it open at the right size" check. ' +
       "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, so anything that changes " +
-      "the title's own height legitimately moves this band: ~528px before the 2026-09-18 bottom-chrome condensing " +
-      'pass, ~592px after it, ~546px after the same-day Earth/Dinosaurs/Humans shortcut group added a row to the ' +
-      'title, ~573-593px after the clip-removal architecture change (unaffected in itself — only the *room to zoom ' +
-      'in* changed) folded with the "make the globe slightly larger by default" nudge (`SPHERE_DEFAULT_SCALE`), ' +
-      '~510px after issue 3\'s own follow-up, round 1 (user report: "the globe/map toggle is overlayed on top of ' +
-      'the globe... globe needs to be made a bit smaller") deliberately shrank the gap from *both* ends — ' +
-      "`ShellLayout.tsx`'s `reserveBottomPx` (the Globe/Map toggle's own real height, plus clearance) from the " +
-      "bottom, and the relocated era shortcuts, then still stacked *below* the title, from the top; ~540px after " +
-      'round 2 (user ask: "moving era shortcuts to the side of the current year instead of below, to save ' +
-      'vertical space" — `useChromeGap` sizes this purely off `.title`\'s own *height*, and a circle inscribed ' +
-      "in that gap has no use for width, so moving the shortcuts onto the title's own row recovers essentially " +
-      'all of the height they cost while stacked below it, without giving back the toggle\'s own bottom reservation ' +
-      '— see `ShellLayout.module.css`\'s `.title` doc comment for the layout itself). Real, intended movement ' +
-      'either way, not a regression: this is the number the coordinator asked to see and judge each time, not a ' +
-      'silently-reverted "larger globe" ask.',
+      "the title's own height legitimately moves this band — currently ~555px, with the era shortcuts living in " +
+      'the timeline controls row rather than the title.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
-    expect: { 'sphere.width': [520, 560], 'sphere.height': [520, 560] },
+    expect: { 'sphere.width': [535, 575], 'sphere.height': [535, 575] },
   },
   {
     name: 'globe-expanded-map',
     description:
-      'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size — guards the map-mode ' +
-      'fit-to-panel framing (ADR-033) the same way `globe-expanded-sphere` guards the sphere\'s (same clip-to-real-' +
-      "fit-frame reasoning, against `GLOBE_MAP_FIT_FRAME_SELECTOR` — see that shot's own description for why " +
-      "`GLOBE_CANVAS_SELECTOR` alone can no longer isolate the map from the surrounding chrome), and (2026-09-18, " +
-      'user report: "when it\'s expanded to a map it still has the \'drag hand\' mouse icon... dragging doesn\'t do ' +
-      'anything in this mode") that the default, fully-zoomed-out map cursor is *not* `grab`: `camera.ts`\'s ' +
+      'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size (drawn pixels) — ' +
+      "guards the map-mode fit-to-panel framing (ADR-033) the same way `globe-expanded-sphere` guards the sphere's " +
+      "(same clip-to-real-fit-frame reasoning, against `GLOBE_MAP_FIT_FRAME_SELECTOR` — see that shot's own " +
+      'description for why `GLOBE_CANVAS_SELECTOR` alone can no longer isolate the map from the surrounding ' +
+      "chrome). Also checks that the default, fully-zoomed-out map cursor is *not* `grab`: `camera.ts`'s " +
       "`mapHasPanRoom` is false here (the fit distance's own margin already shows slightly more than the whole " +
       'map, so there is genuinely nowhere to pan to yet). Same title-height dependency as ' +
-      "`globe-expanded-sphere`'s own: ~1082px before the 2026-09-18 bottom-chrome condensing pass, ~1213px after " +
-      'it, ~1119px after the same-day Earth/Dinosaurs/Humans shortcut group grew the title by one row, ~1045px ' +
-      "after issue 3's own follow-up round 1, ~1107px after round 2 (`globe-expanded-sphere`'s own description " +
-      'has the full reasoning for both rounds) — unaffected by the sphere-only `SPHERE_DEFAULT_SCALE` nudge ' +
-      'either way.',
+      "`globe-expanded-sphere`'s own.",
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'map' },
@@ -431,9 +457,7 @@ export default [
       const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
       return { map, cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
     },
-    // ~1107px matches this shot's own description — see `globe-expanded-sphere`'s own comment on
-    // why this band moved (real, intended changes, not a regression).
-    expect: { 'map.width': [1087, 1127], cursorIsNotGrab: [1, 1] },
+    expect: { 'map.width': [1115, 1155], cursorIsNotGrab: [1, 1] },
   },
   {
     name: 'globe-sphere-zoom-past-fit',
@@ -883,61 +907,54 @@ export default [
   {
     name: 'era-shortcuts-group',
     description:
-      'The Earth/Dinosaurs/Humans "jump to an era" shortcut group, Earth active by default at t=0. Third and ' +
-      'final placement (user ask: "move it back down to below the timelie... justifeid to hte right so its ' +
-      'closer to the play/reiard/ff nav controls") — the group lives inside `TIMELINE_CONTROLS_SECTIONS_SELECTOR` ' +
-      "(`Timeline.tsx`'s `.controlsSections`, alongside the breadcrumb), inside `BOTTOM_CHROME_SELECTOR`, not " +
-      'inside the shell title (that placement is gone entirely — `ShellLayout.tsx` no longer even has an ' +
-      '`eraShortcuts` prop).',
+      'The Dinosaurs/Humans "jump to an era" shortcut group. Lives inside ' +
+      "`TIMELINE_CONTROLS_SECONDARY_SELECTOR` (`Timeline.tsx`'s `.controlsSecondary`, alongside the speed/mode/" +
+      'scale controls), inside `BOTTOM_CHROME_SELECTOR` — moved there from `.controlsSections` (beside the ' +
+      'breadcrumb) so the breadcrumb track has the left side of the row to itself.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
-    measure: async ({ page, hook }) => {
-      const state = await hook.getState()
-      const insideSections = await page.evaluate(
-        ([shortcutsSel, sectionsSel]) => {
+    measure: async ({ page }) => {
+      const insideSecondary = await page.evaluate(
+        ([shortcutsSel, secondarySel]) => {
           const shortcuts = document.querySelector(shortcutsSel)
-          const sections = document.querySelector(sectionsSel)
-          return shortcuts !== null && sections !== null && sections.contains(shortcuts)
+          const secondary = document.querySelector(secondarySel)
+          return shortcuts !== null && secondary !== null && secondary.contains(shortcuts)
         },
-        [ERA_SHORTCUTS_SELECTOR, TIMELINE_CONTROLS_SECTIONS_SELECTOR],
+        [ERA_SHORTCUTS_SELECTOR, TIMELINE_CONTROLS_SECONDARY_SELECTOR],
       )
       return {
         shortcuts: await drawnBounds(page, ERA_SHORTCUTS_SELECTOR),
-        earthActive: state?.sectionId === 'earth' ? 1 : 0,
-        insideSections: insideSections ? 1 : 0,
+        insideSecondary: insideSecondary ? 1 : 0,
       }
     },
     expect: {
-      // Three pills wide enough to hold an icon and a caps-mono label, unmistakably present.
-      'shortcuts.width': [140, 420],
+      // Two pills wide enough to hold an icon and a caps-mono label, unmistakably present.
+      'shortcuts.width': [90, 320],
       'shortcuts.height': [16, 60],
-      earthActive: [1, 1],
-      insideSections: [1, 1],
+      insideSecondary: [1, 1],
     },
   },
   {
     name: 'era-shortcuts-clear-of-neighbours-wide',
     description:
       'The relocated era shortcuts (`era-shortcuts-group`\'s own description) must not overlap the breadcrumb ' +
-      "they now share `.controlsSections` with (`justify-content: space-between` keeps them apart — the whole " +
-      'point of this placement, user ask: "not so close to the breadcrumbs"), the transport core (play/back/' +
-      'forward) or the secondary controls (sound/speed/mode/scale). Plain CSS boxes (`boxOf`), not drawn-pixel ' +
-      "scans: every element here is ordinary HUD chrome over the shell's own layout, not a canvas whose CSS box " +
-      "could diverge from what's painted inside it.",
+      'or the transport core (play/back/forward) — self-overlap against `.controlsSecondary`\'s own other ' +
+      "children (sound/speed/mode/scale) is `controls-secondary-no-self-overlap-*`'s job, not this shot's, since " +
+      "the shortcuts are now themselves one of those children. Plain CSS boxes (`boxOf`), not drawn-pixel scans: " +
+      "every element here is ordinary HUD chrome over the shell's own layout, not a canvas whose CSS box could " +
+      "diverge from what's painted inside it.",
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     measure: async ({ page }) => {
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
       const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
       return {
         overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
         overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
       }
     },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
   },
   {
     name: 'era-shortcuts-clear-of-neighbours-narrow',
@@ -948,14 +965,12 @@ export default [
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
       const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
       return {
         overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
         overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
       }
     },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
   },
   {
     name: 'era-shortcuts-clear-of-neighbours-short',
@@ -968,14 +983,12 @@ export default [
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
       const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
       return {
         overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
         overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-        overlapsSecondary: rectsOverlap(shortcuts, secondary) ? 1 : 0,
       }
     },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0], overlapsSecondary: [0, 0] },
+    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
   },
   {
     name: 'controls-secondary-no-self-overlap-wide',
@@ -1103,6 +1116,119 @@ export default [
       }
     },
     expect: { leftInsetPx: [0, 400], rightInsetPx: [0, 400] },
+  },
+  {
+    name: 'controls-row-single-line-wide',
+    description:
+      'The breadcrumb in `.controlsSections`, and the era shortcuts/mode toggle/scale toggle — the three ' +
+      "interactive groups in `.controlsSecondary` a viewer actually clicks — stay on one line at 1440x900, at " +
+      'the exact full breadcrumb trail (Earth > Cenozoic > Quaternary > Holocene > Modern, t=50) that produced ' +
+      "the reported regression. `.controlsSecondary`'s own doc comment explains why the trailing, always-" +
+      'reserved-but-usually-empty rate-badge row is exempt from this: `firstChildrenShareRow` checks only the ' +
+      'first 3 children, not the 4th.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 50,
+    measure: async ({ page }) => {
+      const sectionsRows = await page.evaluate(countDistinctRows, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
+      const secondaryFirstThreeShareRow = await page.evaluate(firstChildrenShareRow, {
+        containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR,
+        n: 3,
+      })
+      return { sectionsRows, secondaryFirstThreeShareRow: secondaryFirstThreeShareRow ? 1 : 0 }
+    },
+    expect: { sectionsRows: [1, 1], secondaryFirstThreeShareRow: [1, 1] },
+  },
+  {
+    name: 'controls-row-narrow-desktop-no-collision',
+    description:
+      'At 844x390 (a landscape-phone viewport above the 760px breakpoint, so still the desktop 3-track row, not ' +
+      "the stacked layout) there is genuinely not enough width for the breadcrumb's own track plus era " +
+      "shortcuts/mode/scale all on one line — `.controlsSecondary`'s own `flex-wrap` safety net legitimately " +
+      'engages here, same as it always could pre-rearrange. The requirement at this width is what ' +
+      '`controls-secondary-no-self-overlap-short` and `timeline-controls-inset-to-track-short` already guard: no ' +
+      "child collides with another and nothing overflows the track's own gutter bounds. This shot is the same " +
+      "check restated with the full-breadcrumb worst case (t=50) those two don't use, so the wrap this width " +
+      'produces is confirmed collision-free under that case too, not just the shallower default t=0.',
+    viewport: { width: 844, height: 390 },
+    t: 50,
+    measure: async ({ page }) => {
+      const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
+      const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        sectionsOverlaps,
+        secondaryOverlaps,
+        rightOverflowPx: secondary.x + secondary.width - (track.x + track.width),
+      }
+    },
+    expect: { sectionsOverlaps: [0, 0], secondaryOverlaps: [0, 0], rightOverflowPx: [-400, 0] },
+  },
+  {
+    name: 'controls-row-narrow-stacked-no-collision',
+    description:
+      'Below the 760px breakpoint the row restructures into a stacked, centred column that is allowed to wrap ' +
+      '(`Timeline.module.css`\'s own `@media (max-width: 760px)` rule) — this checks the narrow 390x844 phone ' +
+      'viewport degrades to that wrap-tolerant layout without any child colliding with another, rather than ' +
+      'asserting the single-line requirement that only applies to the wider, 3-track layout above.',
+    viewport: { width: 390, height: 844 },
+    t: 50,
+    measure: async ({ page }) => {
+      const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
+      const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      return { sectionsOverlaps, secondaryOverlaps }
+    },
+    expect: { sectionsOverlaps: [0, 0], secondaryOverlaps: [0, 0] },
+  },
+  {
+    name: 'transport-core-optically-centred',
+    description:
+      'The back/play/forward transport group must stay optically centred on the scrub track regardless of how ' +
+      'wide the breadcrumb or the secondary controls happen to be — `.controlsRow`\'s own symmetric ' +
+      '`minmax(0, 1fr) auto minmax(0, 1fr)` grid is what keeps this true. Same full-breadcrumb worst case as ' +
+      '`controls-row-single-line-wide`.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 50,
+    measure: async ({ page }) => {
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      return { offsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)) }
+    },
+    expect: { offsetPx: [0, 3] },
+  },
+  {
+    name: 'controls-secondary-fixed-position-across-breadcrumb-lengths',
+    description:
+      'The actual bug this rearrange fixes: the centre cluster (sound, back/play/forward, speed — ' +
+      '`TIMELINE_CONTROLS_CORE_SELECTOR`) and the right cluster (era shortcuts, playback mode, scale, rate badge ' +
+      '— `TIMELINE_CONTROLS_SECONDARY_SELECTOR`) must sit at identical pixel positions whether the breadcrumb ' +
+      'reads plain "Earth" (t=0) or the full "Earth > Cenozoic > Quaternary > Holocene > Modern" trail (t=50) — ' +
+      "`.controlsSections` is the row's one flexible column precisely so a longer trail never moves anything in " +
+      "either fixed-width cluster beside it. `childPositions` reads every direct child's own `{x, y}`.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const shortCore = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
+      const shortSecondary = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      await hook.setT(50)
+      await hook.ready()
+      const longCore = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
+      const longSecondary = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      const driftOf = (a, b) =>
+        a.length === b.length && a.length > 0 ? Math.max(...a.map((p, i) => Math.max(Math.abs(p.x - b[i].x), Math.abs(p.y - b[i].y)))) : Infinity
+      return {
+        coreChildCount: shortCore.length,
+        secondaryChildCount: shortSecondary.length,
+        coreMaxDriftPx: driftOf(shortCore, longCore),
+        secondaryMaxDriftPx: driftOf(shortSecondary, longSecondary),
+      }
+    },
+    expect: {
+      coreChildCount: [3, 3],
+      secondaryChildCount: [3, 5],
+      coreMaxDriftPx: [0, 0],
+      secondaryMaxDriftPx: [0, 0],
+    },
   },
   {
     name: 'era-shortcut-dinosaurs-selected',
@@ -1418,6 +1544,96 @@ export default [
       // gain reaching `.feed`, not dead space left behind in `.readouts`'s old row.
       feedHeight: [180, 240],
     },
+  },
+  {
+    name: 'event-feed-card-count-stable-across-captions',
+    description:
+      'The event feed\'s visible card count must depend only on the viewport, never on which scene\'s caption ' +
+      'happens to be showing: `amsterdam-voc-harbour` (t=375) carries one of the longest real captions (~350 ' +
+      'characters, several wrapped lines) and `columbus-landfall-1492` (t=533) one of the shortest — both fall in ' +
+      "the same event-dense stretch of the Holocene, so the feed's own candidate pool is comparable either way. " +
+      "`ShellLayout.module.css`'s `.caption` now caps its own height (`max-height` + `overflow-y: auto`), so a " +
+      "longer caption no longer eats into `.feed`'s track below it.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 533,
+    measure: async ({ page, hook }) => {
+      await hook.ready()
+      const shortCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
+      await hook.setT(375)
+      await hook.ready()
+      const longCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
+      return { shortCaptionCount, longCaptionCount, countsMatch: shortCaptionCount === longCaptionCount ? 1 : 0 }
+    },
+    // Both counts must be equal, and (at this viewport, plenty of vertical room) more than one —
+    // a shot that only ever showed a single card either way would not distinguish "the fix works"
+    // from "there was never more than one card available regardless".
+    expect: { countsMatch: [1, 1], shortCaptionCount: [2, 4], longCaptionCount: [2, 4] },
+  },
+  {
+    name: 'event-feed-card-count-stable-across-captions-tall',
+    description: 'Same as `event-feed-card-count-stable-across-captions`, at a taller viewport with more vertical room to show cards in.',
+    viewport: { width: 1440, height: 1200 },
+    t: 533,
+    measure: async ({ page, hook }) => {
+      await hook.ready()
+      const shortCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
+      await hook.setT(375)
+      await hook.ready()
+      const longCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
+      return { shortCaptionCount, longCaptionCount, countsMatch: shortCaptionCount === longCaptionCount ? 1 : 0 }
+    },
+    expect: { countsMatch: [1, 1] },
+  },
+  {
+    name: 'event-feed-no-overflow-at-1280x720',
+    description:
+      "A short, wide desktop window (1280x720, `.feed`'s own ShellLayout.module.css comment names this the worst " +
+      "case measured) leaves `.feed`'s track very little spare height once the title, readouts and bottom bands " +
+      "take theirs — this checks the feed's own box never grows past the bottom of its column and overlaps the " +
+      "scene caption/timeline below it, even with the long-caption scene from the stability shots above.",
+    viewport: { width: 1280, height: 720 },
+    t: 375,
+    measure: async ({ page }) => {
+      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
+      const bottom = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      return { overlapsBottom: rectsOverlap(feed, bottom) ? 1 : 0 }
+    },
+    expect: { overlapsBottom: [0, 0] },
+  },
+  {
+    name: 'event-feed-card-position-stable-across-t',
+    description:
+      "A card's drawn position must depend only on its rank in the feed, never on `t` itself: `distanceFraction` " +
+      'moves continuously as `t` scrubs even while the visible set is unchanged, and the old per-card ' +
+      '`translateY(feedCardOffsetPx(distanceFraction))` chased that every frame, reading as constant jitter. ' +
+      'Both `t=250` and `t=290` resolve to the identical three-event set (`transatlantic-slave-trade`, ' +
+      '`newcomen-steam-engine`, `newton-principia`, same order) — verified against both the fixed selection rule ' +
+      "(age-ratio only) and the removed pixel-lookback one it replaces, so this isolates the drift fix from the " +
+      "selection-rule change. Confirmed failing against the unfixed build: yDelta measured ~1.96px there.",
+    viewport: DEFAULT_VIEWPORT,
+    // This shot's whole point is a per-card `transform` that used to change with `t` — running
+    // under real motion (rather than the run's own `reduce` default) keeps the guard meaningful
+    // against a regression that reintroduces one.
+    reducedMotion: 'no-preference',
+    t: 250,
+    measure: async ({ page, hook }) => {
+      const freshestSelector = '[data-testid="event-feed-item-transatlantic-slave-trade"]'
+      const idsAt = () => page.locator(EVENT_FEED_ITEM_SELECTOR).evaluateAll((els) => els.map((el) => el.dataset.testid))
+      const idsT1 = await idsAt()
+      const boxT1 = await boxOf(page, freshestSelector)
+      await hook.setT(290)
+      // `.card`'s own opacity transition (EventFeed.module.css) has no readiness signal of its
+      // own — `hook.ready()` only covers network/decode state — so this settles any CSS
+      // transition before measuring, the same reasoning `timeouts.mjs`'s two waits give.
+      await page.waitForTimeout(300)
+      const idsT2 = await idsAt()
+      const boxT2 = await boxOf(page, freshestSelector)
+      return {
+        sameVisibleSet: idsT1.length === idsT2.length && idsT1.every((id, i) => id === idsT2[i]) ? 1 : 0,
+        yDelta: Math.abs(boxT1.y - boxT2.y),
+      }
+    },
+    expect: { sameVisibleSet: [1, 1], yDelta: [0, 0.5] },
   },
   {
     name: 'breadcrumb-trimmed',

@@ -3,17 +3,15 @@
  * scene's place in view, how that turn eases, and the shape of the brief pulse the marker plays
  * as the scene comes in. No three.js, no React.
  *
- * **One rotation owner, extended — never a second one.** `Globe.tsx`'s `GlobeRotatingGroup` is
- * the single place the sphere's `rotation.y` is written (`useGlobeAutoRotation.ts`'s own doc
- * comment has the read-after-write bug that rule exists to prevent). Centring a scene's location
- * is therefore not a new rotation source: it is a target handed to that same accumulator, which
- * eases to it and then resumes its ordinary drift from wherever it landed. Everything in this
- * module is the arithmetic for that, kept out of the hook so it can be tested without a canvas.
+ * One rotation owner, never a second: `Globe.tsx`'s `GlobeRotatingGroup` is the only place the
+ * sphere's `rotation.y` is written (see `useGlobeAutoRotation.ts` for the read-after-write hazard
+ * that rule prevents). Centring a scene's location is a target handed to that same accumulator,
+ * which eases to it then resumes ordinary drift from where it landed. This module is the
+ * arithmetic for that, kept out of the hook so it tests without a canvas.
  *
- * **The orb only.** Expanded — sphere or map — the viewer is steering the camera themselves, so
- * nothing here is applied: the marker and its pulse are drawn in place and the camera is left
- * alone. That is a caller-side gate (`Globe.tsx` passes no focus target when expanded), not a
- * branch in here.
+ * Applies to the minimised orb only. Expanded (sphere or map) the viewer steers the camera, so
+ * the marker and pulse are drawn in place and the camera left alone — enforced by the caller
+ * (`Globe.tsx` passes no focus target when expanded), not by a branch in here.
  */
 
 import type { SceneCoordinates } from '@/types/manifest'
@@ -24,10 +22,9 @@ const DEG2RAD = Math.PI / 180
  *  it has settled well before a scene's own dwell is over. */
 export const FOCUS_EASE_SECONDS = 1.2
 
-/** Wraps `angle` (radians) into `[-π, π)`. The accumulator below is kept normalised at all
- *  times, so a long session can never leave the sphere many whole turns from zero — the bug
- *  `useGlobeAutoRotation.ts`'s own doc comment records, and the reason interpolating toward a
- *  focus target is automatically the shorter way round. */
+/** Wraps `angle` (radians) into `[-π, π)`. Keeping the accumulator normalised at all times stops
+ *  a long session leaving the sphere many whole turns from zero, and makes interpolation toward a
+ *  focus target automatically take the shorter way round. */
 export function wrapAngle(angle: number): number {
   const twoPi = Math.PI * 2
   return ((((angle + Math.PI) % twoPi) + twoPi) % twoPi) - Math.PI
@@ -41,19 +38,14 @@ export function wrapAngle(angle: number): number {
  * when it lines up with the camera's own azimuth, i.e. `L + θ = cameraAzimuthY`, so
  * `θ = cameraAzimuthY - L` is what lands it dead centre.
  *
- * **Why the camera's azimuth has to be an argument, not an assumed constant.** An earlier
- * version of this function assumed the camera always sits at azimuth 0 (`θ = -L`), true only
- * the instant the globe first mounts. `OrbitControls` (`Globe.tsx`'s `GlobeCameraControls`)
- * rotates the camera around the same `+Y` axis in both the minimised orb and the expanded
- * sphere, so a viewer who has ever dragged the globe leaves the camera sitting at some other
- * azimuth the old formula had no way to know about — landing the ease exactly that far short of
- * actually centred (browser-verified: the whole of the "moves but doesn't go all the way"
- * report). The camera is owned by three.js's own scene graph, read once by the caller
- * (`useGlobeAutoRotation.ts`, via `useThree()`) at the moment a new focus target is set, and
- * passed in here — this module stays pure and canvas-free, never reaching for the camera itself.
+ * The camera azimuth must be an argument, not assumed to be 0: `OrbitControls` (`Globe.tsx`'s
+ * `GlobeCameraControls`) rotates the camera about this same `+Y` axis in both the orb and the
+ * expanded sphere, so once a viewer has dragged the globe, assuming 0 lands the ease exactly that
+ * far short of centred. The caller (`useGlobeAutoRotation.ts`, via `useThree()`) reads it from
+ * three.js's scene graph when a focus target is set and passes it in, keeping this module pure.
  *
- * Latitude is deliberately still ignored: the globe's single rotation axis is `Y`, and tilting
- * it to chase a latitude would mean a second rotation source, which this feature must not add.
+ * Latitude is deliberately ignored: the globe's only rotation axis is `Y`, and tilting to chase a
+ * latitude would add the second rotation source this feature must not introduce.
  */
 export function focusRotationY(lon: number, cameraAzimuthY: number): number {
   return wrapAngle(cameraAzimuthY - lon * DEG2RAD)
@@ -71,10 +63,9 @@ function easeInOutCubic(x: number): number {
 }
 
 /**
- * The sphere's rotation accumulator. `rotationY` is always wrapped into `[-π, π)` so it can never
- * run away over a long session (the bug `useGlobeAutoRotation.ts` documents); an ease in progress
- * carries its own unwrapped `from`/`to` pair so it interpolates monotonically across the seam
- * instead of snapping back when the wrapped value crosses ±π.
+ * The sphere's rotation accumulator. `rotationY` is always wrapped into `[-π, π)` so it never runs
+ * away over a long session; an ease in progress carries its own *unwrapped* `from`/`to` pair so it
+ * interpolates monotonically instead of snapping back when the wrapped value crosses ±π.
  */
 export interface GlobeRotationState {
   rotationY: number
@@ -108,12 +99,9 @@ export function startFocusEase(state: GlobeRotationState, targetRotationY: numbe
 
 /**
  * Advances the accumulator by one frame. An ease in progress takes precedence and suppresses
- * drift for its duration — two sources adding into the same angle at once would make the ease
- * overshoot its own target. Once it finishes, drift resumes from exactly where the ease left the
- * sphere, so there is no snap at the handover.
- *
- * `driftRadiansPerSecond` of 0 covers both reduced motion and map mode, where the caller wants
- * the angle held rather than accumulating.
+ * drift for its duration — two sources adding into the same angle would make the ease overshoot.
+ * Drift then resumes from exactly where the ease landed, so the handover never snaps.
+ * `driftRadiansPerSecond` of 0 covers reduced motion and map mode, where the angle is held.
  */
 export function stepGlobeRotation(state: GlobeRotationState, dtSeconds: number, driftRadiansPerSecond: number): GlobeRotationState {
   const dt = Number.isFinite(dtSeconds) && dtSeconds > 0 ? dtSeconds : 0

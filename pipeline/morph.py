@@ -1,5 +1,4 @@
-"""Optical flow between consecutive pinned portrait plates (ADR-015, amendments 2026-09-15,
-2026-09-16, 2026-09-17).
+"""Optical flow between consecutive pinned portrait plates (ADR-015).
 
     plate -> subject box (from the dark backdrop) -> framing that centres and scales it
           -> a *separate*, vignette-robust subject extent anchors and clips a scale-bar band
@@ -75,30 +74,28 @@ MAX_FLOW_P95 = 0.6
 # other instead of tearing it.
 FLOW_SMOOTHING_SIGMA = 6.0
 
-# `PORTRAIT_STYLE` (pipeline/prompts.py) no longer asks the generator for a scale bar (ADR-015
-# amendment 2026-09-17: the human found it inconsistent -- faint on most plates, thick and bright
-# on a couple -- and not helpful, and it is erased from every *published* plate, `pipeline.exposure`).
-# But the 40 already-pinned plates this module reads still carry one (a pin is never regenerated,
-# ADR-005), and its position drifts differently between two independently normalised plates (each
-# centred and scaled to its own subject box), so optical flow still bends it into a hook or
-# squiggle rather than leaving it straight if left in (queue item 14 evidence) -- this module's own
-# exclusion stays needed regardless of what publish does with the result. The band is anchored to
-# a subject extent (`SCALE_BAR_BAND_*`, `scale_bar_band`, `pipeline.scale_bar` -- shared with
-# `pipeline.exposure`'s publish-time erase) rather than trying to detect the bar itself (measured
-# unreliable in practice, both by the original 2026-09-15 amendment and a second check that tried a
-# wider search window: still too faint or thin at generation size to separate reliably from a
-# subject's own edges and shadow). The anchor is `bar_search_extent`, *not* `detect_subject_box`:
-# the latter's single frame-corner threshold reads a strong vignette's own radial glow as subject
-# on most plates (measured 2026-09-16: e.g. `amniota`'s box bottom at 0.92 with the lizard's real
-# belly around 0.6), which both misses the true bar on most plates and, worse, was wide enough on
-# some to erase real anatomy when used to place this band -- a regression the 2026-09-15 amendment
-# introduced (`theria` -> `eutheria` and `leca` -> `opisthokonta` both showed new ghosting).
-# `bar_search_extent` leans well below the box (the bar sits close under the subject, and this
-# half of the band only ever covers backdrop on a well-anchored plate) and a little above it too
-# (the four pairs measured 2026-09-16 put the true bar as much as 0.063 plate-UV above the
-# extent's own bottom edge). Either margin can still overshoot on an individual plate; `erase_band`
-# and `zero_band` additionally never touch a pixel `bar_search_extent`'s own mask calls subject,
-# so an overshoot only ever costs band precision, never anatomy.
+# `PORTRAIT_STYLE` (pipeline/prompts.py) no longer asks the generator for a scale bar -- it drew
+# inconsistently (faint on most plates, thick and bright on a couple), and it is erased from every
+# *published* plate (`pipeline.exposure`). But the 40 already-pinned plates this module reads
+# still carry one (a pin is never regenerated, ADR-005), and its position drifts differently
+# between two independently normalised plates (each centred and scaled to its own subject box), so
+# optical flow still bends it into a hook or squiggle rather than leaving it straight if left in --
+# this module's own exclusion stays needed regardless of what publish does with the result. The
+# band is anchored to a subject extent (`SCALE_BAR_BAND_*`, `scale_bar_band`, `pipeline.scale_bar`
+# -- shared with `pipeline.exposure`'s publish-time erase) rather than trying to detect the bar
+# itself (measured unreliable in practice: still too faint or thin at generation size to separate
+# reliably from a subject's own edges and shadow, even with a wider search window). The anchor is
+# `bar_search_extent`, *not* `detect_subject_box`: the latter's single frame-corner threshold reads
+# a strong vignette's own radial glow as subject on most plates (e.g. `amniota`'s box bottom at
+# 0.92 with the lizard's real belly around 0.6), which both misses the true bar on most plates and,
+# worse, is wide enough on some to erase real anatomy when used to place this band (`theria` ->
+# `eutheria` and `leca` -> `opisthokonta` both showed ghosting from it). `bar_search_extent` leans
+# well below the box (the bar sits close under the subject, and this half of the band only ever
+# covers backdrop on a well-anchored plate) and a little above it too (four measured pairs put the
+# true bar as much as 0.063 plate-UV above the extent's own bottom edge). Either margin can still
+# overshoot on an individual plate; `erase_band` and `zero_band` additionally never touch a pixel
+# `bar_search_extent`'s own mask calls subject, so an overshoot only ever costs band precision,
+# never anatomy.
 
 # `zero_band`'s edge, in FLOW_TEXTURE_SIZE texels: a hard cutoff in the composed flow field is a
 # discontinuity the shader renders as a visible tear at the band's boundary. This Gaussian eases
@@ -107,9 +104,9 @@ ZERO_BAND_FEATHER_SIGMA = 3.0
 
 # Two subjects in very different poses (a squat quadruped vs. an upright biped) cannot be
 # reconciled by DIS's local correspondence alone: forcing a sharp field to bridge them produces
-# the offset silhouettes and tangled limbs queue item 14 reports. Widening the flow's smoothing
-# kernel in proportion to how differently *shaped* the two subject boxes are (not merely how far
-# apart in scale — `bounded_fills` already handles that) trades fine detail for a coherent bend.
+# offset silhouettes and tangled limbs. Widening the flow's smoothing kernel in proportion to how
+# differently *shaped* the two subject boxes are (not merely how far apart in scale — `bounded_fills`
+# already handles that) trades fine detail for a coherent bend.
 POSE_DIVERGENCE_SMOOTHING_GAIN = 3.0
 MAX_FLOW_SMOOTHING_SIGMA = 16.0
 
@@ -117,24 +114,23 @@ MAX_FLOW_SMOOTHING_SIGMA = 16.0
 # region, not `detect_subject_box`'s own — see this module's docstring), the forward and backward
 # fields disagree enough that the flow reads as two overlapping bodies rather than one bending
 # into the other; `compute_morph` then reports `fallback_dissolve` and the pair publishes as a
-# plain linear-light dissolve instead (ADR-015 amendment). Recalibrated 2026-09-16 against all 39
-# pinned-adjacent pairs on the live tree, through this same pipeline (fixed scale-bar band, the
-# extent-based region): scores cluster from 0.007 to 0.038 with no single clean gap, then
-# `gnathostomata` -> `osteichthyes` at 0.0397, then 0.041 up to 0.177. 0.039 sits just under that
-# first pair: every pair at or above it was rendered as the actual mid-transition frame the
-# shader produces and confirmed visibly doubled or tangled; every pair below it was spot-checked
-# the same way and confirmed a single coherent body. 20 pairs stay a real morph, 18 dissolve by
-# this threshold; one more (`metazoa` -> `eumetazoa`, 0.0365, under it) needs
-# `FORCED_DISSOLVE_PAIRS` because this statistic cannot separate it from a clean pair at any
-# threshold; see the ADR amendment's "Limit" section.
+# plain linear-light dissolve instead (ADR-015). Calibrated against all 39 pinned-adjacent pairs on
+# the live tree, through this same pipeline (fixed scale-bar band, the extent-based region): scores
+# cluster from 0.007 to 0.038 with no single clean gap, then `gnathostomata` -> `osteichthyes` at
+# 0.0397, then 0.041 up to 0.177. 0.039 sits just under that first pair: every pair at or above it
+# was rendered as the actual mid-transition frame the shader produces and confirmed visibly doubled
+# or tangled; every pair below it was spot-checked the same way and confirmed a single coherent
+# body. 20 pairs stay a real morph, 18 dissolve by this threshold; one more (`metazoa` ->
+# `eumetazoa`, 0.0365, under it) needs `FORCED_DISSOLVE_PAIRS` because this statistic cannot
+# separate it from a clean pair at any threshold; see the ADR's "Limit" section.
 MAX_INVERSE_CONSISTENCY = 0.039
 
 # Pairs the round-trip statistic above cannot catch at any threshold without also dissolving
-# clearly clean pairs, confirmed doubled by eye instead (queue item 14 QA, 2026-09-16; rendered
-# the actual mid-transition frame the shader produces, `MAX_INVERSE_CONSISTENCY`'s comment). Both
-# involve a translucent, radially-symmetric microscope subject: its edges disagree with its
-# neighbour's just enough, everywhere, to read as visible ghosting without ever producing the
-# concentrated round-trip disagreement the statistic looks for.
+# clearly clean pairs, confirmed doubled by eye instead (rendered the actual mid-transition frame
+# the shader produces, `MAX_INVERSE_CONSISTENCY`'s comment). Both involve a translucent,
+# radially-symmetric microscope subject: its edges disagree with its neighbour's just enough,
+# everywhere, to read as visible ghosting without ever producing the concentrated round-trip
+# disagreement the statistic looks for.
 FORCED_DISSOLVE_PAIRS: frozenset[tuple[str, str]] = frozenset({("metazoa", "eumetazoa")})
 
 

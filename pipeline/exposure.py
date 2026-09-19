@@ -1,5 +1,4 @@
-"""Exposure normalisation of published portrait plates (ADR-015, amendments 2026-09-14,
-2026-09-17).
+"""Exposure normalisation of published portrait plates (ADR-015).
 
     pinned plate -> luma at ANALYSIS_SIZE -> backdrop (a morphological opening of the plate)
                  -> subject mask: clearly brighter than the backdrop, inside the central disc
@@ -197,16 +196,15 @@ def _lift_weight_lut() -> list[int]:
     return [round(255 * t * t * (3 - 2 * t)) for t in ramp]
 
 
-# ---------------------------------------------------------------- scale-bar erase (ADR-015
-# ---------------------------------------------------------------- amendment 2026-09-17)
+# ---------------------------------------------------------------- scale-bar erase (ADR-015)
 
 # The search band's own anchor is found at a stricter threshold than `subject_mask`'s own
 # `SUBJECT_CONTRAST`: unlike `pipeline.morph.bar_search_extent`, which anchors on the *pinned*
 # plate, this runs on the *exposure-gained* published derivative, and exposure gain can lift a
 # soft contact shadow's contrast enough to bridge it to the organism at `SUBJECT_CONTRAST` --
-# measured 2026-09-17, `opisthokonta`: at `SUBJECT_CONTRAST` the largest component reaches 90% of
-# plate height (the vignette's own glow, not the cell), inflating the band's anchor so far down
-# that it misses the bar entirely; at `EXTENT_CONTRAST` it stops at a tight 57%, matching the cell.
+# measured on `opisthokonta`: at `SUBJECT_CONTRAST` the largest component reaches 90% of plate
+# height (the vignette's own glow, not the cell), inflating the band's anchor so far down that it
+# misses the bar entirely; at `EXTENT_CONTRAST` it stops at a tight 57%, matching the cell.
 EXTENT_CONTRAST = 40
 # How far above a smooth local estimate of the band's own backdrop (`_smooth_backdrop`) a pixel
 # has to stand to be a scale-bar candidate. Well below a real bar's contrast (100+ codes measured
@@ -214,8 +212,8 @@ EXTENT_CONTRAST = 40
 BAR_EXCESS_THRESHOLD = 14
 # How colourless a candidate has to be. `PORTRAIT_STYLE` draws the bar "pale grey"; every organism
 # in the corpus -- fur, skin, scales, even a pale microscope cell -- keeps some warmth. Measured
-# 2026-09-17, per pixel along several plates' own bars (not just the plate-wide average, which
-# hides the spread JPEG re-encoding and exposure gain add): up to 18 on individual bar pixels
+# per pixel along several plates' own bars (not just the plate-wide average, which hides the
+# spread JPEG re-encoding and exposure gain add): up to 18 on individual bar pixels
 # (`homo-sapiens`); real anatomy measured the same way in the same band was never under 23.
 BAR_MAX_CHROMA = 20
 # `_smooth_backdrop`'s Gaussian sigma, as a fraction of the plate's own width: wide enough that a
@@ -228,7 +226,7 @@ BACKDROP_BLUR_FRACTION = 0.08
 # each surviving component are an independent second check on the same idea. A wide, shallow
 # opening kernel alone was not enough: a gently sloped edge (the vignette's own boundary, or a
 # shadow's) survives it too, broken into a staircase of short, individually thin-and-wide-enough
-# segments (measured 2026-09-17, `holozoa`, `haplorhini`). `BAR_MIN_FILL_RATIO` is what actually
+# segments (measured on `holozoa`, `haplorhini`). `BAR_MIN_FILL_RATIO` is what actually
 # separates them from a real bar: a solid rectangle fills almost all of its own bounding box, a
 # diagonal sliver of one does not.
 BAR_MIN_WIDTH_FRACTION = 0.08  # a component (and the opening kernel) must be at least this wide
@@ -245,10 +243,10 @@ BAR_MASK_DILATE_PX = 3  # grown a little past the detected line so inpainting ha
 # The subject's own protection is measured at a stricter threshold than `SUBJECT_CONTRAST`
 # (`subject_mask`'s own, used only to anchor the search band): a soft contact shadow or ambient
 # floor bounce can itself clear `SUBJECT_CONTRAST`, and being connected to both the organism and
-# the bar, would bridge "protected" all the way across the band and past the bar too (measured
-# 2026-09-17, `amniota`: at `SUBJECT_CONTRAST` the organism's own largest component reaches 70% of
-# plate height; at `PROTECT_CONTRAST` it stops at 61%, clear of the bar). Comfortably above a
-# shadow's own brightness, matching `SEED_CONTRAST` from an earlier iteration of this amendment.
+# the bar, would bridge "protected" all the way across the band and past the bar too (measured on
+# `amniota`: at `SUBJECT_CONTRAST` the organism's own largest component reaches 70% of plate
+# height; at `PROTECT_CONTRAST` it stops at 61%, clear of the bar). Comfortably above a shadow's
+# own brightness.
 PROTECT_CONTRAST = 60
 # The subject's own protection: the largest connected component at `PROTECT_CONTRAST`, dilated by
 # this many pixels so a foot or tail immediately adjacent to the mask's own soft edge is never
@@ -266,17 +264,17 @@ def erase_scale_bar(data: bytes) -> bytes:
     """`data` with its scale-bar line inpainted from its own surrounding backdrop, or `data`
     itself when there is nothing to erase.
 
-    `PORTRAIT_STYLE` (`pipeline.prompts`) no longer asks the generator for a bar -- the human
-    found it inconsistent (faint on most plates, thick and bright on a couple) and not helpful --
-    but the 40 already-pinned plates still carry one (ADR-005: a pin is never regenerated), so
-    every plate `earthtime publish` writes gets it painted out here instead. The pinned original
-    is untouched and `pipeline.morph`'s flow fields stay computed from it -- unaffected by this,
-    since it still excludes the same band from flow estimation on its own copy of the plate.
+    `PORTRAIT_STYLE` (`pipeline.prompts`) no longer asks the generator for a bar -- it drew
+    inconsistently (faint on most plates, thick and bright on a couple) -- but the 40
+    already-pinned plates still carry one (ADR-005: a pin is never regenerated), so every plate
+    `earthtime publish` writes gets it painted out here instead. The pinned original is untouched
+    and `pipeline.morph`'s flow fields stay computed from it -- unaffected by this, since it still
+    excludes the same band from flow estimation on its own copy of the plate.
 
     Deliberately narrow: only a thin, colourless, horizontal-line-shaped mask inside the known
     band is ever touched (see `_scale_bar_mask`), not the band's whole area -- filling the whole
-    band from a smoothed backdrop estimate left visible geometric patches where it replaced real
-    (if plain) backdrop or shadow, found and rejected 2026-09-17.
+    band from a smoothed backdrop estimate leaves visible geometric patches where it replaces real
+    (if plain) backdrop or shadow.
     """
     with Image.open(io.BytesIO(data)) as image:
         if image.mode != "RGB":
@@ -299,8 +297,8 @@ def _scale_bar_mask(
 
     A pixel is a candidate only inside `pipeline.scale_bar.scale_bar_band` (the same known-layout
     anchor `pipeline.morph` already excludes from flow estimation, never a contrast or shape
-    detector for the bar's *position* -- ADR-015's 2026-09-15 amendment measured that unreliable),
-    and only when it is *both* brighter than a smoothed local backdrop estimate and colourless
+    detector for the bar's *position*, which ADR-015 found unreliable on this corpus), and only
+    when it is *both* brighter than a smoothed local backdrop estimate and colourless
     (`BAR_EXCESS_THRESHOLD`, `BAR_MAX_CHROMA`); a long, thin horizontal opening and a per-component
     width/height filter then keep only what is actually line-shaped, so a differently-shaped
     bright, colourless patch (there should not be one, but nothing here assumes it) is not touched

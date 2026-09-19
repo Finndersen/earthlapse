@@ -37,7 +37,7 @@ def normalise(raw_dir: Path) -> list[CuratedShape]:
 
 
 def _published_path(stem: StemManifest, media_dir: Path, data: bytes) -> Path:
-    """Content-hashed (ADR-023 amendment "on-demand loading") -- `_place_stem` below is the
+    """Content-hashed (ADR-023) -- `_place_stem` below is the
     only writer of `<id>-*.<format>` files, so it also removes any other one for this id before
     writing the current one: exactly one published file per catalogued stem always exists,
     never a stale sibling left behind by an earlier run whose content has since changed."""

@@ -12,34 +12,25 @@ import { PROJECTION_GLSL } from './projection'
 export const ATMOSPHERE_SCALE = 1.15
 
 /**
- * Computes the vertex's position from a plain `aLonLat` (degrees) attribute rather than the
- * mesh's own `position`/`normal` attributes — `globeGeometry.ts`'s grid supplies no others (see
- * its own doc comment). `uUnfold` (0 = sphere, 1 = Equal Earth map, docs/GLOBE.md §10) mixes
- * `projection.ts`'s GLSL twin functions (`PROJECTION_GLSL`) every frame, so the *same* mesh
- * smoothly morphs between the two rather than swapping geometry.
+ * Computes the vertex position from a plain `aLonLat` (degrees) attribute, not the mesh's own
+ * `position`/`normal` (`globeGeometry.ts`'s grid supplies no others). `uUnfold` (0 = sphere, 1 =
+ * Equal Earth map, docs/GLOBE.md §10) mixes `projection.ts`'s GLSL twin (`PROJECTION_GLSL`) every
+ * frame, so one mesh morphs between the two rather than swapping geometry.
  *
- * `vNormal` is always the *sphere* position (unit length, so it doubles as its own normal),
- * regardless of `uUnfold` — never the actual (possibly flattened) rendered position. Every
- * colour *effect* in `GLOBE_FRAGMENT_SHADER` below that needs a genuine 3D direction (the
- * lighting term, the ice shell's equator darkening) reads `vNormal` directly and needs no
- * map-mode branch.
+ * `vNormal` is always the sphere position (unit length, doubling as its own normal), regardless
+ * of `uUnfold`. Every fragment-shader effect needing a genuine 3D direction (lighting, the ice
+ * shell's equator darkening) reads it directly, with no map-mode branch.
  *
- * `vUv` is computed directly from `aLonLat` here — `u = 0.5 + lon/360`, `v = 0.5 - lat/180` —
- * rather than the fragment shader deriving it from `vNormal` via `atan2`/`asin`. Two reasons:
- * (1) it is identical in both sphere and map mode (no `uUnfold`-dependent branch needed — a flat
- * map viewed face-on and a sphere's texture wrap use the *same* equirectangular convention once
- * `lonLatToSphere`'s own winding/chirality is correct, see its doc comment in `projection.ts`);
- * (2) `atan2` is discontinuous at ±180°, and computing it per-*fragment* from an interpolated
- * normal makes the GPU's automatic derivative-based mip selection see a huge jump right at that
- * seam, picking an incorrectly coarse mip level there (visible as a dateline-shaped line on a
- * mipmapped texture). `aLonLat` itself has no such jump *within* a triangle — `globeGeometry.ts`'s
- * seam columns are geometrically coincident but never joined by a triangle, so no triangle's
- * `aLonLat` ever interpolates across the ±180° boundary — so deriving `vUv` from it instead, in
- * the vertex shader (interpolated linearly, not recomputed via a discontinuous function per
- * fragment), has no equivalent seam artefact.
+ * `vUv` is computed from `aLonLat` here (`u = 0.5 + lon/360`, `v = 0.5 - lat/180`) rather than
+ * derived per-fragment from `vNormal` via `atan2`/`asin`, for two reasons: it's identical in both
+ * sphere and map mode, and `atan2` is discontinuous at ±180° — computing it per-fragment from an
+ * interpolated normal makes the GPU's derivative-based mip selection see a jump at that seam,
+ * picking a visibly-too-coarse mip level there (a dateline-shaped line on a mipmapped texture).
+ * `aLonLat` has no such jump within a triangle (`globeGeometry.ts`'s seam columns are never
+ * joined by a triangle), so deriving `vUv` from it in the vertex shader avoids the artefact.
  *
- * Combined with `texture.flipY = false` on load (`textureCache.ts`), `v = 0` samples row 0 of
- * the source PNG — the top of the image — so north stays up.
+ * Combined with `texture.flipY = false` on load (`textureCache.ts`), `v = 0` samples the PNG's
+ * top row, so north stays up.
  */
 export const GLOBE_VERTEX_SHADER = /* glsl */ `
 attribute vec2 aLonLat;
@@ -74,17 +65,15 @@ uniform sampler2D uBefore;
 uniform sampler2D uAfter;
 uniform float uMix;
 uniform float uHasData;
-// docs/GLOBE.md §10: 0 (sphere) .. 1 (Equal Earth map). The vertex shader's own uUnfold morphs
-// *position* and *uv*; every texture/effect colour below reads vUv, already unaffected by
-// uUnfold (see GLOBE_VERTEX_SHADER's doc comment on why) — this uniform exists only for the one
-// term below that genuinely depends on the sphere's own surface normal (the diffuse light
-// term), which a flat map has no sensible version of.
+// docs/GLOBE.md §10: 0 (sphere) .. 1 (map). The vertex shader's uUnfold morphs position/uv;
+// every color term below reads vUv, already unaffected (see GLOBE_VERTEX_SHADER). This uniform
+// exists only for the diffuse light term below, the one thing that needs the sphere's real
+// surface normal and has no sensible map equivalent.
 uniform float uUnfold;
 
 // docs/GLOBE.md G8 (§4.2): blend weight per pre-1 Ga regime, computed on the CPU
-// (web/src/globe/effects/regimes.ts) so the long, soft crossfades there don't need porting
-// into GLSL. Order: x = magma ocean, y = Hadean water world, z = Archean haze,
-// w = Proterozoic geography-unknown.
+// (effects/regimes.ts) so its long crossfades don't need porting into GLSL. Order: x = magma
+// ocean, y = Hadean water world, z = Archean haze, w = Proterozoic geography-unknown.
 uniform vec4 uRegimeWeights;
 // docs/GLOBE.md §4.3 (G6): Snowball/Paleoproterozoic ice-shell intensity, 0..1.
 uniform float uIceShell;
@@ -99,18 +88,17 @@ uniform vec2 uImpactFlashAnchorUv;
 uniform float uGiantImpactFlash;
 
 // docs/GLOBE.md §10 (ADR-030): the Natural Earth II human-era basemap — one time-invariant
-// texture per tier (blend.ts's basemapStrengthAt doc comment explains why this is its own
-// sampler rather than folded into uBefore/uAfter/uMix above), mixed over the ordinary PaleoDEM
-// dataColor. uBasemapStrength is 0 above 400 ka ("before 400 ka behaviour unchanged") ramping to
-// 1 at and below 300 ka.
+// texture per tier (blend.ts's basemapStrengthAt doc comment explains why it's a separate
+// sampler rather than folded into uBefore/uAfter/uMix), mixed over the PaleoDEM dataColor.
+// uBasemapStrength is 0 above 400 ka, ramping to 1 at and below 300 ka.
 uniform sampler2D uBasemapTex;
 uniform float uBasemapStrength;
 
-// The human-civilisation layer's population-density overlay (ADR-031 amendment): two bracketing
-// hyde_population_density frames and the mix between them, the single channel the quantity lives
-// in (uDensityChannel, a mask rather than a branch), the published encoding ceiling, and the
-// overlay's own fade-in weight. Every one defaults to WebGL's zero-initialisation, so a manifest
-// without the layer reproduces the plain basemap exactly.
+// The human-civilisation population-density overlay (ADR-031 amendment): two bracketing
+// hyde_population_density frames and their mix, the channel the quantity lives in
+// (uDensityChannel, a mask rather than a branch), the published encoding ceiling, and the
+// overlay's fade-in weight. All zero-initialised by WebGL, so a manifest without the layer
+// reproduces the plain basemap exactly.
 uniform sampler2D uDensityBefore;
 uniform sampler2D uDensityAfter;
 uniform float uDensityMix;
@@ -242,11 +230,11 @@ void main() {
   // read as a brightness jump.
   baseColor = mix(baseColor, gradeBasemapColor(texture2D(uBasemapTex, uv).rgb), uBasemapStrength);
 
-  // The population-density overlay, over the basemap and under everything older: decoded back to
-  // real people per square km first (never treated as a colour, see density.ts), then run
-  // through the shared ramp. The two frames are mixed in *encoded* space, which is the same
-  // geometric-mean compromise the box-filtered mip chain already makes, and is monotonic either
-  // way. uDensityStrength is 0 outside the layer's own domain, so this is a no-op everywhere else.
+  // The density overlay, over the basemap and under everything older: decoded back to real
+  // people per square km (never treated as a colour, see density.ts), then run through the
+  // shared ramp. The two frames mix in encoded space — the same geometric-mean compromise the
+  // box-filtered mip chain already makes, and monotonic either way. uDensityStrength is 0 outside
+  // the layer's domain, so this is a no-op everywhere else.
   float densitySample = mix(
     dot(texture2D(uDensityBefore, uv).rgb, uDensityChannel),
     dot(texture2D(uDensityAfter, uv).rgb, uDensityChannel),
@@ -294,13 +282,12 @@ void main() {
   float diffuse = mix(sphereDiffuse, 1.0, uUnfold);
   gl_FragColor = vec4(baseColor * diffuse, 1.0);
 
-  // docs/GLOBE.md §2.3/§9 G2: textures are sRGB and three.js decodes them to linear on
-  // sampling (texture.colorSpace, textureCache.ts), so every colour above is linear. A plain
-  // ShaderMaterial's fragment shader is user-authored GLSL, so — unlike three.js's built-in
-  // materials — it does not automatically re-encode its output for the renderer's sRGB
-  // canvas (WebGLProgram only appends the \`linearToOutputTexel\` function, not a call to it).
-  // Without this, linear values are written straight to the sRGB framebuffer and read back
-  // too dark — most visibly on open ocean, which measured near-black instead of navy.
+  // docs/GLOBE.md §2.3/§9 G2: textures are sRGB and three.js decodes them to linear on sampling
+  // (texture.colorSpace, textureCache.ts), so every colour above is linear. A plain
+  // ShaderMaterial is user-authored GLSL, so unlike three.js's built-in materials it does not
+  // automatically re-encode its output for the renderer's sRGB canvas (WebGLProgram only
+  // appends the \`linearToOutputTexel\` function, not a call to it) — without this, linear values
+  // hit the sRGB framebuffer and read back too dark.
   #include <colorspace_fragment>
 }
 `

@@ -70,12 +70,11 @@ export interface Scene {
   id: string
   t: GeoTime
   chapterId: string
-  /** The generated still. */
   image: string
   /** A small (`pipeline.transcode.THUMBNAIL_SIZE`-square) derivative of `image`, backing the
    *  timeline checkpoint pip's hover preview (`ScrubTrack.module.css`'s `.pipThumb`). Always
-   *  emitted, like `image` — use this, never `image`, for the pip preview: fetching the full
-   *  still to back a 44px circular preview is the bug this field exists to fix. */
+   *  emitted, like `image` — use this, never `image`, for the pip preview; fetching the full
+   *  still to back a 44px circular preview is wasteful. */
   thumbnail: string
   /** Depth map for 2.5D displacement. Absent in v1 — deferred by ADR-009. The field
    *  exists now so adding it later is a publish, not a schema migration. */
@@ -87,9 +86,8 @@ export interface Scene {
    *  published scene names itself. */
   title: string
   caption: string
-  /** events-core event id(s) this scene visually anchors to (ADR-022). Optional for now: absent
-   *  on any manifest published before this field existed — timeline rendering of scene->event
-   *  links is a later task, this is parsed and passed through only. */
+  /** events-core event id(s) this scene visually anchors to (ADR-022). Optional: absent on any
+   *  manifest published before this field existed. */
   events?: string[]
   /** The scene's optional associated ambience stem (ADR-023). Additive: absent on any manifest
    *  published before this field existed, and on any scene with no associated sound. */

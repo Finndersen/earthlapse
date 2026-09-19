@@ -23,7 +23,7 @@ citation = "Chalstrey, E., Bennett, J. & Mutch, E. (2024). Cliopatria: A geospat
 time_domain = [5.425e3, 1.25e2]
 output_shape = "RasterSequence + FeatureSet"  # cliopatria_extent (raster) + cliopatria_polities (labelled anchors)
 interpolation = "n/a"  # RasterSequence crossfades between frames; FeatureSet has no interpolation policy of its own -- see README.md "Doesn't fit cleanly"
-volume_bytes = 49215745  # measured: the Zenodo repository-archive zip actually downloaded (see README.md "Measured volume" -- the ~44 MB the task brief estimated was close but not exact)
+volume_bytes = 49215745  # measured: the Zenodo repository-archive zip actually downloaded (see README.md "Measured volume")
 storage_tier = "git"  # curated FeatureSet parquet is small; RasterSequence parquet (frame refs only) is tiny too -- textures are generated media (see below)
 outputs = [
     "data/media/textures/cliopatria_extent/*.webp",  # written by normalise.py's write_outputs() hook

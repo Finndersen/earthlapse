@@ -191,11 +191,9 @@ class AudioFormat(StrEnum):
     M4A = "m4a"
 
 
-# Formats a *published* stem may use (2026-09-15 audio re-review, item 7). Every current shipped
-# browser -- Safari/iOS included, the exact gap that same day's "human-history scene sounds,
-# once-mode fix and Safari re-sourcing" amendment re-sourced two stems by hand to close -- decodes
-# MP3 and M4A/AAC natively; WAV never ships as a real stem (only the fixture's synthesised silent
-# signal uses it, `sources/audio-stems/fixture/`, to exercise the sniff/copy/hash machinery
+# Formats a *published* stem may use. Every current shipped browser -- Safari/iOS included --
+# decodes MP3 and M4A/AAC natively; WAV never ships as a real stem (only the fixture's synthesised
+# silent signal uses it, `sources/audio-stems/fixture/`, to exercise the sniff/copy/hash machinery
 # offline); OGG is not decodable on WebKit at all. Enforced at publish time
 # (`pipeline.publish._audio_stems`), not on `StemManifest.format` itself -- narrowing that field's
 # type would also reject the WAV fixture, which legitimately needs a format `numpy` can

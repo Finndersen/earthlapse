@@ -58,20 +58,17 @@ describe('cityPopulationAt', () => {
     expect(cityPopulationAt(URUK, 4000 - CITY_TRAILING_GRACE_T + 1)).toBe(40_000)
   })
 
-  it('drops out of the record once the trailing grace window has fully elapsed (BUG: cities that ceased to exist must stop being drawn, not hold flat forever)', () => {
-    // URUK's newest reading is t=4000 — CITY_TRAILING_GRACE_T years past that, it must vanish
-    // rather than being held flat "through the present" the way the old, unconditional hold did.
+  it('drops out of the record once the trailing grace window has fully elapsed (cities that ceased to exist must stop being drawn, not hold flat forever)', () => {
     expect(cityPopulationAt(URUK, 4000 - CITY_TRAILING_GRACE_T)).toBeNull()
     expect(cityPopulationAt(URUK, 0)).toBeNull()
   })
 })
 
 describe('cityPopulationAt — trailing grace window (real published shapes)', () => {
-  // Verified against the real published dataset (2026-09 user report: "i see city like Cahokia
-  // staying on the map even when i dont think it existed anymore at that time"). Cahokia's own
-  // record stops in 1400 CE — its own newest reading, not the dataset's edge. Memphis's newest
-  // reading (t=50) sits right at the whole published set's own most recent sampling (t=25 is the
-  // earliest any city is attested) — ADR-031's "data ends, held after" rule is right for it.
+  // Cahokia's own record stops in 1400 CE — its own newest reading, not the dataset's edge.
+  // Memphis's newest reading (t=50) sits right at the whole published set's own most recent
+  // sampling (t=25 is the earliest any city is attested) — ADR-031's "data ends, held after" rule
+  // is right for it.
   const CAHOKIA: FeatureData = {
     id: 'cahokia-usa',
     name: 'Cahokia',
@@ -264,7 +261,7 @@ describe('allCitiesAt', () => {
   }))
   const features = [small, ...bigCohort]
 
-  it('never culls by population rank — a city present at t1 stays present at a later t2 even after 50 larger cities have grown past it (BUG 1 regression)', () => {
+  it('never culls by population rank — a city present at t1 stays present at a later t2 even after 50 larger cities have grown past it', () => {
     const t1 = 1500 // before the big cohort exists: `small` is the only city around
     const t2 = 500 // after the whole cohort exists and outranks `small`
 
@@ -272,13 +269,10 @@ describe('allCitiesAt', () => {
 
     const atT2 = allCitiesAt(features, t2)
     expect(atT2.map((c) => c.feature.id)).toContain('small-city')
-    // The scenario actually stresses a rank cap: `small` is now ranked well past both the old
-    // CITY_LIMIT_EXPANDED (45) and any plausible fixed limit — a slice-based selection (the old
-    // `selectCities(features, t2, 45)`) would have dropped it here. `allCitiesAt` must not.
+    // `small` is ranked well past 45 here — a fixed-limit `selectCities(features, t2, 45)` would
+    // drop it, which `allCitiesAt` must not. Both assertions make that contrast explicit.
     const rankAtT2 = atT2.findIndex((c) => c.feature.id === 'small-city')
     expect(rankAtT2).toBeGreaterThan(45)
-    // Confirm the old, slice-based selection really would have dropped it — the failing case
-    // this test guards against, made explicit rather than just asserted away.
     expect(selectCities(features, t2, 45).map((c) => c.feature.id)).not.toContain('small-city')
   })
 

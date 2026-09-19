@@ -1,8 +1,7 @@
 """The five curated data shapes. NORMATIVE — see docs/DATA_SOURCES.md.
 
 Every data source normalises into exactly one of these (`FeatureSet`, the fifth, added by
-ADR-035 -- this docstring previously still said "four" and was corrected in passing by
-ADR-037). Adding a sixth requires an ADR.
+ADR-035). Adding a sixth requires an ADR.
 
 Time convention
 ---------------
@@ -322,11 +321,11 @@ from `GlobeEffect` itself so every existing `GlobeEffect(kind=..., ...)` call si
 
 
 class EventKind(StrEnum):
-    """ADR-022. Which of two things an `Event`'s `t_min`/`t_max` interval means — the two were
-    previously conflated in one interval with no way to tell them apart (a dating error bar on
-    one happening vs. a literature-quoted span of something that genuinely lasted), which is
-    exactly how a fossil-dating uncertainty on the seaweed event was once misread by the
-    timeline as 200 Myr of continuous seaweed."""
+    """ADR-022. Which of two things an `Event`'s `t_min`/`t_max` interval means: a dating error
+    bar on a single happening, or a literature-quoted span of something that genuinely lasted.
+    Left ambiguous, a fossil-dating uncertainty on a `moment` event can be misread as a
+    Myr-scale span of continuous occurrence, so the distinction is explicit rather than
+    inferred."""
 
     MOMENT = "moment"  # one happening; t is the best estimate, [t_min, t_max] its dating error
     PERIOD = "period"  # genuinely lasted; t_min/t_max are its own end/start, no single instant

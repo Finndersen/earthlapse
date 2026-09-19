@@ -1,37 +1,21 @@
 /**
- * Pure geometry and state for human-dispersal arrival arcs (ADR-032). No
- * three.js, no React — the same "pure core, thin three.js/React consumer" split `blend.ts`,
- * `globeGeometry.ts` and `camera.ts` all follow; `HumanCivilisation.tsx` is the thin consumer.
+ * Pure geometry and state for human-dispersal arrival arcs (ADR-032). No three.js, no React —
+ * same "pure core, thin consumer" split as `blend.ts`/`globeGeometry.ts`/`camera.ts`;
+ * `HumanCivilisation.tsx` is the thin consumer.
  *
- * **Geometry fixed, presentation animated (2026-09 amendment reversing part of ADR-032).** The
- * arc's *points* (`greatCircleLonLatPoints`) never depend on `t` — built once from
- * `origin`/`destination` alone, so the underlying shape can never drift or regrow. What *does* now
- * depend on `t` is how much of that fixed shape is drawn: `arrivalPresentationAt`'s
- * `travelProgress` (0 at the window's `tMax`, 1 at `established`) is read by
- * `HumanCivilisation.tsx`'s arc shader as a reveal fraction against each point's own cumulative
- * `DistancedAnchor.distance`, so the ribbon draws progressively from origin toward destination as
- * the migration elapses, with an arrowhead at the leading edge (2026-09 direct user feedback: "the
- * migration line markers should be animated ... with an arrow at the end"). **This is exactly the
- * animation ADR-032 originally rejected** — its own words: "growing the arc's visible length from
- * `t`... exactly ADR-022's seaweed mistake, presenting a dating-uncertainty band as travel time."
- * The `[established, tMax]` span here genuinely is a dating-uncertainty band, not a measured
- * journey duration, and reading it as one is still not literally true. The human asked for the
- * animation anyway, in those terms, so this is an explicit, informed product reversal rather than
- * a blind rediscovery of the mistake ADR-022 named — but it does mean **docs/DECISIONS.md needs an
- * ADR-032 amendment recording it**, not made here since DECISIONS.md is a shared, serialised file
- * (CLAUDE.md's "Working in parallel"). What `arrivalPresentationAt` still owns, unchanged: alpha,
- * `travelProgress` itself, `settleProgress` and `inhabited` — every field stays a pure function of
- * `t`, so scrubbing in either direction reproduces exactly the same reveal at a given `t`.
+ * The arc's *points* (`greatCircleLonLatPoints`) never depend on `t` — built once from
+ * `origin`/`destination` alone. What depends on `t` is how much of that fixed shape is drawn:
+ * `arrivalPresentationAt`'s `travelProgress` (0 at the window's `tMax`, 1 at `established`) is a
+ * reveal fraction against each point's cumulative `DistancedAnchor.distance`, so the ribbon draws
+ * progressively toward destination, arrowhead at the leading edge. The `[established, tMax]` span
+ * is a dating-uncertainty band, not a measured journey duration — animating it as travel time is
+ * a deliberate product choice (ADR-032 amendment, recorded in docs/DECISIONS.md). Every field of
+ * `ArrivalPresentation` is a pure function of `t`, so scrubbing reproduces the same reveal.
  *
- * **Transient, not permanent (2026-09 human-civilisation pass; further amended 2026-09 so the
- * "inhabited" marker fades too).** Every arc used to be drawn for all `t` at or below its
- * window's `tMax`, so by the present all 25 were on screen at once. An arc is now drawn only
- * while its migration is happening — from the window's `tMax` through `established` — then
- * fades out over a tail. A `peopling` arrival leaves a small "inhabited" marker at its
- * destination once it lands, which itself fades out once the whole arrival has read as an event
- * that happened, rather than sitting on the globe forever (a `migration` leaves nothing, at any
- * point). Everything here stays a pure function of `t` — a fade-out driven by wall-clock state
- * would break scrubbing backwards through an already-faded arrival.
+ * An arc is drawn only while its migration is happening — from `tMax` through `established` —
+ * then fades over a tail; a `peopling` arrival also leaves a small "inhabited" marker that itself
+ * fades back out, so nothing sits on the globe permanently (`migration` leaves nothing). The fade
+ * is a pure function of `t`, not wall-clock state, so scrubbing backwards stays correct.
  */
 
 import { EARTH_FORMATION } from '@/types/layer'
@@ -42,9 +26,8 @@ import { lonLatToSphere, splitAtAntimeridian } from './projection'
 
 const RAD2DEG = 180 / Math.PI
 
-/** Below this angular separation (radians) an "arc" is treated as a point — the one curated
- *  degenerate arrival, origin === destination (the Africa origin, ADR-032) — rather than a
- *  zero-length or numerically unstable great-circle interpolation. */
+/** Below this angular separation (radians) an "arc" is treated as a point (the Africa origin,
+ *  ADR-032, where origin === destination) rather than a zero-length/unstable great-circle interpolation. */
 const DEGENERATE_ANGLE_RADIANS = 1e-6
 
 function dot3(a: readonly [number, number, number], b: readonly [number, number, number]): number {
@@ -55,10 +38,9 @@ function clamp(x: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, x))
 }
 
-/** The two endpoints' unit vectors and their great-circle angular separation — computed once and
- *  shared by every point sampled along one arc, whether on `greatCircleLonLatPoints`'s fixed grid
- *  (`ARC_SEGMENTS + 1` evenly-spaced points) or `arrowheadPlacementAt`'s arbitrary `travelProgress`
- *  fraction. */
+/** The two endpoints' unit vectors and their great-circle angular separation, shared by every
+ *  point sampled along one arc (both `greatCircleLonLatPoints`'s fixed grid and
+ *  `arrowheadPlacementAt`'s arbitrary fraction). */
 interface GreatCircleBasis {
   a: readonly [number, number, number]
   b: readonly [number, number, number]
@@ -74,9 +56,8 @@ function greatCircleBasis(origin: GlobeEffectAnchor, destination: GlobeEffectAnc
 }
 
 /** The point at fraction `f` (0 at `origin`, 1 at `destination`) of `basis`'s great circle —
- *  spherical linear interpolation of the two endpoints' unit vectors, the shorter of the two
- *  possible great-circle paths. `basis.theta` must be non-degenerate (checked by every caller
- *  before this is reached — `basis.sinTheta` would otherwise be ~0). */
+ *  spherical linear interpolation of the two endpoints' unit vectors (the shorter path). Every
+ *  caller must check `basis.theta` is non-degenerate first, or `basis.sinTheta` is ~0. */
 function pointAtBasis(basis: GreatCircleBasis, f: number): GlobeEffectAnchor {
   const { a, b, theta, sinTheta } = basis
   const wa = Math.sin((1 - f) * theta) / sinTheta
@@ -86,19 +67,15 @@ function pointAtBasis(basis: GreatCircleBasis, f: number): GlobeEffectAnchor {
   const z = a[2] * wa + b[2] * wb
   const len = Math.hypot(x, y, z)
   const lat = Math.asin(clamp(y / len, -1, 1)) * RAD2DEG
-  // Inverts lonLatToSphere's own x = cos(lat)*sin(lon), z = cos(lat)*cos(lon) (projection.ts's
-  // doc comment on why lon 0 faces +Z) — atan2(x, z), the standard atan2(opposite, adjacent)
-  // recovery of an angle from its own sin/cos.
+  // Inverts lonLatToSphere's x = cos(lat)*sin(lon), z = cos(lat)*cos(lon) (lon 0 faces +Z, see projection.ts).
   const lon = Math.atan2(x / len, z / len) * RAD2DEG
   return { lat, lon }
 }
 
 /**
  * `segments + 1` points along the great-circle path from `origin` to `destination`, evenly
- * spaced in angle. Returns a single-point array (just `origin`) for the degenerate origin ===
- * destination case, so a caller can detect "point, not arc" without a separate check
- * (`isDegenerate` below spells this out explicitly instead of relying on `.length === 1`, since a
- * 1-point return could otherwise read as a bug).
+ * spaced in angle. Returns a single-point array (just `origin`) for the degenerate
+ * origin === destination case — use `isDegenerateArrival` rather than `.length === 1` to detect it.
  */
 export function greatCircleLonLatPoints(
   origin: GlobeEffectAnchor,
@@ -115,31 +92,24 @@ export function greatCircleLonLatPoints(
   return points
 }
 
-/** How far ahead of the arrowhead's own tip, as a fraction of the whole arc, `arrowheadPlacementAt`
- *  samples a second point to hand the renderer a local tangent from — analytic rather than
- *  grid-snapped to `ARC_SEGMENTS`, since the tip can sit at any `travelProgress`, not just one of
- *  the fixed sample points. Mirrors `buildFatLineBuffers`'s own neighbour-based tangent
- *  (`aDirA`/`aDirB`) in spirit: a short, nearby point on the same curve, not a bearing/heading, so
- *  the renderer derives direction the same screen-space way the arc ribbon already does. */
+/** Fraction of the whole arc that `arrowheadPlacementAt` samples ahead for a tangent point —
+ *  analytic rather than snapped to `ARC_SEGMENTS`, since the tip can sit at any `travelProgress`.
+ *  A nearby point on the curve, not a bearing, so the renderer derives direction the same
+ *  screen-space way the arc ribbon does (see `buildFatLineBuffers`'s `aDirA`/`aDirB`). */
 const ARROWHEAD_TANGENT_FRACTION = 0.02
 
-/** Where the migration arrowhead sits and points, at a given `travelProgress` (0 origin, 1
- *  destination — `ArrivalPresentation.travelProgress`'s own range). */
+/** Where the migration arrowhead sits and points, at a given `travelProgress` (0 origin, 1 destination). */
 export interface ArrowheadPlacement {
-  /** The arrowhead's own tip: the head of the revealed arc while travelling, or the destination
-   *  once travel is complete (`travelProgress` is 1 either way — see its own doc comment). */
+  /** The tip: head of the revealed arc while travelling, or the destination once travel completes. */
   anchor: GlobeEffectAnchor
-  /** A point a short distance behind the tip, along the same great circle — not a bearing/heading,
-   *  so the renderer derives a local tangent the same way the arc ribbon's own vertex shader does
-   *  (project both points, take the screen-space direction between them), staying correct through
-   *  the sphere/map unfold exactly like the ribbon (both go through the same
-   *  `unfoldedLiftedPosition` twin). */
+  /** A point just behind the tip on the same great circle — not a bearing; the renderer derives a
+   *  local tangent from the screen-space direction between the two, same as the arc ribbon's
+   *  vertex shader (both go through the same `unfoldedLiftedPosition` twin, so this stays correct
+   *  through the sphere/map unfold). */
   tail: GlobeEffectAnchor
 }
 
-/** `null` for a degenerate (point) arrival — ADR-032's African origin has no direction to show, so
- *  it stays a plain marker with no arrowhead, same as it has no arc. Otherwise pure in its inputs,
- *  same as everything else in this module. */
+/** `null` for a degenerate (point) arrival — no direction to show, so it stays a plain marker. */
 export function arrowheadPlacementAt(effect: ArrivalGlobeEffect, travelProgress: number): ArrowheadPlacement | null {
   if (isDegenerateArrival(effect)) return null
   const basis = greatCircleBasis(effect.origin, effect.destination)
@@ -150,16 +120,15 @@ export function arrowheadPlacementAt(effect: ArrivalGlobeEffect, travelProgress:
 }
 
 /** Whether `effect` is the degenerate origin === destination case (ADR-032's Africa origin): a
- *  point marker, not a line — checked on the curated anchors directly rather than inferred from
- *  `greatCircleLonLatPoints`'s output length, so the two stay independently meaningful. */
+ *  point marker, not a line. Checked on the curated anchors directly, not inferred from
+ *  `greatCircleLonLatPoints`'s output length. */
 export function isDegenerateArrival(effect: ArrivalGlobeEffect): boolean {
   return effect.origin.lat === effect.destination.lat && effect.origin.lon === effect.destination.lon
 }
 
-/** The one `windows` entry that reaches the present — the arc's actual visible span.
- *  `pipeline.shapes.ArrivalEffect` and `web/src/data/curated.ts`'s own parser both validate
- *  that every `ArrivalGlobeEffect` has *exactly* one window with `tMin === 0` before it ever
- *  reaches this function, so a plain `find` is safe: there is exactly one to find. */
+/** The one `windows` entry that reaches the present — the arc's visible span. `find` is safe
+ *  because `pipeline.shapes.ArrivalEffect` and `curated.ts`'s parser both guarantee exactly one
+ *  window with `tMin === 0` per arrival before it reaches this function. */
 function persistentWindow(effect: ArrivalGlobeEffect): { tMin: GeoTime; tMax: GeoTime } {
   const found = effect.windows.find((w) => w.tMin === 0)
   if (found === undefined) {
@@ -171,33 +140,29 @@ function persistentWindow(effect: ArrivalGlobeEffect): { tMin: GeoTime; tMax: Ge
 // --------------------------------------------------------------------------- transient timing
 
 /**
- * How long, in wall-clock seconds at the timeline's own default playback rate, one arrival must
- * stay on screen in total (travel plus fade-out tail) and how long its tail alone must last.
+ * How long, in wall-clock seconds at the timeline's default playback rate, one arrival must stay
+ * on screen in total (travel plus fade-out tail), and how long its tail alone must last.
  *
- * These are seconds, but nothing here reads a clock: `arrivalTimingFor` converts them *once*,
- * statically, into widths in the timeline's own warped space, and `arrivalPresentationAt` is
- * then a pure function of `t` alone. Sizing the tail in warp rather than in years is what makes
- * the guarantee hold at every era — playback moves at constant velocity in warped space
- * (`timeline/playback.ts`), so a constant warp width *is* a constant number of seconds, whereas
- * a fixed year count would be a flicker at 60 ka and an eternity at 700 BP.
+ * Nothing here reads a clock: `arrivalTimingFor` converts these seconds *once*, statically, into
+ * widths in the timeline's warped space, and `arrivalPresentationAt` stays a pure function of `t`.
+ * Sizing the tail in warp rather than years holds the guarantee at every era — playback moves at
+ * constant velocity in warped space (`timeline/playback.ts`), so a constant warp width is a
+ * constant number of seconds, whereas a fixed year count would flicker at 60 ka and linger at 700 BP.
  *
- * Consequence worth knowing: near the present the whole remaining timeline is narrower than
- * `MIN_ARC_SECONDS` of warp, so an arrival established a few hundred years ago cannot be given
- * its full tail — its fade simply runs out of timeline and it is still partly drawn at `t = 0`.
- * That is the honest floor (there is no more time to give it), not a missing clamp.
+ * Near the present the remaining timeline can be narrower than `MIN_ARC_SECONDS` of warp, so a
+ * recently-established arrival can't get its full tail — its fade runs out of timeline and it is
+ * still partly drawn at `t = 0`. That's the honest floor, not a missing clamp.
  */
 const MIN_ARC_SECONDS = 1.1
 const MIN_TAIL_SECONDS = 0.4
 /** Half-width of the landing ripple / inhabited-marker ease either side of `established`. */
 const LANDING_SECONDS = 0.45
-/** Width, past the landing above, over which the "inhabited" marker fades back out — so a
- *  `peopling` arrival reads as an event that happens and passes rather than leaving a permanent
- *  mark (2026-09 user feedback: "I don't think it makes sense for them to persist forever").
- *  Unlike `MIN_ARC_SECONDS`'s tail, this width is not allowed to run out of timeline: an arrival
- *  with less warp left than it needs (Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar) has the
- *  whole settle-then-fade envelope squeezed to fit, in `arrivalPresentationAt`, so every marker
- *  reaches 0 by `t = 0`. A recent arrival's marker therefore comes and goes faster than an
- *  ancient one's — the alternative is the permanent dot this fade exists to remove. */
+/** Width, past the landing above, over which the "inhabited" marker fades back out, so a
+ *  `peopling` arrival reads as an event that happened and passed rather than a permanent mark.
+ *  Unlike `MIN_ARC_SECONDS`'s tail, this is never allowed to run out of timeline: an arrival with
+ *  less warp left than it needs has the whole settle-then-fade envelope squeezed to fit
+ *  (`arrivalPresentationAt`), so every marker reaches 0 by `t = 0` — a recent arrival's marker
+ *  comes and goes faster than an ancient one's rather than becoming a permanent dot. */
 const INHABITED_FADE_SECONDS = 0.8
 
 /** The arrival timing widths, in symlog-warp units — see `MIN_ARC_SECONDS`'s doc comment. */
@@ -208,8 +173,8 @@ export interface ArrivalTiming {
   inhabitedFadeWarp: number
 }
 
-/** The full domain's own warp span. `baseRate` is screen-space units per second across that
- *  whole span (`Playback.baseRate`), so `baseRate * FULL_DOMAIN_WARP` is warp per second. */
+/** The full domain's warp span. `baseRate` is screen-space units per second across that span
+ *  (`Playback.baseRate`), so `baseRate * FULL_DOMAIN_WARP` is warp per second. */
 const FULL_DOMAIN_WARP = symlogWarp(EARTH_FORMATION)
 
 /**
@@ -234,19 +199,16 @@ export interface ArrivalPresentation {
   arcAlpha: number
   /** Whether the migration is currently happening — `t` inside `[established, tMax]`. */
   travelling: boolean
-  /** 0 at the window's `tMax`, 1 at `established` and after. The share of the migration that has
-   *  elapsed at `t`; the travelling pulse's own position along the arc is a separate, wall-clock
-   *  loop (see `HumanCivilisation.tsx`) so it stays legible at any scrub speed. */
+  /** 0 at the window's `tMax`, 1 at `established` and after. The travelling pulse's own position
+   *  along the arc is a separate wall-clock loop (see `HumanCivilisation.tsx`) so it stays legible
+   *  at any scrub speed. */
   travelProgress: number
   /** How far the arrival has settled at its destination: 0 at `established` and while still
-   *  travelling, easing to 1 a `landingWarp` past it. The landing ripple expands and fades across
-   *  this span; the "inhabited" marker below fades in over it. */
+   *  travelling, easing to 1 a `landingWarp` past it. */
   settleProgress: number
-  /** The "inhabited" marker's weight at the destination, 0 .. 1: fades in as the arrival settles
-   *  (tracking `settleProgress`), then fades back out over `inhabitedFadeWarp` once it has —
-   *  it does not persist to the present, so the arrival reads as an event that happened and
-   *  passed rather than a permanent mark. Always 0 for a `migration` (ADR-032 amendment: only
-   *  first settlement leaves one behind, however briefly). */
+  /** The "inhabited" marker's weight at the destination, 0 .. 1: fades in as the arrival settles,
+   *  then back out over `inhabitedFadeWarp` — it does not persist to the present. Always 0 for a
+   *  `migration`; only first settlement leaves a marker (ADR-032 amendment). */
   inhabited: number
 }
 
@@ -259,31 +221,26 @@ const HIDDEN_ARRIVAL: ArrivalPresentation = {
 }
 
 /**
- * The arrival's presentation at `t`. Hidden above the window's own `tMax` (the arrival hasn't
- * happened yet on any defensible dating); drawn at full strength while `t` runs from `tMax` down
- * to `established`; then faded out across a tail wide enough that the whole appearance lasts at
- * least `MIN_ARC_SECONDS` at the default playback rate.
- *
- * `established` stays a hard *dating* fact — it is where the travel ends and the tail begins, not
- * a value blended across — but the arc's own opacity either side of it is continuous, so an arc
- * never pops out mid-flight.
- */
-/**
- * Squeezes an envelope of total width `envelopeWarp` (in warp units) so it fits within
- * `availableWarp` of warp still to come before the present, preserving its internal proportions —
- * 1 (no squeeze) whenever the envelope already fits within what's available; `availableWarp /
- * envelopeWarp` otherwise. Shared by every "settle/fade before `t = 0`" envelope below: a recent
- * arrival (Iceland at 1148 BP, say) has very little warp left between `established` and the
- * present, and left un-squeezed an envelope sized for the common case would still be lit at
- * `t = 0` — exactly the permanent mark these fades exist to remove. Squeezing keeps the fade's
- * *shape* and its purity in `t` rather than a hard clamp that would just truncate it. `symlogWarp(0)`
- * is 0, so callers always pass `establishedWarp` itself as `availableWarp` — the warp still to come
- * between `established` and the present.
+ * Squeezes an envelope of width `envelopeWarp` (warp units) to fit within `availableWarp` of warp
+ * still to come before the present, preserving its proportions — 1 (no squeeze) when it already
+ * fits, `availableWarp / envelopeWarp` otherwise. Shared by every settle/fade envelope below: a
+ * recent arrival has little warp left between `established` and the present, and an un-squeezed
+ * envelope would still be lit at `t = 0` — exactly the permanent mark these fades exist to remove.
+ * Squeezing keeps the fade's shape and its purity in `t`, rather than a hard clamp truncating it.
+ * Callers pass `establishedWarp` as `availableWarp` (the warp remaining between `established` and
+ * the present).
  */
 function squeezeToFit(envelopeWarp: number, availableWarp: number): number {
   return envelopeWarp > availableWarp && envelopeWarp > 0 ? availableWarp / envelopeWarp : 1
 }
 
+/**
+ * The arrival's presentation at `t`: hidden above the window's `tMax`; drawn at full strength
+ * while `t` runs from `tMax` down to `established`; then faded out across a tail wide enough that
+ * the whole appearance lasts at least `MIN_ARC_SECONDS`. `established` is a hard dating fact —
+ * travel ends and the tail begins there — but opacity either side of it is continuous, so the arc
+ * never pops mid-flight.
+ */
 export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, timing: ArrivalTiming): ArrivalPresentation {
   const window = persistentWindow(effect)
   if (t > window.tMax) return HIDDEN_ARRIVAL
@@ -293,10 +250,8 @@ export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, ti
   const currentWarp = symlogWarp(t)
   const travelWarp = Math.max(0, startWarp - establishedWarp)
   const tailWarp = Math.max(timing.minTailWarp, timing.minArcWarp - travelWarp)
-  // The tail itself needs warp between `established` and the present to fade across, same problem
-  // as the settle/fade envelope below and the same fix: squeeze it into what's actually left
-  // rather than letting a recently-established arrival's tail overrun into the present still lit
-  // (the bug this squeeze fixes — see `squeezeToFit`'s own doc comment).
+  // Same squeeze as the settle/fade envelope below: a recently-established arrival may not have
+  // `tailWarp` of warp left before the present, so fit the tail into what's actually left.
   const squeezedTailWarp = tailWarp * squeezeToFit(tailWarp, establishedWarp)
 
   const travelling = t >= effect.established
@@ -312,8 +267,7 @@ export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, ti
   const fadeWarp = timing.inhabitedFadeWarp * squeeze
 
   const settleProgress = landingWarp > 0 ? easeSmoothstep(0, landingWarp, distancePastEstablished) : 1
-  // Fades out starting only once settleProgress has fully risen (distancePastEstablished >=
-  // landingWarp), so the marker never starts disappearing before it has finished appearing.
+  // Starts fading only once settleProgress has fully risen, so the marker never disappears before it has appeared.
   const inhabitedFadeOut =
     fadeWarp > 0 ? easeSmoothstep(landingWarp, landingWarp + fadeWarp, distancePastEstablished) : 1
   const inhabited = effect.arrivalKind === 'peopling' ? settleProgress * (1 - inhabitedFadeOut) : 0
@@ -321,9 +275,8 @@ export function arrivalPresentationAt(effect: ArrivalGlobeEffect, t: GeoTime, ti
   return { arcAlpha, travelling, travelProgress, settleProgress, inhabited }
 }
 
-/** Whether `t` is anywhere inside any arrival's own visible span — the "Human civilisation"
- *  legend row reads this alongside the density and city equivalents. Reuses
- *  `arrivalPresentationAt` rather than re-deriving the rule a second way. */
+/** Whether `t` is anywhere inside any arrival's visible span — the "Human civilisation" legend
+ *  row reads this alongside the density and city equivalents. */
 export function hasVisibleArrivals(events: readonly TimelineEvent[], t: GeoTime, timing: ArrivalTiming): boolean {
   for (const event of events) {
     if (event.effect === undefined || event.effect.kind !== 'arrival') continue
@@ -333,42 +286,38 @@ export function hasVisibleArrivals(events: readonly TimelineEvent[], t: GeoTime,
   return false
 }
 
-/** The arrival's own visible window, `[established, tMax]` in `TimeWindow`'s `[newest, oldest]`
- *  ordering — what the tooltip prints through `@/timeline`'s `formatTimeRange`. */
+/** The arrival's visible window, `[established, tMax]` in `TimeWindow`'s `[newest, oldest]`
+ *  ordering — what the tooltip prints via `@/timeline`'s `formatTimeRange`. */
 export function arrivalWindow(effect: ArrivalGlobeEffect): readonly [GeoTime, GeoTime] {
   return [effect.established, persistentWindow(effect).tMax]
 }
 
-/** A lon/lat point carrying its own cumulative progress (0 at `origin`, 1 at `destination`)
- *  along the *whole* pre-split arc — `ArrivalArcGeometry.segments`' own point type, so a split
- *  piece's dash pattern (`HumanCivilisation.tsx`'s `ARC_FRAGMENT_SHADER`) can pick up exactly where the
- *  piece before it left off rather than restarting at 0 (docs/GLOBE.md §10). */
+/** A lon/lat point carrying its cumulative progress (0 at `origin`, 1 at `destination`) along
+ *  the *whole* pre-split arc, so a split piece's dash pattern
+ *  (`HumanCivilisation.tsx`'s `ARC_FRAGMENT_SHADER`) picks up where the piece before it left off
+ *  rather than restarting at 0 (docs/GLOBE.md §10). */
 export interface DistancedAnchor extends GlobeEffectAnchor {
   distance: number
 }
 
-/** `splitAtAntimeridian`, carrying `distance` through a synthesized seam point by linearly
- *  interpolating it the same way latitude already is (the same fraction `f`) — `points` are
- *  evenly spaced in great-circle angle (`greatCircleLonLatPoints`'s own doc comment), so a
- *  cumulative-progress field is exactly the kind of "changes smoothly along the path" data that
- *  interpolation is valid for, unlike lon/lat themselves near the seam. */
+/** `splitAtAntimeridian`, interpolating `distance` through a synthesized seam point the same way
+ *  as latitude — valid because `points` are evenly spaced in great-circle angle, so cumulative
+ *  progress varies smoothly along the path (unlike lon/lat themselves near the seam). */
 function splitArcAtAntimeridian(points: readonly DistancedAnchor[]): DistancedAnchor[][] {
   return splitAtAntimeridian(points, (prev, curr, f) => ({ distance: prev.distance + (curr.distance - prev.distance) * f }))
 }
 
 /** One arc's static (t-independent) geometry — built once and reused, never rebuilt per frame.
- *  `segments` splits at the antimeridian (`splitArcAtAntimeridian`) so a map-mode arc crossing it
- *  (Beringia to the Americas) draws as two pieces rather than streaking across the whole map
- *  width. */
+ *  `segments` splits at the antimeridian so a map-mode arc crossing it (Beringia to the Americas)
+ *  draws as two pieces rather than streaking across the whole map width. */
 export interface ArrivalArcGeometry {
   eventId: string
   effect: ArrivalGlobeEffect
   isDegenerate: boolean
   /** Empty for a degenerate (point-marker) arrival. Each inner array is one antimeridian-safe
-   *  polyline segment; a non-crossing arc is a single segment holding every point. Each point's
-   *  own `distance` is cumulative across the *whole* arc, not reset per segment (docs/GLOBE.md
-   *  §10) — `buildFatLineBuffers` passes it straight through to `ArcSegment`'s dash pattern
-   *  unchanged. */
+   *  polyline segment; a non-crossing arc is a single segment. Each point's `distance` is
+   *  cumulative across the *whole* arc, not reset per segment (docs/GLOBE.md §10) —
+   *  `buildFatLineBuffers` passes it straight through to the dash pattern unchanged. */
   segments: DistancedAnchor[][]
 }
 
@@ -378,11 +327,8 @@ export function buildArrivalArcGeometry(eventId: string, effect: ArrivalGlobeEff
   const isDegenerate = isDegenerateArrival(effect)
   if (isDegenerate) return { eventId, effect, isDegenerate, segments: [] }
   const points = greatCircleLonLatPoints(effect.origin, effect.destination, ARC_SEGMENTS)
-  // Evenly spaced in angle by construction (greatCircleLonLatPoints's own doc comment), so
-  // point i's cumulative progress along the whole arc is exactly i / (points.length - 1) — no
-  // separate arc-length computation needed. `points.length` is normally `ARC_SEGMENTS + 1`, but
-  // guarded to 1 below for the theoretical near-degenerate single-point case (theta just above
-  // DEGENERATE_ANGLE_RADIANS), matching buildFatLineBuffers's own former `n > 1 ? ... : 0` guard.
+  // Points are evenly spaced in angle, so point i's progress is exactly i / (points.length - 1) —
+  // no arc-length computation needed. Guarded to 1 for the near-degenerate single-point edge case.
   const distanceDenominator = Math.max(points.length - 1, 1)
   const distancedPoints: DistancedAnchor[] = points.map((p, i) => ({ ...p, distance: i / distanceDenominator }))
   return { eventId, effect, isDegenerate, segments: splitArcAtAntimeridian(distancedPoints) }
@@ -481,25 +427,22 @@ export function traceToOrigin(index: ArrivalIndex, eventId: string): string[] {
 
 /**
  * Per-vertex buffers for a screen-space-constant-width ribbon along `points` — a fat line, not a
- * `gl.LINE_STRIP` (which every mainstream WebGL backend clamps to one device pixel regardless of
+ * `gl.LINE_STRIP` (every mainstream WebGL backend clamps that to one device pixel regardless of
  * `gl.lineWidth`). Two vertices per point (`aSide = -1`/`+1`), expanded perpendicular to the
- * *screen-space* tangent direction in
- * the vertex shader (`HumanCivilisation.tsx`'s `ARC_VERTEX_SHADER`) — this function only supplies the
- * per-point data the shader needs to compute that tangent consistently, not the tangent itself
- * (screen-space direction depends on the live camera, so it can't be precomputed here).
+ * *screen-space* tangent in the vertex shader (`HumanCivilisation.tsx`'s `ARC_VERTEX_SHADER`) —
+ * this function only supplies the per-point data the shader needs to compute that tangent, not
+ * the tangent itself (it depends on the live camera).
  *
- * `aDirA`/`aDirB` are the point's own immediate neighbours (clamped at the arc's own ends, so
- * the first/last point's tangent is a one-sided estimate rather than undefined) — both `aSide`
- * copies of a given point index share the *same* `aDirA`/`aDirB` pair, so the ribbon's tangent
- * at that index is identical regardless of which of the two quads sharing it is being drawn,
- * avoiding a visible seam/kink at the joint between segments.
+ * `aDirA`/`aDirB` are the point's own immediate neighbours (clamped at the arc's ends), and both
+ * `aSide` copies of a point index share the same pair, so the ribbon's tangent at that index is
+ * identical regardless of which of the two quads sharing it is drawn — avoiding a seam at the
+ * joint between segments.
  *
- * `distance` is read straight from each point's own `DistancedAnchor.distance`, not recomputed
- * as a local `i / (n - 1)` fraction of *this* array alone — `points` here is one antimeridian
- * split piece, and a piece-local fraction would restart the dash pattern at 0 on every piece and
- * stretch/compress its density to that piece's own length. Carrying a cumulative, whole-arc
- * distance through the split in the first place (`buildArrivalArcGeometry`/
- * `splitArcAtAntimeridian` above) is what keeps a crossing arc's dash pattern continuous.
+ * `distance` is read from each point's own `DistancedAnchor.distance`, not recomputed as a
+ * piece-local `i / (n - 1)` fraction — `points` here is one antimeridian split piece, and a
+ * piece-local fraction would restart the dash pattern at 0 on every piece. Carrying a
+ * cumulative, whole-arc distance through the split (`buildArrivalArcGeometry`/
+ * `splitArcAtAntimeridian`) is what keeps a crossing arc's dash pattern continuous.
  */
 export interface FatLineBuffers {
   /** `(lon, lat)` per vertex, 2 floats each, length `points.length * 2 * 2`. */
@@ -562,16 +505,14 @@ export function buildFatLineBuffers(points: readonly DistancedAnchor[]): FatLine
 const MARKER_FADE_BAND = 0.12
 
 /**
- * Smooth 0..1 visibility of a point on the sphere's surface (`direction`, a unit vector — the
- * caller passes the marker's live *world*-space direction from the sphere's centre, already
- * reflecting any auto-rotation the sphere's own rotating group applies, since it reads the
- * marker's actual `Object3D.getWorldPosition` rather than an unrotated local one) as seen by a
- * camera at `cameraPosition`, `sphereRadius` units from the sphere's centre — same derivation as
- * `poles.ts`'s `isPoleVisible` (`dot(cameraPosition, direction) >= sphereRadius` at the true
- * horizon), but returned as a smoothstep fade across `MARKER_FADE_BAND` around that threshold
- * rather than a boolean, and combined with ordinary WebGL depth-testing in the caller
- * (`GlobeTooltip.tsx`'s own hit test) rather than replacing it — belt and braces, since depth-testing alone
- * leaves a billboard quad ambiguous exactly at the limb where near- and far-surface depth
+ * Smooth 0..1 visibility of a point on the sphere's surface (`direction`, a unit vector — pass
+ * the marker's live *world*-space direction, already reflecting any auto-rotation, since it comes
+ * from the marker's actual `Object3D.getWorldPosition`) as seen by a camera at `cameraPosition`,
+ * `sphereRadius` units from the sphere's centre — same derivation as `poles.ts`'s `isPoleVisible`
+ * (`dot(cameraPosition, direction) >= sphereRadius` at the true horizon), but returned as a
+ * smoothstep fade across `MARKER_FADE_BAND` rather than a boolean. Combined with ordinary WebGL
+ * depth-testing in the caller (`GlobeTooltip.tsx`), not a replacement for it — depth-testing alone
+ * leaves a billboard quad ambiguous exactly at the limb, where near- and far-surface depth
  * converge.
  */
 export function sphereMarkerVisibility(

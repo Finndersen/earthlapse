@@ -8,7 +8,7 @@ plain colour, needs the exact same encode formula and `D_MAX` constant wherever 
 a consumer (`pipeline/publish.py`, writing the layer's own published decode metadata) -- one
 place, so those two can never disagree about the formula or the calibration constant.
 
-Currently used by `sources/hyde`'s `hyde_population_density` (ADR-031 amendment). The formula:
+Currently used by `sources/hyde`'s `hyde_population_density` (ADR-031). The formula:
 
     v = round(255 * clamp(log10(1 + d) / log10(1 + D_MAX), 0, 1))
 

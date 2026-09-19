@@ -1,10 +1,9 @@
 /**
- * Formats a JS number as a GLSL float literal. GLSL requires a decimal point (or exponent) on a
- * float literal — a bare integer like `1` is parsed as an `int`, and using it where a `float` is
- * expected is a compile error (or, in a context that happens to accept it, silently the wrong
- * type). Every JS-number-into-GLSL-template interpolation in this package should go through this
- * rather than a bare `${n}`, which compiles fine today only because the current constants happen
- * to have a fractional part — and silently breaks the moment someone tunes one to a whole number.
+ * Formats a JS number as a GLSL float literal. GLSL requires a decimal point (or exponent): a
+ * bare `1` parses as an `int`, which is a compile error where a `float` is expected (or silently
+ * the wrong type where it isn't). Every JS-number-into-GLSL interpolation in this package must go
+ * through this rather than a bare `${n}` — that only compiles while the constant happens to have
+ * a fractional part, and breaks the moment one is tuned to a whole number.
  */
 export function glslFloat(n: number): string {
   return Number.isInteger(n) ? `${n}.0` : `${n}`

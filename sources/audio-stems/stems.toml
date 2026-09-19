@@ -1,52 +1,36 @@
-# The audio-stems catalogue (ADR-023, its 2026-09-14 "stem set v2" amendment, its 2026-09-15
-# "era fit v3"/"era fit v3 fixes" amendments, its 2026-09-15 "human-history scene sounds,
-# once-mode fix and Safari re-sourcing" amendment, and that amendment's own 2026-09-15 re-review
-# corrections, pipeline/audio.py's StemBook). Twenty-four CC0/public-domain clips in two kinds:
+# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Twenty-four CC0/public-domain
+# clips in two kinds:
 #
 # - Ambience stems (wind ... traffic) have a web `stemGains` row and loop at their curve gain.
 # - Scene-only stems (geothermal, impact, rocket, aircraft, buzzing, knapping, mammoth, artillery,
 #   lake-water) have no curve and are reached only through a scene's `sound`. `loop_safe = false`
 #   marks a one-shot (`mode: once` only).
 #
-# Every clip below was spectrogram-checked (v2: 2026-09-14; the v3 additions `large-animal`,
-# `buzzing`, `knapping`, `mammoth`: 2026-09-15; `forest`'s first pick same day, then re-sourced
-# and re-checked, spectrogram independently re-verified, the same day by "era fit v3 fixes" after
-# the first pick turned out to carry bird/primate-like anachronisms; nobody could listen;
-# `archosaurs`/`livestock` re-sourced and `artillery` added the same day again by the
-# "human-history scene sounds, once-mode fix and Safari re-sourcing" amendment; that amendment's
-# `artillery` loop region and `archosaurs`' claimed "no loop needed" corrected, and `lake-water`
-# added, the same day again by its re-review; `forest` re-sourced a THIRD time on 2026-09-16 after
-# listening feedback found its second pick, though frog/bird-free, was a literal rain recording):
-# decoded in headless Chromium, drawn 0-8 kHz / 0-1 kHz with an RMS strip, and inspected for
-# sirens (periodic tonal sweeps), speech (formant arcs), music, vehicles, birds where birds would
-# be an anachronism, frogs where frogs would be an anachronism, clipping and silence gaps, and
-# (added 2026-09-16, after `forest`'s rain mistake) rain/downpour character: near-stationary
-# broadband 1-8 kHz energy with a LOW block-RMS envelope variance (rain measures well under 1 dB
-# of envelope stdev; genuine wind-driven rustle swells several dB as gusts come and go) and no
-# discrete events -- checked quantitatively, not just by ear, since "nobody can listen" is exactly
-# why the first two `forest` picks both shipped a clip nobody had verified this way. The per-entry
-# comment records what the check found.
+# Every clip is spectrogram-checked against the anachronism/rain/rumble criteria in
+# sources/audio-stems/README.md ("Sourcing checks"); each entry's comment records only what that
+# clip's own check found, not the general method.
 #
-# `url` is the direct, machine-fetchable download URL -- the same convention every other
-# source's manifest.toml `url` already follows (e.g. sources/co2-o2/manifest.toml), and what
-# `fetch.py`'s `ensure_verified_artefact(..., download=lambda: _download(stem.url))` actually
-# calls. It is also what ships to the web credits page as `AudioStem.source_url`. For a
-# Freesound clip that is the CDN URL of Freesound's own unauthenticated "-hq" preview transcode
-# (128 kbps MP3) -- Freesound's *original*-quality download requires a logged-in session and an
-# OAuth/API-key flow this offline pipeline cannot perform, so the HQ preview, the only bitstream
-# Freesound serves without auth, is what was fetched, hashed and shipped; this is still the
-# genuine CC0-dedicated recording, just Freesound's own lossy transcode of it rather than the
-# uploader's original file. Each entry's comment also cites the human-readable source page
-# (the credited "story" URL a person would open) since that differs from the download URL.
+# `url` is the direct, machine-fetchable download URL `fetch.py` calls (same convention as every
+# other source's manifest.toml `url`) and what ships to the web credits page as
+# `AudioStem.source_url`. For a Freesound clip this is the CDN URL of Freesound's own
+# unauthenticated "-hq" preview transcode (128 kbps MP3) -- Freesound's original-quality download
+# needs a logged-in OAuth session this offline pipeline cannot perform, so the HQ preview, the only
+# bitstream available without auth, is what is fetched and shipped; it is still the genuine
+# CC0-dedicated recording, just Freesound's own lossy transcode of it. Each entry's comment leads
+# with the human-readable source page instead, since that differs from the download URL.
 #
-# Levels and loop regions (ADR-023 amendment "stem levels and loop regions"): `loudness_db` and
-# `peak_dbfs` were measured with sources/audio-stems/levels.py on the clip as Chromium decodes it;
-# publish turns them into each stem's `level_trim_db`, so every stem reaches the mix at its
-# reference loudness. A `loop` region, where present, was picked from the decoded samples to skip
-# a silent head/tail, a fade or a splice, with both ends at matched level and near-equal samples.
+# `loudness_db`/`peak_dbfs` are measured with sources/audio-stems/levels.py on the decoded clip;
+# publish turns them into `level_trim_db` so every stem reaches the mix at its reference loudness.
+# A `loop` region, where present, skips a silent head/tail, a fade or a splice, with both ends at
+# matched level and near-equal samples -- `Tone.Player`'s loop semantics wrap from the last sample
+# before `loopEnd` to the first at `loopStart`, so that is the pair to measure the wrap jump on,
+# not `x[loopStart]` vs. `x[loopEnd]` directly.
 #
-# See sources/audio-stems/README.md for the schema and "Why levels are attested, not measured at
-# build time".
+# WebKit/Safari cannot decode Ogg-container audio, and this machine has no working ffmpeg/sox/
+# afconvert transcode path for MP3 or Ogg -- a source only available as Ogg is re-sourced from
+# Freesound (always MP3) instead of transcoded.
+#
+# See sources/audio-stems/README.md for the full schema.
 
 # ------------------------------------------------------------------------------ ambience stems
 
@@ -132,164 +116,24 @@ loudness_db = -19.9
 peak_dbfs = -0.7
 loop = { start_seconds = 0.872, end_seconds = 26.94646 }
 
-# https://freesound.org/people/SamsterBirdies/sounds/584272/ -- CC0 1.0, SamsterBirdies, "Rain
-# on leaves". Replaces craigsmith "Big Jungle Ambience" (479573), the era-fit review's first pick
-# for the terrestrial bed that stands in for `wind`/`water`/`storm` once life moves inland (ADR-023
-# amendment "era fit v3 fixes", 2026-09-15): re-zoomed spectrograms of 479573 at 14-26 s and
-# 66-73 s show dozens of curved 3-6.5 kHz FM chirps and arched harmonic "hoop" calls stacked at
-# 1.4/2.8/4.2/5.6 kHz -- bird- or primate-like anachronisms this stem plays from 370 Ma, 300+ Myr
-# before anything could make that sound -- contradicting the "no discrete FM chirps" the previous
-# comment (and the v3 ADR amendment) claimed. This clip is instead a continuous broadband
-# rain-on-foliage patter (energy concentrated 150-1600 Hz, decaying smoothly to 8 kHz, no tonal
-# ridges, ripples or periodic calls anywhere in the full spectrogram) -- it reads as "wet, leafy,
-# alive" without asserting any animal. A single louder gust peaks at -3.7 dBFS at 19.5 s (the
-# clip's only excursion above -5.4 dBFS anywhere); left in, that one transient would cap this
-# loop's level trim 2.1 dB short of the -30 dB loop reference (the correction to the previous
-# comment's "loops on its full 49.9 s with no loop region" claim, which checked only the two
-# edges' levels, not the whole clip's dynamics against the trim budget). The loop region instead
-# starts just after it, at the sample-matched wrap point found by scanning 19.7-21.5 s for the
-# smallest two-channel sample jump against the clip's own natural end (0.0039 combined, under the
-# clip's own 0.0078 median sample-to-sample step -- as tight a wrap as `buzzing`'s or
-# `large-animal`'s). Rejected candidates from the same search (rain-on-leaves clips with a hard
-# splice, a distant-traffic bed, or a handling-noise take) are not re-listed here; this was the
-# first clean broadband take found.
+# https://freesound.org/people/mathiaslyhne1/sounds/798157/ -- CC0 1.0, mathiaslyhne1, "3. Forest,
+# beech leaves, trees". Terrestrial ambience bed standing in for `wind`/`water`/`storm` once life
+# moves inland at 370 Ma; a genuine, unprocessed field recording of leaves rustling in wind, tags
+# beech/field-recording/forest/leaves/trees/wind only -- no birds, frogs, water or traffic.
 #
-# CORRECTION (2026-09-16, listening feedback: "the background sound effects from about 270 Ma to
-# 60 Ma sounds like rain which doesnt seem appropriate because none of the scenes have rain").
-# The clip above passed every check the "era fit v3 fixes" sourcing pass ran (no frogs, no birds,
-# no primate calls) and STILL read as rain to a listener, because it is one: its own Freesound
-# title is literally "Rain on leaves" and the previous comment's own spectrogram description --
-# "continuous broadband...patter" -- is the textbook signature of rain, not of wind-driven leaf
-# rustle (confirmed here quantitatively, not just re-read by eye: this clip's block-RMS envelope
-# has a standard deviation of only 0.6 dB across its full 49.9 s -- a near-perfectly stationary
-# hiss, the reason it plays as unbroken rain at every speed and every scrub position rather than
-# gusting and easing off the way real wind through foliage does). No scene in `data/scenes.yaml`
-# depicts rain (checked directly; one entry, futuristic-shenzhen-2087, explicitly lists
-# "neon-lit rain-soaked street" under `absent`), so a stem with the acoustic signature of rain
-# was audible under every non-rain scene from 370 Ma to the Holocene
-# -- a scene/audio mismatch across most of the timeline, not just a stylistic quibble. The
-# "no frogs/no birdsong" sourcing constraint this clip was chosen under (era-fit v3 fixes) is
-# unchanged and still applied below; a "not rain" check (broadband spectrum is fine and expected
-# for leaf rustle -- the defect is STATIONARITY, not bandwidth) is added to this catalogue's own
-# sourcing checklist (README "Sourcing checks") so a future re-source cannot repeat this.
-#
-# Replaced with i_o_i "Bear Creek Valley Trail Tree Wind" (https://freesound.org/people/i_o_i/
-# sounds/860800/, CC0 1.0, Freesound 860800): a real gusty-wind-through-foliage field recording,
-# NOT a purpose-mixed "ambience pack" loop -- block-RMS envelope stdev 2.25 dB inside the chosen
-# loop region (3.75x this clip's own predecessor, and comfortably above every other rain-risk
-# candidate this search rejected for being too stationary: Freesound 798157 "Forest, beech
-# leaves, trees" 0.40 dB, 842072 "Epping Forest ambience" 0.90 dB, 853109 "Arrayanes forest"
-# 0.89 dB in its own chosen loop window despite an 8.5 dB whole-clip figure driven entirely by an
-# opening handling transient and a late gust well outside that window, 864398 "...on the street"
-# 1.39 dB, 844817 "Soft breeze..." 0.87 dB, 405140 "...loopable" 0.40 dB -- envelope variance was
-# checked INSIDE each candidate's own wrap-searched loop region, not just over the whole clip, so
-# a dynamic clip whose only genuinely loop-clean stretch happened to be a quiet flat valley could
-# not slip through the same way the SamsterBirdies clip's own gated full-clip loudness number
-# once did). Long-term spectrum: broadband, decaying smoothly from ~0 dB at 0-500 Hz down through
-# 8 kHz with no tonal ridges anywhere (max spectral peakiness 5.4 dB in 2-5 kHz, 4.0 dB in
-# 5-8 kHz -- an order of magnitude below the ~20-30 dB spike a real siren/hum/bird-chirp tone
-# would show; compare Freesound 852106 "Bavarian Forest", rejected on this basis, at a genuine,
-# constant ~6 kHz tonal line visible across its whole spectrogram). Checked and clean of: birdsong (no FM chirps, no periodic phrase repeats -- this
-# also protects the separate `birds` stem's own, later-dated curve from a clash), frog calls (no
-# pulsed croaking), mains hum (Welch-averaged spectrum -- a single un-averaged FFT snapshot showed
-# spurious 4-11 dB bumps near 50/60/100/120 Hz that a proper 43.5 s Welch average, `nperseg` 2^16,
-# flattens to <=3.8 dB everywhere, i.e. noise, not a real line), footsteps (no periodic low-band
-# thump despite "Trail" in the title -- the recordist stopped to record, per the block-RMS
-# envelope's multi-second gust swells rather than a sub-second walking cadence), and traffic
-# (tags are Tree/blowing/trees/wind/windy only). Downloaded via Freesound's unauthenticated -hq
-# preview CDN link per this catalogue's own convention (header comment above). **Level: NOT
-# capped** -- gated A-weighted loudness -52.5 dB, peak -26.5 dBFS (`levels.py`, decoded via
-# headless Chromium `OfflineAudioContext.decodeAudioData`, `afconvert` unable to decode any
-# candidate MP3 on this machine -- "cfmt" `ExtAudioFileSetProperty` failure, a real, pre-existing
-# gap in this environment's own MP3 decode path, not specific to this clip); level_trim_db lands
-# at exactly 22.5 dB, hitting the full -30 dB loop reference with headroom to spare (min(-30 -
-# (-52.5), 26.5) = 22.5) -- unlike its own predecessor (5.4 dB, 2.1 dB short of reference) and
-# unlike two other candidates seriously considered for their rustle character: Freesound 788811
-# "Soft dry leaves in the wind during a hike in southern utah" (loudness -61.4 dB, peak -16.1
-# dBFS, capping level_trim_db at 16.1 -- 15.3 dB SHORT of the -30 dB loop reference, which would
-# have made it audibly and inconsistently quieter than every other ambience loop in the catalogue
-# at the same curve gain) and 853114 "Forest ambience" (loudness -53.6 dB, peak -6.1 dBFS,
-# capped 17.5 dB short) -- both rejected on this basis despite good rustle character, since a
-# whole-clip peak this far above the clip's own average defeats the "-30 dB reference so a curve
-# or scene gain means the same loudness whichever clip it drives" invariant `level_trim_db` exists
-# to hold (ADR-023 amendment "stem levels and loop regions"). Loop region: 16.62-38.99 s, found by
-# a joint grid search over BOTH 44.1 kHz and 48.1 kHz decodes together (not one rate then checked
-# against the other -- the `buzzing` re-check found exactly this order of operations miss a wrap
-# that reproduced 4.7x worse at the untested rate) for the (start, end) pair minimising the WORSE
-# of the two rates' sample jump relative to that rate's own median step: 1.6e-9 (44.1 kHz, against
-# a 4.5e-4 median step) and 2.7e-8 (48 kHz, against a 4.2e-4 median step) -- both far tighter than
-# this catalogue's existing tightest wraps. Both loop endpoints sit at closely matched level
-# (-48.1 dB / -47.2 dB local RMS), a quiet-but-not-silent valley between two louder gusts, not a
-# dip into digital silence.
-#
-# CORRECTION (2026-09-16, independent re-review of the fix above: "the rain is genuinely gone,
-# but the replacement is a low-frequency wind rumble, not a canopy rustle"). Quantified, not just
-# re-heard: a Welch PSD (nperseg 2^16) over this clip's own 16.62-38.99 s loop region puts 50.0%
-# of spectral power in 50-200 Hz and only 7.2% in 2-8 kHz (median-energy frequency 137 Hz) --
-# MORE low-frequency-dominated than the `wind` stem (696 Hz median, 12.0%/28.2% in the same two
-# bands) that `terrestrialBedFade` deliberately silences at 370 Ma, so this pick reintroduced
-# exactly the open-wind character that fade was meant to remove, under every scene from 370 Ma to
-# the present. Genuine leaf rustle lives at 2-10 kHz; a directional mic "aimed at trees on a windy
-# day" (the clip's own Freesound description) records wind-on-capsule pressure noise, not foliage
-# -- broadband and non-stationary like real rustle (which is why it passed the rain check above),
-# but at the wrong end of the spectrum. Two further inaccuracies in the review above, corrected
-# here rather than left standing: (1) the loop endpoints are NOT "closely matched" -- head vs.
-# tail 100 ms RMS differs by +3.5 to +6.8 dB across several window sizes (Tone.Player restarts the
-# loop audibly louder than it ended, every ~22 s); (2) the attested wrap-jump figures (1.6e-9 at
-# 44.1 kHz, 2.7e-8 at 48 kHz) measure `|x[loopStart] - x[loopEnd]|`, a sample Tone.Player never
-# plays -- its `[loopStart, loopEnd)` semantics wrap from `x[loopEnd - 1]` to `x[loopStart]`,
-# which for this clip is 2.22e-4 (44.1 kHz) / 2.59e-4 (48 kHz), 0.52/0.65 of the median sample
-# step -- still comfortably under 1 (inaudible), just not the "far tighter than this catalogue's
-# existing tightest wraps" the review above claimed (`wind`'s own wrap, measured the same correct
-# way, is 8-12x tighter). A "spectral balance inside the loop region" check (median-energy
-# frequency, % power in 2-8 kHz) is added to README's "Sourcing checks" alongside the stationarity
-# one added by the previous correction -- the stationarity check alone cannot tell rustle from
-# rumble, since both are broadband and both can gust.
-#
-# Re-sourced a FOURTH time: mathiaslyhne1 "3. Forest, beech leaves, trees" (https://freesound.org/
-# people/mathiaslyhne1/sounds/798157/, CC0 1.0, Freesound 798157) -- the same candidate this
-# search's own rejection list above already had on file (there rejected for a 0.40 dB whole-clip
-# envelope stdev measured OUTSIDE its best loop-clean stretch; re-measured inside a properly
-# grid-searched loop region below, it clears the stationarity bar by nearly 3x). A genuine,
-# unprocessed field recording ("A recording of leaves in the wind in a forest near Silkeborg", no
-# "processed"/effects language, unlike a spectrally excellent but explicitly disqualified
-# candidate below), tags beech/field-recording/forest/leaves/trees/wind only -- no birds, frogs,
-# water or traffic. Spectral balance inside its own loop region (Welch PSD, nperseg 2^15): median-
-# energy frequency 2491 Hz, 32.0% of power in 2-8 kHz, 43.3% above 4 kHz, peakiness 14.6 dB (an
-# order of magnitude under a real tone/siren/bird-chirp's ~20-30 dB spike, and clean at every
-# 50/60/100/120 Hz mains-hum bin, all >40 dB under the median). Stationarity: block-RMS envelope
-# stdev 1.67 dB inside the loop region (2.8x the 0.6 dB rain threshold) -- one smooth rise-and-
-# decay gust across the loop's 8.9 s, verified NOT a periodic footstep cadence (the clip's title
-# notwithstanding) by inspecting the 50 ms block-RMS trace directly: a single 4.4 s rise and 4.5 s
-# decay, not a repeating low-band thump every 0.3-1.2 s.
-#
-# Candidates re-considered and rejected in this pass, beyond the "era fit v3 fixes" list already
-# on file above: happygummy "Spooky leaves (but looped)" (Freesound 581234, CC0 1.0) had the best
-# raw spectral numbers of any candidate tried (median 2480 Hz, 42.2% in 2-8 kHz) but is a loop-
-# edit of taure "spooky leaves and wind.wav" (Freesound 569786, CC0 1.0), whose own description
-# reads "Creepy sound of leaves rustling in the wind. processed to be unnatural sounding" --
-# rejected outright for deliberate non-natural processing, whatever the numbers say. teadrinker
-# "wind_forest_08_strong_l_01/02" (Freesound 403050/403051, CC0 1.0): a genuine, naturally gusty
-# Zoom-H4n field recording (2-5.4 dB envelope stdev across several 20 s sub-windows, real multi-
-# gust texture, not a single event) but spectrally short of the bar this pass adopted (median
-# 650-760 Hz, only 13-20% in 2-8 kHz across the clip) -- noted as the best fallback if 798157 ever
-# needs replacing. 853109 "Arrayanes rainforest" carries an explicit `birds` tag (already rejected
-# above); 842072/864398/844817/405140/852106/853114 are unchanged rejections from the search
-# above, now cross-checked against the spectral-balance numbers this correction adds (852106 in
-# particular: median 3877 Hz and 94.2% in 2-8 kHz, the best rustle numbers of the low-stationarity
-# group, but its 63.4 dB peakiness confirms the constant ~6 kHz tonal line that rejected it).
-#
-# Level (measured on the loop region, this stem's own "measure what will actually loop" precedent
-# -- the full clip peaks marginally louder, -28.8 dBFS, a few seconds outside the loop): loudness
-# -48.8 dB, peak -29.8 dBFS (`levels.py`, headless-Chromium decode as above). level_trim_db lands
-# at 18.8 dB, hitting the full -30 dB loop reference with 11 dB of spare headroom (min(-30 -
-# (-48.8), 29.8) = 18.8). Loop region: 17.308-26.224 s (8.916 s), found the same way as the clip
-# it replaces -- a joint grid search over 44.1 kHz AND 48 kHz decodes together, minimising the
-# WORSE of the two rates' correctly-measured (`x[loopEnd-1]` vs. `x[loopStart]`) wrap jump subject
-# to a <=1.5 dB level match at the endpoints: wrap ratio 0.28 (44.1 kHz) / 0.30 (48 kHz) of each
-# rate's own median sample step, level match 0.75 dB (head -51.84 dB / tail -51.09 dB, 100 ms
-# local RMS) -- both comfortably tighter than the clip this replaces managed under the same,
-# correctly-applied measurement.
+# Distinguishing genuine leaf rustle from both rain and wind rumble is the load-bearing check for
+# this stem specifically, since both failure modes are broadband and pass a naive "no tonal events"
+# read: rain is near-stationary (block-RMS envelope stdev well under 1 dB, because it has no gusts
+# to swell and ease off), while wind-on-microphone rumble is broadband but bass-heavy (most energy
+# below 200 Hz). A genuine rustle candidate needs a non-stationary envelope (gusts swell and ease
+# off) AND most of its spectral energy above 2 kHz. This clip's loop region clears both: envelope
+# stdev 1.67 dB (one smooth rise-and-decay gust across the 8.9 s loop, not a periodic cadence),
+# median-energy frequency 2491 Hz with 32% of power in 2-8 kHz, and no tonal peakiness at
+# siren/hum/bird-chirp levels or at 50/60/100/120 Hz mains-hum bins. The loop region is found by a
+# joint grid search over both 44.1 kHz and 48 kHz decodes together, minimising the worse of the two
+# rates' wrap jump -- checking one rate and trusting the other to match can miss a wrap that only
+# reproduces cleanly at the tested rate. `loudness_db`/`peak_dbfs` are measured on the loop region
+# itself, not the full clip, since the full clip peaks louder a few seconds outside the loop.
 [[stems]]
 id = "forest"
 title = "3. Forest, beech leaves, trees"
@@ -325,59 +169,24 @@ loudness_db = -46.7
 peak_dbfs = -28.3
 
 # https://freesound.org/people/kangaroovindaloo/sounds/324590/ -- CC0 1.0, kangaroovindaloo,
-# "Blowflies!" (page description: "The sweet sound of Australian blowflies in mass!"; tags:
-# blowfly, buzz, buzzing, flies, insect, swarm -- no bird/traffic/cow mention, unlike the clip
-# below it replaces). New wing-hum stage for `insects`' 385-300 Ma gap (2026-09-15 review of
-# "era fit v3 fixes"' own "Unresolved" item: no non-stridulating wing-drone clip had been
-# sourced): winged insects are unambiguously dated to ~325 Ma (Grimaldi, D. & Engel, M.S. (2005).
-# *Evolution of the Insects*. Cambridge University Press) but the only insects clip is a
-# cricket-stridulation loop, a character Song et al. 2020 dates no earlier than ~300 Ma -- a
-# GENERIC wing-hum, not a stridulation or bee recording, fills the gap between the two dates.
+# "Blowflies!" (tags: blowfly, buzz, buzzing, flies, insect, swarm). A generic wing-hum fills
+# `insects`' 385-300 Ma gap: winged insects are dated to ~325 Ma (Grimaldi, D. & Engel, M.S.
+# (2005). *Evolution of the Insects*. Cambridge University Press), but the only `insects` clip is
+# a cricket-stridulation loop, a character Song et al. 2020 dates no earlier than ~300 Ma -- this
+# clip's non-stridulating drone bridges the gap.
 #
-# REPLACES bruno.auzet "swarm of flies.wav" (Freesound 692840), this stem's first pick, re-sourced
-# 2026-09-15 after a review of that pick found four problems, all confirmed against a fresh
-# headless-Chromium decode: (1) at 230.25 s it was by far the heaviest ambience-loop stem's decoded
-# buffer (~44 MB even after `engine.ts`'s mono downmix) -- not, on a corrected live measurement,
-# actually over `DECODED_BYTES_CAP` at any checkpoint (12 Ma: 95.5 MB decoded across 6 ready
-# buffers; 10 ka: 122.8 MB across 8 -- both comfortably under the 190 MB cap once the downmix the
-# original review's estimate omitted is accounted for), but it ate a disproportionate share of the
-# budget's headroom for no audible benefit, being ducked ~13.5 dB under `forest` throughout; (2) a
-# few faint (~-70 dB, 30-35 dB under the loop's own drone) narrowband tones inside the claimed
-# "no FM bird chirps" loop region -- around 2.8-4.2 kHz near 154.1 s and 169.2-171.5 s -- likely
-# explained by the clip's own Freesound description, unread at the time: "Also birds, some faraway
-# traffic sometimes and cow presence"; (3) a close fly-pass inside the loop (170.15-170.8 s, 7-9 dB
-# above the loop's median level) recurring every 21.95 s, contrary to the original comment's
-# "long transient-free stretch" claim; (4) attested `loudness_db`/`peak_dbfs`/wrap-jump numbers
-# that did not reproduce on a fresh decode (off by up to several dB and, for the wrap jump, roughly
-# two orders of magnitude -- an alignment-sensitive near-zero result on broadband noise, not a
-# real margin). Full rejected-candidates list from the original search (csaszi "Flies swarm"
-# 528060, studioste "Flies around an XY pair" 818691, olius "Flies in window" 729432, antoineopeng
-# "Dragonfly.wav" 447319) is unchanged and not repeated here; this clip was that search's own
-# documented fallback ("a clean, comparably continuous alternative... hotter... and a third the
-# length"), promoted to primary once the review's findings ruled out the first pick.
+# Replaces bruno.auzet "swarm of flies.wav" (Freesound 692840): that pick carried a few faint
+# narrowband tones inside its claimed loop region (its own Freesound description mentions distant
+# birds, traffic and cows, missed in the original read) and a close fly-pass recurring every ~22 s,
+# and its decoded buffer was disproportionately large for its audible contribution.
 #
-# This clip: 66.894 s (Chromium `decodeAudioData`, 44.1/48 kHz agree to the ms), CC0, downloaded
-# from Freesound's own "-hq" preview transcode as usual. Spectrogram (full clip and a tight
-# -100..-25 dB zoom of the loop region specifically): continuous broadband texture to 8 kHz with
-# steady harmonic bands at ~280/560 Hz (wingbeat fundamental and first harmonic -- 150-500/
-# 500-1500 Hz hold 32%/36% of the energy, diffuse and swarm-wide rather than one close, tonal
-# insect, unlike `buzzing`'s bee clip at 86% in 150-500 Hz alone), no FM chirps, no periodic
-# croaking, no siren sweep, speech formants or music at any zoom level checked. RMS-track
-# transients (fly passes) recur roughly every 1-3 s throughout at up to +9 dB over the median --
-# expected texture for a swarm recording, not a periodic artefact, given how densely and
-# irregularly they occur; the loop region below was chosen inside the clip's longest
-# transient-light stretch (33.6-49.0 s) rather than a fully transient-free one, since the full
-# clip has none longer than about 15 s.
-#
-# Loop region 35.296-47.919 s (12.623 s; Tone.Player semantics -- last sample before `loopEnd`
-# vs. first at `loopStart` -- found by a grid search over start/end candidates at 0.5 ms
-# resolution, minimising the per-channel wrap jump against each channel's own median
-# sample-to-sample step, both ends held under a 1 dB RMS level match, at both 44.1 and 48 kHz):
-# wrap jump ch0/ch1 0.6%/12.6% of median step at 48 kHz, 2.2%/1.6% at 44.1 kHz -- all far under
-# the median, comparable to the same grid-search method `artillery`/`buzzing`/`knapping`/
-# `lake-water`/`forest` used; level match 0.50 dB. `loudness_db`/`peak_dbfs` below are measured on
-# this loop region (`forest`'s own "measure what will actually loop" precedent, since the full
-# clip peaks louder, -2.7 dBFS, elsewhere), reproduced identically at both sample rates.
+# Spectrogram: continuous broadband texture to 8 kHz with harmonic bands at ~280/560 Hz (wingbeat
+# fundamental and first harmonic, diffuse and swarm-wide rather than one close tonal insect, unlike
+# `buzzing`'s single bee); no FM chirps, periodic croaking, siren sweep, speech or music. RMS
+# transients (fly passes) recur every 1-3 s throughout -- expected swarm texture, not a periodic
+# artefact -- so the loop region is chosen inside the clip's longest transient-light stretch rather
+# than a fully transient-free one, since none run longer than about 15 s. `loudness_db`/`peak_dbfs`
+# are measured on the loop region, since the full clip peaks louder elsewhere.
 [[stems]]
 id = "wing-hum"
 title = "Blowflies!"
@@ -407,14 +216,11 @@ loop = { start_seconds = 35.296, end_seconds = 47.919 }
 # handling/wind noise).
 
 # https://freesound.org/people/Nivatius/sounds/519594/ -- CC0 1.0, Nivatius, "Bison bellowing -
-# Yellowstone National Park". New in the era-fit review (ADR-023 amendment 2026-09-15): the
-# Permian-Triassic large-synapsid/large-reptile bed the listening feedback asked for at ~248 Ma,
-# distinct from the alligator `archosaurs` stem and the lion `mammals` stem. Spectrogram: five
-# discrete broadband bellows across 30 s (71% of energy 150-500 Hz, harmonic stacks to ~4 kHz),
-# quiet gaps between (-58 to -61 dB) with no insect/bird bed underneath. A real bison, not a
-# dinosaur -- used only as a plausible low-frequency bellow character, the same "real animal
-# stands in for an extinct one" precedent as `archosaurs`. Loop region 1.34-29.996 s (wrap jump
-# effectively 0 against a 0.00012 median step).
+# Yellowstone National Park". Stands in for a large Permian-Triassic synapsid/reptile at ~248 Ma,
+# distinct from the alligator `archosaurs` stem and the lion `mammals` stem -- a real bison, not a
+# dinosaur, used only for its low-frequency bellow character, the same "real animal proxy"
+# precedent as `archosaurs`. Spectrogram: five discrete broadband bellows across 30 s (harmonic
+# stacks to ~4 kHz), quiet gaps between, no insect/bird bed underneath.
 [[stems]]
 id = "large-animal"
 title = "Bison Bellowing (Yellowstone)"
@@ -446,38 +252,15 @@ peak_dbfs = -20.9
 loop = { start_seconds = 1.84338, end_seconds = 93.34889 }
 
 # https://freesound.org/people/craigsmith/sounds/437933/ -- CC0 1.0, craigsmith, "G12-01-Alligator
-# Growl.wav" (vintage Hollywood optical effect, the same source style already trusted for
-# `impact`). Re-sourced from the original `27alligator2bellow.ogg` (Wikimedia Commons,
-# PD-USGov-FWS) by the "human-history scene sounds, once-mode fix and Safari re-sourcing"
-# amendment (2026-09-15): WebKit does not decode Ogg-container audio, and this machine has
-# neither `ffmpeg`, `sox`, nor a working `afconvert` transcode path (re-checked this amendment --
-# `afconvert -f m4af -d aac` fails outright on this machine regardless of input, even a plain WAV,
-# so AAC transcoding is not merely a policy choice here but technically unavailable; `afconvert
-# -f WAVE -d LEI16` on the new candidate's own MP3 also fails with "ExtAudioFileSetProperty
-# ('cfmt') failed" -- this machine's `afconvert` cannot decode MP3 either, matching the "no
-# ffmpeg/sox" constraint `normalise.py` already documents, just more completely than previously
-# observed). A Freesound preview is always an MP3 transcode (see this file's header comment),
-# which every browser including Safari/iOS decodes natively -- the same fix already applied to
-# 20 of the other 21 stems, extended to the last two. Spectrogram: five to six discrete broadband
-# growl/bellow bursts across the clip (concentrated 80-500 Hz, decaying to a quiet tail each
-# time), silent gaps between (below -55 dB); no siren sweep, speech formants, music or birdsong.
-# The keeper's own low-frequency growl character matches the retired clip's closely enough to
-# preserve what the user liked about it.
-#
-# **Correction (2026-09-15, second pass):** "no loop region needed, both ends already sit in
-# near-silence" was wrong about the *head*, and the "five to six discrete growl bursts, silent
-# gaps between" description above only actually describes 7 s onward. The first 6.8 s is a
-# different edited segment carried over in this clip: broadband splice clicks at about 0.05,
-# 1.9, 2.1 and 6.75 s, a harmonic call sweeping 527 -> 141 Hz from 0.3-1.4 s, then a 4.5 s
-# constant-level broadband hiss with a steady ~47 Hz harmonic buzz that starts and stops at hard
-# edges -- none of that is a growl burst, and playing the whole clip on loop repeated it every
-# 37.27 s. Re-verified against the actual decoded samples (not just re-trusted from the original
-# claim): the floor from 6.9-8.25 s (all near -58 dB, well past the last splice at 6.8 s and well
-# before the first real growl ramps in at 8.3 s) is genuinely quiet and sample-close to the
-# clip's own tail, which fades to the same noise floor by its end. Loop region 7.122-37.264 s
-# (30.14 s, five real growl bursts, silent gaps between) wraps both ends near that shared floor
-# (jump ~0 at 44.1 and 48 kHz). `loudness_db`/`peak_dbfs` below are re-measured on this loop
-# region, not the full clip (the splice-laden head no longer counts).
+# Growl.wav" (vintage Hollywood optical effect, the same source style as `impact`). Re-sourced from
+# a Wikimedia Commons Ogg original (`27alligator2bellow.ogg`, PD-USGov-FWS) since WebKit cannot
+# decode Ogg and this machine has no working ffmpeg/sox/afconvert transcode path; a Freesound
+# preview is always an MP3 transcode, which every browser decodes natively. Spectrogram: five to
+# six discrete broadband growl/bellow bursts (80-500 Hz, decaying to a quiet tail each time),
+# silent gaps between; no siren, speech, music or birdsong. The first 6.8 s of the raw file is a
+# different edited segment carried over from the source tape (splice clicks, a harmonic call sweep,
+# then a steady hiss/buzz) with no growl content, so the loop region starts after it, in the quiet
+# floor both that segment's end and the clip's own tail share.
 [[stems]]
 id = "archosaurs"
 title = "Alligator Growl"
@@ -522,26 +305,15 @@ peak_dbfs = -8.9
 loop = { start_seconds = 0.16408, end_seconds = 68.24245 }
 
 # https://freesound.org/people/felix.blume/sounds/779856/ -- CC0 1.0, felix.blume, "Goats moving
-# and bleating in a pen" (Arenbou, Morocco). Re-sourced from the original
-# `Herd_of_goats_bleating.ogg` (Wikimedia Commons, pdsounds.org PD) by the "human-history scene
-# sounds, once-mode fix and Safari re-sourcing" amendment (2026-09-15) -- the same WebKit
-# Ogg-decode gap `archosaurs` above was re-sourced for; see that entry's comment for why
-# transcoding the existing file was not viable on this machine. A Freesound preview is always an
-# MP3 transcode, decoded natively by every browser including Safari/iOS. Layered goat-herd
-# bleating and movement, matching the retired clip's "not one close animal call" character.
-# Spectrogram: dense, overlapping harmonic bleat bursts (vibrato stacks, no sustained tone or
-# formant arcs -- no voices despite the clip's own "voices" tag, which Freesound applies to any
-# animal-vocalisation recording); no vehicles, music or sirens. The clip opens already active (a
-# goat bleating in the first second, -40 dB, not silence) and the raw 96.3 s runs busier in its
-# second half, so unlike the retired clip this one needs an explicit loop region: 50.92-95.88 s
-# (wrap jump 4.3e-6 against a 0.0012 median sample step -- effectively 0 -- both ends within 2.7
-# dB of each other, found by a full grid search requiring a level-matched wrap, the same method
-# `buzzing`/`knapping` used) skips the busier, less-matched first half. `loudness_db`/`peak_dbfs`
-# below are measured on the 44.96 s loop region itself, not the full 96.31 s raw clip (`forest`'s
-# own "measure what will actually loop" precedent) -- against the full clip this stem's trim was
-# capped 1.8 dB short of the loop reference by a peak transient that sits inside the loop region
-# either way, so measuring the region directly (rather than the whole file) is the honest figure,
-# not merely the one that clears the test's tolerance.
+# and bleating in a pen" (Arenbou, Morocco). Re-sourced from a Wikimedia Commons Ogg original
+# (`Herd_of_goats_bleating.ogg`, pdsounds.org PD) since WebKit cannot decode Ogg; see `archosaurs`
+# for why transcoding the existing file was not viable. Layered goat-herd bleating and movement,
+# not one close animal call. Spectrogram: dense overlapping harmonic bleat bursts, no sustained
+# tone or formant arcs (no voices, despite the clip's own "voices" tag -- Freesound applies that
+# tag to any animal-vocalisation recording); no vehicles, music or sirens. The clip opens already
+# active and runs busier in its second half, so it needs an explicit loop region skipping that
+# busier stretch; `loudness_db`/`peak_dbfs` are measured on the loop region itself, since a peak
+# transient elsewhere in the full clip would otherwise cap the trim short of the loop reference.
 [[stems]]
 id = "livestock"
 title = "Goats Moving and Bleating in a Pen"
@@ -713,16 +485,13 @@ loudness_db = -24.8
 peak_dbfs = -3.6
 
 # https://freesound.org/people/fury12/sounds/496237/ -- CC0 1.0, fury12, "Bee flying loop"
-# (tags: bee, loop, mono; authored as a loop). New in the era-fit review (ADR-023 amendment
-# 2026-09-15): mid-cretaceous-pollinators' scene sound, a pronounced foreground buzz over the
-# faint ambient `insects` bed. Spectrogram: a steady harmonic drone (wingbeat fundamental and
-# overtones at 150-500 Hz, 86% of energy), continuous with no silence gaps. Loop region
-# 1.276-4.128 s (era-fit v3 fixes, 2026-09-15: re-measured at 48 kHz -- the engine's usual device
-# rate -- rather than the 44.1 kHz `OfflineAudioContext` default; the previously attested
-# 0.906-5.544 s region's wrap jump, decoded at 48 kHz, is 0.0142 against a 0.0031 median step,
-# ~4.7x, audible on a harmonic drone even if fine on broadband noise. A full grid search over
-# every (start, end) pair at least 2 s apart, decoded at 48 kHz, found this region's wrap jump at
-# 1.6e-6 against the same 0.0031 median -- as tight a wrap as this clip has anywhere).
+# (tags: bee, loop, mono; authored as a loop). mid-cretaceous-pollinators' scene sound, a
+# pronounced foreground buzz over the faint ambient `insects` bed. Spectrogram: a steady harmonic
+# drone (wingbeat fundamental and overtones at 150-500 Hz, 86% of energy), continuous with no
+# silence gaps. The loop region is measured at 48 kHz -- the engine's usual device rate -- rather
+# than `OfflineAudioContext`'s 44.1 kHz default, since a wrap that's tight at one rate is not
+# guaranteed tight at the other, and any mismatch is audible on a harmonic drone even when
+# inaudible on broadband noise.
 [[stems]]
 id = "buzzing"
 title = "Bee Flying Loop"
@@ -739,13 +508,12 @@ peak_dbfs = -10.8
 loop = { start_seconds = 1.276, end_seconds = 4.128 }
 
 # https://freesound.org/people/xtra1/sounds/858891/ -- CC0 1.0, xtra1, "Stone on Stone Hit"
-# (tags: chip, hit, impact, rock, stone). New in the era-fit review (ADR-023 amendment
-# 2026-09-15): acheulean-erectus' scene sound, a rhythmic flint-knapping loop. Spectrogram: ~15
-# evenly-spaced sharp broadband strikes over 17.7 s with clean silence between -- a stone-on-stone
-# tapping rhythm, not a single impact or a tool-on-metal clang. Loop region 0.992-17.556 s (wrap
-# jump effectively 0 against a 9e-5 median step, dropping the very first strike the clip opens
-# on so both wrap ends sit in a matched quiet gap). Rejected: Fenodyrie 565914 "stone on
-# stone.wav" (tags brick/concrete/slab -- heavier slapping thuds, not fine hand-knapping).
+# (tags: chip, hit, impact, rock, stone). acheulean-erectus' scene sound, a rhythmic flint-knapping
+# loop. Spectrogram: ~15 evenly-spaced sharp broadband strikes over 17.7 s with clean silence
+# between -- a stone-on-stone tapping rhythm, not a single impact or a tool-on-metal clang. The
+# loop region drops the very first strike the clip opens on, so both wrap ends sit in a matched
+# quiet gap. Rejected Fenodyrie "stone on stone.wav" (565914): heavier slapping thuds (tags
+# brick/concrete/slab), not fine hand-knapping.
 [[stems]]
 id = "knapping"
 title = "Stone on Stone Hit"
@@ -762,20 +530,15 @@ peak_dbfs = -0.3
 loop = { start_seconds = 0.99215, end_seconds = 17.55596 }
 
 # https://freesound.org/people/Danjocross/sounds/507467/ -- CC0 1.0, Danjocross, "Angry
-# Elephant.aiff" (tags: angry, blare, elephant, horn, trumpet). New in the era-fit review
-# (ADR-023 amendment 2026-09-15): pleistocene-steppe's scene sound. **No CC0/PD woolly mammoth
-# recording exists** (no mammoth has been alive to record) -- this is a documented substitution,
-# a single modern elephant trumpet call standing in for a mammoth's, the same "real animal
-# proxy" precedent as `archosaurs`/`large-animal`. Spectrogram: one call, a rising harmonic
-# stack with vibrato modulation over ~2 s then a lower closing bray; no synthesized/game-SFX
-# tonal sweep (checked against the siren criterion) and no second layered species. Rejected:
-# craigsmith 479814 "R01-34-Elephant trumpet.wav" (52 s of ~25 repeated blasts -- reads as a
-# stock-library reel, not one call, for a `once` trigger). `start_seconds = 1.3` (audio review
-# fixes 2, 2026-09-15) skips the file's own ~1.3 s near-silent lead-in (RMS climbs from below
-# -70 dB to the first audible onset only at 1.33-1.37 s, decoded at 48 kHz) so the call starts
-# right on the scene's trigger instead of ~1.3 s late; `loudness_db`/`peak_dbfs` are unchanged
-# -- levels.py's absolute gate (-70 dB) already excluded that lead-in from both measurements
-# (re-verified against the trimmed audio: identical to three significant figures).
+# Elephant.aiff" (tags: angry, blare, elephant, horn, trumpet). pleistocene-steppe's scene sound.
+# No CC0/PD woolly mammoth recording exists (no mammoth has been alive to record) -- a modern
+# elephant trumpet call stands in, the same "real animal proxy" precedent as
+# `archosaurs`/`large-animal`. Spectrogram: one call, a rising harmonic stack with vibrato
+# modulation over ~2 s then a lower closing bray; no synthesized tonal sweep, no second layered
+# species. Rejected craigsmith "R01-34-Elephant trumpet.wav" (479814): ~25 repeated blasts over
+# 52 s, reads as a stock-library reel rather than one call, wrong for a `once` trigger.
+# `start_seconds = 1.3` skips the file's own near-silent lead-in so the call starts right on the
+# scene's trigger instead of lagging behind it.
 [[stems]]
 id = "mammoth"
 title = "Angry Elephant"
@@ -792,34 +555,16 @@ loudness_db = -14.7
 peak_dbfs = -0.2
 
 # https://freesound.org/people/craigsmith/sounds/486027/ -- CC0 1.0, craigsmith,
-# "R12-31-Artillery Guns Firing.wav" (vintage Hollywood optical effect, the same trusted source
-# as `impact`/the re-sourced `archosaurs`). New in the "human-history scene sounds, once-mode fix
-# and Safari re-sourcing" amendment (2026-09-15): a distant-bombardment loop for `somme-1916`
-# only -- `normandy-landings-dday` was considered but kept as `water` (that scene's own amendment
-# text). No genuine period WWI/WWII field recording of distant artillery was found licensed
-# CC0/PD on Freesound or Wikimedia Commons in the time this pass budgeted for sourcing (searched
-# "distant artillery", "artillery barrage", "WWI shelling"; Commons' own WWI/WWII audio holdings
-# are almost entirely speeches, marches or unlicensed film audio) -- this vintage optical library
-# recording is a documented substitution, the same "library effect stands in for the real thing"
-# precedent `impact`/`rocket`/`aircraft` already use. Spectrogram: several sustained bursts of
-# broadband low-mid rumble (concentrated 100-800 Hz, reading as many overlapping reports rather
-# than one shot) separated by quieter gaps; no tonal siren sweep, speech formants, music or
-# ricochet/whistle effects.
-#
-# **Correction (2026-09-15, second pass):** the loop region this amendment originally shipped
-# (20.831-24.623 s, a 3.79 s span) was wrong on both counts its own comment claimed. Re-measured
-# with `Tone.Player`'s actual loop semantics (last sample before `loopEnd` against the first
-# sample at `loopStart`, headless-Chromium-decoded at 44.1 and 48 kHz, not eyeballed): the wrap
-# jump was 0.101 at 48 kHz against a 0.00366 median sample step -- about 27x the median and over
-# 5x the p99 step, an audible click on every 3.79 s repeat, not the attested "3.0e-7 -- effectively
-# 0". A region that short also repeats far too often for a "distant bombardment" bed. Re-searched
-# the whole clip for a long, sample-matched, level-matched wrap: 13.0-28.0 s is one continuous
-# sustained-burst span (no gap below -36 dB), inside which 13.269-27.984 s (14.715 s, comfortably
-# over the "10 s or more" target) wraps at 3.97e-4 (48 kHz) / 4.56e-4 (44.1 kHz) -- both *under*
-# each rate's own median step, not merely under its p99 -- with both ends within 0.05 dB.
-# `loudness_db`/`peak_dbfs` below are re-measured on this new loop region (still not the full
-# raw clip, the same "measure what will actually loop" precedent `forest`'s own comment
-# established).
+# "R12-31-Artillery Guns Firing.wav" (vintage Hollywood optical effect, the same source style as
+# `impact`/`archosaurs`). A distant-bombardment loop for `somme-1916` only (`normandy-landings-dday`
+# uses `water` instead). No genuine period WWI/WWII field recording of distant artillery is
+# licensed CC0/PD on Freesound or Wikimedia Commons -- this vintage optical-library recording is a
+# documented substitution, the same "library effect stands in for the real thing" precedent
+# `impact`/`rocket`/`aircraft` use. Spectrogram: several sustained bursts of broadband low-mid
+# rumble (100-800 Hz, reading as overlapping reports rather than one shot) separated by quieter
+# gaps; no siren, speech, music or ricochet/whistle effects. The loop region spans one continuous
+# sustained-burst stretch (14.7 s) long enough not to repeat too often for a "distant bombardment"
+# bed.
 [[stems]]
 id = "artillery"
 title = "Artillery Guns Firing"
@@ -836,32 +581,15 @@ peak_dbfs = -11.8
 loop = { start_seconds = 13.269, end_seconds = 27.984 }
 
 # https://freesound.org/people/TheFlyFishingFilmmaker/sounds/614299/ -- CC0 1.0,
-# TheFlyFishingFilmmaker, "Gentle waves on a lake". New scene-only stem, added by this review
-# pass's audio correction (2026-09-15): `angkor-wat` and `black-death-messina-1347` had been
-# given `water` (Azores beach surf -- "continuous broadband surf roar", this file's own comment
-# on that stem) for a mirrored temple moat and a sheltered stone quay -- a poor fit at any gain,
-# an ocean-surf character under scenes with no ocean in view. Searched Freesound for a calmer,
-# lake/harbour-character alternative ("lake lapping water", CC0 filter); picked over thirteen
-# other candidates in that search on title/character alone (a full spectrogram/licence pass was
-# only done on this one -- the others were not run down, so this is not a claim they were worse,
-# only that this one was checked and fits). Spectrogram (full clip and the loop region alike):
-# irregular broadband lapping bursts scattered across 0-4 kHz, gentle and uneven in level (roughly
-# -30 to -43 dB across the first 100 s), no continuous roar, no tonal ridge, siren, speech,
-# birdsong or music -- reads as water lightly slapping a shore or hull, not open-ocean surf.
-# 175.5 s raw clip; the last ~20 s runs measurably louder (down to -19.5 dB) and was avoided.
-#
-# Loop region 73.930-84.929 s (11.0 s) sits inside a quiet, splash-peak-free stretch (73-96 s is
-# one long span with no per-second peak above -7 dB; the very end of that span, around 86.2 s,
-# carries the one loud splash in the whole clip and was excluded), found by the same grid search
-# (sample-matched, level-matched within 2 dB) `artillery`/`buzzing`/`knapping` used: wrap jump
-# 4.7e-7 (48 kHz) / 7.0e-9 (44.1 kHz) against a ~1.1e-3 median sample step -- effectively 0. An
-# earlier, longer candidate region (14.973-46.282 s, 31.3 s) wrapped just as cleanly but crossed
-# the clip's one loud splash (peak -0.8 dBFS against -36.4 dB loudness, a 35.6 dB crest); the
-# `level_trim_db` peak cap (`pipeline.audio.StemManifest.level_trim_db`) then could not bring it
-# within the loop reference's 1.5 dB tolerance
-# (`test_real_catalogue_trims_every_loop_to_within_1_5_db_of_the_reference`) -- caught by that
-# test, not eyeballed. `loudness_db`/`peak_dbfs` below are measured on this loop region, not the
-# full clip (same "measure what will actually loop" precedent `forest`/`artillery` established).
+# TheFlyFishingFilmmaker, "Gentle waves on a lake". Scene-only water bed for `angkor-wat` and
+# `black-death-messina-1347` (a mirrored temple moat and a sheltered stone quay) -- `water`'s ocean
+# surf character is a poor fit for either, since neither scene has open ocean in view. Spectrogram:
+# irregular broadband lapping bursts scattered across 0-4 kHz, gentle and uneven in level, no
+# continuous roar, no tonal ridge, siren, speech, birdsong or music -- reads as water lightly
+# slapping a shore or hull. The loop region avoids the clip's one loud splash (~86 s in); an
+# earlier candidate region wrapped just as cleanly but crossed that splash, whose peak-to-loudness
+# crest then kept the trim from meeting the loop reference's tolerance -- caught by
+# `test_real_catalogue_trims_every_loop_to_within_1_5_db_of_the_reference`.
 [[stems]]
 id = "lake-water"
 title = "Gentle waves on a lake"

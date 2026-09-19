@@ -367,8 +367,8 @@ def create_app(backend: ImageBackend) -> typer.Typer:
     @app.command()
     def morph(ctx: typer.Context) -> None:
         """Flow fields between consecutive pinned portraits. Local and free."""
-        # OpenCV and numpy are core dependencies (ADR-015 amendment 2026-09-17: `pipeline.exposure`
-        # needs them directly too), but the import stays deferred and defensive so a broken
+        # OpenCV and numpy are core dependencies (ADR-015: `pipeline.exposure` needs them directly
+        # too), but the import stays deferred and defensive so a broken
         # installation fails with a clear message here rather than at CLI start-up.
         try:
             from pipeline.morph import MorphError, write_morph

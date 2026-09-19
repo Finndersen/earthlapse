@@ -1,29 +1,26 @@
 /**
  * Pure geometry for the pole orientation cue drawn over the globe (`Globe.tsx`'s
- * `PoleAxisMarkers`). No three.js, no React — safe to unit test without a WebGL context, the
- * same convention `blend.ts` and `effects/math.ts` follow for their own pure cores.
+ * `PoleAxisMarkers`). No three.js, no React — unit-testable without a WebGL context, the same
+ * convention `blend.ts` and `effects/math.ts` follow.
  *
- * The 3D axis stub at each pole needs no logic here: it's real depth-tested geometry, so the
- * sphere's own depth buffer hides it correctly when it's on the far side. The "N"/"S" text
- * label does need one — it's a DOM overlay (`@react-three/drei`'s `Html`), not depth-tested
- * geometry — which is what `isPoleVisible` is for. Screen *projection* (where the label lands
- * on screen) is deliberately not reimplemented here: `Html` already does that correctly from
- * the live camera every frame, and hand-rolling it would only risk drifting from three.js's own
- * perspective math for no benefit.
+ * The 3D axis stub needs no logic here: it's real depth-tested geometry, so the sphere's depth
+ * buffer hides it on the far side. The "N"/"S" label does, because it's a DOM overlay
+ * (`@react-three/drei`'s `Html`), not depth-tested geometry — that's what `isPoleVisible` is for.
+ * Screen *projection* is deliberately not reimplemented: `Html` already does it from the live
+ * camera each frame, and hand-rolling it would risk drifting from three.js's perspective math.
  */
 
 export type PoleId = 'N' | 'S'
 
 /**
- * The pole's position on the unit sphere, in the globe's own object space. `shaders.ts`'s uv
- * formula (`v = 0.5 - asin(n.y) / PI`, combined with `texture.flipY = false` on load) makes
- * `v = 0` — the source PNG's top row, i.e. north on every equirectangular paleogeography texture
- * — land at `n.y = 1`. So `+Y` is the geographic north pole.
+ * The pole's position on the unit sphere, in the globe's object space. `shaders.ts`'s uv formula
+ * (`v = 0.5 - asin(n.y) / PI`, with `texture.flipY = false` on load) lands `v = 0` — the source
+ * PNG's top row, north on every equirectangular paleogeography texture — at `n.y = 1`, so `+Y`
+ * is the geographic north pole.
  *
- * This is also each pole's fixed *world* position: `Globe.tsx`'s auto-rotate only mutates the
- * mesh's `rotation.y`, which leaves any point already on the Y axis fixed (the mesh is never
- * translated), so the sphere's own spin never moves a pole on screen — only camera drag
- * (`OrbitControls`) does.
+ * This is also each pole's fixed *world* position: auto-rotate only mutates the mesh's
+ * `rotation.y` and the mesh is never translated, so a point on the Y axis never moves — the
+ * sphere's spin never shifts a pole on screen, only camera drag (`OrbitControls`) does.
  */
 export function poleDirection(pole: PoleId): readonly [number, number, number] {
   return pole === 'N' ? [0, 1, 0] : [0, -1, 0]
@@ -35,18 +32,14 @@ export function poleDirection(pole: PoleId): readonly [number, number, number] {
 export const POLE_VISIBILITY_MARGIN = 0.03
 
 /**
- * Whether `pole` sits on the hemisphere of a sphere (radius `sphereRadius`, centred at the
- * origin) that faces a camera at `cameraPosition` — the same self-occlusion a depth buffer
- * would resolve for real geometry there, computed directly since the pole label is DOM, not
- * depth-tested geometry.
+ * Whether `pole` sits on the sphere's camera-facing hemisphere — the self-occlusion a depth
+ * buffer resolves for real geometry, computed directly because the label is DOM.
  *
- * Derivation: a point `P` on the sphere (`|P| = sphereRadius`) is on the hemisphere facing
- * camera `C` iff the ray from `P` to `C` doesn't point back into the sphere — i.e. the outward
- * surface normal at `P` (`P / sphereRadius`) has a non-negative component along `C - P`:
- * `dot(C - P, P) >= 0`, which simplifies (`dot(P, P) = sphereRadius²`) to
- * `dot(C, P) >= sphereRadius²`, or in terms of the angle `θ` between `C` and `P`:
- * `cos(θ) >= sphereRadius / |C|`. `POLE_VISIBILITY_MARGIN` tightens that bound slightly so the
- * label hides a little before the true horizon.
+ * Derivation: a point `P` on the sphere (`|P| = sphereRadius`) faces camera `C` iff the outward
+ * normal at `P` has a non-negative component along `C - P`: `dot(C - P, P) >= 0`, which (since
+ * `dot(P, P) = sphereRadius²`) simplifies to `dot(C, P) >= sphereRadius²`, i.e.
+ * `cos(θ) >= sphereRadius / |C|`. `POLE_VISIBILITY_MARGIN` tightens the bound so the label hides
+ * just before the true horizon.
  */
 export function isPoleVisible(
   pole: PoleId,

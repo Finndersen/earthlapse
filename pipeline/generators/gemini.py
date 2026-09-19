@@ -66,10 +66,10 @@ class ModelPrice(BaseModel):
     output_image_tokens: dict[ImageSize, int]
 
 
-# Standard paid tier, confirmed against https://ai.google.dev/gemini-api/docs/pricing on
-# 2026-09-13: $2.00/M input (text and image, ~$0.0011 per input image), $12.00/M text and
-# thinking output, $120.00/M image output (~$0.134 per 1K/2K image, ~$0.24 per 4K). The page
-# now lists these under the GA id; actual cost is recomputed per call from usageMetadata.
+# Standard paid tier, per https://ai.google.dev/gemini-api/docs/pricing (listed there under the
+# GA id, not the preview id above): $2.00/M input (text and image, ~$0.0011 per input image),
+# $12.00/M text and thinking output, $120.00/M image output (~$0.134 per 1K/2K image, ~$0.24 per
+# 4K). Actual cost is recomputed per call from usageMetadata.
 PRICES: dict[str, ModelPrice] = {
     MODEL_ID: ModelPrice(
         input_per_m=2.00,

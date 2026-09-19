@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud } from './hudVisibility'
 
 describe('isHiddenFromHud', () => {
-  it('hides co2 from the HUD (2026-09-18: display-only, event feed gets the space)', () => {
+  it('hides co2 from the HUD', () => {
     expect(isHiddenFromHud('co2')).toBe(true)
     expect(HUD_HIDDEN_LAYER_IDS.has('co2')).toBe(true)
   })

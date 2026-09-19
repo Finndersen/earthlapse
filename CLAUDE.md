@@ -129,3 +129,29 @@ not merge conflicts:
 Python 3.12, pydantic v2, Typer, ruff, full type hints. TypeScript strict,
 react-three-fiber, zustand. Prefer small pure functions and explicit protocols over
 frameworks — the codebase should be readable end to end without learning a DSL.
+
+### Comments
+
+Comments explain the code **as it exists now**, as briefly as the point allows, and only where
+the code cannot say it itself. A constant whose value is non-obvious gets the reason for *that
+value* — not who asked for it, or when.
+
+Do not write: verbatim user-report quotes, dates, "user report:"/"user ask:" preambles,
+narratives of what the code used to do, accounts of which bug a line fixed, internal work-item
+labels ("W12a", "item 7", "re-review fix", "follow-up pass"), or a restatement of an ADR that
+already records the decision. **History belongs in git commit messages and
+`docs/DECISIONS.md`.** A work-item label is the worst of these: it is meaningless to anyone
+outside the session that coined it, and it never becomes meaningful again.
+
+This applies to **test titles and `it.each` row labels** too, not just comments. A test title
+says what behaviour is asserted, in the present tense. A comment duplicating them goes stale and actively misleads the next
+reader; an inline narrative buries the logic it sits on top of.
+
+Length is itself a smell. A doc comment running past ~8 lines is usually recording a decision
+(→ ADR), re-deriving something a reader can see (→ delete), or describing a past state
+(→ delete). Module-level docs explaining a genuinely non-obvious *mechanism* — `fisheye.ts`'s
+mass-conservation invariant, `paleogeography.py`'s reconstruction model — are the legitimate
+exception, and they stay because they describe the design, not its history.
+
+Exempt: `README.md`, `docs/**`, and source-provenance comments carrying real citations in
+`sources/**` and `data/*.yaml` — history and citations legitimately live in those.

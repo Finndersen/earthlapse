@@ -2,18 +2,15 @@
  * A small least-recently-used map with an explicit trim step. Pure bookkeeping (no three.js)
  * so it is unit testable; `textureCache.ts` wraps it around GPU textures.
  *
- * Eviction is deliberately NOT automatic on insert: only the caller knows which entries are
- * on screen right now, and disposing a texture that is still bound would blank the globe.
- * `trim(keep)` evicts least-recently-used entries until the cache is back within capacity,
- * never touching a key in `keep` (so a cache can briefly exceed capacity when everything in
- * it is in use).
+ * Eviction is deliberately NOT automatic on insert: only the caller knows which entries are on
+ * screen, and disposing a texture that is still bound would blank the globe. `trim(keep)` evicts
+ * least-recently-used entries until the cache is back within capacity, never touching a key in
+ * `keep` — so a cache can briefly exceed capacity when everything in it is in use.
  *
- * `trim(keep, { aggressive: true })` (ADR-030) evicts every entry not in `keep`
- * regardless of capacity, rather than only once the cache exceeds it, once `t` is well inside the
- * human-era basemap span. Ordinary `trim` alone would leave up to `capacity` PaleoDEM frames
- * resident (each still under the cap) even while the globe is showing the basemap and none of
- * them are on screen or about to be — cheap to hold in isolation, but a trimmed-down PaleoDEM
- * cache is load-bearing headroom for the human-era textures at that point, not a nice-to-have.
+ * `trim(keep, { aggressive: true })` (ADR-030) evicts every entry not in `keep` regardless of
+ * capacity, used once `t` is well inside the human-era basemap span. Ordinary `trim` would leave
+ * up to `capacity` PaleoDEM frames resident while the globe shows the basemap and none are on
+ * screen or about to be; freeing them is load-bearing headroom for the human-era textures.
  */
 
 export class LruCache<V> {

@@ -14,20 +14,19 @@
  * units — `axisTransform` only ever changes where a value lands on the plot, never how it's
  * labelled — and a log axis says so inline (`chartAxisScale`) so the shape can't be misread.
  *
- * Unlike `Sparkline` (which simply stops drawing at `t`, 2026-09-18's first re-review), this
- * chart is opened deliberately to inspect the data, so hiding the not-yet-reached portion
- * outright would make the axis jump around as `t` moves and leave the chart unreadable at an
- * early `t` (a chart with almost nothing on it). Instead the reached portion draws at full
- * weight (`chartLine`/`chartArea`/`chartBand`) and the rest draws as a faint, fill-less "ghost"
- * (`chartLineGhost` — thin, low-opacity, no area wash, no band) that shares its boundary point
- * with the solid line so the two visually join with no gap, giving a stable "you are here, this
- * is what has happened so far, this is what's coming" reading (2026-09-18, second re-review: "my
- * idea... was for them to grow over time, not be fully visible upfront" — the sparkline was the
- * primary target, but leaving this fully solid at every `t` would repeat the same complaint
- * here). A genuine no-record gap (ADR-027) reads as a real break either way — a `null` sample
- * still ends a segment outright (see `flushLine`/`flushBand` below) before the reached/future
- * split below ever runs, so an absence (a gap: no line, reached or not) never gets confused with
- * a faint-but-present ghost line (a future point: not real data yet, but not a data hole either).
+ * Unlike `Sparkline`, which simply stops drawing at `t`, this chart is opened deliberately to
+ * inspect the data, so hiding the not-yet-reached portion outright would make the axis jump
+ * around as `t` moves and leave the chart unreadable at an early `t` (a chart with almost
+ * nothing on it). Instead the reached portion draws at full weight (`chartLine`/`chartArea`/
+ * `chartBand`) and the rest draws as a faint, fill-less "ghost" (`chartLineGhost` — thin,
+ * low-opacity, no area wash, no band) that shares its boundary point with the solid line so the
+ * two visually join with no gap: a stable "you are here, this is what has happened so far, this
+ * is what's coming" reading, never a fully solid future that would misrepresent unresolved data
+ * as already known. A genuine no-record gap (ADR-027) reads as a real break either way — a
+ * `null` sample still ends a segment outright (see `flushLine`/`flushBand` below) before the
+ * reached/future split ever runs, so an absence (a gap: no line, reached or not) never gets
+ * confused with a faint-but-present ghost line (a future point: not real data yet, but not a
+ * data hole either).
  */
 
 import { useEffect } from 'react'

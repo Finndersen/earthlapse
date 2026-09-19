@@ -1,14 +1,13 @@
 /**
  * Module-level globe texture cache shared by every `Globe` instance: each URL is fetched and
- * decoded at most once while it stays cached, and concurrent requests for one URL share a
- * single load. Not itself part of the pure `t -> value` contract (it does I/O and holds
- * GPU-side state), so it lives outside `blend.ts` and is exercised through the component;
- * the eviction policy it relies on is `lru.ts`, which is unit tested.
+ * decoded at most once while cached, and concurrent requests for one URL share a single load.
+ * Does I/O and holds GPU state, so it sits outside the pure `t -> value` contract in `blend.ts`;
+ * its eviction policy lives in the unit-tested `lru.ts`.
  *
- * With one texture per PaleoDEM epoch (109, ADR-013) keeping everything ever seen would hold
- * ~218 MB of RGBA on the GPU, so the cache is bounded. `trimGlobeTextures(keep)` is called by
- * `useGlobeTexturePair` after it binds a pair, with the bound pair and the preload window as
- * `keep`, so a texture on screen is never disposed.
+ * One texture per PaleoDEM epoch (109, ADR-013) would be ~218 MB of RGBA on the GPU if nothing
+ * were evicted, so the cache is bounded. `useGlobeTexturePair` calls `trimGlobeTextures(keep)`
+ * after binding a pair, passing the bound pair plus the preload window, so a texture on screen is
+ * never disposed.
  *
  * Decoding goes through `createImageBitmap`, which decodes off the main thread; an
  * `HTMLImageElement` would decode synchronously on first upload and hitch playback.

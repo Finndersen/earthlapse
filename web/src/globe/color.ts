@@ -1,11 +1,10 @@
 /**
  * sRGB hex to linear-light RGB. Every colour this package composites in a fragment shader is a
- * *linear* value — `GLOBE_FRAGMENT_SHADER` and friends end with `#include <colorspace_fragment>`,
- * which re-encodes the finished frame for the sRGB canvas (`shaders.ts`'s own note on why a raw
- * `ShaderMaterial` does not get that for free). three.js does this conversion silently inside
- * `new THREE.Color('#...')`; this is the same conversion as a pure function, so a colour can be
- * written once as the hex a stylesheet also uses and reach a shader uniform, an instanced vertex
- * attribute and a CSS gradient stop without three separate hand-converted copies.
+ * *linear* value — the shaders end with `#include <colorspace_fragment>`, which re-encodes the
+ * finished frame for the sRGB canvas (see `shaders.ts` on why a raw `ShaderMaterial` doesn't get
+ * that for free). three.js does this conversion silently inside `new THREE.Color('#...')`; doing
+ * it as a pure function lets one hex value reach a shader uniform, an instanced vertex attribute
+ * and a CSS gradient stop without three hand-converted copies.
  */
 
 /** The sRGB electro-optical transfer function, per IEC 61966-2-1 — identical to three.js's own

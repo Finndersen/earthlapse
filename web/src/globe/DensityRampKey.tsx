@@ -1,15 +1,13 @@
 'use client'
 
 /**
- * The people/km² colour key under the "Human civilisation" toggle. A density colour carries no
- * meaning on its own, so the one overlay in this layer that uses colour to encode a quantity gets
- * a scale; arrivals and cities do not, and deliberately have no key (the user's own direction).
+ * The people/km² colour key under the "Human civilisation" toggle. Only this overlay uses colour
+ * to encode a quantity, so only it gets a scale; arrivals and cities deliberately have no key.
  *
- * The gradient and the tick positions are generated from `density.ts`'s `DENSITY_RAMP` itself —
- * the same stops the fragment shader interpolates — placed at each stop's own `log10(1 + d)`
- * position, which is exactly the axis the shader interpolates along. So the key cannot claim a
- * colour the globe does not paint, and its spacing is the ramp's real spacing rather than an
- * evenly-spread approximation of it.
+ * Gradient and tick positions are generated from `density.ts`'s `DENSITY_RAMP` — the same stops
+ * the fragment shader interpolates — at each stop's own `log10(1 + d)` position, the axis the
+ * shader interpolates along. The key therefore cannot claim a colour the globe does not paint,
+ * and its spacing is the ramp's real spacing rather than an even approximation.
  */
 
 import { DENSITY_RAMP } from './density'

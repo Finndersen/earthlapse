@@ -40,10 +40,10 @@ export interface TimeState {
   globeExpanded: boolean
   /** Which HUD layer's sparkline is expanded to a full-width chart, if any (DESIGN §8). */
   expandedChartLayerId: string | null
-  /** The event feed card (or, later, timeline marker) currently open in `EventDetailPanel`
-   *  (W-followup item 12), if any. `Experience.tsx` owns the accompanying "pause on open, resume
-   *  on close if it was playing" behaviour — this store only remembers which event, like
-   *  `expandedChartLayerId` remembers which chart. */
+  /** The event feed card (or, later, timeline marker) currently open in `EventDetailPanel`, if
+   *  any. `Experience.tsx` owns the accompanying "pause on open, resume on close if it was
+   *  playing" behaviour — this store only remembers which event, like `expandedChartLayerId`
+   *  remembers which chart. */
   detailEventId: string | null
 
   /** Moves `t` (clamped to the domain) and follows it with the section: see the invariant in

@@ -78,7 +78,7 @@ describe('nextOnceTriggerState', () => {
     expect(result.fired).toBeNull()
   })
 
-  it('fires the instant the once-mode scene becomes dominant (mix crosses 0.5), not only once fully settled at 1 — the fix for once sounds never firing in densely-scened clusters, where the rate-limited presented mix can be re-targeted before it ever reaches exactly 1 (ADR-023 amendment 2026-09-15)', () => {
+  it('fires the instant the once-mode scene becomes dominant (mix crosses 0.5), not only once fully settled at 1', () => {
     const result = nextOnceTriggerState(mix(plain, withOnce, 0.5), true, true, new Set())
     expect(result.fired?.id).toBe('once-scene')
     expect(result.armedOff.has('once-scene')).toBe(true)
@@ -110,7 +110,7 @@ describe('nextOnceTriggerState', () => {
     expect(returned.fired?.id).toBe('once-scene')
   })
 
-  it('fires each once-mode scene in a dense cluster exactly once, even when a later target re-targets before the presented mix would have settled at any of them — a pure simulation of the diagnosed bug', () => {
+  it('fires each once-mode scene in a dense cluster exactly once, even when a later target re-targets before the presented mix would have settled at any of them', () => {
     const a = scene('a', { sound: { stem: 'impact', mode: 'once', gain: 1 } })
     const b = scene('b', { sound: { stem: 'impact', mode: 'once', gain: 1 } })
     const c = scene('c', { sound: { stem: 'impact', mode: 'once', gain: 1 } })
@@ -147,7 +147,7 @@ describe('nextOnceTriggerState', () => {
     expect(nextOnceTriggerState(mix(loopOnly, loopOnly, 1), true, true, new Set()).fired).toBeNull()
   })
 
-  describe('the "playing gate" (2026-09-15 correction) — pressing play is not itself an arrival', () => {
+  describe('the "playing gate" — pressing play is not itself an arrival', () => {
     it('does not fire when playing transitions false -> true while already sitting on a once-mode scene, but arms it off', () => {
       const result = nextOnceTriggerState(mix(withOnce, withOnce, 0), true, false, new Set())
       expect(result.fired).toBeNull()
@@ -205,7 +205,7 @@ describe('useSceneSoundOnceTrigger', () => {
     expect(result.current?.id).toBe('once-scene')
   })
 
-  it('does not fire when playback resumes while already sitting on a once-mode scene (2026-09-15 "playing gate" correction) — pressing play is not an arrival', async () => {
+  it('does not fire when playback resumes while already sitting on a once-mode scene — pressing play is not an arrival', async () => {
     const { result, rerender } = renderHook(
       ({ presented, playing }: { presented: SceneMix; playing: boolean }) => useSceneSoundOnceTrigger(presented, playing),
       { initialProps: { presented: mix(withOnce, withOnce, 0) as SceneMix, playing: false } },
@@ -248,7 +248,7 @@ describe('onceSoundOutlived', () => {
   })
 
   describe('before the scene has ever been presented-dominant (hasBeenPresented: false) — reads target instead', () => {
-    it('is false while a lagging presented mix still shows the previous scene, as long as target is still on the fired scene — the exact bug this correction fixes: a voice fired off target must not be faded on the very next tick just because presented has not caught up yet', () => {
+    it('is false while a lagging presented mix still shows the previous scene, as long as target is still on the fired scene — a voice fired off target must not be faded on the very next tick just because presented has not caught up yet', () => {
       // target has already arrived at `launch`; presented (rate-limited) is still catching up
       // and shows `next` receding — this is exactly what happens on the tick right after a once
       // voice fires off the raw target mix.

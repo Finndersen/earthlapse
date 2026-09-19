@@ -1,8 +1,7 @@
 /**
- * Tier-1 ambience stem gains (ADR-023 §1, its 2026-09-14 "era fit v3" amendment, its 2026-09-15
- * "era fit v3 fixes" amendment and its 2026-09-15 "wing-hum" amendment, DESIGN §11).
- * `stemGains(t, flatBasaltWindows)` is pure in both arguments and called every engine tick while
- * sound is on (`engine.ts`), so it stays allocation-light and never imports `tone`.
+ * Tier-1 ambience stem gains (ADR-023 §1, DESIGN §11). `stemGains(t, flatBasaltWindows)` is pure
+ * in both arguments and called every engine tick while sound is on (`engine.ts`), so it stays
+ * allocation-light and never imports `tone`.
  *
  * Every boundary is cited inline; event ids refer to `data/events.yaml` (`land-plants`,
  * `first-forests`, `dinosaurs`, `end-triassic-extinction`, `k-pg-impact`,
@@ -18,20 +17,19 @@ import type { GeoTime } from '@/types/layer'
 import { bump, clampUnit, rampLog, type TimeWindow } from './ramp'
 import type { StemGains } from './stemIds'
 
-/** Kept below v1's 0.6 so the K-Pg `impact` one-shot, not an adjacent Deccan swell, owns the
- *  impact moment (ADR-023 amendment). */
+/** Kept low so the K-Pg `impact` one-shot, not an adjacent Deccan swell, owns the impact moment
+ *  (ADR-023). */
 const VOLCANIC_FLOOD_BASALT_BUMP_GAIN = 0.45
 
 /**
  * `wind`/`water`/`storm` stop being a global ambient bed once terrestrial ecosystems establish
- * (ADR-023 amendment "era fit v3"). 385 Ma rounds `first-forests`'s `t_min` (3.78e8, Late Devonian
- * *Archaeopteris* forests, `data/events.yaml`); 370 Ma sits inside that same post-`first-forests`
- * window and marks land as vegetated enough for a terrestrial rustle bed (`forest`) to fully take
- * over. `devonian-estuary` (375 Ma) keeps its own `water` scene sound throughout, so it needs no
- * help from this global curve. Past this window `wind`/`water`/`storm` are heard only where a
- * scene's own `sound` names them (coastal, ice, storm or open-wind scenes -- data/scenes.yaml), or
- * where a real, dated climate event bumps `wind` back in (`LGM_WIND_WINDOW` below) -- never as a
- * global bed.
+ * (ADR-023). 385 Ma rounds `first-forests`'s `t_min` (3.78e8, Late Devonian *Archaeopteris*
+ * forests, `data/events.yaml`); 370 Ma sits inside that same post-`first-forests` window and
+ * marks land as vegetated enough for a terrestrial rustle bed (`forest`) to fully take over.
+ * `devonian-estuary` (375 Ma) keeps its own `water` scene sound throughout, so it needs no help
+ * from this global curve. Past this window `wind`/`water`/`storm` are heard only where a scene's
+ * own `sound` names them (coastal, ice, storm or open-wind scenes), or where a real, dated
+ * climate event bumps `wind` back in (`LGM_WIND_*` below) — never as a global bed.
  */
 const TERRESTRIAL_BED_FADE_START = 3.85e8
 const TERRESTRIAL_BED_FADE_END = 3.7e8
@@ -42,19 +40,17 @@ function terrestrialBedFade(t: GeoTime): number {
 
 /**
  * The Last Glacial Maximum, ~26.5-19 ka (Clark, P.U. et al. (2009). "The Last Glacial Maximum."
- * *Science* 325(5941), 710-714) -- a real, dated bump back into an otherwise-silent `wind`
- * curve, the same mechanism `volcanic`'s flood-basalt bump already uses, not a return of the
- * global pre-land bed. `pleistocene-steppe` (20 ka, "a cold, dry steppe") carries the human's
- * explicit "woolly mammoth sound effect" `once` request (`data/scenes.yaml`) -- a scene has one
- * `sound` slot, so the katabatic-wind character that scene's own open cold steppe wants has
- * nowhere else to live except this global, dated curve (ADR-023 amendment "era fit v3 fixes":
- * the v3 build's own comment claimed every ice/steppe scene "already carried or kept a `wind`
- * loop", which was true of `ice-age-europe-neanderthal` but not of `pleistocene-steppe`). The
- * window comfortably brackets 20 ka without reaching into `ice-age-europe-neanderthal` (42 ka,
- * already carries its own `wind` loop) or `gobekli-tepe` (11.5 ka, a settlement scene). Centred
- * with `presenceNotch` (below) exactly on the scene's own `t` — a plain `bump()` peaks at a
- * window's arithmetic-mean midpoint (22.75 ka here), 2.75 kyr off the scene itself, leaving the
- * bump at only ~19% of its full gain right where it needs to be loudest.
+ * *Science* 325(5941), 710-714) — a real, dated bump back into an otherwise-silent `wind` curve,
+ * the same mechanism `volcanic`'s flood-basalt bump already uses, not a return of the global
+ * pre-land bed. `pleistocene-steppe` (20 ka, "a cold, dry steppe") carries the scene's explicit
+ * "woolly mammoth sound effect" `once` request (`data/scenes.yaml`) — a scene has one `sound`
+ * slot, so the katabatic-wind character that scene's own open cold steppe wants has nowhere else
+ * to live except this global, dated curve. The window comfortably brackets 20 ka without
+ * reaching into `ice-age-europe-neanderthal` (42 ka, already carries its own `wind` loop) or
+ * `gobekli-tepe` (11.5 ka, a settlement scene). Centred with `presenceNotch` (below) exactly on
+ * the scene's own `t` — a plain `bump()` peaks at a window's arithmetic-mean midpoint (22.75 ka
+ * here), 2.75 kyr off the scene itself, leaving the bump at only ~19% of its full gain right
+ * where it needs to be loudest.
  */
 const LGM_WIND_OLDER_EDGE = 2.65e4
 const LGM_WIND_SCENE_T = 2.0e4
@@ -79,51 +75,46 @@ const K_PG_END = 6.6032e7
 
 /**
  * A "presence" multiplier: 1 (unsuppressed) at and beyond `olderEdge`/`youngerEdge`, falling to
- * exactly 0 at `centerT` in between -- the shared shape both the K-Pg duck and the two barren-
+ * exactly 0 at `centerT` in between — the shared shape both the K-Pg duck and the two barren-
  * scene ducks below need (a fall then a rise, which a single monotonic `rampLog` cannot express:
  * once one clamps flat at its floor it never recovers). The two `rampLog` calls have disjoint
  * domains that meet at exactly 0 at `centerT` (the first's floor, the second's ceiling), so
- * summing them reproduces the notch -- the same disjoint-domain-sum idiom `water`'s own formula
- * already uses, generalised from a single hand-written instance in the v3 build.
+ * summing them reproduces the notch — the same disjoint-domain-sum idiom `water`'s own formula
+ * uses.
  */
 function presenceNotch(t: GeoTime, olderEdge: GeoTime, centerT: GeoTime, youngerEdge: GeoTime): number {
   return clampUnit(rampLog(t, olderEdge, centerT, 1, 0) + rampLog(t, centerT, youngerEdge, 0, 1))
 }
 
 /**
- * Silences the vegetation/insect ambience across the K-Pg impact and its aftermath -- a real,
+ * Silences the vegetation/insect ambience across the K-Pg impact and its aftermath — a real,
  * dated, GLOBAL catastrophe (unlike the two isolated scene-local ducks below), so a `t`-only
- * curve is the right model, not an approximation (ADR-023 amendment "era fit v3 fixes"). Falls
- * from 1 (full presence, before the impact) to 0 across the ~4-day pyroclastic/thermal pulse
- * (the same `K_PG_IMPACT` -> `K_PG_IMPACT_DAYS_AFTER` window `archosaurs` already ducks across
- * for the same reason), stays there through `kpg-darkness` and the ~century-later
- * `kpg-aftermath` (both scenes sit inside the still-near-0 early part of the recovery ramp,
- * nowhere near its own 64.1 Ma floor), then recovers back to 1 by `KPG_FOREST_RECOVERY_T`.
+ * curve is the right model, not an approximation. Falls from 1 (full presence, before the
+ * impact) to 0 across the ~4-day pyroclastic/thermal pulse (the same `K_PG_IMPACT` ->
+ * `K_PG_IMPACT_DAYS_AFTER` window `archosaurs` already ducks across for the same reason), stays
+ * there through `kpg-darkness` and the ~century-later `kpg-aftermath` (both scenes sit inside
+ * the still-near-0 early part of the recovery ramp, nowhere near its own 64.1 Ma floor), then
+ * recovers back to 1 by `KPG_FOREST_RECOVERY_T`.
  */
 function kpgVegetationDuck(t: GeoTime): number {
   return presenceNotch(t, K_PG_IMPACT, K_PG_IMPACT_DAYS_AFTER, KPG_FOREST_RECOVERY_T)
 }
 
 /**
- * Two isolated, scene-local "nothing living is on screen" windows (ADR-023 amendment "era fit
- * v3 fixes": the review found `forest`/`insects`/`birds`/`mammals` all still playing at full
- * strength under scenes whose own `subject.vegetation`/`fauna`/`absent` explicitly rule them
- * out). Unlike the K-Pg duck above, neither of these is a global mass-extinction -- at 33.7 Ma
- * most of Earth still had rainforest; only Antarctica's freshly-calved coast did not. So each
- * uses `presenceNotch` centred exactly on that ONE scene's own `t`, bounded by its dominant
- * span in the published manifest (the `log1p(t)`-space dissolve midpoint to its neighbour on
- * each side, from `data/media/manifest.json`) rather than the real duration of the geological
- * event it depicts -- it approximates "what's on screen right now" the only way a `t`-only curve
- * can, and is documented as such rather than mis-citing a source for a global claim it is not
- * making.
+ * Two isolated, scene-local "nothing living is on screen" windows, for scenes whose own
+ * `subject.vegetation`/`fauna`/`absent` explicitly rules out `forest`/`insects`/`birds`/`mammals`.
+ * Unlike the K-Pg duck above, neither is a global mass-extinction — at 33.7 Ma most of Earth
+ * still had rainforest; only Antarctica's freshly-calved coast did not. Each uses `presenceNotch`
+ * centred exactly on that ONE scene's own `t`, bounded by its dominant span in the published
+ * manifest (the `log1p(t)`-space dissolve midpoint to its neighbour on each side) rather than the
+ * real duration of the geological event it depicts — an approximation of "what's on screen right
+ * now", documented as such rather than mis-citing a source for a global claim it isn't making.
  *
  * - `eocene-oligocene-icesheet` (33.7 Ma, "no forest anywhere in view... no animals in view"):
- *   between `eocene-jungle` (50 Ma) and `miocene-grassland` (18 Ma) in the manifest, a span this
- *   scene has entirely to itself -- and one during which global cooling and forest contraction
- *   through the Eocene-Oligocene transition (Hutchinson, D.K. et al. (2021). "The
- *   Eocene-Oligocene transition: a review of marine and terrestrial proxy data, models and
- *   model-data comparisons." *Climate of the Past* 17, 269-315) was a real, if less abrupt,
- *   trend, so a broad suppression here is not purely a screen-time artefact.
+ *   between `eocene-jungle` (50 Ma) and `miocene-grassland` (18 Ma), a span this scene has
+ *   entirely to itself — and one during which global cooling and forest contraction through the
+ *   Eocene-Oligocene transition (Hutchinson, D.K. et al. (2021). "The Eocene-Oligocene
+ *   transition..." *Climate of the Past* 17, 269-315) was a real, if less abrupt, trend.
  * - `messinian-salt-flats` (5.6 Ma, "absent: any plant, any animal"): between
  *   `c4-savanna-hipparion` (7 Ma) and `lucy-afarensis` (3.2 Ma).
  */
@@ -143,28 +134,26 @@ function lifePresence(t: GeoTime): number {
 }
 
 /**
- * `wing-hum` -- a QUIET, generic winged-insect wing-drone, filling the gap `insects` (a
+ * `wing-hum` — a QUIET, generic winged-insect wing-drone, filling the gap `insects` (a
  * cricket-STRIDULATION clip) honestly cannot: Grimaldi, D. & Engel, M.S. (2005). *Evolution of
- * the Insects*. Cambridge University Press dates unambiguous WINGED insects (Meganisoptera --
- * griffinflies, the `carboniferous-swamp` scene's own Meganeura among them -- and early
+ * the Insects*. Cambridge University Press dates unambiguous WINGED insects (Meganisoptera —
+ * griffinflies, the `carboniferous-swamp` scene's own Meganeura among them — and early
  * Palaeodictyopterida) to ~325 Ma, 25 Myr before Song et al. 2020's ~300 Ma date for
- * stridulation, the one character `insects`' own clip actually has (an earlier build tried
- * playing that stridulating clip from 385 Ma and 325 Ma; both stages were dropped by the "era fit
- * v3 fixes" amendment for citing a character the clip doesn't have -- see that amendment's §3 and
- * its own "Unresolved" note). `wing-hum` uses a DIFFERENT clip (`sources/audio-stems/stems.toml`:
- * kangaroovindaloo "Blowflies!", CC0 -- a diffuse, continuous swarm texture, spectrogram-checked
- * for the absence of discrete pulses, FM bird chirps or periodic frog croaking), so it can rise
- * on its own citation without inheriting `insects`' stridulation date. Ramps in 325 -> 320 Ma to
- * a plateau just under `fire`'s own 0.15 texture level -- clearly audible in the mix from
- * `carboniferous-swamp` onwards without outweighing `forest`'s 0.3 baseline -- ducked by
- * `humanDominance` and `lifePresence` exactly like `insects`.
+ * stridulation, the one character `insects`' own clip actually has. `wing-hum` uses a DIFFERENT
+ * clip (`sources/audio-stems/stems.toml`: kangaroovindaloo "Blowflies!", CC0 — a diffuse,
+ * continuous swarm texture, spectrogram-checked for the absence of discrete pulses, FM bird
+ * chirps or periodic frog croaking), so it can rise on its own citation without inheriting
+ * `insects`' stridulation date. Ramps in 325 -> 320 Ma to a plateau just under `fire`'s own 0.15
+ * texture level — clearly audible in the mix from `carboniferous-swamp` onwards without
+ * outweighing `forest`'s 0.3 baseline — ducked by `humanDominance` and `lifePresence` exactly
+ * like `insects`.
  *
  * **Persists, rather than receding, once `insects` itself starts at 300 Ma.** The two read as
  * different characters (a continuous drone vs. discrete stridulation chirps), not a duplicate of
- * the same sound, and flying insects did not go extinct when stridulation evolved -- winged
+ * the same sound, and flying insects did not go extinct when stridulation evolved — winged
  * insect lineages have flown continuously from the Carboniferous to the present (Grimaldi & Engel
  * 2005), so a generic wing-hum staying audible under every later insect stage is the honest
- * reading, not an artefact left behind by an unfinished fade-out.
+ * reading.
  */
 const WING_HUM_RAMP_START = 3.25e8
 const WING_HUM_RAMP_END = 3.2e8
@@ -209,10 +198,10 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
   const life = lifePresence(t)
 
   return {
-    // `land-plants`/`first-forests`: vegetation softens open wind (unchanged from v1), THEN the
-    // whole pre-land bed fades to 0 by 370 Ma, once land is vegetated enough for `forest` to carry
-    // the terrestrial bed (`terrestrialBedFade`) — past this a wind scene sound (ice-sheet,
-    // salt-flat, steppe, storm scenes) or the dated LGM bump is what carries it.
+    // `land-plants`/`first-forests`: vegetation softens open wind, THEN the whole pre-land bed
+    // fades to 0 by 370 Ma, once land is vegetated enough for `forest` to carry the terrestrial
+    // bed (`terrestrialBedFade`) — past this a wind scene sound (ice-sheet, salt-flat, steppe,
+    // storm scenes) or the dated LGM bump is what carries it.
     wind: clampUnit(
       rampLog(t, 4.7e8, 3.78e8, 0.6, 0.32) * bedFade +
         LGM_WIND_BUMP_GAIN * (1 - presenceNotch(t, LGM_WIND_OLDER_EDGE, LGM_WIND_SCENE_T, LGM_WIND_YOUNGER_EDGE)),
@@ -224,15 +213,14 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Surf recedes to a background as life, and the scenes, move inland across the same
         // `land-plants` → `first-forests` window that softens wind.
         rampLog(t, 4.7e8, 3.78e8, 0, 0.2)) *
-        // Then out entirely by the same dissolve boundary `wind` fades across (era-fit v3) — a
+        // Then out entirely by the same dissolve boundary `wind` fades across — a
         // coastal/estuary/landfall/panama scene brings it back with its own water loop; arid
         // inland and forest scenes no longer sit on a surf roar.
         bedFade,
     ),
     // Flat placeholder until paleoclimate precipitation is curated (ADR-023 Consequences), faded
-    // out with the rest of the pre-land bed (era-fit v3). No scene names `stem: storm` today
-    // (`data/scenes.yaml`), so this stem is silent past 370 Ma until one does — recorded
-    // honestly rather than claiming a restoring scene that does not exist.
+    // out with the rest of the pre-land bed. No scene names `stem: storm` today
+    // (`data/scenes.yaml`), so this stem is silent past 370 Ma until one does.
     storm: clampUnit(0.22 * bedFade),
     // Secular Hadean → Neoproterozoic decline, then out through the early Phanerozoic: the clip is
     // a crater-rim recording with eruption blasts, a plausible bed only on a volcanically
@@ -246,24 +234,19 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
     // in lockstep with the bed's own fade-out (`TERRESTRIAL_BED_FADE_START`/`_END`) and holding
     // as the "the world has land life on it now" backdrop ever after (ducked by
     // `humanDominance` like the other wildlife stems, and by `lifePresence` wherever the
-    // on-screen scene itself is a global die-off or a barren, lifeless setting — era-fit v3 fix).
+    // on-screen scene itself is a global die-off or a barren, lifeless setting).
     forest: clampUnit(rampLog(t, TERRESTRIAL_BED_FADE_START, TERRESTRIAL_BED_FADE_END, 0, 0.3) * duck(0.8, dominance) * life),
     // See `wingHum`'s own doc comment: a quiet, generic wing-drone (a DIFFERENT, non-stridulating
     // clip from `insects`') covering the 325-300 Ma gap `insects` itself cannot honestly cover,
-    // then persisting rather than receding once `insects` starts (2026-09-15 "wing-hum" amendment,
-    // closing the "era fit v3 fixes" amendment's own "Unresolved" item).
+    // then persisting rather than receding once `insects` starts.
     'wing-hum': clampUnit(wingHum(t, dominance, life)),
     insects: clampUnit(
       // Forewing stridulation — the only character this clip has (a cricket-stridulation loop,
       // `sources/audio-stems/stems.toml`) — evolves late Carboniferous–early Permian (Song et
-      // al. 2020, Nat. Commun. 11:4939); Orthoptera ~300 Ma. An earlier build's 385 Ma "general
-      // wing-hum" and 325 Ma "griffinfly" stages played this same stridulating clip 25-85 Myr
-      // before that citation supports (era-fit v3 fix: Grimaldi & Engel 2005 dates unambiguous
-      // WINGED insects from ~325 Ma, not stridulating ones) — dropped rather than kept on a
-      // citation that does not actually support them. `insects` itself is still silent before
-      // 300 Ma (there is still no evidence for stridulation any earlier), but the 325-300 Ma gap
-      // is no longer silent overall: `wing-hum` (above), a genuinely non-stridulating clip, covers
-      // it on its own citation (2026-09-15 "wing-hum" amendment).
+      // al. 2020, Nat. Commun. 11:4939); Orthoptera ~300 Ma. `insects` itself is still silent
+      // before 300 Ma (there is still no evidence for stridulation any earlier); the 325-300 Ma
+      // gap is covered instead by `wing-hum` (above), a genuinely non-stridulating clip on its
+      // own citation.
       (rampLog(t, 3.0e8, 2.52e8, 0, 0.1) +
         // Triassic ensiferans with modern-homologous stridulatory files; Archaboilus musicus
         // sings a 6.4 kHz pure tone at ~165 Ma (Gu et al. 2012, PNAS 109(10):3868–3873).
@@ -277,18 +260,14 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
     // bed's silence and `archosaurs`. Large dinocephalian synapsids dominate Permian terrestrial
     // megafauna by the Guadalupian, ~270-260 Ma; gorgonopsians rise to dominance later, in the
     // Lopingian, after the dinocephalians' own end-Guadalupian extinction (Kemp, T.S. (2005).
-    // *The Origin and Evolution of Mammals*. Oxford University Press) — corrected wording
-    // (era-fit v3 fix: the original comment named both groups as co-dominant by 270-260 Ma,
-    // which holds for dinocephalians but not gorgonopsians) — matches the `permian-interior`
-    // (260 Ma, "massive synapsids drink from a shrinking seasonal river") and
+    // *The Origin and Evolution of Mammals*. Oxford University Press) — matches the
+    // `permian-interior` (260 Ma, "massive synapsids drink from a shrinking seasonal river") and
     // `early-triassic-lystrosaurus` (251 Ma) scenes. Recedes from `end-triassic-extinction`'s own
-    // t_max (2.31e8, the same instant `archosaurs`' Triassic radiation ramp starts rising, `dinosaurs`
-    // t_max) to its t_min (2.01e8, `archosaurs`' second ramp's own start) — moved earlier than the
-    // window `archosaurs` itself recedes across (era-fit v3 fix: the original 2.01e8-1.75e8 window
-    // left `large-animal` still louder than `archosaurs` at `late-triassic-dinosaurs`, 231 Ma, and
-    // for the ~30 Myr after it) so the two stems no longer both peak together at the very moment
-    // the first dinosaurs appear; `large-animal` is fully 0 by 201 Ma, well before Jurassic dinosaur
-    // scenes.
+    // t_max (2.31e8, the same instant `archosaurs`' Triassic radiation ramp starts rising) to its
+    // t_min (2.01e8, `archosaurs`' second ramp's own start) — moved earlier than the window
+    // `archosaurs` itself recedes across, so the two stems no longer both peak together at the
+    // very moment the first dinosaurs appear; `large-animal` is fully 0 by 201 Ma, well before
+    // Jurassic dinosaur scenes.
     'large-animal': clampUnit(rampLog(t, 2.7e8, 2.5e8, 0, 0.32) * rampLog(t, 2.31e8, 2.01e8, 1, 0)),
     birds: clampUnit(
       // Vegavis iaai's 69 Ma syrinx implies honks, not song (Clarke et al. 2016, Nature
@@ -298,9 +277,9 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Eurasia/Africa by the Oligocene.
         rampLog(t, 4.7e7, 3.0e7, 0, 0.16)) *
         duck(0.75, dominance) *
-        // era-fit v3 fix: silences the dawn chorus under `eocene-oligocene-icesheet` ("no
-        // animals in view") and `messinian-salt-flats` ("absent: any animal") — the only two
-        // barren windows birds' own 66 Ma floor overlaps.
+        // Silences the dawn chorus under `eocene-oligocene-icesheet` ("no animals in view") and
+        // `messinian-salt-flats` ("absent: any animal") — the only two barren windows birds' own
+        // 66 Ma floor overlaps.
         barrenSceneDuck(t),
     ),
     archosaurs: clampUnit(
@@ -321,7 +300,7 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Ecol. Evol. Syst. 37:215–250).
         rampLog(t, 5.0e4, 1.0e4, 1, 0.6) *
         duck(0.95, dominance) *
-        // era-fit v3 fix: silences the herd-and-lion bed under `eocene-oligocene-icesheet` and
+        // Silences the herd-and-lion bed under `eocene-oligocene-icesheet` and
         // `messinian-salt-flats` ("absent: any animal") — the only barren window `mammals`' own
         // 66 Ma floor overlaps.
         barrenSceneDuck(t),

@@ -2,16 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { mipmapDimensions } from './humanEraTextureCache'
 
-// Regression guard for a real investigation: a faint, smooth, wavy "closed loop" pattern on the
-// present (t=0) globe over open ocean turned out to be a Moiré artefact from WebGLRenderer's own
-// implicit gl.generateMipmap() aliasing Natural Earth II's fine bathymetric shaded-relief
-// striations — confirmed by forcing the fragment shader's base colour flat (loops vanished) and
-// by disabling mipmaps entirely (loops also vanished, texture still correct). The fix builds the
-// mip chain manually with a proper resampling filter (`buildHighQualityMipmaps`, a thin,
-// canvas-dependent consumer of this pure function) instead of leaving the GPU to build one with a
-// naive box filter. `mipmapDimensions` is the one part of that worth pinning without a browser
-// canvas context: getting the halving/rounding or the stopping condition wrong would silently
-// under- or over-build the chain (missing the 1x1 tail, or looping forever on an odd dimension).
+// WebGLRenderer's implicit gl.generateMipmap() uses a naive box filter, which aliases Natural
+// Earth II's fine bathymetric shaded-relief striations into a visible Moiré "closed loop" pattern
+// over open ocean. The mip chain is therefore built manually with a proper resampling filter
+// (`buildHighQualityMipmaps`, a canvas-dependent consumer of this pure function).
+// `mipmapDimensions` is the part worth pinning without a canvas context: a wrong halving/rounding
+// or stopping condition silently under- or over-builds the chain (missing the 1x1 tail, or
+// looping forever on an odd dimension).
 describe('mipmapDimensions', () => {
   it('starts with the base dimensions at index 0, unchanged', () => {
     expect(mipmapDimensions(2048, 1024)[0]).toEqual([2048, 1024])

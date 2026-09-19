@@ -12,46 +12,32 @@
  * legend key under the toggle (`DensityRampKey.tsx`) is generated from the same stops, so what
  * the globe paints and what the key claims cannot drift.
  *
- * **Why this ramp.** The overlay it replaces (HYDE cleared land, ADR-031) was rejected for being
- * too subtle to see. It failed for two compounding reasons: a *linear* fraction spread thinly
- * across a huge range, and earthy ochre/olive tints that sit inside the same hue family as the
- * terrain underneath. This ramp fixes both. The quantity is log-spaced by construction (one ramp
- * stop per rough order of magnitude, from 2 to 8,000 people/km²), and the hues run dark violet →
- * magenta → hot pink → near-white: a family with no counterpart in Natural Earth II's greens,
- * tans and blues (nor in this layer's own arrivals amber or cities cyan — `humanStyle.ts`'s own
- * doc comment), so even the faintest inhabited band reads as an artificial overlay rather than as
- * terrain (2026-09 user feedback: an earlier violet→amber ramp "looks a bit like an 'earthy'
- * colour"). Lightness rises monotonically from the first stop to the last, so the ramp still
- * reads as a sensible scale in greyscale or at low alpha, not just in colour. Alpha climbs with
- * density too, so an empty ocean or desert shows the basemap untouched while a city core is
+ * **Why this ramp.** A linear-fraction overlay spread thinly across a huge range and earthy
+ * ochre/olive tints sit in the same hue family as the terrain underneath — both make an overlay
+ * too subtle to see. This ramp fixes both: the quantity is log-spaced (one stop per rough order
+ * of magnitude, 2 to 8,000 people/km²), and the hues run dark violet → magenta → hot pink →
+ * near-white, a family with no counterpart in Natural Earth II's greens, tans and blues (nor this
+ * layer's own arrivals amber or cities cyan — `humanStyle.ts`), so even the faintest inhabited
+ * band reads as an artificial overlay rather than terrain. Lightness rises monotonically stop to
+ * stop, so the ramp reads as a sensible scale in greyscale or at low alpha too. Alpha climbs with
+ * density as well, so an empty ocean or desert shows the basemap untouched while a city core is
  * nearly opaque.
  *
- * **2026-09 retune: discriminability, not just visibility** (user feedback, looking at the
- * expanded globe over Africa: "the population density overlay doesn't seem quite right, it makes
- * it look like a lot of central Africa is densely populated, is that accurate?"). Sampled directly
- * against the published 2015 CE frame (`DENSITY_RAMP`'s own doc comment has the table): the Congo
- * basin's true rainforest interior is genuinely sparse, ~5-15 people/km² — roughly a tenth of the
- * Netherlands or Jiangsu, nowhere near the Ganges plain's 1,000+ — so the data was not the
- * problem (verdict (c), "the data really is that dense", is false) and the mip/box-filter
- * averaging noted below is the wrong direction to explain it (it under-, never over-, states
- * density — also measured, also rejected as the cause). The *ramp* was: the old alpha curve
- * reached 0.33 opacity by just 5 people/km² and 0.50 by 20/km², so most of its 0-0.95 range was
- * already spent before a texel left "background rural" territory — a large, visually dominant
- * area of faint-but-nonzero rainforest then reads the same as a small, genuinely dense delta,
- * especially since every stop shares one hue family by design (above), so the only cue left is
- * opacity, and opacity differences are hard to read at a glance. The fix pushes the low-to-mid
- * alphas down and backloads the curve toward the stops that are actually dense (`DENSITY_RAMP`'s
- * current alpha column) — retuned, not redesigned: no density breakpoint or hex colour moved.
+ * **Calibration, not just visibility.** The alpha curve is tuned against real sampled texels of
+ * the published 2015 CE frame (see `DENSITY_RAMP`'s own doc comment for the reference points):
+ * true rainforest interior (Congo basin, deep Amazon) sits at a few people/km² and reads as a
+ * faint tint the terrain shows through, while genuinely dense farmland and cities (Netherlands,
+ * Jiangsu, the Ganges plain) climb toward the ramp's ceiling. The low end is deliberately
+ * backloaded so a large, faint rural area and a small, genuinely dense one don't read as the same
+ * intensity — every stop shares one hue family by design, so opacity is the only remaining cue.
  *
  * **Mip strategy.** The overlay's texture cache uses `'boxFilter'` mips and `NoColorSpace`
- * (`humanEraTextureCache.ts`), for the reason that module's own doc comment gives: these bytes
- * are numeric, not gamma-encoded colour. The lesson that motivated it there (HYDE's sharp
- * Sahel-fringe boundaries aliasing into a saturated band at orb size without mips) applies
- * unchanged here — population density is spatially even sharper, a city core sitting beside an
- * empty hinterland. One honest caveat follows from box-filtering *encoded* bytes: averaging the
- * log is a geometric mean, so a minified texel reads a little *below* the true area average
- * rather than above it. That errs toward under-claiming, which is the right direction for an
- * overlay whose whole failure mode in ADR-031 was a false saturated band.
+ * (`humanEraTextureCache.ts`, see its own doc comment) — these bytes are numeric, not
+ * gamma-encoded colour, and population density is spatially sharp (a city core beside an empty
+ * hinterland), the same aliasing risk `humanEraTextureCache.ts` motivates boxFilter mips for. One
+ * honest caveat: box-filtering *encoded* bytes averages the log, a geometric mean, so a minified
+ * texel reads a little *below* the true area average rather than above it — under-claiming, the
+ * right direction for an overlay whose failure mode is a false saturated band.
  */
 
 import { decodeLogDensity, type RasterChannel, type RasterData } from '@/data/curated'

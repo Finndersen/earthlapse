@@ -317,10 +317,9 @@ describe('unfoldedLiftedPosition (curvature unroll)', () => {
 })
 
 describe('PROJECTION_GLSL', () => {
-  // Regression net against a hand-edited GLSL literal drifting from the TS constant it should
-  // be interpolated from (the interpolation itself is what actually prevents drift — see the
-  // module doc comment) — extracts each `const float EE_* = <value>;` and compares it to the TS
-  // export by the same name.
+  // Net against a hand-edited GLSL literal drifting from the TS constant it is interpolated from
+  // (the interpolation is what prevents drift; see the module doc): extracts each
+  // `const float EE_* = <value>;` and compares it to the TS export of the same name.
   function glslConstant(name: string): number {
     const match = new RegExp(`const float ${name} = ([^;]+);`).exec(PROJECTION_GLSL)
     if (match === null) throw new Error(`PROJECTION_GLSL has no ${name} constant`)

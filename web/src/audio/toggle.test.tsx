@@ -11,7 +11,7 @@ function renderToggle(enabled: boolean, active = enabled, setEnabled = vi.fn(), 
 }
 
 describe('SoundToggle', () => {
-  it('renders the volume slider even while muted, hidden rather than unmounted (re-review fix, 2026-09-15)', () => {
+  it('renders the volume slider even while muted, hidden rather than unmounted', () => {
     renderToggle(false)
     const volume = screen.getByLabelText('Master volume')
     expect(volume).toBeTruthy()

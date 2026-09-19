@@ -87,8 +87,7 @@ const RIM_COLOR = new THREE.Color('#8fc7ff')
  *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
  *  Globe.module.css's halo and expand ring are sized against. */
 const CAMERA_DISTANCE = 3.6
-/** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap.
- *  Unchanged from before this file's full-bleed-canvas change (issue 1). */
+/** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap. */
 const MINIMISED_DPR: [number, number] = [1, 2]
 /**
  * The pixel budget `budgetedDpr` (`camera.ts`) sizes the *expanded* canvas's device pixel ratio
@@ -856,8 +855,8 @@ interface GlobeCameraControlsProps {
 }
 
 /**
- * Owns `OrbitControls` for both globe states. Sphere mode is unchanged from before this feature
- * — rotate plus zoom while expanded, no pan. Map mode disables rotate (there is no "up" to spin
+ * Owns `OrbitControls` for both globe states. Sphere mode is rotate plus zoom while expanded, no
+ * pan. Map mode disables rotate (there is no "up" to spin
  * toward on a flat map), enables pan, and clamps both so the map can never be zoomed out past
  * its own fit-to-panel framing or panned off-screen (`camera.ts`'s `fitDistance`/
  * `clampPanTarget`).
@@ -882,8 +881,8 @@ interface GlobeCameraControlsProps {
  * the distance that fits the map once it's *fully* flattened, but the mesh's own bounding shape
  * doesn't grow linearly from a sphere's circular silhouette to that final rectangle as `unfold`
  * rises — a plain distance lerp can undershoot partway through the tween and clip the
- * partially-flattened mesh (flat cuts top/bottom/right), confirmed browser-side mid-unfold.
- * Instead, every unsettled frame, in *either* direction, also computes the distance actually
+ * partially-flattened mesh (flat cuts top/bottom/right) mid-unfold. Instead, every unsettled
+ * frame, in *either* direction, also computes the distance actually
  * *required* to contain the mesh's own current bounding box — `unrolledHalfWidth`/
  * `unrolledHalfHeight` (`projection.ts`), the curvature unroll's *own* half-extents at this
  * `unfold`, not a linear lerp from `GLOBE_RADIUS` toward the map's — at the live aspect, and takes
@@ -895,20 +894,16 @@ interface GlobeCameraControlsProps {
  * (`Globe.module.css`'s own doc comment), so folding back out starts this tween already
  * square-aspected while the mesh is still nearly the full-width map — the live `aspect` this
  * function reads has already changed before `unfold` has moved off 1, and without this floor
- * applying there too the still-wide mesh clips against the now-narrower square frustum (browser-
- * verified: a sharp-edged rectangle silhouette partway through, not the curvature unroll's own
- * continuously-curved shape). A linear lerp
- * of the half-extents was itself a second, independent source of the reported "jump": the real
- * silhouette's width does not grow at a constant rate (`unrolledHalfWidth`'s own doc comment has
- * the detail), so sizing the camera against that lerp instead of the mesh's *actual* current
- * extents made it visibly overshoot, then have to race the mesh's real (slower-growing at first)
- * width back down — a shrink, then a catch-up growth, confirmed in `scratchpad/transition-*`
- * frame captures browser-side. (The panel's own CSS box plays no part in this any more:
- * `Globe.module.css`'s `.orbExpanded[data-animate-resize]` snaps it to its target size, and so
- * its final aspect, the instant a Globe/Map toggle starts, before this component's own very first
- * tween frame runs — it used to animate width/height on its own slower `ease` curve, changing the
- * *aspect itself* mid-tween on top of the mesh-shape mismatch above, which is a separate problem
- * this distance floor alone doesn't solve; see that CSS rule's own doc comment.)
+ * applying there too the still-wide mesh clips against the now-narrower square frustum (a
+ * sharp-edged rectangle silhouette partway through, not the curvature unroll's own
+ * continuously-curved shape). A linear lerp of the half-extents is itself a second, independent
+ * source of a visible "jump": the real silhouette's width does not grow at a constant rate
+ * (`unrolledHalfWidth`'s own doc comment has the detail), so sizing the camera against that lerp
+ * instead of the mesh's *actual* current extents would overshoot, then have to race the mesh's
+ * real (slower-growing at first) width back down — a shrink, then a catch-up growth. (The panel's
+ * own CSS box plays no part in this: `Globe.module.css`'s `.orbExpanded[data-animate-resize]`
+ * snaps it to its target size, and so its final aspect, the instant a Globe/Map toggle starts,
+ * before this component's own very first tween frame runs — see that CSS rule's own doc comment.)
  *
  * **Both distances are measured from the map plane, not from the origin.** `unfoldedPosition`'s
  * curvature unroll (`projection.ts`'s own doc comment) places the *fully* flattened map at
@@ -925,8 +920,8 @@ interface GlobeCameraControlsProps {
  * direction/pan-target above don't blend from a fixed starting pose (`CAMERA_DISTANCE`, dead
  * centre) — they blend from whatever the camera actually was the instant the tween began,
  * captured once when `settled` flips from `true` to `false` below. Without this, a viewer who had
- * rotated or zoomed the sphere before pressing "Map" saw the camera visibly snap back to the
- * default pose first and *then* animate into the map — the reported "camera jump". Folding back
+ * rotated or zoomed the sphere before pressing "Map" would see the camera visibly snap back to the
+ * default pose first and *then* animate into the map. Folding back
  * out of map mode restores `preUnfoldDistanceRef`, the sphere's own distance at the moment map
  * mode was entered, rather than always `CAMERA_DISTANCE`, so a viewer who'd zoomed in before
  * switching to Map returns to that same zoom. The direction itself is blended with
@@ -938,9 +933,9 @@ interface GlobeCameraControlsProps {
  * an abrupt ~180°-ish flip (`camera.test.ts`'s own antipodal/orthogonal/identical cases pin this).
  *
  * **`enableDamping={settled}` below.** `drei`'s own `<OrbitControls>` wrapper defaults
- * `enableDamping` to `true` (three.js's own raw `OrbitControls` defaults it to `false` — a
- * different default this component previously, incorrectly, assumed applied here). With damping
- * on, a rotate/pan/zoom that was still decelerating persists a fraction of its own delta into
+ * `enableDamping` to `true` (three.js's own raw `OrbitControls` defaults it to `false` — the two
+ * differ here). With damping on, a rotate/pan/zoom that was still decelerating persists a
+ * fraction of its own delta into
  * later frames (`sphericalDelta`/`panOffset`, gradually decayed by `update()` rather than fully
  * drained each call) — exactly the frames this component is also driving directly via
  * `camera.position.set(...)` above, so the two would fight for the tween's first several frames.
@@ -1154,11 +1149,11 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     // aspected while the mesh itself is still nearly the full-width map (`unfold` has barely
     // moved off 1), the same "the container's aspect and the mesh's own shape disagree
     // mid-tween" mismatch entering map mode already guards against — just triggered by the
-    // *container* snapping ahead of the mesh instead of the other way around. Browser-verified
-    // regression this fixes: a `lerpedDistance` sized for the old wide aspect left the camera too
-    // close for the new square one, clipping the still-wide mesh's left/right edges into a flat
-    // vertical line — the silhouette briefly reading as a sharp-cornered rectangle instead of the
-    // curvature unroll's own continuously-curved shape (`projection.ts`'s `curvatureUnroll`).
+    // *container* snapping ahead of the mesh instead of the other way around. Without the
+    // `requiredDistance` floor, a `lerpedDistance` sized for the old wide aspect leaves the camera
+    // too close for the new square one, clipping the still-wide mesh's left/right edges into a
+    // flat vertical line — the silhouette briefly reading as a sharp-cornered rectangle instead of
+    // the curvature unroll's own continuously-curved shape (`projection.ts`'s `curvatureUnroll`).
     const distance = Math.max(lerpedDistance, requiredDistance)
     const start = tweenStartDirectionRef.current
     const [dx, dy, dz] = slerpDirection([start.x, start.y, start.z], [0, 0, 1], progress)

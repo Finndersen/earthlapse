@@ -1,13 +1,11 @@
 /**
- * TS twin of pipeline/shapes.py sampling (DATA_SOURCES § Contract). Mirrors the Python
- * bisect-based sampling in pipeline/shapes.py exactly — same numbers, same edge cases.
+ * TS twin of pipeline/shapes.py sampling (DATA_SOURCES § Contract) — same bisect logic, same
+ * numbers, same edge cases.
  *
  * Owns the on-disk JSON shapes published by `earthtime publish` for scalar, raster, node and
  * (docs/GLOBE.md §6) non-timeline events layers (LayerManifest.data in manifest.ts) and the
- * pure samplers that read them. `events-core`, the timeline's own `EventSet`, is inlined in
- * `Manifest.events` instead (see manifest.ts) and has no `EventsData` file of its own — but
- * `parseTimelineEvent` here is exactly what parses each of those entries too, since
- * `manifest.ts` already depends on this module.
+ * pure samplers that read them. `events-core` has no `EventsData` file of its own — it's
+ * inlined in `Manifest.events` (manifest.ts), parsed by `parseTimelineEvent` below.
  */
 
 import type {
@@ -91,11 +89,10 @@ export interface RasterData {
 }
 
 /**
- * The inverse of `pipeline.density_encoding.encode_log_density`, for one normalised sample:
- * `unit` is the texel's own byte divided by 255 (0..1), `dMax` the published ceiling. Written
- * against the normalised sample rather than the raw byte because that is what both callers
- * actually hold — a GLSL `texture2D` read, and a canvas `ImageData` byte already divided down —
- * and it keeps the formula identical on both sides.
+ * Inverse of `pipeline.density_encoding.encode_log_density`. `unit` is the texel's byte
+ * divided by 255 (0..1), `dMax` the published ceiling. Takes the normalised sample rather than
+ * the raw byte because that's what both callers hold — a GLSL `texture2D` read and a canvas
+ * `ImageData` byte already divided down — so the formula stays identical on both sides.
  */
 export function decodeLogDensity(unit: number, dMax: number): number {
   if (!(dMax > 0)) throw new Error(`decodeLogDensity: dMax must be > 0, got ${dMax}`)
@@ -155,8 +152,8 @@ export interface PortraitPlateData {
   pinned: string
   width: number
   height: number
-  /** Additive (ADR-015 amendment 2026-09-14), absent from layer files published before it.
-   *  Provenance only: `image` is already exposure-normalised, so the viewer draws it as is. */
+  /** Additive (ADR-015 amendment), absent from layer files published before it. Provenance
+   *  only: `image` is already exposure-normalised, so the viewer draws it as is. */
   exposure?: PortraitExposureData
 }
 
@@ -410,11 +407,10 @@ function parseGlobeEffectWindows(v: unknown, path: string): { tMin: GeoTime; tMa
 }
 
 /** Validates the additive `effect` block on a `TimelineEvent` (docs/GLOBE.md §6, ADR-032).
- *  Returns `undefined` when the field is absent, mirroring every other optional field here.
- *  Dispatches on `kind`: `'arrival'` parses as `ArrivalGlobeEffect` (required origin/
- *  destination, no optional anchor), every other kind as `PointGlobeEffect` — mirroring
- *  `pipeline.shapes.AnyGlobeEffect`'s discriminated union exactly, so an `arrival` block
- *  missing `origin`/`destination` fails loudly here too, not just on the pipeline side. */
+ *  `undefined` when absent, like every other optional field here. Dispatches on `kind`:
+ *  `'arrival'` parses as `ArrivalGlobeEffect` (required origin/destination), every other kind
+ *  as `PointGlobeEffect` — mirrors `pipeline.shapes.AnyGlobeEffect`'s discriminated union, so a
+ *  malformed `arrival` block fails loudly here too, not just in the pipeline. */
 function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
   if (v === undefined || v === null) return undefined
   const root = expectRecord(v, path)
@@ -425,9 +421,8 @@ function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
   const windows = parseGlobeEffectWindows(root.windows, `${path}.windows`)
 
   if (kind === ARRIVAL_GLOBE_EFFECT_KIND) {
-    // Mirrors pipeline.shapes.ArrivalEffect: exactly one window reaches the present
-    // (tMin === 0), not merely "at least one" — a second, coincidentally-present-reaching
-    // window would be ambiguous about which one `arcs.ts`'s persistentWindow should use.
+    // Mirrors pipeline.shapes.ArrivalEffect: exactly one window may reach the present
+    // (tMin === 0) — a second would be ambiguous about which one arcs.ts's persistentWindow uses.
     const presentWindows = windows.filter((w) => w.tMin === 0)
     if (presentWindows.length !== 1) {
       throw new Error(
@@ -438,9 +433,8 @@ function parseGlobeEffect(v: unknown, path: string): GlobeEffect | undefined {
     if (!windows.some((w) => w.tMin <= established && established <= w.tMax)) {
       throw new Error(`${path}.established: ${established} falls outside every window`)
     }
-    // Required, never defaulted, mirroring `pipeline.shapes.ArrivalEffect` (ADR-032 amendment):
-    // it decides whether the destination keeps a persistent "inhabited" marker, so a default
-    // would silently mis-render the first arrival that omitted it.
+    // Required, never defaulted (ADR-032 amendment): decides whether the destination keeps a
+    // persistent "inhabited" marker, so a default would silently mis-render an omitted one.
     const arrivalKind = expectString(root.arrivalKind, `${path}.arrivalKind`)
     if (!ARRIVAL_KINDS.has(arrivalKind)) {
       throw new Error(`${path}.arrivalKind: unknown ArrivalKind "${arrivalKind}"`)
@@ -486,12 +480,10 @@ function parseEventTags(v: unknown, path: string): EventTag[] | undefined {
   })
 }
 
-/** Validates one `TimelineEvent` — shared by `manifest.ts` (each entry of `Manifest.events`)
- *  and `parseEventsData` below (each entry of a non-timeline `EventsData` layer file), since
- *  both are the same wire shape (`pipeline.manifest.TimelineEvent`). `kind`/`t`/`tags`
- *  (ADR-022) are parsed leniently — present-and-valid or absent, never required — because the
- *  currently-published manifest and the committed stub both predate this field; rendering the
- *  timeline by them is a later task. */
+/** Validates one `TimelineEvent` — shared by `manifest.ts` (`Manifest.events`) and
+ *  `parseEventsData` below, since both are the same wire shape (`pipeline.manifest.
+ *  TimelineEvent`). `kind`/`t`/`tags` (ADR-022) are parsed leniently — present-and-valid or
+ *  absent, never required — since some published manifests predate this field. */
 export function parseTimelineEvent(v: unknown, path: string): TimelineEvent {
   const r = expectRecord(v, path)
   const event: TimelineEvent = {
@@ -547,11 +539,10 @@ function parsePopulationEstimate(v: unknown, path: string): PopulationEstimateDa
 }
 
 /**
- * Validates one `FeatureData` (ADR-035), mirroring `pipeline.shapes.Feature`'s own validators:
- * lat/lon range checks, a non-empty estimates list, and estimates sorted ascending by `t` with
- * no duplicate `t` (matching `Feature._estimates_sorted_and_unique` — the sort happens here
- * too, not just a check, since a producer that already sorted correctly must round-trip
- * unchanged and one that didn't must not silently ship out of order).
+ * Validates one `FeatureData` (ADR-035), mirroring `pipeline.shapes.Feature`: lat/lon range
+ * checks, a non-empty estimates list, and estimates sorted ascending by `t` with no duplicate
+ * `t` (`Feature._estimates_sorted_and_unique`) — sorted here too, not just checked, so an
+ * already-sorted producer round-trips unchanged and an unsorted one doesn't ship silently.
  */
 function parseFeatureData(v: unknown, path: string): FeatureData {
   const r = expectRecord(v, path)
@@ -706,10 +697,9 @@ function blend(a: number, b: number, f: number, how: Interpolation): number {
 
 /**
  * Per-series `t` array and gap lookup, built once and reused across every `sampleSeries` call
- * against the same `data` object — `sampleSeries` used to rebuild `ts` with `.map` on every
- * call, expensive once a series has real row counts (co2: 1,977). Keyed by object identity in
- * a `WeakMap`, not a mutable field on `data`: `sampleSeries(data, t)` stays a pure function of
- * `t` for a given `data`, this is purely a cache of work `data` alone already determines.
+ * against the same `data` — rebuilding it with `.map` per call gets expensive at real row
+ * counts (co2: 1,977). Keyed by object identity in a `WeakMap`, not a mutable field on `data`:
+ * `sampleSeries(data, t)` stays a pure function of `t`, this is just a cache of derived work.
  */
 interface SeriesIndex {
   ts: number[]
@@ -731,10 +721,10 @@ function indexOf(data: SeriesData): SeriesIndex {
 }
 
 /**
- * Mirrors `TimeSeries.sample`: null outside the domain, the exact sample verbatim on an
- * exact match, null strictly inside a declared gap (ADR-027), otherwise blended by
- * `data.interpolation`. Bounds are a TS-only extension — carried when both bracketing
- * samples (or the exact match itself) have lower/upper.
+ * Mirrors `TimeSeries.sample`: null outside the domain, the exact sample verbatim on an exact
+ * match, null strictly inside a declared gap (ADR-027), otherwise blended by
+ * `data.interpolation`. Bounds are a TS-only extension, carried when both bracketing samples
+ * (or the exact match) have lower/upper.
  */
 export function sampleSeries(data: SeriesData, t: GeoTime): ScalarValue | null {
   const { samples } = data
@@ -795,10 +785,9 @@ export function sampleRaster(data: RasterData, t: GeoTime): RasterValue | null {
 
 /**
  * Mirrors `EventSet.sample`: every event whose `[tMin, tMax]` interval contains `t` — zero,
- * one or several (docs/GLOBE.md's regimes deliberately overlap at their soft boundaries).
- * Not domain-gated the way `sampleSeries`/`sampleRaster` are: `EventsData` has no declared
- * sample range of its own, only its events' own intervals — an empty match is not "no data",
- * it is "nothing active right now", so this never returns null.
+ * one, or several (docs/GLOBE.md's regimes deliberately overlap at their soft boundaries).
+ * Unlike `sampleSeries`/`sampleRaster`, `EventsData` has no domain of its own; an empty match
+ * means "nothing active", not "no data", so this never returns null.
  */
 export function sampleEvents(data: EventsData, t: GeoTime): EventsValue {
   return { kind: 'events', events: data.events.filter((e) => t >= e.tMin && t <= e.tMax) }

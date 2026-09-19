@@ -66,13 +66,11 @@ describe('<Sparkline>', () => {
     expect(container.querySelectorAll('polyline').length).toBe(2)
   })
 
-  // 2026-09-18 re-review: the population sparkline was reading as barely more than a dot.
-  // Root cause — sampling directly against the *passed* `scale`'s own domain (here, `FULL_SCALE`,
-  // spanning all 4.6 Gyr) starves a narrow-domain layer: population's real 12,015-year domain is
-  // under 6% of that span, so a uniform 97-point sample grid across the full span only ever put
-  // ~5 points inside it. The fix windows sampling to `layer.timeDomain` instead (see
-  // `Sparkline.tsx`'s own doc comment) — these tests assert the drawn trace actually reflects
-  // that, not just that `scale.domain` is technically wider than the layer's.
+  // Sampling directly against the *passed* `scale`'s own domain (here, `FULL_SCALE`, spanning all
+  // 4.6 Gyr) would starve a narrow-domain layer: population's real 12,015-year domain is under 6%
+  // of that span. `Sparkline` windows sampling to `layer.timeDomain` instead (see its own doc
+  // comment) — these tests assert the drawn trace actually reflects that, not just that
+  // `scale.domain` is technically wider than the layer's.
   function points(container: HTMLElement): string {
     return container.querySelector('polyline')?.getAttribute('points') ?? ''
   }
@@ -122,12 +120,10 @@ describe('<Sparkline>', () => {
     expect(Number(playhead?.getAttribute('x1'))).toBeCloseTo(3, 0)
   })
 
-  // 2026-09-18, user: "my idea for the population and co2 graph lines was for them to grow over
-  // time, not be fully visible upfront" — a screenshot at an early `t` showed both sparklines
-  // fully drawn (the whole future) while their readouts said "no data". These tests assert the
-  // trace is `t`-driven, mirroring the globe's arrival arcs/city markers (never rendered before
-  // their own moment) — this is a reveal driven by `t`, not a fade on inactivity, so it doesn't
-  // conflict with the project's "nothing hides on inactivity" rule.
+  // A sparkline must never draw before `t` reaches it: these tests assert the trace is
+  // `t`-driven, mirroring the globe's arrival arcs/city markers (never rendered before their own
+  // moment) — a reveal driven by `t`, not a fade on inactivity, so it doesn't conflict with the
+  // project's "nothing hides on inactivity" rule.
   it('draws nothing at all — no trace, no dot — when `t` is older than the whole domain (the "no data" case)', () => {
     const layer = createScalarLayer(POPULATION_MANIFEST, POPULATION_DATA)
     // Older than population's own oldest domain edge (12,025) — nothing has happened yet.
@@ -150,9 +146,8 @@ describe('<Sparkline>', () => {
     const mid = widthAt(5_000)
     const late = widthAt(10) // population's own newest sample — fully reached
     expect(early).toBeGreaterThan(0)
-    // Monotonically longer as `t` moves toward the present — this is the assertion the
-    // coordinator asked to fail against the pre-fix build (which draws the full trace at every
-    // `t`, so early/mid/late would all read as the same, already-maximal width).
+    // Monotonically longer as `t` moves toward the present — a full trace at every `t` (i.e. no
+    // `t`-driven growth) would make early/mid/late all read as the same, already-maximal width.
     expect(mid).toBeGreaterThan(early)
     expect(late).toBeGreaterThan(mid)
   })
@@ -227,12 +222,10 @@ describe('<LayerChart>', () => {
     expect(container.textContent).not.toMatch(/no data/)
   })
 
-  // 2026-09-18, second re-review: same user complaint ("grow over time, not be fully visible
-  // upfront") applied to this chart too, but a chart opened to inspect data shouldn't simply
-  // hide the future (unreadable at an early `t`, axis jumping around) — the not-yet-reached
-  // portion instead draws as a faint, fill-less "ghost" (`chartLineGhost`) alongside the
-  // full-weight reached portion, and a genuine gap (ADR-027) must still read as a real break,
-  // never as (or adjacent-looking to) the ghost.
+  // A chart opened to inspect data shouldn't simply hide the future (unreadable at an early `t`,
+  // axis jumping around): the not-yet-reached portion instead draws as a faint, fill-less
+  // "ghost" (`chartLineGhost`) alongside the full-weight reached portion, and a genuine gap
+  // (ADR-027) must still read as a real break, never as (or adjacent-looking to) the ghost.
   it('draws the not-yet-reached portion as a ghost line, distinct from the full-weight reached one', () => {
     const layer = createScalarLayer(CO2_MANIFEST, CO2_DATA)
     // Mid-domain: plenty reached (older than 1e8) and plenty not yet reached (newer than 1e8).

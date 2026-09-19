@@ -16,7 +16,7 @@ objective, era-relative top-N-by-area rule (README.md "Subset rule"), not the fu
 political map, which would be both unreadable on a globe and far too large to rasterise at
 every one of the ~508 distinct map years.
 
-**Duplicate aggregate entries and label normalisation (ADR-037 amendment, 2026-09-18).**
+**Duplicate aggregate entries and label normalisation (ADR-037).**
 Cliopatria's own schema uses a parenthesised `Name` (e.g. `"(Roman Empire)"`) for two unrelated
 things (README.md "Duplicate aggregate entries" has the full account): (a) an aggregate
 spanning a named entity's own successive periods (`"(Roman Empire)"` and `"Roman Empire"`
@@ -87,11 +87,10 @@ CUTOFF_CE_YEAR = 1900
 """Exclude any polity-window material after this calendar year. Ranking "largest by area" per
 era bucket all the way to the present selects modern nation-states (Canada, the People's
 Republic of China, Brazil, the Russian Federation, the USA) rather than the historical empires
-this layer exists to show -- per-user direction, 2026-09-18 ("hmm yeh maybe stop at 1900 for
-now and ill see what that looks like"). **Provisional**: the user will look at the layer at
-this domain and may move or lift the cutoff later. A window that straddles it is truncated to
-end here, not dropped -- a polity still alive in 1880 still appears, its extent simply stopping
-at 1900 (`_apply_cutoff`)."""
+this layer exists to show. **Provisional**: the cutoff may move or lift once the layer has been
+reviewed at this domain. A window that straddles it is truncated to end here, not dropped -- a
+polity still alive in 1880 still appears, its extent simply stopping at 1900
+(`_apply_cutoff`)."""
 
 CUTOFF_T: GeoTime = float(PRESENT_CE_YEAR - CUTOFF_CE_YEAR)
 """`CUTOFF_CE_YEAR` in years BP against the fixed `PRESENT_CE_YEAR` present -- 125.0."""
@@ -103,9 +102,9 @@ _NAME_ALIASES: dict[str, str] = {
     # "Duplicate aggregate entries"), not two distinct polities. Paren-stripping alone cannot
     # unify these -- "(British Empire)" strips to "British Empire", a third string, not
     # "British Colonial Empire" -- so this one pair is a small, explicit, hand-authored
-    # mapping rather than a general rule (per-user direction, 2026-09-18). Aliased *before*
-    # paren-stripping so the existing "prefer the non-parenthesised row's data" dedupe
-    # convention still applies once both share one canonical name.
+    # mapping rather than a general rule. Aliased *before* paren-stripping so the existing
+    # "prefer the non-parenthesised row's data" dedupe convention still applies once both share
+    # one canonical name.
     "(British Empire)": "British Colonial Empire",
 }
 
@@ -114,8 +113,8 @@ _EXCLUDED_NAMES: frozenset[str] = frozenset(
         # A historical-period label (the Aegean's post-Mycenaean collapse, c. 1100-800 BCE),
         # not an attested governing polity with real borders -- Cliopatria carries it as a
         # POLITY row regardless. Presenting it as a named empire alongside e.g. "Neo-Assyrian
-        # Empire" would misrepresent what it is (per-user direction, 2026-09-18). Checked
-        # against every POLITY Name in the full raw dataset for the same pattern (README.md
+        # Empire" would misrepresent what it is. Checked against every POLITY Name in the full
+        # raw dataset for the same pattern (README.md
         # "Duplicate aggregate entries"/"Non-polity entries"): no other Name reads as a period
         # rather than a polity.
         "Greek Dark Ages",

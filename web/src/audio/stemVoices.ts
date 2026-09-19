@@ -1,7 +1,7 @@
 /**
  * Which kind of playback each catalogued stem gets from the published manifest (ADR-023
- * amendment 2026-09-14). Pure and Tone-free so `engine.ts`'s runtime construction is decided by
- * a unit-testable function, not inside the Tone.js graph builder.
+ * amendment). Pure and Tone-free so `engine.ts`'s runtime construction is decided by a
+ * unit-testable function, not inside the Tone.js graph builder.
  *
  * - `ambience-loop`: an ambience stem, always looping at `max(curve, scene loop)`.
  * - `scene-loop`: a loop-safe scene-only stem (e.g. `geothermal`), looping at its scene gain only.

@@ -8,25 +8,18 @@
  * and the thin `THREE.BufferGeometry` wrapper (`buildGlobeGeometry`) mirrors `blend.ts`'s own
  * "pure core, thin three.js/React consumer" split.
  *
- * **The seam.** Columns run lon -180 -> +180 *inclusive* (`widthSegments + 1` columns, not
- * `widthSegments`) — the same closing convention `THREE.SphereGeometry` itself uses (its own
- * `widthSegments + 1` columns, phi 0 -> 2*PI). No face ever connects the last column back to the
- * first (the index loop below only ever joins column `ix` to `ix + 1`, `ix < widthSegments`), so
- * the two seam columns — coincident on the sphere (same meridian, ±180° apart is the same great
- * circle) but the map's *left and right edges* once unfolded — simply move apart as `uUnfold`
- * rises instead of one enormous triangle stretching across the whole map. This is exactly how
- * `THREE.SphereGeometry` already avoids a texture-seam artefact on the sphere; the difference
- * here is that keeping it now also matters for *geometry*, not just UV, because a flattened
- * point is no longer just a UV coordinate on a continuous surface — it is a real position that
- * two "same point on the sphere" vertices can legitimately disagree about.
+ * The seam: columns run lon -180 -> +180 *inclusive* (`widthSegments + 1` columns), the same
+ * closing convention `THREE.SphereGeometry` uses. No face connects the last column back to the
+ * first, so the two seam columns — coincident on the sphere, but the map's left and right edges
+ * once unfolded — move apart as `uUnfold` rises instead of stretching one triangle across the
+ * whole map. This matters for *geometry* here, not just UV as on a sphere: a flattened point is
+ * a real position that two "same point on the sphere" vertices can legitimately disagree about.
  *
- * **The poles.** `THREE.SphereGeometry` skips one of the two triangles per quad at its very top
- * and bottom row (`iy === 0`/`iy === heightSegments - 1`), since those triangles are exactly
- * zero-area on a sphere (the whole row collapses to one point) and not worth rendering. This
- * grid does *not* skip them: Equal Earth flattens each pole to a *line*, not a point, so that
- * same row is a real, non-degenerate edge once `uUnfold` rises — omitting its triangles would
- * leave a hole along the top/bottom edge of the unfolded map. At `uUnfold = 0` those triangles
- * are simply zero-area, the same harmless cost `THREE.SphereGeometry` accepts everywhere else.
+ * The poles: `THREE.SphereGeometry` skips one triangle per quad on its top and bottom rows,
+ * which are zero-area on a sphere. This grid keeps them, because Equal Earth flattens each pole
+ * to a *line*, not a point — that row is a real edge once `uUnfold` rises, and omitting its
+ * triangles would leave a hole along the map's top/bottom edge. At `uUnfold = 0` they are
+ * simply zero-area.
  */
 
 import * as THREE from 'three'
@@ -48,16 +41,11 @@ export interface GlobeGrid {
  * its source: for corners `a = (iy, ix+1)`, `b = (iy, ix)`, `c = (iy+1, ix)`, `d = (iy+1, ix+1)`,
  * it pushes `(a, b, d)` then `(b, c, d)`).
  *
- * **This winding is only outward-facing when paired with the right position formula.** An
- * earlier version of `projection.ts`'s `lonLatToSphere` used an unnegated `z`, which pairs this
- * exact winding with inward-facing normals instead — every triangle faced the sphere's own
- * centre, so the camera saw the inside of the back hemisphere through the front: a mirrored
- * Earth (east on the left) with dimmer lighting (the front-facing normals pointed away from the
- * camera, not toward it). `lonLatToSphere`'s current `z = -cos(lat)*sin(lon)` is specifically
- * the sign this winding needs to face outward — verified numerically in
- * `globeGeometry.test.ts`'s "triangle winding faces outward" (cross product of each triangle's
- * edges compared against the outward radius direction, not just asserted by analogy to
- * `THREE.SphereGeometry`, which is what let this bug ship the first time).
+ * This winding is outward-facing only when paired with the matching position formula: it needs
+ * `projection.ts`'s `lonLatToSphere` to keep `z = -cos(lat)*sin(lon)`. Unnegate that `z` and
+ * every triangle faces the sphere's centre instead, showing a mirrored Earth. The two must not
+ * drift apart; `globeGeometry.test.ts`'s "triangle winding faces outward" checks it numerically
+ * (each triangle's edge cross product against the outward radius) rather than by analogy.
  */
 export function buildGlobeGrid(widthSegments = GLOBE_WIDTH_SEGMENTS, heightSegments = GLOBE_HEIGHT_SEGMENTS): GlobeGrid {
   const columns = widthSegments + 1

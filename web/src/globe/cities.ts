@@ -19,34 +19,29 @@ import { unfoldedLiftedPosition } from './projection'
 // -------------------------------------------------------------------------------- sampling
 
 /**
- * How long past a city's last attested reading (`estimates[0]`, the newest — "ascending in `t`,
- * oldest last") it keeps being drawn, before dropping out of the record entirely. Two shapes exist
- * in the published data, and conflating them is a bug (2026-09 user report: "i see city like
- * Cahokia staying on the map even when i dont think it existed anymore at that time").
+ * How long past a city's last attested reading (`estimates[0]`, the newest) it keeps being drawn
+ * before dropping out of the record entirely. Two shapes exist in the published data and must not
+ * be conflated:
  *
- * - **The dataset's own trailing edge** — ADR-031's rule for HYDE's near-present edge, "data
- *   ends, held after": Memphis, Egypt's newest reading is `t=50` (~1976), right at the whole
- *   published set's own most recent sampling (`t=25` is the earliest any city is attested).
- *   Nothing in the data says Memphis stopped existing; the compilers simply haven't sampled past
- *   that year, so holding it flat to the present is correct.
- * - **The city's own record ending**, centuries before that edge: Cahokia's newest reading is
- *   `t=625` (~1400 CE, 40,000 people) — an unconditional hold-flat drew it as a 40,000-person
- *   city *today*, alongside Uruk (newest `t=3325`), Babylon (`t=2325`), Tikal (`t=1225`) and
- *   Angkor (`t=621`), every one of them scattered across the modern map at full size. These are
- *   not the dataset's edge; they are where each city's own record simply stops.
+ * - **The dataset's own trailing edge** (ADR-031: "data ends, held after") — Memphis, Egypt's
+ *   newest reading is `t=50` (~1976), at the whole published set's own most recent sampling.
+ *   Nothing says Memphis stopped existing; the compilers simply haven't sampled past that year, so
+ *   holding it flat to the present is correct.
+ * - **A city's own record ending**, centuries before that edge — Cahokia's newest reading is
+ *   `t=625` (~1400 CE). Holding every city flat unconditionally would draw Cahokia as a
+ *   40,000-person city *today*, alongside Uruk, Babylon, Tikal and Angkor at their own
+ *   last-attested sizes, scattered across the modern map.
  *
- * The dataset cannot actually distinguish "genuinely abandoned" from "fell below the compilers'
- * own inclusion threshold" — both look identical here, a reading that stops. What *can* be told
- * apart is distance from the dataset's own most recent sampling: Memphis's newest reading is 50
- * years back, Cahokia's is 625. 200 years draws that line wide enough that Memphis (50) is
- * nowhere near it, narrow enough that Cahokia (625), Angkor (621), Tikal (1225), Babylon (2325)
- * and Uruk (3325) all fall outside it by a wide margin.
+ * The dataset cannot distinguish "genuinely abandoned" from "fell below the compilers' own
+ * inclusion threshold" — both look identical here, a reading that stops. What can be told apart is
+ * distance from the dataset's own most recent sampling: Memphis is 50 years back, Cahokia 625.
+ * 200 years separates the two cleanly, with margin either side.
  *
- * This is a rendering heuristic, not a historical claim — nothing here (nor the tooltip, which
- * only ever reports an attested reading) says a city was "destroyed" or invents an end date it
- * has no record of. The marker simply stops being drawn, fading out over this same window
- * (`cityTrailingFadeAt`) rather than popping, and driven by `t`'s own distance from the newest
- * reading — never a wall-clock timer — so scrubbing reproduces it exactly either direction.
+ * This is a rendering heuristic, not a historical claim: nothing here (nor the tooltip, which only
+ * ever reports an attested reading) says a city was destroyed or invents an end date it has no
+ * record of. The marker fades out over this same window (`cityTrailingFadeAt`) rather than
+ * popping, driven by `t`'s own distance from the newest reading — never a wall-clock timer — so
+ * scrubbing reproduces it exactly either direction.
  */
 export const CITY_TRAILING_GRACE_T = 200
 
@@ -138,21 +133,19 @@ export function cityRadiusPx(population: number): number {
  * today. A single fixed population floor can't express that — it either hides every ancient city
  * (Uruk peaked around 40,000) or admits every present-day village.
  *
- * Control points below (`t`, floor population), descending in `t` (deep antiquity first, present
- * last), log-interpolated between neighbours (population is multiplicative, matching
- * `cityPopulationAt`'s own reasoning) and clamped flat beyond both ends. Deliberately gentle: it
- * only removes cities that were never notable at their own era, wherever they are — local
- * crowding (a dense region reading as a solid mat of dots) is `declutterCities`'s job below, since
+ * Control points below (`t`, floor population), descending in `t`, log-interpolated between
+ * neighbours (population is multiplicative, matching `cityPopulationAt`) and clamped flat beyond
+ * both ends. Deliberately gentle: it only removes cities that were never notable at their own era.
+ * Local crowding (a dense region reading as a solid mat of dots) is `declutterCities`'s job below —
  * a steeper floor can't tell "the only city for a thousand miles" from "a hamlet in a crowded
  * region" and would strip sparse regions along with dense ones.
  *
- * A function of `t` alone, never of the currently-largest city or any other city's population.
- * A threshold defined *relative to* other cities moves whenever they do, so a city holding steady
- * at 30,000 would drop out the moment some other city grew past whatever multiple defined the
- * cutoff, then return if that city later shrank — cities disappearing and reappearing, the exact
- * failure mode `CITY_LIMIT_ORB` documents for a rank cap. Pinning the floor to `t` alone makes
- * that impossible: two calls at the same `t` always agree regardless of which cities exist, so a
- * city's own population crossing it depends only on that city's own history.
+ * A function of `t` alone, never of the currently-largest city or any other city's population: a
+ * threshold defined relative to other cities moves whenever they do, so a city holding steady at
+ * 30,000 would drop out the moment some other city grew past whatever multiple defined the cutoff,
+ * then return if that city later shrank — the same disappear/reappear failure `CITY_LIMIT_ORB`
+ * documents for a rank cap. Pinning the floor to `t` alone makes that impossible: two calls at the
+ * same `t` always agree regardless of which cities exist.
  *
  * At `t=300` (1725 CE) this floor sits above New York (~7,500), Buenos Aires (~3,100),
  * Philadelphia (~7,700) and Boston (~11,600) — genuinely that small then.
@@ -198,16 +191,13 @@ export function citySignificanceFloorAt(t: GeoTime): number {
  * faces the viewer, so more than a handful of dots there is confetti, not information — top-N by
  * population *at `t`* is exactly what makes it show Uruk in 3000 BCE and Tokyo today.
  *
- * Expanded (sphere or map) has no equivalent cap: a city that exists at `t` is drawn, full stop
- * (bug report 2026-09, "im seeing some cities disappear and re-appear... if the city still exists
- * then it shouldn't disappear"). Ranking by population and slicing to a fixed count — the
- * previous behaviour, `CITY_LIMIT_EXPANDED = 45` against a published set of 242 — meant a city's
- * presence depended on how it ranked against every *other* city at that instant, not on whether
- * it existed: Mexico City, Rome, Lisbon and several more dropped out and back in as other cities'
- * interpolated populations briefly overtook and then fell back behind them, and Africa held only
- * 2-4 dots at any `t` because the ranking is dominated by a handful of megacities everywhere.
+ * Expanded (sphere or map) has no equivalent cap: a city that exists at `t` is drawn, full stop. A
+ * fixed-count rank cap there would make a city's presence depend on how it ranks against every
+ * *other* city at that instant rather than on whether it exists — cities dropping out and back in
+ * as other cities' interpolated populations briefly overtake and fall back behind them, with a
+ * ranking dominated by a handful of megacities starving sparser regions of any dots at all.
  * `MarkerField`'s instance budget (`HumanCivilisation.tsx`'s `MARKER_CAPACITY`) is sized for the
- * full 242-city set instead.
+ * full published set instead.
  */
 export const CITY_LIMIT_ORB = 10
 

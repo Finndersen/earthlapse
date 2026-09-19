@@ -2,15 +2,11 @@
 
 /**
  * The Globe/Map toggle's sphere<->map tween (`uUnfold`, `shaders.ts`; ADR-033): ~0.8s, eased,
- * wall-clock. Reuses `lib/presentedMix.ts`'s generic `useRateLimitedState`
- * rAF driver — mount/cleanup, "no idle rAF loop once settled" — rather than a second rAF loop
- * ("rather than a third copy of the rate-limiting loop", `effects/presentation.ts`'s own doc
- * comment for the same reuse). It is not, though, that module's own `moveToward`-based *speed
- * cap*: that shape suits a value tracking a continuously-changing `t` (a fast scrub must not let
- * it snap, but there is no natural "duration" to give it). The unfold toggle is the opposite — a
- * discrete, one-shot UI action with no `t` involved — so a fixed ~0.8s eased duration is what
- * actually reads as "one deliberate motion" per press, which is why this file exists instead of
- * reusing `usePresentedNumericRecord` directly.
+ * wall-clock. Reuses `lib/presentedMix.ts`'s generic `useRateLimitedState` rAF driver (mount/
+ * cleanup, no idle rAF loop once settled) rather than a second loop, but not that module's
+ * `moveToward` speed cap: a speed cap suits a value tracking continuously-changing `t`, where
+ * there is no natural duration. This toggle is a discrete one-shot action with no `t`, so a fixed
+ * eased duration is what reads as one deliberate motion per press.
  */
 
 import { useMemo } from 'react'

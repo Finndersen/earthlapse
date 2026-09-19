@@ -13,27 +13,24 @@ short, so `fetch()` can tell "everything's already here" without a network call,
 "skip the network when what's on disk already verifies" behaviour `ensure_verified_artefact`
 gives every other source's single-file case).
 
-`LAND_USE_VARIABLES` history (README.md "Which HYDE variable is 'pasture'" has the full
-account):
-1. Originally `("cropland", "grazing")`.
-2. Changed to `("cropland", "pasture", "rangeland")` after a rendering review found `grazing`
-   (= `pasture` + `rangeland` + `conv_rangeland`, confirmed by direct arithmetic on real 0 CE
-   data) paints natural rangeland (Sahel/savanna, Madagascar, much of Europe's semi-natural
-   grassland) as if it were cleared land.
-3. Changed again to `("cropland", "pasture", "rangeland", "conv_rangeland")` after checking the
-   primary source (Klein Goldewijk et al. 2017, ESSD 9:927-953) for what `conv_rangeland`
-   actually means: it is grazing land in *forest* biomes, which HYDE's own authors state should
-   be treated as cleared ("for rangeland, the natural vegetation remains intact if it is
-   non-forest, but is cleared if it is forest ... Rangeland-converted is located in forest
-   biomes ... and is assumed to have undergone conversion of natural vegetation"). It therefore
-   belongs with the *cleared* channel (with `pasture`), not the *natural* one (`rangeland`
-   alone, i.e. "rangeland-natural" in the paper's terms) -- see `normalise.py`'s `_render_frame`
-   for the resulting R/G/B encoding.
+`LAND_USE_VARIABLES` fetches four members, not HYDE's own `grazing` aggregate (README.md
+"Which HYDE variable is 'pasture'" has the full account): `grazing` = `pasture` + `rangeland` +
+`conv_rangeland` (confirmed by direct arithmetic on real 0 CE data), which lumps intensively
+managed pasture together with barely-touched natural rangeland (Sahel/savanna, Madagascar, much
+of Europe's semi-natural grassland) -- fetching the three components separately keeps that
+distinction available downstream. `conv_rangeland` ("converted rangeland") is grazing land in
+*forest* biomes, which HYDE's own authors state should be treated as cleared ("for rangeland,
+the natural vegetation remains intact if it is non-forest, but is cleared if it is forest ...
+Rangeland-converted is located in forest biomes ... and is assumed to have undergone conversion
+of natural vegetation" -- Klein Goldewijk et al. 2017, ESSD 9:927-953). It therefore belongs
+with the *cleared* channel (with `pasture`), not the *natural* one (`rangeland` alone, i.e.
+"rangeland-natural" in the paper's terms) -- see `normalise.py`'s `_render_frame` for the
+resulting R/G/B encoding.
 
-`POPULATION_VARIABLE` (ADR-031 amendment, "population density"): `popc` -- population *count*
-per cell (inhabitants, not a density) -- was added for `hyde_population_density`.
-`normalise.py` divides it by the same analytically-computed true cell area used for the
-land-use fractions to get people/km². Population members live in a differently-named sibling
+`POPULATION_VARIABLE` (ADR-031): `popc` -- population *count* per cell (inhabitants, not a
+density) -- feeds `hyde_population_density`. `normalise.py` divides it by the same
+analytically-computed true cell area used for the land-use fractions to get people/km².
+Population members live in a differently-named sibling
 directory inside the archive (`<tag>_pop/`, not `<tag>_lu/`) and use an underscore before the
 tag in their own filename (`popc_<tag>.asc`, not `popc<tag>.asc`) -- both confirmed directly
 from the archive's own central directory listing, not assumed from the land-use members'
@@ -68,7 +65,7 @@ mapping (`normalise.py`'s `_render_frame` combines `pasture` + `conv_rangeland` 
 tuple's own order is not the channel order)."""
 
 POPULATION_VARIABLE = "popc"
-"""Population count (inhabitants per cell) -- ADR-031 amendment "population density". Fetched
+"""Population count (inhabitants per cell), ADR-031. Fetched
 separately from `LAND_USE_VARIABLES` because it lives in a differently-shaped in-archive path
 (`_member_path` below) and has its own local filename convention (`_local_filename`)."""
 

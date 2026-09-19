@@ -1,17 +1,14 @@
 /**
- * Shared y-axis policy for scalar-layer charts (`Sparkline`'s trend line and `LayerChart`'s
- * full plot) — pure, so it's tested independently of either component's rendering.
+ * Shared y-axis policy for scalar-layer charts (`Sparkline`, `LayerChart`) — pure, tested
+ * independently of either component's rendering.
  *
  * Log vs linear is decided from the data itself, not per layer id: a series whose max/min
- * reaches `LOG_AXIS_MIN_RATIO` is plotted on a log axis, otherwise linear. This is what already
- * kept CO2's ~277 -> 427 ppm industrial rise visible against its ~7,000 ppm Cambrian peak (a
- * ~42x ratio) in `Sparkline`. Global population needs the same treatment far more acutely: HYDE's
- * curated series runs from ~4.4 million (10,000 BCE) to ~7.3 billion (2015 CE), a ~1,600x ratio,
- * with 99% of the rise crammed into the last 0.2% of the domain. On a linear axis that's a flat
- * line with a vertical spike at the right edge; log spreads the whole history's growth across the
- * plot instead. A layer whose values include zero or negative numbers (e.g. a temperature
- * anomaly) can't take a log axis at all, so this always falls back to linear rather than
- * throwing — callers that plot such a layer just get the same linear axis they'd get today.
+ * reaches `LOG_AXIS_MIN_RATIO` plots on a log axis, otherwise linear. Needed for CO2 (~42x,
+ * 277->427 ppm industrial rise vs. ~7,000 ppm Cambrian peak) and far more acutely for population
+ * (HYDE's curated series is ~1,600x, 4.4M at 10,000 BCE to 7.3B in 2015 CE, 99% of the rise in
+ * the last 0.2% of the domain — linear renders that as a flat line with a spike at the right
+ * edge). Values including zero or negative (e.g. a temperature anomaly) can't take a log axis,
+ * so this falls back to linear rather than throwing.
  */
 
 export const LOG_AXIS_MIN_RATIO = 10
