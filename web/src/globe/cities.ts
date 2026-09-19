@@ -322,23 +322,6 @@ export function citiesHaveDataAt(features: readonly FeatureData[] | null, t: Geo
 
 // ---------------------------------------------------------------------------------- labels
 
-/**
- * How long, in years of `t` (`GeoTime` is always years before present — `@/types/layer`'s own
- * doc comment), a city's name label stays on screen after it first appears: full opacity exactly
- * at the city's oldest estimate, easing linearly to 0 as `t` moves this far *past* it (i.e.
- * forward in time, toward the present — see `cityLabelOpacityAt`). A window in `t`, not
- * wall-clock time: nothing here reads a clock, so scrubbing back to a city's founding always
- * reproduces the same label at the same strength, matching the project's standing "nothing fades
- * on inactivity, only `t` does" rule.
- *
- * Sized against the published set's own sampling grid: consecutive first-appearance times are as
- * little as 25 years apart near the present and several hundred apart in antiquity (HYDE's own
- * resolution), and as many as 34 cities share the *exact* same first-appearance `t`. 150 years is
- * wide enough for the fade to read as a fade rather than a flash, without bleeding so far past a
- * cohort that it starts to overlap the next distinct one.
- */
-export const CITY_LABEL_FADE_WINDOW_T = 150
-
 /** How many name labels may render at once, most recently appeared first (`newCityLabels`'s own
  *  ordering).
  *
@@ -355,22 +338,36 @@ export const CITY_LABEL_CAP = 12
 
 export interface CityLabel {
   feature: FeatureData
-  /** 1 right as the city first appears, easing to 0 over `CITY_LABEL_FADE_WINDOW_T` — see that
-   *  constant's own doc comment. */
+  /** 1 right as the city first appears, easing to 0 over its own fade window — see
+   *  `cityLabelOpacityAt`. */
   opacity: number
 }
 
-/** The city's own label opacity at `t`: 0 before it exists, easing from 1 down to 0 across
- *  `CITY_LABEL_FADE_WINDOW_T` years after its first appearance, 0 again beyond that window. */
-export function cityLabelOpacityAt(feature: FeatureData, t: GeoTime): number {
+/**
+ * The city's own label opacity at `t`: 0 before it exists, easing from 1 down to 0 across
+ * `fadeWindowYears` years after its first appearance (its oldest attested reading), 0 again
+ * beyond that window. `fadeWindowYears` is years of `t`, not wall-clock time — a fixed number of
+ * years is the wrong unit for "how long a label stays on screen" (playback does not move through
+ * years at a fixed rate), so it is the caller's job to size it per city from real playback pacing
+ * (`newCityLabels`'s `fadeWindowAt`, built from `scene/pacing.ts`'s `yearsForPlaybackSeconds`);
+ * this function itself only knows `t`, so nothing here reads a clock and scrubbing back to a
+ * city's founding always reproduces the same label at the same strength.
+ */
+export function cityLabelOpacityAt(feature: FeatureData, t: GeoTime, fadeWindowYears: GeoTime): number {
+  if (fadeWindowYears <= 0) return 0
   const oldest = feature.estimates[feature.estimates.length - 1]!.t
   const age = oldest - t
-  if (age < 0 || age >= CITY_LABEL_FADE_WINDOW_T) return 0
-  return 1 - age / CITY_LABEL_FADE_WINDOW_T
+  if (age < 0 || age >= fadeWindowYears) return 0
+  return 1 - age / fadeWindowYears
 }
 
 /**
  * Labels for the cities in `cities` that just appeared at `t`, capped at `CITY_LABEL_CAP`.
+ *
+ * `fadeWindowAt(appearanceT)` supplies each candidate's own fade window in years, called once per
+ * city with that city's oldest attested reading — a plain function, not an import from `@/scene`,
+ * so `globe` stays independent of the `scene` package (the same structural-shape convention
+ * `scene/pacing.ts`'s own `scenePlaybackSegments` doc comment uses for `timeline` and `scene`).
  *
  * Ranked by `opacity` — that is, by how recently the city appeared — and only then by population.
  * Recency has to lead: the label announces an arrival, and a city is at its smallest the moment
@@ -381,12 +378,17 @@ export function cityLabelOpacityAt(feature: FeatureData, t: GeoTime): number {
  *
  * Population still breaks ties within one appearance time (up to 34 cities share an exact
  * first-appearance `t` on HYDE's grid), and the id breaks the remainder, so the result stays a
- * pure function of `t`.
+ * pure function of `t` (and, through `fadeWindowAt`, of whatever it is itself a pure function of).
  */
-export function newCityLabels(cities: readonly CityAtTime[], t: GeoTime): CityLabel[] {
+export function newCityLabels(
+  cities: readonly CityAtTime[],
+  t: GeoTime,
+  fadeWindowAt: (appearanceT: GeoTime) => GeoTime,
+): CityLabel[] {
   const candidates: { label: CityLabel; population: number }[] = []
   for (const city of cities) {
-    const opacity = cityLabelOpacityAt(city.feature, t)
+    const appearanceT = city.feature.estimates[city.feature.estimates.length - 1]!.t
+    const opacity = cityLabelOpacityAt(city.feature, t, fadeWindowAt(appearanceT))
     if (opacity > 0) candidates.push({ label: { feature: city.feature, opacity }, population: city.population })
   }
   candidates.sort(

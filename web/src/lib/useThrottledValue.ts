@@ -29,8 +29,13 @@ import { useEffect, useRef, useState } from 'react'
  *  as sluggish rather than smooth. */
 export const HUD_READOUT_THROTTLE_MS = 80
 
+/** An `intervalMs` of 0 or less passes `value` straight through, committing no state of its own,
+ *  so a caller that throttles only in some modes can call this hook unconditionally without
+ *  paying an extra render per frame in the modes that don't. */
+
 export function useThrottledValue<T>(value: T, intervalMs: number): T {
   const [committed, setCommitted] = useState(value)
+  const disabled = intervalMs <= 0
   const lastCommitAtRef = useRef(Date.now())
   const pendingValueRef = useRef(value)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -41,7 +46,7 @@ export function useThrottledValue<T>(value: T, intervalMs: number): T {
   pendingValueRef.current = value
 
   useEffect(() => {
-    if (value === committed) return
+    if (disabled || value === committed) return
 
     const commitNow = (): void => {
       lastCommitAtRef.current = Date.now()
@@ -71,5 +76,5 @@ export function useThrottledValue<T>(value: T, intervalMs: number): T {
     [],
   )
 
-  return committed
+  return disabled ? value : committed
 }

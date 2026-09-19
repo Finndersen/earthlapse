@@ -41,6 +41,7 @@ function renderGlobe(overrides: Partial<GlobeProps> = {}) {
       cities={null}
       sceneLocation={null}
       playbackBaseRate={0.02}
+      cityLabelFadeWindowAt={() => 150}
       feedEventIds={EMPTY_FEED_IDS}
       hoveredFeedEventId={null}
       {...overrides}

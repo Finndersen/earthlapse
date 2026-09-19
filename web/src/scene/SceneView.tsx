@@ -21,6 +21,7 @@
 import { type ReactNode, useMemo } from 'react'
 
 import { useReducedMotion } from '@/lib/useReducedMotion'
+import { useThrottledValue } from '@/lib/useThrottledValue'
 import { supportsWebGL } from '@/lib/webgl'
 import type { GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
@@ -47,13 +48,18 @@ export interface SceneViewProps {
    *  Only `Experience.tsx`'s `'steady'`-mode playback loop ever passes `'cut'`; scrubbing,
    *  seeking, paused viewing and `'scenes'`-mode playback always render `'crossfade'`. */
   regime?: PresentationRegime
-  /** False while something else fully covers this view — today, `Experience.tsx` passes
-   *  `!globeExpanded`. Only affects the WebGL renderer (`SceneCanvasView`'s own doc comment):
-   *  it stops rendering new frames while covered, without unmounting. The DOM fallback
-   *  (`SceneFallbackView`) has no per-frame render loop to stop, so it ignores this. Default
-   *  `true`. */
-  visible?: boolean
+  /** True while the expanded globe/map backdrop sits over this view. That backdrop is
+   *  translucent (`Globe.module.css`'s `.backdrop`: a 55-80% wash plus a 3px blur), so the scene
+   *  stays visible through it and must keep drifting and crossing between scenes — it is only
+   *  seen dimmed and blurred, which `COVERED_SCENE_THROTTLE_MS` is calibrated against. Default
+   *  `false`. */
+  covered?: boolean
 }
+
+/** ~10fps for the scene behind the expanded globe's translucent, blurred backdrop: the drift is
+ *  a slow breathe and the dissolve is rate-limited to seconds, neither of which reads as stepped
+ *  at this rate through a 3px blur. */
+const COVERED_SCENE_THROTTLE_MS = 100
 
 function sceneIndex(scenes: readonly Scene[], scene: Scene): number {
   return scenes.findIndex((s) => s.id === scene.id)
@@ -71,16 +77,20 @@ function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: num
 }
 
 export function SceneView({
-  t,
+  t: rawT,
   scenes,
   assetBase,
   renderCaption,
   className,
   regime = 'crossfade',
-  visible = true,
+  covered = false,
 }: SceneViewProps): ReactNode {
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
+
+  // Every value below derives from this rather than the raw `t`, so a covered scene recomputes
+  // its pair, mix and drift at the throttled rate instead of once per playback frame.
+  const t = useThrottledValue(rawT, covered ? COVERED_SCENE_THROTTLE_MS : 0)
 
   const target = useMemo(() => sceneAt(scenes, t), [scenes, t])
   const presented = usePresentedSceneMix(target, regime)
@@ -115,7 +125,6 @@ export function SceneView({
           fromDrift={fromDrift}
           toDrift={toDrift}
           imageAspect={presented.from.width / presented.from.height}
-          visible={visible}
         />
       ) : (
         <SceneFallbackView

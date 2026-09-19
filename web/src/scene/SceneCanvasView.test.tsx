@@ -48,22 +48,10 @@ const baseProps = {
   imageAspect: 16 / 9,
 }
 
-describe('SceneCanvasView — frameloop (issue: the hidden scene canvas keeps rendering)', () => {
-  it('renders frameloop="never" while fully covered (visible=false)', () => {
-    stubLoader()
-    render(<SceneCanvasView {...baseProps} visible={false} />)
-    expect(screen.getByTestId('mock-canvas').dataset.frameloop).toBe('never')
-  })
-
-  it('renders an active ("demand") frameloop while visible, the default', () => {
+describe('SceneCanvasView — frameloop', () => {
+  it('renders on demand, drawing a frame only when a uniform prop actually changes', () => {
     stubLoader()
     render(<SceneCanvasView {...baseProps} />)
-    expect(screen.getByTestId('mock-canvas').dataset.frameloop).toBe('demand')
-  })
-
-  it('renders an active frameloop when visible is explicitly true', () => {
-    stubLoader()
-    render(<SceneCanvasView {...baseProps} visible />)
     expect(screen.getByTestId('mock-canvas').dataset.frameloop).toBe('demand')
   })
 })

@@ -685,6 +685,13 @@ export interface HumanCivilisationProps {
   /** Set while a touch press is on one of this layer's targets, so `Globe.tsx`'s orb tap-to-expand
    *  gesture stands down and the tap opens a tooltip instead. */
   touchHitRef: MutableRefObject<boolean>
+  /** A new city label's fade window in years, given the city's own first-appearance `t`
+   *  (`cities.ts`'s `newCityLabels`, whose own doc comment explains why this arrives as a plain
+   *  function rather than an `@/scene` import) — built from real playback pacing
+   *  (`Experience.tsx`) so a label's actual on-screen duration is roughly constant everywhere on
+   *  the timeline, not a fixed number of years that reads as a minute-long linger in a
+   *  scene-dense stretch and a flash in a sparse one. */
+  cityLabelFadeWindowAt: (appearanceT: GeoTime) => GeoTime
 }
 
 export function HumanCivilisation({
@@ -701,6 +708,7 @@ export function HumanCivilisation({
   sceneMarker,
   reducedMotion,
   touchHitRef,
+  cityLabelFadeWindowAt,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
@@ -731,15 +739,13 @@ export function HumanCivilisation({
     const all = allCitiesAt(cities, t)
     return declutterCities(all, (city) => cityLocalPosition(city.feature, unfold), minSeparationWorldUnits)
   }, [cities, t, expanded, unfold, minSeparationWorldUnits])
-  // TEMP calibration instrumentation — removed before handoff.
-  if (typeof window !== 'undefined') {
-    ;(window as unknown as { __declutterDebug?: readonly string[] }).__declutterDebug = visibleCities.map((c) => c.feature.id)
-  }
-
   // A brief name tag for a city that just appeared — expanded only; the orb never has
   // visibleCities. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
   // the least-recent arrivals rather than the smallest ones.
-  const cityLabels = useMemo(() => (expanded ? newCityLabels(visibleCities, t) : []), [expanded, visibleCities, t])
+  const cityLabels = useMemo(
+    () => (expanded ? newCityLabels(visibleCities, t, cityLabelFadeWindowAt) : []),
+    [expanded, visibleCities, t, cityLabelFadeWindowAt],
+  )
 
   const arrivals = useMemo(
     () => index.records.map((record) => ({ record, presentation: arrivalPresentationAt(record.effect, t, timing) })),
@@ -847,12 +853,19 @@ export function HumanCivilisation({
   }, [arrivals, visibleCities, sceneMarker, tracedIds, sympathyFor, reducedMotion])
 
   useEffect(() => {
+    // Geometry only — id/points/tolerance, needed by `pickCandidate`'s scoring on every pointer
+    // move. `content` below defers the title/description/dateRange formatting
+    // (`arrivalTarget`/`cityTarget`) until a candidate actually wins a hit test, which is the
+    // only time any of that text is read (`GlobeTooltip.tsx`'s own doc comment on `content`).
+    // This effect still reruns every frame — `arrivals`/`visibleCities` are fresh arrays each `t`
+    // — but building a closure per candidate is cheap; formatting up to ~280 date ranges and
+    // population counts every frame is not.
     const candidates: GlobeHitCandidate[] = []
     for (const { record, presentation } of arrivals) {
       if (presentation.arcAlpha > 0 && !record.geometry.isDegenerate) {
         for (const segment of record.geometry.segments) {
           candidates.push({
-            target: arrivalTarget(record, 'arrival'),
+            content: () => arrivalTarget(record, 'arrival'),
             points: segment,
             tolerancePx: ARC_TOLERANCE_PX,
             sphereLift: ARC_SPHERE_LIFT,
@@ -862,7 +875,7 @@ export function HumanCivilisation({
       }
       if (presentation.inhabited > 0.2) {
         candidates.push({
-          target: arrivalTarget(record, 'inhabited'),
+          content: () => arrivalTarget(record, 'inhabited'),
           points: [record.effect.destination],
           tolerancePx: MARKER_TOLERANCE_PX,
           sphereLift: MARKER_SPHERE_LIFT,
@@ -872,7 +885,7 @@ export function HumanCivilisation({
     }
     for (const city of visibleCities) {
       candidates.push({
-        target: cityTarget(city, t),
+        content: () => cityTarget(city, t),
         points: [{ lat: city.feature.lat, lon: city.feature.lon }],
         tolerancePx: MARKER_TOLERANCE_PX,
         sphereLift: MARKER_SPHERE_LIFT,

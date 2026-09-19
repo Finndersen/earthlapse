@@ -258,6 +258,11 @@ export interface GlobeProps {
    *  timing from it statically (`arrivalTimingFor`), so an arc is legible rather than a flicker at
    *  default playback speed. */
   playbackBaseRate: number
+  /** A new city label's fade window in years, given the city's own first-appearance `t` — passed
+   *  straight through to `HumanCivilisation` (its own doc comment has the full rationale).
+   *  Playback-derived like `playbackBaseRate` above, but per-city rather than a single scalar, so
+   *  it arrives as a resolver instead. */
+  cityLabelFadeWindowAt: (appearanceT: GeoTime) => GeoTime
   /** Event ids whose card is currently in the event feed, and the one the viewer is hovering —
    *  an arrival's arc and marker pulse in sympathy with its own card. */
   feedEventIds: ReadonlySet<string>
@@ -285,6 +290,7 @@ export function Globe({
   cities,
   sceneLocation,
   playbackBaseRate,
+  cityLabelFadeWindowAt,
   feedEventIds,
   hoveredFeedEventId,
   onViewModeToggleHeightChange,
@@ -655,6 +661,7 @@ export function Globe({
                 sceneMarker={sceneMarker}
                 reducedMotion={reducedMotion}
                 touchHitRef={humanTouchHitRef}
+                cityLabelFadeWindowAt={cityLabelFadeWindowAt}
               />
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />

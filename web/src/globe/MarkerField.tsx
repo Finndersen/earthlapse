@@ -11,8 +11,10 @@
  * screen-space size expansion is the same technique the arc ribbon uses, and the one animated
  * quantity — the sympathetic pulse a marker plays while its event card is on screen, or while it
  * is part of a traced chain — is driven by a `uTime` uniform rather than by JS rewriting buffers.
- * The instance buffers are rewritten only when the *set* of markers changes, which is a React
- * render, not a frame.
+ * The instance buffers are rewritten only when the *set* of markers changes in content — compared
+ * by value (`sameMarkers`), not by the `markers` prop's own array identity, since a fresh array of
+ * identical markers is a React render too (every caller of `MarkerField` in this codebase rebuilds
+ * `markers` on every `t`, one of the arguments its own values are a pure function of).
  *
  * Markers are depth-tested against the sphere (so the far side is hidden) *and* faded across the
  * limb in the vertex shader, the same belt-and-braces `arcs.ts`'s `sphereMarkerVisibility`
@@ -21,7 +23,7 @@
  */
 
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 import { glslFloat } from './glsl'
@@ -137,6 +139,37 @@ void main() {
 const CORNERS = new Float32Array([-1, -1, 1, -1, 1, 1, -1, 1])
 const CORNER_INDICES = new Uint16Array([0, 1, 2, 0, 2, 3])
 
+/**
+ * Content equality for the fields that actually reach the GPU buffers — `id` is included too
+ * even though it isn't itself uploaded (see `GlobeMarker.id`'s own doc comment), so a marker set
+ * that reorders without changing any drawn value still counts as changed rather than risking a
+ * false "unchanged" that would desync a buffer's contents from its own index. Exported for
+ * `MarkerField.test.tsx`.
+ */
+export function sameMarker(a: GlobeMarker, b: GlobeMarker): boolean {
+  return (
+    a.id === b.id &&
+    a.lat === b.lat &&
+    a.lon === b.lon &&
+    a.radiusPx === b.radiusPx &&
+    a.alpha === b.alpha &&
+    a.innerFraction === b.innerFraction &&
+    a.pulse === b.pulse &&
+    a.color[0] === b.color[0] &&
+    a.color[1] === b.color[1] &&
+    a.color[2] === b.color[2]
+  )
+}
+
+/** Exported for `MarkerField.test.tsx`. */
+export function sameMarkers(a: readonly GlobeMarker[], b: readonly GlobeMarker[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (!sameMarker(a[i]!, b[i]!)) return false
+  }
+  return true
+}
+
 interface InstanceBuffers {
   lonLat: THREE.InstancedBufferAttribute
   radiusPx: THREE.InstancedBufferAttribute
@@ -209,7 +242,15 @@ export function MarkerField({ markers, unfold, radius, capacity }: MarkerFieldPr
     [mesh],
   )
 
+  // Paired with `buffers` itself, not a bare `useRef([])`: a `capacity` change swaps in a whole
+  // new `buffers` object (fresh, zeroed typed arrays) via the `useMemo` above, and a stale
+  // "unchanged" snapshot from the old buffers would then wrongly skip writing the new ones.
+  const previousRef = useRef<{ buffers: InstanceBuffers; markers: readonly GlobeMarker[] } | null>(null)
+
   useEffect(() => {
+    const previous = previousRef.current
+    if (previous !== null && previous.buffers === buffers && sameMarkers(previous.markers, markers)) return
+
     const count = Math.min(markers.length, capacity)
     for (let i = 0; i < count; i++) {
       const marker = markers[i]!
@@ -226,6 +267,7 @@ export function MarkerField({ markers, unfold, radius, capacity }: MarkerFieldPr
     for (const attribute of Object.values(buffers)) attribute.needsUpdate = true
     geometry.instanceCount = count
     mesh.visible = count > 0
+    previousRef.current = { buffers, markers }
   }, [markers, buffers, geometry, mesh, capacity])
 
   useFrame((state) => {

@@ -72,12 +72,8 @@ describe('SceneView', () => {
     expect(overlay.style.opacity).toBe('0')
   })
 
-  it('accepts visible=false without otherwise changing what renders — the fallback path has no per-frame render loop to gate', () => {
-    // `visible` only matters to `SceneCanvasView`'s WebGL renderer (own doc comment); jsdom has
-    // no WebGL, so this suite always exercises `SceneFallbackView`, which ignores it. This is a
-    // prop-threading smoke test, not a behavioural one — see `SceneCanvasView.test.tsx` for the
-    // actual frameloop/dpr assertions.
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" visible={false} />)
+  it('renders the same scene when covered, which only lowers the rate the pair is recomputed at', () => {
+    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" covered />)
     const base = screen.getByTestId('scene-base') as HTMLImageElement
     expect(base.style.opacity).toBe('1')
   })

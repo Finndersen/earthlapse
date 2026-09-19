@@ -31,6 +31,7 @@
 export { REST_DRIFT, driftAt } from './drift'
 export type { DriftUniforms } from './drift'
 export { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
+export { playbackSecondsBetween, yearsForPlaybackSeconds } from './pacing'
 export type { PlaybackSegment } from './pacing'
 export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
 export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt, tAtLogP } from './scene'

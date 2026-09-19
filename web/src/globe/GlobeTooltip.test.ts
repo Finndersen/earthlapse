@@ -75,7 +75,7 @@ function cityCandidate(id: string, title: string, point: { lat: number; lon: num
     dateRange: '',
     anchor: point,
   }
-  return { target, points: [point], tolerancePx: MARKER_TOLERANCE_PX, sphereLift: MARKER_SPHERE_LIFT, mapLift: MARKER_MAP_LIFT }
+  return { content: () => target, points: [point], tolerancePx: MARKER_TOLERANCE_PX, sphereLift: MARKER_SPHERE_LIFT, mapLift: MARKER_MAP_LIFT }
 }
 
 function arrivalArcCandidates(): GlobeHitCandidate[] {
@@ -90,7 +90,7 @@ function arrivalArcCandidates(): GlobeHitCandidate[] {
     anchor: BRITISH_COLONISATION_EFFECT.destination,
   }
   return geometry.segments.map((segment) => ({
-    target,
+    content: () => target,
     points: segment,
     tolerancePx: ARC_TOLERANCE_PX,
     sphereLift: ARC_SPHERE_LIFT,
@@ -172,6 +172,34 @@ describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
     console.log(`arc's nearest vertex to Melbourne: ${nearestToMelbourne.toFixed(1)}px (tolerance ${ARC_TOLERANCE_PX}px)`)
     expect(Number.isFinite(nearestToMelbourne)).toBe(true)
   })
+
+  it("never calls a losing candidate's content builder, and calls the winner's exactly once", () => {
+    const [mx, my] = melbourneScreenXY()
+    let melbourneCalls = 0
+    let sydneyCalls = 0
+    const melbourne = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE)
+    const sydney = cityCandidate('sydney-australia', 'Sydney', SYDNEY)
+    const countedMelbourne: GlobeHitCandidate = {
+      ...melbourne,
+      content: () => {
+        melbourneCalls += 1
+        return melbourne.content()
+      },
+    }
+    const countedSydney: GlobeHitCandidate = {
+      ...sydney,
+      content: () => {
+        sydneyCalls += 1
+        return sydney.content()
+      },
+    }
+
+    const hit = pickCandidate([countedMelbourne, countedSydney], mx, my, unfold, GLOBE_RADIUS, group, camera, WIDTH, HEIGHT)
+
+    expect(hit?.title).toBe('Melbourne')
+    expect(melbourneCalls).toBe(1)
+    expect(sydneyCalls).toBe(0)
+  })
 })
 
 describe('sameHitTarget', () => {
@@ -180,21 +208,21 @@ describe('sameHitTarget', () => {
   })
 
   it('is true for two distinct objects sharing the same id — candidatesRef rebuilds target objects on every t change without the pointer having moved off them', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
     const b = { ...a } // a fresh object, same id, as a t-driven candidate rebuild would produce
     expect(a).not.toBe(b)
     expect(sameHitTarget(a, b)).toBe(true)
   })
 
   it('is false when one side is null and the other is not', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
     expect(sameHitTarget(a, null)).toBe(false)
     expect(sameHitTarget(null, a)).toBe(false)
   })
 
   it('is false for two different targets', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).target
-    const b = cityCandidate('sydney-australia', 'Sydney', SYDNEY).target
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
+    const b = cityCandidate('sydney-australia', 'Sydney', SYDNEY).content()
     expect(sameHitTarget(a, b)).toBe(false)
   })
 })

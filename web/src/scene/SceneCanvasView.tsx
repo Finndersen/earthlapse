@@ -37,13 +37,6 @@ export interface SceneCanvasViewProps {
   /** `from.width / from.height` — assumed shared across scenes (the generation pipeline
    *  renders every shot at the same dimensions, per VISUAL_SPEC's camera grammar). */
   imageAspect: number
-  /** False while something else fully covers this canvas — today, only the expanded globe/map
-   *  backdrop (`ShellLayout`'s `data-globe-expanded`, z-index 50 over `.scene`). Switches the
-   *  canvas to `frameloop="never"` so a fully hidden canvas costs nothing per frame, without
-   *  unmounting it — unmounting would drop the WebGL context and force a full texture
-   *  re-upload on the next scene shown, a visible hitch worse than the CPU cost being fixed
-   *  here. Default `true`. */
-  visible?: boolean
 }
 
 function usePreloadTextures(urls: readonly string[]): void {
@@ -64,7 +57,6 @@ export function SceneCanvasView({
   fromDrift,
   toDrift,
   imageAspect,
-  visible = true,
 }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
   usePreloadTextures(preloadUrls)
@@ -75,15 +67,16 @@ export function SceneCanvasView({
   // doc comment for why the two can disagree, and `useScenePair`'s for why `pair` itself can lag.
   const render = resolveSceneRender({ fromUrl: baseUrl, toUrl: overlayUrl }, pair, { mix, fromDrift, toDrift })
 
-  // 'demand' while visible: every uniform below is set as a JSX prop (`uniforms-x-value`), which
-  // r3f's own prop-diffing invalidates on change (`uFromOffset`/`uToOffset` are the one
-  // exception — mutated in place inside `SceneQuad`, which requests its own frame explicitly;
-  // see its own comment). A `t`-driven re-render — playback, scrubbing, the drift breathe, the
-  // dissolve's own rAF catch-up (`presentation.ts`) — always changes at least one such prop, so
-  // 'demand' renders exactly the frames 'always' would while something is actually moving, and
-  // none of the ones it wouldn't (paused, settled, fully covered).
+  // 'demand': every uniform below is set as a JSX prop (`uniforms-x-value`), which r3f's own
+  // prop-diffing invalidates on change (`uFromOffset`/`uToOffset` are the one exception —
+  // mutated in place inside `SceneQuad`, which requests its own frame explicitly; see its own
+  // comment). A `t`-driven re-render — playback, scrubbing, the drift breathe, the dissolve's
+  // own rAF catch-up (`presentation.ts`) — always changes at least one such prop, so this
+  // renders exactly the frames 'always' would while something is moving, and none of the ones
+  // it wouldn't. A caller wanting a lower rate throttles the `t` it derives these props from
+  // (`SceneView`'s `covered`) rather than stopping the loop.
   return (
-    <Canvas orthographic dpr={dpr} frameloop={visible ? 'demand' : 'never'} gl={{ antialias: false, alpha: false }} style={canvasStyle}>
+    <Canvas orthographic dpr={dpr} frameloop="demand" gl={{ antialias: false, alpha: false }} style={canvasStyle}>
       <SceneQuad
         fromTex={render?.fromTex ?? null}
         toTex={render?.toTex ?? null}

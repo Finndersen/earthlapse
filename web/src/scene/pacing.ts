@@ -20,6 +20,12 @@
  *
  * `'steady'` mode ignores this file — `advancePlayhead` only walks `scenesPacing` in `'scenes'`
  * mode.
+ *
+ * `playbackSecondsBetween`/`yearsForPlaybackSeconds` convert between a stretch of `t` and the
+ * wall-clock seconds `'scenes'`-mode playback spends crossing it — the tool a caller needs to
+ * size something in *years of `t`* (a label's fade window, say) so its actual on-screen duration
+ * stays constant, rather than in years directly, which the playhead does not move through at a
+ * fixed rate.
  */
 
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
@@ -123,4 +129,137 @@ export function scenePlaybackSegments(scenes: readonly Scene[]): PlaybackSegment
   }
 
   return segments
+}
+
+// -------------------------------------------------------------------------- seconds <-> years
+
+/** `symlogU`'s inverse: recovers a `t` from its full-domain symlog `u`. */
+function symlogUInverse(u: number): GeoTime {
+  return SYMLOG_C * Math.expm1(u)
+}
+
+/**
+ * `scenePlaybackSegments`'s own cumulative index (`GeoTime` boundaries, their symlog `u`, and
+ * running `durationSeconds` totals), built once per distinct `segments` array and reused across
+ * every `playbackSecondsBetween`/`yearsForPlaybackSeconds` call against it — `newCityLabels` calls
+ * the resolver built on this once per candidate city per frame (up to 283), so a fresh O(n) walk
+ * of the scene deck on every call would matter. `segments` is itself built once per scene list
+ * (`Experience.tsx`'s own `useMemo`), so keying this cache on the array's identity is safe: the
+ * same reference always means the same content.
+ */
+interface PacingIndex {
+  /** Ascending `GeoTime`: `segments[0].tNewer`, then each segment's `tOlder` in turn. */
+  tBoundaries: GeoTime[]
+  /** `symlogU` of each entry in `tBoundaries`, same order — precomputed so proration never
+   *  repeats a `log1p` per query. */
+  uBoundaries: number[]
+  /** Cumulative `durationSeconds` at each entry in `tBoundaries`, starting at 0. */
+  cumulativeSeconds: number[]
+}
+
+const pacingIndexCache = new WeakMap<readonly PlaybackSegment[], PacingIndex>()
+
+function pacingIndexFor(segments: readonly PlaybackSegment[]): PacingIndex {
+  const cached = pacingIndexCache.get(segments)
+  if (cached !== undefined) return cached
+
+  const tBoundaries: GeoTime[] = segments.length > 0 ? [segments[0]!.tNewer] : []
+  const cumulativeSeconds: number[] = [0]
+  for (const segment of segments) {
+    tBoundaries.push(segment.tOlder)
+    cumulativeSeconds.push(cumulativeSeconds[cumulativeSeconds.length - 1]! + segment.durationSeconds)
+  }
+  const index: PacingIndex = { tBoundaries, uBoundaries: tBoundaries.map(symlogU), cumulativeSeconds }
+  pacingIndexCache.set(segments, index)
+  return index
+}
+
+/**
+ * Cumulative wall-clock seconds, at 1x, that crossing from `segments`' own newest edge down to
+ * `t` takes — clamped flat outside the segments' own domain (0 before it, the full total beyond
+ * it), which is what gives `playbackSecondsBetween` and `yearsForPlaybackSeconds` their "outside
+ * every segment contributes nothing" behaviour.
+ *
+ * Proration inside the segment containing `t` is by symlog `u` fraction, not by a linear fraction
+ * of the `t` range: `timeline/playback.ts`'s `buildRatedUSegments` plays each segment back at a
+ * constant *`u`* velocity, not a constant `t` velocity, so a linear-in-`t` proration would
+ * mismeasure any hold segment spanning a wide `t` range.
+ */
+function secondsAtT(segments: readonly PlaybackSegment[], t: GeoTime): number {
+  const { tBoundaries, uBoundaries, cumulativeSeconds } = pacingIndexFor(segments)
+  const n = tBoundaries.length
+  if (n === 0) return 0
+  if (t <= tBoundaries[0]!) return 0
+  if (t >= tBoundaries[n - 1]!) return cumulativeSeconds[n - 1]!
+
+  let lo = 0
+  let hi = n - 1
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (tBoundaries[mid]! <= t) lo = mid
+    else hi = mid
+  }
+  const uSpan = uBoundaries[hi]! - uBoundaries[lo]!
+  const fraction = uSpan > 0 ? (symlogU(t) - uBoundaries[lo]!) / uSpan : 0
+  return cumulativeSeconds[lo]! + fraction * (cumulativeSeconds[hi]! - cumulativeSeconds[lo]!)
+}
+
+/**
+ * `secondsAtT`'s inverse: the `t` at which cumulative seconds first reaches `target`, within
+ * `segments`' own domain — clamped to 0 (never `segments[0].tNewer`: `yearsForPlaybackSeconds`
+ * relies on this bottoming out at the true `t` floor, not the segments' own nearest edge) for a
+ * `target` at or below 0, and to the oldest boundary for one at or above the full total.
+ */
+function tAtCumulativeSeconds(segments: readonly PlaybackSegment[], target: number): GeoTime {
+  const { tBoundaries, uBoundaries, cumulativeSeconds } = pacingIndexFor(segments)
+  const n = tBoundaries.length
+  if (n === 0 || target <= 0) return 0
+  if (target >= cumulativeSeconds[n - 1]!) return tBoundaries[n - 1]!
+
+  let lo = 0
+  let hi = n - 1
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1
+    if (cumulativeSeconds[mid]! <= target) lo = mid
+    else hi = mid
+  }
+  const secondsSpan = cumulativeSeconds[hi]! - cumulativeSeconds[lo]!
+  const fraction = secondsSpan > 0 ? (target - cumulativeSeconds[lo]!) / secondsSpan : 0
+  return symlogUInverse(uBoundaries[lo]! + fraction * (uBoundaries[hi]! - uBoundaries[lo]!))
+}
+
+/**
+ * Wall-clock seconds, at 1x, that `'scenes'`-mode `advancePlayhead` spends crossing `[tNewer,
+ * tOlder]`. Any part of the range that falls outside every segment (before `segments[0].tNewer`,
+ * after the oldest segment's `tOlder`) contributes nothing — this module has no access to
+ * `playback.baseRate`, which is what actually paces `t` out there (`advancePlayhead`'s own doc
+ * comment), so it isn't modelled here.
+ */
+export function playbackSecondsBetween(segments: readonly PlaybackSegment[], tNewer: GeoTime, tOlder: GeoTime): number {
+  if (tNewer > tOlder) {
+    throw new Error(`playbackSecondsBetween: tNewer (${tNewer}) must be <= tOlder (${tOlder})`)
+  }
+  return secondsAtT(segments, tOlder) - secondsAtT(segments, tNewer)
+}
+
+/**
+ * The inverse of `playbackSecondsBetween`: walking forward in time (decreasing `t`) from
+ * `tStart`, how many years does `'scenes'`-mode playback cross before spending `seconds` of
+ * wall-clock time at 1x? This is what turns a fixed real-time budget (a label should stay legible
+ * for about this long) into the `t`-window a `t`-only sampler like `cityLabelOpacityAt` needs.
+ *
+ * Clamped at `tStart` when the budget outruns what `segments` can account for before `t` bottoms
+ * out at 0 — the walk cannot span more years than that. The same "outside every segment
+ * contributes nothing" rule as `playbackSecondsBetween` applies past either edge of the segments'
+ * own domain: past the oldest edge, the whole stretch above it is spent for free before the walk
+ * starts drawing down `seconds` inside the domain; below the newest edge, none of `seconds` can
+ * ever be spent, so the walk always bottoms out at 0.
+ */
+export function yearsForPlaybackSeconds(segments: readonly PlaybackSegment[], tStart: GeoTime, seconds: number): GeoTime {
+  if (seconds < 0) {
+    throw new Error(`yearsForPlaybackSeconds: seconds must be >= 0, got ${seconds}`)
+  }
+  const target = secondsAtT(segments, tStart) - seconds
+  const tEnd = tAtCumulativeSeconds(segments, target)
+  return tStart - tEnd
 }

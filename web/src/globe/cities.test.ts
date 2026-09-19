@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import type { FeatureData } from '@/types/layer'
+import { playbackSecondsBetween, scenePlaybackSegments, yearsForPlaybackSeconds } from '@/scene/pacing'
+import type { FeatureData, GeoTime } from '@/types/layer'
+import type { Scene } from '@/types/manifest'
 
 import {
   allCitiesAt,
   CITY_LABEL_CAP,
-  CITY_LABEL_FADE_WINDOW_T,
   CITY_TRAILING_GRACE_T,
   cityEstimateRange,
   cityLabelOpacityAt,
@@ -304,6 +305,13 @@ describe('citiesHaveDataAt', () => {
   })
 })
 
+// A fixed window used throughout these two suites where the actual number doesn't matter, only
+// that `cityLabelOpacityAt`/`newCityLabels` apply whatever `fadeWindowYears`/`fadeWindowAt`
+// resolves to — the real per-city sizing (`scene/pacing.ts`'s `yearsForPlaybackSeconds`) has its
+// own dedicated "differently-paced parts of the timeline" suite further down.
+const FIXED_FADE_WINDOW_YEARS = 150
+const fixedFadeWindowAt = (): GeoTime => FIXED_FADE_WINDOW_YEARS
+
 describe('cityLabelOpacityAt', () => {
   // Founded (oldest estimate) at t = 1000.
   const founded: FeatureData = {
@@ -317,26 +325,31 @@ describe('cityLabelOpacityAt', () => {
   }
 
   it('is 0 before the city exists', () => {
-    expect(cityLabelOpacityAt(founded, 1001)).toBe(0)
+    expect(cityLabelOpacityAt(founded, 1001, FIXED_FADE_WINDOW_YEARS)).toBe(0)
   })
 
   it('is full strength exactly at the city’s first-appearance t', () => {
-    expect(cityLabelOpacityAt(founded, 1000)).toBe(1)
+    expect(cityLabelOpacityAt(founded, 1000, FIXED_FADE_WINDOW_YEARS)).toBe(1)
   })
 
   it('eases linearly to 0 as t moves forward past first appearance', () => {
-    const half = 1000 - CITY_LABEL_FADE_WINDOW_T / 2
-    expect(cityLabelOpacityAt(founded, half)).toBeCloseTo(0.5, 5)
+    const half = 1000 - FIXED_FADE_WINDOW_YEARS / 2
+    expect(cityLabelOpacityAt(founded, half, FIXED_FADE_WINDOW_YEARS)).toBeCloseTo(0.5, 5)
   })
 
   it('is 0 once the fade window has fully elapsed, and beyond', () => {
-    expect(cityLabelOpacityAt(founded, 1000 - CITY_LABEL_FADE_WINDOW_T)).toBe(0)
-    expect(cityLabelOpacityAt(founded, 0)).toBe(0)
+    expect(cityLabelOpacityAt(founded, 1000 - FIXED_FADE_WINDOW_YEARS, FIXED_FADE_WINDOW_YEARS)).toBe(0)
+    expect(cityLabelOpacityAt(founded, 0, FIXED_FADE_WINDOW_YEARS)).toBe(0)
   })
 
-  it('is a pure function of t — scrubbing back reproduces the exact same opacity', () => {
-    const t = 1000 - CITY_LABEL_FADE_WINDOW_T / 4
-    expect(cityLabelOpacityAt(founded, t)).toBe(cityLabelOpacityAt(founded, t))
+  it('is 0 for a non-positive fade window, whatever t', () => {
+    expect(cityLabelOpacityAt(founded, 1000, 0)).toBe(0)
+    expect(cityLabelOpacityAt(founded, 1000, -10)).toBe(0)
+  })
+
+  it('is a pure function of t and the fade window — scrubbing back reproduces the exact same opacity', () => {
+    const t = 1000 - FIXED_FADE_WINDOW_YEARS / 4
+    expect(cityLabelOpacityAt(founded, t, FIXED_FADE_WINDOW_YEARS)).toBe(cityLabelOpacityAt(founded, t, FIXED_FADE_WINDOW_YEARS))
   })
 })
 
@@ -354,7 +367,7 @@ describe('newCityLabels', () => {
     const notYetFounded = cityAt('future-city', 400, 10_000)
     const cities = [justFounded, longEstablished, notYetFounded]
 
-    expect(newCityLabels(cities, 1000).map((l) => l.feature.id)).toEqual(['new-city'])
+    expect(newCityLabels(cities, 1000, fixedFadeWindowAt).map((l) => l.feature.id)).toEqual(['new-city'])
   })
 
   it('caps the number of simultaneous labels, largest population first, deterministically', () => {
@@ -364,7 +377,7 @@ describe('newCityLabels', () => {
     // Sorted largest-first, as `allCitiesAt`/`selectCities` already leave it.
     cohort.sort((a, b) => b.population - a.population)
 
-    const labels = newCityLabels(cohort, 1000)
+    const labels = newCityLabels(cohort, 1000, fixedFadeWindowAt)
     expect(labels).toHaveLength(CITY_LABEL_CAP)
     expect(labels.map((l) => l.feature.id)).toEqual(cohort.slice(0, CITY_LABEL_CAP).map((c) => c.feature.id))
     // Every label in a same-t cohort is at full opacity.
@@ -375,7 +388,85 @@ describe('newCityLabels', () => {
     const cohort: CityAtTime[] = Array.from({ length: 10 }, (_, i) => cityAt(`c-${i}`, 1000, 1000 + i)).sort(
       (a, b) => b.population - a.population,
     )
-    expect(newCityLabels(cohort, 950)).toEqual(newCityLabels(cohort, 950))
+    expect(newCityLabels(cohort, 950, fixedFadeWindowAt)).toEqual(newCityLabels(cohort, 950, fixedFadeWindowAt))
+  })
+
+  it('calls fadeWindowAt with each candidate’s own first-appearance t, not t itself', () => {
+    const city = cityAt('some-city', 1000, 10_000)
+    const seenAppearanceTs: GeoTime[] = []
+    newCityLabels([city], 950, (appearanceT) => {
+      seenAppearanceTs.push(appearanceT)
+      return FIXED_FADE_WINDOW_YEARS
+    })
+    expect(seenAppearanceTs).toEqual([1000])
+  })
+})
+
+describe('newCityLabels — playback-paced fade window (the actual fix)', () => {
+  // A fixed number of years is the wrong unit for "how long a label stays on screen" because
+  // playback does not move through years at a fixed rate — 28 of the manifest's scenes pack into
+  // the last few hundred years of `t`, so that stretch is paced far more slowly (more wall-clock
+  // seconds per year of `t`) than deep antiquity. Two scene decks below stand in for a dense
+  // modern stretch and a sparse ancient one; a city appearing in each should get very different
+  // `t`-year windows but approximately the same real *playback-seconds* duration.
+  function scene(id: string, t: GeoTime): Scene {
+    return {
+      id,
+      t,
+      chapterId: 'ch',
+      image: `${id}.png`,
+      thumbnail: `${id}-thumb.png`,
+      shot: 'WIDE_RIDGE',
+      title: id,
+      caption: id,
+      width: 1920,
+      height: 1080,
+    }
+  }
+
+  // Dense: several scenes packed into a few hundred years of `t`, the modern-history case the
+  // bug report itself measured (Sydney/Los Angeles/Johannesburg).
+  const denseScenes = [scene('d0', 0), scene('d1', 60), scene('d2', 140), scene('d3', 225), scene('d4', 300)]
+  // Sparse: the same scene count spread across most of the domain, so each gap is paced far
+  // faster in years-per-second than the dense deck's gaps.
+  const sparseScenes = [scene('s0', 0), scene('s1', 3e9), scene('s2', 3.5e9), scene('s3', 4e9), scene('s4', 4.5e9)]
+
+  const denseSegments = scenePlaybackSegments(denseScenes)
+  const sparseSegments = scenePlaybackSegments(sparseScenes)
+
+  it('gives cities in differently-paced stretches label windows of approximately equal real playback-seconds duration', () => {
+    const budgetSeconds = 3.5
+    const denseCity: CityAtTime = {
+      feature: { id: 'dense-city', name: 'Dense', country: 'X', lat: 0, lon: 0, certainty: 'high', estimates: [{ t: 140, population: 10_000 }] },
+      population: 10_000,
+      radiusPx: cityRadiusPx(10_000),
+      trailingFade: 1,
+    }
+    const sparseCity: CityAtTime = {
+      feature: { id: 'sparse-city', name: 'Sparse', country: 'X', lat: 0, lon: 0, certainty: 'high', estimates: [{ t: 3.5e9, population: 10_000 }] },
+      population: 10_000,
+      radiusPx: cityRadiusPx(10_000),
+      trailingFade: 1,
+    }
+
+    const denseFadeWindowAt = (appearanceT: GeoTime): GeoTime => yearsForPlaybackSeconds(denseSegments, appearanceT, budgetSeconds)
+    const sparseFadeWindowAt = (appearanceT: GeoTime): GeoTime => yearsForPlaybackSeconds(sparseSegments, appearanceT, budgetSeconds)
+
+    const denseWindowYears = denseFadeWindowAt(140)
+    const sparseWindowYears = sparseFadeWindowAt(3.5e9)
+    // The whole point: wildly different year spans for the same real-time budget.
+    expect(sparseWindowYears).toBeGreaterThan(denseWindowYears * 1000)
+
+    // Both cities are still visible (opacity > 0) at the midpoint of their own window.
+    expect(newCityLabels([denseCity], 140 - denseWindowYears / 2, denseFadeWindowAt).map((l) => l.feature.id)).toEqual(['dense-city'])
+    expect(newCityLabels([sparseCity], 3.5e9 - sparseWindowYears / 2, sparseFadeWindowAt).map((l) => l.feature.id)).toEqual(['sparse-city'])
+
+    // The actual property being fixed: converting each window back into playback-seconds
+    // (`playbackSecondsBetween`, the inverse relationship `yearsForPlaybackSeconds` was built
+    // from) gives approximately the same duration in both stretches, not a 60x spread.
+    const denseSecondsSpent = playbackSecondsBetween(denseSegments, 140 - denseWindowYears, 140)
+    const sparseSecondsSpent = playbackSecondsBetween(sparseSegments, 3.5e9 - sparseWindowYears, 3.5e9)
+    expect(denseSecondsSpent).toBeCloseTo(sparseSecondsSpent, 6)
   })
 })
 

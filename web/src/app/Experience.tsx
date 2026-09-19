@@ -1,8 +1,8 @@
 'use client'
 
 /**
- * W12a — the integration pass. Wires the real `timeline`, `globe`, `scene` and `layers`
- * packages into `ShellLayout` (W11), all driven from the single `t` in `useTimeStore` (W11).
+ * Wires the `timeline`, `globe`, `scene` and `layers` packages into `ShellLayout`, all driven
+ * from the single `t` in `useTimeStore`.
  * This is the one place the playback loop lives (DESIGN §3): `usePlaybackLoop` +
  * `advancePlayhead` against the *full-domain* scale, writing `t` back to the store every
  * frame while playing.
@@ -23,6 +23,7 @@ import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { dominantScene, resolveAssetUrl, sceneAt, scenePlaybackSegments, sceneTerritories, SceneView, steadyFrameRegime } from '@/scene'
 import type { PresentationRegime } from '@/scene'
+import { yearsForPlaybackSeconds } from '@/scene'
 import { ShellLayout } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
@@ -62,6 +63,16 @@ const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 const FULL_DOMAIN_SYMLOG_SCALE: TimeScale = createSymlogScale(FULL_DOMAIN)
 
 
+/**
+ * Target real-world seconds a newly-appeared city name label stays on screen at 1x playback
+ * speed — long enough to actually read the name, short enough to still register as an arrival
+ * rather than a lingering caption. `cityLabelFadeWindowAt` below converts this into the `t`-years
+ * window `cityLabelOpacityAt` fades over, per city, from real `'scenes'`-mode pacing, so the
+ * *real-time* duration stays close to this figure everywhere on the timeline rather than
+ * stretching or collapsing with how fast that stretch happens to be paced.
+ */
+export const CITY_LABEL_FADE_SECONDS = 3.5
+
 /** Time constant, seconds, for smoothing the instantaneous years-per-second rate readout
  *  (ADR-016's prototype) into something that doesn't flicker every frame — an exponential
  *  moving average, `alpha = min(1, dtSeconds / this)` per frame. Small enough that the readout
@@ -96,8 +107,8 @@ export function Experience() {
   const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
   // A leaf section (no children — e.g. the Holocene's own "Modern") draws with the fixed
   // `SYMLOG_C` rather than `symlogKnee`'s own adaptive shrink, which is meant for a section that
-  // has children to make room for (re-review fix, 2026-09-15 — see `sectionSymlogKnee`'s doc
-  // comment). Threaded into both the resting/animated scale and 'steady'-mode pacing below, so
+  // has children to make room for (see `sectionSymlogKnee`'s doc comment). Threaded into both
+  // the resting/animated scale and 'steady'-mode pacing below, so
   // the ruler, the track and steady playback's own speed all agree on the same knee.
   const timelineKnee = sectionSymlogKnee(sectionId)
   const timelineScale = useAnimatedScale(sectionById(sectionId).window, timelineScaleKind, timelineKnee)
@@ -116,8 +127,7 @@ export function Experience() {
 
   // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
   // `onViewModeToggleHeightChange` doc comment), lifted here the same way `globeCaption` is so
-  // `ShellLayout`'s `useChromeGap` can reserve room for it (issue 3 follow-up, user report: "the
-  // globe/map toggle is overlayed on top of the globe... globe needs to be made a bit smaller").
+  // `ShellLayout`'s `useChromeGap` can reserve room for it rather than let it overlay the orb.
   // `0` while the toggle isn't mounted (collapsed, or no WebGL).
   const [viewModeToggleHeightPx, setViewModeToggleHeightPx] = useState(0)
 
@@ -128,6 +138,10 @@ export function Experience() {
   const [feedEventIds, setFeedEventIds] = useState<ReadonlySet<string>>(() => new Set())
   const [hoveredFeedEventId, setHoveredFeedEventId] = useState<string | null>(null)
   const onVisibleEventsChange = useCallback((ids: readonly string[]) => setFeedEventIds(new Set(ids)), [])
+
+  // Stable across this component's per-frame playback re-renders, so `<LayerChart>` can be
+  // memoised on its props: an inline arrow here would differ every frame and defeat that.
+  const closeExpandedChart = useCallback(() => setExpandedChartLayerId(null), [setExpandedChartLayerId])
 
   useEffect(() => {
     installDevHook()
@@ -154,6 +168,20 @@ export function Experience() {
   const scenesPacing = useMemo(
     () => (data.status === 'ready' ? scenePlaybackSegments(data.manifest.scenes) : []),
     [data],
+  )
+
+  // The globe's city labels (`cities.ts`'s `newCityLabels`) fade over a window sized in `t`-years
+  // per city, derived from `scenesPacing` above rather than a fixed year count, so a label's real
+  // on-screen duration stays close to `CITY_LABEL_FADE_SECONDS` regardless of where on the
+  // timeline it appears (`scene/pacing.ts`'s `yearsForPlaybackSeconds`). `* playback.speed`
+  // widens the `t`-window in step with speed, so the *real-time* duration — not the `t`-window
+  // itself — is what stays constant as the speed control changes. Pure in its own inputs, and
+  // `scenesPacing` is itself a pure function of the scene list (`scenePlaybackSegments`'s own
+  // doc comment), so this resolver is a pure function of `t` throughout — scrubbing to the same
+  // `t` at the same speed always reproduces the same label at the same opacity.
+  const cityLabelFadeWindowAt = useMemo(
+    () => (appearanceT: GeoTime) => yearsForPlaybackSeconds(scenesPacing, appearanceT, CITY_LABEL_FADE_SECONDS * playback.speed),
+    [scenesPacing, playback.speed],
   )
 
   // Every scene's on-screen territory (ADR-029) — the shared geometry both 'steady'-mode pacing
@@ -447,11 +475,7 @@ export function Experience() {
               assetBase={manifest.assetBase}
               renderCaption={renderCaption}
               regime={steadyRegime.regime}
-              // The expanded globe/map's backdrop sits at z-index 50, fully covering `.scene`
-              // (`ShellLayout.module.css`), so the scene canvas need not render while it's up —
-              // see `SceneView`'s own `visible` doc comment for why this stops short of
-              // unmounting it.
-              visible={!globeExpanded}
+              covered={globeExpanded}
             />
           ) : (
             <div className={styles.placeholder}>No scenes in manifest.</div>
@@ -471,6 +495,7 @@ export function Experience() {
               cities={cities}
               sceneLocation={currentSceneLocation}
               playbackBaseRate={playback.baseRate}
+              cityLabelFadeWindowAt={cityLabelFadeWindowAt}
               feedEventIds={feedEventIds}
               hoveredFeedEventId={hoveredFeedEventId}
               onViewModeToggleHeightChange={setViewModeToggleHeightPx}
@@ -516,7 +541,7 @@ export function Experience() {
         caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
         chart={
           expandedChartLayer ? (
-            <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={() => setExpandedChartLayerId(null)} />
+            <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={closeExpandedChart} />
           ) : null
         }
         timeline={

@@ -110,4 +110,27 @@ describe('useThrottledValue', () => {
       expect(observed[i]).toBeGreaterThanOrEqual(observed[i - 1]!)
     }
   })
+
+  it.each([0, -1])('passes every value straight through at an interval of %d', (intervalMs) => {
+    const { result, rerender } = renderHook(({ value }) => useThrottledValue(value, intervalMs), {
+      initialProps: { value: 0 },
+    })
+
+    for (let i = 1; i <= 5; i++) {
+      rerender({ value: i })
+      expect(result.current).toBe(i)
+    }
+  })
+
+  it('commits nothing of its own while disabled, so a caller pays no extra render', () => {
+    let renders = 0
+    const { rerender } = renderHook(({ value }) => {
+      renders += 1
+      return useThrottledValue(value, 0)
+    }, { initialProps: { value: 0 } })
+
+    const before = renders
+    rerender({ value: 1 })
+    expect(renders).toBe(before + 1)
+  })
 })

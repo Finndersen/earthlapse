@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import type { Scene } from '@/types/manifest'
 
-import { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
+import {
+  MAX_GAP_BONUS_SECONDS,
+  playbackSecondsBetween,
+  scenePlaybackSegments,
+  SCENE_DWELL_SECONDS,
+  yearsForPlaybackSeconds,
+} from './pacing'
 import type { PlaybackSegment } from './pacing'
 import { MIN_TRANSITION_SECONDS } from './presentation'
 import { sceneAt } from './scene'
@@ -181,5 +187,120 @@ describe('scenePlaybackSegments: gap bonus (ADR-016)', () => {
     const segments = scenePlaybackSegments(pair)
     const [newerHold, , olderHold] = segments as [PlaybackSegment, PlaybackSegment, PlaybackSegment]
     expect(newerHold.durationSeconds).toBe(olderHold.durationSeconds)
+  })
+})
+
+// --------------------------------------------------------------------------- seconds <-> years
+
+describe('playbackSecondsBetween', () => {
+  const scenes = [s0, s1, s2, s3]
+  const segments = scenePlaybackSegments(scenes)
+  const total = segments.reduce((sum, seg) => sum + seg.durationSeconds, 0)
+
+  it('sums to the full segment total across the whole covered range', () => {
+    expect(playbackSecondsBetween(segments, s0.t, s3.t)).toBeCloseTo(total, 9)
+  })
+
+  it('matches a single segment\'s own durationSeconds exactly for that segment\'s own range', () => {
+    const [first] = segments as [PlaybackSegment]
+    expect(playbackSecondsBetween(segments, first.tNewer, first.tOlder)).toBeCloseTo(first.durationSeconds, 9)
+  })
+
+  it('is additive: two adjoining ranges sum to the range spanning both', () => {
+    const mid = segments[1]!.tOlder
+    const first = playbackSecondsBetween(segments, s0.t, mid)
+    const second = playbackSecondsBetween(segments, mid, s3.t)
+    expect(first + second).toBeCloseTo(playbackSecondsBetween(segments, s0.t, s3.t), 9)
+  })
+
+  it('is 0 for a zero-width range', () => {
+    expect(playbackSecondsBetween(segments, s1.t, s1.t)).toBe(0)
+  })
+
+  it('is 0 for a range entirely before the first segment', () => {
+    expect(playbackSecondsBetween(segments, -100, -1)).toBe(0)
+  })
+
+  it('is 0 for a range entirely after the last segment', () => {
+    const beyond = s3.t + 1000
+    expect(playbackSecondsBetween(segments, beyond, beyond + 100)).toBe(0)
+  })
+
+  it('only counts the covered part of a range straddling the domain\'s near edge', () => {
+    const straddling = playbackSecondsBetween(segments, s0.t - 50, s0.t + 10)
+    const coveredOnly = playbackSecondsBetween(segments, s0.t, s0.t + 10)
+    expect(straddling).toBeCloseTo(coveredOnly, 9)
+  })
+
+  it('only counts the covered part of a range straddling the domain\'s far edge', () => {
+    const straddling = playbackSecondsBetween(segments, s3.t - 10, s3.t + 50)
+    const coveredOnly = playbackSecondsBetween(segments, s3.t - 10, s3.t)
+    expect(straddling).toBeCloseTo(coveredOnly, 9)
+  })
+
+  it('is 0 for an empty segment list', () => {
+    expect(playbackSecondsBetween([], 0, 1000)).toBe(0)
+  })
+
+  it('throws when tNewer > tOlder', () => {
+    expect(() => playbackSecondsBetween(segments, s3.t, s0.t)).toThrow()
+  })
+
+  it('prorates a wide hold segment by symlog u fraction, not by a linear t fraction (matches the constant-u-velocity pacing playback actually plays back at)', () => {
+    // A single wide gap far from the near-linear region, so the two proration schemes diverge
+    // measurably: symlog `u` is concave in `t` (its slope falls as `t` grows), so the earlier
+    // (smaller-t) half of an equal-t-width split spans more `u` — and so more seconds, at this
+    // segment's own constant `u` velocity — than the later half. A linear-in-`t` proration would
+    // instead give both halves exactly half the segment's duration.
+    const wide = [scene('a', 1e6), scene('b', 1e9)]
+    const segments = scenePlaybackSegments(wide)
+    const [firstHold] = segments as [PlaybackSegment]
+    const midT = (firstHold.tNewer + firstHold.tOlder) / 2
+    const secondsToMidpoint = playbackSecondsBetween(segments, firstHold.tNewer, midT)
+    expect(secondsToMidpoint).toBeGreaterThan(firstHold.durationSeconds / 2)
+  })
+})
+
+describe('yearsForPlaybackSeconds', () => {
+  const scenes = [s0, s1, s2, s3]
+  const segments = scenePlaybackSegments(scenes)
+
+  it('round-trips against playbackSecondsBetween: the years it returns cost exactly the seconds asked for', () => {
+    const budget = 4
+    const years = yearsForPlaybackSeconds(segments, s2.t, budget)
+    expect(playbackSecondsBetween(segments, s2.t - years, s2.t)).toBeCloseTo(budget, 6)
+  })
+
+  it('round-trips for a budget spanning several segments', () => {
+    const budget = 15
+    const years = yearsForPlaybackSeconds(segments, s3.t, budget)
+    expect(playbackSecondsBetween(segments, s3.t - years, s3.t)).toBeCloseTo(budget, 6)
+  })
+
+  it('is 0 for a 0 budget', () => {
+    expect(yearsForPlaybackSeconds(segments, s2.t, 0)).toBeCloseTo(0, 6)
+  })
+
+  it('clamps at tStart when the budget outruns the pacing available before t reaches 0', () => {
+    const years = yearsForPlaybackSeconds(segments, s1.t, 1e9)
+    expect(years).toBe(s1.t)
+  })
+
+  it('clamps at tStart for an empty segment list — no pacing data can ever be spent', () => {
+    expect(yearsForPlaybackSeconds([], 500, 1)).toBe(500)
+  })
+
+  it('throws for a negative seconds budget', () => {
+    expect(() => yearsForPlaybackSeconds(segments, s2.t, -1)).toThrow()
+  })
+
+  it('grows monotonically with the seconds budget', () => {
+    const small = yearsForPlaybackSeconds(segments, s3.t, 1)
+    const large = yearsForPlaybackSeconds(segments, s3.t, 5)
+    expect(large).toBeGreaterThan(small)
+  })
+
+  it('is a pure function of its inputs — the same call always returns the same years', () => {
+    expect(yearsForPlaybackSeconds(segments, s2.t, 4)).toBe(yearsForPlaybackSeconds(segments, s2.t, 4))
   })
 })

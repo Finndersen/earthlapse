@@ -51,7 +51,14 @@ export interface GlobeHitTarget {
 }
 
 export interface GlobeHitCandidate {
-  target: GlobeHitTarget
+  /**
+   * Builds this candidate's full `GlobeHitTarget` — title/description/dateRange included. Called
+   * at most once per candidate, only for the single candidate `pickCandidate` resolves as the
+   * winner, so the caller is free to do real formatting work here (`HumanCivilisation.tsx`'s
+   * `cityTarget`/`arrivalTarget`) without paying for it on every one of a few hundred candidates
+   * built each frame — the hit test itself only ever touches `points`/`tolerancePx`/the lifts.
+   */
+  content: () => GlobeHitTarget
   /** Screen-space test points: one for a marker, the whole polyline for an arc. */
   points: readonly GlobeEffectAnchor[]
   /** How near, in CSS pixels, the pointer must come. */
@@ -138,7 +145,7 @@ export function pickCandidate(
   width: number,
   height: number,
 ): GlobeHitTarget | null {
-  let best: GlobeHitTarget | null = null
+  let best: GlobeHitCandidate | null = null
   let bestScore = 1
   const current: Projected = { x: 0, y: 0, visible: false }
   const previous: Projected = { x: 0, y: 0, visible: false }
@@ -164,10 +171,12 @@ export function pickCandidate(
     const score = nearest / candidate.tolerancePx
     if (score < bestScore) {
       bestScore = score
-      best = candidate.target
+      best = candidate
     }
   }
-  return best
+  // The only place any candidate's content is actually built — once, for the single winner, and
+  // only because a pointer event (not an animation frame) called this function at all.
+  return best?.content() ?? null
 }
 
 /** Whether two hit targets are the "same" for the purpose of bailing out of a `setState` — by id,
