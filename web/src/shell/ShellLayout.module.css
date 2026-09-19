@@ -422,8 +422,13 @@
   opacity: 0.18;
 }
 
-/* Globe.module.css's expanded backdrop sits at z-index 50 in this same stacking context. */
+/* Globe.module.css's expanded backdrop sits at z-index 50 in this same stacking context. The
+   feed rides above it too: the expanded globe leaves the left column clear, and the events
+   reaching the playhead stay relevant while the globe is what you are watching. It keeps its own
+   `pointer-events: none` (only its cards re-enable), so lifting it cannot swallow a drag meant
+   for the globe. */
 .shell[data-globe-expanded='true'] .title,
+.shell[data-globe-expanded='true'] .feed,
 .shell[data-globe-expanded='true'] .bottom {
   z-index: 60;
 }

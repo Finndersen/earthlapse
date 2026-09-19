@@ -73,47 +73,39 @@ function stop(density: number, hex: string, alpha: number): DensityRampStop {
  * moves at a uniform rate across the texture's own precision rather than crowding six of its
  * seven stops into the top few bytes.
  *
- * The alpha curve was tuned against real sampled texels of the published 2015 CE frame rather
- * than by eye — twice now. The first pass (tuned before the ramp shipped) put remote Amazon
- * 0.04-0.25/km² and Tibet 0.2 at or under the floor, drawing nothing; rural Iowa 6.7, the
- * Argentine pampas 6.4 and the deep Congo 4.7 around a third opaque; the Netherlands 372 and
- * Jiangsu 1,154 most of the way to opaque; Dhaka's own 0.35° cell, 8,204, at the ramp's top. That
- * undersold its own goal: "a third opaque" for values as low as 4-7 people/km² left sparse
- * rainforest and truly dense farmland only a hue-shift apart in the same magenta family, which is
- * exactly the "is central Africa really this dense?" report that prompted the 2026-09 retune (see
- * the module doc comment above for the full verdict). Re-sampled then against a wider spread of
- * points on the same 2015 CE frame — genuinely rural land now sits well under a third opaque, and
- * only land in the hundreds-per-km² range or above earns real weight:
+ * Alphas are set against real sampled texels of the published 2015 CE frame, not by eye, and the
+ * curve has to survive two opposite failures. Too much weight low down and sparse rainforest and
+ * dense farmland sit a hue apart in the same magenta family, so most inhabited land reads as
+ * solid paint. Too little and genuinely dense regions vanish. Representative values:
  *
- * | Location | people/km² | alpha before | alpha after |
- * |---|---|---|---|
- * | Congo basin interior (true rainforest, ~1°N 23°E) | ~7.6 | 0.38 | 0.13 |
- * | Rural Iowa (point sample) | ~4.1 | 0.30 | 0.10 |
- * | Amazon interior (deep, away from river towns) | ~2.7 | 0.25 | 0.07 |
- * | Sahara | 0 | 0.00 | 0.00 |
- * | Ethiopian highlands (rural, intensively farmed) | ~236-258 | 0.75-0.76 | 0.51-0.52 |
- * | Jiangsu | ~466-615 | 0.80-0.82 | 0.60-0.64 |
- * | Netherlands | ~563 | 0.81 | 0.62 |
- * | Nigerian coastal belt / SE Nigeria (genuinely dense) | ~846-1,111 | 0.84-0.86 | 0.68-0.71 |
- * | Ganges plain, rural Bihar | ~1,262-1,560 | 0.87-0.88 | 0.73-0.75 |
+ * | Location | people/km² | alpha |
+ * |---|---|---|
+ * | Amazon interior, away from river towns | ~2.7 | 0.05 |
+ * | Congo basin interior, Afar lowland | ~7.6-8.3 | 0.09 |
+ * | Asir mountains, SW Saudi | ~73 | 0.22 |
+ * | Ethiopian highlands, rural | ~449 | 0.43 |
+ * | Yemen western highlands | ~1,070 | 0.57 |
+ * | Ganges plain, rural Bihar | ~1,747 | 0.64 |
+ * | Dhaka's own 0.35° cell | ~8,000 | 0.85 |
  *
- * Sparse land (Congo interior, rural Iowa, deep Amazon — all under 15 people/km²) now sits at
- * 0.07-0.17 opacity, a faint tint the terrain reads clearly through; genuinely dense regions
- * (several hundred people/km² and up — Netherlands, Jiangsu, the Ganges plain, the Nigerian
- * coastal belt, all real, comparably dense places, not artefacts of this ramp) keep climbing
- * toward the same 0.93 ceiling the top of the range always had. An even earlier, flatter curve
- * than either of the above put rural Iowa at 0.62 and made most inhabited land read as solid
- * paint — the opposite failure to ADR-031's, and just as unreadable; this retune moves toward
- * that failure's *opposite* end of the trade-off, not back toward it.
+ * Highland density in the Horn of Africa and Arabia is real, not an artefact: the highlands are
+ * cool, wetter and malaria-free while the neighbouring lowlands are desert (Afar 8/km², Ogaden
+ * 14, Rub' al Khali 0), so the overlay correctly inverts the usual "mountains are empty" reading.
+ * The same holds for the hard northern edge along the Himalaya, where the Gangetic plain stops at
+ * the foothills. Neither is a reason to reweight the ramp.
+ *
+ * At 1024×512 a cell is ~0.35°, so narrow features average against their surroundings — the Nile
+ * valley samples ~36/km² because each cell mixes river and desert. That is a resolution limit of
+ * the published texture, not of this ramp.
  */
 export const DENSITY_RAMP: readonly DensityRampStop[] = [
   stop(0.5, '#3c1f63', 0),
-  stop(2, '#5a2180', 0.06),
-  stop(10, '#8a2599', 0.15),
-  stop(50, '#c92aa6', 0.3),
-  stop(250, '#f13fa8', 0.52),
-  stop(1500, '#ff7ecb', 0.75),
-  stop(8000, '#ffeaf6', 0.93),
+  stop(2, '#5a2180', 0.04),
+  stop(10, '#8a2599', 0.1),
+  stop(50, '#c92aa6', 0.18),
+  stop(250, '#f13fa8', 0.34),
+  stop(1500, '#ff7ecb', 0.62),
+  stop(8000, '#ffeaf6', 0.85),
 ]
 
 function rampPosition(density: number): number {
