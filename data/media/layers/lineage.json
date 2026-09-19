@@ -503,6 +503,18 @@
         }
       },
       {
+        "nodeId": "simiiformes",
+        "image": "portraits/simiiformes.webp",
+        "plate": "SPECIMEN",
+        "pinned": "78143e7635c1f1c0",
+        "width": 1024,
+        "height": 1024,
+        "exposure": {
+          "highlight": 141,
+          "gain": 1.5
+        }
+      },
+      {
         "nodeId": "haplorhini",
         "image": "portraits/haplorhini.webp",
         "plate": "SPECIMEN",
@@ -916,6 +928,15 @@
         "backward": "portraits/morphs/hominoidea--hominidae.backward.png",
         "forwardRange": 0.1494140625,
         "backwardRange": 0.1953125,
+        "size": 128
+      },
+      {
+        "older": "simiiformes",
+        "younger": "catarrhini",
+        "forward": "portraits/morphs/simiiformes--catarrhini.forward.png",
+        "backward": "portraits/morphs/simiiformes--catarrhini.backward.png",
+        "forwardRange": 0.11328125,
+        "backwardRange": 0.0859375,
         "size": 128
       },
       {

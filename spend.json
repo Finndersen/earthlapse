@@ -2896,6 +2896,38 @@
       "estimated_usd": 0.153852,
       "actual_usd": 0.138888,
       "note": null
+    },
+    {
+      "node_id": "cretaceous-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154722,
+      "actual_usd": 0.143018,
+      "note": null
+    },
+    {
+      "node_id": "cretaceous-forest.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154846,
+      "actual_usd": 0.141092,
+      "note": null
+    },
+    {
+      "node_id": "portrait.simiiformes.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.153872,
+      "actual_usd": 0.13823,
+      "note": null
+    },
+    {
+      "node_id": "uruk-city.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154774,
+      "actual_usd": 0.139428,
+      "note": null
     }
   ]
 }

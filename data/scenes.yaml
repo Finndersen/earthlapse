@@ -172,7 +172,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "The Great Oxidation"
-    caption: As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea begins, almost imperceptibly, to clear.
+    caption: As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea slowly begins to clear.
     unsourced:
       o2_percent: 2  # rounded: the GOE's early rise, a small fraction of modern levels, contested pace
       mean_temp_c: 20  # rounded, contested: some models tie the GOE's onset to Huronian glaciation, more securely dated slightly later, so this scene is kept temperate rather than icy
@@ -201,7 +201,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "The Oldest Known Sexual Cells"
-    caption: In the climatically stable "Boring Billion," Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.
+    caption: In the "Boring Billion," Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.
     unsourced:
       o2_percent: 4  # rounded, contested: pre-Neoproterozoic-oxygenation estimates for this interval are low and disputed
       mean_temp_c: 18  # rounded: the "Boring Billion" is generally characterised as climatically stable and non-glacial
@@ -268,7 +268,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "Life Grows Large"
-    caption: Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in clear, sunlit shallows beside a barren coast.
+    caption: Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in sunlit shallows beside a barren coast.
     unsourced:
       o2_percent: 12  # contested: Ediacaran oxygen estimates range widely below modern
       mean_temp_c: 18  # rounded: post-glacial Ediacaran climate, poorly constrained
@@ -301,7 +301,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "The Cambrian Explosion"
-    caption: On the Cambrian sea floor, most of the major animal groups alive today have appeared within a geologically brief interval, including, as a jawless swimmer no longer than a fingertip, our own.
+    caption: On the Cambrian sea floor, most major animal groups alive today have appeared within a brief interval — including our own, a jawless swimmer no longer than a fingertip.
     unsourced:
       o2_percent: 12  # rounded, contested: rising but still well below modern by the mid-Cambrian
       mean_temp_c: 25  # rounded: Cambrian climate is generally reconstructed as warm
@@ -339,7 +339,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "A Bare Coast, a Crowded Sea"
-    caption: Beneath the surface a reef of crinoids, corals and shelled animals teems with life, hunted by a metre-long straight-shelled nautiloid. Above the waterline the continent is bare rock — the first land plants, known only from their spores, are no more than a green film on damp stone.
+    caption: A reef of crinoids, corals and shelled animals teems with life below, hunted by a metre-long nautiloid; above the waterline, the first land plants are known only from their spores.
     unsourced:
       o2_percent: 14  # rounded, contested: rising through the Ordovician
       mean_temp_c: 26  # rounded: Ordovician greenhouse, before the end-Ordovician glaciation
@@ -374,7 +374,7 @@ scenes:
     chapter: over-under
     shot: SPLIT_LEVEL
     title: "Sea Scorpions and the First Stems"
-    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and small, armoured early fish swim above them.
+    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and armoured early fish swim above them.
     unsourced:
       o2_percent: 16  # rounded
       mean_temp_c: 28  # rounded: warm Silurian greenhouse, high sea levels
@@ -720,8 +720,12 @@ scenes:
     t: 6.8e7
     chapter: waters-edge
     shot: WATER_EDGE
-    title: "Before the Asteroid"
-    caption: Two million years before the asteroid, duck-billed dinosaurs gather at a humid Late Cretaceous swamp where flowering trees have spread.
+    # The healed-bite-mark evidence in the caption: DePalma, R.A. et al. (2013), "Physical
+    # evidence of predatory behavior in Tyrannosaurus rex," PNAS 110(31), 12560-12564 — a tooth
+    # crown lodged in an Edmontosaurus caudal vertebra with bone regrown around it, so the animal
+    # was attacked while alive and survived. Volume/page not re-verified this session.
+    title: "Tyrannosaurus and Its Prey"
+    caption: Two million years before the asteroid, a Tyrannosaurus works the shoreline while Edmontosaurus feed nearby; healed bite marks on their bones show such attacks were often survived.
     unsourced:
       o2_percent: 27  # rounded: Late Cretaceous estimates run somewhat above modern
       mean_temp_c: 22  # rounded: Maastrichtian, cooler than the mid-Cretaceous peak
@@ -729,16 +733,16 @@ scenes:
       setting: The edge of a swampy estuary on the humid coastal plain of the Western Interior Seaway in the Late Cretaceous
       left_mass: a dense subtropical forest of tall flowering broadleaf trees and bald cypress, with fan palms in its understory
       vegetation: flowering broadleaf trees, bald cypress, fan palms, ferns and horsetails, with water lilies along the margin
-      fauna: duck-billed dinosaurs; a crocodilian lying at the water's edge; dragonflies over the water
-      main_subject: a small herd of Edmontosaurus, 10 m duck-billed dinosaurs, standing at the waterline, one wading and drinking
-      ground: dark wet mud with reeds, ferns and fallen branches
+      fauna: a distant herd of duck-billed dinosaurs along the far shallows, heads raised and alert; a crocodilian lying motionless at the water's edge; dragonflies over the water
+      main_subject: a single adult Tyrannosaurus rex, 12 m long, walking the near waterline in profile — massive deep-jawed head held low and level, body balanced horizontally over the hips with the long tail carried straight out behind, two-fingered forelimbs small against a heavy chest, pebbled greenish-brown hide with a sparse bristle of filaments along the neck and spine, wet mud to the ankles
+      ground: dark wet mud with reeds, ferns and fallen branches, deep three-toed footprints filling with water behind the animal
       water: still, tea-brown swamp water scattered with water-lily pads
       far_bank: more swamp forest fading into humid haze
       sky_and_light: heavy milky haze and towering cumulus clouds; soft, diffused warm light; the air thick with humidity
-      absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings]
-    # ADR-023 (v2): `archosaurs` `loop` above ambient -- the Edmontosaurus herd at the waterline.
+      absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings, an upright kangaroo-like posture with the tail dragging, a full coat of feathers, roaring or open-mouthed display, combat or a kill, a painted or illustrated palaeoart look, visible brush strokes, an artist's signature or watermark in any corner, the whole animal centred side-on filling the frame like a museum mural]
+    # ADR-023 (v2): `archosaurs` `loop` above ambient.
     sound: {stem: archosaurs, mode: loop, gain: 0.9}
-    pin: {asset_digest: "45461089a48f8e16", path: "data/candidates/cretaceous-forest/3562b3bc257435a1/01-45461089a48f8e16.jpg"}
+    pin: {asset_digest: "5a6d2ef2f576c49e", path: "data/candidates/cretaceous-forest/8ef0a59c2259daf4/01-5a6d2ef2f576c49e.jpg"}
 
   # 66.043 Ma, events.yaml k-pg-impact (66.032-66.054 Ma): Renne, P.R. et al. (2013), Science
   # 339(6120), 684-687. A deliberate composite, and the caption says so: the landscape is the same
@@ -897,7 +901,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "A High Arctic Forest"
-    caption: In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun disappears for months each winter, and heavy tusked Coryphodon wade its lakes.
+    caption: In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun vanishes for months, Coryphodon wading its lakes.
     unsourced:
       o2_percent: 23  # rounded: near modern
       mean_temp_c: 27  # rounded: EECO global mean, as eocene-jungle
@@ -1257,7 +1261,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Monuments Before Farming"
-    caption: Around 9500 BCE, centuries before farming reaches the region, hunter-gatherers raise and carve massive T-shaped limestone pillars on a hilltop ridge — the oldest known monumental architecture.
+    caption: Around 9500 BCE, hunter-gatherers raise massive T-shaped pillars on a hilltop ridge, the oldest known monumental architecture, centuries before farming reaches the region.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 13  # rounded: just after the Younger Dryas cold snap (ended ~11,700 BP), before the Holocene climatic optimum
@@ -1316,7 +1320,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Çatalhöyük, a Town Without Streets"
-    caption: By 7000 BCE, thousands of people live wall to wall in a honeycomb of mudbrick houses at Çatalhöyük with no streets at all — every home is entered by ladder through a hole in its roof, so the rooftops are the town's only thoroughfares.
+    caption: By 7000 BCE, thousands live wall to wall in a honeycomb of mudbrick houses at Çatalhöyük; every home is entered by ladder through a roof hole, the rooftops its only thoroughfares.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: early Holocene, near pre-industrial
@@ -1392,21 +1396,21 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Uruk, the Largest City Yet"
-    caption: On the southern Mesopotamian delta, the mudbrick temples of Uruk rise above marsh and canal — the largest city the world has yet seen.
+    caption: On the southern Mesopotamian delta, mudbrick houses crowd the canal bank at Uruk, packed roof to roof into the haze — the largest city the world has yet seen.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: Bronze Age Near East, close to pre-industrial
     subject:
       setting: A canal in the marshy delta of southern Mesopotamia, with the mudbrick city of Uruk rising beyond, about 3200 BCE
-      left_mass: a dense stand of tall marsh reeds (Phragmites), taller than a person, growing thick along the canal bank
-      vegetation: reed beds and marsh grasses along the water, with date palms scattered on the drier ground beyond
-      fauna: herons and ibis wading in the shallows; a flock of ducks taking off from the reeds
-      main_subject: two figures in simple wool or linen wraps poling a bundled-reed boat loaded with pottery jars along the canal
-      ground: packed mud footpath along the canal bank, with reed matting and stacked mudbricks drying in the sun
-      water: a slow, brown, silt-laden canal, calm and reed-fringed
-      far_bank: the mudbrick city of Uruk in the middle distance, flat-roofed houses clustered below the raised, tiered platform of the White Temple and the walled Eanna precinct
+      left_mass: a last screen of tall marsh reeds at the very edge of frame, giving way almost at once to the open waterfront
+      vegetation: a few date palms among the rooftops, reed beds confined to the near bank
+      fauna: herons among the moored boats; ducks scattering low over the water
+      main_subject: the mudbrick city of Uruk filling the far bank from edge to edge of the frame and rising well above the horizon — a deep, dense mass of flat-roofed houses packed wall to wall without streets between them, receding row behind row into the dusty haze until individual roofs are no longer separable, its whitewashed temple standing high on a broad terraced platform above the rooftops
+      ground: a crowded mudbrick quay along the near bank, stacked with pottery jars, reed bundles and drying mudbricks
+      water: a wide, slow, silt-brown canal busy with bundled-reed boats, several moored along the quay and others being poled across
+      far_bank: continuous city wall and packed housing meeting the water directly, with figures on the quay and in the boats small enough against it that the size of the place reads at a glance
       sky_and_light: a pale, hazy, warm sky over the delta; bright, dusty midday light
-      absent: [stone buildings, wheeled carts, horses, metal armour, legible cuneiform writing, modern clothing, identifiable faces, camels]
+      absent: [stone buildings, wheeled carts, horses, metal armour, legible cuneiform writing, modern clothing, identifiable faces, camels, a tall stepped ziggurat with monumental staircases, any structure standing alone or isolated from the city around it, an empty or sparsely built horizon]
     events: [uruk-first-city]
     # ADR-023 (v2): `settlement` `loop` above its 0.48 ambient -- the largest city yet.
     sound: {stem: settlement, mode: loop, gain: 0.9}
@@ -1414,7 +1418,7 @@ scenes:
     # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
     # coordinates directly.
     location: {lat: 31.3225, lon: 45.6373, label: "Uruk, Iraq"}
-    pin: {asset_digest: "0fc9645483b32d86", path: "data/candidates/uruk-city/270ac38ccc5b268b/02-0fc9645483b32d86.jpg"}
+    pin: {asset_digest: "c66f15c180cf955f", path: "data/candidates/uruk-city/c26fc3461d68f574/01-c66f15c180cf955f.jpg"}
 
   # About 2560 BCE, completion of the Great Pyramid of Khufu at Giza; t = 2025 + 2560 = 4,585, per the
   # brief. Linked to events.yaml great-pyramid-giza (t_min/t_max 4,602-4,638, the newer Ramsey et
@@ -1481,7 +1485,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Mohenjo-daro, a City Without a King"
-    caption: By 2500 BCE, Mohenjo-daro's grid of straight brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands on the Indus floodplain — with no palace, temple or evidence of a king anywhere yet found.
+    caption: By 2500 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: same broad era as giza-great-pyramid, close to pre-industrial
@@ -1572,7 +1576,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "The Parthenon Complete"
-    caption: By 430 BCE, Pericles' newly finished Parthenon crowns the Acropolis above the Athenian Agora, its marble still bright with paint and gilding, at the height of Athens's naval power and democracy.
+    caption: By 430 BCE, Pericles' newly finished Parthenon crowns the Acropolis above the Athenian Agora, its marble still bright with paint and gilding, at the height of Athens's naval power.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: Classical Greece, close to pre-industrial
@@ -1625,7 +1629,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "China's First Emperor"
-    caption: In 210 BCE, the year Qin Shi Huang dies, forced labourers still raise the colossal earthen platform of his unfinished Epang Palace outside Xianyang, capital of a China unified only eleven years before under one law, one script and one currency.
+    caption: In 210 BCE, as Qin Shi Huang dies, labourers raise the colossal earthen platform of his unfinished Epang Palace outside Xianyang, capital of a China unified eleven years earlier.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: Iron Age China, close to pre-industrial
@@ -1665,7 +1669,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Hadrian's Pantheon"
-    caption: In the 120s AD, at the height of Roman power, Hadrian's newly rebuilt Pantheon rises over the rooftops of the Campus Martius near the Tiber, its huge concrete dome the largest built anywhere for the next 1,300 years.
+    caption: In the 120s AD, at the height of Roman power, Hadrian's rebuilt Pantheon rises over the Campus Martius, its concrete dome the largest built anywhere for the next 1,300 years.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: Roman Warm Period, close to pre-industrial
@@ -1751,7 +1755,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Black Death Arrives"
-    caption: In October 1347, twelve Genoese trading galleys fleeing Caffa put in at Messina, Sicily, carrying the Black Death into Europe; within six years the plague kills an estimated 25-50 million people across Europe, Western Asia and North Africa.
+    caption: In October 1347, twelve Genoese galleys fleeing Caffa put in at Messina, carrying the Black Death into Europe; within six years the plague kills an estimated 25-50 million people.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: late Medieval Warm Period cooling into the Little Ice Age, close to pre-industrial
@@ -1850,7 +1854,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Dutch Golden Age"
-    caption: "By 1650, Amsterdam dominates world trade through the Dutch East India Company (VOC), whose shares — traded from 1602 — gave the city what's often called the world's oldest modern stock market; by 1669 the VOC employs 50,000 people across over 150 merchant ships and 40 warships, and Amsterdam is the wealthiest city in the Western world."
+    caption: "By 1650, Amsterdam dominates world trade through the Dutch East India Company, whose shares, traded since 1602, gave it what's often called the world's oldest stock market."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-17th-century global mean, close to pre-industrial
@@ -1968,7 +1972,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Ford's Moving Assembly Line"
-    caption: In 1913, Ford's new moving assembly line at Highland Park, Michigan, begins cutting the time to build a Model T chassis from twelve and a half hours to ninety-three minutes within a year, putting the automobile within reach of ordinary buyers.
+    caption: In 1913, Ford's new moving assembly line at Highland Park cuts the time to build a Model T chassis from twelve and a half hours to ninety-three minutes within a year.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
@@ -2020,7 +2024,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Battle of the Somme"
-    caption: On the Somme in 1916, four and a half months of Allied offensives against entrenched German lines cost more than a million men killed, wounded or missing on both sides for a few kilometres of ground.
+    caption: On the Somme in 1916, four and a half months of Allied offensives against entrenched German lines cost more than a million men killed, wounded or missing for little ground gained.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
@@ -2087,7 +2091,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Tokyo's Ginza"
-    caption: "By the early 1930s, crowds of office clerks and shoppers throng Tokyo's Ginza for 'Ginbura' — streetcars, radio only five years old, and a department store letting shoppers keep their shoes on indoors — as Tokyo becomes the world's second-largest city, 4.9 million people, in 1932."
+    caption: "By the early 1930s, crowds throng Tokyo's Ginza for 'Ginbura' — a department store lets shoppers keep their shoes on — as Tokyo becomes the world's second-largest city in 1932."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: early-20th-century global mean, close to pre-industrial
@@ -2141,7 +2145,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "D-Day Landings"
-    caption: Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches — with a further 24,000 landing by parachute and glider overnight — opening the Western Front against Nazi Germany.
+    caption: Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches, with a further 24,000 landing by parachute and glider overnight.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-20th-century global mean, close to pre-industrial
@@ -2243,7 +2247,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "The Rise of Suburbia"
-    caption: By the mid-1950s, America authorises 40,000 miles of new interstate highway in a single act while mass-built suburbs like Levittown — 17,447 houses raised in four years — put a car and a house within reach of millions of families for the first time.
+    caption: By the mid-1950s, America authorises 40,000 miles of new interstate highway in a single act, while suburbs like Levittown put a car and a house within reach of millions.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-20th-century global mean, still close to pre-industrial before post-1970s warming
@@ -2287,7 +2291,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Green Revolution"
-    caption: By the mid-1960s, Norman Borlaug's short-stemmed high-yield wheat and the new rice varieties bred alongside it begin lifting Asian cereal yields severalfold within a generation — India's wheat harvest rising from about 10 million tonnes a year to 73 million by 2006 — work credited with saving up to a billion people from famine.
+    caption: By the mid-1960s, Norman Borlaug's high-yield wheat and new rice varieties lift Asian cereal yields severalfold, credited with saving up to a billion people from famine.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-1960s global mean, still close to pre-industrial before post-1970s warming
@@ -2327,7 +2331,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Apollo 11 Lifts Off"
-    caption: On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire, watched from across the lagoon; four days later, Armstrong and Aldrin land on the Moon.
+    caption: On the morning of 16 July 1969, the Saturn V carrying Apollo 11 lifts off from Kennedy Space Center on a column of fire; four days later, Armstrong and Aldrin land on the Moon.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-20th-century global mean, still close to pre-industrial before post-1970s warming
@@ -2366,7 +2370,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Containerisation of World Trade"
-    caption: Two decades after Malcom McLean's first container voyage in 1956, standardised steel boxes and gantry cranes are remaking the world's ports; by 2004 they will handle 354 million TEU (twenty-foot container units) of traffic a year, carrying roughly nine-tenths of the world's non-bulk seaborne trade.
+    caption: Two decades after Malcom McLean's first container voyage in 1956, steel boxes remake the world's ports, which by 2004 carry roughly nine-tenths of its seaborne trade.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-1970s global mean, just entering the post-1970s warming trend
@@ -2415,7 +2419,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Pripyat Evacuated"
-    caption: At 01:23 on 26 April 1986, an explosion and fire destroy Reactor 4 at the Chernobyl Nuclear Power Plant; the nearby city of Pripyat, population 49,360, is evacuated by bus the following afternoon and never resettled, left standing empty inside the exclusion zone declared ten days later.
+    caption: At 01:23 on 26 April 1986, an explosion and fire destroy Reactor 4 at Chernobyl; Pripyat, population 49,360, is evacuated by bus the next day and never resettled.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-1980s global mean, matching its late-1980s neighbours in this catalogue
@@ -2467,7 +2471,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Fall of the Berlin Wall"
-    caption: Within days of the Berlin Wall's fall on 9 November 1989, crowds climb onto it in broad daylight, chiselling away souvenir fragments after overwhelmed border guards threw the checkpoints open overnight — the Cold War's defining collapse.
+    caption: Within days of the Berlin Wall's fall on 9 November 1989, crowds climb onto it in daylight, chiselling away souvenir fragments after guards threw the checkpoints open overnight.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: late-1980s global mean (~14.3 °C)
@@ -2523,7 +2527,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "Amazon Deforestation"
-    caption: In 1995, Brazil's INPE satellite-monitoring programme records 29,059 km² of Amazon rainforest cleared in a single year — by far its highest annual total to date — as new colonisation roads cut fishbone patterns of side-clearings into primary forest, most of the felled land converted to cattle pasture.
+    caption: In 1995, Brazil's INPE programme records 29,059 km² of Amazon rainforest cleared in a single year, its highest total yet, as new roads cut fishbone clearings for cattle pasture.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: mid-1990s global mean, matching its late-1980s neighbours in this catalogue
@@ -2563,7 +2567,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Energy Transition"
-    caption: Between 2010 and 2015 the world's installed solar capacity grows more than fivefold, from 41.6 to 229.1 gigawatts, while offshore wind turbines begin to appear along temperate coastlines too — the leading edge of an energy transition still gathering pace.
+    caption: Between 2010 and 2015 the world's installed solar capacity grows more than fivefold, from 41.6 to 229.1 gigawatts — the leading edge of an energy transition still gathering pace.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: mid-2010s global mean
@@ -2655,7 +2659,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Venice Under Lockdown"
-    caption: On 9 March 2020, Italy becomes the first country to impose a national COVID-19 lockdown, effective the next morning; two days later the WHO declares a pandemic, and Venice's waterfront, ordinarily thronged with visitors, stands empty — one scene repeated in cities worldwide.
+    caption: On 9 March 2020, Italy becomes the first country to impose a national COVID-19 lockdown; two days later the WHO declares a pandemic, and Venice's waterfront stands empty.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: early-2020s global mean
@@ -2715,7 +2719,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "The Morning Commute"
-    caption: "By the early 2020s, more than half of humanity lives in a city — a threshold first crossed only in 2007, up from just 15% in 1900 — commuting by metro, bus and cycle lane past office towers filled with desks and screens."
+    caption: "By the early 2020s, more than half of humanity lives in a city — a threshold crossed in 2007, up from just 15% in 1900 — commuting by metro, bus and cycle lane."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: early-2020s global mean
@@ -2766,7 +2770,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Shenzhen Today"
-    caption: "The present: Shenzhen, a largely rural area of about 30,000 people forty-five years ago, is now a city of some 18 million where glass supertalls, electric traffic and delivery drones crowd the bay, and one species reshapes the planet's surface in a geological instant."
+    caption: "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million, its bay crowded with glass supertalls and delivery drones."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: present global mean

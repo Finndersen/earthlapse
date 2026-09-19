@@ -536,7 +536,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
       absent: ["claws", "a branch or tree", "bare skin on the face", "a fossil, skeleton or rock slab", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
-    pin: null
+    pin: {asset_digest: "78143e7635c1f1c0", path: "data/candidates/portraits/simiiformes/0dbc1f96f86335ec/01-78143e7635c1f1c0.jpg"}
 
   - id: catarrhini
     plate: SPECIMEN
