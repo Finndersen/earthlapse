@@ -64,8 +64,8 @@ function useAnimatedWindow(target: TimeWindow, reducedMotion: boolean): TimeWind
  *
  * At rest, two renders with an unchanged `window` (by value) and kind return the *same* object.
  * The caller (Experience.tsx) owns this hook and passes the one scale down to `<Timeline>` and
- * to anything else drawn on the same axis (the chart dock, the event feed), rather than
- * `<Timeline>` computing it and reporting it back up.
+ * to anything else drawn on the same axis (the chart dock), rather than `<Timeline>` computing
+ * it and reporting it back up.
  *
  * `knee` overrides the symlog scale's own knee (re-review fix, 2026-09-15) — omit it to fall
  * back to `createSymlogScale`'s own `symlogKnee(window)` default. The caller passes

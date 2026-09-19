@@ -1,35 +1,32 @@
 'use client'
 
-/** Playback transport, split into two groups the caller (`Timeline.tsx`) lays out separately so
- *  the primary one can sit centred over the track while the secondary one stays off to the
- *  side, rather than both bunched into a single row whose visual centre would then depend on
- *  the secondary controls' own width:
+/** Playback transport controls. `Timeline.tsx` arranges these into three clusters across its
+ *  `.controlsRow` grid — breadcrumbs (the one flexible column) on the left, `sound` +
+ *  `TransportCore` + `SpeedSelect` centred over the track, and `EraShortcuts` +
+ *  `PlaybackModeToggle` + the scale toggle right-aligned to the gutter — so nothing here ever
+ *  shifts position when the breadcrumb's own length changes:
  *
  *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
- *    visible event *or* checkpoint (`nearestStepTarget`) rather than by a fixed number of years
- *    — a fixed step has no sane value across a domain that runs from 1 year to 4.6 billion, and
- *    a fixed step over events alone would skip past a scene sitting between two of them.
- *  - `TransportSecondary` — the sound toggle (`sound`, follow-up pass item 2: moved here from a
- *    fixed top-right corner so it sits right beside `TransportCore`), the speed select and the
- *    scenes/steady mode toggle (ADR-016). Speed can also be stepped with `[`/`]`/`-`/`=`
- *    (`timeline/keyboard.ts`'s `'speed'` intent, follow-up pass item 3) through the same
- *    `SPEED_OPTIONS` the select offers (`../playback`). The mode toggle is a compact two-state
- *    segmented control, ghost style with an amber active state — the shared lens visual
- *    language (`--hud-*` tokens) rather than a new idiom.
- *  - `RateReadout` — a separate sibling, not part of `TransportSecondary` itself (follow-up
- *    pass item 10): its changing text must never reflow the speed select, mode toggle, scale
- *    toggle or sound controls beside it, so `Timeline.tsx` places it at the outer edge of the
- *    secondary controls, past everything whose position needs to stay pixel-identical while
- *    the rate readout's own width does not (a fixed-width slot, always reserved — see its own
- *    doc comment). It is optional and purely presentational: the caller (`Experience.tsx`)
+ *    visible scene (`nearestStepTarget`) rather than by a fixed number of years — a fixed step
+ *    has no sane value across a domain that runs from 1 year to 4.6 billion. Events are not
+ *    step targets: they are far denser than scenes, so stepping to one usually leaves the same
+ *    still on screen and the button looks broken.
+ *  - `SpeedSelect` — can also be stepped with `[`/`]`/`-`/`=` (`timeline/keyboard.ts`'s `'speed'`
+ *    intent) through the same `SPEED_OPTIONS` the select offers (`../playback`).
+ *  - `PlaybackModeToggle` — the scenes/steady mode toggle (ADR-016): a compact two-state
+ *    segmented control, ghost style with an amber active state — the shared lens visual language
+ *    (`--hud-*` tokens) rather than a new idiom.
+ *  - `RateReadout` — its changing text must never reflow the scale toggle beside it, so
+ *    `Timeline.tsx` places it last, past everything whose position must stay pixel-identical
+ *    while the rate readout's own width does not (a fixed-width slot, always reserved — see its
+ *    own doc comment). It is optional and purely presentational: the caller (`Experience.tsx`)
  *    computes and smooths the instantaneous years-per-second next to its playback loop, since
  *    that is where the real per-frame `t` deltas already are; this component only formats and
  *    shows it, and only while playing. */
 
 import { useId } from 'react'
-import type { ReactNode } from 'react'
 
-import type { GeoTime, Playback, PlaybackMode, TimelineEvent } from '@/types/layer'
+import type { GeoTime, Playback, PlaybackMode } from '@/types/layer'
 
 import { nearestStepTarget, type TimelineCheckpoint } from '../checkpoints'
 import { formatRate } from '../format'
@@ -45,7 +42,6 @@ const PLAYBACK_MODES: readonly { value: PlaybackMode; label: string }[] = [
 interface TransportCoreProps {
   t: GeoTime
   window: TimeWindow
-  events: readonly TimelineEvent[]
   checkpoints: readonly TimelineCheckpoint[]
   playback: Playback
   onScrub: (t: GeoTime) => void
@@ -53,17 +49,23 @@ interface TransportCoreProps {
 }
 
 /** Back / play-pause / forward — the group `Timeline.tsx` centres over the track. */
-export function TransportCore({ t, window: visibleWindow, events, checkpoints, playback, onScrub, onPlaybackChange }: TransportCoreProps) {
+export function TransportCore({ t, window: visibleWindow, checkpoints, playback, onScrub, onPlaybackChange }: TransportCoreProps) {
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
   // present (smaller t) — the same direction playback itself advances in.
   const jumpToNeighbour = (direction: 'back' | 'forward'): void => {
-    const target = nearestStepTarget(events, checkpoints, visibleWindow, t, direction)
+    const target = nearestStepTarget(checkpoints, visibleWindow, t, direction)
     if (target !== undefined) onScrub(target)
   }
 
   return (
     <div className={styles.core}>
-      <button type="button" className={styles.ghostButton} aria-label="Back to previous event" onClick={() => jumpToNeighbour('back')}>
+      <button
+        type="button"
+        className={styles.ghostButton}
+        aria-label="Back to previous scene"
+        title="Back to previous scene"
+        onClick={() => jumpToNeighbour('back')}
+      >
         {'⏮'}
       </button>
       <button
@@ -74,70 +76,79 @@ export function TransportCore({ t, window: visibleWindow, events, checkpoints, p
       >
         {playback.playing ? '⏸' : '▶'}
       </button>
-      <button type="button" className={styles.ghostButton} aria-label="Forward to next event" onClick={() => jumpToNeighbour('forward')}>
+      <button
+        type="button"
+        className={styles.ghostButton}
+        aria-label="Forward to next scene"
+        title="Forward to next scene"
+        onClick={() => jumpToNeighbour('forward')}
+      >
         {'⏭'}
       </button>
     </div>
   )
 }
 
-interface TransportSecondaryProps {
+interface SpeedSelectProps {
   playback: Playback
   onPlaybackChange: (playback: Playback) => void
-  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered as the first item in
-   *  this group so it lands immediately beside `TransportCore`'s play/back/forward (follow-up
-   *  pass item 2). Optional so a caller with no audio wired up yet (tests) can omit it. */
-  sound?: ReactNode
 }
 
-/** Sound toggle, speed select and scenes/steady mode toggle — secondary to `TransportCore`,
- *  laid out beside it rather than centred. The rate readout used to live here too; it is now a
- *  sibling (`RateReadout`, below) so its own width changes can never reflow these.
+/** The playback speed `<select>`, alone — sits centred over the track beside `TransportCore`
+ *  (`Timeline.tsx`'s `.controlsCore`), not beside the mode/scale toggles on the row's right. */
+export function SpeedSelect({ playback, onPlaybackChange }: SpeedSelectProps) {
+  return (
+    <select
+      className={styles.speedSelect}
+      aria-label="Playback speed"
+      title="Playback speed — [ / ] or - / = to change"
+      value={playback.speed}
+      onChange={(e) => onPlaybackChange({ ...playback, speed: Number(e.target.value) })}
+    >
+      {SPEED_OPTIONS.map((speed) => (
+        <option key={speed} value={speed}>
+          {speed}x
+        </option>
+      ))}
+    </select>
+  )
+}
+
+interface PlaybackModeToggleProps {
+  playback: Playback
+  onPlaybackChange: (playback: Playback) => void
+}
+
+/** The scenes/steady mode toggle, alone — sits in the row's right-hand cluster (`Timeline.tsx`'s
+ *  `.controlsSecondary`), beside the era shortcuts and scale toggle.
  *
- *  The mode toggle carries its own visible "Playback mode" label above the buttons (follow-up
- *  pass, user report 2026-09-15 — a bare two-state control read as unlabelled), in the shared
- *  small-caps HUD label style `Timeline.module.css`'s `.scaleLabel` already established for the
- *  scale toggle beside it — duplicated here as `.groupLabel` rather than imported, the same
- *  reason `.scaleGroup`'s own doc comment gives for its own duplication (CSS Modules classes are
- *  scoped per file, and the mode toggle lives in this file, not `Timeline.tsx`). The label is
- *  wired to the group via `aria-labelledby`, not a second, separate `aria-label` repeating the
- *  same text — one accessible name, sourced from the text a sighted user actually reads, per the
- *  same convention `Timeline.tsx`'s scale toggle now uses. */
-export function TransportSecondary({ playback, onPlaybackChange, sound }: TransportSecondaryProps) {
+ *  Carries its own visible "Playback mode" label above the buttons, in the shared small-caps HUD
+ *  label style `Timeline.module.css`'s `.scaleLabel` already established for the scale toggle
+ *  beside it — duplicated here as `.groupLabel` rather than imported, the same reason
+ *  `.scaleGroup`'s own doc comment gives for its own duplication (CSS Modules classes are scoped
+ *  per file, and this toggle lives in this file, not `Timeline.tsx`). The label is wired to the
+ *  group via `aria-labelledby`, not a second, separate `aria-label` repeating the same text — one
+ *  accessible name, sourced from the text a sighted user actually reads, per the same convention
+ *  `Timeline.tsx`'s scale toggle uses. */
+export function PlaybackModeToggle({ playback, onPlaybackChange }: PlaybackModeToggleProps) {
   const modeLabelId = useId()
   return (
-    <div className={styles.secondary}>
-      {sound}
-      <select
-        className={styles.speedSelect}
-        aria-label="Playback speed"
-        title="Playback speed — [ / ] or - / = to change"
-        value={playback.speed}
-        onChange={(e) => onPlaybackChange({ ...playback, speed: Number(e.target.value) })}
-      >
-        {SPEED_OPTIONS.map((speed) => (
-          <option key={speed} value={speed}>
-            {speed}x
-          </option>
+    <div className={styles.modeGroup}>
+      <span id={modeLabelId} className={styles.groupLabel}>
+        Playback mode
+      </span>
+      <div className={styles.modeToggle} role="group" aria-labelledby={modeLabelId}>
+        {PLAYBACK_MODES.map(({ value, label }) => (
+          <button
+            key={value}
+            type="button"
+            className={styles.modeButton}
+            aria-pressed={playback.mode === value}
+            onClick={() => onPlaybackChange({ ...playback, mode: value })}
+          >
+            {label}
+          </button>
         ))}
-      </select>
-      <div className={styles.modeGroup}>
-        <span id={modeLabelId} className={styles.groupLabel}>
-          Playback mode
-        </span>
-        <div className={styles.modeToggle} role="group" aria-labelledby={modeLabelId}>
-          {PLAYBACK_MODES.map(({ value, label }) => (
-            <button
-              key={value}
-              type="button"
-              className={styles.modeButton}
-              aria-pressed={playback.mode === value}
-              onClick={() => onPlaybackChange({ ...playback, mode: value })}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -187,12 +198,12 @@ interface RateReadoutProps {
 }
 
 /** The playback rate readout (ADR-016's prototype), in a fixed-width slot reserved whether or
- *  not it currently has anything to show (follow-up pass item 10): `Timeline.module.css` sizes
- *  `.rateReadout` to comfortably outlast any `formatRate` output this app can produce, so
- *  starting/stopping playback or switching speeds never shifts the speed select, mode toggle,
- *  scale toggle or sound controls beside it — `visibility`, not `display: none`, keeps the slot
- *  in the layout even empty. Placed by the caller (`Timeline.tsx`) at the outer edge of the
- *  secondary controls, past everything whose position must stay pixel-identical. */
+ *  not it currently has anything to show: `Timeline.module.css` sizes `.rateReadout` to
+ *  comfortably outlast any `formatRate` output this app can produce, so starting/stopping
+ *  playback never shifts the mode toggle or scale toggle beside it — `visibility`, not
+ *  `display: none`, keeps the slot in the layout even empty. Placed by the caller (`Timeline.tsx`)
+ *  last in the row's right-hand cluster, past everything whose position must stay
+ *  pixel-identical. */
 export function RateReadout({ ratePerSecond = null, playing }: RateReadoutProps) {
   const visible = playing && ratePerSecond !== null
   return (

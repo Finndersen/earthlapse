@@ -47,31 +47,21 @@ export function nearestNeighbourCheckpoint(
 
 /**
  * The time to scrub to when stepping `direction` from `t` — shared by the transport's
- * back/forward buttons and the ←/→ keyboard shortcut, so every scene is reachable by stepping
- * even when it sits strictly between two `TimelineEvent`s (or has none nearby at all). Steps
- * through every event overlapping `window`, not just the ones `declutter.ts` currently draws
- * (ADR-019) — a keyboard/transport user must never be blocked by a marker that lost a room
- * collision.
+ * back/forward buttons and the ←/→ keyboard shortcut.
  *
- * Both `nearestNeighbourEvent` and `nearestNeighbourCheckpoint` already return *the* nearest
- * candidate from their own set, so the nearer of the two is simply the smaller time for
- * `'back'` (both candidates lie in the future relative to `t`, i.e. further into the past —
- * smaller `t` is closer) and the larger for `'forward'` (both lie nearer the present — larger
- * `t` is closer). `undefined` only when neither set has a candidate in that direction.
+ * Steps between scenes only, never events. The transport sits beside play/pause and reads as
+ * "move through the presentation", and the presentation is the curated stills: stepping to an
+ * event usually leaves the same scene on screen, so the button appears to do nothing. Events
+ * stay reachable by their timeline markers and surface themselves in the feed as the playhead
+ * passes them.
+ *
+ * `undefined` when no checkpoint lies in that direction within `window`.
  */
 export function nearestStepTarget(
-  events: readonly TimelineEvent[],
   checkpoints: readonly TimelineCheckpoint[],
   window: TimeWindow,
   t: GeoTime,
   direction: EventStepDirection,
 ): GeoTime | undefined {
-  const nearestEvent = nearestNeighbourEvent(events, window, t, direction)
-  const nearestCheckpoint = nearestNeighbourCheckpoint(checkpoints, window, t, direction)
-  const eventT = nearestEvent ? (nearestEvent.tMin + nearestEvent.tMax) / 2 : undefined
-  const checkpointT = nearestCheckpoint?.t
-
-  if (eventT === undefined) return checkpointT
-  if (checkpointT === undefined) return eventT
-  return direction === 'back' ? Math.min(eventT, checkpointT) : Math.max(eventT, checkpointT)
+  return nearestNeighbourCheckpoint(checkpoints, window, t, direction)?.t
 }

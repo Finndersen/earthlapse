@@ -9,15 +9,11 @@
  * - The visible window is the selected **era section**'s (ADR-024): `scale.domain`, animated by
  *   the caller's `useAnimatedScale(sectionById(sectionId).window, scaleKind)`. There is still no
  *   free zoom or pan (ADR-021). The section band strip (`SectionBands`), the breadcrumb
- *   (`SectionBreadcrumb`) and the previous/next sibling-section buttons flanking the track itself
- *   (`SectionEdgeNav`, user ask, 2026-09-18 — these used to hang off the breadcrumb, see that
- *   component's own doc comment for why they moved) are the ways to change the window with a
- *   pointer from inside this component; the always-visible Earth/Dinosaurs/Humans shortcuts
- *   (`EraShortcuts`) are a fourth, but live outside it now, beside the shell's own title
- *   (`ShellLayout.tsx`'s own doc comment) — this component's caller renders them directly and
- *   feeds them the same `onSelectSection` below. The keyboard
- *   equivalents (`keyboard.ts`) are Escape/Backspace up a level, Home/`0` to Earth, and
- *   PageUp-PageDown/Shift+←→ to the previous/next sibling section. All of them report through
+ *   (`SectionBreadcrumb`), the previous/next sibling-section buttons flanking the track itself
+ *   (`SectionEdgeNav`) and the Dinosaurs/Humans shortcuts (`EraShortcuts`, rendered in
+ *   `.controlsSecondary` below) are the ways to change the window with a pointer.
+ *   The keyboard equivalents (`keyboard.ts`) are Escape/Backspace up a level, Home/`0` to Earth,
+ *   and PageUp-PageDown/Shift+←→ to the previous/next sibling section. All of them report through
  *   `onSelectSection`. Stepping (transport buttons, plain ←/→) stays inside the selected
  *   section's own (at-rest) window, and so does every track target (drag, pip, cluster member):
  *   each is clamped to that window, because while the window animates the track still maps a
@@ -38,7 +34,7 @@
  * - `scale` is the animated, undistorted `TimeScale` over the section window. The caller owns
  *   it rather than this component computing it, so anything else drawn against the same axis
  *   shares the exact object. That covers the expanded `LayerChart` in the chart dock, left
- *   undistorted on purpose (ADR-017), and the event feed.
+ *   undistorted on purpose (ADR-017).
  * - The scrub track, ruler and section bands are drawn against a second, fisheye-distorted
  *   `trackScale` instead (ADR-017). While the pointer hovers the track, a lens stretches the
  *   region around it so nearby events/pips/ticks spread apart and the rest compresses toward
@@ -58,14 +54,14 @@
  * readout rides above the playhead on the scrub track. The shell shows the large era/time title
  * elsewhere (`eraNameForTime`). `SectionEdgeNav` flanks the scrub track, ruler and section bands
  * together (so all three stay pixel-aligned) with the previous/next sibling-section buttons at
- * its far left/right edges; below that sits one controls row. `TransportCore` (back/play/forward)
- * is centred in that row over the track; its left side holds the breadcrumb alone now
- * (`EraShortcuts` moved back up beside the shell's own title, user ask, 2026-09-18 — see
- * `ShellLayout.tsx`'s own doc comment), and its right side — left to right, nearest
- * the core group first — holds `TransportSecondary` (sound toggle, speed select, mode toggle),
- * the scale toggle and `RateReadout` at the outer edge (`controlsRow`'s doc comment in
- * Timeline.module.css has the layout mechanics; follow-up pass items 1/2/10 cover why the row is
- * shaped this way).
+ * its far left/right edges; below that sits one controls row, three clusters across
+ * `.controlsRow`'s grid: the breadcrumb alone in `.controlsSections` (the row's one flexible
+ * column, free to grow or shrink with the trail); the sound toggle, `TransportCore`
+ * (back/play/forward) and `SpeedSelect` centred in `.controlsCore`; and `EraShortcuts`,
+ * `PlaybackModeToggle`, the scale toggle and `RateReadout` right-aligned in `.controlsSecondary`.
+ * Every control outside the breadcrumb is fixed-width, so none of them ever shifts position when
+ * the breadcrumb's own length changes (`controlsRow`'s doc comment in Timeline.module.css has the
+ * layout mechanics).
  */
 
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
@@ -80,7 +76,7 @@ import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
 import { SectionEdgeNav } from './components/SectionEdgeNav'
-import { RateReadout, TimeCompressedBadge, TransportCore, TransportSecondary } from './components/Transport'
+import { PlaybackModeToggle, RateReadout, SpeedSelect, TimeCompressedBadge, TransportCore } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { timelineKeyIntent } from './keyboard'
 import { stepSpeed } from './playback'
@@ -98,10 +94,9 @@ import styles from './Timeline.module.css'
 import { useFisheye } from './useFisheye'
 import { clamp } from './util'
 
-/** Short explanations of the scale toggle's two options (follow-up pass item 1 — the toggle
- *  used to just say "symlog" with nothing to say what that meant or that linear was even an
- *  option). Shown as each button's `title` tooltip; wording matches DESIGN §3's own table
- *  ("`symlog`... linear region near present"; "`linear`... true proportional"). */
+/** Explanations of the scale toggle's two options, shown as each button's `title` tooltip;
+ *  wording matches DESIGN §3's own table ("`symlog`... linear region near present"; "`linear`...
+ *  true proportional"). */
 const SYMLOG_SCALE_HINT = 'Symlog scale: logarithmic in deep time, linear near the present — keeps recent history legible'
 const LINEAR_SCALE_HINT = 'Linear scale: true proportional — most of history collapses to a sliver near the present edge'
 
@@ -137,19 +132,20 @@ export interface TimelineProps {
    *  state (`Experience.tsx`'s own `steadyPacing` call inside its playback loop), never an idle
    *  timer. Defaults to `false` (tests, and any caller with no steady-mode floor to report). */
   timeCompressed?: boolean
-  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered inside
-   *  `TransportSecondary` (follow-up pass item 2). Optional so a caller with no audio wired up
-   *  (tests) can omit it. */
+  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered as the first item in
+   *  `.controlsCore` — immediately before `TransportCore`'s play/back/forward, in the row's
+   *  centred, fixed-width `auto` column rather than sharing a flex row with the breadcrumb, so it
+   *  never shifts position as the breadcrumb trail grows or shrinks. Optional so a caller with no
+   *  audio wired up (tests) can omit it. */
   sound?: ReactNode
   /** Whether some other overlay outside this component's own DOM subtree — the chart dock
-   *  (`@/layers`'s `LayerChart`) or the expanded globe (`@/globe`'s `Globe`) — is currently open
-   *  (re-review fix, 2026-09-15). Both close themselves on `Escape` via their own `window`-level
-   *  listener, outside React's tree, so neither can `stopPropagation()` the way `ClusterPopover`
-   *  and `shell/Panel` do; without this, a bare `Escape` with focus inside the timeline closed
-   *  the overlay *and* climbed a section in the same keypress. `Timeline` skips `'leave-section'`
-   *  for `Escape` (not `Backspace`, which no overlay binds) while this is true, leaving the key
-   *  entirely to whichever overlay's own listener owns it. Optional so a caller with neither
-   *  wired up (tests) can omit it, defaulting to `false`. */
+   *  (`@/layers`'s `LayerChart`) or the expanded globe (`@/globe`'s `Globe`) — is currently open.
+   *  Both close themselves on `Escape` via their own `window`-level listener, outside React's
+   *  tree, so neither can `stopPropagation()` the way `ClusterPopover` and `shell/Panel` do;
+   *  without this, a bare `Escape` with focus inside the timeline would close the overlay *and*
+   *  climb a section in the same keypress. `Timeline` skips `'leave-section'` for `Escape` (not
+   *  `Backspace`, which no overlay binds) while this is true, leaving the key entirely to
+   *  whichever overlay's own listener owns it. Optional, defaulting to `false`. */
   overlayOpen?: boolean
 }
 
@@ -172,21 +168,20 @@ export function Timeline({
   overlayOpen = false,
 }: TimelineProps) {
   // Visible name for the scale toggle's `role="group"`, stacked above its buttons rather than
-  // beside them (follow-up pass, user report 2026-09-15) — `aria-labelledby`, not a second,
-  // separate `aria-label` repeating the same text, so the group's one accessible name is sourced
-  // from what a sighted user actually reads (same convention `TransportSecondary`'s mode toggle
-  // now uses for the same reason).
+  // beside them — `aria-labelledby`, not a second, separate `aria-label` repeating the same text,
+  // so the group's one accessible name is sourced from what a sighted user actually reads (same
+  // convention `TransportSecondary`'s mode toggle uses for the same reason).
   const scaleLabelId = useId()
 
   // The window being drawn (mid-animation during a section change) versus the selected
   // section's own window, which stepping stays inside.
   const visibleWindow: TimeWindow = scale.domain
   const sectionWindow = sectionById(sectionId).window
-  // Same knee the caller's `useAnimatedScale` built `scale` with (re-review fix, 2026-09-15,
-  // `sections.ts`'s `sectionSymlogKnee`) — kept in sync here rather than recomputed from
-  // `visibleWindow` alone, so `AxisTicks`'s near-linear judgement never disagrees with the
-  // scale it's ticking. See `sectionSymlogKnee`'s own doc comment for why a leaf section's knee
-  // isn't the bare `symlogKnee(window)` default.
+  // Same knee the caller's `useAnimatedScale` built `scale` with (`sections.ts`'s
+  // `sectionSymlogKnee`) — kept in sync here rather than recomputed from `visibleWindow` alone,
+  // so `AxisTicks`'s near-linear judgement never disagrees with the scale it's ticking. See
+  // `sectionSymlogKnee`'s own doc comment for why a leaf section's knee isn't the bare
+  // `symlogKnee(window)` default.
   const sectionKnee = sectionSymlogKnee(sectionId)
 
   // For 700ms after a section change the track still maps the wider animated window, so a press
@@ -256,7 +251,7 @@ export function Timeline({
       case 'step': {
         e.preventDefault()
         const direction = intent.direction === 'prev' ? 'back' : 'forward'
-        const target = nearestStepTarget(events, checkpoints, sectionWindow, t, direction)
+        const target = nearestStepTarget(checkpoints, sectionWindow, t, direction)
         if (target !== undefined) onScrub(target)
         return
       }
@@ -306,28 +301,27 @@ export function Timeline({
         <SectionBands sectionId={sectionId} t={t} scale={trackScale} onSelectSection={selectSection} />
       </SectionEdgeNav>
       <div className={styles.controlsRow}>
-        {/* `data-testid`s: stable QA-harness hooks for the row's own left/right edges (user
-            report, 2026-09-18: "constrain the horizontal layout of the bottom row... within the
-            horizontal bounds of the timeline" — `Timeline.module.css`'s `--timeline-gutter` doc
-            comment) — CSS Modules' hashed class names have nothing stable to select by
-            otherwise. */}
+        {/* `data-testid`s: stable QA-harness hooks for the row's own left/right edges
+            (`Timeline.module.css`'s `--timeline-gutter` doc comment) — CSS Modules' hashed class
+            names have nothing stable to select by otherwise. */}
         <div className={styles.controlsSections} data-testid="timeline-controls-sections">
           <SectionBreadcrumb sectionId={sectionId} onSelectSection={selectSection} />
-          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
         </div>
         <div className={styles.controlsCore} data-testid="timeline-controls-core">
+          {sound}
           <TransportCore
             t={t}
             window={sectionWindow}
-            events={events}
             checkpoints={checkpoints}
             playback={playback}
             onScrub={onScrub}
             onPlaybackChange={onPlaybackChange}
           />
+          <SpeedSelect playback={playback} onPlaybackChange={onPlaybackChange} />
         </div>
         <div className={styles.controlsSecondary} data-testid="timeline-controls-secondary">
-          <TransportSecondary playback={playback} onPlaybackChange={onPlaybackChange} sound={sound} />
+          <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />
+          <PlaybackModeToggle playback={playback} onPlaybackChange={onPlaybackChange} />
           <div className={styles.scaleGroup}>
             <span id={scaleLabelId} className={styles.scaleLabel}>
               Scale

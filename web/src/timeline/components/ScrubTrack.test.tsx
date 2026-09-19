@@ -193,7 +193,7 @@ describe('ScrubTrack checkpoint clustering (ADR-019)', () => {
     expect(container.querySelectorAll('[data-checkpoint-pip]')).toHaveLength(0)
   })
 
-  it("opens the cluster's member list when its marker is clicked, not a plain scrub", () => {
+  it("opens the cluster's member list and scrubs to its first (oldest) member when its marker is clicked", () => {
     const close: TimelineCheckpoint[] = [
       { id: 'a', t: 1e8, label: 'A' },
       { id: 'b', t: 1e8 + 10, label: 'B' },
@@ -204,9 +204,9 @@ describe('ScrubTrack checkpoint clustering (ADR-019)', () => {
     const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
     fireEvent.click(cluster)
     // Screen order (oldest to newest, per the package's left-to-right orientation): 'b' has the
-    // larger t (further into the past) and so sits left of 'a'.
+    // larger t (further into the past) and so sits left of 'a', and is the cluster's first member.
     expect(onOpenCluster).toHaveBeenCalledWith([close[1], close[0]])
-    expect(onScrub).not.toHaveBeenCalled()
+    expect(onScrub).toHaveBeenCalledWith(close[1]!.t)
   })
 
   it("labels the cluster with the member count and its time range", () => {
@@ -367,11 +367,14 @@ describe('ScrubTrack cluster popover (ADR-021)', () => {
     expect(queryByRole('dialog')).toBeNull()
   })
 
-  it('closes on Escape without scrubbing', () => {
+  it('closes on Escape without scrubbing again', () => {
     const onScrub = vi.fn()
     const { container, getByRole, queryByRole } = renderTrack({ checkpoints: close, onScrub })
     const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
     fireEvent.click(cluster)
+    // The opening click itself scrubs to the cluster's first member — cleared here so the
+    // assertion below is about Escape's own effect, not the click that preceded it.
+    onScrub.mockClear()
     fireEvent.keyDown(getByRole('dialog'), { key: 'Escape' })
     expect(queryByRole('dialog')).toBeNull()
     expect(onScrub).not.toHaveBeenCalled()
@@ -383,6 +386,7 @@ describe('ScrubTrack cluster popover (ADR-021)', () => {
     const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
     fireEvent.click(cluster)
     expect(getByRole('dialog')).toBeTruthy()
+    onScrub.mockClear()
     const track = container.querySelector('[role="slider"]') as Element
     fireEvent.pointerDown(track, { clientX: 900, pointerId: 2 })
     expect(queryByRole('dialog')).toBeNull()
@@ -398,6 +402,7 @@ describe('ScrubTrack cluster popover (ADR-021)', () => {
     const cluster = container.querySelector('[data-checkpoint-cluster]') as Element
     fireEvent.click(cluster)
     expect(getByRole('dialog')).toBeTruthy()
+    onScrub.mockClear()
     const track = container.querySelector('[role="slider"]') as Element
     fireEvent.pointerDown(track, { clientX: 900, pointerId: 2 })
     expect(queryByRole('dialog')).toBeNull()
@@ -537,7 +542,7 @@ describe('ScrubTrack touch/pen marker gesture arbitration (ADR-021 follow-up)', 
     expect(onScrub).not.toHaveBeenCalledWith(checkpoint.t)
   })
 
-  it('opens the cluster popover on a touch tap, without scrubbing', () => {
+  it('opens the cluster popover and scrubs to its first member on a touch tap', () => {
     const close: TimelineCheckpoint[] = [
       { id: 'a', t: 1e8, label: 'Scene A' },
       { id: 'b', t: 1e8 + 10, label: 'Scene B' },
@@ -553,7 +558,7 @@ describe('ScrubTrack touch/pen marker gesture arbitration (ADR-021 follow-up)', 
     expect(popover.textContent).toContain('Scene A')
     expect(popover.textContent).toContain('Scene B')
     expect(onOpenCluster).toHaveBeenCalledWith([close[1], close[0]])
-    expect(onScrub).not.toHaveBeenCalled()
+    expect(onScrub).toHaveBeenCalledWith(close[1]!.t)
   })
 
   it('scrubs, and does not open the popover, when a touch drag starting on a cluster exceeds the tap slop', () => {

@@ -4,9 +4,8 @@ import { ERA_SHORTCUTS, isEraShortcutActive } from './eraShortcuts'
 import { ROOT_SECTION_ID } from './sections'
 
 describe('ERA_SHORTCUTS', () => {
-  it('aliases exactly Earth, the Mesozoic and the Holocene, in that order', () => {
+  it('aliases exactly the Mesozoic and the Holocene, in that order', () => {
     expect(ERA_SHORTCUTS.map((s) => [s.id, s.nickname])).toEqual([
-      [ROOT_SECTION_ID, 'Earth'],
       ['mesozoic', 'Dinosaurs'],
       ['holocene', 'Humans'],
     ])
@@ -18,23 +17,15 @@ describe('ERA_SHORTCUTS', () => {
     }
   })
 
-  it("gives Dinosaurs and Humans a plain-language nickname distinct from the section's own geological label (Earth's nickname IS its label — the plain and geological name coincide)", () => {
+  it("gives each shortcut a plain-language nickname distinct from the section's own geological label", () => {
+    expect(ERA_SHORTCUTS[0]!.section.label).not.toBe(ERA_SHORTCUTS[0]!.nickname)
     expect(ERA_SHORTCUTS[1]!.section.label).not.toBe(ERA_SHORTCUTS[1]!.nickname)
-    expect(ERA_SHORTCUTS[2]!.section.label).not.toBe(ERA_SHORTCUTS[2]!.nickname)
   })
 })
 
 describe('isEraShortcutActive', () => {
-  const earth = ERA_SHORTCUTS[0]!
-  const dinosaurs = ERA_SHORTCUTS[1]!
-  const humans = ERA_SHORTCUTS[2]!
-
-  it('Earth is active only at the exact root, never merely as an ancestor', () => {
-    expect(isEraShortcutActive(earth, ROOT_SECTION_ID)).toBe(true)
-    expect(isEraShortcutActive(earth, 'mesozoic')).toBe(false)
-    expect(isEraShortcutActive(earth, 'holocene')).toBe(false)
-    expect(isEraShortcutActive(earth, 'first-farmers')).toBe(false)
-  })
+  const dinosaurs = ERA_SHORTCUTS[0]!
+  const humans = ERA_SHORTCUTS[1]!
 
   it('Dinosaurs is active on the Mesozoic itself and any of its descendants', () => {
     expect(isEraShortcutActive(dinosaurs, 'mesozoic')).toBe(true)

@@ -45,9 +45,9 @@
   align-items: center;
   gap: clamp(12px, 2vw, 28px);
   /* Pure gap above the row, not room any control needs. `.controlsSecondary`
-     (sound/speed/mode/scale/rate-badge) wraps to 2 rows at 54px, taller than the play button
-     (`Transport.module.css`'s `.playButton`, 48px), so that track sets this row's real height, not
-     `.core`'s (`bottom-chrome-height`'s own QA-shot comment has the measured total, 152px). */
+     (era-shortcuts/speed/mode/scale/rate-badge) wraps to 2 rows at 54px, taller than the play
+     button (`Transport.module.css`'s `.playButton`, 48px), so that track sets this row's real
+     height, not `.core`'s (`bottom-chrome-height`'s own QA-shot comment has the measured total). */
   margin-top: 4px;
   /* `.timeline`'s own `--timeline-gutter` doc comment: insets this row by the same amount
      `SectionEdgeNav.module.css`'s `.stack` already insets the track above it, symmetrically on
@@ -59,71 +59,70 @@
   margin-inline: var(--timeline-gutter);
 }
 
-/* Holds the breadcrumb trail and, via `justify-content: space-between` below, `EraShortcuts`
-   pinned to its opposite edge (`EraShortcuts.tsx`'s own doc comment has its placement history).
-   The room this track has traces back to deleting the breadcrumb's own "‹ Up"/"⌂ Earth" buttons
-   and moving its "‹"/"›" sibling-step buttons onto the track itself (`SectionEdgeNav`).
-   `flex-wrap` is a safety net for a long breadcrumb trail, not the intended path, at any width
-   down to a phone's own stacked layout below. */
-/* `justify-content: space-between` pins the breadcrumb to this track's own left edge and
-   `EraShortcuts` to its right, landing the pills next to `.controlsCore`'s own play/back/forward
-   group without loading `.controlsSecondary` (that track's own doc comment has the reason this
-   track was chosen over it). `justify-self: stretch`, not `start`: `space-between` needs this box
-   to actually occupy its whole `minmax(0, 1fr)` track — same width `.controlsSecondary` gets, so
-   `.controlsCore` stays centred — rather than shrinking to its own content's width, which would
-   leave no slack for `space-between` to distribute. */
+/* Holds the breadcrumb trail alone — the row's one flexible column (`minmax(0, 1fr)` below),
+   free to grow or shrink with the trail's own length without disturbing anything else in the row:
+   the sound toggle, era shortcuts, speed/mode/scale controls and rate badge all live in
+   `.controlsSecondary`'s fixed-width track instead, specifically so none of them shifts position
+   as this one does. The room this track has traces back to deleting the breadcrumb's own
+   "‹ Up"/"⌂ Earth" buttons and moving its "‹"/"›" sibling-step buttons onto the track itself
+   (`SectionEdgeNav`). */
 .controlsSections {
   grid-area: sections;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  row-gap: 4px;
-  gap: 10px;
-  justify-self: stretch;
+  justify-self: start;
   min-width: 0;
   max-width: 100%;
 }
 
+/* The centre cluster: the sound toggle, `TransportCore` (back/play/forward) and the speed
+   select, in that order — all fixed-width, so this whole `auto`-sized column's own width is
+   constant regardless of the breadcrumb in `.controlsSections`, which keeps it centred on the
+   track (`.controlsRow`'s own doc comment). Sound and speed sit either side of the nav buttons
+   deliberately, not off in the row's right-hand cluster with the era shortcuts/mode/scale
+   toggles, so both stay visually anchored to the nav controls a viewer's eye already goes to. */
 .controlsCore {
   grid-area: core;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: clamp(10px, 1.4vw, 18px);
 }
 
-/* `flex-wrap: wrap` (with `row-gap` for when it does) is load-bearing, not decoration.
-   `.controlsRow`'s two side tracks are `minmax(0, 1fr)` specifically so
-   `.controlsCore` stays exactly centred regardless of either side's content width (this file's
-   own doc comment on `.controlsRow`) — but a grid item's *automatic* minimum width defaults to
-   its content's own min-content size, which for a `nowrap` flex row is the sum of every child's
-   width. Once the sound toggle, speed select, mode toggle and scale toggle (each already
-   reserving a fixed slot) plus the two always-reserved-width badges in `.rateReadoutRow` add up
-   to more than this track's own `1fr` share — routinely true at 1440×900 and narrower, and only
-   grows as items are added — that min-content size overrode the track's `minmax(0, …)` cap (the
-   pre-existing `min-width: 0` below was not, on its own, enough to stop this — a flex row's
-   automatic minimum still comes from its content unless it is also allowed to wrap), so the item
-   rendered at its full, wider content width and (being right-anchored via `justify-self: end`)
-   spilled leftward out of its own track and straight into `.controlsCore`'s, painting the sound
-   icon and volume slider on top of the forward button. `flex-wrap: wrap` lets the overflow that
-   no longer fits on one line drop to a second line, still right-aligned and still fully inside
-   the track, rather than spilling sideways into the neighbour. The `@media (max-width: 760px)`
-   block below already established this same wrap behaviour for its own (differently laid out)
-   narrow breakpoint; this makes the same safety net apply at every width, not only below 760px.
+/* The right-hand cluster: era shortcuts, the playback-mode toggle and the scale toggle, in that
+   order, then `RateReadout` trailing last. Every control here is fixed-width (each already
+   reserves its own slot; `RateReadout` reserves its own even when showing nothing), so this whole
+   cluster's total width is independent of the breadcrumb in `.controlsSections` — the two
+   `minmax(0, 1fr)` tracks (`.controlsRow`'s own doc comment) already get an equal share of the
+   row regardless of either side's content. `justify-self: end` / `justify-content: flex-end`
+   anchor the cluster to this track's own right edge, flush with `--timeline-gutter`, mirroring
+   the breadcrumb's own left anchor on the opposite side.
 
-   Era shortcuts (`EraShortcuts.tsx`) were tried here first, as the leading item: at 1440×900 this
-   track already wraps to 2 rows before any addition (the paragraph above); adding the three pills
-   pushed it to 3 rows (82px tall, up from 54px), and to 4 at 1024×768. That degradation is what
-   sent the shortcuts to `.controlsSections` instead (that class's own doc comment) —
-   `.controlsSecondary` itself is unchanged by any of this, still the sound/speed/mode/scale/
-   rate-badge row and its own pre-existing wrap behaviour. */
+   `flex-wrap: wrap` (with `row-gap` for when it does) is a safety net, not decoration. A grid
+   item's *automatic* minimum width defaults to its content's own min-content size, which for a
+   `nowrap` flex row is the sum of every child's width — if that sum ever exceeds this track's own
+   `1fr` share, that min-content size would override the track's `minmax(0, …)` cap and the item
+   would spill out of its own track (`min-width: 0` below is not, on its own, enough to stop this).
+   `flex-wrap: wrap` lets any overflow that no longer fits on one line drop to a second line,
+   still anchored right and still fully inside the track, rather than spilling into the neighbour.
+   `align-items: flex-end` bottom-aligns every control's own interactive row regardless of whether
+   a label sits above it (era shortcuts, mode toggle and scale toggle all carry one; the rate
+   readout doesn't).
+
+   `.rateReadoutRow` trailing last is deliberately the one child allowed to fall onto its own
+   second line at this track's own narrowest real widths: it is two always-reserved, usually-
+   *empty* slots (`RateReadout`/`TimeCompressedBadge`'s own doc comments — visibility-hidden,
+   not display-none, so starting/stopping playback never shifts anything beside them), not an
+   interactive control a viewer would notice dropping. Era shortcuts, the mode toggle and the
+   scale toggle — the three a viewer actually looks at and clicks — are what must never wrap. */
 .controlsSecondary {
   grid-area: secondary;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-end;
   justify-self: end;
   flex-wrap: wrap;
-  gap: clamp(10px, 1.4vw, 18px);
+  gap: clamp(8px, 1vw, 14px);
   row-gap: 8px;
   min-width: 0;
 }
@@ -174,7 +173,7 @@
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10.5px;
   letter-spacing: 0.03em;
-  padding: 3px 9px;
+  padding: 3px 7px;
   cursor: pointer;
   transition:
     color 200ms ease,
@@ -234,8 +233,8 @@
      `.rateReadout`) gets its own full-width row, right-aligned within it, rather than wrapping
      onto the row with the scale toggle and centring together with it — the readout has nothing to
      show most of the time, so centring the two together would leave the scale toggle visibly
-     off-centre from the play group above it. This lets the sound/speed/mode/scale group centre on
-     its own while still reserving the readout's width so play/pause starting or stopping never
+     off-centre from the play group above it. This lets the era-shortcuts/mode/scale group centre
+     on its own while still reserving the readout's width so play/pause starting or stopping never
      shifts anything. */
   .rateReadoutRow {
     display: flex;

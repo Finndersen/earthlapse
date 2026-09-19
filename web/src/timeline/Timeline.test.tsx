@@ -124,11 +124,10 @@ describe('<Timeline>', () => {
         onSelectSection={vi.fn()}
       />,
     )
-    // The group's accessible name comes from a *visible* "Playback mode" label above the
-    // buttons (user report, 2026-09-15 — the toggle used to carry only a decorative-looking
-    // `aria-label` with nothing sighted users could see), not a same-text `aria-label` repeating
-    // what the label already says — `getByRole` finding it by that name is proof the visible
-    // label and the group are actually associated (`aria-labelledby`), not merely both present.
+    // The group's accessible name comes from a *visible* "Playback mode" label above the buttons,
+    // not a same-text `aria-label` repeating what the label already says — `getByRole` finding it
+    // by that name is proof the visible label and the group are actually associated
+    // (`aria-labelledby`), not merely both present.
     expect(screen.getByText('Playback mode')).toBeTruthy()
     const group = screen.getByRole('group', { name: 'Playback mode' })
     expect(within(group).getByText('Scenes').getAttribute('aria-pressed')).toBe('true')
@@ -281,7 +280,7 @@ describe('<Timeline>', () => {
     expect(onScaleKindChange).toHaveBeenCalledWith('linear')
   })
 
-  it('jumps to a neighbouring event via the forward transport button', () => {
+  it('does not step to an event: with no scenes in range the transport button is inert', () => {
     const onScrub = vi.fn()
     render(
       <Timeline
@@ -298,11 +297,11 @@ describe('<Timeline>', () => {
         onSelectSection={vi.fn()}
       />,
     )
-    fireEvent.click(screen.getByLabelText('Back to previous event'))
-    expect(onScrub).toHaveBeenCalledWith((events[0]!.tMin + events[0]!.tMax) / 2)
+    fireEvent.click(screen.getByLabelText('Back to previous scene'))
+    expect(onScrub).not.toHaveBeenCalled()
   })
 
-  it('jumps to a checkpoint via the back transport button when it is nearer than any event', () => {
+  it('steps to a scene via the back transport button, ignoring a nearer event', () => {
     const onScrub = vi.fn()
     render(
       <Timeline
@@ -320,8 +319,28 @@ describe('<Timeline>', () => {
         onSelectSection={vi.fn()}
       />,
     )
-    fireEvent.click(screen.getByLabelText('Back to previous event'))
+    fireEvent.click(screen.getByLabelText('Back to previous scene'))
     expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
+  })
+
+  it('gives the back/forward transport buttons a hover tooltip that matches their accessible name', () => {
+    render(
+      <Timeline
+        t={0}
+        scaleKind="symlog"
+        scale={FULL_DOMAIN_SCALE}
+        sectionId="earth"
+        events={events}
+        playback={playback()}
+        onScrub={vi.fn()}
+        onScaleKindChange={vi.fn()}
+        onPlaybackChange={vi.fn()}
+        onOpenCluster={vi.fn()}
+        onSelectSection={vi.fn()}
+      />,
+    )
+    expect(screen.getByLabelText('Back to previous scene').getAttribute('title')).toMatch(/^Back to previous scene/)
+    expect(screen.getByLabelText('Forward to next scene').getAttribute('title')).toMatch(/^Forward to next scene/)
   })
 
   it('steps to the nearest checkpoint via ArrowLeft when it is nearer than any event', () => {
@@ -374,7 +393,7 @@ describe('<Timeline>', () => {
     expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
   })
 
-  it('renders the sound control inside the transport secondary group, beside play/back/forward (follow-up pass item 2)', () => {
+  it('renders the sound control as the leading item in controls-core, before the nav buttons', () => {
     render(
       <Timeline
         t={0}
@@ -391,7 +410,9 @@ describe('<Timeline>', () => {
         sound={<button type="button" data-testid="sound-slot">sound</button>}
       />,
     )
-    expect(screen.getByTestId('sound-slot')).toBeTruthy()
+    const core = screen.getByTestId('timeline-controls-core')
+    expect(core.contains(screen.getByTestId('sound-slot'))).toBe(true)
+    expect(core.firstElementChild).toBe(screen.getByTestId('sound-slot'))
   })
 
   it.each([

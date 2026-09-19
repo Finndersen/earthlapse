@@ -33,6 +33,17 @@ const KPG_TRIO = [KPG_ARRIVAL, KPG_DARKNESS, KPG_AFTERMATH] as const
 
 const MINUTE_YEARS = 1 / (365.25 * 24 * 60)
 
+/** Every distinct checkpoint `t` and event-range endpoint (`t_min`/`t_max`) within 300 years of
+ *  the present in the real curated `data/events.yaml`/`data/scenes.yaml` — the timeline's own
+ *  densest stretch, and what `FISHEYE_GAIN` is tuned against. The span is under 3 undistorted px
+ *  wide, well inside `GAP_TAPER_HALF_WIDTH_PX`, so all 71 gaps compete for the budget at once
+ *  wherever the lens sits in it — the saturated worst case. */
+const REALISTIC_MODERN_DENSITY_YEARS = [
+  0, 2, 2.13, 3, 4, 5, 7, 10, 11, 15, 18, 21, 22, 30, 31, 34, 35, 36, 37, 38, 39, 40, 42, 45, 48, 50, 52, 54, 55, 56,
+  60, 64, 65, 67, 68, 69, 72, 77, 78, 79.33, 80, 81, 85.33, 91, 92, 95, 96, 97, 101, 105, 106.14, 107, 108.12, 108.5,
+  109, 110, 110.43, 112, 116, 122, 137, 142, 146, 166, 167, 185, 195, 210, 225, 237, 238, 265,
+] as const
+
 /** Binary-searches `centreU` so the point that actually ends up under the pointer
  *  (`scale.fromUnit(centreU)`, re-expressed in base `s`-space) lands on `targetS` — a robust
  *  way to place the lens's *effective* focus exactly on a chosen point without depending on
@@ -491,9 +502,9 @@ describe('density-adaptive gap insertion (markers)', () => {
       // GAP_TAPER_HALF_WIDTH_PX either way — every gap here shares essentially the same taper
       // regardless of exactly where within the cluster the lens centres, so one lens position
       // (centred on the middle gap) is enough to check every gap at once. 19 gaps' combined
-      // untapered target is well under MAX_INSERTED_TOTAL_PX's cap (see the separate bounded-
-      // insertion stress test for where the cap actually bites), so each still reaches close
-      // to its own full target.
+      // target is well under the lens's own mass budget `B` (see the "bounded insertion" describe
+      // below for where that budget actually gets saturated), so each still reaches close to its
+      // own full target.
       const midIndex = Math.floor(markerS.length / 2)
       const centreU = centreUForFocus(base, TRACK_WIDTH_PX, markerS, (markerS[midIndex - 1]! + markerS[midIndex]!) / 2)
       const scale = fisheyeScale(base, { centreU, strength: 1 }, TRACK_WIDTH_PX, markerS)
@@ -501,6 +512,49 @@ describe('density-adaptive gap insertion (markers)', () => {
         const widthPx = displayedWidthPx(scale, base, markerS[i]!, markerS[i + 1]!, TRACK_WIDTH_PX)
         expect(widthPx).toBeGreaterThanOrEqual(MIN_MARKER_SEPARATION_PX * 0.9)
       }
+    })
+  })
+
+  describe('extreme modern density (71 gaps within 300 years — the real curated timeline\'s own densest stretch)', () => {
+    const base = createSymlogScale(FULL_DOMAIN)
+    const markerS = REALISTIC_MODERN_DENSITY_YEARS.map((t) => base.toUnit(t))
+      .sort((a, b) => a - b)
+      .filter((s, i, arr) => i === 0 || s !== arr[i - 1])
+
+    it('has at least 70 candidate gaps, all well inside GAP_TAPER_HALF_WIDTH_PX of each other', () => {
+      expect(markerS.length).toBeGreaterThanOrEqual(70)
+      const spanPx = (markerS[markerS.length - 1]! - markerS[0]!) * TRACK_WIDTH_PX
+      expect(spanPx).toBeLessThan(GAP_TAPER_HALF_WIDTH_PX)
+      for (let i = 0; i < markerS.length - 1; i++) {
+        expect((markerS[i + 1]! - markerS[i]!) * TRACK_WIDTH_PX).toBeLessThan(MIN_MARKER_SEPARATION_PX)
+      }
+    })
+
+    it('is strictly increasing across the full domain with every one of these gaps competing for the budget', () => {
+      const centreU = centreUForFocus(base, TRACK_WIDTH_PX, markerS, (markerS[0]! + markerS[markerS.length - 1]!) / 2)
+      const scale = fisheyeScale(base, { centreU, strength: 1 }, TRACK_WIDTH_PX, markerS)
+      let previous = scale.toUnit(EARTH_FORMATION)
+      for (let i = 1; i <= 2000; i++) {
+        const t = EARTH_FORMATION * (1 - i / 2000)
+        const u = scale.toUnit(t)
+        expect(u).toBeGreaterThan(previous)
+        previous = u
+      }
+    })
+
+    it('keeps every adjacent pair above a real floor even fully saturated', () => {
+      // With this many simultaneous candidates the shared budget `B` cannot give each one its
+      // own full `MIN_MARKER_SEPARATION_PX` (module doc, "Density-adaptive gap insertion": a
+      // saturated cluster's candidates are all scaled down together). This pins the actual
+      // per-gap floor `FISHEYE_GAIN` buys against the real data, so a future change to either
+      // constant is caught here rather than only in the lighter 20-event case above.
+      const centreU = centreUForFocus(base, TRACK_WIDTH_PX, markerS, (markerS[0]! + markerS[markerS.length - 1]!) / 2)
+      const scale = fisheyeScale(base, { centreU, strength: 1 }, TRACK_WIDTH_PX, markerS)
+      let minWidthPx = Infinity
+      for (let i = 0; i < markerS.length - 1; i++) {
+        minWidthPx = Math.min(minWidthPx, displayedWidthPx(scale, base, markerS[i]!, markerS[i + 1]!, TRACK_WIDTH_PX))
+      }
+      expect(minWidthPx).toBeGreaterThan(4.5)
     })
   })
 

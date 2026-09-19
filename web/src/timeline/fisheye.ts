@@ -128,10 +128,16 @@ export const FISHEYE_HALF_WIDTH_PX = 60
 
 /** Extra density at the lens centre when the full mass-conserving budget (`gain · halfWidth`,
  *  see the module doc's "Mass conservation") goes entirely to the smooth bump — i.e. away from
- *  any marker gap. Peak magnification is then `(1 + gain) / (1 + B)`, about 5x on a typical
+ *  any marker gap. Peak magnification is then `(1 + gain) / (1 + B)`, about 7x on a typical
  *  1440px-wide track; a gap competing for the same budget lowers the bump's own local share
- *  (`allocateExtraMass`'s `bumpGain`) below `gain`, in exchange for resolving the gap itself. */
-export const FISHEYE_GAIN = 5
+ *  (`allocateExtraMass`'s `bumpGain`) below `gain`, in exchange for resolving the gap itself.
+ *
+ *  The single dial for overall lens strength. It is also the only one that helps a *saturated*
+ *  cluster: once combined demand exceeds the budget, each gap's share is budget/N regardless of
+ *  what `MIN_MARKER_SEPARATION_PX` or `GAP_TAPER_HALF_WIDTH_PX` ask for. Set against the densest
+ *  real stretch (71 gaps within 300 years of the present, all competing at once), which this
+ *  value resolves to ~4.9px each — see `fisheye.test.ts`'s "extreme modern density". */
+export const FISHEYE_GAIN = 10
 
 /** Radius (displayed px) over which the lens centre's coupling to the pointer ramps from 0 (at
  *  the centre) to 1 (fully tracking): see `couplingFactor`. */

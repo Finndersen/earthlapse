@@ -93,10 +93,11 @@ interface ScrubTrackProps {
   events: readonly TimelineEvent[]
   checkpoints: readonly TimelineCheckpoint[]
   onScrub: (t: GeoTime) => void
-  /** Clicking or tapping a checkpoint cluster marker (ADR-019) opens its own in-track member-
-   *  list popover (`ClusterPopover`, ADR-021) — this component owns that surface itself, so
-   *  `onOpenCluster` is only a notification for a caller that wants to know (e.g. analytics); it
-   *  is not required to build any UI in response. */
+  /** Clicking or tapping a checkpoint cluster marker (ADR-019) both scrubs to its first (oldest)
+   *  member via `onScrub` and opens its own in-track member-list popover (`ClusterPopover`,
+   *  ADR-021) — this component owns that surface itself, so `onOpenCluster` is only a
+   *  notification for a caller that wants to know (e.g. analytics); it is not required to build
+   *  any UI in response. */
   onOpenCluster: (members: readonly TimelineCheckpoint[]) => void
   /** The pointer is over the track at displayed unit `u` (a `trackWidthPx`-wide track) — feeds
    *  `Timeline`'s fisheye lens (ADR-017). Fired on hover (mouse) and while dragging (any
@@ -223,6 +224,11 @@ export function ScrubTrack({
       onScrub(entry.t)
       return
     }
+    // A cluster tap both jumps to its first (oldest) member — the same immediate "go there" a
+    // pip tap gives — and opens the popover, so a viewer who wants a different member can still
+    // pick one. `members[0]` is documented as screen-order-first/oldest (`checkpointLayout.ts`),
+    // the same checkpoint the cluster's own stable `id` is already keyed on.
+    onScrub(entry.members[0]!.t)
     setOpenClusterId(entry.id)
     onOpenCluster(entry.members)
   }
@@ -463,6 +469,9 @@ export function ScrubTrack({
             }}
             onClick={(e) => {
               e.stopPropagation()
+              // See `commitMarkerTap`'s own comment (the touch/pen path's equivalent) — a
+              // cluster click jumps to its first (oldest) member as well as opening the popover.
+              onScrub(entry.members[0]!.t)
               setOpenClusterId(entry.id)
               onOpenCluster(entry.members)
             }}

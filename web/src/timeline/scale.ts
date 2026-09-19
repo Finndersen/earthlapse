@@ -48,8 +48,8 @@ export const SYMLOG_C = 1e4
  * `'steady'`-mode playback rate, `ticks.ts`'s near-linear check) is drawn from a window that
  * size, so the visible track, the ruler and steady-mode pacing all move together automatically.
  * What deliberately does *not* pick this up: the full-domain scale `Experience.tsx` keeps for
- * the event feed's lookback, the HUD sparklines and `'scenes'`-mode pacing (ADR-024's own
- * "stay full-domain on purpose" list) — its window is always `[0, EARTH_FORMATION]`, always at
+ * the HUD sparklines and `'scenes'`-mode pacing (ADR-024's own "stay full-domain on purpose"
+ * list) — its window is always `[0, EARTH_FORMATION]`, always at
  * or above the threshold, so it is provably unaffected; likewise `scene/pacing.ts` and
  * `globe/effects/math.ts`, which each keep their own fixed `SYMLOG_C` copy for an unrelated,
  * always-full-domain purpose and were not touched.

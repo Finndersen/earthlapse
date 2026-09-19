@@ -1,8 +1,26 @@
-/* A compact, single-line pill per shortcut (`EraShortcuts.tsx`'s own "placement history" doc
-   comment has the full story of where this has lived). `flex: none` matters here specifically:
-   this group is one flex item of `Timeline.module.css`'s `.controlsSections`, alongside the
-   breadcrumb, and must not shrink below its own content the way a default `flex: 1 1 auto` item
-   would once that row's `justify-content: space-between` gives it real free space to sit in. */
+/* The visible "Eras" label plus the pill row beneath it — same column layout as
+   `Timeline.module.css`'s `.scaleGroup`/`Transport.module.css`'s `.modeGroup`, independently
+   duplicated here for the same "CSS Modules classes are scoped per file" reason those two give
+   for duplicating each other. */
+.groupWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.groupLabel {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+/* A compact, single-line pill per shortcut. `flex: none` matters here specifically: this group is
+   one flex item of `Timeline.module.css`'s `.controlsSecondary`, alongside the speed/mode/scale
+   controls, and must not shrink below its own content the way a default `flex: 1 1 auto` item
+   would. */
 .group {
   display: flex;
   align-items: center;
@@ -13,8 +31,8 @@
 .shortcut {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 3px;
+  padding: 3px 6px;
   background: transparent;
   border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
   border-radius: 999px;
@@ -61,14 +79,9 @@
 }
 
 @media (max-width: 760px) {
-  /* This group is one flex item of `Timeline.module.css`'s `.controlsSections`, which already
-     wraps (`flex-wrap: wrap`) if it and the breadcrumb don't both fit on one line — so, unlike
-     this group's own previous home inside `.title`'s bare `auto` grid column, there is no
-     "auto track won't shrink for wrap-capable content" trap here to work around: `.controlsSections`
-     is a genuine `minmax(0, 1fr)` track that already participates in that shrinking, the same
-     device `.controlsCore`'s own centring already relies on. Tighter padding/gap/font here is
-     just fitting more comfortably at the phone floor once `SectionBreadcrumb` has taken its own
-     share of a narrower row — not a fix for an overflow bug the way the old title-row rule was. */
+  /* This group is one flex item of `Timeline.module.css`'s `.controlsSecondary`, which already
+     wraps (`flex-wrap: wrap`) if its contents don't all fit on one line. Tighter padding/gap/font
+     here is just fitting more comfortably at the phone floor. */
   .group {
     gap: 3px;
   }

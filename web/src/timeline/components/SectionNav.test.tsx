@@ -235,7 +235,7 @@ describe('<Timeline> section navigation (ADR-024)', () => {
         onOpenCluster={vi.fn()}
       />,
     )
-    fireEvent.click(screen.getByLabelText('Back to previous event'))
+    fireEvent.click(screen.getByLabelText('Back to previous scene'))
     expect(onScrub).not.toHaveBeenCalled()
   })
 

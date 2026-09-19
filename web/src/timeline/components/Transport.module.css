@@ -4,19 +4,6 @@
   gap: 14px;
 }
 
-/* `flex-end`, not `center`: the mode toggle's own label-above-buttons
-   layout (`.modeGroup` below) makes it a 35px-tall column, while `sound`/`.speedSelect` beside it
-   are bare ~20px controls with no label of their own. Centring the row vertically centred the
-   *group's* own bounding box, not the interactive controls within it — the mode toggle's actual
-   buttons then sat ~7-8px below the sound icon and speed select's optical centre, reading as
-   misaligned. Bottom-aligning instead lines up every control's own bottom edge — icon, select and
-   button pill alike — regardless of whether a label sits above it. */
-.secondary {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-}
-
 .ghostButton {
   width: 34px;
   height: 34px;
@@ -72,8 +59,8 @@
 
 /* Fixed width (the widest option, "0.25x", plus padding) so a different selected speed never
    changes this element's own rendered width — a native <select> otherwise sizes to its current
-   option's text, which would shift the mode toggle/scale toggle/sound controls beside it every
-   time the speed changes. Centred text reads fine at every width since every option is short. */
+   option's text, which would shift the mode toggle/scale toggle beside it every time the speed
+   changes. Centred text reads fine at every width since every option is short. */
 .speedSelect {
   width: 46px;
   background: transparent;
@@ -132,7 +119,7 @@
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10.5px;
   letter-spacing: 0.03em;
-  padding: 3px 9px;
+  padding: 3px 7px;
   cursor: pointer;
   transition:
     color 200ms ease,
