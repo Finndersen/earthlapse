@@ -25,6 +25,6 @@ deploy-media:
 
 deploy-site:
 	MEDIA_BASE=$(MEDIA_BASE) deploy/build-site.sh
-	npx wrangler deploy --config deploy/wrangler.jsonc
+	pnpm -C web exec wrangler deploy --config ../deploy/wrangler.jsonc
 
 deploy: deploy-media deploy-site

@@ -2,13 +2,16 @@
   // Static-assets-only Worker: no `main` script, so every request is served straight from the
   // uploaded directory. Cloudflare now points new static projects at Workers rather than Pages
   // (https://developers.cloudflare.com/pages/), and the two share the same 25 MiB/file and
-  // 20,000-file limits — the site is a few MB, and the 308 MB of media never goes through here.
+  // 20,000-file limits — the site is a few MB, and the 87 MB of media never goes through here.
   // Media lives in R2 instead; see deploy/README.md.
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "earthtime-site",
+  "name": "earthlapse-site",
   "compatibility_date": "2026-09-01",
   "assets": {
     "directory": "../web/out",
     "not_found_handling": "404-page"
-  }
+  },
+  // Apex only, and it is canonical. `www` is handled by a redirect rule on the zone rather than a
+  // second custom domain, so the site is never served from two origins.
+  "routes": [{ "pattern": "earthlapse.net", "custom_domain": true }]
 }

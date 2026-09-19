@@ -8,7 +8,7 @@ same machine that generates them.
 
 R2 has no egress charge and no bandwidth cap; every alternative meters it (Netlify and Vercel bill
 transfer, CloudFront's free plan stops at 100 GB/month). The site itself is a few MB and fits
-comfortably inside the free 25 MiB/file and 20,000-file limits, while the ~308 MB of media never
+comfortably inside the free 25 MiB/file and 20,000-file limits, while the ~87 MB of media never
 touches the deployment at all. Media is already content-hashed, so it caches for a year and a
 publish only moves what changed. Running cost is the domain.
 
@@ -52,6 +52,6 @@ fetched from. `build-site.sh` checks the second; nothing but care checks that th
 ## Still to wire up
 
 - Nothing has measured a cold first load. That is a content-budget question, not a hosting one —
-  R2 will happily serve 300 MB while the visitor waits.
+  R2 will happily serve it all while the visitor waits.
 - Credits: several sources are CC BY and require attribution. The in-app credits panel exists;
   audit it against every source manifest before the site is public.

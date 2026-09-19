@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "buildId": "647bdc494d2d0bd1",
-  "assetBase": "/media",
+  "assetBase": "https://media.earthlapse.net",
   "scenes": [
     {
       "id": "shenzhen-bay-present",

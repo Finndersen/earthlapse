@@ -24,7 +24,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MEDIA_DIR="$REPO_ROOT/data/media"
 
-REMOTE=":s3,provider=Cloudflare,access_key_id=$R2_ACCESS_KEY_ID,secret_access_key=$R2_SECRET_ACCESS_KEY,endpoint=https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com,no_check_bucket=true:"
+# `endpoint` must be quoted inside the connection string: rclone splits a remote from its path on
+# the first `:`, so a bare `https://…` value is read as the endpoint `https` followed by a path.
+REMOTE=":s3,provider=Cloudflare,access_key_id=$R2_ACCESS_KEY_ID,secret_access_key=$R2_SECRET_ACCESS_KEY,endpoint=\"https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com\",no_check_bucket=true:"
 
 # Media is stored in Git LFS; uploading pointer files would publish a broken site silently.
 if head -c 40 "$MEDIA_DIR/manifest.json" | grep -q 'git-lfs'; then
