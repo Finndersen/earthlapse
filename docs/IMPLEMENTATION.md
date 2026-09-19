@@ -185,3 +185,40 @@ coverage, globe motion and ancestor portraits come first.
 - **Tree-of-life ribbon.** A phylogeny band sharing the timeline's axis. Our lineage runs as the
   spine, and sister clades branch off at their divergence times. Needs sister-clade curation
   (plus extinction ends) and a branch layout. Still under discussion.
+
+## Backlog — onboarding (2026-09-19)
+
+- **First-visit tour.** A short step-through on a viewer's first load, highlighting the four
+  things that aren't self-evident: the play button runs the timeline through the scenes, the
+  timeline scrubs, the era shortcuts jump, and the globe expands. Deliberately light — a handful
+  of steps, not a walkthrough, with a skip control visible from the very first step rather than
+  only at the end. Must not block the scene behind it, and must never reappear once dismissed or
+  completed.
+
+  Settled: **`localStorage` holds the "seen it" flag.** It is per-browser and unavailable in a
+  private window, so a viewer can see the tour more than once — accepted, since the cost of that
+  is one dismissable overlay rather than anything lost. Read it in a `try`/`catch` and treat a
+  throw or a miss as "not seen"; never let a storage failure block the app from rendering.
+
+  Also settled: **it does not touch playback.** The tour only runs on a first visit, and the app
+  opens paused (`store/time.ts`'s initial `playback.playing: false`), so nothing is moving
+  underneath it and there is no state to save and restore. It follows that the tour must not
+  *start* playback either — a viewer who skips at step one should land on exactly the still,
+  paused view they would have got without it.
+
+  Also settled: **design it for the phone first.** Most visitors are expected to arrive on one,
+  so the phone is the case to get right and the desktop is the adaptation — not the other way
+  round, which is how a tour ends up pointing at controls that are somewhere else.
+
+  That matters because three of the four things it points at genuinely move: on a phone the
+  Globe/Map toggle is a top-left corner control, the era shortcuts sit under the title, and the
+  zoom rocker is in the bottom band (see the 760px blocks in `ShellLayout.module.css` and
+  `Globe.module.css`). Anchor each step to the target's *measured* position rather than fixed
+  coordinates, and let the copy differ per breakpoint — "tap" against "click", and a phone has no
+  hover affordances to describe.
+
+  Two phone-specific constraints fall out of that. The viewport is short, so a step's callout
+  cannot assume room beside its target the way it can on a desktop — it will often have to sit
+  above or below. And the skip control has to meet the same touch-target floor as the rest of the
+  phone transport (44px, `Timeline.module.css`'s own `--edge-button-size` at that breakpoint),
+  since a tour a viewer cannot reliably dismiss is worse than no tour.
