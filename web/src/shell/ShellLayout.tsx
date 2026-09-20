@@ -156,10 +156,9 @@ export function ShellLayout({
         </header>
 
         <div className={styles.ancestor}>
-          <span className={styles.label}>Your ancestor</span>
-          {ancestor}
-          {/* Below the portrait, so the globe column opposite starts clean at the orb itself —
-              in-flow rather than fixed-position, so this column simply grows to fit it. */}
+          {/* Leads the column, in the corner the sound toggle used to occupy. The globe column
+              opposite takes a matching top inset (`--hud-column-top`) so the orb and the
+              portrait still start on the same line. */}
           <button
             type="button"
             className={styles.aboutButton}
@@ -178,6 +177,8 @@ export function ShellLayout({
                 accessible name below keeps the credits discoverable by name. */}
             About
           </button>
+          <span className={styles.label}>Your ancestor</span>
+          {ancestor}
         </div>
 
         <div className={styles.bottom}>

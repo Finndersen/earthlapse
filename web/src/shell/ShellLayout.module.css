@@ -10,7 +10,9 @@
 
 .shell {
   --gutter: clamp(16px, 3vw, 48px);
-  --gutter-top: clamp(16px, 2.4vw, 34px);
+  /* Tighter than `--gutter` at the sides: the top row is the time title, the orb and the
+     ancestor portrait, and every pixel spent above them is scene the viewer cannot see. */
+  --gutter-top: clamp(12px, 2vw, 28px);
   /* +~54% over the previous clamp(120px, 13vw, 196px) at every breakpoint it applies at (user
      ask: at least 50%, aiming 50-60% larger drawn orb) — verified against the sphere's real
      drawn pixels, not this box (`globe/Globe.tsx` frames the WebGL sphere to fill almost exactly
@@ -140,6 +142,16 @@
   color: var(--hud-faint);
 }
 
+/* The About button leads the ancestor column, so the portrait below it starts further down. The
+   globe column opposite holds only the orb and takes this matching inset, so the two circles sit
+   on the same line and the time title between them gets the top of the row to itself. The value
+   is whatever precedes the portrait in that column: here the button plus the "Your ancestor"
+   kicker, which the phone rule reorders to sit *below* the portrait instead — hence the smaller
+   inset there. Measured, not guessed (`scripts/qa/shots.mjs`'s `orb-portrait-same-row`). */
+.hud {
+  --hud-column-top: 47px;
+}
+
 .globe {
   grid-area: globe;
   justify-self: start;
@@ -148,6 +160,7 @@
   align-items: center;
   gap: 6px;
   width: var(--orb-size);
+  padding-top: var(--hud-column-top);
 }
 
 .orb {
@@ -230,7 +243,6 @@
   align-items: flex-end;
   gap: 8px;
   max-width: 34ch;
-  padding-top: 40px;
   text-align: right;
 }
 
@@ -586,6 +598,10 @@
      opposite — its own full-width row (the bug this fixes) both hid the scene behind it and
      pushed the readouts/caption/playhead into each other below. */
   .hud {
+    /* The kicker moves below the portrait here (`.ancestor > .label`'s `order`), so only the
+       About button precedes it. */
+    --hud-column-top: 26px;
+
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'globe    title    ancestor'
@@ -663,10 +679,9 @@
     gap: 4px;
   }
 
-  /* The kicker moves after the portrait+readout panel (`order`, not DOM order — desktop's
-     source order, label then panel, stays untouched) so the portrait leads, matching the
-     globe orb leading its own label. The About button stays last regardless (explicit `order`,
-     not the default tie it would otherwise lose to the label). */
+  /* The kicker moves after the portrait+readout panel (`order`, not DOM order) so the portrait
+     leads its own text, matching the globe orb opposite. The About button keeps the top of the
+     column ahead of both. */
   .ancestor > .label {
     order: 1;
     font-size: 8px;
@@ -678,7 +693,7 @@
   }
 
   .ancestor > .aboutButton {
-    order: 2;
+    order: -1;
   }
 
   /* Caps the panel's own width to the column (`.ancestor`'s `max-width`) so the ellipsis rules
@@ -705,7 +720,9 @@
     grid-area: globe;
     align-self: start;
     justify-self: start;
-    margin-top: calc(var(--globe-orb-size) + 4px);
+    /* Measured from the grid area's own top, so it must clear the same `--hud-column-top` inset
+       the orb above it sits on, not just the orb's height. */
+    margin-top: calc(var(--hud-column-top) + var(--globe-orb-size) + 4px);
   }
 }
 

@@ -149,14 +149,14 @@ describe('ShellLayout — About & credits panel', () => {
     expect(document.activeElement).toBe(button)
   })
 
-  it('places the button at the bottom of the ancestor column, below the portrait, not in the globe column', () => {
+  it('leads the ancestor column with the button, not the globe column', () => {
     renderShell()
     const button = screen.getByRole('button', { name: /about & credits/i })
     const ancestorColumn = button.closest(`.${styles.ancestor}`)
     expect(ancestorColumn).not.toBeNull()
     expect(button.closest(`.${styles.globe}`)).toBeNull()
     const children = Array.from(ancestorColumn?.children ?? [])
-    expect(children.at(-1)).toBe(button)
+    expect(children[0]).toBe(button)
   })
 
   it('threads a caller-supplied feedback link through to the panel content', () => {
