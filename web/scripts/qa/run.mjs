@@ -16,6 +16,7 @@ import { chromium } from 'playwright'
 import { buildContactSheet } from './contactSheet.mjs'
 import { makeHook, rafTicks } from './hook.mjs'
 import { startStaticServer } from './server.mjs'
+import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
 import { waitForSceneCrossfadeSettle } from './timeouts.mjs'
 
@@ -118,9 +119,10 @@ function runNextBuild() {
 const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
 
 /**
- * Always resolves `globeExpanded` (default `false`) and, whenever expanded, `globeViewMode`
- * (default `'globe'') and every legend toggle (`DEFAULT_LAYER_TOGGLES`, merged with the shot's
- * own `layerToggles`) — never only the fields a shot happens to mention. `setGlobeViewMode`/
+ * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed) and,
+ * whenever expanded, `globeViewMode` (default `'globe'') and every legend toggle
+ * (`DEFAULT_LAYER_TOGGLES`, merged with the shot's own `layerToggles`) — never only the fields a
+ * shot happens to mention. `setGlobeViewMode`/
  * `setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
  * comment), so resolving every time rather than only on change is what makes one shot's state
  * fully independent of whatever the previous shot left on screen (this is exactly the bug an
@@ -138,6 +140,36 @@ async function applyState(hook, state = {}) {
     const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
     for (const [key, on] of Object.entries(toggles)) await hook.setLayerToggle(key, on)
   }
+  // Last, so the tour measures every anchor against the layout this shot actually ends up with
+  // rather than the one it started from.
+  await hook.setTourOpen(state.tour ?? false)
+}
+
+/**
+ * The published manifest pins an absolute `assetBase` — a CDN host that serves no
+ * `Access-Control-Allow-Origin` header. That is correct for the deployed site, where the page and
+ * its media share an origin, and fatal here, where the export is served from a local port: every
+ * layer fetch is CORS-blocked, `useAppData` rejects the whole batch, and the app never mounts the
+ * shell `ready()` is waiting for. The same media is already inside the export under `/media/`
+ * (`public/media` is a symlink to `data/media`), so requests to that host are answered from
+ * there — which also makes a run deterministic and offline rather than a check against whatever
+ * the CDN currently holds.
+ * @param {import('playwright').Page} page
+ * @param {string} baseUrl
+ * @returns {Promise<string | null>} the rerouted origin, or `null` when the manifest's
+ *   `assetBase` is already relative and nothing needs rerouting.
+ */
+async function routePublishedMediaToLocalExport(page, baseUrl) {
+  const response = await page.request.get(`${baseUrl}/media/manifest.json`)
+  if (!response.ok()) return null
+  const { assetBase } = await response.json()
+  if (typeof assetBase !== 'string' || !/^https?:\/\//.test(assetBase)) return null
+  const origin = assetBase.replace(/\/+$/, '')
+  await page.route(`${origin}/**`, async (route) => {
+    const local = await route.fetch({ url: `${baseUrl}/media${route.request().url().slice(origin.length)}` })
+    await route.fulfill({ response: local, headers: { ...local.headers(), 'access-control-allow-origin': '*' } })
+  })
+  return origin
 }
 
 async function runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion) {
@@ -231,9 +263,13 @@ async function main() {
   const browser = await chromium.launch()
   const consoleErrors = []
   const results = []
+  // Declared out here so the `finally` can tear the media reroute down before closing the
+  // browser: a route callback still in flight when the browser goes away rejects, and that
+  // rejection would otherwise surface instead of whatever actually ended the run.
+  let page = null
   try {
     const context = await browser.newContext({ deviceScaleFactor: 1 })
-    const page = await context.newPage()
+    page = await context.newPage()
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(`console.error: ${msg.text()}`)
     })
@@ -241,6 +277,10 @@ async function main() {
 
     await page.emulateMedia({ reducedMotion: args.reducedMotion })
     await page.setViewportSize(DEFAULT_VIEWPORT)
+
+    const reroutedOrigin = await routePublishedMediaToLocalExport(page, baseUrl)
+    if (reroutedOrigin !== null) console.log(`Answering ${reroutedOrigin} from this export's own /media`)
+
     await page.goto(baseUrl, { waitUntil: 'load' })
 
     const hook = makeHook(page)
@@ -263,6 +303,15 @@ async function main() {
       )
     }
     await hook.ready()
+
+    // The first-visit tour (`@/onboarding`) opens whenever `localStorage` has no "seen it" flag,
+    // and a fresh browser context never does — left alone it would cover every shot in the run.
+    // Dismissed once, here, through the same path its own Skip button takes; the shots that guard
+    // the tour itself re-open it via `state.tour`. Waiting for the layer to actually detach also
+    // covers the race where the tour's own mount effect has not run yet when this fires: the flag
+    // is written either way, so it simply never opens.
+    await hook.setTourOpen(false)
+    await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
 
     const shots = selectShots(shotList, args.shots)
     for (const shot of shots) {
@@ -295,6 +344,7 @@ async function main() {
 
     if (!report.pass) process.exitCode = 1
   } finally {
+    if (page !== null) await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {})
     await browser.close()
     if (server !== null) await server.close()
   }

@@ -21,6 +21,9 @@ export function makeHook(page) {
     getGlobeViewMode: () => page.evaluate(() => window.__earthtime?.getGlobeViewMode() ?? null),
     /** @param {'globe' | 'map'} mode */
     setGlobeViewMode: (mode) => page.evaluate((value) => window.__earthtime?.setGlobeViewMode(value), mode),
+    /** Opens the first-visit tour, or dismisses it and records it as seen — see `devHook.ts`.
+     * @param {boolean} open */
+    setTourOpen: (open) => page.evaluate((value) => window.__earthtime?.setTourOpen(value), open),
     /**
      * @param {string} key
      * @param {boolean} on

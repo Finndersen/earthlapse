@@ -64,12 +64,10 @@ export const GLOBE_SPHERE_FIT_FRAME_SELECTOR = '[data-testid="globe-sphere-fit-f
 export const GLOBE_MAP_FIT_FRAME_SELECTOR = '[data-testid="globe-map-fit-frame"]'
 
 /** The expanded globe's own caption slot (`ShellLayout.tsx`'s `.expandedGlobeCaption`) — always
- *  mounted (it is `useChromeGap`'s own measurement anchor) but, by user ask, never populated with
- *  text while the globe is expanded any more (2026-09-18: "the extra globe labels when fullsreen
- *  like 'Geography unknown', 'Snowball Earth · extent contested' etc can be reoved"). */
+ *  mounted, since it is `useChromeGap`'s own measurement anchor, and never populated with text. */
 export const EXPANDED_GLOBE_CAPTION_SELECTOR = '[data-testid="expanded-globe-caption"]'
-/** The minimised orb's own caption label (`ShellLayout.tsx`'s `.globeLabel`) — the one remaining
- *  reader of `globeCaption`, now that the expanded slot above never shows it. */
+/** The minimised orb's former caption label. The globe draws no caption in either state, so this
+ *  matches nothing — kept as the guard that asserts it stays that way. */
 export const MINIMISED_GLOBE_LABEL_SELECTOR = '[data-testid="minimised-globe-label"]'
 
 /** A single-scene timeline checkpoint marker (`ScrubTrack.tsx`'s `data-checkpoint-pip`) — not a
@@ -85,6 +83,31 @@ export const PIP_PREVIEW_SELECTOR = '[class*="pipPreview"]'
 /** The expanded globe's own "Globe / Map" toggle (`Globe.tsx`'s `ViewModeToggle`) — issue 3
  *  (user ask: "the globe/map toggle should be moved to below the globe/map"). */
 export const VIEW_MODE_TOGGLE_SELECTOR = '[data-testid="globe-view-mode-group"]'
+
+/** The expanded globe's zoom rocker (`Globe.tsx`'s `ZoomControls`). Selected through its own
+ *  "Zoom in" button rather than a testid, since the group element carries no attribute of its
+ *  own; `:has()` keeps the measured box the whole pill, not one of its two buttons. */
+export const ZOOM_CONTROLS_SELECTOR = 'div:has(> button[aria-label="Zoom in"])'
+
+/** The first-visit tour (`@/onboarding`): its whole layer, the callout card, the highlight ring
+ *  around the step's target, and the two controls a shot drives. A fresh browser context has no
+ *  `localStorage`, so the tour opens on load and `run.mjs` dismisses it before any shot runs —
+ *  `ONBOARDING_TOUR_SELECTOR` is what that dismissal waits on. */
+export const ONBOARDING_TOUR_SELECTOR = '[data-testid="onboarding-tour"]'
+export const ONBOARDING_CARD_SELECTOR = '[data-testid="onboarding-card"]'
+export const ONBOARDING_SPOTLIGHT_SELECTOR = '[data-testid="onboarding-spotlight"]'
+export const ONBOARDING_SKIP_SELECTOR = '[data-testid="onboarding-skip"]'
+export const ONBOARDING_NEXT_SELECTOR = '[data-testid="onboarding-next"]'
+
+/** The transport's own play/pause button (`Transport.tsx`'s `TransportCore`), inside
+ *  `TIMELINE_CONTROLS_CORE_SELECTOR`. Selected by accessible name — it carries no testid of its
+ *  own, and the name is "Pause" while playing — the same approach `ZOOM_CONTROLS_SELECTOR` above
+ *  takes, and the same selector the tour's own play step anchors to (`onboarding/steps.ts`). */
+export const PLAY_BUTTON_SELECTOR = '[data-testid="timeline-controls-core"] button:is([aria-label="Play"], [aria-label="Pause"])'
+
+/** The minimised globe orb's expand affordance (`Globe.tsx`'s `.expandButton`) — the circle inset
+ *  inside the orb's box, so its geometry is also the orb's own drawn silhouette. */
+export const GLOBE_EXPAND_SELECTOR = '[data-testid="globe-expand"]'
 
 /** The left column's readouts row (`ShellLayout.tsx`'s `.readouts`) and, below it, the event feed
  *  slot (`.feed`) — the grid's `auto`/`minmax(0, 1fr)` row pair `ShellLayout.module.css`'s `.feed`
