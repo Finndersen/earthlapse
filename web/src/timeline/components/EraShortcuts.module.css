@@ -1,26 +1,7 @@
-/* The visible "Eras" label plus the pill row beneath it — same column layout as
-   `Timeline.module.css`'s `.scaleGroup`/`Transport.module.css`'s `.modeGroup`, independently
-   duplicated here for the same "CSS Modules classes are scoped per file" reason those two give
-   for duplicating each other. */
-.groupWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.groupLabel {
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-}
-
-/* A compact, single-line pill per shortcut. `flex: none` matters here specifically: this group is
-   one flex item of `Timeline.module.css`'s `.controlsSecondary`, alongside the speed/mode/scale
-   controls, and must not shrink below its own content the way a default `flex: 1 1 auto` item
-   would. */
+/* A compact, single-line pill per shortcut, in a row with no heading of its own — see this
+   component's own doc comment for why the group is named by `aria-label` instead. `flex: none`
+   keeps the row at its own content width rather than shrinking below it, since
+   `ShellLayout.module.css`'s `.eraShortcuts` places this inside a flex container. */
 .group {
   display: flex;
   align-items: center;

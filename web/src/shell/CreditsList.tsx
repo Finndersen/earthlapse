@@ -9,9 +9,9 @@
  * 1. **About** — what the project is, what it covers, and the artistic-reconstruction
  *    disclosure (VISUAL_SPEC §9), which used to sit in `ShellLayout`'s always-on footer row and
  *    now shows only here, as the first line a viewer sees on opening this content. Followed by
- *    the repo link and a slot for the feedback link (`CreditsListProps.feedbackLink`) — the same
- *    "supplied by the caller" reasoning as `eventLegend` below, since only the feedback link
- *    needs live store state.
+ *    the author byline, the repo link and a slot for the feedback link
+ *    (`CreditsListProps.feedbackLink`) — the same "supplied by the caller" reasoning as
+ *    `eventLegend` below, since only the feedback link needs live store state.
  * 2. **Controls & shortcuts** (`ControlsShortcuts.tsx`) — added because the timeline's first-use
  *    hint, previously the only place interactions and keyboard shortcuts were explained, was
  *    removed (ADR-012 amendment follow-up, 2026-09-18); this is now the one place they're
@@ -79,6 +79,8 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
         population — is real, drawn from paleoclimate proxies, geological and satellite surveys, phylogenetic
         trees and historical records, each cited below.
       </p>
+
+      <p className={styles.byline}>Built by Finn Andersen</p>
 
       <p className={styles.links}>
         <a href="https://github.com/Finndersen/earthview" target="_blank" rel="noopener noreferrer">

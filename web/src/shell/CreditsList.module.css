@@ -36,6 +36,18 @@
   color: var(--hud-dim);
 }
 
+/* The author line, between the project description and the source/feedback links: the same
+   caps-mono treatment the disclaimer above uses, in the muted ink rather than the accent, so it
+   reads as attribution and not as a second warning. */
+.byline {
+  margin: 0 0 14px;
+  font-family: var(--hud-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-dim);
+}
+
 .links {
   display: flex;
   flex-wrap: wrap;

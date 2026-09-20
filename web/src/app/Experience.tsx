@@ -21,6 +21,7 @@ import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/event
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
   resolveAssetUrl,
@@ -129,14 +130,8 @@ export function Experience() {
   // never drift out of sync with the image) while placing it in the HUD above the vignette.
   const [captionHost, setCaptionHost] = useState<HTMLDivElement | null>(null)
 
-  // The globe's own regime/effect caption (docs/GLOBE.md §7), lifted here from `<Globe>`'s
-  // `onCaptionChange` so `ShellLayout` can place it under the minimised orb (its
-  // "Paleogeography" label slot) and, while the globe is expanded, in the stage slot above the
-  // timeline. `Globe` never draws a caption over the sphere itself in either state.
-  const [globeCaption, setGlobeCaption] = useState('')
-
   // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
-  // `onViewModeToggleHeightChange` doc comment), lifted here the same way `globeCaption` is so
+  // `onViewModeToggleHeightChange` doc comment), lifted here so
   // `ShellLayout`'s `useChromeGap` can reserve room for it rather than let it overlay the orb.
   // `0` while the toggle isn't mounted (collapsed, or no WebGL).
   const [viewModeToggleHeightPx, setViewModeToggleHeightPx] = useState(0)
@@ -474,7 +469,6 @@ export function Experience() {
     <>
       <ShellLayout
         globeExpanded={globeExpanded}
-        globeCaption={globeCaption}
         viewModeToggleHeightPx={viewModeToggleHeightPx}
         eventLegend={<EventTagLegend />}
         feedbackLink={<FeedbackLink />}
@@ -502,7 +496,6 @@ export function Experience() {
               effectEvents={manifest.events}
               expanded={globeExpanded}
               onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
-              onCaptionChange={setGlobeCaption}
               cities={cities}
               sceneLocation={currentSceneLocation}
               playbackBaseRate={playback.baseRate}
@@ -550,7 +543,6 @@ export function Experience() {
         ancestor={
           nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
         }
-        sound={<SoundToggle {...audio} />}
         caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
         chart={
           expandedChartLayer ? (
@@ -578,6 +570,7 @@ export function Experience() {
             ratePerSecond={ratePerSecond}
             timeCompressed={steadyRegime.floored}
             overlayOpen={globeExpanded || expandedChartLayerId !== null}
+            sound={<SoundToggle {...audio} />}
           />
         }
       />
@@ -600,6 +593,11 @@ export function Experience() {
           }}
         />
       )}
+      {/* Mounted here, not inside `ShellLayout`, which stays a layout component. It sits after
+          the shell so its own layer is that element's sibling, above the whole HUD, and it is
+          rendered only past the loading/error branches above so every control it rings is
+          already in the DOM to be measured. */}
+      <OnboardingTour />
     </>
   )
 }

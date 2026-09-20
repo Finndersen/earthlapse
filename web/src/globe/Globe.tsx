@@ -84,9 +84,16 @@ import { useUnfold } from './unfoldAnimation'
 const RIM_COLOR = new THREE.Color('#8fc7ff')
 /** Far enough back (with the 40° fov) that the sphere and its atmosphere shell sit whole
  *  inside the canvas with a margin — the orb reads as a floating object, never a disc
- *  clipped square. The planet's silhouette lands at ≈76% of the canvas half-size, which
- *  Globe.module.css's halo and expand ring are sized against. */
-const CAMERA_DISTANCE = 3.6
+ *  clipped square. The planet's silhouette lands at ≈86% of the canvas half-size, which
+ *  Globe.module.css's halo, static fallback and expand ring are sized against.
+ *
+ *  The orb's box is already the same size as the ancestor portrait opposite it
+ *  (`ShellLayout.module.css`'s `--orb-size`, which `hud.module.css`'s `.portrait` reads on a
+ *  phone), but the portrait fills its own box while the sphere sat well inside this one, so the
+ *  two read as different sizes. Closing the camera fills more of the same box, which is the only
+ *  lever available here: growing the box instead would run the orb into the centred time title,
+ *  which `--orb-size`'s own phone rule is already sized right up against. */
+const CAMERA_DISTANCE = 3.24
 /** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap. */
 const MINIMISED_DPR: [number, number] = [1, 2]
 /**
@@ -705,7 +712,15 @@ export function Globe({
           </svg>
         )}
         {!expanded && (
-          <button type="button" className={styles.expandButton} onClick={onToggleExpand} aria-label="Expand globe" />
+          <button
+            type="button"
+            className={styles.expandButton}
+            onClick={onToggleExpand}
+            aria-label="Expand globe"
+            // The anchor the onboarding tour rings for its "the globe opens" step: a circle inset
+            // inside the orb's box, so the ring traces the orb rather than a square around it.
+            data-testid="globe-expand"
+          />
         )}
       </div>
 

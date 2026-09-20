@@ -176,9 +176,16 @@
 .rateReadout {
   display: inline-block;
   width: 16ch;
+  /* Never gives up its reserve: this slot shares a flank with the "Time compressed" badge, and
+     that flank narrows with the viewport, so without this the two shrink together and the number
+     itself starts losing characters. The badge is the annotation and absorbs the squeeze instead. */
+  flex: none;
   min-height: 11px;
   overflow: hidden;
-  text-align: right;
+  /* Left, not right: this sits on the transport's inboard edge, mirroring the speed select packed
+     against the buttons on the other side, so the number reads as belonging to them rather than
+     drifting to the far end of its own reserved box. */
+  text-align: left;
   text-overflow: ellipsis;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10px;

@@ -29,22 +29,18 @@ beforeEach(() => {
 function renderShell({
   globeExpanded = false,
   chart = <div>CHART_SLOT</div> as ReactNode,
-  globeCaption = '',
   viewModeToggleHeightPx = 0,
   feedbackLink = undefined as ReactNode,
-  sound = undefined as ReactNode,
 } = {}) {
   return render(
     <ShellLayout
       scene={<div>SCENE_SLOT</div>}
       globe={<div>GLOBE_SLOT</div>}
-      globeCaption={globeCaption}
       readouts={<div>READOUTS_SLOT</div>}
       feed={<div>FEED_SLOT</div>}
       title={<div>TITLE_SLOT</div>}
       badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
-      sound={sound}
       caption={<div>CAPTION_SLOT</div>}
       chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
@@ -89,72 +85,29 @@ describe('ShellLayout', () => {
     expect((container.firstElementChild as HTMLElement).dataset.globeExpanded).toBe(String(globeExpanded))
   })
 
-  it('labels the globe orb "Paleogeography" with no caption active', () => {
-    renderShell()
-    const label = screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)?.querySelector(`.${styles.globeLabel}`)
-    expect(label?.textContent).toBe('Paleogeography')
+  it.each([[false], [true]])('draws no caption label beside the globe orb (globeExpanded=%s)', (globeExpanded) => {
+    renderShell({ globeExpanded })
+    const globeColumn = screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)
+    expect(globeColumn).not.toBeNull()
+    expect(globeColumn?.querySelector('[data-testid="minimised-globe-label"]')).toBeNull()
+    expect(globeColumn?.textContent).not.toContain('Paleogeography')
   })
 
-  it("replaces the orb's label with the globe's own caption when one is active, never overlapping the orb's own picture (regression: no label on top of the globe)", () => {
-    renderShell({ globeCaption: 'Snowball Earth · extent contested' })
-    const orb = screen.getByText('GLOBE_SLOT').closest(`.${styles.orb}`)
-    const label = screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)?.querySelector(`.${styles.globeLabel}`)
-    expect(label?.textContent).toBe('Snowball Earth · extent contested')
-    expect(orb?.contains(label ?? null)).toBe(false)
-    expect(screen.getByText('GLOBE_SLOT').closest(`.${styles.globe}`)?.textContent).not.toContain('Paleogeography')
-  })
-
-  // User ask, 2026-09-18: "the extra globe labels when fullscreen like 'Geography unknown',
-  // 'Snowball Earth · extent contested' etc can be removed" — scoped to expanded only, per
-  // `ShellLayout.tsx`'s own `globeCaption` doc comment. The slot itself stays mounted (it is
-  // `useChromeGap`'s own measurement anchor), just always empty while expanded.
-  it('never shows the globe caption in the expanded stage slot, however non-empty globeCaption is', () => {
-    renderShell({ globeCaption: 'Impact winter', globeExpanded: true })
-    const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
-    expect(stageCaption).not.toBeNull()
-    expect(stageCaption?.textContent).toBe('')
-  })
-
-  it('still shows the globe caption under the minimised orb — only the expanded slot lost it', () => {
-    renderShell({ globeCaption: 'Impact winter', globeExpanded: false })
-    const orbLabel = document.querySelector(`.${styles.globeLabel}`)
-    expect(orbLabel?.textContent).toBe('Impact winter')
-  })
-
-  it.each([
-    [false, 'polite'],
-    [true, null],
-  ])('keeps the orb label live only while collapsed (globeExpanded=%s)', (globeExpanded, orbLive) => {
-    renderShell({ globeCaption: 'Impact winter', globeExpanded })
-    const orbLabel = document.querySelector(`.${styles.globeLabel}`)
-    expect(orbLabel?.getAttribute('aria-live')).toBe(orbLive)
-  })
-
-  // The expanded stage slot keeps its own `aria-live="polite"` while expanded (unchanged from
-  // before this content was removed) even though it now never has anything to announce — an
-  // always-empty live region is inert, not a second active announcer, so this is still exactly
-  // one *functioning* live region at a time (the orb label's, while collapsed; none while
-  // expanded, since there is nothing left to say).
-  it('places the sound control at the top of the ancestor column, not in the timeline transport', () => {
-    renderShell({ sound: <button type="button" data-testid="sound-slot">sound</button> })
-    const ancestorColumn = screen.getByText('ANCESTOR_SLOT').closest(`.${styles.ancestor}`)
-    const soundSlot = screen.getByTestId('sound-slot')
-    expect(ancestorColumn?.contains(soundSlot)).toBe(true)
-    // First in the column, so it lands on the "About & credits" button's row opposite. It is
-    // taken out of flow in CSS, so leading the stack costs the panel below no position.
-    const children = Array.from(ancestorColumn?.children ?? [])
-    expect(children.indexOf(soundSlot.parentElement as Element)).toBe(0)
-    expect(screen.getByText('TIMELINE_SLOT').textContent).not.toContain('sound')
-  })
-
-  it('renders no sound slot at all when the caller supplies none', () => {
-    renderShell()
-    expect(screen.queryByTestId('sound-slot')).toBeNull()
-  })
+  // The slot is `useChromeGap`'s measurement anchor for the expanded sphere's lower bound, so it
+  // stays mounted while holding nothing.
+  it.each([[false], [true]])(
+    'keeps the expanded caption slot mounted and empty (globeExpanded=%s)',
+    (globeExpanded) => {
+      renderShell({ globeExpanded })
+      const stageCaption = document.querySelector(`.${styles.expandedGlobeCaption}`)
+      expect(stageCaption).not.toBeNull()
+      expect(stageCaption?.textContent).toBe('')
+    },
+  )
 
   it('never actually has two live regions announcing at once', () => {
     for (const globeExpanded of [false, true]) {
-      const { unmount } = renderShell({ globeCaption: 'Impact winter', globeExpanded })
+      const { unmount } = renderShell({ globeExpanded })
       const liveWithText = Array.from(document.querySelectorAll('[aria-live]')).filter((el) => el.textContent !== '')
       expect(liveWithText.length).toBeLessThanOrEqual(1)
       unmount()
@@ -196,11 +149,14 @@ describe('ShellLayout — About & credits panel', () => {
     expect(document.activeElement).toBe(button)
   })
 
-  it('places the button in the top-left globe column, not colliding with the ancestor corner', () => {
+  it('places the button at the bottom of the ancestor column, below the portrait, not in the globe column', () => {
     renderShell()
     const button = screen.getByRole('button', { name: /about & credits/i })
-    expect(button.closest(`.${styles.globe}`)).not.toBeNull()
-    expect(button.closest(`.${styles.ancestor}`)).toBeNull()
+    const ancestorColumn = button.closest(`.${styles.ancestor}`)
+    expect(ancestorColumn).not.toBeNull()
+    expect(button.closest(`.${styles.globe}`)).toBeNull()
+    const children = Array.from(ancestorColumn?.children ?? [])
+    expect(children.at(-1)).toBe(button)
   })
 
   it('threads a caller-supplied feedback link through to the panel content', () => {

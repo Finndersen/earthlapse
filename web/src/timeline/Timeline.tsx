@@ -68,8 +68,10 @@
  * a hydration mismatch on this static export, and no control is ever rendered twice.
  *
  * Every control outside the breadcrumb is fixed-width, so none of them ever shifts position when
- * the breadcrumb's own length changes. The sound/volume control is not part of this row at all
- * (`ShellLayout.tsx`'s own `sound` slot, beneath the ancestor panel).
+ * the breadcrumb's own length changes. The sound/volume control (`@/audio`'s `<SoundToggle>`)
+ * is the one exception — the caller passes it straight through as `sound`, rendered inside
+ * `.secondary` alongside the mode and scale toggles, rather than reserving it a fixed-width
+ * slot of its own the way every other control here is.
  *
  * DOM order (and so tab order) is `sections, trackStack, edgePrev, core, edgeNext, secondary` —
  * chosen so the phone-portrait transport row, the one place two originally-unrelated groups
@@ -84,7 +86,7 @@
  * change per breakpoint. */
 
 import { useCallback, useEffect, useId, useMemo, useRef } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
 
@@ -159,6 +161,10 @@ export interface TimelineProps {
    *  `Backspace`, which no overlay binds) while this is true, leaving the key entirely to
    *  whichever overlay's own listener owns it. Optional, defaulting to `false`. */
   overlayOpen?: boolean
+  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered in `.secondary`
+   *  beside the mode and scale toggles — see this component's own doc comment. Optional so a
+   *  caller with no audio wired up (tests) can omit it. */
+  sound?: ReactNode
 }
 
 export function Timeline({
@@ -177,6 +183,7 @@ export function Timeline({
   ratePerSecond = null,
   timeCompressed = false,
   overlayOpen = false,
+  sound,
 }: TimelineProps) {
   // Visible name for the scale toggle's `role="group"`, stacked above its buttons rather than
   // beside them — `aria-labelledby`, not a second, separate `aria-label` repeating the same text,
@@ -339,8 +346,8 @@ export function Timeline({
           onPlaybackChange={onPlaybackChange}
         />
         <div className={styles.rateReadoutRow}>
-          <TimeCompressedBadge visible={timeCompressed} />
           <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} />
+          <TimeCompressedBadge visible={timeCompressed} />
         </div>
       </div>
       <SectionEdgeButton edge="next" target={nextSibling} onSelectSection={selectSection} />
@@ -371,6 +378,11 @@ export function Timeline({
             </button>
           </div>
         </div>
+        {sound !== undefined && (
+          <div className={styles.soundSlot} data-testid="timeline-sound-slot">
+            {sound}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -16,15 +16,14 @@ function renderShortcuts({
 }
 
 // The Dinosaurs/Humans shortcut group: a prominent, always-present control, rendered by
-// `Timeline.tsx` inside its own `.controlsSecondary`, alongside the speed/mode/scale controls.
-// Every entry is a plain alias for `onSelectSection(id)` — see `../eraShortcuts.ts` for why those
-// two ids and no others. The equivalent "back to Earth" shortcut is the breadcrumb's own root
-// segment, not a pill here.
+// `ShellLayout` directly under the time title. Every entry is a plain alias for
+// `onSelectSection(id)` — see `../eraShortcuts.ts` for why those two ids and no others. The
+// equivalent "back to Earth" shortcut is the breadcrumb's own root segment, not a pill here.
 describe('<EraShortcuts>', () => {
-  it('renders exactly the Dinosaurs and Humans shortcuts, as one labelled group', () => {
+  it('renders exactly the Dinosaurs and Humans shortcuts, as one group named without a drawn heading', () => {
     renderShortcuts()
     expect(screen.getByRole('group', { name: 'Eras' })).not.toBeNull()
-    expect(screen.getByText('Eras')).not.toBeNull()
+    expect(screen.queryByText('Eras')).toBeNull()
     for (const nickname of ['Dinosaurs', 'Humans']) {
       expect(screen.getByRole('button', { name: new RegExp(`^${nickname} — `) })).not.toBeNull()
     }

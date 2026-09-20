@@ -3,10 +3,11 @@
 /** Playback transport controls. `Timeline.tsx` arranges these into three clusters across its
  *  `.controlsRow` grid — breadcrumbs (the one flexible column) on the left; `SpeedSelect` paired
  *  with `RateReadout`/`TimeCompressedBadge` (one logical "speed + its result" group) followed by
- *  `TransportCore`, both centred over the track; and `EraShortcuts` + `PlaybackModeToggle` + the
+ *  `TransportCore`, both centred over the track; and `PlaybackModeToggle` + the
  *  scale toggle right-aligned to the gutter — so nothing here ever shifts position when the
- *  breadcrumb's own length changes. The sound/volume control is not part of this row at all
- *  (`ShellLayout.tsx`'s own `sound` slot, beneath the ancestor panel):
+ *  breadcrumb's own length changes. The sound/volume control (`@/audio`'s `<SoundToggle>`) also
+ *  lives in `.controlsSecondary`, passed through by the caller rather than owned here — see
+ *  `Timeline.tsx`'s own doc comment:
  *
  *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
  *    visible scene (`nearestStepTarget`) rather than by a fixed number of years — a fixed step
@@ -18,9 +19,9 @@
  *  - `PlaybackModeToggle` — the scenes/steady mode toggle (ADR-016): a compact two-state
  *    segmented control, ghost style with an amber active state — the shared lens visual language
  *    (`--hud-*` tokens) rather than a new idiom.
- *  - `RateReadout` — grouped directly beside `SpeedSelect` (`Timeline.module.css`'s
- *    `.speedGroup`): the select sets the rate, the readout shows the result, so the two read as
- *    one control. A fixed-width slot, always reserved (see its own doc comment), so starting or
+ *  - `RateReadout` — the mirror of `SpeedSelect` across the transport buttons: the select sets the
+ *    rate on one side, the readout shows the result on the other, each packed against the buttons
+ *    so the pair reads as one control wrapped around them. A fixed-width slot, always reserved (see its own doc comment), so starting or
  *    stopping playback never moves `TransportCore` beside it or anything past it in the row. It
  *    is optional and purely presentational: the caller (`Experience.tsx`) computes and smooths
  *    the instantaneous years-per-second next to its playback loop, since that is where the real
@@ -162,7 +163,7 @@ interface PlaybackModeToggleProps {
 }
 
 /** The scenes/steady mode toggle, alone — sits in the row's right-hand cluster (`Timeline.tsx`'s
- *  `.controlsSecondary`), beside the era shortcuts and scale toggle.
+ *  `.controlsSecondary`), beside the scale toggle.
  *
  *  Carries its own visible "Playback mode" label above the buttons, in the shared small-caps HUD
  *  label style `Timeline.module.css`'s `.scaleLabel` already established for the scale toggle
@@ -207,9 +208,10 @@ interface TimeCompressedBadgeProps {
  *  what `speed` requested to keep a dense cluster of scenes readable (WCAG 2.3.1's three-flashes
  *  safety floor) — the numeric year readout keeps moving at whatever rate `t` implies either way
  *  (see `advanceSteadyPlayhead`'s own doc comment), so this is the one place a viewer is told
- *  playback has quietly slowed to protect that readability. Sits beside `RateReadout` in the same
- *  fixed-width row (`rateReadoutRow`), amber like the playing state and the active mode-toggle
- *  option — the shared `--hud-accent` lens language, not a new idiom.
+ *  playback has quietly slowed to protect that readability. Sits outboard of `RateReadout` in the
+ *  same fixed-width row (`rateReadoutRow`) — the number keeps the place beside the transport
+ *  buttons — amber like the playing state and the active mode-toggle option: the shared
+ *  `--hud-accent` lens language, not a new idiom.
  *
  *  A fixed-width slot, always mounted (re-review fix, 2026-09-15 — this originally unmounted via
  *  `return null` while not visible, on the reasoning that a handful of years-dense clusters made

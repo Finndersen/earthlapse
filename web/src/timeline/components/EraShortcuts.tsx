@@ -2,15 +2,15 @@
 
 /** The Dinosaurs/Humans "jump to an era" shortcuts, plain aliases for two existing sections
  *  (`../eraShortcuts.ts`'s own doc comment has the full reasoning for which two and why). Rendered
- *  in `Timeline.tsx`'s `.controlsSecondary`, alongside the mode/scale controls — each of which
- *  carries its own visible caps-mono label, so this group carries a matching "Eras" one
- *  (`.groupLabel`, wired via `aria-labelledby` the same way `Transport.tsx`'s mode toggle and
- *  `Timeline.tsx`'s scale toggle label theirs) rather than reading as unlabelled beside them.
+ *  by `ShellLayout` directly under the time title (`.eraShortcuts`), not in the timeline's control
+ *  row. Nothing around it there carries a caps-mono label, and the two pills — an icon plus
+ *  "DINOSAURS"/"HUMANS" — already say what they are, so the group's name is an `aria-label` rather
+ *  than a drawn heading: a visible "Eras" only crowded the era name already printed directly above
+ *  it, on a phone most of all.
  *  Every entry is a plain alias: clicking it calls the exact same `onSelectSection` a section
  *  band, breadcrumb crumb or edge-nav button already calls, with the section id
  *  `../eraShortcuts.ts` pairs it with — never a second selection mechanism. */
 
-import { useId } from 'react'
 import type { ReactNode } from 'react'
 
 import { ERA_SHORTCUTS, isEraShortcutActive } from '../eraShortcuts'
@@ -53,37 +53,31 @@ interface EraShortcutsProps {
 }
 
 export function EraShortcuts({ sectionId, onSelectSection }: EraShortcutsProps) {
-  const labelId = useId()
   return (
-    <div className={styles.groupWrapper}>
-      <span id={labelId} className={styles.groupLabel}>
-        Eras
-      </span>
-      <div className={styles.group} role="group" aria-labelledby={labelId} data-testid="era-shortcuts">
-        {ERA_SHORTCUTS.map((shortcut) => {
-          const active = isEraShortcutActive(shortcut, sectionId)
-          // Short form for the accessible name ("Dinosaurs — the Mesozoic"), the exact unit named
-          // so the nickname never masquerades as a geological name of its own; the hover `title`
-          // adds the section's own cited span for anyone who wants it.
-          const unitName = `${shortcut.nickname} — the ${shortcut.section.label}`
-          return (
-            <button
-              key={shortcut.id}
-              type="button"
-              className={styles.shortcut}
-              aria-current={active ? 'location' : undefined}
-              aria-label={unitName}
-              title={`${unitName} (${formatTimeRange(shortcut.section.window)})`}
-              onClick={() => onSelectSection(shortcut.id)}
-            >
-              <span className={styles.icon} aria-hidden="true">
-                {eraShortcutIcon(shortcut.id)}
-              </span>
-              <span className={styles.label}>{shortcut.nickname}</span>
-            </button>
-          )
-        })}
-      </div>
+    <div className={styles.group} role="group" aria-label="Eras" data-testid="era-shortcuts">
+      {ERA_SHORTCUTS.map((shortcut) => {
+        const active = isEraShortcutActive(shortcut, sectionId)
+        // Short form for the accessible name ("Dinosaurs — the Mesozoic"), the exact unit named
+        // so the nickname never masquerades as a geological name of its own; the hover `title`
+        // adds the section's own cited span for anyone who wants it.
+        const unitName = `${shortcut.nickname} — the ${shortcut.section.label}`
+        return (
+          <button
+            key={shortcut.id}
+            type="button"
+            className={styles.shortcut}
+            aria-current={active ? 'location' : undefined}
+            aria-label={unitName}
+            title={`${unitName} (${formatTimeRange(shortcut.section.window)})`}
+            onClick={() => onSelectSection(shortcut.id)}
+          >
+            <span className={styles.icon} aria-hidden="true">
+              {eraShortcutIcon(shortcut.id)}
+            </span>
+            <span className={styles.label}>{shortcut.nickname}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

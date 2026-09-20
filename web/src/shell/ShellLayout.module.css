@@ -150,18 +150,6 @@
   width: var(--orb-size);
 }
 
-/* The globe's own label, under the orb: "Paleogeography" by default, replaced by the globe's
-   live regime/effect caption while one is active (ShellLayout.tsx). Single-line and clipped
-   rather than wrapping — a long caption ("Snowball Earth · extent contested") next to the
-   narrow --orb-size column would otherwise wrap to two lines and grow this row, shifting
-   .readouts below it every time the caption appears or disappears. */
-.globeLabel {
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .orb {
   width: var(--orb-size);
   height: var(--orb-size);
@@ -170,7 +158,7 @@
 .readouts {
   grid-area: readouts;
   justify-self: start;
-  margin-top: clamp(18px, 3vh, 36px);
+  margin-top: 4px;
   min-width: 0;
 }
 
@@ -231,14 +219,12 @@
   justify-content: center;
   pointer-events: auto;
   font-size: 0.85em;
-  margin-top: -2px;
+  margin-top: 3px;
 }
 
 .ancestor {
   grid-area: ancestor;
   justify-self: end;
-  /* Containing block for `.ancestorSound`, which pins itself to this column's top edge. */
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -248,21 +234,7 @@
   text-align: right;
 }
 
-/* The sound/volume control (`ShellLayout.tsx`'s own `sound` slot doc comment), pinned to the top
-   of this column so it sits on the same line as the "About & credits" button in the `.globe`
-   column opposite. Out of the flex flow rather than first in it: this column's `padding-top`
-   aligns the portrait below with that orb, and an in-flow first child would push the whole stack
-   down by its own height plus the gap, undoing that. Absolute placement resolves against the
-   padding box, i.e. the column's own top edge, which is exactly the button's row.
-   Present only when `sound` is supplied. */
-.ancestorSound {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: flex;
-}
-
-/* Small and muted so the top-left corner still reads as "globe orb", not "menu" — the same
+/* Small and muted so it reads as a corner affordance, not a competing headline — the same
    caps-mono treatment the old footer Credits link used, now the trigger for the About &
    credits panel (`Panel.tsx`) instead of a route navigation. */
 .aboutButton {
@@ -482,6 +454,37 @@
   opacity: 0.18;
 }
 
+/* Expanded, above the phone breakpoint: the era shortcuts leave the title and sit just left of
+   the band below the sphere, opposite the Globe/Map toggle just right of it
+   (`Globe.module.css`'s own `.viewModeGroup` rule for the same breakpoint). Both anchor to
+   `--chrome-gap-bottom-inset`, so they share one line and the band costs one row instead of two.
+   Two gains: the title row gives up their height, which `useChromeGap` reads straight into
+   `--chrome-gap-top` and the sphere grows into; and neither control sits under the sphere's own
+   widest point the way a centred one does, so the band can sit closer to it.
+   `fixed`, not `absolute`: the offset is expressed against the viewport, the same basis the
+   toggle opposite uses — `.hud`'s padding box is not the viewport (see the phone `.feed` rule
+   below for the same trap). The phone keeps them under the title, where the band has no room
+   for a second control beside the toggle. */
+@media (min-width: 761px) {
+  .shell[data-globe-expanded='true'] {
+    /* How far either control sits from the viewport's vertical centre line. Roughly the sphere's
+       own half-width, so the pair reads as flanking the globe rather than pinned to the window —
+       approximate on purpose: the sphere's real size depends on the live chrome gap, and tracking
+       it exactly would mean publishing a measured frame edge for a placement that only has to look
+       right. Declared here, on the shell, so `Globe.module.css`'s own toggle rule inherits the
+       same number and the two stay symmetric by construction. */
+    --expanded-band-gap: clamp(140px, 21vw, 300px);
+  }
+
+  .shell[data-globe-expanded='true'] .eraShortcuts {
+    position: fixed;
+    left: auto;
+    right: calc(50% + var(--expanded-band-gap));
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
+    justify-content: flex-end;
+  }
+}
+
 /* Globe.module.css's expanded backdrop sits at z-index 50 in this same stacking context. The
    feed rides above it too: the expanded globe leaves the left column clear, and the events
    reaching the playhead stay relevant while the globe is what you are watching. It keeps its own
@@ -528,6 +531,24 @@
        introduce and doesn't attempt to fix, since doing so would mean restructuring the title/
        ancestor grid columns rather than resizing this one property. */
     --orb-size: 116px;
+    /* The globe orb's own box, decoupled from `--orb-size` above (which the ancestor portrait
+       also reads — `hud.module.css`'s `.portrait` phone rule — so it stays untouched: growing
+       it would grow the portrait's box too, preserving rather than closing the gap this closes).
+       The drawn sphere fills a fixed ~86% of its own canvas (`CAMERA_DISTANCE`, `Globe.tsx`)
+       while the portrait's circle fills almost all of its box, so two equal *boxes* draw as two
+       different *sizes* (user report: "looks like same and smaller than ancestor portrait
+       circle"). Sized so the drawn silhouettes roughly match instead — measured, not assumed
+       (`scripts/qa/shots.mjs`'s `globe-vs-portrait-drawn-size` shot holds the numbers). */
+    --globe-orb-size: 110px;
+  }
+
+  .globe,
+  .orb {
+    width: var(--globe-orb-size);
+  }
+
+  .orb {
+    height: var(--globe-orb-size);
   }
 
   /* On a phone the HUD stacks down the top third of the window, so the top falloff runs
@@ -612,7 +633,7 @@
     /* Stops short of the zoom rocker sharing this row at the right edge (`Globe.module.css`'s own
        phone `.zoomGroup` rule): its ~74px plus a gap. */
     right: calc(var(--gutter) + 84px);
-    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
     left: var(--gutter);
   }
 
@@ -626,31 +647,26 @@
     padding-top: 6px;
   }
 
-  /* Top-right corner, mirroring `.globe`'s top-left: the panel's own portrait shrinks to
-     `--orb-size` (AncestorPanel's hud.module.css) so the row balances, and its kicker/name/
-     since text (below) becomes a short right-aligned caps stack instead of the desktop's
-     prose column. No `padding-top` reservation: the sound toggle that used to anchor here now
-     lives inline in the timeline transport instead. This column has no "About & credits"-style
-     button of its own the way `.globe` does, so it starts flush at `--gutter-top`; the *portrait*
-     inside it (from the inherited desktop `.ancestor`'s own `padding-top: 40px`, not overridden
-     here) lands close to, but not exactly at, where the globe orb starts, since that column's own
-     "About & credits" button plus its gap happens to add up to a similar offset. `min-height`
-     holds row 1 at the same height whether or
-     not the lineage has started (`<AncestorPortrait>` renders nothing before it has): sized for
-     the portrait-present case (portrait + panel gap + two text lines + ancestor gap + kicker),
-     it stops the readouts/feed below from jumping down the moment a portrait first appears. */
+  /* Top-right corner: the panel's own portrait shrinks to `--orb-size` (AncestorPanel's
+     hud.module.css) so the row balances, and its kicker/name/since text (below) becomes a short
+     right-aligned caps stack instead of the desktop's prose column. `min-height` holds row 1 at
+     the same height whether or not the lineage has started (`<AncestorPortrait>` renders nothing
+     before it has): sized for the portrait-present case (portrait + panel gap + two text lines +
+     ancestor gap + kicker + gap + the About button), it stops the readouts/feed below from
+     jumping down the moment a portrait first appears. */
   .ancestor {
     justify-self: end;
     align-items: flex-end;
     max-width: 132px;
-    min-height: calc(var(--orb-size) + 8px + 30px + 4px + 12px);
+    min-height: calc(var(--orb-size) + 8px + 30px + 4px + 12px + 4px + 22px);
     text-align: right;
     gap: 4px;
   }
 
   /* The kicker moves after the portrait+readout panel (`order`, not DOM order — desktop's
      source order, label then panel, stays untouched) so the portrait leads, matching the
-     globe orb leading its own label. */
+     globe orb leading its own label. The About button stays last regardless (explicit `order`,
+     not the default tie it would otherwise lose to the label). */
   .ancestor > .label {
     order: 1;
     font-size: 8px;
@@ -661,25 +677,35 @@
     text-overflow: ellipsis;
   }
 
+  .ancestor > .aboutButton {
+    order: 2;
+  }
+
   /* Caps the panel's own width to the column (`.ancestor`'s `max-width`) so the ellipsis rules
      on the name/since text inside it (hud.module.css) have an actual limit to measure against
      — without this, the panel and the readout span nested in it size to their own longest
      text (a flex item's cross size, unlike a block's, isn't implicitly capped by the
      container's width), and a long ancestor name spills out of the corner past the panel's
-     left edge instead of eliding. */
+     left edge instead of eliding. Explicit `order: 0` rather than relying on the default tie,
+     since it must stay ahead of the label. */
   .ancestor > [data-testid='ancestor-readout'] {
     order: 0;
     max-width: 100%;
     min-width: 0;
   }
 
-  /* Stays last regardless of the portrait/label reorder above — explicit rather than relying on
-     the default `order: 0` tie (which would otherwise sort it before the readout). */
-  /* Under the globe orb in the column above it, not centred across the row: centred, the figure
-     floated mid-screen with nothing either side of it and read as unrelated to anything. */
+  /* Directly under the orb, in its own column, not centred across the row (a centred figure
+     floated mid-screen with nothing either side of it and read as unrelated to anything).
+     Shares `.globe`'s own grid area rather than sitting in its own row: `.ancestor` opposite
+     can be taller than the orb once the About button joins it, and a separate `auto` row for
+     this element would grow with *that* column's height too, leaving a gap under the orb. As a
+     second item in the same area, its own position is pinned to the orb by `margin-top` instead,
+     independent of whatever `.ancestor` needs. */
   .readouts {
+    grid-area: globe;
+    align-self: start;
     justify-self: start;
-    margin-top: 0;
+    margin-top: calc(var(--globe-orb-size) + 4px);
   }
 }
 

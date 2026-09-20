@@ -18,17 +18,6 @@ export interface ShellLayoutProps {
   scene: ReactNode
   /** Top-left floating orb: the independent paleogeographic globe (DESIGN §7). */
   globe: ReactNode
-  /** The globe's current regime/effect caption (docs/GLOBE.md §7), or `''` for none, sourced
-   *  from `Globe`'s `onCaptionChange` — `Globe` itself never draws this, in either state, so it
-   *  never overlaps the orb's own picture (the user-reported "label on top of the globe"
-   *  issue). One place now: the minimised orb's own label, replacing "Paleogeography" while
-   *  non-empty, in a single-line slot whose height never changes as the caption appears/
-   *  disappears. It used to also show, expanded, in the `caption`/`chart` stage above the
-   *  timeline — removed there by user ask, 2026-09-18 ("the extra globe labels when fullscreen
-   *  like 'Geography unknown', 'Snowball Earth · extent contested' etc can be removed"); that
-   *  slot (`.expandedGlobeCaption`) still exists, empty, purely as `useChromeGap`'s own
-   *  measurement anchor — see this component's own doc comment on `expandedGlobeCaptionRef`. */
-  globeCaption: string
   /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). */
   readouts: ReactNode
   /** Left edge, below the readouts: the event feed (DESIGN § Event feed) — recently-reached
@@ -49,15 +38,6 @@ export interface ShellLayoutProps {
   eraShortcuts?: ReactNode
   /** Top-right: the ancestor-at-`t` readout (DESIGN §10). */
   ancestor: ReactNode
-  /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered beneath the ancestor
-   *  panel in the same top-right corner column — moved out of the timeline transport row
-   *  entirely (`Timeline.tsx`'s own doc comment) so it can never contribute to that row's width
-   *  or height. This corner, not a new fixed-position element top-right of its own, because
-   *  `.ancestor` already owns the shell's top-right column and simply appending here is the
-   *  smallest change to an existing, already-measured layout; it sits after the panel rather than
-   *  before it so the panel's own position (tuned to align with the globe orb opposite it) is
-   *  undisturbed. Optional so a caller with no audio wired up (tests) can omit it. */
-  sound?: ReactNode
   /** Bottom-centre, above the timeline: the scene caption as a subtitle. */
   caption: ReactNode
   /** The open layer chart, or `null`. It takes the caption's place above the timeline (the
@@ -70,11 +50,10 @@ export interface ShellLayoutProps {
   globeExpanded: boolean
   /** The expanded globe's own Globe/Map toggle's real rendered height in CSS px, `0` while it
    *  isn't mounted (collapsed, or no WebGL) — reported up from `Globe.tsx` (its own
-   *  `onViewModeToggleHeightChange` doc comment) the same way `globeCaption` already crosses this
-   *  boundary. Fed to `useChromeGap` as `reserveBottomPx` (plus a fixed clearance margin) so the
-   *  expanded sphere/map sizes itself into what is genuinely left over once the toggle's own band
-   *  is set aside, rather than growing underneath it (user report: "the globe/map toggle is
-   *  overlayed on top of the globe... globe needs to be made a bit smaller"). */
+   *  `onViewModeToggleHeightChange` doc comment). Fed to `useChromeGap` as `reserveBottomPx`
+   *  (plus a fixed clearance margin) so the expanded sphere/map sizes itself into what is
+   *  genuinely left over once the toggle's own band is set aside, rather than growing
+   *  underneath it. */
   viewModeToggleHeightPx: number
   /** The event colour legend, passed straight through to the About & credits panel's
    *  `CreditsList` (re-review fix, 2026-09-15 — see `CreditsList.tsx`'s own doc comment for why
@@ -94,14 +73,12 @@ export interface ShellLayoutProps {
 export function ShellLayout({
   scene,
   globe,
-  globeCaption,
   readouts,
   feed,
   title,
   badge,
   eraShortcuts,
   ancestor,
-  sound,
   caption,
   chart,
   timeline,
@@ -161,44 +138,7 @@ export function ShellLayout({
 
       <div className={styles.hud}>
         <div className={styles.globe}>
-          {/* Top-left corner, above the orb: small and muted so it reads as a corner
-              affordance, not a competing headline (item 5). In-flow rather than fixed-position —
-              it shares this column's flex stack with the orb and its label, so the row simply
-              grows to fit it instead of needing a hand-tuned pixel reservation. (An earlier note
-              here compared this to a "fixed-position sound toggle" that needed a reservation
-              from `.ancestor` opposite it — stale: the sound toggle moved into the timeline
-              transport in the same follow-up pass, follow-up item 2, and never came back as a
-              fixed-position element.) */}
-          <button
-            type="button"
-            className={styles.aboutButton}
-            aria-haspopup="dialog"
-            aria-expanded={aboutOpen}
-            aria-label="About & credits"
-            onClick={() => setAboutOpen(true)}
-          >
-            <svg className={styles.aboutIcon} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-              <circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-              <circle cx="8" cy="4.9" r="0.85" fill="currentColor" />
-              <path d="M8 7.2v4.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            {/* "About", not "About & credits": the long label wrapped to two lines in the narrow
-                orb column on a phone. The panel it opens is still titled in full, and the
-                accessible name below keeps the credits discoverable by name. */}
-            About
-          </button>
           <div className={styles.orb}>{globe}</div>
-          {/* While expanded, `.expandedGlobeCaption` used to announce the caption (one live
-              region at a time); it no longer carries any text while expanded at all (below), so
-              this is now the *only* live announcer of `globeCaption`, full stop — there is
-              nothing left to be mutually exclusive with. */}
-          <span
-            className={`${styles.label} ${styles.globeLabel}`}
-            aria-live={globeExpanded ? undefined : 'polite'}
-            data-testid="minimised-globe-label"
-          >
-            {globeCaption !== '' ? globeCaption : 'Paleogeography'}
-          </span>
         </div>
 
         <div className={styles.readouts} data-testid="shell-readouts">
@@ -216,37 +156,39 @@ export function ShellLayout({
         </header>
 
         <div className={styles.ancestor}>
-          {sound !== undefined && <div className={styles.ancestorSound}>{sound}</div>}
           <span className={styles.label}>Your ancestor</span>
           {ancestor}
+          {/* Below the portrait, so the globe column opposite starts clean at the orb itself —
+              in-flow rather than fixed-position, so this column simply grows to fit it. */}
+          <button
+            type="button"
+            className={styles.aboutButton}
+            aria-haspopup="dialog"
+            aria-expanded={aboutOpen}
+            aria-label="About & credits"
+            onClick={() => setAboutOpen(true)}
+          >
+            <svg className={styles.aboutIcon} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              <circle cx="8" cy="4.9" r="0.85" fill="currentColor" />
+              <path d="M8 7.2v4.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+            {/* "About", not "About & credits": the long label wrapped to two lines in the narrow
+                ancestor column on a phone. The panel it opens is still titled in full, and the
+                accessible name below keeps the credits discoverable by name. */}
+            About
+          </button>
         </div>
 
         <div className={styles.bottom}>
           <div className={styles.stage}>
             <div className={styles.caption}>{caption}</div>
             <div className={styles.chart}>{chart}</div>
-            {/* User ask, 2026-09-18: "the extra globe labels when fullscreen like 'Geography
-                unknown', 'Snowball Earth · extent contested' etc can be removed" — scoped to
-                *expanded* only (the minimised orb's own label, above, still shows `globeCaption`
-                unchanged). This element itself must stay mounted either way: it is `useChromeGap`'s
-                own `bottomRef` (this component's own doc comment above has the full "why not
-                `.bottom` itself" story), and an empty-but-present element is that reasoning's own
-                already-designed-for case ("nothing, when the globe's own caption is empty, exactly
-                matching the timeline's own top edge") — this change just makes that the permanent
-                state while expanded, rather than only whenever `globeCaption` happened to be `''`.
-                `aria-live` stays wired exactly as before (still `'polite'` only while expanded):
-                with nothing ever written into it now, it never actually announces anything, which
-                is the correct behaviour here — the caption is gone for sighted and screen-reader
-                users alike, not just visually hidden from one of them. */}
-            {/* Always empty now, not just while collapsed — see the comment above this block.
-                `globeCaption` no longer has a reader here at all; the minimised orb's own label
-                (above) is its only remaining consumer. */}
-            <div
-              ref={expandedGlobeCaptionRef}
-              className={styles.expandedGlobeCaption}
-              aria-live={globeExpanded ? 'polite' : undefined}
-              data-testid="expanded-globe-caption"
-            />
+            {/* Deliberately always empty: the globe draws no regime/effect caption in either
+                state. It stays mounted as `useChromeGap`'s `bottomRef` (this component's own doc
+                comment has the "why not `.bottom` itself" story), where an empty element measures
+                exactly the timeline's own top edge — the boundary the expanded sphere must clear. */}
+            <div ref={expandedGlobeCaptionRef} className={styles.expandedGlobeCaption} data-testid="expanded-globe-caption" />
           </div>
           <div className={styles.timeline}>{timeline}</div>
         </div>

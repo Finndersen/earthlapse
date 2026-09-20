@@ -19,8 +19,18 @@
   /* Shared by the speed select's slot and the rate readout, which flank the transport buttons in
      `.core`. One value for both is what centres those buttons: the rate slot is reserved wide
      (it must not reflow the row when playback starts) and the select is narrow, so unequal
-     flanks would push the transport off centre by half the difference. */
-  --transport-flank: 33ch;
+     flanks would push the transport off centre by half the difference.
+
+     Sized to what the rate slot actually holds — the "Time compressed" badge (102px measured) and
+     the widest `formatRate` output (96px) either side of their 8px gap — plus a little slack.
+
+     The flank is paid for twice, and the row must also fit the breadcrumb and the mode/scale
+     cluster, so a flat reserve wide enough to look right at 1440px leaves nothing for the
+     breadcrumb's own column by ~950px. Scaling with the viewport keeps the reserve at its full
+     width where there is room for it and gives it up first — before the breadcrumb, and before
+     anything overlaps — where there is not. The floor still holds the rate readout itself; only
+     the rarely-shown "Time compressed" badge beside it tightens. */
+  --transport-flank: clamp(12ch, 15vw, 24ch);
 
   --edge-button-size: 34px;
   --edge-button-gap: 16px;
@@ -70,7 +80,7 @@
 
 /* Holds the breadcrumb trail alone — the row's one flexible column (`minmax(0, 1fr)` above),
    free to grow or shrink with the trail's own length without disturbing anything else in the row:
-   speed/rate, transport, era shortcuts, mode/scale controls all live in `.core`'s or
+   speed/rate, transport, mode/scale controls all live in `.core`'s or
    `.secondary`'s fixed-width tracks instead, specifically so none of them shifts position as this
    one does. The room this track has traces back to deleting the breadcrumb's own "‹ Up"/"⌂ Earth"
    buttons and moving its "‹"/"›" sibling-step buttons onto the grid itself
@@ -89,48 +99,72 @@
    three read as one group. Every one is fixed-width, so this `auto`-sized column's own width is
    constant regardless of the breadcrumb in `.sections`, which keeps it centred on the track
    (`.timeline`'s own doc comment: `sections`/`core`/`secondary` share the exact same three columns
-   `track` spans one row up). The sound/volume control is not part of this cluster
-   (`ShellLayout.tsx`'s own `sound` slot). */
+   `track` spans one row up). The sound/volume control lives in `.secondary` instead, beside the
+   mode and scale toggles. */
 .core {
   grid-area: core;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(10px, 1.4vw, 18px);
+  /* This sits in the grid's one `auto` track, which floors at its items' own min-content width.
+     Without this the two reserved flanks make that floor wider than the row can grant at a narrow
+     desktop width, and the track overflows into `secondary` beside it instead of the flanks
+     giving up their reserve. Losing a few pixels of centring is the better failure. */
+  min-width: 0;
 }
 
-/* The right-hand cluster: the playback-mode toggle then the scale toggle. Every control here is
-   fixed-width, so this whole cluster's total width is
-   independent of the breadcrumb in `.sections` — the two `minmax(0, 1fr)` tracks (`.timeline`'s
-   own doc comment) already get an equal share of the row regardless of either side's content.
-   `justify-self: end` / `justify-content: flex-end` anchor the cluster to this track's own right
-   edge, mirroring the breadcrumb's own left anchor on the opposite side.
+/* The right-hand cluster: the playback-mode toggle, the scale toggle, then the sound/volume
+   control (`@/audio`'s `<SoundToggle>`, passed through as `sound`). Every control here is
+   fixed-width. `justify-self: end` / `justify-content: flex-end` anchor the cluster to this
+   track's own right edge, mirroring the breadcrumb's own left anchor on the opposite side.
 
-   `flex-wrap: wrap` (with `row-gap` for when it does) is a safety net, not decoration. A grid
-   item's *automatic* minimum width defaults to its content's own min-content size, which for a
-   `nowrap` flex row is the sum of every child's width — if that sum ever exceeds this track's own
-   `1fr` share, that min-content size would override the track's `minmax(0, …)` cap and the item
-   would spill out of its own track (`min-width: 0` below is not, on its own, enough to stop this).
-   `flex-wrap: wrap` lets any overflow that no longer fits on one line drop to a second line,
-   still anchored right and still fully inside the track, rather than spilling into the neighbour.
+   No `min-width: 0` here, deliberately: this item's automatic minimum is exactly what makes
+   `.timeline`'s `minmax(auto, 1fr)` floor this column at its own content, so it never shrinks
+   into `.core` beside it — see the historical "mute/volume button overlaps the next/fast-forward
+   button" bug this guards against (`scripts/qa/shots.mjs`'s `secondary-core-no-self-overlap-*`
+   family). Now that a third control (sound) sits here too, that content floor at three-across
+   would be wider than `.core`'s track can grant at some required widths (844x390 is the tightest
+   real one) — `flex-wrap: wrap`, not `nowrap`, is what keeps the floor to a *single* control's
+   width instead of the sum of all three: a flex container's own automatic minimum is its widest
+   child once wrapping is allowed to catch the rest, never the full row. The genuinely narrow
+   cases (844x390; a long breadcrumb at 1440x900) resolve by this row growing to two lines instead
+   of shrinking below any one control — `secondaryHeightPx`'s own generous ceiling
+   (`scripts/qa/shots.mjs`) already anticipated exactly this. This is the "let `.controlsSecondary`
+   give way" fix, not a `--transport-flank` cut or a `min-width: 0` here.
    `align-items: flex-end` bottom-aligns every control's own interactive row (each carries a label
-   above its buttons except the era shortcuts and the rate readout, which have none). */
+   above its buttons except the rate readout and the sound toggle, neither of which has one) —
+   applies per wrapped line, so a second line still bottom-aligns its own contents. */
 .secondary {
   grid-area: secondary;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   justify-self: end;
-  flex-wrap: nowrap;
-  gap: clamp(8px, 1vw, 14px);
+  flex-wrap: wrap;
+  gap: clamp(6px, 0.7vw, 10px);
   row-gap: 8px;
-  min-width: 0;
 }
 
-/* Holds `TimeCompressedBadge` (ADR-029, shown rarely) beside `RateReadout` (a fixed-width slot,
-   always reserved) inside `.core`. Flex at every width — the badge's own occasional
-   appearance already shifts nothing at rest, so there is no "reserve its width always"
-   requirement the way `RateReadout`'s own doc comment describes for itself. */
+/* The sound toggle's own slot: no label of its own, so it needs no `flex-direction: column`
+   wrapper the way `.modeGroup`/`.scaleGroup` do — just enough to sit in this cluster's flex row
+   like any other item. */
+.soundSlot {
+  display: flex;
+  align-items: center;
+}
+
+/* Holds `RateReadout` (a fixed-width slot, always reserved) and, outboard of it,
+   `TimeCompressedBadge` (ADR-029, shown rarely) inside `.core`. Flex at every width — the badge's
+   own occasional appearance already shifts nothing at rest, so there is no "reserve its width
+   always" requirement the way `RateReadout`'s own doc comment describes for itself.
+
+   `justify-content: flex-start` packs the row toward the transport buttons, mirroring
+   `.speedSlot`'s own `flex-end` on the other side, so the rate sits directly beside the buttons
+   whose result it reports — the select sets the rate on one side, the readout shows it on the
+   other. The badge takes the outboard end for the same reason: it is the occasional annotation,
+   not the number, so it is also what gives way first when the flank tightens on a narrow
+   viewport. */
 .rateReadoutRow {
   display: flex;
   align-items: center;

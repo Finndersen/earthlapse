@@ -127,7 +127,7 @@
 }
 
 /* A wide, faint scatter beyond the shader's own atmosphere. With `inset: -12%` the planet's
-   silhouette (≈76% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈62%
+   silhouette (≈86% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈69%
    of this gradient's radius. `visibility: visible` overrides the hidden `.orbFitFrameSphere`
    ancestor it's nested inside while expanded (that class's own doc comment) — the minimised
    `.orb` never hides it in the first place, so this is a no-op there.
@@ -176,7 +176,7 @@
 
 /* Static placeholder shown instead of the `<Canvas>` when WebGL is unavailable
    (`supportsWebGL()`, `@/lib/webgl`) — no raster data, rotation or effects, just a plausible
-   orb silhouette that fills the same box the sphere would, sized against the same ≈76%
+   orb silhouette that fills the same box the sphere would, sized against the same ≈86%
    figure CAMERA_DISTANCE produces (see Globe.tsx), so the surrounding halo/expand/close
    buttons and backdrop never have to be laid out any differently. Expanded, it's nested inside
    `.orbFitFrameSphere` rather than the (now full-bleed) `.orbExpanded` — the static fallback has
@@ -185,7 +185,7 @@
    hidden state the same way `.halo`'s does, immediately above. */
 .staticOrb {
   position: absolute;
-  inset: 12%;
+  inset: 7%;
   visibility: visible;
   border-radius: 50%;
   /* Opaque throughout — translucent stops let the dimmed scene show through the expanded orb,
@@ -211,7 +211,7 @@
    `pointer-events: none` means it is never the hit target a cursor could be shown for. */
 .expandButton {
   position: absolute;
-  inset: 11%;
+  inset: 7%;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -237,9 +237,10 @@
 
 /* The persistent expand affordance: a small "fullscreen" corner-bracket glyph, always visible
    at low contrast (never hover-only — see its doc comment in Globe.tsx) so a viewer who never
-   hovers still sees the orb is interactive. Sits in the ~12% margin between the box edge and the
-   sphere's own silhouette (`.halo`'s doc comment above has the measurement), so it never draws
-   over the globe itself regardless of viewport. Decorative (`aria-hidden`) and
+   hovers still sees the orb is interactive. Sits in the ~7% margin between the box edge and the
+   sphere's own silhouette (`.halo`'s doc comment above has the measurement) — cornered, where that
+   margin is widest along the diagonal, so it never draws over the globe itself regardless of
+   viewport. Decorative (`aria-hidden`) and
    `pointer-events: none`, same as `.halo`/`.expandButton`: it never becomes a second hit target
    or a second accessible name, only a visual echo of the one `.expandButton` already provides.
    The double `drop-shadow` mirrors `--hud-shadow` (`ShellLayout.module.css`) so the glyph stays
@@ -285,11 +286,12 @@
    oversized hidden sibling swallowing its clicks.
 
    Anchored from the *bottom* of the fixed, full-viewport backdrop (`bottom`, not `top` + height,
-   since the pill's own height isn't hardcoded here) at `--chrome-gap-bottom-raw` — precisely
-   where `ShellLayout`'s `.bottom` (the scene/globe caption, then the timeline) begins. `100vh`
-   converts that top-anchored value into a bottom-anchored offset since `.backdrop` is
-   `position: fixed; inset: 0`; `+ 8px` is real clearance above that boundary, not just
-   non-intersection. This guarantees no overlap with the caption/timeline by construction, at
+   since the pill's own height isn't hardcoded here) at `--chrome-gap-bottom-inset` — the same
+   boundary where `ShellLayout`'s `.bottom` (the scene/globe caption, then the timeline) begins,
+   measured up from the viewport's bottom edge by `useChromeGap` rather than reconstructed here
+   from `100vh`, which on a mobile browser is not the height this backdrop actually has (that
+   hook's own doc comment has the full story). `+ 8px` is real clearance above that boundary, not
+   just non-intersection. This guarantees no overlap with the caption/timeline by construction, at
    every viewport `useChromeGap` measures.
 
    No visible label above the toggle: `bottom`-anchored positioning grows/shrinks a box from its
@@ -301,7 +303,7 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
+  bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -692,8 +694,23 @@
   .zoomGroup {
     top: auto;
     transform: none;
-    bottom: calc(100vh - var(--chrome-gap-bottom-raw, 680px) + 8px);
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
     flex-direction: row;
+  }
+}
+
+/* Above the phone breakpoint the toggle steps off the band's centre line to just right of it,
+   with the era shortcuts the same distance to its left (`--expanded-band-gap`, declared on the
+   shell by `ShellLayout.module.css` so both read one number). Centred, it sat directly under the sphere's widest point, which is the part of the
+   silhouette that reaches lowest; anchored to the corner it no longer constrains how close the
+   band can sit. The phone keeps its own top-left placement (below), where the title band has the
+   only free corner. */
+@media (min-width: 761px) {
+  .viewModeGroup {
+    left: calc(50% + var(--expanded-band-gap, 300px));
+    right: auto;
+    transform: none;
+    align-items: flex-start;
   }
 }
 

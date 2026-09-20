@@ -8,6 +8,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { setOnboardingTourOpen } from '@/onboarding'
 import { resolveAssetUrl } from '@/scene'
 import { useTimeStore } from '@/store/time'
 
@@ -35,6 +36,9 @@ const FETCH_RESPONSES: Record<string, unknown> = {
 
 beforeEach(() => {
   useTimeStore.setState(initialStoreState, true)
+  // A returning viewer, so the first-visit tour is not on screen over these assertions. The one
+  // test below that covers it clears the flag itself.
+  window.localStorage.setItem('earthtime.onboarding.seen', 'true')
 
   vi.stubGlobal(
     'fetch',
@@ -59,6 +63,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  setOnboardingTourOpen(false)
+  window.localStorage.clear()
   vi.unstubAllGlobals()
 })
 
@@ -74,6 +80,19 @@ async function renderSettled() {
 }
 
 describe('Experience (W12a integration)', () => {
+  it('mounts the first-visit tour above the shell, leaving playback paused', async () => {
+    window.localStorage.removeItem('earthtime.onboarding.seen')
+    await renderSettled()
+    expect(screen.getByTestId('onboarding-card')).toBeTruthy()
+    expect(useTimeStore.getState().playback.playing).toBe(false)
+    expect(useTimeStore.getState().globeExpanded).toBe(false)
+  })
+
+  it('shows no tour to a viewer who has already dismissed it', async () => {
+    await renderSettled()
+    expect(screen.queryByTestId('onboarding-card')).toBeNull()
+  })
+
   it(
     'renders a scene image once the stub manifest and layer data have loaded',
     async () => {
