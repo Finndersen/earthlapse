@@ -6381,3 +6381,44 @@ ago — since the symlog axis is nearly linear below its ~10 kyr knee.
 deleted, and the feed is `minmax(0, 1fr)`-independent: caption length can no longer affect it.
 `.caption`'s own `max-height` in `ShellLayout.module.css` therefore stops being a correctness
 constraint and remains only as a guard against a caption squeezing the feed's track.
+
+## ADR-039 — Event feed retention: rank, not age
+
+**Status:** accepted — human-directed 2026-09-20. Supersedes the "only the age ratio remains"
+half of the ADR-024 amendment above; that amendment's removal of the pixel lookback stands.
+
+**Context.** After the pixel gate went, `DEFAULT_MAX_AGE_RATIO = 2` was the sole eviction rule: a
+card showed only while the event was at most twice as old as the playhead (plus a 25-year floor).
+That is an age test, not a capacity test, so it emptied a feed that had room to spare. Measured on
+the published event set (161 events, log-sampling 201 values of `t` across the domain), **22% of
+positions had an under-full feed and 5 had none at all**. The worst real stretch runs 315 ka to
+74 ka, where the feed showed one card of three for the whole span while `homo-sapiens-origin` and
+`control-of-fire` sat just outside the window — a viewer watching the origin of their own species
+saw the feed go quiet.
+
+**Decision.** Eviction is by rank: order the candidates behind the playhead freshest-first and
+show the most recent `DEFAULT_MAX_VISIBLE`. A card leaves when a newer event takes its slot, and
+otherwise stays. The age ratio survives only as a far outer bound, widened to
+`DEFAULT_LOOKBACK_AGE_RATIO = 10`, so that a playhead in the last few centuries still cannot
+reach back into the Neolithic across an empty gap. On the published set it almost never binds:
+under-full positions fall 22% → 1%, empty 5 → 1, and the one remaining empty case is `t` older
+than `earth-formation`.
+
+**The constant was load-bearing twice, so it is now two constants.** `FRESH_AGE_RATIO = 2` keeps
+the old value as the reference scale for `FeedEntry.distanceFraction`, which drives card opacity,
+resting offset and the "just reached" emphasis band; `DEFAULT_LOOKBACK_AGE_RATIO` bounds
+selection. Left merged, widening the bound to 10 would have stretched `FRESH_EMPHASIS_BAND` from
+1.27× the playhead's age to 2.24× and left the arrival highlight on far too long.
+`feedCardOpacity` gains `MIN_CARD_OPACITY = 0.6` as a floor for the same reason: a retained card
+can now legitimately sit well past `distanceFraction` 1, and a card faded to zero is the same
+defect as an evicted one.
+
+**Known limitation, not addressed here.** In *dense* stretches the binding constraint was already
+rank rather than the window, so this changes nothing about fast playback: at 1× on the
+full-domain symlog the median card survives ~0.3 s, and 157 of 158 evictions happen inside one
+second at 8×. Fixing that means decimating events in `t`-space — requiring a minimum separation
+and keeping the highest-`importance` event per cluster — which is pure in `t` and scrub-symmetric,
+but would mean **some events never surface as a feed card at all**. That contradicts "every event
+behind the playhead always shows, full stop" (DESIGN § Event feed, ADR-022) and is a product
+decision, so it wants its own ADR. Scaling retention by playback velocity was rejected outright:
+velocity is `dt/dwall`, so it is not pure in `t` and breaks scrub symmetry.

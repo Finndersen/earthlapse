@@ -8,16 +8,19 @@
  * (reduced motion, a narrow-viewport compact mode, a throttled aria-live announcement) the
  * same way `SceneView` and `AncestorPortrait` do.
  *
- * - `selectFeedEvents(events, t, options?)` — which events are "behind" `t` (already reached,
- *   chronologically, regardless of scrub direction) and no more than `options.maxAgeRatio`
- *   times older than `t` itself. Freshest first, capped at `options.maxVisible`. An event the
+ * - `selectFeedEvents(events, t, options?)` — the `options.maxVisible` most recent events
+ *   "behind" `t` (already reached, chronologically, regardless of scrub direction), freshest
+ *   first, reaching back at most `options.lookbackAgeRatio` times the playhead's own age. A card
+ *   leaves because a newer event pushed it off the end, so a half-full feed holds what it has
+ *   rather than emptying as `t` moves on; the lookback is an outer sanity limit. An event the
  *   currently-captioned scene's own caption already names (`Scene.events`, ADR-022) is **not**
  *   excluded: `kpg-arrival` and `kpg-darkness` both link `k-pg-impact`, so excluding it would
  *   hide the event from the feed for the whole span either scene is on screen, well past when
  *   the impact itself should have surfaced. Every event reached by the playhead always shows.
  * - `feedCardEmphases(visible)` / `feedCardOpacity` (`presentation.ts`) — pure presentation: the
- *   freshest card's "just reached" emphasis easing away across a band of its age window, and
- *   each card's fade as it recedes.
+ *   freshest card's "just reached" emphasis easing away across a band of the freshness scale,
+ *   and each card's dimming as it recedes, floored at `MIN_CARD_OPACITY` so a long-retained card
+ *   stays readable.
  * - `placementT(event)` / `formatEventDate(event)` — the frontend twin of ADR-022's
  *   `Event.placement_t`, and the date line a card prints from it (`formatGeoTime` for a
  *   `'moment'`, `formatTimeRange` for a `'period'`).
@@ -53,13 +56,15 @@ export {
   FEED_CARD_HEIGHT_PX,
   FRESH_EMPHASIS_BAND,
   MAX_FRESH_INSET_PX,
+  MIN_CARD_OPACITY,
   feedCardEmphases,
   feedCardInsetPx,
   feedCardOpacity,
 } from './presentation'
 export {
-  DEFAULT_MAX_AGE_RATIO,
+  DEFAULT_LOOKBACK_AGE_RATIO,
   DEFAULT_MAX_VISIBLE,
+  FRESH_AGE_RATIO,
   RECENCY_FLOOR_YEARS,
   selectFeedEvents,
   type FeedEntry,

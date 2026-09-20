@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HUD_READOUT_THROTTLE_MS } from '@/lib/useThrottledValue'
 import type { TimelineEvent } from '@/types/layer'
 
+import { MIN_CARD_OPACITY } from '../presentation'
 import { DEFAULT_MAX_VISIBLE } from '../select'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
 import { EventFeed } from './EventFeed'
@@ -109,6 +110,19 @@ describe('<EventFeed>', () => {
     expect(onEventActivate).toHaveBeenCalledWith(a)
     expect(button.textContent).not.toContain('a citation')
     expect(button.hasAttribute('aria-expanded')).toBe(false)
+  })
+
+  it('keeps a card on screen, and readable, as t moves on with no newer event to replace it', () => {
+    withThrottledT((flush) => {
+      const a = event('a', { tMin: 315_000, tMax: 315_000 })
+      const { getByTestId, rerender } = render(<EventFeed t={300_000} events={[a]} onEventActivate={vi.fn()} />)
+      expect(getByTestId('event-feed-card-a')).toBeTruthy()
+
+      rerender(<EventFeed t={130_000} events={[a]} onEventActivate={vi.fn()} />)
+      flush()
+      expect(getByTestId('event-feed-card-a')).toBeTruthy()
+      expect(Number(getByTestId('event-feed-item-a').style.opacity)).toBeGreaterThanOrEqual(MIN_CARD_OPACITY)
+    })
   })
 
   it('caps visible cards at a fixed DEFAULT_MAX_VISIBLE (3) for a dense stretch', () => {

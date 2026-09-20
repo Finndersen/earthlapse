@@ -3,23 +3,35 @@
  * (approved-roadmap-2026-09) and "event card (description + citation)", surfacing events as
  * the playhead reaches them instead of requiring a hover over the timeline.
  *
+ * The rule is "the most recent `maxVisible` events at or before `t`": a card leaves because a
+ * newer event pushed it off the end, not because the playhead drifted on. `lookbackAgeRatio` is
+ * an outer sanity limit an order of magnitude beyond the freshness scale, not the thing that
+ * evicts cards — a half-full feed keeps what it has until there is something newer to replace
+ * it with.
+ *
  * Pure in `t` alone — no timers, no stored history, no scrub-direction bookkeeping. "Behind the
  * playhead" is defined chronologically, not by which way the caller is scrubbing: an event is a
  * candidate once its placement has been reached on the forward march from deep time toward the
- * present (`placementT(event) >= t`) and sits within `maxAgeRatio` times as old as `t` itself.
- * Because the test is `placementT(event) >= t` and a relative-age bound, revisiting the exact
- * same `t` from either scrub direction, or landing on it via a jump, reproduces the exact same
- * feed.
+ * present (`placementT(event) >= t`). So revisiting the exact same `t` from either scrub
+ * direction, or landing on it via a jump, reproduces the exact same feed.
  */
 
 import type { GeoTime, TimelineEvent } from '@/types/layer'
 
 import { placementT } from './placement'
 
-/** An event drops out once it is more than this many times older than the playhead (with
- *  `RECENCY_FLOOR_YEARS` added to both, so the present itself has a small window): standing 200
- *  years ago the feed reaches back to ~425 years ago, not to the Neolithic. */
-export const DEFAULT_MAX_AGE_RATIO = 2
+/** How far behind the playhead the feed will reach for a card, as a multiple of the playhead's
+ *  own age (with `RECENCY_FLOOR_YEARS` added to both, so the present itself has a window): an
+ *  event an order of magnitude older than `t` is no longer "what just happened" at any event
+ *  density, so standing 200 years ago the feed will not reach back to the Neolithic even if the
+ *  intervening centuries were empty. `maxVisible` is what ordinarily ends a card's time on
+ *  screen; this only stops the feed scraping the bottom of a sparse era. */
+export const DEFAULT_LOOKBACK_AGE_RATIO = 10
+
+/** The reference scale for `FeedEntry.distanceFraction`: an event sits at 1 once it is twice as
+ *  old as the playhead. Presentation only — it sets how quickly a card's arrival emphasis and
+ *  opacity settle, and has no say in whether the card is shown. */
+export const FRESH_AGE_RATIO = 2
 
 export const RECENCY_FLOOR_YEARS = 25
 
@@ -30,7 +42,9 @@ export const DEFAULT_MAX_VISIBLE = 3
 
 export interface FeedEntry {
   event: TimelineEvent
-  /** 0 = just reached (freshest), 1 = at the edge of the age window, about to drop out. */
+  /** Relative age behind the playhead on the `FRESH_AGE_RATIO` scale: 0 = just reached
+   *  (freshest), 1 = twice as old as the playhead. Unbounded above — a card is free to recede
+   *  well past 1 while it remains among the most recent events. */
   distanceFraction: number
 }
 
@@ -43,31 +57,32 @@ export interface FeedSelection {
 const EMPTY_SELECTION: FeedSelection = { visible: [] }
 
 export interface SelectFeedEventsOptions {
-  maxAgeRatio?: number
+  lookbackAgeRatio?: number
   maxVisible?: number
 }
 
 /**
- * Every event behind `t` within `maxAgeRatio`, freshest first, capped at `maxVisible`.
- * `maxAgeRatio <= 1` returns nothing rather than dividing by zero.
+ * The `maxVisible` most recent events at or before `t`, freshest first, reaching back at most
+ * `lookbackAgeRatio` times the playhead's own age. `lookbackAgeRatio <= 1` returns nothing
+ * rather than admitting only events exactly at `t`.
  */
 export function selectFeedEvents(
   events: readonly TimelineEvent[],
   t: GeoTime,
   options: SelectFeedEventsOptions = {},
 ): FeedSelection {
-  const { maxAgeRatio = DEFAULT_MAX_AGE_RATIO, maxVisible = DEFAULT_MAX_VISIBLE } = options
-  if (maxAgeRatio <= 1) return EMPTY_SELECTION
+  const { lookbackAgeRatio = DEFAULT_LOOKBACK_AGE_RATIO, maxVisible = DEFAULT_MAX_VISIBLE } = options
+  if (lookbackAgeRatio <= 1 || maxVisible <= 0) return EMPTY_SELECTION
 
-  const logMaxAgeRatio = Math.log(maxAgeRatio)
+  const logFreshAgeRatio = Math.log(FRESH_AGE_RATIO)
 
   const candidates: FeedEntry[] = []
   for (const event of events) {
     const eventT = placementT(event)
     if (eventT < t) continue // ahead of t: hasn't happened yet from this vantage
-    const distanceFraction = Math.log((eventT + RECENCY_FLOOR_YEARS) / (t + RECENCY_FLOOR_YEARS)) / logMaxAgeRatio
-    if (distanceFraction > 1) continue
-    candidates.push({ event, distanceFraction })
+    const ageRatio = (eventT + RECENCY_FLOOR_YEARS) / (t + RECENCY_FLOOR_YEARS)
+    if (ageRatio > lookbackAgeRatio) continue
+    candidates.push({ event, distanceFraction: Math.log(ageRatio) / logFreshAgeRatio })
   }
 
   candidates.sort((a, b) => {
@@ -76,6 +91,5 @@ export function selectFeedEvents(
     return a.event.id < b.event.id ? -1 : a.event.id > b.event.id ? 1 : 0
   })
 
-  if (maxVisible <= 0) return { visible: [] }
   return { visible: candidates.slice(0, maxVisible) }
 }

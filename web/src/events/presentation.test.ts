@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest'
 
 import type { TimelineEvent } from '@/types/layer'
 
-import { FRESH_EMPHASIS_BAND, MAX_FRESH_INSET_PX, feedCardEmphases, feedCardInsetPx, feedCardOpacity } from './presentation'
+import {
+  FRESH_EMPHASIS_BAND,
+  MAX_FRESH_INSET_PX,
+  MIN_CARD_OPACITY,
+  feedCardEmphases,
+  feedCardInsetPx,
+  feedCardOpacity,
+} from './presentation'
 import type { FeedEntry } from './select'
 
 function entry(id: string, distanceFraction: number): FeedEntry {
@@ -11,18 +18,25 @@ function entry(id: string, distanceFraction: number): FeedEntry {
 }
 
 describe('feedCardOpacity', () => {
-  it('is fully opaque at distanceFraction 0 and fully transparent at 1', () => {
+  it('is fully opaque at distanceFraction 0 and settled at MIN_CARD_OPACITY by 1', () => {
     expect(feedCardOpacity(0)).toBe(1)
-    expect(feedCardOpacity(1)).toBe(0)
+    expect(feedCardOpacity(1)).toBeCloseTo(MIN_CARD_OPACITY)
   })
 
-  it('clamps outside [0, 1]', () => {
+  it('keeps a long-retained card readable, never dimming past MIN_CARD_OPACITY', () => {
+    expect(feedCardOpacity(2)).toBeCloseTo(MIN_CARD_OPACITY)
+    expect(feedCardOpacity(100)).toBeCloseTo(MIN_CARD_OPACITY)
+    expect(MIN_CARD_OPACITY).toBeGreaterThan(0.5)
+  })
+
+  it('clamps below 0', () => {
     expect(feedCardOpacity(-1)).toBe(1)
-    expect(feedCardOpacity(2)).toBe(0)
   })
 
   it('eases out rather than fading linearly', () => {
-    expect(feedCardOpacity(0.5)).toBeCloseTo(0.75)
+    const linear = 1 - (1 - MIN_CARD_OPACITY) * 0.5
+    expect(feedCardOpacity(0.5)).toBeGreaterThan(linear)
+    expect(feedCardOpacity(0.5)).toBeCloseTo(0.9)
   })
 })
 

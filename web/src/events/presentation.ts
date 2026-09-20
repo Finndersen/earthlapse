@@ -6,6 +6,9 @@
  * selection, never of wall-clock time. So scrubbing back to a `t` reproduces the same emphasis
  * as well as the same cards, and fast playback can't leave a highlight "stuck on" or flash it
  * off early — CSS transitions only animate *between* the states these functions describe.
+ *
+ * `distanceFraction` is a freshness measure, not a countdown to eviction (`select.ts` evicts by
+ * rank), so nothing here may drive a card to the point of being unreadable.
  */
 
 import type { FeedEntry } from './select'
@@ -25,15 +28,22 @@ export const FEED_CARD_GAP_PX = 6
  *  (`EventFeed.module.css`'s compact block draws it at exactly this height). */
 export const FEED_STRIP_HEIGHT_PX = 33
 
-/** A card's opacity at `distanceFraction` (0 fresh -> 1 about to fall out of range): eased
- *  rather than linear, so a card reads clearly for most of its time in the window and only
- *  dims sharply right at the edge, instead of visibly fading from the moment it appears. */
+/** The dimmest a card ever gets. A card leaves the feed when a newer event pushes it off the
+ *  end, not by ageing out, so opacity cannot run to zero: the oldest card on screen may still
+ *  be the most recent thing that has happened, and has to stay readable over the scene behind
+ *  it. */
+export const MIN_CARD_OPACITY = 0.6
+
+/** A card's opacity at `distanceFraction` (0 fresh -> 1 twice as old as the playhead): eased
+ *  rather than linear, so a card reads at full strength for most of the freshness scale and
+ *  settles to `MIN_CARD_OPACITY` beyond it, instead of visibly fading from the moment it
+ *  appears. */
 export function feedCardOpacity(distanceFraction: number): number {
   const clamped = clampUnit(distanceFraction)
-  return 1 - clamped * clamped
+  return 1 - (1 - MIN_CARD_OPACITY) * clamped * clamped
 }
 
-/** The share of the age window over which a just-reached card's emphasis eases away. A
+/** The share of the freshness scale over which a just-reached card's emphasis eases away. A
  *  band, not a threshold, so the highlight settles as the card recedes instead of switching
  *  off at some instant. */
 export const FRESH_EMPHASIS_BAND = 0.35

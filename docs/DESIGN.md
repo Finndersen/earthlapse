@@ -521,29 +521,32 @@ one stretch of the periphery that is never the globe orb, the ancestor panel or 
 caption, at every breakpoint (a compact single-card strip directly above the timeline on a
 phone).
 
-Selection is a pure function of `t`, the full-domain symlog `TimeScale` and the feed's own
-measured pixel width — no timer decides what shows. An event is a candidate once it is "behind" the
-playhead: its placement (`Event.placement_t`, ADR-022) has been reached on the forward march
-from deep time toward the present, and its distance behind `t` — measured in pixels on the
-full-domain warped scale, not raw years — is within a lookback constant, and the event is at
-most twice as old as the playhead (plus a 25-year floor). The lookback deliberately ignores the
-selected era section (ADR-024): measured on a zoomed-in section it would shrink with the window
-(a few decades inside the Industrial age) and leave the feed empty exactly where the viewer
-zoomed in to read history. The pixel lookback on its own fails near the
-present: the symlog axis is nearly linear below ~10 kyr, so at full-domain view all of human
-history fits in a few dozen pixels. The age ratio keeps "200 years ago" to the last few
-centuries while leaving deep time untouched. Cards are freshest-first, capped at four or at
-however many collapsed cards the slot's measured height fits (a "+k more" line covers the rest
-of a dense cluster), each one's opacity and a small resting offset a function of how close it
-sits to falling out of the window. The freshest card alone carries a "just reached" emphasis —
+Selection is a pure function of `t` alone — no timer decides what shows, and nothing is measured
+off the rendered layout. An event is a candidate once it is "behind" the playhead: its placement
+(`Event.placement_t`, ADR-022) has been reached on the forward march from deep time toward the
+present. Candidates are ordered freshest-first and the most recent `DEFAULT_MAX_VISIBLE` of them
+show (one on a phone). **A card therefore leaves only when a newer event arrives to take its
+slot** (ADR-039), never because it aged out while the feed had room — an under-full feed evicts
+nothing.
+`DEFAULT_LOOKBACK_AGE_RATIO` (10, plus a 25-year floor) is a far outer bound, not the working
+rule: it stops "200 years ago" reaching back into the Neolithic if the intervening centuries
+happen to be empty, and on the published event set it almost never binds. The bound deliberately
+ignores the selected era section (ADR-024) — scaled to a zoomed-in window it would shrink to a
+few decades inside the Industrial age and empty the feed exactly where the viewer zoomed in to
+read history.
+
+Presentation is scaled separately from selection, by `FRESH_AGE_RATIO` (2): a card's opacity and
+small resting offset follow how far behind the playhead it sits, relative to that reference
+rather than to the lookback bound. Opacity floors at `MIN_CARD_OPACITY` instead of reaching zero,
+since a retained card can legitimately sit far past the reference age and an invisible card is
+the same defect as an evicted one. The freshest card alone carries a "just reached" emphasis —
 an accent bar, wash and title glow in its primary tag's colour — that eases away across the
 first third of its window, derived from the same distance, so it too reproduces on a scrub back;
 fast playback through a dense stretch hands the one highlight to each newly reached event
 rather than strobing several. Under reduced motion the highlight stays, static, and the arrival
 slide-in and drift are dropped. Revisiting a given `t` reproduces the exact same feed regardless
 of which direction it was reached from, and a paused/hovering viewer sees the same nearest-behind
-cards a playing one would — selection reads only `t`, the scale and the track width, nothing
-else. **No event is excluded because the current scene's caption already names it.** An earlier
+cards a playing one would — selection reads only `t`, nothing else. **No event is excluded because the current scene's caption already names it.** An earlier
 pass tried that (`Scene.events`, ADR-022) and it back-fired (W-followup item 4): `kpg-arrival`
 and `kpg-darkness` both link `k-pg-impact`, so the event stayed hidden from the feed for the
 entire span either scene was on screen — including well past the moment the impact itself was

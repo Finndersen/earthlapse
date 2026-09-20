@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TimelineEvent } from '@/types/layer'
 
-import { DEFAULT_MAX_VISIBLE, selectFeedEvents } from './select'
+import { DEFAULT_LOOKBACK_AGE_RATIO, DEFAULT_MAX_VISIBLE, RECENCY_FLOOR_YEARS, selectFeedEvents } from './select'
 
 function event(id: string, overrides: Partial<TimelineEvent> = {}): TimelineEvent {
   return { id, label: id, tMin: 0, tMax: 0, importance: 0.5, description: '', citation: '', ...overrides }
@@ -34,7 +34,7 @@ describe('selectFeedEvents', () => {
     expect(second).toEqual(first)
   })
 
-  it("bounds relative age evenly across eras: the same maxAgeRatio spans far fewer years near the present than in deep time", () => {
+  it('bounds the lookback evenly across eras: the same ratio spans far fewer years near the present than in deep time', () => {
     // A fixed age ratio, not a fixed year count, is what keeps a near-present playhead from
     // reaching back tens of thousands of years while a deep-time one reaches back eons: the
     // *ratio* of (event age + floor) to (playhead age + floor) is what is bounded, not a raw
@@ -47,18 +47,54 @@ describe('selectFeedEvents', () => {
     expect(deepTime.visible).toHaveLength(1) // the identical 500,000-year gap is imperceptible in deep time
   })
 
-  it("bounds the near-present's own dense stretch by relative age, so 200 years ago doesn't sweep in all of human history", () => {
+  it("refuses to fill an empty slot from beyond the lookback: 200 years ago does not reach the Neolithic", () => {
     const newcomen = event('newcomen', { tMin: 313, tMax: 313 })
     const neolithic = event('neolithic', { tMin: 9000, tMax: 9000 })
     const { visible } = selectFeedEvents([newcomen, neolithic], 200)
     expect(ids(visible)).toEqual(['newcomen'])
   })
 
-  it('reports distanceFraction as the relative-age fraction, 1 exactly at maxAgeRatio', () => {
+  it('reports distanceFraction as the relative-age fraction, 1 exactly at FRESH_AGE_RATIO', () => {
     // 75 -> 175 years ago is (175 + 25) / (75 + 25) = the full 2x default age ratio.
     const e = event('e', { tMin: 175, tMax: 175 })
     const { visible } = selectFeedEvents([e], 75)
     expect(visible).toEqual([{ event: e, distanceFraction: 1 }])
+  })
+
+  it('keeps a lone card the feed still has room for, long after it has aged past the freshness scale', () => {
+    // 315,000 years ago seen from 130,000 years ago is 2.4x the playhead's own age — well past
+    // FRESH_AGE_RATIO, but nothing newer is waiting for the slot.
+    const lone = event('lone', { tMin: 315_000, tMax: 315_000 })
+    const { visible } = selectFeedEvents([lone], 130_000)
+    expect(ids(visible)).toEqual(['lone'])
+    expect(visible[0]!.distanceFraction).toBeGreaterThan(1)
+  })
+
+  it('holds the same cards as t advances while no newer event arrives to replace them', () => {
+    const events = [
+      event('a', { tMin: 510, tMax: 510 }),
+      event('b', { tMin: 520, tMax: 520 }),
+      event('c', { tMin: 530, tMax: 530 }),
+    ]
+    expect(ids(selectFeedEvents(events, 500).visible)).toEqual(['a', 'b', 'c'])
+    expect(ids(selectFeedEvents(events, 200).visible)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('drops the oldest card only once a newer event arrives to take the slot', () => {
+    const standing = [
+      event('a', { tMin: 510, tMax: 510 }),
+      event('b', { tMin: 520, tMax: 520 }),
+      event('c', { tMin: 530, tMax: 530 }),
+    ]
+    const arrival = event('d', { tMin: 210, tMax: 210 })
+    expect(ids(selectFeedEvents([...standing, arrival], 200).visible)).toEqual(['d', 'a', 'b'])
+  })
+
+  it('stops reaching back at lookbackAgeRatio even with slots to spare', () => {
+    const e = event('e', { tMin: 510, tMax: 510 })
+    const edgeT = (510 + RECENCY_FLOOR_YEARS) / DEFAULT_LOOKBACK_AGE_RATIO - RECENCY_FLOOR_YEARS
+    expect(ids(selectFeedEvents([e], edgeT + 1).visible)).toEqual(['e'])
+    expect(selectFeedEvents([e], edgeT - 1).visible).toEqual([])
   })
 
   it('caps visible cards at maxVisible, freshest first', () => {
@@ -100,10 +136,10 @@ describe('selectFeedEvents', () => {
     expect(ids(visible)).toEqual(['captioned', 'other'])
   })
 
-  it('returns nothing when maxAgeRatio is 1 or below', () => {
+  it('returns nothing when lookbackAgeRatio is 1 or below', () => {
     const a = event('a', { tMin: 500, tMax: 500 })
-    expect(selectFeedEvents([a], 500, { maxAgeRatio: 1 })).toEqual({ visible: [] })
-    expect(selectFeedEvents([a], 500, { maxAgeRatio: 0.5 })).toEqual({ visible: [] })
+    expect(selectFeedEvents([a], 500, { lookbackAgeRatio: 1 })).toEqual({ visible: [] })
+    expect(selectFeedEvents([a], 500, { lookbackAgeRatio: 0.5 })).toEqual({ visible: [] })
   })
 
   it('returns nothing when maxVisible is 0', () => {
