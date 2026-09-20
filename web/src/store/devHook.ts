@@ -19,6 +19,9 @@
  *   real buttons. That couples these functions to `Globe.tsx`'s/`Legend.tsx`'s copy and ARIA
  *   structure: a label change breaks them loudly (they throw) rather than silently no-op.
  *
+ * `setTourOpen` is neither: it calls `@/onboarding`'s own session-scoped visibility store, the
+ * one path the tour's Skip button also takes.
+ *
  * The sphere<->map unfold tween's own progress (`Globe.tsx`'s `unfold`, 0..1) is deliberately not
  * exposed: it is local animation state with no DOM reflection, and the panel's own CSS resize is
  * a separate, independently-timed transition (see `GlobeCameraControls`'s doc comment on the two
@@ -26,8 +29,10 @@
  * sample after a calibrated wait instead.
  */
 
-import { useTimeStore } from './time'
+import { setOnboardingTourOpen } from '@/onboarding'
 import type { PlaybackMode } from '@/types/layer'
+
+import { useTimeStore } from './time'
 
 /** Present only once the app shell has actually mounted real content: `Experience.tsx` renders
  *  nothing but a "Loading manifest…" string until the manifest has loaded and the initial `t`
@@ -35,11 +40,12 @@ import type { PlaybackMode } from '@/types/layer'
 const APP_READY_SELECTOR = '[data-testid="time-title"]'
 
 /** Stable keys a harness can pass to `setLayerToggle`, mapped to the legend row's own visible
- *  label (`Legend.tsx`'s `LegendRow.label`) — the only thing that actually identifies a row in
- *  the DOM, since toggle state itself is local to `Globe.tsx`. Extend this alongside any new
- *  legend row. */
-const LAYER_TOGGLE_LABELS: Record<string, string> = {
-  'human-civilisation': 'Human civilisation',
+ *  labels (`Legend.tsx`'s `LegendRow.label` and `compactLabel`) — the only thing that actually
+ *  identifies a row in the DOM, since toggle state itself is local to `Globe.tsx`. Both spellings
+ *  are listed because the legend prints the short one on a phone viewport, where a harness still
+ *  has to be able to reach the row. Extend this alongside any new legend row. */
+const LAYER_TOGGLE_LABELS: Record<string, readonly string[]> = {
+  'human-civilisation': ['Human civilisation', 'People'],
 }
 
 export interface EarthtimeDevHook {
@@ -59,6 +65,13 @@ export interface EarthtimeDevHook {
   /** Clicks the corresponding "Globe"/"Map" button. Throws if the globe isn't expanded (the
    *  toggle only renders then) — never silently no-ops. */
   setGlobeViewMode: (mode: 'globe' | 'map') => void
+  /** Opens the first-visit tour (`@/onboarding`), or dismisses it and records it as seen — the
+   *  same single path its own Skip button takes. The harness runs in a fresh browser context
+   *  whose `localStorage` is empty, so the tour would otherwise open over every shot in the run;
+   *  `run.mjs` dismisses it immediately after load and the one shot that guards the tour itself
+   *  re-opens it. Session state, so this does not need a reload — which is what makes it
+   *  expressible here at all (`run.mjs` loads the page exactly once). */
+  setTourOpen: (open: boolean) => void
   /** Clicks a legend overlay row's On/Off control by stable key (see `LAYER_TOGGLE_LABELS`).
    *  Throws for an unknown key or a row not currently in the DOM (out of its data domain, or
    *  the globe isn't expanded — the legend only renders then). */
@@ -182,22 +195,24 @@ function setGlobeViewMode(mode: 'globe' | 'map'): void {
   button.click()
 }
 
-function findLayerToggleGroup(label: string): HTMLElement {
-  const labelEl = Array.from(document.querySelectorAll('span')).find((span) => span.textContent?.trim() === label)
+function findLayerToggleGroup(labels: readonly string[]): HTMLElement {
+  const labelEl = Array.from(document.querySelectorAll('span')).find((span) => labels.includes(span.textContent?.trim() ?? ''))
   const group = labelEl?.parentElement?.querySelector('[role="group"]')
   if (!(group instanceof HTMLElement)) {
-    throw new Error(`layer toggle "${label}" not found in the DOM — is the globe expanded and the row in its data domain?`)
+    throw new Error(
+      `layer toggle "${labels[0]}" not found in the DOM — is the globe expanded and the row in its data domain?`,
+    )
   }
   return group
 }
 
 function setLayerToggle(key: string, on: boolean): void {
-  const label = LAYER_TOGGLE_LABELS[key]
-  if (label === undefined) throw new Error(`unknown layer toggle key "${key}"`)
-  const group = findLayerToggleGroup(label)
+  const labels = LAYER_TOGGLE_LABELS[key]
+  if (labels === undefined) throw new Error(`unknown layer toggle key "${key}"`)
+  const group = findLayerToggleGroup(labels)
   const buttonText = on ? 'On' : 'Off'
   const button = Array.from(group.querySelectorAll('button')).find((b) => b.textContent?.trim() === buttonText)
-  if (button === undefined) throw new Error(`layer toggle "${label}" has no "${buttonText}" button`)
+  if (button === undefined) throw new Error(`layer toggle "${labels[0]}" has no "${buttonText}" button`)
   button.click()
 }
 
@@ -212,6 +227,7 @@ export function installDevHook(): void {
     setGlobeExpanded: (expanded) => useTimeStore.getState().setGlobeExpanded(expanded),
     getGlobeViewMode,
     setGlobeViewMode,
+    setTourOpen: setOnboardingTourOpen,
     setLayerToggle,
     ready,
   }

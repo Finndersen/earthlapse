@@ -206,6 +206,13 @@ coverage, globe motion and ancestor portraits come first.
   *start* playback either — a viewer who skips at step one should land on exactly the still,
   paused view they would have got without it.
 
+  Also settled: **the era-shortcut step has to say what the shortcuts mean.** "Dinosaurs" and
+  "Humans" are nicknames for the Mesozoic and the Holocene, not geological names, and the pills
+  now carry no heading at all above them (the visible "Eras" label was dropped — it crowded the
+  era name printed directly above it). So this step is the one place a viewer is told these are
+  jumps to two eras of the timeline, and which eras those are. The accessible names already say
+  it ("Dinosaurs — the Mesozoic"); the tour has to say it on screen.
+
   Also settled: **design it for the phone first.** Most visitors are expected to arrive on one,
   so the phone is the case to get right and the desktop is the adaptation — not the other way
   round, which is how a tour ends up pointing at controls that are somewhere else.

@@ -1,0 +1,174 @@
+/*
+ * The first-visit tour overlay. Deliberately a light layer, never a blackout: there is no scrim
+ * at all, so the still behind it stays the subject and a viewer can see exactly what the ring is
+ * pointing at. The layer itself is click-through; only the card takes pointer events, so the
+ * control a step describes can be pressed while the step is on screen.
+ */
+
+.root {
+  position: fixed;
+  inset: 0;
+  /* `ShellLayout`'s `.shell` is `position: fixed` and so its own stacking context: the HUD's
+     z-index 60 and the expanded globe's backdrop at 50 are both contained by it. This layer is
+     that element's sibling, so one value above it clears both. */
+  z-index: 100;
+  pointer-events: none;
+  font-family: var(--hud-sans);
+}
+
+.ring {
+  position: fixed;
+  border: 1px solid var(--hud-accent);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px rgba(3, 4, 6, 0.6),
+    0 0 24px var(--hud-accent-glow);
+  pointer-events: none;
+}
+
+.ring[data-shape='circle'] {
+  border-radius: 50%;
+}
+
+.card {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  /* Fixed rather than content-sized so the height measured for placement is settled the first
+     time it is read, whatever position the card ends up at. */
+  width: min(320px, calc(100vw - 24px));
+  padding: 16px 16px 12px;
+  border: 1px solid var(--hud-hairline);
+  border-radius: 12px;
+  /* Frosted rather than opaque: the still stays visible around and (faintly) behind the card,
+     while the blur stops a bright plate's own caption text reading through the copy. */
+  background: rgba(8, 10, 14, 0.92);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  color: var(--hud-ink);
+  pointer-events: auto;
+  text-shadow: none;
+}
+
+.card:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 2px;
+}
+
+.root[data-settled='true'] .ring,
+.root[data-settled='true'] .card {
+  transition:
+    left 200ms ease,
+    top 200ms ease,
+    width 200ms ease,
+    height 200ms ease;
+}
+
+.root[data-reduced-motion='true'] .ring,
+.root[data-reduced-motion='true'] .card {
+  transition: none;
+}
+
+.counter {
+  margin: 0 0 8px;
+  font-family: var(--hud-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--hud-faint);
+}
+
+.title {
+  margin: 0 0 8px;
+  font-family: var(--hud-serif);
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.body {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--hud-dim);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.advance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skip,
+.secondary,
+.primary {
+  /* The phone transport's own touch-target floor is set below; this is the pointer-device size. */
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.skip,
+.secondary {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--hud-faint);
+}
+
+.skip:hover,
+.secondary:hover {
+  color: var(--hud-ink);
+}
+
+.primary {
+  border: 1px solid var(--hud-accent);
+  background: rgba(232, 176, 106, 0.16);
+  color: var(--hud-accent);
+}
+
+.primary:hover {
+  background: rgba(232, 176, 106, 0.28);
+}
+
+.skip:focus-visible,
+.secondary:focus-visible,
+.primary:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 2px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The breakpoint the rest of the HUD restacks at. Every control here meets the same 44px touch
+   target the phone transport's own edge buttons do (`Timeline.module.css`'s
+   `--edge-button-size`) — a tour a viewer cannot reliably dismiss is worse than no tour. */
+@media (max-width: 760px) {
+  .skip,
+  .secondary,
+  .primary {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 16px;
+  }
+}
