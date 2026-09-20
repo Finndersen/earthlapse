@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "647bdc494d2d0bd1",
+  "buildId": "0e95765ffafda959",
   "assetBase": "https://media.earthlapse.net",
   "scenes": [
     {
@@ -933,6 +933,39 @@
       "height": 1536
     },
     {
+      "id": "jebel-irhoud-firelight",
+      "t": 315000.0,
+      "chapterId": "open-ground",
+      "image": "scenes/jebel-irhoud-firelight.webp",
+      "thumbnail": "scenes/jebel-irhoud-firelight-thumb.webp",
+      "shot": "GROUND",
+      "title": "The Oldest Faces Like Ours",
+      "caption": "At a rock shelter in North Africa, some of the earliest known Homo sapiens tend a fire; the flints they heat in it are what will one day date them.",
+      "events": [
+        "homo-sapiens-origin",
+        "control-of-fire"
+      ],
+      "sound": {
+        "stem": "fire",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "location": {
+        "label": "Jebel Irhoud, Morocco",
+        "presentDay": {
+          "lat": 31.8514,
+          "lon": -8.8722
+        },
+        "marker": {
+          "lat": 31.8514,
+          "lon": -8.8722
+        }
+      },
+      "pinned": "ca26d88194e6bbd2",
+      "width": 2752,
+      "height": 1536
+    },
+    {
       "id": "acheulean-erectus",
       "t": 1760000.0,
       "chapterId": "waters-edge",
@@ -1661,6 +1694,18 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 15165.789409759738,
+      "tEnd": 115022.28895054256
+    },
+    {
+      "id": "open-ground",
+      "label": "On open ground",
+      "tStart": 115022.28895054256,
+      "tEnd": 744580.8121610277
+    },
+    {
+      "id": "waters-edge",
+      "label": "At the water's edge",
+      "tStart": 744580.8121610277,
       "tEnd": 415902632.83633447
     },
     {

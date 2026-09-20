@@ -1177,6 +1177,48 @@ scenes:
     location: {lat: 3.9900, lon: 35.8600, label: "West Turkana, Kenya"}
     pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
+  # Early Homo sapiens at Jebel Irhoud, Morocco, 315 +/- 34 ka (events.yaml
+  # homo-sapiens-origin; Hublin et al. 2017, Richter et al. 2017). Fire is not decoration here:
+  # Richter et al. dated the site by thermoluminescence on flints that had been heated in
+  # hearths, so burnt stone is the physical evidence the age itself rests on, and habitual fire
+  # use is long established by this date (events.yaml control-of-fire, t_max 1.5 Ma).
+  # Anatomy follows Hublin et al. exactly -- a modern-looking face on a longer, lower braincase
+  # -- rather than a fully modern head; that combination is the paper's actual finding.
+  # Deliberately NOT framed as the birthplace of the species: the same paper argues for a
+  # pan-African origin, and events.yaml's own ADR-032 comment keeps the arrival arc off this
+  # site for that reason. Environment from the site's gazelle-dominated fauna (Richter et al.
+  # supplementary): open, dry grassland, not forest and not a shoreline -- hence `open-ground`
+  # rather than the `waters-edge` chapter its neighbours at 1.76 Ma and 42 ka use.
+  - id: jebel-irhoud-firelight
+    t: 3.15e5
+    chapter: open-ground
+    shot: GROUND
+    title: "The Oldest Faces Like Ours"
+    caption: At a rock shelter in North Africa, some of the earliest known Homo sapiens tend a fire; the flints they heat in it are what will one day date them.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: late MIS 9 interglacial, close to pre-industrial
+    subject:
+      setting: A limestone rock shelter opening onto dry open grassland in North Africa, camera low at the mouth of the shelter beside a burning hearth
+      left_mass: a rough buff-coloured limestone wall rising at the shelter mouth, its base blackened with soot and stacked with fire-cracked stone
+      vegetation: dry tawny grassland with scattered low thorny shrubs and a few stunted junipers on the slopes, no woodland
+      fauna: a herd of gazelle grazing far out on the open grassland, with a few zebra beyond them
+      main_subject: two early humans beside a low open hearth of burning branches, one crouched feeding the fire and setting flint nodules at its edge, the other seated knapping a flake, both with a flat modern-looking face and delicate cheekbones but a distinctly long, low, back-swept braincase, wearing simple draped hide
+      ground: dry pale dust and limestone rubble scattered with charcoal, fire-cracked stone and sharp flint flakes
+      water: none in the frame; the shelter sits on a dry limestone slope above open grassland
+      far_bank: no far bank; the grassland runs flat to a line of low arid hills on the horizon
+      sky_and_light: a clear, dusty North African sky at dusk; warm firelight on the figures and the shelter wall, cool fading daylight beyond
+      absent: [agriculture, pottery, metal, domesticated animals, bows, modern humans, modern clothing, buildings, cave paintings, identifiable faces]
+    events: [homo-sapiens-origin, control-of-fire]
+    # ADR-023: `fire` `loop` -- the hearth at the centre of the frame, and the only scene that
+    # uses this stem.
+    sound: {stem: fire, mode: loop, gain: 0.85}
+    # ADR-034: Jebel Irhoud, Morocco, the site named in this record's own comment above. t =
+    # 315 ka sits inside the human-era basemap domain (ADR-030, t <= 2.58 Ma), so publish marks
+    # these present-day coordinates directly.
+    location: {lat: 31.8514, lon: -8.8722, label: "Jebel Irhoud, Morocco"}
+    pin: {asset_digest: "ca26d88194e6bbd2", path: "data/candidates/jebel-irhoud-firelight/3972076dfca0d04d/01-ca26d88194e6bbd2.jpg"}
+
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
   # timing and spatiotemporal patterning of Neanderthal disappearance," Nature, 512, 306-309

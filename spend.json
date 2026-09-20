@@ -2928,6 +2928,14 @@
       "estimated_usd": 0.154774,
       "actual_usd": 0.139428,
       "note": null
+    },
+    {
+      "node_id": "jebel-irhoud-firelight.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154624,
+      "actual_usd": 0.139972,
+      "note": null
     }
   ]
 }
