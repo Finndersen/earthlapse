@@ -46,6 +46,13 @@ import {
   ZOOM_CONTROLS_SELECTOR,
 } from './selectors.mjs'
 
+/** The globe's raster overlay picker (`OverlaySelect.tsx`, outside this harness's edit scope, so
+ *  no `data-testid` constant of its own to import here) and the sentinel value its native
+ *  `<select>` uses for "no overlay" — that component's own `NONE_OPTION_VALUE`, mirrored rather
+ *  than imported. */
+const OVERLAY_SELECT_SELECTOR = '[data-testid="overlay-select"]'
+const OVERLAY_NONE_VALUE = '__none__'
+
 /** Whether two `{x, y, width, height}` CSS-pixel boxes (`measure.mjs`'s `PixelBox`) intersect —
  *  used to prove two pieces of HUD chrome genuinely don't overlap, not just "look" clear in a
  *  screenshot. Half-open on purpose (`<`/`>`, not `<=`/`>=`): two boxes exactly edge-to-edge, 0px
@@ -61,6 +68,18 @@ function centreDistance(a, b) {
   const dx = a.x + a.width / 2 - (b.x + b.width / 2)
   const dy = a.y + a.height / 2 - (b.y + b.height / 2)
   return Math.hypot(dx, dy)
+}
+
+/** Signed separation between two boxes, in CSS pixels: positive is the real closest-point
+ *  distance apart when they don't overlap (per-axis gap on whichever axis actually separates
+ *  them, or the diagonal between their nearest corners when both axes do), negative is how deep
+ *  they overlap (the shallower of the two axes' overlap depth) when they overlap on both axes at
+ *  once — `rectsOverlap`'s own two-axis test, made continuous instead of boolean. */
+function rectClearancePx(a, b) {
+  const gapX = Math.max(a.x - (b.x + b.width), b.x - (a.x + a.width))
+  const gapY = Math.max(a.y - (b.y + b.height), b.y - (a.y + a.height))
+  if (gapX > 0 || gapY > 0) return Math.hypot(Math.max(gapX, 0), Math.max(gapY, 0))
+  return -Math.min(-gapX, -gapY)
 }
 
 /**
@@ -542,6 +561,20 @@ export default [
     expect: { 'sphere.width': [535, 575], 'sphere.height': [535, 575] },
   },
   {
+    name: 'globe-expanded-sphere-phone',
+    description:
+      "The same real drawn diameter as `globe-expanded-sphere`, at the 390x844 phone-portrait floor — the " +
+      'viewport the expanded globe is sized most aggressively for, and the one where the top chrome competes ' +
+      'hardest with it. `useChromeGap` fits the panel to the live title-to-timeline gap, so anything that moves ' +
+      "the title, the era shortcuts or the corner controls moves this number: it is the guard that says how much " +
+      'of the phone screen the globe actually gets.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
+    expect: { 'sphere.width': [330, 400], 'sphere.height': [330, 400] },
+  },
+  {
     name: 'globe-expanded-map',
     description:
       'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size (drawn pixels) — ' +
@@ -843,7 +876,16 @@ export default [
   },
   {
     name: 'globe-view-mode-toggle-clear-of-sphere-narrow',
-    description: 'Same as `globe-view-mode-toggle-clear-of-sphere`, at the narrow 390x844 phone-portrait viewport.',
+    description:
+      'At the narrow 390x844 phone-portrait viewport the Globe/Map toggle sits at the TOP-RIGHT, beside the ' +
+      "close button — freeing the vertical space below for as large a sphere as the viewport allows — so it sits " +
+      "ABOVE the sphere here, not below it as in `globe-view-mode-toggle-clear-of-sphere`/`-clear-of-map`/" +
+      "`-clear-of-sphere-short`. The invariant that still holds at every viewport is narrower than \"below\": the " +
+      "toggle must never overlap the sphere's drawn silhouette. `sphere` is measured the same way as those sibling " +
+      "shots (`drawnBoundsInClip` over the real fit-frame rectangle — sound here for the same reason their own " +
+      "description gives); `toggle` is a plain CSS box (`boxOf`), ordinary HUD chrome. `clearanceGapPx` is the " +
+      'signed rectangle-to-rectangle separation on both axes at once (`rectClearancePx`) — positive when the boxes ' +
+      "don't overlap, negative overlap depth when they do — with the same 4px floor the sibling shots use.",
     viewport: { width: 390, height: 844 },
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -855,9 +897,9 @@ export default [
     measure: async ({ page }) => {
       const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
       const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height) }
+      return { clearanceGapPx: rectClearancePx(toggle, sphere) }
     },
-    expect: { clearanceGapPx: [4, 400] },
+    expect: { clearanceGapPx: [4, 900] },
   },
   {
     name: 'globe-view-mode-toggle-clear-of-sphere-short',
@@ -2736,5 +2778,102 @@ export default [
       return { done: 1 }
     },
     expect: { done: [1, 1] },
+  },
+  {
+    name: 'mobile-review-globe-population-density',
+    description:
+      'Screenshot-only, for human review: expanded globe at the 390x844 phone-portrait viewport, t=10 (2015 CE, ' +
+      "the newest frame in both HYDE sequences and the date at which population density is at its maximum, so " +
+      'the wash reads at full strength rather than near its floor) — the default overlay, selected explicitly ' +
+      "rather than trusted (this harness never reloads between shots, so a prior shot's overlay pick would " +
+      'otherwise still be selected). Shows the left-aligned era-shortcut row, the Globe/Map toggle at the ' +
+      'top-right beside the close button, the overlay selector, and no Legend panel.',
+    viewport: { width: 390, height: 844 },
+    t: 10,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'population_density')
+      await hook.ready()
+      await rafTicks(page, 2)
+    },
+  },
+  {
+    name: 'mobile-review-globe-cleared-land',
+    description:
+      'Screenshot-only, for human review: same view as `mobile-review-globe-population-density` with the overlay ' +
+      'switched to Cleared land — at t=10, cleared land is at its own peak too (~9.6% of land area, cropland ' +
+      'averaging ~30% of a cell where present), so the wash should read as oxblood/rust worked ground, distinct ' +
+      "from the basemap's own terrain browns and desert tans on both hue and luminance.",
+    viewport: { width: 390, height: 844 },
+    t: 10,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'cleared_land')
+      await hook.ready()
+      await rafTicks(page, 2)
+    },
+  },
+  {
+    name: 'mobile-review-globe-overlay-none',
+    description:
+      'Screenshot-only, for human review: same view with the overlay set to None — bare basemap, no raster wash.',
+    viewport: { width: 390, height: 844 },
+    t: 10,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.selectOption(OVERLAY_SELECT_SELECTOR, OVERLAY_NONE_VALUE)
+      await hook.ready()
+      await rafTicks(page, 2)
+    },
+  },
+  {
+    name: 'mobile-review-map-cleared-land',
+    description:
+      'Screenshot-only, for human review: map mode (Globe/Map toggle set to Map) with the Cleared land overlay, ' +
+      'same t as the sibling globe shots.',
+    viewport: { width: 390, height: 844 },
+    t: 10,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'cleared_land')
+      await hook.ready()
+      await rafTicks(page, 2)
+    },
+  },
+  {
+    name: 'mobile-review-globe-zoomed-in',
+    description:
+      'Screenshot-only, for human review: expanded globe zoomed in (four "Zoom in" presses, same technique as ' +
+      '`globe-sphere-zoom-past-fit`) at the same t and default overlay, to show basemap sharpness now that phones ' +
+      'get the T1 4096x2048 texture tier.',
+    viewport: { width: 390, height: 844 },
+    t: 10,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'population_density')
+      await hook.ready()
+      await rafTicks(page, 2)
+      const zoomIn = page.getByRole('button', { name: 'Zoom in' })
+      for (let i = 0; i < 4; i += 1) {
+        await zoomIn.click()
+        await rafTicks(page, 2)
+      }
+      await hook.ready()
+    },
   },
 ]

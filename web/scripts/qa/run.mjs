@@ -128,17 +128,31 @@ const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
  * fully independent of whatever the previous shot left on screen (this is exactly the bug an
  * early run of this harness caught: a shot with no `state` at all silently inherited the
  * previous shot's expanded map mode — see this package's README).
+ *
+ * The legend panel itself is only ever conditionally in the DOM — `Legend.tsx` renders nothing on
+ * phone viewports (the layer is forced on there instead) and drops a row entirely once its
+ * overlay is out of data domain — so the toggle loop is skipped whenever the panel isn't present,
+ * rather than assuming a control exists at every viewport/`t`. `[class*="legendGroup"]` matches
+ * `selectors.mjs`'s own `PIP_PREVIEW_SELECTOR` idiom for a component outside this harness's edit
+ * scope: no `data-testid` to key off, so a CSS Modules class substring stands in. This only gates
+ * "is the panel there at all" — `hook.setLayerToggle` still throws, uncaught, for a key whose row
+ * is missing while the panel itself is present (an unknown key, or a genuinely broken button),
+ * which is the behaviour this harness wants for an actual regression.
+ * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {import('./shots.mjs').ShotState} [state]
  */
-async function applyState(hook, state = {}) {
+async function applyState(page, hook, state = {}) {
   await hook.setPlaying(state.playing ?? false)
   const globeExpanded = state.globeExpanded ?? false
   await hook.setGlobeExpanded(globeExpanded)
   if (globeExpanded) {
     await hook.setGlobeViewMode(state.globeViewMode ?? 'globe')
-    const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
-    for (const [key, on] of Object.entries(toggles)) await hook.setLayerToggle(key, on)
+    const legendPresent = (await page.locator('[class*="legendGroup"]').count()) > 0
+    if (legendPresent) {
+      const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
+      for (const [key, on] of Object.entries(toggles)) await hook.setLayerToggle(key, on)
+    }
   }
   // Last, so the tour measures every anchor against the layout this shot actually ends up with
   // rather than the one it started from.
@@ -184,7 +198,7 @@ async function runShot(page, hook, shot, runDir, viewportOverride, defaultReduce
     await hook.setT(shot.t)
     await waitForSceneCrossfadeSettle(page)
   }
-  await applyState(hook, shot.state)
+  await applyState(page, hook, shot.state)
   if (shot.actions !== undefined) await shot.actions({ page, hook })
   await hook.ready()
   await rafTicks(page, 2)
@@ -214,10 +228,61 @@ async function runShot(page, hook, shot, runDir, viewportOverride, defaultReduce
   }
 }
 
+/** A 1x1 transparent PNG — the contact sheet's fallback image for a shot that crashed before it
+ *  could take its own screenshot (`runShotOrRecordFailure`'s catch branch). */
+const EMPTY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64',
+)
+
+/**
+ * Runs one shot; on a throw from anywhere inside it (an unexpected page error, not the expected
+ * "assertion failed"), records that shot as a failure instead of taking the whole batch down with
+ * it — one shot crashing used to abort every shot still queued behind it. Best-effort screenshot
+ * so the contact sheet still has an image for the row: usually the page itself is still fine (the
+ * throw was a JS exception inside a `page.evaluate`, not a crashed tab), so this typically shows
+ * whatever the app looked like at the moment it failed.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ * @param {import('./shots.mjs').Shot} shot
+ * @param {string} runDir
+ * @param {{width: number, height: number} | null} viewportOverride
+ * @param {string} defaultReducedMotion
+ */
+async function runShotOrRecordFailure(page, hook, shot, runDir, viewportOverride, defaultReducedMotion) {
+  const startedAt = Date.now()
+  try {
+    return await runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion)
+  } catch (error) {
+    console.error(`FAILED ${shot.name}: ${error?.stack ?? error}`)
+    const screenshotName = `${shot.name}.png`
+    const pngPath = path.join(runDir, screenshotName)
+    try {
+      await page.screenshot({ path: pngPath })
+    } catch {
+      await writeFile(pngPath, EMPTY_PNG)
+    }
+    return {
+      name: shot.name,
+      description: shot.description,
+      viewport: viewportOverride ?? shot.viewport ?? DEFAULT_VIEWPORT,
+      t: shot.t ?? null,
+      durationMs: Date.now() - startedAt,
+      screenshot: screenshotName,
+      pngPath,
+      measurements: {},
+      assertions: [],
+      error: String(error?.stack ?? error),
+      pass: false,
+    }
+  }
+}
+
 function printSummary(results, consoleErrors) {
   console.log('')
   for (const r of results) {
     console.log(`${r.pass ? 'PASS' : 'FAIL'}  ${r.name}  (${r.durationMs}ms)  — ${r.description}`)
+    if (r.error !== undefined) console.log(`       ERROR  ${r.error.split('\n')[0]}`)
     for (const a of r.assertions) {
       console.log(`       ${a.pass ? 'ok' : 'FAIL'}  ${a.key} = ${a.value} (expected [${a.min}, ${a.max}])`)
     }
@@ -316,7 +381,7 @@ async function main() {
     const shots = selectShots(shotList, args.shots)
     for (const shot of shots) {
       console.log(`Running ${shot.name}…`)
-      const result = await runShot(page, hook, shot, runDir, args.viewport, args.reducedMotion)
+      const result = await runShotOrRecordFailure(page, hook, shot, runDir, args.viewport, args.reducedMotion)
       results.push(result)
     }
 

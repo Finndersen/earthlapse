@@ -84,4 +84,6 @@ scripts/qa/out/latest -> <run>/
 ```
 
 `report.json.pass` is `false` (process exits non-zero) if any assertion failed or the run saw a
-console/page error — safe for an agent to run unattended and check the exit code.
+console/page error — safe for an agent to run unattended and check the exit code. A shot whose own
+code throws (not an `expect` mismatch) is recorded as a failure with an `error` field rather than
+aborting the rest of the run.
