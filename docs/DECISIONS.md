@@ -6485,33 +6485,39 @@ shows." This ADR chooses the other fix: keep every event, but let a burst share 
    member ids in local state alongside its existing `detailEventId`, re-resolved against
    `manifest.events` the same way `detailEventId` itself already is, so the panel that actually
    ships shows the whole digest, not just its headline.
-5. **`CLUSTER_SPAN = 0.12`**, unchanged from the single-linkage draft — bounding total span only
-   ever *shrinks* clusters relative to that draft, so the same value was re-measured rather than
-   re-swept. **Honest numbers, bounded by total span, on the published 161-event set:** 87
-   clusters (was 67 under the buggy unbounded version), max size **5** (was 27), max total span
-   **0.118** (safely under `CLUSTER_SPAN`, as the invariant now requires; the buggy version's
-   worst cluster measured 1.00), size distribution `{1: 41, 2: 29, 3: 8, 4: 7, 5: 2}`. Median
-   dwell **1x: 0.32s (baseline) → 1.27s (honest, bounded) — the buggy unbounded measurement had
-   claimed 2.29s.** Median dwell 8x: 0.32s → 0.040s → 0.159s; 8x evictions under 1s:
-   157/158 → 63/64 (buggy) → 83/84 (honest).
-   - **This misses the ~2s target at 1x, and `CLUSTER_SPAN` was deliberately left at 0.12 rather
-     than raised to compensate** (explicit instruction on re-review: report the tension, do not
-     quietly absorb it). A further sweep, still bounded by total span, shows the target is
-     reachable without an unreasonable cluster: `span=0.20` gives median 1x **1.99s**, 70
-     clusters, max size **7**; `span=0.25` gives median 1x **2.60s**, 61 clusters, max size **9**.
-     Unlike the buggy unbounded version, raising the threshold under the bounded algorithm cannot
-     produce a runaway cluster — total span is capped at `CLUSTER_SPAN` itself by construction,
-     so "max size" only grows with how densely the *real* manifest happens to pack events inside
-     that span, not with chain length. **Recommendation:** `CLUSTER_SPAN = 0.2`–`0.25` clears the
-     dwell target with clusters still small enough to read at a glance (7–9 members, nothing like
-     the old 27), and is worth adopting in a follow-up once someone signs off on the number
-     directly rather than it being adjusted as a side effect of this bug fix. Left at `0.12` here.
+5. **`CLUSTER_SPAN = 0.20`.** Bounding total span (item 1's fix) only ever *shrinks* clusters
+   relative to the buggy single-linkage draft, so the fix was re-measured at the draft's original
+   `0.12` first rather than re-swept blind: **honest numbers at 0.12, bounded by total span, on
+   the published 161-event set** — 87 clusters (was 67 under the bug), max size **5** (was 27),
+   max total span **0.118** (safely under `CLUSTER_SPAN`, as the invariant now requires; the buggy
+   version's worst cluster measured 1.00), size distribution `{1: 41, 2: 29, 3: 8, 4: 7, 5: 2}`.
+   Median dwell 1x: 0.32s (ADR-039 baseline) → **1.27s honest** (the buggy unbounded measurement
+   had claimed 2.29s — an artefact of the chaining bug, not a real number). This missed the ~2s
+   target, and rather than silently raise the constant to cover the shortfall, a sweep — still
+   bounded by total span, so raising it can no longer produce a runaway cluster the way it did
+   under single-linkage — was reported instead (human-directed decision, 2026-09-21):
+
+   | `CLUSTER_SPAN` | clusters | max size | median dwell 1x |
+   |---|---|---|---|
+   | 0.12 | 87 | 5 | 1.27s |
+   | 0.15 | 76 | 6 | 1.73s |
+   | 0.18 | 73 | 7 | 1.88s |
+   | **0.20** | **70** | **7** | **1.99s** |
+   | 0.25 | 61 | 9 | 2.60s |
+   | 0.30 | 58 | 8 | 2.91s |
+
+   **`0.20` was chosen**: it clears the ~2s target (1.99s — roughly the time it takes to actually
+   read a short card) while capping the largest digest at 7 members, still browsable in the
+   detail panel. `0.25` buys 2.60s but costs a 9-member digest and collapses more events that
+   deserve their own card; `0.20` is the smaller of the two thresholds that clears the target, so
+   it keeps more individual cards. **Re-measured at the shipped `0.20`, from the real code against
+   the real manifest** (not the sweep projection): **70 clusters**, max size **7**, max total span
+   **0.198** (under `CLUSTER_SPAN`, as required), size distribution
+   `{1: 25, 2: 24, 3: 7, 4: 8, 5: 2, 6: 3, 7: 1}`. Median dwell **1x: 1.99s**, median dwell
+   **8x: 0.249s**; 8x evictions under 1s: **65/67** (was 157/158 at the ADR-039 baseline).
 
 **What this deliberately does not address.**
-- **The ~2s median dwell target at 1x is not met** by the honestly-bounded `CLUSTER_SPAN = 0.12`
-  (1.27s). See the sweep and recommendation above — raising the constant is a deliberate follow-up
-  decision, not bundled into this bug fix.
-- **8x playback still evicts almost everything inside a second** (83/84): the fix targets the
+- **8x playback still evicts almost everything inside a second** (65/67): the fix targets the
   stated ~2s target at 1x, not fast playback, which ADR-039 already named as a separate, harder
   problem (scaling by wall-clock velocity breaks purity in `t`).
 
@@ -6526,7 +6532,7 @@ carries more than one entry and otherwise byte-identical to before; `Experience.
 `TimelineEvent`s the same way `detailEvent` itself already is, and a regression test
 (`Experience.test.tsx`) confirming a digest's clustermate actually renders in the opened panel —
 verified failing without this wiring. `web/scripts/qa/shots.mjs` gains
-`event-feed-burst-collapses-into-digest` (t=108, `world-war-i`'s real 5-member cluster; run
-against `CLUSTER_SPAN = 0` first and confirmed failing — `moreCount` read 0 there instead of 1)
-and one existing shot's description is corrected to describe the (now smaller, correctly-bounded)
-digest cards the fix produces at that shot's own `t` values.
+`event-feed-burst-collapses-into-digest` (t=90, `ginza-modern-urban-culture`'s real 7-member
+cluster, the shipped threshold's own largest; run against `CLUSTER_SPAN = 0` first and confirmed
+failing — `moreCount` read 0 there instead of 1) and one existing shot's description is corrected
+to describe the digest cards the fix now produces at that shot's own `t` values.

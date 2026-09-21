@@ -27,11 +27,12 @@ export const RECENCY_FLOOR_YEARS = 25
 
 /**
  * The `distanceFraction` gap that bounds both a cluster's adjacent steps and its total extent
- * (see this module's own doc comment). Chosen against the published 161-event set (ADR-040) —
- * see that ADR for the measured before/after dwell this value produces and the trade-off against
- * a smaller one.
+ * (see this module's own doc comment). `0.20` is the smallest value that lifts the published
+ * event set's median 1x feed-slot dwell to roughly the ~2s it takes to read a short card, while
+ * still capping the largest digest at a browsable size — see ADR-040 for the swept alternatives
+ * and the measured numbers this trades against.
  */
-export const CLUSTER_SPAN = 0.12
+export const CLUSTER_SPAN = 0.2
 
 export interface EventCluster {
   /** Every event in the cluster, freshest first (ascending `placementT`). Ties in `placementT`

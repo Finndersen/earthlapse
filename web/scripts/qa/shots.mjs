@@ -1775,13 +1775,13 @@ export default [
       "A card's drawn position must depend only on its rank in the feed, never on `t` itself: `distanceFraction` " +
       'moves continuously as `t` scrubs even while the visible set is unchanged, and the old per-card ' +
       '`translateY(feedCardOffsetPx(distanceFraction))` chased that every frame, reading as constant jitter. ' +
-      'Both `t=250` and `t=290` resolve to the identical three-card set (ADR-040\'s CLUSTER_SPAN=0.12, bounded ' +
-      "by total span): `transatlantic-slave-trade` now digests `newcomen-steam-engine` (2 members — " +
-      "`newton-principia` stays a card of its own, its total span back to `transatlantic-slave-trade` clearing " +
-      "CLUSTER_SPAN), and `columbian-exchange` digests `dutch-golden-age-voc`, same order both times — this " +
-      "checks the freshest (digest) card's own position, verified against both the fixed selection rule " +
-      "(age-ratio only) and the removed pixel-lookback one it replaces, so this isolates the drift fix from " +
-      "the selection-rule change. Confirmed failing against the unfixed build: yDelta measured ~1.96px there.",
+      'Both `t=250` and `t=290` resolve to the identical three-card set (ADR-040\'s CLUSTER_SPAN=0.20, bounded ' +
+      "by total span): `transatlantic-slave-trade` now digests `newcomen-steam-engine` and `newton-principia` " +
+      "(3 members), and `columbian-exchange` digests `dutch-golden-age-voc`, `galileo-telescope` and " +
+      "`russian-conquest-of-siberia` (4 members), same order both times — this checks the freshest (digest) " +
+      "card's own position, verified against both the fixed selection rule (age-ratio only) and the removed " +
+      "pixel-lookback one it replaces, so this isolates the drift fix from the selection-rule change. Confirmed " +
+      "failing against the unfixed build: yDelta measured ~1.96px there.",
     viewport: DEFAULT_VIEWPORT,
     // This shot's whole point is a per-card `transform` that used to change with `t` — running
     // under real motion (rather than the run's own `reduce` default) keeps the guard meaningful
@@ -1811,25 +1811,27 @@ export default [
     name: 'event-feed-burst-collapses-into-digest',
     description:
       "ADR-040 (burst clustering): a dense stretch collapses into one digest card per cluster instead of " +
-      "evicting its own cards faster than anyone can read them. t=108 sits just past the published manifest's " +
-      "densest real burst — `world-war-i`, `battle-of-the-somme`, `general-relativity`, " +
-      "`ford-model-t-assembly-line` and `haber-bosch-process`, 5 events inside 6 years (CLUSTER_SPAN=0.12, " +
-      "bounded by total span as well as each adjacent gap — ADR-040's amendment) — the feed still shows exactly " +
-      "DEFAULT_MAX_VISIBLE (3) cards, and the freshest is a digest headlined `world-war-i` carrying its own " +
-      "\"+4 more\" badge for the rest of that cluster, rather than 3 separate individual-event cards all drawn " +
-      "from the same burst. Confirmed failing with `CLUSTER_SPAN` temporarily set to 0 (clustering a no-op, " +
-      "reproducing pre-ADR-040 per-event selection): cardCount was still 3 there, but moreCount read 0 — no " +
-      "digest badge exists when nothing merges, which is exactly the bug this shot guards against.",
+      "evicting its own cards faster than anyone can read them. t=90 sits just past the published manifest's " +
+      "densest real burst at CLUSTER_SPAN=0.20 (bounded by total span as well as each adjacent gap) — " +
+      "`ginza-modern-urban-culture`, `penicillin-discovery`, `influenza-1918-pandemic`, `world-war-i`, " +
+      "`battle-of-the-somme`, `general-relativity` and `ford-model-t-assembly-line`, 7 events inside 16 years " +
+      "(this set's own max cluster size at the shipped threshold) — the feed still shows exactly " +
+      "DEFAULT_MAX_VISIBLE (3) cards, and the freshest is a digest headlined `ginza-modern-urban-culture` " +
+      "carrying its own \"+6 more\" badge for the rest of that cluster, rather than 3 separate individual-event " +
+      "cards all drawn from the same burst. Confirmed failing with `CLUSTER_SPAN` temporarily set to 0 " +
+      "(clustering a no-op, reproducing pre-ADR-040 per-event selection): cardCount was still 3 there, but " +
+      "moreCount read 0 — no digest badge exists when nothing merges, which is exactly the bug this shot " +
+      "guards against.",
     viewport: DEFAULT_VIEWPORT,
-    t: 108,
+    t: 90,
     measure: async ({ page }) => {
       const cardCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      const moreBadge = page.locator('[data-testid="event-feed-more-world-war-i"]')
+      const moreBadge = page.locator('[data-testid="event-feed-more-ginza-modern-urban-culture"]')
       const moreCount = await moreBadge.count()
       const moreText = moreCount > 0 ? (await moreBadge.textContent())?.trim() : null
-      return { cardCount, moreCount, hasFourMore: moreText === '+4 more' ? 1 : 0 }
+      return { cardCount, moreCount, hasSixMore: moreText === '+6 more' ? 1 : 0 }
     },
-    expect: { cardCount: [3, 3], moreCount: [1, 1], hasFourMore: [1, 1] },
+    expect: { cardCount: [3, 3], moreCount: [1, 1], hasSixMore: [1, 1] },
   },
   {
     name: 'breadcrumb-trimmed',

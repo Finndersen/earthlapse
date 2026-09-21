@@ -27,15 +27,18 @@ describe('clusterEvents', () => {
   })
 
   it('bounds a cluster by its total extent, not only its adjacent gaps: a chain of small steps still splits once it runs past CLUSTER_SPAN end to end', () => {
-    // Each step's own gap is ~0.070 (well under CLUSTER_SPAN=0.12), but single-linkage on
-    // adjacent gaps alone would chain them without limit — the real bug this bounds: a long
-    // dense run (the published manifest's mid-20th-century stretch) chained into one 27-member
-    // digest whose own total span was ~1.0, over 8x CLUSTER_SPAN, defeating the dwell fix by
-    // hiding a whole era behind one ever-growing badge instead of giving individual cards time
-    // to be read. Every event here still joins *some* cluster — nothing is ever dropped — but
-    // the chain splits every second step, once the total span back to the current cluster's own
-    // first member would clear CLUSTER_SPAN (0.0704 -> 0.1408 crosses it every other step).
-    const ts = [100, 106.25, 112.8125, 119.703125, 126.93828125]
+    // Each step's own gap is 0.6x CLUSTER_SPAN (comfortably under it on its own), but two
+    // consecutive steps combined exceed it. Single-linkage on adjacent gaps alone would chain
+    // these without limit — the real bug this bounds: a long dense run (the published manifest's
+    // mid-20th-century stretch, under an earlier draft of this threshold) chained into one
+    // 27-member digest whose own total span was ~8x CLUSTER_SPAN, defeating the dwell fix by
+    // hiding a whole era behind one ever-growing badge instead of giving individual cards time to
+    // be read. Every event here still joins *some* cluster — nothing is ever dropped — but the
+    // chain splits every second step, once the total span back to the current cluster's own first
+    // member would clear CLUSTER_SPAN (0.6x -> 1.2x crosses it every other step).
+    const stepRatio = 2 ** (CLUSTER_SPAN * 0.6)
+    const ts: number[] = [100]
+    for (let i = 1; i < 5; i++) ts.push((ts[i - 1]! + 25) * stepRatio - 25)
     const events = ts.map((t, i) => event(`e${i}`, { tMin: t, tMax: t }))
     expect(memberIds(clusterEvents(events))).toEqual([['e0', 'e1'], ['e2', 'e3'], ['e4']])
   })
