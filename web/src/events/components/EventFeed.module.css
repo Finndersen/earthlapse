@@ -173,10 +173,23 @@
 }
 
 /* Brightens toward warm white and picks up a halo in the tag colour while emphasised. The title
-   gets the card's full width; the date leads the second line instead of competing with it. */
+   gets the card's full width; the date leads the second line instead of competing with it. A
+   flex row so a digest card's "+k more" badge (`.moreBadge`) sits fixed-width beside the title
+   text without needing a second line — `.labelText` is what actually ellipsises. */
 .label {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   height: 19px;
+  min-width: 0;
+}
+
+.labelText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 auto;
   font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
   font-size: 13.5px;
   line-height: 19px;
@@ -185,12 +198,20 @@
   text-shadow:
     0 0 calc(var(--feed-emphasis, 0) * 14px) color-mix(in srgb, var(--feed-accent) calc(var(--feed-emphasis, 0) * 70%), transparent),
     var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   transition:
     color 360ms ease,
     text-shadow 360ms ease;
+}
+
+/* The digest affordance: a small pill naming how many further reached events the headline is
+   standing in for. Flex-none so a long title's ellipsis takes the squeeze, never this. */
+.moreBadge {
+  flex: none;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--feed-accent);
 }
 
 .detail {
@@ -292,7 +313,7 @@
   .cardButton::after,
   .chip,
   .body,
-  .label,
+  .labelText,
   .date {
     transition: none;
   }

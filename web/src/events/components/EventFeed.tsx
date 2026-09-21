@@ -22,6 +22,11 @@
  * if it was running. This component never scrubs `t` on its own either; only the detail panel's
  * own "Show on timeline" does that, so opening a card to read it can't move the playhead out from
  * under a reader.
+ *
+ * A card renders one `select.ts` cluster (ADR-040), not one event: a single-member cluster looks
+ * exactly as a lone event card always has, and a multi-member one adds a small "+k more" badge
+ * next to its headline. `onEventActivate`'s second argument carries every reached member, freshest
+ * first, so a caller wiring up `EventDetailPanel` can list all of them, not just the headline.
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
@@ -65,9 +70,12 @@ export interface EventFeedProps {
   events: readonly TimelineEvent[]
   /** A card was clicked/tapped/Enter-ed — the caller opens `EventDetailPanel` for it (and pauses
    *  playback if it was running). This component neither opens a panel nor scrubs `t` itself; it
-   *  only reports the activation. */
-  onEventActivate: (event: TimelineEvent) => void
-  /** The ids currently showing as cards, reported whenever that set changes (not per frame). The
+   *  only reports the activation. `members` is the activated card's whole cluster, freshest
+   *  first, `event` always `members[0]` — a lone event's own singleton cluster for a
+   *  single-member card. */
+  onEventActivate: (event: TimelineEvent, members: readonly TimelineEvent[]) => void
+  /** The ids of every event currently showing — including a digest card's non-headline members,
+   *  not just each card's headline — reported whenever that set changes (not per frame). The
    *  globe's human-civilisation layer pulses an arrival's arc or marker while its own card is on
    *  screen, so the two read as the same subject; reporting the selection rather than
    *  re-deriving it there is what keeps one selection rule (`selectFeedEvents`) in the app. */
@@ -104,12 +112,17 @@ export function EventFeed({ t, events, onEventActivate, onVisibleEventsChange, o
     if (now - lastAnnouncedAtRef.current < ANNOUNCE_THROTTLE_MS) return
     lastAnnouncedIdRef.current = freshest.event.id
     lastAnnouncedAtRef.current = now
-    setAnnouncement(`${freshest.event.label}, ${formatEventDate(freshest.event)}`)
+    const extraCount = freshest.members.length - 1
+    const suffix = extraCount > 0 ? `, and ${extraCount} more` : ''
+    setAnnouncement(`${freshest.event.label}, ${formatEventDate(freshest.event)}${suffix}`)
   }, [selection.visible])
 
-  // Keyed on the joined ids, not the array: `selectFeedEvents` returns a fresh array every frame
-  // of playback, but the *set* only changes when the playhead actually reaches or drops an event.
-  const visibleIds = selection.visible.map((entry) => entry.event.id)
+  // Every reached member of every visible cluster, not just each card's headline — a digest
+  // card's non-headline members are still on screen (inside its "+k more"), so the globe's
+  // sympathetic pulse should track them too. Keyed on the joined ids, not the array:
+  // `selectFeedEvents` returns a fresh array every frame of playback, but the *set* only changes
+  // when the playhead actually reaches or drops an event.
+  const visibleIds = selection.visible.flatMap((entry) => entry.members.map((member) => member.id))
   const visibleIdsKey = visibleIds.join('\n')
   const visibleIdsRef = useRef(visibleIds)
   visibleIdsRef.current = visibleIds
@@ -139,7 +152,7 @@ export function EventFeed({ t, events, onEventActivate, onVisibleEventsChange, o
                 entry={entry}
                 emphasis={emphases[rank] ?? 0}
                 reducedMotion={reducedMotion}
-                onActivate={() => onEventActivate(entry.event)}
+                onActivate={() => onEventActivate(entry.event, entry.members)}
                 onHoverChange={onCardHoverChange}
               />
             ))}
@@ -164,10 +177,11 @@ interface EventFeedCardProps {
 }
 
 function EventFeedCard({ entry, emphasis, reducedMotion, onActivate, onHoverChange }: EventFeedCardProps) {
-  const { event, distanceFraction } = entry
+  const { event, distanceFraction, members } = entry
   const insetPx = reducedMotion ? 0 : feedCardInsetPx(emphasis)
   const tag = primaryTag(event)
   const swatch = tag ? EVENT_TAG_PALETTE[tag] : null
+  const extraCount = members.length - 1
 
   // The emphasis highlight (accent bar, tinted wash, title glow) is static styling keyed off
   // `--feed-emphasis`, so it survives reduced motion; only the movement (inset, the arrival
@@ -198,7 +212,16 @@ function EventFeedCard({ entry, emphasis, reducedMotion, onActivate, onHoverChan
       >
         <span className={styles.chip} aria-hidden="true" title={swatch?.label} />
         <span className={styles.body} style={insetPx === 0 ? undefined : { transform: `translateX(${insetPx}px)` }}>
-          <span className={styles.label}>{event.label}</span>
+          <span className={styles.label}>
+            <span className={styles.labelText}>{event.label}</span>
+            {/* A digest card's own "+k more" affordance (ADR-040) — the rest of its cluster's
+                reached members, listed in full in the detail panel this card opens. */}
+            {extraCount > 0 && (
+              <span className={styles.moreBadge} data-testid={`event-feed-more-${event.id}`}>
+                +{extraCount} more
+              </span>
+            )}
+          </span>
           <span className={styles.detail}>
             {/* Primary tag only — `EventDetailPanel` lists every tag an event carries. Coloured
                 and worded straight from `EVENT_TAG_PALETTE`, the one source both share. */}

@@ -12,6 +12,11 @@
  * the phone bottom sheet; this component owns none of that and touches no playback state —
  * `Experience.tsx` pauses on open and resumes on close, and scrubs `t` on "Show on timeline", as
  * a direct consequence of the user's own click, not as something this component decides.
+ *
+ * `members` (ADR-040) lists a digest card's whole cluster, freshest first — omitted, or a single
+ * element, renders exactly as a lone event's card always has. A digest lists every member in
+ * full rather than collapsing to the headline alone, since the point of opening it is to read
+ * the events the card's "+k more" badge stood in for.
  */
 
 import { Panel } from '@/shell'
@@ -23,6 +28,9 @@ import styles from './EventDetailPanel.module.css'
 
 export interface EventDetailPanelProps {
   event: TimelineEvent
+  /** Every reached member of `event`'s cluster, freshest first (`event` is `members[0]`).
+   *  Omitted, or fewer than two entries, is a plain single-event panel. */
+  members?: readonly TimelineEvent[]
   onClose: () => void
   /** Scrubs the timeline to this event's placement and closes the panel — the only thing in this
    *  panel that moves `t`. Opening the panel itself never does (the event is already recent;
@@ -33,9 +41,35 @@ export interface EventDetailPanelProps {
   onShowOnTimeline: () => void
 }
 
-export function EventDetailPanel({ event, onClose, onShowOnTimeline }: EventDetailPanelProps) {
+export function EventDetailPanel({ event, members, onClose, onShowOnTimeline }: EventDetailPanelProps) {
+  const digestMembers = members !== undefined && members.length > 1 ? members : null
+  const label = digestMembers !== null ? `${event.label} +${digestMembers.length - 1} more` : event.label
+
   return (
-    <Panel label={event.label} onClose={onClose} className={styles.panel}>
+    <Panel label={label} onClose={onClose} className={styles.panel}>
+      {digestMembers !== null ? (
+        <ul className={styles.memberList}>
+          {digestMembers.map((member) => (
+            <li key={member.id} className={styles.member}>
+              <p className={styles.memberLabel}>{member.label}</p>
+              <EventDetailBody event={member} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EventDetailBody event={event} />
+      )}
+
+      <button type="button" className={styles.showOnTimeline} onClick={onShowOnTimeline}>
+        Show on timeline
+      </button>
+    </Panel>
+  )
+}
+
+function EventDetailBody({ event }: { event: TimelineEvent }) {
+  return (
+    <>
       <p className={styles.date}>{formatEventDate(event)}</p>
 
       {event.tags && event.tags.length > 0 && (
@@ -54,10 +88,6 @@ export function EventDetailPanel({ event, onClose, onShowOnTimeline }: EventDeta
 
       <p className={styles.description}>{event.description}</p>
       {event.citation && <p className={styles.citation}>{event.citation}</p>}
-
-      <button type="button" className={styles.showOnTimeline} onClick={onShowOnTimeline}>
-        Show on timeline
-      </button>
-    </Panel>
+    </>
   )
 }

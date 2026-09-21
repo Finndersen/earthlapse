@@ -14,7 +14,7 @@ import type { FeedEntry } from './select'
 
 function entry(id: string, distanceFraction: number): FeedEntry {
   const event: TimelineEvent = { id, label: id, tMin: 0, tMax: 0, importance: 0.5, description: '', citation: '' }
-  return { event, distanceFraction }
+  return { event, distanceFraction, members: [event] }
 }
 
 describe('feedCardOpacity', () => {

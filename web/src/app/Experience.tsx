@@ -110,6 +110,13 @@ export function Experience() {
   const setExpandedChartLayerId = useTimeStore((s) => s.setExpandedChartLayerId)
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
+  // The rest of a digest card's reached cluster (ADR-040), alongside `detailEventId` — ids only,
+  // the same "what's expanded, not the expanded thing" shape `detailEventId` itself already
+  // uses, re-resolved against `manifest.events` below rather than carrying `TimelineEvent`
+  // objects through state. Local rather than lifted into `useTimeStore`: nothing outside this
+  // component reads it, and `detailEventId` already owns the store's "is a panel open" bit —
+  // this is only ever set in the same call that sets that id, and cleared with it.
+  const [detailMemberIds, setDetailMemberIds] = useState<readonly string[]>([])
 
   // The timeline's animated scale lives here and is passed down to <Timeline> and the chart
   // dock, so the value under the chart's playhead sits directly above the timeline's. Section
@@ -411,6 +418,13 @@ export function Experience() {
   // rather than kept as the `TimelineEvent` itself, so the store only ever holds a plain id, the
   // same "what's expanded, not the expanded thing" shape `expandedChartLayerId` already uses.
   const detailEvent = detailEventId !== null ? (manifest.events.find((e) => e.id === detailEventId) ?? null) : null
+  // The rest of a digest card's cluster (ADR-040), resolved the same way. `detailMemberIds`
+  // holds every reached member's id including the headline's own, so this is `EventDetailPanel`'s
+  // whole `members` array — a lone event's own singleton "cluster" included, which is exactly
+  // what makes a single-member card behave identically to before.
+  const detailMembers = detailMemberIds
+    .map((id) => manifest.events.find((e) => e.id === id))
+    .filter((e): e is TimelineEvent => e !== undefined)
 
   // ADR-034: the globe plots the *dominant* scene's location — the same scene whose caption and
   // image are on screen (`dominantScene`, the one rule `SceneView` already uses), so the marker
@@ -419,14 +433,16 @@ export function Experience() {
   const currentSceneLocation =
     manifest.scenes.length > 0 ? (dominantScene(sceneAt(manifest.scenes, t)).location ?? null) : null
 
-  const openEventDetail = (event: TimelineEvent): void => {
+  const openEventDetail = (event: TimelineEvent, members: readonly TimelineEvent[]): void => {
     wasPlayingBeforeDetailRef.current = playback.playing
     if (playback.playing) setPlaying(false)
     setDetailEventId(event.id)
+    setDetailMemberIds(members.map((member) => member.id))
   }
 
   const closeEventDetail = (): void => {
     setDetailEventId(null)
+    setDetailMemberIds([])
     if (wasPlayingBeforeDetailRef.current) {
       wasPlayingBeforeDetailRef.current = false
       setPlaying(true)
@@ -577,6 +593,7 @@ export function Experience() {
       {detailEvent && (
         <EventDetailPanel
           event={detailEvent}
+          members={detailMembers}
           onClose={closeEventDetail}
           onShowOnTimeline={() => {
             // Scrubs, then closes the panel itself rather than leaving it open over a ~35%
@@ -590,6 +607,7 @@ export function Experience() {
             setT(placementT(detailEvent))
             wasPlayingBeforeDetailRef.current = false
             setDetailEventId(null)
+            setDetailMemberIds([])
           }}
         />
       )}

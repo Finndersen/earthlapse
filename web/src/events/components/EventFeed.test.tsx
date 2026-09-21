@@ -107,7 +107,7 @@ describe('<EventFeed>', () => {
     expect(button.textContent).not.toContain('a citation')
 
     fireEvent.click(button)
-    expect(onEventActivate).toHaveBeenCalledWith(a)
+    expect(onEventActivate).toHaveBeenCalledWith(a, [a])
     expect(button.textContent).not.toContain('a citation')
     expect(button.hasAttribute('aria-expanded')).toBe(false)
   })
@@ -125,8 +125,13 @@ describe('<EventFeed>', () => {
     })
   })
 
-  it('caps visible cards at a fixed DEFAULT_MAX_VISIBLE (3) for a dense stretch', () => {
-    const events = Array.from({ length: 6 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
+  // Well beyond CLUSTER_SPAN apart (a ratio comfortably above the ~1.087x CLUSTER_SPAN=0.12
+  // merges below), so each stays its own singleton cluster — these events exercise the
+  // maxVisible cap itself, not the digest-clustering behaviour covered separately below.
+  const FAR_APART = [505, 700, 950, 1300, 1750, 2300] as const
+
+  it('caps visible cards at a fixed DEFAULT_MAX_VISIBLE (3) for well-separated events', () => {
+    const events = FAR_APART.map((t, i) => event(`e${i}`, { tMin: t, tMax: t }))
     const { container } = render(<EventFeed t={500} events={events} onEventActivate={vi.fn()} />)
     expect(DEFAULT_MAX_VISIBLE).toBe(3)
     expect(container.querySelectorAll('[data-testid^="event-feed-card-"]')).toHaveLength(3)
@@ -135,14 +140,47 @@ describe('<EventFeed>', () => {
   it('shows only one card in the compact (narrow-viewport) mode, regardless of how many are candidates', () => {
     mockMatchMedia(COMPACT_QUERY)
     const events = [
-      event('e0', { tMin: 505, tMax: 505 }),
-      event('e1', { tMin: 506, tMax: 506 }),
-      event('e2', { tMin: 507, tMax: 507 }),
+      event('e0', { tMin: FAR_APART[0], tMax: FAR_APART[0] }),
+      event('e1', { tMin: FAR_APART[1], tMax: FAR_APART[1] }),
+      event('e2', { tMin: FAR_APART[2], tMax: FAR_APART[2] }),
     ]
     const { getByTestId, queryByTestId } = render(<EventFeed t={500} events={events} onEventActivate={vi.fn()} />)
     expect(getByTestId('event-feed-card-e0')).toBeTruthy()
     expect(queryByTestId('event-feed-card-e1')).toBeNull()
     expect(queryByTestId('event-feed-card-e2')).toBeNull()
+  })
+
+  describe('burst digest cards (ADR-040)', () => {
+    it('collapses a dense stretch of near-simultaneous events into one card with a "+k more" badge', () => {
+      const burst = Array.from({ length: 6 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
+      const { container, getByTestId, queryByTestId } = render(<EventFeed t={500} events={burst} onEventActivate={vi.fn()} />)
+      // The whole burst is one card, not six competing individual events.
+      expect(container.querySelectorAll('[data-testid^="event-feed-card-"]')).toHaveLength(1)
+      expect(getByTestId('event-feed-card-e0')).toBeTruthy()
+      expect(getByTestId('event-feed-more-e0').textContent).toContain('+5 more')
+      expect(queryByTestId('event-feed-card-e1')).toBeNull() // not its own card — a member of e0's digest
+    })
+
+    it('shows no "+k more" badge on a single-member card', () => {
+      const a = event('a', { tMin: 510, tMax: 510 })
+      const { queryByTestId } = render(<EventFeed t={500} events={[a]} onEventActivate={vi.fn()} />)
+      expect(queryByTestId('event-feed-more-a')).toBeNull()
+    })
+
+    it('reports every reached member, not just the headline, via onEventActivate', () => {
+      const burst = Array.from({ length: 3 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
+      const onEventActivate = vi.fn()
+      const { getByTestId } = render(<EventFeed t={500} events={burst} onEventActivate={onEventActivate} />)
+      fireEvent.click(getByTestId('event-feed-card-e0'))
+      expect(onEventActivate).toHaveBeenCalledWith(burst[0], burst)
+    })
+
+    it('mentions the extra count in the aria-live announcement instead of dropping it', () => {
+      const burst = Array.from({ length: 3 }, (_, i) => event(`e${i}`, { tMin: 505 + i, tMax: 505 + i }))
+      const { container } = render(<EventFeed t={500} events={burst} onEventActivate={vi.fn()} />)
+      const live = container.querySelector('[aria-live="polite"]')
+      expect(live?.textContent).toContain('and 2 more')
+    })
   })
 
   it("does not drift a card's position between renders at the same rank: opacity is the only thing distanceFraction changes inline", () => {
@@ -169,7 +207,7 @@ describe('<EventFeed>', () => {
   describe('just-reached emphasis', () => {
     it('emphasises only the freshest card, in its primary tag colour', () => {
       const fresh = event('fresh', { tMin: 500, tMax: 500, tags: ['catastrophe', 'life'] })
-      const older = event('older', { tMin: 520, tMax: 520, tags: ['life'] })
+      const older = event('older', { tMin: 700, tMax: 700, tags: ['life'] }) // far enough apart to stay its own cluster
       const { getByTestId } = render(<EventFeed t={500} events={[older, fresh]} onEventActivate={vi.fn()} />)
 
       const freshItem = getByTestId('event-feed-item-fresh')

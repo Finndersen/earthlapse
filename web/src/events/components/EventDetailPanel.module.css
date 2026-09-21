@@ -77,6 +77,32 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
+/* A digest panel's own member list (ADR-040) — one `.member` block per reached cluster event,
+   each carrying the same date/tags/description/citation a lone event's panel shows. */
+.memberList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  padding: 14px 0;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.member:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.memberLabel {
+  margin: 0 0 6px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hud-ink, #efe9dc);
+}
+
 .showOnTimeline {
   display: block;
   width: 100%;

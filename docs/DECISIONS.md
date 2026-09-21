@@ -6422,3 +6422,111 @@ but would mean **some events never surface as a feed card at all**. That contrad
 behind the playhead always shows, full stop" (DESIGN § Event feed, ADR-022) and is a product
 decision, so it wants its own ADR. Scaling retention by playback velocity was rejected outright:
 velocity is `dt/dwall`, so it is not pure in `t` and breaks scrub symmetry.
+
+## ADR-040 — Burst clustering: one digest card per burst, not one card per event
+
+**Status:** accepted — 2026-09-21. Amends ADR-022's "every event behind the playhead always
+shows" guarantee and closes the "known limitation" ADR-039 left for its own ADR.
+
+**Context.** ADR-039 fixed *under-full* feeds but named the opposite failure as out of scope: in
+a *dense* stretch, rank alone still evicts a card before anyone can read it. Measured on the
+published 161-event set, full-domain symlog: at 1x the median feed slot survives **~0.32 s**, and
+at 8x **157 of 158 card evictions happen inside one second**. The worst real stretch is the mid-
+20th century — 27 events from WWII to the Human Genome Project inside 54 years — where three
+`DEFAULT_MAX_VISIBLE` slots simply cannot keep up with events arriving faster than they can be
+read. ADR-039 named one fix and rejected it: decimating events in `t`-space (keep the highest-
+`importance` event per cluster, drop the rest) is pure in `t` and scrub-symmetric, but means some
+events never surface as a card at all, contradicting "every event behind the playhead always
+shows." This ADR chooses the other fix: keep every event, but let a burst share one card.
+
+**Decision.**
+
+1. **`web/src/events/cluster.ts`, a new module, partitions the event list into clusters.** Sorted
+   by `placementT`, a candidate event joins the current cluster only when **both** its gap to the
+   immediately preceding event and its gap back to the cluster's own first (freshest) member are
+   below `CLUSTER_SPAN` — bounding the cluster's *total* extent, not only each adjacent step. A
+   gap — `log2((newer + RECENCY_FLOOR_YEARS) / (older + RECENCY_FLOOR_YEARS))` — is a fixed
+   property of the two events' own placements: `t` cancels out of the ratio entirely, so
+   **cluster membership never depends on the playhead**. Clusters are computed once per
+   event-list reference (`clusterEvents` memoises on a `WeakMap`) and never re-form or flicker as
+   `t` scrubs, satisfying the same purity contract `selectFeedEvents` itself already has
+   (DESIGN §10 / ADR-002 spirit).
+   - **Single-linkage on adjacent gaps alone was tried first, and shipped with a real bug.**
+     Bounding only each adjacent step lets a dense run chain without limit: on the published set
+     it produced a 27-member digest (WWII through the Human Genome Project) whose own *total*
+     span was `log2 = 1.00` — 8.3x `CLUSTER_SPAN` itself. Through the single most event-dense
+     stretch on the whole timeline, no event ever appeared as its own card; part of the measured
+     dwell improvement came from hiding that whole era behind one ever-growing "+26 more" badge,
+     not from genuinely giving cards time to be read. Re-review (human-directed, 2026-09-21)
+     caught this before it shipped. Bounding total span as well fixes it: "one cluster" now
+     actually means "these happened at essentially the same time" for the cluster as a whole, not
+     only for each pair of neighbours inside it.
+2. **`selectFeedEvents` selects the freshest `DEFAULT_MAX_VISIBLE` *clusters*, not events.** A
+   cluster is a candidate once any of its members is reached (`placementT(member) >= t`) and
+   within `lookbackAgeRatio`; its own `distanceFraction` is that of its **freshest reached
+   member**. `lookbackAgeRatio` keeps its old meaning as an outer sanity bound and still applies
+   per event (ADR-039's own reasoning, unchanged) — a member can age out of a digest
+   independently of its clustermates, exactly as a lone event always could.
+3. **A cluster shows only its already-reached members**, so a digest grows monotonically as
+   playback reaches more of its cluster: a 3-event cluster the playhead has reached one of is a
+   plain single-event card; reaching the second turns the same card into a two-member digest.
+   Nothing is ever dropped from a digest already shown (short of the outer lookback bound above),
+   and nothing below it moves — nothing is evicted by an existing member ageing, only by a newer
+   *cluster* taking the slot. This is the same mechanism ADR-039 already established
+   ("a card leaves when a newer event takes its slot"), just applied to clusters instead of
+   events, so **every event behind the playhead still always shows, full stop — now possibly
+   inside a digest** rather than as its own card.
+4. **Render.** A single-member cluster is pixel-identical to today's lone-event card — no visual
+   change. A multi-member cluster adds a small "+k more" badge beside its headline (the freshest
+   member), and the aria-live announcement names the extra count instead of dropping it.
+   Clicking/Enter-ing it opens `EventDetailPanel` with every reached member listed in full
+   (label, date, tags, description, citation each), not only the headline; a lone-event card
+   opens the same panel exactly as it always has. `Experience.tsx` carries the activated cluster's
+   member ids in local state alongside its existing `detailEventId`, re-resolved against
+   `manifest.events` the same way `detailEventId` itself already is, so the panel that actually
+   ships shows the whole digest, not just its headline.
+5. **`CLUSTER_SPAN = 0.12`**, unchanged from the single-linkage draft — bounding total span only
+   ever *shrinks* clusters relative to that draft, so the same value was re-measured rather than
+   re-swept. **Honest numbers, bounded by total span, on the published 161-event set:** 87
+   clusters (was 67 under the buggy unbounded version), max size **5** (was 27), max total span
+   **0.118** (safely under `CLUSTER_SPAN`, as the invariant now requires; the buggy version's
+   worst cluster measured 1.00), size distribution `{1: 41, 2: 29, 3: 8, 4: 7, 5: 2}`. Median
+   dwell **1x: 0.32s (baseline) → 1.27s (honest, bounded) — the buggy unbounded measurement had
+   claimed 2.29s.** Median dwell 8x: 0.32s → 0.040s → 0.159s; 8x evictions under 1s:
+   157/158 → 63/64 (buggy) → 83/84 (honest).
+   - **This misses the ~2s target at 1x, and `CLUSTER_SPAN` was deliberately left at 0.12 rather
+     than raised to compensate** (explicit instruction on re-review: report the tension, do not
+     quietly absorb it). A further sweep, still bounded by total span, shows the target is
+     reachable without an unreasonable cluster: `span=0.20` gives median 1x **1.99s**, 70
+     clusters, max size **7**; `span=0.25` gives median 1x **2.60s**, 61 clusters, max size **9**.
+     Unlike the buggy unbounded version, raising the threshold under the bounded algorithm cannot
+     produce a runaway cluster — total span is capped at `CLUSTER_SPAN` itself by construction,
+     so "max size" only grows with how densely the *real* manifest happens to pack events inside
+     that span, not with chain length. **Recommendation:** `CLUSTER_SPAN = 0.2`–`0.25` clears the
+     dwell target with clusters still small enough to read at a glance (7–9 members, nothing like
+     the old 27), and is worth adopting in a follow-up once someone signs off on the number
+     directly rather than it being adjusted as a side effect of this bug fix. Left at `0.12` here.
+
+**What this deliberately does not address.**
+- **The ~2s median dwell target at 1x is not met** by the honestly-bounded `CLUSTER_SPAN = 0.12`
+  (1.27s). See the sweep and recommendation above — raising the constant is a deliberate follow-up
+  decision, not bundled into this bug fix.
+- **8x playback still evicts almost everything inside a second** (83/84): the fix targets the
+  stated ~2s target at 1x, not fast playback, which ADR-039 already named as a separate, harder
+  problem (scaling by wall-clock velocity breaks purity in `t`).
+
+**Consequences.** New: `web/src/events/cluster.ts` (`clusterEvents`, `CLUSTER_SPAN`,
+`EventCluster`; `RECENCY_FLOOR_YEARS` moves here from `select.ts`, which re-exports it unchanged).
+Changed: `select.ts`'s `FeedEntry` gains `members`; `EventFeed.tsx` renders the "+k more" badge,
+widens `onEventActivate`, and reports every visible member (not just each card's headline) via
+`onVisibleEventsChange`, so the globe's sympathetic pulse tracks a digest's non-headline members
+too; `EventDetailPanel` gains an optional `members` prop, rendering a full digest list when it
+carries more than one entry and otherwise byte-identical to before; `Experience.tsx` gains local
+`detailMemberIds` state alongside `detailEventId`, set and cleared together, resolved into
+`TimelineEvent`s the same way `detailEvent` itself already is, and a regression test
+(`Experience.test.tsx`) confirming a digest's clustermate actually renders in the opened panel —
+verified failing without this wiring. `web/scripts/qa/shots.mjs` gains
+`event-feed-burst-collapses-into-digest` (t=108, `world-war-i`'s real 5-member cluster; run
+against `CLUSTER_SPAN = 0` first and confirmed failing — `moreCount` read 0 there instead of 1)
+and one existing shot's description is corrected to describe the (now smaller, correctly-bounded)
+digest cards the fix produces at that shot's own `t` values.

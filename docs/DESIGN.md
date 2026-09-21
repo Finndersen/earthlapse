@@ -522,18 +522,34 @@ caption, at every breakpoint (a compact single-card strip directly above the tim
 phone).
 
 Selection is a pure function of `t` alone — no timer decides what shows, and nothing is measured
-off the rendered layout. An event is a candidate once it is "behind" the playhead: its placement
-(`Event.placement_t`, ADR-022) has been reached on the forward march from deep time toward the
-present. Candidates are ordered freshest-first and the most recent `DEFAULT_MAX_VISIBLE` of them
-show (one on a phone). **A card therefore leaves only when a newer event arrives to take its
-slot** (ADR-039), never because it aged out while the feed had room — an under-full feed evicts
-nothing.
+off the rendered layout. The unit of selection is the *cluster* (`web/src/events/cluster.ts`,
+ADR-040), not the raw event: `clusterEvents` partitions the whole event list into bursts of
+near-simultaneous events, sorted by `Event.placement_t` (ADR-022). A candidate event joins the
+current cluster only when **both** its gap to the immediately preceding event and its gap back to
+the cluster's own first (freshest) member are below `CLUSTER_SPAN` — bounding the cluster's total
+extent, not merely each adjacent step, so "one cluster" always means "these happened at
+essentially the same time" as a whole, not just pairwise. A gap —
+`log2((newer + RECENCY_FLOOR_YEARS) / (older + RECENCY_FLOOR_YEARS))` — is a fixed property of the
+two events' own placements, independent of `t`, so cluster membership never re-forms or flickers
+as playback scrubs and can be computed once per event list. A cluster is a candidate once any of
+its members is "behind" the playhead (reached on the forward march from deep time toward the
+present); its own freshness is its **freshest reached member's**. Candidates are ordered
+freshest-first and the most recent `DEFAULT_MAX_VISIBLE` of them show (one on a phone). **A card
+therefore leaves only when a newer cluster arrives to take its slot** (ADR-039, extended to
+clusters by ADR-040), never because it aged out while the feed had room — an under-full feed
+evicts nothing. A single-member cluster looks exactly like a lone event card always has; a
+multi-member one shows its freshest member as the headline plus a "+k more" badge, growing
+monotonically as playback reaches further into that same burst — never evicting a member already
+shown, only gaining more as `t` advances. So **every event behind the playhead always shows,
+full stop, now possibly inside a digest card alongside the rest of its burst** rather than
+evicting its neighbours one at a time.
 `DEFAULT_LOOKBACK_AGE_RATIO` (10, plus a 25-year floor) is a far outer bound, not the working
 rule: it stops "200 years ago" reaching back into the Neolithic if the intervening centuries
-happen to be empty, and on the published event set it almost never binds. The bound deliberately
-ignores the selected era section (ADR-024) — scaled to a zoomed-in window it would shrink to a
-few decades inside the Industrial age and empty the feed exactly where the viewer zoomed in to
-read history.
+happen to be empty, and on the published event set it almost never binds. It still applies
+per event, so an individual member can age out of a digest independently of its clustermates. The
+bound deliberately ignores the selected era section (ADR-024) — scaled to a zoomed-in window it
+would shrink to a few decades inside the Industrial age and empty the feed exactly where the
+viewer zoomed in to read history.
 
 Presentation is scaled separately from selection, by `FRESH_AGE_RATIO` (2): a card's opacity and
 small resting offset follow how far behind the playhead it sits, relative to that reference
@@ -566,7 +582,10 @@ Clicking, tapping or Enter-ing a card no longer expands it in place — the road
 "pop-up cards" instead open `EventDetailPanel`, one instance of `@/shell`'s shared `Panel`
 primitive (the same one the About & credits panel builds on — one focus trap, not several bespoke
 ones) showing the event's full label, date or range, *every* tag it carries (not only the primary
-one), the full description, the citation, and a "Show on timeline" action. Opening the panel
+one), the full description, the citation, and a "Show on timeline" action. For a digest card
+(ADR-040) the panel lists every reached member of the cluster in full, not only the headline the
+card itself shows — the whole point of opening it is to read the events the "+k more" badge stood
+in for. Opening the panel
 never moves `t` by itself — the card that opened it is already recent, that's why it's showing —
 only "Show on timeline" scrubs, using the same store path `<Timeline>`'s own `onScrub` does, so
 there is still exactly one selection mechanism. Opening the panel pauses playback if it was

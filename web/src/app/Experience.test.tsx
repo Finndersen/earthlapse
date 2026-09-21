@@ -377,5 +377,61 @@ describe('Experience (W12a integration)', () => {
       })
       expect(useTimeStore.getState().playback.playing).toBe(false)
     })
+
+    it('opens a digest card listing every reached member of its cluster, not only the headline (ADR-040)', async () => {
+      // kpg-aftermath-test sits 50,000 years *before* kpg-impact (a larger t — this project
+      // counts years before present, so a larger t is older) — well inside CLUSTER_SPAN (their
+      // gap is ~0.0011, far under 0.12) — so the two merge into one cluster headlined by
+      // kpg-impact, the fresher (smaller-t) of the pair. Without `Experience.tsx` carrying the
+      // cluster's member ids alongside `detailEventId` through to `<EventDetailPanel>`, this
+      // card would open showing only kpg-impact, silently dropping its clustermate.
+      const manifestWithCluster = {
+        ...stubManifest,
+        events: [
+          ...stubManifest.events,
+          {
+            id: 'kpg-aftermath-test',
+            label: 'Post-impact winter (test fixture)',
+            kind: 'moment',
+            tMin: 66_050_000,
+            tMax: 66_050_000,
+            t: 66_050_000,
+            tags: ['catastrophe'],
+            importance: 0.4,
+            description: 'A fixture-only companion event for the ADR-040 digest-wiring test.',
+            citation: 'test fixture',
+          },
+        ],
+      }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL) => {
+          const url = String(input)
+          if (url === '/media/manifest.json') {
+            return { ok: false, status: 404, json: async () => undefined } as Response
+          }
+          const body = url === '/stub/manifest.json' ? manifestWithCluster : FETCH_RESPONSES[url]
+          if (body === undefined) throw new Error(`unexpected fetch in test: ${url}`)
+          return { ok: true, status: 200, json: async () => body } as Response
+        }),
+      )
+
+      await renderSettled()
+      act(() => {
+        useTimeStore.getState().setT(66_000_000)
+      })
+
+      const card = await screen.findByTestId('event-feed-card-kpg-impact')
+      expect(screen.getByTestId('event-feed-more-kpg-impact').textContent).toContain('+1 more')
+
+      act(() => {
+        fireEvent.click(card)
+      })
+
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toMatch(/impact/i)
+      expect(dialog.textContent).toContain('Post-impact winter (test fixture)')
+      expect(dialog.textContent).toContain('A fixture-only companion event for the ADR-040 digest-wiring test.')
+    })
   })
 })
