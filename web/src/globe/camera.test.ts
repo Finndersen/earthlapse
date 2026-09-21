@@ -12,6 +12,7 @@ import {
   raySphereIntersection,
   slerpDirection,
   sphereFitDistance,
+  sphereRotateSpeedForDistance,
   subFrameFovY,
   verticalCenterOffset,
 } from './camera'
@@ -80,6 +81,124 @@ describe('sphereFitDistance', () => {
     const unit = sphereFitDistance(1, 1, fovYRadians, 0.08)
     const scaled = sphereFitDistance(2.5, 1, fovYRadians, 0.08)
     expect(scaled).toBeCloseTo(unit * 2.5)
+  })
+})
+
+describe('sphereRotateSpeedForDistance', () => {
+  const radius = 1
+
+  it.each([
+    [3.24, 0.6],
+    [5, 0.25],
+    [1.2, 0.05],
+  ])(
+    'reduces to exactly defaultRotateSpeed (%s -> %s) at distance === defaultDistance — the regression guard on the shipped default feel',
+    (defaultDistance, defaultRotateSpeed) => {
+      expect(sphereRotateSpeedForDistance(defaultDistance, radius, defaultDistance, defaultRotateSpeed)).toBeCloseTo(defaultRotateSpeed, 10)
+    },
+  )
+
+  it('scales linearly with (distance - radius) away from the default', () => {
+    const defaultDistance = 3.24
+    const defaultRotateSpeed = 0.6
+    const a = sphereRotateSpeedForDistance(2, radius, defaultDistance, defaultRotateSpeed) // distance - radius = 1
+    const b = sphereRotateSpeedForDistance(3, radius, defaultDistance, defaultRotateSpeed) // distance - radius = 2
+    expect(b).toBeCloseTo(a * 2, 10)
+  })
+
+  it('is far slower once zoomed in close than at the default distance, where a flat rotateSpeed ran away from the finger', () => {
+    const defaultDistance = 3.24
+    const defaultRotateSpeed = 0.6
+    expect(sphereRotateSpeedForDistance(1.2, radius, defaultDistance, defaultRotateSpeed)).toBeLessThan(defaultRotateSpeed / 4)
+  })
+
+  it('stays positive and finite as distance approaches the radius (no min/maxDistance floor in sphere mode)', () => {
+    const defaultDistance = 3.24
+    const defaultRotateSpeed = 0.6
+    expect(sphereRotateSpeedForDistance(radius, radius, defaultDistance, defaultRotateSpeed)).toBeGreaterThan(0)
+    expect(sphereRotateSpeedForDistance(radius * 1.0001, radius, defaultDistance, defaultRotateSpeed)).toBeGreaterThan(0)
+    expect(Number.isFinite(sphereRotateSpeedForDistance(radius * 0.5, radius, defaultDistance, defaultRotateSpeed))).toBe(true)
+  })
+
+  it('stays exactly defaultRotateSpeed even when defaultDistance itself is at the floor (distance === radius)', () => {
+    // A degenerate but reachable configuration if the idle framing itself ever computed a
+    // distance at or under the radius — the floor must apply identically to both distance terms
+    // so the ratio, and so the anchor property above, still holds exactly.
+    expect(sphereRotateSpeedForDistance(radius, radius, radius, 0.6)).toBeCloseTo(0.6, 10)
+  })
+
+  /**
+   * Full-projection proof that the *scaling law* this function anchors preserves 1:1 finger
+   * tracking away from a correctly-anchored default — independent of which fov the shipped
+   * `defaultRotateSpeed` (0.6) was actually tuned against (this function's own doc comment on why
+   * that is deliberately not assumed). `defaultRotateSpeed` here is instead the value that is
+   * theoretically exact for the fov `Globe.tsx`'s `Canvas` actually renders the globe at (40°) —
+   * computed once, independently, via the same closed form this function's own doc comment
+   * derives — so this checks the *shape* of the anchoring formula, not a restatement of it.
+   */
+  describe('1:1 finger-tracking given a correctly-anchored default', () => {
+    const fovYRadians = (40 * Math.PI) / 180
+    const elementHeightPx = 800
+    const defaultDistance = 3.24
+    const defaultRotateSpeed = (Math.tan(fovYRadians / 2) * (defaultDistance - radius)) / (Math.PI * radius)
+
+    /** Standard pinhole projection of `point` as seen by a camera at `cam`, looking at the world
+     *  origin with world-up `(0, 1, 0)` — the same convention `OrbitControls` itself uses. */
+    function screenX(cam: readonly [number, number, number], point: readonly [number, number, number]): number {
+      const camLen = Math.hypot(cam[0], cam[1], cam[2])
+      const forward: [number, number, number] = [-cam[0] / camLen, -cam[1] / camLen, -cam[2] / camLen]
+      const worldUp: [number, number, number] = [0, 1, 0]
+      const rx = forward[1] * worldUp[2] - forward[2] * worldUp[1]
+      const ry = forward[2] * worldUp[0] - forward[0] * worldUp[2]
+      const rz = forward[0] * worldUp[1] - forward[1] * worldUp[0]
+      const rlen = Math.hypot(rx, ry, rz)
+      const right: [number, number, number] = [rx / rlen, ry / rlen, rz / rlen]
+      const v: [number, number, number] = [point[0] - cam[0], point[1] - cam[1], point[2] - cam[2]]
+      const localX = v[0] * right[0] + v[1] * right[1] + v[2] * right[2]
+      const depth = v[0] * forward[0] + v[1] * forward[1] + v[2] * forward[2]
+      const focalLengthPx = elementHeightPx / (2 * Math.tan(fovYRadians / 2))
+      return (focalLengthPx * localX) / depth
+    }
+
+    /** A camera orbited by `theta` about the world Y axis, starting at `(0, 0, distance)` — the
+     *  same "camera moves, target/world stays fixed" convention `OrbitControls` itself uses. */
+    function orbitedCamera(distance: number, theta: number): [number, number, number] {
+      return [distance * Math.sin(theta), 0, distance * Math.cos(theta)]
+    }
+
+    /**
+     * Independent, full-projection check of the "the point under the finger stays under the
+     * finger" property — not a restatement of `sphereRotateSpeedForDistance`'s own formula.
+     * Derives the OrbitControls rotation angle a `dragPx` drag produces at the returned
+     * `rotateSpeed` (`OrbitControls`'s own `angle = 2*pi*rotateSpeed*deltaPx/elementHeightPx`),
+     * applies it as a real camera orbit, and measures how far the sphere's own near-pole point
+     * (fixed in world space, unlike the orbiting camera) actually moves on screen.
+     */
+    function measuredTrackingRatio(distance: number, dragPx: number): number {
+      const rotateSpeed = sphereRotateSpeedForDistance(distance, radius, defaultDistance, defaultRotateSpeed)
+      const theta = (2 * Math.PI * rotateSpeed * dragPx) / elementHeightPx
+      const nearPole: [number, number, number] = [0, 0, radius]
+      const before = orbitedCamera(distance, 0)
+      const after = orbitedCamera(distance, theta)
+      const shiftPx = screenX(after, nearPole) - screenX(before, nearPole)
+      return Math.abs(shiftPx) / dragPx
+    }
+
+    // Distances span well zoomed-in to well zoomed-out from the default (3.24). The formula is a
+    // first-order (small-rotation) calibration, so it drifts outside 10% only for a combination of
+    // extreme zoom-out and a single very large accumulated drag — well past any drag a real touch
+    // gesture produces at a size where the globe is still a meaningful target.
+    it.each([1.05, 1.5, 2, 3.24, 5, 8])('keeps a 40px drag tracking the surface within 10%% at camera distance %s', (distance) => {
+      const ratio = measuredTrackingRatio(distance, 40)
+      expect(ratio).toBeGreaterThan(0.9)
+      expect(ratio).toBeLessThan(1.1)
+    })
+
+    it.each([10, 25, 40, 80])('keeps a %spx drag tracking the surface within 10%% at the default camera distance', (dragPx) => {
+      const ratio = measuredTrackingRatio(defaultDistance, dragPx)
+      expect(ratio).toBeGreaterThan(0.9)
+      expect(ratio).toBeLessThan(1.1)
+    })
   })
 })
 
@@ -348,7 +467,6 @@ describe('slerpDirection', () => {
   })
 })
 
-// Issue 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it") —
 // `globeBodyProxyHit` and its two shape tests are `Globe.tsx`'s replacement for three.js's own
 // broken default raycast against a mesh with no `position` attribute (`globeGeometry.ts`'s own
 // doc comment); see that file's `mesh.raycast` doc comment for the full story.

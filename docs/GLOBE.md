@@ -714,6 +714,40 @@ snapping to a fixed starting pose first, restores the sphere's own pre-unfold di
 back rather than always the default framing, and sizes its map-mode framing from the unrolled
 mesh's own real half-extents, not a linear lerp (§1's v2 note, ADR-033's amendment).
 
+**One-finger rotate tracks the surface under the finger at any zoom (sphere mode).**
+`OrbitControls`'s own `rotateSpeed` maps a drag to a fixed angle of camera orbit regardless of
+distance, so a flat value only tracks 1:1 at one zoom level — zoomed in, the same finger travel
+sweeps far more surface and the globe runs away from the touch. `camera.ts`'s
+`sphereRotateSpeedForDistance` scales `rotateSpeed` linearly in `(distance - radius)`, anchored to
+the shipped, feel-tuned `DEFAULT_ROTATE_SPEED` (0.6) at each mode's own idle distance rather than
+derived from the camera's fov — an anchor cannot regress the already-correct default feel the way
+an independently-derived proportionality constant could. `Globe.tsx`'s `GlobeCameraControls`
+recomputes it every frame from the live camera distance, not once per drag. Map mode's one-finger
+pan needs no equivalent fix: three.js's own perspective panning already scales with distance
+(`OrbitControls.pan`'s `targetDistance * tan(fov/2)` term).
+
+**Zoom-bounds reporting is deduplicated.** `GlobeCameraControls`'s `onControlsChange` — bound to
+`OrbitControls`'s own 'change' event, which fires on essentially every frame a pinch or drag is
+moving the camera — used to call `onZoomBoundsChange` (`Globe.tsx`'s `setZoomBounds`) unconditionally,
+forcing a full `Globe` re-render every such frame even though `canZoomIn`/`canZoomOut` only ever
+flip right at a zoom limit. `reportZoomBounds` now compares against `lastReportedZoomBoundsRef` and
+skips the call when the answer hasn't changed. Relatedly, `onControlsChange`'s own map-mode pan
+clamp no longer calls `controls.update()` on itself: doing so re-entered the same 'change' handler
+synchronously, and with damping on and a pinch's `panOffset` still decaying, a correction could
+still read as out-of-bounds on that same re-entry — an unbounded recursion that threw `RangeError:
+Maximum call stack size exceeded` mid-gesture. The position/target set directly in that branch is
+already what the current frame renders; `OrbitControls`'s own next-frame `update()` (called
+unconditionally by drei's `<OrbitControls>`) reconciles its internal state against it without a
+second, recursive dispatch.
+
+**A touch tap opens the shared tooltip; touch never dismisses via `pointerleave`.**
+`GlobeTooltip.tsx`'s `useGlobeHitTest` used to clear the tooltip on any `pointerleave`, with no
+`pointerType` guard — for a touch pointer, lifting the finger fires `pointerleave` immediately
+after `pointerup`, so a tap opened the tooltip and the very next event closed it again (visible on
+a real phone as the label flashing then disappearing). `onPointerLeave` now ignores touch pointers
+entirely; touch dismissal already has its own path (`onPointerUp` resolving to nothing on a tap
+over empty space already clears the target there).
+
 **Cleared land — curated, no longer rendered (ADR-031's amendment).** The overlay this ADR
 originally specified (HYDE cropland/pasture tinting, a curve/cap/colour retune of its own) was
 built, then removed from `web/` entirely once rendered: the human found the tint indiscernible on

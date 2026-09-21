@@ -56,6 +56,7 @@ import {
   mapHasPanRoom,
   slerpDirection,
   sphereFitDistance,
+  sphereRotateSpeedForDistance,
   subFrameFovY,
   verticalCenterOffset,
 } from './camera'
@@ -94,6 +95,12 @@ const RIM_COLOR = new THREE.Color('#8fc7ff')
  *  lever available here: growing the box instead would run the orb into the centred time title,
  *  which `--orb-size`'s own phone rule is already sized right up against. */
 const CAMERA_DISTANCE = 3.24
+/** `OrbitControls`'s own rotate-drag speed at each mode's idle (unzoomed) distance — tuned by
+ *  feel and confirmed to track a one-finger drag 1:1 there. Away from that distance,
+ *  `sphereRotateSpeedForDistance` (`camera.ts`) scales it so the same drag keeps tracking the
+ *  surface at any zoom level, rather than the fixed value three.js otherwise applies regardless
+ *  of distance (see that function's own doc comment for the derivation). */
+const DEFAULT_ROTATE_SPEED = 0.6
 /** The minimised orb's own device-pixel-ratio range — small canvas, so retina sharpness is cheap. */
 const MINIMISED_DPR: [number, number] = [1, 2]
 /**
@@ -1144,6 +1151,17 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   useFrame(() => {
     const controls = controlsRef.current
     if (controls === null) return
+    // Live, every frame: `idleSphereDistance` (this render's idle/unzoomed distance for whichever
+    // of minimised or expanded is on screen) is the anchor `sphereRotateSpeedForDistance` scales
+    // against, so a drag keeps tracking the surface 1:1 as the viewer's own zoom moves the camera
+    // away from it — captured once per drag would leave the old distance-independent runaway
+    // feel for the rest of a zoom-then-rotate gesture.
+    controls.rotateSpeed = sphereRotateSpeedForDistance(
+      controls.target.distanceTo(camera.position),
+      GLOBE_RADIUS,
+      idleSphereDistance,
+      DEFAULT_ROTATE_SPEED,
+    )
     if (settled) {
       // The tween's own last driven frame always runs one tick short of the target (the frame
       // where `unfold` finally equals it is already settled, so the block below returns early),
@@ -1219,15 +1237,26 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   /** Reports whether the zoom buttons (`ZoomControls`) can still do anything —
    *  `ZOOM_BOUNDS_EPSILON` absorbs float roundoff right at a bound rather than reading as
    *  perpetually "one step left" there. `zoomMaxDistance === Infinity` (sphere mode, today's
-   *  actual, pre-existing bound — not tightened by this feature) never disables zoom-out. */
+   *  actual, pre-existing bound — not tightened by this feature) never disables zoom-out.
+   *
+   *  `onZoomBoundsChange` is a React state update, so it re-renders `Globe` and its whole subtree,
+   *  and `onControlsChange` fires on essentially every frame the camera moves. Since
+   *  `canZoomIn`/`canZoomOut` only flip right at a zoom limit, `lastReportedZoomBoundsRef` skips
+   *  the call when the answer is unchanged — nearly always, mid-gesture — which is the difference
+   *  between a pinch dropping frames and one that doesn't. */
+  const lastReportedZoomBoundsRef = useRef<ZoomBounds | null>(null)
   const reportZoomBounds = (): void => {
     const controls = controlsRef.current
     if (controls === null) return
     const distance = controls.target.distanceTo(camera.position)
-    onZoomBoundsChange({
+    const bounds: ZoomBounds = {
       canZoomIn: distance > zoomMinDistance + ZOOM_BOUNDS_EPSILON,
       canZoomOut: zoomMaxDistance === Infinity ? true : distance < zoomMaxDistance - ZOOM_BOUNDS_EPSILON,
-    })
+    }
+    const last = lastReportedZoomBoundsRef.current
+    if (last !== null && last.canZoomIn === bounds.canZoomIn && last.canZoomOut === bounds.canZoomOut) return
+    lastReportedZoomBoundsRef.current = bounds
+    onZoomBoundsChange(bounds)
   }
 
   const onControlsChange = (): void => {
@@ -1245,7 +1274,12 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
         camera.position.x += x - controls.target.x
         camera.position.y += y - controls.target.y
         controls.target.set(x, y, 0)
-        controls.update()
+        // No `controls.update()` here: this function is itself the 'change' listener, so calling
+        // `update()` re-enters it synchronously. With damping on, a pinch's decaying `panOffset`
+        // leaves the corrected target out of bounds again on re-entry, clamping and recursing
+        // until the stack overflows mid-gesture. The target set just above is what this frame
+        // renders, and drei calls `update()` every frame anyway, so the next one reconciles
+        // `OrbitControls`' internal bookkeeping without a recursive dispatch here.
       }
     }
     updateCursor()
@@ -1294,7 +1328,8 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       enablePan={mapMode}
       enableRotate={!mapMode}
       enableDamping={settled}
-      rotateSpeed={0.6}
+      // `rotateSpeed` is driven live from camera distance in the `useFrame` above, not set here
+      // (which would only fix it once, at mount) — `DEFAULT_ROTATE_SPEED`'s own doc comment.
       minDistance={zoomMinDistance}
       maxDistance={zoomMaxDistance}
       onChange={onControlsChange}

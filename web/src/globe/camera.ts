@@ -48,6 +48,37 @@ export function sphereFitDistance(radius: number, aspect: number, fovYRadians: n
   return radius * Math.sqrt(1 + 1 / (paddedTangent * paddedTangent))
 }
 
+/** Floor on the distance-above-radius terms below, so a camera at or inside `radius` (the sphere
+ *  mode zoom range has no `minDistance`) never divides by zero or drives rotateSpeed to/below 0,
+ *  which would freeze the drag rather than merely make it imprecise. */
+const MIN_DISTANCE_ABOVE_RADIUS_FRACTION = 1e-3
+
+/**
+ * The `rotateSpeed` that keeps a one-finger drag tracking the sphere surface under the finger at
+ * any camera `distance`. `OrbitControls.rotateLeft` turns the camera by `2*pi*rotateSpeed*deltaPx
+ * /element.clientHeight` — no distance term — so a fixed speed sweeps ever more surface as the
+ * camera closes in.
+ *
+ * A rotation of `theta` moves the point nearest the camera by an arc of `radius * theta`, which
+ * projects to screen at a rate scaling as `1/(distance - radius)`; the speed needed for 1:1
+ * tracking is therefore linear in `(distance - radius)`. The constant of proportionality depends
+ * on fov and element height, so rather than derive it, this anchors to a measured-good point:
+ * `defaultRotateSpeed` at `defaultDistance`, which it returns exactly.
+ *
+ * Both distance terms are floored just above `radius`: the ideal speed genuinely tends to 0 at the
+ * surface, but 0 would freeze the drag outright rather than merely lose 1:1 tracking.
+ */
+export function sphereRotateSpeedForDistance(
+  distance: number,
+  radius: number,
+  defaultDistance: number,
+  defaultRotateSpeed: number,
+): number {
+  const distanceAboveRadius = Math.max(distance - radius, radius * MIN_DISTANCE_ABOVE_RADIUS_FRACTION)
+  const defaultDistanceAboveRadius = Math.max(defaultDistance - radius, radius * MIN_DISTANCE_ABOVE_RADIUS_FRACTION)
+  return (defaultRotateSpeed * distanceAboveRadius) / defaultDistanceAboveRadius
+}
+
 function clampAbs(value: number, max: number): number {
   return Math.min(max, Math.max(-max, value))
 }
@@ -104,11 +135,10 @@ function visibleHalfExtents(distance: number, aspect: number, fovYRadians: numbe
  * (`clampPanTarget`'s `maxX`/`maxY` are both exactly 0 there); true only once zoomed in enough
  * that the viewport shows less than the map's own extent on at least one axis.
  *
- * `Globe.tsx`'s `GlobeCameraControls` uses this to choose the map-mode cursor (issue 3, user
- * verbatim: "when it's expanded to a map it still has the 'drag hand' mouse icon... dragging
- * doesn't do anything in this mode") — at the default, fully-zoomed-out map view this is false
- * (dragging truly does nothing, matching the report), and only flips true once the viewer zooms
- * in, at which point panning starts doing something and `grab` becomes the honest cursor again.
+ * `Globe.tsx`'s `GlobeCameraControls` uses this to choose the map-mode cursor: at the default,
+ * fully-zoomed-out map view this is false (dragging truly does nothing, so `grab` would be
+ * misleading), and only flips true once the viewer zooms in, at which point panning starts doing
+ * something and `grab` becomes the honest cursor again.
  */
 export function mapHasPanRoom(distance: number, aspect: number, fovYRadians: number, mapHalfWidth: number, mapHalfHeight: number): boolean {
   const { halfWidth, halfHeight } = visibleHalfExtents(distance, aspect, fovYRadians)
@@ -126,9 +156,8 @@ export function mapHasPanRoom(distance: number, aspect: number, fovYRadians: num
  *  `size` still reports the *minimised* orb's old, much smaller canvas, before r3f has re-measured
  *  the now-full-viewport `.orbExpanded`. Fed a `frame` larger than the canvas it's meant to be a
  *  sub-region of, `subFrameFovY` computes an effective FOV *wider* than the camera's own real one,
- *  which produces a camera distance far too close — the root cause behind a real regression (user
- *  report: "opens zoomed in a lot, need to press zoom out 6 times to get it back to reasonable
- *  original size"). */
+ *  which produces a camera distance far too close, opening the expanded globe zoomed in well past
+ *  its intended default framing. */
 export function isSubFrameOf(frame: { width: number; height: number } | null, canvasSize: { width: number; height: number }): boolean {
   return frame !== null && frame.height > 0 && frame.width <= canvasSize.width && frame.height <= canvasSize.height
 }
@@ -136,8 +165,7 @@ export function isSubFrameOf(frame: { width: number; height: number } | null, ca
 /**
  * The device pixel ratio to render at, given a `BUDGET_PIXELS`-sized ceiling on the drawing
  * buffer's total pixel count (`widthPx * heightPx * dpr^2`) — `Globe.tsx`'s replacement for a
- * flat DPR pin on the expanded canvas (2026-09-18 follow-up, user verbatim: "the click-dragging
- * of the globe in expanded view doesn't feel very responsive"). A flat pin (`dpr = 1` always) has
+ * flat DPR pin on the expanded canvas. A flat pin (`dpr = 1` always) has
  * a flaw independent of whatever frame-rate figure justified it: it bounds nothing. On a small
  * canvas (the minimised orb, or an ordinary laptop's expanded view) it throws away real
  * sharpness the GPU never even struggled to render; on a 5K display it still leaves millions more
@@ -311,9 +339,10 @@ export function rayBoxIntersection(origin: Vec3, direction: Vec3, min: Vec3, max
 }
 
 /**
- * Issue 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it") — whether
- * a local-space ray hits the globe body's own analytic hit-test proxy at a given `unfold`, or
- * `null` for a miss. `Globe.tsx`'s `GlobeSphere` overrides its mesh's own `raycast` with this
+ * Whether a local-space ray hits the globe body's own analytic hit-test proxy at a given
+ * `unfold`, or `null` for a miss — without it, a click/tap anywhere on the sphere or map itself
+ * falls through to the backdrop's own click-to-collapse handler. `Globe.tsx`'s `GlobeSphere`
+ * overrides its mesh's own `raycast` with this
  * (transforming the click ray into local space first): `globeGeometry.ts`'s grid deliberately
  * carries no `position` attribute (every vertex is computed on the GPU from `aLonLat`), so
  * three.js's own default triangle-level raycast always reports a miss there — the same "no

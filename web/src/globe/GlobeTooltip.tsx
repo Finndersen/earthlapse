@@ -251,7 +251,16 @@ export function useGlobeHitTest({
       if (event.pointerType === 'touch') return
       applyTarget(resolve(event.clientX, event.clientY))
     }
-    const onPointerLeave = (): void => applyTarget(null)
+    // Touch pointers only ever "leave" because the finger lifted, which fires this immediately
+    // after `onPointerUp` — a real hover-device leave, not a dismissal gesture. Clearing here for
+    // touch would erase the target `onPointerUp` just set on every single tap, leaving a tap-to-
+    // dismiss-on-nothing gesture as the only thing that ever shows a tooltip at all. Touch
+    // dismissal already has its own path: `onPointerUp` resolving to nothing (a tap on empty
+    // space) already calls `applyTarget(null)` there.
+    const onPointerLeave = (event: PointerEvent): void => {
+      if (event.pointerType === 'touch') return
+      applyTarget(null)
+    }
     const onPointerDown = (event: PointerEvent): void => {
       pressStart.x = event.clientX
       pressStart.y = event.clientY
