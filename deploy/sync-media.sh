@@ -34,7 +34,11 @@ if head -c 40 "$MEDIA_DIR/manifest.json" | grep -q 'git-lfs'; then
   exit 1
 fi
 
-COMMON=(--fast-list --transfers 16 --checkers 32 --exclude '.claude/**' --exclude '.gitkeep')
+# `hyde_cleared_land` is curated and kept in Git LFS but carries no `LayerSpec`, so no manifest
+# entry ever references its textures and nothing fetches them (pipeline/publish.py says how to
+# re-enable the layer). Excluded here so the bucket does not carry 73 unreachable frames.
+COMMON=(--fast-list --transfers 16 --checkers 32 --exclude '.claude/**' --exclude '.gitkeep'
+        --exclude 'textures/hyde_cleared_land/**')
 
 echo "==> media (immutable, 1 year)"
 rclone copy "$MEDIA_DIR" "$REMOTE$R2_BUCKET" \

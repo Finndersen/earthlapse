@@ -49,4 +49,5 @@ web/CLAUDE.md
 # Tooling scratch
 .claude/
 Claude outputs/
+scratch/
 *.log
