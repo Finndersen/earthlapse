@@ -288,8 +288,13 @@
     min-width: 0;
   }
 
+  /* `flex: 1 1 auto` with `min-width: 0`, not `flex: none`: a digest card's date can be a range
+     ("15 years ago – 10 years ago"), wide enough on its own to starve `.label` of every pixel of
+     row width when this can't shrink — its own `overflow: hidden`/`text-overflow: ellipsis`
+     (above) only ever applies once this is actually allowed to be narrower than its content. */
   .detail {
-    flex: none;
+    flex: 1 1 auto;
+    min-width: 0;
     height: auto;
   }
 

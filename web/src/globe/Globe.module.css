@@ -343,17 +343,28 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* The overlay legend panel (docs/GLOBE.md §10): top-left, the same corner `.closeButton` mirrors
-   top-right. The Globe/Map toggle lives below the sphere/map now (`.viewModeGroup`'s own doc
-   comment), not stacked beneath this panel, so its top offset matches `.closeButton`'s directly.
-   Narrower than
-   a phone viewport minus its own left offset (`max-width`), so a long hint line wraps rather than
-   pushing off the (also ~400px) right edge of a phone viewport. */
-.legendGroup {
+/* The top-left overlay chrome (docs/GLOBE.md §10, ADR-041 item 7): the `<Legend>` panel (desktop
+   only — `Globe.tsx` never renders it on a phone viewport) stacked with `<OverlaySelect>`, which
+   renders on both. Top-left, the same corner `.closeButton` mirrors top-right. The Globe/Map
+   toggle lives below the sphere/map now (`.viewModeGroup`'s own doc comment), not stacked beneath
+   this panel, so its top offset matches `.closeButton`'s directly. `Globe.tsx` owns this
+   positioning wrapper directly rather than `<Legend>` positioning itself, so the stack holds
+   together even when `<Legend>` renders nothing (no visible row) or doesn't render at all (phone). */
+.legendStack {
   position: absolute;
   top: clamp(16px, 2.4vw, 34px);
   left: clamp(16px, 3vw, 48px);
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* `<Legend>`'s own rows, unpositioned — `.legendStack` above supplies the panel's actual place in
+   the chrome. `max-width` keeps a long hint line wrapping rather than pushing off the right edge
+   of a narrower-than-desktop window (a tablet width still above the phone breakpoint, where this
+   panel does still render). */
+.legendGroup {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -417,56 +428,6 @@
 .legendToggleButton[aria-pressed='true'] {
   color: var(--hud-accent, #e8b06a);
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
-}
-
-/* Compact variant (docs/GLOBE.md §10): single-line rows with a short hint below,
-   not the desktop card's wrapping paragraph — see Legend.tsx's own doc comment. `top: 86px` clears
-   the shell's time/era title at the ~400px phone floor (a long geological-age or "N years ago"
-   string, centred, promoted above this backdrop at `z-index: 60`, `ShellLayout.module.css`). */
-.legendGroupCompact {
-  position: absolute;
-  top: 86px;
-  left: clamp(16px, 3vw, 48px);
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  /* Narrow enough to clear the era shortcuts, which are centred and start around x=117 at the
-     ~390px phone floor. The stacked header below is what lets it be this narrow. */
-  max-width: 104px;
-}
-
-/* Label above, On/Off beneath — not the desktop row's label-and-toggle-on-one-line, which needs
-   width this panel no longer has. */
-.legendRowCompact .legendRowHeader {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.legendRowCompact {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 5px 9px;
-  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
-  border-radius: 8px;
-  background: rgba(3, 4, 6, 0.45);
-}
-
-/* The compact legend's hint is read, never drawn (`Legend.tsx`'s own comment on why it stays in
-   the accessibility tree). Clipped rather than `display: none`, which would take it out of the
-   tree along with the `aria-describedby` that points at it. */
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .legendHint {
@@ -614,8 +575,8 @@
    backdrop's own `z-index: 50`, so it paints over rather than being clipped by anything here)
    can run wide enough (a long geological-age or "N years ago" string, centred) to reach this
    panel's own default top-left position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
-   (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides `compact`
-   for `<Legend>`.
+   (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides whether
+   `<Legend>` renders at all.
    No per-breakpoint vertical nudge is needed here any more: `.orbFitFrameSphere`'s and
    `.orbFitFrameMap`'s own `margin-top` already centre each fit target in the shell's *real*,
    live-measured gap (`--chrome-gap-top`/`--chrome-gap-height`) at every width and height,
@@ -623,17 +584,10 @@
    replaced existed only to patch that formula up for viewports its flat guessed constants didn't
    already fit. */
 
-/* The top-left legend is fixed in place regardless of its own size, while the sphere/map box is
-   centred — so on any viewport narrow enough for a *tall* box to still reach a good way up and to
-   the left (a portrait phone's generous vertical gap does this well past the narrowest widths),
-   the box's own radius, not just its centre, can reach back under the legend. Short of exact
-   circle-vs-rectangle geometry, the only way to guarantee no overlap is to keep the box's own top
-   edge clear of the legend's own bottom edge, not just clear of the title — i.e. treat
-   `--overlay-clear-bottom` (`Globe.tsx`'s own measurement of the legend's real drawn bottom edge)
-   as a second candidate top boundary alongside `--chrome-gap-top` and take whichever is lower,
-   `usable-top`, then size against the shrunk remainder down to the timeline (`--chrome-gap-top` +
-   `--chrome-gap-height`, unaffected). Scoped to the same 760px phone breakpoint
-   `useIsPhoneViewport` and `<Legend>`'s own `compact` prop already use. */
+/* `Globe.tsx` never renders `<Legend>` on a phone viewport at all, but `<OverlaySelect>` does
+   (ADR-041 item 7) — it is the only overlay control there. So the top-left corner still needs
+   clearing on a phone, just against `--overlay-clear-bottom` alone rather than a full legend
+   panel. Scoped to the same 760px phone breakpoint `useIsPhoneViewport` uses. */
 @media (max-width: 760px) {
   .backdrop {
     /* Bigger than the desktop 40px: this is the one control that gets a viewer back out of the
@@ -643,11 +597,9 @@
   }
 
   .orbFitFrameSphere {
-    /* The legend is not a top boundary here, unlike every wider viewport: compact, it is a ~104px
-       panel in the left corner, while the drawn sphere is ~76% of this frame's width and centred
-       — at the phone floor it starts around x=110, clear of the panel's right edge. Clamping to
-       the panel's bottom cost ~30px of height to an overlap that does not happen. */
-    --usable-top: var(--chrome-gap-top, 120px);
+    /* The lower of the chrome gap's own top and the overlay stack's real drawn bottom plus a gap
+       — the same `max()` `.orbFitFrameMap`'s own wider-breakpoint rule below already uses. */
+    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
 
     /* `--bottom-overlay-reserve` (ShellLayout.module.css, phone + expanded only) keeps the event
        strip and the zoom rocker above it free at the bottom, the same way `--usable-top` keeps
@@ -665,16 +617,21 @@
     margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--expanded-size)) / 2);
   }
 
-  /* Top-left, into the space beside the centred title that nothing else claims on a phone. It
-     used to sit centred just above the timeline, where the event strip drew straight over it.
-     The legend below moves down to make room rather than this stacking on top of it. */
+  /* Top-right, immediately left of the ✕: both are corner controls on the same row as the
+     centred title, so the toggle costs the expanded sphere no height of its own (unlike the
+     base rule's bottom-of-sphere placement) — `ShellLayout.module.css`'s own `.eraShortcuts`
+     phone rule is what actually frees that space, by pulling the shortcuts row out of `.title`'s
+     flow entirely. It used to sit top-left (this file's own git history), which is now the
+     overlay selector's corner (no `<Legend>` on a phone) rather than this toggle's. */
   .viewModeGroup {
     top: clamp(16px, 2.4vw, 34px);
     bottom: auto;
-    left: clamp(16px, 3vw, 48px);
-    /* Same box as `.closeButton` opposite, contents centred in it: sharing only a top edge
-       leaves this shorter pill visibly riding high against that button and the time title
-       between them. */
+    left: auto;
+    /* `.closeButton`'s own right offset plus its own width plus a real gap between the two
+       pills. */
+    right: calc(clamp(16px, 3vw, 48px) + var(--corner-control-size, 54px) + 8px);
+    /* Same box height as `.closeButton` opposite, contents centred in it: sharing only a top
+       edge leaves this shorter pill visibly riding high against that button. */
     height: var(--corner-control-size);
     justify-content: center;
     transform: none;
@@ -767,46 +724,6 @@
   .zoomButton {
     transition: none;
   }
-}
-
-/* The population-density colour key (DensityRampKey.tsx), under the "Human civilisation" toggle's
-   own hint. Deliberately small: it is a scale for one overlay, not a second legend panel. The
-   tick row is positioned rather than flex-spaced because the ticks sit at the ramp's own
-   log positions, which are not evenly spread. */
-.rampKey {
-  position: relative;
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.rampBar {
-  height: 7px;
-  border-radius: 3px;
-  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
-}
-
-.rampTicks {
-  position: relative;
-  height: 11px;
-}
-
-.rampTick {
-  position: absolute;
-  transform: translateX(-50%);
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 8px;
-  line-height: 11px;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-  white-space: nowrap;
-}
-
-.rampUnit {
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 8px;
-  letter-spacing: 0.04em;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
 /* The shared globe tooltip (GlobeTooltip.tsx), drawn through drei's `Html` at the hovered

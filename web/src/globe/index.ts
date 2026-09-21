@@ -47,6 +47,11 @@ export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
 export { isPoleVisible, poleDirection, POLE_VISIBILITY_MARGIN } from './poles'
 export type { PoleId } from './poles'
+// The globe's single raster-overlay slot (ADR-041): the closed registry `Experience.tsx` reads to
+// resolve which published layer each selectable kind binds, and `OverlaySelect` reads to render
+// its options.
+export { GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS } from './overlay'
+export type { GlobeOverlayKind } from './overlay'
 // Sphere<->Equal Earth map projection (ADR-033), exported for lat/lon-placed overlays drawn on
 // top of both the globe and the map.
 export {

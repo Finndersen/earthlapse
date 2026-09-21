@@ -16,20 +16,16 @@ describe('supportsBasemapT1', () => {
 })
 
 describe('selectBasemapTier', () => {
-  it('is T0 whenever the orb is minimised, regardless of device', () => {
-    expect(selectBasemapTier(false, false, true)).toBe('basemap_t0')
-    expect(selectBasemapTier(false, true, true)).toBe('basemap_t0')
+  it('is T0 whenever the orb is minimised, regardless of GPU capability', () => {
+    expect(selectBasemapTier(false, true)).toBe('basemap_t0')
+    expect(selectBasemapTier(false, false)).toBe('basemap_t0')
   })
 
-  it('is T0 expanded on a phone, even when the GPU could hold T1', () => {
-    expect(selectBasemapTier(true, true, true)).toBe('basemap_t0')
+  it('is T0 expanded when the GPU cannot hold a 4096px texture', () => {
+    expect(selectBasemapTier(true, false)).toBe('basemap_t0')
   })
 
-  it('is T0 expanded on desktop when the GPU cannot hold a 4096px texture', () => {
-    expect(selectBasemapTier(true, false, false)).toBe('basemap_t0')
-  })
-
-  it('is T1 only when expanded, not a phone, and the GPU supports it', () => {
-    expect(selectBasemapTier(true, false, true)).toBe('basemap_t1')
+  it('is T1 once expanded, on any device whose GPU supports it', () => {
+    expect(selectBasemapTier(true, true)).toBe('basemap_t1')
   })
 })

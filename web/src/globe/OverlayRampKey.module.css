@@ -1,0 +1,40 @@
+/* Self-contained copy of Globe.module.css's `.rampKey`/`.rampBar`/`.rampTicks`/`.rampTick`/
+   `.rampUnit` block — this component owns its own styling rather than importing CSS Modules
+   classes across files. Deliberately small: it is a scale for one overlay, not a second legend
+   panel. The tick row is positioned rather than flex-spaced because ticks sit at the ramp's own
+   positions, which are not evenly spread. */
+.rampKey {
+  position: relative;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rampBar {
+  height: 7px;
+  border-radius: 3px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.rampTicks {
+  position: relative;
+  height: 11px;
+}
+
+.rampTick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8px;
+  line-height: 11px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  white-space: nowrap;
+}
+
+.rampUnit {
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}

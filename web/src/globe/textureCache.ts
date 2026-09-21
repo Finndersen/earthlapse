@@ -24,6 +24,22 @@ const CACHE_CAPACITY = 16
 const cache = new LruCache<THREE.Texture>(CACHE_CAPACITY, disposeTexture)
 const inFlight = new Map<string, Promise<THREE.Texture>>()
 
+/** The live renderer's own anisotropic-filtering ceiling (`WebGLRenderer.capabilities.
+ *  getMaxAnisotropy()`), applied to every texture fetched from here on. Defaults to `1` (three.js's
+ *  own default, i.e. no anisotropic filtering) until `GlobeSphere` — the one place in `web/src/globe/`
+ *  with `useThree()` access to the renderer — reports the real value via `setMaxAnisotropy` on
+ *  mount; a fetch that resolves before that first report still gets a valid texture, just without
+ *  the sharpening. Module-level rather than threaded through every `loadTexture` call site: the
+ *  cache is a module singleton already (`PLACEHOLDER_TEXTURE`), and callers here have no renderer
+ *  of their own to pass one from (`useGlobeTexturePair` runs outside the `<Canvas>` tree). */
+let maxAnisotropy = 1
+
+/** Sharpens oblique sampling near the sphere's limb; does little for a flat, near-perpendicular
+ *  view — a small, honest win, not a resolution upgrade. */
+export function setMaxAnisotropy(value: number): void {
+  maxAnisotropy = value
+}
+
 /** A 1x1 opaque black texture bound to the shader's samplers while the real pair is still
  *  loading. `uHasData` is 0 in that state so its color never actually shows — this exists
  *  only so WebGL always has a valid texture object bound, never `null`. */
@@ -47,6 +63,7 @@ async function fetchTexture(url: string): Promise<THREE.Texture> {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.minFilter = THREE.LinearFilter
   texture.generateMipmaps = false
+  texture.anisotropy = maxAnisotropy
   // The fragment shader's UV convention (see shaders.ts) assumes v=0 samples row 0 of the
   // source image (the top, i.e. north). An ImageBitmap is uploaded unflipped; three.js only
   // honours flipY for other image sources, so this states the convention rather than

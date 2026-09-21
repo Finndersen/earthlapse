@@ -48,6 +48,18 @@ import * as THREE from 'three'
 
 import { ByteCappedCache } from './byteCappedCache'
 
+/** The live renderer's own anisotropic-filtering ceiling, applied to every texture fetched by
+ *  every cache instance this module creates — see `textureCache.ts`'s own `setMaxAnisotropy` for
+ *  why this is a module-level "register once" value rather than a per-call parameter, and why a
+ *  fetch that resolves before `GlobeSphere` reports it just gets the default of `1` (no anisotropic
+ *  filtering). One value shared by every instance (basemap, density): they're rendered by the same
+ *  renderer, so they share the same ceiling. */
+let maxAnisotropy = 1
+
+export function setHumanEraMaxAnisotropy(value: number): void {
+  maxAnisotropy = value
+}
+
 export interface HumanEraTextureCache {
   loadTexture(url: string): Promise<THREE.Texture>
   /** `options.aggressive` is accepted to match `useGlobeTexturePair`'s `GlobeTextureCache` shape
@@ -191,6 +203,7 @@ export function createHumanEraTextureCache(options: CreateHumanEraTextureCacheOp
     texture.colorSpace = colorSpace
     texture.minFilter = mipmapStrategy === 'none' ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter
     texture.magFilter = THREE.LinearFilter
+    texture.anisotropy = maxAnisotropy
     switch (mipmapStrategy) {
       case 'highQuality':
         // Own mip chain, not WebGLRenderer's implicit gl.generateMipmap() — see

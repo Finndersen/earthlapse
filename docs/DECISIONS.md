@@ -6536,3 +6536,199 @@ verified failing without this wiring. `web/scripts/qa/shots.mjs` gains
 cluster, the shipped threshold's own largest; run against `CLUSTER_SPAN = 0` first and confirmed
 failing — `moreCount` read 0 there instead of 1) and one existing shot's description is corrected
 to describe the digest cards the fix now produces at that shot's own `t` values.
+
+---
+
+## ADR-041 — The globe's overlay slot becomes a one-of-N selector, and cleared land returns
+
+**Status:** accepted — 2026-09-21. Amends ADR-031 and its amendment.
+
+**Context.** ADR-031's amendment disabled the cleared-land overlay and stopped publishing it: with
+only one overlay slot, cleared land and population density composited into each other and muddied.
+Two translucent washes over the same pixels tell adjacent stories. The layer was never deleted —
+all 73 frames stayed in Git LFS and on R2 — only unpublished. The question this ADR settles is how
+a second overlay can exist at all.
+
+**Decision.**
+
+1. **One-of-N, not stacked.** The globe paints exactly one raster overlay at a time; alternatives
+   must never composite. This is what makes a second overlay safe, and it is the constraint the
+   rest of the design follows from. `GlobeOverlayKind` in `web/src/globe/overlay.ts` is the closed
+   set (`'population_density' | 'cleared_land'`); "off" is the absence of a selection
+   (`GlobeOverlayKind | null`), deliberately NOT a member of the union — an off state with a
+   `layerId` and a ramp would be a state that cannot be valid.
+
+2. **The shader slot is kind-dispatched, not duplicated.** `shaders.ts`'s `uDensity*` uniforms
+   became `uOverlay*` — the slot was never density-specific, only its only occupant was — plus a
+   new `uniform int uOverlayKind` and one `overlayColorAt(float encoded)` dispatch. The shader
+   already sampled the overlay as a weighted dot product against a `vec3` uniform
+   (`uOverlayChannel`), so cleared land's severity collapse is the same instruction with different
+   weights, not a new sampling path. Genuinely new is only the linear decode path (a plain
+   fraction, versus density's log-encoded byte against `d_max`) and a second ramp
+   (`CLEARED_LAND_RAMP_GLSL`, generated from `clearedLand.ts`'s stop list the same way
+   `DENSITY_RAMP_GLSL` already is). The dispatch is a small closed `if`/fallthrough matching the
+   existing `GlobeEffectKind`/`MipmapStrategy` convention, not a generic runtime plugin
+   abstraction. Zero means population density because WebGL zero-inits uniforms, so a caller that
+   sets nothing reproduces the previous behaviour exactly; density is also the dispatch's
+   fallthrough branch for the same reason.
+
+3. **Cleared land collapses to one severity scalar — blend the data, not the colours.** The earlier
+   failed attempt (ADR-031) composited three hues additively and produced intermediate colours
+   nobody designed. `clearedLand.ts`'s `CLEARED_LAND_WEIGHTS = [1, 0.6, 0]`, dotted against the
+   published channels (R cropland, G pasture + converted rangeland, B natural rangeland): cropland
+   full severity, pasture/converted rangeland weighted 0.6 because it is modified but not tilled.
+
+4. **Natural rangeland is excluded, and must not be blended back in.** Measured at the 2015 CE
+   frame: cropland 7.96% of land area at 29.5% mean cell coverage where present;
+   pasture + converted rangeland 6.66% / 22.8%; natural rangeland 6.36% / **49.8%**. So natural
+   rangeland occupies about half a cell where present versus cropland's under a third — on a shared
+   severity scale the least-modified land would paint the most intensely, precisely the
+   Sahel/savanna false positive that HYDE's own pasture/rangeland split exists to fix (ADR-031).
+   An earlier draft of this reasoning claimed rangeland would "swamp the map" by area, and
+   measurement refuted that — it covers 6.36% versus cleared land's 9.62%, i.e. less. The correct
+   argument is per-cell intensity, not extent. Future path, which the selector makes cheap: natural
+   rangeland becomes its own entry in `GLOBE_OVERLAYS`, never a co-tint under cleared land.
+
+5. **Colour: oxblood-anchored ramp, linear in severity.** `clearedLand.ts`'s `CLEARED_LAND_RAMP`
+   stops (severity, hex, alpha): `(0.015, #6b3330, 0.00) (0.05, #7c3632, 0.22) (0.20, #93402f, 0.42)
+   (0.45, #ad4e32, 0.60) (0.75, #c25e38, 0.74) (1.00, #d6733f, 0.88)`. Alphas trace
+   `severity ** 0.45 * 0.88`, front-loaded so sparse pre-industrial clearing (1500 CE Europe) stays
+   visible; the first stop is a floor below which nothing paints, since HYDE's modelling noise at
+   ~1% of a cell is not signal. Linear in severity, unlike density's log spacing, because this is a
+   plain fraction over a narrow effective range rather than four orders of magnitude — most land
+   sits between severity 0.1 and 0.5.
+   `#7c3632` is the colour that means worked ground — tilled earth reads as red-brown soil — and it
+   separates from the graded Natural Earth II basemap far better than the gold/ochre tint it
+   replaced, which matched desert in hue and lightness alike.
+   **Measured after the fact against the rendered 2015 CE frame, because the claim made when this
+   colour was chosen was stronger than the evidence supports.** Over the vegetated land the overlay
+   mostly covers (Sahel khaki-green) separation is unambiguous: hue shifts ~45° (basemap ~78°
+   yellow-green → wash ~34° orange-rust). Over true desert tan it is not: ~9,400 unwashed
+   Sahara-like pixels (hue ~41°, saturation 0.27, lightness 0.63) against ~12,800 washed pixels
+   (hue ~34°, saturation 0.35, lightness 0.44) give only **~7° of hue separation** — the same
+   orange/tan family — with the real separation carried by **luminance, ~18 points darker**, and
+   modestly by saturation. The honest claim is therefore luminance-led separation: strong over
+   vegetation, adequate but not clean over desert. This ADR originally asserted separation "on both
+   hue and luminance"; that half-holds, and is corrected here rather than quietly, so the same
+   over-claim is not re-derived the next time a colour is picked for this overlay. Lightness
+   and chroma rise together toward rust so intensity reads in greyscale and a high-alpha texel
+   never muddies into terrain shadow. Rejected: sienna and terracotta (blend into terrain), umber
+   (reads as terrain shadow), vermillion (reads as a hazard map).
+   **Correction, recorded because it matters for future readers:** an earlier draft rejected
+   candidate colours for overlapping the population-density ramp's violet-magenta-pink family. That
+   was wrong and is not a reason to reject a colour — only one overlay ever paints at a time (item
+   1), so there is no in-frame ambiguity. The only residual cost of palette overlap is at-a-glance
+   mode recognition (knowing which overlay you left on without looking at the control), a modest
+   benefit, not a constraint.
+
+6. **Control: a native `<select>`.** `OverlaySelect.tsx` — its closed footprint does not grow with
+   N, it gets full keyboard and screen-reader support for free, and the open list costs zero page
+   space. Sized for the phone first, at a 390px viewport floor, because that is where space is
+   scarce. Rejected: an icon row (blows a ~104-140px budget at N>=4 at the 390px floor) and a
+   cycling button (tap count grows with N). Accepted trade-off: the open option list is unstyleable
+   OS chrome, so the colour swatch sits beside the *closed* control and the ramp key
+   (`OverlayRampKey.tsx`) below it, not inside the list. `null` (an explicit "None" option) is
+   mapped to a private DOM-boundary sentinel (`NONE_OPTION_VALUE`), never let leak past `onChange`
+   — `GlobeOverlayKind` itself stays the closed set item 1 defines.
+
+7. **The overlay selector and the People toggle are meant to be orthogonal.** `humanOn` currently
+   gates both the arrivals/cities/markers layer AND the density wash together. The intended
+   decomposition splits them: People keeps governing arcs, city dots and inhabited markers; the
+   selector alone owns the raster wash, so turning People off no longer hides whichever overlay is
+   selected — the wash is a layer in its own right, not a sub-detail of the arcs.
+   `DensityRampKey` is meant to be replaced by `OverlayRampKey`, which takes a kind and generates
+   its gradient and ticks from that kind's own ramp stops (`OverlayRampKey.tsx`'s `RAMPS` map), so
+   the key still cannot claim a colour the globe does not paint. Cleared land's key is labelled
+   "share of land worked" rather than a percentage, because severity is a *weighted* share
+   (`cropland + 0.6 x (pasture + converted rangeland)`) and a "% cleared" label would overclaim.
+   The raster's manifest lookup is keyed off the selected kind's own `layerId`, so
+   `GlobeRasterLayers` carries a map of overlay rasters rather than a single named density field.
+   The `OverlaySampling` union is consumed by an exhaustive switch with no default case, so a third
+   overlay cannot silently fall through to log decoding.
+
+8. **Pipeline: re-enabled, nothing regenerated.** `pipeline/publish.py` gains back a `LayerSpec`
+   for `hyde_cleared_land` (colour-only, `chartable=False`, no `raster_encoding` — its channels are
+   plain cell fractions the web collapses, not a physical quantity to decode).
+   `deploy/sync-media.sh`'s `--exclude 'textures/hyde_cleared_land/**'` is removed. All 73 frames
+   already existed in Git LFS and were never deleted from R2, so no texture was regenerated and no
+   generation budget was spent (ADR-005's pinning rule is untouched). Published size, verified on
+   disk (`data/media/textures/hyde_cleared_land/`): 73 frames, 1024x512, 6.4 MB.
+
+**What this deliberately does not address.**
+- **Overlay texture resolution.** Both HYDE overlays publish at 1024x512 against a native 4320x2160
+  grid, and the basemap T1 tier will expose that softness. Left alone on purpose: they are streamed
+  time sequences, so doubling linear resolution quadruples bandwidth during scrubbing on mobile
+  (~62KB to ~250KB per frame), and HYDE is modelled data on ~10km cells — crispness would imply
+  precision it does not have. Terrain sharp / overlay soft is the intended hierarchy.
+- **Natural rangeland has no representation at all** until it earns its own selector entry
+  (item 4).
+- **HYDE 3.3 is not adopted.** It is CC BY-NC-SA 4.0; this project ships HYDE 3.2 (CC0 / CC BY 3.0).
+
+**Consequences.** Verified against `git status --porcelain` and `git diff --stat` at the time of
+this ADR, not assumed from the brief that prompted it:
+- **New:** `web/src/globe/overlay.ts` (+ `overlay.test.ts`), `web/src/globe/clearedLand.ts`
+  (+ `clearedLand.test.ts`), `web/src/globe/OverlaySelect.tsx` (+ `.module.css`, `.test.tsx`),
+  `web/src/globe/OverlayRampKey.tsx` (+ `.module.css`).
+- **Changed:** `web/src/globe/shaders.ts` (uniform rename + dispatch), `web/src/globe/shaders.test.ts`
+  (coverage for the rename and dispatch), `web/src/globe/density.ts` (gains `DENSITY_SWATCH_HEX`),
+  `pipeline/publish.py` (`hyde_cleared_land` `LayerSpec` restored), `deploy/sync-media.sh` (R2
+  exclude removed), `tests/test_pipeline.py` (cleared-land publish test flipped from
+  "not published" to "published, colour-only").
+- **Changed (wiring):** `web/src/globe/Globe.tsx` (overlay state split from `humanOn`, uniform
+  wiring, renders `OverlaySelect`), `web/src/globe/blend.ts` (`GlobeRasterLayers` carries an
+  overlay-raster map keyed by layer id), `web/src/app/Experience.tsx` (builds that map from
+  `GLOBE_OVERLAY_KINDS`), `web/src/globe/density.ts` and `overlay.ts` (the `t`-domain helpers
+  `overlayStrengthAt`/`overlayBlendAt`/`overlayHasDataAt` move to `overlay.ts`, since they were
+  always generic over `RasterData` and apply to either overlay unchanged).
+- **Removed:** `web/src/globe/DensityRampKey.tsx` and its `.rampKey`/`.rampBar`/`.rampTicks`/
+  `.rampTick`/`.rampUnit` rules in `Globe.module.css`, superseded by `OverlayRampKey`.
+- **Guard:** `shaders.test.ts` gains a cross-check that reads `Globe.tsx` as source and asserts
+  every `uniforms-uX-value` prop names a uniform the fragment shader declares. A uniform prop is an
+  untyped JSX string and the shader is an opaque template literal, so renaming one side leaves the
+  other silently binding nothing — a green suite over a globe that has quietly stopped painting a
+  layer. This was written against the half-renamed tree and observed failing there first.
+
+## ADR-042 — Phone-expanded gets the T1 basemap, and every globe texture gets anisotropy
+
+**Status:** accepted — 2026-09-21. Amends ADR-030.
+
+**Context.** ADR-030 gated the human-era basemap's higher tier (T1, 4096×2048) to non-phone
+expanded views, leaving phone-expanded on T0 (2048×1024). That was the conservative choice at the
+time, and it is the wrong one where it matters most: the phone is the device on which the basemap
+is viewed closest to full-bleed. Measured at the roughly 48° of longitude visible across a
+~1080px-wide phone screen, T0 supplies about **273 source pixels** to fill that view — a ~4×
+upscale — where T1 supplies about **546**, a ~2×. That is the softness visible when zooming the
+globe on a phone. Separately, `texture.anisotropy` was never set anywhere in `web/src/globe/`, so
+every globe texture sampled at the renderer default of 1.
+
+**Decision.**
+
+1. **`selectBasemapTier` no longer takes `isPhone`.** It now reads
+   `expanded && t1Available ? 'basemap_t1' : 'basemap_t0'`. The only remaining gate is real GPU
+   capability — `supportsBasemapT1(maxTextureSize >= 4096)` — not device class. ADR-030's own text
+   already pre-authorised this direction ("whoever wants a desktop-zoomed T2 tier … can add either
+   later without a contract change"), so this amends a default rather than a contract. Cost:
+   ~1 MB additional download on expand and ~43 MB GPU with mipmaps, within the budget ADR-030
+   already accepted for desktop. The asset itself is unchanged — T1 was already built, published
+   and on R2, so nothing was regenerated.
+
+2. **Anisotropy is set from the live renderer.** `textureCache.ts` and `humanEraTextureCache.ts`
+   each hold a module-level value applied to every texture they produce, set once from
+   `gl.capabilities.getMaxAnisotropy()` by the one component with `useThree()` access. Module-level
+   rather than threaded through each call site because the caches are module singletons already
+   and their callers run outside the `<Canvas>` tree, with no renderer to pass. A fetch that
+   resolves before the first report still yields a valid texture, just unsharpened.
+   **Be honest about the size of this win:** anisotropic filtering sharpens *oblique* sampling, so
+   it helps the sphere near its limb and does very little for a flat, near-perpendicular zoomed-in
+   map. It is not a resolution upgrade and should not be described as one.
+
+**What this deliberately does not address.**
+- **The overlay rasters stay at 1024×512** (ADR-041's own "does not address" section has the
+  bandwidth and modelled-precision reasoning). T1 makes the terrain sharper while the overlay wash
+  stays soft; that hierarchy is intended, not an oversight.
+- **No T2 tier.** ADR-030 left the door open for a desktop-zoomed 8192×4096 tier; nothing here
+  builds one.
+
+**Consequences.** Changed: `web/src/globe/deviceTier.ts` (signature loses a parameter) and its
+test, `textureCache.ts`, `humanEraTextureCache.ts`, and `Globe.tsx`'s call site plus the effect
+that reports renderer capability.

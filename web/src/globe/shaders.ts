@@ -4,9 +4,18 @@
  */
 
 import { BASEMAP_GRADE_GAMMA, BASEMAP_GRADE_SATURATION, BASEMAP_GRADE_SCALE } from './blend'
+import { CLEARED_LAND_RAMP_GLSL } from './clearedLand'
 import { DENSITY_RAMP_GLSL } from './density'
 import { glslFloat } from './glsl'
+import { overlayKindUniform } from './overlay'
 import { PROJECTION_GLSL } from './projection'
+
+// GLSL int constant, generated rather than retyped so it cannot drift from overlay.ts's own
+// mapping. glslFloat is the wrong helper for an int: it always appends a decimal point.
+const OVERLAY_KIND_CLEARED_LAND_VALUE = overlayKindUniform('cleared_land')
+if (!Number.isInteger(OVERLAY_KIND_CLEARED_LAND_VALUE)) {
+  throw new Error('overlayKindUniform must return an integer for a GLSL int constant')
+}
 
 /** Radius of the atmosphere shell, as a multiple of the planet's. */
 export const ATMOSPHERE_SCALE = 1.15
@@ -94,17 +103,20 @@ uniform float uGiantImpactFlash;
 uniform sampler2D uBasemapTex;
 uniform float uBasemapStrength;
 
-// The human-civilisation population-density overlay (ADR-031 amendment): two bracketing
-// hyde_population_density frames and their mix, the channel the quantity lives in
-// (uDensityChannel, a mask rather than a branch), the published encoding ceiling, and the
-// overlay's fade-in weight. All zero-initialised by WebGL, so a manifest without the layer
-// reproduces the plain basemap exactly.
-uniform sampler2D uDensityBefore;
-uniform sampler2D uDensityAfter;
-uniform float uDensityMix;
-uniform vec3 uDensityChannel;
-uniform float uDensityDMax;
-uniform float uDensityStrength;
+// The globe's single raster-overlay slot (ADR-031 amendment): exactly one of population
+// density or cleared land at a time, chosen by uOverlayKind (overlayKindUniform in
+// overlay.ts; 0 = density, WebGL's zero-init default). uOverlayChannel is the per-channel
+// weight vector both kinds' collapses are dotted against. The two bound frames mix in
+// encoded space (uOverlayMix) — the same geometric-mean compromise the box-filtered mip
+// chain already makes, monotonic either way. uOverlayStrength is 0 outside the active
+// kind's domain, so this whole block is a no-op there.
+uniform int uOverlayKind;
+uniform sampler2D uOverlayBefore;
+uniform sampler2D uOverlayAfter;
+uniform float uOverlayMix;
+uniform vec3 uOverlayChannel;
+uniform float uOverlayDMax;
+uniform float uOverlayStrength;
 
 // docs/GLOBE.md §10 (ADR-030 amendment): the basemap tone-match grade — one TS constant each
 // (blend.ts's gradeBasemapColor doc comment has the measurements and reasoning), interpolated
@@ -120,6 +132,19 @@ vec3 gradeBasemapColor(vec3 color) {
 }
 
 ${DENSITY_RAMP_GLSL}
+${CLEARED_LAND_RAMP_GLSL}
+
+const int OVERLAY_KIND_CLEARED_LAND = ${OVERLAY_KIND_CLEARED_LAND_VALUE};
+
+// Dispatches the overlay slot's single encoded scalar to the active kind's own ramp. Density
+// is the fallthrough branch deliberately, so an unrecognised (or zero-init) kind degrades to
+// today's single-overlay behaviour rather than to nothing.
+vec4 overlayColorAt(float encoded) {
+  if (uOverlayKind == OVERLAY_KIND_CLEARED_LAND) {
+    return clearedLandRampAt(clamp(encoded, 0.0, 1.0));
+  }
+  return densityRampAt(decodeLogDensity(encoded, max(uOverlayDMax, 1.0)));
+}
 
 // Wall-clock seconds, *not* t: drives the magma-ocean crack shimmer and water-world steam
 // drift. Non-informational decoration, the same precedent as Globe.tsx's own auto-rotate
@@ -230,18 +255,18 @@ void main() {
   // read as a brightness jump.
   baseColor = mix(baseColor, gradeBasemapColor(texture2D(uBasemapTex, uv).rgb), uBasemapStrength);
 
-  // The density overlay, over the basemap and under everything older: decoded back to real
-  // people per square km (never treated as a colour, see density.ts), then run through the
-  // shared ramp. The two frames mix in encoded space — the same geometric-mean compromise the
-  // box-filtered mip chain already makes, and monotonic either way. uDensityStrength is 0 outside
-  // the layer's domain, so this is a no-op everywhere else.
-  float densitySample = mix(
-    dot(texture2D(uDensityBefore, uv).rgb, uDensityChannel),
-    dot(texture2D(uDensityAfter, uv).rgb, uDensityChannel),
-    uDensityMix
+  // The active overlay, over the basemap and under everything older. overlayColorAt dispatches
+  // on uOverlayKind: density decodes its log-encoded byte before ramping it, cleared land ramps
+  // its plain fraction directly. The two frames mix in encoded space — the same geometric-mean
+  // compromise the box-filtered mip chain already makes, monotonic either way. uOverlayStrength
+  // is 0 outside the active kind's domain, so this is a no-op everywhere else.
+  float overlaySample = mix(
+    dot(texture2D(uOverlayBefore, uv).rgb, uOverlayChannel),
+    dot(texture2D(uOverlayAfter, uv).rgb, uOverlayChannel),
+    uOverlayMix
   );
-  vec4 densityColor = densityRampAt(decodeLogDensity(densitySample, max(uDensityDMax, 1.0)));
-  baseColor = mix(baseColor, densityColor.rgb, densityColor.a * uDensityStrength);
+  vec4 overlayColor = overlayColorAt(overlaySample);
+  baseColor = mix(baseColor, overlayColor.rgb, overlayColor.a * uOverlayStrength);
 
   // G8: blend the active regime(s) over whatever the base look otherwise is. uRegimeWeights
   // sums to 0 outside every regime (base look untouched) and to ~1 in each regime's interior;

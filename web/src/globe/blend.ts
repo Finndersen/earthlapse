@@ -118,11 +118,12 @@ export interface GlobeRasterLayers {
    *  falls back to plain `globeMultiBlendAt` when it's `null`, regardless of `basemapT1`. */
   basemapT0: RasterData | null
   basemapT1: RasterData | null
-  /** HYDE 3.2 population density (ADR-031 amendment), 10,000 BCE - 2015 CE — `null` when the
-   *  layer isn't published. Unlike every other entry here it is an *overlay*, not a base: it
-   *  carries its own published `encoding` and is composited over whatever base is showing
-   *  (`density.ts`). */
-  populationDensity: RasterData | null
+  /** Every raster overlay the globe's single overlay slot can hold (ADR-041), keyed by its own
+   *  published layer id (`GLOBE_OVERLAYS[kind].layerId` in `overlay.ts`) — absent when that
+   *  layer isn't published. Unlike every other entry here these are *overlays*, not a base:
+   *  each carries the wash Globe.tsx composites over whatever base is showing, for whichever
+   *  kind is currently selected. */
+  overlayRasters: ReadonlyMap<string, RasterData>
 }
 
 /** 540-550 Ma: PaleoDEM and Merdith don't place continents identically there (docs/GLOBE.md

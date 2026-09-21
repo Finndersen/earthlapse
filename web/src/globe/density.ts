@@ -1,16 +1,17 @@
 /**
- * The population-density overlay's pure core (ADR-031 amendment): how a published
- * `hyde_population_density` texel decodes to real people per km², what colour that density
- * reads as, when the overlay fades in, and which frames to bind. No three.js, no React — the
- * same pure-core split `blend.ts` and `arcs.ts` follow.
+ * The population-density overlay's pure core: how a published `hyde_population_density` texel
+ * decodes to real people per km² and what colour that density reads as. No three.js, no React —
+ * the same pure-core split `blend.ts` and `arcs.ts` follow. The overlay's fade-in/bind-frame
+ * logic lives in `overlay.ts` now, generic over every kind the globe's single overlay slot can
+ * hold (ADR-041) — this module keeps only what is genuinely population-density-specific.
  *
  * **Decoded honestly, then mapped.** The published texture is a single 8-bit channel holding
  * `round(255 · log10(1 + d) / log10(1 + dMax))` (`pipeline/density_encoding.py`, `dMax = 15,000`
  * people/km²). Nothing here treats that byte as a colour: `decodeLogDensity` (`@/data/curated`,
  * the TS twin of the pipeline's own decoder) turns it back into people/km² first, and
  * `densityRampAt` is defined on *that* quantity, with its stops written in real units. The
- * legend key under the toggle (`DensityRampKey.tsx`) is generated from the same stops, so what
- * the globe paints and what the key claims cannot drift.
+ * selector's legend key (`OverlayRampKey.tsx`) is generated from the same stops, so what the
+ * globe paints and what the key claims cannot drift.
  *
  * **Why this ramp.** A linear-fraction overlay spread thinly across a huge range and earthy
  * ochre/olive tints sit in the same hue family as the terrain underneath — both make an overlay
@@ -41,9 +42,7 @@
  */
 
 import { decodeLogDensity, type RasterChannel, type RasterData } from '@/data/curated'
-import type { GeoTime } from '@/types/layer'
 
-import { globeBlendAt, type GlobeBlend } from './blend'
 import { srgbHexToLinear } from './color'
 import { clamp01 } from './effects/math'
 import { glslFloat } from './glsl'
@@ -53,7 +52,7 @@ import { glslFloat } from './glsl'
 export interface DensityRampStop {
   /** People per km² at which this stop's colour and alpha are reached exactly. */
   density: number
-  /** The stop's colour as authored — what `DensityRampKey.tsx` puts straight into a CSS
+  /** The stop's colour as authored — what `OverlayRampKey.tsx` puts straight into a CSS
    *  gradient, so the key and the globe can only ever show the same ramp. */
   hex: string
   /** `hex` in the linear-light space `GLOBE_FRAGMENT_SHADER` composites in (`color.ts`). */
@@ -107,6 +106,11 @@ export const DENSITY_RAMP: readonly DensityRampStop[] = [
   stop(1500, '#ff7ecb', 0.62),
   stop(8000, '#ffeaf6', 0.85),
 ]
+
+/** The stop a selector swatch or legend key stands for this overlay with: the hot pink at 250
+ *  people/km², the ramp's most recognisable colour and near the middle of its inhabited range.
+ *  Resolved from the stop list rather than retyped, so retuning that stop retunes the swatch. */
+export const DENSITY_SWATCH_HEX = DENSITY_RAMP[4]!.hex
 
 function rampPosition(density: number): number {
   return Math.log10(1 + Math.max(0, density))
@@ -173,52 +177,7 @@ export function densityChannelMask(channel: RasterChannel): [number, number, num
   return [channel === 'r' ? 1 : 0, channel === 'g' ? 1 : 0, channel === 'b' ? 1 : 0]
 }
 
-// ------------------------------------------------------------------------ domain and binding
-
-/**
- * How far past the sequence's own oldest frame (10,000 BCE) the overlay eases in from nothing.
- * The brief's own framing: the density overlay should take over as the arrival arcs finish, and
- * a hard edge exactly at the first frame would pop.
- *
- * Deliberately a real year count, not a warp width: this band sits entirely inside the Holocene,
- * where the symlog axis is close to linear anyway, and it is anchored to a *data* edge rather
- * than to playback. What it shows across the band is the 10,000 BCE frame itself, eased in — at
- * that date HYDE models roughly four million people worldwide, so every texel in the band is at
- * or near the ramp's own floor and the overlay is, correctly, almost nothing to see.
- */
-export const DENSITY_FADE_BAND_YEARS = 2_500
-
-/**
- * The overlay's own weight at `t`: 1 at and below the sequence's oldest frame, easing to 0 across
- * `DENSITY_FADE_BAND_YEARS` older than it, and 0 beyond. Never fades *out* toward the present —
- * HYDE 3.2 ends at 2015 CE and `densityBlendAt` holds that frame, the same "data ends, held
- * after" rule ADR-031 established for cleared land.
- */
-export function densityStrengthAt(data: RasterData, t: GeoTime): number {
-  const oldest = data.frames[data.frames.length - 1]!.t
-  if (t <= oldest) return 1
-  return clamp01((oldest + DENSITY_FADE_BAND_YEARS - t) / DENSITY_FADE_BAND_YEARS)
-}
-
-/**
- * The two frames to bind at `t`, clamped to the sequence's own domain at both ends: the newest
- * frame is held from 2015 CE to the present (the data simply ends), and the oldest frame is what
- * the fade-in band above shows. `null` only once `t` is past the band entirely, which is also
- * exactly when `densityStrengthAt` is 0 — so nothing is ever fetched for a `t` that would not
- * draw it.
- */
-export function densityBlendAt(data: RasterData, t: GeoTime, assetBase: string): GlobeBlend | null {
-  if (densityStrengthAt(data, t) <= 0) return null
-  const newest = data.frames[0]!.t
-  const oldest = data.frames[data.frames.length - 1]!.t
-  return globeBlendAt(data, Math.min(oldest, Math.max(newest, t)), assetBase)
-}
-
-/** Whether the overlay has anything to draw at `t` — the "Human civilisation" legend row reads
- *  this alongside the arrivals' and cities' own equivalents. */
-export function densityHasDataAt(data: RasterData | null, t: GeoTime): boolean {
-  return data !== null && densityStrengthAt(data, t) > 0
-}
+// ------------------------------------------------------------------------------ texel decode
 
 /** A density reading straight from a published raster's own encoding, for a caller holding a
  *  normalised texel (a canvas read, a unit test) rather than a GPU sample. Throws when the layer

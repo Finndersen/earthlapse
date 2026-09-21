@@ -10,8 +10,8 @@
  *  A layer whose own domain doesn't reach the present (`timeDomain[0] > 0` — its newest real
  *  sample sits some years before now, e.g. HYDE 3.2's population total ending 2015 CE) holds
  *  that newest sample for every `t` nearer than it, rather than reading "no data" — the same
- *  "data simply ends, hold" convention the population-density globe overlay already uses
- *  (`web/src/globe/density.ts`'s `densityBlendAt`), annotated "as of <year>" (a calendar year,
+ *  "data simply ends, hold" convention the globe's raster overlays already use
+ *  (`web/src/globe/overlay.ts`'s `overlayBlendAt`), annotated "as of <year>" (a calendar year,
  *  since that reads naturally for a recent date) because silently freezing the number would
  *  misrepresent a 2015 total as a live reading for right now. Driven by the domain, not a layer
  *  id, so this applies to any future layer whose data ends before the present the same way, not

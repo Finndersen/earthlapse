@@ -11,9 +11,7 @@ function row(overrides: Partial<LegendRow> = {}): LegendRow {
   return {
     id: 'cleared-land',
     label: 'Cleared land',
-    compactLabel: 'Land',
     hint: 'Full hint text with a caveat.',
-    compactHint: 'Short hint',
     on: true,
     onChange: vi.fn(),
     visible: true,
@@ -63,22 +61,9 @@ describe('Legend', () => {
     outside.remove()
   })
 
-  it("renders a row's footer inside the row, in the default layout", () => {
+  it("renders a row's footer inside the row", () => {
     render(<Legend rows={[row({ footer: <div data-testid="ramp-key">key</div> })]} />)
     expect(screen.getByTestId('ramp-key')).toBeTruthy()
-  })
-
-  it("omits a row's footer in the compact layout", () => {
-    render(<Legend rows={[row({ footer: <div data-testid="ramp-key">key</div> })]} compact />)
-    expect(screen.queryByTestId('ramp-key')).toBeNull()
-  })
-
-  it('keeps the compact hint readable by a screen reader while showing no hint text', () => {
-    render(<Legend rows={[row({ hint: 'full hint', compactHint: 'short hint' })]} compact />)
-    const group = screen.getByRole('group')
-    const describedBy = group.getAttribute('aria-describedby')
-    expect(describedBy).toBeTruthy()
-    expect(document.getElementById(describedBy ?? '')?.textContent).toBe('short hint')
   })
 
   it('renders nothing extra for a row with no footer', () => {
@@ -86,12 +71,8 @@ describe('Legend', () => {
     expect(container.querySelector('[data-testid="ramp-key"]')).toBeNull()
   })
 
-  it('shows the short label in the compact layout and the full one otherwise', () => {
-    const { unmount } = render(<Legend rows={[row({ label: 'Human civilisation', compactLabel: 'People' })]} compact />)
-    expect(screen.getByText('People')).toBeTruthy()
-    expect(screen.queryByText('Human civilisation')).toBeNull()
-    unmount()
-    render(<Legend rows={[row({ label: 'Human civilisation', compactLabel: 'People' })]} />)
+  it("shows the row's label", () => {
+    render(<Legend rows={[row({ label: 'Human civilisation' })]} />)
     expect(screen.getByText('Human civilisation')).toBeTruthy()
   })
 })

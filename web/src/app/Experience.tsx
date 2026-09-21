@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom'
 
 import { SoundToggle, useAudioEngine } from '@/audio'
 import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/events'
-import { Globe } from '@/globe'
+import { Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { OnboardingTour } from '@/onboarding'
@@ -360,6 +360,16 @@ export function Experience() {
   // published (an older manifest). `globe-regimes`' raw event list feeds the pre-1 Ga regime
   // blend.
   const paleodemRaster = rasters.get('paleodem')
+  // Every overlay kind the globe's single overlay slot can hold (ADR-041), keyed by its own
+  // published layer id — `GLOBE_OVERLAY_KINDS` is the one place that set is enumerated, so a new
+  // overlay kind needs no change here.
+  const overlayRasters = new Map(
+    GLOBE_OVERLAY_KINDS.flatMap((kind) => {
+      const layerId = GLOBE_OVERLAYS[kind].layerId
+      const raster = rasters.get(layerId)?.data
+      return raster === undefined ? [] : [[layerId, raster] as const]
+    }),
+  )
   const rasterLayers: GlobeRasterLayers | null =
     paleodemRaster === undefined
       ? null
@@ -368,7 +378,7 @@ export function Experience() {
           neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null,
           basemapT0: rasters.get('basemap_t0')?.data ?? null,
           basemapT1: rasters.get('basemap_t1')?.data ?? null,
-          populationDensity: rasters.get('hyde_population_density')?.data ?? null,
+          overlayRasters,
         }
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.

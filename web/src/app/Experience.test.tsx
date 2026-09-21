@@ -18,7 +18,8 @@ import lineageData from '../../public/stub/layers/lineage.json'
 import paleodemData from '../../public/stub/layers/paleodem.json'
 import stubManifest from '../../public/stub/manifest.json'
 
-vi.mock('@/globe', () => ({
+vi.mock('@/globe', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/globe')>()),
   Globe: () => <div data-testid="globe-mock" />,
 }))
 

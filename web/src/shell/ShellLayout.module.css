@@ -663,6 +663,37 @@
     padding-top: 6px;
   }
 
+  /* Expanded, the top band (the Globe/Map toggle and the ✕, both corner controls opposite each
+     other — `Globe.module.css`'s own phone rules, plus the overlay selector pill opposite them at
+     top-left) leaves only a ~26px gap between the two corner clusters at the 390px floor — nowhere
+     near enough for the centred time/era title's own single line, let alone the era shortcuts
+     beside it. Both are pulled out of `.title`'s own flow (`position: fixed`, the same device the
+     desktop rule above uses) into their own rows below the corner band instead of sharing it.
+     `useChromeGap` reads `.title`'s own bottom edge for `--chrome-gap-top` (`ShellLayout.tsx`), so
+     this genuinely costs the expanded sphere/map the height between the old title position and the
+     new one — there is no narrower-but-still-legible title that fits the ~26px corner gap, so
+     unlike the desktop rule above (a pure reshuffle, no net height cost) this one is not free.
+     `74px` clears `Globe.module.css`'s own phone corner controls (`top: clamp(16px, 2.4vw, 34px)` +
+     `--corner-control-size: 54px`, worst case ~72px) with a couple of px to spare; `132px` gives the
+     title's own single centred line (measured ~49px tall at this breakpoint) a real gap above the
+     shortcuts row, matching the 8-14px band `condensed-top-area-gaps` holds for the same
+     title-to-shortcuts relationship elsewhere. */
+  .shell[data-globe-expanded='true'] .title {
+    position: fixed;
+    top: 74px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .shell[data-globe-expanded='true'] .eraShortcuts {
+    position: fixed;
+    top: 132px;
+    left: var(--gutter);
+    right: auto;
+    justify-content: flex-start;
+  }
+
   /* Top-right corner: the panel's own portrait shrinks to `--orb-size` (AncestorPanel's
      hud.module.css) so the row balances, and its kicker/name/since text (below) becomes a short
      right-aligned caps stack instead of the desktop's prose column. `min-height` holds row 1 at

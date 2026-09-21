@@ -22,16 +22,26 @@ import {
 } from 'react'
 import * as THREE from 'three'
 
+import type { RasterData } from '@/data/curated'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { probeWebgl } from '@/lib/webgl'
 import type { FeatureData, GeoTime, TimelineEvent } from '@/types/layer'
 import type { SceneLocation } from '@/types/manifest'
 
-import { arrivalTimingFor, hasVisibleArrivals } from './arcs'
+import { arrivalTimingFor, arrivalWindow } from './arcs'
 import { citiesHaveDataAt } from './cities'
-import { densityBlendAt, densityChannelMask, densityHasDataAt, densityStrengthAt } from './density'
-import { DensityRampKey } from './DensityRampKey'
+import { densityChannelMask } from './density'
 import { HumanCivilisation } from './HumanCivilisation'
+import {
+  GLOBE_OVERLAYS,
+  GLOBE_OVERLAY_KINDS,
+  overlayBlendAt,
+  overlayKindUniform,
+  overlayStrengthAt,
+  type GlobeOverlayKind,
+  type OverlaySampling,
+} from './overlay'
+import { OverlaySelect } from './OverlaySelect'
 import { sceneMarkerCoordinates } from './sceneLocation'
 import {
   basemapStrengthAt,
@@ -65,7 +75,12 @@ import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
 import styles from './Globe.module.css'
 import { buildGlobeGeometry } from './globeGeometry'
 import { GlobeStaticOrb } from './GlobeStaticOrb'
-import { basemapTextureCache, densityTextureCache, initAndCloseHumanEraTexture } from './humanEraTextureCache'
+import {
+  basemapTextureCache,
+  densityTextureCache,
+  initAndCloseHumanEraTexture,
+  setHumanEraMaxAnisotropy,
+} from './humanEraTextureCache'
 import { Legend, type LegendRow } from './Legend'
 import { isOrbClick } from './orbGesture'
 import { isPoleVisible, poleDirection, type PoleId } from './poles'
@@ -77,7 +92,7 @@ import {
   RIM_FRAGMENT_SHADER,
   RIM_VERTEX_SHADER,
 } from './shaders'
-import { PLACEHOLDER_TEXTURE } from './textureCache'
+import { PLACEHOLDER_TEXTURE, setMaxAnisotropy } from './textureCache'
 import { useGlobeAutoRotationY } from './useGlobeAutoRotation'
 import { useGlobeTexturePair } from './useGlobeTexturePair'
 import { useUnfold } from './unfoldAnimation'
@@ -130,6 +145,10 @@ const PRELOAD_WINDOW: PreloadWindow = { ahead: 4, behind: 1 }
  *  the moment `t` enters this margin, from either direction) is enough — there's no multi-frame
  *  preload sequence to keep ahead of, only a comfortable lead time before the band itself. */
 const BASEMAP_FETCH_MARGIN_YEARS = 600_000
+
+/** `uOverlayChannel`'s value while no overlay is selected — meaningless there (`uOverlayStrength`
+ *  is 0), but a stable array identity beats allocating a fresh one on every render. */
+const DEFAULT_OVERLAY_CHANNEL: readonly [number, number, number] = [1, 0, 0]
 
 // ------------------------------------------------------------------------------ map mode
 
@@ -292,6 +311,35 @@ export interface GlobeProps {
   onViewModeToggleHeightChange?: (heightPx: number) => void
 }
 
+/** Whether `t` falls within the arrival layer's own domain — from the oldest arrival's dating
+ *  bound (`arrivalWindow`'s own `tMax`) through to the present — rather than `arcs.ts`'s
+ *  `hasVisibleArrivals`, which is true only while one specific arc is actively drawn (its own
+ *  travel window plus a short fade tail) and so flickers off between arrivals even though human
+ *  dispersal, once begun, never un-happens. Feeds the "Human civilisation" legend row's
+ *  visibility alongside `citiesHaveDataAt`, which is already a domain check. */
+function arrivalsInDomainAt(events: readonly TimelineEvent[], t: GeoTime): boolean {
+  for (const event of events) {
+    if (event.effect?.kind === 'arrival' && t <= arrivalWindow(event.effect)[1]) return true
+  }
+  return false
+}
+
+/** The overlay uniform's channel weights and log ceiling for `sampling`, exhaustive over
+ *  `OverlaySampling` so a new sampling mode is a compile error here rather than a silent alias
+ *  onto an existing one — the shape `overlay.ts`'s own `overlayKindUniform` already follows.
+ *  `dMax` is meaningless for `linear_fraction` (the shader's density branch alone reads it). */
+function overlayChannelAndDMax(
+  sampling: OverlaySampling,
+  data: RasterData,
+): { channel: readonly [number, number, number]; dMax: number } {
+  switch (sampling.mode) {
+    case 'log_encoded':
+      return { channel: densityChannelMask(data.encoding?.channel ?? 'r'), dMax: data.encoding?.dMax ?? 1 }
+    case 'linear_fraction':
+      return { channel: sampling.weights, dMax: 0 }
+  }
+}
+
 export function Globe({
   t,
   rasterLayers,
@@ -322,14 +370,14 @@ export function Globe({
     [rasterLayers, t, direction, assetBase],
   )
 
-  // docs/GLOBE.md's ADR-030: the human-era basemap tier — T0 for the
-  // minimised orb and phone-expanded, T1 only expanded on a desktop-class device
-  // (`selectBasemapTier`). `basemapData` is `null` whenever no basemap layer is published at
-  // all, or the chosen tier specifically isn't (falls back to T0's own RasterData, never to
-  // `null` just because T1 alone is missing).
+  // docs/GLOBE.md's ADR-030 (amended): the human-era basemap tier — T0 for the minimised orb,
+  // T1 once expanded on any device whose GPU can hold it (`selectBasemapTier`), phone included.
+  // `basemapData` is `null` whenever no basemap layer is published at all, or the chosen tier
+  // specifically isn't (falls back to T0's own RasterData, never to `null` just because T1 alone
+  // is missing).
   const isPhoneViewport = useIsPhoneViewport()
   const t1Available = useMemo(() => supportsBasemapT1(webglProbe.maxTextureSize), [webglProbe])
-  const basemapTier = selectBasemapTier(expanded, isPhoneViewport, t1Available)
+  const basemapTier = selectBasemapTier(expanded, t1Available)
   const basemapData =
     basemapTier === 'basemap_t1' && rasterLayers.basemapT1 !== null ? rasterLayers.basemapT1 : rasterLayers.basemapT0
   // Well inside the basemap's own span, the PaleoDEM LRU is trimmed down to just the 0 Ma
@@ -374,32 +422,53 @@ export function Globe({
   const basemapPair = useGlobeTexturePair(basemapBlend, [], { enabled: webgl, cache: basemapTextureCache, resetKey: contextEpoch })
   const basemapStrength = basemapData !== null && basemapPair.texturesReady ? basemapStrengthAt(t) : 0
 
-  // The human-civilisation layer (ADR-031 amendment / ADR-032 / ADR-035): transient arrival arcs,
-  // the population-density overlay and city markers, under one toggle. `arrivalTiming` is derived
-  // from the timeline's own playback rate once, not per frame — see `arrivalTimingFor`.
-  const [humanOn, setHumanOn] = useState(true)
+  // The human-civilisation layer (ADR-031 amendment / ADR-032 / ADR-035): transient arrival arcs
+  // and city markers, under one toggle. `arrivalTiming` is derived from the timeline's own
+  // playback rate once, not per frame — see `arrivalTimingFor`.
+  //
+  // Forced on for a phone viewer: `<Legend>` — the only way to switch it off — never renders on
+  // a phone at all (below), so `rawHumanOn`'s own state would otherwise be unreachable-but-stale
+  // if it had been switched off on a wider window before the viewport narrowed. Deriving `humanOn`
+  // this way makes "off on a phone" unrepresentable rather than merely unreachable through the UI.
+  const [rawHumanOn, setHumanOn] = useState(true)
+  const humanOn = isPhoneViewport || rawHumanOn
   const arrivalTiming = useMemo(() => arrivalTimingFor(playbackBaseRate), [playbackBaseRate])
-  const densityData = rasterLayers.populationDensity
-  const humanHasData =
-    hasVisibleArrivals(effectEvents, t, arrivalTiming) || densityHasDataAt(densityData, t) || citiesHaveDataAt(cities, t)
+  const humanHasData = arrivalsInDomainAt(effectEvents, t) || citiesHaveDataAt(cities, t)
 
-  // The density overlay's own texture pair, on its own `NoColorSpace`/box-filtered cache
-  // (`humanEraTextureCache.ts`) — nothing is fetched while the toggle is off or while `t` is
-  // outside the layer's own domain, since `densityBlendAt` returns null for both.
-  const densityBlend = useMemo(
-    () => (densityData === null || !humanOn ? null : densityBlendAt(densityData, t, assetBase)),
-    [densityData, humanOn, t, assetBase],
+  // The globe's single raster-overlay slot (ADR-041): independent of the People toggle above —
+  // turning arcs/cities off does not hide whichever overlay is selected, and vice versa.
+  // `'population_density'` is the default, matching the wash this feature originally shipped
+  // with alone. `available` (passed to `<OverlaySelect>` below) is derived from which layers the
+  // manifest actually published, not from data presence at the current `t` — an option list that
+  // changes while scrubbing would be worse than an option that paints nothing for a while.
+  const [overlayKind, setOverlayKind] = useState<GlobeOverlayKind | null>('population_density')
+  const availableOverlayKinds = useMemo(
+    () => GLOBE_OVERLAY_KINDS.filter((kind) => rasterLayers.overlayRasters.has(GLOBE_OVERLAYS[kind].layerId)),
+    [rasterLayers],
   )
-  const densityPair = useGlobeTexturePair(densityBlend, [], {
+  const overlaySpec = overlayKind !== null ? GLOBE_OVERLAYS[overlayKind] : null
+  const overlayData = overlaySpec !== null ? (rasterLayers.overlayRasters.get(overlaySpec.layerId) ?? null) : null
+
+  // The overlay's own texture pair, on its own `NoColorSpace`/box-filtered cache
+  // (`humanEraTextureCache.ts`) — nothing is fetched while no overlay is selected or `t` is
+  // outside the selected layer's own domain, since `overlayBlendAt` returns null for both.
+  const overlayBlend = useMemo(
+    () => (overlayData === null ? null : overlayBlendAt(overlayData, t, assetBase)),
+    [overlayData, t, assetBase],
+  )
+  const overlayPair = useGlobeTexturePair(overlayBlend, [], {
     enabled: webgl,
     cache: densityTextureCache,
     resetKey: contextEpoch,
   })
-  const densityStrength = densityData !== null && humanOn && densityPair.texturesReady ? densityStrengthAt(densityData, t) : 0
-  const densityChannel = useMemo(
-    () => densityChannelMask(densityData?.encoding?.channel ?? 'r'),
-    [densityData],
+  const overlayStrength = overlayData !== null && overlayPair.texturesReady ? overlayStrengthAt(overlayData, t) : 0
+  const overlaySampling = useMemo(
+    () => (overlaySpec !== null && overlayData !== null ? overlayChannelAndDMax(overlaySpec.sampling, overlayData) : null),
+    [overlaySpec, overlayData],
   )
+  const overlayChannel = overlaySampling?.channel ?? DEFAULT_OVERLAY_CHANNEL
+  const overlayDMax = overlaySampling?.dMax ?? 1
+  const overlayKindValue = overlaySpec !== null ? overlayKindUniform(overlaySpec.kind) : 0
 
   // ADR-034: the scene's own plotted position. `sceneMarkerCoordinates` is the single place the
   // "never fall back to presentDay" rule lives. The small orb eases its rotation to centre it;
@@ -497,11 +566,11 @@ export function Globe({
     if (isOrbClick(start, { x: e.clientX, y: e.clientY })) onToggleExpand()
   }
 
-  // The narrow-viewport safety net for the legend (`ViewModeToggle` lives elsewhere now, see its
-  // own doc comment): a phone portrait's top-left legend is wide enough that its own right edge
-  // can sit past the *centre* of a narrow viewport, which a centred
-  // sphere or map straddles by construction. `Globe.module.css`'s own narrow-viewport rule reads
-  // `--overlay-clear-bottom` (the legend's own real drawn bottom edge) to keep the panel from
+  // The narrow-viewport safety net for the top-left chrome (`ViewModeToggle` lives elsewhere
+  // now, see its own doc comment): the Legend/overlay-selector stack is wide enough that its own
+  // right edge can sit past the *centre* of a narrow viewport, which a centred sphere or map
+  // straddles by construction. `Globe.module.css`'s own narrow-viewport rule reads
+  // `--overlay-clear-bottom` (the stack's own real drawn bottom edge) to keep the panel from
   // growing underneath it — see that rule's own doc comment for why a simple "clear it vertically
   // altogether" bound, not exact circle geometry, is what's actually applied. Measured directly on
   // the DOM (not estimated), the same `getBoundingClientRect` + `ResizeObserver` + `window.resize`
@@ -568,9 +637,8 @@ export function Globe({
     }
     // Re-runs whenever any observed element could have just mounted or unmounted (a
     // `ResizeObserver` can only watch a node once it exists) — `expanded`/`webgl` gate all of
-    // them, `humanHasData` alone gates the legend's one row today (`Legend` itself renders
-    // nothing once no row is visible).
-  }, [expanded, webgl, humanHasData])
+    // them.
+  }, [expanded, webgl])
 
   // `ZoomControls` below is plain DOM, outside the `<Canvas>`'s own react-three-fiber tree, so it
   // drives `GlobeCameraControls`'s camera
@@ -646,14 +714,16 @@ export function Globe({
                 hasData={showTexture}
                 effects={effects.uniforms}
                 unfold={unfold}
+                mapMode={mapMode}
                 basemapTex={basemapPair.beforeTex}
                 basemapStrength={basemapStrength}
-                densityBeforeTex={densityPair.beforeTex}
-                densityAfterTex={densityPair.afterTex}
-                densityMix={densityPair.mix}
-                densityStrength={densityStrength}
-                densityChannel={densityChannel}
-                densityDMax={densityData?.encoding?.dMax ?? 1}
+                overlayKind={overlayKindValue}
+                overlayBeforeTex={overlayPair.beforeTex}
+                overlayAfterTex={overlayPair.afterTex}
+                overlayMix={overlayPair.mix}
+                overlayStrength={overlayStrength}
+                overlayChannel={overlayChannel}
+                overlayDMax={overlayDMax}
                 onWebglContextRestored={onWebglContextRestored}
               />
               {/* Both siblings of the same `GlobeRotatingGroup` (see its own doc comment for why
@@ -735,26 +805,37 @@ export function Globe({
           to show either — every control below is hidden outright, never shown disabled or
           faked. */}
       {expanded && webgl && <ViewModeToggle mapMode={mapMode} onChange={setMapMode} heightRef={viewModeToggleRef} />}
+      {/* Top-left stack (ADR-041 item 7): the Legend panel and the overlay selector, orthogonal
+          controls sharing one corner. `<Legend>` is desktop only — a phone viewer never sees it
+          at all (`humanOn`'s own doc comment above) — but `<OverlaySelect>` renders on both, since
+          it is the *only* overlay control on a phone. `legendBoundsRef` measures this wrapper
+          directly rather than `<Legend>`'s own inner box, so `--overlay-clear-bottom` covers
+          whichever of the two is actually on screen. `compact` (suppressing the ramp key) on a
+          phone only: at the 390/412px floor the era shortcuts row sits close enough under the
+          title that the ramp key's own height reaches it — desktop has the room. */}
       {expanded && webgl && (
-        <Legend
-          compact={isPhoneViewport}
-          boundsRef={legendBoundsRef}
-          rows={[
-            {
-              id: 'human-civilisation',
-              label: 'Human civilisation',
-              compactLabel: 'People',
-              hint: 'Dispersal arcs while each migration happens, settled markers after, cities, and modelled population density (HYDE 3.2, from 10,000 BCE).',
-              compactHint: 'Arcs, settlements, cities, density',
-              on: humanOn,
-              onChange: setHumanOn,
-              visible: humanHasData,
-              // Only while the layer is actually painting a density: a colour key for an overlay that
-              // is switched off, or out of its own domain, is chrome with nothing to explain.
-              footer: humanOn && densityHasDataAt(densityData, t) ? <DensityRampKey /> : undefined,
-            } satisfies LegendRow,
-          ]}
-        />
+        <div ref={legendBoundsRef} className={styles.legendStack}>
+          {!isPhoneViewport && (
+            <Legend
+              rows={[
+                {
+                  id: 'human-civilisation',
+                  label: 'Human civilisation',
+                  hint: 'Dispersal arcs while each migration happens, settled markers after, and cities.',
+                  on: humanOn,
+                  onChange: setHumanOn,
+                  visible: humanHasData,
+                } satisfies LegendRow,
+              ]}
+            />
+          )}
+          <OverlaySelect
+            value={overlayKind}
+            onChange={setOverlayKind}
+            available={availableOverlayKinds}
+            compact={isPhoneViewport}
+          />
+        </div>
       )}
 
       {expanded && webgl && (
@@ -1513,21 +1594,26 @@ interface GlobeSphereProps {
   /** 0 (sphere) .. 1 (Equal Earth map) — `GLOBE_VERTEX_SHADER`'s `uUnfold` (docs/GLOBE.md's
    *  ADR-033). */
   unfold: number
+  /** The toggle's own raw target, read by the mesh's analytic raycast below instead of `unfold`
+   *  — see that raycast's own doc comment for why the two must not be conflated. */
+  mapMode: boolean
   /** docs/GLOBE.md's ADR-030: the human-era basemap texture (`null` until loaded, or when
    *  no basemap layer is published) and its crossfade weight over the ordinary PaleoDEM base. */
   basemapTex: THREE.Texture | null
   basemapStrength: number
-  /** ADR-031 amendment: the two bracketing `hyde_population_density` frames, the mix between
-   *  them, the overlay's own fade-in weight, and the published decode parameters. `strength` is 0
-   *  whenever the layer isn't published, the toggle is off, or `t` is outside its domain — in
-   *  which case the shader term is a no-op and the placeholder textures are never sampled for
-   *  anything visible. */
-  densityBeforeTex: THREE.Texture | null
-  densityAfterTex: THREE.Texture | null
-  densityMix: number
-  densityStrength: number
-  densityChannel: readonly [number, number, number]
-  densityDMax: number
+  /** The globe's single raster-overlay slot (ADR-041): which kind is bound (`overlayKindUniform`
+   *  in `overlay.ts`), the two bracketing frames for whichever kind that is, the mix between
+   *  them, the overlay's own fade-in weight, and the channel weights/log ceiling its sampling
+   *  mode needs. `overlayStrength` is 0 whenever no overlay is selected, the layer isn't
+   *  published, or `t` is outside its domain — in which case the shader term is a no-op and the
+   *  placeholder textures are never sampled for anything visible. */
+  overlayKind: number
+  overlayBeforeTex: THREE.Texture | null
+  overlayAfterTex: THREE.Texture | null
+  overlayMix: number
+  overlayStrength: number
+  overlayChannel: readonly [number, number, number]
+  overlayDMax: number
   /** Called once, the moment `webglcontextrestored` fires on the
    *  renderer's canvas — see `Globe`'s own `onWebglContextRestored` doc comment for why the
    *  human-era cache needs this and the PaleoDEM one doesn't. */
@@ -1545,14 +1631,16 @@ function GlobeSphere({
   hasData,
   effects,
   unfold,
+  mapMode,
   basemapTex,
   basemapStrength,
-  densityBeforeTex,
-  densityAfterTex,
-  densityMix,
-  densityStrength,
-  densityChannel,
-  densityDMax,
+  overlayKind,
+  overlayBeforeTex,
+  overlayAfterTex,
+  overlayMix,
+  overlayStrength,
+  overlayChannel,
+  overlayDMax,
   onWebglContextRestored,
 }: GlobeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -1573,13 +1661,13 @@ function GlobeSphere({
   // doc comment already documents for the human layer's markers/arcs, worked around there with
   // screen-space hit-testing instead of three.js raycasting. This is that same fix applied to the
   // body mesh: an analytic proxy raycast, good enough to tell "on the globe" from "off it" without
-  // rebuilding real per-vertex geometry every tween frame just for hit-testing — a unit sphere at
-  // `unfold` 0, the map's own flat rectangle at 1 (`projection.ts`'s `unfoldedPosition` doc
-  // comment: "the flat endpoint sits at z = radius"), swapped at the tween's midpoint rather than
-  // three.js's own broken triangle-level test. Both local-space shapes are unscaled (`radius = 1`,
-  // `projection.ts`'s own convention) — `mesh.matrixWorld` (read fresh on every click, including
-  // this mesh's own `scale={GLOBE_RADIUS}` and the parent `GlobeRotatingGroup`'s rotation) applies
-  // the real radius and orientation when the local hit point is converted back to world space.
+  // rebuilding real per-vertex geometry every tween frame just for hit-testing — a unit sphere for
+  // sphere mode, the map's own flat rectangle for map mode (`projection.ts`'s `unfoldedPosition`
+  // doc comment: "the flat endpoint sits at z = radius"), rather than three.js's own broken
+  // triangle-level test. Both local-space shapes are unscaled (`radius = 1`, `projection.ts`'s own
+  // convention) — `mesh.matrixWorld` (read fresh on every click, including this mesh's own
+  // `scale={GLOBE_RADIUS}` and the parent `GlobeRotatingGroup`'s rotation) applies the real radius
+  // and orientation when the local hit point is converted back to world space.
   //
   // **A working `raycast` alone is not enough.** r3f only raycasts objects it has registered in
   // its own internal
@@ -1589,9 +1677,19 @@ function GlobeSphere({
   // to that candidate list regardless of how correct `raycast` is — `onPointerMissed` would keep
   // reporting every click here as a miss. `NOOP_POINTER_HANDLER`'s own doc comment has the fix
   // (a no-op `onPointerOver` on the `<mesh>` below, purely to register it).
-  const unfoldRef = useRef(unfold)
+  //
+  // Keyed off `mapMode` itself, not `unfold`: `unfold` is `useUnfold`'s *presented*, rate-limited
+  // value, which — even snapping instantly under reduced motion — only reaches its new target
+  // inside `useRateLimitedState`'s own `requestAnimationFrame` callback, one frame after the
+  // toggle. `GlobeCameraControls`'s own camera-reframe bookkeeping depends on observing that one
+  // lagging frame (it watches `unfold` settle, not the toggle itself), so `unfold` can't be made to
+  // snap synchronously without breaking that. This mesh's own hit-test has no such dependency — it
+  // only ever needs "which shape is the toggle asking for right now" — so it reads `mapMode`
+  // directly through its own ref, which a plain `useState` setter already updates synchronously
+  // with the click.
+  const mapModeRef = useRef(mapMode)
   useEffect(() => {
-    unfoldRef.current = unfold
+    mapModeRef.current = mapMode
   })
   useEffect(() => {
     const mesh = meshRef.current
@@ -1599,10 +1697,9 @@ function GlobeSphere({
     mesh.raycast = (raycaster, intersects) => {
       raycastInverseMatrix.copy(mesh.matrixWorld).invert()
       raycastLocalRay.copy(raycaster.ray).applyMatrix4(raycastInverseMatrix)
-      const localHit =
-        unfoldRef.current >= 0.5
-          ? raycastLocalRay.intersectBox(RAYCAST_MAP_LOCAL_BOX, raycastLocalHit)
-          : raycastLocalRay.intersectSphere(RAYCAST_UNIT_SPHERE, raycastLocalHit)
+      const localHit = mapModeRef.current
+        ? raycastLocalRay.intersectBox(RAYCAST_MAP_LOCAL_BOX, raycastLocalHit)
+        : raycastLocalRay.intersectSphere(RAYCAST_UNIT_SPHERE, raycastLocalHit)
       if (localHit === null) return
       raycastWorldHit.copy(localHit).applyMatrix4(mesh.matrixWorld)
       intersects.push({ distance: raycaster.ray.origin.distanceTo(raycastWorldHit), point: raycastWorldHit.clone(), object: mesh })
@@ -1617,17 +1714,28 @@ function GlobeSphere({
   // so a texture already handled (including the shared `PLACEHOLDER_TEXTURE`, which has no
   // `ImageBitmap` image to close anyway) is never re-initialised on a later render.
   const { gl } = useThree()
+
+  // Reports the live renderer's own anisotropic-filtering ceiling up to the two texture caches
+  // (docs/GLOBE.md §10) — `GlobeSphere` is the one place with `useThree()` access to it,
+  // the same reasoning `initAndCloseHumanEraTexture` below already follows. Every texture fetched
+  // after this point picks it up; sharpens oblique sampling near the sphere's limb, does little
+  // for a flat, near-perpendicular view.
+  useEffect(() => {
+    setMaxAnisotropy(gl.capabilities.getMaxAnisotropy())
+    setHumanEraMaxAnisotropy(gl.capabilities.getMaxAnisotropy())
+  }, [gl])
+
   const initedTexturesRef = useRef<WeakSet<THREE.Texture>>(new WeakSet())
   useEffect(() => {
-    // Every human-era texture (basemap tier, both density frames) needs the same treatment — they
+    // Every human-era texture (basemap tier, both overlay frames) needs the same treatment — they
     // all come from `humanEraTextureCache`, which closes their backing `ImageBitmap` the moment
     // this forced upload has happened.
-    for (const texture of [basemapTex, densityBeforeTex, densityAfterTex]) {
+    for (const texture of [basemapTex, overlayBeforeTex, overlayAfterTex]) {
       if (texture === null || initedTexturesRef.current.has(texture)) continue
       initedTexturesRef.current.add(texture)
       initAndCloseHumanEraTexture(gl, texture)
     }
-  }, [gl, basemapTex, densityBeforeTex, densityAfterTex])
+  }, [gl, basemapTex, overlayBeforeTex, overlayAfterTex])
 
   // On `webglcontextrestored`, every texture this WeakSet remembers
   // having already force-uploaded is gone from the GPU regardless — clearing it lets any texture
@@ -1671,12 +1779,13 @@ function GlobeSphere({
       uUnfold: { value: 0 },
       uBasemapTex: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uBasemapStrength: { value: 0 },
-      uDensityBefore: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
-      uDensityAfter: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
-      uDensityMix: { value: 0 },
-      uDensityChannel: { value: [1, 0, 0] },
-      uDensityDMax: { value: 1 },
-      uDensityStrength: { value: 0 },
+      uOverlayKind: { value: 0 },
+      uOverlayBefore: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uOverlayAfter: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uOverlayMix: { value: 0 },
+      uOverlayChannel: { value: [1, 0, 0] },
+      uOverlayDMax: { value: 1 },
+      uOverlayStrength: { value: 0 },
     }),
     [],
   )
@@ -1719,12 +1828,13 @@ function GlobeSphere({
         uniforms-uGiantImpactFlash-value={effects.giantImpactFlash}
         uniforms-uBasemapTex-value={basemapTex ?? PLACEHOLDER_TEXTURE}
         uniforms-uBasemapStrength-value={basemapStrength}
-        uniforms-uDensityBefore-value={densityBeforeTex ?? PLACEHOLDER_TEXTURE}
-        uniforms-uDensityAfter-value={densityAfterTex ?? PLACEHOLDER_TEXTURE}
-        uniforms-uDensityMix-value={densityMix}
-        uniforms-uDensityChannel-value={densityChannel}
-        uniforms-uDensityDMax-value={densityDMax}
-        uniforms-uDensityStrength-value={densityStrength}
+        uniforms-uOverlayKind-value={overlayKind}
+        uniforms-uOverlayBefore-value={overlayBeforeTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uOverlayAfter-value={overlayAfterTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uOverlayMix-value={overlayMix}
+        uniforms-uOverlayChannel-value={overlayChannel}
+        uniforms-uOverlayDMax-value={overlayDMax}
+        uniforms-uOverlayStrength-value={overlayStrength}
       />
     </mesh>
   )

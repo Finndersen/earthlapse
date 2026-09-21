@@ -20,7 +20,7 @@ const rasterLayers: GlobeRasterLayers = {
   neoproterozoic: null,
   basemapT0: null,
   basemapT1: null,
-  populationDensity: null,
+  overlayRasters: new Map(),
 }
 
 const EMPTY_FEED_IDS: ReadonlySet<string> = new Set()

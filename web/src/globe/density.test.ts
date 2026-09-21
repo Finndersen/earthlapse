@@ -2,17 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { decodeLogDensity, type RasterData } from '@/data/curated'
 
-import {
-  DENSITY_FADE_BAND_YEARS,
-  DENSITY_RAMP,
-  DENSITY_RAMP_GLSL,
-  decodeDensityTexel,
-  densityBlendAt,
-  densityChannelMask,
-  densityHasDataAt,
-  densityRampAt,
-  densityStrengthAt,
-} from './density'
+import { DENSITY_RAMP, DENSITY_RAMP_GLSL, decodeDensityTexel, densityChannelMask, densityRampAt } from './density'
 
 // --------------------------------------------------------------------------------- densityRampAt
 
@@ -148,7 +138,7 @@ describe('densityChannelMask', () => {
   })
 })
 
-// ---------------------------------------------------------------------------------- domain/binding
+// ------------------------------------------------------------------------------ decodeDensityTexel
 
 const DENSITY_DATA: RasterData = {
   id: 'hyde_population_density',
@@ -159,61 +149,6 @@ const DENSITY_DATA: RasterData = {
   ],
   encoding: { channel: 'r', unit: 'people/km2', dMax: 15_000 },
 }
-
-const OLDEST_T = 12_000
-
-describe('densityStrengthAt', () => {
-  it('is 1 at and below the sequence’s oldest frame', () => {
-    expect(densityStrengthAt(DENSITY_DATA, OLDEST_T)).toBe(1)
-    expect(densityStrengthAt(DENSITY_DATA, 0)).toBe(1)
-  })
-
-  it('is 0 a full fade band older than the oldest frame', () => {
-    expect(densityStrengthAt(DENSITY_DATA, OLDEST_T + DENSITY_FADE_BAND_YEARS)).toBe(0)
-    expect(densityStrengthAt(DENSITY_DATA, OLDEST_T + DENSITY_FADE_BAND_YEARS + 1000)).toBe(0)
-  })
-
-  it('eases linearly across the band', () => {
-    const midpoint = OLDEST_T + DENSITY_FADE_BAND_YEARS / 2
-    expect(densityStrengthAt(DENSITY_DATA, midpoint)).toBeCloseTo(0.5)
-    const quarter = OLDEST_T + DENSITY_FADE_BAND_YEARS / 4
-    expect(densityStrengthAt(DENSITY_DATA, quarter)).toBeCloseTo(0.75)
-  })
-})
-
-describe('densityBlendAt', () => {
-  const ASSET_BASE = '/media'
-
-  it('holds the newest frame from its own t through the present', () => {
-    const blend = densityBlendAt(DENSITY_DATA, 0, ASSET_BASE)
-    expect(blend).not.toBeNull()
-    expect(blend!.beforeUrl).toBe(blend!.afterUrl)
-    expect(blend!.beforeUrl).toContain('newest.png')
-    expect(blend!.alpha).toBe(0)
-  })
-
-  it('holds the oldest frame across the whole fade-in band', () => {
-    const blend = densityBlendAt(DENSITY_DATA, OLDEST_T + DENSITY_FADE_BAND_YEARS / 2, ASSET_BASE)
-    expect(blend).not.toBeNull()
-    expect(blend!.beforeUrl).toContain('oldest.png')
-    expect(blend!.afterUrl).toContain('oldest.png')
-  })
-
-  it('is null once t is past the fade band entirely', () => {
-    expect(densityBlendAt(DENSITY_DATA, OLDEST_T + DENSITY_FADE_BAND_YEARS + 1, ASSET_BASE)).toBeNull()
-  })
-})
-
-describe('densityHasDataAt', () => {
-  it('is false for null data', () => {
-    expect(densityHasDataAt(null, 0)).toBe(false)
-  })
-
-  it('mirrors densityStrengthAt > 0 for real data', () => {
-    expect(densityHasDataAt(DENSITY_DATA, 0)).toBe(true)
-    expect(densityHasDataAt(DENSITY_DATA, OLDEST_T + DENSITY_FADE_BAND_YEARS + 1)).toBe(false)
-  })
-})
 
 describe('decodeDensityTexel', () => {
   it('decodes a normalised texel using the raster’s own published encoding', () => {

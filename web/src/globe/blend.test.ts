@@ -162,7 +162,7 @@ const layers: GlobeRasterLayers = {
   neoproterozoic: neoproterozoicFrames,
   basemapT0: null,
   basemapT1: null,
-  populationDensity: null,
+  overlayRasters: new Map(),
 }
 const layersUnusable: GlobeRasterLayers = { ...layers, neoproterozoic: null }
 
