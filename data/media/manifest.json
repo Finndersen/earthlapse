@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "0e95765ffafda959",
+  "buildId": "398db958a7290e3f",
   "assetBase": "https://media.earthlapse.net",
   "scenes": [
     {
@@ -1837,6 +1837,19 @@
       "source": "basemap",
       "chartable": false,
       "data": "layers/basemap_t1.json"
+    },
+    {
+      "id": "hyde_cleared_land",
+      "name": "Cleared land",
+      "surface": "globe",
+      "dataKind": "raster",
+      "timeDomain": [
+        10.0,
+        12025.0
+      ],
+      "source": "hyde",
+      "chartable": false,
+      "data": "layers/hyde_cleared_land.json"
     },
     {
       "id": "hyde_population_density",

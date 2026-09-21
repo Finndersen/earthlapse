@@ -1,0 +1,297 @@
+{
+  "id": "hyde_cleared_land",
+  "frames": [
+    {
+      "t": 10.0,
+      "ref": "textures/hyde_cleared_land/2015AD.webp"
+    },
+    {
+      "t": 11.0,
+      "ref": "textures/hyde_cleared_land/2014AD.webp"
+    },
+    {
+      "t": 12.0,
+      "ref": "textures/hyde_cleared_land/2013AD.webp"
+    },
+    {
+      "t": 13.0,
+      "ref": "textures/hyde_cleared_land/2012AD.webp"
+    },
+    {
+      "t": 14.0,
+      "ref": "textures/hyde_cleared_land/2011AD.webp"
+    },
+    {
+      "t": 15.0,
+      "ref": "textures/hyde_cleared_land/2010AD.webp"
+    },
+    {
+      "t": 16.0,
+      "ref": "textures/hyde_cleared_land/2009AD.webp"
+    },
+    {
+      "t": 17.0,
+      "ref": "textures/hyde_cleared_land/2008AD.webp"
+    },
+    {
+      "t": 18.0,
+      "ref": "textures/hyde_cleared_land/2007AD.webp"
+    },
+    {
+      "t": 19.0,
+      "ref": "textures/hyde_cleared_land/2006AD.webp"
+    },
+    {
+      "t": 20.0,
+      "ref": "textures/hyde_cleared_land/2005AD.webp"
+    },
+    {
+      "t": 21.0,
+      "ref": "textures/hyde_cleared_land/2004AD.webp"
+    },
+    {
+      "t": 22.0,
+      "ref": "textures/hyde_cleared_land/2003AD.webp"
+    },
+    {
+      "t": 23.0,
+      "ref": "textures/hyde_cleared_land/2002AD.webp"
+    },
+    {
+      "t": 24.0,
+      "ref": "textures/hyde_cleared_land/2001AD.webp"
+    },
+    {
+      "t": 25.0,
+      "ref": "textures/hyde_cleared_land/2000AD.webp"
+    },
+    {
+      "t": 35.0,
+      "ref": "textures/hyde_cleared_land/1990AD.webp"
+    },
+    {
+      "t": 45.0,
+      "ref": "textures/hyde_cleared_land/1980AD.webp"
+    },
+    {
+      "t": 55.0,
+      "ref": "textures/hyde_cleared_land/1970AD.webp"
+    },
+    {
+      "t": 65.0,
+      "ref": "textures/hyde_cleared_land/1960AD.webp"
+    },
+    {
+      "t": 75.0,
+      "ref": "textures/hyde_cleared_land/1950AD.webp"
+    },
+    {
+      "t": 85.0,
+      "ref": "textures/hyde_cleared_land/1940AD.webp"
+    },
+    {
+      "t": 95.0,
+      "ref": "textures/hyde_cleared_land/1930AD.webp"
+    },
+    {
+      "t": 105.0,
+      "ref": "textures/hyde_cleared_land/1920AD.webp"
+    },
+    {
+      "t": 115.0,
+      "ref": "textures/hyde_cleared_land/1910AD.webp"
+    },
+    {
+      "t": 125.0,
+      "ref": "textures/hyde_cleared_land/1900AD.webp"
+    },
+    {
+      "t": 135.0,
+      "ref": "textures/hyde_cleared_land/1890AD.webp"
+    },
+    {
+      "t": 145.0,
+      "ref": "textures/hyde_cleared_land/1880AD.webp"
+    },
+    {
+      "t": 155.0,
+      "ref": "textures/hyde_cleared_land/1870AD.webp"
+    },
+    {
+      "t": 165.0,
+      "ref": "textures/hyde_cleared_land/1860AD.webp"
+    },
+    {
+      "t": 175.0,
+      "ref": "textures/hyde_cleared_land/1850AD.webp"
+    },
+    {
+      "t": 185.0,
+      "ref": "textures/hyde_cleared_land/1840AD.webp"
+    },
+    {
+      "t": 195.0,
+      "ref": "textures/hyde_cleared_land/1830AD.webp"
+    },
+    {
+      "t": 205.0,
+      "ref": "textures/hyde_cleared_land/1820AD.webp"
+    },
+    {
+      "t": 215.0,
+      "ref": "textures/hyde_cleared_land/1810AD.webp"
+    },
+    {
+      "t": 225.0,
+      "ref": "textures/hyde_cleared_land/1800AD.webp"
+    },
+    {
+      "t": 235.0,
+      "ref": "textures/hyde_cleared_land/1790AD.webp"
+    },
+    {
+      "t": 245.0,
+      "ref": "textures/hyde_cleared_land/1780AD.webp"
+    },
+    {
+      "t": 255.0,
+      "ref": "textures/hyde_cleared_land/1770AD.webp"
+    },
+    {
+      "t": 265.0,
+      "ref": "textures/hyde_cleared_land/1760AD.webp"
+    },
+    {
+      "t": 275.0,
+      "ref": "textures/hyde_cleared_land/1750AD.webp"
+    },
+    {
+      "t": 285.0,
+      "ref": "textures/hyde_cleared_land/1740AD.webp"
+    },
+    {
+      "t": 295.0,
+      "ref": "textures/hyde_cleared_land/1730AD.webp"
+    },
+    {
+      "t": 305.0,
+      "ref": "textures/hyde_cleared_land/1720AD.webp"
+    },
+    {
+      "t": 315.0,
+      "ref": "textures/hyde_cleared_land/1710AD.webp"
+    },
+    {
+      "t": 325.0,
+      "ref": "textures/hyde_cleared_land/1700AD.webp"
+    },
+    {
+      "t": 425.0,
+      "ref": "textures/hyde_cleared_land/1600AD.webp"
+    },
+    {
+      "t": 525.0,
+      "ref": "textures/hyde_cleared_land/1500AD.webp"
+    },
+    {
+      "t": 625.0,
+      "ref": "textures/hyde_cleared_land/1400AD.webp"
+    },
+    {
+      "t": 725.0,
+      "ref": "textures/hyde_cleared_land/1300AD.webp"
+    },
+    {
+      "t": 825.0,
+      "ref": "textures/hyde_cleared_land/1200AD.webp"
+    },
+    {
+      "t": 925.0,
+      "ref": "textures/hyde_cleared_land/1100AD.webp"
+    },
+    {
+      "t": 1025.0,
+      "ref": "textures/hyde_cleared_land/1000AD.webp"
+    },
+    {
+      "t": 1125.0,
+      "ref": "textures/hyde_cleared_land/900AD.webp"
+    },
+    {
+      "t": 1225.0,
+      "ref": "textures/hyde_cleared_land/800AD.webp"
+    },
+    {
+      "t": 1325.0,
+      "ref": "textures/hyde_cleared_land/700AD.webp"
+    },
+    {
+      "t": 1425.0,
+      "ref": "textures/hyde_cleared_land/600AD.webp"
+    },
+    {
+      "t": 1525.0,
+      "ref": "textures/hyde_cleared_land/500AD.webp"
+    },
+    {
+      "t": 1625.0,
+      "ref": "textures/hyde_cleared_land/400AD.webp"
+    },
+    {
+      "t": 1725.0,
+      "ref": "textures/hyde_cleared_land/300AD.webp"
+    },
+    {
+      "t": 1825.0,
+      "ref": "textures/hyde_cleared_land/200AD.webp"
+    },
+    {
+      "t": 1925.0,
+      "ref": "textures/hyde_cleared_land/100AD.webp"
+    },
+    {
+      "t": 2025.0,
+      "ref": "textures/hyde_cleared_land/0AD.webp"
+    },
+    {
+      "t": 3025.0,
+      "ref": "textures/hyde_cleared_land/1000BC.webp"
+    },
+    {
+      "t": 4025.0,
+      "ref": "textures/hyde_cleared_land/2000BC.webp"
+    },
+    {
+      "t": 5025.0,
+      "ref": "textures/hyde_cleared_land/3000BC.webp"
+    },
+    {
+      "t": 6025.0,
+      "ref": "textures/hyde_cleared_land/4000BC.webp"
+    },
+    {
+      "t": 7025.0,
+      "ref": "textures/hyde_cleared_land/5000BC.webp"
+    },
+    {
+      "t": 8025.0,
+      "ref": "textures/hyde_cleared_land/6000BC.webp"
+    },
+    {
+      "t": 9025.0,
+      "ref": "textures/hyde_cleared_land/7000BC.webp"
+    },
+    {
+      "t": 10025.0,
+      "ref": "textures/hyde_cleared_land/8000BC.webp"
+    },
+    {
+      "t": 11025.0,
+      "ref": "textures/hyde_cleared_land/9000BC.webp"
+    },
+    {
+      "t": 12025.0,
+      "ref": "textures/hyde_cleared_land/10000BC.webp"
+    }
+  ]
+}

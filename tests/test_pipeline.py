@@ -1946,12 +1946,16 @@ def test_raster_layers_includes_the_human_era_globe_sources() -> None:
         assert by_id[curated_id].chartable is False
 
 
-def test_raster_layers_no_longer_publishes_cleared_land() -> None:
-    """ADR-031 amendment: the human found the cleared-land overlay not discernible on the
-    globe. It stays curated (sources/hyde/normalise.py and its tests are untouched) but is no
-    longer registered in `RASTER_LAYERS`, so `_layers` never publishes it even when
-    `WorldModel.rasters` holds it (a fresh `make data` build still produces the parquet)."""
-    assert "hyde_cleared_land" not in {spec.curated_id for spec in RASTER_LAYERS}
+def test_raster_layers_publishes_cleared_land_as_a_colour_only_layer() -> None:
+    """Cleared land is the alternative to population density in the globe's overlay selector, so
+    it publishes through the same generic `RasterSequence` path. It carries no `raster_encoding`:
+    its channels are plain cell fractions the web collapses into one scalar, not a physical
+    quantity to decode."""
+    spec = {s.curated_id: s for s in RASTER_LAYERS}["hyde_cleared_land"]
+    assert spec.source == "hyde"
+    assert spec.surface == LayerSurface.GLOBE
+    assert spec.chartable is False
+    assert spec.raster_encoding is None
     hyde = RasterSequence(
         id="hyde_cleared_land",
         frames=[
@@ -1961,8 +1965,8 @@ def test_raster_layers_no_longer_publishes_cleared_land() -> None:
     )
     world = WorldModel(rasters={"hyde_cleared_land": hyde})
     files, entries = _layers(world, portraits=None)
-    assert "hyde_cleared_land" not in {e.id for e in entries}
-    assert "hyde_cleared_land" not in {f.data.id for f in files}
+    assert "hyde_cleared_land" in {e.id for e in entries}
+    assert "hyde_cleared_land" in {f.data.id for f in files}
 
 
 def test_layers_publishes_basemap_and_hyde_population_density_raster_entries() -> None:

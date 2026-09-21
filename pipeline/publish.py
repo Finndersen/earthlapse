@@ -177,10 +177,18 @@ RASTER_LAYERS = (
         "basemap",
         chartable=False,
     ),
-    # ADR-031 amendment: cleared land (HYDE 3.2, id "hyde_cleared_land") stays curated
-    # (sources/hyde/normalise.py still produces it, and its tests still pass) but is no longer
-    # published/rendered -- the human found it not discernible on the globe. Re-add a LayerSpec
-    # here to republish it; nothing else needs to change.
+    # Cleared land (HYDE 3.2), the alternative to population density in the globe's one-of-N
+    # overlay selector -- only one raster overlay paints at a time. Colour-only, so no
+    # `raster_encoding`: the three channels carry plain cell fractions (R cropland, G pasture plus
+    # converted rangeland, B natural rangeland), which the web collapses into a single
+    # human-modification scalar rather than decoding to a physical quantity.
+    LayerSpec(
+        "hyde_cleared_land",
+        "Cleared land",
+        LayerSurface.GLOBE,
+        "hyde",
+        chartable=False,
+    ),
     # ADR-031 amendment: population density, from the same HYDE 3.2 deposit. R channel only
     # (people per km^2, 8-bit log-scale encoded -- see sources/hyde/README.md "Population
     # density encoding" for how D_MAX was chosen and pipeline/density_encoding.py for the exact
