@@ -157,6 +157,71 @@ events:
       atmosphere and oceans." Philosophical Transactions of the Royal Society B, 361(1470),
       903-915.
 
+  - id: nuna-columbia-supercontinent
+    label: Nuna/Columbia assembles and rifts apart
+    kind: period
+    t_min: 1.2e9
+    t_max: 2.1e9
+    tags: [earth-climate]
+    importance: 0.55
+    description: >
+      One of the first supercontinents reconstructable from the rock record — variously
+      called Nuna or Columbia, with reconstructions differing in exact extent and timing.
+      Global-scale collisional orogens weld its core together from roughly 2.1-1.8 Ga, with
+      continued accretionary growth at its margins out to about 1.6-1.5 Ga. Breakup is
+      diachronous, beginning as early as 1.6 Ga and largely complete by 1.3-1.2 Ga,
+      scattering fragments that later reassemble as Rodinia (below).
+    citation: >
+      Zhao, G., Cawood, P.A., Wilde, S.A. & Sun, M. (2002). "Review of global 2.1-1.8 Ga
+      orogens: implications for a pre-Rodinia supercontinent." Earth-Science Reviews,
+      59(1-2), 125-162. Rogers, J.J.W. & Santosh, M. (2002). "Configuration of Columbia, a
+      Mesoproterozoic supercontinent." Gondwana Research, 5(1), 5-22. Zhao, G., Sun, M.,
+      Wilde, S.A. & Li, S. (2004). "A Paleo-Mesoproterozoic supercontinent: assembly,
+      growth and breakup." Earth-Science Reviews, 67(1-2), 91-123. Cross-checked live via
+      Wikipedia, "Columbia (supercontinent)" (accessed 2026-09-22).
+
+  - id: vredefort-impact-crater
+    label: Vredefort impact
+    kind: moment
+    t_min: 2.019e9
+    t_max: 2.027e9
+    t: 2.023e9
+    tags: [catastrophe]
+    importance: 0.4
+    description: >
+      An asteroid strikes what is now the Free State, South Africa, excavating the largest
+      verified impact crater on Earth — an original structure some 170-280 km across, now
+      eroded to the central Vredefort Dome. A 2022 re-analysis of the crater's formation
+      revised the impactor upward to roughly 20-25 km across, larger than the impactor
+      behind the Chicxulub crater that ends the non-avian dinosaurs (k-pg-impact, below).
+    citation: >
+      Kamo, S.L., Reimold, W.U., Krogh, T.E. & Colliston, W.P. (1996). "A 2.023 Ga age for
+      the Vredefort impact event and a first report of shock metamorphosed zircons in
+      pseudotachylitic breccias and Granophyre." Earth and Planetary Science Letters,
+      144(3-4), 369-387. Allen, N.H. et al. (2022). "A Revision of the Formation
+      Conditions of the Vredefort Crater." Journal of Geophysical Research: Planets,
+      127(10), e2022JE007186.
+
+  - id: sudbury-impact-crater
+    label: Sudbury impact
+    kind: moment
+    t_min: 1.848e9
+    t_max: 1.851e9
+    t: 1.8495e9
+    tags: [catastrophe]
+    importance: 0.4
+    description: >
+      An asteroid or comet roughly 10-15 km across strikes what is now Ontario, Canada,
+      excavating the second-largest verified impact crater on Earth, originally about
+      130 km across. Its solidified melt sheet, the Sudbury Igneous Complex, later
+      differentiated into one of the world's largest nickel-copper-platinum group element
+      ore deposits.
+    citation: >
+      Davis, D.W. (2008). "Sub-million-year age resolution of Precambrian igneous events
+      by thermal extraction-thermal ionization mass spectrometer Pb dating of zircon:
+      Application to crystallization of the Sudbury impact melt sheet." Geology, 36(5),
+      383-386.
+
   - id: multicellularity-sexual-reproduction
     label: Complex multicellularity and sex
     kind: moment
@@ -191,6 +256,25 @@ events:
     citation: >
       Tang, Q., Pang, K., Yuan, X. & Xiao, S. (2020). "A one-billion-year-old multicellular
       chlorophyte." Nature Ecology & Evolution, 4(4), 543-549.
+
+  - id: rodinia-supercontinent
+    label: Rodinia assembles and rifts apart
+    kind: period
+    t_min: 6.33e8
+    t_max: 1.3e9
+    tags: [earth-climate]
+    importance: 0.65
+    description: >
+      Nearly every continental block then in existence collides together through worldwide
+      orogenic events between about 1.3 and 0.9 Ga, forming Rodinia. Rifting begins by
+      around 825-750 Ma and is largely complete by 750-633 Ma, as the continents that once
+      bordered Laurentia scatter and later regroup as Gondwana (below); the rifting's
+      silicate weathering is one leading hypothesis for the runaway cooling behind the
+      Cryogenian Snowball Earth glaciations, which follow almost immediately.
+    citation: >
+      Li, Z.X. et al. (2008). "Assembly, configuration, and break-up history of Rodinia: A
+      synthesis." Precambrian Research, 160(1-2), 179-210. Cross-checked live via
+      Wikipedia, "Rodinia" (accessed 2026-09-22).
 
   - id: snowball-earth
     label: Snowball Earth glaciations
@@ -241,6 +325,48 @@ events:
       their ecosystems." Annual Review of Earth and Planetary Sciences, 33, 421-442. Top
       of Ediacaran Period (Fortune Head GSSP) = 538.8 +/- 0.2 Ma per the ICS International
       Chronostratigraphic Chart v2024/12.
+
+  - id: acraman-impact-crater
+    label: Acraman impact
+    kind: moment
+    t_min: 5.7e8
+    t_max: 5.9e8
+    t: 5.8e8
+    tags: [catastrophe]
+    importance: 0.35
+    description: >
+      An asteroid strikes the Gawler Ranges of South Australia, excavating a crater up to
+      90 km across — among the largest known Precambrian impacts. Unlike most events in
+      this file, its age comes not from dating the crater itself (deeply eroded, its melt
+      long gone) but from the stratigraphic position of a shocked-ejecta horizon within the
+      Bunyeroo Formation, several hundred kilometres away.
+    citation: >
+      Williams, G.E. & Wallace, M.W. (2003). "The Acraman asteroid impact, South
+      Australia: magnitude and implications for the late Vendian environment." Journal of
+      the Geological Society, 160(4), 545-554. Grey, K., Walter, M.R. & Calver, C.R.
+      (2003). "Neoproterozoic biotic diversification: Snowball Earth, GOE, and the rise
+      of bilaterians." Geology, 31(6), 459-462 (ejecta-horizon age constraint, ~580 Ma).
+
+  - id: gondwana-supercontinent-assembly
+    label: Gondwana assembles
+    kind: period
+    t_min: 5.3e8
+    t_max: 6.0e8
+    tags: [earth-climate]
+    importance: 0.55
+    description: >
+      Fragments scattered by Rodinia's breakup (above) — Africa, South America,
+      Madagascar, India, Australia and Antarctica — collide back together as the
+      Mozambique Ocean closes, in the overlapping Brasiliano and Kuunga orogenies of the
+      Pan-African orogenic episode, c. 600-530 Ma. An earlier phase, the East African
+      Orogeny (c. 800-650 Ma), had already stitched together Gondwana's eastern cratons.
+      Gondwana persists as the southern half of Pangaea (below) until that supercontinent's
+      own breakup.
+    citation: >
+      Meert, J.G. & Van der Voo, R. (1997). "The assembly of Gondwana 800-550 Ma."
+      Journal of Geodynamics, 23(3-4), 223-235. Meert, J.G. (2003). "A synopsis of events
+      related to the assembly of eastern Gondwana." Tectonophysics, 362(1-4), 1-40.
+      Cross-checked live via Wikipedia, "Gondwana" (accessed 2026-09-22).
 
   - id: cambrian-explosion
     label: Cambrian explosion
@@ -602,6 +728,27 @@ events:
       the oldest mammal." Journal of Vertebrate Paleontology, 13(3), 309-334 (~225 Ma).
       Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) for Morganucodon, ~205 Ma.
 
+  - id: manicouagan-impact-crater
+    label: Manicouagan impact
+    kind: moment
+    t_min: 2.13e8
+    t_max: 2.15e8
+    t: 2.14e8
+    tags: [catastrophe]
+    importance: 0.35
+    description: >
+      A ~5 km asteroid strikes what is now Quebec, Canada, excavating a crater originally
+      about 100 km across — Earth's sixth-largest confirmed impact structure, now the
+      ring-shaped Manicouagan Reservoir. At 214 Ma it long predates the end-Triassic
+      extinction (201 Ma, below) by too wide a margin to be its trigger, a hypothesis once
+      proposed and since abandoned; a contested link to a smaller, localised Late Triassic
+      faunal turnover remains debated.
+    citation: >
+      Hodych, J.P. & Dunning, G.R. (1992). "Did the Manicouagan impact trigger
+      end-of-Triassic mass extinction?" Geology, 20(1), 51-54. Cross-checked live via
+      Wikipedia, "Manicouagan Reservoir" (accessed 2026-09-22), which cites a more recent
+      Ramezani et al. U-Pb zircon age of 215.56 +/- 0.05 Ma.
+
   - id: end-triassic-extinction
     label: End-Triassic mass extinction
     kind: period
@@ -878,6 +1025,50 @@ events:
       53-50 Ma). Eberle, J.J. et al. (2014). PLOS ONE, 9(5), e96079. Eberle, J.J., Fricke,
       H.C. & Humphrey, J.D. (2009). "Lower-latitude mammals as year-round residents in Eocene
       Arctic forests." Geology, 37, 499-502.
+
+  - id: popigai-impact-crater
+    label: Popigai impact
+    kind: moment
+    t_min: 3.55e7
+    t_max: 3.59e7
+    t: 3.57e7
+    tags: [catastrophe, earth-climate]
+    importance: 0.4
+    description: >
+      An asteroid strikes northern Siberia, excavating a 90-100 km crater and
+      shock-converting graphite in the target rock into microscopic diamonds — the source
+      of one of the world's largest diamond deposits. It forms within about 25,000 years
+      of the Chesapeake Bay impact (below), and a link between the two impacts and the
+      Eocene-Oligocene cooling step that follows soon after has been proposed but is not
+      established: a 2024 reassessment found no paleoclimatic anomaly associated with
+      either impact.
+    citation: >
+      Bottomley, R., Grieve, R., York, D. & Masaitis, V. (1997). "The age of the Popigai
+      impact event and its relation to events at the Eocene/Oligocene boundary." Nature,
+      388(6640), 365-368. Wade, B. & Cheng, N.K.Y. (2024). "No paleoclimatic anomalies are
+      associated with the late Eocene extraterrestrial impact events." Communications
+      Earth & Environment, 5, 710.
+
+  - id: chesapeake-bay-impact-crater
+    label: Chesapeake Bay impact
+    kind: moment
+    t_min: 3.52e7
+    t_max: 3.58e7
+    t: 3.55e7
+    tags: [catastrophe, earth-climate]
+    importance: 0.4
+    description: >
+      An asteroid strikes the edge of the continental shelf off what is now Virginia, USA,
+      excavating an 85 km crater — one of the best-preserved "wet-target" impact
+      structures known, now buried beneath the mouth of Chesapeake Bay. It forms within
+      about 25,000 years of the Popigai impact (above); geochemical evidence for two
+      chemically distinct impactor types rules out a single parent-body breakup, pointing
+      instead to an unexplained multi-source asteroid shower.
+    citation: >
+      Poag, C.W., Koeberl, C. & Reimold, W.U. (2004). The Chesapeake Bay Crater: Geology
+      and Geophysics of a Late Eocene Submarine Impact Structure. Springer. Schmitz, B. et
+      al. (2015). "Fragments of Late Eocene Earth-impacting asteroids linked to
+      disturbance of asteroid belt." Earth and Planetary Science Letters, 425, 77-83.
 
   - id: eocene-oligocene-transition
     label: Eocene-Oligocene transition; first Antarctic ice sheet

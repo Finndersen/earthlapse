@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 152 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 170 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -386,6 +386,44 @@ appears where none did before — so they are recorded as an ADR-032 amendment i
 `docs/DECISIONS.md`, not merged as a silent data edit (`CLAUDE.md`'s rule for NORMATIVE
 contract fields).
 
+A **deep-time tectonics batch** (2026-09-22) added 9 events covering the supercontinent
+cycle and a hand-picked set of major impact craters, bringing the total to 170:
+`nuna-columbia-supercontinent`, `rodinia-supercontinent` and
+`gondwana-supercontinent-assembly` (each `kind: period`, tag `[earth-climate]`, matching
+`pangaea-supercontinent`'s existing pattern of one event spanning assembly through
+breakup/completion — Pangaea's own breakup was already covered and needed no new event);
+`vredefort-impact-crater`, `sudbury-impact-crater`, `popigai-impact-crater`,
+`chesapeake-bay-impact-crater`, `manicouagan-impact-crater` and `acraman-impact-crater`
+(each `kind: moment`, tag `[catastrophe]` or `[catastrophe, earth-climate]` where a
+climate link is at least proposed in the literature). Every date was checked with WebSearch
+and WebFetch against the primary dating paper named in each citation, not asserted from
+model knowledge. Curation choices:
+- **No `GlobeEffect`/anchor was added to any crater.** `GlobeEffectKind`
+  (`pipeline/shapes.py`) is a closed, NORMATIVE set with exactly one impact-shaped point
+  kind already spoken for by `k-pg-impact` (`impact-winter`, a global-climate visual) and
+  one by `moon-forming-impact` (`giant-impact`, a formation-scale flash). Neither fits six
+  Earth-surface craters with no comparable global effect; reusing either kind would imply a
+  visual the literature doesn't support. Adding a generic "crater" `GlobeEffectKind` is a
+  contract change and needs its own ADR, not a data-file edit.
+- **Popigai and Chesapeake Bay** form within ~25,000 years of each other at ~36 Ma and are
+  the two largest Cenozoic craters; both are tagged `earth-climate` alongside `catastrophe`
+  because a link to the Eocene-Oligocene cooling step has genuinely been proposed in the
+  literature — but each description also carries Wade & Cheng (2024)'s finding of no
+  detectable paleoclimatic anomaly, so the tag isn't read as an endorsed causal claim.
+- **Manicouagan** (214 Ma) is dated too far from the end-Triassic extinction (201 Ma) to
+  have triggered it — the hypothesis that motivated its original dating study (Hodych &
+  Dunning 1992) is stated and then corrected in the same event's description, rather than
+  only citing the paper that proposed it.
+- **Acraman**'s age is dated from the stratigraphic position of its ejecta horizon in the
+  Bunyeroo Formation, not from the eroded crater itself — noted explicitly, matching this
+  file's convention (see `ediacaran-biota`, `snowball-earth`) of flagging when an interval
+  reflects something other than ordinary dating-error uncertainty.
+- Not added: a broader Precambrian crater sweep (Sudbury and Vredefort are the two hand-
+  picked Precambrian entries; a general-purpose crater database is explicitly out of scope
+  per the work-package brief) and a Rodinia/Gondwana breakup event distinct from Pangaea's
+  (Gondwana's later breakup is the southern half of Pangaea's own breakup, already covered
+  by `pangaea-supercontinent`).
+
 ## Gotchas
 
 - **`t_min`/`t_max` is not always "measurement uncertainty about one moment."** For a few
@@ -415,9 +453,9 @@ contract fields).
 
 ## Measured volume
 
-`data/curated/events-core.parquet`: **91,059 bytes** (89.0 KB) for 152 events, regenerated from
-the current `data/events.yaml` via `normalise.main()`. `data/events.yaml` itself (the actual
-source of truth, git-tracked separately): **169,929 bytes** (166.0 KB).
+`data/curated/events-core.parquet`: **100,900 bytes** (98.5 KB) for 170 events, regenerated
+from the current `data/events.yaml` via `normalise.main()`. `data/events.yaml` itself (the
+actual source of truth, git-tracked separately): **192,131 bytes** (187.6 KB).
 
 ## Storage tier chosen
 
