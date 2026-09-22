@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "d00274589aa90680",
+  "buildId": "a25ad5189706a114",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2298,6 +2298,36 @@
       "data": "layers/population.json"
     },
     {
+      "id": "ice_volume",
+      "name": "Ice volume (LGM = 1)",
+      "surface": "globe",
+      "dataKind": "scalar",
+      "timeDomain": [
+        75.0,
+        5320075.0
+      ],
+      "source": "lr04",
+      "chartable": false,
+      "unit": "LGM = 1",
+      "interpolation": "linear",
+      "data": "layers/ice_volume.json"
+    },
+    {
+      "id": "sea_level",
+      "name": "Sea level",
+      "surface": "globe",
+      "dataKind": "scalar",
+      "timeDomain": [
+        75.0,
+        5320075.0
+      ],
+      "source": "lr04",
+      "chartable": false,
+      "unit": "m",
+      "interpolation": "linear",
+      "data": "layers/sea_level.json"
+    },
+    {
       "id": "lineage",
       "name": "Your ancestor",
       "surface": "hud",
@@ -4546,6 +4576,36 @@
       "citation": "Hutchinson, D.K. et al. (2021). \"The Eocene-Oligocene transition: a review of marine and terrestrial proxy data, models and model-data comparisons.\" Climate of the Past, 17, 269 (EOT 34.44-33.65 Ma). Coxall, H.K. et al. (2005). \"Rapid stepwise onset of Antarctic glaciation and deep-sea acidification in the late Eocene.\" Nature, 433, 53-57. Eocene-Oligocene boundary age 33.9 Ma per the ICS International Chronostratigraphic Chart v2024/12. \"Grande Coupure\" term coined by Stehlin, H.G. (1910).\n"
     },
     {
+      "id": "chesapeake-bay-impact-crater",
+      "label": "Chesapeake Bay impact",
+      "kind": "moment",
+      "tMin": 35200000.0,
+      "tMax": 35800000.0,
+      "t": 35500000.0,
+      "tags": [
+        "catastrophe",
+        "earth-climate"
+      ],
+      "importance": 0.4,
+      "description": "An asteroid strikes the edge of the continental shelf off what is now Virginia, USA, excavating an 85 km crater — one of the best-preserved \"wet-target\" impact structures known, now buried beneath the mouth of Chesapeake Bay. It forms within about 25,000 years of the Popigai impact (above); geochemical evidence for two chemically distinct impactor types rules out a single parent-body breakup, pointing instead to an unexplained multi-source asteroid shower.\n",
+      "citation": "Poag, C.W., Koeberl, C. & Reimold, W.U. (2004). The Chesapeake Bay Crater: Geology and Geophysics of a Late Eocene Submarine Impact Structure. Springer. Schmitz, B. et al. (2015). \"Fragments of Late Eocene Earth-impacting asteroids linked to disturbance of asteroid belt.\" Earth and Planetary Science Letters, 425, 77-83.\n"
+    },
+    {
+      "id": "popigai-impact-crater",
+      "label": "Popigai impact",
+      "kind": "moment",
+      "tMin": 35500000.0,
+      "tMax": 35900000.0,
+      "t": 35700000.0,
+      "tags": [
+        "catastrophe",
+        "earth-climate"
+      ],
+      "importance": 0.4,
+      "description": "An asteroid strikes northern Siberia, excavating a 90-100 km crater and shock-converting graphite in the target rock into microscopic diamonds — the source of one of the world's largest diamond deposits. It forms within about 25,000 years of the Chesapeake Bay impact (below), and a link between the two impacts and the Eocene-Oligocene cooling step that follows soon after has been proposed but is not established: a 2024 reassessment found no paleoclimatic anomaly associated with either impact.\n",
+      "citation": "Bottomley, R., Grieve, R., York, D. & Masaitis, V. (1997). \"The age of the Popigai impact event and its relation to events at the Eocene/Oligocene boundary.\" Nature, 388(6640), 365-368. Wade, B. & Cheng, N.K.Y. (2024). \"No paleoclimatic anomalies are associated with the late Eocene extraterrestrial impact events.\" Communications Earth & Environment, 5, 710.\n"
+    },
+    {
       "id": "india-asia-collision",
       "label": "India-Asia collision begins",
       "kind": "moment",
@@ -4745,8 +4805,22 @@
         "catastrophe"
       ],
       "importance": 0.8,
-      "description": "One of the \"Big Five\" mass extinctions, precisely dated to the Triassic-Jurassic boundary and tied to Central Atlantic Magmatic Province (CAMP) volcanism — the largest known flood-basalt province by area — which released enough CO2 and sulphur to drive intense warming, acidification and marine anoxia. Clears the way for dinosaurs to become dominant in the Jurassic.\n",
+      "description": "One of the \"Big Five\", and the one that hands the world to the dinosaurs. Its trigger is the Central Atlantic Magmatic Province, erupting as Pangaea begins to tear open along the line that becomes the Atlantic. The dying falls hardest on the crurotarsans — the crocodile-line archosaurs that had dominated Triassic landscapes and kept dinosaurs in a minor role for some 30 million years — and takes the last conodonts with it. Dinosaurs inherit the emptied niches and hold them for the next 135 million years.\n",
       "citation": "Blackburn, T.J. et al. (2013). \"Zircon U-Pb Geochronology Links the End-Triassic Extinction with the Central Atlantic Magmatic Province.\" Science, 340(6135), 941-945.\n"
+    },
+    {
+      "id": "manicouagan-impact-crater",
+      "label": "Manicouagan impact",
+      "kind": "moment",
+      "tMin": 213000000.0,
+      "tMax": 215000000.0,
+      "t": 214000000.0,
+      "tags": [
+        "catastrophe"
+      ],
+      "importance": 0.35,
+      "description": "A ~5 km asteroid strikes what is now Quebec, Canada, excavating a crater originally about 100 km across — Earth's sixth-largest confirmed impact structure, now the ring-shaped Manicouagan Reservoir. At 214 Ma it long predates the end-Triassic extinction (201 Ma, below) by too wide a margin to be its trigger, a hypothesis once proposed and since abandoned; a contested link to a smaller, localised Late Triassic faunal turnover remains debated.\n",
+      "citation": "Hodych, J.P. & Dunning, G.R. (1992). \"Did the Manicouagan impact trigger end-of-Triassic mass extinction?\" Geology, 20(1), 51-54. Cross-checked live via Wikipedia, \"Manicouagan Reservoir\" (accessed 2026-09-22), which cites a more recent Ramezani et al. U-Pb zircon age of 215.56 +/- 0.05 Ma.\n"
     },
     {
       "id": "mammals-origin",
@@ -5008,6 +5082,33 @@
       "citation": "Narbonne, G.M. (2005). \"The Ediacara Biota: Neoproterozoic origin of animals and their ecosystems.\" Annual Review of Earth and Planetary Sciences, 33, 421-442. Top of Ediacaran Period (Fortune Head GSSP) = 538.8 +/- 0.2 Ma per the ICS International Chronostratigraphic Chart v2024/12.\n"
     },
     {
+      "id": "gondwana-supercontinent-assembly",
+      "label": "Gondwana assembles",
+      "kind": "period",
+      "tMin": 530000000.0,
+      "tMax": 600000000.0,
+      "tags": [
+        "earth-climate"
+      ],
+      "importance": 0.55,
+      "description": "Fragments scattered by Rodinia's breakup (above) — Africa, South America, Madagascar, India, Australia and Antarctica — collide back together as the Mozambique Ocean closes, in the overlapping Brasiliano and Kuunga orogenies of the Pan-African orogenic episode, c. 600-530 Ma. An earlier phase, the East African Orogeny (c. 800-650 Ma), had already stitched together Gondwana's eastern cratons. Gondwana persists as the southern half of Pangaea (below) until that supercontinent's own breakup.\n",
+      "citation": "Meert, J.G. & Van der Voo, R. (1997). \"The assembly of Gondwana 800-550 Ma.\" Journal of Geodynamics, 23(3-4), 223-235. Meert, J.G. (2003). \"A synopsis of events related to the assembly of eastern Gondwana.\" Tectonophysics, 362(1-4), 1-40. Cross-checked live via Wikipedia, \"Gondwana\" (accessed 2026-09-22).\n"
+    },
+    {
+      "id": "acraman-impact-crater",
+      "label": "Acraman impact",
+      "kind": "moment",
+      "tMin": 570000000.0,
+      "tMax": 590000000.0,
+      "t": 580000000.0,
+      "tags": [
+        "catastrophe"
+      ],
+      "importance": 0.35,
+      "description": "An asteroid strikes the Gawler Ranges of South Australia, excavating a crater up to 90 km across — among the largest known Precambrian impacts. Unlike most events in this file, its age comes not from dating the crater itself (deeply eroded, its melt long gone) but from the stratigraphic position of a shocked-ejecta horizon within the Bunyeroo Formation, several hundred kilometres away.\n",
+      "citation": "Williams, G.E. & Wallace, M.W. (2003). \"The Acraman asteroid impact, South Australia: magnitude and implications for the late Vendian environment.\" Journal of the Geological Society, 160(4), 545-554. Grey, K., Walter, M.R. & Calver, C.R. (2003). \"Neoproterozoic biotic diversification: Snowball Earth, GOE, and the rise of bilaterians.\" Geology, 31(6), 459-462 (ejecta-horizon age constraint, ~580 Ma).\n"
+    },
+    {
       "id": "snowball-earth",
       "label": "Snowball Earth glaciations",
       "kind": "period",
@@ -5032,6 +5133,19 @@
           }
         ]
       }
+    },
+    {
+      "id": "rodinia-supercontinent",
+      "label": "Rodinia assembles and rifts apart",
+      "kind": "period",
+      "tMin": 633000000.0,
+      "tMax": 1300000000.0,
+      "tags": [
+        "earth-climate"
+      ],
+      "importance": 0.65,
+      "description": "Nearly every continental block then in existence collides together through worldwide orogenic events between about 1.3 and 0.9 Ga, forming Rodinia. Rifting begins by around 825-750 Ma and is largely complete by 750-633 Ma, as the continents that once bordered Laurentia scatter and later regroup as Gondwana (below); the rifting's silicate weathering is one leading hypothesis for the runaway cooling behind the Cryogenian Snowball Earth glaciations, which follow almost immediately.\n",
+      "citation": "Li, Z.X. et al. (2008). \"Assembly, configuration, and break-up history of Rodinia: A synthesis.\" Precambrian Research, 160(1-2), 179-210. Cross-checked live via Wikipedia, \"Rodinia\" (accessed 2026-09-22).\n"
     },
     {
       "id": "first-seaweeds",
@@ -5074,6 +5188,47 @@
       "importance": 0.65,
       "description": "The lineage bearing a nucleus and internal membrane-bound organelles diverges from other life. Contested: candidate fossils (the Francevillian Biota, Gabon) are dated to 2.1 Ga, but the oldest fossils with unambiguous crown-eukaryote features are ~1.6 Ga, closer to molecular-clock estimates for the last eukaryotic common ancestor.\n",
       "citation": "El Albani, A. et al. (2010). \"Large colonial organisms with coordinated growth in oxygenated environments 2.1 Gyr ago.\" Nature, 466, 100-104 (contested, 2.1 Ga). Bengtson, S. et al. (2017). \"Three-dimensional preservation of cellular and subcellular structures suggests 1.6 billion-year-old crown-group red algae.\" PLOS Biology, 15(3), e2000735.\n"
+    },
+    {
+      "id": "nuna-columbia-supercontinent",
+      "label": "Nuna/Columbia assembles and rifts apart",
+      "kind": "period",
+      "tMin": 1200000000.0,
+      "tMax": 2100000000.0,
+      "tags": [
+        "earth-climate"
+      ],
+      "importance": 0.55,
+      "description": "One of the first supercontinents reconstructable from the rock record — variously called Nuna or Columbia, with reconstructions differing in exact extent and timing. Global-scale collisional orogens weld its core together from roughly 2.1-1.8 Ga, with continued accretionary growth at its margins out to about 1.6-1.5 Ga. Breakup is diachronous, beginning as early as 1.6 Ga and largely complete by 1.3-1.2 Ga, scattering fragments that later reassemble as Rodinia (below).\n",
+      "citation": "Zhao, G., Cawood, P.A., Wilde, S.A. & Sun, M. (2002). \"Review of global 2.1-1.8 Ga orogens: implications for a pre-Rodinia supercontinent.\" Earth-Science Reviews, 59(1-2), 125-162. Rogers, J.J.W. & Santosh, M. (2002). \"Configuration of Columbia, a Mesoproterozoic supercontinent.\" Gondwana Research, 5(1), 5-22. Zhao, G., Sun, M., Wilde, S.A. & Li, S. (2004). \"A Paleo-Mesoproterozoic supercontinent: assembly, growth and breakup.\" Earth-Science Reviews, 67(1-2), 91-123. Cross-checked live via Wikipedia, \"Columbia (supercontinent)\" (accessed 2026-09-22).\n"
+    },
+    {
+      "id": "sudbury-impact-crater",
+      "label": "Sudbury impact",
+      "kind": "moment",
+      "tMin": 1848000000.0,
+      "tMax": 1851000000.0,
+      "t": 1849500000.0,
+      "tags": [
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "An asteroid or comet roughly 10-15 km across strikes what is now Ontario, Canada, excavating the second-largest verified impact crater on Earth, originally about 130 km across. Its solidified melt sheet, the Sudbury Igneous Complex, later differentiated into one of the world's largest nickel-copper-platinum group element ore deposits.\n",
+      "citation": "Davis, D.W. (2008). \"Sub-million-year age resolution of Precambrian igneous events by thermal extraction-thermal ionization mass spectrometer Pb dating of zircon: Application to crystallization of the Sudbury impact melt sheet.\" Geology, 36(5), 383-386.\n"
+    },
+    {
+      "id": "vredefort-impact-crater",
+      "label": "Vredefort impact",
+      "kind": "moment",
+      "tMin": 2019000000.0,
+      "tMax": 2027000000.0,
+      "t": 2023000000.0,
+      "tags": [
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "An asteroid strikes what is now the Free State, South Africa, excavating the largest verified impact crater on Earth — an original structure some 170-280 km across, now eroded to the central Vredefort Dome. A 2022 re-analysis of the crater's formation revised the impactor upward to roughly 20-25 km across, larger than the impactor behind the Chicxulub crater that ends the non-avian dinosaurs (k-pg-impact, below).\n",
+      "citation": "Kamo, S.L., Reimold, W.U., Krogh, T.E. & Colliston, W.P. (1996). \"A 2.023 Ga age for the Vredefort impact event and a first report of shock metamorphosed zircons in pseudotachylitic breccias and Granophyre.\" Earth and Planetary Science Letters, 144(3-4), 369-387. Allen, N.H. et al. (2022). \"A Revision of the Formation Conditions of the Vredefort Crater.\" Journal of Geophysical Research: Planets, 127(10), e2022JE007186.\n"
     },
     {
       "id": "great-oxidation-event",
@@ -5570,6 +5725,13 @@
       "citation": "Every node in data/lineage.yaml carries its own specific citation. Principal syntheses used across multiple adjacent nodes: Betts, H.C. et al. (2018) Nature Ecology & Evolution 2, 1556-1562 (early life); dos Reis, M. et al. (2015) Current Biology 25(22), 2939-2950 (animal origins); dos Reis, M. et al. (2012) Proc. R. Soc. B 279(1742), 3491-3500 (placental mammal timescale); Chatterjee, H.J. et al. (2009) BMC Evolutionary Biology 9, 259 (primate divergence times).",
       "licence": "CC BY 4.0 (this compilation); dates are facts cited from the listed publications",
       "url": ""
+    },
+    {
+      "sourceId": "lr04",
+      "title": "LR04 global Pliocene-Pleistocene benthic d18O stack",
+      "citation": "Lisiecki, L.E. and M.E. Raymo, 2005: A Pliocene-Pleistocene stack of 57 globally distributed benthic d18O records. Paleoceanography 20, PA1003, doi:10.1029/2004PA001071. Data: NOAA NCEI Paleoclimatology, doi:10.25921/k88j-0106. Sea-level scaling anchored to Lambeck, K. et al., 2014: Sea level and global ice volumes from the Last Glacial Maximum to the Holocene. PNAS 111(43), 15296-15303, doi:10.1073/pnas.1411762111.",
+      "licence": "CC-BY-3.0 (identical values on PANGAEA, doi:10.1594/PANGAEA.701576); NOAA NCEI distributes its copy without restriction, citation requested",
+      "url": "https://www.ncei.noaa.gov/pub/data/paleo/contributions_by_author/lisiecki2005/lisiecki2005-d18o-stack-noaa.txt"
     },
     {
       "sourceId": "paleodem",
