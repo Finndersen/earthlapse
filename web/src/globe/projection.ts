@@ -72,6 +72,12 @@ export function lonLatToSphere(point: GlobeEffectAnchor, radius = 1): readonly [
   return [radius * cosPhi * Math.sin(lambda), radius * Math.sin(phi), radius * cosPhi * Math.cos(lambda)]
 }
 
+/** `lonLatToSphere`'s inverse for any non-zero `v`, whatever its length. */
+export function sphereToLonLat(v: readonly [number, number, number]): GlobeEffectAnchor {
+  const len = Math.hypot(v[0], v[1], v[2])
+  return { lon: Math.atan2(v[0], v[2]) / DEG2RAD, lat: Math.asin(Math.max(-1, Math.min(1, v[1] / len))) / DEG2RAD }
+}
+
 // --------------------------------------------------------------------------- equal earth
 
 /** Coefficients from Šavrič, Jenny & Jenny (2018), "A Higher-Order Equal-Area Projection for
@@ -86,7 +92,7 @@ export const EQUAL_EARTH_M = Math.sqrt(3) / 2
 
 /**
  * The Equal Earth projection of `{lat, lon}` (degrees), centred on 0° longitude — `z` is always
- * 0. Forward-only: the published inverse needs Newton iteration, and no caller here needs it.
+ * 0. `mapToLonLat` is its inverse.
  */
 export function lonLatToMap(point: GlobeEffectAnchor, radius = 1): readonly [number, number, number] {
   const lambda = point.lon * DEG2RAD
@@ -108,6 +114,36 @@ export function lonLatToMap(point: GlobeEffectAnchor, radius = 1): readonly [num
  *  (`camera.ts`). */
 export const EQUAL_EARTH_HALF_WIDTH = lonLatToMap({ lon: 180, lat: 0 })[0]
 export const EQUAL_EARTH_HALF_HEIGHT = lonLatToMap({ lon: 0, lat: 90 })[1]
+
+const INVERSE_MAX_ITERATIONS = 12
+const INVERSE_TOLERANCE = 1e-12
+
+/**
+ * `lonLatToMap`'s inverse: the `{lat, lon}` at map point `(x, y)`. The latitude term has no closed
+ * form, so it is solved by Newton iteration on `y(theta)` — the same method `d3-geo`'s
+ * `geoEqualEarthRaw.invert` uses; it converges in a handful of steps across the whole map. A point
+ * outside the map's outline is clamped onto it rather than returning a meaningless lon/lat.
+ */
+export function mapToLonLat(x: number, y: number, radius = 1): GlobeEffectAnchor {
+  const yUnit = Math.max(-EQUAL_EARTH_HALF_HEIGHT, Math.min(EQUAL_EARTH_HALF_HEIGHT, y / radius))
+  let theta = yUnit
+  for (let i = 0; i < INVERSE_MAX_ITERATIONS; i++) {
+    const t2 = theta * theta
+    const t6 = t2 * t2 * t2
+    const f = theta * (EQUAL_EARTH_A1 + EQUAL_EARTH_A2 * t2 + t6 * (EQUAL_EARTH_A3 + EQUAL_EARTH_A4 * t2)) - yUnit
+    const df = EQUAL_EARTH_A1 + 3 * EQUAL_EARTH_A2 * t2 + t6 * (7 * EQUAL_EARTH_A3 + 9 * EQUAL_EARTH_A4 * t2)
+    const step = f / df
+    theta -= step
+    if (Math.abs(step) < INVERSE_TOLERANCE) break
+  }
+  const t2 = theta * theta
+  const t6 = t2 * t2 * t2
+  const lambda =
+    (EQUAL_EARTH_M * (x / radius) * (EQUAL_EARTH_A1 + 3 * EQUAL_EARTH_A2 * t2 + t6 * (7 * EQUAL_EARTH_A3 + 9 * EQUAL_EARTH_A4 * t2))) /
+    Math.cos(theta)
+  const lat = Math.asin(Math.max(-1, Math.min(1, Math.sin(theta) / EQUAL_EARTH_M))) / DEG2RAD
+  return { lon: Math.max(-180, Math.min(180, lambda / DEG2RAD)), lat }
+}
 
 // -------------------------------------------------------------------------------- mixed
 
@@ -181,6 +217,14 @@ export function unfoldedPosition(point: GlobeEffectAnchor, unfold: number, radiu
   const [x, y] = unrolledXY(point, s)
   const [ux, uy, uz] = curvatureUnroll(x, y, 1 - s)
   return [ux * radius, uy * radius, uz * radius]
+}
+
+/** The outward surface direction at `point` for a given `unfold` — radial on the sphere, `+z` on
+ *  the flat map, continuous in between. Unit length. */
+export function unfoldedNormal(point: GlobeEffectAnchor, unfold: number): readonly [number, number, number] {
+  const s = clamp01(unfold)
+  const [x, y] = unrolledXY(point, s)
+  return curvatureNormal(x, y, 1 - s)
 }
 
 /**

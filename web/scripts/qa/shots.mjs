@@ -748,6 +748,44 @@ function desktopGlobeCornersShot(viewport, globeViewMode) {
   }
 }
 
+/** Above the atmosphere glow's own contrast against the flat backdrop `hideSceneAndVignette`
+ *  leaves, well below the sphere's — so a strip scan measures the sphere, not its halo. */
+const SPHERE_OVER_GLOW_THRESHOLD = 90
+
+async function sphereStripBounds(page) {
+  const restoreScene = await hideSceneAndVignette(page)
+  await rafTicks(page, 2)
+  const bounds = await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+  await restoreScene()
+  return bounds
+}
+
+async function pressZoomIn(page, steps) {
+  const button = page.getByRole('button', { name: 'Zoom in' })
+  for (let i = 0; i < steps; i += 1) {
+    await button.click()
+    await rafTicks(page, 2)
+  }
+}
+
+/** Zoom is camera state, not store state, so a shot's `state` cannot reset it and it would
+ *  otherwise carry over from whichever shot ran before. Collapsing and re-expanding reframes the
+ *  sphere to its default. */
+async function openGlobeAtDefaultZoom(page, hook) {
+  await hook.setGlobeExpanded(false)
+  await rafTicks(page, 3)
+  await hook.setGlobeExpanded(true)
+  await hook.ready()
+  await waitForApproxUnfoldProgress(page, 1)
+  await rafTicks(page, 3)
+}
+
+async function switchGlobeViewMode(page, hook, mode) {
+  await hook.setGlobeViewMode(mode)
+  await waitForApproxUnfoldProgress(page, 1.5)
+  await rafTicks(page, 3)
+}
+
 export default [
   {
     name: 'present-day-default',
@@ -1034,6 +1072,55 @@ export default [
     // well below this shot's own measured count, comfortably above screenshot/PNG round-trip
     // noise (`countDiffPixels`'s own threshold already filters that).
     expect: { diffPixels: [5000, 2_000_000] },
+  },
+  {
+    name: 'globe-zoom-carries-to-map',
+    description:
+      'Zooming in on the sphere and switching to the map opens the map zoomed in by the same ratio of its own ' +
+      'default framing: two zoom-in steps on the sphere take exactly two zoom-out steps on the map to reach the ' +
+      "map's default, where zoom-out disables. Counted on the button rather than measured in pixels because a " +
+      'zoomed map fills any clip edge to edge, leaving no backdrop for a pixel scan to compare against.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await openGlobeAtDefaultZoom(page, hook)
+      await pressZoomIn(page, 2)
+      await switchGlobeViewMode(page, hook, 'map')
+      await hook.ready()
+    },
+    measure: async ({ page }) => {
+      const zoomOut = page.getByRole('button', { name: 'Zoom out' })
+      let stepsToDefault = 0
+      while (stepsToDefault < 10 && (await zoomOut.isEnabled())) {
+        await zoomOut.click()
+        await rafTicks(page, 2)
+        stepsToDefault += 1
+      }
+      return { stepsToDefault }
+    },
+    expect: { stepsToDefault: [2, 2] },
+  },
+  {
+    name: 'globe-zoom-survives-map-round-trip',
+    description:
+      'Sphere zoomed in, to the map and straight back without touching it: the sphere returns at the same zoom.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await openGlobeAtDefaultZoom(page, hook)
+      await pressZoomIn(page, 1)
+    },
+    measure: async ({ page, hook }) => {
+      const before = await sphereStripBounds(page)
+      await switchGlobeViewMode(page, hook, 'map')
+      await switchGlobeViewMode(page, hook, 'globe')
+      await hook.ready()
+      const after = await sphereStripBounds(page)
+      return { widthChangePx: Math.abs(after.width - before.width), beforeWidth: before.width }
+    },
+    expect: { widthChangePx: [0, 6], beforeWidth: [560, 680] },
   },
   {
     name: 'globe-transition-mid-unfold',

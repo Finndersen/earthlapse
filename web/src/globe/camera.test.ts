@@ -7,15 +7,20 @@ import {
   fitDistance,
   globeBodyProxyHit,
   isSubFrameOf,
+  logLerp,
   mapHasPanRoom,
   rayBoxIntersection,
   raySphereIntersection,
-  slerpDirection,
   sphereFitDistance,
   sphereRotateSpeedForDistance,
+  sphereViewFocus,
   subFrameFovY,
+  unfoldCameraPose,
+  type UnfoldViewEnds,
   verticalCenterOffset,
+  zoomRatio,
 } from './camera'
+import { lonLatToMap, lonLatToSphere, unfoldedPosition, unrolledHalfHeight, unrolledHalfWidth } from './projection'
 
 describe('fitDistance', () => {
   const fovYRadians = (40 * Math.PI) / 180
@@ -382,94 +387,6 @@ describe('clampedDollyDistance', () => {
   })
 })
 
-describe('slerpDirection', () => {
-  function length(v: readonly [number, number, number]): number {
-    return Math.hypot(v[0], v[1], v[2])
-  }
-
-  it('returns a exactly at t=0 and b exactly at t=1 for two orthogonal directions', () => {
-    const a: [number, number, number] = [1, 0, 0]
-    const b: [number, number, number] = [0, 0, 1]
-    const start = slerpDirection(a, b, 0)
-    const end = slerpDirection(a, b, 1)
-    expect(start[0]).toBeCloseTo(a[0])
-    expect(start[1]).toBeCloseTo(a[1])
-    expect(start[2]).toBeCloseTo(a[2])
-    expect(end[0]).toBeCloseTo(b[0])
-    expect(end[1]).toBeCloseTo(b[1])
-    expect(end[2]).toBeCloseTo(b[2])
-  })
-
-  it('stays unit length and takes the great-circle midpoint for two orthogonal directions', () => {
-    const a: [number, number, number] = [1, 0, 0]
-    const b: [number, number, number] = [0, 0, 1]
-    const mid = slerpDirection(a, b, 0.5)
-    expect(length(mid)).toBeCloseTo(1)
-    // Equidistant from both endpoints on the great circle between them, at 45 degrees each.
-    expect(mid[0]).toBeCloseTo(Math.SQRT1_2)
-    expect(mid[2]).toBeCloseTo(Math.SQRT1_2)
-    expect(mid[1]).toBeCloseTo(0)
-  })
-
-  it('returns the input unchanged (identity, no NaN) when the two directions are identical', () => {
-    const a: [number, number, number] = [0, 0, 1]
-    const result = slerpDirection(a, a, 0.5)
-    expect(result[0]).toBeCloseTo(a[0])
-    expect(result[1]).toBeCloseTo(a[1])
-    expect(result[2]).toBeCloseTo(a[2])
-  })
-
-  it('stays unit length and finite for antipodal directions, unlike a plain lerp+normalize (which passes through the zero vector)', () => {
-    const a: [number, number, number] = [0, 0, 1]
-    const b: [number, number, number] = [0, 0, -1]
-    const mid = slerpDirection(a, b, 0.5)
-    expect(Number.isFinite(mid[0])).toBe(true)
-    expect(Number.isFinite(mid[1])).toBe(true)
-    expect(Number.isFinite(mid[2])).toBe(true)
-    expect(length(mid)).toBeCloseTo(1)
-    // A plain lerp+normalize is undefined here (exactly the zero vector at t=0.5); this must not
-    // collapse to zero.
-    expect(length(mid)).toBeGreaterThan(0.5)
-  })
-
-  it('reaches a and b exactly at the endpoints even in the antipodal case', () => {
-    const a: [number, number, number] = [0, 0, 1]
-    const b: [number, number, number] = [0, 0, -1]
-    const start = slerpDirection(a, b, 0)
-    const end = slerpDirection(a, b, 1)
-    expect(start[0]).toBeCloseTo(a[0])
-    expect(start[1]).toBeCloseTo(a[1])
-    expect(start[2]).toBeCloseTo(a[2])
-    expect(end[0]).toBeCloseTo(b[0])
-    expect(end[1]).toBeCloseTo(b[1])
-    expect(end[2]).toBeCloseTo(b[2])
-  })
-
-  it('uses a different (but still valid, unit-length) rotation plane when the default up axis is itself antipodal to a', () => {
-    // a === upAxisFallback's own antipode is the one case the primary cross product degenerates
-    // for — the fallback cross product (against world +X) must still produce a sensible result.
-    const a: [number, number, number] = [0, 1, 0]
-    const b: [number, number, number] = [0, -1, 0]
-    const mid = slerpDirection(a, b, 0.5, [0, 1, 0])
-    expect(Number.isFinite(mid[0])).toBe(true)
-    expect(Number.isFinite(mid[1])).toBe(true)
-    expect(Number.isFinite(mid[2])).toBe(true)
-    expect(length(mid)).toBeCloseTo(1)
-  })
-
-  it('clamps t outside [0, 1]', () => {
-    const a: [number, number, number] = [1, 0, 0]
-    const b: [number, number, number] = [0, 0, 1]
-    const below = slerpDirection(a, b, -1)
-    const above = slerpDirection(a, b, 2)
-    expect(below[0]).toBeCloseTo(a[0])
-    expect(above[2]).toBeCloseTo(b[2])
-  })
-})
-
-// `globeBodyProxyHit` and its two shape tests are `Globe.tsx`'s replacement for three.js's own
-// broken default raycast against a mesh with no `position` attribute (`globeGeometry.ts`'s own
-// doc comment); see that file's `mesh.raycast` doc comment for the full story.
 describe('raySphereIntersection', () => {
   it('hits a sphere dead centre, from outside it', () => {
     const hit = raySphereIntersection([0, 0, 5], [0, 0, -1], 1)
@@ -581,5 +498,206 @@ describe('globeBodyProxyHit', () => {
     for (const unfold of [0, 0.25, 0.5, 0.75, 1]) {
       expect(globeBodyProxyHit(origin, direction, unfold, mapHalfWidth, mapHalfHeight, mapLocalHalfDepth)).toBeNull()
     }
+  })
+})
+
+describe('zoomRatio', () => {
+  it('is 1 at the default height', () => {
+    expect(zoomRatio(3.24, 3.24)).toBeCloseTo(1)
+  })
+
+  it('is 2 at half the default height (twice the on-screen scale)', () => {
+    expect(zoomRatio(3.24, 1.62)).toBeCloseTo(2)
+  })
+
+  it('is 0.5 at twice the default height', () => {
+    expect(zoomRatio(3.24, 6.48)).toBeCloseTo(0.5)
+  })
+})
+
+describe('logLerp', () => {
+  it('hits a exactly at t = 0', () => {
+    expect(logLerp(2, 32, 0)).toBeCloseTo(2)
+  })
+
+  it('hits b exactly at t = 1', () => {
+    expect(logLerp(2, 32, 1)).toBeCloseTo(32)
+  })
+
+  it('is the geometric mean at t = 0.5', () => {
+    expect(logLerp(2, 32, 0.5)).toBeCloseTo(Math.sqrt(2 * 32))
+  })
+
+  it('works for a >  b (zooming in) too', () => {
+    expect(logLerp(32, 2, 0)).toBeCloseTo(32)
+    expect(logLerp(32, 2, 1)).toBeCloseTo(2)
+    expect(logLerp(32, 2, 0.5)).toBeCloseTo(Math.sqrt(32 * 2))
+  })
+})
+
+describe('sphereViewFocus', () => {
+  it('faces lon 0 lat 0 for a camera on +Z with no globe rotation', () => {
+    const focus = sphereViewFocus([0, 0, 3.24], 0)
+    expect(focus.lon).toBeCloseTo(0, 9)
+    expect(focus.lat).toBeCloseTo(0, 9)
+  })
+
+  it('faces lon 90 for a camera on +X with no globe rotation', () => {
+    const focus = sphereViewFocus([3.24, 0, 0], 0)
+    expect(focus.lon).toBeCloseTo(90, 9)
+    expect(focus.lat).toBeCloseTo(0, 9)
+  })
+
+  /** Same convention `camera.ts`'s own internal `rotateY` uses (`Object3D.rotation.y`): a point at
+   *  local lon `L` appears at world azimuth `L + r`. Reimplemented independently here rather than
+   *  imported, so this test does not just restate the source's own helper. */
+  function rotateAboutY(v: readonly [number, number, number], angle: number): [number, number, number] {
+    const c = Math.cos(angle)
+    const s = Math.sin(angle)
+    return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c]
+  }
+
+  it('recovers the geographic point a camera sits over, for a rotated globe', () => {
+    const cases: Array<{ point: { lat: number; lon: number }; rotation: number }> = [
+      { point: { lat: 0, lon: 0 }, rotation: 0.7 },
+      { point: { lat: 35, lon: -120 }, rotation: -1.9 },
+      { point: { lat: -60, lon: 170 }, rotation: 4.1 },
+      { point: { lat: 80, lon: 10 }, rotation: Math.PI },
+    ]
+    for (const { point, rotation } of cases) {
+      const worldPosition = rotateAboutY(lonLatToSphere(point, 3.24), rotation)
+      const focus = sphereViewFocus(worldPosition, rotation)
+      expect(focus.lon).toBeCloseTo(point.lon, 6)
+      expect(focus.lat).toBeCloseTo(point.lat, 6)
+    }
+  })
+})
+
+describe('unfoldCameraPose', () => {
+  const fovYRadians = (40 * Math.PI) / 180
+  const focus = { lat: 18, lon: -63 }
+  const radius = 1
+
+  function meshFitHeight(unfold: number): number {
+    return fitDistance(unrolledHalfWidth(unfold), unrolledHalfHeight(unfold), 1.6, fovYRadians, 0.03)
+  }
+
+  function makeEnds(overrides: Partial<UnfoldViewEnds> = {}): UnfoldViewEnds {
+    return {
+      focus,
+      globeRotationY: 0.6,
+      radius,
+      sphereHeight: 3.24,
+      mapHeight: 5.5,
+      mapTarget: lonLatToMap(focus, radius) as unknown as [number, number],
+      meshFitHeight,
+      ...overrides,
+    }
+  }
+
+  /** Distance from point `p` to the closest point on segment `a`..`b`, and where along the segment
+   *  (0 = a, 1 = b) that closest point falls — used to check "the ray from position towards target
+   *  passes through X" without assuming any particular internal parameterisation. */
+  function segmentDistanceAndParam(
+    p: readonly [number, number, number],
+    a: readonly [number, number, number],
+    b: readonly [number, number, number],
+  ): { distance: number; t: number } {
+    const ab: [number, number, number] = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+    const ap: [number, number, number] = [p[0] - a[0], p[1] - a[1], p[2] - a[2]]
+    const abLenSq = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2]
+    const t = (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) / abLenSq
+    const closest: [number, number, number] = [a[0] + ab[0] * t, a[1] + ab[1] * t, a[2] + ab[2] * t]
+    return { distance: Math.hypot(p[0] - closest[0], p[1] - closest[1], p[2] - closest[2]), t }
+  }
+
+  it('at unfold 0: target is the origin, position is (radius + sphereHeight) along the world direction of focus, rotated by globeRotationY', () => {
+    const ends = makeEnds()
+    const { position, target } = unfoldCameraPose(0, ends)
+    expect(target[0]).toBeCloseTo(0, 9)
+    expect(target[1]).toBeCloseTo(0, 9)
+    expect(target[2]).toBeCloseTo(0, 9)
+
+    const c = Math.cos(ends.globeRotationY)
+    const s = Math.sin(ends.globeRotationY)
+    const [sx, sy, sz] = lonLatToSphere(focus)
+    const worldDirection: [number, number, number] = [sx * c + sz * s, sy, -sx * s + sz * c]
+    const expectedPosition = worldDirection.map((v) => v * (ends.radius + ends.sphereHeight))
+    expect(position[0]).toBeCloseTo(expectedPosition[0]!, 9)
+    expect(position[1]).toBeCloseTo(expectedPosition[1]!, 9)
+    expect(position[2]).toBeCloseTo(expectedPosition[2]!, 9)
+  })
+
+  it('at unfold 1: target is [mapTarget, 0], position is [mapTarget, radius + mapHeight]', () => {
+    const mapTarget: [number, number] = [0.4, -0.2]
+    const ends = makeEnds({ mapTarget })
+    const { position, target } = unfoldCameraPose(1, ends)
+    expect(target[0]).toBeCloseTo(mapTarget[0], 9)
+    expect(target[1]).toBeCloseTo(mapTarget[1], 9)
+    expect(target[2]).toBeCloseTo(0, 9)
+    expect(position[0]).toBeCloseTo(mapTarget[0], 9)
+    expect(position[1]).toBeCloseTo(mapTarget[1], 9)
+    expect(position[2]).toBeCloseTo(ends.radius + ends.mapHeight, 9)
+  })
+
+  it('with no pan offset, the ray from position through target passes through the rotated surface point at every unfold', () => {
+    const ends = makeEnds() // mapTarget is exactly focus's own lonLatToMap point — no pan offset
+    for (const unfold of [0, 0.1, 0.25, 0.5, 0.6, 0.75, 0.9, 1]) {
+      const { position, target } = unfoldCameraPose(unfold, ends)
+      const rotation = ends.globeRotationY * (1 - unfold)
+      const c = Math.cos(rotation)
+      const s = Math.sin(rotation)
+      const [ux, uy, uz] = unfoldedPosition(focus, unfold, ends.radius)
+      const rotated: [number, number, number] = [ux * c + uz * s, uy, -ux * s + uz * c]
+
+      const { distance, t } = segmentDistanceAndParam(rotated, target, position)
+      expect(distance).toBeLessThan(1e-9)
+      expect(t).toBeGreaterThanOrEqual(-1e-9)
+      expect(t).toBeLessThanOrEqual(1 + 1e-9)
+    }
+  })
+
+  // FAILS as of this writing: at unfold 0.5 with focus {lat: 18, lon: -63}, globeRotationY 0.6,
+  // sphereHeight 3.24, mapHeight 5.5 and mapTarget [0, 0] (the map's own centre, not focus's own
+  // map point — a real pan offset), the measured distance is 4.19413 against a plainHeight floor
+  // of 4.22137: a 0.0272 deficit, ~0.65% under the floor this behaviour is supposed to guarantee.
+  // The offset vector (x/y only, added in `unfoldCameraPose`'s `along`) is not always orthogonal
+  // to the surface normal at that unfold, so it can partially cancel the "along the normal" height
+  // term instead of only ever adding to it — a pan large enough relative to the height at that
+  // point pulls the camera closer to the surface than the plain logLerp floor promises.
+  it('keeps the camera at least the plain logLerp height above the surface along its normal, with a pan offset in play', () => {
+    const ends = makeEnds({ mapTarget: [0, 0] }) // map's centre, not focus's own map point: a real pan offset
+    for (let i = 0; i <= 40; i++) {
+      const unfold = i / 40
+      const { position, target } = unfoldCameraPose(unfold, ends)
+      const heightAlongNormal = Math.hypot(position[0] - target[0], position[1] - target[1], position[2] - target[2]) - ends.radius
+      expect(heightAlongNormal).toBeGreaterThanOrEqual(logLerp(ends.sphereHeight, ends.mapHeight, unfold) - 1e-9)
+    }
+  })
+
+  it.each([
+    ['zoomed-in', 0.2, 0.6],
+    ['default', 1.9, 4.0],
+  ])('is continuous across the whole unfold range (%s case) — no jump in position bigger than a small bound', (_label, sphereHeight, mapHeight) => {
+    const ends = makeEnds({ sphereHeight, mapHeight })
+    const steps = 1000
+    let prev = unfoldCameraPose(0, ends).position
+    let maxJump = 0
+    for (let i = 1; i <= steps; i++) {
+      const unfold = i / steps
+      const curr = unfoldCameraPose(unfold, ends).position
+      const jump = Math.hypot(curr[0] - prev[0], curr[1] - prev[1], curr[2] - prev[2])
+      maxJump = Math.max(maxJump, jump)
+      prev = curr
+    }
+    expect(maxJump).toBeLessThan(0.05)
+  })
+
+  it('clamps unfold below 0 to behave as 0, and above 1 to behave as 1', () => {
+    const ends = makeEnds()
+    expect(unfoldCameraPose(-1, ends)).toEqual(unfoldCameraPose(0, ends))
+    expect(unfoldCameraPose(-5, ends)).toEqual(unfoldCameraPose(0, ends))
+    expect(unfoldCameraPose(2, ends)).toEqual(unfoldCameraPose(1, ends))
+    expect(unfoldCameraPose(10, ends)).toEqual(unfoldCameraPose(1, ends))
   })
 })

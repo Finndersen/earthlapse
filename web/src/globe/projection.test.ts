@@ -11,9 +11,12 @@ import {
   EQUAL_EARTH_M,
   lonLatToMap,
   lonLatToSphere,
+  mapToLonLat,
   PROJECTION_GLSL,
+  sphereToLonLat,
   splitAtAntimeridian,
   unfoldedLiftedPosition,
+  unfoldedNormal,
   unfoldedPosition,
   unrolledHalfHeight,
   unrolledHalfWidth,
@@ -113,6 +116,49 @@ describe('lonLatToMap', () => {
   })
 })
 
+describe('mapToLonLat', () => {
+  it('inverts lonLatToMap across a dense grid spanning the whole map to ~1e-9 deg, including near the poles and the +-180 edges', () => {
+    const lons = [-180, -179.9, -150, -90, -45, -1, 0, 1, 45, 90, 150, 179.9, 180]
+    const lats = [-89.9, -85, -60, -30, -1, 0, 1, 30, 60, 85, 89.9]
+    for (const lon of lons) {
+      for (const lat of lats) {
+        const [x, y] = lonLatToMap({ lat, lon })
+        const back = mapToLonLat(x, y)
+        expect(Math.abs(back.lon - lon)).toBeLessThan(1e-9)
+        expect(Math.abs(back.lat - lat)).toBeLessThan(1e-9)
+      }
+    }
+  })
+
+  it('inverts at radius = 2 too', () => {
+    const point = { lat: 34.2, lon: -102.7 }
+    const [x, y] = lonLatToMap(point, 2)
+    const back = mapToLonLat(x, y, 2)
+    expect(Math.abs(back.lon - point.lon)).toBeLessThan(1e-9)
+    expect(Math.abs(back.lat - point.lat)).toBeLessThan(1e-9)
+  })
+
+  it('clamps a point well outside the map outline instead of returning a meaningless lon/lat', () => {
+    const back = mapToLonLat(100, 100)
+    expect(back.lat).toBeGreaterThanOrEqual(-90)
+    expect(back.lat).toBeLessThanOrEqual(90)
+    expect(back.lon).toBeGreaterThanOrEqual(-180)
+    expect(back.lon).toBeLessThanOrEqual(180)
+    expect(Number.isFinite(back.lat)).toBe(true)
+    expect(Number.isFinite(back.lon)).toBe(true)
+  })
+
+  it('clamps an extremely far-out point without producing NaN', () => {
+    const back = mapToLonLat(1e6, -1e6)
+    expect(Number.isFinite(back.lat)).toBe(true)
+    expect(Number.isFinite(back.lon)).toBe(true)
+    expect(back.lat).toBeGreaterThanOrEqual(-90)
+    expect(back.lat).toBeLessThanOrEqual(90)
+    expect(back.lon).toBeGreaterThanOrEqual(-180)
+    expect(back.lon).toBeLessThanOrEqual(180)
+  })
+})
+
 describe('lonLatToSphere orientation', () => {
   it('places lon 0 on +Z — the sphere\'s own default-facing point (Globe.tsx\'s camera sits on +Z) matches lonLatToMap\'s own map centre', () => {
     const [x, , z] = lonLatToSphere({ lat: 0, lon: 0 })
@@ -167,6 +213,30 @@ describe('lonLatToSphere orientation', () => {
     const africaScreenX = dotRight(lonLatToSphere({ lat: 0, lon: 20 }))
     const indiaScreenX = dotRight(lonLatToSphere({ lat: 20, lon: 78 }))
     expect(indiaScreenX).toBeGreaterThan(africaScreenX)
+  })
+})
+
+describe('sphereToLonLat', () => {
+  it('inverts lonLatToSphere across a dense lon/lat grid, including the antimeridian and near-pole edges', () => {
+    const lons = [-179.9, -150, -90, -45, -1, 0, 1, 45, 90, 150, 179.9]
+    const lats = [-89.9, -60, -30, -1, 0, 1, 30, 60, 89.9]
+    for (const lon of lons) {
+      for (const lat of lats) {
+        const [x, y, z] = lonLatToSphere({ lat, lon })
+        const back = sphereToLonLat([x, y, z])
+        expect(back.lon).toBeCloseTo(lon, 9)
+        expect(back.lat).toBeCloseTo(lat, 9)
+      }
+    }
+  })
+
+  it('gives the same answer for a scaled (non-unit) vector — the doc comment\'s own claim ("for any non-zero v, whatever its length")', () => {
+    const point = { lat: 21.3, lon: -89.5 }
+    const [x, y, z] = lonLatToSphere(point)
+    const unit = sphereToLonLat([x, y, z])
+    const scaled = sphereToLonLat([x * 4.7, y * 4.7, z * 4.7])
+    expect(scaled.lon).toBeCloseTo(unit.lon, 9)
+    expect(scaled.lat).toBeCloseTo(unit.lat, 9)
   })
 })
 
@@ -312,6 +382,45 @@ describe('unfoldedLiftedPosition (curvature unroll)', () => {
     for (const unfold of [0.999, 0.9999, 1 - 1e-9, 1]) {
       const lifted = unfoldedLiftedPosition(point, unfold, 1, 0.02, 0.05)
       for (const v of lifted) expect(Number.isFinite(v)).toBe(true)
+    }
+  })
+})
+
+describe('unfoldedNormal', () => {
+  const point = { lat: 12, lon: -140 }
+
+  it('is unit length at every unfold', () => {
+    for (const unfold of [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1]) {
+      const [nx, ny, nz] = unfoldedNormal(point, unfold)
+      expect(Math.hypot(nx, ny, nz)).toBeCloseTo(1, 9)
+    }
+  })
+
+  it('equals the normalised sphere direction (lonLatToSphere) at unfold = 0', () => {
+    const [sx, sy, sz] = lonLatToSphere(point)
+    const len = Math.hypot(sx, sy, sz)
+    const [nx, ny, nz] = unfoldedNormal(point, 0)
+    expect(nx).toBeCloseTo(sx / len, 9)
+    expect(ny).toBeCloseTo(sy / len, 9)
+    expect(nz).toBeCloseTo(sz / len, 9)
+  })
+
+  it('equals [0, 0, 1] at unfold = 1', () => {
+    const [nx, ny, nz] = unfoldedNormal(point, 1)
+    expect(nx).toBeCloseTo(0, 9)
+    expect(ny).toBeCloseTo(0, 9)
+    expect(nz).toBeCloseTo(1, 9)
+  })
+
+  it('is continuous across the whole unfold range — no jump between adjacent samples', () => {
+    const steps = 400
+    let prev = unfoldedNormal(point, 0)
+    for (let i = 1; i <= steps; i++) {
+      const unfold = i / steps
+      const curr = unfoldedNormal(point, unfold)
+      const jump = Math.hypot(curr[0] - prev[0], curr[1] - prev[1], curr[2] - prev[2])
+      expect(jump).toBeLessThan(0.05)
+      prev = curr
     }
   })
 })

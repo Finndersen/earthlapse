@@ -16,6 +16,7 @@ import {
   useState,
   type ComponentRef,
   type MouseEvent as ReactMouseEvent,
+  type MutableRefObject,
   type PointerEvent,
   type ReactNode,
   type RefObject,
@@ -25,7 +26,7 @@ import * as THREE from 'three'
 import type { RasterData } from '@/data/curated'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { probeWebgl } from '@/lib/webgl'
-import type { FeatureData, GeoTime, TimelineEvent } from '@/types/layer'
+import type { FeatureData, GeoTime, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
 import type { SceneLocation } from '@/types/manifest'
 
 import { arrivalTimingFor, arrivalWindow } from './arcs'
@@ -64,11 +65,14 @@ import {
   fitDistance,
   isSubFrameOf,
   mapHasPanRoom,
-  slerpDirection,
   sphereFitDistance,
   sphereRotateSpeedForDistance,
+  sphereViewFocus,
   subFrameFovY,
+  unfoldCameraPose,
   verticalCenterOffset,
+  zoomRatio,
+  type UnfoldViewEnds,
 } from './camera'
 import { selectBasemapTier, supportsBasemapT1, useIsPhoneViewport } from './deviceTier'
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
@@ -84,7 +88,7 @@ import {
 import { Legend, type LegendRow } from './Legend'
 import { isOrbClick } from './orbGesture'
 import { isPoleVisible, poleDirection, type PoleId } from './poles'
-import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unrolledHalfHeight, unrolledHalfWidth } from './projection'
+import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, lonLatToMap, mapToLonLat, unrolledHalfHeight, unrolledHalfWidth } from './projection'
 import {
   ATMOSPHERE_SCALE,
   GLOBE_FRAGMENT_SHADER,
@@ -191,6 +195,34 @@ const ZOOM_STEP_FACTOR = 0.8
  *  multiplication could read as still-zoomable when a further press would immediately clamp to
  *  the same value again. */
 const ZOOM_BOUNDS_EPSILON = 1e-4
+/** Floor on a carried height above the surface, so a ratio carried from one mode's deepest zoom
+ *  can never put the camera on or through the other mode's surface. */
+const MIN_SURFACE_HEIGHT = 0.01 * GLOBE_RADIUS
+
+/**
+ * What carries across a sphere <-> map switch: the geographic point at the centre of the view,
+ * and how far each mode is zoomed as a ratio of its own default framing (`camera.ts`'s
+ * `zoomRatio`) — so zooming in on India and switching to the map opens the map zoomed in on India
+ * by the same amount, and switching back returns the sphere to it. `departed` names the end the
+ * current morph left from, whose pose is kept exactly as measured.
+ */
+interface SphereMapView {
+  focus: GlobeEffectAnchor
+  departed: 'sphere' | 'map'
+  departedHeight: number
+  departedMapTarget: readonly [number, number]
+  sphereZoom: number
+  mapZoom: number
+}
+
+const DEFAULT_SPHERE_MAP_VIEW: SphereMapView = {
+  focus: { lon: 0, lat: 0 },
+  departed: 'sphere',
+  departedHeight: 1,
+  departedMapTarget: [0, 0],
+  sphereZoom: 1,
+  mapZoom: 1,
+}
 
 /** Scratch objects `GlobeSphere`'s own custom `mesh.raycast` (below) reuses across every click
  *  rather than allocating fresh ones, the same "one-shot event, not a per-frame cost, but no
@@ -669,6 +701,7 @@ export function Globe({
   // through this imperative ref rather than a second, parallel zoom state; `zoomBounds` is
   // reported back the same way `caption`/`onWebglContextRestored` already cross that boundary.
   const cameraApiRef = useRef<GlobeCameraApi>(null)
+  const sphereRotationYRef = useRef(0)
   const [zoomBounds, setZoomBounds] = useState<ZoomBounds>({ canZoomIn: true, canZoomOut: true })
   const expandedDpr = useExpandedCanvasDpr(expanded)
 
@@ -730,7 +763,12 @@ export function Globe({
               if (expanded && event.type === 'click') onCollapse()
             }}
           >
-            <GlobeRotatingGroup unfold={unfold} reducedMotion={reducedMotion} focusLon={sceneFocusLon}>
+            <GlobeRotatingGroup
+              unfold={unfold}
+              reducedMotion={reducedMotion}
+              focusLon={sceneFocusLon}
+              sphereRotationYRef={sphereRotationYRef}
+            >
               <GlobeSphere
                 beforeTex={pair.beforeTex}
                 afterTex={pair.afterTex}
@@ -786,6 +824,7 @@ export function Globe({
               mapFit={fitMeasurements.mapFit}
               verticalOffsetPx={fitMeasurements.verticalOffsetPx}
               onZoomBoundsChange={setZoomBounds}
+              sphereRotationYRef={sphereRotationYRef}
             />
           </Canvas>
         ) : (
@@ -1006,6 +1045,9 @@ interface GlobeCameraControlsProps {
   /** Reported every time the zoom-button bounds could have changed (`ZoomBounds`'s own doc
    *  comment) — mirrors `onCaptionChange`'s "cross the Canvas/DOM boundary via a callback" shape. */
   onZoomBoundsChange: (bounds: ZoomBounds) => void
+  /** The sphere's rotation at `unfold = 0` (`GlobeRotatingGroup`), read to find which point of
+   *  the globe the camera faces. */
+  sphereRotationYRef: MutableRefObject<number>
 }
 
 /**
@@ -1022,42 +1064,26 @@ interface GlobeCameraControlsProps {
  * already re-triggers `mapFit`: a plain expand/collapse reframes to `sphereFitDistance`
  * (tight, `SPHERE_FIT_MARGIN`) or back to `CAMERA_DISTANCE` (loose, halo-friendly) respectively.
  *
- * While the toggle's own tween is still under way (`unfold` hasn't reached `mapMode`'s target
- * yet), this also steers the camera's own distance to match it, so the view zooms in/out in step
- * with the mesh flattening rather than clipping the wider map mid-animation or snapping once the
- * mesh finishes. Once settled, it stops touching `camera.position` — `OrbitControls` (bounded by
- * `minDistance`/`maxDistance` below, and by `onChange`'s pan clamp) owns the camera outright from
- * then on, so a viewer's own zoom/pan is never fought. A resize while already settled in map mode
- * updates the zoom-out cap (`maxDistance`) to the new aspect but does not itself reset the
- * viewer's current framing — only entering/leaving map mode re-triggers the animated reframe.
+ * **One view across the sphere <-> map morph.** Switching mode carries the view rather than
+ * resetting it: the point at the centre of the view, and the zoom as a ratio of each mode's own
+ * default framing (`SphereMapView`). Zoomed in on India on the sphere, the map opens zoomed in on
+ * India by the same amount; folding back returns there. While `unfold` is between its ends, every
+ * frame places the camera with `camera.ts`'s `unfoldCameraPose` — a pure function of `unfold`, so
+ * a toggle reversed mid-morph runs back along the same path — and on the frame it settles, lands
+ * on that function's own end pose exactly. Once settled, it stops touching `camera.position`:
+ * `OrbitControls` (bounded by `minDistance`/`maxDistance` below, and by `onChange`'s pan clamp)
+ * owns the camera outright, so a viewer's own zoom/pan is never fought. A resize while settled
+ * updates the zoom bounds but does not reframe.
  *
- * The distance used mid-tween is not a bare `lerp(startDistance, mapFit, progress)`: `mapFit` is
- * the distance that fits the map once it's *fully* flattened, but the mesh's own bounding shape
- * doesn't grow linearly from a sphere's circular silhouette to that final rectangle as `unfold`
- * rises — a plain distance lerp can undershoot partway through the tween and clip the
- * partially-flattened mesh (flat cuts top/bottom/right) mid-unfold. Instead, every unsettled
- * frame, in *either* direction, also computes the distance actually
- * *required* to contain the mesh's own current bounding box — `unrolledHalfWidth`/
- * `unrolledHalfHeight` (`projection.ts`), the curvature unroll's *own* half-extents at this
- * `unfold`, not a linear lerp from `GLOBE_RADIUS` toward the map's — at the live aspect, and takes
- * whichever of the two distances is larger. This can only ever push the camera *further back*
- * than the plain lerp, never closer, so it costs nothing at the endpoints (where the lerp and the
- * fit already agree) and simply guarantees the mesh is never clipped by a camera that hasn't
- * caught up. Leaving map mode needs this exactly as much as entering it: the CSS panel's own
- * `width`/`height` snap to their target the instant `data-map-mode` changes in *either* direction
- * (`Globe.module.css`'s own doc comment), so folding back out starts this tween already
- * square-aspected while the mesh is still nearly the full-width map — the live `aspect` this
- * function reads has already changed before `unfold` has moved off 1, and without this floor
- * applying there too the still-wide mesh clips against the now-narrower square frustum (a
- * sharp-edged rectangle silhouette partway through, not the curvature unroll's own
- * continuously-curved shape). A linear lerp of the half-extents is itself a second, independent
- * source of a visible "jump": the real silhouette's width does not grow at a constant rate
- * (`unrolledHalfWidth`'s own doc comment has the detail), so sizing the camera against that lerp
- * instead of the mesh's *actual* current extents would overshoot, then have to race the mesh's
- * real (slower-growing at first) width back down — a shrink, then a catch-up growth. (The panel's
- * own CSS box plays no part in this: `Globe.module.css`'s `.orbExpanded[data-animate-resize]`
- * snaps it to its target size, and so its final aspect, the instant a Globe/Map toggle starts,
- * before this component's own very first tween frame runs — see that CSS rule's own doc comment.)
+ * The end the morph left is kept exactly as measured, so its first frame never jumps; the end it
+ * is heading to is derived each frame from the carried zoom and focus against this render's own
+ * fit distances. That matters because the panel's CSS box snaps to its new size and aspect the
+ * instant `data-map-mode` changes (`Globe.module.css`), before the mesh has moved.
+ *
+ * Opening the map and folding straight back, without panning or zooming it, returns the sphere to
+ * the exact view it left (`sphereReturnRef`). Deriving it from the map instead would lose any
+ * sphere zoom the map cannot show — zoomed out past the default, or a focus the map's pan clamp
+ * pulls to the centre at the default zoom.
  *
  * **Both distances are measured from the map plane, not from the origin.** `unfoldedPosition`'s
  * curvature unroll (`projection.ts`'s own doc comment) places the *fully* flattened map at
@@ -1066,25 +1092,9 @@ interface GlobeCameraControlsProps {
  * would also change how sphere-mode orbiting feels, which this feature must not touch), so
  * `fitDistance`'s own output — a distance *to the plane* — needs `GLOBE_RADIUS` added before it's
  * a valid camera-to-*target* distance. Forgetting this offset would under-back the camera by
- * exactly `GLOBE_RADIUS` at every map-mode framing (`mapFit`, the mid-tween `requiredDistance`,
- * and the settled-mode `minDistance`/`maxDistance` zoom bounds below) — small next to the map's
- * own ~2.7-unit half-width, but a real, constant mis-framing, not a rounding error.
- *
- * **Tweening from wherever the viewer actually left the camera.** The mid-tween distance/
- * direction/pan-target above don't blend from a fixed starting pose (`CAMERA_DISTANCE`, dead
- * centre) — they blend from whatever the camera actually was the instant the tween began,
- * captured once when `settled` flips from `true` to `false` below. Without this, a viewer who had
- * rotated or zoomed the sphere before pressing "Map" would see the camera visibly snap back to the
- * default pose first and *then* animate into the map. Folding back
- * out of map mode restores `preUnfoldDistanceRef`, the sphere's own distance at the moment map
- * mode was entered, rather than always `CAMERA_DISTANCE`, so a viewer who'd zoomed in before
- * switching to Map returns to that same zoom. The direction itself is blended with
- * `slerpDirection` (`camera.ts`), not a plain `lerp` + `normalize()`: a viewer who had orbited to
- * the globe's far side before pressing "Map" starts this tween more than 90° from the map's own
- * square-on direction `(0, 0, 1)`, where a linear lerp dips toward (or, near-antipodal, straight
- * through) the zero vector — `normalize()` of that is undefined/unstable, and even short of
- * exactly antipodal the camera visibly swings *through* the globe rather than around its surface,
- * an abrupt ~180°-ish flip (`camera.test.ts`'s own antipodal/orthogonal/identical cases pin this).
+ * exactly `GLOBE_RADIUS` at every map-mode framing (`mapFit`, and the settled-mode
+ * `minDistance`/`maxDistance` zoom bounds below) — small next to the map's own ~2.7-unit
+ * half-width, but a real, constant mis-framing, not a rounding error.
  *
  * **`enableDamping={settled}` below.** `drei`'s own `<OrbitControls>` wrapper defaults
  * `enableDamping` to `true` (three.js's own raw `OrbitControls` defaults it to `false` — the two
@@ -1105,8 +1115,8 @@ interface GlobeCameraControlsProps {
  * invisible reference rectangles) let `idleSphereDistance`/`mapFit` below fit against that
  * rectangle instead of the canvas's own now-much-larger one, and a `camera.setViewOffset` re-
  * centres the render on it — see `idleSphereDistance`'s own comment and the `setViewOffset` effect
- * for the maths. Everything else in this component (the pan clamp, the mid-tween required-
- * distance floor, the cursor's pan-room check) keeps reasoning about the *real* canvas frustum
+ * for the maths. Everything else in this component (the pan clamp, the mid-morph mesh fit, the
+ * cursor's pan-room check) keeps reasoning about the *real* canvas frustum
  * (`aspect`/`fovYRadians`, unchanged) — only the idle target distances are special-cased.
  *
  * **The imperative `zoomIn`/`zoomOut` handle.** `ZoomControls` (`Globe.tsx`) is
@@ -1118,7 +1128,7 @@ interface GlobeCameraControlsProps {
  * `onCaptionChange` already uses for the caption text.
  */
 const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>(function GlobeCameraControls(
-  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, verticalOffsetPx, onZoomBoundsChange },
+  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, verticalOffsetPx, onZoomBoundsChange, sphereRotationYRef },
   ref,
 ) {
   const controlsRef = useRef<ComponentRef<typeof OrbitControls> | null>(null)
@@ -1134,8 +1144,8 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   // same distance, so `sphereFitDistance`/`fitDistance` below compute the distance that makes the
   // object fill *that* rectangle — the exact size it filled back when the canvas *was* that
   // rectangle — while `aspect`/`fovYRadians` above (unchanged) keep governing everything that
-  // must still reason about the *real*, full-canvas frustum: the pan clamp, the mid-tween
-  // required-distance floor, and the cursor's pan-room check, all further down. Falls back to the
+  // must still reason about the *real*, full-canvas frustum: the pan clamp, the mid-morph mesh
+  // fit, and the cursor's pan-room check, all further down. Falls back to the
   // real canvas aspect/FOV when a frame hasn't been measured yet (`null`, before the first
   // `ResizeObserver` pass in `Globe.tsx`) — a one-frame full-size fallback is preferable to a
   // divide-by-zero or NaN distance.
@@ -1202,16 +1212,18 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   }, [camera, expanded, size.width, size.height, verticalOffsetPx])
 
   const wasSettledRef = useRef(settled)
-  const tweenStartDirectionRef = useRef(new THREE.Vector3(0, 0, 1))
-  const tweenStartDistanceRef = useRef(CAMERA_DISTANCE)
-  const tweenStartTargetRef = useRef(new THREE.Vector2(0, 0))
-  const preUnfoldDistanceRef = useRef(idleSphereDistance)
+  const viewRef = useRef<SphereMapView>(DEFAULT_SPHERE_MAP_VIEW)
+  /** Whether the viewer has panned or zoomed since the map opened. Until they do, folding back
+   *  returns the sphere to exactly the view it left rather than one re-derived from the map. */
+  const mapAdjustedRef = useRef(false)
+  const sphereReturnRef = useRef<{ focus: GlobeEffectAnchor; zoom: number } | null>(null)
   // Tracks `expanded` itself, the same "did the target I settle on just change" pattern
   // `wasSettledRef` uses for `mapMode` — see the block below for why a plain expand/collapse
   // needs its own reframe trigger distinct from the map-mode one.
   const wasExpandedRef = useRef(expanded)
 
   const snapPendingRef = useRef(false)
+  const frameSnapPendingRef = useRef(false)
 
   if (settled !== wasSettledRef.current) {
     wasSettledRef.current = settled
@@ -1219,11 +1231,26 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       snapPendingRef.current = true
     } else {
       const controls = controlsRef.current
-      const distance = camera.position.length()
-      tweenStartDistanceRef.current = distance > 1e-4 ? distance : CAMERA_DISTANCE
-      tweenStartDirectionRef.current = distance > 1e-4 ? camera.position.clone().normalize() : new THREE.Vector3(0, 0, 1)
-      if (controls !== null) tweenStartTargetRef.current.set(controls.target.x, controls.target.y)
-      if (mapMode) preUnfoldDistanceRef.current = tweenStartDistanceRef.current
+      const target = controls?.target ?? new THREE.Vector3()
+      const height = Math.max(MIN_SURFACE_HEIGHT, camera.position.distanceTo(target) - GLOBE_RADIUS)
+      if (mapMode) {
+        const focus = sphereViewFocus([camera.position.x, camera.position.y, camera.position.z], sphereRotationYRef.current)
+        const zoom = zoomRatio(idleSphereDistance, height + GLOBE_RADIUS)
+        sphereReturnRef.current = { focus, zoom }
+        mapAdjustedRef.current = false
+        viewRef.current = { focus, departed: 'sphere', departedHeight: height, departedMapTarget: [0, 0], sphereZoom: zoom, mapZoom: zoom }
+      } else {
+        const mapZoom = zoomRatio(mapFit, height + GLOBE_RADIUS)
+        const sphereReturn = mapAdjustedRef.current ? null : sphereReturnRef.current
+        viewRef.current = {
+          focus: sphereReturn?.focus ?? mapToLonLat(target.x, target.y, GLOBE_RADIUS),
+          departed: 'map',
+          departedHeight: height,
+          departedMapTarget: [target.x, target.y],
+          sphereZoom: sphereReturn?.zoom ?? mapZoom,
+          mapZoom,
+        }
+      }
     }
   }
 
@@ -1265,8 +1292,37 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   const canReframeSphere = !expanded || sphereFrameReady
   if (!mapMode && canReframeSphere && expanded !== wasExpandedRef.current) {
     wasExpandedRef.current = expanded
-    preUnfoldDistanceRef.current = idleSphereDistance
-    if (settled) snapPendingRef.current = true
+    sphereReturnRef.current = null
+    viewRef.current = { ...viewRef.current, sphereZoom: 1 }
+    if (settled) frameSnapPendingRef.current = true
+  }
+
+  /** Both ends of the sphere <-> map morph for this frame. The end the camera left is the pose it
+   *  was measured at; the end it is heading to is derived from the carried zoom and focus against
+   *  this render's own fit distances, so a resize mid-morph still lands on a correct framing. */
+  const unfoldViewEnds = (): UnfoldViewEnds => {
+    const view = viewRef.current
+    const sphereHeight =
+      view.departed === 'sphere' ? view.departedHeight : Math.max(MIN_SURFACE_HEIGHT, idleSphereDistance / view.sphereZoom - GLOBE_RADIUS)
+    const mapMaxHeight = mapFit - GLOBE_RADIUS
+    const mapMinHeight = Math.max(MIN_SURFACE_HEIGHT, mapFit * MAP_MIN_ZOOM_FRACTION - GLOBE_RADIUS)
+    const mapHeight =
+      view.departed === 'map' ? view.departedHeight : Math.min(mapMaxHeight, Math.max(mapMinHeight, mapFit / view.mapZoom - GLOBE_RADIUS))
+    const [focusX, focusY] = lonLatToMap(view.focus, GLOBE_RADIUS)
+    const mapTarget =
+      view.departed === 'map'
+        ? view.departedMapTarget
+        : clampPanTarget([focusX, focusY], mapHeight, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+    return {
+      focus: view.focus,
+      globeRotationY: sphereRotationYRef.current,
+      radius: GLOBE_RADIUS,
+      sphereHeight,
+      mapHeight,
+      mapTarget,
+      meshFitHeight: (u) =>
+        fitDistance(unrolledHalfWidth(u, GLOBE_RADIUS), unrolledHalfHeight(u, GLOBE_RADIUS), aspect, fovYRadians, MAP_FIT_MARGIN),
+    }
   }
 
   useFrame(() => {
@@ -1283,50 +1339,30 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       idleSphereDistance,
       DEFAULT_ROTATE_SPEED,
     )
+    const applyPose = (position: readonly [number, number, number], target: readonly [number, number, number]): void => {
+      controls.target.set(target[0], target[1], target[2])
+      camera.position.set(position[0], position[1], position[2])
+      controls.update()
+    }
     if (settled) {
-      // The tween's own last driven frame always runs one tick short of the target (the frame
-      // where `unfold` finally equals it is already settled, so the block below returns early),
-      // and under `prefers-reduced-motion` there is no tween at all: `unfold` snaps, so only a
-      // single un-settled frame at `progress = 0` ever runs and the camera is left with the
-      // *sphere's* framing over a fully flattened map. Browser-verified at 1440x900: the map
-      // filled the panel edge to edge with no margin and its Pacific edges and poles clipped off,
-      // against a correct fit with reduced motion off. Landing the camera on its exact target
-      // once, on the frame it settles, fixes both — and is the whole of the reduced-motion
-      // behaviour, which is meant to snap rather than animate.
+      // The morph's own last driven frame always runs one tick short of its end (the frame where
+      // `unfold` reaches it is already settled), and under `prefers-reduced-motion` there is no
+      // morph at all — `unfold` snaps. Landing on the exact end pose once, on the frame it
+      // settles, covers both.
+      if (frameSnapPendingRef.current) {
+        frameSnapPendingRef.current = false
+        snapPendingRef.current = false
+        applyPose([0, 0, idleSphereDistance], [0, 0, 0])
+        return
+      }
       if (!snapPendingRef.current) return
       snapPendingRef.current = false
-      const distance = mapMode ? mapFit : preUnfoldDistanceRef.current
-      controls.target.set(0, 0, 0)
-      camera.position.set(0, 0, distance)
-      controls.update()
+      const { position, target } = unfoldCameraPose(mapMode ? 1 : 0, unfoldViewEnds())
+      applyPose(position, target)
       return
     }
-    const progress = mapMode ? unfold : 1 - unfold
-    const targetDistance = mapMode ? mapFit : preUnfoldDistanceRef.current
-    const lerpedDistance = THREE.MathUtils.lerp(tweenStartDistanceRef.current, targetDistance, progress)
-    const currentHalfWidth = unrolledHalfWidth(unfold, GLOBE_RADIUS)
-    const currentHalfHeight = unrolledHalfHeight(unfold, GLOBE_RADIUS)
-    const requiredDistance = fitDistance(currentHalfWidth, currentHalfHeight, aspect, fovYRadians, MAP_FIT_MARGIN) + GLOBE_RADIUS
-    // Applied in both directions, not just while entering map mode: `Globe.module.css`'s
-    // `.orbExpanded[data-map-mode='true']` snaps the panel's own `width`/`height` — and so its
-    // aspect — to its target the instant `data-map-mode` changes, in *either* direction (that
-    // rule's own doc comment). Leaving map mode therefore starts this tween already square-
-    // aspected while the mesh itself is still nearly the full-width map (`unfold` has barely
-    // moved off 1), the same "the container's aspect and the mesh's own shape disagree
-    // mid-tween" mismatch entering map mode already guards against — just triggered by the
-    // *container* snapping ahead of the mesh instead of the other way around. Without the
-    // `requiredDistance` floor, a `lerpedDistance` sized for the old wide aspect leaves the camera
-    // too close for the new square one, clipping the still-wide mesh's left/right edges into a
-    // flat vertical line — the silhouette briefly reading as a sharp-cornered rectangle instead of
-    // the curvature unroll's own continuously-curved shape (`projection.ts`'s `curvatureUnroll`).
-    const distance = Math.max(lerpedDistance, requiredDistance)
-    const start = tweenStartDirectionRef.current
-    const [dx, dy, dz] = slerpDirection([start.x, start.y, start.z], [0, 0, 1], progress)
-    const targetX = THREE.MathUtils.lerp(tweenStartTargetRef.current.x, 0, progress)
-    const targetY = THREE.MathUtils.lerp(tweenStartTargetRef.current.y, 0, progress)
-    controls.target.set(targetX, targetY, 0)
-    camera.position.set(dx * distance, dy * distance, dz * distance)
-    controls.update()
+    const { position, target } = unfoldCameraPose(unfold, unfoldViewEnds())
+    applyPose(position, target)
   })
 
   // Shared by the `OrbitControls` props below, `zoomBy` and `reportZoomBounds` — one definition
@@ -1431,6 +1467,7 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     if (controls === null || !settled) return
     const distance = controls.target.distanceTo(camera.position)
     if (distance <= 1e-6) return
+    if (mapMode) mapAdjustedRef.current = true
     const nextDistance = clampedDollyDistance(distance, factor, zoomMinDistance, zoomMaxDistance)
     camera.position.sub(controls.target).multiplyScalar(nextDistance / distance).add(controls.target)
     controls.update()
@@ -1454,6 +1491,9 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       minDistance={zoomMinDistance}
       maxDistance={zoomMaxDistance}
       onChange={onControlsChange}
+      onStart={() => {
+        if (mapMode) mapAdjustedRef.current = true
+      }}
       // `OrbitControls`'s own default `mouseButtons`/`touches` map the primary drag gesture (LEFT
       // click, one-finger touch) to `ROTATE`, unconditionally — `enablePan={mapMode}` above only
       // ever enables *panning itself*, it never reroutes which gesture triggers it. In map mode
@@ -1491,6 +1531,8 @@ interface GlobeRotatingGroupProps {
    *  `useGlobeAutoRotation.ts`'s own doc comment for why the rotation itself (which also needs
    *  the camera's live azimuth) is computed inside that hook, not here. */
   focusLon: number | null
+  /** See `GlobeRotationOptions.sphereRotationYRef`. */
+  sphereRotationYRef: MutableRefObject<number>
   children: ReactNode
 }
 
@@ -1508,9 +1550,9 @@ interface GlobeRotatingGroupProps {
  * `PoleAxisMarkers` deliberately stays *outside* this group (its own doc comment) — both poles
  * sit on the rotation axis itself, so spinning them is a no-op not worth the extra nesting.
  */
-function GlobeRotatingGroup({ unfold, reducedMotion, focusLon, children }: GlobeRotatingGroupProps) {
+function GlobeRotatingGroup({ unfold, reducedMotion, focusLon, sphereRotationYRef, children }: GlobeRotatingGroupProps) {
   const groupRef = useRef<THREE.Group>(null)
-  const rotationYRef = useGlobeAutoRotationY({ unfold, reducedMotion, focusLon })
+  const rotationYRef = useGlobeAutoRotationY({ unfold, reducedMotion, focusLon, sphereRotationYRef })
   useFrame(() => {
     const group = groupRef.current
     if (group !== null) group.rotation.y = rotationYRef.current

@@ -53,10 +53,14 @@ export interface GlobeRotationOptions {
    *  depends on the camera azimuth when the ease starts, which this hook reads itself so
    *  `sceneLocation.ts` stays pure. */
   focusLon: number | null
+  /** Written every frame with the rotation the sphere has at `unfold = 0` — the value the
+   *  displayed one eases from. Held still while unfolded, so the camera can work out which way
+   *  the sphere will face once it folds back (`Globe.tsx`'s `GlobeCameraControls`). */
+  sphereRotationYRef: MutableRefObject<number>
 }
 
 /** The live `rotation.y` for `GlobeRotatingGroup`, updated in place every frame. */
-export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon }: GlobeRotationOptions): MutableRefObject<number> {
+export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon, sphereRotationYRef }: GlobeRotationOptions): MutableRefObject<number> {
   const { camera } = useThree()
   const stateRef = useRef(REST_ROTATION)
   const focusLonRef = useRef<number | null>(null)
@@ -73,6 +77,7 @@ export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon }: Globe
     }
     const drift = unfold === 0 && !reducedMotion && focusLon === null ? AUTO_ROTATE_RADIANS_PER_SECOND : 0
     stateRef.current = stepGlobeRotation(stateRef.current, delta, drift)
+    sphereRotationYRef.current = stateRef.current.rotationY
     rotationYRef.current = stateRef.current.rotationY * (1 - unfold)
   })
 

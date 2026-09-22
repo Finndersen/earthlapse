@@ -4,6 +4,10 @@
  * split `globeGeometry.ts` and `blend.ts` use for their own math.
  */
 
+import type { GlobeEffectAnchor } from '@/types/layer'
+
+import { lonLatToMap, sphereToLonLat, unfoldedNormal, unfoldedPosition } from './projection'
+
 /** Perspective distance along the view axis such that a `2*halfWidth` x `2*halfHeight`
  *  rectangle, centred on the origin and facing the camera, exactly fills the viewport at
  *  `aspect` (width/height) and vertical field of view `fovYRadians` — plus `margin` extra
@@ -192,66 +196,6 @@ export function clampedDollyDistance(currentDistance: number, factor: number, mi
   return Math.min(maxDistance, Math.max(minDistance, currentDistance * factor))
 }
 
-function cross3(a: readonly [number, number, number], b: readonly [number, number, number]): [number, number, number] {
-  return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
-}
-
-function lengthSq3(a: readonly [number, number, number]): number {
-  return a[0] * a[0] + a[1] * a[1] + a[2] * a[2]
-}
-
-function normalize3(a: readonly [number, number, number]): [number, number, number] {
-  const len = Math.hypot(a[0], a[1], a[2])
-  return [a[0] / len, a[1] / len, a[2] / len]
-}
-
-/**
- * Spherical linear interpolation between two unit-length 3D directions — blends a camera's own
- * viewing direction toward a target one *along the sphere of directions itself*, not through its
- * interior the way a plain `lerp` followed by `normalize()` does. A straight lerp between two
- * directions more than ~90° apart dips toward (and, if they are exactly opposite, passes exactly
- * through) the zero vector partway along the blend, where `normalize()` is undefined; even short
- * of that, it swings the camera *through* the globe's own interior rather than *around* its
- * surface, which reads as an abrupt ~180°-ish flip — the bug this fixes, reported when a viewer
- * had orbited to the globe's far side before pressing "Map" (`Globe.tsx`'s `GlobeCameraControls`,
- * the one caller).
- *
- * `upAxisFallback` resolves the ambiguity when `a` and `b` are (numerically) antipodal: no single
- * great circle connects two exactly opposite points, so this picks one by rotating through
- * whichever axis is perpendicular to both `a` and `upAxisFallback` — the same "pick an arbitrary
- * axis" resolution every antipodal-rotation routine needs somehow — falling back to a second,
- * unrelated axis in the vanishingly unlikely case `a` already *is* the up axis (so the first
- * cross product would itself be zero-length).
- */
-export function slerpDirection(
-  a: readonly [number, number, number],
-  b: readonly [number, number, number],
-  t: number,
-  upAxisFallback: readonly [number, number, number] = [0, 1, 0],
-): readonly [number, number, number] {
-  const clampedT = Math.min(1, Math.max(0, t))
-  const dot = Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))
-  const EPSILON = 1e-6
-
-  if (dot > 1 - EPSILON) return a // Identical (or numerically indistinguishable): nothing to blend.
-
-  if (dot < -1 + EPSILON) {
-    let perp = cross3(upAxisFallback, a)
-    if (lengthSq3(perp) < EPSILON) perp = cross3([1, 0, 0], a)
-    const [px, py, pz] = normalize3(perp)
-    const theta = Math.PI * clampedT
-    const cosTheta = Math.cos(theta)
-    const sinTheta = Math.sin(theta)
-    return [a[0] * cosTheta + px * sinTheta, a[1] * cosTheta + py * sinTheta, a[2] * cosTheta + pz * sinTheta]
-  }
-
-  const theta = Math.acos(dot)
-  const sinTheta = Math.sin(theta)
-  const wa = Math.sin((1 - clampedT) * theta) / sinTheta
-  const wb = Math.sin(clampedT * theta) / sinTheta
-  return [a[0] * wa + b[0] * wb, a[1] * wa + b[1] * wb, a[2] * wa + b[2] * wb]
-}
-
 /**
  * Clamps a pan `target` (x, y, world units) so the viewport — half-width/half-height derived
  * from `distance`, `aspect` and `fovYRadians` — never extends past the map's own bounds
@@ -275,6 +219,99 @@ export function clampPanTarget(
   return [clampAbs(target[0], maxX), clampAbs(target[1], maxY)]
 }
 
+// ------------------------------------------------------------------ sphere <-> map view
+
+/**
+ * How far a view is zoomed relative to its own mode's default framing: 1 at the default, 1.25
+ * after one zoom-in step. A ratio of camera-to-target distances — the quantity `ZoomControls`
+ * and scroll/pinch step multiplicatively — so N steps in on the sphere carry across as N steps in
+ * on the map, whatever each mode's default distance is.
+ */
+export function zoomRatio(defaultDistance: number, distance: number): number {
+  return defaultDistance / distance
+}
+
+/** Interpolates `a` to `b` geometrically, so a zoom eases at an even perceived rate rather than
+ *  rushing through the close end the way a linear distance blend does. Both must be positive. */
+export function logLerp(a: number, b: number, t: number): number {
+  return a * (b / a) ** t
+}
+
+/** Rotates `v` about `+Y` by `angle`, matching three.js's own `Object3D.rotation.y`. */
+function rotateY(v: Vec3, angle: number): Vec3 {
+  const c = Math.cos(angle)
+  const s = Math.sin(angle)
+  return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c]
+}
+
+/** The geographic point at the centre of a sphere-mode view: the camera's own direction from the
+ *  globe's centre, undone by the globe's `+Y` rotation. */
+export function sphereViewFocus(cameraPosition: Vec3, globeRotationY: number): GlobeEffectAnchor {
+  return sphereToLonLat(rotateY(cameraPosition, -globeRotationY))
+}
+
+export interface UnfoldCameraPose {
+  position: Vec3
+  target: Vec3
+}
+
+export interface UnfoldViewEnds {
+  /** The geographic point held at the centre of the view throughout the unfold. */
+  focus: GlobeEffectAnchor
+  /** The globe's `+Y` rotation at `unfold = 0`; the mesh eases it to 0 as it flattens
+   *  (`useGlobeAutoRotationY`), so this is scaled by `1 - unfold` here too. */
+  globeRotationY: number
+  radius: number
+  /** Height above the surface at each end. */
+  sphereHeight: number
+  mapHeight: number
+  /** The map view's pan target (`z = 0`). Usually `focus`'s own map point, but differs where the
+   *  pan clamp keeps the view inside the map's outline — at the default zoom, always the centre. */
+  mapTarget: readonly [number, number]
+  /** The height that fits the whole unrolled mesh in view at a given `unfold`. */
+  meshFitHeight: (unfold: number) => number
+}
+
+/**
+ * Where the camera sits at `unfold` (0 = sphere, 1 = map) so the sphere <-> map morph reads as one
+ * continuous move: the camera stays over `focus`, looking straight down its surface normal, at a
+ * height eased between the two ends. The same function of `unfold` in both directions, so a
+ * toggle reversed mid-morph just runs back along the same path.
+ *
+ * The height is the larger of two paths between the same end heights. The first is a plain
+ * `logLerp`. The second follows the mesh itself: the view's size relative to the whole mesh,
+ * eased from its value at one end to its value at the other. The unrolling mesh widens far faster
+ * than a plain interpolation retreats, so without the second path its edges clip partway through;
+ * without the first, a mesh that shrinks toward one end would pull the camera in early. Both paths
+ * meet both end heights exactly, so neither end jumps — including zoomed in, where the second path
+ * scales down with the zoom rather than forcing the camera back out to a whole-mesh fit.
+ *
+ * The pan offset between `focus`'s own map point and `mapTarget` is blended in by `unfold`, so a
+ * default-zoom unfold re-centres on the map while it flattens rather than after.
+ */
+export function unfoldCameraPose(unfold: number, ends: UnfoldViewEnds): UnfoldCameraPose {
+  const u = Math.min(1, Math.max(0, unfold))
+  const { focus, radius, sphereHeight, mapHeight, meshFitHeight } = ends
+  const rotation = ends.globeRotationY * (1 - u)
+  const surface = rotateY(unfoldedPosition(focus, u, radius), rotation)
+  const normal = rotateY(unfoldedNormal(focus, u), rotation)
+
+  const plainHeight = logLerp(sphereHeight, mapHeight, u)
+  const meshRelative = logLerp(sphereHeight / meshFitHeight(0), mapHeight / meshFitHeight(1), u)
+  const height = Math.max(plainHeight, meshFitHeight(u) * meshRelative)
+
+  const [focusMapX, focusMapY] = lonLatToMap(focus, radius)
+  const offsetX = (ends.mapTarget[0] - focusMapX) * u
+  const offsetY = (ends.mapTarget[1] - focusMapY) * u
+
+  const along = (distance: number): Vec3 => [
+    surface[0] + offsetX + normal[0] * distance,
+    surface[1] + offsetY + normal[1] * distance,
+    surface[2] + normal[2] * distance,
+  ]
+  return { position: along(height), target: along(-radius) }
+}
+
 // ---------------------------------------------------------------------- body proxy raycast
 
 type Vec3 = readonly [number, number, number]
@@ -294,8 +331,7 @@ function pointAt(origin: Vec3, direction: Vec3, t: number): Vec3 {
  * transformDirection`'s own doc comment: it re-normalises), the same precondition three.js's own
  * `Ray.intersectSphere` relies on for the identical `b^2 - c` reduction of the ray-sphere
  * quadratic. Hand-rolled rather than calling that three.js method directly — this module's own
- * "no three.js, no React" convention (this file's own top doc comment), the same reason
- * `slerpDirection`'s `cross3`/`normalize3` above are hand-rolled instead of using `THREE.Vector3`.
+ * "no three.js, no React" convention (this file's own top doc comment).
  */
 export function raySphereIntersection(origin: Vec3, direction: Vec3, radius: number): Vec3 | null {
   const b = dot3(origin, direction)
