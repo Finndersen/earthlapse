@@ -47,8 +47,10 @@
      that and stacks them into rows. It still takes `1fr` whenever that is the larger of the two,
      which is what keeps `core` centred between the two flexible columns; only when the controls
      genuinely need more does it grow, and `sections` (the breadcrumb, the row's one freely
-     shrinking column) gives up the difference. Paired with `.secondary`'s own `nowrap` below —
-     the floor only means anything if the flex container cannot collapse itself by wrapping. */
+     shrinking column) gives up the difference. Paired with `.secondary`'s own `wrap` below — the
+     floor only means anything if the flex container cannot collapse itself by wrapping instead,
+     and here it can, which is deliberate: see the narrow-desktop media query below for the one
+     width band where that floor turns out to matter and gets swapped for a real one. */
   grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(auto, 1fr) var(--edge-button-size);
   grid-template-areas:
     'edgePrev track    track track    edgeNext'
@@ -65,6 +67,39 @@
 @media (pointer: coarse) {
   .timeline {
     --edge-button-size: 40px;
+  }
+}
+
+/* Narrow desktop — still this grid's wide-viewport layout (the phone-portrait breakpoint below
+   is a different `grid-template-areas` entirely), just short on width. Two compounding problems
+   in this band, both scoped here rather than in the base rule above so 1440px/1920px keep
+   reading that rule completely unchanged (verified: identical `--transport-flank` and
+   `grid-template-columns` output at those widths with or without this block):
+
+   1. The base `clamp(12ch, 15vw, 24ch)` doesn't reach its own floor until ~700px, so at a
+      plausible desktop width like 1000px `--transport-flank` still reserves ~150px a side, ~300px
+      of `core` before `sections` or `secondary` see anything. Pulled to its floor over this band
+      instead of waiting for ~700px: the floor is already sized to the rate readout's own real
+      content (that custom property's own doc comment), so this only loses the "time compressed"
+      badge's headroom sooner, exactly the give-up-first order that doc comment already describes.
+   2. Even with (1) alone, `secondary`'s `minmax(auto, 1fr)` floor (the base rule above) still
+      measured only 168px at 1000px — its `auto` minimum is its widest *single* child once
+      `flex-wrap: wrap` is allowed to catch the rest (that rule's own doc comment), not the ~318px
+      its three controls need on one line, so the wrap still caught the shortfall: three stacked
+      rows, not one. Swapped for `minmax(max-content, 1fr)` here, whose floor is that true one-line
+      width regardless of wrapping.
+
+   Both scoped to the same narrow-desktop band on purpose: fixing (2) *without* (1) reserves the
+   floor correctly but leaves nothing for `sections` beside it; changing (2) at every width instead
+   of scoping it here was tried and reverted — `max-content` (measured ~323px) turns out to exceed
+   half the leftover space even at 1440px, so grid freezes `secondary` there too and knocks `core`
+   ~30px off true centre, a regression this file's own `transport-core-optically-centred` QA shot
+   caught. 1300px is comfortably clear of 1000px while staying below where the base
+   `--transport-flank` rule is already flat at its own ceiling (`15vw` reaches `24ch` at 1420px). */
+@media (max-width: 1300px) {
+  .timeline {
+    --transport-flank: clamp(10ch, 9vw, 16ch);
+    grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(max-content, 1fr) var(--edge-button-size);
   }
 }
 
@@ -123,15 +158,21 @@
    `.timeline`'s `minmax(auto, 1fr)` floor this column at its own content, so it never shrinks
    into `.core` beside it — see the historical "mute/volume button overlaps the next/fast-forward
    button" bug this guards against (`scripts/qa/shots.mjs`'s `secondary-core-no-self-overlap-*`
-   family). Now that a third control (sound) sits here too, that content floor at three-across
-   would be wider than `.core`'s track can grant at some required widths (844x390 is the tightest
-   real one) — `flex-wrap: wrap`, not `nowrap`, is what keeps the floor to a *single* control's
-   width instead of the sum of all three: a flex container's own automatic minimum is its widest
-   child once wrapping is allowed to catch the rest, never the full row. The genuinely narrow
-   cases (844x390; a long breadcrumb at 1440x900) resolve by this row growing to two lines instead
-   of shrinking below any one control — `secondaryHeightPx`'s own generous ceiling
-   (`scripts/qa/shots.mjs`) already anticipated exactly this. This is the "let `.controlsSecondary`
-   give way" fix, not a `--transport-flank` cut or a `min-width: 0` here.
+   family). At three controls across, that content floor is wider than `.core`'s track can grant
+   at some required widths (844x390 is the tightest real one, and — see `.timeline`'s own narrow-
+   desktop media query — a ~1000px desktop) — `flex-wrap: wrap`, not `nowrap`, is what keeps a
+   genuinely too-narrow case readable: the row grows to two lines instead of shrinking below any
+   one control — `secondaryHeightPx`'s own generous ceiling (`scripts/qa/shots.mjs`) already
+   anticipated exactly this. At the widths that media query covers, `wrap` isn't enough on its own
+   — this column's `auto` floor is only its widest *single* child once wrapping is allowed to
+   catch the rest, well under the ~318px its three controls need on one line, so wrapping still
+   caught the shortfall (three stacked rows, not one) before the grid ever saw a floor worth
+   honouring — so that query swaps this same track for `minmax(max-content, 1fr)` there instead,
+   `max-content` being the true one-line width regardless of wrapping. Left at the base `auto` for
+   every wider viewport rather than switched everywhere: `max-content` (measured ~323px) turns out
+   to exceed half the leftover space even at 1440px, so making it the floor unconditionally froze
+   this column there too and knocked `.core` off true centre — `.timeline`'s own comment has the
+   measured regression this avoided.
    `align-items: flex-end` bottom-aligns every control's own interactive row (each carries a label
    above its buttons except the rate readout and the sound toggle, neither of which has one) —
    applies per wrapped line, so a second line still bottom-aligns its own contents. */

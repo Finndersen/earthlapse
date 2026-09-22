@@ -42,7 +42,20 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
+/* `min-width: 0` lets this shrink inside `.crumb`'s own flex row when the trail as a whole is
+   squeezed (the same mechanism `.crumb` itself relies on); `overflow`/`text-overflow` are what
+   `.current` already carries for the same reason, applied here too — without them, a button whose
+   flex box has been shrunk below its own text's width still renders that text at full size, which
+   just paints past the box edge into whatever crumb sits next rather than truncating. That is the
+   root cause a purely numeric (CSS-box) check can miss: the boxes themselves lay out with no
+   overlap while the *painted* glyphs do. Every non-current crumb goes through this rule — the
+   root and the deliberately-never-collapsed immediate parent (`SectionBreadcrumb.tsx`'s own doc
+   comment) included — so there is no crumb left with no truncation floor at all. */
 .link {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: var(--crumb-pad-block) 2px;
   background: transparent;
   border: 0;
