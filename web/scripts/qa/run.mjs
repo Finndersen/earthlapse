@@ -18,7 +18,8 @@ import { makeHook, rafTicks } from './hook.mjs'
 import { startStaticServer } from './server.mjs'
 import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
-import { waitForSceneCrossfadeSettle } from './timeouts.mjs'
+import smokeShotNames from './smokeShots.mjs'
+import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const WEB_ROOT = path.resolve(__dirname, '../..')
@@ -40,6 +41,8 @@ Options:
   --no-build                skip \`next build\`, reuse the existing scripts/qa's built out/ export
   --serve-only              build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
   --shots <a,b,c*>           comma-separated shot names/globs (matched against each shot's \`name\`)
+  --smoke                    run only \`smokeShots.mjs\`'s named subset (ignored if --shots is also given)
+  --no-screenshots           skip per-shot PNGs and the contact sheet — measurements/assertions still run
   --viewport <WxH>           override every shot's own viewport
   --reduced-motion <mode>    'reduce' (default) or 'no-preference'
   --port <n>                 static server port (default: an ephemeral free port)
@@ -47,12 +50,20 @@ Options:
   --help                     print this message
 `
 
-function parseArgs(argv) {
+function parseArgs(rawArgv) {
+  // `pnpm run qa -- --smoke` (the form this README/preflight.sh both use) passes the literal
+  // `--` straight through on this pnpm version, unlike npm's own `--` separator, which strips
+  // it — strip it here too so `pnpm qa -- --foo` and `node scripts/qa/run.mjs --foo` parse the
+  // same flags. Only a *leading* `--` is special-cased: nothing here takes a literal `--` as an
+  // option's own value, so one appearing later is a real typo, not this pass-through quirk.
+  const argv = rawArgv[0] === '--' ? rawArgv.slice(1) : rawArgv
   const args = {
     dev: false,
     noBuild: false,
     serveOnly: false,
     shots: null,
+    smoke: false,
+    noScreenshots: false,
     viewport: null,
     reducedMotion: 'reduce',
     port: 0,
@@ -66,12 +77,18 @@ function parseArgs(argv) {
     else if (arg === '--serve-only') args.serveOnly = true
     else if (arg === '--help' || arg === '-h') args.help = true
     else if (arg === '--shots') args.shots = argv[(i += 1)].split(',').map((s) => s.trim())
+    else if (arg === '--smoke') args.smoke = true
+    else if (arg === '--no-screenshots') args.noScreenshots = true
     else if (arg === '--viewport') args.viewport = parseViewport(argv[(i += 1)])
     else if (arg === '--reduced-motion') args.reducedMotion = argv[(i += 1)]
     else if (arg === '--port') args.port = Number(argv[(i += 1)])
     else if (arg === '--out') args.out = argv[(i += 1)]
     else throw new Error(`unknown argument: ${arg}`)
   }
+  // `--smoke` picks smokeShots.mjs's own list by exact name, unless the caller already narrowed
+  // with --shots. A name renamed out from under it in shots.mjs surfaces as selectShots' own
+  // "matched no shot" warning (or its "matched nothing" error if every name goes stale at once).
+  if (args.smoke && args.shots === null) args.shots = smokeShotNames
   return args
 }
 
@@ -119,24 +136,71 @@ function runNextBuild() {
 const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
 
 /**
- * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed) and,
- * whenever expanded, `globeViewMode` (default `'globe'') and every legend toggle
- * (`DEFAULT_LAYER_TOGGLES`, merged with the shot's own `layerToggles`) — never only the fields a
- * shot happens to mention. `setGlobeViewMode`/
+ * Closes whatever HUD layer chart a previous shot left expanded (`useTimeStore`'s
+ * `expandedChartLayerId`, no `devHook.ts` setter of its own since it is per-layer rather than a
+ * fixed field `setT`-like calls can target) by clicking its real "Collapse … chart" button — the
+ * same "drive the accessible control a person would" approach `setGlobeViewMode`/`setLayerToggle`
+ * already use. At most one such button ever exists, since only one chart can be expanded at a
+ * time (`Experience.tsx`'s `expandedChartLayerId`). Left open, it eats into the layout every
+ * later shot measures — this is exactly how `timeline-pip-thumbnail-hover` flaked when the shot
+ * before it left population's chart open: the checkpoint pip it hovers rendered squeezed to a
+ * fraction of its real height. Settles with the same `ready()` + `rafTicks` pair every other
+ * DOM-driven setter in this module uses before handing back to the shot, since collapsing the
+ * chart reflows the whole HUD column beneath it and a hover immediately afterwards can otherwise
+ * land mid-reflow.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function closeExpandedChart(page, hook) {
+  const collapseButton = page.getByRole('button', { name: /^Collapse .+ chart$/ })
+  if ((await collapseButton.count()) === 0) return
+  await collapseButton.first().click()
+  await hook.ready()
+  await rafTicks(page, 2)
+}
+
+/**
+ * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed), any
+ * expanded HUD chart (always closed — see `closeExpandedChart`) and, whenever expanded,
+ * `globeViewMode` (default `'globe'') and every legend toggle (`DEFAULT_LAYER_TOGGLES`, merged
+ * with the shot's own `layerToggles`) — never only the fields a shot happens to mention.
+ * `setGlobeViewMode`/
  * `setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
  * comment), so resolving every time rather than only on change is what makes one shot's state
  * fully independent of whatever the previous shot left on screen (this is exactly the bug an
  * early run of this harness caught: a shot with no `state` at all silently inherited the
  * previous shot's expanded map mode — see this package's README).
+ * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {import('./shots.mjs').ShotState} [state]
  */
-async function applyState(hook, state = {}) {
+async function applyState(page, hook, state = {}) {
   await hook.setPlaying(state.playing ?? false)
+  await closeExpandedChart(page, hook)
   const globeExpanded = state.globeExpanded ?? false
-  await hook.setGlobeExpanded(globeExpanded)
+  if (globeExpanded) {
+    // Force a real collapse before every expand, even when the globe is already expanded.
+    // `Globe.tsx`'s own camera code only resets zoom (and, in map mode, pan) on an actual
+    // expanded-true -> false transition ("collapsing back to the minimised orb should never
+    // leave it stuck at whatever zoom level the expanded sphere was left at" — its own comment);
+    // two consecutive expanded shots never cross that transition, so a shot that zoomed or
+    // panned leaves the camera at that same pose for every later expanded shot. A fixed-pixel
+    // click like `globe-click-on-backdrop-still-closes`'s only means "empty backdrop" at the
+    // default framing, so a leaked-in zoom can land it back on the globe's own silhouette.
+    await hook.setGlobeExpanded(false)
+    await hook.setGlobeExpanded(true)
+  } else {
+    await hook.setGlobeExpanded(false)
+  }
   if (globeExpanded) {
     await hook.setGlobeViewMode(state.globeViewMode ?? 'globe')
+    // `setGlobeViewMode` clicks the real toggle even when the mode is already correct, and a
+    // real change kicks off the sphere<->map unfold tween (`Globe.tsx`, no DOM/store reflection
+    // of its own progress — see `timeouts.mjs`). Without this wait, a shot with no `actions` of
+    // its own to settle the tween itself (unlike the shots that trigger this toggle directly)
+    // runs against a still-animating view — this is exactly how
+    // `globe-click-on-backdrop-still-closes` flaked when the shot before it left map mode.
+    await waitForApproxUnfoldProgress(page, 1)
     const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
     for (const [key, on] of Object.entries(toggles)) await hook.setLayerToggle(key, on)
   }
@@ -172,7 +236,7 @@ async function routePublishedMediaToLocalExport(page, baseUrl) {
   return origin
 }
 
-async function runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion) {
+async function runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion, takeScreenshot) {
   const startedAt = Date.now()
   const viewport = viewportOverride ?? shot.viewport ?? DEFAULT_VIEWPORT
   await page.setViewportSize(viewport)
@@ -184,14 +248,18 @@ async function runShot(page, hook, shot, runDir, viewportOverride, defaultReduce
     await hook.setT(shot.t)
     await waitForSceneCrossfadeSettle(page)
   }
-  await applyState(hook, shot.state)
+  await applyState(page, hook, shot.state)
   if (shot.actions !== undefined) await shot.actions({ page, hook })
   await hook.ready()
   await rafTicks(page, 2)
 
-  const screenshotName = `${shot.name}.png`
-  const pngPath = path.join(runDir, screenshotName)
-  await page.screenshot({ path: pngPath })
+  // `--no-screenshots`: measurements still read the real drawn page (`drawnBounds` screenshots
+  // its own clip internally, independent of this), only the per-shot PNG and the contact sheet
+  // built from it are skipped — a smoke run's speed comes from the shot count, this saves the
+  // PNG encode/write on top of that.
+  const screenshotName = takeScreenshot ? `${shot.name}.png` : null
+  const pngPath = takeScreenshot ? path.join(runDir, screenshotName) : null
+  if (takeScreenshot) await page.screenshot({ path: pngPath })
 
   const measurements = shot.measure !== undefined ? await shot.measure({ page, hook }) : {}
   const assertions = Object.entries(shot.expect ?? {}).map(([key, [min, max]]) => {
@@ -316,13 +384,16 @@ async function main() {
     const shots = selectShots(shotList, args.shots)
     for (const shot of shots) {
       console.log(`Running ${shot.name}…`)
-      const result = await runShot(page, hook, shot, runDir, args.viewport, args.reducedMotion)
+      const result = await runShot(page, hook, shot, runDir, args.viewport, args.reducedMotion, !args.noScreenshots)
       results.push(result)
     }
 
-    const contactSheetPng = await buildContactSheet(browser, results, runDir)
-    const contactSheetPath = path.join(runDir, 'contact-sheet.png')
-    await writeFile(contactSheetPath, contactSheetPng)
+    let contactSheetPath = null
+    if (!args.noScreenshots) {
+      const contactSheetPng = await buildContactSheet(browser, results, runDir)
+      contactSheetPath = path.join(runDir, 'contact-sheet.png')
+      await writeFile(contactSheetPath, contactSheetPng)
+    }
 
     const report = {
       startedAt: new Date().toISOString(),
@@ -330,14 +401,14 @@ async function main() {
       reducedMotion: args.reducedMotion,
       consoleErrors,
       shots: results.map(({ pngPath: _pngPath, ...rest }) => rest),
-      contactSheet: 'contact-sheet.png',
+      contactSheet: contactSheetPath !== null ? 'contact-sheet.png' : null,
       pass: results.every((r) => r.pass) && consoleErrors.length === 0,
     }
     await writeFile(path.join(runDir, 'report.json'), JSON.stringify(report, null, 2))
 
     printSummary(results, consoleErrors)
     console.log(`Report: ${path.join(runDir, 'report.json')}`)
-    console.log(`Contact sheet: ${contactSheetPath}`)
+    if (contactSheetPath !== null) console.log(`Contact sheet: ${contactSheetPath}`)
 
     await rm(path.join(OUT_ROOT, 'latest'), { force: true, recursive: true }).catch(() => {})
     await symlink(runDir, path.join(OUT_ROOT, 'latest')).catch(() => {})

@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Fast, staged-files-only subset of scripts/check.sh — ruff on staged Python, tsc only when a
+# staged file is TypeScript. Full checks (pytest, vitest, build) stay in scripts/check.sh /
+# `make check`, not here: this hook exists to be fast enough nobody reaches for --no-verify.
+# Enable with `make hooks` (sets core.hooksPath to this directory).
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+RUFF="${RUFF:-$REPO_ROOT/.venv/bin/ruff}"
+
+# NUL-delimited and read in a loop (not `mapfile`, which macOS's shipped bash 3.2 lacks) so a
+# staged filename with a space or newline can't split into two.
+STAGED_PY=()
+STAGED_TS=()
+while IFS= read -r -d '' f; do
+  case "$f" in
+    *.py) STAGED_PY+=("$f") ;;
+    web/*.ts | web/*.tsx) STAGED_TS+=("$f") ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACM -z)
+
+if [ "${#STAGED_PY[@]}" -gt 0 ]; then
+  echo "pre-commit: ruff check"
+  "$RUFF" check "${STAGED_PY[@]}"
+  echo "pre-commit: ruff format --check"
+  "$RUFF" format --check "${STAGED_PY[@]}"
+fi
+
+if [ "${#STAGED_TS[@]}" -gt 0 ]; then
+  echo "pre-commit: web typecheck"
+  pnpm -C web typecheck
+fi
+
+exit 0

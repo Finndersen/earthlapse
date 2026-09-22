@@ -9,10 +9,15 @@ This tool makes the correct check (measure what's actually drawn) the easy one.
 ```
 pnpm qa                          # build (NEXT_PUBLIC_EARTHTIME_QA=1 next build) + serve + run every shot
 pnpm qa -- --shots globe-*       # filtered to shots whose name matches a glob
+pnpm qa -- --smoke               # run only smokeShots.mjs's named subset (~10-15 shots)
+pnpm qa -- --no-screenshots      # skip per-shot PNGs and the contact sheet; measurements still run
 pnpm qa -- --no-build            # reuse the last out/ export instead of rebuilding
 pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3000 instead
 pnpm qa:serve                    # build (unless --no-build) + serve out/, print the URL, idle
 ```
+
+`--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy: fast, and exits
+non-zero on a real failure the same way the full run does.
 
 Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one static server
 (`server.mjs`, no dependency), one browser, one page load — every shot drives the already-loaded
@@ -56,12 +61,44 @@ Shots are data (`shots.mjs`), not code — add one object, never touch `run.mjs`
 `(page, selector, options) -> numbers` function to `measure.mjs`; assertions belong in `expect`,
 not the measurement itself.
 
-## Known flake
+`smokeShots.mjs` lists a representative subset by name for `--smoke` — add a shot to `shots.mjs`
+as above, and separately decide whether it belongs in the smoke list too (most don't; the smoke
+run is meant to stay small).
 
-On a small fraction of otherwise-identical clean builds, this repo's Next 16 + Turbopack has
-failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook. `run.mjs`
-checks for `window.__earthtime` right after load and fails fast, naming this, if it never
-appears — the fix is to rebuild (drop `--no-build`) and re-run.
+## Known flakes
+
+**Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +
+Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook.
+`run.mjs` checks for `window.__earthtime` right after load and fails fast, naming this, if it
+never appears — the fix is to rebuild (drop `--no-build`) and re-run.
+
+**Batch-order state leaks — fixed.** `globe-click-on-backdrop-still-closes` and
+`timeline-pip-thumbnail-hover` used to pass alone and fail inside a larger batch. Both traced to
+`applyState` resolving a shot's baseline state without waiting for it to actually settle:
+- Calling `setGlobeViewMode` always clicks the real toggle, and a real sphere<->map change starts
+  the ~800ms unfold tween (no DOM/store reflection — `timeouts.mjs`); `applyState` used to return
+  before it finished, so a shot with no click-then-wait of its own (unlike the shots that trigger
+  the toggle directly) ran its own actions mid-tween.
+- The globe's camera (zoom, and in map mode pan) only resets on a real `expanded: true -> false`
+  transition (`Globe.tsx`'s own comment on why) — two consecutive expanded shots never cross that
+  transition, so a shot that zoomed or panned left the camera there for every later expanded shot,
+  and a fixed-pixel click like the backdrop one only means "empty backdrop" at the default framing.
+- The HUD's expanded layer chart (`expandedChartLayerId`) has no `devHook.ts` setter and
+  `applyState` never closed it, so a shot that opened one left it eating into the layout every
+  later shot measured.
+
+All three are now resolved every shot in `applyState` (see its own doc comments), the same way it
+already resolved `globeExpanded`/`globeViewMode`/legend toggles. Reproduce a regression with
+`pnpm qa -- --shots <predecessor>,<shot>` before assuming a state leak is back.
+
+**`breadcrumb-trimmed` / `section-edge-nav-disabled-at-root`.** Observed but not investigated
+further: `section-edge-nav-disabled-at-root` currently times out waiting for a button named
+`/^Earth — /` even run alone — `EraShortcuts.tsx` only has two entries (Dinosaurs, Humans), no
+"Earth" one, so either this shot or that component has drifted out of sync. `breadcrumb-trimmed`
+passes alone but can fail inside a batch if an earlier shot navigated into a section whose
+band/era buttons this shot's own selectors then can't find — consistent with the selected
+*section* (as opposed to `t`) being sticky state `applyState` does not resolve, but this was not
+chased down to a fix.
 
 ## Determinism
 
@@ -77,8 +114,8 @@ appears — the fix is to rebuild (drop `--no-build`) and re-run.
 
 ```
 scripts/qa/out/<run>/
-  <shot-name>.png       one screenshot per shot
-  contact-sheet.png     every screenshot in a labelled grid (built in-browser, no image lib)
+  <shot-name>.png       one screenshot per shot (skipped under --no-screenshots)
+  contact-sheet.png     every screenshot in a labelled grid (skipped under --no-screenshots)
   report.json           every measurement + assertion + timing + console/page errors
 scripts/qa/out/latest -> <run>/
 ```

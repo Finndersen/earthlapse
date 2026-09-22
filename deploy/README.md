@@ -32,6 +32,17 @@ this uses Workers.
 ```
 git lfs pull                                   # media must be content, not LFS pointers
 .venv/bin/earthtime publish --asset-base https://media.<domain>
+make deploy                                    # preflight, then deploy-media, then deploy-site
+```
+
+`make deploy` runs `deploy/preflight.sh` first and stops before anything uploads if it fails: not
+on `main`, a dirty working tree, an LFS pointer under `data/media` instead of real content, a
+`manifest.json` path that doesn't exist on disk, a missing R2 var in `.env`, `scripts/check.sh`
+(full), or the QA smoke run (`pnpm -C web qa -- --smoke --no-screenshots`). The individual targets
+still exist for when you want just one step:
+
+```
+make preflight                                 # the checks above, nothing uploaded
 make deploy-media                              # rclone → R2, changed objects only
 make deploy-site                               # build against the R2 origin, then wrangler deploy
 ```
