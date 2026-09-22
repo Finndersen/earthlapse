@@ -9,7 +9,7 @@
 import { spawnSync } from 'node:child_process'
 import { mkdir, rm, symlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { chromium } from 'playwright'
 
@@ -40,6 +40,9 @@ Options:
   --no-build                skip \`next build\`, reuse the existing scripts/qa's built out/ export
   --serve-only              build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
   --shots <a,b,c*>           comma-separated shot names/globs (matched against each shot's \`name\`)
+  --grep <regex>             run only shots whose name matches; narrows --shots further
+  --extra-shots <file>       append a second shot module (default export) to the shot list
+  --no-screenshots           skip screenshots and the contact sheet (failures still capture one)
   --viewport <WxH>           override every shot's own viewport
   --reduced-motion <mode>    'reduce' (default) or 'no-preference'
   --port <n>                 static server port (default: an ephemeral free port)
@@ -53,6 +56,9 @@ function parseArgs(argv) {
     noBuild: false,
     serveOnly: false,
     shots: null,
+    grep: null,
+    extraShots: null,
+    screenshots: true,
     viewport: null,
     reducedMotion: 'reduce',
     port: 0,
@@ -66,6 +72,9 @@ function parseArgs(argv) {
     else if (arg === '--serve-only') args.serveOnly = true
     else if (arg === '--help' || arg === '-h') args.help = true
     else if (arg === '--shots') args.shots = argv[(i += 1)].split(',').map((s) => s.trim())
+    else if (arg === '--grep') args.grep = new RegExp(argv[(i += 1)])
+    else if (arg === '--extra-shots') args.extraShots = path.resolve(argv[(i += 1)])
+    else if (arg === '--no-screenshots') args.screenshots = false
     else if (arg === '--viewport') args.viewport = parseViewport(argv[(i += 1)])
     else if (arg === '--reduced-motion') args.reducedMotion = argv[(i += 1)]
     else if (arg === '--port') args.port = Number(argv[(i += 1)])
@@ -87,13 +96,22 @@ function globToRegExp(glob) {
   return new RegExp(`^${escaped}$`)
 }
 
-function selectShots(all, filters) {
-  if (filters === null) return all
-  const patterns = filters.map((filter) => ({ filter, regex: globToRegExp(filter) }))
-  const selected = all.filter((shot) => patterns.some((p) => p.regex.test(shot.name)))
-  if (selected.length === 0) throw new Error(`--shots matched nothing (filters: ${filters.join(', ')})`)
-  const unmatched = patterns.filter((p) => !all.some((shot) => p.regex.test(shot.name))).map((p) => p.filter)
-  if (unmatched.length > 0) console.warn(`warning: these --shots filters matched no shot: ${unmatched.join(', ')}`)
+/** `--shots` names shots exactly (or by `*` glob); `--grep` takes one regex matched anywhere in a
+ *  name, which is what makes "every phone shot" or "everything about the breadcrumb" expressible
+ *  without listing them. Both may be given: each narrows what the other left. */
+function selectShots(all, filters, grep) {
+  let selected = all
+  if (filters !== null) {
+    const patterns = filters.map((filter) => ({ filter, regex: globToRegExp(filter) }))
+    selected = selected.filter((shot) => patterns.some((p) => p.regex.test(shot.name)))
+    if (selected.length === 0) throw new Error(`--shots matched nothing (filters: ${filters.join(', ')})`)
+    const unmatched = patterns.filter((p) => !all.some((shot) => p.regex.test(shot.name))).map((p) => p.filter)
+    if (unmatched.length > 0) console.warn(`warning: these --shots filters matched no shot: ${unmatched.join(', ')}`)
+  }
+  if (grep !== null) {
+    selected = selected.filter((shot) => grep.test(shot.name))
+    if (selected.length === 0) throw new Error(`--grep ${grep.source} matched nothing`)
+  }
   return selected
 }
 
@@ -186,13 +204,17 @@ async function routePublishedMediaToLocalExport(page, baseUrl) {
   return origin
 }
 
-async function runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion) {
+/** `run` carries the settings that are the same for every shot in a run — where output goes, the
+ *  `--viewport`/`--reduced-motion` overrides, and whether screenshots are captured at all. One
+ *  object rather than five positional arguments, since every one of them would otherwise have to
+ *  be threaded through `runShotOrRecordFailure` untouched. */
+async function runShot(page, hook, shot, run) {
   const startedAt = Date.now()
-  const viewport = viewportOverride ?? shot.viewport ?? DEFAULT_VIEWPORT
+  const viewport = run.viewport ?? shot.viewport ?? DEFAULT_VIEWPORT
   await page.setViewportSize(viewport)
   // Per-shot override, e.g. the mid-unfold shot needs real motion to have a tween to sample —
   // everything else keeps the run's own default (see `--reduced-motion`'s own doc comment).
-  await page.emulateMedia({ reducedMotion: shot.reducedMotion ?? defaultReducedMotion })
+  await page.emulateMedia({ reducedMotion: shot.reducedMotion ?? run.reducedMotion })
 
   if (shot.t !== undefined) {
     await hook.setT(shot.t)
@@ -203,9 +225,12 @@ async function runShot(page, hook, shot, runDir, viewportOverride, defaultReduce
   await hook.ready()
   await rafTicks(page, 2)
 
-  const screenshotName = `${shot.name}.png`
-  const pngPath = path.join(runDir, screenshotName)
-  await page.screenshot({ path: pngPath })
+  // `--no-screenshots` skips both the capture and the contact sheet built from it: a full-page
+  // PNG is the single most expensive thing a shot does and several MB of the run's output, and an
+  // iteration loop that only reads assertion numbers never opens one.
+  const screenshotName = run.screenshots ? `${shot.name}.png` : null
+  const pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
+  if (pngPath !== null) await page.screenshot({ path: pngPath })
 
   const measurements = shot.measure !== undefined ? await shot.measure({ page, hook }) : {}
   const assertions = Object.entries(shot.expect ?? {}).map(([key, [min, max]]) => {
@@ -249,14 +274,16 @@ const EMPTY_PNG = Buffer.from(
  * @param {{width: number, height: number} | null} viewportOverride
  * @param {string} defaultReducedMotion
  */
-async function runShotOrRecordFailure(page, hook, shot, runDir, viewportOverride, defaultReducedMotion) {
+async function runShotOrRecordFailure(page, hook, shot, run) {
   const startedAt = Date.now()
   try {
-    return await runShot(page, hook, shot, runDir, viewportOverride, defaultReducedMotion)
+    return await runShot(page, hook, shot, run)
   } catch (error) {
     console.error(`FAILED ${shot.name}: ${error?.stack ?? error}`)
+    // A failure's screenshot is the one worth keeping even under `--no-screenshots`: it is the
+    // only record of what the page looked like when it threw.
     const screenshotName = `${shot.name}.png`
-    const pngPath = path.join(runDir, screenshotName)
+    const pngPath = path.join(run.runDir, screenshotName)
     try {
       await page.screenshot({ path: pngPath })
     } catch {
@@ -265,7 +292,7 @@ async function runShotOrRecordFailure(page, hook, shot, runDir, viewportOverride
     return {
       name: shot.name,
       description: shot.description,
-      viewport: viewportOverride ?? shot.viewport ?? DEFAULT_VIEWPORT,
+      viewport: run.viewport ?? shot.viewport ?? DEFAULT_VIEWPORT,
       t: shot.t ?? null,
       durationMs: Date.now() - startedAt,
       screenshot: screenshotName,
@@ -378,16 +405,31 @@ async function main() {
     await hook.setTourOpen(false)
     await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
 
-    const shots = selectShots(shotList, args.shots)
+    const run = {
+      runDir,
+      viewport: args.viewport,
+      reducedMotion: args.reducedMotion,
+      screenshots: args.screenshots,
+    }
+    // `--extra-shots` appends a second shot module to the list. Its point is that `shots.mjs` is a
+    // shared file and several agents routinely work in this repo at once (CLAUDE.md, "Working in
+    // parallel"): a new shot can be written, run and proven to fail-before-fix in its own file,
+    // then folded into `shots.mjs` once, by one writer.
+    const extra = args.extraShots === null ? [] : (await import(pathToFileURL(args.extraShots).href)).default
+    const shots = selectShots([...shotList, ...extra], args.shots, args.grep)
+    console.log(`Running ${shots.length} of ${shotList.length} shots…`)
     for (const shot of shots) {
       console.log(`Running ${shot.name}…`)
-      const result = await runShotOrRecordFailure(page, hook, shot, runDir, args.viewport, args.reducedMotion)
-      results.push(result)
+      results.push(await runShotOrRecordFailure(page, hook, shot, run))
     }
 
-    const contactSheetPng = await buildContactSheet(browser, results, runDir)
-    const contactSheetPath = path.join(runDir, 'contact-sheet.png')
-    await writeFile(contactSheetPath, contactSheetPng)
+    // Nothing to sheet when every shot that passed skipped its screenshot; a run with failures
+    // still has theirs, so the sheet is built whenever any image exists.
+    const sheeted = results.filter((r) => r.pngPath !== null)
+    const contactSheetPath = sheeted.length > 0 ? path.join(runDir, 'contact-sheet.png') : null
+    if (contactSheetPath !== null) {
+      await writeFile(contactSheetPath, await buildContactSheet(browser, sheeted, runDir))
+    }
 
     const report = {
       startedAt: new Date().toISOString(),
@@ -395,14 +437,14 @@ async function main() {
       reducedMotion: args.reducedMotion,
       consoleErrors,
       shots: results.map(({ pngPath: _pngPath, ...rest }) => rest),
-      contactSheet: 'contact-sheet.png',
+      contactSheet: contactSheetPath === null ? null : 'contact-sheet.png',
       pass: results.every((r) => r.pass) && consoleErrors.length === 0,
     }
     await writeFile(path.join(runDir, 'report.json'), JSON.stringify(report, null, 2))
 
     printSummary(results, consoleErrors)
     console.log(`Report: ${path.join(runDir, 'report.json')}`)
-    console.log(`Contact sheet: ${contactSheetPath}`)
+    if (contactSheetPath !== null) console.log(`Contact sheet: ${contactSheetPath}`)
 
     await rm(path.join(OUT_ROOT, 'latest'), { force: true, recursive: true }).catch(() => {})
     await symlink(runDir, path.join(OUT_ROOT, 'latest')).catch(() => {})

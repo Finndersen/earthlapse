@@ -82,6 +82,23 @@ function rectClearancePx(a, b) {
   return -Math.min(-gapX, -gapY)
 }
 
+/** `OverlaySelect.tsx`'s own bordered `.control` box (swatch + `<select>`) — the element whose
+ *  `min-height` the phone breakpoint trims from 44px to 32px (`OverlaySelect.module.css`). No
+ *  `data-testid` of its own (`OverlaySelect.tsx`/`.module.css` are outside this harness's edit
+ *  scope), so this reads it as the `<select>`'s own immediate parent, the shape that component's
+ *  JSX is known to have.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<{x: number, y: number, width: number, height: number}>}
+ */
+async function overlayControlBox(page) {
+  return page.evaluate((sel) => {
+    const select = document.querySelector(sel)
+    const control = select ? select.parentElement : null
+    if (control === null) throw new Error('overlayControlBox: no [data-testid="overlay-select"] parent found')
+    return control.getBoundingClientRect().toJSON()
+  }, OVERLAY_SELECT_SELECTOR)
+}
+
 /**
  * The bounding box, in CSS pixels, of a region's real *opacity* — where a plain `drawnBounds`-
  * style corner-sampled diff can't be trusted: over the photographic scene it registers the
@@ -163,6 +180,140 @@ async function diffAlphaEdge({ blackDataUrl, whiteDataUrl }) {
   }
   if (maxX < minX || maxY < minY) return { width: 0, height: 0 }
   return { width: maxX - minX + 1, height: maxY - minY + 1 }
+}
+
+/**
+ * Each breadcrumb crumb's own *painted* bounding box (`SectionBreadcrumb.tsx`'s `<li>` elements),
+ * isolated the same way `alphaEdgeDiameter` above isolates opacity: not a corner-sampled diff
+ * against the crumb's own background (worthless here for the same reason as everywhere else this
+ * sits over the photographic scene — CLAUDE.md, this file's module doc comment), and not
+ * `getBoundingClientRect` either, which is exactly the measurement that missed the real bug (two
+ * crumbs' *boxes* can lay out with no overlap at all while one's overflowing text still bleeds,
+ * unclipped, into the next box's painted area). Instead: screenshot the whole trail once with
+ * every crumb visible, then once per crumb with just that one `visibility: hidden` (layout is
+ * untouched — `visibility`, not `display`, so no sibling reflows and the two screenshots differ by
+ * exactly that crumb's own pixels, separator arrow included since a `::before` inherits its host's
+ * visibility). The per-pixel diff cancels the shared photo backdrop entirely, the same cancellation
+ * `alphaEdgeDiameter`'s own doc comment derives for its black/white pair, leaving only what that
+ * one crumb actually painted — including any of it that spilled outside its own `<li>` box.
+ * @param {import('playwright').Page} page
+ * @param {string} trailSelector the breadcrumb's `<ol>` (`SectionBreadcrumb.module.css`'s `.trail`).
+ * @param {{ threshold?: number }} [options] summed-RGBA diff per pixel before it counts as "drawn".
+ * @returns {Promise<Array<{x: number, y: number, width: number, height: number}>>} page-absolute
+ *   CSS-pixel boxes, one per crumb in DOM order; a crumb with nothing legible left (width/height 0)
+ *   never happens for a real label, so an empty box is itself a signal something is missing, not
+ *   merely small.
+ */
+async function crumbDrawnBounds(page, trailSelector, { threshold = 16 } = {}) {
+  const count = await page.evaluate((sel) => document.querySelector(sel)?.children.length ?? 0, trailSelector)
+  const trailBox = await boxOf(page, trailSelector)
+  // A little slack beyond the trail's own box: the whole point is to catch a crumb's paint
+  // spilling past where layout says it should stop, which a clip flush with that same layout box
+  // could itself crop away before the diff ever sees it.
+  const pad = 24
+  const clip = { x: Math.max(0, trailBox.x - pad), y: trailBox.y - 4, width: trailBox.width + pad * 2, height: trailBox.height + 8 }
+  // The scene view keeps drifting (parallax breathing) on its own clock even paused/reduced-
+  // motion, which a first pass of this measurement learned the hard way: two screenshots taken
+  // a `page.evaluate` round trip apart already differed across nearly the whole busy photo, not
+  // just at a hidden crumb. `alphaEdgeDiameter` above hides the same two layers for the same
+  // reason (that function's own doc comment) — reused here rather than a second mechanism for
+  // the same problem. `visibility: hidden` stops it painting to the screenshot at all, regardless
+  // of whatever its own render loop keeps doing underneath, so the backdrop behind the HUD text
+  // is flat and genuinely static across every screenshot in this function.
+  const restoreScene = await hideSceneAndVignette(page)
+  try {
+    const baseline = await page.screenshot({ clip })
+    const bounds = []
+    for (let i = 0; i < count; i += 1) {
+      await page.evaluate(([sel, index]) => (document.querySelector(sel).children[index].style.visibility = 'hidden'), [trailSelector, i])
+      const withHidden = await page.screenshot({ clip })
+      await page.evaluate(([sel, index]) => (document.querySelector(sel).children[index].style.visibility = ''), [trailSelector, i])
+      const local = await page.evaluate(diffCrumbPixels, {
+        baseDataUrl: `data:image/png;base64,${baseline.toString('base64')}`,
+        hiddenDataUrl: `data:image/png;base64,${withHidden.toString('base64')}`,
+        threshold,
+      })
+      bounds.push({ x: clip.x + local.x, y: clip.y + local.y, width: local.width, height: local.height })
+    }
+    return bounds
+  } finally {
+    await restoreScene()
+  }
+}
+
+/**
+ * Hides `ShellLayout.tsx`'s scene layer and lens vignette (its `.shell` root's first two
+ * children, `[data-globe-expanded]`'s own doc comment in `alphaEdgeDiameter` above) so a
+ * screenshot behind them reads as a flat, static backdrop instead of the animating photo —
+ * `visibility`, not `display`, so nothing in the HUD grid reflows. Returns a restore callback
+ * rather than leaving the caller to remember the teardown.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<() => Promise<void>>}
+ */
+async function hideSceneAndVignette(page) {
+  await page.evaluate(() => {
+    const shell = document.querySelector('[data-globe-expanded]')
+    if (shell && shell.children.length >= 2) {
+      shell.children[0].style.visibility = 'hidden'
+      shell.children[1].style.visibility = 'hidden'
+    }
+  })
+  return async () => {
+    await page.evaluate(() => {
+      const shell = document.querySelector('[data-globe-expanded]')
+      if (shell && shell.children.length >= 2) {
+        shell.children[0].style.visibility = ''
+        shell.children[1].style.visibility = ''
+      }
+    })
+  }
+}
+
+/** Runs inside the page (`page.evaluate`, self-contained) — the bounding box of pixels that
+ *  differ, by more than `threshold` summed across R+G+B+A, between the two screenshots. */
+async function diffCrumbPixels({ baseDataUrl, hiddenDataUrl, threshold }) {
+  const load = (src) =>
+    new Promise((resolve, reject) => {
+      const el = new Image()
+      el.onload = () => resolve(el)
+      el.onerror = () => reject(new Error('crumbDrawnBounds: failed to decode a probe screenshot'))
+      el.src = src
+    })
+  const [baseImg, hiddenImg] = await Promise.all([load(baseDataUrl), load(hiddenDataUrl)])
+  const canvas = document.createElement('canvas')
+  canvas.width = baseImg.naturalWidth
+  canvas.height = baseImg.naturalHeight
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) throw new Error('crumbDrawnBounds: 2D canvas context unavailable')
+  ctx.drawImage(baseImg, 0, 0)
+  const baseData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(hiddenImg, 0, 0)
+  const hiddenData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+  const { width, height } = canvas
+
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4
+      const diff =
+        Math.abs(baseData[i] - hiddenData[i]) +
+        Math.abs(baseData[i + 1] - hiddenData[i + 1]) +
+        Math.abs(baseData[i + 2] - hiddenData[i + 2]) +
+        Math.abs(baseData[i + 3] - hiddenData[i + 3])
+      if (diff > threshold) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return { x: 0, y: 0, width: 0, height: 0 }
+  return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
 }
 
 /**
@@ -508,6 +659,95 @@ async function dragGlobeOrb(page) {
  */
 
 /** @type {Shot[]} */
+/** The expanded globe's corner wrappers and close button (`Globe.tsx`). Real `data-testid`s,
+ *  unlike `OVERLAY_SELECT_SELECTOR` above, which falls back to a parent-element lookup because
+ *  `OverlaySelect.tsx` is outside this harness's edit scope. */
+const OVERLAY_SELECT_STACK_SELECTOR = '[data-testid="globe-overlay-select-stack"]'
+const LEGEND_CORNER_SELECTOR = '[data-testid="globe-legend-corner"]'
+const CLOSE_BUTTON_SELECTOR = '[data-testid="globe-close-button"]'
+
+/** The legend panel's compact ceiling. The panel measures 48.5px (single row, `padding: 6px 10px`,
+ *  `line-height: 1.25`, short hint); an uncompacted one — 8px padding, 1.4 line-height, a two-line
+ *  hint — measures 68px. 60px sits strictly between the two, so this discriminates rather than
+ *  passing both. */
+const LEGEND_HEIGHT_CEILING_PX = 60
+
+const DESKTOP_CORNER_VIEWPORTS = [
+  { width: 1000, height: 810 },
+  { width: 1440, height: 900 },
+]
+
+/**
+ * One shot per (viewport, globe view mode) combination: every corner control lands in its own
+ * quadrant, none overlaps the drawn sphere/map, and the overlay selector sits clear under the ✕.
+ * @param {{ width: number, height: number }} viewport
+ * @param {'globe' | 'map'} globeViewMode
+ */
+function desktopGlobeCornersShot(viewport, globeViewMode) {
+  const fitFrameSelector = globeViewMode === 'map' ? GLOBE_MAP_FIT_FRAME_SELECTOR : GLOBE_SPHERE_FIT_FRAME_SELECTOR
+  return {
+    name: `desktop-globe-corners-${viewport.width}x${viewport.height}-${globeViewMode}`,
+    description:
+      'Desktop/tablet expanded-globe chrome mirrors the phone layout: era shortcuts top-left, the overlay ' +
+      'selector top-right under the ✕, the Globe/Map toggle bottom-left, the "Human civilisation" legend ' +
+      'bottom-right. Quadrant membership is by each box\'s own centre against the viewport midpoints (plain ' +
+      'CSS boxes — ordinary HUD chrome, not canvases); the sphere/map is measured by drawn pixels ' +
+      '(`drawnBoundsInClip` over the real fit-frame rectangle, `globe-expanded-sphere`\'s own proven-sound ' +
+      'technique) since a busy photographic backdrop makes a plain corner-sampled scan unreliable there.',
+    viewport,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const overlayStack = await boxOf(page, OVERLAY_SELECT_STACK_SELECTOR)
+      const closeButton = await boxOf(page, CLOSE_BUTTON_SELECTOR)
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      const legend = await boxOf(page, LEGEND_CORNER_SELECTOR)
+      const frame = await drawnBoundsInClip(page, await hiddenBoxOf(page, fitFrameSelector))
+
+      const midX = viewport.width / 2
+      const midY = viewport.height / 2
+      const centreOf = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
+      const era_c = centreOf(era)
+      const overlay_c = centreOf(overlayStack)
+      const toggle_c = centreOf(toggle)
+      const legend_c = centreOf(legend)
+
+      return {
+        eraInTopLeft: era_c.x < midX && era_c.y < midY ? 1 : 0,
+        overlayInTopRight: overlay_c.x > midX && overlay_c.y < midY ? 1 : 0,
+        toggleInBottomLeft: toggle_c.x < midX && toggle_c.y > midY ? 1 : 0,
+        legendInBottomRight: legend_c.x > midX && legend_c.y > midY ? 1 : 0,
+        overlayBelowCloseGapPx: overlayStack.y - (closeButton.y + closeButton.height),
+        overlayOverlapsClose: rectsOverlap(overlayStack, closeButton) ? 1 : 0,
+        eraOverlapsFrame: rectsOverlap(era, frame) ? 1 : 0,
+        overlayOverlapsFrame: rectsOverlap(overlayStack, frame) ? 1 : 0,
+        toggleOverlapsFrame: rectsOverlap(toggle, frame) ? 1 : 0,
+        legendOverlapsFrame: rectsOverlap(legend, frame) ? 1 : 0,
+        legendHeightPx: legend.height,
+      }
+    },
+    expect: {
+      eraInTopLeft: [1, 1],
+      overlayInTopRight: [1, 1],
+      toggleInBottomLeft: [1, 1],
+      legendInBottomRight: [1, 1],
+      overlayBelowCloseGapPx: [4, 400],
+      overlayOverlapsClose: [0, 0],
+      eraOverlapsFrame: [0, 0],
+      overlayOverlapsFrame: [0, 0],
+      toggleOverlapsFrame: [0, 0],
+      legendOverlapsFrame: [0, 0],
+      legendHeightPx: [0, LEGEND_HEIGHT_CEILING_PX],
+    },
+  }
+}
+
 export default [
   {
     name: 'present-day-default',
@@ -551,14 +791,14 @@ export default [
       "clipped to the real fit-frame rectangle (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why " +
       '`GLOBE_CANVAS_SELECTOR` alone no longer isolates the sphere from the surrounding chrome) rather than ' +
       'measured at zoom-interaction time, so this is a zero-interaction "does it open at the right size" check. ' +
-      "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, so anything that changes " +
-      "the title's own height legitimately moves this band — currently ~555px, with the era shortcuts living in " +
-      'the timeline controls row rather than the title.',
+      "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, and above the phone " +
+      'breakpoint the sphere also clears all four corner controls, so anything that changes a corner control\'s ' +
+      'own height legitimately moves this band — currently ~491px.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
-    expect: { 'sphere.width': [535, 575], 'sphere.height': [535, 575] },
+    expect: { 'sphere.width': [470, 515], 'sphere.height': [470, 515] },
   },
   {
     name: 'globe-expanded-sphere-phone',
@@ -573,6 +813,120 @@ export default [
     state: { globeExpanded: true, globeViewMode: 'globe' },
     measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
     expect: { 'sphere.width': [330, 400], 'sphere.height': [330, 400] },
+  },
+  {
+    name: 'globe-row2-clear-of-sphere-phone',
+    description:
+      'Phone-expanded row 2 (era shortcuts left, overlay selector right, one line under the title) must never ' +
+      'overlap the sphere below it — the defect the brief for this pass exists to fix (era shortcuts used to paint ' +
+      'at a fixed `top: 132px`, on top of the globe). `era`/`overlayControl` are plain CSS boxes (ordinary HUD ' +
+      "chrome, not canvases); `sphere` is `drawnBoundsInClip` over the real fit-frame rectangle, `globe-expanded-" +
+      "sphere-phone`'s own proven-sound technique. Also guards the overlay selector's own new, shorter control " +
+      '(`OverlaySelect.module.css`\'s phone `.control`, trimmed from the base 44px).',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const overlayControl = await overlayControlBox(page)
+      return {
+        eraClearanceGapPx: rectClearancePx(era, sphere),
+        overlayClearanceGapPx: rectClearancePx(overlayControl, sphere),
+        overlayControlHeightPx: overlayControl.height,
+        // Row 2's two elements share one line despite living in separate DOM subtrees
+        // (`ShellLayout.module.css`'s `--row2-top`/`--row2-height` doc comment) — a wide overlap
+        // window (not an exact match) because they're independently vertically centred within
+        // that shared band and aren't the same height themselves.
+        rowAlignmentDeltaPx: Math.abs(era.y + era.height / 2 - (overlayControl.y + overlayControl.height / 2)),
+      }
+    },
+    expect: {
+      eraClearanceGapPx: [4, 400],
+      overlayClearanceGapPx: [4, 400],
+      overlayControlHeightPx: [24, 36],
+      rowAlignmentDeltaPx: [0, 6],
+    },
+  },
+  {
+    name: 'globe-row2-clear-of-map-phone',
+    description: 'Same as `globe-row2-clear-of-sphere-phone`, in map mode, against the real map fit frame.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'map' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
+      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
+      const overlayControl = await overlayControlBox(page)
+      return {
+        eraClearanceGapPx: rectClearancePx(era, map),
+        overlayClearanceGapPx: rectClearancePx(overlayControl, map),
+      }
+    },
+    expect: { eraClearanceGapPx: [4, 400], overlayClearanceGapPx: [4, 400] },
+  },
+  {
+    name: 'globe-controls-row-clear-of-sphere-phone',
+    description:
+      'Phone-expanded: the Globe/Map toggle and the zoom rocker now share their own row directly under the ' +
+      'sphere/map (not straddling it) — both must sit strictly below the drawn sphere, never overlapping it, at ' +
+      'the width where the sphere grows closest to them.',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
+      return {
+        toggleClearanceGapPx: toggle.y - (sphere.y + sphere.height),
+        zoomClearanceGapPx: zoom.y - (sphere.y + sphere.height),
+        toggleOverlapsZoom: rectsOverlap(toggle, zoom) ? 1 : 0,
+      }
+    },
+    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0] },
+  },
+  {
+    name: 'globe-feed-between-sphere-and-timeline-phone',
+    description:
+      'Phone-expanded: the event feed strip sits in its own band between the sphere/controls row above it and the ' +
+      'breadcrumb/timeline below — ordering by real drawn/box y-position, not just "doesn\'t overlap either".',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
+      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      return {
+        feedBelowSphereGapPx: feed.y - (sphere.y + sphere.height),
+        breadcrumbBelowFeedGapPx: breadcrumb.y - (feed.y + feed.height),
+      }
+    },
+    // The gap to the breadcrumb is deliberately small (a normal band gap, not the vacated band a
+    // dedicated era-shortcuts strip above the timeline would have left) — the strip sits directly
+    // above the timeline now that the era shortcuts have moved up to row 2.
+    expect: { feedBelowSphereGapPx: [4, 400], breadcrumbBelowFeedGapPx: [2, 60] },
   },
   {
     name: 'globe-expanded-map',
@@ -593,7 +947,7 @@ export default [
       const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
       return { map, cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
     },
-    expect: { 'map.width': [1115, 1155], cursorIsNotGrab: [1, 1] },
+    expect: { 'map.width': [960, 1030], cursorIsNotGrab: [1, 1] },
   },
   {
     name: 'globe-sphere-zoom-past-fit',
@@ -877,15 +1231,15 @@ export default [
   {
     name: 'globe-view-mode-toggle-clear-of-sphere-narrow',
     description:
-      'At the narrow 390x844 phone-portrait viewport the Globe/Map toggle sits at the TOP-RIGHT, beside the ' +
-      "close button — freeing the vertical space below for as large a sphere as the viewport allows — so it sits " +
-      "ABOVE the sphere here, not below it as in `globe-view-mode-toggle-clear-of-sphere`/`-clear-of-map`/" +
-      "`-clear-of-sphere-short`. The invariant that still holds at every viewport is narrower than \"below\": the " +
-      "toggle must never overlap the sphere's drawn silhouette. `sphere` is measured the same way as those sibling " +
-      "shots (`drawnBoundsInClip` over the real fit-frame rectangle — sound here for the same reason their own " +
-      "description gives); `toggle` is a plain CSS box (`boxOf`), ordinary HUD chrome. `clearanceGapPx` is the " +
-      'signed rectangle-to-rectangle separation on both axes at once (`rectClearancePx`) — positive when the boxes ' +
-      "don't overlap, negative overlap depth when they do — with the same 4px floor the sibling shots use.",
+      'At the narrow 390x844 phone-portrait viewport the Globe/Map toggle shares its own row with the zoom rocker ' +
+      "directly under the sphere (`Globe.module.css`'s own phone `.viewModeGroup` rule) — the same relative " +
+      'position as `globe-view-mode-toggle-clear-of-sphere`/`-clear-of-map`/`-clear-of-sphere-short`, just at the ' +
+      "narrowest required viewport, where the sphere is squeezed hardest and this clearance is tightest. `sphere` " +
+      "is measured the same way as those sibling shots (`drawnBoundsInClip` over the real fit-frame rectangle — " +
+      "sound here for the same reason their own description gives); `toggle` is a plain CSS box (`boxOf`), " +
+      'ordinary HUD chrome. `clearanceGapPx` is the signed rectangle-to-rectangle separation on both axes at once ' +
+      "(`rectClearancePx`) — positive when the boxes don't overlap, negative overlap depth when they do — with " +
+      'the same 4px floor the sibling shots use.',
     viewport: { width: 390, height: 844 },
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -1285,6 +1639,124 @@ export default [
     // guard). `-6` still catches any *real* regression (an un-inset row here would overhang by
     // roughly a whole `--timeline-gutter`, ~50-56px, not a handful).
     expect: { leftInsetPx: [0, 400], rightInsetPx: [-6, 400] },
+  },
+  {
+    name: 'secondary-cluster-one-row-1000x810',
+    description:
+      'At a ~1000px desktop viewport, the playback-mode toggle, the scale toggle and the sound button ' +
+      "(`.controlsSecondary`) sit on one row, not wrapped across several — the cluster's drawn height stays under " +
+      'a single-row ceiling, and the playback-mode and scale groups share one vertical centre line.',
+    viewport: { width: 1000, height: 810 },
+    t: 0,
+    measure: async ({ page }) => {
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const [modeBox, scaleBox] = await page.evaluate((sel) => {
+        const el = document.querySelector(sel)
+        const [mode, scale] = Array.from(el.children)
+        return [mode.getBoundingClientRect().toJSON(), scale.getBoundingClientRect().toJSON()]
+      }, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const centreY = (r) => r.y + r.height / 2
+      return {
+        secondaryHeightPx: secondary.height,
+        modeScaleCentreYDeltaPx: Math.abs(centreY(modeBox) - centreY(scaleBox)),
+      }
+    },
+    expect: {
+      // A single row of mode-toggle/scale-toggle/sound-button tops out around 35-48px depending
+      // on which control is tallest; two wrapped lines add a further control height plus row-gap
+      // (measured 63px pre-fix with mode+scale sharing a line and only sound wrapped), three adds
+      // a second full control height again (measured 106px pre-fix, the actual reported defect).
+      // 55 sits strictly between "one row" and either wrapped case.
+      secondaryHeightPx: [0, 55],
+      // Sub-pixel on a genuine single line (both are the same fixed layout, just placed side by
+      // side); a wrapped wrap puts one group a full control-height below the other.
+      modeScaleCentreYDeltaPx: [0, 2],
+    },
+  },
+  {
+    name: 'secondary-cluster-no-regression-1440x900',
+    description:
+      'At 1440x900 the playback-mode and scale groups still share one row (the pre-existing, documented baseline ' +
+      '— `timeline-controls-inset-to-track-wide`\'s own `secondaryHeightPx` tolerance already accepts the sound ' +
+      "button wrapping to a second line here) — the narrow-desktop fix for the 1000px defect is scoped to leave " +
+      'this width reading the same rule it always has.',
+    viewport: { width: 1440, height: 900 },
+    t: 0,
+    measure: async ({ page }) => {
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const [modeBox, scaleBox] = await page.evaluate((sel) => {
+        const el = document.querySelector(sel)
+        const [mode, scale] = Array.from(el.children)
+        return [mode.getBoundingClientRect().toJSON(), scale.getBoundingClientRect().toJSON()]
+      }, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const centreY = (r) => r.y + r.height / 2
+      return {
+        secondaryHeightPx: secondary.height,
+        modeScaleCentreYDeltaPx: Math.abs(centreY(modeBox) - centreY(scaleBox)),
+      }
+    },
+    // Same generous ceiling as `timeline-controls-inset-to-track-wide`'s own `secondaryHeightPx`
+    // — up to two wrapped lines is this width's pre-existing, accepted baseline; only mode and
+    // scale sharing one row is asserted strictly.
+    expect: { secondaryHeightPx: [0, 90], modeScaleCentreYDeltaPx: [0, 2] },
+  },
+  {
+    name: 'transport-core-optically-centred-1920x1080',
+    description: 'Same as `transport-core-optically-centred`, at 1920x1080 — the narrow-desktop fix must not reach this width.',
+    viewport: { width: 1920, height: 1080 },
+    t: 50,
+    measure: async ({ page }) => {
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      return { offsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)) }
+    },
+    expect: { offsetPx: [0, 3] },
+  },
+  {
+    name: 'breadcrumb-clean-trail-1000x810',
+    description:
+      "Deep in the section tree, at a ~1000px desktop viewport, the breadcrumb's painted glyphs stay inside " +
+      "their own crumb boxes — no crumb's text runs into the next, every crumb still paints something, and the " +
+      'trail stays inside its own grid column.',
+    viewport: { width: 1000, height: 810 },
+    t: 0,
+    actions: async ({ page }) => {
+      await page.getByRole('button', { name: /^Cenozoic,/ }).click()
+      await page.getByRole('button', { name: /^Quaternary,/ }).click()
+      await page.getByRole('button', { name: /^Holocene,/ }).click()
+      await page.getByRole('button', { name: /^Ancient civilisations,/ }).click()
+    },
+    measure: async ({ page }) => {
+      const trailSelector = `${BREADCRUMB_SELECTOR} ol`
+      const bounds = await crumbDrawnBounds(page, trailSelector)
+      const trail = await boxOf(page, trailSelector)
+      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
+      // A few px of horizontal overlap between two immediately-adjacent glyphs (a collapsed "…"
+      // sitting right beside the next crumb's own separator) is antialiasing, not text bleeding
+      // into a neighbour — the real defect this guards measured tens of px deep. `deepestOverlapPx`
+      // below is the two rects' own overlap depth (0 or negative when they don't overlap at all).
+      let overlappingPairs = 0
+      for (let i = 0; i < bounds.length - 1; i += 1) {
+        const deepestOverlapPx = -rectClearancePx(bounds[i], bounds[i + 1])
+        if (deepestOverlapPx > 4) overlappingPairs += 1
+      }
+      return {
+        crumbCount: bounds.length,
+        crumbsDrawn: bounds.filter((b) => b.width > 0 && b.height > 0).length,
+        overlappingPairs,
+        // Positive means the trail's own right edge sits at or inside the breadcrumb's grid
+        // column; negative means it overhangs into `.core` beside it.
+        trailRightInsetPx: sections.x + sections.width - (trail.x + trail.width),
+      }
+    },
+    expect: {
+      crumbCount: [5, 5],
+      // Every crumb paints *something* — a full label, an abbreviated one, or the collapsed "…"
+      // — never nothing at all.
+      crumbsDrawn: [5, 5],
+      overlappingPairs: [0, 0],
+      trailRightInsetPx: [0, 400],
+    },
   },
   {
     name: 'timeline-controls-inset-to-track-short',
@@ -2003,8 +2475,14 @@ export default [
       'the section changes), matching the convention the breadcrumb\'s own now-deleted "‹ Up"/"⌂ Earth" buttons used.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
+    // A previous shot may have left the store on a deeper section (shots share one page load, no
+    // reload between them — this package's README). The breadcrumb's root crumb (`aria-label`
+    // exactly "Earth", `SectionBreadcrumb.tsx`) is a `<button>` only while some other section is
+    // selected; already at root it renders as the current-location `<span>` instead, so there is
+    // nothing to click and nothing to wait for.
     actions: async ({ page }) => {
-      await page.getByRole('button', { name: /^Earth — /, exact: false }).click()
+      const rootCrumb = page.getByRole('button', { name: 'Earth', exact: true })
+      if ((await rootCrumb.count()) > 0) await rootCrumb.click()
     },
     measure: async ({ page }) => {
       const previous = page.getByRole('button', { name: 'No previous section' })
@@ -2786,8 +3264,8 @@ export default [
       "the newest frame in both HYDE sequences and the date at which population density is at its maximum, so " +
       'the wash reads at full strength rather than near its floor) — the default overlay, selected explicitly ' +
       "rather than trusted (this harness never reloads between shots, so a prior shot's overlay pick would " +
-      'otherwise still be selected). Shows the left-aligned era-shortcut row, the Globe/Map toggle at the ' +
-      'top-right beside the close button, the overlay selector, and no Legend panel.',
+      'otherwise still be selected). Shows row 2 (era shortcuts left, overlay selector right, directly under the ' +
+      'title), the Globe/Map toggle and zoom rocker sharing their own row under the sphere, and no Legend panel.',
     viewport: { width: 390, height: 844 },
     t: 10,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -2876,4 +3354,7 @@ export default [
       await hook.ready()
     },
   },
+  ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
+    ['globe', 'map'].map((globeViewMode) => desktopGlobeCornersShot(viewport, globeViewMode)),
+  ),
 ]

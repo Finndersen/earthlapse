@@ -9,10 +9,26 @@ This tool makes the correct check (measure what's actually drawn) the easy one.
 ```
 pnpm qa                          # build (NEXT_PUBLIC_EARTHTIME_QA=1 next build) + serve + run every shot
 pnpm qa -- --shots globe-*       # filtered to shots whose name matches a glob
+pnpm qa -- --grep phone          # filtered to shots whose name matches a regex anywhere
+pnpm qa -- --no-screenshots      # assertions only: no PNGs, no contact sheet
+pnpm qa -- --extra-shots f.mjs   # append another shot module's default export to the list
 pnpm qa -- --no-build            # reuse the last out/ export instead of rebuilding
 pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3000 instead
 pnpm qa:serve                    # build (unless --no-build) + serve out/, print the URL, idle
 ```
+
+### Iterating quickly
+
+The full list is ~90 shots and every one writes a full-page PNG, so a whole run is minutes and
+hundreds of MB. While iterating on one area, run that area only and skip the images:
+
+```
+node scripts/qa/run.mjs --no-build --grep 'phone|globe-expanded' --no-screenshots --out iter
+```
+
+`--no-screenshots` still captures one for any shot that *throws*, since that image is the only
+record of what the page looked like when it failed. Run the full list with images once at the
+end — an assertion subset cannot tell you that something elsewhere now looks wrong.
 
 Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one static server
 (`server.mjs`, no dependency), one browser, one page load — every shot drives the already-loaded
