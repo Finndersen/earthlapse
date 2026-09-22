@@ -379,3 +379,29 @@ describe('Experience (W12a integration)', () => {
     })
   })
 })
+
+describe('Experience layer loading', () => {
+  it('renders before every layer has loaded, mounting the globe only once its layers have', async () => {
+    let releasePaleodem: () => void = () => {}
+    const paleodemHeld = new Promise<void>((resolve) => {
+      releasePaleodem = resolve
+    })
+    const baseFetch = globalThis.fetch
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        if (String(input) === '/stub/layers/paleodem.json') await paleodemHeld
+        return baseFetch(input)
+      }),
+    )
+
+    await renderSettled()
+    expect(screen.getByTestId('time-title')).toBeTruthy()
+    expect(screen.queryByTestId('globe-mock')).toBeNull()
+    expect(screen.queryByText(/No paleogeographic data/)).toBeNull()
+
+    await act(async () => releasePaleodem())
+
+    await waitFor(() => expect(screen.getByTestId('globe-mock')).toBeTruthy())
+  })
+})

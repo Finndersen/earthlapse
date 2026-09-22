@@ -1,15 +1,16 @@
 'use client'
 
 /**
- * Loads the manifest and every layer's data file in one batch, so the page has everything it
- * needs before it renders any real content — per the W12a brief, "loading states show nothing
- * rather than wrong values". A partial render (manifest in, layer data still in flight) would
- * otherwise have to invent a placeholder value for each not-yet-loaded layer; waiting for the
- * whole batch avoids that question entirely.
+ * Loads the manifest, then every layer's data file. The page renders as soon as the manifest is
+ * in; each layer's data joins `layerData` as it lands. A layer absent from `layerData` has not
+ * loaded yet, and its consumer renders nothing for it rather than a placeholder value — so a
+ * loading layer never shows a wrong value, only none. A consumer whose output depends on several
+ * layers together, or on whether a layer is published at all, waits for all of them
+ * (`Experience.tsx`'s `layersLoaded`), since "not loaded yet" and "not published" look alike.
  *
  * Any failure — the manifest 404s on both the real and stub URL, a layer's data file 404s, a
- * malformed JSON payload — rejects the whole batch and surfaces as `status: 'error'`, per
- * `loadManifest`'s own "throw loudly, never render half a broken manifest" contract.
+ * malformed JSON payload — surfaces as `status: 'error'`, per `loadManifest`'s own "throw loudly,
+ * never render half a broken manifest" contract, even if the page has already rendered.
  */
 
 import { useEffect, useState } from 'react'
@@ -30,14 +31,19 @@ export function useAppData(): AppDataState {
 
     async function run(): Promise<void> {
       const { manifest, isStub } = await loadManifest()
-      // Every declared layer publishes its own data file (docs/GLOBE.md §6 closed that last
-      // gap: a non-timeline `events`-kind layer, e.g. `globe-regimes`, now does too) — so
-      // nothing here is filtered out before the fetch.
-      const entries = manifest.layers
-      const dataList = await Promise.all(entries.map((entry) => loadLayerData(manifest, entry)))
       if (cancelled) return
-      const layerData = new Map(entries.map((entry, i) => [entry.id, dataList[i]!]))
-      setState({ status: 'ready', manifest, isStub, layerData })
+      setState({ status: 'ready', manifest, isStub, layerData: new Map() })
+
+      const layerData = new Map<string, LayerData>()
+      await Promise.all(
+        manifest.layers.map(async (entry) => {
+          const data = await loadLayerData(manifest, entry)
+          if (cancelled) return
+          layerData.set(entry.id, data)
+          const snapshot = new Map(layerData)
+          setState((previous) => (previous.status === 'ready' ? { ...previous, layerData: snapshot } : previous))
+        }),
+      )
     }
 
     run().catch((error: unknown) => {

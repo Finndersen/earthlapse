@@ -1,5 +1,7 @@
 /**
- * Texture cache for the ancestor portrait: a URL decodes onto the GPU at most once.
+ * Texture cache for the ancestor portrait: a URL decodes onto the GPU at most once while cached.
+ * Bounded (`lib/retainedTextureCache.ts`): `usePortraitPair` retains its bound set and
+ * `PortraitCanvas` whatever it draws, so eviction only ever disposes textures nothing is drawing.
  *
  * Every texture uploads with `NoColorSpace`, so the sampler returns the stored bytes. Flow fields
  * are data. Plates stay sRGB-encoded because `portraitShaders.ts` owns the transfer: a settled
@@ -10,9 +12,36 @@
 
 import * as THREE from 'three'
 
+import { createRetainedTextureCache } from '@/lib/retainedTextureCache'
+
+/** A plate is 1024x1024 RGBA, ~4 MB of GPU memory; flow textures are smaller. Sixteen covers the
+ *  bound set and a requested set (four each), the six-texture preload window and a little
+ *  scrub-back history. */
+export const PORTRAIT_CACHE_CAPACITY = 16
+
 const loader = new THREE.TextureLoader()
-const cache = new Map<string, THREE.Texture>()
-const inFlight = new Map<string, Promise<THREE.Texture>>()
+
+function fetchPortraitTexture(url: string): Promise<THREE.Texture> {
+  return new Promise<THREE.Texture>((resolve, reject) => {
+    loader.load(
+      url,
+      (texture) => {
+        texture.colorSpace = THREE.NoColorSpace
+        texture.minFilter = THREE.LinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.generateMipmaps = false
+        resolve(texture)
+      },
+      undefined,
+      (event) => {
+        const message = event instanceof ErrorEvent ? event.message : String(event)
+        reject(new Error(`failed to load portrait texture ${url}: ${message}`))
+      },
+    )
+  })
+}
+
+const cache = createRetainedTextureCache(PORTRAIT_CACHE_CAPACITY, fetchPortraitTexture)
 
 function dataTexture(rgba: readonly number[]): THREE.Texture {
   const texture = new THREE.DataTexture(new Uint8Array(rgba), 1, 1, THREE.RGBAFormat)
@@ -34,31 +63,10 @@ export function getCachedPortraitTexture(url: string): THREE.Texture | undefined
 }
 
 export function loadPortraitTexture(url: string): Promise<THREE.Texture> {
-  const cached = cache.get(url)
-  if (cached !== undefined) return Promise.resolve(cached)
-  const pending = inFlight.get(url)
-  if (pending !== undefined) return pending
+  return cache.load(url)
+}
 
-  const promise = new Promise<THREE.Texture>((resolve, reject) => {
-    loader.load(
-      url,
-      (texture) => {
-        texture.colorSpace = THREE.NoColorSpace
-        texture.minFilter = THREE.LinearFilter
-        texture.magFilter = THREE.LinearFilter
-        texture.generateMipmaps = false
-        cache.set(url, texture)
-        inFlight.delete(url)
-        resolve(texture)
-      },
-      undefined,
-      (event) => {
-        inFlight.delete(url)
-        const message = event instanceof ErrorEvent ? event.message : String(event)
-        reject(new Error(`failed to load portrait texture ${url}: ${message}`))
-      },
-    )
-  })
-  inFlight.set(url, promise)
-  return promise
+/** Protects bound or drawn textures from eviction until the returned release is called. */
+export function retainPortraitTextures(textures: readonly (THREE.Texture | null)[]): () => void {
+  return cache.retain(textures)
 }

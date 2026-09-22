@@ -21,6 +21,7 @@ vi.mock('./portraitTextures', () => ({
       }),
   ),
   getCachedPortraitTexture: vi.fn((url: string) => cached.get(url)),
+  retainPortraitTextures: vi.fn(() => () => {}),
 }))
 
 // eslint-disable-next-line import/first -- must follow the hoisted vi.mock above

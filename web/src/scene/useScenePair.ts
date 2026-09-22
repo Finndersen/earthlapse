@@ -21,10 +21,10 @@
  * `resolveSceneRender` reconciles them, called by `SceneCanvasView`.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type * as THREE from 'three'
 
-import { getCachedSceneTexture, loadSceneTexture } from './textureCache'
+import { getCachedSceneTexture, loadSceneTexture, retainSceneTextures } from './textureCache'
 
 interface BoundPair {
   fromUrl: string
@@ -84,9 +84,14 @@ export function useScenePair(fromUrl: string, toUrl: string): ScenePair {
     }
   }, [fromUrl, toUrl, bound])
 
+  // A layout effect, so the pair is retained in the same commit that binds it.
+  const boundFromTex = bound?.fromTex ?? null
+  const boundToTex = bound?.toTex ?? null
+  useLayoutEffect(() => retainSceneTextures([boundFromTex, boundToTex]), [boundFromTex, boundToTex])
+
   return {
-    fromTex: bound?.fromTex ?? null,
-    toTex: bound?.toTex ?? null,
+    fromTex: boundFromTex,
+    toTex: boundToTex,
     boundFromUrl: bound?.fromUrl ?? null,
     boundToUrl: bound?.toUrl ?? null,
     ready: bound !== null,

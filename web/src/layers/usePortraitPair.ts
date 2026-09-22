@@ -21,10 +21,10 @@
  * them, called by `PortraitCanvas`.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type * as THREE from 'three'
 
-import { getCachedPortraitTexture, loadPortraitTexture } from './portraitTextures'
+import { getCachedPortraitTexture, loadPortraitTexture, retainPortraitTextures } from './portraitTextures'
 
 /** Two PNG data textures bending the older plate into the younger one. Mirrors `PortraitMorph`
  *  (`@/types/layer`) but carries resolved URLs rather than manifest-relative paths — what
@@ -137,11 +137,21 @@ export function usePortraitPair(olderUrl: string, youngerUrl: string, flow: Port
     }
   }, [olderUrl, youngerUrl, forwardUrl, backwardUrl, bound])
 
+  // A layout effect, so the set is retained in the same commit that binds it.
+  const olderTex = bound?.olderTex ?? null
+  const youngerTex = bound?.youngerTex ?? null
+  const forwardTex = bound?.forwardTex ?? null
+  const backwardTex = bound?.backwardTex ?? null
+  useLayoutEffect(
+    () => retainPortraitTextures([olderTex, youngerTex, forwardTex, backwardTex]),
+    [olderTex, youngerTex, forwardTex, backwardTex],
+  )
+
   return {
-    olderTex: bound?.olderTex ?? null,
-    youngerTex: bound?.youngerTex ?? null,
-    forwardTex: bound?.forwardTex ?? null,
-    backwardTex: bound?.backwardTex ?? null,
+    olderTex,
+    youngerTex,
+    forwardTex,
+    backwardTex,
     boundOlderUrl: bound?.olderUrl ?? null,
     boundYoungerUrl: bound?.youngerUrl ?? null,
     boundForwardUrl: bound?.forwardUrl ?? null,

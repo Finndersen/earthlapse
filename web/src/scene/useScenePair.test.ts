@@ -6,9 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 // the real module's persistent cache, deliberately not fed by `resolveLoad` (so a URL can
 // resolve twice with different fake textures across independent in-flight requests); tests
 // exercising the synchronous cache-hit path populate it directly via `markCached`.
-const { pending, cached } = vi.hoisted(() => ({
+const { pending, cached, retained } = vi.hoisted(() => ({
   pending: new Map<string, (tex: unknown) => void>(),
   cached: new Map<string, unknown>(),
+  retained: [] as unknown[],
 }))
 
 vi.mock('./textureCache', () => ({
@@ -19,6 +20,13 @@ vi.mock('./textureCache', () => ({
       }),
   ),
   getCachedSceneTexture: vi.fn((url: string) => cached.get(url)),
+  retainSceneTextures: vi.fn((textures: readonly unknown[]) => {
+    const held = textures.filter((texture) => texture !== null)
+    retained.push(...held)
+    return () => {
+      for (const texture of held) retained.splice(retained.indexOf(texture), 1)
+    }
+  }),
 }))
 
 // eslint-disable-next-line import/first -- must follow the hoisted vi.mock above
@@ -42,6 +50,7 @@ function markCached(url: string, tex: unknown): void {
 afterEach(() => {
   pending.clear()
   cached.clear()
+  retained.length = 0
   vi.clearAllMocks()
 })
 
@@ -162,5 +171,35 @@ describe('useScenePair: no blank frame', () => {
 
     rerender({ from: 'a.png', to: 'b.png' })
     expect(vi.mocked(loadSceneTexture)).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('useScenePair: eviction safety', () => {
+  it('retains exactly the bound pair, holding the old pair while a new one loads', async () => {
+    const { result, rerender, unmount } = renderHook(({ from, to }) => useScenePair(from, to), {
+      initialProps: { from: 'a.png', to: 'b.png' },
+    })
+    const a = fakeTexture('a')
+    const b = fakeTexture('b')
+    const c = fakeTexture('c')
+    act(() => {
+      resolveLoad('a.png', a)
+      resolveLoad('b.png', b)
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    expect(retained).toEqual([a, b])
+
+    rerender({ from: 'b.png', to: 'c.png' })
+    expect(retained).toEqual([a, b])
+
+    act(() => {
+      resolveLoad('b.png', b)
+      resolveLoad('c.png', c)
+    })
+    await waitFor(() => expect(result.current.toTex).toBe(c))
+    expect(retained).toEqual([b, c])
+
+    unmount()
+    expect(retained).toEqual([])
   })
 })
