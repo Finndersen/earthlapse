@@ -1,0 +1,310 @@
+/*
+ * A docked, non-modal panel — not `shell/Panel`'s modal surface (see `EventBrowser.tsx`'s own
+ * doc comment for why). `--browser-bottom-inset` (`useTimelineBottomInset`) is the real distance
+ * from the viewport bottom to the timeline's own top edge, so `.panel`'s `bottom` always clears
+ * it exactly, on both desktop and the phone sheet below.
+ */
+
+.panel {
+  position: fixed;
+  z-index: 150;
+  left: 16px;
+  right: 16px;
+  top: max(16px, env(safe-area-inset-top, 0px));
+  bottom: calc(var(--browser-bottom-inset, 0px) + 12px);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  max-width: 720px;
+  border-radius: 12px;
+  background: rgba(3, 4, 6, 0.94);
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    0 12px 48px rgba(0, 0, 0, 0.6),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  color: var(--hud-ink, #efe9dc);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+}
+
+@media (max-width: 760px) {
+  .panel {
+    left: 0;
+    right: 0;
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+.header {
+  flex: none;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.close:hover,
+.close:focus-visible {
+  color: var(--hud-accent, #e8b06a);
+  outline: none;
+}
+
+.search {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 10px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 8px;
+  background: rgba(239, 233, 220, 0.05);
+  padding: 9px 12px;
+  color: var(--hud-ink, #efe9dc);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 14px;
+}
+
+.search::placeholder {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.search:focus-visible {
+  outline: none;
+  border-color: var(--hud-accent, #e8b06a);
+}
+
+.tagFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.tagChip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 999px;
+  background: transparent;
+  padding: 4px 10px 4px 8px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.tagChip[data-active='true'] {
+  border-color: var(--chip-color, var(--hud-accent, #e8b06a));
+  background: color-mix(in srgb, var(--chip-color, var(--hud-accent, #e8b06a)) 16%, transparent);
+  color: var(--hud-ink, #efe9dc);
+}
+
+.tagChip:hover,
+.tagChip:focus-visible {
+  border-color: var(--chip-color, var(--hud-accent, #e8b06a));
+  outline: none;
+}
+
+.tagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--chip-color);
+  box-shadow: 0 0 5px var(--chip-color);
+}
+
+.count {
+  margin: 0;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* `.list` and `.rail` sit side by side, both spanning the panel's remaining height below
+   `.header`, so the rail's own 0..1 fraction lines up with the list's actual scrollable height. */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* Its own scroll container — separate from `.header`, which stays put above it — so a sticky
+   `.sectionHeader` (`position: sticky; top: 0`) sticks against *this* element's own scrolled
+   content, not the page. */
+.list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0 0 10px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
+}
+
+/* The section index rail: a narrow strip the full height of `.body`, its labels positioned by
+   `entry.offset` (`rail.ts`) — a fraction of the *list*, not of this strip's own pixel height, so
+   the two stay in lockstep without either measuring the other. `touch-action: none` stops the
+   browser's own vertical-scroll gesture from fighting a drag down this narrow a target. */
+.rail {
+  position: relative;
+  flex: none;
+  width: 28px;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.railLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.railBubble {
+  position: absolute;
+  top: 50%;
+  right: 36px;
+  transform: translateY(-50%);
+  min-width: 64px;
+  border-radius: 10px;
+  background: rgba(3, 4, 6, 0.96);
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 10px 16px;
+  color: var(--hud-ink, #efe9dc);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  pointer-events: none;
+}
+
+.sectionHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  background: rgba(3, 4, 6, 0.94);
+  padding: 6px 20px;
+  color: var(--hud-accent, #e8b06a);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.row {
+  border-bottom: 1px solid color-mix(in srgb, var(--hud-hairline, rgba(239, 233, 220, 0.18)) 60%, transparent);
+}
+
+.rowInner {
+  padding: 0 12px;
+}
+
+.rowButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 9px 8px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--hud-ink, #efe9dc);
+  font: inherit;
+}
+
+.rowInner[data-active='true'] .rowButton {
+  background: rgba(239, 233, 220, 0.08);
+  border-radius: 6px;
+}
+
+.rowDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--row-accent, transparent);
+  box-shadow: 0 0 6px var(--row-accent, transparent);
+}
+
+.rowLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+}
+
+.rowDate {
+  flex: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+}
+
+.empty {
+  padding: 20px 20px;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+  text-align: center;
+}

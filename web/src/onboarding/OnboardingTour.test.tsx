@@ -7,7 +7,7 @@ import { OnboardingTour } from './OnboardingTour'
 import { TOUR_STEPS } from './steps'
 import { getServerTourOpenToken, getTourOpenToken, setOnboardingTourOpen } from './visibility'
 
-/** Stand-ins for the four controls the steps anchor to, carrying the same `data-testid`s and
+/** Stand-ins for the controls the steps anchor to, carrying the same `data-testid`s and
  *  accessible names the real app's do — the tour resolves its targets from the live DOM. */
 function mountAnchors(): void {
   const host = document.createElement('div')
@@ -16,6 +16,7 @@ function mountAnchors(): void {
     <div data-testid="era-shortcuts"></div>
     <div data-testid="timeline-track-stack"></div>
     <div data-testid="timeline-controls-core"><button type="button" aria-label="Play"></button></div>
+    <button type="button" aria-label="About & credits"></button>
   `
   document.body.appendChild(host)
 }
@@ -84,7 +85,7 @@ describe('OnboardingTour', () => {
 
   it('offers Skip from the very first step', () => {
     render(<OnboardingTour />)
-    expect(screen.getByText('1 of 4')).toBeTruthy()
+    expect(screen.getByText('1 of 5')).toBeTruthy()
     expect(screen.getByTestId('onboarding-skip')).toBeTruthy()
   })
 
@@ -101,7 +102,7 @@ describe('OnboardingTour', () => {
   it('never reappears after the last step is completed', () => {
     const first = render(<OnboardingTour />)
     clickNext(TOUR_STEPS.length - 1)
-    expect(screen.getByText('4 of 4')).toBeTruthy()
+    expect(screen.getByText('5 of 5')).toBeTruthy()
     fireEvent.click(screen.getByTestId('onboarding-next'))
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
 
@@ -120,9 +121,9 @@ describe('OnboardingTour', () => {
   it('steps forward and back without leaving the step list', () => {
     render(<OnboardingTour />)
     clickNext(2)
-    expect(screen.getByText('3 of 4')).toBeTruthy()
+    expect(screen.getByText('3 of 5')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    expect(screen.getByText('2 of 4')).toBeTruthy()
+    expect(screen.getByText('2 of 5')).toBeTruthy()
   })
 
   it('offers no Back control on the first step', () => {
@@ -174,13 +175,32 @@ describe('OnboardingTour', () => {
     expect(card().textContent).toContain('Tap play')
   })
 
+  it('ends on a step pointing at About for keyboard shortcuts, on a pointer-sized viewport', () => {
+    mockMatchMedia()
+    render(<OnboardingTour />)
+    clickNext(4)
+    expect(screen.getByText('5 of 5')).toBeTruthy()
+    expect(card().textContent).toContain('Keyboard shortcuts')
+    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy()
+  })
+
+  it('drops the About/keyboard-shortcuts step entirely on a phone-sized viewport', () => {
+    mockMatchMedia('max-width: 760px')
+    render(<OnboardingTour />)
+    clickNext(3)
+    expect(screen.getByText('4 of 4')).toBeTruthy()
+    expect(card().textContent).toContain('The globe opens')
+    fireEvent.click(screen.getByTestId('onboarding-next'))
+    expect(screen.queryByTestId('onboarding-card')).toBeNull()
+  })
+
   it('restarts at step one when opened again while already on screen', () => {
     render(<OnboardingTour />)
     clickNext(2)
-    expect(screen.getByText('3 of 4')).toBeTruthy()
+    expect(screen.getByText('3 of 5')).toBeTruthy()
 
     act(() => setOnboardingTourOpen(true))
-    expect(screen.getByText('1 of 4')).toBeTruthy()
+    expect(screen.getByText('1 of 5')).toBeTruthy()
   })
 
   it('reopens on demand for the visual-QA harness, which never reloads the page', () => {
@@ -189,6 +209,6 @@ describe('OnboardingTour', () => {
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
 
     act(() => setOnboardingTourOpen(true))
-    expect(screen.getByText('1 of 4')).toBeTruthy()
+    expect(screen.getByText('1 of 5')).toBeTruthy()
   })
 })

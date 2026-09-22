@@ -1,8 +1,10 @@
 'use client'
 
 /**
- * The first-visit tour (IMPLEMENTATION § Backlog — onboarding): four steps ringing the controls
- * a viewer cannot work out by looking, with Skip available from the first one.
+ * The first-visit tour (IMPLEMENTATION § Backlog — onboarding): steps ringing the controls a
+ * viewer cannot work out by looking, with Skip available from the first one. Four on every
+ * viewport; a fifth, pointing at About for the keyboard shortcuts list, only where there is a
+ * keyboard (`TourStep.desktopOnly`, `steps.ts`).
  *
  * It points at controls and never drives them. Nothing in this package imports `store/time.ts`,
  * so the tour cannot start playback, expand the globe, move `t` or change the selected section —
@@ -15,7 +17,7 @@
  * "closed".
  */
 
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 
 import { useIsCompactViewport } from '@/lib/useIsCompactViewport'
 import { useReducedMotion } from '@/lib/useReducedMotion'
@@ -50,8 +52,12 @@ interface TourOverlayProps {
 function TourOverlay({ onDismiss }: TourOverlayProps) {
   const compact = useIsCompactViewport()
   const reducedMotion = useReducedMotion()
+  // `desktopOnly` steps (keyboard shortcuts, via About) drop out on a compact viewport, where
+  // there is no keyboard to describe — computed once per mount, not re-filtered mid-tour, so the
+  // step list a viewer is stepping through can't change size out from under them.
+  const steps = useMemo(() => TOUR_STEPS.filter((s) => !s.desktopOnly || !compact), [compact])
   const [stepIndex, setStepIndex] = useState(0)
-  const step = TOUR_STEPS[stepIndex]!
+  const step = steps[stepIndex]!
   const { rect, viewport } = useAnchorMeasurement(step.selector)
 
   const cardRef = useRef<HTMLDivElement>(null)
@@ -101,10 +107,10 @@ function TourOverlay({ onDismiss }: TourOverlayProps) {
       announcedOnceRef.current = true
       return
     }
-    setAnnouncement(`Step ${stepIndex + 1} of ${TOUR_STEPS.length}: ${step.title}`)
+    setAnnouncement(`Step ${stepIndex + 1} of ${steps.length}: ${step.title}`)
   }, [stepIndex, step.title])
 
-  const isLastStep = stepIndex === TOUR_STEPS.length - 1
+  const isLastStep = stepIndex === steps.length - 1
 
   return (
     <div className={styles.root} data-testid="onboarding-tour" data-settled={settled} data-reduced-motion={reducedMotion}>
@@ -128,7 +134,7 @@ function TourOverlay({ onDismiss }: TourOverlayProps) {
         data-testid="onboarding-card"
         style={callout === null ? undefined : { left: callout.left, top: callout.top }}
       >
-        <p className={styles.counter}>{`${stepIndex + 1} of ${TOUR_STEPS.length}`}</p>
+        <p className={styles.counter}>{`${stepIndex + 1} of ${steps.length}`}</p>
         <h2 id={titleId} className={styles.title}>
           {step.title}
         </h2>

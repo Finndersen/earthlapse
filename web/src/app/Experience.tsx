@@ -17,10 +17,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { SoundToggle, useAudioEngine } from '@/audio'
-import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/events'
+import { EventBrowser, EventDetailPanel, EventFeed, EventTagLegend, placementT, useIsCompactViewport } from '@/events'
 import { Globe } from '@/globe'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
@@ -44,6 +44,7 @@ import {
   eraNameForTime,
   EraShortcuts,
   formatGeoTime,
+  isOpenEventBrowserShortcut,
   sectionById,
   sectionSymlogKnee,
   Timeline,
@@ -110,6 +111,13 @@ export function Experience() {
   const setExpandedChartLayerId = useTimeStore((s) => s.setExpandedChartLayerId)
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
+
+  // The "All events" browser (owned locally, not in the store: nothing else in the app reads
+  // whether it's open). It docks above the timeline rather than covering it (`EventBrowser.tsx`'s
+  // own doc comment), so it takes the live `t` directly — its own list highlight tracks the
+  // playhead as the timeline scrubs, and never scrolling-to-open-event bookkeeping is needed here.
+  const [eventBrowserOpen, setEventBrowserOpen] = useState(false)
+  const isCompactViewport = useIsCompactViewport()
 
   // The timeline's animated scale lives here and is passed down to <Timeline> and the chart
   // dock, so the value under the chart's playhead sits directly above the timeline's. Section
@@ -253,6 +261,30 @@ export function Experience() {
   // an idle-driven change. `useRef`, not `useTimeStore`, because this is a one-shot remembered
   // fact about *this* open/close pair, not state anything else in the app reads.
   const wasPlayingBeforeDetailRef = useRef(false)
+  // Same contract for the event browser. Opening it from the detail panel (rather than fresh)
+  // carries the original "was playing" fact forward from that ref rather than re-reading
+  // `playback.playing`, which by then is already false (the detail panel paused it) — see
+  // `openEventBrowserFromDetail` below.
+  const wasPlayingBeforeBrowserRef = useRef(false)
+
+  // The desktop-only `/` shortcut (window-level, not `Timeline`'s own onKeyDown, since it must
+  // work wherever focus is — see `isOpenEventBrowserShortcut`'s own doc comment). Ignored while
+  // any other event overlay is already open, so a second press can't stack a duplicate dialog
+  // over the first.
+  useEffect(() => {
+    if (isCompactViewport) return
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (eventBrowserOpen || detailEventId !== null) return
+      if (!isOpenEventBrowserShortcut({ key: event.key, target: event.target })) return
+      event.preventDefault()
+      wasPlayingBeforeBrowserRef.current = playback.playing
+      if (playback.playing) setPlaying(false)
+      setEventBrowserOpen(true)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isCompactViewport, eventBrowserOpen, detailEventId, playback.playing, setPlaying])
+
   useEffect(() => {
     if (!playback.playing) {
       smoothedRateRef.current = null
@@ -433,6 +465,36 @@ export function Experience() {
     }
   }
 
+  // Opened from the detail panel's own "All events" action: replaces it rather than layering
+  // over it, carrying the "was playing before any overlay opened" fact forward from the detail
+  // panel's ref rather than resuming (the panel already paused).
+  const openEventBrowserFromDetail = (): void => {
+    wasPlayingBeforeBrowserRef.current = wasPlayingBeforeDetailRef.current
+    wasPlayingBeforeDetailRef.current = false
+    setDetailEventId(null)
+    setEventBrowserOpen(true)
+  }
+
+  const closeEventBrowser = (): void => {
+    setEventBrowserOpen(false)
+    if (wasPlayingBeforeBrowserRef.current) {
+      wasPlayingBeforeBrowserRef.current = false
+      setPlaying(true)
+    }
+  }
+
+  // A row was activated: jumps `t` and shows the event's detail card, same as the feed's own
+  // "Show on timeline" (§ EventDetailPanel) — closing the browser without resuming playback even
+  // if it had been playing, since resuming would immediately carry the playhead away from the
+  // place just asked for.
+  const activateBrowserEvent = (event: TimelineEvent): void => {
+    setT(placementT(event))
+    setEventBrowserOpen(false)
+    wasPlayingBeforeBrowserRef.current = false
+    wasPlayingBeforeDetailRef.current = false
+    setDetailEventId(event.id)
+  }
+
   // Only chartable scalars get a HUD readout: each one opens the chart dock. `isHiddenFromHud`
   // additionally excludes a small, reversible set of layers (currently just CO2) from this list
   // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
@@ -513,6 +575,7 @@ export function Experience() {
             {hudScalarEntries.map((entry) => {
               const layer = scalarLayers.get(entry.id)
               if (layer === undefined) return null
+              if (isPopulationReadoutHiddenAt(entry.id, layer.timeDomain, t)) return null
               return (
                 <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
                   <ScalarReadout layer={layer} t={t} />
@@ -591,7 +654,11 @@ export function Experience() {
             wasPlayingBeforeDetailRef.current = false
             setDetailEventId(null)
           }}
+          onOpenBrowser={openEventBrowserFromDetail}
         />
+      )}
+      {eventBrowserOpen && (
+        <EventBrowser events={manifest.events} t={t} onClose={closeEventBrowser} onActivate={activateBrowserEvent} />
       )}
       {/* Mounted here, not inside `ShellLayout`, which stays a layout component. It sits after
           the shell so its own layer is that element's sibling, above the whole HUD, and it is

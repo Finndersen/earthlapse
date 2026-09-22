@@ -38,14 +38,14 @@ function event(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
 
 describe('EventDetailPanel', () => {
   it('shows the full label, date, description and citation', () => {
-    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} />)
+    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
     expect(screen.getByRole('dialog').textContent).toContain('The K-Pg impact')
     expect(screen.getByText('A 10km asteroid strikes Chicxulub.')).toBeTruthy()
     expect(screen.getByText('Schulte et al., 2010.')).toBeTruthy()
   })
 
   it('lists every tag, not only the primary one, each in its own palette colour', () => {
-    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} />)
+    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
     const catastrophe = screen.getByText(EVENT_TAG_PALETTE.catastrophe.label)
     const life = screen.getByText(EVENT_TAG_PALETTE.life.label)
     expect(catastrophe.style.color).toBe(asRgb(EVENT_TAG_PALETTE.catastrophe.color))
@@ -53,14 +53,14 @@ describe('EventDetailPanel', () => {
   })
 
   it('shows nothing where an event carries no tags', () => {
-    render(<EventDetailPanel event={event({ tags: undefined })} onClose={vi.fn()} onShowOnTimeline={vi.fn()} />)
+    render(<EventDetailPanel event={event({ tags: undefined })} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
     expect(screen.queryByRole('list')).toBeNull()
   })
 
   it('calls onShowOnTimeline, not onClose, from the Show on timeline action', () => {
     const onClose = vi.fn()
     const onShowOnTimeline = vi.fn()
-    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={onShowOnTimeline} />)
+    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={onShowOnTimeline} onOpenBrowser={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Show on timeline' }))
     expect(onShowOnTimeline).toHaveBeenCalledTimes(1)
     expect(onClose).not.toHaveBeenCalled()
@@ -68,8 +68,17 @@ describe('EventDetailPanel', () => {
 
   it('calls onClose via the panel it is built on', () => {
     const onClose = vi.fn()
-    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={vi.fn()} />)
+    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls onOpenBrowser, not onClose, from the All events action', () => {
+    const onClose = vi.fn()
+    const onOpenBrowser = vi.fn()
+    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={vi.fn()} onOpenBrowser={onOpenBrowser} />)
+    fireEvent.click(screen.getByRole('button', { name: 'All events' }))
+    expect(onOpenBrowser).toHaveBeenCalledTimes(1)
+    expect(onClose).not.toHaveBeenCalled()
   })
 })

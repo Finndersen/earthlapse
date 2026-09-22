@@ -118,7 +118,7 @@ export {
 export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declutter'
 export { ERA_SHORTCUTS, isEraShortcutActive, type EraShortcut } from './eraShortcuts'
 export { formatCalendarYear, formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
-export { timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
+export { isOpenEventBrowserShortcut, timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { nearestNeighbourEvent, type EventStepDirection } from './lod'
 export {
   advancePlayhead,

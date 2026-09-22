@@ -16,6 +16,8 @@
  * To bring a layer back: remove its id from this set. No re-fetch, re-curation, manifest edit,
  * or pipeline change needed.
  */
+import type { GeoTime } from '@/types/layer'
+
 export const HUD_HIDDEN_LAYER_IDS: ReadonlySet<string> = new Set(['co2'])
 
 /** Whether `layerId` should be excluded from the HUD's scalar readout list — see
@@ -24,4 +26,13 @@ export const HUD_HIDDEN_LAYER_IDS: ReadonlySet<string> = new Set(['co2'])
  *  && !isHiddenFromHud(l.id))`. */
 export function isHiddenFromHud(layerId: string): boolean {
   return HUD_HIDDEN_LAYER_IDS.has(layerId)
+}
+
+/** The global population readout only: hidden entirely for any `t` older than the layer's own
+ *  domain start (HYDE 3.2's population series only reaches back into the Holocene), rather than
+ *  showing "no data" across the whole of deep time, which reads as a load failure. Every other
+ *  HUD scalar keeps `ScalarReadout`'s existing "no data"/"no record" behaviour outside its own
+ *  domain — this is a display-only carve-out for one layer, not a general rule. */
+export function isPopulationReadoutHiddenAt(layerId: string, timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): boolean {
+  return layerId === 'population' && t > timeDomain[1]
 }

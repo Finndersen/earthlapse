@@ -76,6 +76,16 @@ function isTextInputTarget(target: EventTarget | null): boolean {
   return target instanceof Element && TEXT_INPUT_TAGS.has(target.tagName)
 }
 
+/** The desktop-only `/` shortcut that opens the event browser (`EventBrowser`, `@/events`) with
+ *  its search focused. Standalone from `TimelineKeyIntent`/`timelineKeyIntent` rather than a new
+ *  member of that union: the browser it opens is a page-level overlay mounted by `Experience.tsx`
+ *  via its own `window`-level listener, the same pattern this module's own doc comment already
+ *  describes for `LayerChart` and the expanded globe's Escape handling — not an intent
+ *  `Timeline.tsx`'s own onKeyDown dispatches. */
+export function isOpenEventBrowserShortcut(event: TimelineKeyEvent): boolean {
+  return event.key === '/' && !isTextInputTarget(event.target)
+}
+
 /** Display strings for the previous/next sibling-section shortcut's keys, shown in
  *  `SectionEdgeButton`'s own tooltips — one source so they can't drift from what
  *  `timelineKeyIntent` actually maps below. `SectionBreadcrumb` used to carry a matching pair for

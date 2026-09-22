@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { timelineKeyIntent } from './keyboard'
+import { isOpenEventBrowserShortcut, timelineKeyIntent } from './keyboard'
 
 function keyEvent(key: string, target: EventTarget | null = null) {
   return { key, target }
@@ -104,5 +104,21 @@ describe('timelineKeyIntent', () => {
     expect(timelineKeyIntent(keyEvent('0', select))).toBeNull()
     // A non-select target is unaffected.
     expect(timelineKeyIntent(keyEvent('Home', document.createElement('button')))).toEqual({ type: 'go-to-root' })
+  })
+})
+
+describe('isOpenEventBrowserShortcut', () => {
+  it('matches a plain /', () => {
+    expect(isOpenEventBrowserShortcut(keyEvent('/'))).toBe(true)
+  })
+
+  it('ignores / while a text input has focus, so typing a slash is never hijacked', () => {
+    expect(isOpenEventBrowserShortcut(keyEvent('/', document.createElement('input')))).toBe(false)
+    expect(isOpenEventBrowserShortcut(keyEvent('/', document.createElement('textarea')))).toBe(false)
+  })
+
+  it('does not match any other key', () => {
+    expect(isOpenEventBrowserShortcut(keyEvent('a'))).toBe(false)
+    expect(isOpenEventBrowserShortcut(keyEvent('Escape'))).toBe(false)
   })
 })

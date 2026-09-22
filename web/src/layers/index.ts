@@ -36,7 +36,7 @@ export {
   type PortraitIndex,
 } from './portraits'
 
-export { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud } from './hudVisibility'
+export { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud, isPopulationReadoutHiddenAt } from './hudVisibility'
 
 export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'

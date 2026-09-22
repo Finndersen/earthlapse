@@ -13,7 +13,7 @@
  * real geological unit. Its copy names both halves of each pairing.
  */
 
-export type TourStepId = 'play' | 'scrub' | 'eras' | 'globe'
+export type TourStepId = 'play' | 'scrub' | 'eras' | 'globe' | 'about'
 
 /** The highlight ring's outline. `'circle'` for a target that is itself round (the globe orb's
  *  expand affordance is a circle inset inside the orb's square box), `'rounded'` otherwise. */
@@ -33,12 +33,20 @@ export interface TourStep {
   title: string
   body: BreakpointCopy
   shape: AnchorShape
+  /** Desktop/pointer-fine layouts only (`OnboardingTour.tsx` drops it from the shown steps on a
+   *  compact viewport) — for a step about something that isn't relevant on a phone, such as
+   *  keyboard shortcuts. */
+  desktopOnly?: boolean
 }
 
 /** The play button, via the transport cluster's own `data-testid`. Matched on either accessible
  *  name because the same button is named "Pause" while playing — the tour never starts playback,
  *  but a viewer is free to press play underneath it, and the ring has to keep its target. */
 const PLAY_BUTTON_SELECTOR = '[data-testid="timeline-controls-core"] button:is([aria-label="Play"], [aria-label="Pause"])'
+
+/** The About & credits button, via its accessible name — it carries no `data-testid` of its own
+ *  (`ShellLayout.tsx`). */
+const ABOUT_BUTTON_SELECTOR = '[aria-label="About & credits"]'
 
 export const TOUR_STEPS: readonly TourStep[] = [
   {
@@ -80,5 +88,16 @@ export const TOUR_STEPS: readonly TourStep[] = [
       wide: 'Click the orb to fill the screen with the world as it was at this moment.',
     },
     shape: 'circle',
+  },
+  {
+    id: 'about',
+    selector: ABOUT_BUTTON_SELECTOR,
+    title: 'Keyboard shortcuts',
+    body: {
+      compact: 'Open About for the full list of keyboard shortcuts.',
+      wide: 'Open About for the full list of keyboard shortcuts, including search (/) and speed ([ ]).',
+    },
+    shape: 'rounded',
+    desktopOnly: true,
   },
 ]

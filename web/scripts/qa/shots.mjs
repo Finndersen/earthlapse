@@ -1956,39 +1956,34 @@ export default [
   {
     name: 'population-sparkline-no-data-state',
     description:
-      'REOPENED again (2026-09-18, coordinator follow-up): user screenshot at an early `t` showed both readouts ' +
-      'reading "no data" while their sparklines were nevertheless drawn complete — the whole future, arrival-arc- ' +
-      'and city-marker-inconsistent. t=20,000 sits older than population\'s own oldest domain edge (12,025) — ' +
-      "nothing has happened yet. Asserts the sparkline's DRAWN trace (not its SVG box, which is always full-width " +
-      'regardless) is empty: no polyline, no dot — only the bare "you are here" playhead line, same as the ' +
-      "timeline's own always-visible playhead.",
+      'UPDATED (global-population-before-domain task): the population readout used to read "no data" at any `t` ' +
+      "older than its own domain — a load-failure-shaped reading across almost the whole of deep time, fixed by " +
+      "hiding the row entirely there instead (`isPopulationReadoutHiddenAt`, `@/layers`). This shot's own premise " +
+      'moved with the fix it used to guard: it asserted the readout showed "no data" text at t=20,000 (older than ' +
+      "population's own oldest domain edge, 12,025); the same `t` now asserts the row is entirely absent — " +
+      "confirmed failing (a `page.textContent` timeout, the row never appears) against this fixed build's own " +
+      'shots.mjs before this edit.',
     viewport: DEFAULT_VIEWPORT,
     t: 20_000,
-    measure: async ({ page }) => {
-      // `polylineTraceBounds`, not `drawnBounds` — see that helper's own doc comment: this
-      // sparkline sits directly over the scene photo with no opaque backing, so pixel-diffing
-      // against a sampled-corner background is fooled by the photo's own texture alone.
-      const trace = await polylineTraceBounds(page, '[data-testid="scalar-readout-population"] svg')
-      const readsNoData = ((await page.textContent('[data-testid="scalar-readout-population"]')) ?? '').includes('no data')
-      return { traceWidth: trace.width, traceHeight: trace.height, readsNoData: readsNoData ? 1 : 0 }
-    },
+    measure: async ({ page }) => ({ rowCount: await page.locator('[data-testid="scalar-readout-population"]').count() }),
     expect: {
-      // A few px of tolerance for the always-drawn vertical playhead line itself (pinned to the
-      // domain's near edge here — see Sparkline.tsx) — never a real trace width.
-      traceWidth: [0, 3],
-      readsNoData: [1, 1],
+      rowCount: [0, 0],
     },
   },
   {
     name: 'population-sparkline-grows-with-t',
     description:
       'The definite, primary fix (user verbatim: "my idea for the population and co2 graph lines was for them to ' +
-      'grow over time, not be fully visible upfront"): sweeps `t` from before population\'s own domain through to ' +
-      "its newest edge and measures the sparkline's DRAWN trace width at each stop (never the SVG box, which is " +
-      'full-width throughout and would prove nothing). Asserts the width is zero with nothing yet reached, then ' +
-      'strictly increases at each later stop — this specific monotonic-growth assertion is the one the coordinator ' +
-      'asked to fail against the pre-fix build, where the full trace is drawn at every `t` and every stop would ' +
-      'read the same, already-maximal width.',
+      'grow over time, not be fully visible upfront"): sweeps `t` from just inside population\'s own domain ' +
+      "through to its newest edge and measures the sparkline's DRAWN trace width at each stop (never the SVG box, " +
+      'which is full-width throughout and would prove nothing). Asserts the width strictly increases at each ' +
+      'later stop — this specific monotonic-growth assertion is the one the coordinator asked to fail against the ' +
+      'pre-fix build, where the full trace is drawn at every `t` and every stop would read the same, already-' +
+      "maximal width. UPDATED (global-population-before-domain task): t=20,000 no longer has a row to measure at " +
+      "all (the readout is hidden before population's own domain, `population-sparkline-no-data-state`'s own " +
+      'update) — this now asserts that absence directly instead of reusing it as this sweep\'s own zero point, ' +
+      "confirmed failing (a `page.locator` count of 1, not 0) against this fixed build's own shots.mjs before " +
+      'this edit.',
     viewport: DEFAULT_VIEWPORT,
     t: 20_000,
     measure: async ({ page, hook }) => {
@@ -1999,29 +1994,29 @@ export default [
         const trace = await polylineTraceBounds(page, '[data-testid="scalar-readout-population"] svg')
         return trace.width
       }
-      // Before the domain begins; deep in it; mid-domain; near its own newest edge. 8,000 (not
-      // right at the domain's own oldest edge, 12,025) is deliberate: population's adaptive
-      // symlog knee (~12 yr) packs the 97-sample grid so tightly near that edge that anything
-      // closer only has the bare minimum two reached points needed to draw a segment at all —
-      // real, but a sub-pixel sliver next to nothing, not a meaningfully assertable width.
-      const beforeDomain = await widthAt(20_000)
+      const hiddenBeforeDomainRowCount = await page.locator('[data-testid="scalar-readout-population"]').count()
+      // Deep in the domain; mid-domain; near its own newest edge. 8,000 (not right at the
+      // domain's own oldest edge, 12,025) is deliberate: population's adaptive symlog knee
+      // (~12 yr) packs the 97-sample grid so tightly near that edge that anything closer only
+      // has the bare minimum two reached points needed to draw a segment at all — real, but a
+      // sub-pixel sliver next to nothing, not a meaningfully assertable width.
       const early = await widthAt(8_000)
       const mid = await widthAt(5_000)
       const late = await widthAt(10)
       return {
-        beforeDomain,
+        hiddenBeforeDomainRowCount,
         early,
         mid,
         late,
-        earlyGrowth: early - beforeDomain,
         midGrowth: mid - early,
         lateGrowth: late - mid,
       }
     },
     expect: {
-      beforeDomain: [0, 3],
+      hiddenBeforeDomainRowCount: [0, 0],
+      // A small but real trace, not yet close to full width.
+      early: [0, 40],
       // Each step must be a real, visible increase, not noise — well above antialiasing slop.
-      earlyGrowth: [5, 200],
       midGrowth: [5, 200],
       lateGrowth: [5, 200],
       // The fully-grown trace should reach close to the row's own full width (matches
@@ -2686,6 +2681,166 @@ export default [
       w390OrbToReadouts: [0, 8],
       w1440TitleToShortcuts: [8, 14],
       w390TitleToShortcuts: [8, 14],
+    },
+  },
+  {
+    name: 'event-browser-opens-desktop-timeline-unobstructed',
+    description:
+      'The `/` shortcut opens the "All events" browser (`EventBrowser.tsx`) with its search focused and a real ' +
+      'drawn list beneath it, AND — the whole reason it is not built on the modal `shell/Panel` — the timeline ' +
+      "stays visible and unobstructed underneath it: asserts the panel's own drawn box and the timeline root's " +
+      "own box (`BOTTOM_CHROME_SELECTOR`) never overlap. Confirmed failing before this fix (as `EventDetailPanel`" +
+      "'s own full-viewport `Panel` backdrop covers the timeline entirely): overlap read 1.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    actions: async ({ page }) => {
+      // Defensive: the harness runs every shot in one continuous page (README's own "nothing
+      // ever reloads"), and this component's open/closed state is local to `Experience.tsx`, not
+      // part of `state`/`hook` — a prior shot leaving it open would otherwise leak into this one.
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('/')
+    },
+    measure: async ({ page }) => {
+      const panel = await drawnBounds(page, '[data-testid="event-browser"]')
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      const focused = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'))
+      const rowCount = await page.locator('[role="option"]').count()
+      return {
+        panelWidth: panel.width,
+        panelHeight: panel.height,
+        timelineWidth: timeline.width,
+        overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
+        focusedSearch: focused === 'event-browser-search' ? 1 : 0,
+        rowCount,
+      }
+    },
+    expect: {
+      panelWidth: [300, 720],
+      panelHeight: [100, 900],
+      timelineWidth: [200, 1440],
+      overlapsTimeline: [0, 0],
+      focusedSearch: [1, 1],
+      rowCount: [1, 500],
+    },
+  },
+  {
+    name: 'event-browser-opens-phone-timeline-unobstructed',
+    description:
+      "Phone path (the `/` shortcut is desktop-only): opens from the feed card's own detail panel via its \"All " +
+      'events\" action, as a sheet stopping above the timeline rather than covering it — never `shell/Panel`\'s ' +
+      'own full-screen phone bottom sheet, which would sit on top of the timeline. Same overlap assertion as the ' +
+      'desktop shot, at the phone viewport.',
+    viewport: PHONE_VIEWPORT,
+    t: 0,
+    actions: async ({ page }) => {
+      // Defensive: see the desktop shot's own comment on why every shot here re-closes first.
+      await page.keyboard.press('Escape')
+      await page.locator('[data-testid^="event-feed-card-"]').first().click()
+      await page.getByRole('button', { name: 'All events' }).click()
+    },
+    measure: async ({ page }) => {
+      const panel = await drawnBounds(page, '[data-testid="event-browser"]')
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      return {
+        panelWidth: panel.width,
+        overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
+      }
+    },
+    expect: {
+      // Full-width phone sheet.
+      panelWidth: [PHONE_VIEWPORT.width - 10, PHONE_VIEWPORT.width],
+      overlapsTimeline: [0, 0],
+    },
+  },
+  {
+    name: 'event-browser-list-follows-scrub',
+    description:
+      'Two-way sync (brief: "scrubbing... scrolls the list to keep the event nearest t in view and highlighted"; ' +
+      '"only row selection sets t"): opens the browser at a recent `t`, scrubs (via `hook.setT`, the same store ' +
+      'write a real drag makes) to a deep-time `t`, and asserts the highlighted row both changed to the deep-time ' +
+      "event AND sits within the list's own visible viewport — not merely marked active while scrolled out of " +
+      'sight. Also asserts `t` itself is unchanged by the scrub-driven scroll settling (no feedback loop back ' +
+      'into the store).',
+    viewport: DEFAULT_VIEWPORT,
+    t: 25,
+    actions: async ({ page }) => {
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('/')
+    },
+    measure: async ({ page, hook }) => {
+      const activeDescendantId = () => page.getAttribute('[data-testid="event-browser-search"]', 'aria-activedescendant')
+      const beforeId = await activeDescendantId()
+
+      await hook.setT(66_000_000)
+      await hook.ready()
+      await rafTicks(page, 2)
+      // The row-position scroll settles by CSS `scroll-behavior`/layout, not a network load —
+      // `hook.ready()` alone doesn't cover it.
+      await page.waitForTimeout(150)
+
+      const afterId = await activeDescendantId()
+      const listBox = await boxOf(page, '#event-browser-list')
+      const rowBox = afterId ? await boxOf(page, `#${afterId}`) : null
+      return {
+        changedRow: beforeId !== afterId ? 1 : 0,
+        rowVisible: rowBox && rowBox.y >= listBox.y - 1 && rowBox.y + rowBox.height <= listBox.y + listBox.height + 1 ? 1 : 0,
+        tAfterScroll: (await hook.getState()).t,
+      }
+    },
+    expect: {
+      changedRow: [1, 1],
+      rowVisible: [1, 1],
+      tAfterScroll: [66_000_000, 66_000_000],
+    },
+  },
+  {
+    name: 'event-browser-rail-full-height-drag-to-bottom',
+    description:
+      'The section index rail (`rail.ts`): asserts it is actually drawn (not a zero-size element) and spans the ' +
+      "full height of the list it indexes, then simulates a press-drag to the rail's own bottom edge and asserts " +
+      "the highlighted row lands in the LAST SECTION — no sticky section header appears anywhere between it and " +
+      'the end of the list — matching an iOS contacts rail\'s own end-of-list behaviour (a rail entry points at ' +
+      "a section's *first* row, so this checks the row's section, not that it is literally the list's final " +
+      'row). Confirmed failing before this feature: no `[data-testid="event-browser-rail"]` element exists at ' +
+      'all, so `drawnBounds` itself throws.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 25,
+    actions: async ({ page }) => {
+      await page.keyboard.press('Escape')
+      await page.keyboard.press('/')
+    },
+    measure: async ({ page }) => {
+      const rail = await drawnBounds(page, '[data-testid="event-browser-rail"]')
+      const list = await boxOf(page, '#event-browser-list')
+
+      const railBox = await boxOf(page, '[data-testid="event-browser-rail"]')
+      await page.mouse.move(railBox.x + railBox.width / 2, railBox.y + 2)
+      await page.mouse.down()
+      await page.mouse.move(railBox.x + railBox.width / 2, railBox.y + railBox.height - 2)
+      await page.mouse.up()
+
+      const rowCount = await page.locator('[role="option"]').count()
+      const headersAfterActiveRow = await page.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('#event-browser-list > li'))
+        const activeRowIndex = rows.findIndex((row) => row.querySelector('[data-active="true"]') !== null)
+        if (activeRowIndex === -1) return -1
+        return rows.slice(activeRowIndex + 1).filter((row) => row.querySelector('p') !== null).length
+      })
+      return {
+        railWidth: rail.width,
+        // Within a few px of the list's own height — the rail spans exactly what it indexes.
+        railHeightDelta: Math.abs(rail.height - list.height),
+        rowCount,
+        headersAfterActiveRow,
+      }
+    },
+    expect: {
+      railWidth: [10, 60],
+      railHeightDelta: [0, 6],
+      rowCount: [1, 500],
+      // No section header between the highlighted row and the end of the list: it's in the last
+      // section the rail knows about.
+      headersAfterActiveRow: [0, 0],
     },
   },
   {

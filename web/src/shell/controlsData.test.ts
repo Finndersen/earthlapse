@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
-import { timelineKeyIntent, type TimelineKeyIntent } from '@/timeline'
+import { isOpenEventBrowserShortcut, timelineKeyIntent, type TimelineKeyIntent } from '@/timeline'
 
 import { formatShortcutKeys, KEYBOARD_SHORTCUTS, POINTER_CONTROLS } from './controlsData'
+
+/** `/` is a page-level shortcut checked against `isOpenEventBrowserShortcut`, not an intent
+ *  `timelineKeyIntent` maps (see `controlsData.ts`'s own doc comment) — excluded from the sync
+ *  sweep below and checked on its own further down. */
+const TIMELINE_INTENT_SHORTCUTS = KEYBOARD_SHORTCUTS.filter((s) => !s.keys.some((k) => k.key === '/'))
 
 /**
  * `KEYBOARD_SHORTCUTS` sync check (task requirement: "a test that would fail if a shortcut were
@@ -62,7 +67,7 @@ describe('KEYBOARD_SHORTCUTS stays in sync with timeline/keyboard.ts', () => {
 
   it('documents exactly the keys timelineKeyIntent maps when Shift is not held', () => {
     const documentedBaseKeys = new Set(
-      KEYBOARD_SHORTCUTS.flatMap((s) => s.keys.filter((k) => k.shiftKey !== true).map((k) => k.key)),
+      TIMELINE_INTENT_SHORTCUTS.flatMap((s) => s.keys.filter((k) => k.shiftKey !== true).map((k) => k.key)),
     )
     expect([...base.keys()].sort()).toEqual([...documentedBaseKeys].sort())
   })
@@ -74,17 +79,24 @@ describe('KEYBOARD_SHORTCUTS stays in sync with timeline/keyboard.ts', () => {
       return JSON.stringify(b) !== JSON.stringify(s)
     })
     const documentedShiftKeys = new Set(
-      KEYBOARD_SHORTCUTS.flatMap((s) => s.keys.filter((k) => k.shiftKey === true).map((k) => k.key)),
+      TIMELINE_INTENT_SHORTCUTS.flatMap((s) => s.keys.filter((k) => k.shiftKey === true).map((k) => k.key)),
     )
     expect(shiftSensitiveKeys.sort()).toEqual([...documentedShiftKeys].sort())
   })
 
   it('gives every documented row a real, non-null intent', () => {
-    for (const shortcut of KEYBOARD_SHORTCUTS) {
+    for (const shortcut of TIMELINE_INTENT_SHORTCUTS) {
       for (const k of shortcut.keys) {
         expect(timelineKeyIntent({ key: k.key, target: null, shiftKey: k.shiftKey ?? false })).not.toBeNull()
       }
     }
+  })
+})
+
+describe('the / shortcut', () => {
+  it('is documented in KEYBOARD_SHORTCUTS and matches isOpenEventBrowserShortcut', () => {
+    expect(KEYBOARD_SHORTCUTS.some((s) => s.keys.some((k) => k.key === '/'))).toBe(true)
+    expect(isOpenEventBrowserShortcut({ key: '/', target: null })).toBe(true)
   })
 })
 
