@@ -52,9 +52,24 @@
  *   panel without `shell` importing this package to do it.
  * - `useIsCompactViewport()` — mirrors `ShellLayout`'s own phone breakpoint, for the "compact
  *   single-card strip" the brief calls for at narrow widths.
+ * - `browseEvents(events, filters)` / `matchesEventQuery(event, query)` / `nearestBrowseEventIndex`
+ *   / `deepestSectionAt` — pure search/filter/grouping over the *whole* event set (not "behind
+ *   `t`" like `selectFeedEvents`), oldest first, for `EventBrowser`'s "All events" list.
+ *   `EventBrowser` — searchable, tag-filterable, opened from `EventDetailPanel`'s own "All
+ *   events" action or the desktop `/` shortcut — docks itself above the timeline
+ *   (`useTimelineBottomInset`) rather than using `shell/Panel`'s modal surface, so the timeline
+ *   stays visible and scrubbable while it's open; see that component's own doc comment for why.
  */
 
 export { CLUSTER_SPAN, clusterEvents, type EventCluster } from './cluster'
+export {
+  browseEvents,
+  deepestSectionAt,
+  matchesEventQuery,
+  nearestBrowseEventIndex,
+  type BrowseEventsFilters,
+} from './browse'
+export { EventBrowser, type EventBrowserProps } from './components/EventBrowser'
 export { EventDetailPanel, type EventDetailPanelProps } from './components/EventDetailPanel'
 export { EventFeed, type EventFeedProps } from './components/EventFeed'
 export { EventTagLegend } from './components/EventTagLegend'

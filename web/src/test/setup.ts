@@ -8,3 +8,9 @@ if (typeof HTMLElement.prototype.setPointerCapture !== 'function') {
 if (typeof HTMLElement.prototype.releasePointerCapture !== 'function') {
   HTMLElement.prototype.releasePointerCapture = () => {}
 }
+
+// jsdom doesn't implement scroll methods at all — same rationale as the pointer-capture no-ops
+// above (a test-environment gap, not something real application code should guard against).
+if (typeof HTMLElement.prototype.scrollIntoView !== 'function') {
+  HTMLElement.prototype.scrollIntoView = () => {}
+}

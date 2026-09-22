@@ -11,6 +11,9 @@
  * silently drifting, without this module reaching past `@/timeline`'s public exports (the
  * package-boundary convention every other cross-package import in this app already follows —
  * `keyboard.ts`'s own hint constants are internal to `timeline/`, so they aren't reused here).
+ * `/` (open the event browser) is checked against `isOpenEventBrowserShortcut` instead — it is a
+ * page-level shortcut `Experience.tsx` wires with its own `window` listener, not an intent
+ * `timelineKeyIntent` maps, so it sits outside that sweep.
  *
  * `POINTER_CONTROLS` has no such mechanical check — pointer/touch interactions aren't a lookup
  * table the way key handling is — so it is kept to interactions verified directly against the
@@ -73,6 +76,10 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcut[] = [
   },
   { keys: [{ key: '[' }, { key: '-' }], description: 'Decrease playback speed.' },
   { keys: [{ key: ']' }, { key: '=' }], description: 'Increase playback speed.' },
+  {
+    keys: [{ key: '/' }],
+    description: 'Open the event browser, search focused (desktop only).',
+  },
 ]
 
 const KEY_LABELS: Record<string, string> = {
@@ -90,6 +97,7 @@ const KEY_LABELS: Record<string, string> = {
   ']': ']',
   '-': '-',
   '=': '=',
+  '/': '/',
 }
 
 function keyLabel(key: string): string {
