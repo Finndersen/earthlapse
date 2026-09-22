@@ -1,0 +1,76 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding-inline: 16px;
+  background: radial-gradient(ellipse 70% 60% at 50% 44%, #0d1014, #030406 72%);
+}
+
+.globe {
+  width: 88px;
+  height: 88px;
+  overflow: visible;
+}
+
+.halo {
+  fill: none;
+  stroke: var(--hud-event-glow);
+  stroke-width: 1;
+}
+
+/* One full strip width (`STRIP_WIDTH` in LoadingScreen.tsx) per loop, so it wraps seamlessly.
+   The surface drifts towards the night side, the way the Earth turns into its evening. */
+.surface {
+  animation: drift 24s linear infinite;
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(-120px);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.title {
+  margin: 0;
+  padding-left: 0.42em;
+  font-family: var(--hud-mono);
+  font-size: 11px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--hud-dim);
+}
+
+.track {
+  width: 160px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: var(--hud-hairline);
+}
+
+.fill {
+  width: 100%;
+  height: 100%;
+  background: var(--hud-accent);
+  box-shadow: 0 0 6px var(--hud-accent-glow);
+  transform-origin: left center;
+  transition: transform 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface {
+    animation: none;
+    transform: translateX(-60px);
+  }
+
+  .fill {
+    transition: none;
+  }
+}

@@ -3569,6 +3569,69 @@ export default [
     ['globe', 'map'].map((globeViewMode) => desktopControlsRowShot(viewport, globeViewMode)),
   ),
   ...iceAgeShots(),
+  {
+    name: 'loading-screen',
+    description:
+      'The loading screen is in the static HTML (drawn with scripts blocked), holds its globe still under reduced ' +
+      'motion and turns it otherwise, advances its progress bar in steps as the manifest and then the first scene ' +
+      'land, and is gone once the shell mounts. Measured on side pages in the same context, so the main page never ' +
+      'reloads.',
+    viewport: DEFAULT_VIEWPORT,
+    measure: async ({ page }) => {
+      const url = page.url()
+      const LOADER = '[data-testid="loading-screen"]'
+      const surfaceAnimation = (p) =>
+        p.evaluate(() => getComputedStyle(document.querySelector('[data-testid="loading-screen"] svg g g')).animationName)
+
+      const noScript = await page.context().newPage()
+      await noScript.setViewportSize(DEFAULT_VIEWPORT)
+      await noScript.emulateMedia({ reducedMotion: 'reduce' })
+      await noScript.route('**/*.js', (route) => route.abort())
+      await noScript.goto(url, { waitUntil: 'load' })
+      const globe = await drawnBounds(noScript, `${LOADER} svg`)
+      const staticProgress = Number(await noScript.getAttribute(`${LOADER} [role="progressbar"]`, 'aria-valuenow'))
+      const staticTitle = (await noScript.textContent(LOADER))?.includes('Earthlapse') ? 1 : 0
+      const reducedMotionStill = (await surfaceAnimation(noScript)) === 'none' ? 1 : 0
+      await noScript.emulateMedia({ reducedMotion: 'no-preference' })
+      const turnsOtherwise = (await surfaceAnimation(noScript)) !== 'none' ? 1 : 0
+      await noScript.close()
+
+      // The first scene is held back so the bar's intermediate step (manifest in, scene pending)
+      // is observable; nothing else about the load is altered.
+      const loading = await page.context().newPage()
+      await loading.setViewportSize(DEFAULT_VIEWPORT)
+      let releaseScenes = () => {}
+      const scenesHeld = new Promise((resolve) => {
+        releaseScenes = resolve
+      })
+      await loading.route('**/scenes/*.webp', async (route) => {
+        await scenesHeld
+        await route.continue()
+      })
+      await loading.goto(url, { waitUntil: 'commit' })
+      const progressbar = `${LOADER} [role="progressbar"]`
+      await loading.waitForFunction(
+        (sel) => Number(document.querySelector(sel)?.getAttribute('aria-valuenow') ?? 0) > 0,
+        progressbar,
+      )
+      const midProgress = Number(await loading.getAttribute(progressbar, 'aria-valuenow'))
+      releaseScenes()
+      await loading.waitForSelector('[data-testid="time-title"]')
+      const loaderAfterShell = await loading.locator(LOADER).count()
+      await loading.close()
+
+      return { globeWidth: globe.width, staticProgress, staticTitle, reducedMotionStill, turnsOtherwise, midProgress, loaderAfterShell }
+    },
+    expect: {
+      globeWidth: [60, 90],
+      staticProgress: [0, 0],
+      staticTitle: [1, 1],
+      reducedMotionStill: [1, 1],
+      turnsOtherwise: [1, 1],
+      midProgress: [10, 20],
+      loaderAfterShell: [0, 0],
+    },
+  },
 ]
 
 /**

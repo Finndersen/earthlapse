@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from '@testing-library/react'
-import * as THREE from 'three'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { budgetedDpr, SCENE_DPR_BUDGET_PIXELS } from './canvasBudget'
@@ -24,14 +23,9 @@ vi.mock('@react-three/fiber', async () => {
   }
 })
 
-/** Avoids a real (and, under jsdom, always-failing) image decode — mirrors
- *  `textureCache.test.ts`'s own `stubLoader`, minus resolving `onLoad`: nothing here needs the
- *  texture to actually finish loading, only the initial `<Canvas>` props. */
-function stubLoader(): void {
-  vi.spyOn(THREE.TextureLoader.prototype, 'load').mockImplementation(function () {
-    return new THREE.Texture<HTMLImageElement>()
-  })
-}
+// Nothing here needs a texture to finish loading, only the initial `<Canvas>` props, so the
+// image fetch never settles rather than reaching the network.
+vi.mock('@/lib/fetchImage', () => ({ fetchImage: () => new Promise<never>(() => {}) }))
 
 afterEach(() => {
   cleanup()
@@ -52,7 +46,6 @@ const baseProps = {
 
 describe('SceneCanvasView — frameloop', () => {
   it('renders on demand, drawing a frame only when a uniform prop actually changes', () => {
-    stubLoader()
     render(<SceneCanvasView {...baseProps} />)
     expect(screen.getByTestId('mock-canvas').dataset.frameloop).toBe('demand')
   })
@@ -60,7 +53,6 @@ describe('SceneCanvasView — frameloop', () => {
 
 describe('SceneCanvasView — dpr budget (issue: dpr={[1, 2]} has no pixel ceiling)', () => {
   it('passes the full device pixel ratio at an ordinary laptop viewport', () => {
-    stubLoader()
     vi.stubGlobal('devicePixelRatio', 2)
     vi.stubGlobal('innerWidth', 1440)
     vi.stubGlobal('innerHeight', 900)
@@ -71,7 +63,6 @@ describe('SceneCanvasView — dpr budget (issue: dpr={[1, 2]} has no pixel ceili
   })
 
   it('tapers the dpr below the device pixel ratio on a large, dense (5K-class) display', () => {
-    stubLoader()
     vi.stubGlobal('devicePixelRatio', 2)
     vi.stubGlobal('innerWidth', 2560)
     vi.stubGlobal('innerHeight', 1440)
@@ -83,7 +74,6 @@ describe('SceneCanvasView — dpr budget (issue: dpr={[1, 2]} has no pixel ceili
   })
 
   it('never upscales past 1 on a non-retina display', () => {
-    stubLoader()
     vi.stubGlobal('devicePixelRatio', 1)
     vi.stubGlobal('innerWidth', 2560)
     vi.stubGlobal('innerHeight', 1440)

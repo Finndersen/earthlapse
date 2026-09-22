@@ -16,12 +16,12 @@
  */
 
 import { Canvas } from '@react-three/fiber'
-import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from 'react'
 import type * as THREE from 'three'
 
 import { resolvePortraitRender, type PortraitRender } from '../portraitRender'
 import { PORTRAIT_FRAGMENT_SHADER, PORTRAIT_VERTEX_SHADER } from '../portraitShaders'
-import { FLOW_PLACEHOLDER, loadPortraitTexture, PLATE_PLACEHOLDER } from '../portraitTextures'
+import { FLOW_PLACEHOLDER, loadPortraitTexture, PLATE_PLACEHOLDER, retainPortraitTextures } from '../portraitTextures'
 import { usePortraitPair, type PortraitFlow } from '../usePortraitPair'
 
 export interface PortraitCanvasProps {
@@ -70,6 +70,12 @@ export function PortraitCanvas({ olderUrl, youngerUrl, flow, alpha, preloadUrls 
   if (render !== null) {
     lastDrawnTexRef.current = render.alpha < 0.5 ? render.olderTex : render.youngerTex
   }
+
+  // The "no plate in common" fallback can draw a plate from an earlier bound set, which
+  // `usePortraitPair` no longer retains, so everything drawn is retained here too.
+  const drawnOlder = render?.olderTex ?? null
+  const drawnYounger = render?.youngerTex ?? null
+  useLayoutEffect(() => retainPortraitTextures([drawnOlder, drawnYounger]), [drawnOlder, drawnYounger])
 
   return (
     <Canvas orthographic dpr={[1, 2]} gl={{ antialias: false, alpha: false }} style={canvasStyle}>

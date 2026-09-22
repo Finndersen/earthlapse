@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { getCachedPortraitTexture, loadPortraitTexture } from './portraitTextures'
+import { getCachedPortraitTexture, loadPortraitTexture, PORTRAIT_CACHE_CAPACITY, retainPortraitTextures } from './portraitTextures'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -52,5 +52,25 @@ describe('getCachedPortraitTexture', () => {
     const texture = await loadPortraitTexture(url)
 
     expect(getCachedPortraitTexture(url)).toBe(texture)
+  })
+})
+
+describe('portrait texture eviction', () => {
+  it('disposes textures beyond capacity, but never a retained set', async () => {
+    stubLoader()
+    const older = await loadPortraitTexture('/media/portraits/bound-older.webp')
+    const younger = await loadPortraitTexture('/media/portraits/bound-younger.webp')
+    const release = retainPortraitTextures([older, younger, null, null])
+    const dispose = vi.spyOn(THREE.Texture.prototype, 'dispose')
+
+    for (let i = 0; i < PORTRAIT_CACHE_CAPACITY * 2; i++) await loadPortraitTexture(`/media/portraits/scrubbed-${i}.webp`)
+
+    expect(getCachedPortraitTexture('/media/portraits/bound-older.webp')).toBe(older)
+    expect(getCachedPortraitTexture('/media/portraits/bound-younger.webp')).toBe(younger)
+    expect(getCachedPortraitTexture('/media/portraits/scrubbed-0.webp')).toBeUndefined()
+    expect(dispose).toHaveBeenCalled()
+    expect(dispose.mock.contexts).not.toContain(older)
+    expect(dispose.mock.contexts).not.toContain(younger)
+    release()
   })
 })

@@ -7,10 +7,11 @@
  * `advancePlayhead` against the *full-domain* scale, writing `t` back to the store every
  * frame while playing.
  *
- * Manifest + every layer's data load together via `useAppData`; nothing renders until all of
- * it is in, so there is no partially-loaded state that could show a wrong value (a stale "0"
- * for a layer whose real data just hasn't arrived yet) — loading shows nothing, and any
- * failure is a loud full-page error, never a half-rendered page.
+ * The loading screen stays up until the manifest and the first scene's images are in
+ * (`firstScene.ts`); layer data keeps arriving after that (`useAppData`). A layer that has not
+ * loaded yet renders nothing rather than a placeholder value, and anything that depends on
+ * several layers together, or on whether one is published at all, waits for all of them
+ * (`layersLoaded`). Any failure is a loud full-page error.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -54,10 +55,12 @@ import {
 import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, Layer, ScalarValue, TimelineEvent, TimeScale } from '@/types/layer'
-import type { Scene } from '@/types/manifest'
+import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
 
 import { buildLayers, rawEvents } from './buildLayers'
 import { FeedbackLink } from './FeedbackLink'
+import { initialSceneT, loadingProgress, useFirstSceneLoad } from './firstScene'
+import { LoadingScreen } from './LoadingScreen'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
 
@@ -92,8 +95,27 @@ export const CITY_LABEL_FADE_SECONDS = 3.5
  *  jitter from `requestAnimationFrame`'s own irregular deltas. */
 const RATE_SMOOTHING_SECONDS = 0.5
 
+/** Props-free chrome, created once: the same element on every render lets React skip it while
+ *  playback re-renders this component every frame. */
+const EVENT_TAG_LEGEND = <EventTagLegend />
+const FEEDBACK_LINK = <FeedbackLink />
+const ONBOARDING_TOUR = <OnboardingTour />
+
+/** Whether every layer `include` selects has loaded — `false` until the manifest has. */
+function layersLoaded(
+  manifest: Manifest | null,
+  layerData: ReadonlyMap<string, unknown> | null,
+  include: (entry: LayerManifest) => boolean,
+): boolean {
+  if (manifest === null || layerData === null) return false
+  return manifest.layers.every((entry) => !include(entry) || layerData.has(entry.id))
+}
+
 export function Experience() {
   const data = useAppData()
+  const readyManifest = data.status === 'ready' ? data.manifest : null
+  const readyLayerData = data.status === 'ready' ? data.layerData : null
+  const firstScene = useFirstSceneLoad(readyManifest)
 
   const t = useTimeStore((s) => s.t)
   const setT = useTimeStore((s) => s.setT)
@@ -166,12 +188,11 @@ export function Experience() {
   // mounting at the store's default `t` and dissolving across all of history to get there.
   const [initialised, setInitialised] = useState(false)
   useEffect(() => {
-    if (data.status !== 'ready' || initialised) return
-    if (data.manifest.scenes.length > 0) {
-      setT(data.manifest.scenes.reduce((a, b) => (b.t > a.t ? b : a)).t)
-    }
+    if (readyManifest === null || initialised) return
+    const t0 = initialSceneT(readyManifest)
+    if (t0 !== null) setT(t0)
     setInitialised(true)
-  }, [data, initialised, setT])
+  }, [readyManifest, initialised, setT])
 
   // Playback pacing for 'scenes' mode (ADR-016 — `scene/pacing.ts`): the wall-clock durations
   // the playhead spends crossing each scene and each dissolve, so the picture stays a pure
@@ -179,8 +200,8 @@ export function Experience() {
   // the manifest's scenes change, not every frame. `advancePlayhead` ignores this entirely in
   // 'steady' mode, so it's harmless (if wasted) to always compute it rather than branch here.
   const scenesPacing = useMemo(
-    () => (data.status === 'ready' ? scenePlaybackSegments(data.manifest.scenes) : []),
-    [data],
+    () => (readyManifest !== null ? scenePlaybackSegments(readyManifest.scenes) : []),
+    [readyManifest],
   )
 
   // The globe's city labels (`cities.ts`'s `newCityLabels`) fade over a window sized in `t`-years
@@ -202,8 +223,8 @@ export function Experience() {
   // (`steadyPacing`, crossfade vs. cut) derive from, so the two always agree about where one
   // scene's dwell ends and the next begins. Memoised like `scenesPacing` above.
   const steadyTerritories = useMemo(
-    () => (data.status === 'ready' ? sceneTerritories(data.manifest.scenes) : []),
-    [data],
+    () => (readyManifest !== null ? sceneTerritories(readyManifest.scenes) : []),
+    [readyManifest],
   )
 
   // 'steady' mode moves at constant velocity in the selected section's scale of whichever
@@ -332,16 +353,16 @@ export function Experience() {
   // unconditionally regardless of load state (rules of hooks) — `buildLayers` tolerates the
   // `null`s that state implies and returns the empty `AppLayers` for them.
   const { scalarLayers, nodeLayers, rasters, eventLayers, featureSets, nodePortraits } = useMemo(
-    () => buildLayers(data.status === 'ready' ? data.manifest : null, data.status === 'ready' ? data.layerData : null),
-    [data],
+    () => buildLayers(readyManifest, readyLayerData),
+    [readyManifest, readyLayerData],
   )
 
   // Audio (ADR-023): the one stateful hook owns Tone.js's lazy lifecycle plus the toggle's own
-  // persisted enabled/volume state (see `@/audio/engine.ts`'s doc comment) — `manifest` is
-  // `null` until `data.status === 'ready'`, the same "not loaded yet" contract `buildLayers`
-  // above already follows, and the engine stays fully inert until then.
+  // persisted enabled/volume state (see `@/audio/engine.ts`'s doc comment). It reads several
+  // scalar layers at once, so `manifest` stays `null` — the engine fully inert — until every
+  // layer has loaded.
   const audio = useAudioEngine({
-    manifest: data.status === 'ready' ? data.manifest : null,
+    manifest: layersLoaded(readyManifest, readyLayerData, () => true) ? readyManifest : null,
     t,
     playing: playback.playing,
     playback,
@@ -360,27 +381,30 @@ export function Experience() {
   // faking continents), plus the human-era basemap tiers, each `null` when its layer isn't
   // published (an older manifest). `globe-regimes`' raw event list feeds the pre-1 Ga regime
   // blend.
-  const paleodemRaster = rasters.get('paleodem')
-  // Every overlay kind the globe's single overlay slot can hold (ADR-041), keyed by its own
-  // published layer id — `GLOBE_OVERLAY_KINDS` is the one place that set is enumerated, so a new
-  // overlay kind needs no change here.
-  const overlayRasters = new Map(
-    GLOBE_OVERLAY_KINDS.flatMap((kind) => {
-      const layerId = GLOBE_OVERLAYS[kind].layerId
-      const raster = rasters.get(layerId)?.data
-      return raster === undefined ? [] : [[layerId, raster] as const]
-    }),
-  )
-  const rasterLayers: GlobeRasterLayers | null =
-    paleodemRaster === undefined
-      ? null
-      : {
-          paleodem: paleodemRaster.data,
-          neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null,
-          basemapT0: rasters.get('basemap_t0')?.data ?? null,
-          basemapT1: rasters.get('basemap_t1')?.data ?? null,
-          overlayRasters,
-        }
+  const rasterLayers = useMemo((): GlobeRasterLayers | null => {
+    const paleodemRaster = rasters.get('paleodem')
+    if (paleodemRaster === undefined) return null
+    // Every overlay kind the globe's single overlay slot can hold (ADR-041), keyed by its own
+    // published layer id — `GLOBE_OVERLAY_KINDS` is the one place that set is enumerated, so a new
+    // overlay kind needs no change here.
+    const overlayRasters = new Map(
+      GLOBE_OVERLAY_KINDS.flatMap((kind) => {
+        const layerId = GLOBE_OVERLAYS[kind].layerId
+        const raster = rasters.get(layerId)?.data
+        return raster === undefined ? [] : [[layerId, raster] as const]
+      }),
+    )
+    return {
+      paleodem: paleodemRaster.data,
+      neoproterozoic: rasters.get('plates_neoproterozoic')?.data ?? null,
+      basemapT0: rasters.get('basemap_t0')?.data ?? null,
+      basemapT1: rasters.get('basemap_t1')?.data ?? null,
+      overlayRasters,
+    }
+  }, [rasters])
+  // The globe tells "not published" from "published" by a layer's absence, so it mounts only once
+  // every globe layer has loaded.
+  const globeLayersLoaded = layersLoaded(readyManifest, readyLayerData, (entry) => entry.surface === 'globe')
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
   const iceAgeLayers = useMemo(() => iceAgeLayersFrom(scalarLayers), [scalarLayers])
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
@@ -391,15 +415,38 @@ export function Experience() {
   // when the manifest does.
   const checkpoints = useMemo(
     (): TimelineCheckpoint[] =>
-      data.status === 'ready'
-        ? data.manifest.scenes.map((scene) => ({
+      readyManifest !== null
+        ? readyManifest.scenes.map((scene) => ({
             id: scene.id,
             t: scene.t,
             label: scene.title,
-            thumbnailUrl: resolveAssetUrl(data.manifest.assetBase, scene.thumbnail),
+            thumbnailUrl: resolveAssetUrl(readyManifest.assetBase, scene.thumbnail),
           }))
         : [],
-    [data],
+    [readyManifest],
+  )
+
+  // Only chartable scalars get a HUD readout: each one opens the chart dock. `isHiddenFromHud`
+  // additionally excludes a small, reversible set of layers (currently just CO2) from this list
+  // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
+  const hudScalarEntries = useMemo(
+    () =>
+      (readyManifest?.layers ?? []).filter(
+        (l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable && !isHiddenFromHud(l.id),
+      ),
+    [readyManifest],
+  )
+  const lineageEntry = readyManifest?.layers.find((l) => l.dataKind === 'node')
+  const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
+  const lineagePortraits = lineageEntry ? (nodePortraits.get(lineageEntry.id) ?? null) : null
+
+  const eraShortcuts = useMemo(
+    () => <EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />,
+    [sectionId, selectSection],
+  )
+  const captionSlot = useMemo(
+    () => <div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />,
+    [setCaptionHost],
   )
 
   // Clicking or tapping a checkpoint cluster marker (ADR-019) reports its members here — purely
@@ -409,8 +456,8 @@ export function Experience() {
   // (analytics, say).
   const handleOpenCluster = (_members: readonly TimelineCheckpoint[]): void => {}
 
-  if (data.status === 'loading' || (data.status === 'ready' && !initialised)) {
-    return <main className={styles.centered}>Loading manifest…</main>
+  if (data.status === 'loading' || (data.status === 'ready' && (!initialised || !firstScene.settled))) {
+    return <LoadingScreen progress={loadingProgress(data.status === 'ready', firstScene.fractions)} />
   }
 
   if (data.status === 'error') {
@@ -461,15 +508,6 @@ export function Experience() {
     }
   }
 
-  // Only chartable scalars get a HUD readout: each one opens the chart dock. `isHiddenFromHud`
-  // additionally excludes a small, reversible set of layers (currently just CO2) from this list
-  // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
-  const hudScalarEntries = manifest.layers.filter(
-    (l) => l.surface === 'hud' && l.dataKind === 'scalar' && l.chartable && !isHiddenFromHud(l.id),
-  )
-  const lineageEntry = manifest.layers.find((l) => l.dataKind === 'node')
-  const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
-  const lineagePortraits = lineageEntry ? (nodePortraits.get(lineageEntry.id) ?? null) : null
   const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
   // The subtitle above the timeline: the scene's short `title` as a heading over its longer
@@ -498,8 +536,8 @@ export function Experience() {
       <ShellLayout
         globeExpanded={globeExpanded}
         viewModeToggleHeightPx={viewModeToggleHeightPx}
-        eventLegend={<EventTagLegend />}
-        feedbackLink={<FeedbackLink />}
+        eventLegend={EVENT_TAG_LEGEND}
+        feedbackLink={FEEDBACK_LINK}
         scene={
           manifest.scenes.length > 0 ? (
             <SceneView
@@ -515,7 +553,7 @@ export function Experience() {
           )
         }
         globe={
-          rasterLayers ? (
+          !globeLayersLoaded ? null : rasterLayers ? (
             <Globe
               t={t}
               rasterLayers={rasterLayers}
@@ -568,11 +606,11 @@ export function Experience() {
         }
         title={<TimeTitle t={t} />}
         badge={isStub ? <span className={styles.stubBadge}>Stub data</span> : null}
-        eraShortcuts={<EraShortcuts sectionId={sectionId} onSelectSection={selectSection} />}
+        eraShortcuts={eraShortcuts}
         ancestor={
           nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
         }
-        caption={<div ref={setCaptionHost} className={styles.captionHost} data-testid="scene-caption" />}
+        caption={captionSlot}
         chart={
           expandedChartLayer ? (
             <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={closeExpandedChart} />
@@ -628,7 +666,7 @@ export function Experience() {
           the shell so its own layer is that element's sibling, above the whole HUD, and it is
           rendered only past the loading/error branches above so every control it rings is
           already in the DOM to be measured. */}
-      <OnboardingTour />
+      {ONBOARDING_TOUR}
     </>
   )
 }
