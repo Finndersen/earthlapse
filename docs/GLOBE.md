@@ -908,25 +908,35 @@ letting the browser drop it to `<body>` with no indication of where it went. On 
 (`compact`) rows are single-line with a short alternative hint rather than a truncated one, so an
 honesty caveat ("modelled", "data ends 2015") is never the part that gets cut off.
 
-**Expanded-view chrome: rows on a phone, corners above 760px (ADR-044).** The sphere on a phone is
-**width-bound** — `94vw` is ~367px on a 390px screen — so freeing vertical space does not make it
-bigger; the chrome's job there is only to stop overlapping it. Below 760px the chrome is a stack of
-real rows: title (centred) with the ✕ right-aligned; then era shortcuts left / overlay selector
-right; then the sphere; then the Globe/Map toggle and the zoom buttons on a row of their own; then
-the event feed, breadcrumbs and timeline. Nothing straddles the sphere or sits in the gap its
-curvature leaves. At 760px and above the same controls take the four corners instead — era
-shortcuts top-left, overlay selector top-right beneath the ✕, Globe/Map bottom-left, the
-"Human civilisation" legend bottom-right.
+**Expanded-view chrome: rows on a phone, corners plus the title above 760px (ADR-044, ADR-046).** The sphere
+on a phone is **width-bound** — `94vw` is ~367px on a 390px screen — so freeing vertical space does
+not make it bigger; the chrome's job there is only to stop overlapping it. Below 760px the chrome is
+a stack of real rows: title (centred) with the ✕ right-aligned; then era shortcuts left / overlay
+selector right; then the sphere; then the Globe/Map toggle and the zoom buttons on a row of their
+own; then the event feed, breadcrumbs and timeline. Nothing straddles the sphere or sits in the gap
+its curvature leaves.
 
-The sphere's own box follows from that geometry rather than repeating it: the shell publishes
-`--row2-top` and `--row2-height`, and `Globe.module.css`'s `--usable-top` is the max of the chrome
-gap, the measured overlay stack's bottom edge and row 2's bottom edge — so a row that grows pushes
-the sphere down instead of painting over it.
+At 760px and above the era shortcuts stay where they sit collapsed — centred under the title, in
+normal flow — rather than moving to a corner. The remaining controls take the four corners, each
+aligned to the scrub track's own horizontal bounds rather than a fixed gutter or an arbitrary
+viewport fraction: the "Human civilisation" legend top-left and the overlay selector top-right
+(beneath the ✕) share the track's left/right edges; the Globe/Map toggle and the zoom rocker,
+sharing a row beneath the sphere, do the same. `--track-inset` (`ShellLayout.module.css`'s `.shell`,
+mirrored in `Timeline.module.css`'s own grid) is the shared source for that edge, so the corners and
+the timeline can't drift apart.
 
-One non-obvious constraint: **`.title` must not carry a `transform`.** `.eraShortcuts` is a
-`position: fixed` DOM child of it, and a transformed ancestor becomes the containing block for its
-fixed descendants — the shortcuts would then resolve `left` against the title's box rather than the
-viewport. Centring uses `left/right: 0`, `width: fit-content` and auto inline margins instead.
+The sphere's own box follows from that geometry rather than repeating it: `Globe.tsx` measures the
+overlay stack's and the legend's own real drawn edges, and `Globe.module.css`'s `--usable-top` is
+the max of the chrome gap and both top corners' bottoms (`--overlay-clear-bottom`,
+`--legend-clear-bottom`) — so a corner that grows pushes the sphere down instead of painting over
+it. `--usable-bottom` is the same idea against the Globe/Map toggle's own top edge.
+
+One non-obvious constraint, on the phone layout only: **`.title` must not carry a `transform`.**
+`.eraShortcuts` is a `position: fixed` DOM child of it there, and a transformed ancestor becomes the
+containing block for its fixed descendants — the shortcuts would then resolve `left` against the
+title's box rather than the viewport. Centring uses `left/right: 0`, `width: fit-content` and auto
+inline margins instead. Above 760px the era shortcuts are an ordinary in-flow child, so this doesn't
+apply there.
 
 ---
 

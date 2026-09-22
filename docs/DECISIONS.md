@@ -6768,7 +6768,7 @@ self-relative rather than inheriting a CDN base it has no assets at.
 
 ## ADR-044 — The expanded globe's chrome is laid out in rows on a phone, corners on desktop
 
-**Status:** accepted — 2026-09-22.
+**Status:** accepted — 2026-09-22; desktop/tablet layout superseded by ADR-046.
 
 **Context.** The expanded globe's chrome had accreted into a single arrangement applied at every
 width: the title centred at the top, the era shortcuts as a band beneath it, the legend down the
@@ -6789,7 +6789,7 @@ line; breadcrumbs; the timeline. The rows are real rows — nothing straddles th
 the space its curvature leaves.
 
 *Desktop/tablet:* the four corners — era shortcuts top-left, overlay selector top-right under the
-✕, Globe/Map bottom-left, the human-civilisation legend bottom-right.
+✕, Globe/Map bottom-left, the human-civilisation legend bottom-right. (Superseded by ADR-046.)
 
 The sphere's usable box is derived from the row geometry rather than hard-coded: `--row2-top` and
 `--row2-height` are published by the shell and `Globe.module.css`'s `--usable-top` takes the max of
@@ -6863,3 +6863,32 @@ framing:
 - Framing is set after review, against the pinned still; VISUAL_SPEC §3 notes it for authors.
 - `web/src/shell/manifest.ts`'s hand-written validator must copy `framing` through for it to reach
   the renderer; a manifest without it renders every scene centred, exactly as before.
+
+---
+
+## ADR-046 — Desktop expanded-globe chrome aligns to the timeline track's edges
+
+**Status:** accepted — 2026-09-22. Supersedes ADR-044's desktop/tablet layout; the phone layout
+stands.
+
+**Context.** ADR-044's desktop corners put the human-civilisation legend bottom-right and the era
+shortcuts top-left, pulled out of the title. The legend then read as unrelated to the overlay
+selector it pairs with, forced the zoom buttons off their position to avoid it, and the shortcuts
+sat in a different place from the normal view for no reason.
+
+**Decision.** On desktop/tablet the expanded view's side chrome shares the timeline track's
+horizontal bounds (the track itself, not the ‹ › era arrows):
+
+- top row: the legend top-left and the overlay selector top-right, tops matched; the legend's left
+  edge is the track's left edge, the selector's right edge the track's right edge;
+- bottom row: the Globe/Map toggle's left edge on the track's left edge, the zoom buttons' right
+  edge on its right edge, on one row;
+- the era shortcuts stay in the title's flow, centred beneath it, as in the normal view.
+
+The bound comes from one source: `.shell` publishes `--edge-button-size`, `--track-side-gap` and
+`--track-inset`, which the timeline grid and the globe chrome both read.
+
+**Consequences.** The zoom row's legend-avoidance clamp and `--era-shortcuts-clear-bottom` are
+gone. The sphere's usable box clears the measured legend at the top and the measured toggle and
+zoom row at the bottom. ADR-044's `.title` transform trap now applies only on a phone, where the
+shortcuts are still `position: fixed`.

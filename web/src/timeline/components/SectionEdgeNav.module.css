@@ -2,7 +2,8 @@
    places it, and reassigning that one property per breakpoint is what moves the same DOM node
    between flanking the track (wide) and sitting beside the transport buttons (phone portrait),
    as `SectionEdgeNav.tsx`'s own doc comment explains. `--edge-button-size` is declared on
-   `.timeline` (that file's own doc comment on why it lives there, not here). */
+   `ShellLayout.module.css`'s `.shell` (that file's own doc comment on why it lives there, not
+   here or on `.timeline`). */
 .edgeButton {
   width: var(--edge-button-size);
   height: var(--edge-button-size);
@@ -66,10 +67,10 @@
   cursor: default;
 }
 
-/* `--edge-button-size`'s own coarse-pointer bump lives on `.timeline` (Timeline.module.css) —
-   `.edgeButton` still reads it via `var()`, so it grows to match without redeclaring the number
-   here; only the glyph's own `font-size` (a property with no shared-gutter consumer elsewhere)
-   stays local to this file. */
+/* `--edge-button-size`'s own coarse-pointer bump lives on `ShellLayout.module.css`'s `.shell`
+   (shared with the expanded globe's corner chrome) — `.edgeButton` still reads it via `var()`, so
+   it grows to match without redeclaring the number here; only the glyph's own `font-size` (a
+   property with no shared-gutter consumer elsewhere) stays local to this file. */
 @media (pointer: coarse) {
   .edgeButton {
     font-size: 26px;

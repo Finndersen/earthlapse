@@ -665,6 +665,9 @@ async function dragGlobeOrb(page) {
 const OVERLAY_SELECT_STACK_SELECTOR = '[data-testid="globe-overlay-select-stack"]'
 const LEGEND_CORNER_SELECTOR = '[data-testid="globe-legend-corner"]'
 const CLOSE_BUTTON_SELECTOR = '[data-testid="globe-close-button"]'
+/** The current-time heading (`Experience.tsx`'s `<TimeTitle>`) — the era shortcuts sit centred
+ *  under this, both collapsed and expanded, above the phone breakpoint. */
+const TIME_TITLE_SELECTOR = '[data-testid="time-title"]'
 
 /** The legend panel's compact ceiling. The panel measures 48.5px (single row, `padding: 6px 10px`,
  *  `line-height: 1.25`, short hint); an uncompacted one — 8px padding, 1.4 line-height, a two-line
@@ -678,8 +681,12 @@ const DESKTOP_CORNER_VIEWPORTS = [
 ]
 
 /**
- * One shot per (viewport, globe view mode) combination: every corner control lands in its own
- * quadrant, none overlaps the drawn sphere/map, and the overlay selector sits clear under the ✕.
+ * One shot per (viewport, globe view mode) combination: the top corners — the "Human
+ * civilisation" legend (top-left) and the overlay selector (top-right, under the ✕) — each align
+ * their own outer edge to the scrub track's real horizontal bound rather than a fixed gutter or a
+ * viewport fraction, so they can't drift from the timeline they sit above; the era shortcuts stay
+ * centred under the title, in flow, the same place they sit collapsed. None of the four (legend,
+ * title, era shortcuts, overlay selector) overlaps another or the drawn sphere/map.
  * @param {{ width: number, height: number }} viewport
  * @param {'globe' | 'map'} globeViewMode
  */
@@ -688,12 +695,12 @@ function desktopGlobeCornersShot(viewport, globeViewMode) {
   return {
     name: `desktop-globe-corners-${viewport.width}x${viewport.height}-${globeViewMode}`,
     description:
-      'Desktop/tablet expanded-globe chrome mirrors the phone layout: era shortcuts top-left, the overlay ' +
-      'selector top-right under the ✕, the Globe/Map toggle bottom-left, the "Human civilisation" legend ' +
-      'bottom-right. Quadrant membership is by each box\'s own centre against the viewport midpoints (plain ' +
-      'CSS boxes — ordinary HUD chrome, not canvases); the sphere/map is measured by drawn pixels ' +
-      '(`drawnBoundsInClip` over the real fit-frame rectangle, `globe-expanded-sphere`\'s own proven-sound ' +
-      'technique) since a busy photographic backdrop makes a plain corner-sampled scan unreliable there.',
+      'Desktop/tablet expanded-globe top chrome: the "Human civilisation" legend (top-left) and the overlay ' +
+      'selector (top-right, under the ✕) each align to the scrub track\'s own left/right edge (`--track-inset`), ' +
+      'share the same top offset, and never overlap each other, the title, the era shortcuts (centred under the ' +
+      'title, unchanged from the collapsed view) or the drawn sphere/map (`drawnBoundsInClip` over the real ' +
+      'fit-frame rectangle, `globe-expanded-sphere`\'s own proven-sound technique, since a busy photographic ' +
+      'backdrop makes a plain corner-sampled scan unreliable there).',
     viewport,
     t: 0,
     state: { globeExpanded: true, globeViewMode },
@@ -704,46 +711,134 @@ function desktopGlobeCornersShot(viewport, globeViewMode) {
     },
     measure: async ({ page }) => {
       const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const overlayStack = await boxOf(page, OVERLAY_SELECT_STACK_SELECTOR)
+      const title = await boxOf(page, TIME_TITLE_SELECTOR)
+      const overlay = await boxOf(page, OVERLAY_SELECT_STACK_SELECTOR)
       const closeButton = await boxOf(page, CLOSE_BUTTON_SELECTOR)
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
       const legend = await boxOf(page, LEGEND_CORNER_SELECTOR)
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
       const frame = await drawnBoundsInClip(page, await hiddenBoxOf(page, fitFrameSelector))
 
-      const midX = viewport.width / 2
-      const midY = viewport.height / 2
       const centreOf = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
       const era_c = centreOf(era)
-      const overlay_c = centreOf(overlayStack)
-      const toggle_c = centreOf(toggle)
-      const legend_c = centreOf(legend)
+      const title_c = centreOf(title)
+
+      const boxes = { legend, title, era, overlay, frame }
+      const pairs = [
+        ['legend', 'title'],
+        ['legend', 'era'],
+        ['legend', 'overlay'],
+        ['legend', 'frame'],
+        ['title', 'era'],
+        ['title', 'overlay'],
+        ['title', 'frame'],
+        ['era', 'overlay'],
+        ['era', 'frame'],
+        ['overlay', 'frame'],
+      ]
+      const overlaps = {}
+      for (const [a, b] of pairs) {
+        overlaps[`overlap_${a}_${b}`] = rectsOverlap(boxes[a], boxes[b]) ? 1 : 0
+      }
 
       return {
-        eraInTopLeft: era_c.x < midX && era_c.y < midY ? 1 : 0,
-        overlayInTopRight: overlay_c.x > midX && overlay_c.y < midY ? 1 : 0,
-        toggleInBottomLeft: toggle_c.x < midX && toggle_c.y > midY ? 1 : 0,
-        legendInBottomRight: legend_c.x > midX && legend_c.y > midY ? 1 : 0,
-        overlayBelowCloseGapPx: overlayStack.y - (closeButton.y + closeButton.height),
-        overlayOverlapsClose: rectsOverlap(overlayStack, closeButton) ? 1 : 0,
-        eraOverlapsFrame: rectsOverlap(era, frame) ? 1 : 0,
-        overlayOverlapsFrame: rectsOverlap(overlayStack, frame) ? 1 : 0,
-        toggleOverlapsFrame: rectsOverlap(toggle, frame) ? 1 : 0,
-        legendOverlapsFrame: rectsOverlap(legend, frame) ? 1 : 0,
+        legendLeftEdgeOffsetPx: legend.x - track.x,
+        overlayRightEdgeOffsetPx: overlay.x + overlay.width - (track.x + track.width),
+        legendOverlayTopDeltaPx: legend.y - overlay.y,
+        eraCentreOffsetPx: era_c.x - title_c.x,
+        eraBelowTitleGapPx: era.y - (title.y + title.height),
+        overlayBelowCloseGapPx: overlay.y - (closeButton.y + closeButton.height),
+        overlayOverlapsClose: rectsOverlap(overlay, closeButton) ? 1 : 0,
         legendHeightPx: legend.height,
+        ...overlaps,
       }
     },
     expect: {
-      eraInTopLeft: [1, 1],
-      overlayInTopRight: [1, 1],
-      toggleInBottomLeft: [1, 1],
-      legendInBottomRight: [1, 1],
+      legendLeftEdgeOffsetPx: [-2, 2],
+      overlayRightEdgeOffsetPx: [-2, 2],
+      legendOverlayTopDeltaPx: [-2, 2],
+      eraCentreOffsetPx: [-3, 3],
+      eraBelowTitleGapPx: [0, 400],
       overlayBelowCloseGapPx: [4, 400],
       overlayOverlapsClose: [0, 0],
-      eraOverlapsFrame: [0, 0],
-      overlayOverlapsFrame: [0, 0],
-      toggleOverlapsFrame: [0, 0],
-      legendOverlapsFrame: [0, 0],
       legendHeightPx: [0, LEGEND_HEIGHT_CEILING_PX],
+      overlap_legend_title: [0, 0],
+      overlap_legend_era: [0, 0],
+      overlap_legend_overlay: [0, 0],
+      overlap_legend_frame: [0, 0],
+      overlap_title_era: [0, 0],
+      overlap_title_overlay: [0, 0],
+      overlap_title_frame: [0, 0],
+      overlap_era_overlay: [0, 0],
+      overlap_era_frame: [0, 0],
+      overlap_overlay_frame: [0, 0],
+    },
+  }
+}
+
+/**
+ * Desktop/tablet, above the phone breakpoint: the Globe/Map toggle and the zoom rocker share one
+ * row at the toggle's own bottom-left `y`, mirroring the phone row (`.viewModeGroup`/`.zoomGroup`'s
+ * own `min-width: 761px` rule) rather than the toggle sitting alone in the corner with zoom
+ * vertically centred on the right edge. The toggle's own left edge lines up with the scrub
+ * track's left edge; the zoom rocker's own right edge with the track's right edge — both read
+ * `--track-inset` (`ShellLayout.module.css`'s `.shell`) so the row can't drift from the timeline
+ * it sits above — on one line, with the zoom buttons arranged horizontally (the divider between
+ * them turned vertical) as on the phone.
+ * @param {{ width: number, height: number }} viewport
+ * @param {'globe' | 'map'} globeViewMode
+ */
+function desktopControlsRowShot(viewport, globeViewMode) {
+  const fitFrameSelector = globeViewMode === 'map' ? GLOBE_MAP_FIT_FRAME_SELECTOR : GLOBE_SPHERE_FIT_FRAME_SELECTOR
+  return {
+    name: `desktop-controls-row-${viewport.width}x${viewport.height}-${globeViewMode}`,
+    description:
+      "Desktop/tablet expanded-globe controls row: the Globe/Map toggle's own left edge and the zoom rocker's " +
+      "own right edge each align to the scrub track's real edge (`--track-inset`), both at the same y and " +
+      'neither overlapping the drawn sphere/map (`drawnBoundsInClip` over the real fit-frame rectangle, ' +
+      "`desktop-globe-corners`'s own technique), the legend corner, or the timeline root.",
+    viewport,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode },
+    actions: async ({ page, hook }) => {
+      await hook.ready()
+      await waitForApproxUnfoldProgress(page, 1)
+      await rafTicks(page, 2)
+    },
+    measure: async ({ page }) => {
+      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
+      const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
+      const legend = await boxOf(page, LEGEND_CORNER_SELECTOR)
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const frame = await drawnBoundsInClip(page, await hiddenBoxOf(page, fitFrameSelector))
+      const centreOf = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
+      const toggle_c = centreOf(toggle)
+      const zoom_c = centreOf(zoom)
+
+      return {
+        toggleLeftEdgeOffsetPx: toggle.x - track.x,
+        zoomRightEdgeOffsetPx: zoom.x + zoom.width - (track.x + track.width),
+        centreYDeltaPx: Math.abs(toggle_c.y - zoom_c.y),
+        zoomWiderThanTall: zoom.width > zoom.height ? 1 : 0,
+        toggleOverlapsFrame: rectsOverlap(toggle, frame) ? 1 : 0,
+        zoomOverlapsFrame: rectsOverlap(zoom, frame) ? 1 : 0,
+        toggleOverlapsLegend: rectsOverlap(toggle, legend) ? 1 : 0,
+        zoomOverlapsLegend: rectsOverlap(zoom, legend) ? 1 : 0,
+        toggleOverlapsTimeline: rectsOverlap(toggle, timeline) ? 1 : 0,
+        zoomOverlapsTimeline: rectsOverlap(zoom, timeline) ? 1 : 0,
+      }
+    },
+    expect: {
+      toggleLeftEdgeOffsetPx: [-2, 2],
+      zoomRightEdgeOffsetPx: [-2, 2],
+      centreYDeltaPx: [0, 4],
+      zoomWiderThanTall: [1, 1],
+      toggleOverlapsFrame: [0, 0],
+      zoomOverlapsFrame: [0, 0],
+      toggleOverlapsLegend: [0, 0],
+      zoomOverlapsLegend: [0, 0],
+      toggleOverlapsTimeline: [0, 0],
+      zoomOverlapsTimeline: [0, 0],
     },
   }
 }
@@ -831,7 +926,7 @@ export default [
       'measured at zoom-interaction time, so this is a zero-interaction "does it open at the right size" check. ' +
       "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, and above the phone " +
       'breakpoint the sphere also clears all four corner controls, so anything that changes a corner control\'s ' +
-      'own height legitimately moves this band — currently ~491px.',
+      'own height legitimately moves this band — currently ~493px.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -1035,8 +1130,8 @@ export default [
       await hook.ready()
     },
     measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP) }),
-    // Comfortably above `globe-expanded-sphere`'s own [555, 595] default band — the old bug would
-    // have failed this by capping at ~592px regardless of how many times "Zoom in" was pressed.
+    // Comfortably above `globe-expanded-sphere`'s own [470, 515] default band — the old bug would
+    // have failed this by capping there regardless of how many times "Zoom in" was pressed.
     // Capped by `GLOBE_CHROME_FREE_STRIP`'s own width (1320), not the sphere itself, past that point.
     expect: { 'sphere.width': [750, 1320] },
   },
@@ -3469,5 +3564,8 @@ export default [
   },
   ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
     ['globe', 'map'].map((globeViewMode) => desktopGlobeCornersShot(viewport, globeViewMode)),
+  ),
+  ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
+    ['globe', 'map'].map((globeViewMode) => desktopControlsRowShot(viewport, globeViewMode)),
   ),
 ]

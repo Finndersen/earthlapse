@@ -19,6 +19,16 @@
      this container, so the drawn silhouette tracks it 1:1; `scripts/qa/shots.mjs`'s
      `minimised-globe-size*` shots hold both the 1440x900 and narrow-phone numbers). */
   --orb-size: clamp(165px, 20vw, 300px);
+  /* The scrub track's own horizontal inset from `Timeline`'s outer edge — an edge-button column
+     plus the gap beside it (`timeline/Timeline.module.css`'s own grid) — declared on `.shell`
+     rather than in `Timeline.module.css` so the expanded globe's corner chrome
+     (`Globe.module.css`'s `.viewModeGroup`/`.zoomGroup`/`.legendCorner`/`.overlaySelectStack`), a
+     sibling DOM subtree, can align to the track's real bounds from the same numbers instead of a
+     second, hand-copied set. `Timeline.module.css` reads `--edge-button-size` back from here for
+     its own grid columns. */
+  --edge-button-size: 34px;
+  --track-side-gap: clamp(12px, 1.6vw, 24px);
+  --track-inset: calc(var(--edge-button-size) + var(--track-side-gap));
   /* Local override of the shared token (app/globals.css), a touch stronger than its default —
      every HUD element under `.shell` reads `var(--hud-shadow)` and custom properties cascade
      through the DOM like any inherited property, so this alone carries the item-9 "lean on
@@ -36,6 +46,15 @@
   color: var(--hud-ink);
   font-family: var(--hud-sans);
   text-shadow: var(--hud-shadow);
+}
+
+/* `--edge-button-size`'s own coarse-pointer bump (`SectionEdgeNav.module.css`'s own note on this
+   value) — declared on `.shell` alongside its base value above, so it reaches `Timeline`'s grid
+   columns and the expanded globe's corner chrome by the same inheritance path. */
+@media (pointer: coarse) {
+  .shell {
+    --edge-button-size: 40px;
+  }
 }
 
 /* Faint caps type needs a tighter, darker halo than --hud-shadow to survive a bright plate. */
@@ -466,44 +485,6 @@
   opacity: 0.18;
 }
 
-/* Expanded, above the phone breakpoint: the era shortcuts leave the title and sit at the
-   top-left corner, level with the ✕ (`Globe.module.css`'s `.closeButton`, top-right) — the
-   layout mirrors the shape the phone breakpoint already ships (era shortcuts and the overlay
-   selector each own a top corner, the Globe/Map toggle and the legend each own a bottom one),
-   just with each control in its own corner instead of two of them sharing a row. The title row
-   gives up their height, which `useChromeGap` reads straight into `--chrome-gap-top` and the
-   sphere grows into.
-   `fixed`, not `absolute`: the offset is expressed against the viewport, the same basis every
-   other corner control uses (`.hud`'s padding box is not the viewport — see the phone `.feed`
-   rule below for the same trap). The phone keeps them under the title instead (below), where the
-   band has no room for a second control beside the toggle. */
-@media (min-width: 761px) {
-  .shell[data-globe-expanded='true'] {
-    /* This row's own real bottom edge: a fixed constant, not a live measurement, because
-       `Globe.tsx` (a sibling DOM subtree under `.shell`) has no ref into this one — the same
-       "share a deterministic number across subtrees" trick `--row2-top`/`--row2-height` already
-       use for the phone breakpoint below. The content itself (two fixed-size pills) never
-       changes size with viewport width, only `clamp(16px, 2.4vw, 34px)` — the same top offset
-       `.closeButton` uses — does, so one constant height covers every width this query matches.
-       Read by `Globe.module.css`'s `.orbFitFrameMap`, so the map can never grow up under this
-       corner at a narrow desktop/tablet width. */
-    --era-shortcuts-clear-bottom: calc(clamp(16px, 2.4vw, 34px) + 22px);
-  }
-
-  .shell[data-globe-expanded='true'] .eraShortcuts {
-    position: fixed;
-    top: clamp(16px, 2.4vw, 34px);
-    left: clamp(16px, 3vw, 48px);
-    right: auto;
-    bottom: auto;
-    /* The base rule's own `margin-top: 3px` is for the in-flow, under-the-title stacking that
-       rule was written for — here it would offset this box 3px below the ✕'s own top, despite
-       both sharing the same `top` clamp, so it's zeroed for an exact match. */
-    margin-top: 0;
-    justify-content: flex-start;
-  }
-}
-
 /* Globe.module.css's expanded backdrop sits at z-index 50 in this same stacking context. The
    feed rides above it too: the expanded globe leaves the left column clear, and the events
    reaching the playhead stay relevant while the globe is what you are watching. It keeps its own
@@ -564,8 +545,8 @@
        here rather than in `Globe.module.css` so both can read it: `Globe`'s `.backdrop` and this
        component's `.title` are sibling DOM subtrees under `.shell`, and a CSS custom property
        only cascades down the tree it's declared in, not sideways between siblings (the same
-       reason `--era-shortcuts-clear-bottom`, further up this file, is declared here rather than
-       in `Globe.module.css`). */
+       reason `--edge-button-size`/`--track-inset`, declared on `.shell` above, live here rather
+       than in `Timeline.module.css`). */
     --corner-control-size: 54px;
     /* Row 2's own top offset while the globe is expanded: directly under the title/✕ row, one
        `--corner-control-size` plus a real gap down. Shared by this file's own `.eraShortcuts`

@@ -9,9 +9,13 @@
    control, one `grid-template-areas` per breakpoint, `Timeline.tsx` renders the same tree either
    way.
 
-   `--edge-button-size`/`--edge-button-gap` are declared here (not in `SectionEdgeNav.module.css`)
-   since `SectionEdgeButton` is now this grid's own direct child — a value a sibling needs must
-   live on their shared ancestor, not on either sibling itself. `--track-box-height`/
+   `--edge-button-gap` is declared here (not in `SectionEdgeNav.module.css`) since
+   `SectionEdgeButton` is now this grid's own direct child — a value a sibling needs must live on
+   their shared ancestor, not on either sibling itself. `--edge-button-size` and the track's own
+   side inset are declared one level further up still, on `ShellLayout.module.css`'s `.shell`:
+   the expanded globe's corner chrome, in a separate DOM subtree from this component entirely,
+   reads them too (that file's own `--track-inset` doc comment has the full story), so `.timeline`
+   only overrides the phone breakpoint's own value below. `--track-box-height`/
    `--stack-row-gap`/`--ticks-height` (`SectionEdgeNav.module.css`'s own `.edgeButton` doc comment
    has the pixel sources) live here for the identical reason: `.edgeButton`'s wide-viewport
    vertical offset reads them via `var()`. */
@@ -32,7 +36,6 @@
      the rarely-shown "Time compressed" badge beside it tightens. */
   --transport-flank: clamp(12ch, 15vw, 24ch);
 
-  --edge-button-size: 34px;
   --edge-button-gap: 16px;
   --track-box-height: 63px;
   --stack-row-gap: 2px;
@@ -55,19 +58,13 @@
   grid-template-areas:
     'edgePrev track    track track    edgeNext'
     '.        sections core  secondary .';
-  column-gap: clamp(12px, 1.6vw, 24px);
+  /* Shares `ShellLayout.module.css`'s `.shell`-level `--track-side-gap` rather than its own copy
+     of the same clamp, so the expanded globe's corner chrome (`--track-inset`, that file's own
+     doc comment) can never drift from the track's real rendered gap. */
+  column-gap: var(--track-side-gap, clamp(12px, 1.6vw, 24px));
   row-gap: 2px;
   width: 100%;
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
-}
-
-/* Larger touch target on a coarse pointer (`SectionEdgeNav.module.css`'s own `.edgeButton`
-   glyph grows to match, in that file, under the same query) — declared here, this property's
-   one canonical source. */
-@media (pointer: coarse) {
-  .timeline {
-    --edge-button-size: 40px;
-  }
 }
 
 /* Narrow desktop — still this grid's wide-viewport layout (the phone-portrait breakpoint below

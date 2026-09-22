@@ -613,20 +613,17 @@ export function Globe({
   // `useChromeGap` uses, written onto `backdropRef`'s own element (an ancestor of both, in the
   // same position: fixed/viewport coordinate space) rather than routed through React state, for
   // the same "don't re-render every playback frame for a value nothing here reads reactively"
-  // reason. The era shortcuts' own top-left corner needs the same clearance and lives in a
-  // sibling DOM subtree this component has no ref into — `ShellLayout.module.css`'s
-  // `--era-shortcuts-clear-bottom` covers it with a fixed constant instead, the same "share a
-  // deterministic number across subtrees" trick `--row2-top`/`--row2-height` already use for the
-  // phone breakpoint.
+  // reason.
   const backdropRef = useRef<HTMLDivElement | null>(null)
   const overlaySelectBoundsRef = useRef<HTMLDivElement | null>(null)
-  // The bottom-right legend corner's own bounds — paired with `viewModeToggleRef` (declared
-  // above) below to write `--bottom-corner-clear-top`, the bottom-edge counterpart to
-  // `--overlay-clear-bottom`: whichever bottom corner starts highest is what the sphere/map must
-  // stop short of, so neither the toggle nor the legend ever finds itself drawn over the globe.
-  // Both live in this component's own subtree (unlike the era shortcuts), so both get a real
-  // measurement rather than a deterministic constant.
+  // The top-left legend corner's own bounds, measured the same way and for the same reason as
+  // `overlaySelectBoundsRef` above — its mirror image on the opposite side of the title. Feeds
+  // `--legend-clear-bottom` below, the sphere/map's own top-clearance term for this corner.
   const legendCornerRef = useRef<HTMLDivElement | null>(null)
+  // The zoom rocker's own bounds — sharing the bottom row with `viewModeToggleRef` but a few px
+  // taller (its own doc comment below), so its top edge can sit above the toggle's. Both feed
+  // `--bottom-corner-clear-top` below; the sphere/map must stop short of whichever starts higher.
+  const zoomGroupRef = useRef<HTMLDivElement | null>(null)
   // `Globe.module.css`'s `.orbFitFrameSphere`/`.orbFitFrameMap` — invisible, `pointer-events:
   // none` boxes carrying the *old* `.orbExpanded` sizing formulas verbatim (that class's own doc
   // comment on why: the canvas itself is now full-bleed, so something else has to say what size
@@ -643,11 +640,14 @@ export function Globe({
       const overlaySelectBottom = overlaySelectBoundsRef.current?.getBoundingClientRect().bottom ?? 0
       host.style.setProperty('--overlay-clear-bottom', `${overlaySelectBottom}px`)
 
+      const legendBottom = legendCornerRef.current?.getBoundingClientRect().bottom ?? 0
+      host.style.setProperty('--legend-clear-bottom', `${legendBottom}px`)
+
       const toggleTop = viewModeToggleRef.current?.getBoundingClientRect().top ?? null
-      const legendTop = legendCornerRef.current?.getBoundingClientRect().top ?? null
-      const bottomCornerTops = [toggleTop, legendTop].filter((top): top is number => top !== null)
-      if (bottomCornerTops.length > 0) {
-        host.style.setProperty('--bottom-corner-clear-top', `${Math.min(...bottomCornerTops)}px`)
+      const zoomTop = zoomGroupRef.current?.getBoundingClientRect().top ?? null
+      const bottomRowTops = [toggleTop, zoomTop].filter((top): top is number => top !== null)
+      if (bottomRowTops.length > 0) {
+        host.style.setProperty('--bottom-corner-clear-top', `${Math.min(...bottomRowTops)}px`)
       } else {
         host.style.removeProperty('--bottom-corner-clear-top')
       }
@@ -683,7 +683,7 @@ export function Globe({
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(recompute)
       observer.observe(host)
-      for (const ref of [overlaySelectBoundsRef, legendCornerRef, viewModeToggleRef, sphereFitFrameRef, mapFitFrameRef]) {
+      for (const ref of [overlaySelectBoundsRef, legendCornerRef, viewModeToggleRef, zoomGroupRef, sphereFitFrameRef, mapFitFrameRef]) {
         if (ref.current !== null) observer.observe(ref.current)
       }
     }
@@ -871,10 +871,9 @@ export function Globe({
       {/* Top-right stack (ADR-041 item 7), under the ✕: the raster-overlay selector. Renders on
           both phone and desktop (it is the *only* overlay control on a phone, `<Legend>` never
           shows there — see `<Legend>`'s own corner below). `overlaySelectBoundsRef` measures this
-          wrapper directly, so `--overlay-clear-bottom` reflects this corner alone now — `<Legend>`
-          moved to its own bottom-right corner, which doesn't share this stack's clearance concern
-          (see its own doc comment). `compact` (suppressing the ramp key) on a phone only: at the
-          390/412px floor row 2 has no room to spare for it — desktop has the room. */}
+          wrapper directly, so `--overlay-clear-bottom` reflects this corner alone. `compact`
+          (suppressing the ramp key) on a phone only: at the 390/412px floor row 2 has no room to
+          spare for it — desktop has the room. */}
       {expanded && webgl && (
         <div ref={overlaySelectBoundsRef} className={styles.overlaySelectStack} data-testid="globe-overlay-select-stack">
           <OverlaySelect
@@ -885,14 +884,12 @@ export function Globe({
           />
         </div>
       )}
-      {/* Bottom-right corner: the "Human civilisation" legend toggle. Desktop only — a phone
-          viewer never sees it at all (`humanOn`'s own doc comment above forces the layer on
-          there instead, since there is nothing to toggle it with) — so this corner is simply
-          absent on a phone rather than needing its own phone positioning rule.
-          `legendCornerRef`, paired with `viewModeToggleRef`, feeds `--bottom-corner-clear-top`
-          (`backdropRef`'s own effect above) — the bottom-edge counterpart to
-          `--overlay-clear-bottom`, so the sphere/map (particularly the wide map) can never grow
-          down underneath this corner or the toggle opposite it either. */}
+      {/* Top-left corner: the "Human civilisation" legend toggle, the mirror image of the overlay
+          stack above. Desktop only — a phone viewer never sees it at all (`humanOn`'s own doc
+          comment above forces the layer on there instead, since there is nothing to toggle it
+          with) — so this corner is simply absent on a phone rather than needing its own phone
+          positioning rule. `legendCornerRef` feeds `--legend-clear-bottom` (`backdropRef`'s own
+          effect above), so the sphere/map can never grow up underneath this corner. */}
       {expanded && webgl && !isPhoneViewport && (
         <div ref={legendCornerRef} className={styles.legendCorner} data-testid="globe-legend-corner">
           <Legend
@@ -916,6 +913,7 @@ export function Globe({
           onZoomOut={() => cameraApiRef.current?.zoomOut()}
           canZoomIn={zoomBounds.canZoomIn}
           canZoomOut={zoomBounds.canZoomOut}
+          groupRef={zoomGroupRef}
         />
       )}
 
@@ -952,10 +950,10 @@ interface ViewModeToggleProps {
  *  the button text alone wouldn't. The group's accessible name comes from a direct `aria-label`
  *  rather than `aria-labelledby`, since there is no separate label element to point at.
  *
- *  Positioned bottom-left (`Globe.module.css`'s `.viewModeGroup`, its own doc comment has the
- *  placement maths), opposite the "Human civilisation" legend at bottom-right — only the
- *  top-corner overlay selector and era shortcuts still need clearance protection
- *  (`Globe`'s own doc comment on `overlaySelectBoundsRef`).
+ *  Positioned bottom-left, its own left edge lined up with the scrub track's left edge
+ *  (`Globe.module.css`'s `.viewModeGroup`, its own doc comment has the placement maths) — the two
+ *  top corners (the overlay selector and the "Human civilisation" legend) still need clearance
+ *  protection (`Globe`'s own doc comment on `overlaySelectBoundsRef`/`legendCornerRef`).
  *  `heightRef` reports this element's own real height up to `ShellLayout` so the expanded
  *  sphere/map sizes itself into what's left over once this band is reserved
  *  (`useViewModeToggleHeightReport`). `data-testid` gives the QA harness a stable selector
@@ -983,6 +981,11 @@ interface ZoomControlsProps {
   onZoomOut: () => void
   canZoomIn: boolean
   canZoomOut: boolean
+  /** `Globe`'s own `zoomGroupRef` — its real top edge, on desktop/tablet a few px above
+   *  `ViewModeToggle`'s own (both share one row; this pill is taller), feeds
+   *  `--bottom-corner-clear-top` alongside the toggle's so the sphere/map stops short of
+   *  whichever of the two starts higher. */
+  groupRef: RefObject<HTMLDivElement | null>
 }
 
 /** Zoom in/out — a vertical pill of two buttons, same
@@ -995,9 +998,9 @@ interface ZoomControlsProps {
  *  reflects `GlobeCameraControls`'s own live-reported `zoomBounds`, so a press that can't move the
  *  camera any further visibly flattens rather than doing nothing unexplained. Never hidden while
  *  the expanded view is open (project rule: nothing fades/hides on inactivity). */
-function ZoomControls({ onZoomIn, onZoomOut, canZoomIn, canZoomOut }: ZoomControlsProps) {
+function ZoomControls({ onZoomIn, onZoomOut, canZoomIn, canZoomOut, groupRef }: ZoomControlsProps) {
   return (
-    <div className={styles.zoomGroup}>
+    <div ref={groupRef} className={styles.zoomGroup}>
       <button type="button" className={styles.zoomButton} onClick={onZoomIn} disabled={!canZoomIn} aria-label="Zoom in">
         <MagnifierIcon glyph="+" />
       </button>
