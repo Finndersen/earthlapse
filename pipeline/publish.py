@@ -97,9 +97,9 @@ from pipeline.transcode import (
 # Matches the committed stub's "/stub": web/src/shell/manifest.ts joins `${assetBase}/${data}`
 # for layer files, so a trailing slash would request "/media//layers/...".
 #
-# The default serves media from the dev server's own origin. A deployment passes the R2 origin
-# instead (`earthtime publish --asset-base https://media.example.org`), which is the only thing
-# that has to change for media to move off the site host -- see deploy/README.md.
+# Only a default for a consumer that reads the manifest off disk: the viewer overwrites this with
+# the base it fetched the manifest from (web/src/shell/manifest.ts), since media and manifest are
+# always published together and so always share an origin.
 ASSET_BASE = "/media"
 MANIFEST_NAME = "manifest.json"
 EVENTS_ID = "events-core"

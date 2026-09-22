@@ -476,6 +476,23 @@ describe('loadManifest', () => {
     expect(result.manifest.scenes).toHaveLength(3)
   })
 
+  it('rebases the primary manifest onto where it was fetched, not its published assetBase', async () => {
+    mockFetchSequence([
+      { url: '/media/manifest.json', status: 200, body: { ...stubManifest, assetBase: 'https://cdn.example.org' } },
+    ])
+    const result = await loadManifest()
+    expect(result.manifest.assetBase).toBe('/media')
+  })
+
+  it('rebases the stub manifest onto /stub', async () => {
+    mockFetchSequence([
+      { url: '/media/manifest.json', status: 404 },
+      { url: '/stub/manifest.json', status: 200, body: { ...stubManifest, assetBase: 'https://cdn.example.org' } },
+    ])
+    const result = await loadManifest()
+    expect(result.manifest.assetBase).toBe('/stub')
+  })
+
   it('throws on a non-404 failure of the primary fetch without trying the stub', async () => {
     const fetchMock = mockFetchSequence([{ url: '/media/manifest.json', status: 500 }])
     await expect(loadManifest()).rejects.toThrow(/500/)

@@ -44,13 +44,16 @@ import {
 /**
  * Where published media lives. Defaults to the dev server's own `/media` symlink; a deployment
  * sets `NEXT_PUBLIC_MEDIA_BASE` to the R2 origin (Next inlines it at build time) so the export
- * carries no media of its own. It must match the `--asset-base` the manifest was published with:
- * this constant only finds the manifest, and every path inside it hangs off `manifest.assetBase`.
+ * carries no media of its own.
  */
 const MEDIA_BASE = process.env.NEXT_PUBLIC_MEDIA_BASE ?? '/media'
 
-const MANIFEST_URL = `${MEDIA_BASE}/manifest.json`
-const STUB_MANIFEST_URL = '/stub/manifest.json'
+/** The committed fallback, served from the site's own origin whatever `MEDIA_BASE` points at. */
+const STUB_BASE = '/stub'
+
+const MANIFEST_FILE = 'manifest.json'
+const MANIFEST_URL = `${MEDIA_BASE}/${MANIFEST_FILE}`
+const STUB_MANIFEST_URL = `${STUB_BASE}/${MANIFEST_FILE}`
 
 export interface ManifestLoadResult {
   manifest: Manifest
@@ -61,17 +64,24 @@ export interface ManifestLoadResult {
 /**
  * Fetches the published manifest, falling back to the stub on a 404. Throws on anything else
  * going wrong — a caller that wants a loud error panel should let this propagate uncaught.
+ *
+ * `assetBase` is overwritten with the base the manifest was actually found at, whatever the
+ * publish step wrote into the file. Media and the manifest are always published together, so the
+ * one is always reachable from the other's origin; taking the published string at face value
+ * instead made two independent settings — `earthtime publish --asset-base` and
+ * `NEXT_PUBLIC_MEDIA_BASE` — that had to be kept in agreement by hand, and a manifest published
+ * for the deployed origin then pointed a local dev server's every asset fetch at the CDN.
  */
 export async function loadManifest(): Promise<ManifestLoadResult> {
   const primary = await fetchManifest(MANIFEST_URL)
   if (primary !== null) {
-    return { manifest: validateManifest(primary), isStub: false }
+    return { manifest: { ...validateManifest(primary), assetBase: MEDIA_BASE }, isStub: false }
   }
   const stub = await fetchManifest(STUB_MANIFEST_URL)
   if (stub === null) {
     throw new Error(`${STUB_MANIFEST_URL}: not found — no manifest available`)
   }
-  return { manifest: validateManifest(stub), isStub: true }
+  return { manifest: { ...validateManifest(stub), assetBase: STUB_BASE }, isStub: true }
 }
 
 /** Fetches and JSON-parses a manifest URL. Returns null on a 404; throws on any other

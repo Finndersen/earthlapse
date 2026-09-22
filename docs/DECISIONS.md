@@ -6732,3 +6732,35 @@ every globe texture sampled at the renderer default of 1.
 **Consequences.** Changed: `web/src/globe/deviceTier.ts` (signature loses a parameter) and its
 test, `textureCache.ts`, `humanEraTextureCache.ts`, and `Globe.tsx`'s call site plus the effect
 that reports renderer capability.
+
+---
+
+## ADR-043 — The manifest is rebased onto where it was fetched, not where it says it lives
+
+**Status:** accepted — 2026-09-22.
+
+**Context.** `earthtime publish` writes an `assetBase` string into `manifest.json`, and the web
+shell took it at face value: every media URL in the app was `manifest.assetBase + path`. The base
+the *manifest itself* was fetched from — `NEXT_PUBLIC_MEDIA_BASE`, defaulting to `/media` — was a
+second, independent setting. Nothing checked that the two agreed; `deploy/README.md` said as much
+in its own words ("nothing but care checks that they agree").
+
+They diverged in the obvious way. A manifest published with `--asset-base
+https://media.earthlapse.net` and then served to a local dev server sent every asset fetch to the
+CDN, so `pnpm dev` loaded the deployed media — and 404'd on anything published locally but not yet
+uploaded (`layers/hyde_cleared_land.json`). The failure is silent in production and only shows up
+in development, which is the worst possible split.
+
+**Decision.** `loadManifest` overwrites `assetBase` with the base the manifest was actually found
+at: `MEDIA_BASE` for the primary manifest, `/stub` for the committed fallback. The published
+string is only a default for a consumer reading the file off disk without fetching it.
+
+This is sound because media and manifest are always published together as one tree — the one is
+always reachable from the other's origin. `NEXT_PUBLIC_MEDIA_BASE` becomes the single setting that
+names an origin, and `earthtime publish --asset-base` is no longer part of the deploy flow.
+
+**Consequences.** Changed: `web/src/shell/manifest.ts` (+ two tests), `web/src/types/manifest.ts`,
+`pipeline/publish.py`'s comment, `deploy/README.md`'s publish step. A local dev server now serves
+local media whatever the manifest was published for, and the stub fallback is correctly
+self-relative rather than inheriting a CDN base it has no assets at.
+

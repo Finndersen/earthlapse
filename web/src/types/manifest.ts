@@ -17,6 +17,9 @@ export interface Manifest {
   schemaVersion: 1
   /** Build digest, for cache-busting and for tying a page back to a pipeline run. */
   buildId: string
+  /** Every media path in this manifest is relative to this base. `shell/manifest.ts` sets it
+   *  from wherever the manifest itself was fetched, so what `earthtime publish` writes here is
+   *  only a default for a consumer that reads the file without fetching it. */
   assetBase: string
   scenes: Scene[]
   chapters: Chapter[]

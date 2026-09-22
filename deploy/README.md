@@ -31,7 +31,7 @@ this uses Workers.
 
 ```
 git lfs pull                                   # media must be content, not LFS pointers
-.venv/bin/earthtime publish --asset-base https://media.<domain>
+.venv/bin/earthtime publish
 make deploy-media                              # rclone → R2, changed objects only
 make deploy-site                               # build against the R2 origin, then wrangler deploy
 ```
@@ -45,9 +45,12 @@ against R2's S3 endpoint, the route Cloudflare documents.
 fails if the R2 origin was not baked into the output rather than shipping a site whose assets all
 404.
 
-`--asset-base` and `NEXT_PUBLIC_MEDIA_BASE` must name the same origin: the first decides where
-every path inside the manifest hangs off, the second only decides where the manifest itself is
-fetched from. `build-site.sh` checks the second; nothing but care checks that they agree.
+`NEXT_PUBLIC_MEDIA_BASE` is the only origin setting. It decides where the manifest is fetched
+from, and the viewer hangs every path inside the manifest off that same base rather than off the
+`assetBase` string the publish step wrote (`web/src/shell/manifest.ts`). So one published
+`data/media/` tree serves both a local dev server and the deployment, and `earthtime publish
+--asset-base` is not part of this flow — passing the R2 origin there used to be required, and
+left a dev server fetching every asset from the CDN.
 
 ## Still to wire up
 
