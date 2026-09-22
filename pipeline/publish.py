@@ -145,6 +145,9 @@ SCALAR_LAYERS = (
     # (unlike day_length) -- this is the one HUD number the readout column has nothing else
     # covering, so it earns a sparkline/chart the way co2's own does.
     LayerSpec("population", "Global population", LayerSurface.HUD, "hyde", chartable=True),
+    # LR04-derived (sources/lr04): drive the globe's ice-age caps and shelf exposure, not the HUD.
+    LayerSpec("ice_volume", "Ice volume (LGM = 1)", LayerSurface.GLOBE, "lr04", chartable=False),
+    LayerSpec("sea_level", "Sea level", LayerSurface.GLOBE, "lr04", chartable=False),
 )
 NODE_LAYERS = (LayerSpec("lineage", "Your ancestor", LayerSurface.HUD, "lineage", chartable=False),)
 RASTER_LAYERS = (

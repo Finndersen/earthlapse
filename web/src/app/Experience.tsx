@@ -19,6 +19,7 @@ import { createPortal } from 'react-dom'
 import { SoundToggle, useAudioEngine } from '@/audio'
 import { EventDetailPanel, EventFeed, EventTagLegend, placementT } from '@/events'
 import { Globe } from '@/globe'
+import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import { OnboardingTour } from '@/onboarding'
@@ -364,6 +365,7 @@ export function Experience() {
           populationDensity: rasters.get('hyde_population_density')?.data ?? null,
         }
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
+  const iceAgeLayers = useMemo(() => iceAgeLayersFrom(scalarLayers), [scalarLayers])
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
   const cities = featureSets.get('cities')?.data.features ?? null
 
@@ -494,6 +496,7 @@ export function Experience() {
               assetBase={manifest.assetBase}
               regimeEvents={regimeEvents}
               effectEvents={manifest.events}
+              iceAgeLayers={iceAgeLayers}
               expanded={globeExpanded}
               onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
               cities={cities}

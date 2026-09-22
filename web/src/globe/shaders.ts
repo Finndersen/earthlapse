@@ -6,6 +6,8 @@
 import { BASEMAP_GRADE_GAMMA, BASEMAP_GRADE_SATURATION, BASEMAP_GRADE_SCALE } from './blend'
 import { DENSITY_RAMP_GLSL } from './density'
 import { glslFloat } from './glsl'
+import { ICE_SHEETS_GLSL } from './ice/iceSheets'
+import { SHELF_GLSL } from './ice/shelf'
 import { PROJECTION_GLSL } from './projection'
 
 /** Radius of the atmosphere shell, as a multiple of the planet's. */
@@ -121,6 +123,13 @@ vec3 gradeBasemapColor(vec3 color) {
 
 ${DENSITY_RAMP_GLSL}
 
+// docs/GLOBE.md §5.1: the Cenozoic ice age (ice/). uSeaLevel is metres relative to present
+// (negative in a glacial lowstand); uIceSheetRadius, declared in ICE_SHEETS_GLSL, is each schematic
+// ice sheet's current angular radius. Both zero-initialised, so outside 0-34 Ma nothing is drawn.
+uniform float uSeaLevel;
+${SHELF_GLSL}
+${ICE_SHEETS_GLSL}
+
 // Wall-clock seconds, *not* t: drives the magma-ocean crack shimmer and water-world steam
 // drift. Non-informational decoration, the same precedent as Globe.tsx's own auto-rotate
 // (mesh.rotation.y += delta) — see effects/index.ts's integration note. Defaults to 0
@@ -228,7 +237,16 @@ void main() {
   // gradeBasemapColor tone-matches Natural Earth II's own much paler, less saturated palette to
   // PaleoDEM's stylised one (this file's own BASEMAP_GRADE_* doc comment) so the crossfade doesn't
   // read as a brightness jump.
-  baseColor = mix(baseColor, gradeBasemapColor(texture2D(uBasemapTex, uv).rgb), uBasemapStrength);
+  vec3 basemapSample = texture2D(uBasemapTex, uv).rgb;
+  baseColor = mix(baseColor, gradeBasemapColor(basemapSample), uBasemapStrength);
+
+  // docs/GLOBE.md §5.1: the glacial lowstand's exposed shelf, painted only where the displayed
+  // base is water — the depth itself is read back from the PaleoDEM sample, which stays bound
+  // under the basemap (ice/shelf.ts).
+  float displayedWater = mix(waterness(dataColor), waterness(basemapSample), uBasemapStrength) * uHasData;
+  float lowstand = min(uSeaLevel, 0.0);
+  float exposedShelf = emergentAt(dataColor, lowstand) * displayedWater * lowstandActive(lowstand);
+  baseColor = mix(baseColor, exposedShelfColor(uBasemapStrength), exposedShelf);
 
   // The density overlay, over the basemap and under everything older: decoded back to real
   // people per square km (never treated as a colour, see density.ts), then run through the
@@ -242,6 +260,12 @@ void main() {
   );
   vec4 densityColor = densityRampAt(decodeLogDensity(densitySample, max(uDensityDMax, 1.0)));
   baseColor = mix(baseColor, densityColor.rgb, densityColor.a * uDensityStrength);
+
+  // docs/GLOBE.md §5.1: the schematic ice sheets, over the shelf and density, clipped at their
+  // margins to land (including exposed shelf). Under the basemap only the ice beyond today's
+  // extent is drawn — Natural Earth II already shows today's (ice/iceSheets.ts).
+  float iceGround = max(1.0 - displayedWater, exposedShelf);
+  baseColor = mix(baseColor, iceSheetColor(n), iceSheetCover(n, iceGround, uBasemapStrength) * 0.95);
 
   // G8: blend the active regime(s) over whatever the base look otherwise is. uRegimeWeights
   // sums to 0 outside every regime (base look untouched) and to ~1 in each regime's interior;

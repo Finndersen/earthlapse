@@ -12,7 +12,7 @@
  */
 
 import { rafTicks } from './hook.mjs'
-import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf } from './measure.mjs'
+import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, mapColoursAt } from './measure.mjs'
 import { waitForApproxUnfoldProgress, waitForFocusEaseSettle, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 import {
   ANCESTOR_CANVAS_SELECTOR,
@@ -2708,4 +2708,74 @@ export default [
     },
     expect: { done: [1, 1] },
   },
+  ...iceAgeShots(),
 ]
+
+/**
+ * The Cenozoic ice age on the expanded map (docs/GLOBE.md §5.1): schematic ice sheets scaled by
+ * LR04 and the glacial lowstand's exposed shelf, sampled at fixed geographic points through
+ * `mapColoursAt`. `whiteness` (darkest channel) reads ice, `blueOverGreen` reads water. The extra
+ * settle covers the ice age's own presentation rate limit, which a jump from the previous shot's
+ * `t` can need up to ~2 s to finish.
+ */
+function iceAgeShots() {
+  const POINTS = {
+    laurentide: { lon: -100, lat: 58 },
+    fennoscandia: { lon: 16, lat: 63 },
+    greenland: { lon: -40, lat: 74 },
+    antarctica: { lon: 30, lat: -82 },
+    sunda: { lon: 108, lat: 4 },
+    beringia: { lon: -172, lat: 63 },
+  }
+  const measure = async ({ page }) => {
+    const { mapWidth, colours } = await mapColoursAt(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR), POINTS)
+    return { mapWidth, ...colours }
+  }
+  // Expanded through the hook rather than `state`: `state` also resolves the "Human civilisation"
+  // legend toggle, whose row does not exist before people do (120 ka and older).
+  const expandToMapAndSettle = async ({ page, hook }) => {
+    await hook.setGlobeExpanded(true)
+    await hook.setGlobeViewMode('map')
+    await waitForSceneCrossfadeSettle(page)
+    await rafTicks(page, 2)
+  }
+  const shot = (name, t, description, expect) => ({
+    name,
+    description,
+    viewport: DEFAULT_VIEWPORT,
+    t,
+    actions: expandToMapAndSettle,
+    measure,
+    expect: { mapWidth: [1080, 1130], ...expect },
+  })
+  return [
+    shot('globe-ice-lgm', 21_000, 'Last Glacial Maximum: Laurentide and Fennoscandian sheets read as ice; Sunda and Beringia shelves read as land.', {
+      'laurentide.whiteness': [140, 255],
+      'fennoscandia.whiteness': [140, 255],
+      'greenland.whiteness': [140, 255],
+      'sunda.blueOverGreen': [-80, 5],
+      'beringia.blueOverGreen': [-80, 5],
+    }),
+    shot('globe-ice-present', 0, 'Present day: Greenland alone in the north; no Laurentide or Fennoscandian ice; Sunda is sea.', {
+      'laurentide.whiteness': [0, 125],
+      'fennoscandia.whiteness': [0, 125],
+      'greenland.whiteness': [140, 255],
+      'sunda.blueOverGreen': [20, 120],
+    }),
+    shot('globe-ice-eemian', 120_000, 'Eemian interglacial (~120 ka): small caps as today; no Laurentide ice; shelves drowned.', {
+      'laurentide.whiteness': [0, 125],
+      'fennoscandia.whiteness': [0, 125],
+      'greenland.whiteness': [140, 255],
+      'sunda.blueOverGreen': [20, 120],
+    }),
+    shot('globe-ice-10ma', 10_000_000, 'Middle Miocene (10 Ma): Antarctica ice-capped, no Northern Hemisphere ice.', {
+      'antarctica.whiteness': [140, 255],
+      'greenland.whiteness': [0, 125],
+      'laurentide.whiteness': [0, 125],
+    }),
+    shot('globe-ice-50ma', 50_000_000, 'Early Eocene (50 Ma): no ice anywhere.', {
+      'antarctica.whiteness': [0, 125],
+      'greenland.whiteness': [0, 125],
+    }),
+  ]
+}

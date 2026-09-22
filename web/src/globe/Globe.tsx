@@ -65,6 +65,7 @@ import styles from './Globe.module.css'
 import { buildGlobeGeometry } from './globeGeometry'
 import { GlobeStaticOrb } from './GlobeStaticOrb'
 import { basemapTextureCache, densityTextureCache, initAndCloseHumanEraTexture } from './humanEraTextureCache'
+import { ICE_SHEET_DOME_COUNT, type IceAgeLayers, type IceAgeState, useIceAge, writeIceSheetRadii } from './ice'
 import { Legend, type LegendRow } from './Legend'
 import { isOrbClick } from './orbGesture'
 import { isPoleVisible, poleDirection, type PoleId } from './poles'
@@ -246,6 +247,10 @@ export interface GlobeProps {
    *  carries: Snowball Earth's `ice-shell`, K-Pg's `impact-winter`, the Moon-forming impact's
    *  `giant-impact` (docs/GLOBE.md §5.3, §6). */
   effectEvents: readonly TimelineEvent[]
+  /** The LR04 `ice_volume`/`sea_level` layers driving the Cenozoic ice sheets and lowstand
+   *  (docs/GLOBE.md §5.1), or `null` when either isn't published — Antarctica still appears then,
+   *  at its present extent. */
+  iceAgeLayers: IceAgeLayers | null
   expanded: boolean
   onToggleExpand: () => void
   /** Reports the current caption text (docs/GLOBE.md §7) on every change, `''` for none. `Globe`
@@ -291,6 +296,7 @@ export function Globe({
   assetBase,
   regimeEvents,
   effectEvents,
+  iceAgeLayers,
   expanded,
   onToggleExpand,
   onCaptionChange,
@@ -414,7 +420,11 @@ export function Globe({
     () => regimeEventsWithRasterFallback(regimeEvents, rasterLayers.neoproterozoic !== null),
     [regimeEvents, rasterLayers.neoproterozoic],
   )
-  const fallbackCaption = useMemo(() => globeMultiCaptionFor(rasterLayers, t), [rasterLayers, t])
+  const iceAge = useIceAge(t, iceAgeLayers)
+  const fallbackCaption = useMemo(
+    () => iceAge.caption || globeMultiCaptionFor(rasterLayers, t),
+    [iceAge.caption, rasterLayers, t],
+  )
   const effects = useGlobeEffects(t, effectiveRegimeEvents, effectEvents, fallbackCaption)
   const caption = effects.caption
 
@@ -638,6 +648,7 @@ export function Globe({
                 mix={mix}
                 hasData={showTexture}
                 effects={effects.uniforms}
+                iceAge={iceAge.state}
                 unfold={unfold}
                 basemapTex={basemapPair.beforeTex}
                 basemapStrength={basemapStrength}
@@ -1475,6 +1486,8 @@ interface GlobeSphereProps {
    *  overlays resolved by `web/src/globe/effects`, in exactly the shape `shaders.ts`'s new
    *  uniforms want. */
   effects: GlobeEffectUniforms
+  /** docs/GLOBE.md §5.1: the presented ice age, driving `uIceSheetRadius` and `uSeaLevel`. */
+  iceAge: IceAgeState
   /** 0 (sphere) .. 1 (Equal Earth map) — `GLOBE_VERTEX_SHADER`'s `uUnfold` (docs/GLOBE.md's
    *  ADR-033). */
   unfold: number
@@ -1509,6 +1522,7 @@ function GlobeSphere({
   mix,
   hasData,
   effects,
+  iceAge,
   unfold,
   basemapTex,
   basemapStrength,
@@ -1642,9 +1656,15 @@ function GlobeSphere({
       uDensityChannel: { value: [1, 0, 0] },
       uDensityDMax: { value: 1 },
       uDensityStrength: { value: 0 },
+      uSeaLevel: { value: 0 },
+      uIceSheetRadius: { value: new Float32Array(ICE_SHEET_DOME_COUNT) },
     }),
     [],
   )
+
+  useEffect(() => {
+    writeIceSheetRadii(iceAge, uniforms.uIceSheetRadius.value)
+  }, [iceAge, uniforms])
 
   useFrame((_state, delta) => {
     clockRef.current += delta
@@ -1690,6 +1710,7 @@ function GlobeSphere({
         uniforms-uDensityChannel-value={densityChannel}
         uniforms-uDensityDMax-value={densityDMax}
         uniforms-uDensityStrength-value={densityStrength}
+        uniforms-uSeaLevel-value={iceAge.seaLevelM}
       />
     </mesh>
   )

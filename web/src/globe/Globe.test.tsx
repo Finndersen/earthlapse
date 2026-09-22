@@ -35,6 +35,7 @@ function renderGlobe(overrides: Partial<GlobeProps> = {}) {
       assetBase="https://cdn.example.com/build"
       regimeEvents={REGIME_EVENTS}
       effectEvents={EFFECT_EVENTS}
+      iceAgeLayers={null}
       expanded={false}
       onToggleExpand={onToggleExpand}
       onCaptionChange={onCaptionChange}
