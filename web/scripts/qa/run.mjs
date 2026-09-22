@@ -212,19 +212,20 @@ async function applyState(page, hook, state = {}) {
     await hook.selectSection(ROOT_SECTION_ID)
     await waitForSectionWindowSettle(page)
   }
+  // Collapsed first, every shot: the expanded globe's canvas covers the HUD controls the two
+  // closers below click, and the camera (zoom, map pan) resets only on a real collapse, so two
+  // consecutive expanded shots would otherwise share whatever pose the first one left. The frames
+  // between collapse and re-expand let React commit the collapse rather than batch it away.
+  await hook.setGlobeExpanded(false)
+  await hook.ready()
+  await rafTicks(page, 2)
   await closeEventBrowser(page, hook)
   await closeExpandedChart(page, hook)
   const globeExpanded = state.globeExpanded ?? false
   if (globeExpanded) {
-    // A real collapse before every expand: the globe's camera (zoom, map pan) resets only on an
-    // expanded -> collapsed transition, so two consecutive expanded shots would otherwise share
-    // whatever pose the first one left.
-    await hook.setGlobeExpanded(false)
     await hook.setGlobeExpanded(true)
-  } else {
-    await hook.setGlobeExpanded(false)
-  }
-  if (globeExpanded) {
+    await hook.ready()
+    await rafTicks(page, 2)
     await hook.setGlobeViewMode(state.globeViewMode ?? 'globe')
     // `setGlobeViewMode` clicks the real toggle even when the mode is already correct, and a
     // real change starts the sphere<->map unfold tween, which has no DOM/store reflection of its

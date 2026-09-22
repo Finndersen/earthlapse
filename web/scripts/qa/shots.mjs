@@ -3784,10 +3784,18 @@ function iceAgeShots() {
   }
   // Expanded through the hook rather than `state`: `state` also resolves the "Human civilisation"
   // legend toggle, whose row does not exist before people do (120 ka and older).
+  // Zoomed fully out explicitly: the map keeps its zoom when its fit frame changes (the legend
+  // corner filling or emptying as `t` crosses 120 ka), so the default framing alone is not a
+  // fixed map size.
   const expandToMapAndSettle = async ({ page, hook }) => {
     await hook.setGlobeExpanded(true)
     await hook.setGlobeViewMode('map')
     await waitForSceneCrossfadeSettle(page)
+    const zoomOut = page.getByRole('button', { name: 'Zoom out' })
+    for (let clicks = 0; clicks < 12 && (await zoomOut.isEnabled()); clicks += 1) {
+      await zoomOut.click()
+      await waitForApproxUnfoldProgress(page, 0.5)
+    }
     await rafTicks(page, 2)
   }
   const shot = (name, t, description, expect) => ({
