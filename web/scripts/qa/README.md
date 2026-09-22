@@ -72,9 +72,19 @@ Shots are data (`shots.mjs`), not code — add one object, never touch `run.mjs`
 `(page, selector, options) -> numbers` function to `measure.mjs`; assertions belong in `expect`,
 not the measurement itself.
 
-## Known flake
+## Known flakes
 
-On a small fraction of otherwise-identical clean builds, this repo's Next 16 + Turbopack has
+**Batch-order sensitivity.** Two shots pass alone and fail inside a larger batch:
+`globe-click-on-backdrop-still-closes` (passes in every batch of ≤11 shots, fails in every batch
+of ≥22) and `timeline-pip-thumbnail-hover` (44×44 alone, 43×32 in a 14-shot batch). Both point at
+the same thing: something one shot leaves behind that the next inherits, despite `applyState`
+resolving every field it covers. Undiagnosed — do not read either failure as a regression in
+whatever you just changed, and reproduce with a single-shot `--grep` before believing it.
+
+`breadcrumb-trimmed` is the same family with a known mechanism: it assumes it starts at a shallow
+section, so a preceding shot that navigates deep makes its `getByRole` wait time out.
+
+**Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 + Turbopack has
 failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook. `run.mjs`
 checks for `window.__earthtime` right after load and fails fast, naming this, if it never
 appears — the fix is to rebuild (drop `--no-build`) and re-run.
