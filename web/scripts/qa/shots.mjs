@@ -929,6 +929,32 @@ export default [
     expect: { feedBelowSphereGapPx: [4, 400], breadcrumbBelowFeedGapPx: [2, 60] },
   },
   {
+    name: 'feed-strip-no-tag-label-phone',
+    description:
+      "Phone: the one-line event feed strip paints no category word — the chip's colour is the category cue there — " +
+      'while the label stays in the DOM for screen readers. Desktop cards keep the word (`feed-tag-label-desktop`).',
+    viewport: { width: 390, height: 844 },
+    t: 0,
+    measure: async ({ page }) => {
+      const tag = page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first()
+      const box = await tag.boundingBox()
+      return { tagInDom: (await tag.count()) > 0 ? 1 : 0, tagWidthPx: box === null ? 0 : box.width }
+    },
+    expect: { tagInDom: [1, 1], tagWidthPx: [0, 1] },
+  },
+  {
+    name: 'feed-tag-label-desktop',
+    description: 'Desktop: every event feed card still shows its primary tag as a word beside the date.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => {
+      const tag = page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first()
+      const box = await tag.boundingBox()
+      return { tagWidthPx: box === null ? 0 : box.width }
+    },
+    expect: { tagWidthPx: [20, 200] },
+  },
+  {
     name: 'globe-expanded-map',
     description:
       'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size (drawn pixels) — ' +

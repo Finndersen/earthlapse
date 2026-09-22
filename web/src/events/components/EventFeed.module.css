@@ -226,7 +226,7 @@
   white-space: nowrap;
 }
 
-/* Primary-tag label (item 11): coloured straight from `EVENT_TAG_PALETTE` via the inline
+/* Primary-tag label, coloured straight from `EVENT_TAG_PALETTE` via the inline
    `color` style `EventFeedCard` sets — no second colour source to drift out of sync with the
    chip/accent/wash, which all read the same swatch. */
 .tag {
@@ -253,8 +253,8 @@
 
 /* The phone's "compact single-card strip": `<EventFeed>` caps to one card here, and the phone HUD
    leaves the feed row only a few dozen px between the readouts and the caption, so the strip is
-   one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet (item
-   12) rather than growing the strip in place, so unlike the desktop card this one never has a
+   one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet rather
+   than growing the strip in place, so unlike the desktop card this one never has a
    second, taller state to account for. */
 @media (max-width: 760px) {
   .feed {
@@ -298,15 +298,25 @@
     height: auto;
   }
 
-  /* Only the description drops here — no room for it alongside title and date on one line, but
-     it's still shown in full inside the detail panel a tap opens. The tag label stays: every
-     card shows its primary tag, never relying on the colour chip alone, so hiding `.tag` here
-     would leave a coloured dot with no text as the phone strip's only category cue.
-     `.detail`'s own `text-overflow: ellipsis` (the un-mediaqueried rule above) truncates the
-     tag+date pair together if the strip is too narrow for both in full, rather than ever
-     hiding the tag outright. */
+  /* No room for the description alongside title and date on one line; the detail panel a tap
+     opens shows it in full. */
   .description {
     display: none;
+  }
+
+  /* The tag's word costs the one-line strip more width than it is worth here, so the chip's
+     colour is the visible category cue. Hidden visually rather than with `display: none` so a
+     screen reader still announces the category, and the detail panel still names it. */
+  .tag {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 }
 
