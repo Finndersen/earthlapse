@@ -6892,3 +6892,58 @@ The bound comes from one source: `.shell` publishes `--edge-button-size`, `--tra
 gone. The sphere's usable box clears the measured legend at the top and the measured toggle and
 zoom row at the bottom. ADR-044's `.title` transform trap now applies only on a phone, where the
 shortcuts are still `position: fixed`.
+
+---
+
+## ADR-047 — Scene framing gains a portrait zoom
+
+**Status:** accepted — 2026-09-22. Extends ADR-045.
+
+**Context.** ADR-045's cover window on a portrait phone always spans the still's full height, so
+only `focus.x` does anything. On a 390×844 phone the HUD covers roughly the top quarter of the
+screen and the event chip, caption and timeline the bottom ~40%, leaving about 25–60% of the
+height clear. A still whose subject sits in its lower third — people round a fire
+(`jebel-irhoud-firelight`), a lone hominin on a river bank (`lucy-afarensis`), anything below a
+split-level waterline — put that subject under the caption while the clear band showed sky.
+Regenerating those stills would discard pinned, reviewed images to fix a viewing problem.
+
+**Decision.** `framing` gains an optional `portrait_zoom` (YAML/Python; `portraitZoom` on the
+wire and in TypeScript):
+
+```yaml
+framing: {focus: [x, y], pan: <degrees>, portrait_zoom: <1..1.5>}
+```
+
+- **Crop rule.** Compute ADR-045's window `(W, H)`. If the viewport is portrait (`va < 1`), divide
+  both by `portrait_zoom`; otherwise leave them alone. Centre each axis on `focus`, clamped inside
+  the image: `cx = clamp(focus.x, W/2, 1 − W/2)`, `cy = clamp(focus.y, H/2, 1 − H/2)`. An axis
+  the window spans fully has one position, so at zoom 1, or in any landscape viewport, this is
+  ADR-045's window exactly — the same floating-point values, not merely the same to within a
+  pixel. `coverWindow` (`web/src/scene/framing.ts`) remains the one implementation both renderers
+  use.
+- **Cap 1.5.** At 1.5 a 390-CSS-px-wide phone at DPR 3 shows a window ~470 source px wide across
+  1170 device px, ~2.5× upscale against ~1.65× at zoom 1; beyond that the softening is visible.
+  At the cap a subject at 75% of the image height lands at ~62% of the screen, so the cap also
+  bounds what the zoom can rescue: a subject lower than that stays partly behind the chrome.
+- **Default 1**, and published only when it differs from 1, like every other additive manifest
+  field. Validated in `pipeline/scenes.py` (`ge=1`, `le=MAX_PORTRAIT_ZOOM`), on the wire model, and
+  in `web/src/shell/manifest.ts` (`[1, MAX_PORTRAIT_ZOOM]`).
+- **Drift** is unchanged: it is already measured in fractions of the window (ADR-045), so the
+  push-in and pan stay inside the smaller window, and cover the same share of the screen.
+- **Fallback renderer.** `object-fit: cover` can only show the unzoomed window, so the no-WebGL
+  path keeps `object-position` for that and adds to its transform a scale-and-translate that fills
+  the box with the zoomed window before the drift (`coverCss`). A test checks that it draws the
+  same image point at each screen point as the shader.
+- **Invisible to the asset graph**, like the rest of `framing`: no prompt or image digest changes,
+  no pin is cleared.
+
+**Consequences.**
+- 27 of the 71 scenes set a zoom (1.2–1.5) with a revised `focus.y` (and in a few cases `focus.x`
+  for the narrower window), chosen against phone-portrait shots from
+  `web/scripts/qa/shots.scene-framing.mjs`. Scenes whose subject already sits in the clear band
+  stay unzoomed.
+- `silurian-shore`'s sea scorpion and `ediacaran-shallows`' *Dickinsonia* sit low enough that even
+  the cap only half-lifts them; a still composed with its subject higher is the fix if that
+  matters.
+- Tablets in portrait zoom by the same factor. Their clear band is larger, so they get more zoom
+  than they need; the values were judged on a phone only.

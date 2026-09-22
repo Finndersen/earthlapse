@@ -69,6 +69,10 @@ export interface SceneLocation {
   marker: SceneCoordinates | null
 }
 
+/** Upper bound of `SceneFraming.portraitZoom`: beyond it a phone upscales the still enough to
+ *  visibly soften it. */
+export const MAX_PORTRAIT_ZOOM = 1.5
+
 /**
  * Where the viewer crops a scene's still and which way its camera drift travels (ADR-045).
  * `focus` is `[x, y]` in fractions of the image's own width and height, origin top-left, y down:
@@ -76,10 +80,14 @@ export interface SceneLocation {
  * the window stays inside the image (`scene/framing.ts`). `pan` is the direction the camera
  * travels across the image over the drift, in degrees in `[0, 360)`: 0 toward the right edge,
  * 90 toward the bottom, 180 left, 270 up — so the content slides the opposite way on screen.
+ * `portraitZoom`, in `[1, MAX_PORTRAIT_ZOOM]`, shrinks the window by that factor in both
+ * dimensions in a portrait viewport only, so `focus` then places it vertically too (ADR-047).
+ * Absent means 1.
  */
 export interface SceneFraming {
   focus: [number, number]
   pan: number
+  portraitZoom?: number
 }
 
 export interface Scene {

@@ -199,4 +199,19 @@ describe('SceneView', () => {
     expect(base.style.objectPosition).toBe('0% 50%')
     expect(overlay.style.objectPosition).toBe('50% 50%')
   })
+
+  it("scales a zoomed scene's layer up to its portrait window and leaves an unzoomed one at the drift alone", () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 390,
+      height: 844,
+    } as DOMRect)
+    const still = { width: 2752, height: 1536 }
+    const zoomed: Scene = { ...s0, ...still, framing: { focus: [0.5, 0.5], pan: 0, portraitZoom: 1.25 } }
+    const plain: Scene = { ...s1, ...still, framing: { focus: [0.5, 0.5], pan: 0 } }
+    render(<SceneView t={midT} scenes={[zoomed, plain, s2, s3]} assetBase="https://cdn.example.com/build" />)
+    const base = screen.getByTestId('scene-base') as HTMLImageElement
+    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
+    expect(base.style.transform).toContain('scale(1.25, 1.25)')
+    expect(overlay.style.transform).not.toContain('translate(-50%, -50%)')
+  })
 })

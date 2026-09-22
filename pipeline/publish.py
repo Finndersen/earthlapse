@@ -601,7 +601,11 @@ def _scene_sound(sound: SceneSoundRecord | None) -> SceneSound | None:
 def _scene_framing(framing: SceneFramingRecord | None) -> SceneFraming | None:
     if framing is None:
         return None
-    return SceneFraming(focus=framing.focus, pan=framing.pan)
+    return SceneFraming(
+        focus=framing.focus,
+        pan=framing.pan,
+        portrait_zoom=None if framing.portrait_zoom == 1.0 else framing.portrait_zoom,
+    )
 
 
 def _load_reconstructor_if_needed(pinned: list[SceneRecord], root: Path) -> Reconstructor | None:

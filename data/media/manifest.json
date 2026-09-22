@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "48d1f60e1df91db3",
+  "buildId": "d00274589aa90680",
   "assetBase": "/media",
   "scenes": [
     {
@@ -330,10 +330,11 @@
       ],
       "framing": {
         "focus": [
-          0.62,
-          0.6
+          0.6,
+          0.62
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.25
       },
       "pinned": "d6a9b3f322ea5a15",
       "width": 2752,
@@ -547,9 +548,10 @@
       "framing": {
         "focus": [
           0.55,
-          0.68
+          0.85
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "1bb72621b940a4f0",
       "width": 2752,
@@ -655,7 +657,8 @@
           0.56,
           0.62
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.25
       },
       "pinned": "815e21329ccda9ba",
       "width": 2752,
@@ -1032,9 +1035,10 @@
       "framing": {
         "focus": [
           0.56,
-          0.58
+          0.6
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.2
       },
       "pinned": "69f1684c8d9654bb",
       "width": 2752,
@@ -1135,10 +1139,11 @@
       },
       "framing": {
         "focus": [
-          0.625,
-          0.58
+          0.62,
+          0.65
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.2
       },
       "pinned": "e5e38045d401cbd2",
       "width": 2752,
@@ -1201,10 +1206,11 @@
       },
       "framing": {
         "focus": [
-          0.34,
-          0.7
+          0.38,
+          0.85
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.4
       },
       "pinned": "ca26d88194e6bbd2",
       "width": 2752,
@@ -1243,7 +1249,8 @@
           0.6,
           0.62
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.3
       },
       "pinned": "23b1e972d4fa9690",
       "width": 2752,
@@ -1308,9 +1315,10 @@
       "framing": {
         "focus": [
           0.6,
-          0.66
+          0.8
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "347021bb25fb32ad",
       "width": 2752,
@@ -1397,9 +1405,10 @@
       "framing": {
         "focus": [
           0.585,
-          0.6
+          0.63
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.5
       },
       "pinned": "93b44eb04685155f",
       "width": 2752,
@@ -1443,10 +1452,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.68,
-          0.7
+          0.63,
+          0.8
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.5
       },
       "pinned": "6fd97ed7b5dbfd9a",
       "width": 2752,
@@ -1464,10 +1474,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.62,
-          0.55
+          0.58,
+          0.62
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "32b5e8d94688fbc7",
       "width": 2752,
@@ -1485,10 +1496,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.64,
-          0.66
+          0.63,
+          0.8
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "735c1240a8062713",
       "width": 2752,
@@ -1564,10 +1576,11 @@
       },
       "framing": {
         "focus": [
-          0.54,
-          0.45
+          0.6,
+          0.6
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.25
       },
       "pinned": "40cf7c5b9d357780",
       "width": 2752,
@@ -1591,9 +1604,10 @@
       "framing": {
         "focus": [
           0.6,
-          0.55
+          0.62
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.2
       },
       "pinned": "5a6d2ef2f576c49e",
       "width": 2752,
@@ -1637,10 +1651,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.54,
-          0.66
+          0.46,
+          0.75
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "fba843f413d942db",
       "width": 2752,
@@ -1705,10 +1720,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.68,
-          0.63
+          0.69,
+          0.8
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.4
       },
       "pinned": "0ea6dc80408755ae",
       "width": 2752,
@@ -1731,10 +1747,11 @@
       },
       "framing": {
         "focus": [
-          0.63,
-          0.62
+          0.62,
+          0.7
         ],
-        "pan": 90.0
+        "pan": 90.0,
+        "portraitZoom": 1.3
       },
       "pinned": "47c14793925a8c37",
       "width": 2752,
@@ -1757,10 +1774,11 @@
       },
       "framing": {
         "focus": [
-          0.64,
-          0.6
+          0.62,
+          0.65
         ],
-        "pan": 90.0
+        "pan": 90.0,
+        "portraitZoom": 1.25
       },
       "pinned": "736e79c67e650684",
       "width": 2752,
@@ -1799,10 +1817,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.64,
-          0.68
+          0.62,
+          0.7
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.4
       },
       "pinned": "9d50ad8640e89aa9",
       "width": 2752,
@@ -1826,9 +1845,10 @@
       "framing": {
         "focus": [
           0.63,
-          0.67
+          0.75
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.5
       },
       "pinned": "04b683b74388043c",
       "width": 2752,
@@ -1883,10 +1903,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.64,
-          0.75
+          0.62,
+          0.85
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "45f0b3f478c76df1",
       "width": 2752,
@@ -1904,10 +1925,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.66,
-          0.72
+          0.64,
+          0.85
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "8f32a35b5ef95389",
       "width": 2752,
@@ -1926,9 +1948,10 @@
       "framing": {
         "focus": [
           0.62,
-          0.68
+          0.75
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "18445a4ae4e6c53c",
       "width": 2752,
@@ -1946,10 +1969,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.64,
-          0.8
+          0.7,
+          0.85
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "b1473d8e9161781f",
       "width": 2752,
@@ -1995,10 +2019,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.63,
-          0.73
+          0.62,
+          0.75
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "1a40aabd80b4def7",
       "width": 2752,
@@ -2017,9 +2042,10 @@
       "framing": {
         "focus": [
           0.66,
-          0.65
+          0.8
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.3
       },
       "pinned": "295c1601ff5c1ece",
       "width": 2752,
@@ -2037,10 +2063,11 @@
       "events": [],
       "framing": {
         "focus": [
-          0.6,
+          0.62,
           0.72
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "5dc36fb18edad44f",
       "width": 2752,

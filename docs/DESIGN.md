@@ -373,7 +373,7 @@ control, a ~150 MB payload instead of gigabytes, and instant iteration with no r
 Optional offline enhancement: [RIFE](https://github.com/nihui/rife-ncnn-vulkan) for baked
 interpolation frames on selected transitions. Local, free.
 
-### Cropping to the viewport (ADR-045)
+### Cropping to the viewport (ADR-045, ADR-047)
 
 A still is cover-fitted to the viewport — cropped, never letterboxed. Stills are 2752×1536
 (aspect 1.79), so a narrow viewport shows only a band of the width: a 390×844 phone in portrait
@@ -382,7 +382,13 @@ optional `framing.focus` (image fractions, origin top-left) is the point the win
 clamped so it never leaves the image; without one the crop is centred. A wide viewport crops
 height instead, the same way along y.
 
-The v1 drift (`web/src/scene/drift.ts`) moves inside that window: a push-in of up to 1.05× about
+A subject low in the frame still lands under the caption and timeline on a phone, because the
+window spans the full height and so `focus.y` has nothing to move. A scene may therefore set
+`framing.portrait_zoom` (1–1.5, default 1; `portraitZoom` in the manifest, ADR-047): in a portrait
+viewport only, the window shrinks by that factor in both dimensions, and `focus` then places it
+vertically as well as horizontally, still clamped to the image. Landscape viewports ignore it.
+
+The v1 drift (`web/src/scene/drift.ts`) moves inside that window, zoomed or not: a push-in of up to 1.05× about
 the window's centre plus a lateral pan within the margin the push-in crops off, so it never
 reveals anything outside the window. The pan travels in the scene's `framing.pan` direction
 (degrees, 0 = toward the image's right edge, 90 = toward the bottom), or a direction hashed from

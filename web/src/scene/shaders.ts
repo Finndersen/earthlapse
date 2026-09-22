@@ -8,7 +8,8 @@
  * (`mix`, via `transition.ts`'s `crossfadeAlpha`) and `drift.ts`:
  *
  * 1. `sceneUV` maps the quad onto each layer's own crop window (`uFromWindow`/`uToWindow`,
- *    computed by `framing.ts`'s `coverWindow`: a cover fit centred on the scene's focus), after
+ *    computed by `framing.ts`'s `coverWindow`: a cover fit centred on the scene's focus, zoomed
+ *    in a portrait viewport by its portrait zoom), after
  *    applying that layer's camera drift (`uFromZoom`/`uFromOffset`, `uToZoom`/`uToOffset`)
  *    inside the window.
  * 2. A smooth whole-image crossfade (ADR-012), gamma-correct so the midpoint of the blend

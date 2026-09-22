@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from pipeline.prompts import PlateType, Shot
-from pipeline.scenes import SoundMode
+from pipeline.scenes import MAX_PORTRAIT_ZOOM, SoundMode
 from pipeline.shapes import (
     POINT_EFFECT_KINDS,
     ArrivalKind,
@@ -80,10 +80,12 @@ class SceneLocation(_WireModel):
 
 class SceneFraming(_WireModel):
     """Mirrors `pipeline.scenes.SceneFraming` (ADR-045): the viewer's crop focus (image
-    fractions, origin top-left) and drift pan direction (degrees, 0 = right, 90 = down)."""
+    fractions, origin top-left), drift pan direction (degrees, 0 = right, 90 = down) and portrait
+    zoom (ADR-047), which is omitted at its default of 1."""
 
     focus: tuple[float, float]
     pan: float = Field(ge=0.0, lt=360.0)
+    portrait_zoom: float | None = Field(default=None, gt=1.0, le=MAX_PORTRAIT_ZOOM)
 
 
 class Scene(_WireModel):

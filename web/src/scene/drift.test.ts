@@ -177,6 +177,16 @@ describe('driftAt: pan direction', () => {
     }
   })
 
+  it('is the same in window fractions whatever the portrait zoom, so it stays inside a zoomed window', () => {
+    const unzoomed = driftAt([s0, framed('f', s1.t, 45), s2, s3], 1, fullPanT)
+    const zoomed = driftAt(
+      [s0, { ...scene('f', s1.t), framing: { focus: [0.5, 0.5], pan: 45, portraitZoom: 1.5 } }, s2, s3],
+      1,
+      fullPanT,
+    )
+    expect(zoomed).toEqual(unzoomed)
+  })
+
   it('ignores the scene id once framing names a direction', () => {
     const a = driftAt([s0, framed('alpha', s1.t, 120), s2, s3], 1, fullPanT)
     const b = driftAt([s0, framed('beta', s1.t, 120), s2, s3], 1, fullPanT)

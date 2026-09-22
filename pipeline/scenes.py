@@ -31,6 +31,9 @@ SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 
 UnitFraction = Annotated[float, Field(ge=0.0, le=1.0, allow_inf_nan=False)]
 
+# Beyond this a phone upscales the still enough to visibly soften it.
+MAX_PORTRAIT_ZOOM = 1.5
+
 
 class SoundMode(StrEnum):
     """ADR-023. How a scene's optional ambience stem attaches to it.
@@ -92,13 +95,16 @@ class SceneFraming(BaseModel):
     cover-fit crop centres its window on it along whichever axis the viewport crops, clamped so
     the window never leaves the image. `pan` is the direction the camera travels over the drift,
     in degrees clockwise from the image's right edge (0 right, 90 down), normalised to
-    [0, 360). Invisible to the asset graph, like `location`: presentation only, so it never
-    changes a prompt/image node's digest or clears a pin."""
+    [0, 360). `portrait_zoom` (ADR-047) shrinks the window by that factor in both dimensions
+    in a portrait viewport only, so there `focus` places it vertically too; 1 is the plain cover
+    fit. Invisible to the asset graph, like `location`: presentation only, so it never changes a
+    prompt/image node's digest or clears a pin."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     focus: tuple[UnitFraction, UnitFraction]
     pan: float = Field(allow_inf_nan=False)
+    portrait_zoom: float = Field(default=1.0, ge=1.0, le=MAX_PORTRAIT_ZOOM)
 
     @field_validator("pan")
     @classmethod

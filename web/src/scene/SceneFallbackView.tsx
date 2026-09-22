@@ -4,7 +4,8 @@
  * Fallback scene renderer for browsers without WebGL: a plain two-`<img>` cross-fade (base
  * fixed at opacity 1, overlay at `mix` — never both faded at once), each cropped by
  * `object-fit: cover` at the `object-position` that reproduces its scene's focus-centred window
- * (`framing.ts`, ADR-045), with a CSS transform standing in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
+ * (`framing.ts`, ADR-045), with a CSS transform applying the portrait zoom (ADR-047) and standing
+ * in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
  * alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole effect
  * (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
  * swapping to it, keeping its last decoded image up while the next one decodes; scenes just
@@ -14,7 +15,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 
 import type { DriftUniforms } from './drift'
-import { CENTRED_FOCUS, coverObjectPosition, coverWindow, type ImagePoint } from './framing'
+import { CENTRED_CROP, coverCss, coverTransform, FULL_WINDOW, type CoverCss, type SceneCrop } from './framing'
 
 /** URLs this browser session has confirmed decode cleanly. Shared by both layers of every
  *  `SceneFallbackView` instance — see `useDecodedSrc`'s doc comment on why sharing the cache
@@ -105,16 +106,6 @@ function useBoxAspect(ref: RefObject<HTMLElement | null>): number | null {
   return aspect
 }
 
-function objectPosition(imageAspect: number, boxAspect: number | null, focus: ImagePoint): string {
-  if (boxAspect === null || !(imageAspect > 0)) return 'center'
-  return coverObjectPosition(coverWindow(imageAspect, boxAspect, focus))
-}
-
-/** The box is the crop window, so translating by a fraction of it is the drift's own unit. */
-function driftTransform({ zoom, dx, dy }: DriftUniforms): string {
-  return `scale(${zoom}) translate(${-dx * 100}%, ${-dy * 100}%)`
-}
-
 export interface SceneFallbackViewProps {
   baseUrl: string
   overlayUrl: string
@@ -128,9 +119,9 @@ export interface SceneFallbackViewProps {
   toDrift: DriftUniforms
   /** Every scene image's width / height (see `SceneCanvasViewProps.imageAspect`). */
   imageAspect: number
-  /** Crop focus of each image URL whose scene has framing; any other URL crops centred. Looked
-   *  up by the URL each layer is actually displaying, which can lag the requested one. */
-  focusByUrl: ReadonlyMap<string, ImagePoint>
+  /** Crop of each image URL whose scene has framing; any other URL crops centred. Looked up by
+   *  the URL each layer is actually displaying, which can lag the requested one. */
+  cropByUrl: ReadonlyMap<string, SceneCrop>
 }
 
 export function SceneFallbackView({
@@ -143,15 +134,19 @@ export function SceneFallbackView({
   fromDrift,
   toDrift,
   imageAspect,
-  focusByUrl,
+  cropByUrl,
 }: SceneFallbackViewProps) {
   const displayedBase = useDecodedSrc(baseUrl)
   const displayedOverlay = useDecodedSrc(overlayUrl)
   usePreload(preloadUrls)
   const baseRef = useRef<HTMLImageElement | null>(null)
   const boxAspect = useBoxAspect(baseRef)
-  const positionOf = (url: string): string =>
-    objectPosition(imageAspect, boxAspect, focusByUrl.get(url) ?? CENTRED_FOCUS)
+  const cssOf = (url: string, drift: DriftUniforms): CoverCss =>
+    boxAspect === null || !(imageAspect > 0)
+      ? { objectPosition: 'center', transform: coverTransform(drift, FULL_WINDOW) }
+      : coverCss(imageAspect, boxAspect, cropByUrl.get(url) ?? CENTRED_CROP, drift)
+  const baseCss = cssOf(displayedBase, fromDrift)
+  const overlayCss = cssOf(displayedOverlay, toDrift)
 
   return (
     <>
@@ -163,8 +158,7 @@ export function SceneFallbackView({
         style={{
           ...layerStyle,
           opacity: 1,
-          objectPosition: positionOf(displayedBase),
-          transform: driftTransform(fromDrift),
+          ...baseCss,
         }}
       />
       <img
@@ -174,8 +168,7 @@ export function SceneFallbackView({
         style={{
           ...layerStyle,
           opacity: mix,
-          objectPosition: positionOf(displayedOverlay),
-          transform: driftTransform(toDrift),
+          ...overlayCss,
         }}
       />
     </>

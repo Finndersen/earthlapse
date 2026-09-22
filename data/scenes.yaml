@@ -159,7 +159,7 @@ scenes:
       far_bank: low, bare volcanic hills in grey and rust tones, with no green anywhere
       sky_and_light: a hazy, pale orange sky rather than a blue one; soft, slightly dim, warm diffuse light
       absent: [plants, trees, grass, moss on land, animals, fish, shells, birds, people, blue sky, streams of rising bubbles, seaweed, kelp, sea grass, corals, sponges, anemones]
-    framing: {focus: [0.6, 0.72], pan: 180}
+    framing: {focus: [0.62, 0.72], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "5dc36fb18edad44f", path: "data/candidates/archean-shore/fef9a33e00974240/01-5dc36fb18edad44f.jpg"}
 
   # ~2.4 Ga, at the onset of the Great Oxidation Event: Gumsley, A.P. et al. (2017), "Timing and
@@ -191,7 +191,7 @@ scenes:
       far_bank: low grey-red hills of layered rock, banded where iron formation is exposed at the surface, with no green anywhere
       sky_and_light: a sky in transition — still pale and hazy rather than a saturated blue, but faintly clearer than the thick orange-brown haze of deeper Archean time; soft, even light
       absent: [land plants, trees, grass, moss, animals, fish, shells, birds, people, a fully clear blue sky, seaweed, kelp, sea grass, corals, sponges, anemones]
-    framing: {focus: [0.66, 0.65], pan: 270}
+    framing: {focus: [0.66, 0.8], pan: 270, portrait_zoom: 1.3}
     pin: {asset_digest: "295c1601ff5c1ece", path: "data/candidates/great-oxidation/d12c74dfe1906c2c/01-295c1601ff5c1ece.jpg"}
 
   # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
@@ -221,7 +221,7 @@ scenes:
       far_bank: "a flat, barren tidal platform of pale rock running unbroken to a low grey coastline of utterly bare rock"
       sky_and_light: a clear, pale sky, less hazy than deep Archean time but not the saturated blue of a modern one; calm, even, cool light
       absent: ["land plants", "trees", "grass", "moss on land", "animals", "fish", "shells", "insects", "birds", "people", "grass tussocks", "reeds", "buildings", "ruins", "walls", "structures on the horizon", "boats", "kelp", "seaweed fronds", "sea grass", "corals", "anemones", "sponges", "large upright fronds"]
-    framing: {focus: [0.63, 0.73], pan: 0}
+    framing: {focus: [0.62, 0.75], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "1a40aabd80b4def7", path: "data/candidates/boring-billion-shallows/c1c26ba80aa855dd/03-1a40aabd80b4def7.jpg"}
 
   # Mid-Sturtian glaciation (~717-661 Ma; events.yaml snowball-earth's first ice-shell window),
@@ -290,7 +290,7 @@ scenes:
       far_bank: a low, barren coastline of reddish rock and sand, with no green
       sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight
       absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people, jellyfish, seaweed, kelp, sea grass, corals, anemones, sponges, starfish]
-    framing: {focus: [0.64, 0.8], pan: 0}
+    framing: {focus: [0.7, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "b1473d8e9161781f", path: "data/candidates/ediacaran-shallows/a0d529261ebaa4d5/02-b1473d8e9161781f.jpg"}
 
   # ~518 Ma, the Chengjiang biota (Yunnan, China): Yang, C., Li, X.-H., Zhu, M. & Condon, D.J.
@@ -324,7 +324,7 @@ scenes:
       far_bank: a low, barren coastline of grey mud and rock, with no green anywhere
       sky_and_light: a clear, pale-blue sky with thin high cloud; bright sunlight throwing soft caustics across the sea floor
       absent: ["land plants", "green vegetation on land", "jawed fish", "scaled fish", "ammonites", "corals", "crabs", "lobsters", "sharks", "modern fish", "reptiles", "mammals", "birds", "people", "fish-shaped predator", "dorsal fin", "dorsal ridge or crest", "forked tail fin", "two-lobed tail fin", "ray-striated tail rays", "fish-like countershading", "sleek torpedo-shaped body", "gill slits on the predator", "gill markings on the predator's head", "shark-like shapes", "centipedes"]
-    framing: {focus: [0.62, 0.68], pan: 180}
+    framing: {focus: [0.62, 0.75], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "18445a4ae4e6c53c", path: "data/candidates/cambrian-seafloor/94120c4582b2fe38/03-18445a4ae4e6c53c.jpg"}
 
   # ~450 Ma, inside events.yaml land-plants (425-470 Ma) on the cryptospore side: Rubinstein, C.V. et
@@ -363,7 +363,7 @@ scenes:
       far_bank: a barren grey limestone coastline rising to low hills, entirely bare rock, with no green anywhere
       sky_and_light: a clear, warm, pale-blue sky with light high cloud; bright, warm, even sunlight
       absent: [trees, grass, ferns, flowers, vascular plants, jawed fish, insects, land animals, birds, people, modern fish, sharks, scleractinian corals such as brain or staghorn coral, sea anemones, kelp, seaweed, sea grass, coiled ammonite shells, octopus or squid, crabs, sea turtles]
-    framing: {focus: [0.66, 0.72], pan: 0}
+    framing: {focus: [0.64, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "8f32a35b5ef95389", path: "data/candidates/ordovician-reef-shore/d9a34c3e4893e1c6/03-8f32a35b5ef95389.jpg"}
 
   # ~425 Ma, at the Cooksonia end of events.yaml land-plants (t_min = 425 Ma): Edwards, D., Fanning,
@@ -399,7 +399,7 @@ scenes:
       far_bank: a low, barren coastal plain of grey-tan rock and sand, with only the faint dark-green fringe of Cooksonia visible at its edge
       sky_and_light: a clear, pale-blue sky with a few high clouds; warm, even sunlight
       absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, jawed fish, fish with teeth, modern fish, sharks, birds, people, kelp, seaweed, sea grass, coral reef, scleractinian corals, anemones, brachiopods, shells, crabs, lobsters]
-    framing: {focus: [0.64, 0.75], pan: 0}
+    framing: {focus: [0.62, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "45f0b3f478c76df1", path: "data/candidates/silurian-shore/94e4eb2062d8286f/03-45f0b3f478c76df1.jpg"}
 
   # ~407 Ma, inside the Rhynie chert's radiometric age (events.yaml insects, 3.96e8-4.11e8;
@@ -468,7 +468,7 @@ scenes:
     # ADR-023 (v2 review): `water` `loop` above its 0.25 Phanerozoic ambient -- a river meeting
     # a shallow sea, where the surf that recedes inland after the first forests still belongs.
     sound: {stem: water, mode: loop, gain: 0.8}
-    framing: {focus: [0.63, 0.67], pan: 180}
+    framing: {focus: [0.63, 0.75], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "04b683b74388043c", path: "data/candidates/devonian-estuary/df7a9ca914a91a0b/03-04b683b74388043c.jpg"}
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
@@ -492,7 +492,7 @@ scenes:
       far_bank: more swamp forest of lycopsid poles fading into the humid haze
       sky_and_light: a low, even overcast of white-grey cloud; soft, diffuse, almost shadowless light; the air saturated and heavy, a dense humid haze tinted green-grey that swallows the distance
       absent: [flowers, grass, broadleaf trees, palms, conifers, dinosaurs, mammals, birds]
-    framing: {focus: [0.64, 0.68], pan: 270}
+    framing: {focus: [0.62, 0.7], pan: 270, portrait_zoom: 1.4}
     pin: {asset_digest: "9d50ad8640e89aa9", path: "data/candidates/carboniferous-swamp/8db84df1af2f828c/01-9d50ad8640e89aa9.jpg"}
 
   # ~294 Ma, earliest Permian, after events.yaml carboniferous-rainforest-collapse (~305 Ma) and within
@@ -548,7 +548,7 @@ scenes:
     # ADR-023 (era-fit v3): `large-animal` `loop` -- two dinocephalian synapsids at the river,
     # matching the new large-animal ambient stem's own ~270-260 Ma rise.
     sound: {stem: large-animal, mode: loop, gain: 0.85}
-    framing: {focus: [0.64, 0.6], pan: 90}
+    framing: {focus: [0.62, 0.65], pan: 90, portrait_zoom: 1.25}
     pin: {asset_digest: "736e79c67e650684", path: "data/candidates/permian-interior/f6afdfa062572f06/01-736e79c67e650684.jpg"}
 
   # ~251 Ma, just after events.yaml permian-extinction (2.5188e8-2.51941e8) and inside
@@ -581,7 +581,7 @@ scenes:
     # by this point" at 248 Ma): `large-animal` `loop` -- Lystrosaurus digging at the water's
     # edge. Superseded the v2 `wind` (the pre-land ambient bed is silent by this era regardless).
     sound: {stem: large-animal, mode: loop, gain: 0.85}
-    framing: {focus: [0.63, 0.62], pan: 90}
+    framing: {focus: [0.62, 0.7], pan: 90, portrait_zoom: 1.3}
     pin: {asset_digest: "47c14793925a8c37", path: "data/candidates/early-triassic-lystrosaurus/0b362bccb7291d9a/01-47c14793925a8c37.jpg"}
 
   # ~231 Ma, exactly at events.yaml dinosaurs (t_min = 2.31e8): Martinez, R.N. et al. (2011),
@@ -610,7 +610,7 @@ scenes:
       far_bank: an open plain of red-brown soil and scattered conifers, drier and more open than a dense forest
       sky_and_light: a cool, clear dry-season sky with high cloud; crisp, bright sunlight
       absent: [flowers, grass, broadleaf trees, palms, sauropods, long-necked dinosaurs, mammals, birds, modern reptiles]
-    framing: {focus: [0.68, 0.63], pan: 0}
+    framing: {focus: [0.69, 0.8], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "0ea6dc80408755ae", path: "data/candidates/late-triassic-dinosaurs/433726cab98bc075/02-0ea6dc80408755ae.jpg"}
 
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
@@ -698,7 +698,7 @@ scenes:
       far_bank: conifer-and-cycad woodland along the far shore
       sky_and_light: a clear, warm sky with scattered cumulus; bright, even sunlight
       absent: [large showy flowers, petals, grass, reeds, grasses, broadleaf trees, bees, butterflies, large mammals, birds, people]
-    framing: {focus: [0.54, 0.66], pan: 0}
+    framing: {focus: [0.46, 0.75], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "fba843f413d942db", path: "data/candidates/early-cretaceous-flowers/278655d42b5c3618/01-fba843f413d942db.jpg"}
 
   # ~100 Ma, inside events.yaml's new angiosperm-radiation (8.0e7-1.25e8) and
@@ -764,7 +764,7 @@ scenes:
       absent: [grass, open grassland, large mammals, modern birds such as ducks or herons, people, buildings, an upright kangaroo-like posture with the tail dragging, a full coat of feathers, roaring or open-mouthed display, combat or a kill, a painted or illustrated palaeoart look, visible brush strokes, an artist's signature or watermark in any corner, the whole animal centred side-on filling the frame like a museum mural]
     # ADR-023 (v2): `archosaurs` `loop` above ambient.
     sound: {stem: archosaurs, mode: loop, gain: 0.9}
-    framing: {focus: [0.6, 0.55], pan: 180}
+    framing: {focus: [0.6, 0.62], pan: 180, portrait_zoom: 1.2}
     pin: {asset_digest: "5a6d2ef2f576c49e", path: "data/candidates/cretaceous-forest/8ef0a59c2259daf4/01-5a6d2ef2f576c49e.jpg"}
 
   # 66.043 Ma, events.yaml k-pg-impact (66.032-66.054 Ma): Renne, P.R. et al. (2013), Science
@@ -800,7 +800,7 @@ scenes:
     # ~20 s of low rolling rumble), fired `once` at full gain as the asteroid strikes. v1 fired the
     # hot-spring `volcanic` clip here, which read as a sudden rush of water.
     sound: {stem: impact, mode: once, gain: 1.0}
-    framing: {focus: [0.54, 0.45], pan: 270}
+    framing: {focus: [0.6, 0.6], pan: 270, portrait_zoom: 1.25}
     pin: {asset_digest: "40cf7c5b9d357780", path: "data/candidates/kpg-arrival/a400d626bc419b6d/02-40cf7c5b9d357780.jpg"}
 
   # t = 6.604299999e7 (66,042,999.99 yr ago): ~3.65 days after kpg-arrival's impact instant
@@ -912,7 +912,7 @@ scenes:
       far_bank: unbroken mature forest along the far bank
       sky_and_light: a warm, hazy pale sky with scattered cumulus; soft, humid, even light
       absent: [dinosaurs, grassland, bears, pigs, dogs, cats, hippopotamus, primates, people, buildings]
-    framing: {focus: [0.64, 0.66], pan: 0}
+    framing: {focus: [0.63, 0.8], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "735c1240a8062713", path: "data/candidates/paleocene-recovery/a4c8da90ae83a988/01-735c1240a8062713.jpg"}
 
   # Early Eocene Climatic Optimum (events.yaml early-eocene-climatic-optimum), Margaret Formation,
@@ -943,7 +943,7 @@ scenes:
       far_bank: more swamp conifer forest fading into a low summer mist
       sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
       absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, hippo-shaped head, eyes or nostrils raised on top of the head, smooth pink or grey hairless skin, rhinoceros, tapir, trunk, people, buildings]
-    framing: {focus: [0.62, 0.55], pan: 180}
+    framing: {focus: [0.58, 0.62], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "32b5e8d94688fbc7", path: "data/candidates/arctic-hothouse-forest/6b5ae1460b5130ea/03-32b5e8d94688fbc7.jpg"}
 
   # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
@@ -967,7 +967,7 @@ scenes:
       far_bank: unbroken rainforest across the lake, steaming in the heat
       sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
       absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
-    framing: {focus: [0.68, 0.7], pan: 180}
+    framing: {focus: [0.63, 0.8], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "6fd97ed7b5dbfd9a", path: "data/candidates/eocene-jungle/5899f56de73ec26e/01-6fd97ed7b5dbfd9a.jpg"}
 
   # Eocene-Oligocene transition (events.yaml eocene-oligocene-transition): Hutchinson, D.K. et al.
@@ -1030,7 +1030,7 @@ scenes:
     # ADR-023 (v2): `mammals` (distant lions roaring in Gonarezhou; no livestock) as a `loop`
     # above its ~0.15 ambient -- herds of three-toed horses on open plains.
     sound: {stem: mammals, mode: loop, gain: 0.8}
-    framing: {focus: [0.585, 0.6], pan: 180}
+    framing: {focus: [0.585, 0.63], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "93b44eb04685155f", path: "data/candidates/miocene-grassland/39127bbcdc1c4182/03-93b44eb04685155f.jpg"}
 
   # Late Miocene, ~7 Ma, within the C4 grass expansion (events.yaml c4-expansion, ~8-5 Ma by
@@ -1131,7 +1131,7 @@ scenes:
     # publish reconstructs this to its Pliocene plate position (Merdith et al. 2021) rather than
     # marking modern Ethiopia -- though at this age the African plate has moved only slightly.
     location: {lat: 11.1600, lon: 40.6000, label: "Hadar, Ethiopia"}
-    framing: {focus: [0.6, 0.66], pan: 0}
+    framing: {focus: [0.6, 0.8], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "347021bb25fb32ad", path: "data/candidates/lucy-afarensis/50206163a975bec6/01-347021bb25fb32ad.jpg"}
 
   # Final closure of the Isthmus of Panama, ~2.8 Ma per O'Dea, A. et al. (2016), Science Advances
@@ -1210,7 +1210,7 @@ scenes:
     # basemap domain (ADR-030, t <= 2.58 Ma), so publish marks these present-day coordinates
     # directly -- continental drift since is imperceptible at globe scale.
     location: {lat: 3.9900, lon: 35.8600, label: "West Turkana, Kenya"}
-    framing: {focus: [0.6, 0.62], pan: 0}
+    framing: {focus: [0.6, 0.62], pan: 0, portrait_zoom: 1.3}
     pin: {asset_digest: "23b1e972d4fa9690", path: "data/candidates/acheulean-erectus/59efa291baee6c06/03-23b1e972d4fa9690.jpg"}
 
   # Early Homo sapiens at Jebel Irhoud, Morocco, 315 +/- 34 ka (events.yaml
@@ -1253,7 +1253,7 @@ scenes:
     # 315 ka sits inside the human-era basemap domain (ADR-030, t <= 2.58 Ma), so publish marks
     # these present-day coordinates directly.
     location: {lat: 31.8514, lon: -8.8722, label: "Jebel Irhoud, Morocco"}
-    framing: {focus: [0.34, 0.7], pan: 0}
+    framing: {focus: [0.38, 0.85], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "ca26d88194e6bbd2", path: "data/candidates/jebel-irhoud-firelight/3972076dfca0d04d/01-ca26d88194e6bbd2.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
@@ -1322,7 +1322,7 @@ scenes:
     # v2 `wind` loop, which moved to ice-age-europe-neanderthal (era-fit v3) -- a scene carries
     # only one `sound`, and the mammoth call was the human's explicit ask for this scene.
     sound: {stem: mammoth, mode: once, gain: 1.0}
-    framing: {focus: [0.625, 0.58], pan: 180}
+    framing: {focus: [0.62, 0.65], pan: 180, portrait_zoom: 1.2}
     pin: {asset_digest: "e5e38045d401cbd2", path: "data/candidates/pleistocene-steppe/7c096c8ee716b05f/01-e5e38045d401cbd2.jpg"}
 
   # About 9500 BCE, earliest construction phase (Pre-Pottery Neolithic A) at Göbekli Tepe, a hilltop
@@ -1463,7 +1463,7 @@ scenes:
     # ADR-023 (v2): `livestock` (the goat-herd recording) `loop` -- Saharan pastoral-Neolithic
     # herders with cattle; a near fit, kept quiet.
     sound: {stem: livestock, mode: loop, gain: 0.8}
-    framing: {focus: [0.56, 0.58], pan: 0}
+    framing: {focus: [0.56, 0.6], pan: 0, portrait_zoom: 1.2}
     pin: {asset_digest: "69f1684c8d9654bb", path: "data/candidates/green-sahara/c4113e71835e83e3/02-69f1684c8d9654bb.jpg"}
 
   # About 3200 BCE, late Uruk period, southern Mesopotamia; t = 2025 + 3200 = 5,225, rounded to 5,200,
@@ -1971,7 +1971,7 @@ scenes:
     # ADR-034: Amsterdam, Netherlands. t = 375 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 52.3730, lon: 4.8924, label: "Amsterdam, Netherlands"}
-    framing: {focus: [0.56, 0.62], pan: 0}
+    framing: {focus: [0.56, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "815e21329ccda9ba", path: "data/candidates/amsterdam-voc-harbour/8e29946d17ae807d/01-815e21329ccda9ba.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
@@ -2098,7 +2098,7 @@ scenes:
     # comment above. t = 112 BP sits inside the human-era basemap domain (ADR-030), so publish
     # marks these present-day coordinates directly.
     location: {lat: 42.4048, lon: -83.0966, label: "Highland Park, Michigan"}
-    framing: {focus: [0.55, 0.68], pan: 0}
+    framing: {focus: [0.55, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "1bb72621b940a4f0", path: "data/candidates/ford-model-t-street/839208a6ede59248/01-1bb72621b940a4f0.jpg"}
 
   # 1 July - 18 November 1916, the Battle of the Somme, northern France; t = 2025 - 1916 = 109
@@ -2417,7 +2417,7 @@ scenes:
     # diesel pump/tractor was sourced in the time this pass budgeted, so per CLAUDE.md ("if
     # something is unusable, stop and report; do not silently substitute a different dataset")
     # this scene carries no `sound` -- the flat 0.48 `settlement` floor covers the rural ambience.
-    framing: {focus: [0.62, 0.6], pan: 0}
+    framing: {focus: [0.6, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "d6a9b3f322ea5a15", path: "data/candidates/green-revolution-fields/3a8b19dfb2466e51/01-d6a9b3f322ea5a15.jpg"}
 
   # 16 July 1969, Kennedy Space Center Launch Complex 39A, Florida; t = 2025 - 1969 = 56, matching

@@ -3,7 +3,7 @@
 /**
  * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does the
  * smooth whole-image crossfade (`shaders.ts`, ADR-012), each layer's own focus-centred crop
- * (`framing.ts`, ADR-045) and camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
+ * (`framing.ts`, ADR-045, ADR-047) and camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
  * `textureCache`/`useScenePair`, which keep the previously bound pair on screen until a newly
  * requested pair has fully loaded, so this never shows a blank or black frame; scenes just
  * outside the current pair are preloaded speculatively. `sceneRender.ts`'s `resolveSceneRender`
@@ -18,7 +18,7 @@ import * as THREE from 'three'
 
 import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
-import { CENTRED_FOCUS, coverWindow, type CoverWindow, type ImagePoint } from './framing'
+import { CENTRED_CROP, coverWindow, type CoverWindow, type SceneCrop } from './framing'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
 import { loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
@@ -38,9 +38,9 @@ export interface SceneCanvasViewProps {
   /** `from.width / from.height` — assumed shared across scenes (the generation pipeline
    *  renders every shot at the same dimensions, per VISUAL_SPEC's camera grammar). */
   imageAspect: number
-  /** Crop focus of each image URL whose scene has framing; any other URL crops centred. Looked
-   *  up by the URL of the texture actually bound, which can lag the requested pair. */
-  focusByUrl: ReadonlyMap<string, ImagePoint>
+  /** Crop of each image URL whose scene has framing; any other URL crops centred. Looked up by
+   *  the URL of the texture actually bound, which can lag the requested pair. */
+  cropByUrl: ReadonlyMap<string, SceneCrop>
 }
 
 function usePreloadTextures(urls: readonly string[]): void {
@@ -61,7 +61,7 @@ export function SceneCanvasView({
   fromDrift,
   toDrift,
   imageAspect,
-  focusByUrl,
+  cropByUrl,
 }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
   usePreloadTextures(preloadUrls)
@@ -89,15 +89,15 @@ export function SceneCanvasView({
         fromDrift={render?.fromDrift ?? fromDrift}
         toDrift={render?.toDrift ?? toDrift}
         imageAspect={imageAspect}
-        fromFocus={focusOf(focusByUrl, render?.fromUrl)}
-        toFocus={focusOf(focusByUrl, render?.toUrl)}
+        fromCrop={cropOf(cropByUrl, render?.fromUrl)}
+        toCrop={cropOf(cropByUrl, render?.toUrl)}
       />
     </Canvas>
   )
 }
 
-function focusOf(focusByUrl: ReadonlyMap<string, ImagePoint>, url: string | undefined): ImagePoint {
-  return (url === undefined ? undefined : focusByUrl.get(url)) ?? CENTRED_FOCUS
+function cropOf(cropByUrl: ReadonlyMap<string, SceneCrop>, url: string | undefined): SceneCrop {
+  return (url === undefined ? undefined : cropByUrl.get(url)) ?? CENTRED_CROP
 }
 
 interface SceneQuadProps {
@@ -107,16 +107,16 @@ interface SceneQuadProps {
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
   imageAspect: number
-  fromFocus: ImagePoint
-  toFocus: ImagePoint
+  fromCrop: SceneCrop
+  toCrop: SceneCrop
 }
 
-function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromFocus, toFocus }: SceneQuadProps) {
+function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromCrop, toCrop }: SceneQuadProps) {
   const { size, invalidate } = useThree()
   const laidOut = size.width > 0 && size.height > 0 && imageAspect > 0
   const viewportAspect = laidOut ? size.width / size.height : imageAspect
-  const fromWindow = laidOut ? coverWindow(imageAspect, viewportAspect, fromFocus) : FULL_IMAGE
-  const toWindow = laidOut ? coverWindow(imageAspect, viewportAspect, toFocus) : FULL_IMAGE
+  const fromWindow = laidOut ? coverWindow(imageAspect, viewportAspect, fromCrop) : FULL_IMAGE
+  const toWindow = laidOut ? coverWindow(imageAspect, viewportAspect, toCrop) : FULL_IMAGE
 
   const uniforms = useMemo(
     () => ({

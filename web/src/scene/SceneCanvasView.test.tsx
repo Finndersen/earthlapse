@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { budgetedDpr, SCENE_DPR_BUDGET_PIXELS } from './canvasBudget'
 import { REST_DRIFT } from './drift'
+import type { SceneCrop } from './framing'
 import { SceneCanvasView } from './SceneCanvasView'
 
 // `<Canvas>` throws under jsdom (no real WebGL context — see `globe/Globe.test.tsx`'s own doc
@@ -46,7 +47,7 @@ const baseProps = {
   fromDrift: REST_DRIFT,
   toDrift: REST_DRIFT,
   imageAspect: 16 / 9,
-  focusByUrl: new Map<string, readonly [number, number]>(),
+  cropByUrl: new Map<string, SceneCrop>(),
 }
 
 describe('SceneCanvasView — frameloop', () => {

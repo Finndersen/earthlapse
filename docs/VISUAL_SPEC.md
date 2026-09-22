@@ -89,9 +89,11 @@ perceived-consistency work.
 **Composing for the portrait crop.** Stills are generated landscape (2752×1536), but a phone in
 portrait shows only ~26% of the width (DESIGN §5, "Cropping to the viewport"). An off-centre focal
 subject is fine to generate — each scene's `framing.focus` in `data/scenes.yaml` moves the
-viewer's crop onto it after the fact (ADR-045). `framing` is not part of the prompt and never
-changes an image's digest, so it is set after review, against the pinned still, not written into
-the subject to steer generation.
+viewer's crop onto it after the fact (ADR-045), and `framing.portrait_zoom` (up to 1.5) lifts a
+subject that sits low in the frame clear of the phone's caption and timeline (ADR-047). `framing`
+is not part of the prompt and never changes an image's digest, so it is set after review, against
+the pinned still, not written into the subject to steer generation. A subject in the bottom
+quarter of the frame stays behind that chrome even at the cap.
 
 ⚠️ **Open risk:** `WIDE_RIDGE` may not survive depth displacement — distant vistas have
 little depth variation and produce weak parallax, while foreground edges produce the worst

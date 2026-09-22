@@ -27,6 +27,7 @@ import type {
   SceneSound,
   SoundMode,
 } from '@/types/manifest'
+import { MAX_PORTRAIT_ZOOM } from '@/types/manifest'
 import type { Interpolation, LayerSurface } from '@/types/layer'
 import {
   parseEventsData,
@@ -204,7 +205,15 @@ function validateSceneFraming(v: unknown, path: string): SceneFraming {
   }
   const pan = expectNumber(r.pan, `${path}.pan`)
   if (!(pan >= 0 && pan < 360)) throw new Error(`${path}.pan: out of range, got ${pan}`)
-  return { focus, pan }
+  const framing: SceneFraming = { focus, pan }
+  if (r.portraitZoom !== undefined) {
+    const portraitZoom = expectNumber(r.portraitZoom, `${path}.portraitZoom`)
+    if (!(portraitZoom >= 1 && portraitZoom <= MAX_PORTRAIT_ZOOM)) {
+      throw new Error(`${path}.portraitZoom: out of range, got ${portraitZoom}`)
+    }
+    framing.portraitZoom = portraitZoom
+  }
+  return framing
 }
 
 function validateScene(v: unknown, path: string): Scene {

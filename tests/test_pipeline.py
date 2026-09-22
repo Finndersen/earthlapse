@@ -64,6 +64,7 @@ from pipeline.publish import (
     validated_asset_base,
 )
 from pipeline.scenes import (
+    MAX_PORTRAIT_ZOOM,
     SceneBook,
     SceneFraming,
     SceneLocation,
@@ -1637,6 +1638,26 @@ def test_scene_framing_requires_both_focus_and_pan() -> None:
         SceneFraming.model_validate({"focus": [0.5, 0.5]})
 
 
+def test_scene_framing_portrait_zoom_defaults_to_the_plain_cover_fit() -> None:
+    assert SceneFraming.model_validate({"focus": [0.5, 0.5], "pan": 0.0}) == SceneFraming(
+        focus=(0.5, 0.5), pan=0.0, portrait_zoom=1.0
+    )
+
+
+@pytest.mark.parametrize("portrait_zoom", [1.0, 1.25, MAX_PORTRAIT_ZOOM])
+def test_scene_framing_accepts_a_portrait_zoom_up_to_the_cap(portrait_zoom: float) -> None:
+    framing = SceneFraming(focus=(0.5, 0.5), pan=0.0, portrait_zoom=portrait_zoom)
+    assert framing.portrait_zoom == portrait_zoom
+
+
+@pytest.mark.parametrize("portrait_zoom", [0.99, MAX_PORTRAIT_ZOOM + 0.01, math.nan, math.inf])
+def test_scene_framing_portrait_zoom_must_lie_between_one_and_the_cap(
+    portrait_zoom: float,
+) -> None:
+    with pytest.raises(ValidationError, match="portrait_zoom"):
+        SceneFraming(focus=(0.5, 0.5), pan=0.0, portrait_zoom=portrait_zoom)
+
+
 def _add_framing(text: str, caption_line: str, framing_yaml: str) -> str:
     framed, count = re.subn(
         re.escape(caption_line) + r"\n",
@@ -1663,10 +1684,16 @@ def test_scene_framing_never_changes_the_prompt_or_image_node_digest(root: Path)
 
     base = digests(load_scene_book(paths.scenes))
     paths.scenes.write_text(
-        _add_framing(paths.scenes.read_text(), "caption: A city.", "{focus: [0.2, 0.7], pan: 180}")
+        _add_framing(
+            paths.scenes.read_text(),
+            "caption: A city.",
+            "{focus: [0.2, 0.7], pan: 180, portrait_zoom: 1.3}",
+        )
     )
     framed_book = load_scene_book(paths.scenes)
-    assert framed_book.scene("city").framing == SceneFraming(focus=(0.2, 0.7), pan=180.0)
+    assert framed_book.scene("city").framing == SceneFraming(
+        focus=(0.2, 0.7), pan=180.0, portrait_zoom=1.3
+    )
 
     assert digests(framed_book) == base
 
@@ -1676,7 +1703,11 @@ def test_scene_framing_leaves_a_pinned_scene_fresh(root: Path) -> None:
     _build_and_pick_all(backend, root)
     paths = ProjectPaths(root)
     paths.scenes.write_text(
-        _add_framing(paths.scenes.read_text(), "caption: A city.", "{focus: [0.2, 0.7], pan: 180}")
+        _add_framing(
+            paths.scenes.read_text(),
+            "caption: A city.",
+            "{focus: [0.2, 0.7], pan: 180, portrait_zoom: 1.3}",
+        )
     )
 
     _, plan_output = _run(backend, root, "plan")
@@ -1698,6 +1729,29 @@ def test_publish_emits_scene_framing_and_omits_it_where_absent(root: Path) -> No
     scenes_by_id = {s["id"]: s for s in raw["scenes"]}
     assert scenes_by_id["city"]["framing"] == {"focus": [0.2, 0.7], "pan": 270.0}
     assert "framing" not in scenes_by_id["devonian"]
+
+
+def test_publish_emits_a_scene_portrait_zoom_only_when_it_zooms(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    text = _add_framing(
+        paths.scenes.read_text(),
+        "caption: A city.",
+        "{focus: [0.2, 0.7], pan: 0, portrait_zoom: 1.4}",
+    )
+    text = _add_framing(
+        text, "caption: An estuary.", "{focus: [0.5, 0.5], pan: 90, portrait_zoom: 1}"
+    )
+    paths.scenes.write_text(text)
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert scenes_by_id["city"]["framing"] == {"focus": [0.2, 0.7], "pan": 0.0, "portraitZoom": 1.4}
+    assert scenes_by_id["devonian"]["framing"] == {"focus": [0.5, 0.5], "pan": 90.0}
 
 
 # -- scene -> stem links (ADR-023) -------------------------------------------------------------

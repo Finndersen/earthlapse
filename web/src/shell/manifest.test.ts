@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import stubManifest from '../../public/stub/manifest.json'
 
+import { MAX_PORTRAIT_ZOOM } from '@/types/manifest'
+
 import { loadLayerData, loadManifest, validateManifest } from './manifest'
 
 afterEach(() => {
@@ -469,6 +471,47 @@ describe('validateManifest', () => {
       ],
     }
     expect(() => validateManifest(bad)).toThrow(/pan/)
+  })
+
+  function framedStub(framing: unknown): unknown {
+    return {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          thumbnail: 'thumb.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          framing,
+        },
+      ],
+    }
+  }
+
+  it("parses a scene's portrait zoom", () => {
+    const manifest = validateManifest(framedStub({ focus: [0.3, 0.6], pan: 180, portraitZoom: 1.3 }))
+    expect(manifest.scenes[0]?.framing).toEqual({ focus: [0.3, 0.6], pan: 180, portraitZoom: 1.3 })
+  })
+
+  it('accepts a portrait zoom at the cap', () => {
+    const manifest = validateManifest(framedStub({ focus: [0.3, 0.6], pan: 0, portraitZoom: MAX_PORTRAIT_ZOOM }))
+    expect(manifest.scenes[0]?.framing?.portraitZoom).toBe(MAX_PORTRAIT_ZOOM)
+  })
+
+  it.each([0.9, MAX_PORTRAIT_ZOOM + 0.01, Number.NaN])('rejects a portrait zoom of %d', (portraitZoom) => {
+    expect(() => validateManifest(framedStub({ focus: [0.5, 0.5], pan: 0, portraitZoom }))).toThrow(/portraitZoom/)
+  })
+
+  it('rejects a non-numeric portrait zoom', () => {
+    expect(() => validateManifest(framedStub({ focus: [0.5, 0.5], pan: 0, portraitZoom: '1.2' }))).toThrow(
+      /portraitZoom/,
+    )
   })
 
   // -------------------------------------------------------------------- features (ADR-035)
