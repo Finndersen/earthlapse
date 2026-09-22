@@ -272,9 +272,12 @@
   filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 10px var(--hud-accent-glow, rgba(232, 176, 106, 0.55)));
 }
 
-/* The Globe/Map toggle (ADR-033). Bottom-centre: below is the one edge of the sphere/map's own
-   framing that is neither a corner already spoken for (`.legendGroup` top-left, `.closeButton`
-   top-right) nor the vertically-centred right edge `.zoomGroup` owns.
+/* The Globe/Map toggle (ADR-033). Bottom-left on desktop/tablet (the `min-width: 761px` rule
+   below), opposite the bottom-right "Human civilisation" legend (`.legendCorner`) — the other two
+   corners are `.overlaySelectStack` top-right (under `.closeButton`) and the era shortcuts
+   top-left (`ShellLayout.module.css`'s own rule for the same breakpoint). Centred as a fallback
+   in the base rule below; the phone breakpoint gives it its own row instead (further down this
+   file).
 
    `ShellLayout.tsx` reserves this element's own real height (`reserveBottomPx`, fed by
    `Globe.tsx`'s `useViewModeToggleHeightReport`) out of `--chrome-gap-height` before the
@@ -292,7 +295,8 @@
    from `100vh`, which on a mobile browser is not the height this backdrop actually has (that
    hook's own doc comment has the full story). `+ 8px` is real clearance above that boundary, not
    just non-intersection. This guarantees no overlap with the caption/timeline by construction, at
-   every viewport `useChromeGap` measures.
+   every viewport `useChromeGap` measures. `.legendCorner` shares this same `bottom` offset so the
+   two corners sit on one line.
 
    No visible label above the toggle: `bottom`-anchored positioning grows/shrinks a box from its
    own *top* edge, so a shorter box here (no label row) moves its top edge down — more room for
@@ -343,25 +347,38 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* The top-left overlay chrome (docs/GLOBE.md §10, ADR-041 item 7): the `<Legend>` panel (desktop
-   only — `Globe.tsx` never renders it on a phone viewport) stacked with `<OverlaySelect>`, which
-   renders on both. Top-left, the same corner `.closeButton` mirrors top-right. The Globe/Map
-   toggle lives below the sphere/map now (`.viewModeGroup`'s own doc comment), not stacked beneath
-   this panel, so its top offset matches `.closeButton`'s directly. `Globe.tsx` owns this
-   positioning wrapper directly rather than `<Legend>` positioning itself, so the stack holds
-   together even when `<Legend>` renders nothing (no visible row) or doesn't render at all (phone). */
-.legendStack {
+/* The top-right overlay chrome (docs/GLOBE.md §10, ADR-041 item 7): `<OverlaySelect>` (plus its
+   ramp key), directly under `.closeButton` — same right offset, top offset one `.closeButton`
+   height plus a real gap down. `right`-anchored with no `left`/`width` so the box shrink-wraps its
+   content from that fixed right edge, the same way `.closeButton` itself is positioned. `<Legend>`
+   has its own corner at bottom-right (`.legendCorner` below) — the two are orthogonal controls
+   with no reason to stack when each can have a free corner. `Globe.tsx`
+   owns this positioning wrapper directly rather than `<OverlaySelect>` positioning itself, so
+   `--overlay-clear-bottom` below always has something to measure while expanded. */
+.overlaySelectStack {
   position: absolute;
-  top: clamp(16px, 2.4vw, 34px);
-  left: clamp(16px, 3vw, 48px);
+  top: calc(clamp(16px, 2.4vw, 34px) + var(--corner-control-size, 40px) + 6px);
+  right: clamp(16px, 3vw, 48px);
+  left: auto;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* `<Legend>`'s own rows, unpositioned — `.legendStack` above supplies the panel's actual place in
-   the chrome. `max-width` keeps a long hint line wrapping rather than pushing off the right edge
+/* Bottom-right: the "Human civilisation" legend, opposite the bottom-left Globe/Map toggle
+   (`.viewModeGroup`'s own doc comment) and sharing its `bottom` offset so the two sit on one line.
+   Desktop only (`Globe.tsx`'s own render guard — `<Legend>` never renders on a phone at all), so
+   no phone override is needed here the way `.overlaySelectStack`/`.viewModeGroup` each need one. */
+.legendCorner {
+  position: absolute;
+  right: clamp(16px, 3vw, 48px);
+  bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
+  z-index: 1;
+}
+
+/* `<Legend>`'s own rows, unpositioned — `.legendCorner` above supplies the panel's actual place in
+   the chrome. `max-width` keeps a long hint line wrapping rather than pushing off the left edge
    of a narrower-than-desktop window (a tablet width still above the phone breakpoint, where this
    panel does still render). */
 .legendGroup {
@@ -371,11 +388,15 @@
   max-width: min(240px, 62vw);
 }
 
+/* `padding`/`.legendHint`'s own `line-height` below are both tighter than this row's original
+   figures — the corner it now sits in (`.legendCorner`) asks for a shorter panel, and the row's
+   own content (a label, a toggle and a one-line hint) doesn't need the extra breathing room a
+   taller, wider top-left stack had space for. */
 .legendRow {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
   border-radius: 10px;
   background: rgba(3, 4, 6, 0.4);
@@ -433,13 +454,16 @@
 .legendHint {
   margin: 0;
   font-size: 10px;
-  line-height: 1.4;
+  line-height: 1.25;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
 
-/* `--corner-control-size` is the shared height of both top-corner controls — this button and the
-   Globe/Map toggle opposite it on a phone — so the two stay optically on one line with the time
-   title between them instead of each carrying its own copy of the number. */
+/* `--corner-control-size` is this button's own size, and — on a phone, while the globe is
+   expanded — the height `ShellLayout.module.css`'s `.title` row centres itself against so the two
+   read as one line. Declared on `ShellLayout.module.css`'s `.shell` (its own phone rule) rather
+   than here: this button's `.backdrop` ancestor and `.title` are sibling DOM subtrees, and a CSS
+   custom property only cascades down the tree it's declared in, so only a shared ancestor can
+   supply one value both read. */
 .closeButton {
   position: absolute;
   top: clamp(16px, 2.4vw, 34px);
@@ -472,15 +496,15 @@
     0 0 14px var(--hud-accent-glow, rgba(232, 176, 106, 0.55));
 }
 
-/* Zoom in/out. Right edge, vertically centred — every corner is already spoken for
-   (`.legendGroup` top-left, `.closeButton` top-right) and bottom-right collides for real: with
-   the globe expanded, `ShellLayout`'s own timeline band stays promoted above this backdrop the
-   same way the title does, and `SectionEdgeNav`'s "next section" edge button sits close enough to
-   the viewport's right edge to intercept clicks meant for a bottom-right zoom control there.
-   Centred vertically on the right edge clears the top-left legend, the bottom-
-   centre Globe/Map toggle (`.viewModeGroup`'s own doc comment) and the bottom timeline at every
-   required viewport, including the narrowest (390x844) where the timeline's own band is tallest.
-   Same hairline/pill-group idiom as
+/* Zoom in/out. Right edge, vertically centred — every corner is already spoken for (era
+   shortcuts top-left, `.overlaySelectStack` top-right under `.closeButton`, `.viewModeGroup`
+   bottom-left, `.legendCorner` bottom-right) and bottom-right collides for real even setting the
+   legend aside: with the globe expanded, `ShellLayout`'s own timeline band stays promoted above
+   this backdrop the same way the title does, and `SectionEdgeNav`'s "next section" edge button
+   sits close enough to the viewport's right edge to intercept clicks meant for a bottom-right
+   zoom control there. Centred vertically on the right edge clears all four corners and the
+   bottom timeline at every required viewport, including the narrowest (390x844) where the
+   timeline's own band is tallest. Same hairline/pill-group idiom as
    `.viewModeToggle`/`.legendToggle` (a bordered, translucent pill of buttons) rather than a new
    button language, just stacked vertically (`+` over `−`, like a physical zoom rocker) instead of
    side-by-side, since these two are mutually exclusive directions rather than a pressed/unpressed
@@ -574,7 +598,7 @@
    (`ShellLayout.module.css`'s `.title`, promoted to `z-index: 60` while expanded — above this
    backdrop's own `z-index: 50`, so it paints over rather than being clipped by anything here)
    can run wide enough (a long geological-age or "N years ago" string, centred) to reach this
-   panel's own default top-left position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
+   panel's own desktop corner position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
    (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides whether
    `<Legend>` renders at all.
    No per-breakpoint vertical nudge is needed here any more: `.orbFitFrameSphere`'s and
@@ -585,103 +609,163 @@
    already fit. */
 
 /* `Globe.tsx` never renders `<Legend>` on a phone viewport at all, but `<OverlaySelect>` does
-   (ADR-041 item 7) — it is the only overlay control there. So the top-left corner still needs
-   clearing on a phone, just against `--overlay-clear-bottom` alone rather than a full legend
-   panel. Scoped to the same 760px phone breakpoint `useIsPhoneViewport` uses. */
+   (ADR-041 item 7) — it is the only overlay control there. So the top corner it occupies still
+   needs clearing on a phone, just against `--overlay-clear-bottom` alone rather than a full
+   legend panel. Scoped to the same 760px phone breakpoint `useIsPhoneViewport` uses. */
 @media (max-width: 760px) {
-  .backdrop {
-    /* Bigger than the desktop 40px: this is the one control that gets a viewer back out of the
-       fullscreen view, and at 40px it was a small glyph in a corner on the device where it is
-       hit with a thumb. Declared on the backdrop so both corner controls inherit it. */
-    --corner-control-size: 54px;
-  }
-
   .orbFitFrameSphere {
-    /* The lower of the chrome gap's own top and the overlay stack's real drawn bottom plus a gap
-       — the same `max()` `.orbFitFrameMap`'s own wider-breakpoint rule below already uses. */
-    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
+    /* The tallest of: the chrome gap's own top, the overlay stack's real drawn bottom plus a gap
+       (unused on a phone now that `<Legend>` never renders — kept as a safety net, the same
+       `max()` both frames' own `min-width: 761px` rule further down this file also uses), and row 2's own
+       deterministic bottom edge plus a gap (`--row2-top`/`--row2-height`, `ShellLayout.module.css`
+       — the era shortcuts and the overlay selector, sharing one line under the title). Row 2 is
+       sized so both of its elements fit inside `--row2-height` by construction
+       (`.overlaySelectStack`'s own rule below, `ShellLayout.module.css`'s own `.eraShortcuts`
+       rule), so this term alone covers both without a live measurement of the era shortcuts,
+       which live in a different DOM subtree this element has no ref into. */
+    --usable-top: max(
+      var(--chrome-gap-top, 120px),
+      calc(var(--overlay-clear-bottom, 0px) + 6px),
+      calc(var(--row2-top, 0px) + var(--row2-height, 32px) + 6px)
+    );
 
-    /* `--bottom-overlay-reserve` (ShellLayout.module.css, phone + expanded only) keeps the event
-       strip and the zoom rocker above it free at the bottom, the same way `--usable-top` keeps
-       the legend clear at the top: without it the sphere grows straight through both. Defaults
-       to `0px` so every other breakpoint is untouched. */
+    /* `--bottom-overlay-reserve` (ShellLayout.module.css, phone + expanded only) keeps the
+       controls row and the event strip below free at the bottom, the same way `--usable-top`
+       keeps row 2 clear above: without it the sphere grows straight through both. Defaults to
+       `0px` so every other breakpoint is untouched. */
     --usable-height: calc(
       var(--chrome-gap-top, 120px) + var(--chrome-gap-height, 560px) - var(--usable-top) - var(--bottom-overlay-reserve, 0px)
     );
 
     /* A lower floor than the base rule's 235px, which on a short phone is taller than the space
-       that is actually free and so pushed the sphere straight back through the legend above and
-       the event strip below — a floor that overflows its own container defeats the clearances
-       either side of it. 225px still reads as a globe rather than a thumbnail. */
+       that is actually free and so pushed the sphere straight back through row 2 above and the
+       controls/event bands below — a floor that overflows its own container defeats the
+       clearances either side of it. 225px still reads as a globe rather than a thumbnail. */
     --expanded-size: max(225px, min(94vw, 900px, var(--usable-height)));
     margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--expanded-size)) / 2);
   }
 
-  /* Top-right, immediately left of the ✕: both are corner controls on the same row as the
-     centred title, so the toggle costs the expanded sphere no height of its own (unlike the
-     base rule's bottom-of-sphere placement) — `ShellLayout.module.css`'s own `.eraShortcuts`
-     phone rule is what actually frees that space, by pulling the shortcuts row out of `.title`'s
-     flow entirely. It used to sit top-left (this file's own git history), which is now the
-     overlay selector's corner (no `<Legend>` on a phone) rather than this toggle's. */
-  .viewModeGroup {
-    top: clamp(16px, 2.4vw, 34px);
-    bottom: auto;
+  /* Row 2: era shortcuts left, the overlay selector right, sharing one line under the title
+     (`ShellLayout.module.css`'s own `.eraShortcuts` phone rule is the left half of this row; both
+     read the same `--row2-top`/`--row2-height` so they land on one vertical centre line despite
+     living in different DOM subtrees). `<Legend>` never renders on a phone (`Globe.tsx`'s own
+     guard), so this stack holds only `<OverlaySelect>`. `justify-content: center` (main axis,
+     `flex-direction: column` from the base rule) vertically centres it inside `--row2-height`,
+     the same device `.eraShortcuts`'s own flex row uses for its pills. */
+  .overlaySelectStack {
+    top: var(--row2-top);
     left: auto;
-    /* `.closeButton`'s own right offset plus its own width plus a real gap between the two
-       pills. */
-    right: calc(clamp(16px, 3vw, 48px) + var(--corner-control-size, 54px) + 8px);
-    /* Same box height as `.closeButton` opposite, contents centred in it: sharing only a top
-       edge leaves this shorter pill visibly riding high against that button. */
-    height: var(--corner-control-size);
+    right: var(--gutter, clamp(16px, 3vw, 48px));
+    transform: none;
+    min-height: var(--row2-height, 32px);
     justify-content: center;
+  }
+
+  /* The Globe/Map toggle and the zoom rocker now share their own row directly under the sphere/
+     map, rather than a floating placement: the sphere is width-bound at `94vw` on a phone (see
+     `--expanded-size` above), so it has vertical slack it can't use anyway, and spending some of
+     it on a real row costs the globe nothing. Toggle left, zoom rocker right, both anchored to
+     the same `bottom` offset (`ShellLayout.module.css`'s own `--controls-row-reserve`/
+     `--feed-reserve` doc comment has the band accounting) so they share one line. */
+  .viewModeGroup {
+    top: auto;
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + var(--feed-reserve, 39px) + 6px);
+    left: var(--gutter, clamp(16px, 3vw, 48px));
+    right: auto;
     transform: none;
   }
 
-  /* Smaller than the desktop pill: at full size this reached across into the centred time
-     title beside it. */
+  /* Smaller than the desktop pill: at full size this crowded the zoom rocker sharing this row. */
   .viewModeButton {
     padding: 3px 9px;
     font-size: 9.5px;
   }
 
-  /* Shares the event strip's band at its right end rather than taking a band of its own above it
-     — two stacked bands cost the sphere ~90px on a viewport that has none to spare. Side by side
-     rather than the base rule's stacked rocker, for the same reason. `.feed` stops short of it
-     (`ShellLayout.module.css`), so the strip and these buttons never overlap. */
   .zoomGroup {
     top: auto;
     transform: none;
-    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + var(--feed-reserve, 39px) + 6px);
+    right: var(--gutter, clamp(16px, 3vw, 48px));
+    left: auto;
     flex-direction: row;
   }
 }
 
-/* Above the phone breakpoint the toggle steps off the band's centre line to just right of it,
-   with the era shortcuts the same distance to its left (`--expanded-band-gap`, declared on the
-   shell by `ShellLayout.module.css` so both read one number). Centred, it sat directly under the sphere's widest point, which is the part of the
-   silhouette that reaches lowest; anchored to the corner it no longer constrains how close the
-   band can sit. The phone keeps its own top-left placement (below), where the title band has the
-   only free corner. */
+/* Above the phone breakpoint the toggle moves to the bottom-left corner, opposite the
+   bottom-right legend (`.legendCorner`) — the layout this file's own corner comments describe.
+   Centred, it sat directly under the sphere's widest point, which is the part of the silhouette
+   that reaches lowest; anchored to the corner it no longer constrains how close the band can
+   sit. The phone keeps its own row under the sphere/map instead (below), where a floating corner
+   placement would cost the already width-bound sphere real vertical budget it can't spare. */
 @media (min-width: 761px) {
   .viewModeGroup {
-    left: calc(50% + var(--expanded-band-gap, 300px));
+    left: clamp(16px, 3vw, 48px);
     right: auto;
     transform: none;
     align-items: flex-start;
   }
 }
 
-/* The map needs the same `--overlay-clear-bottom` safety net at a *wider* breakpoint than the
-   sphere's: locked to ~2.05:1, the map's own box grows in width right along with whatever height
-   the real vertical gap allows, so for a given height it reaches roughly twice as far to each
-   side as the sphere's square box does. `1150px` is chosen from measurement, not derived in
-   closed form — an exact width threshold would need the map's own current height too (itself
-   gap-dependent), which a plain `max-width` media query can't express. */
-@media (max-width: 1150px) {
+/* Every corner carries real chrome now (era shortcuts top-left, `.overlaySelectStack` top-right
+   under the ✕, `.viewModeGroup` bottom-left, `.legendCorner` bottom-right), at every non-phone
+   width — not just a narrow one. A single width threshold like the sphere's old approach (nothing
+   above 760px) doesn't generalize here: the top-right stack sits *below* the ✕, lower than the
+   top-left era shortcuts, and the map's own ~2.05:1 footprint reaches the side gutters at
+   generously wide viewports too, not only cramped ones — measured overlap at both 1000px and
+   1440px widths is what this rule fixes. So both frames get real top *and* bottom clearance
+   unconditionally above the phone breakpoint, rather than a width-gated approximation:
+   `--usable-top` is a `max()` of the chrome-gap top and both top corners' real/constant
+   clear-bottoms; `--usable-bottom` is its bottom-edge counterpart — the lesser of the chrome gap's own real
+   bottom (`--chrome-gap-bottom-raw`) and whichever bottom corner starts highest
+   (`--bottom-corner-clear-top`, `Globe.tsx`'s own doc comment on `legendCornerRef`). */
+@media (min-width: 761px) {
+  .orbFitFrameSphere {
+    --usable-top: max(
+      var(--chrome-gap-top, 120px),
+      calc(var(--overlay-clear-bottom, 0px) + 6px),
+      calc(var(--era-shortcuts-clear-bottom, 0px) + 6px)
+    );
+    --usable-bottom: min(var(--chrome-gap-bottom-raw, 9999px), calc(var(--bottom-corner-clear-top, 9999px) - 6px));
+    --usable-height: calc(var(--usable-bottom) - var(--usable-top));
+    --expanded-size: max(235px, min(94vw, 900px, var(--usable-height)));
+    margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--expanded-size)) / 2);
+  }
+
   .orbFitFrameMap {
-    --usable-top: max(var(--chrome-gap-top, 120px), calc(var(--overlay-clear-bottom, 0px) + 6px));
-    /* `--bottom-overlay-reserve` as in the sphere's own rule above — `0px` above the phone
-       breakpoint that sets it, so this wider query keeps its behaviour on a tablet or desktop. */
+    --usable-top: max(
+      var(--chrome-gap-top, 120px),
+      calc(var(--overlay-clear-bottom, 0px) + 6px),
+      calc(var(--era-shortcuts-clear-bottom, 0px) + 6px)
+    );
+    --usable-bottom: min(var(--chrome-gap-bottom-raw, 9999px), calc(var(--bottom-corner-clear-top, 9999px) - 6px));
+    --map-height: max(160px, min(calc(96vw / 2.05), 94vh, calc(var(--usable-bottom) - var(--usable-top)), calc(1800px / 2.05)));
+
+    /* Re-derived from the (possibly now smaller) `--map-height` above, not left at the base
+       rule's own independent formula — `width`/`height` must stay in the same ~2.05 aspect this
+       whole feature depends on (this file's earlier doc comment on the map-mode rule), and only
+       `--map-height` is guaranteed to reflect the corner clamps here. */
+    width: calc(var(--map-height) * 2.05);
+    margin-top: calc(var(--usable-top) + (var(--usable-bottom) - var(--usable-top) - var(--map-height)) / 2);
+  }
+}
+
+/* The phone breakpoint (`max-width: 760px`, mutually exclusive with the `min-width: 761px` query
+   above) keeps its own row2-based formula (`--row2-top`/`--row2-height`, not the corner constants
+   the wider rule reads) — `.orbFitFrameSphere`'s own phone rule already has an equivalent, but
+   this element is a separate sibling with its own copy of `--usable-top`, not something sphere's
+   rule can reach. Same shape as the rule above with row 2's own top-clearance term substituted
+   in, for the same reason this file's other sphere/map pairs duplicate rather than share a
+   formula (no clean way for one selector's rule to extend another's in plain CSS). No
+   bottom-clearance term here: the phone breakpoint's own `--bottom-overlay-reserve` (subtracted
+   from the full chrome gap directly, not via `--usable-bottom`) already covers the controls row
+   and feed strip below, the same mechanism the phone's `.orbFitFrameSphere` rule uses. */
+@media (max-width: 760px) {
+  .orbFitFrameMap {
+    --usable-top: max(
+      var(--chrome-gap-top, 120px),
+      calc(var(--overlay-clear-bottom, 0px) + 6px),
+      calc(var(--row2-top, 0px) + var(--row2-height, 32px) + 6px)
+    );
     --map-height: max(
       160px,
       min(
@@ -693,11 +777,6 @@
         calc(1800px / 2.05)
       )
     );
-
-    /* Re-derived from the (possibly now smaller) `--map-height` above, not left at the base
-       rule's own independent formula — `width`/`height` must stay in the same ~2.05 aspect this
-       whole feature depends on (this file's earlier doc comment on the map-mode rule), and only
-       `--map-height` is guaranteed to reflect the overlay clamp here. */
     width: calc(var(--map-height) * 2.05);
     margin-top: calc(
       var(--usable-top) +

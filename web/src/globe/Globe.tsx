@@ -510,9 +510,11 @@ export function Globe({
 
   // `viewModeToggleRef`'s own doc comment (`useViewModeToggleHeightReport`, below).
   const viewModeToggleRef = useRef<HTMLDivElement | null>(null)
-  // Not on a phone: there the toggle is a top-corner control beside the title, not a bar sitting
-  // in the band above the timeline, so it costs the sphere no height and reserving any would
-  // leave dead space under the globe.
+  // Not on a phone: there the toggle shares its own row with the zoom rocker
+  // (`Globe.module.css`'s own phone `.viewModeGroup`/`.zoomGroup` rule), and the row's real height
+  // is reserved through `ShellLayout.module.css`'s own literal `--controls-row-reserve` instead —
+  // sized to the taller of the two controls (the zoom rocker), which a live measurement of the
+  // shorter toggle pill alone would under-report.
   useViewModeToggleHeightReport(viewModeToggleRef, expanded && webgl && !isPhoneViewport, onViewModeToggleHeightChange)
 
   // The Globe/Map toggle (docs/GLOBE.md's ADR-033): local, Globe-owned UI state rather
@@ -566,20 +568,33 @@ export function Globe({
     if (isOrbClick(start, { x: e.clientX, y: e.clientY })) onToggleExpand()
   }
 
-  // The narrow-viewport safety net for the top-left chrome (`ViewModeToggle` lives elsewhere
-  // now, see its own doc comment): the Legend/overlay-selector stack is wide enough that its own
-  // right edge can sit past the *centre* of a narrow viewport, which a centred sphere or map
-  // straddles by construction. `Globe.module.css`'s own narrow-viewport rule reads
-  // `--overlay-clear-bottom` (the stack's own real drawn bottom edge) to keep the panel from
-  // growing underneath it — see that rule's own doc comment for why a simple "clear it vertically
-  // altogether" bound, not exact circle geometry, is what's actually applied. Measured directly on
-  // the DOM (not estimated), the same `getBoundingClientRect` + `ResizeObserver` + `window.resize`
-  // recipe `useChromeGap` uses, written onto `backdropRef`'s own element (an ancestor of both, in
-  // the same position: fixed/viewport coordinate space) rather than routed through React state,
-  // for the same "don't re-render every playback frame for a value nothing here reads reactively"
-  // reason.
+  // The narrow-viewport safety net for the top-right overlay-selector stack (`ViewModeToggle` and
+  // `<Legend>` live in their own corners now, see their own doc comments): on a phone this stack
+  // is wide enough that its own edge can sit past the *centre* of a narrow viewport, which a
+  // centred sphere or map straddles by construction; on a wider-but-still-narrow desktop/tablet
+  // width the map's own ~2.05:1 rectangle reaches far enough sideways to grow up underneath it
+  // too. `Globe.module.css`'s own narrow-viewport rules read `--overlay-clear-bottom` (this
+  // stack's own real drawn bottom edge) to keep the sphere/map from growing underneath it — see
+  // those rules' own doc comments for why a simple "clear it vertically altogether" bound, not
+  // exact circle geometry, is what's actually applied. Measured directly on the DOM (not
+  // estimated), the same `getBoundingClientRect` + `ResizeObserver` + `window.resize` recipe
+  // `useChromeGap` uses, written onto `backdropRef`'s own element (an ancestor of both, in the
+  // same position: fixed/viewport coordinate space) rather than routed through React state, for
+  // the same "don't re-render every playback frame for a value nothing here reads reactively"
+  // reason. The era shortcuts' own top-left corner needs the same clearance and lives in a
+  // sibling DOM subtree this component has no ref into — `ShellLayout.module.css`'s
+  // `--era-shortcuts-clear-bottom` covers it with a fixed constant instead, the same "share a
+  // deterministic number across subtrees" trick `--row2-top`/`--row2-height` already use for the
+  // phone breakpoint.
   const backdropRef = useRef<HTMLDivElement | null>(null)
-  const legendBoundsRef = useRef<HTMLDivElement | null>(null)
+  const overlaySelectBoundsRef = useRef<HTMLDivElement | null>(null)
+  // The bottom-right legend corner's own bounds — paired with `viewModeToggleRef` (declared
+  // above) below to write `--bottom-corner-clear-top`, the bottom-edge counterpart to
+  // `--overlay-clear-bottom`: whichever bottom corner starts highest is what the sphere/map must
+  // stop short of, so neither the toggle nor the legend ever finds itself drawn over the globe.
+  // Both live in this component's own subtree (unlike the era shortcuts), so both get a real
+  // measurement rather than a deterministic constant.
+  const legendCornerRef = useRef<HTMLDivElement | null>(null)
   // `Globe.module.css`'s `.orbFitFrameSphere`/`.orbFitFrameMap` — invisible, `pointer-events:
   // none` boxes carrying the *old* `.orbExpanded` sizing formulas verbatim (that class's own doc
   // comment on why: the canvas itself is now full-bleed, so something else has to say what size
@@ -593,8 +608,17 @@ export function Globe({
     const host = backdropRef.current
     if (host === null) return undefined
     const recompute = (): void => {
-      const legendBottom = legendBoundsRef.current?.getBoundingClientRect().bottom ?? 0
-      host.style.setProperty('--overlay-clear-bottom', `${legendBottom}px`)
+      const overlaySelectBottom = overlaySelectBoundsRef.current?.getBoundingClientRect().bottom ?? 0
+      host.style.setProperty('--overlay-clear-bottom', `${overlaySelectBottom}px`)
+
+      const toggleTop = viewModeToggleRef.current?.getBoundingClientRect().top ?? null
+      const legendTop = legendCornerRef.current?.getBoundingClientRect().top ?? null
+      const bottomCornerTops = [toggleTop, legendTop].filter((top): top is number => top !== null)
+      if (bottomCornerTops.length > 0) {
+        host.style.setProperty('--bottom-corner-clear-top', `${Math.min(...bottomCornerTops)}px`)
+      } else {
+        host.style.removeProperty('--bottom-corner-clear-top')
+      }
 
       const canvasRect = host.getBoundingClientRect()
       // `?? null` down to a real, non-degenerate rect only: a frame's *very first*
@@ -627,7 +651,7 @@ export function Globe({
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(recompute)
       observer.observe(host)
-      for (const ref of [legendBoundsRef, sphereFitFrameRef, mapFitFrameRef]) {
+      for (const ref of [overlaySelectBoundsRef, legendCornerRef, viewModeToggleRef, sphereFitFrameRef, mapFitFrameRef]) {
         if (ref.current !== null) observer.observe(ref.current)
       }
     }
@@ -805,35 +829,44 @@ export function Globe({
           to show either — every control below is hidden outright, never shown disabled or
           faked. */}
       {expanded && webgl && <ViewModeToggle mapMode={mapMode} onChange={setMapMode} heightRef={viewModeToggleRef} />}
-      {/* Top-left stack (ADR-041 item 7): the Legend panel and the overlay selector, orthogonal
-          controls sharing one corner. `<Legend>` is desktop only — a phone viewer never sees it
-          at all (`humanOn`'s own doc comment above) — but `<OverlaySelect>` renders on both, since
-          it is the *only* overlay control on a phone. `legendBoundsRef` measures this wrapper
-          directly rather than `<Legend>`'s own inner box, so `--overlay-clear-bottom` covers
-          whichever of the two is actually on screen. `compact` (suppressing the ramp key) on a
-          phone only: at the 390/412px floor the era shortcuts row sits close enough under the
-          title that the ramp key's own height reaches it — desktop has the room. */}
+      {/* Top-right stack (ADR-041 item 7), under the ✕: the raster-overlay selector. Renders on
+          both phone and desktop (it is the *only* overlay control on a phone, `<Legend>` never
+          shows there — see `<Legend>`'s own corner below). `overlaySelectBoundsRef` measures this
+          wrapper directly, so `--overlay-clear-bottom` reflects this corner alone now — `<Legend>`
+          moved to its own bottom-right corner, which doesn't share this stack's clearance concern
+          (see its own doc comment). `compact` (suppressing the ramp key) on a phone only: at the
+          390/412px floor row 2 has no room to spare for it — desktop has the room. */}
       {expanded && webgl && (
-        <div ref={legendBoundsRef} className={styles.legendStack}>
-          {!isPhoneViewport && (
-            <Legend
-              rows={[
-                {
-                  id: 'human-civilisation',
-                  label: 'Human civilisation',
-                  hint: 'Dispersal arcs while each migration happens, settled markers after, and cities.',
-                  on: humanOn,
-                  onChange: setHumanOn,
-                  visible: humanHasData,
-                } satisfies LegendRow,
-              ]}
-            />
-          )}
+        <div ref={overlaySelectBoundsRef} className={styles.overlaySelectStack} data-testid="globe-overlay-select-stack">
           <OverlaySelect
             value={overlayKind}
             onChange={setOverlayKind}
             available={availableOverlayKinds}
             compact={isPhoneViewport}
+          />
+        </div>
+      )}
+      {/* Bottom-right corner: the "Human civilisation" legend toggle. Desktop only — a phone
+          viewer never sees it at all (`humanOn`'s own doc comment above forces the layer on
+          there instead, since there is nothing to toggle it with) — so this corner is simply
+          absent on a phone rather than needing its own phone positioning rule.
+          `legendCornerRef`, paired with `viewModeToggleRef`, feeds `--bottom-corner-clear-top`
+          (`backdropRef`'s own effect above) — the bottom-edge counterpart to
+          `--overlay-clear-bottom`, so the sphere/map (particularly the wide map) can never grow
+          down underneath this corner or the toggle opposite it either. */}
+      {expanded && webgl && !isPhoneViewport && (
+        <div ref={legendCornerRef} className={styles.legendCorner} data-testid="globe-legend-corner">
+          <Legend
+            rows={[
+              {
+                id: 'human-civilisation',
+                label: 'Human civilisation',
+                hint: 'Dispersal arcs, settlement markers and cities.',
+                on: humanOn,
+                onChange: setHumanOn,
+                visible: humanHasData,
+              } satisfies LegendRow,
+            ]}
           />
         </div>
       )}
@@ -848,7 +881,13 @@ export function Globe({
       )}
 
       {expanded && (
-        <button type="button" className={styles.closeButton} onClick={onCollapse} aria-label="Collapse globe">
+        <button
+          type="button"
+          className={styles.closeButton}
+          onClick={onCollapse}
+          aria-label="Collapse globe"
+          data-testid="globe-close-button"
+        >
           ✕
         </button>
       )}
@@ -874,9 +913,10 @@ interface ViewModeToggleProps {
  *  the button text alone wouldn't. The group's accessible name comes from a direct `aria-label`
  *  rather than `aria-labelledby`, since there is no separate label element to point at.
  *
- *  Positioned bottom-centre (`Globe.module.css`'s `.viewModeGroup`, its own doc comment has the
- *  placement maths), below the sphere/map rather than beside it — only the legend still needs
- *  `--overlay-clear-bottom` protection (`Globe`'s own doc comment on `legendBoundsRef`).
+ *  Positioned bottom-left (`Globe.module.css`'s `.viewModeGroup`, its own doc comment has the
+ *  placement maths), opposite the "Human civilisation" legend at bottom-right — only the
+ *  top-corner overlay selector and era shortcuts still need clearance protection
+ *  (`Globe`'s own doc comment on `overlaySelectBoundsRef`).
  *  `heightRef` reports this element's own real height up to `ShellLayout` so the expanded
  *  sphere/map sizes itself into what's left over once this band is reserved
  *  (`useViewModeToggleHeightReport`). `data-testid` gives the QA harness a stable selector

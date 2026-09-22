@@ -1,12 +1,25 @@
-/* Designed for the expanded globe's freed top-left slot at the ~390px phone floor first, desktop
-   inheriting the same layout. Same translucent-dark-backing/hairline-border register as the
-   legend rows this control replaces (`Globe.module.css`'s `.legendRow`/`.legendRowCompact`),
-   rather than a new visual idiom. */
+/* Designed for the expanded globe's top-right slot, under the ✕ (`Globe.module.css`'s
+   `.overlaySelectStack`), desktop and tablet inheriting that layout; right-aligned opposite the
+   era shortcuts on a phone instead, sharing that row (that module's own phone rule and
+   `ShellLayout.module.css`'s own `.eraShortcuts` phone rule). Same translucent-dark-backing/
+   hairline-border register as the legend rows this control replaces (`Globe.module.css`'s
+   `.legendRow`/`.legendRowCompact`), rather than a new visual idiom. */
 .root {
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-width: min(200px, 58vw);
+}
+
+/* Narrower than the base 58vw cap: on a phone this control shares its row with the era shortcuts
+   (`Globe.module.css`'s own `.overlaySelectStack` phone rule), so it can only claim what they leave. At
+   the 390px floor that is 390 less both gutters, the pills' own ~156px and a gap — and the widest
+   option label ("Population density") needs nearly all of it, since a native select cannot be
+   ellipsised or wrapped, only clipped. */
+@media (max-width: 760px) {
+  .root {
+    max-width: min(190px, 50vw);
+  }
 }
 
 .control {
@@ -51,6 +64,18 @@
 .select:focus-visible {
   outline: 1px solid var(--hud-accent, #e8b06a);
   outline-offset: 2px;
+}
+
+/* Shorter than the base 44px: in its own row under the title (`Globe.module.css`'s own phone
+   `.overlaySelectStack` rule) this control costs the sphere real vertical budget rather than sharing a
+   corner with nothing else, so its own height is worth trimming. 32px keeps the swatch/select row
+   comfortably inside it; the select itself still fills the control's full height, so its own tap
+   target shrinks by the same amount rather than staying 44px inside a shorter box. */
+@media (max-width: 760px) {
+  .control {
+    min-height: 32px;
+    padding: 0 8px;
+  }
 }
 
 /* Real, focusable label text kept off screen — the select's accessible name comes from it

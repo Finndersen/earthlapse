@@ -21,7 +21,7 @@
  * `compact` phone variant; that code path is gone along with its last caller.
  */
 
-import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 
 import styles from './Globe.module.css'
 
@@ -73,12 +73,6 @@ function LegendToggle({ label, hint, on, onChange, footer }: Omit<LegendRow, 'id
 
 export interface LegendProps {
   rows: readonly LegendRow[]
-  /** `Globe.tsx`'s own measurement of this panel's rendered footprint (`useOverlayClearBottom`)
-   *  — the expanded sphere/map must never grow underneath it (docs/GLOBE.md's own "must not cover
-   *  land" rule). Merged with this component's internal `containerRef` (focus management) via a
-   *  callback ref, rather than replacing it, since both need the same node. Optional: a caller
-   *  that doesn't need to measure this panel (a test harness) can omit it. */
-  boundsRef?: RefObject<HTMLDivElement | null>
 }
 
 /** Renders nothing when every row is out of its data domain — an empty legend box is chrome with
@@ -90,7 +84,7 @@ export interface LegendProps {
  *  `hadFocusRef` tracks whether focus was genuinely inside the legend (via the container's
  *  bubbling `onFocus`/`onBlur`); the effect redirects focus back to the container only in that
  *  case, on the render after a row-set change, so focus a viewer moved elsewhere is never stolen. */
-export function Legend({ rows, boundsRef }: LegendProps) {
+export function Legend({ rows }: LegendProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const hadFocusRef = useRef(false)
   const visibleRows = rows.filter((row) => row.visible)
@@ -108,10 +102,7 @@ export function Legend({ rows, boundsRef }: LegendProps) {
 
   return (
     <div
-      ref={(el) => {
-        containerRef.current = el
-        if (boundsRef) boundsRef.current = el
-      }}
+      ref={containerRef}
       tabIndex={-1}
       className={styles.legendGroup}
       onFocus={() => {

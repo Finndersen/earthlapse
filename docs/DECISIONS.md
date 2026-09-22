@@ -6764,3 +6764,45 @@ names an origin, and `earthtime publish --asset-base` is no longer part of the d
 local media whatever the manifest was published for, and the stub fallback is correctly
 self-relative rather than inheriting a CDN base it has no assets at.
 
+---
+
+## ADR-044 — The expanded globe's chrome is laid out in rows on a phone, corners on desktop
+
+**Status:** accepted — 2026-09-22.
+
+**Context.** The expanded globe's chrome had accreted into a single arrangement applied at every
+width: the title centred at the top, the era shortcuts as a band beneath it, the legend down the
+left, the Globe/Map toggle and zoom buttons tucked against the sphere's own curvature. On a
+390px-wide phone that arrangement overlapped the sphere — the era shortcuts painted directly over
+it — and the curvature-tucking only worked at widths where the sphere left corners empty.
+
+The sphere on a phone is **width-bound**, not height-bound: at `94vw` on 390px it is ~367px, and
+recovering vertical space does not make it larger. So the chrome's job on a phone is to stop
+overlapping the sphere, not to buy it room.
+
+**Decision.** Two layouts, split at 760px.
+
+*Phone (portrait), top to bottom:* a fixed title row (centred heading, ✕ right-aligned); a second
+fixed row carrying the era shortcuts left and the overlay selector right; the sphere; the
+Globe/Map toggle and zoom buttons on their own row beneath it; the event feed as one full-width
+line; breadcrumbs; the timeline. The rows are real rows — nothing straddles the sphere or sits in
+the space its curvature leaves.
+
+*Desktop/tablet:* the four corners — era shortcuts top-left, overlay selector top-right under the
+✕, Globe/Map bottom-left, the human-civilisation legend bottom-right.
+
+The sphere's usable box is derived from the row geometry rather than hard-coded: `--row2-top` and
+`--row2-height` are published by the shell and `Globe.module.css`'s `--usable-top` takes the max of
+the chrome gap, the measured overlay stack's bottom, and row 2's bottom.
+
+**Consequences.** Changed: `web/src/shell/ShellLayout.module.css`, `web/src/globe/Globe.module.css`,
+`web/src/globe/OverlaySelect.module.css`, `web/src/globe/Globe.tsx`, `web/src/globe/Legend.tsx`.
+
+Two mechanisms this replaced are gone rather than dormant: the curvature-anchoring offset the
+straddled controls needed, and `--expanded-band-gap`.
+
+One trap is worth recording because it is invisible in the CSS: `.title` cannot carry a
+`transform`. `.eraShortcuts` is a `position: fixed` DOM child of it, and a transform on an ancestor
+makes that ancestor the containing block for fixed descendants — the shortcuts then resolve their
+own `left` against the title's box instead of the viewport. Centring is done with `left/right: 0`,
+`width: fit-content` and auto inline margins instead.

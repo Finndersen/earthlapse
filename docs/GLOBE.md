@@ -908,6 +908,26 @@ letting the browser drop it to `<body>` with no indication of where it went. On 
 (`compact`) rows are single-line with a short alternative hint rather than a truncated one, so an
 honesty caveat ("modelled", "data ends 2015") is never the part that gets cut off.
 
+**Expanded-view chrome: rows on a phone, corners above 760px (ADR-044).** The sphere on a phone is
+**width-bound** — `94vw` is ~367px on a 390px screen — so freeing vertical space does not make it
+bigger; the chrome's job there is only to stop overlapping it. Below 760px the chrome is a stack of
+real rows: title (centred) with the ✕ right-aligned; then era shortcuts left / overlay selector
+right; then the sphere; then the Globe/Map toggle and the zoom buttons on a row of their own; then
+the event feed, breadcrumbs and timeline. Nothing straddles the sphere or sits in the gap its
+curvature leaves. At 760px and above the same controls take the four corners instead — era
+shortcuts top-left, overlay selector top-right beneath the ✕, Globe/Map bottom-left, the
+"Human civilisation" legend bottom-right.
+
+The sphere's own box follows from that geometry rather than repeating it: the shell publishes
+`--row2-top` and `--row2-height`, and `Globe.module.css`'s `--usable-top` is the max of the chrome
+gap, the measured overlay stack's bottom edge and row 2's bottom edge — so a row that grows pushes
+the sphere down instead of painting over it.
+
+One non-obvious constraint: **`.title` must not carry a `transform`.** `.eraShortcuts` is a
+`position: fixed` DOM child of it, and a transformed ancestor becomes the containing block for its
+fixed descendants — the shortcuts would then resolve `left` against the title's box rather than the
+viewport. Centring uses `left/right: 0`, `width: fit-content` and auto inline margins instead.
+
 ---
 
 ## References

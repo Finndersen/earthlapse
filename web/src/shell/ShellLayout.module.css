@@ -466,34 +466,41 @@
   opacity: 0.18;
 }
 
-/* Expanded, above the phone breakpoint: the era shortcuts leave the title and sit just left of
-   the band below the sphere, opposite the Globe/Map toggle just right of it
-   (`Globe.module.css`'s own `.viewModeGroup` rule for the same breakpoint). Both anchor to
-   `--chrome-gap-bottom-inset`, so they share one line and the band costs one row instead of two.
-   Two gains: the title row gives up their height, which `useChromeGap` reads straight into
-   `--chrome-gap-top` and the sphere grows into; and neither control sits under the sphere's own
-   widest point the way a centred one does, so the band can sit closer to it.
-   `fixed`, not `absolute`: the offset is expressed against the viewport, the same basis the
-   toggle opposite uses — `.hud`'s padding box is not the viewport (see the phone `.feed` rule
-   below for the same trap). The phone keeps them under the title, where the band has no room
-   for a second control beside the toggle. */
+/* Expanded, above the phone breakpoint: the era shortcuts leave the title and sit at the
+   top-left corner, level with the ✕ (`Globe.module.css`'s `.closeButton`, top-right) — the
+   layout mirrors the shape the phone breakpoint already ships (era shortcuts and the overlay
+   selector each own a top corner, the Globe/Map toggle and the legend each own a bottom one),
+   just with each control in its own corner instead of two of them sharing a row. The title row
+   gives up their height, which `useChromeGap` reads straight into `--chrome-gap-top` and the
+   sphere grows into.
+   `fixed`, not `absolute`: the offset is expressed against the viewport, the same basis every
+   other corner control uses (`.hud`'s padding box is not the viewport — see the phone `.feed`
+   rule below for the same trap). The phone keeps them under the title instead (below), where the
+   band has no room for a second control beside the toggle. */
 @media (min-width: 761px) {
   .shell[data-globe-expanded='true'] {
-    /* How far either control sits from the viewport's vertical centre line. Roughly the sphere's
-       own half-width, so the pair reads as flanking the globe rather than pinned to the window —
-       approximate on purpose: the sphere's real size depends on the live chrome gap, and tracking
-       it exactly would mean publishing a measured frame edge for a placement that only has to look
-       right. Declared here, on the shell, so `Globe.module.css`'s own toggle rule inherits the
-       same number and the two stay symmetric by construction. */
-    --expanded-band-gap: clamp(140px, 21vw, 300px);
+    /* This row's own real bottom edge: a fixed constant, not a live measurement, because
+       `Globe.tsx` (a sibling DOM subtree under `.shell`) has no ref into this one — the same
+       "share a deterministic number across subtrees" trick `--row2-top`/`--row2-height` already
+       use for the phone breakpoint below. The content itself (two fixed-size pills) never
+       changes size with viewport width, only `clamp(16px, 2.4vw, 34px)` — the same top offset
+       `.closeButton` uses — does, so one constant height covers every width this query matches.
+       Read by `Globe.module.css`'s `.orbFitFrameMap`, so the map can never grow up under this
+       corner at a narrow desktop/tablet width. */
+    --era-shortcuts-clear-bottom: calc(clamp(16px, 2.4vw, 34px) + 22px);
   }
 
   .shell[data-globe-expanded='true'] .eraShortcuts {
     position: fixed;
-    left: auto;
-    right: calc(50% + var(--expanded-band-gap));
-    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
-    justify-content: flex-end;
+    top: clamp(16px, 2.4vw, 34px);
+    left: clamp(16px, 3vw, 48px);
+    right: auto;
+    bottom: auto;
+    /* The base rule's own `margin-top: 3px` is for the in-flow, under-the-title stacking that
+       rule was written for — here it would offset this box 3px below the ✕'s own top, despite
+       both sharing the same `top` clamp, so it's zeroed for an exact match. */
+    margin-top: 0;
+    justify-content: flex-start;
   }
 }
 
@@ -552,6 +559,25 @@
        circle"). Sized so the drawn silhouettes roughly match instead — measured, not assumed
        (`scripts/qa/shots.mjs`'s `globe-vs-portrait-drawn-size` shot holds the numbers). */
     --globe-orb-size: 110px;
+    /* The shared height of the expanded globe's top-corner ✕ (`Globe.module.css`'s
+       `.closeButton`) and, while expanded, this file's own centred `.title` row below — declared
+       here rather than in `Globe.module.css` so both can read it: `Globe`'s `.backdrop` and this
+       component's `.title` are sibling DOM subtrees under `.shell`, and a CSS custom property
+       only cascades down the tree it's declared in, not sideways between siblings (the same
+       reason `--era-shortcuts-clear-bottom`, further up this file, is declared here rather than
+       in `Globe.module.css`). */
+    --corner-control-size: 54px;
+    /* Row 2's own top offset while the globe is expanded: directly under the title/✕ row, one
+       `--corner-control-size` plus a real gap down. Shared by this file's own `.eraShortcuts`
+       (left half) and `Globe.module.css`'s `.overlaySelectStack` (right half, the overlay
+       selector) —
+       declared once here, on their shared `.shell` ancestor, rather than in either sibling
+       subtree, for the same reason `--corner-control-size` above is. */
+    --row2-top: calc(clamp(16px, 2.4vw, 34px) + var(--corner-control-size, 54px) + 6px);
+    /* Row 2's own height: the taller of its two elements (`OverlaySelect.module.css`'s phone
+       `.control`, 32px) — both size themselves to exactly this so their content lands on one
+       vertical centre line regardless of which is naturally shorter. */
+    --row2-height: 32px;
   }
 
   .globe,
@@ -621,36 +647,44 @@
     padding-block: 0;
   }
 
-  /* The band the expanded globe must leave free below itself, over and above the Globe/Map
-     toggle's own reservation: the feed's one-card strip (`events/presentation.ts`'s
-     `FEED_STRIP_HEIGHT_PX`) plus a real gap. Declared on the shell so `Globe.module.css` — a
-     different module, but a descendant in the DOM — inherits it for both the sphere's own sizing
-     and the toggle's offset, keeping one source for a distance three rules depend on. Only while
-     expanded: collapsed, the globe is a corner orb and reserves nothing. */
+  /* The two stacked bands the expanded globe must leave free below itself: the Globe/Map toggle +
+     zoom rocker row, then the event strip, then the timeline. Declared on the shell so
+     `Globe.module.css` — a different module, but a descendant in the DOM — inherits both for the
+     sphere's own sizing. Only while expanded: collapsed, the globe is a corner orb and reserves
+     nothing. */
   .shell[data-globe-expanded='true'] {
-    /* The event strip's own band, directly above the timeline. The zoom rocker shares it. */
-    --feed-reserve: 46px;
-    /* What the sphere must leave free at the bottom. One band now, not two: the zoom rocker sits
-       at the right end of the strip's row rather than above it. */
-    --bottom-overlay-reserve: 46px;
+    /* The event strip's own band (`events/presentation.ts`'s `FEED_STRIP_HEIGHT_PX`, 33px) plus
+       the real gap above the controls row above it. */
+    --feed-reserve: 39px;
+    /* The Globe/Map toggle + zoom rocker row (`Globe.module.css`'s own phone `.viewModeGroup`/
+       `.zoomGroup` rule), sized to the taller of the two — the zoom rocker's own 38px pill (36px
+       buttons plus a 1px border top and bottom) — plus the real gap above the sphere. A literal
+       constant, the same device `--feed-reserve` already is, rather than a live measurement of
+       the toggle alone (`useViewModeToggleHeightReport`'s own doc comment in `Globe.tsx`): the
+       toggle pill is shorter than the zoom rocker sharing its row, so measuring it alone would
+       under-reserve. Measured at 390x844 (`scripts/qa/shots.mjs`'s
+       `globe-controls-row-clear-of-sphere-phone`). */
+    --controls-row-reserve: 44px;
+    /* What the sphere/map must leave free at the bottom: both bands stacked, no double-count. */
+    --bottom-overlay-reserve: calc(var(--controls-row-reserve) + var(--feed-reserve));
   }
 
-  /* Expanded, the strip leaves the grid and pins itself to the same lower boundary the Globe/Map
-     toggle uses. In flow it sits above the caption stage, a band whose height varies with the
-     caption's own text, so no fixed reservation could track where it actually lands — and the
-     sphere, sized against a reservation, grew straight through it. Pinned, its position is
-     exactly `--feed-reserve` below the toggle and the arithmetic closes. */
+  /* Expanded, the strip leaves the grid and pins itself to the same lower boundary the controls
+     row above it uses. In flow it would sit above the caption stage, a band whose height varies
+     with the caption's own text, so no fixed reservation could track where it actually lands —
+     and the sphere, sized against a reservation, grew straight through it. Pinned, it sits exactly
+     `--feed-reserve`'s own gap above the timeline and the arithmetic closes. */
   .shell[data-globe-expanded='true'] .feed {
     /* `fixed`, not `absolute`: the offset below is expressed against the viewport (`100vh` minus
-       a viewport-space boundary), which is the basis `Globe.module.css`'s own toggle rule uses.
-       An absolutely positioned strip resolves against `.hud`'s padding box instead and lands
+       a viewport-space boundary), which is the basis `Globe.module.css`'s own controls-row rule
+       uses. An absolutely positioned strip resolves against `.hud`'s padding box instead and lands
        nowhere near it. */
     position: fixed;
-    /* Stops short of the zoom rocker sharing this row at the right edge (`Globe.module.css`'s own
-       phone `.zoomGroup` rule): its ~74px plus a gap. */
-    right: calc(var(--gutter) + 84px);
-    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 8px);
+    /* Full width now: no zoom rocker shares this row any more (it has its own row under the
+       sphere instead — `Globe.module.css`'s own phone rule). */
     left: var(--gutter);
+    right: var(--gutter);
+    bottom: calc(var(--chrome-gap-bottom-inset, 8px) + 6px);
   }
 
   .globe .label {
@@ -663,34 +697,56 @@
     padding-top: 6px;
   }
 
-  /* Expanded, the top band (the Globe/Map toggle and the ✕, both corner controls opposite each
-     other — `Globe.module.css`'s own phone rules, plus the overlay selector pill opposite them at
-     top-left) leaves only a ~26px gap between the two corner clusters at the 390px floor — nowhere
-     near enough for the centred time/era title's own single line, let alone the era shortcuts
-     beside it. Both are pulled out of `.title`'s own flow (`position: fixed`, the same device the
-     desktop rule above uses) into their own rows below the corner band instead of sharing it.
-     `useChromeGap` reads `.title`'s own bottom edge for `--chrome-gap-top` (`ShellLayout.tsx`), so
-     this genuinely costs the expanded sphere/map the height between the old title position and the
-     new one — there is no narrower-but-still-legible title that fits the ~26px corner gap, so
-     unlike the desktop rule above (a pure reshuffle, no net height cost) this one is not free.
-     `74px` clears `Globe.module.css`'s own phone corner controls (`top: clamp(16px, 2.4vw, 34px)` +
-     `--corner-control-size: 54px`, worst case ~72px) with a couple of px to spare; `132px` gives the
-     title's own single centred line (measured ~49px tall at this breakpoint) a real gap above the
-     shortcuts row, matching the 8-14px band `condensed-top-area-gaps` holds for the same
-     title-to-shortcuts relationship elsewhere. */
+  /* Expanded, the title shares the top row with the ✕: the Globe/Map toggle has its own row
+     under the sphere (`Globe.module.css`'s own phone rule), leaving that corner free. Same top offset
+     as the ✕ (`Globe.module.css`'s `.closeButton`), and vertically centred against its own
+     `--corner-control-size` box so the two read as one row. The era shortcuts leave `.title`'s own
+     flow entirely (below, `.eraShortcuts`): stacked under a single-line title they would need a
+     second row's worth of height the top band cannot spare once the ✕/title row and row 2 beneath
+     it (era shortcuts plus the overlay selector) are both accounted for. */
   .shell[data-globe-expanded='true'] .title {
     position: fixed;
-    top: 74px;
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
+    top: clamp(16px, 2.4vw, 34px);
+    /* Centred without `transform`: a `transform` on this element would make it the *containing
+       block* for its own `position: fixed` descendants (CSS Transforms — any transformed element
+       becomes one, the same rule `position: relative` uses for absolutely-positioned ones), and
+       `.eraShortcuts` immediately below is exactly that — a fixed-position DOM child of this
+       header. With a `transform` here, `.eraShortcuts`'s own `top`/`left` resolve against *this*
+       box instead of the viewport. `left`/`right: 0` plus `width: fit-content` and auto
+       inline margins centres a fixed element exactly as `left: 50%; transform: translateX(-50%)`
+       does, without creating a containing block. */
+    left: 0;
+    right: 0;
+    width: fit-content;
+    margin-inline: auto;
+    padding-top: 0;
+    min-height: var(--corner-control-size, 54px);
+    justify-content: center;
+    /* Can never reach the ✕: subtract (the ✕'s own right offset + its own width + a real gap)
+       from each side of this centred box. `--gutter` and `--corner-control-size` are the exact
+       values `Globe.module.css`'s `.closeButton` itself uses, inherited from this shared `.shell`
+       ancestor rather than duplicated as a second literal. */
+    max-width: calc(100vw - 2 * (var(--gutter, clamp(16px, 3vw, 48px)) + var(--corner-control-size, 54px) + 8px));
   }
 
+  /* Row 2: left half of the era-shortcuts/overlay-selector row directly under the title
+     (`Globe.module.css`'s own `.overlaySelectStack` phone rule is the right half — the two read the same
+     `--row2-top`/`--row2-height` so they land on one vertical centre line despite being separate
+     DOM subtrees; `Globe`'s `.backdrop` and this element are siblings under `.shell`, so neither
+     can nest inside the other's own measured box). `fixed`, the same device `.feed` and
+     `Globe.module.css`'s controls row use, and for the same reason: the offset is expressed
+     against the viewport, not `.hud`'s own padding box. */
   .shell[data-globe-expanded='true'] .eraShortcuts {
     position: fixed;
-    top: 132px;
+    top: var(--row2-top);
     left: var(--gutter);
     right: auto;
+    bottom: auto;
+    /* The base rule's own `margin-top: 3px` is for the in-flow, under-the-title stacking that
+       rule was written for — here it would offset this box 3px below `.overlaySelectStack`'s own
+       (margin-free) box despite both sharing the same `top`, so it's zeroed for an exact match. */
+    margin-top: 0;
+    min-height: var(--row2-height, 32px);
     justify-content: flex-start;
   }
 
