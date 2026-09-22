@@ -395,6 +395,82 @@ describe('validateManifest', () => {
     expect(() => validateManifest(bad)).toThrow(/lon/)
   })
 
+  // ---------------------------------------------------------------------- framing (ADR-045)
+
+  it('parses a scene\'s framing', () => {
+    const withFraming = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          thumbnail: 'thumb.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          framing: { focus: [0.3, 0.6], pan: 180 },
+        },
+      ],
+    }
+    const manifest = validateManifest(withFraming)
+    expect(manifest.scenes[0]?.framing).toEqual({ focus: [0.3, 0.6], pan: 180 })
+  })
+
+  it('leaves framing undefined for a scene with no published framing', () => {
+    const manifest = validateManifest(stubManifest)
+    for (const scene of manifest.scenes) {
+      expect(scene.framing).toBeUndefined()
+    }
+  })
+
+  it('rejects a focus fraction out of range', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          thumbnail: 'thumb.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          framing: { focus: [1.2, 0.5], pan: 0 },
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/focus/)
+  })
+
+  it('rejects a pan outside [0, 360)', () => {
+    const bad = {
+      ...stubManifest,
+      scenes: [
+        {
+          id: 'x',
+          t: 0,
+          chapterId: 'c',
+          image: 'i.svg',
+          thumbnail: 'thumb.svg',
+          shot: 'GROUND',
+          title: 'Title',
+          caption: 'hi',
+          width: 10,
+          height: 10,
+          framing: { focus: [0.5, 0.5], pan: 360 },
+        },
+      ],
+    }
+    expect(() => validateManifest(bad)).toThrow(/pan/)
+  })
+
   // -------------------------------------------------------------------- features (ADR-035)
 
   it('accepts the features dataKind on a layer', () => {

@@ -22,6 +22,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -183,4 +184,19 @@ describe('SceneView', () => {
     },
     2000,
   )
+
+  it("crops each layer around its own scene's focus, clamped to the image edge, on a portrait box", () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 390,
+      height: 844,
+    } as DOMRect)
+    const still = { width: 2752, height: 1536 }
+    const framed: Scene = { ...s0, ...still, framing: { focus: [0.05, 0.5], pan: 0 } }
+    const plain: Scene = { ...s1, ...still }
+    render(<SceneView t={midT} scenes={[framed, plain, s2, s3]} assetBase="https://cdn.example.com/build" />)
+    const base = screen.getByTestId('scene-base') as HTMLImageElement
+    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
+    expect(base.style.objectPosition).toBe('0% 50%')
+    expect(overlay.style.objectPosition).toBe('50% 50%')
+  })
 })

@@ -53,6 +53,7 @@ from pipeline.manifest import (
     RasterEncoding,
     RasterFrameData,
     Scene,
+    SceneFraming,
     SceneLocationCoordinates,
     SceneSound,
     SeriesData,
@@ -78,6 +79,7 @@ from pipeline.portraits import (
     load_morph,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
+from pipeline.scenes import SceneFraming as SceneFramingRecord
 from pipeline.scenes import SceneLocation as SceneLocationRecord
 from pipeline.scenes import SceneSound as SceneSoundRecord
 from pipeline.shapes import EARTH_FORMATION, Event, EventSet, FeatureSet, GeoTime, Interpolation
@@ -596,6 +598,12 @@ def _scene_sound(sound: SceneSoundRecord | None) -> SceneSound | None:
     return SceneSound(stem=sound.stem, mode=sound.mode, gain=sound.gain)
 
 
+def _scene_framing(framing: SceneFramingRecord | None) -> SceneFraming | None:
+    if framing is None:
+        return None
+    return SceneFraming(focus=framing.focus, pan=framing.pan)
+
+
 def _load_reconstructor_if_needed(pinned: list[SceneRecord], root: Path) -> Reconstructor | None:
     """Most publishes need no plate reconstruction at all: no scene has a `location`, or every
     located scene sits inside the human-era basemap domain. Loading the Merdith model parses two
@@ -722,6 +730,7 @@ def _scene_entry(
         events=scene.events,
         sound=_scene_sound(scene.sound),
         location=_scene_location(scene.t, scene.location, reconstructor),
+        framing=_scene_framing(scene.framing),
         pinned=scene.pin.asset_digest,
         width=info.width,
         height=info.height,

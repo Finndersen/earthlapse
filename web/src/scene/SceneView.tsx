@@ -5,8 +5,8 @@
  * between two renderers of the same presented scene pair: `SceneCanvasView`, a WebGL
  * full-viewport quad whose fragment shader does a smooth whole-image crossfade (`shaders.ts`,
  * ADR-012), or `SceneFallbackView`, a two-`<img>` opacity cross-fade, when WebGL is
- * unavailable. Both apply each scene's own camera drift (`drift.ts`) for a slow "3D photo"
- * breathe.
+ * unavailable. Both crop each scene around its own focus (`framing.ts`, ADR-045) and apply its
+ * own camera drift (`drift.ts`) for a slow "3D photo" breathe.
  *
  * `sceneAt(scenes, t)` is the pure, instantaneous target. What is actually *displayed* goes
  * through `usePresentedSceneMix` (`presentation.ts`, ADR-012) first, which rate-limits how fast
@@ -27,6 +27,7 @@ import type { GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { driftAt, REST_DRIFT } from './drift'
+import type { ImagePoint } from './framing'
 import { usePresentedSceneMix } from './presentation'
 import { captionOpacity, dominantScene, resolveAssetUrl, sceneAt, type PresentationRegime } from './scene'
 import { SceneCanvasView } from './SceneCanvasView'
@@ -76,6 +77,14 @@ function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: num
   return urls
 }
 
+function framedFocusByUrl(scenes: readonly Scene[], assetBase: string): ReadonlyMap<string, ImagePoint> {
+  const focusByUrl = new Map<string, ImagePoint>()
+  for (const scene of scenes) {
+    if (scene.framing !== undefined) focusByUrl.set(resolveAssetUrl(assetBase, scene.image), scene.framing.focus)
+  }
+  return focusByUrl
+}
+
 export function SceneView({
   t: rawT,
   scenes,
@@ -112,6 +121,9 @@ export function SceneView({
     [scenes, fromIndex, toIndex, assetBase],
   )
 
+  const focusByUrl = useMemo(() => framedFocusByUrl(scenes, assetBase), [scenes, assetBase])
+  const imageAspect = presented.from.width / presented.from.height
+
   const caption = renderCaption?.(dominantScene(presented), captionOpacity(presented.mix))
 
   return (
@@ -124,7 +136,8 @@ export function SceneView({
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
-          imageAspect={presented.from.width / presented.from.height}
+          imageAspect={imageAspect}
+          focusByUrl={focusByUrl}
         />
       ) : (
         <SceneFallbackView
@@ -136,6 +149,8 @@ export function SceneView({
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
+          imageAspect={imageAspect}
+          focusByUrl={focusByUrl}
         />
       )}
       {caption}

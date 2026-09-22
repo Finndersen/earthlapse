@@ -78,6 +78,14 @@ class SceneLocation(_WireModel):
     marker: SceneLocationCoordinates | None = None
 
 
+class SceneFraming(_WireModel):
+    """Mirrors `pipeline.scenes.SceneFraming` (ADR-045): the viewer's crop focus (image
+    fractions, origin top-left) and drift pan direction (degrees, 0 = right, 90 = down)."""
+
+    focus: tuple[float, float]
+    pan: float = Field(ge=0.0, lt=360.0)
+
+
 class Scene(_WireModel):
     id: str
     t: GeoTime
@@ -104,6 +112,9 @@ class Scene(_WireModel):
     # This scene's real-world place, if it depicts one (ADR-034). Additive: absent on every
     # manifest published before this field existed, and on any scene with no specific location.
     location: SceneLocation | None = None
+    # Crop focus and drift direction (ADR-045). Additive: absent on every manifest published
+    # before this field existed, and on any scene framed by the default centred crop.
+    framing: SceneFraming | None = None
     pinned: str | None = None
     width: int = Field(gt=0)
     height: int = Field(gt=0)

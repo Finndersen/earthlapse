@@ -65,6 +65,7 @@ from pipeline.publish import (
 )
 from pipeline.scenes import (
     SceneBook,
+    SceneFraming,
     SceneLocation,
     ScenePin,
     SceneRecord,
@@ -1593,6 +1594,110 @@ def test_publish_refuses_an_older_scene_location_when_the_plate_model_is_unavail
     assert code != 0
     assert "scene location reconstruction unavailable" in output
     assert not (paths.media / "manifest.json").exists()
+
+
+# -- scene framing (ADR-045) ------------------------------------------------------------------
+
+
+def test_scene_framing_accepts_focus_on_the_image_boundary() -> None:
+    assert SceneFraming(focus=(0.0, 1.0), pan=90.0) == SceneFraming(focus=(0.0, 1.0), pan=90.0)
+
+
+@pytest.mark.parametrize("focus", [(-0.01, 0.5), (0.5, 1.01), (math.nan, 0.5)])
+def test_scene_framing_focus_must_lie_inside_the_image(focus: tuple[float, float]) -> None:
+    with pytest.raises(ValidationError, match="focus"):
+        SceneFraming(focus=focus, pan=0.0)
+
+
+def test_scene_framing_focus_must_be_a_pair() -> None:
+    with pytest.raises(ValidationError, match="focus"):
+        SceneFraming.model_validate({"focus": [0.5], "pan": 0.0})
+
+
+@pytest.mark.parametrize(
+    ("pan", "normalised"), [(0.0, 0.0), (360.0, 0.0), (-90.0, 270.0), (450, 90.0)]
+)
+def test_scene_framing_pan_is_normalised_to_one_turn(pan: float, normalised: float) -> None:
+    assert SceneFraming(focus=(0.5, 0.5), pan=pan).pan == normalised
+
+
+@pytest.mark.parametrize("pan", [math.inf, -math.inf, math.nan])
+def test_scene_framing_pan_must_be_finite(pan: float) -> None:
+    with pytest.raises(ValidationError, match="pan"):
+        SceneFraming(focus=(0.5, 0.5), pan=pan)
+
+
+def test_scene_framing_rejects_unknown_keys() -> None:
+    with pytest.raises(ValidationError, match="zoom"):
+        SceneFraming.model_validate({"focus": [0.5, 0.5], "pan": 0.0, "zoom": 1.2})
+
+
+def test_scene_framing_requires_both_focus_and_pan() -> None:
+    with pytest.raises(ValidationError, match="pan"):
+        SceneFraming.model_validate({"focus": [0.5, 0.5]})
+
+
+def _add_framing(text: str, caption_line: str, framing_yaml: str) -> str:
+    framed, count = re.subn(
+        re.escape(caption_line) + r"\n",
+        f"{caption_line}\n    framing: {framing_yaml}\n",
+        text,
+        count=1,
+    )
+    assert count == 1, f"{caption_line!r} not found"
+    return framed
+
+
+def test_scene_framing_never_changes_the_prompt_or_image_node_digest(root: Path) -> None:
+    paths = ProjectPaths(root)
+    world = load_world(paths.curated)
+    store = CandidateStore(paths.candidates)
+
+    def digests(book: SceneBook) -> dict[str, tuple[str, str]]:
+        graph = build_scene_graph(book, world, FakeBackend())
+        resolver = graph.resolver(store)
+        return {
+            a.scene.id: (resolver.digest(a.prompt.id), resolver.digest(a.image.id))
+            for a in graph.assets
+        }
+
+    base = digests(load_scene_book(paths.scenes))
+    paths.scenes.write_text(
+        _add_framing(paths.scenes.read_text(), "caption: A city.", "{focus: [0.2, 0.7], pan: 180}")
+    )
+    framed_book = load_scene_book(paths.scenes)
+    assert framed_book.scene("city").framing == SceneFraming(focus=(0.2, 0.7), pan=180.0)
+
+    assert digests(framed_book) == base
+
+
+def test_scene_framing_leaves_a_pinned_scene_fresh(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    paths.scenes.write_text(
+        _add_framing(paths.scenes.read_text(), "caption: A city.", "{focus: [0.2, 0.7], pan: 180}")
+    )
+
+    _, plan_output = _run(backend, root, "plan")
+    assert "3 scenes: 3 pinned, 0 awaiting review, 0 stale" in plan_output
+
+
+def test_publish_emits_scene_framing_and_omits_it_where_absent(root: Path) -> None:
+    backend = FakeBackend()
+    _build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    paths.scenes.write_text(
+        _add_framing(paths.scenes.read_text(), "caption: A city.", "{focus: [0.2, 0.7], pan: -90}")
+    )
+
+    code, output = _run(backend, root, "publish")
+
+    assert code == 0, output
+    raw = json.loads((paths.media / "manifest.json").read_text())
+    scenes_by_id = {s["id"]: s for s in raw["scenes"]}
+    assert scenes_by_id["city"]["framing"] == {"focus": [0.2, 0.7], "pan": 270.0}
+    assert "framing" not in scenes_by_id["devonian"]
 
 
 # -- scene -> stem links (ADR-023) -------------------------------------------------------------

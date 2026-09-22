@@ -58,6 +58,10 @@ export interface SceneRenderTarget {
 export interface SceneRender {
   fromTex: NonNullable<ScenePair['fromTex']>
   toTex: NonNullable<ScenePair['toTex']>
+  /** The URLs `fromTex`/`toTex` were loaded from, so per-image properties (the crop focus,
+   *  `framing.ts`) follow the texture actually drawn rather than the pair requested. */
+  fromUrl: string
+  toUrl: string
   mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
@@ -72,21 +76,28 @@ export function resolveSceneRender(
 ): SceneRender | null {
   if (pair.fromTex === null || pair.toTex === null) return null
   const { fromTex, toTex, boundFromUrl, boundToUrl } = pair
+  if (boundFromUrl === null || boundToUrl === null) {
+    throw new Error('resolveSceneRender: a bound texture has no bound URL')
+  }
+  const from = { fromTex, fromUrl: boundFromUrl }
+  const to = { toTex, toUrl: boundToUrl }
+  const fromAlone = { fromTex, toTex: fromTex, fromUrl: boundFromUrl, toUrl: boundFromUrl }
+  const toAlone = { fromTex: toTex, toTex, fromUrl: boundToUrl, toUrl: boundToUrl }
 
   if (boundFromUrl === requested.fromUrl && boundToUrl === requested.toUrl) {
-    return { fromTex, toTex, ...target }
+    return { ...from, ...to, ...target }
   }
   if (boundToUrl === requested.fromUrl) {
-    return { fromTex: toTex, toTex, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
+    return { ...toAlone, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
   }
   if (boundFromUrl === requested.toUrl) {
-    return { fromTex, toTex: fromTex, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
+    return { ...fromAlone, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
   }
   if (boundFromUrl === requested.fromUrl) {
-    return { fromTex, toTex: fromTex, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
+    return { ...fromAlone, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
   }
   if (boundToUrl === requested.toUrl) {
-    return { fromTex: toTex, toTex, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
+    return { ...toAlone, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
   }
-  return { fromTex: toTex, toTex, mix: 0, fromDrift: REST_DRIFT, toDrift: REST_DRIFT }
+  return { ...toAlone, mix: 0, fromDrift: REST_DRIFT, toDrift: REST_DRIFT }
 }

@@ -34,6 +34,15 @@ Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one sta
 (`server.mjs`, no dependency), one browser, one page load — every shot drives the already-loaded
 page through `window.__earthtime` (`src/store/devHook.ts`); nothing ever reloads.
 
+### Scene framing review
+
+`shots.scene-framing.mjs` is a separate module, one phone-portrait shot per published scene, for
+judging each scene's crop by eye on the contact sheet:
+
+```
+node scripts/qa/run.mjs --extra-shots scripts/qa/shots.scene-framing.mjs --grep scene-framing --out scene-framing
+```
+
 ## The pixel-vs-CSS-box rule
 
 **Never assert on a CSS box when you mean "what got drawn."** A `<canvas>` can have any CSS size

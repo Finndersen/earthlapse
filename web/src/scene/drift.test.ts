@@ -135,6 +135,55 @@ describe('driftAt edge cases', () => {
   })
 })
 
+// ------------------------------------------------------------------------------ pan direction
+
+describe('driftAt: pan direction', () => {
+  function framed(id: string, t: number, pan: number): Scene {
+    return { ...scene(id, t), framing: { focus: [0.5, 0.5], pan } }
+  }
+
+  // Scene 1's push-in is complete at its span's near edge, so its pan is at full magnitude.
+  const fullPanT = logMidpointT(s0.t, s1.t)
+
+  function panAt(pan: number): { dx: number; dy: number } {
+    const { dx, dy } = driftAt([s0, framed('f', s1.t, pan), s2, s3], 1, fullPanT)
+    return { dx, dy }
+  }
+
+  it.each([
+    [0, 1, 0],
+    [90, 0, 1],
+    [180, -1, 0],
+    [270, 0, -1],
+  ])('travels toward the image edge its pan of %d degrees names (rightward x, downward y)', (pan, sx, sy) => {
+    const { dx, dy } = panAt(pan)
+    const length = Math.hypot(dx, dy)
+    expect(dx / length).toBeCloseTo(sx)
+    expect(dy / length).toBeCloseTo(sy)
+  })
+
+  it('travels the same distance with or without framing', () => {
+    const plain = driftAt(scenes, 1, fullPanT)
+    const withPan = driftAt([s0, framed('s1', s1.t, 37), s2, s3], 1, fullPanT)
+    expect(withPan.zoom).toBe(plain.zoom)
+    expect(Math.hypot(withPan.dx, withPan.dy)).toBeCloseTo(Math.hypot(plain.dx, plain.dy))
+  })
+
+  it('keeps a framed scene inside the crop margin at every t', () => {
+    const framedScenes = [s0, framed('f', s1.t, 225), s2, s3]
+    for (const t of [0, 25, 50, 75, 100, 150, 200]) {
+      const { zoom, dx, dy } = driftAt(framedScenes, 1, t)
+      expect(Math.hypot(dx, dy)).toBeLessThanOrEqual((zoom - 1) / 2 + 1e-9)
+    }
+  })
+
+  it('ignores the scene id once framing names a direction', () => {
+    const a = driftAt([s0, framed('alpha', s1.t, 120), s2, s3], 1, fullPanT)
+    const b = driftAt([s0, framed('beta', s1.t, 120), s2, s3], 1, fullPanT)
+    expect(a).toEqual(b)
+  })
+})
+
 // -------------------------------------------------------------------------------- REST_DRIFT
 
 describe('REST_DRIFT', () => {

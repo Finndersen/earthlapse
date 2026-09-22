@@ -2,8 +2,8 @@
 
 /**
  * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does the
- * smooth whole-image crossfade (`shaders.ts`, ADR-012) and each layer's own camera drift
- * (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
+ * smooth whole-image crossfade (`shaders.ts`, ADR-012), each layer's own focus-centred crop
+ * (`framing.ts`, ADR-045) and camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
  * `textureCache`/`useScenePair`, which keep the previously bound pair on screen until a newly
  * requested pair has fully loaded, so this never shows a blank or black frame; scenes just
  * outside the current pair are preloaded speculatively. `sceneRender.ts`'s `resolveSceneRender`
@@ -18,6 +18,7 @@ import * as THREE from 'three'
 
 import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
+import { CENTRED_FOCUS, coverWindow, type CoverWindow, type ImagePoint } from './framing'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
 import { loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
@@ -37,6 +38,9 @@ export interface SceneCanvasViewProps {
   /** `from.width / from.height` — assumed shared across scenes (the generation pipeline
    *  renders every shot at the same dimensions, per VISUAL_SPEC's camera grammar). */
   imageAspect: number
+  /** Crop focus of each image URL whose scene has framing; any other URL crops centred. Looked
+   *  up by the URL of the texture actually bound, which can lag the requested pair. */
+  focusByUrl: ReadonlyMap<string, ImagePoint>
 }
 
 function usePreloadTextures(urls: readonly string[]): void {
@@ -57,6 +61,7 @@ export function SceneCanvasView({
   fromDrift,
   toDrift,
   imageAspect,
+  focusByUrl,
 }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
   usePreloadTextures(preloadUrls)
@@ -84,9 +89,15 @@ export function SceneCanvasView({
         fromDrift={render?.fromDrift ?? fromDrift}
         toDrift={render?.toDrift ?? toDrift}
         imageAspect={imageAspect}
+        fromFocus={focusOf(focusByUrl, render?.fromUrl)}
+        toFocus={focusOf(focusByUrl, render?.toUrl)}
       />
     </Canvas>
   )
+}
+
+function focusOf(focusByUrl: ReadonlyMap<string, ImagePoint>, url: string | undefined): ImagePoint {
+  return (url === undefined ? undefined : focusByUrl.get(url)) ?? CENTRED_FOCUS
 }
 
 interface SceneQuadProps {
@@ -96,19 +107,24 @@ interface SceneQuadProps {
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
   imageAspect: number
+  fromFocus: ImagePoint
+  toFocus: ImagePoint
 }
 
-function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect }: SceneQuadProps) {
+function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromFocus, toFocus }: SceneQuadProps) {
   const { size, invalidate } = useThree()
-  const viewportAspect = size.height > 0 ? size.width / size.height : 1
-  const aspect = imageAspect > 0 ? viewportAspect / imageAspect : 1
+  const laidOut = size.width > 0 && size.height > 0 && imageAspect > 0
+  const viewportAspect = laidOut ? size.width / size.height : imageAspect
+  const fromWindow = laidOut ? coverWindow(imageAspect, viewportAspect, fromFocus) : FULL_IMAGE
+  const toWindow = laidOut ? coverWindow(imageAspect, viewportAspect, toFocus) : FULL_IMAGE
 
   const uniforms = useMemo(
     () => ({
       uFrom: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uTo: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uMix: { value: 0 },
-      uAspect: { value: 1 },
+      uFromWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
+      uToWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
       uFromZoom: { value: 1 },
       uFromOffset: { value: new THREE.Vector2(0, 0) },
       uToZoom: { value: 1 },
@@ -117,21 +133,35 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect }: Sce
     [],
   )
 
-  // Mutate the persistent Vector2s created once above rather than handing the shader a fresh
-  // one every render — SceneQuad re-renders on every `t` tick during scrubbing/playback, so a
+  // Mutate the persistent vectors created once above rather than handing the shader fresh ones
+  // every render — SceneQuad re-renders on every `t` tick during scrubbing/playback, so a
   // `new THREE.Vector2(...)` here would be a per-frame allocation in a hot path.
   uniforms.uFromOffset.value.set(fromDrift.dx, fromDrift.dy)
   uniforms.uToOffset.value.set(toDrift.dx, toDrift.dy)
+  setWindow(uniforms.uFromWindow.value, fromWindow)
+  setWindow(uniforms.uToWindow.value, toWindow)
 
-  // The mutation above is the one uniform update in this component that does *not* go through a
+  // The mutations above are the uniform updates in this component that do *not* go through a
   // JSX prop (every other one below is `uniforms-x-value={...}`, which r3f's own prop-diffing
   // invalidates on change automatically) — so on a `frameloop="demand"` canvas, request this
-  // frame explicitly rather than lean on `driftAt` (drift.ts) happening to move `uFromZoom`/
-  // `uToZoom` by the same render, which is true only because offset scales with the zoom
-  // margin today, not a contract this file should depend on.
+  // frame explicitly whenever any of them changes.
   useEffect(() => {
     invalidate()
-  }, [fromDrift.dx, fromDrift.dy, toDrift.dx, toDrift.dy, invalidate])
+  }, [
+    fromDrift.dx,
+    fromDrift.dy,
+    toDrift.dx,
+    toDrift.dy,
+    fromWindow.x,
+    fromWindow.y,
+    fromWindow.width,
+    fromWindow.height,
+    toWindow.x,
+    toWindow.y,
+    toWindow.width,
+    toWindow.height,
+    invalidate,
+  ])
 
   return (
     <mesh>
@@ -143,12 +173,17 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect }: Sce
         uniforms-uFrom-value={fromTex ?? PLACEHOLDER_TEXTURE}
         uniforms-uTo-value={toTex ?? PLACEHOLDER_TEXTURE}
         uniforms-uMix-value={mix}
-        uniforms-uAspect-value={aspect}
         uniforms-uFromZoom-value={fromDrift.zoom}
         uniforms-uToZoom-value={toDrift.zoom}
       />
     </mesh>
   )
+}
+
+const FULL_IMAGE: CoverWindow = { x: 0, y: 0, width: 1, height: 1 }
+
+function setWindow(target: THREE.Vector4, window: CoverWindow): void {
+  target.set(window.x, window.y, window.width, window.height)
 }
 
 const canvasStyle: CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }

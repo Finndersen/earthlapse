@@ -4,13 +4,14 @@
  *
  * The vertex shader bypasses the camera entirely — `position.xy` is already in clip space — the
  * standard "full-screen quad" trick, paired with a `[2, 2]` `planeGeometry`. The fragment
- * shader does three things, all pure functions of the uniforms computed in `presentation.ts`
+ * shader does two things, all pure functions of the uniforms computed in `presentation.ts`
  * (`mix`, via `transition.ts`'s `crossfadeAlpha`) and `drift.ts`:
  *
- * 1. `coverUV` reproduces CSS `object-fit: cover` — crop, don't letterbox.
- * 2. `driftUV` applies each layer's own camera drift (`uFromZoom`/`uFromOffset`,
- *    `uToZoom`/`uToOffset`) on top of that crop.
- * 3. A smooth whole-image crossfade (ADR-012), gamma-correct so the midpoint of the blend
+ * 1. `sceneUV` maps the quad onto each layer's own crop window (`uFromWindow`/`uToWindow`,
+ *    computed by `framing.ts`'s `coverWindow`: a cover fit centred on the scene's focus), after
+ *    applying that layer's camera drift (`uFromZoom`/`uFromOffset`, `uToZoom`/`uToOffset`)
+ *    inside the window.
+ * 2. A smooth whole-image crossfade (ADR-012), gamma-correct so the midpoint of the blend
  *    doesn't read as darker/muddier than either endpoint.
  *
  * Scenes sample as their stored sRGB-encoded bytes (`textureCache.ts` uploads every texture
@@ -34,7 +35,8 @@ export const SCENE_FRAGMENT_SHADER = /* glsl */ `
 uniform sampler2D uFrom;
 uniform sampler2D uTo;
 uniform float uMix;
-uniform float uAspect;
+uniform vec4 uFromWindow;
+uniform vec4 uToWindow;
 uniform float uFromZoom;
 uniform vec2 uFromOffset;
 uniform float uToZoom;
@@ -42,18 +44,15 @@ uniform vec2 uToOffset;
 
 varying vec2 vUv;
 
-/** CSS object-fit: cover — crop the longer axis so the image fills uv fully. aspect is
- *  viewport-aspect / image-aspect: > 1 means the viewport is relatively wider, so only a
- *  1/aspect band of the image's height is shown; < 1 means only an aspect-wide band of its
- *  width is. Both scale factors stay <= 1, so sampling never leaves [0, 1]. */
-vec2 coverUV(vec2 uv, float aspect) {
-  vec2 scale = aspect > 1.0 ? vec2(1.0, 1.0 / aspect) : vec2(aspect, 1.0);
-  return (uv - 0.5) * scale + 0.5;
-}
-
-/** Zoom in (crop toward centre) and pan within the margin that crop affords. */
-vec2 driftUV(vec2 uv, float zoom, vec2 offset) {
-  return (uv - 0.5) / zoom + 0.5 + offset;
+/** Texture uv for quad uv. crop is (x, y, width, height) of the cover window in image fractions
+ *  and offset is the drift in window fractions, both origin top-left and y down, so they are
+ *  flipped against uv's y-up here. The drift zooms about the window centre and pans within the
+ *  margin that zoom crops off the window, so sampling never leaves the window. */
+vec2 sceneUV(vec2 uv, vec4 crop, float zoom, vec2 offset) {
+  vec2 screen = vec2(uv.x, 1.0 - uv.y);
+  vec2 local = (screen - 0.5) / zoom + 0.5 + offset;
+  vec2 image = crop.xy + local * crop.zw;
+  return vec2(image.x, 1.0 - image.y);
 }
 
 /** Approximate sRGB <-> linear-light round trip, applied only to the interior of the blend
@@ -68,9 +67,8 @@ vec3 linearToSrgb(vec3 c) {
 }
 
 void main() {
-  vec2 base = coverUV(vUv, uAspect);
-  vec2 fromUV = driftUV(base, uFromZoom, uFromOffset);
-  vec2 toUV = driftUV(base, uToZoom, uToOffset);
+  vec2 fromUV = sceneUV(vUv, uFromWindow, uFromZoom, uFromOffset);
+  vec2 toUV = sceneUV(vUv, uToWindow, uToZoom, uToOffset);
 
   // Exact at both ends: the single sampled texel, untouched by the blend math below — so a
   // fully-settled scene (uMix 0 or 1, per sceneAt) is pixel-identical to a plain image.

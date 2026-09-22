@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "buildId": "398db958a7290e3f",
-  "assetBase": "https://media.earthlapse.net",
+  "buildId": "48d1f60e1df91db3",
+  "assetBase": "/media",
   "scenes": [
     {
       "id": "shenzhen-bay-present",
@@ -29,6 +29,13 @@
           "lon": 113.93
         }
       },
+      "framing": {
+        "focus": [
+          0.66,
+          0.6
+        ],
+        "pan": 180.0
+      },
       "pinned": "7381960301cd6f6e",
       "width": 2752,
       "height": 1536
@@ -49,6 +56,13 @@
         "stem": "settlement",
         "mode": "loop",
         "gain": 0.75
+      },
+      "framing": {
+        "focus": [
+          0.62,
+          0.58
+        ],
+        "pan": 270.0
       },
       "pinned": "4bddd2b3509ab4b6",
       "width": 2752,
@@ -77,6 +91,13 @@
           "lon": 12.3417
         }
       },
+      "framing": {
+        "focus": [
+          0.19,
+          0.45
+        ],
+        "pan": 0.0
+      },
       "pinned": "a1bd3a8153aa5efc",
       "width": 2752,
       "height": 1536
@@ -97,6 +118,13 @@
         "stem": "settlement",
         "mode": "loop",
         "gain": 0.85
+      },
+      "framing": {
+        "focus": [
+          0.47,
+          0.68
+        ],
+        "pan": 180.0
       },
       "pinned": "e42a28ac748277c4",
       "width": 2752,
@@ -119,6 +147,13 @@
         "mode": "loop",
         "gain": 0.8
       },
+      "framing": {
+        "focus": [
+          0.62,
+          0.62
+        ],
+        "pan": 180.0
+      },
       "pinned": "744c0c444494da52",
       "width": 2752,
       "height": 1536
@@ -135,6 +170,13 @@
       "events": [
         "amazon-deforestation"
       ],
+      "framing": {
+        "focus": [
+          0.63,
+          0.66
+        ],
+        "pan": 270.0
+      },
       "pinned": "43a0d45ebd59fac5",
       "width": 2752,
       "height": 1536
@@ -167,6 +209,13 @@
           "lon": 13.3777
         }
       },
+      "framing": {
+        "focus": [
+          0.51,
+          0.52
+        ],
+        "pan": 180.0
+      },
       "pinned": "04dcd886754a57cd",
       "width": 2752,
       "height": 1536
@@ -194,6 +243,13 @@
           "lon": 30.0538
         }
       },
+      "framing": {
+        "focus": [
+          0.44,
+          0.45
+        ],
+        "pan": 90.0
+      },
       "pinned": "73f83b86278a7119",
       "width": 2752,
       "height": 1536
@@ -210,6 +266,13 @@
       "events": [
         "containerization"
       ],
+      "framing": {
+        "focus": [
+          0.52,
+          0.5
+        ],
+        "pan": 180.0
+      },
       "pinned": "8cc9c5451b9b81f3",
       "width": 2752,
       "height": 1536
@@ -242,6 +305,13 @@
           "lon": -80.6043
         }
       },
+      "framing": {
+        "focus": [
+          0.54,
+          0.45
+        ],
+        "pan": 270.0
+      },
       "pinned": "a0da45cad76f825d",
       "width": 2752,
       "height": 1536
@@ -258,6 +328,13 @@
       "events": [
         "green-revolution"
       ],
+      "framing": {
+        "focus": [
+          0.62,
+          0.6
+        ],
+        "pan": 0.0
+      },
       "pinned": "d6a9b3f322ea5a15",
       "width": 2752,
       "height": 1536
@@ -278,6 +355,13 @@
         "stem": "traffic",
         "mode": "loop",
         "gain": 0.6
+      },
+      "framing": {
+        "focus": [
+          0.62,
+          0.5
+        ],
+        "pan": 0.0
       },
       "pinned": "cb19517050596667",
       "width": 2752,
@@ -310,6 +394,13 @@
           "lat": 33.6772,
           "lon": -106.4753
         }
+      },
+      "framing": {
+        "focus": [
+          0.57,
+          0.4
+        ],
+        "pan": 270.0
       },
       "pinned": "f09e447d813c3ab1",
       "width": 2752,
@@ -344,6 +435,13 @@
           "lon": -0.8256
         }
       },
+      "framing": {
+        "focus": [
+          0.68,
+          0.6
+        ],
+        "pan": 330.0
+      },
       "pinned": "3376a765c7aa7975",
       "width": 2752,
       "height": 1536
@@ -370,6 +468,13 @@
           "lat": 35.6717,
           "lon": 139.765
         }
+      },
+      "framing": {
+        "focus": [
+          0.6,
+          0.62
+        ],
+        "pan": 180.0
       },
       "pinned": "81ccaf1dcc006f1f",
       "width": 2752,
@@ -404,6 +509,13 @@
           "lon": 2.6528
         }
       },
+      "framing": {
+        "focus": [
+          0.86,
+          0.55
+        ],
+        "pan": 180.0
+      },
       "pinned": "9efe47ae999402d2",
       "width": 2752,
       "height": 1536
@@ -431,6 +543,13 @@
           "lat": 42.4048,
           "lon": -83.0966
         }
+      },
+      "framing": {
+        "focus": [
+          0.55,
+          0.68
+        ],
+        "pan": 0.0
       },
       "pinned": "1bb72621b940a4f0",
       "width": 2752,
@@ -464,6 +583,13 @@
           "lon": -75.6684
         }
       },
+      "framing": {
+        "focus": [
+          0.58,
+          0.37
+        ],
+        "pan": 0.0
+      },
       "pinned": "b82bc9f05d4f344e",
       "width": 2752,
       "height": 1536
@@ -484,6 +610,13 @@
         "stem": "industry",
         "mode": "loop",
         "gain": 1.0
+      },
+      "framing": {
+        "focus": [
+          0.62,
+          0.62
+        ],
+        "pan": 180.0
       },
       "pinned": "4ee06d67fed510e9",
       "width": 2752,
@@ -517,6 +650,13 @@
           "lon": 4.8924
         }
       },
+      "framing": {
+        "focus": [
+          0.56,
+          0.62
+        ],
+        "pan": 0.0
+      },
       "pinned": "815e21329ccda9ba",
       "width": 2752,
       "height": 1536
@@ -548,6 +688,13 @@
           "lat": 24.0342,
           "lon": -74.4986
         }
+      },
+      "framing": {
+        "focus": [
+          0.72,
+          0.58
+        ],
+        "pan": 0.0
       },
       "pinned": "80840169388e234f",
       "width": 2752,
@@ -581,6 +728,13 @@
           "lon": 15.554
         }
       },
+      "framing": {
+        "focus": [
+          0.64,
+          0.6
+        ],
+        "pan": 180.0
+      },
       "pinned": "00a7df2296a29e50",
       "width": 2752,
       "height": 1536
@@ -612,6 +766,13 @@
           "lat": 13.4125,
           "lon": 103.867
         }
+      },
+      "framing": {
+        "focus": [
+          0.69,
+          0.5
+        ],
+        "pan": 90.0
       },
       "pinned": "93cb98d3b0226711",
       "width": 2752,
@@ -645,6 +806,13 @@
           "lon": 12.4769
         }
       },
+      "framing": {
+        "focus": [
+          0.73,
+          0.55
+        ],
+        "pan": 270.0
+      },
       "pinned": "042036ae90c6428a",
       "width": 2752,
       "height": 1536
@@ -676,6 +844,13 @@
           "lat": 34.348,
           "lon": 108.7093
         }
+      },
+      "framing": {
+        "focus": [
+          0.4,
+          0.4
+        ],
+        "pan": 200.0
       },
       "pinned": "d3dba0d3524723e2",
       "width": 2752,
@@ -709,6 +884,13 @@
           "lon": 23.7267
         }
       },
+      "framing": {
+        "focus": [
+          0.66,
+          0.45
+        ],
+        "pan": 270.0
+      },
       "pinned": "c5cc528bfc6d0344",
       "width": 2752,
       "height": 1536
@@ -740,6 +922,13 @@
           "lat": 27.3286,
           "lon": 68.1381
         }
+      },
+      "framing": {
+        "focus": [
+          0.53,
+          0.55
+        ],
+        "pan": 0.0
       },
       "pinned": "126ac8292443ad22",
       "width": 2752,
@@ -773,6 +962,13 @@
           "lon": 31.1342
         }
       },
+      "framing": {
+        "focus": [
+          0.67,
+          0.5
+        ],
+        "pan": 270.0
+      },
       "pinned": "ae2cd69144d41861",
       "width": 2752,
       "height": 1536
@@ -805,6 +1001,13 @@
           "lon": 45.6373
         }
       },
+      "framing": {
+        "focus": [
+          0.52,
+          0.5
+        ],
+        "pan": 300.0
+      },
       "pinned": "c66f15c180cf955f",
       "width": 2752,
       "height": 1536
@@ -825,6 +1028,13 @@
         "stem": "livestock",
         "mode": "loop",
         "gain": 0.8
+      },
+      "framing": {
+        "focus": [
+          0.56,
+          0.58
+        ],
+        "pan": 0.0
       },
       "pinned": "69f1684c8d9654bb",
       "width": 2752,
@@ -858,6 +1068,13 @@
           "lon": 32.825
         }
       },
+      "framing": {
+        "focus": [
+          0.58,
+          0.58
+        ],
+        "pan": 180.0
+      },
       "pinned": "f29cdedc423a5aa5",
       "width": 2752,
       "height": 1536
@@ -890,6 +1107,13 @@
           "lon": 38.9224
         }
       },
+      "framing": {
+        "focus": [
+          0.6,
+          0.52
+        ],
+        "pan": 0.0
+      },
       "pinned": "84e970ce9bbc7b8c",
       "width": 2752,
       "height": 1536
@@ -909,6 +1133,13 @@
         "mode": "once",
         "gain": 1.0
       },
+      "framing": {
+        "focus": [
+          0.625,
+          0.58
+        ],
+        "pan": 180.0
+      },
       "pinned": "e5e38045d401cbd2",
       "width": 2752,
       "height": 1536
@@ -927,6 +1158,13 @@
         "stem": "wind",
         "mode": "loop",
         "gain": 0.85
+      },
+      "framing": {
+        "focus": [
+          0.65,
+          0.59
+        ],
+        "pan": 180.0
       },
       "pinned": "3905f2c4c1a2641b",
       "width": 2752,
@@ -961,6 +1199,13 @@
           "lon": -8.8722
         }
       },
+      "framing": {
+        "focus": [
+          0.34,
+          0.7
+        ],
+        "pan": 0.0
+      },
       "pinned": "ca26d88194e6bbd2",
       "width": 2752,
       "height": 1536
@@ -993,6 +1238,13 @@
           "lon": 35.86
         }
       },
+      "framing": {
+        "focus": [
+          0.6,
+          0.62
+        ],
+        "pan": 0.0
+      },
       "pinned": "23b1e972d4fa9690",
       "width": 2752,
       "height": 1536
@@ -1018,6 +1270,13 @@
           "lat": 9.08,
           "lon": -79.68
         }
+      },
+      "framing": {
+        "focus": [
+          0.7,
+          0.55
+        ],
+        "pan": 180.0
       },
       "pinned": "ceb077358e2739f9",
       "width": 2752,
@@ -1045,6 +1304,13 @@
           "lat": 9.740152519481732,
           "lon": 40.42781596776596
         }
+      },
+      "framing": {
+        "focus": [
+          0.6,
+          0.66
+        ],
+        "pan": 0.0
       },
       "pinned": "347021bb25fb32ad",
       "width": 2752,
@@ -1076,6 +1342,13 @@
           "lon": 4.886377665342273
         }
       },
+      "framing": {
+        "focus": [
+          0.33,
+          0.5
+        ],
+        "pan": 0.0
+      },
       "pinned": "183125fa8e80ac2d",
       "width": 2752,
       "height": 1536
@@ -1094,6 +1367,13 @@
         "stem": "mammals",
         "mode": "loop",
         "gain": 0.9
+      },
+      "framing": {
+        "focus": [
+          0.66,
+          0.5
+        ],
+        "pan": 0.0
       },
       "pinned": "00c097bfdd0c523f",
       "width": 2752,
@@ -1114,6 +1394,13 @@
         "mode": "loop",
         "gain": 0.8
       },
+      "framing": {
+        "focus": [
+          0.585,
+          0.6
+        ],
+        "pan": 180.0
+      },
       "pinned": "93b44eb04685155f",
       "width": 2752,
       "height": 1536
@@ -1133,6 +1420,13 @@
         "mode": "loop",
         "gain": 0.9
       },
+      "framing": {
+        "focus": [
+          0.22,
+          0.4
+        ],
+        "pan": 0.0
+      },
       "pinned": "a2fe73ed75939b32",
       "width": 2752,
       "height": 1536
@@ -1147,6 +1441,13 @@
       "title": "A Hothouse Rainforest",
       "caption": "In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.68,
+          0.7
+        ],
+        "pan": 180.0
+      },
       "pinned": "6fd97ed7b5dbfd9a",
       "width": 2752,
       "height": 1536
@@ -1161,6 +1462,13 @@
       "title": "A High Arctic Forest",
       "caption": "In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun vanishes for months, Coryphodon wading its lakes.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.62,
+          0.55
+        ],
+        "pan": 180.0
+      },
       "pinned": "32b5e8d94688fbc7",
       "width": 2752,
       "height": 1536
@@ -1175,6 +1483,13 @@
       "title": "The Age of Mammals Begins",
       "caption": "Four million years after the impact that ended the dinosaurs, mammals have grown into the empty world: a heavy, long-tailed pantodont drinks at a Paleocene forest river.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.64,
+          0.66
+        ],
+        "pan": 0.0
+      },
       "pinned": "735c1240a8062713",
       "width": 2752,
       "height": 1536
@@ -1191,6 +1506,13 @@
       "events": [
         "k-pg-aftermath"
       ],
+      "framing": {
+        "focus": [
+          0.5,
+          0.57
+        ],
+        "pan": 0.0
+      },
       "pinned": "7c2ff6fd148753d8",
       "width": 2752,
       "height": 1536
@@ -1211,6 +1533,13 @@
         "stem": "wind",
         "mode": "loop",
         "gain": 0.8
+      },
+      "framing": {
+        "focus": [
+          0.63,
+          0.68
+        ],
+        "pan": 0.0
       },
       "pinned": "ad31c5b96308e6e0",
       "width": 2752,
@@ -1233,6 +1562,13 @@
         "mode": "once",
         "gain": 1.0
       },
+      "framing": {
+        "focus": [
+          0.54,
+          0.45
+        ],
+        "pan": 270.0
+      },
       "pinned": "40cf7c5b9d357780",
       "width": 2752,
       "height": 1536
@@ -1251,6 +1587,13 @@
         "stem": "archosaurs",
         "mode": "loop",
         "gain": 0.9
+      },
+      "framing": {
+        "focus": [
+          0.6,
+          0.55
+        ],
+        "pan": 180.0
       },
       "pinned": "5a6d2ef2f576c49e",
       "width": 2752,
@@ -1271,6 +1614,13 @@
         "mode": "loop",
         "gain": 0.9
       },
+      "framing": {
+        "focus": [
+          0.49,
+          0.55
+        ],
+        "pan": 270.0
+      },
       "pinned": "cfa0c916e9ea3943",
       "width": 2752,
       "height": 1536
@@ -1285,6 +1635,13 @@
       "title": "Early Flowering Plants",
       "caption": "Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.54,
+          0.66
+        ],
+        "pan": 0.0
+      },
       "pinned": "fba843f413d942db",
       "width": 2752,
       "height": 1536
@@ -1304,6 +1661,13 @@
         "mode": "loop",
         "gain": 0.9
       },
+      "framing": {
+        "focus": [
+          0.53,
+          0.55
+        ],
+        "pan": 0.0
+      },
       "pinned": "fff98516543632ed",
       "width": 2752,
       "height": 1536
@@ -1318,6 +1682,13 @@
       "title": "Pollination Before Flowers",
       "caption": "Long-proboscid scorpionflies feed at the cones of Bennettitales, a probable plant-insect pollination partnership that predates flowers by tens of millions of years.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.62,
+          0.55
+        ],
+        "pan": 270.0
+      },
       "pinned": "6219f8eaaaec486a",
       "width": 2752,
       "height": 1536
@@ -1332,6 +1703,13 @@
       "title": "The First Dinosaurs",
       "caption": "The first dinosaurs are still rare hunters in a world ruled by beaked rhynchosaurs and heavy-headed cynodonts.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.68,
+          0.63
+        ],
+        "pan": 0.0
+      },
       "pinned": "0ea6dc80408755ae",
       "width": 2752,
       "height": 1536
@@ -1350,6 +1728,13 @@
         "stem": "large-animal",
         "mode": "loop",
         "gain": 0.85
+      },
+      "framing": {
+        "focus": [
+          0.63,
+          0.62
+        ],
+        "pan": 90.0
       },
       "pinned": "47c14793925a8c37",
       "width": 2752,
@@ -1370,6 +1755,13 @@
         "mode": "loop",
         "gain": 0.85
       },
+      "framing": {
+        "focus": [
+          0.64,
+          0.6
+        ],
+        "pan": 90.0
+      },
       "pinned": "736e79c67e650684",
       "width": 2752,
       "height": 1536
@@ -1384,6 +1776,13 @@
       "title": "The Sail-Backed Synapsids",
       "caption": "Where coal-swamp rainforest once stood, open woodland of early conifers now spreads across drier ground, and sail-backed synapsids hunt along its streams.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.57,
+          0.56
+        ],
+        "pan": 0.0
+      },
       "pinned": "56d38ae859aa81c6",
       "width": 2752,
       "height": 1536
@@ -1398,6 +1797,13 @@
       "title": "Giants of the Coal Swamp",
       "caption": "Giant lycopsid trees wall a Carboniferous coal swamp, where oxygen-rich air lets insects and millipedes grow to record sizes.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.64,
+          0.68
+        ],
+        "pan": 270.0
+      },
       "pinned": "9d50ad8640e89aa9",
       "width": 2752,
       "height": 1536
@@ -1416,6 +1822,13 @@
         "stem": "water",
         "mode": "loop",
         "gain": 0.8
+      },
+      "framing": {
+        "focus": [
+          0.63,
+          0.67
+        ],
+        "pan": 180.0
       },
       "pinned": "04b683b74388043c",
       "width": 2752,
@@ -1447,6 +1860,13 @@
           "lon": -41.439263758104595
         }
       },
+      "framing": {
+        "focus": [
+          0.55,
+          0.7
+        ],
+        "pan": 90.0
+      },
       "pinned": "7ea8b194c790ed34",
       "width": 2752,
       "height": 1536
@@ -1461,6 +1881,13 @@
       "title": "Sea Scorpions and the First Stems",
       "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and armoured early fish swim above them.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.64,
+          0.75
+        ],
+        "pan": 0.0
+      },
       "pinned": "45f0b3f478c76df1",
       "width": 2752,
       "height": 1536
@@ -1475,6 +1902,13 @@
       "title": "A Bare Coast, a Crowded Sea",
       "caption": "A reef of crinoids, corals and shelled animals teems with life below, hunted by a metre-long nautiloid; above the waterline, the first land plants are known only from their spores.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.66,
+          0.72
+        ],
+        "pan": 0.0
+      },
       "pinned": "8f32a35b5ef95389",
       "width": 2752,
       "height": 1536
@@ -1489,6 +1923,13 @@
       "title": "The Cambrian Explosion",
       "caption": "On the Cambrian sea floor, most major animal groups alive today have appeared within a brief interval — including our own, a jawless swimmer no longer than a fingertip.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.62,
+          0.68
+        ],
+        "pan": 180.0
+      },
       "pinned": "18445a4ae4e6c53c",
       "width": 2752,
       "height": 1536
@@ -1503,6 +1944,13 @@
       "title": "Life Grows Large",
       "caption": "Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in sunlit shallows beside a barren coast.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.64,
+          0.8
+        ],
+        "pan": 0.0
+      },
       "pinned": "b1473d8e9161781f",
       "width": 2752,
       "height": 1536
@@ -1524,6 +1972,13 @@
         "mode": "loop",
         "gain": 0.9
       },
+      "framing": {
+        "focus": [
+          0.6,
+          0.72
+        ],
+        "pan": 180.0
+      },
       "pinned": "b282ea0ed3284209",
       "width": 2752,
       "height": 1536
@@ -1538,6 +1993,13 @@
       "title": "The Oldest Known Sexual Cells",
       "caption": "In the \"Boring Billion,\" Bangiomorpha — the oldest known organism with differentiated sexual cells — carpets the rocks of sunlit tidal shallows off an otherwise lifeless shore.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.63,
+          0.73
+        ],
+        "pan": 0.0
+      },
       "pinned": "1a40aabd80b4def7",
       "width": 2752,
       "height": 1536
@@ -1552,6 +2014,13 @@
       "title": "The Great Oxidation",
       "caption": "As oxygen from cyanobacteria finally builds up in the shallows and the air, banded iron formations record it in stone and the haze over the sea slowly begins to clear.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.66,
+          0.65
+        ],
+        "pan": 270.0
+      },
       "pinned": "295c1601ff5c1ece",
       "width": 2752,
       "height": 1536
@@ -1566,6 +2035,13 @@
       "title": "A Stromatolite Shore",
       "caption": "Microbial stromatolites crowd the floor of an Archean tidal sea under a faint young Sun and a hazy, oxygen-free sky.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.6,
+          0.72
+        ],
+        "pan": 180.0
+      },
       "pinned": "5dc36fb18edad44f",
       "width": 2752,
       "height": 1536
@@ -1585,6 +2061,13 @@
         "mode": "loop",
         "gain": 1.0
       },
+      "framing": {
+        "focus": [
+          0.6,
+          0.5
+        ],
+        "pan": 180.0
+      },
       "pinned": "a9fede0cdaca2a7e",
       "width": 2752,
       "height": 1536
@@ -1599,6 +2082,13 @@
       "title": "Earth's First Ocean",
       "caption": "The first ocean steams against black volcanic shores, a world of water and rock with no life anywhere.",
       "events": [],
+      "framing": {
+        "focus": [
+          0.53,
+          0.45
+        ],
+        "pan": 270.0
+      },
       "pinned": "4d674a11701a39a0",
       "width": 2752,
       "height": 1536
@@ -1617,6 +2107,13 @@
         "stem": "volcanic",
         "mode": "loop",
         "gain": 1.0
+      },
+      "framing": {
+        "focus": [
+          0.68,
+          0.4
+        ],
+        "pan": 180.0
       },
       "pinned": "28a947b4b5aa181a",
       "width": 2752,

@@ -7,8 +7,9 @@
  * at the same `t` regardless of scrub direction.
  *
  * Deliberately not the DESIGN §5 parallax: no depth map, no displacement, just a 2D
- * scale/translate kept inside the crop margin the zoom itself creates, so it can never reveal
- * an image edge.
+ * scale/translate of the scene's crop window (`framing.ts`), kept inside the margin the zoom
+ * itself creates within that window, so it can never reveal an image edge. The pan travels in
+ * the scene's `framing.pan` direction (ADR-045), or a direction hashed from its id without one.
  */
 
 import type { GeoTime } from '@/types/layer'
@@ -17,9 +18,10 @@ import type { Scene } from '@/types/manifest'
 export interface DriftUniforms {
   /** Scale applied before cropping to the viewport. Always in `[1, ZOOM_END]`. */
   zoom: number
-  /** Lateral offset as a fraction of frame. `hypot(dx, dy) <= (zoom - 1) / 2` always — the
-   *  exact extra crop margin the current zoom affords, so translating can never reveal an
-   *  edge the zoom hasn't already cropped past. */
+  /** How far the camera has travelled, as a fraction of the crop window's width (`dx`, rightward)
+   *  and height (`dy`, downward) — content therefore moves the opposite way on screen.
+   *  `hypot(dx, dy) <= (zoom - 1) / 2` always — inside the margin the current zoom crops off the
+   *  window, so translating can never reveal anything outside it. */
   dx: number
   dy: number
 }
@@ -49,6 +51,13 @@ function hashUnit(id: string): number {
     h = (Math.imul(h, 31) + id.charCodeAt(i)) | 0
   }
   return ((h >>> 0) % 10000) / 10000
+}
+
+/** Direction the camera travels, in radians clockwise from the image's rightward axis (y down):
+ *  the scene's authored `framing.pan`, or a fixed arbitrary angle hashed from its id. */
+function panAngle(scene: Scene): number {
+  if (scene.framing !== undefined) return (scene.framing.pan * Math.PI) / 180
+  return hashUnit(scene.id) * Math.PI * 2
 }
 
 /** `t` at the log1p-space midpoint between `a` and `b` — the same point `sceneAt` centres its
@@ -90,6 +99,6 @@ export function driftAt(scenes: readonly Scene[], index: number, t: GeoTime): Dr
   // `-0 !== 0` under `Object.is`, which `toEqual` uses, so a scene at rest would otherwise
   // fail to compare equal to `REST_DRIFT`.
   if (margin === 0) return { zoom, dx: 0, dy: 0 }
-  const angle = hashUnit(scene.id) * Math.PI * 2
+  const angle = panAngle(scene)
   return { zoom, dx: Math.cos(angle) * margin, dy: Math.sin(angle) * margin }
 }

@@ -43,7 +43,7 @@ describe('resolveSceneRender', () => {
   it('passes target through unchanged when the bound pair exactly matches what is requested', () => {
     const bound = pair('a.png', 'b.png', aTex, bTex)
     const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, bound, target)
-    expect(render).toEqual({ fromTex: aTex, toTex: bTex, mix: 0.5, fromDrift, toDrift })
+    expect(render).toEqual({ fromTex: aTex, toTex: bTex, fromUrl: 'a.png', toUrl: 'b.png', mix: 0.5, fromDrift, toDrift })
   })
 
   it(
@@ -54,7 +54,7 @@ describe('resolveSceneRender', () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'b.png', toUrl: 'c.png' }, bound, target)
       // b alone, mix pinned to 0 (pixel-exact per shaders.ts), drift is target.fromDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 0, fromDrift, toDrift: fromDrift })
+      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 0, fromDrift, toDrift: fromDrift })
     },
   )
 
@@ -66,7 +66,7 @@ describe('resolveSceneRender', () => {
       const bound = pair('b.png', 'c.png', bTex, texture('c'))
       const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, bound, target)
       // b alone, mix pinned to 1, drift is target.toDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 1, fromDrift: toDrift, toDrift })
+      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 1, fromDrift: toDrift, toDrift })
     },
   )
 
@@ -79,7 +79,7 @@ describe('resolveSceneRender', () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'c.png' }, bound, target)
       // a alone, mix pinned to 0, drift is target.fromDrift.
-      expect(render).toEqual({ fromTex: aTex, toTex: aTex, mix: 0, fromDrift, toDrift: fromDrift })
+      expect(render).toEqual({ fromTex: aTex, toTex: aTex, fromUrl: 'a.png', toUrl: 'a.png', mix: 0, fromDrift, toDrift: fromDrift })
     },
   )
 
@@ -92,13 +92,21 @@ describe('resolveSceneRender', () => {
       const bound = pair('a.png', 'b.png', aTex, bTex)
       const render = resolveSceneRender({ fromUrl: 'c.png', toUrl: 'b.png' }, bound, target)
       // b alone, mix pinned to 1, drift is target.toDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 1, fromDrift: toDrift, toDrift })
+      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 1, fromDrift: toDrift, toDrift })
     },
   )
 
   it('freezes at the bound pair, at rest, when the requested pair shares no scene with it at all', () => {
     const bound = pair('a.png', 'b.png', aTex, bTex)
     const render = resolveSceneRender({ fromUrl: 'x.png', toUrl: 'y.png' }, bound, target)
-    expect(render).toEqual({ fromTex: bTex, toTex: bTex, mix: 0, fromDrift: REST_DRIFT, toDrift: REST_DRIFT })
+    expect(render).toEqual({
+      fromTex: bTex,
+      toTex: bTex,
+      fromUrl: 'b.png',
+      toUrl: 'b.png',
+      mix: 0,
+      fromDrift: REST_DRIFT,
+      toDrift: REST_DRIFT,
+    })
   })
 })

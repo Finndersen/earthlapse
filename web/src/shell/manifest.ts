@@ -22,6 +22,7 @@ import type {
   Manifest,
   Scene,
   SceneCoordinates,
+  SceneFraming,
   SceneLocation,
   SceneSound,
   SoundMode,
@@ -195,6 +196,17 @@ function validateSceneLocation(v: unknown, path: string): SceneLocation {
   }
 }
 
+function validateSceneFraming(v: unknown, path: string): SceneFraming {
+  const r = expectRecord(v, path)
+  const focus = expectTuple2(r.focus, `${path}.focus`)
+  for (const [i, f] of focus.entries()) {
+    if (!(f >= 0 && f <= 1)) throw new Error(`${path}.focus[${i}]: out of range, got ${f}`)
+  }
+  const pan = expectNumber(r.pan, `${path}.pan`)
+  if (!(pan >= 0 && pan < 360)) throw new Error(`${path}.pan: out of range, got ${pan}`)
+  return { focus, pan }
+}
+
 function validateScene(v: unknown, path: string): Scene {
   const r = expectRecord(v, path)
   const scene: Scene = {
@@ -221,6 +233,9 @@ function validateScene(v: unknown, path: string): Scene {
   }
   if (r.location !== undefined && r.location !== null) {
     scene.location = validateSceneLocation(r.location, `${path}.location`)
+  }
+  if (r.framing !== undefined && r.framing !== null) {
+    scene.framing = validateSceneFraming(r.framing, `${path}.framing`)
   }
   const pinned = expectOptionalString(r.pinned, `${path}.pinned`)
   if (pinned !== undefined) scene.pinned = pinned

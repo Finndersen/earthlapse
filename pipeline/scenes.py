@@ -19,6 +19,7 @@ from collections import Counter
 from collections.abc import Sequence
 from enum import StrEnum
 from pathlib import Path
+from typing import Annotated
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -27,6 +28,8 @@ from pipeline.prompts import Composition, SceneSubject, Shot, UnsourcedCondition
 from pipeline.shapes import GeoTime
 
 SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
+
+UnitFraction = Annotated[float, Field(ge=0.0, le=1.0, allow_inf_nan=False)]
 
 
 class SoundMode(StrEnum):
@@ -83,6 +86,26 @@ class SceneLocation(BaseModel):
         return stripped
 
 
+class SceneFraming(BaseModel):
+    """Where the viewer crops this scene's still, and which way its camera drift travels
+    (ADR-045). `focus` is a point in the image's own fractions, origin top-left, y down: the
+    cover-fit crop centres its window on it along whichever axis the viewport crops, clamped so
+    the window never leaves the image. `pan` is the direction the camera travels over the drift,
+    in degrees clockwise from the image's right edge (0 right, 90 down), normalised to
+    [0, 360). Invisible to the asset graph, like `location`: presentation only, so it never
+    changes a prompt/image node's digest or clears a pin."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    focus: tuple[UnitFraction, UnitFraction]
+    pan: float = Field(allow_inf_nan=False)
+
+    @field_validator("pan")
+    @classmethod
+    def _pan_normalised(cls, pan: float) -> float:
+        return pan % 360.0
+
+
 class UnknownScene(LookupError):
     """A scene id that data/scenes.yaml does not define."""
 
@@ -134,6 +157,9 @@ class SceneRecord(BaseModel):
     # This scene's real-world present-day place, if it depicts one (ADR-034). None for every
     # conceptual vantage -- most scenes. Invisible to the asset graph, like `sound`/`events`.
     location: SceneLocation | None = Field(default=None)
+    # Viewer crop focus and drift direction (ADR-045). None means a centred crop and a drift
+    # direction hashed from the scene id. Invisible to the asset graph, like `location`.
+    framing: SceneFraming | None = Field(default=None)
     pin: ScenePin | None
 
     @field_validator("title")

@@ -46,6 +46,7 @@ const baseProps = {
   fromDrift: REST_DRIFT,
   toDrift: REST_DRIFT,
   imageAspect: 16 / 9,
+  focusByUrl: new Map<string, readonly [number, number]>(),
 }
 
 describe('SceneCanvasView — frameloop', () => {

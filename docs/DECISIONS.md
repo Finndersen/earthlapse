@@ -6806,3 +6806,60 @@ One trap is worth recording because it is invisible in the CSS: `.title` cannot 
 makes that ancestor the containing block for fixed descendants — the shortcuts then resolve their
 own `left` against the title's box instead of the viewport. Centring is done with `left/right: 0`,
 `width: fit-content` and auto inline margins instead.
+
+---
+
+## ADR-045 — Scenes gain an optional `framing`: a crop focus and a drift direction
+
+**Status:** accepted — 2026-09-22.
+
+**Context.** The scene still is cover-fitted to the viewport. Stills are 2752×1536 (aspect 1.79);
+a 390×844 phone in portrait (aspect 0.462) sees a window 710px wide — ~26% of the image — and a
+768×1024 tablet in portrait ~42%. The crop was always centred, so a subject away from the centre
+was cut off or absent on a phone (`jebel-irhoud-firelight`'s people round the fire,
+`acheulean-erectus`'s toolmaker). Regenerating those stills with a centred subject would spend
+budget and discard pinned, reviewed images to fix what is a viewing problem, not an image one.
+
+**Decision.** An optional per-scene block in `data/scenes.yaml`:
+
+```yaml
+framing:
+  focus: [x, y]   # fractions of the image's own width/height, 0..1, origin top-left, y down
+  pan: <degrees>  # direction the camera travels over the drift: 0 right, 90 down, 180 left, 270 up
+```
+
+- **Crop rule.** For an image `(iw, ih)` in a viewport of aspect `va = vw / vh`: if
+  `iw / ih > va`, the window is the full height and `W = ih · va` wide, centred at
+  `cx = clamp(focus.x · iw, W/2, iw − W/2)`; otherwise it is the full width and `H = iw / va`
+  tall, centred at `cy = clamp(focus.y · ih, H/2, ih − H/2)`. Absent framing is focus
+  `[0.5, 0.5]`, the centred crop. One pure function (`web/src/scene/framing.ts`'s `coverWindow`)
+  computes the window for both renderers: the WebGL shader samples it directly
+  (`uFromWindow`/`uToWindow`), and the no-WebGL fallback converts it to the `object-position` that
+  makes `object-fit: cover` show the same window (`coverObjectPosition`).
+- **Drift.** Unchanged in magnitude — a push-in to 1.05× and a pan of at most 0.6 of the margin that
+  push-in affords — but both now happen inside the window: the zoom is about the window's centre,
+  and `DriftUniforms.dx`/`dy` are fractions of the window (x right, y down). The pan direction is
+  `framing.pan` when present, the per-id hash angle otherwise. Measuring the pan in window units is
+  what keeps "never reveals an image edge" true once the window can sit flush against an image
+  edge; in image units, a clamped window plus a pan toward that edge would sample past it.
+- **Validation** (`pipeline/scenes.py` `SceneFraming`): both keys required, `focus` a pair in
+  `[0, 1]²`, `pan` finite and normalised to `[0, 360)`; unknown keys rejected.
+- **Published** as an optional camelCase `framing: {focus, pan}` on the manifest's scene, omitted
+  when absent, like `location` (ADR-034).
+- **Invisible to the asset graph**, like `title`, `events`, `sound` and `location`.
+  `pipeline/assets.py` builds prompt/image node inputs from `shot`, `unsourced` and `subject` only;
+  framing is how a finished image is shown, not what it depicts, and letting it into a digest would
+  mark a pinned image stale — and so cost a regeneration (ADR-005) — for a change that alters no
+  pixel of it. Verified by `test_scene_framing_never_changes_the_prompt_or_image_node_digest` and
+  `test_scene_framing_leaves_a_pinned_scene_fresh`, and by `earthtime plan` output being
+  byte-identical before and after adding a `framing` block to a real scene.
+
+**Consequences.**
+- On a phone in portrait the WebGL pan is now ~0.26× its former on-screen distance, because it
+  used to be measured in image units while the window was a quarter of the image. On desktop, where
+  the window is nearly the whole image, the drift is unchanged. The no-WebGL fallback always
+  measured it against the box (the window), so the two renderers now agree; they also agree on the
+  sign of `dy`, which the shader previously applied in uv's y-up frame.
+- Framing is set after review, against the pinned still; VISUAL_SPEC §3 notes it for authors.
+- `web/src/shell/manifest.ts`'s hand-written validator must copy `framing` through for it to reach
+  the renderer; a manifest without it renders every scene centred, exactly as before.

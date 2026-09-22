@@ -2,17 +2,19 @@
 
 /**
  * Fallback scene renderer for browsers without WebGL: a plain two-`<img>` cross-fade (base
- * fixed at opacity 1, overlay at `mix` — never both faded at once) with a CSS transform
- * standing in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
+ * fixed at opacity 1, overlay at `mix` — never both faded at once), each cropped by
+ * `object-fit: cover` at the `object-position` that reproduces its scene's focus-centred window
+ * (`framing.ts`, ADR-045), with a CSS transform standing in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
  * alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole effect
  * (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
  * swapping to it, keeping its last decoded image up while the next one decodes; scenes just
  * outside the current pair are preloaded speculatively.
  */
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
 
 import type { DriftUniforms } from './drift'
+import { CENTRED_FOCUS, coverObjectPosition, coverWindow, type ImagePoint } from './framing'
 
 /** URLs this browser session has confirmed decode cleanly. Shared by both layers of every
  *  `SceneFallbackView` instance — see `useDecodedSrc`'s doc comment on why sharing the cache
@@ -79,6 +81,36 @@ function usePreload(urls: readonly string[]): void {
   }, [key])
 }
 
+/** Width / height of the element's rendered box, or `null` until it has been laid out. */
+function useBoxAspect(ref: RefObject<HTMLElement | null>): number | null {
+  const [aspect, setAspect] = useState<number | null>(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const measure = (width: number, height: number): void => {
+      setAspect(width > 0 && height > 0 ? width / height : null)
+    }
+    const box = el.getBoundingClientRect()
+    measure(box.width, box.height)
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) measure(entry.contentRect.width, entry.contentRect.height)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [ref])
+
+  return aspect
+}
+
+function objectPosition(imageAspect: number, boxAspect: number | null, focus: ImagePoint): string {
+  if (boxAspect === null || !(imageAspect > 0)) return 'center'
+  return coverObjectPosition(coverWindow(imageAspect, boxAspect, focus))
+}
+
+/** The box is the crop window, so translating by a fraction of it is the drift's own unit. */
 function driftTransform({ zoom, dx, dy }: DriftUniforms): string {
   return `scale(${zoom}) translate(${-dx * 100}%, ${-dy * 100}%)`
 }
@@ -94,6 +126,11 @@ export interface SceneFallbackViewProps {
   mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
+  /** Every scene image's width / height (see `SceneCanvasViewProps.imageAspect`). */
+  imageAspect: number
+  /** Crop focus of each image URL whose scene has framing; any other URL crops centred. Looked
+   *  up by the URL each layer is actually displaying, which can lag the requested one. */
+  focusByUrl: ReadonlyMap<string, ImagePoint>
 }
 
 export function SceneFallbackView({
@@ -105,24 +142,41 @@ export function SceneFallbackView({
   mix,
   fromDrift,
   toDrift,
+  imageAspect,
+  focusByUrl,
 }: SceneFallbackViewProps) {
   const displayedBase = useDecodedSrc(baseUrl)
   const displayedOverlay = useDecodedSrc(overlayUrl)
   usePreload(preloadUrls)
+  const baseRef = useRef<HTMLImageElement | null>(null)
+  const boxAspect = useBoxAspect(baseRef)
+  const positionOf = (url: string): string =>
+    objectPosition(imageAspect, boxAspect, focusByUrl.get(url) ?? CENTRED_FOCUS)
 
   return (
     <>
       <img
+        ref={baseRef}
         src={displayedBase}
         alt={baseCaption}
         data-testid="scene-base"
-        style={{ ...layerStyle, opacity: 1, transform: driftTransform(fromDrift) }}
+        style={{
+          ...layerStyle,
+          opacity: 1,
+          objectPosition: positionOf(displayedBase),
+          transform: driftTransform(fromDrift),
+        }}
       />
       <img
         src={displayedOverlay}
         alt={overlayCaption}
         data-testid="scene-overlay"
-        style={{ ...layerStyle, opacity: mix, transform: driftTransform(toDrift) }}
+        style={{
+          ...layerStyle,
+          opacity: mix,
+          objectPosition: positionOf(displayedOverlay),
+          transform: driftTransform(toDrift),
+        }}
       />
     </>
   )
@@ -134,6 +188,5 @@ const layerStyle: CSSProperties = {
   width: '100%',
   height: '100%',
   objectFit: 'cover',
-  objectPosition: 'center',
   transformOrigin: 'center',
 }

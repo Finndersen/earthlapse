@@ -69,6 +69,19 @@ export interface SceneLocation {
   marker: SceneCoordinates | null
 }
 
+/**
+ * Where the viewer crops a scene's still and which way its camera drift travels (ADR-045).
+ * `focus` is `[x, y]` in fractions of the image's own width and height, origin top-left, y down:
+ * the cover-fit crop centres its window on it along whichever axis the viewport crops, clamped so
+ * the window stays inside the image (`scene/framing.ts`). `pan` is the direction the camera
+ * travels across the image over the drift, in degrees in `[0, 360)`: 0 toward the right edge,
+ * 90 toward the bottom, 180 left, 270 up — so the content slides the opposite way on screen.
+ */
+export interface SceneFraming {
+  focus: [number, number]
+  pan: number
+}
+
 export interface Scene {
   id: string
   t: GeoTime
@@ -98,6 +111,10 @@ export interface Scene {
   /** The scene's real-world place, if it depicts one (ADR-034). Additive: absent on any manifest
    *  published before this field existed, and on any scene with no specific location. */
   location?: SceneLocation
+  /** The scene's crop focus and drift direction (ADR-045). Additive: absent on any manifest
+   *  published before this field existed, and on any scene shown with a centred crop and a
+   *  drift direction derived from its id. */
+  framing?: SceneFraming
   /** Digest of the approved asset. Present means pinned (ADR-005). */
   pinned?: string
   width: number
