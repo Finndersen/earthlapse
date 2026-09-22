@@ -7,8 +7,9 @@ holds the detail, the measurements behind it and the build order.
 **Status.** §2 (G1), G2 (§2.3's sRGB fix, §7's caption slot), G5 (§6's `effect` field and the
 `globe-regimes` `EventSet`), G7 (§4.1's 1000–540 Ma Merdith continents) and G8 (§4.2's pre-1 Ga
 regimes) are implemented, and the globe now covers all 4.567 Ga — see §9 for what's still
-partial. §3 (motion-compensated plate rotation, G3/G4) and §5.1/§5.2 (ice sheets, clouds) are
-still design, prototyped only where that was cheap. No image generation is involved anywhere in
+partial. §5.1's rough Cenozoic ice age (G12) is implemented. §3 (motion-compensated plate
+rotation, G3/G4), §5.1's data-true ice (G9/G10) and §5.2 (clouds) are still design, prototyped only
+where that was cheap. No image generation is involved anywhere in
 this document; every item costs $0 of the image budget.
 
 Honesty rule for the whole globe: **real data is shown as data; everything else is labelled on
@@ -63,7 +64,8 @@ between Earth's formation and the oldest cited regime, 4.567–4.52 Ga — see �
 | 0–300 ka | Natural Earth II human-era basemap, tone-graded, crossfading in from 400 ka (§10) | Natural Earth II (public domain) | none (no special-case caption; same as plain PaleoDEM) |
 | 300–400 ka | crossfade: PaleoDEM's 0 Ma frame → the basemap (§10) | as above, blended with the row below | as above |
 | 0–540 Ma | PaleoDEM elevation + bathymetry, 109 epochs; plate-rotated interpolation (§3) | Scotese & Wright 2018 PaleoDEMs + plate model | none (data) |
-| last 26 kyr | ICE-6G_C ice mask over the 0 Ma frame (§5.1) | Peltier et al. 2015 | none (data) |
+| last 26 kyr | ICE-6G_C ice mask over the 0 Ma frame (§5.1) — design only, licence unconfirmed | Peltier et al. 2015 | none (data) |
+| 0–34 Ma | schematic ice sheets and the glacial lowstand, scaled by LR04 (§5.1) | Lisiecki & Raymo 2005 via `lr04` | "Ice-age ice sheets · extent schematic" in a glacial |
 | 540–1000 Ma | continents from plate polygons, stylised relief (§4.1) | Merdith et al. 2021 | "continents from plate model; relief stylised" |
 | 635–717 Ma (inside the above) | Snowball Earth ice shell, two windows (§4.3) | Rooney et al. 2015; Tasistro-Hart et al. 2025 | "Snowball Earth — extent contested" |
 | 1.0–~4.4 Ga | stylised regimes (§4.2) | literature-dated intervals, no geography | "geography unknown — artistic" |
@@ -361,6 +363,43 @@ underlying dates are contested, and the caption says so.
 | 540–0 Ma | **Scotese et al. 2021**, "Phanerozoic paleotemperatures", Earth-Science Reviews 215:103503: global average and polar temperature curves; Scotese 2021 (Annu. Rev. Earth Planet. Sci. 49:679) ties large permanent ice caps to GAT below ~18 °C | journal article; curve values must be digitised from the supplementary data (licence to check) | `TimeSeries` `ice_line_latitude` (derived), a polar cap clipped to PaleoDEM land plus a sea-ice fringe | design; exact derivation rule to be chosen when implemented |
 | 1000–540 Ma | Snowball windows only (§4.3) | — | effect | design |
 
+**Implemented: the rough Cenozoic ice age.** Not a reconstruction — the approved roadmap asks
+for "scalar-driven caps, sea-level lowstand". `sources/lr04` publishes two `globe`-surface scalar
+layers, `ice_volume` (LGM = 1) and `sea_level` (m), both one linear scaling of the LR04 stack
+(`sources/lr04/README.md` § Calibration). The web side is `web/src/globe/ice/`:
+
+- **Time gating** (`iceAge.ts`, pure in `t`): Antarctica from Oi-1 at 33.7 Ma (Coxall et al.
+  2005), the Northern Hemisphere sheets from 2.7 Ma (Haug et al. 2005), each easing in over a
+  constant width of the timeline's symlog warp like every other globe effect. Before 34 Ma there is
+  no ice; between the onsets Antarctica alone, at its present extent outside LR04's 5.32 Ma reach.
+- **Ice sheets** (`iceSheets.ts`): ten soft, 3D-noise-edged spherical caps on present-day centres
+  (Antarctica, Greenland, two Laurentide domes, Cordilleran, Innuitian, Fennoscandian,
+  British-Irish, Barents-Kara, Iceland), each growing from its present radius to its LGM radius as
+  `ice_volume^0.4` (radius from volume under ice-sheet area-volume scaling), with a threshold that
+  keeps LR04's Holocene wander from flickering ghost sheets. Margins clip to land (and exposed
+  shelf) except deep inside a dome, so Hudson Bay and the Ross/Weddell shelves are covered;
+  `marine` domes (Barents-Kara, Antarctic sea ice) also cover open sea at reduced opacity. Present
+  day is Greenland and Antarctica only. The Northern domes are plate-agnostic by construction —
+  continents have not moved perceptibly since 2.7 Ma — and Antarctica is centred on the pole.
+- **Lowstand** (`shelf.ts`): the globe publishes colour, not elevation, but PaleoDEM's palette
+  (`pipeline/palette.py`) is monotonic in red across its whole sea half, so a sea texel's depth is
+  read back from the bound PaleoDEM sample — which stays bound under the basemap. Water deeper
+  than `sea_level` stays sea; shallower water is painted as exposed shelf, but only where the
+  *displayed* base is water, so dry land is never repainted. Resolution is the PaleoDEM grid's (1°,
+  ±~15 m after WebP), which is what "rough" claims. Highstands are not drawn.
+- **No double-drawing.** Natural Earth II already shows today's Greenland and Antarctic ice, so
+  under the basemap only the extent beyond each dome's present radius is drawn, in the basemap's
+  own graded ice colour; the sheets use that colour in the PaleoDEM era too, so the look is
+  continuous across the 300–400 ka crossfade. The Snowball ice shell (§4.3) and pre-1 Ga regimes
+  never share a `t` with the Cenozoic; population density is composited under the ice.
+- **Presentation.** `useIceAge` rate-limits the displayed state exactly like `useGlobeEffects`
+  (`MIN_EFFECT_TRANSITION_SECONDS`), so a scrub from the LGM to the present fades rather than snaps;
+  the target is pure in `t`. Radii are written into one preallocated `Float32Array` uniform.
+- **Caption.** "Ice-age ice sheets · extent schematic" while the Northern sheets read as a glacial
+  (`ice_volume ≥ 0.3`); the permanent Antarctic cap alone is uncaptioned.
+- **QA.** `globe-ice-*` shots (21 ka, present, 120 ka, 10 Ma, 50 Ma) sample the expanded map at
+  fixed geographic points (`measure.mjs`'s `mapColoursAt`).
+
 Rejected for ice: Li et al. 2022 (Scientific Data, CESM 540 Myr at 10 Myr, CC-BY-4.0) prescribes
 no ice sheets from 540 to 10 Ma and publishes no cryosphere fields. It uses PaleoDEMs as
 boundary conditions, which would make it a good future temperature or precipitation layer.
@@ -596,6 +635,7 @@ Image budget for every item: **$0**. Effort is in focused agent-days.
 | G9 | Ice: ICE-6G_C last glacial cycle | 1 d | **licence unconfirmed** | §5.1; blocked on terms |
 | G10 | Ice: Phanerozoic polar caps from Scotese et al. 2021 | 1.5 d | medium: digitising and derivation rule | §5.1 |
 | G11 | Clouds + data-driven atmosphere tint | 1 d | low | §5.2 |
+| G12 | Rough Cenozoic ice age: LR04-scaled schematic ice sheets + glacial lowstand | done | — | §5.1; `sources/lr04`, `web/src/globe/ice/`. Stands in for G10 over 0–34 Ma; G9's data-true last glacial cycle would supersede its last 26 kyr |
 
 **Recommended order:** G2 → G5 → G6 → G3 → G4 → G8 → G7 → G11 → G10 → G9. G2, G5, G7 and G8 are
 done; G6 is partial (see its row above). G7 and G8 ended up landing without G3/G4 (no
@@ -944,9 +984,13 @@ apply there.
 
 - Argus, D.F., Peltier, W.R., Drummond, R. & Moore, A.W. (2014). The Antarctica component of postglacial rebound model ICE-6G_C (VM5a)… *Geophys. J. Int.* 198, 537–563. doi:10.1093/gji/ggu140
 - Barboni, M. et al. (2017). Early formation of the Moon 4.51 billion years ago. *Science Advances* 3, e1602365.
+- Coxall, H.K., Wilson, P.A., Pälike, H., Lear, C.H. & Backman, J. (2005). Rapid stepwise onset of Antarctic glaciation and deeper calcite compensation in the Pacific Ocean. *Nature* 433, 53–57.
 - Burgess, S.D. & Bowring, S.A. (2015). High-precision geochronology confirms voluminous magmatism before, during, and after Earth's most severe extinction. *Science Advances* 1(7), e1500470. doi:10.1126/sciadv.1500470
 - Gumsley, A.P. et al. (2017). Timing and tempo of the Great Oxidation Event. *PNAS* 114(8), 1811–1816. doi:10.1073/pnas.1608824114
 - Li, X., Hu, Y., Guo, J. et al. (2022). A high-resolution climate simulation dataset for the past 540 million years. *Scientific Data* 9, 371. doi:10.1038/s41597-022-01490-4
+- Haug, G.H. et al. (2005). North Pacific seasonality and the glaciation of North America 2.7 million years ago. *Nature* 433, 821–825.
+- Lambeck, K., Rouby, H., Purcell, A., Sun, Y. & Sambridge, M. (2014). Sea level and global ice volumes from the Last Glacial Maximum to the Holocene. *PNAS* 111(43), 15296–15303.
+- Lisiecki, L.E. & Raymo, M.E. (2005). A Pliocene-Pleistocene stack of 57 globally distributed benthic δ¹⁸O records. *Paleoceanography* 20, PA1003. doi:10.1029/2004PA001071
 - Lyons, T.W., Reinhard, C.T. & Planavsky, N.J. (2014). The rise of oxygen in Earth's early ocean and atmosphere. *Nature* 506, 307–315.
 - Merdith, A.S. et al. (2021). Extending full-plate tectonic models into deep time: Linking the Neoproterozoic and the Phanerozoic. *Earth-Science Reviews* 214, 103477. doi:10.1016/j.earscirev.2020.103477. Model: Zenodo 4485738 (CC-BY-4.0).
 - Nimmo, F., Kleine, T. & Morbidelli, A. (2024). Tidally driven remelting around 4.35 billion years ago indicates the Moon is old. *Nature*. doi:10.1038/s41586-024-08231-0

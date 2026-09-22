@@ -1,0 +1,18 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the calibration.
+#
+# The LR04 benthic d18O stack, fetched from NOAA NCEI's paleo archive (study 5847, dataset
+# DOI 10.25921/k88j-0106) in its "NOAA Template File" form. The byte-identical values are also
+# published on PANGAEA (doi:10.1594/PANGAEA.701576) under CC-BY-3.0, which is the explicit
+# redistribution licence we rely on; NCEI's own copy states no licence, only "please cite".
+
+name = "lr04"
+title = "LR04 global Pliocene-Pleistocene benthic d18O stack"
+url = "https://www.ncei.noaa.gov/pub/data/paleo/contributions_by_author/lisiecki2005/lisiecki2005-d18o-stack-noaa.txt"
+sha256 = "ec3c4af8f80c4de1d36fb0ac9fabbde28520f77f0832958caacbae4957afb412"
+licence = "CC-BY-3.0 (identical values on PANGAEA, doi:10.1594/PANGAEA.701576); NOAA NCEI distributes its copy without restriction, citation requested"
+citation = "Lisiecki, L.E. and M.E. Raymo, 2005: A Pliocene-Pleistocene stack of 57 globally distributed benthic d18O records. Paleoceanography 20, PA1003, doi:10.1029/2004PA001071. Data: NOAA NCEI Paleoclimatology, doi:10.25921/k88j-0106. Sea-level scaling anchored to Lambeck, K. et al., 2014: Sea level and global ice volumes from the Last Glacial Maximum to the Holocene. PNAS 111(43), 15296-15303, doi:10.1073/pnas.1411762111."
+time_domain = [5.320075e6, 75.0]  # years before the AD 2025 present, [oldest, newest]; LR04 ages count from AD 1950
+output_shape = "TimeSeries"
+interpolation = "linear"
+volume_bytes = 40651         # measured: the one upstream file (sha256 above)
+storage_tier = "git"

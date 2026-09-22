@@ -468,6 +468,31 @@ historical knowledge — exactly what the objective subset rule exists to avoid 
 
 ---
 
+## `lr04` — Benthic δ¹⁸O stack, ice volume and sea level, 0–5.32 Ma
+
+| | |
+|---|---|
+| **Source** | LR04 global Pliocene-Pleistocene benthic δ¹⁸O stack (Lisiecki & Raymo 2005, Paleoceanography 20, PA1003) |
+| **Access** | **VERIFIED.** `https://www.ncei.noaa.gov/pub/data/paleo/contributions_by_author/lisiecki2005/lisiecki2005-d18o-stack-noaa.txt` (NOAA NCEI study 5847, DOI 10.25921/k88j-0106), plain HTTPS, sha256 in `manifest.toml` |
+| **Format** | NOAA template text file: `#` header, then a tab-separated `age_calkaBP / d18O_benthic / d18O_error` table, CRLF |
+| **Coverage** | 0–5.32 Ma; 1 kyr spacing to 600 ka, 2–5 kyr beyond |
+| **Volume** | measured 40,651 bytes raw; 2,115 rows per curated series |
+| **Licence** | CC-BY-3.0 via the identical PANGAEA publication (doi:10.1594/PANGAEA.701576, compared row by row); NCEI's own copy states no licence, citation requested |
+| **Shape** | `TimeSeries` × 3: `benthic_d18o` (‰, with its standard error), `sea_level` (m), `ice_volume` (LGM = 1) |
+| **Storage** | **git**, committed parquet |
+
+**Processing** — `t = age_ka × 1000 + 75` (LR04 counts from AD 1950). `sea_level` and
+`ice_volume` are one linear scaling of δ¹⁸O anchored on the stack itself: its 0 ka value → 0,
+its 19–23 ka (EPILOG LGM chronozone) mean → −134 m (Lambeck et al. 2014). Rough by design —
+benthic δ¹⁸O also carries deep-water temperature — and documented as such in
+`sources/lr04/README.md` § Calibration.
+
+**Integration** — `WorldState.climate.sea_level_m` (`sea_level`); `ice_volume` and `sea_level`
+are published as `globe`-surface scalar layers driving the globe's schematic ice sheets and
+glacial lowstand (docs/GLOBE.md §5.1). Not on the HUD.
+
+---
+
 ## `paleoclimate` — Temperature, Köppen classes, sea level
 
 | | |
