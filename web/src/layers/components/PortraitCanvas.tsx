@@ -72,7 +72,7 @@ export function PortraitCanvas({ olderUrl, youngerUrl, flow, alpha, preloadUrls 
   }
 
   // The "no plate in common" fallback can draw a plate from an earlier bound set, which
-  // `usePortraitPair` no longer retains, so everything drawn is retained here too.
+  // `usePortraitPair` has already released, so everything drawn is retained here too.
   const drawnOlder = render?.olderTex ?? null
   const drawnYounger = render?.youngerTex ?? null
   useLayoutEffect(() => retainPortraitTextures([drawnOlder, drawnYounger]), [drawnOlder, drawnYounger])

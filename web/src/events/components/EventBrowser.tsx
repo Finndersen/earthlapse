@@ -6,7 +6,7 @@
  *
  * Deliberately **not** built on `shell/Panel` — that primitive is modal (a full-viewport
  * backdrop, a focus trap), and this overlay has to leave the timeline underneath it visible and
- * scrubbable, per the brief. Instead it docks itself above the timeline (`useTimelineBottomInset`
+ * scrubbable. Instead it docks itself above the timeline (`useTimelineBottomInset`
  * measures the real gap, on both desktop and a phone sheet) with no backdrop at all: nothing
  * outside its own box is inert. Escape closes it via its own `window` listener, the same pattern
  * `LayerChart`/the expanded globe already use for the same reason (`timeline/keyboard.ts`'s own

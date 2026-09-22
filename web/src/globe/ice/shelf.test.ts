@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { PALEODEM_SEA_STOPS, paleodemSeaDepthFromRed, SHELF_GLSL, WATER_BLUE_OVER_GREEN } from './shelf'
+import { PALEODEM_LAND_STOPS, PALEODEM_SEA_STOPS, paleodemSeaDepthFromRed, SHELF_GLSL, WATER_BLUE_OVER_GREEN } from './shelf'
 
 describe('paleodemSeaDepthFromRed', () => {
   it('inverts every palette stop exactly', () => {
@@ -31,16 +31,7 @@ describe('paleodemSeaDepthFromRed', () => {
 describe('water detection threshold', () => {
   it('separates every sea stop from every land colour of the palette', () => {
     for (const [, [, g, b]] of PALEODEM_SEA_STOPS) expect(b - g).toBeGreaterThan(WATER_BLUE_OVER_GREEN[1])
-    const landStops: readonly [number, number, number][] = [
-      [30, 120, 60],
-      [60, 150, 70],
-      [140, 160, 60],
-      [170, 140, 70],
-      [150, 100, 60],
-      [170, 170, 170],
-      [255, 255, 255],
-    ]
-    for (const [, g, b] of landStops) expect(b - g).toBeLessThan(WATER_BLUE_OVER_GREEN[0])
+    for (const [, [, g, b]] of PALEODEM_LAND_STOPS) expect(b - g).toBeLessThan(WATER_BLUE_OVER_GREEN[0])
   })
 })
 

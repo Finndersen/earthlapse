@@ -2713,13 +2713,8 @@ export default [
   {
     name: 'population-sparkline-no-data-state',
     description:
-      'UPDATED (global-population-before-domain task): the population readout used to read "no data" at any `t` ' +
-      "older than its own domain — a load-failure-shaped reading across almost the whole of deep time, fixed by " +
-      "hiding the row entirely there instead (`isPopulationReadoutHiddenAt`, `@/layers`). This shot's own premise " +
-      'moved with the fix it used to guard: it asserted the readout showed "no data" text at t=20,000 (older than ' +
-      "population's own oldest domain edge, 12,025); the same `t` now asserts the row is entirely absent — " +
-      "confirmed failing (a `page.textContent` timeout, the row never appears) against this fixed build's own " +
-      'shots.mjs before this edit.',
+      "The population readout is absent, not reading \"no data\", at a `t` older than population's own oldest " +
+      'domain edge (t=20,000; the edge is 12,025): `isPopulationReadoutHiddenAt` hides the row there.',
     viewport: DEFAULT_VIEWPORT,
     t: 20_000,
     measure: async ({ page }) => ({ rowCount: await page.locator('[data-testid="scalar-readout-population"]').count() }),
@@ -2730,17 +2725,10 @@ export default [
   {
     name: 'population-sparkline-grows-with-t',
     description:
-      'The definite, primary fix (user verbatim: "my idea for the population and co2 graph lines was for them to ' +
-      'grow over time, not be fully visible upfront"): sweeps `t` from just inside population\'s own domain ' +
-      "through to its newest edge and measures the sparkline's DRAWN trace width at each stop (never the SVG box, " +
-      'which is full-width throughout and would prove nothing). Asserts the width strictly increases at each ' +
-      'later stop — this specific monotonic-growth assertion is the one the coordinator asked to fail against the ' +
-      'pre-fix build, where the full trace is drawn at every `t` and every stop would read the same, already-' +
-      "maximal width. UPDATED (global-population-before-domain task): t=20,000 no longer has a row to measure at " +
-      "all (the readout is hidden before population's own domain, `population-sparkline-no-data-state`'s own " +
-      'update) — this now asserts that absence directly instead of reusing it as this sweep\'s own zero point, ' +
-      "confirmed failing (a `page.locator` count of 1, not 0) against this fixed build's own shots.mjs before " +
-      'this edit.',
+      "The population sparkline's trace grows with `t` rather than being fully drawn up front: the row is absent " +
+      "before population's own domain (t=20,000), then sweeps `t` through the domain to its newest edge and " +
+      "measures the DRAWN trace width at each stop via `polylineTraceBounds` (the SVG box is full-width throughout " +
+      'and would prove nothing). Asserts the width strictly increases at each later stop.',
     viewport: DEFAULT_VIEWPORT,
     t: 20_000,
     measure: async ({ page, hook }) => {
@@ -3443,11 +3431,9 @@ export default [
   {
     name: 'event-browser-opens-desktop-timeline-unobstructed',
     description:
-      'The `/` shortcut opens the "All events" browser (`EventBrowser.tsx`) with its search focused and a real ' +
-      'drawn list beneath it, AND — the whole reason it is not built on the modal `shell/Panel` — the timeline ' +
-      "stays visible and unobstructed underneath it: asserts the panel's own drawn box and the timeline root's " +
-      "own box (`BOTTOM_CHROME_SELECTOR`) never overlap. Confirmed failing before this fix (as `EventDetailPanel`" +
-      "'s own full-viewport `Panel` backdrop covers the timeline entirely): overlap read 1.",
+      'The `/` shortcut opens the "All events" browser (`EventBrowser.tsx`) with its search focused and a drawn ' +
+      "list beneath it, docked above the timeline: the panel's drawn box and the timeline root's box " +
+      '(`BOTTOM_CHROME_SELECTOR`) do not overlap.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     actions: async ({ page }) => {
@@ -3512,12 +3498,11 @@ export default [
   {
     name: 'event-browser-list-follows-scrub',
     description:
-      'Two-way sync (brief: "scrubbing... scrolls the list to keep the event nearest t in view and highlighted"; ' +
-      '"only row selection sets t"): opens the browser at a recent `t`, scrubs (via `hook.setT`, the same store ' +
-      'write a real drag makes) to a deep-time `t`, and asserts the highlighted row both changed to the deep-time ' +
-      "event AND sits within the list's own visible viewport — not merely marked active while scrolled out of " +
-      'sight. Also asserts `t` itself is unchanged by the scrub-driven scroll settling (no feedback loop back ' +
-      'into the store).',
+      'Scrubbing moves the list, and only row selection moves `t`: opens the browser at a recent `t`, scrubs (via ' +
+      '`hook.setT`, the same store write a real drag makes) to a deep-time `t`, and asserts the highlighted row ' +
+      "both changed to the deep-time event AND sits within the list's visible viewport — not merely marked active " +
+      'while scrolled out of sight. Also asserts `t` is unchanged once the scrub-driven scroll settles (no ' +
+      'feedback loop back into the store).',
     viewport: DEFAULT_VIEWPORT,
     t: 25,
     actions: async ({ page }) => {
@@ -3553,13 +3538,10 @@ export default [
   {
     name: 'event-browser-rail-full-height-drag-to-bottom',
     description:
-      'The section index rail (`rail.ts`): asserts it is actually drawn (not a zero-size element) and spans the ' +
-      "full height of the list it indexes, then simulates a press-drag to the rail's own bottom edge and asserts " +
-      "the highlighted row lands in the LAST SECTION — no sticky section header appears anywhere between it and " +
-      'the end of the list — matching an iOS contacts rail\'s own end-of-list behaviour (a rail entry points at ' +
-      "a section's *first* row, so this checks the row's section, not that it is literally the list's final " +
-      'row). Confirmed failing before this feature: no `[data-testid="event-browser-rail"]` element exists at ' +
-      'all, so `drawnBounds` itself throws.',
+      'The section index rail (`rail.ts`) is drawn and spans the full height of the list it indexes; a press-drag ' +
+      "to the rail's bottom edge lands the highlighted row in the LAST SECTION — no sticky section header appears " +
+      "between it and the end of the list. A rail entry points at a section's *first* row, so this checks the " +
+      "row's section, not that it is literally the list's final row.",
     viewport: DEFAULT_VIEWPORT,
     t: 25,
     actions: async ({ page }) => {

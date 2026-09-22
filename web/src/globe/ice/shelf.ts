@@ -17,15 +17,29 @@
 import { srgbHexToLinear } from '../color'
 import { glslFloat } from '../glsl'
 
-/** `pipeline/palette.py`'s `SEA_STOPS`, mirrored by value: (elevation m, sRGB 0-255). Only the
- *  red channel is decoded; it strictly increases with elevation across every stop. */
-export const PALEODEM_SEA_STOPS: readonly (readonly [number, readonly [number, number, number]])[] = [
+type PaletteStops = readonly (readonly [number, readonly [number, number, number]])[]
+
+/** `pipeline/palette.py`'s `SEA_STOPS`, mirrored by value (`tests/test_palette.py` guards the
+ *  copy): (elevation m, sRGB 0-255). Only the red channel is decoded; it strictly increases with
+ *  elevation across every stop. */
+export const PALEODEM_SEA_STOPS: PaletteStops = [
   [-11000, [8, 12, 48]],
   [-6000, [10, 25, 90]],
   [-3000, [18, 60, 140]],
   [-1000, [30, 100, 180]],
   [-200, [60, 140, 200]],
   [0, [110, 180, 220]],
+]
+
+/** `pipeline/palette.py`'s `LAND_STOPS`, mirrored the same way. */
+export const PALEODEM_LAND_STOPS: PaletteStops = [
+  [0, [30, 120, 60]],
+  [200, [60, 150, 70]],
+  [1000, [140, 160, 60]],
+  [2000, [170, 140, 70]],
+  [3500, [150, 100, 60]],
+  [6000, [170, 170, 170]],
+  [10500, [255, 255, 255]],
 ]
 
 /** Elevation (m, <= 0) of a PaleoDEM sea texel whose sRGB red channel (0-255) is `red`:
@@ -52,7 +66,7 @@ export const MIN_VISIBLE_LOWSTAND_M = 6
 
 /** Exposed shelf in the PaleoDEM era: the palette's own colour at sea level, so a new coastal
  *  plain reads like the land beside it. */
-const PALEODEM_SHELF_HEX = '#1e783c'
+const PALEODEM_SHELF_HEX = `#${PALEODEM_LAND_STOPS[0]![1].map((c) => c.toString(16).padStart(2, '0')).join('')}`
 /** Exposed shelf under the Natural Earth II basemap, before its tone grade: a pale steppe tone
  *  close to the basemap's own tundra and grassland. */
 const BASEMAP_SHELF_HEX = '#bcbfa0'
