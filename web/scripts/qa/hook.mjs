@@ -16,6 +16,8 @@ export function makeHook(page) {
     setPlaying: (playing) => page.evaluate((value) => window.__earthtime?.setPlaying(value), playing),
     /** @param {'scenes' | 'steady'} mode */
     setPlaybackMode: (mode) => page.evaluate((value) => window.__earthtime?.setPlaybackMode(value), mode),
+    /** @param {string} id */
+    selectSection: (id) => page.evaluate((value) => window.__earthtime?.selectSection(value), id),
     /** @param {boolean} expanded */
     setGlobeExpanded: (expanded) => page.evaluate((value) => window.__earthtime?.setGlobeExpanded(value), expanded),
     getGlobeViewMode: () => page.evaluate(() => window.__earthtime?.getGlobeViewMode() ?? null),

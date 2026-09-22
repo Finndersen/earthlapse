@@ -60,3 +60,15 @@ export function waitForFocusEaseSettle(page) {
   const SAFETY_MARGIN_MS = 200
   return page.waitForTimeout(Math.round(FOCUS_EASE_SECONDS_MIRROR * 1000 + SAFETY_MARGIN_MS))
 }
+
+/**
+ * `timeline/useAnimatedScale.ts`'s `WINDOW_ANIMATION_MS`: how long the scrub track's domain takes
+ * to move to a newly selected section. Local animation state with no DOM/store reflection,
+ * mirrored as a plain number for the same reason as the waits above.
+ * @param {import('playwright').Page} page
+ */
+export function waitForSectionWindowSettle(page) {
+  const WINDOW_ANIMATION_MS_MIRROR = 700
+  const SAFETY_MARGIN_MS = 150
+  return page.waitForTimeout(WINDOW_ANIMATION_MS_MIRROR + SAFETY_MARGIN_MS)
+}

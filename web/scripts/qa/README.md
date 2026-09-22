@@ -97,10 +97,10 @@ Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never c
 never appears — the fix is to rebuild (drop `--no-build`) and re-run.
 
 **Batch-order state leaks.** Shots share one page load, so any state a shot can change and
-`applyState` does not reset leaks into the next. `applyState` resets the
-expanded HUD chart, the globe camera (a real collapse before every expand) and waits out the
-sphere<->map unfold. If a shot passes alone and fails in a batch, reproduce with
-`pnpm qa -- --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
+`applyState` does not reset leaks into the next. `applyState` resets the selected section, the
+event browser, the expanded HUD chart and the globe camera (a real collapse before every expand),
+and waits out the sphere<->map unfold. If a shot passes alone and fails in a batch, reproduce
+with `pnpm qa -- --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
 
 ## Determinism
 

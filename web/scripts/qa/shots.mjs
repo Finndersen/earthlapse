@@ -2683,15 +2683,6 @@ export default [
       'the section changes), matching the convention the breadcrumb\'s own now-deleted "‹ Up"/"⌂ Earth" buttons used.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
-    // A previous shot may have left the store on a deeper section (shots share one page load, no
-    // reload between them — this package's README). The breadcrumb's root crumb (`aria-label`
-    // exactly "Earth", `SectionBreadcrumb.tsx`) is a `<button>` only while some other section is
-    // selected; already at root it renders as the current-location `<span>` instead, so there is
-    // nothing to click and nothing to wait for.
-    actions: async ({ page }) => {
-      const rootCrumb = page.getByRole('button', { name: 'Earth', exact: true })
-      if ((await rootCrumb.count()) > 0) await rootCrumb.click()
-    },
     measure: async ({ page }) => {
       const previous = page.getByRole('button', { name: 'No previous section' })
       const next = page.getByRole('button', { name: 'No next section' })
@@ -3806,7 +3797,8 @@ function iceAgeShots() {
     t,
     actions: expandToMapAndSettle,
     measure,
-    expect: { mapWidth: [1080, 1130], ...expect },
+    // The fully zoomed-out map at 1440x900, inside the fit frame aligned to the track's edges.
+    expect: { mapWidth: [960, 1000], ...expect },
   })
   return [
     shot('globe-ice-lgm', 21_000, 'Last Glacial Maximum: Laurentide and Fennoscandian sheets read as ice; Sunda and Beringia shelves read as land.', {

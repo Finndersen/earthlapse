@@ -19,7 +19,7 @@ import { startStaticServer } from './server.mjs'
 import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
 import smokeShotNames from './smokeShots.mjs'
-import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle } from './timeouts.mjs'
+import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle, waitForSectionWindowSettle } from './timeouts.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const WEB_ROOT = path.resolve(__dirname, '../..')
@@ -150,6 +150,9 @@ function runNextBuild() {
  *  overrides, below. */
 const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
 
+/** `timeline/sections.ts`'s `ROOT_SECTION_ID`, mirrored: this harness has no TS/build step. */
+const ROOT_SECTION_ID = 'earth'
+
 /**
  * Closes whatever HUD layer chart a previous shot left expanded, by clicking its real "Collapse …
  * chart" button: `expandedChartLayerId` has no `devHook.ts` setter, and an open chart eats into the
@@ -166,14 +169,28 @@ async function closeExpandedChart(page, hook) {
 }
 
 /**
- * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed), any expanded HUD chart (always closed — see
- * `closeExpandedChart`) and, whenever expanded, `globeViewMode` (default `'globe'') and every
- * legend toggle (`DEFAULT_LAYER_TOGGLES`, merged with the shot's own `layerToggles`) — never only
- * the fields a shot happens to mention. `setGlobeViewMode`/`setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
+ * Closes the "All events" browser if a previous shot left it open, by its real close button: its
+ * open state is local to `Experience.tsx`, with no `devHook.ts` setter.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function closeEventBrowser(page, hook) {
+  const browser = page.locator('[data-testid="event-browser"]')
+  if ((await browser.count()) === 0) return
+  await browser.getByRole('button', { name: 'Close', exact: true }).click()
+  await hook.ready()
+  await rafTicks(page, 2)
+}
+
+/**
+ * Always resolves the selected section (the root), `globeExpanded` (default `false`), the
+ * onboarding tour (default closed), the event browser and any expanded HUD chart (both always
+ * closed — see `closeEventBrowser`/`closeExpandedChart`) and, whenever expanded, `globeViewMode`
+ * (default `'globe'') and every legend toggle (`DEFAULT_LAYER_TOGGLES`, merged with the shot's
+ * own `layerToggles`) — never only the fields a shot happens to mention. `setGlobeViewMode`/
+ * `setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
  * comment), so resolving every time rather than only on change is what makes one shot's state
- * fully independent of whatever the previous shot left on screen (this is exactly the bug an
- * early run of this harness caught: a shot with no `state` at all silently inherited the
- * previous shot's expanded map mode — see this package's README).
+ * fully independent of whatever the previous shot left on screen (see this package's README).
  *
  * The legend panel itself is only ever conditionally in the DOM — `Legend.tsx` renders nothing on
  * phone viewports (the layer is forced on there instead) and drops a row entirely once its
@@ -190,6 +207,12 @@ async function closeExpandedChart(page, hook) {
  */
 async function applyState(page, hook, state = {}) {
   await hook.setPlaying(state.playing ?? false)
+  // Every shot starts at the root section; `t` is unaffected, since the root spans all of it.
+  if ((await hook.getState()).sectionId !== ROOT_SECTION_ID) {
+    await hook.selectSection(ROOT_SECTION_ID)
+    await waitForSectionWindowSettle(page)
+  }
+  await closeEventBrowser(page, hook)
   await closeExpandedChart(page, hook)
   const globeExpanded = state.globeExpanded ?? false
   if (globeExpanded) {

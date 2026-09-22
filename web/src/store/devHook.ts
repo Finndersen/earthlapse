@@ -30,6 +30,7 @@
  */
 
 import { setOnboardingTourOpen } from '@/onboarding'
+import type { SectionId } from '@/timeline/sections'
 import type { PlaybackMode } from '@/types/layer'
 
 import { useTimeStore } from './time'
@@ -56,6 +57,8 @@ export interface EarthtimeDevHook {
    *  `playback.playing` is true. */
   setPlaying: (playing: boolean) => void
   setPlaybackMode: (mode: PlaybackMode) => void
+  /** `useTimeStore`'s `selectSection`: moves `t` to the section's start only if it lies outside. */
+  selectSection: (id: SectionId) => void
   /** Expands or collapses the globe overlay (`useTimeStore`'s `globeExpanded`). */
   setGlobeExpanded: (expanded: boolean) => void
   /** Reads which of the expanded globe's "Globe"/"Map" toggle is currently pressed by
@@ -224,6 +227,7 @@ export function installDevHook(): void {
     getState: useTimeStore.getState,
     setPlaying: (playing) => useTimeStore.getState().setPlaying(playing),
     setPlaybackMode: (mode) => useTimeStore.getState().setPlaybackMode(mode),
+    selectSection: (id) => useTimeStore.getState().selectSection(id),
     setGlobeExpanded: (expanded) => useTimeStore.getState().setGlobeExpanded(expanded),
     getGlobeViewMode,
     setGlobeViewMode,
