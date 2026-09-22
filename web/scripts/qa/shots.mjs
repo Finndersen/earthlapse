@@ -82,6 +82,34 @@ function rectClearancePx(a, b) {
   return -Math.min(-gapX, -gapY)
 }
 
+/**
+ * Real element geometry (not pixel-scanned — CLAUDE.md's own carve-out for text nodes drawn over
+ * an opaque panel) for every currently-visible label in the event browser's section rail
+ * (`EventBrowser.tsx`, `rail.ts`'s `declutterRailLabels`). `overflowPx` is how far the widest
+ * label's right edge sits past `panelRightPx` (0 when every label sits inside it); `overlapCount`
+ * is how many pairs of visible labels' own boxes intersect — both are 0 on a correctly laid-out
+ * rail regardless of how many sections it holds.
+ * @param {import('playwright').Page} page
+ * @param {number} panelRightPx
+ */
+async function eventBrowserRailLabelGeometry(page, panelRightPx) {
+  return page.evaluate((panelRight) => {
+    const rects = Array.from(document.querySelectorAll('[data-testid="event-browser-rail-label"]')).map((el) =>
+      el.getBoundingClientRect(),
+    )
+    const overflowPx = rects.reduce((max, r) => Math.max(max, r.right - panelRight), 0)
+    let overlapCount = 0
+    for (let i = 0; i < rects.length; i += 1) {
+      for (let j = i + 1; j < rects.length; j += 1) {
+        const a = rects[i]
+        const b = rects[j]
+        if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top) overlapCount += 1
+      }
+    }
+    return { overflowPx: Math.max(0, overflowPx), overlapCount, labelCount: rects.length }
+  }, panelRightPx)
+}
+
 /** `OverlaySelect.tsx`'s own bordered `.control` box (swatch + `<select>`) — the element whose
  *  `min-height` the phone breakpoint trims from 44px to 32px (`OverlaySelect.module.css`). No
  *  `data-testid` of its own (`OverlaySelect.tsx`/`.module.css` are outside this harness's edit
@@ -3424,7 +3452,8 @@ export default [
     description:
       'The `/` shortcut opens the "All events" browser (`EventBrowser.tsx`) with its search focused and a drawn ' +
       "list beneath it, docked above the timeline: the panel's drawn box and the timeline root's box " +
-      '(`BOTTOM_CHROME_SELECTOR`) do not overlap.',
+      "(`BOTTOM_CHROME_SELECTOR`) do not overlap. The section rail's own labels (`rail.ts`) sit entirely inside " +
+      'the panel and never overlap each other.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     actions: async ({ page }) => {
@@ -3439,6 +3468,7 @@ export default [
       const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
       const focused = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'))
       const rowCount = await page.locator('[role="option"]').count()
+      const rail = await eventBrowserRailLabelGeometry(page, panel.x + panel.width)
       return {
         panelWidth: panel.width,
         panelHeight: panel.height,
@@ -3446,6 +3476,9 @@ export default [
         overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
         focusedSearch: focused === 'event-browser-search' ? 1 : 0,
         rowCount,
+        railLabelCount: rail.labelCount,
+        railLabelOverflowPx: rail.overflowPx,
+        railLabelOverlapCount: rail.overlapCount,
       }
     },
     expect: {
@@ -3455,6 +3488,10 @@ export default [
       overlapsTimeline: [0, 0],
       focusedSearch: [1, 1],
       rowCount: [1, 500],
+      // A check that can't fail proves nothing: this also proves the selector actually matched.
+      railLabelCount: [1, 40],
+      railLabelOverflowPx: [0, 0],
+      railLabelOverlapCount: [0, 0],
     },
   },
   {
@@ -3462,8 +3499,8 @@ export default [
     description:
       "Phone path (the `/` shortcut is desktop-only): opens from the feed card's own detail panel via its \"All " +
       'events\" action, as a sheet stopping above the timeline rather than covering it — never `shell/Panel`\'s ' +
-      'own full-screen phone bottom sheet, which would sit on top of the timeline. Same overlap assertion as the ' +
-      'desktop shot, at the phone viewport.',
+      'own full-screen phone bottom sheet, which would sit on top of the timeline. Same overlap and rail-label ' +
+      'assertions as the desktop shot, at the phone viewport.',
     viewport: PHONE_VIEWPORT,
     t: 0,
     actions: async ({ page }) => {
@@ -3475,15 +3512,22 @@ export default [
     measure: async ({ page }) => {
       const panel = await drawnBounds(page, '[data-testid="event-browser"]')
       const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      const rail = await eventBrowserRailLabelGeometry(page, panel.x + panel.width)
       return {
         panelWidth: panel.width,
         overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
+        railLabelCount: rail.labelCount,
+        railLabelOverflowPx: rail.overflowPx,
+        railLabelOverlapCount: rail.overlapCount,
       }
     },
     expect: {
       // Full-width phone sheet.
       panelWidth: [PHONE_VIEWPORT.width - 10, PHONE_VIEWPORT.width],
       overlapsTimeline: [0, 0],
+      railLabelCount: [1, 40],
+      railLabelOverflowPx: [0, 0],
+      railLabelOverlapCount: [0, 0],
     },
   },
   {
@@ -3702,21 +3746,31 @@ export default [
     description:
       'The loading screen is in the static HTML (drawn with scripts blocked), holds its globe still under reduced ' +
       'motion and turns it otherwise, advances its progress bar in steps as the manifest and then the first scene ' +
-      'land, and is gone once the shell mounts. Measured on side pages in the same context, so the main page never ' +
-      'reloads.',
+      "land, and is gone once the shell mounts. Owns the harness's one real page load (`bootstrapsPage`, " +
+      "run.mjs's own doc comment) so its own screenshot is taken while the loader is genuinely still on screen, " +
+      'held there by a route intercepting the first scene image; the static-HTML checks still run on their own ' +
+      'side page, independent of that hold.',
     viewport: DEFAULT_VIEWPORT,
-    measure: async ({ page }) => {
-      const url = page.url()
+    /**
+     * Marks this as the one shot allowed to own the harness's single page load — see this
+     * package's README ("Adding a shot"). `run.mjs` calls this in place of the generic
+     * `page.goto`, before `hook`/`window.__earthtime` exist, so it drives `page` with raw
+     * Playwright APIs only. Everything after it returns (waiting for the hook, `hook.ready()`,
+     * dismissing the tour) runs exactly as it does for every other shot.
+     * @param {{ page: import('playwright').Page, baseUrl: string, run: { screenshots: boolean } }} args
+     */
+    bootstrapsPage: async ({ page, baseUrl, run }) => {
       const LOADER = '[data-testid="loading-screen"]'
       const surfaceAnimation = (p) =>
         p.evaluate(() => getComputedStyle(document.querySelector('[data-testid="loading-screen"] svg g g')).animationName)
 
+      // Independent of the timed hold below — scripts never run here, so there is no manifest or
+      // scene fetch to hold back in the first place. A throwaway side page, not the harness's own.
       const noScript = await page.context().newPage()
       await noScript.setViewportSize(DEFAULT_VIEWPORT)
       await noScript.emulateMedia({ reducedMotion: 'reduce' })
       await noScript.route('**/*.js', (route) => route.abort())
-      await noScript.goto(url, { waitUntil: 'load' })
-      const globe = await drawnBounds(noScript, `${LOADER} svg`)
+      await noScript.goto(baseUrl, { waitUntil: 'load' })
       const staticProgress = Number(await noScript.getAttribute(`${LOADER} [role="progressbar"]`, 'aria-valuenow'))
       const staticTitle = (await noScript.textContent(LOADER))?.includes('Earthlapse') ? 1 : 0
       const reducedMotionStill = (await surfaceAnimation(noScript)) === 'none' ? 1 : 0
@@ -3724,34 +3778,57 @@ export default [
       const turnsOtherwise = (await surfaceAnimation(noScript)) !== 'none' ? 1 : 0
       await noScript.close()
 
-      // The first scene is held back so the bar's intermediate step (manifest in, scene pending)
-      // is observable; nothing else about the load is altered.
-      const loading = await page.context().newPage()
-      await loading.setViewportSize(DEFAULT_VIEWPORT)
+      // The real, scripted load — held at the first scene image so the loader is still genuinely
+      // on screen when this shot's own screenshot is taken below. This *is* the harness's one page
+      // load (README's "nothing ever reloads"), not a side page.
       let releaseScenes = () => {}
       const scenesHeld = new Promise((resolve) => {
         releaseScenes = resolve
       })
-      await loading.route('**/scenes/*.webp', async (route) => {
+      await page.route('**/scenes/*.webp', async (route) => {
         await scenesHeld
         await route.continue()
       })
-      await loading.goto(url, { waitUntil: 'commit' })
+      await page.goto(baseUrl, { waitUntil: 'commit' })
       const progressbar = `${LOADER} [role="progressbar"]`
-      await loading.waitForFunction(
+      await page.waitForFunction(
         (sel) => Number(document.querySelector(sel)?.getAttribute('aria-valuenow') ?? 0) > 0,
         progressbar,
       )
-      const midProgress = Number(await loading.getAttribute(progressbar, 'aria-valuenow'))
-      releaseScenes()
-      await loading.waitForSelector('[data-testid="time-title"]')
-      const loaderAfterShell = await loading.locator(LOADER).count()
-      await loading.close()
+      const midProgress = Number(await page.getAttribute(progressbar, 'aria-valuenow'))
+      const globe = await drawnBounds(page, `${LOADER} svg`)
+      const title = await drawnBounds(page, `${LOADER} p`)
 
-      return { globeWidth: globe.width, staticProgress, staticTitle, reducedMotionStill, turnsOtherwise, midProgress, loaderAfterShell }
+      const screenshot = run.screenshots ? await page.screenshot() : null
+
+      // Left registered rather than `page.unroute`d: unrouting while the handler's own
+      // `route.continue()` for an in-flight request hasn't resolved yet races Playwright's own
+      // cleanup, which has been observed to continue that same route a second time and throw
+      // "Route is already handled!". Once resolved, `scenesHeld` makes every future match here an
+      // immediate passthrough, so leaving it up for the rest of the run is harmless.
+      releaseScenes()
+      await page.waitForSelector(LOADER, { state: 'detached', timeout: 10_000 })
+      const loaderAfterShell = await page.locator(LOADER).count()
+
+      return {
+        screenshot,
+        measurements: {
+          globeWidth: globe.width,
+          titleWidth: title.width,
+          titleHeight: title.height,
+          staticProgress,
+          staticTitle,
+          reducedMotionStill,
+          turnsOtherwise,
+          midProgress,
+          loaderAfterShell,
+        },
+      }
     },
     expect: {
       globeWidth: [60, 90],
+      titleWidth: [80, 220],
+      titleHeight: [6, 20],
       staticProgress: [0, 0],
       staticTitle: [1, 1],
       reducedMotionStill: [1, 1],

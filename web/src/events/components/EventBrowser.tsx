@@ -33,6 +33,7 @@
  */
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -46,7 +47,7 @@ import type { EventTag, GeoTime, TimelineEvent } from '@/types/layer'
 
 import { browseEvents, browseGroupSection, nearestBrowseEventIndex } from '../browse'
 import { formatEventDate, placementT } from '../placement'
-import { buildRailEntries, railEntryAtFraction } from '../rail'
+import { buildRailEntries, declutterRailLabels, railEntryAtFraction } from '../rail'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
 import { useTimelineBottomInset } from '../useTimelineBottomInset'
 import styles from './EventBrowser.module.css'
@@ -79,10 +80,33 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
+  const railResizeObserverRef = useRef<ResizeObserver | null>(null)
+  const [railHeight, setRailHeight] = useState(0)
   const bottomInset = useTimelineBottomInset()
+
+  // A callback ref rather than a `useEffect` on `railRef`: the rail div mounts and unmounts as
+  // `railEntries` goes empty/non-empty (a query with no matches), and an effect with an empty
+  // dependency array would never re-observe a remounted node.
+  const setRailNode = useCallback((el: HTMLDivElement | null) => {
+    railRef.current = el
+    railResizeObserverRef.current?.disconnect()
+    railResizeObserverRef.current = null
+    if (el === null) return
+    setRailHeight(el.getBoundingClientRect().height)
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) setRailHeight(entry.contentRect.height)
+    })
+    observer.observe(el)
+    railResizeObserverRef.current = observer
+  }, [])
 
   const results = useMemo(() => browseEvents(events, { query, tags: activeTags }), [events, query, activeTags])
   const railEntries = useMemo(() => buildRailEntries(results), [results])
+  // Which entries' text actually gets drawn — deep-time sections can pack several entries into a
+  // few px of the rail (`rail.ts`'s own doc comment); every entry still gets a tick regardless.
+  const railPlacements = useMemo(() => declutterRailLabels(railEntries, railHeight), [railEntries, railHeight])
 
   // The highlight follows `t` — recentring on the nearest row whenever `t` moves (a scrub) or the
   // result set itself changes (a new query/tag narrows what "nearest" can even mean). Arrow keys
@@ -274,7 +298,7 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
 
         {railEntries.length > 0 && (
           <div
-            ref={railRef}
+            ref={setRailNode}
             className={styles.rail}
             aria-hidden="true"
             data-testid="event-browser-rail"
@@ -283,9 +307,13 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
             onPointerUp={handleRailPointerUp}
             onPointerCancel={handleRailPointerUp}
           >
-            {railEntries.map((entry) => (
-              <span key={entry.sectionId} className={styles.railLabel} style={{ top: `${entry.offset * 100}%` }}>
-                {entry.abbreviation}
+            {railPlacements.map(({ entry, visible }) => (
+              <span key={entry.sectionId} className={styles.railTick} style={{ top: `${entry.offset * 100}%` }}>
+                {visible && (
+                  <span className={styles.railLabel} data-testid="event-browser-rail-label">
+                    {entry.abbreviation}
+                  </span>
+                )}
               </span>
             ))}
             {railDragging && railDragLabel !== null && <span className={styles.railBubble}>{railDragLabel}</span>}

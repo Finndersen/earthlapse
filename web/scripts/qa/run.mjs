@@ -269,6 +269,17 @@ async function routePublishedMediaToLocalExport(page, baseUrl) {
   return origin
 }
 
+/** `shot.expect`'s dot-path ranges, checked against a `measure()`/`bootstrapsPage()` result —
+ *  shared by `runShot` and `runBootstrapShot` so a shot asserts the same way regardless of which
+ *  one produced its measurements. */
+function buildAssertions(measurements, expect) {
+  return Object.entries(expect ?? {}).map(([key, [min, max]]) => {
+    const value = getPath(measurements, key)
+    const pass = typeof value === 'number' && value >= min && value <= max
+    return { key, value: value ?? null, min, max, pass }
+  })
+}
+
 /** `run` carries the settings that are the same for every shot in a run — where output goes, the
  *  `--viewport`/`--reduced-motion` overrides, and whether screenshots are captured at all. One
  *  object rather than five positional arguments, since every one of them would otherwise have to
@@ -298,17 +309,51 @@ async function runShot(page, hook, shot, run) {
   if (pngPath !== null) await page.screenshot({ path: pngPath })
 
   const measurements = shot.measure !== undefined ? await shot.measure({ page, hook }) : {}
-  const assertions = Object.entries(shot.expect ?? {}).map(([key, [min, max]]) => {
-    const value = getPath(measurements, key)
-    const pass = typeof value === 'number' && value >= min && value <= max
-    return { key, value: value ?? null, min, max, pass }
-  })
+  const assertions = buildAssertions(measurements, shot.expect)
 
   return {
     name: shot.name,
     description: shot.description,
     viewport,
     t: shot.t ?? null,
+    durationMs: Date.now() - startedAt,
+    screenshot: screenshotName,
+    pngPath,
+    measurements,
+    assertions,
+    pass: assertions.every((a) => a.pass),
+  }
+}
+
+/**
+ * Runs a shot that owns the harness's one, one-time page load itself (`shot.bootstrapsPage`) —
+ * the loader-screen shot's own need to intercept that exact load, since the loading screen is
+ * gone by the time an ordinary shot's turn comes around (`shots.mjs`'s own doc comment on
+ * `bootstrapsPage`). Called from `main` in place of the plain `page.goto`, before `hook` even
+ * exists; everything after (`window.__earthtime`, `hook.ready()`, the tour dismissal) still runs
+ * exactly as it does for the generic path, once this returns.
+ * @param {import('playwright').Page} page
+ * @param {import('./shots.mjs').Shot} shot
+ * @param {{ runDir: string, screenshots: boolean, reducedMotion: string }} run
+ * @param {string} baseUrl
+ */
+async function runBootstrapShot(page, shot, run, baseUrl) {
+  const startedAt = Date.now()
+  const viewport = shot.viewport ?? DEFAULT_VIEWPORT
+  await page.setViewportSize(viewport)
+  await page.emulateMedia({ reducedMotion: shot.reducedMotion ?? run.reducedMotion })
+
+  const { measurements, screenshot } = await shot.bootstrapsPage({ page, baseUrl, run })
+  const screenshotName = screenshot !== null && screenshot !== undefined ? `${shot.name}.png` : null
+  const pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
+  if (pngPath !== null) await writeFile(pngPath, screenshot)
+  const assertions = buildAssertions(measurements, shot.expect)
+
+  return {
+    name: shot.name,
+    description: shot.description,
+    viewport,
+    t: null,
     durationMs: Date.now() - startedAt,
     screenshot: screenshotName,
     pngPath,
@@ -359,6 +404,38 @@ async function runShotOrRecordFailure(page, hook, shot, run) {
       description: shot.description,
       viewport: run.viewport ?? shot.viewport ?? DEFAULT_VIEWPORT,
       t: shot.t ?? null,
+      durationMs: Date.now() - startedAt,
+      screenshot: screenshotName,
+      pngPath,
+      measurements: {},
+      assertions: [],
+      error: String(error?.stack ?? error),
+      pass: false,
+    }
+  }
+}
+
+/** The bootstrap shot's own analogue of `runShotOrRecordFailure`: it runs before `hook` exists and
+ *  owns the harness's one navigation, so a throw here would otherwise take the whole run down
+ *  (there is no later shot to fall back to a plain load for). Same best-effort failure screenshot. */
+async function runBootstrapShotOrRecordFailure(page, shot, run, baseUrl) {
+  const startedAt = Date.now()
+  try {
+    return await runBootstrapShot(page, shot, run, baseUrl)
+  } catch (error) {
+    console.error(`FAILED ${shot.name}: ${error?.stack ?? error}`)
+    const screenshotName = `${shot.name}.png`
+    const pngPath = path.join(run.runDir, screenshotName)
+    try {
+      await page.screenshot({ path: pngPath })
+    } catch {
+      await writeFile(pngPath, EMPTY_PNG)
+    }
+    return {
+      name: shot.name,
+      description: shot.description,
+      viewport: shot.viewport ?? DEFAULT_VIEWPORT,
+      t: null,
       durationMs: Date.now() - startedAt,
       screenshot: screenshotName,
       pngPath,
@@ -438,7 +515,31 @@ async function main() {
     const reroutedOrigin = await routePublishedMediaToLocalExport(page, baseUrl)
     if (reroutedOrigin !== null) console.log(`Answering ${reroutedOrigin} from this export's own /media`)
 
-    await page.goto(baseUrl, { waitUntil: 'load' })
+    const run = {
+      runDir,
+      viewport: args.viewport,
+      reducedMotion: args.reducedMotion,
+      screenshots: args.screenshots,
+    }
+    // `--extra-shots` appends a second shot module to the list. Its point is that `shots.mjs` is a
+    // shared file and several agents routinely work in this repo at once (CLAUDE.md, "Working in
+    // parallel"): a new shot can be written, run and proven to fail-before-fix in its own file,
+    // then folded into `shots.mjs` once, by one writer.
+    const extra = args.extraShots === null ? [] : (await import(pathToFileURL(args.extraShots).href)).default
+    const shots = selectShots([...shotList, ...extra], args.shots, args.grep)
+
+    // At most one shot ever owns the harness's one page load (`shots.mjs`'s own doc comment on
+    // `bootstrapsPage`) — the loading screen is only ever on screen during that one navigation, so
+    // only a shot selected into *this* run's list gets to intercept it; otherwise the plain,
+    // generic load below runs as it always has.
+    const bootstrapShot = shots.find((shot) => shot.bootstrapsPage !== undefined)
+    let bootstrapResult = null
+    if (bootstrapShot !== undefined) {
+      console.log(`Running ${bootstrapShot.name} (owns the harness's one page load)…`)
+      bootstrapResult = await runBootstrapShotOrRecordFailure(page, bootstrapShot, run, baseUrl)
+    } else {
+      await page.goto(baseUrl, { waitUntil: 'load' })
+    }
 
     const hook = makeHook(page)
     try {
@@ -470,20 +571,12 @@ async function main() {
     await hook.setTourOpen(false)
     await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
 
-    const run = {
-      runDir,
-      viewport: args.viewport,
-      reducedMotion: args.reducedMotion,
-      screenshots: args.screenshots,
-    }
-    // `--extra-shots` appends a second shot module to the list. Its point is that `shots.mjs` is a
-    // shared file and several agents routinely work in this repo at once (CLAUDE.md, "Working in
-    // parallel"): a new shot can be written, run and proven to fail-before-fix in its own file,
-    // then folded into `shots.mjs` once, by one writer.
-    const extra = args.extraShots === null ? [] : (await import(pathToFileURL(args.extraShots).href)).default
-    const shots = selectShots([...shotList, ...extra], args.shots, args.grep)
     console.log(`Running ${shots.length} of ${shotList.length} shots…`)
     for (const shot of shots) {
+      if (shot === bootstrapShot) {
+        results.push(bootstrapResult)
+        continue
+      }
       console.log(`Running ${shot.name}…`)
       results.push(await runShotOrRecordFailure(page, hook, shot, run))
     }

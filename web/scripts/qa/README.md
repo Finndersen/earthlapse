@@ -89,6 +89,36 @@ not the measurement itself.
 as above, and separately decide whether it belongs in the smoke list too (most don't; the smoke
 run is meant to stay small).
 
+### A shot that needs the harness's one page load
+
+The runner loads its one page once, before any shot's turn, so an ordinary shot never sees the app
+mid-load — by the time it runs, the loading screen is long gone. A shot that genuinely needs to
+observe that one load (the `loading-screen` shot: it has to catch the loader still on screen)
+declares `bootstrapsPage` instead of `actions`/`measure`, and owns that one navigation itself:
+
+```js
+{
+  name: 'loading-screen',
+  bootstrapsPage: async ({ page, baseUrl, run }) => {
+    // Set up any `page.route` hold *before* navigating, then `await page.goto(baseUrl, ...)` —
+    // this *is* the harness's one real load, not a side page. Screenshot with `page.screenshot()`
+    // (no `path`, so it returns a `Buffer`) while whatever you're holding back is still held.
+    return { screenshot: run.screenshots ? await page.screenshot() : null, measurements: { ... } }
+  },
+  expect: { ... },
+}
+```
+
+`run.mjs` calls `bootstrapsPage` in place of the generic `page.goto`, before `hook` (and
+`window.__earthtime`) exist — raw Playwright only, no `hook` argument. Everything after it returns
+(waiting for the QA hook, `hook.ready()`, dismissing the first-visit tour) runs exactly as it does
+for every other shot. At most one shot in a given run may declare `bootstrapsPage`; run.mjs finds
+it before navigating and writes its returned `screenshot` buffer to `<name>.png` itself, the same
+place an ordinary shot's `page.screenshot({ path })` would have. A shot that needs to check
+something *independent* of that one load's own timing (`loading-screen`'s own scripts-blocked
+static-HTML checks) can still open an ordinary side page inside `bootstrapsPage`, exactly as any
+other shot's `measure` would.
+
 ## Known flakes
 
 **Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +

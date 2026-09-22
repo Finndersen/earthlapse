@@ -184,37 +184,65 @@
   scrollbar-color: var(--hud-hairline, rgba(239, 233, 220, 0.18)) transparent;
 }
 
-/* The section index rail: a narrow strip the full height of `.body`, its labels positioned by
+/* The section index rail: a strip the full height of `.body`, its ticks positioned by
    `entry.offset` (`rail.ts`) — a fraction of the *list*, not of this strip's own pixel height, so
    the two stay in lockstep without either measuring the other. `touch-action: none` stops the
-   browser's own vertical-scroll gesture from fighting a drag down this narrow a target. */
+   browser's own vertical-scroll gesture from fighting a drag down this narrow a target. Wide
+   enough to hold `rail.ts`'s longest possible label (6 characters plus a trailing ".") with room
+   either side — see `declutterRailLabels`'s own doc comment for why not every tick draws one. */
 .rail {
   position: relative;
   flex: none;
-  width: 28px;
+  width: 48px;
+  overflow: hidden;
   touch-action: none;
   cursor: pointer;
 }
 
-.railLabel {
+/* One per rail entry, always — a section is still draggable-to even when its label is hidden
+   (`declutterRailLabels`), so it needs its own always-on mark. The dot and the label (when shown)
+   are centred as one flex group, rather than the label alone, so a bare dot stays put in the
+   middle of the column instead of drifting to wherever the label's own text-align would have put
+   it. */
+.railTick {
   position: absolute;
   left: 0;
   right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform: translateY(-50%);
-  text-align: center;
+  pointer-events: none;
+}
+
+.railTick::before {
+  content: '';
+  flex: none;
+  width: 3px;
+  height: 3px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.railLabel {
+  overflow: hidden;
+  max-width: 40px;
+  white-space: nowrap;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 8.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  pointer-events: none;
 }
 
 .railBubble {
   position: absolute;
   top: 50%;
-  right: 36px;
+  /* 8px clear of `.rail`'s own left edge (its width, 48px, plus that clearance) — floats over
+     the list, never the rail itself. */
+  right: 56px;
   transform: translateY(-50%);
   min-width: 64px;
   border-radius: 10px;
