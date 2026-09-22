@@ -12,6 +12,7 @@ pnpm qa -- --shots globe-*       # filtered to shots whose name matches a glob
 pnpm qa -- --grep phone          # filtered to shots whose name matches a regex anywhere
 pnpm qa -- --no-screenshots      # assertions only: no PNGs, no contact sheet
 pnpm qa -- --extra-shots f.mjs   # append another shot module's default export to the list
+pnpm qa -- --smoke               # run only smokeShots.mjs's named subset (~10-15 shots)
 pnpm qa -- --no-build            # reuse the last out/ export instead of rebuilding
 pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3000 instead
 pnpm qa:serve                    # build (unless --no-build) + serve out/, print the URL, idle
@@ -29,6 +30,9 @@ node scripts/qa/run.mjs --no-build --grep 'phone|globe-expanded' --no-screenshot
 `--no-screenshots` still captures one for any shot that *throws*, since that image is the only
 record of what the page looked like when it failed. Run the full list with images once at the
 end — an assertion subset cannot tell you that something elsewhere now looks wrong.
+
+`--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy: fast, and exits
+non-zero on a real failure the same way the full run does.
 
 Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one static server
 (`server.mjs`, no dependency), one browser, one page load — every shot drives the already-loaded
@@ -81,22 +85,22 @@ Shots are data (`shots.mjs`), not code — add one object, never touch `run.mjs`
 `(page, selector, options) -> numbers` function to `measure.mjs`; assertions belong in `expect`,
 not the measurement itself.
 
+`smokeShots.mjs` lists a representative subset by name for `--smoke` — add a shot to `shots.mjs`
+as above, and separately decide whether it belongs in the smoke list too (most don't; the smoke
+run is meant to stay small).
+
 ## Known flakes
 
-**Batch-order sensitivity.** Two shots pass alone and fail inside a larger batch:
-`globe-click-on-backdrop-still-closes` (passes in every batch of ≤11 shots, fails in every batch
-of ≥22) and `timeline-pip-thumbnail-hover` (44×44 alone, 43×32 in a 14-shot batch). Both point at
-the same thing: something one shot leaves behind that the next inherits, despite `applyState`
-resolving every field it covers. Undiagnosed — do not read either failure as a regression in
-whatever you just changed, and reproduce with a single-shot `--grep` before believing it.
+**Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +
+Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook.
+`run.mjs` checks for `window.__earthtime` right after load and fails fast, naming this, if it
+never appears — the fix is to rebuild (drop `--no-build`) and re-run.
 
-`breadcrumb-trimmed` is the same family with a known mechanism: it assumes it starts at a shallow
-section, so a preceding shot that navigates deep makes its `getByRole` wait time out.
-
-**Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 + Turbopack has
-failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook. `run.mjs`
-checks for `window.__earthtime` right after load and fails fast, naming this, if it never
-appears — the fix is to rebuild (drop `--no-build`) and re-run.
+**Batch-order state leaks.** Shots share one page load, so any state a shot can change and
+`applyState` does not reset leaks into the next. `applyState` resets the
+expanded HUD chart, the globe camera (a real collapse before every expand) and waits out the
+sphere<->map unfold. If a shot passes alone and fails in a batch, reproduce with
+`pnpm qa -- --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
 
 ## Determinism
 
@@ -112,8 +116,8 @@ appears — the fix is to rebuild (drop `--no-build`) and re-run.
 
 ```
 scripts/qa/out/<run>/
-  <shot-name>.png       one screenshot per shot
-  contact-sheet.png     every screenshot in a labelled grid (built in-browser, no image lib)
+  <shot-name>.png       one screenshot per shot (skipped under --no-screenshots)
+  contact-sheet.png     every screenshot in a labelled grid (skipped under --no-screenshots)
   report.json           every measurement + assertion + timing + console/page errors
 scripts/qa/out/latest -> <run>/
 ```

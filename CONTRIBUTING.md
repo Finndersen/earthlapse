@@ -128,3 +128,14 @@ pnpm dev       # web
 ```
 
 Python 3.12, pydantic v2, ruff, full type hints. TypeScript strict.
+
+## Checks
+
+`scripts/check.sh` (`make check`) is the one definition of "checks pass": pytest, ruff check,
+ruff format --check, the web typecheck, the web test suite, the web build, and shellcheck on
+`deploy/*.sh`/`scripts/*.sh` if shellcheck is installed. `make check-quick` skips the web build
+for a faster local loop; a PR still needs the full run to pass.
+
+`make hooks` (once per clone) points git at `.githooks/`, so `pre-commit` runs ruff on staged
+Python files and, when a staged file is under `web/**/*.ts(x)`, the web typecheck — a few seconds,
+not the full suite. `git commit --no-verify` skips it when you need to.

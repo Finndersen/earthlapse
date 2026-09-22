@@ -8,7 +8,8 @@ Rules, restated from CLAUDE.md because this is where they bite:
 * No agent may raise the ceiling. If a build hits it, the build stops and reports.
 * Cost is reserved *before* the call and committed *after* it, so a crash mid-call cannot
   produce spend the ledger never saw.
-* The ledger is append-only and local (gitignored) — it is a record, not shared state.
+* The ledger is append-only and committed (docs/DECISIONS.md's storage-tiers ADR) — every clone
+  enforces the ceiling against the same record.
 """
 
 from __future__ import annotations

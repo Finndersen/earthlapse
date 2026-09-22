@@ -18,7 +18,8 @@ import { makeHook, rafTicks } from './hook.mjs'
 import { startStaticServer } from './server.mjs'
 import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
-import { waitForSceneCrossfadeSettle } from './timeouts.mjs'
+import smokeShotNames from './smokeShots.mjs'
+import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const WEB_ROOT = path.resolve(__dirname, '../..')
@@ -41,6 +42,7 @@ Options:
   --serve-only              build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
   --shots <a,b,c*>           comma-separated shot names/globs (matched against each shot's \`name\`)
   --grep <regex>             run only shots whose name matches; narrows --shots further
+  --smoke                    run only \`smokeShots.mjs\`'s named subset (ignored if --shots is also given)
   --extra-shots <file>       append a second shot module (default export) to the shot list
   --no-screenshots           skip screenshots and the contact sheet (failures still capture one)
   --viewport <WxH>           override every shot's own viewport
@@ -50,13 +52,20 @@ Options:
   --help                     print this message
 `
 
-function parseArgs(argv) {
+function parseArgs(rawArgv) {
+  // `pnpm run qa -- --smoke` (the form this README/preflight.sh both use) passes the literal
+  // `--` straight through on this pnpm version, unlike npm's own `--` separator, which strips
+  // it — strip it here too so `pnpm qa -- --foo` and `node scripts/qa/run.mjs --foo` parse the
+  // same flags. Only a *leading* `--` is special-cased: nothing here takes a literal `--` as an
+  // option's own value, so one appearing later is a real typo, not this pass-through quirk.
+  const argv = rawArgv[0] === '--' ? rawArgv.slice(1) : rawArgv
   const args = {
     dev: false,
     noBuild: false,
     serveOnly: false,
     shots: null,
     grep: null,
+    smoke: false,
     extraShots: null,
     screenshots: true,
     viewport: null,
@@ -75,12 +84,17 @@ function parseArgs(argv) {
     else if (arg === '--grep') args.grep = new RegExp(argv[(i += 1)])
     else if (arg === '--extra-shots') args.extraShots = path.resolve(argv[(i += 1)])
     else if (arg === '--no-screenshots') args.screenshots = false
+    else if (arg === '--smoke') args.smoke = true
     else if (arg === '--viewport') args.viewport = parseViewport(argv[(i += 1)])
     else if (arg === '--reduced-motion') args.reducedMotion = argv[(i += 1)]
     else if (arg === '--port') args.port = Number(argv[(i += 1)])
     else if (arg === '--out') args.out = argv[(i += 1)]
     else throw new Error(`unknown argument: ${arg}`)
   }
+  // `--smoke` picks smokeShots.mjs's own list by exact name, unless the caller already narrowed
+  // with --shots. A name renamed out from under it in shots.mjs surfaces as selectShots' own
+  // "matched no shot" warning (or its "matched nothing" error if every name goes stale at once).
+  if (args.smoke && args.shots === null) args.shots = smokeShotNames
   return args
 }
 
@@ -137,11 +151,25 @@ function runNextBuild() {
 const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
 
 /**
- * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed) and,
- * whenever expanded, `globeViewMode` (default `'globe'') and every legend toggle
- * (`DEFAULT_LAYER_TOGGLES`, merged with the shot's own `layerToggles`) — never only the fields a
- * shot happens to mention. `setGlobeViewMode`/
- * `setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
+ * Closes whatever HUD layer chart a previous shot left expanded, by clicking its real "Collapse …
+ * chart" button: `expandedChartLayerId` has no `devHook.ts` setter, and an open chart eats into the
+ * layout every later shot measures. At most one chart is ever expanded.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function closeExpandedChart(page, hook) {
+  const collapseButton = page.getByRole('button', { name: /^Collapse .+ chart$/ })
+  if ((await collapseButton.count()) === 0) return
+  await collapseButton.first().click()
+  await hook.ready()
+  await rafTicks(page, 2)
+}
+
+/**
+ * Always resolves `globeExpanded` (default `false`), the onboarding tour (default closed), any expanded HUD chart (always closed — see
+ * `closeExpandedChart`) and, whenever expanded, `globeViewMode` (default `'globe'') and every
+ * legend toggle (`DEFAULT_LAYER_TOGGLES`, merged with the shot's own `layerToggles`) — never only
+ * the fields a shot happens to mention. `setGlobeViewMode`/`setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
  * comment), so resolving every time rather than only on change is what makes one shot's state
  * fully independent of whatever the previous shot left on screen (this is exactly the bug an
  * early run of this harness caught: a shot with no `state` at all silently inherited the
@@ -162,10 +190,23 @@ const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
  */
 async function applyState(page, hook, state = {}) {
   await hook.setPlaying(state.playing ?? false)
+  await closeExpandedChart(page, hook)
   const globeExpanded = state.globeExpanded ?? false
-  await hook.setGlobeExpanded(globeExpanded)
+  if (globeExpanded) {
+    // A real collapse before every expand: the globe's camera (zoom, map pan) resets only on an
+    // expanded -> collapsed transition, so two consecutive expanded shots would otherwise share
+    // whatever pose the first one left.
+    await hook.setGlobeExpanded(false)
+    await hook.setGlobeExpanded(true)
+  } else {
+    await hook.setGlobeExpanded(false)
+  }
   if (globeExpanded) {
     await hook.setGlobeViewMode(state.globeViewMode ?? 'globe')
+    // `setGlobeViewMode` clicks the real toggle even when the mode is already correct, and a
+    // real change starts the sphere<->map unfold tween, which has no DOM/store reflection of its
+    // own (`timeouts.mjs`): a shot with no `actions` to settle it would otherwise run mid-tween.
+    await waitForApproxUnfoldProgress(page, 1)
     const legendPresent = (await page.locator('[class*="legendGroup"]').count()) > 0
     if (legendPresent) {
       const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
