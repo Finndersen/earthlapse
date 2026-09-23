@@ -68,8 +68,7 @@ export async function drawnBoundsInClip(page, clip, { threshold = 24 } = {}) {
   }
 
   const png = await page.screenshot({ clip: roundedClip })
-  const dataUrl = `data:image/png;base64,${png.toString('base64')}`
-  const local = await page.evaluate(scanDrawnPixels, { dataUrl, threshold })
+  const local = await reducePixels(page, [png], scanDrawnPixels, { threshold })
 
   const viewport = page.viewportSize()
   const viewportArea = viewport === null ? 1 : viewport.width * viewport.height
@@ -83,27 +82,52 @@ export async function drawnBoundsInClip(page, clip, { threshold = 24 } = {}) {
 }
 
 /**
- * Runs inside the page (via `page.evaluate`) — must be self-contained, no closures over
- * `measure.mjs`'s own module scope.
- * @param {{ dataUrl: string, threshold: number }} args
- * @returns {Promise<PixelBox>} bounds relative to the screenshot itself, `width`/`height` both 0
- *   when no pixel differs from the sampled background by more than `threshold`.
+ * Decodes each PNG inside the page and hands their RGBA pixels (`ImageData`s, in order) to
+ * `reducer`, returning whatever it returns — the one image decoder every pixel measurement in
+ * this harness shares. The browser does the PNG decode, so the harness needs no npm image
+ * library. `reducer` runs in the page from its source text, so it must be self-contained: no
+ * closures over module scope, everything it needs passed in `args`.
+ * @template T
+ * @param {import('playwright').Page} page
+ * @param {Buffer[]} pngs
+ * @param {(images: ImageData[], args: any) => T} reducer
+ * @param {unknown} [args]
+ * @returns {Promise<T>}
  */
-async function scanDrawnPixels({ dataUrl, threshold }) {
-  const image = await new Promise((resolve, reject) => {
-    const el = new Image()
-    el.onload = () => resolve(el)
-    el.onerror = () => reject(new Error('drawnBounds: failed to decode the probe screenshot'))
-    el.src = dataUrl
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('drawnBounds: 2D canvas context unavailable')
-  ctx.drawImage(image, 0, 0)
-  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+export function reducePixels(page, pngs, reducer, args = {}) {
+  return page.evaluate(
+    async ({ dataUrls, source, reducerArgs }) => {
+      const decode = (src) =>
+        new Promise((resolve, reject) => {
+          const el = new Image()
+          el.onload = () => resolve(el)
+          el.onerror = () => reject(new Error('reducePixels: failed to decode a probe screenshot'))
+          el.src = src
+        })
+      const images = []
+      for (const image of await Promise.all(dataUrls.map(decode))) {
+        const canvas = document.createElement('canvas')
+        canvas.width = image.naturalWidth
+        canvas.height = image.naturalHeight
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
+        if (ctx === null) throw new Error('reducePixels: 2D canvas context unavailable')
+        ctx.drawImage(image, 0, 0)
+        images.push(ctx.getImageData(0, 0, canvas.width, canvas.height))
+      }
+      return new Function(`return (${source})`)()(images, reducerArgs)
+    },
+    { dataUrls: pngs.map((png) => `data:image/png;base64,${png.toString('base64')}`), source: reducer.toString(), reducerArgs: args },
+  )
+}
 
+/**
+ * `reducePixels` reducer: the bounding box of pixels whose summed RGBA difference from the
+ * image's averaged four corners exceeds `threshold`, `width`/`height` 0 when none does.
+ * @param {ImageData[]} images
+ * @param {{ threshold: number }} args
+ * @returns {PixelBox}
+ */
+function scanDrawnPixels([{ data, width, height }], { threshold }) {
   const at = (x, y) => (y * width + x) * 4
   const corners = [
     [0, 0],
@@ -112,17 +136,7 @@ async function scanDrawnPixels({ dataUrl, threshold }) {
     [width - 1, height - 1],
   ]
   const bg = [0, 0, 0, 0]
-  for (const [cx, cy] of corners) {
-    const i = at(cx, cy)
-    bg[0] += data[i]
-    bg[1] += data[i + 1]
-    bg[2] += data[i + 2]
-    bg[3] += data[i + 3]
-  }
-  bg[0] /= corners.length
-  bg[1] /= corners.length
-  bg[2] /= corners.length
-  bg[3] /= corners.length
+  for (const [cx, cy] of corners) for (let c = 0; c < 4; c += 1) bg[c] += data[at(cx, cy) + c] / corners.length
 
   let minX = width
   let minY = height
@@ -200,127 +214,4 @@ export async function gapBetween(page, selectorA, selectorB, options) {
   if (aBottom <= b.y) return b.y - aBottom
   if (bBottom <= a.y) return a.y - bBottom
   return -(Math.min(aBottom, bBottom) - Math.max(a.y, b.y))
-}
-
-/** Equal Earth (Šavrič, Jenny & Jenny 2018) forward projection, mirrored by value from
- *  `src/globe/projection.ts`'s `lonLatToMap` — this harness has no TS/build step. Unit radius. */
-function equalEarth(lon, lat) {
-  const A1 = 1.340264
-  const A2 = -0.081106
-  const A3 = 0.000893
-  const A4 = 0.003796
-  const M = Math.sqrt(3) / 2
-  const lambda = (lon * Math.PI) / 180
-  const theta = Math.asin(M * Math.sin((lat * Math.PI) / 180))
-  const t2 = theta * theta
-  const t6 = t2 * t2 * t2
-  const x = (lambda * Math.cos(theta)) / (M * (A1 + 3 * A2 * t2 + t6 * (7 * A3 + 9 * A4 * t2)))
-  const y = theta * (A1 + A2 * t2 + t6 * (A3 + A4 * t2))
-  return [x, y]
-}
-
-/**
- * Mean drawn colour around geographic points on the expanded, fully zoomed-out Equal Earth map.
- *
- * The map is located from its own outline, not from `clip` (the map fit frame, which the camera
- * pads): the widest rows of the outline are the equator, spanning ±180°. At the equator both map
- * edges are always open Pacific, so the outline is found by that ocean's colour (blue well above
- * red) — the dimmed photographic backdrop around the map has texture that a corner-sampled
- * background diff reads as map. Only the middle third of the frame's height is scanned, clear of
- * the legend and event feed. Each point is averaged over a `(2·radius+1)²` pixel square, so a
- * single noisy texel can't decide it.
- * @param {import('playwright').Page} page
- * @param {PixelBox} clip
- * @param {Record<string, { lon: number, lat: number }>} points
- * @param {{ radius?: number }} [options]
- * @returns {Promise<{ mapWidth: number, colours: Record<string, { r: number, g: number, b: number, whiteness: number, blueOverGreen: number }> }>}
- *   `whiteness` is the darkest channel (high only for near-white ice), `blueOverGreen` is `b - g`
- *   (positive over water, at or below zero over land and ice).
- */
-export async function mapColoursAt(page, clip, points, { radius = 3 } = {}) {
-  const OVERSCAN_PX = 48
-  const roundedClip = {
-    x: Math.round(clip.x) - OVERSCAN_PX,
-    y: Math.round(clip.y),
-    width: Math.round(clip.width) + 2 * OVERSCAN_PX,
-    height: Math.round(clip.height),
-  }
-  const halfWidth = equalEarth(180, 0)[0]
-  const projected = Object.fromEntries(
-    Object.entries(points).map(([name, { lon, lat }]) => {
-      const [x, y] = equalEarth(lon, lat)
-      return [name, { x: x / halfWidth, y: y / halfWidth }]
-    }),
-  )
-  const png = await page.screenshot({ clip: roundedClip })
-  const dataUrl = `data:image/png;base64,${png.toString('base64')}`
-  return page.evaluate(averageMapColoursAt, { dataUrl, projected, radius })
-}
-
-/**
- * Runs inside the page (via `page.evaluate`) — must be self-contained. `projected` points are in
- * units of the map's half-width, centred on (0°, 0°), y up.
- */
-async function averageMapColoursAt({ dataUrl, projected, radius }) {
-  const image = await new Promise((resolve, reject) => {
-    const el = new Image()
-    el.onload = () => resolve(el)
-    el.onerror = () => reject(new Error('mapColoursAt: failed to decode the probe screenshot'))
-    el.src = dataUrl
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('mapColoursAt: 2D canvas context unavailable')
-  ctx.drawImage(image, 0, 0)
-  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const at = (x, y) => (y * width + x) * 4
-
-  const isOcean = (x, y) => {
-    const i = at(x, y)
-    return data[i + 2] >= 65 && data[i + 2] - data[i] >= 40
-  }
-  // A run this long, not a lone pixel, marks the map edge: legend swatches and feed dots are small.
-  const MIN_RUN_PX = 12
-  const oceanRun = (x, y, step) => {
-    for (let k = 0; k < MIN_RUN_PX; k += 1) if (!isOcean(x + k * step, y)) return false
-    return true
-  }
-  const rowSpans = []
-  for (let y = Math.floor(height / 3); y < Math.ceil((2 * height) / 3); y += 1) {
-    let left = -1
-    for (let x = 0; x + MIN_RUN_PX <= width && left < 0; x += 1) if (oceanRun(x, y, 1)) left = x
-    if (left < 0) continue
-    let right = left
-    for (let x = width - 1; x - MIN_RUN_PX >= left && right === left; x -= 1) if (oceanRun(x, y, -1)) right = x
-    rowSpans.push({ y, left, right })
-  }
-  if (rowSpans.length === 0) throw new Error('mapColoursAt: no map ocean found inside the clip')
-  const widest = Math.max(...rowSpans.map((s) => s.right - s.left))
-  const equatorRows = rowSpans.filter((s) => s.right - s.left >= widest - 1)
-  const centreX = equatorRows.reduce((sum, s) => sum + (s.left + s.right) / 2, 0) / equatorRows.length
-  const centreY = equatorRows.reduce((sum, s) => sum + s.y, 0) / equatorRows.length
-  const half = widest / 2
-
-  const colours = {}
-  for (const [name, p] of Object.entries(projected)) {
-    const x = Math.round(centreX + p.x * half)
-    const y = Math.round(centreY - p.y * half)
-    let r = 0
-    let g = 0
-    let b = 0
-    let n = 0
-    for (let dy = -radius; dy <= radius; dy += 1) {
-      for (let dx = -radius; dx <= radius; dx += 1) {
-        const i = at(Math.min(width - 1, Math.max(0, x + dx)), Math.min(height - 1, Math.max(0, y + dy)))
-        r += data[i]
-        g += data[i + 1]
-        b += data[i + 2]
-        n += 1
-      }
-    }
-    colours[name] = { r: r / n, g: g / n, b: b / n, whiteness: Math.min(r, g, b) / n, blueOverGreen: (b - g) / n }
-  }
-  return { mapWidth: widest + 1, colours }
 }

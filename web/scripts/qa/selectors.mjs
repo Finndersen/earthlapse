@@ -14,23 +14,16 @@ export const ANCESTOR_CANVAS_SELECTOR = '[data-testid="ancestor-portrait"] canva
 export const SCENE_CANVAS_SELECTOR = `canvas:not(${GLOBE_CANVAS_SELECTOR}):not(${ANCESTOR_CANVAS_SELECTOR})`
 
 /** The `<Timeline>` control's own root — scrub track, ruler, section bands and the transport row
- *  (back/play/forward, breadcrumb, speed/mode/scale/sound, rate readout) — the "bottom chrome"
- *  the brief means (CLAUDE.md's condensing task): everything below the scene caption, which is a
- *  separate `ShellLayout` slot and not part of this stack. Carries this `data-testid` itself
- *  (`Timeline.tsx`), so no exclusion-selector workaround is needed the way the scene canvas above
- *  requires. */
+ *  (back/play/forward, breadcrumb, speed/mode/scale/sound, rate readout): the "bottom chrome",
+ *  everything below the scene caption, which is a separate `ShellLayout` slot. */
 export const BOTTOM_CHROME_SELECTOR = '[data-testid="timeline-root"]'
 
-/** The Earth/Dinosaurs/Humans "jump to an era" shortcut group (`timeline/components/
- *  EraShortcuts.tsx`). Rendered into a `ShellLayout` slot, so it sits OUTSIDE
- *  `BOTTOM_CHROME_SELECTOR`'s subtree and costs the timeline's measured height nothing —
- *  `era-shortcuts-group` in shots.mjs asserts exactly that. */
+/** The Dinosaurs/Humans "jump to an era" shortcut group (`timeline/components/EraShortcuts.tsx`).
+ *  Rendered into a `ShellLayout` slot, outside `BOTTOM_CHROME_SELECTOR`'s subtree. */
 export const ERA_SHORTCUTS_SELECTOR = '[data-testid="era-shortcuts"]'
 
 /** The breadcrumb's own `<nav>` root (`SectionBreadcrumb.tsx`) — the whole trail, not just the
- *  current crumb (`BREADCRUMB_CURRENT_SELECTOR`, below); used to check the relocated era
- *  shortcuts (`EraShortcuts.tsx`) never overlap it, now that both share `Timeline.module.css`'s
- *  `.controlsSections`. */
+ *  current crumb (`BREADCRUMB_CURRENT_SELECTOR`, below). */
 export const BREADCRUMB_SELECTOR = 'nav[aria-label="Timeline section"]'
 
 /** The current crumb in the era-section breadcrumb (`SectionBreadcrumb.tsx`) — its text is the
@@ -77,8 +70,7 @@ export const CHECKPOINT_PIP_SELECTOR = '[data-checkpoint-pip]'
  *  the class name but keep the source name as a substring (e.g. `ScrubTrack_pipPreview__xyz`). */
 export const PIP_PREVIEW_SELECTOR = '[class*="pipPreview"]'
 
-/** The expanded globe's own "Globe / Map" toggle (`Globe.tsx`'s `ViewModeToggle`) — issue 3
- *  (user ask: "the globe/map toggle should be moved to below the globe/map"). */
+/** The expanded globe's own "Globe / Map" toggle (`Globe.tsx`'s `ViewModeToggle`). */
 export const VIEW_MODE_TOGGLE_SELECTOR = '[data-testid="globe-view-mode-group"]'
 
 /** The expanded globe's zoom rocker (`Globe.tsx`'s `ZoomControls`). Selected through its own
@@ -121,12 +113,14 @@ export const SHELL_FEED_SELECTOR = '[data-testid="shell-feed"]'
  *  what a QA shot cares about is how many cards are showing, not which events they are. */
 export const EVENT_FEED_ITEM_SELECTOR = '[data-testid^="event-feed-item-"]'
 
-/** The bottom chrome's shared horizontal gutter (`Timeline.module.css`'s `--timeline-gutter`,
- *  user report: "constrain the horizontal layout of the bottom row... within the horizontal
- *  bounds of the timeline"): the scrub track/ruler/band strip's own inset box
- *  (`SectionEdgeNav.tsx`'s `.stack`), the breadcrumb's own row (`Timeline.tsx`'s
- *  `.controlsSections`) and the mode/scale/sound row (`.controlsSecondary`). */
+/** The boxes sharing the bottom chrome's horizontal gutter (`Timeline.module.css`'s
+ *  `--timeline-gutter`): the scrub track/ruler/band strip's own inset box (`SectionEdgeNav.tsx`'s
+ *  `.stack`), the breadcrumb's row (`.controlsSections`), the transport (`.controlsCore`) and the
+ *  mode/scale/sound row (`.controlsSecondary`). */
 export const TIMELINE_TRACK_STACK_SELECTOR = '[data-testid="timeline-track-stack"]'
 export const TIMELINE_CONTROLS_SECTIONS_SELECTOR = '[data-testid="timeline-controls-sections"]'
 export const TIMELINE_CONTROLS_CORE_SELECTOR = '[data-testid="timeline-controls-core"]'
 export const TIMELINE_CONTROLS_SECONDARY_SELECTOR = '[data-testid="timeline-controls-secondary"]'
+
+/** The globe's raster overlay picker's native `<select>` (`OverlaySelect.tsx`). */
+export const OVERLAY_SELECT_SELECTOR = '[data-testid="overlay-select"]'
