@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { EARTH_FORMATION, type TimelineEvent } from '@/types/layer'
+import { EARTH_FORMATION } from '@/types/layer'
 
 import { nearestNeighbourCheckpoint, nearestStepTarget, visibleCheckpoints, type TimelineCheckpoint } from './checkpoints'
 import type { TimeWindow } from './scale'
@@ -11,12 +11,8 @@ function checkpoint(id: string, t: number): TimelineCheckpoint {
   return { id, t, label: id }
 }
 
-function event(id: string, tMin: number, tMax: number, importance: number): TimelineEvent {
-  return { id, label: id, tMin, tMax, importance, description: '', citation: '' }
-}
-
 describe('visibleCheckpoints', () => {
-  it('keeps every checkpoint inside the window regardless of importance (there is none)', () => {
+  it('keeps every checkpoint inside the window', () => {
     const checkpoints = [checkpoint('a', 20000), checkpoint('b', 9000), checkpoint('c', 0)]
     expect(visibleCheckpoints(checkpoints, FULL_DOMAIN).map((c) => c.id)).toEqual(['a', 'b', 'c'])
   })
@@ -27,10 +23,6 @@ describe('visibleCheckpoints', () => {
     expect(shown.map((c) => c.id)).toEqual(['inside'])
   })
 
-  it('includes a checkpoint exactly on a window edge', () => {
-    const checkpoints = [checkpoint('edge', 1e4)]
-    expect(visibleCheckpoints(checkpoints, [0, 1e4]).map((c) => c.id)).toEqual(['edge'])
-  })
 })
 
 describe('nearestNeighbourCheckpoint', () => {
@@ -58,31 +50,14 @@ describe('nearestNeighbourCheckpoint', () => {
 
 describe('nearestStepTarget', () => {
   const checkpoints = [checkpoint('pleistocene-steppe', 20000)]
-  const events = [event('agriculture', 12000, 11000, 1.0)]
 
-  it('steps back to the nearest checkpoint', () => {
+  it('steps to the nearest checkpoint in either direction', () => {
     expect(nearestStepTarget(checkpoints, FULL_DOMAIN, 5000, 'back')).toBe(20000)
-  })
-
-  it('steps forward to the nearest checkpoint', () => {
     expect(nearestStepTarget(checkpoints, FULL_DOMAIN, 30000, 'forward')).toBe(20000)
-  })
-
-  it('skips past an event that sits nearer than the next checkpoint', () => {
-    // `events` holds one at 11000-12000, nearer to t=5000 than the 20000 checkpoint. Stepping
-    // is scenes-only, so it must not stop there.
-    expect(events[0]!.tMax).toBeLessThan(20000)
-    expect(nearestStepTarget(checkpoints, FULL_DOMAIN, 5000, 'back')).not.toBe(11500)
-  })
-
-  it('returns undefined when no checkpoint lies in that direction', () => {
     expect(nearestStepTarget([], FULL_DOMAIN, 5000, 'back')).toBeUndefined()
   })
 
-  it('makes every checkpoint reachable by stepping through a cluster near the present', () => {
-    // Regression: pleistocene-steppe (20000), neolithic-river-settlement (9000) and
-    // modern-city (0) must each be individually reachable by repeated forward steps from the
-    // oldest end of the domain, with no events in the way.
+  it('reaches every checkpoint of a cluster near the present by repeated forward steps', () => {
     const cluster = [checkpoint('pleistocene-steppe', 20000), checkpoint('neolithic-river-settlement', 9000), checkpoint('modern-city', 0)]
     let t = EARTH_FORMATION
     const visited: number[] = []

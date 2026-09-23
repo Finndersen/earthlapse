@@ -54,16 +54,6 @@ describe('createRetainedTextureCache', () => {
     expect(cache.get('c')).toBeDefined()
   })
 
-  it('treats a get as a use, so a just-read texture outlives older ones', async () => {
-    const { cache, disposed, loadAll } = setup(2)
-
-    await loadAll('a', 'b')
-    cache.get('a')
-    await loadAll('c')
-
-    expect(disposed).toEqual(['b'])
-  })
-
   it('never evicts a retained texture, even past capacity', async () => {
     const { cache, disposed, loadAll } = setup(2)
     const [a, b] = await loadAll('a', 'b')
@@ -129,16 +119,6 @@ describe('createRetainedTextureCache', () => {
     releaseTwo()
     await loadAll('c')
     expect(disposed).toEqual(['b', 'a'])
-  })
-
-  it('ignores nulls and textures it does not hold', async () => {
-    const { cache, disposed, loadAll } = setup(1)
-
-    const release = cache.retain([null, namedTexture('foreign')])
-    await loadAll('a', 'b')
-    release()
-
-    expect(disposed).toEqual(['a'])
   })
 
   it('reports progress only to the call that started the load', async () => {

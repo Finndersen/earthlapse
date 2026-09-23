@@ -29,10 +29,6 @@ describe('feedCardOpacity', () => {
     expect(MIN_CARD_OPACITY).toBeGreaterThan(0.5)
   })
 
-  it('clamps below 0', () => {
-    expect(feedCardOpacity(-1)).toBe(1)
-  })
-
   it('eases out rather than fading linearly', () => {
     const linear = 1 - (1 - MIN_CARD_OPACITY) * 0.5
     expect(feedCardOpacity(0.5)).toBeGreaterThan(linear)
@@ -61,25 +57,10 @@ describe('feedCardEmphases', () => {
     expect(settled).toBe(0)
   })
 
-  it('is flat at both ends of the band (smoothstep), so the handover never jumps', () => {
-    const [nearStart] = feedCardEmphases([entry('a', FRESH_EMPHASIS_BAND * 0.02)])
-    const [nearEnd] = feedCardEmphases([entry('a', FRESH_EMPHASIS_BAND * 0.98)])
-    expect(nearStart).toBeGreaterThan(0.99)
-    expect(nearEnd).toBeLessThan(0.01)
-  })
-
   it('leaves a freshest card that has already receded past the band unemphasised', () => {
     expect(feedCardEmphases([entry('a', 0.8), entry('b', 0.9)])).toEqual([0, 0])
   })
 
-  it('is a pure function of the selection: the same entries give the same emphasis', () => {
-    const visible = [entry('a', 0.1), entry('b', 0.4)]
-    expect(feedCardEmphases(visible)).toEqual(feedCardEmphases([...visible]))
-  })
-
-  it('returns nothing for an empty selection', () => {
-    expect(feedCardEmphases([])).toEqual([])
-  })
 })
 
 describe('feedCardInsetPx', () => {

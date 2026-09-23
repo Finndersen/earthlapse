@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createNodeLayer } from '../factories'
@@ -20,26 +20,15 @@ afterEach(() => {
 })
 
 describe('<AncestorPanel>', () => {
-  it('renders the portrait above the readout under one testid, in the same DOM order every time', () => {
+  it('stacks the portrait above the readout under one testid, and keeps the readout without portraits', () => {
     const layer = createNodeLayer(PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA)
-    const portraits = indexPortraits(PORTRAIT_TREE_DATA)
-    const { getByTestId } = render(<AncestorPanel layer={layer} t={1e4} assetBase="/media" portraits={portraits} />)
-
-    const panel = getByTestId('ancestor-readout')
-    const portrait = panel.querySelector('[data-testid="ancestor-portrait"]')
-    expect(portrait).not.toBeNull()
+    render(<AncestorPanel layer={layer} t={1e4} assetBase="/media" portraits={indexPortraits(PORTRAIT_TREE_DATA)} />)
+    const panel = screen.getByTestId('ancestor-readout')
+    expect(panel.children[0]).toBe(panel.querySelector('[data-testid="ancestor-portrait"]'))
     expect(panel.textContent).toContain('Homo sapiens')
-    // Portrait precedes the text node in document order — it sits above the readout, never
-    // interleaved with or below it, regardless of which is present at a given `t`.
-    expect(panel.children[0]).toBe(portrait)
-  })
-
-  it('still renders the readout, under the same testid, for a lineage with no portraits at all', () => {
-    const layer = createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)
-    const { getByTestId } = render(<AncestorPanel layer={layer} t={5e7} assetBase="/media" portraits={null} />)
-
-    const panel = getByTestId('ancestor-readout')
-    expect(panel.querySelector('[data-testid="ancestor-portrait"]')).toBeNull()
-    expect(panel.textContent).toContain('First primate')
+    cleanup()
+    render(<AncestorPanel layer={createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)} t={5e7} assetBase="/media" portraits={null} />)
+    expect(screen.getByTestId('ancestor-readout').querySelector('[data-testid="ancestor-portrait"]')).toBeNull()
+    expect(screen.getByTestId('ancestor-readout').textContent).toContain('First primate')
   })
 })

@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
  * Visual-QA harness runner. One `next build` (unless `--dev`/`--no-build`), one static server,
- * one browser, one page load (and one more, in a `hasTouch` context, for `touch: true` shots) —
- * every shot drives an already-loaded page through
+ * one browser, one page load — every shot drives the already-loaded page through
  * `window.__earthtime` (`web/src/store/devHook.ts`) rather than reloading. See `README.md` for
  * the full contract and CLI reference; `--help` prints the same summary.
  */
@@ -15,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium } from 'playwright'
 
 import { buildContactSheet } from './contactSheet.mjs'
-import { makeHook, rafTicks } from './hook.mjs'
+import { makeHook, rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
 import { startStaticServer } from './server.mjs'
 import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
@@ -27,6 +26,9 @@ const WEB_ROOT = path.resolve(__dirname, '../..')
 const QA_ROOT = __dirname
 const OUT_ROOT = path.join(QA_ROOT, 'out')
 const NEXT_BIN = path.join(WEB_ROOT, 'node_modules/.bin/next')
+/** Where `NEXT_PUBLIC_EARTHTIME_QA=1 next build` exports (`next.config.ts`): apart from an ordinary
+ *  build's `out/`, so one can never replace the QA export with a build lacking the hook. */
+const QA_EXPORT_DIR = path.join(WEB_ROOT, 'out-qa')
 const DEV_SERVER_URL = 'http://localhost:3000'
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
 
@@ -35,22 +37,27 @@ Visual-QA harness for the Earthlapse web app.
 
 Usage:
   pnpm qa [options]              build + serve + run the full (or filtered) shot list
-  pnpm qa:serve                  build (unless --no-build) + serve out/, print the URL, and wait
+  pnpm qa:serve                  build (unless --no-build) + serve out-qa/, print the URL, and wait
 
 Options:
-  --dev                    attach to an already-running \`next dev\` on :3000 instead of building
-  --no-build                skip \`next build\`, reuse the existing scripts/qa's built out/ export
-  --serve-only              build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
+  --dev                      attach to an already-running \`next dev\` on :3000 instead of building
+  --no-build                 skip \`next build\`, reuse the existing out-qa/ export
+  --serve-only               build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
   --shots <a,b,c*>           comma-separated shot names/globs (matched against each shot's \`name\`)
   --grep <regex>             run only shots whose name matches; narrows --shots further
   --smoke                    run only \`smokeShots.mjs\`'s named subset (ignored if --shots is also given)
   --extra-shots <file>       append a second shot module (default export) to the shot list
   --no-screenshots           skip screenshots and the contact sheet (failures still capture one)
+  --no-sort                  run shots in file order instead of grouped by viewport
+  --shards <n>               split the shots across n pages loaded in parallel (default 1)
   --viewport <WxH>           override every shot's own viewport
   --reduced-motion <mode>    'reduce' (default) or 'no-preference'
   --port <n>                 static server port (default: an ephemeral free port)
   --out <name>               run folder name under scripts/qa/out/ (default: a timestamp)
   --help                     print this message
+
+Environment:
+  QA_CHROMIUM_PATH           a Chromium binary to launch instead of Playwright's own download
 `
 
 function parseArgs(rawArgv) {
@@ -69,6 +76,8 @@ function parseArgs(rawArgv) {
     smoke: false,
     extraShots: null,
     screenshots: true,
+    sort: true,
+    shards: 1,
     viewport: null,
     reducedMotion: 'reduce',
     port: 0,
@@ -85,6 +94,8 @@ function parseArgs(rawArgv) {
     else if (arg === '--grep') args.grep = new RegExp(argv[(i += 1)])
     else if (arg === '--extra-shots') args.extraShots = path.resolve(argv[(i += 1)])
     else if (arg === '--no-screenshots') args.screenshots = false
+    else if (arg === '--no-sort') args.sort = false
+    else if (arg === '--shards') args.shards = Math.max(1, Number.parseInt(argv[(i += 1)], 10) || 1)
     else if (arg === '--smoke') args.smoke = true
     else if (arg === '--viewport') args.viewport = parseViewport(argv[(i += 1)])
     else if (arg === '--reduced-motion') args.reducedMotion = argv[(i += 1)]
@@ -135,7 +146,7 @@ function getPath(obj, dotPath) {
 }
 
 function runNextBuild() {
-  console.log('Building static export (NEXT_PUBLIC_EARTHTIME_QA=1 next build)…')
+  console.log('Building the QA export into out-qa/ (NEXT_PUBLIC_EARTHTIME_QA=1 next build)…')
   const result = spawnSync(NEXT_BIN, ['build'], {
     cwd: WEB_ROOT,
     env: { ...process.env, NEXT_PUBLIC_EARTHTIME_QA: '1' },
@@ -184,58 +195,74 @@ async function closeEventBrowser(page, hook) {
 }
 
 /**
- * Always resolves the selected section (the root), `globeExpanded` (default `false`), the
- * onboarding tour (default closed), the event browser and any expanded HUD chart (both always
- * closed — see `closeEventBrowser`/`closeExpandedChart`) and, whenever expanded, `globeViewMode`
- * (default `'globe'') and every legend toggle (`DEFAULT_LAYER_TOGGLES`, merged with the shot's
- * own `layerToggles`) — never only the fields a shot happens to mention. `setGlobeViewMode`/
- * `setLayerToggle` click the real "Globe"/"Map" and legend buttons (`devHook.ts`'s own doc
- * comment), so resolving every time rather than only on change is what makes one shot's state
- * fully independent of whatever the previous shot left on screen (see this package's README).
+ * Resolves every field `state` covers on every shot, never only the ones a shot mentions: the
+ * selected section (the root), playback, `globeExpanded` (default `false`), the event browser and
+ * any expanded HUD chart (always closed), and, when expanded, `globeViewMode` (default `'globe'`)
+ * and every legend toggle (`DEFAULT_LAYER_TOGGLES` merged with the shot's own), then the tour. That
+ * is what keeps one shot independent of whatever the previous one left on screen.
  *
- * The legend panel itself is only ever conditionally in the DOM — `Legend.tsx` renders nothing on
- * phone viewports (the layer is forced on there instead) and drops a row entirely once its
- * overlay is out of data domain — so the toggle loop is skipped whenever the panel isn't present,
- * rather than assuming a control exists at every viewport/`t`. `[class*="legendGroup"]` matches
- * `selectors.mjs`'s own `PIP_PREVIEW_SELECTOR` idiom for a component outside this harness's edit
- * scope: no `data-testid` to key off, so a CSS Modules class substring stands in. This only gates
- * "is the panel there at all" — `hook.setLayerToggle` still throws, uncaught, for a key whose row
- * is missing while the panel itself is present (an unknown key, or a genuinely broken button),
- * which is the behaviour this harness wants for an actual regression.
+ * A collapse returns the globe to sphere mode (`Globe.tsx` resets `mapMode`), so only a `'map'`
+ * shot changes mode here, and under reduced motion the unfold snaps rather than tweening: the
+ * tween's blind wait is paid only when both hold. The expand itself is settled by polling its fit
+ * frames (`waitForGlobeFitFramesStable`).
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {import('./shots.mjs').ShotState} [state]
+ * @param {string} [reducedMotion] the shot's effective `prefers-reduced-motion`
  */
-async function applyState(page, hook, state = {}) {
-  await hook.setPlaying(state.playing ?? false)
-  // Every shot starts at the root section; `t` is unaffected, since the root spans all of it.
-  if ((await hook.getState()).sectionId !== ROOT_SECTION_ID) {
-    await hook.selectSection(ROOT_SECTION_ID)
-    await waitForSectionWindowSettle(page)
-  }
-  // Collapsed first, every shot: the expanded globe's canvas covers the HUD controls the two
-  // closers below click, and the camera (zoom, map pan) resets only on a real collapse, so two
-  // consecutive expanded shots would otherwise share whatever pose the first one left. The frames
-  // between collapse and re-expand let React commit the collapse rather than batch it away.
-  await hook.setGlobeExpanded(false)
-  await hook.ready()
-  await rafTicks(page, 2)
-  await closeEventBrowser(page, hook)
-  await closeExpandedChart(page, hook)
-  const globeExpanded = state.globeExpanded ?? false
-  if (globeExpanded) {
-    await hook.setGlobeExpanded(true)
+async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
+  // The resets that need no real click, and what else needs resetting, in one round trip: with
+  // the globe expanded every round trip waits out a software-rendered frame.
+  const reset = await page.evaluate(
+    ({ playing, rootSectionId }) => {
+      const qa = window.__earthtime
+      qa.setPlaying(playing)
+      const { sectionId, globeExpanded } = qa.getState()
+      // Every shot starts at the root section; `t` is unaffected, since the root spans all of it.
+      if (sectionId !== rootSectionId) qa.selectSection(rootSectionId)
+      // Collapsed first: the expanded canvas covers the HUD controls the closers below click,
+      // and the camera (zoom, map pan) resets only on a real collapse.
+      if (globeExpanded) qa.setGlobeExpanded(false)
+      return {
+        sectionChanged: sectionId !== rootSectionId,
+        collapsed: globeExpanded,
+        eventBrowserOpen: document.querySelector('[data-testid="event-browser"]') !== null,
+        chartOpen: document.querySelector('button[aria-label^="Collapse "][aria-label$=" chart"]') !== null,
+      }
+    },
+    { playing: state.playing ?? false, rootSectionId: ROOT_SECTION_ID },
+  )
+  if (reset.sectionChanged) await waitForSectionWindowSettle(page)
+  // The frames between collapse and any re-expand let React commit the collapse rather than
+  // batch it away.
+  if (reset.collapsed) {
     await hook.ready()
     await rafTicks(page, 2)
-    await hook.setGlobeViewMode(state.globeViewMode ?? 'globe')
-    // `setGlobeViewMode` clicks the real toggle even when the mode is already correct, and a
-    // real change starts the sphere<->map unfold tween, which has no DOM/store reflection of its
-    // own (`timeouts.mjs`): a shot with no `actions` to settle it would otherwise run mid-tween.
-    await waitForApproxUnfoldProgress(page, 1)
-    const legendPresent = (await page.locator('[class*="legendGroup"]').count()) > 0
-    if (legendPresent) {
-      const toggles = { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles }
-      for (const [key, on] of Object.entries(toggles)) await hook.setLayerToggle(key, on)
+  }
+  if (reset.eventBrowserOpen) await closeEventBrowser(page, hook)
+  if (reset.chartOpen) await closeExpandedChart(page, hook)
+  if (state.globeExpanded ?? false) {
+    await hook.setGlobeExpanded(true)
+    await hook.ready()
+    await waitForGlobeFitFramesStable(page)
+    const modeChanged = await page.evaluate(
+      ({ mode, toggles }) => {
+        const qa = window.__earthtime
+        const changed = qa.getGlobeViewMode() !== mode
+        if (changed) qa.setGlobeViewMode(mode)
+        // `Legend.tsx` renders nothing on phone viewports and drops a row once its overlay is out
+        // of data domain, so the toggles are resolved only while its panel is present; a key
+        // whose row is missing while the panel is there still throws.
+        if (document.querySelector('[class*="legendGroup"]') !== null) {
+          for (const [key, on] of Object.entries(toggles)) qa.setLayerToggle(key, on)
+        }
+        return changed
+      },
+      { mode: state.globeViewMode ?? 'globe', toggles: { ...DEFAULT_LAYER_TOGGLES, ...state.layerToggles } },
+    )
+    if (modeChanged) {
+      if (reducedMotion === 'no-preference') await waitForApproxUnfoldProgress(page, 1)
+      await waitForGlobeFitFramesStable(page)
     }
   }
   // Last, so the tour measures every anchor against the layout this shot actually ends up with
@@ -289,15 +316,21 @@ async function runShot(page, hook, shot, run) {
   const startedAt = Date.now()
   const viewport = run.viewport ?? shot.viewport ?? DEFAULT_VIEWPORT
   await page.setViewportSize(viewport)
-  // Per-shot override, e.g. the mid-unfold shot needs real motion to have a tween to sample —
-  // everything else keeps the run's own default (see `--reduced-motion`'s own doc comment).
-  await page.emulateMedia({ reducedMotion: shot.reducedMotion ?? run.reducedMotion })
+  // Per-shot override, for a shot that needs real motion to have something to measure.
+  const reducedMotion = shot.reducedMotion ?? run.reducedMotion
+  await page.emulateMedia({ reducedMotion })
 
+  // A `t` the store already holds starts no crossfade, so only the remainder of one an earlier
+  // shot's own `setT` may have left running is waited out.
   if (shot.t !== undefined) {
-    await hook.setT(shot.t)
-    await waitForSceneCrossfadeSettle(page)
+    if ((await hook.getState())?.t !== shot.t) {
+      await hook.setT(shot.t)
+      await waitForSceneCrossfadeSettle(page)
+    } else {
+      await waitForSceneCrossfadeSettle(page, Date.now() - hook.lastSetTAt)
+    }
   }
-  await applyState(page, hook, shot.state)
+  await applyState(page, hook, shot.state, reducedMotion)
   if (shot.actions !== undefined) await shot.actions({ page, hook })
   await hook.ready()
   await rafTicks(page, 2)
@@ -372,18 +405,13 @@ const EMPTY_PNG = Buffer.from(
 )
 
 /**
- * Runs one shot; on a throw from anywhere inside it (an unexpected page error, not the expected
- * "assertion failed"), records that shot as a failure instead of taking the whole batch down with
- * it — one shot crashing used to abort every shot still queued behind it. Best-effort screenshot
- * so the contact sheet still has an image for the row: usually the page itself is still fine (the
- * throw was a JS exception inside a `page.evaluate`, not a crashed tab), so this typically shows
- * whatever the app looked like at the moment it failed.
+ * Runs one shot; a throw from anywhere inside it (a page error, not an assertion miss) is recorded
+ * as that shot's failure rather than aborting the rest of the run, with a best-effort screenshot
+ * of the page as it was when it threw.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {import('./shots.mjs').Shot} shot
- * @param {string} runDir
- * @param {{width: number, height: number} | null} viewportOverride
- * @param {string} defaultReducedMotion
+ * @param {{ runDir: string, viewport: {width: number, height: number} | null, reducedMotion: string, screenshots: boolean }} run
  */
 async function runShotOrRecordFailure(page, hook, shot, run) {
   const startedAt = Date.now()
@@ -460,55 +488,88 @@ function printSummary(results, consoleErrors) {
   console.log('')
   console.log(`console/page errors: ${consoleErrors.length}`)
   for (const e of consoleErrors) console.log(`  - ${e}`)
+  console.log('')
+  console.log('Slowest shots:')
+  for (const r of [...results].sort((a, b) => b.durationMs - a.durationMs).slice(0, 10)) {
+    console.log(`  ${String(r.durationMs).padStart(7)}ms  ${r.name}`)
+  }
   const failed = results.filter((r) => !r.pass)
   console.log('')
   console.log(`${results.length - failed.length}/${results.length} shots passed.`)
 }
 
+function viewportKey(shot, override) {
+  const v = override ?? shot.viewport ?? DEFAULT_VIEWPORT
+  return `${v.width}x${v.height}`
+}
+
 /**
- * Opens one harness page in its own context, loads the app through `load`, and waits it out to the
- * state every shot starts from: the QA hook present, `hook.ready()` resolved, the first-visit tour
- * dismissed. The page is pushed onto `pages` before loading so the caller's teardown reaches it
- * even when the load throws.
- * @param {import('playwright').Browser} browser
- * @param {string} baseUrl
- * @param {{ reducedMotion: string }} args
- * @param {string[]} consoleErrors
- * @param {import('playwright').Page[]} pages
- * @param {{ hasTouch: boolean, load: (page: import('playwright').Page) => Promise<unknown> }} options
+ * Groups shots by viewport, keeping file order within a group and ordering groups by first
+ * appearance — a resize reflows the whole shell, so running a viewport's shots back to back
+ * spends one resize per group rather than one per shot. The page-bootstrapping shot, and its
+ * viewport's group, stay first: that shot runs before any other regardless.
  */
-async function openHarnessPage(browser, baseUrl, args, consoleErrors, pages, { hasTouch, load }) {
-  const context = await browser.newContext({ deviceScaleFactor: 1, hasTouch })
+function sortByViewport(shots, override) {
+  const groupOrder = new Map()
+  const bootstrap = shots.find((shot) => shot.bootstrapsPage !== undefined)
+  groupOrder.set(bootstrap === undefined ? viewportKey({}, override) : viewportKey(bootstrap, override), 0)
+  for (const shot of shots) if (!groupOrder.has(viewportKey(shot, override))) groupOrder.set(viewportKey(shot, override), groupOrder.size)
+  const rank = (shot) => (shot.bootstrapsPage !== undefined ? -1 : groupOrder.get(viewportKey(shot, override)))
+  return shots
+    .map((shot, index) => ({ shot, index }))
+    .sort((a, b) => rank(a.shot) - rank(b.shot) || a.index - b.index)
+    .map(({ shot }) => shot)
+}
+
+/** `count` contiguous, near-equal slices of `list` (fewer when `list` is shorter than `count`). */
+function contiguousChunks(list, count) {
+  const chunks = []
+  const size = Math.ceil(list.length / count)
+  for (let i = 0; i < list.length; i += size) chunks.push(list.slice(i, i + size))
+  return chunks
+}
+
+/**
+ * One browser context and page, loaded once and ready for shots: console errors collected into
+ * `consoleErrors` (prefixed with `label` when set), published media rerouted to the local export,
+ * the app loaded (by `bootstrapShot` when given), the QA hook confirmed present, and the
+ * first-visit tour dismissed.
+ * @returns {Promise<{ page: import('playwright').Page, hook: ReturnType<typeof makeHook>, bootstrapResult: object | null }>}
+ */
+async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label, bootstrapShot }) {
+  const context = await browser.newContext({ deviceScaleFactor: 1 })
   const page = await context.newPage()
-  pages.push(page)
-  const label = hasTouch ? ' (touch page)' : ''
+  const prefix = label === null ? '' : `[${label}] `
   page.on('console', (msg) => {
-    if (msg.type() === 'error') consoleErrors.push(`console.error${label}: ${msg.text()}`)
+    if (msg.type() === 'error') consoleErrors.push(`${prefix}console.error: ${msg.text()}`)
   })
-  page.on('pageerror', (error) => consoleErrors.push(`pageerror${label}: ${String(error)}`))
+  page.on('pageerror', (error) => consoleErrors.push(`${prefix}pageerror: ${String(error)}`))
 
   await page.emulateMedia({ reducedMotion: args.reducedMotion })
   await page.setViewportSize(DEFAULT_VIEWPORT)
 
   const reroutedOrigin = await routePublishedMediaToLocalExport(page, baseUrl)
-  if (reroutedOrigin !== null) console.log(`Answering ${reroutedOrigin} from this export's own /media${label}`)
+  if (reroutedOrigin !== null && label === null) console.log(`Answering ${reroutedOrigin} from this export's own /media`)
 
-  await load(page)
+  // At most one shot ever owns the harness's page load (`shots.mjs`'s doc comment on
+  // `bootstrapsPage`) — the loading screen is only on screen during that one navigation.
+  let bootstrapResult = null
+  if (bootstrapShot !== undefined) {
+    console.log(`${prefix}Running ${bootstrapShot.name} (owns the page load)…`)
+    bootstrapResult = await runBootstrapShotOrRecordFailure(page, bootstrapShot, run, baseUrl)
+  } else {
+    await page.goto(baseUrl, { waitUntil: 'load' })
+  }
 
   const hook = makeHook(page)
   try {
-    // Not a shot-level concern (`ready()`'s own doc comment) — this is "did the build even
-    // carry the QA hook at all", checked once, up front, with a short timeout and a message
-    // that names the actual known cause rather than a bare Playwright TimeoutError: this
-    // repo's Next 16/Turbopack build has, on a small fraction of otherwise-identical clean
-    // builds, failed to inline `NEXT_PUBLIC_EARTHTIME_QA` (a Turbopack quirk, not this
-    // harness's own gate — `devHook.ts`'s guard is a plain, correct `if`; see README "Known
-    // flake"). A stale `out/` from a plain, non-QA build (`--no-build` reusing an old export)
-    // hits this exact same symptom.
+    // "Did the build carry the QA hook at all", checked once with a message naming the known
+    // causes rather than a bare TimeoutError: an export built without NEXT_PUBLIC_EARTHTIME_QA=1
+    // (a stale `--no-build` out-qa/), or the Next 16 + Turbopack env-inlining flake (README).
     await page.waitForFunction(() => window.__earthtime !== undefined, undefined, { timeout: 10_000 })
   } catch {
     throw new Error(
-      'window.__earthtime never appeared. Either this out/ export was built without ' +
+      'window.__earthtime never appeared. Either this out-qa/ export was built without ' +
         'NEXT_PUBLIC_EARTHTIME_QA=1 (check --no-build / --dev), or this is the known Next ' +
         '16 + Turbopack env-inlining flake (rare, seen on an otherwise-identical clean build) ' +
         '— see README "Known flake". Fix: rebuild (drop --no-build) and re-run.',
@@ -516,15 +577,13 @@ async function openHarnessPage(browser, baseUrl, args, consoleErrors, pages, { h
   }
   await hook.ready()
 
-  // The first-visit tour (`@/onboarding`) opens whenever `localStorage` has no "seen it" flag,
-  // and a fresh browser context never does — left alone it would cover every shot in the run.
-  // Dismissed once, here, through the same path its own Skip button takes; the shots that guard
-  // the tour itself re-open it via `state.tour`. Waiting for the layer to actually detach also
-  // covers the race where the tour's own mount effect has not run yet when this fires: the flag
-  // is written either way, so it simply never opens.
+  // A fresh context has no "seen it" flag, so the first-visit tour opens on load and would cover
+  // every shot. Dismissed through the same path its Skip button takes; waiting for the layer to
+  // detach also covers the tour's mount effect not having run yet (the flag is written either
+  // way, so it then never opens). The shots that guard the tour re-open it via `state.tour`.
   await hook.setTourOpen(false)
   await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
-  return { page, hook }
+  return { page, hook, bootstrapResult }
 }
 
 async function main() {
@@ -541,9 +600,9 @@ async function main() {
     baseUrl = DEV_SERVER_URL
   } else {
     if (!args.noBuild) runNextBuild()
-    server = await startStaticServer(path.join(WEB_ROOT, 'out'), args.port)
+    server = await startStaticServer(QA_EXPORT_DIR, args.port)
     baseUrl = server.url
-    console.log(`Serving ${path.join(WEB_ROOT, 'out')} at ${baseUrl}`)
+    console.log(`Serving ${QA_EXPORT_DIR} at ${baseUrl}`)
   }
 
   if (args.serveOnly) {
@@ -557,13 +616,11 @@ async function main() {
   const runDir = path.join(OUT_ROOT, runName)
   await mkdir(runDir, { recursive: true })
 
-  const browser = await chromium.launch()
+  // An environment whose preinstalled Chromium doesn't match this Playwright version points at it here.
+  const browser = await chromium.launch({ executablePath: process.env.QA_CHROMIUM_PATH || undefined })
   const consoleErrors = []
-  const results = []
-  // Declared out here so the `finally` can tear the media reroutes down before closing the
-  // browser: a route callback still in flight when the browser goes away rejects, and that
-  // rejection would otherwise surface instead of whatever actually ended the run.
   const pages = []
+  const startedAt = Date.now()
   try {
     const run = {
       runDir,
@@ -571,49 +628,40 @@ async function main() {
       reducedMotion: args.reducedMotion,
       screenshots: args.screenshots,
     }
-    // `--extra-shots` appends a second shot module to the list. Its point is that `shots.mjs` is a
-    // shared file and several agents routinely work in this repo at once (CLAUDE.md, "Working in
-    // parallel"): a new shot can be written, run and proven to fail-before-fix in its own file,
-    // then folded into `shots.mjs` once, by one writer.
+    // `--extra-shots` lets a new shot be written, run and proven to fail-before-fix in its own
+    // file while `shots.mjs` is being edited elsewhere (CLAUDE.md, "Working in parallel").
     const extra = args.extraShots === null ? [] : (await import(pathToFileURL(args.extraShots).href)).default
-    const shots = selectShots([...shotList, ...extra], args.shots, args.grep)
-
-    // At most one shot ever owns the harness's one page load (`shots.mjs`'s own doc comment on
-    // `bootstrapsPage`) — the loading screen is only ever on screen during that one navigation, so
-    // only a shot selected into *this* run's list gets to intercept it; otherwise the plain,
-    // generic load runs as it always has.
+    const selected = selectShots([...shotList, ...extra], args.shots, args.grep)
+    const shots = args.sort ? sortByViewport(selected, args.viewport) : selected
     const bootstrapShot = shots.find((shot) => shot.bootstrapsPage !== undefined)
-    let bootstrapResult = null
-    const mouse = await openHarnessPage(browser, baseUrl, args, consoleErrors, pages, {
-      hasTouch: false,
-      load: async (page) => {
-        if (bootstrapShot === undefined) return page.goto(baseUrl, { waitUntil: 'load' })
-        console.log(`Running ${bootstrapShot.name} (owns the harness's one page load)…`)
-        bootstrapResult = await runBootstrapShotOrRecordFailure(page, bootstrapShot, run, baseUrl)
-      },
-    })
-    // A shot with `touch: true` runs on a second page whose context has `hasTouch` (Playwright
-    // fixes that per context), loaded once, on the first such shot's turn, and shared by all of
-    // them the way every other shot shares the first.
-    let touch = null
-    const touchPage = async () => {
-      touch ??= await openHarnessPage(browser, baseUrl, args, consoleErrors, pages, {
-        hasTouch: true,
-        load: (page) => page.goto(baseUrl, { waitUntil: 'load' }),
-      })
-      return touch
-    }
+    const chunks = contiguousChunks(
+      shots.filter((shot) => shot !== bootstrapShot),
+      args.shards,
+    )
+    if (chunks.length === 0) chunks.push([])
 
-    console.log(`Running ${shots.length} of ${shotList.length} shots…`)
-    for (const shot of shots) {
-      if (shot === bootstrapShot) {
-        results.push(bootstrapResult)
-        continue
-      }
-      console.log(`Running ${shot.name}…`)
-      const { page, hook } = shot.touch === true ? await touchPage() : mouse
-      results.push(await runShotOrRecordFailure(page, hook, shot, run))
-    }
+    console.log(`Running ${shots.length} of ${shotList.length + extra.length} shots${chunks.length > 1 ? ` across ${chunks.length} pages` : ''}…`)
+    const resultsByName = new Map()
+    await Promise.all(
+      chunks.map(async (chunk, index) => {
+        const label = chunks.length > 1 ? `shard ${index}` : null
+        const loaded = await openLoadedPage(browser, {
+          baseUrl,
+          args,
+          run,
+          consoleErrors,
+          label,
+          bootstrapShot: index === 0 ? bootstrapShot : undefined,
+        })
+        pages.push(loaded.page)
+        if (loaded.bootstrapResult !== null) resultsByName.set(bootstrapShot.name, loaded.bootstrapResult)
+        for (const shot of chunk) {
+          console.log(`${label === null ? '' : `[${label}] `}Running ${shot.name}…`)
+          resultsByName.set(shot.name, await runShotOrRecordFailure(loaded.page, loaded.hook, shot, run))
+        }
+      }),
+    )
+    const results = shots.map((shot) => resultsByName.get(shot.name))
 
     // Nothing to sheet when every shot that passed skipped its screenshot; a run with failures
     // still has theirs, so the sheet is built whenever any image exists.
@@ -624,7 +672,9 @@ async function main() {
     }
 
     const report = {
-      startedAt: new Date().toISOString(),
+      startedAt: new Date(startedAt).toISOString(),
+      wallTimeMs: Date.now() - startedAt,
+      shards: chunks.length,
       baseUrl,
       reducedMotion: args.reducedMotion,
       consoleErrors,
@@ -635,6 +685,7 @@ async function main() {
     await writeFile(path.join(runDir, 'report.json'), JSON.stringify(report, null, 2))
 
     printSummary(results, consoleErrors)
+    console.log(`Wall time: ${(report.wallTimeMs / 1000).toFixed(1)}s`)
     console.log(`Report: ${path.join(runDir, 'report.json')}`)
     if (contactSheetPath !== null) console.log(`Contact sheet: ${contactSheetPath}`)
 
@@ -643,6 +694,8 @@ async function main() {
 
     if (!report.pass) process.exitCode = 1
   } finally {
+    // Tear the media reroute down before closing the browser: a route callback still in flight
+    // when the browser goes away rejects, and that would surface instead of whatever ended the run.
     for (const page of pages) await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {})
     await browser.close()
     if (server !== null) await server.close()

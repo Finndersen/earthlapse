@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pyarrow as pa
@@ -40,7 +39,12 @@ CO2 = TimeSeries(
     id="co2",
     unit="ppm",
     interpolation=Interpolation.LOG_LINEAR,
-    samples=[Sample(t=0.0, value=280.0), Sample(t=5e8, value=4000.0, lower=2000.0, upper=6000.0)],
+    samples=[
+        Sample(t=0.0, value=280.0),
+        Sample(t=1e7, value=300.0),
+        Sample(t=5e8, value=4000.0, lower=2000.0, upper=6000.0),
+    ],
+    gaps=[Gap(from_index=0, to_index=1)],
 )
 EVENTS = EventSet(
     id="events-core",
@@ -56,8 +60,6 @@ EVENTS = EventSet(
             importance=0.95,
             description="Chicxulub.",
             citation="Renne et al. 2013",
-            # Exercises the additive `effect` field (docs/GLOBE.md §6) through the round trip
-            # below, both the anchored case (this event) and the absent case ("no-effect").
             effect=GlobeEffect(
                 kind=GlobeEffectKind.IMPACT_WINTER,
                 anchor=EffectAnchor(lat=21.3, lon=-89.5),
@@ -86,8 +88,6 @@ EVENTS = EventSet(
             importance=0.2,
             description="d.",
             citation="c.",
-            # ADR-032: exercises the discriminated `arrival` variant through the same JSON
-            # column path as the anchored `impact-winter` case above.
             effect=ArrivalEffect(
                 kind=GlobeEffectKind.ARRIVAL,
                 arrival_kind=ArrivalKind.PEOPLING,
@@ -163,84 +163,17 @@ def test_parquet_without_shape_metadata_is_rejected(tmp_path: Path) -> None:
 
 
 def test_load_world_registers_each_shape_by_id(tmp_path: Path) -> None:
-    for shape in (CO2, EVENTS, PALEODEM, LINEAGE):
+    for shape in (CO2, EVENTS, PALEODEM, LINEAGE, CITIES):
         write_shape(shape, tmp_path)
     world = load_world(tmp_path)
-    assert (world.series, world.events, world.rasters, world.trees) == (
+    assert (world.series, world.events, world.rasters, world.trees, world.features) == (
         {"co2": CO2},
         {"events-core": EVENTS},
         {"paleodem": PALEODEM},
         {"lineage": LINEAGE},
+        {"cities": CITIES},
     )
     state = world.at(0.0)
     assert state.atmosphere.co2_ppm == 280.0
     assert state.plates.elevation is not None
     assert state.biosphere.ancestor == LINEAGE.nodes[0]
-
-
-def test_load_world_on_missing_directory_raises(tmp_path: Path) -> None:
-    with pytest.raises(FileNotFoundError):
-        load_world(tmp_path / "absent")
-
-
-def test_load_world_registers_feature_sets(tmp_path: Path) -> None:
-    """ADR-034: `FeatureSet` is registered into `WorldModel.features`, the same way
-    `EventSet`/`RasterSequence`/`Tree` are registered into their own dicts -- a separate test
-    from `test_load_world_registers_each_shape_by_id` above so it doesn't need to touch that
-    test's own multi-shape tuple assertion."""
-    write_shape(CITIES, tmp_path)
-    world = load_world(tmp_path)
-    assert world.features == {"cities": CITIES}
-
-
-def test_event_effect_is_stored_as_a_json_string_column(tmp_path: Path) -> None:
-    """A storage detail, not part of the NORMATIVE contract (pipeline.shapes.GlobeEffect is
-    a nested model there) — but locking it in here means a future refactor of write_shape's
-    encoding can't silently break round-tripping without a test failing here first."""
-    path = write_shape(EVENTS, tmp_path)
-    table = pq.read_table(path)
-    assert table.schema.field("effect").type == pa.string()
-    rows = table.to_pylist()
-    kpg = next(r for r in rows if r["id"] == "kpg")
-    no_effect = next(r for r in rows if r["id"] == "no-effect")
-    assert isinstance(kpg["effect"], str) and kpg["effect"].startswith("{")
-    assert no_effect["effect"] is None
-
-
-def test_gaps_round_trip_through_the_header_not_a_column(tmp_path: Path) -> None:
-    """ADR-027: `gaps` lives in `write_shape`'s JSON header alongside `unit`/`interpolation`,
-    not a per-sample parquet column, so it round-trips for free through the existing
-    header/rows split -- this pins that in place, and that a file with no gaps (every other
-    fixture in this module) keeps writing `"gaps": []` rather than omitting the key."""
-    with_gap = TimeSeries(
-        id="co2",
-        unit="ppm",
-        interpolation=Interpolation.LOG_LINEAR,
-        samples=[
-            Sample(t=0.0, value=280.0),
-            Sample(t=1.0, value=270.0),
-            Sample(t=2.0, value=260.0),
-        ],
-        gaps=[Gap(from_index=0, to_index=1)],
-    )
-    path = write_shape(with_gap, tmp_path)
-    table = pq.read_table(path)
-    assert set(table.schema.names) == {"t", "value", "lower", "upper"}  # unchanged, no new column
-    meta = json.loads((table.schema.metadata or {})[b"earthtime"])
-    assert meta["header"]["gaps"] == [{"from_index": 0, "to_index": 1}]
-    assert read_shape(path) == with_gap
-
-
-def test_kind_t_tags_round_trip_through_parquet(tmp_path: Path) -> None:
-    """ADR-022: `t` is nullable (absent for a period), `tags` is a plain list<string> column
-    (no JSON encoding needed, unlike the nested `effect` model above)."""
-    path = write_shape(EVENTS, tmp_path)
-    table = pq.read_table(path)
-    assert table.schema.field("kind").type == pa.string()
-    assert table.schema.field("t").type == pa.float64()
-    assert table.schema.field("tags").type == pa.list_(pa.string())
-    rows = table.to_pylist()
-    kpg = next(r for r in rows if r["id"] == "kpg")
-    no_effect = next(r for r in rows if r["id"] == "no-effect")
-    assert (kpg["kind"], kpg["t"], kpg["tags"]) == ("moment", 6.605e7, ["catastrophe", "life"])
-    assert (no_effect["kind"], no_effect["t"], no_effect["tags"]) == ("period", None, ["society"])

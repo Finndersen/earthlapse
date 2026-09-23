@@ -5,38 +5,32 @@
  * - `t` and `state` are declarative: the runner applies them through `window.__earthtime` before
  *   every measurement, in a fixed, safe order (pause -> `t` -> globe expand -> globe view mode ->
  *   layer toggles) so a shot only has to name the end state it wants.
- * - `actions`, when the declarative `state` isn't enough (the mid-transition shot below), is an
- *   async function run after `state` is applied and before the runner's own `ready()`/settle wait.
+ * - `actions`, when the declarative `state` isn't enough, is an async function run after `state`
+ *   is applied and before the runner's own `ready()`/settle wait and screenshot.
  * - `measure` returns whatever numeric facts the shot cares about; `expect` asserts numeric
  *   ranges against dot-paths into that object.
+ *
+ * Several shots take one setup and measure a sequence of states from it (a viewport loop, a `t`
+ * sweep, a click sequence): each such shot's `expect` still names every assertion separately.
  */
 
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-import { rafTicks } from './hook.mjs'
-import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, mapColoursAt } from './measure.mjs'
-import { waitForApproxUnfoldProgress, waitForFocusEaseSettle, waitForSceneCrossfadeSettle } from './timeouts.mjs'
+import { rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
+import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, reducePixels } from './measure.mjs'
+import { waitForApproxUnfoldProgress } from './timeouts.mjs'
 import {
-  ANCESTOR_CANVAS_SELECTOR,
   BOTTOM_CHROME_SELECTOR,
   BREADCRUMB_CURRENT_SELECTOR,
   BREADCRUMB_SELECTOR,
-  CHECKPOINT_PIP_SELECTOR,
   ERA_SHORTCUTS_SELECTOR,
   EVENT_FEED_ITEM_SELECTOR,
   GLOBE_CANVAS_SELECTOR,
   GLOBE_EXPAND_SELECTOR,
   GLOBE_MAP_FIT_FRAME_SELECTOR,
-  EXPANDED_GLOBE_CAPTION_SELECTOR,
   GLOBE_SPHERE_FIT_FRAME_SELECTOR,
-  MINIMISED_GLOBE_LABEL_SELECTOR,
   ONBOARDING_CARD_SELECTOR,
-  ONBOARDING_NEXT_SELECTOR,
   ONBOARDING_SKIP_SELECTOR,
   ONBOARDING_SPOTLIGHT_SELECTOR,
-  PIP_PREVIEW_SELECTOR,
+  OVERLAY_SELECT_SELECTOR,
   PLAY_BUTTON_SELECTOR,
   SCENE_CANVAS_SELECTOR,
   SECTION_BANDS_SELECTOR,
@@ -50,657 +44,31 @@ import {
   ZOOM_CONTROLS_SELECTOR,
 } from './selectors.mjs'
 
-/** The globe's raster overlay picker (`OverlaySelect.tsx`, outside this harness's edit scope, so
- *  no `data-testid` constant of its own to import here) and the sentinel value its native
- *  `<select>` uses for "no overlay" — that component's own `NONE_OPTION_VALUE`, mirrored rather
- *  than imported. */
-const OVERLAY_SELECT_SELECTOR = '[data-testid="overlay-select"]'
-const OVERLAY_NONE_VALUE = '__none__'
-
-/** Whether two `{x, y, width, height}` CSS-pixel boxes (`measure.mjs`'s `PixelBox`) intersect —
- *  used to prove two pieces of HUD chrome genuinely don't overlap, not just "look" clear in a
- *  screenshot. Half-open on purpose (`<`/`>`, not `<=`/`>=`): two boxes exactly edge-to-edge, 0px
- *  apart, read as clear, matching how CSS layout itself treats adjacency. */
-function rectsOverlap(a, b) {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
-}
-
-/** Distance between two boxes' centres, in CSS pixels — how a shot proves one element is placed
- *  *on* another (the onboarding tour's highlight ring against the control it rings) rather than
- *  merely somewhere that happens to overlap it. */
-function centreDistance(a, b) {
-  const dx = a.x + a.width / 2 - (b.x + b.width / 2)
-  const dy = a.y + a.height / 2 - (b.y + b.height / 2)
-  return Math.hypot(dx, dy)
-}
-
-/** Signed separation between two boxes, in CSS pixels: positive is the real closest-point
- *  distance apart when they don't overlap (per-axis gap on whichever axis actually separates
- *  them, or the diagonal between their nearest corners when both axes do), negative is how deep
- *  they overlap (the shallower of the two axes' overlap depth) when they overlap on both axes at
- *  once — `rectsOverlap`'s own two-axis test, made continuous instead of boolean. */
-function rectClearancePx(a, b) {
-  const gapX = Math.max(a.x - (b.x + b.width), b.x - (a.x + a.width))
-  const gapY = Math.max(a.y - (b.y + b.height), b.y - (a.y + a.height))
-  if (gapX > 0 || gapY > 0) return Math.hypot(Math.max(gapX, 0), Math.max(gapY, 0))
-  return -Math.min(-gapX, -gapY)
-}
-
-/**
- * Real element geometry (not pixel-scanned — CLAUDE.md's own carve-out for text nodes drawn over
- * an opaque panel) for every currently-visible label in the event browser's section rail
- * (`EventBrowser.tsx`, `rail.ts`'s `declutterRailLabels`). `overflowPx` is how far the widest
- * label's right edge sits past `panelRightPx` (0 when every label sits inside it); `overlapCount`
- * is how many pairs of visible labels' own boxes intersect — both are 0 on a correctly laid-out
- * rail regardless of how many sections it holds.
- * @param {import('playwright').Page} page
- * @param {number} panelRightPx
- */
-async function eventBrowserRailLabelGeometry(page, panelRightPx) {
-  return page.evaluate((panelRight) => {
-    const rects = Array.from(document.querySelectorAll('[data-testid="event-browser-rail-label"]')).map((el) =>
-      el.getBoundingClientRect(),
-    )
-    const overflowPx = rects.reduce((max, r) => Math.max(max, r.right - panelRight), 0)
-    let overlapCount = 0
-    for (let i = 0; i < rects.length; i += 1) {
-      for (let j = i + 1; j < rects.length; j += 1) {
-        const a = rects[i]
-        const b = rects[j]
-        if (a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top) overlapCount += 1
-      }
-    }
-    return { overflowPx: Math.max(0, overflowPx), overlapCount, labelCount: rects.length }
-  }, panelRightPx)
-}
-
-/** `OverlaySelect.tsx`'s own bordered `.control` box (swatch + `<select>`) — the element whose
- *  `min-height` the phone breakpoint trims from 44px to 32px (`OverlaySelect.module.css`). No
- *  `data-testid` of its own (`OverlaySelect.tsx`/`.module.css` are outside this harness's edit
- *  scope), so this reads it as the `<select>`'s own immediate parent, the shape that component's
- *  JSX is known to have.
- * @param {import('playwright').Page} page
- * @returns {Promise<{x: number, y: number, width: number, height: number}>}
- */
-async function overlayControlBox(page) {
-  return page.evaluate((sel) => {
-    const select = document.querySelector(sel)
-    const control = select ? select.parentElement : null
-    if (control === null) throw new Error('overlayControlBox: no [data-testid="overlay-select"] parent found')
-    return control.getBoundingClientRect().toJSON()
-  }, OVERLAY_SELECT_SELECTOR)
-}
-
-/**
- * The bounding box, in CSS pixels, of a region's real *opacity* — where a plain `drawnBounds`-
- * style corner-sampled diff can't be trusted: over the photographic scene it registers the
- * photo's own texture as content (this file's own module doc comment / the project's
- * `CLAUDE.md`), and even over a flat backdrop it can't tell a soft, half-transparent fade (the
- * ancestor portrait's own circular CSS mask) from the *content* drawn underneath it (a dark
- * specimen plate reads as indistinguishable from a dark backdrop at any single threshold).
- *
- * Method: a difference matte. Screenshot the same clip against a solid black page background,
- * then again against solid white, and hide the scene layer for both so neither pass mixes in the
- * photo. Per pixel, compositing means `result = content*alpha + backdrop*(1-alpha)`, so the two
- * results differ by exactly `(white - black) * (1 - alpha)` — a pixel's own colour cancels out
- * entirely, leaving a pure, content-independent measurement of how *opaque* it is, at every
- * pixel, regardless of whether the content itself happens to be dark, light or coloured. The
- * bounding box of pixels at least half-opaque (`alpha >= 0.5`) is what this returns — the same
- * "how far out does this still clearly read as present" edge for a hard silhouette (the globe's
- * sphere) and a soft radial fade (the portrait's mask) alike.
- * @param {import('playwright').Page} page
- * @param {{x: number, y: number, width: number, height: number}} clip page-absolute CSS pixels.
- * @returns {Promise<{width: number, height: number}>}
- */
-async function alphaEdgeDiameter(page, clip) {
-  const roundedClip = { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) }
-  const setBackdrop = async (color) => {
-    await page.evaluate((c) => {
-      const shell = document.querySelector('[data-globe-expanded]')
-      if (shell) shell.style.background = c
-    }, color)
-  }
-  await setBackdrop('#000000')
-  const blackPng = await page.screenshot({ clip: roundedClip })
-  await setBackdrop('#ffffff')
-  const whitePng = await page.screenshot({ clip: roundedClip })
-  await setBackdrop('')
-  return page.evaluate(diffAlphaEdge, {
-    blackDataUrl: `data:image/png;base64,${blackPng.toString('base64')}`,
-    whiteDataUrl: `data:image/png;base64,${whitePng.toString('base64')}`,
-  })
-}
-
-/** Runs inside the page (`page.evaluate`, self-contained) — `alphaEdgeDiameter`'s own pixel diff. */
-async function diffAlphaEdge({ blackDataUrl, whiteDataUrl }) {
-  const load = (src) =>
-    new Promise((resolve, reject) => {
-      const el = new Image()
-      el.onload = () => resolve(el)
-      el.onerror = () => reject(new Error('alphaEdgeDiameter: failed to decode a probe screenshot'))
-      el.src = src
-    })
-  const [blackImg, whiteImg] = await Promise.all([load(blackDataUrl), load(whiteDataUrl)])
-  const canvas = document.createElement('canvas')
-  canvas.width = blackImg.naturalWidth
-  canvas.height = blackImg.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('alphaEdgeDiameter: 2D canvas context unavailable')
-  ctx.drawImage(blackImg, 0, 0)
-  const blackData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(whiteImg, 0, 0)
-  const whiteData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  const { width, height } = canvas
-
-  let minX = width
-  let minY = height
-  let maxX = -1
-  let maxY = -1
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const i = (y * width + x) * 4
-      const diff = (Math.abs(whiteData[i] - blackData[i]) + Math.abs(whiteData[i + 1] - blackData[i + 1]) + Math.abs(whiteData[i + 2] - blackData[i + 2])) / 3
-      const alpha = 1 - diff / 255
-      if (alpha >= 0.5) {
-        if (x < minX) minX = x
-        if (x > maxX) maxX = x
-        if (y < minY) minY = y
-        if (y > maxY) maxY = y
-      }
-    }
-  }
-  if (maxX < minX || maxY < minY) return { width: 0, height: 0 }
-  return { width: maxX - minX + 1, height: maxY - minY + 1 }
-}
-
-/**
- * Each breadcrumb crumb's own *painted* bounding box (`SectionBreadcrumb.tsx`'s `<li>` elements),
- * isolated the same way `alphaEdgeDiameter` above isolates opacity: not a corner-sampled diff
- * against the crumb's own background (worthless here for the same reason as everywhere else this
- * sits over the photographic scene — CLAUDE.md, this file's module doc comment), and not
- * `getBoundingClientRect` either, which is exactly the measurement that missed the real bug (two
- * crumbs' *boxes* can lay out with no overlap at all while one's overflowing text still bleeds,
- * unclipped, into the next box's painted area). Instead: screenshot the whole trail once with
- * every crumb visible, then once per crumb with just that one `visibility: hidden` (layout is
- * untouched — `visibility`, not `display`, so no sibling reflows and the two screenshots differ by
- * exactly that crumb's own pixels, separator arrow included since a `::before` inherits its host's
- * visibility). The per-pixel diff cancels the shared photo backdrop entirely, the same cancellation
- * `alphaEdgeDiameter`'s own doc comment derives for its black/white pair, leaving only what that
- * one crumb actually painted — including any of it that spilled outside its own `<li>` box.
- * @param {import('playwright').Page} page
- * @param {string} trailSelector the breadcrumb's `<ol>` (`SectionBreadcrumb.module.css`'s `.trail`).
- * @param {{ threshold?: number }} [options] summed-RGBA diff per pixel before it counts as "drawn".
- * @returns {Promise<Array<{x: number, y: number, width: number, height: number}>>} page-absolute
- *   CSS-pixel boxes, one per crumb in DOM order; a crumb with nothing legible left (width/height 0)
- *   never happens for a real label, so an empty box is itself a signal something is missing, not
- *   merely small.
- */
-async function crumbDrawnBounds(page, trailSelector, { threshold = 16 } = {}) {
-  const count = await page.evaluate((sel) => document.querySelector(sel)?.children.length ?? 0, trailSelector)
-  const trailBox = await boxOf(page, trailSelector)
-  // A little slack beyond the trail's own box: the whole point is to catch a crumb's paint
-  // spilling past where layout says it should stop, which a clip flush with that same layout box
-  // could itself crop away before the diff ever sees it.
-  const pad = 24
-  const clip = { x: Math.max(0, trailBox.x - pad), y: trailBox.y - 4, width: trailBox.width + pad * 2, height: trailBox.height + 8 }
-  // The scene view keeps drifting (parallax breathing) on its own clock even paused/reduced-
-  // motion, which a first pass of this measurement learned the hard way: two screenshots taken
-  // a `page.evaluate` round trip apart already differed across nearly the whole busy photo, not
-  // just at a hidden crumb. `alphaEdgeDiameter` above hides the same two layers for the same
-  // reason (that function's own doc comment) — reused here rather than a second mechanism for
-  // the same problem. `visibility: hidden` stops it painting to the screenshot at all, regardless
-  // of whatever its own render loop keeps doing underneath, so the backdrop behind the HUD text
-  // is flat and genuinely static across every screenshot in this function.
-  const restoreScene = await hideSceneAndVignette(page)
-  try {
-    const baseline = await page.screenshot({ clip })
-    const bounds = []
-    for (let i = 0; i < count; i += 1) {
-      await page.evaluate(([sel, index]) => (document.querySelector(sel).children[index].style.visibility = 'hidden'), [trailSelector, i])
-      const withHidden = await page.screenshot({ clip })
-      await page.evaluate(([sel, index]) => (document.querySelector(sel).children[index].style.visibility = ''), [trailSelector, i])
-      const local = await page.evaluate(diffCrumbPixels, {
-        baseDataUrl: `data:image/png;base64,${baseline.toString('base64')}`,
-        hiddenDataUrl: `data:image/png;base64,${withHidden.toString('base64')}`,
-        threshold,
-      })
-      bounds.push({ x: clip.x + local.x, y: clip.y + local.y, width: local.width, height: local.height })
-    }
-    return bounds
-  } finally {
-    await restoreScene()
-  }
-}
-
-/**
- * Hides `ShellLayout.tsx`'s scene layer and lens vignette (its `.shell` root's first two
- * children, `[data-globe-expanded]`'s own doc comment in `alphaEdgeDiameter` above) so a
- * screenshot behind them reads as a flat, static backdrop instead of the animating photo —
- * `visibility`, not `display`, so nothing in the HUD grid reflows. Returns a restore callback
- * rather than leaving the caller to remember the teardown.
- * @param {import('playwright').Page} page
- * @returns {Promise<() => Promise<void>>}
- */
-async function hideSceneAndVignette(page) {
-  await page.evaluate(() => {
-    const shell = document.querySelector('[data-globe-expanded]')
-    if (shell && shell.children.length >= 2) {
-      shell.children[0].style.visibility = 'hidden'
-      shell.children[1].style.visibility = 'hidden'
-    }
-  })
-  return async () => {
-    await page.evaluate(() => {
-      const shell = document.querySelector('[data-globe-expanded]')
-      if (shell && shell.children.length >= 2) {
-        shell.children[0].style.visibility = ''
-        shell.children[1].style.visibility = ''
-      }
-    })
-  }
-}
-
-/** Runs inside the page (`page.evaluate`, self-contained) — the bounding box of pixels that
- *  differ, by more than `threshold` summed across R+G+B+A, between the two screenshots. */
-async function diffCrumbPixels({ baseDataUrl, hiddenDataUrl, threshold }) {
-  const load = (src) =>
-    new Promise((resolve, reject) => {
-      const el = new Image()
-      el.onload = () => resolve(el)
-      el.onerror = () => reject(new Error('crumbDrawnBounds: failed to decode a probe screenshot'))
-      el.src = src
-    })
-  const [baseImg, hiddenImg] = await Promise.all([load(baseDataUrl), load(hiddenDataUrl)])
-  const canvas = document.createElement('canvas')
-  canvas.width = baseImg.naturalWidth
-  canvas.height = baseImg.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('crumbDrawnBounds: 2D canvas context unavailable')
-  ctx.drawImage(baseImg, 0, 0)
-  const baseData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(hiddenImg, 0, 0)
-  const hiddenData = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  const { width, height } = canvas
-
-  let minX = width
-  let minY = height
-  let maxX = -1
-  let maxY = -1
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const i = (y * width + x) * 4
-      const diff =
-        Math.abs(baseData[i] - hiddenData[i]) +
-        Math.abs(baseData[i + 1] - hiddenData[i + 1]) +
-        Math.abs(baseData[i + 2] - hiddenData[i + 2]) +
-        Math.abs(baseData[i + 3] - hiddenData[i + 3])
-      if (diff > threshold) {
-        if (x < minX) minX = x
-        if (x > maxX) maxX = x
-        if (y < minY) minY = y
-        if (y > maxY) maxY = y
-      }
-    }
-  }
-  if (maxX < minX || maxY < minY) return { x: 0, y: 0, width: 0, height: 0 }
-  return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
-}
-
-/**
- * Runs inside the page (`page.evaluate`, self-contained — no closures over `shots.mjs`'s own
- * module scope): the number of *distinct* direct-child pairs of `containerSelector`'s own element
- * whose drawn boxes overlap — 0 means every child is clear of every other. Two children sitting on
- * different wrapped flex lines never report an overlap here (their `y` ranges don't intersect),
- * so this is a genuine "did content collide" check, not a "did the row wrap" one — root-cause
- * regression coverage for the historical "mute/volume button overlaps the next/fast-forward
- * button" bug (`Timeline.module.css`'s `.controlsSecondary` doc comment).
- * @param {{ containerSelector: string }} args
- */
-function countOverlappingChildPairs({ containerSelector }) {
-  const container = document.querySelector(containerSelector)
-  if (container === null) return 0
-  const boxes = Array.from(container.children).map((el) => el.getBoundingClientRect())
-  let overlaps = 0
-  for (let i = 0; i < boxes.length; i += 1) {
-    for (let j = i + 1; j < boxes.length; j += 1) {
-      const a = boxes[i]
-      const b = boxes[j]
-      if (a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y) overlaps += 1
-    }
-  }
-  return overlaps
-}
-
-/**
- * Runs inside the page (`page.evaluate`, self-contained): the number of distinct rows
- * `containerSelector`'s own direct children fall into, grouped by rounded `top` — 1 means every
- * child sits on one line (no wrap), 2+ means the flex row has wrapped. A generic "did this
- * flex-wrap row actually wrap" check, independent of `countOverlappingChildPairs`'s "did two
- * children collide" one: a wrapped row is fine as long as nothing overlaps, but the coordinator's
- * ask here is specifically that the row does *not* wrap at all at the widths this guards.
- * @param {{ containerSelector: string }} args
- */
-function countDistinctRows({ containerSelector }) {
-  const container = document.querySelector(containerSelector)
-  if (container === null) return 0
-  const tops = Array.from(container.children).map((el) => Math.round(el.getBoundingClientRect().top))
-  return new Set(tops).size
-}
-
-/**
- * Runs inside the page (`page.evaluate`): whether the first `n` direct children of
- * `containerSelector`'s own element all share one row (rounded `top`). Used where a *trailing*
- * child is allowed to wrap onto its own line (`.controlsSecondary`'s `rateReadoutRow` — two
- * always-reserved, usually-empty slots, not a control a viewer would notice dropping) but the
- * children before it must not.
- * @param {{ containerSelector: string, n: number }} args
- */
-function firstChildrenShareRow({ containerSelector, n }) {
-  const container = document.querySelector(containerSelector)
-  if (container === null) return false
-  const tops = Array.from(container.children)
-    .slice(0, n)
-    .map((el) => Math.round(el.getBoundingClientRect().top))
-  return new Set(tops).size === 1
-}
-
-/**
- * Runs inside the page (`page.evaluate`, self-contained): the rounded `{x, y}` of every direct
- * child of `containerSelector`'s own element, in DOM order — used to prove a fixed-width cluster
- * (`.controlsSecondary`'s sound/speed/mode/era-shortcuts/scale/rate-badge group) sits at the exact
- * same pixel positions regardless of the breadcrumb's own length in the sibling track, not merely
- * "looks about right" in one screenshot.
- * @param {{ containerSelector: string }} args
- */
-function childPositions({ containerSelector }) {
-  const container = document.querySelector(containerSelector)
-  if (container === null) return []
-  return Array.from(container.children).map((el) => {
-    const r = el.getBoundingClientRect()
-    return { x: Math.round(r.x), y: Math.round(r.y) }
-  })
-}
-
-/**
- * A thin horizontal strip through the expanded globe's own vertical centre, wide enough to prove
- * real horizontal growth but narrow (in height) enough to clear every piece of chrome that could
- * otherwise contaminate a `drawnBounds`-style scan of the now-full-viewport `<canvas>` — the top-
- * left "Globe/Map" toggle and legend, the top-right close button, and the right-centre zoom
- * controls (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why `GLOBE_CANVAS_SELECTOR`
- * alone can no longer isolate the sphere from any of them). Deliberately a *width*-only proof: at
- * `DEFAULT_VIEWPORT`, the default sphere already fills nearly the whole real vertical gap between
- * the title and the timeline (by design — `Globe.module.css`'s `.orbFitFrameSphere` "fill the real
- * gap" formula) with only ~20px to spare, so there is no meaningful *vertical* chrome-free room
- * left to prove growth into even before zooming in further — but a circle that grows wider
- * necessarily grows taller by the same factor, so a width-only proof is not a weaker one. Margins
- * were picked by eye against this file's own screenshots, not derived from CSS — a chrome change
- * that moves into this band will need this constant nudged.
- */
-const GLOBE_CHROME_FREE_STRIP = { x: 20, y: 360, width: 1320, height: 100 }
-
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
+/** Portrait phone at the 390px floor the layout is sized for. */
+const PHONE_FLOOR_VIEWPORT = { width: 390, height: 844 }
+/** Narrow desktop, just above the 760px phone breakpoint's tablet range. */
+const NARROW_DESKTOP_VIEWPORT = { width: 1000, height: 810 }
+/** A 6.1" phone held sideways: the short-landscape layout (ADR-048). */
+const LANDSCAPE_VIEWPORT = { width: 844, height: 390 }
 
-/** Portrait phone — the breakpoint the shell restacks at (`ShellLayout.module.css`'s 760px
- *  blocks), and the case most visitors actually arrive on. */
-const PHONE_VIEWPORT = { width: 412, height: 870 }
-
-/**
- * Screenshots the first element matching `selector`, clipped to its own drawn box — the same box
- * `measure.mjs`'s `drawnBounds` locates, but returned as a raw PNG buffer rather than scanned for
- * a bounding rect, since the two arc shots below need to diff two whole frames against each
- * other, not find where one frame differs from its own sampled-corner background.
- * @param {import('playwright').Page} page
- * @param {string} selector
- */
-async function screenshotClip(page, selector) {
-  const locator = page.locator(selector).first()
-  await locator.waitFor({ state: 'visible' })
-  const box = await locator.boundingBox()
-  if (box === null) throw new Error(`screenshotClip: "${selector}" has no box (display:none?)`)
-  const clip = { x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width), height: Math.round(box.height) }
-  const png = await page.screenshot({ clip })
-  return { png, area: clip.width * clip.height }
-}
-
-/**
- * Runs inside the page (`page.evaluate`, must be self-contained — no closures over this module's
- * scope): counts pixels that differ between two same-size screenshots by more than `threshold`
- * (summed per-channel). Mirrors `measure.mjs`'s own `scanDrawnPixels`, but diffs two real frames
- * against each other rather than one frame against its sampled-corner background — an arrival
- * arc is drawn *over* an already-opaque globe (sphere or map), so "differs from a corner sample"
- * would just measure the globe's own silhouette, not the arc.
- * @param {{ dataUrlA: string, dataUrlB: string, threshold: number }} args
- * @returns {Promise<number>}
- */
-async function countDiffPixels({ dataUrlA, dataUrlB, threshold }) {
-  const decode = (src) =>
-    new Promise((resolve, reject) => {
-      const el = new Image()
-      el.onload = () => resolve(el)
-      el.onerror = () => reject(new Error('countDiffPixels: failed to decode a probe screenshot'))
-      el.src = src
-    })
-  const [imageA, imageB] = await Promise.all([decode(dataUrlA), decode(dataUrlB)])
-  const canvas = document.createElement('canvas')
-  canvas.width = imageA.naturalWidth
-  canvas.height = imageA.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('countDiffPixels: 2D canvas context unavailable')
-  ctx.drawImage(imageA, 0, 0)
-  const a = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  ctx.drawImage(imageB, 0, 0)
-  const b = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-
-  let count = 0
-  for (let i = 0; i < a.length; i += 4) {
-    const diff = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) + Math.abs(a[i + 3] - b[i + 3])
-    if (diff > threshold) count += 1
-  }
-  return count
-}
-
-/**
- * How many of `selector`'s own drawn pixels differ (see `countDiffPixels`) between two
- * screenshots taken back to back, with `between` run in between them to change what's on screen.
- * Returns the raw count and the count as a fraction of the clip's own area, so a shot's `expect`
- * can assert either an absolute floor or a proportion.
- * @param {import('playwright').Page} page
- * @param {string} selector
- * @param {() => Promise<void>} between
- * @param {{ threshold?: number }} [options]
- */
-async function drawnPixelDiff(page, selector, between, { threshold = 40 } = {}) {
-  const { png: pngA, area } = await screenshotClip(page, selector)
-  await between()
-  const { png: pngB } = await screenshotClip(page, selector)
-  const dataUrlA = `data:image/png;base64,${pngA.toString('base64')}`
-  const dataUrlB = `data:image/png;base64,${pngB.toString('base64')}`
-  const diffPixels = await page.evaluate(countDiffPixels, { dataUrlA, dataUrlB, threshold })
-  return { diffPixels, diffFraction: area > 0 ? diffPixels / area : 0 }
-}
-
-/**
- * The union bounding box of every `<polyline>` inside `containerSelector`'s first match, in page
- * (CSS pixel) coordinates — `{width: 0, height: 0}` when there are none. Exists because
- * `drawnBounds` (pixel-diffing against the target's own sampled-corner background) is the wrong
- * tool for the sparkline/`LayerChart` trace specifically: both are drawn directly over a busy
- * photographic scene image with no opaque backing panel, so its own texture alone can differ from
- * a corner sample by more than `drawnBounds`' threshold — measured empirically at 173px (the
- * sparkline's own full CSS width) over a *blank* SVG containing only a 1px-wide playhead line,
- * i.e. pure background noise, not a drawn trace. A `<polyline>`'s own `getBoundingClientRect()`
- * is exact SVG geometry, immune to whatever photo sits behind it, and *is* "the drawn trace" in
- * the most literal sense available here — stronger, not weaker, than screenshot pixel-diffing.
- * @param {import('playwright').Page} page
- * @param {string} containerSelector
- * @returns {Promise<{x: number, y: number, width: number, height: number}>}
- */
-async function polylineTraceBounds(page, containerSelector) {
-  const boxes = await page.evaluate((sel) => {
-    const container = document.querySelector(sel)
-    if (!container) return []
-    return Array.from(container.querySelectorAll('polyline')).map((el) => {
-      const r = el.getBoundingClientRect()
-      return { x: r.x, y: r.y, width: r.width, height: r.height }
-    })
-  }, containerSelector)
-  if (boxes.length === 0) return { x: 0, y: 0, width: 0, height: 0 }
-  const minX = Math.min(...boxes.map((b) => b.x))
-  const maxX = Math.max(...boxes.map((b) => b.x + b.width))
-  const minY = Math.min(...boxes.map((b) => b.y))
-  const maxY = Math.max(...boxes.map((b) => b.y + b.height))
-  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
-}
-
-/**
- * Runs inside the page (`page.evaluate`, must be self-contained): decodes a screenshot and
- * returns the centroid (in the screenshot's own local pixel coordinates) of every pixel that
- * looks like the scene-location marker (`HumanCivilisation.tsx`'s `SCENE_RGB`,
- * `humanStyle.ts`'s `SCENE_LOCATION_COLOR = '#fdf6e8'`) — a warm off-white distinguishable from
- * the globe's own pure-white highlights (clouds, ice: `r === g === b`) by a small but
- * consistent red-over-blue skew. `count === 0` means no matching pixel was found at all.
- * @param {{ dataUrl: string }} args
- * @returns {Promise<{ x: number, y: number, count: number }>}
- */
-async function scanForSceneMarkerColor({ dataUrl }) {
-  const image = await new Promise((resolve, reject) => {
-    const el = new Image()
-    el.onload = () => resolve(el)
-    el.onerror = () => reject(new Error('scanForSceneMarkerColor: failed to decode the probe screenshot'))
-    el.src = dataUrl
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('scanForSceneMarkerColor: 2D canvas context unavailable')
-  ctx.drawImage(image, 0, 0)
-  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)
-
-  let sumX = 0
-  let sumY = 0
-  let count = 0
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const i = (y * width + x) * 4
-      const r = data[i]
-      const g = data[i + 1]
-      const b = data[i + 2]
-      const a = data[i + 3]
-      const redOverBlue = r - b
-      const redOverGreen = r - g
-      if (a > 200 && r > 220 && g > 205 && redOverBlue > 6 && redOverBlue < 50 && redOverGreen >= 0 && redOverGreen < 30) {
-        sumX += x
-        sumY += y
-        count += 1
-      }
-    }
-  }
-  return count === 0 ? { x: 0, y: 0, count: 0 } : { x: sumX / count, y: sumY / count, count }
-}
-
-/**
- * The scene-location marker's own screen centroid (page-absolute CSS px), found by colour
- * (`scanForSceneMarkerColor`) inside `clip` — `null` when nothing matched. Used instead of
- * `drawnPixelDiff`'s "toggle something off and diff" approach because the one thing that would
- * need toggling here, the "Human civilisation" legend row, only exists in the DOM while the
- * globe is *expanded* (`Legend.tsx` renders nothing minimised) — and expanding, even briefly,
- * resets the camera's own azimuth to its default framing (`Globe.tsx`'s `GlobeCameraControls`,
- * "a plain expand/collapse... reframes" doc comment), which would destroy exactly the camera
- * state ADR-034's centring is being measured against. Colour-matching the marker directly avoids
- * ever touching `expanded` during a measurement.
- * @param {import('playwright').Page} page
- * @param {{x: number, y: number, width: number, height: number}} clip
- * @returns {Promise<{ x: number, y: number, count: number } | null>}
- */
-async function sceneMarkerCentroid(page, clip) {
-  const roundedClip = { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) }
-  const png = await page.screenshot({ clip: roundedClip })
-  const dataUrl = `data:image/png;base64,${png.toString('base64')}`
-  const local = await page.evaluate(scanForSceneMarkerColor, { dataUrl })
-  if (local.count === 0) return null
-  return { x: roundedClip.x + local.x, y: roundedClip.y + local.y, count: local.count }
-}
-
-/**
- * How far off-centre (degrees) the scene-location marker currently sits, horizontally, on the
- * *minimised* orb — the one measurement ADR-034's centring claim and this file's own
- * `useGlobeAutoRotation.ts` fix are actually about. Converts the measured pixel offset from the
- * drawn sphere's own centre (`drawnBounds` on `GLOBE_CANVAS_SELECTOR` — the sphere's circular
- * silhouette, not the canvas element's CSS box) to degrees via the standard "point on a sphere
- * viewed from outside" relation `screenOffsetPx ≈ apparentRadiusPx * sin(angleFromCentre)`: exact
- * for an orthographic projection and a close enough approximation this near the sphere's own
- * centre under this app's 40° perspective FOV. Positive means the marker sits to the right of
- * centre. Returns `null` (rather than throwing) when no marker pixel was found at all, so a shot
- * can assert on that directly instead of getting a misleading `0`.
- * @param {import('playwright').Page} page
- * @returns {Promise<{ offsetDeg: number, markerPixelCount: number } | null>}
- */
-async function globeOrbMarkerOffsetDeg(page) {
-  const sphere = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
-  if (sphere.width === 0) throw new Error('globeOrbMarkerOffsetDeg: the minimised orb drew nothing')
-  const centreX = sphere.x + sphere.width / 2
-  const apparentRadiusPx = sphere.width / 2
-  const marker = await sceneMarkerCentroid(page, sphere)
-  if (marker === null) return null
-  const sinAngle = Math.max(-1, Math.min(1, (marker.x - centreX) / apparentRadiusPx))
-  return { offsetDeg: (Math.asin(sinAngle) * 180) / Math.PI, markerPixelCount: marker.count }
-}
-
-/**
- * Drags the minimised orb (real `page.mouse` events, so `OrbitControls` sees a genuine drag, not
- * a click — `orbGesture.ts`'s `ORB_CLICK_DRAG_THRESHOLD_PX` is 4px, far below this) far enough to
- * leave the camera's azimuth well away from its default 0 — the precondition for the "moves but
- * doesn't go all the way" report (docs/GLOBE.md's ADR-034 section): a viewer who has ever dragged
- * the orb before a scene's location becomes the focus target.
- * @param {import('playwright').Page} page
- */
-async function dragGlobeOrb(page) {
-  const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
-  if (box === null) throw new Error('dragGlobeOrb: globe canvas has no box')
-  const cx = box.x + box.width / 2
-  const cy = box.y + box.height / 2
-  await page.mouse.move(cx, cy)
-  await page.mouse.down()
-  await page.mouse.move(cx + Math.min(90, box.width * 0.5), cy, { steps: 12 })
-  await page.mouse.up()
-}
-
-/**
- * @typedef {Object} ShotState
- * @property {boolean} [playing]
- * @property {boolean} [globeExpanded]
- * @property {'globe' | 'map'} [globeViewMode]
- * @property {Record<string, boolean>} [layerToggles]
- * @property {boolean} [tour] - open the first-visit tour (`@/onboarding`); defaults to dismissed
- */
-
-/**
- * @typedef {Object} Shot
- * @property {string} name - filesystem-safe, used for the screenshot filename
- * @property {string} description - one line: what this shot guards
- * @property {{width: number, height: number}} [viewport] - defaults to 1440x900
- * @property {'reduce' | 'no-preference'} [reducedMotion] - overrides the run's own --reduced-motion default
- * @property {number} [t] - years before present
- * @property {ShotState} [state]
- * @property {boolean} [touch] - run on the harness's second, `hasTouch` page, where `page.touchscreen.tap` works
- * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<void>} [actions]
- * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<Record<string, unknown>>} [measure]
- * @property {Record<string, [number, number]>} [expect] - dot-path into `measure`'s result -> [min, max]
- */
-
-/** @type {Shot[]} */
-/** The expanded globe's corner wrappers and close button (`Globe.tsx`). Real `data-testid`s,
- *  unlike `OVERLAY_SELECT_SELECTOR` above, which falls back to a parent-element lookup because
- *  `OverlaySelect.tsx` is outside this harness's edit scope. */
+/** The expanded globe's corner wrappers and close button (`Globe.tsx`). */
 const OVERLAY_SELECT_STACK_SELECTOR = '[data-testid="globe-overlay-select-stack"]'
 const LEGEND_CORNER_SELECTOR = '[data-testid="globe-legend-corner"]'
 const CLOSE_BUTTON_SELECTOR = '[data-testid="globe-close-button"]'
-/** The current-time heading (`Experience.tsx`'s `<TimeTitle>`) — the era shortcuts sit centred
- *  under this, both collapsed and expanded, above the phone breakpoint. */
+/** The current-time heading (`Experience.tsx`'s `<TimeTitle>`). */
 const TIME_TITLE_SELECTOR = '[data-testid="time-title"]'
+const SCENE_CAPTION_TITLE_SELECTOR = '[data-testid="scene-caption-title"]'
+const SCENE_CAPTION_TEXT_SELECTOR = '[data-testid="scene-caption-text"]'
+const SCENE_CAPTION_DETAIL_SELECTOR = '[data-testid="scene-caption-detail"]'
+const SCENE_CAPTION_BUTTON_SELECTOR = '[data-testid="scene-caption-button"]'
+const ANCESTOR_PORTRAIT_SELECTOR = '[data-testid="ancestor-portrait"]'
+const ANCESTOR_READOUT_SELECTOR = '[data-testid="ancestor-readout"]'
+const ABOUT_BUTTON_SELECTOR = 'button[aria-label="About & credits"]'
+const POPULATION_READOUT_SELECTOR = '[data-testid="scalar-readout-population"]'
+const EVENT_BROWSER_SELECTOR = '[data-testid="event-browser"]'
+const LAYER_CHART_SVG_SELECTOR = '[data-testid="layer-chart-svg"]'
+const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeLabel"]`
 
 /** The legend panel's compact ceiling. The panel measures 48.5px (single row, `padding: 6px 10px`,
  *  `line-height: 1.25`, short hint); an uncompacted one — 8px padding, 1.4 line-height, a two-line
@@ -708,230 +76,47 @@ const TIME_TITLE_SELECTOR = '[data-testid="time-title"]'
  *  passing both. */
 const LEGEND_HEIGHT_CEILING_PX = 60
 
-const DESKTOP_CORNER_VIEWPORTS = [
-  { width: 1000, height: 810 },
-  { width: 1440, height: 900 },
-]
-
-/**
- * One shot per (viewport, globe view mode) combination: the top corners — the "Human
- * civilisation" legend (top-left) and the overlay selector (top-right, under the ✕) — each align
- * their own outer edge to the scrub track's real horizontal bound rather than a fixed gutter or a
- * viewport fraction, so they can't drift from the timeline they sit above; the era shortcuts stay
- * centred under the title, in flow, the same place they sit collapsed. None of the four (legend,
- * title, era shortcuts, overlay selector) overlaps another or the drawn sphere/map.
- * @param {{ width: number, height: number }} viewport
- * @param {'globe' | 'map'} globeViewMode
- */
-function desktopGlobeCornersShot(viewport, globeViewMode) {
-  const fitFrameSelector = globeViewMode === 'map' ? GLOBE_MAP_FIT_FRAME_SELECTOR : GLOBE_SPHERE_FIT_FRAME_SELECTOR
-  return {
-    name: `desktop-globe-corners-${viewport.width}x${viewport.height}-${globeViewMode}`,
-    description:
-      'Desktop/tablet expanded-globe top chrome: the "Human civilisation" legend (top-left) and the overlay ' +
-      'selector (top-right, under the ✕) each align to the scrub track\'s own left/right edge (`--track-inset`), ' +
-      'share the same top offset, and never overlap each other, the title, the era shortcuts (centred under the ' +
-      'title, unchanged from the collapsed view) or the drawn sphere/map (`drawnBoundsInClip` over the real ' +
-      'fit-frame rectangle, `globe-expanded-sphere`\'s own proven-sound technique, since a busy photographic ' +
-      'backdrop makes a plain corner-sampled scan unreliable there).',
-    viewport,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const title = await boxOf(page, TIME_TITLE_SELECTOR)
-      const overlay = await boxOf(page, OVERLAY_SELECT_STACK_SELECTOR)
-      const closeButton = await boxOf(page, CLOSE_BUTTON_SELECTOR)
-      const legend = await boxOf(page, LEGEND_CORNER_SELECTOR)
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const frame = await drawnBoundsInClip(page, await hiddenBoxOf(page, fitFrameSelector))
-
-      const centreOf = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
-      const era_c = centreOf(era)
-      const title_c = centreOf(title)
-
-      const boxes = { legend, title, era, overlay, frame }
-      const pairs = [
-        ['legend', 'title'],
-        ['legend', 'era'],
-        ['legend', 'overlay'],
-        ['legend', 'frame'],
-        ['title', 'era'],
-        ['title', 'overlay'],
-        ['title', 'frame'],
-        ['era', 'overlay'],
-        ['era', 'frame'],
-        ['overlay', 'frame'],
-      ]
-      const overlaps = {}
-      for (const [a, b] of pairs) {
-        overlaps[`overlap_${a}_${b}`] = rectsOverlap(boxes[a], boxes[b]) ? 1 : 0
-      }
-
-      return {
-        legendLeftEdgeOffsetPx: legend.x - track.x,
-        overlayRightEdgeOffsetPx: overlay.x + overlay.width - (track.x + track.width),
-        legendOverlayTopDeltaPx: legend.y - overlay.y,
-        eraCentreOffsetPx: era_c.x - title_c.x,
-        eraBelowTitleGapPx: era.y - (title.y + title.height),
-        overlayBelowCloseGapPx: overlay.y - (closeButton.y + closeButton.height),
-        overlayOverlapsClose: rectsOverlap(overlay, closeButton) ? 1 : 0,
-        legendHeightPx: legend.height,
-        ...overlaps,
-      }
-    },
-    expect: {
-      legendLeftEdgeOffsetPx: [-2, 2],
-      overlayRightEdgeOffsetPx: [-2, 2],
-      legendOverlayTopDeltaPx: [-2, 2],
-      eraCentreOffsetPx: [-3, 3],
-      eraBelowTitleGapPx: [0, 400],
-      overlayBelowCloseGapPx: [4, 400],
-      overlayOverlapsClose: [0, 0],
-      legendHeightPx: [0, LEGEND_HEIGHT_CEILING_PX],
-      overlap_legend_title: [0, 0],
-      overlap_legend_era: [0, 0],
-      overlap_legend_overlay: [0, 0],
-      overlap_legend_frame: [0, 0],
-      overlap_title_era: [0, 0],
-      overlap_title_overlay: [0, 0],
-      overlap_title_frame: [0, 0],
-      overlap_era_overlay: [0, 0],
-      overlap_era_frame: [0, 0],
-      overlap_overlay_frame: [0, 0],
-    },
-  }
-}
-
-/**
- * Desktop/tablet, above the phone breakpoint: the Globe/Map toggle and the zoom rocker share one
- * row at the toggle's own bottom-left `y`, mirroring the phone row (`.viewModeGroup`/`.zoomGroup`'s
- * own `min-width: 761px` rule) rather than the toggle sitting alone in the corner with zoom
- * vertically centred on the right edge. The toggle's own left edge lines up with the scrub
- * track's left edge; the zoom rocker's own right edge with the track's right edge — both read
- * `--track-inset` (`ShellLayout.module.css`'s `.shell`) so the row can't drift from the timeline
- * it sits above — on one line, with the zoom buttons arranged horizontally (the divider between
- * them turned vertical) as on the phone.
- * @param {{ width: number, height: number }} viewport
- * @param {'globe' | 'map'} globeViewMode
- */
-function desktopControlsRowShot(viewport, globeViewMode) {
-  const fitFrameSelector = globeViewMode === 'map' ? GLOBE_MAP_FIT_FRAME_SELECTOR : GLOBE_SPHERE_FIT_FRAME_SELECTOR
-  return {
-    name: `desktop-controls-row-${viewport.width}x${viewport.height}-${globeViewMode}`,
-    description:
-      "Desktop/tablet expanded-globe controls row: the Globe/Map toggle's own left edge and the zoom rocker's " +
-      "own right edge each align to the scrub track's real edge (`--track-inset`), both at the same y and " +
-      'neither overlapping the drawn sphere/map (`drawnBoundsInClip` over the real fit-frame rectangle, ' +
-      "`desktop-globe-corners`'s own technique), the legend corner, or the timeline root.",
-    viewport,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
-      const legend = await boxOf(page, LEGEND_CORNER_SELECTOR)
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const frame = await drawnBoundsInClip(page, await hiddenBoxOf(page, fitFrameSelector))
-      const centreOf = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
-      const toggle_c = centreOf(toggle)
-      const zoom_c = centreOf(zoom)
-
-      return {
-        toggleLeftEdgeOffsetPx: toggle.x - track.x,
-        zoomRightEdgeOffsetPx: zoom.x + zoom.width - (track.x + track.width),
-        centreYDeltaPx: Math.abs(toggle_c.y - zoom_c.y),
-        zoomWiderThanTall: zoom.width > zoom.height ? 1 : 0,
-        toggleOverlapsFrame: rectsOverlap(toggle, frame) ? 1 : 0,
-        zoomOverlapsFrame: rectsOverlap(zoom, frame) ? 1 : 0,
-        toggleOverlapsLegend: rectsOverlap(toggle, legend) ? 1 : 0,
-        zoomOverlapsLegend: rectsOverlap(zoom, legend) ? 1 : 0,
-        toggleOverlapsTimeline: rectsOverlap(toggle, timeline) ? 1 : 0,
-        zoomOverlapsTimeline: rectsOverlap(zoom, timeline) ? 1 : 0,
-      }
-    },
-    expect: {
-      toggleLeftEdgeOffsetPx: [-2, 2],
-      zoomRightEdgeOffsetPx: [-2, 2],
-      centreYDeltaPx: [0, 4],
-      zoomWiderThanTall: [1, 1],
-      toggleOverlapsFrame: [0, 0],
-      zoomOverlapsFrame: [0, 0],
-      toggleOverlapsLegend: [0, 0],
-      zoomOverlapsLegend: [0, 0],
-      toggleOverlapsTimeline: [0, 0],
-      zoomOverlapsTimeline: [0, 0],
-    },
-  }
-}
-
 /** Above the atmosphere glow's own contrast against the flat backdrop `hideSceneAndVignette`
- *  leaves, well below the sphere's — so a strip scan measures the sphere, not its halo. */
+ *  leaves, well below the sphere's — so a scan measures the sphere, not its halo. */
 const SPHERE_OVER_GLOW_THRESHOLD = 90
 
-/** The drawn sphere across `GLOBE_CHROME_FREE_STRIP`, with the scene and the event feed (which
- *  rides above the expanded globe in the left column) hidden. */
-async function sphereStripBounds(page) {
-  const restoreScene = await hideSceneAndVignette(page)
-  await page.evaluate((sel) => document.querySelector(sel)?.style.setProperty('visibility', 'hidden'), SHELL_FEED_SELECTOR)
-  await rafTicks(page, 2)
-  const bounds = await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
-  await page.evaluate((sel) => document.querySelector(sel)?.style.removeProperty('visibility'), SHELL_FEED_SELECTOR)
-  await restoreScene()
-  return bounds
+/**
+ * A thin horizontal strip through the expanded globe's vertical centre at 1440x900, clear of every
+ * piece of chrome (toggle, legend, close button, zoom controls) that would contaminate a scan of
+ * the full-viewport `<canvas>`. Width-only on purpose: the default sphere already fills nearly the
+ * whole vertical gap between title and timeline, so there is no chrome-free room to prove vertical
+ * growth into — and a circle that grows wider grows taller by the same factor. Margins were picked
+ * against screenshots, not derived from CSS; a chrome change that moves into this band needs this
+ * constant nudged.
+ */
+const GLOBE_CHROME_FREE_STRIP = { x: 20, y: 360, width: 1320, height: 100 }
+
+// ---------------------------------------------------------------------------------------------
+// Geometry
+// ---------------------------------------------------------------------------------------------
+
+/** Whether two `{x, y, width, height}` boxes intersect. Half-open: two boxes exactly edge to edge
+ *  read as clear, matching how CSS layout treats adjacency. */
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
 }
 
-async function pressZoomIn(page, steps) {
-  const button = page.getByRole('button', { name: 'Zoom in' })
-  for (let i = 0; i < steps; i += 1) {
-    await button.click()
-    await rafTicks(page, 2)
-  }
+/** Distance between two boxes' centres — how a shot proves one element is placed *on* another
+ *  rather than merely somewhere overlapping it. */
+function centreDistance(a, b) {
+  return Math.hypot(a.x + a.width / 2 - (b.x + b.width / 2), a.y + a.height / 2 - (b.y + b.height / 2))
 }
 
-/** Zoom is camera state, not store state, so a shot's `state` cannot reset it and it would
- *  otherwise carry over from whichever shot ran before. Collapsing and re-expanding reframes the
- *  sphere to its default. */
-async function openGlobeAtDefaultZoom(page, hook) {
-  await hook.setGlobeExpanded(false)
-  await rafTicks(page, 3)
-  await hook.setGlobeExpanded(true)
-  await hook.ready()
-  await waitForApproxUnfoldProgress(page, 1)
-  await rafTicks(page, 3)
+/** Signed separation between two boxes: the closest-point distance when apart, minus the
+ *  shallower axis's overlap depth when they overlap. */
+function rectClearancePx(a, b) {
+  const gapX = Math.max(a.x - (b.x + b.width), b.x - (a.x + a.width))
+  const gapY = Math.max(a.y - (b.y + b.height), b.y - (a.y + a.height))
+  if (gapX > 0 || gapY > 0) return Math.hypot(Math.max(gapX, 0), Math.max(gapY, 0))
+  return -Math.min(-gapX, -gapY)
 }
 
-async function switchGlobeViewMode(page, hook, mode) {
-  await hook.setGlobeViewMode(mode)
-  await waitForApproxUnfoldProgress(page, 1.5)
-  await rafTicks(page, 3)
-}
-
-/** The short-landscape viewports (ADR-048): iPhone SE, a 6.1" and a 6.7" phone held sideways. */
-const LANDSCAPE_VIEWPORTS = [
-  { width: 667, height: 375 },
-  { width: 844, height: 390 },
-  { width: 932, height: 430 },
-]
-
-const SCENE_CAPTION_TITLE_SELECTOR = '[data-testid="scene-caption-title"]'
-const SCENE_CAPTION_TEXT_SELECTOR = '[data-testid="scene-caption-text"]'
-const SCENE_CAPTION_DETAIL_SELECTOR = '[data-testid="scene-caption-detail"]'
-const ANCESTOR_PORTRAIT_SELECTOR = '[data-testid="ancestor-portrait"]'
-
-/** How far a box pokes outside the viewport on its worst side, in CSS px — 0 or less when it
- *  sits fully inside. */
+/** How far a box pokes outside the viewport on its worst side — 0 or less when fully inside. */
 function viewportOverflowPx(box, viewport) {
   return Math.max(-box.x, -box.y, box.x + box.width - viewport.width, box.y + box.height - viewport.height)
 }
@@ -945,6 +130,9 @@ function unionBox(boxes) {
   return { x, y, width: right - x, height: bottom - y }
 }
 
+const centreX = (box) => box.x + box.width / 2
+const centreY = (box) => box.y + box.height / 2
+
 /** Every unordered pair of `names`, in order. */
 function namePairs(names) {
   return names.flatMap((a, i) => names.slice(i + 1).map((b) => [a, b]))
@@ -952,9 +140,7 @@ function namePairs(names) {
 
 /** Whether each pair among `boxes` (a name -> box map) overlaps, as `overlap_<a>_<b>` flags. */
 function pairwiseOverlapFlags(boxes) {
-  return Object.fromEntries(
-    namePairs(Object.keys(boxes)).map(([a, b]) => [`overlap_${a}_${b}`, rectsOverlap(boxes[a], boxes[b]) ? 1 : 0]),
-  )
+  return Object.fromEntries(namePairs(Object.keys(boxes)).map(([a, b]) => [`overlap_${a}_${b}`, rectsOverlap(boxes[a], boxes[b]) ? 1 : 0]))
 }
 
 /** `expect` entries asserting no pair among `names` overlaps. */
@@ -962,14 +148,198 @@ function noPairOverlaps(names) {
   return Object.fromEntries(namePairs(names).map(([a, b]) => [`overlap_${a}_${b}`, [0, 0]]))
 }
 
+/** Number of overlapping pairs among `boxes`. */
+function overlappingPairCount(boxes) {
+  return namePairs(boxes.map((_, i) => i)).filter(([a, b]) => rectsOverlap(boxes[a], boxes[b])).length
+}
+
 /**
- * Hides everything but the expanded globe's own canvas — the scene, the vignette, the shell's
- * HUD slots other than the globe's, and the globe's own controls — so a whole-viewport pixel scan
- * sees the drawn sphere or map alone against the flat backdrop. `visibility`, so nothing reflows.
- * Returns a restore callback.
+ * The layout box of each named selector's first match, read in one round trip. Throws naming any
+ * that is missing or not rendered (zero size), so a renamed test id fails loudly.
+ * @param {import('playwright').Page} page
+ * @param {Record<string, string>} selectors name -> selector
+ * @returns {Promise<Record<string, {x: number, y: number, width: number, height: number}>>}
+ */
+async function boxesOf(page, selectors) {
+  const boxes = await page.evaluate(
+    (entries) =>
+      Object.fromEntries(
+        entries.map(([name, sel]) => {
+          const rect = document.querySelector(sel)?.getBoundingClientRect()
+          return [name, rect === undefined || (rect.width === 0 && rect.height === 0) ? null : rect.toJSON()]
+        }),
+      ),
+    Object.entries(selectors),
+  )
+  const missing = Object.keys(boxes).filter((name) => boxes[name] === null)
+  if (missing.length > 0) throw new Error(`boxesOf: nothing rendered for ${missing.map((name) => `${name} (${selectors[name]})`).join(', ')}`)
+  return boxes
+}
+
+/** `overlap_<a>_<b>` for every pair of `boxes` plus `offscreen_<name>`, how far each pokes out of
+ *  the viewport (≤ 0 inside) — the whole "no chrome region collides or is clipped" check. */
+function layoutFlags(boxes, viewport) {
+  return {
+    ...pairwiseOverlapFlags(boxes),
+    ...Object.fromEntries(Object.entries(boxes).map(([name, box]) => [`offscreen_${name}`, viewportOverflowPx(box, viewport)])),
+  }
+}
+
+/** `expect` entries for `layoutFlags` over `names`: no pair overlaps, nothing leaves the viewport. */
+function layoutExpect(names) {
+  return { ...noPairOverlaps(names), ...Object.fromEntries(names.map((name) => [`offscreen_${name}`, [-4000, 0]])) }
+}
+
+/** Layout rects of every direct child of `selector`'s first match, `[]` when it is absent. */
+function childRects(page, selector) {
+  return page.evaluate(
+    (sel) => Array.from(document.querySelector(sel)?.children ?? []).map((el) => el.getBoundingClientRect().toJSON()),
+    selector,
+  )
+}
+
+/** Layout rects of every element matching `selector`. */
+function allRects(page, selector) {
+  return page.evaluate((sel) => Array.from(document.querySelectorAll(sel)).map((el) => el.getBoundingClientRect().toJSON()), selector)
+}
+
+/** The union box of every `<polyline>` inside `containerSelector`'s first match, `{0,0,0,0}` when
+ *  there are none. Real SVG geometry, not a pixel scan: a sparkline or chart trace sits over the
+ *  photographic scene with no opaque backing, where a corner-sampled pixel diff reads the photo's
+ *  own texture as content (measured 173px of "width" over an empty SVG). */
+async function polylineTraceBounds(page, containerSelector) {
+  const boxes = await allRects(page, `${containerSelector} polyline`)
+  return boxes.length === 0 ? { x: 0, y: 0, width: 0, height: 0 } : unionBox(boxes)
+}
+
+/** `OverlaySelect.tsx`'s own bordered `.control` box (swatch + `<select>`): the `<select>`'s
+ *  immediate parent, since the control carries no `data-testid` of its own. */
+function overlayControlBox(page) {
+  return page.evaluate((sel) => {
+    const control = document.querySelector(sel)?.parentElement
+    if (!control) throw new Error('overlayControlBox: no [data-testid="overlay-select"] parent found')
+    return control.getBoundingClientRect().toJSON()
+  }, OVERLAY_SELECT_SELECTOR)
+}
+
+// ---------------------------------------------------------------------------------------------
+// Pixel reducers — `reducePixels` runs each in the page from its source, so each is
+// self-contained.
+// ---------------------------------------------------------------------------------------------
+
+/** Bounding box of pixels at least `minAlpha` opaque, from a black-backdrop/white-backdrop pair:
+ *  compositing gives `result = content*a + backdrop*(1-a)`, so the pair differs by exactly
+ *  `255 * (1 - a)` and the content's own colour cancels out. */
+function opaqueBounds([black, white], { minAlpha }) {
+  const { width, height } = black
+  let minX = width
+  let minY = height
+  let maxX = -1
+  let maxY = -1
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4
+      const diff =
+        (Math.abs(white.data[i] - black.data[i]) + Math.abs(white.data[i + 1] - black.data[i + 1]) + Math.abs(white.data[i + 2] - black.data[i + 2])) / 3
+      if (1 - diff / 255 >= minAlpha) {
+        if (x < minX) minX = x
+        if (x > maxX) maxX = x
+        if (y < minY) minY = y
+        if (y > maxY) maxY = y
+      }
+    }
+  }
+  if (maxX < minX || maxY < minY) return { x: 0, y: 0, width: 0, height: 0 }
+  return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Pixel measurements
+// ---------------------------------------------------------------------------------------------
+
+const roundClip = (clip) => ({ x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) })
+
+/**
+ * Hides `ShellLayout.tsx`'s scene layer and lens vignette (the `.shell` root's first two
+ * children) so a screenshot behind them reads as a flat, static backdrop instead of the photo,
+ * which keeps drifting (parallax breathing) even paused under reduced motion. `visibility`, so
+ * nothing reflows. Returns a restore callback.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<() => Promise<void>>}
+ */
+async function hideSceneAndVignette(page) {
+  const setVisibility = (value) =>
+    page.evaluate((v) => {
+      const shell = document.querySelector('[data-globe-expanded]')
+      if (shell && shell.children.length >= 2) {
+        shell.children[0].style.visibility = v
+        shell.children[1].style.visibility = v
+      }
+    }, value)
+  await setVisibility('hidden')
+  return () => setVisibility('')
+}
+
+/**
+ * The bounding box of what is at least `minAlpha` opaque inside `clip`, by a black/white
+ * difference matte (`opaqueBounds`) with the scene and vignette hidden — for a soft edge (the
+ * ancestor portrait's feathered mask, a caption scrim) or content on a busy photo, where a
+ * corner-sampled pixel diff cannot tell a half-transparent fade from dark content.
+ * @param {import('playwright').Page} page
+ * @param {{x: number, y: number, width: number, height: number}} clip page-absolute CSS px
+ * @param {{ minAlpha?: number, hide?: (page: import('playwright').Page) => Promise<() => Promise<unknown>> }} [options]
+ *   `hide` hides whatever else must not count, returning a restore callback (default: the scene
+ *   and vignette).
+ */
+async function opacityMatteBounds(page, clip, { minAlpha = 0.5, hide = hideSceneAndVignette } = {}) {
+  const rounded = roundClip(clip)
+  const restoreScene = await hide(page)
+  const setBackdrop = (color) =>
+    page.evaluate((c) => {
+      const shell = document.querySelector('[data-globe-expanded]')
+      if (shell) shell.style.background = c
+    }, color)
+  await setBackdrop('#000000')
+  const black = await page.screenshot({ clip: rounded })
+  await setBackdrop('#ffffff')
+  const white = await page.screenshot({ clip: rounded })
+  await setBackdrop('')
+  await restoreScene()
+  const local = await reducePixels(page, [black, white], opaqueBounds, { minAlpha })
+  return { x: rounded.x + local.x, y: rounded.y + local.y, width: local.width, height: local.height }
+}
+
+/** Hides the scene, vignette and event feed (which rides above the expanded globe in the left
+ *  column) — everything a scan of `GLOBE_CHROME_FREE_STRIP` would otherwise pick up besides the
+ *  sphere. Returns a restore callback. */
+async function hideAroundSphereStrip(page) {
+  const setVisibility = (value) =>
+    page.evaluate(
+      ([feedSelector, v]) => {
+        const shell = document.querySelector('[data-globe-expanded]')
+        for (const el of [shell?.children[0], shell?.children[1], document.querySelector(feedSelector)]) if (el) el.style.visibility = v
+      },
+      [SHELL_FEED_SELECTOR, value],
+    )
+  await setVisibility('hidden')
+  return () => setVisibility('')
+}
+
+/** The drawn diameter of the minimised globe orb, with the scene hidden so only the sphere counts. */
+async function minimisedOrbDrawnBounds(page) {
+  const canvas = await hiddenBoxOf(page, GLOBE_CANVAS_SELECTOR)
+  const restoreScene = await hideSceneAndVignette(page)
+  const bounds = await drawnBoundsInClip(page, canvas, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+  await restoreScene()
+  return bounds
+}
+
+/**
+ * Hides everything but the expanded globe's own canvas — the scene, the vignette, the shell's HUD
+ * slots other than the globe's, and `chromeSelectors` — so a whole-viewport scan sees the drawn
+ * sphere or map alone against the flat backdrop. Returns a restore callback.
  * @param {import('playwright').Page} page
  * @param {string[]} chromeSelectors
- * @returns {Promise<() => Promise<void>>}
  */
 async function hideAllButGlobeCanvas(page, chromeSelectors) {
   await page.evaluate((selectors) => {
@@ -985,452 +355,91 @@ async function hideAllButGlobeCanvas(page, chromeSelectors) {
       }
     }
   }, chromeSelectors)
-  return async () => {
-    await page.evaluate(() => {
+  return () =>
+    page.evaluate(() => {
       for (const el of document.querySelectorAll('[data-qa-hidden]')) {
         el.style.visibility = el.dataset.qaHidden
         delete el.dataset.qaHidden
       }
     })
-  }
 }
 
-/** Closes the layer chart if an earlier shot left one open — it takes the caption's place. */
-async function closeLayerChart(page) {
-  const close = page.locator('[data-testid="layer-chart"] button[aria-label^="Close "]')
-  if ((await close.count()) > 0) {
-    await close.first().click()
-    await rafTicks(page, 2)
-  }
-}
+/** The expanded globe's own controls, hidden along with everything else by `globeBodyBounds`. */
+const GLOBE_CHROME_SELECTORS = [
+  LEGEND_CORNER_SELECTOR,
+  OVERLAY_SELECT_STACK_SELECTOR,
+  CLOSE_BUTTON_SELECTOR,
+  VIEW_MODE_TOGGLE_SELECTOR,
+  ZOOM_CONTROLS_SELECTOR,
+  TIME_TITLE_SELECTOR,
+  ERA_SHORTCUTS_SELECTOR,
+]
 
 /**
- * The short-landscape collapsed view (ADR-048): the timeline's track, ruler and bands and the
- * transport all sit fully on screen; the ⋯ button shows and opens the mode/scale/volume cluster;
- * none of the title, era shortcuts, globe orb, ancestor, caption, event strip and timeline
- * overlap; the caption shows its title alone, and its ⓘ opens the passage in a panel.
- * @param {{ width: number, height: number }} viewport
- */
-function landscapeNormalShot(viewport) {
-  return {
-    name: `landscape-normal-${viewport.width}x${viewport.height}`,
-    description:
-      'Short-landscape collapsed view: track/axis/transport and the mode/scale/volume controls fully inside the ' +
-      'viewport, no overlap among the title, era shortcuts, orb, ancestor, caption, feed strip and timeline, the ' +
-      'caption showing its title alone, and its button opening the full description.',
-    viewport,
-    t: 0,
-    measure: async ({ page }) => {
-      await closeLayerChart(page)
-      const trackStack = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const bands = await boxOf(page, SECTION_BANDS_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const play = await boxOf(page, PLAY_BUTTON_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-
-      const boxes = {
-        title: await boxOf(page, TIME_TITLE_SELECTOR),
-        era: await boxOf(page, ERA_SHORTCUTS_SELECTOR),
-        orb: await boxOf(page, GLOBE_EXPAND_SELECTOR),
-        ancestor: unionBox([await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR), await boxOf(page, '[data-testid="ancestor-readout"]')]),
-        caption: await captionLabelBox(page),
-        feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
-        timeline: await boxOf(page, BOTTOM_CHROME_SELECTOR),
-      }
-      const captionTextVisible = await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()
-
-      const captionButton = page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first()
-      let detailTextLength = 0
-      let detailOverflowPx = 0
-      let detailClosed = 0
-      if (await captionButton.isVisible()) {
-        await captionButton.click()
-        await rafTicks(page, 2)
-        detailOverflowPx = viewportOverflowPx(await boxOf(page, SCENE_CAPTION_DETAIL_SELECTOR), viewport)
-        detailTextLength = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).innerText()).trim().length
-        await page.keyboard.press('Escape')
-        await rafTicks(page, 2)
-        detailClosed = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).count()) === 0 ? 1 : 0
-      }
-      // Park the pointer off every control, so no hover state carries into the next shot.
-      await page.mouse.move(0, 0)
-
-      return {
-        trackOverflowPx: viewportOverflowPx(trackStack, viewport),
-        bandsOverflowPx: viewportOverflowPx(bands, viewport),
-        coreOverflowPx: viewportOverflowPx(core, viewport),
-        playOverflowPx: viewportOverflowPx(play, viewport),
-        secondaryOverflowPx: viewportOverflowPx(secondary, viewport),
-        captionTextVisible: captionTextVisible ? 1 : 0,
-        detailTextLength,
-        detailOverflowPx,
-        detailClosed,
-        timelineHeightPx: boxes.timeline.height,
-        ...pairwiseOverlapFlags(boxes),
-      }
-    },
-    expect: {
-      trackOverflowPx: [-400, 0],
-      bandsOverflowPx: [-400, 0],
-      coreOverflowPx: [-400, 0],
-      playOverflowPx: [-400, 0],
-      secondaryOverflowPx: [-400, 0],
-      captionTextVisible: [0, 0],
-      detailTextLength: [40, 2000],
-      detailOverflowPx: [-400, 0],
-      detailClosed: [1, 1],
-      ...noPairOverlaps(['title', 'era', 'orb', 'ancestor', 'caption', 'feed', 'timeline']),
-    },
-  }
-}
-
-/**
- * The short-landscape expanded view (ADR-048): a left column (title, era shortcuts, overlay
- * selector, Globe/Map toggle and zoom rocker) and the sphere or map to its right, as large as the
- * height above the timeline allows, the timeline full width beneath both. The drawn sphere/map is
- * measured over the whole viewport with everything but the globe canvas hidden, so it is found
- * wherever it actually lands, not only inside the box it was meant for.
- * @param {{ width: number, height: number }} viewport
- * @param {'globe' | 'map'} globeViewMode
- */
-function landscapeExpandedShot(viewport, globeViewMode) {
-  const columnSelectors = {
-    title: TIME_TITLE_SELECTOR,
-    era: ERA_SHORTCUTS_SELECTOR,
-    overlay: OVERLAY_SELECT_STACK_SELECTOR,
-    toggle: VIEW_MODE_TOGGLE_SELECTOR,
-    zoom: ZOOM_CONTROLS_SELECTOR,
-  }
-  const sphereExpect =
-    globeViewMode === 'globe' ? { sphereDeficitPx: [-400, 4] } : { mapFillFraction: [0.85, 1.05] }
-  return {
-    name: `landscape-${globeViewMode}-${viewport.width}x${viewport.height}`,
-    description:
-      `Short-landscape expanded ${globeViewMode}: the left column and the drawn ${globeViewMode === 'globe' ? 'sphere' : 'map'} ` +
-      'never overlap, the drawn shape sits right of the column and above the timeline, nothing overlaps the timeline, ' +
-      (globeViewMode === 'globe'
-        ? 'and the drawn sphere is at least the height above the timeline less 16px (4px tolerance).'
-        : 'and the drawn map fills the box right of the column (height- or width-bound) to within 15% — the map\'s own fit margin and curved Equal Earth outline take the rest.') +
-      ' Inside a section (so the breadcrumb draws), the crumb trail sits directly above the transport, clear of it and of the shape.',
-    viewport,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await openGlobeAtDefaultZoom(page, hook)
-      if (globeViewMode === 'map') await switchGlobeViewMode(page, hook, 'map')
-      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const column = {}
-      for (const [name, selector] of Object.entries(columnSelectors)) column[name] = await boxOf(page, selector)
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      const close = await boxOf(page, CLOSE_BUTTON_SELECTOR)
-      const crumbs = await boxOf(page, BREADCRUMB_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const columnRight = Math.max(...Object.values(column).map((b) => b.x + b.width))
-
-      const restore = await hideAllButGlobeCanvas(page, [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR])
-      await rafTicks(page, 2)
-      const shape = await drawnBoundsInClip(page, { x: 0, y: 0, width: viewport.width, height: viewport.height }, {
-        threshold: SPHERE_OVER_GLOW_THRESHOLD,
-      })
-      await restore()
-      await goToRootSection(page)
-
-      const flags = {}
-      for (const [name, box] of Object.entries(column)) {
-        flags[`overlap_${name}_shape`] = rectsOverlap(box, shape) ? 1 : 0
-        flags[`overlap_${name}_timeline`] = rectsOverlap(box, timeline) ? 1 : 0
-      }
-      const boxRightOfColumn = close.x - 8 - (columnRight + 12)
-      return {
-        shape,
-        columnRight,
-        shapeRightOfColumnPx: shape.x - columnRight,
-        shapeAboveTimelinePx: timeline.y - (shape.y + shape.height),
-        overlap_close_shape: rectsOverlap(close, shape) ? 1 : 0,
-        overlap_close_timeline: rectsOverlap(close, timeline) ? 1 : 0,
-        availableHeightPx: timeline.y,
-        sphereDeficitPx: timeline.y - 16 - shape.height,
-        mapFillFraction: Math.max(shape.height / (timeline.y - 16), shape.width / boxRightOfColumn),
-        crumbsAboveCoreGapPx: core.y - (crumbs.y + crumbs.height),
-        overlap_crumbs_shape: rectsOverlap(crumbs, shape) ? 1 : 0,
-        overlap_crumbs_core: rectsOverlap(crumbs, core) ? 1 : 0,
-        ...pairwiseOverlapFlags(column),
-        ...flags,
-      }
-    },
-    expect: {
-      'shape.width': [100, 2000],
-      shapeRightOfColumnPx: [0, 400],
-      shapeAboveTimelinePx: [0, 400],
-      overlap_close_shape: [0, 0],
-      overlap_close_timeline: [0, 0],
-      crumbsAboveCoreGapPx: [0, 200],
-      overlap_crumbs_shape: [0, 0],
-      overlap_crumbs_core: [0, 0],
-      ...sphereExpect,
-      ...Object.fromEntries(
-        Object.keys(columnSelectors).flatMap((name) => [
-          [`overlap_${name}_shape`, [0, 0]],
-          [`overlap_${name}_timeline`, [0, 0]],
-        ]),
-      ),
-      ...noPairOverlaps(Object.keys(columnSelectors)),
-    },
-  }
-}
-
-/** Every published scene, read the way `shots.scene-framing.mjs` reads them. */
-const PUBLISHED_SCENES = JSON.parse(
-  readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../../public/media/manifest.json'), 'utf8'),
-).scenes
-
-/**
- * Runs inside the page: the rendered line count of the caption passage showing `caption`, from
- * its text's Range client rects (one distinct top per line) — or `null` while no caption with that
- * text is in the DOM yet. Counts lines a line clamp hides too, since they are still laid out.
- */
-function captionLineCount(caption) {
-  const el = [...document.querySelectorAll('[data-testid="scene-caption-text"]')].find((node) => node.textContent === caption)
-  if (el === undefined) return null
-  const range = document.createRange()
-  range.selectNodeContents(el)
-  const tops = [...range.getClientRects()].filter((rect) => rect.width > 1).map((rect) => rect.top)
-  const lines = []
-  for (const top of tops.sort((a, b) => a - b)) if (lines.length === 0 || top - lines[lines.length - 1] > 2) lines.push(top)
-  return lines.length
-}
-
-/**
- * The drawn horizontal extent of whatever sits over the backdrop along one row, from a black/white
- * difference matte (`alphaEdgeDiameter`'s method) with the scene and vignette hidden: the leftmost
- * and rightmost pixel at least `minAlpha` opaque. For a soft scrim, where "drawn" means "still
- * darkens the photo noticeably".
+ * The drawn body of the expanded sphere or map: an opacity matte (`opacityMatteBounds`) with
+ * everything but the globe canvas hidden, counting only fully opaque pixels. The atmosphere glow
+ * is composited translucently, so it drops out, where a brightness threshold cannot separate its
+ * bright inner edge from the sphere. Scanned over the fit frame plus a margin, so a shape drawn
+ * smaller or somewhat larger than its frame reads as such.
  * @param {import('playwright').Page} page
- * @param {number} y page-absolute CSS px
- * @param {number} minAlpha
- * @returns {Promise<{left: number, right: number, width: number}>}
+ * @param {string} fitFrameSelector
  */
-async function drawnRowExtent(page, y, minAlpha) {
+async function globeBodyBounds(page, fitFrameSelector) {
+  const MARGIN_PX = 48
+  const frame = await hiddenBoxOf(page, fitFrameSelector)
   const viewport = page.viewportSize()
-  const clip = { x: 0, y: Math.round(y), width: viewport.width, height: 1 }
-  const restoreScene = await hideSceneAndVignette(page)
-  const setBackdrop = (color) =>
-    page.evaluate((c) => {
-      document.querySelector('[data-globe-expanded]').style.background = c
-    }, color)
-  await setBackdrop('#000000')
-  const blackPng = await page.screenshot({ clip })
-  await setBackdrop('#ffffff')
-  const whitePng = await page.screenshot({ clip })
-  await setBackdrop('')
-  await restoreScene()
-  return page.evaluate(
-    async ({ blackDataUrl, whiteDataUrl, minAlpha: threshold }) => {
-      const load = (src) =>
-        new Promise((resolve, reject) => {
-          const el = new Image()
-          el.onload = () => resolve(el)
-          el.onerror = () => reject(new Error('drawnRowExtent: failed to decode a probe screenshot'))
-          el.src = src
-        })
-      const [black, white] = await Promise.all([load(blackDataUrl), load(whiteDataUrl)])
-      const canvas = document.createElement('canvas')
-      canvas.width = black.naturalWidth
-      canvas.height = black.naturalHeight
-      const ctx = canvas.getContext('2d')
-      ctx.drawImage(black, 0, 0)
-      const b = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(white, 0, 0)
-      const w = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-      let left = -1
-      let right = -1
-      for (let x = 0; x < canvas.width; x += 1) {
-        const i = x * 4
-        const diff = (Math.abs(w[i] - b[i]) + Math.abs(w[i + 1] - b[i + 1]) + Math.abs(w[i + 2] - b[i + 2])) / 3
-        if (1 - diff / 255 >= threshold) {
-          if (left < 0) left = x
-          right = x
-        }
-      }
-      return left < 0 ? { left: 0, right: 0, width: 0 } : { left, right: right + 1, width: right + 1 - left }
-    },
-    {
-      blackDataUrl: `data:image/png;base64,${blackPng.toString('base64')}`,
-      whiteDataUrl: `data:image/png;base64,${whitePng.toString('base64')}`,
-      minAlpha,
-    },
-  )
+  const x = Math.max(0, frame.x - MARGIN_PX)
+  const y = Math.max(0, frame.y - MARGIN_PX)
+  const clip = { x, y, width: Math.min(viewport.width, frame.x + frame.width + MARGIN_PX) - x, height: Math.min(viewport.height, frame.y + frame.height + MARGIN_PX) - y }
+  return opacityMatteBounds(page, clip, { minAlpha: 0.99, hide: (p) => hideAllButGlobeCanvas(p, GLOBE_CHROME_SELECTORS) })
 }
 
-/**
- * Phone portrait: the scene description's rendered line count across every published scene, and
- * the width of the dark shade behind it. `t` jumps to each scene in turn and the count is read as
- * soon as that scene's caption is in the DOM — line count does not depend on the crossfade's
- * progress, so no settle wait per scene.
- * @param {{ width: number, height: number }} viewport
- */
-function portraitCaptionLinesShot(viewport) {
-  return {
-    name: `portrait-caption-lines-${viewport.width}x${viewport.height}`,
-    description:
-      'Phone portrait: no published scene description runs past 3 lines (Range client rects, so lines a clamp ' +
-      'hides still count), the share on 2 lines or fewer does not fall, and the shade behind the caption spans ' +
-      'the full viewport width (black/white difference matte along the caption row, scene hidden). Most ' +
-      'descriptions run ~150-180 characters, so 2 lines for most of them would need type near 9px; at the ' +
-      '12.5px floor about one in seven fits on 2.',
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const counts = []
-      const notShown = []
-      for (const scene of PUBLISHED_SCENES) {
-        await hook.setT(scene.t)
-        const handle = await page
-          .waitForFunction(captionLineCount, scene.caption, { timeout: 5000, polling: 'raf' })
-          .catch(() => null)
-        if (handle === null) notShown.push(scene.id)
-        else counts.push({ id: scene.id, lines: await handle.jsonValue() })
-      }
-      const histogram = {}
-      for (const { lines } of counts) histogram[lines] = (histogram[lines] ?? 0) + 1
+// ---------------------------------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------------------------------
 
-      await hook.setT(0)
-      await waitForSceneCrossfadeSettle(page)
-      await hook.ready()
-      const text = await boxOf(page, SCENE_CAPTION_TEXT_SELECTOR)
-      const shade = await drawnRowExtent(page, text.y + text.height / 2, 0.15)
-
-      return {
-        scenes: counts.length,
-        scenesNotShown: notShown.length,
-        notShown,
-        histogram,
-        longest: counts.filter(({ lines }) => lines > 2).map(({ id, lines }) => `${id}:${lines}`),
-        fractionAtMostTwoLines: counts.filter(({ lines }) => lines <= 2).length / Math.max(1, counts.length),
-        maxLines: Math.max(...counts.map(({ lines }) => lines)),
-        shade,
-        shadeWidthDeltaPx: shade.width - viewport.width,
-        textInsetLeftPx: text.x,
-        textInsetRightPx: viewport.width - (text.x + text.width),
-      }
-    },
-    expect: {
-      scenes: [PUBLISHED_SCENES.length, PUBLISHED_SCENES.length],
-      scenesNotShown: [0, 0],
-      fractionAtMostTwoLines: [0.12, 1],
-      maxLines: [1, 3],
-      shadeWidthDeltaPx: [-2, 2],
-      textInsetLeftPx: [10, 18],
-      textInsetRightPx: [10, 18],
-    },
-  }
+/** Whether the page is currently emulating `prefers-reduced-motion: reduce`. */
+function motionReduced(page) {
+  return page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
 }
 
-/** Enters the Cenozoic from the root section, so there is a breadcrumb trail to measure. A shot
- *  that inherits a deeper section from an earlier one keeps it. */
-async function enterSectionIfAtRoot(page) {
-  if ((await page.locator(BREADCRUMB_SELECTOR).count()) > 0) return
-  await page.getByRole('button', { name: /^Cenozoic,/ }).click()
-  await rafTicks(page, 2)
-}
-
-/** Returns the timeline to its root section by the root crumb, when a section is entered. */
-async function goToRootSection(page) {
-  const rootCrumb = page.locator(`${BREADCRUMB_SELECTOR} button[aria-label="Earth"]`)
-  if ((await rootCrumb.count()) > 0) {
-    await rootCrumb.click()
+/** Presses the expanded globe's "Zoom in" button `steps` times. */
+async function pressZoomIn(page, steps) {
+  const button = page.getByRole('button', { name: 'Zoom in' })
+  for (let i = 0; i < steps; i += 1) {
+    await button.click()
     await rafTicks(page, 2)
   }
 }
 
-/**
- * The breadcrumb at the root section: nothing is drawn and no `nav` landmark exists. On a phone
- * (portrait or short landscape) its row is removed; on desktop the row keeps its height, so the
- * track does not move when a section is entered. Entering one (the Dinosaurs shortcut) draws the
- * trail. Returns to the root afterwards so the next shot starts there.
- * @param {{ width: number, height: number }} viewport
- * @param {'phone' | 'landscape' | 'desktop'} layout
- */
-function breadcrumbAtRootShot(viewport, layout) {
-  const layoutExpect =
-    layout === 'desktop'
-      ? { trackYShiftOnEnterPx: [-1, 1] }
-      : layout === 'phone'
-        ? { sectionsHeightAtRootPx: [0, 0], trackTopOffsetAtRootPx: [0, 1] }
-        : { sectionsHeightAtRootPx: [0, 0] }
-  return {
-    name: `breadcrumb-hidden-at-root-${viewport.width}x${viewport.height}`,
-    description:
-      'At the root section no breadcrumb is drawn and no empty `nav` landmark exists; ' +
-      (layout === 'desktop'
-        ? "the row keeps its height, so the track's y is unchanged (±1px) once a section is entered; "
-        : "the row takes no height at all; ") +
-      'after entering a section (the Dinosaurs shortcut) the crumbs are drawn.',
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await goToRootSection(page)
-      await hook.setT(0)
-      await rafTicks(page, 2)
-      const timelineAtRoot = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      const trackAtRoot = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const sectionsAtRoot = await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
-      const navLandmarksAtRoot = await page.locator(BREADCRUMB_SELECTOR).count()
-      const sectionsTextAtRoot = (await page.locator(TIMELINE_CONTROLS_SECTIONS_SELECTOR).textContent())?.trim() ?? ''
-
-      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
-      await hook.ready()
-      await rafTicks(page, 2)
-      const trackInSection = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const crumbs = await crumbDrawnBounds(page, `${BREADCRUMB_SELECTOR} ol`)
-      await goToRootSection(page)
-
-      return {
-        navLandmarksAtRoot,
-        sectionsTextLengthAtRoot: sectionsTextAtRoot.length,
-        sectionsHeightAtRootPx: sectionsAtRoot.height,
-        trackTopOffsetAtRootPx: trackAtRoot.y - timelineAtRoot.y,
-        trackYShiftOnEnterPx: trackInSection.y - trackAtRoot.y,
-        crumbsDrawnInSection: crumbs.filter((box) => box.width > 0 && box.height > 0).length,
-      }
-    },
-    expect: {
-      navLandmarksAtRoot: [0, 0],
-      sectionsTextLengthAtRoot: [0, 0],
-      crumbsDrawnInSection: [2, 10],
-      ...layoutExpect,
-    },
-  }
+/** Switches the expanded globe's view mode and waits for it to settle: the unfold tween when
+ *  motion is on (under reduced motion it snaps), then the fit frames. */
+async function switchGlobeViewMode(page, hook, mode) {
+  await hook.setGlobeViewMode(mode)
+  if (!(await motionReduced(page))) await waitForApproxUnfoldProgress(page, 1.5)
+  await waitForGlobeFitFramesStable(page)
 }
 
-/** Navigates from the root section down the bands named, one level per click. */
-async function enterSections(page, bandNames) {
-  await goToRootSection(page)
-  for (const name of bandNames) {
-    await page.getByRole('button', { name: new RegExp(`^${name},`) }).click()
-    await rafTicks(page, 2)
-  }
-}
-
-const DEEPEST_SECTION_PATH = ['Cenozoic', 'Quaternary', 'Holocene', 'Ancient civilisations']
-const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeLabel"]`
-const SCENE_CAPTION_BLOCK_SELECTOR = '[data-testid="scene-caption"]'
-
-/** The drawn diameter of the minimised globe orb, with the scene hidden so only the sphere counts. */
-async function minimisedOrbDrawnBounds(page) {
-  const restoreScene = await hideSceneAndVignette(page)
+/** Selects a section through the store (section navigation itself is vitest's to cover; these
+ *  shots need only the layout inside one) and lets the breadcrumb and bands render. */
+async function selectSection(page, hook, sectionId) {
+  await hook.selectSection(sectionId)
+  await hook.ready()
   await rafTicks(page, 2)
-  const box = await boxOf(page, GLOBE_CANVAS_SELECTOR)
-  const bounds = await drawnBoundsInClip(page, box, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
-  await restoreScene()
-  return bounds
 }
 
-const SCENE_CAPTION_BUTTON_SELECTOR = '[data-testid="scene-caption-button"]'
+/** The scene caption's visible title and passage together (its host element is an empty portal
+ *  target with no box of its own). */
+async function captionBox(page) {
+  const rects = await page.evaluate((sels) => {
+    return sels
+      .flatMap((sel) => Array.from(document.querySelectorAll(sel)))
+      .map((el) => el.getBoundingClientRect().toJSON())
+      .filter((rect) => rect.width > 0 && rect.height > 0)
+  }, [SCENE_CAPTION_TITLE_SELECTOR, SCENE_CAPTION_TEXT_SELECTOR, SCENE_CAPTION_BUTTON_SELECTOR])
+  if (rects.length === 0) throw new Error('captionBox: no visible scene caption')
+  return unionBox(rects)
+}
 
 /** The caption's own drawn label box: the short-landscape title button where it shows, else the
  *  title heading. */
@@ -1439,3712 +448,263 @@ async function captionLabelBox(page) {
   return (await button.isVisible()) ? boxOf(page, SCENE_CAPTION_BUTTON_SELECTOR) : boxOf(page, SCENE_CAPTION_TITLE_SELECTOR)
 }
 
+/** Every visible label in the event browser's section rail (`rail.ts`): how far the widest pokes
+ *  past `panelRightPx`, and how many pairs of them overlap. */
+async function eventBrowserRailLabelGeometry(page, panelRightPx) {
+  const rects = await allRects(page, '[data-testid="event-browser-rail-label"]')
+  const overflowPx = rects.reduce((max, r) => Math.max(max, r.x + r.width - panelRightPx), 0)
+  return { overflowPx: Math.max(0, overflowPx), overlapCount: overlappingPairCount(rects), labelCount: rects.length }
+}
+
 /**
- * The short-landscape collapsed HUD: the globe orb and ancestor portrait drawn as large as the
- * height allows; the time title centred with an era shortcut either side of it (or both to its
- * right where the width is short); none of the title, shortcuts, orb, ancestor, caption, feed and
- * timeline overlapping, inside a section as well as at the root; and a clear gap between the
- * caption and the playhead's time label.
- * @param {{ width: number, height: number }} viewport
+ * @typedef {Object} ShotState
+ * @property {boolean} [playing]
+ * @property {boolean} [globeExpanded]
+ * @property {'globe' | 'map'} [globeViewMode]
+ * @property {Record<string, boolean>} [layerToggles]
+ * @property {boolean} [tour] - open the first-visit tour (`@/onboarding`); defaults to dismissed
  */
-function landscapeHudShot(viewport) {
-  const orbMinPx = Math.round(viewport.height * 0.29)
-  const portraitMinPx = Math.round(viewport.height * 0.25)
+
+/**
+ * @typedef {Object} Shot
+ * @property {string} name - filesystem-safe, used for the screenshot filename
+ * @property {string} description - one line: what this shot asserts
+ * @property {{width: number, height: number}} [viewport] - defaults to 1440x900
+ * @property {'reduce' | 'no-preference'} [reducedMotion] - overrides the run's own --reduced-motion default
+ * @property {number} [t] - years before present
+ * @property {ShotState} [state]
+ * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<void>} [actions]
+ * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<Record<string, unknown>>} [measure]
+ * @property {Record<string, [number, number]>} [expect] - dot-path into `measure`'s result -> [min, max]
+ */
+
+// ---------------------------------------------------------------------------------------------
+// Layout shots: one per (key viewport × resting / globe expanded)
+// ---------------------------------------------------------------------------------------------
+
+/** The collapsed shell's chrome regions, for the pairwise no-overlap and in-viewport check. */
+const RESTING_REGIONS = {
+  title: TIME_TITLE_SELECTOR,
+  era: ERA_SHORTCUTS_SELECTOR,
+  orb: GLOBE_EXPAND_SELECTOR,
+  readouts: SHELL_READOUTS_SELECTOR,
+  feed: EVENT_FEED_ITEM_SELECTOR,
+  timeline: BOTTOM_CHROME_SELECTOR,
+}
+
+/** The transport row's parts, for the same check inside the timeline. */
+const TRANSPORT_ROW_REGIONS = {
+  breadcrumb: BREADCRUMB_SELECTOR,
+  speed: `${TIMELINE_CONTROLS_CORE_SELECTOR} select`,
+  play: PLAY_BUTTON_SELECTOR,
+  secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR,
+}
+
+/**
+ * Desktop resting layout at one viewport, root section then three levels deep (Earth › Cenozoic ›
+ * Quaternary › Holocene, the longest trail that still shows whole):
+ * - no chrome region (title, era shortcuts, orb, readouts, feed, caption, timeline, ancestor
+ *   column) overlaps another or leaves the viewport, at the root and in the section;
+ * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
+ *   the ancestor column, its readouts 0-40px under it;
+ * - the transport row: breadcrumb, speed select, play and secondary cluster clear of each other;
+ *   the secondary cluster's children clear of each other; play on the track centre; transport
+ *   midway between the band row and the viewport bottom, breadcrumb on its centre line; the
+ *   breadcrumb and the secondary cluster inside the track's edges; the breadcrumb on one line;
+ *   the current crumb whole; neither transport nor secondary cluster moving in x as the trail
+ *   grows.
+ * @param {{ width: number, height: number }} viewport
+ * @param {{ description: string, expect: Record<string, [number, number]>,
+ *   atRoot?: (page: import('playwright').Page) => Promise<Record<string, unknown>>,
+ *   inSection?: (page: import('playwright').Page) => Promise<Record<string, unknown>> }} extra
+ *   measurements this viewport adds, at the root and three sections deep (run last there)
+ */
+function desktopRestingShot(viewport, extra) {
+  const regions = { ...RESTING_REGIONS, ancestor: ANCESTOR_PORTRAIT_SELECTOR }
   return {
-    name: `landscape-hud-${viewport.width}x${viewport.height}`,
+    name: `layout-${viewport.width}x${viewport.height}-resting`,
     description:
-      `Short-landscape HUD: the drawn orb is at least ${orbMinPx}px and the drawn portrait at least ${portraitMinPx}px ` +
-      '(29% and 25% of the height), the time title is centred (±3px) with the era shortcuts beside it, nothing among ' +
-      'title, shortcuts, orb, ancestor, caption, feed and timeline overlaps (at the root and inside a section), and ' +
-      'the caption clears the playhead label by at least 4px.',
+      `Desktop ${viewport.width}x${viewport.height}, collapsed, at the root and three sections deep: no chrome region ` +
+      'overlaps another or leaves the viewport; the drawn orb top-aligned (±4px) with the About button and ancestor ' +
+      'column (±3px); the transport row clear of itself, play on the track centre (±2px), transport vertically centred ' +
+      '(±3px) with the breadcrumb on its line (±2px), row inside the track edges, breadcrumb on one line and whole, ' +
+      `transport and secondary cluster fixed in x (±0.5px) as the trail grows${extra.description}`,
     viewport,
     t: 0,
     measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      await goToRootSection(page)
-      await hook.setT(0)
-      await waitForSceneCrossfadeSettle(page)
-      await hook.ready()
       const orb = await minimisedOrbDrawnBounds(page)
-      const portrait = await alphaEdgeDiameter(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
-      const title = await boxOf(page, TIME_TITLE_SELECTOR)
+      const root = await boxesOf(page, { ...regions, about: ABOUT_BUTTON_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR, track: TIMELINE_TRACK_STACK_SELECTOR })
+      const rootLayout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, viewport)
+      const extraAtRoot = extra.atRoot === undefined ? {} : await extra.atRoot(page)
 
-      const layoutAt = async () => {
-        const shortcuts = page.locator(`${ERA_SHORTCUTS_SELECTOR} button`)
-        const boxes = {
-          title: await boxOf(page, TIME_TITLE_SELECTOR),
-          dinosaurs: (await shortcuts.nth(0).boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 },
-          humans: (await shortcuts.nth(1).boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 },
-          orb: await boxOf(page, GLOBE_EXPAND_SELECTOR),
-          ancestor: unionBox([
-            await boxOf(page, 'button[aria-label="About & credits"]'),
-            await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR),
-            await boxOf(page, '[data-testid="ancestor-readout"]'),
-          ]),
-          caption: await captionLabelBox(page),
-          feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
-          timeline: await boxOf(page, BOTTOM_CHROME_SELECTOR),
-        }
-        const label = await boxOf(page, PLAYHEAD_LABEL_SELECTOR)
-        return { boxes, captionToLabelGapPx: label.y - (boxes.caption.y + boxes.caption.height) }
-      }
-      const atRoot = await layoutAt()
-      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
-      await hook.ready()
-      await rafTicks(page, 2)
-      const inSection = await layoutAt()
-      await goToRootSection(page)
-
-      const overlapsAtRoot = pairwiseOverlapFlags(atRoot.boxes)
-      const overlapsInSection = pairwiseOverlapFlags(inSection.boxes)
-      const overlapCount = (flags) => Object.values(flags).reduce((sum, v) => sum + v, 0)
-      return {
-        orbDrawnDiameterPx: orb.height,
-        portraitDrawnDiameterPx: portrait.height,
-        titleCentreOffsetPx: title.x + title.width / 2 - viewport.width / 2,
-        overlapsAtRoot: overlapCount(overlapsAtRoot),
-        overlapsInSection: overlapCount(overlapsInSection),
-        overlappingPairs: Object.keys({ ...overlapsAtRoot, ...overlapsInSection }).filter(
-          (k) => overlapsAtRoot[k] === 1 || overlapsInSection[k] === 1,
-        ),
-        captionToLabelGapPx: Math.min(atRoot.captionToLabelGapPx, inSection.captionToLabelGapPx),
-      }
-    },
-    expect: {
-      orbDrawnDiameterPx: [orbMinPx, 400],
-      portraitDrawnDiameterPx: [portraitMinPx, 400],
-      titleCentreOffsetPx: [-3, 3],
-      overlapsAtRoot: [0, 0],
-      overlapsInSection: [0, 0],
-      captionToLabelGapPx: [4, 400],
-    },
-  }
-}
-
-/**
- * The short-landscape timeline: the breadcrumb on its own row above the track (gone at the root),
- * the mode, scale and volume controls on one row under the transport. The track
- * and play button hold their x at every depth, and their y from one level deep to the deepest
- * (truncated) trail. At 844×390 every section band label shows whole.
- * @param {{ width: number, height: number }} viewport
- */
-function landscapeTimelineShot(viewport) {
-  const secondaryParts = {
-    mode: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [role="group"]:not([class*="scaleOptions"])`,
-    scale: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [class*="scaleOptions"]`,
-    sound: '[data-testid="timeline-sound-slot"]',
-  }
-  const checkBands = viewport.width === 844
-  return {
-    name: `landscape-timeline-${viewport.width}x${viewport.height}`,
-    description:
-      'Short-landscape timeline: breadcrumb above the track, the mode/scale/volume controls drawn on one row under ' +
-      'the transport (inside the viewport, each at least 32px tall, clear of the transport and track), the track and play button fixed in x across depths and in y from depth 1 to the deepest trail' +
-      (checkBands ? ', and no section band label clipped.' : '.'),
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      await goToRootSection(page)
-      await hook.setT(0)
-      await rafTicks(page, 2)
-      const positions = async () => ({
-        track: await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR),
-        play: await boxOf(page, PLAY_BUTTON_SELECTOR),
+      await selectSection(page, hook, 'holocene')
+      const deep = await boxesOf(page, {
+        ...regions,
+        ...TRANSPORT_ROW_REGIONS,
+        core: TIMELINE_CONTROLS_CORE_SELECTOR,
+        sections: TIMELINE_CONTROLS_SECTIONS_SELECTOR,
+        bands: SECTION_BANDS_SELECTOR,
+        track: TIMELINE_TRACK_STACK_SELECTOR,
       })
-      const bandsClipped = () =>
-        page.evaluate(() => {
-          const strip = document.querySelector('[data-section-bands]')
-          if (strip === null) return -1
-          const stripRect = strip.getBoundingClientRect()
-          const labels = [...strip.querySelectorAll('li span')]
-          const clipped = labels.filter((label) => {
-            const rect = label.getBoundingClientRect()
-            return label.scrollWidth > label.clientWidth + 0.5 || rect.right > stripRect.right + 0.5 || rect.left < stripRect.left - 0.5
-          })
-          return clipped.length + (strip.scrollWidth > strip.clientWidth + 1 ? 1 : 0)
-        })
-      const root = await positions()
-      await enterSections(page, DEEPEST_SECTION_PATH.slice(0, 1))
-      const depth1 = await positions()
-      const nav = await boxOf(page, BREADCRUMB_SELECTOR)
-      let clippedBands = await bandsClipped()
-      for (const name of DEEPEST_SECTION_PATH.slice(1)) {
-        await page.getByRole('button', { name: new RegExp(`^${name},`) }).click()
-        await rafTicks(page, 2)
-        clippedBands = Math.max(clippedBands, await bandsClipped())
-      }
-      await hook.ready()
-      const deepest = await positions()
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-
-      const parts = {}
-      for (const [name, selector] of Object.entries(secondaryParts)) {
-        const locator = page.locator(selector).first()
-        parts[name] = (await locator.isVisible()) ? await boxOf(page, selector) : { x: 0, y: -999, width: 0, height: 0 }
-      }
-      const centres = Object.values(parts).map((b) => b.y + b.height / 2)
-      await goToRootSection(page)
-
-      const xs = [root, depth1, deepest]
-      const maxShift = (key, axis, list) => Math.max(...list.map((p) => Math.abs(p[key][axis] - list[0][key][axis])))
-      return {
-        trackXShiftPx: maxShift('track', 'x', xs),
-        playXShiftPx: maxShift('play', 'x', xs),
-        trackYShiftPx: maxShift('track', 'y', [depth1, deepest]),
-        playYShiftPx: maxShift('play', 'y', [depth1, deepest]),
-        breadcrumbAboveTrackPx: depth1.track.y - (nav.y + nav.height),
-        secondaryOverflowPx: Math.max(...Object.values(parts).map((b) => viewportOverflowPx(b, viewport))),
-        secondaryMinHeightPx: Math.min(...Object.values(parts).map((b) => b.height)),
-        secondaryCentreSpreadPx: Math.max(...centres) - Math.min(...centres),
-        secondaryOverlapsTransport: Object.values(parts).some((b) => rectsOverlap(b, core)) ? 1 : 0,
-        secondaryOverlapsTrack: Object.values(parts).some((b) => rectsOverlap(b, deepest.track)) ? 1 : 0,
-        clippedBands,
-      }
-    },
-    expect: {
-      trackXShiftPx: [0, 0.5],
-      playXShiftPx: [0, 0.5],
-      trackYShiftPx: [0, 0.5],
-      playYShiftPx: [0, 0.5],
-      breadcrumbAboveTrackPx: [0, 20],
-      secondaryOverflowPx: [-400, 0],
-      secondaryMinHeightPx: [32, 60],
-      secondaryCentreSpreadPx: [0, 2],
-      secondaryOverlapsTransport: [0, 0],
-      secondaryOverlapsTrack: [0, 0],
-      ...(checkBands ? { clippedBands: [0, 0] } : {}),
-    },
-  }
-}
-
-/**
- * Short landscape: the caption label itself is the button that opens the full description — a
- * tap near the title's left edge, well away from the ⓘ, opens it.
- */
-function landscapeCaptionTapShot(viewport) {
-  return {
-    name: `landscape-caption-tap-${viewport.width}x${viewport.height}`,
-    description:
-      'Short landscape: the whole caption label is one button named "<title> — show description"; a click near ' +
-      "the title text's left edge, away from the ⓘ, opens the description panel.",
-    viewport,
-    t: 0,
-    measure: async ({ page }) => {
-      await closeLayerChart(page)
-      const buttonTitle = page.locator(`${SCENE_CAPTION_BUTTON_SELECTOR} span`).first()
-      const title = (await buttonTitle.isVisible())
-        ? await boxOf(page, `${SCENE_CAPTION_BUTTON_SELECTOR} span`)
-        : await boxOf(page, SCENE_CAPTION_TITLE_SELECTOR)
-      const titleText = ((await page.locator(SCENE_CAPTION_TITLE_SELECTOR).first().textContent()) ?? '').trim()
-      const namedButtons = await page.getByRole('button', { name: `${titleText} — show description` }).count()
-      await page.mouse.click(title.x + 4, title.y + title.height / 2)
-      await rafTicks(page, 2)
-      const opened = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).count()) > 0 ? 1 : 0
-      if (opened) {
-        await page.keyboard.press('Escape')
-        await rafTicks(page, 2)
-      }
-      await page.mouse.move(0, 0)
-      return { namedButtons, opened }
-    },
-    expect: { namedButtons: [1, 1], opened: [1, 1] },
-  }
-}
-
-/**
- * Desktop/tablet: the controls row under the section bands, four levels deep. The play button is
- * centred on the track; the transport sits midway between the band row and the viewport bottom;
- * the breadcrumb shares its centre line; nothing in the row overlaps; and the current crumb shows
- * whole. Playing, the rate readout sits just right of the transport, on its centre line.
- * @param {{ width: number, height: number }} viewport
- */
-function desktopTimelineRowShot(viewport) {
-  return {
-    name: `desktop-timeline-row-${viewport.width}x${viewport.height}`,
-    description:
-      'Desktop controls row four levels deep: the play button centred on the track (±2px), equal gaps above ' +
-      '(to the band row) and below (to the viewport bottom) its drawn box (±3px), the breadcrumb on its centre ' +
-      'line (±2px), no overlap among breadcrumb, speed select, transport buttons and secondary cluster, and the ' +
-      'current crumb not truncated. Playing in steady mode, the rate readout text starts 4-24px right of the ' +
-      'transport, its centre within 3px of the transport\'s, overlapping none of the row.',
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      await hook.setT(8500)
-      await enterSections(page, DEEPEST_SECTION_PATH.slice(0, 3))
-      await hook.ready()
-      const bands = await boxOf(page, SECTION_BANDS_SELECTOR)
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const play = await boxOf(page, PLAY_BUTTON_SELECTOR)
-      const nav = await boxOf(page, BREADCRUMB_SELECTOR)
-      const boxes = {
-        breadcrumb: nav,
-        speed: await boxOf(page, `${TIMELINE_CONTROLS_CORE_SELECTOR} select`),
-        transport: await page.evaluate((sel) => {
-          const rect = document.querySelector(sel).parentElement.getBoundingClientRect()
-          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
-        }, PLAY_BUTTON_SELECTOR),
-        secondary: await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR),
-      }
-      const currentTruncated = await page.evaluate((sel) => {
+      const deepLayout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, deep[name]])), caption: await captionBox(page) }, viewport)
+      const transport = await page.evaluate((sel) => document.querySelector(sel).parentElement.getBoundingClientRect().toJSON(), PLAY_BUTTON_SELECTOR)
+      const rowParts = { breadcrumb: deep.breadcrumb, speed: deep.speed, transport, secondary: deep.secondary }
+      const gapAbove = deep.play.y - (deep.bands.y + deep.bands.height)
+      const gapBelow = viewport.height - (deep.play.y + deep.play.height)
+      const sectionTops = (await childRects(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).map((rect) => Math.round(rect.y))
+      const currentCrumbTruncated = await page.evaluate((sel) => {
         const el = document.querySelector(sel)
         return el !== null && el.scrollWidth > el.clientWidth + 0.5 ? 1 : 0
       }, BREADCRUMB_CURRENT_SELECTOR)
-      const gapAbove = play.y - (bands.y + bands.height)
-      const gapBelow = viewport.height - (play.y + play.height)
-      const readout = await playingRateReadout(page, hook)
-      await goToRootSection(page)
-      await hook.setT(0)
       return {
-        readoutGapPx: readout.text.x - (boxes.transport.x + boxes.transport.width),
-        readoutCentreOffsetPx:
-          readout.text.y + readout.text.height / 2 - (boxes.transport.y + boxes.transport.height / 2),
-        readoutTextWidthPx: readout.text.width,
-        ...pairwiseOverlapFlags({ ...readout.row, readout: readout.text }),
-        playCentreOffsetPx: play.x + play.width / 2 - (track.x + track.width / 2),
-        gapAbovePx: gapAbove,
-        gapBelowPx: gapBelow,
-        centringDeltaPx: Math.abs(gapAbove - gapBelow),
-        breadcrumbCentreOffsetPx: nav.y + nav.height / 2 - (play.y + play.height / 2),
-        currentCrumbTruncated: currentTruncated,
-        ...pairwiseOverlapFlags(boxes),
-      }
-    },
-    expect: {
-      playCentreOffsetPx: [-2, 2],
-      centringDeltaPx: [0, 3],
-      breadcrumbCentreOffsetPx: [-2, 2],
-      currentCrumbTruncated: [0, 0],
-      ...noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary']),
-      readoutGapPx: [4, 24],
-      readoutCentreOffsetPx: [-3, 3],
-      readoutTextWidthPx: [20, 200],
-      overlap_breadcrumb_readout: [0, 0],
-      overlap_speed_readout: [0, 0],
-      overlap_transport_readout: [0, 0],
-      overlap_secondary_readout: [0, 0],
-    },
-  }
-}
-
-const RATE_READOUT_SELECTOR = `${TIMELINE_CONTROLS_CORE_SELECTOR} span[data-visible][class*="rateReadout"]`
-
-/**
- * The rate readout's text rect (a `Range` over its text, not the fixed-width slot it sits in) and
- * the controls row's other boxes, all read while playing in steady mode, the one state the readout
- * shows a number in. Pauses and restores the playback mode before returning.
- * @param {import('playwright').Page} page
- * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
- */
-async function playingRateReadout(page, hook) {
-  const mode = (await hook.getState()).playback.mode
-  await hook.setPlaybackMode('steady')
-  await hook.setPlaying(true)
-  try {
-    await page.waitForFunction(
-      (sel) => (document.querySelector(sel)?.textContent ?? '').trim().length > 0,
-      RATE_READOUT_SELECTOR,
-      { timeout: 5_000 },
-    )
-    await rafTicks(page, 2)
-    const text = await page.evaluate((sel) => {
-      const range = document.createRange()
-      range.selectNodeContents(document.querySelector(sel))
-      return range.getBoundingClientRect().toJSON()
-    }, RATE_READOUT_SELECTOR)
-    const row = {
-      breadcrumb: await boxOf(page, BREADCRUMB_SELECTOR),
-      speed: await boxOf(page, `${TIMELINE_CONTROLS_CORE_SELECTOR} select`),
-      transport: await page.evaluate((sel) => document.querySelector(sel).parentElement.getBoundingClientRect().toJSON(), PLAY_BUTTON_SELECTOR),
-      secondary: await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR),
-    }
-    return { text, row }
-  } finally {
-    await hook.setPlaying(false)
-    await hook.setPlaybackMode(mode)
-  }
-}
-
-/**
- * Desktop/tablet: the globe orb's drawn top sits at the top chrome inset, level with the top of
- * the ancestor column opposite (the About button that leads it), with its readout still under it
- * and nothing among orb, readout, title, era shortcuts and feed overlapping.
- * @param {{ width: number, height: number }} viewport
- */
-function desktopOrbTopShot(viewport) {
-  return {
-    name: `desktop-orb-top-${viewport.width}x${viewport.height}`,
-    description:
-      "Desktop: the orb's drawn top (scene hidden) within 4px of the top inset the About button sits at, level " +
-      'with the ancestor column (±3px), and no overlap among orb, readout, title, era shortcuts and feed.',
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      await hook.ready()
-      const orb = await minimisedOrbDrawnBounds(page)
-      const about = await boxOf(page, 'button[aria-label="About & credits"]')
-      const ancestorColumnTop = Math.min(about.y, (await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR)).y)
-      const boxes = {
+        root: rootLayout,
+        inSection: deepLayout,
         orb,
-        readout: await boxOf(page, SHELL_READOUTS_SELECTOR),
-        title: await boxOf(page, TIME_TITLE_SELECTOR),
-        era: await boxOf(page, ERA_SHORTCUTS_SELECTOR),
-        feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
-      }
-      return {
-        orbTopPx: orb.y,
-        topInsetPx: about.y,
-        orbTopOffsetPx: orb.y - about.y,
-        orbToAncestorTopPx: orb.y - ancestorColumnTop,
-        readoutGapPx: boxes.readout.y - (orb.y + orb.height),
-        ...pairwiseOverlapFlags(boxes),
+        orbTopOffsetPx: orb.y - root.about.y,
+        orbToAncestorTopPx: orb.y - Math.min(root.about.y, root.ancestor.y),
+        readoutGapPx: root.readouts.y - (orb.y + orb.height),
+        transportRow: pairwiseOverlapFlags(rowParts),
+        secondarySelfOverlaps: overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)),
+        playCentreOffsetPx: centreX(deep.play) - centreX(deep.track),
+        coreCentreOffsetAtRootPx: Math.abs(centreX(root.core) - centreX(root.track)),
+        centringDeltaPx: Math.abs(gapAbove - gapBelow),
+        breadcrumbCentreOffsetPx: centreY(deep.breadcrumb) - centreY(deep.play),
+        leftInsetPx: deep.sections.x - deep.track.x,
+        rightInsetPx: deep.track.x + deep.track.width - (deep.secondary.x + deep.secondary.width),
+        breadcrumbRows: new Set(sectionTops).size,
+        currentCrumbTruncated,
+        coreXDriftPx: Math.abs(deep.core.x - root.core.x),
+        secondaryXDriftPx: Math.abs(deep.secondary.x - root.secondary.x),
+        ...extraAtRoot,
+        ...(extra.inSection === undefined ? {} : await extra.inSection(page)),
       }
     },
     expect: {
+      ...Object.fromEntries(Object.entries(layoutExpect([...Object.keys(regions), 'caption'])).flatMap(([key, range]) => [[`root.${key}`, range], [`inSection.${key}`, range]])),
       orbTopOffsetPx: [-4, 4],
       orbToAncestorTopPx: [-3, 3],
       readoutGapPx: [0, 40],
-      ...noPairOverlaps(['orb', 'readout', 'title', 'era', 'feed']),
-    },
-  }
-}
-
-/**
- * A finger tap at `(x, y)` through CDP touch events: touch start, one `jitterPx` move (a real
- * finger never lifts exactly where it landed), touch end. Chromium turns it into the same
- * pointerdown/pointermove/pointerup/click sequence a phone produces. Needs the `hasTouch` page
- * (`touch: true` on the shot).
- * @param {import('playwright').Page} page
- * @param {number} x
- * @param {number} y
- * @param {{ jitterPx?: number }} [options]
- */
-async function touchTap(page, x, y, { jitterPx = 1 } = {}) {
-  const cdp = await page.context().newCDPSession(page)
-  const at = (dx) => [{ x: x + dx, y, id: 0, radiusX: 4, radiusY: 4, force: 1 }]
-  try {
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) })
-    if (jitterPx !== 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(jitterPx) })
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
-  } finally {
-    await cdp.detach()
-  }
-}
-
-/** `touchTap` at the centre of `box`. */
-async function touchTapCentre(page, box, options) {
-  await touchTap(page, box.x + box.width / 2, box.y + box.height / 2, options)
-}
-
-/** Waits for a tap's click and whatever it set off to commit and paint. */
-async function settleAfterTap(page, hook) {
-  await rafTicks(page, 3)
-  await hook.ready()
-  await rafTicks(page, 2)
-}
-
-/**
- * Phone: a finger tap on the minimised orb expands it and does nothing else — the time and the
- * section stay where they were, so the tap never also lands on whatever the expanded layout puts
- * under the finger (the era shortcuts). Paused, `t` must not move at all; playing, it may only
- * advance by playback, never jump to a shortcut's section.
- * @param {boolean} playing
- */
-function phoneOrbTapShot(playing) {
-  return {
-    name: `phone-orb-tap-expands-without-time-jump${playing ? '-playing' : ''}`,
-    description:
-      `Phone portrait, ${playing ? 'playing' : 'paused'}: a touch tap on the minimised orb's centre expands the globe ` +
-      `and leaves the section unchanged, with t ${playing ? 'still under 1 Ma (no era-shortcut jump)' : 'unchanged'}.`,
-    viewport: { width: 390, height: 844 },
-    touch: true,
-    t: 100_000,
-    state: { playing },
-    measure: async ({ page, hook }) => {
-      const orb = await boxOf(page, GLOBE_EXPAND_SELECTOR)
-      const before = await hook.getState()
-      await touchTapCentre(page, orb)
-      await settleAfterTap(page, hook)
-      const after = await hook.getState()
-      await hook.setPlaying(false)
-      return {
-        expanded: after.globeExpanded ? 1 : 0,
-        sectionUnchanged: after.sectionId === before.sectionId ? 1 : 0,
-        tDeltaYears: after.t - before.t,
-        tAfterMa: after.t / 1e6,
-      }
-    },
-    expect: playing
-      ? { expanded: [1, 1], sectionUnchanged: [1, 1], tAfterMa: [0, 1] }
-      : { expanded: [1, 1], sectionUnchanged: [1, 1], tDeltaYears: [0, 0] },
-  }
-}
-
-/**
- * The `t` of the published scene titled `label` — a cluster popover row's own label is its scene's
- * title (`Experience.tsx`'s checkpoints). `NaN` when the title is missing or not unique.
- * @param {import('playwright').Page} page
- * @param {string} label
- */
-async function sceneTByTitle(page, label) {
-  return page.evaluate(async (title) => {
-    const manifest = await (await fetch('/media/manifest.json')).json()
-    const matches = manifest.scenes.filter((scene) => scene.title === title)
-    return matches.length === 1 ? matches[0].t : Number.NaN
-  }, label)
-}
-
-const CLUSTER_SELECTOR = '[data-checkpoint-cluster]'
-/** `ClusterPopover.tsx`'s dialog, labelled "<n> scenes". */
-const CLUSTER_POPOVER_SELECTOR = '[role="dialog"][aria-label$=" scenes"]'
-
-/**
- * Phone, touch: the timeline's checkpoint cluster popover owns taps on its own controls. Opening a
- * cluster jumps to its oldest member; tapping × then closes it with `t` left exactly there, and
- * tapping a member row lands on that member's own `t` — never the `t` under the finger's x.
- */
-function clusterPopoverTouchShot() {
-  return {
-    name: 'cluster-popover-touch',
-    description:
-      'Phone, touch: tapping the cluster popover × closes it with t unchanged; tapping its last member row leaves t ' +
-      "unchanged until the row's click, then closes it with t exactly that member's scene t.",
-    viewport: { width: 390, height: 844 },
-    touch: true,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const openPopover = async () => {
-        await touchTapCentre(page, await boxOf(page, CLUSTER_SELECTOR), { jitterPx: 0 })
-        await settleAfterTap(page, hook)
-        await page.locator(CLUSTER_POPOVER_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
-      }
-      const popoverOpen = async () => ((await page.locator(CLUSTER_POPOVER_SELECTOR).count()) > 0 ? 1 : 0)
-
-      await openPopover()
-      const tOpened = (await hook.getState()).t
-      const close = page.locator(`${CLUSTER_POPOVER_SELECTOR} button[aria-label="Close"]`)
-      await touchTapCentre(page, await close.boundingBox())
-      await settleAfterTap(page, hook)
-      const closeTDeltaYears = (await hook.getState()).t - tOpened
-      const openAfterClose = await popoverOpen()
-
-      await openPopover()
-      const row = page.locator(`${CLUSTER_POPOVER_SELECTOR} li button`).last()
-      const label = (await row.locator('[class*="itemLabel"]').innerText()).trim()
-      const memberT = await sceneTByTitle(page, label)
-      const tReopened = (await hook.getState()).t
-      // The row's own click sets `t` either way, so the scrub a stray pointerup makes before it
-      // shows only in `t` as the click arrives.
-      await page.evaluate(() => {
-        window.__qaTAtClick = null
-        const record = () => (window.__qaTAtClick = window.__earthtime.getState().t)
-        window.addEventListener('click', record, { capture: true, once: true })
-      })
-      await touchTapCentre(page, await row.boundingBox())
-      await settleAfterTap(page, hook)
-      const tAfterRow = (await hook.getState()).t
-      const tAtRowClick = await page.evaluate(() => window.__qaTAtClick)
-      return {
-        closeTDeltaYears,
-        openAfterClose,
-        rowPressTDeltaYears: tAtRowClick === null ? Number.NaN : tAtRowClick - tReopened,
-        memberTDeltaYears: tAfterRow - memberT,
-        memberT,
-        openAfterRow: await popoverOpen(),
-      }
-    },
-    expect: {
-      closeTDeltaYears: [0, 0],
-      openAfterClose: [0, 0],
-      rowPressTDeltaYears: [0, 0],
-      memberTDeltaYears: [0, 0],
-      openAfterRow: [0, 0],
-    },
-  }
-}
-
-const EVENT_FEED_BROWSE_SELECTOR = '[data-testid="event-feed-browse"]'
-const EVENT_BROWSER_SELECTOR = '[data-testid="event-browser"]'
-
-/** The union of every event feed card's box, each clipped to its scrolling ancestor — the desktop
- *  stack cuts its last card off mid-body, so only the part inside the scroller is on screen. */
-async function feedCardsBox(page) {
-  const boxes = await page.locator(EVENT_FEED_ITEM_SELECTOR).evaluateAll((els) =>
-    els
-      .map((el) => {
-        const r = el.getBoundingClientRect()
-        let clip = el.parentElement
-        while (clip !== null && getComputedStyle(clip).overflowY === 'visible') clip = clip.parentElement
-        const c = clip === null ? r : clip.getBoundingClientRect()
-        const x = Math.max(r.left, c.left)
-        const y = Math.max(r.top, c.top)
-        return { x, y, width: Math.min(r.right, c.right) - x, height: Math.min(r.bottom, c.bottom) - y }
-      })
-      .filter((r) => r.width > 0 && r.height > 0),
-  )
-  if (boxes.length === 0) throw new Error('feedCardsBox: no visible event feed card')
-  return unionBox(boxes)
-}
-
-/**
- * The event feed's "All events" button: on desktop a row beneath the card stack, left-aligned
- * with it; on a phone a square tap target of at least 44×44 at the right of the one-card strip,
- * vertically centred on the card and clear of it. Either way, clicking it opens the event browser.
- * @param {'desktop' | 'phone'} layout
- * @param {{ width: number, height: number }} viewport
- * @param {boolean} globeExpanded
- */
-function eventFeedBrowseShot(layout, viewport, globeExpanded) {
-  const phone = layout === 'phone'
-  return {
-    name: `event-feed-browse-${layout}${globeExpanded ? '-globe-expanded' : ''}`,
-    description: phone
-      ? `Phone${globeExpanded ? ', globe expanded' : ''}: the "All events" button is at least 44×44, right of the ` +
-        'feed card with no horizontal overlap and inside the viewport, its centre within 1px of the card\'s, and clicking ' +
-        'it opens the event browser.'
-      : 'Desktop: the "All events" button sits below the card stack, left-aligned with it (±2px) and clear of it, ' +
-        'and clicking it opens the event browser.',
-    viewport,
-    t: 0,
-    state: { globeExpanded },
-    measure: async ({ page, hook }) => {
-      const present = await page.locator(EVENT_FEED_BROWSE_SELECTOR).count()
-      if (present === 0) return { present: 0 }
-      const button = await boxOf(page, EVENT_FEED_BROWSE_SELECTOR)
-      const cards = await feedCardsBox(page)
-      const geometry = phone
-        ? {
-            widthPx: button.width,
-            heightPx: button.height,
-            gapRightOfCardPx: button.x - (cards.x + cards.width),
-            centreOffsetPx: button.y + button.height / 2 - (cards.y + cards.height / 2),
-            rightMarginPx: viewport.width - (button.x + button.width),
-          }
-        : {
-            gapBelowCardsPx: button.y - (cards.y + cards.height),
-            leftAlignPx: button.x - cards.x,
-          }
-      await page.locator(EVENT_FEED_BROWSE_SELECTOR).click()
-      await hook.ready()
-      await rafTicks(page, 2)
-      return { present: 1, ...geometry, browserOpen: (await page.locator(EVENT_BROWSER_SELECTOR).count()) > 0 ? 1 : 0 }
-    },
-    expect: phone
-      ? {
-          present: [1, 1],
-          widthPx: [44, 64],
-          heightPx: [44, 64],
-          gapRightOfCardPx: [0, 40],
-          centreOffsetPx: [-1, 1],
-          rightMarginPx: [0, 60],
-          browserOpen: [1, 1],
-        }
-      : { present: [1, 1], gapBelowCardsPx: [0, 24], leftAlignPx: [-2, 2], browserOpen: [1, 1] },
-  }
-}
-
-/**
- * Desktop: the minimised orb's hover/focus ring (the expand button's 1px box-shadow spread, so its
- * outer diameter is the button's width + 2) traces the drawn limb from just outside it rather than
- * cutting across the planet. The limb is the sphere's `alpha >= 0.5` diameter by difference matte
- * (`alphaEdgeDiameter`), scene and vignette hidden.
- */
-function globeExpandRingShot() {
-  return {
-    name: 'globe-expand-ring-outside-limb',
-    description:
-      "Desktop, minimised: the expand ring's outer diameter is 100-106% of the sphere's drawn (alpha >= 0.5) diameter.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => {
-      const ring = await boxOf(page, GLOBE_EXPAND_SELECTOR)
-      const restoreScene = await hideSceneAndVignette(page)
-      await rafTicks(page, 2)
-      const limb = await alphaEdgeDiameter(page, await boxOf(page, GLOBE_CANVAS_SELECTOR))
-      await restoreScene()
-      return {
-        ringDiameterPx: ring.width + 2,
-        limbDiameterPx: limb.width,
-        ringToLimbPct: (100 * (ring.width + 2)) / limb.width,
-      }
-    },
-    expect: { ringToLimbPct: [100, 106] },
-  }
-}
-
-/**
- * Short landscape: the scene caption shares the event strip's row, right of it. The row splits
- * into fixed regions — the strip's 45% on the left, the caption centred in the 55% right of it —
- * so the caption never slides as the strip's text changes.
- * @param {{ width: number, height: number }} viewport
- */
-function landscapeCaptionRowShot(viewport) {
-  return {
-    name: `landscape-caption-row-${viewport.width}x${viewport.height}`,
-    description:
-      'Short landscape: the feed strip and the caption share one row (centre-y ±3px, gap ≥ 8px), the caption is ' +
-      "centred in its region (the row's right 55%, ±3px), its centre-x holds (±0.5px) across two t values with " +
-      'different feed text, and it clears the playhead label by at least 4px.',
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      await goToRootSection(page)
-      const sample = async (t) => {
-        await hook.setT(t)
-        await waitForSceneCrossfadeSettle(page)
-        await hook.ready()
-        await rafTicks(page, 2)
-        const caption = await captionLabelBox(page)
-        const feed = await boxOf(page, EVENT_FEED_ITEM_SELECTOR)
-        const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-        const label = await boxOf(page, PLAYHEAD_LABEL_SELECTOR)
-        const regionLeft = timeline.x + 0.45 * timeline.width
-        const regionRight = timeline.x + timeline.width
-        return {
-          caption,
-          feedText: (await page.locator(EVENT_FEED_ITEM_SELECTOR).first().innerText()).trim(),
-          sharedRowOffsetPx: caption.y + caption.height / 2 - (feed.y + feed.height / 2),
-          feedToCaptionGapPx: caption.x - (feed.x + feed.width),
-          regionCentreOffsetPx: caption.x + caption.width / 2 - (regionLeft + regionRight) / 2,
-          captionToLabelGapPx: label.y - (caption.y + caption.height),
-        }
-      }
-      const first = await sample(0)
-      const second = await sample(8500)
-      await hook.setT(0)
-      return {
-        sharedRowOffsetPx: Math.max(Math.abs(first.sharedRowOffsetPx), Math.abs(second.sharedRowOffsetPx)),
-        feedToCaptionGapPx: Math.min(first.feedToCaptionGapPx, second.feedToCaptionGapPx),
-        regionCentreOffsetPx: Math.max(Math.abs(first.regionCentreOffsetPx), Math.abs(second.regionCentreOffsetPx)),
-        feedTextChanged: first.feedText !== second.feedText ? 1 : 0,
-        captionCentreShiftPx: Math.abs(
-          first.caption.x + first.caption.width / 2 - (second.caption.x + second.caption.width / 2),
-        ),
-        captionToLabelGapPx: Math.min(first.captionToLabelGapPx, second.captionToLabelGapPx),
-      }
-    },
-    expect: {
-      sharedRowOffsetPx: [0, 3],
-      feedToCaptionGapPx: [8, 800],
-      regionCentreOffsetPx: [0, 3],
-      feedTextChanged: [1, 1],
-      captionCentreShiftPx: [0, 0.5],
-      captionToLabelGapPx: [4, 400],
-    },
-  }
-}
-
-/** The brightest published plates, where the caption's shade matters most: an ice world, a bright
- *  savanna and a sky-heavy desert. */
-const BRIGHT_CAPTION_SCENES = ['cryogenian-snowball', 'green-sahara', 'giza-great-pyramid']
-
-/** Relative luminance of an sRGB colour (WCAG 2.x). */
-function relativeLuminance([r, g, b]) {
-  const channel = (c) => {
-    const v = c / 255
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
-  }
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
-}
-
-/** `--hud-ink`, the caption's text colour. */
-const HUD_INK_RGB = [0xef, 0xe9, 0xdc]
-
-/**
- * Runs inside the page: the 95th-percentile relative luminance of a screenshot — the bright end of
- * what sits behind the caption's text, which is what its contrast has to survive.
- */
-async function brightLuminanceOf({ dataUrl }) {
-  const image = await new Promise((resolve, reject) => {
-    const el = new Image()
-    el.onload = () => resolve(el)
-    el.onerror = () => reject(new Error('brightLuminanceOf: failed to decode the probe screenshot'))
-    el.src = dataUrl
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = image.naturalWidth
-  canvas.height = image.naturalHeight
-  const ctx = canvas.getContext('2d')
-  ctx.drawImage(image, 0, 0)
-  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  const channel = (c) => {
-    const v = c / 255
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
-  }
-  const values = []
-  for (let i = 0; i < data.length; i += 4) values.push(0.2126 * channel(data[i]) + 0.7152 * channel(data[i + 1]) + 0.0722 * channel(data[i + 2]))
-  values.sort((a, b) => a - b)
-  return values[Math.floor(values.length * 0.95)]
-}
-
-/**
- * The caption's legibility over the brightest plates: with the caption text hidden (its shade
- * left drawn), the bright end of the luminance behind where the text sits, turned into a WCAG
- * contrast ratio against the text colour. `minContrast` is the floor.
- * @param {{ width: number, height: number }} viewport
- * @param {number} minContrast
- */
-function captionContrastShot(viewport, minContrast) {
-  return {
-    name: `caption-contrast-${viewport.width}x${viewport.height}`,
-    description:
-      `The caption text's contrast against the drawn background behind it (text hidden, shade drawn, 95th-percentile ` +
-      `luminance) over ${BRIGHT_CAPTION_SCENES.join(', ')} stays at or above ${minContrast}:1.`,
-    viewport,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      await closeLayerChart(page)
-      const contrasts = {}
-      for (const id of BRIGHT_CAPTION_SCENES) {
-        const scene = PUBLISHED_SCENES.find((candidate) => candidate.id === id)
-        await hook.setT(scene.t)
-        await waitForSceneCrossfadeSettle(page)
-        await hook.ready()
-        await rafTicks(page, 2)
-        const textSelectors = [SCENE_CAPTION_TITLE_SELECTOR, SCENE_CAPTION_BUTTON_SELECTOR, SCENE_CAPTION_TEXT_SELECTOR]
-        const visibleBoxes = []
-        for (const selector of textSelectors) {
-          const locator = page.locator(selector).first()
-          if (await locator.isVisible()) visibleBoxes.push(await boxOf(page, selector))
-        }
-        const clip = unionBox(visibleBoxes)
-        await page.evaluate(() => {
-          for (const el of document.querySelectorAll(`${'[data-testid="scene-caption"]'} *`)) {
-            if (el instanceof HTMLElement) el.style.setProperty('visibility', 'hidden')
-          }
-        })
-        await rafTicks(page, 2)
-        const png = await page.screenshot({
-          clip: { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) },
-        })
-        await page.evaluate(() => {
-          for (const el of document.querySelectorAll(`${'[data-testid="scene-caption"]'} *`)) {
-            if (el instanceof HTMLElement) el.style.removeProperty('visibility')
-          }
-        })
-        const background = await page.evaluate(brightLuminanceOf, { dataUrl: `data:image/png;base64,${png.toString('base64')}` })
-        contrasts[id] = (relativeLuminance(HUD_INK_RGB) + 0.05) / (background + 0.05)
-      }
-      await hook.setT(0)
-      await waitForSceneCrossfadeSettle(page)
-      return { contrasts, minContrast: Math.min(...Object.values(contrasts)) }
-    },
-    expect: { minContrast: [minContrast, 30] },
-  }
-}
-
-/** Screenshot-only: a bright plate's caption, for reviewing the shade by eye. */
-function captionReviewShot(viewport, sceneId) {
-  const scene = PUBLISHED_SCENES.find((candidate) => candidate.id === sceneId)
-  return {
-    name: `caption-review-${sceneId}-${viewport.width}x${viewport.height}`,
-    description: `Screenshot for review: the caption over "${scene.title}".`,
-    viewport,
-    t: scene.t,
-    actions: async ({ page }) => closeLayerChart(page),
-  }
-}
-
-export default [
-  {
-    name: 'present-day-default',
-    description: 'Present day (t=0), default collapsed view — baseline for the whole shell layout.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-  },
-  {
-    name: 'early-earth-archean-shore',
-    description: 'Deep-time scene (~3.45 Ga, "A Stromatolite Shore") — scene art and globe raster/regime rendering that far back.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 3_450_000_000,
-  },
-  {
-    name: 'globe-caption-removed',
-    description:
-      'The globe draws no regime/effect caption in either state. `t: 3.45 Ga` is squarely inside the "geography ' +
-      'unknown — artistic" stylised-regime span (docs/GLOBE.md §1, 1.0-~4.4 Ga), so it is a real `t` that used to ' +
-      "produce a caption rather than an assumed one (this file's own `early-earth-archean-shore` shot already uses " +
-      'it for the same deep-time reason). Both the expanded slot and the minimised orb column must stay textless.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 3_450_000_000,
-    measure: async ({ page, hook }) => {
-      await hook.setGlobeExpanded(true)
-      await hook.ready()
-      await rafTicks(page, 2)
-      const expandedText = (await page.locator(EXPANDED_GLOBE_CAPTION_SELECTOR).innerText()).trim()
-      await hook.setGlobeExpanded(false)
-      await hook.ready()
-      await rafTicks(page, 2)
-      const collapsedText = (await page.locator(EXPANDED_GLOBE_CAPTION_SELECTOR).innerText()).trim()
-      const orbLabelCount = await page.locator(MINIMISED_GLOBE_LABEL_SELECTOR).count()
-      return { expandedCaptionLength: expandedText.length, collapsedCaptionLength: collapsedText.length, orbLabelCount }
-    },
-    expect: { expandedCaptionLength: [0, 0], collapsedCaptionLength: [0, 0], orbLabelCount: [0, 0] },
-  },
-  {
-    name: 'globe-expanded-sphere',
-    description:
-      'Expanded globe, sphere mode, measured at its own real DEFAULT diameter (drawn pixels, not a CSS box) — ' +
-      "clipped to the real fit-frame rectangle (`GLOBE_SPHERE_FIT_FRAME_SELECTOR`'s own doc comment explains why " +
-      '`GLOBE_CANVAS_SELECTOR` alone no longer isolates the sphere from the surrounding chrome) rather than ' +
-      'measured at zoom-interaction time, so this is a zero-interaction "does it open at the right size" check. ' +
-      "`useChromeGap` fits this panel to the shell's actual live title-to-timeline gap, and above the phone " +
-      'breakpoint the sphere also clears all four corner controls, so anything that changes a corner control\'s ' +
-      'own height legitimately moves this band — currently ~493px.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
-    expect: { 'sphere.width': [470, 515], 'sphere.height': [470, 515] },
-  },
-  {
-    name: 'globe-expanded-sphere-phone',
-    description:
-      "The same real drawn diameter as `globe-expanded-sphere`, at the 390x844 phone-portrait floor — the " +
-      'viewport the expanded globe is sized most aggressively for, and the one where the top chrome competes ' +
-      'hardest with it. `useChromeGap` fits the panel to the live title-to-timeline gap, so anything that moves ' +
-      "the title, the era shortcuts or the corner controls moves this number: it is the guard that says how much " +
-      'of the phone screen the globe actually gets.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)) }),
-    expect: { 'sphere.width': [330, 400], 'sphere.height': [330, 400] },
-  },
-  {
-    name: 'globe-row2-clear-of-sphere-phone',
-    description:
-      'Phone-expanded row 2 (era shortcuts left, overlay selector right, one line under the title) must never ' +
-      'overlap the sphere below it — the defect the brief for this pass exists to fix (era shortcuts used to paint ' +
-      'at a fixed `top: 132px`, on top of the globe). `era`/`overlayControl` are plain CSS boxes (ordinary HUD ' +
-      "chrome, not canvases); `sphere` is `drawnBoundsInClip` over the real fit-frame rectangle, `globe-expanded-" +
-      "sphere-phone`'s own proven-sound technique. Also guards the overlay selector's own new, shorter control " +
-      '(`OverlaySelect.module.css`\'s phone `.control`, trimmed from the base 44px).',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const overlayControl = await overlayControlBox(page)
-      return {
-        eraClearanceGapPx: rectClearancePx(era, sphere),
-        overlayClearanceGapPx: rectClearancePx(overlayControl, sphere),
-        overlayControlHeightPx: overlayControl.height,
-        // Row 2's two elements share one line despite living in separate DOM subtrees
-        // (`ShellLayout.module.css`'s `--row2-top`/`--row2-height` doc comment) — a wide overlap
-        // window (not an exact match) because they're independently vertically centred within
-        // that shared band and aren't the same height themselves.
-        rowAlignmentDeltaPx: Math.abs(era.y + era.height / 2 - (overlayControl.y + overlayControl.height / 2)),
-      }
-    },
-    expect: {
-      eraClearanceGapPx: [4, 400],
-      overlayClearanceGapPx: [4, 400],
-      overlayControlHeightPx: [24, 36],
-      rowAlignmentDeltaPx: [0, 6],
-    },
-  },
-  {
-    name: 'globe-row2-clear-of-map-phone',
-    description: 'Same as `globe-row2-clear-of-sphere-phone`, in map mode, against the real map fit frame.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
-      const era = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const overlayControl = await overlayControlBox(page)
-      return {
-        eraClearanceGapPx: rectClearancePx(era, map),
-        overlayClearanceGapPx: rectClearancePx(overlayControl, map),
-      }
-    },
-    expect: { eraClearanceGapPx: [4, 400], overlayClearanceGapPx: [4, 400] },
-  },
-  {
-    name: 'globe-controls-row-clear-of-sphere-phone',
-    description:
-      'Phone-expanded: the Globe/Map toggle and the zoom rocker now share their own row directly under the ' +
-      'sphere/map (not straddling it) — both must sit strictly below the drawn sphere, never overlapping it, at ' +
-      'the width where the sphere grows closest to them.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
-      return {
-        toggleClearanceGapPx: toggle.y - (sphere.y + sphere.height),
-        zoomClearanceGapPx: zoom.y - (sphere.y + sphere.height),
-        toggleOverlapsZoom: rectsOverlap(toggle, zoom) ? 1 : 0,
-        toggleHeightMinusZoomPx: toggle.height - zoom.height,
-      }
-    },
-    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0], toggleHeightMinusZoomPx: [-1, 1] },
-  },
-  {
-    name: 'globe-feed-between-sphere-and-timeline-phone',
-    description:
-      'Phone-expanded: the event feed strip sits in its own band between the sphere/controls row above it and the ' +
-      'breadcrumb/timeline below — ordering by real drawn/box y-position, not just "doesn\'t overlap either".',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
-      // The timeline's top row: the breadcrumb once a section is entered, the track at the root.
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      return {
-        feedBelowSphereGapPx: feed.y - (sphere.y + sphere.height),
-        breadcrumbBelowFeedGapPx: timeline.y - (feed.y + feed.height),
-      }
-    },
-    // The gap to the breadcrumb is deliberately small (a normal band gap, not the vacated band a
-    // dedicated era-shortcuts strip above the timeline would have left) — the strip sits directly
-    // above the timeline now that the era shortcuts have moved up to row 2.
-    expect: { feedBelowSphereGapPx: [4, 400], breadcrumbBelowFeedGapPx: [2, 60] },
-  },
-  {
-    name: 'feed-strip-no-tag-label-phone',
-    description:
-      "Phone: the one-line event feed strip paints no category word — the chip's colour is the category cue there — " +
-      'while the label stays in the DOM for screen readers. Desktop cards keep the word (`feed-tag-label-desktop`).',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page }) => {
-      const tag = page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first()
-      const box = await tag.boundingBox()
-      return { tagInDom: (await tag.count()) > 0 ? 1 : 0, tagWidthPx: box === null ? 0 : box.width }
-    },
-    expect: { tagInDom: [1, 1], tagWidthPx: [0, 1] },
-  },
-  {
-    name: 'feed-tag-label-desktop',
-    description: 'Desktop: every event feed card still shows its primary tag as a word beside the date.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => {
-      const tag = page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first()
-      const box = await tag.boundingBox()
-      return { tagWidthPx: box === null ? 0 : box.width }
-    },
-    expect: { tagWidthPx: [20, 200] },
-  },
-  {
-    name: 'globe-expanded-map',
-    description:
-      'Expanded globe, unrolled Equal Earth map mode, measured at its own real DEFAULT size (drawn pixels) — ' +
-      "guards the map-mode fit-to-panel framing (ADR-033) the same way `globe-expanded-sphere` guards the sphere's " +
-      "(same clip-to-real-fit-frame reasoning, against `GLOBE_MAP_FIT_FRAME_SELECTOR` — see that shot's own " +
-      'description for why `GLOBE_CANVAS_SELECTOR` alone can no longer isolate the map from the surrounding ' +
-      "chrome). Also checks that the default, fully-zoomed-out map cursor is *not* `grab`: `camera.ts`'s " +
-      "`mapHasPanRoom` is false here (the fit distance's own margin already shows slightly more than the whole " +
-      'map, so there is genuinely nowhere to pan to yet). Same title-height dependency as ' +
-      "`globe-expanded-sphere`'s own.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    measure: async ({ page }) => {
-      const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
-      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
-      return { map, cursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
-    },
-    expect: { 'map.width': [960, 1030], cursorIsNotGrab: [1, 1] },
-  },
-  {
-    name: 'globe-sphere-zoom-past-fit',
-    description:
-      'BUG (user report, 2026-09-18: "currently when zooming in on the globe, it\'s constrained by a square ' +
-      'bounding window which cuts it off") — pressing "Zoom in" (`ZoomControls`) several times must keep growing ' +
-      'the drawn sphere well past `globe-expanded-sphere`\'s own ~592px default; the old bug capped it there ' +
-      'exactly regardless of zoom, since the `<canvas>` itself *was* that square box. Measured over ' +
-      '`GLOBE_CHROME_FREE_STRIP`, not the real fit frame (which the sphere legitimately grows past here) or the raw ' +
-      'canvas (which would sweep in the surrounding chrome — see that constant\'s own doc comment); width-only, ' +
-      "per that constant's own reasoning.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      const zoomIn = page.getByRole('button', { name: 'Zoom in' })
-      for (let i = 0; i < 4; i += 1) {
-        await zoomIn.click()
-        await rafTicks(page, 2)
-      }
-      await hook.ready()
-    },
-    measure: async ({ page }) => ({ sphere: await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP) }),
-    // Comfortably above `globe-expanded-sphere`'s own [470, 515] default band — the old bug would
-    // have failed this by capping there regardless of how many times "Zoom in" was pressed.
-    // Capped by `GLOBE_CHROME_FREE_STRIP`'s own width (1320), not the sphere itself, past that point.
-    expect: { 'sphere.width': [750, 1320] },
-  },
-  {
-    name: 'globe-zoom-button-changes-drawn-size',
-    description:
-      'Requirement 4 (user ask, 2026-09-18: "add zoom in/out magnifying icons/buttons to the fullscreen map/globe ' +
-      'view") — proves a single press of "Zoom in" actually changes the *drawn* globe content, not just some CSS ' +
-      "box, matching CLAUDE.md's \"assert on drawn pixels, never on CSS boxes\" rule. Map mode, not sphere: this is " +
-      "the mode where the default view has zero pan room but real zoom room (`globe-expanded-map`'s own cursor " +
-      'check), so it also stands as a second, independent proof (alongside `globe-sphere-zoom-past-fit`) that the ' +
-      'zoom buttons drive the same real camera distance in both modes. Uses `drawnPixelDiff` (the same primitive ' +
-      "the arrival-arc shots below use) rather than a `drawnBounds` width comparison: map mode's own default view " +
-      "already fills nearly all of `GLOBE_CHROME_FREE_STRIP`'s own safe width (`globe-expanded-map`'s ~1213px own " +
-      'default, against the strip\'s 1320px), leaving too little headroom for one zoom step to show as further ' +
-      "*growth* there (browser-verified: both before and after saturated the strip identically). A pixel diff has " +
-      'no such ceiling — zooming the camera in changes what the *whole* globe render shows regardless of how much ' +
-      "spare width remains, while any *unchanged* chrome pixels a wider clip might otherwise sweep in (the " +
-      '"Globe/Map" toggle, legend, close button, zoom controls) contribute nothing to the diff either way, so the ' +
-      'full canvas can be diffed directly with no clip needed at all.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    measure: async ({ page, hook }) => {
-      const { diffPixels, diffFraction } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
-        await page.getByRole('button', { name: 'Zoom in' }).click()
-        await rafTicks(page, 2)
-        await hook.ready()
-      })
-      return { diffPixels, diffFraction }
-    },
-    // A single zoom step moves the camera enough to redraw a large fraction of the map — set
-    // well below this shot's own measured count, comfortably above screenshot/PNG round-trip
-    // noise (`countDiffPixels`'s own threshold already filters that).
-    expect: { diffPixels: [5000, 2_000_000] },
-  },
-  {
-    name: 'globe-zoom-carries-to-map',
-    description:
-      'Zooming in on the sphere and switching to the map opens the map zoomed in by the same ratio of its own ' +
-      'default framing: two zoom-in steps on the sphere take exactly two zoom-out steps on the map to reach the ' +
-      "map's default, where zoom-out disables. Counted on the button rather than measured in pixels because a " +
-      'zoomed map fills any clip edge to edge, leaving no backdrop for a pixel scan to compare against.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await openGlobeAtDefaultZoom(page, hook)
-      await pressZoomIn(page, 2)
-      await switchGlobeViewMode(page, hook, 'map')
-      await hook.ready()
-    },
-    measure: async ({ page }) => {
-      const zoomOut = page.getByRole('button', { name: 'Zoom out' })
-      let stepsToDefault = 0
-      while (stepsToDefault < 10 && (await zoomOut.isEnabled())) {
-        await zoomOut.click()
-        await rafTicks(page, 2)
-        stepsToDefault += 1
-      }
-      return { stepsToDefault }
-    },
-    expect: { stepsToDefault: [2, 2] },
-  },
-  {
-    name: 'globe-zoom-survives-map-round-trip',
-    description:
-      'Sphere zoomed in, to the map and straight back without touching it: the sphere returns at the same zoom.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await openGlobeAtDefaultZoom(page, hook)
-      await pressZoomIn(page, 1)
-    },
-    measure: async ({ page, hook }) => {
-      const before = await sphereStripBounds(page)
-      await switchGlobeViewMode(page, hook, 'map')
-      await switchGlobeViewMode(page, hook, 'globe')
-      await hook.ready()
-      const after = await sphereStripBounds(page)
-      return { widthChangePx: Math.abs(after.width - before.width), beforeWidth: before.width }
-    },
-    expect: { widthChangePx: [0, 6], beforeWidth: [560, 680] },
-  },
-  {
-    name: 'globe-transition-mid-unfold',
-    description: 'Sphere->map toggle sampled ~halfway through the ~0.8s unfold tween — catches the folding/square-clip glitch.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    // Overrides the run's own reduced-motion default: `Globe.tsx`'s unfold tween is itself
-    // skipped (an instant snap) under prefers-reduced-motion, which would leave nothing to
-    // sample mid-transition.
-    reducedMotion: 'no-preference',
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.setGlobeViewMode('map')
-      await waitForApproxUnfoldProgress(page, 0.5)
-    },
-    measure: async ({ page }) => ({ globe: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'globe.width': [50, 2000], 'globe.height': [50, 2000] },
-  },
-  {
-    name: 'globe-click-does-not-close',
-    description:
-      'BUG 1 (user verbatim: "clicking on the map or globe in fullscreen mode closes it which is probalby not ' +
-      'expected behaviour"). Root cause: `globeGeometry.ts`\'s mesh carries no `position` attribute, so three.js\'s ' +
-      'default raycast always misses it, and `Globe.tsx`\'s `<Canvas onPointerMissed>` trusted every miss to mean ' +
-      '"clicked the backdrop, close it" — so *every* plain click on the globe itself, not just the transparent ' +
-      "backdrop around it, closed the view. Fixed with an analytic proxy raycast (`camera.ts`'s " +
-      '`globeBodyProxyHit`). A single stationary click (`page.mouse.click`, no movement — matches r3f\'s own ' +
-      '`delta <= 2px` "was this a click or a drag" gate) dead-centre on the sphere\'s own drawn silhouette must ' +
-      'leave the globe expanded.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      // Settle first: `actions` runs *before* the runner's own `ready()`/`rafTicks` wait
-      // (`run.mjs`'s own comment on the order), so the sphere's real fit-frame box isn't
-      // guaranteed final yet here — reading it too early (mid fade-in, or before the
-      // `ResizeObserver` measurement that drives `GlobeCameraControls`'s own fit has fired) risks
-      // clicking a stale or degenerate box. Also waits out a full `waitForApproxUnfoldProgress(
-      // page, 1)`, not just a couple of `rafTicks`: this harness never reloads between shots
-      // (README), and the immediately-preceding `globe-transition-mid-unfold` shot deliberately
-      // leaves the page mid-tween under real (`no-preference`) motion — browser-verified
-      // regression this fix replaces: without the full settle wait, this shot's own click could
-      // land while `unfold` was still mid-transition, well before the sphere's fit-frame box (and
-      // the analytic proxy raycast's own sphere/map shape switch) had actually settled to sphere
-      // mode.
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      const box = await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
-      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-    },
-    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
-    expect: { expanded: [1, 1] },
-  },
-  {
-    name: 'globe-click-on-map-does-not-close',
-    description: 'Same as `globe-click-does-not-close`, in map mode — the proxy raycast swaps to the map\'s own flat rectangle there.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      // Settle first (`globe-click-does-not-close`'s own comment, including the shot-ordering
-      // "why a full unfold-progress wait, not just a couple of frames" reasoning).
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      const box = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
-      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
-    },
-    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
-    expect: { expanded: [1, 1] },
-  },
-  {
-    name: 'globe-click-on-backdrop-still-closes',
-    description:
-      'Regression guard for the `globe-click-does-not-close` fix: a plain click on the dimmed, empty backdrop ' +
-      '*around* the globe (nowhere near the sphere\'s own drawn silhouette, the legend, or the bottom-centre ' +
-      'Globe/Map toggle) must still close the expanded view — the one intended use of `onPointerMissed`, which the ' +
-      "fix must not have broken by making the proxy raycast too generous. (150, 700) at 1440x900: well left of the " +
-      "sphere's own centred silhouette, well below the legend's own short content.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page }) => {
-      await page.mouse.click(150, 700)
-    },
-    measure: async ({ hook }) => ({ expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }),
-    expect: { expanded: [0, 0] },
-  },
-  {
-    name: 'globe-map-drag-pans-when-zoomed',
-    description:
-      'BUG 2 (user verbatim: "dragging of the expanded map doesnt work when zoomed in (shouldbe able to drag when ' +
-      'zoomed but not when fully zoomed out)"). Root cause: `OrbitControls`\'s own default `mouseButtons` routes a ' +
-      "plain left-drag to `ROTATE` unconditionally; map mode sets `enableRotate={false}`, so three.js's own " +
-      '`onMouseDown` hit that disabled-rotate early return and did *nothing* — not "panned with no room", never ' +
-      "even reaching `_handleMouseDownPan` — regardless of zoom level. `camera.ts`'s `mapHasPanRoom` was already " +
-      'correctly wired into the cursor (`globe-expanded-map`\'s own `cursorIsNotGrab` check); the gesture routing ' +
-      "was the actual gap. Fixed by setting `mouseButtons.LEFT`/`touches.ONE` to `PAN` while `mapMode`. Zooms in " +
-      'four steps (past the point `mapHasPanRoom` goes true), then drags and diffs the canvas\'s own drawn pixels ' +
-      "before/after (`drawnPixelDiff`, the same primitive `globe-zoom-button-changes-drawn-size` uses) — proof " +
-      'the drag actually moved the camera, not just that it failed to crash.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      const zoomIn = page.getByRole('button', { name: 'Zoom in' })
-      for (let i = 0; i < 4; i += 1) {
-        await zoomIn.click()
-        await rafTicks(page, 2)
-      }
-      await hook.ready()
-    },
-    measure: async ({ page, hook }) => {
-      const { diffPixels } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
-        const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
-        const cx = box.x + box.width / 2
-        const cy = box.y + box.height / 2
-        await page.mouse.move(cx, cy)
-        await page.mouse.down()
-        await page.mouse.move(cx + 180, cy, { steps: 12 })
-        await page.mouse.up()
-        await rafTicks(page, 2)
-      })
-      return { diffPixels, expanded: (await hook.getState())?.globeExpanded ? 1 : 0 }
-    },
-    // Comfortably above `globe-zoom-button-changes-drawn-size`'s own noise floor; a drag this far
-    // (180px, well beyond the pan clamp at this zoom level) must redraw a real fraction of the map.
-    expect: { diffPixels: [5000, 2_000_000], expanded: [1, 1] },
-  },
-  {
-    name: 'globe-map-drag-does-nothing-when-fully-zoomed-out',
-    description:
-      'BUG 2\'s other half (user verbatim: "shouldbe able to drag when zoomed but not when fully zoomed out"): at ' +
-      "the default, fully-zoomed-out map view (`mapHasPanRoom` false — `globe-expanded-map`'s own `cursorIsNotGrab` " +
-      'check), dragging must still do nothing — panning has genuinely nowhere to go there, so the fix for BUG 2 ' +
-      "must not have also made a no-room drag do something. Same drag, no prior zoom; diffPixels stays in the " +
-      "screenshot/PNG round-trip noise floor `countDiffPixels`'s own threshold already filters, well below a real " +
-      'redraw. Forces a clean default zoom by round-tripping sphere->map (entering map mode always tweens the ' +
-      "camera to `mapFit`, `GlobeCameraControls`'s own settle logic) rather than trusting the page's starting zoom " +
-      "— this harness never reloads between shots (README), so without this reset a *previous* shot's own zoom " +
-      "(e.g. `globe-map-drag-pans-when-zoomed`, which zooms in on purpose) can still be sitting on the camera " +
-      'when this one starts, since neither `globeExpanded` nor `globeViewMode` actually change value between them ' +
-      '(`applyState`\'s own reset logic only fires on a real transition).',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      await hook.setGlobeViewMode('globe')
-      await hook.setGlobeViewMode('map')
-      await hook.ready()
-      // A full settle, not just a couple of frames (`globe-click-does-not-close`'s own "why" —
-      // this harness never reloads between shots, so the round-trip tween just triggered must be
-      // given its own real ~0.8s before the "fully zoomed out" premise below is trustworthy).
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const { diffPixels } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
-        const box = await page.locator(GLOBE_CANVAS_SELECTOR).first().boundingBox()
-        const cx = box.x + box.width / 2
-        const cy = box.y + box.height / 2
-        await page.mouse.move(cx, cy)
-        await page.mouse.down()
-        await page.mouse.move(cx + 180, cy, { steps: 12 })
-        await page.mouse.up()
-        await rafTicks(page, 2)
-      })
-      return { diffPixels }
-    },
-    expect: { diffPixels: [0, 3000] },
-  },
-  {
-    name: 'globe-view-mode-toggle-clear-of-sphere',
-    description:
-      'Issue 3 follow-up defect 1 (user report on the first pass: "the globe/map toggle is overlayed on top of ' +
-      'the globe (should be under, globe needs to be made a bit smaller)"). `sphere` is measured by drawn pixels ' +
-      "(`drawnBoundsInClip` over the real fit-frame rectangle, exactly `globe-expanded-sphere`'s own proven-sound " +
-      "technique — CLAUDE.md's own warning about `drawnBounds` over a busy photographic backdrop is about scanning " +
-      "an *unclipped* full-viewport canvas; clipped tightly to the fit frame, the clip's own corners are the " +
-      'dark backdrop just outside the circular silhouette, which is exactly what makes this technique sound here); ' +
-      '`toggle` is a plain CSS box (`boxOf`) since it is ordinary bordered-pill HUD chrome, not a canvas. The gap ' +
-      'between them must be strictly positive.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    // A full settle, not the default flow's couple of frames — this harness never reloads
-    // between shots (README), so a still-running sphere<->map tween left by whichever shot ran
-    // immediately before this one (view mode or `globeExpanded` can both trigger one) would
-    // otherwise still be moving when the fit-frame box below is read.
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height), sphereDiameterPx: sphere.height }
-    },
-    expect: { clearanceGapPx: [4, 400] },
-  },
-  {
-    name: 'globe-view-mode-toggle-clear-of-map',
-    description: 'Same as `globe-view-mode-toggle-clear-of-sphere`, in map mode, against the real map fit frame.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const map = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { clearanceGapPx: toggle.y - (map.y + map.height) }
-    },
-    expect: { clearanceGapPx: [4, 400] },
-  },
-  {
-    name: 'globe-view-mode-toggle-clear-of-sphere-narrow',
-    description:
-      'At the narrow 390x844 phone-portrait viewport the Globe/Map toggle shares its own row with the zoom rocker ' +
-      "directly under the sphere (`Globe.module.css`'s own phone `.viewModeGroup` rule) — the same relative " +
-      'position as `globe-view-mode-toggle-clear-of-sphere`/`-clear-of-map`/`-clear-of-sphere-short`, just at the ' +
-      "narrowest required viewport, where the sphere is squeezed hardest and this clearance is tightest. `sphere` " +
-      "is measured the same way as those sibling shots (`drawnBoundsInClip` over the real fit-frame rectangle — " +
-      "sound here for the same reason their own description gives); `toggle` is a plain CSS box (`boxOf`), " +
-      'ordinary HUD chrome. `clearanceGapPx` is the signed rectangle-to-rectangle separation on both axes at once ' +
-      "(`rectClearancePx`) — positive when the boxes don't overlap, negative overlap depth when they do — with " +
-      'the same 4px floor the sibling shots use.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { clearanceGapPx: rectClearancePx(toggle, sphere) }
-    },
-    expect: { clearanceGapPx: [4, 900] },
-  },
-  {
-    name: 'globe-view-mode-toggle-clear-of-sphere-short',
-    description:
-      'Same as `globe-view-mode-toggle-clear-of-sphere`, at 844x560 — the narrowest, shortest window that still ' +
-      'takes the desktop layout (under 500px tall a landscape window takes the landscape layout, ADR-048, which ' +
-      '`landscape-globe-*` guards), so the tightest vertical chrome-gap headroom for this one.',
-    viewport: { width: 844, height: 560 },
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { clearanceGapPx: toggle.y - (sphere.y + sphere.height) }
-    },
-    expect: { clearanceGapPx: [4, 400] },
-  },
-  {
-    name: 'globe-view-mode-toggle-clickable',
-    description:
-      'Issue 3 follow-up defect 2 (user report: "and currnetly isnt clickable"). Root cause: `ShellLayout.module.' +
-      'css`\'s `.bottom > *` re-enabled `pointer-events` on the whole of `.stage`, a box deliberately sized to its ' +
-      "tallest grid-cell child including a hidden sibling nobody can see (`ShellLayout.tsx`'s own `useChromeGap` " +
-      'doc comment) — that invisible overflow, promoted to `z-index: 60` above the entire backdrop, sat over the ' +
-      "toggle and ate its clicks. A real Playwright `locator.click()` (not `devHook.ts`'s `setGlobeViewMode`, " +
-      "which drives the DOM `button.click()` API directly and so bypasses real hit-testing/`pointer-events` " +
-      "entirely — proving nothing about clickability) on the actual \"Map\" button, then reading the mode back " +
-      "through the hook: if anything still covers the button, Playwright's own actionability check fails the " +
-      'click outright (this shot errors, not just its `expect`) rather than silently clicking through.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      // Full settle first (the four `globe-view-mode-toggle-clear-of-*` shots' own comment) —
-      // not load-bearing for clickability itself, but the button's own position could still be
-      // mid-tween otherwise, which risks Playwright's actionability wait racing a moving target.
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.locator(VIEW_MODE_TOGGLE_SELECTOR).getByRole('button', { name: 'Map' }).click()
-    },
-    measure: async ({ hook }) => ({ mode: (await hook.getGlobeViewMode()) === 'map' ? 1 : 0 }),
-    expect: { mode: [1, 1] },
-  },
-  {
-    name: 'globe-view-mode-toggle-no-view-label',
-    description:
-      'User ask, 2026-09-18: "remove the redudantn \'view\' label on the globe/map toggle". The toggle\'s own ' +
-      "group keeps an accessible name (`aria-label=\"Globe/Map view\"`, replacing the removed label's " +
-      '`aria-labelledby`) but must draw no "View" text anywhere while expanded.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    measure: async ({ page }) => {
-      const toggleText = await page.locator(VIEW_MODE_TOGGLE_SELECTOR).innerText()
-      const hasViewWord = /\bview\b/i.test(toggleText)
-      // `aria-label` sits on the inner `[role="group"]` (the two buttons' own group), not the
-      // outer `VIEW_MODE_TOGGLE_SELECTOR` element (which only exists for height measurement).
-      const groupLabel = await page.locator(`${VIEW_MODE_TOGGLE_SELECTOR} [role="group"]`).getAttribute('aria-label')
-      return { hasViewWord: hasViewWord ? 1 : 0, hasAccessibleName: groupLabel !== null && groupLabel !== '' ? 1 : 0 }
-    },
-    expect: { hasViewWord: [0, 0], hasAccessibleName: [1, 1] },
-  },
-  {
-    name: 'view-mode-toggle-clear-of-pip-hover-preview',
-    description:
-      'User correction, 2026-09-18: "the globe/map toglge butotns cant go any further dowanrds closer to timeline ' +
-      'cause need space for the hover labels" — the scrub track\'s own checkpoint-pip hover preview ' +
-      "(`ScrubTrack.tsx`'s `.pipPreview`, the same one `timeline-pip-thumbnail-hover` already knows how to " +
-      'trigger, reused here rather than inventing a second hover mechanism) rides above the track and must clear ' +
-      "the expanded globe's own Globe/Map toggle beneath it — an intermittent, hover-only overlap no resting-" +
-      'layout screenshot would ever catch, which is exactly why a static assertion on the toggle\'s own position ' +
-      'alone is not enough here; this one actually triggers the hover and measures the real, visible preview card.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.locator(CHECKPOINT_PIP_SELECTOR).first().hover()
-    },
-    measure: async ({ page }) => {
-      const preview = await boxOf(page, PIP_PREVIEW_SELECTOR)
-      const toggle = await boxOf(page, VIEW_MODE_TOGGLE_SELECTOR)
-      return { overlapsToggle: rectsOverlap(preview, toggle) ? 1 : 0 }
-    },
-    expect: { overlapsToggle: [0, 0] },
-  },
-  {
-    name: 'green-sahara-bright-plate',
-    description: 'Green Sahara (~8000 yr) — bright-plate scene, checks vignette/legibility over a light image.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 8000,
-    measure: async ({ page }) => ({ scene: await drawnBounds(page, SCENE_CANVAS_SELECTOR) }),
-    expect: { 'scene.fractionOfViewport': [0.5, 1] },
-  },
-  {
-    name: 'human-civilisation-1500ce',
-    description: 'Human civilisation layer on, globe expanded, ~1500 CE — arrival/settlement/density overlays on the expanded panel.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 525,
-    state: { globeExpanded: true, layerToggles: { 'human-civilisation': true } },
-  },
-  {
-    name: 'bottom-chrome-height',
-    description:
-      'Condensing pass (2026-09-18, user report: "reduce the vertical footprint of the bottom ' +
-      'chrome"): the <Timeline> control\'s own drawn height (scrub track, ruler, section bands, ' +
-      'transport row — not the scene caption above it, a separate ShellLayout slot) at 1440x900, ' +
-      "present day. Was ~194px before the pass (the dismissible first-use hint's own row plus " +
-      'generous inter-row gaps/margins); a regression back toward that — or an over-eager future ' +
-      'cut that starts clipping/overlapping rows — should fail this band. Still measures 152px ' +
-      "through two later passes that each had a real chance to move it: era shortcuts' own third " +
-      'and final placement, landing back in `.controlsSections` alongside the breadcrumb rather ' +
-      "than adding a row (`EraShortcuts.tsx`'s own doc comment has the full placement history), " +
-      'and the play button\'s "slightly larger" nudge (user ask, 2026-09-18) from 44px to 48px — ' +
-      "checked, not assumed: `.controlsSecondary` (sound/speed/mode/scale/rate-badge) already " +
-      'wraps to 2 rows at 54px tall, taller than either the old or the new play button, so ' +
-      "`.controlsRow`'s own height was already set by that track, not `.core`'s — growing the play " +
-      'button by 4px genuinely cost this band nothing.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
-    expect: { 'timeline.height': [135, 175] },
-  },
-  {
-    name: 'viewport-1024x768',
-    description: 'Common laptop viewport sanity check — default view, plus the same bottom-chrome height guard at this width.',
-    viewport: { width: 1024, height: 768 },
-    t: 0,
-    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
-    expect: { 'timeline.height': [150, 205] },
-  },
-  {
-    name: 'viewport-390x844-phone-portrait',
-    description:
-      'Phone portrait sanity check — default view, ancestor panel collapse behaviour, plus the same ' +
-      'bottom-chrome height guard (a taller band here: the breadcrumb and secondary controls stack ' +
-      'into their own rows below 760px, DESIGN §8).',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
-    expect: { 'timeline.height': [170, 310] },
-  },
-  {
-    name: 'globe-expanded-phone-strip-above-breadcrumb',
-    description:
-      'Phone portrait, globe expanded: the event strip and the zoom rocker share one band that sits immediately ' +
-      'above the timeline\'s breadcrumb row, with real clearance and no overlap. Both are positioned from the ' +
-      'viewport\'s bottom edge against `--chrome-gap-bottom-inset` (`useChromeGap.ts`) — the guard is that the ' +
-      'offset lands them in that band rather than floating somewhere up the globe.',
-    viewport: PHONE_VIEWPORT,
-    t: 12000,
-    state: { globeExpanded: true },
-    measure: async ({ page }) => {
-      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
-      const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
-      // The timeline's top row: the breadcrumb once a section is entered, the track at the root.
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      return {
-        feedToBreadcrumb: timeline.y - (feed.y + feed.height),
-        zoomToBreadcrumb: timeline.y - (zoom.y + zoom.height),
-        feedOverlapsZoom: rectsOverlap(feed, zoom) ? 1 : 0,
-      }
-    },
-    expect: {
-      // Clear of the breadcrumb, but in its band — not a globe's height further up.
-      feedToBreadcrumb: [4, 60],
-      zoomToBreadcrumb: [4, 60],
-      feedOverlapsZoom: [0, 0],
-    },
-  },
-  {
-    name: 'era-shortcuts-group',
-    description:
-      'The Dinosaurs/Humans "jump to an era" shortcut group. Rendered by `ShellLayout` directly under the time ' +
-      'title, NOT inside `BOTTOM_CHROME_SELECTOR` — the timeline\'s own control row carries playback controls ' +
-      'alone. The group has no drawn heading of its own (it is named by `aria-label`), so the measured width ' +
-      'here is the two pills and nothing else.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => {
-      const insideBottomChrome = await page.evaluate(
-        ([shortcutsSel, bottomSel]) => {
-          const shortcuts = document.querySelector(shortcutsSel)
-          const bottom = document.querySelector(bottomSel)
-          return shortcuts !== null && bottom !== null && bottom.contains(shortcuts)
-        },
-        [ERA_SHORTCUTS_SELECTOR, BOTTOM_CHROME_SELECTOR],
-      )
-      return {
-        shortcuts: await drawnBounds(page, ERA_SHORTCUTS_SELECTOR),
-        insideBottomChrome: insideBottomChrome ? 1 : 0,
-      }
-    },
-    expect: {
-      // Two pills wide enough to hold an icon and a caps-mono label, unmistakably present.
-      'shortcuts.width': [90, 320],
-      'shortcuts.height': [16, 60],
-      insideBottomChrome: [0, 0],
-    },
-  },
-  {
-    name: 'era-shortcuts-clear-of-neighbours-wide',
-    description:
-      'The relocated era shortcuts (`era-shortcuts-group`\'s own description) must not overlap the breadcrumb ' +
-      'or the transport core (play/back/forward) — self-overlap against `.controlsSecondary`\'s own other ' +
-      "children (sound/speed/mode/scale) is `controls-secondary-no-self-overlap-*`'s job, not this shot's, since " +
-      "the shortcuts are now themselves one of those children. Plain CSS boxes (`boxOf`), not drawn-pixel scans: " +
-      "every element here is ordinary HUD chrome over the shell's own layout, not a canvas whose CSS box could " +
-      "diverge from what's painted inside it.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return {
-        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
-        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-      }
-    },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
-  },
-  {
-    name: 'era-shortcuts-clear-of-neighbours-narrow',
-    description: 'Same as `era-shortcuts-clear-of-neighbours-wide`, at the narrow 390x844 phone-portrait viewport.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return {
-        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
-        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-      }
-    },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
-  },
-  {
-    name: 'era-shortcuts-clear-of-neighbours-short',
-    description:
-      'Same as `era-shortcuts-clear-of-neighbours-wide`, at 844x560, the narrowest, shortest window that still ' +
-      'takes the desktop layout (ADR-048).',
-    viewport: { width: 844, height: 560 },
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return {
-        overlapsBreadcrumb: rectsOverlap(shortcuts, breadcrumb) ? 1 : 0,
-        overlapsCore: rectsOverlap(shortcuts, core) ? 1 : 0,
-      }
-    },
-    expect: { overlapsBreadcrumb: [0, 0], overlapsCore: [0, 0] },
-  },
-  {
-    name: 'controls-secondary-no-self-overlap-wide',
-    description:
-      'The specific regression risk the coordinator named for era shortcuts\' third placement: adding them ' +
-      "to `.controlsSecondary` first (measured, then rejected — that class's own Timeline.module.css doc comment " +
-      'has the numbers) pushed it from 2 wrapped rows to 3 at 1440x900; even with the shortcuts moved elsewhere, ' +
-      "this guards that `.controlsSecondary`'s own pre-existing children (sound toggle, speed select, mode " +
-      'group, scale group, rate readout row) never overlap each other — the root-cause fix for the historical ' +
-      '"the mute/volume button overlaps with the next/fast forward button" report, which this change sits ' +
-      'immediately next to. `countOverlappingChildPairs` counts overlapping direct-child pairs, not wrapped rows ' +
-      '(two children on different flex lines never overlap in `y`, so wrapping itself never trips this).',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => ({
-      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
-    }),
-    expect: { overlappingPairs: [0, 0] },
-  },
-  {
-    name: 'controls-secondary-no-self-overlap-narrow',
-    description: 'Same as `controls-secondary-no-self-overlap-wide`, at the narrow 390x844 phone-portrait viewport.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page }) => ({
-      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
-    }),
-    expect: { overlappingPairs: [0, 0] },
-  },
-  {
-    name: 'controls-secondary-no-self-overlap-short',
-    description:
-      'Same as `controls-secondary-no-self-overlap-wide`, at 844x560, the narrowest, shortest window that still ' +
-      'takes the desktop layout (ADR-048).',
-    viewport: { width: 844, height: 560 },
-    t: 0,
-    measure: async ({ page }) => ({
-      overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
-    }),
-    expect: { overlappingPairs: [0, 0] },
-  },
-  {
-    name: 'timeline-controls-inset-to-track-wide',
-    description:
-      'User report, 2026-09-18: "maybe cosntrian the horizotan layout of hte bottom row (breadcrumb, nav buttons, ' +
-      'mode/scale toggles) so tehy are constrained within the horizotanl boudns of the timeline and era selector ' +
-      "and dont flow beyond them (so theres more padding on the sides)\". Root cause: `SectionEdgeNav.module.css`'s " +
-      '`.stack` insets the scrub track/ruler/band strip by a real gutter (`--edge-button-size` + `--edge-button-' +
-      "gap`, for the prev/next edge buttons), but `.controlsRow` below it had no matching inset, so the breadcrumb " +
-      "(left) and mode/scale/sound controls (right) visibly overhung the track they sit under. Fixed with one " +
-      'shared `--timeline-gutter` custom property (`Timeline.module.css`\'s `.timeline`), consumed by both ' +
-      "`.stack` and `.controlsRow` instead of two hand-written copies of the same `calc()`. Measures the real " +
-      "rendered boxes (`boxOf` — ordinary flex/grid HUD chrome, ,not a canvas, so a CSS box is exactly what's " +
-      'painted): the breadcrumb\'s own left edge must sit at or inside the track\'s left edge, and the secondary ' +
-      "controls' own right edge at or inside the track's right edge. Also checks `.controlsCore` (the play-button " +
-      "group) stays centred on the *track*'s own centre, not just the row's — the coordinator's own explicit " +
-      'concern: a symmetric inset on a 3-track `minmax(0, 1fr) auto minmax(0, 1fr)` grid must not unbalance the ' +
-      'centring `.controlsRow`\'s own doc comment already relies on.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return {
-        // Positive means the breadcrumb starts inside (to the right of) the track's own left
-        // edge; 0 means exactly flush; negative means it still overhangs.
-        leftInsetPx: sections.x - track.x,
-        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
-        coreCenterOffsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)),
-        secondaryHeightPx: secondary.height,
-      }
-    },
-    expect: {
+      ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary'])).map(([key, range]) => [`transportRow.${key}`, range])),
+      secondarySelfOverlaps: [0, 0],
+      playCentreOffsetPx: [-2, 2],
+      coreCentreOffsetAtRootPx: [0, 3],
+      centringDeltaPx: [0, 3],
+      breadcrumbCentreOffsetPx: [-2, 2],
       leftInsetPx: [0, 400],
       rightInsetPx: [0, 400],
-      // Widened from the original `[0, 3]` (condensing pass, moving the sound toggle into
-      // `.controlsSecondary`): a permanent third control raises `.controlsSecondary`'s own
-      // content floor past what an even split of the two flexible tracks would give it, so
-      // `.controlsCore` — pinned to the *track's* own centre only when that split is even —
-      // settles a fixed ~30px left of true centre instead, at every section (measured constant
-      // across root/mid/leaf breadcrumbs, since `.controlsSections` gives up the difference
-      // regardless of its own content — `DIAG-core-center-debug`, run ad hoc, held it identical
-      // at three `t`s). Not fixable by narrowing this gap further without either reintroducing
-      // the historical overlap bug (`min-width: 0` on `.controlsSecondary`, this file's own doc
-      // comment) or `.controlsCore`/`.controlsSecondary` genuinely colliding (checked: forcing
-      // true centre here pushes `.controlsCore`'s own right edge *past* `.controlsSecondary`'s
-      // left edge by ~15px) — the asymmetric split is what buys the clearance, not a bug to
-      // close. `secondary-core-no-self-overlap-sweep` is the check that actually matters (no
-      // collision, at every required width); this one only guards the offset staying bounded and
-      // not silently growing further.
-      coreCenterOffsetPx: [0, 35],
-      // A generous single/double-row ceiling — `.controlsSecondary`'s own load-bearing
-      // `flex-wrap` (this file's own doc comment) is allowed to wrap, but a real 1440x900
-      // regression would wrap far more than this.
-      secondaryHeightPx: [0, 90],
+      breadcrumbRows: [1, 1],
+      currentCrumbTruncated: [0, 0],
+      coreXDriftPx: [0, 0.5],
+      secondaryXDriftPx: [0, 0.5],
+      ...extra.expect,
     },
-  },
-  {
-    name: 'timeline-controls-inset-to-track-narrow',
-    description: 'Same as `timeline-controls-inset-to-track-wide`, at the narrow 390x844 phone-portrait viewport.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      return {
-        leftInsetPx: sections.x - track.x,
-        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
-      }
-    },
-    // The narrow breakpoint stacks sections/core/secondary into one centred column (this file's
-    // own `@media (max-width: 760px)` rule) rather than a 3-track row, so both sides are centred
-    // within the same inset track width rather than pinned to its exact edges.
-    // `rightInsetPx`'s own floor is `-6`, not `0`: browser-verified, at this exact 390px floor
-    // `.controlsSecondary`'s own first wrapped line (`TransportSecondary` + `.scaleGroup`) is a
-    // genuine few px wider than the inset track even after `flex-wrap`/gap tightening
-    // (`Timeline.module.css`'s own `.controlsSecondary` narrow-breakpoint comment has the
-    // measured story) — a small, pre-existing content-fit characteristic at the single narrowest
-    // supported width, not the overhang the user actually reported (which was tens to hundreds
-    // of px, visible at ordinary/wide viewing, and is what this whole shot family exists to
-    // guard). `-6` still catches any *real* regression (an un-inset row here would overhang by
-    // roughly a whole `--timeline-gutter`, ~50-56px, not a handful).
-    expect: { leftInsetPx: [0, 400], rightInsetPx: [-6, 400] },
-  },
-  {
-    name: 'secondary-cluster-one-row-1000x810',
-    description:
-      'At a ~1000px desktop viewport, the playback-mode toggle, the scale toggle and the sound button ' +
-      "(`.controlsSecondary`) sit on one row, not wrapped across several — the cluster's drawn height stays under " +
-      'a single-row ceiling, and the playback-mode and scale groups share one vertical centre line.',
-    viewport: { width: 1000, height: 810 },
-    t: 0,
-    measure: async ({ page }) => {
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      const [modeBox, scaleBox] = await page.evaluate((sel) => {
-        const el = document.querySelector(sel)
-        const [mode, scale] = Array.from(el.children)
-        return [mode.getBoundingClientRect().toJSON(), scale.getBoundingClientRect().toJSON()]
-      }, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      const centreY = (r) => r.y + r.height / 2
-      return {
-        secondaryHeightPx: secondary.height,
-        modeScaleCentreYDeltaPx: Math.abs(centreY(modeBox) - centreY(scaleBox)),
-      }
-    },
-    expect: {
-      // A single row of mode-toggle/scale-toggle/sound-button tops out around 35-48px depending
-      // on which control is tallest; two wrapped lines add a further control height plus row-gap
-      // (measured 63px pre-fix with mode+scale sharing a line and only sound wrapped), three adds
-      // a second full control height again (measured 106px pre-fix, the actual reported defect).
-      // 55 sits strictly between "one row" and either wrapped case.
-      secondaryHeightPx: [0, 55],
-      // Sub-pixel on a genuine single line (both are the same fixed layout, just placed side by
-      // side); a wrapped wrap puts one group a full control-height below the other.
-      modeScaleCentreYDeltaPx: [0, 2],
-    },
-  },
-  {
-    name: 'secondary-cluster-no-regression-1440x900',
-    description:
-      'At 1440x900 the playback-mode and scale groups still share one row (the pre-existing, documented baseline ' +
-      '— `timeline-controls-inset-to-track-wide`\'s own `secondaryHeightPx` tolerance already accepts the sound ' +
-      "button wrapping to a second line here) — the narrow-desktop fix for the 1000px defect is scoped to leave " +
-      'this width reading the same rule it always has.',
-    viewport: { width: 1440, height: 900 },
-    t: 0,
-    measure: async ({ page }) => {
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      const [modeBox, scaleBox] = await page.evaluate((sel) => {
-        const el = document.querySelector(sel)
-        const [mode, scale] = Array.from(el.children)
-        return [mode.getBoundingClientRect().toJSON(), scale.getBoundingClientRect().toJSON()]
-      }, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      const centreY = (r) => r.y + r.height / 2
-      return {
-        secondaryHeightPx: secondary.height,
-        modeScaleCentreYDeltaPx: Math.abs(centreY(modeBox) - centreY(scaleBox)),
-      }
-    },
-    // Same generous ceiling as `timeline-controls-inset-to-track-wide`'s own `secondaryHeightPx`
-    // — up to two wrapped lines is this width's pre-existing, accepted baseline; only mode and
-    // scale sharing one row is asserted strictly.
-    expect: { secondaryHeightPx: [0, 90], modeScaleCentreYDeltaPx: [0, 2] },
-  },
-  {
-    name: 'transport-core-optically-centred-1920x1080',
-    description: 'Same as `transport-core-optically-centred`, at 1920x1080 — the narrow-desktop fix must not reach this width.',
-    viewport: { width: 1920, height: 1080 },
-    t: 50,
-    measure: async ({ page }) => {
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return { offsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)) }
-    },
-    expect: { offsetPx: [0, 3] },
-  },
-  {
-    name: 'breadcrumb-clean-trail-1000x810',
-    description:
-      "Deep in the section tree, at a ~1000px desktop viewport, the breadcrumb's painted glyphs stay inside " +
-      "their own crumb boxes — no crumb's text runs into the next, every crumb still paints something, and the " +
-      'trail stays inside its own grid column.',
-    viewport: { width: 1000, height: 810 },
-    t: 0,
-    actions: async ({ page }) => {
-      await goToRootSection(page)
-      await page.getByRole('button', { name: /^Cenozoic,/ }).click()
-      await page.getByRole('button', { name: /^Quaternary,/ }).click()
-      await page.getByRole('button', { name: /^Holocene,/ }).click()
-      await page.getByRole('button', { name: /^Ancient civilisations,/ }).click()
-    },
-    measure: async ({ page }) => {
-      const trailSelector = `${BREADCRUMB_SELECTOR} ol`
-      const bounds = await crumbDrawnBounds(page, trailSelector)
-      const trail = await boxOf(page, trailSelector)
-      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
-      // A few px of horizontal overlap between two immediately-adjacent glyphs (a collapsed "…"
-      // sitting right beside the next crumb's own separator) is antialiasing, not text bleeding
-      // into a neighbour — the real defect this guards measured tens of px deep. `deepestOverlapPx`
-      // below is the two rects' own overlap depth (0 or negative when they don't overlap at all).
-      let overlappingPairs = 0
-      for (let i = 0; i < bounds.length - 1; i += 1) {
-        const deepestOverlapPx = -rectClearancePx(bounds[i], bounds[i + 1])
-        if (deepestOverlapPx > 4) overlappingPairs += 1
-      }
-      return {
-        crumbCount: bounds.length,
-        crumbsDrawn: bounds.filter((b) => b.width > 0 && b.height > 0).length,
-        overlappingPairs,
-        // Positive means the trail's own right edge sits at or inside the breadcrumb's grid
-        // column; negative means it overhangs into `.core` beside it.
-        trailRightInsetPx: sections.x + sections.width - (trail.x + trail.width),
-      }
-    },
-    expect: {
-      crumbCount: [5, 5],
-      // Every crumb paints *something* — a full label, an abbreviated one, or the collapsed "…"
-      // — never nothing at all.
-      crumbsDrawn: [5, 5],
-      overlappingPairs: [0, 0],
-      trailRightInsetPx: [0, 400],
-    },
-  },
-  {
-    name: 'timeline-controls-inset-to-track-short',
-    description:
-      'Same as `timeline-controls-inset-to-track-wide`, at 844x560, the narrowest, shortest window that still ' +
-      'takes the desktop layout (ADR-048).',
-    viewport: { width: 844, height: 560 },
-    t: 0,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      return {
-        leftInsetPx: sections.x - track.x,
-        rightInsetPx: track.x + track.width - (secondary.x + secondary.width),
-      }
-    },
-    expect: { leftInsetPx: [0, 400], rightInsetPx: [0, 400] },
-  },
-  {
-    name: 'controls-row-single-line-wide',
-    description:
-      'The breadcrumb in `.controlsSections`, and the mode/scale toggles — the two interactive groups in ' +
-      "`.controlsSecondary` that predate the sound toggle — stay on one line at 1440x900, at t=50 (the state " +
-      'that produced the original reported regression; its breadcrumb reads plain "Earth" like every other ' +
-      "shallow `t`, not the deep trail an earlier version of this comment claimed). `firstChildrenShareRow` " +
-      'checks only the first 2 children, not the sound toggle (3rd) — condensing pass (moving the sound toggle ' +
-      "in): `.controlsSecondary`'s own three-children floor (323px) is only ~8px under its measured cell width " +
-      "at rest, and `.controlsCore`'s own width varies a few px by `t` (its rate-readout content differs) — tight " +
-      "enough that the sound toggle alone wraps to its own line at some `t`s, same `flex-wrap: wrap` fallback " +
-      "`.controlsSecondary`'s own doc comment describes for the genuinely narrow widths. The pre-existing pair " +
-      '(mode, scale) is what this shot actually guards; `secondary-core-no-self-overlap-sweep` ' +
-      '(`scripts/qa/shots.mjs`) is what guards the sound toggle never overlapping anything when it does wrap.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 50,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const sectionsRows = await page.evaluate(countDistinctRows, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
-      const secondaryFirstTwoShareRow = await page.evaluate(firstChildrenShareRow, {
-        containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR,
-        n: 2,
-      })
-      return { sectionsRows, secondaryFirstTwoShareRow: secondaryFirstTwoShareRow ? 1 : 0 }
-    },
-    expect: { sectionsRows: [1, 1], secondaryFirstTwoShareRow: [1, 1] },
-  },
-  {
-    name: 'controls-row-narrow-desktop-no-collision',
-    description:
-      'At 844x560 (above the 760px breakpoint and 500px tall, so still the desktop 3-track row, not the stacked ' +
-      "or landscape layout) there is genuinely not enough width for the breadcrumb's own track plus era " +
-      "shortcuts/mode/scale all on one line — `.controlsSecondary`'s own `flex-wrap` safety net legitimately " +
-      'engages here, same as it always could pre-rearrange. The requirement at this width is what ' +
-      '`controls-secondary-no-self-overlap-short` and `timeline-controls-inset-to-track-short` already guard: no ' +
-      "child collides with another and nothing overflows the track's own gutter bounds. This shot is the same " +
-      "check restated with the full-breadcrumb worst case (t=50) those two don't use, so the wrap this width " +
-      'produces is confirmed collision-free under that case too, not just the shallower default t=0.',
-    viewport: { width: 844, height: 560 },
-    t: 50,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
-      const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      return {
-        sectionsOverlaps,
-        secondaryOverlaps,
-        rightOverflowPx: secondary.x + secondary.width - (track.x + track.width),
-      }
-    },
-    expect: { sectionsOverlaps: [0, 0], secondaryOverlaps: [0, 0], rightOverflowPx: [-400, 0] },
-  },
-  {
-    name: 'controls-row-narrow-stacked-no-collision',
-    description:
-      'Below the 760px breakpoint the row restructures into a stacked, centred column that is allowed to wrap ' +
-      '(`Timeline.module.css`\'s own `@media (max-width: 760px)` rule) — this checks the narrow 390x844 phone ' +
-      'viewport degrades to that wrap-tolerant layout without any child colliding with another, rather than ' +
-      'asserting the single-line requirement that only applies to the wider, 3-track layout above.',
-    viewport: { width: 390, height: 844 },
-    t: 50,
-    actions: async ({ page }) => enterSectionIfAtRoot(page),
-    measure: async ({ page }) => {
-      const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
-      const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
-      return { sectionsOverlaps, secondaryOverlaps }
-    },
-    expect: { sectionsOverlaps: [0, 0], secondaryOverlaps: [0, 0] },
-  },
-  {
-    name: 'transport-core-optically-centred',
-    description:
-      'The back/play/forward transport group must stay optically centred on the scrub track regardless of how ' +
-      'wide the breadcrumb or the secondary controls happen to be — `.controlsRow`\'s own symmetric ' +
-      '`minmax(0, 1fr) auto minmax(0, 1fr)` grid is what keeps this true. Same full-breadcrumb worst case as ' +
-      '`controls-row-single-line-wide`.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 50,
-    measure: async ({ page }) => {
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      return { offsetPx: Math.abs(core.x + core.width / 2 - (track.x + track.width / 2)) }
-    },
-    expect: { offsetPx: [0, 3] },
-  },
-  {
-    name: 'controls-secondary-fixed-position-across-breadcrumb-lengths',
-    description:
-      'The actual bug this rearrange fixes: the centre cluster (sound, back/play/forward, speed — ' +
-      '`TIMELINE_CONTROLS_CORE_SELECTOR`) and the right cluster (era shortcuts, playback mode, scale, rate badge ' +
-      '— `TIMELINE_CONTROLS_SECONDARY_SELECTOR`) must sit at identical pixel positions whether the breadcrumb ' +
-      'reads plain "Earth" (t=0) or the full "Earth > Cenozoic > Quaternary > Holocene > Modern" trail (t=50) — ' +
-      "`.controlsSections` is the row's one flexible column precisely so a longer trail never moves anything in " +
-      "either fixed-width cluster beside it. `childPositions` reads every direct child's own `{x, y}`.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const shortCore = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
-      const shortSecondary = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
-      await hook.setT(50)
-      await hook.ready()
-      const longCore = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
-      const longSecondary = await page.evaluate(childPositions, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
-      const driftOf = (a, b) =>
-        a.length === b.length && a.length > 0 ? Math.max(...a.map((p, i) => Math.max(Math.abs(p.x - b[i].x), Math.abs(p.y - b[i].y)))) : Infinity
-      return {
-        coreChildCount: shortCore.length,
-        secondaryChildCount: shortSecondary.length,
-        coreMaxDriftPx: driftOf(shortCore, longCore),
-        secondaryMaxDriftPx: driftOf(shortSecondary, longSecondary),
-      }
-    },
-    expect: {
-      coreChildCount: [3, 3],
-      secondaryChildCount: [3, 5],
-      coreMaxDriftPx: [0, 0],
-      secondaryMaxDriftPx: [0, 0],
-    },
-  },
-  {
-    name: 'era-shortcut-dinosaurs-selected',
-    description:
-      'Clicking the "Dinosaurs" shortcut behaves exactly like selecting the Mesozoic band by hand: the breadcrumb ' +
-      'shows the real geological name (never the nickname), the section-band strip switches to the Mesozoic\'s own ' +
-      'children (Triassic/Jurassic/Cretaceous), and `t` jumps to the section\'s oldest edge — the same "zoom in and ' +
-      'narrow" ADR-024 already gives every band/breadcrumb selection.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: /^Dinosaurs — /, exact: false }).click()
-    },
-    measure: async ({ page, hook }) => {
-      const state = await hook.getState()
-      const breadcrumbCurrent = (await page.textContent(BREADCRUMB_CURRENT_SELECTOR))?.trim() ?? null
-      const bandsAriaLabel = await page.getAttribute(SECTION_BANDS_SELECTOR, 'aria-label')
-      return {
-        sectionId: state?.sectionId ?? null,
-        t: state?.t ?? null,
-        breadcrumbCurrent,
-        bandsAriaLabel,
-        sectionIsMesozoic: state?.sectionId === 'mesozoic' ? 1 : 0,
-        breadcrumbShowsMesozoic: breadcrumbCurrent === 'Mesozoic' ? 1 : 0,
-        bandsShowMesozoicChildren: bandsAriaLabel === 'Sections of Mesozoic' ? 1 : 0,
-      }
-    },
-    expect: {
-      sectionIsMesozoic: [1, 1],
-      breadcrumbShowsMesozoic: [1, 1],
-      bandsShowMesozoicChildren: [1, 1],
-      // The Mesozoic's own cited base age (sections.ts: 251.902 Ma) — `t` lands on the
-      // section's oldest edge, matching `sectionEntryT`'s "outside -> jump to start" rule.
-      t: [251_901_000, 251_903_000],
-    },
-  },
-  {
-    name: 'population-chart-present',
-    description:
-      'Population HUD sparkline expanded to its full chart (user ask, 2026-09-18: "a small historical graph of ' +
-      'population history beneath the current count, like for the CO2 levels") at t=10, the layer\'s newest sample ' +
-      '(~7.3 billion, 2015 CE) — reuses the exact click-to-expand `LayerChart` CO2 already had. Navigates through ' +
-      'the real "Humans" era shortcut first (Holocene window) so the x-axis actually covers population\'s own ' +
-      "10,000 BCE-2015 CE domain, the way a person would actually reach this view, rather than the sliver it'd be " +
-      'against the full 4.6 Gyr domain. The y-axis is log-scaled (~1,600x range, `chartAxis.ts`) and says so.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 10,
-    // Idempotent by design: this harness runs every shot against one already-loaded page (no
-    // reload between shots — see the README), and `expandedChartLayerId` is local `Experience`
-    // state a "Humans" re-click doesn't reset, so a later shot in the same run can find the
-    // chart already open. Matches either half of the sparkline button's own toggling
-    // aria-label ("Expand ..."/"Collapse ..."), scoped exactly (the chart's own "Close ..."
-    // button also ends in "Global population chart" and would otherwise collide), and only
-    // clicks if it isn't already pressed.
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: 'Humans — the Holocene' }).click()
-      const chartToggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
-      if ((await chartToggle.getAttribute('aria-pressed')) !== 'true') await chartToggle.click()
-    },
-    measure: async ({ page }) => {
-      const curve = await polylineTraceBounds(page, '[data-testid="layer-chart-svg"]')
-      const text = (await page.textContent('[data-testid="layer-chart"]')) ?? ''
-      return {
-        curveWidth: curve.width,
-        curveHeight: curve.height,
-        showsBillion: text.includes('billion') ? 1 : 0,
-        showsLogScale: text.includes('log scale') ? 1 : 0,
-      }
-    },
-    expect: {
-      // The chart's `<svg>` is stretched non-uniformly to the panel's own CSS width (not its
-      // 600-unit viewBox — see `LayerChart.tsx`'s own comment on `preserveAspectRatio="none"`),
-      // so at this viewport that's most of 1440px minus the shell's side padding. The bounding
-      // box's height is dominated by the always-present vertical playhead line (it spans the
-      // full plot regardless of the curve's shape), so it isn't itself proof of the log axis —
-      // that's `chartAxis.test.ts`/`charts.test.tsx`'s job; here it only rules out a totally
-      // blank plot.
-      curveWidth: [1000, 1440],
-      curveHeight: [60, 110],
-      showsBillion: [1, 1],
-      showsLogScale: [1, 1],
-    },
-  },
-  {
-    name: 'population-chart-mid-holocene',
-    description:
-      'Same chart, t=2025 (~0 CE, ~232 million people, DECISIONS.md/fixtures.ts\'s own sanity-check point) — the ' +
-      'playhead should sit mid-curve, not pinned to either edge, proving scrubbing tracks the chart the way it ' +
-      "already does for CO2's.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 2025,
-    // Idempotent by design: this harness runs every shot against one already-loaded page (no
-    // reload between shots — see the README), and `expandedChartLayerId` is local `Experience`
-    // state a "Humans" re-click doesn't reset, so a later shot in the same run can find the
-    // chart already open. Matches either half of the sparkline button's own toggling
-    // aria-label ("Expand ..."/"Collapse ..."), scoped exactly (the chart's own "Close ..."
-    // button also ends in "Global population chart" and would otherwise collide), and only
-    // clicks if it isn't already pressed.
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: 'Humans — the Holocene' }).click()
-      const chartToggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
-      if ((await chartToggle.getAttribute('aria-pressed')) !== 'true') await chartToggle.click()
-    },
-    measure: async ({ page }) => {
-      const curve = await polylineTraceBounds(page, '[data-testid="layer-chart-svg"]')
-      const text = (await page.textContent('[data-testid="layer-chart"]')) ?? ''
-      return {
-        curveWidth: curve.width,
-        curveHeight: curve.height,
-        showsMillion: text.includes('million') ? 1 : 0,
-      }
-    },
-    expect: {
-      curveWidth: [1000, 1440],
-      curveHeight: [60, 110],
-      showsMillion: [1, 1],
-    },
-  },
-  {
-    name: 'population-chart-early-holocene',
-    description:
-      "Same chart, t=11,700 (the Holocene's own cited base — early farming, near population's oldest well-covered " +
-      "records) — the curve's left end, proving the domain is drawn all the way to its own old edge instead of " +
-      'clipping early, and that the log axis keeps this era legible rather than flattened against the present-day ' +
-      'spike a linear axis would produce.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 11_700,
-    // Idempotent by design: this harness runs every shot against one already-loaded page (no
-    // reload between shots — see the README), and `expandedChartLayerId` is local `Experience`
-    // state a "Humans" re-click doesn't reset, so a later shot in the same run can find the
-    // chart already open. Matches either half of the sparkline button's own toggling
-    // aria-label ("Expand ..."/"Collapse ..."), scoped exactly (the chart's own "Close ..."
-    // button also ends in "Global population chart" and would otherwise collide), and only
-    // clicks if it isn't already pressed.
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: 'Humans — the Holocene' }).click()
-      const chartToggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
-      if ((await chartToggle.getAttribute('aria-pressed')) !== 'true') await chartToggle.click()
-    },
-    measure: async ({ page }) => {
-      const curve = await polylineTraceBounds(page, '[data-testid="layer-chart-svg"]')
-      const text = (await page.textContent('[data-testid="layer-chart"]')) ?? ''
-      return {
-        curveWidth: curve.width,
-        curveHeight: curve.height,
-        showsMillion: text.includes('million') ? 1 : 0,
-      }
-    },
-    expect: {
-      curveWidth: [1000, 1440],
-      curveHeight: [60, 110],
-      showsMillion: [1, 1],
-    },
-  },
-  // `co2-chart-log-axis-regression` (log axis for a wide-ratio scalar chart) removed 2026-09-18:
-  // CO2 left the HUD entirely (`@/layers/hudVisibility.ts`, "still remove co2 section so thers
-  // more room for events list"), so its `HudSparkline` toggle — the only way this chart ever
-  // opened — no longer exists; the chart itself is unreachable, not merely unshown. Checked
-  // first whether this was the log-axis behaviour's only coverage before dropping it: it is not
-  // — `axisTransform`'s own unit tests (`src/layers/chartAxis.test.ts`) cover the ratio-threshold
-  // math directly, including a population-scale (~1,600x) ratio well past CO2's own (~42x), and
-  // the `population-chart` shot just above already asserts `showsLogScale: [1, 1]` end-to-end on
-  // a real, still-reachable chart. This shot's only claim not duplicated elsewhere — that CO2's
-  // declared ADR-027 gap "still breaks the line rather than bridging it" — was never actually
-  // asserted in its own `expect` block despite the description; there is nothing here to repoint.
-  {
-    name: 'arrival-arc-mid-journey',
-    description:
-      "Migration-arc progressive reveal (user ask, 2026-09-18: \"showing journey from origin to destination\") — " +
-      "mid-travel on the Out-of-Africa dispersal (out-of-africa-migration: established 60 ka, window to 70 ka), " +
-      "sampled at t=65 ka, map mode so the arc's own screen position never depends on the sphere's (reduced-motion-" +
-      "frozen) auto-rotate angle. HYDE density and the cities layer are both empty this far back (density eases in " +
-      "only from ~14.5 ka), so toggling the whole human-civilisation layer off and back on in `measure` isolates the " +
-      "arc/arrowhead/destination-ring specifically, not a density or city difference riding along with it.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 65_000,
-    state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': true } },
-    measure: async ({ page, hook }) => {
-      const { diffPixels, diffFraction } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
-        await hook.setLayerToggle('human-civilisation', false)
-        await rafTicks(page, 2)
-      })
-      await hook.setLayerToggle('human-civilisation', true)
-      await rafTicks(page, 2)
-      return { diffPixels, diffFraction }
-    },
-    expect: {
-      // A revealed ribbon plus its arrowhead is a thin sliver of the whole map, but a real one —
-      // this floor is well above screenshot/PNG round-trip noise (`countDiffPixels`'s own
-      // threshold already filters that) and was set from this shot's own measured count.
-      diffPixels: [80, 200_000],
-    },
-  },
-  {
-    name: 'arrival-arc-fades-by-present',
-    description:
-      'BUG (2026-09-18 user report: "the more modern migration paths are persisting on the globe up until present ' +
-      'moment and not fading/disappearing") — confirmed root cause: `arrivalPresentationAt`\'s tail-fade width was ' +
-      'never squeezed to fit the warp actually left between `established` and t=0, so a recently-established arc ' +
-      "sat partly lit forever. Fixed by giving the tail the same squeeze the \"inhabited\" marker's own envelope " +
-      "already used. This shot targets the most recent curated arrival (mass-european-emigration, established 175 " +
-      'yr BP) — the worst case, with almost no warp left to fade across. The saved screenshot is t=0 itself: by eye, ' +
-      "no amber arc is on screen anywhere (compare the sibling debug capture at t=established, where the Ireland-to-" +
-      "New-York and the Britain-to-Australia arcs both stand fully drawn) — that visual absence is this shot's real " +
-      "assertion. `measure`'s own diffPixels number is a much weaker, honestly-caveated signal, not a substitute: " +
-      "it diffs t=established (arc undeniably lit) against t=0, but population density genuinely grew enormously " +
-      "over exactly this 175-year span (~1.2B to ~7.3B people) — HYDE's own texture differs hugely between the two " +
-      "frames regardless of the arc, so a healthy diffPixels count here does NOT by itself prove the arc faded; it " +
-      "mainly floors out a total-rendering-failure regression (a blank/frozen canvas). The arc's own contribution " +
-      "was confirmed the only way available without new instrumentation to isolate arc-coloured pixels from " +
-      'density-coloured ones on this map: a human read of the screenshots (this file\'s own `description`, ' +
-      'satisfying CLAUDE.md\'s "read your own screenshots and judge them").',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': true } },
-    measure: async ({ page, hook }) => {
-      const { diffPixels, diffFraction } = await drawnPixelDiff(page, GLOBE_CANVAS_SELECTOR, async () => {
-        await hook.setT(175)
-        await hook.ready()
-        await rafTicks(page, 2)
-      })
-      await hook.setT(0)
-      await hook.ready()
-      await rafTicks(page, 2)
-      return { diffPixels, diffFraction }
-    },
-    expect: {
-      // A floor against a total-rendering-failure regression only (see the description above for
-      // why this can't be a precise arc-only signal) — set well below this shot's own measured
-      // count.
-      diffPixels: [80, 500_000],
-    },
-  },
-  {
-    name: 'population-sparkline-legible',
-    description:
-      'REOPENED (2026-09-18, coordinator re-review): the always-on HUD sparkline beneath "Global population" — ' +
-      'the thing the user actually asked to copy from CO2, not the click-to-expand chart — measured as barely a ' +
-      'dot. Root cause (confirmed against real DOM/polyline data, not just the chart-open shots below): both ' +
-      "sparklines share one `FULL_DOMAIN_SYMLOG_SCALE` (4.6 Gyr) as the literal x-axis, and population's own " +
-      '12,015-year domain is under 6% of that span — of 97 evenly spaced full-domain samples only ~5 landed ' +
-      "inside it, all older than 1450 BP, so the entire industrial-era-to-present explosion (the whole shape) " +
-      "fell between two samples and was never drawn. Fixed in `Sparkline.tsx` by windowing its own sampling to " +
-      "`layer.timeDomain` instead of the passed scale's domain (still using that scale's `kind` — symlog). " +
-      "UPDATED 2026-09-18 (CO2 hidden from the HUD, `@/layers/hudVisibility.ts`): this shot originally compared " +
-      "population's drawn trace against CO2's own as the \"legible, like CO2's\" reference bar, and checked the " +
-      "two readout rows never overlapped. CO2's readout no longer renders at all, so there is no other HUD " +
-      "readout left to compare against or collide with — `hudScalarEntries` now has exactly one chartable entry. " +
-      "Rather than fake a comparison against a row that no longer exists, this now asserts population's trace " +
-      "against the same absolute pixel band directly (unchanged from the original popWidth/popHeight bounds, " +
-      "which were never actually derived from a live co2Width/co2Height reading — see the removed measurement), " +
-      "plus that CO2's own readout is genuinely gone and population's is the one that remains.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 10,
-    measure: async ({ page }) => {
-      // `polylineTraceBounds`, not `drawnBounds`: both sparklines sit directly over the scene
-      // photo with no opaque backing, and `drawnBounds`' own corner-sampled background check is
-      // fooled by that photo's texture alone (see that helper's own doc comment) — a real risk
-      // this exact shot could otherwise have papered over.
-      const pop = await polylineTraceBounds(page, '[data-testid="scalar-readout-population"] svg')
-      const popValue = await page
-        .locator('[data-testid="scalar-readout-population"] [data-testid="scalar-readout-value"]')
-        .boundingBox()
-      const co2ReadoutCount = await page.locator('[data-testid="scalar-readout-co2"]').count()
-      const popReadoutCount = await page.locator('[data-testid="scalar-readout-population"]').count()
-      return {
-        popWidth: pop.width,
-        popHeight: pop.height,
-        // The sparkline's own drawn top sits below the population value text's own bottom —
-        // "beneath the current count".
-        popBelowOwnValue: popValue && pop.y >= popValue.y + popValue.height - 1 ? 1 : 0,
-        co2ReadoutCount,
-        popReadoutCount,
-      }
-    },
-    expect: {
-      popWidth: [120, 200],
-      popHeight: [15, 32],
-      popBelowOwnValue: [1, 1],
-      co2ReadoutCount: [0, 0],
-      popReadoutCount: [1, 1],
-    },
-  },
-  {
-    name: 'feed-gets-space-co2-vacated',
-    description:
-      'The actual goal of hiding CO2 from the HUD (user: "still remove co2 section so thers more room for events ' +
-      'list") was never "delete a row" for its own sake — it was to give `<EventFeed>` more room. `.readouts` and ' +
-      "`.feed` share one column as consecutive grid rows (`ShellLayout.module.css`'s `.hud` grid: `.readouts` is " +
-      "an `auto` track sized to its own content, `.feed` is the one `minmax(0, 1fr)` track that absorbs whatever " +
-      "height the `auto` tracks don't need) — removing CO2's row shrinks `.readouts`, and this shot proves that " +
-      "shrink actually reaches `.feed` rather than becoming dead space, by asserting `.feed`'s own box (`boxOf`, " +
-      "a deliberate layout measurement — see `SHELL_FEED_SELECTOR`'s own doc comment for why a drawn-pixel " +
-      'measurement is the wrong tool here) grew by real, measured amounts. At this viewport (1440x900, t=10): ' +
-      'BEFORE (both co2 and population readout rows present) `.readouts` was 190.4px / `.feed` was 95.1px; AFTER ' +
-      '(co2 hidden, population only) `.readouts` is 79.9px / `.feed` is 205.6px — CO2\'s vacated row (~110px) ' +
-      "reached `.feed` in full, more than doubling its usable height, not merely shrinking `.readouts` and " +
-      'leaving the difference as dead space. Both numbers are asserted against the current (fixed) build\'s own ' +
-      'bands below; confirmed against the unfixed build (co2 still shown) that they read 190.4/95.1 and fail.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 10,
-    measure: async ({ page }) => {
-      const readouts = await boxOf(page, SHELL_READOUTS_SELECTOR)
-      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
-      return { readoutsHeight: readouts.height, feedHeight: feed.height }
-    },
-    expect: {
-      // `.readouts` now holds just the population row (co2's own row is gone) — measured 79.9px,
-      // versus 190.4px with both rows present (confirmed by temporarily un-hiding co2 and
-      // re-running this shot, which fails both bands below as expected).
-      readoutsHeight: [60, 110],
-      // Measured 205.6px with co2 hidden, versus 95.1px with it shown — a real, order-of-110px
-      // gain reaching `.feed`, not dead space left behind in `.readouts`'s old row.
-      feedHeight: [180, 240],
-    },
-  },
-  {
-    name: 'event-feed-card-count-stable-across-captions',
-    description:
-      'The event feed\'s visible card count must depend only on the viewport, never on which scene\'s caption ' +
-      'happens to be showing: `amsterdam-voc-harbour` (t=375) carries one of the longest real captions (~350 ' +
-      'characters, several wrapped lines) and `columbus-landfall-1492` (t=533) one of the shortest — both fall in ' +
-      "the same event-dense stretch of the Holocene, so the feed's own candidate pool is comparable either way. " +
-      "`ShellLayout.module.css`'s `.caption` now caps its own height (`max-height` + `overflow-y: auto`), so a " +
-      "longer caption no longer eats into `.feed`'s track below it.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 533,
-    measure: async ({ page, hook }) => {
-      await hook.ready()
-      const shortCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      await hook.setT(375)
-      await hook.ready()
-      const longCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      return { shortCaptionCount, longCaptionCount, countsMatch: shortCaptionCount === longCaptionCount ? 1 : 0 }
-    },
-    // Both counts must be equal, and (at this viewport, plenty of vertical room) more than one —
-    // a shot that only ever showed a single card either way would not distinguish "the fix works"
-    // from "there was never more than one card available regardless".
-    expect: { countsMatch: [1, 1], shortCaptionCount: [2, 4], longCaptionCount: [2, 4] },
-  },
-  {
-    name: 'event-feed-card-count-stable-across-captions-tall',
-    description: 'Same as `event-feed-card-count-stable-across-captions`, at a taller viewport with more vertical room to show cards in.',
-    viewport: { width: 1440, height: 1200 },
-    t: 533,
-    measure: async ({ page, hook }) => {
-      await hook.ready()
-      const shortCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      await hook.setT(375)
-      await hook.ready()
-      const longCaptionCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      return { shortCaptionCount, longCaptionCount, countsMatch: shortCaptionCount === longCaptionCount ? 1 : 0 }
-    },
-    expect: { countsMatch: [1, 1] },
-  },
-  {
-    name: 'event-feed-holds-cards-through-a-sparse-stretch',
-    description:
-      'A card leaves the feed because a newer event pushed it off the end, never because `t` moved on while ' +
-      'slots sat empty. `t=130000` is the emptiest real stretch of the manifest — `levant-early-dispersal` ' +
-      '(185,500), `homo-sapiens-origin` (315,000) and `control-of-fire` (950,000) are the three most recent ' +
-      'events, spread across an order of magnitude — so the feed must still be full and every card still ' +
-      'readable. A lookback-window rule shows one card here; confirmed failing against that build.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 130000,
-    measure: async ({ page }) => {
-      const cards = page.locator(EVENT_FEED_ITEM_SELECTOR)
-      // Opacity, not a layout box: a card that is in the DOM but faded out is the same bug as a
-      // card that was evicted, and only the painted value distinguishes them.
-      const opacities = await cards.evaluateAll((els) => els.map((el) => Number(getComputedStyle(el).opacity)))
-      return { cardCount: opacities.length, dimmestCard: opacities.length === 0 ? 0 : Math.min(...opacities) }
-    },
-    expect: { cardCount: [3, 3], dimmestCard: [0.6, 1] },
-  },
-  {
-    name: 'event-feed-no-overflow-at-1280x720',
-    description:
-      "A short, wide desktop window (1280x720, `.feed`'s own ShellLayout.module.css comment names this the worst " +
-      "case measured) leaves `.feed`'s track very little spare height once the title, readouts and bottom bands " +
-      "take theirs — this checks the feed's own box never grows past the bottom of its column and overlaps the " +
-      "scene caption/timeline below it, even with the long-caption scene from the stability shots above.",
-    viewport: { width: 1280, height: 720 },
-    t: 375,
-    measure: async ({ page }) => {
-      const feed = await boxOf(page, SHELL_FEED_SELECTOR)
-      const bottom = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      return { overlapsBottom: rectsOverlap(feed, bottom) ? 1 : 0 }
-    },
-    expect: { overlapsBottom: [0, 0] },
-  },
-  {
-    name: 'event-feed-card-position-stable-across-t',
-    description:
-      "A card's drawn position must depend only on its rank in the feed, never on `t` itself: `distanceFraction` " +
-      'moves continuously as `t` scrubs even while the visible set is unchanged, and the old per-card ' +
-      '`translateY(feedCardOffsetPx(distanceFraction))` chased that every frame, reading as constant jitter. ' +
-      'Both `t=250` and `t=290` resolve to the identical three-card set (ADR-040\'s CLUSTER_SPAN=0.20, bounded ' +
-      "by total span): `transatlantic-slave-trade` now digests `newcomen-steam-engine` and `newton-principia` " +
-      "(3 members), and `columbian-exchange` digests `dutch-golden-age-voc`, `galileo-telescope` and " +
-      "`russian-conquest-of-siberia` (4 members), same order both times — this checks the freshest (digest) " +
-      "card's own position, verified against both the fixed selection rule (age-ratio only) and the removed " +
-      "pixel-lookback one it replaces, so this isolates the drift fix from the selection-rule change. Confirmed " +
-      "failing against the unfixed build: yDelta measured ~1.96px there.",
-    viewport: DEFAULT_VIEWPORT,
-    // This shot's whole point is a per-card `transform` that used to change with `t` — running
-    // under real motion (rather than the run's own `reduce` default) keeps the guard meaningful
-    // against a regression that reintroduces one.
-    reducedMotion: 'no-preference',
-    t: 250,
-    measure: async ({ page, hook }) => {
-      const freshestSelector = '[data-testid="event-feed-item-transatlantic-slave-trade"]'
-      const idsAt = () => page.locator(EVENT_FEED_ITEM_SELECTOR).evaluateAll((els) => els.map((el) => el.dataset.testid))
-      const idsT1 = await idsAt()
-      const boxT1 = await boxOf(page, freshestSelector)
-      await hook.setT(290)
-      // `.card`'s own opacity transition (EventFeed.module.css) has no readiness signal of its
-      // own — `hook.ready()` only covers network/decode state — so this settles any CSS
-      // transition before measuring, the same reasoning `timeouts.mjs`'s two waits give.
-      await page.waitForTimeout(300)
-      const idsT2 = await idsAt()
-      const boxT2 = await boxOf(page, freshestSelector)
-      return {
-        sameVisibleSet: idsT1.length === idsT2.length && idsT1.every((id, i) => id === idsT2[i]) ? 1 : 0,
-        yDelta: Math.abs(boxT1.y - boxT2.y),
-      }
-    },
-    expect: { sameVisibleSet: [1, 1], yDelta: [0, 0.5] },
-  },
-  {
-    name: 'event-feed-burst-collapses-into-digest',
-    description:
-      "ADR-040 (burst clustering): a dense stretch collapses into one digest card per cluster instead of " +
-      "evicting its own cards faster than anyone can read them. t=90 sits just past the published manifest's " +
-      "densest real burst at CLUSTER_SPAN=0.20 (bounded by total span as well as each adjacent gap) — " +
-      "`ginza-modern-urban-culture`, `penicillin-discovery`, `influenza-1918-pandemic`, `world-war-i`, " +
-      "`battle-of-the-somme`, `general-relativity` and `ford-model-t-assembly-line`, 7 events inside 16 years " +
-      "(this set's own max cluster size at the shipped threshold) — the feed still shows exactly " +
-      "DEFAULT_MAX_VISIBLE (3) cards, and the freshest is a digest headlined `ginza-modern-urban-culture` " +
-      "carrying its own \"+6 more\" badge for the rest of that cluster, rather than 3 separate individual-event " +
-      "cards all drawn from the same burst. Confirmed failing with `CLUSTER_SPAN` temporarily set to 0 " +
-      "(clustering a no-op, reproducing pre-ADR-040 per-event selection): cardCount was still 3 there, but " +
-      "moreCount read 0 — no digest badge exists when nothing merges, which is exactly the bug this shot " +
-      "guards against.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 90,
-    measure: async ({ page }) => {
-      const cardCount = await page.locator(EVENT_FEED_ITEM_SELECTOR).count()
-      const moreBadge = page.locator('[data-testid="event-feed-more-ginza-modern-urban-culture"]')
-      const moreCount = await moreBadge.count()
-      const moreText = moreCount > 0 ? (await moreBadge.textContent())?.trim() : null
-      return { cardCount, moreCount, hasSixMore: moreText === '+6 more' ? 1 : 0 }
-    },
-    expect: { cardCount: [3, 3], moreCount: [1, 1], hasSixMore: [1, 1] },
-  },
-  {
-    name: 'breadcrumb-trimmed',
-    description:
-      'Chrome-rearrange pass (user ask, 2026-09-18): the breadcrumb\'s own "‹ Up"/"⌂ Earth" buttons are deleted ' +
-      'outright (the parent is always one click away as its own crumb; the root crumb beside "⌂" was already always ' +
-      'labelled "Earth"), leaving only the ancestor trail. Navigates two levels deep (Cenozoic, then Quaternary) so ' +
-      'the trail actually holds clickable ancestor crumbs, and asserts every button inside the breadcrumb `<nav>` is ' +
-      'one of those crumbs — none of the four shortcut buttons this used to carry.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      await goToRootSection(page)
-      await page.getByRole('button', { name: /^Cenozoic,/ }).click()
-      await page.getByRole('button', { name: /^Quaternary,/ }).click()
-    },
-    measure: async ({ page }) => {
-      const crumbLabels = await page.evaluate(() => {
-        const nav = document.querySelector('nav[aria-label="Timeline section"]')
-        return nav ? Array.from(nav.querySelectorAll('button')).map((b) => b.getAttribute('aria-label')) : null
-      })
-      return {
-        breadcrumbCurrent: (await page.textContent(BREADCRUMB_CURRENT_SELECTOR))?.trim() ?? null,
-        // Exactly the ancestor crumbs (Earth, Cenozoic) — no "Already at the top level"/"Back to
-        // Earth"/"Previous section: …"/"Next section: …" among them.
-        crumbCount: crumbLabels?.length ?? -1,
-        hasUpOrHomeOrSiblingButton:
-          crumbLabels?.some((l) => l !== null && /Up to |Back to Earth|Already |Previous section|Next section/.test(l))
-            ? 1
-            : 0,
-      }
-    },
-    expect: {
-      crumbCount: [2, 2],
-      hasUpOrHomeOrSiblingButton: [0, 0],
-    },
-  },
-  {
-    name: 'section-edge-nav-enabled',
-    description:
-      'The previous/next sibling-section buttons moved off the breadcrumb onto the scrub track itself (user ask, ' +
-      '2026-09-18: "the next/previous sibling era navigation buttons should be moved to the far left and right edges ' +
-      'of the era range on the timeline"). Navigates to the Jurassic (Dinosaurs shortcut, then the Jurassic band), ' +
-      'which has both a previous (Triassic) and next (Cretaceous) sibling directly, and: (1) the two buttons carry ' +
-      'the same aria-label/title text — naming the real destination and its keyboard shortcut — the breadcrumb ' +
-      'buttons used to; (2) neither button\'s CSS box overlaps the scrub track\'s own hit area (`role="slider"`), so ' +
-      'they can never intercept a drag meant for the track; (3) a REAL pointer drag (mouse down/move/up, not a ' +
-      'synthetic click) past either literal edge of the (now narrower) track still lands `t` on that edge — proof ' +
-      "the edge buttons cost the track no reachable range; (4) clicking \"Previous section: Triassic\" actually " +
-      'selects the Triassic section, through the same `onSelectSection` every other section control uses.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: /^Dinosaurs — /, exact: false }).click()
-      await page.getByRole('button', { name: /^Jurassic,/ }).click()
-    },
-    measure: async ({ page, hook }) => {
-      const previous = page.getByRole('button', { name: /^Previous section:/ })
-      const next = page.getByRole('button', { name: /^Next section:/ })
-      const [previousLabel, previousTitle, nextLabel, nextTitle] = await Promise.all([
-        previous.getAttribute('aria-label'),
-        previous.getAttribute('title'),
-        next.getAttribute('aria-label'),
-        next.getAttribute('title'),
-      ])
-      const [previousBox, nextBox, trackBox] = await Promise.all([
-        previous.boundingBox(),
-        next.boundingBox(),
-        page.getByRole('slider', { name: 'Scrub timeline' }).boundingBox(),
-      ])
-      const noOverlap = (a, b) => a !== null && b !== null && (a.x + a.width <= b.x || b.x + b.width <= a.x)
+  }
+}
 
-      // A real drag past the track's own right edge — the newest (present-ward) end — must clamp
-      // `t` to the section's own newest boundary, not stop short of it or land on a button instead.
-      const rightEdgeT = await (async () => {
-        const box = trackBox
-        const y = box.y + box.height / 2
-        await page.mouse.move(box.x + box.width / 2, y)
-        await page.mouse.down()
-        await page.mouse.move(box.x + box.width + 20, y, { steps: 8 })
-        await page.mouse.up()
-        return (await hook.getState())?.t ?? null
-      })()
-      const leftEdgeT = await (async () => {
-        const box = trackBox
-        const y = box.y + box.height / 2
-        await page.mouse.move(box.x + box.width / 2, y)
-        await page.mouse.down()
-        await page.mouse.move(box.x - 20, y, { steps: 8 })
-        await page.mouse.up()
-        return (await hook.getState())?.t ?? null
-      })()
-
-      const beforeClick = await hook.getState()
-      await previous.click()
-      const afterClick = await hook.getState()
-
-      return {
-        previousLabel,
-        previousTitle,
-        nextLabel,
-        nextTitle,
-        previousOverlapsTrack: noOverlap(previousBox, trackBox) ? 0 : 1,
-        nextOverlapsTrack: noOverlap(nextBox, trackBox) ? 0 : 1,
-        rightEdgeT,
-        leftEdgeT,
-        wasJurassic: beforeClick?.sectionId === 'jurassic' ? 1 : 0,
-        selectedTriassic: afterClick?.sectionId === 'triassic' ? 1 : 0,
-      }
-    },
-    expect: {
-      previousOverlapsTrack: [0, 0],
-      nextOverlapsTrack: [0, 0],
-      // Jurassic: [143.1 Ma, 201.4 Ma] (sections.ts) — the right/newest edge clamps to 143.1 Ma,
-      // the left/oldest edge to 201.4 Ma, each within a small tolerance of the fisheye-distorted
-      // pixel grid rather than exact float equality.
-      rightEdgeT: [143_050_000, 143_150_000],
-      leftEdgeT: [201_350_000, 201_450_000],
-      wasJurassic: [1, 1],
-      selectedTriassic: [1, 1],
-    },
-  },
-  {
-    name: 'section-edge-nav-disabled-at-root',
+/**
+ * Desktop expanded globe at one viewport, sphere then (with `withMap`) map. Legend (top-left) and
+ * overlay selector (top-right, under the ✕) align their outer edges to the scrub track's at one
+ * top; the era shortcuts stay centred under the title; the Globe/Map toggle and zoom rocker share
+ * one row under the drawn shape, their outer edges on the track's; and no region — legend, title,
+ * shortcuts, overlay, close button, toggle, zoom, timeline, drawn shape — overlaps another or
+ * leaves the viewport. The drawn shape is the sphere's or map's opaque body (`globeBodyBounds`).
+ * @param {{ width: number, height: number }} viewport
+ * @param {{ sphereWidth?: [number, number], mapWidth?: [number, number], withMap?: boolean }} options
+ */
+function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false } = {}) {
+  const regionSelectors = {
+    legend: LEGEND_CORNER_SELECTOR,
+    title: TIME_TITLE_SELECTOR,
+    era: ERA_SHORTCUTS_SELECTOR,
+    overlay: OVERLAY_SELECT_STACK_SELECTOR,
+    close: CLOSE_BUTTON_SELECTOR,
+    toggle: VIEW_MODE_TOGGLE_SELECTOR,
+    zoom: ZOOM_CONTROLS_SELECTOR,
+    timeline: BOTTOM_CHROME_SELECTOR,
+  }
+  const measureMode = async (page, fitFrameSelector) => {
+    const b = await boxesOf(page, { ...regionSelectors, track: TIMELINE_TRACK_STACK_SELECTOR })
+    const shape = await globeBodyBounds(page, fitFrameSelector)
+    const { track, ...regions } = b
+    return {
+      shape,
+      layout: layoutFlags({ ...regions, shape }, viewport),
+      legendLeftEdgeOffsetPx: b.legend.x - track.x,
+      overlayRightEdgeOffsetPx: b.overlay.x + b.overlay.width - (track.x + track.width),
+      legendOverlayTopDeltaPx: b.legend.y - b.overlay.y,
+      legendHeightPx: b.legend.height,
+      eraCentreOffsetPx: centreX(b.era) - centreX(b.title),
+      overlayBelowCloseGapPx: b.overlay.y - (b.close.y + b.close.height),
+      toggleLeftEdgeOffsetPx: b.toggle.x - track.x,
+      zoomRightEdgeOffsetPx: b.zoom.x + b.zoom.width - (track.x + track.width),
+      controlsCentreYDeltaPx: Math.abs(centreY(b.toggle) - centreY(b.zoom)),
+      toggleBelowShapeGapPx: b.toggle.y - (shape.y + shape.height),
+    }
+  }
+  const modeExpect = (prefix, widthRange) => ({
+    [`${prefix}.shape.width`]: widthRange ?? [100, viewport.width],
+    ...Object.fromEntries(Object.entries(layoutExpect([...Object.keys(regionSelectors), 'shape'])).map(([key, range]) => [`${prefix}.layout.${key}`, range])),
+    [`${prefix}.legendLeftEdgeOffsetPx`]: [-2, 2],
+    [`${prefix}.overlayRightEdgeOffsetPx`]: [-2, 2],
+    [`${prefix}.legendOverlayTopDeltaPx`]: [-2, 2],
+    [`${prefix}.legendHeightPx`]: [0, LEGEND_HEIGHT_CEILING_PX],
+    [`${prefix}.eraCentreOffsetPx`]: [-3, 3],
+    [`${prefix}.overlayBelowCloseGapPx`]: [4, 400],
+    [`${prefix}.toggleLeftEdgeOffsetPx`]: [-2, 2],
+    [`${prefix}.zoomRightEdgeOffsetPx`]: [-2, 2],
+    [`${prefix}.controlsCentreYDeltaPx`]: [0, 4],
+    [`${prefix}.toggleBelowShapeGapPx`]: [4, 400],
+  })
+  return {
+    name: `layout-${viewport.width}x${viewport.height}-expanded`,
     description:
-      'At the root section (Earth, the full domain) neither sibling-section move has anywhere to go — both edge-nav ' +
-      'buttons stay in place, `disabled`, rather than disappearing (so the track\'s own drawn width never jumps as ' +
-      'the section changes), matching the convention the breadcrumb\'s own now-deleted "‹ Up"/"⌂ Earth" buttons used.',
-    viewport: DEFAULT_VIEWPORT,
+      `Desktop ${viewport.width}x${viewport.height}, globe expanded (sphere${withMap ? ', then map' : ''}): ` +
+      `${sphereWidth ? `drawn sphere ${sphereWidth[0]}-${sphereWidth[1]}px, ` : ''}${mapWidth ? `drawn map ${mapWidth[0]}-${mapWidth[1]}px, ` : ''}` +
+      'no region (legend, title, era shortcuts, overlay, close, Globe/Map toggle, zoom, timeline, drawn shape) overlaps ' +
+      "another or leaves the viewport; legend, overlay, toggle and zoom on the track's edges (±2px); shortcuts centred " +
+      'under the title (±3px); toggle and zoom on one row (±4px) at least 4px below the drawn shape' +
+      (withMap ? '; the fully zoomed-out map shows no grab cursor.' : '.'),
+    viewport,
     t: 0,
-    measure: async ({ page }) => {
-      const previous = page.getByRole('button', { name: 'No previous section' })
-      const next = page.getByRole('button', { name: 'No next section' })
-      return {
-        previousDisabled: (await previous.isDisabled()) ? 1 : 0,
-        nextDisabled: (await next.isDisabled()) ? 1 : 0,
-        previousVisible: (await previous.isVisible()) ? 1 : 0,
-        nextVisible: (await next.isVisible()) ? 1 : 0,
-      }
-    },
-    expect: {
-      previousDisabled: [1, 1],
-      nextDisabled: [1, 1],
-      // Kept in place, not hidden — a disabled button is still visible.
-      previousVisible: [1, 1],
-      nextVisible: [1, 1],
-    },
-  },
-  {
-    name: 'population-sparkline-no-data-state',
-    description:
-      "The population readout is absent, not reading \"no data\", at a `t` older than population's own oldest " +
-      'domain edge (t=20,000; the edge is 12,025): `isPopulationReadoutHiddenAt` hides the row there.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 20_000,
-    measure: async ({ page }) => ({ rowCount: await page.locator('[data-testid="scalar-readout-population"]').count() }),
-    expect: {
-      rowCount: [0, 0],
-    },
-  },
-  {
-    name: 'population-sparkline-grows-with-t',
-    description:
-      "The population sparkline's trace grows with `t` rather than being fully drawn up front: the row is absent " +
-      "before population's own domain (t=20,000), then sweeps `t` through the domain to its newest edge and " +
-      "measures the DRAWN trace width at each stop via `polylineTraceBounds` (the SVG box is full-width throughout " +
-      'and would prove nothing). Asserts the width strictly increases at each later stop.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 20_000,
-    measure: async ({ page, hook }) => {
-      const widthAt = async (t) => {
-        await hook.setT(t)
-        await hook.ready()
-        await rafTicks(page, 2)
-        const trace = await polylineTraceBounds(page, '[data-testid="scalar-readout-population"] svg')
-        return trace.width
-      }
-      const hiddenBeforeDomainRowCount = await page.locator('[data-testid="scalar-readout-population"]').count()
-      // Deep in the domain; mid-domain; near its own newest edge. 8,000 (not right at the
-      // domain's own oldest edge, 12,025) is deliberate: population's adaptive symlog knee
-      // (~12 yr) packs the 97-sample grid so tightly near that edge that anything closer only
-      // has the bare minimum two reached points needed to draw a segment at all — real, but a
-      // sub-pixel sliver next to nothing, not a meaningfully assertable width.
-      const early = await widthAt(8_000)
-      const mid = await widthAt(5_000)
-      const late = await widthAt(10)
-      return {
-        hiddenBeforeDomainRowCount,
-        early,
-        mid,
-        late,
-        midGrowth: mid - early,
-        lateGrowth: late - mid,
-      }
-    },
-    expect: {
-      hiddenBeforeDomainRowCount: [0, 0],
-      // A small but real trace, not yet close to full width.
-      early: [0, 40],
-      // Each step must be a real, visible increase, not noise — well above antialiasing slop.
-      midGrowth: [5, 200],
-      lateGrowth: [5, 200],
-      // The fully-grown trace should reach close to the row's own full width (matches
-      // `population-sparkline-legible`'s own popWidth band).
-      late: [120, 200],
-    },
-  },
-  // `co2-sparkline-grows-with-t` removed 2026-09-18: its subject, CO2's own HUD sparkline, no
-  // longer exists (`@/layers/hudVisibility.ts` — CO2 is hidden from the HUD entirely). The
-  // sibling shot immediately above, `population-sparkline-grows-with-t`, still covers the same
-  // growth-reveal mechanism on the one HUD scalar sparkline that remains.
-  {
-    name: 'population-chart-ghost-future',
-    description:
-      'The expanded `LayerChart` gets a different treatment than the sparkline (2026-09-18, coordinator: "do NOT ' +
-      'simply hide the future there... a chart opened deliberately to inspect the data is a different contract"): ' +
-      'the reached portion draws at full weight, the not-yet-reached remainder draws as a faint, fill-less ghost ' +
-      "line (`chartLineGhost`) rather than being hidden outright, so the axis stays put and the chart stays " +
-      "readable at an early `t`. Opens population's chart under the \"Humans\" section (as the other population-" +
-      'chart-* shots do, so the x-axis actually covers its domain) at t=5,000 — roughly the midpoint — and asserts ' +
-      'both a full-weight and a ghost polyline are present.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 5_000,
-    actions: async ({ page }) => {
-      await page.getByRole('button', { name: 'Humans — the Holocene' }).click()
-      const chartToggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
-      if ((await chartToggle.getAttribute('aria-pressed')) !== 'true') await chartToggle.click()
-    },
-    measure: async ({ page }) => {
-      const solid = await page.locator('[data-testid="layer-chart-svg"] polyline:not([class*="Ghost"])').count()
-      const ghost = await page.locator('[data-testid="layer-chart-svg"] polyline[class*="Ghost"]').count()
-      return { solid, ghost }
-    },
-    expect: {
-      solid: [1, 10],
-      ghost: [1, 10],
-    },
-  },
-  {
-    name: 'timeline-pip-thumbnail-hover',
-    description:
-      'Hovering a timeline checkpoint pip must still show a crisp, correctly-framed circular preview backed by ' +
-      "its own dedicated thumbnail (`Scene.thumbnail`, `pipeline.transcode.THUMBNAIL_SIZE`-square) -- never the " +
-      'full-resolution scene still (`Scene.image`) the pip used to fetch unconditionally on every page load ' +
-      "regardless of hover (the bug `Experience.tsx`'s `thumbnailUrl` and this thumbnail field both fix). " +
-      "`.pipThumb` is a 44 CSS-px circle (`ScrubTrack.module.css`); reduced motion (this harness's default) " +
-      "makes `.pipPreview`'s opacity transition instant, so a plain hover is enough -- no transition wait needed.",
-    viewport: DEFAULT_VIEWPORT,
-    actions: async ({ page }) => {
-      await page.locator(CHECKPOINT_PIP_SELECTOR).first().hover()
-    },
-    measure: async ({ page }) => ({
-      thumb: await drawnBounds(page, `${CHECKPOINT_PIP_SELECTOR} img`),
-    }),
-    expect: {
-      'thumb.width': [38, 48],
-      'thumb.height': [38, 48],
-    },
-  },
-  {
-    // West Turkana, Kenya (`acheulean-erectus`, t = 1.76 Ma): inside the human-era basemap
-    // domain (so the marker renders against real geography) but centuries before any arrival
-    // arc/city/population-density data exists, so the "Human civilisation" layer draws *only*
-    // the scene marker at this `t` — nothing else in `HumanCivilisation.tsx`'s own marker list
-    // can be mistaken for it by `scanForSceneMarkerColor`.
-    name: 'globe-scene-focus-centred',
-    description:
-      'ADR-034 centring, baseline case (docs/GLOBE.md, user report: "the automatic movement of the globe to ' +
-      'position of the current scene location... moves but doesn\'t actually go all the way to centre the ' +
-      'view"). No prior drag: the camera sits at its default azimuth (0) when West Turkana becomes the ' +
-      "dominant scene, so even the pre-fix formula (`focusRotationY(lon)`, assuming azimuth 0) landed here " +
-      'correctly — this shot is the control proving the fix did not regress the already-working case, measured ' +
-      'the same way (`globeOrbMarkerOffsetDeg`, colour-matching the marker against the drawn sphere\'s own ' +
-      'centre) as the two shots below that exercise the actual bugs.',
-    viewport: DEFAULT_VIEWPORT,
-    reducedMotion: 'reduce',
-    // No shot-level `t`, so this doesn't silently depend on running first (or on whatever `t`
-    // an earlier shot in the full suite happened to leave behind) for the "camera is at its
-    // default azimuth" premise the description above relies on — see the other two shots' own
-    // comments on why re-setting an unchanged `t` never starts a fresh ease at all. Parking on
-    // the no-location `archean-shore` frame first, with no drag in between, guarantees a clean
-    // null -> lon transition with the camera genuinely still at its own default azimuth.
-    actions: async ({ page, hook }) => {
-      await hook.setT(3.45e9)
-      await waitForSceneCrossfadeSettle(page)
-      await hook.setT(1.76e6)
-      await waitForSceneCrossfadeSettle(page)
-    },
-    measure: async ({ page }) => {
-      const result = await globeOrbMarkerOffsetDeg(page)
-      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
-    },
-    expect: {
-      markerPixelCount: [4, 100000],
-      offsetDeg: [-2, 2],
-    },
-  },
-  {
-    name: 'globe-scene-focus-after-drag',
-    description:
-      'ADR-034 centring, hypothesis 1 (this brief\'s own diagnosis): "the camera azimuth is unaccounted for" — ' +
-      '`OrbitControls` rotates the camera on the minimised orb (`Globe.tsx`\'s own "OrbitControls now rotates ' +
-      'in both states" note), so a viewer who dragged the orb before a scene\'s location becomes the focus ' +
-      'target leaves the camera at some azimuth the old `focusRotationY(lon)` (which assumed azimuth 0) had no ' +
-      'way to know about — landing the ease exactly that far short of centred. Drags the orb (`dragGlobeOrb`) ' +
-      'while a scene with no location is current, *then* sets `t` to West Turkana so the (now camera-azimuth-' +
-      'aware) ease target is computed against the already-rotated camera, matching the real "drag, then scrub ' +
-      'onto a located scene" sequence the report describes. `reducedMotion: reduce` snaps the ease instantly ' +
-      'rather than animating it — the landing formula is what this shot checks, not the tween.',
-    viewport: DEFAULT_VIEWPORT,
-    reducedMotion: 'reduce',
-    // No shot-level `t`: this must force a genuine *new* focus target itself rather than lean on
-    // whatever the previous shot already left `t` at, since re-setting `t` to a value the store
-    // already holds is a no-op that would never trigger a fresh ease at all (the hook only starts
-    // one when `focusLon` actually changes — `useGlobeAutoRotation.ts`'s own doc comment). First
-    // parking on `archean-shore` (3.45 Ga, no `location` at all — too far back for any plate
-    // model, ADR-034's own "no marker" rule) clears any prior focus target, so the drag below
-    // happens with nothing eased and the subsequent jump to West Turkana is unambiguously the
-    // transition that starts the ease this shot is measuring.
-    actions: async ({ page, hook }) => {
-      await hook.setT(3.45e9)
-      await waitForSceneCrossfadeSettle(page)
-      await dragGlobeOrb(page)
-      // Lets `OrbitControls`' own damped inertia (`enableDamping={settled}`, on for the idle
-      // orb) fully decay before the camera's azimuth is read: a drag released with real momentum
-      // keeps the camera rotating for a stretch after `mouseup`, independent of and unsynced with
-      // whatever ease starts next — reading too early captures a stale, still-moving azimuth and
-      // reports an error the *fix* didn't cause (browser-verified: a 1s wait here still measured
-      // ~2° at this drag distance; 2.5s converges to the exact same residual the no-drag baseline
-      // shot measures, to 15 decimal digits — i.e. genuinely fully settled, not just "close").
-      await page.waitForTimeout(2_500)
-      await hook.setT(1.76e6)
-      await waitForSceneCrossfadeSettle(page)
-      await waitForFocusEaseSettle(page)
-    },
-    measure: async ({ page }) => {
-      const result = await globeOrbMarkerOffsetDeg(page)
-      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
-    },
-    expect: {
-      markerPixelCount: [4, 100000],
-      offsetDeg: [-2, 2],
-    },
-  },
-  {
-    name: 'globe-scene-focus-holds-after-dwell',
-    description:
-      'ADR-034 centring, hypothesis 2 (this brief\'s own diagnosis): "drift pulls it back off after it lands" — ' +
-      '`useGlobeAutoRotationY` used to resume `AUTO_ROTATE_RADIANS_PER_SECOND` drift the instant the focus ease ' +
-      'finished, regardless of whether the located scene was still on screen, sliding the marker back off-centre ' +
-      'over a scene\'s own dwell (~1.4 deg/s -> ~14 deg over a 10s dwell). The fix ties drift suppression to ' +
-      '"is a scene location currently the target" rather than "is an ease currently running" (see that hook\'s ' +
-      'own doc comment for why a fixed extra delay was rejected). `reducedMotion: no-preference` — unlike the ' +
-      'two shots above, this one needs real animated drift to have something to (not) accumulate — waits for ' +
-      'the ease to land and then a further 8s of simulated dwell before measuring, well past the ~1.2s ease ' +
-      'itself.',
-    viewport: DEFAULT_VIEWPORT,
-    reducedMotion: 'no-preference',
-    // No shot-level `t`, for the same reason `globe-scene-focus-after-drag` gives: re-setting `t`
-    // to a value the store already holds would never start a fresh ease. Parking on the same
-    // no-location `archean-shore` frame first guarantees the jump to West Turkana below is a real
-    // null -> lon transition, so the ease this shot then waits out and measures after is one this
-    // shot itself actually triggered, not a leftover from whichever shot happened to run first.
-    actions: async ({ page, hook }) => {
-      await hook.setT(3.45e9)
-      await waitForSceneCrossfadeSettle(page)
-      await hook.setT(1.76e6)
-      await waitForSceneCrossfadeSettle(page)
-      await waitForFocusEaseSettle(page)
-      await page.waitForTimeout(8_000)
-    },
-    measure: async ({ page }) => {
-      const result = await globeOrbMarkerOffsetDeg(page)
-      return { offsetDeg: result?.offsetDeg ?? null, markerPixelCount: result?.markerPixelCount ?? 0 }
-    },
-    expect: {
-      markerPixelCount: [4, 100000],
-      offsetDeg: [-2, 2],
-    },
-  },
-  {
-    name: 'onboarding-tour-step-one-phone',
-    description:
-      'Phone portrait, first-visit tour at step one: the ring lands on the real play button, the card sits clear ' +
-      'of it and fully on screen, and Skip is a 44px touch target from this very first step. The ring is checked ' +
-      "against the button's own geometry, not drawn pixels — both sit over the photographic scene, where " +
-      "`drawnBounds`' sampled-corner background is meaningless; the card's own copy is checked with " +
-      'drawn pixels, since that sits over the card\'s flat panel.',
-    viewport: PHONE_VIEWPORT,
-    t: 0,
-    state: { tour: true },
-    measure: async ({ page }) => {
-      const ring = await boxOf(page, ONBOARDING_SPOTLIGHT_SELECTOR)
-      const play = await boxOf(page, PLAY_BUTTON_SELECTOR)
-      const card = await boxOf(page, ONBOARDING_CARD_SELECTOR)
-      const skip = await boxOf(page, ONBOARDING_SKIP_SELECTOR)
-      const viewport = page.viewportSize()
-      return {
-        ringToPlayOffsetPx: centreDistance(ring, play),
-        cardOverlapsRing: rectsOverlap(card, ring) ? 1 : 0,
-        cardInsetLeft: card.x,
-        cardInsetRight: viewport.width - (card.x + card.width),
-        cardInsetTop: card.y,
-        cardInsetBottom: viewport.height - (card.y + card.height),
-        skip,
-        cardContent: await drawnBounds(page, ONBOARDING_CARD_SELECTOR),
-      }
-    },
-    expect: {
-      // Same centre as the button it points at, to within a rounding pixel.
-      ringToPlayOffsetPx: [0, 2],
-      cardOverlapsRing: [0, 0],
-      cardInsetLeft: [8, 400],
-      cardInsetRight: [8, 400],
-      cardInsetTop: [8, 860],
-      cardInsetBottom: [8, 860],
-      // The phone touch-target floor the transport's own edge buttons use.
-      'skip.width': [44, 200],
-      'skip.height': [44, 90],
-      // Real copy painted on the card's flat panel, not an empty box.
-      'cardContent.width': [160, 400],
-      'cardContent.height': [80, 500],
-    },
-  },
-  {
-    name: 'onboarding-tour-era-step-phone',
-    description:
-      'Phone portrait, tour advanced to the era-shortcut step: the ring lands on the shortcut pills, and the ' +
-      'card names both nicknames and both geological units. The pills carry no visible heading — only an ' +
-      '`aria-label` — so this step is the only place on screen a viewer learns what they are, and the copy ' +
-      'saying so is the reason the step exists.',
-    viewport: PHONE_VIEWPORT,
-    t: 0,
-    state: { tour: true },
-    actions: async ({ page }) => {
-      await page.click(ONBOARDING_NEXT_SELECTOR)
-      await page.click(ONBOARDING_NEXT_SELECTOR)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page }) => {
-      const ring = await boxOf(page, ONBOARDING_SPOTLIGHT_SELECTOR)
-      const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
-      const copy = await page.textContent(ONBOARDING_CARD_SELECTOR)
-      const names = ['Dinosaurs', 'Mesozoic', 'Humans', 'Holocene']
-      return {
-        ringToShortcutsOffsetPx: centreDistance(ring, shortcuts),
-        namesInCopy: names.filter((name) => copy.includes(name)).length,
-        cardOverlapsRing: rectsOverlap(await boxOf(page, ONBOARDING_CARD_SELECTOR), ring) ? 1 : 0,
-      }
-    },
-    expect: {
-      ringToShortcutsOffsetPx: [0, 2],
-      namesInCopy: [4, 4],
-      cardOverlapsRing: [0, 0],
-    },
-  },
-  {
-    name: 'onboarding-tour-globe-step-desktop',
-    description:
-      'Desktop, tour stepped to its last step: the ring lands on the orb\'s expand affordance, and the store is ' +
-      'untouched throughout — still paused, still collapsed, still at the shot\'s own `t`. The tour points at ' +
-      'controls; it never drives them, so skipping at step one leaves exactly the still, paused view a viewer ' +
-      'would have had without it.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 66_000_000,
-    state: { tour: true },
-    actions: async ({ page }) => {
-      for (let step = 0; step < 3; step += 1) await page.click(ONBOARDING_NEXT_SELECTOR)
-      await rafTicks(page, 2)
-    },
-    measure: async ({ page, hook }) => {
-      const ring = await boxOf(page, ONBOARDING_SPOTLIGHT_SELECTOR)
-      const expand = await boxOf(page, GLOBE_EXPAND_SELECTOR)
-      const state = await hook.getState()
-      return {
-        ringToExpandOffsetPx: centreDistance(ring, expand),
-        playing: state.playback.playing ? 1 : 0,
-        globeExpanded: state.globeExpanded ? 1 : 0,
-        t: state.t,
-      }
-    },
-    expect: {
-      ringToExpandOffsetPx: [0, 2],
-      playing: [0, 0],
-      globeExpanded: [0, 0],
-      t: [66_000_000, 66_000_000],
-    },
-  },
-  {
-    name: 'DIAG-transport-row-no-shift-on-play',
-    description: 'DIAGNOSTIC: measure scrub-track top edge paused vs playing.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { playing: false },
-    measure: async ({ page, hook }) => {
-      await hook.ready()
-      await rafTicks(page, 3)
-      const pausedTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
-      const pausedSecondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      await hook.setPlaying(true)
-      await rafTicks(page, 10)
-      const playingTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
-      const playingSecondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-      await hook.setPlaying(false)
-      return {
-        pausedTop,
-        playingTop,
-        shiftPx: Math.abs(playingTop - pausedTop),
-        pausedSecondaryHeight: pausedSecondary.height,
-        playingSecondaryHeight: playingSecondary.height,
-      }
-    },
-    expect: { shiftPx: [-99999, 99999] },
-  },
-  {
-    name: 'DIAG-minimised-globe-size',
-    description: 'DIAGNOSTIC: measure minimised globe drawn bounds.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => ({ orb: await drawnBounds(page, GLOBE_CANVAS_SELECTOR) }),
-    expect: { 'orb.width': [-99999, 99999] },
-  },
-  {
-    name: 'DIAG-core-width-narrow',
-    description: 'DIAGNOSTIC: controlsCore box width/rows and viewport at narrow widths.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page }) => {
-      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-      const rows = await page.evaluate(countDistinctRows, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
-      const overlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_CORE_SELECTOR })
-      return { coreWidth: core.width, coreHeight: core.height, coreX: core.x, trackWidth: track.width, trackX: track.x, rows, overlaps }
-    },
-    expect: { coreWidth: [-99999, 99999] },
-  },
-  {
-    name: 'DIAG-narrow-play-shift',
-    description: 'DIAGNOSTIC: narrow viewport paused vs playing top-edge shift.',
-    viewport: { width: 390, height: 844 },
-    t: 500,
-    state: { playing: false },
-    reducedMotion: 'no-preference',
-    measure: async ({ page, hook }) => {
-      await hook.ready()
-      await rafTicks(page, 3)
-      const pausedTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
-      const pausedBottom = (await boxOf(page, BOTTOM_CHROME_SELECTOR))
-      await hook.setPlaying(true)
-      await page.waitForTimeout(1200)
-      const playingTop = (await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)).y
-      const playingBottom = (await boxOf(page, BOTTOM_CHROME_SELECTOR))
-      await hook.setPlaying(false)
-      return {
-        pausedTop,
-        playingTop,
-        shiftPx: Math.abs(playingTop - pausedTop),
-        pausedHeight: pausedBottom.height,
-        playingHeight: playingBottom.height,
-      }
-    },
-    expect: { shiftPx: [-99999, 99999] },
-  },
-  {
-    name: 'DIAG-wrap-sweep',
-    description: 'DIAGNOSTIC: check controlsSecondary row-wrap at rest across several t/viewport combos.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const combos = [
-        { width: 1440, t: 0 },
-        { width: 1440, t: 500 },
-        { width: 1440, t: 3_450_000_000 },
-        { width: 1600, t: 0 },
-        { width: 1920, t: 0 },
-        { width: 1280, t: 0 },
-        { width: 1150, t: 0 },
-        { width: 1050, t: 0 },
-      ]
-      const results = []
-      for (const combo of combos) {
-        await page.setViewportSize({ width: combo.width, height: 900 })
-        await hook.setT(combo.t)
-        await hook.ready()
-        const tops = await page.evaluate(() => {
-          const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
-          return secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
-        })
-        results.push({ ...combo, rows: new Set(tops).size, tops })
-      }
-      console.log('WRAP SWEEP', JSON.stringify(results, null, 2))
-      return { done: 1 }
-    },
-    expect: { done: [1, 1] },
-  },
-  {
-    name: 'DIAG-rate-readout-state',
-    description: 'DIAGNOSTIC: inspect the rate readout DOM state while playing.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    state: { playing: false },
-    reducedMotion: 'no-preference',
-    measure: async ({ page, hook }) => {
-      await hook.ready()
-      const before = await page.evaluate(() => {
-        const el = document.querySelector('[class*="rateReadout"]:not([class*="Row"])')
-        const row = document.querySelector('[class*="rateReadoutRow"]')
-        const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
-        const tops = secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
-        return {
-          elText: el ? el.textContent : null,
-          elVisible: el ? getComputedStyle(el).visibility : null,
-          elRect: el ? el.getBoundingClientRect() : null,
-          rowRect: row ? row.getBoundingClientRect() : null,
-          secondaryRect: secondary ? secondary.getBoundingClientRect() : null,
-          childTops: tops,
-        }
-      })
-      await hook.setPlaying(true)
-      await page.waitForTimeout(1500)
-      const after = await page.evaluate(() => {
-        const el = document.querySelector('[class*="rateReadout"]:not([class*="Row"])')
-        const row = document.querySelector('[class*="rateReadoutRow"]')
-        const secondary = document.querySelector('[data-testid="timeline-controls-secondary"]')
-        const tops = secondary ? Array.from(secondary.children).map((c) => Math.round(c.getBoundingClientRect().top)) : []
-        return {
-          elText: el ? el.textContent : null,
-          elVisible: el ? getComputedStyle(el).visibility : null,
-          elRect: el ? el.getBoundingClientRect() : null,
-          rowRect: row ? row.getBoundingClientRect() : null,
-          secondaryRect: secondary ? secondary.getBoundingClientRect() : null,
-          childTops: tops,
-        }
-      })
-      await hook.setPlaying(false)
-      console.log('BEFORE', JSON.stringify(before))
-      console.log('AFTER', JSON.stringify(after))
-      return {
-        beforeText: before.elText ?? '',
-        afterText: after.elText ?? '',
-        beforeSecondaryTop: before.secondaryRect ? before.secondaryRect.top : -1,
-        afterSecondaryTop: after.secondaryRect ? after.secondaryRect.top : -1,
-      }
-    },
-    expect: { 'beforeText': [-99999, 99999] },
-  },
-  {
-    name: 'DIAG-minimised-globe-size-narrow',
-    description: 'DIAGNOSTIC: measure minimised globe drawn bounds at phone floor, and collision with neighbours.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page }) => {
-      const orb = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
-      const title = await boxOf(page, '[data-testid="time-title"]')
-      const transport = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      return {
-        orb,
-        title,
-        overlapsTitle: rectsOverlap(orb, title) ? 1 : 0,
-        transportGapPx: transport.y - (orb.y + orb.height),
-      }
-    },
-    expect: { overlapsTitle: [0, 0] },
-  },
-  {
-    name: 'DIAG-caption-heading-visibility',
-    description: 'DIAGNOSTIC: heading vs caption box bounds at the longest real caption, several viewports.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 9000,
-    measure: async ({ page, hook }) => {
-      const viewports = [
-        { width: 1440, height: 900 },
-        { width: 390, height: 844 },
-        { width: 844, height: 390 },
-      ]
-      const results = []
-      for (const vp of viewports) {
-        await page.setViewportSize(vp)
-        await hook.ready()
-        const data = await page.evaluate(() => {
-          const heading = document.querySelector('[data-testid="scene-caption-title"]')
-          const text = document.querySelector('[data-testid="scene-caption-text"]')
-          const host = document.querySelector('[data-testid="scene-caption"]')
-          const box = host ? host.parentElement : null
-          if (!heading || !box) return null
-          const h = heading.getBoundingClientRect()
-          const b = box.getBoundingClientRect()
-          const t = text ? text.getBoundingClientRect() : null
-          return {
-            headingText: heading.textContent,
-            headingTop: h.top,
-            headingBottom: h.bottom,
-            boxTop: b.top,
-            boxBottom: b.bottom,
-            boxHeight: b.height,
-            headingFullyVisible: h.top >= b.top - 0.5 && h.bottom <= b.bottom + 0.5,
-            passageBottom: t ? t.bottom : null,
-            passageOverflows: t ? t.bottom > b.bottom + 0.5 : null,
-            overflowStyle: getComputedStyle(box).overflowY,
-          }
-        })
-        results.push({ viewport: vp, data })
-      }
-      console.log('CAPTION SWEEP', JSON.stringify(results, null, 2))
-      return { done: 1 }
-    },
-    expect: { done: [1, 1] },
-  },
-  {
-    name: 'DIAG-title-width-sweep-narrow',
-    description: 'DIAGNOSTIC: title box across several t values at 390px, to find worst-case left column room.',
-    viewport: { width: 390, height: 844 },
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const ts = [0, 500, 8000, 1_760_000, 66_000_000, 251_902_000, 3_450_000_000, 4_500_000_000]
-      const results = []
-      for (const t of ts) {
-        await hook.setT(t)
-        await hook.ready()
-        const title = await boxOf(page, '[data-testid="time-title"]')
-        results.push({ t, x: title.x, width: title.width })
-      }
-      console.log('TITLE SWEEP', JSON.stringify(results, null, 2))
-      return { done: 1 }
-    },
-    expect: { done: [1, 1] },
-  },
-  {
-    name: 'DIAG-minimised-globe-size-wide-collision',
-    description: 'DIAGNOSTIC: same collision checks at 1440x900.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page }) => {
-      const orb = await drawnBounds(page, GLOBE_CANVAS_SELECTOR)
-      const title = await boxOf(page, '[data-testid="time-title"]')
-      const transport = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      return {
-        orb,
-        title,
-        overlapsTitle: rectsOverlap(orb, title) ? 1 : 0,
-        transportGapPx: transport.y - (orb.y + orb.height),
-      }
-    },
-    expect: { 'orb.width': [-99999, 99999] },
-  },
-  {
-    name: 'secondary-core-no-self-overlap-sweep',
-    description:
-      'Condensing pass (moving the sound toggle into `.controlsSecondary` beside mode/scale): `.controlsSecondary`\'s own ' +
-      'content floor rises with the added control, and it shares the row with `.controlsCore` (the transport) behind a ' +
-      'shared `--transport-flank` reserve paid for on both sides — the specific risk the brief for this change calls out. ' +
-      'Sweeps every width named there: the two comfortable desktop widths (1440, 1280), the two narrow desktop widths ' +
-      'closest to the phone breakpoint where the shared flank is tightest (1100, 1024), and the two phone-portrait widths ' +
-      '(412, 390) — which in fact carry no risk by construction (`.controlsSecondary` gets its own full-width row there, ' +
-      'never sharing one with `.controlsCore`), included anyway as regression coverage. Plain CSS boxes (`boxOf`): both are ' +
-      'ordinary flex HUD chrome, not canvases, so a CSS box is exactly what is painted.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const widths = [1440, 1280, 1100, 1024, 412, 390]
-      const overlaps = {}
-      for (const width of widths) {
-        await page.setViewportSize({ width, height: width < 760 ? 844 : 900 })
-        await hook.ready()
-        const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
-        const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-        overlaps[`w${width}`] = rectsOverlap(secondary, core) ? 1 : 0
-      }
-      return overlaps
-    },
-    expect: {
-      w1440: [0, 0],
-      w1280: [0, 0],
-      w1100: [0, 0],
-      w1024: [0, 0],
-      w412: [0, 0],
-      w390: [0, 0],
-    },
-  },
-  {
-    name: 'globe-vs-portrait-drawn-size',
-    description:
-      'The phone-breakpoint minimised globe orb and the ancestor portrait share one box size (`--orb-size`), but draw at ' +
-      'different fractions of it: the sphere\'s own silhouette plus its atmosphere glow, versus the portrait\'s feathered ' +
-      'circular CSS mask (`hud.module.css`\'s `.portrait`) over a specimen photo that is often dark and low-contrast in its ' +
-      'own right — a plain corner-sampled pixel diff (`drawnBounds`) saturates to the full box for both regardless (the ' +
-      'atmosphere\'s own faint glow reaches the canvas edge; a mask that goes fully transparent only at its very last ' +
-      'pixel does too), which is why `--globe-orb-size` (this file\'s own decoupled property) was sized against a ' +
-      "difference matte instead (`alphaEdgeDiameter`, this file's own doc comment has the method) — the scene layer and " +
-      'the lens vignette hidden, the same clip shot against solid black and solid white, and the two differenced so a ' +
-      "pixel's own colour cancels out and only its real opacity survives. Requires the globe's `alpha >= 0.5` diameter " +
-      "to be 2-12% larger than the portrait's, at both required phone widths.",
-    viewport: { width: 390, height: 844 },
-    t: 500,
-    measure: async ({ page, hook }) => {
-      const results = {}
-      for (const viewport of [
-        { width: 390, height: 844 },
-        { width: 412, height: 870 },
-      ]) {
-        await page.setViewportSize(viewport)
-        await hook.ready()
-        await page.evaluate(() => {
-          const shell = document.querySelector('[data-globe-expanded]')
-          if (shell && shell.children.length >= 2) {
-            shell.children[0].style.visibility = 'hidden'
-            shell.children[1].style.visibility = 'hidden'
-          }
-        })
-        const globeBox = await boxOf(page, GLOBE_CANVAS_SELECTOR)
-        const portraitBox = await boxOf(page, '[data-testid="ancestor-portrait"]')
-        const globe = await alphaEdgeDiameter(page, globeBox)
-        const portrait = await alphaEdgeDiameter(page, portraitBox)
-        await page.evaluate(() => {
-          const shell = document.querySelector('[data-globe-expanded]')
-          if (shell) shell.style.background = ''
-          if (shell && shell.children.length >= 2) {
-            shell.children[0].style.visibility = ''
-            shell.children[1].style.visibility = ''
-          }
-        })
-        const key = `w${viewport.width}`
-        results[`${key}GlobeWidth`] = globe.width
-        results[`${key}PortraitWidth`] = portrait.width
-        results[`${key}RatioPct`] = Math.round((100 * globe.width) / portrait.width)
-      }
-      return results
-    },
-    expect: {
-      w390RatioPct: [102, 112],
-      w412RatioPct: [102, 112],
-    },
-  },
-  {
-    name: 'condensed-top-area-gaps',
-    description:
-      'Two spacing targets for the condensed top area: the global-population readout (`.readouts`) sits with 0-8px of ' +
-      'real gap under the drawn globe orb (down from a `clamp(18px, 3vh, 36px)` margin — user ask: "directly beneath the ' +
-      "globe with no gap\"), and the era shortcuts pill row sits 8-14px under the time/era title text (user ask: \"a bit " +
-      'of a gap between the current time / era display... and the era shortcut selectors" — previously a `-2px` margin ' +
-      'pulled them together instead). Both measured on drawn pixels (`gapBetween`): the orb is a canvas whose painted ' +
-      "silhouette is smaller than its CSS box, and ordinary text's own line-height leading can otherwise read as extra " +
-      'margin a plain CSS-box measurement would miss. Checked at 1440x900 (desktop) and 390x844 (phone) — the two boxes ' +
-      "this pass's CSS actually differs between (`.readouts`'s own grid area changes at the phone breakpoint).",
-    viewport: DEFAULT_VIEWPORT,
-    t: 500,
-    measure: async ({ page, hook }) => {
-      const results = {}
-      for (const viewport of [DEFAULT_VIEWPORT, { width: 390, height: 844 }]) {
-        await page.setViewportSize(viewport)
-        await hook.ready()
-        const orbToReadouts = await gapBetween(page, GLOBE_CANVAS_SELECTOR, SHELL_READOUTS_SELECTOR)
-        const titleToShortcuts = await gapBetween(page, '[data-testid="time-title"]', ERA_SHORTCUTS_SELECTOR)
-        const key = `w${viewport.width}`
-        results[`${key}OrbToReadouts`] = orbToReadouts
-        results[`${key}TitleToShortcuts`] = titleToShortcuts
-      }
-      return results
-    },
-    expect: {
-      w1440OrbToReadouts: [0, 8],
-      w390OrbToReadouts: [0, 8],
-      w1440TitleToShortcuts: [8, 14],
-      w390TitleToShortcuts: [8, 14],
-    },
-  },
-  {
-    name: 'event-browser-opens-desktop-timeline-unobstructed',
-    description:
-      'The `/` shortcut opens the "All events" browser (`EventBrowser.tsx`) with its search focused and a drawn ' +
-      "list beneath it, docked above the timeline: the panel's drawn box and the timeline root's box " +
-      "(`BOTTOM_CHROME_SELECTOR`) do not overlap. The section rail's own labels (`rail.ts`) sit entirely inside " +
-      'the panel and never overlap each other.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      // Defensive: the harness runs every shot in one continuous page (README's own "nothing
-      // ever reloads"), and this component's open/closed state is local to `Experience.tsx`, not
-      // part of `state`/`hook` — a prior shot leaving it open would otherwise leak into this one.
-      await page.keyboard.press('Escape')
-      await page.keyboard.press('/')
-    },
-    measure: async ({ page }) => {
-      const panel = await drawnBounds(page, '[data-testid="event-browser"]')
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      const focused = await page.evaluate(() => document.activeElement?.getAttribute('data-testid'))
-      const rowCount = await page.locator('[role="option"]').count()
-      const rail = await eventBrowserRailLabelGeometry(page, panel.x + panel.width)
-      return {
-        panelWidth: panel.width,
-        panelHeight: panel.height,
-        timelineWidth: timeline.width,
-        overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
-        focusedSearch: focused === 'event-browser-search' ? 1 : 0,
-        rowCount,
-        railLabelCount: rail.labelCount,
-        railLabelOverflowPx: rail.overflowPx,
-        railLabelOverlapCount: rail.overlapCount,
-      }
-    },
-    expect: {
-      panelWidth: [300, 720],
-      panelHeight: [100, 900],
-      timelineWidth: [200, 1440],
-      overlapsTimeline: [0, 0],
-      focusedSearch: [1, 1],
-      rowCount: [1, 500],
-      // A check that can't fail proves nothing: this also proves the selector actually matched.
-      railLabelCount: [1, 40],
-      railLabelOverflowPx: [0, 0],
-      railLabelOverlapCount: [0, 0],
-    },
-  },
-  {
-    name: 'event-browser-opens-phone-timeline-unobstructed',
-    description:
-      "Phone path (the `/` shortcut is desktop-only): opens from the feed card's own detail panel via its \"All " +
-      'events\" action, as a sheet stopping above the timeline rather than covering it — never `shell/Panel`\'s ' +
-      'own full-screen phone bottom sheet, which would sit on top of the timeline. Same overlap and rail-label ' +
-      'assertions as the desktop shot, at the phone viewport.',
-    viewport: PHONE_VIEWPORT,
-    t: 0,
-    actions: async ({ page }) => {
-      // Defensive: see the desktop shot's own comment on why every shot here re-closes first.
-      await page.keyboard.press('Escape')
-      await page.locator('[data-testid^="event-feed-card-"]').first().click()
-      // The detail panel's own action, not the feed's "All events" button behind it.
-      await page.getByRole('dialog').getByRole('button', { name: 'All events' }).click()
-    },
-    measure: async ({ page }) => {
-      const panel = await drawnBounds(page, '[data-testid="event-browser"]')
-      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
-      const rail = await eventBrowserRailLabelGeometry(page, panel.x + panel.width)
-      return {
-        panelWidth: panel.width,
-        overlapsTimeline: rectsOverlap(panel, timeline) ? 1 : 0,
-        railLabelCount: rail.labelCount,
-        railLabelOverflowPx: rail.overflowPx,
-        railLabelOverlapCount: rail.overlapCount,
-      }
-    },
-    expect: {
-      // Full-width phone sheet.
-      panelWidth: [PHONE_VIEWPORT.width - 10, PHONE_VIEWPORT.width],
-      overlapsTimeline: [0, 0],
-      railLabelCount: [1, 40],
-      railLabelOverflowPx: [0, 0],
-      railLabelOverlapCount: [0, 0],
-    },
-  },
-  {
-    name: 'event-browser-list-follows-scrub',
-    description:
-      'Scrubbing moves the list, and only row selection moves `t`: opens the browser at a recent `t`, scrubs (via ' +
-      '`hook.setT`, the same store write a real drag makes) to a deep-time `t`, and asserts the highlighted row ' +
-      "both changed to the deep-time event AND sits within the list's visible viewport — not merely marked active " +
-      'while scrolled out of sight. Also asserts `t` is unchanged once the scrub-driven scroll settles (no ' +
-      'feedback loop back into the store).',
-    viewport: DEFAULT_VIEWPORT,
-    t: 25,
-    actions: async ({ page }) => {
-      await page.keyboard.press('Escape')
-      await page.keyboard.press('/')
-    },
-    measure: async ({ page, hook }) => {
-      const activeDescendantId = () => page.getAttribute('[data-testid="event-browser-search"]', 'aria-activedescendant')
-      const beforeId = await activeDescendantId()
-
-      await hook.setT(66_000_000)
-      await hook.ready()
-      await rafTicks(page, 2)
-      // The row-position scroll settles by CSS `scroll-behavior`/layout, not a network load —
-      // `hook.ready()` alone doesn't cover it.
-      await page.waitForTimeout(150)
-
-      const afterId = await activeDescendantId()
-      const listBox = await boxOf(page, '#event-browser-list')
-      const rowBox = afterId ? await boxOf(page, `#${afterId}`) : null
-      return {
-        changedRow: beforeId !== afterId ? 1 : 0,
-        rowVisible: rowBox && rowBox.y >= listBox.y - 1 && rowBox.y + rowBox.height <= listBox.y + listBox.height + 1 ? 1 : 0,
-        tAfterScroll: (await hook.getState()).t,
-      }
-    },
-    expect: {
-      changedRow: [1, 1],
-      rowVisible: [1, 1],
-      tAfterScroll: [66_000_000, 66_000_000],
-    },
-  },
-  {
-    name: 'event-browser-rail-full-height-drag-to-bottom',
-    description:
-      'The section index rail (`rail.ts`) is drawn and spans the full height of the list it indexes; a press-drag ' +
-      "to the rail's bottom edge lands the highlighted row in the LAST SECTION — no sticky section header appears " +
-      "between it and the end of the list. A rail entry points at a section's *first* row, so this checks the " +
-      "row's section, not that it is literally the list's final row.",
-    viewport: DEFAULT_VIEWPORT,
-    t: 25,
-    actions: async ({ page }) => {
-      await page.keyboard.press('Escape')
-      await page.keyboard.press('/')
-    },
-    measure: async ({ page }) => {
-      const rail = await drawnBounds(page, '[data-testid="event-browser-rail"]')
-      const list = await boxOf(page, '#event-browser-list')
-
-      const railBox = await boxOf(page, '[data-testid="event-browser-rail"]')
-      await page.mouse.move(railBox.x + railBox.width / 2, railBox.y + 2)
-      await page.mouse.down()
-      await page.mouse.move(railBox.x + railBox.width / 2, railBox.y + railBox.height - 2)
-      await page.mouse.up()
-
-      const rowCount = await page.locator('[role="option"]').count()
-      const headersAfterActiveRow = await page.evaluate(() => {
-        const rows = Array.from(document.querySelectorAll('#event-browser-list > li'))
-        const activeRowIndex = rows.findIndex((row) => row.querySelector('[data-active="true"]') !== null)
-        if (activeRowIndex === -1) return -1
-        return rows.slice(activeRowIndex + 1).filter((row) => row.querySelector('p') !== null).length
-      })
-      return {
-        railWidth: rail.width,
-        // Within a few px of the list's own height — the rail spans exactly what it indexes.
-        railHeightDelta: Math.abs(rail.height - list.height),
-        rowCount,
-        headersAfterActiveRow,
-      }
-    },
-    expect: {
-      railWidth: [10, 60],
-      railHeightDelta: [0, 6],
-      rowCount: [1, 500],
-      // No section header between the highlighted row and the end of the list: it's in the last
-      // section the rail knows about.
-      headersAfterActiveRow: [0, 0],
-    },
-  },
-  {
-    name: 'DIAG-core-center-debug',
-    description: 'DIAGNOSTIC: how far `.controlsCore` sits off the track\'s true centre, across several `t`s.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 0,
-    measure: async ({ page, hook }) => {
-      const results = {}
-      for (const t of [0, 50, 66_000_000, 251_902_000]) {
-        await hook.setT(t)
-        await hook.ready()
-        const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
-        const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
-        const offset = Math.abs(core.x + core.width / 2 - (track.x + track.width / 2))
-        results[`t${t}`] = offset
-      }
-      console.log('CORE CENTER DEBUG', JSON.stringify(results, null, 2))
-      return { done: 1 }
-    },
-    expect: { done: [1, 1] },
-  },
-  {
-    name: 'mobile-review-globe-population-density',
-    description:
-      'Screenshot-only, for human review: expanded globe at the 390x844 phone-portrait viewport, t=10 (2015 CE, ' +
-      "the newest frame in both HYDE sequences and the date at which population density is at its maximum, so " +
-      'the wash reads at full strength rather than near its floor) — the default overlay, selected explicitly ' +
-      "rather than trusted (this harness never reloads between shots, so a prior shot's overlay pick would " +
-      'otherwise still be selected). Shows row 2 (era shortcuts left, overlay selector right, directly under the ' +
-      'title), the Globe/Map toggle and zoom rocker sharing their own row under the sphere, and no Legend panel.',
-    viewport: { width: 390, height: 844 },
-    t: 10,
     state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'population_density')
-      await hook.ready()
-      await rafTicks(page, 2)
+    measure: async ({ page, hook }) => {
+      const sphere = await measureMode(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
+      if (!withMap) return { sphere }
+      await switchGlobeViewMode(page, hook, 'map')
+      const map = await measureMode(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+      const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
+      return { sphere, map, mapCursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
     },
-  },
-  {
-    name: 'mobile-review-globe-cleared-land',
-    description:
-      'Screenshot-only, for human review: same view as `mobile-review-globe-population-density` with the overlay ' +
-      'switched to Cleared land — at t=10, cleared land is at its own peak too (~9.6% of land area, cropland ' +
-      'averaging ~30% of a cell where present), so the wash should read as oxblood/rust worked ground, distinct ' +
-      "from the basemap's own terrain browns and desert tans on both hue and luminance.",
-    viewport: { width: 390, height: 844 },
-    t: 10,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'cleared_land')
-      await hook.ready()
-      await rafTicks(page, 2)
+    expect: {
+      ...modeExpect('sphere', sphereWidth),
+      ...(withMap ? { ...modeExpect('map', mapWidth), mapCursorIsNotGrab: [1, 1] } : {}),
     },
-  },
-  {
-    name: 'mobile-review-globe-overlay-none',
-    description:
-      'Screenshot-only, for human review: same view with the overlay set to None — bare basemap, no raster wash.',
-    viewport: { width: 390, height: 844 },
-    t: 10,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.selectOption(OVERLAY_SELECT_SELECTOR, OVERLAY_NONE_VALUE)
-      await hook.ready()
-      await rafTicks(page, 2)
-    },
-  },
-  {
-    name: 'mobile-review-map-cleared-land',
-    description:
-      'Screenshot-only, for human review: map mode (Globe/Map toggle set to Map) with the Cleared land overlay, ' +
-      'same t as the sibling globe shots.',
-    viewport: { width: 390, height: 844 },
-    t: 10,
-    state: { globeExpanded: true, globeViewMode: 'map' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'cleared_land')
-      await hook.ready()
-      await rafTicks(page, 2)
-    },
-  },
-  {
-    name: 'mobile-review-globe-zoomed-in',
-    description:
-      'Screenshot-only, for human review: expanded globe zoomed in (four "Zoom in" presses, same technique as ' +
-      '`globe-sphere-zoom-past-fit`) at the same t and default overlay, to show basemap sharpness now that phones ' +
-      'get the T1 4096x2048 texture tier.',
-    viewport: { width: 390, height: 844 },
-    t: 10,
-    state: { globeExpanded: true, globeViewMode: 'globe' },
-    actions: async ({ page, hook }) => {
-      await hook.ready()
-      await waitForApproxUnfoldProgress(page, 1)
-      await rafTicks(page, 2)
-      await page.selectOption(OVERLAY_SELECT_SELECTOR, 'population_density')
-      await hook.ready()
-      await rafTicks(page, 2)
-      const zoomIn = page.getByRole('button', { name: 'Zoom in' })
-      for (let i = 0; i < 4; i += 1) {
-        await zoomIn.click()
-        await rafTicks(page, 2)
-      }
-      await hook.ready()
-    },
-  },
-  ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
-    ['globe', 'map'].map((globeViewMode) => desktopGlobeCornersShot(viewport, globeViewMode)),
-  ),
-  ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
-    ['globe', 'map'].map((globeViewMode) => desktopControlsRowShot(viewport, globeViewMode)),
-  ),
-  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeNormalShot(viewport)),
-  ...LANDSCAPE_VIEWPORTS.flatMap((viewport) =>
-    ['globe', 'map'].map((globeViewMode) => landscapeExpandedShot(viewport, globeViewMode)),
-  ),
-  portraitCaptionLinesShot({ width: 390, height: 844 }),
-  portraitCaptionLinesShot(PHONE_VIEWPORT),
-  breadcrumbAtRootShot({ width: 390, height: 844 }, 'phone'),
-  breadcrumbAtRootShot({ width: 844, height: 390 }, 'landscape'),
-  breadcrumbAtRootShot(DEFAULT_VIEWPORT, 'desktop'),
-  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeHudShot(viewport)),
-  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeTimelineShot(viewport)),
-  landscapeCaptionTapShot({ width: 844, height: 390 }),
-  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeCaptionRowShot(viewport)),
-  ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopTimelineRowShot(viewport)),
-  ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopOrbTopShot(viewport)),
-  globeExpandRingShot(),
-  phoneOrbTapShot(false),
-  phoneOrbTapShot(true),
-  clusterPopoverTouchShot(),
-  eventFeedBrowseShot('desktop', DEFAULT_VIEWPORT, false),
-  eventFeedBrowseShot('phone', { width: 390, height: 844 }, false),
-  eventFeedBrowseShot('phone', { width: 390, height: 844 }, true),
-  // Floors: the lower of 4.5:1 and the hard-edged box's own contrast before the soft shade
-  // replaced it, less 0.3 (6.6:1 in portrait, 3.4:1 in landscape).
-  captionContrastShot({ width: 390, height: 844 }, 4.5),
-  captionContrastShot({ width: 844, height: 390 }, 3.1),
-  ...BRIGHT_CAPTION_SCENES.flatMap((id) => [
-    captionReviewShot({ width: 844, height: 390 }, id),
-    captionReviewShot({ width: 390, height: 844 }, id),
-  ]),
-  ...iceAgeShots(),
+  }
+}
+
+/** `expect` keys for a `layoutFlags` result nested under `prefix`. */
+function prefixedLayoutExpect(prefix, names) {
+  return Object.fromEntries(Object.entries(layoutExpect(names)).map(([key, range]) => [`${prefix}.${key}`, range]))
+}
+
+// ---------------------------------------------------------------------------------------------
+// The shot list
+// ---------------------------------------------------------------------------------------------
+
+/** @type {Shot[]} */
+export default [
   {
     name: 'loading-screen',
     description:
       'The loading screen is in the static HTML (drawn with scripts blocked), holds its globe still under reduced ' +
       'motion and turns it otherwise, advances its progress bar in steps as the manifest and then the first scene ' +
-      "land, and is gone once the shell mounts. Owns the harness's one real page load (`bootstrapsPage`, " +
-      "run.mjs's own doc comment) so its own screenshot is taken while the loader is genuinely still on screen, " +
-      'held there by a route intercepting the first scene image; the static-HTML checks still run on their own ' +
-      'side page, independent of that hold.',
+      "land, and is gone once the shell mounts. Owns the harness's one real page load (`bootstrapsPage`), held at " +
+      'the first scene image so its screenshot catches the loader on screen.',
     viewport: DEFAULT_VIEWPORT,
     /**
-     * Marks this as the one shot allowed to own the harness's single page load — see this
-     * package's README ("Adding a shot"). `run.mjs` calls this in place of the generic
-     * `page.goto`, before `hook`/`window.__earthtime` exist, so it drives `page` with raw
-     * Playwright APIs only. Everything after it returns (waiting for the hook, `hook.ready()`,
-     * dismissing the tour) runs exactly as it does for every other shot.
+     * The one shot allowed to own the harness's page load (README, "A shot that needs the
+     * harness's one page load"): `run.mjs` calls this in place of its own `page.goto`, before
+     * `window.__earthtime` exists, so it drives `page` with raw Playwright only.
      * @param {{ page: import('playwright').Page, baseUrl: string, run: { screenshots: boolean } }} args
      */
     bootstrapsPage: async ({ page, baseUrl, run }) => {
@@ -5152,8 +712,7 @@ export default [
       const surfaceAnimation = (p) =>
         p.evaluate(() => getComputedStyle(document.querySelector('[data-testid="loading-screen"] svg g g')).animationName)
 
-      // Independent of the timed hold below — scripts never run here, so there is no manifest or
-      // scene fetch to hold back in the first place. A throwaway side page, not the harness's own.
+      // Scripts never run on this side page, so there is no manifest or scene fetch to hold back.
       const noScript = await page.context().newPage()
       await noScript.setViewportSize(DEFAULT_VIEWPORT)
       await noScript.emulateMedia({ reducedMotion: 'reduce' })
@@ -5166,9 +725,7 @@ export default [
       const turnsOtherwise = (await surfaceAnimation(noScript)) !== 'none' ? 1 : 0
       await noScript.close()
 
-      // The real, scripted load — held at the first scene image so the loader is still genuinely
-      // on screen when this shot's own screenshot is taken below. This *is* the harness's one page
-      // load (README's "nothing ever reloads"), not a side page.
+      // The real, scripted load, held at the first scene image so the loader is still on screen.
       let releaseScenes = () => {}
       const scenesHeld = new Promise((resolve) => {
         releaseScenes = resolve
@@ -5179,21 +736,15 @@ export default [
       })
       await page.goto(baseUrl, { waitUntil: 'commit' })
       const progressbar = `${LOADER} [role="progressbar"]`
-      await page.waitForFunction(
-        (sel) => Number(document.querySelector(sel)?.getAttribute('aria-valuenow') ?? 0) > 0,
-        progressbar,
-      )
+      await page.waitForFunction((sel) => Number(document.querySelector(sel)?.getAttribute('aria-valuenow') ?? 0) > 0, progressbar)
       const midProgress = Number(await page.getAttribute(progressbar, 'aria-valuenow'))
       const globe = await drawnBounds(page, `${LOADER} svg`)
       const title = await drawnBounds(page, `${LOADER} p`)
-
       const screenshot = run.screenshots ? await page.screenshot() : null
 
-      // Left registered rather than `page.unroute`d: unrouting while the handler's own
-      // `route.continue()` for an in-flight request hasn't resolved yet races Playwright's own
-      // cleanup, which has been observed to continue that same route a second time and throw
-      // "Route is already handled!". Once resolved, `scenesHeld` makes every future match here an
-      // immediate passthrough, so leaving it up for the rest of the run is harmless.
+      // Left registered: unrouting while an in-flight `route.continue()` is unresolved races
+      // Playwright's cleanup ("Route is already handled!"), and once released every later match
+      // is an immediate passthrough.
       releaseScenes()
       await page.waitForSelector(LOADER, { state: 'detached', timeout: 10_000 })
       const loaderAfterShell = await page.locator(LOADER).count()
@@ -5225,82 +776,474 @@ export default [
       loaderAfterShell: [0, 0],
     },
   },
-]
+  desktopRestingShot(DEFAULT_VIEWPORT, {
+    description:
+      '; the scene canvas draws over at least half the viewport; the timeline draws 135-175px tall; mode and scale ' +
+      'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; the "All events" browser ' +
+      '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart; in the Holocene the ' +
+      'expanded population chart stays on screen, clear of the timeline, its curve 1000-1440px wide.',
+    atRoot: async (page) => {
+      const [mode, scale] = await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      const trace = await polylineTraceBounds(page, `${POPULATION_READOUT_SELECTOR} svg`)
+      const value = await boxOf(page, `${POPULATION_READOUT_SELECTOR} [data-testid="scalar-readout-value"]`)
+      // Drawn pixels: a blank scene canvas has no extent at all against its own corners.
+      const scene = await drawnBounds(page, SCENE_CANVAS_SELECTOR)
+      const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
 
-/**
- * The Cenozoic ice age on the expanded map (docs/GLOBE.md §5.1): schematic ice sheets scaled by
- * LR04 and the glacial lowstand's exposed shelf, sampled at fixed geographic points through
- * `mapColoursAt`. `whiteness` (darkest channel) reads ice, `blueOverGreen` reads water. The extra
- * settle covers the ice age's own presentation rate limit, which a jump from the previous shot's
- * `t` can need up to ~2 s to finish.
- */
-function iceAgeShots() {
-  const POINTS = {
-    laurentide: { lon: -100, lat: 58 },
-    fennoscandia: { lon: 16, lat: 63 },
-    greenland: { lon: -40, lat: 74 },
-    antarctica: { lon: 30, lat: -82 },
-    sunda: { lon: 108, lat: 4 },
-    beringia: { lon: -172, lat: 63 },
-  }
-  const measure = async ({ page }) => {
-    const { mapWidth, colours } = await mapColoursAt(page, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR), POINTS)
-    return { mapWidth, ...colours }
-  }
-  // Expanded through the hook rather than `state`: `state` also resolves the "Human civilisation"
-  // legend toggle, whose row does not exist before people do (120 ka and older).
-  // Zoomed fully out explicitly: the map keeps its zoom when its fit frame changes (the legend
-  // corner filling or emptying as `t` crosses 120 ka), so the default framing alone is not a
-  // fixed map size.
-  const expandToMapAndSettle = async ({ page, hook }) => {
-    await hook.setGlobeExpanded(true)
-    await hook.setGlobeViewMode('map')
-    await waitForSceneCrossfadeSettle(page)
-    const zoomOut = page.getByRole('button', { name: 'Zoom out' })
-    for (let clicks = 0; clicks < 12 && (await zoomOut.isEnabled()); clicks += 1) {
-      await zoomOut.click()
-      await waitForApproxUnfoldProgress(page, 0.5)
-    }
-    await rafTicks(page, 2)
-  }
-  const shot = (name, t, description, expect) => ({
-    name,
-    description,
+      await page.keyboard.press('/')
+      const panel = await drawnBounds(page, EVENT_BROWSER_SELECTOR)
+      const rail = await eventBrowserRailLabelGeometry(page, panel.x + panel.width)
+      const browserOverlapsTimeline = rectsOverlap(panel, await boxOf(page, BOTTOM_CHROME_SELECTOR)) ? 1 : 0
+      await page.keyboard.press('Escape')
+      await rafTicks(page, 2)
+      return {
+        sceneDrawnFraction: scene.fractionOfViewport,
+        timeline,
+        modeScaleShareRow: Math.round(mode.y) === Math.round(scale.y) ? 1 : 0,
+        sparklineWidth: trace.width,
+        sparklineHeight: trace.height,
+        sparklineBelowValue: trace.y >= value.y + value.height - 1 ? 1 : 0,
+        browserWidth: panel.width,
+        browserOverlapsTimeline,
+        railLabelCount: rail.labelCount,
+        railLabelOverflowPx: rail.overflowPx,
+        railLabelOverlapCount: rail.overlapCount,
+      }
+    },
+    inSection: async (page) => {
+      const toggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
+      await toggle.click()
+      await rafTicks(page, 2)
+      const b = await boxesOf(page, { chart: '[data-testid="layer-chart"]', timeline: BOTTOM_CHROME_SELECTOR })
+      const curve = await polylineTraceBounds(page, LAYER_CHART_SVG_SELECTOR)
+      await toggle.click()
+      return {
+        chartOverlapsTimeline: rectsOverlap(b.chart, b.timeline) ? 1 : 0,
+        chartOffscreenPx: viewportOverflowPx(b.chart, DEFAULT_VIEWPORT),
+        chartCurveWidth: curve.width,
+      }
+    },
+    expect: {
+      sceneDrawnFraction: [0.5, 1],
+      'timeline.height': [135, 175],
+      modeScaleShareRow: [1, 1],
+      sparklineWidth: [120, 200],
+      sparklineHeight: [15, 32],
+      sparklineBelowValue: [1, 1],
+      browserWidth: [300, 720],
+      browserOverlapsTimeline: [0, 0],
+      railLabelCount: [1, 40],
+      railLabelOverflowPx: [0, 0],
+      railLabelOverlapCount: [0, 0],
+      chartOverlapsTimeline: [0, 0],
+      chartOffscreenPx: [-1440, 0],
+      chartCurveWidth: [1000, 1440],
+    },
+  }),
+  desktopRestingShot(NARROW_DESKTOP_VIEWPORT, {
+    description: '; the secondary cluster is one row (≤ 55px, mode and scale on one centre line ±2px).',
+    atRoot: async (page) => {
+      const [mode, scale] = await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+      return {
+        // One row of mode/scale/sound is ≤ 48px; a wrapped second line adds a control height (63px+).
+        secondaryHeightPx: (await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)).height,
+        modeScaleCentreYDeltaPx: Math.abs(centreY(mode) - centreY(scale)),
+      }
+    },
+    expect: { secondaryHeightPx: [0, 55], modeScaleCentreYDeltaPx: [0, 2] },
+  }),
+  {
+    name: 'layout-390x844-resting',
+    description:
+      'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, readouts, feed strip, ' +
+      'caption, timeline) overlaps another or leaves the viewport; the drawn orb and portrait match in size (±5%); the ' +
+      'readouts sit 0-8px under the drawn orb and the shortcuts 8-14px under the title; the timeline draws 170-310px ' +
+      'tall, its breadcrumb row taking no height at the root; the secondary controls clear of each other and of the ' +
+      'transport; in a section the stacked row stays inside the track (6px slack) without collisions and renders its ' +
+      'crumbs; the feed strip paints no category word; "All events" opens a full-width sheet above the timeline; ' +
+      "the first-visit tour's first step rings the play button (±2px) with its card clear of the ring, ≥ 8px inside " +
+      'the viewport, copy drawn on its panel, and a ≥ 44px Skip target.',
+    viewport: PHONE_FLOOR_VIEWPORT,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const regions = { ...RESTING_REGIONS, ancestor: ANCESTOR_PORTRAIT_SELECTOR }
+      const root = await boxesOf(page, { ...regions, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      const layout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, PHONE_FLOOR_VIEWPORT)
+      const globe = await opacityMatteBounds(page, await boxOf(page, GLOBE_CANVAS_SELECTOR))
+      const portrait = await opacityMatteBounds(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
+      const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
+      const orbToReadoutsPx = await gapBetween(page, GLOBE_CANVAS_SELECTOR, SHELL_READOUTS_SELECTOR)
+      const titleToShortcutsPx = await gapBetween(page, TIME_TITLE_SELECTOR, ERA_SHORTCUTS_SELECTOR)
+      const tag = await page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first().boundingBox()
+      const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
+      const secondarySelfOverlaps = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR))
+
+      await hook.setTourOpen(true)
+      await rafTicks(page, 2)
+      const t = await boxesOf(page, { ring: ONBOARDING_SPOTLIGHT_SELECTOR, play: PLAY_BUTTON_SELECTOR, card: ONBOARDING_CARD_SELECTOR, skip: ONBOARDING_SKIP_SELECTOR })
+      const tour = {
+        ringToPlayOffsetPx: centreDistance(t.ring, t.play),
+        cardOverlapsRing: rectsOverlap(t.card, t.ring) ? 1 : 0,
+        cardOffscreenPx: viewportOverflowPx(t.card, PHONE_FLOOR_VIEWPORT),
+        skip: t.skip,
+        // Drawn pixels: the copy sits on the card's own flat panel, where a corner sample is sound.
+        cardContent: await drawnBounds(page, ONBOARDING_CARD_SELECTOR),
+      }
+      await hook.setTourOpen(false)
+      await rafTicks(page, 2)
+
+      await selectSection(page, hook, 'cenozoic')
+      const inSection = await boxesOf(page, { track: TIMELINE_TRACK_STACK_SELECTOR, sections: TIMELINE_CONTROLS_SECTIONS_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      const crumbs = await allRects(page, `${BREADCRUMB_SELECTOR} ol > li`)
+      const sectionCollisions = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR))
+      const secondaryCollisions = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR))
+
+      await page.locator('[data-testid^="event-feed-card-"]').first().click()
+      await page.getByRole('button', { name: 'All events' }).click()
+      await hook.ready()
+      const sheet = await drawnBounds(page, EVENT_BROWSER_SELECTOR)
+      return {
+        layout,
+        tour,
+        globePortraitRatioPct: Math.round((100 * globe.width) / portrait.width),
+        orbToReadoutsPx,
+        titleToShortcutsPx,
+        timeline,
+        sectionsHeightAtRootPx,
+        secondarySelfOverlaps,
+        secondaryOverlapsCore: rectsOverlap(root.secondary, root.core) ? 1 : 0,
+        leftInsetPx: inSection.sections.x - inSection.track.x,
+        rightInsetPx: inSection.track.x + inSection.track.width - (inSection.secondary.x + inSection.secondary.width),
+        sectionCollisions,
+        secondaryCollisions,
+        crumbsRendered: crumbs.filter((box) => box.width > 0 && box.height > 0).length,
+        feedTagWidthPx: tag === null ? 0 : tag.width,
+        eventSheetWidthPx: sheet.width,
+        eventSheetOverlapsTimeline: rectsOverlap(sheet, await boxOf(page, BOTTOM_CHROME_SELECTOR)) ? 1 : 0,
+      }
+    },
+    expect: {
+      ...prefixedLayoutExpect('layout', [...Object.keys(RESTING_REGIONS), 'ancestor', 'caption']),
+      globePortraitRatioPct: [95, 105],
+      orbToReadoutsPx: [0, 8],
+      titleToShortcutsPx: [8, 14],
+      'timeline.height': [170, 310],
+      sectionsHeightAtRootPx: [0, 0],
+      secondarySelfOverlaps: [0, 0],
+      secondaryOverlapsCore: [0, 0],
+      leftInsetPx: [0, 400],
+      // The stacked row's first wrapped line runs a few px wider than the inset track at 390; an
+      // un-inset row would overhang by a whole gutter (~50px).
+      rightInsetPx: [-6, 400],
+      sectionCollisions: [0, 0],
+      secondaryCollisions: [0, 0],
+      crumbsRendered: [2, 10],
+      feedTagWidthPx: [0, 1],
+      eventSheetWidthPx: [PHONE_FLOOR_VIEWPORT.width - 10, PHONE_FLOOR_VIEWPORT.width],
+      eventSheetOverlapsTimeline: [0, 0],
+      'tour.ringToPlayOffsetPx': [0, 2],
+      'tour.cardOverlapsRing': [0, 0],
+      'tour.cardOffscreenPx': [-844, -8],
+      'tour.skip.width': [44, 200],
+      'tour.skip.height': [44, 90],
+      'tour.cardContent.width': [160, 400],
+      'tour.cardContent.height': [80, 500],
+    },
+  },
+  {
+    name: 'layout-844x390-resting',
+    description:
+      'Short landscape 844x390 (ADR-048), collapsed: the drawn orb ≥ 29% and portrait ≥ 25% of the height; no chrome ' +
+      'region (title, each era shortcut, orb, ancestor column, caption label, feed strip, timeline) overlaps another or ' +
+      'leaves the viewport, at the root and in a section; title centred (±3px); caption ≥ 4px above the playhead ' +
+      'label and on the feed row (±3px, ≥ 8px apart); the breadcrumb row takes no height at the root and sits above ' +
+      'the track in a section; the mode/scale/volume controls on one row (±2px), each ≥ 32px, clear of transport and ' +
+      'track; no band label clipped; the caption shows its title alone, its ⓘ opening a description panel on screen.',
+    viewport: LANDSCAPE_VIEWPORT,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const viewport = LANDSCAPE_VIEWPORT
+      const regionBoxes = async () => {
+        const shortcuts = await allRects(page, `${ERA_SHORTCUTS_SELECTOR} button`)
+        const b = await boxesOf(page, {
+          title: TIME_TITLE_SELECTOR,
+          orb: GLOBE_EXPAND_SELECTOR,
+          about: ABOUT_BUTTON_SELECTOR,
+          portrait: ANCESTOR_PORTRAIT_SELECTOR,
+          readout: ANCESTOR_READOUT_SELECTOR,
+          feed: EVENT_FEED_ITEM_SELECTOR,
+          timeline: BOTTOM_CHROME_SELECTOR,
+          label: PLAYHEAD_LABEL_SELECTOR,
+        })
+        const caption = await captionLabelBox(page)
+        const regions = {
+          title: b.title,
+          dinosaurs: shortcuts[0],
+          humans: shortcuts[1],
+          orb: b.orb,
+          ancestor: unionBox([b.about, b.portrait, b.readout]),
+          caption,
+          feed: b.feed,
+          timeline: b.timeline,
+        }
+        return { regions, label: b.label }
+      }
+      const bandsClipped = () =>
+        page.evaluate(() => {
+          const strip = document.querySelector('[data-section-bands]')
+          if (strip === null) return -1
+          const stripRect = strip.getBoundingClientRect()
+          const clipped = [...strip.querySelectorAll('li span')].filter((label) => {
+            const rect = label.getBoundingClientRect()
+            return label.scrollWidth > label.clientWidth + 0.5 || rect.right > stripRect.right + 0.5 || rect.left < stripRect.left - 0.5
+          })
+          return clipped.length + (strip.scrollWidth > strip.clientWidth + 1 ? 1 : 0)
+        })
+
+      const orb = await minimisedOrbDrawnBounds(page)
+      const portrait = await opacityMatteBounds(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
+      const root = await regionBoxes()
+      const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
+      const captionTextVisible = (await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()) ? 1 : 0
+      const clippedBandsAtRoot = await bandsClipped()
+
+      await page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first().click()
+      await rafTicks(page, 2)
+      const detailOverflowPx = viewportOverflowPx(await boxOf(page, SCENE_CAPTION_DETAIL_SELECTOR), viewport)
+      await page.keyboard.press('Escape')
+      await rafTicks(page, 2)
+      const detailClosed = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).count()) === 0 ? 1 : 0
+      await page.mouse.move(0, 0)
+
+      await selectSection(page, hook, 'cenozoic')
+      const inSection = await regionBoxes()
+      const b = await boxesOf(page, { nav: BREADCRUMB_SELECTOR, track: TIMELINE_TRACK_STACK_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR })
+      const parts = await boxesOf(page, {
+        mode: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [role="group"]:not([class*="scaleOptions"])`,
+        scale: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [class*="scaleOptions"]`,
+        sound: '[data-testid="timeline-sound-slot"]',
+      })
+      const centres = Object.values(parts).map(centreY)
+      const clippedBandsInSection = await bandsClipped()
+      const { regions } = root
+      return {
+        orbDrawnDiameterPx: orb.height,
+        portraitDrawnDiameterPx: portrait.height,
+        root: layoutFlags(regions, viewport),
+        inSection: layoutFlags(inSection.regions, viewport),
+        titleCentreOffsetPx: centreX(regions.title) - viewport.width / 2,
+        captionToLabelGapPx: Math.min(root.label.y - (regions.caption.y + regions.caption.height), inSection.label.y - (inSection.regions.caption.y + inSection.regions.caption.height)),
+        captionFeedRowOffsetPx: Math.abs(centreY(regions.caption) - centreY(regions.feed)),
+        feedToCaptionGapPx: regions.caption.x - (regions.feed.x + regions.feed.width),
+        sectionsHeightAtRootPx,
+        breadcrumbAboveTrackPx: b.track.y - (b.nav.y + b.nav.height),
+        secondaryOverflowPx: Math.max(...Object.values(parts).map((box) => viewportOverflowPx(box, viewport))),
+        secondaryMinHeightPx: Math.min(...Object.values(parts).map((box) => box.height)),
+        secondaryCentreSpreadPx: Math.max(...centres) - Math.min(...centres),
+        secondaryOverlapsTransport: Object.values(parts).some((box) => rectsOverlap(box, b.core)) ? 1 : 0,
+        secondaryOverlapsTrack: Object.values(parts).some((box) => rectsOverlap(box, b.track)) ? 1 : 0,
+        clippedBands: Math.max(clippedBandsAtRoot, clippedBandsInSection),
+        captionTextVisible,
+        detailOverflowPx,
+        detailClosed,
+      }
+    },
+    expect: {
+      orbDrawnDiameterPx: [Math.round(LANDSCAPE_VIEWPORT.height * 0.29), 400],
+      portraitDrawnDiameterPx: [Math.round(LANDSCAPE_VIEWPORT.height * 0.25), 400],
+      ...prefixedLayoutExpect('root', ['title', 'dinosaurs', 'humans', 'orb', 'ancestor', 'caption', 'feed', 'timeline']),
+      ...prefixedLayoutExpect('inSection', ['title', 'dinosaurs', 'humans', 'orb', 'ancestor', 'caption', 'feed', 'timeline']),
+      titleCentreOffsetPx: [-3, 3],
+      captionToLabelGapPx: [4, 400],
+      captionFeedRowOffsetPx: [0, 3],
+      feedToCaptionGapPx: [8, 800],
+      sectionsHeightAtRootPx: [0, 0],
+      breadcrumbAboveTrackPx: [0, 20],
+      secondaryOverflowPx: [-400, 0],
+      secondaryMinHeightPx: [32, 60],
+      secondaryCentreSpreadPx: [0, 2],
+      secondaryOverlapsTransport: [0, 0],
+      secondaryOverlapsTrack: [0, 0],
+      clippedBands: [0, 0],
+      captionTextVisible: [0, 0],
+      detailOverflowPx: [-400, 0],
+      detailClosed: [1, 1],
+    },
+  },
+  desktopExpandedShot(DEFAULT_VIEWPORT, { sphereWidth: [470, 515], mapWidth: [960, 1030], withMap: true }),
+  desktopExpandedShot(NARROW_DESKTOP_VIEWPORT),
+  {
+    name: 'layout-390x844-expanded',
+    description:
+      'Phone portrait 390x844, globe expanded: the drawn sphere 330-400px across; no region (title, era shortcuts, ' +
+      'overlay control, close, Globe/Map toggle, zoom, feed strip, timeline, drawn sphere) overlaps another or leaves ' +
+      'the viewport; row 2 (shortcuts, 24-36px overlay control, one centre line ±6px) ≥ 4px clear of the sphere; toggle ' +
+      'and zoom, equal heights (±1px), 4-200px below it; the feed strip ≥ 4px below the sphere and 2-60px above the ' +
+      'timeline. In map mode row 2 stays ≥ 4px clear of the drawn map.',
+    viewport: PHONE_FLOOR_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    measure: async ({ page, hook }) => {
+      const sphere = await globeBodyBounds(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
+      const b = await boxesOf(page, {
+        title: TIME_TITLE_SELECTOR,
+        era: ERA_SHORTCUTS_SELECTOR,
+        close: CLOSE_BUTTON_SELECTOR,
+        toggle: VIEW_MODE_TOGGLE_SELECTOR,
+        zoom: ZOOM_CONTROLS_SELECTOR,
+        feed: SHELL_FEED_SELECTOR,
+        timeline: BOTTOM_CHROME_SELECTOR,
+      })
+      const overlayControl = await overlayControlBox(page)
+      const sphereBottom = sphere.y + sphere.height
+      await switchGlobeViewMode(page, hook, 'map')
+      const map = await globeBodyBounds(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+      return {
+        sphere,
+        layout: layoutFlags({ ...b, overlay: overlayControl, sphere }, PHONE_FLOOR_VIEWPORT),
+        eraClearanceGapPx: rectClearancePx(b.era, sphere),
+        overlayClearanceGapPx: rectClearancePx(overlayControl, sphere),
+        overlayControlHeightPx: overlayControl.height,
+        // The two sit in separate subtrees, each centred in a shared band, and differ in height.
+        rowAlignmentDeltaPx: Math.abs(centreY(b.era) - centreY(overlayControl)),
+        toggleClearanceGapPx: b.toggle.y - sphereBottom,
+        zoomClearanceGapPx: b.zoom.y - sphereBottom,
+        toggleHeightMinusZoomPx: b.toggle.height - b.zoom.height,
+        feedBelowSphereGapPx: b.feed.y - sphereBottom,
+        timelineBelowFeedGapPx: b.timeline.y - (b.feed.y + b.feed.height),
+        mapEraClearanceGapPx: rectClearancePx(await boxOf(page, ERA_SHORTCUTS_SELECTOR), map),
+        mapOverlayClearanceGapPx: rectClearancePx(await overlayControlBox(page), map),
+      }
+    },
+    expect: {
+      'sphere.width': [330, 400],
+      'sphere.height': [330, 400],
+      ...prefixedLayoutExpect('layout', ['title', 'era', 'close', 'toggle', 'zoom', 'feed', 'timeline', 'overlay', 'sphere']),
+      eraClearanceGapPx: [4, 400],
+      overlayClearanceGapPx: [4, 400],
+      overlayControlHeightPx: [24, 36],
+      rowAlignmentDeltaPx: [0, 6],
+      toggleClearanceGapPx: [4, 200],
+      zoomClearanceGapPx: [4, 200],
+      toggleHeightMinusZoomPx: [-1, 1],
+      feedBelowSphereGapPx: [4, 400],
+      timelineBelowFeedGapPx: [2, 60],
+      mapEraClearanceGapPx: [4, 400],
+      mapOverlayClearanceGapPx: [4, 400],
+    },
+  },
+  {
+    name: 'layout-844x390-expanded',
+    description:
+      'Short landscape 844x390, globe expanded, inside a section: a left column (title, era shortcuts, overlay, ' +
+      'Globe/Map toggle, zoom) and the drawn shape right of it and above the timeline, nothing overlapping another ' +
+      'or the timeline; the drawn sphere with its glow at least the height above the timeline less 16px (4px tolerance), the drawn ' +
+      "map filling the box right of the column to within 15%; the crumb trail directly above the transport, clear " +
+      'of it and of the shape.',
+    viewport: LANDSCAPE_VIEWPORT,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => selectSection(page, hook, 'mesozoic'),
+    measure: async ({ page, hook }) => {
+      const columnSelectors = {
+        title: TIME_TITLE_SELECTOR,
+        era: ERA_SHORTCUTS_SELECTOR,
+        overlay: OVERLAY_SELECT_STACK_SELECTOR,
+        toggle: VIEW_MODE_TOGGLE_SELECTOR,
+        zoom: ZOOM_CONTROLS_SELECTOR,
+      }
+      const measureShape = async () => {
+        const b = await boxesOf(page, { ...columnSelectors, timeline: BOTTOM_CHROME_SELECTOR, close: CLOSE_BUTTON_SELECTOR, crumbs: BREADCRUMB_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR })
+        const columnRight = Math.max(...Object.keys(columnSelectors).map((name) => b[name].x + b[name].width))
+        // Everything but the globe canvas hidden, so the shape is found wherever it lands. The
+        // threshold keeps the atmosphere glow's bright inner edge: the fit frame leaves the glow
+        // its room, so "as large as the height allows" is sphere plus glow.
+        const restore = await hideAllButGlobeCanvas(page, [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR])
+        await rafTicks(page, 2)
+        const shape = await drawnBoundsInClip(page, { x: 0, y: 0, width: LANDSCAPE_VIEWPORT.width, height: LANDSCAPE_VIEWPORT.height }, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+        await restore()
+        const { timeline, close, crumbs, core, ...column } = b
+        return {
+          shape,
+          layout: pairwiseOverlapFlags({ ...column, shape, timeline, close, crumbs }),
+          shapeRightOfColumnPx: shape.x - columnRight,
+          shapeAboveTimelinePx: timeline.y - (shape.y + shape.height),
+          sphereDeficitPx: timeline.y - 16 - shape.height,
+          mapFillFraction: Math.max(shape.height / (timeline.y - 16), shape.width / (close.x - 8 - (columnRight + 12))),
+          crumbsAboveCoreGapPx: core.y - (crumbs.y + crumbs.height),
+          crumbsOverlapCore: rectsOverlap(crumbs, core) ? 1 : 0,
+        }
+      }
+      const sphere = await measureShape()
+      await switchGlobeViewMode(page, hook, 'map')
+      const map = await measureShape()
+      return { sphere, map }
+    },
+    expect: Object.fromEntries(
+      ['sphere', 'map'].flatMap((mode) => [
+        [`${mode}.shape.width`, [100, 2000]],
+        ...Object.entries(noPairOverlaps(['title', 'era', 'overlay', 'toggle', 'zoom', 'shape', 'timeline', 'close', 'crumbs'])).map(([key, range]) => [`${mode}.layout.${key}`, range]),
+        [`${mode}.shapeRightOfColumnPx`, [0, 400]],
+        [`${mode}.shapeAboveTimelinePx`, [0, 400]],
+        mode === 'sphere' ? [`${mode}.sphereDeficitPx`, [-400, 4]] : [`${mode}.mapFillFraction`, [0.85, 1.05]],
+        [`${mode}.crumbsAboveCoreGapPx`, [0, 200]],
+        [`${mode}.crumbsOverlapCore`, [0, 0]],
+      ]),
+    ),
+  },
+  {
+    name: 'globe-interactions',
+    description:
+      'Pointer hit-testing against the real canvas geometry: a click on the minimised orb expands the globe; one ' +
+      '"Zoom in" press grows the drawn sphere by ≥ 80px; a click on the sphere keeps the view open; a real click ' +
+      'reaches the "Map" button (nothing covers it); a click on the map keeps the view open; back on the sphere, a ' +
+      'click on the empty backdrop closes it.',
     viewport: DEFAULT_VIEWPORT,
-    t,
-    actions: expandToMapAndSettle,
-    measure,
-    // The fully zoomed-out map at 1440x900, inside the fit frame aligned to the track's edges.
-    expect: { mapWidth: [960, 1000], ...expect },
-  })
-  return [
-    shot('globe-ice-lgm', 21_000, 'Last Glacial Maximum: Laurentide and Fennoscandian sheets read as ice; Sunda and Beringia shelves read as land.', {
-      'laurentide.whiteness': [140, 255],
-      'fennoscandia.whiteness': [140, 255],
-      'greenland.whiteness': [140, 255],
-      'sunda.blueOverGreen': [-80, 5],
-      'beringia.blueOverGreen': [-80, 5],
-    }),
-    shot('globe-ice-present', 0, 'Present day: Greenland alone in the north; no Laurentide or Fennoscandian ice; Sunda is sea.', {
-      'laurentide.whiteness': [0, 125],
-      'fennoscandia.whiteness': [0, 125],
-      'greenland.whiteness': [140, 255],
-      'sunda.blueOverGreen': [20, 120],
-    }),
-    shot('globe-ice-eemian', 120_000, 'Eemian interglacial (~120 ka): small caps as today; no Laurentide ice; shelves drowned.', {
-      'laurentide.whiteness': [0, 125],
-      'fennoscandia.whiteness': [0, 125],
-      'greenland.whiteness': [140, 255],
-      'sunda.blueOverGreen': [20, 120],
-    }),
-    shot('globe-ice-10ma', 10_000_000, 'Middle Miocene (10 Ma): Antarctica ice-capped, no Northern Hemisphere ice.', {
-      'antarctica.whiteness': [140, 255],
-      'greenland.whiteness': [0, 125],
-      'laurentide.whiteness': [0, 125],
-    }),
-    shot('globe-ice-50ma', 50_000_000, 'Early Eocene (50 Ma): no ice anywhere.', {
-      'antarctica.whiteness': [0, 125],
-      'greenland.whiteness': [0, 125],
-    }),
-  ]
-}
+    t: 0,
+    measure: async ({ page, hook }) => {
+      // Two frames for the click to land, then whether the globe is still expanded — one round trip.
+      const expandedAfterClick = async (x, y) => {
+        await page.mouse.click(x, y)
+        return page.evaluate(async () => {
+          for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+          return window.__earthtime.getState().globeExpanded ? 1 : 0
+        })
+      }
+      const reduced = await motionReduced(page)
+      // A plain click on the orb (its canvas; the expand button beneath is the keyboard path).
+      const { orb } = await boxesOf(page, { orb: GLOBE_EXPAND_SELECTOR })
+      const orbClickExpands = await expandedAfterClick(centreX(orb), centreY(orb))
+      await hook.ready()
+      await waitForGlobeFitFramesStable(page)
+      const frames = await boxesOf(page, { sphere: GLOBE_SPHERE_FIT_FRAME_SELECTOR, map: GLOBE_MAP_FIT_FRAME_SELECTOR })
+
+      const restore = await hideAroundSphereStrip(page)
+      const strip = () => drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+      const defaultWidth = (await strip()).width
+      await pressZoomIn(page, 1)
+      const zoomedWidth = (await strip()).width
+      await restore()
+
+      const sphereClickKeepsOpen = await expandedAfterClick(centreX(frames.sphere), centreY(frames.sphere))
+      // A real click, so hit-testing and `pointer-events` apply: a covered button fails
+      // Playwright's actionability check outright (`hook.setGlobeViewMode` would not).
+      await page.locator(VIEW_MODE_TOGGLE_SELECTOR).getByRole('button', { name: 'Map' }).click()
+      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
+      await waitForGlobeFitFramesStable(page)
+      const mapClickKeepsOpen = await expandedAfterClick(centreX(frames.map), centreY(frames.map))
+      await hook.setGlobeViewMode('globe')
+      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
+      await waitForGlobeFitFramesStable(page)
+      // Left of the sphere, below the legend, above the timeline.
+      const expandedAfterBackdropClick = await expandedAfterClick(150, 700)
+      return { orbClickExpands, defaultWidth, zoomGrowthPx: zoomedWidth - defaultWidth, sphereClickKeepsOpen, mapClickKeepsOpen, expandedAfterBackdropClick }
+    },
+    expect: {
+      orbClickExpands: [1, 1],
+      zoomGrowthPx: [80, 800],
+      sphereClickKeepsOpen: [1, 1],
+      mapClickKeepsOpen: [1, 1],
+      expandedAfterBackdropClick: [0, 0],
+    },
+  },
+]

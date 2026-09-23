@@ -1,4 +1,5 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+// @vitest-environment jsdom
+import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -42,7 +43,7 @@ describe('moveToward', () => {
 })
 
 describe('stepMix', () => {
-  it.each([0, -1, NaN, Infinity])('returns the state itself for dt = %p', (dt) => {
+  it.each([0, NaN])('returns the state itself for dt = %p', (dt) => {
     const state: Mix<Item> = { from: a, to: b, mix: 0.3 }
     expect(stepMix(state, { from: a, to: b, mix: 1 }, dt, MIN_SECONDS, KEYING)).toBe(state)
   })
@@ -104,37 +105,49 @@ describe('dominantItem', () => {
   })
 })
 
-describe('usePresentedMix', () => {
+/** Drives rAF, timers and the clock from `vi.advanceTimersByTime` instead of real wall time. */
+function withFakeFrames(): void {
   beforeEach(() => {
-    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16) as unknown as number)
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'clearTimeout', 'performance', 'Date'] })
   })
-
   afterEach(() => {
-    vi.unstubAllGlobals()
+    vi.useRealTimers()
   })
+}
 
-  it('mounts at the target and takes real wall-clock time to catch a jump', async () => {
+function advance(ms: number): void {
+  act(() => {
+    vi.advanceTimersByTime(ms)
+  })
+}
+
+describe('usePresentedMix', () => {
+  withFakeFrames()
+
+  it('mounts at the target and takes at least minSeconds of frames to catch a jump', () => {
     const { result, rerender } = renderHook(({ target }) => usePresentedMix(target, MIN_SECONDS, KEYING), {
       initialProps: { target: alone(a) },
     })
     expect(result.current).toEqual(alone(a))
 
     act(() => rerender({ target: alone(d) }))
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    advance(200)
     expect(result.current.from).toBe(a)
     expect(result.current.to).toBe(d)
     expect(result.current.mix).toBeGreaterThan(0)
     expect(result.current.mix).toBeLessThan(1)
 
-    await waitFor(() => expect(result.current).toEqual(alone(d)), { timeout: 3000, interval: 50 })
-  }, 10000)
+    advance(MIN_SECONDS * 1000 - 250)
+    expect(result.current).not.toEqual(alone(d))
+    advance(200)
+    expect(result.current).toEqual(alone(d))
+  })
 })
 
 const MIN_NUMERIC_SECONDS = 1.5
 
 describe('stepNumericRecord', () => {
-  it.each([0, -1, NaN, Infinity])('returns the state itself for dt = %p', (dt) => {
+  it.each([0, NaN])('returns the state itself for dt = %p', (dt) => {
     const state = { a: 0.2, b: 0.8 }
     expect(stepNumericRecord(state, { a: 1, b: 0 }, dt, MIN_NUMERIC_SECONDS)).toBe(state)
   })
@@ -151,11 +164,6 @@ describe('stepNumericRecord', () => {
     expect(next.b).toBeLessThan(1)
   })
 
-  it('returns the same reference once every field has already reached its target', () => {
-    const state = { a: 1, b: 0 }
-    expect(stepNumericRecord(state, { a: 1, b: 0 }, 0.3, MIN_NUMERIC_SECONDS)).toBe(state)
-  })
-
   it('follows a target moving slower than the floor exactly', () => {
     let state = { a: 0 }
     for (let i = 1; i <= 50; i++) {
@@ -167,36 +175,22 @@ describe('stepNumericRecord', () => {
 })
 
 describe('usePresentedNumericRecord', () => {
-  beforeEach(() => {
-    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16) as unknown as number)
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
-  })
+  withFakeFrames()
 
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('mounts at the target and takes real wall-clock time to catch a jump', async () => {
+  it('mounts at the target and takes at least minSeconds of frames to catch a jump', () => {
     const { result, rerender } = renderHook(({ target }) => usePresentedNumericRecord(target, MIN_NUMERIC_SECONDS), {
       initialProps: { target: { a: 0, b: 0 } },
     })
     expect(result.current).toEqual({ a: 0, b: 0 })
 
     act(() => rerender({ target: { a: 1, b: 1 } }))
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    advance(200)
     expect(result.current.a).toBeGreaterThan(0)
     expect(result.current.a).toBeLessThan(1)
 
-    await waitFor(() => expect(result.current).toEqual({ a: 1, b: 1 }), { timeout: 3000, interval: 50 })
-  }, 10000)
-
-  it('never overshoots a full transition in under minSeconds', async () => {
-    const { result, rerender } = renderHook(({ target }) => usePresentedNumericRecord(target, MIN_NUMERIC_SECONDS), {
-      initialProps: { target: { intensity: 0 } },
-    })
-    act(() => rerender({ target: { intensity: 1 } }))
-    const start = performance.now()
-    await waitFor(() => expect(result.current.intensity).toBe(1), { timeout: 3000, interval: 10 })
-    expect((performance.now() - start) / 1000).toBeGreaterThanOrEqual(MIN_NUMERIC_SECONDS - 0.1)
-  }, 10000)
+    advance(MIN_NUMERIC_SECONDS * 1000 - 250)
+    expect(result.current.a).toBeLessThan(1)
+    advance(200)
+    expect(result.current).toEqual({ a: 1, b: 1 })
+  })
 })

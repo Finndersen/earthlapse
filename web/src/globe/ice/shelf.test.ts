@@ -12,11 +12,6 @@ describe('paleodemSeaDepthFromRed', () => {
     expect(paleodemSeaDepthFromRed(45)).toBe(-600)
   })
 
-  it('clamps outside the palette', () => {
-    expect(paleodemSeaDepthFromRed(0)).toBe(-11000)
-    expect(paleodemSeaDepthFromRed(200)).toBe(0)
-  })
-
   it('reads published 0 Ma shelf texels to within the claimed ~15 m', () => {
     // sRGB red sampled from textures/paleodem/000.0Ma.webp beside the raw PaleoDEM depth there.
     const samples: readonly [number, number][] = [

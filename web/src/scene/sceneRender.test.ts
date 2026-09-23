@@ -35,78 +35,36 @@ const toDrift = drift(1.04)
 const target = { mix: 0.5, fromDrift, toDrift }
 
 describe('resolveSceneRender', () => {
-  it('returns null before any pair has ever bound (the first-load case)', () => {
-    const notReady = pair(null, null, null, null)
-    expect(resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, notReady, target)).toBeNull()
+  const bAlone = (mix: number, d: DriftUniforms) => ({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix, fromDrift: d, toDrift: d })
+
+  it('is null before anything has bound', () => {
+    expect(resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, pair(null, null, null, null), target)).toBeNull()
   })
 
-  it('passes target through unchanged when the bound pair exactly matches what is requested', () => {
-    const bound = pair('a.png', 'b.png', aTex, bTex)
-    const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, bound, target)
-    expect(render).toEqual({ fromTex: aTex, toTex: bTex, fromUrl: 'a.png', toUrl: 'b.png', mix: 0.5, fromDrift, toDrift })
-  })
-
-  it(
-    'forward: renders the bound pair\'s trailing scene alone, at its own drift, when the ' +
-      "requested pair has moved on to (that scene, something not yet loaded) — e.g. bound " +
-      '(a, b), requested (b, c) mid-playback with c still loading',
-    () => {
-      const bound = pair('a.png', 'b.png', aTex, bTex)
-      const render = resolveSceneRender({ fromUrl: 'b.png', toUrl: 'c.png' }, bound, target)
-      // b alone, mix pinned to 0 (pixel-exact per shaders.ts), drift is target.fromDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 0, fromDrift, toDrift: fromDrift })
-    },
-  )
-
-  it(
-    'backward: renders the bound pair\'s leading scene alone, at its own drift, when a scrub ' +
-      'reverses into a pair not yet bound — e.g. bound (b, c), requested (a, b) with a not ' +
-      'yet loaded',
-    () => {
-      const bound = pair('b.png', 'c.png', bTex, texture('c'))
-      const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, bound, target)
-      // b alone, mix pinned to 1, drift is target.toDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 1, fromDrift: toDrift, toDrift })
-    },
-  )
-
-  it(
-    "bound `from` survives: renders it alone, at its own drift, when the requested pair has " +
-      'kept the bound leading scene but replaced the trailing one outright — e.g. bound ' +
-      '(a, b), requested (a, c) via step()\'s direct-transition branch (a big jump landing on ' +
-      'a settled on-screen scene unrelated to the old target, c still loading)',
-    () => {
-      const bound = pair('a.png', 'b.png', aTex, bTex)
-      const render = resolveSceneRender({ fromUrl: 'a.png', toUrl: 'c.png' }, bound, target)
-      // a alone, mix pinned to 0, drift is target.fromDrift.
-      expect(render).toEqual({ fromTex: aTex, toTex: aTex, fromUrl: 'a.png', toUrl: 'a.png', mix: 0, fromDrift, toDrift: fromDrift })
-    },
-  )
-
-  it(
-    "bound `to` survives: renders it alone, at its own drift, when the requested pair has " +
-      'kept the bound trailing scene but replaced the leading one outright — bound (a, b), ' +
-      "requested (c, b): two successive direct-transition jumps in step(), first onto an " +
-      'unrelated scene c and then back onto b, while (a, b) is still the bound pair',
-    () => {
-      const bound = pair('a.png', 'b.png', aTex, bTex)
-      const render = resolveSceneRender({ fromUrl: 'c.png', toUrl: 'b.png' }, bound, target)
-      // b alone, mix pinned to 1, drift is target.toDrift.
-      expect(render).toEqual({ fromTex: bTex, toTex: bTex, fromUrl: 'b.png', toUrl: 'b.png', mix: 1, fromDrift: toDrift, toDrift })
-    },
-  )
-
-  it('freezes at the bound pair, at rest, when the requested pair shares no scene with it at all', () => {
-    const bound = pair('a.png', 'b.png', aTex, bTex)
-    const render = resolveSceneRender({ fromUrl: 'x.png', toUrl: 'y.png' }, bound, target)
-    expect(render).toEqual({
-      fromTex: bTex,
+  it('passes the target through when the bound pair matches the request', () => {
+    expect(resolveSceneRender({ fromUrl: 'a.png', toUrl: 'b.png' }, pair('a.png', 'b.png', aTex, bTex), target)).toEqual({
+      fromTex: aTex,
       toTex: bTex,
-      fromUrl: 'b.png',
+      fromUrl: 'a.png',
       toUrl: 'b.png',
-      mix: 0,
-      fromDrift: REST_DRIFT,
-      toDrift: REST_DRIFT,
+      ...target,
     })
+  })
+
+  it.each([
+    ['moving on past the bound pair', ['a.png', 'b.png'], ['b.png', 'c.png'], bAlone(0, fromDrift)],
+    ['reversing into an unbound pair', ['b.png', 'c.png'], ['a.png', 'b.png'], bAlone(1, toDrift)],
+    ['keeping only the bound trailing scene', ['a.png', 'b.png'], ['c.png', 'b.png'], bAlone(1, toDrift)],
+    [
+      'keeping only the bound leading scene',
+      ['a.png', 'b.png'],
+      ['a.png', 'c.png'],
+      { fromTex: aTex, toTex: aTex, fromUrl: 'a.png', toUrl: 'a.png', mix: 0, fromDrift, toDrift: fromDrift },
+    ],
+    ['sharing nothing with the bound pair', ['a.png', 'b.png'], ['x.png', 'y.png'], bAlone(0, REST_DRIFT)],
+  ] as const)('shows one bound scene alone at its own drift when %s', (_label, [bf, bt], [rf, rt], expected) => {
+    const bound = pair(bf, bt, bf === 'a.png' ? aTex : bTex, bt === 'b.png' ? bTex : texture('c'))
+    const render = resolveSceneRender({ fromUrl: rf, toUrl: rt }, bound, target)
+    expect(render).toEqual(expected)
   })
 })

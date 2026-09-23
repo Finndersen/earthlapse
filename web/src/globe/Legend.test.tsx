@@ -21,58 +21,30 @@ function row(overrides: Partial<LegendRow> = {}): LegendRow {
 
 describe('Legend', () => {
   it('renders nothing when every row is out of its data domain', () => {
-    const { container } = render(<Legend rows={[row({ visible: false })]} />)
-    expect(container.innerHTML).toBe('')
+    expect(render(<Legend rows={[row({ visible: false })]} />).container.innerHTML).toBe('')
   })
 
-  it("wires the toggle group's aria-describedby to the row's own hint paragraph", () => {
-    render(<Legend rows={[row()]} />)
-    const group = screen.getByRole('group')
-    const describedById = group.getAttribute('aria-describedby')
-    expect(describedById).toBeTruthy()
-    expect(document.getElementById(describedById!)?.textContent).toBe('Full hint text with a caveat.')
-  })
-
-  it('redirects focus back to the legend container when the focused row disappears', () => {
-    const { rerender } = render(<Legend rows={[row({ id: 'a' }), row({ id: 'b', label: 'Human arrivals' })]} />)
-    const onButtons = screen.getAllByRole('button', { name: 'On' })
-    onButtons[0]!.focus()
-    expect(document.activeElement).toBe(onButtons[0]);
-
-    // Row "a" leaves the domain — its own buttons are unmounted out from under the focused
-    // element, same as `t` crossing a data-domain edge in `Globe.tsx`.
-    rerender(<Legend rows={[row({ id: 'a', visible: false }), row({ id: 'b', label: 'Human arrivals' })]} />)
-
-    const container = screen.getByRole('group', { name: 'Human arrivals' }).closest('[tabindex="-1"]')
-    expect(container).not.toBeNull()
-    expect(document.activeElement).toBe(container)
-  })
-
-  it('does not steal focus when a row disappears while focus was already elsewhere', () => {
-    const outside = document.createElement('button')
-    document.body.appendChild(outside)
-    outside.focus()
-
-    const { rerender } = render(<Legend rows={[row({ id: 'a' })]} />)
-    expect(document.activeElement).toBe(outside)
-
-    rerender(<Legend rows={[row({ id: 'a', visible: false })]} />)
-    expect(document.activeElement).toBe(outside)
-    outside.remove()
-  })
-
-  it("renders a row's footer inside the row", () => {
+  it('describes each toggle group by its hint and renders its footer', () => {
     render(<Legend rows={[row({ footer: <div data-testid="ramp-key">key</div> })]} />)
+    const describedBy = screen.getByRole('group', { name: 'Cleared land' }).getAttribute('aria-describedby')
+    expect(document.getElementById(describedBy!)?.textContent).toBe('Full hint text with a caveat.')
     expect(screen.getByTestId('ramp-key')).toBeTruthy()
   })
 
-  it('renders nothing extra for a row with no footer', () => {
-    const { container } = render(<Legend rows={[row()]} />)
-    expect(container.querySelector('[data-testid="ramp-key"]')).toBeNull()
-  })
+  it('moves focus to the legend when the focused row disappears, never stealing it otherwise', () => {
+    const rows = (aVisible: boolean) => [row({ id: 'a', visible: aVisible }), row({ id: 'b', label: 'Human arrivals' })]
+    const { rerender } = render(<Legend rows={rows(true)} />)
+    screen.getAllByRole('button', { name: 'On' })[0]!.focus()
+    rerender(<Legend rows={rows(false)} />)
+    expect(document.activeElement).toBe(screen.getByRole('group', { name: 'Human arrivals' }).closest('[tabindex="-1"]'))
+    cleanup()
 
-  it("shows the row's label", () => {
-    render(<Legend rows={[row({ label: 'Human civilisation' })]} />)
-    expect(screen.getByText('Human civilisation')).toBeTruthy()
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    outside.focus()
+    const second = render(<Legend rows={rows(true)} />)
+    second.rerender(<Legend rows={rows(false)} />)
+    expect(document.activeElement).toBe(outside)
+    outside.remove()
   })
 })

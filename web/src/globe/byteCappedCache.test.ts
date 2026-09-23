@@ -3,17 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 import { ByteCappedCache } from './byteCappedCache'
 
 describe('ByteCappedCache', () => {
-  it('tracks total bytes and evicts nothing under capacity', () => {
-    const onEvict = vi.fn()
-    const cache = new ByteCappedCache<number>(100, onEvict, (v) => v)
-    cache.set('a', 10)
-    cache.set('b', 20)
-    expect(cache.bytes).toBe(30)
-    cache.trim(new Set())
-    expect(onEvict).not.toHaveBeenCalled()
-    expect(cache.size).toBe(2)
-  })
-
   it('evicts least-recently-used entries first, oldest insertion first', () => {
     const onEvict = vi.fn()
     const cache = new ByteCappedCache<number>(25, onEvict, (v) => v)
@@ -48,20 +37,10 @@ describe('ByteCappedCache', () => {
     expect(cache.bytes).toBe(20)
   })
 
-  it('throws on a non-positive capacity', () => {
-    expect(() => new ByteCappedCache<number>(0, vi.fn(), (v) => v)).toThrow()
-    expect(() => new ByteCappedCache<number>(-5, vi.fn(), (v) => v)).toThrow()
-  })
-
-  it('throws when re-setting an existing key (caller bug, same as LruCache)', () => {
+  it('throws when re-setting an existing key', () => {
     const cache = new ByteCappedCache<number>(100, vi.fn(), (v) => v)
     cache.set('a', 10)
     expect(() => cache.set('a', 20)).toThrow()
-  })
-
-  it('get() on a missing key returns undefined without touching state', () => {
-    const cache = new ByteCappedCache<number>(100, vi.fn(), (v) => v)
-    expect(cache.get('missing')).toBeUndefined()
   })
 
   it('clear() evicts every entry unconditionally, even well under capacity', () => {

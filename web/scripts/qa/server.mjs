@@ -1,7 +1,7 @@
 /**
- * A tiny static file server for `next build`'s `out/` export — no dependency beyond Node's own
- * `http`/`fs`. Not a general-purpose server: it only needs to serve one static site to one
- * headless browser for the duration of a QA run.
+ * A tiny static file server for the QA build's static export (`out-qa/`) — no dependency beyond
+ * Node's own `http`/`fs`. Not a general-purpose server: it only needs to serve one static site to
+ * one headless browser for the duration of a QA run.
  */
 
 import { createReadStream } from 'node:fs'

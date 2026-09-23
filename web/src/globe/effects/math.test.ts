@@ -2,16 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import { clamp01, smoothstep, symlogWarp, SYMLOG_C, warpedEdgeProgress } from './math'
 
-describe('clamp01', () => {
-  it('clamps to the unit interval', () => {
-    expect(clamp01(-1)).toBe(0)
-    expect(clamp01(0.5)).toBe(0.5)
-    expect(clamp01(2)).toBe(1)
-  })
-})
-
-describe('smoothstep', () => {
+describe('clamp01 / smoothstep', () => {
   it('is 0 at and below edge0, 1 at and above edge1', () => {
+    expect(clamp01(-1)).toBe(0)
+    expect(clamp01(2)).toBe(1)
     expect(smoothstep(0, 10, -5)).toBe(0)
     expect(smoothstep(0, 10, 0)).toBe(0)
     expect(smoothstep(0, 10, 10)).toBe(1)

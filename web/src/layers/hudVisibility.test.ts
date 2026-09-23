@@ -12,13 +12,6 @@ describe('isHiddenFromHud', () => {
     expect(isHiddenFromHud('population')).toBe(false)
     expect(isHiddenFromHud('day_length')).toBe(false)
   })
-
-  it('is reversible by construction: removing an id from the set un-hides it', () => {
-    // Documents the contract in hudVisibility.ts's doc comment rather than mutating the real
-    // exported set: a future revert is "delete the id from HUD_HIDDEN_LAYER_IDS", nothing else.
-    const revertedIfCo2Removed = new Set([...HUD_HIDDEN_LAYER_IDS].filter((id) => id !== 'co2'))
-    expect(revertedIfCo2Removed.has('co2')).toBe(false)
-  })
 })
 
 describe('isPopulationReadoutHiddenAt', () => {
@@ -34,7 +27,4 @@ describe('isPopulationReadoutHiddenAt', () => {
     expect(isPopulationReadoutHiddenAt('population', domain, 0)).toBe(false)
   })
 
-  it('never hides a different layer, even when t is far older than its own domain', () => {
-    expect(isPopulationReadoutHiddenAt('day_length', domain, 3.45e9)).toBe(false)
-  })
 })

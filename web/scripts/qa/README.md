@@ -1,159 +1,156 @@
 # Visual QA harness
 
-A pixel-measuring regression check for the app's shell, globe and scene rendering — built after
-an agent shrank the globe from ~395px to ~226px by measuring a CSS box instead of drawn pixels.
-This tool makes the correct check (measure what's actually drawn) the easy one.
+A pixel-measuring check of what only a real browser can see: layout geometry at the key viewports,
+WebGL/canvas output, pointer hit-testing against real geometry, and the one real page load
+(CLAUDE.md, "Testing policy"). Everything jsdom can assert belongs in vitest instead.
 
 ## Commands
 
 ```
-pnpm qa                          # build (NEXT_PUBLIC_EARTHTIME_QA=1 next build) + serve + run every shot
-pnpm qa -- --shots globe-*       # filtered to shots whose name matches a glob
-pnpm qa -- --grep phone          # filtered to shots whose name matches a regex anywhere
+pnpm qa                          # build the QA export into out-qa/ + serve + run every shot
+pnpm qa -- --smoke               # smokeShots.mjs's subset only
+pnpm qa -- --no-build            # reuse the existing out-qa/ export instead of rebuilding
+pnpm qa -- --shots layout-*      # shots whose name matches a glob (comma-separated)
+pnpm qa -- --grep 390            # shots whose name matches a regex anywhere
 pnpm qa -- --no-screenshots      # assertions only: no PNGs, no contact sheet
 pnpm qa -- --extra-shots f.mjs   # append another shot module's default export to the list
-pnpm qa -- --smoke               # run only smokeShots.mjs's named subset (~10-15 shots)
-pnpm qa -- --no-build            # reuse the last out/ export instead of rebuilding
+pnpm qa -- --no-sort             # run in file order instead of grouped by viewport
+pnpm qa -- --shards 2            # split the shots across 2 pages loaded in parallel
 pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3000 instead
-pnpm qa:serve                    # build (unless --no-build) + serve out/, print the URL, idle
+pnpm qa:serve                    # build (unless --no-build) + serve out-qa/, print the URL, idle
 ```
 
-### Which shots to run
+Full flag reference: `node scripts/qa/run.mjs --help`.
 
-A full run is minutes of wall clock and hundreds of MB of PNGs. For a change, run only the shots
-covering the area it touches, without images:
+- **The QA export lives in `web/out-qa/`**, not `web/out/`: `next.config.ts` switches `distDir` when
+  `NEXT_PUBLIC_EARTHTIME_QA=1`, so an ordinary `pnpm build` (or `scripts/check.sh`) can never
+  replace it with an export that lacks the QA hook.
+- **`QA_CHROMIUM_PATH`** points the runner at a Chromium binary when the preinstalled one does not
+  match this Playwright version (`QA_CHROMIUM_PATH=/opt/pw-browsers/chromium` in the cloud
+  container).
+- **Budgets:** full run ≤ 3 min, `--smoke` ≤ 60 s on a 4-core machine. The run prints its wall
+  time and its ten slowest shots; a change that pushes past a budget pays for itself by removing
+  or merging measurements elsewhere.
 
-```
-node scripts/qa/run.mjs --no-build --grep 'phone|globe-expanded' --no-screenshots --out iter
-```
+`--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy, and exits non-zero
+on a real failure the same way the full run does. For a change, run only the shots covering the
+area it touches (`--grep 390`), without screenshots; capture them only for the few shots someone
+will look at. `--no-screenshots` still captures one for any shot that throws.
 
-Capture screenshots (a second, narrower `--grep` without `--no-screenshots`) only for the few
-shots someone will actually look at. `--no-screenshots` still captures one for any shot that
-*throws*, since that image is the only record of what the page looked like when it failed.
+Sorting groups shots by viewport (one resize per group instead of per shot). `--shards N` loads N
+pages in their own contexts and runs contiguous slices of the list on each; rendering here is
+CPU-bound software WebGL, so on a 4-core machine two shards cut the full run only ~10% and the
+smoke run not at all.
 
-Run the full list only before a deploy or when asked for.
+## The shots
 
-`--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy: fast, and exits
-non-zero on a real failure the same way the full run does.
+One shot per key viewport and state, each measuring everything about that layout at once, plus
+the page load and the globe's pointer interactions:
 
-Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one static server
-(`server.mjs`, no dependency), one browser, one page load (plus one more for touch shots, see
-below) — every shot drives an already-loaded page through `window.__earthtime`
-(`src/store/devHook.ts`); nothing ever reloads.
+| Shot | Guards |
+|---|---|
+| `loading-screen` | the loader is in the static HTML, animates only with motion allowed, steps its progress, and is gone once the shell mounts |
+| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, scene and timeline; the transport row's geometry; the event browser, population sparkline and chart against the timeline |
+| `layout-1000x810-resting` | the same at narrow desktop, with the secondary controls on one row |
+| `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows, the "All events" sheet, the tour's first step |
+| `layout-844x390-resting` | short landscape (ADR-048): drawn orb and portrait sizes, chrome regions at the root and in a section, the caption on the feed row, the controls rows |
+| `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps |
+| `layout-1000x810-expanded` | the same at narrow desktop, sphere only |
+| `layout-390x844-expanded` | phone expanded: drawn sphere size and the rows around it; row 2 clear of the drawn map |
+| `layout-844x390-expanded` | short-landscape expanded: the column beside the drawn sphere and map, the crumb trail over the transport |
+| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere |
 
-### Scene framing review
-
-`shots.scene-framing.mjs` is a separate module, one phone-portrait shot per published scene, for
-judging each scene's crop by eye on the contact sheet:
+`shots.scene-framing.mjs` is a separate, opt-in module — one phone-portrait shot per published
+scene, for judging crops by eye on the contact sheet:
 
 ```
 node scripts/qa/run.mjs --extra-shots scripts/qa/shots.scene-framing.mjs --grep scene-framing --out scene-framing
 ```
 
-## The pixel-vs-CSS-box rule
+## Adding a measurement
 
-**Never assert on a CSS box when you mean "what got drawn."** A `<canvas>` can have any CSS size
-while drawing something much smaller inside it — that's the bug this harness exists to catch.
-Two primitives (`measure.mjs`), deliberately named so they can't be confused:
+Read CLAUDE.md's "Testing policy" first: a QA shot is justified only by needing a real browser.
+**The default is to extend an existing shot's `measure`/`expect`** — a layout change adds its
+regions or numbers to the shot for that viewport and state; a new region joins `RESTING_REGIONS`
+or a shot's `boxesOf` map and so gets the pairwise no-overlap and in-viewport checks for free. A
+new shot is for a viewport or state no existing shot sets up, and never for a single check.
+Diagnostic shots and probes are run from a scratch file through `--extra-shots` and never
+committed.
 
-- `drawnBounds(page, selector)` — screenshots the element, scans for pixels that differ from the
-  sampled background, returns the bounding box of what's actually drawn, in CSS pixels (the
-  context always runs at `deviceScaleFactor: 1`).
-- `boxOf(page, selector)` — the plain CSS box (`getBoundingClientRect`). Reach for this only when
-  you genuinely want layout, not paint.
-
-`gapBetween(page, a, b)` is the vertical free space between two elements' *drawn* content.
-
-## Adding a shot
-
-Shots are data (`shots.mjs`), not code — add one object, never touch `run.mjs`:
+A shot is data (`shots.mjs`); `run.mjs` never changes for one:
 
 ```js
 {
-  name: 'my-new-check',                     // becomes <name>.png
-  description: 'One line: what this guards.',
+  name: 'layout-1440x900-resting',          // becomes <name>.png
+  description: 'What it asserts, present tense.',
   viewport: { width: 1440, height: 900 },   // optional, default 1440x900
-  t: 12345,                                 // optional: years before present
+  t: 0,                                     // optional: years before present
   state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': false } },
   reducedMotion: 'no-preference',           // optional, overrides --reduced-motion
-  touch: true,                              // optional: run on the touch page (below)
   actions: async ({ page, hook }) => { /* anything `state` can't express */ },
-  measure: async ({ page }) => ({ sphere: await drawnBounds(page, '...') }),
-  expect: { 'sphere.width': [480, 560] },   // dot-path into measure()'s result -> [min, max]
+  measure: async ({ page, hook }) => ({ sphere: await globeBodyBounds(page, FIT_FRAME) }),
+  expect: { 'sphere.width': [470, 515] },   // dot-path into measure()'s result -> [min, max]
 }
 ```
 
-`state` always resolves every field it covers, never a partial diff from the previous shot (see
-`applyState` in `run.mjs`) — a shot with no `state` used to silently inherit whatever the
-*previous* shot left the globe in. To add a measurement, add a pure
-`(page, selector, options) -> numbers` function to `measure.mjs`; assertions belong in `expect`,
-not the measurement itself.
+`state` always resolves every field it covers (`applyState` in `run.mjs`), never a partial diff
+from the previous shot. Pure `(page, …) -> numbers` measurements belong in `measure.mjs` or the
+helpers at the top of `shots.mjs`; assertions belong in `expect`.
 
-`smokeShots.mjs` lists a representative subset by name for `--smoke` — add a shot to `shots.mjs`
-as above, and separately decide whether it belongs in the smoke list too (most don't; the smoke
-run is meant to stay small).
+**A check that cannot fail proves nothing.** Before trusting a new assertion, break what it guards
+and watch it fail: a scratch `--extra-shots` module that wraps the shot's `actions` to inject CSS
+(move a region onto another, scale the canvas down) is enough.
 
-### A shot that needs a touchscreen
+## Measuring what is drawn
 
-Playwright fixes `hasTouch` per browser context, and the main page's context has none (so
-`(pointer: coarse)` stays false for the desktop shots). A shot that needs real touch input sets
-`touch: true` and runs on a second page, in a `hasTouch` context, loaded once — on the first such
-shot's turn — and shared by every touch shot the same way the main page is shared by the rest.
-`(pointer: coarse)` matches there, so touch shots see the layout a phone gets. `applyState` and the hook work there unchanged. `touchTap` in `shots.mjs` taps through CDP touch
-events with a 1px move before lift, as a real finger does; `page.touchscreen.tap` works too.
+**Never assert on a CSS box when you mean "what got drawn."** A `<canvas>` can have any CSS size
+while drawing something much smaller inside it. And pick the measurement that matches what is
+underneath:
 
-### A shot that needs the harness's one page load
+- `drawnBounds(page, selector)` (`measure.mjs`) screenshots an element and returns the bounds of
+  pixels that differ from its sampled corners. Sound over a flat panel; worthless over the
+  photographic scene, whose texture reads as content.
+- `polylineTraceBounds` measures an SVG trace (sparklines, charts) by its real `<polyline>` geometry.
+- `opacityMatteBounds` (`shots.mjs`) screenshots against a black and then a white backdrop with the
+  scene hidden: the pair differs by exactly the pixel's transparency, so content colour cancels
+  out. `globeBodyBounds` uses it to find the expanded globe's opaque body: the atmosphere glow is
+  translucent and drops out, where a brightness threshold cannot tell its bright inner edge from
+  the sphere. A drawn-size scan clipped to the globe's fit frame with the photo showing is not a
+  measurement at all — a shrunken sphere leaves backdrop texture that reads as drawn to the
+  clip's edges.
+- `boxOf`/`boxesOf` read layout boxes: right for opaque DOM chrome, where the box is what is painted.
 
-The runner loads its one page once, before any shot's turn, so an ordinary shot never sees the app
-mid-load — by the time it runs, the loading screen is long gone. A shot that genuinely needs to
-observe that one load (the `loading-screen` shot: it has to catch the loader still on screen)
-declares `bootstrapsPage` instead of `actions`/`measure`, and owns that one navigation itself:
+## A shot that needs the harness's one page load
 
-```js
-{
-  name: 'loading-screen',
-  bootstrapsPage: async ({ page, baseUrl, run }) => {
-    // Set up any `page.route` hold *before* navigating, then `await page.goto(baseUrl, ...)` —
-    // this *is* the harness's one real load, not a side page. Screenshot with `page.screenshot()`
-    // (no `path`, so it returns a `Buffer`) while whatever you're holding back is still held.
-    return { screenshot: run.screenshots ? await page.screenshot() : null, measurements: { ... } }
-  },
-  expect: { ... },
-}
-```
-
-`run.mjs` calls `bootstrapsPage` in place of the generic `page.goto`, before `hook` (and
-`window.__earthtime`) exist — raw Playwright only, no `hook` argument. Everything after it returns
-(waiting for the QA hook, `hook.ready()`, dismissing the first-visit tour) runs exactly as it does
-for every other shot. At most one shot in a given run may declare `bootstrapsPage`; run.mjs finds
-it before navigating and writes its returned `screenshot` buffer to `<name>.png` itself, the same
-place an ordinary shot's `page.screenshot({ path })` would have. A shot that needs to check
-something *independent* of that one load's own timing (`loading-screen`'s own scripts-blocked
-static-HTML checks) can still open an ordinary side page inside `bootstrapsPage`, exactly as any
-other shot's `measure` would.
+The runner loads its page once, before any shot, so an ordinary shot never sees the app mid-load.
+The one shot that must (`loading-screen`) declares `bootstrapsPage({ page, baseUrl, run })` instead
+of `actions`/`measure`: `run.mjs` calls it in place of its own `page.goto`, before
+`window.__earthtime` exists, and writes its returned `screenshot` buffer to `<name>.png`. Waiting
+for the hook, `hook.ready()` and the tour dismissal then run as for any other load. At most one
+shot in a run may declare it; with `--shards` it runs on the first page.
 
 ## Known flakes
 
 **Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +
 Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook.
-`run.mjs` checks for `window.__earthtime` right after load and fails fast, naming this, if it
-never appears — the fix is to rebuild (drop `--no-build`) and re-run.
+`run.mjs` checks for `window.__earthtime` right after load and fails fast naming this — rebuild
+(drop `--no-build`) and re-run.
 
-**Batch-order state leaks.** Shots share one page load, so any state a shot can change and
-`applyState` does not reset leaks into the next. `applyState` resets the selected section, the
-event browser, the expanded HUD chart and the globe camera (a real collapse before every expand),
-and waits out the sphere<->map unfold. If a shot passes alone and fails in a batch, reproduce
-with `pnpm qa -- --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
+**State leaks.** Shots share one page load, so any state a shot can change and `applyState` does
+not reset leaks into the next. If a shot passes alone and fails in a batch, reproduce with
+`--no-sort --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
 
-## Determinism
+## Determinism and speed
 
-- `prefers-reduced-motion` defaults to `reduce` (`--reduced-motion no-preference` to disable) so
-  the globe's auto-rotate can't make two identical shots differ by whatever angle it drifted to.
-- Every shot awaits `hook.ready()` (manifest loaded, every image/texture load this run has seen
-  settled) plus a couple of real `requestAnimationFrame` ticks — never a blind sleep.
-- Two genuinely-unavoidable timeouts live in `timeouts.mjs`, reasoning attached: the scene
-  crossfade's own rate limit (no signal to poll for), and the globe's sphere<->map tween, which
-  has no DOM or store reflection of its progress at all.
+- `prefers-reduced-motion` defaults to `reduce` (`--reduced-motion no-preference` to disable), so
+  auto-rotation cannot make two identical runs differ; under it the sphere<->map unfold snaps.
+- Every shot awaits `hook.ready()` plus a couple of `requestAnimationFrame` ticks, and the expanded
+  globe's layout is settled by polling its fit frames (`waitForGlobeFitFramesStable`). The blind
+  waits that remain live in `timeouts.mjs`, each for animation state with nothing to poll: the
+  scene crossfade after a `t` jump (skipped when `t` is unchanged), the unfold tween with motion
+  allowed, and the scrub track's section-window animation.
+- With the globe expanded, every page round trip waits out a software-rendered frame (~150-300 ms),
+  so measurements read many boxes per `page.evaluate` (`boxesOf`) rather than one per call.
 
 ## Output
 
@@ -165,7 +162,6 @@ scripts/qa/out/<run>/
 scripts/qa/out/latest -> <run>/
 ```
 
-`report.json.pass` is `false` (process exits non-zero) if any assertion failed or the run saw a
-console/page error — safe for an agent to run unattended and check the exit code. A shot whose own
-code throws (not an `expect` mismatch) is recorded as a failure with an `error` field rather than
-aborting the rest of the run.
+`report.json.pass` is `false` (and the process exits non-zero) if any assertion failed or the run
+saw a console/page error. A shot whose own code throws is recorded as a failure with an `error`
+field rather than aborting the run.

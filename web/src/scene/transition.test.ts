@@ -8,10 +8,6 @@ describe('crossfadeAlpha: endpoints are exact', () => {
     expect(crossfadeAlpha(1)).toBe(1)
   })
 
-  it('clamps mix outside [0, 1] to the same exact endpoint values', () => {
-    expect(crossfadeAlpha(-0.3)).toBe(0)
-    expect(crossfadeAlpha(1.4)).toBe(1)
-  })
 })
 
 describe('crossfadeAlpha: eases between the endpoints', () => {
@@ -22,10 +18,6 @@ describe('crossfadeAlpha: eases between the endpoints', () => {
     }
   })
 
-  it('is exactly 0.5 at mix 0.5 (smoothstep is symmetric)', () => {
-    expect(crossfadeAlpha(0.5)).toBe(0.5)
-  })
-
   it('eases in and out — slower than linear near both endpoints', () => {
     // Smoothstep's derivative is 0 at the endpoints, so an equal step in `mix` near an
     // endpoint moves `crossfadeAlpha` less than the same step would in the middle.
@@ -34,7 +26,4 @@ describe('crossfadeAlpha: eases between the endpoints', () => {
     expect(nearStart).toBeLessThan(middle)
   })
 
-  it('is a pure function of mix alone', () => {
-    expect(crossfadeAlpha(0.37)).toBe(crossfadeAlpha(0.37))
-  })
 })

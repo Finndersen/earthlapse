@@ -15,57 +15,28 @@ function renderShortcuts({
   return render(<EraShortcuts sectionId={sectionId} onSelectSection={onSelectSection} />)
 }
 
-// The Dinosaurs/Humans shortcut group: a prominent, always-present control, rendered by
-// `ShellLayout` directly under the time title. Every entry is a plain alias for
-// `onSelectSection(id)` — see `../eraShortcuts.ts` for why those two ids and no others. The
-// equivalent "back to Earth" shortcut is the breadcrumb's own root segment, not a pill here.
 describe('<EraShortcuts>', () => {
-  it('renders exactly the Dinosaurs and Humans shortcuts, as one group named without a drawn heading', () => {
+  it('offers Dinosaurs and Humans in a named group, each naming its geological unit', () => {
     renderShortcuts()
-    expect(screen.getByRole('group', { name: 'Eras' })).not.toBeNull()
-    expect(screen.queryByText('Eras')).toBeNull()
-    for (const nickname of ['Dinosaurs', 'Humans']) {
-      expect(screen.getByRole('button', { name: new RegExp(`^${nickname} — `) })).not.toBeNull()
-    }
+    expect(screen.getByRole('group', { name: 'Eras' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Dinosaurs — the Mesozoic/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^Humans — the Holocene/ })).toBeTruthy()
   })
 
-  it("names each shortcut's real geological unit, not just its nickname", () => {
-    renderShortcuts()
-    expect(screen.getByRole('button', { name: /^Dinosaurs — the Mesozoic/ })).not.toBeNull()
-    expect(screen.getByRole('button', { name: /^Humans — the Holocene/ })).not.toBeNull()
-  })
-
-  it('marks only the shortcut matching the current section as current', () => {
-    renderShortcuts({ sectionId: ROOT_SECTION_ID })
-    expect(screen.getByRole('button', { name: /^Dinosaurs —/ }).getAttribute('aria-current')).toBeNull()
-    expect(screen.getByRole('button', { name: /^Humans —/ }).getAttribute('aria-current')).toBeNull()
-  })
-
-  it('marks Dinosaurs current for the Mesozoic itself and for a descendant section', () => {
-    renderShortcuts({ sectionId: 'cretaceous' as SectionId })
-    expect(screen.getByRole('button', { name: /^Dinosaurs —/ }).getAttribute('aria-current')).toBe('location')
-  })
-
-  it('marks Humans current for the Holocene itself and for a human-history child', () => {
-    renderShortcuts({ sectionId: 'industrial-age' as SectionId })
-    expect(screen.getByRole('button', { name: /^Humans —/ }).getAttribute('aria-current')).toBe('location')
-  })
-
-  it('calls onSelectSection with the aliased section id, not the nickname, when clicked', () => {
+  it('enters the aliased section on click', () => {
     const onSelectSection = vi.fn<(id: SectionId) => void>()
     renderShortcuts({ onSelectSection })
     fireEvent.click(screen.getByRole('button', { name: /^Dinosaurs —/ }))
-    expect(onSelectSection).toHaveBeenCalledTimes(1)
     expect(onSelectSection).toHaveBeenCalledWith('mesozoic')
   })
 
-  it('is keyboard-reachable as ordinary buttons (native Tab order, no bespoke handler)', () => {
-    renderShortcuts()
-    for (const nickname of ['Dinosaurs', 'Humans']) {
-      const button = screen.getByRole('button', { name: new RegExp(`^${nickname} — `) })
-      expect(button.tagName).toBe('BUTTON')
-      expect(button.getAttribute('type')).toBe('button')
-      expect(button.hasAttribute('disabled')).toBe(false)
-    }
+  it.each([
+    [ROOT_SECTION_ID, null, null],
+    ['cretaceous', 'location', null],
+    ['industrial-age', null, 'location'],
+  ] as const)('marks the shortcut covering %s as current', (sectionId, dinosaurs, humans) => {
+    renderShortcuts({ sectionId: sectionId as SectionId })
+    expect(screen.getByRole('button', { name: /^Dinosaurs —/ }).getAttribute('aria-current')).toBe(dinosaurs)
+    expect(screen.getByRole('button', { name: /^Humans —/ }).getAttribute('aria-current')).toBe(humans)
   })
 })

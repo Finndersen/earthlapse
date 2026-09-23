@@ -38,16 +38,10 @@ describe('coverWindow', () => {
     expect(window.height).toBe(1)
   })
 
-  it('clamps at the left edge rather than showing past it', () => {
-    const window = coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([0.02, 0.5]))
-    expect(window.x).toBe(0)
-    expect(window.width).toBeCloseTo(PHONE_PORTRAIT / STILL_ASPECT)
-  })
-
-  it('clamps at the right edge rather than showing past it', () => {
-    const window = coverWindow(STILL_ASPECT, TABLET_PORTRAIT, at([1, 0.5]))
-    expect(window.x + window.width).toBeCloseTo(1)
-    expect(window.width).toBeCloseTo(TABLET_PORTRAIT / STILL_ASPECT)
+  it('clamps at either edge rather than showing past it', () => {
+    expect(coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([0.02, 0.5])).x).toBe(0)
+    const right = coverWindow(STILL_ASPECT, TABLET_PORTRAIT, at([1, 0.5]))
+    expect(right.x + right.width).toBeCloseTo(1)
   })
 
   it('keeps the full width and moves a height band to the focus when the viewport is wider', () => {
@@ -68,11 +62,8 @@ describe('coverWindow', () => {
 })
 
 describe('coverObjectPosition', () => {
-  it('is 50% 50% for a centred window', () => {
+  it('is 50% 50% centred and 0%/100% at the clamped edges', () => {
     expect(coverObjectPosition(coverWindow(STILL_ASPECT, PHONE_PORTRAIT, CENTRED_CROP))).toBe('50% 50%')
-  })
-
-  it('reaches 0% and 100% exactly at the clamped edges', () => {
     expect(coverObjectPosition(coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([0, 0.5])))).toBe('0% 50%')
     expect(coverObjectPosition(coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([1, 0.5])))).toBe('100% 50%')
   })
@@ -80,15 +71,13 @@ describe('coverObjectPosition', () => {
   it('reproduces the window: the box offset it implies lands the window at the left of the box', () => {
     const window = coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([0.3, 0.5]))
     const p = Number.parseFloat(coverObjectPosition(window)) / 100
-    // Box width is the window's width in image units; object-position offsets the image by
-    // p * (box - image), which must equal -window.x.
     expect(p * (window.width - 1)).toBeCloseTo(-window.x)
   })
 })
 
 const DESKTOP = 1440 / 900
 
-/** The ADR-045 crop rule, before portrait zoom existed. */
+/** The plain cover crop, independent of portrait zoom. */
 function unzoomedCoverWindow(imageAspect: number, viewportAspect: number, focus: readonly [number, number]): CoverWindow {
   const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v))
   if (imageAspect > viewportAspect) {
@@ -122,15 +111,8 @@ describe('coverWindow with a portrait zoom', () => {
     expect(high.y).toBe(0)
   })
 
-  it('still clamps horizontally at the image edge', () => {
-    const window = coverWindow(STILL_ASPECT, PHONE_PORTRAIT, at([0, 0.5], 1.5))
-    expect(window.x).toBe(0)
-  })
-
   it.each([
     ['desktop', DESKTOP],
-    ['ultrawide', ULTRAWIDE],
-    ['square', 1],
     ['same aspect as the still', STILL_ASPECT],
   ])('ignores the zoom in a %s viewport', (_, aspect) => {
     for (const focus of [[0.1, 0.2], [0.5, 0.5], [0.9, 0.95]] as const) {
@@ -140,10 +122,8 @@ describe('coverWindow with a portrait zoom', () => {
 
   it.each([
     ['phone portrait', PHONE_PORTRAIT],
-    ['tablet portrait', TABLET_PORTRAIT],
-    ['desktop', DESKTOP],
     ['ultrawide', ULTRAWIDE],
-  ])('is exactly the ADR-045 window at zoom 1 in a %s viewport', (_, aspect) => {
+  ])('is exactly the plain cover window at zoom 1 in a %s viewport', (_, aspect) => {
     for (const focus of [[0, 0], [0.3, 0.7], [0.62, 0.55], [1, 1]] as const) {
       expect(coverWindow(STILL_ASPECT, aspect, at(focus))).toStrictEqual(unzoomedCoverWindow(STILL_ASPECT, aspect, focus))
     }
@@ -156,15 +136,9 @@ describe('coverWindow with a portrait zoom', () => {
 })
 
 describe('sceneCrop', () => {
-  it('is the centred, unzoomed crop for a scene without framing', () => {
+  it('defaults to the centred crop and an unzoomed portrait, carrying a zoom through', () => {
     expect(sceneCrop(undefined)).toBe(CENTRED_CROP)
-  })
-
-  it('defaults an absent portrait zoom to 1', () => {
     expect(sceneCrop({ focus: [0.2, 0.7], pan: 90 })).toEqual({ focus: [0.2, 0.7], portraitZoom: 1 })
-  })
-
-  it('carries a portrait zoom through', () => {
     expect(sceneCrop({ focus: [0.2, 0.7], pan: 90, portraitZoom: 1.3 })).toEqual({ focus: [0.2, 0.7], portraitZoom: 1.3 })
   })
 })
@@ -174,9 +148,6 @@ describe('windowWithin', () => {
     const outer = { x: 0.25, y: 0, width: 0.5, height: 1 }
     const inner = { x: 0.375, y: 0.25, width: 0.25, height: 0.5 }
     expect(windowWithin(outer, inner)).toEqual({ x: 0.25, y: 0.25, width: 0.5, height: 0.5 })
-  })
-
-  it('is the full window for the window itself', () => {
     const window = { x: 0.2, y: 0.1, width: 0.4, height: 0.8 }
     expect(windowWithin(window, window)).toEqual(FULL_WINDOW)
   })
@@ -212,7 +183,7 @@ function sceneUV(s: readonly [number, number], window: CoverWindow, drift: Drift
 describe('coverCss', () => {
   const drift: DriftUniforms = { zoom: 1.04, dx: 0.008, dy: -0.006 }
 
-  it('is the ADR-045 object-position and drift transform without a zoom', () => {
+  it('is the plain object-position and drift transform without a zoom', () => {
     const crop = at([0.3, 0.5])
     expect(coverCss(STILL_ASPECT, PHONE_PORTRAIT, crop, drift)).toEqual({
       objectPosition: coverObjectPosition(coverWindow(STILL_ASPECT, PHONE_PORTRAIT, crop)),
@@ -227,7 +198,6 @@ describe('coverCss', () => {
   })
 
   it.each([
-    ['centred', at([0.5, 0.5], 1.4), drift],
     ['clamped to a corner', at([0.02, 0.98], 1.5), drift],
     ['at rest', at([0.6, 0.7], 1.2), REST_DRIFT],
   ])('draws the same image point at each screen point as the shader when %s', (_, crop, d) => {

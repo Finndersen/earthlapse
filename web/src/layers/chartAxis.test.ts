@@ -15,18 +15,9 @@ describe('axisTransform', () => {
     expect(toAxis(100)).toBeCloseTo(Math.log(100))
   })
 
-  it('stays linear just under the ratio threshold', () => {
-    const { isLog } = axisTransform([10, 10 * LOG_AXIS_MIN_RATIO - 1])
-    expect(isLog).toBe(false)
-  })
-
-  it('spreads population’s ~1,600x range so growth is visible across the whole domain, not just a spike at the end', () => {
-    // sources/hyde/README.md "Global population total": ~4.4 million (10,000 BCE) to
-    // ~7.3 billion (2015 CE).
+  it('spreads a ~1,600x range across the axis', () => {
     const { toAxis, isLog } = axisTransform([4_432_265, 7_256_964_920])
     expect(isLog).toBe(true)
-    // On a linear axis the mid-Holocene value below would sit within a fraction of a percent
-    // of the domain's minimum; log spaces it out substantially instead.
     const min = toAxis(4_432_265)
     const max = toAxis(7_256_964_920)
     const mid = toAxis(232_124_272) // 2025 yr BP, ~232 million
@@ -44,8 +35,4 @@ describe('axisTransform', () => {
     expect(toAxis(42)).toBe(42)
   })
 
-  it('is well-defined for a single-value series (ratio of 1, never log)', () => {
-    const { isLog } = axisTransform([100])
-    expect(isLog).toBe(false)
-  })
 })

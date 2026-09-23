@@ -8,9 +8,15 @@
  * @param {import('playwright').Page} page
  */
 export function makeHook(page) {
-  return {
+  const hook = {
+    /** `Date.now()` of the last `setT` through this wrapper — `run.mjs` reads it to tell whether a
+     *  scene crossfade a shot started may still be running when the next shot begins. */
+    lastSetTAt: 0,
     /** @param {number} t */
-    setT: (t) => page.evaluate((value) => window.__earthtime?.setT(value), t),
+    setT: async (t) => {
+      hook.lastSetTAt = Date.now()
+      await page.evaluate((value) => window.__earthtime?.setT(value), t)
+    },
     getState: () => page.evaluate(() => window.__earthtime?.getState()),
     /** @param {boolean} playing */
     setPlaying: (playing) => page.evaluate((value) => window.__earthtime?.setPlaying(value), playing),
@@ -35,6 +41,7 @@ export function makeHook(page) {
      *  settled — see `devHook.ts`'s own doc comment for exactly what that covers. */
     ready: () => page.evaluate(() => window.__earthtime?.ready()),
   }
+  return hook
 }
 
 /**
@@ -59,5 +66,38 @@ export function rafTicks(page, count) {
         else requestAnimationFrame(tick)
       }),
     count,
+  )
+}
+
+/**
+ * Waits until the expanded globe's two fit-frame rectangles (`Globe.tsx`'s `.orbFitFrameSphere`/
+ * `.orbFitFrameMap`, which `GlobeCameraControls` fits the camera to) have held the same geometry
+ * for `stableFrames` consecutive animation frames. After an expand they arrive a few renders late
+ * (`useChromeGap`, then the fit-frame measurement), and the camera snaps to them on the frame they
+ * land, so a stable pair is the signal that the expanded layout has converged.
+ * @param {import('playwright').Page} page
+ * @param {{ stableFrames?: number, timeoutMs?: number }} [options]
+ */
+export function waitForGlobeFitFramesStable(page, { stableFrames = 3, timeoutMs = 3000 } = {}) {
+  return page.evaluate(
+    async ({ stableFrames: needed, timeoutMs: limit }) => {
+      const read = () =>
+        ['[data-testid="globe-sphere-fit-frame"]', '[data-testid="globe-map-fit-frame"]']
+          .map((sel) => {
+            const r = document.querySelector(sel)?.getBoundingClientRect()
+            return r === undefined ? 'none' : `${r.x},${r.y},${r.width},${r.height}`
+          })
+          .join('|')
+      const start = performance.now()
+      let last = read()
+      let stable = 0
+      while (stable < needed && performance.now() - start < limit) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        const current = read()
+        stable = current === last ? stable + 1 : 0
+        last = current
+      }
+    },
+    { stableFrames, timeoutMs },
   )
 }

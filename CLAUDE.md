@@ -73,7 +73,8 @@ earthtime review                # candidate picker; review clear <id>, review pi
 earthtime publish               # write data/media/manifest.json + media (local; no upload)
 ```
 
-Checks — all four must pass before handing work back:
+Checks — all must pass before handing work back. `make check` (`scripts/check.sh`) runs every one,
+the Python and web groups in parallel:
 
 ```
 .venv/bin/python -m pytest -q tests
@@ -81,6 +82,10 @@ Checks — all four must pass before handing work back:
 pnpm -C web typecheck && pnpm -C web exec vitest run
 pnpm -C web build
 ```
+
+For the inner loop, `scripts/check.sh --quick --changed` skips the build and any group the branch
+has not touched, and runs only the vitest files affected by the change; `pytest -m "not content"`
+skips the committed-data checks. Hand work back only on a full `make check`.
 
 Two traps in that third line, both of which have already produced falsely-green reports:
 
@@ -106,9 +111,34 @@ unfixed build and confirm it actually fails there.
 
 Use the harness at `web/scripts/qa/` (see its README) rather than writing a throwaway Playwright
 script: it loads the page once, drives it through `window.__earthtime` without reloading, measures
-rendered bounds, fails on console errors, and writes a screenshot contact sheet. Add a shot to its
-shot list instead of adding a new script, and give any UI brief a numeric target and the shot that
-guards it.
+rendered bounds, fails on console errors, and writes a screenshot contact sheet. Extend an existing
+shot rather than adding a new script — see "Testing policy" for when a shot is justified at all.
+
+## Testing policy
+
+The suites are kept small on purpose: every test is paid for on every run and on every change that
+breaks it without breaking the product. Before adding a test, pick the cheapest layer that can see
+the behaviour, and prefer extending an existing test over adding one.
+
+| Layer | Owns | Not for |
+|---|---|---|
+| pytest | NORMATIVE contracts, hard rules (spend ceiling, pins, no provider names, text-only generation), pipeline semantics, each source's own parsing rules | pydantic built-ins (`Field` bounds, `Literal`, required fields), CLI copy, tuning constants |
+| vitest | pure logic with real invariants; one wiring test per critical interaction (jsdom sees DOM state, not layout) | copy text, CSS class names, inline styles, snapshot tables of tuned numbers |
+| QA shots | only what needs a real browser: layout geometry at the key viewports, WebGL/canvas output, pointer hit-testing against real geometry, the one real page load | anything jsdom can assert; per-scene or per-content sweeps; one-off diagnostics |
+
+- **A new feature adds at most one test per layer it genuinely needs**, asserting the behaviour a
+  user would notice if it broke. A layout change extends the existing viewport shot's measurements;
+  it does not add a shot.
+- **A bug fix adds a regression test only when the bug could plausibly recur** through ordinary
+  edits, and then as an assertion in the existing test for that area, titled by the behaviour it
+  guards, never by the incident.
+- **Content is not code.** Committed data (captions, scene books, rosters) is checked only where a
+  hard rule depends on it, marked `@pytest.mark.content`. Editorial choices are not tested.
+- **Delete as you go.** When a change makes a test redundant, weaker than another, or asserting a
+  removed feature, delete it in the same change. Diagnostic shots and probes never get committed.
+- **Budgets.** Full QA run ≤ 3 min, `--smoke` ≤ 60 s, vitest ≤ 40 s, pytest ≤ 15 s on a 4-core
+  machine. A change that pushes a suite past its budget pays for itself by removing or merging
+  tests elsewhere, not by raising the budget.
 
 ## Working in parallel
 

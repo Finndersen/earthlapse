@@ -26,8 +26,8 @@ function tree(portraits: unknown) {
   return { id: 'lineage', nodes: NODES, portraits }
 }
 
-describe('parseTreeData: portraits (ADR-015)', () => {
-  it('omits the block when the layer file has none, as files from before portraits', () => {
+describe('parseTreeData: portraits', () => {
+  it('omits the block when the layer file has none', () => {
     expect(parseTreeData({ id: 'lineage', nodes: NODES })).not.toHaveProperty('portraits')
   })
 
@@ -40,7 +40,7 @@ describe('parseTreeData: portraits (ADR-015)', () => {
     })
   })
 
-  it("keeps a plate's exposure record, and leaves it absent for files from before exposure (ADR-015 amendment)", () => {
+  it("keeps a plate's optional exposure record", () => {
     const exposed = { ...plate('human'), exposure: { highlight: 107, gain: 3.219 } }
     const untouched = { ...plate('tetrapod'), exposure: { highlight: null, gain: 1 } }
 

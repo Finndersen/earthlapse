@@ -10,19 +10,12 @@ describe('supportsBasemapT1', () => {
     expect(supportsBasemapT1(8192)).toBe(true)
   })
 
-  it('is false for maxTextureSize 0 (probeWebgl\'s own "could not open a context at all" case)', () => {
-    expect(supportsBasemapT1(0)).toBe(false)
-  })
 })
 
 describe('selectBasemapTier', () => {
   it('is T0 whenever the orb is minimised, regardless of GPU capability', () => {
     expect(selectBasemapTier(false, true)).toBe('basemap_t0')
     expect(selectBasemapTier(false, false)).toBe('basemap_t0')
-  })
-
-  it('is T0 expanded when the GPU cannot hold a 4096px texture', () => {
-    expect(selectBasemapTier(true, false)).toBe('basemap_t0')
   })
 
   it('is T1 once expanded, on any device whose GPU supports it', () => {

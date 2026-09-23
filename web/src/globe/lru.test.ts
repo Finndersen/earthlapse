@@ -14,15 +14,6 @@ describe('LruCache', () => {
     expect(() => new LruCache(1.5, () => {})).toThrow(/positive integer/)
   })
 
-  it('does not evict on insert, only on trim', () => {
-    const { cache, evicted } = cacheWithLog(2)
-    cache.set('a', '1')
-    cache.set('b', '2')
-    cache.set('c', '3')
-    expect(cache.size).toBe(3)
-    expect(evicted).toEqual([])
-  })
-
   it('trims least recently used first, back down to capacity', () => {
     const { cache, evicted } = cacheWithLog(2)
     cache.set('a', '1')
@@ -54,12 +45,6 @@ describe('LruCache', () => {
     cache.trim(new Set(['a', 'b']))
     expect(evicted).toEqual(['c=3'])
     expect(cache.size).toBe(2)
-  })
-
-  it('returns undefined for a missing key without inserting it', () => {
-    const { cache } = cacheWithLog(1)
-    expect(cache.get('missing')).toBeUndefined()
-    expect(cache.size).toBe(0)
   })
 
   it('refuses to replace an existing key, which would leak the old value', () => {

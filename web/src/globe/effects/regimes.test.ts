@@ -11,43 +11,21 @@ describe('regimeWeightsAt', () => {
     expect(regimeWeightsAt([], 4.4e9)).toEqual({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })
   })
 
-  it('is all zero deep inside the PaleoDEM domain, well after every regime', () => {
-    const weights = regimeWeightsAt(REGIME_EVENTS, 1e8)
-    expect(weights).toEqual({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })
-  })
-
-  // Regression guard for a real investigation: a faint procedural pattern spotted on the present
-  // (t=0) globe over open ocean was traced to Natural Earth II's own baked-in bathymetric shaded
-  // relief (visible in the raw source texture itself, `sources/basemap`) — not a leaking regime
-  // weight — but `unknownGeographyColor`'s own uv-noise look (`shaders.ts`) would produce exactly
-  // that kind of pale, wavy, contour-like pattern if `uRegimeWeights.w` were ever even slightly
-  // nonzero at the present, so this pins the youngest regime's own edge at `t=0` exactly, not
-  // just "well after" some arbitrary later point.
-  it('is exactly zero at the present (t=0), where the youngest regime (unknown-geography) has long since faded', () => {
-    const weights = regimeWeightsAt(REGIME_EVENTS, 0)
-    expect(weights).toEqual({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })
-  })
-
-  it('is pure in t — the same input twice gives the same result', () => {
-    const a = regimeWeightsAt(REGIME_EVENTS, 3.1e9)
-    const b = regimeWeightsAt(REGIME_EVENTS, 3.1e9)
-    expect(a).toEqual(b)
+  it('is exactly zero at the present and after every regime', () => {
+    const zero = { magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 }
+    expect(regimeWeightsAt(REGIME_EVENTS, 0)).toEqual(zero)
+    expect(regimeWeightsAt(REGIME_EVENTS, 1e8)).toEqual(zero)
+    expect(regimeWeightsAt(REGIME_EVENTS, 8e8).unknownGeography).toBe(0)
   })
 
   it('gives each regime full weight deep in its own interior, away from every edge', () => {
-    // magma-ocean-regime [4.35e9, 4.52e9]: deep interior, away from its standalone tMax edge
-    // and the tMin overlap with water-world.
     expect(regimeWeightsAt(REGIME_EVENTS, 4.45e9).magmaOcean).toBeCloseTo(1, 5)
-    // archean-haze-regime [2.4e9, 4.0e9]: its interior is huge (1.6 Gyr), so its midpoint is
-    // far from both its touching boundaries.
     expect(regimeWeightsAt(REGIME_EVENTS, 3.2e9).archean).toBeCloseTo(1, 5)
-    // unknown-geography [1.0e9, 2.4e9]: interior, away from its archean-touching tMax edge and
-    // its own standalone tMin edge.
     expect(regimeWeightsAt(REGIME_EVENTS, 1.7e9).unknownGeography).toBeCloseTo(1, 5)
+    expect(regimeWeightsAt(REGIME_EVENTS, 2.44e9).archean).toBeCloseTo(1, 5)
   })
 
   it('crossfades magma-ocean into water-world across their cited 50 Myr overlap, summing near 1', () => {
-    // magma-ocean [4.35e9, 4.52e9], water-world [4.0e9, 4.4e9]: overlap is [4.35e9, 4.4e9].
     const atOlderEdge = regimeWeightsAt(REGIME_EVENTS, 4.4e9) // fully magma's side of the overlap
     expect(atOlderEdge.magmaOcean).toBeCloseTo(1, 2)
     expect(atOlderEdge.waterWorld).toBeCloseTo(0, 2)
@@ -66,11 +44,8 @@ describe('regimeWeightsAt', () => {
     // hadean-water-world-regime tMin (4.0e9) touches archean-haze-regime tMax (4.0e9) exactly.
     const t = 4.0e9
     const at = regimeWeightsAt(REGIME_EVENTS, t)
-    // Neither is fully in charge right at the touch point...
     expect(at.waterWorld).toBeGreaterThan(0)
     expect(at.archean).toBeGreaterThan(0)
-    // ...and nearby samples never dip to "no regime at all" (the naive independent-trapezoid
-    // failure mode this crossfade is designed to avoid).
     for (const nearby of [t - 1.5e7, t - 5e6, t, t + 5e6, t + 1.5e7]) {
       const weights = regimeWeightsAt(REGIME_EVENTS, nearby)
       expect(weights.waterWorld + weights.archean).toBeGreaterThan(0.1)
@@ -93,28 +68,11 @@ describe('regimeWeightsAt', () => {
     expect(atEdge.magmaOcean).toBeLessThan(justInside.magmaOcean)
   })
 
-  it('fades the youngest regime to nothing beyond its own open (standalone) edge', () => {
-    const wellAfter = regimeWeightsAt(REGIME_EVENTS, 8e8)
-    expect(wellAfter.unknownGeography).toBe(0)
-    const atEdge = regimeWeightsAt(REGIME_EVENTS, 1.0e9)
-    const justInside = regimeWeightsAt(REGIME_EVENTS, 1.05e9)
-    expect(atEdge.unknownGeography).toBeLessThan(justInside.unknownGeography)
-  })
-
-  it('ignores non-regime effect kinds (e.g. ice-shell) when computing regime weights', () => {
-    // paleoproterozoic-glaciation-regime (ice-shell) sits inside archean-haze-regime's own
-    // span — it must not create a fifth "regime" or perturb archean's weight.
-    const weights = regimeWeightsAt(REGIME_EVENTS, 2.44e9)
-    expect(weights.archean).toBeCloseTo(1, 5)
-  })
 })
 
 describe('dominantRegime', () => {
-  it('is null when every weight is zero', () => {
+  it('picks the largest weight, or null when all are zero', () => {
     expect(dominantRegime({ magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 })).toBeNull()
-  })
-
-  it('picks the largest weight', () => {
     expect(dominantRegime({ magmaOcean: 0.2, waterWorld: 0.8, archean: 0, unknownGeography: 0 })).toEqual({
       kind: 'regime-water-world',
       weight: 0.8,

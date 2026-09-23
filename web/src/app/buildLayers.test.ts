@@ -35,7 +35,6 @@ const LINEAGE_DATA: TreeData = {
   nodes: [{ id: 'luca', parent: null, label: 'LUCA', tDivergence: 4e9, representative: null, note: null, citation: null }],
 }
 
-// Same lineage id, but with a published portrait, for the `nodePortraits` coverage below.
 const PORTRAIT_LINEAGE_DATA: TreeData = {
   ...LINEAGE_DATA,
   portraits: {
@@ -49,9 +48,6 @@ const PORTRAIT_LINEAGE_DATA: TreeData = {
 const PALEODEM_ENTRY = baseManifestEntry({ id: 'paleodem', surface: 'globe', dataKind: 'raster' })
 const PALEODEM_DATA = { id: 'paleodem', frames: [{ t: 0, ref: 'a.png' }] }
 
-// Mirrors sources/globe-regimes (docs/GLOBE.md §6): a non-timeline events layer, surfaced
-// on the globe, never listed on the timeline (that's Manifest.events, which buildLayers
-// never reads — the timeline gets events straight from the manifest, not through a Layer).
 const GLOBE_REGIMES_ENTRY = baseManifestEntry({ id: 'globe-regimes', surface: 'globe', dataKind: 'events' })
 const GLOBE_REGIMES_DATA: EventsData = {
   id: 'globe-regimes',
@@ -69,8 +65,6 @@ const GLOBE_REGIMES_DATA: EventsData = {
   ],
 }
 
-// Mirrors sources/cities (ADR-035): a FeatureSet layer, surfaced on the globe, handed through
-// raw like rasters and non-timeline events — no Layer<V> could supply per-feature estimates.
 const CITIES_ENTRY = baseManifestEntry({ id: 'cities', surface: 'globe', dataKind: 'features' })
 const CITIES_DATA: FeatureSetData = {
   id: 'cities',
@@ -102,77 +96,32 @@ function manifestWith(layers: LayerManifest[]): Manifest {
 }
 
 describe('buildLayers', () => {
-  it('returns the empty AppLayers when either input is null', () => {
+  it('is empty when either input is null, and skips entries without data', () => {
     const empty = buildLayers(null, null)
-    expect(empty.scalarLayers.size).toBe(0)
-    expect(empty.nodeLayers.size).toBe(0)
-    expect(empty.eventLayers.size).toBe(0)
-    expect(empty.rasters.size).toBe(0)
-    expect(empty.featureSets.size).toBe(0)
-    expect(empty.nodePortraits.size).toBe(0)
+    for (const bucket of [empty.scalarLayers, empty.nodeLayers, empty.eventLayers, empty.rasters, empty.featureSets, empty.nodePortraits]) {
+      expect(bucket.size).toBe(0)
+    }
+    expect(buildLayers(manifestWith([CO2_ENTRY]), new Map()).scalarLayers.size).toBe(0)
   })
 
-  it('wraps a scalar entry as a Layer<ScalarValue>', () => {
-    const manifest = manifestWith([CO2_ENTRY])
-    const layerData = new Map<string, LayerData>([['co2', CO2_DATA]])
-    const { scalarLayers } = buildLayers(manifest, layerData)
-    expect(scalarLayers.get('co2')?.sample(0)).toEqual({ kind: 'scalar', value: 280, unit: 'ppm' })
+  it('wraps scalar and node entries as sampling Layers, indexing portraits only when published', () => {
+    const plain = buildLayers(manifestWith([CO2_ENTRY, LINEAGE_ENTRY]), new Map<string, LayerData>([['co2', CO2_DATA], ['lineage', LINEAGE_DATA]]))
+    expect(plain.scalarLayers.get('co2')?.sample(0)).toEqual({ kind: 'scalar', value: 280, unit: 'ppm' })
+    expect(plain.nodeLayers.get('lineage')?.sample(4e9)?.id).toBe('luca')
+    expect(plain.nodePortraits.has('lineage')).toBe(false)
+    const withPortraits = buildLayers(manifestWith([LINEAGE_ENTRY]), new Map<string, LayerData>([['lineage', PORTRAIT_LINEAGE_DATA]]))
+    expect(withPortraits.nodePortraits.get('lineage')?.plates.map((p) => p.nodeId)).toEqual(['luca'])
   })
 
-  it('wraps a node entry as a Layer<NodeValue>', () => {
-    const manifest = manifestWith([LINEAGE_ENTRY])
-    const layerData = new Map<string, LayerData>([['lineage', LINEAGE_DATA]])
-    const { nodeLayers } = buildLayers(manifest, layerData)
-    expect(nodeLayers.get('lineage')?.sample(4e9)?.id).toBe('luca')
-  })
-
-  it('omits a node entry from nodePortraits when its lineage publishes no portraits', () => {
-    const manifest = manifestWith([LINEAGE_ENTRY])
-    const layerData = new Map<string, LayerData>([['lineage', LINEAGE_DATA]])
-    const { nodePortraits } = buildLayers(manifest, layerData)
-    expect(nodePortraits.has('lineage')).toBe(false)
-  })
-
-  it('indexes a node entry\'s published portraits into nodePortraits, keyed like nodeLayers', () => {
-    const manifest = manifestWith([LINEAGE_ENTRY])
-    const layerData = new Map<string, LayerData>([['lineage', PORTRAIT_LINEAGE_DATA]])
-    const { nodePortraits } = buildLayers(manifest, layerData)
-    expect(nodePortraits.get('lineage')?.plates).toHaveLength(1)
-    expect(nodePortraits.get('lineage')?.plates[0]?.nodeId).toBe('luca')
-  })
-
-  it('hands a raster entry through as parsed data, not a Layer, keyed by id', () => {
-    const manifest = manifestWith([PALEODEM_ENTRY])
-    const layerData = new Map<string, LayerData>([['paleodem', PALEODEM_DATA]])
-    const { rasters } = buildLayers(manifest, layerData)
+  it('hands raster, events and features entries through raw, keyed by id', () => {
+    const { rasters, eventLayers, featureSets } = buildLayers(
+      manifestWith([PALEODEM_ENTRY, GLOBE_REGIMES_ENTRY, CITIES_ENTRY]),
+      new Map<string, LayerData>([['paleodem', PALEODEM_DATA], ['globe-regimes', GLOBE_REGIMES_DATA], ['cities', CITIES_DATA]]),
+    )
     expect(rasters.get('paleodem')).toEqual({ entry: PALEODEM_ENTRY, data: PALEODEM_DATA })
-  })
-
-  it('hands a non-timeline events entry (docs/GLOBE.md §6) through as parsed data, not a Layer', () => {
-    const manifest = manifestWith([GLOBE_REGIMES_ENTRY])
-    const layerData = new Map<string, LayerData>([['globe-regimes', GLOBE_REGIMES_DATA]])
-    const { eventLayers } = buildLayers(manifest, layerData)
     expect(eventLayers.get('globe-regimes')).toEqual({ entry: GLOBE_REGIMES_ENTRY, data: GLOBE_REGIMES_DATA })
-  })
-
-  it('hands a features entry (ADR-035) through as parsed data, not a Layer, keyed by id', () => {
-    const manifest = manifestWith([CITIES_ENTRY])
-    const layerData = new Map<string, LayerData>([['cities', CITIES_DATA]])
-    const { featureSets } = buildLayers(manifest, layerData)
     expect(featureSets.get('cities')).toEqual({ entry: CITIES_ENTRY, data: CITIES_DATA })
-  })
-
-  it('rawEvents reads a raw eventLayers entry’s full event list, or [] when unpublished', () => {
-    const manifest = manifestWith([GLOBE_REGIMES_ENTRY])
-    const layerData = new Map<string, LayerData>([['globe-regimes', GLOBE_REGIMES_DATA]])
-    const { eventLayers } = buildLayers(manifest, layerData)
     expect(rawEvents(eventLayers, 'globe-regimes')).toEqual(GLOBE_REGIMES_DATA.events)
     expect(rawEvents(eventLayers, 'not-published')).toEqual([])
-  })
-
-  it('skips a manifest entry with no matching layerData rather than throwing', () => {
-    const manifest = manifestWith([CO2_ENTRY])
-    const { scalarLayers } = buildLayers(manifest, new Map())
-    expect(scalarLayers.size).toBe(0)
   })
 })

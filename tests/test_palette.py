@@ -19,9 +19,6 @@ def _ts_stops(name: str) -> Stops:
     return tuple((float(z), (int(r), int(g), int(b))) for z, r, g, b in rows)
 
 
-def test_sea_stops_match_the_pipeline_palette() -> None:
+def test_the_web_palette_copy_matches_the_pipeline_palette() -> None:
     assert _ts_stops("PALEODEM_SEA_STOPS") == SEA_STOPS
-
-
-def test_land_stops_match_the_pipeline_palette() -> None:
     assert _ts_stops("PALEODEM_LAND_STOPS") == LAND_STOPS

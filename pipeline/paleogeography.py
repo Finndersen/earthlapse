@@ -82,12 +82,6 @@ def load_reconstructor(raw_dir: Path) -> Reconstructor:
     `fetch.py` (`make data`). Raises `PlateModelUnavailable` if the extra isn't installed or
     the files aren't there -- callers turn that into a `PublishRefused`, never a silent
     fallback."""
-    try:
-        import pygplates
-    except ModuleNotFoundError as err:
-        raise PlateModelUnavailable(
-            "pygplates is not installed -- install the geo extra: pip install -e '.[geo]'"
-        ) from err
     continents_path = raw_dir / _CONTINENTS_FILENAME
     rotations_path = raw_dir / _ROTATIONS_FILENAME
     missing = [p.name for p in (continents_path, rotations_path) if not p.is_file()]
@@ -96,6 +90,12 @@ def load_reconstructor(raw_dir: Path) -> Reconstructor:
             f"Merdith plate model file(s) missing from {raw_dir}: {missing} -- run `make data` "
             "(sources/plates-neoproterozoic/fetch.py) first"
         )
+    try:
+        import pygplates
+    except ModuleNotFoundError as err:
+        raise PlateModelUnavailable(
+            "pygplates is not installed -- install the geo extra: pip install -e '.[geo]'"
+        ) from err
     rotation_model = pygplates.RotationModel(str(rotations_path))
     continents = pygplates.FeatureCollection(str(continents_path))
     partitioner = pygplates.PlatePartitioner(continents, rotation_model, reconstruction_time=0.0)

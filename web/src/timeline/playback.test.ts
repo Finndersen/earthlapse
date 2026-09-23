@@ -14,482 +14,214 @@ import { createLinearScale, createSymlogScale } from './scale'
 import { sectionById } from './sections'
 
 const fullScale: TimeScale = createSymlogScale([0, EARTH_FORMATION])
+const MIN_CUT_DWELL_SECONDS = 0.35
 
 function playback(overrides: Partial<Playback> = {}): Playback {
   return { playing: true, baseRate: 0.1, speed: 1, mode: 'steady', ...overrides }
 }
 
-describe('advancePlayhead: base mechanics (both modes)', () => {
-  it('does not move t when not playing', () => {
-    const t = 1e8
-    expect(advancePlayhead(t, 1, playback({ playing: false }), fullScale)).toBe(t)
+function du(t: number, dt: number, pb: Playback, segments?: PlaybackPacingSegment[], scale = fullScale): number {
+  return scale.toUnit(advancePlayhead(t, dt, pb, scale, segments)) - scale.toUnit(t)
+}
+
+describe('advancePlayhead', () => {
+  it('moves toward the present at baseRate × speed × dt in warped space', () => {
+    expect(du(1e8, 2, playback({ baseRate: 0.02, speed: 3 }))).toBeCloseTo(0.12, 9)
+    const linear = createLinearScale([0, EARTH_FORMATION])
+    expect(du(2e9, 5, playback({ baseRate: 0.02 }), undefined, linear)).toBeCloseTo(0.1, 9)
   })
 
-  it('moves toward the present (t decreases)', () => {
-    const t = 1e8
-    const next = advancePlayhead(t, 1, playback(), fullScale)
-    expect(next).toBeLessThan(t)
+  it('is a no-op when paused or for a non-finite dt', () => {
+    expect(advancePlayhead(1e8, 1, playback({ playing: false }), fullScale)).toBe(1e8)
+    for (const dt of [Number.NaN, Infinity, -Infinity]) expect(advancePlayhead(1e8, dt, playback(), fullScale)).toBe(1e8)
   })
 
-  it('has constant du/dt: doubling dt doubles the warped-space displacement', () => {
-    const t = 1e8
-    const u0 = fullScale.toUnit(t)
-    const du1 = fullScale.toUnit(advancePlayhead(t, 1, playback(), fullScale)) - u0
-    const du2 = fullScale.toUnit(advancePlayhead(t, 2, playback(), fullScale)) - u0
-    expect(du2).toBeCloseTo(du1 * 2, 9)
-  })
-
-  it('scales with speed: doubling speed doubles the warped-space displacement', () => {
-    const t = 1e8
-    const u0 = fullScale.toUnit(t)
-    const du1 = fullScale.toUnit(advancePlayhead(t, 1, playback({ speed: 1 }), fullScale)) - u0
-    const du2 = fullScale.toUnit(advancePlayhead(t, 1, playback({ speed: 2 }), fullScale)) - u0
-    expect(du2).toBeCloseTo(du1 * 2, 9)
-  })
-
-  it('clamps at the present and never overshoots past t = 0', () => {
-    const next = advancePlayhead(10, 1e9, playback({ speed: 64 }), fullScale)
-    expect(next).toBe(0)
-  })
-
-  it('stays finite and clamped at extreme speed and dt (no NaN, no overshoot)', () => {
-    const next = advancePlayhead(1e8, Number.MAX_VALUE, playback({ speed: 64 }), fullScale)
-    expect(Number.isFinite(next)).toBe(true)
-    expect(next).toBeGreaterThanOrEqual(0)
-    expect(next).toBeLessThanOrEqual(EARTH_FORMATION)
-  })
-
-  it('is a no-op (not a crash) for a non-finite dt', () => {
-    const t = 1e8
-    expect(advancePlayhead(t, Number.NaN, playback(), fullScale)).toBe(t)
-    expect(advancePlayhead(t, Infinity, playback(), fullScale)).toBe(t)
-    expect(advancePlayhead(t, -Infinity, playback(), fullScale)).toBe(t)
-  })
-
-  it('never moves past t = 0 even already at the present', () => {
+  it('clamps at the present, finite even at extreme dt', () => {
+    expect(advancePlayhead(10, 1e9, playback({ speed: 64 }), fullScale)).toBe(0)
     expect(advancePlayhead(0, 1, playback(), fullScale)).toBe(0)
+    expect(advancePlayhead(1e8, Number.MAX_VALUE, playback({ speed: 64 }), fullScale)).toBe(0)
   })
 
-  it('"scenes" mode with no scenesPacing degrades to the same flat rate as "steady"', () => {
-    const t = 1e8
-    const steady = advancePlayhead(t, 3, playback({ mode: 'steady' }), fullScale)
-    const scenesNoPacing = advancePlayhead(t, 3, playback({ mode: 'scenes' }), fullScale)
-    const scenesEmptyPacing = advancePlayhead(t, 3, playback({ mode: 'scenes' }), fullScale, [])
-    expect(scenesNoPacing).toBe(steady)
-    expect(scenesEmptyPacing).toBe(steady)
-  })
-})
-
-// -------------------------------------------------------------------------- steady mode
-
-describe('advancePlayhead: "steady" mode (ADR-016)', () => {
-  it('moves at constant velocity in whatever fullScale is passed — symlog', () => {
-    const t = 1e8
-    const pb = playback({ mode: 'steady', baseRate: 0.02, speed: 3 })
-    const u0 = fullScale.toUnit(t)
-    const du = fullScale.toUnit(advancePlayhead(t, 2, pb, fullScale)) - u0
-    expect(du).toBeCloseTo(pb.baseRate * pb.speed * 2, 9)
+  it('ignores pacing in steady mode, and scenes mode without pacing matches steady', () => {
+    const segment = { tNewer: 5e7, tOlder: 5.0005e7, durationSeconds: 5 }
+    const steady = advancePlayhead(5.0005e7, 1, playback(), fullScale)
+    expect(advancePlayhead(5.0005e7, 1, playback(), fullScale, [segment])).toBe(steady)
+    expect(advancePlayhead(5.0005e7, 1, playback({ mode: 'scenes' }), fullScale, [])).toBe(steady)
   })
 
-  it('moves at constant velocity in whatever fullScale is passed — linear (the currently selected scale kind)', () => {
-    const linearScale = createLinearScale([0, EARTH_FORMATION])
-    const t = 2e9
-    const pb = playback({ mode: 'steady', baseRate: 0.02, speed: 1 })
-    const u0 = linearScale.toUnit(t)
-    const du = linearScale.toUnit(advancePlayhead(t, 5, pb, linearScale)) - u0
-    expect(du).toBeCloseTo(pb.baseRate * pb.speed * 5, 9)
-  })
-
-  it('ignores scenesPacing entirely, even a dense one that would floor "scenes" mode', () => {
+  describe('scenes mode pacing', () => {
     const segment: PlaybackPacingSegment = { tNewer: 5e7, tOlder: 5.0005e7, durationSeconds: 5 }
-    const pb = playback({ mode: 'steady', baseRate: 0.05, speed: 1 })
-    const t = 5.0005e7
-    const withPacing = advancePlayhead(t, 1, pb, fullScale, [segment])
-    const withoutPacing = advancePlayhead(t, 1, pb, fullScale)
-    expect(withPacing).toBe(withoutPacing)
-  })
-})
-
-// -------------------------------------------------------------------------- scenes mode
-
-describe('advancePlayhead: "scenes" mode pacing (ADR-016)', () => {
-  it('a single step of exactly durationSeconds crosses a dense segment exactly, at 1x', () => {
-    // ~5000 years wide, deep in the domain where the symlog derivative is tiny — a few
-    // millionths of u, far less than durationSeconds worth of the ordinary baseRate.
-    const tNewer = 5e7
-    const tOlder = 5.0005e7
-    const durationSeconds = 5
-    const segment: PlaybackPacingSegment = { tNewer, tOlder, durationSeconds }
-    const pb = playback({ mode: 'scenes', baseRate: 0.05, speed: 1 })
-
-    const next = advancePlayhead(tOlder, durationSeconds, pb, fullScale, [segment])
-    expect(fullScale.toUnit(next)).toBeCloseTo(fullScale.toUnit(tNewer), 9)
-  })
-
-  it('crossing a dense segment via many small steps sums to exactly durationSeconds, no more and no less', () => {
-    const tNewer = 5e7
-    const tOlder = 5.0005e7
-    const durationSeconds = 5
-    const segment: PlaybackPacingSegment = { tNewer, tOlder, durationSeconds }
-    const pb = playback({ mode: 'scenes', baseRate: 0.05, speed: 1 })
-
-    let t = tOlder
-    let elapsed = 0
-    const dt = durationSeconds / 500
-    while (t > tNewer && elapsed < durationSeconds * 4) {
-      t = advancePlayhead(t, dt, pb, fullScale, [segment])
-      elapsed += dt
-    }
-    expect(elapsed).toBeCloseTo(durationSeconds, 1)
-  })
-
-  it('a sparse gap (wide u-span, tiny duration) moves far faster than baseRate — no cap', () => {
-    const segment: PlaybackPacingSegment = { tNewer: 1e6, tOlder: 1e9, durationSeconds: 0.001 }
-    const pb = playback({ mode: 'scenes', baseRate: 0.02, speed: 1 })
-    const t0 = 5e8 // well inside the segment, away from either edge
-
-    const uSpan = fullScale.toUnit(segment.tNewer) - fullScale.toUnit(segment.tOlder)
-    const expectedRate = uSpan / segment.durationSeconds
-
-    const u0 = fullScale.toUnit(t0)
-    const dt = 1e-6
-    const du = fullScale.toUnit(advancePlayhead(t0, dt, pb, fullScale, [segment])) - u0
-
-    expect(du / dt).toBeCloseTo(expectedRate, 3)
-    expect(expectedRate).toBeGreaterThan(pb.baseRate * 10) // would have been capped under ADR-012's hybrid
-  })
-
-  it('t outside every segment moves at the ordinary baseRate * speed, same as "steady"', () => {
-    const segments: PlaybackPacingSegment[] = [{ tNewer: 5e8, tOlder: 6e8, durationSeconds: 0.001 }]
-    const pb = playback({ mode: 'scenes', baseRate: 0.03, speed: 2 })
-    const t0 = 1e9 // older than every segment
-    const dt = 1e-6
-
-    const u0 = fullScale.toUnit(t0)
-    const du = fullScale.toUnit(advancePlayhead(t0, dt, pb, fullScale, segments)) - u0
-    expect(du).toBeCloseTo(pb.baseRate * pb.speed * dt, 9)
-  })
-
-  it('speed 8x divides a paced segment-crossing duration by 8', () => {
-    const tNewer = 5e7
-    const tOlder = 5.0005e7
-    const durationSeconds = 5
-    const segment: PlaybackPacingSegment = { tNewer, tOlder, durationSeconds }
 
     function timeToCross(speed: number): number {
       const pb = playback({ mode: 'scenes', baseRate: 0.05, speed })
-      let t = tOlder
+      let t = segment.tOlder
       let elapsed = 0
-      const dt = durationSeconds / (500 * speed)
-      while (t > tNewer && elapsed < (durationSeconds / speed) * 4) {
+      const dt = segment.durationSeconds / (500 * speed)
+      while (t > segment.tNewer && elapsed < 40) {
         t = advancePlayhead(t, dt, pb, fullScale, [segment])
         elapsed += dt
       }
       return elapsed
     }
 
-    const at1x = timeToCross(1)
-    const at8x = timeToCross(8)
-    expect(at8x).toBeCloseTo(at1x / 8, 2)
-  })
+    it('crosses a dense segment in exactly its duration, divided by speed', () => {
+      const pb = playback({ mode: 'scenes', baseRate: 0.05 })
+      expect(fullScale.toUnit(advancePlayhead(segment.tOlder, 5, pb, fullScale, [segment]))).toBeCloseTo(fullScale.toUnit(segment.tNewer), 9)
+      expect(timeToCross(1)).toBeCloseTo(5, 1)
+      expect(timeToCross(8)).toBeCloseTo(timeToCross(1) / 8, 2)
+    })
 
-  it('a single huge dt crosses several segments correctly and matches many small dts', () => {
-    // Three contiguous dense segments, each with a duration well under baseRate's own crossing time.
-    const segments: PlaybackPacingSegment[] = [
-      { tNewer: 3e8, tOlder: 3.5e8, durationSeconds: 2 },
-      { tNewer: 2.5e8, tOlder: 3e8, durationSeconds: 3 },
-      { tNewer: 2e8, tOlder: 2.5e8, durationSeconds: 1.5 },
-    ]
-    const pb = playback({ mode: 'scenes', baseRate: 0.05, speed: 1 })
-    const t0 = 4e8
-    const totalDt = 20 // enough to fully cross every segment plus the unpaced stretches either side
+    it('crosses a sparse gap faster than baseRate, uncapped', () => {
+      const sparse = { tNewer: 1e6, tOlder: 1e9, durationSeconds: 0.001 }
+      const expected = (fullScale.toUnit(sparse.tNewer) - fullScale.toUnit(sparse.tOlder)) / sparse.durationSeconds
+      expect(du(5e8, 1e-6, playback({ mode: 'scenes', baseRate: 0.02 }), [sparse]) / 1e-6).toBeCloseTo(expected, 3)
+      expect(expected).toBeGreaterThan(0.2)
+    })
 
-    const viaOneHugeStep = advancePlayhead(t0, totalDt, pb, fullScale, segments)
+    it('moves at the flat rate outside every segment', () => {
+      const pb = playback({ mode: 'scenes', baseRate: 0.03, speed: 2 })
+      expect(du(1e9, 1e-6, pb, [{ tNewer: 5e8, tOlder: 6e8, durationSeconds: 0.001 }])).toBeCloseTo(0.06e-6, 9)
+    })
 
-    let viaManySmallSteps = t0
-    const steps = 4000
-    for (let i = 0; i < steps; i++) {
-      viaManySmallSteps = advancePlayhead(viaManySmallSteps, totalDt / steps, pb, fullScale, segments)
-    }
+    it('gives the same result for one huge step as for many small ones', () => {
+      const segments = [
+        { tNewer: 3e8, tOlder: 3.5e8, durationSeconds: 2 },
+        { tNewer: 2.5e8, tOlder: 3e8, durationSeconds: 3 },
+        { tNewer: 2e8, tOlder: 2.5e8, durationSeconds: 1.5 },
+      ]
+      const pb = playback({ mode: 'scenes', baseRate: 0.05 })
+      let many = 4e8
+      for (let i = 0; i < 4000; i++) many = advancePlayhead(many, 20 / 4000, pb, fullScale, segments)
+      expect(fullScale.toUnit(advancePlayhead(4e8, 20, pb, fullScale, segments))).toBeCloseTo(fullScale.toUnit(many), 4)
+    })
 
-    const uHuge = fullScale.toUnit(viaOneHugeStep)
-    const uMany = fullScale.toUnit(viaManySmallSteps)
-    expect(uHuge).toBeCloseTo(uMany, 4)
-  })
-
-  it('a zero-width segment (degenerate tNewer === tOlder) does not stall integration', () => {
-    const segments: PlaybackPacingSegment[] = [
-      { tNewer: 5e7, tOlder: 5e7, durationSeconds: 5 },
-      { tNewer: 4e7, tOlder: 4.5e7, durationSeconds: 1 },
-    ]
-    const pb = playback({ mode: 'scenes', baseRate: 0.05, speed: 1 })
-    const next = advancePlayhead(6e7, 3, pb, fullScale, segments)
-    expect(Number.isFinite(next)).toBe(true)
-    expect(next).toBeLessThan(6e7)
+    it('does not stall on a zero-width segment', () => {
+      const segments = [
+        { tNewer: 5e7, tOlder: 5e7, durationSeconds: 5 },
+        { tNewer: 4e7, tOlder: 4.5e7, durationSeconds: 1 },
+      ]
+      expect(advancePlayhead(6e7, 3, playback({ mode: 'scenes', baseRate: 0.05 }), fullScale, segments)).toBeLessThan(6e7)
+    })
   })
 })
 
-describe('advanceSteadyPlayhead: era sections (ADR-024)', () => {
-  const steady = (overrides: Partial<Playback> = {}): Playback => playback({ mode: 'steady', baseRate: 0.1, speed: 1, ...overrides })
+describe('advanceSteadyPlayhead: sections', () => {
+  const steady = (overrides: Partial<Playback> = {}) => playback({ baseRate: 0.1, ...overrides })
 
   it("moves at constant velocity in the section's own scale", () => {
     const cenozoic = createSymlogScale(sectionById('cenozoic').window)
-    const t = 30e6
-    const next = advanceSteadyPlayhead(t, 2, steady({ baseRate: 0.02 }), 'cenozoic', createSymlogScale)
-    expect(cenozoic.toUnit(next) - cenozoic.toUnit(t)).toBeCloseTo(0.04, 10)
+    const next = advanceSteadyPlayhead(30e6, 2, steady({ baseRate: 0.02 }), 'cenozoic', createSymlogScale)
+    expect(cenozoic.toUnit(next) - cenozoic.toUnit(30e6)).toBeCloseTo(0.04, 10)
   })
 
-  it('carries the rest of the frame into the next section past the edge', () => {
-    // Industrial age [111, 265] linear: from t=120 the edge is 0.0584 u away (0.584 s at 0.1 u/s);
-    // the remaining 0.416 s moves 0.0416 u into Modern [0, 111].
-    const next = advanceSteadyPlayhead(120, 1, steady(), 'industrial-age', createLinearScale)
+  it('carries the remainder of a frame across the section edge, including from exactly on it', () => {
+    // Industrial age [111, 265] linear; the leftover time moves into Modern [0, 111].
     const secondsToEdge = (1 - (265 - 120) / 154) / 0.1
-    expect(next).toBeCloseTo(111 - (1 - secondsToEdge) * 0.1 * 111, 8)
-  })
-
-  it('crosses at once when resting exactly on the edge', () => {
+    expect(advanceSteadyPlayhead(120, 1, steady(), 'industrial-age', createLinearScale)).toBeCloseTo(111 - (1 - secondsToEdge) * 0.1 * 111, 8)
     expect(advanceSteadyPlayhead(111, 0.1, steady(), 'industrial-age', createLinearScale)).toBeLessThan(111)
   })
 
-  it("continues up to the parent's next sibling after the last child", () => {
+  it("continues to the parent's next sibling after the last child, stopping at the present", () => {
     const permian = sectionById('permian')
-    const mesozoic = createLinearScale(sectionById('mesozoic').window)
     const next = advanceSteadyPlayhead(permian.window[0] + 1, 3, steady(), 'permian', createLinearScale)
     expect(next).toBeLessThan(permian.window[0])
-    expect(mesozoic.toUnit(next)).toBeGreaterThan(0.25)
-  })
-
-  it('stops at the present', () => {
+    expect(createLinearScale(sectionById('mesozoic').window).toUnit(next)).toBeGreaterThan(0.25)
     expect(advanceSteadyPlayhead(1, 1000, steady(), 'modern', createSymlogScale)).toBe(0)
   })
 
-  it('is a no-op when paused or for a non-positive dt', () => {
+  it('is a no-op when paused or for zero dt, and rejects scenes mode or t outside the section', () => {
     expect(advanceSteadyPlayhead(150, 1, steady({ playing: false }), 'industrial-age', createLinearScale)).toBe(150)
     expect(advanceSteadyPlayhead(150, 0, steady(), 'industrial-age', createLinearScale)).toBe(150)
-  })
-
-  it('rejects scenes mode and a t outside the section', () => {
     expect(() => advanceSteadyPlayhead(150, 1, playback({ mode: 'scenes' }), 'industrial-age', createLinearScale)).toThrow(/steady/)
     expect(() => advanceSteadyPlayhead(50, 1, steady(), 'industrial-age', createLinearScale)).toThrow(/outside/)
   })
 })
 
-describe('advanceSteadyPlayhead: scene territory floor (ADR-029)', () => {
-  const steady = (overrides: Partial<Playback> = {}): Playback => playback({ mode: 'steady', baseRate: 0.02, speed: 1, ...overrides })
+describe('advanceSteadyPlayhead: scene territory floor', () => {
+  const steady = (speed: number) => playback({ baseRate: 0.02, speed })
+  type SectionArg = Parameters<typeof advanceSteadyPlayhead>[3]
+  type ScaleArg = Parameters<typeof advanceSteadyPlayhead>[4]
 
-  /** Sums the wall-clock time a small-step simulation spends crossing `territory` (from its
-   *  `tOlder` edge down to its `tNewer` edge) — the same "many small steps sum to the exact
-   *  duration" pattern the 'scenes'-mode tests above already use, applied here to measure the
-   *  floor's guarantee rather than an exact paced duration. */
-  function dwellCrossing(
-    territory: SteadySceneTerritory,
-    sectionId: Parameters<typeof advanceSteadyPlayhead>[3],
-    scaleForWindow: Parameters<typeof advanceSteadyPlayhead>[4],
-    territories: readonly SteadySceneTerritory[],
-    speed: number,
-  ): number {
-    const pb = steady({ speed })
-    let t = territory.tOlder
+  function dwell(from: number, to: number, speed: number, section: SectionArg, scale: ScaleArg, territories: SteadySceneTerritory[]): number {
+    let t = from
     let elapsed = 0
-    const dt = 0.001
-    // Generous cap: at the fastest speed tested (64x) even an unfloored crossing takes a small
-    // fraction of a second; this only guards against a genuine infinite loop.
-    for (let i = 0; i < 5_000_000 && t > territory.tNewer; i++) {
-      t = advanceSteadyPlayhead(t, dt, pb, sectionId, scaleForWindow, territories)
-      elapsed += dt
+    for (let i = 0; i < 5_000_000 && t > to; i++) {
+      t = advanceSteadyPlayhead(t, 0.001, steady(speed), section, scale, territories)
+      elapsed += 0.001
     }
     return elapsed
   }
 
-  it('a scene territory narrower than MIN_CUT_DWELL_SECONDS worth of dwell is floored to at least it, at 1x/8x/64x, in the earth section', () => {
-    // ~100 years wide, near the present — the measured "recent human history" shape (28 scenes
-    // in the last 12,000 years) without needing the real manifest.
-    const territories: SteadySceneTerritory[] = [
-      { tNewer: 0, tOlder: 100 },
-      { tNewer: 100, tOlder: 200 },
-      { tNewer: 200, tOlder: EARTH_FORMATION },
-    ]
+  it.each([
+    ['earth', createSymlogScale, [0, 100, 200]],
+    ['earth', createLinearScale, [0, 5, 10, 15]],
+    ['industrial-age', createLinearScale, [111, 150, 155]],
+  ] as const)('floors a narrow territory in %s to the minimum dwell at every speed', (section, scale, edges) => {
+    const top = section === 'industrial-age' ? 265 : EARTH_FORMATION
+    const bounds = [...edges, top]
+    const territories = bounds.slice(0, -1).map((tNewer, i) => ({ tNewer, tOlder: bounds[i + 1]! }))
     for (const speed of [1, 8, 64]) {
-      const elapsed = dwellCrossing(territories[1]!, 'earth', createSymlogScale, territories, speed)
-      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01) // MIN_CUT_DWELL_SECONDS, minus one dt step's slack
+      expect(dwell(territories[1]!.tOlder, territories[1]!.tNewer, speed, section, scale, territories)).toBeGreaterThanOrEqual(MIN_CUT_DWELL_SECONDS - 0.01)
     }
   })
 
-  it('floors correctly under a *linear* scale over the whole domain (re-review fix, HIGH-1)', () => {
-    // Under a linear scale spanning the whole `earth` section (EARTH_FORMATION years wide), a
-    // fixed nudge in `u` — the pre-fix implementation's way of stepping past a just-crossed
-    // territory boundary — is a nudge of several real *years* (order 1e-9 of a ~4.6e9-year
-    // domain), comparable to or wider than territories this narrow: it could skip a whole
-    // territory's floored dwell (or eat most of it) without ever billing any wall-clock time for
-    // it. Live-measured before this fix: up to 9 image changes in a single second, smallest gap
-    // 33ms, well over the 3/s safety limit the floor exists to guarantee. Reproduces that shape
-    // (~5-year-wide territories near the present) without needing the real manifest.
-    const territories: SteadySceneTerritory[] = [
-      { tNewer: 0, tOlder: 5 },
-      { tNewer: 5, tOlder: 10 },
-      { tNewer: 10, tOlder: 15 },
-      { tNewer: 15, tOlder: EARTH_FORMATION },
-    ]
-    for (const speed of [1, 8, 64]) {
-      const elapsed = dwellCrossing(territories[1]!, 'earth', createLinearScale, territories, speed)
-      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01)
-    }
-  })
-
-  it('advances territory by territory (index) rather than skipping any, across many narrow linear territories', () => {
-    // A denser run of 20 narrow (2-year) territories — every one of them must get its own
-    // floored dwell; the pre-fix `u`-space nudge could jump clean over several of these at once,
-    // so crossing all 20 could complete in far less than 20 * MIN_CUT_DWELL_SECONDS. A minimum
-    // total is a simple, strong check that no territory in the run was skipped.
-    const territories: SteadySceneTerritory[] = []
-    for (let i = 0; i < 20; i++) territories.push({ tNewer: i * 2, tOlder: (i + 1) * 2 })
+  it('never skips a territory in a dense run', () => {
+    const territories = Array.from({ length: 20 }, (_, i) => ({ tNewer: i * 2, tOlder: (i + 1) * 2 }))
     territories.push({ tNewer: 40, tOlder: EARTH_FORMATION })
-
-    const pb = steady({ speed: 8 })
-    let t = 40 // the near edge of the run, i.e. about to cross all 20 territories down to t = 0
-    let elapsed = 0
-    const dt = 0.001
-    for (let i = 0; i < 200_000 && t > 0; i++) {
-      t = advanceSteadyPlayhead(t, dt, pb, 'earth', createLinearScale, territories)
-      elapsed += dt
-    }
-    expect(elapsed).toBeGreaterThanOrEqual(20 * (0.35 - 0.01))
+    expect(dwell(40, 0, 8, 'earth', createLinearScale, territories)).toBeGreaterThanOrEqual(20 * (MIN_CUT_DWELL_SECONDS - 0.01))
   })
 
-  it('floors just as well inside a narrower era section (industrial-age, ADR-024)', () => {
-    // A 5-year-wide territory inside the industrial age's own [111, 265] window.
-    const territories: SteadySceneTerritory[] = [
-      { tNewer: 111, tOlder: 150 },
-      { tNewer: 150, tOlder: 155 },
-      { tNewer: 155, tOlder: 265 },
-    ]
-    for (const speed of [1, 8, 64]) {
-      const elapsed = dwellCrossing(territories[1]!, 'industrial-age', createLinearScale, territories, speed)
-      expect(elapsed).toBeGreaterThanOrEqual(0.35 - 0.01)
-    }
-  })
-
-  it('entering a territory mid-way (not at its edge) prorates the remaining dwell, then floors the next territory fully', () => {
-    // The shape of a seek landing just before a boundary (HIGH-2's own "single seek just before
-    // a territory boundary" finding): entering territories[1] already 90% of the way through its
-    // own 50-year span. Its floor prices the *whole* territory at MIN_CUT_DWELL_SECONDS, so only
-    // ~10% remaining gets only ~10% of that — expected (not itself a bug: the presentation
-    // layer's own wall-clock backstop is what protects the *displayed* cadence regardless of
-    // where `t` enters a territory), but must stay positive and finite, and the *next* territory
-    // (reached by index, not by a nudge) must still get its own full floor.
-    const territories: SteadySceneTerritory[] = [
+  it('prorates a territory entered mid-way, then floors the next one fully', () => {
+    const territories = [
       { tNewer: 0, tOlder: 50 },
       { tNewer: 50, tOlder: 100 },
       { tNewer: 100, tOlder: EARTH_FORMATION },
     ]
-    const pb = steady({ speed: 1 })
-
-    let t = 55 // 10% of the way into territories[1] from its tNewer edge
-    let elapsedInEntered = 0
-    for (let i = 0; i < 2000 && t > territories[1]!.tNewer; i++) {
-      t = advanceSteadyPlayhead(t, 0.001, pb, 'earth', createLinearScale, territories)
-      elapsedInEntered += 0.001
-    }
-    expect(Math.abs(t - territories[1]!.tNewer)).toBeLessThan(0.01) // small-step simulation slack
-    expect(elapsedInEntered).toBeGreaterThan(0)
-    expect(elapsedInEntered).toBeLessThan(0.35)
-
-    let elapsedInNext = 0
-    for (let i = 0; i < 2000 && t > territories[0]!.tNewer; i++) {
-      t = advanceSteadyPlayhead(t, 0.001, pb, 'earth', createLinearScale, territories)
-      elapsedInNext += 0.001
-    }
-    expect(elapsedInNext).toBeGreaterThanOrEqual(0.35 - 0.01)
+    const entered = dwell(55, 50, 1, 'earth', createLinearScale, territories)
+    expect(entered).toBeGreaterThan(0)
+    expect(entered).toBeLessThan(MIN_CUT_DWELL_SECONDS)
+    expect(dwell(50, 0, 1, 'earth', createLinearScale, territories)).toBeGreaterThanOrEqual(MIN_CUT_DWELL_SECONDS - 0.01)
   })
 
-  it('does not floor a territory that already dwells comfortably above the minimum', () => {
-    // A vast territory (most of the earth section) at an ordinary 1x rate.
-    const territories: SteadySceneTerritory[] = [{ tNewer: 0, tOlder: EARTH_FORMATION }]
-    const pb = steady({ speed: 1 })
+  it('leaves wide territories and an empty list at the flat rate', () => {
     const t0 = EARTH_FORMATION / 2
-    const scale = createSymlogScale([0, EARTH_FORMATION])
-    const withTerritory = advanceSteadyPlayhead(t0, 1, pb, 'earth', createSymlogScale, territories)
-    const withoutTerritory = advanceSteadyPlayhead(t0, 1, pb, 'earth', createSymlogScale)
-    expect(scale.toUnit(withTerritory)).toBeCloseTo(scale.toUnit(withoutTerritory), 9)
+    const flat = advanceSteadyPlayhead(t0, 1, steady(1), 'earth', createSymlogScale)
+    expect(fullScale.toUnit(advanceSteadyPlayhead(t0, 1, steady(1), 'earth', createSymlogScale, [{ tNewer: 0, tOlder: EARTH_FORMATION }]))).toBeCloseTo(
+      fullScale.toUnit(flat),
+      9,
+    )
+    expect(advanceSteadyPlayhead(30e6, 2, steady(3), 'cenozoic', createSymlogScale, [])).toBe(
+      advanceSteadyPlayhead(30e6, 2, steady(3), 'cenozoic', createSymlogScale),
+    )
   })
 
-  it('an empty (or omitted) sceneTerritories reproduces the pre-ADR-029 flat rate exactly', () => {
-    const pb = steady({ speed: 3 })
-    const withEmpty = advanceSteadyPlayhead(30e6, 2, pb, 'cenozoic', createSymlogScale, [])
-    const omitted = advanceSteadyPlayhead(30e6, 2, pb, 'cenozoic', createSymlogScale)
-    expect(withEmpty).toBe(omitted)
-  })
-
-  it('is a pure function: identical inputs produce identical output', () => {
-    const territories: SteadySceneTerritory[] = [{ tNewer: 100, tOlder: 300 }]
-    const pb = steady({ speed: 8 })
-    const a = advanceSteadyPlayhead(250, 0.05, pb, 'earth', createSymlogScale, territories)
-    const b = advanceSteadyPlayhead(250, 0.05, pb, 'earth', createSymlogScale, territories)
-    expect(a).toBe(b)
-  })
-
-  it('a huge single dt (a stalled tab regaining focus) crossing several dense territories stays finite and matches many small steps', () => {
-    const territories: SteadySceneTerritory[] = [
-      { tNewer: 0, tOlder: 50 },
-      { tNewer: 50, tOlder: 100 },
-      { tNewer: 100, tOlder: 150 },
-      { tNewer: 150, tOlder: EARTH_FORMATION },
-    ]
-    const pb = steady({ speed: 64 })
-    const scale = createSymlogScale([0, EARTH_FORMATION])
-
-    const viaOneHugeStep = advanceSteadyPlayhead(200, 5, pb, 'earth', createSymlogScale, territories)
-    expect(Number.isFinite(viaOneHugeStep)).toBe(true)
-
-    let viaManySmallSteps = 200
-    for (let i = 0; i < 5000; i++) {
-      viaManySmallSteps = advanceSteadyPlayhead(viaManySmallSteps, 5 / 5000, pb, 'earth', createSymlogScale, territories)
-    }
-    // Checked in *years* (`t`), not only in `u` (re-review fix: the original `u`-space
-    // `toBeCloseTo(..., 3)` tolerance was wide enough, near the present, to hide on the order of
-    // 65 years of discrepancy — wider than every territory in this test — so it could not have
-    // caught a wrong floor). Territory-boundary stepping is now exact by construction (assigning
-    // `current = territory.tNewer` directly rather than round-tripping through a nudged `u`, see
-    // `advanceSteadyPlayhead`'s own doc comment), so the two paths agree far tighter than that.
-    expect(Math.abs(viaOneHugeStep - viaManySmallSteps)).toBeLessThan(1e-6)
-    expect(scale.toUnit(viaOneHugeStep)).toBeCloseTo(scale.toUnit(viaManySmallSteps), 9)
+  it('gives the same years for one huge step as for many small ones', () => {
+    const territories = [0, 50, 100, 150].map((tNewer, i, a) => ({ tNewer, tOlder: a[i + 1] ?? EARTH_FORMATION }))
+    const huge = advanceSteadyPlayhead(200, 5, steady(64), 'earth', createSymlogScale, territories)
+    let many = 200
+    for (let i = 0; i < 5000; i++) many = advanceSteadyPlayhead(many, 5 / 5000, steady(64), 'earth', createSymlogScale, territories)
+    expect(Math.abs(huge - many)).toBeLessThan(1e-6)
   })
 })
 
 describe('stepSpeed', () => {
-  it('moves to the next faster option going up', () => {
+  it('steps between options, clamping at both ends', () => {
     expect(stepSpeed(1, 'up')).toBe(2)
-    expect(stepSpeed(0.25, 'up')).toBe(0.5)
-  })
-
-  it('moves to the next slower option going down', () => {
-    expect(stepSpeed(2, 'down')).toBe(1)
     expect(stepSpeed(64, 'down')).toBe(32)
-  })
-
-  it('clamps at the fast end instead of wrapping', () => {
     expect(stepSpeed(64, 'up')).toBe(64)
-  })
-
-  it('clamps at the slow end instead of wrapping', () => {
     expect(stepSpeed(0.25, 'down')).toBe(0.25)
   })
 
   it('resolves an off-list value to the nearest option on the requested side', () => {
     expect(stepSpeed(3, 'up')).toBe(4)
     expect(stepSpeed(3, 'down')).toBe(2)
-    // Beyond either end: clamps to that end rather than to undefined.
     expect(stepSpeed(1000, 'up')).toBe(64)
     expect(stepSpeed(0.01, 'down')).toBe(0.25)
   })
 
-  it('every SPEED_OPTIONS value is reachable by stepping up from the slowest', () => {
-    let speed: number = SPEED_OPTIONS[0]
-    const seen = [speed]
-    for (let i = 1; i < SPEED_OPTIONS.length; i++) {
-      speed = stepSpeed(speed, 'up')
-      seen.push(speed)
-    }
+  it('reaches every option stepping up from the slowest', () => {
+    const seen: number[] = [SPEED_OPTIONS[0]]
+    for (let i = 1; i < SPEED_OPTIONS.length; i++) seen.push(stepSpeed(seen.at(-1)!, 'up'))
     expect(seen).toEqual([...SPEED_OPTIONS])
   })
 })

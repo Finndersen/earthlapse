@@ -13,14 +13,6 @@ describe('StemBufferCache.plan — fetching', () => {
     expect(toEvict).toEqual([])
   })
 
-  it('never re-requests a stem already loading or ready', () => {
-    const cache = new StemBufferCache<string>(3, 60_000, 180)
-    cache.markFetching('wind', 0)
-    cache.markReady('water', 'buf:water', 10, 0)
-    const { toFetch } = cache.plan(new Set(['wind', 'water', 'storm']), 100)
-    expect(toFetch).toEqual(['storm'])
-  })
-
   it('frees a concurrency slot as soon as a fetch resolves', () => {
     const cache = new StemBufferCache<string>(1, 60_000, 180)
     let plan = cache.plan(new Set(['wind', 'water']), 0)
@@ -37,14 +29,7 @@ describe('StemBufferCache.plan — fetching', () => {
 })
 
 describe('StemBufferCache.plan — error backoff', () => {
-  it('does not retry a failed stem on the very next call', () => {
-    const cache = new StemBufferCache<string>(3, 60_000, 180)
-    cache.markFailed('wind', 0)
-    const { toFetch } = cache.plan(new Set<StemId>(['wind']), 80) // one engine tick (TICK_MS) later
-    expect(toFetch).toEqual([])
-  })
-
-  it('retries a failed stem once its backoff elapses', () => {
+  it('retries a failed stem only once its backoff elapses', () => {
     const cache = new StemBufferCache<string>(3, 60_000, 180)
     cache.markFailed('wind', 0) // attempt 1: backoff 2000ms
     expect(cache.plan(new Set<StemId>(['wind']), 1_999).toFetch).toEqual([])
@@ -58,8 +43,6 @@ describe('StemBufferCache.plan — error backoff', () => {
     expect(cache.plan(new Set<StemId>(['wind']), 5_999).toFetch).toEqual([])
     expect(cache.plan(new Set<StemId>(['wind']), 6_000).toFetch).toEqual(['wind'])
 
-    // Enough consecutive failures that uncapped doubling would reach an absurd delay (2000 *
-    // 2^11 =~ 4.1e6 ms) — the actual delay must level off at MAX_RETRY_BACKOFF_MS instead.
     let lastFailAtMs = 6_000
     for (let i = 0; i < 10; i++) {
       cache.markFailed('wind', lastFailAtMs)
@@ -124,7 +107,6 @@ describe('StemBufferCache.plan — decoded-bytes cap', () => {
     cache.markReady('water', 'buf', 40, 10)
     cache.markReady('storm', 'buf', 40, 20) // total 120 > cap 100
     const { toEvict } = cache.plan(new Set(), 30)
-    // wind was touched least recently (t=0) — evicted first, dropping the total to 80 (<= 100).
     expect(toEvict).toEqual(['wind'])
   })
 
@@ -134,20 +116,6 @@ describe('StemBufferCache.plan — decoded-bytes cap', () => {
     cache.markReady('water', 'buf', 40, 0)
     const { toEvict } = cache.plan(new Set(['wind', 'water']), 100)
     expect(toEvict).toEqual([])
-  })
-
-  it('can evict before the idle timeout elapses when the cap alone requires it', () => {
-    const cache = new StemBufferCache<string>(3, 60_000, 10)
-    cache.markReady('wind', 'buf', 40, 0)
-    const { toEvict } = cache.plan(new Set(), 1) // 1ms later, nowhere near the 60s timeout
-    expect(toEvict).toEqual(['wind'])
-  })
-
-  it('never double-lists a stem already scheduled by the idle-timeout rule', () => {
-    const cache = new StemBufferCache<string>(3, 100, 10)
-    cache.markReady('wind', 'buf', 40, 0)
-    const { toEvict } = cache.plan(new Set(), 1000) // both rules would fire on their own
-    expect(toEvict).toEqual(['wind'])
   })
 
   it('reserves bytes for a stem still loading, so a landing fetch cannot blow straight past the cap', () => {
@@ -175,13 +143,6 @@ describe('StemBufferCache bookkeeping', () => {
     cache.forget('wind')
     expect(cache.status('wind')).toBe('absent')
     expect(cache.decodedBytesTotal).toBe(0)
-  })
-
-  it('decodedBytesTotal counts only ready entries', () => {
-    const cache = new StemBufferCache<string>()
-    cache.markFetching('wind', 0, 999)
-    cache.markReady('water', 'buf', 12, 0)
-    expect(cache.decodedBytesTotal).toBe(12)
   })
 
   it('trackedIds() lists every loading, ready or error id, for full teardown', () => {

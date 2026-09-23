@@ -440,11 +440,10 @@ def _at_analysis_size(plane: Image.Image) -> Image.Image:
 
 def _backdrop(plane: Image.Image) -> Image.Image:
     """A morphological opening of an analysis-size plane: the backdrop and its glow, no organism."""
-    return (
-        plane.filter(ImageFilter.MinFilter(BACKDROP_KERNEL))
-        .filter(ImageFilter.MaxFilter(BACKDROP_KERNEL))
-        .filter(ImageFilter.GaussianBlur(BACKDROP_KERNEL / 4))
-    )
+    kernel = np.ones((BACKDROP_KERNEL, BACKDROP_KERNEL), np.uint8)
+    eroded = cv2.erode(np.asarray(plane), kernel, borderType=cv2.BORDER_REPLICATE)
+    opened = cv2.dilate(eroded, kernel, borderType=cv2.BORDER_REPLICATE)
+    return Image.fromarray(opened).filter(ImageFilter.GaussianBlur(BACKDROP_KERNEL / 4))
 
 
 def _central_disc() -> Image.Image:

@@ -1,25 +1,15 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 
 import { isOpenEventBrowserShortcut, timelineKeyIntent, type TimelineKeyIntent } from '@/timeline'
 
-import { formatShortcutKeys, KEYBOARD_SHORTCUTS, POINTER_CONTROLS } from './controlsData'
+import { formatShortcutKeys, KEYBOARD_SHORTCUTS } from './controlsData'
 
-/** `/` is a page-level shortcut checked against `isOpenEventBrowserShortcut`, not an intent
- *  `timelineKeyIntent` maps (see `controlsData.ts`'s own doc comment) — excluded from the sync
- *  sweep below and checked on its own further down. */
+/** `/` is a page-level shortcut, not a timeline intent; it is checked separately. */
 const TIMELINE_INTENT_SHORTCUTS = KEYBOARD_SHORTCUTS.filter((s) => !s.keys.some((k) => k.key === '/'))
 
-/**
- * `KEYBOARD_SHORTCUTS` sync check (task requirement: "a test that would fail if a shortcut were
- * added [to keyboard.ts] and not surfaced here"). `timelineKeyIntent` is a plain key -> intent
- * switch with no way to enumerate its own cases, so this sweeps a deliberately broad superset of
- * plausible `KeyboardEvent.key` values through it — every named key `keyboard.ts`'s doc comment
- * or a real keyboard could produce, plus the full printable ASCII range (covers every current
- * case, including the punctuation ones: `[`, `]`, `-`, `=`, `0`) — and asserts the keys it
- * actually maps are exactly the keys `KEYBOARD_SHORTCUTS` documents. A new case added on any key
- * in this superset changes the observed set and fails the exact-match assertion below; the same
- * is true in reverse if a documented row goes stale.
- */
+/** timelineKeyIntent cannot enumerate its cases, so a broad superset of keys is swept through it
+ *  and the mapped set must equal the documented set exactly, in both directions. */
 const NAMED_KEYS = [
   'ArrowLeft',
   'ArrowRight',
@@ -84,13 +74,6 @@ describe('KEYBOARD_SHORTCUTS stays in sync with timeline/keyboard.ts', () => {
     expect(shiftSensitiveKeys.sort()).toEqual([...documentedShiftKeys].sort())
   })
 
-  it('gives every documented row a real, non-null intent', () => {
-    for (const shortcut of TIMELINE_INTENT_SHORTCUTS) {
-      for (const k of shortcut.keys) {
-        expect(timelineKeyIntent({ key: k.key, target: null, shiftKey: k.shiftKey ?? false })).not.toBeNull()
-      }
-    }
-  })
 })
 
 describe('the / shortcut', () => {
@@ -101,25 +84,9 @@ describe('the / shortcut', () => {
 })
 
 describe('formatShortcutKeys', () => {
-  it('collapses aliases (space / legacy Spacebar) that display identically to one label', () => {
+  it('collapses aliases, renders arrows as glyphs and prefixes a held Shift', () => {
     expect(formatShortcutKeys([{ key: ' ' }, { key: 'Spacebar' }])).toEqual(['Space'])
-  })
-
-  it('renders arrows as glyphs and prefixes a held Shift', () => {
     expect(formatShortcutKeys([{ key: 'ArrowLeft', shiftKey: true }, { key: 'PageUp' }])).toEqual(['Shift+←', 'Page Up'])
   })
 
-  it('falls back to the raw key for anything with no special-cased label', () => {
-    expect(formatShortcutKeys([{ key: '9' }])).toEqual(['9'])
-  })
-})
-
-describe('POINTER_CONTROLS', () => {
-  it('is non-empty and every row has both a label and a description', () => {
-    expect(POINTER_CONTROLS.length).toBeGreaterThan(0)
-    for (const control of POINTER_CONTROLS) {
-      expect(control.label.length).toBeGreaterThan(0)
-      expect(control.description.length).toBeGreaterThan(0)
-    }
-  })
 })

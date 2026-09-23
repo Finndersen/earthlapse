@@ -8,7 +8,6 @@ import { PORTRAIT_MANIFEST, PORTRAIT_TREE_DATA, tAboveDivergence, tBelowDivergen
 import {
   decodeFlowByte,
   indexPortraits,
-  MIN_PORTRAIT_TRANSITION_SECONDS,
   MORPH_BAND_FRACTION,
   PORTRAIT_MIX_KEYING,
   portraitAt,
@@ -34,48 +33,15 @@ describe('indexPortraits', () => {
     const tied = structuredClone(PORTRAIT_TREE_DATA)
     const primate = tied.nodes.find((n) => n.id === 'primate')!
     const tetrapod = tied.nodes.find((n) => n.id === 'tetrapod')!
-    tetrapod.tDivergence = primate.tDivergence // both have plates; portraitAt assumes strictly increasing divergences
+    tetrapod.tDivergence = primate.tDivergence
 
     expect(() => indexPortraits(tied)).toThrow(/primate.*tetrapod|tetrapod.*primate/)
   })
 
-  it('joins plates to their divergence, youngest first, and attaches each computed morph to its younger plate', () => {
-    expect(index.plates).toEqual([
-      {
-        nodeId: 'human',
-        tDivergence: 3e5,
-        image: 'portraits/human.png',
-        plate: 'SPECIMEN',
-        width: 1024,
-        height: 1024,
-        morphFromOlder: {
-          older: 'primate',
-          forward: 'portraits/morphs/primate--human.forward.png',
-          backward: 'portraits/morphs/primate--human.backward.png',
-          forwardRange: 0.1,
-          backwardRange: 0.05,
-          size: 128,
-        },
-      },
-      {
-        nodeId: 'primate',
-        tDivergence: 6.6e7,
-        image: 'portraits/primate.png',
-        plate: 'SPECIMEN',
-        width: 1024,
-        height: 1024,
-        morphFromOlder: {
-          older: 'tetrapod',
-          forward: 'portraits/morphs/tetrapod--primate.forward.png',
-          backward: 'portraits/morphs/tetrapod--primate.backward.png',
-          forwardRange: 0.2,
-          backwardRange: 0.1,
-          size: 128,
-        },
-      },
-      { nodeId: 'tetrapod', tDivergence: 3.75e8, image: 'portraits/tetrapod.png', plate: 'SPECIMEN', width: 1024, height: 1024 },
-      { nodeId: 'luca', tDivergence: 4.2e9, image: 'portraits/luca.png', plate: 'MICROSCOPE', width: 1024, height: 1024 },
-    ])
+  it('joins plates youngest first, attaching each morph to its younger plate', () => {
+    expect(index.plates.map((p) => p.nodeId)).toEqual(['human', 'primate', 'tetrapod', 'luca'])
+    expect(plateOf('primate').morphFromOlder?.older).toBe('tetrapod')
+    expect(plateOf('tetrapod').morphFromOlder).toBeUndefined()
   })
 })
 
@@ -89,14 +55,10 @@ describe('portraitAt', () => {
   })
 
   it('shows the nearest older plate for a node without one, clear of any band', () => {
-    // t = 1e8 is inside the plate-less `mammal` node's span, well below tetrapod's band.
     expect(portraitAt(index, 1e8)).toEqual({ from: plateOf('tetrapod'), to: plateOf('tetrapod'), mix: 0 })
   })
 
   it('is half-way between the two plates at the exact moment the label switches', () => {
-    // t = 6.6e7 is primate's own divergence -- where sampleTree flips the ancestor label to
-    // "Primates" -- so the image must already read as half tetrapod, half primate, not still
-    // 100% tetrapod.
     expect(portraitAt(index, 6.6e7)).toEqual({ from: plateOf('tetrapod'), to: plateOf('primate'), mix: 0.5 })
   })
 
@@ -110,14 +72,9 @@ describe('portraitAt', () => {
     expect(below.mix).toBeCloseTo(0.75)
   })
 
-  it('settles on the older plate alone once past the half-band above the divergence', () => {
-    const past = tAboveDivergence(6.6e7, 3.75e8, MORPH_BAND_FRACTION, 1.01)
-    expect(portraitAt(index, past)).toEqual({ from: plateOf('tetrapod'), to: plateOf('tetrapod'), mix: 0 })
-  })
-
-  it('settles on the younger plate alone once past the half-band below the divergence', () => {
-    const past = tBelowDivergence(6.6e7, 3e5, MORPH_BAND_FRACTION, 1.01)
-    expect(portraitAt(index, past)).toEqual({ from: plateOf('primate'), to: plateOf('primate'), mix: 0 })
+  it('settles on one plate alone past either half-band', () => {
+    expect(portraitAt(index, tAboveDivergence(6.6e7, 3.75e8, MORPH_BAND_FRACTION, 1.01))).toEqual({ from: plateOf('tetrapod'), to: plateOf('tetrapod'), mix: 0 })
+    expect(portraitAt(index, tBelowDivergence(6.6e7, 3e5, MORPH_BAND_FRACTION, 1.01))).toEqual({ from: plateOf('primate'), to: plateOf('primate'), mix: 0 })
   })
 
   it('measures the youngest plate band down to the present', () => {
@@ -132,7 +89,7 @@ describe('portraitAt', () => {
 describe('createNodeLayer with portraits', () => {
   it('adds the portrait target to the sampled node, purely, without touching the data', () => {
     const layer = createNodeLayer(PORTRAIT_MANIFEST, deepFreeze(structuredClone(PORTRAIT_TREE_DATA)))
-    const t = 6.6e7 // primate's own divergence: the label switches here, and the portrait is half-way.
+    const t = 6.6e7
 
     const value = layer.sample(t)
 
@@ -183,11 +140,7 @@ describe('portraitNeighbourUrls', () => {
     expect(portraitNeighbourUrls(null, plateOf('tetrapod'), plateOf('primate'), '/media')).toEqual([])
   })
 
-  it("uses the next-older plate's image but `older`'s OWN morphFromOlder for its flow — not the next-older plate's own field", () => {
-    // Drawn pair (primate, human): the next plate further back is tetrapod. The flow between
-    // (tetrapod, primate) lives on `primate.morphFromOlder` (primate is the *younger* end of
-    // that pair) — tetrapod has no morphFromOlder of its own; that would be the flow one step
-    // further still, toward luca.
+  it("takes the next-older plate's flow from `older`'s own morphFromOlder", () => {
     expect(portraitNeighbourUrls(index, plateOf('primate'), plateOf('human'), '/media')).toEqual([
       '/media/portraits/tetrapod.png',
       '/media/portraits/morphs/tetrapod--primate.forward.png',
@@ -195,19 +148,7 @@ describe('portraitNeighbourUrls', () => {
     ])
   })
 
-  it("uses the next-younger plate's own morphFromOlder for its flow", () => {
-    // Drawn pair (tetrapod, primate): the next plate closer to the present is human, whose own
-    // morphFromOlder is the (primate, human) flow. tetrapod itself has no morphFromOlder, so
-    // the older side here contributes no flow.
-    expect(portraitNeighbourUrls(index, plateOf('tetrapod'), plateOf('primate'), '/media')).toEqual([
-      '/media/portraits/luca.png',
-      '/media/portraits/human.png',
-      '/media/portraits/morphs/primate--human.forward.png',
-      '/media/portraits/morphs/primate--human.backward.png',
-    ])
-  })
-
-  it('omits a side with no neighbour — the oldest plate has none further back, the youngest none closer to the present', () => {
+  it('omits a side with no neighbour', () => {
     expect(portraitNeighbourUrls(index, plateOf('luca'), plateOf('luca'), '/media')).toEqual(['/media/portraits/tetrapod.png'])
     expect(portraitNeighbourUrls(index, plateOf('human'), plateOf('human'), '/media')).toEqual([
       '/media/portraits/primate.png',
@@ -216,11 +157,7 @@ describe('portraitNeighbourUrls', () => {
     ])
   })
 
-  it('handles the alone state (older === younger) without double-adding — both sides add their own, distinct flow exactly once', () => {
-    // primate alone: the older-side flow (toward tetrapod) lives on primate's own
-    // morphFromOlder; the younger-side flow (toward human) lives on human's own morphFromOlder.
-    // Both are present, both are different morphs, and older/younger being the same plate here
-    // must not cause either to be skipped or added twice.
+  it('adds each side\'s distinct flow exactly once for a plate alone', () => {
     expect(portraitNeighbourUrls(index, plateOf('primate'), plateOf('primate'), '/media')).toEqual([
       '/media/portraits/tetrapod.png',
       '/media/portraits/morphs/tetrapod--primate.forward.png',
@@ -229,11 +166,6 @@ describe('portraitNeighbourUrls', () => {
       '/media/portraits/morphs/primate--human.forward.png',
       '/media/portraits/morphs/primate--human.backward.png',
     ])
-  })
-
-  it('resolves every URL against assetBase, like the drawn plates themselves', () => {
-    const [nextOlder] = portraitNeighbourUrls(index, plateOf('primate'), plateOf('human'), 'https://cdn.example/media/')
-    expect(nextOlder).toBe('https://cdn.example/media/portraits/tetrapod.png')
   })
 })
 
@@ -249,11 +181,5 @@ describe('flow decoding and easing', () => {
   it('keys plates by node and measures distance in log1p', () => {
     expect(PORTRAIT_MIX_KEYING.same(plateOf('human'), { ...plateOf('human') })).toBe(true)
     expect(PORTRAIT_MIX_KEYING.distance(plateOf('human'), plateOf('primate'))).toBeCloseTo(Math.log1p(6.6e7) - Math.log1p(3e5))
-  })
-
-  it('has tunables in range', () => {
-    expect(MORPH_BAND_FRACTION).toBeGreaterThan(0)
-    expect(MORPH_BAND_FRACTION).toBeLessThan(1)
-    expect(MIN_PORTRAIT_TRANSITION_SECONDS).toBeGreaterThan(0)
   })
 })

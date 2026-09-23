@@ -1,9 +1,5 @@
-"""Offline validator for sources/hyde/_rangezip.py's pure/local-only functions: `_merge_ranges`
-(byte-range coalescing) and `_build_local_zip` (assembling a valid standalone zip from raw
-bytes). Neither touches the network -- `extract_members`/`open_remote_zip`/`discover_tags`
-(the actual HTTP Range machinery) are exercised only by real fetches, never in this suite, the
-same "pure logic only" split `test_hyde.py` uses for `normalise.py`.
-"""
+"""sources/hyde/_rangezip.py's local functions: byte-range coalescing and assembling a
+standalone zip from raw member bytes. The HTTP Range machinery runs only in a real fetch."""
 
 from __future__ import annotations
 
@@ -20,57 +16,20 @@ def _rangezip_module():
     return load_source_module("hyde", "_rangezip")
 
 
-# --------------------------------------------------------------------------- _merge_ranges
-
-
-def test_merge_ranges_merges_contiguous_spans() -> None:
+def test_merge_ranges_coalesces_touching_and_overlapping_spans_in_order() -> None:
     rz = _rangezip_module()
-    info_a = zipfile.ZipInfo(filename="a")
-    info_b = zipfile.ZipInfo(filename="b")
-    a = rz._MemberByteRange(info=info_a, start=0, end=100)
-    b = rz._MemberByteRange(info=info_b, start=100, end=200)  # starts exactly where a ends
 
-    merged = rz._merge_ranges([a, b])
+    def span(name: str, start: int, end: int):
+        return rz._MemberByteRange(info=zipfile.ZipInfo(filename=name), start=start, end=end)
 
-    assert len(merged) == 1
-    start, end, members = merged[0]
-    assert (start, end) == (0, 200)
-    assert {m.info.filename for m in members} == {"a", "b"}
+    merged = rz._merge_ranges(
+        [span("d", 500, 600), span("a", 0, 100), span("b", 100, 150), span("c", 120, 200)]
+    )
 
-
-def test_merge_ranges_merges_overlapping_spans() -> None:
-    rz = _rangezip_module()
-    a = rz._MemberByteRange(info=zipfile.ZipInfo(filename="a"), start=0, end=150)
-    b = rz._MemberByteRange(info=zipfile.ZipInfo(filename="b"), start=100, end=200)
-
-    merged = rz._merge_ranges([a, b])
-
-    assert len(merged) == 1
-    assert merged[0][:2] == (0, 200)
-
-
-def test_merge_ranges_keeps_disjoint_spans_separate() -> None:
-    rz = _rangezip_module()
-    a = rz._MemberByteRange(info=zipfile.ZipInfo(filename="a"), start=0, end=100)
-    b = rz._MemberByteRange(info=zipfile.ZipInfo(filename="b"), start=500, end=600)
-
-    merged = rz._merge_ranges([a, b])
-
-    assert len(merged) == 2
-    assert [(s, e) for s, e, _ in merged] == [(0, 100), (500, 600)]
-
-
-def test_merge_ranges_handles_unsorted_input() -> None:
-    rz = _rangezip_module()
-    a = rz._MemberByteRange(info=zipfile.ZipInfo(filename="a"), start=500, end=600)
-    b = rz._MemberByteRange(info=zipfile.ZipInfo(filename="b"), start=0, end=100)
-
-    merged = rz._merge_ranges([a, b])
-
-    assert [(s, e) for s, e, _ in merged] == [(0, 100), (500, 600)]
-
-
-# ------------------------------------------------------------------------- _build_local_zip
+    assert [(s, e, {m.info.filename for m in ms}) for s, e, ms in merged] == [
+        (0, 200, {"a", "b", "c"}),
+        (500, 600, {"d"}),
+    ]
 
 
 def _stored_member(filename: str, data: bytes) -> tuple[zipfile.ZipInfo, bytes]:

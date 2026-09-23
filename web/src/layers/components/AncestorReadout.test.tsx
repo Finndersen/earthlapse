@@ -8,21 +8,13 @@ import { AncestorReadout } from './AncestorReadout'
 afterEach(cleanup)
 
 describe('<AncestorReadout>', () => {
-  it('renders the label, representative organism and "since <t>" via formatGeoTime', () => {
+  it('names the ancestor, its representative and when it diverged, or "no data" before the root', () => {
     const layer = createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)
-    // t=5e7 lands on the "First primate" node (tDivergence 6.6e7, representative Purgatorius)
-    // — the youngest node whose divergence is at or after t.
-    const { container } = render(<AncestorReadout layer={layer} t={5e7} />)
-    const text = container.textContent ?? ''
+    const text = render(<AncestorReadout layer={layer} t={5e7} />).container.textContent ?? ''
     expect(text).toContain('First primate')
     expect(text).toContain('Purgatorius')
     expect(text).toContain('since')
-    expect(text).toContain('66 Ma')
-  })
-
-  it('renders "no data" before the root has diverged', () => {
-    const layer = createNodeLayer(ANCESTOR_MANIFEST, ANCESTOR_DATA)
-    const { container } = render(<AncestorReadout layer={layer} t={4.3e9} />)
-    expect(container.textContent).toBe('no data')
+    cleanup()
+    expect(render(<AncestorReadout layer={layer} t={4.3e9} />).container.textContent).toBe('no data')
   })
 })

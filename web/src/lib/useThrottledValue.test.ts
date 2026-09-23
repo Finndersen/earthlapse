@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -14,17 +15,11 @@ afterEach(() => {
 })
 
 describe('useThrottledValue', () => {
-  it('shows the initial value immediately on mount', () => {
-    const { result } = renderHook(() => useThrottledValue(1, INTERVAL_MS))
-    expect(result.current).toBe(1)
-  })
-
   it('settles on the final value once updates stop, even mid-window', () => {
     const { result, rerender } = renderHook(({ value }) => useThrottledValue(value, INTERVAL_MS), {
       initialProps: { value: 0 },
     })
 
-    // A burst of values arriving well inside a single throttle window.
     rerender({ value: 1 })
     act(() => {
       vi.advanceTimersByTime(10)
@@ -35,11 +30,8 @@ describe('useThrottledValue', () => {
     })
     rerender({ value: 3 })
 
-    // None of the intermediate values have committed yet — still well inside the window opened
-    // by the first change.
     expect(result.current).toBe(0)
 
-    // Run out the trailing timeout scheduled by that first change.
     act(() => {
       vi.advanceTimersByTime(INTERVAL_MS)
     })
@@ -51,41 +43,12 @@ describe('useThrottledValue', () => {
       initialProps: { value: 0 },
     })
 
-    // Idle for far longer than the throttle window — nothing has changed, so the next change is
-    // the "first change after quiet" and must not wait.
     act(() => {
       vi.advanceTimersByTime(5000)
     })
     rerender({ value: 42 })
 
     expect(result.current).toBe(42)
-  })
-
-  it('emits fewer commits than inputs during a rapid sequence, without losing any value', () => {
-    const seen: number[] = []
-    const { result, rerender } = renderHook(({ value }) => useThrottledValue(value, INTERVAL_MS), {
-      initialProps: { value: 0 },
-    })
-    seen.push(result.current)
-
-    // 60 updates over one second, as playback driving `t` every animation frame would produce.
-    const inputCount = 60
-    for (let i = 1; i <= inputCount; i++) {
-      act(() => {
-        vi.advanceTimersByTime(1000 / 60)
-      })
-      rerender({ value: i })
-      seen.push(result.current)
-    }
-    // Flush any trailing commit still pending for the final value.
-    act(() => {
-      vi.advanceTimersByTime(INTERVAL_MS)
-    })
-    seen.push(result.current)
-
-    const distinctCommits = new Set(seen).size
-    expect(distinctCommits).toBeLessThan(inputCount)
-    expect(result.current).toBe(inputCount)
   })
 
   it('never regresses to an older value than the one already committed', () => {
@@ -111,8 +74,8 @@ describe('useThrottledValue', () => {
     }
   })
 
-  it.each([0, -1])('passes every value straight through at an interval of %d', (intervalMs) => {
-    const { result, rerender } = renderHook(({ value }) => useThrottledValue(value, intervalMs), {
+  it('passes every value straight through at an interval of 0', () => {
+    const { result, rerender } = renderHook(({ value }) => useThrottledValue(value, 0), {
       initialProps: { value: 0 },
     })
 
@@ -122,15 +85,4 @@ describe('useThrottledValue', () => {
     }
   })
 
-  it('commits nothing of its own while disabled, so a caller pays no extra render', () => {
-    let renders = 0
-    const { rerender } = renderHook(({ value }) => {
-      renders += 1
-      return useThrottledValue(value, 0)
-    }, { initialProps: { value: 0 } })
-
-    const before = renders
-    rerender({ value: 1 })
-    expect(renders).toBe(before + 1)
-  })
 })

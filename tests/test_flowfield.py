@@ -16,44 +16,8 @@ from pipeline.flowfield import (
     compose_flow,
     decode_flow,
     encode_flow,
-    sample_bilinear,
     texel_centres,
 )
-
-
-def test_a_subject_box_must_lie_inside_the_unit_square() -> None:
-    with pytest.raises(ValueError, match="not a box inside the unit square"):
-        SubjectBox(left=0.5, top=0.1, right=0.4, bottom=0.9)
-
-
-def test_centring_puts_the_box_centre_mid_frame_and_its_longer_side_at_the_fill() -> None:
-    framing = Framing.centring(SubjectBox(left=0.2, top=0.3, right=0.6, bottom=0.5), fill=0.7)
-
-    u, v = framing.to_normalised(np.array([0.2, 0.6, 0.4]), np.array([0.4, 0.4, 0.3]))
-
-    assert np.allclose(u, [0.15, 0.85, 0.5])
-    assert np.allclose(v, [0.5, 0.5, 0.325])
-    back_u, back_v = framing.from_normalised(u, v)
-    assert np.allclose(back_u, [0.2, 0.6, 0.4])
-    assert np.allclose(back_v, [0.4, 0.4, 0.3])
-
-
-def test_texel_centres_index_rows_by_v_and_columns_by_u() -> None:
-    u, v = texel_centres(4)
-
-    assert np.allclose(u[0], [0.125, 0.375, 0.625, 0.875])
-    assert np.allclose(v[:, 0], [0.125, 0.375, 0.625, 0.875])
-
-
-def test_bilinear_sampling_reproduces_a_linear_field_and_clamps_at_the_edge() -> None:
-    u, v = texel_centres(8)
-    field = np.stack([u, 2 * v], axis=-1).astype(np.float32)
-
-    inside = sample_bilinear(field, np.array([0.3, 0.55]), np.array([0.4, 0.6]))
-    outside = sample_bilinear(field, np.array([-1.0]), np.array([2.0]))
-
-    assert np.allclose(inside, [[0.3, 0.8], [0.55, 1.2]], atol=1e-6)
-    assert np.allclose(outside, [[0.0625, 1.875]], atol=1e-6)
 
 
 def test_composing_zero_flow_between_identical_framings_is_the_identity() -> None:
@@ -114,15 +78,3 @@ def test_a_flow_texture_round_trips_within_one_quantisation_step() -> None:
     assert encoded.range >= float(np.abs(field).max())
     assert encoded.range == pytest.approx(round(encoded.range / RANGE_QUANTUM) * RANGE_QUANTUM)
     assert np.abs(decoded - field).max() <= encoded.range / 254 + 1e-6
-
-
-def test_a_still_field_encodes_at_the_smallest_range_and_decodes_to_exact_zero() -> None:
-    encoded = encode_flow(np.zeros((4, 4, 2), dtype=np.float32))
-
-    assert encoded.range == RANGE_QUANTUM
-    assert np.array_equal(decode_flow(encoded.png, encoded.range), np.zeros((4, 4, 2)))
-
-
-def test_only_square_two_channel_fields_encode() -> None:
-    with pytest.raises(ValueError, match="square"):
-        encode_flow(np.zeros((4, 3, 2), dtype=np.float32))

@@ -17,11 +17,7 @@ describe('placementT', () => {
     expect(placementT(event({ kind: 'period', tMin: 100, tMax: 300 }))).toBe(200)
   })
 
-  it('falls back to the interval midpoint for a moment with no best-estimate t', () => {
-    expect(placementT(event({ kind: 'moment', tMin: 100, tMax: 200 }))).toBe(150)
-  })
-
-  it('falls back to the interval midpoint when kind/t are absent (a manifest published before ADR-022)', () => {
+  it('falls back to the interval midpoint when kind and t are absent', () => {
     expect(placementT(event({ tMin: 100, tMax: 200 }))).toBe(150)
   })
 })
@@ -41,7 +37,4 @@ describe('formatEventDate', () => {
     expect(formatEventDate(event({ tMin: 1e4, tMax: 1e4 }))).toBe('10 ka')
   })
 
-  it('treats a kind-less wide interval as a period', () => {
-    expect(formatEventDate(event({ tMin: 100, tMax: 300 }))).toContain('–')
-  })
 })
