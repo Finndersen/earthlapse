@@ -93,8 +93,8 @@ opens a detail panel with its dates, description, citation and, for human migrat
 
 ### Data layers
 
-Real series wherever real data exists: global population (HYDE) as a sparkline that expands
-into a full chart, and **your ancestor** — a portrait of the organism in your direct lineage at
+Real series wherever real data exists: global population (HYDE) as a sparkline that grows with
+the story so far, and **your ancestor** — a portrait of the organism in your direct lineage at
 that moment, from LUCA through the first eukaryotes and animals to *Homo sapiens*, morphing
 between portraits. Atmospheric CO₂ and day length shape the score; ice volume and sea level
 shape the globe.
