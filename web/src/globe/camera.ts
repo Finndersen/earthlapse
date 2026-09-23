@@ -52,6 +52,16 @@ export function sphereFitDistance(radius: number, aspect: number, fovYRadians: n
   return radius * Math.sqrt(1 + 1 / (paddedTangent * paddedTangent))
 }
 
+/** The fraction of the viewport's vertical half-height a sphere of `radius`, centred on the view
+ *  axis at `distance`, draws its silhouette out to under a vertical field of view of `fovYDeg`
+ *  degrees. The limb is the tangent cone's edge, at `tan = radius / sqrt(distance² − radius²)`
+ *  off-axis — slightly wider than `radius / distance`, since the tangent points sit nearer the
+ *  camera than the centre does. */
+export function sphereSilhouetteFraction(radius: number, distance: number, fovYDeg: number): number {
+  const halfFovY = (fovYDeg * Math.PI) / 360
+  return radius / Math.sqrt(distance * distance - radius * radius) / Math.tan(halfFovY)
+}
+
 /** Floor on the distance-above-radius terms below, so a camera at or inside `radius` (the sphere
  *  mode zoom range has no `minDistance`) never divides by zero or drives rotateSpeed to/below 0,
  *  which would freeze the drag rather than merely make it imprecise. */

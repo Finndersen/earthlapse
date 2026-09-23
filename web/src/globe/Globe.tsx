@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
   type ComponentRef,
+  type CSSProperties,
   type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
   type PointerEvent,
@@ -68,6 +69,7 @@ import {
   mapHasPanRoom,
   sphereFitDistance,
   sphereRotateSpeedForDistance,
+  sphereSilhouetteFraction,
   sphereViewFocus,
   subFrameFovY,
   unfoldCameraPose,
@@ -103,10 +105,13 @@ import { useGlobeTexturePair } from './useGlobeTexturePair'
 import { useUnfold } from './unfoldAnimation'
 
 const RIM_COLOR = new THREE.Color('#8fc7ff')
-/** Far enough back (with the 40° fov) that the sphere and its atmosphere shell sit whole
+/** The minimised and expanded canvas's vertical field of view, in degrees. */
+const CAMERA_FOV_DEG = 40
+/** Far enough back (with `CAMERA_FOV_DEG`) that the sphere and its atmosphere shell sit whole
  *  inside the canvas with a margin — the orb reads as a floating object, never a disc
- *  clipped square. The planet's silhouette lands at ≈86% of the canvas half-size, which
- *  Globe.module.css's halo, static fallback and expand ring are sized against.
+ *  clipped square. The planet's silhouette lands at ≈89% of the canvas half-size
+ *  (`ORB_SILHOUETTE_INSET`, below), which Globe.module.css's static fallback and expand ring
+ *  are sized against.
  *
  *  The orb's box is already the same size as the ancestor portrait opposite it
  *  (`ShellLayout.module.css`'s `--orb-size`, which `hud.module.css`'s `.portrait` reads on a
@@ -139,6 +144,10 @@ const EXPANDED_DPR_BUDGET_PIXELS = 5_200_000
 /** `GlobeSphere`'s own `sphereGeometry` radius — named so the pole markers below (`poles.ts`,
  *  `PoleAxisMarkers`) agree with the sphere on exactly where its surface sits. */
 const GLOBE_RADIUS = 1
+/** The margin between the minimised orb's square box and the sphere's drawn silhouette, as a
+ *  percentage of the box's side — exposed to Globe.module.css as `--orb-silhouette-inset`. */
+const ORB_SILHOUETTE_INSET = `${((1 - sphereSilhouetteFraction(GLOBE_RADIUS, CAMERA_DISTANCE, CAMERA_FOV_DEG)) / 2) * 100}%`
+const ORB_STYLE = { '--orb-silhouette-inset': ORB_SILHOUETTE_INSET } as CSSProperties
 /** Frames are ~5-10 Myr apart across both raster sources; a few ahead covers fast playback
  *  through one network round trip, one behind covers a small scrub reversal. Must stay well
  *  inside textureCache's capacity. */
@@ -498,7 +507,10 @@ export function Globe({
     enabled: webgl,
     cache: densityTextureCache,
     resetKey: contextEpoch,
+    sourceKey: overlaySpec?.layerId ?? '',
   })
+  // `sourceKey` keeps `texturesReady` false across a kind switch until the new kind's pair has
+  // loaded, so the previous kind's bytes are never decoded through the new kind's channel/ramp.
   const overlayStrength = overlayData !== null && overlayPair.texturesReady ? overlayStrengthAt(overlayData, t) : 0
   const overlaySampling = useMemo(
     () => (overlaySpec !== null && overlayData !== null ? overlayChannelAndDMax(overlaySpec.sampling, overlayData) : null),
@@ -591,23 +603,35 @@ export function Globe({
     if (pressStartedOnBackdrop.current && e.target === e.currentTarget) onCollapse()
   }
 
-  // Minimised orb: OrbitControls now rotates in both states (below), so a plain expand
-  // button covering the orb would swallow every drag. Instead the orb itself distinguishes a
-  // click from a drag by movement, the same "did the press move" test the backdrop uses above
-  // — a press-and-release under the threshold expands, anything that moved further is a
-  // rotate and must not. OrbitControls captures the pointer on the canvas (three.js's
-  // `setPointerCapture`), so pointerup still bubbles here with the right coordinates even when
-  // released outside the orb. `expandButton` below stays for keyboard activation only.
+  // Minimised orb: OrbitControls rotates in both states, so a plain expand button covering the
+  // orb would swallow every drag. Instead the orb tells a press from a drag by movement, the same
+  // "did the press move" test the backdrop uses above. OrbitControls captures the pointer on the
+  // canvas (three.js's `setPointerCapture`), so pointerup and click still bubble here even when
+  // released outside the orb. The expand itself runs on the orb's `click`, not on pointerup:
+  // expanding re-lays out the page (on a phone the era shortcuts move to where the orb was), and a
+  // touch's `click` is hit-tested after that re-layout, so expanding any earlier would let the
+  // same tap land on whatever now sits under the finger. `expandButton` below stays for keyboard
+  // activation only, and stops its own click here so it never counts twice.
   const orbPressStart = useRef<{ x: number; y: number } | null>(null)
+  const orbClickPending = useRef(false)
   const onOrbPointerDown = (e: PointerEvent<HTMLDivElement>): void => {
     orbPressStart.current = { x: e.clientX, y: e.clientY }
+    orbClickPending.current = false
   }
   const onOrbPointerUp = (e: PointerEvent<HTMLDivElement>): void => {
     const start = orbPressStart.current
     orbPressStart.current = null
-    if (start === null) return
-    if (humanTouchHitRef.current) return
-    if (isOrbClick(start, { x: e.clientX, y: e.clientY })) onToggleExpand()
+    orbClickPending.current = start !== null && !humanTouchHitRef.current && isOrbClick(start, { x: e.clientX, y: e.clientY })
+  }
+  const onOrbClick = (): void => {
+    if (!orbClickPending.current) return
+    orbClickPending.current = false
+    onToggleExpand()
+  }
+  const onExpandButtonClick = (e: ReactMouseEvent<HTMLButtonElement>): void => {
+    e.stopPropagation()
+    orbClickPending.current = false
+    onToggleExpand()
   }
 
   // The narrow-viewport safety net for the top-right overlay-selector stack (`ViewModeToggle` and
@@ -746,8 +770,10 @@ export function Globe({
       <div
         className={[expanded ? styles.orbExpanded : styles.orb, webgl ? '' : styles.orbNoWebgl].filter(Boolean).join(' ')}
         data-map-mode={mapMode}
+        style={ORB_STYLE}
         onPointerDown={expanded ? undefined : onOrbPointerDown}
         onPointerUp={expanded ? undefined : onOrbPointerUp}
+        onClick={expanded ? undefined : onOrbClick}
       >
         {/* The two invisible fit-target rectangles (`Globe.module.css`'s own doc comment) —
             mounted only while expanded, since the minimised orb has no clip to remove and keeps
@@ -770,7 +796,7 @@ export function Globe({
         {!expanded && <div className={styles.halo} aria-hidden="true" />}
         {webgl ? (
           <Canvas
-            camera={{ position: [0, 0, CAMERA_DISTANCE], fov: 40 }}
+            camera={{ position: [0, 0, CAMERA_DISTANCE], fov: CAMERA_FOV_DEG }}
             dpr={expanded ? expandedDpr : MINIMISED_DPR}
             gl={{ alpha: true }}
             // The full-bleed canvas (`Globe.module.css`'s `.orbExpanded` doc comment) is mostly
@@ -784,7 +810,7 @@ export function Globe({
             // is this large) never triggers it, matching the existing backdrop-click guard's own
             // "a drag must not dismiss it" rule one level down, at the canvas itself. `onCollapse`
             // only while `expanded`: minimised, a miss must do nothing (the orb's own
-            // `onOrbPointerDown`/`onOrbPointerUp` below already own click-to-expand there, and
+            // `onOrbPointerUp`/`onOrbClick` above already own click-to-expand there, and
             // calling `onCollapse` — which unconditionally toggles — while collapsed would flip it
             // open by mistake). Only plain clicks close it, not right-click/double-click, matching
             // the old `onClick`-only backdrop handler.
@@ -885,7 +911,7 @@ export function Globe({
           <button
             type="button"
             className={styles.expandButton}
-            onClick={onToggleExpand}
+            onClick={onExpandButtonClick}
             aria-label="Expand globe"
             // The anchor the onboarding tour rings for its "the globe opens" step: a circle inset
             // inside the orb's box, so the ring traces the orb rather than a square around it.

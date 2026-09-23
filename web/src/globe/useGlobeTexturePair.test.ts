@@ -22,7 +22,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-describe('useGlobeTexturePair enabled=false (no-WebGL globe, W-followup item 15/19e)', () => {
+describe('useGlobeTexturePair enabled=false (no-WebGL globe)', () => {
   it('fetches neither the bound pair nor the preload window', () => {
     renderHook(() => useGlobeTexturePair(BLEND, PRELOAD_URLS, { enabled: false }))
     expect(loadTexture).not.toHaveBeenCalled()
@@ -108,5 +108,54 @@ describe('useGlobeTexturePair resetKey (docs/GLOBE.md §10)', () => {
     // with the visible pair" discipline the ordinary loading-a-new-pair case already has —
     // beforeTex/afterTex/texturesReady are what actually change here.
     expect(result.current).toEqual({ beforeTex: null, afterTex: null, mix: BLEND.alpha, texturesReady: false })
+  })
+})
+
+describe('useGlobeTexturePair sourceKey', () => {
+  const DENSITY_BLEND: GlobeBlend = { beforeUrl: 'https://cdn.example.com/density/a.png', afterUrl: 'https://cdn.example.com/density/b.png', alpha: 0.5 }
+  const CLEARED_BLEND: GlobeBlend = { beforeUrl: 'https://cdn.example.com/cleared/a.png', afterUrl: 'https://cdn.example.com/cleared/b.png', alpha: 0.5 }
+  const DENSITY_NEXT_BLEND: GlobeBlend = { beforeUrl: 'https://cdn.example.com/density/b.png', afterUrl: 'https://cdn.example.com/density/c.png', alpha: 0.1 }
+
+  function renderWithSource(initial: { blend: GlobeBlend; sourceKey: string }) {
+    return renderHook(({ blend, sourceKey }: { blend: GlobeBlend; sourceKey: string }) => useGlobeTexturePair(blend, [], { sourceKey }), {
+      initialProps: initial,
+    })
+  }
+
+  it('reports nothing bound once sourceKey changes, until the new source’s pair loads', async () => {
+    const densityTex = { name: 'density' }
+    loadTexture.mockImplementation(() => Promise.resolve(densityTex))
+    const { result, rerender } = renderWithSource({ blend: DENSITY_BLEND, sourceKey: 'population_density' })
+    await waitFor(() => expect(result.current.texturesReady).toBe(true))
+
+    loadTexture.mockImplementation(() => new Promise<unknown>(() => {}))
+    rerender({ blend: CLEARED_BLEND, sourceKey: 'cleared_land' })
+    expect(result.current.texturesReady).toBe(false)
+    expect(result.current.beforeTex).toBeNull()
+    expect(result.current.afterTex).toBeNull()
+  })
+
+  it('keeps the previous pair bound while the same source’s next pair loads', async () => {
+    const densityTex = { name: 'density' }
+    loadTexture.mockImplementation(() => Promise.resolve(densityTex))
+    const { result, rerender } = renderWithSource({ blend: DENSITY_BLEND, sourceKey: 'population_density' })
+    await waitFor(() => expect(result.current.texturesReady).toBe(true))
+
+    loadTexture.mockImplementation(() => new Promise<unknown>(() => {}))
+    rerender({ blend: DENSITY_NEXT_BLEND, sourceKey: 'population_density' })
+    expect(result.current.texturesReady).toBe(true)
+    expect(result.current.beforeTex).toBe(densityTex)
+  })
+
+  it('binds the new source’s pair once it loads', async () => {
+    const densityTex = { name: 'density' }
+    const clearedTex = { name: 'cleared' }
+    loadTexture.mockImplementation((url: string) => Promise.resolve(url.includes('/cleared/') ? clearedTex : densityTex))
+    const { result, rerender } = renderWithSource({ blend: DENSITY_BLEND, sourceKey: 'population_density' })
+    await waitFor(() => expect(result.current.texturesReady).toBe(true))
+
+    rerender({ blend: CLEARED_BLEND, sourceKey: 'cleared_land' })
+    await waitFor(() => expect(result.current.beforeTex).toBe(clearedTex))
+    expect(result.current.texturesReady).toBe(true)
   })
 })

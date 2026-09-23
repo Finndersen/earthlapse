@@ -6,7 +6,7 @@ import { Globe, type GlobeProps, type GlobeRasterLayers } from './index'
 
 // jsdom has no WebGL context (`web/src/lib/webgl.test.ts` covers `supportsWebGL()` itself
 // returning false there), so every render in this file exercises `GlobeStaticOrb` — the
-// no-WebGL fallback path (W-followup item 15/19e). `<Globe>`'s `<Canvas>` mount would otherwise
+// no-WebGL fallback path. `<Globe>`'s `<Canvas>` mount would otherwise
 // throw "Error creating WebGL context" here. The real WebGL path is covered by the Playwright
 // check (forcing `getContext` to return non-null), not jsdom, which cannot run a real GPU
 // context either way.
@@ -81,11 +81,44 @@ describe('Globe without WebGL', () => {
     expect(container.querySelector('[class*="expandGlyph"]')).toBeNull()
   })
 
-  it('still toggles expand on a plain click on the minimised orb (no OrbitControls needed)', () => {
+  it('expands on the click that follows a still press on the minimised orb, not on pointerup', () => {
     const { onToggleExpand } = renderGlobe({ expanded: false })
     const orb = screen.getByTestId('globe-static-orb').parentElement as HTMLElement
     fireEvent.pointerDown(orb, { clientX: 10, clientY: 10 })
     fireEvent.pointerUp(orb, { clientX: 10, clientY: 10 })
+    expect(onToggleExpand).not.toHaveBeenCalled()
+    fireEvent.click(orb, { clientX: 10, clientY: 10 })
+    expect(onToggleExpand).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not expand on the click that ends a drag across the minimised orb', () => {
+    const { onToggleExpand } = renderGlobe({ expanded: false })
+    const orb = screen.getByTestId('globe-static-orb').parentElement as HTMLElement
+    fireEvent.pointerDown(orb, { clientX: 10, clientY: 10 })
+    fireEvent.pointerUp(orb, { clientX: 80, clientY: 10 })
+    fireEvent.click(orb, { clientX: 80, clientY: 10 })
+    expect(onToggleExpand).not.toHaveBeenCalled()
+  })
+
+  it('does not expand on a click with no press on the orb before it', () => {
+    const { onToggleExpand } = renderGlobe({ expanded: false })
+    const orb = screen.getByTestId('globe-static-orb').parentElement as HTMLElement
+    fireEvent.click(orb)
+    expect(onToggleExpand).not.toHaveBeenCalled()
+  })
+
+  it('expands exactly once from the keyboard-activated expand button', () => {
+    const { onToggleExpand } = renderGlobe({ expanded: false })
+    fireEvent.click(screen.getByRole('button', { name: 'Expand globe' }))
+    expect(onToggleExpand).toHaveBeenCalledTimes(1)
+  })
+
+  it('expands exactly once from the expand button after an unfinished press on the orb', () => {
+    const { onToggleExpand } = renderGlobe({ expanded: false })
+    const orb = screen.getByTestId('globe-static-orb').parentElement as HTMLElement
+    fireEvent.pointerDown(orb, { clientX: 10, clientY: 10 })
+    fireEvent.pointerUp(orb, { clientX: 10, clientY: 10 })
+    fireEvent.click(screen.getByRole('button', { name: 'Expand globe' }))
     expect(onToggleExpand).toHaveBeenCalledTimes(1)
   })
 

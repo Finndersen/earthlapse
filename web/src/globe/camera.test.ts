@@ -14,6 +14,7 @@ import {
   raySphereIntersection,
   sphereFitDistance,
   sphereRotateSpeedForDistance,
+  sphereSilhouetteFraction,
   sphereViewFocus,
   subFrameFovY,
   unfoldCameraPose,
@@ -701,5 +702,26 @@ describe('unfoldCameraPose', () => {
     expect(unfoldCameraPose(-5, ends)).toEqual(unfoldCameraPose(0, ends))
     expect(unfoldCameraPose(2, ends)).toEqual(unfoldCameraPose(1, ends))
     expect(unfoldCameraPose(10, ends)).toEqual(unfoldCameraPose(1, ends))
+  })
+})
+
+describe('sphereSilhouetteFraction', () => {
+  it('puts the minimised orb’s limb at ≈0.892 of the half-height at distance 3.24 and fov 40°', () => {
+    expect(sphereSilhouetteFraction(1, 3.24, 40)).toBeCloseTo(0.892, 3)
+  })
+
+  it('is the inverse of sphereFitDistance with no margin — a sphere fitted to the viewport fills it exactly', () => {
+    const fovYRadians = (40 * Math.PI) / 180
+    const distance = sphereFitDistance(1, 1, fovYRadians, 0)
+    expect(sphereSilhouetteFraction(1, distance, 40)).toBeCloseTo(1, 10)
+  })
+
+  it('exceeds radius / distance, since the tangent points sit nearer the camera than the centre', () => {
+    const naive = 1 / 3.24 / Math.tan((20 * Math.PI) / 180)
+    expect(sphereSilhouetteFraction(1, 3.24, 40)).toBeGreaterThan(naive)
+  })
+
+  it('shrinks as the camera backs off', () => {
+    expect(sphereSilhouetteFraction(1, 6, 40)).toBeLessThan(sphereSilhouetteFraction(1, 3, 40))
   })
 })

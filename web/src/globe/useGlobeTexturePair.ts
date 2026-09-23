@@ -27,6 +27,7 @@ interface BoundTexturePair {
   beforeTex: THREE.Texture
   afterTex: THREE.Texture
   resetKey: number
+  sourceKey: string
 }
 
 export interface GlobeTexturePair {
@@ -36,9 +37,9 @@ export interface GlobeTexturePair {
    *  it; frozen at its last live value while a newer pair is still loading, so the visible
    *  pair and its mix factor never disagree. */
   mix: number
-  /** Whether any texture pair is currently bound and ready to render — false only before the
-   *  very first pair has loaded. Deliberately independent of whether `blend` is currently
-   *  null: `Globe` gates the out-of-domain look on `blend` itself, not on this. */
+  /** Whether a texture pair is currently bound and ready to render — false until the first pair
+   *  for the current `resetKey`/`sourceKey` has loaded. Deliberately independent of whether
+   *  `blend` is currently null: `Globe` gates the out-of-domain look on `blend` itself, not on this. */
   texturesReady: boolean
 }
 
@@ -70,6 +71,11 @@ export interface UseGlobeTexturePairOptions {
    *  unrecoverable. Without it, `bound` would point at the same permanently-blank `THREE.Texture`
    *  objects forever. Only its identity across renders matters; defaults to `0`. */
   resetKey?: number
+  /** Identifies the data `blend` is drawn from. A pair bound for a different `sourceKey` reads as
+   *  nothing bound, so a caller that switches source (`Globe.tsx`'s overlay kinds share this one
+   *  hook) never renders the previous source's texels through the new source's decoding. Within
+   *  one source the previous pair stays bound while the next loads, as usual. Defaults to `''`. */
+  sourceKey?: string
 }
 
 export function useGlobeTexturePair(
@@ -77,7 +83,7 @@ export function useGlobeTexturePair(
   preloadUrls: readonly string[],
   options: UseGlobeTexturePairOptions = {},
 ): GlobeTexturePair {
-  const { enabled = true, cache = PALEODEM_CACHE, aggressiveTrim = false, resetKey = 0 } = options
+  const { enabled = true, cache = PALEODEM_CACHE, aggressiveTrim = false, resetKey = 0, sourceKey = '' } = options
   const [bound, setBound] = useState<BoundTexturePair | null>(null)
   const requestIdRef = useRef(0)
   const frozenMixRef = useRef(0)
@@ -88,8 +94,8 @@ export function useGlobeTexturePair(
   // `ImageBitmap` is closed the instant the context is restored, not once the replacement has
   // loaded — otherwise every frame in between samples a detached `ImageBitmap` and logs "source
   // data has been detached". `bound` itself is left holding the stale texture as a last-resort
-  // fallback if the refetch fails.
-  const effectiveBound = bound !== null && bound.resetKey === resetKey ? bound : null
+  // fallback if the refetch fails. A pair bound for another `sourceKey` is equally not current.
+  const effectiveBound = bound !== null && bound.resetKey === resetKey && bound.sourceKey === sourceKey ? bound : null
 
   useEffect(() => {
     if (!enabled || blend === null) return undefined
@@ -103,7 +109,7 @@ export function useGlobeTexturePair(
         // A newer request superseded this one (t moved again before this pair finished
         // loading) — drop the stale result rather than binding it out of order.
         if (cancelled || requestIdRef.current !== requestId) return
-        setBound({ beforeUrl: blend.beforeUrl, afterUrl: blend.afterUrl, beforeTex, afterTex, resetKey })
+        setBound({ beforeUrl: blend.beforeUrl, afterUrl: blend.afterUrl, beforeTex, afterTex, resetKey, sourceKey })
       })
       .catch((error: unknown) => {
         // Keep showing whatever pair is already bound. A bad ref is a data problem to
@@ -113,7 +119,7 @@ export function useGlobeTexturePair(
     return () => {
       cancelled = true
     }
-  }, [enabled, blend, effectiveBound, cache, resetKey])
+  }, [enabled, blend, effectiveBound, cache, resetKey, sourceKey])
 
   // Keyed on the joined URLs, not the array: `Globe` recomputes the window every frame during
   // playback, but it only changes when `t` crosses into a new frame pair.

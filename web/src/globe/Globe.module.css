@@ -127,7 +127,7 @@
 }
 
 /* A wide, faint scatter beyond the shader's own atmosphere. With `inset: -12%` the planet's
-   silhouette (≈86% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈69%
+   silhouette (≈89% of the canvas half-size, see CAMERA_DISTANCE in Globe.tsx) sits at ≈72%
    of this gradient's radius. `visibility: visible` overrides the hidden `.orbFitFrameSphere`
    ancestor it's nested inside while expanded (that class's own doc comment) — the minimised
    `.orb` never hides it in the first place, so this is a no-op there.
@@ -176,8 +176,8 @@
 
 /* Static placeholder shown instead of the `<Canvas>` when WebGL is unavailable
    (`supportsWebGL()`, `@/lib/webgl`) — no raster data, rotation or effects, just a plausible
-   orb silhouette that fills the same box the sphere would, sized against the same ≈86%
-   figure CAMERA_DISTANCE produces (see Globe.tsx), so the surrounding halo/expand/close
+   orb silhouette that fills the same box the sphere would, inset by `--orb-silhouette-inset`
+   (set on the orb by Globe.tsx from its camera framing), so the surrounding halo/expand/close
    buttons and backdrop never have to be laid out any differently. Expanded, it's nested inside
    `.orbFitFrameSphere` rather than the (now full-bleed) `.orbExpanded` — the static fallback has
    no camera/zoom of its own to make the clip-removal in `.orbExpanded`'s doc comment relevant, so
@@ -185,7 +185,7 @@
    hidden state the same way `.halo`'s does, immediately above. */
 .staticOrb {
   position: absolute;
-  inset: 7%;
+  inset: var(--orb-silhouette-inset, 5.4%);
   visibility: visible;
   border-radius: 50%;
   /* Opaque throughout — translucent stops let the dimmed scene show through the expanded orb,
@@ -202,7 +202,9 @@
   cursor: zoom-in;
 }
 
-/* Hugs the sphere's silhouette (see .halo) rather than the square canvas. Not a hit target
+/* Hugs the sphere's silhouette rather than the square canvas: `--orb-silhouette-inset` (set on
+   the orb by Globe.tsx from its camera framing) is where the limb is drawn, and the extra 3px
+   puts the 1px hover/focus ring just outside it rather than over the planet. Not a hit target
    for the pointer — `pointer-events: none` lets a mouse/touch press reach the canvas
    underneath so OrbitControls can rotate the minimised orb (Globe.tsx's own
    press-vs-drag threshold does the click-to-expand there instead). It stays in the tab
@@ -211,7 +213,7 @@
    `pointer-events: none` means it is never the hit target a cursor could be shown for. */
 .expandButton {
   position: absolute;
-  inset: 7%;
+  inset: calc(var(--orb-silhouette-inset, 5.4%) - 3px);
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -237,8 +239,8 @@
 
 /* The persistent expand affordance: a small "fullscreen" corner-bracket glyph, always visible
    at low contrast (never hover-only — see its doc comment in Globe.tsx) so a viewer who never
-   hovers still sees the orb is interactive. Sits in the ~7% margin between the box edge and the
-   sphere's own silhouette (`.halo`'s doc comment above has the measurement) — cornered, where that
+   hovers still sees the orb is interactive. Sits in the margin between the box edge and the
+   sphere's own silhouette (`--orb-silhouette-inset`, see `.expandButton`) — cornered, where that
    margin is widest along the diagonal, so it never draws over the globe itself regardless of
    viewport. Decorative (`aria-hidden`) and
    `pointer-events: none`, same as `.halo`/`.expandButton`: it never becomes a second hit target
