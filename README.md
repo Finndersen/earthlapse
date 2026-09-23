@@ -1,7 +1,7 @@
 <h1 align="center">Earthlapse</h1>
 
 <p align="center">
-  <strong>4.6 billion years of Earth's history, as one continuously evolving, scrubbable view.</strong>
+  <strong>4.6 billion years of Earth's history, in one continuously evolving view you can explore at any speed.</strong>
 </p>
 
 <p align="center">
@@ -18,13 +18,10 @@
 
 An interactive, immersive visualisation of Earth's history — a continuously evolving
 photoreal view of the planet's surface across 4.6 billion years, surrounded by live data
-layers, fully scrubbable.
+layers.
 
 Sit back and watch it play, or grab the timeline and explore: zoom from 4.6 billion years
 down to a single year, speed it up, slow it down, toggle layers.
-
-> **Status: in development.** The pipeline and viewer run end to end locally; see
-> [Local development](#local-development).
 
 <p align="center">
   <a href="https://earthlapse.net"><img src="docs/images/readme/hero-cretaceous.webp" alt="Earthlapse at 68 million years ago: a Tyrannosaurus on a misty Cretaceous shoreline, with the paleogeographic globe top left, the ancestor portrait top right, the event feed, and the warped timeline along the bottom" width="100%"></a>
