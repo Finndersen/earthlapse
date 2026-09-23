@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import base64
 import io
+import re
 import struct
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -263,11 +264,15 @@ def fake_png(seed: int) -> bytes:
     return buffer.getvalue()
 
 
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+
+
 def run_cli(backend: FakeBackend, root: Path, *args: str) -> tuple[int, str]:
     result = CliRunner().invoke(create_app(backend), ["--root", str(root), *args])
     if result.exception is not None and not isinstance(result.exception, SystemExit):
         raise result.exception
-    return result.exit_code, result.output
+    # Typer's rich output forces ANSI styling under GITHUB_ACTIONS; assertions read the text.
+    return result.exit_code, ANSI_ESCAPE.sub("", result.output)
 
 
 def build_and_pick_all(backend: FakeBackend, root: Path) -> None:

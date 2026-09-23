@@ -30,8 +30,9 @@ this uses Workers.
    slash).
 5. `wrangler deploy --config deploy/wrangler.jsonc` once, then attach `<domain>` to the Worker.
 6. For CI: in the GitHub repo's Settings → Environments, create `production` and add the four R2
-   values as secrets, plus `CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers"
-   template) and `CLOUDFLARE_ACCOUNT_ID`; add `MEDIA_BASE` as an environment variable.
+   values plus `CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers" template) and
+   `CLOUDFLARE_ACCOUNT_ID`, and `MEDIA_BASE`. The two keys and the token must be secrets; the
+   rest may be environment variables or secrets.
 
 ## Publishing a new version
 
@@ -74,7 +75,9 @@ make deploy-site                               # build against the R2 origin, th
 `deploy/sync-media.sh` uploads in two passes because the cache policies differ: hashed media gets
 `max-age=31536000, immutable`, and `manifest.json` — the one unhashed file — gets 60 seconds.
 There is no `wrangler r2 sync`; `wrangler r2 object` is single-object only, so this uses rclone
-against R2's S3 endpoint, the route Cloudflare documents.
+against R2's S3 endpoint, the route Cloudflare documents. It needs a current rclone: the workflow
+pins v1.75.1, and Ubuntu's packaged 1.60 fails every upload with `501 NotImplemented`. Install
+from rclone.org, not apt, on a workstation too.
 
 `deploy/build-site.sh` moves `web/public/media` aside for the build so the export stays small, and
 fails if the R2 origin was not baked into the output rather than shipping a site whose assets all
