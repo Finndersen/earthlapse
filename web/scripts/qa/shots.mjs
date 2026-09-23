@@ -1387,7 +1387,7 @@ export default [
     description:
       'Pointer hit-testing against the real canvas geometry, at 50 ka: a click on the minimised orb expands the ' +
       'globe; a click on an arrival the human layer draws (found by its "Click for details" hover hint) opens its ' +
-      'event\'s detail panel with a Route section; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
+      'event\'s detail panel with a Route section, its surface opaque and ending ≥ 16px above the viewport bottom; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
       'the sphere keeps the view open; a real click reaches the "Map" button (nothing covers it); a click on the map ' +
       'keeps the view open; back on the sphere, a click on the empty backdrop closes it.',
     viewport: DEFAULT_VIEWPORT,
@@ -1423,12 +1423,22 @@ export default [
         }
       }
       let arrivalOpensRoute = 0
+      let arrivalPanelBottomInsetPx = null
+      let arrivalPanelSurfaceAlpha = null
       if (arrival !== null) {
         await page.mouse.click(...arrival)
         await rafTicks(page, 3)
         await hook.ready()
         const detail = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Route' }) })
         arrivalOpensRoute = await detail.count()
+        if (arrivalOpensRoute > 0) {
+          const box = await detail.boundingBox()
+          arrivalPanelBottomInsetPx = DEFAULT_VIEWPORT.height - (box.y + box.height)
+          arrivalPanelSurfaceAlpha = await detail.evaluate((el) => {
+            const alpha = getComputedStyle(el).backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\)/)
+            return alpha === null ? 1 : Number(alpha[1])
+          })
+        }
         await page.keyboard.press('Escape')
         await detail.waitFor({ state: 'detached', timeout: 5_000 })
       }
@@ -1463,6 +1473,8 @@ export default [
         expandedAfterBackdropClick,
         arrivalFound: arrival === null ? 0 : 1,
         arrivalOpensRoute,
+        arrivalPanelBottomInsetPx,
+        arrivalPanelSurfaceAlpha,
       }
     },
     expect: {
@@ -1473,6 +1485,9 @@ export default [
       expandedAfterBackdropClick: [0, 0],
       arrivalFound: [1, 1],
       arrivalOpensRoute: [1, 1],
+      // The backdrop's own gutter at least: a panel ending flush with the viewport clips its border.
+      arrivalPanelBottomInsetPx: [16, 900],
+      arrivalPanelSurfaceAlpha: [1, 1],
     },
   },
 ]

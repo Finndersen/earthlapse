@@ -1,7 +1,8 @@
 /*
  * `Panel`'s shared appearance — backdrop plus one floating surface, in the same chrome-less
- * language as `ClusterPopover`/`TouchMagnifier` (opaque `rgba(3, 4, 6, 0.88)` card, hairline +
- * shadow token pair, no border). Anchored near the top-left on desktop — where the button that
+ * language as `ClusterPopover`/`TouchMagnifier` (near-black card, hairline + shadow token pair,
+ * no border). The card is fully opaque: it opens over HUD type (the event feed, readouts), and any
+ * translucency lets that type ghost through the panel's own copy. Anchored near the top-left on desktop — where the button that
  * opens it (About & credits, top-left corner) actually sits, so opening it reads as a popover
  * beside that corner rather than a centred modal interrupting the scene. Below 760px it becomes
  * a full-width bottom sheet instead, thumb-reachable and clear of anything above it.
@@ -24,7 +25,7 @@
   width: min(420px, 100%);
   max-height: min(560px, calc(100vh - clamp(32px, 4.8vw, 68px)));
   border-radius: 12px;
-  background: rgba(3, 4, 6, 0.92);
+  background: #08090b;
   box-shadow:
     0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
     0 12px 48px rgba(0, 0, 0, 0.6),

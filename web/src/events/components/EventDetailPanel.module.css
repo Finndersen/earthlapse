@@ -4,25 +4,23 @@
  * as the same feature, not a second visual system.
  */
 
-/* `Panel`'s backdrop anchors near the top-left by default (its own doc comment) — right for the
-   About & credits panel, which opens from a top-left button, but this one opens from a feed
-   card lower down the left column and used to land on top of the globe orb and CO2 readouts
-   instead of anywhere near the feed it came from (re-review fix, 2026-09-15). Pushed down with
-   a margin rather than changing `Panel`'s own backdrop alignment (which the About panel still
-   wants): roughly level with where the feed itself sits (`ShellLayout.module.css`'s `.feed`
-   grid row starts below the readouts), so opening a card reads as "the feed grew a detail view"
-   rather than "a dialog appeared elsewhere on screen". */
+/* Opens level with the feed it came from, below the readouts, rather than at `Panel`'s top-left
+   anchor (which the About panel keeps). The max height subtracts that offset and the backdrop's
+   vertical padding, so the panel ends inside the viewport and `Panel`'s body scrolls under the
+   header instead. */
 .panel {
+  --detail-offset: min(320px, 34vh);
+
   width: min(440px, 100%);
-  margin-top: min(320px, 34vh);
+  margin-top: var(--detail-offset);
+  max-height: min(560px, calc(100vh - var(--detail-offset) - clamp(32px, 4.8vw, 68px)));
 }
 
-/* The phone bottom sheet (`Panel.module.css`'s own `max-width: 760px` rule) already anchors to
-   the bottom of the screen regardless of any margin — cancel the desktop offset so it doesn't
-   also eat into the sheet's own height budget there. */
+/* The phone bottom sheet (`Panel.module.css`) anchors to the screen bottom on its own. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .panel {
     margin-top: 0;
+    max-height: min(80vh, calc(100vh - 32px));
   }
 }
 
