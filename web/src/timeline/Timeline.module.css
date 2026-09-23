@@ -27,6 +27,12 @@
   /* The speed select's own width (`Transport.module.css`'s `.speedSelect`), which the desktop row
      keeps clear beside the breadcrumb. */
   --speed-select-width: 46px;
+  /* The rate readout slot's width: the wider of `.rateReadout`'s 16ch and `.timeCompressed`'s 17ch
+     at their 10px monospace (~6px per ch). The desktop row keeps it clear beside the secondary
+     cluster. */
+  --rate-readout-width: 102px;
+  /* Between the transport buttons and the speed select or rate readout hanging off either side. */
+  --transport-side-gap: clamp(10px, 1.4vw, 18px);
 
   display: grid;
   /* Row 1: the edge buttons flank the track, which spans the three middle columns. Row 2 splits
@@ -74,7 +80,7 @@
 /* The speed select, `TransportCore` (back/play/forward) and the rate readout — speed sets the
    rate, the transport runs it, the readout shows the result. On desktop only the three transport
    buttons are in flow, so this column is exactly their width and centred; the select hangs off
-   their left side and the readout sits under them (`.speedSlot`/`.rateReadoutRow`). */
+   their left side and the readout off their right (`.speedSlot`/`.rateReadoutRow`). */
 .core {
   grid-area: core;
   position: relative;
@@ -82,15 +88,16 @@
   align-items: center;
   justify-content: center;
   align-self: center;
-  gap: clamp(10px, 1.4vw, 18px);
+  gap: var(--transport-side-gap);
 }
 
 /* The right-hand cluster: the playback-mode toggle, the scale toggle, then the sound/volume
    control (`@/audio`'s `<SoundToggle>`, passed through as `sound`), anchored to the track's right
    edge. The mode and scale toggles carry a small label above their pills; the bottom margin is
    that label's height, so the pills, not the whole cluster, sit on the row's centre line with
-   the breadcrumb and transport. Where the column is too narrow for all three on one line (a
-   window under ~1000px wide) the cluster wraps rather than reaching into the transport. */
+   the breadcrumb and transport. On desktop its width stops short of the rate readout hanging into
+   this column, the way `.sections` stops short of the speed select; where that is too narrow for
+   all three on one line (a window under ~1260px wide) the cluster wraps. */
 .secondary {
   grid-area: secondary;
   display: flex;
@@ -102,6 +109,7 @@
   gap: clamp(6px, 0.7vw, 10px);
   row-gap: 8px;
   min-width: 0;
+  max-width: calc(100% - var(--rate-readout-width) - var(--track-side-gap, 16px));
   margin-bottom: 16px;
 }
 
@@ -114,26 +122,34 @@
 }
 
 /* `RateReadout` and, outboard of it, `TimeCompressedBadge` (ADR-029, shown rarely). On desktop
-   it sits centred under the transport buttons, out of flow, so showing it when playback starts
-   moves nothing. The phone and landscape layouts put it back in the transport row, in a reserved
-   slot the width of `--transport-flank`. */
+   the row is out of flow just right of the forward button, the readout centred on the buttons and
+   the badge hanging under it, so the row is only `--rate-readout-width` wide and showing either
+   moves nothing. The phone and landscape layouts put both back in the transport row, in a
+   reserved slot the width of `--transport-flank`. */
 .rateReadoutRow {
   position: absolute;
-  top: calc(100% + 2px);
-  left: 50%;
+  top: 50%;
+  left: calc(100% + var(--transport-side-gap));
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
   width: max-content;
-  transform: translateX(-50%);
+  transform: translateY(-50%);
+}
+
+/* `TimeCompressedBadge`, the row's second child. */
+.rateReadoutRow > :last-child {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
 }
 
 /* The speed select: out of flow on desktop, just left of the back button. */
 .speedSlot {
   position: absolute;
   top: 50%;
-  right: calc(100% + clamp(10px, 1.4vw, 18px));
+  right: calc(100% + var(--transport-side-gap));
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -215,13 +231,14 @@
     transform: none;
   }
 
-  .rateReadoutRow {
-    justify-content: flex-start;
+  .rateReadoutRow > :last-child {
+    position: static;
   }
 
   .secondary {
     align-self: auto;
     min-width: auto;
+    max-width: none;
     margin-bottom: 0;
   }
 }

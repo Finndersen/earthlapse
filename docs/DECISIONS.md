@@ -7034,6 +7034,17 @@ level with the About button leading the ancestor column.
   column instead of its own row above the track, so the sphere/map fit frame gets that row's
   height back; and the portrait Globe/Map toggle is sized nearer the zoom rocker's own height.
 
+**Amendment (2026-09-23) — the desktop rate readout sits right of the transport.** On
+desktop/tablet the rate readout moves from under the transport buttons to their right, vertically
+centred on them and the same gap away as the speed select on their left, so the two flank the
+buttons symmetrically. The "Time compressed" badge (ADR-029) hangs directly under the readout
+rather than beside it, so the readout slot is only one label wide (`--rate-readout-width`, the
+wider of the two labels). The secondary cluster keeps clear of it the way the breadcrumb keeps
+clear of the speed select: its `max-width` is its column less that width and one column gap.
+The cluster fits on one line from ~1260px wide; narrower, it wraps (at 1000px, the mode toggle
+on one line and the scale toggle and sound control on a second). Phone portrait and short
+landscape are unchanged.
+
 ## ADR-049 — A rough Cenozoic ice age on the globe, from the LR04 stack
 
 **Status:** accepted — 2026-09-23. Builds on GLOBE.md's regimes (the Snowball ice shell).

@@ -208,10 +208,10 @@ interface TimeCompressedBadgeProps {
  *  what `speed` requested to keep a dense cluster of scenes readable (WCAG 2.3.1's three-flashes
  *  safety floor) — the numeric year readout keeps moving at whatever rate `t` implies either way
  *  (see `advanceSteadyPlayhead`'s own doc comment), so this is the one place a viewer is told
- *  playback has quietly slowed to protect that readability. Sits outboard of `RateReadout` in the
- *  same fixed-width row (`rateReadoutRow`) — the number keeps the place beside the transport
- *  buttons — amber like the playing state and the active mode-toggle option: the shared
- *  `--hud-accent` lens language, not a new idiom.
+ *  playback has quietly slowed to protect that readability. Shares `RateReadout`'s row
+ *  (`rateReadoutRow`: under the number on desktop, outboard of it in the compact layouts) — the
+ *  number keeps the place beside the transport buttons — amber like the playing state and the
+ *  active mode-toggle option: the shared `--hud-accent` lens language, not a new idiom.
  *
  *  A fixed-width slot, always mounted (re-review fix, 2026-09-15 — this originally unmounted via
  *  `return null` while not visible, on the reasoning that a handful of years-dense clusters made

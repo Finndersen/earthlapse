@@ -541,8 +541,8 @@ expands to fill; it is never the default focus.
 >
 > On desktop the controls row sits midway between the section bands and the window's bottom edge,
 > with the play button on the track's centre (the speed select hangs off the transport's left, the
-> rate readout sits under it), and the globe orb's top sits on the top inset beside the About
-> button. The caption's shade fades to nothing at every edge in every layout.
+> rate readout off its right, with the "Time compressed" badge under the readout), and the globe
+> orb's top sits on the top inset beside the About button. The caption's shade fades to nothing at every edge in every layout.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to
