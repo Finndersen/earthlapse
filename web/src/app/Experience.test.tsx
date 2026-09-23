@@ -18,9 +18,14 @@ import lineageData from '../../public/stub/layers/lineage.json'
 import paleodemData from '../../public/stub/layers/paleodem.json'
 import stubManifest from '../../public/stub/manifest.json'
 
+/** The event id the mocked globe reports when clicked, standing in for a click on an arrival. */
+let globeActivationId = 'agriculture'
+
 vi.mock('@/globe', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/globe')>()),
-  Globe: () => <div data-testid="globe-mock" />,
+  Globe: ({ onActivateEvent }: { onActivateEvent?: (eventId: string) => void }) => (
+    <div data-testid="globe-mock" onClick={() => onActivateEvent?.(globeActivationId)} />
+  ),
 }))
 
 import { Experience } from './Experience'
@@ -453,6 +458,117 @@ describe('Experience (W12a integration)', () => {
       expect(dialog.textContent).toMatch(/impact/i)
       expect(dialog.textContent).toContain('Post-impact winter (test fixture)')
       expect(dialog.textContent).toContain('A fixture-only companion event for the ADR-040 digest-wiring test.')
+    })
+  })
+
+  describe('globe event activation', () => {
+    const ORIGIN = {
+      id: 'origin-test',
+      label: 'Origin arrival (test fixture)',
+      kind: 'moment',
+      tMin: 300_000,
+      tMax: 300_000,
+      t: 300_000,
+      tags: ['human-origins'],
+      importance: 0.5,
+      description: 'Where the fixture chain begins.',
+      citation: 'test fixture',
+      effect: {
+        kind: 'arrival',
+        arrivalKind: 'peopling',
+        origin: { lat: 9, lon: 34 },
+        destination: { lat: 9, lon: 34 },
+        established: 300_000,
+        windows: [{ tMin: 0, tMax: 300_000 }],
+      },
+    }
+    const MIGRATION = {
+      id: 'migration-test',
+      label: 'Migration arrival (test fixture)',
+      kind: 'period',
+      tMin: 4_600,
+      tMax: 5_000,
+      tags: ['human-origins'],
+      importance: 0.5,
+      description: 'A deliberately long fixture description that the globe tooltip would clamp to three lines.',
+      citation: 'test fixture',
+      effect: {
+        kind: 'arrival',
+        arrivalKind: 'migration',
+        origin: { lat: 9, lon: 34 },
+        destination: { lat: 48, lon: 20 },
+        established: 4_600,
+        windows: [{ tMin: 0, tMax: 5_000 }],
+      },
+    }
+
+    function stubManifestWithArrivals(): void {
+      const manifest = { ...stubManifest, events: [...stubManifest.events, ORIGIN, MIGRATION] }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL) => {
+          const url = String(input)
+          if (url === '/media/manifest.json') {
+            return { ok: false, status: 404, json: async () => undefined } as Response
+          }
+          const body = url === '/stub/manifest.json' ? manifest : FETCH_RESPONSES[url]
+          if (body === undefined) throw new Error(`unexpected fetch in test: ${url}`)
+          return { ok: true, status: 200, json: async () => body } as Response
+        }),
+      )
+    }
+
+    afterEach(() => {
+      globeActivationId = 'agriculture'
+    })
+
+    it('opens the detail panel with the full description, leaving t where it is', async () => {
+      await renderSettled()
+      const globe = await screen.findByTestId('globe-mock')
+      const t = useTimeStore.getState().t
+
+      act(() => {
+        fireEvent.click(globe)
+      })
+
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toContain('Agriculture begins')
+      expect(dialog.textContent).toContain('Independent domestication of crops and livestock across several regions.')
+      expect(useTimeStore.getState().t).toBe(t)
+    })
+
+    it("shows an arrival's Route section, whose chain opens the earlier arrival in the panel's place", async () => {
+      stubManifestWithArrivals()
+      globeActivationId = 'migration-test'
+      await renderSettled()
+
+      const globe = await screen.findByTestId('globe-mock')
+      act(() => {
+        fireEvent.click(globe)
+      })
+
+      const route = within(screen.getByRole('dialog')).getByRole('region', { name: 'Route' })
+      expect(route.textContent).toContain('Migration')
+
+      act(() => {
+        fireEvent.click(within(route).getByRole('button', { name: 'Origin arrival (test fixture)' }))
+      })
+
+      const dialog = screen.getByRole('dialog')
+      expect(dialog.textContent).toContain('Where the fixture chain begins.')
+      expect(dialog.textContent).not.toContain('Migration arrival (test fixture)')
+    })
+
+    it('ignores an id the manifest does not carry', async () => {
+      globeActivationId = 'no-such-event'
+      await renderSettled()
+
+      const globe = await screen.findByTestId('globe-mock')
+      act(() => {
+        fireEvent.click(globe)
+      })
+
+      expect(screen.queryByRole('dialog')).toBeNull()
     })
   })
 })

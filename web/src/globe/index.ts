@@ -42,6 +42,9 @@ export {
   SEAM_BAND,
   travelDirection,
 } from './blend'
+// The derived arrival chain (ADR-032), for the event detail panel's Route section.
+export { buildArrivalIndex, traceToOrigin } from './arcs'
+export type { ArrivalIndex } from './arcs'
 export * from './effects'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
