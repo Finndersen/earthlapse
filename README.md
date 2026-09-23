@@ -12,6 +12,12 @@
 
 <p align="center">
   <a href="https://earthlapse.net"><img src="docs/images/readme/hero-cretaceous.webp" alt="Earthlapse at 68 million years ago: a Tyrannosaurus on a misty Cretaceous shoreline, with the paleogeographic globe top left, the ancestor portrait top right, the event feed, and the warped timeline along the bottom" width="100%"></a>
+  <br><em>68 million years ago: a photoreal scene, captioned, framed by the globe, your ancestor, the event feed and the timeline.</em>
+</p>
+
+<p align="center">
+  <a href="https://earthlapse.net"><img src="docs/images/readme/globe-fullscreen.webp" alt="The globe expanded to a full sphere 179 years ago, centred on Africa and Eurasia: the population-density overlay tints Europe, India and China, light-blue city markers carry name tags such as Sevastopol, Tashkent and Colombo, and orange migration arcs cross the sphere, with the density legend top right and the timeline below" width="100%"></a>
+  <br><em>179 years ago, globe expanded: HYDE population density, major cities as they appear, and migration arcs in flight.</em>
 </p>
 
 <p align="center"><a href="https://earthlapse.net"><strong>Open Earthlapse &rarr;</strong></a></p>
@@ -29,6 +35,10 @@ down to a single year, speed it up, slow it down, toggle layers.
 ---
 
 ## Features
+
+<p align="center">
+  <img src="docs/images/readme/showcase.webp" alt="A ten-second loop: a Carboniferous coal swamp dissolves into the Cretaceous Tyrannosaurus shoreline, then into a Dutch Golden Age harbour while the timeline zooms into the Holocene, then the globe expands over the industrial age and turns from Africa towards Asia with city markers and migration arcs" width="100%">
+</p>
 
 ### Photoreal scenes across deep time
 
@@ -52,7 +62,7 @@ dispersal arcs, settlement markers and major cities, plus a switchable **populat
 or **cleared land** overlay from HYDE.
 
 <p align="center">
-  <img src="docs/images/readme/globe.webp" alt="Left: the expanded globe at 250 Ma, showing the Pangaea supercontinent. Right: the unfolded map at the present day with the cleared-land overlay and major-city markers" width="100%">
+  <img src="docs/images/readme/globe-map.webp" alt="The globe unfolded into a flat world map 60 years ago with the cleared-land overlay: farmed land shaded orange across North America, Europe, India, China and Australia, light-blue major-city markers, the cleared-land legend top right and the timeline below" width="100%">
 </p>
 
 ### A timeline built for 4.6 billion years
@@ -60,10 +70,11 @@ or **cleared land** overlay from HYDE.
 The scrub track uses a warped (symlog) scale so the Hadean and the last century both get room, with a
 linear option. Narrow it to any era — eon, period, or one of six human-history sections inside
 the Holocene — via the section bands, breadcrumb or keyboard. Events cluster and declutter as
-you zoom; hovering spreads close-packed markers apart, dragging scrubs.
+you zoom; hovering spreads close-packed markers apart, dragging scrubs. Above the track, each
+scene's title and a short passage place it in its moment.
 
 <p align="center">
-  <img src="docs/images/readme/timeline-section-chart.webp" alt="The timeline narrowed to the Holocene, with human-history sections from First Farmers to Modern, a breadcrumb reading Earth, Cenozoic, Quaternary, Holocene, and the global population chart expanded over an early-modern Dutch harbour scene" width="100%">
+  <img src="docs/images/readme/timeline-holocene.webp" alt="An early-modern Amsterdam harbour 375 years ago, captioned The Dutch Golden Age with a passage on the Dutch East India Company, above the timeline narrowed to the Holocene: human-history sections from First Farmers to Modern, Early Modern highlighted, and a breadcrumb reading Earth, Cenozoic, Quaternary, Holocene" width="100%">
 </p>
 
 ### Events, with sources
