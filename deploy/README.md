@@ -30,8 +30,10 @@ this uses Workers.
    slash).
 5. `wrangler deploy --config deploy/wrangler.jsonc` once, then attach `<domain>` to the Worker.
 6. For CI: in the GitHub repo's Settings → Environments, create `production` and add the four R2
-   values as secrets, plus `CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers"
-   template) and `CLOUDFLARE_ACCOUNT_ID`; add `MEDIA_BASE` as an environment variable.
+   values plus `CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers" template) and
+   `CLOUDFLARE_ACCOUNT_ID`. The two keys and the token must be secrets; `R2_ACCOUNT_ID`,
+   `R2_BUCKET` and `CLOUDFLARE_ACCOUNT_ID` may be either; `MEDIA_BASE` is an environment
+   variable.
 
 ## Publishing a new version
 
