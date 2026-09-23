@@ -1,18 +1,15 @@
 'use client'
 
 /**
- * The event detail popout, replacing the feed card's old in-place expand.
- * Built on `@/shell`'s shared `Panel` — the one deliberate cross-package import this package
- * makes (see `events/index.ts`'s own doc comment) rather than a second bespoke focus trap.
+ * The event detail card. Lives on `EventDock`, the docked, non-modal surface it shares with
+ * `EventBrowser`, sized to its content and resting on the timeline, so the timeline stays visible
+ * and scrubbable while it is open.
  *
- * Pure chrome around one `TimelineEvent`: the full label (as `Panel`'s own heading), its
- * date/range, every tag it carries with its `EVENT_TAG_PALETTE` colour (unlike a feed card,
- * which shows only the primary one), the full description and citation, a "Show on timeline"
- * action, and an "All events" affordance opening `EventBrowser` (the full, searchable list).
- * `Panel` itself owns the focus trap, Escape, focus restore, click-outside and the phone bottom
- * sheet; this component owns none of that and touches no playback state — `Experience.tsx`
- * pauses on open and resumes on close, and scrubs `t` on "Show on timeline", as a direct
- * consequence of the user's own click, not as something this component decides.
+ * Pure chrome around one `TimelineEvent`: the full label (as the dock's heading), its date/range,
+ * every tag it carries with its `EVENT_TAG_PALETTE` colour (unlike a feed card, which shows only
+ * the primary one), the full description and citation, a back button to `EventBrowser`, and a
+ * footer stepping to the neighbouring events. It touches no playback state or `t`: `Experience.tsx` decides
+ * what opening, stepping and closing do to them.
  *
  * An event carrying an `arrival` effect (ADR-032) also gets a "Route" section: first settlement or
  * migration, its best-estimate date, the span its arc is drawn travelling on the globe, the
@@ -25,13 +22,12 @@
  * full rather than collapsing to the headline alone, since the point of opening it is to read
  * the events the card's "+k more" badge stood in for.
  *
- * `onStep`, when given, moves the panel to the neighbouring event: a swipe left for the next (newer),
- * a swipe right for the previous (older), in the "All events" list's order.
+ * Stepping (`onStep`) goes to the neighbouring event in the "All events" list's order: the footer's
+ * Previous and Next buttons, or a swipe right (older) or left (newer) across the body.
  */
 
 import { useId } from 'react'
 
-import { Panel } from '@/shell'
 import { formatGeoTime, formatTimeRange } from '@/timeline'
 import type { ArrivalGlobeEffect, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
 
@@ -39,6 +35,7 @@ import type { EventStep } from '../browse'
 import { formatEventDate } from '../placement'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
 import { useSwipe } from '../useSwipe'
+import { EventDock } from './EventDock'
 import styles from './EventDetailPanel.module.css'
 
 export interface EventDetailPanelProps {
@@ -47,15 +44,7 @@ export interface EventDetailPanelProps {
    *  Omitted, or fewer than two entries, is a plain single-event panel. */
   members?: readonly TimelineEvent[]
   onClose: () => void
-  /** Scrubs the timeline to this event's placement and closes the panel — the only thing in this
-   *  panel that moves `t`. Opening the panel itself never does (the event is already recent;
-   *  that's why a card for it is showing). The caller
-   *  (`Experience.tsx`) does not resume playback on this particular close, even if it had been
-   *  playing before the panel opened, since doing so would immediately carry the playhead away
-   *  from the place just asked for. */
-  onShowOnTimeline: () => void
-  /** Opens `EventBrowser`, the full searchable event list, scrolled to this event. Replaces this
-   *  panel rather than layering over it — the caller owns that transition. */
+  /** The back button: opens `EventBrowser`, the full searchable event list, in this card's place. */
   onOpenBrowser: () => void
   /** The earlier arrivals an arrival event continues, nearest first and ending at the origin.
    *  Omitted, the Route section lists no chain. */
@@ -63,7 +52,9 @@ export interface EventDetailPanelProps {
   /** Opens another event in this panel's place — a chain link in the Route section. Omitted,
    *  the chain is plain text. */
   onOpenEvent?: (eventId: string) => void
-  /** Opens the neighbouring event in this panel's place. Omitted, a swipe does nothing. */
+  /** The events either side of this one, `null` at an end. Omitted, there is no stepping. */
+  neighbours?: Record<EventStep, TimelineEvent | null>
+  /** Opens the neighbouring event in this card's place. */
   onStep?: (direction: EventStep) => void
 }
 
@@ -82,20 +73,29 @@ export function EventDetailPanel({
   event,
   members,
   onClose,
-  onShowOnTimeline,
   onOpenBrowser,
   arrivalChainFor,
   onOpenEvent,
+  neighbours,
   onStep,
 }: EventDetailPanelProps) {
-  const swipe = useSwipe(onStep && ((direction) => onStep(direction === 'left' ? 'newer' : 'older')))
+  const step = (direction: EventStep): void => {
+    if (neighbours?.[direction] && onStep) onStep(direction)
+  }
+  const swipe = useSwipe((direction) => step(direction === 'left' ? 'newer' : 'older'))
   const route: RouteProps = { arrivalChainFor, onOpenEvent }
   const digestMembers = members !== undefined && members.length > 1 ? members : null
   const label = digestMembers !== null ? `${event.label} +${digestMembers.length - 1} more` : event.label
 
   return (
-    <Panel label={label} onClose={onClose} className={styles.panel}>
-      <div className={styles.stepArea} data-testid="event-detail-step-area" {...swipe}>
+    <EventDock
+      title={label}
+      onClose={onClose}
+      fit="content"
+      back={{ label: 'Back to all events', onBack: onOpenBrowser }}
+      testId="event-detail"
+    >
+      <div className={styles.body} data-testid="event-detail-body" {...swipe}>
         {digestMembers !== null ? (
           <ul className={styles.memberList}>
             {digestMembers.map((member) => (
@@ -108,15 +108,39 @@ export function EventDetailPanel({
         ) : (
           <EventDetailBody event={event} route={route} />
         )}
-
-        <button type="button" className={styles.showOnTimeline} onClick={onShowOnTimeline}>
-          Show on timeline
-        </button>
-        <button type="button" className={styles.allEvents} onClick={onOpenBrowser}>
-          All events
-        </button>
       </div>
-    </Panel>
+
+      {neighbours && (
+        <div className={styles.footer}>
+          <StepButton direction="older" target={neighbours.older} onStep={step} />
+          <StepButton direction="newer" target={neighbours.newer} onStep={step} />
+        </div>
+      )}
+    </EventDock>
+  )
+}
+
+function StepButton({
+  direction,
+  target,
+  onStep,
+}: {
+  direction: EventStep
+  target: TimelineEvent | null
+  onStep: (direction: EventStep) => void
+}) {
+  const name = direction === 'older' ? 'Previous event' : 'Next event'
+  return (
+    <button
+      type="button"
+      className={styles.stepButton}
+      aria-label={target ? `${name}: ${target.label}` : name}
+      title={target?.label}
+      disabled={target === null}
+      onClick={() => onStep(direction)}
+    >
+      {direction === 'older' ? '‹ Previous' : 'Next ›'}
+    </button>
   )
 }
 

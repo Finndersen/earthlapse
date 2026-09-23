@@ -36,16 +36,12 @@
  *   for every tag a card carries; `EventTagLegend` for the compact six-dot key. Any future
  *   timeline colouring by tag (ADR-022, still deferred) should reuse it too rather than invent a
  *   second legend.
- * - `EventDetailPanel` — the full-detail popout a feed card or a globe arrival opens (label,
- *   date/range, every tag, description, citation, an arrival's Route section, "Show on
- *   timeline"), built on `@/shell`'s
- *   shared `Panel` rather than a bespoke dialog — the one deliberate exception to this package's
- *   usual self-containment (everything else here stays prop-driven with no store or
- *   cross-package reads), per the explicit "one shared panel primitive, not three bespoke focus
- *   traps" requirement. `shell` does not import back from `events` — it used to, for
- *   `EventTagLegend` (see the next bullet), which meant the two packages imported each other and
- *   only worked because `Panel` is used at render time, not import time. This remains a
- *   one-directional edge.
+ * - `EventDetailPanel` — the detail card a feed card, a list row or a globe arrival opens (label,
+ *   date/range, every tag, description, citation, an arrival's Route section, stepping to the
+ *   neighbouring events), and `EventBrowser` — the searchable, tag-filterable "All events" list,
+ *   opened from the card, the feed or the desktop `/` shortcut. Both sit on `EventDock`, one
+ *   docked, non-modal surface above the timeline (`useTimelineBottomInset`), so the timeline stays
+ *   visible and scrubbable while either is open (ADR-054).
  * - `EventTagLegend` — the compact six-dot "what the colours mean" key. Pure presentation, no
  *   `@/shell` dependency of its own: the caller that already composes both packages
  *   (`app/Experience.tsx`, and `/credits`' own page) passes it into `@/shell`'s `CreditsList` as
@@ -54,12 +50,9 @@
  * - `useIsCompactViewport()` — mirrors `ShellLayout`'s own phone breakpoint, for the "compact
  *   single-card strip" the brief calls for at narrow widths.
  * - `browseEvents(events, filters)` / `matchesEventQuery(event, query)` / `nearestBrowseEventIndex`
- *   / `adjacentEvent` / `deepestSectionAt` — pure search/filter/grouping over the *whole* event set (not "behind
- *   `t`" like `selectFeedEvents`), oldest first, for `EventBrowser`'s "All events" list.
- *   `EventBrowser` — searchable, tag-filterable, opened from `EventDetailPanel`'s own "All
- *   events" action or the desktop `/` shortcut — docks itself above the timeline
- *   (`useTimelineBottomInset`) rather than using `shell/Panel`'s modal surface, so the timeline
- *   stays visible and scrubbable while it's open; see that component's own doc comment for why.
+ *   / `adjacentEvent` / `deepestSectionAt` — pure search/filter/grouping over the *whole* event
+ *   set (not "behind `t`" like `selectFeedEvents`), oldest first, for the list and the card's
+ *   stepping.
  */
 
 export { CLUSTER_SPAN, clusterEvents, type EventCluster } from './cluster'

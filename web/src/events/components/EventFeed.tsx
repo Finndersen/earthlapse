@@ -18,10 +18,8 @@
  * than remounting and losing (or double-firing) an announcement.
  *
  * A card does not expand in place: clicking/tapping/Enter-ing one calls `onEventActivate` and the
- * caller (`Experience.tsx`) owns what happens next — opening `EventDetailPanel`, pausing playback
- * if it was running. This component never scrubs `t` on its own either; only the detail panel's
- * own "Show on timeline" does that, so opening a card to read it can't move the playhead out from
- * under a reader.
+ * caller (`Experience.tsx`) owns what happens next — opening `EventDetailPanel`, moving `t` to the
+ * event and pausing playback if it was running. This component never scrubs `t` itself.
  *
  * A card renders one `select.ts` cluster (ADR-040), not one event: a single-member cluster looks
  * exactly as a lone event card always has, and a multi-member one adds a small "+k more" badge

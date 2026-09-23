@@ -27,6 +27,7 @@ import {
   placementT,
   useIsCompactViewport,
   type BrowseEventsFilters,
+  type EventStep,
 } from '@/events'
 import { buildArrivalIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
@@ -285,41 +286,47 @@ export function Experience() {
     }
   }, [playback.playing])
 
-  // The event detail panel and the event browser each pause playback while open. Opening the
-  // browser from the detail panel hands the detail panel's remembered "was playing" over rather
-  // than re-reading `playback.playing`, which by then is already false — see
-  // `openEventBrowserFromDetail` below.
-  const detailHold = usePlaybackHold(playback.playing, setPlaying)
-  const browserHold = usePlaybackHold(playback.playing, setPlaying)
-
-  // Opens the browser fresh, from the `/` shortcut or the feed's "All events" button. A no-op while
-  // any event overlay is already open, so a second press can't stack a duplicate dialog over the
-  // first.
+  // The event browser and the event detail card share one docked surface (`@/events`'s
+  // `EventDock`), so they share one playback hold too: taken when the surface opens from closed,
+  // kept across every switch between list and card, and resumed only when the surface closes.
+  const eventOverlayHold = usePlaybackHold(playback.playing, setPlaying)
   const eventOverlayOpen = eventBrowserOpen || detailEventId !== null
-  // Whether the open detail panel came from a browser row, so closing it goes back to the list
-  // (with the search and tags it was left with) rather than out of both.
-  const [detailReturnsToBrowser, setDetailReturnsToBrowser] = useState(false)
+  // Whether the open card came from a browser row, so its back button returns to the list with the
+  // search and tags it was left with rather than a fresh one.
+  const [detailFromBrowser, setDetailFromBrowser] = useState(false)
   const browserFilters = useRef<BrowseEventsFilters>({ query: '', tags: [] })
+
+  const showEventBrowser = useCallback(
+    (keepFilters: boolean): void => {
+      if (!eventOverlayOpen) eventOverlayHold.pause()
+      if (!keepFilters) browserFilters.current = { query: '', tags: [] }
+      setDetailFromBrowser(false)
+      setDetailEventId(null)
+      setDetailMemberIds([])
+      setEventBrowserOpen(true)
+    },
+    [eventOverlayOpen, eventOverlayHold, setDetailEventId],
+  )
+
+  // Opens the list fresh, from the `/` shortcut or the feed's "All events" button, in place of an
+  // open card; a no-op while the list is already open.
   const openEventBrowser = useCallback((): void => {
-    if (eventOverlayOpen) return
-    browserHold.pause()
-    browserFilters.current = { query: '', tags: [] }
-    setEventBrowserOpen(true)
-  }, [eventOverlayOpen, browserHold])
+    if (!eventBrowserOpen) showEventBrowser(false)
+  }, [eventBrowserOpen, showEventBrowser])
 
   // The desktop-only `/` shortcut (window-level, not `Timeline`'s own onKeyDown, since it must
   // work wherever focus is — see `isOpenEventBrowserShortcut`'s own doc comment).
   useEffect(() => {
     if (isCompactViewport) return
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (eventOverlayOpen) return
+      if (eventBrowserOpen) return
       if (!isOpenEventBrowserShortcut({ key: event.key, target: event.target })) return
       event.preventDefault()
       openEventBrowser()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isCompactViewport, eventOverlayOpen, openEventBrowser])
+  }, [isCompactViewport, eventBrowserOpen, openEventBrowser])
 
   useEffect(() => {
     if (!playback.playing) {
@@ -534,25 +541,49 @@ export function Experience() {
   const currentSceneLocation =
     manifest.scenes.length > 0 ? (dominantScene(sceneAt(manifest.scenes, t)).location ?? null) : null
 
-  const openEventDetail = (event: TimelineEvent, members: readonly TimelineEvent[]): void => {
-    detailHold.pause()
-    setDetailReturnsToBrowser(false)
+  // Every way the card opens or changes event. `seek` moves the timeline to the event, so the scene
+  // behind the card is the event's own; the globe's arrivals and Route links leave `t` alone.
+  const showEventDetail = (
+    event: TimelineEvent,
+    members: readonly TimelineEvent[],
+    { seek, fromBrowser }: { seek: boolean; fromBrowser: boolean },
+  ): void => {
+    if (!eventOverlayOpen) eventOverlayHold.pause()
+    if (seek) setT(placementT(event))
+    setEventBrowserOpen(false)
+    setDetailFromBrowser(fromBrowser)
     setDetailEventId(event.id)
     setDetailMemberIds(members.map((member) => member.id))
   }
+
+  const closeEventOverlay = (): void => {
+    setEventBrowserOpen(false)
+    setDetailFromBrowser(false)
+    setDetailEventId(null)
+    setDetailMemberIds([])
+    eventOverlayHold.resume()
+  }
+
+  // A feed card: a lone event or a digest of its cluster, which seeks to the headline event.
+  const openEventDetail = (event: TimelineEvent, members: readonly TimelineEvent[]): void =>
+    showEventDetail(event, members, { seek: true, fromBrowser: false })
 
   // A click, or a second tap, on an arrival on the expanded globe. Opens over the globe, which
   // stays expanded underneath.
   const activateGlobeEvent = (eventId: string): void => {
     const event = manifest.events.find((e) => e.id === eventId)
-    if (event !== undefined) openEventDetail(event, [event])
+    if (event !== undefined) showEventDetail(event, [event], { seek: false, fromBrowser: false })
   }
 
-  // A Route section's chain link: replaces the panel's event, keeping the "was playing before the
-  // panel opened" fact from the first open rather than re-reading the now-paused playback.
+  // A Route section's chain link: replaces the card's event.
   const openLinkedEventDetail = (eventId: string): void => {
-    setDetailEventId(eventId)
-    setDetailMemberIds([eventId])
+    const event = manifest.events.find((e) => e.id === eventId)
+    if (event !== undefined) showEventDetail(event, [event], { seek: false, fromBrowser: detailFromBrowser })
+  }
+
+  const stepEventDetail = (direction: EventStep): void => {
+    const neighbour = detailEvent === null ? null : adjacentEvent(manifest.events, detailEvent.id, direction)
+    if (neighbour !== null) showEventDetail(neighbour, [neighbour], { seek: true, fromBrowser: detailFromBrowser })
   }
 
   const openCaptionDetail = (scene: Scene): void => {
@@ -565,47 +596,9 @@ export function Experience() {
     captionDetailHold.resume()
   }
 
-  const closeEventDetail = (): void => {
-    if (detailReturnsToBrowser) {
-      openEventBrowserFromDetail()
-      return
-    }
-    setDetailEventId(null)
-    setDetailMemberIds([])
-    detailHold.resume()
-  }
-
-  // Opened from the detail panel's own "All events" action, or by closing a panel a browser row
-  // opened: replaces it rather than layering over it, carrying the "was playing before any overlay
-  // opened" fact forward from the detail panel's hold rather than resuming (the panel already
-  // paused). Back to a browser row's list, it keeps that list's search and tags.
-  const openEventBrowserFromDetail = (): void => {
-    if (!detailReturnsToBrowser) browserFilters.current = { query: '', tags: [] }
-    setDetailReturnsToBrowser(false)
-    browserHold.adopt(detailHold.release())
-    setDetailEventId(null)
-    setDetailMemberIds([])
-    setEventBrowserOpen(true)
-  }
-
-  const closeEventBrowser = (): void => {
-    setEventBrowserOpen(false)
-    browserHold.resume()
-  }
-
-  // A row was activated: jumps `t` and shows the event's detail card, same as the feed's own
-  // "Show on timeline" (§ EventDetailPanel) — closing the browser without resuming playback even
-  // if it had been playing, since resuming would immediately carry the playhead away from the
-  // place just asked for.
-  const activateBrowserEvent = (event: TimelineEvent): void => {
-    setT(placementT(event))
-    setEventBrowserOpen(false)
-    browserHold.release()
-    detailHold.release()
-    setDetailReturnsToBrowser(true)
-    setDetailEventId(event.id)
-    setDetailMemberIds([event.id])
-  }
+  // A browser row: shows its card in the list's place, the timeline moved to the event.
+  const activateBrowserEvent = (event: TimelineEvent): void =>
+    showEventDetail(event, [event], { seek: true, fromBrowser: true })
 
   // The subtitle above the timeline: the scene's short `title` as a heading over its longer
   // `caption` passage, sharing one opacity so they cross-fade together in step with SceneView's
@@ -755,31 +748,22 @@ export function Experience() {
         <EventDetailPanel
           event={detailEvent}
           members={detailMembers}
-          onClose={closeEventDetail}
-          onShowOnTimeline={() => {
-            // Scrubs, then closes the panel so the scene at the event's placement is visible.
-            // Releases rather than resumes the hold: resuming would immediately carry the
-            // playhead away from the place the viewer just asked to see.
-            setT(placementT(detailEvent))
-            detailHold.release()
-            setDetailReturnsToBrowser(false)
-            setDetailEventId(null)
-            setDetailMemberIds([])
-          }}
-          onOpenBrowser={openEventBrowserFromDetail}
+          onClose={closeEventOverlay}
+          onOpenBrowser={() => showEventBrowser(detailFromBrowser)}
           arrivalChainFor={arrivalChainFor}
           onOpenEvent={openLinkedEventDetail}
-          onStep={(direction) => {
-            const neighbour = adjacentEvent(manifest.events, detailEvent.id, direction)
-            if (neighbour) openLinkedEventDetail(neighbour.id)
+          neighbours={{
+            older: adjacentEvent(manifest.events, detailEvent.id, 'older'),
+            newer: adjacentEvent(manifest.events, detailEvent.id, 'newer'),
           }}
+          onStep={stepEventDetail}
         />
       )}
       {eventBrowserOpen && (
         <EventBrowser
           events={manifest.events}
           t={t}
-          onClose={closeEventBrowser}
+          onClose={closeEventOverlay}
           onActivate={activateBrowserEvent}
           initialFilters={browserFilters.current}
           onFiltersChange={(filters) => {

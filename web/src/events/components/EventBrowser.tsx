@@ -4,13 +4,8 @@
  * "All events": the full event list, searchable and tag-filterable, opened from
  * `EventDetailPanel`'s own "All events" affordance or the desktop `/` shortcut.
  *
- * Deliberately **not** built on `shell/Panel` — that primitive is modal (a full-viewport
- * backdrop, a focus trap), and this overlay has to leave the timeline underneath it visible and
- * scrubbable. Instead it docks itself above the timeline (`useTimelineBottomInset`
- * measures the real gap, on both desktop and a phone sheet) with no backdrop at all: nothing
- * outside its own box is inert. Escape closes it via its own `window` listener, the same pattern
- * the expanded globe already uses for the same reason (`timeline/keyboard.ts`'s own
- * doc comment); Tab is left alone, so it can reach the timeline below rather than being trapped.
+ * Lives on `EventDock`, the docked non-modal surface it shares with `EventDetailPanel`, so the
+ * timeline below stays visible and scrubbable while it is open.
  *
  * Search and tag filtering are `browse.ts`'s pure `browseEvents`. The list highlight tracks `t`:
  * `nearestBrowseEventIndex` recomputes whenever `t` or the filtered results change, and the
@@ -49,8 +44,8 @@ import { browseEvents, browseGroupSection, nearestBrowseEventIndex, type BrowseE
 import { formatEventDate, placementT } from '../placement'
 import { buildRailEntries, declutterRailLabels, railEntryAtFraction } from '../rail'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
-import { useTimelineBottomInset } from '../useTimelineBottomInset'
 import styles from './EventBrowser.module.css'
+import { EventDock } from './EventDock'
 
 export interface EventBrowserProps {
   events: readonly TimelineEvent[]
@@ -82,13 +77,11 @@ export function EventBrowser({ events, t, onClose, onActivate, initialFilters, o
   // Tracked separately from `hasPointerCapture` (not implemented in every test environment, and
   // the drag bubble needs this as render state regardless).
   const [railDragging, setRailDragging] = useState(false)
-  const panelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
   const railResizeObserverRef = useRef<ResizeObserver | null>(null)
   const [railHeight, setRailHeight] = useState(0)
-  const bottomInset = useTimelineBottomInset()
 
   // A callback ref rather than a `useEffect` on `railRef`: the rail div mounts and unmounts as
   // `railEntries` goes empty/non-empty (a query with no matches), and an effect with an empty
@@ -130,20 +123,11 @@ export function EventBrowser({ events, t, onClose, onActivate, initialFilters, o
     listRef.current?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
-  // Focus the search box with a mouse, where typing and the arrow keys start there; on a touch
-  // screen focusing an input opens the on-screen keyboard over the list, so focus the panel.
-  useEffect(() => {
-    const touch = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
-    ;(touch ? panelRef.current : searchRef.current)?.focus()
-  }, [])
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+  // Opens on the search box with a mouse, where typing and the arrow keys start there; on a touch
+  // screen focusing an input opens the on-screen keyboard over the list, so the dock takes focus.
+  const [focusSearchOnOpen] = useState(
+    () => typeof window.matchMedia !== 'function' || !window.matchMedia('(pointer: coarse)').matches,
+  )
 
   function toggleTag(tag: EventTag): void {
     setActiveTags((tags) => (tags.includes(tag) ? tags.filter((t2) => t2 !== tag) : [...tags, tag]))
@@ -199,18 +183,16 @@ export function EventBrowser({ events, t, onClose, onActivate, initialFilters, o
   }
 
   const active = results[activeIndex]
-  const panelStyle = { '--browser-bottom-inset': `${bottomInset}px` } as CSSProperties
 
   return (
-    <div ref={panelRef} className={styles.panel} style={panelStyle} tabIndex={-1} role="dialog" aria-label="All events" data-testid="event-browser">
-      <div className={styles.header}>
-        <div className={styles.titleRow}>
-          <h2 className={styles.title}>All events</h2>
-          <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
-            {'×'}
-          </button>
-        </div>
-
+    <EventDock
+      title="All events"
+      onClose={onClose}
+      fit="fill"
+      initialFocusRef={focusSearchOnOpen ? searchRef : undefined}
+      testId="event-browser"
+      header={
+        <>
         <input
           ref={searchRef}
           type="text"
@@ -264,7 +246,9 @@ export function EventBrowser({ events, t, onClose, onActivate, initialFilters, o
         <p className={styles.count} aria-live="polite">
           {results.length} event{results.length === 1 ? '' : 's'}
         </p>
-      </div>
+        </>
+      }
+    >
 
       <div className={styles.body}>
         <ul id="event-browser-list" ref={listRef} className={styles.list} role="listbox" aria-label="Events">
@@ -333,6 +317,6 @@ export function EventBrowser({ events, t, onClose, onActivate, initialFilters, o
           </div>
         )}
       </div>
-    </div>
+    </EventDock>
   )
 }

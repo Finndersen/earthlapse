@@ -29,26 +29,23 @@ function event(overrides: Partial<TimelineEvent> = {}): TimelineEvent {
 
 describe('EventDetailPanel', () => {
   it('shows the full label, date, description and citation', () => {
-    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+    render(<EventDetailPanel event={event()} onClose={vi.fn()} onOpenBrowser={vi.fn()} />)
     expect(screen.getByRole('dialog').textContent).toContain('The K-Pg impact')
     expect(screen.getByText('A 10km asteroid strikes Chicxulub.')).toBeTruthy()
     expect(screen.getByText('Schulte et al., 2010.')).toBeTruthy()
   })
 
   it('lists every tag, not only the primary one', () => {
-    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+    render(<EventDetailPanel event={event()} onClose={vi.fn()} onOpenBrowser={vi.fn()} />)
     expect(screen.getByText(EVENT_TAG_PALETTE.catastrophe.label)).toBeTruthy()
     expect(screen.getByText(EVENT_TAG_PALETTE.life.label)).toBeTruthy()
   })
 
-  it('routes Show on timeline, All events and Escape to their own callbacks', () => {
+  it('routes Back to all events, and Escape, to their own callbacks', () => {
     const onClose = vi.fn()
-    const onShowOnTimeline = vi.fn()
     const onOpenBrowser = vi.fn()
-    render(<EventDetailPanel event={event()} onClose={onClose} onShowOnTimeline={onShowOnTimeline} onOpenBrowser={onOpenBrowser} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Show on timeline' }))
-    fireEvent.click(screen.getByRole('button', { name: 'All events' }))
-    expect(onShowOnTimeline).toHaveBeenCalledTimes(1)
+    render(<EventDetailPanel event={event()} onClose={onClose} onOpenBrowser={onOpenBrowser} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Back to all events' }))
     expect(onOpenBrowser).toHaveBeenCalledTimes(1)
     expect(onClose).not.toHaveBeenCalled()
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
@@ -57,7 +54,7 @@ describe('EventDetailPanel', () => {
 
   it('renders a single-member digest exactly like a plain event', () => {
     const solo = event({ tags: undefined })
-    render(<EventDetailPanel event={solo} members={[solo]} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+    render(<EventDetailPanel event={solo} members={[solo]} onClose={vi.fn()} onOpenBrowser={vi.fn()} />)
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(solo.label)
     expect(screen.queryByRole('list')).toBeNull()
   })
@@ -71,7 +68,7 @@ describe('EventDetailPanel', () => {
       const headline = member('a')
       const second = member('b')
       const third = member('c')
-      render(<EventDetailPanel event={headline} members={[headline, second, third]} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+      render(<EventDetailPanel event={headline} members={[headline, second, third]} onClose={vi.fn()} onOpenBrowser={vi.fn()} />)
 
       const dialog = screen.getByRole('dialog')
       expect(dialog.textContent).toContain('Event a +2 more')
@@ -80,24 +77,6 @@ describe('EventDetailPanel', () => {
       expect(screen.getByText('a description')).toBeTruthy()
       expect(screen.getByText('b description')).toBeTruthy()
       expect(screen.getByText('c description')).toBeTruthy()
-    })
-
-    it('still shows only one "Show on timeline" action, scoped to the headline event', () => {
-      const headline = member('a')
-      const onShowOnTimeline = vi.fn()
-      render(
-        <EventDetailPanel
-          event={headline}
-          members={[headline, member('b')]}
-          onClose={vi.fn()}
-          onShowOnTimeline={onShowOnTimeline}
-          onOpenBrowser={vi.fn()}
-        />,
-      )
-      const buttons = screen.getAllByRole('button', { name: 'Show on timeline' })
-      expect(buttons).toHaveLength(1)
-      fireEvent.click(buttons[0]!)
-      expect(onShowOnTimeline).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -130,7 +109,7 @@ describe('EventDetailPanel', () => {
         <EventDetailPanel
           event={migration}
           onClose={vi.fn()}
-          onShowOnTimeline={vi.fn()}
+         
           onOpenBrowser={vi.fn()}
           arrivalChainFor={() => chain}
           {...overrides}
@@ -147,25 +126,38 @@ describe('EventDetailPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Out of Africa' }))
       expect(onOpenEvent).toHaveBeenCalledExactlyOnceWith('out-of-africa-migration')
       cleanup()
-      render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+      render(<EventDetailPanel event={event()} onClose={vi.fn()} onOpenBrowser={vi.fn()} />)
       expect(screen.queryByRole('region', { name: 'Route' })).toBeNull()
     })
   })
 
-  it.each([
-    ['left', -120, 'newer'],
-    ['right', 120, 'older'],
-  ])('steps to the neighbouring event on a swipe %s, ignoring a mostly vertical drag', (_, dx, direction) => {
+  it('steps to a neighbour with the footer buttons or a horizontal swipe, never past an end', () => {
     const onStep = vi.fn()
-    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} onStep={onStep} />)
-    const area = screen.getByTestId('event-detail-step-area')
-    const swipe = (x: number, y: number): void => {
-      fireEvent.touchStart(area, { touches: [{ clientX: 200, clientY: 300 }] })
-      fireEvent.touchEnd(area, { changedTouches: [{ clientX: 200 + x, clientY: 300 + y }] })
+    const older = event({ id: 'older', label: 'Older event' })
+    render(
+      <EventDetailPanel
+        event={event()}
+        onClose={vi.fn()}
+        onOpenBrowser={vi.fn()}
+        neighbours={{ older, newer: null }}
+        onStep={onStep}
+      />,
+    )
+    const next = screen.getByRole('button', { name: 'Next event' }) as HTMLButtonElement
+    expect(next.disabled).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Previous event: Older event' }))
+    expect(onStep).toHaveBeenLastCalledWith('older')
+
+    const body = screen.getByTestId('event-detail-body')
+    const swipe = (dx: number, dy: number): void => {
+      fireEvent.touchStart(body, { touches: [{ clientX: 200, clientY: 300 }] })
+      fireEvent.touchEnd(body, { changedTouches: [{ clientX: 200 + dx, clientY: 300 + dy }] })
     }
-    swipe(dx, 140)
+    onStep.mockClear()
+    swipe(120, 140)
+    swipe(-120, 10)
     expect(onStep).not.toHaveBeenCalled()
-    swipe(dx, 10)
-    expect(onStep).toHaveBeenCalledExactlyOnceWith(direction)
+    swipe(120, 10)
+    expect(onStep).toHaveBeenCalledExactlyOnceWith('older')
   })
 })

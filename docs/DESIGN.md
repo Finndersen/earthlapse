@@ -573,8 +573,7 @@ is always the trace's right end (ADR-053). One sparkline component, N layers.
 Surfaces events as playback reaches them, rather than only on a timeline hover — the roadmap's
 "non-intrusive playback pop-up cards" and "event card (description + citation)". Lives in
 `web/src/events` (`selectFeedEvents`, `<EventFeed>`), a self-contained prop-driven package like
-`timeline`, `scene` and `layers` — with one deliberate exception, `EventDetailPanel` importing
-`@/shell`'s shared `Panel`, below; `ShellLayout`'s `feed` slot sits below the readouts, on the
+`timeline`, `scene` and `layers`; `ShellLayout`'s `feed` slot sits below the readouts, on the
 one stretch of the periphery that is never the globe orb, the ancestor panel or the scene
 caption, at every breakpoint (a compact single-card strip directly above the timeline on a
 phone).
@@ -636,25 +635,18 @@ tag is still deferred (ADR-022); until it happens, `EventTagLegend` (a plain six
 inside the About & credits panel rather than claiming any of the feed's own tight vertical
 budget permanently) stays scoped to what the feed shows.
 
-Clicking, tapping or Enter-ing a card no longer expands it in place — the roadmap's original
-"pop-up cards" instead open `EventDetailPanel`, one instance of `@/shell`'s shared `Panel`
-primitive (the same one the About & credits panel builds on — one focus trap, not several bespoke
-ones) showing the event's full label, date or range, *every* tag it carries (not only the primary
-one), the full description, the citation, and a "Show on timeline" action. For a digest card
-(ADR-040) the panel lists every reached member of the cluster in full, not only the headline the
-card itself shows — the whole point of opening it is to read the events the "+k more" badge stood
-in for. Opening the panel
-never moves `t` by itself — the card that opened it is already recent, that's why it's showing —
-only "Show on timeline" scrubs, using the same store path `<Timeline>`'s own `onScrub` does, so
-there is still exactly one selection mechanism. Opening the panel pauses playback if it was
-running; closing it (×, Escape, or a click outside) resumes only then, as a direct consequence of
-the click that opened or closed it, never an idle-driven change (§8's ADR-012 amendment: nothing
-in the UI fades or hides on inactivity, only as a direct function of `t` or a direct user action).
-"Show on timeline" is one further close path, distinct from the other three (re-review fix,
-2026-09-15): it scrubs and closes the panel — a still-open panel over a ~35% backdrop was
-hiding the very scene the action asked to see — but deliberately does not resume playback even
-if it had been running before the panel opened, since resuming would immediately carry the
-playhead away from the place just asked for.
+Clicking, tapping or Enter-ing a card opens `EventDetailPanel` (ADR-054): the event's full label,
+date or range, *every* tag it carries (not only the primary one), the full description and the
+citation. For a digest card (ADR-040) it lists every reached member of the cluster in full, not
+only the headline the card shows. The card docks where the "All events" list does (`EventDock`),
+above the timeline, with no backdrop, so the timeline stays visible and usable. Opening it moves
+`t` to the event, through the same store path `<Timeline>`'s own `onScrub` uses; an arrival opened
+on the expanded globe leaves `t` alone. Its Previous and Next buttons, or a horizontal swipe, step
+to the neighbouring events in the list's order; its back button opens the list, and × closes both.
+Opening the card or the list pauses playback if it was running, and closing the last of them (×
+or Escape) resumes it, as a direct consequence of the click that opened or closed it, never an
+idle-driven change (§8's ADR-012 amendment: nothing in the UI fades or hides on inactivity, only
+as a direct function of `t` or a direct user action).
 A timeline event marker (the room-decluttered uncertainty band, ADR-019) does **not** open the
 same panel: unlike a checkpoint pip, an event band is deliberately `pointer-events: none` so the
 scrub track's hit area stays one continuous drag surface across a dense stretch of overlapping

@@ -7325,3 +7325,38 @@ worth seeing: the explosive modern rise.
   lies flat along the floor for ~95% of the human era.
 - **Keeping the log axis.** It shows early growth but hides the explosion that the sparkline
   exists to show.
+
+## ADR-054 — The event card docks with the event list, and opening an event moves `t` to it
+
+**Status:** accepted — 2026-09-23. Supersedes DESIGN §8 "Event feed"'s rule that opening the detail
+panel never moves `t` and its "Show on timeline" action, and ADR-012's use of the modal `Panel`
+for the event detail.
+
+**Context.** The event browser (the "All events" list) is a docked, non-modal surface above the
+timeline, but a row opened the event's detail in the modal `Panel` — a bottom sheet on a phone,
+over the timeline — and its × closed both. Selecting a row already moved `t`, so the card's "Show
+on timeline" repeated what had just happened; from a feed card, reading an event and seeing its
+moment took two steps.
+
+**Decision.**
+
+- **One docked surface for both** (`EventDock`): the list fills the space above the timeline; the
+  card sits in the same place, as tall as its content. Neither has a backdrop, so the timeline,
+  scene and controls stay usable while one is open, and Tab is not trapped. Escape closes the dock
+  and nothing else.
+- **Opening an event moves `t` to it** — from the list, a feed card (a digest to its headline) or a
+  step to a neighbour. "Show on timeline" is removed. An arrival opened on the expanded globe, and
+  a Route chain link, leave `t` alone, so the globe is not disturbed.
+- **Stepping.** The card's Previous and Next buttons and a horizontal swipe open the neighbouring
+  event in the list's time order.
+- **Back and close.** The card always has a back button to the list (keeping the list's search
+  and tags when it was opened from a row) and a × that closes the whole surface, as Escape does.
+- **One playback hold** covers the surface: taken when it opens from closed, kept across switches
+  between list and card, resumed when it closes. The card stays open if the viewer scrubs or plays.
+
+**Rejected.**
+- **Keeping the modal card over the docked list.** Two surfaces, and the card hid the timeline it
+  had just moved.
+- **Seeking on a globe arrival.** The expanded globe animates in `t`; moving it on a click would
+  redraw the map the viewer just clicked on.
+

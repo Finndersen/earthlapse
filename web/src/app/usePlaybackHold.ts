@@ -2,10 +2,8 @@ import { useMemo, useRef } from 'react'
 
 /**
  * Pauses playback while an overlay is open and resumes it on close only if the overlay was what
- * stopped it. Imperative rather than keyed on an `open` flag because overlays close in more than
- * one way: an ordinary close resumes, while an action that moves `t` (e.g. "Show on timeline")
- * closes without resuming, since resuming would carry the playhead away from where the viewer
- * just asked to look.
+ * stopped it. Imperative rather than keyed on an `open` flag because an overlay can hand its
+ * remembered state to another that replaces it (`release`/`adopt`) rather than resuming.
  */
 export interface PlaybackHold {
   /** Remembers whether playback is running, then pauses it. */

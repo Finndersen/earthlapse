@@ -1,31 +1,29 @@
 /*
- * Content only — `Panel.module.css` owns the surface, header and close button. Same HUD type
+ * Content only — `EventDock.module.css` owns the surface, title row and close button. Same HUD type
  * language as `EventFeed.module.css`'s card (mono date/citation, sans body) so the popout reads
  * as the same feature, not a second visual system.
  */
 
-/* Opens level with the feed it came from, below the readouts, rather than at `Panel`'s top-left
-   anchor (which the About panel keeps). The max height subtracts that offset and the backdrop's
-   vertical padding, so the panel ends inside the viewport and `Panel`'s body scrolls under the
-   header instead. */
-.panel {
-  --detail-offset: min(320px, 34vh);
-
-  width: min(440px, 100%);
-  margin-top: var(--detail-offset);
-  max-height: min(560px, calc(100vh - var(--detail-offset) - clamp(32px, 4.8vw, 68px)));
+/* The scrolling part, under the dock's title row and above the footer. */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 20px 4px;
 }
 
-/* Only a target for the swipe handlers: its children lay out as the panel's own. */
-.stepArea {
-  display: contents;
+.footer {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
 }
 
-/* The phone bottom sheet (`Panel.module.css`) anchors to the screen bottom on its own. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
-  .panel {
-    margin-top: 0;
-    max-height: min(80vh, calc(100vh - 32px));
+  .footer {
+    padding-bottom: 12px;
   }
 }
 
@@ -198,9 +196,9 @@
   color: var(--hud-ink, #efe9dc);
 }
 
-.showOnTimeline {
-  display: block;
-  width: 100%;
+.stepButton {
+  flex: 1;
+  min-height: 40px;
   border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
   border-radius: 8px;
   background: transparent;
@@ -210,39 +208,22 @@
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  text-align: center;
   cursor: pointer;
   transition:
     border-color 180ms ease,
-    background 180ms ease;
+    background 180ms ease,
+    color 180ms ease;
 }
 
-.showOnTimeline:hover,
-.showOnTimeline:focus-visible {
+.stepButton:disabled {
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  opacity: 0.5;
+  cursor: default;
+}
+
+.stepButton:not(:disabled):hover,
+.stepButton:focus-visible {
   border-color: var(--hud-accent, #e8b06a);
   background: color-mix(in srgb, var(--hud-accent, #e8b06a) 12%, transparent);
-  outline: none;
-}
-
-.allEvents {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  border: none;
-  background: transparent;
-  padding: 8px 14px;
-  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  text-align: center;
-  cursor: pointer;
-  transition: color 180ms ease;
-}
-
-.allEvents:hover,
-.allEvents:focus-visible {
-  color: var(--hud-ink, #efe9dc);
   outline: none;
 }

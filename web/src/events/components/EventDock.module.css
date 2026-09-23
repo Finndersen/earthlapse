@@ -1,0 +1,128 @@
+/*
+ * `EventDock`'s surface: fixed above the timeline, `--dock-bottom-inset` (`useTimelineBottomInset`)
+ * being the real distance from the viewport bottom to the timeline's top edge. Opaque, like
+ * `shell/Panel`'s card: it opens over HUD type, and translucency lets that type ghost through.
+ */
+
+.dock {
+  --dock-top: max(16px, env(safe-area-inset-top, 0px));
+  --dock-bottom: calc(var(--dock-bottom-inset, 0px) + 12px);
+
+  outline: none;
+  position: fixed;
+  z-index: 150;
+  left: 16px;
+  right: 16px;
+  top: var(--dock-top);
+  bottom: var(--dock-bottom);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  max-width: 720px;
+  border-radius: 12px;
+  background: #08090b;
+  box-shadow:
+    0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18)),
+    0 12px 48px rgba(0, 0, 0, 0.6),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  color: var(--hud-ink, #efe9dc);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+}
+
+/* Only as tall as the content, resting on the timeline, and a reading width rather than the
+   list's. */
+.dock[data-fit='content'] {
+  top: auto;
+  max-width: 600px;
+  max-height: calc(100vh - var(--dock-top) - var(--dock-bottom));
+  max-height: calc(100dvh - var(--dock-top) - var(--dock-bottom));
+}
+
+.dock:focus-visible {
+  box-shadow:
+    0 0 0 1.5px var(--hud-accent, #e8b06a),
+    0 12px 48px rgba(0, 0, 0, 0.6),
+    var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+}
+
+@media (max-width: 760px) {
+  .dock {
+    left: 0;
+    right: 0;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .dock,
+  .dock[data-fit='content'] {
+    max-width: none;
+  }
+}
+
+.header {
+  flex: none;
+  padding: 14px 20px 10px;
+  border-bottom: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 10px;
+}
+
+.dock[data-fit='content'] .titleRow {
+  margin: 0;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+.back,
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.back {
+  margin-left: -8px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-size: 22px;
+}
+
+.close {
+  margin-right: -8px;
+}
+
+.back:hover,
+.back:focus-visible,
+.close:hover,
+.close:focus-visible {
+  color: var(--hud-accent, #e8b06a);
+  outline: none;
+}
+
+.back:focus-visible,
+.close:focus-visible {
+  box-shadow: 0 0 0 1.5px var(--hud-accent, #e8b06a);
+}

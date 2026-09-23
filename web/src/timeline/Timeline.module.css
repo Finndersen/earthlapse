@@ -201,11 +201,11 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* Narrow desktop: the secondary cluster (~320px) also takes the empty controls-row cell under the
-   next-section button, which keeps the readout beside the transport down to ~1060px wide. Below
-   that it no longer fits, so the readout hangs under the buttons and the cluster keeps its whole
+/* Narrow desktop: from 1080px the secondary cluster (~320px) also takes the empty controls-row
+   cell under the next-section button, which keeps the readout beside the transport. Below that
+   even this does not fit, so the readout hangs under the buttons and the cluster keeps its own
    column; `Transport.module.css` centres the readout's text under the same query. */
-@media (min-width: 761px) and (max-width: 1199px) and (min-height: 501px) {
+@media (min-width: 1080px) and (max-width: 1199px) and (min-height: 501px) {
   .secondary {
     grid-column: secondary / -1;
   }

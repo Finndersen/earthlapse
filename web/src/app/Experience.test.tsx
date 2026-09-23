@@ -148,11 +148,11 @@ describe('Experience integration', () => {
   })
 
   describe('event detail panel', () => {
-    it('surfaces a recently-reached event as a feed card, opening a detail panel on click rather than scrubbing in place', async () => {
+    it('surfaces a recently-reached event as a feed card, opening its detail card on click and moving t to it', async () => {
       await renderSettled()
 
       act(() => {
-        useTimeStore.getState().setT(66_000_000)
+        useTimeStore.getState().setT(65_900_000)
       })
 
       const card = await screen.findByTestId('event-feed-card-kpg-impact')
@@ -162,19 +162,11 @@ describe('Experience integration', () => {
         fireEvent.click(card)
       })
 
-      // Opening the card never moves t by itself — only "Show on timeline" does.
       expect(useTimeStore.getState().t).toBe(66_000_000)
-      const dialog = screen.getByRole('dialog')
-      expect(dialog.textContent).toMatch(/impact/i)
-
-      act(() => {
-        fireEvent.click(within(dialog).getByRole('button', { name: 'Show on timeline' }))
-      })
-      expect(useTimeStore.getState().t).toBe(66_000_000)
-      expect(screen.queryByRole('dialog')).toBeNull()
+      expect(screen.getByTestId('event-detail').textContent).toMatch(/impact/i)
     })
 
-    it('pauses playback while open, resuming it on Close but not on "Show on timeline"', async () => {
+    it('pauses playback while the card or the list is open, resuming it only once both are closed', async () => {
       await renderSettled()
 
       act(() => {
@@ -189,19 +181,16 @@ describe('Experience integration', () => {
       expect(useTimeStore.getState().playback.playing).toBe(false)
 
       act(() => {
-        fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+        fireEvent.click(within(screen.getByTestId('event-detail')).getByRole('button', { name: 'Back to all events' }))
       })
-      expect(useTimeStore.getState().playback.playing).toBe(true)
+      expect(screen.getByTestId('event-browser')).toBeTruthy()
+      expect(useTimeStore.getState().playback.playing).toBe(false)
 
       act(() => {
-        fireEvent.click(screen.getByTestId('event-feed-card-kpg-impact'))
-      })
-      expect(useTimeStore.getState().playback.playing).toBe(false)
-      act(() => {
-        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Show on timeline' }))
+        fireEvent.click(within(screen.getByTestId('event-browser')).getByRole('button', { name: 'Close' }))
       })
       expect(screen.queryByRole('dialog')).toBeNull()
-      expect(useTimeStore.getState().playback.playing).toBe(false)
+      expect(useTimeStore.getState().playback.playing).toBe(true)
     })
 
     it('opens the event browser from the feed\'s "All events" button, pausing playback until it closes', async () => {
@@ -221,19 +210,27 @@ describe('Experience integration', () => {
       expect(useTimeStore.getState().playback.playing).toBe(true)
     })
 
-    it('returns to the event browser, search kept, when a detail panel opened from one of its rows closes', async () => {
+    it('goes back from a row\'s card to the list with its search kept, and closes both with ×', async () => {
       await renderSettled()
       fireEvent.keyDown(window, { key: '/' })
       fireEvent.change(screen.getByTestId('event-browser-search'), { target: { value: 'a' } })
-      act(() => {
-        fireEvent.click(within(screen.getAllByRole('option')[0]!).getByRole('button'))
-      })
+      const openFirstRow = (): void => {
+        act(() => {
+          fireEvent.click(within(screen.getAllByRole('option')[0]!).getByRole('button'))
+        })
+      }
+      openFirstRow()
       expect(screen.queryByTestId('event-browser')).toBeNull()
       act(() => {
-        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }))
+        fireEvent.click(within(screen.getByTestId('event-detail')).getByRole('button', { name: 'Back to all events' }))
       })
-      expect(screen.getByRole('dialog').dataset.testid).toBe('event-browser')
       expect((screen.getByTestId('event-browser-search') as HTMLInputElement).value).toBe('a')
+
+      openFirstRow()
+      act(() => {
+        fireEvent.click(within(screen.getByTestId('event-detail')).getByRole('button', { name: 'Close' }))
+      })
+      expect(screen.queryByRole('dialog')).toBeNull()
     })
 
     it('opens a cluster card as a digest of every reached member', async () => {
