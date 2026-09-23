@@ -7182,3 +7182,57 @@ different things.
   `--speed-control-width`.
 - QA shots that select the speed control as `.core select` need to target
   `[role="spinbutton"]` instead.
+
+## ADR-051 — A scene draws its thumbnail until its full image loads
+
+**Status:** accepted — 2026-09-23. Amends ADR-029's wall-clock backstop (what counts as a change).
+
+**Context.** `useScenePair` kept the previous pair on screen until both of a newly presented
+pair's full images (~430 KB each) had loaded. On a slow link, fast playback outran the loads:
+the picture sat on an old scene while the caption, readouts and pips moved on, and most scenes
+were never shown at all. Every published scene already carries a `thumbnail` (128 px square
+WebP, ~4 KB, ~240 KB for all 71) made for the timeline pips.
+
+**Decision.**
+
+- **Full image, else thumbnail, else keep.** Each end of the pair binds as a layer
+  (`scene/sceneLayer.ts`): its full image if loaded, else its thumbnail. The requested pair binds
+  as soon as both ends have one or the other; only with neither does the previous pair stay up,
+  so the never-blank guarantee and the render-phase cache-hit bind are unchanged.
+- **Drawn soft, in place.** The shader samples a thumbnail layer through a 3×3 tent blur one
+  thumbnail texel wide, so the upscale reads as deliberately soft rather than blocky. A thumbnail
+  is the image's centre square (`to_thumbnail_webp`), so it is sampled through the crop window
+  re-expressed in that square (`framing.ts`'s `centreSquareWindow`); where a wide viewport reaches
+  past the square the texture mirrors rather than smearing its edge. In a portrait viewport the
+  window lies inside the square and the thumbnail matches the full image's framing.
+- **Sharpening.** When a drawn thumbnail's full image lands, the layer fades to it over 0.4 s under
+  the `'crossfade'` regime and cuts under `'cut'`. The fade is tracked per scene, so it carries on
+  if the scene changes channel at a transition.
+- **A sharpening is not a scene change for ADR-029.** The backstop limits how often the dominant
+  *scene* changes; a thumbnail and its own full image are the same frame at two resolutions, with
+  the same composition and local luminance, so the swap is a gain in detail, not a flash. It is
+  neither gated nor counted.
+- **Prefetch.** Every thumbnail goes through the shared byte store (`sceneImageBytes`): the pair's
+  and the prefetch plan's thumbnails with the pair's own requests (the byte store starts them at
+  once, after the pair's), every other one at the end of the background list, and each is decoded
+  and uploaded as it arrives. So after first load every thumbnail is normally resident.
+- **GPU budget.** Thumbnails have their own texture cache of 128 (64 KB each, ≤ 8 MB), so they
+  never evict full scenes by count; `retainSceneTextures` retains a bound layer's textures in both.
+- **No-WebGL fallback.** Each `<img>` layer shows the decoded thumbnail under `blur(6px)` while
+  its full image decodes. `object-fit: cover` can only crop the square, so in a box wider than it
+  the thumbnail shows a tighter crop than the full image will.
+
+**Consequences.**
+- The caption, pips and readouts now almost always describe the scene on screen, since the pair
+  binds on thumbnails instead of lagging behind a full-image load.
+- The first paint still waits for the opening scene's full images (`app/firstScene.ts`).
+- The QA harness's `ready()` now also waits for the thumbnail prefetch.
+- `layout-844x390-resting` holds one scene's full image, jumps to it and asserts the canvas
+  changed and is not black.
+
+**Rejected.**
+- **A full-aspect preview asset** (e.g. 256×143) matching every viewport's crop exactly. Better on
+  wide screens, but it needs a new published derivative and a manifest field; worth doing if the
+  mirrored side bands on desktop prove distracting.
+- **Treating the sharpening as a scene change.** It would hold a full image back behind the
+  backstop for no photosensitivity benefit.
