@@ -514,7 +514,9 @@ expands to fill; it is never the default focus.
 > and long labels are elided. The band holding the playhead is accent-coloured. The
 > **breadcrumb** takes the controls row's left track, opposite the speed/mode/scale controls,
 > so the transport stays centred. Below 760px it becomes its own row above the transport, with
-> middle ancestors collapsed to "…".
+> middle ancestors collapsed to "…". At the root section there is no trail and no navigation
+> landmark: on a phone (portrait or short landscape) the row goes entirely; on desktop the
+> controls row keeps its height, so entering a section moves nothing.
 
 > **v1 note (ADR-012 amendment, 2026-09-15).** The periphery no longer dims on idle — nothing in
 > the UI fades or hides on inactivity, only as a direct function of `t` or a direct user action.
@@ -526,6 +528,21 @@ expands to fill; it is never the default focus.
 > top-left of the fullscreen panel — not top-centre, which is the time/era title's own spot,
 > lifted above this panel's backdrop while expanded. It unfolds the sphere into an Equal Earth
 > map over ~0.8s eased; see `docs/GLOBE.md`'s own v2 note and ADR-033 for the mechanism.
+
+> **v2 note (ADR-048).** A window under 500px tall and wider than it is tall — a phone held
+> sideways — takes a third layout, exclusive of the phone-portrait and desktop ones. The time title
+> stays centred at the top with an era shortcut either side of it, About top-right. The globe orb
+> and ancestor portrait fill the top corners as far down as the height allows; the layer readouts
+> are hidden (the orb still expands the globe). One row holds the one-line event strip on the left
+> and the caption's title on the right, as a button that opens the passage in a panel. The timeline
+> has the breadcrumb on its own row above the track, and the transport with the playback-mode,
+> scale and volume controls in a column left of it. Expanded, the globe splits the screen: a left
+> column of chrome, the sphere or map to its right (`docs/GLOBE.md`, "Expanded-view chrome").
+>
+> On desktop the controls row sits midway between the section bands and the window's bottom edge,
+> with the play button on the track's centre (the speed select hangs off the transport's left, the
+> rate readout sits under it), and the globe orb's top sits on the top inset beside the About
+> button. The caption's shade fades to nothing at every edge in every layout.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to

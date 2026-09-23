@@ -948,7 +948,7 @@ letting the browser drop it to `<body>` with no indication of where it went. On 
 (`compact`) rows are single-line with a short alternative hint rather than a truncated one, so an
 honesty caveat ("modelled", "data ends 2015") is never the part that gets cut off.
 
-**Expanded-view chrome: rows on a phone, corners plus the title above 760px (ADR-044, ADR-046).** The sphere
+**Expanded-view chrome: rows on a phone, corners plus the title above 760px, a column in short landscape (ADR-044, ADR-046, ADR-048).** The sphere
 on a phone is **width-bound** — `94vw` is ~367px on a 390px screen — so freeing vertical space does
 not make it bigger; the chrome's job there is only to stop overlapping it. Below 760px the chrome is
 a stack of real rows: title (centred) with the ✕ right-aligned; then era shortcuts left / overlay
@@ -970,6 +970,18 @@ overlay stack's and the legend's own real drawn edges, and `Globe.module.css`'s 
 the max of the chrome gap and both top corners' bottoms (`--overlay-clear-bottom`,
 `--legend-clear-bottom`) — so a corner that grows pushes the sphere down instead of painting over
 it. `--usable-bottom` is the same idea against the Globe/Map toggle's own top edge.
+
+**Short landscape (ADR-048).** A window under 500px tall and wider than it is tall — a phone held
+sideways — takes a third layout. The screen splits: a fixed-width left column
+(`--landscape-column-width`) holds the title and era, the era shortcuts, the overlay selector, then the
+Globe/Map toggle and zoom rocker on one row; the sphere or map fills the box to the right, and the
+timeline runs full width beneath. That box's edges are all measured: the left is the furthest right
+edge among the title (`--chrome-title-right`, `useChromeGap`), the overlay stack
+(`--overlay-clear-right`) and the view controls (`--view-controls-clear-right`); the top is the
+screen's; the bottom is the timeline's top (`--chrome-gap-bottom-raw`); the right is the ✕'s left
+edge (`--close-clear-left`). Because the fit frame is no longer centred horizontally, the camera's
+lens shift (`camera.ts`'s `centerOffset`) re-centres on both axes. The event strip steps aside while
+the globe is open in this layout.
 
 One non-obvious constraint, on the phone layout only: **`.title` must not carry a `transform`.**
 `.eraShortcuts` is a `position: fixed` DOM child of it there, and a transformed ancestor becomes the

@@ -29,6 +29,10 @@
   --edge-button-size: 34px;
   --track-side-gap: clamp(12px, 1.6vw, 24px);
   --track-inset: calc(var(--edge-button-size) + var(--track-side-gap));
+  /* The space `.hud` leaves below the timeline. `Timeline.module.css` reads it back as the gap
+     above its controls row, so that row sits midway between the section bands and the window's
+     bottom edge, with room below the transport for the rate readout under it. */
+  --hud-bottom-inset: clamp(16px, 1.8vw, 24px);
   /* Local override of the shared token (app/globals.css), a touch stronger than its default —
      every HUD element under `.shell` reads `var(--hud-shadow)` and custom properties cascade
      through the DOM like any inherited property, so this alone carries the item-9 "lean on
@@ -41,7 +45,12 @@
 
   position: fixed;
   inset: 0;
+  /* `clip`, not only `hidden`: a `hidden` box is still a scroll container, so moving focus to a
+     control near the bottom edge (a panel restoring focus on close) could scroll the whole HUD up
+     by however far `.bottom::before`'s scrim reaches past it. `hidden` stays as the fallback for
+     browsers without `clip`. */
   overflow: hidden;
+  overflow: clip;
   background: #030406;
   color: var(--hud-ink);
   font-family: var(--hud-sans);
@@ -144,7 +153,7 @@
     'feed     .        .'
     'bottom   bottom   bottom';
   column-gap: var(--gutter);
-  padding: var(--gutter-top) var(--gutter) clamp(12px, 1.8vw, 24px);
+  padding: var(--gutter-top) var(--gutter) var(--hud-bottom-inset);
   pointer-events: none;
 }
 
@@ -161,14 +170,12 @@
   color: var(--hud-faint);
 }
 
-/* The About button leads the ancestor column, so the portrait below it starts further down. The
-   globe column opposite holds only the orb and takes this matching inset, so the two circles sit
-   on the same line and the time title between them gets the top of the row to itself. The value
-   is whatever precedes the portrait in that column: here the button plus the "Your ancestor"
-   kicker, which the phone rule reorders to sit *below* the portrait instead — hence the smaller
-   inset there. Measured, not guessed (`scripts/qa/shots.mjs`'s `orb-portrait-same-row`). */
+/* How far the globe orb starts below the top inset. On desktop the orb's drawn top sits on the
+   top inset itself, level with the About button leading the ancestor column opposite
+   (`scripts/qa/shots.mjs`'s `desktop-orb-top-*`). The phone rule lines the orb up with the
+   portrait under the About button instead. */
 .hud {
-  --hud-column-top: 47px;
+  --hud-column-top: 0px;
 }
 
 .globe {
@@ -393,13 +400,8 @@
 }
 
 .caption::before {
-  inset: -14px -52px -18px;
-  background: radial-gradient(
-    ellipse 58% 62% at 50% 50%,
-    rgba(3, 4, 6, 0.46) 0%,
-    rgba(3, 4, 6, 0.34) 46%,
-    transparent 78%
-  );
+  inset: 0;
+  background: radial-gradient(closest-side, rgba(3, 4, 6, 0.46) 0%, rgba(3, 4, 6, 0.32) 60%, transparent 100%);
 }
 
 .readouts::before,
@@ -444,14 +446,27 @@
    ships today: `scripts/qa/shots.mjs`'s `caption-fits-without-scroll*` shots hold the heading
    full-frame at the longest real caption (`data/scenes.yaml`'s Çatalhöyük record, 213 combined
    characters) at every viewport this app supports, so any shorter caption is always safe too —
-   real measured heights there are 86px (1440x900), 79px (390x844) and 71px (844x390 landscape,
-   the tightest case — deliberately not shrunk further than the other two despite the room a
-   pure `vh` term would take from it, per the standing caution against deepening that viewport's
-   already-tight vertical budget), each with 20-30px of margin baked into this clamp rather than
-   sized flush to them. */
+   real measured heights there are 86px (1440x900) and 79px (390x844), each with 20-30px of
+   margin baked into this clamp rather than sized flush to them. The short-landscape layout shows
+   the heading alone and lifts this cap. */
 .caption {
-  max-height: clamp(100px, 12vh, 120px);
+  /* The shade fades to nothing at every edge of this box, so the box reaches past the text by
+     these bleeds (padding, cancelled by an equal negative margin, so layout is unchanged) and the
+     fade finishes inside the `overflow: hidden` clip instead of being cut into a hard edge. */
+  --caption-shade-bleed-block: 14px;
+  --caption-shade-bleed-inline: 48px;
+
+  max-width: calc(min(120ch, 94vw) + 2 * var(--caption-shade-bleed-inline));
+  max-height: calc(clamp(100px, 12vh, 120px) + 2 * var(--caption-shade-bleed-block));
   overflow: hidden;
+  padding: var(--caption-shade-bleed-block) var(--caption-shade-bleed-inline);
+  margin: calc(-1 * var(--caption-shade-bleed-block)) calc(-1 * var(--caption-shade-bleed-inline));
+  /* The bleed overlaps the timeline's top edge; only the text itself takes the pointer. */
+  pointer-events: none;
+}
+
+.caption * {
+  pointer-events: auto;
 }
 
 /* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot, above
@@ -515,7 +530,10 @@
   pointer-events: auto;
 }
 
-@media (max-width: 760px) {
+/* Phone portrait. Three layouts share this file and never overlap: this one, the short-landscape
+   one at the end of the file, and the desktop/tablet base rules. A phone held sideways (under
+   760px wide but under 500px tall) takes the landscape layout, so this query excludes it. */
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .shell {
     /* Short of the desktop pass's +~54% (this rule's own doc comment on the wide `--orb-size`
        has the full story): at the ~390px phone floor, `.title`'s own grid column sits only
@@ -638,14 +656,14 @@
        the real gap above the controls row above it. */
     --feed-reserve: 39px;
     /* The Globe/Map toggle + zoom rocker row (`Globe.module.css`'s own phone `.viewModeGroup`/
-       `.zoomGroup` rule), sized to the taller of the two — the zoom rocker's own 38px pill (36px
-       buttons plus a 1px border top and bottom) — plus the real gap above the sphere. A literal
-       constant, the same device `--feed-reserve` already is, rather than a live measurement of
-       the toggle alone (`useViewModeToggleHeightReport`'s own doc comment in `Globe.tsx`): the
-       toggle pill is shorter than the zoom rocker sharing its row, so measuring it alone would
-       under-reserve. Measured at 390x844 (`scripts/qa/shots.mjs`'s
-       `globe-controls-row-clear-of-sphere-phone`). */
-    --controls-row-reserve: 44px;
+       `.zoomGroup` rule), sized to the taller of the two — the toggle's own ~40px pill, since its
+       own padding/font-size now sit it a touch above the zoom rocker's 38px (36px buttons plus a
+       1px border top and bottom) — plus the real gap above the sphere. A literal constant, the
+       same device `--feed-reserve` already is, rather than a live measurement of the toggle alone
+       (`useViewModeToggleHeightReport`'s own doc comment in `Globe.tsx`): a second, independent
+       row-height number here would drift from the toggle's own CSS the first time either changes.
+       Measured at 390x844 (`scripts/qa/shots.mjs`'s `globe-controls-row-clear-of-sphere-phone`). */
+    --controls-row-reserve: 46px;
     /* What the sphere/map must leave free at the bottom: both bands stacked, no double-count. */
     --bottom-overlay-reserve: calc(var(--controls-row-reserve) + var(--feed-reserve));
   }
@@ -671,6 +689,31 @@
   .globe .label {
     font-size: 8px;
     letter-spacing: 0.16em;
+  }
+
+  /* The caption spans the screen edge to edge, so its shade does too; the text keeps a 12px
+     gutter inside it, which buys the passage every pixel of line length the width allows. The
+     shade is even across the width and fades out through the block bleeds at its top and bottom. */
+  .caption {
+    justify-self: stretch;
+    max-width: none;
+    padding-inline: 12px;
+    margin-inline: calc(-1 * var(--gutter));
+  }
+
+  .caption::before {
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(3, 4, 6, 0.46) var(--caption-shade-bleed-block),
+      rgba(3, 4, 6, 0.46) calc(100% - var(--caption-shade-bleed-block)),
+      transparent 100%
+    );
+  }
+
+  /* A phone needs no room under its transport row for a rate readout. */
+  .shell {
+    --hud-bottom-inset: clamp(12px, 1.8vw, 24px);
   }
 
   .title {
@@ -794,27 +837,158 @@
   }
 }
 
-/* A short, wide desktop window (1280x720 is the worst case measured) leaves `.feed`'s track very
-   little spare height once `.bottom` grows to fit the heading, a long caption passage and the
-   timeline (see `.feed`'s own comment, above `.feed {` earlier in this file). Only a partial
-   mitigation, not a fix for that trade-off: it just claws back a couple of px by tightening the
-   heading-to-passage gap, and costs nothing on a taller window. `min-width` excludes phones,
-   which already get their own `.captionBlock` gap above for their own, narrower-not-shorter,
-   reason. */
-@media (max-height: 760px) and (min-width: 761px) {
-  .captionBlock {
-    gap: 2px;
-  }
-
-  /* The 50%+ desktop enlargement (this file's own `--orb-size` doc comment) must not apply here:
-     a short, wide window (844x390 landscape-phone is the case that matters) already pushes the
-     bottom chrome toward the edge of the viewport before this orb grows at all — a bigger orb
-     would only deepen that, and fixing the cut-off itself is a separate, out-of-scope pass.
-     Reverts to the exact pre-enlargement formula (not "smaller than that" — there's no evidence
-     a further shrink is warranted, only that growth is off the table here) rather than a new
-     number, so this is provably a no-op versus the orb's own size before this change. */
+/* A short desktop window takes a smaller orb, since a bigger one only deepens how far the bottom
+   chrome is pushed down. Windows shorter than 500px take the landscape layout below instead. */
+@media (max-height: 760px) and (min-width: 761px) and (min-height: 501px) {
   .shell {
     --orb-size: clamp(120px, 13vw, 196px);
+  }
+}
+
+/* Short landscape: a phone held sideways, or any window under 500px tall and wider than it is
+   tall (ADR-048). Neither the phone-portrait stack nor the desktop periphery fits in that height.
+   Collapsed, the time title stays centred at the top, its own top level with the About button
+   opposite, with the era shortcuts centred in a row beneath it — the desktop arrangement, not a
+   shortcut either side of the title; the globe orb and the ancestor portrait fill the corners
+   beside it as far down as the height allows; one row holds the event strip (left) and the
+   caption's title (right); the timeline runs beneath. The layer readouts are hidden; the orb
+   still expands the globe, which shows them. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .shell {
+    --gutter: 16px;
+    --gutter-top: 8px;
+    --corner-control-size: 40px;
+    /* The height the corner thumbnails can take: the window less everything stacked under them
+       in a section (the strip row, the timeline with its breadcrumb row, the paddings and gaps,
+       ~176px). The ancestor column also holds the About button and two lines of name above and
+       below its portrait (~54px more). Each is capped by its own column's width below. */
+    --globe-orb-size: clamp(64px, 100vh - 176px, 200px);
+    --landscape-portrait-size: clamp(56px, 100vh - 230px, 170px);
+    /* The expanded view's left column: the title, era shortcuts, overlay selector and view
+       controls all fit inside it, so the sphere/map box beside it holds still while the title
+       text changes during playback. */
+    --landscape-column-width: clamp(190px, 28vw, 250px);
+  }
+
+  .hud {
+    --hud-column-top: 0px;
+
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'globe  title  ancestor'
+      'globe  .      ancestor'
+      'strip  strip  strip'
+      'bottom bottom bottom';
+    row-gap: 4px;
+    padding-bottom: 6px;
+  }
+
+  /* The side columns are containers so each thumbnail can be as large as the height allows but
+     never wider than the column beside the title. Collapsed only: containment would make the
+     orb's column the containing block for the expanded globe's fixed backdrop. */
+  .shell[data-globe-expanded='false'] .globe {
+    justify-self: stretch;
+    align-items: flex-start;
+    width: auto;
+    container-type: inline-size;
+  }
+
+  .orb {
+    width: min(var(--globe-orb-size), 100cqw);
+    height: min(var(--globe-orb-size), 100cqw);
+  }
+
+  .readouts {
+    display: none;
+  }
+
+  /* Collapsed, `.title` stays the base rule's plain flex column (time/era, then the era
+     shortcuts beneath, centred) — the same arrangement desktop uses. That puts the heading's own
+     top flush with row 1's top, level with the About button opposite (both read `--hud-column-
+     top: 0`), rather than the era shortcuts alone claiming row 1 and pushing the heading into a
+     second row underneath it. */
+
+  .ancestor {
+    --orb-size: min(var(--landscape-portrait-size), 100cqw);
+
+    justify-self: stretch;
+    max-width: none;
+    gap: 4px;
+    container-type: inline-size;
+  }
+
+  .ancestor > .label {
+    display: none;
+  }
+
+  .ancestor > [data-testid='ancestor-readout'] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* The strip row holds two fixed regions whatever their text: the event strip in the left 45%
+     (less a gap), the caption centred in the right 55%. `.bottom` steps out of the grid so the
+     caption's stage and the timeline can each take their own row. */
+  .bottom {
+    display: contents;
+  }
+
+  .feed {
+    grid-area: strip;
+    align-self: center;
+    justify-self: start;
+    width: calc(45% - 12px);
+    max-width: none;
+    padding-block: 0;
+  }
+
+  .stage {
+    grid-area: strip;
+    align-self: center;
+    justify-self: end;
+    width: 55%;
+    margin-bottom: 0;
+  }
+
+  .timeline {
+    grid-area: bottom;
+  }
+
+  .caption {
+    max-width: calc(100% + 2 * var(--caption-shade-bleed-inline));
+    max-height: none;
+  }
+
+  /* Expanded: the title and era shortcuts head the left column, at the column's fixed width; the
+     globe's own controls continue the column below them (`Globe.module.css`'s landscape rule). The
+     event strip has no room in the column and would cross the sphere anywhere else, so it steps
+     aside while the globe is open. `.bottom` is out of the grid here, so the timeline takes the
+     place above the globe's backdrop itself. */
+  .shell[data-globe-expanded='true'] .title {
+    position: fixed;
+    top: var(--gutter-top);
+    left: var(--gutter);
+    width: var(--landscape-column-width);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .shell[data-globe-expanded='true'] .feed {
+    display: none;
+  }
+
+  /* Bottom-aligned so the globe's own (empty) caption slot, `useChromeGap`'s lower boundary,
+     sits one row gap above the timeline. */
+  .shell[data-globe-expanded='true'] .stage {
+    align-self: end;
+  }
+
+  .shell[data-globe-expanded='true'] .stage,
+  .shell[data-globe-expanded='true'] .timeline {
+    position: relative;
+    z-index: 60;
   }
 }
 

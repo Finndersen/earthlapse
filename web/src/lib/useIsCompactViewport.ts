@@ -1,12 +1,12 @@
 'use client'
 
-/** Whether the viewport is narrow enough that the HUD should switch to its compact/phone
- *  layout. Mirrors `ShellLayout.module.css`'s own `@media (max-width: 760px)` breakpoint — the
- *  point the shell itself restacks into the phone layout — rather than a size threshold invented
- *  separately, so every consumer goes compact exactly when the rest of the HUD does. A viewport
- *  query, not a consumer's own measured element width: several consumers (`events`' feed,
- *  `globe`'s basemap tier and legend) are deliberately narrow at every size, so measuring
- *  themselves would read as "always compact".
+/** Whether the viewport is small enough that the HUD should use its compact chrome: a phone in
+ *  portrait (under 760px wide) or any short landscape window (under 500px tall, ADR-048). Mirrors
+ *  the union of `ShellLayout.module.css`'s phone-portrait and landscape layouts rather than a
+ *  size threshold invented separately, so every consumer goes compact exactly when the rest of
+ *  the HUD does. A viewport query, not a consumer's own measured element width: several
+ *  consumers (`events`' feed, `globe`'s legend) are deliberately narrow at every size, so
+ *  measuring themselves would read as "always compact".
  *
  *  Shared, not duplicated: `events/useIsCompactViewport.ts` and `globe/deviceTier.ts`'s
  *  `useIsPhoneViewport` used to each carry their own identical copy of this `matchMedia`
@@ -19,7 +19,7 @@
 
 import { useEffect, useState } from 'react'
 
-const QUERY = '(max-width: 760px)'
+const QUERY = '(max-width: 760px), (orientation: landscape) and (max-height: 500px)'
 
 function readsCompact(): boolean {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false

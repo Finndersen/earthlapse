@@ -20,41 +20,19 @@
    has the pixel sources) live here for the identical reason: `.edgeButton`'s wide-viewport
    vertical offset reads them via `var()`. */
 .timeline {
-  /* Shared by the speed select's slot and the rate readout, which flank the transport buttons in
-     `.core`. One value for both is what centres those buttons: the rate slot is reserved wide
-     (it must not reflow the row when playback starts) and the select is narrow, so unequal
-     flanks would push the transport off centre by half the difference.
-
-     Sized to what the rate slot actually holds — the "Time compressed" badge (102px measured) and
-     the widest `formatRate` output (96px) either side of their 8px gap — plus a little slack.
-
-     The flank is paid for twice, and the row must also fit the breadcrumb and the mode/scale
-     cluster, so a flat reserve wide enough to look right at 1440px leaves nothing for the
-     breadcrumb's own column by ~950px. Scaling with the viewport keeps the reserve at its full
-     width where there is room for it and gives it up first — before the breadcrumb, and before
-     anything overlaps — where there is not. The floor still holds the rate readout itself; only
-     the rarely-shown "Time compressed" badge beside it tightens. */
-  --transport-flank: clamp(12ch, 15vw, 24ch);
-
   --edge-button-gap: 16px;
   --track-box-height: 63px;
   --stack-row-gap: 2px;
   --ticks-height: 12px;
+  /* The speed select's own width (`Transport.module.css`'s `.speedSelect`), which the desktop row
+     keeps clear beside the breadcrumb. */
+  --speed-select-width: 46px;
 
   display: grid;
-  /* Row 1: the edge buttons flank the track, each in its own `--edge-button-size` column; `track`
-     spans the three middle columns, the same total width `sections`/`core`/`secondary` share
-     between them one row down — this is what keeps `core` optically centred on the track (below). */
-  /* `secondary`'s column floors at its own content (`minmax(auto, 1fr)`) rather than being a
-     plain `1fr`: its controls are all fixed-width, and a purely fractional column caps it below
-     that and stacks them into rows. It still takes `1fr` whenever that is the larger of the two,
-     which is what keeps `core` centred between the two flexible columns; only when the controls
-     genuinely need more does it grow, and `sections` (the breadcrumb, the row's one freely
-     shrinking column) gives up the difference. Paired with `.secondary`'s own `wrap` below — the
-     floor only means anything if the flex container cannot collapse itself by wrapping instead,
-     and here it can, which is deliberate: see the narrow-desktop media query below for the one
-     width band where that floor turns out to matter and gets swapped for a real one. */
-  grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(auto, 1fr) var(--edge-button-size);
+  /* Row 1: the edge buttons flank the track, which spans the three middle columns. Row 2 splits
+     that same width into two equal flexible columns either side of the transport, so the play
+     button sits on the track's centre whatever the breadcrumb or the secondary cluster hold. */
+  grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(0, 1fr) var(--edge-button-size);
   grid-template-areas:
     'edgePrev track    track track    edgeNext'
     '.        sections core  secondary .';
@@ -62,42 +40,11 @@
      of the same clamp, so the expanded globe's corner chrome (`--track-inset`, that file's own
      doc comment) can never drift from the track's real rendered gap. */
   column-gap: var(--track-side-gap, clamp(12px, 1.6vw, 24px));
-  row-gap: 2px;
+  /* The same inset `.hud` leaves below the timeline (`ShellLayout.module.css`), so the controls
+     row sits midway between the section bands and the bottom of the window. */
+  row-gap: var(--hud-bottom-inset, 16px);
   width: 100%;
   font-family: var(--hud-sans, -apple-system, 'SF Pro Display', 'Inter', 'Helvetica Neue', Arial, sans-serif);
-}
-
-/* Narrow desktop — still this grid's wide-viewport layout (the phone-portrait breakpoint below
-   is a different `grid-template-areas` entirely), just short on width. Two compounding problems
-   in this band, both scoped here rather than in the base rule above so 1440px/1920px keep
-   reading that rule completely unchanged (verified: identical `--transport-flank` and
-   `grid-template-columns` output at those widths with or without this block):
-
-   1. The base `clamp(12ch, 15vw, 24ch)` doesn't reach its own floor until ~700px, so at a
-      plausible desktop width like 1000px `--transport-flank` still reserves ~150px a side, ~300px
-      of `core` before `sections` or `secondary` see anything. Pulled to its floor over this band
-      instead of waiting for ~700px: the floor is already sized to the rate readout's own real
-      content (that custom property's own doc comment), so this only loses the "time compressed"
-      badge's headroom sooner, exactly the give-up-first order that doc comment already describes.
-   2. Even with (1) alone, `secondary`'s `minmax(auto, 1fr)` floor (the base rule above) still
-      measured only 168px at 1000px — its `auto` minimum is its widest *single* child once
-      `flex-wrap: wrap` is allowed to catch the rest (that rule's own doc comment), not the ~318px
-      its three controls need on one line, so the wrap still caught the shortfall: three stacked
-      rows, not one. Swapped for `minmax(max-content, 1fr)` here, whose floor is that true one-line
-      width regardless of wrapping.
-
-   Both scoped to the same narrow-desktop band on purpose: fixing (2) *without* (1) reserves the
-   floor correctly but leaves nothing for `sections` beside it; changing (2) at every width instead
-   of scoping it here was tried and reverted — `max-content` (measured ~323px) turns out to exceed
-   half the leftover space even at 1440px, so grid freezes `secondary` there too and knocks `core`
-   ~30px off true centre, a regression this file's own `transport-core-optically-centred` QA shot
-   caught. 1300px is comfortably clear of 1000px while staying below where the base
-   `--transport-flank` rule is already flat at its own ceiling (`15vw` reaches `24ch` at 1420px). */
-@media (max-width: 1300px) {
-  .timeline {
-    --transport-flank: clamp(10ch, 9vw, 16ch);
-    grid-template-columns: var(--edge-button-size) minmax(0, 1fr) auto minmax(max-content, 1fr) var(--edge-button-size);
-  }
 }
 
 .trackStack {
@@ -110,78 +57,52 @@
   gap: var(--stack-row-gap);
 }
 
-/* Holds the breadcrumb trail alone — the row's one flexible column (`minmax(0, 1fr)` above),
-   free to grow or shrink with the trail's own length without disturbing anything else in the row:
-   speed/rate, transport, mode/scale controls all live in `.core`'s or
-   `.secondary`'s fixed-width tracks instead, specifically so none of them shifts position as this
-   one does. The room this track has traces back to deleting the breadcrumb's own "‹ Up"/"⌂ Earth"
-   buttons and moving its "‹"/"›" sibling-step buttons onto the grid itself
-   (`SectionEdgeNav.tsx`/`SectionEdgeButton`). */
+/* The breadcrumb trail. On desktop it takes the left column up to the speed select that hangs
+   off the transport's left side, so a long trail only ellipsises once that width is used up. At
+   the root section the breadcrumb renders nothing; the cell stays, and its row keeps the
+   transport's height, so entering a section moves nothing. */
 .sections {
   grid-area: sections;
   display: flex;
   align-items: center;
+  align-self: center;
   justify-self: start;
   min-width: 0;
-  max-width: 100%;
+  max-width: calc(100% - var(--speed-select-width) - var(--track-side-gap, 16px));
 }
 
-/* The centre cluster: the speed select, `TransportCore` (back/play/forward) and the rate readout,
-   in that order — speed sets the rate, the transport runs it, the readout shows the result, so the
-   three read as one group. Every one is fixed-width, so this `auto`-sized column's own width is
-   constant regardless of the breadcrumb in `.sections`, which keeps it centred on the track
-   (`.timeline`'s own doc comment: `sections`/`core`/`secondary` share the exact same three columns
-   `track` spans one row up). The sound/volume control lives in `.secondary` instead, beside the
-   mode and scale toggles. */
+/* The speed select, `TransportCore` (back/play/forward) and the rate readout — speed sets the
+   rate, the transport runs it, the readout shows the result. On desktop only the three transport
+   buttons are in flow, so this column is exactly their width and centred; the select hangs off
+   their left side and the readout sits under them (`.speedSlot`/`.rateReadoutRow`). */
 .core {
   grid-area: core;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   gap: clamp(10px, 1.4vw, 18px);
-  /* This sits in the grid's one `auto` track, which floors at its items' own min-content width.
-     Without this the two reserved flanks make that floor wider than the row can grant at a narrow
-     desktop width, and the track overflows into `secondary` beside it instead of the flanks
-     giving up their reserve. Losing a few pixels of centring is the better failure. */
-  min-width: 0;
 }
 
 /* The right-hand cluster: the playback-mode toggle, the scale toggle, then the sound/volume
-   control (`@/audio`'s `<SoundToggle>`, passed through as `sound`). Every control here is
-   fixed-width. `justify-self: end` / `justify-content: flex-end` anchor the cluster to this
-   track's own right edge, mirroring the breadcrumb's own left anchor on the opposite side.
-
-   No `min-width: 0` here, deliberately: this item's automatic minimum is exactly what makes
-   `.timeline`'s `minmax(auto, 1fr)` floor this column at its own content, so it never shrinks
-   into `.core` beside it — see the historical "mute/volume button overlaps the next/fast-forward
-   button" bug this guards against (`scripts/qa/shots.mjs`'s `secondary-core-no-self-overlap-*`
-   family). At three controls across, that content floor is wider than `.core`'s track can grant
-   at some required widths (844x390 is the tightest real one, and — see `.timeline`'s own narrow-
-   desktop media query — a ~1000px desktop) — `flex-wrap: wrap`, not `nowrap`, is what keeps a
-   genuinely too-narrow case readable: the row grows to two lines instead of shrinking below any
-   one control — `secondaryHeightPx`'s own generous ceiling (`scripts/qa/shots.mjs`) already
-   anticipated exactly this. At the widths that media query covers, `wrap` isn't enough on its own
-   — this column's `auto` floor is only its widest *single* child once wrapping is allowed to
-   catch the rest, well under the ~318px its three controls need on one line, so wrapping still
-   caught the shortfall (three stacked rows, not one) before the grid ever saw a floor worth
-   honouring — so that query swaps this same track for `minmax(max-content, 1fr)` there instead,
-   `max-content` being the true one-line width regardless of wrapping. Left at the base `auto` for
-   every wider viewport rather than switched everywhere: `max-content` (measured ~323px) turns out
-   to exceed half the leftover space even at 1440px, so making it the floor unconditionally froze
-   this column there too and knocked `.core` off true centre — `.timeline`'s own comment has the
-   measured regression this avoided.
-   `align-items: flex-end` bottom-aligns every control's own interactive row (each carries a label
-   above its buttons except the rate readout and the sound toggle, neither of which has one) —
-   applies per wrapped line, so a second line still bottom-aligns its own contents. */
+   control (`@/audio`'s `<SoundToggle>`, passed through as `sound`), anchored to the track's right
+   edge. The mode and scale toggles carry a small label above their pills; the bottom margin is
+   that label's height, so the pills, not the whole cluster, sit on the row's centre line with
+   the breadcrumb and transport. Where the column is too narrow for all three on one line (a
+   window under ~1000px wide) the cluster wraps rather than reaching into the transport. */
 .secondary {
   grid-area: secondary;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   justify-self: end;
+  align-self: center;
   flex-wrap: wrap;
   gap: clamp(6px, 0.7vw, 10px);
   row-gap: 8px;
+  min-width: 0;
+  margin-bottom: 16px;
 }
 
 /* The sound toggle's own slot: no label of its own, so it needs no `flex-direction: column`
@@ -192,34 +113,31 @@
   align-items: center;
 }
 
-/* Holds `RateReadout` (a fixed-width slot, always reserved) and, outboard of it,
-   `TimeCompressedBadge` (ADR-029, shown rarely) inside `.core`. Flex at every width — the badge's
-   own occasional appearance already shifts nothing at rest, so there is no "reserve its width
-   always" requirement the way `RateReadout`'s own doc comment describes for itself.
-
-   `justify-content: flex-start` packs the row toward the transport buttons, mirroring
-   `.speedSlot`'s own `flex-end` on the other side, so the rate sits directly beside the buttons
-   whose result it reports — the select sets the rate on one side, the readout shows it on the
-   other. The badge takes the outboard end for the same reason: it is the occasional annotation,
-   not the number, so it is also what gives way first when the flank tightens on a narrow
-   viewport. */
+/* `RateReadout` and, outboard of it, `TimeCompressedBadge` (ADR-029, shown rarely). On desktop
+   it sits centred under the transport buttons, out of flow, so showing it when playback starts
+   moves nothing. The phone and landscape layouts put it back in the transport row, in a reserved
+   slot the width of `--transport-flank`. */
 .rateReadoutRow {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  width: var(--transport-flank);
+  justify-content: center;
   gap: 8px;
+  width: max-content;
+  transform: translateX(-50%);
 }
 
-/* The speed select's own slot, the mirror of `.rateReadoutRow` on the other side of the transport
-   buttons: same reserved width, contents pushed toward the buttons so the small control sits
-   beside them rather than stranded at the far edge. The select itself stays its own narrow size —
-   this slot exists only to balance the row. */
+/* The speed select: out of flow on desktop, just left of the back button. */
 .speedSlot {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + clamp(10px, 1.4vw, 18px));
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  width: var(--transport-flank);
+  transform: translateY(-50%);
 }
 
 /* The scale toggle: a "Scale" label plus a segmented control showing both options, so the choice
@@ -276,17 +194,45 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
+/* Phone and short landscape keep the speed select and the rate readout in the transport row, in
+   reserved `--transport-flank` slots either side of the buttons, so the buttons stay centred and
+   the row cannot reflow when playback starts. */
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .sections {
+    align-self: auto;
+    max-width: 100%;
+  }
+
+  .core {
+    position: static;
+    align-self: auto;
+  }
+
+  .speedSlot,
+  .rateReadoutRow {
+    position: static;
+    width: var(--transport-flank);
+    transform: none;
+  }
+
+  .rateReadoutRow {
+    justify-content: flex-start;
+  }
+
+  .secondary {
+    align-self: auto;
+    min-width: auto;
+    margin-bottom: 0;
+  }
+}
+
 /* Phone portrait: the era-edge buttons leave the track (row 1 collapses to just `track`) and
    join `core` in one compact transport row — `‹` and `›` either side of back/play/forward — so
    the track/ruler/band strip above no longer needs a horizontal gutter reserved for them and can
-   use the panel's full width (user ask, 2026-09-19: "the bigger win is horizontal... `‹` and `›`
-   sit outside the era band strip... insetting it... from both edges"). `sections` and `secondary`
-   each get their own full-width row, stacked, matching the pre-existing narrow layout. Kept at
-   the package's existing `max-width: 760px` breakpoint (`deviceTier.ts`'s `useIsPhoneViewport`),
-   not a new one. */
-@media (max-width: 760px) {
+   use the panel's full width. `sections` and `secondary` each get their own full-width row. */
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .timeline {
-    /* Far narrower than the desktop value: this row carries five controls across ~390px. */
+    /* This row carries five controls across ~390px. */
     --transport-flank: 44px;
 
     grid-template-columns: var(--edge-button-size) 1fr var(--edge-button-size);
@@ -311,6 +257,18 @@
     justify-self: center;
   }
 
+  /* At the root section the breadcrumb renders nothing, so its row goes, gap and all. */
+  .timeline[data-at-root='true'] {
+    grid-template-areas:
+      'track      track    track'
+      'edgePrev   core     edgeNext'
+      'secondary  secondary secondary';
+  }
+
+  .timeline[data-at-root='true'] .sections {
+    display: none;
+  }
+
   /* Tight gaps: this row carries five controls plus two reserved flanks across ~390px, and the
      default `clamp(10px, 1.4vw, 18px)` alone spends ~70px of it — enough to push the section-edge
      arrows past the screen edge. */
@@ -323,8 +281,101 @@
     justify-self: center;
     flex-wrap: wrap;
     row-gap: 10px;
-    /* Tightened from the base `clamp(8px, 1vw, 14px)` for a little extra breathing room at the
-       ~390px floor. */
     gap: 6px;
+  }
+}
+
+/* Short landscape (ADR-048): the breadcrumb takes a fixed-height row of its own above the track
+   (gone at the root section), and the track gets the full width between the section-edge
+   buttons. Left of it, the transport sits level with the scrub line and the mode, scale and
+   volume controls take one row under it, their visible labels dropped for width (the labels stay
+   as the groups' accessible names). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .timeline {
+    --transport-flank: 40px;
+
+    grid-template-columns: auto var(--edge-button-size) minmax(0, 1fr) var(--edge-button-size);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      'sections  sections sections sections'
+      'core      edgePrev track    edgeNext'
+      'secondary edgePrev track    edgeNext';
+    column-gap: 8px;
+    row-gap: 0;
+  }
+
+  .sections {
+    justify-content: center;
+    justify-self: center;
+    margin-bottom: 4px;
+  }
+
+  .timeline[data-at-root='true'] .sections {
+    display: none;
+  }
+
+  .core {
+    align-self: start;
+    margin-top: 8px;
+    gap: 4px;
+  }
+
+  .secondary {
+    align-items: center;
+    align-self: start;
+    justify-content: flex-start;
+    justify-self: start;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .scaleGroup {
+    gap: 0;
+  }
+
+  .scaleLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .scaleOptions {
+    min-height: 32px;
+  }
+
+  .scaleButton {
+    padding: 0 6px;
+    font-size: 9.5px;
+  }
+
+  /* Expanded: the breadcrumb leaves its own row above the track — which the track no longer
+     needs to clear, so the sphere/map fit frame below gets that height back (`useChromeGap`'s own
+     flexible middle row absorbs `.timeline`'s smaller intrinsic height and pushes the timeline,
+     and so the frame's lower bound, further down) — and sits directly above the transport
+     instead, in the left column. Taken out of the grid's own row flow entirely (`position:
+     absolute`, against `.timeline` itself, `position: relative` while expanded —
+     `ShellLayout.module.css`'s own rule), so it costs the grid no row height at all. `.shell`'s
+     `[data-globe-expanded]` lives in a sibling module, so it's read directly off the DOM ancestor
+     via `:global()`, the same device `EraShortcuts.module.css` uses for the same reason. */
+  :global([data-globe-expanded='true']) .timeline {
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'core      edgePrev track    edgeNext'
+      'secondary edgePrev track    edgeNext';
+  }
+
+  :global([data-globe-expanded='true']) .sections {
+    position: absolute;
+    left: 0;
+    right: auto;
+    bottom: 100%;
+    margin-bottom: 8px;
+    justify-content: flex-start;
+    justify-self: auto;
+    max-width: var(--landscape-column-width, 220px);
   }
 }

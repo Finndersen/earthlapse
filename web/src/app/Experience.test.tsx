@@ -218,9 +218,29 @@ describe('Experience (W12a integration)', () => {
 
       // Settled on one scene (no crossfade in progress): both share their wrapper's opacity 1,
       // set once on the shared `.captionBlock` wrapper rather than on either element itself.
-      const wrapper = titleEl.parentElement as HTMLElement
-      expect(wrapper).toBe(textEl.parentElement)
+      const wrapper = textEl.parentElement as HTMLElement
+      expect(wrapper.contains(titleEl)).toBe(true)
       expect(wrapper.style.opacity).toBe('1')
+    },
+    10000,
+  )
+
+  it(
+    "opens the scene's full passage in a panel from the caption's title button, pausing playback until it closes",
+    async () => {
+      await renderSettled()
+      act(() => {
+        useTimeStore.getState().setPlaying(true)
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Archean Shore — show description' }))
+      const dialog = screen.getByRole('dialog', { name: 'Archean Shore' })
+      expect(within(dialog).getByTestId('scene-caption-detail').textContent).toMatch(/Archean shore/i)
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+      expect(screen.queryByRole('dialog', { name: 'Archean Shore' })).toBeNull()
+      expect(useTimeStore.getState().playback.playing).toBe(true)
     },
     10000,
   )
@@ -244,7 +264,7 @@ describe('Experience (W12a integration)', () => {
       const samples: string[] = []
       const deadline = Date.now() + 3000
       while (Date.now() < deadline) {
-        const wrapper = screen.getByTestId('scene-caption-title').parentElement as HTMLElement
+        const wrapper = screen.getByTestId('scene-caption-text').parentElement as HTMLElement
         samples.push(wrapper.style.opacity)
         if (Number(wrapper.style.opacity) > 0 && Number(wrapper.style.opacity) < 1) break
         // eslint-disable-next-line no-await-in-loop
@@ -258,7 +278,7 @@ describe('Experience (W12a integration)', () => {
       // fading elements — the same invariant the settled-state assertion above checks at 1.
       const titleEl = screen.getByTestId('scene-caption-title')
       const textEl = screen.getByTestId('scene-caption-text')
-      expect(titleEl.parentElement).toBe(textEl.parentElement)
+      expect(textEl.parentElement?.contains(titleEl)).toBe(true)
     },
     12000,
   )

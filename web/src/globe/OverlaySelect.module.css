@@ -16,7 +16,7 @@
    the 390px floor that is 390 less both gutters, the pills' own ~156px and a gap — and the widest
    option label ("Population density") needs nearly all of it, since a native select cannot be
    ellipsised or wrapped, only clipped. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .root {
     max-width: min(190px, 50vw);
   }
@@ -71,7 +71,7 @@
    corner with nothing else, so its own height is worth trimming. 32px keeps the swatch/select row
    comfortably inside it; the select itself still fills the control's full height, so its own tap
    target shrinks by the same amount rather than staying 44px inside a shorter box. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .control {
     min-height: 32px;
     padding: 0 8px;

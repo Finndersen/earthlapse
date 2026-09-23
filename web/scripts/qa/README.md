@@ -18,18 +18,20 @@ pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3
 pnpm qa:serve                    # build (unless --no-build) + serve out/, print the URL, idle
 ```
 
-### Iterating quickly
+### Which shots to run
 
-The full list is ~90 shots and every one writes a full-page PNG, so a whole run is minutes and
-hundreds of MB. While iterating on one area, run that area only and skip the images:
+A full run is minutes of wall clock and hundreds of MB of PNGs. For a change, run only the shots
+covering the area it touches, without images:
 
 ```
 node scripts/qa/run.mjs --no-build --grep 'phone|globe-expanded' --no-screenshots --out iter
 ```
 
-`--no-screenshots` still captures one for any shot that *throws*, since that image is the only
-record of what the page looked like when it failed. Run the full list with images once at the
-end — an assertion subset cannot tell you that something elsewhere now looks wrong.
+Capture screenshots (a second, narrower `--grep` without `--no-screenshots`) only for the few
+shots someone will actually look at. `--no-screenshots` still captures one for any shot that
+*throws*, since that image is the only record of what the page looked like when it failed.
+
+Run the full list only before a deploy or when asked for.
 
 `--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy: fast, and exits
 non-zero on a real failure the same way the full run does.

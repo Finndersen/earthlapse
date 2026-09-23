@@ -595,9 +595,7 @@
    (`ShellLayout.module.css`'s `.title`, promoted to `z-index: 60` while expanded — above this
    backdrop's own `z-index: 50`, so it paints over rather than being clipped by anything here)
    can run wide enough (a long geological-age or "N years ago" string, centred) to reach this
-   panel's own desktop corner position. Mirrors `useIsPhoneViewport`'s own 760px breakpoint
-   (`deviceTier.ts`) so "phone" means the same thing in the CSS and the JS that decides whether
-   `<Legend>` renders at all.
+   panel's own desktop corner position.
    No per-breakpoint vertical nudge is needed here any more: `.orbFitFrameSphere`'s and
    `.orbFitFrameMap`'s own `margin-top` already centre each fit target in the shell's *real*,
    live-measured gap (`--chrome-gap-top`/`--chrome-gap-height`) at every width and height,
@@ -608,8 +606,9 @@
 /* `Globe.tsx` never renders `<Legend>` on a phone viewport at all, but `<OverlaySelect>` does
    (ADR-041 item 7) — it is the only overlay control there. So the top corner it occupies still
    needs clearing on a phone, just against `--overlay-clear-bottom` alone rather than a full
-   legend panel. Scoped to the same 760px phone breakpoint `useIsPhoneViewport` uses. */
-@media (max-width: 760px) {
+   legend panel. Phone portrait only: `useIsPhoneViewport` also covers short landscape (ADR-048),
+   which has its own rule at the end of this file. */
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .orbFitFrameSphere {
     /* The tallest of: the chrome gap's own top, the overlay stack's real drawn bottom plus a gap
        (unused on a phone now that `<Legend>` never renders — kept as a safety net, the same
@@ -672,10 +671,12 @@
     transform: none;
   }
 
-  /* Smaller than the desktop pill: at full size this crowded the zoom rocker sharing this row. */
+  /* The same 36px as `.zoomButton`, so with each group's 1px border the toggle and the zoom
+     rocker are one height and read as one row. */
   .viewModeButton {
-    padding: 3px 9px;
-    font-size: 9.5px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 11px;
   }
 
   .zoomGroup {
@@ -703,7 +704,7 @@
    two rows aren't the same height — the rocker's `36px` buttons plus its `2px` border stand
    `13px` taller than the toggle's padding-driven pill — so matching `bottom` would align their
    *bottom* edges, not their centres, on a row where only the centres need to match. */
-@media (min-width: 761px) {
+@media (min-width: 761px) and (orientation: portrait), (min-width: 761px) and (min-height: 501px) {
   .viewModeGroup {
     left: calc(var(--gutter, clamp(16px, 3vw, 48px)) + var(--track-inset, 50px));
     right: auto;
@@ -742,7 +743,7 @@
    chrome gap's own real bottom (`--chrome-gap-bottom-raw`) and wherever the bottom row starts
    highest, the Globe/Map toggle or the taller zoom rocker sharing its row (`--bottom-corner-clear-
    top`, `Globe.tsx`'s own doc comment on `viewModeToggleRef`/`zoomGroupRef`). */
-@media (min-width: 761px) {
+@media (min-width: 761px) and (orientation: portrait), (min-width: 761px) and (min-height: 501px) {
   .orbFitFrameSphere {
     --usable-top: max(
       var(--chrome-gap-top, 120px),
@@ -783,7 +784,7 @@
    bottom-clearance term here: the phone breakpoint's own `--bottom-overlay-reserve` (subtracted
    from the full chrome gap directly, not via `--usable-bottom`) already covers the controls row
    and feed strip below, the same mechanism the phone's `.orbFitFrameSphere` rule uses. */
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .orbFitFrameMap {
     --usable-top: max(
       var(--chrome-gap-top, 120px),
@@ -809,6 +810,90 @@
             var(--bottom-overlay-reserve, 0px) - var(--map-height)
         ) / 2
     );
+  }
+}
+
+/* Short landscape (ADR-048; `ShellLayout.module.css`'s own landscape rule is the other half). The
+   screen splits: a left column holds the title and era shortcuts (the shell's), then the overlay
+   selector, then the Globe/Map toggle and zoom rocker on one row; the sphere or map takes the box
+   to the right of that column, from the top of the screen down to the timeline, short of the ✕.
+   Every edge of that box is measured: the column's right edge is the furthest of the title's
+   (`--chrome-title-right`, `useChromeGap`), the overlay stack's and the view controls' own right
+   edges (`Globe.tsx`); the bottom is the timeline's top (`--chrome-gap-bottom-raw`); the right
+   is the ✕'s left edge. The phone-portrait and desktop queries above both exclude this one. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .overlaySelectStack {
+    top: calc(var(--chrome-gap-top, 80px) + 10px);
+    left: var(--gutter, 16px);
+    right: auto;
+    max-width: var(--landscape-column-width, 220px);
+  }
+
+  /* The toggle pill is shorter than the zoom rocker beside it, so it centres itself in a box of
+     the rocker's own height (two 36px buttons across, inside a 1px border) and the two share a
+     centre line from the same `top`. */
+  .viewModeGroup {
+    top: calc(var(--overlay-clear-bottom, 0px) + 10px);
+    bottom: auto;
+    left: var(--gutter, 16px);
+    right: auto;
+    transform: none;
+    min-height: 38px;
+    justify-content: center;
+  }
+
+  .zoomGroup {
+    top: calc(var(--overlay-clear-bottom, 0px) + 10px);
+    bottom: auto;
+    left: calc(var(--view-toggle-clear-right, 0px) + 8px);
+    right: auto;
+    transform: none;
+    flex-direction: row;
+  }
+
+  .zoomDivider {
+    width: 1px;
+    height: auto;
+  }
+
+  .orbFitFrameSphere,
+  .orbFitFrameMap {
+    --usable-left: calc(
+      max(var(--chrome-title-right, 0px), var(--overlay-clear-right, 0px), var(--view-controls-clear-right, 0px)) + 12px
+    );
+    --usable-right: calc(var(--close-clear-left, 100vw) - 8px);
+    --usable-top: 8px;
+    /* The chrome gap's bottom is already one row gap above the timeline. */
+    --usable-bottom: calc(var(--chrome-gap-bottom-raw, 100vh) - 4px);
+    --usable-width: calc(var(--usable-right) - var(--usable-left));
+    --usable-height: calc(var(--usable-bottom) - var(--usable-top));
+
+    transform: none;
+  }
+
+  /* The drawn sphere, with its atmosphere rim, reaches ~6.5% past its fit frame
+     (`SPHERE_DEFAULT_SCALE` in `Globe.tsx` plus the rim); the frame gives that back so the drawn
+     sphere, not the frame, fills the box (`scripts/qa/shots.mjs`'s `landscape-globe-*`). */
+  .orbFitFrameSphere {
+    --expanded-size: max(0px, calc(min(var(--usable-width), var(--usable-height)) / 1.07));
+
+    left: calc(var(--usable-left) + (var(--usable-width) - var(--expanded-size)) / 2);
+    margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--expanded-size)) / 2);
+  }
+
+  .orbFitFrameMap {
+    --map-height: max(0px, min(var(--usable-height), calc(var(--usable-width) / 2.05)));
+
+    width: calc(var(--map-height) * 2.05);
+    height: var(--map-height);
+    left: calc(var(--usable-left) + (var(--usable-width) - var(--map-height) * 2.05) / 2);
+    margin-top: calc(var(--usable-top) + (var(--usable-height) - var(--map-height)) / 2);
+  }
+
+  /* The base rule's bottom clamp assumes a frame centred in the title-to-timeline gap, which
+     this layout's frame is not; the frame already stops short of the timeline. */
+  .halo {
+    bottom: -12%;
   }
 }
 

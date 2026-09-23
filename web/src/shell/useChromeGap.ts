@@ -56,6 +56,9 @@
  * lands as overlays floating exactly that far above where they were aimed. `clientHeight` is the
  * layout viewport, the same basis the measurements and the fixed containing block already use, so
  * the arithmetic closes in one coordinate space instead of two.
+ *
+ * `--chrome-title-right` is `topRef`'s own right edge, for the short-landscape layout, where the
+ * expanded sphere/map sits beside the title's column rather than below it.
  */
 
 import { useEffect } from 'react'
@@ -74,9 +77,11 @@ export function useChromeGap(
     if (host === null || top === null || bottom === null) return undefined
 
     const recompute = (): void => {
-      const topBottom = top.getBoundingClientRect().bottom
+      const topRect = top.getBoundingClientRect()
+      const topBottom = topRect.bottom
       const bottomTop = bottom.getBoundingClientRect().top
       host.style.setProperty('--chrome-gap-top', `${Math.max(0, topBottom)}px`)
+      host.style.setProperty('--chrome-title-right', `${Math.max(0, topRect.right)}px`)
       host.style.setProperty('--chrome-gap-height', `${Math.max(0, bottomTop - topBottom - reserveBottomPx)}px`)
       host.style.setProperty('--chrome-gap-bottom-raw', `${Math.max(0, bottomTop)}px`)
       const viewportHeight = document.documentElement.clientHeight

@@ -106,12 +106,17 @@ describe('<SectionBreadcrumb>', () => {
     expect(onSelectSection).toHaveBeenCalledWith('quaternary')
   })
 
-  it('shows only the root at the top level', () => {
-    render(<SectionBreadcrumb sectionId="earth" onSelectSection={vi.fn()} />)
-    const nav = screen.getByRole('navigation', { name: 'Timeline section' })
-    const trail = within(nav).getByRole('list')
-    expect(within(trail).queryAllByRole('button')).toEqual([])
-    expect(within(trail).getByText('Earth').getAttribute('aria-current')).toBe('location')
+  it('renders nothing, not even a navigation landmark, at the root section', () => {
+    const { container } = render(<SectionBreadcrumb sectionId="earth" onSelectSection={vi.fn()} />)
+    expect(container.innerHTML).toBe('')
+    expect(screen.queryByRole('navigation')).toBeNull()
+  })
+
+  it('shows the root as a crumb once one level down', () => {
+    render(<SectionBreadcrumb sectionId="cenozoic" onSelectSection={vi.fn()} />)
+    const trail = within(screen.getByRole('navigation', { name: 'Timeline section' })).getByRole('list')
+    expect(within(trail).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Earth'])
+    expect(within(trail).getByText('Cenozoic').getAttribute('aria-current')).toBe('location')
   })
 
   it('renders no shortcut buttons of its own (user ask, 2026-09-18: Up/Home deleted, prev/next moved to SectionEdgeNav)', () => {

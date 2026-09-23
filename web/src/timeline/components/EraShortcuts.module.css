@@ -59,7 +59,7 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   /* Stacked, not a pill row: the shell renders this group under the time title
      (`ShellLayout.tsx`'s `eraShortcuts` slot), where a horizontal row runs wide enough to reach
      the minimised orb on one side and the sound toggle on the other. Tighter padding/gap/font
@@ -87,3 +87,4 @@
     font-size: 9px;
   }
 }
+

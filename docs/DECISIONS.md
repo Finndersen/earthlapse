@@ -6947,3 +6947,89 @@ framing: {focus: [x, y], pan: <degrees>, portrait_zoom: <1..1.5>}
   matters.
 - Tablets in portrait zoom by the same factor. Their clear band is larger, so they get more zoom
   than they need; the values were judged on a phone only.
+
+---
+
+## ADR-048 — A third layout for short landscape windows
+
+**Status:** accepted — 2026-09-22. Extends ADR-044 and ADR-046.
+
+**Context.** A phone held sideways (~844×390 CSS px) is wider than the 760px phone breakpoint, so it
+got the desktop layout. That layout's top band (title, era shortcuts, a large globe orb with the
+population readout, the ancestor panel with a large portrait) and its caption took the whole
+height: only the top row of the timeline was on screen, with its axis, breadcrumb, transport and
+secondary controls below the fold. Expanded, the title, centred sphere and chrome did the same.
+
+**Decision.** Three mutually exclusive layouts, chosen by media query:
+
+- **Short landscape:** `(orientation: landscape) and (max-height: 500px)` — any window wider than
+  it is tall and under 500px tall, including a phone held sideways under 760px wide (667×375).
+- **Phone portrait:** `(max-width: 760px)` minus the above, written as
+  `(max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px)`.
+- **Desktop/tablet:** everything else. Rules that are only right for desktop (the expanded globe's
+  corner chrome) exclude short landscape the same way.
+
+The *compact* treatments that both small layouts want — the one-line event strip, the bottom-sheet
+panel, compact overlay selector and ancestor text, 44px transport targets — use the union,
+`(max-width: 760px), (orientation: landscape) and (max-height: 500px)`, in CSS and in
+`useIsCompactViewport`.
+
+*Short landscape, collapsed:*
+- the time title stays centred at the top with its era beneath, one era shortcut either side of it
+  (the title's own three-column grid, the shortcuts placed through a subgrid), About top-right;
+- the globe orb and the ancestor portrait fill the top corners as far down as the height allows,
+  each capped by its own column's width (container query units); the layer readouts are hidden
+  (tapping the orb still expands the globe);
+- one row holds the event strip (the phone's one-line strip, in the left 45%) and the caption's
+  title (centred in the right 55%); the regions are fixed so the caption never slides as the
+  strip's text changes. The caption title is one button, with an ⓘ as its cue, that opens the
+  passage in the shared `Panel`; opening it pauses playback and closing resumes, as the event detail
+  panel does;
+- the timeline: the breadcrumb on a fixed-height row of its own above the track (gone at the root
+  section), the track full width between the section-edge buttons, and left of it the transport
+  with the mode, scale and volume controls on one row under it. Those controls drop their visible
+  labels here (kept as accessible names) and keep 32px touch heights.
+
+*Short landscape, expanded:* the screen splits. A left column of fixed width
+(`--landscape-column-width`) holds the title and era, the era shortcuts, the overlay selector, then
+the Globe/Map toggle and zoom rocker on one row. The sphere or map takes the box to its right: left
+edge the column's measured right edge, top the screen's top, bottom the timeline's top, right the
+✕'s left edge. The timeline runs full width beneath. The event strip steps aside while the globe is
+open, since the column has no room for it and anywhere else it would cross the sphere.
+
+The camera's re-centring on the fit frame (`camera.ts`'s `centerOffset`) now shifts on both axes,
+since the frame is no longer horizontally centred.
+
+*Every layout:* the caption's shade is a soft pool that fades to nothing at every edge of its box
+(radial on desktop and in landscape; full-width, fading at top and bottom, on a phone); the box
+reaches past the text by a bleed so the fade finishes inside its clip.
+
+*Desktop/tablet, alongside:* the controls row under the section bands sits midway between the
+bands and the window's bottom edge; the play button sits on the track's centre, with the speed
+select hanging off the transport's left side and the rate readout under it, so the breadcrumb and
+the secondary cluster each get an equal half of the row; the globe orb's top sits on the top inset,
+level with the About button leading the ancestor column.
+
+**Consequences.**
+- Changed: `ShellLayout.module.css`, `Globe.module.css`, `Globe.tsx`, `camera.ts`, `Timeline.tsx`
+  and `.module.css`, `Transport.module.css`, `EraShortcuts.module.css`, `audio/toggle.module.css`,
+  `page.module.css`, `Experience.tsx`, `useChromeGap.ts` (publishes `--chrome-title-right`),
+  `useIsCompactViewport.ts`, and the phone media queries in the timeline, events, globe, layers,
+  onboarding and shell modules.
+- The expanded title has a fixed width in this layout so the sphere does not slide sideways as the
+  title text changes during playback.
+- At 667×375 the Holocene's section bands are too many for the narrower track and scroll; at
+  844×390 and wider every band label shows whole.
+- On desktop the ancestor portrait sits below the About button and its kicker, so the portrait's
+  top is ~47px below the orb's; aligning the portrait instead would mean moving About out of the
+  top-right corner.
+- The drawn sphere with its rim reaches ~6.5% past its fit frame; the landscape frame is divided by
+  1.07 so the drawn sphere, not the frame, fills the box. That constant follows
+  `SPHERE_DEFAULT_SCALE` and the rim and must move with them.
+- The earlier 844×390 QA shots that assumed the desktop layout now run at 844×560, the narrowest,
+  shortest desktop window; `landscape-*` shots guard the new layout at 667×375, 844×390 and 932×430.
+- Follow-up: collapsed, the era shortcuts sit in one centred row under the title (the desktop
+  arrangement) instead of one either side of it, which also puts the title's own top back level
+  with the About button opposite; expanded, the breadcrumb sits above the transport in the left
+  column instead of its own row above the track, so the sphere/map fit frame gets that row's
+  height back; and the portrait Globe/Map toggle is sized nearer the zoom rocker's own height.

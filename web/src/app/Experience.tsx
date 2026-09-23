@@ -35,7 +35,7 @@ import {
   yearsForPlaybackSeconds,
 } from '@/scene'
 import type { PresentationRegime } from '@/scene'
-import { ShellLayout } from '@/shell'
+import { Panel, ShellLayout } from '@/shell'
 import { installDevHook } from '@/store/devHook'
 import { useTimeStore } from '@/store/time'
 import {
@@ -167,6 +167,12 @@ export function Experience() {
   // lens vignette; the portal keeps the caption driven by SceneView's own dissolve (so it can
   // never drift out of sync with the image) while placing it in the HUD above the vignette.
   const [captionHost, setCaptionHost] = useState<HTMLDivElement | null>(null)
+  // The scene whose full caption passage is open in a panel. Only the short-landscape layout
+  // offers the button that opens it, since that layout shows the caption's title alone (ADR-048).
+  // Like the event detail panel, opening it pauses playback and closing it resumes, so the scene
+  // under the panel stays the one it describes.
+  const [captionDetailScene, setCaptionDetailScene] = useState<Scene | null>(null)
+  const wasPlayingBeforeCaptionDetailRef = useRef(false)
 
   // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
   // `onViewModeToggleHeightChange` doc comment), lifted here so
@@ -531,6 +537,20 @@ export function Experience() {
     setDetailMemberIds(members.map((member) => member.id))
   }
 
+  const openCaptionDetail = (scene: Scene): void => {
+    wasPlayingBeforeCaptionDetailRef.current = playback.playing
+    if (playback.playing) setPlaying(false)
+    setCaptionDetailScene(scene)
+  }
+
+  const closeCaptionDetail = (): void => {
+    setCaptionDetailScene(null)
+    if (wasPlayingBeforeCaptionDetailRef.current) {
+      wasPlayingBeforeCaptionDetailRef.current = false
+      setPlaying(true)
+    }
+  }
+
   const closeEventDetail = (): void => {
     setDetailEventId(null)
     setDetailMemberIds([])
@@ -588,6 +608,21 @@ export function Experience() {
             <p className={styles.captionTitle} data-testid="scene-caption-title">
               {scene.title}
             </p>
+            <button
+              type="button"
+              className={styles.captionButton}
+              aria-label={`${scene.title} — show description`}
+              aria-haspopup="dialog"
+              data-testid="scene-caption-button"
+              onClick={() => openCaptionDetail(scene)}
+            >
+              <span className={styles.captionTitle}>{scene.title}</span>
+              <svg className={styles.captionInfo} viewBox="0 0 16 16" aria-hidden="true" focusable="false" data-testid="scene-caption-info">
+                <circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" strokeWidth="1.2" />
+                <circle cx="8" cy="4.9" r="0.85" fill="currentColor" />
+                <path d="M8 7.2v4.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+            </button>
             <p className={styles.caption} data-testid="scene-caption-text">
               {scene.caption}
             </p>
@@ -730,6 +765,13 @@ export function Experience() {
       )}
       {eventBrowserOpen && (
         <EventBrowser events={manifest.events} t={t} onClose={closeEventBrowser} onActivate={activateBrowserEvent} />
+      )}
+      {captionDetailScene && (
+        <Panel label={captionDetailScene.title} onClose={closeCaptionDetail}>
+          <p className={styles.captionDetail} data-testid="scene-caption-detail">
+            {captionDetailScene.caption}
+          </p>
+        </Panel>
       )}
       {/* Mounted here, not inside `ShellLayout`, which stays a layout component. It sits after
           the shell so its own layer is that element's sibling, above the whole HUD, and it is

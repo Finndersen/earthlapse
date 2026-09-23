@@ -168,6 +168,61 @@
   gap: 6px;
 }
 
+/* The short-landscape caption: the scene's title as one button, with an ⓘ as its cue, that
+   opens the full passage in a panel. Its box is the drawn label, so it takes no taps from the
+   timeline or the scene around it. Hidden in every other layout, which show the passage itself. */
+.captionButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  align-self: center;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--hud-ink);
+  font: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+.captionButton .captionTitle {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.captionInfo {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--hud-dim);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+  transition: color 200ms ease;
+}
+
+.captionButton:hover .captionInfo,
+.captionButton:focus-visible .captionInfo {
+  color: var(--hud-accent);
+}
+
+.captionButton:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 4px;
+}
+
+/* The passage as the caption panel's body. */
+.captionDetail {
+  margin: 0;
+  font-family: var(--hud-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--hud-ink);
+}
+
 /* The scene's short name. Sans, upright and medium-weight against the passage's serif italic-
    free body below it — and against the top-centre time/era title (page.module.css `.time`/
    `.era`, much larger and either tabular-numeral or caps-mono) — so the two headings never
@@ -192,7 +247,7 @@
   text-wrap: balance;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .time {
     font-size: 30px;
   }
@@ -233,12 +288,62 @@
     font-size: 14px;
   }
 
+  /* 12.5px is the smallest size that still reads comfortably, and the size at which no published
+     description runs past three lines at 390px (`scripts/qa/shots.mjs`'s
+     `portrait-caption-lines-*`). */
   .caption {
-    font-size: 13px;
+    font-size: 12.5px;
+    letter-spacing: 0;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     overflow: hidden;
+  }
+}
+
+/* Short landscape (ADR-048): a smaller time title, centred with its era beneath as elsewhere
+   (left-aligned in the expanded globe's column), and a caption that is its title alone, as one
+   button that opens the passage in a panel. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .timeTitle {
+    gap: 6px;
+  }
+
+  .time {
+    font-size: 24px;
+  }
+
+  .era {
+    gap: 8px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+  }
+
+  .era::before,
+  .era::after {
+    width: 14px;
+  }
+
+  :global([data-globe-expanded='true']) .timeTitle {
+    align-items: flex-start;
+  }
+
+  :global([data-globe-expanded='true']) .era {
+    padding-left: 0;
+  }
+
+  :global([data-globe-expanded='true']) .era::before,
+  :global([data-globe-expanded='true']) .era::after {
+    display: none;
+  }
+
+  .captionBlock > .captionTitle,
+  .caption {
+    display: none;
+  }
+
+  .captionButton {
+    display: inline-flex;
   }
 }
 

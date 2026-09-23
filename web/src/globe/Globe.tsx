@@ -60,6 +60,7 @@ import {
 } from './blend'
 import {
   budgetedDpr,
+  centerOffset,
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
@@ -70,7 +71,6 @@ import {
   sphereViewFocus,
   subFrameFovY,
   unfoldCameraPose,
-  verticalCenterOffset,
   zoomRatio,
   type UnfoldViewEnds,
 } from './camera'
@@ -261,15 +261,15 @@ interface FitFrameSize {
 }
 
 /** `Globe.tsx`'s own DOM-layer measurement of the two invisible fit-target rectangles plus the
- *  pixel shift (`verticalCenterOffset`, `camera.ts`) needed to re-centre the rendered sphere/map
+ *  pixel shift (`centerOffset`, `camera.ts`) needed to re-centre the rendered sphere/map
  *  on them — see `GlobeCameraControls`'s doc comment for how all three are used. `null` until the
  *  first `ResizeObserver` pass (or when a frame isn't mounted, e.g. before `expanded`). */
 interface FitMeasurements {
   sphereFit: FitFrameSize | null
   mapFit: FitFrameSize | null
-  verticalOffsetPx: number
+  centerOffsetPx: { x: number; y: number }
 }
-const EMPTY_FIT_MEASUREMENTS: FitMeasurements = { sphereFit: null, mapFit: null, verticalOffsetPx: 0 }
+const EMPTY_FIT_MEASUREMENTS: FitMeasurements = { sphereFit: null, mapFit: null, centerOffsetPx: { x: 0, y: 0 } }
 
 /** Whether the zoom-in/zoom-out buttons (`ZoomControls`) can still do anything — mirrors
  *  `OrbitControls`'s own `minDistance`/`maxDistance` for the current mode, reported by
@@ -634,6 +634,7 @@ export function Globe({
   // taller (its own doc comment below), so its top edge can sit above the toggle's. Both feed
   // `--bottom-corner-clear-top` below; the sphere/map must stop short of whichever starts higher.
   const zoomGroupRef = useRef<HTMLDivElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
   // `Globe.module.css`'s `.orbFitFrameSphere`/`.orbFitFrameMap` — invisible, `pointer-events:
   // none` boxes carrying the *old* `.orbExpanded` sizing formulas verbatim (that class's own doc
   // comment on why: the canvas itself is now full-bleed, so something else has to say what size
@@ -647,20 +648,31 @@ export function Globe({
     const host = backdropRef.current
     if (host === null) return undefined
     const recompute = (): void => {
-      const overlaySelectBottom = overlaySelectBoundsRef.current?.getBoundingClientRect().bottom ?? 0
-      host.style.setProperty('--overlay-clear-bottom', `${overlaySelectBottom}px`)
+      const overlaySelectRect = overlaySelectBoundsRef.current?.getBoundingClientRect() ?? null
+      host.style.setProperty('--overlay-clear-bottom', `${overlaySelectRect?.bottom ?? 0}px`)
+      host.style.setProperty('--overlay-clear-right', `${overlaySelectRect?.right ?? 0}px`)
 
       const legendBottom = legendCornerRef.current?.getBoundingClientRect().bottom ?? 0
       host.style.setProperty('--legend-clear-bottom', `${legendBottom}px`)
 
-      const toggleTop = viewModeToggleRef.current?.getBoundingClientRect().top ?? null
-      const zoomTop = zoomGroupRef.current?.getBoundingClientRect().top ?? null
-      const bottomRowTops = [toggleTop, zoomTop].filter((top): top is number => top !== null)
-      if (bottomRowTops.length > 0) {
-        host.style.setProperty('--bottom-corner-clear-top', `${Math.min(...bottomRowTops)}px`)
+      // Read in dependency order: each `getBoundingClientRect` below forces a layout that already
+      // reflects the properties set above it. In the landscape layout the toggle sits under the
+      // overlay stack and the zoom rocker beside the toggle, so a stale read would leave the zoom
+      // rocker's own edge (and so the sphere/map box beside it) one pass behind.
+      const toggleRect = viewModeToggleRef.current?.getBoundingClientRect() ?? null
+      host.style.setProperty('--view-toggle-clear-right', `${toggleRect?.right ?? 0}px`)
+      const zoomRect = zoomGroupRef.current?.getBoundingClientRect() ?? null
+      const viewControlRects = [toggleRect, zoomRect].filter((rect): rect is DOMRect => rect !== null)
+      if (viewControlRects.length > 0) {
+        host.style.setProperty('--bottom-corner-clear-top', `${Math.min(...viewControlRects.map((rect) => rect.top))}px`)
+        host.style.setProperty('--view-controls-clear-right', `${Math.max(...viewControlRects.map((rect) => rect.right))}px`)
       } else {
         host.style.removeProperty('--bottom-corner-clear-top')
+        host.style.removeProperty('--view-controls-clear-right')
       }
+      const closeLeft = closeButtonRef.current?.getBoundingClientRect().left ?? null
+      if (closeLeft !== null) host.style.setProperty('--close-clear-left', `${closeLeft}px`)
+      else host.style.removeProperty('--close-clear-left')
 
       const canvasRect = host.getBoundingClientRect()
       // `?? null` down to a real, non-degenerate rect only: a frame's *very first*
@@ -675,16 +687,15 @@ export function Globe({
       setFitMeasurements({
         sphereFit: sphereRect !== null ? { width: sphereRect.width, height: sphereRect.height } : null,
         mapFit: mapRect !== null ? { width: mapRect.width, height: mapRect.height } : null,
-        // Both frames are centred in the same real chrome gap regardless of their own
-        // width/height (`verticalCenterOffset`'s own doc comment proves this algebraically), so
+        // Both frames are centred on the same point regardless of their own width/height, so
         // one offset — read from whichever frame is currently mounted — serves both sphere and
         // map framing; `sphereFit` is measured first, but either would agree.
-        verticalOffsetPx:
+        centerOffsetPx:
           sphereRect !== null
-            ? verticalCenterOffset(sphereRect.top, sphereRect.height, canvasRect.top, canvasRect.height)
+            ? centerOffset(sphereRect, canvasRect)
             : mapRect !== null
-              ? verticalCenterOffset(mapRect.top, mapRect.height, canvasRect.top, canvasRect.height)
-              : 0,
+              ? centerOffset(mapRect, canvasRect)
+              : { x: 0, y: 0 },
       })
     }
     recompute()
@@ -693,7 +704,15 @@ export function Globe({
     if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(recompute)
       observer.observe(host)
-      for (const ref of [overlaySelectBoundsRef, legendCornerRef, viewModeToggleRef, zoomGroupRef, sphereFitFrameRef, mapFitFrameRef]) {
+      for (const ref of [
+        overlaySelectBoundsRef,
+        legendCornerRef,
+        viewModeToggleRef,
+        zoomGroupRef,
+        closeButtonRef,
+        sphereFitFrameRef,
+        mapFitFrameRef,
+      ]) {
         if (ref.current !== null) observer.observe(ref.current)
       }
     }
@@ -833,7 +852,7 @@ export function Globe({
               unfold={unfold}
               sphereFit={fitMeasurements.sphereFit}
               mapFit={fitMeasurements.mapFit}
-              verticalOffsetPx={fitMeasurements.verticalOffsetPx}
+              centerOffsetPx={fitMeasurements.centerOffsetPx}
               onZoomBoundsChange={setZoomBounds}
               sphereRotationYRef={sphereRotationYRef}
             />
@@ -930,6 +949,7 @@ export function Globe({
 
       {expanded && (
         <button
+          ref={closeButtonRef}
           type="button"
           className={styles.closeButton}
           onClick={onCollapse}
@@ -1055,7 +1075,7 @@ interface GlobeCameraControlsProps {
    *  own doc comment for how they're used. */
   sphereFit: FitFrameSize | null
   mapFit: FitFrameSize | null
-  verticalOffsetPx: number
+  centerOffsetPx: { x: number; y: number }
   /** Reported every time the zoom-button bounds could have changed (`ZoomBounds`'s own doc
    *  comment) — mirrors `onCaptionChange`'s "cross the Canvas/DOM boundary via a callback" shape. */
   onZoomBoundsChange: (bounds: ZoomBounds) => void
@@ -1121,7 +1141,7 @@ interface GlobeCameraControlsProps {
  * that delta on its very next call instead of decaying it, leaving nothing to fight; damping
  * resumes once settled, for the ordinary smooth-drag feel a viewer gets outside the tween.
  *
- * **`sphereFit`/`mapFit`/`verticalOffsetPx` (docs/GLOBE.md).** `Globe.tsx`'s `<Canvas>` fills the
+ * **`sphereFit`/`mapFit`/`centerOffsetPx` (docs/GLOBE.md).** `Globe.tsx`'s `<Canvas>` fills the
  * whole backdrop (`Globe.module.css`'s `.orbExpanded` doc comment) instead of a chrome-gap-sized
  * box, so a zoomed-in sphere has room to grow past the old square clip — but the *default*,
  * un-zoomed framing must still look the size it did in that smaller box. These three props
@@ -1142,7 +1162,7 @@ interface GlobeCameraControlsProps {
  * `onCaptionChange` already uses for the caption text.
  */
 const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>(function GlobeCameraControls(
-  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, verticalOffsetPx, onZoomBoundsChange, sphereRotationYRef },
+  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, centerOffsetPx, onZoomBoundsChange, sphereRotationYRef },
   ref,
 ) {
   const controlsRef = useRef<ComponentRef<typeof OrbitControls> | null>(null)
@@ -1195,35 +1215,25 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     : CAMERA_DISTANCE
   const settled = unfold === (mapMode ? 1 : 0)
 
-  // Re-centres the rendered sphere/map on the fit frame's own vertical centre rather than the
-  // (now much larger, and differently-centred — the chrome gap isn't centred in the viewport
-  // either) full canvas's — `camera.ts`'s `verticalCenterOffset` computes the raw pixel shift in
-  // `Globe.tsx`; this turns it into a real parallel (lens-shift) `setViewOffset`, not a target/
-  // camera-position offset. A `target`/camera-position offset was considered and rejected: with
-  // `controls.target` a few tenths of a world unit from the sphere's own true centre, orbiting
-  // (dragging to rotate) would visibly wobble the sphere across the screen as the camera swings
-  // around a point that isn't quite where the sphere actually is — `setViewOffset` shifts the
-  // *projection*, independent of camera position/orientation, so the same constant screen shift
-  // applies at every rotation/zoom with no such coupling. Sign: three.js's own
-  // `updateProjectionMatrix` computes `top -= view.offsetY * height / view.fullHeight`; working
-  // through where a world point at the sphere's own Y=0 then lands on screen gives
-  // `screenY = canvasCenterY - offsetYParam` — so reproducing a *downward* shift of
-  // `verticalOffsetPx` (this file's own sign convention, `camera.ts`'s doc comment) needs
-  // `offsetYParam = -verticalOffsetPx`, negated below. `fullWidth`/`fullHeight` equal to the
-  // canvas's own real size (not a genuinely larger virtual frame) means this is a pure shift, not
-  // a crop — three.js's own multiview/tiled-rendering use of this API is the crop case; this is
-  // the same primitive used for the other, less common purpose it's equally built for (a
-  // shift-lens style off-centre projection). Cleared whenever minimised: `camera`/`gl` are shared
-  // between the minimised and expanded views (this component's own doc comment above), so a
-  // stale offset left on from a previous expand would otherwise skew the small orb too.
+  // Re-centres the rendered sphere/map on the fit frame's own centre rather than the full
+  // canvas's, as a lens-shift `setViewOffset` rather than a camera-position offset: a
+  // `controls.target` off the sphere's true centre would make the sphere wobble across the screen
+  // while orbiting, whereas shifting the *projection* applies the same screen shift at every
+  // rotation and zoom. Sign: three.js's `updateProjectionMatrix` computes
+  // `left += offsetX * width / fullWidth` and `top -= offsetY * height / fullHeight`, which puts
+  // the world origin at `canvasCentre - offset` on both axes — so a shift of `centerOffsetPx`
+  // (`camera.ts`'s sign convention) needs both components negated. `fullWidth`/`fullHeight` equal
+  // to the canvas's own size make this a pure shift, not a crop. Cleared whenever minimised:
+  // `camera`/`gl` are shared between the minimised and expanded views, so a stale offset would
+  // otherwise skew the small orb too.
   useEffect(() => {
     const perspectiveCamera = camera as THREE.PerspectiveCamera
     if (!expanded || size.width <= 0 || size.height <= 0) {
       perspectiveCamera.clearViewOffset()
       return
     }
-    perspectiveCamera.setViewOffset(size.width, size.height, 0, -verticalOffsetPx, size.width, size.height)
-  }, [camera, expanded, size.width, size.height, verticalOffsetPx])
+    perspectiveCamera.setViewOffset(size.width, size.height, -centerOffsetPx.x, -centerOffsetPx.y, size.width, size.height)
+  }, [camera, expanded, size.width, size.height, centerOffsetPx.x, centerOffsetPx.y])
 
   const wasSettledRef = useRef(settled)
   const viewRef = useRef<SphereMapView>(DEFAULT_SPHERE_MAP_VIEW)
@@ -1238,6 +1248,11 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
 
   const snapPendingRef = useRef(false)
   const frameSnapPendingRef = useRef(false)
+  /** The expanded sphere's idle distance the camera was last put at, while the viewer has not
+   *  zoomed away from it since; `null` otherwise. The fit frame can settle a few renders after the
+   *  first real measurement (the landscape layout's frame depends on chrome that only takes its
+   *  expanded place once the globe opens), and an untouched camera follows it there. */
+  const followedIdleDistanceRef = useRef<number | null>(null)
 
   if (settled !== wasSettledRef.current) {
     wasSettledRef.current = settled
@@ -1367,7 +1382,22 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
         frameSnapPendingRef.current = false
         snapPendingRef.current = false
         applyPose([0, 0, idleSphereDistance], [0, 0, 0])
+        followedIdleDistanceRef.current = expanded && !mapMode ? idleSphereDistance : null
         return
+      }
+      const followed = followedIdleDistanceRef.current
+      if (followed !== null && (!expanded || mapMode)) {
+        followedIdleDistanceRef.current = null
+      } else if (followed !== null && sphereFrameReady && Math.abs(idleSphereDistance - followed) > followed * 1e-4) {
+        const offset = camera.position.clone().sub(controls.target)
+        if (Math.abs(offset.length() - followed) <= followed * 1e-3) {
+          offset.setLength(idleSphereDistance)
+          camera.position.copy(controls.target).add(offset)
+          controls.update()
+          followedIdleDistanceRef.current = idleSphereDistance
+        } else {
+          followedIdleDistanceRef.current = null
+        }
       }
       if (!snapPendingRef.current) return
       snapPendingRef.current = false
