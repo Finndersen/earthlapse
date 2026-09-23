@@ -19,7 +19,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react'
 import { useTimeStore } from '@/store/time'
 import { eraNameForTime, formatGeoTime } from '@/timeline'
 
-const REPO_URL = 'https://github.com/Finndersen/earthview'
+const REPO_URL = 'https://github.com/Finndersen/earthlapse'
 const NEW_ISSUE_URL = `${REPO_URL}/issues/new`
 
 function findAccessibleButton(text: string): HTMLButtonElement | undefined {

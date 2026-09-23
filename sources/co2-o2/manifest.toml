@@ -10,7 +10,7 @@
 
 name = "co2-o2"
 title = "Atmospheric CO2: Mauna Loa, Antarctic ice-core composite and GEOCARB III"
-url = "https://github.com/finndersen/earthview/blob/main/sources/co2-o2/README.md"
+url = "https://github.com/finndersen/earthlapse/blob/main/sources/co2-o2/README.md"
 sha256 = ""
 licence = "US public domain (NOAA NCEI Paleoclimatology) and NOAA GML data, freely available with credit; per-file detail in [[artefacts]]"
 citation = "Lan, X. (NOAA GML) and Keeling, R. (Scripps Institution of Oceanography): Mauna Loa annual mean CO2. Bereiter, B. et al., 2015: Revision of the EPICA Dome C CO2 record from 800 to 600 kyr before present, Geophysical Research Letters, doi:10.1002/2014GL061957. Berner, R.A. and Z. Kothavala, 2001: GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204."

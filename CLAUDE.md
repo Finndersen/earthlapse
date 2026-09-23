@@ -1,4 +1,4 @@
-# Earth Timeline
+# Earthlapse
 
 Interactive visualisation of Earth's history. Photoreal stills evolving across 4.6 Gyr,
 surrounded by data layers, fully scrubbable. Fully static frontend, offline Python pipeline.

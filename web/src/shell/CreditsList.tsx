@@ -83,7 +83,7 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
       <p className={styles.byline}>Built by Finn Andersen</p>
 
       <p className={styles.links}>
-        <a href="https://github.com/Finndersen/earthview" target="_blank" rel="noopener noreferrer">
+        <a href="https://github.com/Finndersen/earthlapse" target="_blank" rel="noopener noreferrer">
           View source on GitHub
         </a>
         {feedbackLink}

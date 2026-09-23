@@ -9,7 +9,7 @@
 
 name = "audio-stems"
 title = "CC0 Ambience Stems"
-url = "https://github.com/finndersen/earthview/blob/main/sources/audio-stems/stems.toml"
+url = "https://github.com/finndersen/earthlapse/blob/main/sources/audio-stems/stems.toml"
 sha256 = ""
 licence = "CC0 1.0 / public domain only -- every individual file's real licence and source URL is in stems.toml; see README.md"
 citation = "No single dataset. Each stem is an independently CC0/public-domain-licensed audio recording; see stems.toml for per-file author, URL and licence."

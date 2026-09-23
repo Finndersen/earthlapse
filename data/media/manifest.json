@@ -5668,7 +5668,7 @@
       "title": "CC0 Ambience Stems",
       "citation": "No single dataset. Each stem is an independently CC0/public-domain-licensed audio recording; see stems.toml for per-file author, URL and licence.",
       "licence": "CC0 1.0 / public domain only -- every individual file's real licence and source URL is in stems.toml; see README.md",
-      "url": "https://github.com/finndersen/earthview/blob/main/sources/audio-stems/stems.toml"
+      "url": "https://github.com/finndersen/earthlapse/blob/main/sources/audio-stems/stems.toml"
     },
     {
       "sourceId": "basemap",
@@ -5696,7 +5696,7 @@
       "title": "Atmospheric CO2: Mauna Loa, Antarctic ice-core composite and GEOCARB III",
       "citation": "Lan, X. (NOAA GML) and Keeling, R. (Scripps Institution of Oceanography): Mauna Loa annual mean CO2. Bereiter, B. et al., 2015: Revision of the EPICA Dome C CO2 record from 800 to 600 kyr before present, Geophysical Research Letters, doi:10.1002/2014GL061957. Berner, R.A. and Z. Kothavala, 2001: GEOCARB III: A Revised Model of Atmospheric CO2 over Phanerozoic Time, American Journal of Science, v.301, pp.182-204.",
       "licence": "US public domain (NOAA NCEI Paleoclimatology) and NOAA GML data, freely available with credit; per-file detail in [[artefacts]]",
-      "url": "https://github.com/finndersen/earthview/blob/main/sources/co2-o2/README.md"
+      "url": "https://github.com/finndersen/earthlapse/blob/main/sources/co2-o2/README.md"
     },
     {
       "sourceId": "events-core",

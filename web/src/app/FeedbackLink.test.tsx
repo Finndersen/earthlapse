@@ -25,7 +25,7 @@ describe('FeedbackLink', () => {
 
   it('is a bare new-issue link in a new tab until interacted with', () => {
     render(<FeedbackLink />)
-    expect(getLink().getAttribute('href')).toBe('https://github.com/Finndersen/earthview/issues/new')
+    expect(getLink().getAttribute('href')).toBe('https://github.com/Finndersen/earthlapse/issues/new')
     expect(getLink().getAttribute('rel')).toBe('noopener noreferrer')
   })
 

@@ -67,7 +67,7 @@ on Pages, no backend.
 
 ```sh
 git lfs install
-git clone https://github.com/Finndersen/earthview.git && cd earthview
+git clone https://github.com/Finndersen/earthlapse.git && cd earthlapse
 git lfs pull
 
 # Python pipeline. Extras: dev = tests/lint, data = source normalisation,
