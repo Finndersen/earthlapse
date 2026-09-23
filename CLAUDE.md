@@ -73,6 +73,10 @@ earthtime review                # candidate picker; review clear <id>, review pi
 earthtime publish               # write data/media/manifest.json + media (local; no upload)
 ```
 
+In a fresh container, run `scripts/setup.sh [python|web|media|browser]` before the first check or
+QA run, naming only the parts you need (checks: `python web`; QA: `web media browser`). It is
+idempotent and ~0.1 s when warm; `make check` and `pnpm qa` fail fast naming a missing part.
+
 Checks — all must pass before handing work back. `make check` (`scripts/check.sh`) runs every one,
 the Python and web groups in parallel:
 
@@ -106,13 +110,19 @@ have failed. For an SVG trace (sparklines, charts), measure the real element geo
 `polylineTraceBounds` unions the actual `<polyline>` rects and cannot be fooled by the backdrop.
 Pick the measurement that matches what is underneath the thing you are measuring.
 
-A check that cannot fail proves nothing. Before trusting a new assertion, run it against the
-unfixed build and confirm it actually fails there.
+Make sure an assertion measures the thing that would actually be wrong: a range a broken render
+would violate, read from what is drawn rather than from a box or backdrop that stays put when it
+breaks. That needs no second build; the QA README's CSS-injection trick covers the unclear cases.
 
 Use the harness at `web/scripts/qa/` (see its README) rather than writing a throwaway Playwright
 script: it loads the page once, drives it through `window.__earthtime` without reloading, measures
 rendered bounds, fails on console errors, and writes a screenshot contact sheet. Extend an existing
 shot rather than adding a new script — see "Testing policy" for when a shot is justified at all.
+
+**Working loop.** Iterate with `pnpm -C web qa -- --dev --grep <area>` (hot reload against `next
+dev`, no build) and `scripts/check.sh --quick --changed`. At the end, one static build with
+`pnpm -C web qa -- --smoke`, or the full `pnpm -C web qa` when layout or WebGL/canvas output
+changed; then hand back on a full `make check`.
 
 ## Testing policy
 
@@ -153,6 +163,11 @@ not merge conflicts:
 - **Shared-edit files are serialised**, not parallelised: `docs/DECISIONS.md`, `data/scenes.yaml`,
   `data/events.yaml`, `pipeline/publish.py`.
 - **Ask before committing or pushing.** Nothing is committed on the user's behalf unasked.
+- **Never symlink `node_modules` into a worktree**: Turbopack crashes on it. Run
+  `scripts/setup.sh web` there instead; pnpm's store makes it a few seconds.
+- **QA belongs to its checkout.** The export, run output and `--dev` port are per checkout and the
+  static server takes a free port, so worktrees run QA concurrently; two runs in one checkout
+  collide on `out-qa/`. A `--dev` run leaves `next dev` up: `pnpm -C web qa -- --stop-dev` when done.
 
 ## Style
 

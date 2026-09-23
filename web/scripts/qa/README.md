@@ -7,16 +7,18 @@ WebGL/canvas output, pointer hit-testing against real geometry, and the one real
 ## Commands
 
 ```
-pnpm qa                          # build the QA export into out-qa/ + serve + run every shot
+pnpm qa                          # build the QA export into out-qa/ (if stale) + serve + run every shot
 pnpm qa -- --smoke               # smokeShots.mjs's subset only
-pnpm qa -- --no-build            # reuse the existing out-qa/ export instead of rebuilding
+pnpm qa -- --dev                 # against `next dev` on this checkout's port: hot reload, no build
+pnpm qa -- --stop-dev            # stop the `next dev` an earlier --dev run left running
+pnpm qa -- --rebuild             # build even when out-qa/ is up to date with the source
+pnpm qa -- --no-build            # reuse the existing out-qa/ export, however stale
 pnpm qa -- --shots layout-*      # shots whose name matches a glob (comma-separated)
 pnpm qa -- --grep 390            # shots whose name matches a regex anywhere
 pnpm qa -- --no-screenshots      # assertions only: no PNGs, no contact sheet
 pnpm qa -- --extra-shots f.mjs   # append another shot module's default export to the list
 pnpm qa -- --no-sort             # run in file order instead of grouped by viewport
 pnpm qa -- --shards 2            # split the shots across 2 pages loaded in parallel
-pnpm qa -- --dev                 # attach to an already-running `pnpm dev` on :3000 instead
 pnpm qa:serve                    # build (unless --no-build) + serve out-qa/, print the URL, idle
 ```
 
@@ -25,9 +27,25 @@ Full flag reference: `node scripts/qa/run.mjs --help`.
 - **The QA export lives in `web/out-qa/`**, not `web/out/`: `next.config.ts` switches `distDir` when
   `NEXT_PUBLIC_EARTHTIME_QA=1`, so an ordinary `pnpm build` (or `scripts/check.sh`) can never
   replace it with an export that lacks the QA hook.
-- **`QA_CHROMIUM_PATH`** points the runner at a Chromium binary when the preinstalled one does not
-  match this Playwright version (`QA_CHROMIUM_PATH=/opt/pw-browsers/chromium` in the cloud
-  container).
+- **Preconditions.** The runner first checks for web/node_modules, real media under
+  `web/public/media` (not the stub, not LFS pointers) and a launchable Chromium, and exits 2 naming
+  the `scripts/setup.sh` part that provides whichever is missing.
+- **The build is skipped when nothing changed.** A build that carried the QA hook writes a stamp
+  of its inputs (path, size and mtime of `src/` minus tests, `public/` including media, the config
+  files, the `NEXT_PUBLIC_*` env) into `out-qa/`; the next run skips `next build` while the stamp
+  matches. A build without the hook fails straight away (see "Known flakes").
+- **Chromium is launched by path** (`browser.mjs`): `QA_CHROMIUM` if set, else
+  `$PLAYWRIGHT_BROWSERS_PATH/chromium` (the cloud image's `/opt/pw-browsers/chromium`), else the
+  newest `chromium-<rev>` build there, else Playwright's own download. Playwright's revision lookup
+  never finds the preinstalled build, which is older than the one this version expects.
+- **`--dev`** runs against `next dev` on a port derived from the checkout's path (3100-3899;
+  `QA_DEV_PORT` overrides, `QA_DEV_PORT=3000` attaches to a plain `pnpm dev`). When nothing answers
+  there it starts one, detached, logging to `out/dev-server.log`, and leaves it up so the next
+  `--dev` run starts in about a second; `--stop-dev` stops it. Dev-mode timings are not the
+  budgets' timings: judge those on the static export.
+- **Parallel checkouts.** The static server takes an ephemeral port (`--port`/`QA_PORT` to pin
+  one), and the export, the run output and the dev port all belong to the checkout, so QA in two
+  worktrees runs concurrently. Two runs in the *same* checkout share `out-qa/`: don't.
 - **Budgets:** full run ≤ 3 min, `--smoke` ≤ 60 s on a 4-core machine. The run prints its wall
   time and its ten slowest shots; a change that pushes past a budget pays for itself by removing
   or merging measurements elsewhere.
@@ -59,7 +77,7 @@ the page load and the globe's pointer interactions:
 | `layout-1000x810-expanded` | the same at narrow desktop, sphere only |
 | `layout-390x844-expanded` | phone expanded: drawn sphere size and the rows around it; row 2 clear of the drawn map |
 | `layout-844x390-expanded` | short-landscape expanded: the column beside the drawn sphere and map, the crumb trail over the transport |
-| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section, opaque and ending inside the viewport |
+| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section, opaque and ending inside the viewport (full run only, not `--smoke`) |
 
 `shots.scene-framing.mjs` is a separate, opt-in module — one phone-portrait shot per published
 scene, for judging crops by eye on the contact sheet:
@@ -90,18 +108,24 @@ A shot is data (`shots.mjs`); `run.mjs` never changes for one:
   reducedMotion: 'no-preference',           // optional, overrides --reduced-motion
   touch: true,                              // optional: run on the touch page (below)
   actions: async ({ page, hook }) => { /* anything `state` can't express */ },
-  measure: async ({ page, hook }) => ({ sphere: await globeBodyBounds(page, FIT_FRAME) }),
+  measure: async ({ page, hook, smoke }) => ({ sphere: await globeBodyBounds(page, FIT_FRAME) }),
   expect: { 'sphere.width': [470, 515] },   // dot-path into measure()'s result -> [min, max]
 }
 ```
+
+A check too slow for the `--smoke` budget can run in the full run only: `measure` receives
+`smoke`, and `expect` may be a function `({ smoke }) => table` that leaves those keys out under it
+(`globe-interactions`' arrival click).
 
 `state` always resolves every field it covers (`applyState` in `run.mjs`), never a partial diff
 from the previous shot. Pure `(page, …) -> numbers` measurements belong in `measure.mjs` or the
 helpers at the top of `shots.mjs`; assertions belong in `expect`.
 
-**A check that cannot fail proves nothing.** Before trusting a new assertion, break what it guards
-and watch it fail: a scratch `--extra-shots` module that wraps the shot's `actions` to inject CSS
-(move a region onto another, scale the canvas down) is enough.
+**Make sure an assertion measures the thing that would be wrong**: the range is one a broken
+render would violate (a shrunken sphere, an overlap, an empty trace), and the measurement reads
+what is drawn rather than a box or backdrop that stays the same when it breaks. When that is not
+obvious from the code, a scratch `--extra-shots` module that wraps the shot's `actions` to inject
+CSS (move a region onto another, scale the canvas down) shows it failing without a second build.
 
 ## Measuring what is drawn
 
@@ -144,11 +168,12 @@ shot in a run may declare it; with `--shards` it runs on the first page.
 
 **Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +
 Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook.
-`run.mjs` checks for `window.__earthtime` right after load and fails fast naming this — rebuild
-(drop `--no-build`) and re-run.
+`run.mjs` checks a fresh export's JS for the hook before stamping it, and `window.__earthtime`
+right after load, failing fast naming this either way — re-run (without `--no-build`) to rebuild.
 
 **State leaks.** Shots share one page load, so any state a shot can change and `applyState` does
-not reset leaks into the next. If a shot passes alone and fails in a batch, reproduce with
+not reset leaks into the next. `applyState` closes every open dialog (detail panels, About, a
+cluster popover) by its own Close button, the event browser and any expanded chart. If a shot passes alone and fails in a batch, reproduce with
 `--no-sort --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
 
 ## Determinism and speed

@@ -7,13 +7,14 @@
  * the same summary.
  */
 
-import { spawnSync } from 'node:child_process'
-import { mkdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { spawn, spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { existsSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, statSync } from 'node:fs'
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { chromium } from 'playwright'
-
+import { resolveChromium } from './browser.mjs'
 import { buildContactSheet } from './contactSheet.mjs'
 import { makeHook, rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
 import { startStaticServer } from './server.mjs'
@@ -30,8 +31,19 @@ const NEXT_BIN = path.join(WEB_ROOT, 'node_modules/.bin/next')
 /** Where `NEXT_PUBLIC_EARTHTIME_QA=1 next build` exports (`next.config.ts`): apart from an ordinary
  *  build's `out/`, so one can never replace the QA export with a build lacking the hook. */
 const QA_EXPORT_DIR = path.join(WEB_ROOT, 'out-qa')
-const DEV_SERVER_URL = 'http://localhost:3000'
+/** Written into the export after a build that carried the QA hook: what it was built from. */
+const SOURCE_STAMP_FILE = path.join(QA_EXPORT_DIR, '.qa-source-stamp')
+const MEDIA_DIR = path.join(WEB_ROOT, 'public/media')
+const DEV_PID_FILE = path.join(OUT_ROOT, 'dev-server.json')
+const DEV_LOG_FILE = path.join(OUT_ROOT, 'dev-server.log')
 const DEFAULT_VIEWPORT = { width: 1440, height: 900 }
+
+/** A `next dev` port of this checkout's own, in 3100-3899, so `--dev` runs in two worktrees never
+ *  attach to each other's server. */
+function checkoutDevPort() {
+  const digest = createHash('sha1').update(realpathSync(WEB_ROOT)).digest()
+  return 3100 + (digest.readUInt32BE(0) % 800)
+}
 
 const HELP = `
 Visual-QA harness for the Earthlapse web app.
@@ -41,8 +53,11 @@ Usage:
   pnpm qa:serve                  build (unless --no-build) + serve out-qa/, print the URL, and wait
 
 Options:
-  --dev                      attach to an already-running \`next dev\` on :3000 instead of building
+  --dev                      run against \`next dev\` on this checkout's own port (started, and
+                             left running for the next --dev run, when nothing answers there)
+  --stop-dev                 stop the \`next dev\` server an earlier --dev run started, then exit
   --no-build                 skip \`next build\`, reuse the existing out-qa/ export
+  --rebuild                  build even when out-qa/ is up to date with the source
   --serve-only               build (unless --no-build) + serve, then idle until Ctrl+C (no shots run)
   --shots <a,b,c*>           comma-separated shot names/globs (matched against each shot's \`name\`)
   --grep <regex>             run only shots whose name matches; narrows --shots further
@@ -53,12 +68,14 @@ Options:
   --shards <n>               split the shots across n pages loaded in parallel (default 1)
   --viewport <WxH>           override every shot's own viewport
   --reduced-motion <mode>    'reduce' (default) or 'no-preference'
-  --port <n>                 static server port (default: an ephemeral free port)
+  --port <n>                 static server port (default: QA_PORT, else an ephemeral free port)
   --out <name>               run folder name under scripts/qa/out/ (default: a timestamp)
   --help                     print this message
 
 Environment:
-  QA_CHROMIUM_PATH           a Chromium binary to launch instead of Playwright's own download
+  QA_CHROMIUM                Chromium binary to launch (default: discovered, see browser.mjs)
+  QA_DEV_PORT                the \`next dev\` port --dev uses (default: ${checkoutDevPort()}, this checkout's)
+  QA_PORT                    static server port, as --port
 `
 
 function parseArgs(rawArgv) {
@@ -70,7 +87,9 @@ function parseArgs(rawArgv) {
   const argv = rawArgv[0] === '--' ? rawArgv.slice(1) : rawArgv
   const args = {
     dev: false,
+    stopDev: false,
     noBuild: false,
+    rebuild: false,
     serveOnly: false,
     shots: null,
     grep: null,
@@ -81,14 +100,16 @@ function parseArgs(rawArgv) {
     shards: 1,
     viewport: null,
     reducedMotion: 'reduce',
-    port: 0,
+    port: Number(process.env.QA_PORT ?? 0),
     out: null,
     help: false,
   }
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--dev') args.dev = true
+    else if (arg === '--stop-dev') args.stopDev = true
     else if (arg === '--no-build') args.noBuild = true
+    else if (arg === '--rebuild') args.rebuild = true
     else if (arg === '--serve-only') args.serveOnly = true
     else if (arg === '--help' || arg === '-h') args.help = true
     else if (arg === '--shots') args.shots = argv[(i += 1)].split(',').map((s) => s.trim())
@@ -146,7 +167,67 @@ function getPath(obj, dotPath) {
   return dotPath.split('.').reduce((value, key) => (value === undefined || value === null ? undefined : value[key]), obj)
 }
 
-function runNextBuild() {
+/** Files under `dir` (following symlinks, so `public/media`'s content counts), as paths. */
+function walkFiles(dir, keep = () => true) {
+  const files = []
+  const visit = (current) => {
+    for (const name of readdirSync(current)) {
+      const full = path.join(current, name)
+      const info = statSync(full)
+      if (info.isDirectory()) visit(full)
+      else if (keep(full)) files.push({ full, info })
+    }
+  }
+  if (existsSync(dir)) visit(dir)
+  return files
+}
+
+/**
+ * What a QA export is built from, as one hash over every input's path, size and mtime (tests
+ * excluded) plus the `NEXT_PUBLIC_*` environment it inlines. Stat-only, so ~10 ms: a content hash
+ * would read the ~90 MB of media on every run.
+ */
+function sourceStamp() {
+  const hash = createHash('sha1')
+  const isInput = (file) => !/\.test\.tsx?$/.test(file) && !file.includes(`${path.sep}src${path.sep}test${path.sep}`)
+  const files = [
+    ...walkFiles(path.join(WEB_ROOT, 'src'), isInput),
+    ...walkFiles(path.join(WEB_ROOT, 'public')),
+    ...['next.config.ts', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json']
+      .map((name) => path.join(WEB_ROOT, name))
+      .filter((full) => existsSync(full))
+      .map((full) => ({ full, info: statSync(full) })),
+  ]
+  for (const { full, info } of files) hash.update(`${path.relative(WEB_ROOT, full)}\0${info.size}\0${info.mtimeMs}\n`)
+  for (const key of Object.keys(process.env).filter((k) => k.startsWith('NEXT_PUBLIC_')).sort()) {
+    hash.update(`${key}=${process.env[key]}\n`)
+  }
+  return hash.digest('hex')
+}
+
+/** Whether the export's JS carries the QA hook: Next 16 + Turbopack occasionally fails to inline
+ *  `NEXT_PUBLIC_EARTHTIME_QA` (README, "Known flakes"). */
+function exportCarriesHook() {
+  return walkFiles(path.join(QA_EXPORT_DIR, '_next/static'), (file) => file.endsWith('.js')).some(({ full }) =>
+    readFileSync(full, 'utf8').includes('__earthtime'),
+  )
+}
+
+async function readStamp() {
+  try {
+    return (await readFile(SOURCE_STAMP_FILE, 'utf8')).trim()
+  } catch {
+    return null
+  }
+}
+
+/** Builds the QA export unless `out-qa/` was already built from exactly this source. */
+async function ensureQaExport(args) {
+  const stamp = sourceStamp()
+  if (!args.rebuild && (await readStamp()) === stamp) {
+    console.log('out-qa/ is up to date with the source; skipping next build (--rebuild forces one)')
+    return
+  }
   console.log('Building the QA export into out-qa/ (NEXT_PUBLIC_EARTHTIME_QA=1 next build)…')
   const result = spawnSync(NEXT_BIN, ['build'], {
     cwd: WEB_ROOT,
@@ -154,6 +235,107 @@ function runNextBuild() {
     stdio: 'inherit',
   })
   if (result.status !== 0) throw new Error(`next build failed (exit ${result.status})`)
+  if (!exportCarriesHook()) {
+    throw new Error(
+      'the fresh out-qa/ export has no window.__earthtime: the known Next 16 + Turbopack ' +
+        'env-inlining flake (README, "Known flakes"). Re-run to rebuild.',
+    )
+  }
+  await writeFile(SOURCE_STAMP_FILE, `${stamp}\n`)
+}
+
+/** Fails fast, naming the `scripts/setup.sh` part to run, when something the run needs is absent. */
+async function checkPreconditions(args) {
+  const missing = (what, part) => {
+    console.error(`missing ${what} — run scripts/setup.sh ${part}`)
+    process.exit(2)
+  }
+  if (!existsSync(NEXT_BIN) || !existsSync(path.join(WEB_ROOT, 'node_modules/playwright'))) {
+    missing('web dependencies (web/node_modules)', 'web')
+  }
+  // The shots measure published scenes and layers: the stub manifest the app falls back to
+  // without media, or LFS pointers in place of images, fail them in confusing ways.
+  if (!existsSync(path.join(MEDIA_DIR, 'manifest.json'))) missing('media (web/public/media)', 'media')
+  const sample = walkFiles(path.join(MEDIA_DIR, 'scenes'), (file) => /\.(webp|png|jpg)$/.test(file)).slice(0, 20)
+  const pointer = sample.find(({ full, info }) => info.size < 200 && readFileSync(full, 'utf8').startsWith('version https://git-lfs'))
+  if (pointer !== undefined) missing(`media content (${path.relative(WEB_ROOT, pointer.full)} is an LFS pointer)`, 'media')
+  if (!args.serveOnly && (await resolveChromium()) === null) missing('a Chromium to launch', 'browser')
+}
+
+async function responds(url, timeoutMs) {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+function processAlive(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The `next dev` server `--dev` runs against: whatever answers on this checkout's port, or a new
+ * one started there, detached so the next `--dev` run attaches in a second instead of paying the
+ * start-up and first compile again.
+ */
+async function ensureDevServer() {
+  const port = Number(process.env.QA_DEV_PORT ?? checkoutDevPort())
+  const url = `http://localhost:${port}`
+  if (await responds(url, 5_000)) {
+    let ours = false
+    try {
+      const started = JSON.parse(readFileSync(DEV_PID_FILE, 'utf8'))
+      ours = started.port === port && processAlive(started.pid)
+    } catch {
+      // no record of a server this harness started
+    }
+    console.log(`Attaching to next dev at ${url}${ours ? '' : ' (not started by this checkout\'s harness)'}`)
+    return url
+  }
+  await mkdir(OUT_ROOT, { recursive: true })
+  const log = openSync(DEV_LOG_FILE, 'a')
+  // Without the QA flag: it would move `distDir` to out-qa/, the static export's directory.
+  const { NEXT_PUBLIC_EARTHTIME_QA: _qa, ...env } = process.env
+  const child = spawn(NEXT_BIN, ['dev', '--port', String(port)], { cwd: WEB_ROOT, env, detached: true, stdio: ['ignore', log, log] })
+  child.unref()
+  let exited = null
+  child.on('exit', (code) => {
+    exited = code
+  })
+  await writeFile(DEV_PID_FILE, JSON.stringify({ pid: child.pid, port }))
+  console.log(`Starting next dev at ${url} (pid ${child.pid}, log ${DEV_LOG_FILE}); it stays up for the next --dev run: kill ${child.pid} to stop it`)
+  const deadline = Date.now() + 180_000
+  while (Date.now() < deadline) {
+    if (exited !== null) throw new Error(`next dev exited (code ${exited}); see ${DEV_LOG_FILE}`)
+    // The first request compiles the page, so it gets the whole remaining budget.
+    if (await responds(url, deadline - Date.now())) return url
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  throw new Error(`next dev did not answer at ${url} within 180 s; see ${DEV_LOG_FILE}`)
+}
+
+function stopDevServer() {
+  let started = null
+  try {
+    started = JSON.parse(readFileSync(DEV_PID_FILE, 'utf8'))
+  } catch {
+    // nothing recorded
+  }
+  if (started !== null && processAlive(started.pid)) {
+    // Detached, so it leads its own process group: this also stops the workers it spawned.
+    process.kill(-started.pid, 'SIGTERM')
+    console.log(`Stopped next dev (pid ${started.pid}, port ${started.port})`)
+  } else {
+    console.log('No next dev started by this harness is running')
+  }
+  rmSync(DEV_PID_FILE, { force: true })
 }
 
 /** `Globe.tsx`'s own defaults for state this harness can't reload away — a fresh mount would
@@ -195,10 +377,31 @@ async function closeEventBrowser(page, hook) {
   await rafTicks(page, 2)
 }
 
+/** Any open dialog but the tour's own (`setTourOpen` owns that one): an event's or a caption's
+ *  detail panel, About & credits, a timeline cluster popover. Their open state is local to the
+ *  components that own them, so the harness closes them the way a user does. */
+const OPEN_DIALOG_SELECTOR = `[role="dialog"]:not(${ONBOARDING_TOUR_SELECTOR} *)`
+
+/**
+ * Closes every open dialog by its own "Close" button. A panel that would not close throws, failing
+ * this shot rather than leaving its backdrop over the next shot's clicks.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function closeOpenDialogs(page, hook) {
+  const dialogs = page.locator(OPEN_DIALOG_SELECTOR)
+  for (let attempt = 0; attempt < 4 && (await dialogs.count()) > 0; attempt += 1) {
+    await dialogs.last().getByRole('button', { name: 'Close', exact: true }).first().click()
+    await hook.ready()
+    await rafTicks(page, 2)
+  }
+  if ((await dialogs.count()) > 0) throw new Error('an open dialog did not close on its Close button')
+}
+
 /**
  * Resolves every field `state` covers on every shot, never only the ones a shot mentions: the
- * selected section (the root), playback, `globeExpanded` (default `false`), the event browser and
- * any expanded HUD chart (always closed), and, when expanded, `globeViewMode` (default `'globe'`)
+ * selected section (the root), playback, `globeExpanded` (default `false`), any open dialog, the
+ * event browser and any expanded HUD chart (always closed), and, when expanded, `globeViewMode` (default `'globe'`)
  * and every legend toggle (`DEFAULT_LAYER_TOGGLES` merged with the shot's own), then the tour. That
  * is what keeps one shot independent of whatever the previous one left on screen.
  *
@@ -215,7 +418,7 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
   // The resets that need no real click, and what else needs resetting, in one round trip: with
   // the globe expanded every round trip waits out a software-rendered frame.
   const reset = await page.evaluate(
-    ({ playing, rootSectionId }) => {
+    ({ playing, rootSectionId, dialogSelector }) => {
       const qa = window.__earthtime
       qa.setPlaying(playing)
       const { sectionId, globeExpanded } = qa.getState()
@@ -227,11 +430,12 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
       return {
         sectionChanged: sectionId !== rootSectionId,
         collapsed: globeExpanded,
+        dialogOpen: document.querySelector(dialogSelector) !== null,
         eventBrowserOpen: document.querySelector('[data-testid="event-browser"]') !== null,
         chartOpen: document.querySelector('button[aria-label^="Collapse "][aria-label$=" chart"]') !== null,
       }
     },
-    { playing: state.playing ?? false, rootSectionId: ROOT_SECTION_ID },
+    { playing: state.playing ?? false, rootSectionId: ROOT_SECTION_ID, dialogSelector: OPEN_DIALOG_SELECTOR },
   )
   if (reset.sectionChanged) await waitForSectionWindowSettle(page)
   // The frames between collapse and any re-expand let React commit the collapse rather than
@@ -239,6 +443,11 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
   if (reset.collapsed) {
     await hook.ready()
     await rafTicks(page, 2)
+  }
+  if (reset.dialogOpen) {
+    await closeOpenDialogs(page, hook)
+    // A panel that paused playback resumes it on close.
+    await page.evaluate((playing) => window.__earthtime.setPlaying(playing), state.playing ?? false)
   }
   if (reset.eventBrowserOpen) await closeEventBrowser(page, hook)
   if (reset.chartOpen) await closeExpandedChart(page, hook)
@@ -309,6 +518,12 @@ function buildAssertions(measurements, expect) {
   })
 }
 
+/** A shot's `expect` table, or, when it is a function, the table it returns for this run's mode:
+ *  a check too slow for `--smoke` is measured and asserted only in the full run. */
+function shotExpect(shot, run) {
+  return typeof shot.expect === 'function' ? shot.expect({ smoke: run.smoke }) : shot.expect
+}
+
 /** `run` carries the settings that are the same for every shot in a run — where output goes, the
  *  `--viewport`/`--reduced-motion` overrides, and whether screenshots are captured at all. One
  *  object rather than five positional arguments, since every one of them would otherwise have to
@@ -343,8 +558,8 @@ async function runShot(page, hook, shot, run) {
   const pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
   if (pngPath !== null) await page.screenshot({ path: pngPath })
 
-  const measurements = shot.measure !== undefined ? await shot.measure({ page, hook }) : {}
-  const assertions = buildAssertions(measurements, shot.expect)
+  const measurements = shot.measure !== undefined ? await shot.measure({ page, hook, smoke: run.smoke }) : {}
+  const assertions = buildAssertions(measurements, shotExpect(shot, run))
 
   return {
     name: shot.name,
@@ -382,7 +597,7 @@ async function runBootstrapShot(page, shot, run, baseUrl) {
   const screenshotName = screenshot !== null && screenshot !== undefined ? `${shot.name}.png` : null
   const pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
   if (pngPath !== null) await writeFile(pngPath, screenshot)
-  const assertions = buildAssertions(measurements, shot.expect)
+  const assertions = buildAssertions(measurements, shotExpect(shot, run))
 
   return {
     name: shot.name,
@@ -595,13 +810,18 @@ async function main() {
     return
   }
 
-  let server = null
-  let baseUrl = DEV_SERVER_URL
+  if (args.stopDev) {
+    stopDevServer()
+    return
+  }
+  await checkPreconditions(args)
 
+  let server = null
+  let baseUrl
   if (args.dev) {
-    baseUrl = DEV_SERVER_URL
+    baseUrl = await ensureDevServer()
   } else {
-    if (!args.noBuild) runNextBuild()
+    if (!args.noBuild) await ensureQaExport(args)
     server = await startStaticServer(QA_EXPORT_DIR, args.port)
     baseUrl = server.url
     console.log(`Serving ${QA_EXPORT_DIR} at ${baseUrl}`)
@@ -618,8 +838,9 @@ async function main() {
   const runDir = path.join(OUT_ROOT, runName)
   await mkdir(runDir, { recursive: true })
 
-  // An environment whose preinstalled Chromium doesn't match this Playwright version points at it here.
-  const browser = await chromium.launch({ executablePath: process.env.QA_CHROMIUM_PATH || undefined })
+  const { chromium } = await import('playwright')
+  const { executablePath } = await resolveChromium()
+  const browser = await chromium.launch({ executablePath })
   const consoleErrors = []
   const pages = []
   const startedAt = Date.now()
@@ -629,6 +850,7 @@ async function main() {
       viewport: args.viewport,
       reducedMotion: args.reducedMotion,
       screenshots: args.screenshots,
+      smoke: args.smoke,
     }
     // `--extra-shots` lets a new shot be written, run and proven to fail-before-fix in its own
     // file while `shots.mjs` is being edited elsewhere (CLAUDE.md, "Working in parallel").

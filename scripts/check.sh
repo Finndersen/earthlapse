@@ -32,6 +32,22 @@ cd "$REPO_ROOT"
 PYTHON="${PYTHON:-$REPO_ROOT/.venv/bin/python}"
 RUFF="${RUFF:-$REPO_ROOT/.venv/bin/ruff}"
 
+# Presence checks only (scripts/setup.sh does the installing): a fresh container fails here,
+# naming the fix, rather than midway through a group.
+missing() {
+  echo "check.sh: missing $1 — run scripts/setup.sh $2" >&2
+  exit 2
+}
+stale() {
+  if [ -e "$1" ] && [ "$2" -nt "$1" ]; then
+    echo "check.sh: warning: $2 changed since the last scripts/setup.sh $3" >&2
+  fi
+}
+if ! { [ -x "$PYTHON" ] && [ -x "$RUFF" ] && [ -x "$REPO_ROOT/.venv/bin/pytest" ]; }; then
+  missing "the Python venv (.venv)" python
+fi
+stale .venv/.earthtime-setup-stamp pyproject.toml python
+
 LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/earthtime-check.XXXXXX")"
 trap 'rm -rf "$LOG_DIR"' EXIT
 
@@ -46,6 +62,13 @@ if [ -n "$CHANGED_REF" ]; then
   grep -qE '^web/' <<<"$CHANGED_FILES" || RUN_WEB=0
   VITEST_SCOPE=(--changed "$BASE" --passWithNoTests)
   echo "check.sh: scoped to changes since $(git rev-parse --short "$BASE") ($CHANGED_REF)"
+fi
+
+if [ "$RUN_WEB" -eq 1 ]; then
+  if ! { [ -x web/node_modules/.bin/tsc ] && [ -x web/node_modules/.bin/vitest ]; }; then
+    missing "web dependencies (web/node_modules)" web
+  fi
+  stale web/node_modules/.earthtime-setup-stamp web/pnpm-lock.yaml web
 fi
 
 # `step <name> <command...>` — runs one check inside a group, recording its name for the failure

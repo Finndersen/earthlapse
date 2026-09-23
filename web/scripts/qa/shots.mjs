@@ -646,8 +646,9 @@ async function touchTap(page, x, y) {
  * @property {ShotState} [state]
  * @property {boolean} [touch] - run on the harness's `hasTouch` page, where touch input works
  * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<void>} [actions]
- * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<Record<string, unknown>>} [measure]
- * @property {Record<string, [number, number]>} [expect] - dot-path into `measure`'s result -> [min, max]
+ * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook>, smoke: boolean }) => Promise<Record<string, unknown>>} [measure]
+ * @property {Record<string, [number, number]> | ((mode: { smoke: boolean }) => Record<string, [number, number]>)} [expect] -
+ *   dot-path into `measure`'s result -> [min, max]; a function picks the table for `--smoke` or the full run
  */
 
 // ---------------------------------------------------------------------------------------------
@@ -1450,10 +1451,11 @@ export default [
       'globe; a click on an arrival the human layer draws (found by its "Click for details" hover hint) opens its ' +
       'event\'s detail panel with a Route section, its surface opaque and ending ≥ 16px above the viewport bottom; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
       'the sphere keeps the view open; a real click reaches the "Map" button (nothing covers it); a click on the map ' +
-      'keeps the view open; back on the sphere, a click on the empty backdrop closes it.',
+      'keeps the view open; back on the sphere, a click on the empty backdrop closes it. The arrival click runs ' +
+      'only in the full run, not under --smoke.',
     viewport: DEFAULT_VIEWPORT,
     t: 50_000,
-    measure: async ({ page, hook }) => {
+    measure: async ({ page, hook, smoke }) => {
       // Two frames for the click to land, then whether the globe is still expanded — one round trip.
       const expandedAfterClick = async (x, y) => {
         await page.mouse.click(x, y)
@@ -1471,16 +1473,19 @@ export default [
       const frames = await boxesOf(page, { sphere: GLOBE_SPHERE_FIT_FRAME_SELECTOR, map: GLOBE_MAP_FIT_FRAME_SELECTOR })
 
       // At 50 ka the Asian and Sahul arrivals are on the sphere. Hover spread samples of what the
-      // human layer draws until one shows the "Click for details" hint, then click it.
-      await page.mouse.move(0, 0)
-      const points = await humanLayerPoints(page, hook)
+      // human layer draws until one shows the "Click for details" hint, then click it. The hover
+      // hunt is most of this shot's time, so `--smoke` leaves it to the full run.
       let arrival = null
-      for (const [x, y] of points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 12)) === 0).slice(0, 12)) {
-        await page.mouse.move(x, y)
-        await rafTicks(page, 2)
-        if ((await page.locator(GLOBE_TOOLTIP_HINT_SELECTOR).count()) > 0) {
-          arrival = [x, y]
-          break
+      if (!smoke) {
+        await page.mouse.move(0, 0)
+        const points = await humanLayerPoints(page, hook)
+        for (const [x, y] of points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 12)) === 0).slice(0, 12)) {
+          await page.mouse.move(x, y)
+          await rafTicks(page, 2)
+          if ((await page.locator(GLOBE_TOOLTIP_HINT_SELECTOR).count()) > 0) {
+            arrival = [x, y]
+            break
+          }
         }
       }
       let arrivalOpensRoute = 0
@@ -1543,17 +1548,21 @@ export default [
         arrivalPanelSurfaceAlpha,
       }
     },
-    expect: {
+    expect: ({ smoke }) => ({
       orbClickExpands: [1, 1],
       zoomGrowthPx: [80, 800],
       sphereClickKeepsOpen: [1, 1],
       mapClickKeepsOpen: [1, 1],
       expandedAfterBackdropClick: [0, 0],
-      arrivalFound: [1, 1],
-      arrivalOpensRoute: [1, 1],
-      // The backdrop's own gutter at least: a panel ending flush with the viewport clips its border.
-      arrivalPanelBottomInsetPx: [16, 900],
-      arrivalPanelSurfaceAlpha: [1, 1],
-    },
+      ...(smoke
+        ? {}
+        : {
+            arrivalFound: [1, 1],
+            arrivalOpensRoute: [1, 1],
+            // The backdrop's own gutter at least: a panel ending flush with the viewport clips its border.
+            arrivalPanelBottomInsetPx: [16, 900],
+            arrivalPanelSurfaceAlpha: [1, 1],
+          }),
+    }),
   },
 ]

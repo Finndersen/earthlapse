@@ -1,6 +1,10 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: data data-force pins test web-dev web-build check check-quick hooks preflight deploy deploy-media deploy-site
+.PHONY: setup data data-force pins test web-dev web-build check check-quick hooks preflight deploy deploy-media deploy-site
+
+# Every part of the environment; `scripts/setup.sh <part>...` for only some (its own header).
+setup:
+	scripts/setup.sh
 
 data:
 	$(PYTHON) -m pipeline.databuild
