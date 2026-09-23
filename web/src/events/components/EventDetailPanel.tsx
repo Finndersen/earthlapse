@@ -134,12 +134,14 @@ function StepButton({
     <button
       type="button"
       className={styles.stepButton}
+      data-direction={direction}
       aria-label={target ? `${name}: ${target.label}` : name}
       title={target?.label}
       disabled={target === null}
       onClick={() => onStep(direction)}
     >
-      {direction === 'older' ? '‹ Previous' : 'Next ›'}
+      <span className={styles.stepHint}>{direction === 'older' ? '‹ Previous' : 'Next ›'}</span>
+      {target && <span className={styles.stepTitle}>{target.label}</span>}
     </button>
   )
 }
