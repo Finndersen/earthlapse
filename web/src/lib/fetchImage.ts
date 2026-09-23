@@ -28,10 +28,26 @@ export async function readBodyWithProgress(response: Response, onProgress?: (fra
   return new Blob(chunks, { type: response.headers.get('Content-Type') ?? '' })
 }
 
-export async function fetchImage(url: string, onProgress?: (fraction: number) => void): Promise<HTMLImageElement> {
-  const response = await fetch(url)
+/** Fetches `url`'s encoded bytes, reporting download progress. */
+export async function fetchImageBlob(
+  url: string,
+  onProgress?: (fraction: number) => void,
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const response = await fetch(url, signal === undefined ? undefined : { signal })
   if (!response.ok) throw new Error(`failed to load image ${url}: HTTP ${response.status}`)
-  const blob = await readBodyWithProgress(response, onProgress)
+  return readBodyWithProgress(response, onProgress)
+}
+
+export type ImageBlobLoader = (url: string, onProgress?: (fraction: number) => void) => Promise<Blob>
+
+/** `loadBlob` supplies the encoded bytes; by default they are fetched from the network. */
+export async function fetchImage(
+  url: string,
+  onProgress?: (fraction: number) => void,
+  loadBlob: ImageBlobLoader = fetchImageBlob,
+): Promise<HTMLImageElement> {
+  const blob = await loadBlob(url, onProgress)
   const objectUrl = URL.createObjectURL(blob)
   try {
     const image = new Image()
