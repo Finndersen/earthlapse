@@ -958,3 +958,15 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* How to open the full detail (`GlobeTooltip.tsx`'s `hint`): the date line's mono type in the
+   accent the detail panel's own action uses, dimmed so it reads as an aside. `--hud-faint` would
+   fall under 3:1 against this backing at 9px. */
+.tooltipHint {
+  margin: 5px 0 0;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+  color: var(--hud-accent, #e8b06a);
+  opacity: 0.78;
+}

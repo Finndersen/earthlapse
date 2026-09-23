@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import { formatGeoTime } from '@/timeline'
 import type { TimelineEvent } from '@/types/layer'
 
 import { EVENT_TAG_PALETTE } from '../tagPalette'
@@ -97,6 +98,57 @@ describe('EventDetailPanel', () => {
       expect(buttons).toHaveLength(1)
       fireEvent.click(buttons[0]!)
       expect(onShowOnTimeline).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('route', () => {
+    const migration = event({
+      id: 'yamnaya-steppe-migration',
+      label: 'Yamnaya steppe migration',
+      kind: 'period',
+      t: undefined,
+      tMin: 4600,
+      tMax: 5000,
+      tags: ['human-origins'],
+      description: 'Steppe pastoralists move west into Europe.',
+      effect: {
+        kind: 'arrival',
+        arrivalKind: 'migration',
+        origin: { lat: 47.6, lon: 44.4 },
+        destination: { lat: 51.2, lon: -1.8 },
+        established: 4600,
+        windows: [{ tMin: 0, tMax: 5000 }],
+      },
+    })
+    const chain = [
+      { id: 'neanderthal-sapiens-overlap', label: 'Modern humans reach Europe' },
+      { id: 'out-of-africa-migration', label: 'Out of Africa' },
+    ]
+
+    function renderRoute(overrides: Partial<Parameters<typeof EventDetailPanel>[0]> = {}) {
+      return render(
+        <EventDetailPanel
+          event={migration}
+          onClose={vi.fn()}
+          onShowOnTimeline={vi.fn()}
+          onOpenBrowser={vi.fn()}
+          arrivalChainFor={() => chain}
+          {...overrides}
+        />,
+      )
+    }
+
+    it('shows an arrival its Route, whose earlier arrivals each open that event, and no Route otherwise', () => {
+      const onOpenEvent = vi.fn()
+      renderRoute({ onOpenEvent })
+      const route = screen.getByRole('region', { name: 'Route' })
+      expect(route.textContent).toContain('Migration')
+      expect(route.textContent).toContain(formatGeoTime(4600))
+      fireEvent.click(screen.getByRole('button', { name: 'Out of Africa' }))
+      expect(onOpenEvent).toHaveBeenCalledExactlyOnceWith('out-of-africa-migration')
+      cleanup()
+      render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} />)
+      expect(screen.queryByRole('region', { name: 'Route' })).toBeNull()
     })
   })
 })

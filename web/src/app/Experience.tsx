@@ -19,7 +19,7 @@ import { createPortal } from 'react-dom'
 
 import { SoundToggle, useAudioEngine } from '@/audio'
 import { EventBrowser, EventDetailPanel, EventFeed, EventTagLegend, placementT, useIsCompactViewport } from '@/events'
-import { Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS } from '@/globe'
+import { buildArrivalIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
@@ -464,6 +464,15 @@ export function Experience() {
       ),
     [readyManifest],
   )
+  // The derived chain each arrival continues (ADR-032) — the detail panel's Route section lists it.
+  const arrivalIndex = useMemo(() => buildArrivalIndex(readyManifest?.events ?? []), [readyManifest])
+  const arrivalChainFor = useCallback(
+    (eventId: string) =>
+      traceToOrigin(arrivalIndex, eventId)
+        .slice(1)
+        .map((id) => ({ id, label: arrivalIndex.byEventId.get(id)?.event.label ?? id })),
+    [arrivalIndex],
+  )
   const lineageEntry = readyManifest?.layers.find((l) => l.dataKind === 'node')
   const nodeLayer = lineageEntry ? nodeLayers.get(lineageEntry.id) : undefined
   const lineagePortraits = lineageEntry ? (nodePortraits.get(lineageEntry.id) ?? null) : null
@@ -524,6 +533,20 @@ export function Experience() {
     detailHold.pause()
     setDetailEventId(event.id)
     setDetailMemberIds(members.map((member) => member.id))
+  }
+
+  // A click, or a second tap, on an arrival on the expanded globe. Opens over the globe, which
+  // stays expanded underneath.
+  const activateGlobeEvent = (eventId: string): void => {
+    const event = manifest.events.find((e) => e.id === eventId)
+    if (event !== undefined) openEventDetail(event, [event])
+  }
+
+  // A Route section's chain link: replaces the panel's event, keeping the "was playing before the
+  // panel opened" fact from the first open rather than re-reading the now-paused playback.
+  const openLinkedEventDetail = (eventId: string): void => {
+    setDetailEventId(eventId)
+    setDetailMemberIds([eventId])
   }
 
   const openCaptionDetail = (scene: Scene): void => {
@@ -648,6 +671,7 @@ export function Experience() {
               feedEventIds={feedEventIds}
               hoveredFeedEventId={hoveredFeedEventId}
               onViewModeToggleHeightChange={setViewModeToggleHeightPx}
+              onActivateEvent={activateGlobeEvent}
             />
           ) : (
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
@@ -739,6 +763,8 @@ export function Experience() {
             setDetailMemberIds([])
           }}
           onOpenBrowser={openEventBrowserFromDetail}
+          arrivalChainFor={arrivalChainFor}
+          onOpenEvent={openLinkedEventDetail}
         />
       )}
       {eventBrowserOpen && (

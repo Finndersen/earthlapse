@@ -18,6 +18,9 @@
  * focusable inside it, no focus moved and no focus trapped. It also carries `role="status"` with
  * a polite live region, so a screen-reader user hears what a sighted user is pointing at rather
  * than the tooltip being purely visual. Keyboard interaction elsewhere on the page is untouched.
+ * Opening an event's full detail is a click (or second tap) on the drawn target itself
+ * (`bindGlobeHitTest`), never on the tooltip, so the tooltip can stay inert; its `hint` line only
+ * says so. The same detail is reachable by keyboard through the event feed and browser.
  */
 
 import { Html } from '@react-three/drei'
@@ -29,6 +32,7 @@ import type { GlobeEffectAnchor } from '@/types/layer'
 
 import { sphereMarkerVisibility } from './arcs'
 import styles from './Globe.module.css'
+import { ORB_CLICK_DRAG_THRESHOLD_PX } from './orbGesture'
 import { unfoldedLiftedPosition } from './projection'
 
 export type GlobeHitKind = 'arrival' | 'inhabited' | 'city'
@@ -187,6 +191,100 @@ export function sameHitTarget(a: GlobeHitTarget | null, b: GlobeHitTarget | null
   return (a?.id ?? null) === (b?.id ?? null)
 }
 
+export interface GlobeHitTestBindings {
+  /** The target under a client-space point, or `null`. */
+  resolve: (clientX: number, clientY: number) => GlobeHitTarget | null
+  /** Called when the shown target changes (by id, or between hover and touch), with whether a
+   *  touch tap produced it. */
+  onChange: (target: GlobeHitTarget | null, viaTouch: boolean) => void
+  /** Set true for as long as a touch press landed on a target, so the orb's own tap-to-expand
+   *  gesture can stand down and let the tap open a tooltip instead. */
+  touchHitRef: MutableRefObject<boolean>
+  /** Opens an event's detail, read at click time; `null` while activation is off (the
+   *  minimised orb, whose click expands it instead). */
+  activateRef: MutableRefObject<((eventId: string) => void) | null>
+}
+
+/**
+ * The hit-test's DOM gestures on `canvas`: hover on a pointer device, tap on a touch one. A touch
+ * tap that lands on nothing clears the tooltip, which is what makes "tap elsewhere to dismiss"
+ * work without a backdrop element.
+ *
+ * **Activation.** A mouse click on a target that belongs to an event opens that event; on touch
+ * the first tap only shows the tooltip and a second tap on the *same* target opens it, so a tap
+ * never jumps straight past the preview. Activation runs on `click`, not `pointerup`: a panel
+ * mounted on `pointerup` would sit under the finger by the time the browser dispatches the tap's
+ * own `click`, which would land on the panel's backdrop and close it again. An activating click
+ * stops propagating at the canvas, so the canvas container (r3f's `onPointerMissed`, the
+ * expanded view's backdrop-click collapse) never also reads it as a click on empty space.
+ * Returns the unbind function.
+ */
+export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBindings): () => void {
+  const { resolve, onChange, touchHitRef, activateRef } = bindings
+  const press = { x: 0, y: 0, touch: false }
+  let shown: GlobeHitTarget | null = null
+  let shownViaTouch = false
+  // What was showing when the current press began — a touch tap activates only a target that
+  // was already on screen before the finger came down.
+  let shownAtPress: GlobeHitTarget | null = null
+
+  const show = (next: GlobeHitTarget | null, viaTouch: boolean): void => {
+    if (sameHitTarget(shown, next) && (next === null || shownViaTouch === viaTouch)) return
+    shown = next
+    shownViaTouch = viaTouch
+    onChange(next, viaTouch)
+  }
+
+  const onPointerMove = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch') return
+    show(resolve(event.clientX, event.clientY), false)
+  }
+  // Touch pointers only ever "leave" because the finger lifted, which fires this immediately
+  // after `onPointerUp` — not a dismissal gesture. Touch dismissal is `onPointerUp` resolving to
+  // nothing (a tap on empty space).
+  const onPointerLeave = (event: PointerEvent): void => {
+    if (event.pointerType === 'touch') return
+    show(null, false)
+  }
+  const onPointerDown = (event: PointerEvent): void => {
+    press.x = event.clientX
+    press.y = event.clientY
+    press.touch = event.pointerType === 'touch'
+    shownAtPress = shown
+    if (press.touch) touchHitRef.current = resolve(event.clientX, event.clientY) !== null
+  }
+  const onPointerUp = (event: PointerEvent): void => {
+    if (!press.touch) return
+    const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y)
+    if (moved <= TAP_SLOP_PX) show(resolve(event.clientX, event.clientY), true)
+    touchHitRef.current = false
+  }
+  const onClick = (event: MouseEvent): void => {
+    const activate = activateRef.current
+    if (activate === null) return
+    const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y)
+    if (moved > (press.touch ? TAP_SLOP_PX : ORB_CLICK_DRAG_THRESHOLD_PX)) return
+    const hit = resolve(event.clientX, event.clientY)
+    if (hit === null || hit.eventId === null) return
+    if (press.touch && !sameHitTarget(hit, shownAtPress)) return
+    event.stopPropagation()
+    activate(hit.eventId)
+  }
+
+  canvas.addEventListener('pointermove', onPointerMove)
+  canvas.addEventListener('pointerleave', onPointerLeave)
+  canvas.addEventListener('pointerdown', onPointerDown)
+  canvas.addEventListener('pointerup', onPointerUp)
+  canvas.addEventListener('click', onClick)
+  return () => {
+    canvas.removeEventListener('pointermove', onPointerMove)
+    canvas.removeEventListener('pointerleave', onPointerLeave)
+    canvas.removeEventListener('pointerdown', onPointerDown)
+    canvas.removeEventListener('pointerup', onPointerUp)
+    canvas.removeEventListener('click', onClick)
+  }
+}
+
 export interface GlobeHitTestOptions {
   /** Read fresh on every pointer event — the caller keeps it in a ref so rebuilding the
    *  candidate list every render costs nothing but an assignment. */
@@ -197,15 +295,20 @@ export interface GlobeHitTestOptions {
    *  the auto-rotate and the scene-location ease are already folded in. */
   groupRef: MutableRefObject<THREE.Group | null>
   enabled: boolean
-  /** Set true for as long as a touch press landed on a target, so the orb's own tap-to-expand
-   *  gesture can stand down and let the tap open a tooltip instead. */
   touchHitRef: MutableRefObject<boolean>
+  /** Opens an event from its target (`bindGlobeHitTest`'s "Activation"); `null` turns it off. */
+  onActivate: ((eventId: string) => void) | null
 }
 
-/**
- * Hover on a pointer device, tap on a touch one. A touch tap that lands on nothing clears the
- * tooltip, which is what makes "tap elsewhere to dismiss" work without a backdrop element.
- */
+export interface GlobeHitState {
+  target: GlobeHitTarget | null
+  /** Whether a touch tap, rather than a hover, produced `target` — decides the tooltip's hint. */
+  viaTouch: boolean
+}
+
+const NO_HIT: GlobeHitState = { target: null, viaTouch: false }
+
+/** `bindGlobeHitTest` on the r3f canvas, resolving against the live candidates. */
 export function useGlobeHitTest({
   candidatesRef,
   unfold,
@@ -213,22 +316,23 @@ export function useGlobeHitTest({
   groupRef,
   enabled,
   touchHitRef,
-}: GlobeHitTestOptions): GlobeHitTarget | null {
+  onActivate,
+}: GlobeHitTestOptions): GlobeHitState {
   const { camera, gl, size } = useThree()
-  const [target, setTarget] = useState<GlobeHitTarget | null>(null)
-  // The live values the DOM listeners below read — re-subscribing the listeners on every frame
-  // of playback (which is what a dependency on `unfold`/`size` would mean) is what this avoids.
+  const [hit, setHit] = useState<GlobeHitState>(NO_HIT)
+  // The live values the DOM listeners read — re-subscribing the listeners on every frame of
+  // playback (which is what a dependency on `unfold`/`size` would mean) is what this avoids.
   const frameRef = useRef({ unfold, radius, width: size.width, height: size.height })
   frameRef.current = { unfold, radius, width: size.width, height: size.height }
+  const activateRef = useRef(onActivate)
+  activateRef.current = onActivate
 
   useEffect(() => {
     if (!enabled) {
-      setTarget(null)
+      setHit(NO_HIT)
       return undefined
     }
     const canvas = gl.domElement
-    const pressStart = { x: 0, y: 0, touch: false }
-
     const resolve = (clientX: number, clientY: number): GlobeHitTarget | null => {
       const group = groupRef.current
       if (group === null) return null
@@ -236,57 +340,17 @@ export function useGlobeHitTest({
       const { unfold: u, radius: r, width, height } = frameRef.current
       return pickCandidate(candidatesRef.current, clientX - rect.left, clientY - rect.top, u, r, group, camera, width, height)
     }
-
-    // Bails without a re-render when the resolved target is the same one already shown — by id,
-    // not object reference, since `candidatesRef` can rebuild with fresh target objects (a `t`
-    // change during playback) for a target the pointer hasn't actually left. A drag or a fast
-    // sweep across empty space between candidates would otherwise re-render this layer's whole
-    // subtree (and, upstream, force `HumanCivilisation.tsx`'s marker set to be treated as changed)
-    // on every single pointermove rather than only on an actual change of hover target.
-    const applyTarget = (next: GlobeHitTarget | null): void => {
-      setTarget((prev) => (sameHitTarget(prev, next) ? prev : next))
-    }
-
-    const onPointerMove = (event: PointerEvent): void => {
-      if (event.pointerType === 'touch') return
-      applyTarget(resolve(event.clientX, event.clientY))
-    }
-    // Touch pointers only ever "leave" because the finger lifted, which fires this immediately
-    // after `onPointerUp` — a real hover-device leave, not a dismissal gesture. Clearing here for
-    // touch would erase the target `onPointerUp` just set on every single tap, leaving a tap-to-
-    // dismiss-on-nothing gesture as the only thing that ever shows a tooltip at all. Touch
-    // dismissal already has its own path: `onPointerUp` resolving to nothing (a tap on empty
-    // space) already calls `applyTarget(null)` there.
-    const onPointerLeave = (event: PointerEvent): void => {
-      if (event.pointerType === 'touch') return
-      applyTarget(null)
-    }
-    const onPointerDown = (event: PointerEvent): void => {
-      pressStart.x = event.clientX
-      pressStart.y = event.clientY
-      pressStart.touch = event.pointerType === 'touch'
-      if (pressStart.touch) touchHitRef.current = resolve(event.clientX, event.clientY) !== null
-    }
-    const onPointerUp = (event: PointerEvent): void => {
-      if (!pressStart.touch) return
-      const moved = Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y)
-      if (moved <= TAP_SLOP_PX) applyTarget(resolve(event.clientX, event.clientY))
-      touchHitRef.current = false
-    }
-
-    canvas.addEventListener('pointermove', onPointerMove)
-    canvas.addEventListener('pointerleave', onPointerLeave)
-    canvas.addEventListener('pointerdown', onPointerDown)
-    canvas.addEventListener('pointerup', onPointerUp)
-    return () => {
-      canvas.removeEventListener('pointermove', onPointerMove)
-      canvas.removeEventListener('pointerleave', onPointerLeave)
-      canvas.removeEventListener('pointerdown', onPointerDown)
-      canvas.removeEventListener('pointerup', onPointerUp)
-    }
+    // `bindGlobeHitTest` only reports an id change, so a drag or a sweep across empty space
+    // re-renders this layer only when the hover target actually changes.
+    return bindGlobeHitTest(canvas, {
+      resolve,
+      onChange: (target, viaTouch) => setHit(target === null ? NO_HIT : { target, viaTouch }),
+      touchHitRef,
+      activateRef,
+    })
   }, [camera, gl, enabled, candidatesRef, groupRef, touchHitRef])
 
-  return target
+  return hit
 }
 
 /** Kept in step with `.tooltip`'s own `max-width` plus its padding and border
@@ -297,8 +361,9 @@ const TOOLTIP_WIDTH_PX = 240
  *  the panel's edges. */
 const TOOLTIP_OFFSET_PX = 12
 const TOOLTIP_EDGE_PAD_PX = 8
-/** Half the tallest tooltip this can produce (title + date + three clamped description lines). */
-const TOOLTIP_HALF_HEIGHT_PX = 52
+/** Half the tallest tooltip this can produce (title + date + three clamped description lines +
+ *  the hint line). */
+const TOOLTIP_HALF_HEIGHT_PX = 60
 
 const positionScratch = new THREE.Vector3()
 
@@ -323,6 +388,8 @@ function clampedPosition(el: THREE.Object3D, camera: THREE.Camera, size: { width
 
 export interface GlobeTooltipProps {
   target: GlobeHitTarget | null
+  /** A short line under the description saying how to open the full detail, or `null`. */
+  hint: string | null
   unfold: number
   radius: number
   sphereLift: number
@@ -334,7 +401,7 @@ export interface GlobeTooltipProps {
  * and as it unfolds without this component re-deriving a screen position every frame. Rendered
  * as a child of the rotating group by the caller, for the same reason every other overlay is.
  */
-export function GlobeTooltip({ target, unfold, radius, sphereLift, mapLift }: GlobeTooltipProps) {
+export function GlobeTooltip({ target, hint, unfold, radius, sphereLift, mapLift }: GlobeTooltipProps) {
   if (target === null) return null
   const [x, y, z] = unfoldedLiftedPosition(target.anchor, unfold, radius, sphereLift, mapLift)
   return (
@@ -343,6 +410,11 @@ export function GlobeTooltip({ target, unfold, radius, sphereLift, mapLift }: Gl
         <p className={styles.tooltipTitle}>{target.title}</p>
         <p className={styles.tooltipDate}>{target.dateRange}</p>
         <p className={styles.tooltipDescription}>{target.description}</p>
+        {hint !== null && (
+          <p className={styles.tooltipHint} data-testid="globe-tooltip-hint">
+            {hint}
+          </p>
+        )}
       </div>
     </Html>
   )

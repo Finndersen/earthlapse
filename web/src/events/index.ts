@@ -36,8 +36,9 @@
  *   for every tag a card carries; `EventTagLegend` for the compact six-dot key. Any future
  *   timeline colouring by tag (ADR-022, still deferred) should reuse it too rather than invent a
  *   second legend.
- * - `EventDetailPanel` — the full-detail popout a feed card opens on click/tap/Enter (label,
- *   date/range, every tag, description, citation, "Show on timeline"), built on `@/shell`'s
+ * - `EventDetailPanel` — the full-detail popout a feed card or a globe arrival opens (label,
+ *   date/range, every tag, description, citation, an arrival's Route section, "Show on
+ *   timeline"), built on `@/shell`'s
  *   shared `Panel` rather than a bespoke dialog — the one deliberate exception to this package's
  *   usual self-containment (everything else here stays prop-driven with no store or
  *   cross-package reads), per the explicit "one shared panel primitive, not three bespoke focus
@@ -70,7 +71,7 @@ export {
   type BrowseEventsFilters,
 } from './browse'
 export { EventBrowser, type EventBrowserProps } from './components/EventBrowser'
-export { EventDetailPanel, type EventDetailPanelProps } from './components/EventDetailPanel'
+export { EventDetailPanel, type ArrivalChainLink, type EventDetailPanelProps } from './components/EventDetailPanel'
 export { EventFeed, type EventFeedProps } from './components/EventFeed'
 export { EventTagLegend } from './components/EventTagLegend'
 export { formatEventDate, placementT } from './placement'

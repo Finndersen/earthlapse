@@ -788,6 +788,22 @@ a real phone as the label flashing then disappearing). `onPointerLeave` now igno
 entirely; touch dismissal already has its own path (`onPointerUp` resolving to nothing on a tap
 over empty space already clears the target there).
 
+**An arrival target opens its event's detail panel.** The tooltip clamps a description to three
+lines, so an arrival arc or inhabited marker is also a way into the full `EventDetailPanel`: on
+the expanded globe a mouse click on the target opens it, and on touch the first tap shows the
+tooltip and a second tap on the same target opens it. The tooltip itself stays inert
+(`pointer-events: none`) and only carries a hint line ("Click for details ›" / "Tap again for
+details ›"). The minimised orb never activates — a click there still expands the globe. Activation
+runs on `click` rather than `pointerup` so the panel is not already under the finger when a tap's
+own `click` arrives, and an activating click stops at the canvas so r3f's `onPointerMissed`
+(click-empty-space-to-collapse) never also sees it (`GlobeTooltip.tsx`'s `bindGlobeHitTest`).
+`Globe` only reports the event id (`onActivateEvent`); `Experience.tsx` looks the event up and
+opens the panel, which adds a "Route" section for an event carrying an `arrival` effect: first
+settlement or migration, the best-estimate `established` date, the span the arc is drawn
+travelling, the earlier arrivals it continues (the derived `traceToOrigin` chain, each one
+openable), and coarse origin/destination coordinates labelled as schematic region centroids
+(ADR-032).
+
 **Cleared land — curated, no longer rendered (ADR-031's amendment).** The overlay this ADR
 originally specified (HYDE cropland/pasture tinting, a curve/cap/colour retune of its own) was
 built, then removed from `web/` entirely once rendered: the human found the tint indiscernible on

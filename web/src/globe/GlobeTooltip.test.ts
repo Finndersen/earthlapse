@@ -1,8 +1,9 @@
+// @vitest-environment jsdom
 import * as THREE from 'three'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { arrivalPresentationAt, arrivalTimingFor, buildArrivalArcGeometry } from './arcs'
-import { pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
+import { bindGlobeHitTest, pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { ARC_MAP_LIFT, ARC_SPHERE_LIFT, MARKER_MAP_LIFT, MARKER_SPHERE_LIFT } from './humanStyle'
 import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unfoldedLiftedPosition } from './projection'
 import type { ArrivalGlobeEffect } from '@/types/layer'
@@ -162,5 +163,67 @@ describe('sameHitTarget', () => {
     expect(sameHitTarget(a, { ...a })).toBe(true)
     expect(sameHitTarget(a, null)).toBe(false)
     expect(sameHitTarget(a, cityCandidate('sydney-australia', 'Sydney', SYDNEY).content())).toBe(false)
+  })
+})
+
+describe('bindGlobeHitTest', () => {
+  const ARRIVAL: GlobeHitTarget = {
+    kind: 'arrival',
+    id: 'arrival:yamnaya-steppe-migration',
+    eventId: 'yamnaya-steppe-migration',
+    title: 'Yamnaya steppe migration',
+    description: 'A long description the tooltip clamps to three lines.',
+    dateRange: '',
+    anchor: { lat: 48, lon: 20 },
+  }
+
+  function pointer(type: string, pointerType: 'mouse' | 'touch', x: number): Event {
+    const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 0 })
+    Object.defineProperty(event, 'pointerType', { value: pointerType })
+    return event
+  }
+
+  function setup(hitAt: (x: number) => GlobeHitTarget | null, activate: ((eventId: string) => void) | null) {
+    const canvas = document.createElement('canvas')
+    const parent = document.createElement('div')
+    parent.appendChild(canvas)
+    const shown: { target: GlobeHitTarget | null; viaTouch: boolean }[] = []
+    const parentClicks: Event[] = []
+    parent.addEventListener('click', (event) => parentClicks.push(event))
+    const unbind = bindGlobeHitTest(canvas, {
+      resolve: (x) => hitAt(x),
+      onChange: (target, viaTouch) => shown.push({ target, viaTouch }),
+      touchHitRef: { current: false },
+      activateRef: { current: activate },
+    })
+    const tap = (pointerType: 'mouse' | 'touch', x: number, releaseX = x): void => {
+      canvas.dispatchEvent(pointer('pointerdown', pointerType, x))
+      canvas.dispatchEvent(pointer('pointerup', pointerType, releaseX))
+      canvas.dispatchEvent(pointer('click', pointerType, releaseX))
+    }
+    return { canvas, shown, parentClicks, unbind, tap }
+  }
+
+  it('opens an arrival on a mouse click, but not on a drag or while no handler is bound, as on the minimised orb', () => {
+    const activate = vi.fn()
+    const bound = setup(() => ARRIVAL, activate)
+    bound.tap('mouse', 10)
+    expect(activate).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
+    expect(bound.parentClicks).toHaveLength(0)
+    bound.tap('mouse', 10, 40)
+    expect(activate).toHaveBeenCalledTimes(1)
+    const minimised = setup(() => ARRIVAL, null)
+    minimised.tap('mouse', 10)
+    expect(minimised.parentClicks).toHaveLength(1)
+  })
+
+  it('shows the tooltip on a first touch tap and opens the event on a second tap on the same target', () => {
+    const activate = vi.fn()
+    const { tap, shown } = setup(() => ARRIVAL, activate)
+    tap('touch', 10)
+    expect(shown.at(-1)).toEqual({ target: ARRIVAL, viaTouch: true })
+    expect(activate).not.toHaveBeenCalled()
+    tap('touch', 12)
+    expect(activate).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
   })
 })

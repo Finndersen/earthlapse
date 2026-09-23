@@ -69,6 +69,98 @@
   color: var(--hud-ink, #efe9dc);
 }
 
+/* An arrival event's Route section: a hairline-topped block of label/value pairs, labels in the
+   tag row's small uppercase sans, values in the date line's mono. */
+.route {
+  margin: 0 0 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.routeHeading {
+  margin: 0 0 8px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.routeFacts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 0;
+}
+
+.routeFacts dt {
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.routeFacts dd {
+  margin: 0;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.routeChain {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+}
+
+/* Nearest first: each link reads as a step back toward the origin. */
+.routeChain li + li::before {
+  content: '← ';
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+.routeChain li {
+  display: inline;
+}
+
+.routeLink {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--hud-accent, #e8b06a);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--hud-accent, #e8b06a) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.routeLink:hover,
+.routeLink:focus-visible {
+  text-decoration-color: currentcolor;
+  outline: none;
+}
+
+.routeCoords {
+  font-variant-numeric: tabular-nums;
+}
+
+.routeNote {
+  margin: 8px 0 0;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
 .citation {
   margin: 0 0 18px;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
