@@ -302,23 +302,30 @@ export function Experience() {
   // `openEventBrowserFromDetail` below.
   const wasPlayingBeforeBrowserRef = useRef(false)
 
+  // Opens the browser fresh, from the `/` shortcut or the feed's "All events" button. A no-op while
+  // any event overlay is already open, so a second press can't stack a duplicate dialog over the
+  // first.
+  const eventOverlayOpen = eventBrowserOpen || detailEventId !== null
+  const openEventBrowser = useCallback((): void => {
+    if (eventOverlayOpen) return
+    wasPlayingBeforeBrowserRef.current = playback.playing
+    if (playback.playing) setPlaying(false)
+    setEventBrowserOpen(true)
+  }, [eventOverlayOpen, playback.playing, setPlaying])
+
   // The desktop-only `/` shortcut (window-level, not `Timeline`'s own onKeyDown, since it must
-  // work wherever focus is — see `isOpenEventBrowserShortcut`'s own doc comment). Ignored while
-  // any other event overlay is already open, so a second press can't stack a duplicate dialog
-  // over the first.
+  // work wherever focus is — see `isOpenEventBrowserShortcut`'s own doc comment).
   useEffect(() => {
     if (isCompactViewport) return
     const onKeyDown = (event: KeyboardEvent): void => {
-      if (eventBrowserOpen || detailEventId !== null) return
+      if (eventOverlayOpen) return
       if (!isOpenEventBrowserShortcut({ key: event.key, target: event.target })) return
       event.preventDefault()
-      wasPlayingBeforeBrowserRef.current = playback.playing
-      if (playback.playing) setPlaying(false)
-      setEventBrowserOpen(true)
+      openEventBrowser()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isCompactViewport, eventBrowserOpen, detailEventId, playback.playing, setPlaying])
+  }, [isCompactViewport, eventOverlayOpen, openEventBrowser])
 
   useEffect(() => {
     if (!playback.playing) {
@@ -702,6 +709,7 @@ export function Experience() {
             onEventActivate={openEventDetail}
             onVisibleEventsChange={onVisibleEventsChange}
             onCardHoverChange={setHoveredFeedEventId}
+            onOpenBrowser={openEventBrowser}
           />
         }
         title={<TimeTitle t={t} />}

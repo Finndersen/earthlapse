@@ -251,19 +251,64 @@
   transition: color 360ms ease;
 }
 
+/* The "All events" shortcut beneath the card stack: the detail panel's own "All events" type, left
+   aligned with the cards and outlined on hover the way a card is. */
+.browse {
+  flex: none;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: var(--feed-card-gap);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  padding: 4px 10px 4px 9px;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+  letter-spacing: 0.02em;
+  text-shadow: var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    color 180ms ease,
+    border-color 200ms ease;
+}
+
+.browse:hover,
+.browse:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  border-color: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  outline: none;
+}
+
+.browseGlyph {
+  font-size: 15px;
+  line-height: 1;
+}
+
 /* The phone's "compact single-card strip": `<EventFeed>` caps to one card here, and the phone HUD
    leaves the feed row only a few dozen px between the readouts and the caption, so the strip is
    one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet rather
    than growing the strip in place, so unlike the desktop card this one never has a
    second, taller state to account for. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  /* The card and the "All events" button share the strip's one row, the button at its right end
+     even when no card is showing. */
   .feed {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
     max-width: none;
   }
 
   .scroller {
+    flex: 1 1 0;
+    min-width: 0;
     flex-direction: row;
-    flex-shrink: 0;
     align-items: center;
     gap: 10px;
     overflow: visible;
@@ -275,6 +320,36 @@
 
   .cardButton {
     height: var(--feed-strip-height);
+  }
+
+  /* A square touch target taller than the strip, pulled back to the strip's band by negative
+     block margins so the row stays `--feed-strip-height` tall (`FEED_BROWSE_TAP_PX`). */
+  .browse {
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    width: var(--feed-browse-tap);
+    height: var(--feed-browse-tap);
+    margin: calc((var(--feed-strip-height) - var(--feed-browse-tap)) / 2) 0;
+    padding: 0;
+  }
+
+  /* The glyph stands alone here; the word stays as the button's accessible name. */
+  .browseText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .browseGlyph {
+    font-size: 18px;
   }
 
   .body {
@@ -324,6 +399,7 @@
    stops the highlight easing in and out, leaving it a static state. */
 @media (prefers-reduced-motion: reduce) {
   .card,
+  .browse,
   .cardButton::before,
   .cardButton::after,
   .chip,

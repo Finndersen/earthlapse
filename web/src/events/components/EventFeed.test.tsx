@@ -315,4 +315,52 @@ describe('<EventFeed>', () => {
       expect(onCardHoverChange).toHaveBeenLastCalledWith(null)
     })
   })
+
+  describe('onOpenBrowser', () => {
+    it('renders no "All events" button without onOpenBrowser', () => {
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const { queryByTestId } = render(<EventFeed t={500} events={[a]} onEventActivate={vi.fn()} />)
+      expect(queryByTestId('event-feed-browse')).toBeNull()
+    })
+
+    it('renders an "All events" button beneath the cards that calls onOpenBrowser', () => {
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const onOpenBrowser = vi.fn()
+      const onEventActivate = vi.fn()
+      const { getByRole, getByTestId } = render(
+        <EventFeed t={500} events={[a]} onEventActivate={onEventActivate} onOpenBrowser={onOpenBrowser} />,
+      )
+      const button = getByRole('button', { name: 'All events' })
+      expect(button.getAttribute('aria-haspopup')).toBe('dialog')
+      expect(getByTestId('event-feed-card-a').compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+      fireEvent.click(button)
+      expect(onOpenBrowser).toHaveBeenCalledTimes(1)
+      expect(onEventActivate).not.toHaveBeenCalled()
+    })
+
+    it('renders the button outside the aria-live region, even with no cards showing', () => {
+      const onOpenBrowser = vi.fn()
+      const { getByRole, getByTestId } = render(<EventFeed t={500} events={[]} onEventActivate={vi.fn()} onOpenBrowser={onOpenBrowser} />)
+      const button = getByRole('button', { name: 'All events' })
+      expect(button.closest('[aria-live]')).toBeNull()
+      expect(getByTestId('event-feed').querySelector('[aria-live]')?.contains(button)).toBe(false)
+
+      fireEvent.click(button)
+      expect(onOpenBrowser).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps the accessible name "All events" on the compact strip\'s glyph-only button', () => {
+      mockMatchMedia(COMPACT_QUERY)
+      const a = event('a', { tMin: 505, tMax: 505 })
+      const onOpenBrowser = vi.fn()
+      const { getByRole } = render(<EventFeed t={500} events={[a]} onEventActivate={vi.fn()} onOpenBrowser={onOpenBrowser} />)
+      const button = getByRole('button', { name: 'All events' })
+      expect(button.querySelector(`.${styles.browseText}`)?.textContent).toBe('All events')
+      expect(button.querySelector(`.${styles.browseGlyph}`)?.getAttribute('aria-hidden')).toBe('true')
+
+      fireEvent.click(button)
+      expect(onOpenBrowser).toHaveBeenCalledTimes(1)
+    })
+  })
 })

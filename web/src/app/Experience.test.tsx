@@ -399,6 +399,27 @@ describe('Experience (W12a integration)', () => {
       expect(useTimeStore.getState().playback.playing).toBe(false)
     })
 
+    it('opens the event browser from the feed\'s "All events" button, pausing playback and resuming it on close', async () => {
+      await renderSettled()
+      act(() => {
+        useTimeStore.getState().setPlaying(true)
+      })
+
+      act(() => {
+        fireEvent.click(within(screen.getByTestId('event-feed')).getByRole('button', { name: 'All events' }))
+      })
+
+      const browser = screen.getByTestId('event-browser')
+      expect(browser.getAttribute('role')).toBe('dialog')
+      expect(useTimeStore.getState().playback.playing).toBe(false)
+
+      act(() => {
+        fireEvent.click(within(browser).getByRole('button', { name: 'Close' }))
+      })
+      expect(screen.queryByTestId('event-browser')).toBeNull()
+      expect(useTimeStore.getState().playback.playing).toBe(true)
+    })
+
     it('opens a digest card listing every reached member of its cluster, not only the headline (ADR-040)', async () => {
       // kpg-aftermath-test sits 50,000 years *before* kpg-impact (a larger t — this project
       // counts years before present, so a larger t is older) — well inside CLUSTER_SPAN (their

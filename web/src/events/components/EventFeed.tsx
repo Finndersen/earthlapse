@@ -27,6 +27,10 @@
  * exactly as a lone event card always has, and a multi-member one adds a small "+k more" badge
  * next to its headline. `onEventActivate`'s second argument carries every reached member, freshest
  * first, so a caller wiring up `EventDetailPanel` can list all of them, not just the headline.
+ *
+ * Given `onOpenBrowser`, the feed also carries an "All events" button, rendered whether or not
+ * any card is showing and outside the aria-live region: a labelled row beneath the desktop stack,
+ * a square "⋯" beside the phone's single card.
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
@@ -37,6 +41,7 @@ import type { GeoTime, TimelineEvent } from '@/types/layer'
 
 import { formatEventDate } from '../placement'
 import {
+  FEED_BROWSE_TAP_PX,
   FEED_CARD_GAP_PX,
   FEED_CARD_HEIGHT_PX,
   FEED_STRIP_HEIGHT_PX,
@@ -63,6 +68,7 @@ const GEOMETRY_STYLE = {
   '--feed-card-height': `${FEED_CARD_HEIGHT_PX}px`,
   '--feed-card-gap': `${FEED_CARD_GAP_PX}px`,
   '--feed-strip-height': `${FEED_STRIP_HEIGHT_PX}px`,
+  '--feed-browse-tap': `${FEED_BROWSE_TAP_PX}px`,
 } as CSSProperties
 
 export interface EventFeedProps {
@@ -83,10 +89,21 @@ export interface EventFeedProps {
   /** The card the pointer is over, or `null`. Drives the stronger of the globe's two sympathetic
    *  pulses. */
   onCardHoverChange?: (eventId: string | null) => void
+  /** The "All events" button was pressed — the caller opens `EventBrowser`. Omitted, no button
+   *  renders. */
+  onOpenBrowser?: () => void
   className?: string
 }
 
-export function EventFeed({ t, events, onEventActivate, onVisibleEventsChange, onCardHoverChange, className }: EventFeedProps) {
+export function EventFeed({
+  t,
+  events,
+  onEventActivate,
+  onVisibleEventsChange,
+  onCardHoverChange,
+  onOpenBrowser,
+  className,
+}: EventFeedProps) {
   const compact = useIsCompactViewport()
   const reducedMotion = usePrefersReducedMotion()
 
@@ -158,6 +175,20 @@ export function EventFeed({ t, events, onEventActivate, onVisibleEventsChange, o
             ))}
           </ul>
         </div>
+      )}
+      {onOpenBrowser && (
+        <button
+          type="button"
+          className={styles.browse}
+          aria-haspopup="dialog"
+          data-testid="event-feed-browse"
+          onClick={onOpenBrowser}
+        >
+          <span className={styles.browseText}>All events</span>
+          <span className={styles.browseGlyph} aria-hidden="true">
+            ⋯
+          </span>
+        </button>
       )}
     </div>
   )

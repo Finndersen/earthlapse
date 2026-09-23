@@ -28,6 +28,11 @@ export const FEED_CARD_GAP_PX = 6
  *  (`EventFeed.module.css`'s compact block draws it at exactly this height). */
 export const FEED_STRIP_HEIGHT_PX = 33
 
+/** The side of the strip's square "All events" button, in px: the 44px minimum touch target.
+ *  Taller than the strip itself, so the stylesheet pulls it back to the strip's band with negative
+ *  block margins; the 5.5px it overhangs each edge stays inside the shell's gap around the strip. */
+export const FEED_BROWSE_TAP_PX = 44
+
 /** The dimmest a card ever gets. A card leaves the feed when a newer event pushes it off the
  *  end, not by ageing out, so opacity cannot run to zero: the oldest card on screen may still
  *  be the most recent thing that has happened, and has to stay readable over the scene behind
