@@ -12,7 +12,8 @@
 #   2. manifest.json — one unhashed file that changes every publish, so it gets a short TTL.
 #      Cloudflare does not edge-cache JSON by default, so this is mostly a browser-side policy.
 #
-# Requires: rclone, and these in the environment (keep them in .env, which is gitignored):
+# Requires: a current rclone (CI pins v1.75.1; Ubuntu's packaged 1.60 gets 501 NotImplemented from
+# R2 on upload), and these in the environment (keep them in .env, which is gitignored):
 #   R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET
 set -euo pipefail
 
