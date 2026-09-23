@@ -55,9 +55,11 @@ describe('formatGeoTimePrecise', () => {
 })
 
 describe('formatRate', () => {
-  it('picks a unit bucket by magnitude, flooring sub-year rates', () => {
+  it('picks a unit bucket by magnitude, keeping two significant figures below 10 yr/s', () => {
     const cases: [number, string][] = [
-      [0.4, '< 1 yr/s'],
+      [0.004, '< 0.01 yr/s'],
+      [0.13, '0.13 yr/s'],
+      [0.998, '1 yr/s'],
       [42, '42 yr/s'],
       [2.1e5, '210 kyr/s'],
       [4e7, '40 Myr/s'],

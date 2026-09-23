@@ -17,7 +17,8 @@
 
 import { create } from 'zustand'
 
-import { ROOT_SECTION_ID, sectionEntryT, sectionFollowingT, type SectionId } from '@/timeline/sections'
+import { DEFAULT_SCENES_SPEED, defaultSteadyRate } from '@/timeline/playbackRates'
+import { ROOT_SECTION_ID, sectionById, sectionEntryT, sectionFollowingT, type SectionId } from '@/timeline/sections'
 import { EARTH_FORMATION, type GeoTime, type Playback, type PlaybackMode, type ScaleKind } from '@/types/layer'
 
 const TIME_DOMAIN: [GeoTime, GeoTime] = [0, EARTH_FORMATION]
@@ -36,6 +37,10 @@ export interface TimeState {
   sectionId: SectionId
   scaleKind: ScaleKind
   playback: Playback
+  /** Whether the viewer has picked a steady rate this session. Until they do, entering steady
+   *  mode, or selecting a section while in it, sets `playback.yearsPerSecond` to
+   *  `defaultSteadyRate` for where `t` is; afterwards their pick is kept. */
+  steadyRateChosen: boolean
   /** Whether the corner globe overlay has been expanded to fill (DESIGN §7). */
   globeExpanded: boolean
   /** Which HUD layer's sparkline is expanded to a full-width chart, if any (DESIGN §8). */
@@ -54,18 +59,36 @@ export interface TimeState {
   setScaleKind: (kind: ScaleKind) => void
   setPlaying: (playing: boolean) => void
   togglePlaying: () => void
+  /** `'scenes'` mode's multiplier. */
   setSpeed: (speed: number) => void
+  /** `'steady'` mode's rate, in years per second; marks the steady rate as chosen. */
+  setYearsPerSecond: (yearsPerSecond: number) => void
+  /** Switches mode, keeping each mode's own rate (see `steadyRateChosen`). */
   setPlaybackMode: (mode: PlaybackMode) => void
   setGlobeExpanded: (expanded: boolean) => void
   setExpandedChartLayerId: (id: string | null) => void
   setDetailEventId: (id: string | null) => void
 }
 
+/** `playback` with the steady context default applied, or unchanged once the viewer has chosen a
+ *  steady rate or while in `'scenes'` mode. */
+function withContextSteadyRate(playback: Playback, chosen: boolean, sectionId: SectionId, t: GeoTime): Playback {
+  if (chosen || playback.mode !== 'steady') return playback
+  return { ...playback, yearsPerSecond: defaultSteadyRate(sectionById(sectionId).window, t) }
+}
+
 export const useTimeStore = create<TimeState>((set) => ({
   t: 0,
   sectionId: ROOT_SECTION_ID,
   scaleKind: 'symlog',
-  playback: { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' },
+  playback: {
+    playing: false,
+    baseRate: 0.02,
+    speed: DEFAULT_SCENES_SPEED,
+    yearsPerSecond: defaultSteadyRate(sectionById(ROOT_SECTION_ID).window, 0),
+    mode: 'scenes',
+  },
+  steadyRateChosen: false,
   globeExpanded: false,
   expandedChartLayerId: null,
   detailEventId: null,
@@ -75,12 +98,21 @@ export const useTimeStore = create<TimeState>((set) => ({
       const clamped = clampT(t)
       return { t: clamped, sectionId: sectionFollowingT(s.sectionId, clamped) }
     }),
-  selectSection: (sectionId) => set((s) => ({ sectionId, t: sectionEntryT(sectionId, s.t) })),
+  selectSection: (sectionId) =>
+    set((s) => {
+      const t = sectionEntryT(sectionId, s.t)
+      return { sectionId, t, playback: withContextSteadyRate(s.playback, s.steadyRateChosen, sectionId, t) }
+    }),
   setScaleKind: (scaleKind) => set({ scaleKind }),
   setPlaying: (playing) => set((s) => ({ playback: { ...s.playback, playing } })),
   togglePlaying: () => set((s) => ({ playback: { ...s.playback, playing: !s.playback.playing } })),
   setSpeed: (speed) => set((s) => ({ playback: { ...s.playback, speed } })),
-  setPlaybackMode: (mode) => set((s) => ({ playback: { ...s.playback, mode } })),
+  setYearsPerSecond: (yearsPerSecond) =>
+    set((s) => ({ playback: { ...s.playback, yearsPerSecond }, steadyRateChosen: true })),
+  setPlaybackMode: (mode) =>
+    set((s) =>
+      s.playback.mode === mode ? s : { playback: withContextSteadyRate({ ...s.playback, mode }, s.steadyRateChosen, s.sectionId, s.t) },
+    ),
   setGlobeExpanded: (globeExpanded) => set({ globeExpanded }),
   setExpandedChartLayerId: (expandedChartLayerId) => set({ expandedChartLayerId }),
   setDetailEventId: (detailEventId) => set({ detailEventId }),

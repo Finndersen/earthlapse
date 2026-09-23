@@ -219,8 +219,9 @@ Playback rate is **constant events-per-second** — the playhead moves at consta
 *warped screen space*. A linear playthrough would spend 99.98% of its runtime in the
 Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else changes.
 
-> **v1 note (ADR-016, superseding ADR-012's pacing bullet).** Two explicit modes share the one
-> speed multiplier, picked with a segmented control next to the speed selector:
+> **v1 note (ADR-016, superseding ADR-012's pacing bullet).** Two explicit modes ~~share the one
+> speed multiplier~~ each keep their own rate (ADR-050, note below), picked with a segmented
+> control beside the transport:
 >
 > - **Scenes** (default) — every scene gap takes the same wall-clock time to cross regardless
 >   of how many years it spans: `SCENE_DWELL_SECONDS` split across the gap's two neighbouring
@@ -231,9 +232,10 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 >   segment the playhead moves at exactly the velocity its duration demands; there is no cap
 >   against the ordinary rate (ADR-012's hybrid is gone). Outside every scene's span, and in
 >   every segment `scene/pacing.ts` doesn't cover, the playhead moves at the ordinary flat rate.
-> - **Steady** — constant velocity in ~~the full-domain scale~~ the selected era section's scale
+> - **Steady** — ~~constant velocity in the full-domain scale~~ ~~the selected era section's scale
 >   (ADR-024, note below) of whichever scale kind is currently selected (symlog by default,
->   linear when the linear toggle is on); no pacing at all. ~~Dense scene clusters are simply
+>   linear when the linear toggle is on)~~ a literal rate in years per second, the same anywhere
+>   on the timeline (ADR-050, note below); no pacing at all. ~~Dense scene clusters are simply
 >   crossed as reached; `presentation.ts`'s existing minimum-transition rate limiter remains the
 >   visual backstop against a crossing too fast to read as a dissolve.~~ Superseded by ADR-029
 >   below — that unconditional backstop is exactly what turned a dense crossing into one long
@@ -248,9 +250,10 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 > section is the last child, it moves up to the parent's next sibling (Permian → Mesozoic), and
 > so on until the present, with the same animated window transition as a click. Any other jump
 > out of the window (an event card, say) climbs to the nearest section that holds the new `t`.
-> Scenes mode keeps its full-domain pacing. Steady mode moves at constant velocity in the
+> Scenes mode keeps its full-domain pacing. ~~Steady mode moves at constant velocity in the
 > *selected section's* scale, so each section takes the same wall-clock time at 1x, carrying the
-> rest of a frame across an edge (`advanceSteadyPlayhead`).
+> rest of a frame across an edge (`advanceSteadyPlayhead`).~~ Steady mode keeps its chosen years
+> per second across the edge (ADR-050).
 
 > **v1 note (ADR-029): steady mode's "no pacing at all" needs one exception — how long a scene
 > is actually looked at.** Measured: at 1x in the earth section, the last 12,000 years (28 of 66
@@ -273,9 +276,10 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 >    it is still exactly `t`, and this floor only ever engages for the genuinely dense stretch
 >    that needs it, not the whole playthrough.
 >
-> A small "time compressed" marker beside the speed/mode controls shows exactly while the floor
-> is active (a direct function of playback state, per the ADR-012 amendment above — never an
-> idle timer). Scrubbing, seeking, paused viewing and `'scenes'`-mode playback are untouched:
+> ~~A small "time compressed" marker beside the speed/mode controls shows~~ The rate readout turns
+> amber, and a status region announces the slowdown, exactly while the floor is active (ADR-050;
+> a direct function of playback state, per the ADR-012 amendment above — never an idle timer).
+> Scrubbing, seeking, paused viewing and `'scenes'`-mode playback are untouched:
 > they always crossfade, exactly as before this ADR — a frame whose starting `t` wasn't produced
 > by the steady playhead's own previous advance (a scrub, a checkpoint/event jump, a keyboard
 > step) always reads as `'crossfade'`/not-floored for that frame, regardless of what the landed-on
@@ -290,6 +294,20 @@ Proterozoic. Speed control is a scalar multiplier on that velocity; nothing else
 > `advanceSteadyPlayhead` (which applies the floor to the playhead's own rate, stepping territory
 > by territory rather than by a numeric nudge in `u`) for the mechanism, and ADR-029 for the full
 > rationale, the audio consequences (§11) and the live-measured numbers.
+
+> **v1 note (ADR-050): steady mode is a literal years-per-second rate.** Steady mode no longer
+> moves at a velocity in any scale's warped `u`: the viewer picks a rate in years per second on a
+> 1-2-5 log scale from 1 yr/s to 1 Gyr/s, and `t` advances by exactly that many years per second
+> wherever it is, in any section and under either scale kind. Entering steady mode before a rate
+> has been chosen picks a context default: the detent that crosses the selected section — or the
+> distance to the present, if shorter — in about two minutes (1 yr/s in Modern or near the present
+> at the root, 10–20 yr/s in the medieval and ancient sections, ~50 Myr/s from the Hadean at the
+> root). Once chosen, each mode's rate is kept for the session. ADR-029's floor is unchanged in
+> meaning and now computed in years: a territory `span` years wide dwells `span / rate` seconds,
+> and below 0.35 s the rate is slowed across that territory alone. It only ever slows; the readout
+> shows the actual rate, amber while the floor holds. Scenes mode keeps a multiplier on its paced
+> velocity, now 1/16× to 64× in powers of two. Both rates are set on one vertical picker beside the
+> transport (swipe, drag, wheel, arrow keys, or `[`/`]`/`-`/`=`), which snaps to its detents.
 
 ---
 
@@ -540,9 +558,9 @@ expands to fill; it is never the default focus.
 > column of chrome, the sphere or map to its right (`docs/GLOBE.md`, "Expanded-view chrome").
 >
 > On desktop the controls row sits midway between the section bands and the window's bottom edge,
-> with the play button on the track's centre (the speed select hangs off the transport's left, the
-> rate readout off its right, with the "Time compressed" badge under the readout), and the globe
-> orb's top sits on the top inset beside the About button. The caption's shade fades to nothing at every edge in every layout.
+> with the play button on the track's centre (the rate picker hangs off the transport's left, the
+> rate readout off its right), and the globe orb's top sits on the top inset beside the About
+> button. The caption's shade fades to nothing at every edge in every layout.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as sparklines that expand into full-width charts docked to

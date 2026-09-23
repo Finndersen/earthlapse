@@ -327,11 +327,10 @@ export function childSections(id: SectionId): readonly TimelineSection[] {
  * for a **leaf** section: there is nothing below it to make room for, so the same formula only
  * over-compresses the leaf's own display. A concrete case that motivated this: "Modern" (the
  * Holocene's own 0-111-year leaf) shrinks to `MIN_SYMLOG_KNEE` under the bare formula, and the
- * last 10 years alone then draw over half the track — steady-mode pacing (which paces off
- * exactly this knee, `advanceSteadyPlayhead`) spends the same lopsided share of wall-clock time
- * there. A leaf instead draws with the fixed `SYMLOG_C`, which — for a span already far under
- * 10,000 years, as every leaf here is — reads close to true-proportional across the whole
- * window, matching how a short, undivided stretch of time ought to look. Every non-leaf section
+ * last 10 years alone then draw over half the track. A leaf instead draws with the fixed
+ * `SYMLOG_C`, which — for a span already far under 10,000 years, as every leaf here is — reads
+ * close to true-proportional across the whole window, matching how a short, undivided stretch of
+ * time ought to look. Every non-leaf section
  * (the full domain down through the Neogene, then Quaternary, Holocene and each of its still-
  * subdivided ancestors) is unaffected: this returns exactly `symlogKnee(section.window)`, the
  * same value the amendment introduced, for any section with at least one child.

@@ -1,0 +1,84 @@
+/* 46px wide (`Timeline.module.css`'s `--speed-control-width`, which the desktop row keeps clear) and
+   43px tall — three 11px rows plus a 10px caption — so it fits inside the 44px transport row of the
+   compact layouts and beside the 48px play button on desktop without changing either row's
+   height. */
+.scroller {
+  width: var(--speed-control-width, 46px);
+  height: 43px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 8px;
+  cursor: ns-resize;
+  /* The drum owns vertical drags; the page must not scroll or pull-to-refresh under a finger. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+}
+
+.scroller:hover {
+  color: var(--hud-ink, #efe9dc);
+}
+
+.scroller:focus-visible {
+  color: var(--hud-ink, #efe9dc);
+  outline: 1px solid var(--hud-accent, #e8b06a);
+  outline-offset: 1px;
+}
+
+.drum {
+  position: relative;
+  width: 100%;
+  height: 33px;
+  overflow: hidden;
+  /* The neighbours fade out toward the drum's top and bottom edges. */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 35%, #000 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 35%, #000 65%, transparent 100%);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  transition: transform 160ms ease-out;
+}
+
+.scroller[data-dragging='true'] .rows {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rows {
+    transition: none;
+  }
+}
+
+.row {
+  height: 11px;
+  line-height: 11px;
+  flex: none;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 9px;
+  opacity: 0.55;
+}
+
+.row[data-selected='true'] {
+  font-size: 10.5px;
+  opacity: 1;
+}
+
+.caption {
+  height: 10px;
+  line-height: 10px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
+}
+
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .scroller {
+    width: 100%;
+  }
+}

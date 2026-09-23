@@ -24,26 +24,18 @@
  *
  * The lookahead window (`lookaheadWindow`) is deliberately NOT "however far a computed velocity
  * says t will travel": `playback.mode === 'scenes'` paces at whatever rate fits each segment's
- * `durationSeconds` (`scene/pacing.ts`'s `scenePlaybackSegments`), and `'steady'` mode paces at
- * flat `baseRate * speed` in the *selected section's* own scale, not the full domain's. Both are
- * exactly what `timeline/playback.ts`'s `advancePlayhead` computes, so this module calls it
- * directly rather than re-deriving an approximation: `Playback.baseRate` is denominated in
- * screen-space `u` in `[0, 1]` over a *warped* domain, not raw `log1p(t)` seconds, and the two
- * differ by several orders of magnitude almost everywhere.
+ * `durationSeconds` (`scene/pacing.ts`'s `scenePlaybackSegments`), and `'steady'` mode moves at
+ * a literal `yearsPerSecond`. Both are exactly what `timeline/playback.ts`'s `advancePlayhead`
+ * computes, so this module calls it directly rather than re-deriving an approximation.
  *
- * - **Playing**: `advancePlayhead(t, lookaheadSeconds, ..., scale, scenesPacing)` predicts
- *   exactly where `t` will be after `lookaheadSeconds` of wall-clock playback, on the same scale
- *   and (for `'scenes'` mode) the same pacing segments the real playhead uses — `scale` is the
- *   full-domain symlog scale for `'scenes'` mode (always, per `advancePlayhead`'s own contract)
- *   and a symlog scale of the *selected section* for `'steady'` mode (an approximation of
- *   `advanceSteadyPlayhead`'s exact per-section/per-`scaleKind` scale — this package has no
- *   `sectionId`/`scaleKind` to reproduce that precisely, and the two differ only in how the
- *   knee/linear-toggle warp a window this package already clamps hard against via
- *   `sectionWindow`). The backstop behind (an immediate pause-and-reverse) is a fraction of that
- *   same predicted `u` distance, converted back through the same scale — not a second
- *   independent approximation. Playback here only ever moves toward the present (`timeline/
- *   playback.ts`'s own `u` increasing toward 1), so the window is asymmetric: most of the span
- *   ahead (toward the present), a small backstop behind.
+ * - **Playing**: `advancePlayhead(t, lookaheadSeconds, ..., scale, scenesPacing)` predicts where
+ *   `t` will be after `lookaheadSeconds` of wall-clock playback, with the same pacing segments
+ *   (`'scenes'`) or rate (`'steady'`) the real playhead uses. `'steady'` ignores the per-scene
+ *   floor, so it can only overestimate how far `t` travels, and the section clamp below bounds
+ *   that. The backstop behind (an immediate pause-and-reverse) is a fraction of that predicted
+ *   distance in `u` of `scale` — full-domain symlog for `'scenes'`, a symlog scale of the selected
+ *   section for `'steady'`. Playback only ever moves toward the present, so the window is
+ *   asymmetric: most of the span ahead, a small backstop behind.
  * - **Not playing** (paused, or `t` being moved by a scrub/click/jump the engine cannot
  *   distinguish from one another): a small fixed `u` margin on the full-domain scale, symmetric
  *   in both directions — this is what keeps a big scrub or a section jump from bursting every
@@ -115,10 +107,8 @@ function clamp(value: GeoTime, min: GeoTime, max: GeoTime): GeoTime {
   return Math.min(max, Math.max(min, value))
 }
 
-/** The scale playback actually paces on for `mode` (`advancePlayhead`'s own contract):
- *  full-domain symlog for `'scenes'`, a symlog scale of the *selected section* for `'steady'` —
- *  see this module's doc comment for why the latter is an approximation of
- *  `advanceSteadyPlayhead`'s exact per-section scale. */
+/** The scale the lookahead's backstop is measured in: full-domain symlog for `'scenes'` (the
+ *  scale it paces on), a symlog scale of the selected section for `'steady'`. */
 function predictionScale(mode: Playback['mode'], sectionWindow: readonly [GeoTime, GeoTime]): TimeScale {
   return mode === 'scenes' ? FULL_DOMAIN_SYMLOG_SCALE : createSymlogScale(sectionWindow)
 }
@@ -130,7 +120,7 @@ function predictionScale(mode: Playback['mode'], sectionWindow: readonly [GeoTim
  *  the lookahead shape in isolation from which stems it happens to include. */
 export function lookaheadWindow(
   t: GeoTime,
-  playback: Pick<Playback, 'playing' | 'baseRate' | 'speed' | 'mode'>,
+  playback: Pick<Playback, 'playing' | 'baseRate' | 'speed' | 'yearsPerSecond' | 'mode'>,
   sectionWindow: readonly [GeoTime, GeoTime],
   scenesPacing: readonly PlaybackPacingSegment[] = [],
   lookaheadSeconds: number = PLAYING_LOOKAHEAD_SECONDS,
@@ -144,7 +134,7 @@ export function lookaheadWindow(
     tFrom = advancePlayhead(
       t,
       lookaheadSeconds,
-      { playing: true, baseRate: playback.baseRate, speed: playback.speed, mode: playback.mode },
+      { playing: true, baseRate: playback.baseRate, speed: playback.speed, yearsPerSecond: playback.yearsPerSecond, mode: playback.mode },
       scale,
       playback.mode === 'scenes' ? scenesPacing : [],
     )
@@ -194,7 +184,7 @@ function sampleLogSpace(window: TimeWindow): GeoTime[] {
 
 export interface StemsNeededInput {
   t: GeoTime
-  playback: Pick<Playback, 'playing' | 'baseRate' | 'speed' | 'mode'>
+  playback: Pick<Playback, 'playing' | 'baseRate' | 'speed' | 'yearsPerSecond' | 'mode'>
   /** The selected era section's window, `[tNewer, tOlder]` (ADR-024) — the hard bound on how
    *  far the lookahead window can reach. */
   sectionWindow: readonly [GeoTime, GeoTime]

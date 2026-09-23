@@ -1,42 +1,44 @@
 'use client'
 
-/** Playback transport controls. `Timeline.tsx` arranges these into three clusters across its
- *  `.controlsRow` grid — breadcrumbs (the one flexible column) on the left; `SpeedSelect` paired
- *  with `RateReadout`/`TimeCompressedBadge` (one logical "speed + its result" group) followed by
- *  `TransportCore`, both centred over the track; and `PlaybackModeToggle` + the
- *  scale toggle right-aligned to the gutter — so nothing here ever shifts position when the
- *  breadcrumb's own length changes. The sound/volume control (`@/audio`'s `<SoundToggle>`) also
- *  lives in `.controlsSecondary`, passed through by the caller rather than owned here — see
- *  `Timeline.tsx`'s own doc comment:
+/** Playback transport controls. `Timeline.tsx` arranges these across its grid: the breadcrumb on
+ *  the left; `SpeedControl`, `TransportCore` and `RateReadout` (the rate, the buttons that run it,
+ *  and the result) centred over the track; `PlaybackModeToggle` and the scale toggle right-aligned
+ *  — so nothing here shifts when the breadcrumb's length changes. The sound/volume control
+ *  (`@/audio`'s `<SoundToggle>`) is passed through by the caller, not owned here.
  *
  *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
  *    visible scene (`nearestStepTarget`) rather than by a fixed number of years — a fixed step
  *    has no sane value across a domain that runs from 1 year to 4.6 billion. Events are not
  *    step targets: they are far denser than scenes, so stepping to one usually leaves the same
  *    still on screen and the button looks broken.
- *  - `SpeedSelect` — can also be stepped with `[`/`]`/`-`/`=` (`timeline/keyboard.ts`'s `'speed'`
- *    intent) through the same `SPEED_OPTIONS` the select offers (`../playback`).
+ *  - `SpeedControl` — the active mode's rate on a `RateScroller`, also stepped with `[`/`]`/`-`/`=`
+ *    (`timeline/keyboard.ts`'s `'speed'` intent) through the same detents (`../playbackRates`).
  *  - `PlaybackModeToggle` — the scenes/steady mode toggle (ADR-016): a compact two-state
  *    segmented control, ghost style with an amber active state — the shared lens visual language
  *    (`--hud-*` tokens) rather than a new idiom.
- *  - `RateReadout` — the mirror of `SpeedSelect` across the transport buttons: the select sets the
- *    rate on one side, the readout shows the result on the other, each packed against the buttons
- *    so the pair reads as one control wrapped around them. A fixed-width slot, always reserved (see its own doc comment), so starting or
- *    stopping playback never moves `TransportCore` beside it or anything past it in the row. It
- *    is optional and purely presentational: the caller (`Experience.tsx`) computes and smooths
- *    the instantaneous years-per-second next to its playback loop, since that is where the real
- *    per-frame `t` deltas already are; this component only formats and shows it, and only while
- *    playing. */
+ *  - `RateReadout` — the measured rate `t` is advancing at, the mirror of `SpeedControl` across
+ *    the transport buttons. The caller (`Experience.tsx`) computes and smooths it next to its
+ *    playback loop, where the real per-frame `t` deltas are; this component only formats and
+ *    shows it, and only while playing. */
 
-import { useId } from 'react'
+import { useId, useMemo } from 'react'
 import type { ReactNode } from 'react'
 
 import type { GeoTime, Playback, PlaybackMode } from '@/types/layer'
 
 import { nearestStepTarget, type TimelineCheckpoint } from '../checkpoints'
 import { formatRate } from '../format'
-import { SPEED_OPTIONS } from '../playback'
+import {
+  activeRate,
+  detentCaption,
+  detentLabel,
+  detentValueText,
+  nearestDetentIndex,
+  rateDetents,
+  withActiveRate,
+} from '../playbackRates'
 import type { TimeWindow } from '../scale'
+import { RateScroller } from './RateScroller'
 import styles from './Transport.module.css'
 
 const PLAYBACK_MODES: readonly { value: PlaybackMode; label: string }[] = [
@@ -131,29 +133,29 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
   )
 }
 
-interface SpeedSelectProps {
+interface SpeedControlProps {
   playback: Playback
   onPlaybackChange: (playback: Playback) => void
 }
 
-/** The playback speed `<select>`, alone — sits centred over the track grouped with `RateReadout`
- *  (`Timeline.tsx`'s `.speedGroup`, itself inside `.controlsCore` beside `TransportCore`), not
- *  beside the mode/scale toggles on the row's right. */
-export function SpeedSelect({ playback, onPlaybackChange }: SpeedSelectProps) {
+/** The playback rate picker for the current mode: a multiplier in scenes mode, years per second
+ *  in steady mode. Each mode keeps its own rate, so switching mode swaps the detent table. */
+export function SpeedControl({ playback, onPlaybackChange }: SpeedControlProps) {
+  const { mode } = playback
+  const values = rateDetents(mode)
+  const detents = useMemo(
+    () => values.map((value) => ({ value, label: detentLabel(mode, value), valueText: detentValueText(mode, value) })),
+    [mode, values],
+  )
   return (
-    <select
-      className={styles.speedSelect}
-      aria-label="Playback speed"
-      title="Playback speed — [ / ] or - / = to change"
-      value={playback.speed}
-      onChange={(e) => onPlaybackChange({ ...playback, speed: Number(e.target.value) })}
-    >
-      {SPEED_OPTIONS.map((speed) => (
-        <option key={speed} value={speed}>
-          {speed}x
-        </option>
-      ))}
-    </select>
+    <RateScroller
+      detents={detents}
+      index={nearestDetentIndex(values, activeRate(playback))}
+      onChange={(index) => onPlaybackChange(withActiveRate(playback, values[index]!))}
+      label={mode === 'scenes' ? 'Playback speed' : 'Playback rate'}
+      caption={detentCaption(mode)}
+      title={`${mode === 'scenes' ? 'Playback speed' : 'Playback rate'} — drag, scroll, or [ / ] to change`}
+    />
   )
 }
 
@@ -197,61 +199,32 @@ export function PlaybackModeToggle({ playback, onPlaybackChange }: PlaybackModeT
   )
 }
 
-interface TimeCompressedBadgeProps {
-  /** Whether `'steady'`-mode playback's own rate is currently floored to guarantee every scene a
-   *  minimum on-screen dwell (ADR-029) — `Experience.tsx`'s `steadyPacing().floored`, a direct
-   *  function of playback state, never an idle timer. */
-  visible: boolean
-}
-
-/** "Time compressed" (ADR-029): shown only while the steady playhead's own rate is floored below
- *  what `speed` requested to keep a dense cluster of scenes readable (WCAG 2.3.1's three-flashes
- *  safety floor) — the numeric year readout keeps moving at whatever rate `t` implies either way
- *  (see `advanceSteadyPlayhead`'s own doc comment), so this is the one place a viewer is told
- *  playback has quietly slowed to protect that readability. Shares `RateReadout`'s row
- *  (`rateReadoutRow`: under the number on desktop, outboard of it in the compact layouts) — the
- *  number keeps the place beside the transport buttons — amber like the playing state and the
- *  active mode-toggle option: the shared `--hud-accent` lens language, not a new idiom.
- *
- *  A fixed-width slot, always mounted (re-review fix, 2026-09-15 — this originally unmounted via
- *  `return null` while not visible, on the reasoning that a handful of years-dense clusters made
- *  this rare enough not to bother reserving space for): a single steady-mode playthrough can
- *  cross several scene territories whose dwell straddles the floor threshold in quick succession,
- *  toggling `visible` up to ten times in a few seconds (live-measured) — unmounting and
- *  remounting a `role="status"` region that often both re-announces it to screen readers more
- *  erratically than a live region toggling its own text is meant to, and repeatedly shifts
- *  `RateReadout`/the scale toggle beside it. `visibility`, not `display`, keeps the slot's width
- *  constant either way (the same pattern `RateReadout` above already uses, for the same reason);
- *  only the text content toggles between the real label and `''`, which is what actually
- *  re-triggers a screen reader's live-region announcement on each genuine transition into the
- *  floor — a permanently-static label, merely shown/hidden by CSS, would never re-announce at
- *  all. */
-export function TimeCompressedBadge({ visible }: TimeCompressedBadgeProps) {
-  return (
-    <span className={styles.timeCompressed} role="status" data-visible={visible}>
-      {visible ? 'Time compressed' : ''}
-    </span>
-  )
-}
-
 interface RateReadoutProps {
   /** Instantaneous, smoothed years-per-second `t` is currently advancing at — `null`/omitted
    *  when there is nothing meaningful to show yet (not playing, or the first frame). */
   ratePerSecond?: number | null
   playing: boolean
+  /** Whether steady playback is currently slowed below the chosen rate so a dense run of scenes
+   *  never flashes past (ADR-029) — `Experience.tsx`'s `steadyRegime.floored`. */
+  floored?: boolean
 }
 
-/** The playback rate readout (ADR-016's prototype), in a fixed-width slot reserved whether or
- *  not it currently has anything to show: `Transport.module.css` sizes `.rateReadout` to
- *  comfortably outlast any `formatRate` output this app can produce, so starting/stopping
- *  playback never shifts `TransportCore` beside it — `visibility`, not `display: none`, keeps the
- *  slot in the layout even empty. Placed by the caller (`Timeline.tsx`) grouped with `SpeedSelect`
- *  in `.speedGroup`, to the left of `TransportCore`. */
-export function RateReadout({ ratePerSecond = null, playing }: RateReadoutProps) {
+/** The measured playback rate, in a fixed-width slot reserved whether or not it has anything to
+ *  show (`visibility`, not `display`), so starting or stopping playback never shifts the transport.
+ *  While the steady floor holds it is amber and reads below the rate the picker shows.
+ *
+ *  The number changes every frame, so it is hidden from assistive technology; the status region
+ *  beside it carries only the floor, and its text toggling between the cue and `''` announces each
+ *  transition into the floor. */
+export function RateReadout({ ratePerSecond = null, playing, floored = false }: RateReadoutProps) {
   const visible = playing && ratePerSecond !== null
+  const slowed = visible && floored
   return (
-    <span className={styles.rateReadout} aria-hidden data-visible={visible}>
-      {visible ? formatRate(ratePerSecond) : ''}
+    <span className={styles.rateReadout} data-visible={visible} data-floored={slowed}>
+      <span aria-hidden="true">{visible ? formatRate(ratePerSecond) : ''}</span>
+      <span className={styles.visuallyHidden} role="status">
+        {slowed ? 'Playback slowed for scenes' : ''}
+      </span>
     </span>
   )
 }

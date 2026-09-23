@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { defaultSteadyRate } from '@/timeline/playbackRates'
+import { sectionById } from '@/timeline/sections'
 import { EARTH_FORMATION } from '@/types/layer'
 
 import { useTimeStore } from './time'
@@ -18,7 +20,7 @@ describe('useTimeStore', () => {
       t: 0,
       sectionId: 'earth',
       scaleKind: 'symlog',
-      playback: { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' },
+      playback: { playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 1, mode: 'scenes' },
       globeExpanded: false,
       expandedChartLayerId: null,
       detailEventId: null,
@@ -38,10 +40,24 @@ describe('useTimeStore', () => {
   it('changes one playback field at a time', () => {
     store().setSpeed(4)
     store().setPlaying(true)
-    store().setPlaybackMode('steady')
-    expect(store().playback).toEqual({ playing: true, baseRate: 0.02, speed: 4, mode: 'steady' })
+    store().setYearsPerSecond(5000)
+    expect(store().playback).toEqual({ playing: true, baseRate: 0.02, speed: 4, yearsPerSecond: 5000, mode: 'scenes' })
     store().togglePlaying()
     expect(store().playback.playing).toBe(false)
+  })
+
+  it('applies the steady context default until a rate is chosen, then keeps the chosen one', () => {
+    store().setT(1200)
+    store().setPlaybackMode('steady')
+    expect(store().playback.yearsPerSecond).toBe(defaultSteadyRate(sectionById('earth').window, 1200))
+    store().selectSection('cretaceous')
+    const cretaceous = sectionById('cretaceous').window
+    expect(store().playback.yearsPerSecond).toBe(defaultSteadyRate(cretaceous, cretaceous[1]))
+    store().setYearsPerSecond(200)
+    store().setPlaybackMode('scenes')
+    store().selectSection('holocene')
+    store().setPlaybackMode('steady')
+    expect(store().playback.yearsPerSecond).toBe(200)
   })
 
   it('tracks the scale kind and open overlays', () => {

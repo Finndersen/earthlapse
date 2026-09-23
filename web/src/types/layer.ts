@@ -272,24 +272,24 @@ export interface TimeScale {
 }
 
 /**
- * Two playback modes (ADR-016), sharing one `speed` multiplier:
+ * Two playback modes (ADR-016, ADR-050), each with its own rate:
  * - `'scenes'` (default) — the playhead paces itself so every scene gap takes the same
  *   wall-clock time to cross regardless of how many years it spans, plus a small bonus for
- *   gaps that cover a lot of the timeline. See `scene/pacing.ts`'s `scenePlaybackSegments`
- *   and `timeline/playback.ts`'s `advancePlayhead`.
- * - `'steady'` — constant velocity in the full-domain scale of whichever `ScaleKind` is
- *   currently selected (symlog by default; linear when the linear toggle is on). No pacing.
+ *   gaps that cover a lot of the timeline, all divided by `speed`. See `scene/pacing.ts`'s
+ *   `scenePlaybackSegments` and `timeline/playback.ts`'s `advancePlayhead`.
+ * - `'steady'` — `t` moves at a literal `yearsPerSecond`, slowed per scene only where a scene
+ *   would otherwise flash past (ADR-029). See `timeline/playback.ts`'s `advanceSteadyPlayhead`.
  */
 export type PlaybackMode = 'scenes' | 'steady'
 
-/** Playback advances at constant velocity in *warped* space — constant events per second,
- *  not years per second. A linear playthrough would spend 99.98% of its runtime in the
- *  Proterozoic. Speed control is a multiplier on this and nothing else changes. */
 export interface Playback {
   playing: boolean
-  /** Screen-space units per second, before the speed multiplier. Used directly in `'steady'`
-   *  mode and as the flat rate outside every scene's span in `'scenes'` mode. */
+  /** `'scenes'` mode's flat rate outside every paced segment, in full-domain symlog `u` per
+   *  second, before `speed`. */
   baseRate: number
+  /** `'scenes'` mode's multiplier on its paced velocity. */
   speed: number
+  /** `'steady'` mode's rate, in years of `t` per wall-clock second. */
+  yearsPerSecond: number
   mode: PlaybackMode
 }

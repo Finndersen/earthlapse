@@ -26,6 +26,8 @@
  *   `timeline/playback.ts`'s `advanceSteadyPlayhead`.
  * - `steadyFrameRegime` (ADR-029) — `steadyPacing` evaluated at the rendered `t`, forced to
  *   `'crossfade'` on a seek.
+ * - `planScenePrefetch`/`PREFETCH_LOOKAHEAD_SECONDS` — which scenes to decode and which only to
+ *   fetch ahead of the presented pair; `SceneView`'s `prefetchHorizonT` ends the lookahead.
  */
 
 export { REST_DRIFT, driftAt } from './drift'
@@ -33,6 +35,8 @@ export type { DriftUniforms } from './drift'
 export { MAX_GAP_BONUS_SECONDS, scenePlaybackSegments, SCENE_DWELL_SECONDS } from './pacing'
 export { playbackSecondsBetween, yearsForPlaybackSeconds } from './pacing'
 export type { PlaybackSegment } from './pacing'
+export { planScenePrefetch, PREFETCH_LOOKAHEAD_SECONDS } from './prefetch'
+export type { PlaybackHeading, ScenePrefetchPlan } from './prefetch'
 export { MIN_TRANSITION_SECONDS, step, usePresentedSceneMix } from './presentation'
 export { captionOpacity, dominantScene, DISSOLVE_WIDTH, resolveAssetUrl, sceneAt, tAtLogP } from './scene'
 export type { PresentationRegime, SceneMix } from './scene'

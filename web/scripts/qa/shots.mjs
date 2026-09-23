@@ -495,7 +495,7 @@ const RESTING_REGIONS = {
 /** The transport row's parts, for the same check inside the timeline. */
 const TRANSPORT_ROW_REGIONS = {
   breadcrumb: BREADCRUMB_SELECTOR,
-  speed: `${TIMELINE_CONTROLS_CORE_SELECTOR} select`,
+  speed: `${TIMELINE_CONTROLS_CORE_SELECTOR} [role="spinbutton"]`,
   play: PLAY_BUTTON_SELECTOR,
   secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR,
 }
@@ -507,7 +507,7 @@ const TRANSPORT_ROW_REGIONS = {
  *   column) overlaps another or leaves the viewport, at the root and in the section;
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
  *   the ancestor column, its readouts 0-40px under it;
- * - the transport row: breadcrumb, speed select, play and secondary cluster clear of each other;
+ * - the transport row: breadcrumb, rate picker, play and secondary cluster clear of each other;
  *   the secondary cluster's children clear of each other; play on the track centre; transport
  *   midway between the band row and the viewport bottom, breadcrumb on its centre line; the
  *   breadcrumb and the secondary cluster inside the track's edges; the breadcrumb on one line;

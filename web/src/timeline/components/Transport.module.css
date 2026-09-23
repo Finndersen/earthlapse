@@ -67,39 +67,6 @@
   }
 }
 
-/* Fixed width (the widest option, "0.25x", plus padding) so a different selected speed never
-   changes this element's own rendered width — a native <select> otherwise sizes to its current
-   option's text, which would shift the mode toggle/scale toggle beside it every time the speed
-   changes. Centred text reads fine at every width since every option is short. */
-.speedSelect {
-  width: 46px;
-  background: transparent;
-  /* Chrome-less like the transport buttons beside it, rather than a pill: this sits inside the
-     transport cluster now, and a bordered control there read as the odd one out. The caret the
-     native <select> draws is affordance enough. */
-  border: none;
-  border-radius: 999px;
-  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 10.5px;
-  letter-spacing: 0.03em;
-  text-align: center;
-  text-align-last: center;
-  padding: 3px 4px;
-  cursor: pointer;
-}
-
-.speedSelect:hover {
-  color: var(--hud-ink, #efe9dc);
-}
-
-/* Keeps a visible keyboard ring now that there is no border to thicken or recolour instead. */
-.speedSelect:focus-visible {
-  color: var(--hud-ink, #efe9dc);
-  outline: 1px solid var(--hud-accent, #e8b06a);
-  outline-offset: 2px;
-}
-
 /* The mode toggle's own visible label, stacked above the buttons — same small-caps HUD look as
    `Timeline.module.css`'s `.scaleLabel` (mono, letter-spaced caps, faint), duplicated rather than
    imported since CSS Modules classes are scoped per file and this toggle lives here, not in
@@ -155,36 +122,18 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* A fixed-width slot, always present in the layout, sized off `formatRate`'s own bucket-by-bucket
-   worst case, not the single "≈ 77.4 Gyr/s" figure a real run happened to hit: `trimmed` strips
-   trailing zeros, so the longest string each bucket can produce is "≈ < 1 yr/s" (rate < 1),
-   "≈ 999 yr/s" (rate < 1e3), "≈ 999.9 kyr/s" (rate < 1e6), "≈ 999 Myr/s" (rate < 1e9), or
-   "≈ 999.99 Gyr/s" (rate >= 1e9, three integer digits kept as headroom above the ~77 Gyr/s this
-   app has actually measured near the oldest edge, for a slower frame or a higher future top
-   speed) — 14 visible characters at its widest. `16ch`, not `14ch`, keeps a 2-character margin
-   over that exact count: `ch` is the advance width of the font's own "0" glyph, and a fallback
-   font in the stack below can still render "≈" or "/" at a different width than a digit even
-   though the stack is nominally monospace, so an exact-fit box risks clipping the very case it
-   was sized for. `overflow`/`text-overflow` stay as a safety net, not a promise this margin is
-   ever reached. Right-aligned so the numerals hug the row's own outer edge. `visibility`, not
-   `display`, when empty — the slot's width must never depend on whether there is anything to
-   show. `min-height` for the same reason: an `inline-block` with a genuinely empty text node
-   generates no line box at all, so this would measure 0px tall while `visible` is false, jumping
-   to this element's real ~11px line height the moment playback started and shifting whatever
-   comes after it. Pinning the height to what it already renders at when visible removes the
-   jump. */
+/* A fixed-width slot, always present in the layout. `formatRate`'s longest outputs are 12
+   characters ("999.99 Gyr/s", "< 0.01 yr/s"); `16ch` leaves a margin because a fallback font can
+   draw "<" or "/" wider than the "0" that `ch` measures. `visibility`, not `display`, when empty,
+   and a `min-height`, so the slot's size never depends on whether it has anything to show (an empty
+   `inline-block` has no line box and would measure 0px tall). Left-aligned: it sits on the
+   transport's inboard edge, so the number reads as belonging to the buttons. */
 .rateReadout {
   display: inline-block;
   width: 16ch;
-  /* Never gives up its reserve: this slot shares a flank with the "Time compressed" badge, and
-     that flank narrows with the viewport, so without this the two shrink together and the number
-     itself starts losing characters. The badge is the annotation and absorbs the squeeze instead. */
   flex: none;
   min-height: 11px;
   overflow: hidden;
-  /* Left, not right: this sits on the transport's inboard edge, mirroring the speed select packed
-     against the buttons on the other side, so the number reads as belonging to them rather than
-     drifting to the far end of its own reserved box. */
   text-align: left;
   text-overflow: ellipsis;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
@@ -194,70 +143,35 @@
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
   white-space: nowrap;
   visibility: hidden;
+  transition: color 200ms ease;
 }
 
 .rateReadout[data-visible='true'] {
   visibility: visible;
 }
 
-/* "Time compressed" (ADR-029) — amber like the playing state and the active mode-toggle option
-   (`.playButton.playing`/`.modeButton[aria-pressed='true']` above), the shared `--hud-accent`
-   lens language rather than a new idiom. A fixed-width slot, always mounted, mirroring
-   `.rateReadout`'s own reserved-slot pattern above. `width`, not `min-width`: the label's own
-   text — uppercase, letter-spaced — renders at ~96px in this font stack, past what `15ch` (~90px)
-   actually computes to, so a `min-width` floor would let the box grow those extra ~6px the moment
-   the badge became visible, shifting `RateReadout` beside it and everything before it on the
-   line. `width` is a hard cap instead (with `overflow: hidden` as a safety net for a narrower
-   system font falling back); 17ch keeps a safety margin over the measured ~96px the same way
-   `.rateReadout`'s 14ch outlasts its own longest real output. `min-height` for the same reason as
-   `.rateReadout` above. */
-.timeCompressed {
-  display: inline-flex;
-  align-items: center;
-  width: 17ch;
-  min-height: 11px;
-  overflow: hidden;
-  white-space: nowrap;
-  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+/* Slowed by the steady floor (ADR-029): amber like the playing state and the active mode-toggle
+   option, the shared `--hud-accent` lens language. */
+.rateReadout[data-floored='true'] {
   color: var(--hud-accent, #e8b06a);
-  visibility: hidden;
 }
 
-.timeCompressed[data-visible='true'] {
-  visibility: visible;
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
-/* Phone portrait: `RateReadout` and `TimeCompressedBadge` now ride in the transport row itself
-   (`Timeline.module.css`'s `.core`), flanked by the speed select and the two section-edge
-   buttons. Their desktop slots reserve ~33ch between them, which alone is wider than the whole
-   ~390px row, so both shrink here. The slot stays reserved — just narrower — so the row still
-   cannot reflow when playback starts. `overflow: hidden` keeps a long rate string clipped to the
-   slot rather than widening it. */
+/* Phone portrait and short landscape: the readout rides in the transport row itself, in a slot
+   the width of `--transport-flank`, matched to the speed control on the buttons' other side so the
+   buttons stay centred whether or not the readout has anything to show. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
-  /* Matched to `.speedSelect`'s own phone width below, deliberately: the two sit on opposite
-     sides of the transport buttons, so equal widths are what keep those buttons centred in the
-     row — and keep the two section-edge arrows equidistant from the screen edges — whether or
-     not the readout currently has anything to show. */
   .rateReadout {
     width: 100%;
     font-size: 9px;
-    overflow: hidden;
-  }
-
-  /* No native caret at this breakpoint: it reserves a fixed chunk of the control's width for a
-     glyph, which is most of this slot, and tapping opens the platform picker regardless. */
-  .speedSelect {
-    width: 100%;
-    appearance: none;
-    padding: 3px 2px;
-  }
-
-  .timeCompressed {
-    width: 0;
-    padding: 0;
     overflow: hidden;
   }
 }

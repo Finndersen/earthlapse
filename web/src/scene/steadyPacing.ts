@@ -25,7 +25,7 @@
  * so it can floor the playhead's own rate without either package depending on the other.
  */
 
-import { EARTH_FORMATION, type GeoTime, type TimeScale } from '@/types/layer'
+import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { MIN_TRANSITION_SECONDS } from './presentation'
@@ -46,9 +46,9 @@ export const MIN_CUT_DWELL_SECONDS = 0.35
 export interface SteadyPacing {
   /** How `presentation.ts`'s `step` should render the current transition. */
   regime: PresentationRegime
-  /** True exactly while the steady playhead's rate is floored below what `speed` requested to
-   *  guarantee the minimum dwell — a direct function of playback state (this call's own `t`,
-   *  `rawRate` and `scale`), never an idle timer. Drives the "time compressed" marker. */
+  /** True exactly while the steady playhead's rate is floored below the requested
+   *  `yearsPerSecond` to guarantee the minimum dwell — a direct function of this call's own `t`
+   *  and rate, never an idle timer. Drives the rate readout's floored state. */
   floored: boolean
 }
 
@@ -93,21 +93,22 @@ export function territoryAt(territories: readonly SteadySceneTerritory[], t: Geo
 
 /**
  * The presentation regime and floor status for steady-mode playback at `t`, crossing scenes at
- * `rawRate` (`u`/s in `scale` — `playback.baseRate * playback.speed`). Pure in its inputs.
+ * `yearsPerSecond` (`playback.yearsPerSecond`). A scene's dwell is its territory's span in years
+ * over that rate, whatever scale is on screen. Pure in its inputs.
  *
- * No territory containing `t` (fewer than two scenes) or a non-positive `rawRate` has nothing to
- * floor or cut: `{ regime: 'crossfade', floored: false }`, matching `sceneAt`'s own single-scene
- * degenerate case and today's unconditional crossfade.
+ * No territory containing `t` (fewer than two scenes) or a non-positive rate has nothing to floor
+ * or cut: `{ regime: 'crossfade', floored: false }`, matching `sceneAt`'s own single-scene
+ * degenerate case.
  */
-export function steadyPacing(territories: readonly SteadySceneTerritory[], t: GeoTime, rawRate: number, scale: TimeScale): SteadyPacing {
+export function steadyPacing(territories: readonly SteadySceneTerritory[], t: GeoTime, yearsPerSecond: number): SteadyPacing {
   const territory = territoryAt(territories, t)
-  if (territory === undefined || !(rawRate > 0)) return { regime: 'crossfade', floored: false }
+  if (territory === undefined || !(yearsPerSecond > 0)) return { regime: 'crossfade', floored: false }
 
-  const uSpan = Math.abs(scale.toUnit(territory.tOlder) - scale.toUnit(territory.tNewer))
-  const dwellSeconds = uSpan / rawRate
+  const spanYears = territory.tOlder - territory.tNewer
+  const dwellSeconds = spanYears / yearsPerSecond
 
   if (dwellSeconds >= MIN_TRANSITION_SECONDS) return { regime: 'crossfade', floored: false }
-  if (dwellSeconds >= MIN_CUT_DWELL_SECONDS || uSpan === 0) return { regime: 'cut', floored: false }
+  if (dwellSeconds >= MIN_CUT_DWELL_SECONDS || spanYears === 0) return { regime: 'cut', floored: false }
   return { regime: 'cut', floored: true }
 }
 
@@ -128,16 +129,15 @@ export function steadyPacing(territories: readonly SteadySceneTerritory[], t: Ge
  *   rate-limited crossfade, governed by `presentation.ts`'s `MIN_TRANSITION_SECONDS` rather than
  *   this file's `MIN_CUT_DWELL_SECONDS`.
  *
- * Pure in its five inputs — `seeked` is the caller's own comparison against what it tracked
- * last frame, not computed here.
+ * Pure in its inputs — `seeked` is the caller's own comparison against what it tracked last
+ * frame, not computed here.
  */
 export function steadyFrameRegime(
   territories: readonly SteadySceneTerritory[],
   renderedT: GeoTime,
-  rawRate: number,
-  scale: TimeScale,
+  yearsPerSecond: number,
   seeked: boolean,
 ): SteadyPacing {
   if (seeked) return { regime: 'crossfade', floored: false }
-  return steadyPacing(territories, renderedT, rawRate, scale)
+  return steadyPacing(territories, renderedT, yearsPerSecond)
 }

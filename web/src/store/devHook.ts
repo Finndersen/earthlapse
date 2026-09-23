@@ -57,6 +57,8 @@ export interface EarthtimeDevHook {
    *  `playback.playing` is true. */
   setPlaying: (playing: boolean) => void
   setPlaybackMode: (mode: PlaybackMode) => void
+  /** Sets the active mode's rate: the scenes multiplier, or steady years per second. */
+  setPlaybackRate: (rate: number) => void
   /** `useTimeStore`'s `selectSection`: moves `t` to the section's start only if it lies outside. */
   selectSection: (id: SectionId) => void
   /** Expands or collapses the globe overlay (`useTimeStore`'s `globeExpanded`). */
@@ -227,6 +229,11 @@ export function installDevHook(): void {
     getState: useTimeStore.getState,
     setPlaying: (playing) => useTimeStore.getState().setPlaying(playing),
     setPlaybackMode: (mode) => useTimeStore.getState().setPlaybackMode(mode),
+    setPlaybackRate: (rate) => {
+      const store = useTimeStore.getState()
+      if (store.playback.mode === 'scenes') store.setSpeed(rate)
+      else store.setYearsPerSecond(rate)
+    },
     selectSection: (id) => useTimeStore.getState().selectSection(id),
     setGlobeExpanded: (expanded) => useTimeStore.getState().setGlobeExpanded(expanded),
     getGlobeViewMode,

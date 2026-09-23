@@ -45,7 +45,7 @@ function buildDiagnostics(): string {
     `t: ${t} (${formatGeoTime(t)})`,
     `Era: ${eraNameForTime(t)}`,
     `Section: ${sectionId}`,
-    `Playback: ${playback.playing ? 'playing' : 'paused'}, mode=${playback.mode}, speed=${playback.speed}x`,
+    `Playback: ${playback.playing ? 'playing' : 'paused'}, mode=${playback.mode}, speed=${playback.speed}x, steady=${playback.yearsPerSecond} yr/s`,
     `Globe: ${globeLine}`,
     `Viewport: ${window.innerWidth}x${window.innerHeight}, devicePixelRatio=${window.devicePixelRatio}`,
     `User agent: ${navigator.userAgent}`,

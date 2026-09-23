@@ -29,7 +29,7 @@ const events: TimelineEvent[] = [{ id: 'e1', label: 'Big event', tMin: 2.5e8, tM
 const checkpoints: TimelineCheckpoint[] = [{ id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' }]
 
 function playback(overrides: Partial<Playback> = {}): Playback {
-  return { playing: false, baseRate: 0.1, speed: 1, mode: 'scenes', ...overrides }
+  return { playing: false, baseRate: 0.1, speed: 1, yearsPerSecond: 10, mode: 'scenes', ...overrides }
 }
 
 function renderTimeline(overrides: Partial<ComponentProps<typeof Timeline>> = {}) {
@@ -59,12 +59,14 @@ describe('<Timeline>', () => {
     expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ playing: true }))
   })
 
-  it('changes speed from the selector and from the speed shortcut', () => {
-    const { props, keyDown } = renderTimeline({ playback: playback({ speed: 2 }) })
-    fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
-    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 8 }))
-    keyDown(']')
-    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 4 }))
+  it("steps the active mode's rate from the picker and the rate shortcuts", () => {
+    const scenes = renderTimeline({ playback: playback({ speed: 1 }) })
+    fireEvent.keyDown(screen.getByRole('spinbutton', { name: 'Playback speed' }), { key: 'ArrowUp' })
+    expect(scenes.props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 2 }))
+    cleanup()
+    const steady = renderTimeline({ playback: playback({ mode: 'steady', yearsPerSecond: 10 }) })
+    steady.keyDown(']')
+    expect(steady.props.onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'steady', yearsPerSecond: 20 }))
   })
 
   it('switches playback mode and scale kind from their labelled groups', () => {
@@ -107,13 +109,15 @@ describe('<Timeline>', () => {
     expect(props.onSelectSection).toHaveBeenCalledWith('earth')
   })
 
-  it('keeps the time-compressed live region mounted across toggles', () => {
-    const { rerender, props } = renderTimeline({ playback: playback({ playing: true, mode: 'steady' }) })
-    const marker = screen.getByRole('status')
-    expect(marker.textContent).toBe('')
-    rerender(<Timeline {...props} timeCompressed />)
-    expect(screen.getByRole('status')).toBe(marker)
-    expect(marker.textContent).toBe('Time compressed')
+  it('marks the rate readout floored and announces it from a live region that stays mounted', () => {
+    const { rerender, props } = renderTimeline({ playback: playback({ playing: true, mode: 'steady' }), ratePerSecond: 250 })
+    const readout = screen.getByText('250 yr/s').parentElement!
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('')
+    rerender(<Timeline {...props} rateFloored />)
+    expect(screen.getByRole('status')).toBe(status)
+    expect(readout.getAttribute('data-floored')).toBe('true')
+    expect(status.textContent).not.toBe('')
   })
 
   it('feeds every checkpoint and event endpoint to the lens as a marker', () => {

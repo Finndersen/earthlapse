@@ -18,7 +18,10 @@ vi.mock('@react-three/fiber', async () => {
 })
 
 // Image fetches never settle; only the initial Canvas props matter here.
-vi.mock('@/lib/fetchImage', () => ({ fetchImage: () => new Promise<never>(() => {}) }))
+vi.mock('@/lib/fetchImage', () => ({
+  fetchImage: () => new Promise<never>(() => {}),
+  fetchImageBlob: () => new Promise<never>(() => {}),
+}))
 
 afterEach(() => {
   cleanup()
@@ -29,7 +32,8 @@ afterEach(() => {
 const baseProps = {
   baseUrl: 'a.png',
   overlayUrl: 'b.png',
-  preloadUrls: [] as readonly string[],
+  decodeUrls: [] as readonly string[],
+  fetchUrls: [] as readonly string[],
   mix: 0,
   fromDrift: REST_DRIFT,
   toDrift: REST_DRIFT,

@@ -5,31 +5,36 @@
  * smooth whole-image crossfade (`shaders.ts`, ADR-012), each layer's own focus-centred crop
  * (`framing.ts`, ADR-045, ADR-047) and camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
  * `textureCache`/`useScenePair`, which keep the previously bound pair on screen until a newly
- * requested pair has fully loaded, so this never shows a blank or black frame; scenes just
- * outside the current pair are preloaded speculatively. `sceneRender.ts`'s `resolveSceneRender`
+ * requested pair has fully loaded, so this never shows a blank or black frame; scenes ahead of
+ * the current pair are prefetched, decoded and uploaded before they are needed (`prefetch.ts`).
+ * `sceneRender.ts`'s `resolveSceneRender`
  * reconciles that bound pair against `mix`/`fromDrift`/`toDrift` (computed for the pair being
  * *requested*, which can outrun what's bound) so the rendered uniforms always describe the
  * bound pair, never a stale texture under a newer pair's drift.
  */
 
 import { Canvas, useThree } from '@react-three/fiber'
-import { useEffect, useMemo, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import * as THREE from 'three'
+
+import { isAbortError } from '@/lib/imagePrefetcher'
 
 import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
 import { CENTRED_CROP, coverWindow, type CoverWindow, type SceneCrop } from './framing'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
-import { loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
+import { sceneImageBytes } from './sceneImageBytes'
+import { getCachedSceneTexture, loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
 import { useScenePair } from './useScenePair'
 
 export interface SceneCanvasViewProps {
   baseUrl: string
   overlayUrl: string
-  /** URLs of the scenes just outside the current pair — warmed into the texture cache ahead
-   *  of need, same idea as `globe`'s neighbour preload. */
-  preloadUrls: readonly string[]
+  /** Scenes to decode and upload ahead of need, most urgent first (`prefetch.ts`). */
+  decodeUrls: readonly string[]
+  /** Scenes whose bytes to fetch without decoding, most urgent first. */
+  fetchUrls: readonly string[]
   /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
    *  alone, `1` shows `overlayUrl` alone, pixel-exact at both ends (see `shaders.ts`). */
   mix: number
@@ -43,20 +48,47 @@ export interface SceneCanvasViewProps {
   cropByUrl: ReadonlyMap<string, SceneCrop>
 }
 
-function usePreloadTextures(urls: readonly string[]): void {
-  const key = urls.join('|')
+/**
+ * Fetches the pair, then `decodeUrls`, then `fetchUrls` (`sceneImageBytes`), and decodes and
+ * uploads each of `decodeUrls` once its bytes arrive, so `useScenePair`'s render-phase bind finds
+ * it ready. A scene that leaves the plan before its bytes arrive is dropped, not decoded.
+ */
+function useScenePrefetch(
+  pairUrls: readonly string[],
+  decodeUrls: readonly string[],
+  fetchUrls: readonly string[],
+  renderer: { readonly current: THREE.WebGLRenderer | null },
+): void {
+  const pairKey = pairUrls.join('\n')
   useEffect(() => {
-    if (key.length === 0) return
-    for (const url of key.split('|')) {
-      loadSceneTexture(url).catch((error: unknown) => console.error(error))
+    const pending = (url: string): boolean => getCachedSceneTexture(url) === undefined
+    sceneImageBytes.want(pairKey.split('\n').filter(pending), [...decodeUrls.filter(pending), ...fetchUrls.filter(pending)])
+
+    let cancelled = false
+    for (const url of decodeUrls) {
+      const cached = getCachedSceneTexture(url)
+      const decoded =
+        cached !== undefined ? Promise.resolve(cached) : sceneImageBytes.whenStored(url).then(() => loadSceneTexture(url))
+      decoded
+        .then((texture) => {
+          // An evicted texture uploaded here would never be disposed again.
+          if (!cancelled && getCachedSceneTexture(url) === texture) renderer.current?.initTexture(texture)
+        })
+        .catch((error: unknown) => {
+          if (!isAbortError(error)) console.error(error)
+        })
     }
-  }, [key])
+    return () => {
+      cancelled = true
+    }
+  }, [pairKey, decodeUrls, fetchUrls, renderer])
 }
 
 export function SceneCanvasView({
   baseUrl,
   overlayUrl,
-  preloadUrls,
+  decodeUrls,
+  fetchUrls,
   mix,
   fromDrift,
   toDrift,
@@ -64,7 +96,8 @@ export function SceneCanvasView({
   cropByUrl,
 }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, overlayUrl)
-  usePreloadTextures(preloadUrls)
+  const renderer = useRef<THREE.WebGLRenderer | null>(null)
+  useScenePrefetch([baseUrl, overlayUrl], decodeUrls, fetchUrls, renderer)
   const dpr = useSceneCanvasDpr()
 
   // The uniforms below must always describe whichever pair `pair` actually has textures bound
@@ -81,7 +114,16 @@ export function SceneCanvasView({
   // it wouldn't. A caller wanting a lower rate throttles the `t` it derives these props from
   // (`SceneView`'s `covered`) rather than stopping the loop.
   return (
-    <Canvas orthographic dpr={dpr} frameloop="demand" gl={{ antialias: false, alpha: false }} style={canvasStyle}>
+    <Canvas
+      orthographic
+      dpr={dpr}
+      frameloop="demand"
+      gl={{ antialias: false, alpha: false }}
+      style={canvasStyle}
+      onCreated={({ gl }) => {
+        renderer.current = gl
+      }}
+    >
       <SceneQuad
         fromTex={render?.fromTex ?? null}
         toTex={render?.toTex ?? null}

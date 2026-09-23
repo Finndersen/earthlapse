@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { EARTH_FORMATION, type TimeScale } from '@/types/layer'
+import { EARTH_FORMATION } from '@/types/layer'
 import type { Scene } from '@/types/manifest'
 
 import { tAtLogP } from './scene'
@@ -20,13 +20,6 @@ function scene(id: string, t: number): Scene {
     width: 1920,
     height: 1080,
   }
-}
-
-// A plain linear scale, so uSpan / rate arithmetic is exact.
-function linearScale(domain: readonly [number, number]): TimeScale {
-  const [newest, oldest] = domain
-  const span = oldest - newest
-  return { kind: 'linear', domain: [newest, oldest], toUnit: (t) => (oldest - t) / span, fromUnit: (u) => oldest - u * span }
 }
 
 const s0 = scene('s0', 0)
@@ -65,12 +58,11 @@ describe('territoryAt', () => {
 
 describe('steadyPacing', () => {
   const unit: SteadySceneTerritory = { tNewer: 0, tOlder: 1 }
-  const unitScale = linearScale([0, 1])
-  const pace = (dwellSeconds: number) => steadyPacing([unit], 0.5, 1 / dwellSeconds, unitScale)
+  const pace = (dwellSeconds: number) => steadyPacing([unit], 0.5, 1 / dwellSeconds)
 
   it('crossfades for no territories or a non-positive rate', () => {
-    expect(steadyPacing([], 500, 0.02, linearScale([0, 1e6]))).toEqual({ regime: 'crossfade', floored: false })
-    expect(steadyPacing(TERRITORIES, 50, 0, linearScale([0, 1e6]))).toEqual({ regime: 'crossfade', floored: false })
+    expect(steadyPacing([], 500, 1000)).toEqual({ regime: 'crossfade', floored: false })
+    expect(steadyPacing(TERRITORIES, 50, 0)).toEqual({ regime: 'crossfade', floored: false })
   })
 
   it('crossfades at a dwell of MIN_TRANSITION_SECONDS, cuts below it, and floors below MIN_CUT_DWELL_SECONDS', () => {
@@ -80,18 +72,15 @@ describe('steadyPacing', () => {
     expect(pace(MIN_CUT_DWELL_SECONDS - 0.01)).toEqual({ regime: 'cut', floored: true })
   })
 
-  it('floors a dense cluster at 1x but not at a much slower rate', () => {
-    const scale = linearScale([0, 2e6])
-    expect(steadyPacing(TERRITORIES, s1.t, 0.02, scale)).toEqual({ regime: 'cut', floored: true })
-    expect(steadyPacing(TERRITORIES, s1.t, 0.02 / 200, scale).floored).toBe(false)
+  it('floors a dense cluster at a fast literal rate but not at a slow one', () => {
+    expect(steadyPacing(TERRITORIES, s1.t, 4e4)).toEqual({ regime: 'cut', floored: true })
+    expect(steadyPacing(TERRITORIES, s1.t, 200).floored).toBe(false)
   })
 })
 
 describe('steadyFrameRegime', () => {
-  const scale = linearScale([0, 2e6])
-
   it('matches steadyPacing unless seeked, when it always crossfades', () => {
-    expect(steadyFrameRegime(TERRITORIES, s1.t, 0.02, scale, false)).toEqual({ regime: 'cut', floored: true })
-    expect(steadyFrameRegime(TERRITORIES, s1.t, 0.02, scale, true)).toEqual({ regime: 'crossfade', floored: false })
+    expect(steadyFrameRegime(TERRITORIES, s1.t, 4e4, false)).toEqual({ regime: 'cut', floored: true })
+    expect(steadyFrameRegime(TERRITORIES, s1.t, 4e4, true)).toEqual({ regime: 'crossfade', floored: false })
   })
 })

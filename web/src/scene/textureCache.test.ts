@@ -5,7 +5,7 @@ const { fetchImage } = vi.hoisted(() => ({
   fetchImage: vi.fn(async (url: string, _onProgress?: (fraction: number) => void) => ({ src: url }) as unknown as HTMLImageElement),
 }))
 
-vi.mock('@/lib/fetchImage', () => ({ fetchImage }))
+vi.mock('@/lib/fetchImage', () => ({ fetchImage, fetchImageBlob: vi.fn() }))
 
 // eslint-disable-next-line import/first -- must follow the hoisted vi.mock above
 import { getCachedSceneTexture, loadSceneTexture, retainSceneTextures, SCENE_CACHE_CAPACITY } from './textureCache'

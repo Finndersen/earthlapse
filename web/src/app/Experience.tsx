@@ -26,6 +26,7 @@ import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart
 import { OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
+  PREFETCH_LOOKAHEAD_SECONDS,
   resolveAssetUrl,
   sceneAt,
   scenePlaybackSegments,
@@ -41,7 +42,6 @@ import { useTimeStore } from '@/store/time'
 import {
   advancePlayhead,
   advanceSteadyPlayhead,
-  createLinearScale,
   createSymlogScale,
   eraNameForTime,
   EraShortcuts,
@@ -128,6 +128,7 @@ export function Experience() {
   const playback = useTimeStore((s) => s.playback)
   const setPlaying = useTimeStore((s) => s.setPlaying)
   const setSpeed = useTimeStore((s) => s.setSpeed)
+  const setYearsPerSecond = useTimeStore((s) => s.setYearsPerSecond)
   const setPlaybackMode = useTimeStore((s) => s.setPlaybackMode)
   const globeExpanded = useTimeStore((s) => s.globeExpanded)
   const setGlobeExpanded = useTimeStore((s) => s.setGlobeExpanded)
@@ -157,9 +158,7 @@ export function Experience() {
   const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
   // A leaf section (no children — e.g. the Holocene's own "Modern") draws with the fixed
   // `SYMLOG_C` rather than `symlogKnee`'s own adaptive shrink, which is meant for a section that
-  // has children to make room for (see `sectionSymlogKnee`'s doc comment). Threaded into both
-  // the resting/animated scale and 'steady'-mode pacing below, so
-  // the ruler, the track and steady playback's own speed all agree on the same knee.
+  // has children to make room for (see `sectionSymlogKnee`'s doc comment).
   const timelineKnee = sectionSymlogKnee(sectionId)
   const timelineScale = useAnimatedScale(sectionById(sectionId).window, timelineScaleKind, timelineKnee)
 
@@ -242,19 +241,13 @@ export function Experience() {
     [readyManifest],
   )
 
-  // 'steady' mode moves at constant velocity in the selected section's scale of whichever
-  // ScaleKind is on screen (ADR-016, ADR-024). The symlog case is pinned to `timelineKnee`,
-  // the same knee the visible track/ruler use, so a leaf section's
-  // steady-mode pacing doesn't spend a lopsided share of wall-clock time near its present edge —
-  // see `timelineKnee`'s own comment above. `advanceSteadyPlayhead` calls this once per section
-  // it's currently inside; `timelineKnee` reflects `sectionId` fresh every render (and every
-  // render supplies a fresh closure here), so it stays correct across an ordinary frame-to-frame
-  // section change. The one case it doesn't chase mid-call is several section boundaries
-  // crossed within a single `advanceSteadyPlayhead` invocation (an extreme speed/dt combination)
-  // — that uses this frame's knee for the whole catch-up and self-corrects the next frame,
-  // the same trade-off `useAnimatedScale`'s own fixed-knee-per-transition already makes.
-  const steadyScaleForWindow =
-    timelineScaleKind === 'linear' ? createLinearScale : (window: TimeWindow) => createSymlogScale(window, timelineKnee)
+  // Where playback puts `t` after `PREFETCH_LOOKAHEAD_SECONDS`, by the same advance as the loop
+  // below, so `SceneView` loads scenes in the order playback reaches them.
+  const prefetchHorizonT = !playback.playing
+    ? undefined
+    : playback.mode === 'steady'
+      ? advanceSteadyPlayhead(t, PREFETCH_LOOKAHEAD_SECONDS, playback, steadyTerritories)
+      : advancePlayhead(t, PREFETCH_LOOKAHEAD_SECONDS, playback, FULL_DOMAIN_SYMLOG_SCALE, scenesPacing)
 
   // The rate readout beside the Transport mode toggle (ADR-016's prototype): the instantaneous
   // years-per-second `t` is advancing at, smoothed (`RATE_SMOOTHING_SECONDS`) so it doesn't
@@ -332,7 +325,7 @@ export function Experience() {
 
   // The playback loop (DESIGN §3): the one place `t` advances on its own. 'scenes' mode always
   // paces in full-domain symlog u, whatever the toggle or section (ADR-016). 'steady' mode
-  // carries on across section ends (ADR-024) and, per scene territory, floors its own rate
+  // moves at its literal years-per-second rate (ADR-050) and, per scene territory, floors it
   // against `steadyTerritories` (ADR-029). Either way `setT` moves the selected section along
   // with `t`.
   usePlaybackLoop({
@@ -346,20 +339,14 @@ export function Experience() {
 
       const next =
         playback.mode === 'steady'
-          ? advanceSteadyPlayhead(t, dtSeconds, playback, sectionId, steadyScaleForWindow, steadyTerritories)
+          ? advanceSteadyPlayhead(t, dtSeconds, playback, steadyTerritories)
           : advancePlayhead(t, dtSeconds, playback, FULL_DOMAIN_SYMLOG_SCALE, scenesPacing)
 
       if (playback.mode === 'steady') {
-        // Evaluated at `next` — the `t` this frame actually renders — not the pre-advance `t`,
-        // and forced to crossfade by `seeked` above: see `steadyFrameRegime`'s own doc comment
-        // for why both matter. Recomputing
-        // `rawRate`/`scale` here (not reusing anything `advanceSteadyPlayhead` used internally)
-        // mirrors exactly what that call just integrated with, for whichever territory `next`
-        // itself landed in — a large dt crossing several territories in one call is a rare
-        // catch-up case (a stalled tab regaining focus); this only ever reads the *last* one.
-        const rawRate = playback.baseRate * playback.speed
-        const scale = steadyScaleForWindow(sectionById(sectionId).window)
-        const pacing = steadyFrameRegime(steadyTerritories, next, rawRate, scale, seeked)
+        // Evaluated at `next`, the `t` this frame renders, and forced to crossfade by `seeked`
+        // (see `steadyFrameRegime`). A large dt crossing several territories in one call reads
+        // only the last one.
+        const pacing = steadyFrameRegime(steadyTerritories, next, playback.yearsPerSecond, seeked)
         setSteadyRegime({ regime: pacing.regime, floored: pacing.floored })
       } else if (steadyRegime.regime !== 'crossfade' || steadyRegime.floored) {
         setSteadyRegime({ regime: 'crossfade', floored: false })
@@ -411,8 +398,8 @@ export function Experience() {
     scalarLayers,
     // ADR-029: while steady playback is hard-cutting through a dense scene cluster, scene loop
     // sounds mute and once-mode sounds don't trigger (see `useAudioEngine`'s own doc comment) —
-    // the same `steadyRegime` that drives `SceneView`'s presented mix and the "time compressed"
-    // marker below, so all three always agree about which frames are cutting.
+    // the same `steadyRegime` that drives `SceneView`'s presented mix and the rate readout's
+    // floored state below, so all three always agree about which frames are cutting.
     presentationRegime: steadyRegime.regime,
   })
 
@@ -637,6 +624,7 @@ export function Experience() {
               renderCaption={renderCaption}
               regime={steadyRegime.regime}
               covered={globeExpanded}
+              prefetchHorizonT={prefetchHorizonT}
             />
           ) : (
             <div className={styles.placeholder}>No scenes in manifest.</div>
@@ -721,13 +709,16 @@ export function Experience() {
             onSelectSection={selectSection}
             onScaleKindChange={setScaleKind}
             onPlaybackChange={(next) => {
-              setPlaying(next.playing)
-              setSpeed(next.speed)
-              setPlaybackMode(next.mode)
+              // Only what changed: `setPlaybackMode` and `setYearsPerSecond` carry the steady
+              // context-default bookkeeping, which an unrelated play/pause must not trigger.
+              if (next.playing !== playback.playing) setPlaying(next.playing)
+              if (next.speed !== playback.speed) setSpeed(next.speed)
+              if (next.yearsPerSecond !== playback.yearsPerSecond) setYearsPerSecond(next.yearsPerSecond)
+              if (next.mode !== playback.mode) setPlaybackMode(next.mode)
             }}
             onOpenCluster={handleOpenCluster}
             ratePerSecond={ratePerSecond}
-            timeCompressed={steadyRegime.floored}
+            rateFloored={steadyRegime.floored}
             overlayOpen={globeExpanded || expandedChartLayerId !== null}
             sound={<SoundToggle {...audio} />}
           />

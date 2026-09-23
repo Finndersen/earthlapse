@@ -19,12 +19,14 @@ import * as THREE from 'three'
 import { fetchImage } from '@/lib/fetchImage'
 import { createRetainedTextureCache } from '@/lib/retainedTextureCache'
 
+import { sceneImageBytes } from './sceneImageBytes'
+
 /** A scene is 2752x1536 RGBA, ~17 MB of GPU memory. Eight covers the bound pair, a requested pair
- *  still loading, the two preloaded neighbours and two of scrub-back history (~135 MB). */
+ *  still loading and `prefetch.ts`'s four decoded scenes (~135 MB). */
 export const SCENE_CACHE_CAPACITY = 8
 
 async function fetchSceneTexture(url: string, onProgress?: (fraction: number) => void): Promise<THREE.Texture> {
-  const image = await fetchImage(url, onProgress)
+  const image = await fetchImage(url, onProgress, sceneImageBytes.load)
   const texture = new THREE.Texture(image)
   texture.colorSpace = THREE.NoColorSpace
   texture.minFilter = THREE.LinearFilter

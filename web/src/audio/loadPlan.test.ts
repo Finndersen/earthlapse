@@ -15,8 +15,8 @@ import { AMBIENCE_STEM_IDS, SCENE_STEM_IDS, type StemId } from './stemIds'
 const FULL_DOMAIN: [number, number] = [0, EARTH_FORMATION]
 const FULL_DOMAIN_SCALE = createSymlogScale(FULL_DOMAIN)
 
-const PAUSED: Playback = { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' }
-const PLAYING: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'scenes' }
+const PAUSED: Playback = { playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
+const PLAYING: Playback = { playing: true, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
 
 const ALL_STEMS: AudioStem[] = [...AMBIENCE_STEM_IDS, ...SCENE_STEM_IDS].map((id) => ({
   id,

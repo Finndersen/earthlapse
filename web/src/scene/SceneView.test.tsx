@@ -9,12 +9,14 @@ import { SceneView } from './SceneView'
 // jsdom has no WebGL, so these exercise SceneFallbackView through the SceneView dispatcher.
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'clearTimeout', 'performance', 'Date'] })
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<never>(() => {})))
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
   vi.useRealTimers()
+  vi.unstubAllGlobals()
 })
 
 function advance(ms: number): void {
