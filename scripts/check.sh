@@ -96,6 +96,8 @@ python_group() {
 vitest_checked() {
   local out="$LOG_DIR/vitest.out"
   pnpm -C web exec vitest run "${VITEST_SCOPE[@]}" 2>&1 | tee "$out"
+  # vitest colours its summary when it detects CI, which would hide the line from the greps below.
+  sed -i 's/\x1b\[[0-9;]*m//g' "$out"
   if grep -qE '^\s*Test Files\s+[0-9]+\s+failed' "$out"; then
     return 1
   fi
