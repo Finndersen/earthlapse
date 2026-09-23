@@ -2,7 +2,7 @@
  * The shot list — data, not code. Adding a check means adding one object here; `run.mjs` never
  * needs to change. See `README.md` for the full `Shot` contract; the gist:
  *
- * - `t` and `state` are declarative: the runner applies them through `window.__earthtime` before
+ * - `t` and `state` are declarative: the runner applies them through `window.__earthlapse` before
  *   every measurement, in a fixed, safe order (pause -> `t` -> globe expand -> globe view mode ->
  *   layer toggles) so a shot only has to name the end state it wants.
  * - `actions`, when the declarative `state` isn't enough, is an async function run after `state`
@@ -894,7 +894,7 @@ export default [
     /**
      * The one shot allowed to own the harness's page load (README, "A shot that needs the
      * harness's one page load"): `run.mjs` calls this in place of its own `page.goto`, before
-     * `window.__earthtime` exists, so it drives `page` with raw Playwright only.
+     * `window.__earthlapse` exists, so it drives `page` with raw Playwright only.
      * @param {{ page: import('playwright').Page, baseUrl: string, run: { screenshots: boolean } }} args
      */
     bootstrapsPage: async ({ page, baseUrl, run }) => {
@@ -1461,7 +1461,7 @@ export default [
         await page.mouse.click(x, y)
         return page.evaluate(async () => {
           for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
-          return window.__earthtime.getState().globeExpanded ? 1 : 0
+          return window.__earthlapse.getState().globeExpanded ? 1 : 0
         })
       }
       const reduced = await motionReduced(page)

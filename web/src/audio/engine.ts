@@ -313,7 +313,7 @@ async function loadTone(): Promise<ToneModule> {
   return import('tone')
 }
 
-/** Development-only automation hook, mirroring `store/devHook.ts`'s own `window.__earthtime`
+/** Development-only automation hook, mirroring `store/devHook.ts`'s own `window.__earthlapse`
  *  (same `NODE_ENV === 'development'` gate, dead-code-eliminated from production) — kept local
  *  since this package's scope boundary keeps it out of `web/src/store/**`. A headless run can't
  *  listen, so it exposes read-only snapshots instead: whether the `AudioContext` runs, the gain
@@ -334,13 +334,13 @@ export interface AudioDevHook {
 
 declare global {
   interface Window {
-    __earthtimeAudio?: AudioDevHook
+    __earthlapseAudio?: AudioDevHook
   }
 }
 
 function installAudioDevHook(Tone: ToneModule, runtime: ToneRuntime): void {
   if (process.env.NODE_ENV !== 'development') return
-  window.__earthtimeAudio = {
+  window.__earthlapseAudio = {
     getContextState: () => Tone.getContext().state,
     getStemTargets: () => Object.fromEntries([...runtime.loopVoices.values()].map((voice) => [voice.plan.id, voice.target])),
     getActiveOnceVoices: () =>

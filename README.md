@@ -1,4 +1,20 @@
-# Earthlapse
+<h1 align="center">Earthlapse</h1>
+
+<p align="center">
+  <strong>4.6 billion years of Earth's history, as one continuously evolving, scrubbable view.</strong>
+</p>
+
+<p align="center">
+  <a href="https://earthlapse.net"><img alt="Live site: earthlapse.net" src="https://img.shields.io/badge/live-earthlapse.net-c8914a?style=flat-square"></a>
+  <a href="docs/DESIGN.md"><img alt="Docs: design" src="https://img.shields.io/badge/docs-design-3b6ea8?style=flat-square"></a>
+  <img alt="Fully static, no backend" src="https://img.shields.io/badge/backend-none-555?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="https://earthlapse.net"><img src="docs/images/readme/hero-cretaceous.webp" alt="Earthlapse at 68 million years ago: a Tyrannosaurus on a misty Cretaceous shoreline, with the paleogeographic globe top left, the ancestor portrait top right, the event feed, and the warped timeline along the bottom" width="100%"></a>
+</p>
+
+<p align="center"><a href="https://earthlapse.net"><strong>Open Earthlapse &rarr;</strong></a></p>
 
 An interactive, immersive visualisation of Earth's history — a continuously evolving
 photoreal view of the planet's surface across 4.6 billion years, surrounded by live data
@@ -12,6 +28,91 @@ down to a single year, speed it up, slow it down, toggle layers.
 
 ---
 
+## Features
+
+### Photoreal scenes across deep time
+
+71 generated scenes — magma ocean, Carboniferous coal swamp, Cretaceous shoreline,
+ice-age steppe, Hadrian's Rome, the present-day city — each captioned and anchored to its moment.
+Every still breathes with subtle 2.5D depth parallax rendered live in the browser, and one age
+dissolves into the next. No video files anywhere.
+
+<p align="center">
+  <img src="docs/images/readme/scenes-strip.webp" alt="Three scenes side by side: a giant dragonfly over a Carboniferous swamp at 310 Ma, woolly mammoths crossing a meltwater river at 20 ka, and Hadrian's Pantheon over a Roman quayside at 1.9 ka" width="100%">
+</p>
+
+### A paleogeographic globe
+
+An independent three.js globe, driven by real reconstruction data rather than the scene art:
+PALEOMAP PaleoDEM elevation and bathymetry for the Phanerozoic, reconstructed Neoproterozoic
+continents before that, and stylised, literature-dated regimes further back still. Cenozoic ice
+sheets and sea-level lowstands follow the LR04 record. It sits as a small orb in the corner;
+click it to expand to a full sphere, or unfold it into a flat map. In human time it carries
+dispersal arcs, settlement markers and major cities, plus a switchable **population density**
+or **cleared land** overlay from HYDE.
+
+<p align="center">
+  <img src="docs/images/readme/globe.webp" alt="Left: the expanded globe at 250 Ma, showing the Pangaea supercontinent. Right: the unfolded map at the present day with the cleared-land overlay and major-city markers" width="100%">
+</p>
+
+### A timeline built for 4.6 billion years
+
+The scrub track uses a warped (symlog) scale so the Hadean and the last century both get room, with a
+linear option. Narrow it to any era — eon, period, or one of six human-history sections inside
+the Holocene — via the section bands, breadcrumb or keyboard. Events cluster and declutter as
+you zoom; hovering spreads close-packed markers apart, dragging scrubs.
+
+<p align="center">
+  <img src="docs/images/readme/timeline-section-chart.webp" alt="The timeline narrowed to the Holocene, with human-history sections from First Farmers to Modern, a breadcrumb reading Earth, Cenozoic, Quaternary, Holocene, and the global population chart expanded over an early-modern Dutch harbour scene" width="100%">
+</p>
+
+### Events, with sources
+
+170 curated, cited events — mass extinctions, first dinosaurs, the out-of-Africa migration,
+the printing press — tagged by category. A live feed shows what is happening near the cursor;
+the **All events** browser searches and filters the whole list by category and era; every event
+opens a detail panel with its dates, description, citation and, for human migrations, the route.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/readme/event-browser.webp" alt="The All events browser: a search field, category filter chips, and a scrolling list of events grouped by era with their dates"></td>
+    <td width="50%"><img src="docs/images/readme/event-detail.webp" alt="The K-Pg impact detail panel over the asteroid scene, with its date, categories, description, citation, and a Show on timeline button"></td>
+  </tr>
+</table>
+
+### Data layers
+
+Real series wherever real data exists: global population (HYDE) as a sparkline that expands
+into a full chart, and **your ancestor** — a portrait of the organism in your direct lineage at
+that moment, from LUCA through the first eukaryotes and animals to *Homo sapiens*, morphing
+between portraits. Atmospheric CO₂ and day length shape the score; ice volume and sea level
+shape the globe.
+
+### Playback, sound, and every screen size
+
+Two playback modes: **Scenes** paces itself to linger on each scene, while **Steady** runs at a
+constant rate picked from 1 year to a billion years per second. An adaptive Tone.js score
+follows the era, with pitch, brightness and pulse drawn from time, CO₂ and day length, turning
+dissonant near catastrophes. Keyboard shortcuts cover scrubbing, sections and speed, and a
+short first-visit tour introduces the controls. The layout adapts to phones in portrait and
+landscape.
+
+<table>
+  <tr>
+    <td width="30%" align="center"><img src="docs/images/readme/phone.webp" alt="Earthlapse on a phone in portrait: the time readout, globe orb and ancestor portrait on top, the Tyrannosaurus scene in the middle, and the event strip, caption, timeline and stacked controls below" width="260"></td>
+    <td>
+      <strong>Built to be explored anywhere.</strong><br><br>
+      On a phone the chrome stacks around the scene: globe and ancestor up top, a single-line
+      event strip with an <em>All events</em> sheet, the timeline with its section bands, then
+      transport and playback controls — all touch-sized. The globe expands full-screen with a tap.
+      <br><br>
+      <a href="https://earthlapse.net"><strong>Try it at earthlapse.net &rarr;</strong></a>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## What it is
 
 A single view of Earth's surface evolving through deep time — magma ocean, Archean shore,
@@ -19,9 +120,9 @@ Carboniferous swamp, Cretaceous forest, Pleistocene steppe, city — as photorea
 imagery, breathing with subtle parallax and dissolving from one age into the next.
 
 Around it: an independent 3D globe driven by real paleogeographic data, and a set of data
-layers — atmospheric CO₂ and oxygen, temperature, sea level, biodiversity, human population,
-the length of a day, the Moon's distance, and the organism that was your direct ancestor at
-that moment.
+layers — human population, atmospheric CO₂, sea level and ice volume, the length of a day, and
+the organism that was your direct ancestor at that moment. Oxygen, temperature, biodiversity
+and the Moon's distance are planned layers.
 
 Everything is a pure function of one time cursor, so playback and exploration are the same
 mechanism.
@@ -42,6 +143,7 @@ It is an artistic reconstruction, and says so.
 |---|---|
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Architecture, time model, `WorldState`, scene rendering, layout |
 | [`docs/VISUAL_SPEC.md`](docs/VISUAL_SPEC.md) | Art direction, prompt architecture, style contract |
+| [`docs/GLOBE.md`](docs/GLOBE.md) | The globe: projection, reconstructions, overlays |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Every dataset — access, volume, storage, processing |
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | Phasing and agent work packages |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR log |
@@ -52,8 +154,9 @@ Start with `DESIGN.md`.
 ## Stack
 
 Python 3.12 for the offline pipeline (pydantic, gplately, xarray, Typer). Next.js +
-TypeScript + react-three-fiber for the viewer. Fully static — media on Cloudflare R2, site
-on Pages, no backend.
+TypeScript + react-three-fiber for the viewer, Tone.js for the score. Fully static — media on
+Cloudflare R2, site as a Cloudflare Workers static-assets deployment
+([`deploy/`](deploy/README.md)), no backend.
 
 ## Local development
 
@@ -111,12 +214,12 @@ Everything the viewer needs is already committed. You only need these to change 
 make data                                   # rebuild stale sources into data/curated/
 .venv/bin/python -m pipeline.databuild --only <source> --force   # rebuild one source
 
-.venv/bin/earthtime plan                    # what is stale and what it would cost (spends nothing)
-.venv/bin/earthtime build --max-spend <USD> --only images --candidates 1
-.venv/bin/earthtime review                  # pick candidates; `review portraits` for portraits
-.venv/bin/earthtime morph                   # portrait flow fields (local, free)
+.venv/bin/earthlapse plan                    # what is stale and what it would cost (spends nothing)
+.venv/bin/earthlapse build --max-spend <USD> --only images --candidates 1
+.venv/bin/earthlapse review                  # pick candidates; `review portraits` for portraits
+.venv/bin/earthlapse morph                   # portrait flow fields (local, free)
 make pins                                   # stage pinned candidates for commit
-.venv/bin/earthtime publish --allow-unpinned # write data/media/manifest.json + media
+.venv/bin/earthlapse publish --allow-unpinned # write data/media/manifest.json + media
 ```
 
 `build` calls a paid image generator. It needs generator credentials in a gitignored `.env`

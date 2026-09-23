@@ -25,7 +25,7 @@ pnpm qa:serve                    # build (unless --no-build) + serve out-qa/, pr
 Full flag reference: `node scripts/qa/run.mjs --help`.
 
 - **The QA export lives in `web/out-qa/`**, not `web/out/`: `next.config.ts` switches `distDir` when
-  `NEXT_PUBLIC_EARTHTIME_QA=1`, so an ordinary `pnpm build` (or `scripts/check.sh`) can never
+  `NEXT_PUBLIC_EARTHLAPSE_QA=1`, so an ordinary `pnpm build` (or `scripts/check.sh`) can never
   replace it with an export that lacks the QA hook.
 - **Preconditions.** The runner first checks for web/node_modules, real media under
   `web/public/media` (not the stub, not LFS pointers) and a launchable Chromium, and exits 2 naming
@@ -160,15 +160,15 @@ real finger does.
 The runner loads its page once, before any shot, so an ordinary shot never sees the app mid-load.
 The one shot that must (`loading-screen`) declares `bootstrapsPage({ page, baseUrl, run })` instead
 of `actions`/`measure`: `run.mjs` calls it in place of its own `page.goto`, before
-`window.__earthtime` exists, and writes its returned `screenshot` buffer to `<name>.png`. Waiting
+`window.__earthlapse` exists, and writes its returned `screenshot` buffer to `<name>.png`. Waiting
 for the hook, `hook.ready()` and the tour dismissal then run as for any other load. At most one
 shot in a run may declare it; with `--shards` it runs on the first page.
 
 ## Known flakes
 
 **Env inlining.** On a small fraction of otherwise-identical clean builds, this repo's Next 16 +
-Turbopack has failed to inline `NEXT_PUBLIC_EARTHTIME_QA`, so the export never carries the hook.
-`run.mjs` checks a fresh export's JS for the hook before stamping it, and `window.__earthtime`
+Turbopack has failed to inline `NEXT_PUBLIC_EARTHLAPSE_QA`, so the export never carries the hook.
+`run.mjs` checks a fresh export's JS for the hook before stamping it, and `window.__earthlapse`
 right after load, failing fast naming this either way — re-run (without `--no-build`) to rebuild.
 
 **State leaks.** Shots share one page load, so any state a shot can change and `applyState` does

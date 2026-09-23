@@ -123,7 +123,7 @@ would violate, read from what is drawn rather than from a box or backdrop that s
 breaks. That needs no second build; the QA README's CSS-injection trick covers the unclear cases.
 
 Use the harness at `web/scripts/qa/` (see its README) rather than writing a throwaway Playwright
-script: it loads the page once, drives it through `window.__earthtime` without reloading, measures
+script: it loads the page once, drives it through `window.__earthlapse` without reloading, measures
 rendered bounds, fails on console errors, and writes a screenshot contact sheet. Extend an existing
 shot rather than adding a new script — see "Testing policy" for when a shot is justified at all.
 

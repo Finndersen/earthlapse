@@ -1,5 +1,5 @@
 /**
- * Node-side wrapper around `window.__earthtime` (`web/src/store/devHook.ts`) — every call here
+ * Node-side wrapper around `window.__earthlapse` (`web/src/store/devHook.ts`) — every call here
  * is a `page.evaluate` round trip, so shots never need to know that detail. Mirrors the hook's
  * own method names exactly.
  */
@@ -15,31 +15,31 @@ export function makeHook(page) {
     /** @param {number} t */
     setT: async (t) => {
       hook.lastSetTAt = Date.now()
-      await page.evaluate((value) => window.__earthtime?.setT(value), t)
+      await page.evaluate((value) => window.__earthlapse?.setT(value), t)
     },
-    getState: () => page.evaluate(() => window.__earthtime?.getState()),
+    getState: () => page.evaluate(() => window.__earthlapse?.getState()),
     /** @param {boolean} playing */
-    setPlaying: (playing) => page.evaluate((value) => window.__earthtime?.setPlaying(value), playing),
+    setPlaying: (playing) => page.evaluate((value) => window.__earthlapse?.setPlaying(value), playing),
     /** @param {'scenes' | 'steady'} mode */
-    setPlaybackMode: (mode) => page.evaluate((value) => window.__earthtime?.setPlaybackMode(value), mode),
+    setPlaybackMode: (mode) => page.evaluate((value) => window.__earthlapse?.setPlaybackMode(value), mode),
     /** @param {string} id */
-    selectSection: (id) => page.evaluate((value) => window.__earthtime?.selectSection(value), id),
+    selectSection: (id) => page.evaluate((value) => window.__earthlapse?.selectSection(value), id),
     /** @param {boolean} expanded */
-    setGlobeExpanded: (expanded) => page.evaluate((value) => window.__earthtime?.setGlobeExpanded(value), expanded),
-    getGlobeViewMode: () => page.evaluate(() => window.__earthtime?.getGlobeViewMode() ?? null),
+    setGlobeExpanded: (expanded) => page.evaluate((value) => window.__earthlapse?.setGlobeExpanded(value), expanded),
+    getGlobeViewMode: () => page.evaluate(() => window.__earthlapse?.getGlobeViewMode() ?? null),
     /** @param {'globe' | 'map'} mode */
-    setGlobeViewMode: (mode) => page.evaluate((value) => window.__earthtime?.setGlobeViewMode(value), mode),
+    setGlobeViewMode: (mode) => page.evaluate((value) => window.__earthlapse?.setGlobeViewMode(value), mode),
     /** Opens the first-visit tour, or dismisses it and records it as seen — see `devHook.ts`.
      * @param {boolean} open */
-    setTourOpen: (open) => page.evaluate((value) => window.__earthtime?.setTourOpen(value), open),
+    setTourOpen: (open) => page.evaluate((value) => window.__earthlapse?.setTourOpen(value), open),
     /**
      * @param {string} key
      * @param {boolean} on
      */
-    setLayerToggle: (key, on) => page.evaluate(([k, v]) => window.__earthtime?.setLayerToggle(k, v), [key, on]),
+    setLayerToggle: (key, on) => page.evaluate(([k, v]) => window.__earthlapse?.setLayerToggle(k, v), [key, on]),
     /** Resolves once the manifest is loaded and every image/texture load this run has seen has
      *  settled — see `devHook.ts`'s own doc comment for exactly what that covers. */
-    ready: () => page.evaluate(() => window.__earthtime?.ready()),
+    ready: () => page.evaluate(() => window.__earthlapse?.ready()),
   }
   return hook
 }

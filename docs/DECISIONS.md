@@ -2426,7 +2426,7 @@ start at 243 Ma and are silenced within days of the impact (`kpg-darkness`), not
 power-sum estimate each scene's own sound is its loudest element: loops by 3–7 dB over the next
 stem, the impact 13.7 dB over the K-Pg bed, Trinity +9.7 dB, the launch +7.2 dB, the biplane
 +7.3 dB. Nobody has listened; this is the measured estimate. (6) Dev-only
-`window.__earthtimeAudio` adds `getStemTargets()` and `getActiveOnceVoices()` for browser QA.
+`window.__earthlapseAudio` adds `getStemTargets()` and `getActiveOnceVoices()` for browser QA.
 
 **Contract addition (additive, wire).** `AudioStem` gains required `levelTrimDb` and optional
 `loop: {startSeconds, endSeconds}` (`pipeline/manifest.py`, `web/src/types/manifest.ts`,
@@ -2807,7 +2807,7 @@ dBFS peak at `t=0`) with no silent lead-in, unlike `mammoth`'s ~1.4s one (the "e
 amendment above). No `start_seconds` trim needed.
 
 **Verification.** Live browser checks (headless Chromium, network panel + `window.
-__earthtimeAudio.getLoaderState()`): enabling sound at 4.4 Ga fetches exactly `wind`/`water`/
+__earthlapseAudio.getLoaderState()`): enabling sound at 4.4 Ga fetches exactly `wind`/`water`/
 `storm`/`volcanic` (4 requests, matching `stemGains(4.4e9, [])` by hand) and nothing else;
 scrubbing straight from there to 195 yr (1830) fetches exactly the 8 stems active there
 (`forest`/`insects`/`birds`/`mammals`/`livestock`/`fire`/`settlement`/`industry`) with no burst
@@ -2863,7 +2863,7 @@ python -m pytest -q tests` (426 tests) and `ruff check` on every touched Python 
 
 **Amendment (2026-09-15): re-review fixes.** *Status: accepted, fixing nine findings from a
 code review of the "on-demand loading" amendment above (evidence: Playwright against this
-build, request logs and `window.__earthtimeAudio`).* Severity as reported; each is fixed unless
+build, request logs and `window.__earthlapseAudio`).* Severity as reported; each is fixed unless
 marked otherwise.
 
 1. **[high] No retry backoff — fixed.** `StemBufferCache` entries now carry `attempt`/
@@ -3595,7 +3595,7 @@ run src`: 1113 passed. `make data`: `audio-stems: rebuilt`, every other source `
 `earthlapse publish --allow-unpinned`: 66 scenes, 25 audio stems credited (`wing-hum` now
 `durationSeconds: 66.894`, `levelTrimDb: -5.7`, loop `35.296-47.919`). **Live `getStemTargets()`/
 `getLoaderState()` checks, actually run this time** (Playwright driving the real dev server at
-`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthtime
+`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthlapse
 .setT` to position the playhead): 346/320/300/250/90 Ma reproduced exactly the previous
 amendment's predicted table (`wing-hum` silent at 346 Ma; 0.06 at 320/250/90 Ma; 0 exactly at
 300 Ma inside `gondwana-ice-margin`'s barren duck; `insects` present alongside it from 300 Ma on)
@@ -3682,7 +3682,7 @@ audio-only fix; other uncommitted work lives there).
 image-graph effect, as expected). `.venv/bin/python -m pytest -q tests`: 435 passed. `ruff
 check`/`ruff format --check`: clean. `pnpm typecheck`: clean. `pnpm vitest run src`: 1167 passed
 (351 suites). **Live `getStemTargets()` check** (Playwright driving the real dev server at
-`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthtime
+`localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthlapse
 .setT` to the five checkpoints the feedback's own window brackets): `forest` reads exactly 0.3 at
 270/200/150/100/60 Ma, matching `stemGains.ts`'s unchanged curve and confirming the new buffer
 loads and plays; zero unexpected console errors (two "Failed to load resource" entries are

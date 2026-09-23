@@ -1,6 +1,6 @@
 /**
  * The harness's blind waits, isolated here rather than scattered through `shots.mjs`/`run.mjs`.
- * Each exists because `window.__earthtime.ready()` (`devHook.ts`) only covers network/decode
+ * Each exists because `window.__earthlapse.ready()` (`devHook.ts`) only covers network/decode
  * readiness: the local animation state these wait out has no DOM or store reflection to poll.
  */
 

@@ -866,7 +866,7 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 > every curve, scene-loop and once gain multiplied by the stem's published `levelTrimDb` (so a
 > gain means the same loudness whichever clip it drives: loops at a -30 dB reference, one-shots
 > 10 dB above), once-mode voices that fade out when their scene leaves the screen, a
-> development-only `window.__earthtimeAudio` snapshot (context state, the gain the last tick
+> development-only `window.__earthlapseAudio` snapshot (context state, the gain the last tick
 > wrote per looping stem, the once voices still playing, and the loader's own ready/loading/error
 > state), a small always-modulating drone/filter/tremolo score voice ducked under scene sound, an
 > `AudioContext` suspend/resume on tab visibility change, and — a deliberate, documented

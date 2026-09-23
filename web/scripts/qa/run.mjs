@@ -2,7 +2,7 @@
 /**
  * Visual-QA harness runner. One `next build` (unless `--dev`/`--no-build`), one static server,
  * one browser, one page load (plus one in a `hasTouch` context for `touch: true` shots) — every
- * shot drives an already-loaded page through `window.__earthtime` (`web/src/store/devHook.ts`)
+ * shot drives an already-loaded page through `window.__earthlapse` (`web/src/store/devHook.ts`)
  * rather than reloading. See `README.md` for the full contract and CLI reference; `--help` prints
  * the same summary.
  */
@@ -28,7 +28,7 @@ const WEB_ROOT = path.resolve(__dirname, '../..')
 const QA_ROOT = __dirname
 const OUT_ROOT = path.join(QA_ROOT, 'out')
 const NEXT_BIN = path.join(WEB_ROOT, 'node_modules/.bin/next')
-/** Where `NEXT_PUBLIC_EARTHTIME_QA=1 next build` exports (`next.config.ts`): apart from an ordinary
+/** Where `NEXT_PUBLIC_EARTHLAPSE_QA=1 next build` exports (`next.config.ts`): apart from an ordinary
  *  build's `out/`, so one can never replace the QA export with a build lacking the hook. */
 const QA_EXPORT_DIR = path.join(WEB_ROOT, 'out-qa')
 /** Written into the export after a build that carried the QA hook: what it was built from. */
@@ -206,10 +206,10 @@ function sourceStamp() {
 }
 
 /** Whether the export's JS carries the QA hook: Next 16 + Turbopack occasionally fails to inline
- *  `NEXT_PUBLIC_EARTHTIME_QA` (README, "Known flakes"). */
+ *  `NEXT_PUBLIC_EARTHLAPSE_QA` (README, "Known flakes"). */
 function exportCarriesHook() {
   return walkFiles(path.join(QA_EXPORT_DIR, '_next/static'), (file) => file.endsWith('.js')).some(({ full }) =>
-    readFileSync(full, 'utf8').includes('__earthtime'),
+    readFileSync(full, 'utf8').includes('__earthlapse'),
   )
 }
 
@@ -228,16 +228,16 @@ async function ensureQaExport(args) {
     console.log('out-qa/ is up to date with the source; skipping next build (--rebuild forces one)')
     return
   }
-  console.log('Building the QA export into out-qa/ (NEXT_PUBLIC_EARTHTIME_QA=1 next build)…')
+  console.log('Building the QA export into out-qa/ (NEXT_PUBLIC_EARTHLAPSE_QA=1 next build)…')
   const result = spawnSync(NEXT_BIN, ['build'], {
     cwd: WEB_ROOT,
-    env: { ...process.env, NEXT_PUBLIC_EARTHTIME_QA: '1' },
+    env: { ...process.env, NEXT_PUBLIC_EARTHLAPSE_QA: '1' },
     stdio: 'inherit',
   })
   if (result.status !== 0) throw new Error(`next build failed (exit ${result.status})`)
   if (!exportCarriesHook()) {
     throw new Error(
-      'the fresh out-qa/ export has no window.__earthtime: the known Next 16 + Turbopack ' +
+      'the fresh out-qa/ export has no window.__earthlapse: the known Next 16 + Turbopack ' +
         'env-inlining flake (README, "Known flakes"). Re-run to rebuild.',
     )
   }
@@ -302,7 +302,7 @@ async function ensureDevServer() {
   await mkdir(OUT_ROOT, { recursive: true })
   const log = openSync(DEV_LOG_FILE, 'a')
   // Without the QA flag: it would move `distDir` to out-qa/, the static export's directory.
-  const { NEXT_PUBLIC_EARTHTIME_QA: _qa, ...env } = process.env
+  const { NEXT_PUBLIC_EARTHLAPSE_QA: _qa, ...env } = process.env
   const child = spawn(NEXT_BIN, ['dev', '--port', String(port)], { cwd: WEB_ROOT, env, detached: true, stdio: ['ignore', log, log] })
   child.unref()
   let exited = null
@@ -419,7 +419,7 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
   // the globe expanded every round trip waits out a software-rendered frame.
   const reset = await page.evaluate(
     ({ playing, rootSectionId, dialogSelector }) => {
-      const qa = window.__earthtime
+      const qa = window.__earthlapse
       qa.setPlaying(playing)
       const { sectionId, globeExpanded } = qa.getState()
       // Every shot starts at the root section; `t` is unaffected, since the root spans all of it.
@@ -447,7 +447,7 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
   if (reset.dialogOpen) {
     await closeOpenDialogs(page, hook)
     // A panel that paused playback resumes it on close.
-    await page.evaluate((playing) => window.__earthtime.setPlaying(playing), state.playing ?? false)
+    await page.evaluate((playing) => window.__earthlapse.setPlaying(playing), state.playing ?? false)
   }
   if (reset.eventBrowserOpen) await closeEventBrowser(page, hook)
   if (reset.chartOpen) await closeExpandedChart(page, hook)
@@ -457,7 +457,7 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
     await waitForGlobeFitFramesStable(page)
     const modeChanged = await page.evaluate(
       ({ mode, toggles }) => {
-        const qa = window.__earthtime
+        const qa = window.__earthlapse
         const changed = qa.getGlobeViewMode() !== mode
         if (changed) qa.setGlobeViewMode(mode)
         // `Legend.tsx` renders nothing on phone viewports and drops a row once its overlay is out
@@ -580,7 +580,7 @@ async function runShot(page, hook, shot, run) {
  * the loader-screen shot's own need to intercept that exact load, since the loading screen is
  * gone by the time an ordinary shot's turn comes around (`shots.mjs`'s own doc comment on
  * `bootstrapsPage`). Called from `main` in place of the plain `page.goto`, before `hook` even
- * exists; everything after (`window.__earthtime`, `hook.ready()`, the tour dismissal) still runs
+ * exists; everything after (`window.__earthlapse`, `hook.ready()`, the tour dismissal) still runs
  * exactly as it does for the generic path, once this returns.
  * @param {import('playwright').Page} page
  * @param {import('./shots.mjs').Shot} shot
@@ -781,13 +781,13 @@ async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, labe
   const hook = makeHook(page)
   try {
     // "Did the build carry the QA hook at all", checked once with a message naming the known
-    // causes rather than a bare TimeoutError: an export built without NEXT_PUBLIC_EARTHTIME_QA=1
+    // causes rather than a bare TimeoutError: an export built without NEXT_PUBLIC_EARTHLAPSE_QA=1
     // (a stale `--no-build` out-qa/), or the Next 16 + Turbopack env-inlining flake (README).
-    await page.waitForFunction(() => window.__earthtime !== undefined, undefined, { timeout: 10_000 })
+    await page.waitForFunction(() => window.__earthlapse !== undefined, undefined, { timeout: 10_000 })
   } catch {
     throw new Error(
-      'window.__earthtime never appeared. Either this out-qa/ export was built without ' +
-        'NEXT_PUBLIC_EARTHTIME_QA=1 (check --no-build / --dev), or this is the known Next ' +
+      'window.__earthlapse never appeared. Either this out-qa/ export was built without ' +
+        'NEXT_PUBLIC_EARTHLAPSE_QA=1 (check --no-build / --dev), or this is the known Next ' +
         '16 + Turbopack env-inlining flake (rare, seen on an otherwise-identical clean build) ' +
         '— see README "Known flake". Fix: rebuild (drop --no-build) and re-run.',
     )

@@ -1,9 +1,9 @@
 /**
  * Development/QA automation hook: exposes the time store, plus DOM-driven conveniences, on
- * `window.__earthtime` so a browser-driven check can set `t`, pause playback, flip view toggles
+ * `window.__earthlapse` so a browser-driven check can set `t`, pause playback, flip view toggles
  * and read state back without reloading the page or approximating positions via pixel drags.
  *
- * Gated on `process.env.NODE_ENV === 'development'` OR `NEXT_PUBLIC_EARTHTIME_QA === '1'`, both
+ * Gated on `process.env.NODE_ENV === 'development'` OR `NEXT_PUBLIC_EARTHLAPSE_QA === '1'`, both
  * inlined by Next at build time: an ordinary production build dead-code-eliminates everything
  * below the early return, and only a static export built with the QA env var carries this
  * surface (`web/scripts/qa`).
@@ -49,7 +49,7 @@ const LAYER_TOGGLE_LABELS: Record<string, readonly string[]> = {
   'human-civilisation': ['Human civilisation', 'People'],
 }
 
-export interface EarthtimeDevHook {
+export interface EarthlapseDevHook {
   setT: (t: number) => void
   getState: typeof useTimeStore.getState
   /** Pauses (`false`) or resumes (`true`) playback — a still frame is otherwise never
@@ -91,7 +91,7 @@ export interface EarthtimeDevHook {
 
 declare global {
   interface Window {
-    __earthtime?: EarthtimeDevHook
+    __earthlapse?: EarthlapseDevHook
   }
 }
 
@@ -222,9 +222,9 @@ function setLayerToggle(key: string, on: boolean): void {
 }
 
 export function installDevHook(): void {
-  if (process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_EARTHTIME_QA !== '1') return
+  if (process.env.NODE_ENV !== 'development' && process.env.NEXT_PUBLIC_EARTHLAPSE_QA !== '1') return
   instrumentResourceLoading()
-  window.__earthtime = {
+  window.__earthlapse = {
     setT: (t) => useTimeStore.getState().setT(t),
     getState: useTimeStore.getState,
     setPlaying: (playing) => useTimeStore.getState().setPlaying(playing),
