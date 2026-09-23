@@ -18,6 +18,10 @@ const YEARS_PER_KA = 1e3
 const YEARS_PER_MA = 1e6
 const YEARS_PER_GA = 1e9
 
+/** Below this `formatRate` prints a bound rather than a figure: two significant figures of a
+ *  smaller rate are noise from the readout's smoothing. */
+const MIN_PRINTED_RATE = 0.01
+
 /** `value.toFixed(maxDecimals)` with trailing zeros (and a bare trailing `.`) stripped, e.g.
  *  `trimmed(10, 1) === '10'`, `trimmed(11.7, 1) === '11.7'`. */
 function trimmed(value: number, maxDecimals: number): string {
@@ -144,19 +148,20 @@ export function formatTimeRange([newest, oldest]: TimeWindow): string {
 }
 
 /**
- * A rate readout for the playback speed indicator (ADR-016 — the prototype instantaneous
- * years-per-second display beside the mode toggle): `4e7 -> "40 Myr/s"`, `2.1e5 -> "210 kyr/s"`,
- * `0.4 -> "< 1 yr/s"`. Reuses `formatGeoTime`'s magnitude buckets (its divisors are the same
- * "years per ka/Ma/Ga" figures) but labels them as durations (`yr`/`kyr`/`Myr`/`Gyr`) rather
- * than points in time (`years ago`/`ka`/`Ma`/`Ga`) — a rate is a span of years crossed per
- * second, not an age. The caller is responsible for the "≈" this is always an approximation
- * (an instantaneous, smoothed rate, not an exact figure).
+ * A rate readout for the playback rate indicator: `4e7 -> "40 Myr/s"`, `2.1e5 -> "210 kyr/s"`,
+ * `2.5 -> "2.5 yr/s"`, `0.13 -> "0.13 yr/s"`. Reuses `formatGeoTime`'s magnitude buckets but
+ * labels them as durations (`yr`/`kyr`/`Myr`/`Gyr`) — a rate is a span of years crossed per
+ * second, not an age. Below 10 yr/s it keeps two significant figures, so a smoothed reading of
+ * the 1 yr/s steady detent prints "1 yr/s" and scenes mode's slow multipliers near the present
+ * still read as a number.
  */
 export function formatRate(yearsPerSecond: number): string {
   if (!Number.isFinite(yearsPerSecond) || yearsPerSecond < 0) {
     throw new Error(`formatRate: yearsPerSecond must be finite and >= 0, got ${yearsPerSecond}`)
   }
-  if (yearsPerSecond < 1) return '< 1 yr/s'
+  if (yearsPerSecond === 0) return '0 yr/s'
+  if (yearsPerSecond < MIN_PRINTED_RATE) return `< ${MIN_PRINTED_RATE} yr/s`
+  if (yearsPerSecond < 10) return `${Number(yearsPerSecond.toPrecision(2))} yr/s`
   if (yearsPerSecond < YEARS_PER_KA) return `${trimmed(yearsPerSecond, 0)} yr/s`
   if (yearsPerSecond < YEARS_PER_MA) return `${trimmed(yearsPerSecond / YEARS_PER_KA, 1)} kyr/s`
   if (yearsPerSecond < YEARS_PER_GA) return `${trimmed(yearsPerSecond / YEARS_PER_MA, 0)} Myr/s`

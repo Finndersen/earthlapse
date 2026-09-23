@@ -116,13 +116,25 @@ describe('formatGeoTimePrecise', () => {
 })
 
 describe('formatRate', () => {
-  it('floors a sub-1-year-per-second rate to "< 1 yr/s" rather than "0 yr/s"', () => {
-    expect(formatRate(0)).toBe('< 1 yr/s')
-    expect(formatRate(0.4)).toBe('< 1 yr/s')
+  it('formats rates under 10 yr/s to two significant figures', () => {
+    expect(formatRate(2.5)).toBe('2.5 yr/s')
+    expect(formatRate(0.13)).toBe('0.13 yr/s')
+    expect(formatRate(9.4)).toBe('9.4 yr/s')
   })
 
-  it('formats a bare years-per-second rate as a whole number', () => {
+  it('reads a smoothed rate at the 1 yr/s detent as "1 yr/s"', () => {
+    expect(formatRate(0.998)).toBe('1 yr/s')
+    expect(formatRate(1.004)).toBe('1 yr/s')
+  })
+
+  it('bounds a rate too small to print meaningfully, and prints zero as zero', () => {
+    expect(formatRate(0.004)).toBe('< 0.01 yr/s')
+    expect(formatRate(0)).toBe('0 yr/s')
+  })
+
+  it('formats tens and hundreds of years per second as a whole number', () => {
     expect(formatRate(42)).toBe('42 yr/s')
+    expect(formatRate(9.97)).toBe('10 yr/s')
   })
 
   it('formats thousands of years per second as kyr/s, to one decimal', () => {
