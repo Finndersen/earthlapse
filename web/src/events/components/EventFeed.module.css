@@ -333,6 +333,14 @@
     height: var(--feed-browse-tap);
     margin: calc((var(--feed-strip-height) - var(--feed-browse-tap)) / 2) 0;
     padding: 0;
+    /* A lone glyph over a bright photo needs full ink and a dense tight halo on top of the soft
+       HUD shadow to stay legible; the desktop label has the card stack's darker vignette. */
+    color: var(--hud-ink, #efe9dc);
+    text-shadow:
+      0 0 2px #000,
+      0 0 2px #000,
+      0 0 5px rgba(0, 0, 0, 0.8),
+      var(--hud-shadow, 0 1px 12px rgba(0, 0, 0, 0.85));
   }
 
   /* The glyph stands alone here; the word stays as the button's accessible name. */
@@ -349,7 +357,8 @@
   }
 
   .browseGlyph {
-    font-size: 18px;
+    font-size: 22px;
+    font-weight: 700;
   }
 
   .body {
