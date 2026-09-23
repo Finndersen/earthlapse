@@ -559,7 +559,8 @@ expands to fill; it is never the default focus.
 >
 > On desktop the controls row sits midway between the section bands and the window's bottom edge,
 > with the play button on the track's centre (the rate picker hangs off the transport's left, the
-> rate readout off its right), and the globe orb's top sits on the top inset beside the About
+> rate readout off its right, or under it in a window narrower than 1200px so the mode, scale and
+> volume controls keep one line), and the globe orb's top sits on the top inset beside the About
 > button. The caption's shade fades to nothing at every edge in every layout.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central

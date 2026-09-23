@@ -122,15 +122,16 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* A fixed-width slot, always present in the layout. `formatRate`'s longest outputs are 12
-   characters ("999.99 Gyr/s", "< 0.01 yr/s"); `16ch` leaves a margin because a fallback font can
-   draw "<" or "/" wider than the "0" that `ch` measures. `visibility`, not `display`, when empty,
+/* A fixed-width slot, always present in the layout. `formatRate`'s longest outputs are 11
+   characters ("999.9 kyr/s", "99.99 Gyr/s", "< 0.01 yr/s"; a rate of 100 Gyr/s would cross all of
+   Earth's history in 0.05 s); `12ch` holds them and their letter-spacing, and the stack ends in
+   `monospace`, so every glyph is one `ch` wide. `visibility`, not `display`, when empty,
    and a `min-height`, so the slot's size never depends on whether it has anything to show (an empty
    `inline-block` has no line box and would measure 0px tall). Left-aligned: it sits on the
    transport's inboard edge, so the number reads as belonging to the buttons. */
 .rateReadout {
   display: inline-block;
-  width: 16ch;
+  width: 12ch;
   flex: none;
   min-height: 11px;
   overflow: hidden;
@@ -163,6 +164,14 @@
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+/* Narrow desktop: the readout sits centred under the transport (`Timeline.module.css`'s matching
+   query), so its text is centred in the slot too. */
+@media (min-width: 761px) and (max-width: 1199px) and (min-height: 501px) {
+  .rateReadout {
+    text-align: center;
+  }
 }
 
 /* Phone portrait and short landscape: the readout rides in the transport row itself, in a slot

@@ -7041,15 +7041,18 @@ level with the About button leading the ancestor column.
   height back; and the portrait Globe/Map toggle is sized nearer the zoom rocker's own height.
 
 **Amendment (2026-09-23) — the desktop rate readout sits right of the transport.** On
-desktop/tablet the rate readout moves from under the transport buttons to their right, vertically
-centred on them and the same gap away as the rate picker on their left, so the two flank the
-buttons symmetrically. The readout slot is one label wide (`--rate-readout-width`, the readout's
-own width); ADR-050 shows ADR-029's floor on the readout itself, so nothing else shares the slot.
-The secondary cluster keeps clear of it the way the breadcrumb keeps clear of the rate picker: its
-`max-width` is its column less that width and one column gap.
-The cluster fits on one line from ~1260px wide; narrower, it wraps (at 1000px, the mode toggle
-on one line and the scale toggle and sound control on a second). Phone portrait and short
-landscape are unchanged.
+desktop/tablet windows 1200px wide or more, the rate readout moves from under the transport
+buttons to their right, vertically centred on them and the same gap away as the rate picker on
+their left, so the two flank the buttons symmetrically. The readout slot is one label wide
+(`--rate-readout-width`: 12ch, 72px, for `formatRate`'s longest 11-character labels, ADR-050);
+ADR-050 shows ADR-029's floor on the readout itself, so nothing else shares the slot. The
+secondary cluster keeps clear of it the way the breadcrumb keeps clear of the rate picker: its
+`max-width` leaves the readout the same gap on its far side.
+Beside the transport, the readout and its two gaps take ~100px of the secondary cluster's
+column, and the cluster (~320px) then fits on one line only from ~1170px wide. So between 761px
+and 1199px wide the readout keeps this ADR's original placement, centred under the buttons, and
+the cluster takes its whole column, one line down to 1000px; the 1200px bound leaves ~30px for
+font variation. Phone portrait and short landscape are unchanged.
 
 ## ADR-049 — A rough Cenozoic ice age on the globe, from the LR04 stack
 
@@ -7148,7 +7151,9 @@ different things.
   shortcuts. `touch-action: none` keeps a vertical swipe from scrolling the page.
 - **Readout precision.** `formatRate` keeps two significant figures below 10 yr/s ("2.5 yr/s",
   "0.13 yr/s"), so the smoothed reading of the 1 yr/s detent prints "1 yr/s" rather than
-  "< 1 yr/s"; only a rate under 0.01 yr/s prints as a bound.
+  "< 1 yr/s"; only a rate under 0.01 yr/s prints as a bound. Its longest labels are 11
+  characters ("999.9 kyr/s", "99.99 Gyr/s", "< 0.01 yr/s"; 100 Gyr/s would cross all of Earth's
+  history in 0.05 s), so the readout's monospace slot is 12ch wide.
 
 **Alternatives considered.**
 - **Keep a multiplier for steady mode and convert through the section's slope at `t`.** Rejected:

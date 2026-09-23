@@ -626,8 +626,8 @@ const TRANSPORT_ROW_REGIONS = {
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
  *   the ancestor column, its readouts 0-40px under it;
  * - the transport row: breadcrumb, rate picker, play, secondary cluster and (playing in steady)
- *   the rate readout's text clear of each other; picker and readout text on the transport's
- *   centre line, the text 4-24px right of it; the secondary cluster's children clear of each
+ *   the rate readout's text clear of each other; the picker on the transport's centre line (where
+ *   the readout sits is per viewport); the secondary cluster's children clear of each
  *   other; play on the track centre; transport midway between the band row and the viewport
  *   bottom, breadcrumb on its centre line; the breadcrumb and the secondary cluster inside the
  *   track's edges; the breadcrumb on one line; the current crumb whole; neither transport nor
@@ -646,8 +646,8 @@ function desktopRestingShot(viewport, extra) {
       `Desktop ${viewport.width}x${viewport.height}, collapsed, at the root and three sections deep: no chrome region ` +
       'overlaps another or leaves the viewport; the drawn orb top-aligned (±4px) with the About button and ancestor ' +
       'column (±3px); the transport row (breadcrumb, rate picker, transport, secondary cluster and, playing in steady, ' +
-      "the rate readout's text) clear of itself, picker and readout text on the transport's centre line (±3px), the " +
-      'text 4-24px right of the transport, play on the track centre (±2px), transport vertically centred ' +
+      "the rate readout's text) clear of itself, the picker on the transport's centre line (±3px), " +
+      'play on the track centre (±2px), transport vertically centred ' +
       '(±3px) with the breadcrumb on its line (±2px), row inside the track edges, breadcrumb on one line and whole, ' +
       `transport and secondary cluster fixed in x (±0.5px) as the trail grows${extra.description}`,
     viewport,
@@ -690,6 +690,9 @@ function desktopRestingShot(viewport, extra) {
         pickerCentreOffsetPx: centreY(deep.speed) - centreY(transport),
         readoutGapPx: readout.x - (transport.x + transport.width),
         readoutCentreOffsetPx: centreY(readout) - centreY(transport),
+        readoutBelowGapPx: readout.y - (transport.y + transport.height),
+        readoutCentreXOffsetPx: centreX(readout) - centreX(transport),
+        readoutBottomInsetPx: viewport.height - (readout.y + readout.height),
         readoutTextWidthPx: readout.width,
         secondarySelfOverlaps: overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)),
         playCentreOffsetPx: centreX(deep.play) - centreX(deep.track),
@@ -713,8 +716,6 @@ function desktopRestingShot(viewport, extra) {
       orbToReadoutsGapPx: [0, 40],
       ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary', 'readout'])).map(([key, range]) => [`transportRow.${key}`, range])),
       pickerCentreOffsetPx: [-3, 3],
-      readoutGapPx: [4, 24],
-      readoutCentreOffsetPx: [-3, 3],
       readoutTextWidthPx: [20, 120],
       secondarySelfOverlaps: [0, 0],
       playCentreOffsetPx: [-2, 2],
@@ -912,7 +913,8 @@ export default [
   },
   desktopRestingShot(DEFAULT_VIEWPORT, {
     description:
-      "; the orb's hover ring 100-106% of its drawn (alpha ≥ 0.5) limb; the scene canvas draws over at least half " +
+      "; the rate readout's text on the transport's centre line (±3px), 4-24px right of it; the orb's hover ring " +
+      "100-106% of its drawn (alpha ≥ 0.5) limb; the scene canvas draws over at least half " +
       'the viewport; the timeline draws 135-175px tall; mode and scale ' +
       'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; the "All events" browser ' +
       '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart; in the Holocene the ' +
@@ -980,10 +982,14 @@ export default [
       chartOverlapsTimeline: [0, 0],
       chartOffscreenPx: [-1440, 0],
       chartCurveWidth: [1000, 1440],
+      readoutGapPx: [4, 24],
+      readoutCentreOffsetPx: [-3, 3],
     },
   }),
   desktopRestingShot(NARROW_DESKTOP_VIEWPORT, {
-    description: '; the secondary cluster is one row (≤ 55px, mode and scale on one centre line ±2px).',
+    description:
+      "; the rate readout's text 0-12px under the transport, centred on it (±3px) and 4px or more above the viewport bottom; the secondary cluster is one row " +
+      '(≤ 55px, mode and scale on one centre line ±2px).',
     atRoot: async (page) => {
       const [mode, scale] = await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
       return {
@@ -992,7 +998,7 @@ export default [
         modeScaleCentreYDeltaPx: Math.abs(centreY(mode) - centreY(scale)),
       }
     },
-    expect: { secondaryHeightPx: [0, 55], modeScaleCentreYDeltaPx: [0, 2] },
+    expect: { readoutBelowGapPx: [0, 12], readoutCentreXOffsetPx: [-3, 3], readoutBottomInsetPx: [4, 810], secondaryHeightPx: [0, 55], modeScaleCentreYDeltaPx: [0, 2] },
   }),
   {
     name: 'layout-390x844-resting',
