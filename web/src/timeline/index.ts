@@ -48,21 +48,17 @@
  *   event directly, not this decluttered subset — a keyboard/transport user must always be able
  *   to reach an event that currently lost a room collision.
  * - `advancePlayhead(t, dtSeconds, playback, fullScale, scenesPacing?)` moves `t` toward the
- *   present in `fullScale`'s warped `u`, scaled by
- *   `playback.speed`, clamped at the present. Two modes (ADR-016, `playback.mode`): `'scenes'`
- *   (default) walks `scenesPacing` (`scene/pacing.ts`'s `scenePlaybackSegments`, structurally a
- *   `PlaybackPacingSegment[]`) at exactly the velocity that spends each segment's
- *   `durationSeconds`, so scenes dwell and dissolves take their exact wall-clock time at 1x
- *   without the picture ever falling out of sync with `t`; `'steady'` ignores `scenesPacing`
- *   and moves at flat `baseRate * speed` throughout. `'scenes'` always paces on the full-domain
- *   symlog scale. `'steady'` goes through `advanceSteadyPlayhead(t, dt, playback, sectionId,
- *   scaleForWindow, sceneTerritories?)` (ADR-024, ADR-029): constant velocity in the selected
- *   section's scale, carrying on into `continuationSection` past its end, with the rate floored
- *   (`SteadySceneTerritory[]`, structurally `scene/steadyPacing.ts`'s `sceneTerritories(scenes)`)
- *   inside whichever scene territory would otherwise dwell under `MIN_CUT_DWELL_SECONDS` at that
- *   rate — a photosensitivity safety floor, independent of the `'crossfade'`/`'cut'` presentation
- *   regime `scene/steadyPacing.ts`'s own `steadyPacing` decides for the same territory.
- *   `usePlaybackLoop` drives either off `requestAnimationFrame`.
+ *   present, clamped at the present. Two modes (`playback.mode`): `'scenes'` (default, ADR-016)
+ *   walks `scenesPacing` (`scene/pacing.ts`'s `scenePlaybackSegments`, structurally a
+ *   `PlaybackPacingSegment[]`) on the full-domain symlog scale at exactly the velocity that spends
+ *   each segment's `durationSeconds / speed`; `'steady'` (ADR-050) moves at a literal
+ *   `playback.yearsPerSecond`. The playback loop calls `advanceSteadyPlayhead(t, dt, playback,
+ *   sceneTerritories?)` for steady mode, which additionally slows the rate inside any scene
+ *   territory (`SteadySceneTerritory[]`, structurally `scene/steadyPacing.ts`'s
+ *   `sceneTerritories(scenes)`) that would otherwise dwell under `MIN_CUT_DWELL_SECONDS` — a
+ *   photosensitivity safety floor (ADR-029). `usePlaybackLoop` drives either off
+ *   `requestAnimationFrame`. `playbackRates.ts` holds each mode's detents, the `[`/`]` step rule
+ *   and `defaultSteadyRate`, the context default on entering steady mode.
  * - `formatGeoTime(t)` renders a `GeoTime` for humans (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`,
  *   `"250 years ago"`, `"present"`); `formatTimeRange(window)` does the same for a whole window
  *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
@@ -127,6 +123,15 @@ export {
   type PlaybackPacingSegment,
   type SteadySceneTerritory,
 } from './playback'
+export {
+  activeRate,
+  defaultSteadyRate,
+  rateDetents,
+  SCENES_SPEEDS,
+  STEADY_RATES,
+  stepActiveRate,
+  withActiveRate,
+} from './playbackRates'
 export {
   blendScales,
   createLinearScale,

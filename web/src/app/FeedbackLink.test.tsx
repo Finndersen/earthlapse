@@ -51,7 +51,7 @@ describe('FeedbackLink', () => {
     useTimeStore.setState({
       t: 1.5e8,
       sectionId: 'mesozoic',
-      playback: { playing: true, baseRate: 0.02, speed: 4, mode: 'steady' },
+      playback: { playing: true, baseRate: 0.02, speed: 4, yearsPerSecond: 5000, mode: 'steady' },
     })
 
     fireEvent.click(getLink())
@@ -59,7 +59,7 @@ describe('FeedbackLink', () => {
     expect(body).toContain(`t: 150000000 (${formatGeoTime(1.5e8)})`)
     expect(body).toContain(`Era: ${eraNameForTime(1.5e8)}`)
     expect(body).toContain('Section: mesozoic')
-    expect(body).toContain('Playback: playing, mode=steady, speed=4x')
+    expect(body).toContain('Playback: playing, mode=steady, speed=4x, steady=5000 yr/s')
     expect(body).toContain('Globe: collapsed')
   })
 

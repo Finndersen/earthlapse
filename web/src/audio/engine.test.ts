@@ -68,7 +68,7 @@ const EMPTY_MANIFEST: Manifest = {
   credits: [],
 }
 
-const PLAYBACK: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'scenes' }
+const PLAYBACK: Playback = { playing: true, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
 const FULL_SECTION_WINDOW: [number, number] = [0, 4.567e9]
 
 // Regression coverage for the tick-loop lifecycle bug: the `useEffect` that owns the

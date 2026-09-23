@@ -5,7 +5,7 @@
  * PageUp-PageDown/Shift+←→ step to the previous/next sibling section, wrapping to the parent's
  * own next/previous sibling at either end exactly as playback's section-continuation rule does
  * (`sections.ts`'s `continuationSection`/`previousSiblingStep`); follow-up pass item 3: `[`/`]`
- * and `-`/`=` step the playback speed through `playback.ts`'s `SPEED_OPTIONS`). A pure key ->
+ * and `-`/`=` step the active playback rate through `playbackRates.ts`'s detents). A pure key ->
  * intent mapping, kept separate from the DOM listener that wires it up (`Timeline`'s root
  * `onKeyDown`, which fires only while focus is somewhere inside the component — see that
  * component for why that alone is enough to not "hijack typing elsewhere" without a global

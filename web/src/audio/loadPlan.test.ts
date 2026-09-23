@@ -15,8 +15,8 @@ import { AMBIENCE_STEM_IDS, SCENE_STEM_IDS, type StemId } from './stemIds'
 const FULL_DOMAIN: [number, number] = [0, EARTH_FORMATION]
 const FULL_DOMAIN_SCALE = createSymlogScale(FULL_DOMAIN)
 
-const PAUSED: Playback = { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' }
-const PLAYING: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'scenes' }
+const PAUSED: Playback = { playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
+const PLAYING: Playback = { playing: true, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
 
 function stem(id: string, overrides: Partial<AudioStem> = {}): AudioStem {
   return {
@@ -97,7 +97,7 @@ describe('lookaheadWindow', () => {
 
   it('never reaches past the selected section window even at extreme speed deep in time', () => {
     const section: [number, number] = [1e9, 2e9]
-    const window = lookaheadWindow(1.5e9, { playing: true, baseRate: 0.02, speed: 64, mode: 'scenes' }, section)
+    const window = lookaheadWindow(1.5e9, { playing: true, baseRate: 0.02, speed: 64, yearsPerSecond: 10, mode: 'scenes' }, section)
     expect(window.tMin).toBeGreaterThanOrEqual(section[0])
     expect(window.tMax).toBeLessThanOrEqual(section[1])
   })
@@ -121,7 +121,7 @@ describe('lookaheadWindow', () => {
   })
 
   it('reaches at least as far as advancePlayhead moves t in the lookahead span, steady mode', () => {
-    const steady: Playback = { playing: true, baseRate: 0.02, speed: 1, mode: 'steady' }
+    const steady: Playback = { playing: true, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'steady' }
     const t = 5e6
     const section: [number, number] = [0, 1e8]
     const window = lookaheadWindow(t, steady, section)
@@ -301,7 +301,7 @@ describe('stemsNeeded — property: every audible stem is needed', () => {
   })
 
   it('every ambience stem above the gain threshold at t is included (playing, 8x)', () => {
-    const fast: Playback = { playing: true, baseRate: 0.02, speed: 8, mode: 'scenes' }
+    const fast: Playback = { playing: true, baseRate: 0.02, speed: 8, yearsPerSecond: 10, mode: 'scenes' }
     for (const t of checkpoints) {
       const needed = stemsNeeded(baseInput({ t, playback: fast }))
       const gains = stemGains(t, [])

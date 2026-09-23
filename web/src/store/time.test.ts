@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import { defaultSteadyRate } from '@/timeline/playbackRates'
+import { sectionById } from '@/timeline/sections'
 import { EARTH_FORMATION } from '@/types/layer'
 
 import { useTimeStore } from './time'
@@ -16,7 +18,7 @@ describe('useTimeStore initial state', () => {
     expect(s.t).toBe(0)
     expect(s.sectionId).toBe('earth')
     expect(s.scaleKind).toBe('symlog')
-    expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' })
+    expect(s.playback).toEqual({ playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 1, mode: 'scenes' })
     expect(s.globeExpanded).toBe(false)
     expect(s.expandedChartLayerId).toBeNull()
     expect(s.detailEventId).toBeNull()
@@ -61,10 +63,10 @@ describe('scaleKind', () => {
 })
 
 describe('playback actions', () => {
-  it('setPlaying sets playing without touching baseRate/speed/mode', () => {
+  it('setPlaying sets playing without touching the rates or mode', () => {
     useTimeStore.getState().setSpeed(4)
     useTimeStore.getState().setPlaying(true)
-    expect(useTimeStore.getState().playback).toEqual({ playing: true, baseRate: 0.02, speed: 4, mode: 'scenes' })
+    expect(useTimeStore.getState().playback).toEqual({ ...initial.playback, playing: true, speed: 4 })
   })
 
   it('togglePlaying flips the current value', () => {
@@ -75,17 +77,68 @@ describe('playback actions', () => {
     expect(useTimeStore.getState().playback.playing).toBe(false)
   })
 
-  it('setSpeed changes only the speed multiplier', () => {
-    useTimeStore.getState().setSpeed(10)
-    expect(useTimeStore.getState().playback).toEqual({ playing: false, baseRate: 0.02, speed: 10, mode: 'scenes' })
+  it('setSpeed changes only the scenes multiplier', () => {
+    useTimeStore.getState().setSpeed(16)
+    expect(useTimeStore.getState().playback).toEqual({ ...initial.playback, speed: 16 })
   })
 
-  it('setPlaybackMode switches between scenes and steady, touching nothing else', () => {
-    useTimeStore.getState().setSpeed(4)
+  it('setYearsPerSecond changes only the steady rate and marks it chosen', () => {
+    useTimeStore.getState().setYearsPerSecond(5000)
+    expect(useTimeStore.getState().playback).toEqual({ ...initial.playback, yearsPerSecond: 5000 })
+    expect(useTimeStore.getState().steadyRateChosen).toBe(true)
+  })
+})
+
+describe('steady rate context default', () => {
+  it('starts with no steady rate chosen', () => {
+    expect(useTimeStore.getState().steadyRateChosen).toBe(false)
+  })
+
+  it('entering steady mode picks the detent for where t is', () => {
+    useTimeStore.getState().setT(1200)
     useTimeStore.getState().setPlaybackMode('steady')
-    expect(useTimeStore.getState().playback).toEqual({ playing: false, baseRate: 0.02, speed: 4, mode: 'steady' })
+    expect(useTimeStore.getState().playback.mode).toBe('steady')
+    expect(useTimeStore.getState().playback.yearsPerSecond).toBe(defaultSteadyRate(sectionById('earth').window, 1200))
+  })
+
+  it('entering steady mode keeps the scenes multiplier for the way back', () => {
+    useTimeStore.getState().setSpeed(1 / 4)
+    useTimeStore.getState().setPlaybackMode('steady')
     useTimeStore.getState().setPlaybackMode('scenes')
-    expect(useTimeStore.getState().playback.mode).toBe('scenes')
+    expect(useTimeStore.getState().playback.speed).toBe(1 / 4)
+  })
+
+  it('selecting a section in steady mode re-derives the default until a rate is chosen', () => {
+    useTimeStore.getState().setPlaybackMode('steady')
+    useTimeStore.getState().selectSection('cretaceous')
+    const cretaceous = sectionById('cretaceous').window
+    expect(useTimeStore.getState().playback.yearsPerSecond).toBe(defaultSteadyRate(cretaceous, cretaceous[1]))
+  })
+
+  it('keeps a chosen steady rate across mode switches and section changes', () => {
+    useTimeStore.getState().setPlaybackMode('steady')
+    useTimeStore.getState().setYearsPerSecond(200)
+    useTimeStore.getState().setPlaybackMode('scenes')
+    useTimeStore.getState().selectSection('cretaceous')
+    useTimeStore.getState().setPlaybackMode('steady')
+    expect(useTimeStore.getState().playback.yearsPerSecond).toBe(200)
+  })
+
+  it('setting the mode it is already in changes nothing', () => {
+    useTimeStore.getState().setPlaybackMode('steady')
+    const before = useTimeStore.getState().playback
+    useTimeStore.getState().setT(4e9)
+    useTimeStore.getState().setPlaybackMode('steady')
+    expect(useTimeStore.getState().playback).toBe(before)
+  })
+
+  it('playback carrying t into another section does not change the steady rate', () => {
+    useTimeStore.getState().selectSection('industrial-age')
+    useTimeStore.getState().setPlaybackMode('steady')
+    const rate = useTimeStore.getState().playback.yearsPerSecond
+    useTimeStore.getState().setT(50)
+    expect(useTimeStore.getState().sectionId).not.toBe('industrial-age')
+    expect(useTimeStore.getState().playback.yearsPerSecond).toBe(rate)
   })
 })
 

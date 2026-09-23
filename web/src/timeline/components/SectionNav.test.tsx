@@ -178,7 +178,7 @@ describe('<SectionEdgeButton>', () => {
   })
 })
 
-const playback: Playback = { playing: false, baseRate: 0.02, speed: 1, mode: 'scenes' }
+const playback: Playback = { playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 10, mode: 'scenes' }
 const deepEvent: TimelineEvent = { id: 'deep', label: 'Deep', tMin: 2.5e8, tMax: 2.52e8, importance: 1, description: '', citation: '' }
 
 function ControlledTimeline({ initial, t, onSelectSection }: { initial: SectionId; t: number; onSelectSection: (id: SectionId) => void }) {
