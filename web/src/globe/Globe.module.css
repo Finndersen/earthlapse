@@ -671,12 +671,12 @@
     transform: none;
   }
 
-  /* Sized to land near the zoom rocker's own 38px pill height (`.zoomButton`'s 36px plus its
-     group's 1px border top and bottom) so the two read as one row, not two mismatched controls
-     sharing it. */
+  /* The same 36px as `.zoomButton`, so with each group's 1px border the toggle and the zoom
+     rocker are one height and read as one row. */
   .viewModeButton {
-    padding: 12px 20px;
-    font-size: 12px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 11px;
   }
 
   .zoomGroup {

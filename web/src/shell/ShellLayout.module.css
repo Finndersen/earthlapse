@@ -889,6 +889,7 @@
      orb's column the containing block for the expanded globe's fixed backdrop. */
   .shell[data-globe-expanded='false'] .globe {
     justify-self: stretch;
+    align-items: flex-start;
     width: auto;
     container-type: inline-size;
   }

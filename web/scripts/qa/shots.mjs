@@ -2054,10 +2054,10 @@ export default [
         toggleClearanceGapPx: toggle.y - (sphere.y + sphere.height),
         zoomClearanceGapPx: zoom.y - (sphere.y + sphere.height),
         toggleOverlapsZoom: rectsOverlap(toggle, zoom) ? 1 : 0,
-        toggleHeightPx: toggle.height,
+        toggleHeightMinusZoomPx: toggle.height - zoom.height,
       }
     },
-    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0], toggleHeightPx: [40, 48] },
+    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0], toggleHeightMinusZoomPx: [-1, 1] },
   },
   {
     name: 'globe-feed-between-sphere-and-timeline-phone',
