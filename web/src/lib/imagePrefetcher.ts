@@ -6,10 +6,11 @@
  * `want(urgent, background)` states the whole wanted set, each list in priority order, replacing
  * the previous call's. Urgent URLs start at once. Background URLs start in list order while fewer
  * than `concurrency` requests of either kind are in flight, so background work never holds back
- * more than `concurrency - 1` requests' worth of bandwidth from an urgent one. A background request
- * that drops out of both lists is aborted; one that stays keeps running wherever it moved to.
- * `load` joins a request already in flight instead of starting a second one, and makes it urgent so
- * no later `want` aborts it.
+ * more than `concurrency - 1` requests' worth of bandwidth from an urgent one. A request that drops
+ * out of both lists is aborted, whichever call started it, unless it is `NEARLY_DONE` downloaded;
+ * one that stays keeps running wherever it moved to. An aborted URL is not remembered: wanting or
+ * loading it again refetches it. `load` joins a request already in flight instead of starting a
+ * second one; one it starts for a URL no list names lasts until the next `want`.
  *
  * Stored bytes are evicted least recently used once they total more than `maxBytes`, skipping any
  * URL still wanted, so memory stays within `maxBytes` plus the wanted set itself.
@@ -39,9 +40,14 @@ export interface ImagePrefetcher {
   inFlight(): string[]
 }
 
+/** A request this far through its download finishes even once no longer wanted: the few bytes
+ *  left cost less than refetching them if the URL is wanted again. */
+export const NEARLY_DONE = 0.8
+
 interface Request {
   controller: AbortController
-  urgent: boolean
+  /** Downloaded so far, 0..1; stays 0 when the response has no `Content-Length`. */
+  fraction: number
   listeners: Set<(fraction: number) => void>
   promise: Promise<Blob>
 }
@@ -103,15 +109,16 @@ export function createImagePrefetcher({
     trim()
   }
 
-  function start(url: string, urgent: boolean): Request {
+  function start(url: string): Request {
     const controller = new AbortController()
     const listeners = new Set<(fraction: number) => void>()
     const report = (fraction: number): void => {
+      request.fraction = fraction
       for (const listener of listeners) listener(fraction)
     }
     const request: Request = {
       controller,
-      urgent,
+      fraction: 0,
       listeners,
       promise: fetchBlob(url, report, controller.signal).then(
         (blob) => {
@@ -133,7 +140,7 @@ export function createImagePrefetcher({
         },
       ),
     }
-    // A background request has no caller of its own to observe its rejection.
+    // A request `want` started has no caller of its own to observe its rejection.
     request.promise.catch(() => undefined)
     requests.set(url, request)
     return request
@@ -144,10 +151,10 @@ export function createImagePrefetcher({
   }
 
   function pump(): void {
-    for (const url of urgentList) if (idle(url)) start(url, true)
+    for (const url of urgentList) if (idle(url)) start(url)
     for (const url of backgroundList) {
       if (requests.size >= concurrency) return
-      if (idle(url)) start(url, false)
+      if (idle(url)) start(url)
     }
   }
 
@@ -157,7 +164,7 @@ export function createImagePrefetcher({
       backgroundList = background
       wanted = new Set([...urgent, ...background])
       for (const [url, request] of requests) {
-        if (request.urgent || wanted.has(url)) continue
+        if (wanted.has(url) || request.fraction >= NEARLY_DONE) continue
         requests.delete(url)
         request.controller.abort()
         settleWaiters(url, abortError(url))
@@ -177,8 +184,7 @@ export function createImagePrefetcher({
         onProgress?.(1)
         return Promise.resolve(blob)
       }
-      const request = requests.get(url) ?? start(url, true)
-      request.urgent = true
+      const request = requests.get(url) ?? start(url)
       if (onProgress !== undefined) request.listeners.add(onProgress)
       return request.promise
     },

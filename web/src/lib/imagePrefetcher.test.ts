@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { createImagePrefetcher, type BlobFetcher } from './imagePrefetcher'
+import { createImagePrefetcher, NEARLY_DONE, type BlobFetcher } from './imagePrefetcher'
 
 interface PendingFetch {
   url: string
@@ -45,7 +45,7 @@ function find(pending: readonly PendingFetch[], url: string): PendingFetch {
 const flush = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('createImagePrefetcher', () => {
-  it('starts urgent URLs first, fills slots in order, dedupes, and aborts only unwanted background requests', async () => {
+  it('starts urgent URLs first, fills slots in order, dedupes, and aborts whatever leaves the wanted set unless nearly done', async () => {
     const { fetchBlob, pending, started } = controlledFetcher()
     const prefetcher = createImagePrefetcher({ concurrency: 3, maxBytes: 10_000, fetchBlob })
     prefetcher.want(['pair-a', 'pair-b'], ['next-1', 'next-2', 'next-3'])
@@ -58,13 +58,20 @@ describe('createImagePrefetcher', () => {
     expect(started).toEqual(['pair-a', 'pair-b', 'next-1', 'next-2'])
 
     const next1 = find(pending, 'next-1').signal
-    prefetcher.want([], ['next-2', 'other'])
+    prefetcher.want(['pair-a'], ['next-2', 'other'])
     expect(next1.aborted).toBe(true)
-    expect(find(pending, 'pair-a').signal.aborted).toBe(false)
     expect(prefetcher.inFlight().sort()).toEqual(['next-2', 'other', 'pair-a'])
+
+    // `load` does not keep a request alive once `want` drops it.
+    find(pending, 'next-2').onProgress(NEARLY_DONE)
+    prefetcher.want([], ['next-3'])
+    await expect(waitedOn).rejects.toHaveProperty('name', 'AbortError')
+    expect(prefetcher.inFlight().sort()).toEqual(['next-2', 'next-3'])
+
+    prefetcher.want(['pair-a'], [])
     find(pending, 'pair-a').resolve(42)
-    expect((await waitedOn).size).toBe(42)
-    expect(started.filter((url) => url === 'pair-a')).toHaveLength(1)
+    expect((await prefetcher.load('pair-a')).size).toBe(42)
+    expect(started.filter((url) => url === 'pair-a')).toHaveLength(2)
   })
 
   it('evicts the least recently used bytes beyond its budget, but never a wanted URL', async () => {

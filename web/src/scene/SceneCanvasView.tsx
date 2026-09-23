@@ -24,6 +24,7 @@ import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
 import { CENTRED_CROP, centreSquareWindow, coverWindow, type CoverWindow, type SceneCrop } from './framing'
 import type { PresentationRegime } from './scene'
+import { sceneByteWants } from './prefetch'
 import { sharpening } from './sceneLayer'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
@@ -50,6 +51,8 @@ export interface SceneCanvasViewProps {
   /** Scenes whose bytes to fetch without decoding, most urgent first. */
   fetchUrls: readonly string[]
   thumbUrls: ThumbnailPrefetch
+  /** `prefetch.ts`'s `ScenePrefetchPlan.pairFirst`. */
+  pairFirst: boolean
   /** Whether a scene's full image fades in over its thumbnail (`'crossfade'`) or cuts to it. */
   regime: PresentationRegime
   /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
@@ -73,28 +76,41 @@ export interface ThumbnailPrefetch {
 }
 
 /**
- * Fetches the pair and the near thumbnails, then `decodeUrls`, then `fetchUrls`, then every other
- * thumbnail (`sceneImageBytes`), and decodes and uploads each of `decodeUrls` and every thumbnail
- * once its bytes arrive, so `useScenePair`'s render-phase bind finds it ready. A scene that leaves
- * the plan before its bytes arrive is dropped, not decoded; thumbnails never leave it.
+ * Fetches both pairs and the near thumbnails, then `decodeUrls`, then `fetchUrls`, then every other
+ * thumbnail (`sceneImageBytes`, `prefetch.ts`'s `sceneByteWants`), and decodes and uploads each of
+ * `decodeUrls` and every thumbnail once its bytes arrive, so `useScenePair`'s render-phase bind
+ * finds it ready. A full image that leaves all of those before its bytes arrive stops downloading
+ * and is not decoded; thumbnails never leave them.
  */
 function useScenePrefetch(
-  pairUrls: readonly string[],
+  requestedUrls: readonly string[],
+  boundUrls: readonly string[],
   decodeUrls: readonly string[],
   fetchUrls: readonly string[],
   thumbUrls: ThumbnailPrefetch,
+  pairFirst: boolean,
   renderer: { readonly current: THREE.WebGLRenderer | null },
 ): void {
-  const pairKey = pairUrls.join('\n')
+  const pending = (url: string): boolean => getCachedSceneTexture(url) === undefined
+  // Pending only, so the effect re-runs as each pair image lands and `pairFirst` can release the plan.
+  const requestedKey = requestedUrls.filter(pending).join('\n')
+  const boundKey = boundUrls.filter(pending).join('\n')
   useEffect(() => {
     const pending = (url: string): boolean => getCachedSceneTexture(url) === undefined
     const thumbPending = (url: string): boolean => getCachedSceneThumbnail(url) === undefined
-    // Thumbnails are ~4 KB: the near ones start with the pair, since they are what the pair and
-    // the next few scenes draw if their full images are late.
-    sceneImageBytes.want(
-      [...pairKey.split('\n').filter(pending), ...thumbUrls.near.filter(thumbPending)],
-      [...decodeUrls.filter(pending), ...fetchUrls.filter(pending), ...thumbUrls.all.filter(thumbPending)],
+    const split = (key: string): string[] => (key === '' ? [] : key.split('\n'))
+    const { urgent, background } = sceneByteWants(
+      {
+        requested: split(requestedKey),
+        bound: split(boundKey),
+        decode: decodeUrls.filter(pending),
+        fetch: fetchUrls.filter(pending),
+        nearThumbs: thumbUrls.near.filter(thumbPending),
+        allThumbs: thumbUrls.all.filter(thumbPending),
+      },
+      pairFirst,
     )
+    sceneImageBytes.want(urgent, background)
 
     let cancelled = false
     for (const url of decodeUrls) {
@@ -113,7 +129,7 @@ function useScenePrefetch(
     return () => {
       cancelled = true
     }
-  }, [pairKey, decodeUrls, fetchUrls, thumbUrls, renderer])
+  }, [requestedKey, boundKey, decodeUrls, fetchUrls, thumbUrls, pairFirst, renderer])
 
   // Declared after the `want` above, so every thumbnail is already wanted when this first runs.
   useEffect(() => {
@@ -144,6 +160,7 @@ export function SceneCanvasView({
   decodeUrls,
   fetchUrls,
   thumbUrls,
+  pairFirst,
   regime,
   mix,
   fromDrift,
@@ -153,7 +170,8 @@ export function SceneCanvasView({
 }: SceneCanvasViewProps) {
   const pair = useScenePair(baseUrl, baseThumbUrl, overlayUrl, overlayThumbUrl)
   const renderer = useRef<THREE.WebGLRenderer | null>(null)
-  useScenePrefetch([baseUrl, overlayUrl], decodeUrls, fetchUrls, thumbUrls, renderer)
+  const boundUrls = [pair.from?.url, pair.to?.url].filter((url): url is string => url !== undefined)
+  useScenePrefetch([baseUrl, overlayUrl], boundUrls, decodeUrls, fetchUrls, thumbUrls, pairFirst, renderer)
   const dpr = useSceneCanvasDpr()
 
   // The uniforms below must always describe whichever pair `pair` actually has textures bound

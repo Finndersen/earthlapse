@@ -9,7 +9,11 @@
  *   `FETCH_AHEAD_SCENES` of them, plus one more behind the pair.
  *
  * Paused or scrubbing, there is no direction to read ahead in, so both tiers fall back to one
- * scene either side of the pair.
+ * scene either side of the pair, and the pair's own full images come first (`pairFirst`).
+ *
+ * `sceneByteWants` turns a plan into the byte store's wanted lists. Whatever they leave out is
+ * aborted (`lib/imagePrefetcher.ts`), so a full image stops downloading once its scene is in
+ * neither the requested nor the bound pair nor the plan.
  *
  * `horizonT` is where playback puts `t` after `PREFETCH_LOOKAHEAD_SECONDS`. The caller predicts it
  * with the same advance the playback loop uses, so steady mode's per-scene floor (ADR-029) and
@@ -36,6 +40,9 @@ export const FETCH_AHEAD_SCENES = 12
 export interface ScenePrefetchPlan {
   decode: number[]
   fetch: number[]
+  /** No playback direction: the scene on screen is what the viewer is looking at, so no neighbour
+   *  shares the link with it until its full images have arrived. */
+  pairFirst: boolean
 }
 
 export interface PlaybackHeading {
@@ -69,7 +76,7 @@ export function planScenePrefetch(
 
   const direction = heading === null ? 0 : Math.sign(heading.horizonT - heading.t)
   if (heading === null || scenes.length === 0 || (direction !== 1 && direction !== -1)) {
-    return { decode: [lo - 1, hi + 1].filter(inRange), fetch: [] }
+    return { decode: [lo - 1, hi + 1].filter(inRange), fetch: [], pairFirst: true }
   }
 
   // Playback toward the present walks down the indices. The far end is the horizon pair's
@@ -89,5 +96,32 @@ export function planScenePrefetch(
   return {
     decode: [...ahead.slice(0, DECODE_AHEAD_SCENES), behind].filter(inRange),
     fetch: [...ahead.slice(DECODE_AHEAD_SCENES), behindFetch].filter(inRange),
+    pairFirst: false,
+  }
+}
+
+/** Image URLs not loaded yet, each list in priority order. */
+export interface PendingSceneImages {
+  /** The pair `t` asks for, which the grace (ADR-051) waits on. */
+  requested: readonly string[]
+  /** The pair on screen, which lags `requested` while that has nothing to draw. */
+  bound: readonly string[]
+  decode: readonly string[]
+  fetch: readonly string[]
+  /** Thumbnails the pair and the plan could draw first. */
+  nearThumbs: readonly string[]
+  allThumbs: readonly string[]
+}
+
+/**
+ * The byte store's `want` lists: both pairs' full images and the near thumbnails urgent, then the
+ * plan's tiers and every other thumbnail. Under `pairFirst` the plan's full images are left out
+ * until the requested pair's have arrived. Thumbnails are ~4 KB and always wanted.
+ */
+export function sceneByteWants(pending: PendingSceneImages, pairFirst: boolean): { urgent: string[]; background: string[] } {
+  const holdPlan = pairFirst && pending.requested.length > 0
+  return {
+    urgent: [...new Set([...pending.requested, ...pending.bound, ...pending.nearThumbs])],
+    background: [...(holdPlan ? [] : [...pending.decode, ...pending.fetch]), ...pending.allThumbs],
   }
 }

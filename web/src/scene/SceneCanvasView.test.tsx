@@ -37,6 +37,7 @@ const baseProps = {
   decodeUrls: [] as readonly string[],
   fetchUrls: [] as readonly string[],
   thumbUrls: { near: [], all: [] },
+  pairFirst: false,
   regime: 'crossfade' as const,
   mix: 0,
   fromDrift: REST_DRIFT,

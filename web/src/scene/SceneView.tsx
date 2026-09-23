@@ -157,6 +157,7 @@ export function SceneView({
           decodeUrls={decodeUrls}
           fetchUrls={fetchUrls}
           thumbUrls={thumbUrls}
+          pairFirst={plan.pairFirst}
           regime={regime}
           mix={mix}
           fromDrift={fromDrift}

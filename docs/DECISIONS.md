@@ -7227,6 +7227,16 @@ WebP, ~4 KB, ~240 KB for all 71) made for the timeline pips.
   and the prefetch plan's thumbnails with the pair's own requests (the byte store starts them at
   once, after the pair's), every other one at the end of the background list, and each is decoded
   and uploaded as it arrives. So after first load every thumbnail is normally resident.
+- **Stale full images are dropped.** A full image is wanted while its scene is in the requested
+  pair (which the grace waits on), the bound pair or the prefetch plan (`prefetch.ts`'s
+  `sceneByteWants`); once it leaves all of them its download is aborted, whoever started it, unless
+  it is 80% done, and wanting it again refetches it. `load` used to make every presented scene's
+  request permanent, so fast playback on a slow link left one stale ~430 KB download per scene
+  sharing the link. Paused or scrubbing (`pairFirst`), the plan's neighbours also wait until the
+  requested pair's full images have arrived, so the scene on screen has the byte store to itself.
+  Thumbnails are always wanted. At 1.6 Mbps a scene paused on mid-playback now sharpens in
+  1.3–2.8 s with only scene traffic on the link (1.6–4.3 s before); the globe's overlay frames and
+  the audio stems still share it and add several seconds.
 - **GPU budget.** Thumbnails have their own texture cache of 128 (64 KB each, ≤ 8 MB), so they
   never evict full scenes by count; `retainSceneTextures` retains a bound layer's textures in both.
 - **No-WebGL fallback.** Each `<img>` layer shows the decoded thumbnail under `blur(6px)` while

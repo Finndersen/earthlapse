@@ -27,6 +27,8 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import type * as THREE from 'three'
 
+import { isAbortError } from '@/lib/imagePrefetcher'
+
 import { bindsNow, chooseSceneLayer, type SceneLayer } from './sceneLayer'
 import {
   getCachedSceneTexture,
@@ -84,9 +86,10 @@ function useLayerLoads(
       })
     }
     // Keep showing whatever is already bound. A bad ref is a data problem to surface upstream
-    // (earthtime publish), not something to paper over here.
+    // (earthtime publish), not something to paper over here. An abort is the byte store dropping a
+    // scene no longer wanted (`prefetch.ts`'s `sceneByteWants`).
     const report = (error: unknown): void => {
-      if (!cancelled) console.error(error)
+      if (!cancelled && !isAbortError(error)) console.error(error)
     }
     loadSceneTexture(url).then(land(url), report)
     if (getCachedSceneThumbnail(thumbUrl) === undefined) loadSceneThumbnail(thumbUrl).then(land(thumbUrl), report)
