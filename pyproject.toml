@@ -26,3 +26,7 @@ target-version = "py312"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+addopts = ["--strict-markers"]
+markers = [
+    "content: validates committed data (scenes, events, catalogues, rosters) rather than code; deselect with -m 'not content'",
+]

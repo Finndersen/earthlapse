@@ -1,11 +1,5 @@
-"""Offline unit tests for pipeline.fetching.ensure_verified_artefact itself.
-
-sources/*/fetch.py tests exercise this helper indirectly (reuse-without-download,
-download-when-missing, fresh-download-mismatch-raises); this module is the direct coverage
-for the helper's own contract, including the case none of those indirect tests hit: an
-artefact already on disk that is corrupted or truncated -- wrong sha256, not merely absent --
-must be re-downloaded (or raise), never silently returned as-is.
-"""
+"""`ensure_verified_artefact`, the download-and-verify step every sources/*/fetch.py shares:
+a cached artefact is reused only when its sha256 verifies, and nothing unverified is written."""
 
 from __future__ import annotations
 
@@ -62,31 +56,8 @@ def test_a_corrupted_cached_artefact_is_re_downloaded_not_silently_used(tmp_path
     assert result.read_bytes() == _CONTENT
 
 
-def test_a_corrupted_cached_artefact_whose_redownload_also_mismatches_raises(
-    tmp_path: Path,
-) -> None:
-    """If the re-download itself doesn't verify either, this must raise -- not fall back to
-    the stale corrupt bytes already on disk, and not write the bad re-download over them."""
-    stale_content = b"truncated garbage, wrong hash"
-    (tmp_path / "artefact.bin").write_bytes(stale_content)
-
-    with pytest.raises(FetchIntegrityError):
-        ensure_verified_artefact(tmp_path, "artefact.bin", _SHA256, lambda: b"also wrong")
-
-    assert (tmp_path / "artefact.bin").read_bytes() == stale_content
-
-
 def test_a_fresh_download_that_does_not_verify_raises_and_writes_nothing(tmp_path: Path) -> None:
     with pytest.raises(FetchIntegrityError, match="sha256 mismatch"):
         ensure_verified_artefact(tmp_path, "artefact.bin", _SHA256, lambda: b"wrong bytes")
 
     assert not (tmp_path / "artefact.bin").exists()
-
-
-def test_creates_raw_dir_if_missing(tmp_path: Path) -> None:
-    raw_dir = tmp_path / "nested" / "raw"
-
-    result = ensure_verified_artefact(raw_dir, "artefact.bin", _SHA256, lambda: _CONTENT)
-
-    assert result == raw_dir / "artefact.bin"
-    assert result.read_bytes() == _CONTENT

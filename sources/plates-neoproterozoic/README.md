@@ -51,7 +51,7 @@ circuit for any plate id at any age within the file's covered range.
 
 ## Confirming pygplates can reconstruct
 
-Measured directly against the full downloaded data (not just the fixture), reconstructing
+Measured directly against the full downloaded data, reconstructing
 `ContinentalPolygons` and `Cratons` and partitioning the full 1024×512 target grid:
 
 | Age | Continents build | Partition (1024×512, both layers) | Land fraction |
@@ -70,7 +70,7 @@ reassuring cross-check at the seam even though the two models don't place contin
 identically there).
 
 Reconstruction never failed, crashed, or returned empty at any probed age (1000, 750, 540 Ma)
-against either the full data or the trimmed fixture (below). **pygplates can reconstruct
+against the full data. **pygplates can reconstruct
 Merdith's continental polygons across the full 1000-550 Ma target range** — nothing here
 blocks G7.
 
@@ -125,7 +125,7 @@ one coastline edge per frame is the same kind of image). Refs are
 
 ## Sample frames (visual check, real data)
 
-Rendered from the full downloaded data (not the fixture) via `write_outputs`, saved to a
+Rendered from the full downloaded data via `write_outputs`, saved to a
 scratch directory and inspected directly:
 
 - **1000.0Ma** — a scatter of small to medium landmasses on open ocean, no single
@@ -146,29 +146,18 @@ downsampled raster.
 
 ## Fixture
 
-`sources/plates-neoproterozoic/fixture/` holds a real, deliberately narrow slice: every
-feature in both shape files whose `gpml:reconstructionPlateId` is **8013** (Tasmania's
-Tyennan / Rocky Cape / Mt Read terranes — chosen because its features' valid times cover the
-whole 1000-540 Ma target range, so reconstruction succeeds at every probed age, not just
-some), filtered out of the real downloaded files with `pygplates` itself and written back out
-as real, loadable GPML — 6 continent features, 4 craton features. The rotation file is kept
-whole (612 KB) rather than trimmed: a `.rot` file's entries form a circuit back to the fixed
-reference frame, so trimming it to only the plate ids above would need resolving that circuit
-by hand, and 612 KB is already small next to the 90 MB the full archive extracts to.
+There is no committed fixture: the repository's `.gitignore` excludes `*.gpml` and `*.rot`, so
+the trimmed slice once described here (plate id 8013's features plus the whole 612 KB rotation
+file) never reached git.
 
-Total fixture size: ~816 KB (108 KB continents + 96 KB cratons + 612 KB rotations) — larger
-than `sources/paleodem`'s 120 KB fixture, mostly the rotation file's fixed cost, but still a
-small, real, committed slice, not synthetic data.
-
-`normalise()` itself never opens these three files — the frame ages are fixed by
+`normalise()` never opens the three raw files — the frame ages are fixed by
 `normalise.FRAME_AGES_MA`, not discovered from raw content (unlike `sources/paleodem`, which
-parses ages out of its netCDF filenames) — so `tests/sources/test_plates_neoproterozoic.py`
-only confirms the three expected files are present and that `normalise()` builds the right
-`RasterSequence` shape from the fixed age list. `write_outputs()` (loading `relief.py`,
-`pygplates`, `scipy`) is exercised manually against this fixture and against the full
-downloaded data (both described above), never inside the pytest suite — matching
-docs/GLOBE.md §3.4's stated plan for the sibling `sources/plates` (G3): "Tests never import
-gplately."
+parses ages out of its netCDF filenames) — it only checks they exist. So
+`tests/sources/test_plates_neoproterozoic.py` builds its raw directory from empty placeholder
+files named by `_EXPECTED_RAW_FILENAMES` and asserts the `RasterSequence` shape. `write_outputs()`
+(loading `relief.py`, `pygplates`, `scipy`) is exercised manually against the full downloaded
+data, never inside the pytest suite — matching docs/GLOBE.md §3.4's stated plan for the sibling
+`sources/plates` (G3): "Tests never import gplately."
 
 ## Measured volume
 

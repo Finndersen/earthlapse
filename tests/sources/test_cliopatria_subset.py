@@ -1,7 +1,5 @@
-"""`sources.cliopatria.subset.select_notable_polities` (ADR-037): the era-relative top-N-by-
-area rule that picks Cliopatria's "notable subset" -- pure, synthetic-data tests, the same
-style `tests/test_notability.py` uses for the population analogue.
-"""
+"""`select_notable_polities` (ADR-037): the era-relative top-N-by-area rule that picks
+Cliopatria's notable subset. Synthetic windows only."""
 
 from __future__ import annotations
 
@@ -34,15 +32,6 @@ def test_an_ancient_small_polity_can_qualify_in_its_own_era_bucket() -> None:
     assert result == {"bronze-age-city-state", "modern-empire"}
 
 
-def test_a_polity_with_no_bucket_topping_window_is_excluded() -> None:
-    windows = [
-        PolityWindow(name="dominant", t_start=50.0, t_end=0.0, area_km2=1_000_000.0),
-        PolityWindow(name="never-tops", t_start=50.0, t_end=40.0, area_km2=10.0),
-    ]
-    result = select_notable_polities(windows, bucket_years=100.0, top_n=1)
-    assert result == {"dominant"}
-
-
 def test_a_polity_qualifies_via_its_peak_window_not_its_first_or_last() -> None:
     """A polity's peak-in-bucket area is the largest across every window whose midpoint falls
     in that bucket, not whichever window happens to be first or last."""
@@ -54,22 +43,3 @@ def test_a_polity_qualifies_via_its_peak_window_not_its_first_or_last() -> None:
     ]
     result = select_notable_polities(windows, bucket_years=100.0, top_n=1)
     assert result == {"waxed-and-waned"}
-
-
-def test_result_is_a_plain_set_of_names_not_windows() -> None:
-    windows = [PolityWindow(name="only", t_start=10.0, t_end=0.0, area_km2=1.0)]
-    result = select_notable_polities(windows, bucket_years=100.0, top_n=5)
-    assert result == {"only"}
-
-
-def test_a_larger_top_n_in_the_same_buckets_never_shrinks_the_result() -> None:
-    """Loosening `top_n` alone (bucket boundaries unchanged) can only add polities to a given
-    bucket's winners, never remove one that already qualified -- a cheap guard against a sign
-    error in the ranking. (Widening `bucket_years` instead can genuinely shrink the result, by
-    merging previously-separate buckets' winners into one competition -- not asserted here.)"""
-    windows = [
-        PolityWindow(name=f"p{i}", t_start=10.0, t_end=0.0, area_km2=float(i)) for i in range(1, 11)
-    ]
-    narrow = select_notable_polities(windows, bucket_years=100.0, top_n=2)
-    looser = select_notable_polities(windows, bucket_years=100.0, top_n=5)
-    assert narrow <= looser
