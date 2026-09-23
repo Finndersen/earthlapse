@@ -5,11 +5,16 @@
  * fixed at opacity 1, overlay at `mix` — never both faded at once), each cropped by
  * `object-fit: cover` at the `object-position` that reproduces its scene's focus-centred window
  * (`framing.ts`, ADR-045), with a CSS transform applying the portrait zoom (ADR-047) and standing
- * in for camera drift. No CSS filter is applied — `mix` is already the eased crossfade
- * alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole effect
- * (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
- * swapping to it, keeping its last decoded image up while the next one decodes; scenes ahead of
- * the current pair are prefetched and decoded before they are needed (`prefetch.ts`).
+ * in for camera drift. No CSS filter is applied to a full image — `mix` is already the eased
+ * crossfade alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole
+ * effect (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
+ * swapping to it, showing that scene's thumbnail, blurred, if it decodes first (ADR-051) and
+ * otherwise keeping its last decoded image up; scenes ahead of the current pair are prefetched and
+ * decoded before they are needed (`prefetch.ts`), and every thumbnail is.
+ *
+ * A thumbnail is the image's centre square, and `object-fit: cover` can only crop it, so in a box
+ * wider than that square it shows a tighter crop than the full image will; in a portrait box the
+ * two match.
  */
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
@@ -17,8 +22,12 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import { isAbortError } from '@/lib/imagePrefetcher'
 
 import type { DriftUniforms } from './drift'
-import { CENTRED_CROP, coverCss, coverTransform, FULL_WINDOW, type CoverCss, type SceneCrop } from './framing'
+import { CENTRED_CROP, centreSquareWindow, coverCss, coverTransform, FULL_WINDOW, type CoverCss, type SceneCrop } from './framing'
+import type { ThumbnailPrefetch } from './SceneCanvasView'
 import { sceneImageBytes } from './sceneImageBytes'
+
+/** Softens a thumbnail's upscale, as the WebGL renderer's blur does. */
+const THUMBNAIL_BLUR = 'blur(6px)'
 
 /** URLs this browser session has confirmed decode cleanly. Shared by both layers of every
  *  `SceneFallbackView` instance — see `useDecodedSrc`'s doc comment on why sharing the cache
@@ -26,69 +35,75 @@ import { sceneImageBytes } from './sceneImageBytes'
  *  at a boundary where a scene flips from overlay to base. */
 const decodedUrls = new Set<string>()
 
-function useDecodedSrc(targetUrl: string): string {
-  const [displayed, setDisplayed] = useState(targetUrl)
+function decodeOffDom(url: string, onDone: () => void): HTMLImageElement {
+  const image = new Image()
+  image.src = url
+  const mark = (): void => {
+    decodedUrls.add(url)
+    onDone()
+  }
+  if (typeof image.decode === 'function') {
+    image.decode().then(mark).catch(mark)
+  } else {
+    image.onload = mark
+    image.onerror = mark
+  }
+  return image
+}
 
-  if (targetUrl !== displayed && decodedUrls.has(targetUrl)) {
-    setDisplayed(targetUrl)
+interface DisplayedSrc {
+  src: string
+  /** Showing `thumbUrl` while `targetUrl` decodes. */
+  soft: boolean
+}
+
+function useDecodedSrc(targetUrl: string, thumbUrl: string): DisplayedSrc {
+  const [displayed, setDisplayed] = useState<DisplayedSrc>({ src: targetUrl, soft: false })
+  const [, setDecodedCount] = useState(0)
+
+  if (displayed.src !== targetUrl && decodedUrls.has(targetUrl)) {
+    setDisplayed({ src: targetUrl, soft: false })
+  } else if (displayed.src !== targetUrl && displayed.src !== thumbUrl && decodedUrls.has(thumbUrl)) {
+    setDisplayed({ src: thumbUrl, soft: true })
   }
 
   useEffect(() => {
-    decodedUrls.add(displayed)
+    if (!displayed.soft) decodedUrls.add(displayed.src)
   }, [displayed])
 
   useEffect(() => {
-    if (targetUrl === displayed || decodedUrls.has(targetUrl)) return undefined
-
+    if (displayed.src === targetUrl || decodedUrls.has(targetUrl)) return undefined
     let cancelled = false
-    const image = new Image()
-    image.src = targetUrl
-    const commit = (): void => {
-      decodedUrls.add(targetUrl)
-      if (!cancelled) setDisplayed(targetUrl)
+    const redraw = (): void => {
+      if (!cancelled) setDecodedCount((count) => count + 1)
     }
-    if (typeof image.decode === 'function') {
-      image.decode().then(commit).catch(commit)
-    } else {
-      image.onload = commit
-      image.onerror = commit
-    }
+    decodeOffDom(targetUrl, redraw)
+    if (!decodedUrls.has(thumbUrl)) decodeOffDom(thumbUrl, redraw)
     return () => {
       cancelled = true
     }
-  }, [targetUrl, displayed])
+  }, [targetUrl, thumbUrl, displayed])
 
   return displayed
 }
 
 /**
- * Fetches `decodeUrls`, then `fetchUrls` (`sceneImageBytes`), and decodes each of `decodeUrls`
- * off-DOM once its bytes arrive, the `<img>` request itself answered by the HTTP cache.
+ * Fetches the near thumbnails, `decodeUrls`, `fetchUrls` and then every other thumbnail
+ * (`sceneImageBytes`), and decodes each of `decodeUrls` and every thumbnail off-DOM once its bytes
+ * arrive, the `<img>` request itself answered by the HTTP cache.
  */
-function useScenePrefetch(decodeUrls: readonly string[], fetchUrls: readonly string[]): void {
+function useScenePrefetch(decodeUrls: readonly string[], fetchUrls: readonly string[], thumbUrls: ThumbnailPrefetch): void {
   useEffect(() => {
     const pending = (url: string): boolean => !decodedUrls.has(url)
-    sceneImageBytes.want([], [...decodeUrls.filter(pending), ...fetchUrls.filter(pending)])
+    sceneImageBytes.want([], [...thumbUrls.near, ...decodeUrls, ...fetchUrls, ...thumbUrls.all].filter(pending))
 
     let cancelled = false
     const images: HTMLImageElement[] = []
-    for (const url of decodeUrls.filter(pending)) {
+    for (const url of [...thumbUrls.near, ...decodeUrls, ...thumbUrls.all].filter(pending)) {
       sceneImageBytes
         .whenStored(url)
         .then(() => {
-          if (cancelled) return
-          const image = new Image()
-          image.src = url
-          images.push(image)
-          const mark = (): void => {
-            decodedUrls.add(url)
-          }
-          if (typeof image.decode === 'function') {
-            image.decode().then(mark).catch(mark)
-          } else {
-            image.onload = mark
-            image.onerror = mark
-          }
+          if (!cancelled) images.push(decodeOffDom(url, () => undefined))
         })
         .catch((error: unknown) => {
           if (!isAbortError(error)) console.error(error)
@@ -98,7 +113,7 @@ function useScenePrefetch(decodeUrls: readonly string[], fetchUrls: readonly str
       cancelled = true
       for (const image of images) image.src = ''
     }
-  }, [decodeUrls, fetchUrls])
+  }, [decodeUrls, fetchUrls, thumbUrls])
 }
 
 /** Width / height of the element's rendered box, or `null` until it has been laid out. */
@@ -128,12 +143,15 @@ function useBoxAspect(ref: RefObject<HTMLElement | null>): number | null {
 export interface SceneFallbackViewProps {
   baseUrl: string
   overlayUrl: string
+  baseThumbUrl: string
+  overlayThumbUrl: string
   baseCaption: string
   overlayCaption: string
   /** Scenes to decode ahead of need, most urgent first (`prefetch.ts`). */
   decodeUrls: readonly string[]
   /** Scenes whose bytes to fetch without decoding, most urgent first. */
   fetchUrls: readonly string[]
+  thumbUrls: ThumbnailPrefetch
   /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
    *  alone, `1` shows `overlayUrl` alone. */
   mix: number
@@ -149,33 +167,43 @@ export interface SceneFallbackViewProps {
 export function SceneFallbackView({
   baseUrl,
   overlayUrl,
+  baseThumbUrl,
+  overlayThumbUrl,
   baseCaption,
   overlayCaption,
   decodeUrls,
   fetchUrls,
+  thumbUrls,
   mix,
   fromDrift,
   toDrift,
   imageAspect,
   cropByUrl,
 }: SceneFallbackViewProps) {
-  const displayedBase = useDecodedSrc(baseUrl)
-  const displayedOverlay = useDecodedSrc(overlayUrl)
-  useScenePrefetch(decodeUrls, fetchUrls)
+  const displayedBase = useDecodedSrc(baseUrl, baseThumbUrl)
+  const displayedOverlay = useDecodedSrc(overlayUrl, overlayThumbUrl)
+  useScenePrefetch(decodeUrls, fetchUrls, thumbUrls)
   const baseRef = useRef<HTMLImageElement | null>(null)
   const boxAspect = useBoxAspect(baseRef)
-  const cssOf = (url: string, drift: DriftUniforms): CoverCss =>
-    boxAspect === null || !(imageAspect > 0)
-      ? { objectPosition: 'center', transform: coverTransform(drift, FULL_WINDOW) }
-      : coverCss(imageAspect, boxAspect, cropByUrl.get(url) ?? CENTRED_CROP, drift)
-  const baseCss = cssOf(displayedBase, fromDrift)
-  const overlayCss = cssOf(displayedOverlay, toDrift)
+  // A thumbnail layer crops its square around the full image's focus, re-expressed in the square.
+  const cssOf = ({ src, soft }: DisplayedSrc, sceneUrl: string, drift: DriftUniforms): CSSProperties => {
+    const crop = cropByUrl.get(soft ? sceneUrl : src) ?? CENTRED_CROP
+    const aspect = soft ? 1 : imageAspect
+    const focus = soft ? centreSquareWindow({ x: crop.focus[0], y: crop.focus[1], width: 0, height: 0 }, imageAspect) : null
+    const css: CoverCss =
+      boxAspect === null || !(imageAspect > 0)
+        ? { objectPosition: 'center', transform: coverTransform(drift, FULL_WINDOW) }
+        : coverCss(aspect, boxAspect, focus === null ? crop : { ...crop, focus: [clampUnit(focus.x), clampUnit(focus.y)] }, drift)
+    return soft ? { ...css, filter: THUMBNAIL_BLUR } : css
+  }
+  const baseCss = cssOf(displayedBase, baseUrl, fromDrift)
+  const overlayCss = cssOf(displayedOverlay, overlayUrl, toDrift)
 
   return (
     <>
       <img
         ref={baseRef}
-        src={displayedBase}
+        src={displayedBase.src}
         alt={baseCaption}
         data-testid="scene-base"
         style={{
@@ -185,7 +213,7 @@ export function SceneFallbackView({
         }}
       />
       <img
-        src={displayedOverlay}
+        src={displayedOverlay.src}
         alt={overlayCaption}
         data-testid="scene-overlay"
         style={{
@@ -196,6 +224,10 @@ export function SceneFallbackView({
       />
     </>
   )
+}
+
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value))
 }
 
 const layerStyle: CSSProperties = {
