@@ -3238,6 +3238,12 @@ narrower section before `'steady'` playback near the present), the same territor
 note above already deferred to, and outside a WebGL-gating pass's remit. Left as an open,
 accurately-described gap rather than re-asserting the retracted claim.
 
+> **Closed by ADR-050 (2026-09-23).** Steady mode now moves at a literal years-per-second rate
+> chosen on a 1 yr/s–1 Gyr/s picker, and entering it from the root near the present defaults to
+> 1 yr/s (the context default sizes the rate to `min(section span, t)`), so from `t = 60` the
+> playhead takes about a minute to reach the present instead of two frames. At a rate high enough
+> to cross such a scene too quickly, ADR-029's floor still gives it 0.35 s.
+
 **(c) Safari/iOS decode gap — `archosaurs`/`livestock` re-sourced as MP3, not transcoded.** The
 "re-review fixes" amendment above (finding 7) left this deferred with a documented reason
 (`normalise.py`'s "no `ffmpeg`/`sox`, `afconvert` must not become a hard pipeline dependency"
@@ -7064,3 +7070,99 @@ replace this for the deglaciation.
 
 **Rejected.** Publishing an elevation raster (a new `paleodem` output) for the lowstand — more
 payload and pipeline work than a rough look warrants.
+
+## ADR-050 — Steady playback at a literal years-per-second rate, on a detent picker
+
+**Status:** accepted — human-directed 2026-09-23. Amends ADR-016 (the speed range, and "applies
+identically to both modes"), ADR-024 (steady pacing in the selected section's scale) and ADR-029
+rule 4 (the "Time compressed" marker). Closes the open gap recorded after ADR-023 (the
+"steady-mode from the root section is fast enough to blow past a several-decade-wide scene
+unobserved" note in its once-trigger re-review amendment).
+
+**Context.** Steady mode moved at a constant velocity in the warped `u` of the selected section's
+scale (ADR-024), so "1x" meant a different number of years per second at every `t` and in every
+section: from `t = 100` at the root section even the slowest setting (0.25x) crossed the last
+hundred years in under a second. That is the gap left open after ADR-023: once-mode sounds never
+fired because nothing near the present was on screen long enough, and ADR-024's premise that a
+narrower section would be selected first was never enforced. The speed control was a native
+`<select>` of nine multipliers, awkward on a phone and shared by two modes whose rates mean
+different things.
+
+**Decision.**
+
+- **Steady mode's rate is literal.** `Playback` gains `yearsPerSecond`; `speed` is now scenes mode's
+  alone. `advanceSteadyPlayhead(t, dt, playback, territories?)` moves `t` by `yearsPerSecond × dt`
+  years, integrated in years directly rather than through a scale's `u` (a local-slope conversion
+  to `u` and back is a first-order approximation of the same thing, and needs section-edge
+  bookkeeping that years do not). Section, scale kind and knee no longer enter the step, so the
+  section-continuation loop is gone; `setT`'s section-following carries the view along as before.
+- **Detents.** Steady: a 1-2-5 sequence from 1 yr/s to 1 Gyr/s (28 detents). Scenes: 1/16× to 64× in
+  powers of two (11 detents). `timeline/playbackRates.ts` holds both tables, the log-nearest lookup,
+  the clamped no-wrap step rule the `[`/`]`/`-`/`=` keys share with the picker, and the labels.
+- **Context default.** Until the viewer picks a steady rate in the session, entering steady mode —
+  or selecting a section while in it — sets `yearsPerSecond` to `defaultSteadyRate(window, t)`: the
+  detent nearest `min(section span, t) / 120 s`. The span is capped at `t` so that near the present
+  at the root the default is sized to the last few centuries, not 4.6 Gyr. Two minutes gives 1 yr/s
+  in Modern and at the root near the present, 10–20 yr/s in the medieval and ancient sections,
+  ~100 yr/s across the Holocene, ~500 kyr/s across the Cretaceous and 50 Myr/s from the Hadean at
+  the root. Once the viewer picks a rate (picker, keys or the dev hook), the store's
+  `steadyRateChosen` keeps it across mode switches and section changes for the session; the scenes
+  multiplier is always kept. Playback carrying `t` across a section edge never changes the rate.
+- **ADR-029's floor stays, recomputed in years.** It is a photosensitivity limit on how often a
+  full-frame image changes, which does not depend on how the rate is specified, so it still makes
+  sense everywhere and still only ever slows: a territory `span` years wide dwells `span / rate`
+  seconds, and below `MIN_CUT_DWELL_SECONDS` it is crossed at `span / MIN_CUT_DWELL_SECONDS`
+  (`flooredSteadyRate`). What no longer applies is everything that depended on the section's
+  scale: the dwell no longer changes with the scale kind or knee, and the linear-scale nudge
+  problem ADR-029's re-review fixed cannot recur because nothing is measured in `u`. The regime
+  rules (crossfade ≥ 1.6 s, cut ≥ 0.35 s) use the same year-based dwell, and the wall-clock backstop
+  in `presentation.ts` is unchanged. At a high literal rate crossing a dense run (1 Myr/s into the
+  Holocene, say) the floor now does most of the pacing; that is its job.
+- **ADR-029 rule 4, amended: the floor shows on the rate readout, not a badge.** The "Time
+  compressed" badge and its reserved slot are removed. While the floor holds, the rate readout —
+  which always shows the actual measured rate, so it reads below the picker's chosen rate — turns
+  `--hud-accent` amber, and a visually hidden `role="status"` region inside the readout's
+  fixed-width slot says "Playback slowed for scenes". Its text toggles between that and `''`, so
+  each genuine transition into the floor is announced and nothing shifts. It is driven by the same
+  `steadyRegime.floored` as before.
+- **The picker.** `RateScroller` replaces the `<select>` in the same slot (46×43 px on desktop, the
+  `--transport-flank` width in the compact layouts, under the 44 px row height): a vertical drum
+  with the selected detent centred, its neighbours faint above and below, and the unit ("yr/s" or
+  "speed") beneath. Detents ascend top to bottom as on a picker drum, so dragging or scrolling up
+  brings a faster value to the centre. A drag follows the pointer and commits each detent it
+  crosses (18 px per detent); release snaps. The wheel steps once per notch or per 40 px of trackpad
+  travel; a tap on a neighbour steps to it. It is a `role="spinbutton"` with `aria-valuenow`, min,
+  max and a spelled-out `aria-valuetext`; ArrowUp/Down step, PageUp/Down move three, Home/End jump
+  to the ends, and those keys stop at the picker rather than reaching the timeline's section
+  shortcuts. `touch-action: none` keeps a vertical swipe from scrolling the page.
+- **Readout precision.** `formatRate` keeps two significant figures below 10 yr/s ("2.5 yr/s",
+  "0.13 yr/s"), so the smoothed reading of the 1 yr/s detent prints "1 yr/s" rather than
+  "< 1 yr/s"; only a rate under 0.01 yr/s prints as a bound.
+
+**Alternatives considered.**
+- **Keep a multiplier for steady mode and convert through the section's slope at `t`.** Rejected:
+  it keeps "1x" meaning a different rate everywhere, which is the problem.
+- **Remember the steady rate relative to the context default** (e.g. "two detents above the
+  default"), so it scales when the viewer moves from the Holocene to the Cretaceous. Rejected for
+  now as less predictable than "the rate I picked"; the re-derived default covers a viewer who
+  never touches the picker. Worth revisiting if a chosen 10 yr/s stranding someone in deep time
+  proves common.
+- **A horizontal slider.** Rejected: the slot beside the transport is 46 px wide, and a vertical
+  drum shows the neighbouring values in the space a slider would need for its track.
+- **Keep the badge alongside the amber readout.** Rejected by the human: the readout already sits
+  where the eye looks for the rate.
+
+**Consequences.**
+- `Playback` gains `yearsPerSecond`; `baseRate` is now used only by scenes mode outside its paced
+  segments. `steadyPacing`/`steadyFrameRegime` take a rate in years per second instead of a `u`
+  rate and a scale. `audio/loadPlan.ts` predicts the steady lookahead from the literal rate
+  (ignoring the floor, so it can only overestimate, clamped to the section).
+- The time store gains `steadyRateChosen` and `setYearsPerSecond`; `setPlaybackMode` and
+  `selectSection` apply the context default. `Experience.tsx` now calls only the setters whose
+  field changed, so a play/pause no longer re-sets the mode.
+- The dev hook gains `setPlaybackRate(rate)`, setting the active mode's rate.
+- Removed: `SPEED_OPTIONS`, `stepSpeed`, `SpeedSelect`, `TimeCompressedBadge` and its CSS, and
+  `Timeline`'s `timeCompressed` prop (now `rateFloored`). `--speed-select-width` is renamed
+  `--speed-control-width`.
+- QA shots that select the speed control as `.core select` need to target
+  `[role="spinbutton"]` instead.
