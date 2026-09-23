@@ -11,13 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://earthlapse.net"><img src="docs/images/readme/hero-cretaceous.webp" alt="Earthlapse at 68 million years ago: a Tyrannosaurus on a misty Cretaceous shoreline, with the paleogeographic globe top left, the ancestor portrait top right, the event feed, and the warped timeline along the bottom" width="100%"></a>
-  <br><em>68 million years ago: a photoreal scene, captioned, framed by the globe, your ancestor, the event feed and the timeline.</em>
-</p>
-
-<p align="center">
-  <a href="https://earthlapse.net"><img src="docs/images/readme/globe-fullscreen.webp" alt="The globe expanded to a full sphere 179 years ago, centred on Africa and Eurasia: the population-density overlay tints Europe, India and China, light-blue city markers carry name tags such as Sevastopol, Tashkent and Colombo, and orange migration arcs cross the sphere, with the density legend top right and the timeline below" width="100%"></a>
-  <br><em>179 years ago, globe expanded: HYDE population density, major cities as they appear, and migration arcs in flight.</em>
+  <a href="https://earthlapse.net"><img src="docs/images/readme/showcase.webp" alt="A ten-second loop: a Carboniferous coal swamp dissolves into the Cretaceous Tyrannosaurus shoreline, then into a Dutch Golden Age harbour while the timeline zooms into the Holocene, then the globe expands over the industrial age and turns from Africa towards Asia with city markers and migration arcs" width="100%"></a>
 </p>
 
 <p align="center"><a href="https://earthlapse.net"><strong>Open Earthlapse &rarr;</strong></a></p>
@@ -32,13 +26,19 @@ down to a single year, speed it up, slow it down, toggle layers.
 > **Status: in development.** The pipeline and viewer run end to end locally; see
 > [Local development](#local-development).
 
+<p align="center">
+  <a href="https://earthlapse.net"><img src="docs/images/readme/hero-cretaceous.webp" alt="Earthlapse at 68 million years ago: a Tyrannosaurus on a misty Cretaceous shoreline, with the paleogeographic globe top left, the ancestor portrait top right, the event feed, and the warped timeline along the bottom" width="100%"></a>
+  <br><em>68 million years ago: a photoreal scene, captioned, framed by the globe, your ancestor, the event feed and the timeline.</em>
+</p>
+
+<p align="center">
+  <a href="https://earthlapse.net"><img src="docs/images/readme/globe-fullscreen.webp" alt="The globe expanded to a full sphere 179 years ago, centred on Africa and Eurasia: the population-density overlay tints Europe, India and China, light-blue city markers carry name tags such as Sevastopol, Tashkent and Colombo, and orange migration arcs cross the sphere, with the density legend top right and the timeline below" width="100%"></a>
+  <br><em>179 years ago, globe expanded: HYDE population density, major cities as they appear, and migration arcs in flight.</em>
+</p>
+
 ---
 
 ## Features
-
-<p align="center">
-  <img src="docs/images/readme/showcase.webp" alt="A ten-second loop: a Carboniferous coal swamp dissolves into the Cretaceous Tyrannosaurus shoreline, then into a Dutch Golden Age harbour while the timeline zooms into the Holocene, then the globe expands over the industrial age and turns from Africa towards Asia with city markers and migration arcs" width="100%">
-</p>
 
 ### Photoreal scenes across deep time
 
