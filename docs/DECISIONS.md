@@ -7199,8 +7199,9 @@ WebP, ~4 KB, ~240 KB for all 71) made for the timeline pips.
   (`scene/sceneLayer.ts`): its full image if loaded, else its thumbnail. The requested pair binds
   as soon as both ends have one or the other; only with neither does the previous pair stay up,
   so the never-blank guarantee and the render-phase cache-hit bind are unchanged.
-- **Drawn soft, in place.** The shader samples a thumbnail layer through a 3×3 tent blur one
-  thumbnail texel wide, so the upscale reads as deliberately soft rather than blocky. A thumbnail
+- **Drawn soft, in place.** A thumbnail is softened once as it is uploaded (two 3×3 tent passes,
+  about one thumbnail texel), so the upscale reads as deliberately soft rather than blocky; a
+  per-fragment blur in the shader cost the software-rendered QA run ~1.5 s. A thumbnail
   is the image's centre square (`to_thumbnail_webp`), so it is sampled through the crop window
   re-expressed in that square (`framing.ts`'s `centreSquareWindow`); where a wide viewport reaches
   past the square the texture mirrors rather than smearing its edge. In a portrait viewport the

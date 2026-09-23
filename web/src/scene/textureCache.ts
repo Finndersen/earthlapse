@@ -40,12 +40,52 @@ async function fetchSceneTexture(url: string, onProgress?: (fraction: number) =>
   return texture
 }
 
-/** A thumbnail is the scene's centre square, so a wide viewport samples past its edges; mirroring
- *  continues the picture there instead of smearing its edge texels. */
+/** Two passes of a 3x3 tent, a softening about one thumbnail texel wide: bilinear upscaling alone
+ *  leaves the texel grid visible. Done once here rather than per fragment in the shader. */
+const THUMBNAIL_BLUR_PASSES = 2
+
+/** One 1-2-1 pass over RGBA `data` along x or y, edges mirrored. */
+function tentPass(data: Uint8ClampedArray, width: number, height: number, alongX: boolean): void {
+  const source = data.slice()
+  const length = alongX ? width : height
+  const step = alongX ? 4 : 4 * width
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4
+      const position = alongX ? x : y
+      const before = position === 0 ? i + step : i - step
+      const after = position === length - 1 ? i - step : i + step
+      for (let c = 0; c < 3; c++) data[i + c] = (source[before + c]! + 2 * source[i + c]! + source[after + c]!) / 4
+    }
+  }
+}
+
+/**
+ * A thumbnail pre-softened on a canvas. It is the scene's centre square, so a wide viewport
+ * samples past its edges; mirroring continues the picture there instead of smearing edge texels.
+ */
 async function fetchThumbnailTexture(url: string): Promise<THREE.Texture> {
-  const texture = await fetchSceneTexture(url)
+  const image = await fetchImage(url, undefined, sceneImageBytes.load)
+  const canvas = document.createElement('canvas')
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (context !== null && canvas.width > 2 && canvas.height > 2) {
+    context.drawImage(image, 0, 0)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height)
+    for (let pass = 0; pass < THUMBNAIL_BLUR_PASSES; pass++) {
+      tentPass(pixels.data, canvas.width, canvas.height, true)
+      tentPass(pixels.data, canvas.width, canvas.height, false)
+    }
+    context.putImageData(pixels, 0, 0)
+  }
+  const texture = new THREE.Texture(context === null ? image : canvas)
+  texture.colorSpace = THREE.NoColorSpace
+  texture.minFilter = THREE.LinearFilter
+  texture.generateMipmaps = false
   texture.wrapS = THREE.MirroredRepeatWrapping
   texture.wrapT = THREE.MirroredRepeatWrapping
+  texture.needsUpdate = true
   return texture
 }
 

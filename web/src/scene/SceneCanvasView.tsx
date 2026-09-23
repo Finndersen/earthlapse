@@ -40,9 +40,6 @@ import { useScenePair, type BoundSceneLayer } from './useScenePair'
 /** How long a scene's full image takes to fade in over its own thumbnail under `'crossfade'`. */
 export const SHARPEN_SECONDS = 0.4
 
-/** Thumbnails are 128 px square (`pipeline/transcode.py`'s `THUMBNAIL_SIZE`). */
-const THUMBNAIL_TEXEL = 1 / 128
-
 export interface SceneCanvasViewProps {
   baseUrl: string
   overlayUrl: string
@@ -265,7 +262,6 @@ function SceneQuad({ from, to, regime, mix, fromDrift, toDrift, imageAspect, fro
       uToThumb: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uFromSharp: { value: 1 },
       uToSharp: { value: 1 },
-      uThumbTexel: { value: new THREE.Vector2(THUMBNAIL_TEXEL, THUMBNAIL_TEXEL) },
       uMix: { value: 0 },
       uFromWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
       uToWindow: { value: new THREE.Vector4(0, 0, 1, 1) },

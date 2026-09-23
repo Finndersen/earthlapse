@@ -1490,15 +1490,20 @@ export default [
         await page.mouse.click(...arrival)
         await rafTicks(page, 3)
         await hook.ready()
+        // One round trip: each one waits out a software-rendered frame of the expanded globe.
+        const panel = await page.evaluate(() => {
+          const dialog = [...document.querySelectorAll('[role="dialog"]')].find((el) =>
+            [...el.querySelectorAll('h3')].some((heading) => heading.textContent?.trim() === 'Route'),
+          )
+          if (dialog === undefined) return null
+          const alpha = getComputedStyle(dialog).backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\)/)
+          return { bottom: dialog.getBoundingClientRect().bottom, alpha: alpha === null ? 1 : Number(alpha[1]) }
+        })
         const detail = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Route' }) })
-        arrivalOpensRoute = await detail.count()
-        if (arrivalOpensRoute > 0) {
-          const box = await detail.boundingBox()
-          arrivalPanelBottomInsetPx = DEFAULT_VIEWPORT.height - (box.y + box.height)
-          arrivalPanelSurfaceAlpha = await detail.evaluate((el) => {
-            const alpha = getComputedStyle(el).backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\)/)
-            return alpha === null ? 1 : Number(alpha[1])
-          })
+        if (panel !== null) {
+          arrivalOpensRoute = 1
+          arrivalPanelBottomInsetPx = DEFAULT_VIEWPORT.height - panel.bottom
+          arrivalPanelSurfaceAlpha = panel.alpha
         }
         await page.keyboard.press('Escape')
         await detail.waitFor({ state: 'detached', timeout: 5_000 })

@@ -16,10 +16,11 @@
  *    doesn't read as darker/muddier than either endpoint.
  *
  * Each layer is its full image (`uFrom`/`uTo`) or, until that loads, its thumbnail
- * (`uFromThumb`/`uToThumb`, ADR-051) under a small blur, so the upscale reads as soft rather than
- * blocky; `uFromSharp`/`uToSharp` fade from one to the other (0 thumbnail, 1 full). A thumbnail is
- * the image's centre square, so it samples through its own window (`uFromThumbWindow`), the crop
- * window re-expressed in the thumbnail's frame.
+ * (`uFromThumb`/`uToThumb`, ADR-051, pre-softened by `textureCache.ts` so the upscale reads as soft
+ * rather than blocky); `uFromSharp`/`uToSharp` fade from one to the other (0 thumbnail, 1 full). A
+ * thumbnail is the image's centre square, so it samples through its own window
+ * (`uFromThumbWindow`), the crop window re-expressed in the thumbnail's frame, computed only while
+ * a layer is not sharp.
  *
  * Scenes sample as their stored sRGB-encoded bytes (`textureCache.ts` uploads every texture
  * with `NoColorSpace`, not `SRGBColorSpace` — the GPU must not decode them on sample), so a
@@ -45,7 +46,6 @@ uniform sampler2D uFromThumb;
 uniform sampler2D uToThumb;
 uniform float uFromSharp;
 uniform float uToSharp;
-uniform vec2 uThumbTexel;
 uniform float uMix;
 uniform vec4 uFromWindow;
 uniform vec4 uToWindow;
@@ -69,22 +69,10 @@ vec2 sceneUV(vec2 uv, vec4 crop, float zoom, vec2 offset) {
   return vec2(image.x, 1.0 - image.y);
 }
 
-/** A 3x3 tent blur one thumbnail texel wide: bilinear upscaling alone leaves a visible texel grid. */
-vec4 softSample(sampler2D thumb, vec2 uv) {
-  vec4 sum = vec4(0.0);
-  for (int i = -1; i <= 1; i++) {
-    for (int j = -1; j <= 1; j++) {
-      float weight = (2.0 - abs(float(i))) * (2.0 - abs(float(j)));
-      sum += weight * texture2D(thumb, uv + vec2(float(i), float(j)) * uThumbTexel);
-    }
-  }
-  return sum / 16.0;
-}
-
 /** One layer's texel: the full image alone when sharp, so a settled scene stays pixel-exact. */
-vec4 layerSample(sampler2D full, sampler2D thumb, vec2 fullUV, vec2 thumbUV, float sharp) {
+vec4 layerSample(sampler2D full, sampler2D thumb, vec2 fullUV, vec4 thumbWindow, float zoom, vec2 offset, float sharp) {
   if (sharp >= 1.0) return texture2D(full, fullUV);
-  vec4 soft = softSample(thumb, thumbUV);
+  vec4 soft = vec4(texture2D(thumb, sceneUV(vUv, thumbWindow, zoom, offset)).rgb, 1.0);
   if (sharp <= 0.0) return soft;
   return mix(soft, texture2D(full, fullUV), sharp);
 }
@@ -103,22 +91,20 @@ vec3 linearToSrgb(vec3 c) {
 void main() {
   vec2 fromUV = sceneUV(vUv, uFromWindow, uFromZoom, uFromOffset);
   vec2 toUV = sceneUV(vUv, uToWindow, uToZoom, uToOffset);
-  vec2 fromThumbUV = sceneUV(vUv, uFromThumbWindow, uFromZoom, uFromOffset);
-  vec2 toThumbUV = sceneUV(vUv, uToThumbWindow, uToZoom, uToOffset);
 
   // Exact at both ends: the single sampled texel, untouched by the blend math below — so a
   // fully-settled scene (uMix 0 or 1, per sceneAt) is pixel-identical to a plain image.
   if (uMix <= 0.0) {
-    gl_FragColor = layerSample(uFrom, uFromThumb, fromUV, fromThumbUV, uFromSharp);
+    gl_FragColor = layerSample(uFrom, uFromThumb, fromUV, uFromThumbWindow, uFromZoom, uFromOffset, uFromSharp);
     return;
   }
   if (uMix >= 1.0) {
-    gl_FragColor = layerSample(uTo, uToThumb, toUV, toThumbUV, uToSharp);
+    gl_FragColor = layerSample(uTo, uToThumb, toUV, uToThumbWindow, uToZoom, uToOffset, uToSharp);
     return;
   }
 
-  vec3 fromLinear = srgbToLinear(layerSample(uFrom, uFromThumb, fromUV, fromThumbUV, uFromSharp).rgb);
-  vec3 toLinear = srgbToLinear(layerSample(uTo, uToThumb, toUV, toThumbUV, uToSharp).rgb);
+  vec3 fromLinear = srgbToLinear(layerSample(uFrom, uFromThumb, fromUV, uFromThumbWindow, uFromZoom, uFromOffset, uFromSharp).rgb);
+  vec3 toLinear = srgbToLinear(layerSample(uTo, uToThumb, toUV, uToThumbWindow, uToZoom, uToOffset, uToSharp).rgb);
   vec3 blended = linearToSrgb(mix(fromLinear, toLinear, uMix));
   gl_FragColor = vec4(blended, 1.0);
 }
