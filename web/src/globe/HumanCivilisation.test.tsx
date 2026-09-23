@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import type { ArrivalGlobeEffect, FeatureData, TimelineEvent } from '@/types/layer'
 
 import { buildArrivalIndex } from './arcs'
 import { cityRadiusPx, type CityAtTime } from './cities'
-import { cityLabelVisibility, cityTarget, resolveTracedIds } from './HumanCivilisation'
+import type { GlobeHitTarget } from './GlobeTooltip'
+import { activationFor, cityLabelVisibility, cityTarget, resolveTracedIds, tooltipHintFor } from './HumanCivilisation'
 
 // Same conventions arcs.test.ts's own `sphereMarkerVisibility` suite uses, since
 // `cityLabelVisibility` wraps that exact function for its limb half.
@@ -137,5 +138,47 @@ describe('resolveTracedIds', () => {
   it('returns a real traced chain for an actual arrival hover', () => {
     const traced = resolveTracedIds(index, 'descendant')
     expect([...traced]).toEqual(['descendant', 'origin'])
+  })
+})
+
+describe('activationFor', () => {
+  it('passes the activation handler through while expanded', () => {
+    const onActivateEvent = vi.fn()
+    const activate = activationFor(true, onActivateEvent)
+    activate?.('yamnaya-steppe-migration')
+    expect(onActivateEvent).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
+  })
+
+  it('binds no activation on the minimised orb, so a click there still expands the globe', () => {
+    expect(activationFor(false, vi.fn())).toBeNull()
+  })
+
+  it('binds no activation when the caller supplies no handler', () => {
+    expect(activationFor(true, undefined)).toBeNull()
+  })
+})
+
+describe('tooltipHintFor', () => {
+  const ARRIVAL: GlobeHitTarget = {
+    kind: 'arrival',
+    id: 'arrival:yamnaya-steppe-migration',
+    eventId: 'yamnaya-steppe-migration',
+    title: 'Yamnaya steppe migration',
+    description: 'd',
+    dateRange: '',
+    anchor: { lat: 48, lon: 20 },
+  }
+
+  it('asks for a click after a hover and for a second tap after a touch tap', () => {
+    expect(tooltipHintFor(ARRIVAL, false, true)).toBe('Click for details ›')
+    expect(tooltipHintFor(ARRIVAL, true, true)).toBe('Tap again for details ›')
+  })
+
+  it('shows no hint while activation is off', () => {
+    expect(tooltipHintFor(ARRIVAL, false, false)).toBeNull()
+  })
+
+  it('shows no hint for a city, which has no event to open', () => {
+    expect(tooltipHintFor({ ...ARRIVAL, kind: 'city', id: 'city:uruk', eventId: null }, false, true)).toBeNull()
   })
 })

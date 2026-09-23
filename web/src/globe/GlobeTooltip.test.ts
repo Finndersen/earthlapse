@@ -1,8 +1,8 @@
 import * as THREE from 'three'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { arrivalPresentationAt, arrivalTimingFor, buildArrivalArcGeometry } from './arcs'
-import { pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
+import { bindGlobeHitTest, pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { ARC_MAP_LIFT, ARC_SPHERE_LIFT, MARKER_MAP_LIFT, MARKER_SPHERE_LIFT } from './humanStyle'
 import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unfoldedLiftedPosition } from './projection'
 import type { ArrivalGlobeEffect } from '@/types/layer'
@@ -224,5 +224,134 @@ describe('sameHitTarget', () => {
     const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
     const b = cityCandidate('sydney-australia', 'Sydney', SYDNEY).content()
     expect(sameHitTarget(a, b)).toBe(false)
+  })
+})
+
+describe('bindGlobeHitTest', () => {
+  const ARRIVAL: GlobeHitTarget = {
+    kind: 'arrival',
+    id: 'arrival:yamnaya-steppe-migration',
+    eventId: 'yamnaya-steppe-migration',
+    title: 'Yamnaya steppe migration',
+    description: 'A long description the tooltip clamps to three lines.',
+    dateRange: '',
+    anchor: { lat: 48, lon: 20 },
+  }
+  const CITY: GlobeHitTarget = { ...ARRIVAL, kind: 'city', id: 'city:uruk', eventId: null, title: 'Uruk' }
+
+  function pointer(type: string, pointerType: 'mouse' | 'touch', x: number): Event {
+    const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: 0 })
+    Object.defineProperty(event, 'pointerType', { value: pointerType })
+    return event
+  }
+
+  function setup(hitAt: (x: number) => GlobeHitTarget | null, activate: ((eventId: string) => void) | null) {
+    const canvas = document.createElement('canvas')
+    const parent = document.createElement('div')
+    parent.appendChild(canvas)
+    const shown: { target: GlobeHitTarget | null; viaTouch: boolean }[] = []
+    const parentClicks: Event[] = []
+    parent.addEventListener('click', (event) => parentClicks.push(event))
+    const unbind = bindGlobeHitTest(canvas, {
+      resolve: (x) => hitAt(x),
+      onChange: (target, viaTouch) => shown.push({ target, viaTouch }),
+      touchHitRef: { current: false },
+      activateRef: { current: activate },
+    })
+    const tap = (pointerType: 'mouse' | 'touch', x: number, releaseX = x): void => {
+      canvas.dispatchEvent(pointer('pointerdown', pointerType, x))
+      canvas.dispatchEvent(pointer('pointerup', pointerType, releaseX))
+      canvas.dispatchEvent(pointer('click', pointerType, releaseX))
+    }
+    return { canvas, shown, parentClicks, unbind, tap }
+  }
+
+  it('opens the clicked arrival event on a mouse click', () => {
+    const activate = vi.fn()
+    const { canvas, tap } = setup(() => ARRIVAL, activate)
+    canvas.dispatchEvent(pointer('pointermove', 'mouse', 10))
+    tap('mouse', 10)
+    expect(activate).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
+  })
+
+  it('keeps an activating click from reaching the canvas container, so it never reads as a backdrop miss', () => {
+    const { tap, parentClicks } = setup(() => ARRIVAL, vi.fn())
+    tap('mouse', 10)
+    expect(parentClicks).toHaveLength(0)
+  })
+
+  it('lets a click on empty space through to the container', () => {
+    const activate = vi.fn()
+    const { tap, parentClicks } = setup(() => null, activate)
+    tap('mouse', 10)
+    expect(activate).not.toHaveBeenCalled()
+    expect(parentClicks).toHaveLength(1)
+  })
+
+  it('does not open anything for a mouse drag that releases over a target', () => {
+    const activate = vi.fn()
+    const { tap } = setup(() => ARRIVAL, activate)
+    tap('mouse', 10, 40)
+    expect(activate).not.toHaveBeenCalled()
+  })
+
+  it('does not open a city, which has no event of its own', () => {
+    const activate = vi.fn()
+    const { tap } = setup(() => CITY, activate)
+    tap('mouse', 10)
+    expect(activate).not.toHaveBeenCalled()
+  })
+
+  it('lets a click through untouched while no activation handler is bound, as on the minimised orb', () => {
+    const { tap, parentClicks } = setup(() => ARRIVAL, null)
+    tap('mouse', 10)
+    expect(parentClicks).toHaveLength(1)
+  })
+
+  it('reports whether the shown target came from a touch tap or a hover', () => {
+    const { canvas, tap, shown } = setup(() => ARRIVAL, vi.fn())
+    canvas.dispatchEvent(pointer('pointermove', 'mouse', 10))
+    expect(shown.at(-1)).toEqual({ target: ARRIVAL, viaTouch: false })
+    canvas.dispatchEvent(pointer('pointerleave', 'mouse', 10))
+    tap('touch', 10)
+    expect(shown.at(-1)).toEqual({ target: ARRIVAL, viaTouch: true })
+  })
+
+  it('shows the tooltip on a first touch tap and opens the event on a second tap on the same target', () => {
+    const activate = vi.fn()
+    const { tap, shown } = setup(() => ARRIVAL, activate)
+    tap('touch', 10)
+    expect(shown.at(-1)?.target?.id).toBe(ARRIVAL.id)
+    expect(activate).not.toHaveBeenCalled()
+    tap('touch', 12)
+    expect(activate).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
+  })
+
+  it('treats a touch tap on a different target as a first tap on that target', () => {
+    const activate = vi.fn()
+    const other: GlobeHitTarget = { ...ARRIVAL, id: 'arrival:bantu-expansion', eventId: 'bantu-expansion' }
+    const { tap } = setup((x) => (x < 50 ? ARRIVAL : other), activate)
+    tap('touch', 10)
+    tap('touch', 90)
+    expect(activate).not.toHaveBeenCalled()
+    tap('touch', 90)
+    expect(activate).toHaveBeenCalledExactlyOnceWith('bantu-expansion')
+  })
+
+  it('needs a fresh first tap after a tap on empty space dismisses the tooltip', () => {
+    const activate = vi.fn()
+    const { tap } = setup((x) => (x < 50 ? ARRIVAL : null), activate)
+    tap('touch', 10)
+    tap('touch', 90)
+    tap('touch', 10)
+    expect(activate).not.toHaveBeenCalled()
+  })
+
+  it('stops listening once unbound', () => {
+    const activate = vi.fn()
+    const { tap, unbind } = setup(() => ARRIVAL, activate)
+    unbind()
+    tap('mouse', 10)
+    expect(activate).not.toHaveBeenCalled()
   })
 })

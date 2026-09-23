@@ -346,6 +346,9 @@ export interface GlobeProps {
    *  arrives there as an already-rendered `ReactNode`).
    *  Optional: a caller that doesn't care (e.g. a test harness) can omit it. */
   onViewModeToggleHeightChange?: (heightPx: number) => void
+  /** Opens an event's full detail — a click, or a second tap, on an arrival arc or inhabited
+   *  marker while expanded. The caller looks the event up and shows it. */
+  onActivateEvent?: (eventId: string) => void
 }
 
 /** Whether `t` falls within the arrival layer's own domain — from the oldest arrival's dating
@@ -394,6 +397,7 @@ export function Globe({
   feedEventIds,
   hoveredFeedEventId,
   onViewModeToggleHeightChange,
+  onActivateEvent,
 }: GlobeProps) {
   // One throwaway canvas/context answers both "does WebGL work at all" and (below) "can this
   // GPU hold a T1 basemap texture" — `probeWebgl`'s own doc comment has the full story on why
@@ -840,6 +844,7 @@ export function Globe({
                 sceneMarker={sceneMarker}
                 reducedMotion={reducedMotion}
                 touchHitRef={humanTouchHitRef}
+                onActivateEvent={onActivateEvent}
                 cityLabelFadeWindowAt={cityLabelFadeWindowAt}
               />
             </GlobeRotatingGroup>

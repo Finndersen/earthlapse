@@ -497,6 +497,23 @@ function arrivalTarget(record: ArrivalRecord, kind: 'arrival' | 'inhabited'): Gl
   }
 }
 
+/** The handler the hit test activates targets through: none on the minimised orb, where a click
+ *  must still expand the globe rather than open a panel over it. */
+export function activationFor(
+  expanded: boolean,
+  onActivateEvent: ((eventId: string) => void) | undefined,
+): ((eventId: string) => void) | null {
+  return expanded ? (onActivateEvent ?? null) : null
+}
+
+/** The tooltip's "how to open this" line: only for a target with an event of its own, and only
+ *  while activation is on (expanded). Worded for the gesture that showed it — a touch tap has
+ *  already been spent showing the tooltip, so it asks for a second one. */
+export function tooltipHintFor(target: GlobeHitTarget | null, viaTouch: boolean, activatable: boolean): string | null {
+  if (!activatable || target === null || target.eventId === null) return null
+  return viaTouch ? 'Tap again for details ›' : 'Click for details ›'
+}
+
 /** Population with a thousands separator — the attested figure, never the interpolated one the
  *  marker is currently sized by (`cities.ts`'s own doc comment on why that distinction matters). */
 function formatPopulation(population: number): string {
@@ -685,6 +702,9 @@ export interface HumanCivilisationProps {
   /** Set while a touch press is on one of this layer's targets, so `Globe.tsx`'s orb tap-to-expand
    *  gesture stands down and the tap opens a tooltip instead. */
   touchHitRef: MutableRefObject<boolean>
+  /** Opens an event's full detail from its arrival arc or inhabited marker. Acted on only while
+   *  `expanded`: on the minimised orb a click expands the globe instead. */
+  onActivateEvent?: (eventId: string) => void
   /** A new city label's fade window in years, given the city's own first-appearance `t`
    *  (`cities.ts`'s `newCityLabels`, whose own doc comment explains why this arrives as a plain
    *  function rather than an `@/scene` import) — built from real playback pacing
@@ -708,11 +728,21 @@ export function HumanCivilisation({
   sceneMarker,
   reducedMotion,
   touchHitRef,
+  onActivateEvent,
   cityLabelFadeWindowAt,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
-  const hovered = useGlobeHitTest({ candidatesRef, unfold, radius, groupRef, enabled, touchHitRef })
+  const onActivate = activationFor(expanded, onActivateEvent)
+  const { target: hovered, viaTouch } = useGlobeHitTest({
+    candidatesRef,
+    unfold,
+    radius,
+    groupRef,
+    enabled,
+    touchHitRef,
+    onActivate,
+  })
 
   const index = useMemo(() => buildArrivalIndex(effectEvents), [effectEvents])
   const hoveredEventId = hovered?.eventId ?? null
@@ -933,6 +963,7 @@ export function HumanCivilisation({
       {cityLabels.length > 0 && <CityLabelField labels={cityLabels} unfold={unfold} radius={radius} groupRef={groupRef} />}
       <GlobeTooltip
         target={hovered}
+        hint={tooltipHintFor(hovered, viaTouch, onActivate !== null)}
         unfold={unfold}
         radius={radius}
         sphereLift={MARKER_SPHERE_LIFT}
