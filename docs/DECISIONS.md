@@ -7292,3 +7292,36 @@ policy does not reach the Cloudflare API or R2, and which should not hold produc
 - **Deploy credentials in cloud session environments.** Needs Cloudflare and R2 hosts allowed and
   a production token in every session; a `[deploy]` commit needs neither.
 - **A PR label trigger.** No PRs in the current workflow.
+
+## ADR-053 — HUD sparklines grow with `t`; the chart dock is removed
+
+**Status:** accepted — 2026-09-23. Supersedes DESIGN §8's "sparklines that expand into full-width
+charts docked to the timeline", ADR-017's undistorted chart dock, and the log/linear axis choice
+in `web/src/layers/chartAxis.ts`.
+
+**Context.** The only HUD sparkline shown is global population (CO₂ is hidden from the HUD), and it
+covers only the last ~12,000 years of a 4.6 Gyr timeline, so the click-to-expand chart dock
+existed for a sliver of the experience and was not discoverable. Population's ~1,600× range had
+also put both the sparkline and the chart on an automatic log axis, which flattens the thing
+worth seeing: the explosive modern rise.
+
+**Decision.**
+
+- **The chart dock is removed**: `LayerChart`, the store's `expandedChartLayerId`, the shell's chart
+  slot and its scrim. The sparkline is no longer a button. `chartable` stays in the manifest as the
+  "gets a HUD readout" flag.
+- **The sparkline's x-axis grows with `t`**: linear time from the layer's oldest sample to `t`,
+  with a floor of 2.5% of the domain so the first moments do not stretch a few years across the
+  full width. The playhead is always the trace's right end. Past the newest sample the last value
+  is held, as `ScalarReadout` already does.
+- **The y-axis is linear from zero to the peak reached so far.** The running peak sits at the top,
+  so the curve's shape shows growth relative to its own history, and the bend sharpens as the
+  industrial and modern rise arrives. Negative values extend the range below zero.
+- **One sample per viewBox unit** (~194), not 96, so a linear time axis still resolves the
+  1900→2015 surge.
+
+**Rejected.**
+- **A fixed 0-to-final-maximum y-axis.** It gives one dramatic reveal at the end, but the line
+  lies flat along the floor for ~95% of the human era.
+- **Keeping the log axis.** It shows early growth but hides the explosion that the sparkline
+  exists to show.

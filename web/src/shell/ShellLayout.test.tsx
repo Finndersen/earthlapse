@@ -20,7 +20,6 @@ beforeEach(() => {
 
 function renderShell({
   globeExpanded = false,
-  chart = <div>CHART_SLOT</div> as ReactNode,
   viewModeToggleHeightPx = 0,
   feedbackLink = undefined as ReactNode,
 } = {}) {
@@ -34,7 +33,6 @@ function renderShell({
       badge={<div>BADGE_SLOT</div>}
       ancestor={<div>ANCESTOR_SLOT</div>}
       caption={<div>CAPTION_SLOT</div>}
-      chart={chart}
       timeline={<div>TIMELINE_SLOT</div>}
       globeExpanded={globeExpanded}
       viewModeToggleHeightPx={viewModeToggleHeightPx}
@@ -56,7 +54,6 @@ describe('ShellLayout', () => {
       'BADGE_SLOT',
       'ANCESTOR_SLOT',
       'CAPTION_SLOT',
-      'CHART_SLOT',
       'TIMELINE_SLOT',
     ]) {
       expect(screen.getByText(text).textContent).toBe(text)

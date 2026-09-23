@@ -68,7 +68,6 @@ const ABOUT_BUTTON_SELECTOR = 'button[aria-label="About & credits"]'
 const POPULATION_READOUT_SELECTOR = '[data-testid="scalar-readout-population"]'
 const EVENT_BROWSER_SELECTOR = '[data-testid="event-browser"]'
 const EVENT_FEED_BROWSE_SELECTOR = '[data-testid="event-feed-browse"]'
-const LAYER_CHART_SVG_SELECTOR = '[data-testid="layer-chart-svg"]'
 const GLOBE_TOOLTIP_HINT_SELECTOR = '[data-testid="globe-tooltip-hint"]'
 const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeLabel"]`
 
@@ -206,7 +205,7 @@ function allRects(page, selector) {
 }
 
 /** The union box of every `<polyline>` inside `containerSelector`'s first match, `{0,0,0,0}` when
- *  there are none. Real SVG geometry, not a pixel scan: a sparkline or chart trace sits over the
+ *  there are none. Real SVG geometry, not a pixel scan: a sparkline trace sits over the
  *  photographic scene with no opaque backing, where a corner-sampled pixel diff reads the photo's
  *  own texture as content (measured 173px of "width" over an empty SVG). */
 async function polylineTraceBounds(page, containerSelector) {
@@ -972,8 +971,7 @@ export default [
       "100-106% of its drawn (alpha ≥ 0.5) limb; the scene canvas draws over at least half " +
       'the viewport; the timeline draws 135-175px tall; mode and scale ' +
       'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; the "All events" browser ' +
-      '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart; in the Holocene the ' +
-      'expanded population chart stays on screen, clear of the timeline, its curve 1000-1440px wide.',
+      '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart.',
     atRoot: async (page) => {
       const [mode, scale] = await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
       const trace = await polylineTraceBounds(page, `${POPULATION_READOUT_SELECTOR} svg`)
@@ -1008,19 +1006,6 @@ export default [
         railLabelOverlapCount: rail.overlapCount,
       }
     },
-    inSection: async (page) => {
-      const toggle = page.getByRole('button', { name: /^(Expand|Collapse) Global population chart$/ })
-      await toggle.click()
-      await rafTicks(page, 2)
-      const b = await boxesOf(page, { chart: '[data-testid="layer-chart"]', timeline: BOTTOM_CHROME_SELECTOR })
-      const curve = await polylineTraceBounds(page, LAYER_CHART_SVG_SELECTOR)
-      await toggle.click()
-      return {
-        chartOverlapsTimeline: rectsOverlap(b.chart, b.timeline) ? 1 : 0,
-        chartOffscreenPx: viewportOverflowPx(b.chart, DEFAULT_VIEWPORT),
-        chartCurveWidth: curve.width,
-      }
-    },
     expect: {
       sceneDrawnFraction: [0.5, 1],
       ringToLimbPct: [100, 106],
@@ -1034,9 +1019,6 @@ export default [
       railLabelCount: [1, 40],
       railLabelOverflowPx: [0, 0],
       railLabelOverlapCount: [0, 0],
-      chartOverlapsTimeline: [0, 0],
-      chartOffscreenPx: [-1440, 0],
-      chartCurveWidth: [1000, 1440],
       readoutGapPx: [4, 24],
       readoutCentreOffsetPx: [-3, 3],
     },

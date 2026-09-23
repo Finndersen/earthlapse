@@ -68,7 +68,7 @@ the page load and the globe's pointer interactions:
 | Shot | Guards |
 |---|---|
 | `loading-screen` | the loader is in the static HTML, animates only with motion allowed, steps its progress, and is gone once the shell mounts |
-| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser, population sparkline and chart against the timeline |
+| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser and population sparkline against the timeline |
 | `layout-1000x810-resting` | the same at narrow desktop, with the rate readout under the transport and the secondary controls on one row |
 | `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows and the rate picker inside its row, the feed's "All events" tap target and the sheet it opens, the tour's first step |
 | `phone-orb-touch-tap` | a finger tap on the phone's minimised orb expands it with `t` and the section unchanged (touch page) |
@@ -136,7 +136,7 @@ underneath:
 - `drawnBounds(page, selector)` (`measure.mjs`) screenshots an element and returns the bounds of
   pixels that differ from its sampled corners. Sound over a flat panel; worthless over the
   photographic scene, whose texture reads as content.
-- `polylineTraceBounds` measures an SVG trace (sparklines, charts) by its real `<polyline>` geometry.
+- `polylineTraceBounds` measures an SVG trace (sparklines) by its real `<polyline>` geometry.
 - `opacityMatteBounds` (`shots.mjs`) screenshots against a black and then a white backdrop with the
   scene hidden: the pair differs by exactly the pixel's transparency, so content colour cancels
   out. `globeBodyBounds` uses it to find the expanded globe's opaque body: the atmosphere glow is
@@ -173,7 +173,7 @@ right after load, failing fast naming this either way — re-run (without `--no-
 
 **State leaks.** Shots share one page load, so any state a shot can change and `applyState` does
 not reset leaks into the next. `applyState` closes every open dialog (detail panels, About, a
-cluster popover) by its own Close button, the event browser and any expanded chart. If a shot passes alone and fails in a batch, reproduce with
+cluster popover) by its own Close button, and the event browser. If a shot passes alone and fails in a batch, reproduce with
 `--no-sort --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
 
 ## Determinism and speed

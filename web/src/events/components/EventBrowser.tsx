@@ -9,7 +9,7 @@
  * scrubbable. Instead it docks itself above the timeline (`useTimelineBottomInset`
  * measures the real gap, on both desktop and a phone sheet) with no backdrop at all: nothing
  * outside its own box is inert. Escape closes it via its own `window` listener, the same pattern
- * `LayerChart`/the expanded globe already use for the same reason (`timeline/keyboard.ts`'s own
+ * the expanded globe already uses for the same reason (`timeline/keyboard.ts`'s own
  * doc comment); Tab is left alone, so it can reach the timeline below rather than being trapped.
  *
  * Search and tag filtering are `browse.ts`'s pure `browseEvents`. The list highlight tracks `t`:
