@@ -1081,19 +1081,24 @@ function landscapeExpandedShot(viewport, globeViewMode) {
       'never overlap, the drawn shape sits right of the column and above the timeline, nothing overlaps the timeline, ' +
       (globeViewMode === 'globe'
         ? 'and the drawn sphere is at least the height above the timeline less 16px (4px tolerance).'
-        : 'and the drawn map fills the box right of the column (height- or width-bound) to within 15% — the map\'s own fit margin and curved Equal Earth outline take the rest.'),
+        : 'and the drawn map fills the box right of the column (height- or width-bound) to within 15% — the map\'s own fit margin and curved Equal Earth outline take the rest.') +
+      ' Inside a section (so the breadcrumb draws), the crumb trail sits directly above the transport, clear of it and of the shape.',
     viewport,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     actions: async ({ page, hook }) => {
       await openGlobeAtDefaultZoom(page, hook)
       if (globeViewMode === 'map') await switchGlobeViewMode(page, hook, 'map')
+      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
+      await rafTicks(page, 2)
     },
     measure: async ({ page }) => {
       const column = {}
       for (const [name, selector] of Object.entries(columnSelectors)) column[name] = await boxOf(page, selector)
       const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
       const close = await boxOf(page, CLOSE_BUTTON_SELECTOR)
+      const crumbs = await boxOf(page, BREADCRUMB_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
       const columnRight = Math.max(...Object.values(column).map((b) => b.x + b.width))
 
       const restore = await hideAllButGlobeCanvas(page, [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR])
@@ -1102,6 +1107,7 @@ function landscapeExpandedShot(viewport, globeViewMode) {
         threshold: SPHERE_OVER_GLOW_THRESHOLD,
       })
       await restore()
+      await goToRootSection(page)
 
       const flags = {}
       for (const [name, box] of Object.entries(column)) {
@@ -1119,6 +1125,9 @@ function landscapeExpandedShot(viewport, globeViewMode) {
         availableHeightPx: timeline.y,
         sphereDeficitPx: timeline.y - 16 - shape.height,
         mapFillFraction: Math.max(shape.height / (timeline.y - 16), shape.width / boxRightOfColumn),
+        crumbsAboveCoreGapPx: core.y - (crumbs.y + crumbs.height),
+        overlap_crumbs_shape: rectsOverlap(crumbs, shape) ? 1 : 0,
+        overlap_crumbs_core: rectsOverlap(crumbs, core) ? 1 : 0,
         ...pairwiseOverlapFlags(column),
         ...flags,
       }
@@ -1129,6 +1138,9 @@ function landscapeExpandedShot(viewport, globeViewMode) {
       shapeAboveTimelinePx: [0, 400],
       overlap_close_shape: [0, 0],
       overlap_close_timeline: [0, 0],
+      crumbsAboveCoreGapPx: [0, 200],
+      overlap_crumbs_shape: [0, 0],
+      overlap_crumbs_core: [0, 0],
       ...sphereExpect,
       ...Object.fromEntries(
         Object.keys(columnSelectors).flatMap((name) => [
@@ -2042,9 +2054,10 @@ export default [
         toggleClearanceGapPx: toggle.y - (sphere.y + sphere.height),
         zoomClearanceGapPx: zoom.y - (sphere.y + sphere.height),
         toggleOverlapsZoom: rectsOverlap(toggle, zoom) ? 1 : 0,
+        toggleHeightPx: toggle.height,
       }
     },
-    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0] },
+    expect: { toggleClearanceGapPx: [4, 200], zoomClearanceGapPx: [4, 200], toggleOverlapsZoom: [0, 0], toggleHeightPx: [40, 48] },
   },
   {
     name: 'globe-feed-between-sphere-and-timeline-phone',

@@ -656,14 +656,14 @@
        the real gap above the controls row above it. */
     --feed-reserve: 39px;
     /* The Globe/Map toggle + zoom rocker row (`Globe.module.css`'s own phone `.viewModeGroup`/
-       `.zoomGroup` rule), sized to the taller of the two — the zoom rocker's own 38px pill (36px
-       buttons plus a 1px border top and bottom) — plus the real gap above the sphere. A literal
-       constant, the same device `--feed-reserve` already is, rather than a live measurement of
-       the toggle alone (`useViewModeToggleHeightReport`'s own doc comment in `Globe.tsx`): the
-       toggle pill is shorter than the zoom rocker sharing its row, so measuring it alone would
-       under-reserve. Measured at 390x844 (`scripts/qa/shots.mjs`'s
-       `globe-controls-row-clear-of-sphere-phone`). */
-    --controls-row-reserve: 44px;
+       `.zoomGroup` rule), sized to the taller of the two — the toggle's own ~40px pill, since its
+       own padding/font-size now sit it a touch above the zoom rocker's 38px (36px buttons plus a
+       1px border top and bottom) — plus the real gap above the sphere. A literal constant, the
+       same device `--feed-reserve` already is, rather than a live measurement of the toggle alone
+       (`useViewModeToggleHeightReport`'s own doc comment in `Globe.tsx`): a second, independent
+       row-height number here would drift from the toggle's own CSS the first time either changes.
+       Measured at 390x844 (`scripts/qa/shots.mjs`'s `globe-controls-row-clear-of-sphere-phone`). */
+    --controls-row-reserve: 46px;
     /* What the sphere/map must leave free at the bottom: both bands stacked, no double-count. */
     --bottom-overlay-reserve: calc(var(--controls-row-reserve) + var(--feed-reserve));
   }
@@ -847,10 +847,12 @@
 
 /* Short landscape: a phone held sideways, or any window under 500px tall and wider than it is
    tall (ADR-048). Neither the phone-portrait stack nor the desktop periphery fits in that height.
-   The time title stays centred at the top with an era shortcut either side of it; the globe orb
-   and the ancestor portrait fill the corners beside it as far down as the height allows; one row
-   holds the event strip (left) and the caption's title (right); the timeline runs beneath. The
-   layer readouts are hidden; the orb still expands the globe, which shows them. */
+   Collapsed, the time title stays centred at the top, its own top level with the About button
+   opposite, with the era shortcuts centred in a row beneath it — the desktop arrangement, not a
+   shortcut either side of the title; the globe orb and the ancestor portrait fill the corners
+   beside it as far down as the height allows; one row holds the event strip (left) and the
+   caption's title (right); the timeline runs beneath. The layer readouts are hidden; the orb
+   still expands the globe, which shows them. */
 @media (orientation: landscape) and (max-height: 500px) {
   .shell {
     --gutter: 16px;
@@ -900,27 +902,11 @@
     display: none;
   }
 
-  /* The time title sits in the middle column of its own three-column grid, the era shortcuts in
-     the two equal outer ones (`EraShortcuts.module.css` places each button through a subgrid), so
-     the title stays centred whatever either shortcut's width. */
-  .shell[data-globe-expanded='false'] .title {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    column-gap: 12px;
-  }
-
-  .shell[data-globe-expanded='false'] .title > :not(.eraShortcuts) {
-    grid-column: 2;
-  }
-
-  .shell[data-globe-expanded='false'] .eraShortcuts {
-    display: grid;
-    grid-template-columns: subgrid;
-    grid-row: 1;
-    grid-column: 1 / -1;
-    margin-top: 0;
-  }
+  /* Collapsed, `.title` stays the base rule's plain flex column (time/era, then the era
+     shortcuts beneath, centred) — the same arrangement desktop uses. That puts the heading's own
+     top flush with row 1's top, level with the About button opposite (both read `--hud-column-
+     top: 0`), rather than the era shortcuts alone claiming row 1 and pushing the heading into a
+     second row underneath it. */
 
   .ancestor {
     --orb-size: min(var(--landscape-portrait-size), 100cqw);

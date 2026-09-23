@@ -351,4 +351,31 @@
     padding: 0 6px;
     font-size: 9.5px;
   }
+
+  /* Expanded: the breadcrumb leaves its own row above the track — which the track no longer
+     needs to clear, so the sphere/map fit frame below gets that height back (`useChromeGap`'s own
+     flexible middle row absorbs `.timeline`'s smaller intrinsic height and pushes the timeline,
+     and so the frame's lower bound, further down) — and sits directly above the transport
+     instead, in the left column. Taken out of the grid's own row flow entirely (`position:
+     absolute`, against `.timeline` itself, `position: relative` while expanded —
+     `ShellLayout.module.css`'s own rule), so it costs the grid no row height at all. `.shell`'s
+     `[data-globe-expanded]` lives in a sibling module, so it's read directly off the DOM ancestor
+     via `:global()`, the same device `EraShortcuts.module.css` uses for the same reason. */
+  :global([data-globe-expanded='true']) .timeline {
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'core      edgePrev track    edgeNext'
+      'secondary edgePrev track    edgeNext';
+  }
+
+  :global([data-globe-expanded='true']) .sections {
+    position: absolute;
+    left: 0;
+    right: auto;
+    bottom: 100%;
+    margin-bottom: 8px;
+    justify-content: flex-start;
+    justify-self: auto;
+    max-width: var(--landscape-column-width, 220px);
+  }
 }

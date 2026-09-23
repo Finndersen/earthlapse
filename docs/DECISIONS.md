@@ -7028,3 +7028,8 @@ level with the About button leading the ancestor column.
   `SPHERE_DEFAULT_SCALE` and the rim and must move with them.
 - The earlier 844×390 QA shots that assumed the desktop layout now run at 844×560, the narrowest,
   shortest desktop window; `landscape-*` shots guard the new layout at 667×375, 844×390 and 932×430.
+- Follow-up: collapsed, the era shortcuts sit in one centred row under the title (the desktop
+  arrangement) instead of one either side of it, which also puts the title's own top back level
+  with the About button opposite; expanded, the breadcrumb sits above the transport in the left
+  column instead of its own row above the track, so the sphere/map fit frame gets that row's
+  height back; and the portrait Globe/Map toggle is sized nearer the zoom rocker's own height.

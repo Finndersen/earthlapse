@@ -88,24 +88,3 @@
   }
 }
 
-/* Short landscape, collapsed (ADR-048): one shortcut either side of the time title. The group
-   spans the title's three-column grid as a subgrid (`ShellLayout.module.css`), so each button
-   lands in an outer column and the title stays centred between them. */
-@media (orientation: landscape) and (max-height: 500px) {
-  :global([data-globe-expanded='false']) .group {
-    display: grid;
-    grid-template-columns: subgrid;
-    grid-column: 1 / -1;
-    align-items: center;
-  }
-
-  :global([data-globe-expanded='false']) .shortcut:first-child {
-    grid-column: 1;
-    justify-self: end;
-  }
-
-  :global([data-globe-expanded='false']) .shortcut:last-child {
-    grid-column: 3;
-    justify-self: start;
-  }
-}

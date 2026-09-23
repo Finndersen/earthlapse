@@ -671,10 +671,12 @@
     transform: none;
   }
 
-  /* Smaller than the desktop pill: at full size this crowded the zoom rocker sharing this row. */
+  /* Sized to land near the zoom rocker's own 38px pill height (`.zoomButton`'s 36px plus its
+     group's 1px border top and bottom) so the two read as one row, not two mismatched controls
+     sharing it. */
   .viewModeButton {
-    padding: 3px 9px;
-    font-size: 9.5px;
+    padding: 12px 20px;
+    font-size: 12px;
   }
 
   .zoomGroup {

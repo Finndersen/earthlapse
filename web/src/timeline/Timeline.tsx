@@ -64,8 +64,10 @@
  * buttons flank the track exactly as before; at phone-portrait width (the package's existing
  * `max-width: 760px` breakpoint) they instead join `.core`'s row, freeing the track's own
  * horizontal gutter and the transport's own vertical row for a full-width track. In a short
- * landscape window (ADR-048) the breadcrumb takes its own row above the track, and the transport
- * and the mode/scale/volume cluster stack in a column left of the track. On desktop the speed
+ * landscape window (ADR-048) the breadcrumb takes its own row above the track while collapsed;
+ * expanded, it instead sits directly above the transport, out of the grid's row flow so the track
+ * loses nothing to it. Either way the transport and the mode/scale/volume cluster stack in a
+ * column left of the track. On desktop the speed
  * select and rate readout hang off the transport (left of it and under it) so the play button
  * sits on the track's centre. Same DOM every way — only `grid-template-areas` and positioning
  * change — so there is no viewport-driven React branch to cause a hydration mismatch on this
