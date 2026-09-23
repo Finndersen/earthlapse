@@ -2858,54 +2858,44 @@ scenes:
   # The present day, t = 0 (events.yaml present), and the last scene of the timeline: Shenzhen,
   # designated China's first Special Economic Zone in May 1980, when it was a largely rural area of
   # about 30,000 people, and by 2025 a city of about 18.2 million, called "China's Silicon Valley"
-  # and home to Huawei, Tencent, DJI and Oppo (Wikipedia "Shenzhen"). Framed on the Shenzhen Bay
-  # waterfront, a composite of real landmarks rather than one surveyed sightline: Shenzhen Bay Park,
-  # 13 km along the bay's north shore across Nanshan and Futian, opened in full 6 August 2011, with
-  # mangroves and migrating birds (Wikipedia "Shenzhen Bay Park"); China Resources Headquarters,
-  # "Spring Bamboo", 392.5 m, 2018, Houhai, Nanshan (Wikipedia "China Resources Headquarters");
-  # Shenzhen Bay Sports Center, "Spring Cocoon", a perforated external steel skin on reclaimed land,
-  # opened April 2011 (Wikipedia "Shenzhen Bay Sports Center"); Shenzhen Bay Bridge, cable-stayed,
-  # opened 1 July 2007, from Nanshan to Ngau Hom Shek, Hong Kong (Wikipedia "Hong Kong–Shenzhen
-  # Western Corridor"). The left-to-right placement is composed, not surveyed, but `far_bank` holds
-  # only what really lies across the bay from the Houhai shore: the bridge and the New Territories
-  # hills. Ping An Finance Centre and the Futian skyline are left out because they stand about
-  # 10 km east, set back from the shore, not across the water, and a 599 m skyline would fight the
-  # composition's low far bank. The white CR HQ crown, the white "cocoon" shell and the mangroves
-  # carry the present-day read, not generic glass towers and a railed embankment. The drone is a generic small quadcopter: DJI is
-  # Shenzhen-based (Wikipedia "Shenzhen"), but Meituan's 2023 urban drone deliveries are sourced
-  # only to "first-tier cities" (Wikipedia "Meituan"), so no delivery service is claimed.
-  # "Futuristic" comes from real present-day architecture in waters-edge daylight, like every other
-  # scene in the chapter (VISUAL_SPEC §2 holds time of day within a chapter), not from a
-  # night-time LED light show or invented sci-fi forms.
+  # and home to Huawei, Tencent, DJI and Oppo (Wikipedia "Shenzhen"). Framed from the water of
+  # Shenzhen Bay looking along the Houhai shore, a composite of real Houhai landmarks rather than one
+  # surveyed sightline: China Resources Headquarters, "Spring Bamboo", 392.5 m, 2018 (Wikipedia
+  # "China Resources Headquarters"); Tencent Seafront Towers, two towers joined by three
+  # multi-storey link bridges, 2017 (Wikipedia "Tencent Seafront Towers"). The harbour basin is
+  # composed, not surveyed: the frame is built-up edge to edge, no shoreline nature. The drones are generic quadcopters: DJI is
+  # Shenzhen-based, but no delivery service is claimed.
+  #
+  # Composed for the phone crop, which shows about a quarter of the frame width (VISUAL_SPEC §3):
+  # the skybridge towers, drones and water-taxi share one narrow full-height band that
+  # `framing.focus` centres on, and there is no road or promenade to take over the lower half. "Futuristic" comes
+  # from real present-day architecture in waters-edge daylight (VISUAL_SPEC §2 holds time of day
+  # within a chapter), not from a night-time light show or invented forms.
   - id: shenzhen-bay-present
     t: 0.0
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Shenzhen Today"
-    caption: "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million, its bay crowded with glass supertalls and delivery drones."
+    caption: "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million — a forest of glass supertalls on its bay, drones crossing between the towers."
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 15  # rounded: present global mean
-    # Respecified 2026-09-15 at the user's request: "the shenzen scene should be replaced with a more
-    # futuristic looking part of the city with skyscrapers, electric cars, maybe robots, etc, making it
-    # look like a sci-fi city (there are parts of it that do)". Houhai / Shenzhen Bay Super Headquarters
-    # is that real part: everything below exists today, so no invented architecture.
     subject:
-      setting: the Houhai waterfront on Shenzhen Bay, Shenzhen, China, in the present day, seen from the edge of the bay looking along the shore towards the dense Houhai central business district
-      left_mass: a tight cluster of glass-and-steel supertalls rising close behind the waterfront, among them the 390-metre white China Resources Headquarters with fine vertical ribs tapering to a pointed bamboo-shoot crown, and the twin angular glass towers of a technology company's headquarters joined in mid-air by three enclosed glass skybridges
-      vegetation: planted palms and young banyan trees along the promenade, and a narrow fringe of dark-green mangroves at the water's edge
-      fauna: a few white egrets wading in the shallows by the mangroves
-      main_subject: a sweeping elevated pedestrian skywalk of white steel and glass curving between the towers above a waterfront boulevard, where a stream of electric cars and an electric bus with green number plates glide past; on the promenade in front, a small white wheeled autonomous delivery robot rolls between pedestrians and cyclists, and two small delivery drones cross the sky between the towers; no figure has a distinguishable face
-      ground: a wide paved promenade of pale stone with a low granite edge and inset lighting strips, running beside the mangrove fringe
-      water: the calm grey-green water of Shenzhen Bay, faintly rippled, reflecting the glass towers and skybridges
-      far_bank: further along the curving shore, more slender supertalls of the Shenzhen Bay Super Headquarters district rising in a hazy line
-      sky_and_light: a lightly hazy pale-blue subtropical sky with scattered cumulus; bright, warm, slightly diffused afternoon sunlight glinting off glass curtain walls, skybridges and car roofs
-      absent: [flying cars, holograms, invented science-fiction buildings, humanoid robots, night scene, neon-lit rain-soaked street, ruins, construction cranes, heavy smog hiding the skyline, petrol exhaust, traffic jams, advertising billboards, legible text, legible number plates, brand logos, identifiable faces]
-    # ADR-023 (v2): `traffic` `loop` above its 0.55 present-day ambient -- a busy megacity
-    # waterfront, heard as road traffic and city hum, never sirens.
+      setting: the heart of the Houhai headquarters district on Shenzhen Bay, Shenzhen, China, in the present day, one of the densest clusters of new supertall towers on Earth, packed right to the edge of a narrow urban harbour basin
+      left_mass: the 390-metre white China Resources Headquarters tower, sheathed in fine white vertical ribs that taper to a pointed bamboo-shoot crown, pressed shoulder to shoulder with faceted blue-silver glass supertalls rising straight from a sheer granite quay wall, filling the whole left of the frame with towers, their glass podiums lit from within
+      vegetation: none; hard stone, steel and glass only
+      fauna: none
+      main_subject: two angular faceted glass skyscrapers of a technology company's headquarters standing side by side just right of centre, rising almost to the top of the frame, joined high up by three enclosed multi-storey glass skybridges stacked one above another; a glass-walled elevated pedestrian skywalk sweeps between their podiums at the waterline, several small white delivery drones in flight among the towers, and a sleek white electric water-taxi gliding across the basin below; no figure has a distinguishable face
+      ground: a sheer, clean-cut granite quay wall with inset lighting strips, lining the whole basin
+      water: the flat, dark, glassy water of a narrow harbour basin enclosed by towers on every side, mirroring the glass facades and skybridges in sharp reflections
+      far_bank: across the basin, instead of a low shore, an unbroken wall of slender glass supertalls of the Shenzhen Bay Super Headquarters district, dozens of towers of varied heights crowding the horizon, some still topped out with tower cranes
+      sky_and_light: a clear, lightly hazy pale-blue subtropical sky; bright, crisp afternoon sunlight flashing off the glass curtain walls, the white ribs of the tall tower and the skybridges
+      absent: [trees, mangroves, grass, birds, beaches, natural shoreline, roads, cars, traffic jams, flying cars, holograms, invented science-fiction buildings, humanoid robots, night scene, neon, rain, ruins, heavy smog hiding the skyline, advertising billboards, legible text, brand logos, identifiable faces]
+    # ADR-023 (v2): `traffic` `loop` above its 0.55 present-day ambient -- a megacity
+    # waterfront, heard as distant traffic and city hum, never sirens.
     sound: {stem: traffic, mode: loop, gain: 0.9}
     # ADR-034: Shenzhen Bay (Houhai), China. t = 0 sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 22.4800, lon: 113.9300, label: "Shenzhen Bay, China"}
-    framing: {focus: [0.66, 0.6], pan: 180}
-    pin: {asset_digest: "7381960301cd6f6e", path: "data/candidates/shenzhen-bay-present/a350076bdc37326f/01-7381960301cd6f6e.jpg"}
+    framing: {focus: [0.52, 0.45], pan: 180}
+    pin: {asset_digest: "4b78fbf58f08c131", path: "data/candidates/shenzhen-bay-present/6cb4062afd77088d/03-4b78fbf58f08c131.jpg"}
