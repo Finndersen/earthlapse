@@ -53,8 +53,8 @@ make deploy                                    # from a workstation with .env
 
 The `deploy` workflow (`.github/workflows/deploy.yml`) runs on a push to `main` whose head commit
 message contains `[deploy]`, on a pushed `v*` tag, and on `workflow_dispatch` — the Actions tab's
-"Run workflow", or the GitHub API, which is how a Claude Code cloud session deploys without holding
-any Cloudflare credential. Runs never overlap. A tag is the way to name a release you may want to
+"Run workflow". A Claude Code cloud session deploys with a `[deploy]` commit, holding no Cloudflare
+credential; the Claude GitHub App cannot dispatch workflows. Runs never overlap. A tag is the way to name a release you may want to
 roll back to: running the workflow on an older tag redeploys it, and R2 still
 holds that version's media because `sync-media.sh` only ever adds objects.
 

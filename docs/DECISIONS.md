@@ -7263,8 +7263,8 @@ policy does not reach the Cloudflare API or R2, and which should not hold produc
   runner, credentials from the `production` environment's secrets. There is no CI-only deploy path.
 - **Triggers.** A push to `main` whose head commit message contains `[deploy]`; a pushed `v*` tag;
   `workflow_dispatch`. Solo development pushes straight to `main`, so the gate is on the commit, not
-  a PR. A cloud session deploys by dispatching the workflow through the GitHub API, holding no
-  Cloudflare credential itself. Runs share one concurrency group and never overlap.
+  a PR. A cloud session deploys by pushing a `[deploy]` commit, holding no Cloudflare credential
+  itself; the Claude GitHub App has no permission to dispatch workflows. Runs share one concurrency group and never overlap.
 - **Preflight's gate is ancestry, not branch name.** A runner checks out a detached HEAD, so
   "on branch main" became "HEAD is an ancestor of `origin/main`" — which also admits an older tag as
   a rollback and still refuses an unpushed commit.
@@ -7280,5 +7280,5 @@ policy does not reach the Cloudflare API or R2, and which should not hold produc
 
 **Rejected.**
 - **Deploy credentials in cloud session environments.** Needs Cloudflare and R2 hosts allowed and
-  a production token in every session; dispatching the workflow needs neither.
+  a production token in every session; a `[deploy]` commit needs neither.
 - **A PR label trigger.** No PRs in the current workflow.
