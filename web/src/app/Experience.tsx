@@ -18,7 +18,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { SoundToggle, useAudioEngine } from '@/audio'
-import { EventBrowser, EventDetailPanel, EventFeed, EventTagLegend, placementT, useIsCompactViewport } from '@/events'
+import {
+  adjacentEvent,
+  EventBrowser,
+  EventDetailPanel,
+  EventFeed,
+  EventTagLegend,
+  placementT,
+  useIsCompactViewport,
+  type BrowseEventsFilters,
+} from '@/events'
 import { buildArrivalIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
@@ -287,9 +296,14 @@ export function Experience() {
   // any event overlay is already open, so a second press can't stack a duplicate dialog over the
   // first.
   const eventOverlayOpen = eventBrowserOpen || detailEventId !== null
+  // Whether the open detail panel came from a browser row, so closing it goes back to the list
+  // (with the search and tags it was left with) rather than out of both.
+  const [detailReturnsToBrowser, setDetailReturnsToBrowser] = useState(false)
+  const browserFilters = useRef<BrowseEventsFilters>({ query: '', tags: [] })
   const openEventBrowser = useCallback((): void => {
     if (eventOverlayOpen) return
     browserHold.pause()
+    browserFilters.current = { query: '', tags: [] }
     setEventBrowserOpen(true)
   }, [eventOverlayOpen, browserHold])
 
@@ -522,6 +536,7 @@ export function Experience() {
 
   const openEventDetail = (event: TimelineEvent, members: readonly TimelineEvent[]): void => {
     detailHold.pause()
+    setDetailReturnsToBrowser(false)
     setDetailEventId(event.id)
     setDetailMemberIds(members.map((member) => member.id))
   }
@@ -551,15 +566,22 @@ export function Experience() {
   }
 
   const closeEventDetail = (): void => {
+    if (detailReturnsToBrowser) {
+      openEventBrowserFromDetail()
+      return
+    }
     setDetailEventId(null)
     setDetailMemberIds([])
     detailHold.resume()
   }
 
-  // Opened from the detail panel's own "All events" action: replaces it rather than layering
-  // over it, carrying the "was playing before any overlay opened" fact forward from the detail
-  // panel's hold rather than resuming (the panel already paused).
+  // Opened from the detail panel's own "All events" action, or by closing a panel a browser row
+  // opened: replaces it rather than layering over it, carrying the "was playing before any overlay
+  // opened" fact forward from the detail panel's hold rather than resuming (the panel already
+  // paused). Back to a browser row's list, it keeps that list's search and tags.
   const openEventBrowserFromDetail = (): void => {
+    if (!detailReturnsToBrowser) browserFilters.current = { query: '', tags: [] }
+    setDetailReturnsToBrowser(false)
     browserHold.adopt(detailHold.release())
     setDetailEventId(null)
     setDetailMemberIds([])
@@ -580,6 +602,7 @@ export function Experience() {
     setEventBrowserOpen(false)
     browserHold.release()
     detailHold.release()
+    setDetailReturnsToBrowser(true)
     setDetailEventId(event.id)
     setDetailMemberIds([event.id])
   }
@@ -739,16 +762,30 @@ export function Experience() {
             // playhead away from the place the viewer just asked to see.
             setT(placementT(detailEvent))
             detailHold.release()
+            setDetailReturnsToBrowser(false)
             setDetailEventId(null)
             setDetailMemberIds([])
           }}
           onOpenBrowser={openEventBrowserFromDetail}
           arrivalChainFor={arrivalChainFor}
           onOpenEvent={openLinkedEventDetail}
+          onStep={(direction) => {
+            const neighbour = adjacentEvent(manifest.events, detailEvent.id, direction)
+            if (neighbour) openLinkedEventDetail(neighbour.id)
+          }}
         />
       )}
       {eventBrowserOpen && (
-        <EventBrowser events={manifest.events} t={t} onClose={closeEventBrowser} onActivate={activateBrowserEvent} />
+        <EventBrowser
+          events={manifest.events}
+          t={t}
+          onClose={closeEventBrowser}
+          onActivate={activateBrowserEvent}
+          initialFilters={browserFilters.current}
+          onFiltersChange={(filters) => {
+            browserFilters.current = filters
+          }}
+        />
       )}
       {captionDetailScene && (
         <Panel label={captionDetailScene.title} onClose={closeCaptionDetail}>

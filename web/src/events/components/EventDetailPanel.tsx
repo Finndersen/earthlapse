@@ -24,6 +24,9 @@
  * element, renders exactly as a lone event's card always has. A digest lists every member in
  * full rather than collapsing to the headline alone, since the point of opening it is to read
  * the events the card's "+k more" badge stood in for.
+ *
+ * `onStep`, when given, moves the panel to the neighbouring event: a swipe left for the next (newer),
+ * a swipe right for the previous (older), in the "All events" list's order.
  */
 
 import { useId } from 'react'
@@ -32,8 +35,10 @@ import { Panel } from '@/shell'
 import { formatGeoTime, formatTimeRange } from '@/timeline'
 import type { ArrivalGlobeEffect, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
 
+import type { EventStep } from '../browse'
 import { formatEventDate } from '../placement'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
+import { useSwipe } from '../useSwipe'
 import styles from './EventDetailPanel.module.css'
 
 export interface EventDetailPanelProps {
@@ -58,6 +63,8 @@ export interface EventDetailPanelProps {
   /** Opens another event in this panel's place — a chain link in the Route section. Omitted,
    *  the chain is plain text. */
   onOpenEvent?: (eventId: string) => void
+  /** Opens the neighbouring event in this panel's place. Omitted, a swipe does nothing. */
+  onStep?: (direction: EventStep) => void
 }
 
 /** One earlier arrival in a route's chain. */
@@ -79,32 +86,36 @@ export function EventDetailPanel({
   onOpenBrowser,
   arrivalChainFor,
   onOpenEvent,
+  onStep,
 }: EventDetailPanelProps) {
+  const swipe = useSwipe(onStep && ((direction) => onStep(direction === 'left' ? 'newer' : 'older')))
   const route: RouteProps = { arrivalChainFor, onOpenEvent }
   const digestMembers = members !== undefined && members.length > 1 ? members : null
   const label = digestMembers !== null ? `${event.label} +${digestMembers.length - 1} more` : event.label
 
   return (
     <Panel label={label} onClose={onClose} className={styles.panel}>
-      {digestMembers !== null ? (
-        <ul className={styles.memberList}>
-          {digestMembers.map((member) => (
-            <li key={member.id} className={styles.member}>
-              <p className={styles.memberLabel}>{member.label}</p>
-              <EventDetailBody event={member} route={route} />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <EventDetailBody event={event} route={route} />
-      )}
+      <div className={styles.stepArea} data-testid="event-detail-step-area" {...swipe}>
+        {digestMembers !== null ? (
+          <ul className={styles.memberList}>
+            {digestMembers.map((member) => (
+              <li key={member.id} className={styles.member}>
+                <p className={styles.memberLabel}>{member.label}</p>
+                <EventDetailBody event={member} route={route} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EventDetailBody event={event} route={route} />
+        )}
 
-      <button type="button" className={styles.showOnTimeline} onClick={onShowOnTimeline}>
-        Show on timeline
-      </button>
-      <button type="button" className={styles.allEvents} onClick={onOpenBrowser}>
-        All events
-      </button>
+        <button type="button" className={styles.showOnTimeline} onClick={onShowOnTimeline}>
+          Show on timeline
+        </button>
+        <button type="button" className={styles.allEvents} onClick={onOpenBrowser}>
+          All events
+        </button>
+      </div>
     </Panel>
   )
 }

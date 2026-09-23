@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { TimelineEvent } from '@/types/layer'
 
-import { browseEvents, matchesEventQuery, nearestBrowseEventIndex } from './browse'
+import { adjacentEvent, browseEvents, matchesEventQuery, nearestBrowseEventIndex } from './browse'
 
 function event(id: string, overrides: Partial<TimelineEvent> = {}): TimelineEvent {
   return { id, label: id, tMin: 0, tMax: 0, importance: 0.5, description: '', citation: '', ...overrides }
@@ -75,4 +75,15 @@ describe('nearestBrowseEventIndex', () => {
     expect(nearestBrowseEventIndex(sorted, 0)).toBe(2)
   })
 
+})
+
+describe('adjacentEvent', () => {
+  const events = [event('recent', { tMin: 10, tMax: 10 }), event('old', { tMin: 2e9, tMax: 2e9 }), event('mid', { tMin: 5e6, tMax: 5e6 })]
+
+  it('steps along time order, not input order, and stops at either end', () => {
+    expect(adjacentEvent(events, 'mid', 'newer')?.id).toBe('recent')
+    expect(adjacentEvent(events, 'mid', 'older')?.id).toBe('old')
+    expect(adjacentEvent(events, 'recent', 'newer')).toBeNull()
+    expect(adjacentEvent(events, 'old', 'older')).toBeNull()
+  })
 })

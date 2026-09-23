@@ -97,8 +97,11 @@ const SparklineBody = memo(function SparklineBody({ layer, t }: SparklineProps) 
       aria-label={`${layer.name} sparkline`}
       style={{ display: 'block', overflow: 'visible' }}
     >
-      {segments.map((seg, i) => (
-        <polyline key={i} className={styles.sparkLine} points={seg.map((p) => `${x(p.t)},${y(p.value)}`).join(' ')} />
+      {segments.map((seg) => seg.map((p) => `${x(p.t)},${y(p.value)}`).join(' ')).map((points, i) => (
+        <g key={i}>
+          <polyline className={styles.sparkHalo} points={points} />
+          <polyline className={styles.sparkLine} points={points} />
+        </g>
       ))}
       {playheadValue !== null && <circle className={styles.sparkDot} cx={x(t)} cy={y(playheadValue.value)} r={2.25} />}
     </svg>

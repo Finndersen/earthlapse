@@ -168,7 +168,7 @@
 
 /* Narrow desktop: the readout sits centred under the transport (`Timeline.module.css`'s matching
    query), so its text is centred in the slot too. */
-@media (min-width: 761px) and (max-width: 1199px) and (min-height: 501px) {
+@media (min-width: 761px) and (max-width: 1079px) and (min-height: 501px) {
   .rateReadout {
     text-align: center;
   }

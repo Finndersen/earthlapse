@@ -52,6 +52,17 @@
 
 /* --------------------------------------------------------------------------- sparkline */
 
+/* A dark stroke under the trace, so the line keeps its contrast where it runs over bright sky
+   past the edge of the readout scrim. */
+.sparkHalo {
+  fill: none;
+  stroke: rgba(3, 4, 6, 0.6);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
 .sparkLine {
   fill: none;
   stroke: currentColor;

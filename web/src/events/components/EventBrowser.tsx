@@ -45,7 +45,7 @@ import {
 
 import type { EventTag, GeoTime, TimelineEvent } from '@/types/layer'
 
-import { browseEvents, browseGroupSection, nearestBrowseEventIndex } from '../browse'
+import { browseEvents, browseGroupSection, nearestBrowseEventIndex, type BrowseEventsFilters } from '../browse'
 import { formatEventDate, placementT } from '../placement'
 import { buildRailEntries, declutterRailLabels, railEntryAtFraction } from '../rail'
 import { EVENT_TAG_PALETTE } from '../tagPalette'
@@ -61,6 +61,11 @@ export interface EventBrowserProps {
   /** A row was clicked, tapped or Enter-ed — the caller jumps `t` to it and shows its detail
    *  card, closing this browser. The only thing in this component that ever changes `t`. */
   onActivate: (event: TimelineEvent) => void
+  /** The search and tag selection to open with — how the caller brings a viewer back to the list
+   *  they left. Omitted, it opens unfiltered. */
+  initialFilters?: BrowseEventsFilters
+  /** Reports every change to the search or tag selection, for the caller to hand back later. */
+  onFiltersChange?: (filters: BrowseEventsFilters) => void
 }
 
 const ALL_TAGS = Object.keys(EVENT_TAG_PALETTE) as EventTag[]
@@ -69,14 +74,15 @@ function rowId(eventId: string): string {
   return `event-browser-row-${eventId}`
 }
 
-export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserProps) {
-  const [query, setQuery] = useState('')
-  const [activeTags, setActiveTags] = useState<EventTag[]>([])
+export function EventBrowser({ events, t, onClose, onActivate, initialFilters, onFiltersChange }: EventBrowserProps) {
+  const [query, setQuery] = useState(initialFilters?.query ?? '')
+  const [activeTags, setActiveTags] = useState<EventTag[]>(() => [...(initialFilters?.tags ?? [])])
   const [activeIndex, setActiveIndex] = useState(0)
   const [railDragLabel, setRailDragLabel] = useState<string | null>(null)
   // Tracked separately from `hasPointerCapture` (not implemented in every test environment, and
   // the drag bubble needs this as render state regardless).
   const [railDragging, setRailDragging] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const railRef = useRef<HTMLDivElement>(null)
@@ -103,6 +109,10 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
   }, [])
 
   const results = useMemo(() => browseEvents(events, { query, tags: activeTags }), [events, query, activeTags])
+  useEffect(() => {
+    onFiltersChange?.({ query, tags: activeTags })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, activeTags])
   const railEntries = useMemo(() => buildRailEntries(results), [results])
   // Which entries' text actually gets drawn — deep-time sections can pack several entries into a
   // few px of the rail (`rail.ts`'s own doc comment); every entry still gets a tick regardless.
@@ -120,8 +130,11 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
     listRef.current?.querySelector<HTMLElement>(`[data-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
 
+  // Focus the search box with a mouse, where typing and the arrow keys start there; on a touch
+  // screen focusing an input opens the on-screen keyboard over the list, so focus the panel.
   useEffect(() => {
-    searchRef.current?.focus()
+    const touch = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+    ;(touch ? panelRef.current : searchRef.current)?.focus()
   }, [])
 
   useEffect(() => {
@@ -189,7 +202,7 @@ export function EventBrowser({ events, t, onClose, onActivate }: EventBrowserPro
   const panelStyle = { '--browser-bottom-inset': `${bottomInset}px` } as CSSProperties
 
   return (
-    <div className={styles.panel} style={panelStyle} role="dialog" aria-label="All events" data-testid="event-browser">
+    <div ref={panelRef} className={styles.panel} style={panelStyle} tabIndex={-1} role="dialog" aria-label="All events" data-testid="event-browser">
       <div className={styles.header}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>All events</h2>

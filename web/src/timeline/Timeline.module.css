@@ -96,8 +96,7 @@
    that label's height, so the pills, not the whole cluster, sit on the row's centre line with
    the breadcrumb and transport. On desktop its width stops short of the rate readout hanging into
    this column, the way `.sections` stops short of the speed select, leaving the readout the same
-   gap on its right as on its left; under 1200px wide, where that no longer leaves all three one
-   line, the readout moves under the transport and the cluster takes the whole column. */
+   gap on its right as on its left (narrow desktop: see the query below). */
 .secondary {
   grid-area: secondary;
   display: flex;
@@ -123,7 +122,7 @@
 
 /* `RateReadout`. On desktop the row is out of flow just right of the forward button, centred on
    the buttons, so it is only `--rate-readout-width` wide and showing it moves nothing; narrower
-   than 1200px it hangs centred under them instead (below). The phone and landscape layouts put it
+   than 1080px it hangs centred under them instead (below). The phone and landscape layouts put it
    back in the transport row, in a reserved slot the width of `--transport-flank`. */
 .rateReadoutRow {
   position: absolute;
@@ -202,11 +201,17 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* Narrow desktop: beside the transport, the readout and its gaps (~100px) would leave the
-   secondary cluster (~320px) too narrow for one line below ~1170px wide, so here the readout hangs
-   under the buttons and the cluster keeps its whole column. The bound leaves ~30px for font
-   variation; `Transport.module.css` centres the readout's text under the same query. */
+/* Narrow desktop: the secondary cluster (~320px) also takes the empty controls-row cell under the
+   next-section button, which keeps the readout beside the transport down to ~1060px wide. Below
+   that it no longer fits, so the readout hangs under the buttons and the cluster keeps its whole
+   column; `Transport.module.css` centres the readout's text under the same query. */
 @media (min-width: 761px) and (max-width: 1199px) and (min-height: 501px) {
+  .secondary {
+    grid-column: secondary / -1;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1079px) and (min-height: 501px) {
   .rateReadoutRow {
     top: calc(100% + 2px);
     left: 50%;

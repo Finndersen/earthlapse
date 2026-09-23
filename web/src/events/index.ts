@@ -54,7 +54,7 @@
  * - `useIsCompactViewport()` — mirrors `ShellLayout`'s own phone breakpoint, for the "compact
  *   single-card strip" the brief calls for at narrow widths.
  * - `browseEvents(events, filters)` / `matchesEventQuery(event, query)` / `nearestBrowseEventIndex`
- *   / `deepestSectionAt` — pure search/filter/grouping over the *whole* event set (not "behind
+ *   / `adjacentEvent` / `deepestSectionAt` — pure search/filter/grouping over the *whole* event set (not "behind
  *   `t`" like `selectFeedEvents`), oldest first, for `EventBrowser`'s "All events" list.
  *   `EventBrowser` — searchable, tag-filterable, opened from `EventDetailPanel`'s own "All
  *   events" action or the desktop `/` shortcut — docks itself above the timeline
@@ -64,11 +64,13 @@
 
 export { CLUSTER_SPAN, clusterEvents, type EventCluster } from './cluster'
 export {
+  adjacentEvent,
   browseEvents,
   deepestSectionAt,
   matchesEventQuery,
   nearestBrowseEventIndex,
   type BrowseEventsFilters,
+  type EventStep,
 } from './browse'
 export { EventBrowser, type EventBrowserProps } from './components/EventBrowser'
 export { EventDetailPanel, type ArrivalChainLink, type EventDetailPanelProps } from './components/EventDetailPanel'

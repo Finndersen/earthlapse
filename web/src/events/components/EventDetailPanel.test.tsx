@@ -151,4 +151,21 @@ describe('EventDetailPanel', () => {
       expect(screen.queryByRole('region', { name: 'Route' })).toBeNull()
     })
   })
+
+  it.each([
+    ['left', -120, 'newer'],
+    ['right', 120, 'older'],
+  ])('steps to the neighbouring event on a swipe %s, ignoring a mostly vertical drag', (_, dx, direction) => {
+    const onStep = vi.fn()
+    render(<EventDetailPanel event={event()} onClose={vi.fn()} onShowOnTimeline={vi.fn()} onOpenBrowser={vi.fn()} onStep={onStep} />)
+    const area = screen.getByTestId('event-detail-step-area')
+    const swipe = (x: number, y: number): void => {
+      fireEvent.touchStart(area, { touches: [{ clientX: 200, clientY: 300 }] })
+      fireEvent.touchEnd(area, { changedTouches: [{ clientX: 200 + x, clientY: 300 + y }] })
+    }
+    swipe(dx, 140)
+    expect(onStep).not.toHaveBeenCalled()
+    swipe(dx, 10)
+    expect(onStep).toHaveBeenCalledExactlyOnceWith(direction)
+  })
 })

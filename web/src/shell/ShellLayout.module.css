@@ -388,10 +388,10 @@
 .feed::before {
   inset: -16px -56px -20px -48px;
   background: radial-gradient(
-    ellipse 62% 60% at 30% 50%,
-    rgba(3, 4, 6, 0.42) 0%,
-    rgba(3, 4, 6, 0.3) 48%,
-    transparent 80%
+    ellipse 72% 62% at 40% 50%,
+    rgba(3, 4, 6, 0.46) 0%,
+    rgba(3, 4, 6, 0.34) 52%,
+    transparent 84%
   );
 }
 

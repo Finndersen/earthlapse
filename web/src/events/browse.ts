@@ -98,3 +98,19 @@ export function nearestBrowseEventIndex(events: readonly TimelineEvent[], t: Geo
   }
   return bestIndex
 }
+
+/** Which way to step from an event: `'older'` or `'newer'` along the browser's time order. */
+export type EventStep = 'older' | 'newer'
+
+/** The event one step `direction` of `eventId` in `browseEvents`' unfiltered time order, or
+ *  `null` at either end (or for an id not in `events`). */
+export function adjacentEvent(
+  events: readonly TimelineEvent[],
+  eventId: string,
+  direction: EventStep,
+): TimelineEvent | null {
+  const ordered = browseEvents(events, { query: '', tags: [] })
+  const index = ordered.findIndex((event) => event.id === eventId)
+  if (index === -1) return null
+  return ordered[index + (direction === 'newer' ? 1 : -1)] ?? null
+}

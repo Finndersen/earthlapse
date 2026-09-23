@@ -221,6 +221,21 @@ describe('Experience integration', () => {
       expect(useTimeStore.getState().playback.playing).toBe(true)
     })
 
+    it('returns to the event browser, search kept, when a detail panel opened from one of its rows closes', async () => {
+      await renderSettled()
+      fireEvent.keyDown(window, { key: '/' })
+      fireEvent.change(screen.getByTestId('event-browser-search'), { target: { value: 'a' } })
+      act(() => {
+        fireEvent.click(within(screen.getAllByRole('option')[0]!).getByRole('button'))
+      })
+      expect(screen.queryByTestId('event-browser')).toBeNull()
+      act(() => {
+        fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }))
+      })
+      expect(screen.getByRole('dialog').dataset.testid).toBe('event-browser')
+      expect((screen.getByTestId('event-browser-search') as HTMLInputElement).value).toBe('a')
+    })
+
     it('opens a cluster card as a digest of every reached member', async () => {
       // A companion 50 kyr older than kpg-impact clusters under it as headline.
       const manifestWithCluster = {

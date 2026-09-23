@@ -7,6 +7,7 @@ import { EventBrowser } from './EventBrowser'
 
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
 })
 
 function event(id: string, overrides: Partial<TimelineEvent> = {}): TimelineEvent {
@@ -20,6 +21,15 @@ const EVENTS: TimelineEvent[] = [
 ]
 
 describe('EventBrowser', () => {
+  it.each([
+    ['focuses the search box with a mouse', false, 'event-browser-search'],
+    ['focuses the panel, not the search box, on a touch screen', true, 'event-browser'],
+  ])('%s', (_, coarse, focusedTestId) => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: coarse && query === '(pointer: coarse)' }))
+    render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={vi.fn()} />)
+    expect(document.activeElement).toBe(screen.getByTestId(focusedTestId))
+  })
+
   it('lists every event, oldest first', () => {
     render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={vi.fn()} />)
     const rows = screen.getAllByRole('option').map((row) => row.textContent)

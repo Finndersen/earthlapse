@@ -6,6 +6,7 @@
  */
 
 .panel {
+  outline: none;
   position: fixed;
   z-index: 150;
   left: 16px;
@@ -138,10 +139,20 @@
   color: var(--hud-ink, #efe9dc);
 }
 
-.tagChip:hover,
+/* Hover and keyboard focus take a half-strength border, distinct from the selected state; hover
+   only where the pointer can hover, since a touch screen leaves `:hover` stuck on the last chip
+   tapped, which then still looks selected after it is toggled off. */
 .tagChip:focus-visible {
-  border-color: var(--chip-color, var(--hud-accent, #e8b06a));
+  border-color: color-mix(in srgb, var(--chip-color, var(--hud-accent, #e8b06a)) 55%, transparent);
+  color: var(--hud-ink, #efe9dc);
   outline: none;
+}
+
+@media (hover: hover) {
+  .tagChip:hover {
+    border-color: color-mix(in srgb, var(--chip-color, var(--hud-accent, #e8b06a)) 55%, transparent);
+    color: var(--hud-ink, #efe9dc);
+  }
 }
 
 .tagDot {

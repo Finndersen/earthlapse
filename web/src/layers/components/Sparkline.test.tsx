@@ -32,7 +32,7 @@ describe('<Sparkline>', () => {
       gaps: [{ fromIndex: 1, toIndex: 2 }],
     }
     const { container } = render(<Sparkline layer={createScalarLayer(CO2_MANIFEST, data)} t={0} />)
-    expect(container.querySelectorAll('polyline')).toHaveLength(2)
+    expect(container.querySelectorAll('svg > g')).toHaveLength(2)
   })
 
   it.each([

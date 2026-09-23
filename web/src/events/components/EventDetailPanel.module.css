@@ -16,6 +16,11 @@
   max-height: min(560px, calc(100vh - var(--detail-offset) - clamp(32px, 4.8vw, 68px)));
 }
 
+/* Only a target for the swipe handlers: its children lay out as the panel's own. */
+.stepArea {
+  display: contents;
+}
+
 /* The phone bottom sheet (`Panel.module.css`) anchors to the screen bottom on its own. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .panel {
