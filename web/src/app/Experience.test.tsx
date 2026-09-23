@@ -44,7 +44,7 @@ const FETCH_RESPONSES: Record<string, unknown> = {
 beforeEach(() => {
   useTimeStore.setState(initialStoreState, true)
   // A returning viewer, so the first-visit tour is not on screen.
-  window.localStorage.setItem('earthtime.onboarding.seen', 'true')
+  window.localStorage.setItem('earthlapse.onboarding.seen', 'true')
 
   vi.stubGlobal(
     'fetch',
@@ -84,7 +84,7 @@ describe('Experience integration', () => {
     await renderSettled()
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
     cleanup()
-    window.localStorage.removeItem('earthtime.onboarding.seen')
+    window.localStorage.removeItem('earthlapse.onboarding.seen')
     await renderSettled()
     expect(screen.getByTestId('onboarding-card')).toBeTruthy()
     expect(useTimeStore.getState().playback.playing).toBe(false)

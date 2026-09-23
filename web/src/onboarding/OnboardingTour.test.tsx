@@ -76,7 +76,7 @@ describe('OnboardingTour', () => {
   })
 
   it('stays closed once the seen flag is stored', () => {
-    window.localStorage.setItem('earthtime.onboarding.seen', 'true')
+    window.localStorage.setItem('earthlapse.onboarding.seen', 'true')
     render(<OnboardingTour />)
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
   })

@@ -13,8 +13,13 @@ describe('onboarding storage', () => {
   })
 
   it('reads as not seen for a stored value that is not the flag', () => {
-    window.localStorage.setItem('earthtime.onboarding.seen', 'maybe')
+    window.localStorage.setItem('earthlapse.onboarding.seen', 'maybe')
     expect(hasSeenTour()).toBe(false)
+  })
+
+  it('reads the flag stored under the pre-rename key as seen', () => {
+    window.localStorage.setItem('earthtime.onboarding.seen', 'true')
+    expect(hasSeenTour()).toBe(true)
   })
 
   describe('when localStorage throws', () => {

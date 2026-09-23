@@ -15,8 +15,6 @@ geo = ["gplately>=2.0", "scipy>=1.11"]
 
 [project.scripts]
 earthlapse = "pipeline.cli:app"
-# Former name, kept as an alias for existing notes and habits.
-earthtime = "pipeline.cli:app"
 
 [tool.setuptools.packages.find]
 include = ["pipeline*"]

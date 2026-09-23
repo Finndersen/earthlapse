@@ -504,7 +504,7 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
   - Citations that could not be confirmed carry an inline UNVERIFIED marker.
 
 **Consequences.**
-- `earthtime plan` lists 27 unpinned scenes: the 26 new ones plus `devonian-estuary`.
+- `earthlapse plan` lists 27 unpinned scenes: the 26 new ones plus `devonian-estuary`.
 - **Pacing:** `SCENE_DWELL_SECONDS` / `MIN_TRANSITION_SECONDS` (ADR-012) should be revisited
   once the new scenes are pinned. The checkpoint count rises from 14 to 40, and some neighbours
   sit very close in symlog time:
@@ -566,11 +566,11 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
     `data/candidates/portraits/`, and the same `Ledger` and ceiling. Generators still reserve
     before each call.
   - CLI:
-    - `earthtime plan` shows every portrait and its estimate.
-    - `earthtime build --only portraits [--node …] [--candidates N]`, default 1.
-    - `earthtime review portraits [sheet|pick|clear]`, with pins written into
+    - `earthlapse plan` shows every portrait and its estimate.
+    - `earthlapse build --only portraits [--node …] [--candidates N]`, default 1.
+    - `earthlapse review portraits [sheet|pick|clear]`, with pins written into
       `data/portraits.yaml`.
-    - `earthtime publish` copies pinned plates to `data/media/portraits/`.
+    - `earthlapse publish` copies pinned plates to `data/media/portraits/`.
   - `build.py` now loops over any `ImageJob`, `plan.py` shares the standing computation, and
     `scenes.patch_pin_line` is public for reuse. Scene behaviour and CLI output are unchanged.
   - **No change** to `graph.py`, `models.py`, `spend.py` or `shapes.py`.
@@ -582,7 +582,7 @@ exception was pre-approved: an `UNDERWATER` shot for the Cambrian sea floor.
   - `web/src/types/layer.ts`: optional `NodeValue.portrait` (a `PortraitMix`), plus
     `PortraitPlate`, `PortraitMorph` and `PortraitPlateType`.
   - The `Layer` interface is unchanged, and `sample()` stays pure in `t`.
-- **Morph.** Computed offline, deterministic and free, by `earthtime morph`. It needs the
+- **Morph.** Computed offline, deterministic and free, by `earthlapse morph`. It needs the
   optional `morph` extra (`opencv-python-headless`); core dependencies are unchanged.
   - Per consecutive pinned pair: a subject box is taken from the dark backdrop, and the subject
     is centred and scaled to 70% fill.
@@ -631,7 +631,7 @@ up to 2.1 plate widths; every other pair stays under 0.43.
   mean, at most `MAX_MORPH_ZOOM = 1.4` apart. Every other pinned pair was already within 1.33,
   so their fields are unchanged (within 0.002, byte rounding); the two bursting pairs drop to
   0.27 and 0.39.
-- `refuse_bursting_flow` fails `earthtime morph` when a field's 95th-percentile displacement
+- `refuse_bursting_flow` fails `earthlapse morph` when a field's 95th-percentile displacement
   exceeds 0.6 plate widths, naming the pair, so a badly framed plate is caught before it ships.
 - `MORPH_ALGORITHM_VERSION` is 2, so every cached morph recomputes.
 - **Rejected: correcting subject detection instead.** A rule dropping hollow rings fixed
@@ -667,7 +667,7 @@ viewer-wide curve could serve both.
   - Tested: a grey code is monotonic, never darker, and keeps 0 and 255; the brightest channel
     never clips; a dark coloured pixel keeps its channel ratios; the glow beside a subject moves
     at most 3 codes.
-- **Where: a publish-time derivative, not a viewer gain.** `earthtime publish` writes the
+- **Where: a publish-time derivative, not a viewer gain.** `earthlapse publish` writes the
   normalised plate to `data/media/portraits/<id>.<ext>` from the untouched pinned candidate.
   - Format: JPEG at quality 100 with the source's chroma subsampling; PNG stays PNG. At gain 1
     the file is the pin byte for byte.
@@ -680,7 +680,7 @@ viewer-wide curve could serve both.
     `NoColorSpace`, and the shader's own transfer applies only to the blend. On settled plates
     at 1440×900, the centre-disc mean of WebGL and the `<img>` fallback now agree within 1 code
     (`homo-sapiens` 32.0 against 31.4; the double decode predicts 5.1).
-  - Morph fields are unaffected. `earthtime morph` still reads the pinned originals, keyed by
+  - Morph fields are unaffected. `earthlapse morph` still reads the pinned originals, keyed by
     pin digests and `MORPH_ALGORITHM_VERSION`. Exposure moves no pixel, so flows and subject
     boxes are unchanged and no morph recomputes.
   - Pins are untouched (ADR-005), and `pinned` still names the original.
@@ -797,16 +797,16 @@ a hook or squiggle: `boreoeutheria` → `euarchontoglires`, `haplorhini` → `ca
      crossfade `PORTRAIT_FRAGMENT_SHADER` uses when `uHasFlow` is unset — no shader change.
      `write_morph` still writes both (tiny, all-zero) PNGs and the record for inspection, but
      `pipeline.publish._portrait_morphs` treats a `fallback_dissolve` pair exactly as if
-     `earthtime morph` had not run for it yet: no `PortraitMorphData` entry, no files copied.
+     `earthlapse morph` had not run for it yet: no `PortraitMorphData` entry, no files copied.
      This reuses the contract this ADR already established rather than adding a new one — "A
      plate without a pin, or a pair without a morph, degrades gracefully… crossfades" — so
      `web/src/data/curated.ts` and `web/src/types/layer.ts` need no change. The one difference
-     from a genuinely missing morph: `earthtime publish` reports it as a `note`, not a
-     `WARNING`, and `earthtime morph`'s cache means it is never silently mistaken for
+     from a genuinely missing morph: `earthlapse publish` reports it as a `note`, not a
+     `WARNING`, and `earthlapse morph`'s cache means it is never silently mistaken for
      unfinished work (`portraits.dissolved_morphs` in `PortraitPublication`, distinct from
      `missing_morphs`).
 
-- **`MORPH_ALGORITHM_VERSION` is now `3`.** Every cached morph recomputes; `earthtime morph`
+- **`MORPH_ALGORITHM_VERSION` is now `3`.** Every cached morph recomputes; `earthlapse morph`
   reports each pair as computed or dissolved.
 
 - **Calibration of `MAX_INVERSE_CONSISTENCY`.** Measured against all 39 pinned-adjacent pairs,
@@ -875,7 +875,7 @@ does not claim to have confirmed each one by eye.
   identically zero, which the shader already renders as `PORTRAIT_FRAGMENT_SHADER`'s plain
   linear-light crossfade.
 - Media churn: 23 morph PNG pairs (46 files) recomputed under the new algorithm; the 16 pairs
-  that now dissolve are no longer part of the publication, so `earthtime publish` no longer
+  that now dissolve are no longer part of the publication, so `earthlapse publish` no longer
   copies their PNGs into `data/media/portraits/morphs/` or lists them in `lineage.json`'s
   `portraits.morphs`. The now-unpublished v2 files for those 16 pairs (32 files) are left as
   orphans in the working tree by this change — `pipeline.publish.write_publication` has never
@@ -1058,7 +1058,7 @@ on `boreoeutheria` and `cynodontia` — and not helpful, and asked for it gone.
   rebuild regardless of prompt drift (ADR-005). All 41 pins survive untouched; nothing rebuilds; no
   spend. Any future portrait (`deuterostomia`, still without a representative) generates without a
   bar.
-- **The 40 already-pinned plates still carry a bar, so `earthtime publish` erases it from the
+- **The 40 already-pinned plates still carry a bar, so `earthlapse publish` erases it from the
   published derivative** — the same place exposure normalisation already runs
   (`pipeline/exposure.py`, the 2026-09-14 amendment above). The pinned candidate is untouched.
 - **The band geometry and the connected-component subject-extent finder move into a new shared
@@ -1082,7 +1082,7 @@ on `boreoeutheria` and `cynodontia` — and not helpful, and asked for it gone.
   the five were individually re-verified in the running viewer for this change; the same practice
   earlier amendments used for their own bulk reclassifications.
 - **OpenCV and numpy are now core dependencies**, not the optional `morph` extra: the erase needs
-  them directly in `pipeline.exposure`, which `earthtime publish` always runs, so they can no
+  them directly in `pipeline.exposure`, which `earthlapse publish` always runs, so they can no
   longer be optional. `pyproject.toml`'s `morph` extra is removed; `opencv-python-headless` and
   `numpy` move to `dependencies`.
 - **Only a thin, colourless, horizontal-line-shaped mask inside the band is touched — never the
@@ -1098,7 +1098,7 @@ on `boreoeutheria` and `cynodontia` — and not helpful, and asked for it gone.
   shadow edge surviving the opening as a staircase of short segments measured 0.13–0.62). Only that
   mask, dilated by `BAR_MASK_DILATE_PX = 3`, is inpainted (`cv2.inpaint`, `cv2.INPAINT_TELEA`) and
   re-grained with Gaussian noise scaled to the plate's own local backdrop noise, seeded by a fixed
-  `GRAIN_SEED = 20260917` so `earthtime publish` stays deterministic.
+  `GRAIN_SEED = 20260917` so `earthlapse publish` stays deterministic.
 - **The search band's own anchor and the subject's own protection each need a stricter,
   gain-robust threshold than `subject_mask`'s ordinary `SUBJECT_CONTRAST`,** because this erase
   runs on the *exposure-gained* published derivative (unlike `pipeline.morph`, which reads the
@@ -1421,7 +1421,7 @@ Decisions deferred to Phase 1, to be recorded here once answered:
 DATA_SOURCES § Storage policy (NORMATIVE); the curated and raw tiers stand.
 
 **Context.** The storage policy put generated media in R2 only, but no upload was ever built:
-`earthtime publish` writes `data/media/` locally. A clone therefore had no images, and the pinned
+`earthlapse publish` writes `data/media/` locally. A clone therefore had no images, and the pinned
 originals — paid for, human-picked and nondeterministic, so impossible to recreate — existed on
 one machine. The human asked for the images the app needs, and other relevant data, to be
 versioned with the project.
@@ -1444,9 +1444,9 @@ versioned with the project.
 
 **Consequences.**
 - A clone with `git lfs install` runs the frontend with every published image and can
-  `earthtime publish` from committed pins without a paid call; portrait morphs need a free,
-  local `earthtime morph` first (the cache is not committed).
-- After `earthtime review pick` or `clear`, run `make pins` before committing.
+  `earthlapse publish` from committed pins without a paid call; portrait morphs need a free,
+  local `earthlapse morph` first (the cache is not committed).
+- After `earthlapse review pick` or `clear`, run `make pins` before committing.
 - Republishing rewrites `data/media/`, which shows up as LFS object churn in history. Acceptable
   at ~110 MB; serving from a CDN, if deployment lands, is a copy of `data/media/`, not a change
   of where it is stored.
@@ -1929,7 +1929,7 @@ text, which is exactly the "stringly-typed" trap CLAUDE.md's engineering guidanc
   (default empty) naming the `events-core` event id(s) a generated still visually anchors to —
   the reverse of nothing previously existing: a scene could already be *dated* near an event's
   interval, but nothing recorded that the connection was intentional. Validated against the
-  published `events-core` `EventSet`'s ids at `earthtime publish` time (`PublishRefused` on an
+  published `events-core` `EventSet`'s ids at `earthlapse publish` time (`PublishRefused` on an
   unknown id) rather than at `SceneBook` parse time, so `load_scene_book` (used by `plan`,
   `review` and `build`, none of which load curated event data) keeps its current signature. The
   field is invisible to the asset graph (`pipeline/assets.py` never reads `scene.events` when
@@ -1981,7 +1981,7 @@ text, which is exactly the "stringly-typed" trap CLAUDE.md's engineering guidanc
   from the first event missing `kind`/`tags`) until a follow-up curation pass fills in every
   event's `kind`, `tags`, and — for a moment — its best-estimate `t`, then reruns `make data`. This
   is the intended, expected state immediately after this ADR, not a regression to silently work
-  around; `earthtime publish` is likewise blocked on `events-core` until that pass lands, since
+  around; `earthlapse publish` is likewise blocked on `events-core` until that pass lands, since
   `load_world` fails the same way `WorldModel.at` is expected to for a source that hasn't finished
   migrating.
 - **This reaches further than the two sources' own tests.** `data/curated/events-core.parquet` and
@@ -2167,7 +2167,7 @@ under two different gain functions, never two asset pipelines.
   (`test_scene_sound_plays_no_part_in_the_asset_graph`).
 - **Validated at publish time**, not at `SceneBook` parse time — the same reasoning
   `_validate_scene_events` gives: parsing `scenes.yaml` has no stem catalogue to check against.
-  `earthtime publish` refuses (`PublishRefused`) a scene naming an unknown `stem` id, and
+  `earthlapse publish` refuses (`PublishRefused`) a scene naming an unknown `stem` id, and
   separately refuses if a catalogued stem's own published file is missing from
   `data/media/audio/` (`pipeline/publish.py`'s `_validate_scene_sound`/`_audio_stems`).
 
@@ -2191,7 +2191,7 @@ per-source-directory listing needs. `fetch.py` loops `ensure_verified_artefact` 
 `[[stems]]` entry; `write_outputs()` (the `pipeline.databuild` post-normalise hook
 `sources/paleodem/normalise.py` already uses for its globe textures) copies each verified raw
 file to `data/media/audio/<id>.<format>` — placed directly at build time, like paleodem's
-textures, never staged and copied again at `earthtime publish` time.
+textures, never staged and copied again at `earthlapse publish` time.
 
 **No automated trimming, loudness normalisation or transcoding.** This machine has neither
 `ffmpeg` nor `sox`, and macOS's `afconvert` must **not** become a hard pipeline dependency
@@ -2205,7 +2205,7 @@ level-matched to the rest of the set — `duration_seconds`/`loop_safe` are cura
 fields, entered by ear the same way `sources/astronomy`'s checkpoint values are cited numbers a
 human typed in, not something this pipeline measures. A local, optional `afconvert`-based
 sourcing convenience script may be added later, invoked by a human when picking clips, never by
-`earthtime build` or by any test.
+`earthlapse build` or by any test.
 
 **Storage: `git-lfs`**, extending ADR-018's reasoning rather than paleodem's. Unlike paleodem's
 ~100+ regenerable globe textures (deliberately left uncommitted — DATA_SOURCES.md "generated
@@ -2311,7 +2311,7 @@ leniently — absent (the committed stub, or any manifest published before this 
   land.
 - **Real stems must still be sourced** (`audio-stem-wishlist.md`) before tier 1 or scene sound
   can be heard; `data/scenes.yaml` entries can add `sound:` referencing a stem id the moment
-  that stem exists in `stems.toml` and its file lands in `data/media/audio/` — `earthtime
+  that stem exists in `stems.toml` and its file lands in `data/media/audio/` — `earthlapse
   publish` enforces the ordering (unknown-stem and missing-file refusals) so this can never
   silently drift out of sync.
 - **When `paleoclimate`/`hyde`/`pbdb` land**, `storm`'s flat baseline and `settlement`'s
@@ -2761,7 +2761,7 @@ component that drives it" for the globe's own bounded texture cache):
 **Delivery: content-hashed filenames.** Checked first how scenes/portraits are versioned today
 (`pipeline/publish.py`): they are not — `f"scenes/{scene.id}{ext}"`, a stable per-id name, same
 for portraits, and `Manifest.assetBase` is today a fixed local constant (`"/media"`; DESIGN §9's
-original "upload to R2" line was never implemented — `earthtime publish` is local-only, per
+original "upload to R2" line was never implemented — `earthlapse publish` is local-only, per
 CLAUDE.md). So there is no existing hashing or CDN-path-versioning convention to "stay
 consistent" with; this amendment introduces one, scoped to audio only, since audio is the one
 media kind now fetched piecemeal, lazily, well after first paint, where immutable long-lived
@@ -2850,7 +2850,7 @@ python -m pytest -q tests` (426 tests) and `ruff check` on every touched Python 
   normalise.py`'s `_published_path`/`_place_stem` and `pipeline/publish.py`'s `_audio_stems`
   updated for content-hashed filenames; `data/media/audio/*` republished under their hashed
   names (old unhashed files removed), `data/media/manifest.json` republished
-  (`earthtime publish --allow-unpinned`, build `c4a56f4700d1e06f`).
+  (`earthlapse publish --allow-unpinned`, build `c4a56f4700d1e06f`).
 - Engine purity is unchanged and re-verified: `stemGains`/`sceneSoundLoopGains`/`scoreParams`
   are still pure in `t` alone (DESIGN §11, CLAUDE.md's own hard rule) — `stemsNeeded` reads them
   but adds no new impure dependency into them; every network/Tone.js side effect stays inside
@@ -3013,7 +3013,7 @@ marked otherwise.
    not revisited here. Immutable `Cache-Control` on `/media/audio/*` remains unconfigured
    because there is nothing in this repo to configure it on: `next.config.ts` sets
    `output: 'export'` (a static export has no server for `next` `headers()` to run on), and
-   `earthtime publish` is local-filesystem-only (CLAUDE.md, DESIGN §9) — exactly as the
+   `earthlapse publish` is local-filesystem-only (CLAUDE.md, DESIGN §9) — exactly as the
    original amendment already documented ("recorded here for whoever wires up actual
    hosting"). This is unchanged, correctly-scoped-out infrastructure work, not a gap this
    pass introduced or could close from inside the repo.
@@ -3293,21 +3293,21 @@ to, Safari/iOS included, without narrowing what `sources/audio-stems/normalise.p
 **Files.** `web/src/audio/sceneSound.ts`/`sceneSound.test.ts`, `web/src/audio/engine.ts`,
 `web/src/audio/stemIds.ts`, `sources/audio-stems/stems.toml`, `data/raw/audio-stems/`
 (`archosaurs.mp3`/`livestock.mp3`/`artillery.mp3` added, the retired `.ogg` raw files removed),
-`data/media/audio/` (re-published via `earthtime publish --allow-unpinned`, the retired `.ogg`
-published files removed by hand — `earthtime publish` does not prune stale media on a format
+`data/media/audio/` (re-published via `earthlapse publish --allow-unpinned`, the retired `.ogg`
+published files removed by hand — `earthlapse publish` does not prune stale media on a format
 change, queue item 19f, not fixed here), `data/scenes.yaml` (16 `sound` blocks, one deliberate
 omission), `tests/sources/test_audio_stems.py`, `docs/DESIGN.md` §11.
 
 **Never touched:** `web/src/scene/**` (presentation/pacing), scene subjects or pins (ADR-005;
-`earthtime plan` still reports 67 scenes pinned after this pass, unchanged), any image
+`earthlapse plan` still reports 67 scenes pinned after this pass, unchanged), any image
 generation.
 
 **Verification.** `.venv/bin/python -m pytest -q tests`: 426 passed. `.venv/bin/ruff check`/
 `ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
 run src`: 1087 passed (0 failed), including a new dense-cluster regression test in
-`sceneSound.test.ts`. `earthtime plan`: 67 scenes pinned, unchanged; the two pre-existing stale
+`sceneSound.test.ts`. `earthlapse plan`: 67 scenes pinned, unchanged; the two pre-existing stale
 scenes (`jurassic-cycad-pollination`, `panama-land-bridge`) predate this pass and are untouched
-by it. `earthtime publish --allow-unpinned`: succeeds, 67 scenes published, 23 audio stems
+by it. `earthlapse publish --allow-unpinned`: succeeds, 67 scenes published, 23 audio stems
 credited. Live Playwright verification for (b) and spot-checks for (a) (`getStemTargets()`
 confirming each new scene's foregrounded stem reaches its declared gain once loaded, and that
 `shenzhen-sez-1980` shows only the ambient curve, no foregrounded stem) both reported above and
@@ -3385,7 +3385,7 @@ synthesise without a real encoder this offline pipeline does not have. Instead,
 (`test_real_catalogue_uses_only_webkit_decodable_formats`) cover it; `tests/test_pipeline.py`'s
 own stem-catalogue test helper (`_write_stem_catalogue`) moved off its WAV-based synthetic
 fixture to a synthetic MP3 one so it keeps testing scene→stem linking and publish-refusal
-behaviour, not incidentally relying on a format the pipeline no longer publishes. `earthtime
+behaviour, not incidentally relying on a format the pipeline no longer publishes. `earthlapse
 publish` still does not prune stale media on a format change (queue item 19f) — unchanged, and
 still not fixed here.
 
@@ -3416,13 +3416,13 @@ on the scene).
 `data/scenes.yaml`, `pipeline/audio.py`, `pipeline/publish.py`, `tests/sources/test_audio_stems.py`,
 `tests/test_pipeline.py`.
 
-**Never touched:** `web/src/scene/**`, scene subjects or pins (`earthtime plan` still reports 67
+**Never touched:** `web/src/scene/**`, scene subjects or pins (`earthlapse plan` still reports 67
 scenes pinned after this pass), any image generation.
 
 **Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
 `ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
-run src`: 1100 passed (0 failed). `earthtime plan`: 67 scenes pinned, unchanged (the same two
-pre-existing, unrelated stale scenes). `earthtime publish --allow-unpinned`: succeeds, 67 scenes
+run src`: 1100 passed (0 failed). `earthlapse plan`: 67 scenes pinned, unchanged (the same two
+pre-existing, unrelated stale scenes). `earthlapse publish --allow-unpinned`: succeeds, 67 scenes
 published, 24 audio stems credited. Live Playwright re-verification of the once-mode voice-lifetime
 fix (finding in the amendment above) and of every touched scene's live `getStemTargets()` gain
 (both reported inline above); zero console errors across all of it.
@@ -3489,13 +3489,13 @@ stemGains.test.ts`, `web/src/audio/loadPlan.test.ts`, `tests/sources/test_audio_
 wing-hum-a5862d0fc3.mp3` (published), `docs/DESIGN.md` §11.
 
 **Never touched:** `web/src/scene/**`, `data/scenes.yaml`, any scene subject or pin, any image
-generation — `earthtime plan` reports the same 66 scenes pinned / 2 pre-existing stale
+generation — `earthlapse plan` reports the same 66 scenes pinned / 2 pre-existing stale
 (`jurassic-cycad-pollination`, `panama-land-bridge`, unrelated to audio) before and after, and the
 same 40 portraits pinned / 1 awaiting review.
 
 **Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
 `ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
-run src`: 1111 passed. `earthtime publish --allow-unpinned`: succeeds, 66 scenes, 25 audio stems
+run src`: 1111 passed. `earthlapse publish --allow-unpinned`: succeeds, 66 scenes, 25 audio stems
 credited (`wing-hum` among them, `levelTrimDb: 3.2`, its loop region on the wire). `make pins`:
 106 pinned images staged, 0 unpinned removed — unchanged by this task. **Correction (2026-09-15
 "wing-hum re-source" amendment below): no live `getStemTargets()` check was actually run for this
@@ -3586,13 +3586,13 @@ exported, for the new test), `web/src/audio/engine.ts` (`DECODED_BYTES_CAP` expo
 same), `docs/DECISIONS.md` (this amendment, plus the in-place correction above).
 
 **Never touched:** `web/src/scene/**`, `data/scenes.yaml`, any scene subject or pin, any image
-generation, `stemGains.ts`'s curve/duck logic. `earthtime plan` reports the same scenes and
+generation, `stemGains.ts`'s curve/duck logic. `earthlapse plan` reports the same scenes and
 portraits pinned/stale before and after.
 
 **Verification.** `.venv/bin/python -m pytest -q tests`: 428 passed. `.venv/bin/ruff check`/
 `ruff format --check` on every touched Python file: clean. `pnpm typecheck`: clean. `pnpm vitest
 run src`: 1113 passed. `make data`: `audio-stems: rebuilt`, every other source `fresh`.
-`earthtime publish --allow-unpinned`: 66 scenes, 25 audio stems credited (`wing-hum` now
+`earthlapse publish --allow-unpinned`: 66 scenes, 25 audio stems credited (`wing-hum` now
 `durationSeconds: 66.894`, `levelTrimDb: -5.7`, loop `35.296-47.919`). **Live `getStemTargets()`/
 `getLoaderState()` checks, actually run this time** (Playwright driving the real dev server at
 `localhost:3000`, a genuine "sound on" click as the required user gesture, `window.__earthtime
@@ -3676,7 +3676,7 @@ audio-only fix; other uncommitted work lives there).
 
 **Verification.** `.venv/bin/python -m pipeline.databuild --only audio-stems --force`:
 `audio-stems: rebuilt` (fetched the new clip, verified its sha256, published
-`forest-cdac2ac432.mp3`, removed the stale `forest-98937a7ce6.mp3`). `earthtime publish
+`forest-cdac2ac432.mp3`, removed the stale `forest-98937a7ce6.mp3`). `earthlapse publish
 --allow-unpinned`: 66 scenes, 25 audio stems credited, `forest` now `durationSeconds: 43.52`,
 `levelTrimDb: 22.5`, loop `16.62-38.99`. `make pins`: 106 pinned images staged, 0 removed (no
 image-graph effect, as expected). `.venv/bin/python -m pytest -q tests`: 435 passed. `ruff
@@ -3777,7 +3777,7 @@ audio-only fix; other uncommitted work lives there).
 
 **Verification.** `.venv/bin/python -m pipeline.databuild --only audio-stems --force`:
 `audio-stems: rebuilt` (fetched the new clip, verified its sha256, published
-`forest-d19ca9dc96.mp3`, removed the stale `forest-cdac2ac432.mp3`). `earthtime publish
+`forest-d19ca9dc96.mp3`, removed the stale `forest-cdac2ac432.mp3`). `earthlapse publish
 --allow-unpinned`: 66 scenes, `forest` now `durationSeconds: 27.12`, `levelTrimDb: 18.8`, loop
 `17.308-26.224`. `make pins`: 106 pinned images staged, 0 removed (no image-graph effect, as
 expected). `.venv/bin/python -m pytest -q tests`: 436 passed (435 plus the new mirror-guard
@@ -4281,7 +4281,7 @@ over-under framing directly, and it covers a run of eight scenes rather than one
 
 **Consequences.**
 - **Pins.** A pinned node reports PINNED before its digest is compared (ADR-005), so the move and
-  the re-specs leave every early scene pinned and `earthtime plan` unchanged in status. Each of the
+  the re-specs leave every early scene pinned and `earthlapse plan` unchanged in status. Each of the
   seven re-specified scenes needs its pin cleared by a human before it regenerates; until a new
   candidate is picked it leaves the published manifest (ADR-014 precedent).
 - **Prompt provenance.** `cambrian-seafloor`'s kept subject still says "plainly visible through
@@ -4414,7 +4414,7 @@ which duplicated source knowledge in a consumer and needed a cross-check test to
   chart dock's header now say **"no record"** when `t` is inside the layer's own domain but the
   sample is `null` (a gap), and keep **"no data"** when `t` is outside the domain entirely — the
   only two ways `sample()` returns `null`. Neither component reads `gaps` directly; both infer
-  which case applies from `layer.timeDomain`, which `earthtime publish` always sets to the
+  which case applies from `layer.timeDomain`, which `earthlapse publish` always sets to the
   series' own `domain` (`pipeline/publish.py` `_layers`), so the inference is exact for every
   real published layer.
 - `sources/co2-o2` declares the ice-core segment's oldest row and GEOCARB's oldest-surviving row
@@ -4470,12 +4470,12 @@ rather than a name once truncated to pip width.
   scene's prompt and image node `inputs` from `scene.shot`, `scene.unsourced` (rendered
   conditions) and `scene.subject` only; it has never read `caption`, and does not read `title`
   either. Adding the field to all 68 existing scenes therefore changes no prompt/image digest and
-  clears no pin — verified by `.venv/bin/earthtime plan` reporting identical counts before and
+  clears no pin — verified by `.venv/bin/earthlapse plan` reporting identical counts before and
   after (68 scenes: 66 pinned, 0 awaiting review, 2 stale; 41 portraits: 40 pinned, 1 awaiting
   review, 0 stale — the 2 stale scenes and 1 awaiting-review portrait are pre-existing, unrelated
   to this change) and by a new test that retitles a pinned scene in an otherwise-identical
   `SceneBook` and asserts every scene's resolved prompt/image digest is unchanged.
-  `pipeline.scenes.patch_pin_line` (the pin-writing helper `earthtime review pick` uses) already
+  `pipeline.scenes.patch_pin_line` (the pin-writing helper `earthlapse review pick` uses) already
   edits only the single `pin:` line of a record by regex, leaving every other line — comments
   included — untouched, so it needed no change to preserve `title`.
 - **Wire format.** `pipeline.manifest.Scene` gains `title: str`, required and always emitted
@@ -4526,7 +4526,7 @@ rather than a name once truncated to pip width.
 
 **Consequences.**
 - `data/scenes.yaml` grows by one required line per scene (68 lines); `data/media/manifest.json`
-  gains one `"title"` field per published scene. `earthtime publish --allow-unpinned` followed by
+  gains one `"title"` field per published scene. `earthlapse publish --allow-unpinned` followed by
   `make pins` was re-run to confirm a clean publish with the new field; the only manifest diff
   beyond the new `title` lines is the nondeterministic `buildId`.
 - A future scene added to `data/scenes.yaml` without a `title` fails to parse, loudly, the same
@@ -5621,7 +5621,7 @@ not silently substitute a different dataset" is written against.
 - **Invisible to the asset graph, exactly like `title` (ADR-028), `events` (ADR-022) and `sound`
   (ADR-023).** `pipeline/assets.py` builds a scene's prompt/image node inputs from `scene.shot`,
   `scene.unsourced` and `scene.subject` only; it was not touched by this change and does not read
-  `location`. Verified two ways: `.venv/bin/earthtime plan` reports the identical `68 scenes: 66
+  `location`. Verified two ways: `.venv/bin/earthlapse plan` reports the identical `68 scenes: 66
   pinned, 0 awaiting review, 2 stale` before and after all 23 scenes in `data/scenes.yaml` gained a
   `location` (byte-identical `plan` output, not just the summary line), and
   `test_scene_location_plays_no_part_in_the_asset_graph` (`tests/test_pipeline.py`) adds a location
@@ -5669,7 +5669,7 @@ not silently substitute a different dataset" is written against.
     `sources/plates-neoproterozoic/normalise.py`'s own `write_outputs` pattern and keeps this
     module — and everything that imports it, including `pipeline.publish` unconditionally —
     importable without the extra. The model, once loaded, is reused for every scene needing it in
-    one `earthtime publish` run rather than reloaded per scene (`_load_reconstructor_if_needed`
+    one `earthlapse publish` run rather than reloaded per scene (`_load_reconstructor_if_needed`
     loads it at most once, and not at all when no pinned scene needs it — most publishes still
     need no `geo` extra and touch no raw Merdith file at all).
 - **Both coordinate pairs publish, clearly named, so the reconstruction is auditable.**
@@ -5703,7 +5703,7 @@ not silently substitute a different dataset" is written against.
   absent, so a manifest predating this field, or a scene with none, stays valid). A later web agent
   renders the pulse/rotation from `marker` only, treating its absence (or a `null` `marker` inside a
   present `location`) as "no globe marker for this scene", never falling back to `presentDay`.
-- `earthtime publish` now needs the `geo` extra and a fetched `sources/plates-neoproterozoic` raw
+- `earthlapse publish` now needs the `geo` extra and a fetched `sources/plates-neoproterozoic` raw
   directory *only* when some pinned scene's location is older than the human-era basemap domain —
   every other publish, including every one before this ADR, is unaffected.
 - `web/public/stub/manifest.json` was not extended: the stub's job is to validate against
@@ -6745,7 +6745,7 @@ that reports renderer capability.
 
 **Status:** accepted — 2026-09-22.
 
-**Context.** `earthtime publish` writes an `assetBase` string into `manifest.json`, and the web
+**Context.** `earthlapse publish` writes an `assetBase` string into `manifest.json`, and the web
 shell took it at face value: every media URL in the app was `manifest.assetBase + path`. The base
 the *manifest itself* was fetched from — `NEXT_PUBLIC_MEDIA_BASE`, defaulting to `/media` — was a
 second, independent setting. Nothing checked that the two agreed; `deploy/README.md` said as much
@@ -6763,7 +6763,7 @@ string is only a default for a consumer reading the file off disk without fetchi
 
 This is sound because media and manifest are always published together as one tree — the one is
 always reachable from the other's origin. `NEXT_PUBLIC_MEDIA_BASE` becomes the single setting that
-names an origin, and `earthtime publish --asset-base` is no longer part of the deploy flow.
+names an origin, and `earthlapse publish --asset-base` is no longer part of the deploy flow.
 
 **Consequences.** Changed: `web/src/shell/manifest.ts` (+ two tests), `web/src/types/manifest.ts`,
 `pipeline/publish.py`'s comment, `deploy/README.md`'s publish step. A local dev server now serves
@@ -6857,7 +6857,7 @@ framing:
   framing is how a finished image is shown, not what it depicts, and letting it into a digest would
   mark a pinned image stale — and so cost a regeneration (ADR-005) — for a change that alters no
   pixel of it. Verified by `test_scene_framing_never_changes_the_prompt_or_image_node_digest` and
-  `test_scene_framing_leaves_a_pinned_scene_fresh`, and by `earthtime plan` output being
+  `test_scene_framing_leaves_a_pinned_scene_fresh`, and by `earthlapse plan` output being
   byte-identical before and after adding a `framing` block to a real scene.
 
 **Consequences.**

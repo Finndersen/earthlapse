@@ -15,8 +15,14 @@
  * into a single "falsy -> off" read the way a `=== 'true'` comparison would.
  */
 
-const ENABLED_KEY = 'earthtime.audio.enabled'
-const MASTER_VOLUME_KEY = 'earthtime.audio.masterVolume'
+const ENABLED_KEY = 'earthlapse.audio.enabled'
+const MASTER_VOLUME_KEY = 'earthlapse.audio.masterVolume'
+/** Where these lived before the rename, still read so a returning viewer keeps their settings. */
+const LEGACY_PREFIX = 'earthtime.'
+
+function readStored(key: string): string | null {
+  return window.localStorage.getItem(key) ?? window.localStorage.getItem(key.replace(/^earthlapse\./, LEGACY_PREFIX))
+}
 
 export const DEFAULT_MASTER_VOLUME = 0.6
 export const DEFAULT_ENABLED = true
@@ -34,9 +40,9 @@ function clampVolume(v: number): number {
  *  storage) reads back as the on-by-default in-memory state. */
 export function loadAudioPrefs(): AudioPrefs {
   try {
-    const storedEnabled = window.localStorage.getItem(ENABLED_KEY)
+    const storedEnabled = readStored(ENABLED_KEY)
     const enabled = storedEnabled === null ? DEFAULT_ENABLED : storedEnabled === 'true'
-    const rawVolume = window.localStorage.getItem(MASTER_VOLUME_KEY)
+    const rawVolume = readStored(MASTER_VOLUME_KEY)
     const parsedVolume = rawVolume === null ? NaN : Number(rawVolume)
     const masterVolume = Number.isFinite(parsedVolume) ? clampVolume(parsedVolume) : DEFAULT_MASTER_VOLUME
     return { enabled, masterVolume }

@@ -12,13 +12,15 @@
  * rendering.
  */
 
-const SEEN_KEY = 'earthtime.onboarding.seen'
+const SEEN_KEY = 'earthlapse.onboarding.seen'
+/** Where the flag lived before the rename, still read so a returning viewer isn't re-toured. */
+const LEGACY_SEEN_KEY = 'earthtime.onboarding.seen'
 
 /** `false` for a miss, malformed data, or a storage access that throws — all three mean
  *  "not seen", so the tour shows. */
 export function hasSeenTour(): boolean {
   try {
-    return window.localStorage.getItem(SEEN_KEY) === 'true'
+    return (window.localStorage.getItem(SEEN_KEY) ?? window.localStorage.getItem(LEGACY_SEEN_KEY)) === 'true'
   } catch {
     return false
   }

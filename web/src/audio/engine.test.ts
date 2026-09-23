@@ -75,7 +75,7 @@ describe('useAudioEngine tick loop lifecycle', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     window.localStorage.clear()
-    window.localStorage.setItem('earthtime.audio.enabled', 'true')
+    window.localStorage.setItem('earthlapse.audio.enabled', 'true')
   })
 
   afterEach(() => {

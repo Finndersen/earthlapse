@@ -25,7 +25,7 @@ describe('audio persistence', () => {
   })
 
   it('clamps a stored volume outside [0, 1]', () => {
-    window.localStorage.setItem('earthtime.audio.masterVolume', '5')
+    window.localStorage.setItem('earthlapse.audio.masterVolume', '5')
     expect(loadAudioPrefs().masterVolume).toBe(1)
   })
 
