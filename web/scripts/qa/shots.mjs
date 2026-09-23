@@ -4284,7 +4284,7 @@ export default [
         transportGapPx: transport.y - (orb.y + orb.height),
       }
     },
-    expect: { 'orb.width': [-99999, 99999] },
+    expect: { overlapsTitle: [0, 0] },
   },
   {
     name: 'DIAG-caption-heading-visibility',
@@ -4412,8 +4412,8 @@ export default [
       'pixel does too), which is why `--globe-orb-size` (this file\'s own decoupled property) was sized against a ' +
       "difference matte instead (`alphaEdgeDiameter`, this file's own doc comment has the method) — the scene layer and " +
       'the lens vignette hidden, the same clip shot against solid black and solid white, and the two differenced so a ' +
-      "pixel's own colour cancels out and only its real opacity survives. Bounds the two `alpha >= 0.5` diameters to " +
-      'within 5% of each other, at both required phone widths.',
+      "pixel's own colour cancels out and only its real opacity survives. Requires the globe's `alpha >= 0.5` diameter " +
+      "to be 2-12% larger than the portrait's, at both required phone widths.",
     viewport: { width: 390, height: 844 },
     t: 500,
     measure: async ({ page, hook }) => {
@@ -4451,8 +4451,8 @@ export default [
       return results
     },
     expect: {
-      w390RatioPct: [95, 105],
-      w412RatioPct: [95, 105],
+      w390RatioPct: [102, 112],
+      w412RatioPct: [102, 112],
     },
   },
   {

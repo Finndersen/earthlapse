@@ -549,15 +549,12 @@
        introduce and doesn't attempt to fix, since doing so would mean restructuring the title/
        ancestor grid columns rather than resizing this one property. */
     --orb-size: 116px;
-    /* The globe orb's own box, decoupled from `--orb-size` above (which the ancestor portrait
-       also reads — `hud.module.css`'s `.portrait` phone rule — so it stays untouched: growing
-       it would grow the portrait's box too, preserving rather than closing the gap this closes).
-       The drawn sphere fills a fixed ~86% of its own canvas (`CAMERA_DISTANCE`, `Globe.tsx`)
-       while the portrait's circle fills almost all of its box, so two equal *boxes* draw as two
-       different *sizes* (user report: "looks like same and smaller than ancestor portrait
-       circle"). Sized so the drawn silhouettes roughly match instead — measured, not assumed
-       (`scripts/qa/shots.mjs`'s `globe-vs-portrait-drawn-size` shot holds the numbers). */
-    --globe-orb-size: 110px;
+    /* The globe orb's own box, decoupled from `--orb-size` above, which the ancestor portrait also
+       reads. The drawn sphere fills less of its canvas than the portrait's circle fills of its box
+       (`sphereSilhouetteFraction`, `camera.ts`), so the globe box is sized for its silhouette to
+       draw slightly larger than the portrait's (`globe-vs-portrait-drawn-size` in
+       `scripts/qa/shots.mjs` holds the ratio). */
+    --globe-orb-size: 118px;
     /* The shared height of the expanded globe's top-corner ✕ (`Globe.module.css`'s
        `.closeButton`) and, while expanded, this file's own centred `.title` row below — declared
        here rather than in `Globe.module.css` so both can read it: `Globe`'s `.backdrop` and this
