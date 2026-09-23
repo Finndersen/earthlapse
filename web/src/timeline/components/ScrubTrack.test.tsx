@@ -414,6 +414,59 @@ describe('ScrubTrack cluster popover (ADR-021)', () => {
     expect(onScrub).toHaveBeenCalled()
   })
 
+  it('closes on a touch tap of × without scrubbing or moving the lens', () => {
+    const onScrub = vi.fn()
+    const onLensPointer = vi.fn()
+    const { container, getByRole, queryByRole } = renderTrack({ checkpoints: close, onScrub, onLensPointer })
+    fireEvent.click(container.querySelector('[data-checkpoint-cluster]') as Element)
+    onScrub.mockClear()
+    onLensPointer.mockClear()
+    const closeButton = getByRole('button', { name: 'Close' })
+    const touch = { pointerId: 7, pointerType: 'touch', clientY: 24 }
+    fireEvent.pointerDown(closeButton, { ...touch, clientX: 900, buttons: 1 })
+    fireEvent.pointerMove(closeButton, { ...touch, clientX: 901, buttons: 1 })
+    fireEvent.pointerUp(closeButton, { ...touch, clientX: 901, buttons: 0 })
+    fireEvent.click(closeButton)
+    expect(onScrub).not.toHaveBeenCalled()
+    expect(onLensPointer).not.toHaveBeenCalled()
+    expect(queryByRole('dialog')).toBeNull()
+  })
+
+  it("scrubs to the tapped entry's t, not the finger's x, on a touch tap of a member row", () => {
+    const onScrub = vi.fn()
+    const onLensPointer = vi.fn()
+    const { container, getByText, queryByRole } = renderTrack({ checkpoints: close, onScrub, onLensPointer })
+    fireEvent.click(container.querySelector('[data-checkpoint-cluster]') as Element)
+    onScrub.mockClear()
+    onLensPointer.mockClear()
+    const row = getByText('Scene B').closest('button') as HTMLElement
+    const touch = { pointerId: 8, pointerType: 'touch', clientY: 24 }
+    fireEvent.pointerDown(row, { ...touch, clientX: 100, buttons: 1 })
+    fireEvent.pointerMove(row, { ...touch, clientX: 101, buttons: 1 })
+    fireEvent.pointerUp(row, { ...touch, clientX: 101, buttons: 0 })
+    fireEvent.click(row)
+    expect(onScrub.mock.calls).toEqual([[close[1]!.t]])
+    expect(onLensPointer).not.toHaveBeenCalled()
+    expect(queryByRole('dialog')).toBeNull()
+  })
+
+  it('ignores mouse hover and touch swipes over the open popover', () => {
+    const onScrub = vi.fn()
+    const onLensPointer = vi.fn()
+    const { container, getByRole } = renderTrack({ checkpoints: close, onScrub, onLensPointer })
+    fireEvent.click(container.querySelector('[data-checkpoint-cluster]') as Element)
+    onScrub.mockClear()
+    onLensPointer.mockClear()
+    const dialog = getByRole('dialog')
+    fireEvent.pointerMove(dialog, { pointerId: 1, pointerType: 'mouse', clientX: 300, clientY: 24, buttons: 0 })
+    fireEvent.pointerDown(dialog, { pointerId: 9, pointerType: 'touch', clientX: 300, clientY: 24, buttons: 1 })
+    fireEvent.pointerMove(dialog, { pointerId: 9, pointerType: 'touch', clientX: 300, clientY: 60, buttons: 1 })
+    fireEvent.pointerCancel(dialog, { pointerId: 9, pointerType: 'touch', clientX: 300, clientY: 60 })
+    expect(onScrub).not.toHaveBeenCalled()
+    expect(onLensPointer).not.toHaveBeenCalled()
+    expect(getByRole('dialog')).toBeTruthy()
+  })
+
   it('is keyboard-focusable on open', () => {
     const { container, getByRole } = renderTrack({ checkpoints: close })
     const cluster = container.querySelector('[data-checkpoint-cluster]') as Element

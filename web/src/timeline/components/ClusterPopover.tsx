@@ -16,9 +16,9 @@
  *  all of them unmount this component and focus is restored from that one effect cleanup.
  *
  *  The trap/restore mechanics themselves are `@/lib/focusTrap`'s `useFocusTrap`, shared with
- *  `shell/Panel` (re-review fix, 2026-09-15) rather than a second copy of the same logic — this
- *  stays a distinct component because its content (a member list) and anchoring (relative to the
- *  cluster's own track position, not a centred/bottom-sheet dialog) don't fit `Panel`'s shape. */
+ *  `shell/Panel`. This stays a distinct component because its content (a member list) and
+ *  anchoring (relative to the cluster's own track position, not a centred/bottom-sheet dialog)
+ *  don't fit `Panel`'s shape. */
 
 import { useRef } from 'react'
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
@@ -68,6 +68,7 @@ export function ClusterPopover({ members, anchorU, edgeAnchorClass, onSelect, on
     <div
       ref={rootRef}
       role="dialog"
+      data-cluster-popover
       aria-label={`${members.length} scenes`}
       tabIndex={-1}
       className={`${styles.popover} ${edgeAnchorClass}`}

@@ -209,6 +209,13 @@ export function ScrubTrack({
   // closes the popover rather than going stale.
   const [openClusterId, setOpenClusterId] = useState<string | null>(null)
 
+  // The popover renders inside `.hitArea`, so its pointer events bubble here. A gesture that
+  // starts on it belongs to the popover alone: scrubbing or moving the lens would re-lay out the
+  // markers, split the cluster and unmount the popover before its own `click` fires. A gesture
+  // captured by the track keeps the track as its target, so this never cuts off a drag.
+  const isInsideClusterPopover = (e: ReactPointerEvent<HTMLDivElement>): boolean =>
+    e.target instanceof Element && e.target.closest('[data-cluster-popover]') !== null
+
   const updateHover = (e: ReactPointerEvent<HTMLDivElement>): void => {
     const u = uFromClientX(e.clientX)
     setHoverU(u)
@@ -271,6 +278,7 @@ export function ScrubTrack({
   }
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    if (isInsideClusterPopover(e)) return
     updateHover(e)
     if (dismissingPopoverPointerIdRef.current === e.pointerId) return
     const pendingMarker = pendingMarkerPressRef.current
@@ -313,6 +321,7 @@ export function ScrubTrack({
   }
 
   const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    if (isInsideClusterPopover(e)) return
     const pendingMarker = pendingMarkerPressRef.current
     if (pendingMarker && pendingMarker.pointerId === e.pointerId) {
       // Never exceeded the slop by the time it lifted — a tap, not a drag.
@@ -323,6 +332,7 @@ export function ScrubTrack({
   }
 
   const handlePointerCancel = (e: ReactPointerEvent<HTMLDivElement>): void => {
+    if (isInsideClusterPopover(e)) return
     // A cancelled gesture (e.g. the system taking the pointer for its own gesture) is neither a
     // tap nor a scrub — unlike `handlePointerUp`, this never commits a pending marker press.
     if (pendingMarkerPressRef.current?.pointerId === e.pointerId) {
