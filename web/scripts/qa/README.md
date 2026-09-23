@@ -37,8 +37,9 @@ Run the full list only before a deploy or when asked for.
 non-zero on a real failure the same way the full run does.
 
 Full flag reference: `node scripts/qa/run.mjs --help`. One `next build`, one static server
-(`server.mjs`, no dependency), one browser, one page load — every shot drives the already-loaded
-page through `window.__earthtime` (`src/store/devHook.ts`); nothing ever reloads.
+(`server.mjs`, no dependency), one browser, one page load (plus one more for touch shots, see
+below) — every shot drives an already-loaded page through `window.__earthtime`
+(`src/store/devHook.ts`); nothing ever reloads.
 
 ### Scene framing review
 
@@ -75,6 +76,7 @@ Shots are data (`shots.mjs`), not code — add one object, never touch `run.mjs`
   t: 12345,                                 // optional: years before present
   state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': false } },
   reducedMotion: 'no-preference',           // optional, overrides --reduced-motion
+  touch: true,                              // optional: run on the touch page (below)
   actions: async ({ page, hook }) => { /* anything `state` can't express */ },
   measure: async ({ page }) => ({ sphere: await drawnBounds(page, '...') }),
   expect: { 'sphere.width': [480, 560] },   // dot-path into measure()'s result -> [min, max]
@@ -90,6 +92,15 @@ not the measurement itself.
 `smokeShots.mjs` lists a representative subset by name for `--smoke` — add a shot to `shots.mjs`
 as above, and separately decide whether it belongs in the smoke list too (most don't; the smoke
 run is meant to stay small).
+
+### A shot that needs a touchscreen
+
+Playwright fixes `hasTouch` per browser context, and the main page's context has none (so
+`(pointer: coarse)` stays false for the desktop shots). A shot that needs real touch input sets
+`touch: true` and runs on a second page, in a `hasTouch` context, loaded once — on the first such
+shot's turn — and shared by every touch shot the same way the main page is shared by the rest.
+`(pointer: coarse)` matches there, so touch shots see the layout a phone gets. `applyState` and the hook work there unchanged. `touchTap` in `shots.mjs` taps through CDP touch
+events with a 1px move before lift, as a real finger does; `page.touchscreen.tap` works too.
 
 ### A shot that needs the harness's one page load
 

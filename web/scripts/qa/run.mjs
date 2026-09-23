@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Visual-QA harness runner. One `next build` (unless `--dev`/`--no-build`), one static server,
- * one browser, one page load — every shot drives the already-loaded page through
+ * one browser, one page load (and one more, in a `hasTouch` context, for `touch: true` shots) —
+ * every shot drives an already-loaded page through
  * `window.__earthtime` (`web/src/store/devHook.ts`) rather than reloading. See `README.md` for
  * the full contract and CLI reference; `--help` prints the same summary.
  */
@@ -464,6 +465,68 @@ function printSummary(results, consoleErrors) {
   console.log(`${results.length - failed.length}/${results.length} shots passed.`)
 }
 
+/**
+ * Opens one harness page in its own context, loads the app through `load`, and waits it out to the
+ * state every shot starts from: the QA hook present, `hook.ready()` resolved, the first-visit tour
+ * dismissed. The page is pushed onto `pages` before loading so the caller's teardown reaches it
+ * even when the load throws.
+ * @param {import('playwright').Browser} browser
+ * @param {string} baseUrl
+ * @param {{ reducedMotion: string }} args
+ * @param {string[]} consoleErrors
+ * @param {import('playwright').Page[]} pages
+ * @param {{ hasTouch: boolean, load: (page: import('playwright').Page) => Promise<unknown> }} options
+ */
+async function openHarnessPage(browser, baseUrl, args, consoleErrors, pages, { hasTouch, load }) {
+  const context = await browser.newContext({ deviceScaleFactor: 1, hasTouch })
+  const page = await context.newPage()
+  pages.push(page)
+  const label = hasTouch ? ' (touch page)' : ''
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(`console.error${label}: ${msg.text()}`)
+  })
+  page.on('pageerror', (error) => consoleErrors.push(`pageerror${label}: ${String(error)}`))
+
+  await page.emulateMedia({ reducedMotion: args.reducedMotion })
+  await page.setViewportSize(DEFAULT_VIEWPORT)
+
+  const reroutedOrigin = await routePublishedMediaToLocalExport(page, baseUrl)
+  if (reroutedOrigin !== null) console.log(`Answering ${reroutedOrigin} from this export's own /media${label}`)
+
+  await load(page)
+
+  const hook = makeHook(page)
+  try {
+    // Not a shot-level concern (`ready()`'s own doc comment) — this is "did the build even
+    // carry the QA hook at all", checked once, up front, with a short timeout and a message
+    // that names the actual known cause rather than a bare Playwright TimeoutError: this
+    // repo's Next 16/Turbopack build has, on a small fraction of otherwise-identical clean
+    // builds, failed to inline `NEXT_PUBLIC_EARTHTIME_QA` (a Turbopack quirk, not this
+    // harness's own gate — `devHook.ts`'s guard is a plain, correct `if`; see README "Known
+    // flake"). A stale `out/` from a plain, non-QA build (`--no-build` reusing an old export)
+    // hits this exact same symptom.
+    await page.waitForFunction(() => window.__earthtime !== undefined, undefined, { timeout: 10_000 })
+  } catch {
+    throw new Error(
+      'window.__earthtime never appeared. Either this out/ export was built without ' +
+        'NEXT_PUBLIC_EARTHTIME_QA=1 (check --no-build / --dev), or this is the known Next ' +
+        '16 + Turbopack env-inlining flake (rare, seen on an otherwise-identical clean build) ' +
+        '— see README "Known flake". Fix: rebuild (drop --no-build) and re-run.',
+    )
+  }
+  await hook.ready()
+
+  // The first-visit tour (`@/onboarding`) opens whenever `localStorage` has no "seen it" flag,
+  // and a fresh browser context never does — left alone it would cover every shot in the run.
+  // Dismissed once, here, through the same path its own Skip button takes; the shots that guard
+  // the tour itself re-open it via `state.tour`. Waiting for the layer to actually detach also
+  // covers the race where the tour's own mount effect has not run yet when this fires: the flag
+  // is written either way, so it simply never opens.
+  await hook.setTourOpen(false)
+  await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
+  return { page, hook }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   if (args.help) {
@@ -497,24 +560,11 @@ async function main() {
   const browser = await chromium.launch()
   const consoleErrors = []
   const results = []
-  // Declared out here so the `finally` can tear the media reroute down before closing the
+  // Declared out here so the `finally` can tear the media reroutes down before closing the
   // browser: a route callback still in flight when the browser goes away rejects, and that
   // rejection would otherwise surface instead of whatever actually ended the run.
-  let page = null
+  const pages = []
   try {
-    const context = await browser.newContext({ deviceScaleFactor: 1 })
-    page = await context.newPage()
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') consoleErrors.push(`console.error: ${msg.text()}`)
-    })
-    page.on('pageerror', (error) => consoleErrors.push(`pageerror: ${String(error)}`))
-
-    await page.emulateMedia({ reducedMotion: args.reducedMotion })
-    await page.setViewportSize(DEFAULT_VIEWPORT)
-
-    const reroutedOrigin = await routePublishedMediaToLocalExport(page, baseUrl)
-    if (reroutedOrigin !== null) console.log(`Answering ${reroutedOrigin} from this export's own /media`)
-
     const run = {
       runDir,
       viewport: args.viewport,
@@ -531,45 +581,28 @@ async function main() {
     // At most one shot ever owns the harness's one page load (`shots.mjs`'s own doc comment on
     // `bootstrapsPage`) — the loading screen is only ever on screen during that one navigation, so
     // only a shot selected into *this* run's list gets to intercept it; otherwise the plain,
-    // generic load below runs as it always has.
+    // generic load runs as it always has.
     const bootstrapShot = shots.find((shot) => shot.bootstrapsPage !== undefined)
     let bootstrapResult = null
-    if (bootstrapShot !== undefined) {
-      console.log(`Running ${bootstrapShot.name} (owns the harness's one page load)…`)
-      bootstrapResult = await runBootstrapShotOrRecordFailure(page, bootstrapShot, run, baseUrl)
-    } else {
-      await page.goto(baseUrl, { waitUntil: 'load' })
+    const mouse = await openHarnessPage(browser, baseUrl, args, consoleErrors, pages, {
+      hasTouch: false,
+      load: async (page) => {
+        if (bootstrapShot === undefined) return page.goto(baseUrl, { waitUntil: 'load' })
+        console.log(`Running ${bootstrapShot.name} (owns the harness's one page load)…`)
+        bootstrapResult = await runBootstrapShotOrRecordFailure(page, bootstrapShot, run, baseUrl)
+      },
+    })
+    // A shot with `touch: true` runs on a second page whose context has `hasTouch` (Playwright
+    // fixes that per context), loaded once, on the first such shot's turn, and shared by all of
+    // them the way every other shot shares the first.
+    let touch = null
+    const touchPage = async () => {
+      touch ??= await openHarnessPage(browser, baseUrl, args, consoleErrors, pages, {
+        hasTouch: true,
+        load: (page) => page.goto(baseUrl, { waitUntil: 'load' }),
+      })
+      return touch
     }
-
-    const hook = makeHook(page)
-    try {
-      // Not a shot-level concern (`ready()`'s own doc comment) — this is "did the build even
-      // carry the QA hook at all", checked once, up front, with a short timeout and a message
-      // that names the actual known cause rather than a bare Playwright TimeoutError: this
-      // repo's Next 16/Turbopack build has, on a small fraction of otherwise-identical clean
-      // builds, failed to inline `NEXT_PUBLIC_EARTHTIME_QA` (a Turbopack quirk, not this
-      // harness's own gate — `devHook.ts`'s guard is a plain, correct `if`; see README "Known
-      // flake"). A stale `out/` from a plain, non-QA build (`--no-build` reusing an old export)
-      // hits this exact same symptom.
-      await page.waitForFunction(() => window.__earthtime !== undefined, undefined, { timeout: 10_000 })
-    } catch {
-      throw new Error(
-        'window.__earthtime never appeared. Either this out/ export was built without ' +
-          'NEXT_PUBLIC_EARTHTIME_QA=1 (check --no-build / --dev), or this is the known Next ' +
-          '16 + Turbopack env-inlining flake (rare, seen on an otherwise-identical clean build) ' +
-          '— see README "Known flake". Fix: rebuild (drop --no-build) and re-run.',
-      )
-    }
-    await hook.ready()
-
-    // The first-visit tour (`@/onboarding`) opens whenever `localStorage` has no "seen it" flag,
-    // and a fresh browser context never does — left alone it would cover every shot in the run.
-    // Dismissed once, here, through the same path its own Skip button takes; the shots that guard
-    // the tour itself re-open it via `state.tour`. Waiting for the layer to actually detach also
-    // covers the race where the tour's own mount effect has not run yet when this fires: the flag
-    // is written either way, so it simply never opens.
-    await hook.setTourOpen(false)
-    await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
 
     console.log(`Running ${shots.length} of ${shotList.length} shots…`)
     for (const shot of shots) {
@@ -578,6 +611,7 @@ async function main() {
         continue
       }
       console.log(`Running ${shot.name}…`)
+      const { page, hook } = shot.touch === true ? await touchPage() : mouse
       results.push(await runShotOrRecordFailure(page, hook, shot, run))
     }
 
@@ -609,7 +643,7 @@ async function main() {
 
     if (!report.pass) process.exitCode = 1
   } finally {
-    if (page !== null) await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {})
+    for (const page of pages) await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {})
     await browser.close()
     if (server !== null) await server.close()
   }

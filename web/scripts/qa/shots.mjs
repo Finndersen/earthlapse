@@ -685,6 +685,7 @@ async function dragGlobeOrb(page) {
  * @property {'reduce' | 'no-preference'} [reducedMotion] - overrides the run's own --reduced-motion default
  * @property {number} [t] - years before present
  * @property {ShotState} [state]
+ * @property {boolean} [touch] - run on the harness's second, `hasTouch` page, where `page.touchscreen.tap` works
  * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<void>} [actions]
  * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<Record<string, unknown>>} [measure]
  * @property {Record<string, [number, number]>} [expect] - dot-path into `measure`'s result -> [min, max]
@@ -1655,7 +1656,7 @@ function landscapeCaptionTapShot(viewport) {
  * Desktop/tablet: the controls row under the section bands, four levels deep. The play button is
  * centred on the track; the transport sits midway between the band row and the viewport bottom;
  * the breadcrumb shares its centre line; nothing in the row overlaps; and the current crumb shows
- * whole.
+ * whole. Playing, the rate readout sits just right of the transport, on its centre line.
  * @param {{ width: number, height: number }} viewport
  */
 function desktopTimelineRowShot(viewport) {
@@ -1665,7 +1666,8 @@ function desktopTimelineRowShot(viewport) {
       'Desktop controls row four levels deep: the play button centred on the track (±2px), equal gaps above ' +
       '(to the band row) and below (to the viewport bottom) its drawn box (±3px), the breadcrumb on its centre ' +
       'line (±2px), no overlap among breadcrumb, speed select, transport buttons and secondary cluster, and the ' +
-      'current crumb not truncated.',
+      'current crumb not truncated. Playing in steady mode, the rate readout text starts 4-24px right of the ' +
+      'transport, its centre within 3px of the transport\'s, overlapping none of the row.',
     viewport,
     t: 0,
     measure: async ({ page, hook }) => {
@@ -1692,9 +1694,15 @@ function desktopTimelineRowShot(viewport) {
       }, BREADCRUMB_CURRENT_SELECTOR)
       const gapAbove = play.y - (bands.y + bands.height)
       const gapBelow = viewport.height - (play.y + play.height)
+      const readout = await playingRateReadout(page, hook)
       await goToRootSection(page)
       await hook.setT(0)
       return {
+        readoutGapPx: readout.text.x - (boxes.transport.x + boxes.transport.width),
+        readoutCentreOffsetPx:
+          readout.text.y + readout.text.height / 2 - (boxes.transport.y + boxes.transport.height / 2),
+        readoutTextWidthPx: readout.text.width,
+        ...pairwiseOverlapFlags({ ...readout.row, readout: readout.text }),
         playCentreOffsetPx: play.x + play.width / 2 - (track.x + track.width / 2),
         gapAbovePx: gapAbove,
         gapBelowPx: gapBelow,
@@ -1710,7 +1718,52 @@ function desktopTimelineRowShot(viewport) {
       breadcrumbCentreOffsetPx: [-2, 2],
       currentCrumbTruncated: [0, 0],
       ...noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary']),
+      readoutGapPx: [4, 24],
+      readoutCentreOffsetPx: [-3, 3],
+      readoutTextWidthPx: [20, 200],
+      overlap_breadcrumb_readout: [0, 0],
+      overlap_speed_readout: [0, 0],
+      overlap_transport_readout: [0, 0],
+      overlap_secondary_readout: [0, 0],
     },
+  }
+}
+
+const RATE_READOUT_SELECTOR = `${TIMELINE_CONTROLS_CORE_SELECTOR} span[data-visible][class*="rateReadout"]`
+
+/**
+ * The rate readout's text rect (a `Range` over its text, not the fixed-width slot it sits in) and
+ * the controls row's other boxes, all read while playing in steady mode, the one state the readout
+ * shows a number in. Pauses and restores the playback mode before returning.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function playingRateReadout(page, hook) {
+  const mode = (await hook.getState()).playback.mode
+  await hook.setPlaybackMode('steady')
+  await hook.setPlaying(true)
+  try {
+    await page.waitForFunction(
+      (sel) => (document.querySelector(sel)?.textContent ?? '').trim().length > 0,
+      RATE_READOUT_SELECTOR,
+      { timeout: 5_000 },
+    )
+    await rafTicks(page, 2)
+    const text = await page.evaluate((sel) => {
+      const range = document.createRange()
+      range.selectNodeContents(document.querySelector(sel))
+      return range.getBoundingClientRect().toJSON()
+    }, RATE_READOUT_SELECTOR)
+    const row = {
+      breadcrumb: await boxOf(page, BREADCRUMB_SELECTOR),
+      speed: await boxOf(page, `${TIMELINE_CONTROLS_CORE_SELECTOR} select`),
+      transport: await page.evaluate((sel) => document.querySelector(sel).parentElement.getBoundingClientRect().toJSON(), PLAY_BUTTON_SELECTOR),
+      secondary: await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR),
+    }
+    return { text, row }
+  } finally {
+    await hook.setPlaying(false)
+    await hook.setPlaybackMode(mode)
   }
 }
 
@@ -1756,6 +1809,269 @@ function desktopOrbTopShot(viewport) {
       readoutGapPx: [0, 40],
       ...noPairOverlaps(['orb', 'readout', 'title', 'era', 'feed']),
     },
+  }
+}
+
+/**
+ * A finger tap at `(x, y)` through CDP touch events: touch start, one `jitterPx` move (a real
+ * finger never lifts exactly where it landed), touch end. Chromium turns it into the same
+ * pointerdown/pointermove/pointerup/click sequence a phone produces. Needs the `hasTouch` page
+ * (`touch: true` on the shot).
+ * @param {import('playwright').Page} page
+ * @param {number} x
+ * @param {number} y
+ * @param {{ jitterPx?: number }} [options]
+ */
+async function touchTap(page, x, y, { jitterPx = 1 } = {}) {
+  const cdp = await page.context().newCDPSession(page)
+  const at = (dx) => [{ x: x + dx, y, id: 0, radiusX: 4, radiusY: 4, force: 1 }]
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) })
+    if (jitterPx !== 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(jitterPx) })
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  } finally {
+    await cdp.detach()
+  }
+}
+
+/** `touchTap` at the centre of `box`. */
+async function touchTapCentre(page, box, options) {
+  await touchTap(page, box.x + box.width / 2, box.y + box.height / 2, options)
+}
+
+/** Waits for a tap's click and whatever it set off to commit and paint. */
+async function settleAfterTap(page, hook) {
+  await rafTicks(page, 3)
+  await hook.ready()
+  await rafTicks(page, 2)
+}
+
+/**
+ * Phone: a finger tap on the minimised orb expands it and does nothing else — the time and the
+ * section stay where they were, so the tap never also lands on whatever the expanded layout puts
+ * under the finger (the era shortcuts). Paused, `t` must not move at all; playing, it may only
+ * advance by playback, never jump to a shortcut's section.
+ * @param {boolean} playing
+ */
+function phoneOrbTapShot(playing) {
+  return {
+    name: `phone-orb-tap-expands-without-time-jump${playing ? '-playing' : ''}`,
+    description:
+      `Phone portrait, ${playing ? 'playing' : 'paused'}: a touch tap on the minimised orb's centre expands the globe ` +
+      `and leaves the section unchanged, with t ${playing ? 'still under 1 Ma (no era-shortcut jump)' : 'unchanged'}.`,
+    viewport: { width: 390, height: 844 },
+    touch: true,
+    t: 100_000,
+    state: { playing },
+    measure: async ({ page, hook }) => {
+      const orb = await boxOf(page, GLOBE_EXPAND_SELECTOR)
+      const before = await hook.getState()
+      await touchTapCentre(page, orb)
+      await settleAfterTap(page, hook)
+      const after = await hook.getState()
+      await hook.setPlaying(false)
+      return {
+        expanded: after.globeExpanded ? 1 : 0,
+        sectionUnchanged: after.sectionId === before.sectionId ? 1 : 0,
+        tDeltaYears: after.t - before.t,
+        tAfterMa: after.t / 1e6,
+      }
+    },
+    expect: playing
+      ? { expanded: [1, 1], sectionUnchanged: [1, 1], tAfterMa: [0, 1] }
+      : { expanded: [1, 1], sectionUnchanged: [1, 1], tDeltaYears: [0, 0] },
+  }
+}
+
+/**
+ * The `t` of the published scene titled `label` — a cluster popover row's own label is its scene's
+ * title (`Experience.tsx`'s checkpoints). `NaN` when the title is missing or not unique.
+ * @param {import('playwright').Page} page
+ * @param {string} label
+ */
+async function sceneTByTitle(page, label) {
+  return page.evaluate(async (title) => {
+    const manifest = await (await fetch('/media/manifest.json')).json()
+    const matches = manifest.scenes.filter((scene) => scene.title === title)
+    return matches.length === 1 ? matches[0].t : Number.NaN
+  }, label)
+}
+
+const CLUSTER_SELECTOR = '[data-checkpoint-cluster]'
+/** `ClusterPopover.tsx`'s dialog, labelled "<n> scenes". */
+const CLUSTER_POPOVER_SELECTOR = '[role="dialog"][aria-label$=" scenes"]'
+
+/**
+ * Phone, touch: the timeline's checkpoint cluster popover owns taps on its own controls. Opening a
+ * cluster jumps to its oldest member; tapping × then closes it with `t` left exactly there, and
+ * tapping a member row lands on that member's own `t` — never the `t` under the finger's x.
+ */
+function clusterPopoverTouchShot() {
+  return {
+    name: 'cluster-popover-touch',
+    description:
+      'Phone, touch: tapping the cluster popover × closes it with t unchanged; tapping its last member row leaves t ' +
+      "unchanged until the row's click, then closes it with t exactly that member's scene t.",
+    viewport: { width: 390, height: 844 },
+    touch: true,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const openPopover = async () => {
+        await touchTapCentre(page, await boxOf(page, CLUSTER_SELECTOR), { jitterPx: 0 })
+        await settleAfterTap(page, hook)
+        await page.locator(CLUSTER_POPOVER_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
+      }
+      const popoverOpen = async () => ((await page.locator(CLUSTER_POPOVER_SELECTOR).count()) > 0 ? 1 : 0)
+
+      await openPopover()
+      const tOpened = (await hook.getState()).t
+      const close = page.locator(`${CLUSTER_POPOVER_SELECTOR} button[aria-label="Close"]`)
+      await touchTapCentre(page, await close.boundingBox())
+      await settleAfterTap(page, hook)
+      const closeTDeltaYears = (await hook.getState()).t - tOpened
+      const openAfterClose = await popoverOpen()
+
+      await openPopover()
+      const row = page.locator(`${CLUSTER_POPOVER_SELECTOR} li button`).last()
+      const label = (await row.locator('[class*="itemLabel"]').innerText()).trim()
+      const memberT = await sceneTByTitle(page, label)
+      const tReopened = (await hook.getState()).t
+      // The row's own click sets `t` either way, so the scrub a stray pointerup makes before it
+      // shows only in `t` as the click arrives.
+      await page.evaluate(() => {
+        window.__qaTAtClick = null
+        const record = () => (window.__qaTAtClick = window.__earthtime.getState().t)
+        window.addEventListener('click', record, { capture: true, once: true })
+      })
+      await touchTapCentre(page, await row.boundingBox())
+      await settleAfterTap(page, hook)
+      const tAfterRow = (await hook.getState()).t
+      const tAtRowClick = await page.evaluate(() => window.__qaTAtClick)
+      return {
+        closeTDeltaYears,
+        openAfterClose,
+        rowPressTDeltaYears: tAtRowClick === null ? Number.NaN : tAtRowClick - tReopened,
+        memberTDeltaYears: tAfterRow - memberT,
+        memberT,
+        openAfterRow: await popoverOpen(),
+      }
+    },
+    expect: {
+      closeTDeltaYears: [0, 0],
+      openAfterClose: [0, 0],
+      rowPressTDeltaYears: [0, 0],
+      memberTDeltaYears: [0, 0],
+      openAfterRow: [0, 0],
+    },
+  }
+}
+
+const EVENT_FEED_BROWSE_SELECTOR = '[data-testid="event-feed-browse"]'
+const EVENT_BROWSER_SELECTOR = '[data-testid="event-browser"]'
+
+/** The union of every event feed card's box, each clipped to its scrolling ancestor — the desktop
+ *  stack cuts its last card off mid-body, so only the part inside the scroller is on screen. */
+async function feedCardsBox(page) {
+  const boxes = await page.locator(EVENT_FEED_ITEM_SELECTOR).evaluateAll((els) =>
+    els
+      .map((el) => {
+        const r = el.getBoundingClientRect()
+        let clip = el.parentElement
+        while (clip !== null && getComputedStyle(clip).overflowY === 'visible') clip = clip.parentElement
+        const c = clip === null ? r : clip.getBoundingClientRect()
+        const x = Math.max(r.left, c.left)
+        const y = Math.max(r.top, c.top)
+        return { x, y, width: Math.min(r.right, c.right) - x, height: Math.min(r.bottom, c.bottom) - y }
+      })
+      .filter((r) => r.width > 0 && r.height > 0),
+  )
+  if (boxes.length === 0) throw new Error('feedCardsBox: no visible event feed card')
+  return unionBox(boxes)
+}
+
+/**
+ * The event feed's "All events" button: on desktop a row beneath the card stack, left-aligned
+ * with it; on a phone a square tap target of at least 44×44 at the right of the one-card strip,
+ * vertically centred on the card and clear of it. Either way, clicking it opens the event browser.
+ * @param {'desktop' | 'phone'} layout
+ * @param {{ width: number, height: number }} viewport
+ * @param {boolean} globeExpanded
+ */
+function eventFeedBrowseShot(layout, viewport, globeExpanded) {
+  const phone = layout === 'phone'
+  return {
+    name: `event-feed-browse-${layout}${globeExpanded ? '-globe-expanded' : ''}`,
+    description: phone
+      ? `Phone${globeExpanded ? ', globe expanded' : ''}: the "All events" button is at least 44×44, right of the ` +
+        'feed card with no horizontal overlap and inside the viewport, its centre within 1px of the card\'s, and clicking ' +
+        'it opens the event browser.'
+      : 'Desktop: the "All events" button sits below the card stack, left-aligned with it (±2px) and clear of it, ' +
+        'and clicking it opens the event browser.',
+    viewport,
+    t: 0,
+    state: { globeExpanded },
+    measure: async ({ page, hook }) => {
+      const present = await page.locator(EVENT_FEED_BROWSE_SELECTOR).count()
+      if (present === 0) return { present: 0 }
+      const button = await boxOf(page, EVENT_FEED_BROWSE_SELECTOR)
+      const cards = await feedCardsBox(page)
+      const geometry = phone
+        ? {
+            widthPx: button.width,
+            heightPx: button.height,
+            gapRightOfCardPx: button.x - (cards.x + cards.width),
+            centreOffsetPx: button.y + button.height / 2 - (cards.y + cards.height / 2),
+            rightMarginPx: viewport.width - (button.x + button.width),
+          }
+        : {
+            gapBelowCardsPx: button.y - (cards.y + cards.height),
+            leftAlignPx: button.x - cards.x,
+          }
+      await page.locator(EVENT_FEED_BROWSE_SELECTOR).click()
+      await hook.ready()
+      await rafTicks(page, 2)
+      return { present: 1, ...geometry, browserOpen: (await page.locator(EVENT_BROWSER_SELECTOR).count()) > 0 ? 1 : 0 }
+    },
+    expect: phone
+      ? {
+          present: [1, 1],
+          widthPx: [44, 64],
+          heightPx: [44, 64],
+          gapRightOfCardPx: [0, 40],
+          centreOffsetPx: [-1, 1],
+          rightMarginPx: [0, 60],
+          browserOpen: [1, 1],
+        }
+      : { present: [1, 1], gapBelowCardsPx: [0, 24], leftAlignPx: [-2, 2], browserOpen: [1, 1] },
+  }
+}
+
+/**
+ * Desktop: the minimised orb's hover/focus ring (the expand button's 1px box-shadow spread, so its
+ * outer diameter is the button's width + 2) traces the drawn limb from just outside it rather than
+ * cutting across the planet. The limb is the sphere's `alpha >= 0.5` diameter by difference matte
+ * (`alphaEdgeDiameter`), scene and vignette hidden.
+ */
+function globeExpandRingShot() {
+  return {
+    name: 'globe-expand-ring-outside-limb',
+    description:
+      "Desktop, minimised: the expand ring's outer diameter is 100-106% of the sphere's drawn (alpha >= 0.5) diameter.",
+    viewport: DEFAULT_VIEWPORT,
+    t: 0,
+    measure: async ({ page }) => {
+      const ring = await boxOf(page, GLOBE_EXPAND_SELECTOR)
+      const restoreScene = await hideSceneAndVignette(page)
+      await rafTicks(page, 2)
+      const limb = await alphaEdgeDiameter(page, await boxOf(page, GLOBE_CANVAS_SELECTOR))
+      await restoreScene()
+      return {
+        ringDiameterPx: ring.width + 2,
+        limbDiameterPx: limb.width,
+        ringToLimbPct: (100 * (ring.width + 2)) / limb.width,
+      }
+    },
+    expect: { ringToLimbPct: [100, 106] },
   }
 }
 
@@ -4548,7 +4864,8 @@ export default [
       // Defensive: see the desktop shot's own comment on why every shot here re-closes first.
       await page.keyboard.press('Escape')
       await page.locator('[data-testid^="event-feed-card-"]').first().click()
-      await page.getByRole('button', { name: 'All events' }).click()
+      // The detail panel's own action, not the feed's "All events" button behind it.
+      await page.getByRole('dialog').getByRole('button', { name: 'All events' }).click()
     },
     measure: async ({ page }) => {
       const panel = await drawnBounds(page, '[data-testid="event-browser"]')
@@ -4796,6 +5113,13 @@ export default [
   ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeCaptionRowShot(viewport)),
   ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopTimelineRowShot(viewport)),
   ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopOrbTopShot(viewport)),
+  globeExpandRingShot(),
+  phoneOrbTapShot(false),
+  phoneOrbTapShot(true),
+  clusterPopoverTouchShot(),
+  eventFeedBrowseShot('desktop', DEFAULT_VIEWPORT, false),
+  eventFeedBrowseShot('phone', { width: 390, height: 844 }, false),
+  eventFeedBrowseShot('phone', { width: 390, height: 844 }, true),
   // Floors: the lower of 4.5:1 and the hard-edged box's own contrast before the soft shade
   // replaced it, less 0.3 (6.6:1 in portrait, 3.4:1 in landscape).
   captionContrastShot({ width: 390, height: 844 }, 4.5),
