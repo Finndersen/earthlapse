@@ -7033,3 +7033,34 @@ level with the About button leading the ancestor column.
   with the About button opposite; expanded, the breadcrumb sits above the transport in the left
   column instead of its own row above the track, so the sphere/map fit frame gets that row's
   height back; and the portrait Globe/Map toggle is sized nearer the zoom rocker's own height.
+
+## ADR-049 — A rough Cenozoic ice age on the globe, from the LR04 stack
+
+**Status:** accepted — 2026-09-23. Builds on GLOBE.md's regimes (the Snowball ice shell).
+
+**Context.** The approved globe roadmap asked for a rough ice-age look — scalar-driven caps and a
+sea-level lowstand — not detailed reconstructions. The Snowball ice shell covers the Cryogenian
+and Huronian; nothing showed the Antarctic ice sheet (from ~34 Ma) or the Northern Hemisphere
+glacial cycles (from ~2.7 Ma), the ones most visitors have heard of.
+
+**Decision.** A new source, `lr04`, curates the LR04 benthic δ¹⁸O stack (Lisiecki & Raymo 2005,
+0–5.3 Ma; CC-BY-3.0 via PANGAEA doi:10.1594/PANGAEA.701576, row-identical to NOAA NCEI's copy)
+and publishes two globe-surface scalar layers derived in the pipeline:
+
+- `ice_volume`, normalised 0 (today) to 1 (the 19–23 ka LGM mean);
+- `sea_level`, one straight-line calibration of δ¹⁸O: 0 m today, −134 m at the LGM (Lambeck et
+  al. 2014, PNAS 111:15296). It also fills `WorldState`'s sea-level field.
+
+The globe draws soft, schematic caps on present-day centres, sized by `ice_volume` and gated by
+the Antarctic (33.7 Ma) and northern (2.7 Ma) onsets, and paints shallow shelves as land at
+lowstand using depth read back out of the PaleoDEM palette colours (±15 m). Under the Natural
+Earth II basemap only ice beyond today's extent is drawn. `tests/test_palette.py` keeps the
+shader's palette copy in step with `pipeline/palette.py`.
+
+**Consequences.** Explicitly rough: the linear calibration overstates warm-period highstands (up
+to +46 m in the Pliocene), and the caps are not reconstructions. The Late Ordovician and Late
+Paleozoic ice ages are not drawn. If ICE-6G_C's licence is confirmed, its last 26 kyr would
+replace this for the deglaciation.
+
+**Rejected.** Publishing an elevation raster (a new `paleodem` output) for the lowstand — more
+payload and pipeline work than a rough look warrants.
