@@ -46,8 +46,8 @@
   position: fixed;
   inset: 0;
   /* `clip`, not only `hidden`: a `hidden` box is still a scroll container, so moving focus to a
-     control near the bottom edge (a panel restoring focus on close) could scroll the whole HUD up
-     by however far `.bottom::before`'s scrim reaches past it. `hidden` stays as the fallback for
+     control near the bottom edge (a panel restoring focus on close) could scroll the whole HUD.
+     `hidden` stays as the fallback for
      browsers without `clip`. */
   overflow: hidden;
   overflow: clip;
@@ -212,7 +212,7 @@
    so it never depends on how much of this track a given viewport or caption leaves — the feed
    stacks its (up to three) cards against the bottom of this box, scrolling within it if a very
    short viewport leaves less room than that. The padding keeps the stack clear of the readouts
-   above and the caption/chart below.
+   above and the caption below.
 
    This is also why hiding a HUD readout (`@/layers/hudVisibility.ts`) needs no change here:
    `.readouts` above sits in the grid's row-2 `auto` track, so one fewer readout row shrinks that
@@ -330,27 +330,8 @@
    properties) replaces a blanket `.bottom > *` that used to live here — see that rule's own doc
    comment for why. */
 
-/* A feathered darkening that rises behind an open chart so its trace reads over any plate,
-   without a box: it fades in with the chart and has no edge of its own. */
-.bottom::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: calc(-1 * var(--gutter));
-  right: calc(-1 * var(--gutter));
-  bottom: -24px;
-  height: calc(100% + 120px);
-  background: linear-gradient(to top, rgba(3, 4, 6, 0.72) 0%, rgba(3, 4, 6, 0.6) 55%, transparent 100%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 300ms ease;
-}
-
-.shell[data-chart-open='true'] .bottom::before {
-  opacity: 1;
-}
-
-/* Caption and chart share one cell above the timeline: whichever is showing owns it. */
+/* The scene caption and the expanded globe's caption share one cell above the timeline:
+   whichever is showing owns it. */
 .stage {
   display: grid;
   align-items: end;
@@ -360,8 +341,8 @@
 /* `pointer-events: auto` (`.timeline`'s own doc comment above has the full "why"): `.stage`
    itself stays `pointer-events: none` by default (inherited from `.bottom`,
    never overridden here), a deliberate layout-only box sized to its tallest child; each of its
-   three actual children re-enables the pointer individually so only whichever one is actually
-   visible (`.caption`/`.chart`/`.expandedGlobeCaption`'s own crossfade rule) can ever intercept a
+   two actual children re-enables the pointer individually so only whichever one is actually
+   visible (`.caption`/`.expandedGlobeCaption`'s own crossfade rule) can ever intercept a
    click, never the empty space `.stage`'s own box reserves around it. */
 .stage > * {
   grid-area: 1 / 1;
@@ -370,7 +351,6 @@
 }
 
 .caption,
-.chart,
 .expandedGlobeCaption,
 .stage {
   transition:
@@ -379,7 +359,7 @@
 }
 
 /* Feathered local scrims behind the two blocks that sit over open sky — the caption
-   and the left readout/feed column. Same device as `.bottom::before`: an edgeless gradient that
+   and the left readout/feed column. Each is an edgeless gradient that
    carries legibility where the type actually is, so the global `.lens` vignette can stay light
    and show more of the plate. No fill, border or blur: a panel would read as app chrome against
    the photograph (DESIGN §8). */
@@ -471,17 +451,14 @@
 
 /* The globe's own caption (docs/GLOBE.md §7), shown here — the scene caption's own spot, above
    the timeline and clear of the playhead readout riding the track — only while the globe is
-   expanded; the scene caption and chart take it back the instant it collapses. Empty text
+   expanded; the scene caption takes it back the instant it collapses. Empty text
    (no globe caption active) simply renders nothing, the same as an empty .caption. */
 .expandedGlobeCaption {
   opacity: 0;
   visibility: hidden;
 }
 
-.shell[data-chart-open='true'] .caption,
-.shell[data-chart-open='false'] .chart,
-.shell[data-globe-expanded='true'] .caption,
-.shell[data-globe-expanded='true'] .chart {
+.shell[data-globe-expanded='true'] .caption {
   opacity: 0;
   visibility: hidden;
   transition:
@@ -521,7 +498,7 @@
    oversized, mostly-invisible box (promoted to `z-index: 60` above this entire backdrop) swallow
    clicks meant for whatever actually sits underneath it, e.g. the expanded globe's own Globe/Map
    toggle. `.stage`'s own children get their `pointer-events: auto` from `.stage > *` below
-   instead, so only whichever of the three is actually visible there ever intercepts a click. */
+   instead, so only whichever of the two is actually visible there ever intercepts a click. */
 .timeline {
   min-width: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -991,9 +968,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .caption,
-  .chart,
-  .stage,
-  .bottom::before {
+  .stage {
     transition: none;
   }
 }

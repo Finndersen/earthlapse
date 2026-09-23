@@ -18,12 +18,11 @@
  * `EventFeed`'s old in-place card expand and its own bespoke `Escape` handler. `ClusterPopover`
  * does the same, but — unlike the claim an earlier pass made here — it is *not* outside
  * `Timeline`'s DOM subtree: `ScrubTrack` renders it directly, so it only works because it also
- * stops propagation, same as `Panel`. Two overlays neither of those covers, `LayerChart` (the
- * chart dock) and the expanded `Globe`, mount their own `window`-level `Escape` listeners instead
- * (outside React's tree entirely, so `stopPropagation` can't reach them either way) — `Timeline`
- * is told one of them is open via its own `overlayOpen` prop and skips `'leave-section'` for a
- * bare `Escape` while it's true, leaving that keypress to whichever overlay's own listener closes
- * it, instead of also climbing a section (see `Timeline.tsx`'s doc comment and `handleKeyDown`).
+ * stops propagation, same as `Panel`. The expanded `Globe`, which neither of those covers, mounts
+ * its own `window`-level `Escape` listener instead (outside React's tree entirely, so
+ * `stopPropagation` can't reach it either way) — `Timeline` is told it is open via its own
+ * `overlayOpen` prop and skips `'leave-section'` for a bare `Escape` while it's true, leaving that
+ * keypress to the globe's own listener, instead of also climbing a section (see `Timeline.tsx`'s doc comment and `handleKeyDown`).
  * Plain `ArrowLeft`/`ArrowRight` (no Shift) keep stepping through events/checkpoints exactly as
  * before — only the `Shift`-held chord is new.
  */
@@ -80,7 +79,7 @@ function isTextInputTarget(target: EventTarget | null): boolean {
  *  its search focused. Standalone from `TimelineKeyIntent`/`timelineKeyIntent` rather than a new
  *  member of that union: the browser it opens is a page-level overlay mounted by `Experience.tsx`
  *  via its own `window`-level listener, the same pattern this module's own doc comment already
- *  describes for `LayerChart` and the expanded globe's Escape handling — not an intent
+ *  describes for the expanded globe's Escape handling — not an intent
  *  `Timeline.tsx`'s own onKeyDown dispatches. */
 export function isOpenEventBrowserShortcut(event: TimelineKeyEvent): boolean {
   return event.key === '/' && !isTextInputTarget(event.target)

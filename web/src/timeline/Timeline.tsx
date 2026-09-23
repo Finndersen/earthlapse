@@ -34,8 +34,7 @@
  *   is not required to build any UI in response.
  * - `scale` is the animated, undistorted `TimeScale` over the section window. The caller owns
  *   it rather than this component computing it, so anything else drawn against the same axis
- *   shares the exact object. That covers the expanded `LayerChart` in the chart dock, left
- *   undistorted on purpose (ADR-017).
+ *   shares the exact object.
  * - The scrub track, ruler and section bands are drawn against a second, fisheye-distorted
  *   `trackScale` instead (ADR-017). While the pointer hovers the track, a lens stretches the
  *   region around it so nearby events/pips/ticks spread apart and the rest compresses toward
@@ -156,14 +155,13 @@ export interface TimelineProps {
    *  scene a minimum on-screen dwell (ADR-029) — `RateReadout` turns amber and announces it. A
    *  direct function of playback state, never an idle timer. Defaults to `false`. */
   rateFloored?: boolean
-  /** Whether some other overlay outside this component's own DOM subtree — the chart dock
-   *  (`@/layers`'s `LayerChart`) or the expanded globe (`@/globe`'s `Globe`) — is currently open.
-   *  Both close themselves on `Escape` via their own `window`-level listener, outside React's
-   *  tree, so neither can `stopPropagation()` the way `ClusterPopover` and `shell/Panel` do;
-   *  without this, a bare `Escape` with focus inside the timeline would close the overlay *and*
+  /** Whether an overlay outside this component's own DOM subtree — the expanded globe
+   *  (`@/globe`'s `Globe`) — is currently open. It closes itself on `Escape` via its own
+   *  `window`-level listener, outside React's tree, so it cannot `stopPropagation()` the way
+   *  `ClusterPopover` and `shell/Panel` do; without this, a bare `Escape` with focus inside the timeline would close the overlay *and*
    *  climb a section in the same keypress. `Timeline` skips `'leave-section'` for `Escape` (not
    *  `Backspace`, which no overlay binds) while this is true, leaving the key entirely to
-   *  whichever overlay's own listener owns it. Optional, defaulting to `false`. */
+   *  the overlay's own listener. Optional, defaulting to `false`. */
   overlayOpen?: boolean
   /** The sound mute/volume control (`@/audio`'s `<SoundToggle>`), rendered in `.secondary`
    *  beside the mode and scale toggles — see this component's own doc comment. Optional so a
@@ -267,7 +265,7 @@ export function Timeline({
   }, [sectionId])
 
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>): void => {
-    // An open chart dock or expanded globe owns a bare Escape itself (see `overlayOpen`'s own
+    // An expanded globe owns a bare Escape itself (see `overlayOpen`'s own
     // doc comment above) — leave it alone entirely rather than also climbing a section.
     if (e.key === 'Escape' && overlayOpen) return
     const intent = timelineKeyIntent({ key: e.key, target: e.target, shiftKey: e.shiftKey })

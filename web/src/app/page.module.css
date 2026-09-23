@@ -125,34 +125,6 @@
   color: var(--hud-dim);
 }
 
-.sparklineButton {
-  margin: -6px -8px;
-  padding: 6px 8px;
-  box-sizing: content-box;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  cursor: pointer;
-  transition:
-    color 220ms ease,
-    filter 220ms ease;
-}
-
-.sparklineButton:hover {
-  color: var(--hud-ink);
-  filter: drop-shadow(0 0 6px rgba(239, 233, 220, 0.3));
-}
-
-.sparklineButton[aria-pressed='true'] {
-  color: var(--hud-accent);
-  filter: drop-shadow(0 0 6px var(--hud-accent-glow));
-}
-
-.sparklineButton:focus-visible {
-  outline: 1px solid var(--hud-accent);
-  outline-offset: 2px;
-}
-
 /* ---------------------------------------------------------------------------- caption */
 
 .captionHost {
@@ -347,8 +319,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .sparklineButton {
-    transition: none;
-  }
-}

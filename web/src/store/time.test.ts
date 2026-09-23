@@ -22,7 +22,6 @@ describe('useTimeStore', () => {
       scaleKind: 'symlog',
       playback: { playing: false, baseRate: 0.02, speed: 1, yearsPerSecond: 1, mode: 'scenes' },
       globeExpanded: false,
-      expandedChartLayerId: null,
       detailEventId: null,
     })
   })
@@ -63,9 +62,8 @@ describe('useTimeStore', () => {
   it('tracks the scale kind and open overlays', () => {
     store().setScaleKind('linear')
     store().setGlobeExpanded(true)
-    store().setExpandedChartLayerId('co2')
     store().setDetailEventId('k-pg-impact')
-    expect(store()).toMatchObject({ scaleKind: 'linear', globeExpanded: true, expandedChartLayerId: 'co2', detailEventId: 'k-pg-impact' })
+    expect(store()).toMatchObject({ scaleKind: 'linear', globeExpanded: true, detailEventId: 'k-pg-impact' })
   })
 })
 

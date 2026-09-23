@@ -71,7 +71,7 @@ export function formatPopulation(value: number): string {
 
 /** Dispatches a scalar layer's numeric formatting by its declared `unit` — `formatPopulation`
  *  for a population count, `formatValue` (unchanged) for every other unit (ppm, °C, m, ...).
- *  Keeps `ScalarReadout`/`LayerChart` generic: neither special-cases a layer by id, only by the
+ *  Keeps `ScalarReadout` generic: it never special-cases a layer by id, only by the
  *  physical unit its data already declares. */
 export function formatScalarValue(value: number, unit: string): string {
   return unit === 'people' ? formatPopulation(value) : formatValue(value)

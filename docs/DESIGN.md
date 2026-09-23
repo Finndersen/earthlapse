@@ -82,7 +82,7 @@ automatically. There is no separate "video mode".
 │    ├─ Scene view    stills + depth, parallax + dissolve         │
 │    ├─ Globe view    INDEPENDENT three.js sphere, real geodata   │
 │    ├─ Timeline      warped scale, LOD events, scrubbing         │
-│    ├─ Layer HUD     sparklines → expandable charts              │
+│    ├─ Layer HUD     readouts + growing sparklines               │
 │    └─ Audio         stem mixer + procedural score               │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -173,10 +173,10 @@ idea as map tile LOD.
 > visible window is that section's window, animated in symlog-warped space when it changes.
 > There is still **no free zoom**: a clickable band strip under the ruler shows the current
 > section's children, and a breadcrumb (Earth › Cenozoic › Quaternary › Holocene › Industrial
-> age) or Escape zooms back out. The scrub track, ruler, bands and chart dock all draw against
+> age) or Escape zooms back out. The scrub track, ruler and bands all draw against
 > the windowed scale. Dragging and stepping stay inside the window, including mid-animation (track
-> targets are clamped to the section). The HUD sparklines, scenes-mode pacing and the event
-> feed's lookback stay full-domain. Within a section the symlog/linear toggle
+> targets are clamped to the section). Scenes-mode pacing and the event feed's lookback stay
+> full-domain. Within a section the symlog/linear toggle
 > still applies. Symlog stays the default, because `log(1 + t/10⁴)` already draws close to
 > linearly across a short historical section while still compressing the Cenozoic usefully. A
 > near-linear window gets evenly stepped ruler ticks.
@@ -187,7 +187,7 @@ idea as map tile LOD.
 > sibling section — wrapping to the parent's own next/previous sibling at either end of a branch,
 > the same rule playback's own section-continuation already used. The breadcrumb carries matching
 > "‹ Up"/"Earth"/"‹ ›" buttons, each disabled (not hidden) with nowhere to go, and a bare Escape
-> defers to the chart dock or the expanded globe instead when either is open (`Timeline`'s own
+> defers to the expanded globe instead when it is open (`Timeline`'s own
 > `overlayOpen` prop). Separately, every section now carries a short `abbreviation`, drawn once a
 > band's own rendered width no longer fits its full name, with a floor under every band's width
 > (fit to its abbreviation, redistributed from wider siblings) that is never shrunk below itself:
@@ -564,9 +564,9 @@ expands to fill; it is never the default focus.
 > button. The caption's shade fades to nothing at every edge in every layout.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
-viewport. Scalar layers appear as sparklines that expand into full-width charts docked to
-the timeline; because the chart shares the timeline's warped x-axis, the value under the
-playhead is always directly above it. One chart component, N layers.
+viewport. Scalar layers appear as a readout over a sparkline of the story so far: linear time
+from the layer's first sample to `t`, linear value from zero to the peak reached, so the playhead
+is always the trace's right end (ADR-053). One sparkline component, N layers.
 
 ### Event feed
 

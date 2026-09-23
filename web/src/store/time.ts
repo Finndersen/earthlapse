@@ -43,12 +43,9 @@ export interface TimeState {
   steadyRateChosen: boolean
   /** Whether the corner globe overlay has been expanded to fill (DESIGN §7). */
   globeExpanded: boolean
-  /** Which HUD layer's sparkline is expanded to a full-width chart, if any (DESIGN §8). */
-  expandedChartLayerId: string | null
   /** The event feed card (or, later, timeline marker) currently open in `EventDetailPanel`, if
    *  any. `Experience.tsx` owns the accompanying "pause on open, resume on close if it was
-   *  playing" behaviour — this store only remembers which event, like `expandedChartLayerId`
-   *  remembers which chart. */
+   *  playing" behaviour — this store only remembers which event. */
   detailEventId: string | null
 
   /** Moves `t` (clamped to the domain) and follows it with the section: see the invariant in
@@ -66,7 +63,6 @@ export interface TimeState {
   /** Switches mode, keeping each mode's own rate (see `steadyRateChosen`). */
   setPlaybackMode: (mode: PlaybackMode) => void
   setGlobeExpanded: (expanded: boolean) => void
-  setExpandedChartLayerId: (id: string | null) => void
   setDetailEventId: (id: string | null) => void
 }
 
@@ -90,7 +86,6 @@ export const useTimeStore = create<TimeState>((set) => ({
   },
   steadyRateChosen: false,
   globeExpanded: false,
-  expandedChartLayerId: null,
   detailEventId: null,
 
   setT: (t) =>
@@ -114,6 +109,5 @@ export const useTimeStore = create<TimeState>((set) => ({
       s.playback.mode === mode ? s : { playback: withContextSteadyRate({ ...s.playback, mode }, s.steadyRateChosen, s.sectionId, s.t) },
     ),
   setGlobeExpanded: (globeExpanded) => set({ globeExpanded }),
-  setExpandedChartLayerId: (expandedChartLayerId) => set({ expandedChartLayerId }),
   setDetailEventId: (detailEventId) => set({ detailEventId }),
 }))
