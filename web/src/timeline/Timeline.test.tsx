@@ -39,7 +39,7 @@ const events: TimelineEvent[] = [
 ]
 
 function playback(overrides: Partial<Playback> = {}): Playback {
-  return { playing: false, baseRate: 0.1, speed: 1, mode: 'scenes', ...overrides }
+  return { playing: false, baseRate: 0.1, speed: 1, yearsPerSecond: 10, mode: 'scenes', ...overrides }
 }
 
 const checkpoints: TimelineCheckpoint[] = [{ id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' }]
@@ -86,25 +86,44 @@ describe('<Timeline>', () => {
     expect(onPlaybackChange).toHaveBeenCalledWith(playback({ playing: true }))
   })
 
-  it('changes speed via the speed selector', () => {
-    const onPlaybackChange = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ speed: 1 })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={onPlaybackChange}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
-    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 8 }))
+  function renderTimeline(overrides: Partial<Parameters<typeof Timeline>[0]> = {}) {
+    const props = {
+      t: 0,
+      scaleKind: 'symlog' as const,
+      scale: FULL_DOMAIN_SCALE,
+      sectionId: 'earth' as const,
+      events,
+      playback: playback(),
+      onScrub: vi.fn(),
+      onScaleKindChange: vi.fn(),
+      onPlaybackChange: vi.fn(),
+      onOpenCluster: vi.fn(),
+      onSelectSection: vi.fn(),
+      ...overrides,
+    }
+    return { props, ...render(<Timeline {...props} />) }
+  }
+
+  it('changes the scenes multiplier via the rate picker', () => {
+    const { props } = renderTimeline({ playback: playback({ speed: 1 }) })
+    const picker = screen.getByRole('spinbutton', { name: 'Playback speed' })
+    expect(picker.getAttribute('aria-valuetext')).toBe('1 times scene pace')
+    fireEvent.keyDown(picker, { key: 'ArrowUp' })
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 2 }))
+  })
+
+  it('shows and steps the steady rate in years per second in steady mode', () => {
+    const { props } = renderTimeline({ playback: playback({ mode: 'steady', yearsPerSecond: 10 }) })
+    const picker = screen.getByRole('spinbutton', { name: 'Playback rate' })
+    expect(picker.getAttribute('aria-valuetext')).toBe('10 years per second')
+    fireEvent.keyDown(picker, { key: ']' })
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'steady', yearsPerSecond: 20 }))
+  })
+
+  it('steps only the active mode\'s rate with the [ and ] shortcuts', () => {
+    const { props } = renderTimeline({ playback: playback({ mode: 'scenes', speed: 1, yearsPerSecond: 10 }) })
+    fireEvent.keyDown(screen.getByRole('spinbutton'), { key: '[' })
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'scenes', speed: 0.5, yearsPerSecond: 10 }))
   })
 
   it('switches playback.mode via the Scenes/Steady toggle (ADR-016)', () => {
@@ -173,76 +192,28 @@ describe('<Timeline>', () => {
     expect(screen.getByText('40 Myr/s')).toBeTruthy()
   })
 
-  it('shows the "time compressed" marker only when timeCompressed is true (ADR-029)', () => {
-    const { rerender } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true, mode: 'steady' })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    expect(screen.queryByText('Time compressed')).toBeNull()
+  it('colours the rate readout and announces the slowdown while the steady floor holds (ADR-029)', () => {
+    const { props, rerender } = renderTimeline({ playback: playback({ playing: true, mode: 'steady' }), ratePerSecond: 250 })
+    const readout = screen.getByText('250 yr/s').parentElement!
+    const status = screen.getByRole('status')
+    expect(readout.getAttribute('data-floored')).toBe('false')
+    expect(status.textContent).toBe('')
 
-    rerender(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true, mode: 'steady' })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-        timeCompressed
-      />,
-    )
-    expect(screen.getByText('Time compressed')).toBeTruthy()
+    rerender(<Timeline {...props} rateFloored />)
+    expect(readout.getAttribute('data-floored')).toBe('true')
+    expect(screen.getByRole('status')).toBe(status)
+    expect(status.textContent).toBe('Playback slowed for scenes')
+
+    rerender(<Timeline {...props} rateFloored={false} />)
+    expect(screen.getByRole('status')).toBe(status)
+    expect(readout.getAttribute('data-floored')).toBe('false')
+    expect(status.textContent).toBe('')
   })
 
-  it('keeps the "time compressed" marker\'s live region mounted across the toggle (re-review fix, ADR-029)', () => {
-    // A single playthrough can cross the floor threshold several times in quick succession
-    // (`TimeCompressedBadge`'s own doc comment) — unmounting/remounting a `role="status"` region
-    // that often both re-announces it more erratically than a live region is meant to and shifts
-    // its neighbours. The marker must stay the same node throughout, only its content/visibility
-    // toggling.
-    const props = {
-      t: 0,
-      scaleKind: 'symlog' as const,
-      scale: FULL_DOMAIN_SCALE,
-      sectionId: 'earth' as const,
-      events,
-      playback: playback({ playing: true, mode: 'steady' }),
-      onScrub: vi.fn(),
-      onScaleKindChange: vi.fn(),
-      onPlaybackChange: vi.fn(),
-      onOpenCluster: vi.fn(),
-      onSelectSection: vi.fn(),
-    }
-    const { rerender } = render(<Timeline {...props} />)
-    const marker = screen.getByRole('status')
-    expect(marker.getAttribute('data-visible')).toBe('false')
-    expect(marker.textContent).toBe('')
-
-    rerender(<Timeline {...props} timeCompressed />)
-    expect(screen.getByRole('status')).toBe(marker) // same node — never unmounted
-    expect(marker.getAttribute('data-visible')).toBe('true')
-    expect(marker.textContent).toBe('Time compressed')
-
-    rerender(<Timeline {...props} timeCompressed={false} />)
-    expect(screen.getByRole('status')).toBe(marker)
-    expect(marker.getAttribute('data-visible')).toBe('false')
-    expect(marker.textContent).toBe('')
+  it('announces nothing for the floor while paused', () => {
+    const { props, rerender } = renderTimeline({ playback: playback({ playing: false, mode: 'steady' }), ratePerSecond: 250 })
+    rerender(<Timeline {...props} rateFloored />)
+    expect(screen.getByRole('status').textContent).toBe('')
   })
 
   it('shows a "Scale" label and a Symlog/Linear segmented control, and calls onScaleKindChange on click (follow-up pass item 1)', () => {

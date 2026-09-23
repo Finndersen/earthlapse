@@ -24,9 +24,9 @@
   --track-box-height: 63px;
   --stack-row-gap: 2px;
   --ticks-height: 12px;
-  /* The speed select's own width (`Transport.module.css`'s `.speedSelect`), which the desktop row
+  /* The rate picker's own width (`RateScroller.module.css`'s `.scroller`), which the desktop row
      keeps clear beside the breadcrumb. */
-  --speed-select-width: 46px;
+  --speed-control-width: 46px;
 
   display: grid;
   /* Row 1: the edge buttons flank the track, which spans the three middle columns. Row 2 splits
@@ -57,7 +57,7 @@
   gap: var(--stack-row-gap);
 }
 
-/* The breadcrumb trail. On desktop it takes the left column up to the speed select that hangs
+/* The breadcrumb trail. On desktop it takes the left column up to the rate picker that hangs
    off the transport's left side, so a long trail only ellipsises once that width is used up. At
    the root section the breadcrumb renders nothing; the cell stays, and its row keeps the
    transport's height, so entering a section moves nothing. */
@@ -68,12 +68,12 @@
   align-self: center;
   justify-self: start;
   min-width: 0;
-  max-width: calc(100% - var(--speed-select-width) - var(--track-side-gap, 16px));
+  max-width: calc(100% - var(--speed-control-width) - var(--track-side-gap, 16px));
 }
 
-/* The speed select, `TransportCore` (back/play/forward) and the rate readout — speed sets the
+/* The rate picker, `TransportCore` (back/play/forward) and the rate readout — the picker sets the
    rate, the transport runs it, the readout shows the result. On desktop only the three transport
-   buttons are in flow, so this column is exactly their width and centred; the select hangs off
+   buttons are in flow, so this column is exactly their width and centred; the picker hangs off
    their left side and the readout sits under them (`.speedSlot`/`.rateReadoutRow`). */
 .core {
   grid-area: core;
@@ -113,7 +113,7 @@
   align-items: center;
 }
 
-/* `RateReadout` and, outboard of it, `TimeCompressedBadge` (ADR-029, shown rarely). On desktop
+/* `RateReadout`. On desktop
    it sits centred under the transport buttons, out of flow, so showing it when playback starts
    moves nothing. The phone and landscape layouts put it back in the transport row, in a reserved
    slot the width of `--transport-flank`. */
@@ -129,7 +129,7 @@
   transform: translateX(-50%);
 }
 
-/* The speed select: out of flow on desktop, just left of the back button. */
+/* The rate picker: out of flow on desktop, just left of the back button. */
 .speedSlot {
   position: absolute;
   top: 50%;
@@ -194,7 +194,7 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-/* Phone and short landscape keep the speed select and the rate readout in the transport row, in
+/* Phone and short landscape keep the rate picker and the rate readout in the transport row, in
    reserved `--transport-flank` slots either side of the buttons, so the buttons stay centred and
    the row cannot reflow when playback starts. */
 @media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {

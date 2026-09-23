@@ -26,8 +26,8 @@
  *   edge-nav button or Escape. The caller is expected to move `t` into the section when it was
  *   outside (the time store's `selectSection`).
  * - `onScaleKindChange(kind)` fires from the Symlog/Linear segmented scale toggle.
- * - `onPlaybackChange(playback)` fires from the play/pause button, the speed selector, the
- *   scenes/steady mode toggle (ADR-016), and the space-bar shortcut.
+ * - `onPlaybackChange(playback)` fires from the play/pause button, the rate picker, the
+ *   scenes/steady mode toggle (ADR-016), and the space-bar and `[`/`]` shortcuts.
  * - `onOpenCluster(members)` fires when a checkpoint cluster marker (ADR-019) is clicked or
  *   tapped. `ScrubTrack` itself opens an in-track member-list popover (ADR-021) on the same
  *   click, so this is only a notification for a caller that wants to know (e.g. analytics); it
@@ -58,7 +58,7 @@
  * One CSS Grid (`Timeline.module.css`'s own `.timeline` doc comment has the full mechanics) holds
  * every piece as a direct child: the scrub track/ruler/band strip (`.trackStack`), the previous/
  * next section-edge buttons (`SectionEdgeButton`), the breadcrumb (`.sections`, the row's one
- * flexible column, free to grow or shrink with the trail), the transport cluster of speed select,
+ * flexible column, free to grow or shrink with the trail), the transport cluster of rate picker,
  * `TransportCore` (back/play/forward) and rate readout (`.core`), and the mode/scale controls
  * (`.secondary`). At a wide viewport the edge
  * buttons flank the track exactly as before; at phone-portrait width (the package's existing
@@ -67,8 +67,8 @@
  * landscape window (ADR-048) the breadcrumb takes its own row above the track while collapsed;
  * expanded, it instead sits directly above the transport, out of the grid's row flow so the track
  * loses nothing to it. Either way the transport and the mode/scale/volume cluster stack in a
- * column left of the track. On desktop the speed
- * select and rate readout hang off the transport (left of it and under it) so the play button
+ * column left of the track. On desktop the rate
+ * picker and rate readout hang off the transport (left of it and under it) so the play button
  * sits on the track's centre. Same DOM every way — only `grid-template-areas` and positioning
  * change — so there is no viewport-driven React branch to cause a hydration mismatch on this
  * static export, and no control is ever rendered twice.
@@ -102,10 +102,10 @@ import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
 import { SectionBreadcrumb } from './components/SectionBreadcrumb'
 import { SectionEdgeButton } from './components/SectionEdgeNav'
-import { PlaybackModeToggle, RateReadout, SpeedSelect, TimeCompressedBadge, TransportCore } from './components/Transport'
+import { PlaybackModeToggle, RateReadout, SpeedControl, TransportCore } from './components/Transport'
 import { fisheyeScale } from './fisheye'
 import { timelineKeyIntent } from './keyboard'
-import { stepSpeed } from './playback'
+import { stepActiveRate } from './playbackRates'
 import type { TimeWindow } from './scale'
 import {
   continuationSection,
@@ -152,12 +152,10 @@ export interface TimelineProps {
   /** Instantaneous, smoothed years-per-second `t` is advancing at (ADR-016's prototype rate
    *  readout) — passed straight through to `RateReadout`. `null`/omitted shows nothing. */
   ratePerSecond?: number | null
-  /** True exactly while `'steady'`-mode playback's own rate is floored below what `speed`
-   *  requested, to guarantee every scene a minimum on-screen dwell (ADR-029) — passed straight
-   *  through to the "time compressed" marker beside `RateReadout`. A direct function of playback
-   *  state (`Experience.tsx`'s own `steadyPacing` call inside its playback loop), never an idle
-   *  timer. Defaults to `false` (tests, and any caller with no steady-mode floor to report). */
-  timeCompressed?: boolean
+  /** True exactly while `'steady'`-mode playback is slowed below the chosen rate to give every
+   *  scene a minimum on-screen dwell (ADR-029) — `RateReadout` turns amber and announces it. A
+   *  direct function of playback state, never an idle timer. Defaults to `false`. */
+  rateFloored?: boolean
   /** Whether some other overlay outside this component's own DOM subtree — the chart dock
    *  (`@/layers`'s `LayerChart`) or the expanded globe (`@/globe`'s `Globe`) — is currently open.
    *  Both close themselves on `Escape` via their own `window`-level listener, outside React's
@@ -187,7 +185,7 @@ export function Timeline({
   onPlaybackChange,
   onOpenCluster,
   ratePerSecond = null,
-  timeCompressed = false,
+  rateFloored = false,
   overlayOpen = false,
   sound,
 }: TimelineProps) {
@@ -308,7 +306,7 @@ export function Timeline({
       }
       case 'speed': {
         e.preventDefault()
-        onPlaybackChange({ ...playback, speed: stepSpeed(playback.speed, intent.direction) })
+        onPlaybackChange(stepActiveRate(playback, intent.direction))
         return
       }
     }
@@ -347,7 +345,7 @@ export function Timeline({
       <SectionEdgeButton edge="previous" target={previousSibling} onSelectSection={selectSection} />
       <div className={styles.core} data-testid="timeline-controls-core">
         <div className={styles.speedSlot}>
-          <SpeedSelect playback={playback} onPlaybackChange={onPlaybackChange} />
+          <SpeedControl playback={playback} onPlaybackChange={onPlaybackChange} />
         </div>
         <TransportCore
           t={t}
@@ -358,8 +356,7 @@ export function Timeline({
           onPlaybackChange={onPlaybackChange}
         />
         <div className={styles.rateReadoutRow}>
-          <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} />
-          <TimeCompressedBadge visible={timeCompressed} />
+          <RateReadout ratePerSecond={ratePerSecond} playing={playback.playing} floored={rateFloored} />
         </div>
       </div>
       <SectionEdgeButton edge="next" target={nextSibling} onSelectSection={selectSection} />
