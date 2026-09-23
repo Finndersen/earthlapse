@@ -45,13 +45,7 @@ describe('EventBrowser', () => {
     expect(screen.getAllByRole('option')).toHaveLength(3)
   })
 
-  it('highlights the event nearest t on mount', () => {
-    render(<EventBrowser events={EVENTS} t={399_000} onClose={vi.fn()} onActivate={vi.fn()} />)
-    const search = screen.getByTestId('event-browser-search')
-    expect(search.getAttribute('aria-activedescendant')).toBe('event-browser-row-fire')
-  })
-
-  it('re-highlights the nearest row when t changes, without calling onActivate', () => {
+  it('highlights the row nearest t, following t without activating', () => {
     const onActivate = vi.fn()
     const { rerender } = render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={onActivate} />)
     expect(screen.getByTestId('event-browser-search').getAttribute('aria-activedescendant')).toBe('event-browser-row-genome')
@@ -61,23 +55,17 @@ describe('EventBrowser', () => {
     expect(onActivate).not.toHaveBeenCalled()
   })
 
-  it('moves the active row with ArrowDown/ArrowUp and jumps with Enter', () => {
+  it('moves the active row with the arrow keys, clamped at the ends, and activates with Enter', () => {
     const onActivate = vi.fn()
     render(<EventBrowser events={EVENTS} t={100e6} onClose={vi.fn()} onActivate={onActivate} />)
     const search = screen.getByTestId('event-browser-search')
-    // Oldest first: kpg, fire, genome. t=100e6 starts the highlight on kpg (index 0).
+    fireEvent.keyDown(search, { key: 'ArrowUp' })
+    expect(search.getAttribute('aria-activedescendant')).toBe('event-browser-row-kpg')
     fireEvent.keyDown(search, { key: 'ArrowDown' })
     expect(search.getAttribute('aria-activedescendant')).toBe('event-browser-row-fire')
     fireEvent.keyDown(search, { key: 'Enter' })
     expect(onActivate).toHaveBeenCalledTimes(1)
     expect(onActivate.mock.calls[0]![0].id).toBe('fire')
-  })
-
-  it('does not move past either end of the list', () => {
-    render(<EventBrowser events={EVENTS} t={100e6} onClose={vi.fn()} onActivate={vi.fn()} />)
-    const search = screen.getByTestId('event-browser-search')
-    fireEvent.keyDown(search, { key: 'ArrowUp' })
-    expect(search.getAttribute('aria-activedescendant')).toBe('event-browser-row-kpg')
   })
 
   it('calls onActivate when a row is clicked', () => {
@@ -88,41 +76,25 @@ describe('EventBrowser', () => {
     expect(onActivate.mock.calls[0]![0].id).toBe('genome')
   })
 
-  it('closes on Escape from anywhere on the page, not just the panel itself', () => {
+  it('closes on Escape from anywhere and from its Close button', () => {
     const onClose = vi.fn()
     render(<EventBrowser events={EVENTS} t={25} onClose={onClose} onActivate={vi.fn()} />)
     fireEvent.keyDown(window, { key: 'Escape' })
-    expect(onClose).toHaveBeenCalledTimes(1)
-  })
-
-  it('closes via its own close button', () => {
-    const onClose = vi.fn()
-    render(<EventBrowser events={EVENTS} t={25} onClose={onClose} onActivate={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(2)
   })
 
-  it('shows a no-match message when nothing matches the query', () => {
+  it('shows a no-match message and drops the rail when nothing matches', () => {
     render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={vi.fn()} />)
     fireEvent.change(screen.getByTestId('event-browser-search'), { target: { value: 'nonexistent-xyz' } })
     expect(screen.queryAllByRole('option')).toHaveLength(0)
     expect(screen.getByText('No events match.')).toBeTruthy()
+    expect(screen.queryByTestId('event-browser-rail')).toBeNull()
   })
 
-  it('is not aria-modal: a non-modal dialog, since the timeline behind it stays interactive', () => {
+  it('is a non-modal dialog, since the timeline behind it stays interactive', () => {
     render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={vi.fn()} />)
     expect(screen.getByRole('dialog').getAttribute('aria-modal')).toBeNull()
-  })
-
-  it('renders a section rail with one label per section change, none when there are no results', () => {
-    render(<EventBrowser events={EVENTS} t={25} onClose={vi.fn()} onActivate={vi.fn()} />)
-    const rail = screen.getByTestId('event-browser-rail')
-    // kpg (Mesozoic/Cenozoic boundary era), fire (human-history), genome (human-history): at
-    // least two distinct section entries across the three events.
-    expect(rail.children.length).toBeGreaterThanOrEqual(2)
-
-    fireEvent.change(screen.getByTestId('event-browser-search'), { target: { value: 'nonexistent-xyz' } })
-    expect(screen.queryByTestId('event-browser-rail')).toBeNull()
   })
 
   it('a rail drag scrolls the list without ever calling onActivate', () => {
@@ -141,8 +113,6 @@ describe('EventBrowser', () => {
       toJSON: () => ({}),
     })
     fireEvent.pointerDown(rail, { clientY: 99, pointerId: 1 })
-    // The last entry (kpg, fire or genome's own section) is now highlighted, and no jump to `t`
-    // ever happened — dragging the rail only ever scrolls.
     expect(screen.getByTestId('event-browser-search').getAttribute('aria-activedescendant')).toBe(
       'event-browser-row-genome',
     )

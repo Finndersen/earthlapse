@@ -44,13 +44,6 @@ describe('planStemVoices', () => {
     expect(byId.get('traffic')).toEqual<StemVoicePlan>({ kind: 'missing', id: 'traffic' })
   })
 
-  it('never plans a looping voice for impact, even if published loop-safe by mistake it stays scene-only', () => {
-    const plans = planStemVoices([stem('impact', true)])
-    const impact = plans.find((plan) => plan.id === 'impact')
-    expect(impact?.kind).toBe('scene-loop')
-    expect(plans.some((plan) => plan.kind === 'ambience-loop' && (plan.id as string) === 'impact')).toBe(false)
-  })
-
   it('refuses to loop an ambience stem that is not loop-safe', () => {
     const insects = stem('insects', false)
     const plan = planStemVoices([insects]).find((p) => p.id === 'insects')

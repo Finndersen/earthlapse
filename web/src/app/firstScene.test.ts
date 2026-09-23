@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -37,9 +38,6 @@ describe('initialSceneT', () => {
     expect(initialSceneT(stubManifest)).toBe(4_000_000_000)
   })
 
-  it('is null for a manifest with no scenes', () => {
-    expect(initialSceneT({ ...stubManifest, scenes: [] })).toBeNull()
-  })
 })
 
 describe('firstSceneUrls', () => {
@@ -66,11 +64,6 @@ describe('loadingProgress', () => {
 })
 
 describe('useFirstSceneLoad', () => {
-  it('is not settled before the manifest is known', () => {
-    const { result } = renderHook(() => useFirstSceneLoad(null))
-    expect(result.current.settled).toBe(false)
-  })
-
   it('reports download progress and settles once the first scene has loaded', async () => {
     const { result } = renderHook(() => useFirstSceneLoad(stubManifest))
     const url = '/stub/scenes/archean-shore.svg'

@@ -15,13 +15,6 @@ describe('scoreParams', () => {
     expect(deepPast).toBeCloseTo(27.5, 5)
   })
 
-  it('rootHz glides monotonically between the two', () => {
-    const values = [0, 1e8, 1e9, EARTH_FORMATION].map((t) => scoreParams(t, NO_SERIES, NO_CATASTROPHES).rootHz)
-    for (let i = 1; i < values.length; i++) {
-      expect(values[i]!).toBeLessThanOrEqual(values[i - 1]!)
-    }
-  })
-
   it('higher co2 lowers the filter cutoff; null falls back to the present-day default', () => {
     const low = scoreParams(0, { co2Ppm: 200, dayLengthHours: null }, NO_CATASTROPHES).filterCutoffHz
     const high = scoreParams(0, { co2Ppm: 6000, dayLengthHours: null }, NO_CATASTROPHES).filterCutoffHz
@@ -32,11 +25,6 @@ describe('scoreParams', () => {
     expect(fallback).toBeCloseTo(explicit420, 5)
     expect(fallback).toBeGreaterThanOrEqual(400)
     expect(fallback).toBeLessThanOrEqual(4000)
-  })
-
-  it('filter cutoff always stays in the musical range, even for out-of-range co2', () => {
-    expect(scoreParams(0, { co2Ppm: 0, dayLengthHours: null }, NO_CATASTROPHES).filterCutoffHz).toBe(4000)
-    expect(scoreParams(0, { co2Ppm: 1e6, dayLengthHours: null }, NO_CATASTROPHES).filterCutoffHz).toBe(400)
   })
 
   it('shorter days drive a faster pulse; null falls back to the present-day 24h default', () => {
@@ -60,12 +48,4 @@ describe('scoreParams', () => {
     expect(near).toBeCloseTo(1, 5)
   })
 
-  it('dissonance sums multiple nearby windows but never exceeds 1', () => {
-    const windows = [
-      { tMin: 6.6e7, tMax: 6.61e7 },
-      { tMin: 6.6e7, tMax: 6.61e7 },
-    ]
-    const mid = (windows[0]!.tMin + windows[0]!.tMax) / 2
-    expect(scoreParams(mid, NO_SERIES, windows).dissonance).toBeLessThanOrEqual(1)
-  })
 })

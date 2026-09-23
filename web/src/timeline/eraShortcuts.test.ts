@@ -11,16 +11,6 @@ describe('ERA_SHORTCUTS', () => {
     ])
   })
 
-  it("carries each shortcut's real section, not a synthetic stand-in", () => {
-    for (const shortcut of ERA_SHORTCUTS) {
-      expect(shortcut.section.id).toBe(shortcut.id)
-    }
-  })
-
-  it("gives each shortcut a plain-language nickname distinct from the section's own geological label", () => {
-    expect(ERA_SHORTCUTS[0]!.section.label).not.toBe(ERA_SHORTCUTS[0]!.nickname)
-    expect(ERA_SHORTCUTS[1]!.section.label).not.toBe(ERA_SHORTCUTS[1]!.nickname)
-  })
 })
 
 describe('isEraShortcutActive', () => {

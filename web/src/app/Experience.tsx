@@ -64,6 +64,7 @@ import { initialSceneT, loadingProgress, useFirstSceneLoad } from './firstScene'
 import { LoadingScreen } from './LoadingScreen'
 import styles from './page.module.css'
 import { useAppData } from './useAppData'
+import { usePlaybackHold } from './usePlaybackHold'
 
 /** The whole of Earth's history. The timeline's own window is the selected era section's
  *  (ADR-024); this is only for the scales below, which must not follow the selection. */
@@ -172,7 +173,7 @@ export function Experience() {
   // Like the event detail panel, opening it pauses playback and closing it resumes, so the scene
   // under the panel stays the one it describes.
   const [captionDetailScene, setCaptionDetailScene] = useState<Scene | null>(null)
-  const wasPlayingBeforeCaptionDetailRef = useRef(false)
+  const captionDetailHold = usePlaybackHold(playback.playing, setPlaying)
 
   // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
   // `onViewModeToggleHeightChange` doc comment), lifted here so
@@ -196,7 +197,7 @@ export function Experience() {
     installDevHook()
   }, [])
 
-  // Initial t (W12a brief): open on the oldest scene, once, the first time the manifest
+  // Initial t: open on the oldest scene, once, the first time the manifest
   // loads — never again, so it doesn't fight a later manual scrub. Nothing renders until it
   // has been applied, so the scene mounts directly on the oldest still rather than first
   // mounting at the store's default `t` and dissolving across all of history to get there.
@@ -242,8 +243,8 @@ export function Experience() {
   )
 
   // 'steady' mode moves at constant velocity in the selected section's scale of whichever
-  // ScaleKind is on screen (ADR-016, ADR-024). The symlog case is pinned to `timelineKnee`
-  // (re-review fix, 2026-09-15), the same knee the visible track/ruler use, so a leaf section's
+  // ScaleKind is on screen (ADR-016, ADR-024). The symlog case is pinned to `timelineKnee`,
+  // the same knee the visible track/ruler use, so a leaf section's
   // steady-mode pacing doesn't spend a lopsided share of wall-clock time near its present edge —
   // see `timelineKnee`'s own comment above. `advanceSteadyPlayhead` calls this once per section
   // it's currently inside; `timelineKnee` reflects `sectionId` fresh every render (and every
@@ -270,7 +271,7 @@ export function Experience() {
   // `ratePerSecond` above already follows — never an idle *timer*, a direct consequence of
   // `playback.playing` itself, ADR-012 amendment). While playback *is* running, `onFrame` still
   // runs every frame regardless of a concurrent scrub — `lastAdvancedTRef` (below) is what keeps
-  // such a frame reading 'crossfade' too (re-review fix, 2026-09-15): see its own comment.
+  // such a frame reading 'crossfade' too: see its own comment.
   const [steadyRegime, setSteadyRegime] = useState<{ regime: PresentationRegime; floored: boolean }>({
     regime: 'crossfade',
     floored: false,
@@ -280,9 +281,9 @@ export function Experience() {
   // since" (a scrub, a checkpoint/event jump, a keyboard step). `null` whenever there is no such
   // reference to compare against: before the loop has ever advanced anything, and reset on every
   // stop/(re)start so a resume never compares the fresh first frame against a many-seconds-stale
-  // value left over from before playback paused (re-review fix, HIGH-2/MEDIUM-1: a scrub or seek
-  // made while steady playback keeps running used to hard-cut with no rate limit at all, since
-  // the regime was read from whatever territory the scrubbed-to `t` happened to land in).
+  // value left over from before playback paused. Without it, a scrub or seek made while steady
+  // playback keeps running would take its regime from whatever territory the scrubbed-to `t`
+  // lands in, and could hard-cut with no rate limit.
   const lastAdvancedTRef = useRef<GeoTime | null>(null)
   useEffect(() => {
     if (!playback.playing) {
@@ -291,16 +292,12 @@ export function Experience() {
     }
   }, [playback.playing])
 
-  // Event detail panel (W-followup item 12): opening it pauses playback if it was running,
-  // closing it resumes only then — a direct consequence of the click that opened/closed it, not
-  // an idle-driven change. `useRef`, not `useTimeStore`, because this is a one-shot remembered
-  // fact about *this* open/close pair, not state anything else in the app reads.
-  const wasPlayingBeforeDetailRef = useRef(false)
-  // Same contract for the event browser. Opening it from the detail panel (rather than fresh)
-  // carries the original "was playing" fact forward from that ref rather than re-reading
-  // `playback.playing`, which by then is already false (the detail panel paused it) — see
+  // The event detail panel and the event browser each pause playback while open. Opening the
+  // browser from the detail panel hands the detail panel's remembered "was playing" over rather
+  // than re-reading `playback.playing`, which by then is already false — see
   // `openEventBrowserFromDetail` below.
-  const wasPlayingBeforeBrowserRef = useRef(false)
+  const detailHold = usePlaybackHold(playback.playing, setPlaying)
+  const browserHold = usePlaybackHold(playback.playing, setPlaying)
 
   // The desktop-only `/` shortcut (window-level, not `Timeline`'s own onKeyDown, since it must
   // work wherever focus is — see `isOpenEventBrowserShortcut`'s own doc comment). Ignored while
@@ -312,13 +309,12 @@ export function Experience() {
       if (eventBrowserOpen || detailEventId !== null) return
       if (!isOpenEventBrowserShortcut({ key: event.key, target: event.target })) return
       event.preventDefault()
-      wasPlayingBeforeBrowserRef.current = playback.playing
-      if (playback.playing) setPlaying(false)
+      browserHold.pause()
       setEventBrowserOpen(true)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isCompactViewport, eventBrowserOpen, detailEventId, playback.playing, setPlaying])
+  }, [isCompactViewport, eventBrowserOpen, detailEventId, browserHold])
 
   useEffect(() => {
     if (!playback.playing) {
@@ -349,7 +345,7 @@ export function Experience() {
       if (playback.mode === 'steady') {
         // Evaluated at `next` — the `t` this frame actually renders — not the pre-advance `t`,
         // and forced to crossfade by `seeked` above: see `steadyFrameRegime`'s own doc comment
-        // for why both re-review fixes matter (MEDIUM-2 and HIGH-2, respectively). Recomputing
+        // for why both matter. Recomputing
         // `rawRate`/`scale` here (not reusing anything `advanceSteadyPlayhead` used internally)
         // mirrors exactly what that call just integrated with, for whichever territory `next`
         // itself landed in — a large dt crossing several territories in one call is a rare
@@ -511,7 +507,7 @@ export function Experience() {
 
   const { manifest, isStub } = data
 
-  // The event feed card an activation opened, if any (W-followup item 12). Looked up by id
+  // The event feed card an activation opened, if any. Looked up by id
   // rather than kept as the `TimelineEvent` itself, so the store only ever holds a plain id, the
   // same "what's expanded, not the expanded thing" shape `expandedChartLayerId` already uses.
   const detailEvent = detailEventId !== null ? (manifest.events.find((e) => e.id === detailEventId) ?? null) : null
@@ -531,41 +527,32 @@ export function Experience() {
     manifest.scenes.length > 0 ? (dominantScene(sceneAt(manifest.scenes, t)).location ?? null) : null
 
   const openEventDetail = (event: TimelineEvent, members: readonly TimelineEvent[]): void => {
-    wasPlayingBeforeDetailRef.current = playback.playing
-    if (playback.playing) setPlaying(false)
+    detailHold.pause()
     setDetailEventId(event.id)
     setDetailMemberIds(members.map((member) => member.id))
   }
 
   const openCaptionDetail = (scene: Scene): void => {
-    wasPlayingBeforeCaptionDetailRef.current = playback.playing
-    if (playback.playing) setPlaying(false)
+    captionDetailHold.pause()
     setCaptionDetailScene(scene)
   }
 
   const closeCaptionDetail = (): void => {
     setCaptionDetailScene(null)
-    if (wasPlayingBeforeCaptionDetailRef.current) {
-      wasPlayingBeforeCaptionDetailRef.current = false
-      setPlaying(true)
-    }
+    captionDetailHold.resume()
   }
 
   const closeEventDetail = (): void => {
     setDetailEventId(null)
     setDetailMemberIds([])
-    if (wasPlayingBeforeDetailRef.current) {
-      wasPlayingBeforeDetailRef.current = false
-      setPlaying(true)
-    }
+    detailHold.resume()
   }
 
   // Opened from the detail panel's own "All events" action: replaces it rather than layering
   // over it, carrying the "was playing before any overlay opened" fact forward from the detail
-  // panel's ref rather than resuming (the panel already paused).
+  // panel's hold rather than resuming (the panel already paused).
   const openEventBrowserFromDetail = (): void => {
-    wasPlayingBeforeBrowserRef.current = wasPlayingBeforeDetailRef.current
-    wasPlayingBeforeDetailRef.current = false
+    browserHold.adopt(detailHold.release())
     setDetailEventId(null)
     setDetailMemberIds([])
     setEventBrowserOpen(true)
@@ -573,10 +560,7 @@ export function Experience() {
 
   const closeEventBrowser = (): void => {
     setEventBrowserOpen(false)
-    if (wasPlayingBeforeBrowserRef.current) {
-      wasPlayingBeforeBrowserRef.current = false
-      setPlaying(true)
-    }
+    browserHold.resume()
   }
 
   // A row was activated: jumps `t` and shows the event's detail card, same as the feed's own
@@ -586,8 +570,8 @@ export function Experience() {
   const activateBrowserEvent = (event: TimelineEvent): void => {
     setT(placementT(event))
     setEventBrowserOpen(false)
-    wasPlayingBeforeBrowserRef.current = false
-    wasPlayingBeforeDetailRef.current = false
+    browserHold.release()
+    detailHold.release()
     setDetailEventId(event.id)
     setDetailMemberIds([event.id])
   }
@@ -747,16 +731,11 @@ export function Experience() {
           members={detailMembers}
           onClose={closeEventDetail}
           onShowOnTimeline={() => {
-            // Scrubs, then closes the panel itself rather than leaving it open over a ~35%
-            // backdrop (re-review fix, 2026-09-15): the panel already paused playback on open
-            // (`openEventDetail`), and the point of this action is to actually see the scene at
-            // the event's placement, which the still-open panel was hiding. Closing here does
-            // *not* resume playback even if it had been running before the panel opened —
-            // clearing `wasPlayingBeforeDetailRef` first, then calling `setDetailEventId(null)`
-            // directly rather than `closeEventDetail` (which would resume) — since resuming would
-            // immediately carry the playhead away from the place the viewer just asked to see.
+            // Scrubs, then closes the panel so the scene at the event's placement is visible.
+            // Releases rather than resumes the hold: resuming would immediately carry the
+            // playhead away from the place the viewer just asked to see.
             setT(placementT(detailEvent))
-            wasPlayingBeforeDetailRef.current = false
+            detailHold.release()
             setDetailEventId(null)
             setDetailMemberIds([])
           }}

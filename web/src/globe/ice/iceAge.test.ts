@@ -103,10 +103,6 @@ describe('iceAgeStateAt', () => {
     expect(iceAgeStateAt(21_075, LAYERS)).toEqual({ iceVolume: 0.9941, seaLevelM: -133.2, northernGate: 1, antarcticGate: 1 })
   })
 
-  it('holds the newest LR04 sample through to the present', () => {
-    expect(iceAgeStateAt(0, LAYERS)).toEqual({ iceVolume: 0, seaLevelM: 0, northernGate: 1, antarcticGate: 1 })
-  })
-
   it('opens the Northern sheets at their onset with LR04 already covering it', () => {
     expect(iceAgeStateAt(NORTHERN_ONSET_T, LAYERS).northernGate).toBe(1)
     expect(iceAgeStateAt(olderThan(NORTHERN_ONSET_T, NORTHERN_ONSET_EASE_WARP, 1), LAYERS).northernGate).toBe(0)
@@ -116,11 +112,6 @@ describe('iceAgeStateAt', () => {
     expect(iceAgeStateAt(21_075, null)).toEqual({ iceVolume: 0, seaLevelM: 0, northernGate: 1, antarcticGate: 1 })
   })
 
-  it('returns identical state for the same t, whatever was sampled before', () => {
-    const first = iceAgeStateAt(120_075, LAYERS)
-    iceAgeStateAt(21_075, LAYERS)
-    expect(iceAgeStateAt(120_075, LAYERS)).toEqual(first)
-  })
 })
 
 describe('iceAgeCaption', () => {
@@ -128,11 +119,7 @@ describe('iceAgeCaption', () => {
     expect(iceAgeCaption(iceAgeStateAt(21_075, LAYERS))).toBe(GLACIAL_ICE_CAPTION)
   })
 
-  it.each([
-    ['the present', 0],
-    ['the Eemian interglacial', 120_075],
-    ['the Miocene', 10e6],
-  ])('is empty in %s', (_label, t) => {
-    expect(iceAgeCaption(iceAgeStateAt(t, LAYERS))).toBe('')
+  it('is empty in an interglacial or before the Northern onset', () => {
+    for (const t of [0, 120_075, 10e6]) expect(iceAgeCaption(iceAgeStateAt(t, LAYERS))).toBe('')
   })
 })

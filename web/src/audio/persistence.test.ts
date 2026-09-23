@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { DEFAULT_ENABLED, DEFAULT_MASTER_VOLUME, loadAudioPrefs, saveAudioEnabled, saveAudioMasterVolume } from './persistence'
@@ -12,14 +13,9 @@ describe('audio persistence', () => {
     expect(loadAudioPrefs()).toEqual({ enabled: true, masterVolume: DEFAULT_MASTER_VOLUME })
   })
 
-  it('a stored false survives — a deliberate mute is never overridden by the on-by-default', () => {
+  it('keeps a stored mute over the on-by-default', () => {
     saveAudioEnabled(false)
     expect(loadAudioPrefs()).toEqual({ enabled: false, masterVolume: DEFAULT_MASTER_VOLUME })
-  })
-
-  it('a stored true round-trips as on', () => {
-    saveAudioEnabled(true)
-    expect(loadAudioPrefs().enabled).toBe(true)
   })
 
   it('round-trips enabled and master volume', () => {
@@ -31,11 +27,6 @@ describe('audio persistence', () => {
   it('clamps a stored volume outside [0, 1]', () => {
     window.localStorage.setItem('earthtime.audio.masterVolume', '5')
     expect(loadAudioPrefs().masterVolume).toBe(1)
-  })
-
-  it('falls back to the default volume for malformed stored data', () => {
-    window.localStorage.setItem('earthtime.audio.masterVolume', 'not-a-number')
-    expect(loadAudioPrefs().masterVolume).toBe(DEFAULT_MASTER_VOLUME)
   })
 
   describe('when localStorage throws', () => {

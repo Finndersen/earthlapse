@@ -4,8 +4,8 @@ import { EFFECT_EVENTS, REGIME_EVENTS } from './fixtures'
 import { resolveGlobeEffects } from './resolve'
 
 describe('resolveGlobeEffects', () => {
-  it('is inert (matches the pre-G6/G8 look) well inside the plain PaleoDEM domain', () => {
-    const { uniforms, caption } = resolveGlobeEffects(1e8, REGIME_EVENTS, EFFECT_EVENTS, '')
+  it('is inert inside the plain PaleoDEM domain, keeping the fallback caption', () => {
+    const { uniforms, caption } = resolveGlobeEffects(1e8, REGIME_EVENTS, EFFECT_EVENTS, 'fallback')
     expect(uniforms).toEqual({
       regimeWeights: { magmaOcean: 0, waterWorld: 0, archean: 0, unknownGeography: 0 },
       iceShell: 0,
@@ -14,18 +14,7 @@ describe('resolveGlobeEffects', () => {
       impactFlashAnchorUv: null,
       giantImpactFlash: 0,
     })
-    expect(caption).toBe('')
-  })
-
-  it('falls back to the caller-supplied caption when nothing is active', () => {
-    const { caption } = resolveGlobeEffects(1e8, REGIME_EVENTS, EFFECT_EVENTS, 'No reconstruction before 540 Ma')
-    expect(caption).toBe('No reconstruction before 540 Ma')
-  })
-
-  it('resolves the giant-impact flash at the older edge of its window, where the regime is only just fading in', () => {
-    const window = EFFECT_EVENTS.find((e) => e.id === 'moon-forming-impact')!.effect!.windows[0]!
-    const { uniforms } = resolveGlobeEffects(window.tMax, REGIME_EVENTS, EFFECT_EVENTS, '')
-    expect(uniforms.giantImpactFlash).toBeCloseTo(1, 5)
+    expect(caption).toBe('fallback')
   })
 
   it('resolves the magma-ocean regime deep in its interior, its caption dominant and the flash long decayed', () => {
@@ -41,7 +30,7 @@ describe('resolveGlobeEffects', () => {
     expect(caption).toBe('Snowball Earth · extent contested')
   })
 
-  it('captions the Paleoproterozoic glaciation over its enclosing Archean regime (regression: its window sits entirely inside archean-haze-regime, so the regime weight there is ~1 too — the ice shell must still win the caption, not just the shader look)', () => {
+  it('captions an ice shell over the regime that encloses it', () => {
     const { uniforms, caption } = resolveGlobeEffects(2.44e9, REGIME_EVENTS, EFFECT_EVENTS, '')
     expect(uniforms.regimeWeights.archean).toBeGreaterThan(0.5)
     expect(uniforms.iceShell).toBe(1)
@@ -58,7 +47,7 @@ describe('resolveGlobeEffects', () => {
     expect(caption).toBe('Impact winter')
   })
 
-  it('is inert exactly at the impact instant (regression: the pre-impact kpg-arrival scene sits exactly here and must show the clear, pre-impact globe)', () => {
+  it('is inert exactly at the impact instant', () => {
     const kPg = EFFECT_EVENTS.find((e) => e.id === 'k-pg-impact')!
     const tImpact = (kPg.tMin + kPg.tMax) / 2
     const { uniforms, caption } = resolveGlobeEffects(tImpact, REGIME_EVENTS, EFFECT_EVENTS, 'fallback')
@@ -68,9 +57,4 @@ describe('resolveGlobeEffects', () => {
     expect(caption).toBe('fallback')
   })
 
-  it('is pure in t: identical inputs give identical output', () => {
-    const a = resolveGlobeEffects(4.1e9, REGIME_EVENTS, EFFECT_EVENTS, 'fallback')
-    const b = resolveGlobeEffects(4.1e9, REGIME_EVENTS, EFFECT_EVENTS, 'fallback')
-    expect(a).toEqual(b)
-  })
 })

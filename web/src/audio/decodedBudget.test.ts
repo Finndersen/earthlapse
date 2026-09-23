@@ -1,13 +1,7 @@
 /**
- * Regression guard for `DECODED_BYTES_CAP` (`engine.ts`) against the ambience-stem catalogue
- * itself, not just the loader's own bookkeeping (`bufferCache.test.ts` covers that in isolation
- * with synthetic sizes) — catches a single oversized clip pushing the peak simultaneous decode
- * near the cap once every stem needed alongside it at a busy checkpoint is summed.
- *
- * `engine.ts` downmixes every `ambience-loop` stem to mono right after decode
- * (`buffer.toMono()`), so a stem's decoded size is `duration * assumed sample rate * 4 bytes
- * (float32) * 1 channel` — the same 48 kHz assumption `engine.ts`'s
- * `ASSUMED_BYTES_PER_SECOND`/`estimatedStemBytes` use for a fetch still in flight.
+ * Checks DECODED_BYTES_CAP against the real ambience catalogue: the peak simultaneous mono decode
+ * of every stem audible at once, anywhere on the timeline, must fit under it. Ambience stems are
+ * downmixed to mono after decode, so a stem costs duration × 48 kHz × 4 bytes.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -19,11 +13,7 @@ import { GAIN_THRESHOLD } from './loadPlan'
 import { stemGains } from './stemGains'
 import { AMBIENCE_STEM_IDS, type AmbienceStemId } from './stemIds'
 
-// Mirrors sources/audio-stems/stems.toml's attested `duration_seconds` for every ambience stem —
-// update this table, in the same change, whenever a duration there changes. Not derived from the
-// published manifest: this package's tests stay pure/offline (CLAUDE.md "no live API calls or
-// large downloads in tests"), and a hand-cited table matches how `stemGains.ts`'s own boundary
-// constants already cite real dates without deriving them from a data file.
+// Mirrors sources/audio-stems/stems.toml's `duration_seconds`; update both together.
 const AMBIENCE_DURATION_SECONDS: Record<AmbienceStemId, number> = {
   wind: 128.2,
   water: 60.0,
@@ -52,12 +42,7 @@ const MONO_DECODED_BYTES: Record<AmbienceStemId, number> = Object.fromEntries(
 
 const NO_FLOOD_BASALT: never[] = []
 
-/** A dense log1p-spaced sweep of the whole domain, plus a handful of checkpoints in the busiest,
- *  most human-era-adjacent stretch, included explicitly so this test's coverage there does not
- *  depend only on where the log-spaced grid happens to land. A gap in the sweep can only ever
- *  make this test *more* permissive, never less (a missed narrow bump undercounts a peak; a
- *  missed narrow duck overcounts one and so still yields a valid, if slightly pessimistic, upper
- *  bound), so density here trades runtime for a tighter bound, not for correctness. */
+/** A dense log1p sweep of the domain plus the busiest checkpoints explicitly. */
 function sampleTimes(): number[] {
   const times: number[] = []
   const logMax = Math.log1p(EARTH_FORMATION)
@@ -71,11 +56,7 @@ function sampleTimes(): number[] {
 
 describe('ambience decoded-bytes budget', () => {
   it('never needs more mono-decoded ambience bytes at once than DECODED_BYTES_CAP allows', () => {
-    // Scene-only stems (`buzzing`, `lake-water`, ...) are deliberately excluded: they are not
-    // "always-on" the way an ambience stem is, they stay stereo (not mono-downmixed), and
-    // `engine.ts`'s own `DECODED_BYTES_CAP` comment already accounts for `rocket`'s stereo size
-    // needing no trim. This test's scope is the always-on ambience set the review's own fix
-    // asked for, not the full worst case across every scene transition too.
+    // Scene-only stems are excluded: they are not always-on and stay stereo.
     let peakBytes = 0
     let peakT = 0
     for (const t of sampleTimes()) {

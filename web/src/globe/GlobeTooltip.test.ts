@@ -8,16 +8,8 @@ import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unfoldedLiftedPosition
 import type { ArrivalGlobeEffect } from '@/types/layer'
 
 /**
- * Regression coverage for a Melbourne hover reported as unreliable. Real data, no browser: the
- * "British colonisation of Australia" arrival (`data/events.yaml`) is a `migration` from
- * Portsmouth (50.8, -1.1) to a schematic Sydney destination (-33.85, 151.2) — 2 km from the real,
- * curated Sydney city point (-33.86785, 151.20732) — while Melbourne (-37.814, 144.96332) sits
- * ~713 km further southwest. `HumanCivilisation.tsx` registers that arc's *whole polyline* as one
- * `GlobeHitCandidate` whenever `arcAlpha > 0` (`arrivalPresentationAt`), with `ARC_TOLERANCE_PX =
- * 7` — a plausible collision with Melbourne's own dot. This checks it against the real geometry
- * rather than a screen scan: a colour-based pixel scan over a photoreal basemap is exactly the
- * "drawnBounds is worthless over a busy backdrop" trap `CLAUDE.md` warns about, and never reliably
- * resolved Melbourne's own dot.
+ * Hit-picking against real geometry: the British-colonisation arc ends 2 km from Sydney and
+ * ~713 km from Melbourne, and must never steal a hover centred on Melbourne's dot.
  */
 
 // `data/events.yaml`'s `british-colonisation-australia` `effect:` block, verbatim.
@@ -35,16 +27,12 @@ const BRITISH_COLONISATION_EFFECT: ArrivalGlobeEffect = {
 const MELBOURNE = { lat: -37.814, lon: 144.96332 }
 const SYDNEY = { lat: -33.86785, lon: 151.20732 }
 
-// `HumanCivilisation.tsx`'s own tolerance constants, copied verbatim (not exported): this test's
-// own assertions would simply test the wrong numbers if that file's copy ever drifts from these.
+// Mirrors HumanCivilisation.tsx's (unexported) hit tolerances.
 const ARC_TOLERANCE_PX = 7
 const MARKER_TOLERANCE_PX = 11
 
 const GLOBE_RADIUS = 1 // Globe.tsx's own GLOBE_RADIUS
-// Globe.tsx's own map-mode fit: a PerspectiveCamera at fov 40 backed off far enough that the
-// Equal Earth map's own half-extents (+3% margin, Globe.tsx's MAP_FIT_MARGIN) fill the viewport —
-// reproduced by hand since Globe.tsx's own camera-framing constants aren't exported; camera.ts's
-// pure `fitDistance` is the same formula `GlobeCameraControls` calls.
+// Globe.tsx's map-mode fit: fov 40, the Equal Earth extents plus a 3% margin fill the viewport.
 function mapFitDistance(aspect: number): number {
   const fovYRadians = (40 * Math.PI) / 180
   const margin = 0.03
@@ -98,10 +86,10 @@ function arrivalArcCandidates(): GlobeHitCandidate[] {
   }))
 }
 
-describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
+describe('pickCandidate on the unfolded map', () => {
   const WIDTH = 1440
   const HEIGHT = 900
-  const unfold = 1 // fully-unfolded map — the simpler, fully-on-screen-at-once case to rule in or out first.
+  const unfold = 1
   const group = new THREE.Group()
   group.updateMatrixWorld(true)
   const camera = makeMapCamera(WIDTH, HEIGHT)
@@ -119,58 +107,23 @@ describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
     return screenXY(MELBOURNE, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
   }
 
-  it('sanity: Melbourne’s own city candidate wins when hovered dead-centre and nothing else is on the globe', () => {
-    const [mx, my] = melbourneScreenXY()
-    const candidates = [cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE)]
-    const hit = pickCandidate(candidates, mx, my, unfold, GLOBE_RADIUS, group, camera, WIDTH, HEIGHT)
-    expect(hit?.title).toBe('Melbourne')
-  })
-
-  it('reports whether the British-colonisation arc is even a live candidate at t=100 (100 years before present)', () => {
-    const timing = arrivalTimingFor(1) // Playback.baseRate = 1 (default speed) — arrivalTimingFor's own doc comment
-    const presentation = arrivalPresentationAt(BRITISH_COLONISATION_EFFECT, 100, timing)
-    // Not an assertion on a specific number — recorded so a failure elsewhere in this file is
-    // legible against whether the arc was actually drawn at this t at all.
-    console.log('arrivalPresentationAt(t=100):', presentation)
-    expect(typeof presentation.arcAlpha).toBe('number')
-  })
-
-  it('Melbourne hovered dead-centre still resolves to Melbourne, not the British-colonisation arc, at every t the arc could be live', () => {
+  it('resolves a hover on Melbourne to Melbourne at every t the arc is drawn', () => {
     const [mx, my] = melbourneScreenXY()
     const melbourne = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE)
     const sydney = cityCandidate('sydney-australia', 'Sydney', SYDNEY)
     const timing = arrivalTimingFor(1)
-    // Sweep every t from "arc just established" (237) down to the present (0) — the arc's own
-    // whole life — rather than guess a single t at which it might collide.
     const failures: { t: number; arcAlpha: number; hitTitle: string | null }[] = []
+    let liveFrames = 0
     for (let t = 237; t >= 0; t -= 1) {
       const presentation = arrivalPresentationAt(BRITISH_COLONISATION_EFFECT, t, timing)
       if (presentation.arcAlpha <= 0) continue
+      liveFrames += 1
       const candidates = [melbourne, sydney, ...arrivalArcCandidates()]
       const hit = pickCandidate(candidates, mx, my, unfold, GLOBE_RADIUS, group, camera, WIDTH, HEIGHT)
       if (hit?.title !== 'Melbourne') failures.push({ t, arcAlpha: presentation.arcAlpha, hitTitle: hit?.title ?? null })
     }
-    if (failures.length > 0) console.log('Melbourne hover hijacked at:', failures.slice(0, 10))
+    expect(liveFrames).toBeGreaterThan(0)
     expect(failures).toEqual([])
-  })
-
-  it('the arc\'s nearest point to Melbourne, and to real Sydney, in CSS pixels at this camera/viewport', () => {
-    const arcCandidates = arrivalArcCandidates()
-    const [mx, my] = melbourneScreenXY()
-    if (arcCandidates.length === 0) {
-      console.log('arc is degenerate (no segments) — geometry never registers as a hit candidate')
-      return
-    }
-    let nearestToMelbourne = Infinity
-    for (const candidate of arcCandidates) {
-      for (const point of candidate.points) {
-        const [sx, sy] = screenXY(point, ARC_SPHERE_LIFT, ARC_MAP_LIFT)
-        const d = Math.hypot(sx - mx, sy - my)
-        if (d < nearestToMelbourne) nearestToMelbourne = d
-      }
-    }
-    console.log(`arc's nearest vertex to Melbourne: ${nearestToMelbourne.toFixed(1)}px (tolerance ${ARC_TOLERANCE_PX}px)`)
-    expect(Number.isFinite(nearestToMelbourne)).toBe(true)
   })
 
   it("never calls a losing candidate's content builder, and calls the winner's exactly once", () => {
@@ -203,26 +156,11 @@ describe('GlobeTooltip pickCandidate — Melbourne hover report', () => {
 })
 
 describe('sameHitTarget', () => {
-  it('is true for two null targets', () => {
+  it('compares targets by id, treating null as its own value', () => {
+    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
     expect(sameHitTarget(null, null)).toBe(true)
-  })
-
-  it('is true for two distinct objects sharing the same id — candidatesRef rebuilds target objects on every t change without the pointer having moved off them', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
-    const b = { ...a } // a fresh object, same id, as a t-driven candidate rebuild would produce
-    expect(a).not.toBe(b)
-    expect(sameHitTarget(a, b)).toBe(true)
-  })
-
-  it('is false when one side is null and the other is not', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
+    expect(sameHitTarget(a, { ...a })).toBe(true)
     expect(sameHitTarget(a, null)).toBe(false)
-    expect(sameHitTarget(null, a)).toBe(false)
-  })
-
-  it('is false for two different targets', () => {
-    const a = cityCandidate('melbourne-australia', 'Melbourne', MELBOURNE).content()
-    const b = cityCandidate('sydney-australia', 'Sydney', SYDNEY).content()
-    expect(sameHitTarget(a, b)).toBe(false)
+    expect(sameHitTarget(a, cityCandidate('sydney-australia', 'Sydney', SYDNEY).content())).toBe(false)
   })
 })

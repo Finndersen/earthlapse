@@ -1,11 +1,9 @@
+// @vitest-environment jsdom
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-// `loadSceneTexture` is mocked with resolvers we control by hand, so tests can assert what
-// `useScenePair` shows *while* a load is still in flight. `cached` is a separate stand-in for
-// the real module's persistent cache, deliberately not fed by `resolveLoad` (so a URL can
-// resolve twice with different fake textures across independent in-flight requests); tests
-// exercising the synchronous cache-hit path populate it directly via `markCached`.
+// Loads resolve only when a test calls `resolveLoad`; `cached` stands in for the texture cache's
+// synchronous hit path and is populated separately via `markCached`.
 const { pending, cached, retained } = vi.hoisted(() => ({
   pending: new Map<string, (tex: unknown) => void>(),
   cached: new Map<string, unknown>(),
@@ -84,8 +82,6 @@ describe('useScenePair: no blank frame', () => {
 
     rerender({ from: 'b.png', to: 'c.png' })
 
-    // c.png hasn't resolved yet — the old pair must still be bound, not a blank frame.
-    // `boundFromUrl`/`boundToUrl` say so explicitly (see sceneRender.ts's resolveSceneRender).
     expect(result.current.ready).toBe(true)
     expect(result.current.fromTex).toEqual(fakeTexture('a'))
     expect(result.current.toTex).toEqual(fakeTexture('b'))
@@ -102,9 +98,7 @@ describe('useScenePair: no blank frame', () => {
   })
 
   it(
-    'binds a newly requested pair synchronously, with no intermediate render, when both its ' +
-      'textures are already cached — the scene-checkpoint case where the incoming pair reuses ' +
-      "a texture that was the outgoing pair's other half, or a preloaded neighbour",
+    'binds a fully cached pair in the same render as the request, with no frame of the old pair',
     async () => {
       const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
         initialProps: { from: 'a.png', to: 'b.png' },
@@ -116,17 +110,11 @@ describe('useScenePair: no blank frame', () => {
       })
       await waitFor(() => expect(result.current.ready).toBe(true))
 
-      // b.png was the outgoing pair's "to" half; c.png a preloaded, already-decoded neighbour —
-      // both already in the cache by the time the request moves on to (b, c).
       markCached('b.png', fakeTexture('b'))
       markCached('c.png', fakeTexture('c'))
 
       rerender({ from: 'b.png', to: 'c.png' })
 
-      // No `act`/`waitFor` here on purpose: binding a fully cache-hit pair must land in the same
-      // render as the rerender, not a microtask later via the effect's `Promise.all` — otherwise
-      // a caller driving mix/drift off the same prop change paints one frame of the OLD pair
-      // under the NEW mix/drift, a flash of the previous scene.
       expect(result.current.fromTex).toEqual(fakeTexture('b'))
       expect(result.current.toTex).toEqual(fakeTexture('c'))
     },
@@ -147,7 +135,6 @@ describe('useScenePair: no blank frame', () => {
     expect(result.current.fromTex).toEqual(fakeTexture('c'))
     expect(result.current.toTex).toEqual(fakeTexture('d'))
 
-    // The superseded a/b request resolves late; it must not clobber the newer c/d binding.
     act(() => {
       resolveLoad('a.png', fakeTexture('a'))
       resolveLoad('b.png', fakeTexture('b'))

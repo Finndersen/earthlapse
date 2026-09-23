@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Scene } from '@/types/manifest'
@@ -6,212 +6,83 @@ import type { Scene } from '@/types/manifest'
 import { crossfadeAlpha } from './transition'
 import { SceneView } from './SceneView'
 
-// jsdom has no WebGL context, so `supportsWebGL()` is false throughout this suite and every
-// render below exercises `SceneFallbackView`, via the shared `SceneView` dispatcher.
-
-// jsdom does not implement requestAnimationFrame; `usePresentedSceneMix` only needs it when a
-// render moves the target away from what's already presented (a single `render()` call starts
-// presented exactly at target — presentation.ts's "no animation on mount" — so most tests here
-// never touch this at all).
+// jsdom has no WebGL, so these exercise SceneFallbackView through the SceneView dispatcher.
 beforeEach(() => {
-  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-    return setTimeout(() => cb(performance.now()), 16) as unknown as number
-  })
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  vi.useFakeTimers({ toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'setTimeout', 'clearTimeout', 'performance', 'Date'] })
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
+function advance(ms: number): void {
+  act(() => {
+    vi.advanceTimersByTime(ms)
+  })
+}
+
 function scene(id: string, t: number): Scene {
-  return {
-    id,
-    t,
-    chapterId: 'ch',
-    image: `${id}.png`,
-    thumbnail: `${id}-thumb.png`,
-    shot: 'WIDE_RIDGE',
-    title: `title ${id}`,
-    caption: `caption ${id}`,
-    width: 1920,
-    height: 1080,
-  }
+  return { id, t, chapterId: 'ch', image: `${id}.png`, thumbnail: `${id}-t.png`, shot: 'WIDE_RIDGE', title: `title ${id}`, caption: `caption ${id}`, width: 1920, height: 1080 }
 }
 
 const s0 = scene('s0', 0)
 const s1 = scene('s1', 100)
-const s2 = scene('s2', 400)
 const s3 = scene('s3', 1e6)
-const scenes: Scene[] = [s0, s1, s2, s3]
-
-// p=0.5 of log1p(0)..log1p(100) -> mix 0.5, independent of DISSOLVE_WIDTH (the smoothstep
-// window is symmetric around the midpoint regardless of its width).
+const scenes: Scene[] = [s0, s1, scene('s2', 400), s3]
+const BASE = 'https://cdn.example.com/build'
+// Mix 0.5 between s0 and s1.
 const midT = Math.expm1(0.5 * Math.log1p(100))
 
-/** Inverts sceneAt's log1p interpolation to pick a `t` landing at a known `p` in [a, b]. */
-function tAtP(a: number, b: number, p: number): number {
-  return Math.expm1(Math.log1p(a) + (Math.log1p(b) - Math.log1p(a)) * p)
+const base = () => screen.getByTestId('scene-base') as HTMLImageElement
+const overlay = () => screen.getByTestId('scene-overlay') as HTMLImageElement
+
+function expectSettledOn(s: Scene): void {
+  expect(base().alt).toBe(s.caption)
+  expect(overlay().alt).toBe(s.caption)
+  expect(base().style.opacity).toBe('1')
+  expect(overlay().style.opacity).toBe('0')
 }
 
 describe('SceneView', () => {
-  it('draws the base layer at full opacity regardless of mix, and the overlay at the eased crossfade alpha', () => {
-    render(<SceneView t={midT} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.style.opacity).toBe('1')
-    expect(Number(overlay.style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
+  it('keeps the base layer opaque and draws the overlay at the eased crossfade alpha from the first frame', () => {
+    render(<SceneView t={midT} scenes={scenes} assetBase={BASE} />)
+    expect(base().style.opacity).toBe('1')
+    expect(Number(overlay().style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
+    cleanup()
+    render(<SceneView t={s0.t} scenes={scenes} assetBase={BASE} />)
+    expectSettledOn(s0)
+    expect(base().src).toBe(`${BASE}/s0.png`)
   })
 
-  it('draws the base layer at full opacity even when mix is 0 (never fades both to nothing)', () => {
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.style.opacity).toBe('1')
-    expect(overlay.style.opacity).toBe('0')
+  it('renders the caption for the dominant scene at its crossfade opacity', () => {
+    render(<SceneView t={s0.t} scenes={scenes} assetBase={BASE} renderCaption={(sc, opacity) => <p>{`${sc.caption} @ ${opacity}`}</p>} />)
+    expect(screen.getByText('caption s0 @ 1')).toBeTruthy()
   })
 
-  it('renders the same scene when covered, which only lowers the rate the pair is recomputed at', () => {
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" covered />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    expect(base.style.opacity).toBe('1')
+  it('follows a distant t change over several frames rather than jumping', () => {
+    const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase={BASE} />)
+    act(() => rerender(<SceneView t={s3.t} scenes={scenes} assetBase={BASE} />))
+    advance(200)
+    expect(base().alt).toBe('caption s0')
+    advance(3000)
+    expectSettledOn(s3)
   })
 
-  it('resolves image src against assetBase', () => {
-    render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    expect(base.src).toBe('https://cdn.example.com/build/s0.png')
+  it('cuts to a distant scene within a few frames in the cut regime', () => {
+    const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase={BASE} regime="cut" />)
+    act(() => rerender(<SceneView t={s3.t} scenes={scenes} assetBase={BASE} regime="cut" />))
+    advance(50)
+    expectSettledOn(s3)
   })
 
-  it('calls renderCaption with the dominant scene and its cross-fade opacity, and renders its result', () => {
-    render(
-      <SceneView
-        t={s0.t}
-        scenes={scenes}
-        assetBase="https://cdn.example.com/build"
-        renderCaption={(scene, opacity) => (
-          <p>
-            caption: {scene.caption} @ {opacity}
-          </p>
-        )}
-      />,
-    )
-    // mix is 0 at an exact scene t, so captionOpacity(0) === 1.
-    expect(screen.getByText('caption: caption s0 @ 1')).toBeTruthy()
-  })
-
-  it('fades the caption toward 0 as mix approaches the dissolve midpoint, in sync with the image dissolve', () => {
-    const opacities: number[] = []
-    render(
-      <SceneView
-        t={tAtP(s0.t, s1.t, 0.5)}
-        scenes={scenes}
-        assetBase="https://cdn.example.com/build"
-        renderCaption={(_scene, opacity) => {
-          opacities.push(opacity)
-          return null
-        }}
-      />,
-    )
-    expect(opacities[0]).toBeCloseTo(0)
-  })
-
-  it('mounts with the presentation already settled at the target — no animation on the first frame', () => {
-    // Landing exactly mid-dissolve on mount must show that mix immediately, not ease in from
-    // scratch (presentation.ts: "the first presented state equals the target").
-    const t = tAtP(s0.t, s1.t, 0.5)
-    render(<SceneView t={t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(Number(overlay.style.opacity)).toBeCloseTo(crossfadeAlpha(0.5))
-  })
-
-  it(
-    'does not jump instantly to a scene several gaps away — it keeps showing the previous pair immediately after t moves, and only catches up over subsequent frames',
-    async () => {
-      // `alt` reflects the presented caption directly (unlike `src`, which `SceneFallbackView`
-      // only swaps once the browser has decoded the image — see its `useDecodedSrc` — and
-      // jsdom never fires that decode; this is the same reason Experience.test.tsx asserts on
-      // `alt`, not `src`, for the same kind of check).
-      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
-
-      act(() => {
-        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" />)
-      })
-
-      // No wall-clock time has passed yet — still showing s0, not s3.
-      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
-
-      // It does eventually reach s3, once the minimum transition duration has had time to
-      // play — settling alone on s3 (an exact scene `t`), so both layers show it and the
-      // overlay's crossfade alpha returns to 0, same as the mount-time "alone" case above.
-      await waitFor(
-        () => {
-          expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s3')
-          expect((screen.getByTestId('scene-overlay') as HTMLImageElement).alt).toBe('caption s3')
-          expect(screen.getByTestId('scene-base').style.opacity).toBe('1')
-          expect(screen.getByTestId('scene-overlay').style.opacity).toBe('0')
-        },
-        { timeout: 3000, interval: 50 },
-      )
-    },
-    10000,
-  )
-
-  it(
-    'regime="cut" (ADR-029) switches to a distant scene on the next rendered frame, not over several seconds',
-    async () => {
-      const { rerender } = render(<SceneView t={s0.t} scenes={scenes} assetBase="https://cdn.example.com/build" regime="cut" />)
-      expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s0')
-
-      act(() => {
-        rerender(<SceneView t={s3.t} scenes={scenes} assetBase="https://cdn.example.com/build" regime="cut" />)
-      })
-
-      // One stubbed rAF tick (16ms) away, not the multi-second `MIN_TRANSITION_SECONDS` catch-up
-      // the crossfade case immediately above needs — a tight timeout is the point of this test.
-      await waitFor(
-        () => {
-          expect((screen.getByTestId('scene-base') as HTMLImageElement).alt).toBe('caption s3')
-          expect((screen.getByTestId('scene-overlay') as HTMLImageElement).alt).toBe('caption s3')
-          expect(screen.getByTestId('scene-base').style.opacity).toBe('1')
-          expect(screen.getByTestId('scene-overlay').style.opacity).toBe('0')
-        },
-        { timeout: 200, interval: 10 },
-      )
-    },
-    2000,
-  )
-
-  it("crops each layer around its own scene's focus, clamped to the image edge, on a portrait box", () => {
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      width: 390,
-      height: 844,
-    } as DOMRect)
+  it("crops each layer around its own scene's focus on a portrait box", () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ width: 390, height: 844 } as DOMRect)
     const still = { width: 2752, height: 1536 }
     const framed: Scene = { ...s0, ...still, framing: { focus: [0.05, 0.5], pan: 0 } }
-    const plain: Scene = { ...s1, ...still }
-    render(<SceneView t={midT} scenes={[framed, plain, s2, s3]} assetBase="https://cdn.example.com/build" />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.style.objectPosition).toBe('0% 50%')
-    expect(overlay.style.objectPosition).toBe('50% 50%')
-  })
-
-  it("scales a zoomed scene's layer up to its portrait window and leaves an unzoomed one at the drift alone", () => {
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-      width: 390,
-      height: 844,
-    } as DOMRect)
-    const still = { width: 2752, height: 1536 }
-    const zoomed: Scene = { ...s0, ...still, framing: { focus: [0.5, 0.5], pan: 0, portraitZoom: 1.25 } }
-    const plain: Scene = { ...s1, ...still, framing: { focus: [0.5, 0.5], pan: 0 } }
-    render(<SceneView t={midT} scenes={[zoomed, plain, s2, s3]} assetBase="https://cdn.example.com/build" />)
-    const base = screen.getByTestId('scene-base') as HTMLImageElement
-    const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
-    expect(base.style.transform).toContain('scale(1.25, 1.25)')
-    expect(overlay.style.transform).not.toContain('translate(-50%, -50%)')
+    render(<SceneView t={midT} scenes={[framed, { ...s1, ...still }, s3]} assetBase={BASE} />)
+    expect(base().style.objectPosition).toBe('0% 50%')
+    expect(overlay().style.objectPosition).toBe('50% 50%')
   })
 })

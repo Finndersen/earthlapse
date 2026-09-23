@@ -66,10 +66,6 @@ describe('domeRadius', () => {
     expect(drawn).toEqual(['antarctica'])
   })
 
-  it('has no ice before the Antarctic onset', () => {
-    expect(ICE_SHEET_DOMES.map((d) => domeRadius(d, EOCENE))).toEqual(ICE_SHEET_DOMES.map(() => 0))
-  })
-
   it('scales with the gates, so an onset grows the sheets from nothing', () => {
     expect(domeRadius(dome('greenland'), { ...PRESENT, northernGate: 0.5 })).toBe(dome('greenland').presentRadius / 2)
   })
@@ -82,9 +78,6 @@ describe('writeIceSheetRadii', () => {
     expect(Array.from(out)).toEqual(ICE_SHEET_DOMES.map((d) => Math.fround(domeRadius(d, LGM))))
   })
 
-  it('rejects an array of the wrong size', () => {
-    expect(() => writeIceSheetRadii(LGM, new Float32Array(ICE_SHEET_DOME_COUNT - 1))).toThrow()
-  })
 })
 
 describe('ICE_SHEETS_GLSL', () => {

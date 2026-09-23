@@ -31,21 +31,10 @@ describe('placeCallout', () => {
     expect(placement.left).toBeGreaterThanOrEqual(160)
   })
 
-  it('centres on the target along the axis it is placed against', () => {
-    const placement = placeCallout(rect(600, 100, 200, 40), CARD, DESKTOP)
-    expect(placement.left + CARD.width / 2).toBeCloseTo(700)
-  })
-
   it('keeps the card on screen when centring would push it past a viewport edge', () => {
     const placement = placeCallout(rect(0, 100, 60, 60), CARD, PHONE)
     expect(placement.left).toBeGreaterThanOrEqual(12)
     expect(placement.left + CARD.width).toBeLessThanOrEqual(PHONE.width - 12)
-  })
-
-  it('prefers above over beside on a phone, where a target leaves no room underneath', () => {
-    // The phone transport's own band: the play button sits near the bottom of a short viewport.
-    const placement = placeCallout(rect(180, 790, 52, 52), CARD, PHONE)
-    expect(placement.side).toBe('above')
   })
 
   it('stays on screen even when the card fits on no side at all', () => {

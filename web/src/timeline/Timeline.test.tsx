@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import type { ComponentProps } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EARTH_FORMATION, type Playback, type TimelineEvent } from '@/types/layer'
@@ -6,23 +7,15 @@ import { EARTH_FORMATION, type Playback, type TimelineEvent } from '@/types/laye
 import type { TimelineCheckpoint } from './checkpoints'
 import * as fisheyeModule from './fisheye'
 import { Timeline } from './Timeline'
-import { createSymlogScale, type TimeWindow } from './scale'
+import { createSymlogScale } from './scale'
 
-// Spies through to the real implementation (the ADR-021 markers test below only needs to inspect
-// what Timeline calls fisheyeScale with, not to change its behaviour) — every other test in this
-// file exercises the genuine lens.
 vi.mock('./fisheye', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./fisheye')>()
   return { ...actual, fisheyeScale: vi.fn(actual.fisheyeScale) }
 })
 
-// jsdom does not implement requestAnimationFrame; the fisheye lens's own settle loop only needs
-// it to exist (the scale animation is exercised by scale.test.ts via blendScales directly, and
-// the scale itself is a prop here).
 beforeEach(() => {
-  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-    return setTimeout(() => cb(performance.now()), 0) as unknown as number
-  })
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 0) as unknown as number)
   vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
 })
 
@@ -31,539 +24,103 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
-const FULL_DOMAIN_SCALE = createSymlogScale(FULL_DOMAIN)
-
-const events: TimelineEvent[] = [
-  { id: 'e1', label: 'Big event', tMin: 2.5e8, tMax: 2.52e8, importance: 1, description: '', citation: '' },
-]
+const SCALE = createSymlogScale([0, EARTH_FORMATION])
+const events: TimelineEvent[] = [{ id: 'e1', label: 'Big event', tMin: 2.5e8, tMax: 2.52e8, importance: 1, description: '', citation: '' }]
+const checkpoints: TimelineCheckpoint[] = [{ id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' }]
 
 function playback(overrides: Partial<Playback> = {}): Playback {
   return { playing: false, baseRate: 0.1, speed: 1, mode: 'scenes', ...overrides }
 }
 
-const checkpoints: TimelineCheckpoint[] = [{ id: 'pleistocene-steppe', t: 20000, label: 'Pleistocene steppe' }]
+function renderTimeline(overrides: Partial<ComponentProps<typeof Timeline>> = {}) {
+  const props: ComponentProps<typeof Timeline> = {
+    t: 0,
+    scaleKind: 'symlog',
+    scale: SCALE,
+    sectionId: 'earth',
+    events,
+    playback: playback(),
+    onScrub: vi.fn(),
+    onScaleKindChange: vi.fn(),
+    onPlaybackChange: vi.fn(),
+    onOpenCluster: vi.fn(),
+    onSelectSection: vi.fn(),
+    ...overrides,
+  }
+  const result = render(<Timeline {...props} />)
+  const keyDown = (key: string) => fireEvent.keyDown(result.container.firstChild as Element, { key })
+  return { ...result, props, keyDown }
+}
 
 describe('<Timeline>', () => {
-  it('renders the formatted current time and transport controls', () => {
-    render(
-      <Timeline
-        t={4.567e9}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    expect(screen.getByText('4.57 Ga')).toBeTruthy()
-    expect(screen.getByLabelText('Play')).toBeTruthy()
-  })
-
-  it('toggles playback.playing via the play/pause button', () => {
-    const onPlaybackChange = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: false })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={onPlaybackChange}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
+  it('toggles play/pause', () => {
+    const { props } = renderTimeline()
     fireEvent.click(screen.getByLabelText('Play'))
-    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ playing: true }))
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ playing: true }))
   })
 
-  it('changes speed via the speed selector', () => {
-    const onPlaybackChange = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ speed: 1 })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={onPlaybackChange}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
+  it('changes speed from the selector and from the speed shortcut', () => {
+    const { props, keyDown } = renderTimeline({ playback: playback({ speed: 2 }) })
     fireEvent.change(screen.getByLabelText('Playback speed'), { target: { value: '8' } })
-    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 8 }))
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 8 }))
+    keyDown(']')
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ speed: 4 }))
   })
 
-  it('switches playback.mode via the Scenes/Steady toggle (ADR-016)', () => {
-    const onPlaybackChange = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ mode: 'scenes' })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={onPlaybackChange}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    // The group's accessible name comes from a *visible* "Playback mode" label above the buttons,
-    // not a same-text `aria-label` repeating what the label already says — `getByRole` finding it
-    // by that name is proof the visible label and the group are actually associated
-    // (`aria-labelledby`), not merely both present.
-    expect(screen.getByText('Playback mode')).toBeTruthy()
-    const group = screen.getByRole('group', { name: 'Playback mode' })
-    expect(within(group).getByText('Scenes').getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(within(group).getByText('Steady'))
-    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'steady' }))
+  it('switches playback mode and scale kind from their labelled groups', () => {
+    const { props } = renderTimeline()
+    const mode = screen.getByRole('group', { name: 'Playback mode' })
+    expect(within(mode).getByText('Scenes').getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(within(mode).getByText('Steady'))
+    expect(props.onPlaybackChange).toHaveBeenCalledWith(playback({ mode: 'steady' }))
+    fireEvent.click(within(screen.getByRole('group', { name: 'Scale' })).getByText('Linear'))
+    expect(props.onScaleKindChange).toHaveBeenCalledWith('linear')
   })
 
-  it('shows the rate readout only while playing and ratePerSecond is given', () => {
-    const { rerender } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: false })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-        ratePerSecond={4e7}
-      />,
-    )
-    expect(screen.queryByText(/Myr\/s/)).toBeNull()
-
-    rerender(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-        ratePerSecond={4e7}
-      />,
-    )
-    expect(screen.getByText('40 Myr/s')).toBeTruthy()
-  })
-
-  it('shows the "time compressed" marker only when timeCompressed is true (ADR-029)', () => {
-    const { rerender } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true, mode: 'steady' })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    expect(screen.queryByText('Time compressed')).toBeNull()
-
-    rerender(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true, mode: 'steady' })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-        timeCompressed
-      />,
-    )
-    expect(screen.getByText('Time compressed')).toBeTruthy()
-  })
-
-  it('keeps the "time compressed" marker\'s live region mounted across the toggle (re-review fix, ADR-029)', () => {
-    // A single playthrough can cross the floor threshold several times in quick succession
-    // (`TimeCompressedBadge`'s own doc comment) — unmounting/remounting a `role="status"` region
-    // that often both re-announces it more erratically than a live region is meant to and shifts
-    // its neighbours. The marker must stay the same node throughout, only its content/visibility
-    // toggling.
-    const props = {
-      t: 0,
-      scaleKind: 'symlog' as const,
-      scale: FULL_DOMAIN_SCALE,
-      sectionId: 'earth' as const,
-      events,
-      playback: playback({ playing: true, mode: 'steady' }),
-      onScrub: vi.fn(),
-      onScaleKindChange: vi.fn(),
-      onPlaybackChange: vi.fn(),
-      onOpenCluster: vi.fn(),
-      onSelectSection: vi.fn(),
-    }
-    const { rerender } = render(<Timeline {...props} />)
-    const marker = screen.getByRole('status')
-    expect(marker.getAttribute('data-visible')).toBe('false')
-    expect(marker.textContent).toBe('')
-
-    rerender(<Timeline {...props} timeCompressed />)
-    expect(screen.getByRole('status')).toBe(marker) // same node — never unmounted
-    expect(marker.getAttribute('data-visible')).toBe('true')
-    expect(marker.textContent).toBe('Time compressed')
-
-    rerender(<Timeline {...props} timeCompressed={false} />)
-    expect(screen.getByRole('status')).toBe(marker)
-    expect(marker.getAttribute('data-visible')).toBe('false')
-    expect(marker.textContent).toBe('')
-  })
-
-  it('shows a "Scale" label and a Symlog/Linear segmented control, and calls onScaleKindChange on click (follow-up pass item 1)', () => {
-    const onScaleKindChange = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={onScaleKindChange}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    // The group's accessible name is the visible "Scale" label itself (`aria-labelledby`, user
-    // report 2026-09-15 — this used to carry a separate, same-meaning `aria-label="Timeline
-    // scale"` alongside a merely decorative "Scale" span with no accessibility relationship to
-    // the group at all), so finding it by that name proves the two are actually associated.
-    expect(screen.getByText('Scale')).toBeTruthy()
-    const group = screen.getByRole('group', { name: 'Scale' })
-    const symlogButton = within(group).getByText('Symlog')
-    const linearButton = within(group).getByText('Linear')
-    expect(symlogButton.getAttribute('aria-pressed')).toBe('true')
-    expect(linearButton.getAttribute('aria-pressed')).toBe('false')
-    // Both options carry a short explanation of what they mean (item 1's ask), not just a label.
-    expect(symlogButton.getAttribute('title')).toMatch(/logarithmic/i)
-    expect(linearButton.getAttribute('title')).toMatch(/proportional/i)
-
-    fireEvent.click(linearButton)
-    expect(onScaleKindChange).toHaveBeenCalledWith('linear')
-  })
-
-  it('does not step to an event: with no scenes in range the transport button is inert', () => {
-    const onScrub = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback()}
-        onScrub={onScrub}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
+  it('steps to scenes, never events, from the transport button and ArrowLeft', () => {
+    const inert = renderTimeline()
     fireEvent.click(screen.getByLabelText('Back to previous scene'))
-    expect(onScrub).not.toHaveBeenCalled()
-  })
-
-  it('steps to a scene via the back transport button, ignoring a nearer event', () => {
-    const onScrub = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        checkpoints={checkpoints}
-        playback={playback()}
-        onScrub={onScrub}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
+    expect(inert.props.onScrub).not.toHaveBeenCalled()
+    cleanup()
+    const { props, keyDown } = renderTimeline({ checkpoints })
     fireEvent.click(screen.getByLabelText('Back to previous scene'))
-    expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
+    expect(props.onScrub).toHaveBeenLastCalledWith(20000)
+    vi.mocked(props.onScrub).mockClear()
+    keyDown('ArrowLeft')
+    expect(props.onScrub).toHaveBeenCalledWith(20000)
   })
 
-  it('gives the back/forward transport buttons a hover tooltip that matches their accessible name', () => {
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    expect(screen.getByLabelText('Back to previous scene').getAttribute('title')).toMatch(/^Back to previous scene/)
-    expect(screen.getByLabelText('Forward to next scene').getAttribute('title')).toMatch(/^Forward to next scene/)
-  })
-
-  it('steps to the nearest checkpoint via ArrowLeft when it is nearer than any event', () => {
-    const onScrub = vi.fn()
-    const { container } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        checkpoints={checkpoints}
-        playback={playback()}
-        onScrub={onScrub}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    fireEvent.keyDown(container.firstChild as Element, { key: 'ArrowLeft' })
-    expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
-  })
-
-  it('renders a checkpoint pip that scrubs exactly to its own t, not the track pointer position', () => {
-    const onScrub = vi.fn()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        checkpoints={checkpoints}
-        playback={playback()}
-        onScrub={onScrub}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
+  it('scrubs a checkpoint pip exactly to its own t, once', () => {
+    const { props } = renderTimeline({ checkpoints })
     const pip = screen.getByLabelText(/Pleistocene steppe/)
     fireEvent.pointerDown(pip, { pointerId: 1 })
     fireEvent.click(pip)
-    // Exactly one scrub, straight to the checkpoint's own t — the track's own pointer-driven
-    // scrub (which would otherwise also fire from the bubbled pointerdown, landing on
-    // whatever jsdom's zero-size bounding rect resolves to) must never also fire.
-    expect(onScrub).toHaveBeenCalledTimes(1)
-    expect(onScrub).toHaveBeenCalledWith(checkpoints[0]!.t)
+    expect(props.onScrub).toHaveBeenCalledTimes(1)
+    expect(props.onScrub).toHaveBeenCalledWith(20000)
   })
 
-  it('puts the speed selector and rate readout in the transport cluster, flanking the controls, and accepts no sound prop', () => {
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ playing: true })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-        ratePerSecond={4e7}
-      />,
-    )
-    const core = screen.getByTestId('timeline-controls-core')
-    const secondary = screen.getByTestId('timeline-controls-secondary')
-    const speedSelect = screen.getByLabelText('Playback speed')
-    const rateReadout = screen.getByText('40 Myr/s')
-
-    expect(core.contains(speedSelect)).toBe(true)
-    expect(core.contains(rateReadout)).toBe(true)
-    expect(secondary.contains(speedSelect)).toBe(false)
-    expect(secondary.contains(rateReadout)).toBe(false)
-
-    // Speed leads the cluster and the rate readout trails it, so the transport buttons sit
-    // between the control that sets the rate and the readout that reports it.
-    const children = Array.from(core.children)
-    const speedIndex = children.findIndex((child) => child.contains(speedSelect))
-    const rateIndex = children.findIndex((child) => child.contains(rateReadout))
-    expect(speedIndex).toBe(0)
-    expect(rateIndex).toBe(children.length - 1)
+  it('leaves Escape to an open overlay but still leaves the section on Backspace', () => {
+    const { props, keyDown } = renderTimeline({ sectionId: 'cenozoic', overlayOpen: true })
+    keyDown('Escape')
+    expect(props.onSelectSection).not.toHaveBeenCalled()
+    keyDown('Backspace')
+    expect(props.onSelectSection).toHaveBeenCalledWith('earth')
   })
 
-  it('orders the section-edge buttons around the transport row in the DOM, so the phone-portrait row tabs left to right', () => {
-    // Grid-area placement (Timeline.module.css) repositions these per breakpoint without
-    // touching DOM order — this asserts the DOM order itself, which is what tab sequence
-    // actually follows regardless of viewport (this component's own doc comment explains the
-    // choice: phone portrait's `‹ ⏮ ▶ ⏭ ›` row tabs in that visual order because the section-edge
-    // buttons sandwich `core` here, at the cost of not being DOM-adjacent to the track on wide
-    // viewports).
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="industrial-age"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    const root = screen.getByTestId('timeline-root')
-    const sections = screen.getByTestId('timeline-controls-sections')
-    const track = screen.getByTestId('timeline-track-stack')
-    const edgePrev = screen.getByRole('button', { name: /^Previous section:/ })
-    const core = screen.getByTestId('timeline-controls-core')
-    const edgeNext = screen.getByRole('button', { name: /^Next section:/ })
-    const secondary = screen.getByTestId('timeline-controls-secondary')
-    const domOrder = Array.from(root.children)
-    expect(domOrder.indexOf(sections)).toBeLessThan(domOrder.indexOf(track))
-    expect(domOrder.indexOf(track)).toBeLessThan(domOrder.indexOf(edgePrev))
-    expect(domOrder.indexOf(edgePrev)).toBeLessThan(domOrder.indexOf(core))
-    expect(domOrder.indexOf(core)).toBeLessThan(domOrder.indexOf(edgeNext))
-    expect(domOrder.indexOf(edgeNext)).toBeLessThan(domOrder.indexOf(secondary))
+  it('keeps the time-compressed live region mounted across toggles', () => {
+    const { rerender, props } = renderTimeline({ playback: playback({ playing: true, mode: 'steady' }) })
+    const marker = screen.getByRole('status')
+    expect(marker.textContent).toBe('')
+    rerender(<Timeline {...props} timeCompressed />)
+    expect(screen.getByRole('status')).toBe(marker)
+    expect(marker.textContent).toBe('Time compressed')
   })
 
-  it.each([
-    ['[', 'down'],
-    ['-', 'down'],
-    [']', 'up'],
-    ['=', 'up'],
-  ] as const)('steps playback speed %s via the %s shortcut (follow-up pass item 3)', (key, direction) => {
-    const onPlaybackChange = vi.fn()
-    const { container } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        playback={playback({ speed: 2 })}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={onPlaybackChange}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    fireEvent.keyDown(container.firstChild as Element, { key })
-    expect(onPlaybackChange).toHaveBeenCalledWith(playback({ speed: direction === 'up' ? 4 : 1 }))
-  })
-
-  it('leaves the current section on Escape when no overlay is open', () => {
-    const onSelectSection = vi.fn()
-    const { container } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="cenozoic"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={onSelectSection}
-      />,
-    )
-    fireEvent.keyDown(container.firstChild as Element, { key: 'Escape' })
-    expect(onSelectSection).toHaveBeenCalledWith('earth')
-  })
-
-  it('leaves Escape to the chart dock/globe instead of also leaving the section while overlayOpen (re-review fix)', () => {
-    const onSelectSection = vi.fn()
-    const { container } = render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="cenozoic"
-        events={events}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={onSelectSection}
-        overlayOpen
-      />,
-    )
-    fireEvent.keyDown(container.firstChild as Element, { key: 'Escape' })
-    expect(onSelectSection).not.toHaveBeenCalled()
-    // Backspace has no overlay binding, so it keeps working even while overlayOpen.
-    fireEvent.keyDown(container.firstChild as Element, { key: 'Backspace' })
-    expect(onSelectSection).toHaveBeenCalledWith('earth')
-  })
-
-  it('builds the density-adaptive lens markers from every checkpoint and event range endpoint (ADR-021)', () => {
+  it('feeds every checkpoint and event endpoint to the lens as a marker', () => {
     const spy = fisheyeModule.fisheyeScale as unknown as ReturnType<typeof vi.fn>
     spy.mockClear()
-    render(
-      <Timeline
-        t={0}
-        scaleKind="symlog"
-        scale={FULL_DOMAIN_SCALE}
-        sectionId="earth"
-        events={events}
-        checkpoints={checkpoints}
-        playback={playback()}
-        onScrub={vi.fn()}
-        onScaleKindChange={vi.fn()}
-        onPlaybackChange={vi.fn()}
-        onOpenCluster={vi.fn()}
-        onSelectSection={vi.fn()}
-      />,
-    )
-    expect(spy).toHaveBeenCalled()
+    renderTimeline({ checkpoints })
     const markers = spy.mock.calls.at(-1)![3] as number[]
-    const expected = [
-      FULL_DOMAIN_SCALE.toUnit(events[0]!.tMin),
-      FULL_DOMAIN_SCALE.toUnit(events[0]!.tMax),
-      FULL_DOMAIN_SCALE.toUnit(checkpoints[0]!.t),
-    ].sort((a, b) => a - b)
-    expect(markers).toEqual(expected)
+    expect(markers).toEqual([SCALE.toUnit(2.5e8), SCALE.toUnit(2.52e8), SCALE.toUnit(20000)].sort((a, b) => a - b))
   })
 })

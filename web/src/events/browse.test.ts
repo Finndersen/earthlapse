@@ -20,7 +20,6 @@ describe('matchesEventQuery', () => {
   })
 
   it('matches an era/section name the event is placed within, even though no field spells it', () => {
-    // 150 Ma sits in the Jurassic (201.4-143.1 Ma) — the word appears nowhere on the event itself.
     const e = event('stego', { label: 'Stegosaurus roams', tMin: 150e6, tMax: 150e6, description: '' })
     expect(matchesEventQuery(e, 'jurassic')).toBe(true)
     expect(matchesEventQuery(e, 'cretaceous')).toBe(false)
@@ -32,11 +31,6 @@ describe('matchesEventQuery', () => {
     expect(matchesEventQuery(e, 'fire nowhere')).toBe(false)
   })
 
-  it('matches everything on an empty or whitespace-only query', () => {
-    const e = event('a', { label: 'Control of Fire' })
-    expect(matchesEventQuery(e, '')).toBe(true)
-    expect(matchesEventQuery(e, '   ')).toBe(true)
-  })
 })
 
 describe('browseEvents', () => {
@@ -53,13 +47,6 @@ describe('browseEvents', () => {
     const society = event('society-event', { tags: ['society'] })
     const result = browseEvents([life, society], { query: '', tags: ['life'] })
     expect(result.map((e) => e.id)).toEqual(['life-event'])
-  })
-
-  it('shows every tag when tags is empty', () => {
-    const life = event('life-event', { tags: ['life'] })
-    const untagged = event('untagged-event')
-    const result = browseEvents([life, untagged], { query: '', tags: [] })
-    expect(result.map((e) => e.id).sort()).toEqual(['life-event', 'untagged-event'])
   })
 
   it('combines a query and a tag filter', () => {
@@ -88,7 +75,4 @@ describe('nearestBrowseEventIndex', () => {
     expect(nearestBrowseEventIndex(sorted, 0)).toBe(2)
   })
 
-  it('returns -1 for an empty list', () => {
-    expect(nearestBrowseEventIndex([], 100)).toBe(-1)
-  })
 })

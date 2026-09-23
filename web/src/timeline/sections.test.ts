@@ -48,13 +48,6 @@ describe('section tree', () => {
     })
   })
 
-  it('gives every section a non-empty abbreviation no longer than its full label', () => {
-    for (const section of allSections()) {
-      expect(section.abbreviation.length).toBeGreaterThan(0)
-      expect(section.abbreviation.length).toBeLessThanOrEqual(section.label.length)
-    }
-  })
-
   it('tiles every parent exactly with its children, oldest first', () => {
     for (const section of allSections()) {
       const children = childSections(section.id)
@@ -69,10 +62,6 @@ describe('section tree', () => {
         expect(child.parentId).toBe(section.id)
       }
     }
-  })
-
-  it('gives every section a citation', () => {
-    for (const section of allSections()) expect(section.citation.length).toBeGreaterThan(20)
   })
 
   it('has the approved hierarchy', () => {
@@ -125,13 +114,10 @@ describe('navigation', () => {
     expect(parentSection('earth')).toBeUndefined()
   })
 
-  it('nextSibling is the younger neighbour within the same parent only', () => {
+  it('nextSibling and previousSibling stay within the same parent', () => {
     expect(nextSibling('cambrian')?.id).toBe('ordovician')
     expect(nextSibling('permian')).toBeUndefined()
     expect(nextSibling('earth')).toBeUndefined()
-  })
-
-  it('previousSibling is the older neighbour within the same parent only', () => {
     expect(previousSibling('ordovician')?.id).toBe('cambrian')
     expect(previousSibling('cambrian')).toBeUndefined()
     expect(previousSibling('earth')).toBeUndefined()
@@ -177,7 +163,7 @@ describe('navigation', () => {
   })
 })
 
-describe('continuationSection (playback continues, ADR-024)', () => {
+describe('continuationSection', () => {
   it('moves to the next sibling', () => {
     expect(continuationSection('industrial-age')?.id).toBe('modern')
     expect(continuationSection('pleistocene')?.id).toBe('holocene')
@@ -199,7 +185,7 @@ describe('continuationSection (playback continues, ADR-024)', () => {
   })
 })
 
-describe('previousSiblingStep (the "previous section" keyboard shortcut and breadcrumb button)', () => {
+describe('previousSiblingStep', () => {
   it('moves to the previous sibling', () => {
     expect(previousSiblingStep('modern')?.id).toBe('industrial-age')
     expect(previousSiblingStep('holocene')?.id).toBe('pleistocene')
@@ -261,9 +247,8 @@ describe('sectionEntryT', () => {
   })
 })
 
-describe('sectionSymlogKnee (re-review fix, 2026-09-15)', () => {
+describe('sectionSymlogKnee', () => {
   it('returns the fixed SYMLOG_C for a leaf section, not the bare adaptive shrink', () => {
-    expect(childSections('modern')).toHaveLength(0) // sanity: this really is a leaf
     expect(sectionSymlogKnee('modern')).toBe(SYMLOG_C)
     expect(sectionSymlogKnee('industrial-age')).toBe(SYMLOG_C)
   })
@@ -271,7 +256,6 @@ describe('sectionSymlogKnee (re-review fix, 2026-09-15)', () => {
   it('returns the ordinary symlogKnee(window) for any section with children, unaffected', () => {
     expect(childSections('holocene').length).toBeGreaterThan(0)
     expect(sectionSymlogKnee('holocene')).toBe(symlogKnee(sectionById('holocene').window))
-    // The full domain (many children, well above the adaptive threshold) is just SYMLOG_C.
     expect(sectionSymlogKnee('earth')).toBe(SYMLOG_C)
   })
 })

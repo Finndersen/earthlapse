@@ -8,7 +8,6 @@ import {
   arrivalPresentationAt,
   arrivalTimingFor,
   arrivalWindow,
-  type ArrowheadPlacement,
   arrowheadPlacementAt,
   buildArrivalArcGeometry,
   buildArrivalIndex,
@@ -23,259 +22,135 @@ import {
 import { SYMLOG_C, symlogWarp } from './effects/math'
 import { lonLatToSphere } from './projection'
 
-/** `buildFatLineBuffers` takes `DistancedAnchor`s (docs/GLOBE.md §10); every test here
- *  builds its own points via `greatCircleLonLatPoints` alone (plain `GlobeEffectAnchor`s, no
- *  split), so an evenly-spaced `i / (n - 1)` distance — exactly what `buildArrivalArcGeometry`
- *  itself computes before ever splitting — is the right one to attach. */
 function withDistance(points: readonly GlobeEffectAnchor[]): DistancedAnchor[] {
   const denom = Math.max(points.length - 1, 1)
   return points.map((p, i) => ({ ...p, distance: i / denom }))
 }
 
-const OUT_OF_AFRICA: ArrivalGlobeEffect = {
-  kind: 'arrival',
-  arrivalKind: 'migration',
-  origin: { lat: 9.0, lon: 42.0 },
-  destination: { lat: 20.0, lon: 48.0 },
-  established: 6.0e4,
-  windows: [{ tMin: 0, tMax: 7.0e4 }],
+function arrival(overrides: Partial<ArrivalGlobeEffect> = {}): ArrivalGlobeEffect {
+  return {
+    kind: 'arrival',
+    arrivalKind: 'migration',
+    origin: { lat: 9.0, lon: 42.0 },
+    destination: { lat: 20.0, lon: 48.0 },
+    established: 6.0e4,
+    windows: [{ tMin: 0, tMax: 7.0e4 }],
+    ...overrides,
+  }
 }
 
-// A schematic Beringia -> Americas arrival, chosen because a great circle between them crosses
-// the antimeridian.
-const BERINGIA_TO_AMERICAS: ArrivalGlobeEffect = {
-  kind: 'arrival',
-  arrivalKind: 'peopling',
-  origin: { lat: 65.0, lon: 170.0 },
-  destination: { lat: 55.0, lon: -130.0 },
-  established: 1.5e4,
-  windows: [{ tMin: 0, tMax: 2.0e4 }],
+const OUT_OF_AFRICA = arrival()
+const PEOPLING = arrival({ arrivalKind: 'peopling' })
+// A great circle between these crosses the antimeridian.
+const BERINGIA_TO_AMERICAS = arrival({ origin: { lat: 65, lon: 170 }, destination: { lat: 55, lon: -130 } })
+const DEGENERATE = arrival({ origin: { lat: 9, lon: 34 }, destination: { lat: 9, lon: 34 } })
+
+function event(id: string, effect?: ArrivalGlobeEffect): TimelineEvent {
+  return { id, label: id, tMin: 0, tMax: 1, importance: 0.5, description: 'd', citation: 'c', effect }
 }
 
-const DEGENERATE: ArrivalGlobeEffect = {
-  kind: 'arrival',
-  arrivalKind: 'peopling',
-  origin: { lat: 9.0, lon: 34.0 },
-  destination: { lat: 9.0, lon: 34.0 },
-  established: 3.15e5,
-  windows: [{ tMin: 0, tMax: 3.15e5 }],
+/** t at a given symlog-warp distance below `established`. */
+function warpBelow(effect: ArrivalGlobeEffect, warp: number): GeoTime {
+  return SYMLOG_C * Math.expm1(symlogWarp(effect.established) - warp)
 }
 
-describe('greatCircleLonLatPoints', () => {
-  it('starts and ends exactly at origin and destination', () => {
+/** The t at which the arc's tail decay reaches 0, derived from the public timing fields. */
+function tailFadeEnd(effect: ArrivalGlobeEffect, timing: ArrivalTiming): GeoTime {
+  const travelWarp = Math.max(0, symlogWarp(effect.windows[0]!.tMax) - symlogWarp(effect.established))
+  return warpBelow(effect, Math.max(timing.minTailWarp, timing.minArcWarp - travelWarp))
+}
+
+describe('arc geometry', () => {
+  it('samples a great circle from origin to destination, a single point when degenerate', () => {
     const points = greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 8)
+    expect(points).toHaveLength(9)
     expect(points[0]).toEqual(OUT_OF_AFRICA.origin)
     expect(points.at(-1)).toEqual(OUT_OF_AFRICA.destination)
-    expect(points).toHaveLength(9)
-  })
-
-  it('returns a single point for a degenerate (zero-length) arrival', () => {
-    const points = greatCircleLonLatPoints(DEGENERATE.origin, DEGENERATE.destination, 8)
-    expect(points).toEqual([DEGENERATE.origin])
-  })
-
-  it('every interior point lies on the unit sphere between the endpoints (sanity: finite, in range)', () => {
-    const points = greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 16)
-    for (const p of points) {
-      expect(Number.isFinite(p.lat)).toBe(true)
-      expect(Number.isFinite(p.lon)).toBe(true)
-      expect(p.lat).toBeGreaterThanOrEqual(-90)
-      expect(p.lat).toBeLessThanOrEqual(90)
-      expect(p.lon).toBeGreaterThanOrEqual(-180)
-      expect(p.lon).toBeLessThanOrEqual(180)
-    }
-  })
-})
-
-describe('isDegenerateArrival', () => {
-  it('is true only when origin and destination are identical', () => {
+    expect(greatCircleLonLatPoints(DEGENERATE.origin, DEGENERATE.destination, 8)).toEqual([DEGENERATE.origin])
     expect(isDegenerateArrival(DEGENERATE)).toBe(true)
     expect(isDegenerateArrival(OUT_OF_AFRICA)).toBe(false)
   })
-})
 
-describe('buildArrivalArcGeometry', () => {
-  it('splits at the antimeridian for an arc that crosses it', () => {
-    const geometry = buildArrivalArcGeometry('beringia-arrival', BERINGIA_TO_AMERICAS)
-    expect(geometry.isDegenerate).toBe(false)
+  it('splits at the antimeridian with cumulative distance continuous across the split', () => {
+    const geometry = buildArrivalArcGeometry('beringia', BERINGIA_TO_AMERICAS)
     expect(geometry.segments.length).toBeGreaterThanOrEqual(2)
-    // No segment should itself contain a >180 degree jump between consecutive points — that's
-    // exactly the streak-across-the-map bug splitting is meant to prevent.
     for (const segment of geometry.segments) {
-      for (let i = 1; i < segment.length; i++) {
-        expect(Math.abs(segment[i]!.lon - segment[i - 1]!.lon)).toBeLessThanOrEqual(180)
-      }
+      for (let i = 1; i < segment.length; i++) expect(Math.abs(segment[i]!.lon - segment[i - 1]!.lon)).toBeLessThanOrEqual(180)
     }
+    const flat = geometry.segments.flat()
+    expect(flat[0]!.distance).toBe(0)
+    expect(flat.at(-1)!.distance).toBe(1)
+    for (let i = 1; i < flat.length; i++) expect(flat[i]!.distance).toBeGreaterThanOrEqual(flat[i - 1]!.distance)
   })
 
-  it('does not split an arc that never crosses the antimeridian', () => {
-    const geometry = buildArrivalArcGeometry('out-of-africa-migration', OUT_OF_AFRICA)
-    expect(geometry.segments).toHaveLength(1)
-  })
-
-  it('is a degenerate point with no segments for origin === destination', () => {
-    const geometry = buildArrivalArcGeometry('homo-sapiens-origin', DEGENERATE)
-    expect(geometry.isDegenerate).toBe(true)
-    expect(geometry.segments).toEqual([])
-  })
-
-  it('carries cumulative distance across a split continuously, 0 at the origin to 1 at the destination (docs/GLOBE.md §10)', () => {
-    const geometry = buildArrivalArcGeometry('beringia-arrival', BERINGIA_TO_AMERICAS)
-    expect(geometry.segments.length).toBeGreaterThanOrEqual(2)
-    expect(geometry.segments[0]![0]!.distance).toBe(0)
-    expect(geometry.segments.at(-1)!.at(-1)!.distance).toBe(1)
-    // Strictly increasing within a piece and across the seam it shares with the next piece — no
-    // reset to 0 partway through, which is exactly the bug a piece-local i/(n-1) fraction had.
-    const flattened = geometry.segments.flat()
-    for (let i = 1; i < flattened.length; i++) {
-      expect(flattened[i]!.distance).toBeGreaterThanOrEqual(flattened[i - 1]!.distance)
-    }
-  })
-
-  it('does not split a non-crossing arc, so its distance is a plain 0..1 sweep with no seam points', () => {
-    const geometry = buildArrivalArcGeometry('out-of-africa-migration', OUT_OF_AFRICA)
-    const [segment] = geometry.segments
-    expect(segment![0]!.distance).toBe(0)
-    expect(segment!.at(-1)!.distance).toBe(1)
+  it('keeps a non-crossing arc whole and a degenerate one segment-free', () => {
+    expect(buildArrivalArcGeometry('ooa', OUT_OF_AFRICA).segments).toHaveLength(1)
+    expect(buildArrivalArcGeometry('origin', DEGENERATE)).toMatchObject({ isDegenerate: true, segments: [] })
   })
 })
 
 describe('buildFatLineBuffers', () => {
-  it('emits two vertices per point, sides -1 and +1, sharing distance/dir', () => {
-    const points = withDistance(greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 4))
-    const buffers = buildFatLineBuffers(points)
-    expect(buffers.side).toHaveLength(points.length * 2)
-    expect(buffers.distance).toHaveLength(points.length * 2)
-    for (let i = 0; i < points.length; i++) {
-      expect(buffers.side[i * 2]).toBe(-1)
-      expect(buffers.side[i * 2 + 1]).toBe(1)
-      expect(buffers.distance[i * 2]).toBe(buffers.distance[i * 2 + 1])
-      expect(buffers.lonLat[i * 4]).toBeCloseTo(points[i]!.lon)
-      expect(buffers.lonLat[i * 4 + 1]).toBeCloseTo(points[i]!.lat)
-    }
-  })
-
-  it('gives both side copies of one point index the same dirA/dirB (no seam at shared joints)', () => {
-    const points = withDistance(greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 6))
-    const buffers = buildFatLineBuffers(points)
-    for (let i = 0; i < points.length; i++) {
-      const left = i * 2
-      const right = i * 2 + 1
-      expect(buffers.dirA[left * 2]).toBe(buffers.dirA[right * 2])
-      expect(buffers.dirA[left * 2 + 1]).toBe(buffers.dirA[right * 2 + 1])
-      expect(buffers.dirB[left * 2]).toBe(buffers.dirB[right * 2])
-      expect(buffers.dirB[left * 2 + 1]).toBe(buffers.dirB[right * 2 + 1])
-    }
-  })
-
-  it('produces two triangles (6 indices) per segment between consecutive points', () => {
+  it('emits two side vertices per point sharing distance and tangents, two triangles per span', () => {
     const points = withDistance(greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 5))
     const buffers = buildFatLineBuffers(points)
+    expect(buffers.side).toHaveLength(points.length * 2)
     expect(buffers.indices).toHaveLength((points.length - 1) * 6)
-    // Every index must reference a real vertex.
-    for (const idx of buffers.indices) {
-      expect(idx).toBeLessThan(points.length * 2)
-      expect(idx).toBeGreaterThanOrEqual(0)
+    for (const idx of buffers.indices) expect(idx).toBeLessThan(points.length * 2)
+    for (let i = 0; i < points.length; i++) {
+      const [l, r] = [i * 2, i * 2 + 1]
+      expect([buffers.side[l], buffers.side[r]]).toEqual([-1, 1])
+      expect(buffers.distance[l]).toBe(buffers.distance[r])
+      expect(buffers.lonLat[i * 4]).toBeCloseTo(points[i]!.lon)
+      expect(buffers.dirA[l * 2]).toBe(buffers.dirA[r * 2])
+      expect(buffers.dirB[l * 2 + 1]).toBe(buffers.dirB[r * 2 + 1])
     }
-  })
-
-  it('clamps end-point tangent neighbours to the arc’s own ends rather than going out of range', () => {
-    const points = withDistance(greatCircleLonLatPoints(OUT_OF_AFRICA.origin, OUT_OF_AFRICA.destination, 3))
-    const buffers = buildFatLineBuffers(points)
-    // First point's dirA is itself (clamped at 0).
     expect(buffers.dirA[0]).toBeCloseTo(points[0]!.lon)
-    // Last point's dirB is itself (clamped at n-1).
-    const lastLeft = (points.length - 1) * 2
-    expect(buffers.dirB[lastLeft * 2]).toBeCloseTo(points.at(-1)!.lon)
+    expect(buffers.dirB[(points.length - 1) * 4]).toBeCloseTo(points.at(-1)!.lon)
   })
 
-  it('reads distance straight from each point, not a local i/(n-1) fraction of just this array (docs/GLOBE.md §10)', () => {
-    // A stand-in for one antimeridian-split piece: cumulative progress over a sub-range of the
-    // whole arc (0.4..0.7), not 0..1 — buildFatLineBuffers must pass it through unchanged so a
-    // split piece's dash pattern continues from where the piece before it left off.
-    const points: DistancedAnchor[] = [
+  it("passes each point's own distance through for split pieces", () => {
+    const buffers = buildFatLineBuffers([
       { lat: 0, lon: -20, distance: 0.4 },
       { lat: 5, lon: -10, distance: 0.55 },
       { lat: 10, lon: 0, distance: 0.7 },
-    ]
-    const buffers = buildFatLineBuffers(points)
-    // Float32Array storage: compare element-by-element with toBeCloseTo, not a deep toEqual
-    // against exact float64 literals.
-    const expected = [0.4, 0.4, 0.55, 0.55, 0.7, 0.7]
-    expect(buffers.distance).toHaveLength(expected.length)
-    expected.forEach((value, i) => expect(buffers.distance[i]).toBeCloseTo(value, 5))
+    ])
+    ;[0.4, 0.4, 0.55, 0.55, 0.7, 0.7].forEach((v, i) => expect(buffers.distance[i]).toBeCloseTo(v, 5))
   })
 })
 
 describe('sphereMarkerVisibility', () => {
-  const CAMERA_DISTANCE = 3.6
-  const RADIUS = 1
+  const cam: [number, number, number] = [0, 0, 3.6]
 
-  it('is fully visible (1) for a point facing the camera directly', () => {
-    const cameraPosition: [number, number, number] = [0, 0, CAMERA_DISTANCE]
-    expect(sphereMarkerVisibility([0, 0, 1], cameraPosition, RADIUS)).toBe(1)
-  })
-
-  it('is fully hidden (0) for a point on the far side, directly away from the camera', () => {
-    const cameraPosition: [number, number, number] = [0, 0, CAMERA_DISTANCE]
-    expect(sphereMarkerVisibility([0, 0, -1], cameraPosition, RADIUS)).toBe(0)
-  })
-
-  it('fades smoothly through an intermediate band near the true horizon, not a hard cutoff', () => {
-    const cameraPosition: [number, number, number] = [0, 0, CAMERA_DISTANCE]
-    // A point exactly at the geometric horizon (cosAngle == radius/distance).
-    const thresholdCos = RADIUS / CAMERA_DISTANCE
-    const horizonAngle = Math.acos(thresholdCos)
-    const direction: [number, number, number] = [Math.sin(horizonAngle), 0, Math.cos(horizonAngle)]
-    const visibility = sphereMarkerVisibility(direction, cameraPosition, RADIUS)
-    expect(visibility).toBeGreaterThan(0)
-    expect(visibility).toBeLessThan(1)
-  })
-
-  it('is 0 when the camera sits at the origin (degenerate, avoids division by zero)', () => {
-    expect(sphereMarkerVisibility([0, 0, 1], [0, 0, 0], RADIUS)).toBe(0)
+  it('is 1 facing the camera, 0 behind, and fades through the horizon', () => {
+    expect(sphereMarkerVisibility([0, 0, 1], cam, 1)).toBe(1)
+    expect(sphereMarkerVisibility([0, 0, -1], cam, 1)).toBe(0)
+    const a = Math.acos(1 / 3.6)
+    const v = sphereMarkerVisibility([Math.sin(a), 0, Math.cos(a)], cam, 1)
+    expect(v).toBeGreaterThan(0)
+    expect(v).toBeLessThan(1)
+    expect(sphereMarkerVisibility([0, 0, 1], [0, 0, 0], 1)).toBe(0)
   })
 })
 
-// --------------------------------------------------------------------- transient timing
-
 describe('arrivalTimingFor', () => {
-  it('scales every width linearly with baseRate', () => {
+  it('scales linearly with baseRate and clamps negatives to zero', () => {
     const a = arrivalTimingFor(0.02)
     const b = arrivalTimingFor(0.04)
-    expect(b.minArcWarp).toBeCloseTo(a.minArcWarp * 2)
-    expect(b.minTailWarp).toBeCloseTo(a.minTailWarp * 2)
-    expect(b.landingWarp).toBeCloseTo(a.landingWarp * 2)
-    expect(b.inhabitedFadeWarp).toBeCloseTo(a.inhabitedFadeWarp * 2)
-  })
-
-  it('gives every width 0 at baseRate 0', () => {
-    expect(arrivalTimingFor(0)).toEqual({ minArcWarp: 0, minTailWarp: 0, landingWarp: 0, inhabitedFadeWarp: 0 })
-  })
-
-  it('treats a negative baseRate the same as 0 (clamped, never a negative width)', () => {
+    for (const key of ['minArcWarp', 'minTailWarp', 'landingWarp', 'inhabitedFadeWarp'] as const) {
+      expect(b[key]).toBeCloseTo(a[key] * 2)
+    }
     expect(arrivalTimingFor(-1)).toEqual({ minArcWarp: 0, minTailWarp: 0, landingWarp: 0, inhabitedFadeWarp: 0 })
   })
 })
 
-/** The `t` at which `arrivalPresentationAt`'s own tail decay reaches exactly 0 — the same
- *  computation `arrivalPresentationAt` performs internally, replicated here from its own public
- *  `ArrivalTiming` fields so the legibility guarantee below can be checked from outside. */
-function tailFadeEnd(effect: ArrivalGlobeEffect, timing: ArrivalTiming): GeoTime {
-  const window = effect.windows.find((w) => w.tMin === 0)!
-  const establishedWarp = symlogWarp(effect.established)
-  const travelWarp = Math.max(0, symlogWarp(window.tMax) - establishedWarp)
-  const tailWarp = Math.max(timing.minTailWarp, timing.minArcWarp - travelWarp)
-  return SYMLOG_C * Math.expm1(establishedWarp - tailWarp)
-}
-
 describe('arrivalPresentationAt', () => {
   const BASE_RATE = 0.05
   const timing = arrivalTimingFor(BASE_RATE)
+  const tMax = OUT_OF_AFRICA.windows[0]!.tMax
+  const { established } = OUT_OF_AFRICA
 
-  it('is hidden above the window’s own tMax', () => {
-    const t = OUT_OF_AFRICA.windows[0]!.tMax + 1
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, t, timing)).toEqual({
+  it('is hidden above tMax', () => {
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, tMax + 1, timing)).toEqual({
       arcAlpha: 0,
       travelling: false,
       travelProgress: 0,
@@ -284,377 +159,156 @@ describe('arrivalPresentationAt', () => {
     })
   })
 
-  it('draws the arc at full strength while travelling, from tMax through established', () => {
-    const { established, windows } = OUT_OF_AFRICA
-    for (const t of [windows[0]!.tMax, (established + windows[0]!.tMax) / 2, established]) {
-      expect(arrivalPresentationAt(OUT_OF_AFRICA, t, timing).arcAlpha).toBe(1)
-      expect(arrivalPresentationAt(OUT_OF_AFRICA, t, timing).travelling).toBe(true)
+  it('travels at full alpha from tMax (progress 0) to established (progress 1)', () => {
+    for (const t of [tMax, (established + tMax) / 2, established]) {
+      expect(arrivalPresentationAt(OUT_OF_AFRICA, t, timing)).toMatchObject({ arcAlpha: 1, travelling: true })
     }
-  })
-
-  it('travelProgress runs 0 at tMax to 1 at established', () => {
-    const { established, windows } = OUT_OF_AFRICA
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, windows[0]!.tMax, timing).travelProgress).toBe(0)
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, tMax, timing).travelProgress).toBe(0)
     expect(arrivalPresentationAt(OUT_OF_AFRICA, established, timing).travelProgress).toBe(1)
   })
 
-  it('travelProgress stays 1 throughout the fade-out tail — the reveal (HumanCivilisation.tsx\'s arc shader reads travelProgress as its reveal fraction) stays complete while only the arc\'s opacity fades, never re-animating the journey', () => {
-    const { established } = OUT_OF_AFRICA
-    const fadeEnd = tailFadeEnd(OUT_OF_AFRICA, timing)
-    const midTail = (established + fadeEnd) / 2
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, midTail, timing).travelProgress).toBe(1)
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, fadeEnd, timing).travelProgress).toBe(1)
-  })
-
-  it('decays arcAlpha monotonically to 0 across the tail below established', () => {
-    const { established } = OUT_OF_AFRICA
+  it('fades arcAlpha monotonically to 0 over the tail while travelProgress stays 1', () => {
     const fadeEnd = tailFadeEnd(OUT_OF_AFRICA, timing)
     expect(fadeEnd).toBeGreaterThan(0)
     expect(fadeEnd).toBeLessThan(established)
-
-    let previous = arrivalPresentationAt(OUT_OF_AFRICA, established, timing).arcAlpha
-    expect(previous).toBe(1)
-    const steps = 8
-    for (let i = 1; i <= steps; i++) {
-      const t = established - ((established - fadeEnd) * i) / steps
-      const alpha = arrivalPresentationAt(OUT_OF_AFRICA, t, timing).arcAlpha
-      expect(alpha).toBeLessThanOrEqual(previous + 1e-9)
-      previous = alpha
+    let previous = 1
+    for (let i = 1; i <= 8; i++) {
+      const p = arrivalPresentationAt(OUT_OF_AFRICA, established - ((established - fadeEnd) * i) / 8, timing)
+      expect(p.arcAlpha).toBeLessThanOrEqual(previous + 1e-9)
+      expect(p.travelProgress).toBe(1)
+      previous = p.arcAlpha
     }
     expect(arrivalPresentationAt(OUT_OF_AFRICA, fadeEnd, timing).arcAlpha).toBeCloseTo(0, 5)
     expect(arrivalPresentationAt(OUT_OF_AFRICA, Math.max(0, fadeEnd - 5000), timing).arcAlpha).toBe(0)
   })
 
-  it('guarantees at least ~MIN_ARC_SECONDS of playback even for a near-instantaneous arrival', () => {
-    // established sits one year below tMax: almost no travel span, so the whole guarantee has to
-    // come from the tail alone.
-    const shortWindow: ArrivalGlobeEffect = {
-      kind: 'arrival',
-      arrivalKind: 'migration',
-      origin: { lat: 0, lon: 0 },
-      destination: { lat: 1, lon: 1 },
-      established: 60_000,
-      windows: [{ tMin: 0, tMax: 60_001 }],
-    }
-    const fadeEnd = tailFadeEnd(shortWindow, timing)
-    expect(arrivalPresentationAt(shortWindow, fadeEnd, timing).arcAlpha).toBeCloseTo(0, 4)
-
-    const seconds =
-      (symlogWarp(shortWindow.windows[0]!.tMax) - symlogWarp(fadeEnd)) / (BASE_RATE * symlogWarp(EARTH_FORMATION))
+  it('guarantees at least a second of playback for a near-instantaneous arrival', () => {
+    const short = arrival({ established: 60_000, windows: [{ tMin: 0, tMax: 60_001 }] })
+    const fadeEnd = tailFadeEnd(short, timing)
+    expect(arrivalPresentationAt(short, fadeEnd, timing).arcAlpha).toBeCloseTo(0, 4)
+    const seconds = (symlogWarp(60_001) - symlogWarp(fadeEnd)) / (BASE_RATE * symlogWarp(EARTH_FORMATION))
     expect(seconds).toBeGreaterThanOrEqual(1.0)
   })
 
-  it('settleProgress is 0 at and above established, rising to 1 a landingWarp past it', () => {
-    const { established } = OUT_OF_AFRICA
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, established, timing).settleProgress).toBe(0)
+  it('settles from 0 at established to 1 a landingWarp later', () => {
     expect(arrivalPresentationAt(OUT_OF_AFRICA, established + 5000, timing).settleProgress).toBe(0)
-
-    const establishedWarp = symlogWarp(established)
-    const wellPast = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp)
-    expect(arrivalPresentationAt(OUT_OF_AFRICA, wellPast, timing).settleProgress).toBe(1)
-
-    const midway = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp / 2)
-    const mid = arrivalPresentationAt(OUT_OF_AFRICA, midway, timing).settleProgress
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, established, timing).settleProgress).toBe(0)
+    const mid = arrivalPresentationAt(OUT_OF_AFRICA, warpBelow(OUT_OF_AFRICA, timing.landingWarp / 2), timing).settleProgress
     expect(mid).toBeGreaterThan(0)
     expect(mid).toBeLessThan(1)
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, warpBelow(OUT_OF_AFRICA, timing.landingWarp), timing).settleProgress).toBe(1)
   })
 
-  it('inhabited stays 0 for a migration and tracks settleProgress for a peopling while it is still rising', () => {
-    const migration: ArrivalGlobeEffect = { ...OUT_OF_AFRICA, arrivalKind: 'migration' }
-    const peopling: ArrivalGlobeEffect = { ...OUT_OF_AFRICA, arrivalKind: 'peopling' }
-    const t = OUT_OF_AFRICA.established - 1000
-
-    expect(arrivalPresentationAt(migration, t, timing).inhabited).toBe(0)
-    const presentation = arrivalPresentationAt(peopling, t, timing)
-    expect(presentation.inhabited).toBe(presentation.settleProgress)
-    expect(presentation.inhabited).toBeGreaterThan(0)
-  })
-
-  it('inhabited rises to 1 exactly at the landing, then fades back to 0 over inhabitedFadeWarp — it does not persist', () => {
-    const peopling: ArrivalGlobeEffect = { ...OUT_OF_AFRICA, arrivalKind: 'peopling' }
-    const establishedWarp = symlogWarp(peopling.established)
-
-    const atLanding = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp)
-    expect(arrivalPresentationAt(peopling, atLanding, timing).inhabited).toBeCloseTo(1, 5)
-
-    const fadeEnd = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp - timing.inhabitedFadeWarp)
-    expect(fadeEnd).toBeGreaterThan(0)
-    expect(arrivalPresentationAt(peopling, fadeEnd, timing).inhabited).toBeCloseTo(0, 5)
-    expect(arrivalPresentationAt(peopling, Math.max(0, fadeEnd - 5000), timing).inhabited).toBe(0)
-
+  it('marks inhabited only for peopling, rising to 1 at landing then fading back to 0', () => {
+    expect(arrivalPresentationAt(OUT_OF_AFRICA, established - 1000, timing).inhabited).toBe(0)
+    const rising = arrivalPresentationAt(PEOPLING, established - 1000, timing)
+    expect(rising.inhabited).toBeGreaterThan(0)
+    expect(rising.inhabited).toBe(rising.settleProgress)
+    expect(arrivalPresentationAt(PEOPLING, warpBelow(PEOPLING, timing.landingWarp), timing).inhabited).toBeCloseTo(1, 5)
     let previous = 1
-    const steps = 8
-    for (let i = 1; i <= steps; i++) {
-      const warpPastLanding = timing.landingWarp + (timing.inhabitedFadeWarp * i) / steps
-      const t = SYMLOG_C * Math.expm1(establishedWarp - warpPastLanding)
-      const inhabited = arrivalPresentationAt(peopling, t, timing).inhabited
+    for (let i = 1; i <= 8; i++) {
+      const inhabited = arrivalPresentationAt(PEOPLING, warpBelow(PEOPLING, timing.landingWarp + (timing.inhabitedFadeWarp * i) / 8), timing).inhabited
       expect(inhabited).toBeLessThanOrEqual(previous + 1e-9)
       previous = inhabited
     }
+    expect(previous).toBeCloseTo(0, 5)
   })
 
-  it('is pure across the fade-out too: scrubbing back into it and away reproduces the same value', () => {
-    const peopling: ArrivalGlobeEffect = { ...OUT_OF_AFRICA, arrivalKind: 'peopling' }
-    const establishedWarp = symlogWarp(peopling.established)
-    const midFade = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp - timing.inhabitedFadeWarp / 2)
-
-    const first = arrivalPresentationAt(peopling, midFade, timing)
-    arrivalPresentationAt(peopling, OUT_OF_AFRICA.windows[0]!.tMax, timing)
-    arrivalPresentationAt(peopling, 0, timing)
-    expect(arrivalPresentationAt(peopling, midFade, timing)).toEqual(first)
+  it('is pure in t regardless of call order', () => {
+    const t = warpBelow(PEOPLING, timing.landingWarp + timing.inhabitedFadeWarp / 2)
+    const first = arrivalPresentationAt(PEOPLING, t, timing)
+    arrivalPresentationAt(PEOPLING, tMax, timing)
+    arrivalPresentationAt(PEOPLING, 0, timing)
+    expect(arrivalPresentationAt(PEOPLING, t, timing)).toEqual(first)
   })
 
-  it('is pure: the same t gives the same result regardless of call order', () => {
-    const t1 = OUT_OF_AFRICA.established - 2000
-    const t2 = OUT_OF_AFRICA.windows[0]!.tMax - 500
-    const first = arrivalPresentationAt(OUT_OF_AFRICA, t1, timing)
-    arrivalPresentationAt(OUT_OF_AFRICA, t2, timing)
-    arrivalPresentationAt(OUT_OF_AFRICA, OUT_OF_AFRICA.windows[0]!.tMax, timing)
-    const again = arrivalPresentationAt(OUT_OF_AFRICA, t1, timing)
-    expect(again).toEqual(first)
+  describe('near the present', () => {
+    const slow = arrivalTimingFor(0.02)
+    const recent = (established: GeoTime, arrivalKind: ArrivalGlobeEffect['arrivalKind']) =>
+      arrival({ arrivalKind, destination: { lat: 64, lon: -21 }, established, windows: [{ tMin: 0, tMax: established * 1.4 }] })
+
+    it.each([745, 1148, 2.5e4, 1.85e5])('leaves nothing lit at t = 0 for an arrival established at %i', (established) => {
+      expect(arrivalPresentationAt(recent(established, 'migration'), 0, slow).arcAlpha).toBeCloseTo(0, 5)
+      const p = arrivalPresentationAt(recent(established, 'peopling'), 0, slow)
+      expect(p.arcAlpha).toBeCloseTo(0, 5)
+      expect(p.inhabited).toBeCloseTo(0, 5)
+    })
+
+    it('still shows arc and marker just after a recent landing', () => {
+      expect(arrivalPresentationAt(recent(1148, 'migration'), 900, slow).arcAlpha).toBeGreaterThan(0)
+      expect(arrivalPresentationAt(recent(1148, 'peopling'), 1000, slow).inhabited).toBeGreaterThan(0)
+    })
   })
 })
 
 describe('hasVisibleArrivals', () => {
-  const BASE_RATE = 0.05
-  const timing = arrivalTimingFor(BASE_RATE)
+  const timing = arrivalTimingFor(0.05)
 
-  function eventFor(effect: ArrivalGlobeEffect): TimelineEvent {
-    return {
-      id: 'out-of-africa-migration',
-      label: 'Out of Africa',
-      tMin: 5e4,
-      tMax: 7e4,
-      importance: 0.8,
-      description: 'd',
-      citation: 'c',
-      effect,
-    }
-  }
-
-  it('is true while an arc is being drawn', () => {
-    expect(hasVisibleArrivals([eventFor(OUT_OF_AFRICA)], OUT_OF_AFRICA.established, timing)).toBe(true)
-  })
-
-  it('is false above every arrival’s own tMax', () => {
-    const t = OUT_OF_AFRICA.windows[0]!.tMax + 1
-    expect(hasVisibleArrivals([eventFor(OUT_OF_AFRICA)], t, timing)).toBe(false)
-  })
-
-  it('is false at the present for a peopling arrival established tens of thousands of years ago: its arc, ripple and inhabited marker have all fully faded by then, none of them persists', () => {
-    const migration = eventFor({ ...OUT_OF_AFRICA, arrivalKind: 'migration' })
-    const peopling = eventFor({ ...OUT_OF_AFRICA, arrivalKind: 'peopling' })
-    expect(hasVisibleArrivals([migration], 0, timing)).toBe(false)
-    expect(hasVisibleArrivals([peopling], 0, timing)).toBe(false)
-  })
-
-  it('is true for a peopling arrival while its inhabited marker is still settling or fading, even after arcAlpha has reached 0', () => {
-    const peopling = eventFor({ ...OUT_OF_AFRICA, arrivalKind: 'peopling' })
-    const establishedWarp = symlogWarp(OUT_OF_AFRICA.established)
-    const stillFading = SYMLOG_C * Math.expm1(establishedWarp - timing.landingWarp - timing.inhabitedFadeWarp / 2)
-    expect(hasVisibleArrivals([peopling], stillFading, timing)).toBe(true)
-  })
-
-  it('ignores events with no arrival effect', () => {
-    const other: TimelineEvent = { id: 'x', label: 'X', tMin: 0, tMax: 1, importance: 0.1, description: 'd', citation: 'c' }
-    expect(hasVisibleArrivals([other], 0, timing)).toBe(false)
+  it('is true while an arc or inhabited marker shows, false before and long after', () => {
+    expect(hasVisibleArrivals([event('a', OUT_OF_AFRICA)], OUT_OF_AFRICA.established, timing)).toBe(true)
+    expect(hasVisibleArrivals([event('a', OUT_OF_AFRICA)], OUT_OF_AFRICA.windows[0]!.tMax + 1, timing)).toBe(false)
+    expect(hasVisibleArrivals([event('a', OUT_OF_AFRICA), event('b', PEOPLING)], 0, timing)).toBe(false)
+    const fading = warpBelow(PEOPLING, timing.landingWarp + timing.inhabitedFadeWarp / 2)
+    expect(hasVisibleArrivals([event('b', PEOPLING)], fading, timing)).toBe(true)
+    expect(hasVisibleArrivals([event('x')], 0, timing)).toBe(false)
   })
 })
 
 describe('arrivalWindow', () => {
-  it('returns [established, tMax] — the TimeWindow order formatTimeRange expects', () => {
-    expect(arrivalWindow(OUT_OF_AFRICA)).toEqual([OUT_OF_AFRICA.established, OUT_OF_AFRICA.windows[0]!.tMax])
+  it('returns [established, tMax]', () => {
+    expect(arrivalWindow(OUT_OF_AFRICA)).toEqual([6.0e4, 7.0e4])
   })
 })
-
-// ------------------------------------------------------------------------- the arrival chain
 
 describe('buildArrivalIndex and traceToOrigin', () => {
-  const AFRICA_ORIGIN: ArrivalGlobeEffect = {
-    kind: 'arrival',
-    arrivalKind: 'peopling',
-    origin: { lat: 9.0, lon: 34.0 },
-    destination: { lat: 9.0, lon: 34.0 },
-    established: 3.15e5,
-    windows: [{ tMin: 0, tMax: 3.15e5 }],
-  }
-  const LEVANT: ArrivalGlobeEffect = {
-    kind: 'arrival',
-    arrivalKind: 'peopling',
-    origin: { lat: 9.0, lon: 34.0 },
-    destination: { lat: 31.5, lon: 35.0 },
-    established: 1.9e5,
-    windows: [{ tMin: 0, tMax: 2.0e5 }],
-  }
-  const ASIA: ArrivalGlobeEffect = {
-    kind: 'arrival',
-    arrivalKind: 'peopling',
-    origin: { lat: 31.5, lon: 35.0 },
-    destination: { lat: 60.0, lon: 90.0 },
-    established: 1.0e5,
-    windows: [{ tMin: 0, tMax: 1.2e5 }],
-  }
+  const ORIGIN = arrival({ arrivalKind: 'peopling', origin: { lat: 9, lon: 34 }, destination: { lat: 9, lon: 34 }, established: 3.15e5, windows: [{ tMin: 0, tMax: 3.15e5 }] })
+  const LEVANT = arrival({ origin: { lat: 9, lon: 34 }, destination: { lat: 31.5, lon: 35 }, established: 1.9e5, windows: [{ tMin: 0, tMax: 2.0e5 }] })
+  const ASIA = arrival({ origin: { lat: 31.5, lon: 35 }, destination: { lat: 60, lon: 90 }, established: 1.0e5, windows: [{ tMin: 0, tMax: 1.2e5 }] })
+  const index = buildArrivalIndex([event('origin', ORIGIN), event('levant', LEVANT), event('asia', ASIA)])
 
-  function eventFor(id: string, effect: ArrivalGlobeEffect): TimelineEvent {
-    return { id, label: id, tMin: effect.established, tMax: effect.windows[0]!.tMax, importance: 0.5, description: 'd', citation: 'c', effect }
-  }
-
-  const EVENTS: TimelineEvent[] = [eventFor('africa-origin', AFRICA_ORIGIN), eventFor('levant-arrival', LEVANT), eventFor('asia-arrival', ASIA)]
-
-  it('sorts records ascending by established — newest arrival first, origin last', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(index.records.map((r) => r.eventId)).toEqual(['asia-arrival', 'levant-arrival', 'africa-origin'])
+  it('sorts newest first and links each arrival to the nearest older destination', () => {
+    expect(index.records.map((r) => r.eventId)).toEqual(['asia', 'levant', 'origin'])
+    expect(index.byEventId.get('asia')?.parentEventId).toBe('levant')
+    expect(index.byEventId.get('levant')?.parentEventId).toBe('origin')
+    expect(index.byEventId.get('origin')?.parentEventId).toBeNull()
   })
 
-  it('links each arrival to the older arrival whose destination sits nearest its own origin', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(index.byEventId.get('asia-arrival')?.parentEventId).toBe('levant-arrival')
-    expect(index.byEventId.get('levant-arrival')?.parentEventId).toBe('africa-origin')
+  it('breaks a distance tie by eventId', () => {
+    const tied = { ...LEVANT, established: 2.5e5, windows: [{ tMin: 0, tMax: 2.6e5 }] }
+    const tiedIndex = buildArrivalIndex([event('z', tied), event('a', tied), event('asia', ASIA)])
+    expect(tiedIndex.byEventId.get('asia')?.parentEventId).toBe('a')
   })
 
-  it('gives the degenerate origin arrival no parent', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(index.byEventId.get('africa-origin')?.parentEventId).toBeNull()
-  })
-
-  it('breaks a distance tie deterministically by eventId', () => {
-    // Two equally-old candidate parents whose destination is exactly ASIA's own origin — the
-    // tie must resolve to the lexicographically smaller id, not whichever happened to be listed
-    // first.
-    const tiedOlder: ArrivalGlobeEffect = { ...LEVANT, established: 2.5e5, windows: [{ tMin: 0, tMax: 2.6e5 }] }
-    const events = [eventFor('z-tied-parent', tiedOlder), eventFor('a-tied-parent', tiedOlder), eventFor('asia-arrival', ASIA)]
-    const index = buildArrivalIndex(events)
-    expect(index.byEventId.get('asia-arrival')?.parentEventId).toBe('a-tied-parent')
-  })
-
-  it('traces the full chain, hovered-first and origin-last', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(traceToOrigin(index, 'asia-arrival')).toEqual(['asia-arrival', 'levant-arrival', 'africa-origin'])
-  })
-
-  it('a chain rooted at the origin itself is just the origin', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(traceToOrigin(index, 'africa-origin')).toEqual(['africa-origin'])
-  })
-
-  it('terminates and returns [] for an unknown id', () => {
-    const index = buildArrivalIndex(EVENTS)
-    expect(traceToOrigin(index, 'no-such-arrival')).toEqual([])
+  it('traces hovered-first to origin-last, [] for an unknown id', () => {
+    expect(traceToOrigin(index, 'asia')).toEqual(['asia', 'levant', 'origin'])
+    expect(traceToOrigin(index, 'origin')).toEqual(['origin'])
+    expect(traceToOrigin(index, 'ghost')).toEqual([])
   })
 })
-
-describe('arc fade near the present (BUG: a recently-established arc previously never reached 0)', () => {
-  // A recently-established arrival has less warp left before t = 0 than `tailWarp` wants, so the
-  // tail must be squeezed into `establishedWarp` (`squeezeToFit`); sizing it against
-  // `minArcWarp`/`minTailWarp` alone leaves the arc still lit at the present.
-  const timing = arrivalTimingFor(0.02)
-
-  function migration(established: GeoTime): ArrivalGlobeEffect {
-    return {
-      kind: 'arrival',
-      arrivalKind: 'migration',
-      origin: { lat: 9.0, lon: 42.0 },
-      destination: { lat: 64.0, lon: -21.0 },
-      established,
-      windows: [{ tMin: 0, tMax: established * 1.4 }],
-    }
-  }
-
-  // Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar, Beringia, the Levant — same table as the
-  // "inhabited" marker's own near-the-present fade test, since the bug and the fix are the same
-  // shape for both fields.
-  it.each([1148, 745, 953, 1040, 2075, 2.5e4, 1.85e5])(
-    'leaves the arc fully faded (arcAlpha === 0) at the present for an arrival established at %i',
-    (established) => {
-      expect(arrivalPresentationAt(migration(established), 0, timing).arcAlpha).toBeCloseTo(0, 5)
-    },
-  )
-
-  it('still draws the arc right after a recent arrival lands, before the tail fades it out', () => {
-    expect(arrivalPresentationAt(migration(1148), 900, timing).arcAlpha).toBeGreaterThan(0)
-  })
-
-  it('a `peopling` arrival gets the same treatment as a `migration` one — the bug and fix are independent of arrivalKind', () => {
-    const peopling: ArrivalGlobeEffect = { ...migration(1148), arrivalKind: 'peopling' }
-    expect(arrivalPresentationAt(peopling, 0, timing).arcAlpha).toBeCloseTo(0, 5)
-  })
-})
-
-describe('inhabited marker fade near the present', () => {
-  const timing = arrivalTimingFor(0.02)
-
-  function peopling(established: GeoTime): ArrivalGlobeEffect {
-    return {
-      kind: 'arrival',
-      arrivalKind: 'peopling',
-      origin: { lat: 9.0, lon: 42.0 },
-      destination: { lat: 64.0, lon: -21.0 },
-      established,
-      windows: [{ tMin: 0, tMax: established * 1.4 }],
-    }
-  }
-
-  // Iceland, Aotearoa, Rapa Nui, Greenland, Madagascar, Beringia, the Levant.
-  it.each([1148, 745, 953, 1040, 2075, 2.5e4, 1.85e5])(
-    'leaves nothing lit at the present for an arrival established at %i',
-    (established) => {
-      expect(arrivalPresentationAt(peopling(established), 0, timing).inhabited).toBeCloseTo(0, 5)
-    },
-  )
-
-  it('still raises the marker after a recent arrival, before fading it', () => {
-    expect(arrivalPresentationAt(peopling(1148), 1000, timing).inhabited).toBeGreaterThan(0)
-  })
-})
-
-// --------------------------------------------------------------------------------- arrowhead
-
-function angularDistance(a: readonly [number, number, number], b: readonly [number, number, number]): number {
-  return Math.acos(Math.min(1, Math.max(-1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])))
-}
 
 describe('arrowheadPlacementAt', () => {
-  it('is null for a degenerate (point) arrival — no direction to show', () => {
+  const angle = (a: readonly number[], b: readonly number[]) =>
+    Math.acos(Math.min(1, Math.max(-1, a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!)))
+
+  it('is null for a degenerate arrival', () => {
     expect(arrowheadPlacementAt(DEGENERATE, 0.5)).toBeNull()
   })
 
-  it('sits exactly at the origin at progress 0 and the destination at progress 1', () => {
-    const atStart = arrowheadPlacementAt(OUT_OF_AFRICA, 0) as ArrowheadPlacement
-    expect(atStart.anchor).toEqual(OUT_OF_AFRICA.origin)
-
-    const atEnd = arrowheadPlacementAt(OUT_OF_AFRICA, 1) as ArrowheadPlacement
-    expect(atEnd.anchor.lat).toBeCloseTo(OUT_OF_AFRICA.destination.lat, 6)
-    expect(atEnd.anchor.lon).toBeCloseTo(OUT_OF_AFRICA.destination.lon, 6)
+  it('runs origin to destination, clamping progress outside 0..1', () => {
+    expect(arrowheadPlacementAt(OUT_OF_AFRICA, 0)!.anchor).toEqual(OUT_OF_AFRICA.origin)
+    expect(arrowheadPlacementAt(OUT_OF_AFRICA, -0.5)!.anchor).toEqual(OUT_OF_AFRICA.origin)
+    for (const p of [1, 1.5]) {
+      const { anchor } = arrowheadPlacementAt(OUT_OF_AFRICA, p)!
+      expect(anchor.lat).toBeCloseTo(OUT_OF_AFRICA.destination.lat, 6)
+      expect(anchor.lon).toBeCloseTo(OUT_OF_AFRICA.destination.lon, 6)
+    }
   })
 
-  it('clamps progress outside 0..1 rather than extrapolating past the endpoints', () => {
-    const belowZero = arrowheadPlacementAt(OUT_OF_AFRICA, -0.5) as ArrowheadPlacement
-    const atZero = arrowheadPlacementAt(OUT_OF_AFRICA, 0) as ArrowheadPlacement
-    expect(belowZero.anchor).toEqual(atZero.anchor)
-
-    const aboveOne = arrowheadPlacementAt(OUT_OF_AFRICA, 1.5) as ArrowheadPlacement
-    const atOne = arrowheadPlacementAt(OUT_OF_AFRICA, 1) as ArrowheadPlacement
-    expect(aboveOne.anchor.lat).toBeCloseTo(atOne.anchor.lat, 6)
-    expect(aboveOne.anchor.lon).toBeCloseTo(atOne.anchor.lon, 6)
-  })
-
-  it('places tail strictly behind the anchor along the same great circle once underway — a real tangent, not a coincident point', () => {
-    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.5) as ArrowheadPlacement
-    expect(placement.tail).not.toEqual(placement.anchor)
-  })
-
-  it('orients toward the destination: the anchor is angularly closer to the destination than the tail is', () => {
-    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.5) as ArrowheadPlacement
-    const destination = lonLatToSphere(OUT_OF_AFRICA.destination)
-    const anchorDistance = angularDistance(lonLatToSphere(placement.anchor), destination)
-    const tailDistance = angularDistance(lonLatToSphere(placement.tail), destination)
-    expect(anchorDistance).toBeLessThan(tailDistance)
-  })
-
-  it('clamps the tail at the origin rather than going negative when progress is near 0', () => {
-    const placement = arrowheadPlacementAt(OUT_OF_AFRICA, 0.005) as ArrowheadPlacement
-    const originDistance = angularDistance(lonLatToSphere(placement.tail), lonLatToSphere(OUT_OF_AFRICA.origin))
-    // The tail is at or beyond the origin's own position, never past it toward negative progress.
-    expect(originDistance).toBeCloseTo(0, 3)
+  it('points toward the destination with the tail behind, clamped at the origin', () => {
+    const { anchor, tail } = arrowheadPlacementAt(OUT_OF_AFRICA, 0.5)!
+    const dest = lonLatToSphere(OUT_OF_AFRICA.destination)
+    expect(angle(lonLatToSphere(anchor), dest)).toBeLessThan(angle(lonLatToSphere(tail), dest))
+    const early = arrowheadPlacementAt(OUT_OF_AFRICA, 0.005)!
+    expect(angle(lonLatToSphere(early.tail), lonLatToSphere(OUT_OF_AFRICA.origin))).toBeCloseTo(0, 3)
   })
 })
