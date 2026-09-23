@@ -4,16 +4,17 @@
  * WebGL scene renderer: a full-viewport quad (react-three-fiber) whose fragment shader does the
  * smooth whole-image crossfade (`shaders.ts`, ADR-012), each layer's own focus-centred crop
  * (`framing.ts`, ADR-045, ADR-047) and camera drift (`drift.ts`) in one pass — no stacked DOM layers, no double exposure. Texture loads go through
- * `textureCache`/`useScenePair`, which keep the previously bound pair on screen until a newly
- * requested pair has fully loaded, so this never shows a blank or black frame; scenes ahead of
- * the current pair are prefetched, decoded and uploaded before they are needed (`prefetch.ts`).
+ * `textureCache`/`useScenePair`, which draw a scene's softened thumbnail until its full image
+ * loads (ADR-051) and keep the previously bound pair on screen until both ends have one or the
+ * other, so this never shows a blank or black frame; scenes ahead of the current pair are
+ * prefetched, decoded and uploaded before they are needed (`prefetch.ts`), and every thumbnail is.
  * `sceneRender.ts`'s `resolveSceneRender`
  * reconciles that bound pair against `mix`/`fromDrift`/`toDrift` (computed for the pair being
  * *requested*, which can outrun what's bound) so the rendered uniforms always describe the
  * bound pair, never a stale texture under a newer pair's drift.
  */
 
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import * as THREE from 'three'
 
@@ -21,20 +22,39 @@ import { isAbortError } from '@/lib/imagePrefetcher'
 
 import { useSceneCanvasDpr } from './canvasBudget'
 import type { DriftUniforms } from './drift'
-import { CENTRED_CROP, coverWindow, type CoverWindow, type SceneCrop } from './framing'
+import { CENTRED_CROP, centreSquareWindow, coverWindow, type CoverWindow, type SceneCrop } from './framing'
+import type { PresentationRegime } from './scene'
+import { sharpening } from './sceneLayer'
 import { resolveSceneRender } from './sceneRender'
 import { SCENE_FRAGMENT_SHADER, SCENE_VERTEX_SHADER } from './shaders'
 import { sceneImageBytes } from './sceneImageBytes'
-import { getCachedSceneTexture, loadSceneTexture, PLACEHOLDER_TEXTURE } from './textureCache'
-import { useScenePair } from './useScenePair'
+import {
+  getCachedSceneTexture,
+  getCachedSceneThumbnail,
+  loadSceneTexture,
+  loadSceneThumbnail,
+  PLACEHOLDER_TEXTURE,
+} from './textureCache'
+import { useScenePair, type BoundSceneLayer } from './useScenePair'
+
+/** How long a scene's full image takes to fade in over its own thumbnail under `'crossfade'`. */
+export const SHARPEN_SECONDS = 0.4
+
+/** Thumbnails are 128 px square (`pipeline/transcode.py`'s `THUMBNAIL_SIZE`). */
+const THUMBNAIL_TEXEL = 1 / 128
 
 export interface SceneCanvasViewProps {
   baseUrl: string
   overlayUrl: string
+  baseThumbUrl: string
+  overlayThumbUrl: string
   /** Scenes to decode and upload ahead of need, most urgent first (`prefetch.ts`). */
   decodeUrls: readonly string[]
   /** Scenes whose bytes to fetch without decoding, most urgent first. */
   fetchUrls: readonly string[]
+  thumbUrls: ThumbnailPrefetch
+  /** Whether a scene's full image fades in over its thumbnail (`'crossfade'`) or cuts to it. */
+  regime: PresentationRegime
   /** Crossfade alpha (`transition.ts`'s `crossfadeAlpha`, already eased) — `0` shows `baseUrl`
    *  alone, `1` shows `overlayUrl` alone, pixel-exact at both ends (see `shaders.ts`). */
   mix: number
@@ -48,21 +68,36 @@ export interface SceneCanvasViewProps {
   cropByUrl: ReadonlyMap<string, SceneCrop>
 }
 
+/** Thumbnail URLs in two tiers: `near` (the pair's and the prefetch plan's) are fetched with the
+ *  pair, `all` (every scene's) behind everything else. */
+export interface ThumbnailPrefetch {
+  near: readonly string[]
+  all: readonly string[]
+}
+
 /**
- * Fetches the pair, then `decodeUrls`, then `fetchUrls` (`sceneImageBytes`), and decodes and
- * uploads each of `decodeUrls` once its bytes arrive, so `useScenePair`'s render-phase bind finds
- * it ready. A scene that leaves the plan before its bytes arrive is dropped, not decoded.
+ * Fetches the pair and the near thumbnails, then `decodeUrls`, then `fetchUrls`, then every other
+ * thumbnail (`sceneImageBytes`), and decodes and uploads each of `decodeUrls` and every thumbnail
+ * once its bytes arrive, so `useScenePair`'s render-phase bind finds it ready. A scene that leaves
+ * the plan before its bytes arrive is dropped, not decoded; thumbnails never leave it.
  */
 function useScenePrefetch(
   pairUrls: readonly string[],
   decodeUrls: readonly string[],
   fetchUrls: readonly string[],
+  thumbUrls: ThumbnailPrefetch,
   renderer: { readonly current: THREE.WebGLRenderer | null },
 ): void {
   const pairKey = pairUrls.join('\n')
   useEffect(() => {
     const pending = (url: string): boolean => getCachedSceneTexture(url) === undefined
-    sceneImageBytes.want(pairKey.split('\n').filter(pending), [...decodeUrls.filter(pending), ...fetchUrls.filter(pending)])
+    const thumbPending = (url: string): boolean => getCachedSceneThumbnail(url) === undefined
+    // Thumbnails are ~4 KB: the near ones start with the pair, since they are what the pair and
+    // the next few scenes draw if their full images are late.
+    sceneImageBytes.want(
+      [...pairKey.split('\n').filter(pending), ...thumbUrls.near.filter(thumbPending)],
+      [...decodeUrls.filter(pending), ...fetchUrls.filter(pending), ...thumbUrls.all.filter(thumbPending)],
+    )
 
     let cancelled = false
     for (const url of decodeUrls) {
@@ -81,23 +116,47 @@ function useScenePrefetch(
     return () => {
       cancelled = true
     }
-  }, [pairKey, decodeUrls, fetchUrls, renderer])
+  }, [pairKey, decodeUrls, fetchUrls, thumbUrls, renderer])
+
+  // Declared after the `want` above, so every thumbnail is already wanted when this first runs.
+  useEffect(() => {
+    let cancelled = false
+    for (const url of thumbUrls.all) {
+      if (getCachedSceneThumbnail(url) !== undefined) continue
+      sceneImageBytes
+        .whenStored(url)
+        .then(() => loadSceneThumbnail(url))
+        .then((texture) => {
+          if (!cancelled) renderer.current?.initTexture(texture)
+        })
+        .catch((error: unknown) => {
+          if (!isAbortError(error)) console.error(error)
+        })
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [thumbUrls.all, renderer])
 }
 
 export function SceneCanvasView({
   baseUrl,
   overlayUrl,
+  baseThumbUrl,
+  overlayThumbUrl,
   decodeUrls,
   fetchUrls,
+  thumbUrls,
+  regime,
   mix,
   fromDrift,
   toDrift,
   imageAspect,
   cropByUrl,
 }: SceneCanvasViewProps) {
-  const pair = useScenePair(baseUrl, overlayUrl)
+  const pair = useScenePair(baseUrl, baseThumbUrl, overlayUrl, overlayThumbUrl)
   const renderer = useRef<THREE.WebGLRenderer | null>(null)
-  useScenePrefetch([baseUrl, overlayUrl], decodeUrls, fetchUrls, renderer)
+  useScenePrefetch([baseUrl, overlayUrl], decodeUrls, fetchUrls, thumbUrls, renderer)
   const dpr = useSceneCanvasDpr()
 
   // The uniforms below must always describe whichever pair `pair` actually has textures bound
@@ -125,14 +184,15 @@ export function SceneCanvasView({
       }}
     >
       <SceneQuad
-        fromTex={render?.fromTex ?? null}
-        toTex={render?.toTex ?? null}
+        from={render?.from ?? null}
+        to={render?.to ?? null}
+        regime={regime}
         mix={render?.mix ?? mix}
         fromDrift={render?.fromDrift ?? fromDrift}
         toDrift={render?.toDrift ?? toDrift}
         imageAspect={imageAspect}
-        fromCrop={cropOf(cropByUrl, render?.fromUrl)}
-        toCrop={cropOf(cropByUrl, render?.toUrl)}
+        fromCrop={cropOf(cropByUrl, render?.from.url)}
+        toCrop={cropOf(cropByUrl, render?.to.url)}
       />
     </Canvas>
   )
@@ -143,8 +203,9 @@ function cropOf(cropByUrl: ReadonlyMap<string, SceneCrop>, url: string | undefin
 }
 
 interface SceneQuadProps {
-  fromTex: THREE.Texture | null
-  toTex: THREE.Texture | null
+  from: BoundSceneLayer | null
+  to: BoundSceneLayer | null
+  regime: PresentationRegime
   mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
@@ -153,7 +214,43 @@ interface SceneQuadProps {
   toCrop: SceneCrop
 }
 
-function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromCrop, toCrop }: SceneQuadProps) {
+/**
+ * Each drawn scene's sharpness (1 full image, 0 thumbnail) at a frame's wall-clock time: 1 at once
+ * for a scene first drawn with its full image or sharpened under `'cut'`, ramping over
+ * `SHARPEN_SECONDS` from when a drawn thumbnail's full image landed under `'crossfade'`
+ * (`sceneLayer.ts`). Tracked per scene rather than per channel, so a fade carries on when the
+ * scene moves from one channel to the other at a transition.
+ */
+function useSharpness(
+  from: BoundSceneLayer | null,
+  to: BoundSceneLayer | null,
+  regime: PresentationRegime,
+): (layer: BoundSceneLayer | null, now: number) => number {
+  const drawn = useRef(new Map<string, BoundSceneLayer>())
+  const fadeStartedAt = useRef(new Map<string, number>())
+  const layers = [from, to].filter((layer): layer is BoundSceneLayer => layer !== null)
+  for (const url of [...drawn.current.keys()]) {
+    if (layers.some((layer) => layer.url === url)) continue
+    drawn.current.delete(url)
+    fadeStartedAt.current.delete(url)
+  }
+  for (const layer of layers) {
+    const previous = drawn.current.get(layer.url) ?? null
+    if (previous === layer) continue
+    const change = sharpening(previous, layer, regime)
+    if (change === 'fade') fadeStartedAt.current.set(layer.url, performance.now())
+    if (change === 'cut') fadeStartedAt.current.delete(layer.url)
+    drawn.current.set(layer.url, layer)
+  }
+  return (layer, now) => {
+    if (layer === null || layer.full === null) return 0
+    const startedAt = fadeStartedAt.current.get(layer.url)
+    if (layer.thumb === null || startedAt === undefined) return 1
+    return Math.min(1, Math.max(0, (now - startedAt) / (SHARPEN_SECONDS * 1000)))
+  }
+}
+
+function SceneQuad({ from, to, regime, mix, fromDrift, toDrift, imageAspect, fromCrop, toCrop }: SceneQuadProps) {
   const { size, invalidate } = useThree()
   const laidOut = size.width > 0 && size.height > 0 && imageAspect > 0
   const viewportAspect = laidOut ? size.width / size.height : imageAspect
@@ -164,9 +261,16 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromC
     () => ({
       uFrom: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uTo: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uFromThumb: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uToThumb: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uFromSharp: { value: 1 },
+      uToSharp: { value: 1 },
+      uThumbTexel: { value: new THREE.Vector2(THUMBNAIL_TEXEL, THUMBNAIL_TEXEL) },
       uMix: { value: 0 },
       uFromWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
       uToWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
+      uFromThumbWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
+      uToThumbWindow: { value: new THREE.Vector4(0, 0, 1, 1) },
       uFromZoom: { value: 1 },
       uFromOffset: { value: new THREE.Vector2(0, 0) },
       uToZoom: { value: 1 },
@@ -182,6 +286,27 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromC
   uniforms.uToOffset.value.set(toDrift.dx, toDrift.dy)
   setWindow(uniforms.uFromWindow.value, fromWindow)
   setWindow(uniforms.uToWindow.value, toWindow)
+  const squareAspect = imageAspect > 0 ? imageAspect : 1
+  setWindow(uniforms.uFromThumbWindow.value, centreSquareWindow(fromWindow, squareAspect))
+  setWindow(uniforms.uToThumbWindow.value, centreSquareWindow(toWindow, squareAspect))
+
+  // A prop for the frame this render produces, then written to the material every frame until a
+  // sharpening fade finishes. (r3f copies each uniform entry, so only a mutated object value, like
+  // the vectors above, reaches the material through `uniforms`; a number must be written to it.)
+  const sharpness = useSharpness(from, to, regime)
+  const renderedAt = performance.now()
+  const material = useRef<THREE.ShaderMaterial>(null)
+  useFrame(() => {
+    const target = material.current
+    if (target === null) return
+    const now = performance.now()
+    const fromSharp = sharpness(from, now)
+    const toSharp = sharpness(to, now)
+    target.uniforms.uFromSharp!.value = fromSharp
+    target.uniforms.uToSharp!.value = toSharp
+    const fading = (sharp: number, layer: BoundSceneLayer | null): boolean => sharp < 1 && layer !== null && layer.full !== null
+    if (fading(fromSharp, from) || fading(toSharp, to)) invalidate()
+  })
 
   // The mutations above are the uniform updates in this component that do *not* go through a
   // JSX prop (every other one below is `uniforms-x-value={...}`, which r3f's own prop-diffing
@@ -209,11 +334,16 @@ function SceneQuad({ fromTex, toTex, mix, fromDrift, toDrift, imageAspect, fromC
     <mesh>
       <planeGeometry args={[2, 2]} />
       <shaderMaterial
+        ref={material}
         vertexShader={SCENE_VERTEX_SHADER}
         fragmentShader={SCENE_FRAGMENT_SHADER}
         uniforms={uniforms}
-        uniforms-uFrom-value={fromTex ?? PLACEHOLDER_TEXTURE}
-        uniforms-uTo-value={toTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uFrom-value={from?.full ?? PLACEHOLDER_TEXTURE}
+        uniforms-uTo-value={to?.full ?? PLACEHOLDER_TEXTURE}
+        uniforms-uFromThumb-value={from?.thumb ?? PLACEHOLDER_TEXTURE}
+        uniforms-uToThumb-value={to?.thumb ?? PLACEHOLDER_TEXTURE}
+        uniforms-uFromSharp-value={sharpness(from, renderedAt)}
+        uniforms-uToSharp-value={sharpness(to, renderedAt)}
         uniforms-uMix-value={mix}
         uniforms-uFromZoom-value={fromDrift.zoom}
         uniforms-uToZoom-value={toDrift.zoom}

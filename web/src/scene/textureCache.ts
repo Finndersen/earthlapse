@@ -5,7 +5,8 @@
  * outside `transition.ts`/`drift.ts` and is exercised through `useScenePair`.
  *
  * Bounded (`lib/retainedTextureCache.ts`): `useScenePair` retains the pair it has bound, so
- * eviction only ever disposes scenes nothing is drawing.
+ * eviction only ever disposes scenes nothing is drawing. Thumbnails (ADR-051) have a cache of their
+ * own, sized to hold every scene's: at 64 KB each they would otherwise evict full scenes by count.
  *
  * Every texture uploads with `NoColorSpace`, so the sampler returns the stored bytes — the same
  * contract as `layers/portraitTextures.ts`. `shaders.ts` owns the transfer: a settled scene is
@@ -25,6 +26,10 @@ import { sceneImageBytes } from './sceneImageBytes'
  *  still loading and `prefetch.ts`'s four decoded scenes (~135 MB). */
 export const SCENE_CACHE_CAPACITY = 8
 
+/** A thumbnail is 128x128 RGBA, 64 KB on the GPU; this holds every published scene's (~71) with
+ *  room to grow, ~8 MB at most. */
+export const SCENE_THUMBNAIL_CACHE_CAPACITY = 128
+
 async function fetchSceneTexture(url: string, onProgress?: (fraction: number) => void): Promise<THREE.Texture> {
   const image = await fetchImage(url, onProgress, sceneImageBytes.load)
   const texture = new THREE.Texture(image)
@@ -35,7 +40,17 @@ async function fetchSceneTexture(url: string, onProgress?: (fraction: number) =>
   return texture
 }
 
+/** A thumbnail is the scene's centre square, so a wide viewport samples past its edges; mirroring
+ *  continues the picture there instead of smearing its edge texels. */
+async function fetchThumbnailTexture(url: string): Promise<THREE.Texture> {
+  const texture = await fetchSceneTexture(url)
+  texture.wrapS = THREE.MirroredRepeatWrapping
+  texture.wrapT = THREE.MirroredRepeatWrapping
+  return texture
+}
+
 const cache = createRetainedTextureCache(SCENE_CACHE_CAPACITY, fetchSceneTexture)
+const thumbnailCache = createRetainedTextureCache(SCENE_THUMBNAIL_CACHE_CAPACITY, fetchThumbnailTexture)
 
 /** A 1x1 opaque black texture bound to the shader's samplers while the real pair is still
  *  loading, so WebGL always has a valid texture object, never `null`. */
@@ -56,7 +71,21 @@ export function loadSceneTexture(url: string, onProgress?: (fraction: number) =>
   return cache.load(url, onProgress)
 }
 
-/** Protects bound textures from eviction until the returned release is called. */
+export function getCachedSceneThumbnail(url: string): THREE.Texture | undefined {
+  return thumbnailCache.get(url)
+}
+
+export function loadSceneThumbnail(url: string): Promise<THREE.Texture> {
+  return thumbnailCache.load(url)
+}
+
+/** Protects bound textures, full scenes and thumbnails alike, from eviction until the returned
+ *  release is called. */
 export function retainSceneTextures(textures: readonly (THREE.Texture | null)[]): () => void {
-  return cache.retain(textures)
+  const releaseScenes = cache.retain(textures)
+  const releaseThumbnails = thumbnailCache.retain(textures)
+  return () => {
+    releaseScenes()
+    releaseThumbnails()
+  }
 }

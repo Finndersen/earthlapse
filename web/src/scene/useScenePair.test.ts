@@ -10,25 +10,45 @@ const { pending, cached, retained } = vi.hoisted(() => ({
   retained: [] as unknown[],
 }))
 
-vi.mock('./textureCache', () => ({
-  loadSceneTexture: vi.fn(
+vi.mock('./textureCache', () => {
+  const load = vi.fn(
     (url: string) =>
       new Promise((resolve) => {
         pending.set(url, resolve)
       }),
-  ),
-  getCachedSceneTexture: vi.fn((url: string) => cached.get(url)),
-  retainSceneTextures: vi.fn((textures: readonly unknown[]) => {
-    const held = textures.filter((texture) => texture !== null)
-    retained.push(...held)
-    return () => {
-      for (const texture of held) retained.splice(retained.indexOf(texture), 1)
-    }
-  }),
-}))
+  )
+  const get = vi.fn((url: string) => cached.get(url))
+  return {
+    loadSceneTexture: load,
+    loadSceneThumbnail: vi.fn((url: string) => load(url)),
+    getCachedSceneTexture: get,
+    getCachedSceneThumbnail: vi.fn((url: string) => get(url)),
+    retainSceneTextures: vi.fn((textures: readonly unknown[]) => {
+      const held = textures.filter((texture) => texture !== null)
+      retained.push(...held)
+      return () => {
+        for (const texture of held) retained.splice(retained.indexOf(texture), 1)
+      }
+    }),
+  }
+})
 
 // eslint-disable-next-line import/first -- must follow the hoisted vi.mock above
-import { useScenePair } from './useScenePair'
+import { useScenePair as useScenePairOf } from './useScenePair'
+
+/** Each scene's thumbnail is `<url>.thumb`. */
+function useScenePair(from: string, to: string) {
+  const pair = useScenePairOf(from, `${from}.thumb`, to, `${to}.thumb`)
+  return {
+    fromTex: pair.from?.full ?? null,
+    toTex: pair.to?.full ?? null,
+    fromThumb: pair.from?.thumb ?? null,
+    toThumb: pair.to?.thumb ?? null,
+    boundFromUrl: pair.from?.url ?? null,
+    boundToUrl: pair.to?.url ?? null,
+    ready: pair.ready,
+  }
+}
 
 function fakeTexture(name: string): { name: string } {
   return { name }
@@ -97,28 +117,49 @@ describe('useScenePair: no blank frame', () => {
     expect(result.current.fromTex).toEqual(fakeTexture('b2'))
   })
 
-  it(
-    'binds a fully cached pair in the same render as the request, with no frame of the old pair',
-    async () => {
-      const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
-        initialProps: { from: 'a.png', to: 'b.png' },
-      })
+  it('binds a fully cached pair in the same render as the request, with no frame of the old pair', async () => {
+    const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
+      initialProps: { from: 'a.png', to: 'b.png' },
+    })
 
-      act(() => {
-        resolveLoad('a.png', fakeTexture('a'))
-        resolveLoad('b.png', fakeTexture('b'))
-      })
-      await waitFor(() => expect(result.current.ready).toBe(true))
+    act(() => {
+      resolveLoad('a.png', fakeTexture('a'))
+      resolveLoad('b.png', fakeTexture('b'))
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
 
-      markCached('b.png', fakeTexture('b'))
-      markCached('c.png', fakeTexture('c'))
+    markCached('b.png', fakeTexture('b'))
+    markCached('c.png', fakeTexture('c'))
 
-      rerender({ from: 'b.png', to: 'c.png' })
+    rerender({ from: 'b.png', to: 'c.png' })
 
-      expect(result.current.fromTex).toEqual(fakeTexture('b'))
-      expect(result.current.toTex).toEqual(fakeTexture('c'))
-    },
-  )
+    expect(result.current.fromTex).toEqual(fakeTexture('b'))
+    expect(result.current.toTex).toEqual(fakeTexture('c'))
+  })
+
+  it('binds a newly requested scene on its thumbnail while its full image loads, then on the full image', async () => {
+    const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
+      initialProps: { from: 'a.png', to: 'b.png' },
+    })
+    act(() => {
+      resolveLoad('a.png', fakeTexture('a'))
+      resolveLoad('b.png', fakeTexture('b'))
+    })
+    await waitFor(() => expect(result.current.ready).toBe(true))
+
+    markCached('b.png', fakeTexture('b'))
+    markCached('c.png.thumb', fakeTexture('c thumb'))
+    rerender({ from: 'b.png', to: 'c.png' })
+
+    expect(result.current.boundToUrl).toBe('c.png')
+    expect(result.current.toTex).toBeNull()
+    expect(result.current.toThumb).toEqual(fakeTexture('c thumb'))
+
+    act(() => resolveLoad('c.png', fakeTexture('c')))
+    await waitFor(() => expect(result.current.toTex).toEqual(fakeTexture('c')))
+    expect(result.current.toThumb).toEqual(fakeTexture('c thumb'))
+    expect(retained).toContainEqual(fakeTexture('c thumb'))
+  })
 
   it('drops a stale in-flight request superseded by a newer one, rather than binding it out of order', async () => {
     const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
@@ -146,7 +187,7 @@ describe('useScenePair: no blank frame', () => {
 
   it('does not re-request a pair that is already bound', async () => {
     const { loadSceneTexture } = await import('./textureCache')
-    const { rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
+    const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
       initialProps: { from: 'a.png', to: 'b.png' },
     })
 
@@ -154,10 +195,11 @@ describe('useScenePair: no blank frame', () => {
       resolveLoad('a.png', fakeTexture('a'))
       resolveLoad('b.png', fakeTexture('b'))
     })
-    await waitFor(() => expect(vi.mocked(loadSceneTexture)).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(result.current.ready).toBe(true))
+    const calls = vi.mocked(loadSceneTexture).mock.calls.length
 
     rerender({ from: 'a.png', to: 'b.png' })
-    expect(vi.mocked(loadSceneTexture)).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(loadSceneTexture)).toHaveBeenCalledTimes(calls)
   })
 })
 

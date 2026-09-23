@@ -2,7 +2,7 @@
  * Reconciles the requested scene pair's mix/drift — computed in `SceneView`, a pure function of
  * `t` alone (`presentation.ts`, `drift.ts`) — against whichever pair `useScenePair` has actually
  * bound textures for. The two can disagree: `useScenePair` keeps the previously bound pair on
- * screen until a newly requested pair's textures have *both* finished loading, but
+ * screen until both ends of a newly requested pair have a texture (full image or thumbnail), but
  * `mix`/`fromDrift`/`toDrift` are computed for the pair actually being *requested*. Rendering
  * the bound textures under the requested uniforms unconditionally flashes a frame of the wrong
  * scene the instant a checkpoint is crossed with the new pair's texture still loading (fast
@@ -42,7 +42,7 @@
 
 import type { DriftUniforms } from './drift'
 import { REST_DRIFT } from './drift'
-import type { ScenePair } from './useScenePair'
+import type { BoundSceneLayer, ScenePair } from './useScenePair'
 
 export interface RequestedScenePair {
   fromUrl: string
@@ -56,12 +56,10 @@ export interface SceneRenderTarget {
 }
 
 export interface SceneRender {
-  fromTex: NonNullable<ScenePair['fromTex']>
-  toTex: NonNullable<ScenePair['toTex']>
-  /** The URLs `fromTex`/`toTex` were loaded from, so per-image properties (the crop focus,
-   *  `framing.ts`) follow the texture actually drawn rather than the pair requested. */
-  fromUrl: string
-  toUrl: string
+  /** The layers to draw; each `url` is the scene it was loaded for, so per-image properties (the
+   *  crop focus, `framing.ts`) follow the layer actually drawn rather than the pair requested. */
+  from: BoundSceneLayer
+  to: BoundSceneLayer
   mix: number
   fromDrift: DriftUniforms
   toDrift: DriftUniforms
@@ -74,29 +72,24 @@ export function resolveSceneRender(
   pair: ScenePair,
   target: SceneRenderTarget,
 ): SceneRender | null {
-  if (pair.fromTex === null || pair.toTex === null) return null
-  const { fromTex, toTex, boundFromUrl, boundToUrl } = pair
-  if (boundFromUrl === null || boundToUrl === null) {
-    throw new Error('resolveSceneRender: a bound texture has no bound URL')
-  }
-  const from = { fromTex, fromUrl: boundFromUrl }
-  const to = { toTex, toUrl: boundToUrl }
-  const fromAlone = { fromTex, toTex: fromTex, fromUrl: boundFromUrl, toUrl: boundFromUrl }
-  const toAlone = { fromTex: toTex, toTex, fromUrl: boundToUrl, toUrl: boundToUrl }
+  const { from, to } = pair
+  if (from === null || to === null) return null
+  const fromAlone = { from, to: from }
+  const toAlone = { from: to, to }
 
-  if (boundFromUrl === requested.fromUrl && boundToUrl === requested.toUrl) {
-    return { ...from, ...to, ...target }
+  if (from.url === requested.fromUrl && to.url === requested.toUrl) {
+    return { from, to, ...target }
   }
-  if (boundToUrl === requested.fromUrl) {
+  if (to.url === requested.fromUrl) {
     return { ...toAlone, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
   }
-  if (boundFromUrl === requested.toUrl) {
+  if (from.url === requested.toUrl) {
     return { ...fromAlone, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
   }
-  if (boundFromUrl === requested.fromUrl) {
+  if (from.url === requested.fromUrl) {
     return { ...fromAlone, mix: 0, fromDrift: target.fromDrift, toDrift: target.fromDrift }
   }
-  if (boundToUrl === requested.toUrl) {
+  if (to.url === requested.toUrl) {
     return { ...toAlone, mix: 1, fromDrift: target.toDrift, toDrift: target.toDrift }
   }
   return { ...toAlone, mix: 0, fromDrift: REST_DRIFT, toDrift: REST_DRIFT }

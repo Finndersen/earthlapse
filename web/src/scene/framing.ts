@@ -71,7 +71,7 @@ export function coverWindow(imageAspect: number, viewportAspect: number, crop: S
   return { x: centreX - width / 2, y: centreY - height / 2, width, height }
 }
 
-/** `inner` expressed as fractions of `outer`, which must contain it. */
+/** `inner` expressed as fractions of `outer`. */
 export function windowWithin(outer: CoverWindow, inner: CoverWindow): CoverWindow {
   return {
     x: (inner.x - outer.x) / outer.width,
@@ -79,6 +79,16 @@ export function windowWithin(outer: CoverWindow, inner: CoverWindow): CoverWindo
     width: inner.width / outer.width,
     height: inner.height / outer.height,
   }
+}
+
+/**
+ * `window` re-expressed in the frame of the image's centre square, the crop every thumbnail is
+ * (`pipeline/transcode.py`'s `to_thumbnail_webp`). A window wider than that square comes out
+ * reaching past 0 or 1.
+ */
+export function centreSquareWindow(window: CoverWindow, imageAspect: number): CoverWindow {
+  const side = imageAspect >= 1 ? { width: 1 / imageAspect, height: 1 } : { width: 1, height: imageAspect }
+  return windowWithin({ x: (1 - side.width) / 2, y: (1 - side.height) / 2, ...side }, window)
 }
 
 /** The CSS `object-position` that makes `object-fit: cover` show exactly `window`. A percentage

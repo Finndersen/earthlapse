@@ -74,6 +74,10 @@ function imageUrls(scenes: readonly Scene[], indices: readonly number[], assetBa
   return indices.map((index) => resolveAssetUrl(assetBase, scenes[index]!.image))
 }
 
+function thumbnailUrls(scenes: readonly Scene[], indices: readonly number[], assetBase: string): string[] {
+  return [...new Set(indices)].map((index) => resolveAssetUrl(assetBase, scenes[index]!.thumbnail))
+}
+
 /** `urls`, keeping the previous array while its contents are unchanged, so a per-frame plan only
  *  re-runs the renderers' prefetch effects when it actually changes. */
 function useStableUrls(urls: string[]): readonly string[] {
@@ -130,6 +134,12 @@ export function SceneView({
   )
   const decodeUrls = useStableUrls(imageUrls(scenes, plan.decode, assetBase))
   const fetchUrls = useStableUrls(imageUrls(scenes, plan.fetch, assetBase))
+  // Every thumbnail, those the pair and the plan could draw first (ADR-051).
+  const nearThumbUrls = useStableUrls(thumbnailUrls(scenes, [fromIndex, toIndex, ...plan.decode, ...plan.fetch], assetBase))
+  const allThumbUrls = useMemo(() => scenes.map((scene) => resolveAssetUrl(assetBase, scene.thumbnail)), [scenes, assetBase])
+  const thumbUrls = useMemo(() => ({ near: nearThumbUrls, all: allThumbUrls }), [nearThumbUrls, allThumbUrls])
+  const baseThumbUrl = resolveAssetUrl(assetBase, presented.from.thumbnail)
+  const overlayThumbUrl = resolveAssetUrl(assetBase, presented.to.thumbnail)
 
   const cropByUrl = useMemo(() => framedCropByUrl(scenes, assetBase), [scenes, assetBase])
   const imageAspect = presented.from.width / presented.from.height
@@ -142,8 +152,12 @@ export function SceneView({
         <SceneCanvasView
           baseUrl={baseUrl}
           overlayUrl={overlayUrl}
+          baseThumbUrl={baseThumbUrl}
+          overlayThumbUrl={overlayThumbUrl}
           decodeUrls={decodeUrls}
           fetchUrls={fetchUrls}
+          thumbUrls={thumbUrls}
+          regime={regime}
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
@@ -154,10 +168,13 @@ export function SceneView({
         <SceneFallbackView
           baseUrl={baseUrl}
           overlayUrl={overlayUrl}
+          baseThumbUrl={baseThumbUrl}
+          overlayThumbUrl={overlayThumbUrl}
           baseCaption={presented.from.caption}
           overlayCaption={presented.to.caption}
           decodeUrls={decodeUrls}
           fetchUrls={fetchUrls}
+          thumbUrls={thumbUrls}
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}

@@ -1,99 +1,140 @@
 /**
- * Binds `from`/`to` URLs to loaded `THREE.Texture`s, without ever handing the caller a blank
- * frame: the previously bound pair stays visible until the newly requested pair has both
- * finished loading (mirrors `globe/useGlobeTexturePair.ts`). `SceneCanvasView` is the only
+ * Binds the requested `from`/`to` scenes to loaded `THREE.Texture`s, without ever handing the
+ * caller a blank frame (mirrors `globe/useGlobeTexturePair.ts`). `SceneCanvasView` is the only
  * consumer.
  *
- * When both of a newly requested pair's textures are already in `textureCache`'s cache (the
- * common case right at a scene checkpoint: the incoming texture was the outgoing pair's other
- * half, or a prefetched scene — see `prefetch.ts`), the bind happens
- * synchronously during render rather than through the effect below. Deferring even a cache hit
- * through `Promise.all(...).then(...)` costs a microtask, so the caller's `mix`/drift uniforms —
+ * Each end binds as a `SceneLayer` (`sceneLayer.ts`, ADR-051): its full image if loaded, else its
+ * thumbnail, which `SceneQuad` draws softened until the full image lands and replaces it. The
+ * requested pair binds as soon as both ends have either; until then the previously bound pair
+ * stays on screen. Thumbnails are prefetched for every scene, so that wait is normally only the
+ * very first load.
+ *
+ * When both ends are already in `textureCache`'s caches (the common case: a scene checkpoint
+ * whose incoming scene was the outgoing pair's other half, or a prefetched one — `prefetch.ts`),
+ * the bind happens synchronously during render rather than through the effect below. Deferring
+ * even a cache hit through a promise costs a microtask, so the caller's `mix`/drift uniforms —
  * driven by the same `t` — would land in a render before the rebind, painting the OLD pair's
  * textures under the NEW state: a one-frame flash of the previous scene. `SceneFallbackView`'s
  * `useDecodedSrc` uses the same render-phase pattern for the same reason.
  *
- * That fast path only closes the flash for the cache-hit case. When the newly requested pair's
- * texture genuinely isn't loaded yet (fast playback, rapid scrubs, a cold cache), `fromTex`/
- * `toTex` below keep describing the *previous* pair while `t`-driven mix/drift have already
- * moved on — the same mismatch via the effect below instead of the fast path.
- * `boundFromUrl`/`boundToUrl` let a caller tell the two apart: `sceneRender.ts`'s
- * `resolveSceneRender` reconciles them, called by `SceneCanvasView`.
+ * When an end has neither texture yet (a cold cache), the bound layers keep describing the
+ * *previous* pair while `t`-driven mix/drift have already moved on. Each layer's `url` lets a
+ * caller tell the two apart: `sceneRender.ts`'s `resolveSceneRender` reconciles them, called by
+ * `SceneCanvasView`.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import type * as THREE from 'three'
 
-import { getCachedSceneTexture, loadSceneTexture, retainSceneTextures } from './textureCache'
+import { chooseSceneLayer, type SceneLayer } from './sceneLayer'
+import {
+  getCachedSceneTexture,
+  getCachedSceneThumbnail,
+  loadSceneTexture,
+  loadSceneThumbnail,
+  retainSceneTextures,
+} from './textureCache'
 
-interface BoundPair {
-  fromUrl: string
-  toUrl: string
-  fromTex: THREE.Texture
-  toTex: THREE.Texture
-}
+export type BoundSceneLayer = SceneLayer<THREE.Texture>
 
 export interface ScenePair {
-  fromTex: THREE.Texture | null
-  toTex: THREE.Texture | null
-  /** URLs of the pair `fromTex`/`toTex` actually belong to — `null` until the first pair has
-   *  bound. May lag the most recently requested `fromUrl`/`toUrl`: only updates once a newly
-   *  requested pair's textures have *both* loaded — see `sceneRender.ts`'s `resolveSceneRender`. */
-  boundFromUrl: string | null
-  boundToUrl: string | null
-  /** Whether any pair has ever loaded — false only before the very first pair resolves. */
+  /** The layers actually bound — `null` until the first pair has bound. May lag the requested
+   *  pair while an end has neither texture loaded; see `sceneRender.ts`'s `resolveSceneRender`. */
+  from: BoundSceneLayer | null
+  to: BoundSceneLayer | null
+  /** Whether any pair has ever bound — false only before the very first pair resolves. */
   ready: boolean
 }
 
-export function useScenePair(fromUrl: string, toUrl: string): ScenePair {
-  const [bound, setBound] = useState<BoundPair | null>(null)
-  const requestIdRef = useRef(0)
+interface BoundPair {
+  from: BoundSceneLayer
+  to: BoundSceneLayer
+}
 
-  const alreadyBound = bound !== null && bound.fromUrl === fromUrl && bound.toUrl === toUrl
-  if (!alreadyBound) {
-    const cachedFrom = getCachedSceneTexture(fromUrl)
-    const cachedTo = getCachedSceneTexture(toUrl)
-    // Render-phase update: both halves are already on the GPU, so bind them in this same render
-    // instead of the effect + promise below (see module doc). React re-renders synchronously off
-    // this before painting, so `alreadyBound` sees the new pair on the next check, not a loop.
-    if (cachedFrom !== undefined && cachedTo !== undefined) {
-      setBound({ fromUrl, toUrl, fromTex: cachedFrom, toTex: cachedTo })
-    }
-  }
+/** Textures this request's own loads resolved to, keyed by URL. Scoped to one request, so a load
+ *  finishing after the request moved on can never bind out of order. */
+interface Landed {
+  requestKey: string
+  textures: ReadonlyMap<string, THREE.Texture>
+}
 
+/**
+ * Starts `url`'s full-image load, and its thumbnail's unless cached, until the full image is bound
+ * (`sharp`), recording each texture as it lands for this request only. Both loads join any already
+ * in flight in `textureCache`, so a re-run costs no second request.
+ */
+function useLayerLoads(
+  url: string,
+  thumbUrl: string,
+  sharp: boolean,
+  requestKey: string,
+  setLanded: (update: (previous: Landed) => Landed) => void,
+): void {
   useEffect(() => {
-    const stillNeedsRequest = bound === null || bound.fromUrl !== fromUrl || bound.toUrl !== toUrl
-    if (!stillNeedsRequest) return undefined
-
-    const requestId = ++requestIdRef.current
+    if (sharp) return undefined
     let cancelled = false
-    void Promise.all([loadSceneTexture(fromUrl), loadSceneTexture(toUrl)])
-      .then(([fromTex, toTex]) => {
-        // A newer request superseded this one (t moved again before this pair finished
-        // loading) — drop the stale result rather than binding it out of order.
-        if (cancelled || requestIdRef.current !== requestId) return
-        setBound({ fromUrl, toUrl, fromTex, toTex })
+    const land = (landedUrl: string) => (texture: THREE.Texture) => {
+      if (cancelled) return
+      setLanded((previous) => {
+        const textures = new Map(previous.requestKey === requestKey ? previous.textures : [])
+        textures.set(landedUrl, texture)
+        return { requestKey, textures }
       })
-      .catch((error: unknown) => {
-        // Keep showing whatever pair is already bound. A bad ref is a data problem to
-        // surface upstream (earthtime publish), not something to paper over here.
-        console.error(error)
-      })
+    }
+    // Keep showing whatever is already bound. A bad ref is a data problem to surface upstream
+    // (earthtime publish), not something to paper over here.
+    const report = (error: unknown): void => {
+      if (!cancelled) console.error(error)
+    }
+    loadSceneTexture(url).then(land(url), report)
+    if (getCachedSceneThumbnail(thumbUrl) === undefined) loadSceneThumbnail(thumbUrl).then(land(thumbUrl), report)
     return () => {
       cancelled = true
     }
-  }, [fromUrl, toUrl, bound])
+  }, [url, thumbUrl, sharp, requestKey, setLanded])
+}
+
+function sameLayer(a: BoundSceneLayer, b: BoundSceneLayer): boolean {
+  return a.url === b.url && a.full === b.full && a.thumb === b.thumb
+}
+
+export function useScenePair(fromUrl: string, fromThumbUrl: string, toUrl: string, toThumbUrl: string): ScenePair {
+  const [bound, setBound] = useState<BoundPair | null>(null)
+  const requestKey = [fromUrl, fromThumbUrl, toUrl, toThumbUrl].join('\n')
+  const [landed, setLanded] = useState<Landed>({ requestKey, textures: new Map() })
+
+  const landedTexture = (url: string): THREE.Texture | undefined =>
+    landed.requestKey === requestKey ? landed.textures.get(url) : undefined
+  const layerFor = (url: string, thumbUrl: string): BoundSceneLayer | null =>
+    chooseSceneLayer(
+      url,
+      getCachedSceneTexture(url) ?? landedTexture(url),
+      getCachedSceneThumbnail(thumbUrl) ?? landedTexture(thumbUrl),
+    )
+
+  const from = layerFor(fromUrl, fromThumbUrl)
+  const to = layerFor(toUrl, toThumbUrl)
+  // Render-phase update: both ends can be drawn now, so bind them in this same render instead of
+  // waiting on the effect below (see module doc). React re-renders synchronously off this before
+  // painting, and the comparison makes the next pass a no-op, not a loop.
+  if (from !== null && to !== null && (bound === null || !sameLayer(bound.from, from) || !sameLayer(bound.to, to))) {
+    setBound({ from, to })
+  }
+
+  const sharp = (layer: BoundSceneLayer | null): boolean => layer !== null && layer.full !== null
+  useLayerLoads(fromUrl, fromThumbUrl, sharp(from), requestKey, setLanded)
+  // A settled scene requests the same URLs at both ends; one set of loads covers both.
+  useLayerLoads(toUrl, toThumbUrl, toUrl === fromUrl || sharp(to), requestKey, setLanded)
 
   // A layout effect, so the pair is retained in the same commit that binds it.
-  const boundFromTex = bound?.fromTex ?? null
-  const boundToTex = bound?.toTex ?? null
-  useLayoutEffect(() => retainSceneTextures([boundFromTex, boundToTex]), [boundFromTex, boundToTex])
+  const fromFull = bound?.from.full ?? null
+  const fromThumb = bound?.from.thumb ?? null
+  const toFull = bound?.to.full ?? null
+  const toThumb = bound?.to.thumb ?? null
+  useLayoutEffect(
+    () => retainSceneTextures([fromFull, fromThumb, toFull, toThumb]),
+    [fromFull, fromThumb, toFull, toThumb],
+  )
 
-  return {
-    fromTex: boundFromTex,
-    toTex: boundToTex,
-    boundFromUrl: bound?.fromUrl ?? null,
-    boundToUrl: bound?.toUrl ?? null,
-    ready: bound !== null,
-  }
+  return { from: bound?.from ?? null, to: bound?.to ?? null, ready: bound !== null }
 }

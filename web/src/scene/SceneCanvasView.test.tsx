@@ -32,8 +32,12 @@ afterEach(() => {
 const baseProps = {
   baseUrl: 'a.png',
   overlayUrl: 'b.png',
+  baseThumbUrl: 'a-thumb.png',
+  overlayThumbUrl: 'b-thumb.png',
   decodeUrls: [] as readonly string[],
   fetchUrls: [] as readonly string[],
+  thumbUrls: { near: [], all: [] },
+  regime: 'crossfade' as const,
   mix: 0,
   fromDrift: REST_DRIFT,
   toDrift: REST_DRIFT,

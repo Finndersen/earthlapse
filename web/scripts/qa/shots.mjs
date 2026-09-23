@@ -16,7 +16,7 @@
 
 import { rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
 import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, reducePixels } from './measure.mjs'
-import { waitForApproxUnfoldProgress } from './timeouts.mjs'
+import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 import {
   BOTTOM_CHROME_SELECTOR,
   BREADCRUMB_CURRENT_SELECTOR,
@@ -299,9 +299,63 @@ function opaqueBounds([black, white], { minAlpha }) {
   return { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
 }
 
+/** Mean luma of the second image (0-255) and its mean per-channel difference from the first, as a
+ *  percentage of full scale. */
+function lumaAndChange([before, after]) {
+  let luma = 0
+  let change = 0
+  const pixels = after.width * after.height
+  for (let i = 0; i < after.data.length; i += 4) {
+    luma += 0.2126 * after.data[i] + 0.7152 * after.data[i + 1] + 0.0722 * after.data[i + 2]
+    change += Math.abs(after.data[i] - before.data[i]) + Math.abs(after.data[i + 1] - before.data[i + 1]) + Math.abs(after.data[i + 2] - before.data[i + 2])
+  }
+  return { meanLuma: luma / pixels, changePct: (100 * change) / (pixels * 3 * 255) }
+}
+
 // ---------------------------------------------------------------------------------------------
 // Pixel measurements
 // ---------------------------------------------------------------------------------------------
+
+/**
+ * Jumps to the scene whose full image is `image` while holding that image's request, so the
+ * renderer can only draw the scene's thumbnail (ADR-051), and reads the scene canvas alone once
+ * the crossfade has settled: its mean luma (a black frame reads ~0) and how much it changed from
+ * the scene shown before (the previous scene kept on screen reads ~0). `heldRequests` is how many
+ * requests the hold caught: 0 means the full image was already cached and the reading proves
+ * nothing. Releases the hold and returns to `restoreT` before resolving.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ * @param {{ image: string, t: number, restoreT: number }} target
+ */
+async function heldFullImageDraw(page, hook, { image, t, restoreT }) {
+  const sceneOnly = await page.addStyleTag({
+    content: `body * { visibility: hidden !important; } ${SCENE_CANVAS_SELECTOR} { visibility: visible !important; }`,
+  })
+  await rafTicks(page, 2)
+  const before = await page.screenshot()
+  let heldRequests = 0
+  let release = () => {}
+  const held = new Promise((resolve) => {
+    release = resolve
+  })
+  // Left registered once released, as in `loading-screen`: unrouting while a held
+  // `route.continue()` is unresolved races Playwright's cleanup.
+  await page.route(`**/${image}`, async (route) => {
+    heldRequests += 1
+    await held
+    await route.continue()
+  })
+  await hook.setT(t)
+  await waitForSceneCrossfadeSettle(page)
+  await rafTicks(page, 2)
+  const after = await page.screenshot()
+  release()
+  await sceneOnly.evaluate((el) => el.remove())
+  await hook.setT(restoreT)
+  await hook.ready()
+  await waitForSceneCrossfadeSettle(page)
+  return { heldRequests, ...(await reducePixels(page, [before, after], lumaAndChange)) }
+}
 
 const roundClip = (clip) => ({ x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) })
 
@@ -1149,7 +1203,8 @@ export default [
       'leaves the viewport, at the root and in a section; title centred (±3px); caption ≥ 4px above the playhead ' +
       'label and on the feed row (±3px, ≥ 8px apart); the breadcrumb row takes no height at the root and sits above ' +
       'the track in a section; the mode/scale/volume controls on one row (±2px), each ≥ 32px, clear of transport and ' +
-      'track; no band label clipped; the caption shows its title alone, its ⓘ opening a description panel on screen.',
+      'track; no band label clipped; the caption shows its title alone, its ⓘ opening a description panel on screen; ' +
+      "a jump to a scene whose full image is held draws that scene's thumbnail (the canvas ≥ 10% changed, mean luma ≥ 20).",
     viewport: LANDSCAPE_VIEWPORT,
     t: 0,
     measure: async ({ page, hook }) => {
@@ -1197,6 +1252,8 @@ export default [
       const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
       const captionTextVisible = (await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()) ? 1 : 0
       const clippedBandsAtRoot = await bandsClipped()
+      // No other shot visits 450 Ma, so its full image is not already cached.
+      const thumbnail = await heldFullImageDraw(page, hook, { image: 'scenes/ordovician-reef-shore.webp', t: 450e6, restoreT: 0 })
 
       await page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first().click()
       await rafTicks(page, 2)
@@ -1237,6 +1294,7 @@ export default [
         captionTextVisible,
         detailOverflowPx,
         detailClosed,
+        thumbnail,
       }
     },
     expect: {
@@ -1259,6 +1317,9 @@ export default [
       captionTextVisible: [0, 0],
       detailOverflowPx: [-400, 0],
       detailClosed: [1, 1],
+      'thumbnail.heldRequests': [1, 10],
+      'thumbnail.changePct': [10, 100],
+      'thumbnail.meanLuma': [20, 255],
     },
   },
   desktopExpandedShot(DEFAULT_VIEWPORT, { sphereWidth: [470, 515], mapWidth: [960, 1030], withMap: true }),
