@@ -30,7 +30,7 @@
  *
  * Given `onOpenBrowser`, the feed also carries an "All events" button, rendered whether or not
  * any card is showing and outside the aria-live region: a labelled row beneath the desktop stack,
- * a square "⋯" beside the phone's single card.
+ * a square list icon beside the phone's single card.
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
@@ -182,15 +182,26 @@ export function EventFeed({
           className={styles.browse}
           aria-haspopup="dialog"
           data-testid="event-feed-browse"
+          title="All events"
           onClick={onOpenBrowser}
         >
+          <ListIcon />
           <span className={styles.browseText}>All events</span>
-          <span className={styles.browseGlyph} aria-hidden="true">
-            ⋯
-          </span>
         </button>
       )}
     </div>
+  )
+}
+
+/** A bulleted list: three dots and three rules, at the HUD's 1.2-unit line weight. */
+function ListIcon() {
+  return (
+    <svg className={styles.browseIcon} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="2.8" cy="4" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="2.8" cy="8" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="2.8" cy="12" r="1.1" fill="currentColor" stroke="none" />
+      <path d="M6.2 4h7.6M6.2 8h7.6M6.2 12h7.6" />
+    </svg>
   )
 }
 
