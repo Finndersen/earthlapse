@@ -67,7 +67,9 @@ const ANCESTOR_READOUT_SELECTOR = '[data-testid="ancestor-readout"]'
 const ABOUT_BUTTON_SELECTOR = 'button[aria-label="About & credits"]'
 const POPULATION_READOUT_SELECTOR = '[data-testid="scalar-readout-population"]'
 const EVENT_BROWSER_SELECTOR = '[data-testid="event-browser"]'
+const EVENT_FEED_BROWSE_SELECTOR = '[data-testid="event-feed-browse"]'
 const LAYER_CHART_SVG_SELECTOR = '[data-testid="layer-chart-svg"]'
+const GLOBE_TOOLTIP_HINT_SELECTOR = '[data-testid="globe-tooltip-hint"]'
 const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeLabel"]`
 
 /** The legend panel's compact ceiling. The panel measures 48.5px (single row, `padding: 6px 10px`,
@@ -212,6 +214,50 @@ async function polylineTraceBounds(page, containerSelector) {
   return boxes.length === 0 ? { x: 0, y: 0, width: 0, height: 0 } : unionBox(boxes)
 }
 
+/** The rate picker inside the transport row. */
+const RATE_PICKER_SELECTOR = `${TIMELINE_CONTROLS_CORE_SELECTOR} [role="spinbutton"]`
+
+/**
+ * The rate readout's drawn text rect (a `Range` over its first non-empty text node, not the
+ * fixed-width slot around it), read while playing in steady mode from `t` — the one state it
+ * shows a number in. Pauses and restores the playback mode and `t` before returning.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ * @param {number} t
+ */
+async function playingRateReadoutText(page, hook, t) {
+  const { t: tBefore, playback } = await hook.getState()
+  await hook.setT(t)
+  await hook.setPlaybackMode('steady')
+  await hook.setPlaying(true)
+  try {
+    return await page.evaluate(async (coreSelector) => {
+      const textRect = () => {
+        const slot = document.querySelector(`${coreSelector} [data-visible="true"]`)
+        if (slot === null) return null
+        const walker = document.createTreeWalker(slot, NodeFilter.SHOW_TEXT)
+        for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+          if (node.textContent.trim() === '') continue
+          const range = document.createRange()
+          range.selectNodeContents(node)
+          return range.getBoundingClientRect().toJSON()
+        }
+        return null
+      }
+      for (let i = 0; i < 120; i += 1) {
+        await new Promise((resolve) => requestAnimationFrame(resolve))
+        const rect = textRect()
+        if (rect !== null) return rect
+      }
+      throw new Error('playingRateReadoutText: the rate readout never showed a number')
+    }, TIMELINE_CONTROLS_CORE_SELECTOR)
+  } finally {
+    await hook.setPlaying(false)
+    await hook.setPlaybackMode(playback.mode)
+    await hook.setT(tBefore)
+  }
+}
+
 /** `OverlaySelect.tsx`'s own bordered `.control` box (swatch + `<select>`): the `<select>`'s
  *  immediate parent, since the control carries no `data-testid` of its own. */
 function overlayControlBox(page) {
@@ -335,6 +381,27 @@ async function minimisedOrbDrawnBounds(page) {
 }
 
 /**
+ * The minimised orb's drawn limb: what is at least half opaque inside its canvas (`opacityMatteBounds`),
+ * with the scene, vignette, halo and corner expand glyph hidden so only the sphere counts.
+ * @param {import('playwright').Page} page
+ */
+async function minimisedOrbLimbBounds(page) {
+  const hide = async (p) => {
+    const restoreScene = await hideSceneAndVignette(p)
+    const setVisibility = (value) =>
+      p.evaluate((v) => {
+        for (const el of document.querySelectorAll('div[data-map-mode] [class*="halo"], div[data-map-mode] [class*="expandGlyph"]')) el.style.visibility = v
+      }, value)
+    await setVisibility('hidden')
+    return async () => {
+      await setVisibility('')
+      await restoreScene()
+    }
+  }
+  return opacityMatteBounds(page, await boxOf(page, GLOBE_CANVAS_SELECTOR), { minAlpha: 0.5, hide })
+}
+
+/**
  * Hides everything but the expanded globe's own canvas — the scene, the vignette, the shell's HUD
  * slots other than the globe's, and `chromeSelectors` — so a whole-viewport scan sees the drawn
  * sphere or map alone against the flat backdrop. Returns a restore callback.
@@ -392,6 +459,36 @@ async function globeBodyBounds(page, fitFrameSelector) {
   const y = Math.max(0, frame.y - MARGIN_PX)
   const clip = { x, y, width: Math.min(viewport.width, frame.x + frame.width + MARGIN_PX) - x, height: Math.min(viewport.height, frame.y + frame.height + MARGIN_PX) - y }
   return opacityMatteBounds(page, clip, { minAlpha: 0.99, hide: (p) => hideAllButGlobeCanvas(p, GLOBE_CHROME_SELECTORS) })
+}
+
+/** Sample points (every `step` px) where two screenshots of one clip differ, strongest first. */
+function differingPoints([a, b], { step }) {
+  const points = []
+  for (let y = 0; y < a.height; y += step) {
+    for (let x = 0; x < a.width; x += step) {
+      const i = (y * a.width + x) * 4
+      const diff = Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1]) + Math.abs(a.data[i + 2] - b.data[i + 2])
+      if (diff > 60) points.push([x, y, diff])
+    }
+  }
+  return points.sort((p, q) => q[2] - p[2])
+}
+
+/**
+ * Where the expanded sphere draws the human-civilisation layer: the sphere's fit frame screenshotted
+ * with the layer on and off, differing points strongest first, in page coordinates.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ */
+async function humanLayerPoints(page, hook) {
+  const clip = roundClip(await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
+  const on = await page.screenshot({ clip })
+  await hook.setLayerToggle('human-civilisation', false)
+  await rafTicks(page, 2)
+  const off = await page.screenshot({ clip })
+  await hook.setLayerToggle('human-civilisation', true)
+  await rafTicks(page, 2)
+  return (await reducePixels(page, [on, off], differingPoints, { step: 2 })).map(([x, y]) => [clip.x + x, clip.y + y])
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -457,6 +554,26 @@ async function eventBrowserRailLabelGeometry(page, panelRightPx) {
 }
 
 /**
+ * A finger tap at `(x, y)` through CDP touch events: touch start, one 1px move (a real finger never
+ * lifts exactly where it landed), touch end. Chromium turns it into the pointer and click sequence
+ * a phone produces. Needs a `touch: true` shot.
+ * @param {import('playwright').Page} page
+ * @param {number} x
+ * @param {number} y
+ */
+async function touchTap(page, x, y) {
+  const cdp = await page.context().newCDPSession(page)
+  const at = (dx) => [{ x: x + dx, y, id: 0, radiusX: 4, radiusY: 4, force: 1 }]
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) })
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(1) })
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+  } finally {
+    await cdp.detach()
+  }
+}
+
+/**
  * @typedef {Object} ShotState
  * @property {boolean} [playing]
  * @property {boolean} [globeExpanded]
@@ -473,6 +590,7 @@ async function eventBrowserRailLabelGeometry(page, panelRightPx) {
  * @property {'reduce' | 'no-preference'} [reducedMotion] - overrides the run's own --reduced-motion default
  * @property {number} [t] - years before present
  * @property {ShotState} [state]
+ * @property {boolean} [touch] - run on the harness's `hasTouch` page, where touch input works
  * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<void>} [actions]
  * @property {(ctx: { page: import('playwright').Page, hook: ReturnType<typeof import('./hook.mjs').makeHook> }) => Promise<Record<string, unknown>>} [measure]
  * @property {Record<string, [number, number]>} [expect] - dot-path into `measure`'s result -> [min, max]
@@ -495,7 +613,7 @@ const RESTING_REGIONS = {
 /** The transport row's parts, for the same check inside the timeline. */
 const TRANSPORT_ROW_REGIONS = {
   breadcrumb: BREADCRUMB_SELECTOR,
-  speed: `${TIMELINE_CONTROLS_CORE_SELECTOR} [role="spinbutton"]`,
+  speed: RATE_PICKER_SELECTOR,
   play: PLAY_BUTTON_SELECTOR,
   secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR,
 }
@@ -507,12 +625,13 @@ const TRANSPORT_ROW_REGIONS = {
  *   column) overlaps another or leaves the viewport, at the root and in the section;
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
  *   the ancestor column, its readouts 0-40px under it;
- * - the transport row: breadcrumb, rate picker, play and secondary cluster clear of each other;
- *   the secondary cluster's children clear of each other; play on the track centre; transport
- *   midway between the band row and the viewport bottom, breadcrumb on its centre line; the
- *   breadcrumb and the secondary cluster inside the track's edges; the breadcrumb on one line;
- *   the current crumb whole; neither transport nor secondary cluster moving in x as the trail
- *   grows.
+ * - the transport row: breadcrumb, rate picker, play, secondary cluster and (playing in steady)
+ *   the rate readout's text clear of each other; picker and readout text on the transport's
+ *   centre line, the text 4-24px right of it; the secondary cluster's children clear of each
+ *   other; play on the track centre; transport midway between the band row and the viewport
+ *   bottom, breadcrumb on its centre line; the breadcrumb and the secondary cluster inside the
+ *   track's edges; the breadcrumb on one line; the current crumb whole; neither transport nor
+ *   secondary cluster moving in x as the trail grows.
  * @param {{ width: number, height: number }} viewport
  * @param {{ description: string, expect: Record<string, [number, number]>,
  *   atRoot?: (page: import('playwright').Page) => Promise<Record<string, unknown>>,
@@ -526,7 +645,9 @@ function desktopRestingShot(viewport, extra) {
     description:
       `Desktop ${viewport.width}x${viewport.height}, collapsed, at the root and three sections deep: no chrome region ` +
       'overlaps another or leaves the viewport; the drawn orb top-aligned (±4px) with the About button and ancestor ' +
-      'column (±3px); the transport row clear of itself, play on the track centre (±2px), transport vertically centred ' +
+      'column (±3px); the transport row (breadcrumb, rate picker, transport, secondary cluster and, playing in steady, ' +
+      "the rate readout's text) clear of itself, picker and readout text on the transport's centre line (±3px), the " +
+      'text 4-24px right of the transport, play on the track centre (±2px), transport vertically centred ' +
       '(±3px) with the breadcrumb on its line (±2px), row inside the track edges, breadcrumb on one line and whole, ' +
       `transport and secondary cluster fixed in x (±0.5px) as the trail grows${extra.description}`,
     viewport,
@@ -556,14 +677,20 @@ function desktopRestingShot(viewport, extra) {
         const el = document.querySelector(sel)
         return el !== null && el.scrollWidth > el.clientWidth + 0.5 ? 1 : 0
       }, BREADCRUMB_CURRENT_SELECTOR)
+      // 8 ka: inside the Holocene with room to play forward.
+      const readout = await playingRateReadoutText(page, hook, 8_000)
       return {
         root: rootLayout,
         inSection: deepLayout,
         orb,
         orbTopOffsetPx: orb.y - root.about.y,
         orbToAncestorTopPx: orb.y - Math.min(root.about.y, root.ancestor.y),
-        readoutGapPx: root.readouts.y - (orb.y + orb.height),
-        transportRow: pairwiseOverlapFlags(rowParts),
+        orbToReadoutsGapPx: root.readouts.y - (orb.y + orb.height),
+        transportRow: pairwiseOverlapFlags({ ...rowParts, readout }),
+        pickerCentreOffsetPx: centreY(deep.speed) - centreY(transport),
+        readoutGapPx: readout.x - (transport.x + transport.width),
+        readoutCentreOffsetPx: centreY(readout) - centreY(transport),
+        readoutTextWidthPx: readout.width,
         secondarySelfOverlaps: overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)),
         playCentreOffsetPx: centreX(deep.play) - centreX(deep.track),
         coreCentreOffsetAtRootPx: Math.abs(centreX(root.core) - centreX(root.track)),
@@ -583,8 +710,12 @@ function desktopRestingShot(viewport, extra) {
       ...Object.fromEntries(Object.entries(layoutExpect([...Object.keys(regions), 'caption'])).flatMap(([key, range]) => [[`root.${key}`, range], [`inSection.${key}`, range]])),
       orbTopOffsetPx: [-4, 4],
       orbToAncestorTopPx: [-3, 3],
-      readoutGapPx: [0, 40],
-      ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary'])).map(([key, range]) => [`transportRow.${key}`, range])),
+      orbToReadoutsGapPx: [0, 40],
+      ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary', 'readout'])).map(([key, range]) => [`transportRow.${key}`, range])),
+      pickerCentreOffsetPx: [-3, 3],
+      readoutGapPx: [4, 24],
+      readoutCentreOffsetPx: [-3, 3],
+      readoutTextWidthPx: [20, 120],
       secondarySelfOverlaps: [0, 0],
       playCentreOffsetPx: [-2, 2],
       coreCentreOffsetAtRootPx: [0, 3],
@@ -691,6 +822,9 @@ function prefixedLayoutExpect(prefix, names) {
 // The shot list
 // ---------------------------------------------------------------------------------------------
 
+/** The store as the phone orb tap shot found it, from its `actions` to its `measure`. */
+let phoneOrbTapBefore = null
+
 /** @type {Shot[]} */
 export default [
   {
@@ -778,7 +912,8 @@ export default [
   },
   desktopRestingShot(DEFAULT_VIEWPORT, {
     description:
-      '; the scene canvas draws over at least half the viewport; the timeline draws 135-175px tall; mode and scale ' +
+      "; the orb's hover ring 100-106% of its drawn (alpha ≥ 0.5) limb; the scene canvas draws over at least half " +
+      'the viewport; the timeline draws 135-175px tall; mode and scale ' +
       'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; the "All events" browser ' +
       '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart; in the Holocene the ' +
       'expanded population chart stays on screen, clear of the timeline, its curve 1000-1440px wide.',
@@ -789,6 +924,9 @@ export default [
       // Drawn pixels: a blank scene canvas has no extent at all against its own corners.
       const scene = await drawnBounds(page, SCENE_CANVAS_SELECTOR)
       const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
+      // The hover/focus ring is the expand button's 1px box-shadow spread: its box plus 1px a side.
+      const ringDiameterPx = (await boxOf(page, GLOBE_EXPAND_SELECTOR)).width + 2
+      const limb = await minimisedOrbLimbBounds(page)
 
       await page.keyboard.press('/')
       const panel = await drawnBounds(page, EVENT_BROWSER_SELECTOR)
@@ -799,6 +937,9 @@ export default [
       return {
         sceneDrawnFraction: scene.fractionOfViewport,
         timeline,
+        ringDiameterPx,
+        limbDiameterPx: limb.width,
+        ringToLimbPct: (100 * ringDiameterPx) / limb.width,
         modeScaleShareRow: Math.round(mode.y) === Math.round(scale.y) ? 1 : 0,
         sparklineWidth: trace.width,
         sparklineHeight: trace.height,
@@ -825,6 +966,7 @@ export default [
     },
     expect: {
       sceneDrawnFraction: [0.5, 1],
+      ringToLimbPct: [100, 106],
       'timeline.height': [135, 175],
       modeScaleShareRow: [1, 1],
       sparklineWidth: [120, 200],
@@ -856,19 +998,22 @@ export default [
     name: 'layout-390x844-resting',
     description:
       'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, readouts, feed strip, ' +
-      'caption, timeline) overlaps another or leaves the viewport; the drawn orb and portrait match in size (±5%); the ' +
+      'caption, timeline) overlaps another or leaves the viewport; the drawn orb 102-112% of the drawn portrait; the ' +
       'readouts sit 0-8px under the drawn orb and the shortcuts 8-14px under the title; the timeline draws 170-310px ' +
-      'tall, its breadcrumb row taking no height at the root; the secondary controls clear of each other and of the ' +
-      'transport; in a section the stacked row stays inside the track (6px slack) without collisions and renders its ' +
-      'crumbs; the feed strip paints no category word; "All events" opens a full-width sheet above the timeline; ' +
+      'tall, its breadcrumb row taking no height at the root; the rate picker inside the transport row, clear of the ' +
+      'transport buttons, the row no taller than the play button (1px); the secondary controls clear of each other and ' +
+      'of the transport; in a section the stacked row stays inside the track (6px slack) without collisions and renders its ' +
+      'crumbs; the feed strip paints no category word; its "All events" button, a 44-64px square clear of the card and ' +
+      'inside the viewport, opens a full-width sheet above the timeline; ' +
       "the first-visit tour's first step rings the play button (±2px) with its card clear of the ring, ≥ 8px inside " +
       'the viewport, copy drawn on its panel, and a ≥ 44px Skip target.',
     viewport: PHONE_FLOOR_VIEWPORT,
     t: 0,
     measure: async ({ page, hook }) => {
       const regions = { ...RESTING_REGIONS, ancestor: ANCESTOR_PORTRAIT_SELECTOR }
-      const root = await boxesOf(page, { ...regions, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
+      const root = await boxesOf(page, { ...regions, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR, picker: RATE_PICKER_SELECTOR, play: PLAY_BUTTON_SELECTOR })
       const layout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, PHONE_FLOOR_VIEWPORT)
+      const transport = await page.evaluate((sel) => document.querySelector(sel).parentElement.getBoundingClientRect().toJSON(), PLAY_BUTTON_SELECTOR)
       const globe = await opacityMatteBounds(page, await boxOf(page, GLOBE_CANVAS_SELECTOR))
       const portrait = await opacityMatteBounds(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
       const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
@@ -898,8 +1043,8 @@ export default [
       const sectionCollisions = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR))
       const secondaryCollisions = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR))
 
-      await page.locator('[data-testid^="event-feed-card-"]').first().click()
-      await page.getByRole('button', { name: 'All events' }).click()
+      const feed = await boxesOf(page, { card: EVENT_FEED_ITEM_SELECTOR, browse: EVENT_FEED_BROWSE_SELECTOR })
+      await page.locator(EVENT_FEED_BROWSE_SELECTOR).click()
       await hook.ready()
       const sheet = await drawnBounds(page, EVENT_BROWSER_SELECTOR)
       return {
@@ -912,25 +1057,34 @@ export default [
         sectionsHeightAtRootPx,
         secondarySelfOverlaps,
         secondaryOverlapsCore: rectsOverlap(root.secondary, root.core) ? 1 : 0,
+        pickerOutsideRowPx: Math.max(root.core.y - root.picker.y, root.picker.y + root.picker.height - (root.core.y + root.core.height)),
+        rowTallerThanPlayPx: root.core.height - root.play.height,
+        pickerOverlapsTransport: rectsOverlap(root.picker, transport) ? 1 : 0,
         leftInsetPx: inSection.sections.x - inSection.track.x,
         rightInsetPx: inSection.track.x + inSection.track.width - (inSection.secondary.x + inSection.secondary.width),
         sectionCollisions,
         secondaryCollisions,
         crumbsRendered: crumbs.filter((box) => box.width > 0 && box.height > 0).length,
         feedTagWidthPx: tag === null ? 0 : tag.width,
+        browse: feed.browse,
+        browseOverlapsCard: rectsOverlap(feed.browse, feed.card) ? 1 : 0,
+        browseOffscreenPx: viewportOverflowPx(feed.browse, PHONE_FLOOR_VIEWPORT),
         eventSheetWidthPx: sheet.width,
         eventSheetOverlapsTimeline: rectsOverlap(sheet, await boxOf(page, BOTTOM_CHROME_SELECTOR)) ? 1 : 0,
       }
     },
     expect: {
       ...prefixedLayoutExpect('layout', [...Object.keys(RESTING_REGIONS), 'ancestor', 'caption']),
-      globePortraitRatioPct: [95, 105],
+      globePortraitRatioPct: [102, 112],
       orbToReadoutsPx: [0, 8],
       titleToShortcutsPx: [8, 14],
       'timeline.height': [170, 310],
       sectionsHeightAtRootPx: [0, 0],
       secondarySelfOverlaps: [0, 0],
       secondaryOverlapsCore: [0, 0],
+      pickerOutsideRowPx: [-40, 0],
+      rowTallerThanPlayPx: [0, 1],
+      pickerOverlapsTransport: [0, 0],
       leftInsetPx: [0, 400],
       // The stacked row's first wrapped line runs a few px wider than the inset track at 390; an
       // un-inset row would overhang by a whole gutter (~50px).
@@ -939,6 +1093,10 @@ export default [
       secondaryCollisions: [0, 0],
       crumbsRendered: [2, 10],
       feedTagWidthPx: [0, 1],
+      'browse.width': [44, 64],
+      'browse.height': [44, 64],
+      browseOverlapsCard: [0, 0],
+      browseOffscreenPx: [-390, 0],
       eventSheetWidthPx: [PHONE_FLOOR_VIEWPORT.width - 10, PHONE_FLOOR_VIEWPORT.width],
       eventSheetOverlapsTimeline: [0, 0],
       'tour.ringToPlayOffsetPx': [0, 2],
@@ -949,6 +1107,33 @@ export default [
       'tour.cardContent.width': [160, 400],
       'tour.cardContent.height': [80, 500],
     },
+  },
+  {
+    name: 'phone-orb-touch-tap',
+    description:
+      "Phone portrait 390x844, touch: a finger tap on the minimised orb's centre expands the globe and does nothing " +
+      'else — t and the section unchanged, so the tap never also lands on the era shortcut the expanded layout puts ' +
+      'under the finger.',
+    viewport: PHONE_FLOOR_VIEWPORT,
+    touch: true,
+    t: 0,
+    // In `actions`, so the screenshot shows the result of the tap.
+    actions: async ({ page, hook }) => {
+      const orb = await boxOf(page, GLOBE_EXPAND_SELECTOR)
+      phoneOrbTapBefore = await hook.getState()
+      await touchTap(page, centreX(orb), centreY(orb))
+      await rafTicks(page, 3)
+    },
+    measure: async ({ hook }) => {
+      const before = phoneOrbTapBefore
+      const after = await hook.getState()
+      return {
+        expanded: after.globeExpanded ? 1 : 0,
+        sectionUnchanged: after.sectionId === before.sectionId ? 1 : 0,
+        tDeltaYears: after.t - before.t,
+      }
+    },
+    expect: { expanded: [1, 1], sectionUnchanged: [1, 1], tDeltaYears: [0, 0] },
   },
   {
     name: 'layout-844x390-resting',
@@ -1194,12 +1379,13 @@ export default [
   {
     name: 'globe-interactions',
     description:
-      'Pointer hit-testing against the real canvas geometry: a click on the minimised orb expands the globe; one ' +
-      '"Zoom in" press grows the drawn sphere by ≥ 80px; a click on the sphere keeps the view open; a real click ' +
-      'reaches the "Map" button (nothing covers it); a click on the map keeps the view open; back on the sphere, a ' +
-      'click on the empty backdrop closes it.',
+      'Pointer hit-testing against the real canvas geometry, at 50 ka: a click on the minimised orb expands the ' +
+      'globe; a click on an arrival the human layer draws (found by its "Click for details" hover hint) opens its ' +
+      'event\'s detail panel with a Route section; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
+      'the sphere keeps the view open; a real click reaches the "Map" button (nothing covers it); a click on the map ' +
+      'keeps the view open; back on the sphere, a click on the empty backdrop closes it.',
     viewport: DEFAULT_VIEWPORT,
-    t: 0,
+    t: 50_000,
     measure: async ({ page, hook }) => {
       // Two frames for the click to land, then whether the globe is still expanded — one round trip.
       const expandedAfterClick = async (x, y) => {
@@ -1216,6 +1402,31 @@ export default [
       await hook.ready()
       await waitForGlobeFitFramesStable(page)
       const frames = await boxesOf(page, { sphere: GLOBE_SPHERE_FIT_FRAME_SELECTOR, map: GLOBE_MAP_FIT_FRAME_SELECTOR })
+
+      // At 50 ka the Asian and Sahul arrivals are on the sphere. Hover spread samples of what the
+      // human layer draws until one shows the "Click for details" hint, then click it.
+      await page.mouse.move(0, 0)
+      const points = await humanLayerPoints(page, hook)
+      let arrival = null
+      for (const [x, y] of points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 12)) === 0).slice(0, 12)) {
+        await page.mouse.move(x, y)
+        await rafTicks(page, 2)
+        if ((await page.locator(GLOBE_TOOLTIP_HINT_SELECTOR).count()) > 0) {
+          arrival = [x, y]
+          break
+        }
+      }
+      let arrivalOpensRoute = 0
+      if (arrival !== null) {
+        await page.mouse.click(...arrival)
+        await rafTicks(page, 3)
+        await hook.ready()
+        const detail = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Route' }) })
+        arrivalOpensRoute = await detail.count()
+        await page.keyboard.press('Escape')
+        await detail.waitFor({ state: 'detached', timeout: 5_000 })
+      }
+      await page.mouse.move(0, 0)
 
       const restore = await hideAroundSphereStrip(page)
       const strip = () => drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
@@ -1236,7 +1447,17 @@ export default [
       await waitForGlobeFitFramesStable(page)
       // Left of the sphere, below the legend, above the timeline.
       const expandedAfterBackdropClick = await expandedAfterClick(150, 700)
-      return { orbClickExpands, defaultWidth, zoomGrowthPx: zoomedWidth - defaultWidth, sphereClickKeepsOpen, mapClickKeepsOpen, expandedAfterBackdropClick }
+
+      return {
+        orbClickExpands,
+        defaultWidth,
+        zoomGrowthPx: zoomedWidth - defaultWidth,
+        sphereClickKeepsOpen,
+        mapClickKeepsOpen,
+        expandedAfterBackdropClick,
+        arrivalFound: arrival === null ? 0 : 1,
+        arrivalOpensRoute,
+      }
     },
     expect: {
       orbClickExpands: [1, 1],
@@ -1244,6 +1465,8 @@ export default [
       sphereClickKeepsOpen: [1, 1],
       mapClickKeepsOpen: [1, 1],
       expandedAfterBackdropClick: [0, 0],
+      arrivalFound: [1, 1],
+      arrivalOpensRoute: [1, 1],
     },
   },
 ]

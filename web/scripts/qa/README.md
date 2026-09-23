@@ -50,15 +50,16 @@ the page load and the globe's pointer interactions:
 | Shot | Guards |
 |---|---|
 | `loading-screen` | the loader is in the static HTML, animates only with motion allowed, steps its progress, and is gone once the shell mounts |
-| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, scene and timeline; the transport row's geometry; the event browser, population sparkline and chart against the timeline |
+| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser, population sparkline and chart against the timeline |
 | `layout-1000x810-resting` | the same at narrow desktop, with the secondary controls on one row |
-| `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows, the "All events" sheet, the tour's first step |
+| `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows and the rate picker inside its row, the feed's "All events" tap target and the sheet it opens, the tour's first step |
+| `phone-orb-touch-tap` | a finger tap on the phone's minimised orb expands it with `t` and the section unchanged (touch page) |
 | `layout-844x390-resting` | short landscape (ADR-048): drawn orb and portrait sizes, chrome regions at the root and in a section, the caption on the feed row, the controls rows |
 | `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps |
 | `layout-1000x810-expanded` | the same at narrow desktop, sphere only |
 | `layout-390x844-expanded` | phone expanded: drawn sphere size and the rows around it; row 2 clear of the drawn map |
 | `layout-844x390-expanded` | short-landscape expanded: the column beside the drawn sphere and map, the crumb trail over the transport |
-| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere |
+| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section |
 
 `shots.scene-framing.mjs` is a separate, opt-in module — one phone-portrait shot per published
 scene, for judging crops by eye on the contact sheet:
@@ -87,6 +88,7 @@ A shot is data (`shots.mjs`); `run.mjs` never changes for one:
   t: 0,                                     // optional: years before present
   state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': false } },
   reducedMotion: 'no-preference',           // optional, overrides --reduced-motion
+  touch: true,                              // optional: run on the touch page (below)
   actions: async ({ page, hook }) => { /* anything `state` can't express */ },
   measure: async ({ page, hook }) => ({ sphere: await globeBodyBounds(page, FIT_FRAME) }),
   expect: { 'sphere.width': [470, 515] },   // dot-path into measure()'s result -> [min, max]
@@ -119,6 +121,15 @@ underneath:
   measurement at all — a shrunken sphere leaves backdrop texture that reads as drawn to the
   clip's edges.
 - `boxOf`/`boxesOf` read layout boxes: right for opaque DOM chrome, where the box is what is painted.
+
+## A shot that needs a touchscreen
+
+Playwright fixes `hasTouch` per browser context, and the main page's context has none, so
+`(pointer: coarse)` stays false for every other shot. A shot that needs real touch input sets
+`touch: true`: after the rest, `run.mjs` loads one more page, in a `hasTouch` context, and runs
+every touch shot on it the same way the main page is shared. `applyState` and the hook work there
+unchanged. `touchTap` in `shots.mjs` taps through CDP touch events with a 1px move before lift, as a
+real finger does.
 
 ## A shot that needs the harness's one page load
 

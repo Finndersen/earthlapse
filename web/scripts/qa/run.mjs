@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Visual-QA harness runner. One `next build` (unless `--dev`/`--no-build`), one static server,
- * one browser, one page load — every shot drives the already-loaded page through
- * `window.__earthtime` (`web/src/store/devHook.ts`) rather than reloading. See `README.md` for
- * the full contract and CLI reference; `--help` prints the same summary.
+ * one browser, one page load (plus one in a `hasTouch` context for `touch: true` shots) — every
+ * shot drives an already-loaded page through `window.__earthtime` (`web/src/store/devHook.ts`)
+ * rather than reloading. See `README.md` for the full contract and CLI reference; `--help` prints
+ * the same summary.
  */
 
 import { spawnSync } from 'node:child_process'
@@ -531,13 +532,14 @@ function contiguousChunks(list, count) {
 
 /**
  * One browser context and page, loaded once and ready for shots: console errors collected into
- * `consoleErrors` (prefixed with `label` when set), published media rerouted to the local export,
+ * `consoleErrors` (prefixed with `label` when set), touch input enabled with `hasTouch`, published
+ * media rerouted to the local export,
  * the app loaded (by `bootstrapShot` when given), the QA hook confirmed present, and the
  * first-visit tour dismissed.
  * @returns {Promise<{ page: import('playwright').Page, hook: ReturnType<typeof makeHook>, bootstrapResult: object | null }>}
  */
-async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label, bootstrapShot }) {
-  const context = await browser.newContext({ deviceScaleFactor: 1 })
+async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label, bootstrapShot, hasTouch = false }) {
+  const context = await browser.newContext({ deviceScaleFactor: 1, hasTouch })
   const page = await context.newPage()
   const prefix = label === null ? '' : `[${label}] `
   page.on('console', (msg) => {
@@ -634,11 +636,12 @@ async function main() {
     const selected = selectShots([...shotList, ...extra], args.shots, args.grep)
     const shots = args.sort ? sortByViewport(selected, args.viewport) : selected
     const bootstrapShot = shots.find((shot) => shot.bootstrapsPage !== undefined)
+    const touchShots = shots.filter((shot) => shot.touch === true)
     const chunks = contiguousChunks(
-      shots.filter((shot) => shot !== bootstrapShot),
+      shots.filter((shot) => shot !== bootstrapShot && shot.touch !== true),
       args.shards,
     )
-    if (chunks.length === 0) chunks.push([])
+    if (chunks.length === 0 && (touchShots.length === 0 || bootstrapShot !== undefined)) chunks.push([])
 
     console.log(`Running ${shots.length} of ${shotList.length + extra.length} shots${chunks.length > 1 ? ` across ${chunks.length} pages` : ''}…`)
     const resultsByName = new Map()
@@ -661,6 +664,15 @@ async function main() {
         }
       }),
     )
+    // Playwright fixes `hasTouch` per context, so touch shots run afterwards on a page of their own.
+    if (touchShots.length > 0) {
+      const loaded = await openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label: 'touch', bootstrapShot: undefined, hasTouch: true })
+      pages.push(loaded.page)
+      for (const shot of touchShots) {
+        console.log(`[touch] Running ${shot.name}…`)
+        resultsByName.set(shot.name, await runShotOrRecordFailure(loaded.page, loaded.hook, shot, run))
+      }
+    }
     const results = shots.map((shot) => resultsByName.get(shot.name))
 
     // Nothing to sheet when every shot that passed skipped its screenshot; a run with failures
