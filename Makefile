@@ -1,5 +1,10 @@
 PYTHON ?= .venv/bin/python
 
+# Deploy credentials: from the gitignored .env on a workstation (plain KEY=value lines), from the
+# workflow's secrets in CI, where there is no .env.
+-include .env
+export R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET MEDIA_BASE
+
 .PHONY: setup data data-force pins test web-dev web-build check check-quick hooks preflight deploy deploy-media deploy-site
 
 # Every part of the environment; `scripts/setup.sh <part>...` for only some (its own header).
@@ -42,7 +47,7 @@ deploy-media:
 	deploy/sync-media.sh
 
 deploy-site:
-	MEDIA_BASE=$(MEDIA_BASE) deploy/build-site.sh
+	deploy/build-site.sh
 	pnpm -C web exec wrangler deploy --config ../deploy/wrangler.jsonc
 
 deploy: preflight deploy-media deploy-site

@@ -30,6 +30,13 @@ it, do not unilaterally edit.
   This is a known design wart: a safety rail you must re-state correctly on every use is one you
   will eventually state wrongly. Making the flag optional and defaulting to the stored ceiling
   needs an ADR, since `pipeline/spend.py` is NORMATIVE.
+- **A cloud session is ephemeral: commit what generation produced before it ends.** `spend.json`
+  is the ledger; spend a session never pushes is spend the ceiling forgets. Unpinned candidates
+  (`data/candidates/`, gitignored) die with the container, so review, pin and publish in the same
+  session, then commit and push the pins, `data/media/` and `spend.json`.
+- **Deploy from a cloud session with a `[deploy]` commit on `main`**, never with credentials in the
+  session. The `deploy` workflow ships the committed state of `main` (ADR-052); see
+  `deploy/README.md` for the other triggers.
 - **No live API calls or large downloads in tests.** Every source ships a committed fixture
   at `sources/<name>/fixture/`. Use it.
 - **Nothing reads `data/curated/` directly.** Go through `WorldState.at(t)`. (ADR-002)
@@ -71,6 +78,7 @@ earthtime plan                  # what is stale, what it will cost
 earthtime build --only images   # generate, respecting pins and ceiling
 earthtime review                # candidate picker; review clear <id>, review pick <id> <n>
 earthtime publish               # write data/media/manifest.json + media (local; no upload)
+make deploy                     # preflight, then R2 media + Worker site (deploy/README.md)
 ```
 
 In a fresh container, run `scripts/setup.sh [python|web|media|browser]` before the first check or

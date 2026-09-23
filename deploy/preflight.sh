@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Gate for `make deploy`, run before anything touches R2 or the Worker. Cheap, local-only checks
-# first (git state, media content, manifest, .env), then the full test suite, then a QA smoke run
+# first (git state, media content, manifest, deploy vars), then the full test suite, then a QA smoke run
 # against a real build — each one fails fast with a specific reason rather than letting a bad
 # publish reach production.
 set -euo pipefail
@@ -10,10 +10,12 @@ cd "$REPO_ROOT"
 
 PYTHON="${PYTHON:-$REPO_ROOT/.venv/bin/python}"
 
-echo "==> branch"
-BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [ "$BRANCH" != "main" ]; then
-  echo "error: on branch '$BRANCH', not main — deploy only ships from main" >&2
+echo "==> commit is on origin/main"
+# Ancestry rather than the branch name: CI checks out a tag or SHA as a detached HEAD, and an
+# older main commit is a valid rollback target. An unpushed local commit is not deployable.
+git fetch --quiet origin main
+if ! git merge-base --is-ancestor HEAD origin/main; then
+  echo "error: HEAD ($(git rev-parse --short HEAD)) is not on origin/main — deploy only ships pushed main commits" >&2
   exit 1
 fi
 
@@ -86,15 +88,16 @@ if missing:
     sys.exit(1)
 PYEOF
 
-echo "==> .env has the R2 vars"
-ENV_FILE="$REPO_ROOT/.env"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "error: $ENV_FILE does not exist — see deploy/README.md's one-time setup" >&2
-  exit 1
+echo "==> deploy vars are set"
+# Locally the Makefile loads them from .env; in CI they come from the workflow's secrets. Wrangler
+# authenticates by `wrangler login` on a workstation, so its token is required only in CI.
+REQUIRED_VARS=(R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET MEDIA_BASE)
+if [ -n "${CI:-}" ]; then
+  REQUIRED_VARS+=(CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID)
 fi
-for var in R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
-  if ! grep -qE "^${var}=.+" "$ENV_FILE"; then
-    echo "error: $ENV_FILE has no non-empty $var" >&2
+for var in "${REQUIRED_VARS[@]}"; do
+  if [ -z "${!var:-}" ]; then
+    echo "error: $var is not set — see deploy/README.md's one-time setup" >&2
     exit 1
   fi
 done

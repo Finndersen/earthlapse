@@ -7257,3 +7257,38 @@ WebP, ~4 KB, ~240 KB for all 71) made for the timeline pips.
   mirrored side bands on desktop prove distracting.
 - **Treating the sharpening as a scene change.** It would hold a full image back behind the
   backstop for no photosensitivity benefit.
+
+## ADR-052 — Deploys run from GitHub Actions as well as a workstation
+
+**Status:** accepted — 2026-09-23. Amends `deploy/README.md`'s "built and uploaded from the same
+machine that generates them".
+
+**Context.** `make deploy` could only run on a workstation holding `.env`, so a deploy needed that
+machine. Development also happens in Claude Code cloud sessions, which are ephemeral, whose network
+policy does not reach the Cloudflare API or R2, and which should not hold production credentials.
+
+**Decision.**
+
+- **One recipe, two hosts.** `.github/workflows/deploy.yml` runs the same `make deploy` on a hosted
+  runner, credentials from the `production` environment's secrets. There is no CI-only deploy path.
+- **Triggers.** A push to `main` whose head commit message contains `[deploy]`; a pushed `v*` tag;
+  `workflow_dispatch`. Solo development pushes straight to `main`, so the gate is on the commit, not
+  a PR. A cloud session deploys by pushing a `[deploy]` commit, holding no Cloudflare credential
+  itself; the Claude GitHub App has no permission to dispatch workflows. Runs share one concurrency group and never overlap.
+- **Preflight's gate is ancestry, not branch name.** A runner checks out a detached HEAD, so
+  "on branch main" became "HEAD is an ancestor of `origin/main`" — which also admits an older tag as
+  a rollback and still refuses an unpushed commit.
+- **Credentials are environment variables everywhere.** The Makefile includes `.env` when present;
+  preflight checks the environment, not the file. `MEDIA_BASE` joins the checked set.
+- **CI never generates.** No generation provider key is given to CI. Media is generated, reviewed,
+  pinned and published by hand, committed, and deployed as committed; the spend ledger is untouched.
+
+**Consequences.**
+- Each run fetches `data/media` from Git LFS (~90 MB), which counts against the repo's LFS
+  bandwidth quota.
+- A deploy re-runs the full checks and QA smoke on the runner; there is still no PR-time CI.
+
+**Rejected.**
+- **Deploy credentials in cloud session environments.** Needs Cloudflare and R2 hosts allowed and
+  a production token in every session; a `[deploy]` commit needs neither.
+- **A PR label trigger.** No PRs in the current workflow.
