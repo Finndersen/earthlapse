@@ -424,20 +424,6 @@ describe('Experience population readout and chart', () => {
     })
     expect(screen.getByTestId('scalar-readout-population')).toBeTruthy()
   })
-
-  it('opens the population chart from its sparkline, drawing the reached curve and a ghost future', async () => {
-    await renderSettled()
-    act(() => {
-      useTimeStore.getState().setT(1000)
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Expand Global population chart' }))
-    expect(useTimeStore.getState().expandedChartLayerId).toBe('population')
-    const plot = screen.getByRole('img', { name: /^Global population chart/ })
-    const lines = Array.from(plot.querySelectorAll('polyline'))
-    const isGhost = (el: Element) => el.getAttribute('class')?.includes('Ghost') ?? false
-    expect(lines.some((el) => !isGhost(el))).toBe(true)
-    expect(lines.some(isGhost)).toBe(true)
-  })
 })
 
 describe('Experience layer loading', () => {

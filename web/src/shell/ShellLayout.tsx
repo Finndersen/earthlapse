@@ -40,9 +40,6 @@ export interface ShellLayoutProps {
   ancestor: ReactNode
   /** Bottom-centre, above the timeline: the scene caption as a subtitle. */
   caption: ReactNode
-  /** The open layer chart, or `null`. It takes the caption's place above the timeline (the
-   *  caption yields while it is open) so the two never overlap. */
-  chart: ReactNode | null
   /** Bottom band: the warped timeline with scrub, play and speed controls. */
   timeline: ReactNode
   /** The globe fills the lens: the title and timeline stay above its backdrop, still legible
@@ -80,7 +77,6 @@ export function ShellLayout({
   eraShortcuts,
   ancestor,
   caption,
-  chart,
   timeline,
   globeExpanded,
   viewModeToggleHeightPx,
@@ -101,10 +97,10 @@ export function ShellLayout({
   // itself makes the same point for a different element).
   //
   // The lower boundary is `.expandedGlobeCaption` itself, not `.bottom` (a first pass got this
-  // wrong, browser-verified regression, 2026-09-17 lead review): `.stage`'s three children
-  // (`.caption`, `.chart`, `.expandedGlobeCaption`) sit in the *same* CSS Grid cell so the
-  // caption/chart crossfade never reflows, which means `.stage` — and so `.bottom`, which
-  // contains it — is always sized to the *tallest* of the three, including whichever is hidden
+  // wrong, browser-verified regression, 2026-09-17 lead review): `.stage`'s two children
+  // (`.caption`, `.expandedGlobeCaption`) sit in the *same* CSS Grid cell so their crossfade
+  // never reflows, which means `.stage` — and so `.bottom`, which contains it — is always sized
+  // to the *taller* of the two, including whichever is hidden
   // via `opacity: 0` (`ShellLayout.module.css`'s own crossfade rule): `visibility` isn't involved
   // in that sizing, only `opacity`, so the hidden box still occupies its full layout height.
   // While the globe is expanded, the scene's own `.caption` (a heading plus a paragraph, easily
@@ -132,7 +128,7 @@ export function ShellLayout({
   useChromeGap(shellRef, titleRef, expandedGlobeCaptionRef, reserveBottomPx)
 
   return (
-    <div ref={shellRef} className={styles.shell} data-chart-open={chart !== null} data-globe-expanded={globeExpanded}>
+    <div ref={shellRef} className={styles.shell} data-globe-expanded={globeExpanded}>
       <div className={styles.scene}>{scene}</div>
       <div className={styles.lens} aria-hidden="true" />
 
@@ -184,7 +180,6 @@ export function ShellLayout({
         <div className={styles.bottom}>
           <div className={styles.stage}>
             <div className={styles.caption}>{caption}</div>
-            <div className={styles.chart}>{chart}</div>
             {/* Deliberately always empty: the globe draws no regime/effect caption in either
                 state. It stays mounted as `useChromeGap`'s `bottomRef` (this component's own doc
                 comment has the "why not `.bottom` itself" story), where an empty element measures

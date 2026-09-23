@@ -349,21 +349,6 @@ const DEFAULT_LAYER_TOGGLES = { 'human-civilisation': true }
 const ROOT_SECTION_ID = 'earth'
 
 /**
- * Closes whatever HUD layer chart a previous shot left expanded, by clicking its real "Collapse …
- * chart" button: `expandedChartLayerId` has no `devHook.ts` setter, and an open chart eats into the
- * layout every later shot measures. At most one chart is ever expanded.
- * @param {import('playwright').Page} page
- * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
- */
-async function closeExpandedChart(page, hook) {
-  const collapseButton = page.getByRole('button', { name: /^Collapse .+ chart$/ })
-  if ((await collapseButton.count()) === 0) return
-  await collapseButton.first().click()
-  await hook.ready()
-  await rafTicks(page, 2)
-}
-
-/**
  * Closes the "All events" browser if a previous shot left it open, by its real close button: its
  * open state is local to `Experience.tsx`, with no `devHook.ts` setter.
  * @param {import('playwright').Page} page
@@ -401,7 +386,7 @@ async function closeOpenDialogs(page, hook) {
 /**
  * Resolves every field `state` covers on every shot, never only the ones a shot mentions: the
  * selected section (the root), playback, `globeExpanded` (default `false`), any open dialog, the
- * event browser and any expanded HUD chart (always closed), and, when expanded, `globeViewMode` (default `'globe'`)
+ * event browser (always closed), and, when expanded, `globeViewMode` (default `'globe'`)
  * and every legend toggle (`DEFAULT_LAYER_TOGGLES` merged with the shot's own), then the tour. That
  * is what keeps one shot independent of whatever the previous one left on screen.
  *
@@ -432,7 +417,6 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
         collapsed: globeExpanded,
         dialogOpen: document.querySelector(dialogSelector) !== null,
         eventBrowserOpen: document.querySelector('[data-testid="event-browser"]') !== null,
-        chartOpen: document.querySelector('button[aria-label^="Collapse "][aria-label$=" chart"]') !== null,
       }
     },
     { playing: state.playing ?? false, rootSectionId: ROOT_SECTION_ID, dialogSelector: OPEN_DIALOG_SELECTOR },
@@ -450,7 +434,6 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
     await page.evaluate((playing) => window.__earthtime.setPlaying(playing), state.playing ?? false)
   }
   if (reset.eventBrowserOpen) await closeEventBrowser(page, hook)
-  if (reset.chartOpen) await closeExpandedChart(page, hook)
   if (state.globeExpanded ?? false) {
     await hook.setGlobeExpanded(true)
     await hook.ready()

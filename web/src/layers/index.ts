@@ -7,11 +7,10 @@
  * `entry`/`data`, never mutate them — `sample(t)` is pure, `null` outside `entry.timeDomain` or
  * the data's own sample range, whichever is narrower.
  *
- * Components are all prop-driven (`layer`, `t`, and `scale` where a chart needs the timeline's
- * warp) — nothing read from a store, ref, or fetch. `t` outside a layer's domain renders as "no
- * data" text, never a false `0`. See each component's own doc comment for its specific contract
- * (`Sparkline`'s domain-warping choice, `AncestorPortrait`'s morph timing, etc.) — not repeated
- * here.
+ * Components are all prop-driven (`layer`, `t`) — nothing read from a store, ref, or fetch. `t`
+ * outside a layer's domain renders as "no data" text, never a false `0`. See each component's own
+ * doc comment for its specific contract (`Sparkline`'s growing axes, `AncestorPortrait`'s morph
+ * timing, etc.) — not repeated here.
  *
  * `HUD_HIDDEN_LAYER_IDS`/`isHiddenFromHud` (`./hudVisibility.ts`) is a display-only, reversible
  * HUD filter — the layer, its data, and its sampling are untouched.
@@ -41,6 +40,5 @@ export { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud, isPopulationReadoutHiddenAt } fr
 export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPanel'
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
 export { AncestorReadout, type AncestorReadoutProps } from './components/AncestorReadout'
-export { LayerChart, type LayerChartProps } from './components/LayerChart'
 export { ScalarReadout, type ScalarReadoutProps } from './components/ScalarReadout'
 export { Sparkline, type SparklineProps } from './components/Sparkline'

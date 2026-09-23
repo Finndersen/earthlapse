@@ -22,7 +22,7 @@ import { EventBrowser, EventDetailPanel, EventFeed, EventTagLegend, placementT, 
 import { buildArrivalIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
 import { OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
@@ -55,7 +55,7 @@ import {
 } from '@/timeline'
 import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
 import { EARTH_FORMATION } from '@/types/layer'
-import type { GeoTime, Layer, ScalarValue, TimelineEvent, TimeScale } from '@/types/layer'
+import type { GeoTime, TimelineEvent, TimeScale } from '@/types/layer'
 import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
 
 import { buildLayers, rawEvents } from './buildLayers'
@@ -70,12 +70,10 @@ import { usePlaybackHold } from './usePlaybackHold'
  *  (ADR-024); this is only for the scales below, which must not follow the selection. */
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
 
-/** The full-domain *symlog* `TimeScale`, shared by the three things in this component that must
+/** The full-domain *symlog* `TimeScale`, shared by the two things in this component that must
  *  not track the timeline's current section or scale-kind: `advancePlayhead`'s `'scenes'`-mode
  *  pacing (always symlog, per ADR-016 — a scene's dwell/dissolve durations don't change when the
- *  user flips the linear toggle), the HUD sparklines (a trend line that reads as a fixed
- *  miniature of all of history, not a mirror of the user's current scale-kind toggle), and the
- *  event feed's lookback (selecting a short section must not shrink "what just happened" to a
+ *  user flips the linear toggle) and the event feed's lookback (selecting a short section must not shrink "what just happened" to a
  *  few decades, ADR-024). Module scope: one stable `TimeScale`, computed once, not per render. */
 const FULL_DOMAIN_SYMLOG_SCALE: TimeScale = createSymlogScale(FULL_DOMAIN)
 
@@ -132,8 +130,6 @@ export function Experience() {
   const setPlaybackMode = useTimeStore((s) => s.setPlaybackMode)
   const globeExpanded = useTimeStore((s) => s.globeExpanded)
   const setGlobeExpanded = useTimeStore((s) => s.setGlobeExpanded)
-  const expandedChartLayerId = useTimeStore((s) => s.expandedChartLayerId)
-  const setExpandedChartLayerId = useTimeStore((s) => s.setExpandedChartLayerId)
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
   // The rest of a digest card's reached cluster (ADR-040), alongside `detailEventId` — ids only,
@@ -151,8 +147,7 @@ export function Experience() {
   const [eventBrowserOpen, setEventBrowserOpen] = useState(false)
   const isCompactViewport = useIsCompactViewport()
 
-  // The timeline's animated scale lives here and is passed down to <Timeline> and the chart
-  // dock, so the value under the chart's playhead sits directly above the timeline's. Section
+  // The timeline's animated scale lives here and is passed down to <Timeline>. Section
   // windows are constants from `sections.ts`, so `useAnimatedScale`'s memoised scales only
   // recompute while the window or the symlog/linear toggle is actually animating.
   const timelineScaleKind = scaleKind === 'linear' ? 'linear' : 'symlog'
@@ -187,10 +182,6 @@ export function Experience() {
   const [feedEventIds, setFeedEventIds] = useState<ReadonlySet<string>>(() => new Set())
   const [hoveredFeedEventId, setHoveredFeedEventId] = useState<string | null>(null)
   const onVisibleEventsChange = useCallback((ids: readonly string[]) => setFeedEventIds(new Set(ids)), [])
-
-  // Stable across this component's per-frame playback re-renders, so `<LayerChart>` can be
-  // memoised on its props: an inline arrow here would differ every frame and defeat that.
-  const closeExpandedChart = useCallback(() => setExpandedChartLayerId(null), [setExpandedChartLayerId])
 
   useEffect(() => {
     installDevHook()
@@ -454,7 +445,7 @@ export function Experience() {
     [readyManifest],
   )
 
-  // Only chartable scalars get a HUD readout: each one opens the chart dock. `isHiddenFromHud`
+  // Only chartable scalars get a HUD readout and sparkline. `isHiddenFromHud`
   // additionally excludes a small, reversible set of layers (currently just CO2) from this list
   // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
   const hudScalarEntries = useMemo(
@@ -512,7 +503,7 @@ export function Experience() {
 
   // The event feed card an activation opened, if any. Looked up by id
   // rather than kept as the `TimelineEvent` itself, so the store only ever holds a plain id, the
-  // same "what's expanded, not the expanded thing" shape `expandedChartLayerId` already uses.
+  // same "what's expanded, not the expanded thing" shape the other overlays use.
   const detailEvent = detailEventId !== null ? (manifest.events.find((e) => e.id === detailEventId) ?? null) : null
   // The rest of a digest card's cluster (ADR-040), resolved the same way. `detailMemberIds`
   // holds every reached member's id including the headline's own, so this is `EventDetailPanel`'s
@@ -592,8 +583,6 @@ export function Experience() {
     setDetailEventId(event.id)
     setDetailMemberIds([event.id])
   }
-
-  const expandedChartLayer = expandedChartLayerId !== null ? scalarLayers.get(expandedChartLayerId) : undefined
 
   // The subtitle above the timeline: the scene's short `title` as a heading over its longer
   // `caption` passage, sharing one opacity so they cross-fade together in step with SceneView's
@@ -686,13 +675,9 @@ export function Experience() {
               return (
                 <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
                   <ScalarReadout layer={layer} t={t} />
-                  <HudSparkline
-                    layer={layer}
-                    t={t}
-                    entryId={entry.id}
-                    expanded={expandedChartLayerId === entry.id}
-                    onToggle={setExpandedChartLayerId}
-                  />
+                  <div className={styles.sparkline}>
+                    <Sparkline layer={layer} t={t} />
+                  </div>
                 </div>
               )
             })}
@@ -715,11 +700,6 @@ export function Experience() {
           nodeLayer ? <AncestorPanel layer={nodeLayer} t={t} assetBase={manifest.assetBase} portraits={lineagePortraits} /> : null
         }
         caption={captionSlot}
-        chart={
-          expandedChartLayer ? (
-            <LayerChart layer={expandedChartLayer} t={t} scale={timelineScale} onClose={closeExpandedChart} />
-          ) : null
-        }
         timeline={
           <Timeline
             t={t}
@@ -743,7 +723,7 @@ export function Experience() {
             onOpenCluster={handleOpenCluster}
             ratePerSecond={ratePerSecond}
             rateFloored={steadyRegime.floored}
-            overlayOpen={globeExpanded || expandedChartLayerId !== null}
+            overlayOpen={globeExpanded}
             sound={<SoundToggle {...audio} />}
           />
         }
@@ -793,30 +773,5 @@ function TimeTitle({ t }: { t: GeoTime }) {
       <span className={styles.time}>{formatGeoTime(t)}</span>
       <span className={styles.era}>{eraNameForTime(t)}</span>
     </div>
-  )
-}
-
-interface HudSparklineProps {
-  layer: Layer<ScalarValue>
-  t: GeoTime
-  entryId: string
-  expanded: boolean
-  onToggle: (id: string | null) => void
-}
-
-/** A HUD sparkline, clickable to toggle the chart dock (DESIGN §8). Only chartable layers get a
- *  HUD readout, so every one is a button. */
-function HudSparkline({ layer, t, entryId, expanded, onToggle }: HudSparklineProps) {
-  const sparkline = <Sparkline layer={layer} t={t} scale={FULL_DOMAIN_SYMLOG_SCALE} />
-  return (
-    <button
-      type="button"
-      className={`${styles.sparkline} ${styles.sparklineButton}`}
-      aria-pressed={expanded}
-      aria-label={`${expanded ? 'Collapse' : 'Expand'} ${layer.name} chart`}
-      onClick={() => onToggle(expanded ? null : entryId)}
-    >
-      {sparkline}
-    </button>
   )
 }
