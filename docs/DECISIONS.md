@@ -7199,6 +7199,16 @@ WebP, ~4 KB, ~240 KB for all 71) made for the timeline pips.
   (`scene/sceneLayer.ts`): its full image if loaded, else its thumbnail. The requested pair binds
   as soon as both ends have one or the other; only with neither does the previous pair stay up,
   so the never-blank guarantee and the render-phase cache-hit bind are unchanged.
+- **Grace before a thumbnail.** An end that would bring a scene on screen on its thumbnail first
+  keeps the bound pair up for `FULL_IMAGE_GRACE_MS` (300 ms) waiting for its full image
+  (`sceneLayer.ts`'s `bindsNow`, timed from the request in `useFullImageGrace`). A deliberate jump
+  whose full image arrives in time transitions once, straight to it, instead of dissolving to a
+  blurred thumbnail and then sharpening. The grace is skipped when the request came within
+  `RAPID_REQUEST_MS` (600 ms) of the previous one — playback or a scrub, where holding would cost
+  over half a scene's time on screen (ADR-029's floor is 0.35 s) — and for the first pair. The
+  signal is the request cadence itself, so it needs no playback state threaded in and covers
+  fast scrubs too. During the grace the caption, pips and readouts may lead the picture by up to
+  300 ms. The no-WebGL fallback applies the same grace per `<img>` layer.
 - **Drawn soft, in place.** A thumbnail is softened once as it is uploaded (two 3×3 tent passes,
   about one thumbnail texel), so the upscale reads as deliberately soft rather than blocky; a
   per-fragment blur in the shader cost the software-rendered QA run ~1.5 s. A thumbnail

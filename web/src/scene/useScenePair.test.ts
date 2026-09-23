@@ -34,6 +34,8 @@ vi.mock('./textureCache', () => {
 })
 
 // eslint-disable-next-line import/first -- must follow the hoisted vi.mock above
+import { FULL_IMAGE_GRACE_MS, RAPID_REQUEST_MS } from './sceneLayer'
+// eslint-disable-next-line import/first -- must follow the hoisted vi.mock above
 import { useScenePair as useScenePairOf } from './useScenePair'
 
 /** Each scene's thumbnail is `<url>.thumb`. */
@@ -66,6 +68,7 @@ function markCached(url: string, tex: unknown): void {
 }
 
 afterEach(() => {
+  vi.useRealTimers()
   pending.clear()
   cached.clear()
   retained.length = 0
@@ -137,7 +140,9 @@ describe('useScenePair: no blank frame', () => {
     expect(result.current.toTex).toEqual(fakeTexture('c'))
   })
 
-  it('binds a newly requested scene on its thumbnail while its full image loads, then on the full image', async () => {
+  it('holds the bound pair through the grace for a jump to a scene with only its thumbnail, then binds the thumbnail, then the full image', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
+    const flush = () => act(async () => {})
     const { result, rerender } = renderHook(({ from, to }) => useScenePair(from, to), {
       initialProps: { from: 'a.png', to: 'b.png' },
     })
@@ -145,18 +150,23 @@ describe('useScenePair: no blank frame', () => {
       resolveLoad('a.png', fakeTexture('a'))
       resolveLoad('b.png', fakeTexture('b'))
     })
-    await waitFor(() => expect(result.current.ready).toBe(true))
+    await flush()
+    expect(result.current.ready).toBe(true)
 
+    act(() => vi.advanceTimersByTime(RAPID_REQUEST_MS))
     markCached('b.png', fakeTexture('b'))
     markCached('c.png.thumb', fakeTexture('c thumb'))
     rerender({ from: 'b.png', to: 'c.png' })
+    expect(result.current.boundToUrl).toBe('b.png')
 
+    act(() => vi.advanceTimersByTime(FULL_IMAGE_GRACE_MS))
     expect(result.current.boundToUrl).toBe('c.png')
     expect(result.current.toTex).toBeNull()
     expect(result.current.toThumb).toEqual(fakeTexture('c thumb'))
 
     act(() => resolveLoad('c.png', fakeTexture('c')))
-    await waitFor(() => expect(result.current.toTex).toEqual(fakeTexture('c')))
+    await flush()
+    expect(result.current.toTex).toEqual(fakeTexture('c'))
     expect(result.current.toThumb).toEqual(fakeTexture('c thumb'))
     expect(retained).toContainEqual(fakeTexture('c thumb'))
   })

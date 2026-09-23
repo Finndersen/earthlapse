@@ -5,9 +5,10 @@
  *
  * Each end binds as a `SceneLayer` (`sceneLayer.ts`, ADR-051): its full image if loaded, else its
  * thumbnail, which `SceneQuad` draws softened until the full image lands and replaces it. The
- * requested pair binds as soon as both ends have either; until then the previously bound pair
- * stays on screen. Thumbnails are prefetched for every scene, so that wait is normally only the
- * very first load.
+ * requested pair binds once both ends have either; until then the previously bound pair stays on
+ * screen. Thumbnails are prefetched for every scene, so that wait is normally only the very first
+ * load. A scene that would come on screen on its thumbnail first waits `FULL_IMAGE_GRACE_MS` for
+ * its full image, unless requests are arriving faster than that could pay for (`bindsNow`).
  *
  * When both ends are already in `textureCache`'s caches (the common case: a scene checkpoint
  * whose incoming scene was the outgoing pair's other half, or a prefetched one — `prefetch.ts`),
@@ -26,7 +27,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import type * as THREE from 'three'
 
-import { chooseSceneLayer, type SceneLayer } from './sceneLayer'
+import { bindsNow, chooseSceneLayer, type SceneLayer } from './sceneLayer'
 import {
   getCachedSceneTexture,
   getCachedSceneThumbnail,
@@ -34,6 +35,7 @@ import {
   loadSceneThumbnail,
   retainSceneTextures,
 } from './textureCache'
+import { useFullImageGrace } from './useFullImageGrace'
 
 export type BoundSceneLayer = SceneLayer<THREE.Texture>
 
@@ -114,10 +116,16 @@ export function useScenePair(fromUrl: string, fromThumbUrl: string, toUrl: strin
 
   const from = layerFor(fromUrl, fromThumbUrl)
   const to = layerFor(toUrl, toThumbUrl)
-  // Render-phase update: both ends can be drawn now, so bind them in this same render instead of
-  // waiting on the effect below (see module doc). React re-renders synchronously off this before
-  // painting, and the comparison makes the next pass a no-op, not a loop.
-  if (from !== null && to !== null && (bound === null || !sameLayer(bound.from, from) || !sameLayer(bound.to, to))) {
+  const wait = useFullImageGrace(requestKey, from?.full == null || to?.full == null)
+  // Render-phase update: the requested pair can be drawn now, so bind it in this same render
+  // instead of waiting on the effect below (see module doc). React re-renders synchronously off
+  // this before painting, and the comparison makes the next pass a no-op, not a loop.
+  if (
+    from !== null &&
+    to !== null &&
+    bindsNow(bound, from, to, wait) &&
+    (bound === null || !sameLayer(bound.from, from) || !sameLayer(bound.to, to))
+  ) {
     setBound({ from, to })
   }
 

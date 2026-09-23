@@ -8,8 +8,8 @@
  * in for camera drift. No CSS filter is applied to a full image — `mix` is already the eased
  * crossfade alpha (`transition.ts`'s `crossfadeAlpha`), so a plain opacity ramp is the whole
  * effect (ADR-012). Never shows a blank frame: each layer decodes its next image off-DOM before
- * swapping to it, showing that scene's thumbnail, blurred, if it decodes first (ADR-051) and
- * otherwise keeping its last decoded image up; scenes ahead of the current pair are prefetched and
+ * swapping to it, showing that scene's thumbnail, blurred, if it decodes first and the full image
+ * is still pending after the grace (ADR-051), and otherwise keeping its last decoded image up; scenes ahead of the current pair are prefetched and
  * decoded before they are needed (`prefetch.ts`), and every thumbnail is.
  *
  * A thumbnail is the image's centre square, and `object-fit: cover` can only crop it, so in a box
@@ -25,6 +25,8 @@ import type { DriftUniforms } from './drift'
 import { CENTRED_CROP, centreSquareWindow, coverCss, coverTransform, FULL_WINDOW, type CoverCss, type SceneCrop } from './framing'
 import type { ThumbnailPrefetch } from './SceneCanvasView'
 import { sceneImageBytes } from './sceneImageBytes'
+import { thumbnailAllowed } from './sceneLayer'
+import { useFullImageGrace } from './useFullImageGrace'
 
 /** Softens a thumbnail's upscale, as the WebGL renderer's blur does. */
 const THUMBNAIL_BLUR = 'blur(6px)'
@@ -61,9 +63,11 @@ function useDecodedSrc(targetUrl: string, thumbUrl: string): DisplayedSrc {
   const [displayed, setDisplayed] = useState<DisplayedSrc>({ src: targetUrl, soft: false })
   const [, setDecodedCount] = useState(0)
 
+  const wait = useFullImageGrace(targetUrl, !decodedUrls.has(targetUrl))
+
   if (displayed.src !== targetUrl && decodedUrls.has(targetUrl)) {
     setDisplayed({ src: targetUrl, soft: false })
-  } else if (displayed.src !== targetUrl && displayed.src !== thumbUrl && decodedUrls.has(thumbUrl)) {
+  } else if (displayed.src !== targetUrl && displayed.src !== thumbUrl && decodedUrls.has(thumbUrl) && thumbnailAllowed(wait)) {
     setDisplayed({ src: thumbUrl, soft: true })
   }
 
