@@ -36,6 +36,11 @@
   min-width: 0;
 }
 
+/* The current section never gives up width first: its ancestors ellipsise before it does. */
+.crumb:last-child {
+  flex-shrink: 0;
+}
+
 .crumb + .crumb::before {
   content: '›';
   padding: 0 7px;

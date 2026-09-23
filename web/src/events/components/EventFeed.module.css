@@ -256,7 +256,7 @@
    one line — title and date only. Tapping it opens `EventDetailPanel` as a bottom sheet rather
    than growing the strip in place, so unlike the desktop card this one never has a
    second, taller state to account for. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .feed {
     max-width: none;
   }

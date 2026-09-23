@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   budgetedDpr,
+  centerOffset,
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
@@ -17,7 +18,6 @@ import {
   subFrameFovY,
   unfoldCameraPose,
   type UnfoldViewEnds,
-  verticalCenterOffset,
   zoomRatio,
 } from './camera'
 import { lonLatToMap, lonLatToSphere, unfoldedPosition, unrolledHalfHeight, unrolledHalfWidth } from './projection'
@@ -273,17 +273,19 @@ describe('subFrameFovY', () => {
   })
 })
 
-describe('verticalCenterOffset', () => {
-  it('is zero when the target and canvas share a centre', () => {
-    expect(verticalCenterOffset(0, 900, 0, 900)).toBeCloseTo(0)
-    expect(verticalCenterOffset(170, 560, 0, 900)).toBeCloseTo(0)
+describe('centerOffset', () => {
+  const canvas = { left: 0, top: 0, width: 1440, height: 900 }
+
+  it('is zero on both axes when the target and canvas share a centre', () => {
+    expect(centerOffset(canvas, canvas)).toEqual({ x: 0, y: 0 })
+    expect(centerOffset({ left: 440, top: 170, width: 560, height: 560 }, canvas)).toEqual({ x: 0, y: 0 })
   })
 
-  it('is positive when the target sits below the canvas centre', () => {
-    // Target centred at y=400 (120..680), canvas centred at y=450 (0..900): target is above
-    // centre here, so this should be negative — flip the target down to check the positive case.
-    expect(verticalCenterOffset(120, 560, 0, 900)).toBeLessThan(0)
-    expect(verticalCenterOffset(220, 560, 0, 900)).toBeGreaterThan(0)
+  it('is negative for a target above or left of the canvas centre, positive below or right', () => {
+    expect(centerOffset({ left: 440, top: 120, width: 560, height: 560 }, canvas)).toEqual({ x: 0, y: -50 })
+    expect(centerOffset({ left: 440, top: 220, width: 560, height: 560 }, canvas)).toEqual({ x: 0, y: 50 })
+    expect(centerOffset({ left: 300, top: 170, width: 560, height: 560 }, canvas)).toEqual({ x: -140, y: 0 })
+    expect(centerOffset({ left: 600, top: 170, width: 560, height: 560 }, canvas)).toEqual({ x: 160, y: 0 })
   })
 })
 

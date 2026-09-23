@@ -163,7 +163,7 @@
 /* The breakpoint the rest of the HUD restacks at. Every control here meets the same 44px touch
    target the phone transport's own edge buttons do (`Timeline.module.css`'s
    `--edge-button-size`) — a tour a viewer cannot reliably dismiss is worse than no tour. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .skip,
   .secondary,
   .primary {

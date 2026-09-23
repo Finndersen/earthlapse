@@ -20,7 +20,7 @@
 /* The phone bottom sheet (`Panel.module.css`'s own `max-width: 760px` rule) already anchors to
    the bottom of the screen regardless of any margin — cancel the desktop offset so it doesn't
    also eat into the sheet's own height budget there. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .panel {
     margin-top: 0;
   }

@@ -3,7 +3,8 @@
  * T0 for the minimised orb, T1 once expanded on any device whose GPU can hold it.
  *
  * "Phone" (`useIsPhoneViewport` below) is this package's own name for `@/lib/
- * useIsCompactViewport`'s `(max-width: 760px)` query — see that module's own doc comment for why
+ * useIsCompactViewport`'s compact query (phone portrait or short landscape) — see that module's
+ * own doc comment for why
  * this is a re-export rather than a second, independent implementation. Still used elsewhere in
  * `web/src/globe/` for phone-specific chrome layout, even though tier selection itself no longer
  * branches on it.

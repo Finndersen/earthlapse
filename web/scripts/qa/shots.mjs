@@ -11,6 +11,10 @@
  *   ranges against dot-paths into that object.
  */
 
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { rafTicks } from './hook.mjs'
 import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf } from './measure.mjs'
 import { waitForApproxUnfoldProgress, waitForFocusEaseSettle, waitForSceneCrossfadeSettle } from './timeouts.mjs'
@@ -847,10 +851,14 @@ function desktopControlsRowShot(viewport, globeViewMode) {
  *  leaves, well below the sphere's — so a strip scan measures the sphere, not its halo. */
 const SPHERE_OVER_GLOW_THRESHOLD = 90
 
+/** The drawn sphere across `GLOBE_CHROME_FREE_STRIP`, with the scene and the event feed (which
+ *  rides above the expanded globe in the left column) hidden. */
 async function sphereStripBounds(page) {
   const restoreScene = await hideSceneAndVignette(page)
+  await page.evaluate((sel) => document.querySelector(sel)?.style.setProperty('visibility', 'hidden'), SHELL_FEED_SELECTOR)
   await rafTicks(page, 2)
   const bounds = await drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+  await page.evaluate((sel) => document.querySelector(sel)?.style.removeProperty('visibility'), SHELL_FEED_SELECTOR)
   await restoreScene()
   return bounds
 }
@@ -879,6 +887,1010 @@ async function switchGlobeViewMode(page, hook, mode) {
   await hook.setGlobeViewMode(mode)
   await waitForApproxUnfoldProgress(page, 1.5)
   await rafTicks(page, 3)
+}
+
+/** The short-landscape viewports (ADR-048): iPhone SE, a 6.1" and a 6.7" phone held sideways. */
+const LANDSCAPE_VIEWPORTS = [
+  { width: 667, height: 375 },
+  { width: 844, height: 390 },
+  { width: 932, height: 430 },
+]
+
+const SCENE_CAPTION_TITLE_SELECTOR = '[data-testid="scene-caption-title"]'
+const SCENE_CAPTION_TEXT_SELECTOR = '[data-testid="scene-caption-text"]'
+const SCENE_CAPTION_DETAIL_SELECTOR = '[data-testid="scene-caption-detail"]'
+const ANCESTOR_PORTRAIT_SELECTOR = '[data-testid="ancestor-portrait"]'
+
+/** How far a box pokes outside the viewport on its worst side, in CSS px — 0 or less when it
+ *  sits fully inside. */
+function viewportOverflowPx(box, viewport) {
+  return Math.max(-box.x, -box.y, box.x + box.width - viewport.width, box.y + box.height - viewport.height)
+}
+
+/** The smallest box containing every box given. */
+function unionBox(boxes) {
+  const x = Math.min(...boxes.map((b) => b.x))
+  const y = Math.min(...boxes.map((b) => b.y))
+  const right = Math.max(...boxes.map((b) => b.x + b.width))
+  const bottom = Math.max(...boxes.map((b) => b.y + b.height))
+  return { x, y, width: right - x, height: bottom - y }
+}
+
+/** Every unordered pair of `names`, in order. */
+function namePairs(names) {
+  return names.flatMap((a, i) => names.slice(i + 1).map((b) => [a, b]))
+}
+
+/** Whether each pair among `boxes` (a name -> box map) overlaps, as `overlap_<a>_<b>` flags. */
+function pairwiseOverlapFlags(boxes) {
+  return Object.fromEntries(
+    namePairs(Object.keys(boxes)).map(([a, b]) => [`overlap_${a}_${b}`, rectsOverlap(boxes[a], boxes[b]) ? 1 : 0]),
+  )
+}
+
+/** `expect` entries asserting no pair among `names` overlaps. */
+function noPairOverlaps(names) {
+  return Object.fromEntries(namePairs(names).map(([a, b]) => [`overlap_${a}_${b}`, [0, 0]]))
+}
+
+/**
+ * Hides everything but the expanded globe's own canvas — the scene, the vignette, the shell's
+ * HUD slots other than the globe's, and the globe's own controls — so a whole-viewport pixel scan
+ * sees the drawn sphere or map alone against the flat backdrop. `visibility`, so nothing reflows.
+ * Returns a restore callback.
+ * @param {import('playwright').Page} page
+ * @param {string[]} chromeSelectors
+ * @returns {Promise<() => Promise<void>>}
+ */
+async function hideAllButGlobeCanvas(page, chromeSelectors) {
+  await page.evaluate((selectors) => {
+    const shell = document.querySelector('[data-globe-expanded]')
+    const hud = shell?.children[2]
+    const targets = [shell?.children[0], shell?.children[1]]
+    if (hud) for (const child of hud.children) if (!child.contains(document.querySelector('div[data-map-mode]'))) targets.push(child)
+    for (const selector of selectors) targets.push(...document.querySelectorAll(selector))
+    for (const el of targets) {
+      if (el instanceof HTMLElement) {
+        el.dataset.qaHidden = el.style.visibility
+        el.style.visibility = 'hidden'
+      }
+    }
+  }, chromeSelectors)
+  return async () => {
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll('[data-qa-hidden]')) {
+        el.style.visibility = el.dataset.qaHidden
+        delete el.dataset.qaHidden
+      }
+    })
+  }
+}
+
+/** Closes the layer chart if an earlier shot left one open — it takes the caption's place. */
+async function closeLayerChart(page) {
+  const close = page.locator('[data-testid="layer-chart"] button[aria-label^="Close "]')
+  if ((await close.count()) > 0) {
+    await close.first().click()
+    await rafTicks(page, 2)
+  }
+}
+
+/**
+ * The short-landscape collapsed view (ADR-048): the timeline's track, ruler and bands and the
+ * transport all sit fully on screen; the ⋯ button shows and opens the mode/scale/volume cluster;
+ * none of the title, era shortcuts, globe orb, ancestor, caption, event strip and timeline
+ * overlap; the caption shows its title alone, and its ⓘ opens the passage in a panel.
+ * @param {{ width: number, height: number }} viewport
+ */
+function landscapeNormalShot(viewport) {
+  return {
+    name: `landscape-normal-${viewport.width}x${viewport.height}`,
+    description:
+      'Short-landscape collapsed view: track/axis/transport and the mode/scale/volume controls fully inside the ' +
+      'viewport, no overlap among the title, era shortcuts, orb, ancestor, caption, feed strip and timeline, the ' +
+      'caption showing its title alone, and its button opening the full description.',
+    viewport,
+    t: 0,
+    measure: async ({ page }) => {
+      await closeLayerChart(page)
+      const trackStack = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const bands = await boxOf(page, SECTION_BANDS_SELECTOR)
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+      const play = await boxOf(page, PLAY_BUTTON_SELECTOR)
+      const secondary = await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
+
+      const boxes = {
+        title: await boxOf(page, TIME_TITLE_SELECTOR),
+        era: await boxOf(page, ERA_SHORTCUTS_SELECTOR),
+        orb: await boxOf(page, GLOBE_EXPAND_SELECTOR),
+        ancestor: unionBox([await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR), await boxOf(page, '[data-testid="ancestor-readout"]')]),
+        caption: await captionLabelBox(page),
+        feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
+        timeline: await boxOf(page, BOTTOM_CHROME_SELECTOR),
+      }
+      const captionTextVisible = await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()
+
+      const captionButton = page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first()
+      let detailTextLength = 0
+      let detailOverflowPx = 0
+      let detailClosed = 0
+      if (await captionButton.isVisible()) {
+        await captionButton.click()
+        await rafTicks(page, 2)
+        detailOverflowPx = viewportOverflowPx(await boxOf(page, SCENE_CAPTION_DETAIL_SELECTOR), viewport)
+        detailTextLength = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).innerText()).trim().length
+        await page.keyboard.press('Escape')
+        await rafTicks(page, 2)
+        detailClosed = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).count()) === 0 ? 1 : 0
+      }
+      // Park the pointer off every control, so no hover state carries into the next shot.
+      await page.mouse.move(0, 0)
+
+      return {
+        trackOverflowPx: viewportOverflowPx(trackStack, viewport),
+        bandsOverflowPx: viewportOverflowPx(bands, viewport),
+        coreOverflowPx: viewportOverflowPx(core, viewport),
+        playOverflowPx: viewportOverflowPx(play, viewport),
+        secondaryOverflowPx: viewportOverflowPx(secondary, viewport),
+        captionTextVisible: captionTextVisible ? 1 : 0,
+        detailTextLength,
+        detailOverflowPx,
+        detailClosed,
+        timelineHeightPx: boxes.timeline.height,
+        ...pairwiseOverlapFlags(boxes),
+      }
+    },
+    expect: {
+      trackOverflowPx: [-400, 0],
+      bandsOverflowPx: [-400, 0],
+      coreOverflowPx: [-400, 0],
+      playOverflowPx: [-400, 0],
+      secondaryOverflowPx: [-400, 0],
+      captionTextVisible: [0, 0],
+      detailTextLength: [40, 2000],
+      detailOverflowPx: [-400, 0],
+      detailClosed: [1, 1],
+      ...noPairOverlaps(['title', 'era', 'orb', 'ancestor', 'caption', 'feed', 'timeline']),
+    },
+  }
+}
+
+/**
+ * The short-landscape expanded view (ADR-048): a left column (title, era shortcuts, overlay
+ * selector, Globe/Map toggle and zoom rocker) and the sphere or map to its right, as large as the
+ * height above the timeline allows, the timeline full width beneath both. The drawn sphere/map is
+ * measured over the whole viewport with everything but the globe canvas hidden, so it is found
+ * wherever it actually lands, not only inside the box it was meant for.
+ * @param {{ width: number, height: number }} viewport
+ * @param {'globe' | 'map'} globeViewMode
+ */
+function landscapeExpandedShot(viewport, globeViewMode) {
+  const columnSelectors = {
+    title: TIME_TITLE_SELECTOR,
+    era: ERA_SHORTCUTS_SELECTOR,
+    overlay: OVERLAY_SELECT_STACK_SELECTOR,
+    toggle: VIEW_MODE_TOGGLE_SELECTOR,
+    zoom: ZOOM_CONTROLS_SELECTOR,
+  }
+  const sphereExpect =
+    globeViewMode === 'globe' ? { sphereDeficitPx: [-400, 4] } : { mapFillFraction: [0.85, 1.05] }
+  return {
+    name: `landscape-${globeViewMode}-${viewport.width}x${viewport.height}`,
+    description:
+      `Short-landscape expanded ${globeViewMode}: the left column and the drawn ${globeViewMode === 'globe' ? 'sphere' : 'map'} ` +
+      'never overlap, the drawn shape sits right of the column and above the timeline, nothing overlaps the timeline, ' +
+      (globeViewMode === 'globe'
+        ? 'and the drawn sphere is at least the height above the timeline less 16px (4px tolerance).'
+        : 'and the drawn map fills the box right of the column (height- or width-bound) to within 15% — the map\'s own fit margin and curved Equal Earth outline take the rest.'),
+    viewport,
+    t: 0,
+    state: { globeExpanded: true, globeViewMode: 'globe' },
+    actions: async ({ page, hook }) => {
+      await openGlobeAtDefaultZoom(page, hook)
+      if (globeViewMode === 'map') await switchGlobeViewMode(page, hook, 'map')
+    },
+    measure: async ({ page }) => {
+      const column = {}
+      for (const [name, selector] of Object.entries(columnSelectors)) column[name] = await boxOf(page, selector)
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      const close = await boxOf(page, CLOSE_BUTTON_SELECTOR)
+      const columnRight = Math.max(...Object.values(column).map((b) => b.x + b.width))
+
+      const restore = await hideAllButGlobeCanvas(page, [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR])
+      await rafTicks(page, 2)
+      const shape = await drawnBoundsInClip(page, { x: 0, y: 0, width: viewport.width, height: viewport.height }, {
+        threshold: SPHERE_OVER_GLOW_THRESHOLD,
+      })
+      await restore()
+
+      const flags = {}
+      for (const [name, box] of Object.entries(column)) {
+        flags[`overlap_${name}_shape`] = rectsOverlap(box, shape) ? 1 : 0
+        flags[`overlap_${name}_timeline`] = rectsOverlap(box, timeline) ? 1 : 0
+      }
+      const boxRightOfColumn = close.x - 8 - (columnRight + 12)
+      return {
+        shape,
+        columnRight,
+        shapeRightOfColumnPx: shape.x - columnRight,
+        shapeAboveTimelinePx: timeline.y - (shape.y + shape.height),
+        overlap_close_shape: rectsOverlap(close, shape) ? 1 : 0,
+        overlap_close_timeline: rectsOverlap(close, timeline) ? 1 : 0,
+        availableHeightPx: timeline.y,
+        sphereDeficitPx: timeline.y - 16 - shape.height,
+        mapFillFraction: Math.max(shape.height / (timeline.y - 16), shape.width / boxRightOfColumn),
+        ...pairwiseOverlapFlags(column),
+        ...flags,
+      }
+    },
+    expect: {
+      'shape.width': [100, 2000],
+      shapeRightOfColumnPx: [0, 400],
+      shapeAboveTimelinePx: [0, 400],
+      overlap_close_shape: [0, 0],
+      overlap_close_timeline: [0, 0],
+      ...sphereExpect,
+      ...Object.fromEntries(
+        Object.keys(columnSelectors).flatMap((name) => [
+          [`overlap_${name}_shape`, [0, 0]],
+          [`overlap_${name}_timeline`, [0, 0]],
+        ]),
+      ),
+      ...noPairOverlaps(Object.keys(columnSelectors)),
+    },
+  }
+}
+
+/** Every published scene, read the way `shots.scene-framing.mjs` reads them. */
+const PUBLISHED_SCENES = JSON.parse(
+  readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '../../public/media/manifest.json'), 'utf8'),
+).scenes
+
+/**
+ * Runs inside the page: the rendered line count of the caption passage showing `caption`, from
+ * its text's Range client rects (one distinct top per line) — or `null` while no caption with that
+ * text is in the DOM yet. Counts lines a line clamp hides too, since they are still laid out.
+ */
+function captionLineCount(caption) {
+  const el = [...document.querySelectorAll('[data-testid="scene-caption-text"]')].find((node) => node.textContent === caption)
+  if (el === undefined) return null
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  const tops = [...range.getClientRects()].filter((rect) => rect.width > 1).map((rect) => rect.top)
+  const lines = []
+  for (const top of tops.sort((a, b) => a - b)) if (lines.length === 0 || top - lines[lines.length - 1] > 2) lines.push(top)
+  return lines.length
+}
+
+/**
+ * The drawn horizontal extent of whatever sits over the backdrop along one row, from a black/white
+ * difference matte (`alphaEdgeDiameter`'s method) with the scene and vignette hidden: the leftmost
+ * and rightmost pixel at least `minAlpha` opaque. For a soft scrim, where "drawn" means "still
+ * darkens the photo noticeably".
+ * @param {import('playwright').Page} page
+ * @param {number} y page-absolute CSS px
+ * @param {number} minAlpha
+ * @returns {Promise<{left: number, right: number, width: number}>}
+ */
+async function drawnRowExtent(page, y, minAlpha) {
+  const viewport = page.viewportSize()
+  const clip = { x: 0, y: Math.round(y), width: viewport.width, height: 1 }
+  const restoreScene = await hideSceneAndVignette(page)
+  const setBackdrop = (color) =>
+    page.evaluate((c) => {
+      document.querySelector('[data-globe-expanded]').style.background = c
+    }, color)
+  await setBackdrop('#000000')
+  const blackPng = await page.screenshot({ clip })
+  await setBackdrop('#ffffff')
+  const whitePng = await page.screenshot({ clip })
+  await setBackdrop('')
+  await restoreScene()
+  return page.evaluate(
+    async ({ blackDataUrl, whiteDataUrl, minAlpha: threshold }) => {
+      const load = (src) =>
+        new Promise((resolve, reject) => {
+          const el = new Image()
+          el.onload = () => resolve(el)
+          el.onerror = () => reject(new Error('drawnRowExtent: failed to decode a probe screenshot'))
+          el.src = src
+        })
+      const [black, white] = await Promise.all([load(blackDataUrl), load(whiteDataUrl)])
+      const canvas = document.createElement('canvas')
+      canvas.width = black.naturalWidth
+      canvas.height = black.naturalHeight
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(black, 0, 0)
+      const b = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.drawImage(white, 0, 0)
+      const w = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+      let left = -1
+      let right = -1
+      for (let x = 0; x < canvas.width; x += 1) {
+        const i = x * 4
+        const diff = (Math.abs(w[i] - b[i]) + Math.abs(w[i + 1] - b[i + 1]) + Math.abs(w[i + 2] - b[i + 2])) / 3
+        if (1 - diff / 255 >= threshold) {
+          if (left < 0) left = x
+          right = x
+        }
+      }
+      return left < 0 ? { left: 0, right: 0, width: 0 } : { left, right: right + 1, width: right + 1 - left }
+    },
+    {
+      blackDataUrl: `data:image/png;base64,${blackPng.toString('base64')}`,
+      whiteDataUrl: `data:image/png;base64,${whitePng.toString('base64')}`,
+      minAlpha,
+    },
+  )
+}
+
+/**
+ * Phone portrait: the scene description's rendered line count across every published scene, and
+ * the width of the dark shade behind it. `t` jumps to each scene in turn and the count is read as
+ * soon as that scene's caption is in the DOM — line count does not depend on the crossfade's
+ * progress, so no settle wait per scene.
+ * @param {{ width: number, height: number }} viewport
+ */
+function portraitCaptionLinesShot(viewport) {
+  return {
+    name: `portrait-caption-lines-${viewport.width}x${viewport.height}`,
+    description:
+      'Phone portrait: no published scene description runs past 3 lines (Range client rects, so lines a clamp ' +
+      'hides still count), the share on 2 lines or fewer does not fall, and the shade behind the caption spans ' +
+      'the full viewport width (black/white difference matte along the caption row, scene hidden). Most ' +
+      'descriptions run ~150-180 characters, so 2 lines for most of them would need type near 9px; at the ' +
+      '12.5px floor about one in seven fits on 2.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      const counts = []
+      const notShown = []
+      for (const scene of PUBLISHED_SCENES) {
+        await hook.setT(scene.t)
+        const handle = await page
+          .waitForFunction(captionLineCount, scene.caption, { timeout: 5000, polling: 'raf' })
+          .catch(() => null)
+        if (handle === null) notShown.push(scene.id)
+        else counts.push({ id: scene.id, lines: await handle.jsonValue() })
+      }
+      const histogram = {}
+      for (const { lines } of counts) histogram[lines] = (histogram[lines] ?? 0) + 1
+
+      await hook.setT(0)
+      await waitForSceneCrossfadeSettle(page)
+      await hook.ready()
+      const text = await boxOf(page, SCENE_CAPTION_TEXT_SELECTOR)
+      const shade = await drawnRowExtent(page, text.y + text.height / 2, 0.15)
+
+      return {
+        scenes: counts.length,
+        scenesNotShown: notShown.length,
+        notShown,
+        histogram,
+        longest: counts.filter(({ lines }) => lines > 2).map(({ id, lines }) => `${id}:${lines}`),
+        fractionAtMostTwoLines: counts.filter(({ lines }) => lines <= 2).length / Math.max(1, counts.length),
+        maxLines: Math.max(...counts.map(({ lines }) => lines)),
+        shade,
+        shadeWidthDeltaPx: shade.width - viewport.width,
+        textInsetLeftPx: text.x,
+        textInsetRightPx: viewport.width - (text.x + text.width),
+      }
+    },
+    expect: {
+      scenes: [PUBLISHED_SCENES.length, PUBLISHED_SCENES.length],
+      scenesNotShown: [0, 0],
+      fractionAtMostTwoLines: [0.12, 1],
+      maxLines: [1, 3],
+      shadeWidthDeltaPx: [-2, 2],
+      textInsetLeftPx: [10, 18],
+      textInsetRightPx: [10, 18],
+    },
+  }
+}
+
+/** Enters the Cenozoic from the root section, so there is a breadcrumb trail to measure. A shot
+ *  that inherits a deeper section from an earlier one keeps it. */
+async function enterSectionIfAtRoot(page) {
+  if ((await page.locator(BREADCRUMB_SELECTOR).count()) > 0) return
+  await page.getByRole('button', { name: /^Cenozoic,/ }).click()
+  await rafTicks(page, 2)
+}
+
+/** Returns the timeline to its root section by the root crumb, when a section is entered. */
+async function goToRootSection(page) {
+  const rootCrumb = page.locator(`${BREADCRUMB_SELECTOR} button[aria-label="Earth"]`)
+  if ((await rootCrumb.count()) > 0) {
+    await rootCrumb.click()
+    await rafTicks(page, 2)
+  }
+}
+
+/**
+ * The breadcrumb at the root section: nothing is drawn and no `nav` landmark exists. On a phone
+ * (portrait or short landscape) its row is removed; on desktop the row keeps its height, so the
+ * track does not move when a section is entered. Entering one (the Dinosaurs shortcut) draws the
+ * trail. Returns to the root afterwards so the next shot starts there.
+ * @param {{ width: number, height: number }} viewport
+ * @param {'phone' | 'landscape' | 'desktop'} layout
+ */
+function breadcrumbAtRootShot(viewport, layout) {
+  const layoutExpect =
+    layout === 'desktop'
+      ? { trackYShiftOnEnterPx: [-1, 1] }
+      : layout === 'phone'
+        ? { sectionsHeightAtRootPx: [0, 0], trackTopOffsetAtRootPx: [0, 1] }
+        : { sectionsHeightAtRootPx: [0, 0] }
+  return {
+    name: `breadcrumb-hidden-at-root-${viewport.width}x${viewport.height}`,
+    description:
+      'At the root section no breadcrumb is drawn and no empty `nav` landmark exists; ' +
+      (layout === 'desktop'
+        ? "the row keeps its height, so the track's y is unchanged (±1px) once a section is entered; "
+        : "the row takes no height at all; ") +
+      'after entering a section (the Dinosaurs shortcut) the crumbs are drawn.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await goToRootSection(page)
+      await hook.setT(0)
+      await rafTicks(page, 2)
+      const timelineAtRoot = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+      const trackAtRoot = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const sectionsAtRoot = await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
+      const navLandmarksAtRoot = await page.locator(BREADCRUMB_SELECTOR).count()
+      const sectionsTextAtRoot = (await page.locator(TIMELINE_CONTROLS_SECTIONS_SELECTOR).textContent())?.trim() ?? ''
+
+      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
+      await hook.ready()
+      await rafTicks(page, 2)
+      const trackInSection = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const crumbs = await crumbDrawnBounds(page, `${BREADCRUMB_SELECTOR} ol`)
+      await goToRootSection(page)
+
+      return {
+        navLandmarksAtRoot,
+        sectionsTextLengthAtRoot: sectionsTextAtRoot.length,
+        sectionsHeightAtRootPx: sectionsAtRoot.height,
+        trackTopOffsetAtRootPx: trackAtRoot.y - timelineAtRoot.y,
+        trackYShiftOnEnterPx: trackInSection.y - trackAtRoot.y,
+        crumbsDrawnInSection: crumbs.filter((box) => box.width > 0 && box.height > 0).length,
+      }
+    },
+    expect: {
+      navLandmarksAtRoot: [0, 0],
+      sectionsTextLengthAtRoot: [0, 0],
+      crumbsDrawnInSection: [2, 10],
+      ...layoutExpect,
+    },
+  }
+}
+
+/** Navigates from the root section down the bands named, one level per click. */
+async function enterSections(page, bandNames) {
+  await goToRootSection(page)
+  for (const name of bandNames) {
+    await page.getByRole('button', { name: new RegExp(`^${name},`) }).click()
+    await rafTicks(page, 2)
+  }
+}
+
+const DEEPEST_SECTION_PATH = ['Cenozoic', 'Quaternary', 'Holocene', 'Ancient civilisations']
+const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeLabel"]`
+const SCENE_CAPTION_BLOCK_SELECTOR = '[data-testid="scene-caption"]'
+
+/** The drawn diameter of the minimised globe orb, with the scene hidden so only the sphere counts. */
+async function minimisedOrbDrawnBounds(page) {
+  const restoreScene = await hideSceneAndVignette(page)
+  await rafTicks(page, 2)
+  const box = await boxOf(page, GLOBE_CANVAS_SELECTOR)
+  const bounds = await drawnBoundsInClip(page, box, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+  await restoreScene()
+  return bounds
+}
+
+const SCENE_CAPTION_BUTTON_SELECTOR = '[data-testid="scene-caption-button"]'
+
+/** The caption's own drawn label box: the short-landscape title button where it shows, else the
+ *  title heading. */
+async function captionLabelBox(page) {
+  const button = page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first()
+  return (await button.isVisible()) ? boxOf(page, SCENE_CAPTION_BUTTON_SELECTOR) : boxOf(page, SCENE_CAPTION_TITLE_SELECTOR)
+}
+
+/**
+ * The short-landscape collapsed HUD: the globe orb and ancestor portrait drawn as large as the
+ * height allows; the time title centred with an era shortcut either side of it (or both to its
+ * right where the width is short); none of the title, shortcuts, orb, ancestor, caption, feed and
+ * timeline overlapping, inside a section as well as at the root; and a clear gap between the
+ * caption and the playhead's time label.
+ * @param {{ width: number, height: number }} viewport
+ */
+function landscapeHudShot(viewport) {
+  const orbMinPx = Math.round(viewport.height * 0.29)
+  const portraitMinPx = Math.round(viewport.height * 0.25)
+  return {
+    name: `landscape-hud-${viewport.width}x${viewport.height}`,
+    description:
+      `Short-landscape HUD: the drawn orb is at least ${orbMinPx}px and the drawn portrait at least ${portraitMinPx}px ` +
+      '(29% and 25% of the height), the time title is centred (±3px) with the era shortcuts beside it, nothing among ' +
+      'title, shortcuts, orb, ancestor, caption, feed and timeline overlaps (at the root and inside a section), and ' +
+      'the caption clears the playhead label by at least 4px.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      await goToRootSection(page)
+      await hook.setT(0)
+      await waitForSceneCrossfadeSettle(page)
+      await hook.ready()
+      const orb = await minimisedOrbDrawnBounds(page)
+      const portrait = await alphaEdgeDiameter(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
+      const title = await boxOf(page, TIME_TITLE_SELECTOR)
+
+      const layoutAt = async () => {
+        const shortcuts = page.locator(`${ERA_SHORTCUTS_SELECTOR} button`)
+        const boxes = {
+          title: await boxOf(page, TIME_TITLE_SELECTOR),
+          dinosaurs: (await shortcuts.nth(0).boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 },
+          humans: (await shortcuts.nth(1).boundingBox()) ?? { x: 0, y: 0, width: 0, height: 0 },
+          orb: await boxOf(page, GLOBE_EXPAND_SELECTOR),
+          ancestor: unionBox([
+            await boxOf(page, 'button[aria-label="About & credits"]'),
+            await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR),
+            await boxOf(page, '[data-testid="ancestor-readout"]'),
+          ]),
+          caption: await captionLabelBox(page),
+          feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
+          timeline: await boxOf(page, BOTTOM_CHROME_SELECTOR),
+        }
+        const label = await boxOf(page, PLAYHEAD_LABEL_SELECTOR)
+        return { boxes, captionToLabelGapPx: label.y - (boxes.caption.y + boxes.caption.height) }
+      }
+      const atRoot = await layoutAt()
+      await page.getByRole('button', { name: /^Dinosaurs — / }).click()
+      await hook.ready()
+      await rafTicks(page, 2)
+      const inSection = await layoutAt()
+      await goToRootSection(page)
+
+      const overlapsAtRoot = pairwiseOverlapFlags(atRoot.boxes)
+      const overlapsInSection = pairwiseOverlapFlags(inSection.boxes)
+      const overlapCount = (flags) => Object.values(flags).reduce((sum, v) => sum + v, 0)
+      return {
+        orbDrawnDiameterPx: orb.height,
+        portraitDrawnDiameterPx: portrait.height,
+        titleCentreOffsetPx: title.x + title.width / 2 - viewport.width / 2,
+        overlapsAtRoot: overlapCount(overlapsAtRoot),
+        overlapsInSection: overlapCount(overlapsInSection),
+        overlappingPairs: Object.keys({ ...overlapsAtRoot, ...overlapsInSection }).filter(
+          (k) => overlapsAtRoot[k] === 1 || overlapsInSection[k] === 1,
+        ),
+        captionToLabelGapPx: Math.min(atRoot.captionToLabelGapPx, inSection.captionToLabelGapPx),
+      }
+    },
+    expect: {
+      orbDrawnDiameterPx: [orbMinPx, 400],
+      portraitDrawnDiameterPx: [portraitMinPx, 400],
+      titleCentreOffsetPx: [-3, 3],
+      overlapsAtRoot: [0, 0],
+      overlapsInSection: [0, 0],
+      captionToLabelGapPx: [4, 400],
+    },
+  }
+}
+
+/**
+ * The short-landscape timeline: the breadcrumb on its own row above the track (gone at the root),
+ * the mode, scale and volume controls on one row under the transport. The track
+ * and play button hold their x at every depth, and their y from one level deep to the deepest
+ * (truncated) trail. At 844×390 every section band label shows whole.
+ * @param {{ width: number, height: number }} viewport
+ */
+function landscapeTimelineShot(viewport) {
+  const secondaryParts = {
+    mode: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [role="group"]:not([class*="scaleOptions"])`,
+    scale: `${TIMELINE_CONTROLS_SECONDARY_SELECTOR} [class*="scaleOptions"]`,
+    sound: '[data-testid="timeline-sound-slot"]',
+  }
+  const checkBands = viewport.width === 844
+  return {
+    name: `landscape-timeline-${viewport.width}x${viewport.height}`,
+    description:
+      'Short-landscape timeline: breadcrumb above the track, the mode/scale/volume controls drawn on one row under ' +
+      'the transport (inside the viewport, each at least 32px tall, clear of the transport and track), the track and play button fixed in x across depths and in y from depth 1 to the deepest trail' +
+      (checkBands ? ', and no section band label clipped.' : '.'),
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      await goToRootSection(page)
+      await hook.setT(0)
+      await rafTicks(page, 2)
+      const positions = async () => ({
+        track: await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR),
+        play: await boxOf(page, PLAY_BUTTON_SELECTOR),
+      })
+      const bandsClipped = () =>
+        page.evaluate(() => {
+          const strip = document.querySelector('[data-section-bands]')
+          if (strip === null) return -1
+          const stripRect = strip.getBoundingClientRect()
+          const labels = [...strip.querySelectorAll('li span')]
+          const clipped = labels.filter((label) => {
+            const rect = label.getBoundingClientRect()
+            return label.scrollWidth > label.clientWidth + 0.5 || rect.right > stripRect.right + 0.5 || rect.left < stripRect.left - 0.5
+          })
+          return clipped.length + (strip.scrollWidth > strip.clientWidth + 1 ? 1 : 0)
+        })
+      const root = await positions()
+      await enterSections(page, DEEPEST_SECTION_PATH.slice(0, 1))
+      const depth1 = await positions()
+      const nav = await boxOf(page, BREADCRUMB_SELECTOR)
+      let clippedBands = await bandsClipped()
+      for (const name of DEEPEST_SECTION_PATH.slice(1)) {
+        await page.getByRole('button', { name: new RegExp(`^${name},`) }).click()
+        await rafTicks(page, 2)
+        clippedBands = Math.max(clippedBands, await bandsClipped())
+      }
+      await hook.ready()
+      const deepest = await positions()
+      const core = await boxOf(page, TIMELINE_CONTROLS_CORE_SELECTOR)
+
+      const parts = {}
+      for (const [name, selector] of Object.entries(secondaryParts)) {
+        const locator = page.locator(selector).first()
+        parts[name] = (await locator.isVisible()) ? await boxOf(page, selector) : { x: 0, y: -999, width: 0, height: 0 }
+      }
+      const centres = Object.values(parts).map((b) => b.y + b.height / 2)
+      await goToRootSection(page)
+
+      const xs = [root, depth1, deepest]
+      const maxShift = (key, axis, list) => Math.max(...list.map((p) => Math.abs(p[key][axis] - list[0][key][axis])))
+      return {
+        trackXShiftPx: maxShift('track', 'x', xs),
+        playXShiftPx: maxShift('play', 'x', xs),
+        trackYShiftPx: maxShift('track', 'y', [depth1, deepest]),
+        playYShiftPx: maxShift('play', 'y', [depth1, deepest]),
+        breadcrumbAboveTrackPx: depth1.track.y - (nav.y + nav.height),
+        secondaryOverflowPx: Math.max(...Object.values(parts).map((b) => viewportOverflowPx(b, viewport))),
+        secondaryMinHeightPx: Math.min(...Object.values(parts).map((b) => b.height)),
+        secondaryCentreSpreadPx: Math.max(...centres) - Math.min(...centres),
+        secondaryOverlapsTransport: Object.values(parts).some((b) => rectsOverlap(b, core)) ? 1 : 0,
+        secondaryOverlapsTrack: Object.values(parts).some((b) => rectsOverlap(b, deepest.track)) ? 1 : 0,
+        clippedBands,
+      }
+    },
+    expect: {
+      trackXShiftPx: [0, 0.5],
+      playXShiftPx: [0, 0.5],
+      trackYShiftPx: [0, 0.5],
+      playYShiftPx: [0, 0.5],
+      breadcrumbAboveTrackPx: [0, 20],
+      secondaryOverflowPx: [-400, 0],
+      secondaryMinHeightPx: [32, 60],
+      secondaryCentreSpreadPx: [0, 2],
+      secondaryOverlapsTransport: [0, 0],
+      secondaryOverlapsTrack: [0, 0],
+      ...(checkBands ? { clippedBands: [0, 0] } : {}),
+    },
+  }
+}
+
+/**
+ * Short landscape: the caption label itself is the button that opens the full description — a
+ * tap near the title's left edge, well away from the ⓘ, opens it.
+ */
+function landscapeCaptionTapShot(viewport) {
+  return {
+    name: `landscape-caption-tap-${viewport.width}x${viewport.height}`,
+    description:
+      'Short landscape: the whole caption label is one button named "<title> — show description"; a click near ' +
+      "the title text's left edge, away from the ⓘ, opens the description panel.",
+    viewport,
+    t: 0,
+    measure: async ({ page }) => {
+      await closeLayerChart(page)
+      const buttonTitle = page.locator(`${SCENE_CAPTION_BUTTON_SELECTOR} span`).first()
+      const title = (await buttonTitle.isVisible())
+        ? await boxOf(page, `${SCENE_CAPTION_BUTTON_SELECTOR} span`)
+        : await boxOf(page, SCENE_CAPTION_TITLE_SELECTOR)
+      const titleText = ((await page.locator(SCENE_CAPTION_TITLE_SELECTOR).first().textContent()) ?? '').trim()
+      const namedButtons = await page.getByRole('button', { name: `${titleText} — show description` }).count()
+      await page.mouse.click(title.x + 4, title.y + title.height / 2)
+      await rafTicks(page, 2)
+      const opened = (await page.locator(SCENE_CAPTION_DETAIL_SELECTOR).count()) > 0 ? 1 : 0
+      if (opened) {
+        await page.keyboard.press('Escape')
+        await rafTicks(page, 2)
+      }
+      await page.mouse.move(0, 0)
+      return { namedButtons, opened }
+    },
+    expect: { namedButtons: [1, 1], opened: [1, 1] },
+  }
+}
+
+/**
+ * Desktop/tablet: the controls row under the section bands, four levels deep. The play button is
+ * centred on the track; the transport sits midway between the band row and the viewport bottom;
+ * the breadcrumb shares its centre line; nothing in the row overlaps; and the current crumb shows
+ * whole.
+ * @param {{ width: number, height: number }} viewport
+ */
+function desktopTimelineRowShot(viewport) {
+  return {
+    name: `desktop-timeline-row-${viewport.width}x${viewport.height}`,
+    description:
+      'Desktop controls row four levels deep: the play button centred on the track (±2px), equal gaps above ' +
+      '(to the band row) and below (to the viewport bottom) its drawn box (±3px), the breadcrumb on its centre ' +
+      'line (±2px), no overlap among breadcrumb, speed select, transport buttons and secondary cluster, and the ' +
+      'current crumb not truncated.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      await hook.setT(8500)
+      await enterSections(page, DEEPEST_SECTION_PATH.slice(0, 3))
+      await hook.ready()
+      const bands = await boxOf(page, SECTION_BANDS_SELECTOR)
+      const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
+      const play = await boxOf(page, PLAY_BUTTON_SELECTOR)
+      const nav = await boxOf(page, BREADCRUMB_SELECTOR)
+      const boxes = {
+        breadcrumb: nav,
+        speed: await boxOf(page, `${TIMELINE_CONTROLS_CORE_SELECTOR} select`),
+        transport: await page.evaluate((sel) => {
+          const rect = document.querySelector(sel).parentElement.getBoundingClientRect()
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
+        }, PLAY_BUTTON_SELECTOR),
+        secondary: await boxOf(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR),
+      }
+      const currentTruncated = await page.evaluate((sel) => {
+        const el = document.querySelector(sel)
+        return el !== null && el.scrollWidth > el.clientWidth + 0.5 ? 1 : 0
+      }, BREADCRUMB_CURRENT_SELECTOR)
+      const gapAbove = play.y - (bands.y + bands.height)
+      const gapBelow = viewport.height - (play.y + play.height)
+      await goToRootSection(page)
+      await hook.setT(0)
+      return {
+        playCentreOffsetPx: play.x + play.width / 2 - (track.x + track.width / 2),
+        gapAbovePx: gapAbove,
+        gapBelowPx: gapBelow,
+        centringDeltaPx: Math.abs(gapAbove - gapBelow),
+        breadcrumbCentreOffsetPx: nav.y + nav.height / 2 - (play.y + play.height / 2),
+        currentCrumbTruncated: currentTruncated,
+        ...pairwiseOverlapFlags(boxes),
+      }
+    },
+    expect: {
+      playCentreOffsetPx: [-2, 2],
+      centringDeltaPx: [0, 3],
+      breadcrumbCentreOffsetPx: [-2, 2],
+      currentCrumbTruncated: [0, 0],
+      ...noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary']),
+    },
+  }
+}
+
+/**
+ * Desktop/tablet: the globe orb's drawn top sits at the top chrome inset, level with the top of
+ * the ancestor column opposite (the About button that leads it), with its readout still under it
+ * and nothing among orb, readout, title, era shortcuts and feed overlapping.
+ * @param {{ width: number, height: number }} viewport
+ */
+function desktopOrbTopShot(viewport) {
+  return {
+    name: `desktop-orb-top-${viewport.width}x${viewport.height}`,
+    description:
+      "Desktop: the orb's drawn top (scene hidden) within 4px of the top inset the About button sits at, level " +
+      'with the ancestor column (±3px), and no overlap among orb, readout, title, era shortcuts and feed.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      await hook.ready()
+      const orb = await minimisedOrbDrawnBounds(page)
+      const about = await boxOf(page, 'button[aria-label="About & credits"]')
+      const ancestorColumnTop = Math.min(about.y, (await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR)).y)
+      const boxes = {
+        orb,
+        readout: await boxOf(page, SHELL_READOUTS_SELECTOR),
+        title: await boxOf(page, TIME_TITLE_SELECTOR),
+        era: await boxOf(page, ERA_SHORTCUTS_SELECTOR),
+        feed: await boxOf(page, EVENT_FEED_ITEM_SELECTOR),
+      }
+      return {
+        orbTopPx: orb.y,
+        topInsetPx: about.y,
+        orbTopOffsetPx: orb.y - about.y,
+        orbToAncestorTopPx: orb.y - ancestorColumnTop,
+        readoutGapPx: boxes.readout.y - (orb.y + orb.height),
+        ...pairwiseOverlapFlags(boxes),
+      }
+    },
+    expect: {
+      orbTopOffsetPx: [-4, 4],
+      orbToAncestorTopPx: [-3, 3],
+      readoutGapPx: [0, 40],
+      ...noPairOverlaps(['orb', 'readout', 'title', 'era', 'feed']),
+    },
+  }
+}
+
+/**
+ * Short landscape: the scene caption shares the event strip's row, right of it. The row splits
+ * into fixed regions — the strip's 45% on the left, the caption centred in the 55% right of it —
+ * so the caption never slides as the strip's text changes.
+ * @param {{ width: number, height: number }} viewport
+ */
+function landscapeCaptionRowShot(viewport) {
+  return {
+    name: `landscape-caption-row-${viewport.width}x${viewport.height}`,
+    description:
+      'Short landscape: the feed strip and the caption share one row (centre-y ±3px, gap ≥ 8px), the caption is ' +
+      "centred in its region (the row's right 55%, ±3px), its centre-x holds (±0.5px) across two t values with " +
+      'different feed text, and it clears the playhead label by at least 4px.',
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      await goToRootSection(page)
+      const sample = async (t) => {
+        await hook.setT(t)
+        await waitForSceneCrossfadeSettle(page)
+        await hook.ready()
+        await rafTicks(page, 2)
+        const caption = await captionLabelBox(page)
+        const feed = await boxOf(page, EVENT_FEED_ITEM_SELECTOR)
+        const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
+        const label = await boxOf(page, PLAYHEAD_LABEL_SELECTOR)
+        const regionLeft = timeline.x + 0.45 * timeline.width
+        const regionRight = timeline.x + timeline.width
+        return {
+          caption,
+          feedText: (await page.locator(EVENT_FEED_ITEM_SELECTOR).first().innerText()).trim(),
+          sharedRowOffsetPx: caption.y + caption.height / 2 - (feed.y + feed.height / 2),
+          feedToCaptionGapPx: caption.x - (feed.x + feed.width),
+          regionCentreOffsetPx: caption.x + caption.width / 2 - (regionLeft + regionRight) / 2,
+          captionToLabelGapPx: label.y - (caption.y + caption.height),
+        }
+      }
+      const first = await sample(0)
+      const second = await sample(8500)
+      await hook.setT(0)
+      return {
+        sharedRowOffsetPx: Math.max(Math.abs(first.sharedRowOffsetPx), Math.abs(second.sharedRowOffsetPx)),
+        feedToCaptionGapPx: Math.min(first.feedToCaptionGapPx, second.feedToCaptionGapPx),
+        regionCentreOffsetPx: Math.max(Math.abs(first.regionCentreOffsetPx), Math.abs(second.regionCentreOffsetPx)),
+        feedTextChanged: first.feedText !== second.feedText ? 1 : 0,
+        captionCentreShiftPx: Math.abs(
+          first.caption.x + first.caption.width / 2 - (second.caption.x + second.caption.width / 2),
+        ),
+        captionToLabelGapPx: Math.min(first.captionToLabelGapPx, second.captionToLabelGapPx),
+      }
+    },
+    expect: {
+      sharedRowOffsetPx: [0, 3],
+      feedToCaptionGapPx: [8, 800],
+      regionCentreOffsetPx: [0, 3],
+      feedTextChanged: [1, 1],
+      captionCentreShiftPx: [0, 0.5],
+      captionToLabelGapPx: [4, 400],
+    },
+  }
+}
+
+/** The brightest published plates, where the caption's shade matters most: an ice world, a bright
+ *  savanna and a sky-heavy desert. */
+const BRIGHT_CAPTION_SCENES = ['cryogenian-snowball', 'green-sahara', 'giza-great-pyramid']
+
+/** Relative luminance of an sRGB colour (WCAG 2.x). */
+function relativeLuminance([r, g, b]) {
+  const channel = (c) => {
+    const v = c / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+/** `--hud-ink`, the caption's text colour. */
+const HUD_INK_RGB = [0xef, 0xe9, 0xdc]
+
+/**
+ * Runs inside the page: the 95th-percentile relative luminance of a screenshot — the bright end of
+ * what sits behind the caption's text, which is what its contrast has to survive.
+ */
+async function brightLuminanceOf({ dataUrl }) {
+  const image = await new Promise((resolve, reject) => {
+    const el = new Image()
+    el.onload = () => resolve(el)
+    el.onerror = () => reject(new Error('brightLuminanceOf: failed to decode the probe screenshot'))
+    el.src = dataUrl
+  })
+  const canvas = document.createElement('canvas')
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+  const ctx = canvas.getContext('2d')
+  ctx.drawImage(image, 0, 0)
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height)
+  const channel = (c) => {
+    const v = c / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  const values = []
+  for (let i = 0; i < data.length; i += 4) values.push(0.2126 * channel(data[i]) + 0.7152 * channel(data[i + 1]) + 0.0722 * channel(data[i + 2]))
+  values.sort((a, b) => a - b)
+  return values[Math.floor(values.length * 0.95)]
+}
+
+/**
+ * The caption's legibility over the brightest plates: with the caption text hidden (its shade
+ * left drawn), the bright end of the luminance behind where the text sits, turned into a WCAG
+ * contrast ratio against the text colour. `minContrast` is the floor.
+ * @param {{ width: number, height: number }} viewport
+ * @param {number} minContrast
+ */
+function captionContrastShot(viewport, minContrast) {
+  return {
+    name: `caption-contrast-${viewport.width}x${viewport.height}`,
+    description:
+      `The caption text's contrast against the drawn background behind it (text hidden, shade drawn, 95th-percentile ` +
+      `luminance) over ${BRIGHT_CAPTION_SCENES.join(', ')} stays at or above ${minContrast}:1.`,
+    viewport,
+    t: 0,
+    measure: async ({ page, hook }) => {
+      await closeLayerChart(page)
+      const contrasts = {}
+      for (const id of BRIGHT_CAPTION_SCENES) {
+        const scene = PUBLISHED_SCENES.find((candidate) => candidate.id === id)
+        await hook.setT(scene.t)
+        await waitForSceneCrossfadeSettle(page)
+        await hook.ready()
+        await rafTicks(page, 2)
+        const textSelectors = [SCENE_CAPTION_TITLE_SELECTOR, SCENE_CAPTION_BUTTON_SELECTOR, SCENE_CAPTION_TEXT_SELECTOR]
+        const visibleBoxes = []
+        for (const selector of textSelectors) {
+          const locator = page.locator(selector).first()
+          if (await locator.isVisible()) visibleBoxes.push(await boxOf(page, selector))
+        }
+        const clip = unionBox(visibleBoxes)
+        await page.evaluate(() => {
+          for (const el of document.querySelectorAll(`${'[data-testid="scene-caption"]'} *`)) {
+            if (el instanceof HTMLElement) el.style.setProperty('visibility', 'hidden')
+          }
+        })
+        await rafTicks(page, 2)
+        const png = await page.screenshot({
+          clip: { x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) },
+        })
+        await page.evaluate(() => {
+          for (const el of document.querySelectorAll(`${'[data-testid="scene-caption"]'} *`)) {
+            if (el instanceof HTMLElement) el.style.removeProperty('visibility')
+          }
+        })
+        const background = await page.evaluate(brightLuminanceOf, { dataUrl: `data:image/png;base64,${png.toString('base64')}` })
+        contrasts[id] = (relativeLuminance(HUD_INK_RGB) + 0.05) / (background + 0.05)
+      }
+      await hook.setT(0)
+      await waitForSceneCrossfadeSettle(page)
+      return { contrasts, minContrast: Math.min(...Object.values(contrasts)) }
+    },
+    expect: { minContrast: [minContrast, 30] },
+  }
+}
+
+/** Screenshot-only: a bright plate's caption, for reviewing the shade by eye. */
+function captionReviewShot(viewport, sceneId) {
+  const scene = PUBLISHED_SCENES.find((candidate) => candidate.id === sceneId)
+  return {
+    name: `caption-review-${sceneId}-${viewport.width}x${viewport.height}`,
+    description: `Screenshot for review: the caption over "${scene.title}".`,
+    viewport,
+    t: scene.t,
+    actions: async ({ page }) => closeLayerChart(page),
+  }
 }
 
 export default [
@@ -1050,10 +2062,11 @@ export default [
     measure: async ({ page }) => {
       const sphere = await drawnBoundsInClip(page, await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
       const feed = await boxOf(page, SHELL_FEED_SELECTOR)
-      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      // The timeline's top row: the breadcrumb once a section is entered, the track at the root.
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
       return {
         feedBelowSphereGapPx: feed.y - (sphere.y + sphere.height),
-        breadcrumbBelowFeedGapPx: breadcrumb.y - (feed.y + feed.height),
+        breadcrumbBelowFeedGapPx: timeline.y - (feed.y + feed.height),
       }
     },
     // The gap to the breadcrumb is deliberately small (a normal band gap, not the vacated band a
@@ -1466,9 +2479,10 @@ export default [
   {
     name: 'globe-view-mode-toggle-clear-of-sphere-short',
     description:
-      'Same as `globe-view-mode-toggle-clear-of-sphere`, at the short 844x390 landscape-phone viewport — the ' +
-      'tightest of this feature\'s own required viewports for vertical chrome-gap headroom.',
-    viewport: { width: 844, height: 390 },
+      'Same as `globe-view-mode-toggle-clear-of-sphere`, at 844x560 — the narrowest, shortest window that still ' +
+      'takes the desktop layout (under 500px tall a landscape window takes the landscape layout, ADR-048, which ' +
+      '`landscape-globe-*` guards), so the tightest vertical chrome-gap headroom for this one.',
+    viewport: { width: 844, height: 560 },
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
     actions: async ({ page, hook }) => {
@@ -1609,7 +2623,7 @@ export default [
     viewport: { width: 390, height: 844 },
     t: 0,
     measure: async ({ page }) => ({ timeline: await drawnBounds(page, BOTTOM_CHROME_SELECTOR) }),
-    expect: { 'timeline.height': [230, 310] },
+    expect: { 'timeline.height': [170, 310] },
   },
   {
     name: 'globe-expanded-phone-strip-above-breadcrumb',
@@ -1624,10 +2638,11 @@ export default [
     measure: async ({ page }) => {
       const feed = await boxOf(page, SHELL_FEED_SELECTOR)
       const zoom = await boxOf(page, ZOOM_CONTROLS_SELECTOR)
-      const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
+      // The timeline's top row: the breadcrumb once a section is entered, the track at the root.
+      const timeline = await boxOf(page, BOTTOM_CHROME_SELECTOR)
       return {
-        feedToBreadcrumb: breadcrumb.y - (feed.y + feed.height),
-        zoomToBreadcrumb: breadcrumb.y - (zoom.y + zoom.height),
+        feedToBreadcrumb: timeline.y - (feed.y + feed.height),
+        zoomToBreadcrumb: timeline.y - (zoom.y + zoom.height),
         feedOverlapsZoom: rectsOverlap(feed, zoom) ? 1 : 0,
       }
     },
@@ -1679,6 +2694,7 @@ export default [
       "diverge from what's painted inside it.",
     viewport: DEFAULT_VIEWPORT,
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
@@ -1695,6 +2711,7 @@ export default [
     description: 'Same as `era-shortcuts-clear-of-neighbours-wide`, at the narrow 390x844 phone-portrait viewport.',
     viewport: { width: 390, height: 844 },
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
@@ -1709,10 +2726,11 @@ export default [
   {
     name: 'era-shortcuts-clear-of-neighbours-short',
     description:
-      'Same as `era-shortcuts-clear-of-neighbours-wide`, at the short 844x390 landscape-phone viewport (one of ' +
-      "docs/GLOBE.md's own required viewports for exactly this kind of tight-space check).",
-    viewport: { width: 844, height: 390 },
+      'Same as `era-shortcuts-clear-of-neighbours-wide`, at 844x560, the narrowest, shortest window that still ' +
+      'takes the desktop layout (ADR-048).',
+    viewport: { width: 844, height: 560 },
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const shortcuts = await boxOf(page, ERA_SHORTCUTS_SELECTOR)
       const breadcrumb = await boxOf(page, BREADCRUMB_SELECTOR)
@@ -1754,8 +2772,10 @@ export default [
   },
   {
     name: 'controls-secondary-no-self-overlap-short',
-    description: 'Same as `controls-secondary-no-self-overlap-wide`, at the short 844x390 landscape-phone viewport.',
-    viewport: { width: 844, height: 390 },
+    description:
+      'Same as `controls-secondary-no-self-overlap-wide`, at 844x560, the narrowest, shortest window that still ' +
+      'takes the desktop layout (ADR-048).',
+    viewport: { width: 844, height: 560 },
     t: 0,
     measure: async ({ page }) => ({
       overlappingPairs: await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR }),
@@ -1781,6 +2801,7 @@ export default [
       'centring `.controlsRow`\'s own doc comment already relies on.',
     viewport: DEFAULT_VIEWPORT,
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
       const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
@@ -1825,6 +2846,7 @@ export default [
     description: 'Same as `timeline-controls-inset-to-track-wide`, at the narrow 390x844 phone-portrait viewport.',
     viewport: { width: 390, height: 844 },
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
       const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
@@ -1929,6 +2951,7 @@ export default [
     viewport: { width: 1000, height: 810 },
     t: 0,
     actions: async ({ page }) => {
+      await goToRootSection(page)
       await page.getByRole('button', { name: /^Cenozoic,/ }).click()
       await page.getByRole('button', { name: /^Quaternary,/ }).click()
       await page.getByRole('button', { name: /^Holocene,/ }).click()
@@ -1969,10 +2992,11 @@ export default [
   {
     name: 'timeline-controls-inset-to-track-short',
     description:
-      'Same as `timeline-controls-inset-to-track-wide`, at the short 844x390 landscape-phone viewport (one of ' +
-      "docs/GLOBE.md's own required viewports for tight horizontal/vertical space together).",
-    viewport: { width: 844, height: 390 },
+      'Same as `timeline-controls-inset-to-track-wide`, at 844x560, the narrowest, shortest window that still ' +
+      'takes the desktop layout (ADR-048).',
+    viewport: { width: 844, height: 560 },
     t: 0,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const track = await boxOf(page, TIMELINE_TRACK_STACK_SELECTOR)
       const sections = await boxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)
@@ -2000,6 +3024,7 @@ export default [
       '(`scripts/qa/shots.mjs`) is what guards the sound toggle never overlapping anything when it does wrap.',
     viewport: DEFAULT_VIEWPORT,
     t: 50,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const sectionsRows = await page.evaluate(countDistinctRows, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
       const secondaryFirstTwoShareRow = await page.evaluate(firstChildrenShareRow, {
@@ -2013,16 +3038,17 @@ export default [
   {
     name: 'controls-row-narrow-desktop-no-collision',
     description:
-      'At 844x390 (a landscape-phone viewport above the 760px breakpoint, so still the desktop 3-track row, not ' +
-      "the stacked layout) there is genuinely not enough width for the breadcrumb's own track plus era " +
+      'At 844x560 (above the 760px breakpoint and 500px tall, so still the desktop 3-track row, not the stacked ' +
+      "or landscape layout) there is genuinely not enough width for the breadcrumb's own track plus era " +
       "shortcuts/mode/scale all on one line — `.controlsSecondary`'s own `flex-wrap` safety net legitimately " +
       'engages here, same as it always could pre-rearrange. The requirement at this width is what ' +
       '`controls-secondary-no-self-overlap-short` and `timeline-controls-inset-to-track-short` already guard: no ' +
       "child collides with another and nothing overflows the track's own gutter bounds. This shot is the same " +
       "check restated with the full-breadcrumb worst case (t=50) those two don't use, so the wrap this width " +
       'produces is confirmed collision-free under that case too, not just the shallower default t=0.',
-    viewport: { width: 844, height: 390 },
+    viewport: { width: 844, height: 560 },
     t: 50,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
       const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
@@ -2045,6 +3071,7 @@ export default [
       'asserting the single-line requirement that only applies to the wider, 3-track layout above.',
     viewport: { width: 390, height: 844 },
     t: 50,
+    actions: async ({ page }) => enterSectionIfAtRoot(page),
     measure: async ({ page }) => {
       const sectionsOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECTIONS_SELECTOR })
       const secondaryOverlaps = await page.evaluate(countOverlappingChildPairs, { containerSelector: TIMELINE_CONTROLS_SECONDARY_SELECTOR })
@@ -2566,6 +3593,7 @@ export default [
     viewport: DEFAULT_VIEWPORT,
     t: 0,
     actions: async ({ page }) => {
+      await goToRootSection(page)
       await page.getByRole('button', { name: /^Cenozoic,/ }).click()
       await page.getByRole('button', { name: /^Quaternary,/ }).click()
     },
@@ -3568,4 +4596,27 @@ export default [
   ...DESKTOP_CORNER_VIEWPORTS.flatMap((viewport) =>
     ['globe', 'map'].map((globeViewMode) => desktopControlsRowShot(viewport, globeViewMode)),
   ),
+  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeNormalShot(viewport)),
+  ...LANDSCAPE_VIEWPORTS.flatMap((viewport) =>
+    ['globe', 'map'].map((globeViewMode) => landscapeExpandedShot(viewport, globeViewMode)),
+  ),
+  portraitCaptionLinesShot({ width: 390, height: 844 }),
+  portraitCaptionLinesShot(PHONE_VIEWPORT),
+  breadcrumbAtRootShot({ width: 390, height: 844 }, 'phone'),
+  breadcrumbAtRootShot({ width: 844, height: 390 }, 'landscape'),
+  breadcrumbAtRootShot(DEFAULT_VIEWPORT, 'desktop'),
+  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeHudShot(viewport)),
+  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeTimelineShot(viewport)),
+  landscapeCaptionTapShot({ width: 844, height: 390 }),
+  ...LANDSCAPE_VIEWPORTS.map((viewport) => landscapeCaptionRowShot(viewport)),
+  ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopTimelineRowShot(viewport)),
+  ...DESKTOP_CORNER_VIEWPORTS.map((viewport) => desktopOrbTopShot(viewport)),
+  // Floors: the lower of 4.5:1 and the hard-edged box's own contrast before the soft shade
+  // replaced it, less 0.3 (6.6:1 in portrait, 3.4:1 in landscape).
+  captionContrastShot({ width: 390, height: 844 }, 4.5),
+  captionContrastShot({ width: 844, height: 390 }, 3.1),
+  ...BRIGHT_CAPTION_SCENES.flatMap((id) => [
+    captionReviewShot({ width: 844, height: 390 }, id),
+    captionReviewShot({ width: 390, height: 844 }, id),
+  ]),
 ]

@@ -59,7 +59,7 @@
   background: var(--hud-accent-glow, rgba(232, 176, 106, 0.16));
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   /* Stacked, not a pill row: the shell renders this group under the time title
      (`ShellLayout.tsx`'s `eraShortcuts` slot), where a horizontal row runs wide enough to reach
      the minimised orb on one side and the sound toggle on the other. Tighter padding/gap/font
@@ -85,5 +85,27 @@
 
   .label {
     font-size: 9px;
+  }
+}
+
+/* Short landscape, collapsed (ADR-048): one shortcut either side of the time title. The group
+   spans the title's three-column grid as a subgrid (`ShellLayout.module.css`), so each button
+   lands in an outer column and the title stays centred between them. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :global([data-globe-expanded='false']) .group {
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: center;
+  }
+
+  :global([data-globe-expanded='false']) .shortcut:first-child {
+    grid-column: 1;
+    justify-self: end;
+  }
+
+  :global([data-globe-expanded='false']) .shortcut:last-child {
+    grid-column: 3;
+    justify-self: start;
   }
 }

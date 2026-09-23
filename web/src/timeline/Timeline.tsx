@@ -63,9 +63,13 @@
  * (`.secondary`). At a wide viewport the edge
  * buttons flank the track exactly as before; at phone-portrait width (the package's existing
  * `max-width: 760px` breakpoint) they instead join `.core`'s row, freeing the track's own
- * horizontal gutter and the transport's own vertical row for a full-width track. Same DOM either
- * way — only `grid-template-areas` changes — so there is no viewport-driven React branch to cause
- * a hydration mismatch on this static export, and no control is ever rendered twice.
+ * horizontal gutter and the transport's own vertical row for a full-width track. In a short
+ * landscape window (ADR-048) the breadcrumb takes its own row above the track, and the transport
+ * and the mode/scale/volume cluster stack in a column left of the track. On desktop the speed
+ * select and rate readout hang off the transport (left of it and under it) so the play button
+ * sits on the track's centre. Same DOM every way — only `grid-template-areas` and positioning
+ * change — so there is no viewport-driven React branch to cause a hydration mismatch on this
+ * static export, and no control is ever rendered twice.
  *
  * Every control outside the breadcrumb is fixed-width, so none of them ever shifts position when
  * the breadcrumb's own length changes. The sound/volume control (`@/audio`'s `<SoundToggle>`)
@@ -309,7 +313,13 @@ export function Timeline({
   }
 
   return (
-    <div ref={rootRef} className={styles.timeline} data-testid="timeline-root" onKeyDown={handleKeyDown}>
+    <div
+      ref={rootRef}
+      className={styles.timeline}
+      data-at-root={sectionId === ROOT_SECTION_ID}
+      data-testid="timeline-root"
+      onKeyDown={handleKeyDown}
+    >
       {/* `data-testid`s: stable QA-harness hooks — CSS Modules' hashed class names have nothing
           stable to select by otherwise. DOM order (not visual order, which `grid-template-areas`
           controls per breakpoint) is `sections, trackStack, edgePrev, core, edgeNext, secondary`

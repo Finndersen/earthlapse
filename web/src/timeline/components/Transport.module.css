@@ -60,7 +60,7 @@
    `@media (pointer: coarse)` bump above, since that query is about *pointer type*, not viewport,
    and this breakpoint must hold the floor regardless of how a given device or test harness
    reports pointer coarseness. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .ghostButton {
     width: 44px;
     height: 44px;
@@ -236,7 +236,7 @@
    ~390px row, so both shrink here. The slot stays reserved — just narrower — so the row still
    cannot reflow when playback starts. `overflow: hidden` keeps a long rate string clipped to the
    slot rather than widening it. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   /* Matched to `.speedSelect`'s own phone width below, deliberately: the two sit on opposite
      sides of the transport buttons, so equal widths are what keep those buttons centred in the
      row — and keep the two section-edge arrows equidistant from the screen edges — whether or
@@ -259,5 +259,32 @@
     width: 0;
     padding: 0;
     overflow: hidden;
+  }
+}
+
+/* Short landscape (ADR-048): the mode toggle shares a row with the scale toggle and the volume
+   control under the transport. Its visible label is dropped for width — it stays the group's
+   accessible name — and the pill keeps a 32px touch height. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .modeGroup {
+    gap: 0;
+  }
+
+  .groupLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .modeToggle {
+    min-height: 32px;
+  }
+
+  .modeButton {
+    padding: 0 6px;
+    font-size: 9.5px;
   }
 }

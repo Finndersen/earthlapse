@@ -102,7 +102,7 @@
    native thumb's own render size, ~12px, actually hit-testable) — while the `<input>`'s own box
    grows to a real 32px-tall touch target, centred over that thin track rather than changing how
    it reads. */
-@media (pointer: coarse) {
+@media (pointer: coarse), (orientation: landscape) and (max-height: 500px) {
   .volume {
     width: 64px;
     height: 32px;
@@ -139,5 +139,23 @@
     border: none;
     border-radius: 50%;
     background: var(--hud-accent, #e8b06a);
+  }
+}
+
+/* Short landscape (ADR-048): the volume control shares a row with the mode and scale toggles
+   under the transport, so it keeps the touch-sized track above at a width and height that fit
+   that row. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .wrap {
+    gap: 4px;
+  }
+
+  .button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .volume {
+    width: 44px;
   }
 }

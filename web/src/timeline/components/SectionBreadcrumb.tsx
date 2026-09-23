@@ -2,7 +2,7 @@
 
 /** The era-section breadcrumb (ADR-024), for example Earth › Cenozoic › Quaternary › Holocene ›
  *  Industrial age. Each ancestor is a button that zooms back out to it. The selected section
- *  is plain text with `aria-current="location"`. On a narrow row the middle ancestors (not the
+ *  is plain text with `aria-current="location"`. At the root section nothing renders. On a narrow row the middle ancestors (not the
  *  root, not the immediate parent) collapse to "…". Their buttons keep the full name as their
  *  accessible name and title, so they stay reachable.
  *
@@ -30,6 +30,10 @@ interface SectionBreadcrumbProps {
 export function SectionBreadcrumb({ sectionId, onSelectSection }: SectionBreadcrumbProps) {
   const path = sectionPath(sectionId)
   const lastIndex = path.length - 1
+  // At the root the trail would be the single word "Earth" with nowhere to go, so there is no
+  // trail and no navigation landmark at all; `Timeline.module.css` decides whether its row keeps
+  // its height.
+  if (lastIndex === 0) return null
 
   return (
     <nav aria-label="Timeline section" className={styles.breadcrumb}>

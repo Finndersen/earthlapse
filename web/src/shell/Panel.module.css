@@ -103,7 +103,7 @@
   border: 0;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .backdrop {
     align-items: flex-end;
     justify-content: stretch;

@@ -109,21 +109,29 @@ export function subFrameFovY(fovYRadians: number, subHeightPx: number, canvasHei
   return 2 * Math.atan((subHeightPx / canvasHeightPx) * Math.tan(fovYRadians / 2))
 }
 
+/** A screen-space rectangle in CSS pixels, as `getBoundingClientRect` reports it. */
+export interface ScreenRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
 /**
- * The screen-pixel shift needed to re-centre content at `targetRect`'s own vertical centre
- * instead of `canvasRect`'s — positive means the target sits *below* the canvas's centre (screen
- * Y grows downward). `Globe.tsx`'s `GlobeCameraControls` negates this into a
- * `camera.setViewOffset` Y offset (see that call's own doc comment for the sign derivation): a
- * sphere/map that sits at the world origin renders at the canvas's own centre by default, but the
- * chrome-gap rectangle it should visually sit in generally isn't centred in the *canvas* now that
- * the canvas is the whole backdrop (the gap itself isn't centred in the viewport either — the
- * title band above it is shorter than the caption-plus-timeline band below,
- * `Globe.module.css`'s own doc comment).
+ * The screen-pixel shift needed to re-centre content at `target`'s own centre instead of
+ * `canvas`'s — positive `x` means the target sits right of the canvas's centre, positive `y`
+ * below it (screen Y grows downward). `Globe.tsx`'s `GlobeCameraControls` negates both into a
+ * `camera.setViewOffset` shift (see that call's own doc comment for the sign derivation): a
+ * sphere/map at the world origin renders at the canvas's own centre by default, but the fit
+ * rectangle it should sit in generally isn't centred in the full-backdrop canvas — the chrome
+ * gap is not centred vertically, and in the landscape layout the rectangle sits right of a
+ * column of controls.
  */
-export function verticalCenterOffset(targetTopPx: number, targetHeightPx: number, canvasTopPx: number, canvasHeightPx: number): number {
-  const targetCenterY = targetTopPx + targetHeightPx / 2
-  const canvasCenterY = canvasTopPx + canvasHeightPx / 2
-  return targetCenterY - canvasCenterY
+export function centerOffset(target: ScreenRect, canvas: ScreenRect): { x: number; y: number } {
+  return {
+    x: target.left + target.width / 2 - (canvas.left + canvas.width / 2),
+    y: target.top + target.height / 2 - (canvas.top + canvas.height / 2),
+  }
 }
 
 /** The visible half-width/half-height at `distance`, shared by `clampPanTarget` (below) and

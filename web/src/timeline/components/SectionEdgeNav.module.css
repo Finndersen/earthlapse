@@ -81,7 +81,7 @@
    sits beside the play/back/forward transport in one compact row, not flanking a multi-row track
    stack above it, so the ruler-boundary offset above no longer means anything here — centre it
    in its own grid cell instead, matching its row neighbours. */
-@media (max-width: 760px) {
+@media (max-width: 760px) and (orientation: portrait), (max-width: 760px) and (min-height: 501px) {
   .edgeButton[data-edge='previous'],
   .edgeButton[data-edge='next'] {
     align-self: center;

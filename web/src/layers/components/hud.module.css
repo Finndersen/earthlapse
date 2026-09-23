@@ -362,7 +362,7 @@
    (hypothetical; no direct fossil)") never fits a phone-width corner in 1-2 short lines
    without reading as noise, so it is visually hidden rather than truncated mid-word — clipped
    off-screen, not `display: none`, so a screen reader still gets it. */
-@media (max-width: 760px) {
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
   .portrait {
     width: var(--orb-size, 84px);
   }
