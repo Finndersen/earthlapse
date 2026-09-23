@@ -1,8 +1,9 @@
 # Deployment
 
 Static site on **Cloudflare Workers (static assets)**, media on **Cloudflare R2**, custom domain,
-public. No backend, no build step in the cloud — the site is built and the media uploaded from the
-same machine that generates them.
+public. No backend. `make deploy` ships the committed state of `main` — from a workstation, or from
+the `deploy` GitHub Actions workflow (ADR-052). Neither generates anything: media is generated and
+published locally, committed, and deployed as committed.
 
 ## Why this shape
 
@@ -23,22 +24,45 @@ this uses Workers.
 3. Set the bucket's CORS policy: edit `cors.json` (replace `SITE_DOMAIN`), then
    `wrangler r2 bucket cors set <bucket> --file deploy/cors.json`. The texture, audio and manifest
    fetches are cross-origin, so without this the site loads and then silently renders nothing.
-4. Create an R2 API token and put the credentials in the repo's gitignored `.env`:
-   `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`.
+4. Create an R2 API token and put the credentials in the repo's gitignored `.env`, as plain
+   `KEY=value` lines (the Makefile includes it): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+   `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, and `MEDIA_BASE` (`https://media.<domain>`, no trailing
+   slash).
 5. `wrangler deploy --config deploy/wrangler.jsonc` once, then attach `<domain>` to the Worker.
+6. For CI: in the GitHub repo's Settings → Environments, create `production` and add the four R2
+   values as secrets, plus `CLOUDFLARE_API_TOKEN` (a token from the "Edit Cloudflare Workers"
+   template) and `CLOUDFLARE_ACCOUNT_ID`; add `MEDIA_BASE` as an environment variable.
 
 ## Publishing a new version
+
+Publish and commit first — a deploy ships only what is on `origin/main`:
 
 ```
 git lfs pull                                   # media must be content, not LFS pointers
 .venv/bin/earthtime publish
-make deploy                                    # preflight, then deploy-media, then deploy-site
+git commit … && git push origin main
 ```
 
-`make deploy` runs `deploy/preflight.sh` first and stops before anything uploads if it fails: not
-on `main`, a dirty working tree, an LFS pointer under `data/media` instead of real content, a
-`manifest.json` path that doesn't exist on disk, a missing R2 var in `.env`, `scripts/check.sh`
-(full), or the QA smoke run (`pnpm -C web qa -- --smoke --no-screenshots`). The individual targets
+Then deploy, by any one of:
+
+```
+git commit --allow-empty -m "… [deploy]"       # or put [deploy] in the commit that changes things
+git tag v2026.09.23 && git push origin v2026.09.23
+make deploy                                    # from a workstation with .env
+```
+
+The `deploy` workflow (`.github/workflows/deploy.yml`) runs on a push to `main` whose head commit
+message contains `[deploy]`, on a pushed `v*` tag, and on `workflow_dispatch` — the Actions tab's
+"Run workflow", or the GitHub API, which is how a Claude Code cloud session deploys without holding
+any Cloudflare credential. Runs never overlap. A tag is the way to name a release you may want to
+roll back to: running the workflow on an older tag redeploys it, and R2 still
+holds that version's media because `sync-media.sh` only ever adds objects.
+
+`make deploy` runs `deploy/preflight.sh` first and stops before anything uploads if it fails: a
+commit not on `origin/main`, a dirty working tree, an LFS pointer under `data/media` instead of
+real content, a `manifest.json` path that doesn't exist on disk, a missing deploy var (the R2 vars
+and `MEDIA_BASE`; in CI also the Cloudflare pair), `scripts/check.sh` (full), or the QA smoke run
+(`pnpm -C web qa -- --smoke --no-screenshots`). The individual targets
 still exist for when you want just one step:
 
 ```
