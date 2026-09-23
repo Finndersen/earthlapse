@@ -28,6 +28,7 @@ import type { Scene } from '@/types/manifest'
 
 import { driftAt, REST_DRIFT } from './drift'
 import { sceneCrop, type SceneCrop } from './framing'
+import { planScenePrefetch } from './prefetch'
 import { usePresentedSceneMix } from './presentation'
 import { captionOpacity, dominantScene, resolveAssetUrl, sceneAt, type PresentationRegime } from './scene'
 import { SceneCanvasView } from './SceneCanvasView'
@@ -55,6 +56,9 @@ export interface SceneViewProps {
    *  seen dimmed and blurred, which `COVERED_SCENE_THROTTLE_MS` is calibrated against. Default
    *  `false`. */
   covered?: boolean
+  /** While playing: where playback puts `t` after `prefetch.ts`'s `PREFETCH_LOOKAHEAD_SECONDS`,
+   *  so scenes ahead load in playback order. Omitted when paused or scrubbing. */
+  prefetchHorizonT?: GeoTime
 }
 
 /** ~10fps for the scene behind the expanded globe's translucent, blurred backdrop: the drift is
@@ -66,15 +70,16 @@ function sceneIndex(scenes: readonly Scene[], scene: Scene): number {
   return scenes.findIndex((s) => s.id === scene.id)
 }
 
-function neighbourUrls(scenes: readonly Scene[], fromIndex: number, toIndex: number, assetBase: string): string[] {
-  const lo = Math.min(fromIndex, toIndex)
-  const hi = Math.max(fromIndex, toIndex)
-  const urls: string[] = []
-  const before = scenes[lo - 1]
-  const after = scenes[hi + 1]
-  if (before !== undefined) urls.push(resolveAssetUrl(assetBase, before.image))
-  if (after !== undefined) urls.push(resolveAssetUrl(assetBase, after.image))
-  return urls
+function imageUrls(scenes: readonly Scene[], indices: readonly number[], assetBase: string): string[] {
+  return indices.map((index) => resolveAssetUrl(assetBase, scenes[index]!.image))
+}
+
+/** `urls`, keeping the previous array while its contents are unchanged, so a per-frame plan only
+ *  re-runs the renderers' prefetch effects when it actually changes. */
+function useStableUrls(urls: string[]): readonly string[] {
+  const key = urls.join('\n')
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` is `urls`' identity
+  return useMemo(() => urls, [key])
 }
 
 function framedCropByUrl(scenes: readonly Scene[], assetBase: string): ReadonlyMap<string, SceneCrop> {
@@ -93,6 +98,7 @@ export function SceneView({
   className,
   regime = 'crossfade',
   covered = false,
+  prefetchHorizonT,
 }: SceneViewProps): ReactNode {
   const reducedMotion = useReducedMotion()
   const webgl = useMemo(() => supportsWebGL(), [])
@@ -116,10 +122,14 @@ export function SceneView({
 
   const baseUrl = resolveAssetUrl(assetBase, presented.from.image)
   const overlayUrl = resolveAssetUrl(assetBase, presented.to.image)
-  const preloadUrls = useMemo(
-    () => neighbourUrls(scenes, fromIndex, toIndex, assetBase),
-    [scenes, fromIndex, toIndex, assetBase],
+  const plan = planScenePrefetch(
+    scenes,
+    fromIndex,
+    toIndex,
+    prefetchHorizonT === undefined ? null : { t: rawT, horizonT: prefetchHorizonT },
   )
+  const decodeUrls = useStableUrls(imageUrls(scenes, plan.decode, assetBase))
+  const fetchUrls = useStableUrls(imageUrls(scenes, plan.fetch, assetBase))
 
   const cropByUrl = useMemo(() => framedCropByUrl(scenes, assetBase), [scenes, assetBase])
   const imageAspect = presented.from.width / presented.from.height
@@ -132,7 +142,8 @@ export function SceneView({
         <SceneCanvasView
           baseUrl={baseUrl}
           overlayUrl={overlayUrl}
-          preloadUrls={preloadUrls}
+          decodeUrls={decodeUrls}
+          fetchUrls={fetchUrls}
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}
@@ -145,7 +156,8 @@ export function SceneView({
           overlayUrl={overlayUrl}
           baseCaption={presented.from.caption}
           overlayCaption={presented.to.caption}
-          preloadUrls={preloadUrls}
+          decodeUrls={decodeUrls}
+          fetchUrls={fetchUrls}
           mix={mix}
           fromDrift={fromDrift}
           toDrift={toDrift}

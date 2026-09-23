@@ -6,7 +6,7 @@
  *
  * When both of a newly requested pair's textures are already in `textureCache`'s cache (the
  * common case right at a scene checkpoint: the incoming texture was the outgoing pair's other
- * half, or a preloaded neighbour — see `SceneView`'s `neighbourUrls`), the bind happens
+ * half, or a prefetched scene — see `prefetch.ts`), the bind happens
  * synchronously during render rather than through the effect below. Deferring even a cache hit
  * through `Promise.all(...).then(...)` costs a microtask, so the caller's `mix`/drift uniforms —
  * driven by the same `t` — would land in a render before the rebind, painting the OLD pair's

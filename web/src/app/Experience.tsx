@@ -26,6 +26,7 @@ import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart
 import { OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
+  PREFETCH_LOOKAHEAD_SECONDS,
   resolveAssetUrl,
   sceneAt,
   scenePlaybackSegments,
@@ -238,6 +239,14 @@ export function Experience() {
     () => (readyManifest !== null ? sceneTerritories(readyManifest.scenes) : []),
     [readyManifest],
   )
+
+  // Where playback puts `t` after `PREFETCH_LOOKAHEAD_SECONDS`, by the same advance as the loop
+  // below, so `SceneView` loads scenes in the order playback reaches them.
+  const prefetchHorizonT = !playback.playing
+    ? undefined
+    : playback.mode === 'steady'
+      ? advanceSteadyPlayhead(t, PREFETCH_LOOKAHEAD_SECONDS, playback, steadyTerritories)
+      : advancePlayhead(t, PREFETCH_LOOKAHEAD_SECONDS, playback, FULL_DOMAIN_SYMLOG_SCALE, scenesPacing)
 
   // The rate readout beside the Transport mode toggle (ADR-016's prototype): the instantaneous
   // years-per-second `t` is advancing at, smoothed (`RATE_SMOOTHING_SECONDS`) so it doesn't
@@ -624,6 +633,7 @@ export function Experience() {
               renderCaption={renderCaption}
               regime={steadyRegime.regime}
               covered={globeExpanded}
+              prefetchHorizonT={prefetchHorizonT}
             />
           ) : (
             <div className={styles.placeholder}>No scenes in manifest.</div>

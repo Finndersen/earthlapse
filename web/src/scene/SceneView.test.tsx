@@ -18,6 +18,7 @@ beforeEach(() => {
     return setTimeout(() => cb(performance.now()), 16) as unknown as number
   })
   vi.stubGlobal('cancelAnimationFrame', (id: number) => clearTimeout(id))
+  vi.stubGlobal('fetch', vi.fn(() => new Promise<never>(() => {})))
 })
 
 afterEach(() => {
@@ -213,5 +214,21 @@ describe('SceneView', () => {
     const overlay = screen.getByTestId('scene-overlay') as HTMLImageElement
     expect(base.style.transform).toContain('scale(1.25, 1.25)')
     expect(overlay.style.transform).not.toContain('translate(-50%, -50%)')
+  })
+
+  describe('prefetch', () => {
+    const fetchedUrls = (): string[] => vi.mocked(fetch).mock.calls.map(([url]) => String(url))
+
+    it('fetches one scene either side of the pair while paused', () => {
+      render(<SceneView t={s2.t} scenes={scenes} assetBase="/prefetch-paused" />)
+
+      expect(fetchedUrls()).toEqual(['/prefetch-paused/s1.png', '/prefetch-paused/s3.png'])
+    })
+
+    it('fetches the scenes playback reaches next before the one behind', () => {
+      render(<SceneView t={s2.t} scenes={scenes} assetBase="/prefetch-playing" prefetchHorizonT={50} />)
+
+      expect(fetchedUrls()).toEqual(['/prefetch-playing/s1.png', '/prefetch-playing/s0.png', '/prefetch-playing/s3.png'])
+    })
   })
 })
