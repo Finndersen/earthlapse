@@ -129,7 +129,7 @@ export function usePortraitPair(olderUrl: string, youngerUrl: string, flow: Port
       })
       .catch((error: unknown) => {
         // Keep showing whatever set is already bound. A bad ref is a data problem to surface
-        // upstream (earthtime publish), not something to paper over here.
+        // upstream (earthlapse publish), not something to paper over here.
         console.error(error)
       })
     return () => {

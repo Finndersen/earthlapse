@@ -15,7 +15,7 @@ constants below are that one place; a caller never touches a pixel a correctly-a
 would call subject, so an imprecise extent only ever costs band precision, not anatomy.
 
 OpenCV (`opencv-python-headless`) and numpy are core dependencies of this project (ADR-015):
-`pipeline.exposure`, which `earthtime publish` always runs, needs them directly for the erase
+`pipeline.exposure`, which `earthlapse publish` always runs, needs them directly for the erase
 below, so they can no longer be the optional `morph` extra's alone to provide.
 """
 

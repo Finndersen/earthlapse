@@ -1,4 +1,4 @@
-"""`earthtime build`: generate candidates for stale images, one paid call at a time.
+"""`earthlapse build`: generate candidates for stale images, one paid call at a time.
 
 Sequential by design (VISUAL_SPEC §8: keep concurrency low). Every image is reserved, called,
 settled and saved before the next begins, so a stop at any point leaves the ledger and the

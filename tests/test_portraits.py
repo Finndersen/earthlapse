@@ -277,7 +277,7 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
 
     assert code == 0, output
     assert "portraits: 3 plates, 1 morphs, 0 unpinned skipped" in output
-    assert "WARNING: no morph for luca -> tetrapod; run `earthtime morph`" in output
+    assert "WARNING: no morph for luca -> tetrapod; run `earthlapse morph`" in output
     lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
     assert lineage["portraits"] == {
         "plates": [

@@ -282,7 +282,7 @@ class MorphRecord(BaseModel):
 
 
 def load_morph(cache_root: Path, key: MorphKey) -> MorphRecord | None:
-    """The cached morph for `key`, or None when `earthtime morph` has not computed it yet."""
+    """The cached morph for `key`, or None when `earthlapse morph` has not computed it yet."""
     path = key.directory(cache_root) / MORPH_RECORD_NAME
     if not path.is_file():
         return None

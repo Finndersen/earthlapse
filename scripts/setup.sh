@@ -36,14 +36,14 @@ for arg in "$@"; do
 done
 [ "${#PARTS[@]}" -gt 0 ] || PARTS=("${ALL_PARTS[@]}")
 
-LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/earthtime-setup.XXXXXX")"
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/earthlapse-setup.XXXXXX")"
 
 # Each part writes a one-line outcome ("up to date", "installed", ...) for its status line; PART is
 # set by start_part in the part's own subshell.
 note() { echo "$*" >"$LOG_DIR/${PART:?}.note"; }
 
-PYTHON_STAMP=.venv/.earthtime-setup-stamp
-WEB_STAMP=web/node_modules/.earthtime-setup-stamp
+PYTHON_STAMP=.venv/.earthlapse-setup-stamp
+WEB_STAMP=web/node_modules/.earthlapse-setup-stamp
 
 setup_python() {
   if [ -x .venv/bin/python ] && [ "$PYTHON_STAMP" -nt pyproject.toml ]; then

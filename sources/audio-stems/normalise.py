@@ -31,7 +31,7 @@ _MEDIA_SUBDIR = Path("audio")
 def normalise(raw_dir: Path) -> list[CuratedShape]:
     """Always empty -- see module docstring. `raw_dir` is unused; kept only so this matches
     the `normalise(raw_dir: Path) -> list[CuratedShape]` convention every source's
-    `normalise.py` shares, so `earthtime build` can invoke every source the same way."""
+    `normalise.py` shares, so `earthlapse build` can invoke every source the same way."""
     del raw_dir
     return []
 
@@ -48,7 +48,7 @@ def _place_stem(stem: StemManifest, raw_dir: Path, media_dir: Path) -> None:
     raw_path = raw_dir / stem.raw_filename
     if not raw_path.is_file():
         raise FileNotFoundError(
-            f"stem {stem.id}: {raw_path} is missing -- run `earthtime` data fetch first"
+            f"stem {stem.id}: {raw_path} is missing -- run `earthlapse` data fetch first"
         )
     data = raw_path.read_bytes()
     actual = sniff_audio(data)

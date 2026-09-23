@@ -9,7 +9,7 @@ entry) is not used here.
 There is no upstream file to download: every node's date and citation was looked up
 individually against the published paper (or a freely accessible copy of it), not bulk-
 fetched from one dataset. fetch() is therefore a documented no-op rather than absent, so
-`earthtime plan` / `make data` can invoke every source's fetch.py uniformly. normalise()
+`earthlapse plan` / `make data` can invoke every source's fetch.py uniformly. normalise()
 never reads raw_dir, so a no-op fetch never blocks the build.
 """
 

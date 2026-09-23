@@ -1,6 +1,6 @@
 """The one place the pipeline's image generator is chosen (CLAUDE.md: vendors stay swappable).
 
-`earthtime` asks this module for an `ImageBackend` and never names a provider or model itself.
+`earthlapse` asks this module for an `ImageBackend` and never names a provider or model itself.
 Swapping vendors is a change to `image_backend()` and nothing else.
 """
 
@@ -29,7 +29,7 @@ from pipeline.spend import Ledger
 class ImageBackend(Protocol):
     """A generator's identity and price list, usable offline, plus a way to open it for paid work.
 
-    `name` and `version` go into every image node's digest, so `earthtime plan` can decide
+    `name` and `version` go into every image node's digest, so `earthlapse plan` can decide
     staleness and cost without credentials or a network connection.
     """
 

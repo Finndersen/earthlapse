@@ -6,7 +6,7 @@ world morphing rather than a cut. A chapter may recur as several non-adjacent **
 the timeline (ADR-020) — each run is its own consecutive stretch of scenes, and every run of
 the same chapter shares that chapter's shot and composition, but a run's neighbours in a
 *different* chapter still read as a cut at each boundary. The pin a human writes with
-`earthtime review pick` lives here too, so it survives every rebuild (ADR-005). A scene may
+`earthlapse review pick` lives here too, so it survives every rebuild (ADR-005). A scene may
 also name an optional stem (`sound`, ADR-023) it plays when on screen: an ambience stem it
 foregrounds, or a scene-only stem such as a one-shot, which publish allows only in `once` mode.
 """
@@ -52,7 +52,7 @@ class SoundMode(StrEnum):
 class SceneSound(BaseModel):
     """A scene's optional associated ambience stem (ADR-023). `stem` names an id in the
     audio-stems catalogue (`sources/audio-stems/stems.toml`, `pipeline.audio.StemBook`) —
-    checked at `earthtime publish` time, the same way `SceneRecord.events` is checked against
+    checked at `earthlapse publish` time, the same way `SceneRecord.events` is checked against
     `events-core` (ADR-022), not here: parsing scenes.yaml has no stem catalogue to check
     against."""
 
@@ -151,7 +151,7 @@ class SceneRecord(BaseModel):
     unsourced: UnsourcedConditions
     subject: SceneSubject
     # events-core event id(s) this scene visually anchors to (ADR-022). Optional, defaults to no
-    # links; checked against the published events-core EventSet at `earthtime publish` time
+    # links; checked against the published events-core EventSet at `earthlapse publish` time
     # (pipeline/publish.py), not here -- SceneBook parsing has no curated event data to check
     # against. Invisible to the asset graph (pipeline/assets.py never reads it), so editing this
     # field never changes a prompt/image node's digest or clears a pin.

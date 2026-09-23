@@ -39,7 +39,7 @@ Publish and commit first — a deploy ships only what is on `origin/main`:
 
 ```
 git lfs pull                                   # media must be content, not LFS pointers
-.venv/bin/earthtime publish
+.venv/bin/earthlapse publish
 git commit … && git push origin main
 ```
 
@@ -83,7 +83,7 @@ fails if the R2 origin was not baked into the output rather than shipping a site
 `NEXT_PUBLIC_MEDIA_BASE` is the only origin setting. It decides where the manifest is fetched
 from, and the viewer hangs every path inside the manifest off that same base rather than off the
 `assetBase` string the publish step wrote (`web/src/shell/manifest.ts`). So one published
-`data/media/` tree serves both a local dev server and the deployment, and `earthtime publish
+`data/media/` tree serves both a local dev server and the deployment, and `earthlapse publish
 --asset-base` is not part of this flow — passing the R2 origin there used to be required, and
 left a dev server fetching every asset from the CDN.
 

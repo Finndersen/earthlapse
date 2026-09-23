@@ -11,7 +11,7 @@ a scene's full still is never a reasonable source for a 44px hover preview
 
 Both are publish-side transforms of the pinned original, the same category as
 `pipeline.exposure`'s exposure normalisation: the pin, the candidate file on disk and its asset
-digest are all untouched (ADR-005 is about never regenerating those, not about how `earthtime
+digest are all untouched (ADR-005 is about never regenerating those, not about how `earthlapse
 publish` encodes the bytes it writes). `pipeline.publish` is the only caller, and it must always
 pass bytes decoded from a pinned original or an in-memory derivative of one, computed fresh for
 that publish -- never bytes read back from a previously published file. Reading a previous

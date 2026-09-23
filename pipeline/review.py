@@ -1,4 +1,4 @@
-"""`earthtime review`: candidates beside their neighbours, and the human pick that pins one.
+"""`earthlapse review`: candidates beside their neighbours, and the human pick that pins one.
 
 VISUAL_SPEC §7: review adjacent pairs, never single images in isolation. Every listing and
 contact sheet therefore shows a scene's predecessor and successor alongside its candidates, and
@@ -251,12 +251,12 @@ def _portrait_tile(
 def pick_candidate(
     book_path: Path, book: SceneBook, store: CandidateStore, root: Path, scene_id: str, number: int
 ) -> ScenePin:
-    """Pin candidate `number` (1-based, as listed by `earthtime review`) into data/scenes.yaml."""
+    """Pin candidate `number` (1-based, as listed by `earthlapse review`) into data/scenes.yaml."""
     scene = book.scene(scene_id)
     if scene.pin is not None:
         raise ReviewError(
             f"{scene_id} is already pinned to {scene.pin.asset_digest}; "
-            "clear it first with `earthtime review clear`"
+            "clear it first with `earthlapse review clear`"
         )
     pin = _chosen_pin(store, root, scene_id, number)
     write_pin(book_path, scene_id, pin)
@@ -271,12 +271,12 @@ def pick_portrait(
     node_id: str,
     number: int,
 ) -> ScenePin:
-    """Pin candidate `number` (as listed by `earthtime review portraits`) into data/portraits.yaml."""
+    """Pin candidate `number` (as listed by `earthlapse review portraits`) into data/portraits.yaml."""
     record = book.portrait(node_id)
     if record.pin is not None:
         raise ReviewError(
             f"{node_id} is already pinned to {record.pin.asset_digest}; "
-            "clear it first with `earthtime review portraits clear`"
+            "clear it first with `earthlapse review portraits clear`"
         )
     pin = _chosen_pin(store, root, node_id, number)
     write_portrait_pin(book_path, node_id, pin)

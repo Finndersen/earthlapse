@@ -70,7 +70,7 @@ working on them have read that section:
   is needed. Do not download the rest.
 
 The MVP runs locally only — `pnpm dev`. Do not set up Cloudflare, R2, wrangler or any
-deployment. `earthtime publish` writes a manifest and media directory on disk, nothing more.
+deployment. `earthlapse publish` writes a manifest and media directory on disk, nothing more.
 
 When the fan-out completes, work through the Definition of Done checklist in
 ONESHOT_SCOPE.md yourself and report which lines pass and which do not. Be honest about

@@ -46,9 +46,9 @@ stale() {
 if ! { [ -x "$PYTHON" ] && [ -x "$RUFF" ] && [ -x "$REPO_ROOT/.venv/bin/pytest" ]; }; then
   missing "the Python venv (.venv)" python
 fi
-stale .venv/.earthtime-setup-stamp pyproject.toml python
+stale .venv/.earthlapse-setup-stamp pyproject.toml python
 
-LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/earthtime-check.XXXXXX")"
+LOG_DIR="$(mktemp -d "${TMPDIR:-/tmp}/earthlapse-check.XXXXXX")"
 trap 'rm -rf "$LOG_DIR"' EXIT
 
 RUN_PYTHON=1
@@ -68,7 +68,7 @@ if [ "$RUN_WEB" -eq 1 ]; then
   if ! { [ -x web/node_modules/.bin/tsc ] && [ -x web/node_modules/.bin/vitest ]; }; then
     missing "web dependencies (web/node_modules)" web
   fi
-  stale web/node_modules/.earthtime-setup-stamp web/pnpm-lock.yaml web
+  stale web/node_modules/.earthlapse-setup-stamp web/pnpm-lock.yaml web
 fi
 
 # `step <name> <command...>` — runs one check inside a group, recording its name for the failure

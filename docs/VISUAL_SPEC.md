@@ -226,7 +226,7 @@ Reference prices for the rest: FLUX.2 Dev $0.0084, FLUX.1 Pro $0.050, Imagen 4 F
 
 ⚠️ **No provider name may appear outside `pipeline/generators/`.** Swapping vendors must be a
 config change — this decision is explicitly expected to be revisited. `estimate_usd()` reads
-a per-model price table so `earthtime plan` can cost a build before spending anything.
+a per-model price table so `earthlapse plan` can cost a build before spending anything.
 
 ## 9. Honesty
 
@@ -272,7 +272,7 @@ Stated once in `pipeline/prompts.py` (`PORTRAIT_STYLE`), before the plate type a
   viewer masks the plate to a feathered circle, so nothing important sits in the corners.
 - No text, labels, watermark, border, grade, HDR, bloom or flare.
 - Published plates carry no scale bar (ADR-015 amendment 2026-09-17). Earlier plates were
-  generated with one; `earthtime publish` erases it from every published plate, `pipeline/
+  generated with one; `earthlapse publish` erases it from every published plate, `pipeline/
   exposure.py`, the same known-layout band `pipeline/morph.py` already excludes from flow
   estimation. A real size, where a source gives one, goes into the subject text instead.
 
@@ -311,7 +311,7 @@ the same as a scene.
   ancestor readout's label switches to it — so the image reads as half-way between the two
   plates exactly when the label does, not still the older plate.
 - Consecutive pinned plates are joined by a dense optical-flow field computed offline
-  (`earthtime morph`, free).
+  (`earthlapse morph`, free).
 - Both plates are normalised first: the subject box is taken from the dark backdrop, then centred
   and scaled to the 70% fill.
 - The viewer warps each plate toward the other while it crossfades.
@@ -320,12 +320,12 @@ the same as a scene.
 - Morphs between very different body plans (a micrograph into a sponge, a fish into a tetrapod)
   read as a warped dissolve, not an anatomical correspondence. That is expected.
 - A pair whose flow disagrees with itself too much to trust (ADR-015, amendments 2026-09-15 and
-  2026-09-16) is not warped at all: `earthtime morph` falls back to a plain linear-light crossfade
+  2026-09-16) is not warped at all: `earthlapse morph` falls back to a plain linear-light crossfade
   for it, the same thing the viewer already does for a pair it has no flow field for.
 
 ### Exposure
 
-- The generator lights plates unevenly. `earthtime publish` normalises each plate so its
+- The generator lights plates unevenly. `earthlapse publish` normalises each plate so its
   subject's highlight reads at a shared level (ADR-015, amendment 2026-09-14). The pinned
   candidate is never altered.
 - The subject highlight is the 95th-percentile luma of pixels clearly brighter than the backdrop
@@ -346,7 +346,7 @@ the same as a scene.
 
 ### Review
 
-- Review a portrait between its **older and younger neighbours** (`earthtime review portraits
+- Review a portrait between its **older and younger neighbours** (`earthlapse review portraits
   sheet`), never alone. The morph runs between exactly those plates.
 - Judge in order:
   1. Framing: centre, fill, facing right.
@@ -354,7 +354,7 @@ the same as a scene.
   3. Absences: nothing from `absent` appears.
   4. Register: a photograph, not art.
   5. Beauty.
-- Pin with `earthtime review portraits pick`.
+- Pin with `earthlapse review portraits pick`.
 
 ### Style gate
 

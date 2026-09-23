@@ -56,7 +56,7 @@ class Reconstructor(Protocol):
 
 @dataclass(frozen=True)
 class _PygplatesReconstructor:
-    """Built once per `earthtime publish` run (`load_reconstructor` is the expensive part --
+    """Built once per `earthlapse publish` run (`load_reconstructor` is the expensive part --
     parsing two GPML files) and reused for every scene that needs it."""
 
     partitioner: object  # pygplates.PlatePartitioner, present-day (t=0) partitioning

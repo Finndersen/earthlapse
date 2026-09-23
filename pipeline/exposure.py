@@ -14,7 +14,7 @@
                     `PORTRAIT_STYLE`) never reaches the viewer either, without touching the
                     backdrop or subject around it
 
-The pinned candidate is never rewritten (ADR-005): `earthtime publish` writes this derivative to
+The pinned candidate is never rewritten (ADR-005): `earthlapse publish` writes this derivative to
 data/media/portraits/, WebP-transcoded (pipeline/transcode.py) on top of whatever this module
 does. Geometry is untouched, so morph fields computed from the pinned originals (pipeline/
 morph.py) stay valid, and a plate that needs no gain and no scale-bar erase still gets that one
@@ -253,7 +253,7 @@ PROTECT_CONTRAST = 60
 # eroded into "erasable". Never touched regardless of what the line mask above finds inside it.
 SUBJECT_PROTECT_DILATE_PX = 6
 INPAINT_RADIUS = 3
-# A fixed seed, not real randomness, so `earthtime publish` stays deterministic: the same plate
+# A fixed seed, not real randomness, so `earthlapse publish` stays deterministic: the same plate
 # always inpaints to the same bytes. The grain is added only inside the thin erased line, scaled
 # to that plate's own local backdrop noise, so the strip does not read as an unnaturally smooth
 # streak against its grainy surroundings.
@@ -267,7 +267,7 @@ def erase_scale_bar(data: bytes) -> bytes:
     `PORTRAIT_STYLE` (`pipeline.prompts`) no longer asks the generator for a bar -- it drew
     inconsistently (faint on most plates, thick and bright on a couple) -- but the 40
     already-pinned plates still carry one (ADR-005: a pin is never regenerated), so every plate
-    `earthtime publish` writes gets it painted out here instead. The pinned original is untouched
+    `earthlapse publish` writes gets it painted out here instead. The pinned original is untouched
     and `pipeline.morph`'s flow fields stay computed from it -- unaffected by this, since it still
     excludes the same band from flow estimation on its own copy of the plate.
 

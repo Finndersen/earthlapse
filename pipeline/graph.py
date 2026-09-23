@@ -119,7 +119,7 @@ class Store(Protocol):
 
 class Resolver:
     """Walks the graph and reports what needs doing. Decides nothing about cost or
-    approval — `earthtime plan` renders this, `earthtime build` acts on it."""
+    approval — `earthlapse plan` renders this, `earthlapse build` acts on it."""
 
     def __init__(self, nodes: list[AssetNode], pins: dict[str, Pin], store: Store) -> None:
         self.nodes = {n.id: n for n in nodes}

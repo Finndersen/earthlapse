@@ -1,4 +1,4 @@
-"""`earthtime` end to end against a temporary project. Offline: a fake image generator only."""
+"""`earthlapse` end to end against a temporary project. Offline: a fake image generator only."""
 
 from __future__ import annotations
 

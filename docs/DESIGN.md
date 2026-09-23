@@ -692,10 +692,10 @@ twenty minutes.
 ### CLI
 
 ```
-earthtime plan                  # what is stale and what it will cost
-earthtime build --only images   # generate, respecting pins and ceiling
-earthtime review                # candidate picker
-earthtime publish               # upload to R2, emit manifest.json
+earthlapse plan                  # what is stale and what it will cost
+earthlapse build --only images   # generate, respecting pins and ceiling
+earthlapse review                # candidate picker
+earthlapse publish               # upload to R2, emit manifest.json
 ```
 
 **Do not** reach for Dagster or Prefect (ADR-006). The DAG is small; the custom semantics

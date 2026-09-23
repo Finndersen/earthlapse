@@ -86,7 +86,7 @@ function useLayerLoads(
       })
     }
     // Keep showing whatever is already bound. A bad ref is a data problem to surface upstream
-    // (earthtime publish), not something to paper over here. An abort is the byte store dropping a
+    // (earthlapse publish), not something to paper over here. An abort is the byte store dropping a
     // scene no longer wanted (`prefetch.ts`'s `sceneByteWants`).
     const report = (error: unknown): void => {
       if (!cancelled && !isAbortError(error)) console.error(error)

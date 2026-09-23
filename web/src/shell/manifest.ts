@@ -1,7 +1,7 @@
 /**
  * Loads and validates the published manifest (web/src/types/manifest.ts, NORMATIVE).
  *
- * `loadManifest()` fetches `/media/manifest.json` — where `earthtime publish` writes real
+ * `loadManifest()` fetches `/media/manifest.json` — where `earthlapse publish` writes real
  * output — and falls back to the committed `/stub/manifest.json` only on a 404, flagging the
  * fallback so the shell can show a "stub data" badge instead of pretending it's real. Any
  * other failure (network error, non-404 status, malformed JSON, a schema mismatch) throws:
@@ -70,7 +70,7 @@ export interface ManifestLoadResult {
  * `assetBase` is overwritten with the base the manifest was actually found at, whatever the
  * publish step wrote into the file. Media and the manifest are always published together, so the
  * one is always reachable from the other's origin; taking the published string at face value
- * instead made two independent settings — `earthtime publish --asset-base` and
+ * instead made two independent settings — `earthlapse publish --asset-base` and
  * `NEXT_PUBLIC_MEDIA_BASE` — that had to be kept in agreement by hand, and a manifest published
  * for the deployed origin then pointed a local dev server's every asset fetch at the CDN.
  */

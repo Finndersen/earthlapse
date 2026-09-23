@@ -118,7 +118,7 @@ class WorldModel:
     """Holds loaded curated data and produces a `WorldState` at any `t`.
 
     Deliberately a plain object rather than a module-level singleton: tests construct one
-    from fixtures, and `earthtime` constructs one from `data/curated/`.
+    from fixtures, and `earthlapse` constructs one from `data/curated/`.
 
     Sources are registered by curated id, so a new source becomes one registration plus one
     line in `at()` — the whole cost of adding a field.

@@ -113,7 +113,7 @@ export function useGlobeTexturePair(
       })
       .catch((error: unknown) => {
         // Keep showing whatever pair is already bound. A bad ref is a data problem to
-        // surface upstream (earthtime publish), not something to paper over here.
+        // surface upstream (earthlapse publish), not something to paper over here.
         console.error(error)
       })
     return () => {

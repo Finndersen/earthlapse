@@ -2,7 +2,7 @@
  * TS twin of pipeline/shapes.py sampling (DATA_SOURCES § Contract) — same bisect logic, same
  * numbers, same edge cases.
  *
- * Owns the on-disk JSON shapes published by `earthtime publish` for scalar, raster, node and
+ * Owns the on-disk JSON shapes published by `earthlapse publish` for scalar, raster, node and
  * (docs/GLOBE.md §6) non-timeline events layers (LayerManifest.data in manifest.ts) and the
  * pure samplers that read them. `events-core` has no `EventsData` file of its own — it's
  * inlined in `Manifest.events` (manifest.ts), parsed by `parseTimelineEvent` below.

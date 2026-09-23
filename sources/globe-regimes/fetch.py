@@ -4,7 +4,7 @@ No-op for this source, exactly like sources/astronomy/fetch.py and for the same 
 globe-regimes is hand-curated: data/globe_regimes.yaml already carries a specific citation
 per regime, cross-checked by hand against the primary literature (see README.md). There is
 no upstream file to download, verify, or cache in data/raw/ -- this function exists only so
-globe-regimes behaves like every other source under `make data` / earthtime's fetch dispatch.
+globe-regimes behaves like every other source under `make data` / earthlapse's fetch dispatch.
 """
 
 from __future__ import annotations

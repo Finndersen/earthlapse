@@ -1,4 +1,4 @@
-"""Where `earthtime` reads and writes, relative to one project root."""
+"""Where `earthlapse` reads and writes, relative to one project root."""
 
 from __future__ import annotations
 

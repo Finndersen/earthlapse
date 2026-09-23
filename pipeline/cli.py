@@ -1,12 +1,12 @@
-"""`earthtime`: plan, build, review and publish scene images and ancestor portraits (DESIGN §9).
+"""`earthlapse`: plan, build, review and publish scene images and ancestor portraits (DESIGN §9).
 
-    earthtime plan [--candidates 3] [--scene ID ...] [--portrait-candidates 1] [--node ID ...]
-    earthtime build --max-spend <USD> [--only images|portraits] [--candidates N]
+    earthlapse plan [--candidates 3] [--scene ID ...] [--portrait-candidates 1] [--node ID ...]
+    earthlapse build --max-spend <USD> [--only images|portraits] [--candidates N]
                     [--scene ID ... | --node ID ...]
-    earthtime review [sheet | pick <scene_id> <n> | clear <scene_id>]
-    earthtime review portraits [sheet | pick <node_id> <n> | clear <node_id>]
-    earthtime morph
-    earthtime publish [--allow-unpinned] [--asset-base URL]
+    earthlapse review [sheet | pick <scene_id> <n> | clear <scene_id>]
+    earthlapse review portraits [sheet | pick <node_id> <n> | clear <node_id>]
+    earthlapse morph
+    earthlapse publish [--allow-unpinned] [--asset-base URL]
 
 The generator comes from pipeline/generators/registry.py; nothing here names a provider.
 """
@@ -288,7 +288,7 @@ def create_app(backend: ImageBackend) -> typer.Typer:
 
     @review_app.command("pick")
     def review_pick(ctx: typer.Context, scene_id: str, number: int) -> None:
-        """Pin candidate NUMBER (as listed by `earthtime review`) for SCENE_ID."""
+        """Pin candidate NUMBER (as listed by `earthlapse review`) for SCENE_ID."""
         paths: ProjectPaths = ctx.obj
         book = load_scene_book(paths.scenes)
         try:
@@ -338,7 +338,7 @@ def create_app(backend: ImageBackend) -> typer.Typer:
 
     @portraits_app.command("pick")
     def review_portrait_pick(ctx: typer.Context, node_id: str, number: int) -> None:
-        """Pin candidate NUMBER (as listed by `earthtime review portraits`) for NODE_ID."""
+        """Pin candidate NUMBER (as listed by `earthlapse review portraits`) for NODE_ID."""
         paths: ProjectPaths = ctx.obj
         book = load_portrait_book(paths.portraits)
         try:
@@ -461,7 +461,7 @@ def format_portrait_publication(portraits: PortraitPublication) -> str:
         f"portraits: {plates} plates, {morphs} morphs, {len(portraits.unpinned)} unpinned skipped"
     ]
     lines += [
-        f"WARNING: no morph for {key.older} -> {key.younger}; run `earthtime morph` "
+        f"WARNING: no morph for {key.older} -> {key.younger}; run `earthlapse morph` "
         "(the viewer crossfades this pair until then)"
         for key in portraits.missing_morphs
     ]

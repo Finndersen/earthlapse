@@ -4,7 +4,7 @@ lineage is hand-curated: data/lineage.yaml IS the dataset (see its header commen
 sources/lineage/README.md), not something derived from data/raw/. normalise() therefore
 reads data/lineage.yaml directly and ignores raw_dir — the parameter exists only to match
 the normalise(raw_dir: Path) -> list[CuratedShape] convention shared by every source's
-normalise.py, so `earthtime build` can invoke every source the same way.
+normalise.py, so `earthlapse build` can invoke every source the same way.
 """
 
 from __future__ import annotations

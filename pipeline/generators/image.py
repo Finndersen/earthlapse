@@ -132,7 +132,7 @@ class MissingCredentials(RuntimeError):
 
 
 class ImageGenerator(Protocol):
-    """What `earthtime build` needs from a generator: one ledgered, paid render per call.
+    """What `earthlapse build` needs from a generator: one ledgered, paid render per call.
 
     `render` reserves in the ledger before the call and settles after, raising `BudgetExceeded`
     before it would spend past the ceiling (pipeline/spend.py).

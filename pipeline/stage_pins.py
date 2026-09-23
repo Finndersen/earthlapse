@@ -2,7 +2,7 @@
 
 `data/candidates/` is gitignored because unpinned candidates are local scratch, so a newly
 pinned image has to be force-added, and one whose pin was cleared or replaced has to leave the
-index. Run after `earthtime review pick` / `clear`, before committing.
+index. Run after `earthlapse review pick` / `clear`, before committing.
 """
 
 from __future__ import annotations

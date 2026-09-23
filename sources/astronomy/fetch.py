@@ -5,7 +5,7 @@ Tier 3): day length, lunar distance, solar luminosity and obliquity are each eit
 closed-form formula or a handful of cited published point estimates, hard-coded with
 their citations directly in normalise.py. There is nothing to download, verify, or
 cache in data/raw/ -- the function signature is kept only so `astronomy` behaves like
-every other source under `make data` / earthtime's fetch dispatch.
+every other source under `make data` / earthlapse's fetch dispatch.
 """
 
 from __future__ import annotations

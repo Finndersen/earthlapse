@@ -155,7 +155,7 @@ Every package's verification is a runnable command. "It renders" is not a verifi
 | **W4** | `sources/events-core` | `data/events.yaml`, ~30 events | `pytest tests/sources/test_events.py` — every event has citation, `t_min ≤ t_max`, importance in 0..1, ≥ 20 events, spans > 4e9 | spine | ✅ |
 | **W5** | `sources/lineage` | `data/lineage.yaml`, ~40 nodes | `pytest tests/sources/test_lineage.py` — parents resolve, dates monotonic, path LUCA→human intact | spine | ✅ |
 | **W6a** | **anchor gate** — see below | 1 era anchor + 3 scenes conditioned on it, **generated on Pro**, saved | **human looks at 4 images and says go / no-go** | spine | ✅ first |
-| **W6** | `pipeline/generators` + prompt renderer + `earthtime` CLI | Generator protocol impls, prompt templates from WorldState, `plan`/`build`/`review`/`publish` | `pytest tests/test_pipeline.py` + `earthtime plan` prints a cost estimate without spending | W6a | ✅ |
+| **W6** | `pipeline/generators` + prompt renderer + `earthlapse` CLI | Generator protocol impls, prompt templates from WorldState, `plan`/`build`/`review`/`publish` | `pytest tests/test_pipeline.py` + `earthlapse plan` prints a cost estimate without spending | W6a | ✅ |
 | **W7** | `web/timeline` | warped scale, LOD, scrub, play, speed, linear toggle | `pnpm test timeline` — `toUnit`/`fromUnit` round-trip to 1e-6 across the full domain; LOD drops low-importance events when zoomed out | spine | ✅ |
 | **W8** | `web/globe` | three.js sphere, texture blending | `pnpm test globe` — samples correct blend pair and alpha at 5 known `t` values | spine, W2 shape only | ✅ |
 | **W9** | `web/scene` | still display + depth-free cross-dissolve | `pnpm test scene` — correct scene pair and dissolve factor at chapter boundaries | spine | ✅ |
@@ -218,8 +218,8 @@ A five-minute checklist. Every line must pass.
 
 - [ ] `pytest` — all tests green, offline, no network
 - [ ] `pnpm build` succeeds with no type errors
-- [ ] `earthtime plan` prints a cost estimate and spends nothing
-- [ ] `earthtime build --max-spend 18` completes; ledger total under $18
+- [ ] `earthlapse plan` prints a cost estimate and spends nothing
+- [ ] `earthlapse build --max-spend 18` completes; ledger total under $18
 - [ ] `data/events.yaml` has ≥ 20 events, every one with a citation and `t_min ≤ t_max`
 - [ ] `data/lineage.yaml` resolves LUCA → *Homo sapiens* with no orphan parents
 - [ ] `pnpm dev` serves the page and it shows a scene image
@@ -236,7 +236,7 @@ A five-minute checklist. Every line must pass.
 
 These are expected to be missing. Do not "fix" them.
 
-- Deployment — local only; `earthtime publish` writes a local manifest and media directory,
+- Deployment — local only; `earthlapse publish` writes a local manifest and media directory,
   no R2 upload
 - Depth maps — `Scene.depth` is in the manifest schema but unpopulated (ADR-009)
 - Review UI — CLI listing, not a web app

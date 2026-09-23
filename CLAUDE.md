@@ -24,7 +24,7 @@ it, do not unilaterally edit.
   `pipeline/spend.py`. If a build hits the ceiling, stop and report — do not work around it.
   Note the footgun: `--max-spend` **overwrites** the ledger's stored ceiling with an absolute
   value, it does not add to it (`Ledger.load`: "CLI flag wins over whatever was stored"). It is a
-  **required** option on `earthtime build` — it cannot be left off — so every build retypes the
+  **required** option on `earthlapse build` — it cannot be left off — so every build retypes the
   ceiling, and a typo silently rewrites it rather than erroring. Always pass exactly
   `--max-spend 100`. Check `spend.json`'s `ceiling_usd` afterwards if you are unsure.
   This is a known design wart: a safety rail you must re-state correctly on every use is one you
@@ -69,15 +69,15 @@ docs/               DESIGN, VISUAL_SPEC, DATA_SOURCES, IMPLEMENTATION, DECISIONS
 
 ## Commands
 
-The Python CLI lives in the project venv — always call it as `.venv/bin/earthtime`.
+The Python CLI lives in the project venv — always call it as `.venv/bin/earthlapse`.
 
 ```
 python -m pipeline.databuild --only <source> [--force]   # rebuild ONE source into data/curated/
 make data                       # re-run every stale source (see "Working in parallel")
-earthtime plan                  # what is stale, what it will cost
-earthtime build --only images   # generate, respecting pins and ceiling
-earthtime review                # candidate picker; review clear <id>, review pick <id> <n>
-earthtime publish               # write data/media/manifest.json + media (local; no upload)
+earthlapse plan                  # what is stale, what it will cost
+earthlapse build --only images   # generate, respecting pins and ceiling
+earthlapse review                # candidate picker; review clear <id>, review pick <id> <n>
+earthlapse publish               # write data/media/manifest.json + media (local; no upload)
 make deploy                     # preflight, then R2 media + Worker site (deploy/README.md)
 ```
 
@@ -164,7 +164,7 @@ Several agents often run at once. The failures that actually happen here are sha
 not merge conflicts:
 
 - **One writer per file.** Every agent brief lists the paths it owns; nobody edits outside them.
-- **Only the coordinator runs `make data`, `earthtime publish` and `git` writes.** A subagent that
+- **Only the coordinator runs `make data`, `earthlapse publish` and `git` writes.** A subagent that
   needs curated data rebuilds exactly its own source with `python -m pipeline.databuild --only
   <source>`; `make data` can delete another agent's outputs, and a mid-run `publish` breaks any
   browser check in flight. Publish once, at the end, from one place.

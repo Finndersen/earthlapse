@@ -1,4 +1,4 @@
-"""`earthtime publish`: data/media/manifest.json plus the media it references. Local only.
+"""`earthlapse publish`: data/media/manifest.json plus the media it references. Local only.
 
 Everything is assembled and validated in memory first (`prepare_publication`) and only then
 written (`write_publication`), so a refused publish leaves data/media/ as it was. All world
@@ -326,9 +326,9 @@ class PortraitPublication:
     unpinned: tuple[str, ...]
     missing_morphs: tuple[
         MorphKey, ...
-    ]  # consecutive pinned pairs `earthtime morph` has not run for
+    ]  # consecutive pinned pairs `earthlapse morph` has not run for
     dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015):
-    # `earthtime morph` judged these fine to skip, not to rerun; the viewer crossfades them
+    # `earthlapse morph` judged these fine to skip, not to rerun; the viewer crossfades them
     # exactly as it would an ungenerated pair
 
 
@@ -383,7 +383,7 @@ def prepare_publication(
     asset_base = validated_asset_base(asset_base)
     pinned = [scene for scene in book.scenes if scene.pin is not None]
     if not pinned:
-        raise PublishRefused("no scene is pinned; pick candidates with `earthtime review pick`")
+        raise PublishRefused("no scene is pinned; pick candidates with `earthlapse review pick`")
     _validate_scene_events(book, world.events.get(EVENTS_ID))
     stem_book = load_stem_book(sources_dir / AUDIO_STEMS_SOURCE / "stems.toml")
     _validate_scene_sound(book, stem_book)

@@ -40,7 +40,7 @@ fi
 echo "==> manifest.json"
 MANIFEST="$REPO_ROOT/data/media/manifest.json"
 if [ ! -f "$MANIFEST" ]; then
-  echo "error: $MANIFEST does not exist — run: earthtime publish" >&2
+  echo "error: $MANIFEST does not exist — run: earthlapse publish" >&2
   exit 1
 fi
 "$PYTHON" - "$MANIFEST" "$REPO_ROOT/data/media" <<'PYEOF'

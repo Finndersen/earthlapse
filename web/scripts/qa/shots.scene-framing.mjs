@@ -2,7 +2,7 @@
  * One shot per published scene at a phone portrait viewport: a contact sheet for reviewing each
  * scene's ADR-045 crop by eye, not a regression guard, so it stays out of the default list. Run it
  * with `--extra-shots scripts/qa/shots.scene-framing.mjs --grep scene-framing`. Generated from the
- * published manifest, so it always covers exactly the scenes `earthtime publish` wrote.
+ * published manifest, so it always covers exactly the scenes `earthlapse publish` wrote.
  */
 
 import { readFileSync } from 'node:fs'
