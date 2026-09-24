@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 170 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 196 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -423,6 +423,35 @@ model knowledge. Curation choices:
   per the work-package brief) and a Rodinia/Gondwana breakup event distinct from Pangaea's
   (Gondwana's later breakup is the southern half of Pangaea's own breakup, already covered
   by `pangaea-supercontinent`).
+
+A **gap-filling batch** (2026-09-24) added 26 events, bringing the total to 196, for silent
+stretches found by measuring the gaps between scenes on the timeline's warped scale and by
+counting scenes per era section. Deep time: `huronian-glaciation`, `ichthyosaurs-origin`,
+`pterosaurs-origin`, `mosasaurs`. Cenozoic and Quaternary: `messel-pit`,
+`whales-return-to-sea`, `paraceratherium`, `middle-miocene-climatic-optimum`,
+`mid-pleistocene-transition`, `late-quaternary-megafauna-extinction`, `4-2-kiloyear-event`,
+`late-bronze-age-collapse`. Early modern onward: `little-ice-age`, `edo-million-city`,
+`lisbon-earthquake-1755`, `canton-system`, `american-revolution`, `laki-eruption`,
+`french-revolution`, `haitian-revolution`, `jenner-smallpox-vaccine`, `tambora-eruption`,
+`first-transcontinental-railroad`, `krakatoa-eruption`, `smallpox-eradication`,
+`paris-agreement`. Four back new scenes (`paraceratherium`, `edo-million-city`,
+`first-transcontinental-railroad`, and `messel-pit`, to which `eocene-jungle` moved); the
+new `vredefort-impact` and `wallacea-hand-stencil` scenes link existing events. Verification
+was narrower than the batches above: WebFetch was blocked by the session's egress proxy for
+every publisher and encyclopaedia host tried, so each date was checked against WebSearch result
+text quoting the cited source, not a full page read. Details that could not be confirmed that
+way are marked UNVERIFIED inline. Curation choices:
+- **`4-2-kiloyear-event`** starts at the Meghalayan base, 4,250 yr **b2k** (before 2000), not
+  BP 1950, so t = 4,275 under this file's convention.
+- **`messel-pit`**'s t (47.5 Ma) sits in the Middle Messel Formation (47.65-47.22 Ma, Schmitt
+  et al. 2024), assuming the classic fossils come from it. Mertz & Renne's 47.8 Ma is kept in
+  the citation, marked as superseded by Lenz et al. 2015.
+- **`huronian-glaciation`**'s 2.22 Ga end is the age of dykes cutting the glacial rocks, so it
+  is a cap on the glaciation's end rather than a date for it.
+- **`pterosaurs-origin`** does not claim a ~228 Ma first appearance: the oldest definite
+  pterosaurs are ~215 Ma, and older Brazilian candidates are of uncertain identity.
+- **`paraceratherium`** is described as among the largest land mammals, not the largest: some
+  mass estimates for *Palaeoloxodon* elephants are higher.
 
 ## Gotchas
 

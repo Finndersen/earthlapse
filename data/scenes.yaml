@@ -194,6 +194,46 @@ scenes:
     framing: {focus: [0.66, 0.8], pan: 270, portrait_zoom: 1.3}
     pin: {asset_digest: "295c1601ff5c1ece", path: "data/pins/scenes/great-oxidation/295c1601ff5c1ece.jpg"}
 
+  # 2.023 Ga, the Vredefort impact (events.yaml vredefort-impact-crater; Kamo et al. 1996). A
+  # 20-25 km impactor at 15-20 km/s, for an original crater 250-280 km across (Allen, N.H. et al.
+  # (2022), JGR Planets 127(10), e2022JE007186). About 10 km of the crater's own surface has since
+  # eroded away, so whether it struck land or shallow sea is unknown; the vantage is instead a
+  # composite shallow sea roughly 800 km out. From there the plume clears the horizon; nearer
+  # (a few hundred km) a viewer would sit inside the fireball and ejecta blanket. The moment is a
+  # couple of minutes after impact: ground shaking arrives at ~2-3.5 min, falling ejecta at
+  # ~5-8 min and the air blast at ~30-50 min, so the sea is still calm (distances and arrival
+  # times estimated from Collins, Melosh & Marcus (2005), Meteoritics & Planetary Science 40(6),
+  # 817-840). Life is microbial only; after the Great Oxidation the sky is blue, not the orange
+  # Archean haze, and there is no land vegetation to burn.
+  - id: vredefort-impact
+    t: 2.023e9
+    chapter: over-under
+    shot: SPLIT_LEVEL
+    title: "The Largest Known Impact"
+    caption: About two billion years ago, an asteroid some 20-25 km across strikes what is now South Africa, blasting out Vredefort, the largest impact crater known on Earth. Hundreds of kilometres away, its plume towers over a sea where the only life is microbial.
+    unsourced:
+      o2_percent: 1  # rounded, contested: after the Great Oxidation, still a small fraction of modern levels
+      mean_temp_c: 20  # rounded: no defensible Paleoproterozoic global figure; kept temperate like great-oxidation
+    subject:
+      setting: A shallow, sunlit sea on the margin of an ancient continent, some 800 km from the Vredefort asteroid impact, a couple of minutes after it strikes, seen half above and half below the surface
+      left_mass: a low, wave-washed headland of layered grey and rust-red sedimentary rock rising out of the sea, its submerged face crusted with dark microbial mat
+      vegetation: none on land, which is bare rock; underwater, the only life is microbial, olive-green and brown mats coating the sea floor and low stromatolite domes
+      fauna: none; no animals exist yet
+      main_subject: underwater, a field of low, rounded stromatolite domes skinned with olive microbial mat on the sandy sea floor, lit from above by a strange warm orange light filtering down through the clear water
+      ground: the shallow sea floor, rippled pale grey sand and flat rock slabs filmed with microbial mat
+      water: shallow, calm, clear water, its surface still smooth, catching an orange glow from the horizon
+      far_bank: a low, bare, rocky far shore with no green anywhere; beyond it, far off on the horizon right of centre, an immense column of incandescent vapour and molten rock rising out of sight into the upper atmosphere and spreading into a vast, glowing, mushroom-shaped plume that dwarfs every cloud
+      sky_and_light: an ordinary pale blue daytime sky over most of the frame, but the horizon beneath the plume blazing white-orange, a hard orange glow spreading across the right half of the sky and reflecting on the sea
+      absent: [a visible asteroid, a crater, lava on the near shore, flames, burning forest, smoke from fires, plants, trees, grass, moss, animals, fish, shells, birds, people, seaweed, kelp, corals, a tsunami wave, falling debris, a second sun, an orange hazy sky]
+    events: [vredefort-impact-crater]
+    # ADR-023: `impact` `once` at 0.8, a notch under kpg-arrival's 1.0: the plume here is ~800 km
+    # away and its sound is still minutes off, so the cue is a distant rumble rather than a strike.
+    sound: {stem: impact, mode: once, gain: 0.8}
+    # ADR-034: the Vredefort Dome, Free State, South Africa: where the impact struck, not the
+    # composite sea the camera stands in.
+    location: {lat: -27.0, lon: 27.5, label: "Vredefort Dome, South Africa"}
+    pin: null
+
   # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
   # Ga): Bangiomorpha pubescens, Somerset Island, Arctic Canada. Gibson, T.M. et al. (2018),
   # "Precise age of Bangiomorpha pubescens dates the origin of eukaryotic photosynthesis,"
@@ -946,18 +986,25 @@ scenes:
     framing: {focus: [0.58, 0.62], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "32b5e8d94688fbc7", path: "data/pins/scenes/arctic-hothouse-forest/32b5e8d94688fbc7.jpg"}
 
-  # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
+  # ~47.5 Ma, the Messel maar lake, Hesse, Germany (events.yaml messel-pit): a volcanic crater
+  # lake in paratropical rainforest whose oil shale preserves the early horse Eurohippus, the
+  # lemur-like primate Darwinius and the crocodilian Diplocynodon (Lenz, O.K. et al. (2015),
+  # International Journal of Earth Sciences 104, 873-889; Franzen, J.L. et al. (2009), PLoS ONE
+  # 4(5), e5723). Messel comes a few million years after the Early Eocene Climatic Optimum
+  # (53.3-49.1 Ma; Inglis, G.N. et al. (2020), Climate of the Past 16, 1953-1968), in a world
+  # Westerhold, T. et al. (2020), Science 369, 1383-1387, still class as Hothouse, more than
+  # 10 °C warmer than today; arctic-hothouse-forest (52 Ma) holds the EECO itself.
   - id: eocene-jungle
-    t: 5.0e7
+    t: 4.75e7
     chapter: waters-edge
     shot: WATER_EDGE
     title: "A Hothouse Rainforest"
-    caption: In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.
+    caption: About 47.5 million years ago, in a hothouse world still more than 10 °C warmer than today, paratropical rainforest rings the Messel crater lake, in what is now Germany, where tiny early horses come to drink.
     unsourced:
       o2_percent: 23  # rounded: near modern
-      mean_temp_c: 27  # rounded: Early Eocene Climatic Optimum global mean, commonly put at 23-29 °C
+      mean_temp_c: 25  # rounded: no verified single figure for ~47.5 Ma; Hothouse, >10 °C above today, below the EECO's ~27 °C
     subject:
-      setting: The shore of a still lake in the paratropical rainforest of the early Eocene hothouse
+      setting: The shore of a deep, still volcanic crater lake at Messel, in what is now Germany, in the paratropical rainforest of the middle Eocene hothouse
       left_mass: a towering wall of dense rainforest, tall buttressed laurel and fig-like trees draped with lianas above palms and giant-leaved understory plants
       vegetation: dense broadleaf rainforest with palms, lianas, tree ferns and aroids, and no open ground
       fauna: a small lemur-like early primate clinging to a branch over the water; a crocodile basking on the bank
@@ -967,6 +1014,10 @@ scenes:
       far_bank: unbroken rainforest across the lake, steaming in the heat
       sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
       absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
+    events: [messel-pit]
+    # ADR-034: Messel Pit, Hesse, Germany (UNESCO site 720). Older than the human-era basemap
+    # domain, so publish reconstructs its paleo position.
+    location: {lat: 49.918, lon: 8.757, label: "Messel Pit, Germany"}
     framing: {focus: [0.63, 0.8], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "6fd97ed7b5dbfd9a", path: "data/pins/scenes/eocene-jungle/6fd97ed7b5dbfd9a.jpg"}
 
@@ -1000,6 +1051,43 @@ scenes:
     sound: {stem: wind, mode: loop, gain: 0.9}
     framing: {focus: [0.22, 0.4], pan: 0}
     pin: {asset_digest: "a2fe73ed75939b32", path: "data/pins/scenes/eocene-oligocene-icesheet/a2fe73ed75939b32.jpg"}
+
+  # ~26.5 Ma, late Oligocene, the Linxia Basin, Gansu, northwest China: Paraceratherium
+  # linxiaense from the Jiaozigou Formation, dated faunally and palaeomagnetically to the middle of
+  # chron C8r (Deng, T. et al. (2021), "An Oligocene giant rhino provides insights into
+  # Paraceratherium evolution," Communications Biology 4, 639). About 17-21 t, nearly 5 m at the shoulder and over 7.4 m
+  # long; a hornless browser with a long neck, long legs and three-toed feet. Its snout is shown
+  # as a short, mobile upper lip: reconstructions range from a prehensile lip to a short
+  # tapir-like proboscis, never an elephant trunk. Deng et al. describe late Oligocene northwest
+  # China as open woodland, with the Tibetan region still low (possibly under 2,000 m), so no
+  # grassland and no high snowy skyline. The same fauna holds the entelodont Paraentelodon and the
+  # chalicothere Schizotherium. Whether the Linxia locality was a river or lake margin is not
+  # established: the river is the chapter's framing, not a claim about the site, so the scene
+  # carries no `location`.
+  - id: paraceratherium-woodland
+    t: 2.65e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "A Giant Hornless Rhino"
+    caption: About 26.5 million years ago, in what is now northwest China, Paraceratherium, a hornless rhinoceros nearly 5 metres tall at the shoulder and one of the largest land mammals ever, browses the treetops of an open woodland.
+    unsourced:
+      o2_percent: 23  # rounded: Oligocene estimates run a little above modern
+      mean_temp_c: null  # no verified single global figure for the late Oligocene
+    subject:
+      setting: The bank of a shallow river through open woodland in what is now the Linxia Basin, northwest China, in the late Oligocene
+      left_mass: a tall, spreading broadleaf tree with a dense crown, its lower branches already stripped bare of leaves to well above head height
+      vegetation: open woodland of scattered tall broadleaf trees and dense shrubs, with bare earth and low herbs between them; only small, patchy tufts of grass
+      fauna: a heavy, pig-like entelodont rooting along the far bank; a few birds
+      main_subject: "a Paraceratherium: a colossal hornless rhinoceros nearly five metres tall at the shoulder, with long, pillar-like legs ending in three-toed feet, a deep barrel body, a long thick neck held high, and a long, low, hornless skull with a short, mobile, overhanging upper lip, stretching up at the waterline to pull leaves from a tree's high branches; thick, dull grey-brown, sparsely haired hide"
+      ground: dry, pale earth and gravel along the riverbank, scattered with fallen leaves and churned by large three-toed footprints
+      water: a shallow, slow, silty river, calm and brown-green
+      far_bank: more open woodland and shrubs on a low far bank, rolling low hills beyond, hazy in the distance
+      sky_and_light: a warm, dry, pale blue sky with a few high clouds; bright, clear sunlight
+      absent: [horn, nose horn, elephant trunk, tusks, giraffe, elephant, horses, antelope, cattle, open grassland, savanna, prairie, snow-capped mountains, high plateau skyline, people, buildings]
+    events: [paraceratherium]
+    # ADR-023: `large-animal` `loop`, as for the other scenes led by one big mammal.
+    sound: {stem: large-animal, mode: loop, gain: 0.85}
+    pin: null
 
   # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
   # taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North
@@ -1255,6 +1343,45 @@ scenes:
     location: {lat: 31.8514, lon: -8.8722, label: "Jebel Irhoud, Morocco"}
     framing: {focus: [0.38, 0.85], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "ca26d88194e6bbd2", path: "data/pins/scenes/jebel-irhoud-firelight/ca26d88194e6bbd2.jpg"}
+
+  # At least 67.8 ka, the hand stencil in Liang Metanduno, Muna Island, Sulawesi (events.yaml
+  # earliest-cave-art; Oktaviana et al. 2026, Nature 650): faint red ochre sprayed by mouth around
+  # a hand about 14 x 10 cm, its fingertips reshaped to look pointed, a style known only from
+  # Sulawesi. The authors place the artists within "the same broad population of modern humans
+  # who went on to colonize Australia by 65,000 years ago" by the northern route through Wallacea
+  # (events.yaml sahul-arrival, whose long chronology this scene assumes), so the scene joins the
+  # two. With sea level some 75-85 m lower, reaching Sahul still took several open-water
+  # crossings, at least one near 100 km (Bird, M.I. et al. (2019), Scientific Reports 9, 8220).
+  # No watercraft survives from this period: the bamboo raft is the commonly proposed form, not
+  # evidenced, and the caption does not name one. The cave's much later (~4 ka) paintings of
+  # boats, horses and people are kept out. `location` marks Muna Island, not the cave, whose
+  # exact coordinates are unpublished.
+  - id: wallacea-hand-stencil
+    t: 6.78e4
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The Oldest Known Rock Art"
+    caption: At least 67,800 years ago, on Muna Island in Sulawesi, people spray red ochre around a hand on a cave wall, the oldest dated rock art. They are likely of the population that crossed open sea to reach Australia and New Guinea.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 11  # rounded: MIS 4 glacial stage, colder than pre-industrial but milder than the LGM (pleistocene-steppe uses 8)
+    subject:
+      setting: A tropical limestone coast on an island in Wallacea, between mainland Asia and Australia, during the last ice age, the sea lower than today but still open water between the islands
+      left_mass: a tall, pale grey limestone karst cliff streaked with dark water stains and hung with vines, a low cave mouth at its foot; just inside the entrance a person seen from behind sprays red ochre from their mouth around a hand pressed to the rock, several faint red hand stencils with narrowed, pointed fingertips already on the wall beside it
+      vegetation: dense tropical forest on the karst above the cliff, with palms, pandanus and tall broadleaf trees; mangroves and beach shrubs along the shore
+      fauna: a Sulawesi warty pig rooting at the forest edge; a few seabirds over the water
+      main_subject: a small group of people, seen from behind or in profile at a distance, dragging a simple raft of lashed bamboo poles from the beach into the shallows, a bundle of gear and a gourd lashed aboard
+      ground: a narrow beach of pale coral sand and limestone rubble, washed-up driftwood and bamboo
+      water: calm, clear, turquoise tropical shallows over pale sand, darkening to deep blue further out
+      far_bank: open sea to the horizon, where the faint, low outline of another island shows through the haze
+      sky_and_light: a warm, humid, bright tropical morning sky with scattered cumulus; clear, even sunlight
+      absent: [boats with sails, carved dugout canoes, paddles with blades, horses, dogs, metal, pottery, woven cloth, clothing beyond a simple wrap, modern people, buildings, painted boats or animals on the cave wall, identifiable faces, legible symbols]
+    events: [earliest-cave-art, sahul-arrival]
+    # ADR-023: `water` `loop` -- surf and shallows as the raft is launched, the crossing being half
+    # of what the scene shows.
+    sound: {stem: water, mode: loop, gain: 0.8}
+    location: {lat: -4.84, lon: 122.65, label: "Muna Island, Sulawesi, Indonesia"}
+    pin: null
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
@@ -1974,6 +2101,48 @@ scenes:
     framing: {focus: [0.56, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "815e21329ccda9ba", path: "data/pins/scenes/amsterdam-voc-harbour/815e21329ccda9ba.jpg"}
 
+  # About 1740, Nihonbashi in Edo; t = 2025 - 1740 = 285. Edo passes about a million people in
+  # the 1720s (events.yaml edo-million-city). The fish market (Uogashi) stood on the Nihonbashi
+  # River's north bank from the early 1600s until 1923. Hokusai's (c. 1830-32) and Hiroshige's
+  # (1856) Nihonbashi prints show storehouses lining the canal, laden cargo boats, Edo Castle
+  # beyond and Fuji ~100 km to the west-southwest; they are a century later than this scene,
+  # so they stand as evidence of a stable townscape, not a picture of 1740. Edo Castle has no
+  # main keep: it burned in the Meireki fire of 1657 and was never rebuilt, so only turrets
+  # (yagura) and white walls on stone ramparts show. The bridge is wooden (the stone one dates
+  # from 1911). Plastered, tile-roofed fireproof storehouses (dozo kura) were permitted along
+  # riverbanks from 1691 and encouraged in the Kyoho era (1716-35). Townspeople's cotton
+  # clothing was held to subdued browns, greys and indigo by sumptuary law. Sources: Met Museum
+  # and Brooklyn Museum print records; MLIT multilingual interpretation database (Edo Castle,
+  # Nihonbashi); Chuo City tourism (Uogashi).
+  - id: edo-nihonbashi
+    t: 285.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Edo, a City of a Million"
+    caption: By 1740, Edo is one of the largest cities in the world, with around a million people. At Nihonbashi, cargo boats crowd the canal beside the city's fish market.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-18th-century global mean, within the Little Ice Age, close to pre-industrial
+    subject:
+      setting: The Nihonbashi River in the heart of Edo, Japan, about 1740, beside the fish market and the arched wooden Nihonbashi bridge
+      left_mass: a row of two-storey fireproof merchant storehouses rising straight from the stone canal wall, thick white-plastered walls with black tile facing at their base and heavy grey tiled roofs, small shuttered windows
+      vegetation: a single pine leaning over the canal wall; otherwise stone, timber and tile
+      fauna: gulls and crows over the fish market; a cat on a boat's gunwale
+      main_subject: long, narrow, flat-bottomed wooden cargo boats moored at a stone landing, men in short indigo jackets, loincloths and cloth headbands unloading baskets of fish and bales of goods onto the quay, a slim roofless river-taxi boat sculled past them by a single stern oar, faces not distinguishable
+      ground: the stone and timber landing of the fish market, wet with water, wooden tubs and shallow baskets of fish, straw mats and coiled rope
+      water: the calm, grey-green water of the city canal, crowded with moored cargo boats and small sculled boats
+      far_bank: the low wooden arch of the Nihonbashi bridge crossing the river, crowded with pedestrians; beyond it, dark tiled roofs of the merchant quarter, the white walls and low turrets of Edo Castle on stone ramparts, and far off on the horizon the snow-capped cone of Mount Fuji
+      sky_and_light: a clear, crisp winter morning sky; bright, low, clean sunlight
+      absent: [a tall multi-storey castle keep, stone bridge, rickshaws, steamships, sailing ships with square sails, Western clothing, Western hats, umbrellas, gas or electric lamps, telegraph poles, glass windows, brick buildings, colour woodblock prints, legible signage or text, bright silk clothing, identifiable faces, modern Tokyo skyline]
+    events: [edo-million-city]
+    # ADR-023: `settlement` `loop` -- the fish market and quayside unloading read as commerce, the
+    # same footing as amsterdam-voc-harbour.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-034: Nihonbashi, Tokyo, Japan. t = 285 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 35.6841, lon: 139.7745, label: "Nihonbashi, Tokyo"}
+    pin: null
+
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
   # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
   # Lancashire's cotton industry, driving multi-storey brick spinning mills with tall chimneys, and the
@@ -2009,6 +2178,46 @@ scenes:
     sound: {stem: industry, mode: loop, gain: 1.0}
     framing: {focus: [0.62, 0.62], pan: 180}
     pin: {asset_digest: "4ee06d67fed510e9", path: "data/pins/scenes/industrial-mill-town/4ee06d67fed510e9.jpg"}
+
+  # 10 May 1869, Promontory Summit, Utah; t = 2025 - 1869 = 156 (events.yaml
+  # first-transcontinental-railroad). Central Pacific No. 60 "Jupiter" (wood-burning, balloon
+  # stack; reported in March 1869 as ultramarine blue with crimson driving wheels) and Union
+  # Pacific No. 119 (coal-burning, straight stack) stood pilot to pilot; an eight-man Chinese crew
+  # brought up and laid the last rail. The crowd, estimated at a few hundred to about 3,000,
+  # included track workers of both lines, officials, four companies of the 21st Infantry and two
+  # bands. The site is a treeless sagebrush basin among low, arid ranges, with a telegraph line
+  # along the track that carried "DONE" at 12:47 pm. Sources: Wikipedia "Jupiter (locomotive)",
+  # "Union Pacific No. 119", "Golden Spike National Historical Park"; cprr.org; Stanford Chinese
+  # Railroad Workers in North America Project. No. 119's original paint scheme is unsettled, so
+  # the subject names only its stack. Open-ground (GROUND): the rails are the chapter's low
+  # leading line.
+  - id: promontory-golden-spike
+    t: 156.0
+    chapter: open-ground
+    shot: GROUND
+    title: "The Railroad Spans a Continent"
+    caption: On 10 May 1869 at Promontory Summit, Utah, a Chinese crew lays the last rail joining the Central Pacific and Union Pacific railroads across North America. Chinese workers made up about 90% of the Central Pacific's workforce.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: late-19th-century global mean, close to pre-industrial
+    subject:
+      setting: Promontory Summit, Utah, a treeless high-desert basin, at midday on 10 May 1869, where the two halves of the first railroad across North America meet
+      left_mass: a wood-burning 4-4-0 steam locomotive with a large funnel-shaped balloon smokestack, a big square brass-trimmed headlamp and a cowcatcher, painted deep ultramarine blue with crimson driving wheels, a thin plume of steam rising
+      vegetation: grey-green sagebrush scattered across the dry ground; no trees anywhere
+      fauna: none
+      main_subject: at the gap in the track just right of centre, a small crew of Chinese railroad workers lowering the last iron rail onto the wooden ties, a coal-burning 4-4-0 locomotive with a straight smokestack standing beyond them facing the first engine, a crowd of workers, soldiers in dark blue uniforms and men in dark frock coats gathered on either side, faces not distinguishable
+      ground: dry, pale earth and gravel ballast, the fresh wooden ties and iron rails running low from the near foreground toward the workers
+      water: none; the basin is dry sagebrush desert
+      far_bank: no far bank; a scatter of canvas tents and rough plank shacks, a line of telegraph poles running beside the track into the distance, and low, bare, brown mountains on the horizon
+      sky_and_light: a clear, cool spring sky with a few high clouds; bright, crisp midday sunlight
+      absent: [legible text, legible locomotive names or numbers, banners, company flags, state flags, snow-capped peaks, trees, grass lawns, paved roads, monuments, visitor centre, modern clothing, cars, electric power lines, identifiable faces, handshake pose]
+    events: [first-transcontinental-railroad]
+    # ADR-023: `settlement` `loop` -- the gathered crowd; no CC0/PD 1860s steam-locomotive
+    # recording is in the stem catalogue.
+    sound: {stem: settlement, mode: loop, gain: 0.8}
+    # ADR-034: Golden Spike National Historical Park, Promontory Summit, Utah.
+    location: {lat: 41.6179, lon: -112.5516, label: "Promontory Summit, Utah"}
+    pin: null
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
   # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,

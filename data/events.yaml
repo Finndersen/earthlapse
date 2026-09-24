@@ -103,6 +103,31 @@ events:
       early ocean and atmosphere." Nature, 506, 307-315. Gumsley, A.P. et al. (2017).
       "Timing and tempo of the Great Oxidation Event." PNAS, 114(8), 1811-1816.
 
+  - id: huronian-glaciation
+    label: Huronian glaciation
+    kind: period
+    t_min: 2.22e9
+    t_max: 2.45e9
+    tags: [earth-climate]
+    importance: 0.6
+    description: >
+      Earth's first known ice ages: three glacial diamictites (Ramsay Lake, Bruce and Gowganda
+      formations) in the Huronian Supergroup of Ontario, deposited between ~2.45 Ga and the
+      2.22 Ga Nipissing diabase that cuts them, broadly coeval with the Great Oxidation Event
+      as rising oxygen destroyed a methane greenhouse. Contested: whether any of them was
+      global (a "snowball"), and how they correlate with South Africa's Makganyene glaciation,
+      dated to ~2.3-2.22 Ga by Kopp et al. (2005) but to before ~2.43 Ga by Gumsley et al. (2017).
+    citation: >
+      Sekine, Y. et al. (2011). "Osmium evidence for synchronicity between a rise in
+      atmospheric oxygen and Palaeoproterozoic deglaciation." Nature Communications, 2, 502
+      (Huronian stratigraphy; depositional age ~2.45-2.217 Ga, Nipissing diabase 2217 +/- 9 Ma).
+      Kopp, R.E., Kirschvink, J.L., Hilburn, I.A. & Nash, C.Z. (2005). "The Paleoproterozoic
+      snowball Earth: A climate disaster triggered by the evolution of oxygenic
+      photosynthesis." PNAS, 102(32), 11131-11136. doi:10.1073/pnas.0504878102.
+      Gumsley, A.P. et al. (2017). "Timing and tempo of the Great Oxidation Event." PNAS,
+      114(8), 1811-1816. doi:10.1073/pnas.1608824114 (first Paleoproterozoic global glaciation
+      and GOE onset between ~2,460 and 2,426 Ma).
+
   - id: eukaryotes-origin
     label: Eukaryotes originate
     kind: moment
@@ -628,6 +653,7 @@ events:
   # UNVERIFIED which source pair a curator should anchor the interval on: Scotese
   # (2004)/Torsvik & Cocks (2017) vs. Wikipedia's own cited Rogers & Santosh (2004), which
   # give the same broad shape but different precise assembly/breakup bounds.
+
   - id: pangaea-supercontinent
     label: Pangaea assembles and rifts apart
     kind: period
@@ -693,6 +719,28 @@ events:
       between 251.941 +/- 0.037 Ma and 251.880 +/- 0.031 Ma at the Meishan GSSP, Zhejiang,
       China.
 
+  - id: ichthyosaurs-origin
+    label: First ichthyosaurs
+    kind: moment
+    t_min: 2.48e8
+    t_max: 2.519e8
+    t: 2.5e8
+    tags: [life]
+    importance: 0.5
+    description: >
+      Reptiles return to the sea soon after the end-Permian extinction: tail vertebrae of an
+      already fully oceanic, ~3 m ichthyosaur from Smithian rocks of Spitsbergen, ~250 Ma, are
+      the oldest yet found, ahead of the small, possibly amphibious Cartorhynchus and
+      Chaohusaurus of China ~248 Ma. So derived a form so early implies the lineage began
+      earlier; whether it arose before the extinction itself is contested.
+    citation: >
+      Kear, B.P., Engelschion, V.S., Hammer, O., Roberts, A.J. & Hurum, J.H. (2023).
+      "Earliest Triassic ichthyosaur fossils push back oceanic reptile origins." Current
+      Biology, 33(5), R178-R179. doi:10.1016/j.cub.2022.12.053. Motani, R. et al. (2015). "A
+      basal ichthyosauriform with a short snout from the Lower Triassic of China." Nature,
+      517(7535), 485-488 (Cartorhynchus, ~248 Ma). Permian-Triassic boundary 251.902 Ma per
+      the ICS International Chronostratigraphic Chart v2024/12.
+
   - id: dinosaurs
     label: First dinosaurs
     kind: moment
@@ -727,6 +775,29 @@ events:
       Lucas, S.G. & Luo, Z. (1993). "Adelobasileus from the Upper Triassic of West Texas:
       the oldest mammal." Journal of Vertebrate Paleontology, 13(3), 309-334 (~225 Ma).
       Kermack, K.A., Mussett, F. & Rigney, H.W. (1981) for Morganucodon, ~205 Ma.
+
+  - id: pterosaurs-origin
+    label: First pterosaurs
+    kind: moment
+    t_min: 2.1e8
+    t_max: 2.27e8
+    t: 2.15e8
+    tags: [life]
+    importance: 0.6
+    description: >
+      The first vertebrates to fly under their own power: the oldest definite pterosaurs, such as
+      Eudimorphodon from the Norian Zorzino Limestone of northern Italy, are ~215 million years
+      old and already fully adapted for flight. Their closest known relatives, the lagerpetids,
+      point to an earlier origin; a Carnian-Norian specimen from Brazil (Faxinalipterus) is of
+      contested affinity.
+    citation: >
+      Kligman, B.T. et al. (2025). "Unusual bone bed reveals a vertebrate community with
+      pterosaurs and turtles in equatorial Pangaea before the end-Triassic extinction." PNAS,
+      122(29), e2505513122. doi:10.1073/pnas.2505513122 (with its Smithsonian release: oldest
+      known pterosaur fossils ~215 Ma, in Europe). Wild, R. (1978), Eudimorphodon ranzii, Calcare
+      di Zorzino, Norian (venue UNVERIFIED). Ezcurra, M.D. et al. (2020). "Enigmatic dinosaur
+      precursors bridge the gap to the origin of Pterosauria." Nature, 588, 445-449. Norian
+      base ~227 Ma per the ICS International Chronostratigraphic Chart v2024/12.
 
   - id: manicouagan-impact-crater
     label: Manicouagan impact
@@ -848,6 +919,7 @@ events:
 
   # UNVERIFIED: Wikipedia's own reference list does not name Roberts & Kirschbaum (1995)
   # directly, though its stated 100-66 Ma range matches it.
+
   - id: western-interior-seaway
     label: Western Interior Seaway
     kind: period
@@ -868,6 +940,23 @@ events:
       corroborated live via Wikipedia, "Western Interior Seaway" (2026-09-14);
       UNVERIFIED — that article's own citations do not name the USGS paper directly,
       though its stated 100-66 Ma range matches it.
+
+  - id: mosasaurs
+    label: Age of mosasaurs
+    kind: period
+    t_min: 6.6043e7
+    t_max: 9.8e7
+    tags: [life]
+    importance: 0.45
+    description: >
+      Marine lizards related to monitors and snakes appear ~98 Ma and, once ichthyosaurs and
+      pliosaurs are gone, become the top predators of Late Cretaceous seas from the Turonian
+      onward, before dying out in the K-Pg extinction.
+    citation: >
+      Polcyn, M.J., Jacobs, L.L., Araujo, R., Schulp, A.S. & Mateus, O. (2014). "Physical
+      drivers of mosasaur evolution." Palaeogeography, Palaeoclimatology, Palaeoecology, 400,
+      17-27 (a 32.5 Myr history from their appearance at 98 Ma, Haasiasaurus, to the K-Pg
+      boundary). K-Pg boundary 66.043 Ma per Renne et al. (2013), as for k-pg-impact.
 
   - id: deccan-traps
     label: Deccan Traps eruptions
@@ -988,6 +1077,55 @@ events:
       20170082. Onset
       dated to 55.9-56.0 Ma.
 
+  - id: whales-return-to-sea
+    label: Whales return to the sea
+    kind: period
+    t_min: 4.1e7
+    t_max: 5.0e7
+    tags: [life]
+    importance: 0.55
+    description: >
+      Whales evolve from land-dwelling artiodactyls: wolf-sized pakicetids of
+      Indo-Pakistan were "no more amphibious than a tapir", yet within about ten million
+      years basilosaurids such as Tutcetus in the Tethys Sea off Egypt had cut all ties to
+      land. The start is contested, because the age of the Kuldana Formation that yields
+      Pakicetus is argued as late early Eocene (~50 Ma) or early middle Eocene.
+    citation: >
+      Thewissen, J.G.M., Williams, E.M., Roe, L.J. & Hussain, S.T. (2001). "Skeletons of
+      terrestrial cetaceans and the relationship of whales to artiodactyls." Nature, 413,
+      277-281. Gingerich, P.D. (2003). "Stratigraphic and micropaleontological constraints
+      on the middle Eocene age of the mammal-bearing Kuldana Formation of Pakistan."
+      Journal of Vertebrate Paleontology, 23(3), 643-651. Antar, M.S. et al. (2023). "A
+      diminutive new basilosaurid whale reveals the trajectory of the cetacean life
+      histories during the Eocene." Communications Biology, 6, 707 (Tutcetus, ~41 Ma,
+      Fayum). Uhen, M.D. (2010). "The Origin(s) of Whales." Annual Review of Earth and
+      Planetary Sciences, 38, 189-219 (first whales ~52.5 Ma).
+
+  - id: messel-pit
+    label: Messel Pit fossil lake
+    kind: moment
+    t_min: 4.72e7
+    t_max: 4.85e7
+    t: 4.75e7
+    tags: [life, earth-climate]
+    importance: 0.4
+    description: >
+      A volcanic maar lake near Darmstadt, Germany, set in paratropical rainforest just
+      after the Early Eocene Climatic Optimum, fills with annually laminated oil shale over
+      roughly 640 kyr. Its anoxic bottom preserves whole skeletons with skin, hair, feathers
+      and stomach contents: the early horse Eurohippus, the primate Darwinius, crocodilians
+      such as Diplocynodon, bats, birds and insects.
+    citation: >
+      Lenz, O.K., Wilde, V., Mertz, D.F. & Riegel, W. (2015). "New palynology-based
+      astronomical and revised 40Ar/39Ar ages for the Eocene maar lake of Messel (Germany)."
+      International Journal of Earth Sciences, 104, 873-889 (eruption 48.27-48.11 +/- 0.22
+      Ma depending on Fish Canyon calibration; lake record ~640 kyr), revising Mertz, D.F.
+      & Renne, P.R. (2005), Courier Forschungsinstitut Senckenberg, 255, 67-75 (47.8 +/- 0.2
+      Ma). Schmitt, C. et al. (2024). "Eocene maar sediments record warming of up to 3.5 °C
+      during a hyperthermal event 47.2 million years ago." Communications Earth &
+      Environment (Middle Messel Formation 47.65-47.22 Ma; volume and article number
+      UNVERIFIED). Franzen, J.L. et al. (2009). PLoS ONE, 4(5), e5723 (Darwinius masillae).
+
   - id: india-asia-collision
     label: India-Asia collision begins
     kind: moment
@@ -1091,6 +1229,26 @@ events:
       33.9 Ma per the ICS International Chronostratigraphic Chart v2024/12. "Grande Coupure"
       term coined by Stehlin, H.G. (1910).
 
+  - id: paraceratherium
+    label: Paraceratherium, a giant hornless rhino
+    kind: period
+    t_min: 2.3e7
+    t_max: 3.4e7
+    tags: [life]
+    importance: 0.4
+    description: >
+      Hornless giant rhinocerotoids browse the Oligocene woodlands of Asia from Mongolia and
+      Kazakhstan to Pakistan and Gansu. At an estimated 11-20 tonnes and nearly 5 m at the
+      shoulder, Paraceratherium is among the largest land mammals known.
+    citation: >
+      Deng, T. et al. (2021). "An Oligocene giant rhino provides insights into
+      Paraceratherium evolution." Communications Biology, 4, 639 (P. linxiaense, 26.5 Ma,
+      Linxia Basin). Fortelius, M. & Kappelman, J. (1993). "The largest land mammal ever
+      imagined." Zoological Journal of the Linnean Society, 108, 85-101 (mean ~11 t,
+      maximum 15-20 t). Prothero, D.R. (2013). Rhinoceros Giants: The Paleobiology of
+      Indricotheres. Indiana University Press. Genus range treated as the Oligocene
+      (~34-23 Ma); exact first and last appearances UNVERIFIED against primary literature.
+
   - id: antarctic-circumpolar-current
     label: Drake Passage opens; proto-Antarctic Circumpolar Current
     kind: moment
@@ -1132,6 +1290,25 @@ events:
       (open-habitat grass dominance in North America by the late Oligocene-early Miocene).
       Stromberg, C.A.E. (2011). "Evolution of Grasses and Grassland Ecosystems." Annual
       Review of Earth and Planetary Sciences, 39, 517-544.
+
+  - id: middle-miocene-climatic-optimum
+    label: Miocene Climatic Optimum
+    kind: period
+    t_min: 1.47e7
+    t_max: 1.69e7
+    tags: [earth-climate]
+    importance: 0.45
+    description: >
+      A roughly two-million-year warm spell when global temperatures were about 7-8 °C
+      above today's, with CO2 comparable to near-future levels. It ends in the Middle
+      Miocene Climate Transition, when the Antarctic ice sheet expands permanently, with the
+      main step at about 13.9-13.8 Ma.
+    citation: >
+      Steinthorsdottir, M. et al. (2021). "The Miocene: the future of the past."
+      Paleoceanography and Paleoclimatology, 36(4), e2020PA004037 (MCO ~16.9-14.7 Ma, ~7-8
+      °C warmer). Holbourn, A. et al. (2014). "Middle Miocene climate cooling linked to
+      intensification of eastern equatorial Pacific upwelling." Geology, 42, 19-22
+      (main MMCT step 13.9-13.8 Ma).
 
   - id: hipparion-dispersal
     label: Hipparionine horses reach the Old World
@@ -1350,6 +1527,23 @@ events:
       109(20), E1215-E1220 (~1.0 Ma). Roebroeks, W. & Villa, P. (2011). "On the earliest
       evidence for habitual use of fire in Europe." PNAS, 108(13), 5209-5214 (habitual use
       not clearly established before ~300-400 ka).
+
+  - id: mid-pleistocene-transition
+    label: Mid-Pleistocene Transition
+    kind: period
+    t_min: 7.0e5
+    t_max: 1.25e6
+    tags: [earth-climate]
+    importance: 0.5
+    description: >
+      The rhythm of the ice ages changes: small glacial cycles paced by the 41-kyr cycle of
+      Earth's axial tilt give way to larger, slower ~100-kyr cycles with much bigger ice
+      sheets, with no matching change in orbital forcing. The cause, internal to the climate
+      system, is still debated.
+    citation: >
+      Clark, P.U. et al. (2006). "The middle Pleistocene transition: characteristics,
+      mechanisms, and implications for long-term changes in atmospheric pCO2." Quaternary
+      Science Reviews, 25(23-24), 3150-3184 (MPT began 1250 ka, complete by 700 ka).
 
   - id: homo-sapiens-origin
     label: Homo sapiens appears
@@ -1573,6 +1767,25 @@ events:
       windows:
         - {t_min: 0.0, t_max: 7.1e4}
 
+  - id: late-quaternary-megafauna-extinction
+    label: Late Quaternary megafauna extinctions
+    kind: period
+    t_min: 1.0e4
+    t_max: 5.0e4
+    tags: [life, catastrophe]
+    importance: 0.6
+    description: >
+      Most large mammals vanish from every continent except Africa, including mammoths,
+      giant ground sloths and Australia's Diprotodon, at different times on different
+      landmasses. The cause is contested: human hunting and habitat change, climate change,
+      or both in combination.
+    citation: >
+      Koch, P.L. & Barnosky, A.D. (2006). "Late Quaternary Extinctions: State of the
+      Debate." Annual Review of Ecology, Evolution, and Systematics, 37, 215-250 ("between
+      fifty and ten thousand years ago"). Barnosky, A.D., Koch, P.L., Feranec, R.S., Wing,
+      S.L. & Shabel, A.B. (2004). "Assessing the causes of late Pleistocene extinctions on
+      the continents." Science, 306, 70-75.
+
   - id: east-asia-arrival
     label: Arrival in East Asia
     kind: moment
@@ -1667,6 +1880,7 @@ events:
   # Pleistocene-wolf recalibration vs. Thalmann 2013's own 19,000-32,000 YBP figure);
   # t=27,000 is an illustrative midpoint, not an authoritative single value. Verified
   # via Wikipedia only -- primary genomic papers not read directly.
+
   - id: dog-domestication
     label: Dog domestication
     kind: moment
@@ -1794,6 +2008,7 @@ events:
 
   # A secondary human-origins tag is plausible (Beringia's role in peopling-of-americas)
   # but this event's own description stays geographic, so it is left single-tagged.
+
   - id: pleistocene-land-bridges
     label: Beringia, Sunda and Doggerland exposed
     kind: period
@@ -1952,6 +2167,7 @@ events:
   # greenland-norse-settlement `peopling` event -- per the destination's prior-
   # population status. See sources/events-core/README.md for the full batch list and
   # verification method.
+
   - id: neolithic-farmers-europe
     label: Neolithic farmers spread from Anatolia into Europe
     kind: period
@@ -2076,6 +2292,7 @@ events:
   # contested against conflicting mortar-radiocarbon evidence and one unexplained older
   # cedar-plank date -- see description. The linked scene (giza-great-pyramid,
   # data/scenes.yaml) instead uses the older conventional completion date, ~2560 BC.
+
   - id: great-pyramid-giza
     label: Great Pyramid of Giza built
     kind: moment
@@ -2099,6 +2316,7 @@ events:
   # Added for the mohenjo-daro scene (data/scenes.yaml), filling the gap between
   # great-pyramid-giza and roman-empire-peak. No existing event covered the Indus Valley
   # Civilisation.
+
   - id: indus-valley-urbanism
     label: Indus Valley Civilisation's Mature Harappan phase
     kind: period
@@ -2153,6 +2371,28 @@ events:
       windows:
         - {t_min: 0.0, t_max: 5025.0}
 
+  - id: 4-2-kiloyear-event
+    label: 4.2 ka aridification event
+    kind: period
+    t_min: 3925
+    t_max: 4275
+    tags: [earth-climate]
+    importance: 0.45
+    description: >
+      A centuries-long drought weakens the Indian monsoon and dries the Mediterranean and
+      west Asia; its onset in a Meghalayan cave stalagmite defines the base of the
+      Meghalayan Age, the latest division of the Holocene. How global it was is contested:
+      a 2024 synthesis of over 1,000 records finds it unremarkable against other Holocene
+      climate swings.
+    citation: >
+      Walker, M. et al. (2018). "Formal ratification of the subdivision of the Holocene
+      Series/Epoch (Quaternary System/Period): two new GSSPs and three new stages/subseries."
+      Episodes, 41(4), 213-223 (Meghalayan GSSP, Mawmluh Cave, 4250 yr b2k = t 4275).
+      Weiss, H. (2016). "Global megadrought, societal collapse and resilience at 4.2-3.9 ka
+      BP across the Mediterranean and west Asia." PAGES Magazine, 24(2), 62-63 (2200-1900
+      BC). Contested by: McKay, N.P. et al. (2024). "The 4.2 ka event is not remarkable in
+      the context of Holocene climate variability." Nature Communications, 15, 6555.
+
   - id: lapita-oceania-expansion
     label: Lapita expansion into Remote Oceania
     kind: period
@@ -2189,6 +2429,28 @@ events:
       established: 3175.0
       windows:
         - {t_min: 0.0, t_max: 3325.0}
+
+  - id: late-bronze-age-collapse
+    label: Late Bronze Age collapse
+    kind: period
+    t_min: 3175
+    t_max: 3225
+    tags: [society, catastrophe]
+    importance: 0.55
+    description: >
+      The interlinked palace states of the eastern Mediterranean fall within a few decades:
+      the Hittite empire disintegrates, Mycenaean palaces burn, and Ugarit is destroyed around
+      1190-1185 BC. Ramesses III's Medinet Habu inscription records repelling the "Sea
+      Peoples" in his year 8 (about 1177 BC). The causes, among them drought, earthquakes,
+      invasion and the breakdown of trade, are contested.
+    citation: >
+      Knapp, A.B. & Manning, S.W. (2016). "Crisis in Context: The End of the Late Bronze Age
+      in the Eastern Mediterranean." American Journal of Archaeology, 120(1), 99-149.
+      Kaniewski, D. et al. (2011). "The Sea Peoples, from Cuneiform Tablets to Carbon
+      Dating." PLoS ONE, 6(6), e20232 (northern Levant destruction 1192-1190 BC). Cline,
+      E.H. (2014). 1177 B.C.: The Year Civilization Collapsed. Princeton University Press.
+      Kaniewski, D. et al. (2013). "Environmental Roots of the Late Bronze Age Crisis."
+      PLoS ONE, 8(8), e71004 (drought).
 
   - id: phoenician-alphabet
     label: Phoenician alphabet emerges
@@ -2265,6 +2527,7 @@ events:
   # Added for the classical-athens-parthenon scene (data/scenes.yaml), filling the gap
   # between great-pyramid-giza and roman-empire-peak. No existing event covered classical
   # Greece.
+
   - id: periclean-athens
     label: Age of Pericles in Athens
     kind: period
@@ -2288,6 +2551,7 @@ events:
 
   # Added for the qin-xianyang-epang-palace scene (data/scenes.yaml), filling the gap
   # between great-pyramid-giza and roman-empire-peak. No existing event covered Qin China.
+
   - id: qin-unification
     label: Qin dynasty unifies China
     kind: period
@@ -2565,6 +2829,7 @@ events:
   # t_max (1368) runs to the fall of the last successor state (Yuan dynasty), a
   # "founding to final dissolution" framing choice broader than the unified empire's own
   # life, which fragmented into four khanates after 1259.
+
   - id: mongol-empire
     label: Mongol Empire spans Eurasia
     kind: period
@@ -2583,6 +2848,32 @@ events:
     citation: >
       Via Wikipedia "Mongol Empire": proclaimed 1206; Möngke Khan's death and
       fragmentation, 1259; territorial peak ~23.5M km^2 (1294); Yuan dynasty fall, 1368.
+
+  - id: little-ice-age
+    label: Little Ice Age
+    kind: period
+    t_min: 175
+    t_max: 725
+    tags: [earth-climate, society]
+    importance: 0.55
+    description: >
+      A multi-century interval of cooler Northern Hemisphere climate and advancing
+      mountain glaciers, conventionally placed c. 1300-1850; its bounds are contested,
+      with the coldest summers concentrated c. 1570-1900. It spans the Maunder Minimum of
+      near-absent sunspots (1645-1715) and the Thames frost fairs held on the frozen river
+      in London between 1608 and 1814, though the Thames did not freeze more often during
+      the Maunder Minimum itself.
+    citation: >
+      Matthews, J.A. & Briffa, K.R. (2005). "The 'Little Ice Age': re-evaluation of an
+      evolving concept." Geografiska Annaler: Series A, Physical Geography, 87A(1), 17-36,
+      doi:10.1111/j.0435-3676.2005.00242.x — glacierization c. AD 1300-1950 (European Alps),
+      "Little Ice Age" climate c. AD 1570-1900. Eddy, J.A. (1976). "The Maunder Minimum."
+      Science, 192(4245), 1189-1202 — sunspot minimum 1645-1715. Owens, M.J. et al. (2017),
+      "The Maunder minimum and the Little Ice Age: an update from recent reconstructions and
+      climate simulations," Journal of Space Weather and Space Climate, 7, A33 — no increase
+      in Thames freezings during the Maunder Minimum (volume/article number UNVERIFIED).
+      Frost fairs 1608 and February 1814 (last): London Museum, "Frost fairs: festivities on
+      a frozen River Thames" (accessed 2026-09-24).
 
   - id: black-death
     label: Black Death pandemic
@@ -2778,6 +3069,7 @@ events:
   # "one of the first joint-stock companies in the world"; the stock-exchange superlative is now
   # attributed to, and phrased after, Wikipedia "Euronext Amsterdam" instead, and "roughly 150"
   # corrected to "over 150" to match the source verbatim.
+
   - id: dutch-golden-age-voc
     label: Amsterdam's Dutch Golden Age
     kind: period
@@ -2839,6 +3131,68 @@ events:
       UNVERIFIED beyond Wikipedia — not cross-checked against a primary engineering-
       history source (e.g. the Newcomen Society).
 
+  - id: edo-million-city
+    label: Edo, a city of a million
+    kind: period
+    t_min: 157
+    t_max: 304
+    tags: [society]
+    importance: 0.4
+    description: >
+      The Tokugawa shogun's capital Edo grows past an estimated one million people by the
+      early eighteenth century, among the largest cities in the world alongside Beijing,
+      roughly half of them samurai households and retainers drawn by the alternate-
+      attendance system and half townspeople. The start is an estimate — only commoners
+      were counted — and the interval closes when the city is renamed Tokyo in 1868.
+    citation: >
+      Wikipedia, "Edo" (accessed 2026-09-24): population "surpassed 1 million" by 1721,
+      "one of the largest cities in the world at the time, along with Beijing"; imperial
+      edict renaming Edo "Tokyo" issued 3 September 1868 (Wikipedia, "Edo"; Wikidata
+      Q11134494). Roughly half warrior class: nihombashi-tokyo.com history page (accessed
+      2026-09-24). UNVERIFIED: the 1721 townspeople census figure and a scholarly source
+      (e.g. McClain, Merriman & Ugawa eds., Edo and Paris, 1994) were not confirmed live.
+
+  - id: lisbon-earthquake-1755
+    label: Lisbon earthquake, tsunami and fire
+    kind: moment
+    t_min: 270
+    t_max: 270
+    t: 270
+    tags: [catastrophe, earth-climate]
+    importance: 0.45
+    description: >
+      On the morning of 1 November 1755 a great offshore earthquake, estimated at
+      magnitude 8.5-9.0, wrecks Lisbon; a tsunami follows about forty minutes later and
+      fires burn for five days. Estimates of the dead range widely, commonly 30,000-50,000
+      in Lisbon and more across Portugal, Spain and Morocco, and the disaster became a
+      touchstone of Enlightenment debate and early seismology.
+    citation: >
+      Chester, D.K. (2001). "The 1755 Lisbon earthquake." Progress in Physical Geography,
+      25(3), 363-383, doi:10.1177/030913330102500304 — affected ~800,000 km2, "killed up to
+      100,000 people." Date (1 November 1755, ~09:40 local), magnitude range, tsunami
+      ~40 min after the shock, five-day fire and 30,000-40,000 Lisbon dead (after Á.
+      Pereira 2009): Wikipedia, "1755 Lisbon earthquake" (accessed 2026-09-24).
+
+  - id: canton-system
+    label: Canton System
+    kind: period
+    t_min: 183
+    t_max: 268
+    tags: [society]
+    importance: 0.4
+    description: >
+      Qing China confines all Western maritime trade to Canton (Guangzhou), where foreign
+      merchants live and trade from the Thirteen Factories on the Pearl River and deal only
+      through a licensed guild of Chinese Hong merchants, the Cohong. The system ends with
+      the 1842 Treaty of Nanking after the First Opium War, which abolished the Cohong
+      monopoly and opened treaty ports.
+    citation: >
+      Van Dyke, P.A. (2005). The Canton Trade: Life and Enterprise on the China Coast,
+      1700-1845. Hong Kong University Press. Dates (1757 edict of the Qianlong Emperor;
+      Cohong sanctioned 1760; ended by Article V of the 1842 Treaty of Nanking): Wikipedia,
+      "Canton System" and "Thirteen Factories" (accessed 2026-09-24); Encyclopaedia
+      Britannica, "Canton system."
+
   - id: industrial-revolution
     label: Industrial Revolution
     kind: period
@@ -2855,6 +3209,45 @@ events:
       Ashton, T.S. (1948). The Industrial Revolution 1760-1830. Oxford University Press.
       Conventional bracket widened to 1760-1840 by later historians (e.g. Encyclopaedia
       Britannica, "Industrial Revolution").
+
+  - id: american-revolution
+    label: American Revolution
+    kind: period
+    t_min: 242
+    t_max: 250
+    tags: [society]
+    importance: 0.6
+    description: >
+      Thirteen British colonies in North America go to war with Britain from the fighting
+      at Lexington and Concord in April 1775, declare independence on 4 July 1776, and
+      win recognition as the United States in the Treaty of Paris of September 1783, after
+      French intervention helped force the British surrender at Yorktown in 1781.
+    citation: >
+      US National Park Service, "Timeline of the Revolution" (nps.gov/subjects/
+      americanrevolution/timeline.htm, accessed 2026-09-24); American Battlefield Trust,
+      "American Revolution Timeline." Lexington and Concord 19 April 1775; Declaration of
+      Independence 4 July 1776; Yorktown 1781; Treaty of Paris 3 September 1783.
+
+  - id: laki-eruption
+    label: Laki fissure eruption
+    kind: period
+    t_min: 240.90
+    t_max: 241.56
+    tags: [catastrophe, earth-climate]
+    importance: 0.45
+    description: >
+      For eight months from 8 June 1783 the Laki fissure in southern Iceland pours out one
+      of the largest basaltic lava flows in historic times and vast volumes of sulphur
+      dioxide and fluorine, spreading a sulphurous haze across Europe. In the famine that
+      followed, livestock losses and fluorine poisoning killed some 20-25% of Iceland's
+      population.
+    citation: >
+      Thordarson, T. & Self, S. (1993). "The Laki (Skaftár Fires) and Grímsvötn eruptions
+      in 1783-1785." Bulletin of Volcanology, 55, 233-263, doi:10.1007/BF00624353 — eight
+      months, 1783-1784, 14.7 +/- 1.0 km3 of lava. Start 8 June 1783, end February 1784,
+      and 20-25% Icelandic mortality: Oregon State University Volcano World, "Laki,
+      Iceland - 1783" (accessed 2026-09-24). End date taken as 7 February 1784; the day
+      is UNVERIFIED (month confirmed).
 
   - id: british-colonisation-australia
     label: British colonisation of Australia
@@ -2886,6 +3279,66 @@ events:
       established: 237.0
       windows:
         - {t_min: 0.0, t_max: 238.0}
+
+  - id: french-revolution
+    label: French Revolution
+    kind: period
+    t_min: 226
+    t_max: 236
+    tags: [society]
+    importance: 0.65
+    description: >
+      From the meeting of the Estates-General in May 1789 and the storming of the Bastille
+      that July, revolution overturns France's absolute monarchy, abolishes it in 1792 and
+      executes Louis XVI in 1793, spreading ideas of popular sovereignty and the rights of
+      man across Europe. The period closes with Napoleon Bonaparte's coup of 18 Brumaire,
+      9 November 1799.
+    citation: >
+      Wikipedia, "French Revolution" (accessed 2026-09-24): began with the Estates General
+      of 1789, ended with the Coup of 18 Brumaire, 9 November 1799; monarchy abolished
+      1792, Louis XVI executed 1793. Estates-General opened 5 May 1789: Château de
+      Versailles, "Versailles at the heart of the French Revolution, 1789"; Encyclopaedia
+      Britannica, "Estates-General." Bastille 14 July 1789: World History Encyclopedia,
+      "Storming of the Bastille."
+
+  - id: haitian-revolution
+    label: Haitian Revolution
+    kind: period
+    t_min: 221
+    t_max: 234
+    tags: [society]
+    importance: 0.5
+    description: >
+      Enslaved people in the French colony of Saint-Domingue, the most profitable colony
+      of the eighteenth-century Atlantic world, rise in August 1791, force emancipation by
+      1794 and, under Toussaint Louverture and then Jean-Jacques Dessalines, defeat
+      Napoleon's expedition. Independence is declared on 1 January 1804, making Haiti the
+      first state founded through a successful slave revolt.
+    citation: >
+      Dubois, L. (2004). Avengers of the New World: The Story of the Haitian Revolution.
+      Cambridge, MA: Belknap Press of Harvard University Press — uprising 1791,
+      emancipation ratified by Paris 1794, "the first and only successful slave revolution
+      in the Americas." Bois Caïman ceremony August 1791 and independence 1 January 1804:
+      Wikipedia, "Haitian Revolution" (accessed 2026-09-24).
+
+  - id: jenner-smallpox-vaccine
+    label: Jenner's smallpox vaccine
+    kind: moment
+    t_min: 229
+    t_max: 229
+    t: 229
+    tags: [science-technology, life]
+    importance: 0.6
+    description: >
+      On 14 May 1796 the English physician Edward Jenner inoculates eight-year-old James
+      Phipps with material from a milkmaid's cowpox lesion, then shows the boy is immune
+      to smallpox. Jenner publishes the method in 1798, founding vaccination.
+    citation: >
+      Riedel, S. (2005). "Edward Jenner and the history of smallpox and vaccination."
+      Baylor University Medical Center Proceedings, 18(1), 21-25,
+      doi:10.1080/08998280.2005.11928028. Date 14 May 1796, James Phipps, cowpox from
+      Sarah Nelmes, and 1798 "An Inquiry into the Causes and Effects of the Variolae
+      Vaccinae": Science Museum Group Collection, "James Phipps" (accessed 2026-09-24).
 
   - id: mass-european-emigration
     label: Mass European emigration to the Americas
@@ -2921,6 +3374,29 @@ events:
       established: 175.0
       windows:
         - {t_min: 0.0, t_max: 210.0}
+
+  - id: tambora-eruption
+    label: Tambora eruption
+    kind: moment
+    t_min: 210
+    t_max: 210
+    t: 210
+    tags: [catastrophe, earth-climate]
+    importance: 0.55
+    description: >
+      Mount Tambora on Sumbawa, in present-day Indonesia, erupts climactically on 10 April
+      1815 (VEI 7), the largest eruption in recorded history; more than 71,000 people die
+      on Sumbawa and Lombok during or after it. Some 60 megatonnes of sulphur injected into
+      the stratosphere cool the Northern Hemisphere, bringing crop failures and famine in
+      1816, the "Year Without a Summer."
+    citation: >
+      Oppenheimer, C. (2003). "Climatic, environmental and human consequences of the
+      largest known historic eruption: Tambora volcano (Indonesia) 1815." Progress in
+      Physical Geography, 27(2), 230-259, doi:10.1191/0309133303pp379ra — ~50 km3 dense-rock
+      equivalent, >71,000 dead on Sumbawa and Lombok, ~60 Mt sulphur, causal link to 1816.
+      Climactic eruption 10 April 1815, VEI 7: Encyclopaedia Britannica, "How the 1815
+      eruption of Mount Tambora produced the 'Year Without a Summer'" (accessed
+      2026-09-24). Issue number (2) UNVERIFIED.
 
   - id: darwin-natural-selection
     label: Evolution by natural selection published
@@ -2964,6 +3440,31 @@ events:
       credible milestones in a continuous scientific development, not a single
       literature-defined span.
 
+  - id: first-transcontinental-railroad
+    label: First transcontinental railroad completed
+    kind: moment
+    t_min: 156
+    t_max: 156
+    t: 156
+    tags: [science-technology, society]
+    importance: 0.55
+    description: >
+      On 10 May 1869 a ceremonial golden spike at Promontory Summit, Utah Territory, joins
+      the Central Pacific line built east from Sacramento to the Union Pacific line built
+      west from Omaha, and a telegraph signal carries the word "DONE" across the country.
+      Most of the Central Pacific's labour was done by Chinese workers: some 90 per cent of
+      its workforce by 1867, 10,000-15,000 men at the peak. Hundreds, and possibly more than
+      a thousand, died during its construction.
+    citation: >
+      Chinese Railroad Workers in North America Project, Stanford University, via Stanford
+      Report, "Giving voice to Chinese railroad workers" (April 2019, accessed 2026-09-24):
+      ~90% of the Central Pacific workforce Chinese by February 1867; 10,000-15,000 at peak,
+      perhaps 20,000 in total; "hundreds, possibly more than a thousand" deaths. Utley, R.M.
+      & Ketterson, F.A. Jr. (1969). Golden Spike. National Park Service Historical Handbook
+      Series No. 40. Date and 12:47 p.m. "DONE" telegram: Utah History to Go, "Golden Spike
+      National Historic Site" (historytogo.utah.gov/golden-spike, accessed 2026-09-24);
+      Library of Congress, "Today in History - May 10".
+
   - id: edison-electric-light
     label: Edison's practical incandescent bulb
     kind: moment
@@ -2980,6 +3481,27 @@ events:
     citation: >
       Wikipedia, "Thomas Edison" (accessed 2026-09-14). Viable design 21 October 1879;
       patent filed 4 November 1879; public demonstration December 1879.
+
+  - id: krakatoa-eruption
+    label: Krakatoa eruption
+    kind: moment
+    t_min: 142
+    t_max: 142
+    t: 142
+    tags: [catastrophe, earth-climate]
+    importance: 0.45
+    description: >
+      After three months of smaller eruptions, Krakatau in the Sunda Strait between Java
+      and Sumatra erupts climactically on 26-27 August 1883 (VEI 6), collapsing most of the
+      island into a caldera. Its explosions were heard some 4,800 km away, and the tsunamis
+      it raised killed more than 36,000 people on the surrounding coasts.
+    citation: >
+      Simkin, T. & Fiske, R.S. (1983). Krakatau 1883: The Volcanic Eruption and Its
+      Effects. Washington, D.C.: Smithsonian Institution Press. Activity from 20 May 1883,
+      climax 26-27 August, VEI 6, >36,000 dead, heard at Rodrigues ~4,800 km away:
+      NOAA NCEI, "On This Day: Historic Krakatau Eruption of 1883"; Wikipedia, "1883
+      eruption of Krakatoa" (accessed 2026-09-24). The widely quoted exact toll of 36,417
+      was not confirmed against Simkin & Fiske.
 
   - id: wright-flyer-first-flight
     label: First powered flight
@@ -3059,6 +3581,7 @@ events:
   # standalone battle events but named no First or Second World War event at all, so the wider
   # war each sits inside was missing from the event feed entirely. t_min/t_max use the same
   # day-counted GeoTime convention as battle-of-the-somme's own fix below.
+
   - id: world-war-i
     label: The First World War
     kind: period
@@ -3083,6 +3606,7 @@ events:
   # which is part of why this matters" (coordinator brief). Overlaps world-war-i's own span; no
   # single day is documented for either the pandemic's start or its end, so dated to the month/
   # year only, unlike the war's own day-counted neighbours below.
+
   - id: influenza-1918-pandemic
     label: 1918 influenza pandemic
     kind: period
@@ -3112,6 +3636,7 @@ events:
   # t = 2025 - 1916.880 = 108.12. GeoTime is a float, so this uses the same day-counted precision
   # the file already uses for other well-dated spans, rather than the coarser whole-year
   # shorthand.
+
   - id: battle-of-the-somme
     label: Battle of the Somme
     kind: period
@@ -3134,6 +3659,7 @@ events:
   # streets across 1927-1934; in fact the 1927 opening was the Ueno-Asakusa section, and the line
   # reached Ginza itself only in 1934 (Wikipedia "Ginza Line", already cited below) -- reworded to
   # state both dates and places explicitly.
+
   - id: ginza-modern-urban-culture
     label: Ginza's mass urban culture
     kind: period
@@ -3177,6 +3703,7 @@ events:
 
   # Added in review (2026-09-15): see world-war-i's comment -- the Second World War was likewise
   # missing as its own event, with only its D-Day and Trinity moments individually dated.
+
   - id: world-war-ii
     label: The Second World War
     kind: period
@@ -3201,6 +3728,7 @@ events:
   # across sea and air; Wikipedia "Normandy landings" gives 24,000 of the 156,000 as airborne
   # troops dropped by parachute and glider overnight, so only about 132,000 actually came ashore
   # by landing craft. Both figures are now stated separately.
+
   - id: d-day-normandy-landings
     label: D-Day, the Normandy landings
     kind: moment
@@ -3266,6 +3794,7 @@ events:
   # separate claim about it. No single day is documented for the first reading, so this is dated
   # to the month/year only, per the file's convention for imprecisely-dated moments (e.g.
   # personal-computers).
+
   - id: keeling-curve-begins
     label: Keeling begins measuring atmospheric CO2
     kind: moment
@@ -3349,6 +3878,27 @@ events:
   # and asked for "amazon deforestation and chernobyl" instead; see scenes.yaml
   # chernobyl-exclusion-zone/amazon-deforestation-fishbone). This event backs
   # chernobyl-exclusion-zone.
+
+  - id: smallpox-eradication
+    label: Smallpox declared eradicated
+    kind: moment
+    t_min: 45
+    t_max: 45
+    t: 45
+    tags: [science-technology, life]
+    importance: 0.55
+    description: >
+      On 8 May 1980 the 33rd World Health Assembly declares smallpox eradicated, the first
+      human disease eliminated worldwide, after a WHO-led vaccination and surveillance
+      campaign; the last naturally occurring case was a hospital worker in Merca, Somalia,
+      in October 1977.
+    citation: >
+      World Health Organization, resolution WHA33.3, "Declaration of global eradication of
+      smallpox," 33rd World Health Assembly, 8 May 1980 (who.int/publications/i/item/
+      WHA33-3). Last natural case, Merca, Somalia, October 1977: The Lancet, "A history of
+      eradication — successes, failures, and controversies" (2012) (author/volume
+      UNVERIFIED).
+
   - id: chernobyl-disaster
     label: Chernobyl disaster
     kind: moment
@@ -3377,6 +3927,7 @@ events:
   # "detected and fixed" arc the brief asks for. t_min/t_max span discovery to signing, the
   # detect-to-fix interval itself, rather than reaching for the (still-running) recovery: full
   # recovery is not yet observed, only forecast.
+
   - id: ozone-hole-montreal-protocol
     label: Ozone hole found, then closed by treaty
     kind: period
@@ -3401,6 +3952,7 @@ events:
 
   # This event backs scenes.yaml amazon-deforestation-fishbone; see that scene's own comment for
   # the 1995 year choice.
+
   - id: amazon-deforestation
     label: Amazon deforestation accelerates
     kind: period
@@ -3503,6 +4055,7 @@ events:
   # it (listed in sources/events-core/README.md) were each checked live against the page named
   # in their citation, never asserted from model memory. Where a day-level date could not be
   # confirmed, the event is dated to the year only and the citation says so.
+
   - id: integrated-circuit-invented
     label: Integrated circuit invented
     kind: moment
@@ -3784,6 +4337,25 @@ events:
       "in 2007, more than 50% of the world population was living in cities, for the
       first time in human history."
 
+  - id: paris-agreement
+    label: Paris Agreement adopted
+    kind: moment
+    t_min: 10
+    t_max: 10
+    t: 10
+    tags: [earth-climate, society]
+    importance: 0.5
+    description: >
+      On 12 December 2015, 196 parties to the UN climate convention adopt the Paris
+      Agreement, committing to hold global warming "well below 2°C" above pre-industrial
+      levels and to pursue efforts to limit it to 1.5°C. It enters into force on
+      4 November 2016.
+    citation: >
+      UNFCCC, "The Paris Agreement," FCCC/CP/2015/10/Add.1, Decision 1/CP.21, adopted at
+      COP21, Paris, 12 December 2015; Article 2.1(a) temperature goal. United Nations,
+      "The Paris Agreement" (un.org/en/climatechange/paris-agreement, accessed
+      2026-09-24): 196 parties; entry into force 4 November 2016.
+
   - id: half-of-humanity-online
     label: Half of humanity online
     kind: moment
@@ -3809,6 +4381,7 @@ events:
   # date chosen. t_min/t_max run PHEIC declaration to PHEIC end -- the WHO's own two dated
   # emergency-status bookends -- not the epidemiologically fuzzier "pandemic is over" question,
   # which WHO itself never declared on a single date.
+
   - id: covid-19-pandemic
     label: COVID-19 pandemic
     kind: period
@@ -3851,6 +4424,7 @@ events:
   # is unaffected, since data/events.yaml is invisible to it. Day-counted like battle-of-the-somme:
   # 15 Nov 2022 is day 319 of a 365-day year, 2022 + 318/365 = 2022.871, t = 2025 - 2022.871 =
   # 2.13.
+
   - id: world-population-8-billion
     label: World population reaches 8 billion
     kind: moment
