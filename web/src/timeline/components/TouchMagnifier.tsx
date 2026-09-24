@@ -4,13 +4,21 @@
  *  while a touch/pen pointer is down on the track, a bubble floats above the finger — never
  *  under it, where a real finger would hide it — showing a further-magnified strip of the track
  *  around the touch point plus the same time/label readout the mouse hover readout shows.
- *  `ScrubTrack` already computed everything drawn here (`checkpointLayout`, the decluttered
- *  event bands, the precision-formatted hover readout) against the fisheye-distorted `scale`; this
- *  component only re-projects those same displayed positions into its own, further-zoomed local
- *  window — it does no time-scale math of its own. `position: fixed`, since the finger (and so
+ *  `ScrubTrack` supplies the decluttered event bands and the precision-formatted, snapped hover
+ *  readout against the fisheye-distorted `scale`; this component re-projects those displayed
+ *  positions into its own further-zoomed window, and re-clusters the checkpoints at that zoom so a
+ *  group the track had to merge splits wherever the bubble has room. The crosshair marks the
+ *  snapped instant the readout names, which sits off-centre when a snap pulls it away from the
+ *  finger, exactly as the track's playhead does. `position: fixed`, since the finger (and so
  *  the bubble above it) can sit anywhere in the viewport, not just within the track's own bounds. */
 
-import type { CheckpointLayoutEntry } from '../checkpointLayout'
+import { useMemo } from 'react'
+
+import type { TimeScale } from '@/types/layer'
+
+import { layoutCheckpointPips } from '../checkpointLayout'
+import type { TimelineCheckpoint } from '../checkpoints'
+import type { TimeWindow } from '../scale'
 import { clamp } from '../util'
 import styles from './TouchMagnifier.module.css'
 
@@ -63,9 +71,13 @@ interface TouchMagnifierProps {
   /** 0..1, the touched position in the same (fisheye-distorted) displayed space every other `u`
    *  in this package is measured in — the bubble's own centre. */
   centerU: number
+  /** 0..1, the snapped instant the readout names — the crosshair's position. */
+  markerU: number
   time: string
   label?: string
-  pips: readonly CheckpointLayoutEntry[]
+  checkpoints: readonly TimelineCheckpoint[]
+  visibleWindow: TimeWindow
+  scale: TimeScale
   eventBands: readonly EventBand[]
 }
 
@@ -77,7 +89,23 @@ function inView(x: number): boolean {
   return x >= -EDGE_SLACK_PX && x <= VIEWPORT_WIDTH_PX + EDGE_SLACK_PX
 }
 
-export function TouchMagnifier({ clientX, clientY, trackWidthPx, centerU, time, label, pips, eventBands }: TouchMagnifierProps) {
+export function TouchMagnifier({
+  clientX,
+  clientY,
+  trackWidthPx,
+  centerU,
+  markerU,
+  time,
+  label,
+  checkpoints,
+  visibleWindow,
+  scale,
+  eventBands,
+}: TouchMagnifierProps) {
+  const pips = useMemo(
+    () => layoutCheckpointPips(checkpoints, visibleWindow, scale, trackWidthPx * MAGNIFIER_ZOOM),
+    [checkpoints, visibleWindow, scale, trackWidthPx],
+  )
   const halfPanelPx = PANEL_WIDTH_PX / 2 + EDGE_MARGIN_PX
   const clampedLeft =
     typeof window === 'undefined' ? clientX : clamp(clientX, halfPanelPx, Math.max(halfPanelPx, window.innerWidth - halfPanelPx))
@@ -111,7 +139,7 @@ export function TouchMagnifier({ clientX, clientY, trackWidthPx, centerU, time, 
             </div>
           ),
         )}
-        <div className={styles.crosshair} />
+        <div className={styles.crosshair} style={{ left: projectU(markerU, centerU, trackWidthPx) }} />
       </div>
       <div className={styles.readout} style={{ width: VIEWPORT_WIDTH_PX }}>
         {label && <span className={styles.label}>{label}</span>}

@@ -390,14 +390,26 @@ export function ScrubTrack({
   // pixel budget (`yearsPerDisplayedPixelAt`) actually resolves — so a 1px hover move inside a
   // fisheye-resolved gap visibly changes what's shown, on both the in-track readout and the
   // touch magnifier below, which both just render this string rather than reformatting it.
-  const lastHoverInfoRef = useRef<{ u: number; t: GeoTime; label: string | undefined; formattedTime: string } | null>(null)
+  const lastHoverInfoRef = useRef<{
+    u: number
+    snappedU: number
+    t: GeoTime
+    label: string | undefined
+    formattedTime: string
+  } | null>(null)
   const hoverInfo = useMemo(() => {
     if (hoverU === null) return lastHoverInfoRef.current
     const rawT = scale.fromUnit(hoverU)
     const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
     const t = snap?.t ?? rawT
     const precisionYears = yearsPerDisplayedPixelAt(scale, hoverU, trackWidthPx)
-    const info = { u: hoverU, t, label: snap?.label, formattedTime: formatGeoTimePrecise(t, precisionYears) }
+    const info = {
+      u: hoverU,
+      snappedU: snap ? clampUnit(scale.toUnit(snap.t)) : hoverU,
+      t,
+      label: snap?.label,
+      formattedTime: formatGeoTimePrecise(t, precisionYears),
+    }
     lastHoverInfoRef.current = info
     return info
   }, [hoverU, scale, candidates, trackWidthPx])
@@ -560,9 +572,12 @@ export function ScrubTrack({
           clientY={touchPoint.clientY}
           trackWidthPx={trackWidthPx}
           centerU={hoverInfo.u}
+          markerU={hoverInfo.snappedU}
           time={hoverInfo.formattedTime}
           label={hoverInfo.label}
-          pips={checkpointLayout}
+          checkpoints={checkpoints}
+          visibleWindow={visibleWindow}
+          scale={scale}
           eventBands={eventBandsU}
         />
       )}

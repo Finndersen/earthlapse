@@ -82,11 +82,10 @@
   white-space: nowrap;
 }
 
-/* The exact touched instant, fixed at the viewport's own centre — everything else slides past
-   it as the finger moves, same as the real track's own playhead/lens relationship. */
+/* The instant the readout names, positioned inline: at the centre under the finger, or on the
+   marker a snap has pulled it to — the same place the track's playhead lands. */
 .crosshair {
   position: absolute;
-  left: 50%;
   top: 0;
   bottom: 0;
   width: 1px;
