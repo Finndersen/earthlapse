@@ -3104,6 +3104,22 @@
       "estimated_usd": 0.155292,
       "actual_usd": 0.14086,
       "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154948,
+      "actual_usd": 0.140488,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154948,
+      "actual_usd": 0.140236,
+      "note": null
     }
   ]
 }

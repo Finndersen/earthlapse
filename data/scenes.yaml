@@ -2149,8 +2149,9 @@ scenes:
   # along the track that carried "DONE" at 12:47 pm. Sources: Wikipedia "Jupiter (locomotive)",
   # "Union Pacific No. 119", "Golden Spike National Historical Park"; cprr.org; Stanford Chinese
   # Railroad Workers in North America Project. No. 119's original paint scheme is unsettled, so
-  # the subject names only its stack. Open-ground (GROUND): the rails are the chapter's low
-  # leading line.
+  # the subject names only its stack. Open-ground (GROUND): the single track runs across the
+  # frame so both engines read nose to nose, and a wagon track is the chapter's low leading line;
+  # a track running toward the camera made the model split them onto crossing tracks.
   - id: promontory-golden-spike
     t: 156.0
     chapter: open-ground
@@ -2162,15 +2163,15 @@ scenes:
       mean_temp_c: 14  # rounded: late-19th-century global mean, close to pre-industrial
     subject:
       setting: Promontory Summit, Utah, a treeless high-desert basin, at midday on 10 May 1869, where the two halves of the first railroad across North America meet
-      left_mass: a wood-burning 4-4-0 steam locomotive with a large funnel-shaped balloon smokestack, a big square brass-trimmed headlamp and a cowcatcher, painted deep ultramarine blue with crimson driving wheels, a thin plume of steam rising
+      left_mass: a tall stack of fresh wooden railroad ties and spare iron rails beside a wooden telegraph pole, its wires running off toward the right
       vegetation: grey-green sagebrush scattered across the dry ground; no trees anywhere
       fauna: none
-      main_subject: at the gap in the track just right of centre, a small crew of Chinese railroad workers lowering the last iron rail onto the wooden ties, a coal-burning 4-4-0 locomotive with a straight smokestack standing beyond them facing the first engine, a crowd of workers, soldiers in dark blue uniforms and men in dark frock coats gathered on either side, faces not distinguishable
-      ground: dry, pale earth and gravel ballast, the fresh wooden ties and iron rails running low from the near foreground toward the workers
+      main_subject: two steam locomotives standing on one single straight track that runs level across the middle ground from left to right, facing each other nose to nose with their cowcatchers almost touching and both seen from the side; on the left a wood-burning 4-4-0 with a large funnel-shaped balloon smokestack, painted deep ultramarine blue with crimson driving wheels; on the right a coal-burning 4-4-0 with a straight smokestack; in the short gap between their cowcatchers a small crew of Chinese railroad workers with long braided queues lowers the last iron rail onto the ties, a crowd of workers, soldiers in dark blue uniforms and men in dark frock coats gathered along both sides of the track, faces not distinguishable
+      ground: dry, pale earth and sagebrush, a worn wagon track running from the near foreground toward the meeting point of the two locomotives
       water: none; the basin is dry sagebrush desert
-      far_bank: no far bank; a scatter of canvas tents and rough plank shacks, a line of telegraph poles running beside the track into the distance, and low, bare, brown mountains on the horizon
+      far_bank: no far bank; a scatter of canvas tents and rough plank shacks behind the track, the line of telegraph poles running along it into the distance, and low, bare, brown mountains on the horizon
       sky_and_light: a clear, cool spring sky with a few high clouds; bright, crisp midday sunlight
-      absent: [legible text, legible locomotive names or numbers, banners, company flags, state flags, snow-capped peaks, trees, grass lawns, paved roads, monuments, visitor centre, modern clothing, cars, electric power lines, identifiable faces, handshake pose]
+      absent: [a second track, crossing tracks, parallel tracks, tracks running toward the camera, legible text, legible locomotive names or numbers, banners, company flags, state flags, snow-capped peaks, trees, grass lawns, paved roads, monuments, visitor centre, modern clothing, cars, electric power lines, identifiable faces, handshake pose]
     events: [first-transcontinental-railroad]
     # ADR-023: `settlement` `loop` -- the gathered crowd; no CC0/PD 1860s steam-locomotive
     # recording is in the stem catalogue.
