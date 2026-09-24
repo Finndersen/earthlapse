@@ -7474,7 +7474,7 @@ the flow implementation to whichever version an environment resolved.
   quietly crossfading. The cache stays a speed-up keyed by both pin digests and
   `MORPH_ALGORITHM_VERSION`, so a change to the morph logic recomputes every pair. Nothing reuses
   previously published morph files, and the cache is not committed.
-- **OpenCV is pinned to `==5.0.0`**, the version the live morphs were built with.
+- **OpenCV is pinned to `==5.0.0.93`** (OpenCV 5.0.0; PyPI wheels carry a fourth build component, which an `==5.0.0` pin does not match), the version the live morphs were built with.
 
 **Evidence.** All 40 pairs were computed under OpenCV 4.14.0 and 5.0.0 in a Linux container. 5.0
 is deterministic run to run, and its decode ranges match the live lineage layer's exactly for 18
