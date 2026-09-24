@@ -49,6 +49,8 @@ export * from './effects'
 // The historical-empires index (ADR-059), built once by `Experience.tsx` from the `empires` layer.
 export { buildEmpireIndex } from './empires'
 export type { EmpireIndex } from './empires'
+// An empire lineage's detail card, docked where the event card docks.
+export { EmpireDetailPanel } from './EmpireDetailPanel'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
 export { isPoleVisible, poleDirection, POLE_VISIBILITY_MARGIN } from './poles'

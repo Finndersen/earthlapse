@@ -29,7 +29,7 @@ import {
   type BrowseEventsFilters,
   type EventStep,
 } from '@/events'
-import { buildArrivalIndex, buildEmpireIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
+import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
@@ -155,6 +155,9 @@ export function Experience() {
   // own doc comment), so it takes the live `t` directly — its own list highlight tracks the
   // playhead as the timeline scrubs, and never scrolling-to-open-event bookkeeping is needed here.
   const [eventBrowserOpen, setEventBrowserOpen] = useState(false)
+  // The empire lineage whose card is open (ADR-059). It docks where the event card docks, so at
+  // most one of the two is open.
+  const [empireDetailId, setEmpireDetailId] = useState<string | null>(null)
   const isCompactViewport = useIsCompactViewport()
 
   // The timeline's animated scale lives here and is passed down to <Timeline>. Section
@@ -290,7 +293,7 @@ export function Experience() {
   // `EventDock`), so they share one playback hold too: taken when the surface opens from closed,
   // kept across every switch between list and card, and resumed only when the surface closes.
   const eventOverlayHold = usePlaybackHold(playback.playing, setPlaying)
-  const eventOverlayOpen = eventBrowserOpen || detailEventId !== null
+  const eventOverlayOpen = eventBrowserOpen || detailEventId !== null || empireDetailId !== null
   // Whether the open card came from a browser row, so its back button returns to the list with the
   // search and tags it was left with rather than a fresh one.
   const [detailFromBrowser, setDetailFromBrowser] = useState(false)
@@ -303,6 +306,7 @@ export function Experience() {
       setDetailFromBrowser(false)
       setDetailEventId(null)
       setDetailMemberIds([])
+      setEmpireDetailId(null)
       setEventBrowserOpen(true)
     },
     [eventOverlayOpen, eventOverlayHold, setDetailEventId],
@@ -554,6 +558,7 @@ export function Experience() {
     if (!eventOverlayOpen) eventOverlayHold.pause()
     if (seek) setT(placementT(event))
     setEventBrowserOpen(false)
+    setEmpireDetailId(null)
     setDetailFromBrowser(fromBrowser)
     setDetailEventId(event.id)
     setDetailMemberIds(members.map((member) => member.id))
@@ -561,6 +566,7 @@ export function Experience() {
 
   const closeEventOverlay = (): void => {
     setEventBrowserOpen(false)
+    setEmpireDetailId(null)
     setDetailFromBrowser(false)
     setDetailEventId(null)
     setDetailMemberIds([])
@@ -577,6 +583,18 @@ export function Experience() {
     const event = manifest.events.find((e) => e.id === eventId)
     if (event !== undefined) showEventDetail(event, [event], { seek: false, fromBrowser: false })
   }
+
+  // A click, or a second tap, on an empire's territory or label on the expanded globe: its card
+  // replaces any open event card or list, and leaves `t` alone.
+  const activateGlobeEmpire = (lineage: string): void => {
+    if (!eventOverlayOpen) eventOverlayHold.pause()
+    setEventBrowserOpen(false)
+    setDetailFromBrowser(false)
+    setDetailEventId(null)
+    setDetailMemberIds([])
+    setEmpireDetailId(lineage)
+  }
+  const empireDetail = empireDetailId === null ? null : (empires?.lineages.get(empireDetailId) ?? null)
 
   // A Route section's chain link: replaces the card's event.
   const openLinkedEventDetail = (eventId: string): void => {
@@ -681,6 +699,8 @@ export function Experience() {
               hoveredFeedEventId={hoveredFeedEventId}
               onViewModeToggleHeightChange={setViewModeToggleHeightPx}
               onActivateEvent={activateGlobeEvent}
+              onActivateEmpire={activateGlobeEmpire}
+              selectedEmpire={empireDetail === null ? null : empireDetailId}
             />
           ) : (
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
@@ -761,6 +781,19 @@ export function Experience() {
             newer: adjacentEvent(manifest.events, detailEvent.id, 'newer'),
           }}
           onStep={stepEventDetail}
+        />
+      )}
+      {empireDetail && (
+        <EmpireDetailPanel
+          summary={empireDetail}
+          t={t}
+          relatedEvents={empireDetail.lineage.events.flatMap((id) => {
+            const event = manifest.events.find((e) => e.id === id)
+            return event === undefined ? [] : [{ id: event.id, label: event.label }]
+          })}
+          onClose={closeEventOverlay}
+          onOpenEvent={activateGlobeEvent}
+          onJumpTo={setT}
         />
       )}
       {eventBrowserOpen && (

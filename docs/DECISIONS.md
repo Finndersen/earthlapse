@@ -7599,3 +7599,31 @@ that only approximates it.
   the royal demesne.
 - Every `databuild` source's `*.toml` is now part of its fingerprint, so `audio-stems` rebuilt
   once on the change.
+
+**Amendment (2026-09-24) — quieter labels, an empire tooltip and a docked empire card.** The
+human found the labels "quite large and opaque", covering the map and the outlines they name, and
+asked for an info popup per empire like the ones arrivals and events have.
+- **Labels are bare text.** No chip, border or padding: 9px uppercase mono, 0.14em tracking, a
+  dark text-shadow halo for legibility over ocean, desert and the density ramp, and a 5px dot in
+  the lineage colour before the text. They rest at 0.75 opacity (`EMPIRE_LABEL_REST_OPACITY`) and
+  draw at full opacity for the hovered lineage and the one whose card is open. The declutter box
+  (`EMPIRE_LABEL_BOX`) is estimated from the new metrics. The cap, ranking and anchor rule stand.
+- **Empires join the shared hit test**, as a new `GlobeHitKind` `'empire'`, after every existing
+  mark has missed: first the label anchors, then the territory under the pointer (pointer →
+  lon/lat through the group's inverse transform, even-odd per polygon, smallest containing
+  snapshot wins). Only in the expanded view, only while territory is drawn, and not mid-unfold.
+  This replaces "Empires get no hover tooltip": the tooltip names the member, its span, and the
+  lineage's area now and at its peak. The shared tooltip's `Html` z-range now starts above the
+  globe labels' so no label draws over it.
+- **A click opens a docked empire card** (`EmpireDetailPanel`, on `EventDock`): description, an
+  area-over-time step chart with a playhead at `t`, the member succession (the active member
+  highlighted, each linked to English Wikipedia), related events that open their event card, and
+  "Jump to peak". Unlike an event card, opening it never moves `t`; only "Jump to peak" does. The
+  empire card and the event card are mutually exclusive in the one dock.
+- **Wire additions** (`territories`, NORMATIVE): each lineage gains `description` (≤ 320
+  characters), `events` (published event ids) and `members[{label, wikipedia}]` in roster order,
+  with `wikipedia` an explicit `null` when absent; each snapshot gains `member`, an index into its
+  lineage's `members`. All come from the roster at publish, so editing them needs no rebuild.
+  Publish refuses a lineage event id that is not a published `events-core` id and a `member`
+  index out of range. Wikipedia titles are copied from Cliopatria's own rows except where a raw
+  title names a place or a process rather than the polity; `sources/cliopatria/README.md` lists those.

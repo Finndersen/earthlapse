@@ -32,6 +32,11 @@
  * a city's founding always brings its label back. Capped (`CITY_LABEL_CAP`) since the published
  * set has cohorts of cities sharing the exact same first-appearance `t`. The tag itself is the
  * shared `GlobeLabel`, which also hides it round the back of the sphere and off-screen.
+ *
+ * **Empires.** The historical-empire territories are painted into the globe's own texture
+ * (`empireTexture.ts`), but their labels and hit test live here so they share this layer's one
+ * tooltip. Marks win over territory: an empire resolves only after every arc, marker and city has
+ * missed, first near a drawn label's anchor, then anywhere inside an active territory.
  */
 
 import { useFrame, useThree } from '@react-three/fiber'
@@ -39,7 +44,9 @@ import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from '
 import * as THREE from 'three'
 
 import { formatGeoTime, formatTimeRange } from '@/timeline'
-import type { FeatureData, GeoTime, TimelineEvent } from '@/types/layer'
+import type { TerritoryGeometry } from '@/data/curated'
+import type { Mix } from '@/lib/presentedMix'
+import type { FeatureData, GeoTime, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
 import type { SceneCoordinates } from '@/types/manifest'
 
 import {
@@ -68,6 +75,18 @@ import {
 } from './cities'
 import { srgbHexToLinear } from './color'
 import { smoothstep as easeSmoothstep } from './effects/math'
+import { drawnEmpireLabels, EmpireLabels } from './EmpireLabels'
+import {
+  empireAtLonLat,
+  formatEmpireArea,
+  formatEmpireSpan,
+  formatEmpireYear,
+  lineageAreaAt,
+  type EmpireFrame,
+  type EmpireIndex,
+  type EmpireLineageSummary,
+  type EmpireSnapshot,
+} from './empires'
 import { CITY_LABEL_STYLE, GlobeLabel, useScreenSeparation } from './GlobeLabel'
 import { GlobeTooltip, useGlobeHitTest, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { glslFloat } from './glsl'
@@ -461,11 +480,11 @@ export function activationFor(
   return expanded ? (onActivateEvent ?? null) : null
 }
 
-/** The tooltip's "how to open this" line: only for a target with an event of its own, and only
- *  while activation is on (expanded). Worded for the gesture that showed it — a touch tap has
- *  already been spent showing the tooltip, so it asks for a second one. */
+/** The tooltip's "how to open this" line: only for a target with an event or an empire of its
+ *  own, and only while activation is on (expanded). Worded for the gesture that showed it — a
+ *  touch tap has already been spent showing the tooltip, so it asks for a second one. */
 export function tooltipHintFor(target: GlobeHitTarget | null, viaTouch: boolean, activatable: boolean): string | null {
-  if (!activatable || target === null || target.eventId === null) return null
+  if (!activatable || target === null || (target.eventId === null && target.lineage === undefined)) return null
   return viaTouch ? 'Tap again for details ›' : 'Click for details ›'
 }
 
@@ -510,6 +529,35 @@ export function cityTarget(city: CityAtTime, t: GeoTime): GlobeHitTarget {
     anchor: { lat: city.feature.lat, lon: city.feature.lon },
   }
 }
+
+/** An empire's tooltip: the member state as the title, the lineage's area now against its peak,
+ *  and the member's own span. Points at `anchor` — where the pointer entered the territory — or
+ *  at the snapshot's label anchor. */
+export function empireTarget(
+  summary: EmpireLineageSummary,
+  snapshot: EmpireSnapshot,
+  t: GeoTime,
+  anchor: GlobeEffectAnchor = { lat: snapshot.lat, lon: snapshot.lon },
+): GlobeHitTarget {
+  const member = summary.members.find((m) => m.member === snapshot.member)!
+  const { peak } = summary
+  return {
+    kind: 'empire',
+    id: `empire:${snapshot.lineage}:${snapshot.member}`,
+    eventId: null,
+    lineage: snapshot.lineage,
+    title: member.label,
+    description:
+      `${summary.lineage.name} · about ${formatEmpireArea(lineageAreaAt(summary, t))} now ` +
+      `(peak ${formatEmpireArea(peak.areaKm2)} in ${formatEmpireYear(peak.tStart)})`,
+    dateRange: formatEmpireSpan(member.tStart, member.tEnd),
+    anchor,
+  }
+}
+
+/** How near a label's anchor, in CSS pixels, still names its empire — about half a short label's
+ *  width, so hovering the name itself resolves it even where the anchor sits near a border. */
+const EMPIRE_LABEL_TOLERANCE_PX = 18
 
 // ------------------------------------------------------------------------------- city labels
 
@@ -575,6 +623,16 @@ export interface HumanCivilisationProps {
    *  the timeline, not a fixed number of years that reads as a minute-long linger in a
    *  scene-dense stretch and a flash in a sparse one. */
   cityLabelFadeWindowAt: (appearanceT: GeoTime) => GeoTime
+  /** The empire territories the hit test resolves against at `t` — the current frame, not the
+   *  presented crossfade — or `null` while their labels do not show (so never on the orb) or their
+   *  geometry has not loaded. */
+  empires?: { index: EmpireIndex; frame: EmpireFrame; geometry: TerritoryGeometry } | null
+  /** The empire labels' presented frames and cap, or `null` while no labels show. */
+  empireLabels?: { presented: Mix<EmpireFrame>; cap: number } | null
+  /** The lineage whose detail panel is open, drawn highlighted like a hovered one. */
+  selectedEmpire?: string | null
+  /** Opens a lineage's detail panel from its territory or label. Acted on only while `expanded`. */
+  onActivateEmpire?: (lineage: string) => void
 }
 
 export function HumanCivilisation({
@@ -593,10 +651,17 @@ export function HumanCivilisation({
   touchHitRef,
   onActivateEvent,
   cityLabelFadeWindowAt,
+  empires = null,
+  empireLabels = null,
+  selectedEmpire = null,
+  onActivateEmpire,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
+  const empireCandidatesRef = useRef<readonly GlobeHitCandidate[]>([])
+  const empireSurfaceRef = useRef<((point: GlobeEffectAnchor) => GlobeHitTarget | null) | null>(null)
   const onActivate = activationFor(expanded, onActivateEvent)
+  const onActivateEmpireHere = activationFor(expanded, onActivateEmpire)
   const { target: hovered, viaTouch } = useGlobeHitTest({
     candidatesRef,
     unfold,
@@ -605,10 +670,18 @@ export function HumanCivilisation({
     enabled,
     touchHitRef,
     onActivate,
+    onActivateEmpire: onActivateEmpireHere,
+    fallbackCandidatesRef: empireCandidatesRef,
+    surfaceRef: empireSurfaceRef,
   })
 
   const index = useMemo(() => buildArrivalIndex(effectEvents), [effectEvents])
   const hoveredEventId = hovered?.eventId ?? null
+  const hoveredLineage = hovered?.lineage ?? null
+  const highlightedLineages = useMemo(
+    () => new Set([hoveredLineage, selectedEmpire].filter((lineage): lineage is string => lineage !== null)),
+    [hoveredLineage, selectedEmpire],
+  )
   const tracedIds = useMemo(() => resolveTracedIds(index, hoveredEventId), [index, hoveredEventId])
 
   // `CITY_DECLUTTER_MIN_SEPARATION_PX` as the object-space distance `declutterCities` compares
@@ -781,6 +854,36 @@ export function HumanCivilisation({
     candidatesRef.current = candidates
   }, [arrivals, visibleCities, t])
 
+  // The drawn labels' anchors, then the territory test; both only while `empires` is set.
+  const labelCap = empireLabels?.cap ?? 0
+  const empireWorldPerPx = useScreenSeparation(1, empireLabels !== null)
+  useEffect(() => {
+    if (empires === null) {
+      empireCandidatesRef.current = []
+      empireSurfaceRef.current = null
+      return
+    }
+    const { index, frame, geometry } = empires
+    const labelCandidates: GlobeHitCandidate[] = []
+    for (const label of drawnEmpireLabels(frame, labelCap, unfold, empireWorldPerPx)) {
+      const summary = index.lineages.get(label.lineage)
+      if (summary === undefined) continue
+      labelCandidates.push({
+        content: () => empireTarget(summary, label.snapshot, t),
+        points: [{ lat: label.lat, lon: label.lon }],
+        tolerancePx: EMPIRE_LABEL_TOLERANCE_PX,
+        sphereLift: MARKER_SPHERE_LIFT,
+        mapLift: MARKER_MAP_LIFT,
+      })
+    }
+    empireCandidatesRef.current = labelCandidates
+    empireSurfaceRef.current = (point) => {
+      const snapshot = empireAtLonLat(frame, geometry, point.lon, point.lat)
+      const summary = snapshot === null ? undefined : index.lineages.get(snapshot.lineage)
+      return snapshot === null || summary === undefined ? null : empireTarget(summary, snapshot, t, point)
+    }
+  }, [empires, labelCap, unfold, empireWorldPerPx, t])
+
   if (!enabled) return null
 
   return (
@@ -817,9 +920,18 @@ export function HumanCivilisation({
       })}
       <MarkerField markers={markers} unfold={unfold} radius={radius} capacity={MARKER_CAPACITY} />
       {cityLabels.length > 0 && <CityLabelField labels={cityLabels} unfold={unfold} radius={radius} groupRef={groupRef} />}
+      {empireLabels !== null && (
+        <EmpireLabels
+          presented={empireLabels.presented}
+          cap={empireLabels.cap}
+          unfold={unfold}
+          radius={radius}
+          highlight={highlightedLineages}
+        />
+      )}
       <GlobeTooltip
         target={hovered}
-        hint={tooltipHintFor(hovered, viaTouch, onActivate !== null)}
+        hint={tooltipHintFor(hovered, viaTouch, (hovered?.lineage !== undefined ? onActivateEmpireHere : onActivate) !== null)}
         unfold={unfold}
         radius={radius}
         sphereLift={MARKER_SPHERE_LIFT}

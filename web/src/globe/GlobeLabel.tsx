@@ -6,8 +6,9 @@
  *
  * Positioned like `GlobeTooltip.tsx`'s tooltip — drei's `Html` at the anchor's
  * `unfoldedLiftedPosition`, so it tracks rotation and the sphere/map unfold — but with no edge
- * clamp: these are decorative and drawn several at once. Styled inline to match `.tooltip` (mono
- * HUD font, near-black translucent chip) so it reads as the same family.
+ * clamp: these are decorative and drawn several at once. A city tag is styled inline to match
+ * `.tooltip` (mono HUD font, near-black translucent chip) so it reads as the same family; an
+ * empire label is bare text with a halo, since it sits over the territory it names.
  *
  * Visibility is about the camera, not the clock, so each tag runs its own `useFrame`: camera
  * drag and auto-rotate change it without `t` changing or the owner re-rendering. The div's
@@ -23,16 +24,20 @@ import { sphereMarkerVisibility } from './arcs'
 import { MARKER_MAP_LIFT, MARKER_SPHERE_LIFT } from './humanStyle'
 import { unfoldedLiftedPosition } from './projection'
 
-const LABEL_CHIP_STYLE: CSSProperties = {
+const LABEL_TEXT_STYLE: CSSProperties = {
   pointerEvents: 'none',
   whiteSpace: 'nowrap',
   fontFamily: 'var(--hud-mono, ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace)',
-  letterSpacing: '0.03em',
   color: 'var(--hud-ink, #efe9dc)',
+  opacity: 0,
+}
+
+const LABEL_CHIP_STYLE: CSSProperties = {
+  ...LABEL_TEXT_STYLE,
+  letterSpacing: '0.03em',
   background: 'rgba(3, 4, 6, 0.78)',
   border: '1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18))',
   borderRadius: 4,
-  opacity: 0,
 }
 
 /** A city tag sits just right of its marker dot. */
@@ -43,30 +48,45 @@ export const CITY_LABEL_STYLE: CSSProperties = {
   padding: '2px 5px',
 }
 
-const EMPIRE_LABEL_FONT_PX = 10
-const EMPIRE_LABEL_LINE_PX = 12
+const EMPIRE_LABEL_FONT_PX = 9
+const EMPIRE_LABEL_LINE_PX = 11
+const EMPIRE_LABEL_TRACKING_EM = 0.14
+const EMPIRE_LABEL_TICK_PX = 5
+const EMPIRE_LABEL_TICK_GAP_PX = 4
 
-/** An empire chip's measurements, for decluttering without reading the DOM. */
-export const EMPIRE_LABEL_CHIP = {
-  /** One monospaced character (0.6em) plus the 0.06em letter spacing. */
-  advancePx: EMPIRE_LABEL_FONT_PX * 0.66,
-  /** 5 + 6 px padding, the 3 px accent edge and the 1 px right border. */
-  chromeWidthPx: 15,
-  /** One line, 2 px padding and a 1 px border above and below. */
-  heightPx: EMPIRE_LABEL_LINE_PX + 6,
+/** An empire label's measurements, for decluttering without reading the DOM. */
+export const EMPIRE_LABEL_BOX = {
+  /** One monospaced character (0.6em) plus the letter spacing. */
+  advancePx: EMPIRE_LABEL_FONT_PX * (0.6 + EMPIRE_LABEL_TRACKING_EM),
+  /** The colour tick and its gap before the text. */
+  chromeWidthPx: EMPIRE_LABEL_TICK_PX + EMPIRE_LABEL_TICK_GAP_PX,
+  heightPx: EMPIRE_LABEL_LINE_PX,
 } as const
 
-/** An empire label is centred on its territory's anchor, with the lineage's colour as an edge so
- *  the name ties to the outline it belongs to. */
-export function empireLabelStyle(accent: string): CSSProperties {
+/** An empire label: small tracked capitals centred on the territory's anchor, no backing, legible
+ *  over any terrain through a dark halo. Its tick (`empireLabelTickStyle`) carries the lineage's
+ *  colour so the name ties to its outline. */
+export const EMPIRE_LABEL_STYLE: CSSProperties = {
+  ...LABEL_TEXT_STYLE,
+  display: 'flex',
+  alignItems: 'center',
+  gap: EMPIRE_LABEL_TICK_GAP_PX,
+  transform: 'translate(-50%, -50%)',
+  fontSize: EMPIRE_LABEL_FONT_PX,
+  lineHeight: `${EMPIRE_LABEL_LINE_PX}px`,
+  letterSpacing: `${EMPIRE_LABEL_TRACKING_EM}em`,
+  textTransform: 'uppercase',
+  textShadow: '0 0 1px rgba(3, 4, 6, 0.95), 0 0 3px rgba(3, 4, 6, 0.85), 0 0 6px rgba(3, 4, 6, 0.6)',
+}
+
+export function empireLabelTickStyle(accent: string): CSSProperties {
   return {
-    ...LABEL_CHIP_STYLE,
-    transform: 'translate(-50%, -50%)',
-    fontSize: EMPIRE_LABEL_FONT_PX,
-    lineHeight: `${EMPIRE_LABEL_LINE_PX}px`,
-    letterSpacing: '0.06em',
-    padding: '2px 6px 2px 5px',
-    borderLeft: `3px solid ${accent}`,
+    flex: 'none',
+    width: EMPIRE_LABEL_TICK_PX,
+    height: EMPIRE_LABEL_TICK_PX,
+    borderRadius: '50%',
+    background: accent,
+    boxShadow: '0 0 0 1px rgba(3, 4, 6, 0.7)',
   }
 }
 
@@ -106,12 +126,14 @@ export interface GlobeLabelProps {
   /** The owning group, whose transform places the label's local position in the world. */
   groupRef: MutableRefObject<THREE.Group | null>
   style: CSSProperties
+  /** Drawn before the text, e.g. an empire label's colour tick. */
+  tickStyle?: CSSProperties
   /** Moves the sphere's limb fade this far inward, in `sphereMarkerVisibility`'s cosine units, so
    *  the label is gone before its anchor reaches the limb. */
   limbInset?: number
 }
 
-export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, style, limbInset = 0 }: GlobeLabelProps) {
+export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, style, tickStyle, limbInset = 0 }: GlobeLabelProps) {
   const elementRef = useRef<HTMLDivElement>(null)
   const { camera } = useThree()
   const [x, y, z] = unfoldedLiftedPosition({ lat, lon }, unfold, radius, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
@@ -137,6 +159,7 @@ export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, 
   return (
     <Html position={[x, y, z]} pointerEvents="none" zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
       <div ref={elementRef} style={style} data-globe-label="">
+        {tickStyle !== undefined && <span aria-hidden="true" style={tickStyle} />}
         {text}
       </div>
     </Html>

@@ -141,12 +141,23 @@ export interface FeatureSetData {
  *  globe's empire palette (`globe/empireStyle.ts`). */
 export const TERRITORY_COLOUR_SLOTS = 8
 
+/** One member state of a lineage, in roster order: its display label and English Wikipedia
+ *  article title, if it has one. */
+export interface TerritoryMemberData {
+  label: string
+  wikipedia: string | null
+}
+
 /** One hand-picked empire lineage (ADR-059), e.g. Rome across its Republic, Empire and Byzantine
- *  members. `colourSlot` indexes the globe's empire palette. */
+ *  members. `colourSlot` indexes the globe's empire palette; `events` names timeline events about
+ *  the lineage. */
 export interface TerritoryLineageData {
   id: string
   name: string
   colourSlot: number
+  description: string
+  events: string[]
+  members: TerritoryMemberData[]
 }
 
 /**
@@ -157,6 +168,8 @@ export interface TerritoryLineageData {
 export interface TerritorySnapshotData {
   id: string
   lineage: string
+  /** Index into the lineage's `members`. */
+  member: number
   label: string
   tStart: GeoTime
   tEnd: GeoTime
@@ -660,10 +673,21 @@ function parseTerritoryLineage(v: unknown, path: string): TerritoryLineageData {
   if (!Number.isInteger(colourSlot) || colourSlot < 0 || colourSlot >= TERRITORY_COLOUR_SLOTS) {
     throw new Error(`${path}.colourSlot: expected an integer in [0, ${TERRITORY_COLOUR_SLOTS}), got ${colourSlot}`)
   }
+  const members = expectArray(r.members, `${path}.members`).map((raw, i) => {
+    const m = expectRecord(raw, `${path}.members[${i}]`)
+    return {
+      label: expectString(m.label, `${path}.members[${i}].label`),
+      wikipedia: expectNullableString(m.wikipedia, `${path}.members[${i}].wikipedia`),
+    }
+  })
+  if (members.length === 0) throw new Error(`${path}.members: empty`)
   return {
     id: expectString(r.id, `${path}.id`),
     name: expectString(r.name, `${path}.name`),
     colourSlot,
+    description: expectString(r.description, `${path}.description`),
+    events: expectArray(r.events, `${path}.events`).map((raw, i) => expectString(raw, `${path}.events[${i}]`)),
+    members,
   }
 }
 
@@ -676,9 +700,12 @@ function parseTerritorySnapshot(v: unknown, path: string): TerritorySnapshotData
   if (!(lat >= -90 && lat <= 90)) throw new Error(`${path}.lat: out of range, got ${lat}`)
   const lon = expectNumber(r.lon, `${path}.lon`)
   if (!(lon >= -180 && lon <= 180)) throw new Error(`${path}.lon: out of range, got ${lon}`)
+  const member = expectNumber(r.member, `${path}.member`)
+  if (!Number.isInteger(member) || member < 0) throw new Error(`${path}.member: expected a member index, got ${member}`)
   return {
     id: expectString(r.id, `${path}.id`),
     lineage: expectString(r.lineage, `${path}.lineage`),
+    member,
     label: expectString(r.label, `${path}.label`),
     tStart,
     tEnd,
@@ -690,7 +717,7 @@ function parseTerritorySnapshot(v: unknown, path: string): TerritorySnapshotData
 
 /**
  * Validates a `territories` layer file (ADR-059): unique lineage ids, unique snapshot ids, every
- * snapshot naming a known lineage. Snapshots are sorted by `tStart` descending, then `id`, so an
+ * snapshot naming a known lineage and one of its members. Snapshots are sorted by `tStart` descending, then `id`, so an
  * already-sorted producer round-trips unchanged.
  */
 export function parseTerritoryData(json: unknown): TerritoryData {
@@ -700,10 +727,10 @@ export function parseTerritoryData(json: unknown): TerritoryData {
   const lineages = expectArray(root.lineages, `${id}.lineages`).map((raw, i) =>
     parseTerritoryLineage(raw, `${id}.lineages[${i}]`),
   )
-  const lineageIds = new Set<string>()
+  const memberCounts = new Map<string, number>()
   for (const lineage of lineages) {
-    if (lineageIds.has(lineage.id)) throw new Error(`${id}: duplicate lineage id ${lineage.id}`)
-    lineageIds.add(lineage.id)
+    if (memberCounts.has(lineage.id)) throw new Error(`${id}: duplicate lineage id ${lineage.id}`)
+    memberCounts.set(lineage.id, lineage.members.length)
   }
   const rawSnapshots = expectArray(root.snapshots, `${id}.snapshots`)
   if (rawSnapshots.length === 0) throw new Error(`${id}: empty TerritoryData`)
@@ -712,8 +739,12 @@ export function parseTerritoryData(json: unknown): TerritoryData {
   for (const snapshot of snapshots) {
     if (snapshotIds.has(snapshot.id)) throw new Error(`${id}: duplicate snapshot id ${snapshot.id}`)
     snapshotIds.add(snapshot.id)
-    if (!lineageIds.has(snapshot.lineage)) {
+    const memberCount = memberCounts.get(snapshot.lineage)
+    if (memberCount === undefined) {
       throw new Error(`${id}: snapshot ${snapshot.id} names unknown lineage ${snapshot.lineage}`)
+    }
+    if (snapshot.member >= memberCount) {
+      throw new Error(`${id}: snapshot ${snapshot.id} names member ${snapshot.member} of ${memberCount} in ${snapshot.lineage}`)
     }
   }
   snapshots.sort((a, b) => b.tStart - a.tStart || a.id.localeCompare(b.id))

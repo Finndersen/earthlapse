@@ -379,10 +379,18 @@ describe('parseFeatureSetData', () => {
 })
 
 describe('parseTerritoryData', () => {
-  const lineage = { id: 'rome', name: 'Rome', colourSlot: 3 }
+  const lineage = {
+    id: 'rome',
+    name: 'Rome',
+    colourSlot: 3,
+    description: 'From a city-state to a Mediterranean empire.',
+    events: ['fall-of-rome'],
+    members: [{ label: 'Roman Empire', wikipedia: 'Roman Empire' }],
+  }
   const territory = (overrides: object = {}): object => ({
     id: 'roman-empire-117ce',
     lineage: 'rome',
+    member: 0,
     label: 'Roman Empire',
     tStart: 1908,
     tEnd: 1893,
@@ -398,9 +406,10 @@ describe('parseTerritoryData', () => {
     snapshots,
   })
 
-  it('sorts snapshots oldest first and checks the geometry file covers every one', () => {
+  it('keeps lineage members and events, sorts snapshots oldest first and checks the geometry covers each', () => {
     const data = parseTerritoryData(layer([territory({ id: 'b', tStart: 1000, tEnd: 900 }), territory({ id: 'a' })]))
     expect(data.snapshots.map((s) => s.id)).toEqual(['a', 'b'])
+    expect(data.lineages[0]).toMatchObject({ events: ['fall-of-rome'], members: [{ label: 'Roman Empire', wikipedia: 'Roman Empire' }] })
     const ring = [10, 40, 20, 40, 20, 45]
     expect(parseTerritoryGeometry({ precision: 0.01, snapshots: { a: [[ring]], b: [[ring]] } }, data).snapshots.get('a')).toEqual([[ring]])
     expect(() => parseTerritoryGeometry({ precision: 0.01, snapshots: { a: [[ring]] } }, data)).toThrow(/b: missing/)
@@ -414,6 +423,7 @@ describe('parseTerritoryData', () => {
     ['a colour slot outside the palette', layer([territory()], [{ ...lineage, colourSlot: 8 }]), /colourSlot/],
     ['a snapshot ending before it starts', layer([territory({ tEnd: 1908 })]), /tStart/],
     ['a non-positive area', layer([territory({ areaKm2: 0 })]), /areaKm2/],
+    ['a member index past the lineage roster', layer([territory({ member: 1 })]), /member 1 of 1/],
   ])('rejects %s', (_label, json, error) => {
     expect(() => parseTerritoryData(json)).toThrow(error)
   })

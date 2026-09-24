@@ -453,8 +453,10 @@ the curated shape: `write_outputs` writes one content-hashed JSON keyed by featu
 flat `[lon, lat, …]` rings, exteriors counter-clockwise, holes clockwise — after
 `simplify(0.1°, preserve_topology=True)` and `set_precision(0.01°)`, with stale siblings removed.
 Publish builds the `empires` globe layer (`territories` wire kind) from the `FeatureSet`, the
-roster (lineage, label, colour slot) and that file's path; `docs/GLOBE.md` §10 "Historical
-empires" covers rendering.
+roster (lineage, label, colour slot, and the info card's description, related event ids and each
+member's Wikipedia title) and that file's path, writing each snapshot's `member` index; it refuses
+a lineage event id that is not a published `events-core` id (ADR-059's amendment).
+`docs/GLOBE.md` §10 "Historical empires" covers rendering.
 
 **Certainty and honesty** — `FeatureCertainty` is mapped from whether a window's row carries a
 Seshat databank cross-reference (`SeshatID`) — `HIGH` if present, `MEDIUM` otherwise, no `LOW`

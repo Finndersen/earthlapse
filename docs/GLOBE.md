@@ -906,8 +906,9 @@ hover only, in the shared tooltip below:** the same call ADR-032 already made fo
 for the same reason (the labelled set overlaps constantly at globe scale, and a silent collision
 cull is worse than a tooltip that always answers). What is drawn is a small transient name tag as
 a city first appears, capped and faded by `t`. **Empires are the one exception to hover-only
-(ADR-059):** a few labels, always on, capped and decluttered — see "Historical empires" below. An
-empire is large and few at once, and an unnamed coloured outline explains nothing.
+(ADR-059):** a few quiet labels, always on, capped and decluttered — see "Historical empires"
+below. An empire is large and few at once, and an unnamed coloured outline explains nothing. They
+also answer on hover, like everything else here.
 
 **One shared screen-space hit-test and tooltip (`GlobeTooltip.tsx`).** Every drawable in this
 layer — arcs, inhabited/city/scene-location markers — registers a `GlobeHitCandidate` (a point or
@@ -918,7 +919,9 @@ screen space on each pointer move (cheap — it runs on pointer events, not fram
 `unfoldedLiftedPosition`, and scores a hit by distance-over-tolerance, so a thin arc and a 2px city
 dot compete on "how close, relative to how close it had to be" rather than raw pixels. One tooltip
 component renders whichever target won, tracking it through `drei`'s `Html` with a clamp so it is
-never cut off at the panel's own rounded edge.
+never cut off at the panel's own rounded edge, and in a z-range above the globe labels'. Empires
+(kind `'empire'`) are tested only when every mark above has missed: first their label anchors, then
+the territory under the pointer — see "Historical empires" below.
 
 **One instanced field for every dot (`MarkerField.tsx`).** Inhabited markers, city dots, arrival
 landing ripples and the scene-location indicator are all one instance in a single
@@ -948,9 +951,19 @@ basemap, else 2048×1024. The fill shows only with the overlay set to None, so i
 population density or cleared land. A new active set crossfades in 0.3 s (`usePresentedMix`);
 at the 1900 CE cutoff the set empties, so the layer fades out rather than cutting. **Labels**
 (`EmpireLabels.tsx`, on the shared `GlobeLabel`): one per active lineage on its largest member's
-anchor, ranked by area, capped at 6 (3 on a phone), dropped when its chip box (estimated from its text, plus a 4 px
-gap) overlaps a larger lineage's chip (`declutterLabelBoxes`), faded with the
-crossfade; expanded view only. The palette's eight colours, one per `colourSlot`, are chosen
+anchor, ranked by area, capped at 6 (3 on a phone), dropped when its box (`EMPIRE_LABEL_BOX`,
+estimated from its text, plus a 4 px gap) overlaps a larger lineage's (`declutterLabelBoxes`),
+faded with the crossfade; expanded view only. A label is bare text so it never hides the outline
+it names: 9 px tracked uppercase mono with a dark halo and a dot in the lineage colour, at 0.75
+opacity, full for the hovered lineage and the one whose card is open. **Hover and card:** in the
+expanded view, once territory is drawn, a pointer that misses every mark is tested against the
+label anchors and then the territory itself (pointer → lon/lat through the group's inverse
+transform, even-odd per polygon with a cached bounding-box prefilter, smallest containing
+snapshot wins; no answer mid-unfold). The tooltip names the member, its span, and the lineage's
+area now and at its peak. A click opens `EmpireDetailPanel` in the event dock — description,
+area chart with a playhead at `t`, member succession linked to Wikipedia, related events, "Jump to
+peak" — which replaces any event card and, unlike one, never moves `t` on opening. Lineage
+summaries (member spans, area series, peak) are built once in `buildEmpireIndex`. The palette's eight colours, one per `colourSlot`, are chosen
 against the basemap, both overlay ramps, the amber arrival arcs and the cyan city markers.
 
 **Scene location on the orb (ADR-034; the single-toggle framing is ADR-036).** A scene naming a

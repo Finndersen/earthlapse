@@ -1,6 +1,6 @@
 /**
  * The historical-empires layer's look (ADR-059). Pure — hex strings and numbers only — like
- * `humanStyle.ts`, so the canvas painter and the label chips read the same constants.
+ * `humanStyle.ts`, so the canvas painter, the labels and the detail panel read the same constants.
  *
  * **Palette.** Eight categorical hues indexed by a lineage's `colourSlot`. The roster assigns
  * slots by graph colouring, so two lineages that coexist and neighbour each other never share
@@ -72,3 +72,7 @@ export function selectEmpireTier(expanded: boolean, highResolutionAvailable: boo
 /** How many lineage labels show at once, expanded only (never on the orb). */
 export const EMPIRE_LABEL_CAP_DESKTOP = 6
 export const EMPIRE_LABEL_CAP_PHONE = 3
+
+/** A label's opacity at rest: present but quieter than the outlines it names. A hovered or
+ *  selected lineage's label draws at full opacity. */
+export const EMPIRE_LABEL_REST_OPACITY = 0.75

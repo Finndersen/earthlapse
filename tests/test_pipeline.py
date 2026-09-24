@@ -26,6 +26,7 @@ from pipeline.manifest import (
     SeriesData,
     TerritoryData,
     TerritoryLineageData,
+    TerritoryMemberData,
     TreeData,
 )
 from pipeline.manifest import SceneLocation as WireSceneLocation
@@ -1165,16 +1166,38 @@ def test_empires_publish_as_a_territories_layer_with_roster_lineages_and_labels(
             _polity("byzantine-empire-1400ce", "Byzantine Empire", 1400, 1453),
         ],
     )
+    rome = TerritoryLineageData(
+        id="rome",
+        name="Rome",
+        colour_slot=3,
+        description="Rome ruled the Mediterranean.",
+        events=("roman-empire-peak",),
+        members=(
+            TerritoryMemberData(label="Roman Empire", wikipedia="Roman Empire"),
+            TerritoryMemberData(label="Byzantium", wikipedia=None),
+        ),
+    )
     empires = EmpireInputs(
-        lineages=(TerritoryLineageData(id="rome", name="Rome", colour_slot=3),),
-        polities={
-            "Roman Empire": ("rome", "Roman Empire"),
-            "Byzantine Empire": ("rome", "Byzantium"),
-        },
+        lineages=(rome,),
+        polities={"Roman Empire": ("rome", 0), "Byzantine Empire": ("rome", 1)},
         geometry="vectors/cliopatria_territories-0123456789.json",
         geometry_ids=frozenset({"roman-empire-117ce", "byzantine-empire-1400ce"}),
     )
-    world = WorldModel(features={"cliopatria_polities": polities})
+    peak = Event(
+        id="roman-empire-peak",
+        label="Roman Empire at its height",
+        kind=EventKind.PERIOD,
+        t_min=1845.0,
+        t_max=1929.0,
+        tags=[EventTag.SOCIETY],
+        importance=0.6,
+        description="Trajan's reign.",
+        citation="Scheidel 2009",
+    )
+    world = WorldModel(
+        features={"cliopatria_polities": polities},
+        events={"events-core": EventSet(id="events-core", events=[peak])},
+    )
 
     files, entries = _layers(world, portraits=None, empires=empires)
 
@@ -1185,9 +1208,21 @@ def test_empires_publish_as_a_territories_layer_with_roster_lineages_and_labels(
     assert isinstance(published.data, TerritoryData)
     wire = published.data.model_dump(mode="json", by_alias=True)
     assert wire["geometry"] == "vectors/cliopatria_territories-0123456789.json"
+    assert wire["lineages"][0] == {
+        "id": "rome",
+        "name": "Rome",
+        "colourSlot": 3,
+        "description": "Rome ruled the Mediterranean.",
+        "events": ["roman-empire-peak"],
+        "members": [
+            {"label": "Roman Empire", "wikipedia": "Roman Empire"},
+            {"label": "Byzantium", "wikipedia": None},
+        ],
+    }
     assert wire["snapshots"][0] == {
         "id": "roman-empire-117ce",
         "lineage": "rome",
+        "member": 0,
         "label": "Roman Empire",
         "tStart": 1908.0,
         "tEnd": 1893.0,
@@ -1195,11 +1230,14 @@ def test_empires_publish_as_a_territories_layer_with_roster_lineages_and_labels(
         "lon": 12.5,
         "areaKm2": 1e6,
     }
-    assert wire["snapshots"][1]["label"] == "Byzantium"
+    assert (wire["snapshots"][1]["member"], wire["snapshots"][1]["label"]) == (1, "Byzantium")
 
-    unrostered = replace(empires, polities={"Roman Empire": ("rome", "Roman Empire")})
+    unrostered = replace(empires, polities={"Roman Empire": ("rome", 0)})
     with pytest.raises(PublishRefused, match="Byzantine Empire"):
         _layers(world, portraits=None, empires=unrostered)
     ungeometried = replace(empires, geometry_ids=frozenset({"roman-empire-117ce"}))
     with pytest.raises(PublishRefused, match="byzantine-empire-1400ce"):
         _layers(world, portraits=None, empires=ungeometried)
+    unpublished = rome.model_copy(update={"events": ("roman-empire-peak", "atlantis", "troy")})
+    with pytest.raises(PublishRefused, match="rome:atlantis, rome:troy"):
+        _layers(world, portraits=None, empires=replace(empires, lineages=(unpublished,)))

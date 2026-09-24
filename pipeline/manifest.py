@@ -463,20 +463,32 @@ class FeatureSetData(_WireModel):
     features: tuple[FeatureData, ...] = Field(min_length=1)
 
 
+class TerritoryMemberData(_WireModel):
+    """One polity of a lineage: its display label and English Wikipedia article title."""
+
+    label: str
+    wikipedia: str | None
+
+
 class TerritoryLineageData(_WireModel):
-    """One empire lineage (ADR-059). `colour_slot` indexes the web's empire palette."""
+    """One empire lineage (ADR-059). `colour_slot` indexes the web's empire palette; `events`
+    are ids of published events that concern it; `members` are in roster order."""
 
     id: str
     name: str
     colour_slot: int = Field(ge=0, le=7)
+    description: str = Field(min_length=1, max_length=320)
+    events: tuple[str, ...]
+    members: tuple[TerritoryMemberData, ...] = Field(min_length=1)
 
 
 class TerritorySnapshotData(_WireModel):
     """One territory snapshot, active for `t_end < t <= t_start`. `id` keys its polygons in the
-    geometry file; `lat`/`lon` anchor its label."""
+    geometry file; `lat`/`lon` anchor its label; `member` indexes its lineage's `members`."""
 
     id: str
     lineage: str
+    member: int = Field(ge=0)
     label: str
     t_start: GeoTime
     t_end: GeoTime
@@ -501,11 +513,16 @@ class TerritoryData(_WireModel):
     snapshots: tuple[TerritorySnapshotData, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def _snapshots_name_known_lineages(self) -> Self:
-        known = {lineage.id for lineage in self.lineages}
-        unknown = sorted({s.lineage for s in self.snapshots} - known)
+    def _snapshots_name_known_lineages_and_members(self) -> Self:
+        members = {lineage.id: len(lineage.members) for lineage in self.lineages}
+        unknown = sorted({s.lineage for s in self.snapshots} - members.keys())
         if unknown:
             raise ValueError(f"snapshots name unknown lineage(s): {', '.join(unknown)}")
+        out_of_range = [s.id for s in self.snapshots if s.member >= members[s.lineage]]
+        if out_of_range:
+            raise ValueError(
+                f"snapshots name no member of their lineage: {', '.join(out_of_range)}"
+            )
         return self
 
 

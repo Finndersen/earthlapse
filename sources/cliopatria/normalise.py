@@ -133,12 +133,14 @@ class _RosterModel(BaseModel):
 
 class RosterMember(_RosterModel):
     """One Cliopatria polity in a lineage. `from_year`/`to_year` clamp its windows (inclusive
-    CE years); `label` is the text the globe shows for its snapshots."""
+    CE years); `label` is the text the globe shows for its snapshots; `wikipedia` is its English
+    Wikipedia article title."""
 
     polity: str = Field(min_length=1)
     from_year: int | None = Field(default=None, alias="from")
     to_year: int | None = Field(default=None, alias="to")
     label: str | None = Field(default=None, min_length=1)
+    wikipedia: str | None = Field(default=None, min_length=1)
 
     @model_validator(mode="after")
     def _clamp_is_ordered(self) -> Self:
@@ -157,6 +159,8 @@ class RosterLineage(_RosterModel):
     name: str = Field(min_length=1)
     colour_slot: int = Field(ge=0, le=7)
     reason: str = Field(min_length=1)
+    description: str = Field(min_length=1, max_length=320)
+    events: tuple[str, ...] = ()
     members: tuple[RosterMember, ...] = Field(min_length=1)
 
 

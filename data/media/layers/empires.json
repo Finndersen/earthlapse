@@ -1,152 +1,621 @@
 {
   "id": "empires",
-  "geometry": "vectors/cliopatria_territories-2233a02a07.json",
+  "geometry": "vectors/cliopatria_territories-2137cdbbc2.json",
   "lineages": [
     {
       "id": "egypt",
       "name": "Egypt",
-      "colourSlot": 2
+      "colourSlot": 2,
+      "description": "Egypt was unified under a single king around 3100 BCE and ruled by native dynasties through the Old, Middle and New Kingdoms, separated by periods of division. After Persian and then Macedonian conquest, the Ptolemaic Kingdom ruled from Alexandria until Rome annexed Egypt in 30 BCE.",
+      "events": [
+        "great-pyramid-giza"
+      ],
+      "members": [
+        {
+          "label": "Early Dynastic Egypt",
+          "wikipedia": "Early Dynastic Period (Egypt)"
+        },
+        {
+          "label": "Old Kingdom of Egypt",
+          "wikipedia": "Old Kingdom of Egypt"
+        },
+        {
+          "label": "Lower Egypt",
+          "wikipedia": "Lower Egypt"
+        },
+        {
+          "label": "Upper Egypt",
+          "wikipedia": "Upper Egypt"
+        },
+        {
+          "label": "Middle Kingdom of Egypt",
+          "wikipedia": "Middle Kingdom of Egypt"
+        },
+        {
+          "label": "New Kingdom of Egypt",
+          "wikipedia": "New Kingdom of Egypt"
+        },
+        {
+          "label": "Twenty-second Dynasty of Egypt",
+          "wikipedia": "Twenty-second Dynasty of Egypt"
+        },
+        {
+          "label": "Twenty-sixth Dynasty of Egypt",
+          "wikipedia": "Twenty-sixth Dynasty of Egypt"
+        },
+        {
+          "label": "Thirtieth Dynasty of Egypt",
+          "wikipedia": "Thirtieth Dynasty of Egypt"
+        },
+        {
+          "label": "Ptolemaic Kingdom",
+          "wikipedia": "Ptolemaic Kingdom"
+        }
+      ]
     },
     {
       "id": "mesopotamia",
       "name": "Mesopotamia",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "Sumerian city-states such as Uruk, Ur and Lagash arose in southern Mesopotamia and developed cuneiform writing. Sargon of Akkad united the region in the 24th century BCE. Babylon later rose under Hammurabi, and the Neo-Babylonian Empire of Nebuchadnezzar II fell to Cyrus of Persia in 539 BCE.",
+      "events": [
+        "uruk-first-city",
+        "writing"
+      ],
+      "members": [
+        {
+          "label": "Sumer",
+          "wikipedia": "History of Sumer"
+        },
+        {
+          "label": "Akkadian Empire",
+          "wikipedia": "Akkadian Empire"
+        },
+        {
+          "label": "Babylonia",
+          "wikipedia": "Babylonia"
+        },
+        {
+          "label": "Neo-Babylonian Empire",
+          "wikipedia": "Neo-Babylonian Empire"
+        }
+      ]
     },
     {
       "id": "assyria",
       "name": "Assyria",
-      "colourSlot": 1
+      "colourSlot": 1,
+      "description": "Assyria, centred on the city of Ashur on the upper Tigris, was a Mesopotamian power from the early second millennium BCE. From 911 BCE the Neo-Assyrian Empire expanded until it reached from western Iran to Egypt. It fell to Babylonian and Median forces after the sack of its capital, Nineveh, in 612 BCE.",
+      "events": [],
+      "members": [
+        {
+          "label": "Assyria",
+          "wikipedia": "Assyria"
+        },
+        {
+          "label": "Neo-Assyrian Empire",
+          "wikipedia": "Neo-Assyrian Empire"
+        }
+      ]
     },
     {
       "id": "hittites",
       "name": "Hittites",
-      "colourSlot": 3
+      "colourSlot": 3,
+      "description": "The Hittites ruled central Anatolia from their capital, Hattusa, from about the 17th century BCE. At their height they rivalled Egypt, fighting it at Kadesh around 1274 BCE and later agreeing one of the earliest recorded peace treaties. The kingdom collapsed around 1180 BCE, in the Late Bronze Age collapse.",
+      "events": [],
+      "members": [
+        {
+          "label": "Hittites",
+          "wikipedia": "Hittites"
+        }
+      ]
     },
     {
       "id": "persia",
       "name": "Persia",
-      "colourSlot": 1
+      "colourSlot": 1,
+      "description": "Cyrus the Great founded the Achaemenid Empire around 550 BCE; it reached from the Aegean to the Indus until Alexander conquered it in 330 BCE. The Parthian and Sasanian empires restored Iranian rule and fought Rome for centuries until the Arab conquest. The Safavids, Afsharids and Qajars ruled Iran from 1501.",
+      "events": [],
+      "members": [
+        {
+          "label": "Achaemenid Empire",
+          "wikipedia": "Achaemenid Empire"
+        },
+        {
+          "label": "Parthian Empire",
+          "wikipedia": "Parthian Empire"
+        },
+        {
+          "label": "Sasanian Empire",
+          "wikipedia": "Sasanian Empire"
+        },
+        {
+          "label": "Safavid Dynasty",
+          "wikipedia": "Safavid dynasty"
+        },
+        {
+          "label": "Afsharid Iran",
+          "wikipedia": "Afsharid Iran"
+        },
+        {
+          "label": "Qajar Dynasty",
+          "wikipedia": "Qajar dynasty"
+        }
+      ]
     },
     {
       "id": "macedon",
       "name": "Macedon",
-      "colourSlot": 3
+      "colourSlot": 3,
+      "description": "Philip II made Macedon the leading power in Greece, and his son Alexander conquered the Persian Empire between 334 and 323 BCE, reaching the Indus. His generals divided the empire after his death. The Seleucid Empire, the largest successor, held much of the Near East before Rome annexed its remnant in 63 BCE.",
+      "events": [],
+      "members": [
+        {
+          "label": "Macedonian Empire",
+          "wikipedia": "Macedonia (ancient kingdom)"
+        },
+        {
+          "label": "Seleucid Empire",
+          "wikipedia": "Seleucid dynasty"
+        }
+      ]
     },
     {
       "id": "carthage",
       "name": "Carthage",
-      "colourSlot": 4
+      "colourSlot": 4,
+      "description": "Founded by Phoenician settlers from Tyre, traditionally in 814 BCE, Carthage in modern Tunisia built a trading empire across North Africa, western Sicily, Sardinia and southern Iberia. It fought Rome in three Punic Wars, including Hannibal's invasion of Italy, and was destroyed by Rome in 146 BCE.",
+      "events": [],
+      "members": [
+        {
+          "label": "Carthage",
+          "wikipedia": "Ancient Carthage"
+        }
+      ]
     },
     {
       "id": "rome",
       "name": "Rome",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "Rome grew from a city-state, a republic by tradition from 509 BCE, to rule the whole Mediterranean, and became an empire under Augustus in 27 BCE. It reached its greatest extent under Trajan in 117 CE. The western empire ended in 476; the eastern, Byzantine Empire lasted until the Ottomans took Constantinople in 1453.",
+      "events": [
+        "roman-empire-peak"
+      ],
+      "members": [
+        {
+          "label": "Roman Republic",
+          "wikipedia": "Roman Republic"
+        },
+        {
+          "label": "Roman Empire",
+          "wikipedia": "Roman Empire"
+        },
+        {
+          "label": "Western Roman Empire",
+          "wikipedia": "Western Roman Empire"
+        },
+        {
+          "label": "Eastern Roman Empire",
+          "wikipedia": "Byzantine Empire"
+        },
+        {
+          "label": "Byzantine Empire",
+          "wikipedia": "Byzantine Empire"
+        }
+      ]
     },
     {
       "id": "india",
       "name": "Maurya & Gupta",
-      "colourSlot": 2
+      "colourSlot": 2,
+      "description": "Chandragupta Maurya founded the Maurya Empire around 320 BCE; under Ashoka it covered most of the Indian subcontinent and promoted Buddhism. It collapsed around 185 BCE. The Gupta Empire, from about 320 CE, reunited much of northern India in an era noted for Sanskrit literature, mathematics and astronomy.",
+      "events": [],
+      "members": [
+        {
+          "label": "Maurya Empire",
+          "wikipedia": "Maurya Empire"
+        },
+        {
+          "label": "Gupta Empire",
+          "wikipedia": "Gupta Empire"
+        }
+      ]
     },
     {
       "id": "china",
       "name": "China",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "The Shang, the earliest Chinese dynasty known from its own written records, ruled the Yellow River valley from about 1600 BCE. The Qin unified China in 221 BCE, and dynasties including the Han, Tang, Song, Ming and Qing ruled an imperial state, through periods of division, until the Qing fell in 1912.",
+      "events": [
+        "qin-unification"
+      ],
+      "members": [
+        {
+          "label": "Shang Dynasty",
+          "wikipedia": "Shang dynasty"
+        },
+        {
+          "label": "Zhou Dynasty",
+          "wikipedia": "Zhou dynasty"
+        },
+        {
+          "label": "Qin",
+          "wikipedia": "Qin (state)"
+        },
+        {
+          "label": "Qin Dynasty",
+          "wikipedia": "Qin dynasty"
+        },
+        {
+          "label": "Han Dynasty",
+          "wikipedia": "Han dynasty"
+        },
+        {
+          "label": "Western Jin",
+          "wikipedia": "Jin dynasty (266-420)"
+        },
+        {
+          "label": "Sui Dynasty",
+          "wikipedia": "Sui dynasty"
+        },
+        {
+          "label": "Tang Dynasty",
+          "wikipedia": "Tang dynasty"
+        },
+        {
+          "label": "Northern Song",
+          "wikipedia": "Song dynasty"
+        },
+        {
+          "label": "Southern Song",
+          "wikipedia": "Song dynasty"
+        },
+        {
+          "label": "Ming Dynasty",
+          "wikipedia": "Ming dynasty"
+        },
+        {
+          "label": "Later Jin Dynasty",
+          "wikipedia": "Later Jin (1616-1636)"
+        },
+        {
+          "label": "Qing Dynasty",
+          "wikipedia": "Qing dynasty"
+        }
+      ]
     },
     {
       "id": "xiongnu",
       "name": "Xiongnu",
-      "colourSlot": 3
+      "colourSlot": 3,
+      "description": "The Xiongnu were a confederation of steppe peoples who, under Modu Chanyu from 209 BCE, built the first great empire of the Mongolian steppe. They forced Han China to pay tribute until Han campaigns and internal splits weakened them; the confederation divided in the 1st century CE.",
+      "events": [],
+      "members": [
+        {
+          "label": "Xiongnu",
+          "wikipedia": "Xiongnu"
+        }
+      ]
     },
     {
       "id": "tibet",
       "name": "Tibetan Empire",
-      "colourSlot": 3
+      "colourSlot": 3,
+      "description": "Songtsen Gampo unified the Tibetan plateau in the early 7th century CE. The Tibetan Empire expanded into Central Asia and western China, contested the Silk Road with the Tang and briefly occupied the Tang capital, Chang'an, in 763. It fragmented after the death of its last emperor, Langdarma, around 842.",
+      "events": [],
+      "members": [
+        {
+          "label": "Tibetan Empire",
+          "wikipedia": "Tibetan Empire"
+        }
+      ]
     },
     {
       "id": "khmer",
       "name": "Khmer Empire",
-      "colourSlot": 2
+      "colourSlot": 2,
+      "description": "The Khmer Empire is dated from 802 CE, when Jayavarman II proclaimed himself universal monarch. Ruling from Angkor, it dominated much of mainland South-East Asia and built temple complexes such as Angkor Wat. Angkor declined during the 14th century and was abandoned as the capital after a Siamese attack in 1431.",
+      "events": [
+        "angkor-wat-built"
+      ],
+      "members": [
+        {
+          "label": "Khmer Empire",
+          "wikipedia": "Khmer Empire"
+        }
+      ]
     },
     {
       "id": "caliphate",
       "name": "Caliphate",
-      "colourSlot": 2
+      "colourSlot": 2,
+      "description": "After Muhammad's death in 632, the Rashidun caliphs conquered the Sasanian Empire and Byzantine Syria and Egypt. The Umayyads, ruling from Damascus from 661, extended the empire from Iberia to Central Asia. The Abbasids took power in 750 and founded Baghdad, which the Mongols sacked in 1258.",
+      "events": [],
+      "members": [
+        {
+          "label": "Rashidun Caliphate",
+          "wikipedia": "Rashidun Caliphate"
+        },
+        {
+          "label": "Umayyad Caliphate",
+          "wikipedia": "Umayyad Caliphate"
+        },
+        {
+          "label": "Abbasid Caliphate",
+          "wikipedia": "Abbasid Caliphate"
+        }
+      ]
     },
     {
       "id": "franks",
       "name": "Franks",
-      "colourSlot": 1
+      "colourSlot": 1,
+      "description": "Clovis I united the Franks around 500 CE, founding a Merovingian kingdom that ruled most of Gaul. The Carolingians replaced it in 751; Charlemagne extended the realm across much of western and central Europe and was crowned emperor in Rome in 800. His grandsons divided the empire by the Treaty of Verdun in 843.",
+      "events": [],
+      "members": [
+        {
+          "label": "Kingdom of the Franks",
+          "wikipedia": "Francia"
+        },
+        {
+          "label": "Carolingian Empire",
+          "wikipedia": "Francia"
+        }
+      ]
     },
     {
       "id": "hre",
       "name": "Holy Roman Empire",
-      "colourSlot": 6
+      "colourSlot": 6,
+      "description": "The Holy Roman Empire is usually dated from the coronation of Otto I in 962. A decentralised realm of hundreds of principalities, bishoprics and cities under an elected emperor, it covered much of central Europe. Its central authority waned after the Thirty Years' War, and Francis II dissolved it in 1806.",
+      "events": [],
+      "members": [
+        {
+          "label": "Holy Roman Empire",
+          "wikipedia": "Holy Roman Empire"
+        }
+      ]
     },
     {
       "id": "sahel",
       "name": "Ghana, Mali & Songhai",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "The Ghana Empire, flourishing by the 8th century, controlled the trans-Saharan gold trade of the western Sahel. Mali, founded by Sundiata Keita in the 13th century, succeeded it; Mansa Musa's pilgrimage of 1324 made its wealth famous. Songhai, ruling from Gao, grew larger still until Morocco defeated it in 1591.",
+      "events": [],
+      "members": [
+        {
+          "label": "Ghana Empire",
+          "wikipedia": "Ghana Empire"
+        },
+        {
+          "label": "Mali Empire",
+          "wikipedia": "Mali Empire"
+        },
+        {
+          "label": "Songhai Empire",
+          "wikipedia": "Songhai Empire"
+        }
+      ]
     },
     {
       "id": "seljuk",
       "name": "Seljuks",
-      "colourSlot": 1
+      "colourSlot": 1,
+      "description": "The Seljuks, a Turkic dynasty from Central Asia, took Baghdad in 1055 and ruled from Central Asia to the Levant. Their victory over Byzantium at Manzikert in 1071 opened Anatolia to Turkic settlement and led to the Byzantine appeal that prompted the First Crusade. The Great Seljuk state broke up in the 12th century.",
+      "events": [],
+      "members": [
+        {
+          "label": "Seljuk Dynasty",
+          "wikipedia": "Seljuk dynasty"
+        },
+        {
+          "label": "Great Seljuk Empire",
+          "wikipedia": "Seljuk Empire"
+        }
+      ]
     },
     {
       "id": "mongol",
       "name": "Mongols",
-      "colourSlot": 1
+      "colourSlot": 1,
+      "description": "Temujin was proclaimed Genghis Khan in 1206 and led conquests across Asia; by the late 13th century the empire reached from Korea to eastern Europe, the largest contiguous land empire in history. From 1260 it split into four khanates: the Yuan in China, the Golden Horde, the Ilkhanate and the Chagatai Khanate.",
+      "events": [
+        "mongol-empire"
+      ],
+      "members": [
+        {
+          "label": "Mongol Empire",
+          "wikipedia": "Mongol Empire"
+        },
+        {
+          "label": "Yuan Dynasty",
+          "wikipedia": "Yuan dynasty"
+        },
+        {
+          "label": "Golden Horde",
+          "wikipedia": "Golden Horde"
+        },
+        {
+          "label": "Ilkhanate",
+          "wikipedia": "Ilkhanate"
+        },
+        {
+          "label": "Chagatai Khanate",
+          "wikipedia": "Chagatai Khanate"
+        }
+      ]
     },
     {
       "id": "timurid",
       "name": "Timurids & Mughals",
-      "colourSlot": 7
+      "colourSlot": 7,
+      "description": "Timur, a Turco-Mongol conqueror, built an empire across Central Asia, Iran and Mesopotamia from 1370, ruling from Samarkand; his successors lost most of it by 1507. His descendant Babur founded the Mughal Empire in 1526. It ruled most of the Indian subcontinent by 1700 and ended after the rebellion of 1857.",
+      "events": [],
+      "members": [
+        {
+          "label": "Timurid Empire",
+          "wikipedia": "Timurid Empire"
+        },
+        {
+          "label": "Mughal Empire",
+          "wikipedia": "Mughal Empire"
+        }
+      ]
     },
     {
       "id": "ottoman",
       "name": "Ottoman Empire",
-      "colourSlot": 2
+      "colourSlot": 2,
+      "description": "Founded by Osman I in north-west Anatolia around 1299, the Ottoman state took Constantinople in 1453 and in the 16th century ruled south-east Europe, the Middle East and North Africa. It lost territory steadily from the late 17th century and was dissolved in 1922, after the First World War.",
+      "events": [],
+      "members": [
+        {
+          "label": "Ottoman Empire",
+          "wikipedia": "Ottoman Empire"
+        }
+      ]
     },
     {
       "id": "axum",
       "name": "Kush & Axum",
-      "colourSlot": 5
+      "colourSlot": 5,
+      "description": "The Kingdom of Kush, in Nubia on the middle Nile, ruled Egypt as its Twenty-fifth Dynasty in the 8th and 7th centuries BCE and later flourished at Meroe. Axum, in the Ethiopian highlands, rose in the 1st century CE as a Red Sea trading power, minted its own coins and adopted Christianity in the 4th century.",
+      "events": [],
+      "members": [
+        {
+          "label": "Kingdom of Kush",
+          "wikipedia": "Kingdom of Kush"
+        },
+        {
+          "label": "Kingdom of Axum",
+          "wikipedia": "Kingdom of Aksum"
+        }
+      ]
     },
     {
       "id": "maya",
       "name": "Maya",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "Maya city-states such as Tikal, Calakmul and Copan flourished in the Yucatan Peninsula, Guatemala and Honduras, peaking in the Classic period, about 250 to 900 CE, with temple-cities and a full hieroglyphic script. Many southern cities were abandoned in the 9th century; northern centres such as Chichen Itza continued.",
+      "events": [],
+      "members": [
+        {
+          "label": "Maya",
+          "wikipedia": "Maya civilization"
+        },
+        {
+          "label": "Maya",
+          "wikipedia": "Maya civilization"
+        }
+      ]
     },
     {
       "id": "aztec",
       "name": "Aztec",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "The Triple Alliance of Tenochtitlan, Texcoco and Tlacopan formed in 1428 and came to dominate central Mexico, drawing tribute from hundreds of subject towns. Tenochtitlan, built on an island in Lake Texcoco, was one of the largest cities of its time. Spanish forces and their Indigenous allies conquered it in 1521.",
+      "events": [],
+      "members": [
+        {
+          "label": "Aztec Empire",
+          "wikipedia": "Aztec Empire"
+        }
+      ]
     },
     {
       "id": "inca",
       "name": "Inca",
-      "colourSlot": 0
+      "colourSlot": 0,
+      "description": "From their capital, Cusco, the Inca expanded from about 1438 under Pachacuti to rule the Andes from Ecuador to central Chile, linked by an extensive road network. It was the largest state in the Americas before European contact. Spanish forces under Francisco Pizarro captured its emperor, Atahualpa, in 1532.",
+      "events": [],
+      "members": [
+        {
+          "label": "Inca Empire",
+          "wikipedia": "Inca Empire"
+        }
+      ]
     },
     {
       "id": "spain",
       "name": "Spain",
-      "colourSlot": 4
+      "colourSlot": 4,
+      "description": "The union of Castile and Aragon made Spain a European power, and Columbus's voyage of 1492 began its conquest of the Americas. By the late 16th century it ruled much of the Americas, the Philippines and lands in Europe. Most American colonies won independence by 1826; Cuba and the Philippines were lost in 1898.",
+      "events": [
+        "columbian-exchange"
+      ],
+      "members": [
+        {
+          "label": "Spain",
+          "wikipedia": "Spain"
+        },
+        {
+          "label": "Spanish Empire",
+          "wikipedia": "Spanish Empire"
+        },
+        {
+          "label": "Iberian Union",
+          "wikipedia": "Iberian Union"
+        },
+        {
+          "label": "First Spanish Republic",
+          "wikipedia": "First Spanish Republic"
+        }
+      ]
     },
     {
       "id": "britain",
       "name": "Britain",
-      "colourSlot": 3
+      "colourSlot": 3,
+      "description": "Building on English colonies and trade from the early 1600s, Great Britain (from 1801 the United Kingdom) expanded across North America, India, Australia and Africa and was the dominant naval and commercial power of the 19th century. At its height, around 1920, it covered about a quarter of the world's land.",
+      "events": [
+        "industrial-revolution",
+        "british-colonisation-australia"
+      ],
+      "members": [
+        {
+          "label": "Great Britain",
+          "wikipedia": "United Kingdom"
+        },
+        {
+          "label": "British Empire",
+          "wikipedia": "British Empire"
+        },
+        {
+          "label": "British Raj",
+          "wikipedia": "British Raj"
+        },
+        {
+          "label": "British Africa",
+          "wikipedia": "British Empire"
+        }
+      ]
     },
     {
       "id": "russia",
       "name": "Russia",
-      "colourSlot": 5
+      "colourSlot": 5,
+      "description": "Ivan IV was crowned the first Tsar of Russia in 1547 and conquered the khanates of Kazan and Astrakhan. Russian expansion crossed Siberia to reach the Pacific by 1639 and continued into Alaska in the 18th century. Peter the Great proclaimed the Russian Empire in 1721; it sold Alaska to the United States in 1867.",
+      "events": [
+        "russian-conquest-of-siberia"
+      ],
+      "members": [
+        {
+          "label": "Tsardom of Russia",
+          "wikipedia": "Tsardom of Russia"
+        },
+        {
+          "label": "Russian Empire",
+          "wikipedia": "Russian Empire"
+        }
+      ]
     }
   ],
   "snapshots": [
     {
       "id": "sumerian-city-states-3400bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 5425.0,
       "tEnd": 5225.0,
@@ -157,6 +626,7 @@
     {
       "id": "sumerian-city-states-3200bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 5225.0,
       "tEnd": 5025.0,
@@ -167,6 +637,7 @@
     {
       "id": "early-dynastic-period-of-egypt-3000bce",
       "lineage": "egypt",
+      "member": 0,
       "label": "Early Dynastic Egypt",
       "tStart": 5025.0,
       "tEnd": 4525.0,
@@ -177,6 +648,7 @@
     {
       "id": "sumerian-city-states-3000bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 5025.0,
       "tEnd": 4725.0,
@@ -187,6 +659,7 @@
     {
       "id": "sumerian-city-states-2700bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 4725.0,
       "tEnd": 4525.0,
@@ -197,6 +670,7 @@
     {
       "id": "old-kingdom-of-egypt-2500bce",
       "lineage": "egypt",
+      "member": 1,
       "label": "Old Kingdom of Egypt",
       "tStart": 4525.0,
       "tEnd": 4225.0,
@@ -207,6 +681,7 @@
     {
       "id": "sumerian-city-states-2500bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 4525.0,
       "tEnd": 4325.0,
@@ -217,6 +692,7 @@
     {
       "id": "akkadian-empire-2300bce",
       "lineage": "mesopotamia",
+      "member": 1,
       "label": "Akkadian Empire",
       "tStart": 4325.0,
       "tEnd": 4275.0,
@@ -227,6 +703,7 @@
     {
       "id": "sumerian-city-states-2300bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 4325.0,
       "tEnd": 4275.0,
@@ -237,6 +714,7 @@
     {
       "id": "akkadian-empire-2250bce",
       "lineage": "mesopotamia",
+      "member": 1,
       "label": "Akkadian Empire",
       "tStart": 4275.0,
       "tEnd": 4225.0,
@@ -247,6 +725,7 @@
     {
       "id": "akkadian-empire-2200bce",
       "lineage": "mesopotamia",
+      "member": 1,
       "label": "Akkadian Empire",
       "tStart": 4225.0,
       "tEnd": 4125.0,
@@ -257,6 +736,7 @@
     {
       "id": "lower-egypt-2200bce",
       "lineage": "egypt",
+      "member": 2,
       "label": "Lower Egypt",
       "tStart": 4225.0,
       "tEnd": 4025.0,
@@ -267,6 +747,7 @@
     {
       "id": "upper-egypt-2200bce",
       "lineage": "egypt",
+      "member": 3,
       "label": "Upper Egypt",
       "tStart": 4225.0,
       "tEnd": 4025.0,
@@ -277,6 +758,7 @@
     {
       "id": "sumerian-city-states-2100bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 4125.0,
       "tEnd": 4025.0,
@@ -287,6 +769,7 @@
     {
       "id": "middle-kingdom-of-egypt-2000bce",
       "lineage": "egypt",
+      "member": 4,
       "label": "Middle Kingdom of Egypt",
       "tStart": 4025.0,
       "tEnd": 3825.0,
@@ -297,6 +780,7 @@
     {
       "id": "sumerian-city-states-2000bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 4025.0,
       "tEnd": 3825.0,
@@ -307,6 +791,7 @@
     {
       "id": "assyria-1800bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3825.0,
       "tEnd": 3785.0,
@@ -317,6 +802,7 @@
     {
       "id": "babylonia-1800bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3825.0,
       "tEnd": 3785.0,
@@ -327,6 +813,7 @@
     {
       "id": "middle-kingdom-of-egypt-1800bce",
       "lineage": "egypt",
+      "member": 4,
       "label": "Middle Kingdom of Egypt",
       "tStart": 3825.0,
       "tEnd": 3625.0,
@@ -337,6 +824,7 @@
     {
       "id": "sumerian-city-states-1800bce",
       "lineage": "mesopotamia",
+      "member": 0,
       "label": "Sumer",
       "tStart": 3825.0,
       "tEnd": 3785.0,
@@ -347,6 +835,7 @@
     {
       "id": "assyria-1760bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3785.0,
       "tEnd": 3725.0,
@@ -357,6 +846,7 @@
     {
       "id": "babylonia-1760bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3785.0,
       "tEnd": 3775.0,
@@ -367,6 +857,7 @@
     {
       "id": "babylonia-1750bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3775.0,
       "tEnd": 3725.0,
@@ -377,6 +868,7 @@
     {
       "id": "assyria-1700bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3725.0,
       "tEnd": 3525.0,
@@ -387,6 +879,7 @@
     {
       "id": "babylonia-1700bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3725.0,
       "tEnd": 3425.0,
@@ -397,6 +890,7 @@
     {
       "id": "hittites-1600bce",
       "lineage": "hittites",
+      "member": 0,
       "label": "Hittites",
       "tStart": 3625.0,
       "tEnd": 3425.0,
@@ -407,6 +901,7 @@
     {
       "id": "shang-dynasty-1600bce",
       "lineage": "china",
+      "member": 0,
       "label": "Shang Dynasty",
       "tStart": 3625.0,
       "tEnd": 3025.0,
@@ -417,6 +912,7 @@
     {
       "id": "assyria-1500bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3525.0,
       "tEnd": 3325.0,
@@ -427,6 +923,7 @@
     {
       "id": "new-kingdom-of-egypt-1500bce",
       "lineage": "egypt",
+      "member": 5,
       "label": "New Kingdom of Egypt",
       "tStart": 3525.0,
       "tEnd": 3425.0,
@@ -437,6 +934,7 @@
     {
       "id": "babylonia-1400bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3425.0,
       "tEnd": 3325.0,
@@ -447,6 +945,7 @@
     {
       "id": "hittites-1400bce",
       "lineage": "hittites",
+      "member": 0,
       "label": "Hittites",
       "tStart": 3425.0,
       "tEnd": 3325.0,
@@ -457,6 +956,7 @@
     {
       "id": "new-kingdom-of-egypt-1400bce",
       "lineage": "egypt",
+      "member": 5,
       "label": "New Kingdom of Egypt",
       "tStart": 3425.0,
       "tEnd": 3175.0,
@@ -467,6 +967,7 @@
     {
       "id": "assyria-1300bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3325.0,
       "tEnd": 3265.0,
@@ -477,6 +978,7 @@
     {
       "id": "babylonia-1300bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3325.0,
       "tEnd": 3265.0,
@@ -487,6 +989,7 @@
     {
       "id": "hittites-1300bce",
       "lineage": "hittites",
+      "member": 0,
       "label": "Hittites",
       "tStart": 3325.0,
       "tEnd": 3175.0,
@@ -497,6 +1000,7 @@
     {
       "id": "assyria-1240bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3265.0,
       "tEnd": 3245.0,
@@ -507,6 +1011,7 @@
     {
       "id": "babylonia-1240bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3265.0,
       "tEnd": 3245.0,
@@ -517,6 +1022,7 @@
     {
       "id": "assyria-1220bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3245.0,
       "tEnd": 3225.0,
@@ -527,6 +1033,7 @@
     {
       "id": "assyria-1200bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3225.0,
       "tEnd": 3175.0,
@@ -537,6 +1044,7 @@
     {
       "id": "babylonia-1200bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3225.0,
       "tEnd": 3175.0,
@@ -547,6 +1055,7 @@
     {
       "id": "assyria-1150bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3175.0,
       "tEnd": 3025.0,
@@ -557,6 +1066,7 @@
     {
       "id": "new-kingdom-of-egypt-1150bce",
       "lineage": "egypt",
+      "member": 5,
       "label": "New Kingdom of Egypt",
       "tStart": 3175.0,
       "tEnd": 3025.0,
@@ -567,6 +1077,7 @@
     {
       "id": "babylonia-1100bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3125.0,
       "tEnd": 3025.0,
@@ -577,6 +1088,7 @@
     {
       "id": "assyria-1000bce",
       "lineage": "assyria",
+      "member": 0,
       "label": "Assyria",
       "tStart": 3025.0,
       "tEnd": 2925.0,
@@ -587,6 +1099,7 @@
     {
       "id": "babylonia-1000bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 3025.0,
       "tEnd": 2925.0,
@@ -597,6 +1110,7 @@
     {
       "id": "kingdom-of-kush-1000bce",
       "lineage": "axum",
+      "member": 0,
       "label": "Kingdom of Kush",
       "tStart": 3025.0,
       "tEnd": 2725.0,
@@ -607,6 +1121,7 @@
     {
       "id": "new-kingdom-of-egypt-1000bce",
       "lineage": "egypt",
+      "member": 5,
       "label": "New Kingdom of Egypt",
       "tStart": 3025.0,
       "tEnd": 2825.0,
@@ -617,6 +1132,7 @@
     {
       "id": "zhou-dynasty-1000bce",
       "lineage": "china",
+      "member": 1,
       "label": "Zhou Dynasty",
       "tStart": 3025.0,
       "tEnd": 2775.0,
@@ -627,6 +1143,7 @@
     {
       "id": "babylonia-900bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 2925.0,
       "tEnd": 2825.0,
@@ -637,6 +1154,7 @@
     {
       "id": "neo-assyrian-empire-900bce",
       "lineage": "assyria",
+      "member": 1,
       "label": "Neo-Assyrian Empire",
       "tStart": 2925.0,
       "tEnd": 2825.0,
@@ -647,6 +1165,7 @@
     {
       "id": "neo-assyrian-empire-800bce",
       "lineage": "assyria",
+      "member": 1,
       "label": "Neo-Assyrian Empire",
       "tStart": 2825.0,
       "tEnd": 2725.0,
@@ -657,6 +1176,7 @@
     {
       "id": "twenty-second-dynasty-of-egypt-800bce",
       "lineage": "egypt",
+      "member": 6,
       "label": "Twenty-second Dynasty of Egypt",
       "tStart": 2825.0,
       "tEnd": 2725.0,
@@ -667,6 +1187,7 @@
     {
       "id": "qin-750bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2775.0,
       "tEnd": 2475.0,
@@ -677,6 +1198,7 @@
     {
       "id": "kingdom-of-kush-700bce",
       "lineage": "axum",
+      "member": 0,
       "label": "Kingdom of Kush",
       "tStart": 2725.0,
       "tEnd": 2700.0,
@@ -687,6 +1209,7 @@
     {
       "id": "neo-assyrian-empire-700bce",
       "lineage": "assyria",
+      "member": 1,
       "label": "Neo-Assyrian Empire",
       "tStart": 2725.0,
       "tEnd": 2700.0,
@@ -697,6 +1220,7 @@
     {
       "id": "kingdom-of-kush-675bce",
       "lineage": "axum",
+      "member": 0,
       "label": "Kingdom of Kush",
       "tStart": 2700.0,
       "tEnd": 1678.0,
@@ -707,6 +1231,7 @@
     {
       "id": "macedonian-empire-675bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2700.0,
       "tEnd": 2575.0,
@@ -717,6 +1242,7 @@
     {
       "id": "neo-assyrian-empire-675bce",
       "lineage": "assyria",
+      "member": 1,
       "label": "Neo-Assyrian Empire",
       "tStart": 2700.0,
       "tEnd": 2640.0,
@@ -727,6 +1253,7 @@
     {
       "id": "babylonia-650bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 2675.0,
       "tEnd": 2655.0,
@@ -737,6 +1264,7 @@
     {
       "id": "carthage-650bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2675.0,
       "tEnd": 2655.0,
@@ -747,6 +1275,7 @@
     {
       "id": "carthage-630bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2655.0,
       "tEnd": 2525.0,
@@ -757,6 +1286,7 @@
     {
       "id": "babylonia-615bce",
       "lineage": "mesopotamia",
+      "member": 2,
       "label": "Babylonia",
       "tStart": 2640.0,
       "tEnd": 2625.0,
@@ -767,6 +1297,7 @@
     {
       "id": "neo-assyrian-empire-615bce",
       "lineage": "assyria",
+      "member": 1,
       "label": "Neo-Assyrian Empire",
       "tStart": 2640.0,
       "tEnd": 2625.0,
@@ -777,6 +1308,7 @@
     {
       "id": "twenty-sixth-dynasty-of-egypt-615bce",
       "lineage": "egypt",
+      "member": 7,
       "label": "Twenty-sixth Dynasty of Egypt",
       "tStart": 2640.0,
       "tEnd": 2525.0,
@@ -787,6 +1319,7 @@
     {
       "id": "neo-babylonian-empire-600bce",
       "lineage": "mesopotamia",
+      "member": 3,
       "label": "Neo-Babylonian Empire",
       "tStart": 2625.0,
       "tEnd": 2575.0,
@@ -797,6 +1330,7 @@
     {
       "id": "achaemenid-empire-550bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2575.0,
       "tEnd": 2565.0,
@@ -807,6 +1341,7 @@
     {
       "id": "macedonian-empire-550bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2575.0,
       "tEnd": 2525.0,
@@ -817,6 +1352,7 @@
     {
       "id": "neo-babylonian-empire-550bce",
       "lineage": "mesopotamia",
+      "member": 3,
       "label": "Neo-Babylonian Empire",
       "tStart": 2575.0,
       "tEnd": 2555.0,
@@ -827,6 +1363,7 @@
     {
       "id": "achaemenid-empire-540bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2565.0,
       "tEnd": 2555.0,
@@ -837,6 +1374,7 @@
     {
       "id": "achaemenid-empire-530bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2555.0,
       "tEnd": 2525.0,
@@ -847,6 +1385,7 @@
     {
       "id": "achaemenid-empire-500bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2525.0,
       "tEnd": 2429.0,
@@ -857,6 +1396,7 @@
     {
       "id": "carthage-500bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2525.0,
       "tEnd": 2475.0,
@@ -867,6 +1407,7 @@
     {
       "id": "macedonian-empire-500bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2525.0,
       "tEnd": 2505.0,
@@ -877,6 +1418,7 @@
     {
       "id": "roman-republic-500bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2525.0,
       "tEnd": 2362.0,
@@ -887,6 +1429,7 @@
     {
       "id": "macedonian-empire-480bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2505.0,
       "tEnd": 2475.0,
@@ -897,6 +1440,7 @@
     {
       "id": "carthage-450bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2475.0,
       "tEnd": 2264.0,
@@ -907,6 +1451,7 @@
     {
       "id": "macedonian-empire-450bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2475.0,
       "tEnd": 2375.0,
@@ -917,6 +1462,7 @@
     {
       "id": "qin-450bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2475.0,
       "tEnd": 2375.0,
@@ -927,6 +1473,7 @@
     {
       "id": "achaemenid-empire-404bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2429.0,
       "tEnd": 2408.0,
@@ -937,6 +1484,7 @@
     {
       "id": "achaemenid-empire-383bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2408.0,
       "tEnd": 2362.0,
@@ -947,6 +1495,7 @@
     {
       "id": "thirtieth-dynasty-of-egypt-383bce",
       "lineage": "egypt",
+      "member": 8,
       "label": "Thirtieth Dynasty of Egypt",
       "tStart": 2408.0,
       "tEnd": 2362.0,
@@ -957,6 +1506,7 @@
     {
       "id": "macedonian-empire-350bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2375.0,
       "tEnd": 2362.0,
@@ -967,6 +1517,7 @@
     {
       "id": "qin-350bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2375.0,
       "tEnd": 2362.0,
@@ -977,6 +1528,7 @@
     {
       "id": "achaemenid-empire-337bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2362.0,
       "tEnd": 2358.0,
@@ -987,6 +1539,7 @@
     {
       "id": "macedonian-empire-337bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2362.0,
       "tEnd": 2358.0,
@@ -997,6 +1550,7 @@
     {
       "id": "qin-337bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2362.0,
       "tEnd": 2351.0,
@@ -1007,6 +1561,7 @@
     {
       "id": "roman-republic-337bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2362.0,
       "tEnd": 2348.0,
@@ -1017,6 +1572,7 @@
     {
       "id": "achaemenid-empire-333bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2358.0,
       "tEnd": 2356.0,
@@ -1027,6 +1583,7 @@
     {
       "id": "macedonian-empire-333bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2358.0,
       "tEnd": 2356.0,
@@ -1037,6 +1594,7 @@
     {
       "id": "achaemenid-empire-331bce",
       "lineage": "persia",
+      "member": 0,
       "label": "Achaemenid Empire",
       "tStart": 2356.0,
       "tEnd": 2351.0,
@@ -1047,6 +1605,7 @@
     {
       "id": "macedonian-empire-331bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2356.0,
       "tEnd": 2348.0,
@@ -1057,6 +1616,7 @@
     {
       "id": "ptolemaic-kingdom-331bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2356.0,
       "tEnd": 2351.0,
@@ -1067,6 +1627,7 @@
     {
       "id": "ptolemaic-kingdom-326bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2351.0,
       "tEnd": 2348.0,
@@ -1077,6 +1638,7 @@
     {
       "id": "qin-326bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2351.0,
       "tEnd": 2340.0,
@@ -1087,6 +1649,7 @@
     {
       "id": "macedonian-empire-323bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2348.0,
       "tEnd": 2340.0,
@@ -1097,6 +1660,7 @@
     {
       "id": "roman-republic-323bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2348.0,
       "tEnd": 2343.0,
@@ -1107,6 +1671,7 @@
     {
       "id": "maurya-empire-318bce",
       "lineage": "india",
+      "member": 0,
       "label": "Maurya Empire",
       "tStart": 2343.0,
       "tEnd": 2340.0,
@@ -1117,6 +1682,7 @@
     {
       "id": "roman-republic-318bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2343.0,
       "tEnd": 2326.0,
@@ -1127,6 +1693,7 @@
     {
       "id": "seleucid-empire-318bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2343.0,
       "tEnd": 2340.0,
@@ -1137,6 +1704,7 @@
     {
       "id": "macedonian-empire-315bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2340.0,
       "tEnd": 2332.0,
@@ -1147,6 +1715,7 @@
     {
       "id": "maurya-empire-315bce",
       "lineage": "india",
+      "member": 0,
       "label": "Maurya Empire",
       "tStart": 2340.0,
       "tEnd": 2326.0,
@@ -1157,6 +1726,7 @@
     {
       "id": "qin-315bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2340.0,
       "tEnd": 2302.0,
@@ -1167,6 +1737,7 @@
     {
       "id": "macedonian-empire-307bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2332.0,
       "tEnd": 2326.0,
@@ -1177,6 +1748,7 @@
     {
       "id": "ptolemaic-kingdom-307bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2332.0,
       "tEnd": 2326.0,
@@ -1187,6 +1759,7 @@
     {
       "id": "seleucid-empire-307bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2332.0,
       "tEnd": 2326.0,
@@ -1197,6 +1770,7 @@
     {
       "id": "macedonian-empire-301bce",
       "lineage": "macedon",
+      "member": 0,
       "label": "Macedonian Empire",
       "tStart": 2326.0,
       "tEnd": 2316.0,
@@ -1207,6 +1781,7 @@
     {
       "id": "maurya-empire-301bce",
       "lineage": "india",
+      "member": 0,
       "label": "Maurya Empire",
       "tStart": 2326.0,
       "tEnd": 2316.0,
@@ -1217,6 +1792,7 @@
     {
       "id": "ptolemaic-kingdom-301bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2326.0,
       "tEnd": 2316.0,
@@ -1227,6 +1803,7 @@
     {
       "id": "roman-republic-301bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2326.0,
       "tEnd": 2316.0,
@@ -1237,6 +1814,7 @@
     {
       "id": "seleucid-empire-301bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2326.0,
       "tEnd": 2316.0,
@@ -1247,6 +1825,7 @@
     {
       "id": "maurya-empire-291bce",
       "lineage": "india",
+      "member": 0,
       "label": "Maurya Empire",
       "tStart": 2316.0,
       "tEnd": 2250.0,
@@ -1257,6 +1836,7 @@
     {
       "id": "ptolemaic-kingdom-291bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2316.0,
       "tEnd": 2297.0,
@@ -1267,6 +1847,7 @@
     {
       "id": "roman-republic-291bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2316.0,
       "tEnd": 2300.0,
@@ -1277,6 +1858,7 @@
     {
       "id": "seleucid-empire-291bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2316.0,
       "tEnd": 2306.0,
@@ -1287,6 +1869,7 @@
     {
       "id": "seleucid-empire-281bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2306.0,
       "tEnd": 2272.0,
@@ -1297,6 +1880,7 @@
     {
       "id": "qin-277bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2302.0,
       "tEnd": 2248.0,
@@ -1307,6 +1891,7 @@
     {
       "id": "roman-republic-275bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2300.0,
       "tEnd": 2296.0,
@@ -1317,6 +1902,7 @@
     {
       "id": "ptolemaic-kingdom-272bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2297.0,
       "tEnd": 2281.0,
@@ -1327,6 +1913,7 @@
     {
       "id": "roman-republic-271bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2296.0,
       "tEnd": 2289.0,
@@ -1337,6 +1924,7 @@
     {
       "id": "roman-republic-264bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2289.0,
       "tEnd": 2281.0,
@@ -1347,6 +1935,7 @@
     {
       "id": "ptolemaic-kingdom-256bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2281.0,
       "tEnd": 2272.0,
@@ -1357,6 +1946,7 @@
     {
       "id": "roman-republic-256bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2281.0,
       "tEnd": 2255.0,
@@ -1367,6 +1957,7 @@
     {
       "id": "mayan-city-states-247bce",
       "lineage": "maya",
+      "member": 0,
       "label": "Maya",
       "tStart": 2272.0,
       "tEnd": 1726.0,
@@ -1377,6 +1968,7 @@
     {
       "id": "ptolemaic-kingdom-247bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2272.0,
       "tEnd": 2222.0,
@@ -1387,6 +1979,7 @@
     {
       "id": "seleucid-empire-247bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2272.0,
       "tEnd": 2264.0,
@@ -1397,6 +1990,7 @@
     {
       "id": "carthage-239bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2264.0,
       "tEnd": 2255.0,
@@ -1407,6 +2001,7 @@
     {
       "id": "parthian-empire-239bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2264.0,
       "tEnd": 2189.0,
@@ -1417,6 +2012,7 @@
     {
       "id": "seleucid-empire-239bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2264.0,
       "tEnd": 2235.0,
@@ -1427,6 +2023,7 @@
     {
       "id": "carthage-230bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2255.0,
       "tEnd": 2237.0,
@@ -1437,6 +2034,7 @@
     {
       "id": "roman-republic-230bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2255.0,
       "tEnd": 2248.0,
@@ -1447,6 +2045,7 @@
     {
       "id": "maurya-empire-225bce",
       "lineage": "india",
+      "member": 0,
       "label": "Maurya Empire",
       "tStart": 2250.0,
       "tEnd": 2195.0,
@@ -1457,6 +2056,7 @@
     {
       "id": "qin-223bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2248.0,
       "tEnd": 2247.0,
@@ -1467,6 +2067,7 @@
     {
       "id": "roman-republic-223bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2248.0,
       "tEnd": 2241.0,
@@ -1477,6 +2078,7 @@
     {
       "id": "qin-222bce",
       "lineage": "china",
+      "member": 2,
       "label": "Qin",
       "tStart": 2247.0,
       "tEnd": 2243.0,
@@ -1487,6 +2089,7 @@
     {
       "id": "qin-dynasty-218bce",
       "lineage": "china",
+      "member": 3,
       "label": "Qin Dynasty",
       "tStart": 2243.0,
       "tEnd": 2237.0,
@@ -1497,6 +2100,7 @@
     {
       "id": "roman-republic-216bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2241.0,
       "tEnd": 2237.0,
@@ -1507,6 +2111,7 @@
     {
       "id": "carthage-212bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2237.0,
       "tEnd": 2228.0,
@@ -1517,6 +2122,7 @@
     {
       "id": "qin-dynasty-212bce",
       "lineage": "china",
+      "member": 3,
       "label": "Qin Dynasty",
       "tStart": 2237.0,
       "tEnd": 2233.0,
@@ -1527,6 +2133,7 @@
     {
       "id": "roman-republic-212bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2237.0,
       "tEnd": 2235.0,
@@ -1537,6 +2144,7 @@
     {
       "id": "roman-republic-210bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2235.0,
       "tEnd": 2233.0,
@@ -1547,6 +2155,7 @@
     {
       "id": "seleucid-empire-210bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2235.0,
       "tEnd": 2213.0,
@@ -1557,6 +2166,7 @@
     {
       "id": "roman-republic-208bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2233.0,
       "tEnd": 2231.0,
@@ -1567,6 +2177,7 @@
     {
       "id": "xiongnu-208bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2233.0,
       "tEnd": 2228.0,
@@ -1577,6 +2188,7 @@
     {
       "id": "roman-republic-206bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2231.0,
       "tEnd": 2228.0,
@@ -1587,6 +2199,7 @@
     {
       "id": "carthage-203bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2228.0,
       "tEnd": 2227.0,
@@ -1597,6 +2210,7 @@
     {
       "id": "roman-republic-203bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2228.0,
       "tEnd": 2195.0,
@@ -1607,6 +2221,7 @@
     {
       "id": "xiongnu-203bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2228.0,
       "tEnd": 2195.0,
@@ -1617,6 +2232,7 @@
     {
       "id": "carthage-202bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2227.0,
       "tEnd": 2222.0,
@@ -1627,6 +2243,7 @@
     {
       "id": "han-dynasty-202bce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 2227.0,
       "tEnd": 2135.0,
@@ -1637,6 +2254,7 @@
     {
       "id": "carthage-197bce",
       "lineage": "carthage",
+      "member": 0,
       "label": "Carthage",
       "tStart": 2222.0,
       "tEnd": 2169.0,
@@ -1647,6 +2265,7 @@
     {
       "id": "ptolemaic-kingdom-197bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2222.0,
       "tEnd": 2213.0,
@@ -1657,6 +2276,7 @@
     {
       "id": "ptolemaic-kingdom-188bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2213.0,
       "tEnd": 2195.0,
@@ -1667,6 +2287,7 @@
     {
       "id": "seleucid-empire-188bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2213.0,
       "tEnd": 2195.0,
@@ -1677,6 +2298,7 @@
     {
       "id": "ptolemaic-kingdom-170bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2195.0,
       "tEnd": 2189.0,
@@ -1687,6 +2309,7 @@
     {
       "id": "roman-republic-170bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2195.0,
       "tEnd": 2189.0,
@@ -1697,6 +2320,7 @@
     {
       "id": "seleucid-empire-170bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2195.0,
       "tEnd": 2189.0,
@@ -1707,6 +2331,7 @@
     {
       "id": "xiongnu-170bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2195.0,
       "tEnd": 2169.0,
@@ -1717,6 +2342,7 @@
     {
       "id": "parthian-empire-164bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2189.0,
       "tEnd": 2169.0,
@@ -1727,6 +2353,7 @@
     {
       "id": "ptolemaic-kingdom-164bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2189.0,
       "tEnd": 2135.0,
@@ -1737,6 +2364,7 @@
     {
       "id": "roman-republic-164bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2189.0,
       "tEnd": 2169.0,
@@ -1747,6 +2375,7 @@
     {
       "id": "seleucid-empire-164bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2189.0,
       "tEnd": 2169.0,
@@ -1757,6 +2386,7 @@
     {
       "id": "parthian-empire-144bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2169.0,
       "tEnd": 2151.0,
@@ -1767,6 +2397,7 @@
     {
       "id": "roman-republic-144bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2169.0,
       "tEnd": 2151.0,
@@ -1777,6 +2408,7 @@
     {
       "id": "seleucid-empire-144bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2169.0,
       "tEnd": 2151.0,
@@ -1787,6 +2419,7 @@
     {
       "id": "xiongnu-144bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2169.0,
       "tEnd": 2135.0,
@@ -1797,6 +2430,7 @@
     {
       "id": "parthian-empire-126bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2151.0,
       "tEnd": 2135.0,
@@ -1807,6 +2441,7 @@
     {
       "id": "roman-republic-126bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2151.0,
       "tEnd": 2116.0,
@@ -1817,6 +2452,7 @@
     {
       "id": "seleucid-empire-126bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2151.0,
       "tEnd": 2135.0,
@@ -1827,6 +2463,7 @@
     {
       "id": "han-dynasty-110bce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 2135.0,
       "tEnd": 2116.0,
@@ -1837,6 +2474,7 @@
     {
       "id": "parthian-empire-110bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2135.0,
       "tEnd": 2116.0,
@@ -1847,6 +2485,7 @@
     {
       "id": "ptolemaic-kingdom-110bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2135.0,
       "tEnd": 2056.0,
@@ -1857,6 +2496,7 @@
     {
       "id": "seleucid-empire-110bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2135.0,
       "tEnd": 2102.0,
@@ -1867,6 +2507,7 @@
     {
       "id": "xiongnu-110bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2135.0,
       "tEnd": 2116.0,
@@ -1877,6 +2518,7 @@
     {
       "id": "han-dynasty-91bce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 2116.0,
       "tEnd": 2075.0,
@@ -1887,6 +2529,7 @@
     {
       "id": "parthian-empire-91bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2116.0,
       "tEnd": 2102.0,
@@ -1897,6 +2540,7 @@
     {
       "id": "roman-republic-91bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2116.0,
       "tEnd": 2112.0,
@@ -1907,6 +2551,7 @@
     {
       "id": "xiongnu-91bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2116.0,
       "tEnd": 2091.0,
@@ -1917,6 +2562,7 @@
     {
       "id": "roman-republic-87bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2112.0,
       "tEnd": 2102.0,
@@ -1927,6 +2573,7 @@
     {
       "id": "parthian-empire-77bce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 2102.0,
       "tEnd": 1908.0,
@@ -1937,6 +2584,7 @@
     {
       "id": "roman-republic-77bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2102.0,
       "tEnd": 2091.0,
@@ -1947,6 +2595,7 @@
     {
       "id": "roman-republic-66bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2091.0,
       "tEnd": 2088.0,
@@ -1957,6 +2606,7 @@
     {
       "id": "seleucid-empire-66bce",
       "lineage": "macedon",
+      "member": 1,
       "label": "Seleucid Empire",
       "tStart": 2091.0,
       "tEnd": 2088.0,
@@ -1967,6 +2617,7 @@
     {
       "id": "xiongnu-66bce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 2091.0,
       "tEnd": 1957.0,
@@ -1977,6 +2628,7 @@
     {
       "id": "roman-republic-63bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2088.0,
       "tEnd": 2075.0,
@@ -1987,6 +2639,7 @@
     {
       "id": "han-dynasty-50bce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 2075.0,
       "tEnd": 2019.0,
@@ -1997,6 +2650,7 @@
     {
       "id": "kingdom-of-axum-50bce",
       "lineage": "axum",
+      "member": 1,
       "label": "Kingdom of Axum",
       "tStart": 2075.0,
       "tEnd": 1787.0,
@@ -2007,6 +2661,7 @@
     {
       "id": "roman-republic-50bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2075.0,
       "tEnd": 2065.0,
@@ -2017,6 +2672,7 @@
     {
       "id": "roman-republic-40bce",
       "lineage": "rome",
+      "member": 0,
       "label": "Roman Republic",
       "tStart": 2065.0,
       "tEnd": 2056.0,
@@ -2027,6 +2683,7 @@
     {
       "id": "ptolemaic-kingdom-31bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2056.0,
       "tEnd": 2055.0,
@@ -2037,6 +2694,7 @@
     {
       "id": "roman-empire-31bce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2056.0,
       "tEnd": 2055.0,
@@ -2047,6 +2705,7 @@
     {
       "id": "ptolemaic-kingdom-30bce",
       "lineage": "egypt",
+      "member": 9,
       "label": "Ptolemaic Kingdom",
       "tStart": 2055.0,
       "tEnd": 2052.0,
@@ -2057,6 +2716,7 @@
     {
       "id": "roman-empire-30bce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2055.0,
       "tEnd": 2052.0,
@@ -2067,6 +2727,7 @@
     {
       "id": "roman-empire-27bce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2052.0,
       "tEnd": 2050.0,
@@ -2077,6 +2738,7 @@
     {
       "id": "roman-empire-25bce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2050.0,
       "tEnd": 2044.0,
@@ -2087,6 +2749,7 @@
     {
       "id": "roman-empire-19bce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2044.0,
       "tEnd": 2024.0,
@@ -2097,6 +2760,7 @@
     {
       "id": "roman-empire-1ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2024.0,
       "tEnd": 2019.0,
@@ -2107,6 +2771,7 @@
     {
       "id": "roman-empire-6ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2019.0,
       "tEnd": 2016.0,
@@ -2117,6 +2782,7 @@
     {
       "id": "roman-empire-9ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 2016.0,
       "tEnd": 1982.0,
@@ -2127,6 +2793,7 @@
     {
       "id": "han-dynasty-30ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1995.0,
       "tEnd": 1934.0,
@@ -2137,6 +2804,7 @@
     {
       "id": "roman-empire-43ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1982.0,
       "tEnd": 1965.0,
@@ -2147,6 +2815,7 @@
     {
       "id": "roman-empire-60ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1965.0,
       "tEnd": 1957.0,
@@ -2157,6 +2826,7 @@
     {
       "id": "roman-empire-68ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1957.0,
       "tEnd": 1919.0,
@@ -2167,6 +2837,7 @@
     {
       "id": "xiongnu-68ce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 1957.0,
       "tEnd": 1947.0,
@@ -2177,6 +2848,7 @@
     {
       "id": "xiongnu-78ce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 1947.0,
       "tEnd": 1934.0,
@@ -2187,6 +2859,7 @@
     {
       "id": "han-dynasty-91ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1934.0,
       "tEnd": 1908.0,
@@ -2197,6 +2870,7 @@
     {
       "id": "xiongnu-91ce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 1934.0,
       "tEnd": 1919.0,
@@ -2207,6 +2881,7 @@
     {
       "id": "roman-empire-106ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1919.0,
       "tEnd": 1911.0,
@@ -2217,6 +2892,7 @@
     {
       "id": "xiongnu-106ce",
       "lineage": "xiongnu",
+      "member": 0,
       "label": "Xiongnu",
       "tStart": 1919.0,
       "tEnd": 1871.0,
@@ -2227,6 +2903,7 @@
     {
       "id": "roman-empire-114ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1911.0,
       "tEnd": 1908.0,
@@ -2237,6 +2914,7 @@
     {
       "id": "han-dynasty-117ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1908.0,
       "tEnd": 1841.0,
@@ -2247,6 +2925,7 @@
     {
       "id": "parthian-empire-117ce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 1908.0,
       "tEnd": 1898.0,
@@ -2257,6 +2936,7 @@
     {
       "id": "roman-empire-117ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1908.0,
       "tEnd": 1898.0,
@@ -2267,6 +2947,7 @@
     {
       "id": "parthian-empire-127ce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 1898.0,
       "tEnd": 1860.0,
@@ -2277,6 +2958,7 @@
     {
       "id": "roman-empire-127ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1898.0,
       "tEnd": 1764.0,
@@ -2287,6 +2969,7 @@
     {
       "id": "parthian-empire-165ce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 1860.0,
       "tEnd": 1801.0,
@@ -2297,6 +2980,7 @@
     {
       "id": "han-dynasty-184ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1841.0,
       "tEnd": 1828.0,
@@ -2307,6 +2991,7 @@
     {
       "id": "han-dynasty-197ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1828.0,
       "tEnd": 1818.0,
@@ -2317,6 +3002,7 @@
     {
       "id": "han-dynasty-207ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1818.0,
       "tEnd": 1810.0,
@@ -2327,6 +3013,7 @@
     {
       "id": "han-dynasty-215ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1810.0,
       "tEnd": 1801.0,
@@ -2337,6 +3024,7 @@
     {
       "id": "sasanian-empire-215ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1810.0,
       "tEnd": 1801.0,
@@ -2347,6 +3035,7 @@
     {
       "id": "han-dynasty-224ce",
       "lineage": "china",
+      "member": 4,
       "label": "Han Dynasty",
       "tStart": 1801.0,
       "tEnd": 1787.0,
@@ -2357,6 +3046,7 @@
     {
       "id": "parthian-empire-224ce",
       "lineage": "persia",
+      "member": 1,
       "label": "Parthian Empire",
       "tStart": 1801.0,
       "tEnd": 1787.0,
@@ -2367,6 +3057,7 @@
     {
       "id": "sasanian-empire-224ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1801.0,
       "tEnd": 1787.0,
@@ -2377,6 +3068,7 @@
     {
       "id": "kingdom-of-axum-238ce",
       "lineage": "axum",
+      "member": 1,
       "label": "Kingdom of Axum",
       "tStart": 1787.0,
       "tEnd": 1672.0,
@@ -2387,6 +3079,7 @@
     {
       "id": "sasanian-empire-238ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1787.0,
       "tEnd": 1765.0,
@@ -2397,6 +3090,7 @@
     {
       "id": "sasanian-empire-260ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1765.0,
       "tEnd": 1742.0,
@@ -2407,6 +3101,7 @@
     {
       "id": "roman-empire-261ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1764.0,
       "tEnd": 1755.0,
@@ -2417,6 +3112,7 @@
     {
       "id": "western-jin-265ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1760.0,
       "tEnd": 1742.0,
@@ -2427,6 +3123,7 @@
     {
       "id": "roman-empire-270ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1755.0,
       "tEnd": 1742.0,
@@ -2437,6 +3134,7 @@
     {
       "id": "roman-empire-283ce",
       "lineage": "rome",
+      "member": 1,
       "label": "Roman Empire",
       "tStart": 1742.0,
       "tEnd": 1630.0,
@@ -2447,6 +3145,7 @@
     {
       "id": "sasanian-empire-283ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1742.0,
       "tEnd": 1738.0,
@@ -2457,6 +3156,7 @@
     {
       "id": "western-jin-283ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1742.0,
       "tEnd": 1719.0,
@@ -2467,6 +3167,7 @@
     {
       "id": "sasanian-empire-287ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1738.0,
       "tEnd": 1667.0,
@@ -2477,6 +3178,7 @@
     {
       "id": "mayan-city-states-299ce",
       "lineage": "maya",
+      "member": 0,
       "label": "Maya",
       "tStart": 1726.0,
       "tEnd": 1175.0,
@@ -2487,6 +3189,7 @@
     {
       "id": "western-jin-306ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1719.0,
       "tEnd": 1701.0,
@@ -2497,6 +3200,7 @@
     {
       "id": "gupta-empire-324ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1701.0,
       "tEnd": 1678.0,
@@ -2507,6 +3211,7 @@
     {
       "id": "western-jin-324ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1701.0,
       "tEnd": 1688.0,
@@ -2517,6 +3222,7 @@
     {
       "id": "western-jin-337ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1688.0,
       "tEnd": 1678.0,
@@ -2527,6 +3233,7 @@
     {
       "id": "gupta-empire-347ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1678.0,
       "tEnd": 1647.0,
@@ -2537,6 +3244,7 @@
     {
       "id": "western-jin-347ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1678.0,
       "tEnd": 1652.0,
@@ -2547,6 +3255,7 @@
     {
       "id": "kingdom-of-axum-353ce",
       "lineage": "axum",
+      "member": 1,
       "label": "Kingdom of Axum",
       "tStart": 1672.0,
       "tEnd": 1491.0,
@@ -2557,6 +3266,7 @@
     {
       "id": "sasanian-empire-358ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1667.0,
       "tEnd": 1654.0,
@@ -2567,6 +3277,7 @@
     {
       "id": "sasanian-empire-371ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1654.0,
       "tEnd": 1638.0,
@@ -2577,6 +3288,7 @@
     {
       "id": "western-jin-373ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1652.0,
       "tEnd": 1642.0,
@@ -2587,6 +3299,7 @@
     {
       "id": "gupta-empire-378ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1647.0,
       "tEnd": 1615.0,
@@ -2597,6 +3310,7 @@
     {
       "id": "western-jin-383ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1642.0,
       "tEnd": 1635.0,
@@ -2607,6 +3321,7 @@
     {
       "id": "sasanian-empire-387ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1638.0,
       "tEnd": 1535.0,
@@ -2617,6 +3332,7 @@
     {
       "id": "western-jin-390ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1635.0,
       "tEnd": 1608.0,
@@ -2627,6 +3343,7 @@
     {
       "id": "eastern-roman-empire-395ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1630.0,
       "tEnd": 1629.0,
@@ -2637,6 +3354,7 @@
     {
       "id": "western-roman-empire-395ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1630.0,
       "tEnd": 1615.0,
@@ -2647,6 +3365,7 @@
     {
       "id": "eastern-roman-empire-396ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1629.0,
       "tEnd": 1623.0,
@@ -2657,6 +3376,7 @@
     {
       "id": "eastern-roman-empire-402ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1623.0,
       "tEnd": 1491.0,
@@ -2667,6 +3387,7 @@
     {
       "id": "gupta-empire-410ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1615.0,
       "tEnd": 1574.0,
@@ -2677,6 +3398,7 @@
     {
       "id": "western-roman-empire-410ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1615.0,
       "tEnd": 1586.0,
@@ -2687,6 +3409,7 @@
     {
       "id": "western-jin-417ce",
       "lineage": "china",
+      "member": 5,
       "label": "Western Jin",
       "tStart": 1608.0,
       "tEnd": 1599.0,
@@ -2697,6 +3420,7 @@
     {
       "id": "western-roman-empire-439ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1586.0,
       "tEnd": 1582.0,
@@ -2707,6 +3431,7 @@
     {
       "id": "western-roman-empire-443ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1582.0,
       "tEnd": 1574.0,
@@ -2717,6 +3442,7 @@
     {
       "id": "gupta-empire-451ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1574.0,
       "tEnd": 1535.0,
@@ -2727,6 +3453,7 @@
     {
       "id": "western-roman-empire-451ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1574.0,
       "tEnd": 1573.0,
@@ -2737,6 +3464,7 @@
     {
       "id": "western-roman-empire-452ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1573.0,
       "tEnd": 1570.0,
@@ -2747,6 +3475,7 @@
     {
       "id": "western-roman-empire-455ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1570.0,
       "tEnd": 1567.0,
@@ -2757,6 +3486,7 @@
     {
       "id": "western-roman-empire-458ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1567.0,
       "tEnd": 1566.0,
@@ -2767,6 +3497,7 @@
     {
       "id": "western-roman-empire-459ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1566.0,
       "tEnd": 1563.0,
@@ -2777,6 +3508,7 @@
     {
       "id": "kingdom-of-the-franks-462ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1563.0,
       "tEnd": 1515.0,
@@ -2787,6 +3519,7 @@
     {
       "id": "western-roman-empire-462ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1563.0,
       "tEnd": 1556.0,
@@ -2797,6 +3530,7 @@
     {
       "id": "western-roman-empire-469ce",
       "lineage": "rome",
+      "member": 2,
       "label": "Western Roman Empire",
       "tStart": 1556.0,
       "tEnd": 1549.0,
@@ -2807,6 +3541,7 @@
     {
       "id": "gupta-empire-490ce",
       "lineage": "india",
+      "member": 1,
       "label": "Gupta Empire",
       "tStart": 1535.0,
       "tEnd": 1470.0,
@@ -2817,6 +3552,7 @@
     {
       "id": "sasanian-empire-490ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1535.0,
       "tEnd": 1502.0,
@@ -2827,6 +3563,7 @@
     {
       "id": "kingdom-of-the-franks-510ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1515.0,
       "tEnd": 1491.0,
@@ -2837,6 +3574,7 @@
     {
       "id": "sasanian-empire-523ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1502.0,
       "tEnd": 1423.0,
@@ -2847,6 +3585,7 @@
     {
       "id": "eastern-roman-empire-534ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1491.0,
       "tEnd": 1485.0,
@@ -2857,6 +3596,7 @@
     {
       "id": "kingdom-of-axum-534ce",
       "lineage": "axum",
+      "member": 1,
       "label": "Kingdom of Axum",
       "tStart": 1491.0,
       "tEnd": 1423.0,
@@ -2867,6 +3607,7 @@
     {
       "id": "kingdom-of-the-franks-534ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1491.0,
       "tEnd": 1458.0,
@@ -2877,6 +3618,7 @@
     {
       "id": "eastern-roman-empire-540ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1485.0,
       "tEnd": 1464.0,
@@ -2887,6 +3629,7 @@
     {
       "id": "eastern-roman-empire-561ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1464.0,
       "tEnd": 1433.0,
@@ -2897,6 +3640,7 @@
     {
       "id": "kingdom-of-the-franks-567ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1458.0,
       "tEnd": 1396.0,
@@ -2907,6 +3651,7 @@
     {
       "id": "sui-dynasty-587ce",
       "lineage": "china",
+      "member": 6,
       "label": "Sui Dynasty",
       "tStart": 1438.0,
       "tEnd": 1433.0,
@@ -2917,6 +3662,7 @@
     {
       "id": "eastern-roman-empire-592ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1433.0,
       "tEnd": 1408.0,
@@ -2927,6 +3673,7 @@
     {
       "id": "sui-dynasty-592ce",
       "lineage": "china",
+      "member": 6,
       "label": "Sui Dynasty",
       "tStart": 1433.0,
       "tEnd": 1402.0,
@@ -2937,6 +3684,7 @@
     {
       "id": "kingdom-of-axum-602ce",
       "lineage": "axum",
+      "member": 1,
       "label": "Kingdom of Axum",
       "tStart": 1423.0,
       "tEnd": 1078.0,
@@ -2947,6 +3695,7 @@
     {
       "id": "sasanian-empire-602ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1423.0,
       "tEnd": 1408.0,
@@ -2957,6 +3706,7 @@
     {
       "id": "eastern-roman-empire-617ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1408.0,
       "tEnd": 1402.0,
@@ -2967,6 +3717,7 @@
     {
       "id": "sasanian-empire-617ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1408.0,
       "tEnd": 1398.0,
@@ -2977,6 +3728,7 @@
     {
       "id": "eastern-roman-empire-623ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1402.0,
       "tEnd": 1399.0,
@@ -2987,6 +3739,7 @@
     {
       "id": "tang-dynasty-623ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1402.0,
       "tEnd": 1399.0,
@@ -2997,6 +3750,7 @@
     {
       "id": "tibetan-empire-623ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1402.0,
       "tEnd": 1398.0,
@@ -3007,6 +3761,7 @@
     {
       "id": "eastern-roman-empire-626ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1399.0,
       "tEnd": 1398.0,
@@ -3017,6 +3772,7 @@
     {
       "id": "sui-dynasty-626ce",
       "lineage": "china",
+      "member": 6,
       "label": "Sui Dynasty",
       "tStart": 1399.0,
       "tEnd": 1397.0,
@@ -3027,6 +3783,7 @@
     {
       "id": "tang-dynasty-626ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1399.0,
       "tEnd": 1395.0,
@@ -3037,6 +3794,7 @@
     {
       "id": "eastern-roman-empire-627ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1398.0,
       "tEnd": 1396.0,
@@ -3047,6 +3805,7 @@
     {
       "id": "sasanian-empire-627ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1398.0,
       "tEnd": 1396.0,
@@ -3057,6 +3816,7 @@
     {
       "id": "tibetan-empire-627ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1398.0,
       "tEnd": 1397.0,
@@ -3067,6 +3827,7 @@
     {
       "id": "tibetan-empire-628ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1397.0,
       "tEnd": 1391.0,
@@ -3077,6 +3838,7 @@
     {
       "id": "eastern-roman-empire-629ce",
       "lineage": "rome",
+      "member": 3,
       "label": "Eastern Roman Empire",
       "tStart": 1396.0,
       "tEnd": 1392.0,
@@ -3087,6 +3849,7 @@
     {
       "id": "kingdom-of-the-franks-629ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1396.0,
       "tEnd": 1392.0,
@@ -3097,6 +3860,7 @@
     {
       "id": "sasanian-empire-629ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1396.0,
       "tEnd": 1392.0,
@@ -3107,6 +3871,7 @@
     {
       "id": "tang-dynasty-630ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1395.0,
       "tEnd": 1392.0,
@@ -3117,6 +3882,7 @@
     {
       "id": "byzantine-empire-633ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1392.0,
       "tEnd": 1387.0,
@@ -3127,6 +3893,7 @@
     {
       "id": "kingdom-of-the-franks-633ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1392.0,
       "tEnd": 1381.0,
@@ -3137,6 +3904,7 @@
     {
       "id": "rashidun-caliphate-633ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1392.0,
       "tEnd": 1391.0,
@@ -3147,6 +3915,7 @@
     {
       "id": "sasanian-empire-633ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1392.0,
       "tEnd": 1387.0,
@@ -3157,6 +3926,7 @@
     {
       "id": "tang-dynasty-633ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1392.0,
       "tEnd": 1378.0,
@@ -3167,6 +3937,7 @@
     {
       "id": "rashidun-caliphate-634ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1391.0,
       "tEnd": 1387.0,
@@ -3177,6 +3948,7 @@
     {
       "id": "tibetan-empire-634ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1391.0,
       "tEnd": 1359.0,
@@ -3187,6 +3959,7 @@
     {
       "id": "byzantine-empire-638ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1387.0,
       "tEnd": 1384.0,
@@ -3197,6 +3970,7 @@
     {
       "id": "rashidun-caliphate-638ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1387.0,
       "tEnd": 1384.0,
@@ -3207,6 +3981,7 @@
     {
       "id": "sasanian-empire-638ce",
       "lineage": "persia",
+      "member": 2,
       "label": "Sasanian Empire",
       "tStart": 1387.0,
       "tEnd": 1381.0,
@@ -3217,6 +3992,7 @@
     {
       "id": "byzantine-empire-641ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1384.0,
       "tEnd": 1378.0,
@@ -3227,6 +4003,7 @@
     {
       "id": "rashidun-caliphate-641ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1384.0,
       "tEnd": 1381.0,
@@ -3237,6 +4014,7 @@
     {
       "id": "kingdom-of-the-franks-644ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1381.0,
       "tEnd": 1364.0,
@@ -3247,6 +4025,7 @@
     {
       "id": "rashidun-caliphate-644ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1381.0,
       "tEnd": 1378.0,
@@ -3257,6 +4036,7 @@
     {
       "id": "byzantine-empire-647ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1378.0,
       "tEnd": 1369.0,
@@ -3267,6 +4047,7 @@
     {
       "id": "rashidun-caliphate-647ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1378.0,
       "tEnd": 1369.0,
@@ -3277,6 +4058,7 @@
     {
       "id": "tang-dynasty-647ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1378.0,
       "tEnd": 1369.0,
@@ -3287,6 +4069,7 @@
     {
       "id": "byzantine-empire-656ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1369.0,
       "tEnd": 1364.0,
@@ -3297,6 +4080,7 @@
     {
       "id": "rashidun-caliphate-656ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1369.0,
       "tEnd": 1364.0,
@@ -3307,6 +4091,7 @@
     {
       "id": "tang-dynasty-656ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1369.0,
       "tEnd": 1364.0,
@@ -3317,6 +4102,7 @@
     {
       "id": "umayyad-caliphate-656ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1369.0,
       "tEnd": 1364.0,
@@ -3327,6 +4113,7 @@
     {
       "id": "byzantine-empire-661ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1364.0,
       "tEnd": 1351.0,
@@ -3337,6 +4124,7 @@
     {
       "id": "rashidun-caliphate-661ce",
       "lineage": "caliphate",
+      "member": 0,
       "label": "Rashidun Caliphate",
       "tStart": 1364.0,
       "tEnd": 1359.0,
@@ -3347,6 +4135,7 @@
     {
       "id": "tang-dynasty-661ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1364.0,
       "tEnd": 1359.0,
@@ -3357,6 +4146,7 @@
     {
       "id": "umayyad-caliphate-661ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1364.0,
       "tEnd": 1359.0,
@@ -3367,6 +4157,7 @@
     {
       "id": "kingdom-of-the-franks-666ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1359.0,
       "tEnd": 1351.0,
@@ -3377,6 +4168,7 @@
     {
       "id": "tang-dynasty-666ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1359.0,
       "tEnd": 1351.0,
@@ -3387,6 +4179,7 @@
     {
       "id": "tibetan-empire-666ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1359.0,
       "tEnd": 1351.0,
@@ -3397,6 +4190,7 @@
     {
       "id": "umayyad-caliphate-666ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1359.0,
       "tEnd": 1343.0,
@@ -3407,6 +4201,7 @@
     {
       "id": "byzantine-empire-674ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1351.0,
       "tEnd": 1320.0,
@@ -3417,6 +4212,7 @@
     {
       "id": "kingdom-of-the-franks-674ce",
       "lineage": "franks",
+      "member": 0,
       "label": "Kingdom of the Franks",
       "tStart": 1351.0,
       "tEnd": 1307.0,
@@ -3427,6 +4223,7 @@
     {
       "id": "tang-dynasty-674ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1351.0,
       "tEnd": 1343.0,
@@ -3437,6 +4234,7 @@
     {
       "id": "tibetan-empire-674ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1351.0,
       "tEnd": 1333.0,
@@ -3447,6 +4245,7 @@
     {
       "id": "tang-dynasty-682ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1343.0,
       "tEnd": 1333.0,
@@ -3457,6 +4256,7 @@
     {
       "id": "umayyad-caliphate-682ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1343.0,
       "tEnd": 1333.0,
@@ -3467,6 +4267,7 @@
     {
       "id": "tang-dynasty-692ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1333.0,
       "tEnd": 1275.0,
@@ -3477,6 +4278,7 @@
     {
       "id": "tibetan-empire-692ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1333.0,
       "tEnd": 1275.0,
@@ -3487,6 +4289,7 @@
     {
       "id": "umayyad-caliphate-692ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1333.0,
       "tEnd": 1307.0,
@@ -3497,6 +4300,7 @@
     {
       "id": "byzantine-empire-705ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1320.0,
       "tEnd": 1307.0,
@@ -3507,6 +4311,7 @@
     {
       "id": "byzantine-empire-718ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1307.0,
       "tEnd": 1301.0,
@@ -3515,9 +4320,10 @@
       "areaKm2": 744013.0033092351
     },
     {
-      "id": "carolingian-empire-718ce",
+      "id": "kingdom-of-the-franks-718ce",
       "lineage": "franks",
-      "label": "Carolingian Empire",
+      "member": 0,
+      "label": "Kingdom of the Franks",
       "tStart": 1307.0,
       "tEnd": 1301.0,
       "lat": 48.68730545043945,
@@ -3527,6 +4333,7 @@
     {
       "id": "umayyad-caliphate-718ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1307.0,
       "tEnd": 1284.0,
@@ -3537,6 +4344,7 @@
     {
       "id": "byzantine-empire-724ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1301.0,
       "tEnd": 1237.0,
@@ -3545,9 +4353,10 @@
       "areaKm2": 731977.4308438372
     },
     {
-      "id": "carolingian-empire-724ce",
+      "id": "kingdom-of-the-franks-724ce",
       "lineage": "franks",
-      "label": "Carolingian Empire",
+      "member": 0,
+      "label": "Kingdom of the Franks",
       "tStart": 1301.0,
       "tEnd": 1293.0,
       "lat": 48.15879249572754,
@@ -3555,9 +4364,10 @@
       "areaKm2": 362909.8241254073
     },
     {
-      "id": "carolingian-empire-732ce",
+      "id": "kingdom-of-the-franks-732ce",
       "lineage": "franks",
-      "label": "Carolingian Empire",
+      "member": 0,
+      "label": "Kingdom of the Franks",
       "tStart": 1293.0,
       "tEnd": 1275.0,
       "lat": 47.56527137756348,
@@ -3567,6 +4377,7 @@
     {
       "id": "umayyad-caliphate-741ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1284.0,
       "tEnd": 1275.0,
@@ -3577,6 +4388,7 @@
     {
       "id": "abbasid-caliphate-750ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1275.0,
       "tEnd": 1274.0,
@@ -3585,11 +4397,12 @@
       "areaKm2": 2738365.272878037
     },
     {
-      "id": "carolingian-empire-750ce",
+      "id": "kingdom-of-the-franks-750ce",
       "lineage": "franks",
-      "label": "Carolingian Empire",
+      "member": 0,
+      "label": "Kingdom of the Franks",
       "tStart": 1275.0,
-      "tEnd": 1257.0,
+      "tEnd": 1274.0,
       "lat": 48.29084014892578,
       "lon": 4.206371251676878,
       "areaKm2": 555246.8580137362
@@ -3597,6 +4410,7 @@
     {
       "id": "tang-dynasty-750ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1275.0,
       "tEnd": 1270.0,
@@ -3607,6 +4421,7 @@
     {
       "id": "tibetan-empire-750ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1275.0,
       "tEnd": 1268.0,
@@ -3617,6 +4432,7 @@
     {
       "id": "umayyad-caliphate-750ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1275.0,
       "tEnd": 1274.0,
@@ -3627,6 +4443,7 @@
     {
       "id": "abbasid-caliphate-751ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1274.0,
       "tEnd": 1270.0,
@@ -3635,8 +4452,20 @@
       "areaKm2": 7548330.713728256
     },
     {
+      "id": "carolingian-empire-751ce",
+      "lineage": "franks",
+      "member": 1,
+      "label": "Carolingian Empire",
+      "tStart": 1274.0,
+      "tEnd": 1257.0,
+      "lat": 48.356855392456055,
+      "lon": 4.212720055310741,
+      "areaKm2": 555628.326584419
+    },
+    {
       "id": "umayyad-caliphate-751ce",
       "lineage": "caliphate",
+      "member": 1,
       "label": "Umayyad Caliphate",
       "tStart": 1274.0,
       "tEnd": 1268.0,
@@ -3647,6 +4476,7 @@
     {
       "id": "abbasid-caliphate-755ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1270.0,
       "tEnd": 1262.0,
@@ -3657,6 +4487,7 @@
     {
       "id": "tang-dynasty-755ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1270.0,
       "tEnd": 1268.0,
@@ -3667,6 +4498,7 @@
     {
       "id": "tang-dynasty-757ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1268.0,
       "tEnd": 1262.0,
@@ -3677,6 +4509,7 @@
     {
       "id": "tibetan-empire-757ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1268.0,
       "tEnd": 1232.0,
@@ -3687,6 +4520,7 @@
     {
       "id": "abbasid-caliphate-763ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1262.0,
       "tEnd": 1225.0,
@@ -3697,6 +4531,7 @@
     {
       "id": "tang-dynasty-763ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1262.0,
       "tEnd": 1145.0,
@@ -3707,6 +4542,7 @@
     {
       "id": "carolingian-empire-768ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1257.0,
       "tEnd": 1250.0,
@@ -3717,6 +4553,7 @@
     {
       "id": "carolingian-empire-775ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1250.0,
       "tEnd": 1247.0,
@@ -3727,6 +4564,7 @@
     {
       "id": "carolingian-empire-778ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1247.0,
       "tEnd": 1237.0,
@@ -3737,6 +4575,7 @@
     {
       "id": "byzantine-empire-788ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1237.0,
       "tEnd": 1165.0,
@@ -3747,6 +4586,7 @@
     {
       "id": "carolingian-empire-788ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1237.0,
       "tEnd": 1232.0,
@@ -3757,6 +4597,7 @@
     {
       "id": "carolingian-empire-793ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1232.0,
       "tEnd": 1219.0,
@@ -3767,6 +4608,7 @@
     {
       "id": "ghana-empire-793ce",
       "lineage": "sahel",
+      "member": 0,
       "label": "Ghana Empire",
       "tStart": 1232.0,
       "tEnd": 789.0,
@@ -3777,6 +4619,7 @@
     {
       "id": "tibetan-empire-793ce",
       "lineage": "tibet",
+      "member": 0,
       "label": "Tibetan Empire",
       "tStart": 1232.0,
       "tEnd": 1175.0,
@@ -3787,6 +4630,7 @@
     {
       "id": "abbasid-caliphate-800ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1225.0,
       "tEnd": 1159.0,
@@ -3797,6 +4641,7 @@
     {
       "id": "khmer-empire-800ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 1225.0,
       "tEnd": 1219.0,
@@ -3807,6 +4652,7 @@
     {
       "id": "carolingian-empire-806ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1219.0,
       "tEnd": 1165.0,
@@ -3817,6 +4663,7 @@
     {
       "id": "khmer-empire-806ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 1219.0,
       "tEnd": 1150.0,
@@ -3827,6 +4674,7 @@
     {
       "id": "later-mayan-city-states-850ce",
       "lineage": "maya",
+      "member": 1,
       "label": "Maya",
       "tStart": 1175.0,
       "tEnd": 1065.0,
@@ -3837,6 +4685,7 @@
     {
       "id": "byzantine-empire-860ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1165.0,
       "tEnd": 1089.0,
@@ -3847,6 +4696,7 @@
     {
       "id": "carolingian-empire-860ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1165.0,
       "tEnd": 1155.0,
@@ -3857,6 +4707,7 @@
     {
       "id": "abbasid-caliphate-866ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1159.0,
       "tEnd": 1150.0,
@@ -3867,6 +4718,7 @@
     {
       "id": "carolingian-empire-870ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1155.0,
       "tEnd": 1138.0,
@@ -3877,6 +4729,7 @@
     {
       "id": "abbasid-caliphate-875ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1150.0,
       "tEnd": 1147.0,
@@ -3887,6 +4740,7 @@
     {
       "id": "khmer-empire-875ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 1150.0,
       "tEnd": 997.0,
@@ -3897,6 +4751,7 @@
     {
       "id": "abbasid-caliphate-878ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1147.0,
       "tEnd": 1139.0,
@@ -3907,6 +4762,7 @@
     {
       "id": "tang-dynasty-880ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1145.0,
       "tEnd": 1143.0,
@@ -3917,6 +4773,7 @@
     {
       "id": "tang-dynasty-882ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1143.0,
       "tEnd": 1141.0,
@@ -3927,6 +4784,7 @@
     {
       "id": "tang-dynasty-884ce",
       "lineage": "china",
+      "member": 7,
       "label": "Tang Dynasty",
       "tStart": 1141.0,
       "tEnd": 1114.0,
@@ -3937,6 +4795,7 @@
     {
       "id": "abbasid-caliphate-886ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1139.0,
       "tEnd": 1127.0,
@@ -3947,6 +4806,7 @@
     {
       "id": "carolingian-empire-887ce",
       "lineage": "franks",
+      "member": 1,
       "label": "Carolingian Empire",
       "tStart": 1138.0,
       "tEnd": 1137.0,
@@ -3957,6 +4817,7 @@
     {
       "id": "abbasid-caliphate-898ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1127.0,
       "tEnd": 1126.0,
@@ -3967,6 +4828,7 @@
     {
       "id": "abbasid-caliphate-899ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1126.0,
       "tEnd": 1114.0,
@@ -3977,6 +4839,7 @@
     {
       "id": "abbasid-caliphate-911ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1114.0,
       "tEnd": 1089.0,
@@ -3987,6 +4850,7 @@
     {
       "id": "abbasid-caliphate-936ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1089.0,
       "tEnd": 1078.0,
@@ -3997,6 +4861,7 @@
     {
       "id": "byzantine-empire-936ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1089.0,
       "tEnd": 1055.0,
@@ -4007,6 +4872,7 @@
     {
       "id": "abbasid-caliphate-947ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 1078.0,
       "tEnd": 1055.0,
@@ -4017,6 +4883,7 @@
     {
       "id": "later-mayan-city-states-960ce",
       "lineage": "maya",
+      "member": 1,
       "label": "Maya",
       "tStart": 1065.0,
       "tEnd": 824.0,
@@ -4027,6 +4894,7 @@
     {
       "id": "northern-song-961ce",
       "lineage": "china",
+      "member": 8,
       "label": "Northern Song",
       "tStart": 1064.0,
       "tEnd": 1055.0,
@@ -4037,6 +4905,7 @@
     {
       "id": "holy-roman-empire-962ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 1063.0,
       "tEnd": 1022.0,
@@ -4047,6 +4916,7 @@
     {
       "id": "byzantine-empire-970ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1055.0,
       "tEnd": 1045.0,
@@ -4057,6 +4927,7 @@
     {
       "id": "northern-song-970ce",
       "lineage": "china",
+      "member": 8,
       "label": "Northern Song",
       "tStart": 1055.0,
       "tEnd": 1045.0,
@@ -4067,6 +4938,7 @@
     {
       "id": "byzantine-empire-980ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1045.0,
       "tEnd": 1025.0,
@@ -4077,6 +4949,7 @@
     {
       "id": "northern-song-980ce",
       "lineage": "china",
+      "member": 8,
       "label": "Northern Song",
       "tStart": 1045.0,
       "tEnd": 997.0,
@@ -4087,6 +4960,7 @@
     {
       "id": "seljuk-dynasty-990ce",
       "lineage": "seljuk",
+      "member": 0,
       "label": "Seljuk Dynasty",
       "tStart": 1035.0,
       "tEnd": 991.0,
@@ -4097,6 +4971,7 @@
     {
       "id": "byzantine-empire-1000ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1025.0,
       "tEnd": 1015.0,
@@ -4107,6 +4982,7 @@
     {
       "id": "holy-roman-empire-1003ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 1022.0,
       "tEnd": 1015.0,
@@ -4117,6 +4993,7 @@
     {
       "id": "byzantine-empire-1010ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1015.0,
       "tEnd": 1007.0,
@@ -4127,6 +5004,7 @@
     {
       "id": "holy-roman-empire-1010ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 1015.0,
       "tEnd": 991.0,
@@ -4137,6 +5015,7 @@
     {
       "id": "byzantine-empire-1018ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 1007.0,
       "tEnd": 959.0,
@@ -4147,6 +5026,7 @@
     {
       "id": "khmer-empire-1028ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 997.0,
       "tEnd": 969.0,
@@ -4157,6 +5037,7 @@
     {
       "id": "southern-song-1028ce",
       "lineage": "china",
+      "member": 9,
       "label": "Southern Song",
       "tStart": 997.0,
       "tEnd": 886.0,
@@ -4167,6 +5048,7 @@
     {
       "id": "holy-roman-empire-1034ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 991.0,
       "tEnd": 823.0,
@@ -4177,6 +5059,7 @@
     {
       "id": "seljuk-dynasty-1034ce",
       "lineage": "seljuk",
+      "member": 0,
       "label": "Seljuk Dynasty",
       "tStart": 991.0,
       "tEnd": 985.0,
@@ -4187,6 +5070,7 @@
     {
       "id": "great-seljuk-empire-1040ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 985.0,
       "tEnd": 979.0,
@@ -4197,6 +5081,7 @@
     {
       "id": "great-seljuk-empire-1046ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 979.0,
       "tEnd": 969.0,
@@ -4207,6 +5092,7 @@
     {
       "id": "great-seljuk-empire-1056ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 969.0,
       "tEnd": 953.0,
@@ -4217,6 +5103,7 @@
     {
       "id": "khmer-empire-1056ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 969.0,
       "tEnd": 837.0,
@@ -4227,6 +5114,7 @@
     {
       "id": "byzantine-empire-1066ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 959.0,
       "tEnd": 940.0,
@@ -4237,6 +5125,7 @@
     {
       "id": "great-seljuk-empire-1072ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 953.0,
       "tEnd": 940.0,
@@ -4247,6 +5136,7 @@
     {
       "id": "byzantine-empire-1085ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 940.0,
       "tEnd": 926.0,
@@ -4257,6 +5147,7 @@
     {
       "id": "great-seljuk-empire-1085ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 940.0,
       "tEnd": 931.0,
@@ -4267,6 +5158,7 @@
     {
       "id": "great-seljuk-empire-1094ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 931.0,
       "tEnd": 899.0,
@@ -4277,6 +5169,7 @@
     {
       "id": "byzantine-empire-1099ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 926.0,
       "tEnd": 856.0,
@@ -4287,6 +5180,7 @@
     {
       "id": "great-seljuk-empire-1126ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 899.0,
       "tEnd": 886.0,
@@ -4297,6 +5191,7 @@
     {
       "id": "great-seljuk-empire-1139ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 886.0,
       "tEnd": 878.0,
@@ -4307,6 +5202,7 @@
     {
       "id": "southern-song-1139ce",
       "lineage": "china",
+      "member": 9,
       "label": "Southern Song",
       "tStart": 886.0,
       "tEnd": 765.0,
@@ -4317,6 +5213,7 @@
     {
       "id": "great-seljuk-empire-1147ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 878.0,
       "tEnd": 873.0,
@@ -4327,6 +5224,7 @@
     {
       "id": "great-seljuk-empire-1152ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 873.0,
       "tEnd": 848.0,
@@ -4337,6 +5235,7 @@
     {
       "id": "byzantine-empire-1169ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 856.0,
       "tEnd": 837.0,
@@ -4347,6 +5246,7 @@
     {
       "id": "great-seljuk-empire-1177ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 848.0,
       "tEnd": 837.0,
@@ -4357,6 +5257,7 @@
     {
       "id": "byzantine-empire-1188ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 837.0,
       "tEnd": 833.0,
@@ -4367,6 +5268,7 @@
     {
       "id": "great-seljuk-empire-1188ce",
       "lineage": "seljuk",
+      "member": 1,
       "label": "Great Seljuk Empire",
       "tStart": 837.0,
       "tEnd": 823.0,
@@ -4377,6 +5279,7 @@
     {
       "id": "khmer-empire-1188ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 837.0,
       "tEnd": 819.0,
@@ -4387,6 +5290,7 @@
     {
       "id": "byzantine-empire-1192ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 833.0,
       "tEnd": 823.0,
@@ -4397,6 +5301,7 @@
     {
       "id": "abbasid-caliphate-1202ce",
       "lineage": "caliphate",
+      "member": 2,
       "label": "Abbasid Caliphate",
       "tStart": 823.0,
       "tEnd": 766.0,
@@ -4407,6 +5312,7 @@
     {
       "id": "byzantine-empire-1202ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 823.0,
       "tEnd": 819.0,
@@ -4417,6 +5323,7 @@
     {
       "id": "holy-roman-empire-1202ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 823.0,
       "tEnd": 765.0,
@@ -4427,6 +5334,7 @@
     {
       "id": "byzantine-empire-1206ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 819.0,
       "tEnd": 798.0,
@@ -4437,6 +5345,7 @@
     {
       "id": "khmer-empire-1206ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 819.0,
       "tEnd": 805.0,
@@ -4447,6 +5356,7 @@
     {
       "id": "mongol-empire-1206ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 819.0,
       "tEnd": 815.0,
@@ -4457,6 +5367,7 @@
     {
       "id": "mongol-empire-1210ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 815.0,
       "tEnd": 809.0,
@@ -4467,6 +5378,7 @@
     {
       "id": "mongol-empire-1216ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 809.0,
       "tEnd": 805.0,
@@ -4477,6 +5389,7 @@
     {
       "id": "khmer-empire-1220ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 805.0,
       "tEnd": 784.0,
@@ -4487,6 +5400,7 @@
     {
       "id": "mongol-empire-1220ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 805.0,
       "tEnd": 798.0,
@@ -4497,6 +5411,7 @@
     {
       "id": "mongol-empire-1227ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 798.0,
       "tEnd": 789.0,
@@ -4507,6 +5422,7 @@
     {
       "id": "mali-empire-1236ce",
       "lineage": "sahel",
+      "member": 1,
       "label": "Mali Empire",
       "tStart": 789.0,
       "tEnd": 610.0,
@@ -4517,6 +5433,7 @@
     {
       "id": "mongol-empire-1236ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 789.0,
       "tEnd": 784.0,
@@ -4527,6 +5444,7 @@
     {
       "id": "khmer-empire-1241ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 784.0,
       "tEnd": 662.0,
@@ -4537,6 +5455,7 @@
     {
       "id": "mongol-empire-1241ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 784.0,
       "tEnd": 775.0,
@@ -4547,6 +5466,7 @@
     {
       "id": "mongol-empire-1250ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 775.0,
       "tEnd": 765.0,
@@ -4557,6 +5477,7 @@
     {
       "id": "holy-roman-empire-1260ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 765.0,
       "tEnd": 720.0,
@@ -4567,6 +5488,7 @@
     {
       "id": "mongol-empire-1260ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 765.0,
       "tEnd": 746.0,
@@ -4577,6 +5499,7 @@
     {
       "id": "southern-song-1260ce",
       "lineage": "china",
+      "member": 9,
       "label": "Southern Song",
       "tStart": 765.0,
       "tEnd": 746.0,
@@ -4587,6 +5510,7 @@
     {
       "id": "byzantine-empire-1279ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 746.0,
       "tEnd": 731.0,
@@ -4597,6 +5521,7 @@
     {
       "id": "mongol-empire-1279ce",
       "lineage": "mongol",
+      "member": 0,
       "label": "Mongol Empire",
       "tStart": 746.0,
       "tEnd": 731.0,
@@ -4607,6 +5532,7 @@
     {
       "id": "byzantine-empire-1294ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 731.0,
       "tEnd": 720.0,
@@ -4617,6 +5543,7 @@
     {
       "id": "chagatai-khanate-1294ce",
       "lineage": "mongol",
+      "member": 4,
       "label": "Chagatai Khanate",
       "tStart": 731.0,
       "tEnd": 673.0,
@@ -4627,6 +5554,7 @@
     {
       "id": "golden-horde-1294ce",
       "lineage": "mongol",
+      "member": 2,
       "label": "Golden Horde",
       "tStart": 731.0,
       "tEnd": 640.0,
@@ -4637,6 +5565,7 @@
     {
       "id": "ilkhanate-1294ce",
       "lineage": "mongol",
+      "member": 3,
       "label": "Ilkhanate",
       "tStart": 731.0,
       "tEnd": 692.0,
@@ -4647,6 +5576,7 @@
     {
       "id": "yuan-dynasty-1294ce",
       "lineage": "mongol",
+      "member": 1,
       "label": "Yuan Dynasty",
       "tStart": 731.0,
       "tEnd": 662.0,
@@ -4657,6 +5587,7 @@
     {
       "id": "byzantine-empire-1305ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 720.0,
       "tEnd": 711.0,
@@ -4667,6 +5598,7 @@
     {
       "id": "holy-roman-empire-1305ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 720.0,
       "tEnd": 692.0,
@@ -4677,6 +5609,7 @@
     {
       "id": "ottoman-empire-1305ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 720.0,
       "tEnd": 699.0,
@@ -4687,6 +5620,7 @@
     {
       "id": "byzantine-empire-1314ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 711.0,
       "tEnd": 699.0,
@@ -4697,6 +5631,7 @@
     {
       "id": "byzantine-empire-1326ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 699.0,
       "tEnd": 692.0,
@@ -4707,6 +5642,7 @@
     {
       "id": "ottoman-empire-1326ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 699.0,
       "tEnd": 692.0,
@@ -4717,6 +5653,7 @@
     {
       "id": "byzantine-empire-1333ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 692.0,
       "tEnd": 681.0,
@@ -4727,6 +5664,7 @@
     {
       "id": "holy-roman-empire-1333ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 692.0,
       "tEnd": 623.0,
@@ -4737,6 +5675,7 @@
     {
       "id": "ilkhanate-1333ce",
       "lineage": "mongol",
+      "member": 3,
       "label": "Ilkhanate",
       "tStart": 692.0,
       "tEnd": 681.0,
@@ -4747,6 +5686,7 @@
     {
       "id": "ottoman-empire-1333ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 692.0,
       "tEnd": 681.0,
@@ -4757,6 +5697,7 @@
     {
       "id": "byzantine-empire-1344ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 681.0,
       "tEnd": 673.0,
@@ -4767,6 +5708,7 @@
     {
       "id": "ottoman-empire-1344ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 681.0,
       "tEnd": 662.0,
@@ -4777,6 +5719,7 @@
     {
       "id": "byzantine-empire-1352ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 673.0,
       "tEnd": 650.0,
@@ -4787,6 +5730,7 @@
     {
       "id": "chagatai-khanate-1352ce",
       "lineage": "mongol",
+      "member": 4,
       "label": "Chagatai Khanate",
       "tStart": 673.0,
       "tEnd": 662.0,
@@ -4797,6 +5741,7 @@
     {
       "id": "chagatai-khanate-1363ce",
       "lineage": "mongol",
+      "member": 4,
       "label": "Chagatai Khanate",
       "tStart": 662.0,
       "tEnd": 603.0,
@@ -4807,6 +5752,7 @@
     {
       "id": "khmer-empire-1363ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 662.0,
       "tEnd": 650.0,
@@ -4817,6 +5763,7 @@
     {
       "id": "ottoman-empire-1363ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 662.0,
       "tEnd": 650.0,
@@ -4827,6 +5774,7 @@
     {
       "id": "yuan-dynasty-1363ce",
       "lineage": "mongol",
+      "member": 1,
       "label": "Yuan Dynasty",
       "tStart": 662.0,
       "tEnd": 656.0,
@@ -4837,6 +5785,7 @@
     {
       "id": "byzantine-empire-1375ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 650.0,
       "tEnd": 640.0,
@@ -4847,6 +5796,7 @@
     {
       "id": "khmer-empire-1375ce",
       "lineage": "khmer",
+      "member": 0,
       "label": "Khmer Empire",
       "tStart": 650.0,
       "tEnd": 593.0,
@@ -4857,6 +5807,7 @@
     {
       "id": "ming-dynasty-1375ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 650.0,
       "tEnd": 640.0,
@@ -4867,6 +5818,7 @@
     {
       "id": "ottoman-empire-1375ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 650.0,
       "tEnd": 630.0,
@@ -4877,6 +5829,7 @@
     {
       "id": "timurid-empire-1375ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 650.0,
       "tEnd": 640.0,
@@ -4887,6 +5840,7 @@
     {
       "id": "byzantine-empire-1385ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 640.0,
       "tEnd": 630.0,
@@ -4897,6 +5851,7 @@
     {
       "id": "golden-horde-1385ce",
       "lineage": "mongol",
+      "member": 2,
       "label": "Golden Horde",
       "tStart": 640.0,
       "tEnd": 623.0,
@@ -4907,6 +5862,7 @@
     {
       "id": "ming-dynasty-1385ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 640.0,
       "tEnd": 623.0,
@@ -4917,6 +5873,7 @@
     {
       "id": "timurid-empire-1385ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 640.0,
       "tEnd": 630.0,
@@ -4927,6 +5884,7 @@
     {
       "id": "byzantine-empire-1395ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 630.0,
       "tEnd": 623.0,
@@ -4937,6 +5895,7 @@
     {
       "id": "ottoman-empire-1395ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 630.0,
       "tEnd": 623.0,
@@ -4947,6 +5906,7 @@
     {
       "id": "timurid-empire-1395ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 630.0,
       "tEnd": 623.0,
@@ -4957,6 +5917,7 @@
     {
       "id": "golden-horde-1402ce",
       "lineage": "mongol",
+      "member": 2,
       "label": "Golden Horde",
       "tStart": 623.0,
       "tEnd": 575.0,
@@ -4967,6 +5928,7 @@
     {
       "id": "holy-roman-empire-1402ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 623.0,
       "tEnd": 603.0,
@@ -4977,6 +5939,7 @@
     {
       "id": "ming-dynasty-1402ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 623.0,
       "tEnd": 610.0,
@@ -4987,6 +5950,7 @@
     {
       "id": "ottoman-empire-1402ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 623.0,
       "tEnd": 618.0,
@@ -4997,6 +5961,7 @@
     {
       "id": "timurid-empire-1402ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 623.0,
       "tEnd": 618.0,
@@ -5007,6 +5972,7 @@
     {
       "id": "byzantine-empire-1407ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 618.0,
       "tEnd": 594.0,
@@ -5017,6 +5983,7 @@
     {
       "id": "ottoman-empire-1407ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 618.0,
       "tEnd": 603.0,
@@ -5027,6 +5994,7 @@
     {
       "id": "timurid-empire-1407ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 618.0,
       "tEnd": 610.0,
@@ -5037,6 +6005,7 @@
     {
       "id": "mali-empire-1415ce",
       "lineage": "sahel",
+      "member": 1,
       "label": "Mali Empire",
       "tStart": 610.0,
       "tEnd": 562.0,
@@ -5047,6 +6016,7 @@
     {
       "id": "ming-dynasty-1415ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 610.0,
       "tEnd": 585.0,
@@ -5057,6 +6027,7 @@
     {
       "id": "timurid-empire-1415ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 610.0,
       "tEnd": 572.0,
@@ -5067,6 +6038,7 @@
     {
       "id": "chagatai-khanate-1422ce",
       "lineage": "mongol",
+      "member": 4,
       "label": "Chagatai Khanate",
       "tStart": 603.0,
       "tEnd": 562.0,
@@ -5077,6 +6049,7 @@
     {
       "id": "holy-roman-empire-1422ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 603.0,
       "tEnd": 575.0,
@@ -5087,6 +6060,7 @@
     {
       "id": "ottoman-empire-1422ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 603.0,
       "tEnd": 596.0,
@@ -5097,6 +6071,7 @@
     {
       "id": "aztec-triple-alliance-1429ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 596.0,
       "tEnd": 585.0,
@@ -5107,6 +6082,7 @@
     {
       "id": "ottoman-empire-1429ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 596.0,
       "tEnd": 566.0,
@@ -5117,6 +6093,7 @@
     {
       "id": "byzantine-empire-1431ce",
       "lineage": "rome",
+      "member": 4,
       "label": "Byzantine Empire",
       "tStart": 594.0,
       "tEnd": 571.0,
@@ -5127,6 +6104,7 @@
     {
       "id": "aztec-triple-alliance-1440ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 585.0,
       "tEnd": 575.0,
@@ -5137,6 +6115,7 @@
     {
       "id": "inca-empire-1440ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 585.0,
       "tEnd": 575.0,
@@ -5147,6 +6126,7 @@
     {
       "id": "ming-dynasty-1440ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 585.0,
       "tEnd": 575.0,
@@ -5157,6 +6137,7 @@
     {
       "id": "aztec-triple-alliance-1450ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 575.0,
       "tEnd": 572.0,
@@ -5167,6 +6148,7 @@
     {
       "id": "golden-horde-1450ce",
       "lineage": "mongol",
+      "member": 2,
       "label": "Golden Horde",
       "tStart": 575.0,
       "tEnd": 557.0,
@@ -5177,6 +6159,7 @@
     {
       "id": "holy-roman-empire-1450ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 575.0,
       "tEnd": 566.0,
@@ -5187,6 +6170,7 @@
     {
       "id": "inca-empire-1450ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 575.0,
       "tEnd": 550.0,
@@ -5197,6 +6181,7 @@
     {
       "id": "ming-dynasty-1450ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 575.0,
       "tEnd": 557.0,
@@ -5207,6 +6192,7 @@
     {
       "id": "aztec-triple-alliance-1453ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 572.0,
       "tEnd": 566.0,
@@ -5217,6 +6203,7 @@
     {
       "id": "timurid-empire-1453ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 572.0,
       "tEnd": 566.0,
@@ -5227,6 +6214,7 @@
     {
       "id": "aztec-triple-alliance-1459ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 566.0,
       "tEnd": 550.0,
@@ -5237,6 +6225,7 @@
     {
       "id": "holy-roman-empire-1459ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 566.0,
       "tEnd": 496.0,
@@ -5247,6 +6236,7 @@
     {
       "id": "ottoman-empire-1459ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 566.0,
       "tEnd": 562.0,
@@ -5257,6 +6247,7 @@
     {
       "id": "timurid-empire-1459ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 566.0,
       "tEnd": 562.0,
@@ -5267,6 +6258,7 @@
     {
       "id": "ottoman-empire-1463ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 562.0,
       "tEnd": 557.0,
@@ -5277,6 +6269,7 @@
     {
       "id": "songhai-empire-1463ce",
       "lineage": "sahel",
+      "member": 2,
       "label": "Songhai Empire",
       "tStart": 562.0,
       "tEnd": 557.0,
@@ -5287,6 +6280,7 @@
     {
       "id": "timurid-empire-1463ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 562.0,
       "tEnd": 550.0,
@@ -5297,6 +6291,7 @@
     {
       "id": "golden-horde-1468ce",
       "lineage": "mongol",
+      "member": 2,
       "label": "Golden Horde",
       "tStart": 557.0,
       "tEnd": 523.0,
@@ -5307,6 +6302,7 @@
     {
       "id": "ming-dynasty-1468ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 557.0,
       "tEnd": 509.0,
@@ -5317,6 +6313,7 @@
     {
       "id": "ottoman-empire-1468ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 557.0,
       "tEnd": 509.0,
@@ -5327,6 +6324,7 @@
     {
       "id": "songhai-empire-1468ce",
       "lineage": "sahel",
+      "member": 2,
       "label": "Songhai Empire",
       "tStart": 557.0,
       "tEnd": 550.0,
@@ -5337,6 +6335,7 @@
     {
       "id": "aztec-triple-alliance-1475ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 550.0,
       "tEnd": 543.0,
@@ -5347,6 +6346,7 @@
     {
       "id": "inca-empire-1475ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 550.0,
       "tEnd": 543.0,
@@ -5357,6 +6357,7 @@
     {
       "id": "songhai-empire-1475ce",
       "lineage": "sahel",
+      "member": 2,
       "label": "Songhai Empire",
       "tStart": 550.0,
       "tEnd": 433.0,
@@ -5367,6 +6368,7 @@
     {
       "id": "timurid-empire-1475ce",
       "lineage": "timurid",
+      "member": 0,
       "label": "Timurid Empire",
       "tStart": 550.0,
       "tEnd": 518.0,
@@ -5377,6 +6379,7 @@
     {
       "id": "aztec-triple-alliance-1482ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 543.0,
       "tEnd": 528.0,
@@ -5387,6 +6390,7 @@
     {
       "id": "inca-empire-1482ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 543.0,
       "tEnd": 528.0,
@@ -5397,6 +6401,7 @@
     {
       "id": "aztec-triple-alliance-1497ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 528.0,
       "tEnd": 523.0,
@@ -5407,6 +6412,7 @@
     {
       "id": "inca-empire-1497ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 528.0,
       "tEnd": 485.0,
@@ -5417,6 +6423,7 @@
     {
       "id": "aztec-triple-alliance-1502ce",
       "lineage": "aztec",
+      "member": 0,
       "label": "Aztec Empire",
       "tStart": 523.0,
       "tEnd": 504.0,
@@ -5427,6 +6434,7 @@
     {
       "id": "safavid-dynasty-1502ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 523.0,
       "tEnd": 518.0,
@@ -5437,6 +6445,7 @@
     {
       "id": "safavid-dynasty-1507ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 518.0,
       "tEnd": 513.0,
@@ -5447,6 +6456,7 @@
     {
       "id": "safavid-dynasty-1512ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 513.0,
       "tEnd": 499.0,
@@ -5457,6 +6467,7 @@
     {
       "id": "kingdom-of-spain-1516ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 509.0,
       "tEnd": 506.0,
@@ -5467,6 +6478,7 @@
     {
       "id": "ming-dynasty-1516ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 509.0,
       "tEnd": 389.0,
@@ -5477,6 +6489,7 @@
     {
       "id": "ottoman-empire-1516ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 509.0,
       "tEnd": 506.0,
@@ -5487,6 +6500,7 @@
     {
       "id": "spanish-empire-1516ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 509.0,
       "tEnd": 506.0,
@@ -5497,6 +6511,7 @@
     {
       "id": "kingdom-of-spain-1519ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 506.0,
       "tEnd": 504.0,
@@ -5507,6 +6522,7 @@
     {
       "id": "ottoman-empire-1519ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 506.0,
       "tEnd": 491.0,
@@ -5517,6 +6533,7 @@
     {
       "id": "spanish-empire-1519ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 506.0,
       "tEnd": 504.0,
@@ -5527,6 +6544,7 @@
     {
       "id": "kingdom-of-spain-1521ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 504.0,
       "tEnd": 496.0,
@@ -5537,6 +6555,7 @@
     {
       "id": "spanish-empire-1521ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 504.0,
       "tEnd": 499.0,
@@ -5547,6 +6566,7 @@
     {
       "id": "mughal-empire-1526ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 499.0,
       "tEnd": 496.0,
@@ -5557,6 +6577,7 @@
     {
       "id": "safavid-dynasty-1526ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 499.0,
       "tEnd": 496.0,
@@ -5567,6 +6588,7 @@
     {
       "id": "spanish-empire-1526ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 499.0,
       "tEnd": 496.0,
@@ -5577,6 +6599,7 @@
     {
       "id": "holy-roman-empire-1529ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 496.0,
       "tEnd": 473.0,
@@ -5587,6 +6610,7 @@
     {
       "id": "kingdom-of-spain-1529ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 496.0,
       "tEnd": 485.0,
@@ -5597,6 +6621,7 @@
     {
       "id": "mughal-empire-1529ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 496.0,
       "tEnd": 491.0,
@@ -5607,6 +6632,7 @@
     {
       "id": "safavid-dynasty-1529ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 496.0,
       "tEnd": 491.0,
@@ -5617,6 +6643,7 @@
     {
       "id": "spanish-empire-1529ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 496.0,
       "tEnd": 491.0,
@@ -5627,6 +6654,7 @@
     {
       "id": "mughal-empire-1534ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 491.0,
       "tEnd": 485.0,
@@ -5637,6 +6665,7 @@
     {
       "id": "ottoman-empire-1534ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 491.0,
       "tEnd": 473.0,
@@ -5647,6 +6676,7 @@
     {
       "id": "safavid-dynasty-1534ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 491.0,
       "tEnd": 469.0,
@@ -5657,6 +6687,7 @@
     {
       "id": "spanish-empire-1534ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 491.0,
       "tEnd": 485.0,
@@ -5667,6 +6698,7 @@
     {
       "id": "inca-empire-1540ce",
       "lineage": "inca",
+      "member": 0,
       "label": "Inca Empire",
       "tStart": 485.0,
       "tEnd": 453.0,
@@ -5677,6 +6709,7 @@
     {
       "id": "kingdom-of-spain-1540ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 485.0,
       "tEnd": 469.0,
@@ -5687,6 +6720,7 @@
     {
       "id": "mughal-empire-1540ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 485.0,
       "tEnd": 478.0,
@@ -5697,6 +6731,7 @@
     {
       "id": "spanish-empire-1540ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 485.0,
       "tEnd": 473.0,
@@ -5707,6 +6742,7 @@
     {
       "id": "mughal-empire-1547ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 478.0,
       "tEnd": 469.0,
@@ -5717,6 +6753,7 @@
     {
       "id": "tsardom-of-russia-1547ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 478.0,
       "tEnd": 473.0,
@@ -5727,6 +6764,7 @@
     {
       "id": "holy-roman-empire-1552ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 473.0,
       "tEnd": 461.0,
@@ -5737,6 +6775,7 @@
     {
       "id": "ottoman-empire-1552ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 473.0,
       "tEnd": 461.0,
@@ -5747,6 +6786,7 @@
     {
       "id": "spanish-empire-1552ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 473.0,
       "tEnd": 446.0,
@@ -5757,6 +6797,7 @@
     {
       "id": "tsardom-of-russia-1552ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 473.0,
       "tEnd": 469.0,
@@ -5767,6 +6808,7 @@
     {
       "id": "kingdom-of-spain-1556ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 469.0,
       "tEnd": 443.0,
@@ -5777,6 +6819,7 @@
     {
       "id": "mughal-empire-1556ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 469.0,
       "tEnd": 461.0,
@@ -5787,6 +6830,7 @@
     {
       "id": "safavid-dynasty-1556ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 469.0,
       "tEnd": 437.0,
@@ -5797,6 +6841,7 @@
     {
       "id": "tsardom-of-russia-1556ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 469.0,
       "tEnd": 443.0,
@@ -5807,6 +6852,7 @@
     {
       "id": "holy-roman-empire-1564ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 461.0,
       "tEnd": 453.0,
@@ -5817,6 +6863,7 @@
     {
       "id": "mughal-empire-1564ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 461.0,
       "tEnd": 453.0,
@@ -5827,6 +6874,7 @@
     {
       "id": "ottoman-empire-1564ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 461.0,
       "tEnd": 437.0,
@@ -5837,6 +6885,7 @@
     {
       "id": "holy-roman-empire-1572ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 453.0,
       "tEnd": 406.0,
@@ -5847,6 +6896,7 @@
     {
       "id": "mughal-empire-1572ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 453.0,
       "tEnd": 446.0,
@@ -5857,6 +6907,7 @@
     {
       "id": "mughal-empire-1579ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 446.0,
       "tEnd": 437.0,
@@ -5867,6 +6918,7 @@
     {
       "id": "spanish-empire-1579ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 446.0,
       "tEnd": 443.0,
@@ -5877,6 +6929,7 @@
     {
       "id": "iberian-union-1582ce",
       "lineage": "spain",
+      "member": 2,
       "label": "Iberian Union",
       "tStart": 443.0,
       "tEnd": 385.0,
@@ -5887,6 +6940,7 @@
     {
       "id": "spanish-empire-1582ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 443.0,
       "tEnd": 437.0,
@@ -5897,6 +6951,7 @@
     {
       "id": "tsardom-of-russia-1582ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 443.0,
       "tEnd": 430.0,
@@ -5907,6 +6962,7 @@
     {
       "id": "mughal-empire-1588ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 437.0,
       "tEnd": 430.0,
@@ -5917,6 +6973,7 @@
     {
       "id": "ottoman-empire-1588ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 437.0,
       "tEnd": 416.0,
@@ -5927,6 +6984,7 @@
     {
       "id": "safavid-dynasty-1588ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 437.0,
       "tEnd": 416.0,
@@ -5937,6 +6995,7 @@
     {
       "id": "spanish-empire-1588ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 437.0,
       "tEnd": 430.0,
@@ -5947,6 +7006,7 @@
     {
       "id": "mughal-empire-1595ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 430.0,
       "tEnd": 366.0,
@@ -5957,6 +7017,7 @@
     {
       "id": "spanish-empire-1595ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 430.0,
       "tEnd": 416.0,
@@ -5967,6 +7028,7 @@
     {
       "id": "tsardom-of-russia-1595ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 430.0,
       "tEnd": 416.0,
@@ -5977,6 +7039,7 @@
     {
       "id": "ottoman-empire-1609ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 416.0,
       "tEnd": 413.0,
@@ -5987,6 +7050,7 @@
     {
       "id": "safavid-dynasty-1609ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 416.0,
       "tEnd": 413.0,
@@ -5997,6 +7061,7 @@
     {
       "id": "spanish-empire-1609ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 416.0,
       "tEnd": 406.0,
@@ -6007,6 +7072,7 @@
     {
       "id": "tsardom-of-russia-1609ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 416.0,
       "tEnd": 406.0,
@@ -6017,6 +7083,7 @@
     {
       "id": "ottoman-empire-1612ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 413.0,
       "tEnd": 389.0,
@@ -6027,6 +7094,7 @@
     {
       "id": "safavid-dynasty-1612ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 413.0,
       "tEnd": 312.0,
@@ -6037,6 +7105,7 @@
     {
       "id": "holy-roman-empire-1619ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 406.0,
       "tEnd": 403.0,
@@ -6047,6 +7116,7 @@
     {
       "id": "later-jin-dynasty-1619ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 406.0,
       "tEnd": 403.0,
@@ -6057,6 +7127,7 @@
     {
       "id": "spanish-empire-1619ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 406.0,
       "tEnd": 393.0,
@@ -6067,6 +7138,7 @@
     {
       "id": "tsardom-of-russia-1619ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 406.0,
       "tEnd": 393.0,
@@ -6077,6 +7149,7 @@
     {
       "id": "holy-roman-empire-1622ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 403.0,
       "tEnd": 393.0,
@@ -6087,6 +7160,7 @@
     {
       "id": "later-jin-dynasty-1622ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 403.0,
       "tEnd": 399.0,
@@ -6097,6 +7171,7 @@
     {
       "id": "later-jin-dynasty-1626ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 399.0,
       "tEnd": 393.0,
@@ -6107,6 +7182,7 @@
     {
       "id": "holy-roman-empire-1632ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 393.0,
       "tEnd": 389.0,
@@ -6117,6 +7193,7 @@
     {
       "id": "later-jin-dynasty-1632ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 393.0,
       "tEnd": 389.0,
@@ -6127,6 +7204,7 @@
     {
       "id": "spanish-empire-1632ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 393.0,
       "tEnd": 385.0,
@@ -6137,6 +7215,7 @@
     {
       "id": "tsardom-of-russia-1632ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 393.0,
       "tEnd": 389.0,
@@ -6147,6 +7226,7 @@
     {
       "id": "holy-roman-empire-1636ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 389.0,
       "tEnd": 380.0,
@@ -6157,6 +7237,7 @@
     {
       "id": "later-jin-dynasty-1636ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 389.0,
       "tEnd": 385.0,
@@ -6167,6 +7248,7 @@
     {
       "id": "ming-dynasty-1636ce",
       "lineage": "china",
+      "member": 10,
       "label": "Ming Dynasty",
       "tStart": 389.0,
       "tEnd": 380.0,
@@ -6177,6 +7259,7 @@
     {
       "id": "ottoman-empire-1636ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 389.0,
       "tEnd": 385.0,
@@ -6187,6 +7270,7 @@
     {
       "id": "tsardom-of-russia-1636ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 389.0,
       "tEnd": 385.0,
@@ -6197,6 +7281,7 @@
     {
       "id": "kingdom-of-spain-1640ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 385.0,
       "tEnd": 334.0,
@@ -6207,6 +7292,7 @@
     {
       "id": "later-jin-dynasty-1640ce",
       "lineage": "china",
+      "member": 11,
       "label": "Later Jin Dynasty",
       "tStart": 385.0,
       "tEnd": 380.0,
@@ -6217,6 +7303,7 @@
     {
       "id": "ottoman-empire-1640ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 385.0,
       "tEnd": 319.0,
@@ -6227,6 +7314,7 @@
     {
       "id": "spanish-empire-1640ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 385.0,
       "tEnd": 338.0,
@@ -6237,6 +7325,7 @@
     {
       "id": "tsardom-of-russia-1640ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 385.0,
       "tEnd": 380.0,
@@ -6247,6 +7336,7 @@
     {
       "id": "holy-roman-empire-1645ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 380.0,
       "tEnd": 377.0,
@@ -6257,6 +7347,7 @@
     {
       "id": "qing-dynasty-1645ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 380.0,
       "tEnd": 377.0,
@@ -6267,6 +7358,7 @@
     {
       "id": "tsardom-of-russia-1645ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 380.0,
       "tEnd": 377.0,
@@ -6277,6 +7369,7 @@
     {
       "id": "holy-roman-empire-1648ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 377.0,
       "tEnd": 352.0,
@@ -6287,6 +7380,7 @@
     {
       "id": "qing-dynasty-1648ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 377.0,
       "tEnd": 372.0,
@@ -6297,6 +7391,7 @@
     {
       "id": "tsardom-of-russia-1648ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 377.0,
       "tEnd": 372.0,
@@ -6307,6 +7402,7 @@
     {
       "id": "qing-dynasty-1653ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 372.0,
       "tEnd": 352.0,
@@ -6317,6 +7413,7 @@
     {
       "id": "tsardom-of-russia-1653ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 372.0,
       "tEnd": 366.0,
@@ -6327,6 +7424,7 @@
     {
       "id": "mughal-empire-1659ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 366.0,
       "tEnd": 334.0,
@@ -6337,6 +7435,7 @@
     {
       "id": "tsardom-of-russia-1659ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 366.0,
       "tEnd": 363.0,
@@ -6347,6 +7446,7 @@
     {
       "id": "tsardom-of-russia-1662ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 363.0,
       "tEnd": 355.0,
@@ -6357,6 +7457,7 @@
     {
       "id": "tsardom-of-russia-1670ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 355.0,
       "tEnd": 348.0,
@@ -6367,6 +7468,7 @@
     {
       "id": "holy-roman-empire-1673ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 352.0,
       "tEnd": 329.0,
@@ -6377,6 +7479,7 @@
     {
       "id": "qing-dynasty-1673ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 352.0,
       "tEnd": 348.0,
@@ -6387,6 +7490,7 @@
     {
       "id": "qing-dynasty-1677ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 348.0,
       "tEnd": 342.0,
@@ -6397,6 +7501,7 @@
     {
       "id": "tsardom-of-russia-1677ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 348.0,
       "tEnd": 334.0,
@@ -6407,6 +7512,7 @@
     {
       "id": "qing-dynasty-1683ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 342.0,
       "tEnd": 338.0,
@@ -6417,6 +7523,7 @@
     {
       "id": "qing-dynasty-1687ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 338.0,
       "tEnd": 334.0,
@@ -6427,6 +7534,7 @@
     {
       "id": "spanish-empire-1687ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 338.0,
       "tEnd": 325.0,
@@ -6437,6 +7545,7 @@
     {
       "id": "kingdom-of-spain-1691ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 334.0,
       "tEnd": 323.0,
@@ -6447,6 +7556,7 @@
     {
       "id": "mughal-empire-1691ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 334.0,
       "tEnd": 307.0,
@@ -6457,6 +7567,7 @@
     {
       "id": "qing-dynasty-1691ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 334.0,
       "tEnd": 329.0,
@@ -6467,6 +7578,7 @@
     {
       "id": "tsardom-of-russia-1691ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 334.0,
       "tEnd": 312.0,
@@ -6477,6 +7589,7 @@
     {
       "id": "holy-roman-empire-1696ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 329.0,
       "tEnd": 316.0,
@@ -6487,6 +7600,7 @@
     {
       "id": "qing-dynasty-1696ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 329.0,
       "tEnd": 325.0,
@@ -6497,6 +7611,7 @@
     {
       "id": "qing-dynasty-1700ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 325.0,
       "tEnd": 298.0,
@@ -6507,6 +7622,7 @@
     {
       "id": "spanish-empire-1700ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 325.0,
       "tEnd": 273.0,
@@ -6517,6 +7633,7 @@
     {
       "id": "kingdom-of-spain-1702ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 323.0,
       "tEnd": 319.0,
@@ -6527,6 +7644,7 @@
     {
       "id": "kingdom-of-spain-1706ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 319.0,
       "tEnd": 316.0,
@@ -6537,6 +7655,7 @@
     {
       "id": "ottoman-empire-1706ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 319.0,
       "tEnd": 312.0,
@@ -6547,6 +7666,7 @@
     {
       "id": "british-colonial-empire-1709ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 316.0,
       "tEnd": 312.0,
@@ -6557,6 +7677,7 @@
     {
       "id": "holy-roman-empire-1709ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 316.0,
       "tEnd": 291.0,
@@ -6567,6 +7688,7 @@
     {
       "id": "kingdom-of-great-britain-1709ce",
       "lineage": "britain",
+      "member": 0,
       "label": "Great Britain",
       "tStart": 316.0,
       "tEnd": 205.0,
@@ -6577,6 +7699,7 @@
     {
       "id": "kingdom-of-spain-1709ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 316.0,
       "tEnd": 312.0,
@@ -6587,6 +7710,7 @@
     {
       "id": "british-colonial-empire-1713ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 312.0,
       "tEnd": 307.0,
@@ -6597,6 +7721,7 @@
     {
       "id": "kingdom-of-spain-1713ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 312.0,
       "tEnd": 291.0,
@@ -6607,6 +7732,7 @@
     {
       "id": "ottoman-empire-1713ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 312.0,
       "tEnd": 298.0,
@@ -6617,6 +7743,7 @@
     {
       "id": "safavid-dynasty-1713ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 312.0,
       "tEnd": 304.0,
@@ -6627,6 +7754,7 @@
     {
       "id": "tsardom-of-russia-1713ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 312.0,
       "tEnd": 307.0,
@@ -6637,6 +7765,7 @@
     {
       "id": "british-colonial-empire-1718ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 307.0,
       "tEnd": 304.0,
@@ -6647,6 +7776,7 @@
     {
       "id": "mughal-empire-1718ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 307.0,
       "tEnd": 298.0,
@@ -6657,6 +7787,7 @@
     {
       "id": "tsardom-of-russia-1718ce",
       "lineage": "russia",
+      "member": 0,
       "label": "Tsardom of Russia",
       "tStart": 307.0,
       "tEnd": 304.0,
@@ -6667,6 +7798,7 @@
     {
       "id": "british-colonial-empire-1721ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 304.0,
       "tEnd": 284.0,
@@ -6677,6 +7809,7 @@
     {
       "id": "russian-empire-1721ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 304.0,
       "tEnd": 291.0,
@@ -6687,6 +7820,7 @@
     {
       "id": "safavid-dynasty-1721ce",
       "lineage": "persia",
+      "member": 3,
       "label": "Safavid Dynasty",
       "tStart": 304.0,
       "tEnd": 298.0,
@@ -6697,6 +7831,7 @@
     {
       "id": "mughal-empire-1727ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 298.0,
       "tEnd": 284.0,
@@ -6707,6 +7842,7 @@
     {
       "id": "ottoman-empire-1727ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 298.0,
       "tEnd": 287.0,
@@ -6717,6 +7853,7 @@
     {
       "id": "qing-dynasty-1727ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 298.0,
       "tEnd": 268.0,
@@ -6727,6 +7864,7 @@
     {
       "id": "afsharid-iran-1734ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 291.0,
       "tEnd": 287.0,
@@ -6737,6 +7875,7 @@
     {
       "id": "holy-roman-empire-1734ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 291.0,
       "tEnd": 268.0,
@@ -6747,6 +7886,7 @@
     {
       "id": "kingdom-of-spain-1734ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 291.0,
       "tEnd": 244.0,
@@ -6757,6 +7897,7 @@
     {
       "id": "russian-empire-1734ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 291.0,
       "tEnd": 273.0,
@@ -6767,6 +7908,7 @@
     {
       "id": "afsharid-iran-1738ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 287.0,
       "tEnd": 284.0,
@@ -6777,6 +7919,7 @@
     {
       "id": "ottoman-empire-1738ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 287.0,
       "tEnd": 226.0,
@@ -6787,6 +7930,7 @@
     {
       "id": "afsharid-iran-1741ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 284.0,
       "tEnd": 281.0,
@@ -6797,6 +7941,7 @@
     {
       "id": "british-colonial-empire-1741ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 284.0,
       "tEnd": 273.0,
@@ -6807,6 +7952,7 @@
     {
       "id": "mughal-empire-1741ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 284.0,
       "tEnd": 281.0,
@@ -6817,6 +7963,7 @@
     {
       "id": "afsharid-iran-1744ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 281.0,
       "tEnd": 277.0,
@@ -6827,6 +7974,7 @@
     {
       "id": "mughal-empire-1744ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 281.0,
       "tEnd": 263.0,
@@ -6837,6 +7985,7 @@
     {
       "id": "afsharid-iran-1748ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 277.0,
       "tEnd": 273.0,
@@ -6847,6 +7996,7 @@
     {
       "id": "afsharid-iran-1752ce",
       "lineage": "persia",
+      "member": 4,
       "label": "Afsharid Iran",
       "tStart": 273.0,
       "tEnd": 268.0,
@@ -6857,6 +8007,7 @@
     {
       "id": "british-colonial-empire-1752ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 273.0,
       "tEnd": 263.0,
@@ -6867,6 +8018,7 @@
     {
       "id": "russian-empire-1752ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 273.0,
       "tEnd": 256.0,
@@ -6877,6 +8029,7 @@
     {
       "id": "spanish-empire-1752ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 273.0,
       "tEnd": 268.0,
@@ -6887,6 +8040,7 @@
     {
       "id": "holy-roman-empire-1757ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 268.0,
       "tEnd": 262.0,
@@ -6897,6 +8051,7 @@
     {
       "id": "qing-dynasty-1757ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 268.0,
       "tEnd": 231.0,
@@ -6907,6 +8062,7 @@
     {
       "id": "spanish-empire-1757ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 268.0,
       "tEnd": 256.0,
@@ -6917,6 +8073,7 @@
     {
       "id": "british-colonial-empire-1762ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 263.0,
       "tEnd": 262.0,
@@ -6927,6 +8084,7 @@
     {
       "id": "mughal-empire-1762ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 263.0,
       "tEnd": 253.0,
@@ -6937,6 +8095,7 @@
     {
       "id": "british-colonial-empire-1763ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 262.0,
       "tEnd": 256.0,
@@ -6947,6 +8106,7 @@
     {
       "id": "holy-roman-empire-1763ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 262.0,
       "tEnd": 245.0,
@@ -6957,6 +8117,7 @@
     {
       "id": "british-colonial-empire-1769ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 256.0,
       "tEnd": 250.0,
@@ -6967,6 +8128,7 @@
     {
       "id": "russian-empire-1769ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 256.0,
       "tEnd": 253.0,
@@ -6977,6 +8139,7 @@
     {
       "id": "spanish-empire-1769ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 256.0,
       "tEnd": 247.0,
@@ -6987,6 +8150,7 @@
     {
       "id": "mughal-empire-1772ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 253.0,
       "tEnd": 242.0,
@@ -6997,6 +8161,7 @@
     {
       "id": "russian-empire-1772ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 253.0,
       "tEnd": 250.0,
@@ -7007,6 +8172,7 @@
     {
       "id": "british-colonial-empire-1775ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 250.0,
       "tEnd": 249.0,
@@ -7017,6 +8183,7 @@
     {
       "id": "russian-empire-1775ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 250.0,
       "tEnd": 242.0,
@@ -7027,6 +8194,7 @@
     {
       "id": "british-colonial-empire-1776ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 249.0,
       "tEnd": 247.0,
@@ -7037,6 +8205,7 @@
     {
       "id": "british-colonial-empire-1778ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 247.0,
       "tEnd": 245.0,
@@ -7047,6 +8216,7 @@
     {
       "id": "spanish-empire-1778ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 247.0,
       "tEnd": 231.0,
@@ -7057,6 +8227,7 @@
     {
       "id": "british-colonial-empire-1780ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 245.0,
       "tEnd": 244.0,
@@ -7067,6 +8238,7 @@
     {
       "id": "holy-roman-empire-1780ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 245.0,
       "tEnd": 231.0,
@@ -7077,6 +8249,7 @@
     {
       "id": "british-colonial-empire-1781ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 244.0,
       "tEnd": 242.0,
@@ -7087,6 +8260,7 @@
     {
       "id": "kingdom-of-spain-1781ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 244.0,
       "tEnd": 216.0,
@@ -7097,6 +8271,7 @@
     {
       "id": "british-colonial-empire-1783ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 242.0,
       "tEnd": 228.0,
@@ -7107,6 +8282,7 @@
     {
       "id": "mughal-empire-1783ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 242.0,
       "tEnd": 220.0,
@@ -7117,6 +8293,7 @@
     {
       "id": "russian-empire-1783ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 242.0,
       "tEnd": 233.0,
@@ -7127,6 +8304,7 @@
     {
       "id": "qajar-dynasty-1788ce",
       "lineage": "persia",
+      "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 237.0,
       "tEnd": 234.0,
@@ -7137,6 +8315,7 @@
     {
       "id": "qajar-dynasty-1791ce",
       "lineage": "persia",
+      "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 234.0,
       "tEnd": 231.0,
@@ -7147,6 +8326,7 @@
     {
       "id": "russian-empire-1792ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 233.0,
       "tEnd": 220.0,
@@ -7157,6 +8337,7 @@
     {
       "id": "holy-roman-empire-1794ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 231.0,
       "tEnd": 229.0,
@@ -7167,6 +8348,7 @@
     {
       "id": "qajar-dynasty-1794ce",
       "lineage": "persia",
+      "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 231.0,
       "tEnd": 130.0,
@@ -7177,6 +8359,7 @@
     {
       "id": "qing-dynasty-1794ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 231.0,
       "tEnd": 177.0,
@@ -7187,6 +8370,7 @@
     {
       "id": "spanish-empire-1794ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 231.0,
       "tEnd": 214.0,
@@ -7197,6 +8381,7 @@
     {
       "id": "holy-roman-empire-1796ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 229.0,
       "tEnd": 228.0,
@@ -7207,6 +8392,7 @@
     {
       "id": "british-colonial-empire-1797ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 228.0,
       "tEnd": 214.0,
@@ -7217,6 +8403,7 @@
     {
       "id": "holy-roman-empire-1797ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 228.0,
       "tEnd": 222.0,
@@ -7227,6 +8414,7 @@
     {
       "id": "ottoman-empire-1799ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 226.0,
       "tEnd": 220.0,
@@ -7237,6 +8425,7 @@
     {
       "id": "holy-roman-empire-1803ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 222.0,
       "tEnd": 219.0,
@@ -7247,6 +8436,7 @@
     {
       "id": "mughal-empire-1805ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 220.0,
       "tEnd": 214.0,
@@ -7257,6 +8447,7 @@
     {
       "id": "ottoman-empire-1805ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 220.0,
       "tEnd": 214.0,
@@ -7267,6 +8458,7 @@
     {
       "id": "russian-empire-1805ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 220.0,
       "tEnd": 216.0,
@@ -7277,6 +8469,7 @@
     {
       "id": "holy-roman-empire-1806ce",
       "lineage": "hre",
+      "member": 0,
       "label": "Holy Roman Empire",
       "tStart": 219.0,
       "tEnd": 218.0,
@@ -7287,6 +8480,7 @@
     {
       "id": "kingdom-of-spain-1809ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 216.0,
       "tEnd": 214.0,
@@ -7297,6 +8491,7 @@
     {
       "id": "russian-empire-1809ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 216.0,
       "tEnd": 211.0,
@@ -7307,6 +8502,7 @@
     {
       "id": "british-colonial-empire-1811ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 214.0,
       "tEnd": 213.0,
@@ -7317,6 +8513,7 @@
     {
       "id": "kingdom-of-spain-1811ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 214.0,
       "tEnd": 213.0,
@@ -7327,6 +8524,7 @@
     {
       "id": "mughal-empire-1811ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 214.0,
       "tEnd": 205.0,
@@ -7337,6 +8535,7 @@
     {
       "id": "ottoman-empire-1811ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 214.0,
       "tEnd": 211.0,
@@ -7347,6 +8546,7 @@
     {
       "id": "spanish-empire-1811ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 214.0,
       "tEnd": 213.0,
@@ -7357,6 +8557,7 @@
     {
       "id": "british-colonial-empire-1812ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 213.0,
       "tEnd": 211.0,
@@ -7367,6 +8568,7 @@
     {
       "id": "kingdom-of-spain-1812ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 213.0,
       "tEnd": 211.0,
@@ -7377,6 +8579,7 @@
     {
       "id": "spanish-empire-1812ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 213.0,
       "tEnd": 211.0,
@@ -7387,6 +8590,7 @@
     {
       "id": "british-colonial-empire-1814ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 211.0,
       "tEnd": 205.0,
@@ -7397,6 +8601,7 @@
     {
       "id": "kingdom-of-spain-1814ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 211.0,
       "tEnd": 191.0,
@@ -7407,6 +8612,7 @@
     {
       "id": "ottoman-empire-1814ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 211.0,
       "tEnd": 205.0,
@@ -7417,6 +8623,7 @@
     {
       "id": "russian-empire-1814ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 211.0,
       "tEnd": 197.0,
@@ -7427,6 +8634,7 @@
     {
       "id": "spanish-empire-1814ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 211.0,
       "tEnd": 210.0,
@@ -7437,6 +8645,7 @@
     {
       "id": "spanish-empire-1815ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 210.0,
       "tEnd": 205.0,
@@ -7447,6 +8656,7 @@
     {
       "id": "british-colonial-empire-1820ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 205.0,
       "tEnd": 200.0,
@@ -7457,6 +8667,7 @@
     {
       "id": "kingdom-of-great-britain-1820ce",
       "lineage": "britain",
+      "member": 0,
       "label": "Great Britain",
       "tStart": 205.0,
       "tEnd": 185.0,
@@ -7467,6 +8678,7 @@
     {
       "id": "mughal-empire-1820ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 205.0,
       "tEnd": 168.0,
@@ -7477,6 +8689,7 @@
     {
       "id": "ottoman-empire-1820ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 205.0,
       "tEnd": 200.0,
@@ -7487,6 +8700,7 @@
     {
       "id": "spanish-empire-1820ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 205.0,
       "tEnd": 203.0,
@@ -7497,6 +8711,7 @@
     {
       "id": "spanish-empire-1822ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 203.0,
       "tEnd": 201.0,
@@ -7507,6 +8722,7 @@
     {
       "id": "spanish-empire-1824ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 201.0,
       "tEnd": 164.0,
@@ -7517,6 +8733,7 @@
     {
       "id": "british-colonial-empire-1825ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 200.0,
       "tEnd": 197.0,
@@ -7527,6 +8744,7 @@
     {
       "id": "ottoman-empire-1825ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 200.0,
       "tEnd": 191.0,
@@ -7537,6 +8755,7 @@
     {
       "id": "british-colonial-empire-1828ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 197.0,
       "tEnd": 185.0,
@@ -7547,6 +8766,7 @@
     {
       "id": "russian-empire-1828ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 197.0,
       "tEnd": 179.0,
@@ -7557,6 +8777,7 @@
     {
       "id": "kingdom-of-spain-1834ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 191.0,
       "tEnd": 189.0,
@@ -7567,6 +8788,7 @@
     {
       "id": "ottoman-empire-1834ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 191.0,
       "tEnd": 183.0,
@@ -7577,6 +8799,7 @@
     {
       "id": "kingdom-of-spain-1836ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 189.0,
       "tEnd": 152.0,
@@ -7587,6 +8810,7 @@
     {
       "id": "british-colonial-empire-1840ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 185.0,
       "tEnd": 172.0,
@@ -7597,6 +8821,7 @@
     {
       "id": "kingdom-of-great-britain-1840ce",
       "lineage": "britain",
+      "member": 0,
       "label": "Great Britain",
       "tStart": 185.0,
       "tEnd": 135.0,
@@ -7607,6 +8832,7 @@
     {
       "id": "ottoman-empire-1842ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 183.0,
       "tEnd": 152.0,
@@ -7617,6 +8843,7 @@
     {
       "id": "russian-empire-1846ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 179.0,
       "tEnd": 177.0,
@@ -7627,6 +8854,7 @@
     {
       "id": "qing-dynasty-1848ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 177.0,
       "tEnd": 169.0,
@@ -7637,6 +8865,7 @@
     {
       "id": "russian-empire-1848ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 177.0,
       "tEnd": 165.0,
@@ -7647,6 +8876,7 @@
     {
       "id": "british-colonial-empire-1853ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 172.0,
       "tEnd": 169.0,
@@ -7657,6 +8887,7 @@
     {
       "id": "british-colonial-empire-1856ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 169.0,
       "tEnd": 168.0,
@@ -7667,6 +8898,7 @@
     {
       "id": "qing-dynasty-1856ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 169.0,
       "tEnd": 168.0,
@@ -7677,6 +8909,7 @@
     {
       "id": "british-colonial-empire-1857ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 168.0,
       "tEnd": 166.0,
@@ -7687,6 +8920,7 @@
     {
       "id": "mughal-empire-1857ce",
       "lineage": "timurid",
+      "member": 1,
       "label": "Mughal Empire",
       "tStart": 168.0,
       "tEnd": 167.0,
@@ -7697,6 +8931,7 @@
     {
       "id": "qing-dynasty-1857ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 168.0,
       "tEnd": 166.0,
@@ -7707,6 +8942,7 @@
     {
       "id": "british-colonial-empire-1859ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 166.0,
       "tEnd": 163.0,
@@ -7717,6 +8953,7 @@
     {
       "id": "british-raj-1859ce",
       "lineage": "britain",
+      "member": 2,
       "label": "British Raj",
       "tStart": 166.0,
       "tEnd": 140.0,
@@ -7727,6 +8964,7 @@
     {
       "id": "qing-dynasty-1859ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 166.0,
       "tEnd": 165.0,
@@ -7737,6 +8975,7 @@
     {
       "id": "qing-dynasty-1860ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 165.0,
       "tEnd": 164.0,
@@ -7747,6 +8986,7 @@
     {
       "id": "russian-empire-1860ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 165.0,
       "tEnd": 161.0,
@@ -7757,6 +8997,7 @@
     {
       "id": "qing-dynasty-1861ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 164.0,
       "tEnd": 163.0,
@@ -7767,6 +9008,7 @@
     {
       "id": "spanish-empire-1861ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 164.0,
       "tEnd": 152.0,
@@ -7777,6 +9019,7 @@
     {
       "id": "british-colonial-empire-1862ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 163.0,
       "tEnd": 162.0,
@@ -7787,6 +9030,7 @@
     {
       "id": "qing-dynasty-1862ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 163.0,
       "tEnd": 162.0,
@@ -7797,6 +9041,7 @@
     {
       "id": "british-colonial-empire-1863ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 162.0,
       "tEnd": 157.0,
@@ -7807,6 +9052,7 @@
     {
       "id": "qing-dynasty-1863ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 162.0,
       "tEnd": 161.0,
@@ -7817,6 +9063,7 @@
     {
       "id": "qing-dynasty-1864ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 161.0,
       "tEnd": 160.0,
@@ -7827,6 +9074,7 @@
     {
       "id": "russian-empire-1864ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 161.0,
       "tEnd": 157.0,
@@ -7837,6 +9085,7 @@
     {
       "id": "qing-dynasty-1865ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 160.0,
       "tEnd": 159.0,
@@ -7847,6 +9096,7 @@
     {
       "id": "qing-dynasty-1866ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 159.0,
       "tEnd": 152.0,
@@ -7857,6 +9107,7 @@
     {
       "id": "british-colonial-empire-1868ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 157.0,
       "tEnd": 155.0,
@@ -7867,6 +9118,7 @@
     {
       "id": "russian-empire-1868ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 157.0,
       "tEnd": 152.0,
@@ -7877,6 +9129,7 @@
     {
       "id": "british-colonial-empire-1870ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 155.0,
       "tEnd": 152.0,
@@ -7887,6 +9140,7 @@
     {
       "id": "british-colonial-empire-1873ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 152.0,
       "tEnd": 148.0,
@@ -7897,6 +9151,7 @@
     {
       "id": "first-spanish-republic-1873ce",
       "lineage": "spain",
+      "member": 3,
       "label": "First Spanish Republic",
       "tStart": 152.0,
       "tEnd": 148.0,
@@ -7907,6 +9162,7 @@
     {
       "id": "ottoman-empire-1873ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 152.0,
       "tEnd": 125.0,
@@ -7917,6 +9173,7 @@
     {
       "id": "qing-dynasty-1873ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 152.0,
       "tEnd": 148.0,
@@ -7927,6 +9184,7 @@
     {
       "id": "russian-empire-1873ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 152.0,
       "tEnd": 125.0,
@@ -7937,6 +9195,7 @@
     {
       "id": "british-colonial-empire-1877ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 148.0,
       "tEnd": 145.0,
@@ -7947,6 +9206,7 @@
     {
       "id": "kingdom-of-spain-1877ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 148.0,
       "tEnd": 135.0,
@@ -7957,6 +9217,7 @@
     {
       "id": "qing-dynasty-1877ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 148.0,
       "tEnd": 125.0,
@@ -7967,6 +9228,7 @@
     {
       "id": "british-colonial-empire-1880ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 145.0,
       "tEnd": 140.0,
@@ -7977,6 +9239,7 @@
     {
       "id": "spanish-empire-1880ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 145.0,
       "tEnd": 135.0,
@@ -7987,6 +9250,7 @@
     {
       "id": "british-africa-1885ce",
       "lineage": "britain",
+      "member": 3,
       "label": "British Africa",
       "tStart": 140.0,
       "tEnd": 135.0,
@@ -7997,6 +9261,7 @@
     {
       "id": "british-colonial-empire-1885ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 140.0,
       "tEnd": 135.0,
@@ -8007,6 +9272,7 @@
     {
       "id": "british-raj-1885ce",
       "lineage": "britain",
+      "member": 2,
       "label": "British Raj",
       "tStart": 140.0,
       "tEnd": 124.0,
@@ -8017,6 +9283,7 @@
     {
       "id": "british-africa-1890ce",
       "lineage": "britain",
+      "member": 3,
       "label": "British Africa",
       "tStart": 135.0,
       "tEnd": 130.0,
@@ -8027,6 +9294,7 @@
     {
       "id": "british-colonial-empire-1890ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 135.0,
       "tEnd": 125.0,
@@ -8037,6 +9305,7 @@
     {
       "id": "kingdom-of-great-britain-1890ce",
       "lineage": "britain",
+      "member": 0,
       "label": "Great Britain",
       "tStart": 135.0,
       "tEnd": 130.0,
@@ -8047,6 +9316,7 @@
     {
       "id": "kingdom-of-spain-1890ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 135.0,
       "tEnd": 125.0,
@@ -8057,6 +9327,7 @@
     {
       "id": "spanish-empire-1890ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 135.0,
       "tEnd": 125.0,
@@ -8067,6 +9338,7 @@
     {
       "id": "british-africa-1895ce",
       "lineage": "britain",
+      "member": 3,
       "label": "British Africa",
       "tStart": 130.0,
       "tEnd": 125.0,
@@ -8077,6 +9349,7 @@
     {
       "id": "kingdom-of-great-britain-1895ce",
       "lineage": "britain",
+      "member": 0,
       "label": "Great Britain",
       "tStart": 130.0,
       "tEnd": 124.0,
@@ -8087,6 +9360,7 @@
     {
       "id": "qajar-dynasty-1895ce",
       "lineage": "persia",
+      "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 130.0,
       "tEnd": 127.0,
@@ -8097,6 +9371,7 @@
     {
       "id": "qajar-dynasty-1898ce",
       "lineage": "persia",
+      "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 127.0,
       "tEnd": 124.0,
@@ -8107,6 +9382,7 @@
     {
       "id": "british-africa-1900ce",
       "lineage": "britain",
+      "member": 3,
       "label": "British Africa",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8117,6 +9393,7 @@
     {
       "id": "british-colonial-empire-1900ce",
       "lineage": "britain",
+      "member": 1,
       "label": "British Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8127,6 +9404,7 @@
     {
       "id": "kingdom-of-spain-1900ce",
       "lineage": "spain",
+      "member": 0,
       "label": "Spain",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8137,6 +9415,7 @@
     {
       "id": "ottoman-empire-1900ce",
       "lineage": "ottoman",
+      "member": 0,
       "label": "Ottoman Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8147,6 +9426,7 @@
     {
       "id": "qing-dynasty-1900ce",
       "lineage": "china",
+      "member": 12,
       "label": "Qing Dynasty",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8157,6 +9437,7 @@
     {
       "id": "russian-empire-1900ce",
       "lineage": "russia",
+      "member": 1,
       "label": "Russian Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
@@ -8167,6 +9448,7 @@
     {
       "id": "spanish-empire-1900ce",
       "lineage": "spain",
+      "member": 1,
       "label": "Spanish Empire",
       "tStart": 125.0,
       "tEnd": 124.0,

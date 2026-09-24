@@ -629,19 +629,80 @@ function rescaleWithFrame(box, frameBefore, frameAfter) {
   return { x, y, width: box.width * scale, height: box.height * scale }
 }
 
+const GLOBE_TOOLTIP_SELECTOR = '[data-testid="globe-tooltip"]'
+const EMPIRE_DETAIL_SELECTOR = '[data-testid="empire-detail"]'
+const EVENT_DETAIL_SELECTOR = '[data-testid="event-detail"]'
+
+/** How far `box` reaches into `frame` vertically, in px — 0 when it sits wholly above or below. */
+function verticalOverlapPx(box, frame) {
+  return Math.max(0, Math.min(box.y + box.height, frame.y + frame.height) - Math.max(box.y, frame.y))
+}
+
+/**
+ * The empire hover and panel on the map at `EMPIRE_CHECK_T`: hovers points across the
+ * Roman-interior box (cities there win their own tooltips, so the first point the empire resolves
+ * at is used) until the tooltip names the Roman Empire, clicks there, measures the docked panel
+ * against the viewport and the map fit frame, opens its first related event (the same dock's
+ * event card) to measure that card the same way, and closes that. A missing related event leaves
+ * the event-card comparison at the panel's own value. Closing the panel itself is jsdom's
+ * (`Experience.test.tsx`).
+ * @param {import('playwright').Page} page
+ * @param {{ width: number, height: number }} viewport
+ * @param {{ x: number, y: number, width: number, height: number }} roman the Roman-interior box on the page
+ */
+async function empirePanelChecks(page, viewport, roman) {
+  const points = []
+  for (let row = 1; row <= 3; row += 1) {
+    for (let col = 1; col <= 4; col += 1) points.push([roman.x + (roman.width * col) / 5, roman.y + (roman.height * row) / 4])
+  }
+  let hovered = null
+  for (let attempt = 0; attempt < 5 && hovered === null; attempt += 1) {
+    for (const [x, y] of points) {
+      await page.mouse.move(x, y)
+      await rafTicks(page, 2)
+      const title = await page.evaluate((sel) => document.querySelector(`${sel} p`)?.textContent ?? '', GLOBE_TOOLTIP_SELECTOR)
+      if (title.includes('Roman Empire')) {
+        hovered = [x, y]
+        break
+      }
+    }
+  }
+  if (hovered === null) return { tooltipNamesRome: 0 }
+  await page.mouse.click(hovered[0], hovered[1])
+  await page.locator(EMPIRE_DETAIL_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
+  const frame = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+  const panel = await boxOf(page, EMPIRE_DETAIL_SELECTOR)
+  const panelOverlapPx = verticalOverlapPx(panel, frame)
+  let eventOverlapPx = panelOverlapPx
+  const related = page.locator(EMPIRE_DETAIL_SELECTOR).getByRole('region', { name: 'Events' }).getByRole('button').first()
+  if ((await related.count()) > 0) {
+    await related.click()
+    await page.locator(EVENT_DETAIL_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
+    eventOverlapPx = verticalOverlapPx(await boxOf(page, EVENT_DETAIL_SELECTOR), frame)
+    await page.keyboard.press('Escape')
+    await page.locator(EVENT_DETAIL_SELECTOR).waitFor({ state: 'detached', timeout: 5_000 })
+  }
+  return {
+    tooltipNamesRome: 1,
+    panelOverflowPx: viewportOverflowPx(panel, viewport),
+    panelFrameOverlapBeyondEventPx: panelOverlapPx - eventOverlapPx,
+  }
+}
+
 /**
  * What the empires layer paints on the map at `EMPIRE_CHECK_T`, with overlay "None" so the
  * territory fill is on: the fraction of the Roman-interior and mid-Pacific boxes that change when
  * the Human civilisation row is toggled. Globe labels are hidden for the diff, so only drawn
  * pixels count. Dropping the overlay's ramp key refits the camera, so the drawn map `shape` is
  * carried over to the new fit frame. The territory geometry loads lazily, so this waits for its
- * fetch and then polls briefly while the texture paints. Restores the overlay it found; the next
- * shot sets its own `t`.
+ * fetch and then polls briefly while the texture paints. Then, labels shown again, the hover and
+ * panel checks (`empirePanelChecks`). Restores the overlay it found; the next shot sets its own `t`.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {{ x: number, y: number, width: number, height: number }} shape the drawn map body
+ * @param {{ width: number, height: number }} viewport
  */
-async function empireToggleFractions(page, hook, shape) {
+async function empireToggleFractions(page, hook, shape, viewport) {
   const frameBefore = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
   const overlayBefore = await page.locator(OVERLAY_SELECT_SELECTOR).inputValue()
   await page.selectOption(OVERLAY_SELECT_SELECTOR, OVERLAY_NONE_VALUE)
@@ -666,6 +727,7 @@ async function empireToggleFractions(page, hook, shape) {
   const clip = roundClip(unionBox(Object.values(rects)))
   const boxes = Object.fromEntries(Object.entries(rects).map(([name, rect]) => [name, { ...rect, x: rect.x - clip.x, y: rect.y - clip.y }]))
   let fractions = { roman: 0, pacific: 0 }
+  let panel = {}
   try {
     for (let attempt = 0; attempt < 10; attempt += 1) {
       await rafTicks(page, 2)
@@ -677,11 +739,13 @@ async function empireToggleFractions(page, hook, shape) {
       fractions = await reducePixels(page, [on, off], differingFractions, { boxes, step: 2, minDiff: 15 })
       if (fractions.roman >= 0.9) break
     }
+    await page.evaluate(() => document.querySelector('style[data-qa-empire-check]')?.remove())
+    panel = await empirePanelChecks(page, viewport, rects.roman)
   } finally {
     await page.evaluate(() => document.querySelector('style[data-qa-empire-check]')?.remove())
     await page.selectOption(OVERLAY_SELECT_SELECTOR, overlayBefore)
   }
-  return fractions
+  return { ...fractions, ...panel }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -993,7 +1057,9 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false,
       (withMap ? '; the fully zoomed-out map shows no grab cursor' : '') +
       (withEmpires
         ? '; at 117 CE with overlay None, toggling Human civilisation changes at least 90% of central Anatolia ' +
-          '(Roman territory fill) and none of the open mid-Pacific.'
+          '(Roman territory fill) and none of the open mid-Pacific; hovering central Anatolia shows a tooltip naming ' +
+          'the Roman Empire, and clicking there docks the empire panel inside the viewport, reaching no further into ' +
+          'the map fit frame than its first related event\'s card.'
         : '.'),
     viewport,
     t: 0,
@@ -1004,13 +1070,21 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false,
       await switchGlobeViewMode(page, hook, 'map')
       const map = await measureMode(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
       const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
-      const empires = withEmpires ? await empireToggleFractions(page, hook, map.shape) : undefined
+      const empires = withEmpires ? await empireToggleFractions(page, hook, map.shape, viewport) : undefined
       return { sphere, map, mapCursorIsNotGrab: cursor !== 'grab' ? 1 : 0, ...(empires ? { empires } : {}) }
     },
     expect: {
       ...modeExpect('sphere', sphereWidth),
       ...(withMap ? { ...modeExpect('map', mapWidth), mapCursorIsNotGrab: [1, 1] } : {}),
-      ...(withMap && withEmpires ? { 'empires.roman': [0.9, 1], 'empires.pacific': [0, 0] } : {}),
+      ...(withMap && withEmpires
+        ? {
+            'empires.roman': [0.9, 1],
+            'empires.pacific': [0, 0],
+            'empires.tooltipNamesRome': [1, 1],
+            'empires.panelOverflowPx': [-4000, 0],
+            'empires.panelFrameOverlapBeyondEventPx': [-4000, 0],
+          }
+        : {}),
     },
   }
 }

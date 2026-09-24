@@ -10,8 +10,9 @@
  * to cache the rasterised texture.
  */
 
-import type { TerritoryData, TerritorySnapshotData } from '@/data/curated'
+import type { TerritoryData, TerritoryGeometry, TerritoryLineageData, TerritoryPolygon, TerritorySnapshotData } from '@/data/curated'
 import type { MixKeying } from '@/lib/presentedMix'
+import { formatCalendarYear, formatGeoTime } from '@/timeline'
 import type { GeoTime } from '@/types/layer'
 
 export interface EmpireSnapshot extends TerritorySnapshotData {
@@ -27,8 +28,39 @@ export interface EmpireFrame {
   snapshots: readonly EmpireSnapshot[]
 }
 
+/** One member state's run within its lineage: active for `tEnd < t <= tStart`, from its oldest
+ *  snapshot's start to its newest snapshot's end. */
+export interface EmpireMemberSpan {
+  member: number
+  label: string
+  wikipedia: string | null
+  tStart: GeoTime
+  tEnd: GeoTime
+}
+
+/** The lineage's summed active-member area over `tEnd < t <= tStart`. */
+export interface EmpireAreaStep {
+  tStart: GeoTime
+  tEnd: GeoTime
+  areaKm2: number
+}
+
+/** Everything the detail panel and tooltip show about one lineage, derived once from the data. */
+export interface EmpireLineageSummary {
+  lineage: TerritoryLineageData
+  /** Members with at least one snapshot, oldest first. */
+  members: readonly EmpireMemberSpan[]
+  /** Oldest first, contiguous between the lineage's first and last boundary; a gap is a 0 step. */
+  area: readonly EmpireAreaStep[]
+  /** The largest step (the oldest on a tie). */
+  peak: EmpireAreaStep
+  /** `[newest tEnd, oldest tStart]`. */
+  span: readonly [GeoTime, GeoTime]
+}
+
 export interface EmpireIndex {
   data: TerritoryData
+  lineages: ReadonlyMap<string, EmpireLineageSummary>
   /** `[newest tEnd, oldest tStart]`: `t` lies inside when `tEnd < t <= tStart` for some snapshot
    *  boundary pair, so `empiresHaveDataAt` is `domain[0] < t <= domain[1]`. */
   domain: readonly [GeoTime, GeoTime]
@@ -78,7 +110,56 @@ export function buildEmpireIndex(data: TerritoryData): EmpireIndex {
 
   const domain: readonly [GeoTime, GeoTime] =
     boundaries.length === 0 ? [0, 0] : [boundaries[boundaries.length - 1]!, boundaries[0]!]
-  return { data, domain, boundaries, frames, frameByKey, olderThanAll, newerThanAll }
+  const lineages = new Map<string, EmpireLineageSummary>()
+  for (const lineage of data.lineages) {
+    const summary = summariseLineage(lineage, snapshots.filter((s) => s.lineage === lineage.id))
+    if (summary !== null) lineages.set(lineage.id, summary)
+  }
+  return { data, lineages, domain, boundaries, frames, frameByKey, olderThanAll, newerThanAll }
+}
+
+/** `null` for a lineage with no snapshots. */
+function summariseLineage(lineage: TerritoryLineageData, snapshots: readonly TerritorySnapshotData[]): EmpireLineageSummary | null {
+  if (snapshots.length === 0) return null
+  const spans = new Map<number, EmpireMemberSpan>()
+  for (const s of snapshots) {
+    const span = spans.get(s.member)
+    if (span === undefined) {
+      const { label, wikipedia } = lineage.members[s.member]!
+      spans.set(s.member, { member: s.member, label, wikipedia, tStart: s.tStart, tEnd: s.tEnd })
+    } else {
+      span.tStart = Math.max(span.tStart, s.tStart)
+      span.tEnd = Math.min(span.tEnd, s.tEnd)
+    }
+  }
+  const members = [...spans.values()].sort((a, b) => b.tStart - a.tStart || a.member - b.member)
+
+  const boundaries = [...new Set(snapshots.flatMap((s) => [s.tStart, s.tEnd]))].sort((a, b) => b - a)
+  const area: EmpireAreaStep[] = []
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const tStart = boundaries[i]!
+    const tEnd = boundaries[i + 1]!
+    let areaKm2 = 0
+    for (const s of snapshots) if (s.tStart >= tStart && s.tEnd <= tEnd) areaKm2 += s.areaKm2
+    area.push({ tStart, tEnd, areaKm2 })
+  }
+  let peak = area[0]!
+  for (const step of area) if (step.areaKm2 > peak.areaKm2) peak = step
+  return { lineage, members, area, peak, span: [boundaries[boundaries.length - 1]!, boundaries[0]!] }
+}
+
+/** The lineage's summed active area at `t`, 0 outside its span or in a gap. */
+export function lineageAreaAt(summary: EmpireLineageSummary, t: GeoTime): number {
+  for (const step of summary.area) if (step.tEnd < t && t <= step.tStart) return step.areaKm2
+  return 0
+}
+
+/** The member span active at `t`, or `null`. */
+export function memberAt(summary: EmpireLineageSummary, t: GeoTime): EmpireMemberSpan | null {
+  let found: EmpireMemberSpan | null = null
+  // Newest-starting wins where two members overlap (a successor alongside its predecessor's tail).
+  for (const span of summary.members) if (span.tEnd < t && t <= span.tStart) found = span
+  return found
 }
 
 /** The active set at `t` (half-open: a snapshot shows for `tEnd < t <= tStart`). */
@@ -109,6 +190,7 @@ export const EMPIRE_FRAME_KEYING: MixKeying<EmpireFrame> = {
 }
 
 export interface EmpireLabel {
+  snapshot: EmpireSnapshot
   lineage: string
   text: string
   lat: number
@@ -133,7 +215,7 @@ export function empireLabelsAt(frame: EmpireFrame, cap: number): EmpireLabel[] {
   return [...largest.values()]
     .sort((a, b) => b.areaKm2 - a.areaKm2 || a.id.localeCompare(b.id))
     .slice(0, Math.max(0, cap))
-    .map((s) => ({ lineage: s.lineage, text: s.label, lat: s.lat, lon: s.lon, colourSlot: s.colourSlot, areaKm2: s.areaKm2 }))
+    .map((s) => ({ snapshot: s, lineage: s.lineage, text: s.label, lat: s.lat, lon: s.lon, colourSlot: s.colourSlot, areaKm2: s.areaKm2 }))
 }
 
 /** A label's half extents, in the same units as the positions `declutterLabelBoxes` compares. */
@@ -168,6 +250,75 @@ export function declutterLabelBoxes<T>(
     out.push(label)
   }
   return out
+}
+
+// ------------------------------------------------------------------------------- hit test
+
+type Bounds = readonly [number, number, number, number]
+
+const polygonBounds = new WeakMap<TerritoryPolygon, Bounds>()
+
+/** `[lonMin, latMin, lonMax, latMax]` of a polygon's exterior, cached per polygon. */
+function boundsOf(polygon: TerritoryPolygon): Bounds {
+  let bounds = polygonBounds.get(polygon)
+  if (bounds === undefined) {
+    const ring = polygon[0]!
+    let lonMin = Infinity
+    let latMin = Infinity
+    let lonMax = -Infinity
+    let latMax = -Infinity
+    for (let i = 0; i < ring.length; i += 2) {
+      lonMin = Math.min(lonMin, ring[i]!)
+      lonMax = Math.max(lonMax, ring[i]!)
+      latMin = Math.min(latMin, ring[i + 1]!)
+      latMax = Math.max(latMax, ring[i + 1]!)
+    }
+    bounds = [lonMin, latMin, lonMax, latMax]
+    polygonBounds.set(polygon, bounds)
+  }
+  return bounds
+}
+
+/** Even-odd crossing test of one flat `[lon, lat, ...]` ring. */
+function ringContains(ring: readonly number[], lon: number, lat: number): boolean {
+  let inside = false
+  const n = ring.length
+  for (let i = 0, j = n - 2; i < n; j = i, i += 2) {
+    const xi = ring[i]!
+    const yi = ring[i + 1]!
+    const xj = ring[j]!
+    const yj = ring[j + 1]!
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
+  }
+  return inside
+}
+
+/**
+ * Whether `(lon, lat)` lies inside any of the polygons: inside an exterior and outside its holes.
+ * For valid polygons that is what the painter's nonzero fill over oriented rings covers.
+ */
+export function territoryContains(polygons: readonly TerritoryPolygon[], lon: number, lat: number): boolean {
+  for (const polygon of polygons) {
+    const [lonMin, latMin, lonMax, latMax] = boundsOf(polygon)
+    if (lon < lonMin || lon > lonMax || lat < latMin || lat > latMax) continue
+    if (!ringContains(polygon[0]!, lon, lat)) continue
+    let inHole = false
+    for (let r = 1; r < polygon.length && !inHole; r++) inHole = ringContains(polygon[r]!, lon, lat)
+    if (!inHole) return true
+  }
+  return false
+}
+
+/** The frame's snapshot whose territory contains `(lon, lat)` — the smallest, where members
+ *  overlap — or `null`. */
+export function empireAtLonLat(frame: EmpireFrame, geometry: TerritoryGeometry, lon: number, lat: number): EmpireSnapshot | null {
+  let best: EmpireSnapshot | null = null
+  for (const snapshot of frame.snapshots) {
+    if (best !== null && snapshot.areaKm2 >= best.areaKm2) continue
+    const polygons = geometry.snapshots.get(snapshot.id)
+    if (polygons !== undefined && territoryContains(polygons, lon, lat)) best = snapshot
+  }
+  return best
 }
 
 // ------------------------------------------------------------------------ canvas geometry
@@ -258,4 +409,23 @@ export function ringStrokeRuns(ring: readonly number[], width: number, height: n
   }
   if (run.length >= 4) runs.push(run)
   return { runs, closed: false }
+}
+
+// ------------------------------------------------------------------------------- wording
+
+/** An area for the tooltip and panel: `4.4M km²` from a million up, `350k km²` below. */
+export function formatEmpireArea(areaKm2: number): string {
+  if (areaKm2 >= 1e6) return `${(areaKm2 / 1e6).toFixed(1)}M km²`
+  return `${Math.max(1, Math.round(areaKm2 / 1e3)).toLocaleString('en-US')}k km²`
+}
+
+/** `t` as a calendar year where one reads naturally, else as elapsed time. */
+export function formatEmpireYear(t: GeoTime): string {
+  return formatCalendarYear(t) ?? formatGeoTime(t)
+}
+
+/** A `tEnd < t <= tStart` span as its first and last calendar years (`tEnd` itself is the first
+ *  year after it). */
+export function formatEmpireSpan(tStart: GeoTime, tEnd: GeoTime): string {
+  return `${formatEmpireYear(tStart)} – ${formatEmpireYear(tEnd + 1)}`
 }

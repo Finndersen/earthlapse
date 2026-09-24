@@ -1,34 +1,42 @@
 import { describe, expect, it } from 'vitest'
 
-import type { TerritoryData, TerritorySnapshotData } from '@/data/curated'
+import type { TerritoryData, TerritoryGeometry, TerritorySnapshotData } from '@/data/curated'
 
 import {
   buildEmpireIndex,
   declutterLabelBoxes,
+  empireAtLonLat,
   empireLabelsAt,
   empiresHaveDataAt,
   empireSnapshotsAt,
+  lineageAreaAt,
+  memberAt,
   orientedRingPixels,
   ringStrokeRuns,
   ringToPixels,
+  territoryContains,
 } from './empires'
 
-function snapshot(id: string, lineage: string, tStart: number, tEnd: number, areaKm2 = 1000): TerritorySnapshotData {
-  return { id, lineage, label: id, tStart, tEnd, lat: 0, lon: 0, areaKm2 }
+function snapshot(id: string, lineage: string, member: number, tStart: number, tEnd: number, areaKm2 = 1000): TerritorySnapshotData {
+  return { id, lineage, member, label: id, tStart, tEnd, lat: 0, lon: 0, areaKm2 }
+}
+
+function members(...labels: string[]) {
+  return labels.map((label) => ({ label, wikipedia: label }))
 }
 
 const DATA: TerritoryData = {
   id: 'empires',
   geometry: 'vectors/cliopatria_territories-0123456789.json',
   lineages: [
-    { id: 'rome', name: 'Rome', colourSlot: 3 },
-    { id: 'china', name: 'China', colourSlot: 0 },
+    { id: 'rome', name: 'Rome', colourSlot: 3, description: '', events: [], members: members('Republic', 'Empire', 'West') },
+    { id: 'china', name: 'China', colourSlot: 0, description: '', events: [], members: members('Han') },
   ],
   snapshots: [
-    snapshot('republic', 'rome', 2500, 2050, 500_000),
-    snapshot('empire', 'rome', 2050, 1600, 5_000_000),
-    snapshot('west', 'rome', 1630, 1550, 2_000_000),
-    snapshot('han', 'china', 2200, 1800, 6_000_000),
+    snapshot('republic', 'rome', 0, 2500, 2050, 500_000),
+    snapshot('empire', 'rome', 1, 2050, 1600, 5_000_000),
+    snapshot('west', 'rome', 2, 1630, 1550, 2_000_000),
+    snapshot('han', 'china', 0, 2200, 1800, 6_000_000),
   ],
 }
 
@@ -58,6 +66,58 @@ describe('empireSnapshotsAt', () => {
     expect(empiresHaveDataAt(index, 1550)).toBe(false)
     expect(empiresHaveDataAt(index, 2501)).toBe(false)
     expect(empiresHaveDataAt(null, 2000)).toBe(false)
+  })
+})
+
+describe('lineage summaries', () => {
+  const rome = buildEmpireIndex(DATA).lineages.get('rome')!
+
+  it('lists each member once with its own span, sums active member areas per step and finds the peak and the member at t', () => {
+    expect(rome.members.map((m) => [m.label, m.tStart, m.tEnd])).toEqual([
+      ['Republic', 2500, 2050],
+      ['Empire', 2050, 1600],
+      ['West', 1630, 1550],
+    ])
+    expect(rome.span).toEqual([1550, 2500])
+    expect(rome.area.map((step) => [step.tStart, step.tEnd, step.areaKm2])).toEqual([
+      [2500, 2050, 500_000],
+      [2050, 1630, 5_000_000],
+      [1630, 1600, 7_000_000],
+      [1600, 1550, 2_000_000],
+    ])
+    expect(rome.peak.tStart).toBe(1630)
+    expect(lineageAreaAt(rome, 1620)).toBe(7_000_000)
+    expect(lineageAreaAt(rome, 1550)).toBe(0)
+    expect(memberAt(rome, 1620)?.label).toBe('West')
+    expect(memberAt(rome, 2050)?.label).toBe('Empire')
+    expect(memberAt(rome, 3000)).toBeNull()
+  })
+})
+
+describe('territory hit test', () => {
+  // A 20°x20° square with a 4°x4° hole, and a small square inside it.
+  const outer = [0, 0, 20, 0, 20, 20, 0, 20]
+  const hole = [8, 8, 12, 8, 12, 12, 8, 12]
+  const inner = [2, 2, 6, 2, 6, 6, 2, 6]
+  const geometry: TerritoryGeometry = {
+    snapshots: new Map([
+      ['empire', [[outer, hole]]],
+      ['west', [[inner]]],
+      ['han', [[[100, 30, 110, 30, 110, 40]]]],
+    ]),
+  }
+  const frame = empireSnapshotsAt(buildEmpireIndex(DATA), 1620)
+
+  it('resolves the smallest active territory containing the point, outside holes, whichever way the rings wind', () => {
+    expect(territoryContains([[outer, hole]], 4, 15)).toBe(true)
+    expect(territoryContains([[outer, hole]], 10, 10)).toBe(false)
+    expect(territoryContains([[outer, hole]], 25, 10)).toBe(false)
+    expect(territoryContains([[[0, 20, 20, 20, 20, 0, 0, 0]]], 4, 15)).toBe(true)
+    expect(empireAtLonLat(frame, geometry, 4, 4)?.id).toBe('west')
+    expect(empireAtLonLat(frame, geometry, 15, 4)?.id).toBe('empire')
+    expect(empireAtLonLat(frame, geometry, 10, 10)).toBeNull()
+    // Han is not active at 1620.
+    expect(empireAtLonLat(frame, geometry, 105, 32)).toBeNull()
   })
 })
 

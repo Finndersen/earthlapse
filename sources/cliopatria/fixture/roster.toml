@@ -7,8 +7,9 @@ id = "china"
 name = "China"
 colour_slot = 0
 reason = "Han Dynasty: bare, parenthesised and paren-only windows, plus a sub-500 km^2 sliver"
+description = "The Han dynasty ruled China from 202 BCE to 220 CE."
 members = [
-  { polity = "Han Dynasty", label = "Han" },
+  { polity = "Han Dynasty", label = "Han", wikipedia = "Han dynasty" },
 ]
 
 [[lineage]]
@@ -16,6 +17,7 @@ id = "korea"
 name = "Korea"
 colour_slot = 1
 reason = "Goguryeo: a single window"
+description = "Goguryeo was a kingdom of northern Korea and Manchuria."
 members = [
   { polity = "Goguryeo" },
 ]
@@ -25,6 +27,7 @@ id = "montenegro"
 name = "Montenegro"
 colour_slot = 2
 reason = "Montenegro: abutting windows, one straddling the 1900 CE cutoff and one wholly after it"
+description = "Montenegro was a principality, and later kingdom, in the Balkans."
 members = [
   { polity = "Montenegro" },
 ]

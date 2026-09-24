@@ -228,9 +228,24 @@ Colonial Empire` → "British Empire", `Sumerian City-States` → "Sumer"). `nor
 the build naming every member that matches no window up to 1900, and every member left with no
 window after its clamp and the area floor; a polity may appear in only one lineage.
 
+**Info card.** Each lineage also carries a `description` (2–3 plain sentences, at most 320
+characters) and `events`, the `data/events.yaml` ids that concern it; each member carries
+`wikipedia`, its English Wikipedia article title. The globe's empire tooltip and detail card
+read them from the published layer. Titles are copied from the raw rows' own `Wikipedia`
+property, so a few name a broader article than the member (`Sumerian City-States` → "History of
+Sumer"). Two raw titles name something other than the polity and are overridden: `Kingdom of
+Great Britain` says "Great Britain" (the island), which the roster replaces with "United
+Kingdom", the state for most of the member's span; `British Africa` says "Scramble for Africa"
+(a process), replaced with "British Empire". Two polities' rows disagree: the Carolingian
+Empire's aggregate says "Francia" for 751–849 and "West Francia" for 850–887, and the roster
+takes "Francia", the article on the whole Frankish realm; eight 1815–1879 `Spanish Empire` rows say
+"History of Spain (1808–1874)" against 68 saying "Spanish Empire", which the roster takes. Publish refuses a lineage event that is
+not a published `events-core` id, naming each. None of these fields reaches `normalise.py`'s
+output, so editing them rebuilds the source to identical curated data and geometry.
+
 **Clamps** trim members whose Cliopatria series runs on past the period the lineage is about, or
 that overlaps its predecessor: Byzantium to 1453, the Abbasids to 1258, the Khmer to 1431, the
-Holy Roman Empire from 962, the Carolingian Empire to 718–887 (its parenthesised aggregate
+Holy Roman Empire from 962, the Carolingian Empire to 751–887 (the dynasty takes the throne in 751; its parenthesised aggregate
 otherwise swallows the Kingdom of the Franks), the Mughals to 1526–1857, the Yuan to 1368, the
 Golden Horde to 1502, Mali to 1462, Songhai to 1591, Later Mayan City-States to 1200.
 
@@ -244,8 +259,8 @@ are active in 187 of the 5,301 years (max 10, 202–171 BCE).
 China, Persia, Mongols, Caliphate, Ottoman, Britain, Spain, Russia, …): two lineages that are
 ever active at the same time with member bounding boxes within 10° of each other never share a
 slot. Eight slots suffice. The numbers are written into `roster.toml`, so inserting a lineage
-later does not recolour the others. Lineage names, labels and colour slots are read again at
-publish, so changing them needs no data rebuild; membership, clamps and the polity list are
+later does not recolour the others. Lineage names, labels, colour slots and the info-card fields are
+read again at publish, so changing them needs no data rebuild; membership, clamps and the polity list are
 read by `normalise.py`, and `databuild`'s fingerprint covers `*.toml`, so editing them does.
 
 ## Resolution and thinning

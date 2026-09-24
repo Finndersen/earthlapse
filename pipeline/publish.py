@@ -67,6 +67,7 @@ from pipeline.manifest import (
     SeriesSample,
     TerritoryData,
     TerritoryLineageData,
+    TerritoryMemberData,
     TerritorySnapshotData,
     TimelineEvent,
     TreeData,
@@ -310,11 +311,12 @@ EMPIRES_VECTORS_DIR = "vectors"
 @dataclass(frozen=True)
 class EmpireInputs:
     """What the `empires` layer needs beside the curated `FeatureSet` (ADR-059): the roster's
-    lineages, each roster polity's (lineage id, label), and the published geometry file with the
-    snapshot ids it holds. Read at publish, so relabelling or recolouring needs no data rebuild."""
+    lineages, each roster polity's (lineage id, index in that lineage's members), and the
+    published geometry file with the snapshot ids it holds. Read at publish, so relabelling,
+    recolouring or rewording needs no data rebuild."""
 
     lineages: tuple[TerritoryLineageData, ...]
-    polities: dict[str, tuple[str, str]]
+    polities: dict[str, tuple[str, int]]
     geometry: str  # media path, relative to the asset base
     geometry_ids: frozenset[str]
 
@@ -337,26 +339,51 @@ def load_empire_inputs(sources_dir: Path, media_dir: Path) -> EmpireInputs:
     document = json.loads(path.read_bytes())
     return EmpireInputs(
         lineages=tuple(
-            TerritoryLineageData(id=lineage.id, name=lineage.name, colour_slot=lineage.colour_slot)
+            TerritoryLineageData(
+                id=lineage.id,
+                name=lineage.name,
+                colour_slot=lineage.colour_slot,
+                description=lineage.description,
+                events=lineage.events,
+                members=tuple(
+                    TerritoryMemberData(label=member.display_label, wikipedia=member.wikipedia)
+                    for member in lineage.members
+                ),
+            )
             for lineage in roster.lineages
         ),
         polities={
-            member.polity: (lineage.id, member.display_label)
-            for lineage, member in roster.members()
+            member.polity: (lineage.id, index)
+            for lineage in roster.lineages
+            for index, member in enumerate(lineage.members)
         },
         geometry=f"{EMPIRES_VECTORS_DIR}/{path.name}",
         geometry_ids=frozenset(document["snapshots"]),
     )
 
 
-def _territory_data(feature_set: FeatureSet, empires: EmpireInputs) -> TerritoryData:
-    """The `empires` layer: one snapshot per curated feature, lineage and label looked up by
-    polity name. Refuses a polity the roster does not name and a snapshot with no geometry."""
+def _territory_data(
+    feature_set: FeatureSet, empires: EmpireInputs, event_ids: frozenset[str]
+) -> TerritoryData:
+    """The `empires` layer: one snapshot per curated feature, lineage, member and label looked
+    up by polity name. Refuses a polity the roster does not name, a snapshot with no geometry,
+    and a lineage event that is not a published event."""
     unknown = sorted({f.name for f in feature_set.features} - empires.polities.keys())
     if unknown:
         raise PublishRefused(
             f"{feature_set.id}: polities absent from the empire roster: {', '.join(unknown)}"
         )
+    unpublished = [
+        f"{lineage.id}:{event_id}"
+        for lineage in empires.lineages
+        for event_id in lineage.events
+        if event_id not in event_ids
+    ]
+    if unpublished:
+        raise PublishRefused(
+            f"{feature_set.id}: empire roster events not in {EVENTS_ID!r}: {', '.join(unpublished)}"
+        )
+    lineages = {lineage.id: lineage for lineage in empires.lineages}
     missing = [f.id for f in feature_set.features if f.id not in empires.geometry_ids]
     if missing:
         raise PublishRefused(
@@ -368,12 +395,13 @@ def _territory_data(feature_set: FeatureSet, empires: EmpireInputs) -> Territory
         (estimate,) = feature.estimates
         if estimate.area_km2 is None or estimate.t_end is None:
             raise PublishRefused(f"{feature.id}: a territory snapshot needs area_km2 and t_end")
-        lineage, label = empires.polities[feature.name]
+        lineage, member = empires.polities[feature.name]
         snapshots.append(
             TerritorySnapshotData(
                 id=feature.id,
                 lineage=lineage,
-                label=label,
+                member=member,
+                label=lineages[lineage].members[member].label,
                 t_start=estimate.t,
                 t_end=estimate.t_end,
                 lat=feature.lat,
@@ -1052,7 +1080,9 @@ def _layers(
         entries.append(_layer_entry(spec, LayerDataKind.FEATURES, feature_set.domain, None, None))
     territories = world.features.get(EMPIRES_CURATED_ID)
     if territories is not None and empires is not None:
-        data = _territory_data(territories, empires)
+        event_set = world.events.get(EVENTS_ID)
+        event_ids = frozenset(e.id for e in event_set.events) if event_set else frozenset()
+        data = _territory_data(territories, empires, event_ids)
         domain = (min(s.t_end for s in data.snapshots), max(s.t_start for s in data.snapshots))
         files.append(LayerFile(published=_layer_path(EMPIRES_LAYER), data=data))
         entries.append(_layer_entry(EMPIRES_LAYER, LayerDataKind.TERRITORIES, domain, None, None))

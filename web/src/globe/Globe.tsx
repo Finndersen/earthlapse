@@ -35,7 +35,6 @@ import type { SceneLocation } from '@/types/manifest'
 import { arrivalTimingFor, arrivalWindow } from './arcs'
 import { citiesHaveDataAt } from './cities'
 import { densityChannelMask } from './density'
-import { EmpireLabels } from './EmpireLabels'
 import {
   EMPIRE_FRAME_KEYING,
   empiresHaveDataAt,
@@ -396,6 +395,11 @@ export interface GlobeProps {
   /** Opens an event's full detail — a click, or a second tap, on an arrival arc or inhabited
    *  marker while expanded. The caller looks the event up and shows it. */
   onActivateEvent?: (eventId: string) => void
+  /** Opens an empire lineage's detail — a click, or a second tap, on its territory or label while
+   *  expanded. */
+  onActivateEmpire?: (lineage: string) => void
+  /** The lineage whose detail is open, if any; its label draws highlighted. */
+  selectedEmpire?: string | null
 }
 
 /** Whether `t` falls within the arrival layer's own domain — from the oldest arrival's dating
@@ -446,6 +450,8 @@ export function Globe({
   hoveredFeedEventId,
   onViewModeToggleHeightChange,
   onActivateEvent,
+  onActivateEmpire,
+  selectedEmpire = null,
 }: GlobeProps) {
   // One throwaway canvas/context answers both "does WebGL work at all" and (below) "can this
   // GPU hold a T1 basemap texture" — `probeWebgl`'s own doc comment has the full story on why
@@ -616,6 +622,16 @@ export function Globe({
   // Outside the domain the presented set is empty, so the texture itself fades the layer out.
   const empireStrength = humanOn && empirePair.texturesReady ? 1 : 0
   const showEmpireLabels = expanded && humanOn && empiresInDomain && empirePair.texturesReady
+  const empireLabelCap = isPhoneViewport ? EMPIRE_LABEL_CAP_PHONE : EMPIRE_LABEL_CAP_DESKTOP
+  const empireLabels = useMemo(
+    () => (showEmpireLabels ? { presented: presentedEmpires, cap: empireLabelCap } : null),
+    [showEmpireLabels, presentedEmpires, empireLabelCap],
+  )
+  // The hit test answers for what is drawn at `t`, expanded only, like the labels.
+  const empireHits = useMemo(
+    () => (showEmpireLabels && empires !== null && empireGeometry !== null ? { index: empires, frame: empireFrame, geometry: empireGeometry } : null),
+    [showEmpireLabels, empires, empireFrame, empireGeometry],
+  )
 
   // ADR-034: the scene's own plotted position. `sceneMarkerCoordinates` is the single place the
   // "never fall back to presentDay" rule lives. The small orb eases its rotation to centre it;
@@ -969,15 +985,11 @@ export function Globe({
                 touchHitRef={humanTouchHitRef}
                 onActivateEvent={onActivateEvent}
                 cityLabelFadeWindowAt={cityLabelFadeWindowAt}
+                empires={empireHits}
+                empireLabels={empireLabels}
+                selectedEmpire={selectedEmpire}
+                onActivateEmpire={onActivateEmpire}
               />
-              {showEmpireLabels && (
-                <EmpireLabels
-                  presented={presentedEmpires}
-                  cap={isPhoneViewport ? EMPIRE_LABEL_CAP_PHONE : EMPIRE_LABEL_CAP_DESKTOP}
-                  unfold={unfold}
-                  radius={GLOBE_RADIUS}
-                />
-              )}
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />
             <PoleAxisMarkers unfold={unfold} />
