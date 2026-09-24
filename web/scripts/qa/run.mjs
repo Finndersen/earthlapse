@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
  * Visual-QA harness runner. One `next build` (unless `--dev`/`--no-build`), one static server,
- * one browser, one page load (plus one in a `hasTouch` context for `touch: true` shots) — every
- * shot drives an already-loaded page through `window.__earthlapse` (`web/src/store/devHook.ts`)
- * rather than reloading. See `README.md` for the full contract and CLI reference; `--help` prints
- * the same summary.
+ * one browser, one page load (one per shard) — every shot drives an already-loaded page through
+ * `window.__earthlapse` (`web/src/store/devHook.ts`) rather than reloading. See `README.md` for
+ * the full contract and CLI reference; `--help` prints the same summary.
  */
 
 import { spawn, spawnSync } from 'node:child_process'
@@ -16,7 +15,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { resolveChromium } from './browser.mjs'
 import { buildContactSheet } from './contactSheet.mjs'
-import { makeHook, rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
+import { makeHook, waitForGlobeFitFramesStable } from './hook.mjs'
+import { capturePng, cdpSession } from './measure.mjs'
 import { startStaticServer } from './server.mjs'
 import { ONBOARDING_TOUR_SELECTOR } from './selectors.mjs'
 import shotList from './shots.mjs'
@@ -76,6 +76,7 @@ Environment:
   QA_CHROMIUM                Chromium binary to launch (default: discovered, see browser.mjs)
   QA_DEV_PORT                the \`next dev\` port --dev uses (default: ${checkoutDevPort()}, this checkout's)
   QA_PORT                    static server port, as --port
+  QA_TRACE                   set: print every timed page call with its duration and call site
 `
 
 function parseArgs(rawArgv) {
@@ -359,7 +360,6 @@ async function closeEventBrowser(page, hook) {
   if ((await browser.count()) === 0) return
   await browser.getByRole('button', { name: 'Close', exact: true }).click()
   await hook.ready()
-  await rafTicks(page, 2)
 }
 
 /** Any open dialog but the tour's own (`setTourOpen` owns that one): an event's or a caption's
@@ -378,7 +378,6 @@ async function closeOpenDialogs(page, hook) {
   for (let attempt = 0; attempt < 4 && (await dialogs.count()) > 0; attempt += 1) {
     await dialogs.last().getByRole('button', { name: 'Close', exact: true }).first().click()
     await hook.ready()
-    await rafTicks(page, 2)
   }
   if ((await dialogs.count()) > 0) throw new Error('an open dialog did not close on its Close button')
 }
@@ -421,13 +420,12 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
     },
     { playing: state.playing ?? false, rootSectionId: ROOT_SECTION_ID, dialogSelector: OPEN_DIALOG_SELECTOR },
   )
-  if (reset.sectionChanged) await waitForSectionWindowSettle(page)
-  // The frames between collapse and any re-expand let React commit the collapse rather than
-  // batch it away.
-  if (reset.collapsed) {
-    await hook.ready()
-    await rafTicks(page, 2)
-  }
+  // The scrub track's section-window animation runs on the wall clock, so it runs out during the
+  // steps below and only its remainder is waited, before the tour measures its anchors.
+  const sectionChangedAt = reset.sectionChanged ? Date.now() : null
+  // `ready()`'s frames between collapse and any re-expand let React commit the collapse rather
+  // than batch it away.
+  if (reset.collapsed) await hook.ready()
   if (reset.dialogOpen) {
     await closeOpenDialogs(page, hook)
     // A panel that paused playback resumes it on close.
@@ -458,6 +456,7 @@ async function applyState(page, hook, state = {}, reducedMotion = 'reduce') {
       await waitForGlobeFitFramesStable(page)
     }
   }
+  if (sectionChangedAt !== null) await waitForSectionWindowSettle(page, Date.now() - sectionChangedAt)
   // Last, so the tour measures every anchor against the layout this shot actually ends up with
   // rather than the one it started from.
   await hook.setTourOpen(state.tour ?? false)
@@ -513,35 +512,54 @@ function shotExpect(shot, run) {
  *  be threaded through `runShotOrRecordFailure` untouched. */
 async function runShot(page, hook, shot, run) {
   const startedAt = Date.now()
+  const calls = resetCallTimings(page)
+  const steps = {}
+  let stepStart = Date.now()
+  const endStep = (name) => {
+    steps[name] = Date.now() - stepStart
+    stepStart = Date.now()
+  }
   const viewport = run.viewport ?? shot.viewport ?? DEFAULT_VIEWPORT
-  await page.setViewportSize(viewport)
+  const current = page.viewportSize()
+  if (current?.width !== viewport.width || current?.height !== viewport.height) await page.setViewportSize(viewport)
   // Per-shot override, for a shot that needs real motion to have something to measure.
   const reducedMotion = shot.reducedMotion ?? run.reducedMotion
-  await page.emulateMedia({ reducedMotion })
-
-  // A `t` the store already holds starts no crossfade, so only the remainder of one an earlier
-  // shot's own `setT` may have left running is waited out.
-  if (shot.t !== undefined) {
-    if ((await hook.getState())?.t !== shot.t) {
-      await hook.setT(shot.t)
-      await waitForSceneCrossfadeSettle(page)
-    } else {
-      await waitForSceneCrossfadeSettle(page, Date.now() - hook.lastSetTAt)
-    }
+  if (page.qaReducedMotion !== reducedMotion) {
+    await page.emulateMedia({ reducedMotion })
+    page.qaReducedMotion = reducedMotion
   }
-  await applyState(page, hook, shot.state, reducedMotion)
-  if (shot.actions !== undefined) await shot.actions({ page, hook })
-  await hook.ready()
-  await rafTicks(page, 2)
+  if (shot.touch === true) await setTouchEmulation(page, true)
+  endStep('viewport')
 
-  // `--no-screenshots` skips both the capture and the contact sheet built from it: a full-page
-  // PNG is the single most expensive thing a shot does and several MB of the run's output, and an
-  // iteration loop that only reads assertion numbers never opens one.
-  const screenshotName = run.screenshots ? `${shot.name}.png` : null
-  const pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
-  if (pngPath !== null) await page.screenshot({ path: pngPath })
+  let screenshotName = null
+  let pngPath = null
+  let measurements = {}
+  try {
+    // A `t` jump starts a scene crossfade that settles on the wall clock (`timeouts.mjs`), so it
+    // runs out while `state` is applied and only its remainder is waited afterwards — as is the
+    // remainder of one an earlier shot's own `setT` left running.
+    if (shot.t !== undefined) await hook.setTIfChanged(shot.t)
+    await applyState(page, hook, shot.state, reducedMotion)
+    endStep('state')
+    if (shot.t !== undefined) await waitForSceneCrossfadeSettle(page, Date.now() - hook.lastSetTAt)
+    endStep('t')
+    if (shot.actions !== undefined) await shot.actions({ page, hook })
+    // `ready()` ends on two animation frames of its own, so what it waited for has painted.
+    await hook.ready()
+    endStep('actions')
 
-  const measurements = shot.measure !== undefined ? await shot.measure({ page, hook, smoke: run.smoke }) : {}
+    // `--no-screenshots` skips both the capture and the contact sheet built from it: an iteration
+    // loop that only reads assertion numbers never opens one.
+    screenshotName = run.screenshots ? `${shot.name}.png` : null
+    pngPath = screenshotName === null ? null : path.join(run.runDir, screenshotName)
+    if (pngPath !== null) await writeFile(pngPath, await capturePng(page))
+    endStep('screenshot')
+
+    if (shot.measure !== undefined) measurements = await shot.measure({ page, hook, smoke: run.smoke })
+    endStep('measure')
+  } finally {
+    if (shot.touch === true) await setTouchEmulation(page, false)
+  }
   const assertions = buildAssertions(measurements, shotExpect(shot, run))
 
   return {
@@ -550,12 +568,58 @@ async function runShot(page, hook, shot, run) {
     viewport,
     t: shot.t ?? null,
     durationMs: Date.now() - startedAt,
+    timing: { steps, calls: { ...calls } },
     screenshot: screenshotName,
     pngPath,
     measurements,
     assertions,
     pass: assertions.every((a) => a.pass),
   }
+}
+
+/**
+ * Turns touch input on or off on the loaded page: what Playwright's per-context `hasTouch` sets
+ * (`Emulation.setTouchEmulationEnabled`), switched at runtime so a `touch: true` shot runs on the
+ * same page as every other shot instead of paying a second page load. `(pointer: coarse)`
+ * re-evaluates with it, and `touchTap`'s CDP touch events are delivered only while it is on.
+ * @param {import('playwright').Page} page
+ * @param {boolean} enabled
+ */
+async function setTouchEmulation(page, enabled) {
+  const cdp = await cdpSession(page)
+  await cdp.send('Emulation.setTouchEmulationEnabled', enabled ? { enabled, maxTouchPoints: 1 } : { enabled })
+}
+
+/** Page methods whose count and total time each shot reports: where a shot's time goes, since a
+ *  screenshot or a round trip with the globe expanded each waits out a software-rendered frame. */
+const TIMED_PAGE_METHODS = ['screenshot', 'evaluate', 'waitForTimeout', 'waitForFunction']
+
+/** Wraps `TIMED_PAGE_METHODS` on `page` to accumulate into `page.qaCallTimings`. */
+function timePageCalls(page) {
+  page.qaCallTimings = {}
+  for (const method of TIMED_PAGE_METHODS) {
+    const original = page[method].bind(page)
+    page[method] = async (...args) => {
+      const started = Date.now()
+      try {
+        return await original(...args)
+      } finally {
+        const entry = (page.qaCallTimings[method] ??= { n: 0, ms: 0 })
+        entry.n += 1
+        entry.ms += Date.now() - started
+        if (process.env.QA_TRACE) {
+          const caller = new Error().stack.split('\n').slice(2, 6).map((l) => (/(\w+\.mjs:\d+)/.exec(l) ?? [''])[0]).join(' ')
+          console.log(`TRACE ${String(Date.now() - started).padStart(5)} ${method} ${caller.trim()}`)
+        }
+      }
+    }
+  }
+}
+
+/** Clears `page.qaCallTimings` and returns the fresh object the next calls accumulate into. */
+function resetCallTimings(page) {
+  page.qaCallTimings = {}
+  return page.qaCallTimings
 }
 
 /**
@@ -574,7 +638,8 @@ async function runBootstrapShot(page, shot, run, baseUrl) {
   const startedAt = Date.now()
   const viewport = shot.viewport ?? DEFAULT_VIEWPORT
   await page.setViewportSize(viewport)
-  await page.emulateMedia({ reducedMotion: shot.reducedMotion ?? run.reducedMotion })
+  page.qaReducedMotion = shot.reducedMotion ?? run.reducedMotion
+  await page.emulateMedia({ reducedMotion: page.qaReducedMotion })
 
   const { measurements, screenshot } = await shot.bootstrapsPage({ page, baseUrl, run })
   const screenshotName = screenshot !== null && screenshot !== undefined ? `${shot.name}.png` : null
@@ -688,9 +753,13 @@ function printSummary(results, consoleErrors) {
   console.log(`console/page errors: ${consoleErrors.length}`)
   for (const e of consoleErrors) console.log(`  - ${e}`)
   console.log('')
-  console.log('Slowest shots:')
+  console.log('Slowest shots (steps; page calls as count/ms):')
   for (const r of [...results].sort((a, b) => b.durationMs - a.durationMs).slice(0, 10)) {
     console.log(`  ${String(r.durationMs).padStart(7)}ms  ${r.name}`)
+    if (r.timing === undefined) continue
+    const steps = Object.entries(r.timing.steps).filter(([, ms]) => ms > 0).map(([name, ms]) => `${name} ${ms}`)
+    const calls = Object.entries(r.timing.calls).map(([name, { n, ms }]) => `${name} ${n}/${ms}`)
+    console.log(`             ${[...steps, '|', ...calls].join('  ')}`)
   }
   const failed = results.filter((r) => !r.pass)
   console.log('')
@@ -730,21 +799,22 @@ function contiguousChunks(list, count) {
 
 /**
  * One browser context and page, loaded once and ready for shots: console errors collected into
- * `consoleErrors` (prefixed with `label` when set), touch input enabled with `hasTouch`, published
- * media rerouted to the local export,
- * the app loaded (by `bootstrapShot` when given), the QA hook confirmed present, and the
- * first-visit tour dismissed.
+ * `consoleErrors` (prefixed with `label` when set), published media rerouted to the local export,
+ * the app loaded (by `bootstrapShot` when given), the QA hook confirmed present, the text caret
+ * hidden (as `page.screenshot` would, per capture) and the first-visit tour dismissed.
  * @returns {Promise<{ page: import('playwright').Page, hook: ReturnType<typeof makeHook>, bootstrapResult: object | null }>}
  */
-async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label, bootstrapShot, hasTouch = false }) {
-  const context = await browser.newContext({ deviceScaleFactor: 1, hasTouch })
+async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label, bootstrapShot }) {
+  const context = await browser.newContext({ deviceScaleFactor: 1 })
   const page = await context.newPage()
+  timePageCalls(page)
   const prefix = label === null ? '' : `[${label}] `
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(`${prefix}console.error: ${msg.text()}`)
   })
   page.on('pageerror', (error) => consoleErrors.push(`${prefix}pageerror: ${String(error)}`))
 
+  page.qaReducedMotion = args.reducedMotion
   await page.emulateMedia({ reducedMotion: args.reducedMotion })
   await page.setViewportSize(DEFAULT_VIEWPORT)
 
@@ -783,6 +853,8 @@ async function openLoadedPage(browser, { baseUrl, args, run, consoleErrors, labe
   // way, so it then never opens). The shots that guard the tour re-open it via `state.tour`.
   await hook.setTourOpen(false)
   await page.waitForSelector(ONBOARDING_TOUR_SELECTOR, { state: 'detached', timeout: 10_000 })
+  // A blinking caret in a focused field would differ between two otherwise identical captures.
+  await page.addStyleTag({ content: '*, *::before, *::after { caret-color: transparent !important; }' })
   return { page, hook, bootstrapResult }
 }
 
@@ -797,7 +869,16 @@ async function main() {
     stopDevServer()
     return
   }
+  // Wall-clock time of each phase outside the shots, for the report and the summary.
+  const phases = {}
+  let phaseStart = Date.now()
+  const endPhase = (name) => {
+    phases[name] = (phases[name] ?? 0) + (Date.now() - phaseStart)
+    phaseStart = Date.now()
+  }
+  const processStartedAt = phaseStart
   await checkPreconditions(args)
+  endPhase('preconditions')
 
   let server = null
   let baseUrl
@@ -805,6 +886,7 @@ async function main() {
     baseUrl = await ensureDevServer()
   } else {
     if (!args.noBuild) await ensureQaExport(args)
+    endPhase('build')
     server = await startStaticServer(QA_EXPORT_DIR, args.port)
     baseUrl = server.url
     console.log(`Serving ${QA_EXPORT_DIR} at ${baseUrl}`)
@@ -824,6 +906,7 @@ async function main() {
   const { chromium } = await import('playwright')
   const { executablePath } = await resolveChromium()
   const browser = await chromium.launch({ executablePath })
+  endPhase('browserLaunch')
   const consoleErrors = []
   const pages = []
   const startedAt = Date.now()
@@ -841,18 +924,19 @@ async function main() {
     const selected = selectShots([...shotList, ...extra], args.shots, args.grep)
     const shots = args.sort ? sortByViewport(selected, args.viewport) : selected
     const bootstrapShot = shots.find((shot) => shot.bootstrapsPage !== undefined)
-    const touchShots = shots.filter((shot) => shot.touch === true)
     const chunks = contiguousChunks(
-      shots.filter((shot) => shot !== bootstrapShot && shot.touch !== true),
+      shots.filter((shot) => shot !== bootstrapShot),
       args.shards,
     )
-    if (chunks.length === 0 && (touchShots.length === 0 || bootstrapShot !== undefined)) chunks.push([])
+    if (chunks.length === 0) chunks.push([])
 
     console.log(`Running ${shots.length} of ${shotList.length + extra.length} shots${chunks.length > 1 ? ` across ${chunks.length} pages` : ''}…`)
     const resultsByName = new Map()
+    const pageLoadMs = {}
     await Promise.all(
       chunks.map(async (chunk, index) => {
         const label = chunks.length > 1 ? `shard ${index}` : null
+        const loadStartedAt = Date.now()
         const loaded = await openLoadedPage(browser, {
           baseUrl,
           args,
@@ -861,6 +945,7 @@ async function main() {
           label,
           bootstrapShot: index === 0 ? bootstrapShot : undefined,
         })
+        pageLoadMs[label ?? 'main'] = Date.now() - loadStartedAt
         pages.push(loaded.page)
         if (loaded.bootstrapResult !== null) resultsByName.set(bootstrapShot.name, loaded.bootstrapResult)
         for (const shot of chunk) {
@@ -869,15 +954,7 @@ async function main() {
         }
       }),
     )
-    // Playwright fixes `hasTouch` per context, so touch shots run afterwards on a page of their own.
-    if (touchShots.length > 0) {
-      const loaded = await openLoadedPage(browser, { baseUrl, args, run, consoleErrors, label: 'touch', bootstrapShot: undefined, hasTouch: true })
-      pages.push(loaded.page)
-      for (const shot of touchShots) {
-        console.log(`[touch] Running ${shot.name}…`)
-        resultsByName.set(shot.name, await runShotOrRecordFailure(loaded.page, loaded.hook, shot, run))
-      }
-    }
+    endPhase('shots')
     const results = shots.map((shot) => resultsByName.get(shot.name))
 
     // Nothing to sheet when every shot that passed skipped its screenshot; a run with failures
@@ -886,11 +963,15 @@ async function main() {
     const contactSheetPath = sheeted.length > 0 ? path.join(runDir, 'contact-sheet.png') : null
     if (contactSheetPath !== null) {
       await writeFile(contactSheetPath, await buildContactSheet(browser, sheeted, runDir))
+      endPhase('contactSheet')
     }
 
     const report = {
       startedAt: new Date(startedAt).toISOString(),
       wallTimeMs: Date.now() - startedAt,
+      processTimeMs: Date.now() - processStartedAt,
+      phases,
+      pageLoadMs,
       shards: chunks.length,
       baseUrl,
       reducedMotion: args.reducedMotion,
@@ -902,7 +983,9 @@ async function main() {
     await writeFile(path.join(runDir, 'report.json'), JSON.stringify(report, null, 2))
 
     printSummary(results, consoleErrors)
-    console.log(`Wall time: ${(report.wallTimeMs / 1000).toFixed(1)}s`)
+    const phaseList = Object.entries({ ...phases, ...Object.fromEntries(Object.entries(pageLoadMs).map(([k, ms]) => [`load(${k})`, ms])) })
+    console.log(`Phases (ms; page loads are part of shots): ${phaseList.map(([name, ms]) => `${name} ${ms}`).join('  ')}`)
+    console.log(`Wall time: ${(report.wallTimeMs / 1000).toFixed(1)}s after browser launch, ${(report.processTimeMs / 1000).toFixed(1)}s in all`)
     console.log(`Report: ${path.join(runDir, 'report.json')}`)
     if (contactSheetPath !== null) console.log(`Contact sheet: ${contactSheetPath}`)
 

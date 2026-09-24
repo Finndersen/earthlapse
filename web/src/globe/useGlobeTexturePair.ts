@@ -41,6 +41,9 @@ export interface GlobeTexturePair {
    *  for the current `resetKey`/`sourceKey` has loaded. Deliberately independent of whether
    *  `blend` is currently null: `Globe` gates the out-of-domain look on `blend` itself, not on this. */
   texturesReady: boolean
+  /** Whether the bound pair is the one `blend` asks for: false while a newer pair loads behind
+   *  the previous one, and while nothing is bound. */
+  blendBound: boolean
 }
 
 /**
@@ -155,5 +158,6 @@ export function useGlobeTexturePair(
     afterTex: effectiveBound?.afterTex ?? null,
     mix,
     texturesReady: effectiveBound !== null,
+    blendBound: matchesBound,
   }
 }

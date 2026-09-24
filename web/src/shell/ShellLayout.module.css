@@ -389,10 +389,17 @@
   inset: -16px -56px -20px -48px;
   background: radial-gradient(
     ellipse 72% 62% at 40% 50%,
-    rgba(3, 4, 6, 0.46) 0%,
-    rgba(3, 4, 6, 0.34) 52%,
+    rgba(3, 4, 6, var(--scrim-core, 0.46)) 0%,
+    rgba(3, 4, 6, var(--scrim-mid, 0.34)) 52%,
     transparent 84%
   );
+}
+
+/* The readouts are a few short lines with their own text-shadow halo, so they need less backing
+   than the feed's running text. */
+.readouts {
+  --scrim-core: 0.3;
+  --scrim-mid: 0.2;
 }
 
 .caption,
@@ -800,14 +807,21 @@
      can be taller than the orb once the About button joins it, and a separate `auto` row for
      this element would grow with *that* column's height too, leaving a gap under the orb. As a
      second item in the same area, its own position is pinned to the orb by `margin-top` instead,
-     independent of whatever `.ancestor` needs. */
+     independent of whatever `.ancestor` needs. Its scrim is lighter and tighter than
+     desktop's, so the readout does not sit in a dark patch as large as the orb. */
   .readouts {
+    --scrim-core: 0.2;
+    --scrim-mid: 0.12;
     grid-area: globe;
     align-self: start;
     justify-self: start;
     /* Measured from the grid area's own top, so it must clear the same `--hud-column-top` inset
        the orb above it sits on, not just the orb's height. */
     margin-top: calc(var(--hud-column-top) + var(--globe-orb-size) + 4px);
+  }
+
+  .readouts::before {
+    inset: -8px -20px -10px -16px;
   }
 }
 

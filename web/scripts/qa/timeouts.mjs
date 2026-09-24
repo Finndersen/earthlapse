@@ -45,9 +45,11 @@ export function waitForApproxUnfoldProgress(page, fractionOfDuration) {
  * to move to a newly selected section. Local animation state with no DOM/store reflection,
  * mirrored as a plain number for the same reason as the waits above.
  * @param {import('playwright').Page} page
+ * @param {number} [alreadyElapsedMs] time already passed since the section changed — only the
+ *   remainder is waited.
  */
-export function waitForSectionWindowSettle(page) {
+export function waitForSectionWindowSettle(page, alreadyElapsedMs = 0) {
   const WINDOW_ANIMATION_MS_MIRROR = 700
   const SAFETY_MARGIN_MS = 150
-  return page.waitForTimeout(WINDOW_ANIMATION_MS_MIRROR + SAFETY_MARGIN_MS)
+  return page.waitForTimeout(Math.max(0, WINDOW_ANIMATION_MS_MIRROR + SAFETY_MARGIN_MS - alreadyElapsedMs))
 }

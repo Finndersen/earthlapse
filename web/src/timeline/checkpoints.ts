@@ -6,7 +6,7 @@
  * window-overlap test, not `lod.ts`'s span-driven importance threshold.
  */
 
-import type { GeoTime, TimelineEvent } from '@/types/layer'
+import type { GeoTime, Playback, TimelineEvent } from '@/types/layer'
 
 import { nearestNeighbourEvent, type EventStepDirection } from './lod'
 import type { TimeWindow } from './scale'
@@ -64,4 +64,23 @@ export function nearestStepTarget(
   direction: EventStepDirection,
 ): GeoTime | undefined {
   return nearestNeighbourCheckpoint(checkpoints, window, t, direction)?.t
+}
+
+/**
+ * The transport's step (back/forward buttons, ←/→). In `'scenes'` mode, the neighbouring scene
+ * (`nearestStepTarget`). In `'steady'` mode, one second of playback at the chosen rate, so manual
+ * stepping walks time at the pace playing would; clamped to `window`, and `undefined` at its edge.
+ */
+export function transportStepTarget(
+  checkpoints: readonly TimelineCheckpoint[],
+  window: TimeWindow,
+  t: GeoTime,
+  direction: EventStepDirection,
+  playback: Pick<Playback, 'mode' | 'yearsPerSecond'>,
+): GeoTime | undefined {
+  if (playback.mode !== 'steady') return nearestStepTarget(checkpoints, window, t, direction)
+  const [newest, oldest] = window
+  const stepped = direction === 'back' ? t + playback.yearsPerSecond : t - playback.yearsPerSecond
+  const target = Math.min(oldest, Math.max(newest, stepped))
+  return target === t ? undefined : target
 }

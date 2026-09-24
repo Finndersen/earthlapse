@@ -6,11 +6,12 @@
  *  — so nothing here shifts when the breadcrumb's length changes. The sound/volume control
  *  (`@/audio`'s `<SoundToggle>`) is passed through by the caller, not owned here.
  *
- *  - `TransportCore` — back / play-pause / forward. Back and forward step to the nearest
- *    visible scene (`nearestStepTarget`) rather than by a fixed number of years — a fixed step
- *    has no sane value across a domain that runs from 1 year to 4.6 billion. Events are not
- *    step targets: they are far denser than scenes, so stepping to one usually leaves the same
- *    still on screen and the button looks broken.
+ *  - `TransportCore` — back / play-pause / forward (`transportStepTarget`). In scenes mode back
+ *    and forward step to the nearest visible scene rather than by a fixed number of years — a
+ *    fixed step has no sane value across a domain that runs from 1 year to 4.6 billion. Events
+ *    are not step targets: they are far denser than scenes, so stepping to one usually leaves
+ *    the same still on screen and the button looks broken. In steady mode the viewer has chosen
+ *    a rate, which is a sane step: one second of playback at it.
  *  - `SpeedControl` — the active mode's rate on a `RateScroller`, also stepped with `[`/`]`/`-`/`=`
  *    (`timeline/keyboard.ts`'s `'speed'` intent) through the same detents (`../playbackRates`).
  *  - `PlaybackModeToggle` — the scenes/steady mode toggle (ADR-016): a compact two-state
@@ -26,7 +27,7 @@ import type { ReactNode } from 'react'
 
 import type { GeoTime, Playback, PlaybackMode } from '@/types/layer'
 
-import { nearestStepTarget, type TimelineCheckpoint } from '../checkpoints'
+import { transportStepTarget, type TimelineCheckpoint } from '../checkpoints'
 import { formatRate } from '../format'
 import {
   activeRate,
@@ -97,17 +98,20 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
   // "back" moves further into the past (older, larger t ago); "forward" moves toward the
   // present (smaller t) — the same direction playback itself advances in.
   const jumpToNeighbour = (direction: 'back' | 'forward'): void => {
-    const target = nearestStepTarget(checkpoints, visibleWindow, t, direction)
+    const target = transportStepTarget(checkpoints, visibleWindow, t, direction, playback)
     if (target !== undefined) onScrub(target)
   }
+  const steadyStep = playback.mode === 'steady' ? formatRate(playback.yearsPerSecond).replace(/\/s$/, '') : null
+  const backLabel = steadyStep === null ? 'Back to previous scene' : `Back ${steadyStep}`
+  const forwardLabel = steadyStep === null ? 'Forward to next scene' : `Forward ${steadyStep}`
 
   return (
     <div className={styles.core}>
       <button
         type="button"
         className={styles.ghostButton}
-        aria-label="Back to previous scene"
-        title="Back to previous scene"
+        aria-label={backLabel}
+        title={backLabel}
         onClick={() => jumpToNeighbour('back')}
       >
         <TransportIcon>{BACK_ICON}</TransportIcon>
@@ -123,8 +127,8 @@ export function TransportCore({ t, window: visibleWindow, checkpoints, playback,
       <button
         type="button"
         className={styles.ghostButton}
-        aria-label="Forward to next scene"
-        title="Forward to next scene"
+        aria-label={forwardLabel}
+        title={forwardLabel}
         onClick={() => jumpToNeighbour('forward')}
       >
         <TransportIcon>{FORWARD_ICON}</TransportIcon>

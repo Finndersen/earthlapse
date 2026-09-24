@@ -130,9 +130,10 @@ rendered bounds, fails on console errors, and writes a screenshot contact sheet.
 shot rather than adding a new script — see "Testing policy" for when a shot is justified at all.
 
 **Working loop.** Iterate with `pnpm -C web qa -- --dev --grep <area>` (hot reload against `next
-dev`, no build) and `scripts/check.sh --quick --changed`. At the end, one static build with
-`pnpm -C web qa -- --smoke`, or the full `pnpm -C web qa` when layout or WebGL/canvas output
-changed; then hand back on a full `make check`.
+dev`, no build) and `scripts/check.sh --quick --changed`. At the end, run only the shots covering what changed
+(`pnpm -C web qa -- --grep <shot>`), once, on the static build; a change with no rendered effect
+needs no QA run. Never run the full `pnpm -C web qa` for a targeted change: it is for a change
+to the harness itself or one that touches every layout. Then hand back on a full `make check`.
 
 ## Testing policy
 

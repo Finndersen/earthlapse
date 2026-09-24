@@ -1,0 +1,263 @@
+/*
+ * Content only — `EventDock.module.css` owns the surface, title row and close button. The type and
+ * the footer follow `EventDetailPanel.module.css` (mono dates, sans body, small uppercase section
+ * heads, outlined footer buttons) so an empire card reads as the same feature as an event card.
+ * Two columns on a wide dock keep it about as tall as an event card; one on a phone.
+ */
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 24px;
+  padding: 12px 20px 4px;
+}
+
+@media (max-width: 760px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 14px;
+  }
+}
+
+.column {
+  min-width: 0;
+}
+
+.span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.swatch {
+  flex: none;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.description {
+  margin: 0 0 12px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.chart {
+  margin: 0 0 12px;
+}
+
+.column > .chart:last-child {
+  margin-bottom: 0;
+}
+
+.chartSvg {
+  display: block;
+  height: auto;
+  overflow: visible;
+}
+
+.chartLine {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartPeak {
+  fill: var(--hud-ink, #efe9dc);
+}
+
+.chartPlayhead {
+  stroke: var(--hud-faint, rgba(239, 233, 220, 0.36));
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartDot {
+  fill: var(--hud-accent, #e8b06a);
+}
+
+.chartCaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  white-space: nowrap;
+  margin-top: 4px;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.heading {
+  margin: 0 0 6px;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hud-ink, #efe9dc);
+}
+
+.members,
+.eventList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.member {
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  grid-template-areas: 'tick label span';
+  align-items: baseline;
+  column-gap: 9px;
+  padding: 2px 0;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+}
+
+.member[data-current] {
+  color: var(--hud-ink, #efe9dc);
+}
+
+.memberTick {
+  grid-area: tick;
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+.memberLabel {
+  grid-area: label;
+  overflow: hidden;
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.memberLabel:hover,
+a.memberLabel:focus-visible {
+  color: var(--hud-accent, #e8b06a);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  outline: none;
+}
+
+.member[data-current] .memberLabel {
+  font-weight: 600;
+}
+
+.memberSpan {
+  grid-area: span;
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.events {
+  margin: 12px 0 0;
+}
+
+.eventList li + li {
+  margin-top: 2px;
+}
+
+.eventLink {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--hud-accent, #e8b06a);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--hud-accent, #e8b06a) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.eventLink:hover,
+.eventLink:focus-visible {
+  text-decoration-color: currentcolor;
+  outline: none;
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+}
+
+@media (max-width: 760px), (orientation: landscape) and (max-height: 500px) {
+  .footer {
+    padding-bottom: 12px;
+  }
+}
+
+.footerButton {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
+  border-radius: 8px;
+  background: transparent;
+  padding: 7px 12px;
+  color: var(--hud-ink, #efe9dc);
+  font-family: var(--hud-sans, -apple-system, 'Helvetica Neue', Arial, sans-serif);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.footerButton[data-align='end'] {
+  text-align: right;
+}
+
+.footerHint {
+  color: var(--hud-accent, #e8b06a);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.footerTitle {
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footerButton:hover,
+.footerButton:focus-visible {
+  border-color: var(--hud-accent, #e8b06a);
+  background: color-mix(in srgb, var(--hud-accent, #e8b06a) 12%, transparent);
+  outline: none;
+}

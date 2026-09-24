@@ -6,6 +6,8 @@ import type { Scene } from '@/types/manifest'
 
 import {
   allCitiesAt,
+  arrivingCitiesAt,
+  CITY_ARRIVAL_SWELL,
   CITY_LABEL_CAP,
   CITY_TRAILING_GRACE_T,
   cityEstimateRange,
@@ -18,7 +20,6 @@ import {
   cityTrailingFadeAt,
   declutterCities,
   newCityLabels,
-  selectCities,
   type CityAtTime,
 } from './cities'
 
@@ -27,7 +28,7 @@ function city(id: string, estimates: FeatureData['estimates'], lat = 0, lon = 0)
 }
 
 function cityAt(id: string, population: number, foundedT = 0): CityAtTime {
-  return { feature: city(id, [{ t: foundedT, population }]), population, radiusPx: cityRadiusPx(population), trailingFade: 1 }
+  return { feature: city(id, [{ t: foundedT, population }]), population, radiusPx: cityRadiusPx(population), fade: 1 }
 }
 
 // Estimates ascending by t, as the parser leaves them.
@@ -91,26 +92,23 @@ describe('cityEstimateRange / cityRadiusPx / citiesHaveDataAt', () => {
   })
 })
 
-describe('selectCities', () => {
+describe('arrivingCitiesAt', () => {
   const A = city('a-city', [
     { t: 100, population: 50_000 },
     { t: 3000, population: 200_000 },
   ])
   const B = city('b-city', [
     { t: 100, population: 900_000 },
-    { t: 3000, population: 5000 },
+    { t: 1000, population: 20_000 },
   ])
+  const window = () => 500
 
-  it('ranks by population at t, capped at limit', () => {
-    expect(selectCities([A, B], 3000, 5).map((c) => c.feature.id)).toEqual(['a-city', 'b-city'])
-    expect(selectCities([A, B], 100, 1)).toEqual([{ feature: B, population: 900_000, radiusPx: cityRadiusPx(900_000), trailingFade: 1 }])
-    expect(selectCities([A, B], 5000, 5)).toEqual([])
-  })
-
-  it('breaks a population tie by id', () => {
-    const z = city('z', [{ t: 100, population: 50_000 }])
-    const y = city('y', [{ t: 100, population: 50_000 }])
-    expect(selectCities([z, y], 100, 5).map((c) => c.feature.id)).toEqual(['y', 'z'])
+  it('keeps a city only while it is new, swelling at its appearance and fading over its window', () => {
+    expect(arrivingCitiesAt([A, B], 3000, window).map((c) => c.feature.id)).toEqual(['a-city'])
+    const [fresh] = arrivingCitiesAt([A, B], 1000, window)
+    expect(fresh).toMatchObject({ fade: 1, radiusPx: cityRadiusPx(20_000) * (1 + CITY_ARRIVAL_SWELL) })
+    expect(arrivingCitiesAt([A, B], 750, window)[0]?.fade).toBeCloseTo(0.5)
+    expect(arrivingCitiesAt([A, B], 400, window)).toEqual([])
   })
 })
 

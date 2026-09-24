@@ -10,6 +10,7 @@ at all -- never leaves an orphaned file behind.
 
 from __future__ import annotations
 
+import json
 import math
 import shutil
 import tomllib
@@ -26,7 +27,7 @@ from pipeline.audio import (
     content_hashed_filename,
     load_stem_book,
 )
-from pipeline.databuild import discover_sources
+from pipeline.databuild import discover_sources, load_source_module
 from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
 from pipeline.exposure import ExposedPlate, ExposureError, erase_scale_bar, expose_plate
 from pipeline.generators.image import ImageInfo, asset_digest, sniff_image
@@ -64,6 +65,10 @@ from pipeline.manifest import (
     SeriesData,
     SeriesGap,
     SeriesSample,
+    TerritoryData,
+    TerritoryLineageData,
+    TerritoryMemberData,
+    TerritorySnapshotData,
     TimelineEvent,
     TreeData,
     TreeNodeData,
@@ -78,12 +83,17 @@ from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
     FORWARD_FLOW_NAME,
     LINEAGE_TREE_ID,
+    PUBLISHED_MORPH_RECORDS_NAME,
+    PUBLISHED_MORPHS_DIR,
     MorphKey,
     MorphRecord,
     PortraitBook,
     PortraitRecord,
+    PublishedMorph,
+    dump_published_morphs,
     lineage_order,
     load_morph,
+    load_published_morphs,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
 from pipeline.scenes import SceneFraming as SceneFramingRecord
@@ -296,6 +306,123 @@ def apply_city_roster(feature_set: FeatureSet, roster: CityRoster) -> FeatureSet
     return FeatureSet(id=feature_set.id, features=kept)
 
 
+EMPIRES_LAYER = LayerSpec(
+    "empires", "Historical empires", LayerSurface.GLOBE, "cliopatria", chartable=False
+)
+EMPIRES_CURATED_ID = "cliopatria_polities"
+EMPIRES_VECTORS_DIR = "vectors"
+
+
+@dataclass(frozen=True)
+class EmpireInputs:
+    """What the `empires` layer needs beside the curated `FeatureSet` (ADR-059): the roster's
+    lineages, each roster polity's (lineage id, index in that lineage's members), and the
+    published geometry file with the snapshot ids it holds. Read at publish, so relabelling,
+    recolouring or rewording needs no data rebuild."""
+
+    lineages: tuple[TerritoryLineageData, ...]
+    polities: dict[str, tuple[str, int]]
+    geometry: str  # media path, relative to the asset base
+    geometry_ids: frozenset[str]
+
+
+def load_empire_inputs(sources_dir: Path, media_dir: Path) -> EmpireInputs:
+    """The cliopatria roster, and the one content-hashed geometry file its `write_outputs`
+    placed under `media_dir/vectors/`. Refuses no file or several (a stale file `make data`
+    should have cleared)."""
+    normalise = load_source_module(sources_dir / EMPIRES_LAYER.source, "normalise")
+    roster = normalise.load_roster(normalise.ROSTER_PATH)
+    pattern = f"{normalise.GEOMETRY_STEM}-*.json"
+    matches = sorted((media_dir / EMPIRES_VECTORS_DIR).glob(pattern))
+    if len(matches) != 1:
+        raise PublishRefused(
+            f"{EMPIRES_LAYER.curated_id}: expected one data/media/{EMPIRES_VECTORS_DIR}/{pattern}, "
+            f"found {len(matches)} -- run `make data` (sources/cliopatria/normalise.py "
+            f"write_outputs)"
+        )
+    (path,) = matches
+    document = json.loads(path.read_bytes())
+    return EmpireInputs(
+        lineages=tuple(
+            TerritoryLineageData(
+                id=lineage.id,
+                name=lineage.name,
+                colour_slot=lineage.colour_slot,
+                description=lineage.description,
+                events=lineage.events,
+                members=tuple(
+                    TerritoryMemberData(label=member.display_label, wikipedia=member.wikipedia)
+                    for member in lineage.members
+                ),
+            )
+            for lineage in roster.lineages
+        ),
+        polities={
+            member.polity: (lineage.id, index)
+            for lineage in roster.lineages
+            for index, member in enumerate(lineage.members)
+        },
+        geometry=f"{EMPIRES_VECTORS_DIR}/{path.name}",
+        geometry_ids=frozenset(document["snapshots"]),
+    )
+
+
+def _territory_data(
+    feature_set: FeatureSet, empires: EmpireInputs, event_ids: frozenset[str]
+) -> TerritoryData:
+    """The `empires` layer: one snapshot per curated feature, lineage, member and label looked
+    up by polity name. Refuses a polity the roster does not name, a snapshot with no geometry,
+    and a lineage event that is not a published event."""
+    unknown = sorted({f.name for f in feature_set.features} - empires.polities.keys())
+    if unknown:
+        raise PublishRefused(
+            f"{feature_set.id}: polities absent from the empire roster: {', '.join(unknown)}"
+        )
+    unpublished = [
+        f"{lineage.id}:{event_id}"
+        for lineage in empires.lineages
+        for event_id in lineage.events
+        if event_id not in event_ids
+    ]
+    if unpublished:
+        raise PublishRefused(
+            f"{feature_set.id}: empire roster events not in {EVENTS_ID!r}: {', '.join(unpublished)}"
+        )
+    lineages = {lineage.id: lineage for lineage in empires.lineages}
+    missing = [f.id for f in feature_set.features if f.id not in empires.geometry_ids]
+    if missing:
+        raise PublishRefused(
+            f"{feature_set.id}: {len(missing)} snapshot(s) missing from {empires.geometry}: "
+            f"{', '.join(missing)}"
+        )
+    snapshots = []
+    for feature in feature_set.features:
+        (estimate,) = feature.estimates
+        if estimate.area_km2 is None or estimate.t_end is None:
+            raise PublishRefused(f"{feature.id}: a territory snapshot needs area_km2 and t_end")
+        lineage, member = empires.polities[feature.name]
+        snapshots.append(
+            TerritorySnapshotData(
+                id=feature.id,
+                lineage=lineage,
+                member=member,
+                label=lineages[lineage].members[member].label,
+                t_start=estimate.t,
+                t_end=estimate.t_end,
+                lat=feature.lat,
+                lon=feature.lon,
+                area_km2=estimate.area_km2,
+            )
+        )
+    snapshots.sort(key=lambda s: (-s.t_start, s.id))
+    return TerritoryData(
+        id=EMPIRES_LAYER.curated_id,
+        geometry=empires.geometry,
+        lineages=empires.lineages,
+        snapshots=tuple(snapshots),
+    )
+
+
 @dataclass(frozen=True)
 class MediaCopy:
     source: Path
@@ -329,7 +456,7 @@ class PortraitPublication:
     design: plates arrive a few at a time, and the viewer shows the nearest older plate."""
 
     data: PortraitSetData | None  # None until at least one portrait is pinned
-    files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, then copied morph fields
+    files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, morph fields, morph records
     unpinned: tuple[str, ...]
     dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015):
     # `earthlapse morph` judged these fine to skip, not to rerun; the viewer crossfades them
@@ -400,6 +527,11 @@ def prepare_publication(
         if world.features.get(CITIES_ID) is not None
         else None
     )
+    empires = (
+        load_empire_inputs(sources_dir, root / "data" / "media")
+        if world.features.get(EMPIRES_CURATED_ID) is not None
+        else None
+    )
     reconstructor = _load_reconstructor_if_needed(pinned, root)
     scene_entries = [_scene_entry(scene, root, reconstructor) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
@@ -411,6 +543,7 @@ def prepare_publication(
         world,
         None if portrait_publication is None else portrait_publication.data,
         city_roster,
+        empires,
     )
     events = _events(world)
     audio_stems = _audio_stems(stem_book, root)
@@ -474,7 +607,9 @@ def write_publication(publication: Publication, media_dir: Path) -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         match media:
             case MediaCopy(source=source):
-                shutil.copyfile(source, target)
+                # A reused published morph is its own source when publishing into data/media.
+                if not (target.exists() and target.samefile(source)):
+                    shutil.copyfile(source, target)
             case MediaBytes(data=data):
                 target.write_bytes(data)
     _prune_stale_media(
@@ -809,29 +944,39 @@ def _exposed_plate(node_id: str, data: bytes) -> ExposedPlate:
 
 def _portrait_morphs(
     pinned: list[PortraitRecord], cache: Path, root: Path
-) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...]]:
+) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaBytes | MediaCopy, ...], tuple[MorphKey, ...]]:
     """`pinned` is youngest first, so each pairwise step is (younger, older). Returns
     (morphs, files, dissolved): `dissolved` pairs are computed but too incoherent to trust
     (ADR-015 amendment), published as if no morph existed so the viewer crossfades them.
+    `files` ends with the published morph records.
 
-    A pair missing from `cache` is computed here, from the pins (ADR-058), so a publish never
-    depends on an earlier `earthlapse morph` having run on this machine."""
-    morphs, files, dissolved = [], [], []
+    Each pair comes from the first of: the published morph whose record and file digests still
+    match (`pipeline.portraits` says why that one wins), the local cache, or a fresh computation
+    from the pins (ADR-058), so a publish never depends on an earlier `earthlapse morph`."""
+    media_dir = root / "data" / "media"
+    published = load_published_morphs(
+        media_dir / PUBLISHED_MORPHS_DIR / PUBLISHED_MORPH_RECORDS_NAME
+    )
+    morphs, files, dissolved, entries = [], [], [], []
     for younger, older in pairwise(pinned):
         key = MorphKey.between(older, younger)
-        record = load_morph(cache, key) or _computed_morph(cache, key, older, younger, root)
+        base = f"{PUBLISHED_MORPHS_DIR}/{older.id}--{younger.id}"
+        entry = _reusable_morph(published.get(key), media_dir, base)
+        if entry is None:
+            entry = _cached_morph(key, cache, older, younger, root)
+            directory = key.directory(cache)
+            sources = (directory / FORWARD_FLOW_NAME, directory / BACKWARD_FLOW_NAME)
+        else:
+            sources = (media_dir / f"{base}.forward.png", media_dir / f"{base}.backward.png")
+        entries.append(entry)
+        record = entry.record
         if record.fallback_dissolve:
             dissolved.append(key)
             continue
-        directory = key.directory(cache)
-        base = f"portraits/morphs/{older.id}--{younger.id}"
         copies = (
-            MediaCopy(source=directory / FORWARD_FLOW_NAME, published=f"{base}.forward.png"),
-            MediaCopy(source=directory / BACKWARD_FLOW_NAME, published=f"{base}.backward.png"),
+            MediaCopy(source=sources[0], published=f"{base}.forward.png"),
+            MediaCopy(source=sources[1], published=f"{base}.backward.png"),
         )
-        for copy in copies:
-            if not copy.source.is_file():
-                raise PublishRefused(f"morph {older.id} -> {younger.id}: {copy.source} is missing")
         files.extend(copies)
         morphs.append(
             PortraitMorphData(
@@ -844,7 +989,50 @@ def _portrait_morphs(
                 size=record.size,
             )
         )
+    if entries:
+        records = dump_published_morphs(tuple(entries)).encode()
+        files.append(
+            MediaBytes(
+                data=records, published=f"{PUBLISHED_MORPHS_DIR}/{PUBLISHED_MORPH_RECORDS_NAME}"
+            )
+        )
     return tuple(morphs), tuple(files), tuple(dissolved)
+
+
+def _reusable_morph(
+    entry: PublishedMorph | None, media_dir: Path, base: str
+) -> PublishedMorph | None:
+    """`entry` when every file it shipped is still in `media_dir` with the digest it recorded
+    (a missing file or an un-smudged LFS pointer fails that), else None."""
+    if entry is None:
+        return None
+    for suffix, expected in (
+        ("forward", entry.forward_digest),
+        ("backward", entry.backward_digest),
+    ):
+        if expected is None:
+            continue
+        path = media_dir / f"{base}.{suffix}.png"
+        if not path.is_file() or asset_digest(path.read_bytes()) != expected:
+            return None
+    return entry
+
+
+def _cached_morph(
+    key: MorphKey, cache: Path, older: PortraitRecord, younger: PortraitRecord, root: Path
+) -> PublishedMorph:
+    """The pair from the local cache, computing it first when it is not there."""
+    record = load_morph(cache, key) or _computed_morph(cache, key, older, younger, root)
+    if record.fallback_dissolve:
+        return PublishedMorph(record=record, forward_digest=None, backward_digest=None)
+    directory = key.directory(cache)
+    digests = []
+    for name in (FORWARD_FLOW_NAME, BACKWARD_FLOW_NAME):
+        path = directory / name
+        if not path.is_file():
+            raise PublishRefused(f"morph {older.id} -> {younger.id}: {path} is missing")
+        digests.append(asset_digest(path.read_bytes()))
+    return PublishedMorph(record=record, forward_digest=digests[0], backward_digest=digests[1])
 
 
 def _computed_morph(
@@ -861,10 +1049,11 @@ def _layers(
     world: WorldModel,
     portraits: PortraitSetData | None,
     city_roster: CityRoster | None = None,
+    empires: EmpireInputs | None = None,
 ) -> tuple[tuple[LayerFile, ...], tuple[LayerManifest, ...]]:
-    """`city_roster` is `None` by default only for tests exercising the other layer kinds --
-    the real `prepare_publication` call site always loads and passes one (ADR-038). It has no
-    effect unless `world.features` actually holds a `cities` `FeatureSet`."""
+    """`city_roster` and `empires` are `None` by default only for tests exercising the other
+    layer kinds -- `prepare_publication` loads and passes each whenever `world.features` holds
+    the `FeatureSet` it applies to (ADR-038, ADR-059)."""
     files: list[LayerFile] = []
     entries: list[LayerManifest] = []
     for spec in SCALAR_LAYERS:
@@ -949,6 +1138,14 @@ def _layers(
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
         entries.append(_layer_entry(spec, LayerDataKind.FEATURES, feature_set.domain, None, None))
+    territories = world.features.get(EMPIRES_CURATED_ID)
+    if territories is not None and empires is not None:
+        event_set = world.events.get(EVENTS_ID)
+        event_ids = frozenset(e.id for e in event_set.events) if event_set else frozenset()
+        data = _territory_data(territories, empires, event_ids)
+        domain = (min(s.t_end for s in data.snapshots), max(s.t_start for s in data.snapshots))
+        files.append(LayerFile(published=_layer_path(EMPIRES_LAYER), data=data))
+        entries.append(_layer_entry(EMPIRES_LAYER, LayerDataKind.TERRITORIES, domain, None, None))
     return tuple(files), tuple(entries)
 
 

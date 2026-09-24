@@ -17,6 +17,18 @@ export function makeHook(page) {
       hook.lastSetTAt = Date.now()
       await page.evaluate((value) => window.__earthlapse?.setT(value), t)
     },
+    /** `setT` only when the store holds a different `t`, in one round trip; whether it did.
+     * @param {number} t */
+    setTIfChanged: async (t) => {
+      const changed = await page.evaluate((value) => {
+        const qa = window.__earthlapse
+        if (qa?.getState().t === value) return false
+        qa?.setT(value)
+        return true
+      }, t)
+      if (changed) hook.lastSetTAt = Date.now()
+      return changed
+    },
     getState: () => page.evaluate(() => window.__earthlapse?.getState()),
     /** @param {boolean} playing */
     setPlaying: (playing) => page.evaluate((value) => window.__earthlapse?.setPlaying(value), playing),
@@ -40,8 +52,44 @@ export function makeHook(page) {
     /** Resolves once the manifest is loaded and every image/texture load this run has seen has
      *  settled — see `devHook.ts`'s own doc comment for exactly what that covers. */
     ready: () => page.evaluate(() => window.__earthlapse?.ready()),
+    /**
+     * Calls the hook's `method` with `args`, then waits `frames` animation frames, in one round
+     * trip: a toggle and the frames that paint it cost one software-rendered frame's wait, not two.
+     * @param {string} method
+     * @param {unknown[]} args
+     * @param {number} frames
+     */
+    callThenFrames: (method, args, frames) =>
+      page.evaluate(
+        async ([name, values, count]) => {
+          window.__earthlapse[name](...values)
+          for (let i = 0; i < count; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+        },
+        [method, args, frames],
+      ),
   }
   return hook
+}
+
+/**
+ * Waits `frames` animation frames for a pointer move or click to land, then returns `read`
+ * evaluated in the page — one round trip instead of `rafTicks` plus a separate read. Three by
+ * default: after two, a globe tooltip can still show the previous pointer position's hit.
+ * @template T
+ * @param {import('playwright').Page} page
+ * @param {(arg: any) => T} read self-contained: it runs in the page from its source
+ * @param {unknown} [arg]
+ * @param {number} [frames]
+ * @returns {Promise<T>}
+ */
+export function afterFrames(page, read, arg, frames = 3) {
+  return page.evaluate(
+    async ({ source, value, count }) => {
+      for (let i = 0; i < count; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+      return new Function(`return (${source})`)()(value)
+    },
+    { source: read.toString(), value: arg, count: frames },
+  )
 }
 
 /**
@@ -77,26 +125,27 @@ export function rafTicks(page, count) {
  * land, so a stable pair is the signal that the expanded layout has converged.
  * @param {import('playwright').Page} page
  * @param {{ stableFrames?: number, timeoutMs?: number }} [options]
+ * @returns {Promise<Record<"sphere" | "map", { x: number, y: number, width: number, height: number } | null>>} the frames as they
+ *   settled (`null` when absent), so a caller needs no round trip of its own to read them.
  */
 export function waitForGlobeFitFramesStable(page, { stableFrames = 3, timeoutMs = 3000 } = {}) {
   return page.evaluate(
     async ({ stableFrames: needed, timeoutMs: limit }) => {
-      const read = () =>
-        ['[data-testid="globe-sphere-fit-frame"]', '[data-testid="globe-map-fit-frame"]']
-          .map((sel) => {
-            const r = document.querySelector(sel)?.getBoundingClientRect()
-            return r === undefined ? 'none' : `${r.x},${r.y},${r.width},${r.height}`
-          })
-          .join('|')
+      const rects = () => ({
+        sphere: document.querySelector('[data-testid="globe-sphere-fit-frame"]')?.getBoundingClientRect().toJSON() ?? null,
+        map: document.querySelector('[data-testid="globe-map-fit-frame"]')?.getBoundingClientRect().toJSON() ?? null,
+      })
+      const key = ({ sphere, map }) => [sphere, map].map((r) => (r === null ? 'none' : `${r.x},${r.y},${r.width},${r.height}`)).join('|')
       const start = performance.now()
-      let last = read()
+      let last = rects()
       let stable = 0
       while (stable < needed && performance.now() - start < limit) {
         await new Promise((resolve) => requestAnimationFrame(resolve))
-        const current = read()
-        stable = current === last ? stable + 1 : 0
+        const current = rects()
+        stable = key(current) === key(last) ? stable + 1 : 0
         last = current
       }
+      return last
     },
     { stableFrames, timeoutMs },
   )

@@ -14,18 +14,23 @@
  * (it happens on pointer moves, not on frames), needs no second copy of the geometry, and works
  * identically on the orb, on the expanded sphere and on the unfolded map.
  *
- * **Accessible by not getting in the way.** The tooltip is inert: `pointer-events: none`, nothing
- * focusable inside it, no focus moved and no focus trapped. It also carries `role="status"` with
- * a polite live region, so a screen-reader user hears what a sighted user is pointing at rather
- * than the tooltip being purely visual. Keyboard interaction elsewhere on the page is untouched.
- * Opening an event's full detail is a click (or second tap) on the drawn target itself
- * (`bindGlobeHitTest`), never on the tooltip, so the tooltip can stay inert; its `hint` line only
- * says so. The same detail is reachable by keyboard through the event feed and browser.
+ * **Inert on hover, interactive once tapped.** A hover tooltip is inert (`pointer-events: none`):
+ * it must never become a hover target of its own, and a mouse click on the drawn target itself
+ * opens its detail (`bindGlobeHitTest`). A tooltip a touch tap opened is *pinned*: its body is a
+ * button that opens the same detail a second tap on the target would, a × closes it, and every
+ * press on it stops there, so it never falls through to a target or the backdrop underneath.
+ * Neither kind moves or traps focus, and both carry `role="status"` with a polite live region, so a
+ * screen-reader user hears what a sighted user is pointing at. The same detail is reachable by
+ * keyboard through the event feed and browser.
+ *
+ * Empire territories join the same hit test last: after every mark misses, the pointer is
+ * inverse-projected to lon/lat (`pointerLonLat`) and tested against the active polygons, so the
+ * small marks drawn on top of a territory keep winning over the area underneath them.
  */
 
 import { Html } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
-import { useEffect, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type MutableRefObject, type SyntheticEvent } from 'react'
 import * as THREE from 'three'
 
 import type { GlobeEffectAnchor } from '@/types/layer'
@@ -33,9 +38,9 @@ import type { GlobeEffectAnchor } from '@/types/layer'
 import { sphereMarkerVisibility } from './arcs'
 import styles from './Globe.module.css'
 import { ORB_CLICK_DRAG_THRESHOLD_PX } from './orbGesture'
-import { unfoldedLiftedPosition } from './projection'
+import { lonLatToMap, mapToLonLat, sphereToLonLat, unfoldedLiftedPosition } from './projection'
 
-export type GlobeHitKind = 'arrival' | 'inhabited' | 'city'
+export type GlobeHitKind = 'arrival' | 'inhabited' | 'city' | 'empire'
 
 /** What the tooltip says, and what the rest of the layer keys its sympathetic highlights off. */
 export interface GlobeHitTarget {
@@ -45,6 +50,8 @@ export interface GlobeHitTarget {
   /** The events-core event this target belongs to, for an arrival or an inhabited marker.
    *  `null` for a city, which is `FeatureSet` data with no event of its own. */
   eventId: string | null
+  /** The empire lineage an `empire` target names; activating it opens that lineage's panel. */
+  lineage?: string
   title: string
   description: string
   /** Already formatted through `@/timeline`'s own wording by the caller — this component never
@@ -183,6 +190,67 @@ export function pickCandidate(
   return best?.content() ?? null
 }
 
+/** The first stage's target, in order: each stage runs only when every earlier one missed. */
+function resolveGlobeHit(stages: readonly (() => GlobeHitTarget | null)[]): GlobeHitTarget | null {
+  for (const stage of stages) {
+    const hit = stage()
+    if (hit !== null) return hit
+  }
+  return null
+}
+
+/** How close to either end of the unfold tween the surface hit test still answers; in between,
+ *  the surface is neither the sphere nor the plane and no lon/lat is reported. */
+const SURFACE_HIT_UNFOLD_EPSILON = 0.02
+/** How far, in map units at `radius = 1`, a plane hit may sit from its own reprojection before it
+ *  counts as off the map's curved outline (`mapToLonLat` clamps rather than refusing). */
+const MAP_OUTLINE_TOLERANCE = 1e-3
+
+const surfaceRaycaster = new THREE.Raycaster()
+const surfaceNdc = new THREE.Vector2()
+const surfaceInverse = new THREE.Matrix4()
+const surfaceRay = new THREE.Ray()
+const surfaceHit = new THREE.Vector3()
+const surfaceSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 1)
+const surfacePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -1)
+
+/**
+ * The lon/lat on the globe's surface under a canvas-space pointer, or `null` off the body or
+ * mid-unfold. The camera ray is taken into `group`'s local space, so the rotation and any
+ * scene-location ease are folded in, and met with the sphere of `radius` (globe) or the map plane
+ * at `z = radius` (`projection.ts`'s flat endpoint) — the same two shapes `GlobeSphere`'s
+ * analytic raycast uses.
+ */
+export function pointerLonLat(
+  pointerX: number,
+  pointerY: number,
+  width: number,
+  height: number,
+  unfold: number,
+  radius: number,
+  group: THREE.Object3D,
+  camera: THREE.Camera,
+): GlobeEffectAnchor | null {
+  const onSphere = unfold <= SURFACE_HIT_UNFOLD_EPSILON
+  const onMap = unfold >= 1 - SURFACE_HIT_UNFOLD_EPSILON
+  if (!onSphere && !onMap) return null
+  surfaceNdc.set((pointerX / width) * 2 - 1, -(pointerY / height) * 2 + 1)
+  surfaceRaycaster.setFromCamera(surfaceNdc, camera)
+  surfaceInverse.copy(group.matrixWorld).invert()
+  surfaceRay.copy(surfaceRaycaster.ray).applyMatrix4(surfaceInverse)
+  if (onSphere) {
+    surfaceSphere.radius = radius
+    if (surfaceRay.intersectSphere(surfaceSphere, surfaceHit) === null) return null
+    return sphereToLonLat([surfaceHit.x, surfaceHit.y, surfaceHit.z])
+  }
+  surfacePlane.constant = -radius
+  if (surfaceRay.intersectPlane(surfacePlane, surfaceHit) === null) return null
+  const point = mapToLonLat(surfaceHit.x, surfaceHit.y, radius)
+  const [x, y] = lonLatToMap(point, radius)
+  if (Math.hypot(x - surfaceHit.x, y - surfaceHit.y) > MAP_OUTLINE_TOLERANCE * radius) return null
+  return point
+}
+
 /** Whether two hit targets are the "same" for the purpose of bailing out of a `setState` — by id,
  *  not object reference, since `candidatesRef` can rebuild with a fresh target object for a
  *  target the pointer hasn't actually left (a `t` change during playback). Exported for
@@ -203,6 +271,19 @@ export interface GlobeHitTestBindings {
   /** Opens an event's detail, read at click time; `null` while activation is off (the
    *  minimised orb, whose click expands it instead). */
   activateRef: MutableRefObject<((eventId: string) => void) | null>
+  /** Opens an empire lineage's panel from an `empire` target, read at click time like
+   *  `activateRef`. */
+  activateEmpireRef?: MutableRefObject<((lineage: string) => void) | null>
+}
+
+/** What `bindGlobeHitTest` hands back besides its listeners. */
+export interface GlobeHitTestHandle {
+  unbind: () => void
+  /** Clears the shown target, as a tap on empty space would. */
+  dismiss: () => void
+  /** Opens the shown target's detail, as a second tap on it would, and clears it; does nothing
+   *  for a target with no detail of its own or while activation is off. */
+  activateShown: () => void
 }
 
 /**
@@ -216,11 +297,11 @@ export interface GlobeHitTestBindings {
  * mounted on `pointerup` would sit under the finger by the time the browser dispatches the tap's
  * own `click`, which would land on the panel's backdrop and close it again. An activating click
  * stops propagating at the canvas, so the canvas container (r3f's `onPointerMissed`, the
- * expanded view's backdrop-click collapse) never also reads it as a click on empty space.
- * Returns the unbind function.
+ * expanded view's backdrop-click collapse) never also reads it as a click on empty space. A
+ * touch activation also clears the tooltip, as `activateShown` does, since the detail replaces it.
  */
-export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBindings): () => void {
-  const { resolve, onChange, touchHitRef, activateRef } = bindings
+export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBindings): GlobeHitTestHandle {
+  const { resolve, onChange, touchHitRef, activateRef, activateEmpireRef } = bindings
   const press = { x: 0, y: 0, touch: false }
   let shown: GlobeHitTarget | null = null
   let shownViaTouch = false
@@ -259,16 +340,27 @@ export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBind
     if (moved <= TAP_SLOP_PX) show(resolve(event.clientX, event.clientY), true)
     touchHitRef.current = false
   }
-  const onClick = (event: MouseEvent): void => {
+  // What activating `hit` does, or `null` when it opens nothing.
+  const activationOf = (hit: GlobeHitTarget): (() => void) | null => {
+    const { lineage, eventId } = hit
+    if (lineage !== undefined) {
+      const activateEmpire = activateEmpireRef?.current ?? null
+      return activateEmpire === null ? null : () => activateEmpire(lineage)
+    }
     const activate = activateRef.current
-    if (activate === null) return
+    return activate === null || eventId === null ? null : () => activate(eventId)
+  }
+  const onClick = (event: MouseEvent): void => {
+    if (activateRef.current === null && (activateEmpireRef?.current ?? null) === null) return
     const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y)
     if (moved > (press.touch ? TAP_SLOP_PX : ORB_CLICK_DRAG_THRESHOLD_PX)) return
     const hit = resolve(event.clientX, event.clientY)
-    if (hit === null || hit.eventId === null) return
+    const open = hit === null ? null : activationOf(hit)
+    if (open === null) return
     if (press.touch && !sameHitTarget(hit, shownAtPress)) return
     event.stopPropagation()
-    activate(hit.eventId)
+    if (press.touch) show(null, false)
+    open()
   }
 
   canvas.addEventListener('pointermove', onPointerMove)
@@ -276,12 +368,20 @@ export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBind
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointerup', onPointerUp)
   canvas.addEventListener('click', onClick)
-  return () => {
-    canvas.removeEventListener('pointermove', onPointerMove)
-    canvas.removeEventListener('pointerleave', onPointerLeave)
-    canvas.removeEventListener('pointerdown', onPointerDown)
-    canvas.removeEventListener('pointerup', onPointerUp)
-    canvas.removeEventListener('click', onClick)
+  return {
+    unbind: () => {
+      canvas.removeEventListener('pointermove', onPointerMove)
+      canvas.removeEventListener('pointerleave', onPointerLeave)
+      canvas.removeEventListener('pointerdown', onPointerDown)
+      canvas.removeEventListener('pointerup', onPointerUp)
+      canvas.removeEventListener('click', onClick)
+    },
+    dismiss: () => show(null, false),
+    activateShown: () => {
+      const open = shown === null ? null : activationOf(shown)
+      show(null, false)
+      open?.()
+    },
   }
 }
 
@@ -298,15 +398,30 @@ export interface GlobeHitTestOptions {
   touchHitRef: MutableRefObject<boolean>
   /** Opens an event from its target (`bindGlobeHitTest`'s "Activation"); `null` turns it off. */
   onActivate: ((eventId: string) => void) | null
+  /** Opens an empire lineage from an `empire` target; `null` or absent turns it off. */
+  onActivateEmpire?: ((lineage: string) => void) | null
+  /** Resolved only when `candidatesRef` misses: targets that sit under the layer's own marks,
+   *  such as empire label anchors. */
+  fallbackCandidatesRef?: MutableRefObject<readonly GlobeHitCandidate[]>
+  /** Resolved last, against the lon/lat under the pointer (`pointerLonLat`): targets that are
+   *  areas of the surface rather than marks on it, such as empire territories. */
+  surfaceRef?: MutableRefObject<((point: GlobeEffectAnchor) => GlobeHitTarget | null) | null>
 }
 
 export interface GlobeHitState {
   target: GlobeHitTarget | null
-  /** Whether a touch tap, rather than a hover, produced `target` — decides the tooltip's hint. */
+  /** Whether a touch tap, rather than a hover, produced `target` — pins the tooltip and decides
+   *  its hint. */
   viaTouch: boolean
 }
 
 const NO_HIT: GlobeHitState = { target: null, viaTouch: false }
+
+export interface GlobeHitTestResult extends GlobeHitState {
+  /** `GlobeHitTestHandle`'s, stable across renders. */
+  dismiss: () => void
+  activateShown: () => void
+}
 
 /** `bindGlobeHitTest` on the r3f canvas, resolving against the live candidates. */
 export function useGlobeHitTest({
@@ -317,15 +432,21 @@ export function useGlobeHitTest({
   enabled,
   touchHitRef,
   onActivate,
-}: GlobeHitTestOptions): GlobeHitState {
+  onActivateEmpire = null,
+  fallbackCandidatesRef,
+  surfaceRef,
+}: GlobeHitTestOptions): GlobeHitTestResult {
   const { camera, gl, size } = useThree()
   const [hit, setHit] = useState<GlobeHitState>(NO_HIT)
+  const handleRef = useRef<GlobeHitTestHandle | null>(null)
   // The live values the DOM listeners read — re-subscribing the listeners on every frame of
   // playback (which is what a dependency on `unfold`/`size` would mean) is what this avoids.
   const frameRef = useRef({ unfold, radius, width: size.width, height: size.height })
   frameRef.current = { unfold, radius, width: size.width, height: size.height }
   const activateRef = useRef(onActivate)
   activateRef.current = onActivate
+  const activateEmpireRef = useRef(onActivateEmpire)
+  activateEmpireRef.current = onActivateEmpire
 
   useEffect(() => {
     if (!enabled) {
@@ -338,19 +459,38 @@ export function useGlobeHitTest({
       if (group === null) return null
       const rect = canvas.getBoundingClientRect()
       const { unfold: u, radius: r, width, height } = frameRef.current
-      return pickCandidate(candidatesRef.current, clientX - rect.left, clientY - rect.top, u, r, group, camera, width, height)
+      const x = clientX - rect.left
+      const y = clientY - rect.top
+      return resolveGlobeHit([
+        () => pickCandidate(candidatesRef.current, x, y, u, r, group, camera, width, height),
+        () => (fallbackCandidatesRef === undefined ? null : pickCandidate(fallbackCandidatesRef.current, x, y, u, r, group, camera, width, height)),
+        () => {
+          const surface = surfaceRef?.current ?? null
+          if (surface === null) return null
+          const point = pointerLonLat(x, y, width, height, u, r, group, camera)
+          return point === null ? null : surface(point)
+        },
+      ])
     }
     // `bindGlobeHitTest` only reports an id change, so a drag or a sweep across empty space
     // re-renders this layer only when the hover target actually changes.
-    return bindGlobeHitTest(canvas, {
+    const handle = bindGlobeHitTest(canvas, {
       resolve,
       onChange: (target, viaTouch) => setHit(target === null ? NO_HIT : { target, viaTouch }),
       touchHitRef,
       activateRef,
+      activateEmpireRef,
     })
-  }, [camera, gl, enabled, candidatesRef, groupRef, touchHitRef])
+    handleRef.current = handle
+    return () => {
+      handleRef.current = null
+      handle.unbind()
+    }
+  }, [camera, gl, enabled, candidatesRef, fallbackCandidatesRef, surfaceRef, groupRef, touchHitRef])
 
-  return hit
+  const dismiss = useCallback(() => handleRef.current?.dismiss(), [])
+  const activateShown = useCallback(() => handleRef.current?.activateShown(), [])
+  return { ...hit, dismiss, activateShown }
 }
 
 /** Kept in step with `.tooltip`'s own `max-width` plus its padding and border
@@ -386,10 +526,91 @@ function clampedPosition(el: THREE.Object3D, camera: THREE.Camera, size: { width
   ]
 }
 
-export interface GlobeTooltipProps {
-  target: GlobeHitTarget | null
+export interface GlobeTooltipCardProps {
+  target: GlobeHitTarget
   /** A short line under the description saying how to open the full detail, or `null`. */
   hint: string | null
+  /** Shown by a tap rather than a hover: the card takes presses, with a × to close it. */
+  pinned: boolean
+  /** Opens the target's full detail from a pinned card; `null` for a target with none. */
+  onOpen: (() => void) | null
+  onDismiss: () => void
+}
+
+/** Keeps a press on a pinned card from reaching the canvas container underneath, where r3f would
+ *  read it as a click on the globe or on empty space. */
+function stopAtCard(event: SyntheticEvent): void {
+  event.stopPropagation()
+}
+
+/**
+ * The tooltip's own box; `GlobeTooltip` places it.
+ *
+ * A pinned card acts only on a click whose press began on the card (or a keyboard click, `detail`
+ * 0). The tap that pins it pressed the canvas, but its `click` is hit-tested after the card has
+ * rendered, and on a narrow screen the edge clamp can put the card under the finger.
+ */
+export function GlobeTooltipCard({ target, hint, pinned, onOpen, onDismiss }: GlobeTooltipCardProps) {
+  const pressedRef = useRef(false)
+  const content = (
+    <>
+      <span className={styles.tooltipTitle}>{target.title}</span>
+      <span className={styles.tooltipDate}>{target.dateRange}</span>
+      <span className={styles.tooltipDescription}>{target.description}</span>
+      {hint !== null && (
+        <span className={styles.tooltipHint} data-testid="globe-tooltip-hint">
+          {hint}
+        </span>
+      )}
+    </>
+  )
+  const onCardPointerDown = (event: SyntheticEvent): void => {
+    pressedRef.current = true
+    event.stopPropagation()
+  }
+  const onCardClick = (event: ReactMouseEvent<HTMLDivElement>): void => {
+    event.stopPropagation()
+    const deliberate = pressedRef.current || event.detail === 0
+    pressedRef.current = false
+    if (!deliberate) return
+    const action = (event.target as Element).closest('button')?.dataset.action
+    if (action === 'open') onOpen?.()
+    else if (action === 'close') onDismiss()
+  }
+  if (!pinned) {
+    return (
+      <div className={styles.tooltip} role="status" aria-live="polite" data-testid="globe-tooltip">
+        {content}
+      </div>
+    )
+  }
+  return (
+    <div
+      className={`${styles.tooltip} ${styles.tooltipPinned}`}
+      role="status"
+      aria-live="polite"
+      data-testid="globe-tooltip"
+      onPointerDown={onCardPointerDown}
+      onPointerUp={stopAtCard}
+      onClick={onCardClick}
+      onWheel={stopAtCard}
+    >
+      {onOpen === null ? (
+        <div className={styles.tooltipBody}>{content}</div>
+      ) : (
+        <button type="button" className={styles.tooltipBody} data-action="open" aria-label={`Open details: ${target.title}`}>
+          {content}
+        </button>
+      )}
+      <button type="button" className={styles.tooltipClose} data-action="close" aria-label="Close preview">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+  )
+}
+
+export interface GlobeTooltipProps extends Omit<GlobeTooltipCardProps, 'target'> {
+  target: GlobeHitTarget | null
   unfold: number
   radius: number
   sphereLift: number
@@ -401,21 +622,21 @@ export interface GlobeTooltipProps {
  * and as it unfolds without this component re-deriving a screen position every frame. Rendered
  * as a child of the rotating group by the caller, for the same reason every other overlay is.
  */
-export function GlobeTooltip({ target, hint, unfold, radius, sphereLift, mapLift }: GlobeTooltipProps) {
+export function GlobeTooltip({ target, unfold, radius, sphereLift, mapLift, ...card }: GlobeTooltipProps) {
   if (target === null) return null
   const [x, y, z] = unfoldedLiftedPosition(target.anchor, unfold, radius, sphereLift, mapLift)
+  const pointerEvents = card.pinned ? 'auto' : 'none'
+  // drei orders `Html` by camera distance within its range; starting above `GlobeLabel`'s [20, 0]
+  // keeps a nearer label from drawing over the tooltip.
   return (
-    <Html position={[x, y, z]} calculatePosition={clampedPosition} pointerEvents="none" zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
-      <div className={styles.tooltip} role="status" aria-live="polite" data-testid="globe-tooltip">
-        <p className={styles.tooltipTitle}>{target.title}</p>
-        <p className={styles.tooltipDate}>{target.dateRange}</p>
-        <p className={styles.tooltipDescription}>{target.description}</p>
-        {hint !== null && (
-          <p className={styles.tooltipHint} data-testid="globe-tooltip-hint">
-            {hint}
-          </p>
-        )}
-      </div>
+    <Html
+      position={[x, y, z]}
+      calculatePosition={clampedPosition}
+      pointerEvents={pointerEvents}
+      zIndexRange={[40, 21]}
+      style={{ pointerEvents }}
+    >
+      <GlobeTooltipCard target={target} {...card} />
     </Html>
   )
 }

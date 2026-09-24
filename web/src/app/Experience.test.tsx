@@ -21,10 +21,19 @@ const GLOBE_ARRIVAL_ID = 'migration-test'
 
 vi.mock('@/globe', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/globe')>()),
-  Globe: ({ onToggleExpand, onActivateEvent }: { onToggleExpand: () => void; onActivateEvent?: (eventId: string) => void }) => (
+  Globe: ({
+    onToggleExpand,
+    onActivateEvent,
+    onActivateEmpire,
+  }: {
+    onToggleExpand: () => void
+    onActivateEvent?: (eventId: string) => void
+    onActivateEmpire?: (lineage: string) => void
+  }) => (
     <>
       <button type="button" data-testid="globe-mock" aria-label="Globe stand-in" onClick={onToggleExpand} />
       <button type="button" data-testid="globe-arrival-mock" aria-label="Globe arrival stand-in" onClick={() => onActivateEvent?.(GLOBE_ARRIVAL_ID)} />
+      <button type="button" data-testid="globe-empire-mock" aria-label="Globe empire stand-in" onClick={() => onActivateEmpire?.('rome')} />
     </>
   ),
 }))
@@ -354,6 +363,82 @@ describe('Experience integration', () => {
       expect(within(dialog).getByRole('region', { name: 'Route' }).textContent).toContain('Migration')
       expect(useTimeStore.getState().t).toBe(t)
     })
+  })
+})
+
+describe('Experience empire detail', () => {
+  const EMPIRES_ENTRY = {
+    id: 'empires',
+    name: 'Historical empires',
+    surface: 'globe',
+    dataKind: 'territories',
+    timeDomain: [1500, 2500],
+    source: 'cliopatria',
+    chartable: false,
+    data: 'layers/empires.json',
+  }
+  const EMPIRES_DATA = {
+    id: 'empires',
+    geometry: 'vectors/cliopatria_territories-0123456789.json',
+    lineages: [
+      {
+        id: 'rome',
+        name: 'Rome',
+        colourSlot: 3,
+        description: 'A city-state that came to rule the Mediterranean.',
+        events: ['agriculture', 'not-published'],
+        members: [
+          { label: 'Roman Republic', wikipedia: 'Roman Republic' },
+          { label: 'Roman Empire', wikipedia: 'Roman Empire' },
+        ],
+      },
+    ],
+    snapshots: [
+      { id: 'republic', lineage: 'rome', member: 0, label: 'Roman Republic', tStart: 2500, tEnd: 2050, lat: 42, lon: 12, areaKm2: 500_000 },
+      { id: 'empire', lineage: 'rome', member: 1, label: 'Roman Empire', tStart: 2050, tEnd: 1500, lat: 41, lon: 14, areaKm2: 5_000_000 },
+    ],
+  }
+
+  beforeEach(() => {
+    const responses: Record<string, unknown> = {
+      ...FETCH_RESPONSES,
+      '/stub/manifest.json': { ...stubManifest, layers: [...stubManifest.layers, EMPIRES_ENTRY] },
+      '/stub/layers/empires.json': EMPIRES_DATA,
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url === '/media/manifest.json') return { ok: false, status: 404, json: async () => undefined } as Response
+        const body = responses[url]
+        if (body === undefined) throw new Error(`unexpected fetch in test: ${url}`)
+        return { ok: true, status: 200, json: async () => body } as Response
+      }),
+    )
+  })
+
+  it('opens an empire the globe activates without moving t, shares the dock with event cards, and closes', async () => {
+    await renderSettled()
+    const t = useTimeStore.getState().t
+    await waitFor(() => expect(screen.getByTestId('globe-empire-mock')).toBeTruthy())
+    fireEvent.click(screen.getByTestId('globe-empire-mock'))
+    const empire = screen.getByTestId('empire-detail')
+    expect(within(empire).getByRole('heading', { name: 'Rome' })).toBeTruthy()
+    expect(useTimeStore.getState().t).toBe(t)
+
+    // A related event opens its card in the empire's place; only published events are listed.
+    const related = within(within(empire).getByRole('region', { name: 'Events' })).getAllByRole('button')
+    expect(related.map((button) => button.textContent)).toEqual(['Agriculture begins'])
+    fireEvent.click(within(empire).getByRole('button', { name: 'Agriculture begins' }))
+    expect(screen.queryByTestId('empire-detail')).toBeNull()
+    expect(screen.getByTestId('event-detail').textContent).toContain('Agriculture begins')
+
+    fireEvent.click(screen.getByTestId('globe-empire-mock'))
+    expect(screen.queryByTestId('event-detail')).toBeNull()
+    fireEvent.click(within(screen.getByTestId('empire-detail')).getByRole('button', { name: /Jump to peak/ }))
+    expect(useTimeStore.getState().t).toBe(2050)
+    fireEvent.click(within(screen.getByTestId('empire-detail')).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByTestId('empire-detail')).toBeNull()
   })
 })
 

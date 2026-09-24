@@ -40,6 +40,7 @@ function renderGlobe(expanded: boolean) {
       onToggleExpand={vi.fn()}
       onCaptionChange={vi.fn()}
       cities={null}
+      empires={null}
       sceneLocation={null}
       playbackBaseRate={0.02}
       cityLabelFadeWindowAt={() => 150}

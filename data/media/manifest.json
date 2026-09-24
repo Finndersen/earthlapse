@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "b7f5532ef3e0b52a",
+  "buildId": "96d470d1efe7e365",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2557,6 +2557,19 @@
       "source": "cities",
       "chartable": false,
       "data": "layers/cities.json"
+    },
+    {
+      "id": "empires",
+      "name": "Historical empires",
+      "surface": "globe",
+      "dataKind": "territories",
+      "timeDomain": [
+        27.0,
+        5425.0
+      ],
+      "source": "cliopatria",
+      "chartable": false,
+      "data": "layers/empires.json"
     }
   ],
   "events": [
@@ -3033,6 +3046,20 @@
       "citation": "Wikipedia, \"Levittown, New York\" and \"Interstate Highway System\" (both accessed 2026-09-15). Levittown built 1947-1951, 17,447 houses, peak rate 30 houses/day. Federal-Aid Highway Act of 1956 signed June 1956, authorising 40,000 miles of divided highway.\n"
     },
     {
+      "id": "indian-independence",
+      "label": "Independence of India and Pakistan",
+      "kind": "moment",
+      "tMin": 78.0,
+      "tMax": 78.0,
+      "t": 78.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "British rule in India ends on 15 August 1947 with the partition of the Raj into the independent dominions of India and Pakistan. Partition displaces an estimated 10-20 million people. It opens two decades in which most of Britain's colonies in Asia and Africa become independent.\n",
+      "citation": "Via Wikipedia \"Partition of India\" and \"Decolonisation of Africa\" (searched 2026-09-24): Indian Independence Act 1947, independence 14-15 August 1947; 10-20 million displaced.\n"
+    },
+    {
       "id": "transistor-invented",
       "label": "Transistor invented",
       "kind": "moment",
@@ -3120,6 +3147,20 @@
       "citation": "Fleming, A. (1929). \"On the antibacterial action of cultures of a penicillium, with special reference to their use in the isolation of B. influenzae.\" British Journal of Experimental Pathology, 10(3), 226-236 (received 10 May 1929, describing the culture-plate observation dated 3 September 1928).\n"
     },
     {
+      "id": "end-of-the-ottoman-empire",
+      "label": "End of the Ottoman Empire",
+      "kind": "moment",
+      "tMin": 103.0,
+      "tMax": 103.0,
+      "t": 103.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Defeated in the First World War and partitioned by the Allies, the Ottoman Empire ends when the Grand National Assembly in Ankara abolishes the sultanate on 1 November 1922. The Republic of Turkey is proclaimed the following year.\n",
+      "citation": "Via Wikipedia \"Abolition of the Ottoman sultanate\" and \"Republic of Turkey\" (searched 2026-09-24): sultanate abolished 1 November 1922; republic proclaimed 29 October 1923.\n"
+    },
+    {
       "id": "influenza-1918-pandemic",
       "label": "1918 influenza pandemic",
       "kind": "period",
@@ -3132,6 +3173,20 @@
       "importance": 0.6,
       "description": "An influenza pandemic spreads worldwide from February 1918 to April 1920, infecting an estimated third of the global population, some 500 million people. Death-toll estimates vary widely and are genuinely contested, from 17 million to 100 million, with 25-50 million most commonly cited — making it, by the low end of that range alone, deadlier than the First World War it overlaps.\n",
       "citation": "Wikipedia, \"1918 influenza pandemic\" (accessed 2026-09-18): February 1918 - April 1920; ~500 million infected (nearly a third of world population); deaths \"generally accepted\" at 25-50 million, with cited estimates ranging 17-100 million.\n"
+    },
+    {
+      "id": "russian-revolution",
+      "label": "Russian Revolution",
+      "kind": "moment",
+      "tMin": 108.0,
+      "tMax": 108.0,
+      "t": 108.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Amid the losses of the First World War, the February Revolution of 1917 forces Tsar Nicholas II to abdicate, ending the Russian Empire and three centuries of Romanov rule. The Bolsheviks seize power in the October Revolution later that year.\n",
+      "citation": "Via Wikipedia \"Russian Revolution\" and \"Nicholas II\" (searched 2026-09-24): abdication of Nicholas II, 15 March 1917 (2 March Old Style); October Revolution, 7 November 1917 (25 October Old Style).\n"
     },
     {
       "id": "world-war-i",
@@ -3189,6 +3244,20 @@
       "importance": 0.5,
       "description": "Henry Ford's Highland Park plant in Michigan introduces the moving assembly line for the Model T, cutting chassis assembly time from over twelve hours to 93 minutes by the following year. Combined with the internal combustion engine it puts on the road, the technique makes the automobile a mass-market product and becomes the template for 20th-century manufacturing.\n",
       "citation": "Wikipedia, \"Ford Model T\" (accessed 2026-09-15). Moving assembly line introduced 7 October 1913 at the Highland Park plant; assembly time cut from 12+ hours to 93 minutes by 1914.\n"
+    },
+    {
+      "id": "fall-of-the-qing",
+      "label": "Fall of the Qing dynasty",
+      "kind": "moment",
+      "tMin": 113.0,
+      "tMax": 113.0,
+      "t": 113.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "The Xinhai Revolution, which began with the Wuchang Uprising in October 1911, ends more than two thousand years of imperial rule in China. The six-year-old Xuantong Emperor, Puyi, abdicates on 12 February 1912, and the Republic of China takes the Qing's place.\n",
+      "citation": "Via Wikipedia \"1911 Revolution\" and \"Puyi\" (searched 2026-09-24): Wuchang Uprising, 10 October 1911; abdication edict of the Xuantong Emperor, 12 February 1912.\n"
     },
     {
       "id": "haber-bosch-process",
@@ -3337,6 +3406,20 @@
       "importance": 0.55,
       "description": "Mount Tambora on Sumbawa, in present-day Indonesia, erupts climactically on 10 April 1815 (VEI 7), the largest eruption in recorded history; more than 71,000 people die on Sumbawa and Lombok during or after it. Some 60 megatonnes of sulphur injected into the stratosphere cool the Northern Hemisphere, bringing crop failures and famine in 1816, the \"Year Without a Summer.\"\n",
       "citation": "Oppenheimer, C. (2003). \"Climatic, environmental and human consequences of the largest known historic eruption: Tambora volcano (Indonesia) 1815.\" Progress in Physical Geography, 27(2), 230-259, doi:10.1191/0309133303pp379ra — ~50 km3 dense-rock equivalent, >71,000 dead on Sumbawa and Lombok, ~60 Mt sulphur, causal link to 1816. Climactic eruption 10 April 1815, VEI 7: Encyclopaedia Britannica, \"How the 1815 eruption of Mount Tambora produced the 'Year Without a Summer'\" (accessed 2026-09-24). Issue number (2) UNVERIFIED.\n"
+    },
+    {
+      "id": "holy-roman-empire-dissolved",
+      "label": "Holy Roman Empire dissolved",
+      "kind": "moment",
+      "tMin": 219.0,
+      "tMax": 219.0,
+      "t": 219.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "After Napoleon's victory at Austerlitz and the secession of the German states of his Confederation of the Rhine, Francis II abdicates on 6 August 1806 and declares the Holy Roman Empire dissolved, 844 years after Otto I's coronation. He continues to rule as Francis I, Emperor of Austria.\n",
+      "citation": "Via Wikipedia \"Dissolution of the Holy Roman Empire\" (searched 2026-09-24): Confederation of the Rhine members secede 1 August 1806; Francis II abdicates and dissolves the empire, 6 August 1806.\n"
     },
     {
       "id": "industrial-revolution",
@@ -3588,6 +3671,20 @@
       }
     },
     {
+      "id": "ming-qing-transition",
+      "label": "Fall of the Ming, Qing take Beijing",
+      "kind": "moment",
+      "tMin": 381.0,
+      "tMax": 381.0,
+      "t": 381.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "Li Zicheng's rebel army takes Beijing in April 1644 and the last Ming emperor, Chongzhen, hangs himself. The Ming general Wu Sangui lets the Manchus through the Great Wall at Shanhai Pass; together they defeat Li, and in June the Manchu Qing dynasty occupies Beijing, going on to conquer the rest of China.\n",
+      "citation": "Via Wikipedia \"Transition from Ming to Qing\" and \"Battle of Shanhai Pass\" (searched 2026-09-24): Beijing falls to Li Zicheng, 24-25 April 1644, Chongzhen Emperor's suicide; Qing and Wu Sangui enter Beijing, 6 June 1644.\n"
+    },
+    {
       "id": "dutch-golden-age-voc",
       "label": "Amsterdam's Dutch Golden Age",
       "kind": "period",
@@ -3647,6 +3744,33 @@
       }
     },
     {
+      "id": "ottoman-greatest-extent",
+      "label": "Ottoman Empire at its greatest extent",
+      "kind": "period",
+      "tMin": 422.0,
+      "tMax": 435.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "The Treaty of Constantinople of 1590 ends a twelve-year war with Safavid Iran and cedes Georgia, Armenia, Azerbaijan and western Iran to the Ottomans, their widest eastern border. Shah Abbas I begins retaking the lands in 1603. Measured instead by reach into Europe, the empire's high-water mark was the siege of Vienna in 1683.\n",
+      "citation": "Via Wikipedia \"Treaty of Constantinople (1590)\" and \"Safavid capture of Tabriz (1603)\" (searched 2026-09-24): treaty signed 21 March 1590, Georgia, Azerbaijan, Armenia and western Iran under Ottoman rule; Tabriz retaken 21 October 1603.\n"
+    },
+    {
+      "id": "battle-of-tondibi",
+      "label": "Morocco defeats Songhai at Tondibi",
+      "kind": "moment",
+      "tMin": 434.0,
+      "tMax": 434.0,
+      "t": 434.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "A Moroccan army of about 4,000 under Judar Pasha, armed with arquebuses and cannon, crosses the Sahara and routs a far larger Songhai army at Tondibi, near Gao, on 13 March 1591. Gao, Timbuktu and Djenne are taken, and the Songhai Empire, West Africa's largest state, never recovers.\n",
+      "citation": "Via Wikipedia \"Battle of Tondibi\" and \"Moroccan invasion of the Songhai Empire\" (searched 2026-09-24): battle 13 March 1591; Judar Pasha against Askia Ishaq II; Gao, Timbuktu and Djenne seized.\n"
+    },
+    {
       "id": "little-ice-age",
       "label": "Little Ice Age",
       "kind": "period",
@@ -3661,6 +3785,19 @@
       "citation": "Matthews, J.A. & Briffa, K.R. (2005). \"The 'Little Ice Age': re-evaluation of an evolving concept.\" Geografiska Annaler: Series A, Physical Geography, 87A(1), 17-36, doi:10.1111/j.0435-3676.2005.00242.x — glacierization c. AD 1300-1950 (European Alps), \"Little Ice Age\" climate c. AD 1570-1900. Eddy, J.A. (1976). \"The Maunder Minimum.\" Science, 192(4245), 1189-1202 — sunspot minimum 1645-1715. Owens, M.J. et al. (2017), \"The Maunder minimum and the Little Ice Age: an update from recent reconstructions and climate simulations,\" Journal of Space Weather and Space Climate, 7, A33 — no increase in Thames freezings during the Maunder Minimum (volume/article number UNVERIFIED). Frost fairs 1608 and February 1814 (last): London Museum, \"Frost fairs: festivities on a frozen River Thames\" (accessed 2026-09-24).\n"
     },
     {
+      "id": "spanish-conquest-of-inca",
+      "label": "Spanish conquest of the Inca Empire",
+      "kind": "period",
+      "tMin": 453.0,
+      "tMax": 493.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.45,
+      "description": "Francisco Pizarro's small force captures the Inca emperor Atahualpa at Cajamarca in November 1532 and executes him the following year. Inca resistance continues from the Neo-Inca State at Vilcabamba until 1572, when the Spanish take it and execute the last Inca ruler, Tupac Amaru.\n",
+      "citation": "Via Wikipedia \"Spanish conquest of the Inca Empire\" and \"Neo-Inca State\" (searched 2026-09-24): Atahualpa captured at Cajamarca, 1532, killed 29 August 1533; Vilcabamba taken and Tupac Amaru executed in Cusco, 1572.\n"
+    },
+    {
       "id": "copernicus-heliocentrism",
       "label": "Copernicus publishes heliocentrism",
       "kind": "moment",
@@ -3673,6 +3810,35 @@
       "importance": 0.55,
       "description": "Nicolaus Copernicus's De revolutionibus orbium coelestium is printed in Nuremberg shortly before his death, arguing that Earth and the other planets orbit the Sun — the founding text of the shift away from an Earth-centred cosmos that drives the wider scientific revolution.\n",
       "citation": "Wikipedia, \"De revolutionibus orbium coelestium\" (accessed 2026-09-14). Publication year 1543; only the year, not an exact day, is recorded.\n"
+    },
+    {
+      "id": "fall-of-tenochtitlan",
+      "label": "Fall of Tenochtitlan",
+      "kind": "moment",
+      "tMin": 504.0,
+      "tMax": 504.0,
+      "t": 504.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.45,
+      "description": "Spanish forces under Hernan Cortes, with tens of thousands of Indigenous allies led by the Tlaxcalans, besiege the smallpox-stricken Aztec capital from May 1521. Its last ruler, Cuauhtemoc, is captured on 13 August, and the city's surrender ends the Aztec Empire.\n",
+      "citation": "Via Wikipedia \"Fall of Tenochtitlan\" and \"Spanish conquest of the Aztec Empire\" (searched 2026-09-24): siege 26 May to 13 August 1521; Tlaxcalan and other native allies; smallpox epidemic in the city; Cuauhtemoc captured.\n"
+    },
+    {
+      "id": "fall-of-constantinople",
+      "label": "Fall of Constantinople",
+      "kind": "moment",
+      "tMin": 572.0,
+      "tMax": 572.0,
+      "t": 572.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Ottoman forces under Sultan Mehmed II take Constantinople on 29 May 1453 after a 53-day siege in which cannon batter the city's land walls. The last emperor, Constantine XI, dies in the fighting; the Byzantine Empire, the last continuation of the Roman Empire, ends, and the city becomes the Ottoman capital.\n",
+      "citation": "Via Wikipedia \"Fall of Constantinople\" (searched 2026-09-24): captured 29 May 1453 after a siege begun 6 April; Mehmed II against Constantine XI Palaiologos, who died in the fall of the city.\n"
     },
     {
       "id": "gutenberg-printing-press",
@@ -3780,6 +3946,21 @@
           }
         ]
       }
+    },
+    {
+      "id": "mongol-sack-of-baghdad",
+      "label": "Mongols sack Baghdad",
+      "kind": "moment",
+      "tMin": 767.0,
+      "tMax": 767.0,
+      "t": 767.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.45,
+      "description": "A Mongol army under Hulagu, brother of the Great Khan Mongke, besieges Baghdad and takes its surrender in February 1258. The last Abbasid caliph, al-Musta'sim, is executed, the city is sacked and its libraries, including the House of Wisdom, are destroyed, ending the Abbasid Caliphate in Baghdad.\n",
+      "citation": "Via Wikipedia \"Siege of Baghdad\" (searched 2026-09-24): siege 29 January to 10 February 1258 by Hulagu's forces; caliph al-Musta'sim put to death; city sacked and the House of Wisdom destroyed.\n"
     },
     {
       "id": "greenland-norse-settlement",
@@ -3894,6 +4075,61 @@
       }
     },
     {
+      "id": "an-lushan-rebellion",
+      "label": "An Lushan Rebellion",
+      "kind": "period",
+      "tMin": 1262.0,
+      "tMax": 1270.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "The frontier general An Lushan rebels against the Tang in 755 and takes both capitals, Luoyang and Chang'an. The war lasts until 763, ends the Tang golden age and begins the dynasty's long decline; in 763 the Tibetan Empire, exploiting the turmoil, briefly occupies Chang'an.\n",
+      "citation": "Via Wikipedia \"An Lushan rebellion\" and \"Chang'an\" (searched 2026-09-24): rebellion 755-763, ending with Shi Chaoyi's defeat; Chang'an occupied by the Tibetan Empire for about 15 days in 763.\n"
+    },
+    {
+      "id": "umayyad-greatest-extent",
+      "label": "Umayyad Caliphate at its greatest extent",
+      "kind": "period",
+      "tMin": 1285.0,
+      "tMax": 1307.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "With the conquest of the Iberian Peninsula complete by 718, and Sindh and much of Transoxiana taken under al-Walid I, the Umayyad Caliphate ruled from the Atlantic to the Indus, the largest state the world had yet seen. The Berber Revolt of 740 cost it most of the Maghreb, and the Abbasid Revolution overthrew the dynasty in 750.\n",
+      "citation": "Via Wikipedia \"Umayyad Caliphate\", \"Muslim conquest of the Iberian Peninsula\" and \"Berber Revolt\" (searched 2026-09-24): conquest of Hispania 711-718; North Africa, Hispania, Transoxiana and Sindh conquered under al-Walid I (705-715); Berber Revolt from 740, the Maghreb beyond Ifriqiya never recovered.\n"
+    },
+    {
+      "id": "fall-of-western-roman-empire",
+      "label": "Fall of the Western Roman Empire",
+      "kind": "moment",
+      "tMin": 1549.0,
+      "tMax": 1549.0,
+      "t": 1549.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Odoacer, a Germanic general of the Roman army in Italy, deposes the boy emperor Romulus Augustulus in September 476 and rules as king of Italy rather than naming a new emperor. The date is a convention for a long decline, and the eastern empire continues from Constantinople for almost another thousand years.\n",
+      "citation": "Via Wikipedia \"Fall of the Western Roman Empire\" and \"Romulus Augustulus\" (searched 2026-09-24): Romulus Augustulus deposed by Odoacer, 4 September 476, the date most commonly given for the end of the empire in the west.\n"
+    },
+    {
+      "id": "end-of-han-dynasty",
+      "label": "End of the Han dynasty",
+      "kind": "moment",
+      "tMin": 1805.0,
+      "tMax": 1805.0,
+      "t": 1805.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "Cao Pi, son of the warlord Cao Cao, forces the last Han emperor, Xian, to abdicate in his favour in December 220 and proclaims the state of Wei. Liu Bei proclaims himself emperor of Shu Han in 221 and Sun Quan breaks with Wei as king of Wu in 222 (emperor from 229), dividing China into the Three Kingdoms.\n",
+      "citation": "Via Wikipedia \"End of the Han dynasty\", \"Emperor Xian of Han\" and \"Sun Quan\" (searched 2026-09-24): abdication to Cao Pi, 11 December 220; Liu Bei emperor of Shu Han, 221; Sun Quan breaks with Wei as king of Wu, 222, and declares himself emperor, 229.\n"
+    },
+    {
       "id": "roman-empire-peak",
       "label": "Roman Empire at its height",
       "kind": "period",
@@ -3941,6 +4177,21 @@
       }
     },
     {
+      "id": "destruction-of-carthage",
+      "label": "Rome destroys Carthage",
+      "kind": "moment",
+      "tMin": 2171.0,
+      "tMax": 2171.0,
+      "t": 2171.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "A Roman army under Scipio Aemilianus storms Carthage in spring 146 BC, ending a three-year siege and the Third Punic War. The city is burned and razed, its surviving inhabitants enslaved, and its territory becomes the Roman province of Africa, leaving Rome unrivalled in the western Mediterranean.\n",
+      "citation": "Via Wikipedia \"Siege of Carthage (Third Punic War)\" and \"Third Punic War\" (searched 2026-09-24): siege 149 to spring 146 BC; city razed, some 50,000 prisoners enslaved; territory made the province of Africa.\n"
+    },
+    {
       "id": "qin-unification",
       "label": "Qin dynasty unifies China",
       "kind": "period",
@@ -3953,6 +4204,19 @@
       "importance": 0.55,
       "description": "King Zheng of Qin completes the conquest of China's rival Warring States in 221 BC, becoming its first emperor (Qin Shi Huang) and standardising its currency, weights and measures, and writing system across the newly unified territory. His capital, Xianyang, is by tradition ringed by a network of over two hundred palaces across the Wei valley, and needs no defensive wall of its own. The dynasty he founds collapses within four years of his death in 210 BC, falling to rebellion in 206 BC.\n",
       "citation": "Via Wikipedia \"Qin dynasty\" and \"Qin Shi Huang\" (accessed 2026-09-17): unification 221 BC; dynasty ends 206 BC; standardisation of currency, weights/measures and writing; Xianyang \"the only capital city in China that did not require walls to be built around it\"; a network of \"over 200\" palaces linked by covered roads. Primary sources (Sima Qian's Records of the Grand Historian) not independently read.\n"
+    },
+    {
+      "id": "alexander-conquers-persia",
+      "label": "Alexander conquers the Persian Empire",
+      "kind": "period",
+      "tMin": 2355.0,
+      "tMax": 2359.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Alexander of Macedon crosses into Anatolia in 334 BC, defeats the Persian satraps at the Granicus, then Darius III himself at Issus in 333 BC and, decisively, at Gaugamela in 331 BC, and occupies the Persian heartland. Darius is murdered by his own satrap Bessus in 330 BC, ending the Achaemenid Empire, which Alexander carries on to the Indus.\n",
+      "citation": "Via Wikipedia \"Battle of the Granicus\", \"Battle of Issus\", \"Battle of Gaugamela\" and \"Darius III\" (searched 2026-09-24): Granicus, May 334 BC, against the satraps of Asia Minor; Issus, November 333 BC; Gaugamela, 1 October 331 BC; Darius killed by Bessus, July 330 BC.\n"
     },
     {
       "id": "periclean-athens",
@@ -3982,6 +4246,20 @@
       "importance": 0.4,
       "description": "Standardized metal coinage — electrum pieces stamped with an issuing authority's mark — first appears in Iron Age Lydia and Ionia in the late 7th century BC, replacing weighed bullion with a portable, trust-based medium of exchange. Alyattes of Lydia is conventionally credited with early state-issued coinage, and his son Croesus (r. c. 560-546 BC) with the first coins of standardized purity; the earliest known inscribed coins come from Ephesus.\n",
       "citation": "Via Wikipedia \"Coin\", drawing on Herodotus, Aristotle and Pollux, plus the Ephesus Artemision hoard; primary/archaeological sources not independently checked.\n"
+    },
+    {
+      "id": "fall-of-nineveh",
+      "label": "Fall of Nineveh",
+      "kind": "moment",
+      "tMin": 2637.0,
+      "tMax": 2637.0,
+      "t": 2637.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "A coalition of Babylonians under Nabopolassar and Medes under Cyaxares takes Nineveh, the capital of the Neo-Assyrian Empire, in 612 BC after a siege of about three months. An Assyrian remnant under Ashur-uballit II holds out at Harran until 609 BC, and Babylon inherits most of Assyria's former empire.\n",
+      "citation": "Via Wikipedia \"Fall of Nineveh\" and \"Medo-Babylonian conquest of the Assyrian Empire\" (searched 2026-09-24): Nineveh falls to the Median-Babylonian coalition in 612 BC after a three-month siege; Ashur-uballit II driven from Harran by 609 BC. Primary source (Babylonian Chronicle ABC 3) not independently read.\n"
     },
     {
       "id": "bantu-expansion",
@@ -4943,7 +5221,7 @@
     },
     {
       "id": "paraceratherium",
-      "label": "Paraceratherium, the largest land mammal",
+      "label": "Paraceratherium, a giant hornless rhino",
       "kind": "period",
       "tMin": 23000000.0,
       "tMax": 34000000.0,
@@ -4951,7 +5229,7 @@
         "life"
       ],
       "importance": 0.4,
-      "description": "Hornless giant rhinocerotoids browse the Oligocene woodlands of Asia from Mongolia and Kazakhstan to Pakistan and Gansu. At an estimated 11-20 tonnes and nearly 5 m at the shoulder, Paraceratherium is the largest land mammal known.\n",
+      "description": "Hornless giant rhinocerotoids browse the Oligocene woodlands of Asia from Mongolia and Kazakhstan to Pakistan and Gansu. At an estimated 11-20 tonnes and nearly 5 m at the shoulder, Paraceratherium is among the largest land mammals known.\n",
       "citation": "Deng, T. et al. (2021). \"An Oligocene giant rhino provides insights into Paraceratherium evolution.\" Communications Biology, 4, 639 (P. linxiaense, 26.5 Ma, Linxia Basin). Fortelius, M. & Kappelman, J. (1993). \"The largest land mammal ever imagined.\" Zoological Journal of the Linnean Society, 108, 85-101 (mean ~11 t, maximum 15-20 t). Prothero, D.R. (2013). Rhinoceros Giants: The Paleobiology of Indricotheres. Indiana University Press. Genus range treated as the Oligocene (~34-23 Ma); exact first and last appearances UNVERIFIED against primary literature.\n"
     },
     {
@@ -6160,7 +6438,7 @@
     },
     {
       "sourceId": "cliopatria",
-      "title": "Cliopatria: worldwide political entities, 3400 BCE - 1900 CE (notable subset)",
+      "title": "Cliopatria: historical empires, 3400 BCE - 1900 CE",
       "citation": "Chalstrey, E., Bennett, J. & Mutch, E. (2024). Cliopatria: A geospatial database of world-wide political entities from 3400BCE to 2024CE (v0.0.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.13363121. Methods: Bennett, J. et al., \"Cliopatria: a geospatial dataset of world historical polities\", SocArXiv preprint osf.io/24wd6. Seshat Global History Databank: https://seshatdatabank.info/",
       "licence": "CC BY 4.0 (confirmed both via the Zenodo record's own metadata, license.id == \"cc-by-4.0\", and the repository's committed LICENSE.md)",
       "url": "https://zenodo.org/api/records/13363121/files/Seshat-Global-History-Databank/cliopatria-v0.0.1.zip/content"
@@ -6177,7 +6455,7 @@
       "title": "Curated Earth History Events",
       "citation": "Every event in data/events.yaml carries its own specific citation. This manifest's citation covers only the ICS International Chronostratigraphic Chart v2024/12, stratigraphy.org, used as a boundary-dating reference.",
       "licence": "CC0 (Wikidata candidate pool, unused here) + ICS chart free-for-research/non-commercial-use-with-attribution (not modified beyond resizing) + per-event literature citations retain their own copyright, paraphrased not copied — see README.md",
-      "url": "https://stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf"
+      "url": ""
     },
     {
       "sourceId": "globe-regimes",

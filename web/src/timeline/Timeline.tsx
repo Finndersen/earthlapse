@@ -95,7 +95,7 @@ import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 
 import type { GeoTime, Playback, TimeScale, TimelineEvent } from '@/types/layer'
 
-import { nearestStepTarget, type TimelineCheckpoint } from './checkpoints'
+import { transportStepTarget, type TimelineCheckpoint } from './checkpoints'
 import { AxisTicks } from './components/AxisTicks'
 import { ScrubTrack } from './components/ScrubTrack'
 import { SectionBands } from './components/SectionBands'
@@ -278,7 +278,7 @@ export function Timeline({
       case 'step': {
         e.preventDefault()
         const direction = intent.direction === 'prev' ? 'back' : 'forward'
-        const target = nearestStepTarget(checkpoints, sectionWindow, t, direction)
+        const target = transportStepTarget(checkpoints, sectionWindow, t, direction, playback)
         if (target !== undefined) onScrub(target)
         return
       }

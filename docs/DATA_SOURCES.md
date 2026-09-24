@@ -414,57 +414,56 @@ field, with names on hover only, in the same shared tooltip arrival arcs and inh
 | **Source** | Cliopatria (Seshat Global History Databank / Complexity Science Hub Vienna / Alan Turing Institute / Oxford); Chalstrey, E., Bennett, J. & Mutch, E. (2024), Zenodo doi:10.5281/zenodo.13363121 (v0.0.1); methods paper Bennett, J. et al., SocArXiv preprint osf.io/24wd6 |
 | **Access** | **VERIFIED.** A single Zenodo file-content URL (`zenodo.org/api/records/13363121/files/.../content`), no auth — the Zenodo deposit is a snapshot of the `cliopatria` GitHub repo, containing one doubly-nested zip whose only real payload is `cliopatria.geojson` |
 | **Format** | one GeoJSON `FeatureCollection`, CRS84 (lon/lat WGS84) |
-| **Coverage** | curated domain 3400 BCE → 1900 CE (the raw dataset itself runs to 2024 CE; a provisional per-user cutoff excludes everything after 1900 CE — see "Processing" below and `sources/cliopatria/README.md` "Domain cutoff: 1900 CE"), ~508 distinct attested map years in the raw data |
-| **Volume** | measured: 49,215,745 bytes raw zip; 186,488,764 bytes extracted GeoJSON; 14,945 total features (14,108 `Type == "POLITY"`); curated (2026-09-18, after the label-normalisation and 1900-cutoff amendment) to 114 notable polities across 1,803 surviving windows, 842 raster frames (`sources/cliopatria/README.md` "Measured volume") |
+| **Coverage** | curated domain 3400 BCE → 1997 CE, each roster lineage to its own end (the raw dataset itself runs to 2024 CE — `sources/cliopatria/README.md` "Domain: each lineage's own end"), ~508 distinct attested map years in the raw data |
+| **Volume** | measured: 49,215,745 bytes raw zip; 186,488,764 bytes extracted GeoJSON; 14,945 total features (14,108 `Type == "POLITY"`); curated to the 28-lineage empire roster: 1,755 resolved member segments thinned to 804 territory snapshots (`sources/cliopatria/README.md` "Measured volume") |
 | **Licence** | **CC BY 4.0** — confirmed both via the Zenodo record's own `license.id` and the repository's committed `LICENSE.md` |
-| **Shape** | `RasterSequence` (id `cliopatria_extent`, territorial coverage) + `FeatureSet` (id `cliopatria_polities`, one label-anchor `Feature` per surviving polity-window — ADR-037) |
-| **Storage** | raw not committed (gitignored, re-fetched from Zenodo); both curated parquets → git (small); textures → generated media, git-lfs |
+| **Shape** | `FeatureSet` (id `cliopatria_polities`, one `Feature` per territory snapshot: label anchor, area, half-open span — ADR-037, ADR-059), plus a vector geometry media file the shape does not hold |
+| **Storage** | raw not committed (gitignored, re-fetched from Zenodo); curated parquet (~44 KB) → git; geometry `data/media/vectors/cliopatria_territories-<hash10>.json` (3.2 MB, 0.30 MB gzipped) → plain git, written by `normalise.py`'s `write_outputs` |
 
-**Processing** — `Type != "POLITY"` rows (`LEADER`/`GROUP`/`EVENT`/`ARMY`) are dropped first;
-Cliopatria's own precomputed `Area` (km², spot-checked against known peak empire sizes) feeds
-an objective, era-relative "top 6 by peak area per 100-year bucket" subset rule
-(`sources/cliopatria/subset.py`), applied inside `normalise.py` itself (curated data already
-holds only the notable subset — a deliberate departure from `sources/cities`' "curate
-everything, filter at publish" precedent, since the full world political map at ~508 map years
-is a different, much larger product than what was asked for). Every raw `Name`'s wrapping
-`"(...)"` pair is stripped unconditionally — a merge into an existing bare name when one exists
-(e.g. `"(Roman Empire)"` → `"Roman Empire"`, stopping the same physical empire consuming two
-ranking slots) or a plain rename when it doesn't (e.g. `"(Delhi Sultanate)"` →
-`"Delhi Sultanate"`) — plus a small explicit alias (`"(British Empire)"` →
-`"British Colonial Empire"`, two literal Names for one empire that paren-stripping alone can't
-unify) and a small explicit exclusion list (`"Greek Dark Ages"`, a historical period Cliopatria
-carries as a `POLITY` row despite not being an attested governing polity) — see
-`sources/cliopatria/README.md` "Duplicate aggregate entries and label normalisation" for the
-full account and every name affected. **Domain cutoff (added 2026-09-18, per-user, provisional):**
-`normalise.CUTOFF_CE_YEAR = 1900` drops any polity-window material after that year and truncates
-a straddling window to end there, applied before the subset rule runs — "largest by area" ranked
-all the way to the present had selected modern nation-states (Canada, the PRC, Brazil, the
-Russian Federation, the USA) rather than the historical empires this layer exists to show; see
-`sources/cliopatria/README.md` "Domain cutoff: 1900 CE". 114 polities selected, spanning every
-millennium 3400 BCE → 1900 CE and every inhabited continent — full list, peak areas and spans in
-`sources/cliopatria/README.md` "Subset rule".
+**Processing** — `Type != "POLITY"` rows (`LEADER`/`GROUP`/`EVENT`/`ARMY`) are dropped first.
+Every raw `Name`'s wrapping `"(...)"` pair is stripped (a merge into an existing bare name, or a
+plain rename), plus a small explicit alias (`"(British Empire)"` → `"British Colonial Empire"`)
+and exclusion list (`"Greek Dark Ages"`, a period rather than a polity) — `sources/cliopatria/README.md`
+"Duplicate aggregate entries and label normalisation". There is no domain cutoff: the roster keeps modern
+nation-states out, and its two modern-state members (`Kingdom of Spain`, `Kingdom of Great
+Britain`) carry a `to` year.
 
-**Integration** — the raster is a plain coverage mask (R = antialiased territorial coverage
-0–255, G = B = 0; which named polity a pixel belongs to is left to the `FeatureSet`'s label
-anchors, the same split `sources/hyde` draws between its population-density raster and
-`sources/cities`' named markers). Each `Feature`'s single-element `estimates` list carries
-`area_km2` and `t_end` (ADR-037's additive extension to `PopulationEstimate`, not `population`
-— a polity has no population reading), because a polity's own representative point moves as its
-territory does, which the existing "one `Feature`, one fixed `lat`/`lon`" shape can only express
-at the granularity of one `Feature` per attested window, not one per polity — see
-`sources/cliopatria/README.md` "FeatureSet: one row per window, not per polity" for the full
-account of why this doesn't fit `FeatureSet` as cleanly as `sources/cities` does. Rendering is
-out of scope for this source, matching `sources/cities`' own original ADR-035 scoping.
+**Selection is a hand-picked roster (ADR-059)**, replacing ADR-037's era-relative top-6-by-area
+rule. `sources/cliopatria/roster.toml` lists 28 lineages (Rome, China, Persia, the Caliphate, the
+Mongols, the Ottomans, …), each an ordered list of Cliopatria polities with optional year clamps
+and globe labels, a one-line `reason` and a colour slot. A roster name absent from the data, or a
+member left empty by its clamp, fails the build. Curated data holds only roster polities, over
+their full lifespans:
+
+- **One geometry per member per year.** A bare-name window beats a parenthesised aggregate
+  wherever one covers that year (the two often describe different footprints — a colonial
+  empire's overseas holdings vs. metropole plus colonies); the aggregate fills gaps only, and the
+  latest `FromYear` wins a tie. A window under 500 km² counts as absent (degenerate slivers such
+  as Han 6–13 CE at 143 km²).
+- **Thinning.** A member's resolved segments merge into the last kept snapshot unless IoU drops
+  below 0.9, the symmetric difference exceeds 250,000 km² (both in an equal-area projection), or
+  there is a gap. Per lineage: Rome 109 snapshots, China 104, Persia 60, down to the Hittites' 3.
+- **Time.** `t_start = 2025 − from`, `t_end = 2025 − (to + 1)`; a snapshot is active for
+  `t_end < t ≤ t_start`, so the curated domain is t = 5425 → 124.
+
+**Integration** — each `Feature` is one snapshot: `name` is the canonical polity name, `lat`/`lon`
+its `representative_point()` (always inside the territory), and a single `estimates` entry carries
+`area_km2` and `t_end` (ADR-037's additive extension to `PopulationEstimate`). Geometry is not in
+the curated shape: `write_outputs` writes one content-hashed JSON keyed by feature id — polygons of
+flat `[lon, lat, …]` rings, exteriors counter-clockwise, holes clockwise — after
+`simplify(0.1°, preserve_topology=True)` and `set_precision(0.01°)`, with stale siblings removed.
+Publish builds the `empires` globe layer (`territories` wire kind) from the `FeatureSet`, the
+roster (lineage, label, colour slot, and the info card's description, related event ids and each
+member's Wikipedia title) and that file's path, writing each snapshot's `member` index; it refuses
+a lineage event id that is not a published `events-core` id (ADR-059's amendment).
+`docs/GLOBE.md` §10 "Historical empires" covers rendering.
 
 **Certainty and honesty** — `FeatureCertainty` is mapped from whether a window's row carries a
 Seshat databank cross-reference (`SeshatID`) — `HIGH` if present, `MEDIUM` otherwise, no `LOW`
 tier — a genuine data-provenance signal, not a border-accuracy one. The Cliopatria authors'
 own stated caveat that steppe/nomadic polities' borders (their example: the Avar Khaganate) are
-materially more contested than settled agrarian empires' is **not** encoded as per-feature data
-(doing so would mean hand-classifying which selected polities count as "nomadic" from
-historical knowledge — exactly what the objective subset rule exists to avoid doing for
-*selection*) — it is carried instead as explicit prose in `sources/cliopatria/README.md`
-"Certainty".
+materially more contested than settled agrarian empires' is **not** encoded as per-feature data;
+it is carried as explicit prose in `sources/cliopatria/README.md` "Certainty".
 
 ---
 

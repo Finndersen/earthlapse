@@ -137,10 +137,11 @@ def test_a_rebuild_is_fresh_until_forced(repo: Path) -> None:
     }
 
 
-def test_editing_one_normalise_makes_only_that_source_stale(repo: Path) -> None:
+@pytest.mark.parametrize("filename", ["normalise.py", "roster.toml"])
+def test_editing_one_source_file_makes_only_that_source_stale(repo: Path, filename: str) -> None:
     build(repo)
-    normalise_path = repo / "sources" / "alpha" / "normalise.py"
-    normalise_path.write_text(normalise_path.read_text() + "\n# a harmless edit\n")
+    path = repo / "sources" / "alpha" / filename
+    path.write_text((path.read_text() if path.exists() else "") + "\n# a harmless edit\n")
 
     report = build(repo)
 

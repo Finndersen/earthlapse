@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 196 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 215 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -64,8 +64,8 @@ Every date was checked against its cited source with WebSearch, not asserted fro
 knowledge (per the hard rule: an LLM must not be the source of truth for dates). Stratigraphic
 boundaries (Cambrian base, Ediacaran top, Cryogenian bounds, Permian-Triassic boundary,
 K-Pg boundary) are checked against the **ICS International Chronostratigraphic Chart v2024/12**
-(`stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf`), fetched by `fetch.py` and hashed in
-`manifest.toml`. First-appearance dates for clades use the primary literature that established
+(`stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf`), a reference consulted while
+authoring and cited in `manifest.toml`; the build does not download it (`fetch.py` is a no-op). First-appearance dates for clades use the primary literature that established
 them (with DOI/journal where available) rather than PBDB directly — PBDB's occurrence API
 returns raw specimen records, not a curated "first appearance" figure, so for a ~30-event
 set the primary paper for each landmark specimen is the more precise and more easily
@@ -91,6 +91,10 @@ bibliographic line that could not be confirmed against its DOI page carries an i
 `late-devonian-extinction` (Becker & House year, Percival 2018), `gymnosperm-radiation` (no
 primary source yet, importance lowered to 0.35), `angiosperm-radiation` (Benton, Wilf & Sauquet
 year) and `younger-dryas` (Rasmussen 2006 volume and pages).
+
+The 15 empire peak-and-fall events (`fall-of-nineveh` … `holy-roman-empire-dissolved`) were
+checked by web search against the Wikipedia articles each cites; en.wikipedia.org itself could
+not be fetched from that session, so their citations read "searched" rather than "accessed".
 
 **Contested dates** get a wide `t_min`/`t_max` interval and the word "contested" (or an
 explanation of the disagreement) in the description, rather than a single invented number.
@@ -424,7 +428,7 @@ model knowledge. Curation choices:
   (Gondwana's later breakup is the southern half of Pangaea's own breakup, already covered
   by `pangaea-supercontinent`).
 
-A **gap-filling batch** (2026-09-24) added 26 events, bringing the total to 196, for silent
+A **gap-filling batch** (2026-09-24) added 26 events, bringing the total to 215, for silent
 stretches found by measuring the gaps between scenes on the timeline's warped scale and by
 counting scenes per era section. Deep time: `huronian-glaciation`, `ichthyosaurs-origin`,
 `pterosaurs-origin`, `mosasaurs`. Cenozoic and Quaternary: `messel-pit`,

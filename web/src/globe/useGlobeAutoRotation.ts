@@ -32,14 +32,37 @@
  * know. Keying suppression to the same signal that starts the ease avoids inventing a timer to
  * tune against a per-scene dwell. Ambient drift resumes from wherever the ease landed once the
  * dominant scene has no location (or the orb expands, which clears `focusLon` at the call site).
+ *
+ * Expanded, the drift also yields to the viewer (`sceneLocation.ts`'s `stepDriftGate`): it stops on
+ * any interaction, stays stopped while a tooltip or card is open or the view is zoomed in, and
+ * eases back in after an idle spell or once the orb collapses. The signals arrive through
+ * `driftSignalsRef`, written by the camera controls and the hit test outside this hook.
  */
 
 import { useFrame, useThree } from '@react-three/fiber'
 import { useRef, type MutableRefObject } from 'react'
 
-import { FOCUS_EASE_SECONDS, focusRotationY, REST_ROTATION, startFocusEase, stepGlobeRotation } from './sceneLocation'
+import {
+  DRIFT_RUNNING,
+  FOCUS_EASE_SECONDS,
+  focusRotationY,
+  REST_ROTATION,
+  startFocusEase,
+  stepDriftGate,
+  stepGlobeRotation,
+} from './sceneLocation'
 
 export const AUTO_ROTATE_RADIANS_PER_SECOND = 0.025
+
+/** What the expanded view tells the drift gate, written outside the render loop. */
+export interface GlobeDriftSignals {
+  /** Set on a drag, pinch, wheel, zoom-button press or tap; cleared by the hook once read. */
+  interacted: boolean
+  /** The camera sits inside its current mode's default framing. */
+  zoomedIn: boolean
+  /** A tooltip is showing. */
+  tooltipOpen: boolean
+}
 
 export interface GlobeRotationOptions {
   /** 0 (sphere) .. 1 (map). The displayed angle eases to square-on over this span, and drift
@@ -57,12 +80,25 @@ export interface GlobeRotationOptions {
    *  displayed one eases from. Held still while unfolded, so the camera can work out which way
    *  the sphere will face once it folds back (`Globe.tsx`'s `GlobeCameraControls`). */
   sphereRotationYRef: MutableRefObject<number>
+  expanded: boolean
+  /** A detail card (an event's or an empire's) is open. */
+  detailOpen: boolean
+  driftSignalsRef: MutableRefObject<GlobeDriftSignals>
 }
 
 /** The live `rotation.y` for `GlobeRotatingGroup`, updated in place every frame. */
-export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon, sphereRotationYRef }: GlobeRotationOptions): MutableRefObject<number> {
+export function useGlobeAutoRotationY({
+  unfold,
+  reducedMotion,
+  focusLon,
+  sphereRotationYRef,
+  expanded,
+  detailOpen,
+  driftSignalsRef,
+}: GlobeRotationOptions): MutableRefObject<number> {
   const { camera } = useThree()
   const stateRef = useRef(REST_ROTATION)
+  const driftGateRef = useRef(DRIFT_RUNNING)
   const focusLonRef = useRef<number | null>(null)
   const rotationYRef = useRef(0)
 
@@ -75,7 +111,15 @@ export function useGlobeAutoRotationY({ unfold, reducedMotion, focusLon, sphereR
         stateRef.current = startFocusEase(stateRef.current, target, reducedMotion ? 0 : FOCUS_EASE_SECONDS)
       }
     }
-    const drift = unfold === 0 && !reducedMotion && focusLon === null ? AUTO_ROTATE_RADIANS_PER_SECOND : 0
+    const signals = driftSignalsRef.current
+    driftGateRef.current = stepDriftGate(driftGateRef.current, delta, {
+      expanded,
+      interacted: signals.interacted,
+      held: detailOpen || signals.tooltipOpen || signals.zoomedIn,
+    })
+    signals.interacted = false
+    const drift =
+      unfold === 0 && !reducedMotion && focusLon === null ? AUTO_ROTATE_RADIANS_PER_SECOND * driftGateRef.current.speed : 0
     stateRef.current = stepGlobeRotation(stateRef.current, delta, drift)
     sphereRotationYRef.current = stateRef.current.rotationY
     rotationYRef.current = stateRef.current.rotationY * (1 - unfold)

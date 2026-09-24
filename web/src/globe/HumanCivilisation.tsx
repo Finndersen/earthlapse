@@ -24,35 +24,29 @@
  * because each is its own ribbon geometry, but only the handful actually in flight (or ghosted by
  * a trace) render at all.
  *
- * **Labels.** A city's full name/country/population still only ever appears in the shared
- * tooltip, on hover — ADR-032's call against permanent screen-space labels stands: at globe scale
- * a labelled set overlaps constantly, and a collision cull that silently drops half of them is
- * worse than a tooltip that always answers. What *is* drawn, expanded only (sphere or map, never
- * the orb), is a small transient name tag when a city first appears — `cities.ts`'s
- * `newCityLabels`, faded purely by `t`'s distance from the city's own first-appearance time
- * (`cityLabelOpacityAt`), never by a wall-clock timer, so scrubbing back to a city's founding
- * always brings its label back. Capped (`CITY_LABEL_CAP`) since the published set has cohorts of
- * cities sharing the exact same first-appearance `t`.
+ * **Labels.** A city's full name/country/population only ever appears in the shared tooltip, on
+ * hover — at globe scale a permanently labelled city set overlaps constantly. What *is* drawn,
+ * expanded only (sphere or map, never the orb), is a small transient name tag when a city first
+ * appears — `cities.ts`'s `newCityLabels`, faded purely by `t`'s distance from the city's own
+ * first-appearance time (`cityLabelOpacityAt`), never by a wall-clock timer, so scrubbing back to
+ * a city's founding always brings its label back. Capped (`CITY_LABEL_CAP`) since the published
+ * set has cohorts of cities sharing the exact same first-appearance `t`. The tag itself is the
+ * shared `GlobeLabel`, which also hides it round the back of the sphere and off-screen.
  *
- * A label only ever shows for a city that can actually be seen: `cityLabelVisibility` multiplies
- * the `t`-driven fade above by the same limb test the dot itself is already subject to
- * (`sphereMarkerVisibility`, `arcs.ts` — round the back of the sphere in globe mode, skipped once
- * unfolded past the midpoint, exactly `GlobeTooltip.tsx`'s own `projectAnchor`) and a hard
- * off-screen discard when the marker falls outside the camera's frustum (zoomed map, panned
- * sphere). Never clamped back into view the way the pointer-following tooltip deliberately is — an
- * unrequested label dragged to the screen edge would point at nothing. Both are about the
- * *camera*, not the clock, so they need their own per-frame `useFrame` (`CityLabelItem`) rather
- * than the plain-render-time computation everything else in this file uses: camera drag/auto-rotate
- * moves the view without `t` changing or this component re-rendering.
+ * **Empires.** The historical-empire territories are painted into the globe's own texture
+ * (`empireTexture.ts`), but their labels and hit test live here so they share this layer's one
+ * tooltip. Marks win over territory: an empire resolves only after every arc, marker and city has
+ * missed, first near a drawn label's anchor, then anywhere inside an active territory.
  */
 
-import { Html } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 
 import { formatGeoTime, formatTimeRange } from '@/timeline'
-import type { FeatureData, GeoTime, TimelineEvent } from '@/types/layer'
+import type { TerritoryGeometry } from '@/data/curated'
+import type { Mix } from '@/lib/presentedMix'
+import type { FeatureData, GeoTime, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
 import type { SceneCoordinates } from '@/types/manifest'
 
 import {
@@ -61,7 +55,6 @@ import {
   arrowheadPlacementAt,
   buildArrivalIndex,
   buildFatLineBuffers,
-  sphereMarkerVisibility,
   traceToOrigin,
   type ArrivalIndex,
   type ArrivalRecord,
@@ -71,17 +64,28 @@ import {
 } from './arcs'
 import {
   allCitiesAt,
-  CITY_LIMIT_ORB,
+  arrivingCitiesAt,
   cityEstimateRange,
   cityLocalPosition,
   declutterCities,
   newCityLabels,
-  selectCities,
   type CityAtTime,
   type CityLabel,
 } from './cities'
 import { srgbHexToLinear } from './color'
 import { smoothstep as easeSmoothstep } from './effects/math'
+import { EmpireLabels } from './EmpireLabels'
+import {
+  empireAreaLine,
+  empireAtLonLat,
+  formatEmpireSpan,
+  type EmpireFrame,
+  type EmpireIndex,
+  type EmpireLabel,
+  type EmpireLineageSummary,
+  type EmpireSnapshot,
+} from './empires'
+import { CITY_LABEL_STYLE, GlobeLabel, useScreenSeparation } from './GlobeLabel'
 import { GlobeTooltip, useGlobeHitTest, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { glslFloat } from './glsl'
 import {
@@ -96,7 +100,7 @@ import {
   SCENE_LOCATION_COLOR,
 } from './humanStyle'
 import { MarkerField, type GlobeMarker } from './MarkerField'
-import { PROJECTION_GLSL, unfoldedLiftedPosition } from './projection'
+import { PROJECTION_GLSL } from './projection'
 
 // ------------------------------------------------------------------------------------- arcs
 
@@ -429,43 +433,11 @@ const MARKER_CAPACITY = 512
  */
 const CITY_DECLUTTER_MIN_SEPARATION_PX = 14
 
-/** One "zoom step" for `useZoomBucket`, as a fraction change in camera distance (`Math.log(1.15)`
- *  ~ 15%) — loose enough to noticeably ease the declutter as a viewer zooms in, tight enough to
- *  damp sub-percent camera jitter that would otherwise flip a borderline city in and out. */
-const ZOOM_BUCKET_STEP = Math.log(1.15)
-
-/**
- * Camera distance from the world origin, quantised into `ZOOM_BUCKET_STEP`-sized steps, updating
- * only when the viewer crosses into a new step. Read every frame (`OrbitControls` mutates the
- * camera directly with no render-triggering signal of its own), but only triggers a `setState`
- * — and so only reruns the caller's `declutterCities` pass — on a bucket crossing, not every frame.
- *
- * Reacts to zoom (camera distance) and nothing else: `cityLocalPosition`'s local-space distances
- * are already rotation/pan invariant, so only the local-to-screen-pixel conversion (which scales
- * with 1/distance) needs the camera at all. Returns the quantised distance so the caller's
- * `useMemo` sees a stable value between bucket crossings rather than a new number every frame.
- */
-function useZoomBucket(camera: THREE.Camera, active: boolean): number {
-  const bucketRef = useRef(0)
-  const [bucket, setBucket] = useState(0)
-  useFrame(() => {
-    if (!active) return
-    const distance = camera.position.length()
-    if (!(distance > 0)) return
-    const next = Math.round(Math.log(distance) / ZOOM_BUCKET_STEP)
-    if (next !== bucketRef.current) {
-      bucketRef.current = next
-      setBucket(next)
-    }
-  })
-  return Math.exp(bucket * ZOOM_BUCKET_STEP)
-}
-
 const INHABITED_RADIUS_PX = 3.4
 const ARRIVAL_RING_RADIUS_PX = 4.2
 const RIPPLE_MAX_SCALE = 4
 const SCENE_MARKER_RADIUS_PX = 4.5
-/** A city dot's own alpha before `trailingFade` scales it down. */
+/** A city dot's own alpha before its `fade` scales it down. */
 const CITY_ALPHA = 0.92
 /** The location ring's radius as a multiple of the dot's. */
 const SCENE_RING_SCALE = 2.4
@@ -506,12 +478,12 @@ export function activationFor(
   return expanded ? (onActivateEvent ?? null) : null
 }
 
-/** The tooltip's "how to open this" line: only for a target with an event of its own, and only
- *  while activation is on (expanded). Worded for the gesture that showed it — a touch tap has
- *  already been spent showing the tooltip, so it asks for a second one. */
+/** The tooltip's "how to open this" line: only for a target with an event or an empire of its
+ *  own, and only while activation is on (expanded). Worded for the gesture that showed it — a
+ *  tapped tooltip is itself the button that opens the detail. */
 export function tooltipHintFor(target: GlobeHitTarget | null, viaTouch: boolean, activatable: boolean): string | null {
-  if (!activatable || target === null || target.eventId === null) return null
-  return viaTouch ? 'Tap again for details ›' : 'Click for details ›'
+  if (!activatable || target === null || (target.eventId === null && target.lineage === undefined)) return null
+  return viaTouch ? 'Tap for details ›' : 'Click for details ›'
 }
 
 /** Population with a thousands separator — the attested figure, never the interpolated one the
@@ -556,109 +528,33 @@ export function cityTarget(city: CityAtTime, t: GeoTime): GlobeHitTarget {
   }
 }
 
+/** An empire's tooltip: the member state as the title, the lineage's area now against its peak,
+ *  and the member's own span. Points at `anchor` — where the pointer entered the territory — or
+ *  at the snapshot's label anchor. */
+export function empireTarget(
+  summary: EmpireLineageSummary,
+  snapshot: EmpireSnapshot,
+  t: GeoTime,
+  anchor: GlobeEffectAnchor = { lat: snapshot.lat, lon: snapshot.lon },
+): GlobeHitTarget {
+  const member = summary.members.find((m) => m.member === snapshot.member)!
+  return {
+    kind: 'empire',
+    id: `empire:${snapshot.lineage}:${snapshot.member}`,
+    eventId: null,
+    lineage: snapshot.lineage,
+    title: member.label,
+    description: empireAreaLine(summary, t),
+    dateRange: formatEmpireSpan(member.tStart, member.tEnd),
+    anchor,
+  }
+}
+
+/** How near a label's anchor, where its colour dot sits, in CSS pixels, still names its empire —
+ *  the dot and the start of the name, even where the anchor sits near a border. */
+const EMPIRE_LABEL_TOLERANCE_PX = 18
+
 // ------------------------------------------------------------------------------- city labels
-
-/**
- * The small transient name tag a city gets when it first appears. Positioned exactly like
- * `GlobeTooltip.tsx`'s own tooltip — drei's `Html` at the marker's `unfoldedLiftedPosition`, so it
- * tracks the globe through rotation and the sphere/map unfold without re-deriving a screen
- * position itself — but with no edge clamp: these are decorative and small, drawn several at
- * once, and the tooltip's own clamp logic exists for a single larger panel that must never be cut
- * off, which isn't this. Styled inline rather than through `Globe.module.css`; the values mirror
- * `.tooltip`'s own (mono HUD font, near-black translucent chip) so it reads as the same family
- * rather than a new visual language.
- */
-const CITY_LABEL_STYLE: CSSProperties = {
-  pointerEvents: 'none',
-  transform: 'translate(7px, -50%)',
-  whiteSpace: 'nowrap',
-  fontFamily: 'var(--hud-mono, ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace)',
-  fontSize: 9,
-  letterSpacing: '0.03em',
-  color: 'var(--hud-ink, #efe9dc)',
-  background: 'rgba(3, 4, 6, 0.78)',
-  border: '1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18))',
-  borderRadius: 4,
-  padding: '2px 5px',
-  opacity: 0,
-}
-
-/**
- * The label's own draw-alpha multiplier for whether the city it names can actually be seen right
- * now — independent of, and multiplied against, its `t`-driven fade (`cityLabelOpacityAt`). Pure
- * (plain tuples, no `THREE` types) so it is unit-testable without a canvas, matching
- * `sphereMarkerVisibility` (`arcs.ts`) itself, which it wraps for the limb half of the test.
- *
- * - **Off-screen** (`ndc` outside `[-1, 1]` in x/y, or behind the camera — `ndc[2] > 1`): 0,
- *   unconditionally. A zoomed-in map or a panned sphere can put a marker outside the viewport
- *   entirely; the label must not be dragged back into view the way the pointer-following tooltip
- *   deliberately is (`GlobeTooltip.tsx`'s `clampedPosition`) — an unrequested label at the screen
- *   edge would point at nothing real.
- * - **Round the back of the sphere** (globe mode only — `unfold >= 0.5` skips this entirely, the
- *   same shortcut `GlobeTooltip.tsx`'s `projectAnchor` uses, since the flattened map has no back
- *   face): `sphereMarkerVisibility`'s own smooth limb fade, so a city rotating into view brings
- *   its name with it smoothly instead of the label popping in a beat after (or before) its dot.
- */
-export function cityLabelVisibility(
-  worldPosition: readonly [number, number, number],
-  cameraPosition: readonly [number, number, number],
-  radius: number,
-  unfold: number,
-  ndc: readonly [number, number, number],
-): number {
-  const onScreen = Math.abs(ndc[0]) <= 1 && Math.abs(ndc[1]) <= 1 && ndc[2] <= 1
-  if (!onScreen) return 0
-  return unfold >= 0.5 ? 1 : sphereMarkerVisibility(worldPosition, cameraPosition, radius)
-}
-
-const labelScratchLocal = new THREE.Vector3()
-const labelScratchWorld = new THREE.Vector3()
-
-interface CityLabelItemProps {
-  label: CityLabel
-  unfold: number
-  radius: number
-  groupRef: MutableRefObject<THREE.Group | null>
-}
-
-/**
- * One label. Its own `useFrame` — not a plain render-time computation like everything else in
- * this file — because camera drag/auto-rotate changes `cityLabelVisibility`'s answer every frame
- * without `t` changing or this component re-rendering (see this module's own doc comment,
- * "Labels"). The div's `opacity` is written directly via a ref rather than through React state,
- * the same reason `ArcSegment`/`ArrowHead` write shader uniforms straight into a ref each frame:
- * a value that changes every frame has no business going through a React re-render.
- */
-function CityLabelItem({ label, unfold, radius, groupRef }: CityLabelItemProps) {
-  const elementRef = useRef<HTMLDivElement>(null)
-  const { camera } = useThree()
-  const anchor = { lat: label.feature.lat, lon: label.feature.lon }
-  const [x, y, z] = unfoldedLiftedPosition(anchor, unfold, radius, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
-
-  useFrame(() => {
-    const group = groupRef.current
-    const element = elementRef.current
-    if (group === null || element === null) return
-    labelScratchLocal.set(x, y, z)
-    group.localToWorld(labelScratchWorld.copy(labelScratchLocal))
-    const worldPosition: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    const cameraPosition: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z]
-    // `.project` mutates in place; `worldPosition` above is already captured, so reusing the same
-    // scratch vector for the NDC projection next is safe.
-    labelScratchWorld.project(camera)
-    const ndc: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    const visibility = cityLabelVisibility(worldPosition, cameraPosition, radius, unfold, ndc)
-    element.style.opacity = String(label.opacity * visibility)
-  })
-
-  return (
-    <Html position={[x, y, z]} pointerEvents="none" zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-      <div ref={elementRef} style={CITY_LABEL_STYLE}>
-        {label.feature.name}
-      </div>
-    </Html>
-  )
-}
 
 interface CityLabelFieldProps {
   labels: readonly CityLabel[]
@@ -671,7 +567,17 @@ function CityLabelField({ labels, unfold, radius, groupRef }: CityLabelFieldProp
   return (
     <>
       {labels.map((label) => (
-        <CityLabelItem key={label.feature.id} label={label} unfold={unfold} radius={radius} groupRef={groupRef} />
+        <GlobeLabel
+          key={label.feature.id}
+          text={label.feature.name}
+          lat={label.feature.lat}
+          lon={label.feature.lon}
+          opacity={label.opacity}
+          unfold={unfold}
+          radius={radius}
+          groupRef={groupRef}
+          style={CITY_LABEL_STYLE}
+        />
       ))}
     </>
   )
@@ -712,6 +618,20 @@ export interface HumanCivilisationProps {
    *  the timeline, not a fixed number of years that reads as a minute-long linger in a
    *  scene-dense stretch and a flash in a sparse one. */
   cityLabelFadeWindowAt: (appearanceT: GeoTime) => GeoTime
+  /** The empire territories the hit test resolves against at `t` — the current frame, not the
+   *  presented crossfade — or `null` while their labels do not show (so never on the orb) or their
+   *  geometry has not loaded. */
+  empires?: { index: EmpireIndex; frame: EmpireFrame; geometry: TerritoryGeometry } | null
+  /** The empire labels' presented frames, or `null` while no labels show. */
+  empireLabels?: { presented: Mix<EmpireFrame> } | null
+  /** The lineage whose detail panel is open, drawn highlighted like a hovered one. */
+  selectedEmpire?: string | null
+  /** Opens a lineage's detail panel from its territory or label. Acted on only while `expanded`. */
+  onActivateEmpire?: (lineage: string) => void
+  /** Told the hovered empire lineage, or `null`, each time it changes — never per pointermove. */
+  onHoverEmpire?: (lineage: string | null) => void
+  /** Told whether a tooltip is showing, each time that changes. */
+  onTooltipChange?: (open: boolean) => void
 }
 
 export function HumanCivilisation({
@@ -730,11 +650,25 @@ export function HumanCivilisation({
   touchHitRef,
   onActivateEvent,
   cityLabelFadeWindowAt,
+  empires = null,
+  empireLabels = null,
+  selectedEmpire = null,
+  onActivateEmpire,
+  onHoverEmpire,
+  onTooltipChange,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
+  const empireCandidatesRef = useRef<readonly GlobeHitCandidate[]>([])
+  const empireSurfaceRef = useRef<((point: GlobeEffectAnchor) => GlobeHitTarget | null) | null>(null)
   const onActivate = activationFor(expanded, onActivateEvent)
-  const { target: hovered, viaTouch } = useGlobeHitTest({
+  const onActivateEmpireHere = activationFor(expanded, onActivateEmpire)
+  const {
+    target: hovered,
+    viaTouch,
+    dismiss: dismissTooltip,
+    activateShown,
+  } = useGlobeHitTest({
     candidatesRef,
     unfold,
     radius,
@@ -742,35 +676,49 @@ export function HumanCivilisation({
     enabled,
     touchHitRef,
     onActivate,
+    onActivateEmpire: onActivateEmpireHere,
+    fallbackCandidatesRef: empireCandidatesRef,
+    surfaceRef: empireSurfaceRef,
   })
 
   const index = useMemo(() => buildArrivalIndex(effectEvents), [effectEvents])
   const hoveredEventId = hovered?.eventId ?? null
+  const hoveredLineage = hovered?.lineage ?? null
+  const highlightedLineages = useMemo(
+    () => new Set([hoveredLineage, selectedEmpire].filter((lineage): lineage is string => lineage !== null)),
+    [hoveredLineage, selectedEmpire],
+  )
   const tracedIds = useMemo(() => resolveTracedIds(index, hoveredEventId), [index, hoveredEventId])
+  useEffect(() => {
+    onHoverEmpire?.(hoveredLineage)
+  }, [hoveredLineage, onHoverEmpire])
+  // The open panel already shows everything this empire's tooltip would, and the tooltip would
+  // sit over the card's top edge.
+  const tooltipTarget = hovered !== null && hovered.lineage !== undefined && hovered.lineage === selectedEmpire ? null : hovered
+  const tooltipOpen = tooltipTarget !== null
+  useEffect(() => {
+    onTooltipChange?.(tooltipOpen)
+    return () => onTooltipChange?.(false)
+  }, [tooltipOpen, onTooltipChange])
+  const tooltipActivatable =
+    tooltipTarget !== null &&
+    (tooltipTarget.lineage !== undefined ? onActivateEmpireHere : tooltipTarget.eventId !== null ? onActivate : null) !== null
 
-  // Converts `CITY_DECLUTTER_MIN_SEPARATION_PX` (a screen-pixel budget) into the object-space
-  // distance `declutterCities` compares cities by, via the standard perspective scale-at-distance
-  // relationship. `useZoomBucket` keeps this from recomputing every frame during a drag/zoom.
-  const { camera, size } = useThree()
-  const zoomDistance = useZoomBucket(camera, expanded)
-  const minSeparationWorldUnits = useMemo(() => {
-    const fovYRadians = (((camera as THREE.PerspectiveCamera).fov ?? 40) * Math.PI) / 180
-    const pixelsPerWorldUnit = size.height / (2 * zoomDistance * Math.tan(fovYRadians / 2))
-    return pixelsPerWorldUnit > 0 ? CITY_DECLUTTER_MIN_SEPARATION_PX / pixelsPerWorldUnit : 0
-  }, [camera, size.height, zoomDistance])
+  // `CITY_DECLUTTER_MIN_SEPARATION_PX` as the object-space distance `declutterCities` compares
+  // cities by, recomputed only when the camera crosses a zoom step.
+  const minSeparationWorldUnits = useScreenSeparation(CITY_DECLUTTER_MIN_SEPARATION_PX, expanded)
 
-  // The orb stays a ranked top-N (decorative, ~130px, room for a handful of dots); expanded draws
-  // every city that clears the era-relative significance floor and the screen-space declutter
-  // (`cities.ts`'s `citySignificanceFloorAt`/`declutterCities`) — see `CITY_LIMIT_ORB` for why a
-  // fixed-size rank cull is wrong there.
+  // The orb shows only cities that just appeared (`arrivingCitiesAt`); expanded draws every city
+  // that clears the era-relative significance floor and the screen-space declutter
+  // (`cities.ts`'s `citySignificanceFloorAt`/`declutterCities`).
   const visibleCities = useMemo(() => {
     if (cities === null) return []
-    if (!expanded) return selectCities(cities, t, CITY_LIMIT_ORB)
+    if (!expanded) return arrivingCitiesAt(cities, t, cityLabelFadeWindowAt)
     const all = allCitiesAt(cities, t)
     return declutterCities(all, (city) => cityLocalPosition(city.feature, unfold), minSeparationWorldUnits)
-  }, [cities, t, expanded, unfold, minSeparationWorldUnits])
-  // A brief name tag for a city that just appeared — expanded only; the orb never has
-  // visibleCities. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
+  }, [cities, t, expanded, unfold, minSeparationWorldUnits, cityLabelFadeWindowAt])
+  // A brief name tag for a city that just appeared — expanded only; the orb shows the arrival as
+  // the dot itself. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
   // the least-recent arrivals rather than the smallest ones.
   const cityLabels = useMemo(
     () => (expanded ? newCityLabels(visibleCities, t, cityLabelFadeWindowAt) : []),
@@ -843,10 +791,7 @@ export function HumanCivilisation({
         lon: city.feature.lon,
         radiusPx: city.radiusPx,
         color: CITY_RGB,
-        // `trailingFade` (cities.ts) fades a marker out over CITY_TRAILING_GRACE_T years past its
-        // own newest attested reading, rather than popping it away the instant it's excluded —
-        // see CITY_TRAILING_GRACE_T's own doc comment.
-        alpha: CITY_ALPHA * city.trailingFade,
+        alpha: CITY_ALPHA * city.fade,
         innerFraction: 0,
         pulse: 0,
       })
@@ -925,6 +870,36 @@ export function HumanCivilisation({
     candidatesRef.current = candidates
   }, [arrivals, visibleCities, t])
 
+  // The drawn labels' anchors, then the territory test; both only while `empires` is set. The
+  // labels are whichever `EmpireLabels` reports drawn on screen now, kept to the current frame.
+  const [drawnEmpireLabels, setDrawnEmpireLabels] = useState<readonly EmpireLabel[]>([])
+  useEffect(() => {
+    if (empires === null) {
+      empireCandidatesRef.current = []
+      empireSurfaceRef.current = null
+      return
+    }
+    const { index, frame, geometry } = empires
+    const labelCandidates: GlobeHitCandidate[] = []
+    for (const label of drawnEmpireLabels) {
+      const summary = index.lineages.get(label.lineage)
+      if (summary === undefined || !frame.snapshots.includes(label.snapshot)) continue
+      labelCandidates.push({
+        content: () => empireTarget(summary, label.snapshot, t),
+        points: [{ lat: label.lat, lon: label.lon }],
+        tolerancePx: EMPIRE_LABEL_TOLERANCE_PX,
+        sphereLift: MARKER_SPHERE_LIFT,
+        mapLift: MARKER_MAP_LIFT,
+      })
+    }
+    empireCandidatesRef.current = labelCandidates
+    empireSurfaceRef.current = (point) => {
+      const snapshot = empireAtLonLat(frame, geometry, point.lon, point.lat)
+      const summary = snapshot === null ? undefined : index.lineages.get(snapshot.lineage)
+      return snapshot === null || summary === undefined ? null : empireTarget(summary, snapshot, t, point)
+    }
+  }, [empires, drawnEmpireLabels, t])
+
   if (!enabled) return null
 
   return (
@@ -961,9 +936,21 @@ export function HumanCivilisation({
       })}
       <MarkerField markers={markers} unfold={unfold} radius={radius} capacity={MARKER_CAPACITY} />
       {cityLabels.length > 0 && <CityLabelField labels={cityLabels} unfold={unfold} radius={radius} groupRef={groupRef} />}
+      {empireLabels !== null && (
+        <EmpireLabels
+          presented={empireLabels.presented}
+          unfold={unfold}
+          radius={radius}
+          highlight={highlightedLineages}
+          onDrawn={setDrawnEmpireLabels}
+        />
+      )}
       <GlobeTooltip
-        target={hovered}
-        hint={tooltipHintFor(hovered, viaTouch, onActivate !== null)}
+        target={tooltipTarget}
+        hint={tooltipHintFor(tooltipTarget, viaTouch, tooltipActivatable)}
+        pinned={viaTouch}
+        onOpen={tooltipActivatable ? activateShown : null}
+        onDismiss={dismissTooltip}
         unfold={unfold}
         radius={radius}
         sphereLift={MARKER_SPHERE_LIFT}

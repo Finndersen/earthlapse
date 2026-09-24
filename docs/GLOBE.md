@@ -45,7 +45,9 @@ between Earth's formation and the oldest cited regime, 4.567–4.52 Ga — see �
 > half-extents (`unrolledHalfWidth`/`unrolledHalfHeight`), not a linear lerp of the sphere's and
 > map's own bounding boxes — that lerp overshot the real, slower-growing-at-first silhouette and
 > read as a shrink-then-grow jump (ADR-033's amendment). Map mode disables rotation, enables pan,
-> and clamps both pan and zoom so the map can never be lost off-screen (`camera.ts`). See ADR-033
+> and clamps both pan and zoom so the map can never be lost off-screen (`camera.ts`); the pan
+> clamp measures against the chrome-free fit frames (`panWindow`), not the whole canvas, so every
+> edge of the map can be brought into view at every zoom. See ADR-033
 > and its amendment for the full rationale, including why Equal Earth over equirectangular.
 
 > **v2 note (ADR-030/ADR-031/ADR-032/ADR-035/ADR-036): the basemap and the human-civilisation
@@ -652,15 +654,17 @@ remains a quality upgrade over 0–1000 Ma, not a coverage gap.
 
 ---
 
-## 10. Human-era rendering: basemap, arrivals, population density, cities
+## 10. Human-era rendering: basemap, arrivals, population density, cities, empires
 
 Renders the data ADR-030 (basemap), ADR-031's amendment (HYDE population density; the original
 cleared-land tint is curated but no longer rendered — see below), ADR-032 and its amendment
-(arrivals, now transient), and ADR-035 (cities, published but not rendered until this pass).
-ADR-036 records the "Human civilisation" layer these four are unified into: one legend toggle,
+(arrivals, now transient), ADR-035 (cities, published but not rendered until this pass) and
+ADR-059 (historical empires, which joined the layer later).
+ADR-036 records the "Human civilisation" layer these are unified into: one legend toggle,
 one shared hit-test and tooltip, one screen-space marker field. Image budget: **$0** (everything
 here is shaders/geometry over already-published data, same as the rest of this document).
-Web-only work — no pipeline/data change.
+The basemap, arrivals, density and cities parts are web-only work; empires also need the
+cliopatria pipeline changes ADR-059 records.
 
 **Base crossfade (ADR-030).** `web/src/globe/blend.ts`'s `BASEMAP_CROSSFADE_BAND = [300_000,
 400_000]` (years BP) and `basemapStrengthAt(t)`: 0 at and above 400 ka (PaleoDEM/Merdith
@@ -748,11 +752,32 @@ rather than letting it grow without bound across a long session, and stops accum
 under `prefers-reduced-motion`; a scene with a real-world location (ADR-034) eases this same
 accumulator to face it (`sceneLocation.ts`) rather than adding a second rotation source. `PoleAxisMarkers`
 stays outside the group deliberately: both poles sit on the rotation axis itself, so spinning them
-is a no-op. The camera (`GlobeCameraControls`) tweens from wherever the viewer actually left it —
+is a no-op.
+
+**Expanded, the drift yields to the viewer.** `sceneLocation.ts`'s `stepDriftGate` scales the
+drift speed: any drag, pinch, wheel, zoom-button press or tap (`OrbitControls`' `start`, the zoom
+buttons) stops it at once, and it stays stopped while a tooltip or a detail card (event or empire)
+is open or the camera sits inside its mode's default framing. After 45 s left alone
+(`DRIFT_RESUME_IDLE_SECONDS`) it ramps back to full speed over 4 s, a speed ramp so the angle never
+jumps; the collapsed orb always drifts. The signals reach the rotation hook through one
+`GlobeDriftSignals` ref written by `GlobeCameraControls` and the hit test; the open event card
+arrives as `Globe`'s `eventDetailOpen` prop.
+
+The camera (`GlobeCameraControls`) tweens from wherever the viewer actually left it —
 direction, distance and pan target captured the instant a Globe/Map tween starts — rather than
 snapping to a fixed starting pose first, restores the sphere's own pre-unfold distance on folding
 back rather than always the default framing, and sizes its map-mode framing from the unrolled
 mesh's own real half-extents, not a linear lerp (§1's v2 note, ADR-033's amendment).
+
+**One zoom range per mode, one closest scale for both.** Neither mode zooms closer than one globe
+radius spanning `MAX_ZOOM_PX_PER_RADIUS` (1000) CSS px — about 1.5 px per texel of the T1
+basemap — expressed as a height above the surface (`camera.ts`'s `heightForScale`), which reads
+the same for the sphere's nearest point and the flat map. The map cannot zoom out past its fit; the
+sphere has no outer bound. A mode switch carries the zoom by `carriedDistance`: the destination
+opens at whichever is farther out of the carried ratio and the source's own on-screen scale (no
+farther than the destination's default), clamped to the destination's range. Defaults map to
+defaults; a deep map zoom opens the sphere at the same scale, where a plain ratio would overshoot
+on a portrait phone, whose sphere default already sits ~3x closer than its map default.
 
 **One-finger rotate tracks the surface under the finger at any zoom (sphere mode).**
 `OrbitControls`'s own `rotateSpeed` maps a drag to a fixed angle of camera orbit regardless of
@@ -791,9 +816,14 @@ over empty space already clears the target there).
 **An arrival target opens its event's detail panel.** The tooltip clamps a description to three
 lines, so an arrival arc or inhabited marker is also a way into the full `EventDetailPanel`: on
 the expanded globe a mouse click on the target opens it, and on touch the first tap shows the
-tooltip and a second tap on the same target opens it. The tooltip itself stays inert
-(`pointer-events: none`) and only carries a hint line ("Click for details ›" / "Tap again for
-details ›"). The minimised orb never activates — a click there still expands the globe. Activation
+tooltip and a second tap on the same target opens it. A hover tooltip stays inert
+(`pointer-events: none`) with a "Click for details ›" hint. A tapped tooltip is pinned and
+interactive: its body is a button that opens the same detail ("Tap for details ›"), a × closes it,
+and every press on it stops at the card, so nothing underneath — another target, the empty
+backdrop — is reached through it. The card acts only on a click whose press began on it, since the
+pinning tap's own `click` can land on the freshly drawn card (the edge clamp can put it under the
+finger on a phone). A touch activation, from either path, also closes the tooltip. The minimised
+orb never activates — a click there still expands the globe. Activation
 runs on `click` rather than `pointerup` so the panel is not already under the finger when a tap's
 own `click` arrives, and an activating click stops at the canvas so r3f's `onPointerMissed`
 (click-empty-space-to-collapse) never also sees it (`GlobeTooltip.tsx`'s `bindGlobeHitTest`).
@@ -890,19 +920,25 @@ candidates count), and hovering a marker or feed card ghosts the whole chain bac
 origin (`traceToOrigin`) at a dimmed alpha. **Labels are still not drawn** — the shared tooltip
 (below) and the event feed cover the "what is this" need instead.
 
-**Cities (ADR-035's data, rendered this pass).** `cities.ts`'s `selectCities` culls the 242
-cities `FeatureData` publishes (the significance roster of ADR-038 is a separate, publish-time cut)
-down to whichever are largest *at the current `t`* — 10 on the orb, 45
-expanded — so the late-modern frames don't turn solid; a scrub to 3000 BCE surfaces Uruk and
-Memphis, to 1900 CE London and New York, with no separate ranking table. Marker radius is
+**Cities (ADR-035's data, rendered this pass).** Expanded, every one of the 242 cities
+`FeatureData` publishes (the significance roster of ADR-038 is a separate, publish-time cut) that
+exists at `t` and clears the era-relative significance floor is drawn, thinned by a screen-space
+declutter (`allCitiesAt`, `declutterCities`). The orb shows a city only while it is new
+(`arrivingCitiesAt`): the dot swells in as the city first appears and fades over the same window
+its expanded-view name tag has, so the small orb shows where cities are forming without a standing
+set that turns over as rankings change. Marker radius is
 `log10(population)`-mapped (2.4–9 CSS px), a legibility trade against area-true bubble sizing:
 below about a million a proportional dot would be indistinguishable from the floor for most of
 history. A city's size between two attested readings eases log-linearly (population is
 multiplicative) rather than jumping; the tooltip always states the actual attested reading it sits
-between, never the interpolated figure. **Names appear on hover only, in the shared tooltip below
-— never as drawn labels:** the same call ADR-032 already made for arrival labels, for the same
-reason (the labelled set overlaps constantly at globe scale, and a silent collision cull is worse
-than a tooltip that always answers).
+between, never the interpolated figure. **A city's full name, country and population appear on
+hover only, in the shared tooltip below:** the same call ADR-032 already made for arrival labels,
+for the same reason (the labelled set overlaps constantly at globe scale, and a silent collision
+cull is worse than a tooltip that always answers). What is drawn is a small transient name tag as
+a city first appears, capped and faded by `t`. **Empires are the one exception to hover-only
+(ADR-059):** a few quiet labels, always on, decluttered on screen — see "Historical empires"
+below. An empire is large and few at once, and an unnamed coloured outline explains nothing. They
+also answer on hover, like everything else here.
 
 **One shared screen-space hit-test and tooltip (`GlobeTooltip.tsx`).** Every drawable in this
 layer — arcs, inhabited/city/scene-location markers — registers a `GlobeHitCandidate` (a point or
@@ -913,7 +949,9 @@ screen space on each pointer move (cheap — it runs on pointer events, not fram
 `unfoldedLiftedPosition`, and scores a hit by distance-over-tolerance, so a thin arc and a 2px city
 dot compete on "how close, relative to how close it had to be" rather than raw pixels. One tooltip
 component renders whichever target won, tracking it through `drei`'s `Html` with a clamp so it is
-never cut off at the panel's own rounded edge.
+never cut off at the panel's own rounded edge, and in a z-range above the globe labels'. Empires
+(kind `'empire'`) are tested only when every mark above has missed: first their label anchors, then
+the territory under the pointer — see "Historical empires" below.
 
 **One instanced field for every dot (`MarkerField.tsx`).** Inhabited markers, city dots, arrival
 landing ripples and the scene-location indicator are all one instance in a single
@@ -922,6 +960,73 @@ what an earlier `ArrivalArcs.tsx` did and does not survive going from thirteen d
 forty-odd cities plus everything else. The one animated quantity, a sympathetic pulse for a marker
 whose event card is on screen or is part of a traced chain, is a `uTime` uniform read on the GPU;
 instance buffers are rewritten only when the marker *set* changes (a render), never per frame.
+
+**Historical empires (ADR-059).** The `empires` layer (`territories` wire kind) draws the
+Cliopatria lineage roster's territory snapshots. `empires.ts` (pure) indexes the snapshots once
+into frames within which the active set cannot change; `empireSnapshotsAt` finds the frame for
+`t` by binary search under the half-open rule `tEnd < t ≤ tStart`. The eager layer JSON is small;
+the vector geometry file is fetched once (`useEmpireGeometry`), when `t` comes within 5,000 years
+of the domain, and a failed fetch draws nothing rather than failing the page.
+`empireTexture.ts` rasterises the active set's **coverage**, not its outlines, through a
+`GlobeTextureCache` that paints instead of fetching (key: frame, tier, fill, highlighted lineage;
+byte-capped, cleared on context restore). The texture stacks three equirectangular bands: one
+coverage channel per palette slot (every lineage of that `colourSlot` in one nonzero `Path2D`,
+rings re-wound so exteriors and holes have opposite winding) and one for the highlighted lineage.
+It is uploaded as an `ImageBitmap` transferred off an `OffscreenCanvas`, with no pixel readback.
+Each texture carries its own draw parameters (fill on, highlighted slot) in `userData`, bound
+with it as `uEmpireBeforeParams`/`uEmpireAfterParams`, so the uniforms always describe the
+texture beside them; `uPixelRatio` is the renderer's live pixel ratio. A slot is a sound border identity because the roster never
+gives two coexisting neighbours one. The shader (`shaders.ts`'s `empireOver`) finds each border
+as the half-way contour of its slot's coverage: `(a − 0.5) / |∇a|`, the gradient taken in screen
+space, is the fragment's distance to it in device pixels, so the line (`EMPIRE_LINE_WIDTH_PX`,
+1.25 CSS px over a slightly wider dark casing) is the same width at every zoom, on the sphere
+and map, and the texture resolution sets only how finely it follows the geometry. The
+fill is cut at the same contour. No line is drawn within a line's width of the antimeridian,
+where Cliopatria cuts its polygons and often keeps one side only. Each crossfade side is drawn
+whole and the two results mixed, so a border fades rather than slides, after the overlay mix
+through `uEmpireBefore`/`uEmpireAfter`/`uEmpireMix`/`uEmpireStrength`. Uniform branches skip the
+layer entirely while `uEmpireStrength` is 0, and the side not on screen outside a crossfade. The
+geometry is fetched only once the globe is expanded with the layer on. Tiers (`empireStyle.ts`,
+per band): 2048×1024 on a GPU that takes the T1 basemap, else 1536×768. Empires are drawn
+expanded only; the minimised orb shows none. The fill shows only with the overlay set to None, so it never tints population density
+or cleared land. A new active set crossfades in 0.3 s (`usePresentedMix`);
+when the last lineage ends (1997) the set empties, so the layer fades out rather than cutting. **Labels**
+(`EmpireLabels.tsx`, on the shared `GlobeLabel`): one per active lineage on its largest member's
+anchor — the roster member's `anchor` (its capital or core, set for 24 members whose representative
+point is a poor label spot, such as the metropole of a colonial series), else the snapshot's
+representative point. The label's colour dot sits on that anchor, marking the capital or core, and
+the name runs to its right. Which labels show is decided on screen, every frame
+(`EmpireLabels.tsx`'s `useDrawnEmpireLabels`, `empires.ts`'s `placeEmpireLabels`): only labels
+whose anchor is on screen and, on the sphere, on the near side compete, the hovered or selected
+lineage first, then by area. A label whose box (`EMPIRE_LABEL_BOX`, estimated from its text, plus
+a 4 px gap, in CSS px) overlaps one already placed moves its name a row above its anchor, then
+below, the dot staying on the anchor, and is dropped only when all three collide (`declutterLabelBoxes`). There is no count cap: crowding
+alone thins them, so a far-side empire never takes a small near-side one's place and zooming in
+names more. React state changes only when the placed set changes, not per frame; the hit test
+reads the same drawn set. Labels fade with the crossfade; expanded view only. A label is bare text so it never hides the outline
+it names: 9 px semibold tracked uppercase mono with a dark halo and a dot in the lineage colour, at 0.92
+opacity, full for the hovered lineage and the one whose card is open. **Hover and card:** in the
+expanded view, once territory is drawn, a pointer that misses every mark is tested against the
+label anchors and then the territory itself (pointer → lon/lat through the group's inverse
+transform, even-odd per polygon with a cached bounding-box prefilter, smallest containing
+snapshot wins; no answer mid-unfold). The tooltip names the member, its span, and the lineage's
+area now and at its peak, or "at its peak, X" while `t` is inside the peak step; it is suppressed
+for the lineage whose card is open. A click opens `EmpireDetailPanel` in the event dock — description,
+area chart with a playhead at `t`, member succession linked to Wikipedia, related events, "Jump to
+peak" — which replaces any event card and, unlike one, never moves `t` on opening. Lineage
+summaries (member spans, area series, peak) are built once in `buildEmpireIndex`. **Highlight:**
+hovering an empire, or opening its card, emphasises that lineage in the territory texture itself —
+the other lineages' fills, casings and lines drop to `EMPIRE_DIM_ALPHA` (0.45), and the
+emphasised lineage draws last with a 1.6× line and a stronger fill; hover wins over an open card.
+The highlight is part of the texture key, taken per crossfade side and only when that frame draws
+the lineage (`empireHighlightIn`), so it composes with the snapshot crossfade and an open card for
+an empire absent at `t` reuses the plain texture. Hover reaches the texture after 120 ms
+(`EMPIRE_HOVER_SETTLE_MS`), so a sweep across territories repaints once. While one texture is
+kept (no crossfade or rebind in flight), trimming the cache keeps its unhighlighted twin resident,
+so hovering on and off swaps between two cached textures (two expanded ones are ~67 MB, inside the
+72 MB cap); during a crossfade the twins are ordinary LRU entries the cap can evict. Other lineages' labels recede to
+0.6 opacity (`EMPIRE_LABEL_DIM_OPACITY`) while a highlighted lineage is on screen. The palette's eight colours, one per `colourSlot`, are chosen
+against the basemap, both overlay ramps, the amber arrival arcs and the cyan city markers.
 
 **Scene location on the orb (ADR-034; the single-toggle framing is ADR-036).** A scene naming a
 real place eases the orb's own auto-rotation to face it and shows a small pulsing marker
@@ -950,8 +1055,8 @@ expanded-view only, same labelled-toggle idiom as `ViewModeToggle`/the timeline 
 controls, now shows a single row governing arcs, population density and cities together, per the
 user's own framing ("a more global toggle for 'human civilisation' ... which covers that as well
 as population density and cities") — not a toggle and a colour key per part. The row is shown only
-when at least one of the three has data at the current `t` (`hasVisibleArrivals ||
-densityHasDataAt || citiesHaveDataAt`) — omitted entirely rather than greyed out, the same rule
+when at least one of its parts has data at the current `t` (arrivals, cities, or empires —
+`empiresHaveDataAt`, ADR-059) — omitted entirely rather than greyed out, the same rule
 the old per-overlay rows already followed. **Arrivals carry no colour key at all** (their colour is
 fixed, not a scale); **density gets one** (`DensityRampKey.tsx`, generated from `DENSITY_RAMP`),
 shown in the row's own `footer` slot only while the layer is on and actually painting a density —

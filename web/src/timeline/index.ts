@@ -90,8 +90,8 @@
  *   hidden, only merged; clicking a cluster reports its members via `Timeline`'s `onOpenCluster`
  *   rather than framing them (there is no window left to frame into). `nearestNeighbourCheckpoint`
  *   and `nearestStepTarget` (checkpoints only — events are not step targets) back the transport's
- *   step buttons and the ←/→ shortcut, so every checkpoint is reachable by stepping regardless of
- *   clustering.
+ *   step buttons and the ←/→ shortcut in scenes mode, so every checkpoint is reachable by stepping
+ *   regardless of clustering; in steady mode `transportStepTarget` steps one second of playback.
  *
  * ## `<Timeline>` — props contract
  *

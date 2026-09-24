@@ -9,6 +9,13 @@ nearest older plate for a node without one.
 Morph fields between consecutive pinned plates are derived, deterministic data. They are cached
 under data/candidates/portraits/_morph/ (ProjectPaths.portrait_morphs), keyed by both pins' digests and the algorithm version,
 so re-picking either plate invalidates exactly the two morphs that touch it.
+
+The published morphs (data/media/portraits/morphs/) are the first cache: `records.json` there
+holds each published pair's `MorphRecord` and the digests of its two flow files, so a publish
+reuses a committed morph whose key, algorithm version and file bytes still match instead of
+recomputing it. The flow is byte-reproducible only per CPU (OpenCV dispatches SIMD paths by
+instruction set) and the PNG deflate stream only per zlib build, so a recompute on another
+machine rewrites every file with no change in the inputs.
 """
 
 from __future__ import annotations
@@ -53,6 +60,8 @@ MORPH_ALGORITHM_VERSION = "5"
 FORWARD_FLOW_NAME = "forward.png"
 BACKWARD_FLOW_NAME = "backward.png"
 MORPH_RECORD_NAME = "morph.json"
+PUBLISHED_MORPHS_DIR = "portraits/morphs"  # under data/media
+PUBLISHED_MORPH_RECORDS_NAME = "records.json"
 
 
 class UnknownPortrait(LookupError):
@@ -290,3 +299,44 @@ def load_morph(cache_root: Path, key: MorphKey) -> MorphRecord | None:
     if record.key != key or record.algorithm_version != MORPH_ALGORITHM_VERSION:
         raise ValueError(f"{path}: records {record.key}, expected {key}")
     return record
+
+
+class PublishedMorph(BaseModel):
+    """One pair as published: its record, and the digests of the two flow files it shipped.
+    A dissolved pair ships no files, so both digests are None."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    record: MorphRecord
+    forward_digest: str | None
+    backward_digest: str | None
+
+    @model_validator(mode="after")
+    def _files_match_verdict(self) -> PublishedMorph:
+        shipped = (self.forward_digest is not None, self.backward_digest is not None)
+        if shipped != (not self.record.fallback_dissolve,) * 2:
+            raise ValueError(f"{self.record.key}: flow digests contradict fallback_dissolve")
+        return self
+
+
+class PublishedMorphs(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    morphs: tuple[PublishedMorph, ...]
+
+
+def load_published_morphs(path: Path) -> dict[MorphKey, PublishedMorph]:
+    """The published morph records at `path`, current algorithm version only; empty when the
+    file does not exist yet."""
+    if not path.is_file():
+        return {}
+    published = PublishedMorphs.model_validate_json(path.read_text())
+    return {
+        entry.record.key: entry
+        for entry in published.morphs
+        if entry.record.algorithm_version == MORPH_ALGORITHM_VERSION
+    }
+
+
+def dump_published_morphs(morphs: tuple[PublishedMorph, ...]) -> str:
+    return PublishedMorphs(morphs=morphs).model_dump_json(indent=2) + "\n"

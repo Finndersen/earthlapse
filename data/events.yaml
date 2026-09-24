@@ -2549,6 +2549,43 @@ events:
       Propylaea finished 432 BC. Primary sources (Thucydides, Plutarch) not independently
       read.
 
+  - id: fall-of-nineveh
+    label: Fall of Nineveh
+    kind: moment
+    t_min: 2637
+    t_max: 2637
+    t: 2637
+    tags: [society]
+    importance: 0.35
+    description: >
+      A coalition of Babylonians under Nabopolassar and Medes under Cyaxares takes Nineveh,
+      the capital of the Neo-Assyrian Empire, in 612 BC after a siege of about three
+      months. An Assyrian remnant under Ashur-uballit II holds out at Harran until 609 BC,
+      and Babylon inherits most of Assyria's former empire.
+    citation: >
+      Via Wikipedia "Fall of Nineveh" and "Medo-Babylonian conquest of the Assyrian
+      Empire" (searched 2026-09-24): Nineveh falls to the Median-Babylonian coalition in
+      612 BC after a three-month siege; Ashur-uballit II driven from Harran by 609 BC.
+      Primary source (Babylonian Chronicle ABC 3) not independently read.
+
+  - id: alexander-conquers-persia
+    label: Alexander conquers the Persian Empire
+    kind: period
+    t_min: 2355
+    t_max: 2359
+    tags: [society]
+    importance: 0.5
+    description: >
+      Alexander of Macedon crosses into Anatolia in 334 BC, defeats the Persian satraps
+      at the Granicus, then Darius III himself at Issus in 333 BC and, decisively, at
+      Gaugamela in 331 BC, and occupies the Persian heartland. Darius is murdered by his own satrap Bessus in 330 BC, ending
+      the Achaemenid Empire, which Alexander carries on to the Indus.
+    citation: >
+      Via Wikipedia "Battle of the Granicus", "Battle of Issus", "Battle of Gaugamela"
+      and "Darius III" (searched 2026-09-24): Granicus, May 334 BC, against the satraps
+      of Asia Minor; Issus, November 333 BC; Gaugamela, 1 October 331 BC; Darius killed
+      by Bessus, July 330 BC.
+
   # Added for the qin-xianyang-epang-palace scene (data/scenes.yaml), filling the gap
   # between great-pyramid-giza and roman-empire-peak. No existing event covered Qin China.
 
@@ -2573,6 +2610,24 @@ events:
       built around it"; a network of "over 200" palaces linked by covered roads. Primary
       sources (Sima Qian's Records of the Grand Historian) not independently read.
 
+  - id: destruction-of-carthage
+    label: Rome destroys Carthage
+    kind: moment
+    t_min: 2171
+    t_max: 2171
+    t: 2171
+    tags: [society, catastrophe]
+    importance: 0.4
+    description: >
+      A Roman army under Scipio Aemilianus storms Carthage in spring 146 BC, ending a
+      three-year siege and the Third Punic War. The city is burned and razed, its
+      surviving inhabitants enslaved, and its territory becomes the Roman province of
+      Africa, leaving Rome unrivalled in the western Mediterranean.
+    citation: >
+      Via Wikipedia "Siege of Carthage (Third Punic War)" and "Third Punic War"
+      (searched 2026-09-24): siege 149 to spring 146 BC; city razed, some 50,000
+      prisoners enslaved; territory made the province of Africa.
+
   - id: roman-empire-peak
     label: Roman Empire at its height
     kind: period
@@ -2592,6 +2647,79 @@ events:
       AD 98-117, ~5,000,000 km^2; Nerva-Antonine dynasty and Pax Romana, AD 96-180.
       Wikipedia, "Pantheon, Rome" (accessed 2026-09-15): present building completed
       and probably dedicated by Hadrian c. AD 126.
+
+  - id: end-of-han-dynasty
+    label: End of the Han dynasty
+    kind: moment
+    t_min: 1805
+    t_max: 1805
+    t: 1805
+    tags: [society]
+    importance: 0.4
+    description: >
+      Cao Pi, son of the warlord Cao Cao, forces the last Han emperor, Xian, to abdicate
+      in his favour in December 220 and proclaims the state of Wei. Liu Bei proclaims
+      himself emperor of Shu Han in 221 and Sun Quan breaks with Wei as king of Wu in 222
+      (emperor from 229), dividing China into the Three Kingdoms.
+    citation: >
+      Via Wikipedia "End of the Han dynasty", "Emperor Xian of Han" and "Sun Quan"
+      (searched 2026-09-24): abdication to Cao Pi, 11 December 220; Liu Bei emperor of
+      Shu Han, 221; Sun Quan breaks with Wei as king of Wu, 222, and declares himself
+      emperor, 229.
+
+  - id: fall-of-western-roman-empire
+    label: Fall of the Western Roman Empire
+    kind: moment
+    t_min: 1549
+    t_max: 1549
+    t: 1549
+    tags: [society]
+    importance: 0.55
+    description: >
+      Odoacer, a Germanic general of the Roman army in Italy, deposes the boy emperor
+      Romulus Augustulus in September 476 and rules as king of Italy rather than naming a
+      new emperor. The date is a convention for a long decline, and the eastern empire
+      continues from Constantinople for almost another thousand years.
+    citation: >
+      Via Wikipedia "Fall of the Western Roman Empire" and "Romulus Augustulus" (searched
+      2026-09-24): Romulus Augustulus deposed by Odoacer, 4 September 476, the date most
+      commonly given for the end of the empire in the west.
+
+  # 718-740 is also Cliopatria's peak snapshot of the Umayyad Caliphate (9.84 million km^2).
+  - id: umayyad-greatest-extent
+    label: Umayyad Caliphate at its greatest extent
+    kind: period
+    t_min: 1285
+    t_max: 1307
+    tags: [society]
+    importance: 0.4
+    description: >
+      With the conquest of the Iberian Peninsula complete by 718, and Sindh and much of
+      Transoxiana taken under al-Walid I, the Umayyad Caliphate ruled from the Atlantic to
+      the Indus, the largest state the world had yet seen. The Berber Revolt of 740 cost
+      it most of the Maghreb, and the Abbasid Revolution overthrew the dynasty in 750.
+    citation: >
+      Via Wikipedia "Umayyad Caliphate", "Muslim conquest of the Iberian Peninsula" and
+      "Berber Revolt" (searched 2026-09-24): conquest of Hispania 711-718; North Africa,
+      Hispania, Transoxiana and Sindh conquered under al-Walid I (705-715); Berber Revolt
+      from 740, the Maghreb beyond Ifriqiya never recovered.
+
+  - id: an-lushan-rebellion
+    label: An Lushan Rebellion
+    kind: period
+    t_min: 1262
+    t_max: 1270
+    tags: [society, catastrophe]
+    importance: 0.4
+    description: >
+      The frontier general An Lushan rebels against the Tang in 755 and takes both
+      capitals, Luoyang and Chang'an. The war lasts until 763, ends the Tang golden age
+      and begins the dynasty's long decline; in 763 the Tibetan Empire, exploiting the
+      turmoil, briefly occupies Chang'an.
+    citation: >
+      Via Wikipedia "An Lushan rebellion" and "Chang'an" (searched 2026-09-24): rebellion
+      755-763, ending with Shi Chaoyi's defeat; Chang'an occupied by the Tibetan Empire
+      for about 15 days in 763.
 
   - id: madagascar-arrival
     label: Arrival in Madagascar
@@ -2849,6 +2977,24 @@ events:
       Via Wikipedia "Mongol Empire": proclaimed 1206; Möngke Khan's death and
       fragmentation, 1259; territorial peak ~23.5M km^2 (1294); Yuan dynasty fall, 1368.
 
+  - id: mongol-sack-of-baghdad
+    label: Mongols sack Baghdad
+    kind: moment
+    t_min: 767
+    t_max: 767
+    t: 767
+    tags: [society, catastrophe]
+    importance: 0.45
+    description: >
+      A Mongol army under Hulagu, brother of the Great Khan Mongke, besieges Baghdad and
+      takes its surrender in February 1258. The last Abbasid caliph, al-Musta'sim, is
+      executed, the city is sacked and its libraries, including the House of Wisdom, are
+      destroyed, ending the Abbasid Caliphate in Baghdad.
+    citation: >
+      Via Wikipedia "Siege of Baghdad" (searched 2026-09-24): siege 29 January to
+      10 February 1258 by Hulagu's forces; caliph al-Musta'sim put to death; city sacked
+      and the House of Wisdom destroyed.
+
   - id: little-ice-age
     label: Little Ice Age
     kind: period
@@ -2917,6 +3063,59 @@ events:
       Wikipedia: the ~1440 Strasbourg claim is flagged uncertain in the source itself
       and was not used to set t_max.
 
+  - id: fall-of-constantinople
+    label: Fall of Constantinople
+    kind: moment
+    t_min: 572
+    t_max: 572
+    t: 572
+    tags: [society]
+    importance: 0.55
+    description: >
+      Ottoman forces under Sultan Mehmed II take Constantinople on 29 May 1453 after a
+      53-day siege in which cannon batter the city's land walls. The last emperor,
+      Constantine XI, dies in the fighting; the Byzantine Empire, the last continuation of
+      the Roman Empire, ends, and the city becomes the Ottoman capital.
+    citation: >
+      Via Wikipedia "Fall of Constantinople" (searched 2026-09-24): captured 29 May 1453
+      after a siege begun 6 April; Mehmed II against Constantine XI Palaiologos, who died
+      in the fall of the city.
+
+  - id: fall-of-tenochtitlan
+    label: Fall of Tenochtitlan
+    kind: moment
+    t_min: 504
+    t_max: 504
+    t: 504
+    tags: [society, catastrophe]
+    importance: 0.45
+    description: >
+      Spanish forces under Hernan Cortes, with tens of thousands of Indigenous allies led
+      by the Tlaxcalans, besiege the smallpox-stricken Aztec capital from May 1521. Its
+      last ruler, Cuauhtemoc, is captured on 13 August, and the city's surrender ends the
+      Aztec Empire.
+    citation: >
+      Via Wikipedia "Fall of Tenochtitlan" and "Spanish conquest of the Aztec Empire"
+      (searched 2026-09-24): siege 26 May to 13 August 1521; Tlaxcalan and other native
+      allies; smallpox epidemic in the city; Cuauhtemoc captured.
+
+  - id: spanish-conquest-of-inca
+    label: Spanish conquest of the Inca Empire
+    kind: period
+    t_min: 453
+    t_max: 493
+    tags: [society]
+    importance: 0.45
+    description: >
+      Francisco Pizarro's small force captures the Inca emperor Atahualpa at Cajamarca in
+      November 1532 and executes him the following year. Inca resistance continues from
+      the Neo-Inca State at Vilcabamba until 1572, when the Spanish take it and execute
+      the last Inca ruler, Tupac Amaru.
+    citation: >
+      Via Wikipedia "Spanish conquest of the Inca Empire" and "Neo-Inca State" (searched
+      2026-09-24): Atahualpa captured at Cajamarca, 1532, killed 29 August 1533;
+      Vilcabamba taken and Tupac Amaru executed in Cusco, 1572.
+
   - id: copernicus-heliocentrism
     label: Copernicus publishes heliocentrism
     kind: moment
@@ -2933,6 +3132,43 @@ events:
     citation: >
       Wikipedia, "De revolutionibus orbium coelestium" (accessed 2026-09-14).
       Publication year 1543; only the year, not an exact day, is recorded.
+
+  # Cliopatria's largest Ottoman snapshot is 1588-1608 (4.25 million km^2), matching this
+  # eastern peak rather than the 1683 European high-water mark.
+  - id: ottoman-greatest-extent
+    label: Ottoman Empire at its greatest extent
+    kind: period
+    t_min: 422
+    t_max: 435
+    tags: [society]
+    importance: 0.35
+    description: >
+      The Treaty of Constantinople of 1590 ends a twelve-year war with Safavid Iran and
+      cedes Georgia, Armenia, Azerbaijan and western Iran to the Ottomans, their widest
+      eastern border. Shah Abbas I begins retaking the lands in 1603. Measured instead by
+      reach into Europe, the empire's high-water mark was the siege of Vienna in 1683.
+    citation: >
+      Via Wikipedia "Treaty of Constantinople (1590)" and "Safavid capture of Tabriz
+      (1603)" (searched 2026-09-24): treaty signed 21 March 1590, Georgia, Azerbaijan,
+      Armenia and western Iran under Ottoman rule; Tabriz retaken 21 October 1603.
+
+  - id: battle-of-tondibi
+    label: Morocco defeats Songhai at Tondibi
+    kind: moment
+    t_min: 434
+    t_max: 434
+    t: 434
+    tags: [society]
+    importance: 0.35
+    description: >
+      A Moroccan army of about 4,000 under Judar Pasha, armed with arquebuses and cannon,
+      crosses the Sahara and routs a far larger Songhai army at Tondibi, near Gao, on
+      13 March 1591. Gao, Timbuktu and Djenne are taken, and the Songhai Empire, West
+      Africa's largest state, never recovers.
+    citation: >
+      Via Wikipedia "Battle of Tondibi" and "Moroccan invasion of the Songhai Empire"
+      (searched 2026-09-24): battle 13 March 1591; Judar Pasha against Askia Ishaq II;
+      Gao, Timbuktu and Djenne seized.
 
   - id: galileo-telescope
     label: Galileo's telescopic discoveries
@@ -3095,6 +3331,24 @@ events:
       oldest 'modern' securities market in the world." Wikipedia, "Amsterdam" (accessed
       2026-09-15): the 17th-century Golden Age city "became the wealthiest city in
       the Western world."
+
+  - id: ming-qing-transition
+    label: Fall of the Ming, Qing take Beijing
+    kind: moment
+    t_min: 381
+    t_max: 381
+    t: 381
+    tags: [society]
+    importance: 0.4
+    description: >
+      Li Zicheng's rebel army takes Beijing in April 1644 and the last Ming emperor,
+      Chongzhen, hangs himself. The Ming general Wu Sangui lets the Manchus through the
+      Great Wall at Shanhai Pass; together they defeat Li, and in June the Manchu Qing
+      dynasty occupies Beijing, going on to conquer the rest of China.
+    citation: >
+      Via Wikipedia "Transition from Ming to Qing" and "Battle of Shanhai Pass" (searched
+      2026-09-24): Beijing falls to Li Zicheng, 24-25 April 1644, Chongzhen Emperor's
+      suicide; Qing and Wu Sangui enter Beijing, 6 June 1644.
 
   - id: newton-principia
     label: Newton publishes the Principia
@@ -3340,6 +3594,24 @@ events:
       Sarah Nelmes, and 1798 "An Inquiry into the Causes and Effects of the Variolae
       Vaccinae": Science Museum Group Collection, "James Phipps" (accessed 2026-09-24).
 
+  - id: holy-roman-empire-dissolved
+    label: Holy Roman Empire dissolved
+    kind: moment
+    t_min: 219
+    t_max: 219
+    t: 219
+    tags: [society]
+    importance: 0.35
+    description: >
+      After Napoleon's victory at Austerlitz and the secession of the German states of his
+      Confederation of the Rhine, Francis II abdicates on 6 August 1806 and declares the
+      Holy Roman Empire dissolved, 844 years after Otto I's coronation. He continues to
+      rule as Francis I, Emperor of Austria.
+    citation: >
+      Via Wikipedia "Dissolution of the Holy Roman Empire" (searched 2026-09-24):
+      Confederation of the Rhine members secede 1 August 1806; Francis II abdicates and
+      dissolves the empire, 6 August 1806.
+
   - id: mass-european-emigration
     label: Mass European emigration to the Americas
     kind: period
@@ -3581,6 +3853,22 @@ events:
   # standalone battle events but named no First or Second World War event at all, so the wider
   # war each sits inside was missing from the event feed entirely. t_min/t_max use the same
   # day-counted GeoTime convention as battle-of-the-somme's own fix below.
+  - id: fall-of-the-qing
+    label: Fall of the Qing dynasty
+    kind: moment
+    t_min: 113
+    t_max: 113
+    t: 113
+    tags: [society]
+    importance: 0.5
+    description: >
+      The Xinhai Revolution, which began with the Wuchang Uprising in October 1911,
+      ends more than two thousand years of imperial rule in China. The six-year-old
+      Xuantong Emperor, Puyi, abdicates on 12 February 1912, and the Republic of China
+      takes the Qing's place.
+    citation: >
+      Via Wikipedia "1911 Revolution" and "Puyi" (searched 2026-09-24): Wuchang Uprising,
+      10 October 1911; abdication edict of the Xuantong Emperor, 12 February 1912.
 
   - id: world-war-i
     label: The First World War
@@ -3659,6 +3947,40 @@ events:
   # streets across 1927-1934; in fact the 1927 opening was the Ueno-Asakusa section, and the line
   # reached Ginza itself only in 1934 (Wikipedia "Ginza Line", already cited below) -- reworded to
   # state both dates and places explicitly.
+  - id: russian-revolution
+    label: Russian Revolution
+    kind: moment
+    t_min: 108
+    t_max: 108
+    t: 108
+    tags: [society]
+    importance: 0.55
+    description: >
+      Amid the losses of the First World War, the February Revolution of 1917 forces
+      Tsar Nicholas II to abdicate, ending the Russian Empire and three centuries of
+      Romanov rule. The Bolsheviks seize power in the October Revolution later that
+      year.
+    citation: >
+      Via Wikipedia "Russian Revolution" and "Nicholas II" (searched 2026-09-24):
+      abdication of Nicholas II, 15 March 1917 (2 March Old Style); October Revolution,
+      7 November 1917 (25 October Old Style).
+
+  - id: end-of-the-ottoman-empire
+    label: End of the Ottoman Empire
+    kind: moment
+    t_min: 103
+    t_max: 103
+    t: 103
+    tags: [society]
+    importance: 0.5
+    description: >
+      Defeated in the First World War and partitioned by the Allies, the Ottoman
+      Empire ends when the Grand National Assembly in Ankara abolishes the sultanate on
+      1 November 1922. The Republic of Turkey is proclaimed the following year.
+    citation: >
+      Via Wikipedia "Abolition of the Ottoman sultanate" and "Republic of Turkey"
+      (searched 2026-09-24): sultanate abolished 1 November 1922; republic proclaimed
+      29 October 1923.
 
   - id: ginza-modern-urban-culture
     label: Ginza's mass urban culture
@@ -3765,6 +4087,24 @@ events:
       US Department of Energy / Manhattan Project records. Trinity test, 16 July 1945,
       05:29:21 Mountain War Time, Jornada del Muerto desert, New Mexico; yield ~24.8 kt.
       Uncontested — among the most precisely documented events of the 20th century.
+
+  - id: indian-independence
+    label: Independence of India and Pakistan
+    kind: moment
+    t_min: 78
+    t_max: 78
+    t: 78
+    tags: [society]
+    importance: 0.55
+    description: >
+      British rule in India ends on 15 August 1947 with the partition of the Raj into
+      the independent dominions of India and Pakistan. Partition displaces an estimated
+      10-20 million people. It opens two decades in which most of Britain's colonies in
+      Asia and Africa become independent.
+    citation: >
+      Via Wikipedia "Partition of India" and "Decolonisation of Africa" (searched
+      2026-09-24): Indian Independence Act 1947, independence 14-15 August 1947; 10-20
+      million displaced.
 
   - id: postwar-suburban-boom
     label: Postwar highway and suburban boom

@@ -145,8 +145,10 @@ export interface Chapter {
 
 // --------------------------------------------------------------------------- layers
 
-/** ADR-035 added `'features'` (a `FeatureSet` layer file, e.g. `cities`). */
-export type LayerDataKind = 'scalar' | 'events' | 'raster' | 'node' | 'features'
+/** ADR-035 added `'features'` (a `FeatureSet` layer file, e.g. `cities`); ADR-059 added
+ *  `'territories'` (a `TerritoryData` layer file, e.g. `empires`, whose polygons live in a separate
+ *  geometry file the globe fetches lazily). */
+export type LayerDataKind = 'scalar' | 'events' | 'raster' | 'node' | 'features' | 'territories'
 
 export interface LayerManifest {
   id: string

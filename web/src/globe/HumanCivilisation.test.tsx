@@ -4,7 +4,8 @@ import type { ArrivalGlobeEffect, FeatureData, TimelineEvent } from '@/types/lay
 
 import { buildArrivalIndex } from './arcs'
 import { cityRadiusPx, type CityAtTime } from './cities'
-import { cityLabelVisibility, cityTarget, resolveTracedIds } from './HumanCivilisation'
+import { cityLabelVisibility } from './GlobeLabel'
+import { cityTarget, resolveTracedIds } from './HumanCivilisation'
 
 const CAMERA: [number, number, number] = [0, 0, 3.6]
 const ON_SCREEN: [number, number, number] = [0, 0, 0.5]
@@ -41,7 +42,7 @@ describe('cityTarget', () => {
         { t: 522, population: 5_000 },
       ],
     }
-    const city: CityAtTime = { feature: sanaa, population: 18_000, radiusPx: cityRadiusPx(18_000), trailingFade: 1 }
+    const city: CityAtTime = { feature: sanaa, population: 18_000, radiusPx: cityRadiusPx(18_000), fade: 1 }
     expect(cityTarget(city, 81).dateRange).toBe('Records: 522 years ago – 115 years ago')
   })
 })

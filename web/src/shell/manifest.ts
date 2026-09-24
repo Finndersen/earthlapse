@@ -34,12 +34,14 @@ import {
   parseFeatureSetData,
   parseRasterData,
   parseSeriesData,
+  parseTerritoryData,
   parseTimelineEvent,
   parseTreeData,
   type EventsData,
   type FeatureSetData,
   type RasterData,
   type SeriesData,
+  type TerritoryData,
   type TreeData,
 } from '@/data/curated'
 
@@ -162,7 +164,7 @@ function expectTuple2(v: unknown, path: string): [number, number] {
 
 const SHOT_TYPES = ['WIDE_RIDGE', 'WATER_EDGE', 'CANOPY', 'GROUND', 'SPLIT_LEVEL'] as const
 const LAYER_SURFACES: readonly LayerSurface[] = ['globe', 'timeline-lane', 'hud', 'scene-overlay']
-const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node', 'features']
+const LAYER_DATA_KINDS: readonly LayerDataKind[] = ['scalar', 'events', 'raster', 'node', 'features', 'territories']
 const INTERPOLATIONS: readonly Interpolation[] = ['linear', 'log-linear', 'step', 'nearest']
 const SOUND_MODES: readonly SoundMode[] = ['loop', 'once']
 
@@ -366,7 +368,7 @@ export function validateManifest(json: unknown): Manifest {
 
 // ---------------------------------------------------------------------------- layer data
 
-export type LayerData = SeriesData | RasterData | TreeData | EventsData | FeatureSetData
+export type LayerData = SeriesData | RasterData | TreeData | EventsData | FeatureSetData | TerritoryData
 
 /**
  * Fetches and parses one layer's data file, dispatching on `dataKind` to the matching
@@ -394,5 +396,7 @@ export async function loadLayerData(manifest: Manifest, entry: LayerManifest): P
       return parseEventsData(json)
     case 'features':
       return parseFeatureSetData(json)
+    case 'territories':
+      return parseTerritoryData(json)
   }
 }

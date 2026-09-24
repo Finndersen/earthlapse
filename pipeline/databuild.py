@@ -94,17 +94,16 @@ def _hash_files(base_dir: Path, files: Iterable[Path]) -> str:
 
 
 def fingerprint(source_dir: Path) -> str:
-    """sha256 over `manifest.toml` plus every `*.py` in `source_dir`, excluding
-    `fixture/` and `__pycache__`.
+    """sha256 over every `*.toml` and `*.py` in `source_dir`, excluding `fixture/` and
+    `__pycache__`.
 
     This -- not `data/raw/`'s own checksum -- is what `make data` compares against the
     stamp: `data/raw/` is gitignored and reproduced by `fetch()`, so it is not a stable
-    thing to fingerprint the *source* against. What changed is either the manifest (a new
-    upstream URL or sha256) or the source's own code (`fetch.py`/`normalise.py`), and
-    either one must trigger a rebuild.
+    thing to fingerprint the *source* against. What changed is the manifest (a new upstream
+    URL or sha256), a hand-curated input beside it (`roster.toml`, `stems.toml`), or the
+    source's own code (`fetch.py`/`normalise.py`), and any of them must trigger a rebuild.
     """
-    manifest = source_dir / "manifest.toml"
-    candidates = {manifest, *source_dir.rglob("*.py")}
+    candidates = {*source_dir.rglob("*.toml"), *source_dir.rglob("*.py")}
     files = (
         path
         for path in candidates

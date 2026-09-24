@@ -21,7 +21,7 @@
  * same as `indexPortraits` itself.
  */
 
-import type { EventsData, FeatureSetData, RasterData, SeriesData, TreeData } from '@/data/curated'
+import type { EventsData, FeatureSetData, RasterData, SeriesData, TerritoryData, TreeData } from '@/data/curated'
 import { createNodeLayer, createScalarLayer, indexPortraits, type PortraitIndex } from '@/layers'
 import type { LayerData } from '@/shell'
 import type { Layer, NodeValue, ScalarValue, TimelineEvent } from '@/types/layer'
@@ -42,6 +42,11 @@ export interface FeatureLayerEntry {
   data: FeatureSetData
 }
 
+export interface TerritoryLayerEntry {
+  entry: LayerManifest
+  data: TerritoryData
+}
+
 export interface AppLayers {
   scalarLayers: ReadonlyMap<string, Layer<ScalarValue>>
   nodeLayers: ReadonlyMap<string, Layer<NodeValue>>
@@ -55,6 +60,9 @@ export interface AppLayers {
    *  and `eventLayers`: the globe places every feature itself and samples each one's own
    *  estimates at `t`, which no `Layer<V>.sample(t)` slice could supply. */
   featureSets: ReadonlyMap<string, FeatureLayerEntry>
+  /** Every `territories` layer (ADR-059), keyed by id (`empires`). Raw, like `featureSets`: the
+   *  globe rasterises the active snapshots itself and fetches their geometry file lazily. */
+  territories: ReadonlyMap<string, TerritoryLayerEntry>
   /** Each node layer's full `PortraitIndex`, keyed by the same id as `nodeLayers` — omitted for
    *  a lineage that publishes no portraits (see this module's doc comment). */
   nodePortraits: ReadonlyMap<string, PortraitIndex>
@@ -66,6 +74,7 @@ const EMPTY_LAYERS: AppLayers = {
   eventLayers: new Map(),
   rasters: new Map(),
   featureSets: new Map(),
+  territories: new Map(),
   nodePortraits: new Map(),
 }
 
@@ -85,6 +94,7 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
   const eventLayers = new Map<string, EventsLayerEntry>()
   const rasters = new Map<string, RasterLayerEntry>()
   const featureSets = new Map<string, FeatureLayerEntry>()
+  const territories = new Map<string, TerritoryLayerEntry>()
   const nodePortraits = new Map<string, PortraitIndex>()
 
   for (const entry of manifest.layers) {
@@ -114,10 +124,13 @@ export function buildLayers(manifest: Manifest | null, layerData: ReadonlyMap<st
       case 'features':
         featureSets.set(entry.id, { entry, data: parsed as FeatureSetData })
         break
+      case 'territories':
+        territories.set(entry.id, { entry, data: parsed as TerritoryData })
+        break
     }
   }
 
-  return { scalarLayers, nodeLayers, eventLayers, rasters, featureSets, nodePortraits }
+  return { scalarLayers, nodeLayers, eventLayers, rasters, featureSets, territories, nodePortraits }
 }
 
 /** Every `TimelineEvent` a raw `eventLayers` entry carries, or `[]` when the layer isn't

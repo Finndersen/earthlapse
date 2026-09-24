@@ -229,3 +229,16 @@ coverage, globe motion and ancestor portraits come first.
   above or below. And the skip control has to meet the same touch-target floor as the rest of the
   phone transport (44px, `Timeline.module.css`'s own `--edge-button-size` at that breakpoint),
   since a tour a viewer cannot reliably dismiss is worse than no tour.
+
+## Backlog — historical empires follow-ups (2026-09-24)
+
+Noted while building the empires layer (ADR-059); neither is scheduled.
+
+- **An empire lane on the timeline.** Deferred: the timeline is already dense, and up to ~10
+  empires overlap at once, so a lane per empire would need ~10 rows. Possible forms: a single row
+  showing only the hovered or selected empire's span, or a lane that appears only below ~1 kyr of
+  zoom, where few enough empires are visible to fit.
+- **Flash the territory an empire gains or loses at a snapshot change.** An honest alternative to
+  border morphing (which ADR-059 rejects because it invents shapes that never existed): briefly
+  tint the difference between consecutive snapshots of a lineage, so a conquest or a collapse reads
+  as an event rather than a silent swap in the 0.3 s crossfade.
