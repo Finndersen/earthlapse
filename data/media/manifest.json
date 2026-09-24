@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "07188b85a42a21a1",
+  "buildId": "caed192e7e76238b",
   "assetBase": "/media",
   "scenes": [
     {
@@ -3163,6 +3163,20 @@
       "citation": "Wikipedia, \"On the Origin of Species\" (accessed 2026-09-14). Linnean Society reading 1 July 1858; Origin of Species published 24 November 1859.\n"
     },
     {
+      "id": "holy-roman-empire-dissolved",
+      "label": "Holy Roman Empire dissolved",
+      "kind": "moment",
+      "tMin": 219.0,
+      "tMax": 219.0,
+      "t": 219.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "After Napoleon's victory at Austerlitz and the secession of the German states of his Confederation of the Rhine, Francis II abdicates on 6 August 1806 and declares the Holy Roman Empire dissolved, 844 years after Otto I's coronation. He continues to rule as Francis I, Emperor of Austria.\n",
+      "citation": "Via Wikipedia \"Dissolution of the Holy Roman Empire\" (searched 2026-09-24): Confederation of the Rhine members secede 1 August 1806; Francis II abdicates and dissolves the empire, 6 August 1806.\n"
+    },
+    {
       "id": "industrial-revolution",
       "label": "Industrial Revolution",
       "kind": "period",
@@ -3303,6 +3317,20 @@
       }
     },
     {
+      "id": "ming-qing-transition",
+      "label": "Fall of the Ming, Qing take Beijing",
+      "kind": "moment",
+      "tMin": 381.0,
+      "tMax": 381.0,
+      "t": 381.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "Li Zicheng's rebel army takes Beijing in April 1644 and the last Ming emperor, Chongzhen, hangs himself. The Ming general Wu Sangui lets the Manchus through the Great Wall at Shanhai Pass; together they defeat Li, and in June the Manchu Qing dynasty occupies Beijing, going on to conquer the rest of China.\n",
+      "citation": "Via Wikipedia \"Transition from Ming to Qing\" and \"Battle of Shanhai Pass\" (searched 2026-09-24): Beijing falls to Li Zicheng, 24-25 April 1644, Chongzhen Emperor's suicide; Qing and Wu Sangui enter Beijing, 6 June 1644.\n"
+    },
+    {
       "id": "dutch-golden-age-voc",
       "label": "Amsterdam's Dutch Golden Age",
       "kind": "period",
@@ -3362,6 +3390,46 @@
       }
     },
     {
+      "id": "ottoman-greatest-extent",
+      "label": "Ottoman Empire at its greatest extent",
+      "kind": "period",
+      "tMin": 422.0,
+      "tMax": 435.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "The Treaty of Constantinople of 1590 ends a twelve-year war with Safavid Iran and cedes Georgia, Armenia, Azerbaijan and western Iran to the Ottomans, their widest eastern border. Shah Abbas I begins retaking the lands in 1603. Measured instead by reach into Europe, the empire's high-water mark was the siege of Vienna in 1683.\n",
+      "citation": "Via Wikipedia \"Treaty of Constantinople (1590)\" and \"Safavid capture of Tabriz (1603)\" (searched 2026-09-24): treaty signed 21 March 1590, Georgia, Azerbaijan, Armenia and western Iran under Ottoman rule; Tabriz retaken 21 October 1603.\n"
+    },
+    {
+      "id": "battle-of-tondibi",
+      "label": "Morocco defeats Songhai at Tondibi",
+      "kind": "moment",
+      "tMin": 434.0,
+      "tMax": 434.0,
+      "t": 434.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "A Moroccan army of about 4,000 under Judar Pasha, armed with arquebuses and cannon, crosses the Sahara and routs a far larger Songhai army at Tondibi, near Gao, on 13 March 1591. Gao, Timbuktu and Djenne are taken, and the Songhai Empire, West Africa's largest state, never recovers.\n",
+      "citation": "Via Wikipedia \"Battle of Tondibi\" and \"Moroccan invasion of the Songhai Empire\" (searched 2026-09-24): battle 13 March 1591; Judar Pasha against Askia Ishaq II; Gao, Timbuktu and Djenne seized.\n"
+    },
+    {
+      "id": "spanish-conquest-of-inca",
+      "label": "Spanish conquest of the Inca Empire",
+      "kind": "period",
+      "tMin": 453.0,
+      "tMax": 493.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.45,
+      "description": "Francisco Pizarro's small force captures the Inca emperor Atahualpa at Cajamarca in November 1532 and executes him the following year. Inca resistance continues from the Neo-Inca State at Vilcabamba until 1572, when the Spanish take it and execute the last Inca ruler, Tupac Amaru.\n",
+      "citation": "Via Wikipedia \"Spanish conquest of the Inca Empire\" and \"Neo-Inca State\" (searched 2026-09-24): Atahualpa captured at Cajamarca, 1532, killed 29 August 1533; Vilcabamba taken and Tupac Amaru executed in Cusco, 1572.\n"
+    },
+    {
       "id": "copernicus-heliocentrism",
       "label": "Copernicus publishes heliocentrism",
       "kind": "moment",
@@ -3374,6 +3442,35 @@
       "importance": 0.55,
       "description": "Nicolaus Copernicus's De revolutionibus orbium coelestium is printed in Nuremberg shortly before his death, arguing that Earth and the other planets orbit the Sun — the founding text of the shift away from an Earth-centred cosmos that drives the wider scientific revolution.\n",
       "citation": "Wikipedia, \"De revolutionibus orbium coelestium\" (accessed 2026-09-14). Publication year 1543; only the year, not an exact day, is recorded.\n"
+    },
+    {
+      "id": "fall-of-tenochtitlan",
+      "label": "Fall of Tenochtitlan",
+      "kind": "moment",
+      "tMin": 504.0,
+      "tMax": 504.0,
+      "t": 504.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.45,
+      "description": "Spanish forces under Hernan Cortes, with tens of thousands of Indigenous allies led by the Tlaxcalans, besiege the smallpox-stricken Aztec capital from May 1521. Its last ruler, Cuauhtemoc, is captured on 13 August, and the city's surrender ends the Aztec Empire.\n",
+      "citation": "Via Wikipedia \"Fall of Tenochtitlan\" and \"Spanish conquest of the Aztec Empire\" (searched 2026-09-24): siege 26 May to 13 August 1521; Tlaxcalan and other native allies; smallpox epidemic in the city; Cuauhtemoc captured.\n"
+    },
+    {
+      "id": "fall-of-constantinople",
+      "label": "Fall of Constantinople",
+      "kind": "moment",
+      "tMin": 572.0,
+      "tMax": 572.0,
+      "t": 572.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Ottoman forces under Sultan Mehmed II take Constantinople on 29 May 1453 after a 53-day siege in which cannon batter the city's land walls. The last emperor, Constantine XI, dies in the fighting; the Byzantine Empire, the last continuation of the Roman Empire, ends, and the city becomes the Ottoman capital.\n",
+      "citation": "Via Wikipedia \"Fall of Constantinople\" (searched 2026-09-24): captured 29 May 1453 after a siege begun 6 April; Mehmed II against Constantine XI Palaiologos, who died in the fall of the city.\n"
     },
     {
       "id": "gutenberg-printing-press",
@@ -3481,6 +3578,21 @@
           }
         ]
       }
+    },
+    {
+      "id": "mongol-sack-of-baghdad",
+      "label": "Mongols sack Baghdad",
+      "kind": "moment",
+      "tMin": 767.0,
+      "tMax": 767.0,
+      "t": 767.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.45,
+      "description": "A Mongol army under Hulagu, brother of the Great Khan Mongke, besieges Baghdad and takes its surrender in February 1258. The last Abbasid caliph, al-Musta'sim, is executed, the city is sacked and its libraries, including the House of Wisdom, are destroyed, ending the Abbasid Caliphate in Baghdad.\n",
+      "citation": "Via Wikipedia \"Siege of Baghdad\" (searched 2026-09-24): siege 29 January to 10 February 1258 by Hulagu's forces; caliph al-Musta'sim put to death; city sacked and the House of Wisdom destroyed.\n"
     },
     {
       "id": "greenland-norse-settlement",
@@ -3595,6 +3707,61 @@
       }
     },
     {
+      "id": "an-lushan-rebellion",
+      "label": "An Lushan Rebellion",
+      "kind": "period",
+      "tMin": 1262.0,
+      "tMax": 1270.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "The frontier general An Lushan rebels against the Tang in 755 and takes both capitals, Luoyang and Chang'an. The war lasts until 763, ends the Tang golden age and begins the dynasty's long decline; in 763 the Tibetan Empire, exploiting the turmoil, briefly occupies Chang'an.\n",
+      "citation": "Via Wikipedia \"An Lushan rebellion\" and \"Chang'an\" (searched 2026-09-24): rebellion 755-763, ending with Shi Chaoyi's defeat; Chang'an occupied by the Tibetan Empire for about 15 days in 763.\n"
+    },
+    {
+      "id": "umayyad-greatest-extent",
+      "label": "Umayyad Caliphate at its greatest extent",
+      "kind": "period",
+      "tMin": 1285.0,
+      "tMax": 1307.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "With the conquest of the Iberian Peninsula complete by 718, and Sindh and much of Transoxiana taken under al-Walid I, the Umayyad Caliphate ruled from the Atlantic to the Indus, the largest state the world had yet seen. The Berber Revolt of 740 cost it most of the Maghreb, and the Abbasid Revolution overthrew the dynasty in 750.\n",
+      "citation": "Via Wikipedia \"Umayyad Caliphate\", \"Muslim conquest of the Iberian Peninsula\" and \"Berber Revolt\" (searched 2026-09-24): conquest of Hispania 711-718; North Africa, Hispania, Transoxiana and Sindh conquered under al-Walid I (705-715); Berber Revolt from 740, the Maghreb beyond Ifriqiya never recovered.\n"
+    },
+    {
+      "id": "fall-of-western-roman-empire",
+      "label": "Fall of the Western Roman Empire",
+      "kind": "moment",
+      "tMin": 1549.0,
+      "tMax": 1549.0,
+      "t": 1549.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Odoacer, a Germanic general of the Roman army in Italy, deposes the boy emperor Romulus Augustulus in September 476 and rules as king of Italy rather than naming a new emperor. The date is a convention for a long decline, and the eastern empire continues from Constantinople for almost another thousand years.\n",
+      "citation": "Via Wikipedia \"Fall of the Western Roman Empire\" and \"Romulus Augustulus\" (searched 2026-09-24): Romulus Augustulus deposed by Odoacer, 4 September 476, the date most commonly given for the end of the empire in the west.\n"
+    },
+    {
+      "id": "end-of-han-dynasty",
+      "label": "End of the Han dynasty",
+      "kind": "moment",
+      "tMin": 1805.0,
+      "tMax": 1805.0,
+      "t": 1805.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.4,
+      "description": "Cao Pi, son of the warlord Cao Cao, forces the last Han emperor, Xian, to abdicate in his favour in December 220 and proclaims the state of Wei. Liu Bei proclaims himself emperor of Shu Han in 221 and Sun Quan breaks with Wei as king of Wu in 222 (emperor from 229), dividing China into the Three Kingdoms.\n",
+      "citation": "Via Wikipedia \"End of the Han dynasty\", \"Emperor Xian of Han\" and \"Sun Quan\" (searched 2026-09-24): abdication to Cao Pi, 11 December 220; Liu Bei emperor of Shu Han, 221; Sun Quan breaks with Wei as king of Wu, 222, and declares himself emperor, 229.\n"
+    },
+    {
       "id": "roman-empire-peak",
       "label": "Roman Empire at its height",
       "kind": "period",
@@ -3642,6 +3809,21 @@
       }
     },
     {
+      "id": "destruction-of-carthage",
+      "label": "Rome destroys Carthage",
+      "kind": "moment",
+      "tMin": 2171.0,
+      "tMax": 2171.0,
+      "t": 2171.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.4,
+      "description": "A Roman army under Scipio Aemilianus storms Carthage in spring 146 BC, ending a three-year siege and the Third Punic War. The city is burned and razed, its surviving inhabitants enslaved, and its territory becomes the Roman province of Africa, leaving Rome unrivalled in the western Mediterranean.\n",
+      "citation": "Via Wikipedia \"Siege of Carthage (Third Punic War)\" and \"Third Punic War\" (searched 2026-09-24): siege 149 to spring 146 BC; city razed, some 50,000 prisoners enslaved; territory made the province of Africa.\n"
+    },
+    {
       "id": "qin-unification",
       "label": "Qin dynasty unifies China",
       "kind": "period",
@@ -3654,6 +3836,19 @@
       "importance": 0.55,
       "description": "King Zheng of Qin completes the conquest of China's rival Warring States in 221 BC, becoming its first emperor (Qin Shi Huang) and standardising its currency, weights and measures, and writing system across the newly unified territory. His capital, Xianyang, is by tradition ringed by a network of over two hundred palaces across the Wei valley, and needs no defensive wall of its own. The dynasty he founds collapses within four years of his death in 210 BC, falling to rebellion in 206 BC.\n",
       "citation": "Via Wikipedia \"Qin dynasty\" and \"Qin Shi Huang\" (accessed 2026-09-17): unification 221 BC; dynasty ends 206 BC; standardisation of currency, weights/measures and writing; Xianyang \"the only capital city in China that did not require walls to be built around it\"; a network of \"over 200\" palaces linked by covered roads. Primary sources (Sima Qian's Records of the Grand Historian) not independently read.\n"
+    },
+    {
+      "id": "alexander-conquers-persia",
+      "label": "Alexander conquers the Persian Empire",
+      "kind": "period",
+      "tMin": 2355.0,
+      "tMax": 2359.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Alexander of Macedon crosses into Anatolia in 334 BC, defeats the Persian satraps at the Granicus, then Darius III himself at Issus in 333 BC and, decisively, at Gaugamela in 331 BC, and occupies the Persian heartland. Darius is murdered by his own satrap Bessus in 330 BC, ending the Achaemenid Empire, which Alexander carries on to the Indus.\n",
+      "citation": "Via Wikipedia \"Battle of the Granicus\", \"Battle of Issus\", \"Battle of Gaugamela\" and \"Darius III\" (searched 2026-09-24): Granicus, May 334 BC, against the satraps of Asia Minor; Issus, November 333 BC; Gaugamela, 1 October 331 BC; Darius killed by Bessus, July 330 BC.\n"
     },
     {
       "id": "periclean-athens",
@@ -3683,6 +3878,20 @@
       "importance": 0.4,
       "description": "Standardized metal coinage — electrum pieces stamped with an issuing authority's mark — first appears in Iron Age Lydia and Ionia in the late 7th century BC, replacing weighed bullion with a portable, trust-based medium of exchange. Alyattes of Lydia is conventionally credited with early state-issued coinage, and his son Croesus (r. c. 560-546 BC) with the first coins of standardized purity; the earliest known inscribed coins come from Ephesus.\n",
       "citation": "Via Wikipedia \"Coin\", drawing on Herodotus, Aristotle and Pollux, plus the Ephesus Artemision hoard; primary/archaeological sources not independently checked.\n"
+    },
+    {
+      "id": "fall-of-nineveh",
+      "label": "Fall of Nineveh",
+      "kind": "moment",
+      "tMin": 2637.0,
+      "tMax": 2637.0,
+      "t": 2637.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.35,
+      "description": "A coalition of Babylonians under Nabopolassar and Medes under Cyaxares takes Nineveh, the capital of the Neo-Assyrian Empire, in 612 BC after a siege of about three months. An Assyrian remnant under Ashur-uballit II holds out at Harran until 609 BC, and Babylon inherits most of Assyria's former empire.\n",
+      "citation": "Via Wikipedia \"Fall of Nineveh\" and \"Medo-Babylonian conquest of the Assyrian Empire\" (searched 2026-09-24): Nineveh falls to the Median-Babylonian coalition in 612 BC after a three-month siege; Ashur-uballit II driven from Harran by 609 BC. Primary source (Babylonian Chronicle ABC 3) not independently read.\n"
     },
     {
       "id": "bantu-expansion",

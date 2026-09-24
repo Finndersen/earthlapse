@@ -40,6 +40,16 @@ export const EMPIRE_CASING_COLOUR = 'rgba(8, 10, 14, 0.62)'
 export const EMPIRE_FILL_ALPHA = 0.28
 
 /**
+ * While one lineage is highlighted (hovered, or its detail panel open) the others recede to
+ * `EMPIRE_DIM_ALPHA` of their fill, casing and stroke alpha, and the highlighted one draws its
+ * stroke `EMPIRE_HIGHLIGHT_STROKE_SCALE` times as wide, casing widened to match, over everything
+ * else, with a slightly stronger fill.
+ */
+export const EMPIRE_DIM_ALPHA = 0.45
+export const EMPIRE_HIGHLIGHT_STROKE_SCALE = 1.6
+export const EMPIRE_HIGHLIGHT_FILL_ALPHA = 0.36
+
+/**
  * Which canvas an active set is rasterised into. The minimised orb shows the whole hemisphere in
  * about 130 CSS px, so its outlines are several texels wide to survive mip averaging; the expanded
  * map spans about 1000 CSS px, a quarter of a CSS px per texel at 4096 wide, where a 5-texel stroke
@@ -73,6 +83,8 @@ export function selectEmpireTier(expanded: boolean, highResolutionAvailable: boo
 export const EMPIRE_LABEL_CAP_DESKTOP = 6
 export const EMPIRE_LABEL_CAP_PHONE = 3
 
-/** A label's opacity at rest: present but quieter than the outlines it names. A hovered or
- *  selected lineage's label draws at full opacity. */
-export const EMPIRE_LABEL_REST_OPACITY = 0.75
+/** A label's opacity at rest: legible, a step below full. A hovered or
+ *  selected lineage's label draws at full opacity, and while one is, every other label recedes
+ *  to `EMPIRE_LABEL_DIM_OPACITY` with its territory. */
+export const EMPIRE_LABEL_REST_OPACITY = 0.92
+export const EMPIRE_LABEL_DIM_OPACITY = 0.6

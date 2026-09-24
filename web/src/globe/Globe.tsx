@@ -9,6 +9,7 @@ import { Html, OrbitControls } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -37,6 +38,7 @@ import { citiesHaveDataAt } from './cities'
 import { densityChannelMask } from './density'
 import {
   EMPIRE_FRAME_KEYING,
+  empireHighlightIn,
   empiresHaveDataAt,
   empireSnapshotsAt,
   type EmpireFrame,
@@ -188,6 +190,9 @@ const EMPIRE_FETCH_MARGIN_YEARS = 5_000
 /** The presented crossfade between two active empire sets — short, since a snapshot change is a
  *  step in the data, not a motion. */
 const EMPIRE_CROSSFADE_SECONDS = 0.3
+/** How long the hovered empire must hold before the territory texture repaints for it, so a
+ *  sweep across several territories, or across the gap between two, paints only where it stops. */
+const EMPIRE_HOVER_SETTLE_MS = 120
 /** The frame shown when no empires layer is published. */
 const NO_EMPIRE_FRAME: EmpireFrame = { key: '', order: -1, snapshots: [] }
 /** Stands in for the empire cache until the geometry has loaded; never asked to load, since the
@@ -574,7 +579,7 @@ export function Globe({
   // Historical empires (ADR-059), part of the human-civilisation layer. The active set is a step
   // function of `t` (`empireSnapshotsAt`); only the crossfade between two sets runs on wall-clock
   // time (`usePresentedMix`). Each presented set is rasterised into its own texture through
-  // `useGlobeTexturePair`, keyed by set, tier and fill. The fill shows only while no raster
+  // `useGlobeTexturePair`, keyed by set, tier, fill and highlight. The fill shows only while no raster
   // overlay is selected; over an overlay's ramp the outlines and labels carry the layer alone.
   const empireFrame = useMemo(() => (empires === null ? NO_EMPIRE_FRAME : empireSnapshotsAt(empires, t)), [empires, t])
   const empireTarget = useMemo((): Mix<EmpireFrame> => ({ from: empireFrame, to: empireFrame, mix: 1 }), [empireFrame])
@@ -595,17 +600,31 @@ export function Globe({
   }, [empireCache])
   const empireTier = selectEmpireTier(expanded, t1Available)
   const empireFill = overlayKind === null
-  const empireBlend = useMemo(
-    (): GlobeBlend | null =>
-      empireCache === null || !humanOn
-        ? null
-        : {
-            beforeUrl: empireTextureKey(presentedEmpires.from.key, empireTier, empireFill),
-            afterUrl: empireTextureKey(presentedEmpires.to.key, empireTier, empireFill),
-            alpha: presentedEmpires.mix,
-          },
-    [empireCache, humanOn, presentedEmpires, empireTier, empireFill],
+  // The hovered lineage, else the one whose panel is open, is emphasised in the texture itself
+  // (expanded only). Hover reaches here settled (`EMPIRE_HOVER_SETTLE_MS`), so the painter runs
+  // once per lineage the pointer rests on.
+  const [hoveredEmpire, setHoveredEmpire] = useState<string | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onHoverEmpire = useCallback((lineage: string | null) => {
+    if (hoverTimerRef.current !== null) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => {
+      hoverTimerRef.current = null
+      setHoveredEmpire(lineage)
+    }, EMPIRE_HOVER_SETTLE_MS)
+  }, [])
+  useEffect(
+    () => () => {
+      if (hoverTimerRef.current !== null) clearTimeout(hoverTimerRef.current)
+    },
+    [],
   )
+  const empireHighlight = expanded && humanOn ? (hoveredEmpire ?? selectedEmpire) : null
+  const empireBlend = useMemo((): GlobeBlend | null => {
+    if (empireCache === null || !humanOn) return null
+    const keyFor = (frame: EmpireFrame): string =>
+      empireTextureKey({ frameKey: frame.key, tier: empireTier, fill: empireFill, highlight: empireHighlightIn(frame, empireHighlight) })
+    return { beforeUrl: keyFor(presentedEmpires.from), afterUrl: keyFor(presentedEmpires.to), alpha: presentedEmpires.mix }
+  }, [empireCache, humanOn, presentedEmpires, empireTier, empireFill, empireHighlight])
   // A pair bound before the layer was hidden belongs to whatever `t` it was hidden at, so each
   // hide starts a new epoch in `sourceKey`: re-showing the layer reads as nothing bound until the
   // current frame's pair loads, rather than drawing the old territories under current labels.
@@ -883,6 +902,7 @@ export function Globe({
       <div
         className={[expanded ? styles.orbExpanded : styles.orb, webgl ? '' : styles.orbNoWebgl].filter(Boolean).join(' ')}
         data-map-mode={mapMode}
+        data-empires-bound={empireBlend !== null && empirePair.blendBound}
         style={ORB_STYLE}
         onPointerDown={expanded ? undefined : onOrbPointerDown}
         onPointerUp={expanded ? undefined : onOrbPointerUp}
@@ -989,6 +1009,7 @@ export function Globe({
                 empireLabels={empireLabels}
                 selectedEmpire={selectedEmpire}
                 onActivateEmpire={onActivateEmpire}
+                onHoverEmpire={onHoverEmpire}
               />
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />

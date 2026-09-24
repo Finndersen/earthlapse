@@ -939,8 +939,8 @@ the vector geometry file is fetched once (`useEmpireGeometry`), when `t` comes w
 of the domain, and a failed fetch draws nothing rather than failing the page.
 `empireTexture.ts` paints the active set into an equirectangular canvas — one `Path2D` per
 lineage, all fills first, then all casings, then all coloured strokes — through a
-`GlobeTextureCache` that rasterises instead of fetching (key: frame, tier, fill; byte-capped,
-cleared on context restore). Rings are re-wound so exteriors and holes have opposite winding,
+`GlobeTextureCache` that rasterises instead of fetching (key: frame, tier, fill, highlighted
+lineage; byte-capped, cleared on context restore). Rings are re-wound so exteriors and holes have opposite winding,
 which the nonzero fill needs; edges with both ends at `|lon| ≥ 179.99` are not stroked, since
 Cliopatria splits polygons at the antimeridian. The texture is premultiplied and uploaded as
 `NoColorSpace`; the shader un-premultiplies before decoding sRGB (a GPU sRGB decode of
@@ -951,19 +951,34 @@ basemap, else 2048×1024. The fill shows only with the overlay set to None, so i
 population density or cleared land. A new active set crossfades in 0.3 s (`usePresentedMix`);
 at the 1900 CE cutoff the set empties, so the layer fades out rather than cutting. **Labels**
 (`EmpireLabels.tsx`, on the shared `GlobeLabel`): one per active lineage on its largest member's
-anchor, ranked by area, capped at 6 (3 on a phone), dropped when its box (`EMPIRE_LABEL_BOX`,
-estimated from its text, plus a 4 px gap) overlaps a larger lineage's (`declutterLabelBoxes`),
+anchor — the roster member's `anchor` (its capital or core, set for 24 members whose representative
+point is a poor label spot, such as the metropole of a colonial series), else the snapshot's
+representative point — ranked by area, capped at 6 (3 on a phone), the hovered or selected lineage placed first. A label
+whose box (`EMPIRE_LABEL_BOX`, estimated from its text, plus a 4 px gap) overlaps one already placed
+moves a row above its anchor, then below, and is dropped only when all three collide (`declutterLabelBoxes`),
 faded with the crossfade; expanded view only. A label is bare text so it never hides the outline
-it names: 9 px tracked uppercase mono with a dark halo and a dot in the lineage colour, at 0.75
+it names: 9 px semibold tracked uppercase mono with a dark halo and a dot in the lineage colour, at 0.92
 opacity, full for the hovered lineage and the one whose card is open. **Hover and card:** in the
 expanded view, once territory is drawn, a pointer that misses every mark is tested against the
 label anchors and then the territory itself (pointer → lon/lat through the group's inverse
 transform, even-odd per polygon with a cached bounding-box prefilter, smallest containing
 snapshot wins; no answer mid-unfold). The tooltip names the member, its span, and the lineage's
-area now and at its peak. A click opens `EmpireDetailPanel` in the event dock — description,
+area now and at its peak, or "at its peak, X" while `t` is inside the peak step; it is suppressed
+for the lineage whose card is open. A click opens `EmpireDetailPanel` in the event dock — description,
 area chart with a playhead at `t`, member succession linked to Wikipedia, related events, "Jump to
 peak" — which replaces any event card and, unlike one, never moves `t` on opening. Lineage
-summaries (member spans, area series, peak) are built once in `buildEmpireIndex`. The palette's eight colours, one per `colourSlot`, are chosen
+summaries (member spans, area series, peak) are built once in `buildEmpireIndex`. **Highlight:**
+hovering an empire, or opening its card, emphasises that lineage in the territory texture itself —
+the other lineages' fills, casings and strokes drop to `EMPIRE_DIM_ALPHA` (0.45), and the
+emphasised lineage draws last with a 1.6× stroke and a stronger fill; hover wins over an open card.
+The highlight is part of the texture key, taken per crossfade side and only when that frame draws
+the lineage (`empireHighlightIn`), so it composes with the snapshot crossfade and an open card for
+an empire absent at `t` reuses the plain texture. Hover reaches the texture after 120 ms
+(`EMPIRE_HOVER_SETTLE_MS`), so a sweep across territories repaints once. While one texture is
+kept (no crossfade or rebind in flight), trimming the cache keeps its unhighlighted twin resident,
+so hovering on and off swaps between two cached textures (two at 4096×2048 are ~90 MB, inside the
+96 MB cap); during a crossfade the twins are ordinary LRU entries the cap can evict. Other lineages' labels recede to
+0.6 opacity (`EMPIRE_LABEL_DIM_OPACITY`) while a highlighted lineage is on screen. The palette's eight colours, one per `colourSlot`, are chosen
 against the basemap, both overlay ramps, the amber arrival arcs and the cyan city markers.
 
 **Scene location on the orb (ADR-034; the single-toggle framing is ADR-036).** A scene naming a

@@ -184,6 +184,12 @@ export function empiresHaveDataAt(index: EmpireIndex | null, t: GeoTime): boolea
   return index !== null && index.domain[0] < t && t <= index.domain[1]
 }
 
+/** `lineage` when the frame draws any of its members, else `null`: a highlight the frame cannot
+ *  show paints (and caches) as no highlight at all. */
+export function empireHighlightIn(frame: EmpireFrame, lineage: string | null): string | null {
+  return lineage !== null && frame.snapshots.some((s) => s.lineage === lineage) ? lineage : null
+}
+
 export const EMPIRE_FRAME_KEYING: MixKeying<EmpireFrame> = {
   same: (a, b) => a.key === b.key,
   distance: (a, b) => Math.abs(a.order - b.order),
@@ -224,30 +230,42 @@ export interface LabelHalfExtents {
   halfHeight: number
 }
 
+/** A kept label and the row it sits in: 0 on its anchor, -1 one box height above, 1 below. */
+export interface PlacedLabelBox<T> {
+  label: T
+  row: number
+}
+
 /**
- * Keeps labels in order, dropping each one whose box would overlap a box already kept. Boxes are
- * centred on each label's position in the globe's local space (y up): vertical overlap compares
- * y, horizontal overlap the chord distance in the x/z plane. That is exact on the map, which is a
+ * Keeps labels in order, placing each in the first of `rows` where its box overlaps no box already
+ * kept, and dropping it only when every row collides. Boxes are centred on each label's position in
+ * the globe's local space (y up), shifted one full box height per row: vertical overlap compares y,
+ * horizontal overlap the chord distance in the x/z plane. That is exact on the map, which is a
  * plane facing the camera, and close on the sphere, which turns about its vertical axis.
  */
 export function declutterLabelBoxes<T>(
   labels: readonly T[],
   positionOf: (label: T) => readonly [number, number, number],
   extentsOf: (label: T) => LabelHalfExtents,
-): T[] {
-  const kept: { position: readonly [number, number, number]; extents: LabelHalfExtents }[] = []
-  const out: T[] = []
+  rows: readonly number[] = [0],
+): PlacedLabelBox<T>[] {
+  const kept: { x: number; y: number; z: number; extents: LabelHalfExtents }[] = []
+  const out: PlacedLabelBox<T>[] = []
   for (const label of labels) {
-    const position = positionOf(label)
+    const [x, y0, z] = positionOf(label)
     const extents = extentsOf(label)
-    const overlaps = kept.some((other) => {
-      const dy = Math.abs(position[1] - other.position[1])
-      const dxz = Math.hypot(position[0] - other.position[0], position[2] - other.position[2])
-      return dy < extents.halfHeight + other.extents.halfHeight && dxz < extents.halfWidth + other.extents.halfWidth
-    })
-    if (overlaps) continue
-    kept.push({ position, extents })
-    out.push(label)
+    for (const row of rows) {
+      const y = y0 - row * 2 * extents.halfHeight
+      const overlaps = kept.some(
+        (other) =>
+          Math.abs(y - other.y) < extents.halfHeight + other.extents.halfHeight &&
+          Math.hypot(x - other.x, z - other.z) < extents.halfWidth + other.extents.halfWidth,
+      )
+      if (overlaps) continue
+      kept.push({ x, y, z, extents })
+      out.push({ label, row })
+      break
+    }
   }
   return out
 }
@@ -417,6 +435,17 @@ export function ringStrokeRuns(ring: readonly number[], width: number, height: n
 export function formatEmpireArea(areaKm2: number): string {
   if (areaKm2 >= 1e6) return `${(areaKm2 / 1e6).toFixed(1)}M km²`
   return `${Math.max(1, Math.round(areaKm2 / 1e3)).toLocaleString('en-US')}k km²`
+}
+
+/** The tooltip's area line: the lineage's area at `t` against its peak, or the peak alone while
+ *  `t` is inside the peak step. */
+export function empireAreaLine(summary: EmpireLineageSummary, t: GeoTime): string {
+  const { peak } = summary
+  if (peak.tEnd < t && t <= peak.tStart) return `${summary.lineage.name} · at its peak, ${formatEmpireArea(peak.areaKm2)}`
+  return (
+    `${summary.lineage.name} · about ${formatEmpireArea(lineageAreaAt(summary, t))} now ` +
+    `(peak ${formatEmpireArea(peak.areaKm2)} in ${formatEmpireYear(peak.tStart)})`
+  )
 }
 
 /** `t` as a calendar year where one reads naturally, else as elapsed time. */

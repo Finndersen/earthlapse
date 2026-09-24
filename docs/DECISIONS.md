@@ -7644,3 +7644,32 @@ asked for an info popup per empire like the ones arrivals and events have.
   Publish refuses a lineage event id that is not a published `events-core` id and a `member`
   index out of range. Wikipedia titles are copied from Cliopatria's own rows except where a raw
   title names a place or a process rather than the polity; `sources/cliopatria/README.md` lists those.
+
+**Amendment (2026-09-24) — capital label anchors, a lineage highlight, and peak and fall events.**
+- **A roster member may set `anchor = [lat, lon]`** (validated ±90/±180), which replaces the
+  representative point as the label anchor for every snapshot of that member. The representative
+  point is a poor label spot in three recurring cases: a colonial series whose geometry is the
+  overseas holdings only (British Colonial Empire, Spanish Empire — both anchored at the
+  metropole), a sprawling territory whose point lands where nobody would look, and a stray snapshot
+  whose point jumps (Qajars in Borneo 1895–97, Sasanians in Yemen 627–628, Ptolemies in eastern
+  Iran). 24 of 84 members carry one, each its capital or core; `sources/cliopatria/README.md` lists
+  them and the few snapshots an anchor sits outside. Members whose point already reads well (Russia
+  in Siberia, Macedon) or for which no capital lies inside every snapshot (Timurids) keep the point.
+  Geometry is unchanged; only the curated `lat`/`lon` move.
+- **Hovering an empire, or opening its card, highlights its lineage in the territory texture.**
+  The other lineages' fills, casings and strokes drop to 0.45 of their alpha and their labels to
+  0.6 opacity; the highlighted lineage draws last with a 1.6× stroke and a stronger fill. Hover
+  wins over an open card. The highlighted lineage joins the texture cache key, per crossfade side
+  and only when that frame draws it, and reaches the texture after the pointer has settled for
+  120 ms so a sweep repaints once; while no crossfade is in flight the cache keeps the bound
+  texture's plain version, so hovering off costs no repaint. The tooltip is suppressed for the lineage whose card is
+  open, and reads "at its peak" while `t` is inside the peak step.
+- **15 peak-and-fall events** join `events-core` (185 events) and the lineages' `events` lists:
+  the fall of Nineveh, Alexander's conquest of Persia, the destruction of Carthage, the end of Han,
+  the fall of the Western Roman Empire, the Umayyad and Ottoman greatest extents (dated to
+  Cliopatria's own largest snapshot), An Lushan, the sack of Baghdad, the fall of Constantinople,
+  Tenochtitlan, the Spanish conquest of the Inca, Tondibi, the Ming–Qing transition and the
+  dissolution of the Holy Roman Empire. Each is tagged `society`; none duplicates an existing event.
+- **Labels rest at 0.92 opacity, semibold, with a stronger halo.** At 0.75 and regular weight the
+  9px labels were hard to read over the basemap and the density ramp. The text is now weight 600 and its dark halo a four-step `text-shadow` (1, 2, 4 and 8 px); size and
+  tracking are unchanged.

@@ -5,14 +5,18 @@
  *
  * The cache implements `useGlobeTexturePair`'s `GlobeTextureCache`, so the empire pair gets the
  * same "keep the old pair bound until the new one is ready" discipline as every other globe
- * texture. Its "url" is a texture key (`empireTextureKey`): the active set's frame key, the tier
- * and whether the fill is on. `loadTexture` paints instead of fetching.
+ * texture. Its "url" is a texture key (`empireTextureKey`): the active set's frame key, the tier,
+ * whether the fill is on and the highlighted lineage. `loadTexture` paints instead of fetching.
+ * While one texture is kept (no crossfade or rebind in flight), trimming keeps its unhighlighted
+ * twin resident too, so hovering on and off an empire swaps between two cached textures instead
+ * of repainting.
  *
  * Painting: one `Path2D` per lineage holding every member's rings, wound so the nonzero rule
  * unions overlapping members and still cuts holes (`orientedRingPixels`); fills first, then every
  * casing, then every coloured stroke, so no lineage's fill covers another's outline. The canvas
  * is copied into a premultiplied `ImageBitmap`, which `Globe.tsx` force-uploads and closes like
- * the other human-era textures (`initAndCloseHumanEraTexture`). Premultiplied texels keep the
+ * the other human-era textures (`initAndCloseHumanEraTexture`). A highlighted lineage is painted
+ * after every other lineage's outlines, wider, with the others dimmed (`EMPIRE_DIM_ALPHA`). Premultiplied texels keep the
  * mip chain free of dark fringes; the bytes stay sRGB-encoded (`NoColorSpace`) and the shader
  * un-premultiplies before decoding, since decoding sRGB on premultiplied values would darken
  * every partially transparent texel. Losing the WebGL context loses the uploads, so
@@ -25,7 +29,16 @@ import * as THREE from 'three'
 import { parseTerritoryGeometry, type TerritoryGeometry } from '@/data/curated'
 
 import { ByteCappedCache } from './byteCappedCache'
-import { EMPIRE_CASING_COLOUR, EMPIRE_FILL_ALPHA, EMPIRE_TIERS, empireColour, type EmpireTier } from './empireStyle'
+import {
+  EMPIRE_CASING_COLOUR,
+  EMPIRE_DIM_ALPHA,
+  EMPIRE_FILL_ALPHA,
+  EMPIRE_HIGHLIGHT_FILL_ALPHA,
+  EMPIRE_HIGHLIGHT_STROKE_SCALE,
+  EMPIRE_TIERS,
+  empireColour,
+  type EmpireTier,
+} from './empireStyle'
 import { orientedRingPixels, ringStrokeRuns, type EmpireIndex, type EmpireSnapshot } from './empires'
 import type { GlobeTextureCache } from './useGlobeTexturePair'
 
@@ -35,20 +48,31 @@ export function setEmpireMaxAnisotropy(value: number): void {
   maxAnisotropy = value
 }
 
-/** Two expandedHigh textures with mips (~43 MB each) — the bound pair during a crossfade. */
+/** Two expandedHigh textures with mips (~45 MB each): the bound pair during a crossfade, or a
+ *  highlighted texture and its resident unhighlighted twin. A twin is protected only while one
+ *  texture is kept, so the two never add up. */
 const EMPIRE_CACHE_BYTES = 96 * 1024 * 1024
 
-export function empireTextureKey(frameKey: string, tier: EmpireTier, fill: boolean): string {
-  return `${frameKey}|${tier}|${fill ? 'fill' : 'line'}`
+interface EmpireTextureSpec {
+  frameKey: string
+  tier: EmpireTier
+  fill: boolean
+  /** The emphasised lineage, or `null`; pass it through `empireHighlightIn` first so a frame
+   *  that does not draw it shares the unhighlighted texture. */
+  highlight: string | null
 }
 
-function parseEmpireTextureKey(key: string): { frameKey: string; tier: EmpireTier; fill: boolean } {
-  const [fillPart, tierPart, ...rest] = key.split('|').reverse()
+export function empireTextureKey({ frameKey, tier, fill, highlight }: EmpireTextureSpec): string {
+  return `${frameKey}|${tier}|${fill ? 'fill' : 'line'}|${highlight ?? ''}`
+}
+
+function parseEmpireTextureKey(key: string): EmpireTextureSpec {
+  const [highlightPart, fillPart, tierPart, ...rest] = key.split('|').reverse()
   const tier = tierPart as EmpireTier
-  if (!(tier in EMPIRE_TIERS) || (fillPart !== 'fill' && fillPart !== 'line')) {
+  if (highlightPart === undefined || !(tier in EMPIRE_TIERS) || (fillPart !== 'fill' && fillPart !== 'line')) {
     throw new Error(`empire texture key ${key} is malformed`)
   }
-  return { frameKey: rest.reverse().join('|'), tier, fill: fillPart === 'fill' }
+  return { frameKey: rest.reverse().join('|'), tier, fill: fillPart === 'fill', highlight: highlightPart === '' ? null : highlightPart }
 }
 
 export interface EmpireTextureCache extends GlobeTextureCache {
@@ -81,25 +105,30 @@ function tracePolyline(path: Path2D, xy: readonly number[], closed: boolean): vo
   if (closed) path.closePath()
 }
 
+interface LineagePath {
+  lineage: string
+  path: Path2D
+  colour: string
+}
+
 function paintSnapshots(
   snapshots: readonly EmpireSnapshot[],
   geometry: TerritoryGeometry,
-  tier: EmpireTier,
-  fill: boolean,
+  { tier, fill, highlight }: EmpireTextureSpec,
 ): OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D {
   const { width, height, stroke, casing } = EMPIRE_TIERS[tier]
   const ctx = scratchContext(width, height)
   ctx.clearRect(0, 0, width, height)
 
-  const fills = new Map<string, { path: Path2D; colour: string }>()
-  const outlines: { path: Path2D; colour: string }[] = []
+  const fills = new Map<string, LineagePath>()
+  const outlines: LineagePath[] = []
   for (const snapshot of snapshots) {
     const polygons = geometry.snapshots.get(snapshot.id)
     if (polygons === undefined) continue
     const colour = empireColour(snapshot.colourSlot)
     let lineageFill = fills.get(snapshot.lineage)
     if (lineageFill === undefined) {
-      lineageFill = { path: new Path2D(), colour }
+      lineageFill = { lineage: snapshot.lineage, path: new Path2D(), colour }
       fills.set(snapshot.lineage, lineageFill)
     }
     const outline = new Path2D()
@@ -110,27 +139,43 @@ function paintSnapshots(
         for (const run of runs) tracePolyline(outline, run, closed)
       })
     }
-    outlines.push({ path: outline, colour })
+    outlines.push({ lineage: snapshot.lineage, path: outline, colour })
   }
 
+  const dim = highlight === null ? 1 : EMPIRE_DIM_ALPHA
   if (fill) {
-    ctx.globalAlpha = EMPIRE_FILL_ALPHA
-    for (const { path, colour } of fills.values()) {
+    for (const { lineage, path, colour } of fills.values()) {
+      ctx.globalAlpha = lineage === highlight ? EMPIRE_HIGHLIGHT_FILL_ALPHA : EMPIRE_FILL_ALPHA * dim
       ctx.fillStyle = colour
       ctx.fill(path, 'nonzero')
     }
-    ctx.globalAlpha = 1
   }
   ctx.lineJoin = 'round'
   ctx.lineCap = 'round'
-  ctx.strokeStyle = EMPIRE_CASING_COLOUR
-  ctx.lineWidth = casing
-  for (const { path } of outlines) ctx.stroke(path)
-  ctx.lineWidth = stroke
-  for (const { path, colour } of outlines) {
-    ctx.strokeStyle = colour
-    ctx.stroke(path)
+  const strokeOutlines = (drawn: readonly LineagePath[], strokeWidth: number, alpha: number): void => {
+    ctx.globalAlpha = alpha
+    ctx.strokeStyle = EMPIRE_CASING_COLOUR
+    ctx.lineWidth = strokeWidth + casing - stroke
+    for (const { path } of drawn) ctx.stroke(path)
+    ctx.lineWidth = strokeWidth
+    for (const { path, colour } of drawn) {
+      ctx.strokeStyle = colour
+      ctx.stroke(path)
+    }
   }
+  strokeOutlines(
+    outlines.filter((o) => o.lineage !== highlight),
+    stroke,
+    dim,
+  )
+  if (highlight !== null) {
+    strokeOutlines(
+      outlines.filter((o) => o.lineage === highlight),
+      stroke * EMPIRE_HIGHLIGHT_STROKE_SCALE,
+      1,
+    )
+  }
+  ctx.globalAlpha = 1
   return ctx
 }
 
@@ -153,12 +198,12 @@ function transparentTexture(): THREE.Texture {
 }
 
 async function rasterise(key: string, index: EmpireIndex, geometry: TerritoryGeometry): Promise<THREE.Texture> {
-  const { frameKey, tier, fill } = parseEmpireTextureKey(key)
-  const frame = index.frameByKey.get(frameKey)
+  const spec = parseEmpireTextureKey(key)
+  const frame = index.frameByKey.get(spec.frameKey)
   if (frame === undefined) throw new Error(`empire texture key ${key} names no active set`)
   if (frame.snapshots.length === 0) return transparentTexture()
 
-  const ctx = paintSnapshots(frame.snapshots, geometry, tier, fill)
+  const ctx = paintSnapshots(frame.snapshots, geometry, spec)
   // `createImageBitmap` snapshots the canvas synchronously, so the shared scratch canvas is free
   // for the next paint as soon as this call returns.
   const bitmap = await createImageBitmap(ctx.canvas, { premultiplyAlpha: 'premultiply', colorSpaceConversion: 'none' })
@@ -203,7 +248,11 @@ export function createEmpireTextureCache(index: EmpireIndex, geometry: Territory
 
   return {
     loadTexture,
-    trimTextures: (keep) => cache.trim(keep),
+    trimTextures: (keep) => {
+      const resident = new Set(keep)
+      if (keep.size === 1) for (const key of keep) resident.add(empireTextureKey({ ...parseEmpireTextureKey(key), highlight: null }))
+      cache.trim(resident)
+    },
     clear: () => cache.clear(),
   }
 }

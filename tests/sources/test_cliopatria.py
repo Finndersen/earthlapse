@@ -58,6 +58,17 @@ def test_normalise_keeps_roster_polities_over_half_open_spans_to_the_cutoff(
         assert feature.estimates[0].area_km2 is not None
 
 
+def test_a_roster_anchor_replaces_the_representative_point_as_the_label_anchor(
+    feature_set: FeatureSet,
+) -> None:
+    anchors = {f.id: (f.lat, f.lon) for f in feature_set.features}
+
+    assert anchors["goguryeo-612ce"] == (39.02, 125.75)
+    # Without an anchor, the label sits on the territory's representative point.
+    assert 18.0 < anchors["han-dynasty-202bce"][0] < 45.0
+    assert 95.0 < anchors["han-dynasty-202bce"][1] < 125.0
+
+
 def test_a_roster_naming_unknown_polities_is_refused_naming_each_one(
     cliopatria_normalise: ModuleType, roster
 ) -> None:

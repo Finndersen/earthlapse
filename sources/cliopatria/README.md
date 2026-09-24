@@ -260,8 +260,8 @@ China, Persia, Mongols, Caliphate, Ottoman, Britain, Spain, Russia, …): two li
 ever active at the same time with member bounding boxes within 10° of each other never share a
 slot. Eight slots suffice. The numbers are written into `roster.toml`, so inserting a lineage
 later does not recolour the others. Lineage names, labels, colour slots and the info-card fields are
-read again at publish, so changing them needs no data rebuild; membership, clamps and the polity list are
-read by `normalise.py`, and `databuild`'s fingerprint covers `*.toml`, so editing them does.
+read again at publish, so changing them needs no data rebuild; membership, clamps, anchors and the polity
+list are read by `normalise.py`, and `databuild`'s fingerprint covers `*.toml`, so editing them does.
 
 ## Resolution and thinning
 
@@ -283,7 +283,7 @@ extends over it. Both measures are computed in a Lambert cylindrical equal-area 
 areas are real km². IoU alone at 0.9 missed changes that are small relative to a vast empire
 but obvious on screen (the Ottoman losses of 1699, the sale of Alaska — Russia kept only 5
 snapshots); the symmetric-difference rule brings the Ottomans to 38 and Russia to 39. A
-snapshot keeps its first window's geometry, `Area`, `SeshatID` and label anchor.
+snapshot keeps its first window's geometry, `Area`, `SeshatID` and representative point.
 
 **Time semantics.** `t_start = 2025 − from_year`, `t_end = 2025 − (to_year + 1)`, and a
 snapshot is active for `t_end < t ≤ t_start`: years are inclusive, so abutting snapshots share a
@@ -294,8 +294,8 @@ at `t_end = 124`.
 
 `cliopatria_polities` is the source's only curated shape: **one `Feature` per kept snapshot**.
 `id` is `<polity slug>-<from year>` (e.g. `roman-empire-117ce`, suffixed `-2` on a collision),
-`name` the canonical polity name, `country` always `""`, `lat`/`lon` the snapshot geometry's
-`representative_point()`, `certainty` as under "Certainty", and a single estimate
+`name` the canonical polity name, `country` always `""`, `lat`/`lon` the label anchor (see
+"Label anchors"), `certainty` as under "Certainty", and a single estimate
 `PopulationEstimate(t=t_start, area_km2=..., t_end=t_end)`.
 
 `FeatureSet`/`Feature` (ADR-035) was built for `sources/cities`: one fixed point with several
@@ -309,6 +309,45 @@ nothing of `t_end` and is not how this layer is read: publish turns each feature
 **Representative point, not centroid.** A centroid can fall outside a concave or multi-part
 territory (an archipelagic empire's lands in open ocean); `representative_point()` is guaranteed
 to fall inside the geometry.
+
+### Label anchors
+
+By default a snapshot's anchor is its geometry's `representative_point()`. A roster member's
+optional `anchor = [lat, lon]` (validated to ±90/±180) replaces it for **every** snapshot of that
+member; it changes the curated `lat`/`lon` only, never the geometry file. The representative
+point is a poor label spot in three recurring cases, and 24 of the 84 members carry an anchor at
+their capital or core for the era:
+
+- **Colonial series.** The bare `British Colonial Empire` and `Spanish Empire` series are the
+  overseas territory alone, so their points land in North America or Australia and in
+  Amazonia; both are anchored at the metropole (London, Madrid), as are `Kingdom of Great
+  Britain` (whose point moves to southern Arabia from 1890) and `Kingdom of Spain` (Austria, 1540–55). The globe labels a
+  lineage at its largest member's anchor, so the Britain and Spain labels now sit at home.
+- **Far-flung empires.** The point of a huge or sprawling territory lands somewhere nobody
+  would name it by: Rome's in Spain or Syria (Republic, Empire, Western Empire → Rome),
+  Byzantium's in Syria (Eastern Roman and Byzantine Empire → Constantinople), the Ottomans' in
+  the Egyptian desert (→ Bursa, Ottoman from 1326, where Constantinople is Byzantine until 1453),
+  the caliphates' in eastern Iran (Rashidun → Medina, Umayyad → Damascus, Abbasid →
+  Baghdad), the Mongol Empire's in the Gobi (→ Karakorum), the Qing's in Qinghai (→ Beijing),
+  the Neo-Assyrian's in southern Iraq (→ Nineveh), the Inca's in Bolivia (→ Cusco).
+- **Points that jump.** Cliopatria assigns a few members a stray snapshot whose point lands far
+  from the rest: Carthage in Spain (230–213 BCE), the Ptolemaic Kingdom in eastern Iran
+  (326–324 BCE, Alexander's whole empire), Axum in Yemen (534–601), the Sasanian Empire in Yemen
+  (627–628), the Qajars in Borneo (1895–97). These are anchored at Carthage, Alexandria, Aksum,
+  Istakhr (the Sasanians' Persian homeland, inside every snapshot but that sliver, where
+  Ctesiphon misses the first two) and Tehran; Songhai at Gao and the Aztec Triple Alliance at
+  Tenochtitlan likewise.
+
+Every anchor lies within 0.3° of its member's territory in every snapshot except the colonial
+series (by design) and a handful of short windows: Byzantium 1206–26 (the Latin occupation),
+Umayyad 751–56 (the Iberian remnant), Abbasid 947–69, the Ottomans 1305–25, the Inca 1540–71
+(Vilcabamba), Spain 1809–11, Sasanian 627–28 and Qajar 1895–97.
+
+Left on their representative points, as sensible label spots already: the Egyptian,
+Mesopotamian, Chinese (other than Qing), Indian, steppe and Iranian dynasties, the Macedonian
+Empire (Macedon while small, central Iran at its peak), the Timurids (Samarkand and Herat each
+fall outside several snapshots), and Russia, whose central-Siberian point is where an atlas
+labels it.
 
 ## Geometry file
 
@@ -382,8 +421,8 @@ is **49,215,745 bytes** (sha256-pinned in `manifest.toml`); the extracted `cliop
 **186,488,764 bytes**, parsed once per build (~20 s for the whole normalise, cached between
 `normalise` and `write_outputs`).
 
-Curated, measured on the 28-lineage roster (ADR-059): **803 snapshots** in
-`cliopatria_polities.parquet` (44 KB), from 1,755 resolved segments. At most 10 lineages are
+Curated, measured on the 28-lineage roster (ADR-059): **804 snapshots** in
+`cliopatria_polities.parquet` (41 KB), from 1,755 resolved segments. At most 10 lineages are
 active at once (202–171 BCE). Per lineage:
 
 | Lineage | Snapshots | Lineage | Snapshots |
@@ -393,7 +432,7 @@ active at once (202–171 BCE). Per lineage:
 | persia | 60 | caliphate | 32 |
 | spain | 59 | mesopotamia | 27 |
 | britain | 48 | mongol | 23 |
-| russia | 39 | franks | 22 |
+| russia | 39 | franks | 23 |
 | ottoman | 38 | assyria | 15 |
 | egypt | 28 | seljuk | 14 |
 | macedon | 28 | india, khmer, xiongnu | 11 each |
@@ -423,7 +462,8 @@ polities (the tests inject it through `normalise_with`/`write_geometry`):
 - `(Han Dynasty)` at (224–237 CE), a window only the parenthesised label reports (`SeshatID`
   blank) — a paren window filling a gap, and a `MEDIUM`-certainty example;
 - `Himyarite Kingdom` at (534–576 CE) — present in the data, absent from the fixture roster;
-- `Goguryeo` at (612–616 CE) — a `MultiPolygon`, `SeshatID` present (`HIGH` certainty);
+- `Goguryeo` at (612–616 CE) — a `MultiPolygon`, `SeshatID` present (`HIGH` certainty),
+  and the fixture roster's one `anchor`;
 - `Atropates` (`Type = LEADER`) — dropped by the `Type` filter;
 - `Montenegro`'s real windows (1880–1884), (1885–1910) and (1911) — abutting snapshots, a window
   straddling 1900 (clipped to end at `t = 124`) and one wholly after it (dropped);

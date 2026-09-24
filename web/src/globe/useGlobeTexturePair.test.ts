@@ -73,7 +73,7 @@ describe('useGlobeTexturePair resetKey', () => {
 
     loadTexture.mockImplementation(() => new Promise<unknown>(() => {}))
     rerender({ resetKey: 1 })
-    expect(result.current).toEqual({ beforeTex: null, afterTex: null, mix: BLEND.alpha, texturesReady: false })
+    expect(result.current).toEqual({ beforeTex: null, afterTex: null, mix: BLEND.alpha, texturesReady: false, blendBound: false })
   })
 })
 

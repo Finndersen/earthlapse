@@ -16,10 +16,10 @@ members = [
 id = "korea"
 name = "Korea"
 colour_slot = 1
-reason = "Goguryeo: a single window"
+reason = "Goguryeo: a single window, labelled at a roster anchor (Pyongyang)"
 description = "Goguryeo was a kingdom of northern Korea and Manchuria."
 members = [
-  { polity = "Goguryeo" },
+  { polity = "Goguryeo", anchor = [39.02, 125.75] },
 ]
 
 [[lineage]]

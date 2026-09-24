@@ -119,12 +119,11 @@
 
 .member {
   display: grid;
-  grid-template-columns: 3px minmax(0, 1fr);
-  grid-template-areas:
-    'tick label'
-    'tick span';
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  grid-template-areas: 'tick label span';
+  align-items: baseline;
   column-gap: 9px;
-  padding: 3px 0;
+  padding: 2px 0;
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
@@ -134,6 +133,7 @@
 
 .memberTick {
   grid-area: tick;
+  align-self: stretch;
   border-radius: 2px;
   background: var(--hud-hairline, rgba(239, 233, 220, 0.18));
 }
@@ -167,6 +167,7 @@ a.memberLabel:focus-visible {
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 10.5px;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .events {
@@ -174,7 +175,7 @@ a.memberLabel:focus-visible {
 }
 
 .eventList li + li {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .eventLink {

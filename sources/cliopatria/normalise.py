@@ -3,7 +3,8 @@
 Two outputs, built from one list of snapshots so their ids cannot diverge:
 
 - `cliopatria_polities.parquet` -- a `FeatureSet` with one `Feature` per kept snapshot: the
-  polity's canonical name, a label anchor, and one estimate carrying the snapshot's area and its
+  polity's canonical name, a label anchor (the member's roster `anchor`, else the snapshot's
+  representative point), and one estimate carrying the snapshot's area and its
   half-open span, active for `t_end < t <= t_start`.
 - `data/media/vectors/cliopatria_territories-<hash>.json` -- the simplified territory of every
   snapshot, keyed by the same feature id (`write_outputs`).
@@ -37,7 +38,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 from itertools import pairwise
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
 import numpy as np
 import shapely
@@ -131,16 +132,22 @@ class _RosterModel(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid", populate_by_name=True)
 
 
+_Latitude = Annotated[float, Field(ge=-90.0, le=90.0)]
+_Longitude = Annotated[float, Field(ge=-180.0, le=180.0)]
+
+
 class RosterMember(_RosterModel):
     """One Cliopatria polity in a lineage. `from_year`/`to_year` clamp its windows (inclusive
     CE years); `label` is the text the globe shows for its snapshots; `wikipedia` is its English
-    Wikipedia article title."""
+    Wikipedia article title. `anchor` (`[lat, lon]`) replaces every one of its snapshots'
+    representative points as the label anchor."""
 
     polity: str = Field(min_length=1)
     from_year: int | None = Field(default=None, alias="from")
     to_year: int | None = Field(default=None, alias="to")
     label: str | None = Field(default=None, min_length=1)
     wikipedia: str | None = Field(default=None, min_length=1)
+    anchor: tuple[_Latitude, _Longitude] | None = None
 
     @model_validator(mode="after")
     def _clamp_is_ordered(self) -> Self:
@@ -511,14 +518,16 @@ def _certainty(seshat_id: str) -> FeatureCertainty:
     return FeatureCertainty.HIGH if seshat_id else FeatureCertainty.MEDIUM
 
 
-def _feature(feature_id: str, snapshot: Snapshot) -> Feature:
-    point = snapshot.geometry.representative_point()
+def _feature(feature_id: str, snapshot: Snapshot, anchor: tuple[float, float] | None) -> Feature:
+    if anchor is None:
+        point = snapshot.geometry.representative_point()
+        anchor = (max(-90.0, min(90.0, point.y)), max(-180.0, min(180.0, point.x)))
     return Feature(
         id=feature_id,
         name=snapshot.polity,
         country="",  # a supra-national polity's anchor has no single modern country
-        lat=max(-90.0, min(90.0, point.y)),
-        lon=max(-180.0, min(180.0, point.x)),
+        lat=anchor[0],
+        lon=anchor[1],
         certainty=_certainty(snapshot.seshat_id),
         estimates=[
             PopulationEstimate(t=snapshot.t_start, area_km2=snapshot.area_km2, t_end=snapshot.t_end)
@@ -527,7 +536,11 @@ def _feature(feature_id: str, snapshot: Snapshot) -> Feature:
 
 
 def normalise_with(raw_dir: Path, roster: EmpireRoster) -> list[CuratedShape]:
-    features = [_feature(fid, snapshot) for fid, snapshot in roster_snapshots(raw_dir, roster)]
+    anchors = {member.polity: member.anchor for _, member in roster.members()}
+    features = [
+        _feature(fid, snapshot, anchors[snapshot.polity])
+        for fid, snapshot in roster_snapshots(raw_dir, roster)
+    ]
     return [FeatureSet(id=FEATURE_SET_ID, features=features)]
 
 

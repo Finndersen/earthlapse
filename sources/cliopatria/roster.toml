@@ -6,10 +6,14 @@
 # `polity` must be a canonical Cliopatria name (normalise.py's `_canonical_name`: paren-stripped,
 # aliases applied); normalise.py refuses the build naming every member that matches no window.
 # A polity may appear in only one lineage. `from`/`to` (CE years, inclusive, negative = BCE)
-# clamp a member's windows; `label` replaces the polity name on the globe. `wikipedia` is the
-# English Wikipedia article title, copied from the raw rows' own `Wikipedia` property except where
-# that names a place or a process rather than the polity, or differs across the member's windows;
-# there it is one chosen title.
+# clamp a member's windows; `label` replaces the polity name on the globe. `anchor = [lat, lon]`
+# places the label of every snapshot of the member, in place of each snapshot's representative
+# point; it is set only where that point is a poor label spot (overseas for a colonial series,
+# somewhere unrecognisable for a far-flung empire, or jumping between snapshots), and names the
+# member's capital or core for its era. `wikipedia` is the English Wikipedia article title,
+# copied from the raw rows' own `Wikipedia` property except where that names a place or a
+# process rather than the polity, or differs across the member's windows; there it is one
+# chosen title.
 #
 # `description` (at most 320 characters) is the lineage's info-card text and `events` the
 # data/events.yaml ids that concern it; publish refuses an id that is not a published event.
@@ -40,7 +44,7 @@ members = [
   { polity = "Twenty-second Dynasty of Egypt", wikipedia = "Twenty-second Dynasty of Egypt" },
   { polity = "Twenty-sixth Dynasty of Egypt", wikipedia = "Twenty-sixth Dynasty of Egypt" },
   { polity = "Thirtieth Dynasty of Egypt", wikipedia = "Thirtieth Dynasty of Egypt" },
-  { polity = "Ptolemaic Kingdom", wikipedia = "Ptolemaic Kingdom" },
+  { polity = "Ptolemaic Kingdom", wikipedia = "Ptolemaic Kingdom", anchor = [31.20, 29.92] },
 ]
 
 [[lineage]]
@@ -49,7 +53,7 @@ name = "Mesopotamia"
 colour_slot = 0
 reason = "The first cities and the first territorial empire, Akkad, through to Nebuchadnezzar's Babylon"
 description = "Sumerian city-states such as Uruk, Ur and Lagash arose in southern Mesopotamia and developed cuneiform writing. Sargon of Akkad united the region in the 24th century BCE. Babylon later rose under Hammurabi, and the Neo-Babylonian Empire of Nebuchadnezzar II fell to Cyrus of Persia in 539 BCE."
-events = ["uruk-first-city", "writing"]
+events = ["uruk-first-city", "writing", "fall-of-nineveh"]
 members = [
   { polity = "Sumerian City-States", label = "Sumer", wikipedia = "History of Sumer" },
   { polity = "Akkadian Empire", wikipedia = "Akkadian Empire" },
@@ -63,10 +67,10 @@ name = "Assyria"
 colour_slot = 1
 reason = "The Iron Age's first great empire, from the Tigris to Egypt"
 description = "Assyria, centred on the city of Ashur on the upper Tigris, was a Mesopotamian power from the early second millennium BCE. From 911 BCE the Neo-Assyrian Empire expanded until it reached from western Iran to Egypt. It fell to Babylonian and Median forces after the sack of its capital, Nineveh, in 612 BCE."
-events = []
+events = ["fall-of-nineveh"]
 members = [
   { polity = "Assyria", wikipedia = "Assyria" },
-  { polity = "Neo-Assyrian Empire", wikipedia = "Neo-Assyrian Empire" },
+  { polity = "Neo-Assyrian Empire", wikipedia = "Neo-Assyrian Empire", anchor = [36.36, 43.15] },
 ]
 
 [[lineage]]
@@ -86,14 +90,15 @@ name = "Persia"
 colour_slot = 1
 reason = "Achaemenid, Parthian, Sasanian and later Iranian empires, the Near East's recurring great power"
 description = "Cyrus the Great founded the Achaemenid Empire around 550 BCE; it reached from the Aegean to the Indus until Alexander conquered it in 330 BCE. The Parthian and Sasanian empires restored Iranian rule and fought Rome for centuries until the Arab conquest. The Safavids, Afsharids and Qajars ruled Iran from 1501."
-events = []
+events = ["alexander-conquers-persia"]
 members = [
   { polity = "Achaemenid Empire", wikipedia = "Achaemenid Empire" },
   { polity = "Parthian Empire", wikipedia = "Parthian Empire" },
-  { polity = "Sasanian Empire", wikipedia = "Sasanian Empire" },
+  # Istakhr in Persis, the dynasty's homeland: inside every snapshot but the fragmentary 627-628 one, where Ctesiphon misses the first two and that one.
+  { polity = "Sasanian Empire", wikipedia = "Sasanian Empire", anchor = [29.98, 52.91] },
   { polity = "Safavid Dynasty", wikipedia = "Safavid dynasty" },
   { polity = "Afsharid Iran", wikipedia = "Afsharid Iran" },
-  { polity = "Qajar Dynasty", wikipedia = "Qajar dynasty" },
+  { polity = "Qajar Dynasty", wikipedia = "Qajar dynasty", anchor = [35.69, 51.39] },
 ]
 
 [[lineage]]
@@ -102,7 +107,7 @@ name = "Macedon"
 colour_slot = 3
 reason = "Alexander's conquest and its largest successor state"
 description = "Philip II made Macedon the leading power in Greece, and his son Alexander conquered the Persian Empire between 334 and 323 BCE, reaching the Indus. His generals divided the empire after his death. The Seleucid Empire, the largest successor, held much of the Near East before Rome annexed its remnant in 63 BCE."
-events = []
+events = ["alexander-conquers-persia"]
 members = [
   { polity = "Macedonian Empire", wikipedia = "Macedonia (ancient kingdom)" },
   { polity = "Seleucid Empire", wikipedia = "Seleucid dynasty" },
@@ -114,9 +119,9 @@ name = "Carthage"
 colour_slot = 4
 reason = "The Phoenician maritime empire, Rome's rival in the western Mediterranean"
 description = "Founded by Phoenician settlers from Tyre, traditionally in 814 BCE, Carthage in modern Tunisia built a trading empire across North Africa, western Sicily, Sardinia and southern Iberia. It fought Rome in three Punic Wars, including Hannibal's invasion of Italy, and was destroyed by Rome in 146 BCE."
-events = []
+events = ["destruction-of-carthage"]
 members = [
-  { polity = "Carthage", wikipedia = "Ancient Carthage" },
+  { polity = "Carthage", wikipedia = "Ancient Carthage", anchor = [36.85, 10.32] },
 ]
 
 [[lineage]]
@@ -125,13 +130,13 @@ name = "Rome"
 colour_slot = 0
 reason = "Republic, Empire and its eastern continuation until the fall of Constantinople"
 description = "Rome grew from a city-state, a republic by tradition from 509 BCE, to rule the whole Mediterranean, and became an empire under Augustus in 27 BCE. It reached its greatest extent under Trajan in 117 CE. The western empire ended in 476; the eastern, Byzantine Empire lasted until the Ottomans took Constantinople in 1453."
-events = ["roman-empire-peak"]
+events = ["destruction-of-carthage", "roman-empire-peak", "fall-of-western-roman-empire", "fall-of-constantinople"]
 members = [
-  { polity = "Roman Republic", wikipedia = "Roman Republic" },
-  { polity = "Roman Empire", wikipedia = "Roman Empire" },
-  { polity = "Western Roman Empire", wikipedia = "Western Roman Empire" },
-  { polity = "Eastern Roman Empire", wikipedia = "Byzantine Empire" },
-  { polity = "Byzantine Empire", to = 1453, wikipedia = "Byzantine Empire" },
+  { polity = "Roman Republic", wikipedia = "Roman Republic", anchor = [41.89, 12.49] },
+  { polity = "Roman Empire", wikipedia = "Roman Empire", anchor = [41.89, 12.49] },
+  { polity = "Western Roman Empire", wikipedia = "Western Roman Empire", anchor = [41.89, 12.49] },
+  { polity = "Eastern Roman Empire", wikipedia = "Byzantine Empire", anchor = [41.01, 28.98] },
+  { polity = "Byzantine Empire", to = 1453, wikipedia = "Byzantine Empire", anchor = [41.01, 28.98] },
 ]
 
 
@@ -155,7 +160,7 @@ name = "China"
 colour_slot = 0
 reason = "The succession of Chinese dynasties from the Shang to the Qing"
 description = "The Shang, the earliest Chinese dynasty known from its own written records, ruled the Yellow River valley from about 1600 BCE. The Qin unified China in 221 BCE, and dynasties including the Han, Tang, Song, Ming and Qing ruled an imperial state, through periods of division, until the Qing fell in 1912."
-events = ["qin-unification"]
+events = ["qin-unification", "end-of-han-dynasty", "an-lushan-rebellion", "ming-qing-transition"]
 members = [
   { polity = "Shang Dynasty", wikipedia = "Shang dynasty" },
   { polity = "Zhou Dynasty", wikipedia = "Zhou dynasty" },
@@ -169,7 +174,7 @@ members = [
   { polity = "Southern Song", wikipedia = "Song dynasty" },
   { polity = "Ming Dynasty", wikipedia = "Ming dynasty" },
   { polity = "Later Jin Dynasty", wikipedia = "Later Jin (1616-1636)" },
-  { polity = "Qing Dynasty", wikipedia = "Qing dynasty" },
+  { polity = "Qing Dynasty", wikipedia = "Qing dynasty", anchor = [39.90, 116.40] },
 ]
 
 [[lineage]]
@@ -189,7 +194,7 @@ name = "Tibetan Empire"
 colour_slot = 3
 reason = "The plateau empire that contested Central Asia with the Tang"
 description = "Songtsen Gampo unified the Tibetan plateau in the early 7th century CE. The Tibetan Empire expanded into Central Asia and western China, contested the Silk Road with the Tang and briefly occupied the Tang capital, Chang'an, in 763. It fragmented after the death of its last emperor, Langdarma, around 842."
-events = []
+events = ["an-lushan-rebellion"]
 members = [
   { polity = "Tibetan Empire", wikipedia = "Tibetan Empire" },
 ]
@@ -214,11 +219,11 @@ name = "Caliphate"
 colour_slot = 2
 reason = "The Arab conquests and the Abbasid golden age, until the Mongol sack of Baghdad"
 description = "After Muhammad's death in 632, the Rashidun caliphs conquered the Sasanian Empire and Byzantine Syria and Egypt. The Umayyads, ruling from Damascus from 661, extended the empire from Iberia to Central Asia. The Abbasids took power in 750 and founded Baghdad, which the Mongols sacked in 1258."
-events = []
+events = ["umayyad-greatest-extent", "mongol-sack-of-baghdad"]
 members = [
-  { polity = "Rashidun Caliphate", wikipedia = "Rashidun Caliphate" },
-  { polity = "Umayyad Caliphate", wikipedia = "Umayyad Caliphate" },
-  { polity = "Abbasid Caliphate", to = 1258, wikipedia = "Abbasid Caliphate" },
+  { polity = "Rashidun Caliphate", wikipedia = "Rashidun Caliphate", anchor = [24.47, 39.61] },
+  { polity = "Umayyad Caliphate", wikipedia = "Umayyad Caliphate", anchor = [33.51, 36.29] },
+  { polity = "Abbasid Caliphate", to = 1258, wikipedia = "Abbasid Caliphate", anchor = [33.31, 44.37] },
 ]
 
 [[lineage]]
@@ -239,7 +244,7 @@ name = "Holy Roman Empire"
 colour_slot = 6
 reason = "Central Europe's elective empire from Otto I to Napoleon"
 description = "The Holy Roman Empire is usually dated from the coronation of Otto I in 962. A decentralised realm of hundreds of principalities, bishoprics and cities under an elected emperor, it covered much of central Europe. Its central authority waned after the Thirty Years' War, and Francis II dissolved it in 1806."
-events = []
+events = ["holy-roman-empire-dissolved"]
 members = [
   { polity = "Holy Roman Empire", from = 962, wikipedia = "Holy Roman Empire" },
 ]
@@ -250,11 +255,11 @@ name = "Ghana, Mali & Songhai"
 colour_slot = 0
 reason = "The trans-Saharan gold empires of West Africa"
 description = "The Ghana Empire, flourishing by the 8th century, controlled the trans-Saharan gold trade of the western Sahel. Mali, founded by Sundiata Keita in the 13th century, succeeded it; Mansa Musa's pilgrimage of 1324 made its wealth famous. Songhai, ruling from Gao, grew larger still until Morocco defeated it in 1591."
-events = []
+events = ["battle-of-tondibi"]
 members = [
   { polity = "Ghana Empire", wikipedia = "Ghana Empire" },
   { polity = "Mali Empire", to = 1462, wikipedia = "Mali Empire" },
-  { polity = "Songhai Empire", to = 1591, wikipedia = "Songhai Empire" },
+  { polity = "Songhai Empire", to = 1591, wikipedia = "Songhai Empire", anchor = [16.27, -0.04] },
 ]
 
 [[lineage]]
@@ -275,9 +280,9 @@ name = "Mongols"
 colour_slot = 1
 reason = "The largest contiguous land empire, and the khanates it split into"
 description = "Temujin was proclaimed Genghis Khan in 1206 and led conquests across Asia; by the late 13th century the empire reached from Korea to eastern Europe, the largest contiguous land empire in history. From 1260 it split into four khanates: the Yuan in China, the Golden Horde, the Ilkhanate and the Chagatai Khanate."
-events = ["mongol-empire"]
+events = ["mongol-empire", "mongol-sack-of-baghdad"]
 members = [
-  { polity = "Mongol Empire", wikipedia = "Mongol Empire" },
+  { polity = "Mongol Empire", wikipedia = "Mongol Empire", anchor = [47.20, 102.80] },
   { polity = "Yuan Dynasty", to = 1368, wikipedia = "Yuan dynasty" },
   { polity = "Golden Horde", to = 1502, wikipedia = "Golden Horde" },
   { polity = "Ilkhanate", wikipedia = "Ilkhanate" },
@@ -302,9 +307,10 @@ name = "Ottoman Empire"
 colour_slot = 2
 reason = "Six centuries spanning south-east Europe, Anatolia, the Levant and North Africa"
 description = "Founded by Osman I in north-west Anatolia around 1299, the Ottoman state took Constantinople in 1453 and in the 16th century ruled south-east Europe, the Middle East and North Africa. It lost territory steadily from the late 17th century and was dissolved in 1922, after the First World War."
-events = []
+events = ["fall-of-constantinople", "ottoman-greatest-extent"]
 members = [
-  { polity = "Ottoman Empire", wikipedia = "Ottoman Empire" },
+  # Bursa: Ottoman from 1326, where Constantinople is Byzantine until 1453.
+  { polity = "Ottoman Empire", wikipedia = "Ottoman Empire", anchor = [40.19, 29.06] },
 ]
 
 
@@ -319,7 +325,7 @@ description = "The Kingdom of Kush, in Nubia on the middle Nile, ruled Egypt as 
 events = []
 members = [
   { polity = "Kingdom of Kush", wikipedia = "Kingdom of Kush" },
-  { polity = "Kingdom of Axum", wikipedia = "Kingdom of Aksum" },
+  { polity = "Kingdom of Axum", wikipedia = "Kingdom of Aksum", anchor = [14.13, 38.72] },
 ]
 
 [[lineage]]
@@ -340,9 +346,9 @@ name = "Aztec"
 colour_slot = 0
 reason = "The Triple Alliance centred on Tenochtitlan, until the Spanish conquest"
 description = "The Triple Alliance of Tenochtitlan, Texcoco and Tlacopan formed in 1428 and came to dominate central Mexico, drawing tribute from hundreds of subject towns. Tenochtitlan, built on an island in Lake Texcoco, was one of the largest cities of its time. Spanish forces and their Indigenous allies conquered it in 1521."
-events = []
+events = ["fall-of-tenochtitlan"]
 members = [
-  { polity = "Aztec Triple Alliance", label = "Aztec Empire", wikipedia = "Aztec Empire" },
+  { polity = "Aztec Triple Alliance", label = "Aztec Empire", wikipedia = "Aztec Empire", anchor = [19.43, -99.13] },
 ]
 
 [[lineage]]
@@ -351,9 +357,9 @@ name = "Inca"
 colour_slot = 0
 reason = "The largest empire of the pre-Columbian Americas"
 description = "From their capital, Cusco, the Inca expanded from about 1438 under Pachacuti to rule the Andes from Ecuador to central Chile, linked by an extensive road network. It was the largest state in the Americas before European contact. Spanish forces under Francisco Pizarro captured its emperor, Atahualpa, in 1532."
-events = []
+events = ["spanish-conquest-of-inca"]
 members = [
-  { polity = "Inca Empire", wikipedia = "Inca Empire" },
+  { polity = "Inca Empire", wikipedia = "Inca Empire", anchor = [-13.53, -71.97] },
 ]
 
 
@@ -365,10 +371,11 @@ name = "Spain"
 colour_slot = 4
 reason = "The first global empire, with its American colonies"
 description = "The union of Castile and Aragon made Spain a European power, and Columbus's voyage of 1492 began its conquest of the Americas. By the late 16th century it ruled much of the Americas, the Philippines and lands in Europe. Most American colonies won independence by 1826; Cuba and the Philippines were lost in 1898."
-events = ["columbian-exchange"]
+events = ["columbian-exchange", "fall-of-tenochtitlan", "spanish-conquest-of-inca"]
 members = [
-  { polity = "Kingdom of Spain", label = "Spain", wikipedia = "Spain" },
-  { polity = "Spanish Empire", wikipedia = "Spanish Empire" },
+  { polity = "Kingdom of Spain", label = "Spain", wikipedia = "Spain", anchor = [40.42, -3.70] },
+  # Madrid: the bare series is the overseas territory alone.
+  { polity = "Spanish Empire", wikipedia = "Spanish Empire", anchor = [40.42, -3.70] },
   { polity = "Iberian Union", wikipedia = "Iberian Union" },
   { polity = "First Spanish Republic", wikipedia = "First Spanish Republic" },
 ]
@@ -381,8 +388,9 @@ reason = "The largest empire in history by area, metropole and colonies together
 description = "Building on English colonies and trade from the early 1600s, Great Britain (from 1801 the United Kingdom) expanded across North America, India, Australia and Africa and was the dominant naval and commercial power of the 19th century. At its height, around 1920, it covered about a quarter of the world's land."
 events = ["industrial-revolution", "british-colonisation-australia"]
 members = [
-  { polity = "Kingdom of Great Britain", label = "Great Britain", wikipedia = "United Kingdom" },
-  { polity = "British Colonial Empire", label = "British Empire", wikipedia = "British Empire" },
+  { polity = "Kingdom of Great Britain", label = "Great Britain", wikipedia = "United Kingdom", anchor = [51.51, -0.13] },
+  # London: the bare series is the overseas territory alone.
+  { polity = "British Colonial Empire", label = "British Empire", wikipedia = "British Empire", anchor = [51.51, -0.13] },
   { polity = "British Raj", wikipedia = "British Raj" },
   { polity = "British Africa", wikipedia = "British Empire" },
 ]

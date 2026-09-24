@@ -5,7 +5,9 @@ import type { TerritoryData, TerritoryGeometry, TerritorySnapshotData } from '@/
 import {
   buildEmpireIndex,
   declutterLabelBoxes,
+  empireAreaLine,
   empireAtLonLat,
+  empireHighlightIn,
   empireLabelsAt,
   empiresHaveDataAt,
   empireSnapshotsAt,
@@ -60,6 +62,12 @@ describe('empireSnapshotsAt', () => {
     expect(empireSnapshotsAt(index, 3000).key).toBe('')
   })
 
+  it('highlights a lineage only in a frame that draws it', () => {
+    expect(empireHighlightIn(empireSnapshotsAt(index, 1900), 'china')).toBe('china')
+    expect(empireHighlightIn(empireSnapshotsAt(index, 1620), 'china')).toBeNull()
+    expect(empireHighlightIn(empireSnapshotsAt(index, 1620), null)).toBeNull()
+  })
+
   it('reports data only inside the layer domain', () => {
     expect(empiresHaveDataAt(index, 2500)).toBe(true)
     expect(empiresHaveDataAt(index, 1551)).toBe(true)
@@ -91,6 +99,11 @@ describe('lineage summaries', () => {
     expect(memberAt(rome, 1620)?.label).toBe('West')
     expect(memberAt(rome, 2050)?.label).toBe('Empire')
     expect(memberAt(rome, 3000)).toBeNull()
+  })
+
+  it('states the area once while t is at the peak, else against the peak', () => {
+    expect(empireAreaLine(rome, 1620)).toBe('Rome · at its peak, 7.0M km²')
+    expect(empireAreaLine(rome, 1700)).toMatch(/^Rome · about 5\.0M km² now \(peak 7\.0M km² in .+\)$/)
   })
 })
 
@@ -142,7 +155,17 @@ describe('declutterLabelBoxes', () => {
       ['far', [11, 0, 1]], // clear horizontally
     ]
     const kept = declutterLabelBoxes(labels, ([, position]) => position, () => box)
-    expect(kept.map(([name]) => name)).toEqual(['first', 'below', 'far'])
+    expect(kept.map(({ label: [name] }) => name)).toEqual(['first', 'below', 'far'])
+  })
+
+  it('moves a colliding label a row above, then below, and drops it only when every row collides', () => {
+    const box = { halfWidth: 5, halfHeight: 1 }
+    const placed = declutterLabelBoxes(['a', 'b', 'c', 'd'], () => [0, 0, 1] as const, () => box, [0, -1, 1])
+    expect(placed.map(({ label, row }) => [label, row])).toEqual([
+      ['a', 0],
+      ['b', -1],
+      ['c', 1],
+    ])
   })
 })
 

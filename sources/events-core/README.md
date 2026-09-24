@@ -1,6 +1,6 @@
 # Source: events-core
 
-The curated event set behind the scrubbable timeline. 170 events, `EventSet` id
+The curated event set behind the scrubbable timeline. 185 events, `EventSet` id
 `"events-core"`. **Hand-curated — `data/events.yaml` is the source of truth, not derived
 data.** See its header comment for the full time convention.
 
@@ -91,6 +91,10 @@ bibliographic line that could not be confirmed against its DOI page carries an i
 `late-devonian-extinction` (Becker & House year, Percival 2018), `gymnosperm-radiation` (no
 primary source yet, importance lowered to 0.35), `angiosperm-radiation` (Benton, Wilf & Sauquet
 year) and `younger-dryas` (Rasmussen 2006 volume and pages).
+
+The 15 empire peak-and-fall events (`fall-of-nineveh` … `holy-roman-empire-dissolved`) were
+checked by web search against the Wikipedia articles each cites; en.wikipedia.org itself could
+not be fetched from that session, so their citations read "searched" rather than "accessed".
 
 **Contested dates** get a wide `t_min`/`t_max` interval and the word "contested" (or an
 explanation of the disagreement) in the description, rather than a single invented number.

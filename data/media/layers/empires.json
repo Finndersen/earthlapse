@@ -60,7 +60,8 @@
       "description": "Sumerian city-states such as Uruk, Ur and Lagash arose in southern Mesopotamia and developed cuneiform writing. Sargon of Akkad united the region in the 24th century BCE. Babylon later rose under Hammurabi, and the Neo-Babylonian Empire of Nebuchadnezzar II fell to Cyrus of Persia in 539 BCE.",
       "events": [
         "uruk-first-city",
-        "writing"
+        "writing",
+        "fall-of-nineveh"
       ],
       "members": [
         {
@@ -86,7 +87,9 @@
       "name": "Assyria",
       "colourSlot": 1,
       "description": "Assyria, centred on the city of Ashur on the upper Tigris, was a Mesopotamian power from the early second millennium BCE. From 911 BCE the Neo-Assyrian Empire expanded until it reached from western Iran to Egypt. It fell to Babylonian and Median forces after the sack of its capital, Nineveh, in 612 BCE.",
-      "events": [],
+      "events": [
+        "fall-of-nineveh"
+      ],
       "members": [
         {
           "label": "Assyria",
@@ -116,7 +119,9 @@
       "name": "Persia",
       "colourSlot": 1,
       "description": "Cyrus the Great founded the Achaemenid Empire around 550 BCE; it reached from the Aegean to the Indus until Alexander conquered it in 330 BCE. The Parthian and Sasanian empires restored Iranian rule and fought Rome for centuries until the Arab conquest. The Safavids, Afsharids and Qajars ruled Iran from 1501.",
-      "events": [],
+      "events": [
+        "alexander-conquers-persia"
+      ],
       "members": [
         {
           "label": "Achaemenid Empire",
@@ -149,7 +154,9 @@
       "name": "Macedon",
       "colourSlot": 3,
       "description": "Philip II made Macedon the leading power in Greece, and his son Alexander conquered the Persian Empire between 334 and 323 BCE, reaching the Indus. His generals divided the empire after his death. The Seleucid Empire, the largest successor, held much of the Near East before Rome annexed its remnant in 63 BCE.",
-      "events": [],
+      "events": [
+        "alexander-conquers-persia"
+      ],
       "members": [
         {
           "label": "Macedonian Empire",
@@ -166,7 +173,9 @@
       "name": "Carthage",
       "colourSlot": 4,
       "description": "Founded by Phoenician settlers from Tyre, traditionally in 814 BCE, Carthage in modern Tunisia built a trading empire across North Africa, western Sicily, Sardinia and southern Iberia. It fought Rome in three Punic Wars, including Hannibal's invasion of Italy, and was destroyed by Rome in 146 BCE.",
-      "events": [],
+      "events": [
+        "destruction-of-carthage"
+      ],
       "members": [
         {
           "label": "Carthage",
@@ -180,7 +189,10 @@
       "colourSlot": 0,
       "description": "Rome grew from a city-state, a republic by tradition from 509 BCE, to rule the whole Mediterranean, and became an empire under Augustus in 27 BCE. It reached its greatest extent under Trajan in 117 CE. The western empire ended in 476; the eastern, Byzantine Empire lasted until the Ottomans took Constantinople in 1453.",
       "events": [
-        "roman-empire-peak"
+        "destruction-of-carthage",
+        "roman-empire-peak",
+        "fall-of-western-roman-empire",
+        "fall-of-constantinople"
       ],
       "members": [
         {
@@ -228,7 +240,10 @@
       "colourSlot": 0,
       "description": "The Shang, the earliest Chinese dynasty known from its own written records, ruled the Yellow River valley from about 1600 BCE. The Qin unified China in 221 BCE, and dynasties including the Han, Tang, Song, Ming and Qing ruled an imperial state, through periods of division, until the Qing fell in 1912.",
       "events": [
-        "qin-unification"
+        "qin-unification",
+        "end-of-han-dynasty",
+        "an-lushan-rebellion",
+        "ming-qing-transition"
       ],
       "members": [
         {
@@ -303,7 +318,9 @@
       "name": "Tibetan Empire",
       "colourSlot": 3,
       "description": "Songtsen Gampo unified the Tibetan plateau in the early 7th century CE. The Tibetan Empire expanded into Central Asia and western China, contested the Silk Road with the Tang and briefly occupied the Tang capital, Chang'an, in 763. It fragmented after the death of its last emperor, Langdarma, around 842.",
-      "events": [],
+      "events": [
+        "an-lushan-rebellion"
+      ],
       "members": [
         {
           "label": "Tibetan Empire",
@@ -331,7 +348,10 @@
       "name": "Caliphate",
       "colourSlot": 2,
       "description": "After Muhammad's death in 632, the Rashidun caliphs conquered the Sasanian Empire and Byzantine Syria and Egypt. The Umayyads, ruling from Damascus from 661, extended the empire from Iberia to Central Asia. The Abbasids took power in 750 and founded Baghdad, which the Mongols sacked in 1258.",
-      "events": [],
+      "events": [
+        "umayyad-greatest-extent",
+        "mongol-sack-of-baghdad"
+      ],
       "members": [
         {
           "label": "Rashidun Caliphate",
@@ -369,7 +389,9 @@
       "name": "Holy Roman Empire",
       "colourSlot": 6,
       "description": "The Holy Roman Empire is usually dated from the coronation of Otto I in 962. A decentralised realm of hundreds of principalities, bishoprics and cities under an elected emperor, it covered much of central Europe. Its central authority waned after the Thirty Years' War, and Francis II dissolved it in 1806.",
-      "events": [],
+      "events": [
+        "holy-roman-empire-dissolved"
+      ],
       "members": [
         {
           "label": "Holy Roman Empire",
@@ -382,7 +404,9 @@
       "name": "Ghana, Mali & Songhai",
       "colourSlot": 0,
       "description": "The Ghana Empire, flourishing by the 8th century, controlled the trans-Saharan gold trade of the western Sahel. Mali, founded by Sundiata Keita in the 13th century, succeeded it; Mansa Musa's pilgrimage of 1324 made its wealth famous. Songhai, ruling from Gao, grew larger still until Morocco defeated it in 1591.",
-      "events": [],
+      "events": [
+        "battle-of-tondibi"
+      ],
       "members": [
         {
           "label": "Ghana Empire",
@@ -421,7 +445,8 @@
       "colourSlot": 1,
       "description": "Temujin was proclaimed Genghis Khan in 1206 and led conquests across Asia; by the late 13th century the empire reached from Korea to eastern Europe, the largest contiguous land empire in history. From 1260 it split into four khanates: the Yuan in China, the Golden Horde, the Ilkhanate and the Chagatai Khanate.",
       "events": [
-        "mongol-empire"
+        "mongol-empire",
+        "mongol-sack-of-baghdad"
       ],
       "members": [
         {
@@ -468,7 +493,10 @@
       "name": "Ottoman Empire",
       "colourSlot": 2,
       "description": "Founded by Osman I in north-west Anatolia around 1299, the Ottoman state took Constantinople in 1453 and in the 16th century ruled south-east Europe, the Middle East and North Africa. It lost territory steadily from the late 17th century and was dissolved in 1922, after the First World War.",
-      "events": [],
+      "events": [
+        "fall-of-constantinople",
+        "ottoman-greatest-extent"
+      ],
       "members": [
         {
           "label": "Ottoman Empire",
@@ -515,7 +543,9 @@
       "name": "Aztec",
       "colourSlot": 0,
       "description": "The Triple Alliance of Tenochtitlan, Texcoco and Tlacopan formed in 1428 and came to dominate central Mexico, drawing tribute from hundreds of subject towns. Tenochtitlan, built on an island in Lake Texcoco, was one of the largest cities of its time. Spanish forces and their Indigenous allies conquered it in 1521.",
-      "events": [],
+      "events": [
+        "fall-of-tenochtitlan"
+      ],
       "members": [
         {
           "label": "Aztec Empire",
@@ -528,7 +558,9 @@
       "name": "Inca",
       "colourSlot": 0,
       "description": "From their capital, Cusco, the Inca expanded from about 1438 under Pachacuti to rule the Andes from Ecuador to central Chile, linked by an extensive road network. It was the largest state in the Americas before European contact. Spanish forces under Francisco Pizarro captured its emperor, Atahualpa, in 1532.",
-      "events": [],
+      "events": [
+        "spanish-conquest-of-inca"
+      ],
       "members": [
         {
           "label": "Inca Empire",
@@ -542,7 +574,9 @@
       "colourSlot": 4,
       "description": "The union of Castile and Aragon made Spain a European power, and Columbus's voyage of 1492 began its conquest of the Americas. By the late 16th century it ruled much of the Americas, the Philippines and lands in Europe. Most American colonies won independence by 1826; Cuba and the Philippines were lost in 1898.",
       "events": [
-        "columbian-exchange"
+        "columbian-exchange",
+        "fall-of-tenochtitlan",
+        "spanish-conquest-of-inca"
       ],
       "members": [
         {
@@ -1158,8 +1192,8 @@
       "label": "Neo-Assyrian Empire",
       "tStart": 2925.0,
       "tEnd": 2825.0,
-      "lat": 35.19401168823242,
-      "lon": 41.91515914991243,
+      "lat": 36.36,
+      "lon": 43.15,
       "areaKm2": 250500.31487280346
     },
     {
@@ -1169,8 +1203,8 @@
       "label": "Neo-Assyrian Empire",
       "tStart": 2825.0,
       "tEnd": 2725.0,
-      "lat": 35.09748458862305,
-      "lon": 41.162707163359016,
+      "lat": 36.36,
+      "lon": 43.15,
       "areaKm2": 519448.6319329519
     },
     {
@@ -1213,8 +1247,8 @@
       "label": "Neo-Assyrian Empire",
       "tStart": 2725.0,
       "tEnd": 2700.0,
-      "lat": 35.22618293762207,
-      "lon": 41.51861468767934,
+      "lat": 36.36,
+      "lon": 43.15,
       "areaKm2": 920410.5020226941
     },
     {
@@ -1246,8 +1280,8 @@
       "label": "Neo-Assyrian Empire",
       "tStart": 2700.0,
       "tEnd": 2640.0,
-      "lat": 32.332380294799805,
-      "lon": 45.91502806765219,
+      "lat": 36.36,
+      "lon": 43.15,
       "areaKm2": 1400805.5985948048
     },
     {
@@ -1268,8 +1302,8 @@
       "label": "Carthage",
       "tStart": 2675.0,
       "tEnd": 2655.0,
-      "lat": 36.578256607055664,
-      "lon": 10.361829354550395,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 3728.3914405799464
     },
     {
@@ -1279,8 +1313,8 @@
       "label": "Carthage",
       "tStart": 2655.0,
       "tEnd": 2525.0,
-      "lat": 36.32059288024902,
-      "lon": 10.40167149080203,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 12267.345574433812
     },
     {
@@ -1301,8 +1335,8 @@
       "label": "Neo-Assyrian Empire",
       "tStart": 2640.0,
       "tEnd": 2625.0,
-      "lat": 33.58595085144043,
-      "lon": 42.99721160867367,
+      "lat": 36.36,
+      "lon": 43.15,
       "areaKm2": 555798.2934094695
     },
     {
@@ -1400,8 +1434,8 @@
       "label": "Carthage",
       "tStart": 2525.0,
       "tEnd": 2475.0,
-      "lat": 33.81100654602051,
-      "lon": 9.660266231262673,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 124727.75760027286
     },
     {
@@ -1422,8 +1456,8 @@
       "label": "Roman Republic",
       "tStart": 2525.0,
       "tEnd": 2362.0,
-      "lat": 41.94391059875488,
-      "lon": 12.290359715932034,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 906.4470584672355
     },
     {
@@ -1444,8 +1478,8 @@
       "label": "Carthage",
       "tStart": 2475.0,
       "tEnd": 2264.0,
-      "lat": 40.12882995605469,
-      "lon": 9.024120310028078,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 198257.78151544338
     },
     {
@@ -1565,8 +1599,8 @@
       "label": "Roman Republic",
       "tStart": 2362.0,
       "tEnd": 2348.0,
-      "lat": 41.68425369262695,
-      "lon": 12.716851084711031,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 9189.972762822867
     },
     {
@@ -1620,8 +1654,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2356.0,
       "tEnd": 2351.0,
-      "lat": 32.685909271240234,
-      "lon": 35.874565009055246,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 1222887.581685148
     },
     {
@@ -1631,8 +1665,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2351.0,
       "tEnd": 2348.0,
-      "lat": 32.685909271240234,
-      "lon": 59.314607581268774,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 4829460.636325103
     },
     {
@@ -1664,8 +1698,8 @@
       "label": "Roman Republic",
       "tStart": 2348.0,
       "tEnd": 2343.0,
-      "lat": 41.68425369262695,
-      "lon": 12.716851084711031,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 10238.272839019712
     },
     {
@@ -1686,8 +1720,8 @@
       "label": "Roman Republic",
       "tStart": 2343.0,
       "tEnd": 2326.0,
-      "lat": 41.45712089538574,
-      "lon": 15.458476648872175,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 11962.444059836176
     },
     {
@@ -1752,8 +1786,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2332.0,
       "tEnd": 2326.0,
-      "lat": 37.06151008605957,
-      "lon": 34.997691698111474,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 654345.2824431794
     },
     {
@@ -1796,8 +1830,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2326.0,
       "tEnd": 2316.0,
-      "lat": 29.215216636657715,
-      "lon": 29.02963018976146,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 703905.9441685478
     },
     {
@@ -1807,8 +1841,8 @@
       "label": "Roman Republic",
       "tStart": 2326.0,
       "tEnd": 2316.0,
-      "lat": 41.84651756286621,
-      "lon": 15.255545569279857,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 31817.319987766718
     },
     {
@@ -1840,8 +1874,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2316.0,
       "tEnd": 2297.0,
-      "lat": 29.150935173034668,
-      "lon": 29.05185668581987,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 849110.2152991382
     },
     {
@@ -1851,8 +1885,8 @@
       "label": "Roman Republic",
       "tStart": 2316.0,
       "tEnd": 2300.0,
-      "lat": 42.366180419921875,
-      "lon": 13.087467786018053,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 57307.910247509535
     },
     {
@@ -1895,8 +1929,8 @@
       "label": "Roman Republic",
       "tStart": 2300.0,
       "tEnd": 2296.0,
-      "lat": 42.00885200500488,
-      "lon": 13.488148084659606,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 70032.33886501606
     },
     {
@@ -1906,8 +1940,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2297.0,
       "tEnd": 2281.0,
-      "lat": 29.311635971069336,
-      "lon": 28.885054622461166,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 741598.7220466826
     },
     {
@@ -1917,8 +1951,8 @@
       "label": "Roman Republic",
       "tStart": 2296.0,
       "tEnd": 2289.0,
-      "lat": 41.003204345703125,
-      "lon": 15.59120413238623,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 92044.03461442134
     },
     {
@@ -1928,8 +1962,8 @@
       "label": "Roman Republic",
       "tStart": 2289.0,
       "tEnd": 2281.0,
-      "lat": 41.003204345703125,
-      "lon": 15.59120413238623,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 118455.07418260795
     },
     {
@@ -1939,8 +1973,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2281.0,
       "tEnd": 2272.0,
-      "lat": 29.311635971069336,
-      "lon": 28.885054622461166,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 677744.0371686895
     },
     {
@@ -1950,8 +1984,8 @@
       "label": "Roman Republic",
       "tStart": 2281.0,
       "tEnd": 2255.0,
-      "lat": 40.5820255279541,
-      "lon": 16.469475941925495,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 135971.48109000688
     },
     {
@@ -1972,8 +2006,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2272.0,
       "tEnd": 2222.0,
-      "lat": 29.150935173034668,
-      "lon": 29.05185668581987,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 782993.0066695885
     },
     {
@@ -1994,8 +2028,8 @@
       "label": "Carthage",
       "tStart": 2264.0,
       "tEnd": 2255.0,
-      "lat": 33.65024948120117,
-      "lon": 9.938923469264775,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 170093.4058245991
     },
     {
@@ -2027,8 +2061,8 @@
       "label": "Carthage",
       "tStart": 2255.0,
       "tEnd": 2237.0,
-      "lat": 38.190114974975586,
-      "lon": -3.8548727401478997,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 346081.98902992345
     },
     {
@@ -2038,8 +2072,8 @@
       "label": "Roman Republic",
       "tStart": 2255.0,
       "tEnd": 2248.0,
-      "lat": 40.5820255279541,
-      "lon": 16.469475941925495,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 176055.7913062338
     },
     {
@@ -2071,8 +2105,8 @@
       "label": "Roman Republic",
       "tStart": 2248.0,
       "tEnd": 2241.0,
-      "lat": 41.61933898925781,
-      "lon": 14.190501229310968,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 210472.97356306546
     },
     {
@@ -2104,8 +2138,8 @@
       "label": "Roman Republic",
       "tStart": 2241.0,
       "tEnd": 2237.0,
-      "lat": 41.39225196838379,
-      "lon": 1.2784084082946563,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 156427.28251157206
     },
     {
@@ -2115,8 +2149,8 @@
       "label": "Carthage",
       "tStart": 2237.0,
       "tEnd": 2228.0,
-      "lat": 36.771522521972656,
-      "lon": 4.132917196367764,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 170800.84118354044
     },
     {
@@ -2137,8 +2171,8 @@
       "label": "Roman Republic",
       "tStart": 2237.0,
       "tEnd": 2235.0,
-      "lat": 42.69124984741211,
-      "lon": 12.48662007926044,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 143980.64198099278
     },
     {
@@ -2148,8 +2182,8 @@
       "label": "Roman Republic",
       "tStart": 2235.0,
       "tEnd": 2233.0,
-      "lat": 42.69124984741211,
-      "lon": 12.48662007926044,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 161978.79859849552
     },
     {
@@ -2170,8 +2204,8 @@
       "label": "Roman Republic",
       "tStart": 2233.0,
       "tEnd": 2231.0,
-      "lat": 42.39867401123047,
-      "lon": 12.361550184894883,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 187194.04164410598
     },
     {
@@ -2192,8 +2226,8 @@
       "label": "Roman Republic",
       "tStart": 2231.0,
       "tEnd": 2228.0,
-      "lat": 42.00885200500488,
-      "lon": 13.488148084659606,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 233634.60030681017
     },
     {
@@ -2203,8 +2237,8 @@
       "label": "Carthage",
       "tStart": 2228.0,
       "tEnd": 2227.0,
-      "lat": 33.778852462768555,
-      "lon": 9.708476638728984,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 302141.4948571462
     },
     {
@@ -2214,8 +2248,8 @@
       "label": "Roman Republic",
       "tStart": 2228.0,
       "tEnd": 2195.0,
-      "lat": 43.01654815673828,
-      "lon": 12.260908951851444,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 381141.95777513384
     },
     {
@@ -2236,8 +2270,8 @@
       "label": "Carthage",
       "tStart": 2227.0,
       "tEnd": 2222.0,
-      "lat": 36.771522521972656,
-      "lon": 4.132917196367764,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 133659.80532203463
     },
     {
@@ -2258,8 +2292,8 @@
       "label": "Carthage",
       "tStart": 2222.0,
       "tEnd": 2169.0,
-      "lat": 35.80546188354492,
-      "lon": 9.78595044031354,
+      "lat": 36.85,
+      "lon": 10.32,
       "areaKm2": 46216.1941125469
     },
     {
@@ -2269,8 +2303,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2222.0,
       "tEnd": 2213.0,
-      "lat": 28.218819618225098,
-      "lon": 30.24571532681087,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 505776.12921927375
     },
     {
@@ -2280,8 +2314,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2213.0,
       "tEnd": 2195.0,
-      "lat": 28.218819618225098,
-      "lon": 30.24571532681087,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 570196.9895210695
     },
     {
@@ -2302,8 +2336,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2195.0,
       "tEnd": 2189.0,
-      "lat": 31.046979904174805,
-      "lon": 23.63898953781042,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 156340.40517783593
     },
     {
@@ -2313,8 +2347,8 @@
       "label": "Roman Republic",
       "tStart": 2195.0,
       "tEnd": 2189.0,
-      "lat": 39.5142879486084,
-      "lon": -2.205551953591629,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 506264.10308669525
     },
     {
@@ -2357,8 +2391,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2189.0,
       "tEnd": 2135.0,
-      "lat": 28.250962257385254,
-      "lon": 30.19151147703753,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 679404.4347368943
     },
     {
@@ -2368,8 +2402,8 @@
       "label": "Roman Republic",
       "tStart": 2189.0,
       "tEnd": 2169.0,
-      "lat": 41.45712089538574,
-      "lon": 26.031335108536535,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 648898.6228174678
     },
     {
@@ -2401,8 +2435,8 @@
       "label": "Roman Republic",
       "tStart": 2169.0,
       "tEnd": 2151.0,
-      "lat": 41.45712089538574,
-      "lon": 23.902841640722485,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 848947.6426268611
     },
     {
@@ -2445,8 +2479,8 @@
       "label": "Roman Republic",
       "tStart": 2151.0,
       "tEnd": 2116.0,
-      "lat": 39.48194885253906,
-      "lon": -4.8025957209391015,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1160796.4776832429
     },
     {
@@ -2489,8 +2523,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2135.0,
       "tEnd": 2056.0,
-      "lat": 27.479498863220215,
-      "lon": 30.868436140177074,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 565937.5694190675
     },
     {
@@ -2544,8 +2578,8 @@
       "label": "Roman Republic",
       "tStart": 2116.0,
       "tEnd": 2112.0,
-      "lat": 41.10042762756348,
-      "lon": -3.8782102862005345,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1303376.6163117196
     },
     {
@@ -2566,8 +2600,8 @@
       "label": "Roman Republic",
       "tStart": 2112.0,
       "tEnd": 2102.0,
-      "lat": 41.10042762756348,
-      "lon": -3.8782102862005345,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1186376.6993635064
     },
     {
@@ -2588,8 +2622,8 @@
       "label": "Roman Republic",
       "tStart": 2102.0,
       "tEnd": 2091.0,
-      "lat": 41.10042762756348,
-      "lon": -3.8782102862005345,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1344265.6963296311
     },
     {
@@ -2599,8 +2633,8 @@
       "label": "Roman Republic",
       "tStart": 2091.0,
       "tEnd": 2088.0,
-      "lat": 41.10042762756348,
-      "lon": -3.8782102862005345,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1560933.8746288286
     },
     {
@@ -2632,8 +2666,8 @@
       "label": "Roman Republic",
       "tStart": 2088.0,
       "tEnd": 2075.0,
-      "lat": 38.38373947143555,
-      "lon": -4.660148767522146,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1610421.2193011593
     },
     {
@@ -2654,8 +2688,8 @@
       "label": "Kingdom of Axum",
       "tStart": 2075.0,
       "tEnd": 1787.0,
-      "lat": 14.364645004272461,
-      "lon": 39.779227307604174,
+      "lat": 14.13,
+      "lon": 38.72,
       "areaKm2": 97003.90299438157
     },
     {
@@ -2665,8 +2699,8 @@
       "label": "Roman Republic",
       "tStart": 2075.0,
       "tEnd": 2065.0,
-      "lat": 41.35981559753418,
-      "lon": -3.351592191955797,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 2214404.41181952
     },
     {
@@ -2676,8 +2710,8 @@
       "label": "Roman Republic",
       "tStart": 2065.0,
       "tEnd": 2056.0,
-      "lat": 44.09169578552246,
-      "lon": 2.3912882192301965,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 2210192.348454068
     },
     {
@@ -2687,8 +2721,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2056.0,
       "tEnd": 2055.0,
-      "lat": 28.186676025390625,
-      "lon": 30.284819788480792,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 1272832.6918083038
     },
     {
@@ -2698,8 +2732,8 @@
       "label": "Roman Empire",
       "tStart": 2056.0,
       "tEnd": 2055.0,
-      "lat": 44.09169578552246,
-      "lon": 2.3912882192301965,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1692118.010729747
     },
     {
@@ -2709,8 +2743,8 @@
       "label": "Ptolemaic Kingdom",
       "tStart": 2055.0,
       "tEnd": 2052.0,
-      "lat": 27.479498863220215,
-      "lon": 30.868436140177074,
+      "lat": 31.2,
+      "lon": 29.92,
       "areaKm2": 554500.0864447906
     },
     {
@@ -2720,8 +2754,8 @@
       "label": "Roman Empire",
       "tStart": 2055.0,
       "tEnd": 2052.0,
-      "lat": 41.35981559753418,
-      "lon": -3.351592191955797,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 2411151.349481531
     },
     {
@@ -2731,8 +2765,8 @@
       "label": "Roman Empire",
       "tStart": 2052.0,
       "tEnd": 2050.0,
-      "lat": 30.340028762817383,
-      "lon": 28.433463358664522,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3058106.2769504935
     },
     {
@@ -2742,8 +2776,8 @@
       "label": "Roman Empire",
       "tStart": 2050.0,
       "tEnd": 2044.0,
-      "lat": 33.618099212646484,
-      "lon": 36.44164639680345,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3550369.067893053
     },
     {
@@ -2753,8 +2787,8 @@
       "label": "Roman Empire",
       "tStart": 2044.0,
       "tEnd": 2024.0,
-      "lat": 30.340028762817383,
-      "lon": 28.433463358664522,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3291037.335403199
     },
     {
@@ -2764,8 +2798,8 @@
       "label": "Roman Empire",
       "tStart": 2024.0,
       "tEnd": 2019.0,
-      "lat": 42.073801040649414,
-      "lon": -2.90090010218315,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3548476.6728844945
     },
     {
@@ -2775,8 +2809,8 @@
       "label": "Roman Empire",
       "tStart": 2019.0,
       "tEnd": 2016.0,
-      "lat": 45.00608444213867,
-      "lon": 5.580998907631761,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3648633.033713052
     },
     {
@@ -2786,8 +2820,8 @@
       "label": "Roman Empire",
       "tStart": 2016.0,
       "tEnd": 1982.0,
-      "lat": 37.73849105834961,
-      "lon": -4.7744853108055585,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3476000.060724846
     },
     {
@@ -2808,8 +2842,8 @@
       "label": "Roman Empire",
       "tStart": 1982.0,
       "tEnd": 1965.0,
-      "lat": 37.73849105834961,
-      "lon": 32.81557874658288,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3886710.600261656
     },
     {
@@ -2819,8 +2853,8 @@
       "label": "Roman Empire",
       "tStart": 1965.0,
       "tEnd": 1957.0,
-      "lat": 37.73849105834961,
-      "lon": 32.81557874658288,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4301744.564789866
     },
     {
@@ -2830,8 +2864,8 @@
       "label": "Roman Empire",
       "tStart": 1957.0,
       "tEnd": 1919.0,
-      "lat": 37.73849105834961,
-      "lon": 32.81557874658288,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4205806.05623463
     },
     {
@@ -2885,8 +2919,8 @@
       "label": "Roman Empire",
       "tStart": 1919.0,
       "tEnd": 1911.0,
-      "lat": 37.73849105834961,
-      "lon": 32.79275875145904,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4583767.277656738
     },
     {
@@ -2907,8 +2941,8 @@
       "label": "Roman Empire",
       "tStart": 1911.0,
       "tEnd": 1908.0,
-      "lat": 37.73849105834961,
-      "lon": 35.05307467447909,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4898292.3295891415
     },
     {
@@ -2940,8 +2974,8 @@
       "label": "Roman Empire",
       "tStart": 1908.0,
       "tEnd": 1898.0,
-      "lat": 37.73849105834961,
-      "lon": 36.229604520838464,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 5261056.557294762
     },
     {
@@ -2962,8 +2996,8 @@
       "label": "Roman Empire",
       "tStart": 1898.0,
       "tEnd": 1764.0,
-      "lat": 37.73849105834961,
-      "lon": 32.79275875145904,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4556270.8055844335
     },
     {
@@ -3028,8 +3062,8 @@
       "label": "Sasanian Empire",
       "tStart": 1810.0,
       "tEnd": 1801.0,
-      "lat": 29.79371166229248,
-      "lon": 52.734280979229034,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 52228.91985115653
     },
     {
@@ -3061,8 +3095,8 @@
       "label": "Sasanian Empire",
       "tStart": 1801.0,
       "tEnd": 1787.0,
-      "lat": 30.56497097015381,
-      "lon": 53.8732397121033,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 638646.1564381449
     },
     {
@@ -3072,8 +3106,8 @@
       "label": "Kingdom of Axum",
       "tStart": 1787.0,
       "tEnd": 1672.0,
-      "lat": 14.364645004272461,
-      "lon": 39.779227307604174,
+      "lat": 14.13,
+      "lon": 38.72,
       "areaKm2": 133415.64185753584
     },
     {
@@ -3083,8 +3117,8 @@
       "label": "Sasanian Empire",
       "tStart": 1787.0,
       "tEnd": 1765.0,
-      "lat": 31.818202018737793,
-      "lon": 53.456717551356064,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2687556.7798252306
     },
     {
@@ -3094,8 +3128,8 @@
       "label": "Sasanian Empire",
       "tStart": 1765.0,
       "tEnd": 1742.0,
-      "lat": 33.03946876525879,
-      "lon": 53.13675605305001,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3147995.7486229134
     },
     {
@@ -3105,8 +3139,8 @@
       "label": "Roman Empire",
       "tStart": 1764.0,
       "tEnd": 1755.0,
-      "lat": 42.7237663269043,
-      "lon": 22.91542800142478,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 2547864.6843855404
     },
     {
@@ -3127,8 +3161,8 @@
       "label": "Roman Empire",
       "tStart": 1755.0,
       "tEnd": 1742.0,
-      "lat": 39.8699893951416,
-      "lon": -4.632060556679993,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 3442684.9507345534
     },
     {
@@ -3138,8 +3172,8 @@
       "label": "Roman Empire",
       "tStart": 1742.0,
       "tEnd": 1630.0,
-      "lat": 37.73849105834961,
-      "lon": 33.65200036611659,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 4214255.474291577
     },
     {
@@ -3149,8 +3183,8 @@
       "label": "Sasanian Empire",
       "tStart": 1742.0,
       "tEnd": 1738.0,
-      "lat": 33.168046951293945,
-      "lon": 54.334259524947896,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3252558.232891451
     },
     {
@@ -3171,8 +3205,8 @@
       "label": "Sasanian Empire",
       "tStart": 1738.0,
       "tEnd": 1667.0,
-      "lat": 33.29662322998047,
-      "lon": 52.9621773387411,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2940447.964742464
     },
     {
@@ -3259,8 +3293,8 @@
       "label": "Kingdom of Axum",
       "tStart": 1672.0,
       "tEnd": 1491.0,
-      "lat": 14.364645004272461,
-      "lon": 39.779227307604174,
+      "lat": 14.13,
+      "lon": 38.72,
       "areaKm2": 97003.90299438157
     },
     {
@@ -3270,8 +3304,8 @@
       "label": "Sasanian Empire",
       "tStart": 1667.0,
       "tEnd": 1654.0,
-      "lat": 31.8503360748291,
-      "lon": 56.9988386504767,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3147167.8748307717
     },
     {
@@ -3281,8 +3315,8 @@
       "label": "Sasanian Empire",
       "tStart": 1654.0,
       "tEnd": 1638.0,
-      "lat": 32.33238220214844,
-      "lon": 57.02124573083367,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3398922.394554675
     },
     {
@@ -3325,8 +3359,8 @@
       "label": "Sasanian Empire",
       "tStart": 1638.0,
       "tEnd": 1535.0,
-      "lat": 31.850337028503418,
-      "lon": 56.892079518396216,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2986039.709969964
     },
     {
@@ -3347,8 +3381,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1630.0,
       "tEnd": 1629.0,
-      "lat": 34.42197799682617,
-      "lon": 37.45126628010989,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1976909.3875702252
     },
     {
@@ -3358,8 +3392,8 @@
       "label": "Western Roman Empire",
       "tStart": 1630.0,
       "tEnd": 1615.0,
-      "lat": 44.09169578552246,
-      "lon": 3.4080219150686646,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 2132650.364302458
     },
     {
@@ -3369,8 +3403,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1629.0,
       "tEnd": 1623.0,
-      "lat": 30.275758743286133,
-      "lon": 29.49307604127829,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1779901.82694346
     },
     {
@@ -3380,8 +3414,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1623.0,
       "tEnd": 1491.0,
-      "lat": 34.42197799682617,
-      "lon": 37.45126628010989,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1963623.850005745
     },
     {
@@ -3402,8 +3436,8 @@
       "label": "Western Roman Empire",
       "tStart": 1615.0,
       "tEnd": 1586.0,
-      "lat": 44.41802978515625,
-      "lon": 3.757920457921383,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1585316.0390367543
     },
     {
@@ -3424,8 +3458,8 @@
       "label": "Western Roman Empire",
       "tStart": 1586.0,
       "tEnd": 1582.0,
-      "lat": 44.15694236755371,
-      "lon": 5.061292924316707,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1432230.213139104
     },
     {
@@ -3435,8 +3469,8 @@
       "label": "Western Roman Empire",
       "tStart": 1582.0,
       "tEnd": 1574.0,
-      "lat": 44.74462127685547,
-      "lon": 6.598410921714494,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1204779.006772698
     },
     {
@@ -3457,8 +3491,8 @@
       "label": "Western Roman Empire",
       "tStart": 1574.0,
       "tEnd": 1573.0,
-      "lat": 44.09169578552246,
-      "lon": 5.034561362210515,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1051188.9021253134
     },
     {
@@ -3468,8 +3502,8 @@
       "label": "Western Roman Empire",
       "tStart": 1573.0,
       "tEnd": 1570.0,
-      "lat": 44.74462127685547,
-      "lon": 6.598410921714494,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1104779.9224985414
     },
     {
@@ -3479,8 +3513,8 @@
       "label": "Western Roman Empire",
       "tStart": 1570.0,
       "tEnd": 1567.0,
-      "lat": 44.74462127685547,
-      "lon": 9.521302909948202,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 960155.6295830468
     },
     {
@@ -3490,8 +3524,8 @@
       "label": "Western Roman Empire",
       "tStart": 1567.0,
       "tEnd": 1566.0,
-      "lat": 47.96078872680664,
-      "lon": 2.065667675306521,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 734067.1261302633
     },
     {
@@ -3501,8 +3535,8 @@
       "label": "Western Roman Empire",
       "tStart": 1566.0,
       "tEnd": 1563.0,
-      "lat": 43.7656135559082,
-      "lon": 4.721006250912182,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1273676.5732640007
     },
     {
@@ -3523,8 +3557,8 @@
       "label": "Western Roman Empire",
       "tStart": 1563.0,
       "tEnd": 1556.0,
-      "lat": 39.54661178588867,
-      "lon": -4.472746390190465,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 1106325.682726398
     },
     {
@@ -3534,8 +3568,8 @@
       "label": "Western Roman Empire",
       "tStart": 1556.0,
       "tEnd": 1549.0,
-      "lat": 48.85271644592285,
-      "lon": 1.592665931712028,
+      "lat": 41.89,
+      "lon": 12.49,
       "areaKm2": 615857.3491519536
     },
     {
@@ -3556,8 +3590,8 @@
       "label": "Sasanian Empire",
       "tStart": 1535.0,
       "tEnd": 1502.0,
-      "lat": 32.33238220214844,
-      "lon": 51.982234912281726,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2154644.3969436404
     },
     {
@@ -3578,8 +3612,8 @@
       "label": "Sasanian Empire",
       "tStart": 1502.0,
       "tEnd": 1423.0,
-      "lat": 32.68591117858887,
-      "lon": 55.61631721512946,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3127078.2555511063
     },
     {
@@ -3589,8 +3623,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1491.0,
       "tEnd": 1485.0,
-      "lat": 34.42197799682617,
-      "lon": 37.45126628010989,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2186467.791471565
     },
     {
@@ -3600,8 +3634,8 @@
       "label": "Kingdom of Axum",
       "tStart": 1491.0,
       "tEnd": 1423.0,
-      "lat": 15.296818733215332,
-      "lon": 47.15802435554768,
+      "lat": 14.13,
+      "lon": 38.72,
       "areaKm2": 392798.4248962756
     },
     {
@@ -3622,8 +3656,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1485.0,
       "tEnd": 1464.0,
-      "lat": 34.77578163146973,
-      "lon": 9.78108923957149,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2326856.5744173722
     },
     {
@@ -3633,8 +3667,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1464.0,
       "tEnd": 1433.0,
-      "lat": 35.03314018249512,
-      "lon": 38.52738093281124,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2600677.242710421
     },
     {
@@ -3666,8 +3700,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1433.0,
       "tEnd": 1408.0,
-      "lat": 34.64711952209473,
-      "lon": 38.28309640666417,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2532264.6943157925
     },
     {
@@ -3688,8 +3722,8 @@
       "label": "Kingdom of Axum",
       "tStart": 1423.0,
       "tEnd": 1078.0,
-      "lat": 14.364645004272461,
-      "lon": 39.779227307604174,
+      "lat": 14.13,
+      "lon": 38.72,
       "areaKm2": 97003.90299438157
     },
     {
@@ -3699,8 +3733,8 @@
       "label": "Sasanian Empire",
       "tStart": 1423.0,
       "tEnd": 1408.0,
-      "lat": 32.84661293029785,
-      "lon": 54.86901230126309,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3623466.0354819084
     },
     {
@@ -3710,8 +3744,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1408.0,
       "tEnd": 1402.0,
-      "lat": 30.340028762817383,
-      "lon": 29.26114948376097,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1873698.3121648447
     },
     {
@@ -3721,8 +3755,8 @@
       "label": "Sasanian Empire",
       "tStart": 1408.0,
       "tEnd": 1398.0,
-      "lat": 33.26447868347168,
-      "lon": 51.265380480687064,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 4362636.135885369
     },
     {
@@ -3732,8 +3766,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1402.0,
       "tEnd": 1399.0,
-      "lat": 40.80876922607422,
-      "lon": 36.42564655587587,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1223686.0336893795
     },
     {
@@ -3765,8 +3799,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1399.0,
       "tEnd": 1398.0,
-      "lat": 40.71160316467285,
-      "lon": 38.02425596681485,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1410318.2618185359
     },
     {
@@ -3798,8 +3832,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1398.0,
       "tEnd": 1396.0,
-      "lat": 39.3526554107666,
-      "lon": 35.37047818414324,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1717288.173876577
     },
     {
@@ -3809,8 +3843,8 @@
       "label": "Sasanian Empire",
       "tStart": 1398.0,
       "tEnd": 1396.0,
-      "lat": 15.296818733215332,
-      "lon": 47.15802435554768,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 298175.6568743142
     },
     {
@@ -3842,8 +3876,8 @@
       "label": "Eastern Roman Empire",
       "tStart": 1396.0,
       "tEnd": 1392.0,
-      "lat": 34.64711952209473,
-      "lon": 38.28309640666417,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2443569.8014424085
     },
     {
@@ -3864,8 +3898,8 @@
       "label": "Sasanian Empire",
       "tStart": 1396.0,
       "tEnd": 1392.0,
-      "lat": 31.850337028503418,
-      "lon": 56.222621474032394,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 3242750.591543211
     },
     {
@@ -3886,8 +3920,8 @@
       "label": "Byzantine Empire",
       "tStart": 1392.0,
       "tEnd": 1387.0,
-      "lat": 34.64711952209473,
-      "lon": 38.28309640666417,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 2335664.0555892102
     },
     {
@@ -3908,8 +3942,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1392.0,
       "tEnd": 1391.0,
-      "lat": 21.307680130004883,
-      "lon": 49.215511224212435,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 2543054.196159232
     },
     {
@@ -3919,8 +3953,8 @@
       "label": "Sasanian Empire",
       "tStart": 1392.0,
       "tEnd": 1387.0,
-      "lat": 34.003929138183594,
-      "lon": 53.554317908222984,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2963247.458096177
     },
     {
@@ -3941,8 +3975,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1391.0,
       "tEnd": 1387.0,
-      "lat": 23.461292266845703,
-      "lon": 48.810607022143735,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 3201651.784257497
     },
     {
@@ -3963,8 +3997,8 @@
       "label": "Byzantine Empire",
       "tStart": 1387.0,
       "tEnd": 1384.0,
-      "lat": 40.71158027648926,
-      "lon": 35.39713224080402,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1675546.3693844534
     },
     {
@@ -3974,8 +4008,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1387.0,
       "tEnd": 1384.0,
-      "lat": 26.675853729248047,
-      "lon": 43.16720175054264,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 3773843.98628664
     },
     {
@@ -3985,8 +4019,8 @@
       "label": "Sasanian Empire",
       "tStart": 1387.0,
       "tEnd": 1381.0,
-      "lat": 33.07161331176758,
-      "lon": 56.952707915095914,
+      "lat": 29.98,
+      "lon": 52.91,
       "areaKm2": 2565037.981864458
     },
     {
@@ -3996,8 +4030,8 @@
       "label": "Byzantine Empire",
       "tStart": 1384.0,
       "tEnd": 1378.0,
-      "lat": 40.71158027648926,
-      "lon": 35.39713224080402,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1057179.2839394833
     },
     {
@@ -4007,8 +4041,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1384.0,
       "tEnd": 1381.0,
-      "lat": 26.675853729248047,
-      "lon": 43.16720175054264,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 4395174.08714961
     },
     {
@@ -4029,8 +4063,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1381.0,
       "tEnd": 1378.0,
-      "lat": 26.643707275390625,
-      "lon": 43.17296440477625,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 6738718.166880347
     },
     {
@@ -4040,8 +4074,8 @@
       "label": "Byzantine Empire",
       "tStart": 1378.0,
       "tEnd": 1369.0,
-      "lat": 40.71158027648926,
-      "lon": 35.176593657368564,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 760822.0840001062
     },
     {
@@ -4051,8 +4085,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1378.0,
       "tEnd": 1369.0,
-      "lat": 27.897380828857422,
-      "lon": 58.941800209251866,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 7089356.246488535
     },
     {
@@ -4073,8 +4107,8 @@
       "label": "Byzantine Empire",
       "tStart": 1369.0,
       "tEnd": 1364.0,
-      "lat": 40.77636909484863,
-      "lon": 35.2906797501886,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1040481.7365228169
     },
     {
@@ -4084,8 +4118,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1369.0,
       "tEnd": 1364.0,
-      "lat": 27.897380828857422,
-      "lon": 58.941800209251866,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 6521299.160358561
     },
     {
@@ -4106,8 +4140,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1369.0,
       "tEnd": 1364.0,
-      "lat": 34.64711952209473,
-      "lon": 37.88679977451794,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 387260.6045702514
     },
     {
@@ -4117,8 +4151,8 @@
       "label": "Byzantine Empire",
       "tStart": 1364.0,
       "tEnd": 1351.0,
-      "lat": 40.77636909484863,
-      "lon": 35.416314223542955,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1186090.3493374765
     },
     {
@@ -4128,8 +4162,8 @@
       "label": "Rashidun Caliphate",
       "tStart": 1364.0,
       "tEnd": 1359.0,
-      "lat": 27.897380828857422,
-      "lon": 58.941800209251866,
+      "lat": 24.47,
+      "lon": 39.61,
       "areaKm2": 5866262.46574751
     },
     {
@@ -4150,8 +4184,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1364.0,
       "tEnd": 1359.0,
-      "lat": 30.725642204284668,
-      "lon": 31.346251086670883,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 923936.470661077
     },
     {
@@ -4194,8 +4228,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1359.0,
       "tEnd": 1343.0,
-      "lat": 27.897380828857422,
-      "lon": 58.941800209251866,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 6926277.758584386
     },
     {
@@ -4205,8 +4239,8 @@
       "label": "Byzantine Empire",
       "tStart": 1351.0,
       "tEnd": 1320.0,
-      "lat": 39.09415245056152,
-      "lon": 33.928467415037865,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 964199.407709829
     },
     {
@@ -4260,8 +4294,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1343.0,
       "tEnd": 1333.0,
-      "lat": 33.61810111999512,
-      "lon": 57.31983016947066,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 5836875.339808584
     },
     {
@@ -4293,8 +4327,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1333.0,
       "tEnd": 1307.0,
-      "lat": 27.44735336303711,
-      "lon": 59.51027956796224,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 8608405.161149777
     },
     {
@@ -4304,8 +4338,8 @@
       "label": "Byzantine Empire",
       "tStart": 1320.0,
       "tEnd": 1307.0,
-      "lat": 39.41729927062988,
-      "lon": 33.66394622309695,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 842689.0575942692
     },
     {
@@ -4315,8 +4349,8 @@
       "label": "Byzantine Empire",
       "tStart": 1307.0,
       "tEnd": 1301.0,
-      "lat": 39.64360237121582,
-      "lon": 34.0509828981264,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 744013.0033092351
     },
     {
@@ -4337,8 +4371,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1307.0,
       "tEnd": 1284.0,
-      "lat": 28.154532432556152,
-      "lon": 60.92249129309838,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 9838558.993467264
     },
     {
@@ -4348,8 +4382,8 @@
       "label": "Byzantine Empire",
       "tStart": 1301.0,
       "tEnd": 1237.0,
-      "lat": 39.41729927062988,
-      "lon": 31.87280235959897,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 731977.4308438372
     },
     {
@@ -4381,8 +4415,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1284.0,
       "tEnd": 1275.0,
-      "lat": 28.186676025390625,
-      "lon": 60.48813906538675,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 8538842.272173319
     },
     {
@@ -4392,8 +4426,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1275.0,
       "tEnd": 1274.0,
-      "lat": 33.90746307373047,
-      "lon": 54.57925636667614,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 2738365.272878037
     },
     {
@@ -4436,8 +4470,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1275.0,
       "tEnd": 1274.0,
-      "lat": 27.897380828857422,
-      "lon": 42.162577057342425,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 5209412.526124827
     },
     {
@@ -4447,8 +4481,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1274.0,
       "tEnd": 1270.0,
-      "lat": 28.186676025390625,
-      "lon": 60.48813906538675,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 7548330.713728256
     },
     {
@@ -4469,8 +4503,8 @@
       "label": "Umayyad Caliphate",
       "tStart": 1274.0,
       "tEnd": 1268.0,
-      "lat": 40.2906436920166,
-      "lon": -4.337936140771537,
+      "lat": 33.51,
+      "lon": 36.29,
       "areaKm2": 473893.0625929384
     },
     {
@@ -4480,8 +4514,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1270.0,
       "tEnd": 1262.0,
-      "lat": 28.186676025390625,
-      "lon": 60.48813906538675,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 7824854.404135281
     },
     {
@@ -4524,8 +4558,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1262.0,
       "tEnd": 1225.0,
-      "lat": 28.186676025390625,
-      "lon": 60.48813906538675,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 8085296.875814963
     },
     {
@@ -4579,8 +4613,8 @@
       "label": "Byzantine Empire",
       "tStart": 1237.0,
       "tEnd": 1165.0,
-      "lat": 39.41729927062988,
-      "lon": 31.87280235959897,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 701591.041591676
     },
     {
@@ -4634,8 +4668,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1225.0,
       "tEnd": 1159.0,
-      "lat": 28.186676025390625,
-      "lon": 60.48813906538675,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 7890529.80740138
     },
     {
@@ -4689,8 +4723,8 @@
       "label": "Byzantine Empire",
       "tStart": 1165.0,
       "tEnd": 1089.0,
-      "lat": 39.223388671875,
-      "lon": 31.813192783570738,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 626502.0809435243
     },
     {
@@ -4711,8 +4745,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1159.0,
       "tEnd": 1150.0,
-      "lat": 29.170968063354493,
-      "lon": 59.091211336638786,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 7435973.425444546
     },
     {
@@ -4733,8 +4767,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1150.0,
       "tEnd": 1147.0,
-      "lat": 29.1509370803833,
-      "lon": 41.547794999983154,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 5122574.226154861
     },
     {
@@ -4755,8 +4789,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1147.0,
       "tEnd": 1139.0,
-      "lat": 29.183076858520508,
-      "lon": 41.883426471665615,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 4853543.22049356
     },
     {
@@ -4799,8 +4833,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1139.0,
       "tEnd": 1127.0,
-      "lat": 27.5759334564209,
-      "lon": 42.396902170339885,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 3856677.885385371
     },
     {
@@ -4821,8 +4855,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1127.0,
       "tEnd": 1126.0,
-      "lat": 29.183076858520508,
-      "lon": 41.883426471665615,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 4181009.02409247
     },
     {
@@ -4832,8 +4866,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1126.0,
       "tEnd": 1114.0,
-      "lat": 30.56497097015381,
-      "lon": 49.544362042180026,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 2448419.563412679
     },
     {
@@ -4843,8 +4877,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1114.0,
       "tEnd": 1089.0,
-      "lat": 29.022375106811523,
-      "lon": 29.11223475427152,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 2821301.813066519
     },
     {
@@ -4854,8 +4888,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1089.0,
       "tEnd": 1078.0,
-      "lat": 27.897380828857422,
-      "lon": 30.57073066063125,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 2112644.414755838
     },
     {
@@ -4865,8 +4899,8 @@
       "label": "Byzantine Empire",
       "tStart": 1089.0,
       "tEnd": 1055.0,
-      "lat": 39.094146728515625,
-      "lon": 34.52180958170521,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 719229.862527553
     },
     {
@@ -4876,8 +4910,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 1078.0,
       "tEnd": 1055.0,
-      "lat": 26.03292465209961,
-      "lon": 31.327093648910523,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 1577136.0808541614
     },
     {
@@ -4920,8 +4954,8 @@
       "label": "Byzantine Empire",
       "tStart": 1055.0,
       "tEnd": 1045.0,
-      "lat": 38.38373947143555,
-      "lon": 34.725461846763935,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 891566.975723016
     },
     {
@@ -4942,8 +4976,8 @@
       "label": "Byzantine Empire",
       "tStart": 1045.0,
       "tEnd": 1025.0,
-      "lat": 39.99938774108887,
-      "lon": 33.94823888509848,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 898341.0625893925
     },
     {
@@ -4975,8 +5009,8 @@
       "label": "Byzantine Empire",
       "tStart": 1025.0,
       "tEnd": 1015.0,
-      "lat": 38.83573532104492,
-      "lon": 34.50541739310927,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 862755.0429277392
     },
     {
@@ -4997,8 +5031,8 @@
       "label": "Byzantine Empire",
       "tStart": 1015.0,
       "tEnd": 1007.0,
-      "lat": 40.03173828125,
-      "lon": 34.51164315982621,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 972592.9842299074
     },
     {
@@ -5019,8 +5053,8 @@
       "label": "Byzantine Empire",
       "tStart": 1007.0,
       "tEnd": 959.0,
-      "lat": 40.03173828125,
-      "lon": 34.51164315982621,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1137604.9989907076
     },
     {
@@ -5118,8 +5152,8 @@
       "label": "Byzantine Empire",
       "tStart": 959.0,
       "tEnd": 940.0,
-      "lat": 39.99938201904297,
-      "lon": 35.394213613404354,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 1146694.3315271353
     },
     {
@@ -5140,8 +5174,8 @@
       "label": "Byzantine Empire",
       "tStart": 940.0,
       "tEnd": 926.0,
-      "lat": 41.035600662231445,
-      "lon": 23.47901556964174,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 512169.3497280473
     },
     {
@@ -5173,8 +5207,8 @@
       "label": "Byzantine Empire",
       "tStart": 926.0,
       "tEnd": 856.0,
-      "lat": 40.71158027648926,
-      "lon": 21.47219794174719,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 701421.50913525
     },
     {
@@ -5239,8 +5273,8 @@
       "label": "Byzantine Empire",
       "tStart": 856.0,
       "tEnd": 837.0,
-      "lat": 40.71158027648926,
-      "lon": 21.47219794174719,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 726806.9723758246
     },
     {
@@ -5261,8 +5295,8 @@
       "label": "Byzantine Empire",
       "tStart": 837.0,
       "tEnd": 833.0,
-      "lat": 39.67593574523926,
-      "lon": 28.12411385754021,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 492677.9713986983
     },
     {
@@ -5294,8 +5328,8 @@
       "label": "Byzantine Empire",
       "tStart": 833.0,
       "tEnd": 823.0,
-      "lat": 39.61126708984375,
-      "lon": 28.11515554066706,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 430338.2290225163
     },
     {
@@ -5305,8 +5339,8 @@
       "label": "Abbasid Caliphate",
       "tStart": 823.0,
       "tEnd": 766.0,
-      "lat": 32.68591117858887,
-      "lon": 45.0651586110049,
+      "lat": 33.31,
+      "lon": 44.37,
       "areaKm2": 168351.2561352325
     },
     {
@@ -5316,8 +5350,8 @@
       "label": "Byzantine Empire",
       "tStart": 823.0,
       "tEnd": 819.0,
-      "lat": 39.83763885498047,
-      "lon": 28.199181606794415,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 385128.8286379913
     },
     {
@@ -5338,8 +5372,8 @@
       "label": "Byzantine Empire",
       "tStart": 819.0,
       "tEnd": 798.0,
-      "lat": 38.22237968444824,
-      "lon": 20.557609442421942,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 4348.191957818944
     },
     {
@@ -5360,8 +5394,8 @@
       "label": "Mongol Empire",
       "tStart": 819.0,
       "tEnd": 815.0,
-      "lat": 48.12577247619629,
-      "lon": 107.6906688462569,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 2464171.4390819175
     },
     {
@@ -5371,8 +5405,8 @@
       "label": "Mongol Empire",
       "tStart": 815.0,
       "tEnd": 809.0,
-      "lat": 48.52214813232422,
-      "lon": 106.55988738986994,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 2781774.131612258
     },
     {
@@ -5382,8 +5416,8 @@
       "label": "Mongol Empire",
       "tStart": 809.0,
       "tEnd": 805.0,
-      "lat": 47.23610877990723,
-      "lon": 108.87986149575127,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 4081692.4864695384
     },
     {
@@ -5404,8 +5438,8 @@
       "label": "Mongol Empire",
       "tStart": 805.0,
       "tEnd": 798.0,
-      "lat": 47.46649932861328,
-      "lon": 100.48847517144213,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 8510777.748942439
     },
     {
@@ -5415,8 +5449,8 @@
       "label": "Mongol Empire",
       "tStart": 798.0,
       "tEnd": 789.0,
-      "lat": 47.46649932861328,
-      "lon": 95.78605890536335,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 13970458.475392226
     },
     {
@@ -5437,8 +5471,8 @@
       "label": "Mongol Empire",
       "tStart": 789.0,
       "tEnd": 784.0,
-      "lat": 44.320106506347656,
-      "lon": 98.36943743262178,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 18805268.906071898
     },
     {
@@ -5459,8 +5493,8 @@
       "label": "Mongol Empire",
       "tStart": 784.0,
       "tEnd": 775.0,
-      "lat": 44.35274314880371,
-      "lon": 98.3914416554834,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 20935176.375362832
     },
     {
@@ -5470,8 +5504,8 @@
       "label": "Mongol Empire",
       "tStart": 775.0,
       "tEnd": 765.0,
-      "lat": 43.179277420043945,
-      "lon": 91.74793767338804,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 23974924.253724817
     },
     {
@@ -5492,8 +5526,8 @@
       "label": "Mongol Empire",
       "tStart": 765.0,
       "tEnd": 746.0,
-      "lat": 41.65178298950195,
-      "lon": 91.90418679560103,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 25802271.771351505
     },
     {
@@ -5514,8 +5548,8 @@
       "label": "Byzantine Empire",
       "tStart": 746.0,
       "tEnd": 731.0,
-      "lat": 39.8699893951416,
-      "lon": 28.23000146847176,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 255370.80022674854
     },
     {
@@ -5525,8 +5559,8 @@
       "label": "Mongol Empire",
       "tStart": 746.0,
       "tEnd": 731.0,
-      "lat": 41.2301082611084,
-      "lon": 92.29260077378188,
+      "lat": 47.2,
+      "lon": 102.8,
       "areaKm2": 27426675.267719273
     },
     {
@@ -5536,8 +5570,8 @@
       "label": "Byzantine Empire",
       "tStart": 731.0,
       "tEnd": 720.0,
-      "lat": 39.8699893951416,
-      "lon": 28.23000146847176,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 251526.33777949895
     },
     {
@@ -5591,8 +5625,8 @@
       "label": "Byzantine Empire",
       "tStart": 720.0,
       "tEnd": 711.0,
-      "lat": 41.16526412963867,
-      "lon": 24.215143219633326,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 171816.87581951672
     },
     {
@@ -5613,8 +5647,8 @@
       "label": "Ottoman Empire",
       "tStart": 720.0,
       "tEnd": 699.0,
-      "lat": 40.19353103637695,
-      "lon": 30.536763600055053,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 12957.441995400777
     },
     {
@@ -5624,8 +5658,8 @@
       "label": "Byzantine Empire",
       "tStart": 711.0,
       "tEnd": 699.0,
-      "lat": 41.16526412963867,
-      "lon": 24.215143219633326,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 154563.04504919186
     },
     {
@@ -5635,8 +5669,8 @@
       "label": "Byzantine Empire",
       "tStart": 699.0,
       "tEnd": 692.0,
-      "lat": 41.035600662231445,
-      "lon": 23.462513141864775,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 154484.06902402613
     },
     {
@@ -5646,8 +5680,8 @@
       "label": "Ottoman Empire",
       "tStart": 699.0,
       "tEnd": 692.0,
-      "lat": 40.32299995422363,
-      "lon": 30.99363716866242,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 27394.5975879684
     },
     {
@@ -5657,8 +5691,8 @@
       "label": "Byzantine Empire",
       "tStart": 692.0,
       "tEnd": 681.0,
-      "lat": 40.646799087524414,
-      "lon": 21.587332435196032,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 166356.92741776307
     },
     {
@@ -5690,8 +5724,8 @@
       "label": "Ottoman Empire",
       "tStart": 692.0,
       "tEnd": 681.0,
-      "lat": 40.25826835632324,
-      "lon": 30.405847961060246,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 31420.313056499886
     },
     {
@@ -5701,8 +5735,8 @@
       "label": "Byzantine Empire",
       "tStart": 681.0,
       "tEnd": 673.0,
-      "lat": 39.41729927062988,
-      "lon": 21.629384537131386,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 163878.55572165412
     },
     {
@@ -5712,8 +5746,8 @@
       "label": "Ottoman Empire",
       "tStart": 681.0,
       "tEnd": 662.0,
-      "lat": 39.41730499267578,
-      "lon": 37.90777146007953,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 189088.61368581772
     },
     {
@@ -5723,8 +5757,8 @@
       "label": "Byzantine Empire",
       "tStart": 673.0,
       "tEnd": 650.0,
-      "lat": 41.29495811462402,
-      "lon": 26.27209321326015,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 76370.68502540939
     },
     {
@@ -5767,8 +5801,8 @@
       "label": "Ottoman Empire",
       "tStart": 662.0,
       "tEnd": 650.0,
-      "lat": 40.19353103637695,
-      "lon": 29.50038809312325,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 209528.40452310114
     },
     {
@@ -5789,8 +5823,8 @@
       "label": "Byzantine Empire",
       "tStart": 650.0,
       "tEnd": 640.0,
-      "lat": 40.161170959472656,
-      "lon": 21.939648679854802,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 44046.39151716214
     },
     {
@@ -5822,8 +5856,8 @@
       "label": "Ottoman Empire",
       "tStart": 650.0,
       "tEnd": 630.0,
-      "lat": 40.19353103637695,
-      "lon": 29.5794056181091,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 264494.6086481108
     },
     {
@@ -5844,8 +5878,8 @@
       "label": "Byzantine Empire",
       "tStart": 640.0,
       "tEnd": 630.0,
-      "lat": 40.161170959472656,
-      "lon": 21.939648679854802,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 37888.50397319194
     },
     {
@@ -5888,8 +5922,8 @@
       "label": "Byzantine Empire",
       "tStart": 630.0,
       "tEnd": 623.0,
-      "lat": 41.19768714904785,
-      "lon": 28.645097169041108,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 11340.883200601193
     },
     {
@@ -5899,8 +5933,8 @@
       "label": "Ottoman Empire",
       "tStart": 630.0,
       "tEnd": 623.0,
-      "lat": 41.84651756286621,
-      "lon": 24.314110929619076,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 404491.8140803328
     },
     {
@@ -5954,8 +5988,8 @@
       "label": "Ottoman Empire",
       "tStart": 623.0,
       "tEnd": 618.0,
-      "lat": 42.17124366760254,
-      "lon": 24.534589767456055,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 388006.0709389733
     },
     {
@@ -5976,8 +6010,8 @@
       "label": "Byzantine Empire",
       "tStart": 618.0,
       "tEnd": 594.0,
-      "lat": 41.19768714904785,
-      "lon": 28.645097169041108,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 11340.883200601193
     },
     {
@@ -5987,8 +6021,8 @@
       "label": "Ottoman Empire",
       "tStart": 618.0,
       "tEnd": 603.0,
-      "lat": 39.99942207336426,
-      "lon": 29.49176721893115,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 422720.7507594656
     },
     {
@@ -6064,8 +6098,8 @@
       "label": "Ottoman Empire",
       "tStart": 603.0,
       "tEnd": 596.0,
-      "lat": 39.708274841308594,
-      "lon": 29.452505127393152,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 457342.08559594676
     },
     {
@@ -6075,8 +6109,8 @@
       "label": "Aztec Empire",
       "tStart": 596.0,
       "tEnd": 585.0,
-      "lat": 19.186227798461914,
-      "lon": -98.76108474731446,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 5759.282849880984
     },
     {
@@ -6086,8 +6120,8 @@
       "label": "Ottoman Empire",
       "tStart": 596.0,
       "tEnd": 566.0,
-      "lat": 41.878976821899414,
-      "lon": 24.322543012153815,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 550316.1666332174
     },
     {
@@ -6097,8 +6131,8 @@
       "label": "Byzantine Empire",
       "tStart": 594.0,
       "tEnd": 571.0,
-      "lat": 37.54501533508301,
-      "lon": 22.18200486057806,
+      "lat": 41.01,
+      "lon": 28.98,
       "areaKm2": 23031.654910203008
     },
     {
@@ -6108,8 +6142,8 @@
       "label": "Aztec Empire",
       "tStart": 585.0,
       "tEnd": 575.0,
-      "lat": 19.12194061279297,
-      "lon": -98.74572944641113,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 15135.947807286755
     },
     {
@@ -6119,8 +6153,8 @@
       "label": "Inca Empire",
       "tStart": 585.0,
       "tEnd": 575.0,
-      "lat": -13.471879005432129,
-      "lon": -72.52457286242908,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 8783.28179087285
     },
     {
@@ -6141,8 +6175,8 @@
       "label": "Aztec Empire",
       "tStart": 575.0,
       "tEnd": 572.0,
-      "lat": 19.475518226623535,
-      "lon": -98.83145593931724,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 54171.17507366909
     },
     {
@@ -6174,8 +6208,8 @@
       "label": "Inca Empire",
       "tStart": 575.0,
       "tEnd": 550.0,
-      "lat": -13.88974905014038,
-      "lon": -73.34932827031898,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 155367.62605453003
     },
     {
@@ -6196,8 +6230,8 @@
       "label": "Aztec Empire",
       "tStart": 572.0,
       "tEnd": 566.0,
-      "lat": 19.41123104095459,
-      "lon": -98.77999392189501,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 69428.43992644474
     },
     {
@@ -6218,8 +6252,8 @@
       "label": "Aztec Empire",
       "tStart": 566.0,
       "tEnd": 550.0,
-      "lat": 18.993366241455078,
-      "lon": -96.43349619591322,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 102282.81846837618
     },
     {
@@ -6240,8 +6274,8 @@
       "label": "Ottoman Empire",
       "tStart": 566.0,
       "tEnd": 562.0,
-      "lat": 39.384979248046875,
-      "lon": 37.5067391109882,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 654871.0215028935
     },
     {
@@ -6262,8 +6296,8 @@
       "label": "Ottoman Empire",
       "tStart": 562.0,
       "tEnd": 557.0,
-      "lat": 40.84116554260254,
-      "lon": 34.98024886791095,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 799338.8539241519
     },
     {
@@ -6273,8 +6307,8 @@
       "label": "Songhai Empire",
       "tStart": 562.0,
       "tEnd": 557.0,
-      "lat": 16.454002380371094,
-      "lon": -0.5466013023515577,
+      "lat": 16.27,
+      "lon": -0.04,
       "areaKm2": 116860.18253915028
     },
     {
@@ -6317,8 +6351,8 @@
       "label": "Ottoman Empire",
       "tStart": 557.0,
       "tEnd": 509.0,
-      "lat": 40.71158027648926,
-      "lon": 35.21299213850409,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 896520.2232176105
     },
     {
@@ -6328,8 +6362,8 @@
       "label": "Songhai Empire",
       "tStart": 557.0,
       "tEnd": 550.0,
-      "lat": 16.16470718383789,
-      "lon": -2.774612041879023,
+      "lat": 16.27,
+      "lon": -0.04,
       "areaKm2": 251494.67737391827
     },
     {
@@ -6339,8 +6373,8 @@
       "label": "Aztec Empire",
       "tStart": 550.0,
       "tEnd": 543.0,
-      "lat": 18.929079055786133,
-      "lon": -99.2931765566525,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 120240.83191398538
     },
     {
@@ -6350,8 +6384,8 @@
       "label": "Inca Empire",
       "tStart": 550.0,
       "tEnd": 543.0,
-      "lat": -7.6217124462127686,
-      "lon": -78.09533781635844,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 434544.5430678505
     },
     {
@@ -6361,8 +6395,8 @@
       "label": "Songhai Empire",
       "tStart": 550.0,
       "tEnd": 433.0,
-      "lat": 15.103955268859863,
-      "lon": -8.905162759452876,
+      "lat": 16.27,
+      "lon": -0.04,
       "areaKm2": 629260.4716394695
     },
     {
@@ -6383,8 +6417,8 @@
       "label": "Aztec Empire",
       "tStart": 543.0,
       "tEnd": 528.0,
-      "lat": 19.057653427124023,
-      "lon": -98.16090650656852,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 147186.79922865191
     },
     {
@@ -6394,8 +6428,8 @@
       "label": "Inca Empire",
       "tStart": 543.0,
       "tEnd": 528.0,
-      "lat": -7.589568614959717,
-      "lon": -78.51231655844924,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 537148.758720102
     },
     {
@@ -6405,8 +6439,8 @@
       "label": "Aztec Empire",
       "tStart": 528.0,
       "tEnd": 523.0,
-      "lat": 19.057653427124023,
-      "lon": -98.14610238549747,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 176841.79746538363
     },
     {
@@ -6416,8 +6450,8 @@
       "label": "Inca Empire",
       "tStart": 528.0,
       "tEnd": 485.0,
-      "lat": -17.393439292907715,
-      "lon": -67.1004143012635,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 2095031.9905848624
     },
     {
@@ -6427,8 +6461,8 @@
       "label": "Aztec Empire",
       "tStart": 523.0,
       "tEnd": 504.0,
-      "lat": 18.76836109161377,
-      "lon": -97.92382049560547,
+      "lat": 19.43,
+      "lon": -99.13,
       "areaKm2": 211464.85571990494
     },
     {
@@ -6471,8 +6505,8 @@
       "label": "Spain",
       "tStart": 509.0,
       "tEnd": 506.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 689649.3162004321
     },
     {
@@ -6493,8 +6527,8 @@
       "label": "Ottoman Empire",
       "tStart": 509.0,
       "tEnd": 506.0,
-      "lat": 41.35981559753418,
-      "lon": 23.97532697010368,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 1062423.4674678699
     },
     {
@@ -6504,8 +6538,8 @@
       "label": "Spanish Empire",
       "tStart": 509.0,
       "tEnd": 506.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 256512.1266171967
     },
     {
@@ -6515,8 +6549,8 @@
       "label": "Spain",
       "tStart": 506.0,
       "tEnd": 504.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 945241.3549625858
     },
     {
@@ -6526,8 +6560,8 @@
       "label": "Ottoman Empire",
       "tStart": 506.0,
       "tEnd": 491.0,
-      "lat": 29.69730281829834,
-      "lon": 28.37725906566679,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2689050.898335989
     },
     {
@@ -6537,8 +6571,8 @@
       "label": "Spanish Empire",
       "tStart": 506.0,
       "tEnd": 504.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 945241.3549625858
     },
     {
@@ -6548,8 +6582,8 @@
       "label": "Spain",
       "tStart": 504.0,
       "tEnd": 496.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 664951.0025364311
     },
     {
@@ -6559,8 +6593,8 @@
       "label": "Spanish Empire",
       "tStart": 504.0,
       "tEnd": 499.0,
-      "lat": 18.76836109161377,
-      "lon": -97.92382049560547,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 486588.68756179506
     },
     {
@@ -6592,8 +6626,8 @@
       "label": "Spanish Empire",
       "tStart": 499.0,
       "tEnd": 496.0,
-      "lat": 17.096881866455078,
-      "lon": -95.57604219281131,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 878453.096625457
     },
     {
@@ -6614,8 +6648,8 @@
       "label": "Spain",
       "tStart": 496.0,
       "tEnd": 485.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 871824.3439271813
     },
     {
@@ -6647,8 +6681,8 @@
       "label": "Spanish Empire",
       "tStart": 496.0,
       "tEnd": 491.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 985873.1622242784
     },
     {
@@ -6669,8 +6703,8 @@
       "label": "Ottoman Empire",
       "tStart": 491.0,
       "tEnd": 473.0,
-      "lat": 29.69730281829834,
-      "lon": 28.391469858295153,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3176947.8268498685
     },
     {
@@ -6691,8 +6725,8 @@
       "label": "Spanish Empire",
       "tStart": 491.0,
       "tEnd": 485.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 1470056.6522892136
     },
     {
@@ -6702,8 +6736,8 @@
       "label": "Inca Empire",
       "tStart": 485.0,
       "tEnd": 453.0,
-      "lat": -12.925434112548828,
-      "lon": -73.4480637220405,
+      "lat": -13.53,
+      "lon": -71.97,
       "areaKm2": 4864.459942666766
     },
     {
@@ -6713,8 +6747,8 @@
       "label": "Spain",
       "tStart": 485.0,
       "tEnd": 469.0,
-      "lat": 48.25780487060547,
-      "lon": 17.344546013406962,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 971484.8672312583
     },
     {
@@ -6735,8 +6769,8 @@
       "label": "Spanish Empire",
       "tStart": 485.0,
       "tEnd": 473.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 3968178.601236041
     },
     {
@@ -6779,8 +6813,8 @@
       "label": "Ottoman Empire",
       "tStart": 473.0,
       "tEnd": 461.0,
-      "lat": 30.340028762817383,
-      "lon": 29.974966211838222,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3482235.225604025
     },
     {
@@ -6790,8 +6824,8 @@
       "label": "Spanish Empire",
       "tStart": 473.0,
       "tEnd": 446.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 4220291.524454561
     },
     {
@@ -6812,8 +6846,8 @@
       "label": "Spain",
       "tStart": 469.0,
       "tEnd": 443.0,
-      "lat": 39.90234184265137,
-      "lon": -3.5407560828983655,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 737478.3984571673
     },
     {
@@ -6878,8 +6912,8 @@
       "label": "Ottoman Empire",
       "tStart": 461.0,
       "tEnd": 437.0,
-      "lat": 30.340028762817383,
-      "lon": 29.974966211838222,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3641931.06148246
     },
     {
@@ -6922,8 +6956,8 @@
       "label": "Spanish Empire",
       "tStart": 446.0,
       "tEnd": 443.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 4517465.629961418
     },
     {
@@ -6944,8 +6978,8 @@
       "label": "Spanish Empire",
       "tStart": 443.0,
       "tEnd": 437.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 5697983.930185812
     },
     {
@@ -6977,8 +7011,8 @@
       "label": "Ottoman Empire",
       "tStart": 437.0,
       "tEnd": 416.0,
-      "lat": 30.340028762817383,
-      "lon": 29.974966211838222,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 4253192.6259023165
     },
     {
@@ -6999,8 +7033,8 @@
       "label": "Spanish Empire",
       "tStart": 437.0,
       "tEnd": 430.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6080816.034449814
     },
     {
@@ -7021,8 +7055,8 @@
       "label": "Spanish Empire",
       "tStart": 430.0,
       "tEnd": 416.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6401677.26593522
     },
     {
@@ -7043,8 +7077,8 @@
       "label": "Ottoman Empire",
       "tStart": 416.0,
       "tEnd": 413.0,
-      "lat": 30.340028762817383,
-      "lon": 29.988229060824377,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3800623.603455276
     },
     {
@@ -7065,8 +7099,8 @@
       "label": "Spanish Empire",
       "tStart": 416.0,
       "tEnd": 406.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6508242.115489379
     },
     {
@@ -7087,8 +7121,8 @@
       "label": "Ottoman Empire",
       "tStart": 413.0,
       "tEnd": 389.0,
-      "lat": 30.340028762817383,
-      "lon": 29.974966211838222,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3775088.120499005
     },
     {
@@ -7131,8 +7165,8 @@
       "label": "Spanish Empire",
       "tStart": 406.0,
       "tEnd": 393.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6902467.343150951
     },
     {
@@ -7208,8 +7242,8 @@
       "label": "Spanish Empire",
       "tStart": 393.0,
       "tEnd": 385.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 7103554.785231877
     },
     {
@@ -7263,8 +7297,8 @@
       "label": "Ottoman Empire",
       "tStart": 389.0,
       "tEnd": 385.0,
-      "lat": 32.20383262634277,
-      "lon": 36.52849206291474,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3379815.349673569
     },
     {
@@ -7285,8 +7319,8 @@
       "label": "Spain",
       "tStart": 385.0,
       "tEnd": 334.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 660641.1640371847
     },
     {
@@ -7307,8 +7341,8 @@
       "label": "Ottoman Empire",
       "tStart": 385.0,
       "tEnd": 319.0,
-      "lat": 32.20383262634277,
-      "lon": 45.69626301409018,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3522723.6527446457
     },
     {
@@ -7318,8 +7352,8 @@
       "label": "Spanish Empire",
       "tStart": 385.0,
       "tEnd": 338.0,
-      "lat": 18.800504684448242,
-      "lon": -70.50354510732262,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6152470.753456211
     },
     {
@@ -7351,8 +7385,8 @@
       "label": "Qing Dynasty",
       "tStart": 380.0,
       "tEnd": 377.0,
-      "lat": 43.04908752441406,
-      "lon": 121.11755829352073,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 3630357.5577502535
     },
     {
@@ -7384,8 +7418,8 @@
       "label": "Qing Dynasty",
       "tStart": 377.0,
       "tEnd": 372.0,
-      "lat": 39.86998176574707,
-      "lon": 110.13016087011874,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 4112508.3477167436
     },
     {
@@ -7406,8 +7440,8 @@
       "label": "Qing Dynasty",
       "tStart": 372.0,
       "tEnd": 352.0,
-      "lat": 36.96483612060547,
-      "lon": 112.58061956297335,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 6029709.884943083
     },
     {
@@ -7483,8 +7517,8 @@
       "label": "Qing Dynasty",
       "tStart": 352.0,
       "tEnd": 348.0,
-      "lat": 39.0295352935791,
-      "lon": 108.87148075365886,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 5292611.505493792
     },
     {
@@ -7494,8 +7528,8 @@
       "label": "Qing Dynasty",
       "tStart": 348.0,
       "tEnd": 342.0,
-      "lat": 39.0295352935791,
-      "lon": 108.87148075365886,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 4337027.220588991
     },
     {
@@ -7516,8 +7550,8 @@
       "label": "Qing Dynasty",
       "tStart": 342.0,
       "tEnd": 338.0,
-      "lat": 36.96483612060547,
-      "lon": 112.58061956297335,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 6269215.303459675
     },
     {
@@ -7527,8 +7561,8 @@
       "label": "Qing Dynasty",
       "tStart": 338.0,
       "tEnd": 334.0,
-      "lat": 36.96483612060547,
-      "lon": 112.58061956297335,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 6004121.404490215
     },
     {
@@ -7538,8 +7572,8 @@
       "label": "Spanish Empire",
       "tStart": 338.0,
       "tEnd": 325.0,
-      "lat": 18.736217498779297,
-      "lon": -70.2423764967584,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6482716.385427115
     },
     {
@@ -7549,8 +7583,8 @@
       "label": "Spain",
       "tStart": 334.0,
       "tEnd": 323.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 641408.3707732
     },
     {
@@ -7571,8 +7605,8 @@
       "label": "Qing Dynasty",
       "tStart": 334.0,
       "tEnd": 329.0,
-      "lat": 38.19010925292969,
-      "lon": 112.26695697289979,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 6301194.509509596
     },
     {
@@ -7604,8 +7638,8 @@
       "label": "Qing Dynasty",
       "tStart": 329.0,
       "tEnd": 325.0,
-      "lat": 38.19010925292969,
-      "lon": 109.40527557179826,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 8472403.43522642
     },
     {
@@ -7615,8 +7649,8 @@
       "label": "Qing Dynasty",
       "tStart": 325.0,
       "tEnd": 298.0,
-      "lat": 38.19010925292969,
-      "lon": 104.53268975498531,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 8886071.66083209
     },
     {
@@ -7626,8 +7660,8 @@
       "label": "Spanish Empire",
       "tStart": 325.0,
       "tEnd": 273.0,
-      "lat": -0.614362359046936,
-      "lon": -78.88220405510981,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 6905916.844933957
     },
     {
@@ -7637,8 +7671,8 @@
       "label": "Spain",
       "tStart": 323.0,
       "tEnd": 319.0,
-      "lat": 39.83763885498047,
-      "lon": -4.050947759171365,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 552429.971376513
     },
     {
@@ -7648,8 +7682,8 @@
       "label": "Spain",
       "tStart": 319.0,
       "tEnd": 316.0,
-      "lat": 39.86998176574707,
-      "lon": -2.1496131402227494,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 496227.5229534984
     },
     {
@@ -7659,8 +7693,8 @@
       "label": "Ottoman Empire",
       "tStart": 319.0,
       "tEnd": 312.0,
-      "lat": 32.332380294799805,
-      "lon": 45.61054380856875,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3148678.407647667
     },
     {
@@ -7670,8 +7704,8 @@
       "label": "British Empire",
       "tStart": 316.0,
       "tEnd": 312.0,
-      "lat": 39.740610122680664,
-      "lon": -75.19558766322706,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 227184.71348966868
     },
     {
@@ -7692,8 +7726,8 @@
       "label": "Great Britain",
       "tStart": 316.0,
       "tEnd": 205.0,
-      "lat": 53.42831611633301,
-      "lon": -8.16512776112069,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 341477.4116260992
     },
     {
@@ -7703,8 +7737,8 @@
       "label": "Spain",
       "tStart": 316.0,
       "tEnd": 312.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 614489.5336679567
     },
     {
@@ -7714,8 +7748,8 @@
       "label": "British Empire",
       "tStart": 312.0,
       "tEnd": 307.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 417790.7259293983
     },
     {
@@ -7725,8 +7759,8 @@
       "label": "Spain",
       "tStart": 312.0,
       "tEnd": 291.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 494305.10848279943
     },
     {
@@ -7736,8 +7770,8 @@
       "label": "Ottoman Empire",
       "tStart": 312.0,
       "tEnd": 298.0,
-      "lat": 32.332380294799805,
-      "lon": 45.61054380856875,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2883145.516143614
     },
     {
@@ -7769,8 +7803,8 @@
       "label": "British Empire",
       "tStart": 307.0,
       "tEnd": 304.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 483311.34368017426
     },
     {
@@ -7802,8 +7836,8 @@
       "label": "British Empire",
       "tStart": 304.0,
       "tEnd": 284.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 635398.2026347867
     },
     {
@@ -7846,8 +7880,8 @@
       "label": "Ottoman Empire",
       "tStart": 298.0,
       "tEnd": 287.0,
-      "lat": 32.332380294799805,
-      "lon": 46.09931350303784,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 3142373.6338935145
     },
     {
@@ -7857,8 +7891,8 @@
       "label": "Qing Dynasty",
       "tStart": 298.0,
       "tEnd": 268.0,
-      "lat": 38.19010925292969,
-      "lon": 104.53268975498531,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 9164356.785596723
     },
     {
@@ -7890,8 +7924,8 @@
       "label": "Spain",
       "tStart": 291.0,
       "tEnd": 244.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 593211.553178797
     },
     {
@@ -7923,8 +7957,8 @@
       "label": "Ottoman Empire",
       "tStart": 287.0,
       "tEnd": 226.0,
-      "lat": 32.332380294799805,
-      "lon": 45.61054380856875,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2841892.0488079395
     },
     {
@@ -7945,8 +7979,8 @@
       "label": "British Empire",
       "tStart": 284.0,
       "tEnd": 273.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 714365.3023418395
     },
     {
@@ -8011,8 +8045,8 @@
       "label": "British Empire",
       "tStart": 273.0,
       "tEnd": 263.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 844437.3279093114
     },
     {
@@ -8033,8 +8067,8 @@
       "label": "Spanish Empire",
       "tStart": 273.0,
       "tEnd": 268.0,
-      "lat": -0.646506130695343,
-      "lon": -76.51922098739213,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 9356847.338638302
     },
     {
@@ -8055,8 +8089,8 @@
       "label": "Qing Dynasty",
       "tStart": 268.0,
       "tEnd": 231.0,
-      "lat": 38.12557601928711,
-      "lon": 96.59650374896647,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 11365936.111736521
     },
     {
@@ -8066,8 +8100,8 @@
       "label": "Spanish Empire",
       "tStart": 268.0,
       "tEnd": 256.0,
-      "lat": -0.646506130695343,
-      "lon": -76.51922098739213,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 9713681.655269483
     },
     {
@@ -8077,8 +8111,8 @@
       "label": "British Empire",
       "tStart": 263.0,
       "tEnd": 262.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 991458.7247602791
     },
     {
@@ -8099,8 +8133,8 @@
       "label": "British Empire",
       "tStart": 262.0,
       "tEnd": 256.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1676639.3535505414
     },
     {
@@ -8121,8 +8155,8 @@
       "label": "British Empire",
       "tStart": 256.0,
       "tEnd": 250.0,
-      "lat": 37.190420150756836,
-      "lon": -78.9201542117429,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1887693.944599545
     },
     {
@@ -8143,8 +8177,8 @@
       "label": "Spanish Empire",
       "tStart": 256.0,
       "tEnd": 247.0,
-      "lat": -0.646506130695343,
-      "lon": -76.51922098739213,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 9781863.679668594
     },
     {
@@ -8176,8 +8210,8 @@
       "label": "British Empire",
       "tStart": 250.0,
       "tEnd": 249.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1041208.9548577217
     },
     {
@@ -8198,8 +8232,8 @@
       "label": "British Empire",
       "tStart": 249.0,
       "tEnd": 247.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 935723.3080197739
     },
     {
@@ -8209,8 +8243,8 @@
       "label": "British Empire",
       "tStart": 247.0,
       "tEnd": 245.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1056036.0534378744
     },
     {
@@ -8220,8 +8254,8 @@
       "label": "Spanish Empire",
       "tStart": 247.0,
       "tEnd": 231.0,
-      "lat": -0.614362359046936,
-      "lon": -73.55119752816279,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 11006062.944846926
     },
     {
@@ -8231,8 +8265,8 @@
       "label": "British Empire",
       "tStart": 245.0,
       "tEnd": 244.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1189040.3832472987
     },
     {
@@ -8253,8 +8287,8 @@
       "label": "British Empire",
       "tStart": 244.0,
       "tEnd": 242.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 921615.8255914665
     },
     {
@@ -8264,8 +8298,8 @@
       "label": "Spain",
       "tStart": 244.0,
       "tEnd": 216.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 502737.6272321326
     },
     {
@@ -8275,8 +8309,8 @@
       "label": "British Empire",
       "tStart": 242.0,
       "tEnd": 228.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 725178.2072016032
     },
     {
@@ -8308,8 +8342,8 @@
       "label": "Qajar Dynasty",
       "tStart": 237.0,
       "tEnd": 234.0,
-      "lat": 34.32549476623535,
-      "lon": 50.716580287233654,
+      "lat": 35.69,
+      "lon": 51.39,
       "areaKm2": 579480.4244345109
     },
     {
@@ -8319,8 +8353,8 @@
       "label": "Qajar Dynasty",
       "tStart": 234.0,
       "tEnd": 231.0,
-      "lat": 34.71145057678223,
-      "lon": 53.07849773038258,
+      "lat": 35.69,
+      "lon": 51.39,
       "areaKm2": 964649.884740884
     },
     {
@@ -8352,8 +8386,8 @@
       "label": "Qajar Dynasty",
       "tStart": 231.0,
       "tEnd": 130.0,
-      "lat": 32.460933685302734,
-      "lon": 54.06774105486948,
+      "lat": 35.69,
+      "lon": 51.39,
       "areaKm2": 1585478.0357076784
     },
     {
@@ -8363,8 +8397,8 @@
       "label": "Qing Dynasty",
       "tStart": 231.0,
       "tEnd": 177.0,
-      "lat": 38.19010925292969,
-      "lon": 96.43145325686629,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 12509656.600969313
     },
     {
@@ -8374,8 +8408,8 @@
       "label": "Spanish Empire",
       "tStart": 231.0,
       "tEnd": 214.0,
-      "lat": -0.614362359046936,
-      "lon": -73.55119752816279,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 11256627.987370105
     },
     {
@@ -8396,8 +8430,8 @@
       "label": "British Empire",
       "tStart": 228.0,
       "tEnd": 214.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 738183.7620280149
     },
     {
@@ -8418,8 +8452,8 @@
       "label": "Ottoman Empire",
       "tStart": 226.0,
       "tEnd": 220.0,
-      "lat": 33.45735740661621,
-      "lon": 44.017191114578495,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2646165.53175559
     },
     {
@@ -8451,8 +8485,8 @@
       "label": "Ottoman Empire",
       "tStart": 220.0,
       "tEnd": 214.0,
-      "lat": 34.454139709472656,
-      "lon": 40.73300089689997,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2376225.275125946
     },
     {
@@ -8484,8 +8518,8 @@
       "label": "Spain",
       "tStart": 216.0,
       "tEnd": 214.0,
-      "lat": 38.512868881225586,
-      "lon": -3.769363666572892,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 233126.51358347083
     },
     {
@@ -8506,8 +8540,8 @@
       "label": "British Empire",
       "tStart": 214.0,
       "tEnd": 213.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1150236.401210473
     },
     {
@@ -8517,8 +8551,8 @@
       "label": "Spain",
       "tStart": 214.0,
       "tEnd": 213.0,
-      "lat": 38.80344200134277,
-      "lon": -1.3104065959754285,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 131635.05386683292
     },
     {
@@ -8539,8 +8573,8 @@
       "label": "Ottoman Empire",
       "tStart": 214.0,
       "tEnd": 211.0,
-      "lat": 37.416053771972656,
-      "lon": 35.99441487486846,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 1755321.085231513
     },
     {
@@ -8550,8 +8584,8 @@
       "label": "Spanish Empire",
       "tStart": 214.0,
       "tEnd": 213.0,
-      "lat": -13.954036712646484,
-      "lon": -68.4377028319064,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 8527521.944709724
     },
     {
@@ -8561,8 +8595,8 @@
       "label": "British Empire",
       "tStart": 213.0,
       "tEnd": 211.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1289340.9431753377
     },
     {
@@ -8572,8 +8606,8 @@
       "label": "Spain",
       "tStart": 213.0,
       "tEnd": 211.0,
-      "lat": 39.8699893951416,
-      "lon": -3.6390995820402794,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 377639.70150862995
     },
     {
@@ -8583,8 +8617,8 @@
       "label": "Spanish Empire",
       "tStart": 213.0,
       "tEnd": 211.0,
-      "lat": -6.721685886383057,
-      "lon": -76.8778018951416,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 8454893.005948585
     },
     {
@@ -8594,8 +8628,8 @@
       "label": "British Empire",
       "tStart": 211.0,
       "tEnd": 205.0,
-      "lat": 49.15062713623047,
-      "lon": -55.888047953427204,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 970606.0149820725
     },
     {
@@ -8605,8 +8639,8 @@
       "label": "Spain",
       "tStart": 211.0,
       "tEnd": 191.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 495296.4895360263
     },
     {
@@ -8616,8 +8650,8 @@
       "label": "Ottoman Empire",
       "tStart": 211.0,
       "tEnd": 205.0,
-      "lat": 32.84661293029785,
-      "lon": 44.87502631269328,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2088169.5982389397
     },
     {
@@ -8638,8 +8672,8 @@
       "label": "Spanish Empire",
       "tStart": 211.0,
       "tEnd": 210.0,
-      "lat": -8.039581775665283,
-      "lon": -71.49795473622075,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 7861031.068544677
     },
     {
@@ -8649,8 +8683,8 @@
       "label": "Spanish Empire",
       "tStart": 210.0,
       "tEnd": 205.0,
-      "lat": -12.829002857208252,
-      "lon": -69.9034404979062,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 8503235.604154851
     },
     {
@@ -8660,8 +8694,8 @@
       "label": "British Empire",
       "tStart": 205.0,
       "tEnd": 200.0,
-      "lat": 45.6605110168457,
-      "lon": -63.95999944598778,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 860556.4349875561
     },
     {
@@ -8671,8 +8705,8 @@
       "label": "Great Britain",
       "tStart": 205.0,
       "tEnd": 185.0,
-      "lat": 53.42831611633301,
-      "lon": -8.16512776112069,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 383700.87314092845
     },
     {
@@ -8693,8 +8727,8 @@
       "label": "Ottoman Empire",
       "tStart": 205.0,
       "tEnd": 200.0,
-      "lat": 31.239782333374023,
-      "lon": 35.87102399951979,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2669744.7758302577
     },
     {
@@ -8704,8 +8738,8 @@
       "label": "Spanish Empire",
       "tStart": 205.0,
       "tEnd": 203.0,
-      "lat": -12.250414848327637,
-      "lon": -70.88483619689941,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 7831231.991060452
     },
     {
@@ -8715,8 +8749,8 @@
       "label": "Spanish Empire",
       "tStart": 203.0,
       "tEnd": 201.0,
-      "lat": -17.618446350097656,
-      "lon": -63.38842903742914,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 1984058.1658999017
     },
     {
@@ -8726,8 +8760,8 @@
       "label": "Spanish Empire",
       "tStart": 201.0,
       "tEnd": 164.0,
-      "lat": 7.646594762802124,
-      "lon": 125.16345410029697,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 506351.60104470974
     },
     {
@@ -8737,8 +8771,8 @@
       "label": "British Empire",
       "tStart": 200.0,
       "tEnd": 197.0,
-      "lat": 45.6605110168457,
-      "lon": -63.95999944598778,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 946457.3671244542
     },
     {
@@ -8748,8 +8782,8 @@
       "label": "Ottoman Empire",
       "tStart": 200.0,
       "tEnd": 191.0,
-      "lat": 31.239782333374023,
-      "lon": 35.87102399951979,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2155745.5181571143
     },
     {
@@ -8759,8 +8793,8 @@
       "label": "British Empire",
       "tStart": 197.0,
       "tEnd": 185.0,
-      "lat": 45.6605110168457,
-      "lon": -63.95999944598778,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1076666.196858912
     },
     {
@@ -8781,8 +8815,8 @@
       "label": "Spain",
       "tStart": 191.0,
       "tEnd": 189.0,
-      "lat": 39.255714416503906,
-      "lon": -3.74299883576649,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 297771.95973017305
     },
     {
@@ -8792,8 +8826,8 @@
       "label": "Ottoman Empire",
       "tStart": 191.0,
       "tEnd": 183.0,
-      "lat": 37.48053169250488,
-      "lon": 31.473552076550384,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 1459521.594211324
     },
     {
@@ -8803,8 +8837,8 @@
       "label": "Spain",
       "tStart": 189.0,
       "tEnd": 152.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 462229.9503902958
     },
     {
@@ -8814,8 +8848,8 @@
       "label": "British Empire",
       "tStart": 185.0,
       "tEnd": 172.0,
-      "lat": 45.6605110168457,
-      "lon": -63.95999944598778,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1211232.5419874364
     },
     {
@@ -8825,8 +8859,8 @@
       "label": "Great Britain",
       "tStart": 185.0,
       "tEnd": 135.0,
-      "lat": 53.42831611633301,
-      "lon": -8.16512776112069,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 348797.6280696946
     },
     {
@@ -8836,8 +8870,8 @@
       "label": "Ottoman Empire",
       "tStart": 183.0,
       "tEnd": 152.0,
-      "lat": 31.239782333374023,
-      "lon": 35.9344179275045,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2113588.7776932227
     },
     {
@@ -8858,8 +8892,8 @@
       "label": "Qing Dynasty",
       "tStart": 177.0,
       "tEnd": 169.0,
-      "lat": 38.19010925292969,
-      "lon": 96.43145325686629,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 12101686.72208796
     },
     {
@@ -8880,8 +8914,8 @@
       "label": "British Empire",
       "tStart": 172.0,
       "tEnd": 169.0,
-      "lat": 45.6605110168457,
-      "lon": -63.9639921601015,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 1539588.1745357383
     },
     {
@@ -8891,8 +8925,8 @@
       "label": "British Empire",
       "tStart": 169.0,
       "tEnd": 168.0,
-      "lat": -32.918155670166016,
-      "lon": 146.0765724182129,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 2550697.051513173
     },
     {
@@ -8902,8 +8936,8 @@
       "label": "Qing Dynasty",
       "tStart": 169.0,
       "tEnd": 168.0,
-      "lat": 38.609703063964844,
-      "lon": 95.80701400429973,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 10828860.200751275
     },
     {
@@ -8913,8 +8947,8 @@
       "label": "British Empire",
       "tStart": 168.0,
       "tEnd": 166.0,
-      "lat": -32.918155670166016,
-      "lon": 142.87965561769676,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 3206636.7409897535
     },
     {
@@ -8935,8 +8969,8 @@
       "label": "Qing Dynasty",
       "tStart": 168.0,
       "tEnd": 166.0,
-      "lat": 38.609703063964844,
-      "lon": 96.10042791639563,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 11126255.433663419
     },
     {
@@ -8946,8 +8980,8 @@
       "label": "British Empire",
       "tStart": 166.0,
       "tEnd": 163.0,
-      "lat": -24.97936248779297,
-      "lon": 146.38213226591682,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 5133427.098970624
     },
     {
@@ -8968,8 +9002,8 @@
       "label": "Qing Dynasty",
       "tStart": 166.0,
       "tEnd": 165.0,
-      "lat": 38.19010925292969,
-      "lon": 96.43145325686629,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 11309666.589414489
     },
     {
@@ -8979,8 +9013,8 @@
       "label": "Qing Dynasty",
       "tStart": 165.0,
       "tEnd": 164.0,
-      "lat": 36.8681755065918,
-      "lon": 98.57517408681471,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 10341252.902020434
     },
     {
@@ -9001,8 +9035,8 @@
       "label": "Qing Dynasty",
       "tStart": 164.0,
       "tEnd": 163.0,
-      "lat": 36.8681755065918,
-      "lon": 98.57517408681471,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 10276628.935447292
     },
     {
@@ -9012,8 +9046,8 @@
       "label": "Spanish Empire",
       "tStart": 164.0,
       "tEnd": 152.0,
-      "lat": 18.76836109161377,
-      "lon": -70.0494499206543,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 541563.9810537518
     },
     {
@@ -9023,8 +9057,8 @@
       "label": "British Empire",
       "tStart": 163.0,
       "tEnd": 162.0,
-      "lat": -24.97936248779297,
-      "lon": 144.96063939337114,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 5938946.520218144
     },
     {
@@ -9034,8 +9068,8 @@
       "label": "Qing Dynasty",
       "tStart": 163.0,
       "tEnd": 162.0,
-      "lat": 36.8681755065918,
-      "lon": 89.50920294473323,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 10114208.773595149
     },
     {
@@ -9045,8 +9079,8 @@
       "label": "British Empire",
       "tStart": 162.0,
       "tEnd": 157.0,
-      "lat": -24.88292407989502,
-      "lon": 140.39101465872892,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 7252118.184734901
     },
     {
@@ -9056,8 +9090,8 @@
       "label": "Qing Dynasty",
       "tStart": 162.0,
       "tEnd": 161.0,
-      "lat": 36.900394439697266,
-      "lon": 87.65784434807406,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 9937135.905471688
     },
     {
@@ -9067,8 +9101,8 @@
       "label": "Qing Dynasty",
       "tStart": 161.0,
       "tEnd": 160.0,
-      "lat": 36.900394439697266,
-      "lon": 115.830570815721,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 8361825.973032632
     },
     {
@@ -9089,8 +9123,8 @@
       "label": "Qing Dynasty",
       "tStart": 160.0,
       "tEnd": 159.0,
-      "lat": 36.900394439697266,
-      "lon": 95.49794268670007,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 8251719.488452591
     },
     {
@@ -9100,8 +9134,8 @@
       "label": "Qing Dynasty",
       "tStart": 159.0,
       "tEnd": 152.0,
-      "lat": 36.900394439697266,
-      "lon": 115.830570815721,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 8545625.028058106
     },
     {
@@ -9111,8 +9145,8 @@
       "label": "British Empire",
       "tStart": 157.0,
       "tEnd": 155.0,
-      "lat": -24.88292407989502,
-      "lon": 140.39101465872892,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 8071408.935006296
     },
     {
@@ -9133,8 +9167,8 @@
       "label": "British Empire",
       "tStart": 155.0,
       "tEnd": 152.0,
-      "lat": -24.88292407989502,
-      "lon": 140.39101465872892,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 8420131.342472339
     },
     {
@@ -9144,8 +9178,8 @@
       "label": "British Empire",
       "tStart": 152.0,
       "tEnd": 148.0,
-      "lat": -24.88292407989502,
-      "lon": 140.39101465872892,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 8679202.765970634
     },
     {
@@ -9166,8 +9200,8 @@
       "label": "Ottoman Empire",
       "tStart": 152.0,
       "tEnd": 125.0,
-      "lat": 29.054515838623047,
-      "lon": 36.25752305676582,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2412708.8462304943
     },
     {
@@ -9177,8 +9211,8 @@
       "label": "Qing Dynasty",
       "tStart": 152.0,
       "tEnd": 148.0,
-      "lat": 36.8681755065918,
-      "lon": 106.45954994863311,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 9405431.900714183
     },
     {
@@ -9199,8 +9233,8 @@
       "label": "British Empire",
       "tStart": 148.0,
       "tEnd": 145.0,
-      "lat": -24.88292407989502,
-      "lon": 140.39101465872892,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 9350343.832808526
     },
     {
@@ -9210,8 +9244,8 @@
       "label": "Spain",
       "tStart": 148.0,
       "tEnd": 135.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 984289.2490801172
     },
     {
@@ -9221,8 +9255,8 @@
       "label": "Qing Dynasty",
       "tStart": 148.0,
       "tEnd": 125.0,
-      "lat": 36.8681755065918,
-      "lon": 98.57517408681471,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 11119698.121053247
     },
     {
@@ -9232,8 +9266,8 @@
       "label": "British Empire",
       "tStart": 145.0,
       "tEnd": 140.0,
-      "lat": 51.279428482055664,
-      "lon": -112.45735362872227,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 9755195.283058984
     },
     {
@@ -9243,8 +9277,8 @@
       "label": "Spanish Empire",
       "tStart": 145.0,
       "tEnd": 135.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 988477.5564240703
     },
     {
@@ -9265,8 +9299,8 @@
       "label": "British Empire",
       "tStart": 140.0,
       "tEnd": 135.0,
-      "lat": 51.279428482055664,
-      "lon": -112.45735362872227,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 10020745.040096667
     },
     {
@@ -9298,8 +9332,8 @@
       "label": "British Empire",
       "tStart": 135.0,
       "tEnd": 125.0,
-      "lat": -24.947216033935547,
-      "lon": 132.9128871638968,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 12257586.123316824
     },
     {
@@ -9309,8 +9343,8 @@
       "label": "Great Britain",
       "tStart": 135.0,
       "tEnd": 130.0,
-      "lat": 15.875411033630371,
-      "lon": 49.36803834346239,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 665539.1491905568
     },
     {
@@ -9320,8 +9354,8 @@
       "label": "Spain",
       "tStart": 135.0,
       "tEnd": 125.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 1294074.6033185269
     },
     {
@@ -9331,8 +9365,8 @@
       "label": "Spanish Empire",
       "tStart": 135.0,
       "tEnd": 125.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 1294074.6033185269
     },
     {
@@ -9353,8 +9387,8 @@
       "label": "Great Britain",
       "tStart": 130.0,
       "tEnd": 124.0,
-      "lat": 15.875411033630371,
-      "lon": 49.36803834346239,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 740000.2764929283
     },
     {
@@ -9364,8 +9398,8 @@
       "label": "Qajar Dynasty",
       "tStart": 130.0,
       "tEnd": 127.0,
-      "lat": 0.02851296402514,
-      "lon": 113.17654262069414,
+      "lat": 35.69,
+      "lon": 51.39,
       "areaKm2": 1780919.2766292098
     },
     {
@@ -9375,8 +9409,8 @@
       "label": "Qajar Dynasty",
       "tStart": 127.0,
       "tEnd": 124.0,
-      "lat": 32.39665603637695,
-      "lon": 55.353257921814595,
+      "lat": 35.69,
+      "lon": 51.39,
       "areaKm2": 1624311.8772313145
     },
     {
@@ -9397,8 +9431,8 @@
       "label": "British Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
-      "lat": -24.947216033935547,
-      "lon": 132.9128871638968,
+      "lat": 51.51,
+      "lon": -0.13,
       "areaKm2": 13658902.770487169
     },
     {
@@ -9408,8 +9442,8 @@
       "label": "Spain",
       "tStart": 125.0,
       "tEnd": 124.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 841117.4650455848
     },
     {
@@ -9419,8 +9453,8 @@
       "label": "Ottoman Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
-      "lat": 27.961668968200684,
-      "lon": 36.85145583198537,
+      "lat": 40.19,
+      "lon": 29.06,
       "areaKm2": 2168947.957454138
     },
     {
@@ -9430,8 +9464,8 @@
       "label": "Qing Dynasty",
       "tStart": 125.0,
       "tEnd": 124.0,
-      "lat": 36.900394439697266,
-      "lon": 98.60176426691613,
+      "lat": 39.9,
+      "lon": 116.4,
       "areaKm2": 10368313.123992275
     },
     {
@@ -9452,8 +9486,8 @@
       "label": "Spanish Empire",
       "tStart": 125.0,
       "tEnd": 124.0,
-      "lat": 39.8699893951416,
-      "lon": -3.565086214664832,
+      "lat": 40.42,
+      "lon": -3.7,
       "areaKm2": 841117.4650455848
     }
   ]

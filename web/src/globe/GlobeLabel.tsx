@@ -63,7 +63,7 @@ export const EMPIRE_LABEL_BOX = {
   heightPx: EMPIRE_LABEL_LINE_PX,
 } as const
 
-/** An empire label: small tracked capitals centred on the territory's anchor, no backing, legible
+/** An empire label: small semibold tracked capitals centred on the territory's anchor, no backing, legible
  *  over any terrain through a dark halo. Its tick (`empireLabelTickStyle`) carries the lineage's
  *  colour so the name ties to its outline. */
 export const EMPIRE_LABEL_STYLE: CSSProperties = {
@@ -74,9 +74,10 @@ export const EMPIRE_LABEL_STYLE: CSSProperties = {
   transform: 'translate(-50%, -50%)',
   fontSize: EMPIRE_LABEL_FONT_PX,
   lineHeight: `${EMPIRE_LABEL_LINE_PX}px`,
+  fontWeight: 600,
   letterSpacing: `${EMPIRE_LABEL_TRACKING_EM}em`,
   textTransform: 'uppercase',
-  textShadow: '0 0 1px rgba(3, 4, 6, 0.95), 0 0 3px rgba(3, 4, 6, 0.85), 0 0 6px rgba(3, 4, 6, 0.6)',
+  textShadow: '0 0 1px rgba(3, 4, 6, 1), 0 0 2px rgba(3, 4, 6, 0.95), 0 0 4px rgba(3, 4, 6, 0.85), 0 0 8px rgba(3, 4, 6, 0.6)',
 }
 
 export function empireLabelTickStyle(accent: string): CSSProperties {

@@ -77,11 +77,9 @@ import { srgbHexToLinear } from './color'
 import { smoothstep as easeSmoothstep } from './effects/math'
 import { drawnEmpireLabels, EmpireLabels } from './EmpireLabels'
 import {
+  empireAreaLine,
   empireAtLonLat,
-  formatEmpireArea,
   formatEmpireSpan,
-  formatEmpireYear,
-  lineageAreaAt,
   type EmpireFrame,
   type EmpireIndex,
   type EmpireLineageSummary,
@@ -540,16 +538,13 @@ export function empireTarget(
   anchor: GlobeEffectAnchor = { lat: snapshot.lat, lon: snapshot.lon },
 ): GlobeHitTarget {
   const member = summary.members.find((m) => m.member === snapshot.member)!
-  const { peak } = summary
   return {
     kind: 'empire',
     id: `empire:${snapshot.lineage}:${snapshot.member}`,
     eventId: null,
     lineage: snapshot.lineage,
     title: member.label,
-    description:
-      `${summary.lineage.name} · about ${formatEmpireArea(lineageAreaAt(summary, t))} now ` +
-      `(peak ${formatEmpireArea(peak.areaKm2)} in ${formatEmpireYear(peak.tStart)})`,
+    description: empireAreaLine(summary, t),
     dateRange: formatEmpireSpan(member.tStart, member.tEnd),
     anchor,
   }
@@ -633,6 +628,8 @@ export interface HumanCivilisationProps {
   selectedEmpire?: string | null
   /** Opens a lineage's detail panel from its territory or label. Acted on only while `expanded`. */
   onActivateEmpire?: (lineage: string) => void
+  /** Told the hovered empire lineage, or `null`, each time it changes — never per pointermove. */
+  onHoverEmpire?: (lineage: string | null) => void
 }
 
 export function HumanCivilisation({
@@ -655,6 +652,7 @@ export function HumanCivilisation({
   empireLabels = null,
   selectedEmpire = null,
   onActivateEmpire,
+  onHoverEmpire,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
@@ -683,6 +681,12 @@ export function HumanCivilisation({
     [hoveredLineage, selectedEmpire],
   )
   const tracedIds = useMemo(() => resolveTracedIds(index, hoveredEventId), [index, hoveredEventId])
+  useEffect(() => {
+    onHoverEmpire?.(hoveredLineage)
+  }, [hoveredLineage, onHoverEmpire])
+  // The open panel already shows everything this empire's tooltip would, and the tooltip would
+  // sit over the card's top edge.
+  const tooltipTarget = hovered !== null && hovered.lineage !== undefined && hovered.lineage === selectedEmpire ? null : hovered
 
   // `CITY_DECLUTTER_MIN_SEPARATION_PX` as the object-space distance `declutterCities` compares
   // cities by, recomputed only when the camera crosses a zoom step.
@@ -865,7 +869,7 @@ export function HumanCivilisation({
     }
     const { index, frame, geometry } = empires
     const labelCandidates: GlobeHitCandidate[] = []
-    for (const label of drawnEmpireLabels(frame, labelCap, unfold, empireWorldPerPx)) {
+    for (const { label } of drawnEmpireLabels(frame, labelCap, unfold, empireWorldPerPx, highlightedLineages)) {
       const summary = index.lineages.get(label.lineage)
       if (summary === undefined) continue
       labelCandidates.push({
@@ -882,7 +886,7 @@ export function HumanCivilisation({
       const summary = snapshot === null ? undefined : index.lineages.get(snapshot.lineage)
       return snapshot === null || summary === undefined ? null : empireTarget(summary, snapshot, t, point)
     }
-  }, [empires, labelCap, unfold, empireWorldPerPx, t])
+  }, [empires, labelCap, unfold, empireWorldPerPx, highlightedLineages, t])
 
   if (!enabled) return null
 
@@ -930,8 +934,8 @@ export function HumanCivilisation({
         />
       )}
       <GlobeTooltip
-        target={hovered}
-        hint={tooltipHintFor(hovered, viaTouch, (hovered?.lineage !== undefined ? onActivateEmpireHere : onActivate) !== null)}
+        target={tooltipTarget}
+        hint={tooltipHintFor(tooltipTarget, viaTouch, (tooltipTarget?.lineage !== undefined ? onActivateEmpireHere : onActivate) !== null)}
         unfold={unfold}
         radius={radius}
         sphereLift={MARKER_SPHERE_LIFT}
