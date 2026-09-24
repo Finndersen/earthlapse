@@ -2936,6 +2936,54 @@
       "estimated_usd": 0.154624,
       "actual_usd": 0.139972,
       "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155084,
+      "actual_usd": 0.141384,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155084,
+      "actual_usd": 0.142656,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155084,
+      "actual_usd": 0.13986,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155128,
+      "actual_usd": 0.139494,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155128,
+      "actual_usd": 0.14013,
+      "note": null
+    },
+    {
+      "node_id": "shenzhen-bay-present.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155128,
+      "actual_usd": 0.139506,
+      "note": null
     }
   ]
 }

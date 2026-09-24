@@ -11,7 +11,7 @@
       "thumbnail": "scenes/shenzhen-bay-present-thumb.webp",
       "shot": "WATER_EDGE",
       "title": "Shenzhen Today",
-      "caption": "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million, its bay crowded with glass supertalls and delivery drones.",
+      "caption": "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million — a forest of glass supertalls on its bay, drones crossing between the towers.",
       "events": [],
       "sound": {
         "stem": "traffic",
@@ -31,12 +31,12 @@
       },
       "framing": {
         "focus": [
-          0.66,
-          0.6
+          0.52,
+          0.45
         ],
         "pan": 180.0
       },
-      "pinned": "7381960301cd6f6e",
+      "pinned": "4b78fbf58f08c131",
       "width": 2752,
       "height": 1536
     },
