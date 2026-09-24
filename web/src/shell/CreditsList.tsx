@@ -9,9 +9,10 @@
  * 1. **About** — what the project is, what it covers, and the artistic-reconstruction
  *    disclosure (VISUAL_SPEC §9), which used to sit in `ShellLayout`'s always-on footer row and
  *    now shows only here, as the first line a viewer sees on opening this content. Followed by
- *    the author byline, the repo link and a slot for the feedback link
+ *    the author byline, the repo link, a slot for the feedback link
  *    (`CreditsListProps.feedbackLink`) — the same "supplied by the caller" reasoning as
- *    `eventLegend` below, since only the feedback link needs live store state.
+ *    `eventLegend` below, since only the feedback link needs live store state — and the built
+ *    commit's version (`version.ts`).
  * 2. **Controls & shortcuts** (`ControlsShortcuts.tsx`) — added because the timeline's first-use
  *    hint, previously the only place interactions and keyboard shortcuts were explained, was
  *    removed (ADR-012 amendment follow-up, 2026-09-18); this is now the one place they're
@@ -30,6 +31,7 @@ import type { AudioStem, Credit } from '@/types/manifest'
 
 import { ControlsShortcuts } from './ControlsShortcuts'
 import { loadManifest } from './manifest'
+import { siteVersion } from './version'
 import styles from './CreditsList.module.css'
 
 type LoadState =
@@ -52,6 +54,7 @@ export interface CreditsListProps {
 
 export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}) {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+  const version = siteVersion(process.env.NEXT_PUBLIC_EARTHLAPSE_VERSION, process.env.NEXT_PUBLIC_EARTHLAPSE_COMMIT)
 
   useEffect(() => {
     let cancelled = false
@@ -87,6 +90,11 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
           View source on GitHub
         </a>
         {feedbackLink}
+        {version !== null && (
+          <a href={version.href} target="_blank" rel="noopener noreferrer">
+            Version {version.label}
+          </a>
+        )}
       </p>
 
       <h3 className={styles.sectionTitle}>Controls &amp; shortcuts</h3>

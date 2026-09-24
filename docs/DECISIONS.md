@@ -7396,3 +7396,31 @@ after a cloud session re-pinned it.
   a second rule to police the first, instead of removing the need for either.
 - **Commit `data/candidates/` whole.** It is about 1.2 GB of mostly rejected images, and LFS keeps
   them forever.
+
+## ADR-056 — Deploys are triggered by a tag or by hand; the version is the built commit
+
+**Status:** accepted — human-directed 2026-09-24. Amends ADR-052's triggers.
+
+**Context.** ADR-052 let a `[deploy]` substring in any commit message on `main` ship production, so
+that a cloud session could deploy without credentials. A stray `[deploy]` deploys by accident, and
+the site showed no version at all. Cloud sessions were found to be able to push `main` but not
+tags (GitHub answers 403), and the Claude GitHub App still cannot dispatch workflows.
+
+**Decision.**
+- **Triggers.** A pushed `v*` tag (including one created by publishing a GitHub Release), and
+  `workflow_dispatch`. The `[deploy]` commit trigger is removed. Deploying is a person's step; a
+  cloud session lands work on `main` and stops.
+- **The version is derived, not declared.** `web/next.config.ts` reads the built commit's UTC date
+  and hash from git at build time, and the About panel shows `2026.09.24 · 9500113` linking to that
+  commit. No version is stored in the repo, so none can go stale; a build outside a git checkout
+  shows none.
+- **Tags are optional milestones.** A release with notes is cut when there is something worth
+  naming; its tag is a rollback point. The commit log is the changelog otherwise.
+
+**Rejected.**
+- **A tag-derived version** (`git describe`). Every deploy would need a tag to show a clean version,
+  and a hand-typed tag can be mistyped or reused.
+- **A `CHANGELOG.md` or a version in `package.json`/`pyproject.toml`.** A second source of truth
+  that must be bumped by hand and drifts.
+- **A GitHub token in cloud sessions to push tags.** A credential that can write `main` and trigger
+  production, contrary to ADR-052's no-credentials rule.

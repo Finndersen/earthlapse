@@ -10,6 +10,7 @@ import { CreditsList } from './CreditsList'
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
 })
 
 function mockFetchSequence(responses: Array<{ url: string; status: number; body?: unknown }>) {
@@ -55,11 +56,17 @@ describe('CreditsList', () => {
     await waitFor(() => expect(screen.getByText(/failed to load credits/i)).toBeTruthy())
   })
 
-  it('renders supplied legend and feedback link slots alongside the repository link', async () => {
+  it('renders supplied legend and feedback link slots alongside the repository and version links', async () => {
     ok()
+    const commit = '9500113c0ffee0000000000000000000000000ab'
+    vi.stubEnv('NEXT_PUBLIC_EARTHLAPSE_VERSION', '2026.09.24')
+    vi.stubEnv('NEXT_PUBLIC_EARTHLAPSE_COMMIT', commit)
     render(<CreditsList eventLegend={<EventTagLegend />} feedbackLink={<a href="https://example.com/issues/new">Report a bug or give feedback</a>} />)
     await waitFor(() => expect(screen.getByText(/event colours/i)).toBeTruthy())
     expect(screen.getByRole('link', { name: /report a bug or give feedback/i })).toBeTruthy()
     expect(screen.getByRole('link', { name: /view source on github/i }).getAttribute('rel')).toBe('noopener noreferrer')
+    expect(screen.getByRole('link', { name: 'Version 2026.09.24 · 9500113' }).getAttribute('href')).toBe(
+      `https://github.com/Finndersen/earthlapse/commit/${commit}`,
+    )
   })
 })

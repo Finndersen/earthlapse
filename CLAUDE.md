@@ -34,9 +34,9 @@ it, do not unilaterally edit.
   is the ledger; spend a session never pushes is spend the ceiling forgets. Unpinned candidates
   (`data/candidates/`, gitignored) die with the container, so review, pin and publish in the same
   session, then commit and push `data/pins/`, `data/media/` and `spend.json`.
-- **Deploy from a cloud session with a `[deploy]` commit on `main`**, never with credentials in the
-  session. The `deploy` workflow ships the committed state of `main` (ADR-052); see
-  `deploy/README.md` for the other triggers.
+- **A cloud session does not deploy.** It lands work on `main` and stops; a person deploys with the
+  `deploy` workflow's "Run workflow" or a `v*` tag / GitHub Release (ADR-056). Never put deploy
+  credentials in a session. See `deploy/README.md`.
 - **No live API calls or large downloads in tests.** Every source ships a committed fixture
   at `sources/<name>/fixture/`. Use it.
 - **Nothing reads `data/curated/` directly.** Go through `WorldState.at(t)`. (ADR-002)

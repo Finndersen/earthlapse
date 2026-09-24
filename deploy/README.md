@@ -47,15 +47,18 @@ git commit … && git push origin main
 Then deploy, by any one of:
 
 ```
-git commit --allow-empty -m "… [deploy]"       # or put [deploy] in the commit that changes things
-git tag v2026.09.23 && git push origin v2026.09.23
+Actions → deploy → Run workflow                # deploys main as it stands
+git tag -a v2026.09.23 -m "…" && git push origin v2026.09.23   # or publish a GitHub Release
 make deploy                                    # from a workstation with .env
 ```
 
-The `deploy` workflow (`.github/workflows/deploy.yml`) runs on a push to `main` whose head commit
-message contains `[deploy]`, on a pushed `v*` tag, and on `workflow_dispatch` — the Actions tab's
-"Run workflow". A Claude Code cloud session deploys with a `[deploy]` commit, holding no Cloudflare
-credential; the Claude GitHub App cannot dispatch workflows. Runs never overlap. A tag is the way to name a release you may want to
+The `deploy` workflow (`.github/workflows/deploy.yml`) runs on a pushed `v*` tag and on
+`workflow_dispatch` — the Actions tab's "Run workflow" (ADR-056). Publishing a GitHub Release with a
+new `v*` tag creates and pushes the tag, so it deploys too, with the release notes attached. A Claude
+Code cloud session cannot deploy: it can push `main` but not tags, and cannot dispatch workflows.
+It lands work on `main` and leaves the deploy to a person. Runs never overlap. The site's version is not the tag: `web/next.config.ts` bakes in the built commit's
+UTC date and short hash (`2026.09.24 · 9500113`), shown in the About panel and linking to
+that commit. A tag is the way to name a release you may want to
 roll back to: running the workflow on an older tag redeploys it, and R2 still
 holds that version's media because `sync-media.sh` only ever adds objects.
 
