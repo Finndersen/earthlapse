@@ -194,46 +194,6 @@ scenes:
     framing: {focus: [0.66, 0.8], pan: 270, portrait_zoom: 1.3}
     pin: {asset_digest: "295c1601ff5c1ece", path: "data/pins/scenes/great-oxidation/295c1601ff5c1ece.jpg"}
 
-  # 2.023 Ga, the Vredefort impact (events.yaml vredefort-impact-crater; Kamo et al. 1996). A
-  # 20-25 km impactor at 15-20 km/s, for an original crater 250-280 km across (Allen, N.H. et al.
-  # (2022), JGR Planets 127(10), e2022JE007186). About 10 km of the crater's own surface has since
-  # eroded away, so whether it struck land or shallow sea is unknown; the vantage is instead a
-  # composite shallow sea roughly 800 km out. From there the plume clears the horizon; nearer
-  # (a few hundred km) a viewer would sit inside the fireball and ejecta blanket. The moment is a
-  # couple of minutes after impact: ground shaking arrives at ~2-3.5 min, falling ejecta at
-  # ~5-8 min and the air blast at ~30-50 min, so the sea is still calm (distances and arrival
-  # times estimated from Collins, Melosh & Marcus (2005), Meteoritics & Planetary Science 40(6),
-  # 817-840). Life is microbial only; after the Great Oxidation the sky is blue, not the orange
-  # Archean haze, and there is no land vegetation to burn.
-  - id: vredefort-impact
-    t: 2.023e9
-    chapter: over-under
-    shot: SPLIT_LEVEL
-    title: "The Largest Known Impact"
-    caption: About two billion years ago, an asteroid some 20-25 km across strikes what is now South Africa, blasting out Vredefort, the largest impact crater known on Earth. Hundreds of kilometres away, its plume towers over a sea where the only life is microbial.
-    unsourced:
-      o2_percent: 1  # rounded, contested: after the Great Oxidation, still a small fraction of modern levels
-      mean_temp_c: 20  # rounded: no defensible Paleoproterozoic global figure; kept temperate like great-oxidation
-    subject:
-      setting: A shallow, sunlit sea on the margin of an ancient continent, some 800 km from the Vredefort asteroid impact, a couple of minutes after it strikes, seen half above and half below the surface
-      left_mass: a low, wave-washed headland of layered grey and rust-red sedimentary rock rising out of the sea, its submerged face crusted with dark microbial mat
-      vegetation: none on land, which is bare rock; underwater, the only life is microbial, olive-green and brown mats coating the sea floor and low stromatolite domes
-      fauna: none; no animals exist yet
-      main_subject: underwater, a field of low, rounded stromatolite domes skinned with olive microbial mat on the sandy sea floor, lit from above by a strange warm orange light filtering down through the clear water
-      ground: the shallow sea floor, rippled pale grey sand and flat rock slabs filmed with microbial mat
-      water: shallow, calm, clear water, its surface still smooth, catching an orange glow from the horizon
-      far_bank: a low, bare, rocky far shore with no green anywhere; beyond it, far off on the horizon right of centre, an immense column of incandescent vapour and molten rock rising out of sight into the upper atmosphere and spreading into a vast, glowing, mushroom-shaped plume that dwarfs every cloud
-      sky_and_light: an ordinary pale blue daytime sky over most of the frame, but the horizon beneath the plume blazing white-orange, a hard orange glow spreading across the right half of the sky and reflecting on the sea
-      absent: [a visible asteroid, a crater, lava on the near shore, flames, burning forest, smoke from fires, plants, trees, grass, moss, animals, fish, shells, birds, people, seaweed, kelp, corals, a tsunami wave, falling debris, a second sun, an orange hazy sky]
-    events: [vredefort-impact-crater]
-    # ADR-023: `impact` `once` at 0.8, a notch under kpg-arrival's 1.0: the plume here is ~800 km
-    # away and its sound is still minutes off, so the cue is a distant rumble rather than a strike.
-    sound: {stem: impact, mode: once, gain: 0.8}
-    # ADR-034: the Vredefort Dome, Free State, South Africa: where the impact struck, not the
-    # composite sea the camera stands in.
-    location: {lat: -27.0, lon: 27.5, label: "Vredefort Dome, South Africa"}
-    pin: null
-
   # ~1.047 Ga, exactly inside events.yaml multicellularity-sexual-reproduction (1.030-1.064
   # Ga): Bangiomorpha pubescens, Somerset Island, Arctic Canada. Gibson, T.M. et al. (2018),
   # "Precise age of Bangiomorpha pubescens dates the origin of eukaryotic photosynthesis,"

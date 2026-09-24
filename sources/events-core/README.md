@@ -436,7 +436,9 @@ counting scenes per era section. Deep time: `huronian-glaciation`, `ichthyosaurs
 `first-transcontinental-railroad`, `krakatoa-eruption`, `smallpox-eradication`,
 `paris-agreement`. Four back new scenes (`paraceratherium`, `edo-million-city`,
 `first-transcontinental-railroad`, and `messel-pit`, to which `eocene-jungle` moved); the
-new `vredefort-impact` and `wallacea-hand-stencil` scenes link existing events. Verification
+new `wallacea-hand-stencil` scene links existing events. A Vredefort impact scene was drafted
+and dropped: its neighbours are both split-level over-under frames, and a half-underwater view
+of a distant impact read poorly, so `vredefort-impact-crater` stays an event only. Verification
 was narrower than the batches above: WebFetch was blocked by the session's egress proxy for
 every publisher and encyclopaedia host tried, so each date was checked against WebSearch result
 text quoting the cited source, not a full page read. Details that could not be confirmed that
