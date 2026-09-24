@@ -2984,6 +2984,126 @@
       "estimated_usd": 0.155128,
       "actual_usd": 0.139506,
       "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.14104,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.141652,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.140356,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.140448,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.14094,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.139356,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.140456,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.139352,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.140672,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.140908,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.139468,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.139,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.1396,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.139972,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.14086,
+      "note": null
     }
   ]
 }
