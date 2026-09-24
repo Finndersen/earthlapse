@@ -7493,6 +7493,23 @@ with an empty cache spends a few seconds computing every pair.
 - **Reusing the published morph files when the cache is empty.** Would freeze morphs made by older
   morph code; recomputing takes seconds.
 
+**Amendment (2026-09-24) — published morphs are the first cache.** A publish in a fresh container
+rewrote all 48 committed morph PNGs and 16 `lineage.json` ranges with no input changed. The flow is
+byte-reproducible only per CPU: OpenCV dispatches SIMD paths by instruction set, and disabling
+AVX/AVX2 in one container changes every file. The PNG deflate stream is reproducible only per zlib
+build: committed files decode to identical filtered scanlines but re-encode differently. Neither is
+fixable by thread count or encoder settings. `publish` therefore writes
+`data/media/portraits/morphs/records.json`, which holds every consecutive pinned pair's
+`MorphRecord` and, for pairs that ship flows, the digest of each PNG. A pair is taken from there
+when its key (both pin digests), `MORPH_ALGORITHM_VERSION` and file digests all still match (an LFS
+pointer or a missing file fails the digest); otherwise it comes from the local cache, and otherwise
+it is computed (a `MorphError` still refuses). This reverses the rejected option "reusing the
+published morph files when the cache is empty": it was rejected because it would freeze morphs made
+by older morph code, but the record carries the algorithm version, so a version bump or a re-pin
+still recomputes. A republish from any machine now leaves the morph files and `lineage.json`
+byte-identical unless an input changed (measured: a publish from a container with a different CPU
+left all 48 PNGs and `lineage.json` unchanged).
+
 ## ADR-059 — Historical empires: a hand-picked lineage roster, drawn as vector territory on the globe
 
 **Status:** accepted — human-directed 2026-09-24. Supersedes ADR-037's subset rule and its

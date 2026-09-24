@@ -1,0 +1,684 @@
+{
+  "morphs": [
+    {
+      "record": {
+        "key": {
+          "older": "homo-heidelbergensis",
+          "older_digest": "d3058b63da2612c6",
+          "younger": "homo-sapiens",
+          "younger_digest": "da1b756a2ace8f44"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "homo-erectus",
+          "older_digest": "13a1d771f6cbf79c",
+          "younger": "homo-heidelbergensis",
+          "younger_digest": "d3058b63da2612c6"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.080078125,
+        "backward_range": 0.083984375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "c73f87000ad72756",
+      "backward_digest": "a9466c3fe82369d2"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "homo",
+          "older_digest": "3bcfe020f0937e57",
+          "younger": "homo-erectus",
+          "younger_digest": "13a1d771f6cbf79c"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1396484375,
+        "backward_range": 0.12890625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "584a00ebed2072ec",
+      "backward_digest": "1d62a4666c47e305"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "australopithecus",
+          "older_digest": "290c4a6e4303ba25",
+          "younger": "homo",
+          "younger_digest": "3bcfe020f0937e57"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1357421875,
+        "backward_range": 0.1259765625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "2f76575632de2d67",
+      "backward_digest": "5a70a17cfaeffe94"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "hominini",
+          "older_digest": "141ef7d153b9d351",
+          "younger": "australopithecus",
+          "younger_digest": "290c4a6e4303ba25"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.2236328125,
+        "backward_range": 0.208984375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "5352ef8e6ff34419",
+      "backward_digest": "24aaadf60f02e53e"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "homininae",
+          "older_digest": "5ec8d9f137fdbd53",
+          "younger": "hominini",
+          "younger_digest": "141ef7d153b9d351"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "hominidae",
+          "older_digest": "f1f208c897153062",
+          "younger": "homininae",
+          "younger_digest": "5ec8d9f137fdbd53"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1552734375,
+        "backward_range": 0.1376953125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "57eb2444758d106b",
+      "backward_digest": "5cd8a532ae35b7b6"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "hominoidea",
+          "older_digest": "4ad5d9260bdcb0dd",
+          "younger": "hominidae",
+          "younger_digest": "f1f208c897153062"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1494140625,
+        "backward_range": 0.1953125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "26e7da8fc5c01116",
+      "backward_digest": "fabbe2f1ba4d9c67"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "catarrhini",
+          "older_digest": "a9a1e7c3e6f639a1",
+          "younger": "hominoidea",
+          "younger_digest": "4ad5d9260bdcb0dd"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "simiiformes",
+          "older_digest": "78143e7635c1f1c0",
+          "younger": "catarrhini",
+          "younger_digest": "a9a1e7c3e6f639a1"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.11328125,
+        "backward_range": 0.0859375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "4b9a6577e63933a5",
+      "backward_digest": "011df5e6085a1649"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "haplorhini",
+          "older_digest": "0f2102e75a870b6e",
+          "younger": "simiiformes",
+          "younger_digest": "78143e7635c1f1c0"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "primates",
+          "older_digest": "28a0d444e17fd0f0",
+          "younger": "haplorhini",
+          "younger_digest": "0f2102e75a870b6e"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "primatomorpha",
+          "older_digest": "46f1c6ce85e50a08",
+          "younger": "primates",
+          "younger_digest": "28a0d444e17fd0f0"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.162109375,
+        "backward_range": 0.107421875,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "82005d5ed13efc09",
+      "backward_digest": "d40ffeec76e6aff6"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "euarchontoglires",
+          "older_digest": "b34fb2e0afe5ff64",
+          "younger": "primatomorpha",
+          "younger_digest": "46f1c6ce85e50a08"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.08984375,
+        "backward_range": 0.078125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "e7b5c39e23d54bb3",
+      "backward_digest": "e11dcd21e3b42cdf"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "boreoeutheria",
+          "older_digest": "b265b8831e219686",
+          "younger": "euarchontoglires",
+          "younger_digest": "b34fb2e0afe5ff64"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "placentalia",
+          "older_digest": "22ea1eed2c0700b5",
+          "younger": "boreoeutheria",
+          "younger_digest": "b265b8831e219686"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "eutheria",
+          "older_digest": "96512f40094b71c8",
+          "younger": "placentalia",
+          "younger_digest": "22ea1eed2c0700b5"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1455078125,
+        "backward_range": 0.33984375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "48197d43f25d5a8f",
+      "backward_digest": "6048ab359f8834b3"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "theria",
+          "older_digest": "9b7c50ee0bbda0a9",
+          "younger": "eutheria",
+          "younger_digest": "96512f40094b71c8"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1171875,
+        "backward_range": 0.115234375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "cd835909b12bafbb",
+      "backward_digest": "08bb4422d2da3712"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "mammalia",
+          "older_digest": "7e3062f8c909a6a1",
+          "younger": "theria",
+          "younger_digest": "9b7c50ee0bbda0a9"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.11328125,
+        "backward_range": 0.107421875,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "78c980d4fde0fe6a",
+      "backward_digest": "5a066d1ece80ae0f"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "mammaliaformes",
+          "older_digest": "c667ad3310fcec37",
+          "younger": "mammalia",
+          "younger_digest": "7e3062f8c909a6a1"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0986328125,
+        "backward_range": 0.041015625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "b85dcccbd727b663",
+      "backward_digest": "8608ee89737eb5bc"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "cynodontia",
+          "older_digest": "7eb4b6337ccfa56e",
+          "younger": "mammaliaformes",
+          "younger_digest": "c667ad3310fcec37"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0439453125,
+        "backward_range": 0.0439453125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "72d1248f1176c459",
+      "backward_digest": "404fb6b2254833df"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "therapsida",
+          "older_digest": "0a7fe284a0cc1bee",
+          "younger": "cynodontia",
+          "younger_digest": "7eb4b6337ccfa56e"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1162109375,
+        "backward_range": 0.1474609375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "e831403f4e9ac474",
+      "backward_digest": "f521aba7f39060c0"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "synapsida",
+          "older_digest": "53ede5a016046935",
+          "younger": "therapsida",
+          "younger_digest": "0a7fe284a0cc1bee"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.17578125,
+        "backward_range": 0.0986328125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "c9b198220b5e2b6d",
+      "backward_digest": "c693db8721e2d22f"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "amniota",
+          "older_digest": "60ead2448ece7209",
+          "younger": "synapsida",
+          "younger_digest": "53ede5a016046935"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.09375,
+        "backward_range": 0.255859375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "7058b2d7f899bbaa",
+      "backward_digest": "74a8106cc53b8653"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "tetrapoda",
+          "older_digest": "35d025bfba217b1d",
+          "younger": "amniota",
+          "younger_digest": "60ead2448ece7209"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0849609375,
+        "backward_range": 0.111328125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "40b8d715987e5237",
+      "backward_digest": "f5d62a923947eef7"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "tetrapodomorpha",
+          "older_digest": "80fca4206846b113",
+          "younger": "tetrapoda",
+          "younger_digest": "35d025bfba217b1d"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.09375,
+        "backward_range": 0.0927734375,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "fa80ded91283f445",
+      "backward_digest": "5be8792157464901"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "sarcopterygii",
+          "older_digest": "d4122fd21724b79b",
+          "younger": "tetrapodomorpha",
+          "younger_digest": "80fca4206846b113"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.283203125,
+        "backward_range": 0.1181640625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "c9b3235c9b4af308",
+      "backward_digest": "9edf71c4c1cdda35"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "osteichthyes",
+          "older_digest": "105148bcd6c22ae3",
+          "younger": "sarcopterygii",
+          "younger_digest": "d4122fd21724b79b"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1474609375,
+        "backward_range": 0.15625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "689116a6b2c70700",
+      "backward_digest": "b23cc02848f62ec0"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "gnathostomata",
+          "older_digest": "d04c2b033a483f5b",
+          "younger": "osteichthyes",
+          "younger_digest": "105148bcd6c22ae3"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.2109375,
+        "backward_range": 0.134765625,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "4984b175d1f73b1b",
+      "backward_digest": "d8937deb885d352b"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "vertebrata",
+          "older_digest": "282ac709cbf7d26b",
+          "younger": "gnathostomata",
+          "younger_digest": "d04c2b033a483f5b"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.11328125,
+        "backward_range": 0.1376953125,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "87deb1ade2ed347d",
+      "backward_digest": "a3a9c07ceccaf9dc"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "olfactores",
+          "older_digest": "bb4e4ac417942fa4",
+          "younger": "vertebrata",
+          "younger_digest": "282ac709cbf7d26b"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "chordata",
+          "older_digest": "a4ea5ba4af80ab2f",
+          "younger": "olfactores",
+          "younger_digest": "bb4e4ac417942fa4"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "bilateria",
+          "older_digest": "9c9e32e0464f4648",
+          "younger": "chordata",
+          "younger_digest": "a4ea5ba4af80ab2f"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "eumetazoa",
+          "older_digest": "476499a62ca9c41a",
+          "younger": "bilateria",
+          "younger_digest": "9c9e32e0464f4648"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "metazoa",
+          "older_digest": "f3773bffa3cfab68",
+          "younger": "eumetazoa",
+          "younger_digest": "476499a62ca9c41a"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "holozoa",
+          "older_digest": "5973dd6f36eff417",
+          "younger": "metazoa",
+          "younger_digest": "f3773bffa3cfab68"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.1376953125,
+        "backward_range": 0.107421875,
+        "fallback_dissolve": false
+      },
+      "forward_digest": "db6483fb24f69b47",
+      "backward_digest": "38d0c85bbc73b906"
+    },
+    {
+      "record": {
+        "key": {
+          "older": "opisthokonta",
+          "older_digest": "03af3d822e3e05ae",
+          "younger": "holozoa",
+          "younger_digest": "5973dd6f36eff417"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "leca",
+          "older_digest": "c276b4a3154b29a5",
+          "younger": "opisthokonta",
+          "younger_digest": "03af3d822e3e05ae"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "archaeal-host-lineage",
+          "older_digest": "cbaa84828438551c",
+          "younger": "leca",
+          "younger_digest": "c276b4a3154b29a5"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    },
+    {
+      "record": {
+        "key": {
+          "older": "luca",
+          "older_digest": "55a8a83a3e0b58ad",
+          "younger": "archaeal-host-lineage",
+          "younger_digest": "cbaa84828438551c"
+        },
+        "algorithm_version": "5",
+        "size": 128,
+        "forward_range": 0.0009765625,
+        "backward_range": 0.0009765625,
+        "fallback_dissolve": true
+      },
+      "forward_digest": null,
+      "backward_digest": null
+    }
+  ]
+}

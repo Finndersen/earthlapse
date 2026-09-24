@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -363,6 +364,20 @@ def test_publish_computes_a_morph_missing_from_the_cache_from_the_two_pins(root:
     ]
     assert not record.fallback_dissolve
     assert published == [("tetrapod", "human", record.forward_range)]
+
+    # A fresh checkout has no cache: the published morph matching its record is reused as is.
+    forward = paths.media / "portraits" / "morphs" / "tetrapod--human.forward.png"
+    shipped = forward.read_bytes()
+    shutil.rmtree(paths.portrait_morphs)
+    assert run_cli(backend, root, "publish")[0] == 0
+    assert load_morph(paths.portrait_morphs, key) is None
+    assert forward.read_bytes() == shipped
+
+    # A published file that no longer matches its recorded digest is recomputed.
+    forward.write_bytes(b"version https://git-lfs.github.com/spec/v1\n")
+    assert run_cli(backend, root, "publish")[0] == 0
+    assert load_morph(paths.portrait_morphs, key) == record
+    assert forward.read_bytes() == shipped
 
 
 def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_untouched(

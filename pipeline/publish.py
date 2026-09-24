@@ -83,12 +83,17 @@ from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
     FORWARD_FLOW_NAME,
     LINEAGE_TREE_ID,
+    PUBLISHED_MORPH_RECORDS_NAME,
+    PUBLISHED_MORPHS_DIR,
     MorphKey,
     MorphRecord,
     PortraitBook,
     PortraitRecord,
+    PublishedMorph,
+    dump_published_morphs,
     lineage_order,
     load_morph,
+    load_published_morphs,
 )
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, SoundMode
 from pipeline.scenes import SceneFraming as SceneFramingRecord
@@ -451,7 +456,7 @@ class PortraitPublication:
     design: plates arrive a few at a time, and the viewer shows the nearest older plate."""
 
     data: PortraitSetData | None  # None until at least one portrait is pinned
-    files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, then copied morph fields
+    files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, morph fields, morph records
     unpinned: tuple[str, ...]
     dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015):
     # `earthlapse morph` judged these fine to skip, not to rerun; the viewer crossfades them
@@ -602,7 +607,9 @@ def write_publication(publication: Publication, media_dir: Path) -> Path:
         target.parent.mkdir(parents=True, exist_ok=True)
         match media:
             case MediaCopy(source=source):
-                shutil.copyfile(source, target)
+                # A reused published morph is its own source when publishing into data/media.
+                if not (target.exists() and target.samefile(source)):
+                    shutil.copyfile(source, target)
             case MediaBytes(data=data):
                 target.write_bytes(data)
     _prune_stale_media(
@@ -937,29 +944,39 @@ def _exposed_plate(node_id: str, data: bytes) -> ExposedPlate:
 
 def _portrait_morphs(
     pinned: list[PortraitRecord], cache: Path, root: Path
-) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...]]:
+) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaBytes | MediaCopy, ...], tuple[MorphKey, ...]]:
     """`pinned` is youngest first, so each pairwise step is (younger, older). Returns
     (morphs, files, dissolved): `dissolved` pairs are computed but too incoherent to trust
     (ADR-015 amendment), published as if no morph existed so the viewer crossfades them.
+    `files` ends with the published morph records.
 
-    A pair missing from `cache` is computed here, from the pins (ADR-058), so a publish never
-    depends on an earlier `earthlapse morph` having run on this machine."""
-    morphs, files, dissolved = [], [], []
+    Each pair comes from the first of: the published morph whose record and file digests still
+    match (`pipeline.portraits` says why that one wins), the local cache, or a fresh computation
+    from the pins (ADR-058), so a publish never depends on an earlier `earthlapse morph`."""
+    media_dir = root / "data" / "media"
+    published = load_published_morphs(
+        media_dir / PUBLISHED_MORPHS_DIR / PUBLISHED_MORPH_RECORDS_NAME
+    )
+    morphs, files, dissolved, entries = [], [], [], []
     for younger, older in pairwise(pinned):
         key = MorphKey.between(older, younger)
-        record = load_morph(cache, key) or _computed_morph(cache, key, older, younger, root)
+        base = f"{PUBLISHED_MORPHS_DIR}/{older.id}--{younger.id}"
+        entry = _reusable_morph(published.get(key), media_dir, base)
+        if entry is None:
+            entry = _cached_morph(key, cache, older, younger, root)
+            directory = key.directory(cache)
+            sources = (directory / FORWARD_FLOW_NAME, directory / BACKWARD_FLOW_NAME)
+        else:
+            sources = (media_dir / f"{base}.forward.png", media_dir / f"{base}.backward.png")
+        entries.append(entry)
+        record = entry.record
         if record.fallback_dissolve:
             dissolved.append(key)
             continue
-        directory = key.directory(cache)
-        base = f"portraits/morphs/{older.id}--{younger.id}"
         copies = (
-            MediaCopy(source=directory / FORWARD_FLOW_NAME, published=f"{base}.forward.png"),
-            MediaCopy(source=directory / BACKWARD_FLOW_NAME, published=f"{base}.backward.png"),
+            MediaCopy(source=sources[0], published=f"{base}.forward.png"),
+            MediaCopy(source=sources[1], published=f"{base}.backward.png"),
         )
-        for copy in copies:
-            if not copy.source.is_file():
-                raise PublishRefused(f"morph {older.id} -> {younger.id}: {copy.source} is missing")
         files.extend(copies)
         morphs.append(
             PortraitMorphData(
@@ -972,7 +989,50 @@ def _portrait_morphs(
                 size=record.size,
             )
         )
+    if entries:
+        records = dump_published_morphs(tuple(entries)).encode()
+        files.append(
+            MediaBytes(
+                data=records, published=f"{PUBLISHED_MORPHS_DIR}/{PUBLISHED_MORPH_RECORDS_NAME}"
+            )
+        )
     return tuple(morphs), tuple(files), tuple(dissolved)
+
+
+def _reusable_morph(
+    entry: PublishedMorph | None, media_dir: Path, base: str
+) -> PublishedMorph | None:
+    """`entry` when every file it shipped is still in `media_dir` with the digest it recorded
+    (a missing file or an un-smudged LFS pointer fails that), else None."""
+    if entry is None:
+        return None
+    for suffix, expected in (
+        ("forward", entry.forward_digest),
+        ("backward", entry.backward_digest),
+    ):
+        if expected is None:
+            continue
+        path = media_dir / f"{base}.{suffix}.png"
+        if not path.is_file() or asset_digest(path.read_bytes()) != expected:
+            return None
+    return entry
+
+
+def _cached_morph(
+    key: MorphKey, cache: Path, older: PortraitRecord, younger: PortraitRecord, root: Path
+) -> PublishedMorph:
+    """The pair from the local cache, computing it first when it is not there."""
+    record = load_morph(cache, key) or _computed_morph(cache, key, older, younger, root)
+    if record.fallback_dissolve:
+        return PublishedMorph(record=record, forward_digest=None, backward_digest=None)
+    directory = key.directory(cache)
+    digests = []
+    for name in (FORWARD_FLOW_NAME, BACKWARD_FLOW_NAME):
+        path = directory / name
+        if not path.is_file():
+            raise PublishRefused(f"morph {older.id} -> {younger.id}: {path} is missing")
+        digests.append(asset_digest(path.read_bytes()))
+    return PublishedMorph(record=record, forward_digest=digests[0], backward_digest=digests[1])
 
 
 def _computed_morph(
