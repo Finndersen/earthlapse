@@ -40,7 +40,7 @@
  */
 
 import { useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 
 import { formatGeoTime, formatTimeRange } from '@/timeline'
@@ -64,24 +64,24 @@ import {
 } from './arcs'
 import {
   allCitiesAt,
-  CITY_LIMIT_ORB,
+  arrivingCitiesAt,
   cityEstimateRange,
   cityLocalPosition,
   declutterCities,
   newCityLabels,
-  selectCities,
   type CityAtTime,
   type CityLabel,
 } from './cities'
 import { srgbHexToLinear } from './color'
 import { smoothstep as easeSmoothstep } from './effects/math'
-import { drawnEmpireLabels, EmpireLabels } from './EmpireLabels'
+import { EmpireLabels } from './EmpireLabels'
 import {
   empireAreaLine,
   empireAtLonLat,
   formatEmpireSpan,
   type EmpireFrame,
   type EmpireIndex,
+  type EmpireLabel,
   type EmpireLineageSummary,
   type EmpireSnapshot,
 } from './empires'
@@ -437,7 +437,7 @@ const INHABITED_RADIUS_PX = 3.4
 const ARRIVAL_RING_RADIUS_PX = 4.2
 const RIPPLE_MAX_SCALE = 4
 const SCENE_MARKER_RADIUS_PX = 4.5
-/** A city dot's own alpha before `trailingFade` scales it down. */
+/** A city dot's own alpha before its `fade` scales it down. */
 const CITY_ALPHA = 0.92
 /** The location ring's radius as a multiple of the dot's. */
 const SCENE_RING_SCALE = 2.4
@@ -480,10 +480,10 @@ export function activationFor(
 
 /** The tooltip's "how to open this" line: only for a target with an event or an empire of its
  *  own, and only while activation is on (expanded). Worded for the gesture that showed it — a
- *  touch tap has already been spent showing the tooltip, so it asks for a second one. */
+ *  tapped tooltip is itself the button that opens the detail. */
 export function tooltipHintFor(target: GlobeHitTarget | null, viaTouch: boolean, activatable: boolean): string | null {
   if (!activatable || target === null || (target.eventId === null && target.lineage === undefined)) return null
-  return viaTouch ? 'Tap again for details ›' : 'Click for details ›'
+  return viaTouch ? 'Tap for details ›' : 'Click for details ›'
 }
 
 /** Population with a thousands separator — the attested figure, never the interpolated one the
@@ -622,14 +622,16 @@ export interface HumanCivilisationProps {
    *  presented crossfade — or `null` while their labels do not show (so never on the orb) or their
    *  geometry has not loaded. */
   empires?: { index: EmpireIndex; frame: EmpireFrame; geometry: TerritoryGeometry } | null
-  /** The empire labels' presented frames and cap, or `null` while no labels show. */
-  empireLabels?: { presented: Mix<EmpireFrame>; cap: number } | null
+  /** The empire labels' presented frames, or `null` while no labels show. */
+  empireLabels?: { presented: Mix<EmpireFrame> } | null
   /** The lineage whose detail panel is open, drawn highlighted like a hovered one. */
   selectedEmpire?: string | null
   /** Opens a lineage's detail panel from its territory or label. Acted on only while `expanded`. */
   onActivateEmpire?: (lineage: string) => void
   /** Told the hovered empire lineage, or `null`, each time it changes — never per pointermove. */
   onHoverEmpire?: (lineage: string | null) => void
+  /** Told whether a tooltip is showing, each time that changes. */
+  onTooltipChange?: (open: boolean) => void
 }
 
 export function HumanCivilisation({
@@ -653,6 +655,7 @@ export function HumanCivilisation({
   selectedEmpire = null,
   onActivateEmpire,
   onHoverEmpire,
+  onTooltipChange,
 }: HumanCivilisationProps) {
   const groupRef = useRef<THREE.Group>(null)
   const candidatesRef = useRef<readonly GlobeHitCandidate[]>([])
@@ -660,7 +663,12 @@ export function HumanCivilisation({
   const empireSurfaceRef = useRef<((point: GlobeEffectAnchor) => GlobeHitTarget | null) | null>(null)
   const onActivate = activationFor(expanded, onActivateEvent)
   const onActivateEmpireHere = activationFor(expanded, onActivateEmpire)
-  const { target: hovered, viaTouch } = useGlobeHitTest({
+  const {
+    target: hovered,
+    viaTouch,
+    dismiss: dismissTooltip,
+    activateShown,
+  } = useGlobeHitTest({
     candidatesRef,
     unfold,
     radius,
@@ -687,23 +695,30 @@ export function HumanCivilisation({
   // The open panel already shows everything this empire's tooltip would, and the tooltip would
   // sit over the card's top edge.
   const tooltipTarget = hovered !== null && hovered.lineage !== undefined && hovered.lineage === selectedEmpire ? null : hovered
+  const tooltipOpen = tooltipTarget !== null
+  useEffect(() => {
+    onTooltipChange?.(tooltipOpen)
+    return () => onTooltipChange?.(false)
+  }, [tooltipOpen, onTooltipChange])
+  const tooltipActivatable =
+    tooltipTarget !== null &&
+    (tooltipTarget.lineage !== undefined ? onActivateEmpireHere : tooltipTarget.eventId !== null ? onActivate : null) !== null
 
   // `CITY_DECLUTTER_MIN_SEPARATION_PX` as the object-space distance `declutterCities` compares
   // cities by, recomputed only when the camera crosses a zoom step.
   const minSeparationWorldUnits = useScreenSeparation(CITY_DECLUTTER_MIN_SEPARATION_PX, expanded)
 
-  // The orb stays a ranked top-N (decorative, ~130px, room for a handful of dots); expanded draws
-  // every city that clears the era-relative significance floor and the screen-space declutter
-  // (`cities.ts`'s `citySignificanceFloorAt`/`declutterCities`) — see `CITY_LIMIT_ORB` for why a
-  // fixed-size rank cull is wrong there.
+  // The orb shows only cities that just appeared (`arrivingCitiesAt`); expanded draws every city
+  // that clears the era-relative significance floor and the screen-space declutter
+  // (`cities.ts`'s `citySignificanceFloorAt`/`declutterCities`).
   const visibleCities = useMemo(() => {
     if (cities === null) return []
-    if (!expanded) return selectCities(cities, t, CITY_LIMIT_ORB)
+    if (!expanded) return arrivingCitiesAt(cities, t, cityLabelFadeWindowAt)
     const all = allCitiesAt(cities, t)
     return declutterCities(all, (city) => cityLocalPosition(city.feature, unfold), minSeparationWorldUnits)
-  }, [cities, t, expanded, unfold, minSeparationWorldUnits])
-  // A brief name tag for a city that just appeared — expanded only; the orb never has
-  // visibleCities. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
+  }, [cities, t, expanded, unfold, minSeparationWorldUnits, cityLabelFadeWindowAt])
+  // A brief name tag for a city that just appeared — expanded only; the orb shows the arrival as
+  // the dot itself. `newCityLabels` ranks by how recently each city appeared, so the cap falls on
   // the least-recent arrivals rather than the smallest ones.
   const cityLabels = useMemo(
     () => (expanded ? newCityLabels(visibleCities, t, cityLabelFadeWindowAt) : []),
@@ -776,10 +791,7 @@ export function HumanCivilisation({
         lon: city.feature.lon,
         radiusPx: city.radiusPx,
         color: CITY_RGB,
-        // `trailingFade` (cities.ts) fades a marker out over CITY_TRAILING_GRACE_T years past its
-        // own newest attested reading, rather than popping it away the instant it's excluded —
-        // see CITY_TRAILING_GRACE_T's own doc comment.
-        alpha: CITY_ALPHA * city.trailingFade,
+        alpha: CITY_ALPHA * city.fade,
         innerFraction: 0,
         pulse: 0,
       })
@@ -858,9 +870,9 @@ export function HumanCivilisation({
     candidatesRef.current = candidates
   }, [arrivals, visibleCities, t])
 
-  // The drawn labels' anchors, then the territory test; both only while `empires` is set.
-  const labelCap = empireLabels?.cap ?? 0
-  const empireWorldPerPx = useScreenSeparation(1, empireLabels !== null)
+  // The drawn labels' anchors, then the territory test; both only while `empires` is set. The
+  // labels are whichever `EmpireLabels` reports drawn on screen now, kept to the current frame.
+  const [drawnEmpireLabels, setDrawnEmpireLabels] = useState<readonly EmpireLabel[]>([])
   useEffect(() => {
     if (empires === null) {
       empireCandidatesRef.current = []
@@ -869,9 +881,9 @@ export function HumanCivilisation({
     }
     const { index, frame, geometry } = empires
     const labelCandidates: GlobeHitCandidate[] = []
-    for (const { label } of drawnEmpireLabels(frame, labelCap, unfold, empireWorldPerPx, highlightedLineages)) {
+    for (const label of drawnEmpireLabels) {
       const summary = index.lineages.get(label.lineage)
-      if (summary === undefined) continue
+      if (summary === undefined || !frame.snapshots.includes(label.snapshot)) continue
       labelCandidates.push({
         content: () => empireTarget(summary, label.snapshot, t),
         points: [{ lat: label.lat, lon: label.lon }],
@@ -886,7 +898,7 @@ export function HumanCivilisation({
       const summary = snapshot === null ? undefined : index.lineages.get(snapshot.lineage)
       return snapshot === null || summary === undefined ? null : empireTarget(summary, snapshot, t, point)
     }
-  }, [empires, labelCap, unfold, empireWorldPerPx, highlightedLineages, t])
+  }, [empires, drawnEmpireLabels, t])
 
   if (!enabled) return null
 
@@ -927,15 +939,18 @@ export function HumanCivilisation({
       {empireLabels !== null && (
         <EmpireLabels
           presented={empireLabels.presented}
-          cap={empireLabels.cap}
           unfold={unfold}
           radius={radius}
           highlight={highlightedLineages}
+          onDrawn={setDrawnEmpireLabels}
         />
       )}
       <GlobeTooltip
         target={tooltipTarget}
-        hint={tooltipHintFor(tooltipTarget, viaTouch, (tooltipTarget?.lineage !== undefined ? onActivateEmpireHere : onActivate) !== null)}
+        hint={tooltipHintFor(tooltipTarget, viaTouch, tooltipActivatable)}
+        pinned={viaTouch}
+        onOpen={tooltipActivatable ? activateShown : null}
+        onDismiss={dismissTooltip}
         unfold={unfold}
         radius={radius}
         sphereLift={MARKER_SPHERE_LIFT}

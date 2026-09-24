@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "caed192e7e76238b",
+  "buildId": "f447d94a8e318692",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2450,7 +2450,7 @@
       "surface": "globe",
       "dataKind": "territories",
       "timeDomain": [
-        124.0,
+        27.0,
         5425.0
       ],
       "source": "cliopatria",
@@ -2902,6 +2902,20 @@
       "citation": "Wikipedia, \"Levittown, New York\" and \"Interstate Highway System\" (both accessed 2026-09-15). Levittown built 1947-1951, 17,447 houses, peak rate 30 houses/day. Federal-Aid Highway Act of 1956 signed June 1956, authorising 40,000 miles of divided highway.\n"
     },
     {
+      "id": "indian-independence",
+      "label": "Independence of India and Pakistan",
+      "kind": "moment",
+      "tMin": 78.0,
+      "tMax": 78.0,
+      "t": 78.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "British rule in India ends on 15 August 1947 with the partition of the Raj into the independent dominions of India and Pakistan. Partition displaces an estimated 10-20 million people. It opens two decades in which most of Britain's colonies in Asia and Africa become independent.\n",
+      "citation": "Via Wikipedia \"Partition of India\" and \"Decolonisation of Africa\" (searched 2026-09-24): Indian Independence Act 1947, independence 14-15 August 1947; 10-20 million displaced.\n"
+    },
+    {
       "id": "transistor-invented",
       "label": "Transistor invented",
       "kind": "moment",
@@ -2989,6 +3003,20 @@
       "citation": "Fleming, A. (1929). \"On the antibacterial action of cultures of a penicillium, with special reference to their use in the isolation of B. influenzae.\" British Journal of Experimental Pathology, 10(3), 226-236 (received 10 May 1929, describing the culture-plate observation dated 3 September 1928).\n"
     },
     {
+      "id": "end-of-the-ottoman-empire",
+      "label": "End of the Ottoman Empire",
+      "kind": "moment",
+      "tMin": 103.0,
+      "tMax": 103.0,
+      "t": 103.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Defeated in the First World War and partitioned by the Allies, the Ottoman Empire ends when the Grand National Assembly in Ankara abolishes the sultanate on 1 November 1922. The Republic of Turkey is proclaimed the following year.\n",
+      "citation": "Via Wikipedia \"Abolition of the Ottoman sultanate\" and \"Republic of Turkey\" (searched 2026-09-24): sultanate abolished 1 November 1922; republic proclaimed 29 October 1923.\n"
+    },
+    {
       "id": "influenza-1918-pandemic",
       "label": "1918 influenza pandemic",
       "kind": "period",
@@ -3001,6 +3029,20 @@
       "importance": 0.6,
       "description": "An influenza pandemic spreads worldwide from February 1918 to April 1920, infecting an estimated third of the global population, some 500 million people. Death-toll estimates vary widely and are genuinely contested, from 17 million to 100 million, with 25-50 million most commonly cited — making it, by the low end of that range alone, deadlier than the First World War it overlaps.\n",
       "citation": "Wikipedia, \"1918 influenza pandemic\" (accessed 2026-09-18): February 1918 - April 1920; ~500 million infected (nearly a third of world population); deaths \"generally accepted\" at 25-50 million, with cited estimates ranging 17-100 million.\n"
+    },
+    {
+      "id": "russian-revolution",
+      "label": "Russian Revolution",
+      "kind": "moment",
+      "tMin": 108.0,
+      "tMax": 108.0,
+      "t": 108.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.55,
+      "description": "Amid the losses of the First World War, the February Revolution of 1917 forces Tsar Nicholas II to abdicate, ending the Russian Empire and three centuries of Romanov rule. The Bolsheviks seize power in the October Revolution later that year.\n",
+      "citation": "Via Wikipedia \"Russian Revolution\" and \"Nicholas II\" (searched 2026-09-24): abdication of Nicholas II, 15 March 1917 (2 March Old Style); October Revolution, 7 November 1917 (25 October Old Style).\n"
     },
     {
       "id": "world-war-i",
@@ -3058,6 +3100,20 @@
       "importance": 0.5,
       "description": "Henry Ford's Highland Park plant in Michigan introduces the moving assembly line for the Model T, cutting chassis assembly time from over twelve hours to 93 minutes by the following year. Combined with the internal combustion engine it puts on the road, the technique makes the automobile a mass-market product and becomes the template for 20th-century manufacturing.\n",
       "citation": "Wikipedia, \"Ford Model T\" (accessed 2026-09-15). Moving assembly line introduced 7 October 1913 at the Highland Park plant; assembly time cut from 12+ hours to 93 minutes by 1914.\n"
+    },
+    {
+      "id": "fall-of-the-qing",
+      "label": "Fall of the Qing dynasty",
+      "kind": "moment",
+      "tMin": 113.0,
+      "tMax": 113.0,
+      "t": 113.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "The Xinhai Revolution, which began with the Wuchang Uprising in October 1911, ends more than two thousand years of imperial rule in China. The six-year-old Xuantong Emperor, Puyi, abdicates on 12 February 1912, and the Republic of China takes the Qing's place.\n",
+      "citation": "Via Wikipedia \"1911 Revolution\" and \"Puyi\" (searched 2026-09-24): Wuchang Uprising, 10 October 1911; abdication edict of the Xuantong Emperor, 12 February 1912.\n"
     },
     {
       "id": "haber-bosch-process",
@@ -5925,7 +5981,7 @@
       "title": "Curated Earth History Events",
       "citation": "Every event in data/events.yaml carries its own specific citation. This manifest's citation covers only the ICS International Chronostratigraphic Chart v2024/12, stratigraphy.org, used as a boundary-dating reference.",
       "licence": "CC0 (Wikidata candidate pool, unused here) + ICS chart free-for-research/non-commercial-use-with-attribution (not modified beyond resizing) + per-event literature citations retain their own copyright, paraphrased not copied — see README.md",
-      "url": "https://stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf"
+      "url": ""
     },
     {
       "sourceId": "globe-regimes",

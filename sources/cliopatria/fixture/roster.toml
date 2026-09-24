@@ -26,8 +26,8 @@ members = [
 id = "montenegro"
 name = "Montenegro"
 colour_slot = 2
-reason = "Montenegro: abutting windows, one straddling the 1900 CE cutoff and one wholly after it"
+reason = "Montenegro: abutting windows, one straddling the member's `to` and one wholly after it"
 description = "Montenegro was a principality, and later kingdom, in the Balkans."
 members = [
-  { polity = "Montenegro" },
+  { polity = "Montenegro", to = 1900 },
 ]

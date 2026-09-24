@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { EARTH_FORMATION } from '@/types/layer'
 
-import { nearestNeighbourCheckpoint, nearestStepTarget, visibleCheckpoints, type TimelineCheckpoint } from './checkpoints'
+import { nearestNeighbourCheckpoint, nearestStepTarget, transportStepTarget, visibleCheckpoints, type TimelineCheckpoint } from './checkpoints'
 import type { TimeWindow } from './scale'
 
 const FULL_DOMAIN: TimeWindow = [0, EARTH_FORMATION]
@@ -68,5 +68,18 @@ describe('nearestStepTarget', () => {
       t = next as number
     }
     expect(visited).toEqual([20000, 9000, 0])
+  })
+})
+
+describe('transportStepTarget', () => {
+  const checkpoints = [checkpoint('pleistocene-steppe', 20000)]
+
+  it('steps to a scene in scenes mode and by one second of playback in steady mode, clamped to the window', () => {
+    expect(transportStepTarget(checkpoints, FULL_DOMAIN, 5000, 'back', { mode: 'scenes', yearsPerSecond: 100 })).toBe(20000)
+    const steady = { mode: 'steady', yearsPerSecond: 100 } as const
+    expect(transportStepTarget(checkpoints, FULL_DOMAIN, 5000, 'back', steady)).toBe(5100)
+    expect(transportStepTarget(checkpoints, FULL_DOMAIN, 5000, 'forward', steady)).toBe(4900)
+    expect(transportStepTarget(checkpoints, FULL_DOMAIN, 50, 'forward', steady)).toBe(0)
+    expect(transportStepTarget(checkpoints, FULL_DOMAIN, 0, 'forward', steady)).toBeUndefined()
   })
 })

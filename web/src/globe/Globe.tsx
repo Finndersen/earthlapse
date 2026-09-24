@@ -44,7 +44,7 @@ import {
   type EmpireFrame,
   type EmpireIndex,
 } from './empires'
-import { EMPIRE_LABEL_CAP_DESKTOP, EMPIRE_LABEL_CAP_PHONE, selectEmpireTier } from './empireStyle'
+import { selectEmpireTier } from './empireStyle'
 import {
   createEmpireTextureCache,
   empireTextureKey,
@@ -81,12 +81,15 @@ import {
 } from './blend'
 import {
   budgetedDpr,
+  carriedDistance,
   centerOffset,
   clampedDollyDistance,
   clampPanTarget,
   fitDistance,
+  heightForScale,
   isSubFrameOf,
   mapHasPanRoom,
+  panWindow,
   sphereFitDistance,
   sphereRotateSpeedForDistance,
   sphereSilhouetteFraction,
@@ -94,7 +97,9 @@ import {
   subFrameFovY,
   unfoldCameraPose,
   zoomRatio,
+  type FrameSize,
   type UnfoldViewEnds,
+  type ZoomLimits,
 } from './camera'
 import { selectBasemapTier, supportsBasemapT1, useIsPhoneViewport } from './deviceTier'
 import { useGlobeEffects, type GlobeEffectUniforms } from './effects'
@@ -120,7 +125,7 @@ import {
   RIM_VERTEX_SHADER,
 } from './shaders'
 import { PLACEHOLDER_TEXTURE, setMaxAnisotropy } from './textureCache'
-import { useGlobeAutoRotationY } from './useGlobeAutoRotation'
+import { useGlobeAutoRotationY, type GlobeDriftSignals } from './useGlobeAutoRotation'
 import { useGlobeTexturePair, type GlobeTextureCache } from './useGlobeTexturePair'
 import { useUnfold } from './unfoldAnimation'
 
@@ -216,8 +221,12 @@ const MAP_HALF_HEIGHT = EQUAL_EARTH_HALF_HEIGHT * GLOBE_RADIUS
  *  the sphere's own margin (`SPHERE_FIT_MARGIN`) because the map has further to make up against
  *  the same gap-limited height, while still leaving a visible gap at the panel's own edge. */
 const MAP_FIT_MARGIN = 0.03
-/** How far past the "whole map fits" distance a viewer can zoom in, as a fraction of it. */
-const MAP_MIN_ZOOM_FRACTION = 0.12
+/** The closest either mode zooms: one globe radius spanning this many CSS px, about 1.5 px per
+ *  texel of the 4096-px-wide T1 basemap, past which the imagery only blurs. */
+const MAX_ZOOM_PX_PER_RADIUS = 1000
+/** How far inside its default framing the camera must sit to count as zoomed in, which holds the
+ *  ambient drift (`GlobeDriftSignals`); absorbs the fit frame settling a few px after a resize. */
+const ZOOMED_IN_TOLERANCE = 0.02
 /** Extra headroom around the *expanded* sphere's own silhouette (`camera.ts`'s
  *  `sphereFitDistance`) — same value and meaning as `MAP_FIT_MARGIN` (tightened alongside it for
  *  the same "fill the real, tight gap" reason), kept as its own named constant since the two
@@ -250,9 +259,10 @@ const MIN_SURFACE_HEIGHT = 0.01 * GLOBE_RADIUS
 /**
  * What carries across a sphere <-> map switch: the geographic point at the centre of the view,
  * and how far each mode is zoomed as a ratio of its own default framing (`camera.ts`'s
- * `zoomRatio`) — so zooming in on India and switching to the map opens the map zoomed in on India
- * by the same amount, and switching back returns the sphere to it. `departed` names the end the
- * current morph left from, whose pose is kept exactly as measured.
+ * `zoomRatio`), the destination's derived from the source's by `carriedDistance` when the switch
+ * starts — so zooming in on India and switching to the map opens the map zoomed in on India, and
+ * switching back returns the sphere to it. `departed` names the end the current morph left from,
+ * whose pose is kept exactly as measured.
  */
 interface SphereMapView {
   focus: GlobeEffectAnchor
@@ -302,10 +312,7 @@ const NOOP_POINTER_HANDLER = (): void => {}
 /** A measured `.orbFitFrameSphere`/`.orbFitFrameMap` rectangle's size (`Globe.module.css`'s own
  *  doc comment) — width/height only; `GlobeCameraControls` never needs the raw top/left, just the
  *  aspect and the height ratio `subFrameFovY` (`camera.ts`) wants. */
-interface FitFrameSize {
-  width: number
-  height: number
-}
+type FitFrameSize = FrameSize
 
 /** `Globe.tsx`'s own DOM-layer measurement of the two invisible fit-target rectangles plus the
  *  pixel shift (`centerOffset`, `camera.ts`) needed to re-centre the rendered sphere/map
@@ -405,6 +412,8 @@ export interface GlobeProps {
   onActivateEmpire?: (lineage: string) => void
   /** The lineage whose detail is open, if any; its label draws highlighted. */
   selectedEmpire?: string | null
+  /** An event's detail card is open; like an open empire card, it holds the ambient drift. */
+  eventDetailOpen?: boolean
 }
 
 /** Whether `t` falls within the arrival layer's own domain — from the oldest arrival's dating
@@ -457,6 +466,7 @@ export function Globe({
   onActivateEvent,
   onActivateEmpire,
   selectedEmpire = null,
+  eventDetailOpen = false,
 }: GlobeProps) {
   // One throwaway canvas/context answers both "does WebGL work at all" and (below) "can this
   // GPU hold a T1 basemap texture" — `probeWebgl`'s own doc comment has the full story on why
@@ -598,7 +608,9 @@ export function Globe({
     empireCacheRef.current = empireCache
     return () => empireCache?.clear()
   }, [empireCache])
-  const empireTier = selectEmpireTier(expanded, t1Available)
+  const empireTier = selectEmpireTier(t1Available)
+  // Expanded only (`EmpireTier`): the orb draws no empires.
+  const empiresOn = humanOn && expanded
   const empireFill = overlayKind === null
   // The hovered lineage, else the one whose panel is open, is emphasised in the texture itself
   // (expanded only). Hover reaches here settled (`EMPIRE_HOVER_SETTLE_MS`), so the painter runs
@@ -618,20 +630,20 @@ export function Globe({
     },
     [],
   )
-  const empireHighlight = expanded && humanOn ? (hoveredEmpire ?? selectedEmpire) : null
+  const empireHighlight = empiresOn ? (hoveredEmpire ?? selectedEmpire) : null
   const empireBlend = useMemo((): GlobeBlend | null => {
-    if (empireCache === null || !humanOn) return null
+    if (empireCache === null || !empiresOn) return null
     const keyFor = (frame: EmpireFrame): string =>
       empireTextureKey({ frameKey: frame.key, tier: empireTier, fill: empireFill, highlight: empireHighlightIn(frame, empireHighlight) })
     return { beforeUrl: keyFor(presentedEmpires.from), afterUrl: keyFor(presentedEmpires.to), alpha: presentedEmpires.mix }
-  }, [empireCache, humanOn, presentedEmpires, empireTier, empireFill, empireHighlight])
+  }, [empireCache, empiresOn, presentedEmpires, empireTier, empireFill, empireHighlight])
   // A pair bound before the layer was hidden belongs to whatever `t` it was hidden at, so each
   // hide starts a new epoch in `sourceKey`: re-showing the layer reads as nothing bound until the
   // current frame's pair loads, rather than drawing the old territories under current labels.
   const [empireEpoch, setEmpireEpoch] = useState(0)
   useEffect(() => {
-    if (!humanOn) setEmpireEpoch((epoch) => epoch + 1)
-  }, [humanOn])
+    if (!empiresOn) setEmpireEpoch((epoch) => epoch + 1)
+  }, [empiresOn])
   const empirePair = useGlobeTexturePair(empireBlend, [], {
     enabled: webgl,
     cache: empireCache ?? NO_EMPIRE_CACHE,
@@ -639,13 +651,9 @@ export function Globe({
     sourceKey: `${empires?.data.geometry ?? ''}|${empireEpoch}`,
   })
   // Outside the domain the presented set is empty, so the texture itself fades the layer out.
-  const empireStrength = humanOn && empirePair.texturesReady ? 1 : 0
-  const showEmpireLabels = expanded && humanOn && empiresInDomain && empirePair.texturesReady
-  const empireLabelCap = isPhoneViewport ? EMPIRE_LABEL_CAP_PHONE : EMPIRE_LABEL_CAP_DESKTOP
-  const empireLabels = useMemo(
-    () => (showEmpireLabels ? { presented: presentedEmpires, cap: empireLabelCap } : null),
-    [showEmpireLabels, presentedEmpires, empireLabelCap],
-  )
+  const empireStrength = empiresOn && empirePair.texturesReady ? 1 : 0
+  const showEmpireLabels = empiresOn && empiresInDomain && empirePair.texturesReady
+  const empireLabels = useMemo(() => (showEmpireLabels ? { presented: presentedEmpires } : null), [showEmpireLabels, presentedEmpires])
   // The hit test answers for what is drawn at `t`, expanded only, like the labels.
   const empireHits = useMemo(
     () => (showEmpireLabels && empires !== null && empireGeometry !== null ? { index: empires, frame: empireFrame, geometry: empireGeometry } : null),
@@ -887,6 +895,10 @@ export function Globe({
   // reported back the same way `caption`/`onWebglContextRestored` already cross that boundary.
   const cameraApiRef = useRef<GlobeCameraApi>(null)
   const sphereRotationYRef = useRef(0)
+  const driftSignalsRef = useRef<GlobeDriftSignals>({ interacted: false, zoomedIn: false, tooltipOpen: false })
+  const onTooltipChange = useCallback((open: boolean) => {
+    driftSignalsRef.current.tooltipOpen = open
+  }, [])
   const [zoomBounds, setZoomBounds] = useState<ZoomBounds>({ canZoomIn: true, canZoomOut: true })
   const expandedDpr = useExpandedCanvasDpr(expanded)
 
@@ -956,6 +968,9 @@ export function Globe({
               reducedMotion={reducedMotion}
               focusLon={sceneFocusLon}
               sphereRotationYRef={sphereRotationYRef}
+              expanded={expanded}
+              detailOpen={selectedEmpire !== null || eventDetailOpen}
+              driftSignalsRef={driftSignalsRef}
             >
               <GlobeSphere
                 beforeTex={pair.beforeTex}
@@ -1010,6 +1025,7 @@ export function Globe({
                 selectedEmpire={selectedEmpire}
                 onActivateEmpire={onActivateEmpire}
                 onHoverEmpire={onHoverEmpire}
+                onTooltipChange={onTooltipChange}
               />
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />
@@ -1024,6 +1040,7 @@ export function Globe({
               centerOffsetPx={fitMeasurements.centerOffsetPx}
               onZoomBoundsChange={setZoomBounds}
               sphereRotationYRef={sphereRotationYRef}
+              driftSignalsRef={driftSignalsRef}
             />
           </Canvas>
         ) : (
@@ -1188,9 +1205,10 @@ interface ZoomControlsProps {
   groupRef: RefObject<HTMLDivElement | null>
 }
 
-/** Zoom in/out — a vertical pill of two buttons, same
- *  hairline/pill idiom as `ViewModeToggle`/`Legend`'s own toggles rather than a new button
- *  language (`Globe.module.css`'s `.zoomGroup`/`.zoomButton` doc comment). Both buttons call
+/** Zoom out/in — a horizontal pill of two buttons in every layout, `−` left of `+` (the order a
+ *  number line and a slider read in), same hairline/pill idiom as `ViewModeToggle`/`Legend`'s own
+ *  toggles rather than a new button language (`Globe.module.css`'s `.zoomGroup`/`.zoomButton`
+ *  doc comment). Both buttons call
  *  straight into `GlobeCameraControls`'s imperative `zoomIn`/`zoomOut` (via `Globe`'s
  *  `cameraApiRef`), which dollies the *same* camera distance scroll/pinch already drives through
  *  the *same* `minDistance`/`maxDistance` clamp — never a second, parallel zoom state. Works
@@ -1201,12 +1219,12 @@ interface ZoomControlsProps {
 function ZoomControls({ onZoomIn, onZoomOut, canZoomIn, canZoomOut, groupRef }: ZoomControlsProps) {
   return (
     <div ref={groupRef} className={styles.zoomGroup}>
-      <button type="button" className={styles.zoomButton} onClick={onZoomIn} disabled={!canZoomIn} aria-label="Zoom in">
-        <MagnifierIcon glyph="+" />
-      </button>
-      <div className={styles.zoomDivider} aria-hidden="true" />
       <button type="button" className={styles.zoomButton} onClick={onZoomOut} disabled={!canZoomOut} aria-label="Zoom out">
         <MagnifierIcon glyph="−" />
+      </button>
+      <div className={styles.zoomDivider} aria-hidden="true" />
+      <button type="button" className={styles.zoomButton} onClick={onZoomIn} disabled={!canZoomIn} aria-label="Zoom in">
+        <MagnifierIcon glyph="+" />
       </button>
     </div>
   )
@@ -1251,6 +1269,9 @@ interface GlobeCameraControlsProps {
   /** The sphere's rotation at `unfold = 0` (`GlobeRotatingGroup`), read to find which point of
    *  the globe the camera faces. */
   sphereRotationYRef: MutableRefObject<number>
+  /** Written with every drag, pinch, wheel or zoom-button press, and with whether the view is
+   *  zoomed in past its default framing; the ambient drift reads both. */
+  driftSignalsRef: MutableRefObject<GlobeDriftSignals>
 }
 
 /**
@@ -1268,9 +1289,9 @@ interface GlobeCameraControlsProps {
  * (tight, `SPHERE_FIT_MARGIN`) or back to `CAMERA_DISTANCE` (loose, halo-friendly) respectively.
  *
  * **One view across the sphere <-> map morph.** Switching mode carries the view rather than
- * resetting it: the point at the centre of the view, and the zoom as a ratio of each mode's own
- * default framing (`SphereMapView`). Zoomed in on India on the sphere, the map opens zoomed in on
- * India by the same amount; folding back returns there. While `unfold` is between its ends, every
+ * resetting it: the point at the centre of the view, and the zoom (`SphereMapView`, sized by
+ * `camera.ts`'s `carriedDistance` inside the destination's own zoom range). Zoomed in on India on
+ * the sphere, the map opens zoomed in on India; folding back returns there. While `unfold` is between its ends, every
  * frame places the camera with `camera.ts`'s `unfoldCameraPose` — a pure function of `unfold`, so
  * a toggle reversed mid-morph runs back along the same path — and on the frame it settles, lands
  * on that function's own end pose exactly. Once settled, it stops touching `camera.position`:
@@ -1318,9 +1339,9 @@ interface GlobeCameraControlsProps {
  * invisible reference rectangles) let `idleSphereDistance`/`mapFit` below fit against that
  * rectangle instead of the canvas's own now-much-larger one, and a `camera.setViewOffset` re-
  * centres the render on it — see `idleSphereDistance`'s own comment and the `setViewOffset` effect
- * for the maths. Everything else in this component (the pan clamp, the mid-morph mesh fit, the
- * cursor's pan-room check) keeps reasoning about the *real* canvas frustum
- * (`aspect`/`fovYRadians`, unchanged) — only the idle target distances are special-cased.
+ * for the maths. The pan clamp and the cursor's pan-room check use the union of both frames
+ * (`panWindow`), the part of the canvas no chrome covers; the mid-morph mesh fit keeps the whole
+ * canvas frustum (`aspect`/`fovYRadians`).
  *
  * **The imperative `zoomIn`/`zoomOut` handle.** `ZoomControls` (`Globe.tsx`) is
  * plain DOM, outside this react-three-fiber tree, so it can't touch `camera`/`controlsRef`
@@ -1331,7 +1352,17 @@ interface GlobeCameraControlsProps {
  * `onCaptionChange` already uses for the caption text.
  */
 const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>(function GlobeCameraControls(
-  { expanded, mapMode, unfold, sphereFit: sphereFitFrame, mapFit: mapFitFrame, centerOffsetPx, onZoomBoundsChange, sphereRotationYRef },
+  {
+    expanded,
+    mapMode,
+    unfold,
+    sphereFit: sphereFitFrame,
+    mapFit: mapFitFrame,
+    centerOffsetPx,
+    onZoomBoundsChange,
+    sphereRotationYRef,
+    driftSignalsRef,
+  },
   ref,
 ) {
   const controlsRef = useRef<ComponentRef<typeof OrbitControls> | null>(null)
@@ -1346,9 +1377,8 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   // (`camera.ts`) treats that smaller rectangle as if it were the camera's *whole* frustum at the
   // same distance, so `sphereFitDistance`/`fitDistance` below compute the distance that makes the
   // object fill *that* rectangle — the exact size it filled back when the canvas *was* that
-  // rectangle — while `aspect`/`fovYRadians` above (unchanged) keep governing everything that
-  // must still reason about the *real*, full-canvas frustum: the pan clamp, the mid-morph mesh
-  // fit, and the cursor's pan-room check, all further down. Falls back to the
+  // rectangle — while `aspect`/`fovYRadians` above (unchanged) keep governing the mid-morph mesh
+  // fit further down, which reasons about the whole canvas. Falls back to the
   // real canvas aspect/FOV when a frame hasn't been measured yet (`null`, before the first
   // `ResizeObserver` pass in `Globe.tsx`) — a one-frame full-size fallback is preferable to a
   // divide-by-zero or NaN distance.
@@ -1383,6 +1413,24 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     ? sphereFitDistance(GLOBE_RADIUS, sphereFrameAspect, sphereFovY, SPHERE_FIT_MARGIN) / SPHERE_DEFAULT_SCALE
     : CAMERA_DISTANCE
   const settled = unfold === (mapMode ? 1 : 0)
+
+  // Each mode's zoom range, shared by the `OrbitControls` props below, `zoomBy`,
+  // `reportZoomBounds` and the sphere <-> map carry — one definition of "how far this mode can
+  // zoom" that scroll/pinch, the zoom buttons and a mode switch can never disagree about. Both
+  // modes share one closest scale (`MAX_ZOOM_PX_PER_RADIUS`); the map cannot zoom out past its fit.
+  const closestDistance = GLOBE_RADIUS + Math.max(MIN_SURFACE_HEIGHT, heightForScale(MAX_ZOOM_PX_PER_RADIUS, size.height, fovYRadians))
+  const sphereLimits: ZoomLimits = { min: expanded ? closestDistance : 0, idle: idleSphereDistance, max: Infinity }
+  const mapLimits: ZoomLimits = { min: Math.min(closestDistance, mapFit), idle: mapFit, max: mapFit }
+  const zoomLimits = mapMode ? mapLimits : sphereLimits
+  const zoomMinDistance = zoomLimits.min
+  const zoomMaxDistance = zoomLimits.max
+
+  // Pan is clamped against the part of the canvas no chrome covers (`camera.ts`'s `panWindow`),
+  // so the map's edges can always be brought fully into view.
+  const readyFrames = [sphereFrameReady ? sphereFitFrame : null, mapFrameReady ? mapFitFrame : null].filter(
+    (frame): frame is FitFrameSize => frame !== null,
+  )
+  const mapPanWindow = panWindow(readyFrames, size, fovYRadians)
 
   // Re-centres the rendered sphere/map on the fit frame's own centre rather than the full
   // canvas's, as a lens-shift `setViewOffset` rather than a camera-position offset: a
@@ -1431,21 +1479,23 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       const controls = controlsRef.current
       const target = controls?.target ?? new THREE.Vector3()
       const height = Math.max(MIN_SURFACE_HEIGHT, camera.position.distanceTo(target) - GLOBE_RADIUS)
+      const distance = height + GLOBE_RADIUS
       if (mapMode) {
         const focus = sphereViewFocus([camera.position.x, camera.position.y, camera.position.z], sphereRotationYRef.current)
-        const zoom = zoomRatio(idleSphereDistance, height + GLOBE_RADIUS)
+        const zoom = zoomRatio(idleSphereDistance, distance)
         sphereReturnRef.current = { focus, zoom }
         mapAdjustedRef.current = false
-        viewRef.current = { focus, departed: 'sphere', departedHeight: height, departedMapTarget: [0, 0], sphereZoom: zoom, mapZoom: zoom }
+        const mapZoom = zoomRatio(mapFit, carriedDistance(distance, zoom, mapLimits))
+        viewRef.current = { focus, departed: 'sphere', departedHeight: height, departedMapTarget: [0, 0], sphereZoom: zoom, mapZoom }
       } else {
-        const mapZoom = zoomRatio(mapFit, height + GLOBE_RADIUS)
+        const mapZoom = zoomRatio(mapFit, distance)
         const sphereReturn = mapAdjustedRef.current ? null : sphereReturnRef.current
         viewRef.current = {
           focus: sphereReturn?.focus ?? mapToLonLat(target.x, target.y, GLOBE_RADIUS),
           departed: 'map',
           departedHeight: height,
           departedMapTarget: [target.x, target.y],
-          sphereZoom: sphereReturn?.zoom ?? mapZoom,
+          sphereZoom: sphereReturn?.zoom ?? zoomRatio(idleSphereDistance, carriedDistance(distance, mapZoom, sphereLimits)),
           mapZoom,
         }
       }
@@ -1501,16 +1551,18 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
   const unfoldViewEnds = (): UnfoldViewEnds => {
     const view = viewRef.current
     const sphereHeight =
-      view.departed === 'sphere' ? view.departedHeight : Math.max(MIN_SURFACE_HEIGHT, idleSphereDistance / view.sphereZoom - GLOBE_RADIUS)
-    const mapMaxHeight = mapFit - GLOBE_RADIUS
-    const mapMinHeight = Math.max(MIN_SURFACE_HEIGHT, mapFit * MAP_MIN_ZOOM_FRACTION - GLOBE_RADIUS)
+      view.departed === 'sphere'
+        ? view.departedHeight
+        : Math.max(MIN_SURFACE_HEIGHT, sphereLimits.min - GLOBE_RADIUS, idleSphereDistance / view.sphereZoom - GLOBE_RADIUS)
     const mapHeight =
-      view.departed === 'map' ? view.departedHeight : Math.min(mapMaxHeight, Math.max(mapMinHeight, mapFit / view.mapZoom - GLOBE_RADIUS))
+      view.departed === 'map'
+        ? view.departedHeight
+        : Math.min(mapLimits.max, Math.max(mapLimits.min, mapFit / view.mapZoom)) - GLOBE_RADIUS
     const [focusX, focusY] = lonLatToMap(view.focus, GLOBE_RADIUS)
     const mapTarget =
       view.departed === 'map'
         ? view.departedMapTarget
-        : clampPanTarget([focusX, focusY], mapHeight, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+        : clampPanTarget([focusX, focusY], mapHeight, mapPanWindow.aspect, mapPanWindow.fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
     return {
       focus: view.focus,
       globeRotationY: sphereRotationYRef.current,
@@ -1531,12 +1583,9 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     // against, so a drag keeps tracking the surface 1:1 as the viewer's own zoom moves the camera
     // away from it — captured once per drag would leave the old distance-independent runaway
     // feel for the rest of a zoom-then-rotate gesture.
-    controls.rotateSpeed = sphereRotateSpeedForDistance(
-      controls.target.distanceTo(camera.position),
-      GLOBE_RADIUS,
-      idleSphereDistance,
-      DEFAULT_ROTATE_SPEED,
-    )
+    const distance = controls.target.distanceTo(camera.position)
+    controls.rotateSpeed = sphereRotateSpeedForDistance(distance, GLOBE_RADIUS, idleSphereDistance, DEFAULT_ROTATE_SPEED)
+    driftSignalsRef.current.zoomedIn = distance < zoomLimits.idle * (1 - ZOOMED_IN_TOLERANCE)
     const applyPose = (position: readonly [number, number, number], target: readonly [number, number, number]): void => {
       controls.target.set(target[0], target[1], target[2])
       camera.position.set(position[0], position[1], position[2])
@@ -1578,12 +1627,6 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     applyPose(position, target)
   })
 
-  // Shared by the `OrbitControls` props below, `zoomBy` and `reportZoomBounds` — one definition
-  // of "how far can this mode's zoom go" that scroll/pinch, the zoom buttons and their own
-  // disabled state can never disagree about.
-  const zoomMinDistance = mapMode ? mapFit * MAP_MIN_ZOOM_FRACTION : 0
-  const zoomMaxDistance = mapMode ? mapFit : Infinity
-
   /** Panning is enabled in map mode (`camera.ts`'s `mapHasPanRoom`), but has zero range at the
    *  settled default view (`mapFit`'s own margin already shows slightly *more* than the whole
    *  map), so `grab` would be misleading there. Written directly onto the canvas element's own
@@ -1601,7 +1644,10 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     const controls = controlsRef.current
     if (controls === null) return
     const distance = controls.target.distanceTo(camera.position)
-    gl.domElement.style.cursor = mapHasPanRoom(distance, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT) ? 'grab' : ''
+    const planeDistance = distance - GLOBE_RADIUS
+    gl.domElement.style.cursor = mapHasPanRoom(planeDistance, mapPanWindow.aspect, mapPanWindow.fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+      ? 'grab'
+      : ''
   }
 
   /** Reports whether the zoom buttons (`ZoomControls`) can still do anything —
@@ -1639,7 +1685,14 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       // would read as `GLOBE_RADIUS` further away than the plane actually is, letting a viewer
       // pan slightly past the map's true edge.
       const planeDistance = camera.position.distanceTo(controls.target) - GLOBE_RADIUS
-      const [x, y] = clampPanTarget([controls.target.x, controls.target.y], planeDistance, aspect, fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+      const [x, y] = clampPanTarget(
+        [controls.target.x, controls.target.y],
+        planeDistance,
+        mapPanWindow.aspect,
+        mapPanWindow.fovYRadians,
+        MAP_HALF_WIDTH,
+        MAP_HALF_HEIGHT,
+      )
       if (x !== controls.target.x || y !== controls.target.y) {
         camera.position.x += x - controls.target.x
         camera.position.y += y - controls.target.y
@@ -1666,7 +1719,7 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `updateCursor`/`reportZoomBounds`
     // are redefined every render (they close over `controlsRef`/`camera`/`gl`, not memoized); the
     // dependency list below is deliberately just their real *inputs*, not the functions themselves.
-  }, [mapMode, aspect, fovYRadians, zoomMinDistance, zoomMaxDistance])
+  }, [mapMode, mapPanWindow.aspect, mapPanWindow.fovYRadians, zoomMinDistance, zoomMaxDistance])
 
   /** One press of `ZoomControls`' `+`/`−` — dollies `camera.position` toward or
    *  away from `controls.target` by `factor`, clamped through the exact same
@@ -1680,6 +1733,7 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
     if (controls === null || !settled) return
     const distance = controls.target.distanceTo(camera.position)
     if (distance <= 1e-6) return
+    driftSignalsRef.current.interacted = true
     if (mapMode) mapAdjustedRef.current = true
     const nextDistance = clampedDollyDistance(distance, factor, zoomMinDistance, zoomMaxDistance)
     camera.position.sub(controls.target).multiplyScalar(nextDistance / distance).add(controls.target)
@@ -1705,6 +1759,7 @@ const GlobeCameraControls = forwardRef<GlobeCameraApi, GlobeCameraControlsProps>
       maxDistance={zoomMaxDistance}
       onChange={onControlsChange}
       onStart={() => {
+        driftSignalsRef.current.interacted = true
         if (mapMode) mapAdjustedRef.current = true
       }}
       // `OrbitControls`'s own default `mouseButtons`/`touches` map the primary drag gesture (LEFT
@@ -1746,6 +1801,9 @@ interface GlobeRotatingGroupProps {
   focusLon: number | null
   /** See `GlobeRotationOptions.sphereRotationYRef`. */
   sphereRotationYRef: MutableRefObject<number>
+  expanded: boolean
+  detailOpen: boolean
+  driftSignalsRef: MutableRefObject<GlobeDriftSignals>
   children: ReactNode
 }
 
@@ -1763,9 +1821,9 @@ interface GlobeRotatingGroupProps {
  * `PoleAxisMarkers` deliberately stays *outside* this group (its own doc comment) — both poles
  * sit on the rotation axis itself, so spinning them is a no-op not worth the extra nesting.
  */
-function GlobeRotatingGroup({ unfold, reducedMotion, focusLon, sphereRotationYRef, children }: GlobeRotatingGroupProps) {
+function GlobeRotatingGroup({ children, ...rotation }: GlobeRotatingGroupProps) {
   const groupRef = useRef<THREE.Group>(null)
-  const rotationYRef = useGlobeAutoRotationY({ unfold, reducedMotion, focusLon, sphereRotationYRef })
+  const rotationYRef = useGlobeAutoRotationY(rotation)
   useFrame(() => {
     const group = groupRef.current
     if (group !== null) group.rotation.y = rotationYRef.current

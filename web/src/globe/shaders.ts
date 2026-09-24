@@ -6,6 +6,17 @@
 import { BASEMAP_GRADE_GAMMA, BASEMAP_GRADE_SATURATION, BASEMAP_GRADE_SCALE } from './blend'
 import { CLEARED_LAND_RAMP_GLSL } from './clearedLand'
 import { DENSITY_RAMP_GLSL } from './density'
+import {
+  EMPIRE_CASING,
+  EMPIRE_CASING_WIDTH_PX,
+  EMPIRE_DIM_ALPHA,
+  EMPIRE_FILL_ALPHA,
+  EMPIRE_HIGHLIGHT_FILL_ALPHA,
+  EMPIRE_HIGHLIGHT_LINE_SCALE,
+  EMPIRE_LINE_WIDTH_PX,
+  EMPIRE_PALETTE,
+} from './empireStyle'
+import { EMPIRE_BANDS, EMPIRE_PIXEL_RATIO_CODE, EMPIRE_SLOT_CODE_STEP } from './empireTexture'
 import { glslFloat } from './glsl'
 import { overlayKindUniform } from './overlay'
 import { ICE_SHEETS_GLSL } from './ice/iceSheets'
@@ -18,6 +29,120 @@ const OVERLAY_KIND_CLEARED_LAND_VALUE = overlayKindUniform('cleared_land')
 if (!Number.isInteger(OVERLAY_KIND_CLEARED_LAND_VALUE)) {
   throw new Error('overlayKindUniform must return an integer for a GLSL int constant')
 }
+
+// empireOver unpacks eight slot channels from the texture's bands (empireTexture.ts).
+if (EMPIRE_PALETTE.length !== 8) throw new Error('the empire coverage texture packs exactly eight palette slots')
+
+/** A `#rrggbb` sRGB colour as a linear-light GLSL `vec3`, the space the globe composites in. */
+function linearVec3(hex: string): string {
+  const channels = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  return `vec3(${channels.map((c) => glslFloat(Number(c.toFixed(5)))).join(', ')})`
+}
+
+/**
+ * The empire territories' fills and borders over `base`, from one coverage texture
+ * (`empireTexture.ts` has the layout). Each palette slot's border is the half-way contour of its
+ * coverage; `(a - 0.5) / |grad a|`, the gradient taken in screen space, is the fragment's signed
+ * distance to it in device pixels (positive inside), so a line of fixed pixel width sits on it
+ * whether a texel spans a tenth of a pixel or ten. The fill is cut at the same contour. Order
+ * matches a painter: every fill, every casing, every line, then the highlighted lineage's.
+ */
+const EMPIRE_GLSL = /* glsl */ `
+const vec3 EMPIRE_COLOURS[${EMPIRE_PALETTE.length}] = vec3[](${EMPIRE_PALETTE.map(linearVec3).join(', ')});
+const vec3 EMPIRE_CASING_COLOUR = ${linearVec3(EMPIRE_CASING.colour)};
+const float EMPIRE_CASING_ALPHA = ${glslFloat(EMPIRE_CASING.alpha)};
+const float EMPIRE_LINE_WIDTH_PX = ${glslFloat(EMPIRE_LINE_WIDTH_PX)};
+const float EMPIRE_CASING_WIDTH_PX = ${glslFloat(EMPIRE_CASING_WIDTH_PX)};
+const float EMPIRE_FILL_ALPHA = ${glslFloat(EMPIRE_FILL_ALPHA)};
+const float EMPIRE_HIGHLIGHT_FILL_ALPHA = ${glslFloat(EMPIRE_HIGHLIGHT_FILL_ALPHA)};
+const float EMPIRE_HIGHLIGHT_LINE_SCALE = ${glslFloat(EMPIRE_HIGHLIGHT_LINE_SCALE)};
+const float EMPIRE_DIM_ALPHA = ${glslFloat(EMPIRE_DIM_ALPHA)};
+const float EMPIRE_BANDS = ${glslFloat(EMPIRE_BANDS)};
+const float EMPIRE_SLOT_CODE_STEP = ${glslFloat(EMPIRE_SLOT_CODE_STEP)};
+const float EMPIRE_PIXEL_RATIO_CODE = ${glslFloat(EMPIRE_PIXEL_RATIO_CODE)};
+
+vec4 empireBand(sampler2D tex, vec2 uv, float band) {
+  return texture2D(tex, vec2(uv.x, (band + uv.y) / EMPIRE_BANDS));
+}
+
+// A band's alpha constant, read from its centre texel at full resolution.
+float empireBandConstant(sampler2D tex, float band) {
+  return textureLod(tex, vec2(0.5, (band + 0.5) / EMPIRE_BANDS), 0.0).a * 255.0;
+}
+
+vec4 empireContourDistance(vec4 coverage) {
+  vec4 dx = dFdx(coverage);
+  vec4 dy = dFdy(coverage);
+  return (coverage - 0.5) / max(sqrt(dx * dx + dy * dy), vec4(1e-4));
+}
+
+// Coverage of a line widthPx wide centred on the contour, antialiased over one pixel.
+float empireLine(float distancePx, float widthPx) {
+  return clamp(0.5 * widthPx + 0.5 - abs(distancePx), 0.0, 1.0);
+}
+
+vec3 empireOver(vec3 base, sampler2D tex, vec2 uv) {
+  vec4 band0 = empireBand(tex, uv, 0.0);
+  vec4 band1 = empireBand(tex, uv, 1.0);
+  vec4 band2 = empireBand(tex, uv, 2.0);
+  vec4 slotsLow = vec4(band0.rgb, band1.r);
+  vec4 slotsHigh = vec4(band1.gb, band2.rg);
+  float highlightCoverage = band2.b;
+
+  float fillOn = step(0.5, empireBandConstant(tex, 0.0) / 255.0);
+  float highlightSlot = floor(empireBandConstant(tex, 1.0) / EMPIRE_SLOT_CODE_STEP + 0.5) - 1.0;
+  float pixelRatio = empireBandConstant(tex, 2.0) / EMPIRE_PIXEL_RATIO_CODE;
+  float dim = highlightSlot >= 0.0 ? EMPIRE_DIM_ALPHA : 1.0;
+
+  vec4 distanceLow = empireContourDistance(slotsLow);
+  vec4 distanceHigh = empireContourDistance(slotsHigh);
+  // The share of a slot's coverage that is the highlighted lineage: 1 along its own border, 0 for
+  // another lineage that happens to share its slot.
+  vec4 emphasisLow = vec4(equal(vec4(0.0, 1.0, 2.0, 3.0), vec4(highlightSlot)))
+    * clamp(highlightCoverage / max(slotsLow, vec4(1e-3)), 0.0, 1.0);
+  vec4 emphasisHigh = vec4(equal(vec4(4.0, 5.0, 6.0, 7.0), vec4(highlightSlot)))
+    * clamp(highlightCoverage / max(slotsHigh, vec4(1e-3)), 0.0, 1.0);
+  float distancePx[8] = float[](
+    distanceLow.x, distanceLow.y, distanceLow.z, distanceLow.w,
+    distanceHigh.x, distanceHigh.y, distanceHigh.z, distanceHigh.w
+  );
+  float emphasis[8] = float[](
+    emphasisLow.x, emphasisLow.y, emphasisLow.z, emphasisLow.w,
+    emphasisHigh.x, emphasisHigh.y, emphasisHigh.z, emphasisHigh.w
+  );
+
+  float lineWidth = EMPIRE_LINE_WIDTH_PX * pixelRatio;
+  float casingWidth = EMPIRE_CASING_WIDTH_PX * pixelRatio;
+  float highlightLineWidth = lineWidth * EMPIRE_HIGHLIGHT_LINE_SCALE;
+  float highlightCasingWidth = highlightLineWidth + casingWidth - lineWidth;
+  // Cliopatria cuts territory at the antimeridian, often keeping only one side: a contour along
+  // it is that cut, not a border, so no line is drawn within a line's width of it.
+  float seamPx = min(uv.x, 1.0 - uv.x) / max(length(vec2(dFdx(uv.x), dFdy(uv.x))), 1e-6);
+  float lineKeep = clamp(seamPx - 0.5 * highlightCasingWidth, 0.0, 1.0);
+
+  vec3 color = base;
+  for (int k = 0; k < 8; k++) {
+    float fillAlpha = mix(EMPIRE_FILL_ALPHA * dim, EMPIRE_HIGHLIGHT_FILL_ALPHA, emphasis[k]);
+    color = mix(color, EMPIRE_COLOURS[k], fillOn * fillAlpha * clamp(distancePx[k] + 0.5, 0.0, 1.0));
+  }
+  for (int k = 0; k < 8; k++) {
+    float alpha = lineKeep * EMPIRE_CASING_ALPHA * dim * (1.0 - emphasis[k]);
+    color = mix(color, EMPIRE_CASING_COLOUR, alpha * empireLine(distancePx[k], casingWidth));
+  }
+  for (int k = 0; k < 8; k++) {
+    color = mix(color, EMPIRE_COLOURS[k], lineKeep * dim * (1.0 - emphasis[k]) * empireLine(distancePx[k], lineWidth));
+  }
+  for (int k = 0; k < 8; k++) {
+    float alpha = lineKeep * emphasis[k];
+    color = mix(color, EMPIRE_CASING_COLOUR, alpha * EMPIRE_CASING_ALPHA * empireLine(distancePx[k], highlightCasingWidth));
+    color = mix(color, EMPIRE_COLOURS[k], alpha * empireLine(distancePx[k], highlightLineWidth));
+  }
+  return color;
+}
+`
 
 /** Radius of the atmosphere shell, as a multiple of the planet's. */
 export const ATMOSPHERE_SCALE = 1.15
@@ -120,15 +245,14 @@ uniform vec3 uOverlayChannel;
 uniform float uOverlayDMax;
 uniform float uOverlayStrength;
 
-// The historical-empires territory texture (ADR-059, empireTexture.ts): outlines, casings and an
-// optional light fill, painted on an equirect canvas. Texels are premultiplied and still
-// sRGB-encoded (the texture is NoColorSpace), so the composite un-premultiplies before decoding.
+// The historical-empires coverage textures (ADR-059, empireTexture.ts), drawn by empireOver.
 // uEmpireMix crossfades between two active sets; uEmpireStrength is 0 while the layer is off or no
-// texture is bound yet. Outside the domain the active set is empty, so the texture is transparent.
+// texture is bound yet. Outside the domain the active set is empty, so the texture has no coverage.
 uniform sampler2D uEmpireBefore;
 uniform sampler2D uEmpireAfter;
 uniform float uEmpireMix;
 uniform float uEmpireStrength;
+${EMPIRE_GLSL}
 
 // docs/GLOBE.md §10 (ADR-030 amendment): the basemap tone-match grade — one TS constant each
 // (blend.ts's gradeBasemapColor doc comment has the measurements and reasoning), interpolated
@@ -296,12 +420,11 @@ void main() {
   vec4 overlayColor = overlayColorAt(overlaySample);
   baseColor = mix(baseColor, overlayColor.rgb, overlayColor.a * uOverlayStrength);
 
-  // Empire territories over the overlay, so outlines stay legible on either ramp.
-  vec4 empireTexel = mix(texture2D(uEmpireBefore, uv), texture2D(uEmpireAfter, uv), uEmpireMix);
-  if (empireTexel.a > 0.0) {
-    vec3 empireColor = sRGBTransferEOTF(vec4(empireTexel.rgb / empireTexel.a, 1.0)).rgb;
-    baseColor = mix(baseColor, empireColor, empireTexel.a * uEmpireStrength);
-  }
+  // Empire territories over the overlay, so outlines stay legible on either ramp. Each side of the
+  // crossfade is drawn whole and the results mixed, so a border fades rather than slides.
+  vec3 empireBefore = empireOver(baseColor, uEmpireBefore, uv);
+  vec3 empireAfter = empireOver(baseColor, uEmpireAfter, uv);
+  baseColor = mix(baseColor, mix(empireBefore, empireAfter, uEmpireMix), uEmpireStrength);
 
   // docs/GLOBE.md §5.1: the schematic ice sheets, over the shelf and density, clipped at their
   // margins to land (including exposed shelf). Under the basemap only the ice beyond today's

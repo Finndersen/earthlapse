@@ -144,6 +144,34 @@ export function centerOffset(target: ScreenRect, canvas: ScreenRect): { x: numbe
   }
 }
 
+/** A measured fit-frame size in CSS px. */
+export interface FrameSize {
+  width: number
+  height: number
+}
+
+/** A sub-rectangle of the canvas as the camera sees it: the `aspect` and vertical fov a camera
+ *  would need for that rectangle to be its whole frustum (`subFrameFovY`). */
+export interface ViewWindow {
+  aspect: number
+  fovYRadians: number
+}
+
+/**
+ * The window the map pans within: the smallest rectangle holding every fit `frame`, centred on
+ * their shared centre (where `setViewOffset` puts the pan target). The canvas runs under the
+ * title and timeline, so clamping against the whole canvas would park the map's edges beneath
+ * that chrome; the fit frames are what no chrome covers. The map frame is the widest on every
+ * layout, and the sphere frame the tallest on a phone, where the map is width-bound. Falls back to
+ * the whole canvas when no frame is measured.
+ */
+export function panWindow(frames: readonly FrameSize[], canvas: FrameSize, fovYRadians: number): ViewWindow {
+  const width = Math.min(canvas.width, Math.max(0, ...frames.map((frame) => frame.width)))
+  const height = Math.min(canvas.height, Math.max(0, ...frames.map((frame) => frame.height)))
+  if (width <= 0 || height <= 0) return { aspect: canvas.width / canvas.height, fovYRadians }
+  return { aspect: width / height, fovYRadians: subFrameFovY(fovYRadians, height, canvas.height) }
+}
+
 /** The visible half-width/half-height at `distance`, shared by `clampPanTarget` (below) and
  *  `mapHasPanRoom` — both need the same "how much of the map plane is on screen right now" figure. */
 function visibleHalfExtents(distance: number, aspect: number, fovYRadians: number): { halfWidth: number; halfHeight: number } {
@@ -204,6 +232,37 @@ export function budgetedDpr(devicePixelRatio: number, widthPx: number, heightPx:
   const areaPx = widthPx * heightPx
   if (areaPx <= 0) return 1
   return Math.max(1, Math.min(devicePixelRatio, Math.sqrt(budgetPixels / areaPx)))
+}
+
+/** The height above the surface at which one world unit spans `pxPerUnit` CSS px at the centre
+ *  of a canvas `canvasHeightPx` tall — the same for the sphere's nearest point and the flat map,
+ *  so one scale limit bounds both modes' zoom. */
+export function heightForScale(pxPerUnit: number, canvasHeightPx: number, fovYRadians: number): number {
+  return canvasHeightPx / (2 * Math.tan(fovYRadians / 2) * pxPerUnit)
+}
+
+/** A mode's camera-to-target distances: its closest zoom, its default framing and its farthest. */
+export interface ZoomLimits {
+  min: number
+  idle: number
+  max: number
+}
+
+/**
+ * The camera-to-target distance a sphere <-> map switch opens the destination at, from the source
+ * view's own `sourceDistance` and its zoom ratio (`zoomRatio`). Both modes measure distance as
+ * radius plus height above the surface, so an equal distance is an equal on-screen scale.
+ *
+ * The destination takes whichever is farther out: the carried ratio, or the source's own scale
+ * (no farther than the destination's default). At the defaults that is the destination's default;
+ * from a deep zoom it is the source's scale, where a ratio alone would overshoot a mode whose
+ * default already sits closer (on a portrait phone the sphere's default is ~3x the map's scale).
+ * The result is always inside the destination's own `limits`.
+ */
+export function carriedDistance(sourceDistance: number, zoom: number, limits: ZoomLimits): number {
+  const byRatio = limits.idle / zoom
+  const byScale = Math.min(sourceDistance, limits.idle)
+  return Math.min(limits.max, Math.max(limits.min, byRatio, byScale))
 }
 
 /** A single scroll/pinch step's worth of camera dolly, scaled by `factor` (< 1 moves closer / in,

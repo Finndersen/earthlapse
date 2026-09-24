@@ -1259,6 +1259,13 @@ near-scene-mode already, just without being named as such or offering the honest
   constructor of a `Playback` value in the codebase lived inside the same owned files and was
   updated alongside it.
 
+**Amendment (2026-09-24) — steady mode's back/forward step by its rate.** In steady mode the
+transport's back/forward buttons and ←/→ move `t` by one second of playback at the chosen rate
+(`transportStepTarget`, clamped to the section window), and their labels name the step ("Back 10
+kyr"). Scenes mode keeps stepping to the neighbouring scene. A fixed step has no sane value across
+the whole domain, but a steady-mode viewer has already picked one, so manual stepping walks time at
+the pace playing would.
+
 ---
 
 ## ADR-017 — A fisheye stretch of the scrub track replaces the hover loupe
@@ -7673,3 +7680,38 @@ asked for an info popup per empire like the ones arrivals and events have.
 - **Labels rest at 0.92 opacity, semibold, with a stronger halo.** At 0.75 and regular weight the
   9px labels were hard to read over the basemap and the density ramp. The text is now weight 600 and its dark halo a four-step `text-shadow` (1, 2, 4 and 8 px); size and
   tracking are unchanged.
+
+**Amendment (2026-09-24) — each lineage runs to its own end; China's gaps filled.**
+- **The provisional 1900 CE cutoff is lifted.** It kept modern nation-states out of ADR-037's
+  top-N-by-area ranking. The roster now does that, so the cutoff only truncated the roster's own
+  empires (Qing 1912, Russian Empire 1917, Ottoman Empire 1922, and the British Empire at its
+  1920 peak). Each member runs to its last Cliopatria window. The two members that are modern
+  states carry a roster `to`: `Kingdom of Spain` 1931, the fall of the monarchy, and `Kingdom of
+  Great Britain` 1997 with `British Colonial Empire`, the handover of Hong Kong. The newest
+  snapshot boundary moves from `t = 124` to `t = 27`.
+- **Four fall events** join `events-core` and the lineages' `events`: the fall of the Qing, the
+  Russian Revolution, the end of the Ottoman Empire, and the independence of India and Pakistan.
+- **China's lineage gains the Northern and Southern dynasties** (Liu Song, Southern Qi, Liang and
+  Chen; Northern Wei, Western Wei and Northern Zhou) **and the Five Dynasties** (Later Liang,
+  Tang, Jin and Han). It was empty from 426 to 586 and from 911 to 960. Cliopatria has no Chinese
+  state for 238–264, so that gap remains.
+
+**Amendment (2026-09-24) — screen-space borders, labels limited only by crowding, and no empires on the orb.**
+- **Borders are drawn in the shader at a constant screen width.** The texture now holds where each
+  empire is, not a painted stroke. It stacks three equirectangular bands: one channel per palette
+  colour slot, plus one for the highlighted lineage. The shader takes each slot's half-way contour
+  as the border, and divides by the screen-space gradient to get distance in device pixels. The
+  line is 1.25 CSS px over a 2.25 px dark casing at every zoom, where a baked stroke thickened as
+  the viewer zoomed in. Colour slots can serve as border identities because the roster never gives
+  two coexisting neighbours the same slot. No line is drawn within a line's width of the
+  antimeridian, where Cliopatria's split polygons would otherwise draw one. Band grids are
+  2048×1024 (T1-capable GPUs) or 1536×768, and the texture cache cap drops from 96 to 72 MB.
+- **No label count cap.** The 6 (desktop) / 3 (phone) area-ranked cap chose labels before
+  anything knew what was on screen, so small or far-side empires went unlabelled. Labels are now
+  chosen among those whose anchor is on screen (and on the near side of the sphere). Highlighted
+  lineages go first, then the rest by area, through the three-row declutter measured in CSS px,
+  so zooming in reveals more. The hit test reads the same drawn set.
+- **The minimised orb draws no empires.** At about 130 CSS px, unlabelled colour regions only
+  compete with the scene; the `orb` tier is gone. The orb's cities likewise show only while
+  new (`arrivingCitiesAt`), in place of a top-10 by population that turned over as rankings
+  changed.

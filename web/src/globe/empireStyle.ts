@@ -6,7 +6,7 @@
  * slots by graph colouring, so two lineages that coexist and neighbour each other never share
  * one. The hues sit clear of everything else drawn on the globe in this era: the Natural Earth
  * basemap's olive, tan and ocean blue, the violet-to-pink density ramp, the oxblood-to-rust
- * cleared-land ramp, amber arrival arcs and cyan cities. Every stroke runs over a dark casing, so
+ * cleared-land ramp, amber arrival arcs and cyan cities. Every border runs over a dark casing, so
  * each hue needs contrast against the casing rather than against whatever terrain is underneath.
  * Validated with the dataviz palette checker against the casing colour, all pairs: worst CVD
  * separation ΔE 10.0 (violet/blue, protan), worst normal-vision separation ΔE 15.6 (teal/mint),
@@ -31,9 +31,17 @@ export function empireColour(colourSlot: number): string {
   return EMPIRE_PALETTE[colourSlot] ?? EMPIRE_PALETTE[0]
 }
 
-/** Drawn under every coloured stroke so outlines hold over pale desert, deep ocean and both
+/** Drawn under every coloured line so outlines hold over pale desert, deep ocean and both
  *  overlay ramps alike. */
-export const EMPIRE_CASING_COLOUR = 'rgba(8, 10, 14, 0.62)'
+export const EMPIRE_CASING = { colour: '#080a0e', alpha: 0.62 } as const
+
+/**
+ * Border widths in CSS px. The globe shader draws each border on the territory's edge in screen
+ * space (`empireTexture.ts`), so these hold at every zoom, on the orb, the sphere and the map.
+ * The casing is centred under the line, a dark half-pixel rim either side.
+ */
+export const EMPIRE_LINE_WIDTH_PX = 1.25
+export const EMPIRE_CASING_WIDTH_PX = 2.25
 
 /** The territory fill's alpha, drawn only while no raster overlay is selected — over density or
  *  cleared land a fill would tint the overlay's own ramp and misreport it. */
@@ -41,47 +49,39 @@ export const EMPIRE_FILL_ALPHA = 0.28
 
 /**
  * While one lineage is highlighted (hovered, or its detail panel open) the others recede to
- * `EMPIRE_DIM_ALPHA` of their fill, casing and stroke alpha, and the highlighted one draws its
- * stroke `EMPIRE_HIGHLIGHT_STROKE_SCALE` times as wide, casing widened to match, over everything
+ * `EMPIRE_DIM_ALPHA` of their fill, casing and line alpha, and the highlighted one draws its
+ * line `EMPIRE_HIGHLIGHT_LINE_SCALE` times as wide, casing widened to match, over everything
  * else, with a slightly stronger fill.
  */
 export const EMPIRE_DIM_ALPHA = 0.45
-export const EMPIRE_HIGHLIGHT_STROKE_SCALE = 1.6
+export const EMPIRE_HIGHLIGHT_LINE_SCALE = 1.6
 export const EMPIRE_HIGHLIGHT_FILL_ALPHA = 0.36
 
 /**
- * Which canvas an active set is rasterised into. The minimised orb shows the whole hemisphere in
- * about 130 CSS px, so its outlines are several texels wide to survive mip averaging; the expanded
- * map spans about 1000 CSS px, a quarter of a CSS px per texel at 4096 wide, where a 5-texel stroke
- * lands near 1.25 CSS px: clear over olive and tan terrain without reading as a heavy border.
+ * The equirectangular grid one territory band is rasterised on (`empireTexture.ts` stacks three).
+ * Borders are drawn in screen space, so the grid sets only how finely a border follows the
+ * geometry: the territory's edge is its coverage's half-way contour, placed to a fraction of a
+ * texel. At the map's closest zoom a 2048-wide band is about 4 CSS px per texel. Empires are drawn
+ * expanded only: on the ~130 CSS px orb, unlabelled colour regions would only compete with the
+ * scene.
  */
-export type EmpireTier = 'orb' | 'expanded' | 'expandedHigh'
+export type EmpireTier = 'expanded' | 'expandedHigh'
 
 export interface EmpireTierSpec {
   width: number
   height: number
-  /** Coloured stroke width in texels. */
-  stroke: number
-  /** Casing width in texels, centred under the stroke. */
-  casing: number
 }
 
 export const EMPIRE_TIERS: Readonly<Record<EmpireTier, EmpireTierSpec>> = {
-  orb: { width: 2048, height: 1024, stroke: 6, casing: 10 },
-  expanded: { width: 2048, height: 1024, stroke: 2.5, casing: 4.5 },
-  expandedHigh: { width: 4096, height: 2048, stroke: 5, casing: 9 },
+  expanded: { width: 1536, height: 768 },
+  expandedHigh: { width: 2048, height: 1024 },
 }
 
-/** The expanded view uses the 4096-wide canvas only where the GPU can hold the T1 basemap too
- *  (`deviceTier.ts`'s `supportsBasemapT1`), the same ceiling. */
-export function selectEmpireTier(expanded: boolean, highResolutionAvailable: boolean): EmpireTier {
-  if (!expanded) return 'orb'
+/** The 2048-wide grid only where the GPU can hold the T1 basemap too (`deviceTier.ts`'s
+ *  `supportsBasemapT1`), the same ceiling. */
+export function selectEmpireTier(highResolutionAvailable: boolean): EmpireTier {
   return highResolutionAvailable ? 'expandedHigh' : 'expanded'
 }
-
-/** How many lineage labels show at once, expanded only (never on the orb). */
-export const EMPIRE_LABEL_CAP_DESKTOP = 6
-export const EMPIRE_LABEL_CAP_PHONE = 3
 
 /** A label's opacity at rest: legible, a step below full. A hovered or
  *  selected lineage's label draws at full opacity, and while one is, every other label recedes

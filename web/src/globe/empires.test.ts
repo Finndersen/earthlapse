@@ -14,7 +14,7 @@ import {
   lineageAreaAt,
   memberAt,
   orientedRingPixels,
-  ringStrokeRuns,
+  placeEmpireLabels,
   ringToPixels,
   territoryContains,
 } from './empires'
@@ -134,25 +134,40 @@ describe('territory hit test', () => {
   })
 })
 
-describe('empireLabelsAt', () => {
-  it('labels each lineage once at its largest member, largest lineage first, capped', () => {
+describe('empire labels', () => {
+  it('labels each lineage once at its largest member, largest lineage first', () => {
     const frame = empireSnapshotsAt(buildEmpireIndex(DATA), 1620)
-    expect(empireLabelsAt(frame, 5).map((l) => [l.lineage, l.text, l.colourSlot])).toEqual([['rome', 'empire', 3]])
+    expect(empireLabelsAt(frame).map((l) => [l.lineage, l.text, l.colourSlot])).toEqual([['rome', 'empire', 3]])
 
     const both = empireSnapshotsAt(buildEmpireIndex(DATA), 1900)
-    expect(empireLabelsAt(both, 5).map((l) => l.text)).toEqual(['han', 'empire'])
-    expect(empireLabelsAt(both, 1).map((l) => l.text)).toEqual(['han'])
+    expect(empireLabelsAt(both).map((l) => l.text)).toEqual(['han', 'empire'])
+  })
+
+  it('places only on-screen labels, highlighted lineages first, so a hidden larger empire takes no room', () => {
+    const ranked = empireLabelsAt(empireSnapshotsAt(buildEmpireIndex(DATA), 1900))
+    const box = () => ({ halfWidth: 20, halfHeight: 5 })
+    const sameSpot = () => [100, 100] as const
+    const place = (highlight: string[], screenOf: Parameters<typeof placeEmpireLabels>[2], rows: number[]) =>
+      placeEmpireLabels(ranked, new Set(highlight), screenOf, box, rows).map(({ label, row }) => [label.text, row])
+
+    expect(place([], sameSpot, [0])).toEqual([['han', 0]])
+    expect(place(['rome'], sameSpot, [0])).toEqual([['empire', 0]])
+    expect(place([], (label) => (label.lineage === 'china' ? null : [100, 100]), [0])).toEqual([['empire', 0]])
+    expect(place([], sameSpot, [0, -1])).toEqual([
+      ['han', 0],
+      ['empire', -1],
+    ])
   })
 })
 
 describe('declutterLabelBoxes', () => {
   it('drops a label only when its box overlaps one already kept, keeping earlier labels first', () => {
     const box = { halfWidth: 5, halfHeight: 1 }
-    const labels: [string, [number, number, number]][] = [
-      ['first', [0, 0, 1]],
-      ['beside', [8, 0, 1]], // overlaps horizontally
-      ['below', [0, 2.5, 1]], // clear vertically
-      ['far', [11, 0, 1]], // clear horizontally
+    const labels: [string, [number, number]][] = [
+      ['first', [0, 0]],
+      ['beside', [8, 0]], // overlaps horizontally
+      ['below', [0, 2.5]], // clear vertically
+      ['far', [11, 0]], // clear horizontally
     ]
     const kept = declutterLabelBoxes(labels, ([, position]) => position, () => box)
     expect(kept.map(({ label: [name] }) => name)).toEqual(['first', 'below', 'far'])
@@ -160,7 +175,7 @@ describe('declutterLabelBoxes', () => {
 
   it('moves a colliding label a row above, then below, and drops it only when every row collides', () => {
     const box = { halfWidth: 5, halfHeight: 1 }
-    const placed = declutterLabelBoxes(['a', 'b', 'c', 'd'], () => [0, 0, 1] as const, () => box, [0, -1, 1])
+    const placed = declutterLabelBoxes(['a', 'b', 'c', 'd'], () => [0, 0] as const, () => box, [0, -1, 1])
     expect(placed.map(({ label, row }) => [label, row])).toEqual([
       ['a', 0],
       ['b', -1],
@@ -189,16 +204,5 @@ describe('territory rings on the equirect canvas', () => {
       expect(area(orientedRingPixels(ring, 360, 180, true))).toBeGreaterThan(0)
       expect(area(orientedRingPixels(ring, 360, 180, false))).toBeLessThan(0)
     }
-  })
-
-  it('never strokes the edge along the antimeridian cut', () => {
-    const ring = [170, 0, 180, 0, 180, 10, 170, 10]
-    const { runs, closed } = ringStrokeRuns(ring, 360, 180)
-    expect(closed).toBe(false)
-    // One open run from (180,10) round to (180,0): every edge but the one on lon 180.
-    expect(runs).toEqual([[360, 80, 350, 80, 350, 90, 360, 90]])
-
-    const inland = ringStrokeRuns([10, 0, 20, 0, 20, 10], 360, 180)
-    expect(inland).toEqual({ runs: [[190, 90, 200, 90, 200, 80]], closed: true })
   })
 })

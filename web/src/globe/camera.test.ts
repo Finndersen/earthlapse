@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   budgetedDpr,
+  carriedDistance,
   centerOffset,
   clampedDollyDistance,
   clampPanTarget,
@@ -10,6 +11,7 @@ import {
   isSubFrameOf,
   logLerp,
   mapHasPanRoom,
+  panWindow,
   rayBoxIntersection,
   raySphereIntersection,
   sphereFitDistance,
@@ -145,6 +147,23 @@ describe('map pan limits', () => {
     expect(clamp([-100, -100], distance)).toEqual([-x, -y])
     expect(clamp([0.1, -0.05], distance)).toEqual([0.1, -0.05])
   })
+
+  it('brings every map edge into the chrome-free frames at every zoom on a portrait phone', () => {
+    // 390x844 as measured: the map frame is width-bound and short, the sphere frame tall.
+    const canvas = { width: 390, height: 844 }
+    const mapFrame = { width: 374.4, height: 182.6 }
+    const sphereFrame = { width: 366.6, height: 366.6 }
+    const window = panWindow([sphereFrame, mapFrame], canvas, FOV_Y)
+    const fitPlane = fitDistance(MAP_HALF_WIDTH, MAP_HALF_HEIGHT, mapFrame.width / mapFrame.height, subFrameFovY(FOV_Y, mapFrame.height, canvas.height), 0.03)
+    const unobscuredHalfHeight = (plane: number) => plane * Math.tan(subFrameFovY(FOV_Y, sphereFrame.height, canvas.height) / 2)
+    const unobscuredHalfWidth = (plane: number) => plane * Math.tan(subFrameFovY(FOV_Y, mapFrame.height, canvas.height) / 2) * (mapFrame.width / mapFrame.height)
+    for (const zoom of [1, 1.5, 3, 8, 15]) {
+      const plane = fitPlane / zoom
+      const [x, y] = clampPanTarget([100, 100], plane, window.aspect, window.fovYRadians, MAP_HALF_WIDTH, MAP_HALF_HEIGHT)
+      expect(y + unobscuredHalfHeight(plane)).toBeGreaterThanOrEqual(MAP_HALF_HEIGHT - 1e-9)
+      expect(x + unobscuredHalfWidth(plane)).toBeGreaterThanOrEqual(MAP_HALF_WIDTH - 1e-9)
+    }
+  })
 })
 
 describe('centerOffset', () => {
@@ -192,6 +211,18 @@ describe('zoom helpers', () => {
     expect(clampedDollyDistance(10, 0.8, 0, Infinity)).toBeCloseTo(8)
     expect(clampedDollyDistance(10, 0.1, 2, Infinity)).toBeCloseTo(2)
     expect(clampedDollyDistance(10, 5, 0, 20)).toBeCloseTo(20)
+  })
+
+  it('carriedDistance opens defaults at defaults and a deep zoom at its own scale, inside the destination range', () => {
+    // A portrait phone: the map's default sits ~3x farther out than the sphere's.
+    const sphere = { min: 2.16, idle: 6.4, max: Infinity }
+    const map = { min: 2.16, idle: 18.27, max: 18.27 }
+    expect(carriedDistance(map.idle, 1, sphere)).toBeCloseTo(sphere.idle)
+    expect(carriedDistance(sphere.idle, 1, map)).toBeCloseTo(map.idle)
+    expect(carriedDistance(map.min, zoomRatio(map.idle, map.min), sphere)).toBeCloseTo(map.min)
+    expect(carriedDistance(3, zoomRatio(map.idle, 3), sphere)).toBeCloseTo(3)
+    expect(carriedDistance(sphere.min, zoomRatio(sphere.idle, sphere.min), map)).toBeGreaterThanOrEqual(map.min)
+    expect(carriedDistance(40, zoomRatio(sphere.idle, 40), map)).toBeCloseTo(map.max)
   })
 
   it('zoomRatio is inverse to height', () => {

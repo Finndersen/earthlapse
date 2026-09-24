@@ -1,6 +1,6 @@
 {
   "id": "empires",
-  "geometry": "vectors/cliopatria_territories-2137cdbbc2.json",
+  "geometry": "vectors/cliopatria_territories-f484d4be9b.json",
   "lineages": [
     {
       "id": "egypt",
@@ -243,7 +243,8 @@
         "qin-unification",
         "end-of-han-dynasty",
         "an-lushan-rebellion",
-        "ming-qing-transition"
+        "ming-qing-transition",
+        "fall-of-the-qing"
       ],
       "members": [
         {
@@ -271,12 +272,56 @@
           "wikipedia": "Jin dynasty (266-420)"
         },
         {
+          "label": "Liu Song",
+          "wikipedia": "Liu Song dynasty"
+        },
+        {
+          "label": "Southern Qi",
+          "wikipedia": "Southern Qi"
+        },
+        {
+          "label": "Liang",
+          "wikipedia": "Liang dynasty"
+        },
+        {
+          "label": "Chen",
+          "wikipedia": "Chen dynasty"
+        },
+        {
+          "label": "Northern Wei",
+          "wikipedia": "Northern Wei"
+        },
+        {
+          "label": "Western Wei",
+          "wikipedia": "Western Wei"
+        },
+        {
+          "label": "Northern Zhou",
+          "wikipedia": "Northern Zhou"
+        },
+        {
           "label": "Sui Dynasty",
           "wikipedia": "Sui dynasty"
         },
         {
           "label": "Tang Dynasty",
           "wikipedia": "Tang dynasty"
+        },
+        {
+          "label": "Later Liang",
+          "wikipedia": "Later Liang (Five Dynasties)"
+        },
+        {
+          "label": "Later Tang",
+          "wikipedia": "Later Tang"
+        },
+        {
+          "label": "Later Jin",
+          "wikipedia": "Later Jin (Five Dynasties)"
+        },
+        {
+          "label": "Later Han",
+          "wikipedia": "Later Han (Five Dynasties)"
         },
         {
           "label": "Northern Song",
@@ -495,7 +540,8 @@
       "description": "Founded by Osman I in north-west Anatolia around 1299, the Ottoman state took Constantinople in 1453 and in the 16th century ruled south-east Europe, the Middle East and North Africa. It lost territory steadily from the late 17th century and was dissolved in 1922, after the First World War.",
       "events": [
         "fall-of-constantinople",
-        "ottoman-greatest-extent"
+        "ottoman-greatest-extent",
+        "end-of-the-ottoman-empire"
       ],
       "members": [
         {
@@ -601,10 +647,11 @@
       "id": "britain",
       "name": "Britain",
       "colourSlot": 3,
-      "description": "Building on English colonies and trade from the early 1600s, Great Britain (from 1801 the United Kingdom) expanded across North America, India, Australia and Africa and was the dominant naval and commercial power of the 19th century. At its height, around 1920, it covered about a quarter of the world's land.",
+      "description": "Building on English colonies of the early 1600s, Britain expanded across North America, India, Australia and Africa. At its height, around 1920, it covered about a quarter of the world's land. India and Pakistan became independent in 1947, most other colonies within two decades, and Hong Kong was handed over in 1997.",
       "events": [
         "industrial-revolution",
-        "british-colonisation-australia"
+        "british-colonisation-australia",
+        "indian-independence"
       ],
       "members": [
         {
@@ -629,9 +676,10 @@
       "id": "russia",
       "name": "Russia",
       "colourSlot": 5,
-      "description": "Ivan IV was crowned the first Tsar of Russia in 1547 and conquered the khanates of Kazan and Astrakhan. Russian expansion crossed Siberia to reach the Pacific by 1639 and continued into Alaska in the 18th century. Peter the Great proclaimed the Russian Empire in 1721; it sold Alaska to the United States in 1867.",
+      "description": "Ivan IV was crowned the first Tsar of Russia in 1547 and conquered Kazan and Astrakhan. Russian expansion crossed Siberia to the Pacific by 1639 and reached Alaska, which was sold to the United States in 1867. Peter the Great proclaimed the Russian Empire in 1721; the revolution of 1917 ended it.",
       "events": [
-        "russian-conquest-of-siberia"
+        "russian-conquest-of-siberia",
+        "russian-revolution"
       ],
       "members": [
         {
@@ -3353,6 +3401,17 @@
       "areaKm2": 2537214.233437512
     },
     {
+      "id": "northern-wei-387ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1638.0,
+      "tEnd": 1630.0,
+      "lat": 40.45254135131836,
+      "lon": 113.33775954803812,
+      "areaKm2": 320630.50091832643
+    },
+    {
       "id": "sasanian-empire-387ce",
       "lineage": "persia",
       "member": 2,
@@ -3384,6 +3443,17 @@
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 1976909.3875702252
+    },
+    {
+      "id": "northern-wei-395ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1630.0,
+      "tEnd": 1623.0,
+      "lat": 39.28802490234375,
+      "lon": 111.07862538948203,
+      "areaKm2": 436745.652185118
     },
     {
       "id": "western-roman-empire-395ce",
@@ -3419,6 +3489,17 @@
       "areaKm2": 1963623.850005745
     },
     {
+      "id": "northern-wei-402ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1623.0,
+      "tEnd": 1586.0,
+      "lat": 37.93202590942383,
+      "lon": 112.74420358286443,
+      "areaKm2": 178344.63475520353
+    },
+    {
       "id": "gupta-empire-410ce",
       "lineage": "india",
       "member": 1,
@@ -3452,6 +3533,28 @@
       "areaKm2": 2923195.1755018383
     },
     {
+      "id": "liu-song-dynasty-426ce",
+      "lineage": "china",
+      "member": 6,
+      "label": "Liu Song",
+      "tStart": 1599.0,
+      "tEnd": 1574.0,
+      "lat": 27.865235328674316,
+      "lon": 110.91545163241659,
+      "areaKm2": 2737939.767686556
+    },
+    {
+      "id": "northern-wei-439ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1586.0,
+      "tEnd": 1584.0,
+      "lat": 37.0937385559082,
+      "lon": 108.41982175035494,
+      "areaKm2": 671031.1985900869
+    },
+    {
       "id": "western-roman-empire-439ce",
       "lineage": "rome",
       "member": 2,
@@ -3461,6 +3564,17 @@
       "lat": 41.89,
       "lon": 12.49,
       "areaKm2": 1432230.213139104
+    },
+    {
+      "id": "northern-wei-441ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1584.0,
+      "tEnd": 1574.0,
+      "lat": 37.0937385559082,
+      "lon": 108.41982175035494,
+      "areaKm2": 789975.9482765977
     },
     {
       "id": "western-roman-empire-443ce",
@@ -3483,6 +3597,28 @@
       "lat": 25.247142397319585,
       "lon": 79.30572781216966,
       "areaKm2": 2214364.732865146
+    },
+    {
+      "id": "liu-song-dynasty-451ce",
+      "lineage": "china",
+      "member": 6,
+      "label": "Liu Song",
+      "tStart": 1574.0,
+      "tEnd": 1545.0,
+      "lat": 25.775753021240234,
+      "lon": 110.52246271894603,
+      "areaKm2": 2361417.2593314
+    },
+    {
+      "id": "northern-wei-451ce",
+      "lineage": "china",
+      "member": 10,
+      "label": "Northern Wei",
+      "tStart": 1574.0,
+      "tEnd": 1491.0,
+      "lat": 37.06151008605957,
+      "lon": 112.70837798240052,
+      "areaKm2": 1166543.428874836
     },
     {
       "id": "western-roman-empire-451ce",
@@ -3573,6 +3709,17 @@
       "areaKm2": 615857.3491519536
     },
     {
+      "id": "southern-qi-480ce",
+      "lineage": "china",
+      "member": 7,
+      "label": "Southern Qi",
+      "tStart": 1545.0,
+      "tEnd": 1515.0,
+      "lat": 25.775753021240234,
+      "lon": 110.52246271894603,
+      "areaKm2": 2361417.2593314
+    },
+    {
       "id": "gupta-empire-490ce",
       "lineage": "india",
       "member": 1,
@@ -3604,6 +3751,17 @@
       "lat": 47.92781448364258,
       "lon": 1.971100091934204,
       "areaKm2": 536852.769801913
+    },
+    {
+      "id": "liang-dynasty-510ce",
+      "lineage": "china",
+      "member": 8,
+      "label": "Liang",
+      "tStart": 1515.0,
+      "tEnd": 1489.0,
+      "lat": 25.775753021240234,
+      "lon": 110.52246271894603,
+      "areaKm2": 2361517.4446464824
     },
     {
       "id": "sasanian-empire-523ce",
@@ -3650,6 +3808,39 @@
       "areaKm2": 693928.9985817823
     },
     {
+      "id": "western-wei-534ce",
+      "lineage": "china",
+      "member": 11,
+      "label": "Western Wei",
+      "tStart": 1491.0,
+      "tEnd": 1489.0,
+      "lat": 36.73930740356445,
+      "lon": 107.02588975985468,
+      "areaKm2": 542066.5638276364
+    },
+    {
+      "id": "liang-dynasty-536ce",
+      "lineage": "china",
+      "member": 8,
+      "label": "Liang",
+      "tStart": 1489.0,
+      "tEnd": 1464.0,
+      "lat": 25.775753021240234,
+      "lon": 110.52246271894603,
+      "areaKm2": 2037575.865109892
+    },
+    {
+      "id": "western-wei-536ce",
+      "lineage": "china",
+      "member": 11,
+      "label": "Western Wei",
+      "tStart": 1489.0,
+      "tEnd": 1464.0,
+      "lat": 34.32550239562988,
+      "lon": 107.18974133525694,
+      "areaKm2": 865962.1713753212
+    },
+    {
       "id": "eastern-roman-empire-540ce",
       "lineage": "rome",
       "member": 3,
@@ -3659,6 +3850,17 @@
       "lat": 41.01,
       "lon": 28.98,
       "areaKm2": 2326856.5744173722
+    },
+    {
+      "id": "chen-dynasty-561ce",
+      "lineage": "china",
+      "member": 9,
+      "label": "Chen",
+      "tStart": 1464.0,
+      "tEnd": 1433.0,
+      "lat": 26.193657875061035,
+      "lon": 115.74477237432643,
+      "areaKm2": 1012383.3841102156
     },
     {
       "id": "eastern-roman-empire-561ce",
@@ -3672,6 +3874,17 @@
       "areaKm2": 2600677.242710421
     },
     {
+      "id": "northern-zhou-561ce",
+      "lineage": "china",
+      "member": 12,
+      "label": "Northern Zhou",
+      "tStart": 1464.0,
+      "tEnd": 1448.0,
+      "lat": 34.9688663482666,
+      "lon": 107.4420977472339,
+      "areaKm2": 930573.6685828676
+    },
+    {
       "id": "kingdom-of-the-franks-567ce",
       "lineage": "franks",
       "member": 0,
@@ -3683,9 +3896,20 @@
       "areaKm2": 684295.1852495093
     },
     {
+      "id": "northern-zhou-577ce",
+      "lineage": "china",
+      "member": 12,
+      "label": "Northern Zhou",
+      "tStart": 1448.0,
+      "tEnd": 1438.0,
+      "lat": 35.129690170288086,
+      "lon": 111.52869802480076,
+      "areaKm2": 1772608.661316337
+    },
+    {
       "id": "sui-dynasty-587ce",
       "lineage": "china",
-      "member": 6,
+      "member": 13,
       "label": "Sui Dynasty",
       "tStart": 1438.0,
       "tEnd": 1433.0,
@@ -3707,7 +3931,7 @@
     {
       "id": "sui-dynasty-592ce",
       "lineage": "china",
-      "member": 6,
+      "member": 13,
       "label": "Sui Dynasty",
       "tStart": 1433.0,
       "tEnd": 1402.0,
@@ -3773,7 +3997,7 @@
     {
       "id": "tang-dynasty-623ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1402.0,
       "tEnd": 1399.0,
@@ -3806,7 +4030,7 @@
     {
       "id": "sui-dynasty-626ce",
       "lineage": "china",
-      "member": 6,
+      "member": 13,
       "label": "Sui Dynasty",
       "tStart": 1399.0,
       "tEnd": 1397.0,
@@ -3817,7 +4041,7 @@
     {
       "id": "tang-dynasty-626ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1399.0,
       "tEnd": 1395.0,
@@ -3905,7 +4129,7 @@
     {
       "id": "tang-dynasty-630ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1395.0,
       "tEnd": 1392.0,
@@ -3960,7 +4184,7 @@
     {
       "id": "tang-dynasty-633ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1392.0,
       "tEnd": 1378.0,
@@ -4092,7 +4316,7 @@
     {
       "id": "tang-dynasty-647ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1378.0,
       "tEnd": 1369.0,
@@ -4125,7 +4349,7 @@
     {
       "id": "tang-dynasty-656ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1369.0,
       "tEnd": 1364.0,
@@ -4169,7 +4393,7 @@
     {
       "id": "tang-dynasty-661ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1364.0,
       "tEnd": 1359.0,
@@ -4202,7 +4426,7 @@
     {
       "id": "tang-dynasty-666ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1359.0,
       "tEnd": 1351.0,
@@ -4257,7 +4481,7 @@
     {
       "id": "tang-dynasty-674ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1351.0,
       "tEnd": 1343.0,
@@ -4279,7 +4503,7 @@
     {
       "id": "tang-dynasty-682ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1343.0,
       "tEnd": 1333.0,
@@ -4301,7 +4525,7 @@
     {
       "id": "tang-dynasty-692ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1333.0,
       "tEnd": 1275.0,
@@ -4444,7 +4668,7 @@
     {
       "id": "tang-dynasty-750ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1275.0,
       "tEnd": 1270.0,
@@ -4521,7 +4745,7 @@
     {
       "id": "tang-dynasty-755ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1270.0,
       "tEnd": 1268.0,
@@ -4532,7 +4756,7 @@
     {
       "id": "tang-dynasty-757ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1268.0,
       "tEnd": 1262.0,
@@ -4565,7 +4789,7 @@
     {
       "id": "tang-dynasty-763ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1262.0,
       "tEnd": 1145.0,
@@ -4796,7 +5020,7 @@
     {
       "id": "tang-dynasty-880ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1145.0,
       "tEnd": 1143.0,
@@ -4807,7 +5031,7 @@
     {
       "id": "tang-dynasty-882ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1143.0,
       "tEnd": 1141.0,
@@ -4818,7 +5042,7 @@
     {
       "id": "tang-dynasty-884ce",
       "lineage": "china",
-      "member": 7,
+      "member": 14,
       "label": "Tang Dynasty",
       "tStart": 1141.0,
       "tEnd": 1114.0,
@@ -4882,6 +5106,39 @@
       "areaKm2": 2821301.813066519
     },
     {
+      "id": "later-jin-911ce",
+      "lineage": "china",
+      "member": 17,
+      "label": "Later Jin",
+      "tStart": 1114.0,
+      "tEnd": 1103.0,
+      "lat": 39.675941467285156,
+      "lon": 112.7703036605147,
+      "areaKm2": 71612.32598549602
+    },
+    {
+      "id": "later-liang-dynasty-911ce",
+      "lineage": "china",
+      "member": 15,
+      "label": "Later Liang",
+      "tStart": 1114.0,
+      "tEnd": 1099.0,
+      "lat": 35.58016014099121,
+      "lon": 113.72953242422551,
+      "areaKm2": 793635.7144558349
+    },
+    {
+      "id": "later-tang-926ce",
+      "lineage": "china",
+      "member": 16,
+      "label": "Later Tang",
+      "tStart": 1099.0,
+      "tEnd": 1089.0,
+      "lat": 33.71455764770508,
+      "lon": 110.96619266944417,
+      "areaKm2": 1556339.1668651304
+    },
+    {
       "id": "abbasid-caliphate-936ce",
       "lineage": "caliphate",
       "member": 2,
@@ -4904,6 +5161,17 @@
       "areaKm2": 719229.862527553
     },
     {
+      "id": "later-jin-936ce",
+      "lineage": "china",
+      "member": 17,
+      "label": "Later Jin",
+      "tStart": 1089.0,
+      "tEnd": 1078.0,
+      "lat": 34.647117614746094,
+      "lon": 113.43592274789721,
+      "areaKm2": 790319.1813186044
+    },
+    {
       "id": "abbasid-caliphate-947ce",
       "lineage": "caliphate",
       "member": 2,
@@ -4913,6 +5181,17 @@
       "lat": 33.31,
       "lon": 44.37,
       "areaKm2": 1577136.0808541614
+    },
+    {
+      "id": "later-han-947ce",
+      "lineage": "china",
+      "member": 18,
+      "label": "Later Han",
+      "tStart": 1078.0,
+      "tEnd": 1065.0,
+      "lat": 34.647117614746094,
+      "lon": 113.43592274789721,
+      "areaKm2": 790319.1813186044
     },
     {
       "id": "later-mayan-city-states-960ce",
@@ -4928,7 +5207,7 @@
     {
       "id": "northern-song-961ce",
       "lineage": "china",
-      "member": 8,
+      "member": 19,
       "label": "Northern Song",
       "tStart": 1064.0,
       "tEnd": 1055.0,
@@ -4961,7 +5240,7 @@
     {
       "id": "northern-song-970ce",
       "lineage": "china",
-      "member": 8,
+      "member": 19,
       "label": "Northern Song",
       "tStart": 1055.0,
       "tEnd": 1045.0,
@@ -4983,7 +5262,7 @@
     {
       "id": "northern-song-980ce",
       "lineage": "china",
-      "member": 8,
+      "member": 19,
       "label": "Northern Song",
       "tStart": 1045.0,
       "tEnd": 997.0,
@@ -5071,7 +5350,7 @@
     {
       "id": "southern-song-1028ce",
       "lineage": "china",
-      "member": 9,
+      "member": 20,
       "label": "Southern Song",
       "tStart": 997.0,
       "tEnd": 886.0,
@@ -5236,7 +5515,7 @@
     {
       "id": "southern-song-1139ce",
       "lineage": "china",
-      "member": 9,
+      "member": 20,
       "label": "Southern Song",
       "tStart": 886.0,
       "tEnd": 765.0,
@@ -5533,7 +5812,7 @@
     {
       "id": "southern-song-1260ce",
       "lineage": "china",
-      "member": 9,
+      "member": 20,
       "label": "Southern Song",
       "tStart": 765.0,
       "tEnd": 746.0,
@@ -5841,7 +6120,7 @@
     {
       "id": "ming-dynasty-1375ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 650.0,
       "tEnd": 640.0,
@@ -5896,7 +6175,7 @@
     {
       "id": "ming-dynasty-1385ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 640.0,
       "tEnd": 623.0,
@@ -5973,7 +6252,7 @@
     {
       "id": "ming-dynasty-1402ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 623.0,
       "tEnd": 610.0,
@@ -6050,7 +6329,7 @@
     {
       "id": "ming-dynasty-1415ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 610.0,
       "tEnd": 585.0,
@@ -6160,7 +6439,7 @@
     {
       "id": "ming-dynasty-1440ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 585.0,
       "tEnd": 575.0,
@@ -6215,7 +6494,7 @@
     {
       "id": "ming-dynasty-1450ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 575.0,
       "tEnd": 557.0,
@@ -6336,7 +6615,7 @@
     {
       "id": "ming-dynasty-1468ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 557.0,
       "tEnd": 509.0,
@@ -6512,7 +6791,7 @@
     {
       "id": "ming-dynasty-1516ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 509.0,
       "tEnd": 389.0,
@@ -7150,7 +7429,7 @@
     {
       "id": "later-jin-dynasty-1619ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 406.0,
       "tEnd": 403.0,
@@ -7194,7 +7473,7 @@
     {
       "id": "later-jin-dynasty-1622ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 403.0,
       "tEnd": 399.0,
@@ -7205,7 +7484,7 @@
     {
       "id": "later-jin-dynasty-1626ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 399.0,
       "tEnd": 393.0,
@@ -7227,7 +7506,7 @@
     {
       "id": "later-jin-dynasty-1632ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 393.0,
       "tEnd": 389.0,
@@ -7271,7 +7550,7 @@
     {
       "id": "later-jin-dynasty-1636ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 389.0,
       "tEnd": 385.0,
@@ -7282,7 +7561,7 @@
     {
       "id": "ming-dynasty-1636ce",
       "lineage": "china",
-      "member": 10,
+      "member": 21,
       "label": "Ming Dynasty",
       "tStart": 389.0,
       "tEnd": 380.0,
@@ -7326,7 +7605,7 @@
     {
       "id": "later-jin-dynasty-1640ce",
       "lineage": "china",
-      "member": 11,
+      "member": 22,
       "label": "Later Jin Dynasty",
       "tStart": 385.0,
       "tEnd": 380.0,
@@ -7381,7 +7660,7 @@
     {
       "id": "qing-dynasty-1645ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 380.0,
       "tEnd": 377.0,
@@ -7414,7 +7693,7 @@
     {
       "id": "qing-dynasty-1648ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 377.0,
       "tEnd": 372.0,
@@ -7436,7 +7715,7 @@
     {
       "id": "qing-dynasty-1653ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 372.0,
       "tEnd": 352.0,
@@ -7513,7 +7792,7 @@
     {
       "id": "qing-dynasty-1673ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 352.0,
       "tEnd": 348.0,
@@ -7524,7 +7803,7 @@
     {
       "id": "qing-dynasty-1677ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 348.0,
       "tEnd": 342.0,
@@ -7546,7 +7825,7 @@
     {
       "id": "qing-dynasty-1683ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 342.0,
       "tEnd": 338.0,
@@ -7557,7 +7836,7 @@
     {
       "id": "qing-dynasty-1687ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 338.0,
       "tEnd": 334.0,
@@ -7601,7 +7880,7 @@
     {
       "id": "qing-dynasty-1691ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 334.0,
       "tEnd": 329.0,
@@ -7634,7 +7913,7 @@
     {
       "id": "qing-dynasty-1696ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 329.0,
       "tEnd": 325.0,
@@ -7645,7 +7924,7 @@
     {
       "id": "qing-dynasty-1700ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 325.0,
       "tEnd": 298.0,
@@ -7887,7 +8166,7 @@
     {
       "id": "qing-dynasty-1727ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 298.0,
       "tEnd": 268.0,
@@ -8085,7 +8364,7 @@
     {
       "id": "qing-dynasty-1757ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 268.0,
       "tEnd": 231.0,
@@ -8393,7 +8672,7 @@
     {
       "id": "qing-dynasty-1794ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 231.0,
       "tEnd": 177.0,
@@ -8888,7 +9167,7 @@
     {
       "id": "qing-dynasty-1848ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 177.0,
       "tEnd": 169.0,
@@ -8932,7 +9211,7 @@
     {
       "id": "qing-dynasty-1856ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 169.0,
       "tEnd": 168.0,
@@ -8965,7 +9244,7 @@
     {
       "id": "qing-dynasty-1857ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 168.0,
       "tEnd": 166.0,
@@ -8998,7 +9277,7 @@
     {
       "id": "qing-dynasty-1859ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 166.0,
       "tEnd": 165.0,
@@ -9009,7 +9288,7 @@
     {
       "id": "qing-dynasty-1860ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 165.0,
       "tEnd": 164.0,
@@ -9031,7 +9310,7 @@
     {
       "id": "qing-dynasty-1861ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 164.0,
       "tEnd": 163.0,
@@ -9064,7 +9343,7 @@
     {
       "id": "qing-dynasty-1862ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 163.0,
       "tEnd": 162.0,
@@ -9086,7 +9365,7 @@
     {
       "id": "qing-dynasty-1863ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 162.0,
       "tEnd": 161.0,
@@ -9097,7 +9376,7 @@
     {
       "id": "qing-dynasty-1864ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 161.0,
       "tEnd": 160.0,
@@ -9119,7 +9398,7 @@
     {
       "id": "qing-dynasty-1865ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 160.0,
       "tEnd": 159.0,
@@ -9130,7 +9409,7 @@
     {
       "id": "qing-dynasty-1866ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 159.0,
       "tEnd": 152.0,
@@ -9207,7 +9486,7 @@
     {
       "id": "qing-dynasty-1873ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 152.0,
       "tEnd": 148.0,
@@ -9251,7 +9530,7 @@
     {
       "id": "qing-dynasty-1877ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 148.0,
       "tEnd": 125.0,
@@ -9309,7 +9588,7 @@
       "member": 2,
       "label": "British Raj",
       "tStart": 140.0,
-      "tEnd": 124.0,
+      "tEnd": 82.0,
       "lat": 22.175545692443848,
       "lon": 81.7082810067577,
       "areaKm2": 4816230.175096621
@@ -9386,7 +9665,7 @@
       "member": 0,
       "label": "Great Britain",
       "tStart": 130.0,
-      "tEnd": 124.0,
+      "tEnd": 103.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 740000.2764929283
@@ -9408,7 +9687,7 @@
       "member": 5,
       "label": "Qajar Dynasty",
       "tStart": 127.0,
-      "tEnd": 124.0,
+      "tEnd": 110.0,
       "lat": 35.69,
       "lon": 51.39,
       "areaKm2": 1624311.8772313145
@@ -9419,7 +9698,7 @@
       "member": 3,
       "label": "British Africa",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 120.0,
       "lat": 13.400330066680908,
       "lon": 29.29239571018902,
       "areaKm2": 8031875.399277482
@@ -9430,7 +9709,7 @@
       "member": 1,
       "label": "British Empire",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 120.0,
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 13658902.770487169
@@ -9441,7 +9720,7 @@
       "member": 0,
       "label": "Spain",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 93.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 841117.4650455848
@@ -9452,7 +9731,7 @@
       "member": 0,
       "label": "Ottoman Empire",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 112.0,
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 2168947.957454138
@@ -9460,10 +9739,10 @@
     {
       "id": "qing-dynasty-1900ce",
       "lineage": "china",
-      "member": 12,
+      "member": 23,
       "label": "Qing Dynasty",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 120.0,
       "lat": 39.9,
       "lon": 116.4,
       "areaKm2": 10368313.123992275
@@ -9474,7 +9753,7 @@
       "member": 1,
       "label": "Russian Empire",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 120.0,
       "lat": 56.490665435791016,
       "lon": 79.53535387249383,
       "areaKm2": 22894358.883642312
@@ -9485,10 +9764,615 @@
       "member": 1,
       "label": "Spanish Empire",
       "tStart": 125.0,
-      "tEnd": 124.0,
+      "tEnd": 93.0,
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 841117.4650455848
+    },
+    {
+      "id": "british-africa-1905ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 120.0,
+      "tEnd": 109.0,
+      "lat": 13.59319257736206,
+      "lon": 29.324469969866747,
+      "areaKm2": 9275140.054764159
+    },
+    {
+      "id": "british-colonial-empire-1905ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 120.0,
+      "tEnd": 117.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 14116299.109153217
+    },
+    {
+      "id": "qing-dynasty-1905ce",
+      "lineage": "china",
+      "member": 23,
+      "label": "Qing Dynasty",
+      "tStart": 120.0,
+      "tEnd": 113.0,
+      "lat": 39.9,
+      "lon": 116.4,
+      "areaKm2": 11098858.262289459
+    },
+    {
+      "id": "russian-empire-1905ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 120.0,
+      "tEnd": 110.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22118428.896614168
+    },
+    {
+      "id": "british-colonial-empire-1908ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 117.0,
+      "tEnd": 114.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 14862783.092842327
+    },
+    {
+      "id": "british-colonial-empire-1911ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 114.0,
+      "tEnd": 110.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19064321.430317495
+    },
+    {
+      "id": "ottoman-empire-1913ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 112.0,
+      "tEnd": 108.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1929824.0980275238
+    },
+    {
+      "id": "british-colonial-empire-1915ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 110.0,
+      "tEnd": 105.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19417188.173053507
+    },
+    {
+      "id": "qajar-dynasty-1915ce",
+      "lineage": "persia",
+      "member": 5,
+      "label": "Qajar Dynasty",
+      "tStart": 110.0,
+      "tEnd": 103.0,
+      "lat": 35.69,
+      "lon": 51.39,
+      "areaKm2": 1427975.1523185782
+    },
+    {
+      "id": "russian-empire-1915ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 110.0,
+      "tEnd": 109.0,
+      "lat": 56.490665435791016,
+      "lon": 79.53535387249383,
+      "areaKm2": 22462680.79348961
+    },
+    {
+      "id": "british-africa-1916ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 109.0,
+      "tEnd": 108.0,
+      "lat": -21.70065975189209,
+      "lon": 22.84042990188612,
+      "areaKm2": 10286524.247036563
+    },
+    {
+      "id": "russian-empire-1916ce",
+      "lineage": "russia",
+      "member": 1,
+      "label": "Russian Empire",
+      "tStart": 109.0,
+      "tEnd": 108.0,
+      "lat": 56.490665435791016,
+      "lon": 81.73487103260636,
+      "areaKm2": 22263671.473939195
+    },
+    {
+      "id": "british-africa-1917ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 108.0,
+      "tEnd": 107.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 10945446.639852803
+    },
+    {
+      "id": "ottoman-empire-1917ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 108.0,
+      "tEnd": 107.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1270693.2197447955
+    },
+    {
+      "id": "british-africa-1918ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 107.0,
+      "tEnd": 106.0,
+      "lat": 1.410695344209671,
+      "lon": 35.71600218056129,
+      "areaKm2": 11484136.994588844
+    },
+    {
+      "id": "ottoman-empire-1918ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 107.0,
+      "tEnd": 106.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 1144040.8026759739
+    },
+    {
+      "id": "british-africa-1919ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 106.0,
+      "tEnd": 105.0,
+      "lat": 1.410695344209671,
+      "lon": 35.71600218056129,
+      "areaKm2": 11755869.773435013
+    },
+    {
+      "id": "ottoman-empire-1919ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 106.0,
+      "tEnd": 105.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 759971.1841840012
+    },
+    {
+      "id": "british-africa-1920ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 105.0,
+      "tEnd": 103.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 11182653.14690726
+    },
+    {
+      "id": "british-colonial-empire-1920ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 105.0,
+      "tEnd": 103.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19692920.743896134
+    },
+    {
+      "id": "ottoman-empire-1920ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 105.0,
+      "tEnd": 103.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 650352.3484948461
+    },
+    {
+      "id": "british-africa-1922ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 103.0,
+      "tEnd": 95.0,
+      "lat": 1.410695344209671,
+      "lon": 35.71600218056129,
+      "areaKm2": 11727764.047101589
+    },
+    {
+      "id": "british-colonial-empire-1922ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 103.0,
+      "tEnd": 93.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 19315074.47613148
+    },
+    {
+      "id": "kingdom-of-great-britain-1922ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 103.0,
+      "tEnd": 89.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 696709.422320128
+    },
+    {
+      "id": "ottoman-empire-1922ce",
+      "lineage": "ottoman",
+      "member": 0,
+      "label": "Ottoman Empire",
+      "tStart": 103.0,
+      "tEnd": 101.0,
+      "lat": 40.19,
+      "lon": 29.06,
+      "areaKm2": 723881.3858662464
+    },
+    {
+      "id": "qajar-dynasty-1922ce",
+      "lineage": "persia",
+      "member": 5,
+      "label": "Qajar Dynasty",
+      "tStart": 103.0,
+      "tEnd": 101.0,
+      "lat": 35.69,
+      "lon": 51.39,
+      "areaKm2": 1624334.9976886772
+    },
+    {
+      "id": "british-africa-1930ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 95.0,
+      "tEnd": 93.0,
+      "lat": 1.410695344209671,
+      "lon": 35.71600218056129,
+      "areaKm2": 11221561.932838205
+    },
+    {
+      "id": "british-africa-1932ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 93.0,
+      "tEnd": 89.0,
+      "lat": 3.3071795701980595,
+      "lon": 36.08820627775499,
+      "areaKm2": 8713251.080689775
+    },
+    {
+      "id": "british-colonial-empire-1932ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 93.0,
+      "tEnd": 83.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 9683154.010632524
+    },
+    {
+      "id": "british-africa-1936ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 89.0,
+      "tEnd": 85.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 7496115.735901624
+    },
+    {
+      "id": "kingdom-of-great-britain-1936ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 89.0,
+      "tEnd": 85.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 823722.3824482237
+    },
+    {
+      "id": "british-africa-1940ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 85.0,
+      "tEnd": 84.0,
+      "lat": 3.3071795701980595,
+      "lon": 36.08820627775499,
+      "areaKm2": 8441337.02247024
+    },
+    {
+      "id": "kingdom-of-great-britain-1940ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 85.0,
+      "tEnd": 80.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 809652.475046569
+    },
+    {
+      "id": "british-africa-1941ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 84.0,
+      "tEnd": 83.0,
+      "lat": 3.3071795701980595,
+      "lon": 38.83739089797821,
+      "areaKm2": 10339419.894020606
+    },
+    {
+      "id": "british-africa-1942ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 83.0,
+      "tEnd": 82.0,
+      "lat": 3.3071795701980595,
+      "lon": 38.83739089797821,
+      "areaKm2": 9242905.595722355
+    },
+    {
+      "id": "british-colonial-empire-1942ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 83.0,
+      "tEnd": 79.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 9614110.978906713
+    },
+    {
+      "id": "british-africa-1943ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 82.0,
+      "tEnd": 81.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 10014303.854831185
+    },
+    {
+      "id": "british-raj-1943ce",
+      "lineage": "britain",
+      "member": 2,
+      "label": "British Raj",
+      "tStart": 82.0,
+      "tEnd": 80.0,
+      "lat": 22.561266899108887,
+      "lon": 80.50890016555786,
+      "areaKm2": 4218185.022580225
+    },
+    {
+      "id": "british-africa-1944ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 81.0,
+      "tEnd": 79.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 10991800.220920784
+    },
+    {
+      "id": "british-raj-1945ce",
+      "lineage": "britain",
+      "member": 2,
+      "label": "British Raj",
+      "tStart": 80.0,
+      "tEnd": 78.0,
+      "lat": 22.561266899108887,
+      "lon": 80.50890016555786,
+      "areaKm2": 4901868.20364164
+    },
+    {
+      "id": "kingdom-of-great-britain-1945ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 80.0,
+      "tEnd": 78.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 808687.0961653905
+    },
+    {
+      "id": "british-africa-1946ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 79.0,
+      "tEnd": 72.0,
+      "lat": 3.1143167018890385,
+      "lon": 38.735601423490905,
+      "areaKm2": 9120854.149036422
+    },
+    {
+      "id": "british-colonial-empire-1946ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 79.0,
+      "tEnd": 78.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1860085.0096876612
+    },
+    {
+      "id": "british-colonial-empire-1947ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 78.0,
+      "tEnd": 67.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1412546.2646392037
+    },
+    {
+      "id": "british-raj-1947ce",
+      "lineage": "britain",
+      "member": 2,
+      "label": "British Raj",
+      "tStart": 78.0,
+      "tEnd": 77.0,
+      "lat": 19.31480121612549,
+      "lon": 95.71789742676955,
+      "areaKm2": 748070.4411663709
+    },
+    {
+      "id": "kingdom-of-great-britain-1947ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 78.0,
+      "tEnd": 69.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 726102.4790098787
+    },
+    {
+      "id": "british-africa-1953ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 72.0,
+      "tEnd": 69.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 7951292.984196554
+    },
+    {
+      "id": "british-africa-1956ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 69.0,
+      "tEnd": 65.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 5475611.2009967
+    },
+    {
+      "id": "kingdom-of-great-britain-1956ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 69.0,
+      "tEnd": 56.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 1005284.1943039857
+    },
+    {
+      "id": "british-colonial-empire-1958ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 67.0,
+      "tEnd": 62.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 579544.8976873535
+    },
+    {
+      "id": "british-africa-1960ce",
+      "lineage": "britain",
+      "member": 3,
+      "label": "British Africa",
+      "tStart": 65.0,
+      "tEnd": 64.0,
+      "lat": 8.835915088653564,
+      "lon": 7.783894544454992,
+      "areaKm2": 4586687.059397846
+    },
+    {
+      "id": "british-colonial-empire-1963ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 62.0,
+      "tEnd": 56.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 351420.7903143806
+    },
+    {
+      "id": "british-colonial-empire-1969ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 56.0,
+      "tEnd": 29.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 134104.64036676264
+    },
+    {
+      "id": "kingdom-of-great-britain-1969ce",
+      "lineage": "britain",
+      "member": 0,
+      "label": "Great Britain",
+      "tStart": 56.0,
+      "tEnd": 27.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 672206.4324807501
+    },
+    {
+      "id": "british-colonial-empire-1996ce",
+      "lineage": "britain",
+      "member": 1,
+      "label": "British Empire",
+      "tStart": 29.0,
+      "tEnd": 27.0,
+      "lat": 51.51,
+      "lon": -0.13,
+      "areaKm2": 23222.480735035457
     }
   ]
 }

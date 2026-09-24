@@ -207,10 +207,10 @@ export interface EmpireLabel {
 
 /**
  * One label per active lineage, placed on its largest active member snapshot, ranked by that
- * snapshot's area (largest first, id breaking ties) and capped. Deterministic in the frame, so
- * scrubbing back to the same `t` reproduces the same labels.
+ * snapshot's area (largest first, id breaking ties). Deterministic in the frame, so scrubbing back
+ * to the same `t` reproduces the same labels.
  */
-export function empireLabelsAt(frame: EmpireFrame, cap: number): EmpireLabel[] {
+export function empireLabelsAt(frame: EmpireFrame): EmpireLabel[] {
   const largest = new Map<string, EmpireSnapshot>()
   for (const snapshot of frame.snapshots) {
     const kept = largest.get(snapshot.lineage)
@@ -220,7 +220,6 @@ export function empireLabelsAt(frame: EmpireFrame, cap: number): EmpireLabel[] {
   }
   return [...largest.values()]
     .sort((a, b) => b.areaKm2 - a.areaKm2 || a.id.localeCompare(b.id))
-    .slice(0, Math.max(0, cap))
     .map((s) => ({ snapshot: s, lineage: s.lineage, text: s.label, lat: s.lat, lon: s.lon, colourSlot: s.colourSlot, areaKm2: s.areaKm2 }))
 }
 
@@ -238,36 +237,64 @@ export interface PlacedLabelBox<T> {
 
 /**
  * Keeps labels in order, placing each in the first of `rows` where its box overlaps no box already
- * kept, and dropping it only when every row collides. Boxes are centred on each label's position in
- * the globe's local space (y up), shifted one full box height per row: vertical overlap compares y,
- * horizontal overlap the chord distance in the x/z plane. That is exact on the map, which is a
- * plane facing the camera, and close on the sphere, which turns about its vertical axis.
+ * kept, and dropping it only when every row collides. Boxes are centred on each label's screen
+ * position (y down), shifted one full box height per row.
  */
 export function declutterLabelBoxes<T>(
   labels: readonly T[],
-  positionOf: (label: T) => readonly [number, number, number],
+  positionOf: (label: T) => readonly [number, number],
   extentsOf: (label: T) => LabelHalfExtents,
   rows: readonly number[] = [0],
 ): PlacedLabelBox<T>[] {
-  const kept: { x: number; y: number; z: number; extents: LabelHalfExtents }[] = []
+  const kept: { x: number; y: number; extents: LabelHalfExtents }[] = []
   const out: PlacedLabelBox<T>[] = []
   for (const label of labels) {
-    const [x, y0, z] = positionOf(label)
+    const [x, y0] = positionOf(label)
     const extents = extentsOf(label)
     for (const row of rows) {
-      const y = y0 - row * 2 * extents.halfHeight
+      const y = y0 + row * 2 * extents.halfHeight
       const overlaps = kept.some(
         (other) =>
           Math.abs(y - other.y) < extents.halfHeight + other.extents.halfHeight &&
-          Math.hypot(x - other.x, z - other.z) < extents.halfWidth + other.extents.halfWidth,
+          Math.abs(x - other.x) < extents.halfWidth + other.extents.halfWidth,
       )
       if (overlaps) continue
-      kept.push({ x, y, z, extents })
+      kept.push({ x, y, extents })
       out.push({ label, row })
       break
     }
   }
   return out
+}
+
+/**
+ * The labels drawn for `ranked` (from `empireLabelsAt`): only those `screenOf` places on screen
+ * (`null` when off screen or round the back of the sphere), highlighted lineages first so a hovered
+ * or selected empire always keeps its name, then by area, each in the first of `rows` where its box
+ * overlaps none already placed (`declutterLabelBoxes`, in CSS px). Only on-screen
+ * labels compete for room, so zooming in, which spreads them apart, names more of them.
+ */
+export function placeEmpireLabels(
+  ranked: readonly EmpireLabel[],
+  highlight: ReadonlySet<string>,
+  screenOf: (label: EmpireLabel) => readonly [number, number] | null,
+  extentsOf: (label: EmpireLabel) => LabelHalfExtents,
+  rows: readonly number[],
+): PlacedLabelBox<EmpireLabel>[] {
+  const onScreen: { label: EmpireLabel; x: number; y: number }[] = []
+  for (const emphasised of [true, false]) {
+    for (const label of ranked) {
+      if (highlight.has(label.lineage) !== emphasised) continue
+      const point = screenOf(label)
+      if (point !== null) onScreen.push({ label, x: point[0], y: point[1] })
+    }
+  }
+  return declutterLabelBoxes(
+    onScreen,
+    ({ x, y }) => [x, y],
+    ({ label }) => extentsOf(label),
+    rows,
+  ).map(({ label, row }) => ({ label: label.label, row }))
 }
 
 // ------------------------------------------------------------------------------- hit test
@@ -341,10 +368,6 @@ export function empireAtLonLat(frame: EmpireFrame, geometry: TerritoryGeometry, 
 
 // ------------------------------------------------------------------------ canvas geometry
 
-/** Cliopatria splits polygons at the antimeridian, leaving a straight edge along it. An edge whose
- *  endpoints both sit this close to ±180° is that cut, not a border, and is never stroked. */
-export const ANTIMERIDIAN_EDGE_LON = 179.99
-
 /** A flat `[lon, lat, ...]` ring as flat `[x, y, ...]` pixels on a `width`x`height` equirect
  *  canvas: `x = (lon + 180) / 360 * width`, `y = (90 - lat) / 180 * height` (row 0 is north). */
 export function ringToPixels(ring: readonly number[], width: number, height: number): number[] {
@@ -382,51 +405,6 @@ export function orientedRingPixels(ring: readonly number[], width: number, heigh
     reversed[xy.length - 1 - i] = xy[i + 1]!
   }
   return reversed
-}
-
-export interface RingStroke {
-  /** Flat `[x, y, ...]` polylines to stroke. */
-  runs: number[][]
-  /** Whether the single run is the whole ring (stroke it closed). */
-  closed: boolean
-}
-
-function onAntimeridian(lon: number): boolean {
-  return Math.abs(lon) >= ANTIMERIDIAN_EDGE_LON
-}
-
-/**
- * The ring's outline in pixels as polylines, leaving out every edge that runs along the
- * antimeridian cut (`ANTIMERIDIAN_EDGE_LON`). A ring with no such edge is one closed run.
- */
-export function ringStrokeRuns(ring: readonly number[], width: number, height: number): RingStroke {
-  const xy = ringToPixels(ring, width, height)
-  const n = ring.length / 2
-  const skip = new Array<boolean>(n)
-  let firstSkip = -1
-  for (let i = 0; i < n; i++) {
-    const j = (i + 1) % n
-    skip[i] = onAntimeridian(ring[2 * i]!) && onAntimeridian(ring[2 * j]!)
-    if (skip[i] && firstSkip < 0) firstSkip = i
-  }
-  if (firstSkip < 0) return { runs: [xy], closed: true }
-
-  const runs: number[][] = []
-  let run: number[] = []
-  // Start just after a skipped edge so no run wraps round the ring's seam.
-  for (let step = 1; step <= n; step++) {
-    const edge = (firstSkip + step) % n
-    if (skip[edge]) {
-      if (run.length >= 4) runs.push(run)
-      run = []
-      continue
-    }
-    const j = (edge + 1) % n
-    if (run.length === 0) run.push(xy[2 * edge]!, xy[2 * edge + 1]!)
-    run.push(xy[2 * j]!, xy[2 * j + 1]!)
-  }
-  if (run.length >= 4) runs.push(run)
-  return { runs, closed: false }
 }
 
 // ------------------------------------------------------------------------------- wording

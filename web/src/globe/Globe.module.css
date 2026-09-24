@@ -239,21 +239,24 @@
 
 /* The persistent expand affordance: a small "fullscreen" corner-bracket glyph, always visible
    at low contrast (never hover-only — see its doc comment in Globe.tsx) so a viewer who never
-   hovers still sees the orb is interactive. Sits in the margin between the box edge and the
-   sphere's own silhouette (`--orb-silhouette-inset`, see `.expandButton`) — cornered, where that
-   margin is widest along the diagonal, so it never draws over the globe itself regardless of
-   viewport. Decorative (`aria-hidden`) and
+   hovers still sees the orb is interactive. Sits flush in the box's bottom-right corner, where
+   the margin outside the sphere's silhouette (`--orb-silhouette-inset`, see `.expandButton`) is
+   widest: along the diagonal the silhouette comes within `--orb-corner-margin` of the corner on
+   each axis (`0.5 - (0.5 - inset)/√2` of the box), and the glyph is capped at that size, so it
+   stays clear of the sphere at any orb size. Decorative (`aria-hidden`) and
    `pointer-events: none`, same as `.halo`/`.expandButton`: it never becomes a second hit target
    or a second accessible name, only a visual echo of the one `.expandButton` already provides.
    The double `drop-shadow` mirrors `--hud-shadow` (`ShellLayout.module.css`) so the glyph stays
    legible over a bright plate, not just a dark one, without the light/dark split every other HUD
    text token needs — `filter` (not `text-shadow`) is what actually darkens an SVG stroke's edges. */
 .expandGlyph {
+  --orb-corner-margin: calc(50% - (50% - var(--orb-silhouette-inset, 5.4%)) * 0.7071);
+
   position: absolute;
-  right: 8%;
-  bottom: 8%;
-  width: clamp(13px, 13%, 20px);
-  height: clamp(13px, 13%, 20px);
+  right: 0;
+  bottom: 0;
+  width: min(clamp(13px, 13%, 20px), var(--orb-corner-margin));
+  height: min(clamp(13px, 13%, 20px), var(--orb-corner-margin));
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
   opacity: 0.85;
   filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 6px rgba(0, 0, 0, 0.85));
@@ -510,7 +513,8 @@
    than a new button language. Never hidden or faded on inactivity (project rule) — visible for
    the whole time the expanded view is open, in both sphere and map mode alike (`Globe.tsx`
    renders this once, unconditioned on `mapMode`, since `GlobeCameraControls`'s zoom drives the
-   same camera distance either way). */
+   same camera distance either way). The markup is `−` then `+`, so a row reads `− +`; a column
+   reverses it to keep `+` on top. */
 .zoomGroup {
   position: absolute;
   top: 50%;
@@ -518,7 +522,7 @@
   right: clamp(16px, 3vw, 48px);
   z-index: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   border: 1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18));
   border-radius: 999px;
   overflow: hidden;
@@ -723,8 +727,8 @@
     flex-direction: row;
   }
 
-  /* Horizontal rocker, `+`/`−` side by side (the phone's own row idiom) instead of the vertical
-     rocker's stacked pair — the divider between the two buttons turns with it. */
+  /* Horizontal rocker, `−` then `+` side by side (the phone's own row idiom) instead of the
+     vertical rocker's stacked pair — the divider between the two buttons turns with it. */
   .zoomDivider {
     width: 1px;
     height: auto;
@@ -918,9 +922,9 @@
 
 /* The shared globe tooltip (GlobeTooltip.tsx), drawn through drei's `Html` at the hovered
    target's own 3D position so it tracks the globe as it rotates and unfolds. Offset up and right
-   of the anchor so the dot or arc under the pointer stays visible, and `pointer-events: none`
-   throughout: it must never become a hover target of its own, which would make it flicker as the
-   pointer entered it. */
+   of the anchor so the dot or arc under the pointer stays visible. A hover tooltip is
+   `pointer-events: none`: it must never become a hover target of its own, which would make it
+   flicker as the pointer entered it. A tapped one is pinned (`.tooltipPinned`) and takes presses. */
 .tooltip {
   pointer-events: none;
   transform: translate(12px, -50%);
@@ -934,6 +938,7 @@
 }
 
 .tooltipTitle {
+  display: block;
   margin: 0;
   font-size: 12px;
   line-height: 1.25;
@@ -941,6 +946,7 @@
 }
 
 .tooltipDate {
+  display: block;
   margin: 2px 0 0;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 9px;
@@ -963,10 +969,74 @@
    accent the detail panel's own action uses, dimmed so it reads as an aside. `--hud-faint` would
    fall under 3:1 against this backing at 9px. */
 .tooltipHint {
+  display: block;
   margin: 5px 0 0;
   font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
   font-size: 9px;
   letter-spacing: 0.03em;
   color: var(--hud-accent, #e8b06a);
   opacity: 0.78;
+}
+
+/* A tapped tooltip: the body opens the target's detail, the × closes it. The body keeps the plain
+   tooltip's padding so the text does not move when a tooltip pins; the × is a 32px touch target
+   in the top-right corner. */
+.tooltipPinned {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  padding: 0;
+}
+
+.tooltipBody {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 7px 0 7px 9px;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.tooltipBody {
+  cursor: pointer;
+}
+
+.tooltipClose {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0 8px 0 8px;
+  background: none;
+  color: var(--hud-dim, rgba(239, 233, 220, 0.62));
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tooltipClose:focus-visible {
+  color: var(--hud-accent, #e8b06a);
+}
+
+@media (hover: hover) {
+  .tooltipClose:hover,
+  button.tooltipBody:hover .tooltipTitle {
+    color: var(--hud-accent, #e8b06a);
+  }
+}
+
+.tooltipBody:focus-visible,
+.tooltipClose:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--hud-accent, #e8b06a);
 }

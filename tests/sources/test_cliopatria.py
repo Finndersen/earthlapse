@@ -1,7 +1,7 @@
 """sources/cliopatria against its committed fixture and fixture roster: twelve real features
 exercising the Type filter (a LEADER row), the parenthesis merge (Han Dynasty pairs), the
 exclusion list (Greek Dark Ages), the roster filter (Himyarite Kingdom is not on it), the area
-floor (Han Dynasty 6-13 CE) and the 1900 CE cutoff (Montenegro).
+floor (Han Dynasty 6-13 CE) and a member's `to` clamp (Montenegro, to 1900).
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def feature_set(cliopatria_normalise: ModuleType, roster) -> FeatureSet:
     return shape
 
 
-def test_normalise_keeps_roster_polities_over_half_open_spans_to_the_cutoff(
+def test_normalise_keeps_roster_polities_over_half_open_spans_within_member_years(
     feature_set: FeatureSet,
 ) -> None:
     spans = {f.id: (f.name, f.estimates[0].t, f.estimates[0].t_end) for f in feature_set.features}
@@ -50,7 +50,8 @@ def test_normalise_keeps_roster_polities_over_half_open_spans_to_the_cutoff(
         # 6-13 CE is a 143 km^2 sliver, absent; 224-237 exists only parenthesised.
         "han-dynasty-224ce": ("Han Dynasty", 2025.0 - 224, 2025.0 - 238),
         "goguryeo-612ce": ("Goguryeo", 2025.0 - 612, 2025.0 - 617),
-        # Abutting windows share a boundary; 1885-1910 is clipped to end with 1900.
+        # Abutting windows share a boundary; 1885-1910 is clamped to the member's `to`,
+        # 1900, and 1911 lies wholly after it.
         "montenegro-1880ce": ("Montenegro", 145.0, 140.0),
         "montenegro-1885ce": ("Montenegro", 140.0, 124.0),
     }

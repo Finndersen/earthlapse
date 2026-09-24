@@ -414,7 +414,7 @@ field, with names on hover only, in the same shared tooltip arrival arcs and inh
 | **Source** | Cliopatria (Seshat Global History Databank / Complexity Science Hub Vienna / Alan Turing Institute / Oxford); Chalstrey, E., Bennett, J. & Mutch, E. (2024), Zenodo doi:10.5281/zenodo.13363121 (v0.0.1); methods paper Bennett, J. et al., SocArXiv preprint osf.io/24wd6 |
 | **Access** | **VERIFIED.** A single Zenodo file-content URL (`zenodo.org/api/records/13363121/files/.../content`), no auth — the Zenodo deposit is a snapshot of the `cliopatria` GitHub repo, containing one doubly-nested zip whose only real payload is `cliopatria.geojson` |
 | **Format** | one GeoJSON `FeatureCollection`, CRS84 (lon/lat WGS84) |
-| **Coverage** | curated domain 3400 BCE → 1900 CE (the raw dataset itself runs to 2024 CE; a provisional per-user cutoff excludes everything after 1900 CE — see "Processing" below and `sources/cliopatria/README.md` "Domain cutoff: 1900 CE"), ~508 distinct attested map years in the raw data |
+| **Coverage** | curated domain 3400 BCE → 1997 CE, each roster lineage to its own end (the raw dataset itself runs to 2024 CE — `sources/cliopatria/README.md` "Domain: each lineage's own end"), ~508 distinct attested map years in the raw data |
 | **Volume** | measured: 49,215,745 bytes raw zip; 186,488,764 bytes extracted GeoJSON; 14,945 total features (14,108 `Type == "POLITY"`); curated to the 28-lineage empire roster: 1,755 resolved member segments thinned to 804 territory snapshots (`sources/cliopatria/README.md` "Measured volume") |
 | **Licence** | **CC BY 4.0** — confirmed both via the Zenodo record's own `license.id` and the repository's committed `LICENSE.md` |
 | **Shape** | `FeatureSet` (id `cliopatria_polities`, one `Feature` per territory snapshot: label anchor, area, half-open span — ADR-037, ADR-059), plus a vector geometry media file the shape does not hold |
@@ -424,16 +424,16 @@ field, with names on hover only, in the same shared tooltip arrival arcs and inh
 Every raw `Name`'s wrapping `"(...)"` pair is stripped (a merge into an existing bare name, or a
 plain rename), plus a small explicit alias (`"(British Empire)"` → `"British Colonial Empire"`)
 and exclusion list (`"Greek Dark Ages"`, a period rather than a polity) — `sources/cliopatria/README.md`
-"Duplicate aggregate entries and label normalisation". **Domain cutoff (per-user, provisional):**
-`normalise.CUTOFF_CE_YEAR = 1900` drops polity-window material after that year and truncates a
-straddling window, since past it Cliopatria is dominated by modern nation-states.
+"Duplicate aggregate entries and label normalisation". There is no domain cutoff: the roster keeps modern
+nation-states out, and its two modern-state members (`Kingdom of Spain`, `Kingdom of Great
+Britain`) carry a `to` year.
 
 **Selection is a hand-picked roster (ADR-059)**, replacing ADR-037's era-relative top-6-by-area
 rule. `sources/cliopatria/roster.toml` lists 28 lineages (Rome, China, Persia, the Caliphate, the
 Mongols, the Ottomans, …), each an ordered list of Cliopatria polities with optional year clamps
 and globe labels, a one-line `reason` and a colour slot. A roster name absent from the data, or a
 member left empty by its clamp, fails the build. Curated data holds only roster polities, over
-their full lifespans to 1900 CE:
+their full lifespans:
 
 - **One geometry per member per year.** A bare-name window beats a parenthesised aggregate
   wherever one covers that year (the two often describe different footprints — a colonial

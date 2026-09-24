@@ -3331,6 +3331,23 @@ events:
   # standalone battle events but named no First or Second World War event at all, so the wider
   # war each sits inside was missing from the event feed entirely. t_min/t_max use the same
   # day-counted GeoTime convention as battle-of-the-somme's own fix below.
+  - id: fall-of-the-qing
+    label: Fall of the Qing dynasty
+    kind: moment
+    t_min: 113
+    t_max: 113
+    t: 113
+    tags: [society]
+    importance: 0.5
+    description: >
+      The Xinhai Revolution, which began with the Wuchang Uprising in October 1911,
+      ends more than two thousand years of imperial rule in China. The six-year-old
+      Xuantong Emperor, Puyi, abdicates on 12 February 1912, and the Republic of China
+      takes the Qing's place.
+    citation: >
+      Via Wikipedia "1911 Revolution" and "Puyi" (searched 2026-09-24): Wuchang Uprising,
+      10 October 1911; abdication edict of the Xuantong Emperor, 12 February 1912.
+
   - id: world-war-i
     label: The First World War
     kind: period
@@ -3406,6 +3423,41 @@ events:
   # streets across 1927-1934; in fact the 1927 opening was the Ueno-Asakusa section, and the line
   # reached Ginza itself only in 1934 (Wikipedia "Ginza Line", already cited below) -- reworded to
   # state both dates and places explicitly.
+  - id: russian-revolution
+    label: Russian Revolution
+    kind: moment
+    t_min: 108
+    t_max: 108
+    t: 108
+    tags: [society]
+    importance: 0.55
+    description: >
+      Amid the losses of the First World War, the February Revolution of 1917 forces
+      Tsar Nicholas II to abdicate, ending the Russian Empire and three centuries of
+      Romanov rule. The Bolsheviks seize power in the October Revolution later that
+      year.
+    citation: >
+      Via Wikipedia "Russian Revolution" and "Nicholas II" (searched 2026-09-24):
+      abdication of Nicholas II, 15 March 1917 (2 March Old Style); October Revolution,
+      7 November 1917 (25 October Old Style).
+
+  - id: end-of-the-ottoman-empire
+    label: End of the Ottoman Empire
+    kind: moment
+    t_min: 103
+    t_max: 103
+    t: 103
+    tags: [society]
+    importance: 0.5
+    description: >
+      Defeated in the First World War and partitioned by the Allies, the Ottoman
+      Empire ends when the Grand National Assembly in Ankara abolishes the sultanate on
+      1 November 1922. The Republic of Turkey is proclaimed the following year.
+    citation: >
+      Via Wikipedia "Abolition of the Ottoman sultanate" and "Republic of Turkey"
+      (searched 2026-09-24): sultanate abolished 1 November 1922; republic proclaimed
+      29 October 1923.
+
   - id: ginza-modern-urban-culture
     label: Ginza's mass urban culture
     kind: period
@@ -3509,6 +3561,24 @@ events:
       US Department of Energy / Manhattan Project records. Trinity test, 16 July 1945,
       05:29:21 Mountain War Time, Jornada del Muerto desert, New Mexico; yield ~24.8 kt.
       Uncontested — among the most precisely documented events of the 20th century.
+
+  - id: indian-independence
+    label: Independence of India and Pakistan
+    kind: moment
+    t_min: 78
+    t_max: 78
+    t: 78
+    tags: [society]
+    importance: 0.55
+    description: >
+      British rule in India ends on 15 August 1947 with the partition of the Raj into
+      the independent dominions of India and Pakistan. Partition displaces an estimated
+      10-20 million people. It opens two decades in which most of Britain's colonies in
+      Asia and Africa become independent.
+    citation: >
+      Via Wikipedia "Partition of India" and "Decolonisation of Africa" (searched
+      2026-09-24): Indian Independence Act 1947, independence 14-15 August 1947; 10-20
+      million displaced.
 
   - id: postwar-suburban-boom
     label: Postwar highway and suburban boom

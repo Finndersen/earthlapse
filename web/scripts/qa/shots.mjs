@@ -380,7 +380,7 @@ function mask(page, { selectors = [], hud = false, backdrop = null, boxes = {} }
       if (hideHud && hudRoot) for (const child of hudRoot.children) if (!child.contains(document.querySelector('div[data-map-mode]'))) targets.push(child)
       for (const selector of extra) targets.push(...document.querySelectorAll(selector))
       for (const el of targets) {
-        if (el instanceof HTMLElement && el.dataset.qaHidden === undefined) {
+        if ((el instanceof HTMLElement || el instanceof SVGElement) && el.dataset.qaHidden === undefined) {
           el.dataset.qaHidden = el.style.visibility
           el.style.visibility = 'hidden'
         }
@@ -631,7 +631,7 @@ async function empirePanelChecks(page, viewport, roman) {
   for (let attempt = 0; attempt < 5 && hovered === null; attempt += 1) {
     for (const [x, y] of points) {
       await page.mouse.move(x, y)
-      const title = await afterFrames(page, (sel) => document.querySelector(`${sel} p`)?.textContent ?? '', GLOBE_TOOLTIP_SELECTOR)
+      const title = await afterFrames(page, (sel) => document.querySelector(`${sel} [class*="tooltipTitle"]`)?.textContent ?? '', GLOBE_TOOLTIP_SELECTOR)
       if (title.includes('Roman Empire')) {
         hovered = [x, y]
         break
@@ -1713,8 +1713,9 @@ export default [
       'Phone portrait 390x844, globe expanded: the drawn sphere 330-400px across; no region (title, era shortcuts, ' +
       'overlay control, close, Globe/Map toggle, zoom, feed strip, timeline, drawn sphere) overlaps another or leaves ' +
       'the viewport; row 2 (shortcuts, 24-36px overlay control, one centre line ±6px) ≥ 4px clear of the sphere; toggle ' +
-      'and zoom, equal heights (±1px), 4-200px below it; the feed strip ≥ 4px below the sphere and 2-60px above the ' +
-      'timeline. In map mode row 2 stays ≥ 4px clear of the drawn map.',
+      'and zoom, equal heights (±1px), 4-200px below it, "Zoom in" right of "Zoom out"; the feed strip ≥ 4px below the ' +
+      'sphere and 2-60px above the timeline. In map mode row 2 stays ≥ 4px clear of the drawn map, and zoomed in six ' +
+      'steps then dragged down, the map\'s north edge comes to rest at the top of the chrome-free frame (±3px).',
     viewport: PHONE_FLOOR_VIEWPORT,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -1729,10 +1730,25 @@ export default [
         feed: SHELL_FEED_SELECTOR,
         timeline: BOTTOM_CHROME_SELECTOR,
       })
+      const zoomButtons = await boxesOf(page, { zoomIn: 'button[aria-label="Zoom in"]', zoomOut: 'button[aria-label="Zoom out"]' })
       const overlayControl = await overlayControlBox(page)
       const sphereBottom = sphere.y + sphere.height
       await switchGlobeViewMode(page, hook, 'map')
       const map = await globeBodyBounds(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+      const mapEraClearanceGapPx = rectClearancePx(await boxOf(page, ERA_SHORTCUTS_SELECTOR), map)
+      const mapOverlayClearanceGapPx = rectClearancePx(await overlayControlBox(page), map)
+      // Zoomed in far enough that the whole canvas no longer shows the map's full height, but the
+      // chrome-free frame does not either: the north edge must still be reachable by panning.
+      await pressZoomIn(page, 6)
+      const sphereFrame = await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
+      await page.mouse.move(centreX(sphereFrame), centreY(sphereFrame))
+      await page.mouse.down()
+      await page.mouse.move(centreX(sphereFrame), centreY(sphereFrame) + 320, { steps: 8 })
+      await page.mouse.up()
+      await rafTicks(page, 3)
+      const pannedMap = await globeBodyBounds(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR)
+      const zoomOut = page.getByRole('button', { name: 'Zoom out' })
+      while (await zoomOut.isEnabled()) await zoomOut.click()
       return {
         sphere,
         layout: layoutFlags({ ...b, overlay: overlayControl, sphere }, PHONE_FLOOR_VIEWPORT),
@@ -1744,10 +1760,12 @@ export default [
         toggleClearanceGapPx: b.toggle.y - sphereBottom,
         zoomClearanceGapPx: b.zoom.y - sphereBottom,
         toggleHeightMinusZoomPx: b.toggle.height - b.zoom.height,
+        zoomInRightOfOutPx: zoomButtons.zoomIn.x - (zoomButtons.zoomOut.x + zoomButtons.zoomOut.width),
         feedBelowSphereGapPx: b.feed.y - sphereBottom,
         timelineBelowFeedGapPx: b.timeline.y - (b.feed.y + b.feed.height),
-        mapEraClearanceGapPx: rectClearancePx(await boxOf(page, ERA_SHORTCUTS_SELECTOR), map),
-        mapOverlayClearanceGapPx: rectClearancePx(await overlayControlBox(page), map),
+        mapEraClearanceGapPx,
+        mapOverlayClearanceGapPx,
+        pannedMapNorthEdgeOffsetPx: pannedMap.y - sphereFrame.y,
       }
     },
     expect: {
@@ -1761,10 +1779,12 @@ export default [
       toggleClearanceGapPx: [4, 200],
       zoomClearanceGapPx: [4, 200],
       toggleHeightMinusZoomPx: [-1, 1],
+      zoomInRightOfOutPx: [0, 4],
       feedBelowSphereGapPx: [4, 400],
       timelineBelowFeedGapPx: [2, 60],
       mapEraClearanceGapPx: [4, 400],
       mapOverlayClearanceGapPx: [4, 400],
+      pannedMapNorthEdgeOffsetPx: [-3, 3],
     },
   },
   {

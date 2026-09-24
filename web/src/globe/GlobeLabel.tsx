@@ -113,8 +113,34 @@ export function cityLabelVisibility(
   return unfold >= 0.5 ? 1 : sphereMarkerVisibility(worldPosition, cameraPosition, radius)
 }
 
-const labelScratchLocal = new THREE.Vector3()
 const labelScratchWorld = new THREE.Vector3()
+
+/**
+ * A label anchor's camera visibility (`cityLabelVisibility`), with the sphere's limb fade moved
+ * `limbInset` inward, for the anchor at `local` in `group`'s space; writes the anchor's NDC into
+ * `ndcOut`. Shared by `GlobeLabel`'s own fade and the empire labels' on-screen test, so a label
+ * counted as visible is one that is drawn.
+ */
+export function globeLabelVisibility(
+  local: readonly [number, number, number],
+  group: THREE.Object3D,
+  camera: THREE.Camera,
+  radius: number,
+  unfold: number,
+  limbInset: number,
+  ndcOut: THREE.Vector3,
+): number {
+  group.localToWorld(labelScratchWorld.set(local[0], local[1], local[2]))
+  const worldPosition: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
+  const cameraPosition: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z]
+  // `sphereMarkerVisibility`'s horizon sits at cos = radius / cameraDistance, so widening the
+  // radius by `limbInset * cameraDistance` raises it by exactly `limbInset`.
+  const fadeRadius = radius + limbInset * camera.position.length()
+  ndcOut.copy(labelScratchWorld).project(camera)
+  return cityLabelVisibility(worldPosition, cameraPosition, fadeRadius, unfold, [ndcOut.x, ndcOut.y, ndcOut.z])
+}
+
+const labelScratchNdc = new THREE.Vector3()
 
 export interface GlobeLabelProps {
   text: string
@@ -143,18 +169,8 @@ export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, 
     const group = groupRef.current
     const element = elementRef.current
     if (group === null || element === null) return
-    labelScratchLocal.set(x, y, z)
-    group.localToWorld(labelScratchWorld.copy(labelScratchLocal))
-    const worldPosition: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    const cameraPosition: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z]
-    // `sphereMarkerVisibility`'s horizon sits at cos = radius / cameraDistance, so widening the
-    // radius by `limbInset * cameraDistance` raises it by exactly `limbInset`.
-    const fadeRadius = radius + limbInset * camera.position.length()
-    // `.project` mutates in place; `worldPosition` is already captured, so reusing the scratch
-    // vector for the NDC projection is safe.
-    labelScratchWorld.project(camera)
-    const ndc: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    element.style.opacity = String(opacity * cityLabelVisibility(worldPosition, cameraPosition, fadeRadius, unfold, ndc))
+    const visibility = globeLabelVisibility([x, y, z], group, camera, radius, unfold, limbInset, labelScratchNdc)
+    element.style.opacity = String(opacity * visibility)
   })
 
   return (

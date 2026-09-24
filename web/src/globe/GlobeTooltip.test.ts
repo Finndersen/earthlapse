@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { createElement } from 'react'
 import * as THREE from 'three'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { arrivalPresentationAt, arrivalTimingFor, buildArrivalArcGeometry } from './arcs'
-import { bindGlobeHitTest, pickCandidate, sameHitTarget, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
+import {
+  bindGlobeHitTest,
+  GlobeTooltipCard,
+  pickCandidate,
+  sameHitTarget,
+  type GlobeHitCandidate,
+  type GlobeHitTarget,
+} from './GlobeTooltip'
 import { ARC_MAP_LIFT, ARC_SPHERE_LIFT, MARKER_MAP_LIFT, MARKER_SPHERE_LIFT } from './humanStyle'
 import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, unfoldedLiftedPosition } from './projection'
 import type { ArrivalGlobeEffect } from '@/types/layer'
@@ -190,7 +199,7 @@ describe('bindGlobeHitTest', () => {
     const shown: { target: GlobeHitTarget | null; viaTouch: boolean }[] = []
     const parentClicks: Event[] = []
     parent.addEventListener('click', (event) => parentClicks.push(event))
-    const unbind = bindGlobeHitTest(canvas, {
+    const handle = bindGlobeHitTest(canvas, {
       resolve: (x) => hitAt(x),
       onChange: (target, viaTouch) => shown.push({ target, viaTouch }),
       touchHitRef: { current: false },
@@ -201,7 +210,7 @@ describe('bindGlobeHitTest', () => {
       canvas.dispatchEvent(pointer('pointerup', pointerType, releaseX))
       canvas.dispatchEvent(pointer('click', pointerType, releaseX))
     }
-    return { canvas, shown, parentClicks, unbind, tap }
+    return { canvas, shown, parentClicks, handle, tap }
   }
 
   it('opens an arrival on a mouse click, but not on a drag or while no handler is bound, as on the minimised orb', () => {
@@ -217,13 +226,65 @@ describe('bindGlobeHitTest', () => {
     expect(minimised.parentClicks).toHaveLength(1)
   })
 
-  it('shows the tooltip on a first touch tap and opens the event on a second tap on the same target', () => {
+  it('shows the tooltip on a first touch tap and opens the event, closing it, on a second tap or from the tooltip', () => {
     const activate = vi.fn()
-    const { tap, shown } = setup(() => ARRIVAL, activate)
+    const { tap, shown, handle } = setup(() => ARRIVAL, activate)
     tap('touch', 10)
     expect(shown.at(-1)).toEqual({ target: ARRIVAL, viaTouch: true })
     expect(activate).not.toHaveBeenCalled()
     tap('touch', 12)
     expect(activate).toHaveBeenCalledExactlyOnceWith('yamnaya-steppe-migration')
+    expect(shown.at(-1)?.target).toBeNull()
+
+    tap('touch', 10)
+    handle.activateShown()
+    expect(activate).toHaveBeenCalledTimes(2)
+    expect(shown.at(-1)?.target).toBeNull()
+
+    tap('touch', 10)
+    handle.dismiss()
+    expect(shown.at(-1)?.target).toBeNull()
+    expect(activate).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('GlobeTooltipCard', () => {
+  afterEach(cleanup)
+
+  const CITY: GlobeHitTarget = {
+    kind: 'city',
+    id: 'city:rome',
+    eventId: null,
+    title: 'Rome',
+    description: '',
+    dateRange: '',
+    anchor: { lat: 41.9, lon: 12.5 },
+  }
+
+  it('once pinned, opens the detail from its body and closes from its ×, with no press reaching the globe underneath', () => {
+    const onOpen = vi.fn()
+    const onDismiss = vi.fn()
+    const underneath = vi.fn()
+    render(
+      createElement('div', { onClick: underneath, onPointerDown: underneath }, createElement(GlobeTooltipCard, { target: CITY, hint: null, pinned: true, onOpen, onDismiss })),
+    )
+    const body = screen.getByRole('button', { name: 'Open details: Rome' })
+    const close = screen.getByRole('button', { name: 'Close preview' })
+    // The pinning tap's own click, pressed on the canvas, lands on the card: ignored.
+    fireEvent.click(body, { detail: 1 })
+    expect(onOpen).not.toHaveBeenCalled()
+    fireEvent.pointerDown(body)
+    fireEvent.click(body, { detail: 1 })
+    expect(onOpen).toHaveBeenCalledOnce()
+    fireEvent.pointerDown(close)
+    fireEvent.click(close, { detail: 1 })
+    expect(onDismiss).toHaveBeenCalledOnce()
+    fireEvent.click(close, { detail: 0 })
+    expect(onDismiss).toHaveBeenCalledTimes(2)
+    expect(underneath).not.toHaveBeenCalled()
+    cleanup()
+
+    render(createElement(GlobeTooltipCard, { target: CITY, hint: null, pinned: false, onOpen, onDismiss }))
+    expect(screen.queryByRole('button')).toBeNull()
   })
 })

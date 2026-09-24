@@ -42,7 +42,7 @@ describe('cityTarget', () => {
         { t: 522, population: 5_000 },
       ],
     }
-    const city: CityAtTime = { feature: sanaa, population: 18_000, radiusPx: cityRadiusPx(18_000), trailingFade: 1 }
+    const city: CityAtTime = { feature: sanaa, population: 18_000, radiusPx: cityRadiusPx(18_000), fade: 1 }
     expect(cityTarget(city, 81).dateRange).toBe('Records: 522 years ago – 115 years ago')
   })
 })

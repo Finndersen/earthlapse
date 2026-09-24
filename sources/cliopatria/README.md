@@ -1,7 +1,7 @@
 # Source: cliopatria
 
-Historical empire territory, 3400 BCE – 1900 CE (curated domain; the raw dataset itself runs to
-2024 CE — see "Domain cutoff: 1900 CE"): the hand-picked lineages of `roster.toml` (ADR-059),
+Historical empire territory, 3400 BCE – 1997 CE (each lineage to its own end; the raw dataset
+itself runs to 2024 CE — see "Domain: each lineage's own end"): the hand-picked lineages of `roster.toml` (ADR-059),
 each over its full lifespan, as a `FeatureSet` of territory snapshots (id `cliopatria_polities`:
 label anchor, area, half-open time span) plus one content-hashed geometry file of their
 simplified polygons (`data/media/vectors/cliopatria_territories-<hash>.json`). Published as the
@@ -146,8 +146,8 @@ a small, explicit, commented list, checked against a canonical name (post paren-
 in `_dedupe_rows`, deliberately not a broader "is this a real polity" heuristic that would
 reintroduce hand-curated historical judgement into a rule built to avoid exactly that.
 
-**Every name that changed or was dropped** by this amendment (independent of the 1900 cutoff
-below, which separately removes seven modern nation-states — see "Domain cutoff: 1900 CE"):
+**Every name that changed or was dropped** by this amendment (independent of the 1900 cutoff,
+since lifted, which separately removed seven modern nation-states):
 
 | Raw name | Outcome |
 |---|---|
@@ -170,41 +170,19 @@ peak area than either original reading, since the divergent `Area` readings are 
 double-counted) plus the 1900 cutoff, a `"Brazilian Republic"` window newly qualifies in the
 bucket the cutoff-truncated `"Empire of Brazil"`/former `"Republic of Brazil"` windows vacated.
 
-## Domain cutoff: 1900 CE
+## Domain: each lineage's own end
 
-**Added 2026-09-18** (ADR-037 amendment), per-user direction after reviewing the originally
--selected subset: ranking "largest by area" within each era bucket, run all the way to the
-present, put five modern nation-states in the selected list — Canada, the People's Republic of
-China, Brazil, the Russian Federation and the USA — rather than the historical empires this
-layer exists to show. The user's own words: *"hmm yeh maybe stop at 1900 for now and ill see
-what that looks like."*
+**2026-09-24** (ADR-059 amendment): the provisional 1900 CE cutoff (ADR-037 amendment,
+2026-09-18) is lifted. It existed to keep modern nation-states out of the old subset rule's
+top-N-by-area ranking; the hand-picked roster already does that, and the cutoff was instead
+cutting the roster's own empires off mid-life (the Qing fell in 1912, the Russian Empire in
+1917, the Ottoman Empire in 1922, and the British Empire peaked around 1920). Every member now
+runs to its last Cliopatria window, and the two members that are modern states rather than
+empires carry a roster `to`: `Kingdom of Spain` ends in 1931 with the monarchy, and `Kingdom of
+Great Britain` in 1997 with `British Colonial Empire`, at the handover of Hong Kong.
 
-`normalise.CUTOFF_CE_YEAR = 1900` excludes every polity-window material after that year. 1900
-itself is drawn through to its end, so the newest snapshot boundary (`Snapshot.t_end`) is 124.0 years
-BP against the fixed 2025 present (see "Resolution and thinning" for the half-open spans). This is
-explicitly **provisional** — the user will look at the layer at this domain before deciding
-whether to move or lift the cutoff — so it is one named module-level constant, not scattered
-through the pipeline.
-
-**Applied to raw rows before dedupe** (`normalise._apply_cutoff`, immediately after loading).
-When it was introduced this kept a modern nation-state's post-1900 growth out of the subset
-rule's top-N ranking altogether; with the roster it simply bounds every member's lifespan:
-
-- A window that starts strictly after 1900 (`FromYear > 1900`) is **dropped entirely**.
-- A window straddling 1900 (`FromYear <= 1900 < ToYear`) is **truncated**, not dropped — its
-  `ToYear` clips to 1900, so a polity still alive in 1880 still appears, its territory simply
-  ending at 1900 rather than persisting to its own real, later end-year.
-- A window entirely before or at 1900 (`ToYear <= 1900`) is kept unchanged.
-
-**Effect on the selected subset**: three of the five nation-states the user flagged (Canada, the
-People's Republic of China, the Russian Federation) vanish entirely — their only windows start
-after 1900. `"Republic of Brazil"` and `"Republics of the Soviet Union"`/`"Union of Soviet
-Socialist Republics"`/`"Russian Republic"` (all post-1900-only) vanish the same way. `"United
-States of America"`, `"British Colonial Empire"`, `"Russian Empire"`, `"Ottoman Empire"`,
-`"Spanish Empire"` and `"Qing Dynasty"` survive with their windows truncated at 1900 — they were
-real polities already alive before 1900, so truncating (not dropping) them is the correct
-reading of "stop at 1900", not an accident of the mechanism. `"Empire of Brazil"` needed no
-truncation at all: its own last window already ends in 1889, before the cutoff.
+The last snapshots: Qing 1911, Russian Empire 1916, Ottoman Empire and Qajar 1923, Spain 1931,
+British Raj 1947, British Africa 1960, Britain and its colonial empire 1997.
 
 ## Empire roster
 
@@ -225,7 +203,7 @@ web's palette), a one-line `reason`, and ordered `members`. A member is a canoni
 (after `_canonical_name`'s paren-stripping and alias), with optional inclusive `from`/`to` CE
 clamps and an optional `label` shown on the globe instead of the polity name (e.g. `British
 Colonial Empire` → "British Empire", `Sumerian City-States` → "Sumer"). `normalise.py` refuses
-the build naming every member that matches no window up to 1900, and every member left with no
+the build naming every member that matches no window, and every member left with no
 window after its clamp and the area floor; a polity may appear in only one lineage.
 
 **Info card.** Each lineage also carries a `description` (2–3 plain sentences, at most 320
@@ -287,8 +265,7 @@ snapshot keeps its first window's geometry, `Area`, `SeshatID` and representativ
 
 **Time semantics.** `t_start = 2025 − from_year`, `t_end = 2025 − (to_year + 1)`, and a
 snapshot is active for `t_end < t ≤ t_start`: years are inclusive, so abutting snapshots share a
-boundary and never overlap or leave a one-year hole. A snapshot clipped by the 1900 cutoff ends
-at `t_end = 124`.
+boundary and never overlap or leave a one-year hole.
 
 ## FeatureSet: one row per snapshot
 
@@ -411,8 +388,8 @@ Seshat's own polity records", not "is this border agreed".
 `sources/co2-o2`. Unlike `sources/cities`' `BC_<year>`/`AD_<year>` column-name parsing,
 Cliopatria's `FromYear`/`ToYear` are already signed integers (negative = BCE), so one formula
 covers every row: `t = 2025 - year` for a snapshot's start, and `t = 2025 - (year + 1)` for its
-end, since `ToYear` is inclusive. The curated domain's newer edge is 124.0
-(the end of 1900 CE) — see "Domain cutoff: 1900 CE" above — not the present.
+end, since `ToYear` is inclusive. The curated domain's newer edge is 27.0 (the end of 1997 CE),
+the roster's last `to` — see "Domain: each lineage's own end" above — not the present.
 
 ## Measured volume
 
@@ -466,7 +443,8 @@ polities (the tests inject it through `normalise_with`/`write_geometry`):
   and the fixture roster's one `anchor`;
 - `Atropates` (`Type = LEADER`) — dropped by the `Type` filter;
 - `Montenegro`'s real windows (1880–1884), (1885–1910) and (1911) — abutting snapshots, a window
-  straddling 1900 (clipped to end at `t = 124`) and one wholly after it (dropped);
+  straddling the fixture roster's `to = 1900` (clamped to end at `t = 124`) and one wholly after
+  it (dropped);
 - `Greek Dark Ages` at (-1100,-1001 BCE) — the non-polity exclusion.
 
 Bare-over-paren resolution with differing spans and the thinning thresholds are tested on
@@ -487,7 +465,6 @@ synthetic windows, and the `British Colonial Empire`/`(British Empire)` alias on
 - **Metropoles are separate polities.** `British Colonial Empire` excludes Great Britain, the
   Raj and British Africa; `Spanish Empire` excludes the Kingdom of Spain. A lineage therefore
   often has several members active at once, which the web fills as one path.
-- **The 1900 cutoff (`CUTOFF_CE_YEAR`) is provisional** — see "Domain cutoff: 1900 CE".
 - **No border-uncertainty field, and no population field, at all** — both are prose-only
   caveats here, not fabricated data.
 - **`FeatureSet.sample(t)` is not the right way to read this layer** — it ignores `t_end`; read

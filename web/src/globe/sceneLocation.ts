@@ -12,6 +12,9 @@
  * Applies to the minimised orb only. Expanded (sphere or map) the viewer steers the camera, so
  * the marker and pulse are drawn in place and the camera left alone — enforced by the caller
  * (`Globe.tsx` passes no focus target when expanded), not by a branch in here.
+ *
+ * The same accumulator's drift speed is gated here too (`stepDriftGate`): in the expanded view the
+ * drift stops while the viewer is using the globe and eases back in once they leave it alone.
  */
 
 import type { SceneCoordinates } from '@/types/manifest'
@@ -115,6 +118,44 @@ export function stepGlobeRotation(state: GlobeRotationState, dtSeconds: number, 
     return { ...state, rotationY: wrapAngle(rotationY), easeElapsed }
   }
   return { ...state, rotationY: wrapAngle(state.rotationY + dt * driftRadiansPerSecond) }
+}
+
+/** How long the expanded globe stays still after the viewer's last interaction, with nothing open
+ *  and the view at its default zoom, before the drift resumes: long enough to read a tooltip or
+ *  study a region without it sliding away, short enough that an abandoned view comes back to life. */
+export const DRIFT_RESUME_IDLE_SECONDS = 45
+/** How long a resuming drift takes to reach full speed, so it eases in rather than lurching. */
+export const DRIFT_EASE_IN_SECONDS = 4
+
+/** The drift's speed as a fraction of full (`speed`), and how long the view has been left alone
+ *  (`idleSeconds`). */
+export interface DriftGate {
+  speed: number
+  idleSeconds: number
+}
+
+export const DRIFT_RUNNING: DriftGate = { speed: 1, idleSeconds: Infinity }
+
+export interface DriftInputs {
+  expanded: boolean
+  /** The viewer dragged, pinched, scrolled, pressed a zoom button or tapped since the last step. */
+  interacted: boolean
+  /** A tooltip or detail card is open, or the view is zoomed in past its default framing. */
+  held: boolean
+}
+
+/**
+ * Advances the expanded view's drift gate by one frame. Any interaction stops the drift at once
+ * and restarts the idle clock; while `held`, the clock stays at zero. Once the view has been idle
+ * for `DRIFT_RESUME_IDLE_SECONDS` the speed ramps back up over `DRIFT_EASE_IN_SECONDS` — a speed
+ * ramp, so the angle itself never jumps. The collapsed orb always drifts (ramping up the same way).
+ */
+export function stepDriftGate(gate: DriftGate, dtSeconds: number, inputs: DriftInputs): DriftGate {
+  const dt = Number.isFinite(dtSeconds) && dtSeconds > 0 ? dtSeconds : 0
+  if (inputs.expanded && (inputs.interacted || inputs.held)) return { speed: 0, idleSeconds: 0 }
+  const idleSeconds = inputs.expanded ? gate.idleSeconds + dt : Infinity
+  if (idleSeconds < DRIFT_RESUME_IDLE_SECONDS) return { speed: 0, idleSeconds }
+  return { speed: Math.min(1, gate.speed + dt / DRIFT_EASE_IN_SECONDS), idleSeconds }
 }
 
 /** The location the globe should actually plot for a scene, or `null` for "no marker at all".

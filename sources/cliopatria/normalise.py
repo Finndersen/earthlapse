@@ -10,7 +10,7 @@ Two outputs, built from one list of snapshots so their ids cannot diverge:
   snapshot, keyed by the same feature id (`write_outputs`).
 
 **Scope.** Only `Type == "POLITY"` rows are territorial extents. Of those, only the polities the
-empire roster (`roster.toml`) names are kept, each over its full lifespan up to `CUTOFF_CE_YEAR`.
+empire roster (`roster.toml`) names are kept, each over its full lifespan or its roster `from`/`to`.
 
 **Duplicate aggregate entries.** Cliopatria uses a parenthesised `Name` (e.g. `"(Roman Empire)"`)
 both for an aggregate of one entity's own successive periods and for a genuinely distinct
@@ -64,12 +64,6 @@ FEATURE_SET_ID = "cliopatria_polities"
 PRESENT_CE_YEAR = 2025
 """t = years before this fixed calendar present, matching sources/hyde's, sources/cities' and
 sources/co2-o2's own convention. `FromYear`/`ToYear` are signed integers (negative = BCE)."""
-
-CUTOFF_CE_YEAR = 1900
-"""Exclude any polity-window material after this calendar year: past it, Cliopatria is dominated
-by modern nation-states rather than the historical empires this layer exists to show
-(README.md "Domain cutoff"). A window that straddles it is truncated to end here
-(`_apply_cutoff`)."""
 
 MIN_AREA_KM2 = 500.0
 """A window smaller than this counts as absent. Cliopatria carries degenerate slivers inside
@@ -251,15 +245,6 @@ def _is_parenthesised(name: str) -> bool:
     return name.startswith("(") and name.endswith(")")
 
 
-def _apply_cutoff(row: _RawPolityRow) -> _RawPolityRow | None:
-    """Clip `row` to end at `CUTOFF_CE_YEAR`, or `None` when it lies wholly after it."""
-    if row.from_year > CUTOFF_CE_YEAR:
-        return None
-    if row.to_year > CUTOFF_CE_YEAR:
-        return replace(row, to_year=CUTOFF_CE_YEAR)
-    return row
-
-
 def _dedupe_rows(rows: list[_RawPolityRow]) -> dict[tuple[str, int, int], _RawPolityRow]:
     """Group by (canonical name, FromYear, ToYear), dropping `_EXCLUDED_NAMES`. When a bare and a
     parenthesised row cover the identical window (identical geometry and area for every such
@@ -278,11 +263,8 @@ def _dedupe_rows(rows: list[_RawPolityRow]) -> dict[tuple[str, int, int], _RawPo
 
 def _polity_rows(raw_dir: Path) -> dict[str, list[_RawPolityRow]]:
     """Every surviving window, by canonical polity name, oldest first."""
-    rows = [
-        clipped for row in _load_raw_rows(raw_dir) if (clipped := _apply_cutoff(row)) is not None
-    ]
     by_polity: dict[str, list[_RawPolityRow]] = defaultdict(list)
-    for (canonical, _from, _to), row in _dedupe_rows(rows).items():
+    for (canonical, _from, _to), row in _dedupe_rows(_load_raw_rows(raw_dir)).items():
         by_polity[canonical].append(row)
     for windows in by_polity.values():
         windows.sort(key=lambda row: (row.from_year, row.to_year))
@@ -346,7 +328,7 @@ def _roster_windows(
     if unknown:
         raise EmpireRosterError(
             f"roster names {len(unknown)} polit{'y' if len(unknown) == 1 else 'ies'} with no "
-            f"Cliopatria window up to {CUTOFF_CE_YEAR} CE: {', '.join(unknown)}"
+            f"Cliopatria window: {', '.join(unknown)}"
         )
     per_member = [_member_windows(by_polity[m.polity], m) for _, m in roster.members()]
     empty = [m.polity for (_, m), ws in zip(roster.members(), per_member, strict=True) if not ws]

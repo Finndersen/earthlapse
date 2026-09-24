@@ -160,7 +160,7 @@ name = "China"
 colour_slot = 0
 reason = "The succession of Chinese dynasties from the Shang to the Qing"
 description = "The Shang, the earliest Chinese dynasty known from its own written records, ruled the Yellow River valley from about 1600 BCE. The Qin unified China in 221 BCE, and dynasties including the Han, Tang, Song, Ming and Qing ruled an imperial state, through periods of division, until the Qing fell in 1912."
-events = ["qin-unification", "end-of-han-dynasty", "an-lushan-rebellion", "ming-qing-transition"]
+events = ["qin-unification", "end-of-han-dynasty", "an-lushan-rebellion", "ming-qing-transition", "fall-of-the-qing"]
 members = [
   { polity = "Shang Dynasty", wikipedia = "Shang dynasty" },
   { polity = "Zhou Dynasty", wikipedia = "Zhou dynasty" },
@@ -168,8 +168,21 @@ members = [
   { polity = "Qin Dynasty", wikipedia = "Qin dynasty" },
   { polity = "Han Dynasty", wikipedia = "Han dynasty" },
   { polity = "Western Jin", wikipedia = "Jin dynasty (266-420)" },
+  # The Northern and Southern dynasties, until the Sui reunified China in 589.
+  { polity = "Liu Song Dynasty", label = "Liu Song", wikipedia = "Liu Song dynasty" },
+  { polity = "Southern Qi", wikipedia = "Southern Qi" },
+  { polity = "Liang Dynasty", label = "Liang", wikipedia = "Liang dynasty" },
+  { polity = "Chen Dynasty", label = "Chen", wikipedia = "Chen dynasty" },
+  { polity = "Northern Wei", wikipedia = "Northern Wei" },
+  { polity = "Western Wei", wikipedia = "Western Wei" },
+  { polity = "Northern Zhou", wikipedia = "Northern Zhou" },
   { polity = "Sui Dynasty", wikipedia = "Sui dynasty" },
   { polity = "Tang Dynasty", wikipedia = "Tang dynasty" },
+  # The Five Dynasties of the north, between the Tang and the Song.
+  { polity = "Later Liang Dynasty", label = "Later Liang", wikipedia = "Later Liang (Five Dynasties)" },
+  { polity = "Later Tang", wikipedia = "Later Tang" },
+  { polity = "Later Jin", wikipedia = "Later Jin (Five Dynasties)" },
+  { polity = "Later Han", wikipedia = "Later Han (Five Dynasties)" },
   { polity = "Northern Song", wikipedia = "Song dynasty" },
   { polity = "Southern Song", wikipedia = "Song dynasty" },
   { polity = "Ming Dynasty", wikipedia = "Ming dynasty" },
@@ -307,7 +320,7 @@ name = "Ottoman Empire"
 colour_slot = 2
 reason = "Six centuries spanning south-east Europe, Anatolia, the Levant and North Africa"
 description = "Founded by Osman I in north-west Anatolia around 1299, the Ottoman state took Constantinople in 1453 and in the 16th century ruled south-east Europe, the Middle East and North Africa. It lost territory steadily from the late 17th century and was dissolved in 1922, after the First World War."
-events = ["fall-of-constantinople", "ottoman-greatest-extent"]
+events = ["fall-of-constantinople", "ottoman-greatest-extent", "end-of-the-ottoman-empire"]
 members = [
   # Bursa: Ottoman from 1326, where Constantinople is Byzantine until 1453.
   { polity = "Ottoman Empire", wikipedia = "Ottoman Empire", anchor = [40.19, 29.06] },
@@ -373,7 +386,8 @@ reason = "The first global empire, with its American colonies"
 description = "The union of Castile and Aragon made Spain a European power, and Columbus's voyage of 1492 began its conquest of the Americas. By the late 16th century it ruled much of the Americas, the Philippines and lands in Europe. Most American colonies won independence by 1826; Cuba and the Philippines were lost in 1898."
 events = ["columbian-exchange", "fall-of-tenochtitlan", "spanish-conquest-of-inca"]
 members = [
-  { polity = "Kingdom of Spain", label = "Spain", wikipedia = "Spain", anchor = [40.42, -3.70] },
+  # The metropole alone, until the monarchy fell in 1931.
+  { polity = "Kingdom of Spain", to = 1931, label = "Spain", wikipedia = "Spain", anchor = [40.42, -3.70] },
   # Madrid: the bare series is the overseas territory alone.
   { polity = "Spanish Empire", wikipedia = "Spanish Empire", anchor = [40.42, -3.70] },
   { polity = "Iberian Union", wikipedia = "Iberian Union" },
@@ -385,12 +399,13 @@ id = "britain"
 name = "Britain"
 colour_slot = 3
 reason = "The largest empire in history by area, metropole and colonies together"
-description = "Building on English colonies and trade from the early 1600s, Great Britain (from 1801 the United Kingdom) expanded across North America, India, Australia and Africa and was the dominant naval and commercial power of the 19th century. At its height, around 1920, it covered about a quarter of the world's land."
-events = ["industrial-revolution", "british-colonisation-australia"]
+description = "Building on English colonies of the early 1600s, Britain expanded across North America, India, Australia and Africa. At its height, around 1920, it covered about a quarter of the world's land. India and Pakistan became independent in 1947, most other colonies within two decades, and Hong Kong was handed over in 1997."
+events = ["industrial-revolution", "british-colonisation-australia", "indian-independence"]
 members = [
-  { polity = "Kingdom of Great Britain", label = "Great Britain", wikipedia = "United Kingdom", anchor = [51.51, -0.13] },
+  # The metropole alone, until the handover of Hong Kong in 1997.
+  { polity = "Kingdom of Great Britain", to = 1997, label = "Great Britain", wikipedia = "United Kingdom", anchor = [51.51, -0.13] },
   # London: the bare series is the overseas territory alone.
-  { polity = "British Colonial Empire", label = "British Empire", wikipedia = "British Empire", anchor = [51.51, -0.13] },
+  { polity = "British Colonial Empire", to = 1997, label = "British Empire", wikipedia = "British Empire", anchor = [51.51, -0.13] },
   { polity = "British Raj", wikipedia = "British Raj" },
   { polity = "British Africa", wikipedia = "British Empire" },
 ]
@@ -400,8 +415,8 @@ id = "russia"
 name = "Russia"
 colour_slot = 5
 reason = "Muscovy's expansion across Siberia to the Pacific and Alaska"
-description = "Ivan IV was crowned the first Tsar of Russia in 1547 and conquered the khanates of Kazan and Astrakhan. Russian expansion crossed Siberia to reach the Pacific by 1639 and continued into Alaska in the 18th century. Peter the Great proclaimed the Russian Empire in 1721; it sold Alaska to the United States in 1867."
-events = ["russian-conquest-of-siberia"]
+description = "Ivan IV was crowned the first Tsar of Russia in 1547 and conquered Kazan and Astrakhan. Russian expansion crossed Siberia to the Pacific by 1639 and reached Alaska, which was sold to the United States in 1867. Peter the Great proclaimed the Russian Empire in 1721; the revolution of 1917 ended it."
+events = ["russian-conquest-of-siberia", "russian-revolution"]
 members = [
   { polity = "Tsardom of Russia", wikipedia = "Tsardom of Russia" },
   { polity = "Russian Empire", wikipedia = "Russian Empire" },

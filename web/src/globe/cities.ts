@@ -143,7 +143,7 @@ export function cityRadiusPx(population: number): number {
  * A function of `t` alone, never of the currently-largest city or any other city's population: a
  * threshold defined relative to other cities moves whenever they do, so a city holding steady at
  * 30,000 would drop out the moment some other city grew past whatever multiple defined the cutoff,
- * then return if that city later shrank — the same disappear/reappear failure `CITY_LIMIT_ORB`
+ * then return if that city later shrank — the same disappear/reappear failure `allCitiesAt`
  * documents for a rank cap. Pinning the floor to `t` alone makes that impossible: two calls at the
  * same `t` always agree regardless of which cities exist.
  *
@@ -186,65 +186,40 @@ export function citySignificanceFloorAt(t: GeoTime): number {
 
 // ---------------------------------------------------------------------------------- culling
 
-/**
- * How many city markers the orb may draw at once. The orb is a ~130px disc of which barely half
- * faces the viewer, so more than a handful of dots there is confetti, not information — top-N by
- * population *at `t`* is exactly what makes it show Uruk in 3000 BCE and Tokyo today.
- *
- * Expanded (sphere or map) has no equivalent cap: a city that exists at `t` is drawn, full stop. A
- * fixed-count rank cap there would make a city's presence depend on how it ranks against every
- * *other* city at that instant rather than on whether it exists — cities dropping out and back in
- * as other cities' interpolated populations briefly overtake and fall back behind them, with a
- * ranking dominated by a handful of megacities starving sparser regions of any dots at all.
- * `MarkerField`'s instance budget (`HumanCivilisation.tsx`'s `MARKER_CAPACITY`) is sized for the
- * full published set instead.
- */
-export const CITY_LIMIT_ORB = 10
-
 export interface CityAtTime {
   feature: FeatureData
   /** Interpolated at `t` — see `cityPopulationAt`. */
   population: number
   radiusPx: number
-  /** 1..0 draw-alpha multiplier for the trailing edge of the city's own record — see
-   *  `cityTrailingFadeAt`'s own doc comment. Always 1 outside the grace window (either still
-   *  within the attested/interpolated span, or — since `population` is `null` and the city is
-   *  excluded entirely once past the grace window — never observed as a partial fade beyond it). */
-  trailingFade: number
+  /** 1..0 draw-alpha multiplier: the trailing edge of the city's own record
+   *  (`cityTrailingFadeAt`), and on the orb also its arrival fade (`arrivingCitiesAt`). */
+  fade: number
 }
 
 /** Every city that both exists at `t` (see `cityPopulationAt` — both the oldest-estimate bound
  *  and the newest-reading trailing grace) and clears `citySignificanceFloorAt(t)`, largest
  *  population first, ties broken on feature id so both the order and the set are deterministic
- *  and a scrub back to the same `t` reproduces both exactly. Shared core for `selectCities` (the
- *  orb's own ranked-and-capped view) and `allCitiesAt` (the expanded view's uncapped one) so the
- *  two can never define "exists" or "population order" differently from each other. */
+ *  and a scrub back to the same `t` reproduces both exactly. Shared core for `allCitiesAt` (the
+ *  expanded view) and `arrivingCitiesAt` (the orb) so the two can never define "exists"
+ *  differently. */
 function citiesAtTime(features: readonly FeatureData[], t: GeoTime): CityAtTime[] {
   const floor = citySignificanceFloorAt(t)
   const present: CityAtTime[] = []
   for (const feature of features) {
     const population = cityPopulationAt(feature, t)
     if (population === null || population < floor) continue
-    present.push({ feature, population, radiusPx: cityRadiusPx(population), trailingFade: cityTrailingFadeAt(feature, t) })
+    present.push({ feature, population, radiusPx: cityRadiusPx(population), fade: cityTrailingFadeAt(feature, t) })
   }
   present.sort((a, b) => b.population - a.population || a.feature.id.localeCompare(b.feature.id))
   return present
 }
 
 /**
- * The `limit` largest cities that exist at `t`, largest first — the orb's own ranked view (pass
- * `CITY_LIMIT_ORB`). Chosen by population *at `t`*, not by any fixed ranking: at 3000 BCE that is
- * Uruk and Memphis, at 1900 CE London and New York, and the set turns over on its own as history
- * does. Not for the expanded view — see `allCitiesAt`.
- */
-export function selectCities(features: readonly FeatureData[], t: GeoTime, limit: number): CityAtTime[] {
-  const present = citiesAtTime(features, t)
-  return present.length > limit ? present.slice(0, limit) : present
-}
-
-/**
- * Every city that exists at `t` — no cap, no ranking cull. The expanded view's own city set: see
- * `CITY_LIMIT_ORB`'s doc comment for why the expanded view deliberately has no equivalent limit.
+ * Every city that exists at `t` — no cap, no ranking cull: the expanded view's city set. A
+ * fixed-count rank cap would make a city's presence depend on how it ranks against every other
+ * city at that instant rather than on whether it exists, so cities would drop out and back in as
+ * others' interpolated populations overtook them. `MarkerField`'s instance budget
+ * (`HumanCivilisation.tsx`'s `MARKER_CAPACITY`) is sized for the full published set instead.
  */
 export function allCitiesAt(features: readonly FeatureData[], t: GeoTime): CityAtTime[] {
   return citiesAtTime(features, t)
@@ -275,7 +250,7 @@ export function cityLocalPosition(feature: FeatureData, unfold: number): readonl
  * in (the caller converts a screen-pixel budget into that space once, using the live camera
  * distance — see `cityLocalPosition` for why the positions themselves need no camera at all).
  *
- * Local and blind to rank, unlike a fixed top-N (`CITY_LIMIT_ORB`): a city is only ever removed
+ * Local and blind to rank, unlike a fixed top-N: a city is only ever removed
  * for having a closer, bigger neighbour that was kept first, so a sparse region where no two
  * cities are ever close together keeps every one of them, while a packed region thins hard. A
  * global rank cap can't do this — it strips a sparse region bare while a crowded one still shows
@@ -311,7 +286,7 @@ export function declutterCities<T>(cities: readonly T[], positionOf: (city: T) =
 }
 
 /** Whether any city exists at `t` — the "Human civilisation" legend row's own visibility test
- *  for this part of the layer. Cheaper than `selectCities` and allocates nothing. */
+ *  for this part of the layer. Cheaper than `allCitiesAt` and allocates nothing. */
 export function citiesHaveDataAt(features: readonly FeatureData[] | null, t: GeoTime): boolean {
   if (features === null) return false
   for (const feature of features) {
@@ -398,4 +373,29 @@ export function newCityLabels(
       a.label.feature.id.localeCompare(b.label.feature.id),
   )
   return candidates.slice(0, CITY_LABEL_CAP).map((c) => c.label)
+}
+
+/** How much larger than its population radius an orb city's dot is the moment it appears,
+ *  shrinking back as it fades, so an arrival reads as a pop at the orb's small scale. */
+export const CITY_ARRIVAL_SWELL = 0.8
+
+/**
+ * The orb's cities: each existing city only while it is new, over the same window its arrival
+ * label has in the expanded view (`cityLabelOpacityAt`). The dot swells in and fades away, so the
+ * ~130px orb shows where cities are appearing without keeping a standing set that turns over as
+ * rankings change.
+ */
+export function arrivingCitiesAt(
+  features: readonly FeatureData[],
+  t: GeoTime,
+  fadeWindowAt: (appearanceT: GeoTime) => GeoTime,
+): CityAtTime[] {
+  const arriving: CityAtTime[] = []
+  for (const city of citiesAtTime(features, t)) {
+    const appearanceT = city.feature.estimates[city.feature.estimates.length - 1]!.t
+    const arrival = cityLabelOpacityAt(city.feature, t, fadeWindowAt(appearanceT))
+    if (arrival <= 0) continue
+    arriving.push({ ...city, radiusPx: city.radiusPx * (1 + CITY_ARRIVAL_SWELL * arrival), fade: city.fade * arrival })
+  }
+  return arriving
 }

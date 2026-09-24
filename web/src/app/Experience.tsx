@@ -701,6 +701,7 @@ export function Experience() {
               onActivateEvent={activateGlobeEvent}
               onActivateEmpire={activateGlobeEmpire}
               selectedEmpire={empireDetail === null ? null : empireDetailId}
+              eventDetailOpen={detailEventId !== null}
             />
           ) : (
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>

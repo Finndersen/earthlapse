@@ -1,7 +1,6 @@
 /**
- * Rasterises the active empire snapshots (ADR-059) into an equirectangular texture the globe
- * shader composites after the overlay mix, and fetches the territory geometry they are drawn
- * from.
+ * Rasterises the active empire snapshots (ADR-059) into a coverage texture the globe shader
+ * turns into fills and borders, and fetches the territory geometry they are drawn from.
  *
  * The cache implements `useGlobeTexturePair`'s `GlobeTextureCache`, so the empire pair gets the
  * same "keep the old pair bound until the new one is ready" discipline as every other globe
@@ -11,16 +10,24 @@
  * twin resident too, so hovering on and off an empire swaps between two cached textures instead
  * of repainting.
  *
- * Painting: one `Path2D` per lineage holding every member's rings, wound so the nonzero rule
- * unions overlapping members and still cuts holes (`orientedRingPixels`); fills first, then every
- * casing, then every coloured stroke, so no lineage's fill covers another's outline. The canvas
- * is copied into a premultiplied `ImageBitmap`, which `Globe.tsx` force-uploads and closes like
- * the other human-era textures (`initAndCloseHumanEraTexture`). A highlighted lineage is painted
- * after every other lineage's outlines, wider, with the others dimmed (`EMPIRE_DIM_ALPHA`). Premultiplied texels keep the
- * mip chain free of dark fringes; the bytes stay sRGB-encoded (`NoColorSpace`) and the shader
- * un-premultiplies before decoding, since decoding sRGB on premultiplied values would darken
- * every partially transparent texel. Losing the WebGL context loses the uploads, so
- * `Globe.tsx` clears this cache and repaints on restore.
+ * **Coverage, not strokes.** Borders are not painted: the shader draws each one in screen space
+ * on the half-way contour of a coverage channel, so it stays about one CSS pixel wide at any zoom.
+ * The texture is three equirectangular bands stacked vertically (`EMPIRE_BANDS`), each a
+ * `EMPIRE_TIERS` grid. Channel `c` lives in band `floor(c / 3)`, colour channel `c % 3`: channels
+ * 0–7 are the coverage of each palette slot (every lineage of that `colourSlot`, one nonzero
+ * `Path2D` over rings wound by `orientedRingPixels`, so overlapping members union and holes cut),
+ * and channel 8 is the highlighted lineage's own coverage. A slot is a sound border identity
+ * because the roster never gives two coexisting neighbours the same slot. Each band's alpha is a
+ * constant the shader reads at the band's centre: band 0 whether the fill is on, band 1 the
+ * highlighted lineage's slot (`EMPIRE_SLOT_CODE_STEP`), band 2 the device pixel ratio at paint
+ * time (`EMPIRE_PIXEL_RATIO_CODE`), so the texture alone says how to draw itself and a crossfade
+ * between two of them needs no extra state. `RepeatWrapping` joins the two sides of the
+ * antimeridian, where Cliopatria cuts its polygons; the shader draws no line along the cut.
+ *
+ * The bands are drawn opaque (black, then each channel added with `lighter`) so every channel
+ * stays independent, read back once, their alphas set, and uploaded as a mipmapped
+ * `NoColorSpace` `DataTexture`; the CPU copy is dropped after the upload. Losing the WebGL
+ * context loses the uploads, so `Globe.tsx` clears this cache and repaints on restore.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -29,17 +36,8 @@ import * as THREE from 'three'
 import { parseTerritoryGeometry, type TerritoryGeometry } from '@/data/curated'
 
 import { ByteCappedCache } from './byteCappedCache'
-import {
-  EMPIRE_CASING_COLOUR,
-  EMPIRE_DIM_ALPHA,
-  EMPIRE_FILL_ALPHA,
-  EMPIRE_HIGHLIGHT_FILL_ALPHA,
-  EMPIRE_HIGHLIGHT_STROKE_SCALE,
-  EMPIRE_TIERS,
-  empireColour,
-  type EmpireTier,
-} from './empireStyle'
-import { orientedRingPixels, ringStrokeRuns, type EmpireIndex, type EmpireSnapshot } from './empires'
+import { EMPIRE_PALETTE, EMPIRE_TIERS, type EmpireTier } from './empireStyle'
+import { orientedRingPixels, type EmpireIndex, type EmpireSnapshot } from './empires'
 import type { GlobeTextureCache } from './useGlobeTexturePair'
 
 let maxAnisotropy = 1
@@ -48,10 +46,20 @@ export function setEmpireMaxAnisotropy(value: number): void {
   maxAnisotropy = value
 }
 
-/** Two expandedHigh textures with mips (~45 MB each): the bound pair during a crossfade, or a
+/** Bands stacked in one texture: eight slot channels and the highlight channel, three per band. */
+export const EMPIRE_BANDS = 3
+/** The channel holding the highlighted lineage's coverage. */
+const HIGHLIGHT_CHANNEL = EMPIRE_PALETTE.length
+/** Band 1's alpha byte is `(slot + 1) * EMPIRE_SLOT_CODE_STEP` for the highlighted slot, 0 for none;
+ *  the step is wide so the shader's rounding never lands on a neighbouring slot. */
+export const EMPIRE_SLOT_CODE_STEP = 28
+/** Band 2's alpha byte is the device pixel ratio times this (a ratio up to ~4 fits a byte). */
+export const EMPIRE_PIXEL_RATIO_CODE = 64
+
+/** Two expandedHigh textures with mips (~34 MB each): the bound pair during a crossfade, or a
  *  highlighted texture and its resident unhighlighted twin. A twin is protected only while one
  *  texture is kept, so the two never add up. */
-const EMPIRE_CACHE_BYTES = 96 * 1024 * 1024
+const EMPIRE_CACHE_BYTES = 72 * 1024 * 1024
 
 interface EmpireTextureSpec {
   frameKey: string
@@ -79,9 +87,11 @@ export interface EmpireTextureCache extends GlobeTextureCache {
   clear(): void
 }
 
+type Context2D = OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D
+
 const scratchCanvases = new Map<string, HTMLCanvasElement | OffscreenCanvas>()
 
-function scratchContext(width: number, height: number): OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D {
+function scratchContext(width: number, height: number): Context2D {
   const sizeKey = `${width}x${height}`
   let canvas = scratchCanvases.get(sizeKey)
   if (canvas === undefined) {
@@ -94,89 +104,76 @@ function scratchContext(width: number, height: number): OffscreenCanvasRendering
     }
     scratchCanvases.set(sizeKey, canvas)
   }
-  const ctx = canvas.getContext('2d') as OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D | null
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }) as Context2D | null
   if (ctx === null) throw new Error('empireTexture: 2D canvas context unavailable')
   return ctx
 }
 
-function tracePolyline(path: Path2D, xy: readonly number[], closed: boolean): void {
+function tracePolyline(path: Path2D, xy: readonly number[]): void {
   path.moveTo(xy[0]!, xy[1]!)
   for (let i = 2; i < xy.length; i += 2) path.lineTo(xy[i]!, xy[i + 1]!)
-  if (closed) path.closePath()
+  path.closePath()
 }
 
-interface LineagePath {
-  lineage: string
-  path: Path2D
-  colour: string
+const CHANNEL_COLOURS = ['#ff0000', '#00ff00', '#0000ff'] as const
+
+function devicePixelRatioNow(): number {
+  return typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1
 }
 
-function paintSnapshots(
-  snapshots: readonly EmpireSnapshot[],
-  geometry: TerritoryGeometry,
-  { tier, fill, highlight }: EmpireTextureSpec,
-): OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D {
-  const { width, height, stroke, casing } = EMPIRE_TIERS[tier]
-  const ctx = scratchContext(width, height)
-  ctx.clearRect(0, 0, width, height)
+/** The stacked coverage bands for `snapshots`, alphas set, as RGBA bytes (layout: module doc). */
+function paintCoverage(snapshots: readonly EmpireSnapshot[], geometry: TerritoryGeometry, { tier, fill, highlight }: EmpireTextureSpec): Uint8Array {
+  const { width, height } = EMPIRE_TIERS[tier]
+  const ctx = scratchContext(width, height * EMPIRE_BANDS)
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.fillStyle = '#000000'
+  ctx.fillRect(0, 0, width, height * EMPIRE_BANDS)
 
-  const fills = new Map<string, LineagePath>()
-  const outlines: LineagePath[] = []
+  const channels = new Map<number, Path2D>()
+  let highlightSlot = -1
   for (const snapshot of snapshots) {
     const polygons = geometry.snapshots.get(snapshot.id)
     if (polygons === undefined) continue
-    const colour = empireColour(snapshot.colourSlot)
-    let lineageFill = fills.get(snapshot.lineage)
-    if (lineageFill === undefined) {
-      lineageFill = { lineage: snapshot.lineage, path: new Path2D(), colour }
-      fills.set(snapshot.lineage, lineageFill)
-    }
-    const outline = new Path2D()
+    const highlighted = snapshot.lineage === highlight
+    if (highlighted) highlightSlot = snapshot.colourSlot
+    const targets = highlighted ? [snapshot.colourSlot, HIGHLIGHT_CHANNEL] : [snapshot.colourSlot]
     for (const polygon of polygons) {
       polygon.forEach((ring, r) => {
-        tracePolyline(lineageFill.path, orientedRingPixels(ring, width, height, r === 0), true)
-        const { runs, closed } = ringStrokeRuns(ring, width, height)
-        for (const run of runs) tracePolyline(outline, run, closed)
+        const xy = orientedRingPixels(ring, width, height, r === 0)
+        for (const channel of targets) {
+          let path = channels.get(channel)
+          if (path === undefined) {
+            path = new Path2D()
+            channels.set(channel, path)
+          }
+          tracePolyline(path, xy)
+        }
       })
     }
-    outlines.push({ lineage: snapshot.lineage, path: outline, colour })
   }
 
-  const dim = highlight === null ? 1 : EMPIRE_DIM_ALPHA
-  if (fill) {
-    for (const { lineage, path, colour } of fills.values()) {
-      ctx.globalAlpha = lineage === highlight ? EMPIRE_HIGHLIGHT_FILL_ALPHA : EMPIRE_FILL_ALPHA * dim
-      ctx.fillStyle = colour
-      ctx.fill(path, 'nonzero')
-    }
+  ctx.globalCompositeOperation = 'lighter'
+  for (const [channel, path] of channels) {
+    ctx.setTransform(1, 0, 0, 1, 0, Math.floor(channel / 3) * height)
+    ctx.fillStyle = CHANNEL_COLOURS[channel % 3]!
+    ctx.fill(path, 'nonzero')
   }
-  ctx.lineJoin = 'round'
-  ctx.lineCap = 'round'
-  const strokeOutlines = (drawn: readonly LineagePath[], strokeWidth: number, alpha: number): void => {
-    ctx.globalAlpha = alpha
-    ctx.strokeStyle = EMPIRE_CASING_COLOUR
-    ctx.lineWidth = strokeWidth + casing - stroke
-    for (const { path } of drawn) ctx.stroke(path)
-    ctx.lineWidth = strokeWidth
-    for (const { path, colour } of drawn) {
-      ctx.strokeStyle = colour
-      ctx.stroke(path)
-    }
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.globalCompositeOperation = 'source-over'
+
+  const bytes = new Uint8Array(ctx.getImageData(0, 0, width, height * EMPIRE_BANDS).data.buffer)
+  const bandAlpha = [
+    fill ? 255 : 0,
+    (highlightSlot + 1) * EMPIRE_SLOT_CODE_STEP,
+    Math.min(255, Math.round(devicePixelRatioNow() * EMPIRE_PIXEL_RATIO_CODE)),
+  ]
+  const bandBytes = width * height * 4
+  for (let band = 0; band < EMPIRE_BANDS; band++) {
+    const alpha = bandAlpha[band]!
+    for (let i = band * bandBytes + 3, end = (band + 1) * bandBytes; i < end; i += 4) bytes[i] = alpha
   }
-  strokeOutlines(
-    outlines.filter((o) => o.lineage !== highlight),
-    stroke,
-    dim,
-  )
-  if (highlight !== null) {
-    strokeOutlines(
-      outlines.filter((o) => o.lineage === highlight),
-      stroke * EMPIRE_HIGHLIGHT_STROKE_SCALE,
-      1,
-    )
-  }
-  ctx.globalAlpha = 1
-  return ctx
+  return bytes
 }
 
 function textureBytes(texture: THREE.Texture): number {
@@ -186,37 +183,36 @@ function textureBytes(texture: THREE.Texture): number {
 
 function disposeTexture(texture: THREE.Texture): void {
   texture.dispose()
-  const image: unknown = texture.image
-  if (typeof ImageBitmap !== 'undefined' && image instanceof ImageBitmap) image.close()
 }
 
-/** An empty active set: a 1x1 transparent texture rather than a full-size blank canvas. */
+/** An empty active set: a 1x1 texture with no coverage rather than full-size blank bands. */
 function transparentTexture(): THREE.Texture {
   const texture = new THREE.DataTexture(new Uint8Array(4), 1, 1)
   texture.needsUpdate = true
   return texture
 }
 
-async function rasterise(key: string, index: EmpireIndex, geometry: TerritoryGeometry): Promise<THREE.Texture> {
+function rasterise(key: string, index: EmpireIndex, geometry: TerritoryGeometry): THREE.Texture {
   const spec = parseEmpireTextureKey(key)
   const frame = index.frameByKey.get(spec.frameKey)
   if (frame === undefined) throw new Error(`empire texture key ${key} names no active set`)
   if (frame.snapshots.length === 0) return transparentTexture()
 
-  const ctx = paintSnapshots(frame.snapshots, geometry, spec)
-  // `createImageBitmap` snapshots the canvas synchronously, so the shared scratch canvas is free
-  // for the next paint as soon as this call returns.
-  const bitmap = await createImageBitmap(ctx.canvas, { premultiplyAlpha: 'premultiply', colorSpaceConversion: 'none' })
-  const texture = new THREE.Texture(bitmap)
+  const { width, height } = EMPIRE_TIERS[spec.tier]
+  const texture = new THREE.DataTexture(paintCoverage(frame.snapshots, geometry, spec), width, height * EMPIRE_BANDS)
   texture.colorSpace = THREE.NoColorSpace
-  texture.premultiplyAlpha = true
-  texture.flipY = false
   texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
   texture.generateMipmaps = true
   texture.anisotropy = maxAnisotropy
   texture.needsUpdate = true
+  // Nothing re-uploads a cached texture (a lost context clears the cache), so the bytes are dead
+  // weight once on the GPU.
+  texture.onUpdate = () => {
+    ;(texture.image as { data: Uint8Array | null }).data = null
+  }
   return texture
 }
 
@@ -231,7 +227,7 @@ export function createEmpireTextureCache(index: EmpireIndex, geometry: Territory
     if (cached !== undefined) return Promise.resolve(cached)
     const pending = inFlight.get(key)
     if (pending !== undefined) return pending
-    const promise = rasterise(key, index, geometry).then(
+    const promise = new Promise<THREE.Texture>((resolve) => resolve(rasterise(key, index, geometry))).then(
       (texture) => {
         inFlight.delete(key)
         cache.set(key, texture)
