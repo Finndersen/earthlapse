@@ -3,7 +3,7 @@
 /** The member-list popover a checkpoint cluster marker opens on click/tap (ADR-021, replacing
  *  the window-framing `onFrameCluster` zoom used before zoom was removed). Anchored to the
  *  cluster's own displayed `u`, clamped to the track's own left/right edge the same way a pip's
- *  hover preview is (`previewAnchorClass` in `ScrubTrack`). Owns no state of its own — `onSelect`
+ *  hover preview is (`anchorEdge` in `ScrubTrack`). Owns no state of its own — `onSelect`
  *  scrubs and closes, `onClose` alone just closes; `ScrubTrack` is the source of truth for which
  *  cluster (if any) is open.
  *
@@ -30,20 +30,21 @@ import type { TimelineCheckpoint } from '../checkpoints'
 import { formatGeoTime } from '../format'
 import styles from './ClusterPopover.module.css'
 
+export type AnchorEdge = 'start' | 'end' | null
+
 interface ClusterPopoverProps {
   members: readonly TimelineCheckpoint[]
   /** 0..1, the cluster marker's own displayed position — same space as every other `u` this
    *  package positions against. */
   anchorU: number
-  /** `''`, `styles.start` or `styles.end` — which edge (if any) the popover anchors to instead
-   *  of centring, so it never clips past the track's own bounds. Computed by the caller
-   *  (`ScrubTrack`), which already has this logic for pip previews. */
-  edgeAnchorClass: string
+  /** The track edge the popover pins to instead of centring on `anchorU`, so it never runs past
+   *  the track's own bounds; null to centre. */
+  edge: AnchorEdge
   onSelect: (t: GeoTime) => void
   onClose: () => void
 }
 
-export function ClusterPopover({ members, anchorU, edgeAnchorClass, onSelect, onClose }: ClusterPopoverProps) {
+export function ClusterPopover({ members, anchorU, edge, onSelect, onClose }: ClusterPopoverProps) {
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Focus entry/restore + Tab-cycling (brief §3): focus lands here the moment it opens, so
@@ -71,10 +72,11 @@ export function ClusterPopover({ members, anchorU, edgeAnchorClass, onSelect, on
       data-cluster-popover
       aria-label={`${members.length} scenes`}
       tabIndex={-1}
-      className={`${styles.popover} ${edgeAnchorClass}`}
+      className={`${styles.popover} ${edge === null ? '' : styles[edge]}`}
       onPointerDown={(e) => e.stopPropagation()}
       onKeyDown={handleKeyDown}
-      style={{ left: `${anchorU * 100}%` }}
+      // Only a centred popover takes the inline `left`: it would override `.start`/`.end`.
+      style={edge === null ? { left: `${anchorU * 100}%` } : undefined}
     >
       <div className={styles.header}>
         <span className={styles.count}>{members.length} scenes</span>

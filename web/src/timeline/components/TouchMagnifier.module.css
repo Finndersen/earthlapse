@@ -61,10 +61,25 @@
 }
 
 .clusterDot {
-  width: 9px;
-  height: 9px;
-  margin-left: -4.5px;
-  margin-top: -4.5px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+}
+
+/* The member count, as on the track's own cluster diamond (`ScrubTrack.module.css`), turned
+   back upright inside the rotated diamond. */
+.clusterCount {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-family: var(--hud-mono, ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace);
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--hud-bg, #0b0c0e);
+  white-space: nowrap;
 }
 
 /* The exact touched instant, fixed at the viewport's own centre — everything else slides past

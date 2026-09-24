@@ -7424,3 +7424,36 @@ tags (GitHub answers 403), and the Claude GitHub App still cannot dispatch workf
   that must be bumped by hand and drifts.
 - **A GitHub token in cloud sessions to push tags.** A credential that can write `main` and trigger
   production, contrary to ADR-052's no-credentials rule.
+
+## ADR-057 — Only content-hashed media is cached immutable; scene and portrait files are hashed
+
+**Status:** accepted — 2026-09-24. Amends the ADR-023 "on-demand loading" amendment's
+audio-only scope for content-hashed filenames, and ADR-052's media upload.
+
+**Context.** `sync-media.sh` uploaded every media file with `max-age=31536000, immutable`, on the
+premise that media names are content-hashed. Only audio stems were. Scene images, thumbnails and
+portrait plates were published under stable per-id names, so a republished scene kept its URL and
+browsers and the edge went on serving the old bytes for up to a year — the new
+`shenzhen-bay-present` caption appeared over the old image. Globe textures, layer JSON and portrait
+morphs have the same stable names.
+
+**Decision.**
+- **Scene images, thumbnails and portrait plates are content-addressed** by
+  `pipeline.audio.content_hashed_filename`: `scenes/<id>-<hash10>.webp`,
+  `scenes/<id>-thumb-<hash10>.webp`, `portraits/<id>-<hash10>.webp`. The manifest and the lineage
+  layer carry the hashed paths; `_prune_stale_media` removes superseded names.
+- **The cache policy follows the name.** A name matching `*-<10 hex>.*` is uploaded immutable for a
+  year. Every other media file is uploaded with `max-age=300, must-revalidate` and re-uploaded on
+  every deploy, so an object stored under the old immutable header is rewritten. `manifest.json`
+  keeps its 60 seconds.
+
+**Consequences.** Every scene and portrait URL changed once, so existing stale copies are bypassed
+without a purge. Each deploy re-uploads the ~57 MB of unhashed media. A texture or layer changed by
+a republish reaches viewers within five minutes rather than immediately.
+
+**Rejected.**
+- **Content-hashing textures, layers and morphs too.** Textures are written by sources'
+  `write_outputs` hooks and named by frame, and the layer JSON that lists them would need rewriting
+  per hash; the short revalidating TTL fixes staleness without that.
+- **A cache purge per deploy.** Needs a Cloudflare zone token in CI and leaves browser caches, which
+  `immutable` tells never to revalidate, still stale.

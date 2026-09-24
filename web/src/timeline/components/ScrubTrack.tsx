@@ -35,6 +35,7 @@ import { findSnapTarget, snapCandidates } from '../snap'
 import { useTrackWidth } from '../useTrackWidth'
 import { clamp, clampUnit } from '../util'
 import { ClusterPopover } from './ClusterPopover'
+import type { AnchorEdge } from './ClusterPopover'
 import styles from './ScrubTrack.module.css'
 import { TouchMagnifier } from './TouchMagnifier'
 
@@ -80,9 +81,17 @@ function playheadLabelAnchor(u: number, label: string, trackWidthPx: number): 's
   return 'center'
 }
 
+/** Which track edge a `2 * halfWidthPx`-wide surface centred on `u` would cross, if either. */
+function anchorEdge(u: number, trackWidthPx: number, halfWidthPx: number): AnchorEdge {
+  if (u * trackWidthPx < halfWidthPx) return 'start'
+  if ((1 - u) * trackWidthPx < halfWidthPx) return 'end'
+  return null
+}
+
 function previewAnchorClass(u: number, trackWidthPx: number, halfWidthPx: number = PREVIEW_HALF_WIDTH_PX): string {
-  if (u * trackWidthPx < halfWidthPx) return styles.previewStart ?? ''
-  if ((1 - u) * trackWidthPx < halfWidthPx) return styles.previewEnd ?? ''
+  const edge = anchorEdge(u, trackWidthPx, halfWidthPx)
+  if (edge === 'start') return styles.previewStart ?? ''
+  if (edge === 'end') return styles.previewEnd ?? ''
   return ''
 }
 
@@ -512,7 +521,7 @@ export function ScrubTrack({
         <ClusterPopover
           members={openClusterEntry.members}
           anchorU={openClusterEntry.u}
-          edgeAnchorClass={previewAnchorClass(openClusterEntry.u, trackWidthPx, CLUSTER_POPOVER_HALF_WIDTH_PX)}
+          edge={anchorEdge(openClusterEntry.u, trackWidthPx, CLUSTER_POPOVER_HALF_WIDTH_PX)}
           onSelect={(selectedT) => {
             onScrub(selectedT)
             setOpenClusterId(null)

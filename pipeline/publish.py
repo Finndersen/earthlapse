@@ -20,7 +20,12 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from pipeline.audio import WEBKIT_DECODABLE_FORMATS, StemBook, load_stem_book
+from pipeline.audio import (
+    WEBKIT_DECODABLE_FORMATS,
+    StemBook,
+    content_hashed_filename,
+    load_stem_book,
+)
 from pipeline.databuild import discover_sources
 from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
 from pipeline.exposure import ExposedPlate, ExposureError, erase_scale_bar, expose_plate
@@ -719,12 +724,15 @@ def _scene_entry(
 ) -> tuple[Scene, tuple[MediaBytes, MediaBytes]]:
     assert scene.pin is not None, scene.id
     data, info = _verified_pin(scene.id, scene.pin, root)
-    published = f"scenes/{scene.id}.webp"
-    thumbnail_published = f"scenes/{scene.id}-thumb.webp"
     webp = _to_webp(scene.id, data, SCENE_WEBP_QUALITY)
     # Always derived from `data` (the pin's own bytes) -- never from `webp` above, which would
     # be a lossy encode of a lossy encode (this module's own docstring; `pipeline.transcode`'s).
     thumbnail_webp = _to_thumbnail_webp(scene.id, data)
+    # Content-addressed, so the media host can cache them immutable (deploy/sync-media.sh).
+    published = f"scenes/{content_hashed_filename(scene.id, 'webp', webp)}"
+    thumbnail_published = (
+        f"scenes/{content_hashed_filename(f'{scene.id}-thumb', 'webp', thumbnail_webp)}"
+    )
     entry = Scene(
         id=scene.id,
         t=scene.t,
@@ -763,7 +771,7 @@ def _portrait_publication(
         assert record.pin is not None, record.id
         data, info = _verified_pin(record.id, record.pin, root)
         exposed = _exposed_plate(record.id, data)
-        published = f"portraits/{record.id}.webp"
+        published = f"portraits/{content_hashed_filename(record.id, 'webp', exposed.data)}"
         plates.append(
             PortraitPlateData(
                 node_id=record.id,

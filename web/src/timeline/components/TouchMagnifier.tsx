@@ -102,9 +102,15 @@ export function TouchMagnifier({ clientX, clientY, trackWidthPx, centerU, time, 
         {visibleBands.map((band) => (
           <div key={band.id} className={styles.band} style={{ left: band.x0, width: Math.max(band.x1 - band.x0, 2) }} />
         ))}
-        {visiblePips.map(({ entry, x }) => (
-          <div key={entry.id} className={entry.kind === 'pip' ? styles.pipDot : styles.clusterDot} style={{ left: x }} />
-        ))}
+        {visiblePips.map(({ entry, x }) =>
+          entry.kind === 'pip' ? (
+            <div key={entry.id} className={styles.pipDot} style={{ left: x }} />
+          ) : (
+            <div key={entry.id} className={styles.clusterDot} style={{ left: x }}>
+              <span className={styles.clusterCount}>{entry.members.length}</span>
+            </div>
+          ),
+        )}
         <div className={styles.crosshair} />
       </div>
       <div className={styles.readout} style={{ width: VIEWPORT_WIDTH_PX }}>

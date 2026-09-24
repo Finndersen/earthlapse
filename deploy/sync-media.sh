@@ -6,11 +6,13 @@
 # (https://developers.cloudflare.com/r2/examples/rclone/). The remote is built inline from env
 # vars so there is no rclone config file holding credentials.
 #
-# Two passes, because the two kinds of object want opposite cache policies:
-#   1. media — filenames already carry a content hash (`wind-077abd6e63.mp3`), so they are
-#      immutable and can be cached for a year.
-#   2. manifest.json — one unhashed file that changes every publish, so it gets a short TTL.
-#      Cloudflare does not edge-cache JSON by default, so this is mostly a browser-side policy.
+# Three passes, by whether an object's name changes when its bytes do:
+#   1. content-hashed media (`wind-077abd6e63.mp3`, `scenes/city-3a91cf02de.webp`) — immutable,
+#      cached for a year. Only a name matching HASHED gets this: an unhashed name cached
+#      immutable keeps serving its old bytes after a republish.
+#   2. every other media file (globe textures, layer JSON, portrait morphs) — cached briefly and
+#      revalidated. Always re-uploaded, so an object stored under an older policy is rewritten.
+#   3. manifest.json — changes every publish, so it gets the shortest TTL.
 #
 # Requires: a current rclone (CI pins v1.75.1; Ubuntu's packaged 1.60 gets 501 NotImplemented from
 # R2 on upload), and these in the environment (keep them in .env, which is gitignored):
@@ -35,14 +37,24 @@ if head -c 40 "$MEDIA_DIR/manifest.json" | grep -q 'git-lfs'; then
   exit 1
 fi
 
-COMMON=(--fast-list --transfers 16 --checkers 32 --exclude '.claude/**' --exclude '.gitkeep')
+COMMON=(--fast-list --transfers 16 --checkers 32 --filter '- .claude/**' --filter '- .gitkeep')
+# `<name>-<10 hex>.<ext>`: pipeline.audio.content_hashed_filename, the only hashed naming.
+HASHED='*-{{[0-9a-f]{10}}}.*'
 
-echo "==> media (immutable, 1 year)"
+echo "==> content-hashed media (immutable, 1 year)"
 rclone copy "$MEDIA_DIR" "$REMOTE$R2_BUCKET" \
   "${COMMON[@]}" \
-  --exclude 'manifest.json' \
+  --filter "+ $HASHED" --filter '- *' \
   --size-only \
   --header-upload 'Cache-Control: public, max-age=31536000, immutable' \
+  --progress
+
+echo "==> other media (5 minutes, then revalidate)"
+rclone copy "$MEDIA_DIR" "$REMOTE$R2_BUCKET" \
+  "${COMMON[@]}" \
+  --filter '- manifest.json' --filter "- $HASHED" --filter '+ *' \
+  --ignore-times \
+  --header-upload 'Cache-Control: public, max-age=300, must-revalidate' \
   --progress
 
 echo "==> manifest.json (short TTL)"

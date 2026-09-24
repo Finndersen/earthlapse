@@ -10,8 +10,8 @@ published locally, committed, and deployed as committed.
 R2 has no egress charge and no bandwidth cap; every alternative meters it (Netlify and Vercel bill
 transfer, CloudFront's free plan stops at 100 GB/month). The site itself is a few MB and fits
 comfortably inside the free 25 MiB/file and 20,000-file limits, while the ~87 MB of media never
-touches the deployment at all. Media is already content-hashed, so it caches for a year and a
-publish only moves what changed. Running cost is the domain.
+touches the deployment at all. Audio, scene and portrait files carry a content hash in their
+names, so they cache for a year and a publish only moves what changed (ADR-057). Running cost is the domain.
 
 Cloudflare now recommends Workers over Pages for new static projects; the limits are identical, so
 this uses Workers.
@@ -75,8 +75,10 @@ make deploy-media                              # rclone → R2, changed objects 
 make deploy-site                               # build against the R2 origin, then wrangler deploy
 ```
 
-`deploy/sync-media.sh` uploads in two passes because the cache policies differ: hashed media gets
-`max-age=31536000, immutable`, and `manifest.json` — the one unhashed file — gets 60 seconds.
+`deploy/sync-media.sh` uploads in three passes because the cache policies differ (ADR-057): files
+whose names carry a content hash get `max-age=31536000, immutable`; every other media file (globe
+textures, layer JSON, portrait morphs) gets 5 minutes and revalidation, and is re-uploaded on every
+deploy so its header is current; `manifest.json` gets 60 seconds.
 There is no `wrangler r2 sync`; `wrangler r2 object` is single-object only, so this uses rclone
 against R2's S3 endpoint, the route Cloudflare documents. It needs a current rclone: the workflow
 pins v1.75.1, and Ubuntu's packaged 1.60 fails every upload with `501 NotImplemented`. Install

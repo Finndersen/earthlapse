@@ -510,9 +510,11 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
         "buildId": raw["buildId"],
         "assetBase": "/media",
         "scenes": [
-            _published_scene(book, "city", 0.0, "shore", "WATER_EDGE", "A city."),
-            _published_scene(book, "devonian", 3.75e8, "shore", "WATER_EDGE", "An estuary."),
-            _published_scene(book, "hot-start", 4.5e9, "molten", "WIDE_RIDGE", "A molten world."),
+            _published_scene(root, book, "city", 0.0, "shore", "WATER_EDGE", "A city."),
+            _published_scene(root, book, "devonian", 3.75e8, "shore", "WATER_EDGE", "An estuary."),
+            _published_scene(
+                root, book, "hot-start", 4.5e9, "molten", "WIDE_RIDGE", "A molten world."
+            ),
         ],
         "chapters": [
             {"id": "shore", "label": "Shore", "tStart": 0.0, "tEnd": boundary},
@@ -622,11 +624,12 @@ def test_publish_emits_a_valid_manifest_and_layer_json_in_the_parser_formats(roo
     }
     for scene in book.scenes:
         assert scene.pin is not None
-        published = (media / "scenes" / f"{scene.id}.webp").read_bytes()
+        image, thumbnail = _scene_files(root, book, scene.id)
         pinned = (root / scene.pin.path).read_bytes()
-        assert published == to_webp(pinned, SCENE_WEBP_QUALITY)
-        thumbnail = (media / "scenes" / f"{scene.id}-thumb.webp").read_bytes()
-        assert thumbnail == to_thumbnail_webp(pinned, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY)
+        assert (media / "scenes" / image).read_bytes() == to_webp(pinned, SCENE_WEBP_QUALITY)
+        assert (media / "scenes" / thumbnail).read_bytes() == to_thumbnail_webp(
+            pinned, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY
+        )
 
     assert _layer_json(media, "co2") == {
         "id": "co2",
@@ -710,21 +713,23 @@ def test_republishing_prunes_stale_scene_files_and_transcodes_from_the_pin(root:
     assert run_cli(backend, root, "publish")[0] == 0
     scenes_dir = paths.media / "scenes"
     (scenes_dir / "no-longer-a-scene.jpg").write_bytes(b"orphaned from a previous publish")
-    (scenes_dir / "city.webp").write_bytes(b"corrupted previous output")
-    (scenes_dir / "city-thumb.webp").write_bytes(b"corrupted previous output")
+    book = load_scene_book(paths.scenes)
+    city_image, city_thumbnail = _scene_files(root, book, "city")
+    (scenes_dir / city_image).write_bytes(b"corrupted previous output")
+    (scenes_dir / city_thumbnail).write_bytes(b"corrupted previous output")
 
     assert run_cli(backend, root, "publish")[0] == 0
 
-    assert sorted(p.name for p in scenes_dir.iterdir()) == [
-        f"{scene}{suffix}.webp"
+    assert sorted(p.name for p in scenes_dir.iterdir()) == sorted(
+        name
         for scene in ("city", "devonian", "hot-start")
-        for suffix in ("-thumb", "")
-    ]
-    pin = load_scene_book(paths.scenes).scene("city").pin
+        for name in _scene_files(root, book, scene)
+    )
+    pin = book.scene("city").pin
     assert pin is not None
     pinned = (root / pin.path).read_bytes()
-    assert (scenes_dir / "city.webp").read_bytes() == to_webp(pinned, SCENE_WEBP_QUALITY)
-    assert (scenes_dir / "city-thumb.webp").read_bytes() == to_thumbnail_webp(
+    assert (scenes_dir / city_image).read_bytes() == to_webp(pinned, SCENE_WEBP_QUALITY)
+    assert (scenes_dir / city_thumbnail).read_bytes() == to_thumbnail_webp(
         pinned, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY
     )
 
@@ -743,17 +748,37 @@ def test_publish_refuses_a_pinned_image_that_no_longer_matches_its_digest(root: 
     assert not ProjectPaths(root).media.exists()
 
 
+def _scene_files(root: Path, book: SceneBook, scene_id: str) -> tuple[str, str]:
+    """The published image and thumbnail names: content-hashed from the pin's transcodes."""
+    pin = book.scene(scene_id).pin
+    assert pin is not None
+    pinned = (root / pin.path).read_bytes()
+    image = to_webp(pinned, SCENE_WEBP_QUALITY)
+    thumbnail = to_thumbnail_webp(pinned, THUMBNAIL_SIZE, THUMBNAIL_WEBP_QUALITY)
+    return (
+        content_hashed_filename(scene_id, "webp", image),
+        content_hashed_filename(f"{scene_id}-thumb", "webp", thumbnail),
+    )
+
+
 def _published_scene(
-    book: SceneBook, scene_id: str, t: float, chapter: str, shot: str, caption: str
+    root: Path,
+    book: SceneBook,
+    scene_id: str,
+    t: float,
+    chapter: str,
+    shot: str,
+    caption: str,
 ) -> dict[str, object]:
     pin = book.scene(scene_id).pin
     assert pin is not None
+    image, thumbnail = _scene_files(root, book, scene_id)
     return {
         "id": scene_id,
         "t": t,
         "chapterId": chapter,
-        "image": f"scenes/{scene_id}.webp",
-        "thumbnail": f"scenes/{scene_id}-thumb.webp",
+        "image": f"scenes/{image}",
+        "thumbnail": f"scenes/{thumbnail}",
         "shot": shot,
         "title": book.scene(scene_id).title,
         "caption": caption,

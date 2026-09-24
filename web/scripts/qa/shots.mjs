@@ -316,7 +316,7 @@ function lumaAndChange([before, after]) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Jumps to the scene whose full image is `image` while holding that image's request, so the
+ * Jumps to the scene whose full image URL matches `image` while holding that image's request, so the
  * renderer can only draw the scene's thumbnail (ADR-051), and reads the scene canvas alone once
  * the crossfade has settled: its mean luma (a black frame reads ~0) and how much it changed from
  * the scene shown before (the previous scene kept on screen reads ~0). `heldRequests` is how many
@@ -324,8 +324,13 @@ function lumaAndChange([before, after]) {
  * nothing. Releases the hold and returns to `restoreT` before resolving.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
- * @param {{ image: string, t: number, restoreT: number }} target
+ * @param {{ image: RegExp, t: number, restoreT: number }} target
  */
+/** A scene's full-image URL: content-hashed (ADR-057), and never its `-thumb-` sibling. */
+function sceneImageUrl(sceneId) {
+  return new RegExp(`/scenes/${sceneId}-[0-9a-f]{10}\\.webp$`)
+}
+
 async function heldFullImageDraw(page, hook, { image, t, restoreT }) {
   const sceneOnly = await page.addStyleTag({
     content: `body * { visibility: hidden !important; } ${SCENE_CANVAS_SELECTOR} { visibility: visible !important; }`,
@@ -339,7 +344,7 @@ async function heldFullImageDraw(page, hook, { image, t, restoreT }) {
   })
   // Left registered once released, as in `loading-screen`: unrouting while a held
   // `route.continue()` is unresolved races Playwright's cleanup.
-  await page.route(`**/${image}`, async (route) => {
+  await page.route(image, async (route) => {
     heldRequests += 1
     await held
     await route.continue()
@@ -1236,7 +1241,7 @@ export default [
       const captionTextVisible = (await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()) ? 1 : 0
       const clippedBandsAtRoot = await bandsClipped()
       // No other shot visits 450 Ma, so its full image is not already cached.
-      const thumbnail = await heldFullImageDraw(page, hook, { image: 'scenes/ordovician-reef-shore.webp', t: 450e6, restoreT: 0 })
+      const thumbnail = await heldFullImageDraw(page, hook, { image: sceneImageUrl('ordovician-reef-shore'), t: 450e6, restoreT: 0 })
 
       await page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first().click()
       await rafTicks(page, 2)

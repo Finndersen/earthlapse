@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from pipeline.audio import content_hashed_filename
 from pipeline.curated import load_world, write_shape
 from pipeline.exposure import erase_scale_bar, expose_plate
 from pipeline.flowfield import encode_flow
@@ -283,9 +284,9 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
     assert lineage["portraits"] == {
         "plates": [
-            _plate(book, "human", "SPECIMEN"),
-            _plate(book, "tetrapod", "SPECIMEN"),
-            _plate(book, "luca", "MICROSCOPE"),
+            _plate(root, book, "human", "SPECIMEN"),
+            _plate(root, book, "tetrapod", "SPECIMEN"),
+            _plate(root, book, "luca", "MICROSCOPE"),
         ],
         "morphs": [
             {
@@ -302,25 +303,25 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     for node_id in ("luca", "tetrapod", "human"):
         pin = book.portrait(node_id).pin
         assert pin is not None
-        published = paths.media / "portraits" / f"{node_id}.webp"
         # The fake generator's plates are a flat colour: no subject to expose and no scale bar
         # to erase, so the published bytes are exactly the pin, WebP-transcoded.
-        assert published.read_bytes() == to_webp(
-            (root / pin.path).read_bytes(), PORTRAIT_WEBP_QUALITY
-        )
+        webp = to_webp((root / pin.path).read_bytes(), PORTRAIT_WEBP_QUALITY)
+        published = paths.media / "portraits" / content_hashed_filename(node_id, "webp", webp)
+        assert published.read_bytes() == webp
     directory = morph.key.directory(paths.portrait_morphs)
     assert (paths.media / "portraits" / "morphs" / "tetrapod--human.forward.png").read_bytes() == (
         directory / FORWARD_FLOW_NAME
     ).read_bytes()
 
 
-def _plate(book: object, node_id: str, plate: str) -> dict[str, object]:
+def _plate(root: Path, book: object, node_id: str, plate: str) -> dict[str, object]:
     assert hasattr(book, "portrait")
     pin = book.portrait(node_id).pin
     assert pin is not None
+    webp = to_webp((root / pin.path).read_bytes(), PORTRAIT_WEBP_QUALITY)
     return {
         "nodeId": node_id,
-        "image": f"portraits/{node_id}.webp",
+        "image": f"portraits/{content_hashed_filename(node_id, 'webp', webp)}",
         "plate": plate,
         "pinned": pin.asset_digest,
         "width": 16,
@@ -347,6 +348,8 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         ScenePin(asset_digest=digest, path=pinned.relative_to(root).as_posix()),
     )
     expected = expose_plate(original)
+    webp = to_webp(erase_scale_bar(expected.data), PORTRAIT_WEBP_QUALITY)
+    published = f"portraits/{content_hashed_filename('human', 'webp', webp)}"
 
     code, output = run_cli(backend, root, "publish")
 
@@ -357,7 +360,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         "plates": [
             {
                 "nodeId": "human",
-                "image": "portraits/human.webp",
+                "image": published,
                 "plate": "SPECIMEN",
                 "pinned": digest,
                 "width": 512,
@@ -370,9 +373,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
         ],
         "morphs": [],
     }
-    assert (paths.media / "portraits" / "human.webp").read_bytes() == to_webp(
-        erase_scale_bar(expected.data), PORTRAIT_WEBP_QUALITY
-    )
+    assert (paths.media / published).read_bytes() == webp
     assert pinned.read_bytes() == original
 
 
