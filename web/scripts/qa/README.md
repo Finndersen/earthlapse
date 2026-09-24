@@ -73,7 +73,7 @@ the page load and the globe's pointer interactions:
 | `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows and the rate picker inside its row, the feed's "All events" tap target and the sheet it opens, the tour's first step |
 | `phone-orb-touch-tap` | a finger tap on the phone's minimised orb expands it with `t` and the section unchanged (touch page) |
 | `layout-844x390-resting` | short landscape (ADR-048): drawn orb and portrait sizes, chrome regions at the root and in a section, the caption on the feed row, the controls rows; with one scene's full image held, the canvas draws that scene's thumbnail (ADR-051) |
-| `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps |
+| `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps; then on the map at 117 CE with overlay None, a Human-civilisation on/off pixel diff: the Roman territory fill changes central Anatolia, nothing changes in the open mid-Pacific |
 | `layout-1000x810-expanded` | the same at narrow desktop, sphere only |
 | `layout-390x844-expanded` | phone expanded: drawn sphere size and the rows around it; row 2 clear of the drawn map |
 | `layout-844x390-expanded` | short-landscape expanded: the column beside the drawn sphere and map, the crumb trail over the transport |

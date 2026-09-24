@@ -48,7 +48,8 @@ fi
 rather than a hard-coded field list, since the manifest's own schema (`web/src/types/manifest.ts`)
 grows scene/portrait/texture/audio fields independently of this script -- any string shaped like
 a relative asset path (a known media extension, no scheme, no leading slash) is checked, so a new
-field is covered automatically instead of silently skipped."""
+field is covered automatically instead of silently skipped. A referenced `.json` file (a layer's
+data) is walked the same way, so a path it names in turn (a vectors file) is checked too."""
 
 import json
 import sys
@@ -57,7 +58,7 @@ from pathlib import Path
 manifest_path, media_dir = Path(sys.argv[1]), Path(sys.argv[2])
 manifest = json.loads(manifest_path.read_text())
 
-MEDIA_EXTENSIONS = (".webp", ".png", ".jpg", ".jpeg", ".mp3", ".ogg", ".m4a", ".wav")
+MEDIA_EXTENSIONS = (".webp", ".png", ".jpg", ".jpeg", ".mp3", ".ogg", ".m4a", ".wav", ".json")
 
 
 def looks_like_relative_asset_path(value: str) -> bool:
@@ -80,7 +81,20 @@ def walk(node):
             yield from walk(v)
 
 
-missing = sorted({path for path in walk(manifest) if not (media_dir / path).is_file()})
+missing: set[str] = set()
+seen: set[str] = set()
+pending = list(walk(manifest))
+while pending:
+    path = pending.pop()
+    if path in seen:
+        continue
+    seen.add(path)
+    target = media_dir / path
+    if not target.is_file():
+        missing.add(path)
+    elif path.endswith(".json"):
+        pending.extend(walk(json.loads(target.read_text())))
+missing = sorted(missing)
 if missing:
     print(f"error: {len(missing)} manifest path(s) do not exist under {media_dir}:", file=sys.stderr)
     for path in missing:

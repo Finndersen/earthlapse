@@ -2,8 +2,8 @@
 
 /**
  * The expanded globe's overlay legend/toggle panel (docs/GLOBE.md §10), desktop only. One row,
- * "Human civilisation", governs the whole layer — arrival arcs, population density and city
- * markers together — rather than a toggle per part. Arrivals carry no colour key; density does,
+ * "Human civilisation", governs the whole layer — arrival arcs, settlements, city markers and
+ * historical-empire territories together (ADR-059) — rather than a toggle per part. Arrivals carry no colour key; density does,
  * because a density colour is meaningless without a scale, and it rides in the row's `footer`
  * slot. Same toggle idiom as `ViewModeToggle` and the timeline transport controls: small-caps
  * label, a pill of pressed/unpressed buttons, `aria-labelledby` rather than a repeated
@@ -11,7 +11,7 @@
  *
  * A row is omitted entirely, not shown disabled, when its overlay has no data at the current `t`.
  * `Globe.tsx` passes each row's visibility as a boolean it already computes (`arrivalsInDomainAt`,
- * `densityHasDataAt`, `citiesHaveDataAt`), so this component stays a pure rendering concern with
+ * `citiesHaveDataAt`, `empiresHaveDataAt`), so this component stays a pure rendering concern with
  * no `t`-domain knowledge. Toggle state also lives in `Globe.tsx` (`useState`, not persisted).
  * Nothing here fades on inactivity (project rule): every visibility change follows from `t`
  * crossing a domain edge or a viewer pressing a toggle, never an idle timer.

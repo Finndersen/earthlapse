@@ -652,15 +652,17 @@ remains a quality upgrade over 0–1000 Ma, not a coverage gap.
 
 ---
 
-## 10. Human-era rendering: basemap, arrivals, population density, cities
+## 10. Human-era rendering: basemap, arrivals, population density, cities, empires
 
 Renders the data ADR-030 (basemap), ADR-031's amendment (HYDE population density; the original
 cleared-land tint is curated but no longer rendered — see below), ADR-032 and its amendment
-(arrivals, now transient), and ADR-035 (cities, published but not rendered until this pass).
-ADR-036 records the "Human civilisation" layer these four are unified into: one legend toggle,
+(arrivals, now transient), ADR-035 (cities, published but not rendered until this pass) and
+ADR-059 (historical empires, which joined the layer later).
+ADR-036 records the "Human civilisation" layer these are unified into: one legend toggle,
 one shared hit-test and tooltip, one screen-space marker field. Image budget: **$0** (everything
 here is shaders/geometry over already-published data, same as the rest of this document).
-Web-only work — no pipeline/data change.
+The basemap, arrivals, density and cities parts are web-only work; empires also need the
+cliopatria pipeline changes ADR-059 records.
 
 **Base crossfade (ADR-030).** `web/src/globe/blend.ts`'s `BASEMAP_CROSSFADE_BAND = [300_000,
 400_000]` (years BP) and `basemapStrengthAt(t)`: 0 at and above 400 ka (PaleoDEM/Merdith
@@ -899,10 +901,13 @@ Memphis, to 1900 CE London and New York, with no separate ranking table. Marker 
 below about a million a proportional dot would be indistinguishable from the floor for most of
 history. A city's size between two attested readings eases log-linearly (population is
 multiplicative) rather than jumping; the tooltip always states the actual attested reading it sits
-between, never the interpolated figure. **Names appear on hover only, in the shared tooltip below
-— never as drawn labels:** the same call ADR-032 already made for arrival labels, for the same
-reason (the labelled set overlaps constantly at globe scale, and a silent collision cull is worse
-than a tooltip that always answers).
+between, never the interpolated figure. **A city's full name, country and population appear on
+hover only, in the shared tooltip below:** the same call ADR-032 already made for arrival labels,
+for the same reason (the labelled set overlaps constantly at globe scale, and a silent collision
+cull is worse than a tooltip that always answers). What is drawn is a small transient name tag as
+a city first appears, capped and faded by `t`. **Empires are the one exception to hover-only
+(ADR-059):** a few labels, always on, capped and decluttered — see "Historical empires" below. An
+empire is large and few at once, and an unnamed coloured outline explains nothing.
 
 **One shared screen-space hit-test and tooltip (`GlobeTooltip.tsx`).** Every drawable in this
 layer — arcs, inhabited/city/scene-location markers — registers a `GlobeHitCandidate` (a point or
@@ -922,6 +927,31 @@ what an earlier `ArrivalArcs.tsx` did and does not survive going from thirteen d
 forty-odd cities plus everything else. The one animated quantity, a sympathetic pulse for a marker
 whose event card is on screen or is part of a traced chain, is a `uTime` uniform read on the GPU;
 instance buffers are rewritten only when the marker *set* changes (a render), never per frame.
+
+**Historical empires (ADR-059).** The `empires` layer (`territories` wire kind) draws the
+Cliopatria lineage roster's territory snapshots. `empires.ts` (pure) indexes the snapshots once
+into frames within which the active set cannot change; `empireSnapshotsAt` finds the frame for
+`t` by binary search under the half-open rule `tEnd < t ≤ tStart`. The eager layer JSON is small;
+the vector geometry file is fetched once (`useEmpireGeometry`), when `t` comes within 5,000 years
+of the domain, and a failed fetch draws nothing rather than failing the page.
+`empireTexture.ts` paints the active set into an equirectangular canvas — one `Path2D` per
+lineage, all fills first, then all casings, then all coloured strokes — through a
+`GlobeTextureCache` that rasterises instead of fetching (key: frame, tier, fill; byte-capped,
+cleared on context restore). Rings are re-wound so exteriors and holes have opposite winding,
+which the nonzero fill needs; edges with both ends at `|lon| ≥ 179.99` are not stroked, since
+Cliopatria splits polygons at the antimeridian. The texture is premultiplied and uploaded as
+`NoColorSpace`; the shader un-premultiplies before decoding sRGB (a GPU sRGB decode of
+premultiplied texels would render the 20% fill near-black), and composites it after the overlay
+mix through `uEmpireBefore`/`uEmpireAfter`/`uEmpireMix`/`uEmpireStrength`. Tiers
+(`empireStyle.ts`): the orb at 2048×1024; expanded at 4096×2048 on a GPU that takes the T1
+basemap, else 2048×1024. The fill shows only with the overlay set to None, so it never tints
+population density or cleared land. A new active set crossfades in 0.3 s (`usePresentedMix`);
+at the 1900 CE cutoff the set empties, so the layer fades out rather than cutting. **Labels**
+(`EmpireLabels.tsx`, on the shared `GlobeLabel`): one per active lineage on its largest member's
+anchor, ranked by area, capped at 6 (3 on a phone), dropped when its chip box (estimated from its text, plus a 4 px
+gap) overlaps a larger lineage's chip (`declutterLabelBoxes`), faded with the
+crossfade; expanded view only. The palette's eight colours, one per `colourSlot`, are chosen
+against the basemap, both overlay ramps, the amber arrival arcs and the cyan city markers.
 
 **Scene location on the orb (ADR-034; the single-toggle framing is ADR-036).** A scene naming a
 real place eases the orb's own auto-rotation to face it and shows a small pulsing marker
@@ -950,8 +980,8 @@ expanded-view only, same labelled-toggle idiom as `ViewModeToggle`/the timeline 
 controls, now shows a single row governing arcs, population density and cities together, per the
 user's own framing ("a more global toggle for 'human civilisation' ... which covers that as well
 as population density and cities") — not a toggle and a colour key per part. The row is shown only
-when at least one of the three has data at the current `t` (`hasVisibleArrivals ||
-densityHasDataAt || citiesHaveDataAt`) — omitted entirely rather than greyed out, the same rule
+when at least one of its parts has data at the current `t` (arrivals, cities, or empires —
+`empiresHaveDataAt`, ADR-059) — omitted entirely rather than greyed out, the same rule
 the old per-overlay rows already followed. **Arrivals carry no colour key at all** (their colour is
 fixed, not a scale); **density gets one** (`DensityRampKey.tsx`, generated from `DENSITY_RAMP`),
 shown in the row's own `footer` slot only while the layer is on and actually painting a density —

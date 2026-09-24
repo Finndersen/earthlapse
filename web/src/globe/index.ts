@@ -3,8 +3,8 @@
  *
  * `<Globe>` is fully prop-driven (no global store): it re-derives everything from `t` and its
  * props on every render, composing raster data, pre-1 Ga regimes and overlay effects, a caption
- * slot, and the human-civilisation layer (ADR-031/032/035 — arcs, inhabited markers, the HYDE
- * density shader term and city markers under one legend toggle, sharing one tooltip).
+ * slot, and the human-civilisation layer (ADR-031/032/035/059 — arcs, inhabited markers, the HYDE
+ * density shader term, city markers and historical-empire territories under one legend toggle).
  *
  * Data-honesty rules worth knowing before changing anything here: the two raster sources
  * (PaleoDEM below the 540 Ma seam, Merdith et al. 2021 above it) are crossfaded across a labelled
@@ -46,6 +46,9 @@ export {
 export { buildArrivalIndex, traceToOrigin } from './arcs'
 export type { ArrivalIndex } from './arcs'
 export * from './effects'
+// The historical-empires index (ADR-059), built once by `Experience.tsx` from the `empires` layer.
+export { buildEmpireIndex } from './empires'
+export type { EmpireIndex } from './empires'
 export { Globe } from './Globe'
 export type { GlobeProps } from './Globe'
 export { isPoleVisible, poleDirection, POLE_VISIBILITY_MARGIN } from './poles'

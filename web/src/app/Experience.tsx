@@ -29,7 +29,7 @@ import {
   type BrowseEventsFilters,
   type EventStep,
 } from '@/events'
-import { buildArrivalIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
+import { buildArrivalIndex, buildEmpireIndex, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
@@ -392,7 +392,7 @@ export function Experience() {
   // Hoisted above the loading/error branches below so every hook in this component runs
   // unconditionally regardless of load state (rules of hooks) — `buildLayers` tolerates the
   // `null`s that state implies and returns the empty `AppLayers` for them.
-  const { scalarLayers, nodeLayers, rasters, eventLayers, featureSets, nodePortraits } = useMemo(
+  const { scalarLayers, nodeLayers, rasters, eventLayers, featureSets, territories, nodePortraits } = useMemo(
     () => buildLayers(readyManifest, readyLayerData),
     [readyManifest, readyLayerData],
   )
@@ -449,6 +449,9 @@ export function Experience() {
   const iceAgeLayers = useMemo(() => iceAgeLayersFrom(scalarLayers), [scalarLayers])
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
   const cities = featureSets.get('cities')?.data.features ?? null
+  // ADR-059's `empires` territories, indexed once per published layer file.
+  const empireLayer = territories.get('empires')?.data ?? null
+  const empires = useMemo(() => (empireLayer === null ? null : buildEmpireIndex(empireLayer)), [empireLayer])
 
   // Every scene is a timeline checkpoint, so the stills themselves are marked and steppable on
   // the axis, not only the data-driven events. Memoised so the track's pip layout only reruns
@@ -670,6 +673,7 @@ export function Experience() {
               expanded={globeExpanded}
               onToggleExpand={() => setGlobeExpanded(!globeExpanded)}
               cities={cities}
+              empires={empires}
               sceneLocation={currentSceneLocation}
               playbackBaseRate={playback.baseRate}
               cityLabelFadeWindowAt={cityLabelFadeWindowAt}

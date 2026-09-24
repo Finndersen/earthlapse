@@ -6,6 +6,8 @@ import {
   parseFeatureSetData,
   parseRasterData,
   parseSeriesData,
+  parseTerritoryData,
+  parseTerritoryGeometry,
   parseTimelineEvent,
   parseTreeData,
   pathToRoot,
@@ -373,5 +375,46 @@ describe('parseFeatureSetData', () => {
     ['a non-positive population', [city({ estimates: [{ t: 0, population: 0 }] })], /./],
   ])('rejects %s', (_label, features, error) => {
     expect(() => parseFeatureSetData({ id: 'cities', features })).toThrow(error)
+  })
+})
+
+describe('parseTerritoryData', () => {
+  const lineage = { id: 'rome', name: 'Rome', colourSlot: 3 }
+  const territory = (overrides: object = {}): object => ({
+    id: 'roman-empire-117ce',
+    lineage: 'rome',
+    label: 'Roman Empire',
+    tStart: 1908,
+    tEnd: 1893,
+    lat: 41.2,
+    lon: 14.1,
+    areaKm2: 5_261_057,
+    ...overrides,
+  })
+  const layer = (snapshots: object[], lineages: object[] = [lineage]): object => ({
+    id: 'empires',
+    geometry: 'vectors/cliopatria_territories-0123456789.json',
+    lineages,
+    snapshots,
+  })
+
+  it('sorts snapshots oldest first and checks the geometry file covers every one', () => {
+    const data = parseTerritoryData(layer([territory({ id: 'b', tStart: 1000, tEnd: 900 }), territory({ id: 'a' })]))
+    expect(data.snapshots.map((s) => s.id)).toEqual(['a', 'b'])
+    const ring = [10, 40, 20, 40, 20, 45]
+    expect(parseTerritoryGeometry({ precision: 0.01, snapshots: { a: [[ring]], b: [[ring]] } }, data).snapshots.get('a')).toEqual([[ring]])
+    expect(() => parseTerritoryGeometry({ precision: 0.01, snapshots: { a: [[ring]] } }, data)).toThrow(/b: missing/)
+    expect(() => parseTerritoryGeometry({ precision: 0.01, snapshots: { a: [[[10, 40, 20]]], b: [[ring]] } }, data)).toThrow(/even count/)
+  })
+
+  it.each([
+    ['an empty snapshot list', layer([]), /empty/],
+    ['a duplicate snapshot id', layer([territory(), territory()]), /duplicate snapshot id/],
+    ['an unknown lineage', layer([territory({ lineage: 'carthage' })]), /unknown lineage/],
+    ['a colour slot outside the palette', layer([territory()], [{ ...lineage, colourSlot: 8 }]), /colourSlot/],
+    ['a snapshot ending before it starts', layer([territory({ tEnd: 1908 })]), /tStart/],
+    ['a non-positive area', layer([territory({ areaKm2: 0 })]), /areaKm2/],
+  ])('rejects %s', (_label, json, error) => {
+    expect(() => parseTerritoryData(json)).toThrow(error)
   })
 })

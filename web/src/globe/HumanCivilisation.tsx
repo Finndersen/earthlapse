@@ -24,31 +24,18 @@
  * because each is its own ribbon geometry, but only the handful actually in flight (or ghosted by
  * a trace) render at all.
  *
- * **Labels.** A city's full name/country/population still only ever appears in the shared
- * tooltip, on hover — ADR-032's call against permanent screen-space labels stands: at globe scale
- * a labelled set overlaps constantly, and a collision cull that silently drops half of them is
- * worse than a tooltip that always answers. What *is* drawn, expanded only (sphere or map, never
- * the orb), is a small transient name tag when a city first appears — `cities.ts`'s
- * `newCityLabels`, faded purely by `t`'s distance from the city's own first-appearance time
- * (`cityLabelOpacityAt`), never by a wall-clock timer, so scrubbing back to a city's founding
- * always brings its label back. Capped (`CITY_LABEL_CAP`) since the published set has cohorts of
- * cities sharing the exact same first-appearance `t`.
- *
- * A label only ever shows for a city that can actually be seen: `cityLabelVisibility` multiplies
- * the `t`-driven fade above by the same limb test the dot itself is already subject to
- * (`sphereMarkerVisibility`, `arcs.ts` — round the back of the sphere in globe mode, skipped once
- * unfolded past the midpoint, exactly `GlobeTooltip.tsx`'s own `projectAnchor`) and a hard
- * off-screen discard when the marker falls outside the camera's frustum (zoomed map, panned
- * sphere). Never clamped back into view the way the pointer-following tooltip deliberately is — an
- * unrequested label dragged to the screen edge would point at nothing. Both are about the
- * *camera*, not the clock, so they need their own per-frame `useFrame` (`CityLabelItem`) rather
- * than the plain-render-time computation everything else in this file uses: camera drag/auto-rotate
- * moves the view without `t` changing or this component re-rendering.
+ * **Labels.** A city's full name/country/population only ever appears in the shared tooltip, on
+ * hover — at globe scale a permanently labelled city set overlaps constantly. What *is* drawn,
+ * expanded only (sphere or map, never the orb), is a small transient name tag when a city first
+ * appears — `cities.ts`'s `newCityLabels`, faded purely by `t`'s distance from the city's own
+ * first-appearance time (`cityLabelOpacityAt`), never by a wall-clock timer, so scrubbing back to
+ * a city's founding always brings its label back. Capped (`CITY_LABEL_CAP`) since the published
+ * set has cohorts of cities sharing the exact same first-appearance `t`. The tag itself is the
+ * shared `GlobeLabel`, which also hides it round the back of the sphere and off-screen.
  */
 
-import { Html } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import * as THREE from 'three'
 
 import { formatGeoTime, formatTimeRange } from '@/timeline'
@@ -61,7 +48,6 @@ import {
   arrowheadPlacementAt,
   buildArrivalIndex,
   buildFatLineBuffers,
-  sphereMarkerVisibility,
   traceToOrigin,
   type ArrivalIndex,
   type ArrivalRecord,
@@ -82,6 +68,7 @@ import {
 } from './cities'
 import { srgbHexToLinear } from './color'
 import { smoothstep as easeSmoothstep } from './effects/math'
+import { CITY_LABEL_STYLE, GlobeLabel, useScreenSeparation } from './GlobeLabel'
 import { GlobeTooltip, useGlobeHitTest, type GlobeHitCandidate, type GlobeHitTarget } from './GlobeTooltip'
 import { glslFloat } from './glsl'
 import {
@@ -96,7 +83,7 @@ import {
   SCENE_LOCATION_COLOR,
 } from './humanStyle'
 import { MarkerField, type GlobeMarker } from './MarkerField'
-import { PROJECTION_GLSL, unfoldedLiftedPosition } from './projection'
+import { PROJECTION_GLSL } from './projection'
 
 // ------------------------------------------------------------------------------------- arcs
 
@@ -429,38 +416,6 @@ const MARKER_CAPACITY = 512
  */
 const CITY_DECLUTTER_MIN_SEPARATION_PX = 14
 
-/** One "zoom step" for `useZoomBucket`, as a fraction change in camera distance (`Math.log(1.15)`
- *  ~ 15%) — loose enough to noticeably ease the declutter as a viewer zooms in, tight enough to
- *  damp sub-percent camera jitter that would otherwise flip a borderline city in and out. */
-const ZOOM_BUCKET_STEP = Math.log(1.15)
-
-/**
- * Camera distance from the world origin, quantised into `ZOOM_BUCKET_STEP`-sized steps, updating
- * only when the viewer crosses into a new step. Read every frame (`OrbitControls` mutates the
- * camera directly with no render-triggering signal of its own), but only triggers a `setState`
- * — and so only reruns the caller's `declutterCities` pass — on a bucket crossing, not every frame.
- *
- * Reacts to zoom (camera distance) and nothing else: `cityLocalPosition`'s local-space distances
- * are already rotation/pan invariant, so only the local-to-screen-pixel conversion (which scales
- * with 1/distance) needs the camera at all. Returns the quantised distance so the caller's
- * `useMemo` sees a stable value between bucket crossings rather than a new number every frame.
- */
-function useZoomBucket(camera: THREE.Camera, active: boolean): number {
-  const bucketRef = useRef(0)
-  const [bucket, setBucket] = useState(0)
-  useFrame(() => {
-    if (!active) return
-    const distance = camera.position.length()
-    if (!(distance > 0)) return
-    const next = Math.round(Math.log(distance) / ZOOM_BUCKET_STEP)
-    if (next !== bucketRef.current) {
-      bucketRef.current = next
-      setBucket(next)
-    }
-  })
-  return Math.exp(bucket * ZOOM_BUCKET_STEP)
-}
-
 const INHABITED_RADIUS_PX = 3.4
 const ARRIVAL_RING_RADIUS_PX = 4.2
 const RIPPLE_MAX_SCALE = 4
@@ -558,108 +513,6 @@ export function cityTarget(city: CityAtTime, t: GeoTime): GlobeHitTarget {
 
 // ------------------------------------------------------------------------------- city labels
 
-/**
- * The small transient name tag a city gets when it first appears. Positioned exactly like
- * `GlobeTooltip.tsx`'s own tooltip — drei's `Html` at the marker's `unfoldedLiftedPosition`, so it
- * tracks the globe through rotation and the sphere/map unfold without re-deriving a screen
- * position itself — but with no edge clamp: these are decorative and small, drawn several at
- * once, and the tooltip's own clamp logic exists for a single larger panel that must never be cut
- * off, which isn't this. Styled inline rather than through `Globe.module.css`; the values mirror
- * `.tooltip`'s own (mono HUD font, near-black translucent chip) so it reads as the same family
- * rather than a new visual language.
- */
-const CITY_LABEL_STYLE: CSSProperties = {
-  pointerEvents: 'none',
-  transform: 'translate(7px, -50%)',
-  whiteSpace: 'nowrap',
-  fontFamily: 'var(--hud-mono, ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace)',
-  fontSize: 9,
-  letterSpacing: '0.03em',
-  color: 'var(--hud-ink, #efe9dc)',
-  background: 'rgba(3, 4, 6, 0.78)',
-  border: '1px solid var(--hud-hairline, rgba(239, 233, 220, 0.18))',
-  borderRadius: 4,
-  padding: '2px 5px',
-  opacity: 0,
-}
-
-/**
- * The label's own draw-alpha multiplier for whether the city it names can actually be seen right
- * now — independent of, and multiplied against, its `t`-driven fade (`cityLabelOpacityAt`). Pure
- * (plain tuples, no `THREE` types) so it is unit-testable without a canvas, matching
- * `sphereMarkerVisibility` (`arcs.ts`) itself, which it wraps for the limb half of the test.
- *
- * - **Off-screen** (`ndc` outside `[-1, 1]` in x/y, or behind the camera — `ndc[2] > 1`): 0,
- *   unconditionally. A zoomed-in map or a panned sphere can put a marker outside the viewport
- *   entirely; the label must not be dragged back into view the way the pointer-following tooltip
- *   deliberately is (`GlobeTooltip.tsx`'s `clampedPosition`) — an unrequested label at the screen
- *   edge would point at nothing real.
- * - **Round the back of the sphere** (globe mode only — `unfold >= 0.5` skips this entirely, the
- *   same shortcut `GlobeTooltip.tsx`'s `projectAnchor` uses, since the flattened map has no back
- *   face): `sphereMarkerVisibility`'s own smooth limb fade, so a city rotating into view brings
- *   its name with it smoothly instead of the label popping in a beat after (or before) its dot.
- */
-export function cityLabelVisibility(
-  worldPosition: readonly [number, number, number],
-  cameraPosition: readonly [number, number, number],
-  radius: number,
-  unfold: number,
-  ndc: readonly [number, number, number],
-): number {
-  const onScreen = Math.abs(ndc[0]) <= 1 && Math.abs(ndc[1]) <= 1 && ndc[2] <= 1
-  if (!onScreen) return 0
-  return unfold >= 0.5 ? 1 : sphereMarkerVisibility(worldPosition, cameraPosition, radius)
-}
-
-const labelScratchLocal = new THREE.Vector3()
-const labelScratchWorld = new THREE.Vector3()
-
-interface CityLabelItemProps {
-  label: CityLabel
-  unfold: number
-  radius: number
-  groupRef: MutableRefObject<THREE.Group | null>
-}
-
-/**
- * One label. Its own `useFrame` — not a plain render-time computation like everything else in
- * this file — because camera drag/auto-rotate changes `cityLabelVisibility`'s answer every frame
- * without `t` changing or this component re-rendering (see this module's own doc comment,
- * "Labels"). The div's `opacity` is written directly via a ref rather than through React state,
- * the same reason `ArcSegment`/`ArrowHead` write shader uniforms straight into a ref each frame:
- * a value that changes every frame has no business going through a React re-render.
- */
-function CityLabelItem({ label, unfold, radius, groupRef }: CityLabelItemProps) {
-  const elementRef = useRef<HTMLDivElement>(null)
-  const { camera } = useThree()
-  const anchor = { lat: label.feature.lat, lon: label.feature.lon }
-  const [x, y, z] = unfoldedLiftedPosition(anchor, unfold, radius, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
-
-  useFrame(() => {
-    const group = groupRef.current
-    const element = elementRef.current
-    if (group === null || element === null) return
-    labelScratchLocal.set(x, y, z)
-    group.localToWorld(labelScratchWorld.copy(labelScratchLocal))
-    const worldPosition: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    const cameraPosition: [number, number, number] = [camera.position.x, camera.position.y, camera.position.z]
-    // `.project` mutates in place; `worldPosition` above is already captured, so reusing the same
-    // scratch vector for the NDC projection next is safe.
-    labelScratchWorld.project(camera)
-    const ndc: [number, number, number] = [labelScratchWorld.x, labelScratchWorld.y, labelScratchWorld.z]
-    const visibility = cityLabelVisibility(worldPosition, cameraPosition, radius, unfold, ndc)
-    element.style.opacity = String(label.opacity * visibility)
-  })
-
-  return (
-    <Html position={[x, y, z]} pointerEvents="none" zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-      <div ref={elementRef} style={CITY_LABEL_STYLE}>
-        {label.feature.name}
-      </div>
-    </Html>
-  )
-}
-
 interface CityLabelFieldProps {
   labels: readonly CityLabel[]
   unfold: number
@@ -671,7 +524,17 @@ function CityLabelField({ labels, unfold, radius, groupRef }: CityLabelFieldProp
   return (
     <>
       {labels.map((label) => (
-        <CityLabelItem key={label.feature.id} label={label} unfold={unfold} radius={radius} groupRef={groupRef} />
+        <GlobeLabel
+          key={label.feature.id}
+          text={label.feature.name}
+          lat={label.feature.lat}
+          lon={label.feature.lon}
+          opacity={label.opacity}
+          unfold={unfold}
+          radius={radius}
+          groupRef={groupRef}
+          style={CITY_LABEL_STYLE}
+        />
       ))}
     </>
   )
@@ -748,16 +611,9 @@ export function HumanCivilisation({
   const hoveredEventId = hovered?.eventId ?? null
   const tracedIds = useMemo(() => resolveTracedIds(index, hoveredEventId), [index, hoveredEventId])
 
-  // Converts `CITY_DECLUTTER_MIN_SEPARATION_PX` (a screen-pixel budget) into the object-space
-  // distance `declutterCities` compares cities by, via the standard perspective scale-at-distance
-  // relationship. `useZoomBucket` keeps this from recomputing every frame during a drag/zoom.
-  const { camera, size } = useThree()
-  const zoomDistance = useZoomBucket(camera, expanded)
-  const minSeparationWorldUnits = useMemo(() => {
-    const fovYRadians = (((camera as THREE.PerspectiveCamera).fov ?? 40) * Math.PI) / 180
-    const pixelsPerWorldUnit = size.height / (2 * zoomDistance * Math.tan(fovYRadians / 2))
-    return pixelsPerWorldUnit > 0 ? CITY_DECLUTTER_MIN_SEPARATION_PX / pixelsPerWorldUnit : 0
-  }, [camera, size.height, zoomDistance])
+  // `CITY_DECLUTTER_MIN_SEPARATION_PX` as the object-space distance `declutterCities` compares
+  // cities by, recomputed only when the camera crosses a zoom step.
+  const minSeparationWorldUnits = useScreenSeparation(CITY_DECLUTTER_MIN_SEPARATION_PX, expanded)
 
   // The orb stays a ranked top-N (decorative, ~130px, room for a handful of dots); expanded draws
   // every city that clears the era-relative significance floor and the screen-space declutter

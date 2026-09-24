@@ -55,8 +55,8 @@ PALEOMAP PaleoDEM elevation and bathymetry for the Phanerozoic, reconstructed Ne
 continents before that, and stylised, literature-dated regimes further back still. Cenozoic ice
 sheets and sea-level lowstands follow the LR04 record. It sits as a small orb in the corner;
 click it to expand to a full sphere, or unfold it into a flat map. In human time it carries
-dispersal arcs, settlement markers and major cities, plus a switchable **population density**
-or **cleared land** overlay from HYDE.
+dispersal arcs, settlement markers, major cities and the territory of historical empires from
+Cliopatria, plus a switchable **population density** or **cleared land** overlay from HYDE.
 
 <p align="center">
   <img src="docs/images/readme/globe-map.webp" alt="The globe unfolded into a flat world map 60 years ago with the cleared-land overlay: farmed land shaded orange across North America, Europe, India, China and Australia, light-blue major-city markers, the cleared-land legend top right and the timeline below" width="100%">

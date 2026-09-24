@@ -549,6 +549,141 @@ async function humanLayerPoints(page, hook) {
   return (await reducePixels(page, [on, off], differingPoints, { step: 2 })).map(([x, y]) => [clip.x + x, clip.y + y])
 }
 
+/** 117 CE, when the Roman Empire is near its greatest extent (`t` is years before 2025 CE). */
+const EMPIRE_CHECK_T = 1908
+/** Central Anatolia: inside the Roman Empire at `EMPIRE_CHECK_T`, well clear of its borders. */
+const ROMAN_INTERIOR_BOX = { lonMin: 30, lonMax: 36, latMin: 37.5, latMax: 40 }
+/** Open ocean north-east of Hawaii: no territory, city or arrival at `EMPIRE_CHECK_T`. */
+const MID_PACIFIC_BOX = { lonMin: -170, lonMax: -150, latMin: 25, latMax: 35 }
+/** The option value `OverlaySelect.tsx` gives "None". */
+const OVERLAY_NONE_VALUE = '__none__'
+
+/** Equal Earth at unit radius — mirrors `projection.ts`'s `lonLatToMap` (the harness has no TS
+ *  step), so a lon/lat box can be located on the drawn map. */
+function equalEarth(lon, lat) {
+  const A1 = 1.340264
+  const A2 = -0.081106
+  const A3 = 0.000893
+  const A4 = 0.003796
+  const M = Math.sqrt(3) / 2
+  const theta = Math.asin(M * Math.sin((lat * Math.PI) / 180))
+  const t2 = theta * theta
+  const t6 = t2 * t2 * t2
+  const x = ((lon * Math.PI) / 180) * Math.cos(theta) / (M * (A1 + 3 * A2 * t2 + t6 * (7 * A3 + 9 * A4 * t2)))
+  const y = theta * (A1 + A2 * t2 + t6 * (A3 + A4 * t2))
+  return [x, y]
+}
+
+/**
+ * The page rectangle inside a lon/lat box on the unrotated map whose drawn body is `shape`. The
+ * body's bounding box is the projection's full extent (widest at the equator, tallest at lon 0),
+ * and the rectangle is the one inscribed between the box's projected corners, so it never pokes
+ * outside the box where the meridians curve.
+ */
+function mapBoxToPage({ lonMin, lonMax, latMin, latMax }, shape) {
+  const [halfWidth] = equalEarth(180, 0)
+  const [, halfHeight] = equalEarth(0, 90)
+  const toPage = (lon, lat) => {
+    const [x, y] = equalEarth(lon, lat)
+    return [shape.x + ((x / halfWidth + 1) / 2) * shape.width, shape.y + ((1 - y / halfHeight) / 2) * shape.height]
+  }
+  const corners = [toPage(lonMin, latMin), toPage(lonMin, latMax), toPage(lonMax, latMin), toPage(lonMax, latMax)]
+  const left = Math.max(corners[0][0], corners[1][0])
+  const right = Math.min(corners[2][0], corners[3][0])
+  const top = Math.max(corners[1][1], corners[3][1])
+  const bottom = Math.min(corners[0][1], corners[2][1])
+  return { x: left, y: top, width: right - left, height: bottom - top }
+}
+
+/** For each box (clip-relative), the fraction of samples (every `step` px) where two screenshots
+ *  differ by more than `minDiff` summed over RGB. */
+function differingFractions([a, b], { boxes, step, minDiff }) {
+  const out = {}
+  for (const [name, box] of Object.entries(boxes)) {
+    let samples = 0
+    let differing = 0
+    for (let y = Math.ceil(box.y); y < box.y + box.height; y += step) {
+      for (let x = Math.ceil(box.x); x < box.x + box.width; x += step) {
+        const i = (y * a.width + x) * 4
+        const diff = Math.abs(a.data[i] - b.data[i]) + Math.abs(a.data[i + 1] - b.data[i + 1]) + Math.abs(a.data[i + 2] - b.data[i + 2])
+        samples += 1
+        if (diff > minDiff) differing += 1
+      }
+    }
+    out[name] = samples === 0 ? -1 : differing / samples
+  }
+  return out
+}
+
+/**
+ * `box` carried from one map fit frame to another: the camera fits the map to its frame, so the
+ * drawn map scales about the frame's centre. Cheaper than measuring the drawn body again.
+ */
+function rescaleWithFrame(box, frameBefore, frameAfter) {
+  const scale = frameAfter.width / frameBefore.width
+  const map = (x, y) => [
+    centreX(frameAfter) + (x - centreX(frameBefore)) * scale,
+    centreY(frameAfter) + (y - centreY(frameBefore)) * scale,
+  ]
+  const [x, y] = map(box.x, box.y)
+  return { x, y, width: box.width * scale, height: box.height * scale }
+}
+
+/**
+ * What the empires layer paints on the map at `EMPIRE_CHECK_T`, with overlay "None" so the
+ * territory fill is on: the fraction of the Roman-interior and mid-Pacific boxes that change when
+ * the Human civilisation row is toggled. Globe labels are hidden for the diff, so only drawn
+ * pixels count. Dropping the overlay's ramp key refits the camera, so the drawn map `shape` is
+ * carried over to the new fit frame. The territory geometry loads lazily, so this waits for its
+ * fetch and then polls briefly while the texture paints. Restores the overlay it found; the next
+ * shot sets its own `t`.
+ * @param {import('playwright').Page} page
+ * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ * @param {{ x: number, y: number, width: number, height: number }} shape the drawn map body
+ */
+async function empireToggleFractions(page, hook, shape) {
+  const frameBefore = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
+  const overlayBefore = await page.locator(OVERLAY_SELECT_SELECTOR).inputValue()
+  await page.selectOption(OVERLAY_SELECT_SELECTOR, OVERLAY_NONE_VALUE)
+  await hook.setT(EMPIRE_CHECK_T)
+  await hook.ready()
+  await waitForGlobeFitFramesStable(page)
+  const drawn = rescaleWithFrame(shape, frameBefore, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
+  await page.waitForFunction(
+    () => performance.getEntriesByType('resource').some((e) => e.name.includes('/vectors/') && e.responseEnd > 0),
+    undefined,
+    { timeout: 15_000 },
+  )
+  await page.evaluate(() => {
+    const style = document.createElement('style')
+    style.dataset.qaEmpireCheck = ''
+    style.textContent = '[data-globe-label] { visibility: hidden !important; }'
+    document.head.append(style)
+  })
+  // Both boxes sit near the same latitude, so one thin clip spanning them keeps each screenshot
+  // small.
+  const rects = { roman: mapBoxToPage(ROMAN_INTERIOR_BOX, drawn), pacific: mapBoxToPage(MID_PACIFIC_BOX, drawn) }
+  const clip = roundClip(unionBox(Object.values(rects)))
+  const boxes = Object.fromEntries(Object.entries(rects).map(([name, rect]) => [name, { ...rect, x: rect.x - clip.x, y: rect.y - clip.y }]))
+  let fractions = { roman: 0, pacific: 0 }
+  try {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await rafTicks(page, 2)
+      const on = await page.screenshot({ clip })
+      await hook.setLayerToggle('human-civilisation', false)
+      await rafTicks(page, 2)
+      const off = await page.screenshot({ clip })
+      await hook.setLayerToggle('human-civilisation', true)
+      fractions = await reducePixels(page, [on, off], differingFractions, { boxes, step: 2, minDiff: 15 })
+      if (fractions.roman >= 0.9) break
+    }
+  } finally {
+    await page.evaluate(() => document.querySelector('style[data-qa-empire-check]')?.remove())
+    await page.selectOption(OVERLAY_SELECT_SELECTOR, overlayBefore)
+  }
+  return fractions
+}
+
 // ---------------------------------------------------------------------------------------------
 // Actions
 // ---------------------------------------------------------------------------------------------
@@ -799,10 +934,11 @@ function desktopRestingShot(viewport, extra) {
  * one row under the drawn shape, their outer edges on the track's; and no region — legend, title,
  * shortcuts, overlay, close button, toggle, zoom, timeline, drawn shape — overlaps another or
  * leaves the viewport. The drawn shape is the sphere's or map's opaque body (`globeBodyBounds`).
+ * `withEmpires` (map only) adds the historical-empires check (`empireToggleFractions`).
  * @param {{ width: number, height: number }} viewport
- * @param {{ sphereWidth?: [number, number], mapWidth?: [number, number], withMap?: boolean }} options
+ * @param {{ sphereWidth?: [number, number], mapWidth?: [number, number], withMap?: boolean, withEmpires?: boolean }} options
  */
-function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false } = {}) {
+function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false, withEmpires = false } = {}) {
   const regionSelectors = {
     legend: LEGEND_CORNER_SELECTOR,
     title: TIME_TITLE_SELECTOR,
@@ -854,7 +990,11 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false 
       'no region (legend, title, era shortcuts, overlay, close, Globe/Map toggle, zoom, timeline, drawn shape) overlaps ' +
       "another or leaves the viewport; legend, overlay, toggle and zoom on the track's edges (±2px); shortcuts centred " +
       'under the title (±3px); toggle and zoom on one row (±4px) at least 4px below the drawn shape' +
-      (withMap ? '; the fully zoomed-out map shows no grab cursor.' : '.'),
+      (withMap ? '; the fully zoomed-out map shows no grab cursor' : '') +
+      (withEmpires
+        ? '; at 117 CE with overlay None, toggling Human civilisation changes at least 90% of central Anatolia ' +
+          '(Roman territory fill) and none of the open mid-Pacific.'
+        : '.'),
     viewport,
     t: 0,
     state: { globeExpanded: true, globeViewMode: 'globe' },
@@ -864,11 +1004,13 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false 
       await switchGlobeViewMode(page, hook, 'map')
       const map = await measureMode(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
       const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
-      return { sphere, map, mapCursorIsNotGrab: cursor !== 'grab' ? 1 : 0 }
+      const empires = withEmpires ? await empireToggleFractions(page, hook, map.shape) : undefined
+      return { sphere, map, mapCursorIsNotGrab: cursor !== 'grab' ? 1 : 0, ...(empires ? { empires } : {}) }
     },
     expect: {
       ...modeExpect('sphere', sphereWidth),
       ...(withMap ? { ...modeExpect('map', mapWidth), mapCursorIsNotGrab: [1, 1] } : {}),
+      ...(withMap && withEmpires ? { 'empires.roman': [0.9, 1], 'empires.pacific': [0, 0] } : {}),
     },
   }
 }
@@ -1310,7 +1452,7 @@ export default [
       'thumbnail.meanLuma': [20, 255],
     },
   },
-  desktopExpandedShot(DEFAULT_VIEWPORT, { sphereWidth: [470, 515], mapWidth: [960, 1030], withMap: true }),
+  desktopExpandedShot(DEFAULT_VIEWPORT, { sphereWidth: [470, 515], mapWidth: [960, 1030], withMap: true, withEmpires: true }),
   desktopExpandedShot(NARROW_DESKTOP_VIEWPORT),
   {
     name: 'layout-390x844-expanded',

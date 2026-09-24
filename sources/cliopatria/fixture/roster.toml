@@ -1,0 +1,30 @@
+# The fixture's own empire roster: the committed fixture holds none of the real roster's
+# polities, so tests load this one instead. Himyarite Kingdom is deliberately absent, to show
+# the roster filter dropping a polity the data does contain.
+
+[[lineage]]
+id = "china"
+name = "China"
+colour_slot = 0
+reason = "Han Dynasty: bare, parenthesised and paren-only windows, plus a sub-500 km^2 sliver"
+members = [
+  { polity = "Han Dynasty", label = "Han" },
+]
+
+[[lineage]]
+id = "korea"
+name = "Korea"
+colour_slot = 1
+reason = "Goguryeo: a single window"
+members = [
+  { polity = "Goguryeo" },
+]
+
+[[lineage]]
+id = "montenegro"
+name = "Montenegro"
+colour_slot = 2
+reason = "Montenegro: abutting windows, one straddling the 1900 CE cutoff and one wholly after it"
+members = [
+  { polity = "Montenegro" },
+]

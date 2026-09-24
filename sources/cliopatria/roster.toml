@@ -1,0 +1,337 @@
+# The empire roster (ADR-059): the hand-picked lineages the globe's "Historical empires" layer
+# draws. A lineage groups the Cliopatria polities a general audience reads as one continuing
+# power (Rome -> Byzantium, the Chinese dynasties, the Mongol successor khanates), so they share
+# one colour on the globe.
+#
+# `polity` must be a canonical Cliopatria name (normalise.py's `_canonical_name`: paren-stripped,
+# aliases applied); normalise.py refuses the build naming every member that matches no window.
+# A polity may appear in only one lineage. `from`/`to` (CE years, inclusive, negative = BCE)
+# clamp a member's windows; `label` replaces the polity name on the globe.
+#
+# `colour_slot` (0..7) indexes the web's empire palette. Slots come from a greedy colouring,
+# most famous lineages first, so two lineages that are ever active at the same time within ~10
+# degrees of each other never share one. They are written out explicitly so inserting a
+# lineage later does not recolour the rest.
+
+
+# ---- Ancient Near East and Mediterranean
+
+[[lineage]]
+id = "egypt"
+name = "Egypt"
+colour_slot = 2
+reason = "Three millennia of Nile-valley kingdoms, the longest-lived state tradition on the roster"
+members = [
+  { polity = "Early Dynastic Period of Egypt", label = "Early Dynastic Egypt" },
+  { polity = "Old Kingdom of Egypt" },
+  { polity = "Lower Egypt" },
+  { polity = "Upper Egypt" },
+  { polity = "Middle Kingdom of Egypt" },
+  { polity = "New Kingdom of Egypt" },
+  { polity = "Twenty-second Dynasty of Egypt" },
+  { polity = "Twenty-sixth Dynasty of Egypt" },
+  { polity = "Thirtieth Dynasty of Egypt" },
+  { polity = "Ptolemaic Kingdom" },
+]
+
+[[lineage]]
+id = "mesopotamia"
+name = "Mesopotamia"
+colour_slot = 0
+reason = "The first cities and the first territorial empire, Akkad, through to Nebuchadnezzar's Babylon"
+members = [
+  { polity = "Sumerian City-States", label = "Sumer" },
+  { polity = "Akkadian Empire" },
+  { polity = "Babylonia" },
+  { polity = "Neo-Babylonian Empire" },
+]
+
+[[lineage]]
+id = "assyria"
+name = "Assyria"
+colour_slot = 1
+reason = "The Iron Age's first great empire, from the Tigris to Egypt"
+members = [
+  { polity = "Assyria" },
+  { polity = "Neo-Assyrian Empire" },
+]
+
+[[lineage]]
+id = "hittites"
+name = "Hittites"
+colour_slot = 3
+reason = "The Bronze Age Anatolian empire that fought Egypt at Kadesh"
+members = [
+  { polity = "Hittites" },
+]
+
+[[lineage]]
+id = "persia"
+name = "Persia"
+colour_slot = 1
+reason = "Achaemenid, Parthian, Sasanian and later Iranian empires, the Near East's recurring great power"
+members = [
+  { polity = "Achaemenid Empire" },
+  { polity = "Parthian Empire" },
+  { polity = "Sasanian Empire" },
+  { polity = "Safavid Dynasty" },
+  { polity = "Afsharid Iran" },
+  { polity = "Qajar Dynasty" },
+]
+
+[[lineage]]
+id = "macedon"
+name = "Macedon"
+colour_slot = 3
+reason = "Alexander's conquest and its largest successor state"
+members = [
+  { polity = "Macedonian Empire" },
+  { polity = "Seleucid Empire" },
+]
+
+[[lineage]]
+id = "carthage"
+name = "Carthage"
+colour_slot = 4
+reason = "The Phoenician maritime empire, Rome's rival in the western Mediterranean"
+members = [
+  { polity = "Carthage" },
+]
+
+[[lineage]]
+id = "rome"
+name = "Rome"
+colour_slot = 0
+reason = "Republic, Empire and its eastern continuation until the fall of Constantinople"
+members = [
+  { polity = "Roman Republic" },
+  { polity = "Roman Empire" },
+  { polity = "Western Roman Empire" },
+  { polity = "Eastern Roman Empire" },
+  { polity = "Byzantine Empire", to = 1453 },
+]
+
+
+# ---- South and East Asia
+
+[[lineage]]
+id = "india"
+name = "Maurya & Gupta"
+colour_slot = 2
+reason = "The two classical empires that unified most of the Indian subcontinent"
+members = [
+  { polity = "Maurya Empire" },
+  { polity = "Gupta Empire" },
+]
+
+[[lineage]]
+id = "china"
+name = "China"
+colour_slot = 0
+reason = "The succession of Chinese dynasties from the Shang to the Qing"
+members = [
+  { polity = "Shang Dynasty" },
+  { polity = "Zhou Dynasty" },
+  { polity = "Qin" },
+  { polity = "Qin Dynasty" },
+  { polity = "Han Dynasty" },
+  { polity = "Western Jin" },
+  { polity = "Sui Dynasty" },
+  { polity = "Tang Dynasty" },
+  { polity = "Northern Song" },
+  { polity = "Southern Song" },
+  { polity = "Ming Dynasty" },
+  { polity = "Later Jin Dynasty" },
+  { polity = "Qing Dynasty" },
+]
+
+[[lineage]]
+id = "xiongnu"
+name = "Xiongnu"
+colour_slot = 3
+reason = "The first steppe empire, Han China's great northern rival"
+members = [
+  { polity = "Xiongnu" },
+]
+
+[[lineage]]
+id = "tibet"
+name = "Tibetan Empire"
+colour_slot = 3
+reason = "The plateau empire that contested Central Asia with the Tang"
+members = [
+  { polity = "Tibetan Empire" },
+]
+
+[[lineage]]
+id = "khmer"
+name = "Khmer Empire"
+colour_slot = 2
+reason = "Angkor's empire, the dominant power of mainland South-East Asia"
+members = [
+  { polity = "Khmer Empire", to = 1431 },
+]
+
+
+# ---- The medieval world
+
+[[lineage]]
+id = "caliphate"
+name = "Caliphate"
+colour_slot = 2
+reason = "The Arab conquests and the Abbasid golden age, until the Mongol sack of Baghdad"
+members = [
+  { polity = "Rashidun Caliphate" },
+  { polity = "Umayyad Caliphate" },
+  { polity = "Abbasid Caliphate", to = 1258 },
+]
+
+[[lineage]]
+id = "franks"
+name = "Franks"
+colour_slot = 1
+reason = "Clovis's kingdom and Charlemagne's empire, the core of medieval Western Europe"
+members = [
+  { polity = "Kingdom of the Franks", to = 717 },
+  { polity = "Carolingian Empire", from = 718, to = 887 },
+]
+
+[[lineage]]
+id = "hre"
+name = "Holy Roman Empire"
+colour_slot = 6
+reason = "Central Europe's elective empire from Otto I to Napoleon"
+members = [
+  { polity = "Holy Roman Empire", from = 962 },
+]
+
+[[lineage]]
+id = "sahel"
+name = "Ghana, Mali & Songhai"
+colour_slot = 0
+reason = "The trans-Saharan gold empires of West Africa"
+members = [
+  { polity = "Ghana Empire" },
+  { polity = "Mali Empire", to = 1462 },
+  { polity = "Songhai Empire", to = 1591 },
+]
+
+[[lineage]]
+id = "seljuk"
+name = "Seljuks"
+colour_slot = 1
+reason = "The Turkic empire that took Anatolia and triggered the Crusades"
+members = [
+  { polity = "Seljuk Dynasty" },
+  { polity = "Great Seljuk Empire" },
+]
+
+[[lineage]]
+id = "mongol"
+name = "Mongols"
+colour_slot = 1
+reason = "The largest contiguous land empire, and the khanates it split into"
+members = [
+  { polity = "Mongol Empire" },
+  { polity = "Yuan Dynasty", to = 1368 },
+  { polity = "Golden Horde", to = 1502 },
+  { polity = "Ilkhanate" },
+  { polity = "Chagatai Khanate" },
+]
+
+[[lineage]]
+id = "timurid"
+name = "Timurids & Mughals"
+colour_slot = 7
+reason = "Timur's empire and the Mughal dynasty his descendant Babur founded in India"
+members = [
+  { polity = "Timurid Empire" },
+  { polity = "Mughal Empire", from = 1526, to = 1857 },
+]
+
+[[lineage]]
+id = "ottoman"
+name = "Ottoman Empire"
+colour_slot = 2
+reason = "Six centuries spanning south-east Europe, Anatolia, the Levant and North Africa"
+members = [
+  { polity = "Ottoman Empire" },
+]
+
+
+# ---- Africa and the Americas
+
+[[lineage]]
+id = "axum"
+name = "Kush & Axum"
+colour_slot = 5
+reason = "The Nubian and Ethiopian kingdoms that traded with Egypt, Rome and India"
+members = [
+  { polity = "Kingdom of Kush" },
+  { polity = "Kingdom of Axum" },
+]
+
+[[lineage]]
+id = "maya"
+name = "Maya"
+colour_slot = 0
+reason = "The classic and post-classic Maya city-states of Mesoamerica"
+members = [
+  { polity = "Mayan City-States", label = "Maya" },
+  { polity = "Later Mayan City-States", to = 1200, label = "Maya" },
+]
+
+[[lineage]]
+id = "aztec"
+name = "Aztec"
+colour_slot = 0
+reason = "The Triple Alliance centred on Tenochtitlan, until the Spanish conquest"
+members = [
+  { polity = "Aztec Triple Alliance", label = "Aztec Empire" },
+]
+
+[[lineage]]
+id = "inca"
+name = "Inca"
+colour_slot = 0
+reason = "The largest empire of the pre-Columbian Americas"
+members = [
+  { polity = "Inca Empire" },
+]
+
+
+# ---- Early modern empires
+
+[[lineage]]
+id = "spain"
+name = "Spain"
+colour_slot = 4
+reason = "The first global empire, with its American colonies"
+members = [
+  { polity = "Kingdom of Spain", label = "Spain" },
+  { polity = "Spanish Empire" },
+  { polity = "Iberian Union" },
+  { polity = "First Spanish Republic" },
+]
+
+[[lineage]]
+id = "britain"
+name = "Britain"
+colour_slot = 3
+reason = "The largest empire in history by area, metropole and colonies together"
+members = [
+  { polity = "Kingdom of Great Britain", label = "Great Britain" },
+  { polity = "British Colonial Empire", label = "British Empire" },
+  { polity = "British Raj" },
+  { polity = "British Africa" },
+]
+
+[[lineage]]
+id = "russia"
+name = "Russia"
+colour_slot = 5
+reason = "Muscovy's expansion across Siberia to the Pacific and Alaska"
+members = [
+  { polity = "Tsardom of Russia" },
+  { polity = "Russian Empire" },
+]

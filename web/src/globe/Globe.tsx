@@ -25,6 +25,8 @@ import {
 import * as THREE from 'three'
 
 import type { RasterData } from '@/data/curated'
+import { resolveAssetUrl } from '@/lib/assetUrl'
+import { usePresentedMix, type Mix } from '@/lib/presentedMix'
 import { useReducedMotion } from '@/lib/useReducedMotion'
 import { probeWebgl } from '@/lib/webgl'
 import type { FeatureData, GeoTime, GlobeEffectAnchor, TimelineEvent } from '@/types/layer'
@@ -33,6 +35,22 @@ import type { SceneLocation } from '@/types/manifest'
 import { arrivalTimingFor, arrivalWindow } from './arcs'
 import { citiesHaveDataAt } from './cities'
 import { densityChannelMask } from './density'
+import { EmpireLabels } from './EmpireLabels'
+import {
+  EMPIRE_FRAME_KEYING,
+  empiresHaveDataAt,
+  empireSnapshotsAt,
+  type EmpireFrame,
+  type EmpireIndex,
+} from './empires'
+import { EMPIRE_LABEL_CAP_DESKTOP, EMPIRE_LABEL_CAP_PHONE, selectEmpireTier } from './empireStyle'
+import {
+  createEmpireTextureCache,
+  empireTextureKey,
+  setEmpireMaxAnisotropy,
+  useEmpireGeometry,
+  type EmpireTextureCache,
+} from './empireTexture'
 import { HumanCivilisation } from './HumanCivilisation'
 import {
   GLOBE_OVERLAYS,
@@ -55,6 +73,7 @@ import {
   globeUniforms,
   regimeEventsWithRasterFallback,
   travelDirection,
+  type GlobeBlend,
   type GlobeRasterLayers,
   type PreloadWindow,
   type TravelDirection,
@@ -101,7 +120,7 @@ import {
 } from './shaders'
 import { PLACEHOLDER_TEXTURE, setMaxAnisotropy } from './textureCache'
 import { useGlobeAutoRotationY } from './useGlobeAutoRotation'
-import { useGlobeTexturePair } from './useGlobeTexturePair'
+import { useGlobeTexturePair, type GlobeTextureCache } from './useGlobeTexturePair'
 import { useUnfold } from './unfoldAnimation'
 
 const RIM_COLOR = new THREE.Color('#8fc7ff')
@@ -163,6 +182,21 @@ const BASEMAP_FETCH_MARGIN_YEARS = 600_000
 /** `uOverlayChannel`'s value while no overlay is selected — meaningless there (`uOverlayStrength`
  *  is 0), but a stable array identity beats allocating a fresh one on every render. */
 const DEFAULT_OVERLAY_CHANNEL: readonly [number, number, number] = [1, 0, 0]
+/** How long before `t` enters the empires layer's domain its geometry file is fetched, in years —
+ *  far enough ahead that playback toward the present finds it loaded, near enough that a session
+ *  that never reaches recorded history never downloads it. */
+const EMPIRE_FETCH_MARGIN_YEARS = 5_000
+/** The presented crossfade between two active empire sets — short, since a snapshot change is a
+ *  step in the data, not a motion. */
+const EMPIRE_CROSSFADE_SECONDS = 0.3
+/** The frame shown when no empires layer is published. */
+const NO_EMPIRE_FRAME: EmpireFrame = { key: '', order: -1, snapshots: [] }
+/** Stands in for the empire cache until the geometry has loaded; never asked to load, since the
+ *  empire blend is `null` until then. */
+const NO_EMPIRE_CACHE: GlobeTextureCache = {
+  loadTexture: () => Promise.reject(new Error('empire geometry not loaded')),
+  trimTextures: () => {},
+}
 
 // ------------------------------------------------------------------------------ map mode
 
@@ -330,6 +364,10 @@ export interface GlobeProps {
   onCaptionChange?: (caption: string) => void
   /** The `cities` `FeatureSet` (ADR-035), or `null` when that layer isn't published. */
   cities: readonly FeatureData[] | null
+  /** The historical-empires territories (ADR-059), indexed once by the caller
+   *  (`buildEmpireIndex`), or `null` when that layer isn't published. Drawn under the "Human
+   *  civilisation" toggle; the geometry file it names is fetched only as `t` nears its domain. */
+  empires: EmpireIndex | null
   /** The current scene's `location` (ADR-034), or `null`/absent for a scene with no place. Only
    *  its `marker` is ever plotted — never `presentDay`. */
   sceneLocation: SceneLocation | null
@@ -400,6 +438,7 @@ export function Globe({
   onToggleExpand,
   onCaptionChange,
   cities,
+  empires,
   sceneLocation,
   playbackBaseRate,
   cityLabelFadeWindowAt,
@@ -444,9 +483,11 @@ export function Globe({
   // the two `useGlobeTexturePair` calls below (via their `resetKey` option) to re-fetch even
   // though their blend's URLs haven't changed.
   const [contextEpoch, setContextEpoch] = useState(0)
+  const empireCacheRef = useRef<EmpireTextureCache | null>(null)
   const onWebglContextRestored = (): void => {
     basemapTextureCache.clear()
     densityTextureCache.clear()
+    empireCacheRef.current?.clear()
     setContextEpoch((epoch) => epoch + 1)
   }
   // Gates the shader's textured look: even in-domain, don't show data until the first pair
@@ -484,7 +525,7 @@ export function Globe({
   const [rawHumanOn, setHumanOn] = useState(true)
   const humanOn = isPhoneViewport || rawHumanOn
   const arrivalTiming = useMemo(() => arrivalTimingFor(playbackBaseRate), [playbackBaseRate])
-  const humanHasData = arrivalsInDomainAt(effectEvents, t) || citiesHaveDataAt(cities, t)
+  const humanHasData = arrivalsInDomainAt(effectEvents, t) || citiesHaveDataAt(cities, t) || empiresHaveDataAt(empires, t)
 
   // The globe's single raster-overlay slot (ADR-041): independent of the People toggle above —
   // turning arcs/cities off does not hide whichever overlay is selected, and vice versa.
@@ -523,6 +564,58 @@ export function Globe({
   const overlayChannel = overlaySampling?.channel ?? DEFAULT_OVERLAY_CHANNEL
   const overlayDMax = overlaySampling?.dMax ?? 1
   const overlayKindValue = overlaySpec !== null ? overlayKindUniform(overlaySpec.kind) : 0
+
+  // Historical empires (ADR-059), part of the human-civilisation layer. The active set is a step
+  // function of `t` (`empireSnapshotsAt`); only the crossfade between two sets runs on wall-clock
+  // time (`usePresentedMix`). Each presented set is rasterised into its own texture through
+  // `useGlobeTexturePair`, keyed by set, tier and fill. The fill shows only while no raster
+  // overlay is selected; over an overlay's ramp the outlines and labels carry the layer alone.
+  const empireFrame = useMemo(() => (empires === null ? NO_EMPIRE_FRAME : empireSnapshotsAt(empires, t)), [empires, t])
+  const empireTarget = useMemo((): Mix<EmpireFrame> => ({ from: empireFrame, to: empireFrame, mix: 1 }), [empireFrame])
+  const presentedEmpires = usePresentedMix(empireTarget, EMPIRE_CROSSFADE_SECONDS, EMPIRE_FRAME_KEYING)
+  const empiresInDomain = empiresHaveDataAt(empires, t)
+  const empireGeometry = useEmpireGeometry(
+    empires,
+    empires === null ? null : resolveAssetUrl(assetBase, empires.data.geometry),
+    webgl && empires !== null && t <= empires.domain[1] + EMPIRE_FETCH_MARGIN_YEARS,
+  )
+  const empireCache = useMemo(
+    () => (empires !== null && empireGeometry !== null ? createEmpireTextureCache(empires, empireGeometry) : null),
+    [empires, empireGeometry],
+  )
+  useEffect(() => {
+    empireCacheRef.current = empireCache
+    return () => empireCache?.clear()
+  }, [empireCache])
+  const empireTier = selectEmpireTier(expanded, t1Available)
+  const empireFill = overlayKind === null
+  const empireBlend = useMemo(
+    (): GlobeBlend | null =>
+      empireCache === null || !humanOn
+        ? null
+        : {
+            beforeUrl: empireTextureKey(presentedEmpires.from.key, empireTier, empireFill),
+            afterUrl: empireTextureKey(presentedEmpires.to.key, empireTier, empireFill),
+            alpha: presentedEmpires.mix,
+          },
+    [empireCache, humanOn, presentedEmpires, empireTier, empireFill],
+  )
+  // A pair bound before the layer was hidden belongs to whatever `t` it was hidden at, so each
+  // hide starts a new epoch in `sourceKey`: re-showing the layer reads as nothing bound until the
+  // current frame's pair loads, rather than drawing the old territories under current labels.
+  const [empireEpoch, setEmpireEpoch] = useState(0)
+  useEffect(() => {
+    if (!humanOn) setEmpireEpoch((epoch) => epoch + 1)
+  }, [humanOn])
+  const empirePair = useGlobeTexturePair(empireBlend, [], {
+    enabled: webgl,
+    cache: empireCache ?? NO_EMPIRE_CACHE,
+    resetKey: contextEpoch,
+    sourceKey: `${empires?.data.geometry ?? ''}|${empireEpoch}`,
+  })
+  // Outside the domain the presented set is empty, so the texture itself fades the layer out.
+  const empireStrength = humanOn && empirePair.texturesReady ? 1 : 0
+  const showEmpireLabels = expanded && humanOn && empiresInDomain && empirePair.texturesReady
 
   // ADR-034: the scene's own plotted position. `sceneMarkerCoordinates` is the single place the
   // "never fall back to presentDay" rule lives. The small orb eases its rotation to centre it;
@@ -846,6 +939,10 @@ export function Globe({
                 overlayStrength={overlayStrength}
                 overlayChannel={overlayChannel}
                 overlayDMax={overlayDMax}
+                empireBeforeTex={empirePair.beforeTex}
+                empireAfterTex={empirePair.afterTex}
+                empireMix={empirePair.mix}
+                empireStrength={empireStrength}
                 onWebglContextRestored={onWebglContextRestored}
               />
               {/* Both siblings of the same `GlobeRotatingGroup` (see its own doc comment for why
@@ -873,6 +970,14 @@ export function Globe({
                 onActivateEvent={onActivateEvent}
                 cityLabelFadeWindowAt={cityLabelFadeWindowAt}
               />
+              {showEmpireLabels && (
+                <EmpireLabels
+                  presented={presentedEmpires}
+                  cap={isPhoneViewport ? EMPIRE_LABEL_CAP_PHONE : EMPIRE_LABEL_CAP_DESKTOP}
+                  unfold={unfold}
+                  radius={GLOBE_RADIUS}
+                />
+              )}
             </GlobeRotatingGroup>
             <AtmosphereRim unfold={unfold} />
             <PoleAxisMarkers unfold={unfold} />
@@ -958,7 +1063,7 @@ export function Globe({
               {
                 id: 'human-civilisation',
                 label: 'Human civilisation',
-                hint: 'Dispersal arcs, settlement markers and cities.',
+                hint: 'Dispersal arcs, settlements, cities and empires.',
                 on: humanOn,
                 onChange: setHumanOn,
                 visible: humanHasData,
@@ -1773,6 +1878,12 @@ interface GlobeSphereProps {
   overlayStrength: number
   overlayChannel: readonly [number, number, number]
   overlayDMax: number
+  /** The historical-empires texture pair (`empireTexture.ts`) and its crossfade; `empireStrength`
+   *  is 0 while the human-civilisation layer is off or nothing is bound yet. */
+  empireBeforeTex: THREE.Texture | null
+  empireAfterTex: THREE.Texture | null
+  empireMix: number
+  empireStrength: number
   /** Called once, the moment `webglcontextrestored` fires on the
    *  renderer's canvas — see `Globe`'s own `onWebglContextRestored` doc comment for why the
    *  human-era cache needs this and the PaleoDEM one doesn't. */
@@ -1801,6 +1912,10 @@ function GlobeSphere({
   overlayStrength,
   overlayChannel,
   overlayDMax,
+  empireBeforeTex,
+  empireAfterTex,
+  empireMix,
+  empireStrength,
   onWebglContextRestored,
 }: GlobeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -1883,6 +1998,7 @@ function GlobeSphere({
   useEffect(() => {
     setMaxAnisotropy(gl.capabilities.getMaxAnisotropy())
     setHumanEraMaxAnisotropy(gl.capabilities.getMaxAnisotropy())
+    setEmpireMaxAnisotropy(gl.capabilities.getMaxAnisotropy())
   }, [gl])
 
   const initedTexturesRef = useRef<WeakSet<THREE.Texture>>(new WeakSet())
@@ -1890,12 +2006,12 @@ function GlobeSphere({
     // Every human-era texture (basemap tier, both overlay frames) needs the same treatment — they
     // all come from `humanEraTextureCache`, which closes their backing `ImageBitmap` the moment
     // this forced upload has happened.
-    for (const texture of [basemapTex, overlayBeforeTex, overlayAfterTex]) {
+    for (const texture of [basemapTex, overlayBeforeTex, overlayAfterTex, empireBeforeTex, empireAfterTex]) {
       if (texture === null || initedTexturesRef.current.has(texture)) continue
       initedTexturesRef.current.add(texture)
       initAndCloseHumanEraTexture(gl, texture)
     }
-  }, [gl, basemapTex, overlayBeforeTex, overlayAfterTex])
+  }, [gl, basemapTex, overlayBeforeTex, overlayAfterTex, empireBeforeTex, empireAfterTex])
 
   // On `webglcontextrestored`, every texture this WeakSet remembers
   // having already force-uploaded is gone from the GPU regardless — clearing it lets any texture
@@ -1946,6 +2062,10 @@ function GlobeSphere({
       uOverlayChannel: { value: [1, 0, 0] },
       uOverlayDMax: { value: 1 },
       uOverlayStrength: { value: 0 },
+      uEmpireBefore: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uEmpireAfter: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uEmpireMix: { value: 0 },
+      uEmpireStrength: { value: 0 },
       uSeaLevel: { value: 0 },
       uIceSheetRadius: { value: new Float32Array(ICE_SHEET_DOME_COUNT) },
     }),
@@ -2001,6 +2121,10 @@ function GlobeSphere({
         uniforms-uOverlayChannel-value={overlayChannel}
         uniforms-uOverlayDMax-value={overlayDMax}
         uniforms-uOverlayStrength-value={overlayStrength}
+        uniforms-uEmpireBefore-value={empireBeforeTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uEmpireAfter-value={empireAfterTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uEmpireMix-value={empireMix}
+        uniforms-uEmpireStrength-value={empireStrength}
         uniforms-uSeaLevel-value={iceAge.seaLevelM}
       />
     </mesh>

@@ -4,7 +4,8 @@ import type { ArrivalGlobeEffect, FeatureData, TimelineEvent } from '@/types/lay
 
 import { buildArrivalIndex } from './arcs'
 import { cityRadiusPx, type CityAtTime } from './cities'
-import { cityLabelVisibility, cityTarget, resolveTracedIds } from './HumanCivilisation'
+import { cityLabelVisibility } from './GlobeLabel'
+import { cityTarget, resolveTracedIds } from './HumanCivilisation'
 
 const CAMERA: [number, number, number] = [0, 0, 3.6]
 const ON_SCREEN: [number, number, number] = [0, 0, 0.5]

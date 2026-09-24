@@ -10,6 +10,7 @@ at all -- never leaves an orphaned file behind.
 
 from __future__ import annotations
 
+import json
 import math
 import shutil
 import tomllib
@@ -26,7 +27,7 @@ from pipeline.audio import (
     content_hashed_filename,
     load_stem_book,
 )
-from pipeline.databuild import discover_sources
+from pipeline.databuild import discover_sources, load_source_module
 from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
 from pipeline.exposure import ExposedPlate, ExposureError, erase_scale_bar, expose_plate
 from pipeline.generators.image import ImageInfo, asset_digest, sniff_image
@@ -64,6 +65,9 @@ from pipeline.manifest import (
     SeriesData,
     SeriesGap,
     SeriesSample,
+    TerritoryData,
+    TerritoryLineageData,
+    TerritorySnapshotData,
     TimelineEvent,
     TreeData,
     TreeNodeData,
@@ -296,6 +300,96 @@ def apply_city_roster(feature_set: FeatureSet, roster: CityRoster) -> FeatureSet
     return FeatureSet(id=feature_set.id, features=kept)
 
 
+EMPIRES_LAYER = LayerSpec(
+    "empires", "Historical empires", LayerSurface.GLOBE, "cliopatria", chartable=False
+)
+EMPIRES_CURATED_ID = "cliopatria_polities"
+EMPIRES_VECTORS_DIR = "vectors"
+
+
+@dataclass(frozen=True)
+class EmpireInputs:
+    """What the `empires` layer needs beside the curated `FeatureSet` (ADR-059): the roster's
+    lineages, each roster polity's (lineage id, label), and the published geometry file with the
+    snapshot ids it holds. Read at publish, so relabelling or recolouring needs no data rebuild."""
+
+    lineages: tuple[TerritoryLineageData, ...]
+    polities: dict[str, tuple[str, str]]
+    geometry: str  # media path, relative to the asset base
+    geometry_ids: frozenset[str]
+
+
+def load_empire_inputs(sources_dir: Path, media_dir: Path) -> EmpireInputs:
+    """The cliopatria roster, and the one content-hashed geometry file its `write_outputs`
+    placed under `media_dir/vectors/`. Refuses no file or several (a stale file `make data`
+    should have cleared)."""
+    normalise = load_source_module(sources_dir / EMPIRES_LAYER.source, "normalise")
+    roster = normalise.load_roster(normalise.ROSTER_PATH)
+    pattern = f"{normalise.GEOMETRY_STEM}-*.json"
+    matches = sorted((media_dir / EMPIRES_VECTORS_DIR).glob(pattern))
+    if len(matches) != 1:
+        raise PublishRefused(
+            f"{EMPIRES_LAYER.curated_id}: expected one data/media/{EMPIRES_VECTORS_DIR}/{pattern}, "
+            f"found {len(matches)} -- run `make data` (sources/cliopatria/normalise.py "
+            f"write_outputs)"
+        )
+    (path,) = matches
+    document = json.loads(path.read_bytes())
+    return EmpireInputs(
+        lineages=tuple(
+            TerritoryLineageData(id=lineage.id, name=lineage.name, colour_slot=lineage.colour_slot)
+            for lineage in roster.lineages
+        ),
+        polities={
+            member.polity: (lineage.id, member.display_label)
+            for lineage, member in roster.members()
+        },
+        geometry=f"{EMPIRES_VECTORS_DIR}/{path.name}",
+        geometry_ids=frozenset(document["snapshots"]),
+    )
+
+
+def _territory_data(feature_set: FeatureSet, empires: EmpireInputs) -> TerritoryData:
+    """The `empires` layer: one snapshot per curated feature, lineage and label looked up by
+    polity name. Refuses a polity the roster does not name and a snapshot with no geometry."""
+    unknown = sorted({f.name for f in feature_set.features} - empires.polities.keys())
+    if unknown:
+        raise PublishRefused(
+            f"{feature_set.id}: polities absent from the empire roster: {', '.join(unknown)}"
+        )
+    missing = [f.id for f in feature_set.features if f.id not in empires.geometry_ids]
+    if missing:
+        raise PublishRefused(
+            f"{feature_set.id}: {len(missing)} snapshot(s) missing from {empires.geometry}: "
+            f"{', '.join(missing)}"
+        )
+    snapshots = []
+    for feature in feature_set.features:
+        (estimate,) = feature.estimates
+        if estimate.area_km2 is None or estimate.t_end is None:
+            raise PublishRefused(f"{feature.id}: a territory snapshot needs area_km2 and t_end")
+        lineage, label = empires.polities[feature.name]
+        snapshots.append(
+            TerritorySnapshotData(
+                id=feature.id,
+                lineage=lineage,
+                label=label,
+                t_start=estimate.t,
+                t_end=estimate.t_end,
+                lat=feature.lat,
+                lon=feature.lon,
+                area_km2=estimate.area_km2,
+            )
+        )
+    snapshots.sort(key=lambda s: (-s.t_start, s.id))
+    return TerritoryData(
+        id=EMPIRES_LAYER.curated_id,
+        geometry=empires.geometry,
+        lineages=empires.lineages,
+        snapshots=tuple(snapshots),
+    )
+
+
 @dataclass(frozen=True)
 class MediaCopy:
     source: Path
@@ -400,6 +494,11 @@ def prepare_publication(
         if world.features.get(CITIES_ID) is not None
         else None
     )
+    empires = (
+        load_empire_inputs(sources_dir, root / "data" / "media")
+        if world.features.get(EMPIRES_CURATED_ID) is not None
+        else None
+    )
     reconstructor = _load_reconstructor_if_needed(pinned, root)
     scene_entries = [_scene_entry(scene, root, reconstructor) for scene in pinned]
     published_chapters = {scene.chapter for scene in pinned}
@@ -411,6 +510,7 @@ def prepare_publication(
         world,
         None if portrait_publication is None else portrait_publication.data,
         city_roster,
+        empires,
     )
     events = _events(world)
     audio_stems = _audio_stems(stem_book, root)
@@ -861,10 +961,11 @@ def _layers(
     world: WorldModel,
     portraits: PortraitSetData | None,
     city_roster: CityRoster | None = None,
+    empires: EmpireInputs | None = None,
 ) -> tuple[tuple[LayerFile, ...], tuple[LayerManifest, ...]]:
-    """`city_roster` is `None` by default only for tests exercising the other layer kinds --
-    the real `prepare_publication` call site always loads and passes one (ADR-038). It has no
-    effect unless `world.features` actually holds a `cities` `FeatureSet`."""
+    """`city_roster` and `empires` are `None` by default only for tests exercising the other
+    layer kinds -- `prepare_publication` loads and passes each whenever `world.features` holds
+    the `FeatureSet` it applies to (ADR-038, ADR-059)."""
     files: list[LayerFile] = []
     entries: list[LayerManifest] = []
     for spec in SCALAR_LAYERS:
@@ -949,6 +1050,12 @@ def _layers(
         )
         files.append(LayerFile(published=_layer_path(spec), data=data))
         entries.append(_layer_entry(spec, LayerDataKind.FEATURES, feature_set.domain, None, None))
+    territories = world.features.get(EMPIRES_CURATED_ID)
+    if territories is not None and empires is not None:
+        data = _territory_data(territories, empires)
+        domain = (min(s.t_end for s in data.snapshots), max(s.t_start for s in data.snapshots))
+        files.append(LayerFile(published=_layer_path(EMPIRES_LAYER), data=data))
+        entries.append(_layer_entry(EMPIRES_LAYER, LayerDataKind.TERRITORIES, domain, None, None))
     return tuple(files), tuple(entries)
 
 

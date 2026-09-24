@@ -35,6 +35,7 @@ function renderGlobe(overrides: Partial<GlobeProps> = {}) {
       onToggleExpand={onToggleExpand}
       onCaptionChange={onCaptionChange}
       cities={null}
+      empires={null}
       sceneLocation={null}
       playbackBaseRate={0.02}
       cityLabelFadeWindowAt={() => 150}

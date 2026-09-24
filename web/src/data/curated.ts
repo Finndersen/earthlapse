@@ -2,8 +2,9 @@
  * TS twin of pipeline/shapes.py sampling (DATA_SOURCES § Contract) — same bisect logic, same
  * numbers, same edge cases.
  *
- * Owns the on-disk JSON shapes published by `earthlapse publish` for scalar, raster, node and
- * (docs/GLOBE.md §6) non-timeline events layers (LayerManifest.data in manifest.ts) and the
+ * Owns the on-disk JSON shapes published by `earthlapse publish` for scalar, raster, node,
+ * (docs/GLOBE.md §6) non-timeline events, feature and territory layers (LayerManifest.data in
+ * manifest.ts) and the
  * pure samplers that read them. `events-core` has no `EventsData` file of its own — it's
  * inlined in `Manifest.events` (manifest.ts), parsed by `parseTimelineEvent` below.
  */
@@ -134,6 +135,57 @@ export interface EventsData {
 export interface FeatureSetData {
   id: string
   features: FeatureData[]
+}
+
+/** How many categorical colour slots a territory lineage can name (ADR-059) — the length of the
+ *  globe's empire palette (`globe/empireStyle.ts`). */
+export const TERRITORY_COLOUR_SLOTS = 8
+
+/** One hand-picked empire lineage (ADR-059), e.g. Rome across its Republic, Empire and Byzantine
+ *  members. `colourSlot` indexes the globe's empire palette. */
+export interface TerritoryLineageData {
+  id: string
+  name: string
+  colourSlot: number
+}
+
+/**
+ * One kept territorial snapshot of a lineage member (ADR-059). Active for `tEnd < t <= tStart`,
+ * half-open so abutting snapshots neither overlap nor leave a gap. `lat`/`lon` is the label
+ * anchor, inside the territory.
+ */
+export interface TerritorySnapshotData {
+  id: string
+  lineage: string
+  label: string
+  tStart: GeoTime
+  tEnd: GeoTime
+  lat: number
+  lon: number
+  areaKm2: number
+}
+
+/**
+ * A `territories` layer file (ADR-059), e.g. `empires`. Mirrors `pipeline.manifest.TerritoryData`.
+ * `geometry` is a media path relative to `assetBase`, fetched lazily by the globe
+ * (`parseTerritoryGeometry`), never with the layer file itself. `snapshots` is sorted by `tStart`
+ * descending, then `id`.
+ */
+export interface TerritoryData {
+  id: string
+  geometry: string
+  lineages: TerritoryLineageData[]
+  snapshots: TerritorySnapshotData[]
+}
+
+/** A flat `[lon, lat, lon, lat, ...]` ring. The first ring of a polygon is its exterior; any
+ *  further rings are holes. The closing point is not repeated. */
+export type TerritoryRing = readonly number[]
+export type TerritoryPolygon = readonly TerritoryRing[]
+
+/** The geometry file a `TerritoryData.geometry` names: every snapshot's polygons by snapshot id. */
+export interface TerritoryGeometry {
+  snapshots: ReadonlyMap<string, readonly TerritoryPolygon[]>
 }
 
 /** Mirrors `PortraitExposureData` in pipeline/manifest.py: how publish normalised a plate's
@@ -600,6 +652,109 @@ function expectPositiveNumber(v: unknown, path: string): number {
   const n = expectNumber(v, path)
   if (!(n > 0)) throw new Error(`${path}: expected a positive number, got ${n}`)
   return n
+}
+
+function parseTerritoryLineage(v: unknown, path: string): TerritoryLineageData {
+  const r = expectRecord(v, path)
+  const colourSlot = expectNumber(r.colourSlot, `${path}.colourSlot`)
+  if (!Number.isInteger(colourSlot) || colourSlot < 0 || colourSlot >= TERRITORY_COLOUR_SLOTS) {
+    throw new Error(`${path}.colourSlot: expected an integer in [0, ${TERRITORY_COLOUR_SLOTS}), got ${colourSlot}`)
+  }
+  return {
+    id: expectString(r.id, `${path}.id`),
+    name: expectString(r.name, `${path}.name`),
+    colourSlot,
+  }
+}
+
+function parseTerritorySnapshot(v: unknown, path: string): TerritorySnapshotData {
+  const r = expectRecord(v, path)
+  const tStart = expectNumber(r.tStart, `${path}.tStart`)
+  const tEnd = expectNumber(r.tEnd, `${path}.tEnd`)
+  if (!(tStart > tEnd)) throw new Error(`${path}: tStart ${tStart} must be older than tEnd ${tEnd}`)
+  const lat = expectNumber(r.lat, `${path}.lat`)
+  if (!(lat >= -90 && lat <= 90)) throw new Error(`${path}.lat: out of range, got ${lat}`)
+  const lon = expectNumber(r.lon, `${path}.lon`)
+  if (!(lon >= -180 && lon <= 180)) throw new Error(`${path}.lon: out of range, got ${lon}`)
+  return {
+    id: expectString(r.id, `${path}.id`),
+    lineage: expectString(r.lineage, `${path}.lineage`),
+    label: expectString(r.label, `${path}.label`),
+    tStart,
+    tEnd,
+    lat,
+    lon,
+    areaKm2: expectPositiveNumber(r.areaKm2, `${path}.areaKm2`),
+  }
+}
+
+/**
+ * Validates a `territories` layer file (ADR-059): unique lineage ids, unique snapshot ids, every
+ * snapshot naming a known lineage. Snapshots are sorted by `tStart` descending, then `id`, so an
+ * already-sorted producer round-trips unchanged.
+ */
+export function parseTerritoryData(json: unknown): TerritoryData {
+  const root = expectRecord(json, 'TerritoryData')
+  const id = expectString(root.id, 'TerritoryData.id')
+  const geometry = expectString(root.geometry, `${id}.geometry`)
+  const lineages = expectArray(root.lineages, `${id}.lineages`).map((raw, i) =>
+    parseTerritoryLineage(raw, `${id}.lineages[${i}]`),
+  )
+  const lineageIds = new Set<string>()
+  for (const lineage of lineages) {
+    if (lineageIds.has(lineage.id)) throw new Error(`${id}: duplicate lineage id ${lineage.id}`)
+    lineageIds.add(lineage.id)
+  }
+  const rawSnapshots = expectArray(root.snapshots, `${id}.snapshots`)
+  if (rawSnapshots.length === 0) throw new Error(`${id}: empty TerritoryData`)
+  const snapshots = rawSnapshots.map((raw, i) => parseTerritorySnapshot(raw, `${id}.snapshots[${i}]`))
+  const snapshotIds = new Set<string>()
+  for (const snapshot of snapshots) {
+    if (snapshotIds.has(snapshot.id)) throw new Error(`${id}: duplicate snapshot id ${snapshot.id}`)
+    snapshotIds.add(snapshot.id)
+    if (!lineageIds.has(snapshot.lineage)) {
+      throw new Error(`${id}: snapshot ${snapshot.id} names unknown lineage ${snapshot.lineage}`)
+    }
+  }
+  snapshots.sort((a, b) => b.tStart - a.tStart || a.id.localeCompare(b.id))
+  return { id, geometry, lineages, snapshots }
+}
+
+function parseTerritoryRing(v: unknown, path: string): TerritoryRing {
+  const ring = expectArray(v, path)
+  if (ring.length < 6 || ring.length % 2 !== 0) {
+    throw new Error(`${path}: expected an even count of at least 6 coordinates, got ${ring.length}`)
+  }
+  for (let i = 0; i < ring.length; i += 2) {
+    const lon = ring[i]
+    const lat = ring[i + 1]
+    if (typeof lon !== 'number' || !(lon >= -180 && lon <= 180) || typeof lat !== 'number' || !(lat >= -90 && lat <= 90)) {
+      throw new Error(`${path}[${i}]: expected an in-range lon, lat pair`)
+    }
+  }
+  return ring as number[]
+}
+
+/**
+ * Validates the geometry file a `TerritoryData.geometry` names (ADR-059): each snapshot a list of
+ * polygons, each polygon a non-empty list of flat rings. Refuses a file missing any snapshot
+ * `data` lists, since the globe would otherwise silently draw nothing for it.
+ */
+export function parseTerritoryGeometry(json: unknown, data: TerritoryData): TerritoryGeometry {
+  const root = expectRecord(json, 'TerritoryGeometry')
+  const rawSnapshots = expectRecord(root.snapshots, 'TerritoryGeometry.snapshots')
+  const snapshots = new Map<string, readonly TerritoryPolygon[]>()
+  for (const snapshot of data.snapshots) {
+    const path = `TerritoryGeometry.snapshots.${snapshot.id}`
+    if (!(snapshot.id in rawSnapshots)) throw new Error(`${path}: missing`)
+    const polygons = expectArray(rawSnapshots[snapshot.id], path).map((rawPolygon, p) => {
+      const rings = expectArray(rawPolygon, `${path}[${p}]`)
+      if (rings.length === 0) throw new Error(`${path}[${p}]: empty polygon`)
+      return rings.map((rawRing, r) => parseTerritoryRing(rawRing, `${path}[${p}][${r}]`))
+    })
+    snapshots.set(snapshot.id, polygons)
+  }
+  return { snapshots }
 }
 
 function parsePortraitExposure(json: unknown, path: string): PortraitExposureData {

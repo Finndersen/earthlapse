@@ -6,6 +6,7 @@ import itertools
 import json
 import math
 import re
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,8 @@ from pipeline.manifest import (
     Manifest,
     RasterData,
     SeriesData,
+    TerritoryData,
+    TerritoryLineageData,
     TreeData,
 )
 from pipeline.manifest import SceneLocation as WireSceneLocation
@@ -32,6 +35,8 @@ from pipeline.publish import (
     CityRoster,
     CityRosterEntry,
     CityRosterError,
+    EmpireInputs,
+    PublishRefused,
     _effect,
     _layers,
     _scene_location,
@@ -1138,3 +1143,63 @@ def test_a_roster_naming_absent_cities_is_refused_naming_each_one() -> None:
 
     with pytest.raises(CityRosterError, match="atlantis-nowhere.*el-dorado-nowhere"):
         apply_city_roster(feature_set, roster)
+
+
+def _polity(feature_id: str, name: str, from_year: int, to_year: int) -> Feature:
+    return Feature(
+        id=feature_id,
+        name=name,
+        country="",
+        lat=41.9,
+        lon=12.5,
+        certainty=FeatureCertainty.HIGH,
+        estimates=[PopulationEstimate(t=2025.0 - from_year, area_km2=1e6, t_end=2024.0 - to_year)],
+    )
+
+
+def test_empires_publish_as_a_territories_layer_with_roster_lineages_and_labels() -> None:
+    polities = FeatureSet(
+        id="cliopatria_polities",
+        features=[
+            _polity("roman-empire-117ce", "Roman Empire", 117, 131),
+            _polity("byzantine-empire-1400ce", "Byzantine Empire", 1400, 1453),
+        ],
+    )
+    empires = EmpireInputs(
+        lineages=(TerritoryLineageData(id="rome", name="Rome", colour_slot=3),),
+        polities={
+            "Roman Empire": ("rome", "Roman Empire"),
+            "Byzantine Empire": ("rome", "Byzantium"),
+        },
+        geometry="vectors/cliopatria_territories-0123456789.json",
+        geometry_ids=frozenset({"roman-empire-117ce", "byzantine-empire-1400ce"}),
+    )
+    world = WorldModel(features={"cliopatria_polities": polities})
+
+    files, entries = _layers(world, portraits=None, empires=empires)
+
+    (entry,) = (e for e in entries if e.id == "empires")
+    assert (entry.data_kind, entry.time_domain) == (LayerDataKind.TERRITORIES, (571.0, 1908.0))
+    assert (entry.data, entry.source) == ("layers/empires.json", "cliopatria")
+    (published,) = (f for f in files if f.published == "layers/empires.json")
+    assert isinstance(published.data, TerritoryData)
+    wire = published.data.model_dump(mode="json", by_alias=True)
+    assert wire["geometry"] == "vectors/cliopatria_territories-0123456789.json"
+    assert wire["snapshots"][0] == {
+        "id": "roman-empire-117ce",
+        "lineage": "rome",
+        "label": "Roman Empire",
+        "tStart": 1908.0,
+        "tEnd": 1893.0,
+        "lat": 41.9,
+        "lon": 12.5,
+        "areaKm2": 1e6,
+    }
+    assert wire["snapshots"][1]["label"] == "Byzantium"
+
+    unrostered = replace(empires, polities={"Roman Empire": ("rome", "Roman Empire")})
+    with pytest.raises(PublishRefused, match="Byzantine Empire"):
+        _layers(world, portraits=None, empires=unrostered)
+    ungeometried = replace(empires, geometry_ids=frozenset({"roman-empire-117ce"}))
+    with pytest.raises(PublishRefused, match="byzantine-empire-1400ce"):
+        _layers(world, portraits=None, empires=ungeometried)

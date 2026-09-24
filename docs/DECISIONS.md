@@ -7492,3 +7492,110 @@ with an empty cache spends a few seconds computing every pair.
   output to whatever code version produced it.
 - **Reusing the published morph files when the cache is empty.** Would freeze morphs made by older
   morph code; recomputing takes seconds.
+
+## ADR-059 — Historical empires: a hand-picked lineage roster, drawn as vector territory on the globe
+
+**Status:** accepted — human-directed 2026-09-24. Supersedes ADR-037's subset rule and its
+`cliopatria_extent` raster (the rest of ADR-037 — the source, name normalisation, the 1900 CE
+cutoff, certainty, the generalised `PopulationEstimate` — stands). Amends ADR-036's layer
+membership and its hover-only label rule, for this layer only.
+
+**Context.** ADR-037 curated Cliopatria by an objective rule — the top 6 polities by peak area per
+100-year bucket — into 114 polities and an 842-frame coverage mask, and left rendering for later.
+Seen as a candidate for the globe, that selection does not read: short-lived regional states
+qualify in thin buckets while a famous empire flickers in and out as it drops below sixth place,
+the mask cannot say which empire a pixel belongs to, and a crossfading raster blurs borders that
+really change abruptly. ADR-037 rejected hand-picking to keep historical judgement out of the
+data. That stance is revisited here, for the same reason ADR-038 gave for cities: which empires a
+viewer should see is a judgement, and a reviewable list states it more honestly than a formula
+that only approximates it.
+
+**Decision.**
+- **A roster of 28 lineages, not a subset rule.** `sources/cliopatria/roster.toml` lists lineages
+  (id, name, `colour_slot` 0–7, a one-line `reason`), each a sequence of Cliopatria polities
+  (Roman Republic → Roman Empire → Western/Eastern Roman Empire → Byzantine Empire to 1453).
+  A member may clamp its years (`from`/`to`) and override its globe `label`. Each member keeps its
+  full lifespan up to the 1900 CE cutoff. Unknown or duplicate polities, duplicate lineage ids,
+  and a member left empty by its clamp are refused at build (`EmpireRosterError`), naming every
+  offender. Colour slots are assigned by greedy colouring, famous lineages first, so no two
+  lineages that coexist within ~10° of each other share one; the slots are stored explicitly so
+  an inserted lineage does not recolour the rest.
+- **One geometry per member per year.** A bare-name window beats a parenthesised aggregate
+  (`"(X)"`) wherever one covers the year; the aggregate only fills gaps, and the latest `FromYear`
+  wins a tie. The two often describe different footprints (an empire's metropole vs. its
+  overseas holdings, a royal demesne vs. the kingdom), and ADR-037's merge-by-name drew both. A
+  window under 500 km² (`MIN_AREA_KM2`) counts as absent: Cliopatria carries degenerate slivers
+  inside good series (Han 6–13 CE at 143 km²); the smallest genuine window, the early Roman
+  Republic, is ~900 km².
+- **Thinning.** Walking a member's segments in time order, a new snapshot starts when IoU with the
+  last kept one is below 0.9 (`IOU_KEEP`), when the symmetric difference exceeds 250,000 km²
+  (`SYMDIFF_KEEP_KM2`: IoU alone misses the Ottoman losses of 1699 and the sale of Alaska), or
+  after a gap. Both are measured in an equal-area projection. A kept snapshot spans every segment
+  merged into it and keeps its first segment's geometry, area, certainty and representative
+  point. 1,755 segments thin to **803 snapshots**; at most 10 lineages are active at once.
+- **Half-open time.** `t_start = 2025 − from`, `t_end = 2025 − (to + 1)`, active for
+  `t_end < t ≤ t_start`, so abutting snapshots neither overlap nor leave a one-year hole, and the
+  cutoff ends every snapshot at `t = 124`.
+- **Curated data is the `FeatureSet` only.** `cliopatria_polities` holds one `Feature` per
+  snapshot (shape unchanged). The coverage-mask `RasterSequence`, its 842 textures and
+  `subset.py` are removed.
+- **Geometry is a content-hashed vector media file.** `write_outputs` writes
+  `data/media/vectors/cliopatria_territories-<hash10>.json` (ADR-057's naming, so it is cached
+  immutable) and removes stale siblings: per snapshot id, polygons of flat `[lon, lat, …]` rings,
+  exterior counter-clockwise first, holes clockwise. Geometry is `simplify(0.1°,
+  preserve_topology)` — about one texel of a 4096-wide canvas — then `set_precision(0.01°)`, which
+  keeps every polygon valid where plain rounding to two decimals broke 79 of 734 test snapshots.
+  Measured: 3.2 MB, 0.30 MB gzipped, ~259k vertices. Plain git, like the layer JSON.
+  `databuild.fingerprint()` now hashes a source's `*.toml` as well as its `*.py`, so a roster
+  edit rebuilds the source.
+- **A new wire kind, `territories`** (`pipeline/manifest.py`, mirrored in `web/`; the manifest is
+  NORMATIVE for the web). Layer `empires` carries the geometry path, the lineages (id, name,
+  `colourSlot`) and the snapshots (id, lineage, label, `tStart`, `tEnd`, `lat`, `lon`,
+  `areaKm2`), sorted by `tStart` descending. Lineage and label are looked up in the roster at
+  publish, so relabelling or recolouring needs no rebuild. Publish refuses a polity not on the
+  roster, zero or several geometry files, and a snapshot id missing from the file. The layer JSON
+  stays small (~0.2 MB) because it loads eagerly; the globe fetches the geometry file once, when
+  `t` comes within 5,000 years of the layer's domain.
+- **Rendering.** The active snapshots are rasterised into an equirectangular canvas texture
+  (4096×2048 expanded on a GPU that takes the T1 basemap, 2048×1024 otherwise) and composited in
+  the globe shader right after the overlay mix. One `Path2D` per lineage, filled with the nonzero
+  rule, so overlapping members never double the fill. A lineage-coloured stroke over a dark
+  casing, from an 8-colour palette checked against the basemap, the density and cleared-land
+  ramps, the arrival arcs and city markers; a ~20% fill only when the overlay is None, so it never
+  tints a data overlay. Edges with both ends at `|lon| ≥ 179.99` are not stroked (Cliopatria splits
+  polygons at the antimeridian). A change of active set crossfades over 0.3 s through
+  `usePresentedMix`; polygons never morph.
+- **Part of "Human civilisation", not a new control.** The ADR-036 row's toggle now also governs
+  empires, and the row shows while any of its parts has data; its hint stays one line. On a phone,
+  where the legend is not shown and the human layer is always on, so are empires; a mobile toggle
+  may come later.
+- **Capped, always-on labels.** One label per active lineage, on its largest active member's
+  anchor, ranked by area and capped at 6 (desktop) or 3 (phone), thinned by screen distance and
+  faded with the crossfade; expanded view only, never on the orb. This departs from ADR-036's
+  "names on hover only" (itself ADR-032's call for arrivals) because an empire is large and few at
+  once, and an unnamed coloured outline explains nothing. Empires get no hover tooltip.
+
+**Rejected.**
+- **Keeping ADR-037's coverage mask, or a per-pixel polity-index raster.** A mask cannot colour or
+  name an empire; an index raster can, but at 842+ dated frames it costs far more than one vector
+  file, blurs abrupt border changes in its crossfade, and fixes the resolution at publish.
+- **Morphing polygons between snapshots.** Borders change by conquest and collapse, not
+  continuously, and matching rings across snapshots with different part counts invents shapes
+  that never existed.
+- **A separate legend row for empires.** ADR-036 exists to keep "what the globe shows about
+  people" under one control.
+- **An option in the overlay selector.** The selector picks one mutually exclusive data overlay;
+  borders sit on top of either overlay rather than replacing it.
+- **Retuning an objective area rule** (bucket width, N, lifespan weighting). It can only rank area,
+  and area is not what makes an empire worth showing: a per-era rank drops a famous empire for the
+  decades it is outranked and admits short-lived regional states in thin eras.
+
+**Consequences.**
+- `docs/GLOBE.md` §10 gains an empires section and its label rule is amended;
+  `docs/DATA_SOURCES.md`'s `cliopatria` entry and `sources/cliopatria/README.md` describe the
+  roster and the vector output.
+- The roster is a maintenance surface like the city roster (ADR-038): its `reason` lines are where
+  a later reader argues with an entry. Kingdom of France is left out because its bare series is
+  the royal demesne.
+- Every `databuild` source's `*.toml` is now part of its fingerprint, so `audio-stems` rebuilt
+  once on the change.

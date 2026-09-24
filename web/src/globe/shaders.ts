@@ -120,6 +120,16 @@ uniform vec3 uOverlayChannel;
 uniform float uOverlayDMax;
 uniform float uOverlayStrength;
 
+// The historical-empires territory texture (ADR-059, empireTexture.ts): outlines, casings and an
+// optional light fill, painted on an equirect canvas. Texels are premultiplied and still
+// sRGB-encoded (the texture is NoColorSpace), so the composite un-premultiplies before decoding.
+// uEmpireMix crossfades between two active sets; uEmpireStrength is 0 while the layer is off or no
+// texture is bound yet. Outside the domain the active set is empty, so the texture is transparent.
+uniform sampler2D uEmpireBefore;
+uniform sampler2D uEmpireAfter;
+uniform float uEmpireMix;
+uniform float uEmpireStrength;
+
 // docs/GLOBE.md §10 (ADR-030 amendment): the basemap tone-match grade — one TS constant each
 // (blend.ts's gradeBasemapColor doc comment has the measurements and reasoning), interpolated
 // here rather than hand-copied.
@@ -285,6 +295,13 @@ void main() {
   );
   vec4 overlayColor = overlayColorAt(overlaySample);
   baseColor = mix(baseColor, overlayColor.rgb, overlayColor.a * uOverlayStrength);
+
+  // Empire territories over the overlay, so outlines stay legible on either ramp.
+  vec4 empireTexel = mix(texture2D(uEmpireBefore, uv), texture2D(uEmpireAfter, uv), uEmpireMix);
+  if (empireTexel.a > 0.0) {
+    vec3 empireColor = sRGBTransferEOTF(vec4(empireTexel.rgb / empireTexel.a, 1.0)).rgb;
+    baseColor = mix(baseColor, empireColor, empireTexel.a * uEmpireStrength);
+  }
 
   // docs/GLOBE.md §5.1: the schematic ice sheets, over the shelf and density, clipped at their
   // margins to land (including exposed shelf). Under the basemap only the ice beyond today's

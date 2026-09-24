@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "44ad3535036d8015",
+  "buildId": "cce3565c83d947dd",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2443,6 +2443,19 @@
       "source": "cities",
       "chartable": false,
       "data": "layers/cities.json"
+    },
+    {
+      "id": "empires",
+      "name": "Historical empires",
+      "surface": "globe",
+      "dataKind": "territories",
+      "timeDomain": [
+        124.0,
+        5425.0
+      ],
+      "source": "cliopatria",
+      "chartable": false,
+      "data": "layers/empires.json"
     }
   ],
   "events": [
@@ -5686,7 +5699,7 @@
     },
     {
       "sourceId": "cliopatria",
-      "title": "Cliopatria: worldwide political entities, 3400 BCE - 1900 CE (notable subset)",
+      "title": "Cliopatria: historical empires, 3400 BCE - 1900 CE",
       "citation": "Chalstrey, E., Bennett, J. & Mutch, E. (2024). Cliopatria: A geospatial database of world-wide political entities from 3400BCE to 2024CE (v0.0.1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.13363121. Methods: Bennett, J. et al., \"Cliopatria: a geospatial dataset of world historical polities\", SocArXiv preprint osf.io/24wd6. Seshat Global History Databank: https://seshatdatabank.info/",
       "licence": "CC BY 4.0 (confirmed both via the Zenodo record's own metadata, license.id == \"cc-by-4.0\", and the repository's committed LICENSE.md)",
       "url": "https://zenodo.org/api/records/13363121/files/Seshat-Global-History-Databank/cliopatria-v0.0.1.zip/content"
