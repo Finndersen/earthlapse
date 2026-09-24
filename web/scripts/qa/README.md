@@ -47,18 +47,22 @@ Full flag reference: `node scripts/qa/run.mjs --help`.
   one), and the export, the run output and the dev port all belong to the checkout, so QA in two
   worktrees runs concurrently. Two runs in the *same* checkout share `out-qa/`: don't.
 - **Budgets:** full run ≤ 3 min, `--smoke` ≤ 60 s on a 4-core machine. The run prints its wall
-  time and its ten slowest shots; a change that pushes past a budget pays for itself by removing
-  or merging measurements elsewhere.
+  time, its phases (build, browser launch, page load, shots, contact sheet) and its ten slowest
+  shots, each broken into steps (`state`, the crossfade remainder `t`, `actions`, `screenshot`,
+  `measure`) and page calls (`evaluate`, `capture`, blind `waitForTimeout`s: count/ms); the same
+  lands in `report.json` as `phases` and each shot's `timing`. `QA_TRACE=1` also prints every
+  timed call as it returns, with its duration and call site. A change that pushes past a budget
+  pays for itself by removing or merging measurements elsewhere.
 
 `--smoke --no-screenshots` is what `deploy/preflight.sh` runs before a deploy, and exits non-zero
 on a real failure the same way the full run does. For a change, run only the shots covering the
 area it touches (`--grep 390`), without screenshots; capture them only for the few shots someone
 will look at. `--no-screenshots` still captures one for any shot that throws.
 
-Sorting groups shots by viewport (one resize per group instead of per shot). `--shards N` loads N
-pages in their own contexts and runs contiguous slices of the list on each; rendering here is
-CPU-bound software WebGL, so on a 4-core machine two shards cut the full run only ~10% and the
-smoke run not at all.
+Sorting groups shots by viewport (one resize per group instead of per shot), keeping file order
+within a group. `--shards N` loads N pages in their own contexts and runs contiguous slices of the
+list on each; rendering here is CPU-bound software WebGL, so on a 4-core machine two shards make
+the full run slower (134 s against 116 s), and the default stays one page.
 
 ## The shots
 
@@ -69,15 +73,15 @@ the page load and the globe's pointer interactions:
 |---|---|
 | `loading-screen` | the loader is in the static HTML, animates only with motion allowed, steps its progress, and is gone once the shell mounts |
 | `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser and population sparkline against the timeline |
+| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section, opaque and ending inside the viewport (full run only, not `--smoke`) |
 | `layout-1000x810-resting` | the same at narrow desktop, with the rate readout under the transport and the secondary controls on one row |
 | `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows and the rate picker inside its row, the feed's "All events" tap target and the sheet it opens, the tour's first step |
-| `phone-orb-touch-tap` | a finger tap on the phone's minimised orb expands it with `t` and the section unchanged (touch page) |
+| `phone-orb-touch-tap` | with touch input on (a coarse pointer), a finger tap on the phone's minimised orb expands it with `t` and the section unchanged |
 | `layout-844x390-resting` | short landscape (ADR-048): drawn orb and portrait sizes, chrome regions at the root and in a section, the caption on the feed row, the controls rows; with one scene's full image held, the canvas draws that scene's thumbnail (ADR-051) |
-| `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps; then on the map at 117 CE with overlay None, a Human-civilisation on/off pixel diff: the Roman territory fill changes central Anatolia, nothing changes in the open mid-Pacific; hovering central Anatolia names the Roman Empire and a click docks its panel inside the viewport, no deeper into the map than its first related event's card |
+| `layout-1440x900-expanded` | desktop expanded globe, sphere then map: drawn body size, corner and controls-row alignment, no overlaps; then on the map at 117 CE with overlay None, a Human-civilisation on/off pixel diff: the Roman territory fill changes central Anatolia, nothing changes in the open mid-Pacific; hovering central Anatolia names the Roman Empire and a click docks its panel inside the viewport, no deeper into the map than the card of its related event current at 117 CE |
 | `layout-1000x810-expanded` | the same at narrow desktop, sphere only |
 | `layout-390x844-expanded` | phone expanded: drawn sphere size and the rows around it; row 2 clear of the drawn map |
 | `layout-844x390-expanded` | short-landscape expanded: the column beside the drawn sphere and map, the crumb trail over the transport |
-| `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section, opaque and ending inside the viewport (full run only, not `--smoke`) |
 
 `shots.scene-framing.mjs` is a separate, opt-in module — one phone-portrait shot per published
 scene, for judging crops by eye on the contact sheet:
@@ -106,7 +110,7 @@ A shot is data (`shots.mjs`); `run.mjs` never changes for one:
   t: 0,                                     // optional: years before present
   state: { globeExpanded: true, globeViewMode: 'map', layerToggles: { 'human-civilisation': false } },
   reducedMotion: 'no-preference',           // optional, overrides --reduced-motion
-  touch: true,                              // optional: run on the touch page (below)
+  touch: true,                              // optional: touch input on for this shot (below)
   actions: async ({ page, hook }) => { /* anything `state` can't express */ },
   measure: async ({ page, hook, smoke }) => ({ sphere: await globeBodyBounds(page, FIT_FRAME) }),
   expect: { 'sphere.width': [470, 515] },   // dot-path into measure()'s result -> [min, max]
@@ -137,8 +141,8 @@ underneath:
   pixels that differ from its sampled corners. Sound over a flat panel; worthless over the
   photographic scene, whose texture reads as content.
 - `polylineTraceBounds` measures an SVG trace (sparklines) by its real `<polyline>` geometry.
-- `opacityMatteBounds` (`shots.mjs`) screenshots against a black and then a white backdrop with the
-  scene hidden: the pair differs by exactly the pixel's transparency, so content colour cancels
+- `opacityMatteBounds` (`shots.mjs`) captures a selector's box against a black and then a white
+  backdrop with the scene hidden (`mask`): the pair differs by exactly the pixel's transparency, so content colour cancels
   out. `globeBodyBounds` uses it to find the expanded globe's opaque body: the atmosphere glow is
   translucent and drops out, where a brightness threshold cannot tell its bright inner edge from
   the sphere. A drawn-size scan clipped to the globe's fit frame with the photo showing is not a
@@ -148,12 +152,12 @@ underneath:
 
 ## A shot that needs a touchscreen
 
-Playwright fixes `hasTouch` per browser context, and the main page's context has none, so
-`(pointer: coarse)` stays false for every other shot. A shot that needs real touch input sets
-`touch: true`: after the rest, `run.mjs` loads one more page, in a `hasTouch` context, and runs
-every touch shot on it the same way the main page is shared. `applyState` and the hook work there
-unchanged. `touchTap` in `shots.mjs` taps through CDP touch events with a 1px move before lift, as a
-real finger does.
+The page runs without touch input, so `(pointer: coarse)` is false for every other shot. A shot
+that needs real touch input sets `touch: true`, and `run.mjs` switches CDP touch emulation on for
+it alone (`Emulation.setTouchEmulationEnabled`, what Playwright's per-context `hasTouch` sets),
+on the same page, so it pays no second page load. `phone-orb-touch-tap` asserts the coarse
+pointer took effect. `touchTap` in `shots.mjs` taps through CDP touch events with a 1px move
+before lift, as a real finger does.
 
 ## A shot that needs the harness's one page load
 
@@ -173,20 +177,36 @@ right after load, failing fast naming this either way — re-run (without `--no-
 
 **State leaks.** Shots share one page load, so any state a shot can change and `applyState` does
 not reset leaks into the next. `applyState` closes every open dialog (detail panels, About, a
-cluster popover) by its own Close button, and the event browser. If a shot passes alone and fails in a batch, reproduce with
-`--no-sort --shots <predecessor>,<shot>` and add the leaked field to `applyState`.
+cluster popover) by its own Close button, and the event browser. If a shot passes alone and fails
+in a batch, reproduce with `--no-sort --shots <predecessor>,<shot>` (the list keeps file order,
+whatever order `--shots` names them in) and add the leaked field to `applyState`.
 
 ## Determinism and speed
 
 - `prefers-reduced-motion` defaults to `reduce` (`--reduced-motion no-preference` to disable), so
   auto-rotation cannot make two identical runs differ; under it the sphere<->map unfold snaps.
-- Every shot awaits `hook.ready()` plus a couple of `requestAnimationFrame` ticks, and the expanded
-  globe's layout is settled by polling its fit frames (`waitForGlobeFitFramesStable`). The blind
-  waits that remain live in `timeouts.mjs`, each for animation state with nothing to poll: the
-  scene crossfade after a `t` jump (skipped when `t` is unchanged), the unfold tween with motion
-  allowed, and the scrub track's section-window animation.
-- With the globe expanded, every page round trip waits out a software-rendered frame (~150-300 ms),
-  so measurements read many boxes per `page.evaluate` (`boxesOf`) rather than one per call.
+- Every shot awaits `hook.ready()` (which ends on two animation frames), and the expanded globe's
+  layout is settled by polling its fit frames (`waitForGlobeFitFramesStable`, which returns them).
+  The blind waits that remain live in `timeouts.mjs`, each for animation state with nothing to
+  poll: the scene crossfade after a `t` jump, the unfold tween with motion allowed, and the scrub
+  track's section-window animation. The crossfade and the section window run on the wall clock,
+  so `run.mjs` starts them first, applies the rest of the state meanwhile, and waits only their
+  remainder (as it does for a crossfade the previous shot's `setT` left running).
+- The empires check waits for the globe's own readiness signal instead of retrying blind: the
+  the Roman Empire's label is mounted and the globe's `data-empires-bound` attribute says the
+  bound territory texture is the one the current `t` asks for.
+- Rendering is software WebGL. With the globe expanded every page round trip waits out a frame
+  (~100-500 ms here, ~350 ms typical) and so does every screenshot, so the harness counts round
+  trips: measurements read many boxes per `page.evaluate` (`boxesOf`, `mask`), a change and the
+  frames that paint it share one (`hook.callThenFrames`, `afterFrames`), and page-side waits poll
+  `requestAnimationFrame` inside one evaluate rather than from Node.
+- Screenshots come from CDP's `Page.captureScreenshot` with `optimizeForSpeed` (`capturePng`),
+  3-5x faster than `page.screenshot`'s full-strength encode and extra round trips, always of the
+  whole viewport: a `clip` makes Chromium swap the capturing session's device-metrics emulation
+  in, which undoes Playwright's viewport for later resizes. `capturePixels` decodes the PNG in
+  Node (zlib, no npm image library) and crops it; the pixel reducers run there too, never in the
+  busy page. A capture takes the last frame drawn, so whatever changed the page waits two frames
+  first (`mask`, `rafTicks`, `hook.ready()`).
 
 ## Output
 

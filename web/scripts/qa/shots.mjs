@@ -14,8 +14,8 @@
  * sweep, a click sequence): each such shot's `expect` still names every assertion separately.
  */
 
-import { rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
-import { boxOf, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, reducePixels } from './measure.mjs'
+import { afterFrames, rafTicks, waitForGlobeFitFramesStable } from './hook.mjs'
+import { boxOf, capturePixels, capturePng, drawnBounds, drawnBoundsInClip, gapBetween, hiddenBoxOf, roundClip } from './measure.mjs'
 import { waitForApproxUnfoldProgress, waitForSceneCrossfadeSettle } from './timeouts.mjs'
 import {
   BOTTOM_CHROME_SELECTOR,
@@ -77,8 +77,8 @@ const PLAYHEAD_LABEL_SELECTOR = `${TIMELINE_TRACK_STACK_SELECTOR} [class*="timeL
  *  passing both. */
 const LEGEND_HEIGHT_CEILING_PX = 60
 
-/** Above the atmosphere glow's own contrast against the flat backdrop `hideSceneAndVignette`
- *  leaves, well below the sphere's — so a scan measures the sphere, not its halo. */
+/** Above the atmosphere glow's own contrast against the flat backdrop `mask` leaves, well below
+ *  the sphere's — so a scan measures the sphere, not its halo. */
 const SPHERE_OVER_GLOW_THRESHOLD = 90
 
 /**
@@ -268,8 +268,7 @@ function overlayControlBox(page) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Pixel reducers — `reducePixels` runs each in the page from its source, so each is
-// self-contained.
+// Pixel reducers — pure functions over `capturePixels` images (RGBA, row-major).
 // ---------------------------------------------------------------------------------------------
 
 /** Bounding box of pixels at least `minAlpha` opaque, from a black-backdrop/white-backdrop pair:
@@ -315,28 +314,29 @@ function lumaAndChange([before, after]) {
 // Pixel measurements
 // ---------------------------------------------------------------------------------------------
 
+/** A scene's full-image URL: content-hashed (ADR-057), and never its `-thumb-` sibling. */
+function sceneImageUrl(sceneId) {
+  return new RegExp(`/scenes/${sceneId}-[0-9a-f]{10}\\.webp$`)
+}
+
 /**
  * Jumps to the scene whose full image URL matches `image` while holding that image's request, so the
  * renderer can only draw the scene's thumbnail (ADR-051), and reads the scene canvas alone once
  * the crossfade has settled: its mean luma (a black frame reads ~0) and how much it changed from
  * the scene shown before (the previous scene kept on screen reads ~0). `heldRequests` is how many
  * requests the hold caught: 0 means the full image was already cached and the reading proves
- * nothing. Releases the hold and returns to `restoreT` before resolving.
+ * nothing. Releases the hold and sets `restoreT` before resolving, without waiting out the
+ * crossfade back: `run.mjs` waits out its remainder before the next shot measures anything.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {{ image: RegExp, t: number, restoreT: number }} target
  */
-/** A scene's full-image URL: content-hashed (ADR-057), and never its `-thumb-` sibling. */
-function sceneImageUrl(sceneId) {
-  return new RegExp(`/scenes/${sceneId}-[0-9a-f]{10}\\.webp$`)
-}
-
 async function heldFullImageDraw(page, hook, { image, t, restoreT }) {
   const sceneOnly = await page.addStyleTag({
     content: `body * { visibility: hidden !important; } ${SCENE_CANVAS_SELECTOR} { visibility: visible !important; }`,
   })
   await rafTicks(page, 2)
-  const before = await page.screenshot()
+  const before = await capturePixels(page)
   let heldRequests = 0
   let release = () => {}
   const held = new Promise((resolve) => {
@@ -352,89 +352,104 @@ async function heldFullImageDraw(page, hook, { image, t, restoreT }) {
   await hook.setT(t)
   await waitForSceneCrossfadeSettle(page)
   await rafTicks(page, 2)
-  const after = await page.screenshot()
+  const after = await capturePixels(page)
   release()
   await sceneOnly.evaluate((el) => el.remove())
   await hook.setT(restoreT)
-  await hook.ready()
-  await waitForSceneCrossfadeSettle(page)
-  return { heldRequests, ...(await reducePixels(page, [before, after], lumaAndChange)) }
+  return { heldRequests, ...lumaAndChange([before, after]) }
 }
 
-const roundClip = (clip) => ({ x: Math.round(clip.x), y: Math.round(clip.y), width: Math.round(clip.width), height: Math.round(clip.height) })
-
 /**
- * Hides `ShellLayout.tsx`'s scene layer and lens vignette (the `.shell` root's first two
- * children) so a screenshot behind them reads as a flat, static backdrop instead of the photo,
- * which keeps drifting (parallax breathing) even paused under reduced motion. `visibility`, so
- * nothing reflows. Returns a restore callback.
+ * Hides, in one round trip, `ShellLayout.tsx`'s scene layer and lens vignette (the `.shell` root's
+ * first two children: the photo keeps drifting, parallax breathing, even paused under reduced
+ * motion), every element matching `selectors`, and with `hud` every HUD slot but the globe's; with
+ * `backdrop`, paints the shell's own background that colour. `visibility`, so nothing reflows.
+ * Returns the layout boxes of `boxes` (name -> selector, `null` when absent), read in the same
+ * round trip, once two animation frames have painted the change: a capture (`capturePixels`) takes
+ * the last frame drawn, not one it waits for. `unmask` undoes all of it.
  * @param {import('playwright').Page} page
- * @returns {Promise<() => Promise<void>>}
+ * @param {{ selectors?: string[], hud?: boolean, backdrop?: string | null, boxes?: Record<string, string> }} [options]
+ * @returns {Promise<Record<string, {x: number, y: number, width: number, height: number} | null>>}
  */
-async function hideSceneAndVignette(page) {
-  const setVisibility = (value) =>
-    page.evaluate((v) => {
+function mask(page, { selectors = [], hud = false, backdrop = null, boxes = {} } = {}) {
+  return page.evaluate(
+    async ({ selectors: extra, hud: hideHud, backdrop: colour, boxes: wanted }) => {
       const shell = document.querySelector('[data-globe-expanded]')
-      if (shell && shell.children.length >= 2) {
-        shell.children[0].style.visibility = v
-        shell.children[1].style.visibility = v
+      const targets = [shell?.children[0], shell?.children[1]]
+      const hudRoot = shell?.children[2]
+      if (hideHud && hudRoot) for (const child of hudRoot.children) if (!child.contains(document.querySelector('div[data-map-mode]'))) targets.push(child)
+      for (const selector of extra) targets.push(...document.querySelectorAll(selector))
+      for (const el of targets) {
+        if (el instanceof HTMLElement && el.dataset.qaHidden === undefined) {
+          el.dataset.qaHidden = el.style.visibility
+          el.style.visibility = 'hidden'
+        }
       }
-    }, value)
-  await setVisibility('hidden')
-  return () => setVisibility('')
+      if (colour !== null && shell instanceof HTMLElement) {
+        if (shell.dataset.qaBackdrop === undefined) shell.dataset.qaBackdrop = shell.style.background
+        shell.style.background = colour
+      }
+      for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+      return Object.fromEntries(Object.entries(wanted).map(([name, sel]) => [name, document.querySelector(sel)?.getBoundingClientRect().toJSON() ?? null]))
+    },
+    { selectors, hud, backdrop, boxes },
+  )
+}
+
+/** Undoes every `mask` on the page, in one round trip.
+ * @param {import('playwright').Page} page */
+function unmask(page) {
+  return page.evaluate(() => {
+    for (const el of document.querySelectorAll('[data-qa-hidden]')) {
+      el.style.visibility = el.dataset.qaHidden
+      delete el.dataset.qaHidden
+    }
+    const shell = document.querySelector('[data-qa-backdrop]')
+    if (shell instanceof HTMLElement) {
+      shell.style.background = shell.dataset.qaBackdrop
+      delete shell.dataset.qaBackdrop
+    }
+  })
+}
+
+/** `box` grown by `margin` on every side, clamped to the viewport. */
+function inflateWithinViewport(box, margin, viewport) {
+  const x = Math.max(0, box.x - margin)
+  const y = Math.max(0, box.y - margin)
+  return { x, y, width: Math.min(viewport.width, box.x + box.width + margin) - x, height: Math.min(viewport.height, box.y + box.height + margin) - y }
 }
 
 /**
- * The bounding box of what is at least `minAlpha` opaque inside `clip`, by a black/white
- * difference matte (`opaqueBounds`) with the scene and vignette hidden — for a soft edge (the
- * ancestor portrait's feathered mask, a caption scrim) or content on a busy photo, where a
- * corner-sampled pixel diff cannot tell a half-transparent fade from dark content.
+ * The bounding box of what is at least `minAlpha` opaque inside `selector`'s layout box (grown by
+ * `margin`), by a black/white difference matte (`opaqueBounds`) with the scene and vignette hidden
+ * plus whatever `hide` names (`mask`'s options) — for a soft edge (the ancestor portrait's
+ * feathered mask, the orb's limb) or content on a busy photo, where a corner-sampled pixel diff
+ * cannot tell a half-transparent fade from dark content. The box is read in the masking round
+ * trip, so it may be a `visibility: hidden` probe such as a fit frame.
  * @param {import('playwright').Page} page
- * @param {{x: number, y: number, width: number, height: number}} clip page-absolute CSS px
- * @param {{ minAlpha?: number, hide?: (page: import('playwright').Page) => Promise<() => Promise<unknown>> }} [options]
- *   `hide` hides whatever else must not count, returning a restore callback (default: the scene
- *   and vignette).
+ * @param {string} selector
+ * @param {{ minAlpha?: number, margin?: number, hide?: { selectors?: string[], hud?: boolean } }} [options]
  */
-async function opacityMatteBounds(page, clip, { minAlpha = 0.5, hide = hideSceneAndVignette } = {}) {
-  const rounded = roundClip(clip)
-  const restoreScene = await hide(page)
-  const setBackdrop = (color) =>
-    page.evaluate((c) => {
-      const shell = document.querySelector('[data-globe-expanded]')
-      if (shell) shell.style.background = c
-    }, color)
-  await setBackdrop('#000000')
-  const black = await page.screenshot({ clip: rounded })
-  await setBackdrop('#ffffff')
-  const white = await page.screenshot({ clip: rounded })
-  await setBackdrop('')
-  await restoreScene()
-  const local = await reducePixels(page, [black, white], opaqueBounds, { minAlpha })
-  return { x: rounded.x + local.x, y: rounded.y + local.y, width: local.width, height: local.height }
-}
-
-/** Hides the scene, vignette and event feed (which rides above the expanded globe in the left
- *  column) — everything a scan of `GLOBE_CHROME_FREE_STRIP` would otherwise pick up besides the
- *  sphere. Returns a restore callback. */
-async function hideAroundSphereStrip(page) {
-  const setVisibility = (value) =>
-    page.evaluate(
-      ([feedSelector, v]) => {
-        const shell = document.querySelector('[data-globe-expanded]')
-        for (const el of [shell?.children[0], shell?.children[1], document.querySelector(feedSelector)]) if (el) el.style.visibility = v
-      },
-      [SHELL_FEED_SELECTOR, value],
-    )
-  await setVisibility('hidden')
-  return () => setVisibility('')
+async function opacityMatteBounds(page, selector, { minAlpha = 0.5, margin = 0, hide = {} } = {}) {
+  const { target } = await mask(page, { ...hide, backdrop: '#000000', boxes: { target: selector } })
+  if (target === null) {
+    await unmask(page)
+    throw new Error(`opacityMatteBounds: nothing matches ${selector}`)
+  }
+  const clip = roundClip(inflateWithinViewport(target, margin, page.viewportSize()))
+  const black = await capturePixels(page, clip)
+  await mask(page, { backdrop: '#ffffff' })
+  const white = await capturePixels(page, clip)
+  await unmask(page)
+  const local = opaqueBounds([black, white], { minAlpha })
+  return { x: clip.x + local.x, y: clip.y + local.y, width: local.width, height: local.height }
 }
 
 /** The drawn diameter of the minimised globe orb, with the scene hidden so only the sphere counts. */
 async function minimisedOrbDrawnBounds(page) {
-  const canvas = await hiddenBoxOf(page, GLOBE_CANVAS_SELECTOR)
-  const restoreScene = await hideSceneAndVignette(page)
+  const { canvas } = await mask(page, { boxes: { canvas: GLOBE_CANVAS_SELECTOR } })
   const bounds = await drawnBoundsInClip(page, canvas, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
-  await restoreScene()
+  await unmask(page)
   return bounds
 }
 
@@ -443,50 +458,11 @@ async function minimisedOrbDrawnBounds(page) {
  * with the scene, vignette, halo and corner expand glyph hidden so only the sphere counts.
  * @param {import('playwright').Page} page
  */
-async function minimisedOrbLimbBounds(page) {
-  const hide = async (p) => {
-    const restoreScene = await hideSceneAndVignette(p)
-    const setVisibility = (value) =>
-      p.evaluate((v) => {
-        for (const el of document.querySelectorAll('div[data-map-mode] [class*="halo"], div[data-map-mode] [class*="expandGlyph"]')) el.style.visibility = v
-      }, value)
-    await setVisibility('hidden')
-    return async () => {
-      await setVisibility('')
-      await restoreScene()
-    }
-  }
-  return opacityMatteBounds(page, await boxOf(page, GLOBE_CANVAS_SELECTOR), { minAlpha: 0.5, hide })
-}
-
-/**
- * Hides everything but the expanded globe's own canvas — the scene, the vignette, the shell's HUD
- * slots other than the globe's, and `chromeSelectors` — so a whole-viewport scan sees the drawn
- * sphere or map alone against the flat backdrop. Returns a restore callback.
- * @param {import('playwright').Page} page
- * @param {string[]} chromeSelectors
- */
-async function hideAllButGlobeCanvas(page, chromeSelectors) {
-  await page.evaluate((selectors) => {
-    const shell = document.querySelector('[data-globe-expanded]')
-    const hud = shell?.children[2]
-    const targets = [shell?.children[0], shell?.children[1]]
-    if (hud) for (const child of hud.children) if (!child.contains(document.querySelector('div[data-map-mode]'))) targets.push(child)
-    for (const selector of selectors) targets.push(...document.querySelectorAll(selector))
-    for (const el of targets) {
-      if (el instanceof HTMLElement) {
-        el.dataset.qaHidden = el.style.visibility
-        el.style.visibility = 'hidden'
-      }
-    }
-  }, chromeSelectors)
-  return () =>
-    page.evaluate(() => {
-      for (const el of document.querySelectorAll('[data-qa-hidden]')) {
-        el.style.visibility = el.dataset.qaHidden
-        delete el.dataset.qaHidden
-      }
-    })
+function minimisedOrbLimbBounds(page) {
+  return opacityMatteBounds(page, GLOBE_CANVAS_SELECTOR, {
+    minAlpha: 0.5,
+    hide: { selectors: ['div[data-map-mode] [class*="halo"]', 'div[data-map-mode] [class*="expandGlyph"]'] },
+  })
 }
 
 /** The expanded globe's own controls, hidden along with everything else by `globeBodyBounds`. */
@@ -509,14 +485,8 @@ const GLOBE_CHROME_SELECTORS = [
  * @param {import('playwright').Page} page
  * @param {string} fitFrameSelector
  */
-async function globeBodyBounds(page, fitFrameSelector) {
-  const MARGIN_PX = 48
-  const frame = await hiddenBoxOf(page, fitFrameSelector)
-  const viewport = page.viewportSize()
-  const x = Math.max(0, frame.x - MARGIN_PX)
-  const y = Math.max(0, frame.y - MARGIN_PX)
-  const clip = { x, y, width: Math.min(viewport.width, frame.x + frame.width + MARGIN_PX) - x, height: Math.min(viewport.height, frame.y + frame.height + MARGIN_PX) - y }
-  return opacityMatteBounds(page, clip, { minAlpha: 0.99, hide: (p) => hideAllButGlobeCanvas(p, GLOBE_CHROME_SELECTORS) })
+function globeBodyBounds(page, fitFrameSelector) {
+  return opacityMatteBounds(page, fitFrameSelector, { minAlpha: 0.99, margin: 48, hide: { hud: true, selectors: GLOBE_CHROME_SELECTORS } })
 }
 
 /** Sample points (every `step` px) where two screenshots of one clip differ, strongest first. */
@@ -537,16 +507,16 @@ function differingPoints([a, b], { step }) {
  * with the layer on and off, differing points strongest first, in page coordinates.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
+ * @param {{ x: number, y: number, width: number, height: number }} sphereFrame the sphere's fit frame
  */
-async function humanLayerPoints(page, hook) {
-  const clip = roundClip(await hiddenBoxOf(page, GLOBE_SPHERE_FIT_FRAME_SELECTOR))
-  const on = await page.screenshot({ clip })
-  await hook.setLayerToggle('human-civilisation', false)
+async function humanLayerPoints(page, hook, sphereFrame) {
+  const clip = roundClip(sphereFrame)
   await rafTicks(page, 2)
-  const off = await page.screenshot({ clip })
-  await hook.setLayerToggle('human-civilisation', true)
-  await rafTicks(page, 2)
-  return (await reducePixels(page, [on, off], differingPoints, { step: 2 })).map(([x, y]) => [clip.x + x, clip.y + y])
+  const on = await capturePixels(page, clip)
+  await hook.callThenFrames('setLayerToggle', ['human-civilisation', false], 2)
+  const off = await capturePixels(page, clip)
+  await hook.callThenFrames('setLayerToggle', ['human-civilisation', true], 2)
+  return differingPoints([on, off], { step: 2 }).map(([x, y]) => [clip.x + x, clip.y + y])
 }
 
 /** 117 CE, when the Roman Empire is near its greatest extent (`t` is years before 2025 CE). */
@@ -632,6 +602,8 @@ function rescaleWithFrame(box, frameBefore, frameAfter) {
 const GLOBE_TOOLTIP_SELECTOR = '[data-testid="globe-tooltip"]'
 const EMPIRE_DETAIL_SELECTOR = '[data-testid="empire-detail"]'
 const EVENT_DETAIL_SELECTOR = '[data-testid="event-detail"]'
+/** The Roman card's related event at `EMPIRE_CHECK_T`, whose event card is the height reference. */
+const EMPIRE_CHECK_EVENT_LABEL = 'Roman Empire at its height'
 
 /** How far `box` reaches into `frame` vertically, in px — 0 when it sits wholly above or below. */
 function verticalOverlapPx(box, frame) {
@@ -642,9 +614,9 @@ function verticalOverlapPx(box, frame) {
  * The empire hover and panel on the map at `EMPIRE_CHECK_T`: hovers points across the
  * Roman-interior box (cities there win their own tooltips, so the first point the empire resolves
  * at is used) until the tooltip names the Roman Empire, clicks there, measures the docked panel
- * against the viewport and the map fit frame, opens its first related event (the same dock's
- * event card) to measure that card the same way, and closes that. A missing related event leaves
- * the event-card comparison at the panel's own value. Closing the panel itself is jsdom's
+ * against the viewport and the map fit frame, opens the related event current at that `t` (the
+ * same dock's event card) to measure that card the same way, and closes that. A missing related
+ * event leaves the event-card comparison at the panel's own value. Closing the panel itself is jsdom's
  * (`Experience.test.tsx`).
  * @param {import('playwright').Page} page
  * @param {{ width: number, height: number }} viewport
@@ -659,8 +631,7 @@ async function empirePanelChecks(page, viewport, roman) {
   for (let attempt = 0; attempt < 5 && hovered === null; attempt += 1) {
     for (const [x, y] of points) {
       await page.mouse.move(x, y)
-      await rafTicks(page, 2)
-      const title = await page.evaluate((sel) => document.querySelector(`${sel} p`)?.textContent ?? '', GLOBE_TOOLTIP_SELECTOR)
+      const title = await afterFrames(page, (sel) => document.querySelector(`${sel} p`)?.textContent ?? '', GLOBE_TOOLTIP_SELECTOR)
       if (title.includes('Roman Empire')) {
         hovered = [x, y]
         break
@@ -670,11 +641,13 @@ async function empirePanelChecks(page, viewport, roman) {
   if (hovered === null) return { tooltipNamesRome: 0 }
   await page.mouse.click(hovered[0], hovered[1])
   await page.locator(EMPIRE_DETAIL_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
-  const frame = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
-  const panel = await boxOf(page, EMPIRE_DETAIL_SELECTOR)
+  const { frame, panel } = await boxesOf(page, { frame: GLOBE_MAP_FIT_FRAME_SELECTOR, panel: EMPIRE_DETAIL_SELECTOR })
   const panelOverlapPx = verticalOverlapPx(panel, frame)
   let eventOverlapPx = panelOverlapPx
-  const related = page.locator(EMPIRE_DETAIL_SELECTOR).getByRole('region', { name: 'Events' }).getByRole('button').first()
+  const related = page
+    .locator(EMPIRE_DETAIL_SELECTOR)
+    .getByRole('region', { name: 'Events' })
+    .getByRole('button', { name: EMPIRE_CHECK_EVENT_LABEL })
   if ((await related.count()) > 0) {
     await related.click()
     await page.locator(EVENT_DETAIL_SELECTOR).waitFor({ state: 'visible', timeout: 5_000 })
@@ -690,60 +663,137 @@ async function empirePanelChecks(page, viewport, roman) {
 }
 
 /**
+ * Picks `value` in the overlay `<select>` the way `page.selectOption` does (sets it, fires `input`
+ * and `change`), and returns the value it held before — one round trip.
+ * @param {import('playwright').Page} page
+ * @param {string} value
+ */
+function selectOverlay(page, value) {
+  return page.evaluate(
+    ([sel, next]) => {
+      const select = document.querySelector(sel)
+      if (!(select instanceof HTMLSelectElement)) throw new Error(`selectOverlay: no <select> at ${sel}`)
+      const before = select.value
+      select.value = next
+      select.dispatchEvent(new Event('input', { bubbles: true }))
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+      return before
+    },
+    [OVERLAY_SELECT_SELECTOR, value],
+  )
+}
+
+/**
+ * Resolves once the globe draws the Roman Empire's territory: its label is in the DOM (hidden or
+ * not) and the empire texture pair bound is the one the current `t` asks for
+ * (`data-empires-bound`), then two frames to paint. The label alone can mount while an earlier
+ * frame's pair is still bound. Re-showing the layer starts a new texture epoch, so this runs
+ * before every capture with the layer on. Throws after 15 s.
+ * @param {import('playwright').Page} page
+ */
+function waitForRomanTerritory(page) {
+  return page.evaluate(async () => {
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve))
+    const deadline = performance.now() + 15_000
+    const drawn = () =>
+      document.querySelector('[data-empires-bound="true"]') !== null &&
+      [...document.querySelectorAll('[data-globe-label]')].some((el) => /roman/i.test(el.textContent ?? ''))
+    while (!drawn()) {
+      if (performance.now() > deadline) throw new Error('the Roman Empire territory never drew (no label, or its texture never bound)')
+      await nextFrame()
+    }
+    await nextFrame()
+    await nextFrame()
+  })
+}
+
+/** Hides (or shows again) every globe label, then waits two frames for that to paint.
+ * @param {import('playwright').Page} page
+ * @param {boolean} hidden */
+function setGlobeLabelsHidden(page, hidden) {
+  return page.evaluate(async (hide) => {
+    document.querySelector('style[data-qa-labels-hidden]')?.remove()
+    if (hide) {
+      const style = document.createElement('style')
+      style.dataset.qaLabelsHidden = ''
+      style.textContent = '[data-globe-label] { visibility: hidden !important; }'
+      document.head.append(style)
+    }
+    for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+  }, hidden)
+}
+
+/**
+ * Closes the empire and event detail panels by Escape, as a user does, until neither is open.
+ * @param {import('playwright').Page} page
+ */
+async function closeDetailPanels(page) {
+  const selector = `${EMPIRE_DETAIL_SELECTOR}, ${EVENT_DETAIL_SELECTOR}`
+  for (let attempt = 0; attempt < 3 && (await afterFrames(page, (sel) => document.querySelector(sel) !== null, selector, 1)); attempt += 1) {
+    await page.keyboard.press('Escape')
+  }
+  if (await afterFrames(page, (sel) => document.querySelector(sel) !== null, selector, 2)) throw new Error('a detail panel did not close on Escape')
+}
+
+/**
  * What the empires layer paints on the map at `EMPIRE_CHECK_T`, with overlay "None" so the
  * territory fill is on: the fraction of the Roman-interior and mid-Pacific boxes that change when
- * the Human civilisation row is toggled. Globe labels are hidden for the diff, so only drawn
- * pixels count. Dropping the overlay's ramp key refits the camera, so the drawn map `shape` is
- * carried over to the new fit frame. The territory geometry loads lazily, so this waits for its
- * fetch and then polls briefly while the texture paints. Then, labels shown again, the hover and
- * panel checks (`empirePanelChecks`). Restores the overlay it found; the next shot sets its own `t`.
+ * the Human civilisation row is toggled, with globe labels hidden so only drawn pixels count.
+ * Dropping the overlay's ramp key refits the camera, so the drawn map `shape` is carried from
+ * `frameBefore` over to the new fit frame. The "on" capture is taken once the territory has drawn
+ * (`waitForRomanTerritory`); the hover and panel checks (`empirePanelChecks`) run next, on that
+ * same drawn territory with labels shown, and the "off" capture last, once their panels are closed:
+ * re-showing the layer rebinds its texture (seconds here), so this order pays that only on a
+ * retry. Restores the layer and the overlay it found; the next shot sets its own `t`.
  * @param {import('playwright').Page} page
  * @param {ReturnType<typeof import('./hook.mjs').makeHook>} hook
  * @param {{ x: number, y: number, width: number, height: number }} shape the drawn map body
+ * @param {{ x: number, y: number, width: number, height: number }} frameBefore the map fit frame `shape` was drawn in
  * @param {{ width: number, height: number }} viewport
  */
-async function empireToggleFractions(page, hook, shape, viewport) {
-  const frameBefore = await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
-  const overlayBefore = await page.locator(OVERLAY_SELECT_SELECTOR).inputValue()
-  await page.selectOption(OVERLAY_SELECT_SELECTOR, OVERLAY_NONE_VALUE)
-  await hook.setT(EMPIRE_CHECK_T)
-  await hook.ready()
-  await waitForGlobeFitFramesStable(page)
-  const drawn = rescaleWithFrame(shape, frameBefore, await hiddenBoxOf(page, GLOBE_MAP_FIT_FRAME_SELECTOR))
-  await page.waitForFunction(
-    () => performance.getEntriesByType('resource').some((e) => e.name.includes('/vectors/') && e.responseEnd > 0),
-    undefined,
-    { timeout: 15_000 },
-  )
-  await page.evaluate(() => {
-    const style = document.createElement('style')
-    style.dataset.qaEmpireCheck = ''
-    style.textContent = '[data-globe-label] { visibility: hidden !important; }'
-    document.head.append(style)
-  })
-  // Both boxes sit near the same latitude, so one thin clip spanning them keeps each screenshot
-  // small.
-  const rects = { roman: mapBoxToPage(ROMAN_INTERIOR_BOX, drawn), pacific: mapBoxToPage(MID_PACIFIC_BOX, drawn) }
-  const clip = roundClip(unionBox(Object.values(rects)))
-  const boxes = Object.fromEntries(Object.entries(rects).map(([name, rect]) => [name, { ...rect, x: rect.x - clip.x, y: rect.y - clip.y }]))
+async function empireToggleFractions(page, hook, shape, frameBefore, viewport) {
+  const overlayBefore = await selectOverlay(page, OVERLAY_NONE_VALUE)
   let fractions = { roman: 0, pacific: 0 }
   let panel = {}
   try {
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      await rafTicks(page, 2)
-      const on = await page.screenshot({ clip })
-      await hook.setLayerToggle('human-civilisation', false)
-      await rafTicks(page, 2)
-      const off = await page.screenshot({ clip })
+    await page.evaluate(async (t) => {
+      window.__earthlapse.setT(t)
+      await window.__earthlapse.ready()
+    }, EMPIRE_CHECK_T)
+    hook.lastSetTAt = Date.now()
+    const { map: frameAfter } = await waitForGlobeFitFramesStable(page)
+    const drawn = rescaleWithFrame(shape, frameBefore, frameAfter)
+    // Both boxes sit near the same latitude, so one thin clip spanning them keeps each capture
+    // small.
+    const rects = { roman: mapBoxToPage(ROMAN_INTERIOR_BOX, drawn), pacific: mapBoxToPage(MID_PACIFIC_BOX, drawn) }
+    const clip = roundClip(unionBox(Object.values(rects)))
+    const boxes = Object.fromEntries(Object.entries(rects).map(([name, rect]) => [name, { ...rect, x: rect.x - clip.x, y: rect.y - clip.y }]))
+    const captureOff = async () => {
+      await hook.callThenFrames('setLayerToggle', ['human-civilisation', false], 2)
+      const off = await capturePixels(page, clip)
       await hook.setLayerToggle('human-civilisation', true)
-      fractions = await reducePixels(page, [on, off], differingFractions, { boxes, step: 2, minDiff: 15 })
-      if (fractions.roman >= 0.9) break
+      return off
     }
-    await page.evaluate(() => document.querySelector('style[data-qa-empire-check]')?.remove())
+
+    await page.mouse.move(0, 0)
+    await waitForRomanTerritory(page)
+    await setGlobeLabelsHidden(page, true)
+    let on = await capturePixels(page, clip)
+    await setGlobeLabelsHidden(page, false)
     panel = await empirePanelChecks(page, viewport, rects.roman)
+    await closeDetailPanels(page)
+    // Off the hovered territory, so no tooltip lies over the boxes in the "off" capture.
+    await page.mouse.move(0, 0)
+    await setGlobeLabelsHidden(page, true)
+    fractions = differingFractions([on, await captureOff()], { boxes, step: 2, minDiff: 15 })
+    for (let retry = 0; retry < 2 && fractions.roman < 0.9; retry += 1) {
+      await waitForRomanTerritory(page)
+      on = await capturePixels(page, clip)
+      fractions = differingFractions([on, await captureOff()], { boxes, step: 2, minDiff: 15 })
+    }
   } finally {
-    await page.evaluate(() => document.querySelector('style[data-qa-empire-check]')?.remove())
-    await page.selectOption(OVERLAY_SELECT_SELECTOR, overlayBefore)
+    await setGlobeLabelsHidden(page, false)
+    await selectOverlay(page, overlayBefore)
   }
   return { ...fractions, ...panel }
 }
@@ -1013,11 +1063,13 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false,
     zoom: ZOOM_CONTROLS_SELECTOR,
     timeline: BOTTOM_CHROME_SELECTOR,
   }
+  /** The mode's measurements, plus (`fitFrame`) the fit frame its shape was drawn in. */
   const measureMode = async (page, fitFrameSelector) => {
-    const b = await boxesOf(page, { ...regionSelectors, track: TIMELINE_TRACK_STACK_SELECTOR })
+    const b = await boxesOf(page, { ...regionSelectors, track: TIMELINE_TRACK_STACK_SELECTOR, fitFrame: fitFrameSelector })
     const shape = await globeBodyBounds(page, fitFrameSelector)
-    const { track, ...regions } = b
+    const { track, fitFrame, ...regions } = b
     return {
+      fitFrame,
       shape,
       layout: layoutFlags({ ...regions, shape }, viewport),
       legendLeftEdgeOffsetPx: b.legend.x - track.x,
@@ -1059,7 +1111,7 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false,
         ? '; at 117 CE with overlay None, toggling Human civilisation changes at least 90% of central Anatolia ' +
           '(Roman territory fill) and none of the open mid-Pacific; hovering central Anatolia shows a tooltip naming ' +
           'the Roman Empire, and clicking there docks the empire panel inside the viewport, reaching no further into ' +
-          'the map fit frame than its first related event\'s card.'
+          'the map fit frame than the card of its related event current at that t.'
         : '.'),
     viewport,
     t: 0,
@@ -1070,7 +1122,7 @@ function desktopExpandedShot(viewport, { sphereWidth, mapWidth, withMap = false,
       await switchGlobeViewMode(page, hook, 'map')
       const map = await measureMode(page, GLOBE_MAP_FIT_FRAME_SELECTOR)
       const cursor = await page.locator(GLOBE_CANVAS_SELECTOR).first().evaluate((el) => getComputedStyle(el).cursor)
-      const empires = withEmpires ? await empireToggleFractions(page, hook, map.shape, viewport) : undefined
+      const empires = withEmpires ? await empireToggleFractions(page, hook, map.shape, map.fitFrame, viewport) : undefined
       return { sphere, map, mapCursorIsNotGrab: cursor !== 'grab' ? 1 : 0, ...(empires ? { empires } : {}) }
     },
     expect: {
@@ -1150,7 +1202,7 @@ export default [
       const midProgress = Number(await page.getAttribute(progressbar, 'aria-valuenow'))
       const globe = await drawnBounds(page, `${LOADER} svg`)
       const title = await drawnBounds(page, `${LOADER} p`)
-      const screenshot = run.screenshots ? await page.screenshot() : null
+      const screenshot = run.screenshots ? await capturePng(page) : null
 
       // Left registered: unrouting while an in-flight `route.continue()` is unresolved races
       // Playwright's cleanup ("Route is already handled!"), and once released every later match
@@ -1244,6 +1296,128 @@ export default [
       readoutCentreOffsetPx: [-3, 3],
     },
   }),
+  // Before the expanded shot at this viewport: it starts collapsed and ends collapsed (its
+  // backdrop click), so neither it nor the shot after it pays a collapse first.
+  {
+    name: 'globe-interactions',
+    description:
+      'Pointer hit-testing against the real canvas geometry, at 50 ka: a click on the minimised orb expands the ' +
+      'globe; a click on an arrival the human layer draws (found by its "Click for details" hover hint) opens its ' +
+      'event\'s detail panel with a Route section, its surface opaque and ending ≥ 16px above the viewport bottom; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
+      'the sphere keeps the view open; a real click reaches the "Map" button (nothing covers it); a click on the map ' +
+      'keeps the view open; back on the sphere, a click on the empty backdrop closes it. The arrival click runs ' +
+      'only in the full run, not under --smoke.',
+    viewport: DEFAULT_VIEWPORT,
+    t: 50_000,
+    measure: async ({ page, hook, smoke }) => {
+      // Two frames for the click to land, then whether the globe is still expanded — one round trip.
+      const expandedAfterClick = async (x, y) => {
+        await page.mouse.click(x, y)
+        return page.evaluate(async () => {
+          for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
+          return window.__earthlapse.getState().globeExpanded ? 1 : 0
+        })
+      }
+      const reduced = await motionReduced(page)
+      // A plain click on the orb (its canvas; the expand button beneath is the keyboard path).
+      const { orb } = await boxesOf(page, { orb: GLOBE_EXPAND_SELECTOR })
+      const orbClickExpands = await expandedAfterClick(centreX(orb), centreY(orb))
+      await hook.ready()
+      const frames = await waitForGlobeFitFramesStable(page)
+
+      // At 50 ka the Asian and Sahul arrivals are on the sphere. Hover spread samples of what the
+      // human layer draws until one shows the "Click for details" hint, then click it. The hover
+      // hunt is most of this shot's time, so `--smoke` leaves it to the full run.
+      let arrival = null
+      if (!smoke) {
+        await page.mouse.move(0, 0)
+        const points = await humanLayerPoints(page, hook, frames.sphere)
+        for (const [x, y] of points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 12)) === 0).slice(0, 12)) {
+          await page.mouse.move(x, y)
+          if (await afterFrames(page, (sel) => document.querySelector(sel) !== null, GLOBE_TOOLTIP_HINT_SELECTOR)) {
+            arrival = [x, y]
+            break
+          }
+        }
+      }
+      let arrivalOpensRoute = 0
+      let arrivalPanelBottomInsetPx = null
+      let arrivalPanelSurfaceAlpha = null
+      if (arrival !== null) {
+        await page.mouse.click(...arrival)
+        await rafTicks(page, 3)
+        await hook.ready()
+        // One round trip: each one waits out a software-rendered frame of the expanded globe.
+        const panel = await page.evaluate(() => {
+          const dialog = [...document.querySelectorAll('[role="dialog"]')].find((el) =>
+            [...el.querySelectorAll('h3')].some((heading) => heading.textContent?.trim() === 'Route'),
+          )
+          if (dialog === undefined) return null
+          const alpha = getComputedStyle(dialog).backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\)/)
+          return { bottom: dialog.getBoundingClientRect().bottom, alpha: alpha === null ? 1 : Number(alpha[1]) }
+        })
+        const detail = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Route' }) })
+        if (panel !== null) {
+          arrivalOpensRoute = 1
+          arrivalPanelBottomInsetPx = DEFAULT_VIEWPORT.height - panel.bottom
+          arrivalPanelSurfaceAlpha = panel.alpha
+        }
+        await page.keyboard.press('Escape')
+        await detail.waitFor({ state: 'detached', timeout: 5_000 })
+      }
+      await page.mouse.move(0, 0)
+
+      // The feed rides above the expanded globe in the left column, inside the strip.
+      await mask(page, { selectors: [SHELL_FEED_SELECTOR] })
+      const strip = () => drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
+      const defaultWidth = (await strip()).width
+      await pressZoomIn(page, 1)
+      const zoomedWidth = (await strip()).width
+      await unmask(page)
+
+      const sphereClickKeepsOpen = await expandedAfterClick(centreX(frames.sphere), centreY(frames.sphere))
+      // A real click, so hit-testing and `pointer-events` apply: a covered button fails
+      // Playwright's actionability check outright (`hook.setGlobeViewMode` would not).
+      await page.locator(VIEW_MODE_TOGGLE_SELECTOR).getByRole('button', { name: 'Map' }).click()
+      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
+      await waitForGlobeFitFramesStable(page)
+      const mapClickKeepsOpen = await expandedAfterClick(centreX(frames.map), centreY(frames.map))
+      await hook.setGlobeViewMode('globe')
+      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
+      await waitForGlobeFitFramesStable(page)
+      // Left of the sphere, below the legend, above the timeline.
+      const expandedAfterBackdropClick = await expandedAfterClick(150, 700)
+
+      return {
+        orbClickExpands,
+        defaultWidth,
+        zoomGrowthPx: zoomedWidth - defaultWidth,
+        sphereClickKeepsOpen,
+        mapClickKeepsOpen,
+        expandedAfterBackdropClick,
+        arrivalFound: arrival === null ? 0 : 1,
+        arrivalOpensRoute,
+        arrivalPanelBottomInsetPx,
+        arrivalPanelSurfaceAlpha,
+      }
+    },
+    expect: ({ smoke }) => ({
+      orbClickExpands: [1, 1],
+      zoomGrowthPx: [80, 800],
+      sphereClickKeepsOpen: [1, 1],
+      mapClickKeepsOpen: [1, 1],
+      expandedAfterBackdropClick: [0, 0],
+      ...(smoke
+        ? {}
+        : {
+            arrivalFound: [1, 1],
+            arrivalOpensRoute: [1, 1],
+            // The backdrop's own gutter at least: a panel ending flush with the viewport clips its border.
+            arrivalPanelBottomInsetPx: [16, 900],
+            arrivalPanelSurfaceAlpha: [1, 1],
+          }),
+    }),
+  },
   desktopRestingShot(NARROW_DESKTOP_VIEWPORT, {
     description:
       "; the rate readout's text 0-12px under the transport, centred on it (±3px) and 4px or more above the viewport bottom; the secondary cluster is one row " +
@@ -1278,8 +1452,8 @@ export default [
       const root = await boxesOf(page, { ...regions, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR, picker: RATE_PICKER_SELECTOR, play: PLAY_BUTTON_SELECTOR })
       const layout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, PHONE_FLOOR_VIEWPORT)
       const transport = await page.evaluate((sel) => document.querySelector(sel).parentElement.getBoundingClientRect().toJSON(), PLAY_BUTTON_SELECTOR)
-      const globe = await opacityMatteBounds(page, await boxOf(page, GLOBE_CANVAS_SELECTOR))
-      const portrait = await opacityMatteBounds(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
+      const globe = await opacityMatteBounds(page, GLOBE_CANVAS_SELECTOR)
+      const portrait = await opacityMatteBounds(page, ANCESTOR_PORTRAIT_SELECTOR)
       const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
       const orbToReadoutsPx = await gapBetween(page, GLOBE_CANVAS_SELECTOR, SHELL_READOUTS_SELECTOR)
       const titleToShortcutsPx = await gapBetween(page, TIME_TITLE_SELECTOR, ERA_SHORTCUTS_SELECTOR)
@@ -1375,7 +1549,7 @@ export default [
   {
     name: 'phone-orb-touch-tap',
     description:
-      "Phone portrait 390x844, touch: a finger tap on the minimised orb's centre expands the globe and does nothing " +
+      "Phone portrait 390x844, touch input on (a coarse pointer): a finger tap on the minimised orb's centre expands the globe and does nothing " +
       'else — t and the section unchanged, so the tap never also lands on the era shortcut the expanded layout puts ' +
       'under the finger.',
     viewport: PHONE_FLOOR_VIEWPORT,
@@ -1388,16 +1562,20 @@ export default [
       await touchTap(page, centreX(orb), centreY(orb))
       await rafTicks(page, 3)
     },
-    measure: async ({ hook }) => {
+    measure: async ({ page }) => {
       const before = phoneOrbTapBefore
-      const after = await hook.getState()
+      const { after, coarse } = await page.evaluate(() => ({
+        after: window.__earthlapse.getState(),
+        coarse: matchMedia('(pointer: coarse)').matches,
+      }))
       return {
+        coarsePointer: coarse ? 1 : 0,
         expanded: after.globeExpanded ? 1 : 0,
         sectionUnchanged: after.sectionId === before.sectionId ? 1 : 0,
         tDeltaYears: after.t - before.t,
       }
     },
-    expect: { expanded: [1, 1], sectionUnchanged: [1, 1], tDeltaYears: [0, 0] },
+    expect: { coarsePointer: [1, 1], expanded: [1, 1], sectionUnchanged: [1, 1], tDeltaYears: [0, 0] },
   },
   {
     name: 'layout-844x390-resting',
@@ -1451,13 +1629,11 @@ export default [
         })
 
       const orb = await minimisedOrbDrawnBounds(page)
-      const portrait = await opacityMatteBounds(page, await boxOf(page, ANCESTOR_PORTRAIT_SELECTOR))
+      const portrait = await opacityMatteBounds(page, ANCESTOR_PORTRAIT_SELECTOR)
       const root = await regionBoxes()
       const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
       const captionTextVisible = (await page.locator(SCENE_CAPTION_TEXT_SELECTOR).first().isVisible()) ? 1 : 0
       const clippedBandsAtRoot = await bandsClipped()
-      // No other shot visits 450 Ma, so its full image is not already cached.
-      const thumbnail = await heldFullImageDraw(page, hook, { image: sceneImageUrl('ordovician-reef-shore'), t: 450e6, restoreT: 0 })
 
       await page.locator(SCENE_CAPTION_BUTTON_SELECTOR).first().click()
       await rafTicks(page, 2)
@@ -1477,6 +1653,9 @@ export default [
       })
       const centres = Object.values(parts).map(centreY)
       const clippedBandsInSection = await bandsClipped()
+      // Last: nothing after it waits for the crossfade back to `t` 0. No other shot visits 450 Ma,
+      // so its full image is not already cached.
+      const thumbnail = await heldFullImageDraw(page, hook, { image: sceneImageUrl('ordovician-reef-shore'), t: 450e6, restoreT: 0 })
       const { regions } = root
       return {
         orbDrawnDiameterPx: orb.height,
@@ -1609,15 +1788,17 @@ export default [
         zoom: ZOOM_CONTROLS_SELECTOR,
       }
       const measureShape = async () => {
-        const b = await boxesOf(page, { ...columnSelectors, timeline: BOTTOM_CHROME_SELECTOR, close: CLOSE_BUTTON_SELECTOR, crumbs: BREADCRUMB_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR })
-        const columnRight = Math.max(...Object.keys(columnSelectors).map((name) => b[name].x + b[name].width))
-        // Everything but the globe canvas hidden, so the shape is found wherever it lands. The
-        // threshold keeps the atmosphere glow's bright inner edge: the fit frame leaves the glow
-        // its room, so "as large as the height allows" is sphere plus glow.
-        const restore = await hideAllButGlobeCanvas(page, [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR])
-        await rafTicks(page, 2)
+        // Everything but the globe canvas hidden, so the shape is found wherever it lands; the
+        // layout boxes are read in the same round trip. The threshold keeps the atmosphere glow's
+        // bright inner edge: the fit frame leaves the glow its room, so "as large as the height
+        // allows" is sphere plus glow.
+        const boxSelectors = { ...columnSelectors, timeline: BOTTOM_CHROME_SELECTOR, close: CLOSE_BUTTON_SELECTOR, crumbs: BREADCRUMB_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR }
+        const b = await mask(page, { hud: true, selectors: [...Object.values(columnSelectors), CLOSE_BUTTON_SELECTOR], boxes: boxSelectors })
         const shape = await drawnBoundsInClip(page, { x: 0, y: 0, width: LANDSCAPE_VIEWPORT.width, height: LANDSCAPE_VIEWPORT.height }, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
-        await restore()
+        await unmask(page)
+        const missing = Object.keys(b).filter((name) => b[name] === null || (b[name].width === 0 && b[name].height === 0))
+        if (missing.length > 0) throw new Error(`nothing rendered for ${missing.join(', ')}`)
+        const columnRight = Math.max(...Object.keys(columnSelectors).map((name) => b[name].x + b[name].width))
         const { timeline, close, crumbs, core, ...column } = b
         return {
           shape,
@@ -1646,126 +1827,5 @@ export default [
         [`${mode}.crumbsOverlapCore`, [0, 0]],
       ]),
     ),
-  },
-  {
-    name: 'globe-interactions',
-    description:
-      'Pointer hit-testing against the real canvas geometry, at 50 ka: a click on the minimised orb expands the ' +
-      'globe; a click on an arrival the human layer draws (found by its "Click for details" hover hint) opens its ' +
-      'event\'s detail panel with a Route section, its surface opaque and ending ≥ 16px above the viewport bottom; one "Zoom in" press grows the drawn sphere by ≥ 80px; a click on ' +
-      'the sphere keeps the view open; a real click reaches the "Map" button (nothing covers it); a click on the map ' +
-      'keeps the view open; back on the sphere, a click on the empty backdrop closes it. The arrival click runs ' +
-      'only in the full run, not under --smoke.',
-    viewport: DEFAULT_VIEWPORT,
-    t: 50_000,
-    measure: async ({ page, hook, smoke }) => {
-      // Two frames for the click to land, then whether the globe is still expanded — one round trip.
-      const expandedAfterClick = async (x, y) => {
-        await page.mouse.click(x, y)
-        return page.evaluate(async () => {
-          for (let i = 0; i < 2; i += 1) await new Promise((resolve) => requestAnimationFrame(resolve))
-          return window.__earthlapse.getState().globeExpanded ? 1 : 0
-        })
-      }
-      const reduced = await motionReduced(page)
-      // A plain click on the orb (its canvas; the expand button beneath is the keyboard path).
-      const { orb } = await boxesOf(page, { orb: GLOBE_EXPAND_SELECTOR })
-      const orbClickExpands = await expandedAfterClick(centreX(orb), centreY(orb))
-      await hook.ready()
-      await waitForGlobeFitFramesStable(page)
-      const frames = await boxesOf(page, { sphere: GLOBE_SPHERE_FIT_FRAME_SELECTOR, map: GLOBE_MAP_FIT_FRAME_SELECTOR })
-
-      // At 50 ka the Asian and Sahul arrivals are on the sphere. Hover spread samples of what the
-      // human layer draws until one shows the "Click for details" hint, then click it. The hover
-      // hunt is most of this shot's time, so `--smoke` leaves it to the full run.
-      let arrival = null
-      if (!smoke) {
-        await page.mouse.move(0, 0)
-        const points = await humanLayerPoints(page, hook)
-        for (const [x, y] of points.filter((_, i) => i % Math.max(1, Math.floor(points.length / 12)) === 0).slice(0, 12)) {
-          await page.mouse.move(x, y)
-          await rafTicks(page, 2)
-          if ((await page.locator(GLOBE_TOOLTIP_HINT_SELECTOR).count()) > 0) {
-            arrival = [x, y]
-            break
-          }
-        }
-      }
-      let arrivalOpensRoute = 0
-      let arrivalPanelBottomInsetPx = null
-      let arrivalPanelSurfaceAlpha = null
-      if (arrival !== null) {
-        await page.mouse.click(...arrival)
-        await rafTicks(page, 3)
-        await hook.ready()
-        // One round trip: each one waits out a software-rendered frame of the expanded globe.
-        const panel = await page.evaluate(() => {
-          const dialog = [...document.querySelectorAll('[role="dialog"]')].find((el) =>
-            [...el.querySelectorAll('h3')].some((heading) => heading.textContent?.trim() === 'Route'),
-          )
-          if (dialog === undefined) return null
-          const alpha = getComputedStyle(dialog).backgroundColor.match(/rgba\([^)]*,\s*([\d.]+)\)/)
-          return { bottom: dialog.getBoundingClientRect().bottom, alpha: alpha === null ? 1 : Number(alpha[1]) }
-        })
-        const detail = page.getByRole('dialog').filter({ has: page.getByRole('heading', { name: 'Route' }) })
-        if (panel !== null) {
-          arrivalOpensRoute = 1
-          arrivalPanelBottomInsetPx = DEFAULT_VIEWPORT.height - panel.bottom
-          arrivalPanelSurfaceAlpha = panel.alpha
-        }
-        await page.keyboard.press('Escape')
-        await detail.waitFor({ state: 'detached', timeout: 5_000 })
-      }
-      await page.mouse.move(0, 0)
-
-      const restore = await hideAroundSphereStrip(page)
-      const strip = () => drawnBoundsInClip(page, GLOBE_CHROME_FREE_STRIP, { threshold: SPHERE_OVER_GLOW_THRESHOLD })
-      const defaultWidth = (await strip()).width
-      await pressZoomIn(page, 1)
-      const zoomedWidth = (await strip()).width
-      await restore()
-
-      const sphereClickKeepsOpen = await expandedAfterClick(centreX(frames.sphere), centreY(frames.sphere))
-      // A real click, so hit-testing and `pointer-events` apply: a covered button fails
-      // Playwright's actionability check outright (`hook.setGlobeViewMode` would not).
-      await page.locator(VIEW_MODE_TOGGLE_SELECTOR).getByRole('button', { name: 'Map' }).click()
-      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
-      await waitForGlobeFitFramesStable(page)
-      const mapClickKeepsOpen = await expandedAfterClick(centreX(frames.map), centreY(frames.map))
-      await hook.setGlobeViewMode('globe')
-      if (!reduced) await waitForApproxUnfoldProgress(page, 1)
-      await waitForGlobeFitFramesStable(page)
-      // Left of the sphere, below the legend, above the timeline.
-      const expandedAfterBackdropClick = await expandedAfterClick(150, 700)
-
-      return {
-        orbClickExpands,
-        defaultWidth,
-        zoomGrowthPx: zoomedWidth - defaultWidth,
-        sphereClickKeepsOpen,
-        mapClickKeepsOpen,
-        expandedAfterBackdropClick,
-        arrivalFound: arrival === null ? 0 : 1,
-        arrivalOpensRoute,
-        arrivalPanelBottomInsetPx,
-        arrivalPanelSurfaceAlpha,
-      }
-    },
-    expect: ({ smoke }) => ({
-      orbClickExpands: [1, 1],
-      zoomGrowthPx: [80, 800],
-      sphereClickKeepsOpen: [1, 1],
-      mapClickKeepsOpen: [1, 1],
-      expandedAfterBackdropClick: [0, 0],
-      ...(smoke
-        ? {}
-        : {
-            arrivalFound: [1, 1],
-            arrivalOpensRoute: [1, 1],
-            // The backdrop's own gutter at least: a panel ending flush with the viewport clips its border.
-            arrivalPanelBottomInsetPx: [16, 900],
-            arrivalPanelSurfaceAlpha: [1, 1],
-          }),
-    }),
   },
 ]
