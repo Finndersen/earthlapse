@@ -22,6 +22,7 @@ from pipeline.portraits import (
     MorphKey,
     MorphRecord,
     build_portrait_graph,
+    load_morph,
     load_portrait_book,
     parse_portrait_book,
     write_portrait_pin,
@@ -273,6 +274,7 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
     build_and_pick_all(backend, root)
     _build_and_pick_portraits(backend, root)
     morph = _cache_morph(root, "tetrapod", "human")
+    _cache_morph(root, "luca", "tetrapod", fallback_dissolve=True)
     paths = ProjectPaths(root)
     book = load_portrait_book(paths.portraits)
 
@@ -280,7 +282,7 @@ def test_publish_adds_plates_and_cached_morphs_to_the_lineage_layer(root: Path) 
 
     assert code == 0, output
     assert "portraits: 3 plates, 1 morphs, 0 unpinned skipped" in output
-    assert "WARNING: no morph for luca -> tetrapod; run `earthlapse morph`" in output
+    assert "note: luca -> tetrapod falls back to a plain dissolve" in output
     lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
     assert lineage["portraits"] == {
         "plates": [
@@ -329,6 +331,38 @@ def _plate(root: Path, book: object, node_id: str, plate: str) -> dict[str, obje
         # The fake generator's plates are a flat colour: no subject, so nothing to expose.
         "exposure": {"highlight": None, "gain": 1.0},
     }
+
+
+def test_publish_computes_a_morph_missing_from_the_cache_from_the_two_pins(root: Path) -> None:
+    backend = FakeBackend()
+    build_and_pick_all(backend, root)
+    paths = ProjectPaths(root)
+    book = load_portrait_book(paths.portraits)
+    for node_id, peak in (("human", 90), ("tetrapod", 80)):
+        original = jpeg_bytes(specimen_plate(peak))
+        pinned = paths.portrait_pins / node_id / f"{asset_digest(original)}.jpg"
+        pinned.parent.mkdir(parents=True)
+        pinned.write_bytes(original)
+        write_portrait_pin(
+            paths.portraits,
+            node_id,
+            ScenePin(asset_digest=asset_digest(original), path=pinned.relative_to(root).as_posix()),
+        )
+    book = load_portrait_book(paths.portraits)
+    key = MorphKey.between(book.portrait("tetrapod"), book.portrait("human"))
+    assert load_morph(paths.portrait_morphs, key) is None
+
+    code, output = run_cli(backend, root, "publish")
+
+    assert code == 0, output
+    record = load_morph(paths.portrait_morphs, key)
+    assert record is not None
+    lineage = json.loads((paths.media / "layers" / "lineage.json").read_text())
+    published = [
+        (m["older"], m["younger"], m["forwardRange"]) for m in lineage["portraits"]["morphs"]
+    ]
+    assert not record.fallback_dissolve
+    assert published == [("tetrapod", "human", record.forward_range)]
 
 
 def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_untouched(

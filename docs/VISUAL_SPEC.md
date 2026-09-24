@@ -310,8 +310,9 @@ the same as a scene.
 - The viewer's morph band is centred on each plate's divergence — the same instant the
   ancestor readout's label switches to it — so the image reads as half-way between the two
   plates exactly when the label does, not still the older plate.
-- Consecutive pinned plates are joined by a dense optical-flow field computed offline
-  (`earthlapse morph`, free).
+- Consecutive pinned plates are joined by a dense optical-flow field computed offline and free,
+  by `earthlapse publish` for any pair not yet cached (ADR-058); `earthlapse morph` computes them
+  ahead of time.
 - Both plates are normalised first: the subject box is taken from the dark backdrop, then centred
   and scaled to the 70% fill.
 - The viewer warps each plate toward the other while it crossfades.
@@ -320,7 +321,7 @@ the same as a scene.
 - Morphs between very different body plans (a micrograph into a sponge, a fish into a tetrapod)
   read as a warped dissolve, not an anatomical correspondence. That is expected.
 - A pair whose flow disagrees with itself too much to trust (ADR-015, amendments 2026-09-15 and
-  2026-09-16) is not warped at all: `earthlapse morph` falls back to a plain linear-light crossfade
+  2026-09-16) is not warped at all: the morph step falls back to a plain linear-light crossfade
   for it, the same thing the viewer already does for a pair it has no flow field for.
 
 ### Exposure

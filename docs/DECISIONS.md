@@ -7457,3 +7457,38 @@ a republish reaches viewers within five minutes rather than immediately.
   per hash; the short revalidating TTL fixes staleness without that.
 - **A cache purge per deploy.** Needs a Cloudflare zone token in CI and leaves browser caches, which
   `immutable` tells never to revalidate, still stale.
+
+## ADR-058 — Publish computes portrait morphs from the pins; OpenCV is pinned
+
+**Status:** accepted — human-directed 2026-09-24. Amends ADR-015's "run `earthlapse morph` before
+publishing".
+
+**Context.** Morphs are cached locally (`paths.portrait_morphs`, gitignored) and `publish` read
+only that cache: a pair missing from it was published without a morph, with a warning. A publish
+from a fresh checkout would have dropped all 24 live morphs. `opencv-python-headless>=4.10` left
+the flow implementation to whichever version an environment resolved.
+
+**Decision.**
+- **`publish` computes a pair missing from the cache** with `pipeline.morph.write_morph`, from the
+  two pins, and caches it; a pair it cannot compute (`MorphError`) refuses the publish rather than
+  quietly crossfading. The cache stays a speed-up keyed by both pin digests and
+  `MORPH_ALGORITHM_VERSION`, so a change to the morph logic recomputes every pair. Nothing reuses
+  previously published morph files, and the cache is not committed.
+- **OpenCV is pinned to `==5.0.0`**, the version the live morphs were built with.
+
+**Evidence.** All 40 pairs were computed under OpenCV 4.14.0 and 5.0.0 in a Linux container. 5.0
+is deterministic run to run, and its decode ranges match the live lineage layer's exactly for 18
+of 24 flow pairs (4.14: 4); the remaining byte differences (up to 143/255 on one pair) are
+consistent with CPU-specific SIMD paths on the machine that built them. Mid-transition frames
+(blend 0.5), rendered as `portraitShaders.ts` does, for the five most-different pairs were
+indistinguishable between live, 4.14 and 5.0 beyond faint ghosting at limbs.
+
+**Consequences.** Morphs are reproducible per platform, not byte-identical across platforms: a
+republish from a different CPU architecture may shift flows slightly. A first publish on a machine
+with an empty cache spends a few seconds computing every pair.
+
+**Rejected.**
+- **Committing the morph cache.** It duplicates what `data/media` already publishes, and ties
+  output to whatever code version produced it.
+- **Reusing the published morph files when the cache is empty.** Would freeze morphs made by older
+  morph code; recomputing takes seconds.

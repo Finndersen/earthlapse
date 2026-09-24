@@ -225,7 +225,7 @@ make data                                   # rebuild stale sources into data/cu
 .venv/bin/earthlapse plan                    # what is stale and what it would cost (spends nothing)
 .venv/bin/earthlapse build --max-spend <USD> --only images --candidates 1
 .venv/bin/earthlapse review                  # pick candidates into data/pins/; `review portraits` for portraits
-.venv/bin/earthlapse morph                   # portrait flow fields (local, free)
+.venv/bin/earthlapse morph                   # portrait flow fields (local, free; publish runs it too)
 .venv/bin/earthlapse publish --allow-unpinned # write data/media/manifest.json + media
 ```
 

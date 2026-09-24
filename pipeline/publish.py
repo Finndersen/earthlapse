@@ -72,12 +72,14 @@ from pipeline.manifest import (
 )
 from pipeline.manifest import SceneLocation as SceneLocationEntry
 from pipeline.models import WorldModel
+from pipeline.morph import MorphError, write_morph
 from pipeline.paleogeography import PlateModelUnavailable, Reconstructor, load_reconstructor
 from pipeline.portraits import (
     BACKWARD_FLOW_NAME,
     FORWARD_FLOW_NAME,
     LINEAGE_TREE_ID,
     MorphKey,
+    MorphRecord,
     PortraitBook,
     PortraitRecord,
     lineage_order,
@@ -329,9 +331,6 @@ class PortraitPublication:
     data: PortraitSetData | None  # None until at least one portrait is pinned
     files: tuple[MediaBytes | MediaCopy, ...]  # exposed plates, then copied morph fields
     unpinned: tuple[str, ...]
-    missing_morphs: tuple[
-        MorphKey, ...
-    ]  # consecutive pinned pairs `earthlapse morph` has not run for
     dissolved_morphs: tuple[MorphKey, ...]  # computed but too incoherent to trust (ADR-015):
     # `earthlapse morph` judged these fine to skip, not to rerun; the viewer crossfades them
     # exactly as it would an ungenerated pair
@@ -786,12 +785,11 @@ def _portrait_publication(
             )
         )
         files.append(MediaBytes(data=exposed.data, published=published))
-    morphs, morph_files, missing, dissolved = _portrait_morphs(pinned, inputs.morph_cache)
+    morphs, morph_files, dissolved = _portrait_morphs(pinned, inputs.morph_cache, root)
     return PortraitPublication(
         data=PortraitSetData(plates=tuple(plates), morphs=morphs) if plates else None,
         files=(*files, *morph_files),
         unpinned=tuple(record.id for record in ordered if record.pin is None),
-        missing_morphs=missing,
         dissolved_morphs=dissolved,
     )
 
@@ -810,20 +808,18 @@ def _exposed_plate(node_id: str, data: bytes) -> ExposedPlate:
 
 
 def _portrait_morphs(
-    pinned: list[PortraitRecord], cache: Path
-) -> tuple[
-    tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...], tuple[MorphKey, ...]
-]:
+    pinned: list[PortraitRecord], cache: Path, root: Path
+) -> tuple[tuple[PortraitMorphData, ...], tuple[MediaCopy, ...], tuple[MorphKey, ...]]:
     """`pinned` is youngest first, so each pairwise step is (younger, older). Returns
-    (morphs, files, missing, dissolved): `dissolved` pairs are computed but too incoherent to
-    trust (ADR-015 amendment), published as if no morph existed so the viewer crossfades them."""
-    morphs, files, missing, dissolved = [], [], [], []
+    (morphs, files, dissolved): `dissolved` pairs are computed but too incoherent to trust
+    (ADR-015 amendment), published as if no morph existed so the viewer crossfades them.
+
+    A pair missing from `cache` is computed here, from the pins (ADR-058), so a publish never
+    depends on an earlier `earthlapse morph` having run on this machine."""
+    morphs, files, dissolved = [], [], []
     for younger, older in pairwise(pinned):
         key = MorphKey.between(older, younger)
-        record = load_morph(cache, key)
-        if record is None:
-            missing.append(key)
-            continue
+        record = load_morph(cache, key) or _computed_morph(cache, key, older, younger, root)
         if record.fallback_dissolve:
             dissolved.append(key)
             continue
@@ -848,7 +844,17 @@ def _portrait_morphs(
                 size=record.size,
             )
         )
-    return tuple(morphs), tuple(files), tuple(missing), tuple(dissolved)
+    return tuple(morphs), tuple(files), tuple(dissolved)
+
+
+def _computed_morph(
+    cache: Path, key: MorphKey, older: PortraitRecord, younger: PortraitRecord, root: Path
+) -> MorphRecord:
+    assert older.pin is not None and younger.pin is not None, key
+    try:
+        return write_morph(cache, key, root / older.pin.path, root / younger.pin.path)
+    except MorphError as err:
+        raise PublishRefused(f"morph {older.id} -> {younger.id}: {err}") from err
 
 
 def _layers(

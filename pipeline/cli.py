@@ -381,7 +381,8 @@ def create_app(backend: ImageBackend) -> typer.Typer:
 
     @app.command()
     def morph(ctx: typer.Context) -> None:
-        """Flow fields between consecutive pinned portraits. Local and free."""
+        """Flow fields between consecutive pinned portraits. Local and free; `publish` computes
+        any it finds missing, so this only reports them ahead of time."""
         # OpenCV and numpy are core dependencies (ADR-015: `pipeline.exposure` needs them directly
         # too), but the import stays deferred and defensive so a broken
         # installation fails with a clear message here rather than at CLI start-up.
@@ -474,11 +475,6 @@ def format_portrait_publication(portraits: PortraitPublication) -> str:
     morphs = 0 if portraits.data is None else len(portraits.data.morphs)
     lines = [
         f"portraits: {plates} plates, {morphs} morphs, {len(portraits.unpinned)} unpinned skipped"
-    ]
-    lines += [
-        f"WARNING: no morph for {key.older} -> {key.younger}; run `earthlapse morph` "
-        "(the viewer crossfades this pair until then)"
-        for key in portraits.missing_morphs
     ]
     lines += [
         f"note: {key.older} -> {key.younger} falls back to a plain dissolve "
