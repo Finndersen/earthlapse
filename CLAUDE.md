@@ -77,7 +77,7 @@ The Python CLI lives in the project venv — always call it as `.venv/bin/earthl
 python -m pipeline.databuild --only <source> [--force]   # rebuild ONE source into data/curated/
 make data                       # re-run every stale source (see "Working in parallel")
 earthlapse plan                  # what is stale, what it will cost
-earthlapse build --only images   # generate, respecting pins and ceiling
+earthlapse build --only images   # 2 candidates per scene; if neither works, revise the subject and rebuild
 earthlapse review                # candidate picker; review clear <id>, review pick <id> <n>
 earthlapse publish               # write data/media/manifest.json + media (local; no upload)
 make deploy                     # preflight, then R2 media + Worker site (deploy/README.md)

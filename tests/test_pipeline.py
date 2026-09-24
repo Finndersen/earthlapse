@@ -167,7 +167,7 @@ def test_plan_prints_an_estimate_and_spends_nothing(root: Path) -> None:
 
     assert code == 0
     assert "3 scenes: 0 pinned, 0 awaiting review, 3 stale" in output
-    assert "estimate to build stale scenes: 3 x 3 candidates = 9 images, $0.90" in output
+    assert "estimate to build stale scenes: 3 x 2 candidates = 6 images, $0.60" in output
     assert "ledger spend.json: $1.53 spent so far" in output
     assert backend.opened == 0
     assert backend.rendered == []
@@ -194,7 +194,7 @@ def test_build_refuses_when_the_estimate_exceeds_the_remaining_budget(root: Path
     code, output = run_cli(backend, root, "build", "--max-spend", "0.5")
 
     assert code == 1
-    assert "REFUSED: estimate $0.90 exceeds the $0.50 remaining" in output
+    assert "REFUSED: estimate $0.60 exceeds the $0.50 remaining" in output
     assert (backend.opened, backend.rendered) == (0, [])
 
 
@@ -209,7 +209,7 @@ def test_each_build_rewrites_the_stored_ceiling_with_its_own_max_spend(root: Pat
     assert code == 0, output
     ledger = json.loads(ledger_path.read_text())
     assert ledger["ceiling_usd"] == 0.7
-    assert len(ledger["entries"]) == 6
+    assert len(ledger["entries"]) == 4
 
 
 def test_build_writes_candidates_with_sidecars_then_awaits_review(root: Path) -> None:
