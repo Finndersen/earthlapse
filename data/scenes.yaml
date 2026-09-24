@@ -1548,10 +1548,10 @@ scenes:
     framing: {focus: [0.67, 0.5], pan: 270}
     pin: {asset_digest: "ae2cd69144d41861", path: "data/pins/scenes/giza-great-pyramid/ae2cd69144d41861.jpg"}
 
-  # About 2500 BCE, the Mature ("Integration Era") Harappan phase of the Indus Valley
+  # About 2300 BCE, the Mature ("Integration Era") Harappan phase of the Indus Valley
   # Civilisation, conventionally c. 2600-1900 BCE (Wikipedia "Indus Valley Civilisation"); t =
-  # 2025 + 2500 = 4,525. New scene, filling the 2,700-year gap between giza-great-pyramid
-  # (t = 4,585) and imperial-rome-pantheon (t = 1,900), per the brief. Mohenjo-daro, on the
+  # 2025 + 2300 = 4,325: mid-phase, so it does not sit beside giza-great-pyramid (t = 4,585)
+  # and still falls before the 4.2 ka aridification (events.yaml 4-2-kiloyear-event). Mohenjo-daro, on the
   # Indus floodplain in Sindh, grew to tens of thousands of people in this phase (30,000-60,000
   # is the commonly cited range for the largest Harappan cities) laid out on a strict street
   # grid, with fired-brick houses drained by covered brick sewers running beneath the streets --
@@ -1567,16 +1567,16 @@ scenes:
   # writing is shown. New event indus-valley-urbanism added (events.yaml) since no existing
   # event covers the Indus civilisation.
   - id: mohenjo-daro
-    t: 4.525e3
+    t: 4.325e3
     chapter: open-ground
     shot: GROUND
     title: "Mohenjo-daro, a City Without a King"
-    caption: By 2500 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.
+    caption: Around 2300 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: same broad era as giza-great-pyramid, close to pre-industrial
     subject:
-      setting: A street corner in Mohenjo-daro on the Indus floodplain, Sindh, at the edge of the raised citadel mound, about 2500 BCE
+      setting: A street corner in Mohenjo-daro on the Indus floodplain, Sindh, at the edge of the raised citadel mound, about 2300 BCE
       left_mass: a fired-mudbrick house wall two storeys high, its corner rounded smooth by generations of cart traffic, a covered brick drain with an inspection hole running along its base
       vegetation: a few date palms and scrubby acacia beyond the mudbrick perimeter wall; nothing growing within the paved street itself
       fauna: a humped zebu bullock harnessed to a cart; pigeons on the flat rooftops
@@ -1590,7 +1590,7 @@ scenes:
     # ADR-023: `settlement` `loop` -- ordinary street life in one of the largest cities of its
     # age, on the same footing as uruk-city's own `settlement` above its ambient floor.
     sound: {stem: settlement, mode: loop, gain: 0.85}
-    # ADR-034: Mohenjo-daro, Sindh, Pakistan (named in `subject.setting` above). t = 4,525 BP
+    # ADR-034: Mohenjo-daro, Sindh, Pakistan (named in `subject.setting` above). t = 4,325 BP
     # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
     # coordinates directly.
     location: {lat: 27.3286, lon: 68.1381, label: "Mohenjo-daro, Pakistan"}
