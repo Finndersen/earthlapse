@@ -3,9 +3,10 @@
 /**
  * One name per active empire lineage (ADR-059), expanded view only. Which labels show is decided
  * on screen, every frame, by `useDrawnEmpireLabels`: among the labels whose anchor is on screen
- * and on the near side of the sphere, highlighted lineages first and then by area, each is placed
- * on its anchor or a row above or below, and dropped only when all three collide with a label
- * already placed (`placeEmpireLabels`). No count cap: crowding alone thins them, so zooming in
+ * and on the near side of the sphere, highlighted lineages first and then by area, each name is
+ * placed level with its anchor or a row above or below, and dropped only when all three collide
+ * with a label already placed (`placeEmpireLabels`). The colour dot always sits on the anchor, the
+ * name to its right. No count cap: crowding alone thins them, so zooming in
  * names more. React state changes only when the drawn set or a row changes, not per frame.
  *
  * Labels fade with the same presented crossfade the territory texture uses: the outgoing frame's
@@ -31,16 +32,25 @@ import { unfoldedLiftedPosition } from './projection'
 /** Clear space kept around each label when decluttering, in CSS px. */
 const EMPIRE_LABEL_GAP_PX = 4
 
-/** A label's half extents in CSS px, estimated from its text: the label font is monospaced, so the
- *  width is the character count times one advance plus the colour tick before it. */
+/** A label's width in CSS px, estimated from its text: the label font is monospaced, so the width
+ *  is the character count times one advance plus the colour tick before it. */
+function labelWidthPx(label: EmpireLabel): number {
+  return label.text.length * EMPIRE_LABEL_BOX.advancePx + EMPIRE_LABEL_BOX.chromeWidthPx
+}
+
 function labelHalfExtentsPx(label: EmpireLabel): LabelHalfExtents {
-  const width = label.text.length * EMPIRE_LABEL_BOX.advancePx + EMPIRE_LABEL_BOX.chromeWidthPx
-  return { halfWidth: width / 2 + EMPIRE_LABEL_GAP_PX, halfHeight: EMPIRE_LABEL_BOX.heightPx / 2 + EMPIRE_LABEL_GAP_PX }
+  return { halfWidth: labelWidthPx(label) / 2 + EMPIRE_LABEL_GAP_PX, halfHeight: EMPIRE_LABEL_BOX.heightPx / 2 + EMPIRE_LABEL_GAP_PX }
+}
+
+/** How far right of its anchor a label's box is centred: the box starts at the tick, whose centre
+ *  is the anchor. */
+function labelCentreOffsetPx(label: EmpireLabel): number {
+  return (labelWidthPx(label) - EMPIRE_LABEL_BOX.tickPx) / 2
 }
 
 /** How far inside the sphere's limb an empire label finishes fading out, in the cosine units of
- *  `sphereMarkerVisibility`'s fade band. A label is centred on its anchor, so without this one near
- *  the limb hangs half off the sphere. */
+ *  `sphereMarkerVisibility`'s fade band. A name runs out from its anchor, so without this one near
+ *  the limb hangs off the sphere. */
 const EMPIRE_LABEL_LIMB_INSET = 0.12
 
 /** The rows a colliding label tries after its anchor: one box height above, then below. */
@@ -88,7 +98,7 @@ function useDrawnEmpireLabels(
     const screenOf = (label: EmpireLabel): readonly [number, number] | null => {
       const local = unfoldedLiftedPosition({ lat: label.lat, lon: label.lon }, unfold, radius, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
       if (globeLabelVisibility(local, group, camera, radius, unfold, EMPIRE_LABEL_LIMB_INSET, scratchNdc) <= 0) return null
-      return [((scratchNdc.x + 1) / 2) * size.width, ((1 - scratchNdc.y) / 2) * size.height]
+      return [((scratchNdc.x + 1) / 2) * size.width + labelCentreOffsetPx(label), ((1 - scratchNdc.y) / 2) * size.height]
     }
     const place = (ranked: readonly EmpireLabel[]) => placeEmpireLabels(ranked, highlight, screenOf, labelHalfExtentsPx, EMPIRE_LABEL_ROWS)
     const placedTo = place(rankedTo)
@@ -102,10 +112,10 @@ function useDrawnEmpireLabels(
   return drawn
 }
 
-/** The label style for a row: the anchor-centred style, shifted a whole row up or down. */
-function rowStyle(row: number): CSSProperties {
-  if (row === 0) return EMPIRE_LABEL_STYLE
-  return { ...EMPIRE_LABEL_STYLE, transform: `translate(-50%, calc(-50% + ${row * EMPIRE_LABEL_ROW_PX}px))` }
+/** The name's style for a row: level with the tick, or shifted a whole row up or down while the
+ *  tick stays on the anchor. */
+function rowTextStyle(row: number): CSSProperties | undefined {
+  return row === 0 ? undefined : { transform: `translateY(${row * EMPIRE_LABEL_ROW_PX}px)` }
 }
 
 /** The opacity factor for a label: full for a highlighted lineage, dimmed while a highlighted
@@ -184,7 +194,8 @@ export function EmpireLabels({ presented, unfold, radius, highlight, onDrawn }: 
           unfold={unfold}
           radius={radius}
           groupRef={groupRef}
-          style={rowStyle(row)}
+          style={EMPIRE_LABEL_STYLE}
+          textStyle={rowTextStyle(row)}
           tickStyle={empireLabelTickStyle(empireColour(label.colourSlot))}
           limbInset={EMPIRE_LABEL_LIMB_INSET}
         />

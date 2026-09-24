@@ -60,18 +60,19 @@ export const EMPIRE_LABEL_BOX = {
   advancePx: EMPIRE_LABEL_FONT_PX * (0.6 + EMPIRE_LABEL_TRACKING_EM),
   /** The colour tick and its gap before the text. */
   chromeWidthPx: EMPIRE_LABEL_TICK_PX + EMPIRE_LABEL_TICK_GAP_PX,
+  tickPx: EMPIRE_LABEL_TICK_PX,
   heightPx: EMPIRE_LABEL_LINE_PX,
 } as const
 
-/** An empire label: small semibold tracked capitals centred on the territory's anchor, no backing, legible
- *  over any terrain through a dark halo. Its tick (`empireLabelTickStyle`) carries the lineage's
- *  colour so the name ties to its outline. */
+/** An empire label: a dot in the lineage's colour (`empireLabelTickStyle`) centred on the
+ *  territory's anchor, so it marks the capital or core, with the name to its right in small
+ *  semibold tracked capitals, no backing, legible over any terrain through a dark halo. */
 export const EMPIRE_LABEL_STYLE: CSSProperties = {
   ...LABEL_TEXT_STYLE,
   display: 'flex',
   alignItems: 'center',
   gap: EMPIRE_LABEL_TICK_GAP_PX,
-  transform: 'translate(-50%, -50%)',
+  transform: `translate(${-EMPIRE_LABEL_TICK_PX / 2}px, -50%)`,
   fontSize: EMPIRE_LABEL_FONT_PX,
   lineHeight: `${EMPIRE_LABEL_LINE_PX}px`,
   fontWeight: 600,
@@ -155,12 +156,15 @@ export interface GlobeLabelProps {
   style: CSSProperties
   /** Drawn before the text, e.g. an empire label's colour tick. */
   tickStyle?: CSSProperties
+  /** Applied to the text alone, e.g. to move an empire name off a crowded row while its tick
+   *  stays on the anchor. */
+  textStyle?: CSSProperties
   /** Moves the sphere's limb fade this far inward, in `sphereMarkerVisibility`'s cosine units, so
    *  the label is gone before its anchor reaches the limb. */
   limbInset?: number
 }
 
-export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, style, tickStyle, limbInset = 0 }: GlobeLabelProps) {
+export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, style, tickStyle, textStyle, limbInset = 0 }: GlobeLabelProps) {
   const elementRef = useRef<HTMLDivElement>(null)
   const { camera } = useThree()
   const [x, y, z] = unfoldedLiftedPosition({ lat, lon }, unfold, radius, MARKER_SPHERE_LIFT, MARKER_MAP_LIFT)
@@ -177,7 +181,7 @@ export function GlobeLabel({ text, lat, lon, opacity, unfold, radius, groupRef, 
     <Html position={[x, y, z]} pointerEvents="none" zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
       <div ref={elementRef} style={style} data-globe-label="">
         {tickStyle !== undefined && <span aria-hidden="true" style={tickStyle} />}
-        {text}
+        {textStyle === undefined ? text : <span style={textStyle}>{text}</span>}
       </div>
     </Html>
   )

@@ -8,9 +8,10 @@
  * basemap's olive, tan and ocean blue, the violet-to-pink density ramp, the oxblood-to-rust
  * cleared-land ramp, amber arrival arcs and cyan cities. Every border runs over a dark casing, so
  * each hue needs contrast against the casing rather than against whatever terrain is underneath.
- * Validated with the dataviz palette checker against the casing colour, all pairs: worst CVD
- * separation ΔE 10.0 (violet/blue, protan), worst normal-vision separation ΔE 15.6 (teal/mint),
- * every hue ≥ 3:1 against the casing. Slot 1 is a deliberately near-achromatic ice white, the one
+ * No slot is a mid blue: a 1–2 px line of one vanishes against the ocean. Validated with the
+ * dataviz palette checker against the casing colour, all pairs: worst CVD separation ΔE 10.1
+ * (mint/yellow, protan), worst normal-vision separation ΔE 15.6 (teal/mint), every hue ≥ 3:1
+ * against the casing. Slot 1 is a deliberately near-achromatic ice white, the one
  * hue that reads on every backdrop; the labels naming each lineage carry identity as well.
  */
 
@@ -21,10 +22,10 @@ export const EMPIRE_PALETTE = [
   '#e4ecff', // ice white
   '#00e7a0', // mint
   '#ff2d55', // red
-  '#3a78ff', // blue
+  '#9b6bff', // purple
   '#02b5b2', // teal
   '#ff8a00', // orange
-  '#c08cff', // violet
+  '#f08cff', // orchid
 ] as const satisfies readonly string[] & { length: typeof TERRITORY_COLOUR_SLOTS }
 
 export function empireColour(colourSlot: number): string {

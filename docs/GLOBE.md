@@ -990,12 +990,13 @@ when the last lineage ends (1997) the set empties, so the layer fades out rather
 (`EmpireLabels.tsx`, on the shared `GlobeLabel`): one per active lineage on its largest member's
 anchor — the roster member's `anchor` (its capital or core, set for 24 members whose representative
 point is a poor label spot, such as the metropole of a colonial series), else the snapshot's
-representative point. Which labels show is decided on screen, every frame
+representative point. The label's colour dot sits on that anchor, marking the capital or core, and
+the name runs to its right. Which labels show is decided on screen, every frame
 (`EmpireLabels.tsx`'s `useDrawnEmpireLabels`, `empires.ts`'s `placeEmpireLabels`): only labels
 whose anchor is on screen and, on the sphere, on the near side compete, the hovered or selected
 lineage first, then by area. A label whose box (`EMPIRE_LABEL_BOX`, estimated from its text, plus
-a 4 px gap, in CSS px) overlaps one already placed moves a row above its anchor, then below, and
-is dropped only when all three collide (`declutterLabelBoxes`). There is no count cap: crowding
+a 4 px gap, in CSS px) overlaps one already placed moves its name a row above its anchor, then
+below, the dot staying on the anchor, and is dropped only when all three collide (`declutterLabelBoxes`). There is no count cap: crowding
 alone thins them, so a far-side empire never takes a small near-side one's place and zooming in
 names more. React state changes only when the placed set changes, not per frame; the hit test
 reads the same drawn set. Labels fade with the crossfade; expanded view only. A label is bare text so it never hides the outline

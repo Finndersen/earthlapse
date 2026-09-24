@@ -7715,3 +7715,9 @@ asked for an info popup per empire like the ones arrivals and events have.
   compete with the scene; the `orb` tier is gone. The orb's cities likewise show only while
   new (`arrivingCitiesAt`), in place of a top-10 by population that turned over as rankings
   changed.
+- **A label's colour dot sits on the anchor**, the name to its right, so the dot marks the capital
+  or core rather than the middle of the text; a name moved off a crowded row keeps its dot in
+  place.
+- **Slot 4 is purple (`#9b6bff`), not blue (`#3a78ff`)**: a thin blue border vanished against the
+  ocean. Slot 7 moves from violet to orchid (`#f08cff`) to stay clear of it; the palette's worst
+  CVD separation is unchanged at ΔE 10.1.

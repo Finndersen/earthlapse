@@ -550,8 +550,8 @@ export function empireTarget(
   }
 }
 
-/** How near a label's anchor, in CSS pixels, still names its empire — about half a short label's
- *  width, so hovering the name itself resolves it even where the anchor sits near a border. */
+/** How near a label's anchor, where its colour dot sits, in CSS pixels, still names its empire —
+ *  the dot and the start of the name, even where the anchor sits near a border. */
 const EMPIRE_LABEL_TOLERANCE_PX = 18
 
 // ------------------------------------------------------------------------------- city labels
