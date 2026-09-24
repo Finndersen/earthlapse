@@ -7721,3 +7721,9 @@ asked for an info popup per empire like the ones arrivals and events have.
 - **Slot 4 is purple (`#9b6bff`), not blue (`#3a78ff`)**: a thin blue border vanished against the
   ocean. Slot 7 moves from violet to orchid (`#f08cff`) to stay clear of it; the palette's worst
   CVD separation is unchanged at ΔE 10.1.
+- **Cost trims.** The shader skips the layer on uniform branches while it is off and draws one
+  side outside a crossfade (it had run both sides on every fragment, empires shown or not). A
+  texture's draw parameters ride in `userData` and bind as uniforms rather than as band alpha
+  constants, so a paint hands the GPU an `ImageBitmap` transferred off the `OffscreenCanvas`
+  instead of reading back and rewriting ~25 MB of pixels; the border width now follows the live
+  pixel ratio. The geometry file is fetched only once the globe is expanded with the layer on.

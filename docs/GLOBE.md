@@ -971,18 +971,22 @@ of the domain, and a failed fetch draws nothing rather than failing the page.
 `GlobeTextureCache` that paints instead of fetching (key: frame, tier, fill, highlighted lineage;
 byte-capped, cleared on context restore). The texture stacks three equirectangular bands: one
 coverage channel per palette slot (every lineage of that `colourSlot` in one nonzero `Path2D`,
-rings re-wound so exteriors and holes have opposite winding), one for the highlighted lineage,
-and per band an alpha constant (fill on, highlighted slot, device pixel ratio at paint time), so
-each texture says how to draw itself. A slot is a sound border identity because the roster never
+rings re-wound so exteriors and holes have opposite winding) and one for the highlighted lineage.
+It is uploaded as an `ImageBitmap` transferred off an `OffscreenCanvas`, with no pixel readback.
+Each texture carries its own draw parameters (fill on, highlighted slot) in `userData`, bound
+with it as `uEmpireBeforeParams`/`uEmpireAfterParams`, so the uniforms always describe the
+texture beside them; `uPixelRatio` is the renderer's live pixel ratio. A slot is a sound border identity because the roster never
 gives two coexisting neighbours one. The shader (`shaders.ts`'s `empireOver`) finds each border
 as the half-way contour of its slot's coverage: `(a − 0.5) / |∇a|`, the gradient taken in screen
 space, is the fragment's distance to it in device pixels, so the line (`EMPIRE_LINE_WIDTH_PX`,
-1.25 CSS px over a slightly wider dark casing) is the same width at every zoom, on the orb,
-sphere and map, and the texture resolution sets only how finely it follows the geometry. The
+1.25 CSS px over a slightly wider dark casing) is the same width at every zoom, on the sphere
+and map, and the texture resolution sets only how finely it follows the geometry. The
 fill is cut at the same contour. No line is drawn within a line's width of the antimeridian,
 where Cliopatria cuts its polygons and often keeps one side only. Each crossfade side is drawn
 whole and the two results mixed, so a border fades rather than slides, after the overlay mix
-through `uEmpireBefore`/`uEmpireAfter`/`uEmpireMix`/`uEmpireStrength`. Tiers (`empireStyle.ts`,
+through `uEmpireBefore`/`uEmpireAfter`/`uEmpireMix`/`uEmpireStrength`. Uniform branches skip the
+layer entirely while `uEmpireStrength` is 0, and the side not on screen outside a crossfade. The
+geometry is fetched only once the globe is expanded with the layer on. Tiers (`empireStyle.ts`,
 per band): 2048×1024 on a GPU that takes the T1 basemap, else 1536×768. Empires are drawn
 expanded only; the minimised orb shows none. The fill shows only with the overlay set to None, so it never tints population density
 or cleared land. A new active set crossfades in 0.3 s (`usePresentedMix`);

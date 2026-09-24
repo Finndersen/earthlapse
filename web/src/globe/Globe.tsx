@@ -48,6 +48,7 @@ import { selectEmpireTier } from './empireStyle'
 import {
   createEmpireTextureCache,
   empireTextureKey,
+  empireTextureParams,
   setEmpireMaxAnisotropy,
   useEmpireGeometry,
   type EmpireTextureCache,
@@ -598,7 +599,8 @@ export function Globe({
   const empireGeometry = useEmpireGeometry(
     empires,
     empires === null ? null : resolveAssetUrl(assetBase, empires.data.geometry),
-    webgl && empires !== null && t <= empires.domain[1] + EMPIRE_FETCH_MARGIN_YEARS,
+    // Fetched only once empires can be drawn: the orb never draws them.
+    webgl && expanded && humanOn && empires !== null && t <= empires.domain[1] + EMPIRE_FETCH_MARGIN_YEARS,
   )
   const empireCache = useMemo(
     () => (empires !== null && empireGeometry !== null ? createEmpireTextureCache(empires, empireGeometry) : null),
@@ -2010,6 +2012,8 @@ function GlobeSphere({
   onWebglContextRestored,
 }: GlobeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
+  // Empire borders are a fixed width in CSS px, drawn in device px.
+  const pixelRatio = useThree((state) => state.viewport.dpr)
   // Rebuilt only if the segment counts ever change (they don't, today) — `globeGeometry.ts`'s
   // grid needs no three.js render context, so this is cheap and safe in a plain `useMemo`.
   const geometry = useMemo(() => buildGlobeGeometry(), [])
@@ -2155,8 +2159,11 @@ function GlobeSphere({
       uOverlayStrength: { value: 0 },
       uEmpireBefore: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
       uEmpireAfter: { value: PLACEHOLDER_TEXTURE as THREE.Texture },
+      uEmpireBeforeParams: { value: [0, -1] },
+      uEmpireAfterParams: { value: [0, -1] },
       uEmpireMix: { value: 0 },
       uEmpireStrength: { value: 0 },
+      uPixelRatio: { value: 1 },
       uSeaLevel: { value: 0 },
       uIceSheetRadius: { value: new Float32Array(ICE_SHEET_DOME_COUNT) },
     }),
@@ -2214,8 +2221,11 @@ function GlobeSphere({
         uniforms-uOverlayStrength-value={overlayStrength}
         uniforms-uEmpireBefore-value={empireBeforeTex ?? PLACEHOLDER_TEXTURE}
         uniforms-uEmpireAfter-value={empireAfterTex ?? PLACEHOLDER_TEXTURE}
+        uniforms-uEmpireBeforeParams-value={empireTextureParams(empireBeforeTex)}
+        uniforms-uEmpireAfterParams-value={empireTextureParams(empireAfterTex)}
         uniforms-uEmpireMix-value={empireMix}
         uniforms-uEmpireStrength-value={empireStrength}
+        uniforms-uPixelRatio-value={pixelRatio}
         uniforms-uSeaLevel-value={iceAge.seaLevelM}
       />
     </mesh>

@@ -16,7 +16,7 @@ import {
   EMPIRE_LINE_WIDTH_PX,
   EMPIRE_PALETTE,
 } from './empireStyle'
-import { EMPIRE_BANDS, EMPIRE_PIXEL_RATIO_CODE, EMPIRE_SLOT_CODE_STEP } from './empireTexture'
+import { EMPIRE_BANDS } from './empireTexture'
 import { glslFloat } from './glsl'
 import { overlayKindUniform } from './overlay'
 import { ICE_SHEETS_GLSL } from './ice/iceSheets'
@@ -61,16 +61,9 @@ const float EMPIRE_HIGHLIGHT_FILL_ALPHA = ${glslFloat(EMPIRE_HIGHLIGHT_FILL_ALPH
 const float EMPIRE_HIGHLIGHT_LINE_SCALE = ${glslFloat(EMPIRE_HIGHLIGHT_LINE_SCALE)};
 const float EMPIRE_DIM_ALPHA = ${glslFloat(EMPIRE_DIM_ALPHA)};
 const float EMPIRE_BANDS = ${glslFloat(EMPIRE_BANDS)};
-const float EMPIRE_SLOT_CODE_STEP = ${glslFloat(EMPIRE_SLOT_CODE_STEP)};
-const float EMPIRE_PIXEL_RATIO_CODE = ${glslFloat(EMPIRE_PIXEL_RATIO_CODE)};
 
 vec4 empireBand(sampler2D tex, vec2 uv, float band) {
   return texture2D(tex, vec2(uv.x, (band + uv.y) / EMPIRE_BANDS));
-}
-
-// A band's alpha constant, read from its centre texel at full resolution.
-float empireBandConstant(sampler2D tex, float band) {
-  return textureLod(tex, vec2(0.5, (band + 0.5) / EMPIRE_BANDS), 0.0).a * 255.0;
 }
 
 vec4 empireContourDistance(vec4 coverage) {
@@ -84,7 +77,8 @@ float empireLine(float distancePx, float widthPx) {
   return clamp(0.5 * widthPx + 0.5 - abs(distancePx), 0.0, 1.0);
 }
 
-vec3 empireOver(vec3 base, sampler2D tex, vec2 uv) {
+// params: (fill on, highlighted slot or -1), from the texture's own empireTextureParams.
+vec3 empireOver(vec3 base, sampler2D tex, vec2 params, float pixelRatio, vec2 uv) {
   vec4 band0 = empireBand(tex, uv, 0.0);
   vec4 band1 = empireBand(tex, uv, 1.0);
   vec4 band2 = empireBand(tex, uv, 2.0);
@@ -92,9 +86,8 @@ vec3 empireOver(vec3 base, sampler2D tex, vec2 uv) {
   vec4 slotsHigh = vec4(band1.gb, band2.rg);
   float highlightCoverage = band2.b;
 
-  float fillOn = step(0.5, empireBandConstant(tex, 0.0) / 255.0);
-  float highlightSlot = floor(empireBandConstant(tex, 1.0) / EMPIRE_SLOT_CODE_STEP + 0.5) - 1.0;
-  float pixelRatio = empireBandConstant(tex, 2.0) / EMPIRE_PIXEL_RATIO_CODE;
+  float fillOn = params.x;
+  float highlightSlot = params.y;
   float dim = highlightSlot >= 0.0 ? EMPIRE_DIM_ALPHA : 1.0;
 
   vec4 distanceLow = empireContourDistance(slotsLow);
@@ -250,8 +243,11 @@ uniform float uOverlayStrength;
 // texture is bound yet. Outside the domain the active set is empty, so the texture has no coverage.
 uniform sampler2D uEmpireBefore;
 uniform sampler2D uEmpireAfter;
+uniform vec2 uEmpireBeforeParams;
+uniform vec2 uEmpireAfterParams;
 uniform float uEmpireMix;
 uniform float uEmpireStrength;
+uniform float uPixelRatio;
 ${EMPIRE_GLSL}
 
 // docs/GLOBE.md §10 (ADR-030 amendment): the basemap tone-match grade — one TS constant each
@@ -421,10 +417,24 @@ void main() {
   baseColor = mix(baseColor, overlayColor.rgb, overlayColor.a * uOverlayStrength);
 
   // Empire territories over the overlay, so outlines stay legible on either ramp. Each side of the
-  // crossfade is drawn whole and the results mixed, so a border fades rather than slides.
-  vec3 empireBefore = empireOver(baseColor, uEmpireBefore, uv);
-  vec3 empireAfter = empireOver(baseColor, uEmpireAfter, uv);
-  baseColor = mix(baseColor, mix(empireBefore, empireAfter, uEmpireMix), uEmpireStrength);
+  // crossfade is drawn whole and the results mixed, so a border fades rather than slides. The
+  // branches are on uniforms, so derivatives inside stay defined, and a side not on screen (or the
+  // whole layer, while off) costs nothing.
+  if (uEmpireStrength > 0.0) {
+    vec3 empire;
+    if (uEmpireMix <= 0.0) {
+      empire = empireOver(baseColor, uEmpireBefore, uEmpireBeforeParams, uPixelRatio, uv);
+    } else if (uEmpireMix >= 1.0) {
+      empire = empireOver(baseColor, uEmpireAfter, uEmpireAfterParams, uPixelRatio, uv);
+    } else {
+      empire = mix(
+        empireOver(baseColor, uEmpireBefore, uEmpireBeforeParams, uPixelRatio, uv),
+        empireOver(baseColor, uEmpireAfter, uEmpireAfterParams, uPixelRatio, uv),
+        uEmpireMix
+      );
+    }
+    baseColor = mix(baseColor, empire, uEmpireStrength);
+  }
 
   // docs/GLOBE.md §5.1: the schematic ice sheets, over the shelf and density, clipped at their
   // margins to land (including exposed shelf). Under the basemap only the ice beyond today's
