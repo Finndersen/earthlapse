@@ -1,9 +1,9 @@
 data/media/**/*.jpg filter=lfs diff=lfs merge=lfs -text
 data/media/**/*.png filter=lfs diff=lfs merge=lfs -text
 data/media/**/*.webp filter=lfs diff=lfs merge=lfs -text
-data/candidates/**/*.jpg filter=lfs diff=lfs merge=lfs -text
-data/candidates/**/*.png filter=lfs diff=lfs merge=lfs -text
-data/candidates/**/*.webp filter=lfs diff=lfs merge=lfs -text
+data/pins/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+data/pins/**/*.png filter=lfs diff=lfs merge=lfs -text
+data/pins/**/*.webp filter=lfs diff=lfs merge=lfs -text
 
 # Ambience stems (ADR-023) -- sourced CC0 clips, committed like pinned images (ADR-018).
 data/media/**/*.ogg filter=lfs diff=lfs merge=lfs -text

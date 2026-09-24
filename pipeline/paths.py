@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+# Committed copies of pinned images; data/candidates/ beside it is local scratch (ADR-050).
+PINS_DIR = "data/pins"
+
 
 @dataclass(frozen=True)
 class ProjectPaths:
@@ -21,6 +24,14 @@ class ProjectPaths:
     @property
     def candidates(self) -> Path:
         return self.root / "data" / "candidates"
+
+    @property
+    def pins(self) -> Path:
+        return self.root / PINS_DIR / "scenes"
+
+    @property
+    def portrait_pins(self) -> Path:
+        return self.root / PINS_DIR / "portraits"
 
     @property
     def review(self) -> Path:

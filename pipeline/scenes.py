@@ -24,6 +24,7 @@ from typing import Annotated
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from pipeline.paths import PINS_DIR
 from pipeline.prompts import Composition, SceneSubject, Shot, UnsourcedConditions
 from pipeline.shapes import GeoTime
 
@@ -117,12 +118,12 @@ class UnknownScene(LookupError):
 
 
 class ScenePin(BaseModel):
-    """A human-approved candidate: the stored image's content digest and its project path."""
+    """A human-approved candidate: the stored image's content digest and its committed copy."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     asset_digest: str = Field(pattern=r"^[0-9a-f]{16}$")
-    path: str = Field(min_length=1)
+    path: str = Field(pattern=rf"^{PINS_DIR}/")
 
 
 class ChapterRecord(BaseModel):

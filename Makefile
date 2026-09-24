@@ -5,7 +5,7 @@ PYTHON ?= .venv/bin/python
 -include .env
 export R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET MEDIA_BASE
 
-.PHONY: setup data data-force pins test web-dev web-build check check-quick hooks preflight deploy deploy-media deploy-site
+.PHONY: setup data data-force test web-dev web-build check check-quick hooks preflight deploy deploy-media deploy-site
 
 # Every part of the environment; `scripts/setup.sh <part>...` for only some (its own header).
 setup:
@@ -16,9 +16,6 @@ data:
 
 data-force:
 	$(PYTHON) -m pipeline.databuild --force
-
-pins:
-	$(PYTHON) -m pipeline.stage_pins
 
 test:
 	.venv/bin/pytest

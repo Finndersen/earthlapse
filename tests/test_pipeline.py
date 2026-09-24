@@ -316,7 +316,7 @@ def _image_digest(root: Path, backend: FakeBackend, scene_id: str) -> str:
     return graph.resolver(CandidateStore(paths.candidates)).digest(f"{scene_id}.image")
 
 
-def test_review_pick_writes_the_pin_and_clear_removes_it(root: Path) -> None:
+def test_review_pick_copies_the_image_into_pins_and_clear_removes_both(root: Path) -> None:
     backend = FakeBackend()
     assert run_cli(backend, root, "build", "--max-spend", "10", "--candidates", "2")[0] == 0
     paths = ProjectPaths(root)
@@ -326,11 +326,12 @@ def test_review_pick_writes_the_pin_and_clear_removes_it(root: Path) -> None:
     code, output = run_cli(backend, root, "review", "pick", "devonian", "2")
 
     assert code == 0, output
+    digest = second.record.asset_digest
     expected = ScenePin(
-        asset_digest=second.record.asset_digest,
-        path=second.image_path.relative_to(root).as_posix(),
+        asset_digest=digest, path=f"data/pins/scenes/devonian/{digest}{second.image_path.suffix}"
     )
     assert load_scene_book(paths.scenes).scene("devonian").pin == expected
+    assert (root / expected.path).read_bytes() == second.image_path.read_bytes()
     changed = [
         (old, new)
         for old, new in zip(
@@ -347,6 +348,8 @@ def test_review_pick_writes_the_pin_and_clear_removes_it(root: Path) -> None:
 
     assert run_cli(backend, root, "review", "clear", "devonian")[0] == 0
     assert paths.scenes.read_text() == original
+    assert not (paths.pins / "devonian").exists()
+    assert second.image_path.is_file()
 
 
 CURATION_ONLY_EDITS = {

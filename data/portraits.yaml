@@ -49,7 +49,7 @@ portraits:
       surface: "translucent and colourless, glowing faintly against the black field"
       size: null
       absent: ["a nucleus", "visible organelles", "flagella or hairs of any kind", "a group of cells"]
-    pin: {asset_digest: "55a8a83a3e0b58ad", path: "data/candidates/portraits/luca/bf40cc93c7d28d1b/01-55a8a83a3e0b58ad.jpg"}
+    pin: {asset_digest: "55a8a83a3e0b58ad", path: "data/pins/portraits/luca/55a8a83a3e0b58ad.jpg"}
 
   - id: archaeal-host-lineage
     plate: MICROSCOPE
@@ -64,7 +64,7 @@ portraits:
       surface: "a translucent pale membrane, glowing faintly against the black field"
       size: "a cell body about 300 to 750 nanometres across"
       absent: ["a nucleus", "a flagellum", "visible internal organelles", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: {asset_digest: "cbaa84828438551c", path: "data/candidates/portraits/archaeal-host-lineage/835f3602c6440e42/01-cbaa84828438551c.jpg"}
+    pin: {asset_digest: "cbaa84828438551c", path: "data/pins/portraits/archaeal-host-lineage/cbaa84828438551c.jpg"}
 
   - id: leca
     plate: MICROSCOPE
@@ -83,7 +83,7 @@ portraits:
       surface: "a translucent, colourless cell, its internal structures faintly lit in darkfield"
       size: null
       absent: ["chloroplasts or any green pigment", "a cell wall, shell or scales", "engulfed prey", "a group of cells"]
-    pin: {asset_digest: "c276b4a3154b29a5", path: "data/candidates/portraits/leca/96d97bf5af289df9/01-c276b4a3154b29a5.jpg"}
+    pin: {asset_digest: "c276b4a3154b29a5", path: "data/pins/portraits/leca/c276b4a3154b29a5.jpg"}
 
   - id: opisthokonta
     plate: MICROSCOPE
@@ -98,7 +98,7 @@ portraits:
       surface: "translucent and colourless, glowing faintly against the black field"
       size: null
       absent: ["a second flagellum", "a flagellum at the front of the cell", "chloroplasts or any green pigment", "a group of cells"]
-    pin: {asset_digest: "03af3d822e3e05ae", path: "data/candidates/portraits/opisthokonta/e98173c508960fc4/01-03af3d822e3e05ae.jpg"}
+    pin: {asset_digest: "03af3d822e3e05ae", path: "data/pins/portraits/opisthokonta/03af3d822e3e05ae.jpg"}
 
   - id: holozoa
     plate: MICROSCOPE
@@ -114,7 +114,7 @@ portraits:
       surface: "translucent, colourless cells with a faint sheen along the collars in darkfield"
       size: null
       absent: ["tissues or organs", "a shell or spicules", "chloroplasts or any green pigment"]
-    pin: {asset_digest: "5973dd6f36eff417", path: "data/candidates/portraits/holozoa/b72835947554c506/01-5973dd6f36eff417.jpg"}
+    pin: {asset_digest: "5973dd6f36eff417", path: "data/pins/portraits/holozoa/5973dd6f36eff417.jpg"}
 
   # ------------------------------------------------------------------- specimen plates
 
@@ -134,7 +134,7 @@ portraits:
       surface: "a pale, soft, slightly translucent body wall; no source gives its colour, so muted natural tones"
       size: null
       absent: ["glassy or chalky spicules", "tentacles", "a head, face, mouth or eyes", "a snout, nose or mouth-like mark", "a gut", "limbs", "a forked or foot-like base", "a coral, sea anemone or jellyfish", "a plant, seaweed, fungus or mushroom", "a vase, bottle, bag or any other made object"]
-    pin: {asset_digest: "f3773bffa3cfab68", path: "data/candidates/portraits/metazoa/69c0eae5b5148527/01-f3773bffa3cfab68.jpg"}
+    pin: {asset_digest: "f3773bffa3cfab68", path: "data/pins/portraits/metazoa/f3773bffa3cfab68.jpg"}
 
   - id: eumetazoa
     plate: SPECIMEN
@@ -149,7 +149,7 @@ portraits:
       surface: "soft polyp tissue within a rigid, faceted cup wall; no source gives its colour, so muted natural tones"
       size: "about 20 cm tall"
       absent: ["a stony or chalky coral skeleton", "a swimming bell", "a head, face or eyes", "limbs", "a shell", "a flower, plant or seaweed", "a drinking glass, goblet, vase or any other made object"]
-    pin: {asset_digest: "476499a62ca9c41a", path: "data/candidates/portraits/eumetazoa/0df5b0207b6b539d/01-476499a62ca9c41a.jpg"}
+    pin: {asset_digest: "476499a62ca9c41a", path: "data/pins/portraits/eumetazoa/476499a62ca9c41a.jpg"}
 
   - id: bilateria
     plate: SPECIMEN
@@ -166,7 +166,7 @@ portraits:
       surface: "a smooth, tough, flexible covering over soft body tissue, with no plates, ridges or segments; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a head, face, eyes or mouth", "a neck", "limbs, flippers or fins", "plates, scutes, ridges or segments on the covering", "a coiled shell", "a hard stony or chalky shell"]
-    pin: {asset_digest: "9c9e32e0464f4648", path: "data/candidates/portraits/bilateria/8890709556e8208c/02-9c9e32e0464f4648.jpg"}
+    pin: {asset_digest: "9c9e32e0464f4648", path: "data/pins/portraits/bilateria/9c9e32e0464f4648.jpg"}
 
   - id: chordata
     plate: SPECIMEN
@@ -181,7 +181,7 @@ portraits:
       surface: "smooth, soft, slightly translucent skin; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a face, eyes or a mouth", "jaws or teeth", "legs or jointed limbs", "antennae or eyestalks like a snail's or an insect's", "scales or bony plates", "paired fins with fin rays", "a fish's tail fin", "the rings of a segmented worm"]
-    pin: {asset_digest: "a4ea5ba4af80ab2f", path: "data/candidates/portraits/chordata/f8a679f6acd65011/01-a4ea5ba4af80ab2f.jpg"}
+    pin: {asset_digest: "a4ea5ba4af80ab2f", path: "data/pins/portraits/chordata/a4ea5ba4af80ab2f.jpg"}
 
   - id: olfactores
     plate: SPECIMEN
@@ -196,7 +196,7 @@ portraits:
       surface: "a soft, slightly translucent body wall through which the branchial basket shows faintly; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a hard shell", "a tail", "a face, eyes or a mouth with lips", "a colony of joined bodies", "limbs", "a crown of long tentacles like a sea anemone's", "a plant, bottle, vase or bag"]
-    pin: {asset_digest: "bb4e4ac417942fa4", path: "data/candidates/portraits/olfactores/7314b508c63dc99a/01-bb4e4ac417942fa4.jpg"}
+    pin: {asset_digest: "bb4e4ac417942fa4", path: "data/pins/portraits/olfactores/bb4e4ac417942fa4.jpg"}
 
   - id: vertebrata
     plate: SPECIMEN
@@ -212,7 +212,7 @@ portraits:
       surface: "smooth, unarmoured skin, with the even colour and texture of living tissue, not stone-grey or rock-textured; no source gives its colour, so muted natural tones"
       size: null
       absent: ["jaws", "teeth", "paired fins", "a fin below or behind the gills", "separate dorsal, anal and tail fins like a modern fish's", "a forked tail", "scales", "gill covers", "bony armour plates", "limbs", "a modern eel or lamprey", "a fossil, cast or replica", "a flattened rock slab or stone impression", "grey rock texture or colouring"]
-    pin: {asset_digest: "282ac709cbf7d26b", path: "data/candidates/portraits/vertebrata/964110ee32f71332/01-282ac709cbf7d26b.jpg"}
+    pin: {asset_digest: "282ac709cbf7d26b", path: "data/pins/portraits/vertebrata/282ac709cbf7d26b.jpg"}
 
   - id: gnathostomata
     plate: SPECIMEN
@@ -227,7 +227,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["limbs or digits", "a round jawless sucker mouth", "lungs or a neck", "a modern shark, perch, trout or any other living fish species"]
-    pin: {asset_digest: "d04c2b033a483f5b", path: "data/candidates/portraits/gnathostomata/54a444a893fd4dae/01-d04c2b033a483f5b.jpg"}
+    pin: {asset_digest: "d04c2b033a483f5b", path: "data/pins/portraits/gnathostomata/d04c2b033a483f5b.jpg"}
 
   - id: osteichthyes
     plate: SPECIMEN
@@ -243,7 +243,7 @@ portraits:
       surface: "glossy, ridged rhombic scales; no source gives its colour, so muted natural tones"
       size: null
       absent: ["limbs or digits", "smooth scaleless skin", "a neck", "a modern carp, perch, sturgeon or any other living fish species"]
-    pin: {asset_digest: "105148bcd6c22ae3", path: "data/candidates/portraits/osteichthyes/12c94bea931c39ff/01-105148bcd6c22ae3.jpg"}
+    pin: {asset_digest: "105148bcd6c22ae3", path: "data/pins/portraits/osteichthyes/105148bcd6c22ae3.jpg"}
 
   - id: sarcopterygii
     plate: SPECIMEN
@@ -261,7 +261,7 @@ portraits:
       surface: "glossy, enamel-like cosmine on the head bones and scales; no source gives its colour, so muted natural tones"
       size: null
       absent: ["limbs, legs, feet or digits", "standing or resting on its fins", "a neck", "smooth scaleless skin", "whiskers or barbels", "a modern coelacanth, lungfish, catfish or any other living fish species"]
-    pin: {asset_digest: "d4122fd21724b79b", path: "data/candidates/portraits/sarcopterygii/cf982e773844e64d/01-d4122fd21724b79b.jpg"}
+    pin: {asset_digest: "d4122fd21724b79b", path: "data/pins/portraits/sarcopterygii/d4122fd21724b79b.jpg"}
 
   - id: tetrapodomorpha
     plate: SPECIMEN
@@ -277,7 +277,7 @@ portraits:
       surface: "overlapping bony scales over the whole body; no source gives its colour, so muted natural tones"
       size: null
       absent: ["fingers, toes or feet", "legs", "standing up with its belly raised off the surface", "claws", "smooth amphibian skin", "a head cropped or tail cropped by the frame edge"]
-    pin: {asset_digest: "80fca4206846b113", path: "data/candidates/portraits/tetrapodomorpha/fb8986de8d51a7b4/02-80fca4206846b113.jpg"}
+    pin: {asset_digest: "80fca4206846b113", path: "data/pins/portraits/tetrapodomorpha/80fca4206846b113.jpg"}
 
   - id: tetrapoda
     plate: SPECIMEN
@@ -293,7 +293,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["claws", "hands or feet with five digits", "separate individual fingers, toes, hands or paws", "legs holding its belly off the surface", "scales like a reptile's", "a neck frill or feathery external gills", "a crocodile, salamander, newt or any other living animal", "a head cropped or tail cropped by the frame edge"]
-    pin: {asset_digest: "35d025bfba217b1d", path: "data/candidates/portraits/tetrapoda/d323330332037f58/01-35d025bfba217b1d.jpg"}
+    pin: {asset_digest: "35d025bfba217b1d", path: "data/pins/portraits/tetrapoda/35d025bfba217b1d.jpg"}
 
   - id: amniota
     plate: SPECIMEN
@@ -309,7 +309,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: "about 20 cm long including the tail"
       absent: ["fur", "feathers", "gills", "a tail fin", "crests, frills, spines or a dewlap", "a modern gecko, iguana, chameleon or any other living lizard species", "a tail cropped by the frame edge"]
-    pin: {asset_digest: "60ead2448ece7209", path: "data/candidates/portraits/amniota/3fb8b5dd6e0e0ede/01-60ead2448ece7209.jpg"}
+    pin: {asset_digest: "60ead2448ece7209", path: "data/pins/portraits/amniota/60ead2448ece7209.jpg"}
 
   - id: synapsida
     plate: SPECIMEN
@@ -326,7 +326,7 @@ portraits:
       surface: "smooth to finely textured skin, not granular or bumpy scales; no source describes its skin or colour, so muted natural tones"
       size: "about 50 cm long from head to tail"
       absent: ["fur", "a sail on the back", "feathers", "gills", "a crocodile's armoured back or long narrow snout", "crests or frills", "loose wrinkled throat or neck skin folds", "a forked tongue", "an open mouth or bared teeth", "a snarling or aggressive expression", "an open-mouthed threat display", "granular or bumpy scaled skin", "a lunging or defensive stance", "a monitor lizard or any other living reptile", "a tail cropped by the frame edge"]
-    pin: {asset_digest: "53ede5a016046935", path: "data/candidates/portraits/synapsida/07bbe8a106bddb79/01-53ede5a016046935.jpg"}
+    pin: {asset_digest: "53ede5a016046935", path: "data/pins/portraits/synapsida/53ede5a016046935.jpg"}
 
   - id: therapsida
     plate: SPECIMEN
@@ -344,7 +344,7 @@ portraits:
       surface: "no source describes its skin or colour; muted natural tones"
       size: null
       absent: ["a sail on the back", "feathers", "horns", "a shell or armour plates", "a sabre-toothed cat, dog, wolf or any other mammal", "a thick fur coat, whiskers or external ear flaps", "a tail cropped by the frame edge"]
-    pin: {asset_digest: "0a7fe284a0cc1bee", path: "data/candidates/portraits/therapsida/b41b211a6596c34f/01-0a7fe284a0cc1bee.jpg"}
+    pin: {asset_digest: "0a7fe284a0cc1bee", path: "data/pins/portraits/therapsida/0a7fe284a0cc1bee.jpg"}
 
   - id: cynodontia
     plate: SPECIMEN
@@ -361,7 +361,7 @@ portraits:
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "a skull about 5 cm long"
       absent: ["long blade-shaped fangs", "a sail on the back", "feathers", "a shell or armour plates", "a modern rat, weasel, shrew, lizard or any other living animal", "a tail cropped by the frame edge"]
-    pin: {asset_digest: "7eb4b6337ccfa56e", path: "data/candidates/portraits/cynodontia/0f0d9560a125b457/01-7eb4b6337ccfa56e.jpg"}
+    pin: {asset_digest: "7eb4b6337ccfa56e", path: "data/pins/portraits/cynodontia/7eb4b6337ccfa56e.jpg"}
 
   - id: mammaliaformes
     plate: SPECIMEN
@@ -378,7 +378,7 @@ portraits:
       surface: "no source describes its skin, hair or colour; muted natural tones"
       size: "about 15 cm long overall, with a skull 2 to 3 cm long"
       absent: ["scales", "a sail on the back", "feathers", "large fangs", "prominent external ear pinnae, whiskers, or a pink naked nose", "an open mouth or bared teeth", "visible ribs or skull structure through the skin", "an emaciated or semi-flayed appearance", "upright ear flaps standing off the head", "a pale pink snout tip", "a modern shrew, mouse, rat or any other living animal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: {asset_digest: "c667ad3310fcec37", path: "data/candidates/portraits/mammaliaformes/fff29ef96edf7717/01-c667ad3310fcec37.jpg"}
+    pin: {asset_digest: "c667ad3310fcec37", path: "data/pins/portraits/mammaliaformes/c667ad3310fcec37.jpg"}
 
   - id: mammalia
     plate: SPECIMEN
@@ -393,7 +393,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal"]
-    pin: {asset_digest: "7e3062f8c909a6a1", path: "data/candidates/portraits/mammalia/a8573b4a1e4fb10f/01-7e3062f8c909a6a1.jpg"}
+    pin: {asset_digest: "7e3062f8c909a6a1", path: "data/pins/portraits/mammalia/7e3062f8c909a6a1.jpg"}
 
   - id: theria
     plate: SPECIMEN
@@ -408,7 +408,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "large fangs", "a pouch with young", "a modern shrew, mouse, rat or any other living mammal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: {asset_digest: "9b7c50ee0bbda0a9", path: "data/candidates/portraits/theria/a9b1835b73547fef/01-9b7c50ee0bbda0a9.jpg"}
+    pin: {asset_digest: "9b7c50ee0bbda0a9", path: "data/pins/portraits/theria/9b7c50ee0bbda0a9.jpg"}
 
   - id: eutheria
     plate: SPECIMEN
@@ -424,7 +424,7 @@ portraits:
       surface: "short fur; no source gives its colour, so muted natural tones"
       size: "very small, with a skull about 22 mm long"
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a modern shrew, mouse, rat or any other living mammal"]
-    pin: {asset_digest: "96512f40094b71c8", path: "data/candidates/portraits/eutheria/5a62482f98ff1abf/01-96512f40094b71c8.jpg"}
+    pin: {asset_digest: "96512f40094b71c8", path: "data/pins/portraits/eutheria/96512f40094b71c8.jpg"}
 
   - id: placentalia
     plate: SPECIMEN
@@ -439,7 +439,7 @@ portraits:
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: "6 to 245 grams"
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
-    pin: {asset_digest: "22ea1eed2c0700b5", path: "data/candidates/portraits/placentalia/1ad22aed0d266d08/01-22ea1eed2c0700b5.jpg"}
+    pin: {asset_digest: "22ea1eed2c0700b5", path: "data/pins/portraits/placentalia/22ea1eed2c0700b5.jpg"}
 
   - id: boreoeutheria
     plate: SPECIMEN
@@ -455,7 +455,7 @@ portraits:
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a thick, fluffy or plume-like tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: {asset_digest: "b265b8831e219686", path: "data/candidates/portraits/boreoeutheria/15a5b5beb6a1d9b9/01-b265b8831e219686.jpg"}
+    pin: {asset_digest: "b265b8831e219686", path: "data/pins/portraits/boreoeutheria/b265b8831e219686.jpg"}
 
   - id: euarchontoglires
     plate: SPECIMEN
@@ -471,7 +471,7 @@ portraits:
       surface: "fur over the body and tail; no source gives its colour, so muted natural tones"
       size: null
       absent: ["scales", "feathers", "a pouch with young", "a branch or tree", "a squirrel's bushy tail", "a modern squirrel, shrew, rat, tree shrew or any other living mammal"]
-    pin: {asset_digest: "b34fb2e0afe5ff64", path: "data/candidates/portraits/euarchontoglires/e2da8a10b002725f/01-b34fb2e0afe5ff64.jpg"}
+    pin: {asset_digest: "b34fb2e0afe5ff64", path: "data/pins/portraits/euarchontoglires/b34fb2e0afe5ff64.jpg"}
 
   - id: primatomorpha
     plate: SPECIMEN
@@ -487,7 +487,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "about 100 grams, the weight of a deck of cards"
       absent: ["nails in place of claws", "large forward-facing eyes", "a branch or tree", "scales", "a squirrel's bushy tail", "a modern squirrel, tree shrew, lemur, monkey or any other living mammal"]
-    pin: {asset_digest: "46f1c6ce85e50a08", path: "data/candidates/portraits/primatomorpha/773c443982a3bbd4/01-46f1c6ce85e50a08.jpg"}
+    pin: {asset_digest: "46f1c6ce85e50a08", path: "data/pins/portraits/primatomorpha/46f1c6ce85e50a08.jpg"}
 
   - id: primates
     plate: SPECIMEN
@@ -503,7 +503,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a branch or tree", "scales", "bare skin on the face", "a fossil, skeleton or rock slab", "a modern lemur, tarsier, monkey or any other living primate"]
-    pin: {asset_digest: "28a0d444e17fd0f0", path: "data/candidates/portraits/primates/141b4325c358e3bd/01-28a0d444e17fd0f0.jpg"}
+    pin: {asset_digest: "28a0d444e17fd0f0", path: "data/pins/portraits/primates/28a0d444e17fd0f0.jpg"}
 
   - id: haplorhini
     plate: SPECIMEN
@@ -519,7 +519,7 @@ portraits:
       surface: "fur, with the texture and colour of a living animal's coat, not stone-grey or rock-textured; no source gives its colour, so muted natural tones"
       size: null
       absent: ["claws", "a branch or tree", "a human-like face", "a modern tarsier, lemur, monkey or any other living primate", "a fossil, skeleton, cast or replica", "a flattened rock slab or stone impression", "grey rock texture or colouring"]
-    pin: {asset_digest: "0f2102e75a870b6e", path: "data/candidates/portraits/haplorhini/4b1aaa080b3a3554/01-0f2102e75a870b6e.jpg"}
+    pin: {asset_digest: "0f2102e75a870b6e", path: "data/pins/portraits/haplorhini/0f2102e75a870b6e.jpg"}
 
   - id: simiiformes
     plate: SPECIMEN
@@ -536,7 +536,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: "under 100 to about 200 grams"
       absent: ["claws", "a branch or tree", "bare skin on the face", "a fossil, skeleton or rock slab", "a modern monkey, marmoset, tarsier, lemur or any other living primate"]
-    pin: {asset_digest: "78143e7635c1f1c0", path: "data/candidates/portraits/simiiformes/0dbc1f96f86335ec/01-78143e7635c1f1c0.jpg"}
+    pin: {asset_digest: "78143e7635c1f1c0", path: "data/pins/portraits/simiiformes/78143e7635c1f1c0.jpg"}
 
   - id: catarrhini
     plate: SPECIMEN
@@ -551,7 +551,7 @@ portraits:
       surface: "fur; no source gives its colour, so muted natural tones"
       size: null
       absent: ["claws", "a branch or tree", "a human-like face", "a modern macaque, baboon or any other living monkey", "a modern ape"]
-    pin: {asset_digest: "a9a1e7c3e6f639a1", path: "data/candidates/portraits/catarrhini/c80f4dd89d90294c/01-a9a1e7c3e6f639a1.jpg"}
+    pin: {asset_digest: "a9a1e7c3e6f639a1", path: "data/pins/portraits/catarrhini/a9a1e7c3e6f639a1.jpg"}
 
   - id: hominoidea
     plate: SPECIMEN
@@ -570,7 +570,7 @@ portraits:
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "a heavy, shelf-like brow ridge", "a heavy, deep-set brow", "a flattened wide nose bridge", "flared nostrils", "a large or heavily built body", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads"]
-    pin: {asset_digest: "4ad5d9260bdcb0dd", path: "data/candidates/portraits/hominoidea/22d1a3ce322ebe2e/01-4ad5d9260bdcb0dd.jpg"}
+    pin: {asset_digest: "4ad5d9260bdcb0dd", path: "data/pins/portraits/hominoidea/4ad5d9260bdcb0dd.jpg"}
 
   - id: hominidae
     plate: SPECIMEN
@@ -586,7 +586,7 @@ portraits:
       surface: "a uniform coat of hair, the same muted tone all over with no darker or lighter saddle patch; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "bare dark facial skin", "a silver or lighter saddle patch on the coat", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads"]
-    pin: {asset_digest: "f1f208c897153062", path: "data/candidates/portraits/hominidae/586a5780723568f8/01-f1f208c897153062.jpg"}
+    pin: {asset_digest: "f1f208c897153062", path: "data/pins/portraits/hominidae/f1f208c897153062.jpg"}
 
   - id: homininae
     plate: SPECIMEN
@@ -602,7 +602,7 @@ portraits:
       surface: "a uniform coat of hair, the same muted tone all over with no lighter saddle patch; no source gives its colour, so muted natural tones"
       size: null
       absent: ["a branch or tree", "a human-like face", "clothing or tools", "a modern chimpanzee, bonobo, gorilla, orangutan or any other living ape", "a gorilla's crested head or silver back", "a gorilla's heavy brow ridge and flat wide nose", "bare dark facial skin", "a crest along the top of the skull", "a silver or lighter saddle patch on the coat", "broad, flared lips", "pink or pale lips", "knuckle-walking posture", "a curled fist or hand resting on its knuckles", "an orangutan's long orange hair or cheek pads", "sepia or antique photo-plate toning", "bevelled or rounded frame corners", "a one-arm crouching or grazing posture", "a photo print border, mat or mount", "a book, album page or table surface", "a curled or torn photo corner"]
-    pin: {asset_digest: "5ec8d9f137fdbd53", path: "data/candidates/portraits/homininae/5e56c0b838f1c3c1/01-5ec8d9f137fdbd53.jpg"}
+    pin: {asset_digest: "5ec8d9f137fdbd53", path: "data/pins/portraits/homininae/5ec8d9f137fdbd53.jpg"}
 
   - id: hominini
     plate: SPECIMEN
@@ -619,7 +619,7 @@ portraits:
       surface: "a coat of hair; no source gives its colour, so muted natural tones"
       size: null
       absent: ["large fangs", "clothing or tools", "a branch or tree", "a modern human face", "a modern chimpanzee, gorilla or any other living ape", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet", "a dim, underexposed figure that is hard to see against the dark field"]
-    pin: {asset_digest: "141ef7d153b9d351", path: "data/candidates/portraits/hominini/9dc253a9affb1c69/01-141ef7d153b9d351.jpg"}
+    pin: {asset_digest: "141ef7d153b9d351", path: "data/pins/portraits/hominini/141ef7d153b9d351.jpg"}
 
   - id: australopithecus
     plate: SPECIMEN
@@ -635,7 +635,7 @@ portraits:
       surface: "a coat of hair; no source gives its skin or hair colour, so muted natural tones"
       size: null
       absent: ["clothing or tools", "a branch or tree", "a modern human face", "a modern human body", "a tail", "a modern chimpanzee, gorilla or any other living ape"]
-    pin: {asset_digest: "290c4a6e4303ba25", path: "data/candidates/portraits/australopithecus/4115e7cd87246643/01-290c4a6e4303ba25.jpg"}
+    pin: {asset_digest: "290c4a6e4303ba25", path: "data/pins/portraits/australopithecus/290c4a6e4303ba25.jpg"}
 
   - id: homo
     plate: SPECIMEN
@@ -651,7 +651,7 @@ portraits:
       surface: "no source gives its skin or hair; rendered with a light coat of body hair, intermediate between Australopithecus and Homo erectus, in muted natural tones"
       size: null
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
-    pin: {asset_digest: "3bcfe020f0937e57", path: "data/candidates/portraits/homo/2bb26facbba20146/01-3bcfe020f0937e57.jpg"}
+    pin: {asset_digest: "3bcfe020f0937e57", path: "data/pins/portraits/homo/3bcfe020f0937e57.jpg"}
 
   - id: homo-erectus
     plate: SPECIMEN
@@ -668,7 +668,7 @@ portraits:
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "145 to 185 cm tall across the species"
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a tail"]
-    pin: {asset_digest: "13a1d771f6cbf79c", path: "data/candidates/portraits/homo-erectus/d0401dd3974b3d35/02-13a1d771f6cbf79c.jpg"}
+    pin: {asset_digest: "13a1d771f6cbf79c", path: "data/pins/portraits/homo-erectus/13a1d771f6cbf79c.jpg"}
 
   - id: homo-heidelbergensis
     plate: SPECIMEN
@@ -685,7 +685,7 @@ portraits:
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: "males about 175 cm tall, females about 157 cm"
       absent: ["clothing or tools", "a modern human face", "jewellery or body paint", "a modern hairstyle", "a tail", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet"]
-    pin: {asset_digest: "d3058b63da2612c6", path: "data/candidates/portraits/homo-heidelbergensis/c2679d0f3224812f/01-d3058b63da2612c6.jpg"}
+    pin: {asset_digest: "d3058b63da2612c6", path: "data/pins/portraits/homo-heidelbergensis/d3058b63da2612c6.jpg"}
 
   - id: homo-sapiens
     plate: SPECIMEN
@@ -702,4 +702,4 @@ portraits:
       surface: "no source gives its skin or hair; a plausible natural appearance without modern grooming, rendered as a scientific reconstruction and not sexualised"
       size: null
       absent: ["clothing or tools", "jewellery, tattoos or body paint", "a modern hairstyle", "long or loose hair covering the skull outline", "a head-and-shoulders bust or portrait crop", "any cropping of the legs or feet", "a frontal or three-quarter facing pose", "bright, even lighting with no shadow across the lower body"]
-    pin: {asset_digest: "da1b756a2ace8f44", path: "data/candidates/portraits/homo-sapiens/81a33349e89ef33e/01-da1b756a2ace8f44.jpg"}
+    pin: {asset_digest: "da1b756a2ace8f44", path: "data/pins/portraits/homo-sapiens/da1b756a2ace8f44.jpg"}

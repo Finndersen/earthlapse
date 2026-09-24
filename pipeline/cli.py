@@ -71,7 +71,7 @@ from pipeline.review import (
 from pipeline.scenes import SceneBook, UnknownScene, load_scene_book
 from pipeline.shapes import Tree
 from pipeline.spend import Ledger
-from pipeline.store import CandidateStore
+from pipeline.store import CandidateStore, PinStore
 
 
 class BuildTarget(StrEnum):
@@ -293,7 +293,12 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         book = load_scene_book(paths.scenes)
         try:
             pin = pick_candidate(
-                paths.scenes, book, CandidateStore(paths.candidates), paths.root, scene_id, number
+                paths.scenes,
+                book,
+                CandidateStore(paths.candidates),
+                PinStore(paths.root, paths.pins),
+                scene_id,
+                number,
             )
         except (ReviewError, UnknownScene) as err:
             raise fail(str(err)) from err
@@ -304,7 +309,12 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         """Remove SCENE_ID's pin, so the next build may regenerate it."""
         paths: ProjectPaths = ctx.obj
         try:
-            pin = clear_pin(paths.scenes, load_scene_book(paths.scenes), scene_id)
+            pin = clear_pin(
+                paths.scenes,
+                load_scene_book(paths.scenes),
+                PinStore(paths.root, paths.pins),
+                scene_id,
+            )
         except (ReviewError, UnknownScene) as err:
             raise fail(str(err)) from err
         typer.echo(f"cleared {scene_id} (was {pin.asset_digest})")
@@ -346,7 +356,7 @@ def create_app(backend: ImageBackend) -> typer.Typer:
                 paths.portraits,
                 book,
                 CandidateStore(paths.portrait_candidates),
-                paths.root,
+                PinStore(paths.root, paths.portrait_pins),
                 node_id,
                 number,
             )
@@ -359,7 +369,12 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         """Remove NODE_ID's portrait pin, so the next portrait build may regenerate it."""
         paths: ProjectPaths = ctx.obj
         try:
-            pin = clear_portrait_pin(paths.portraits, load_portrait_book(paths.portraits), node_id)
+            pin = clear_portrait_pin(
+                paths.portraits,
+                load_portrait_book(paths.portraits),
+                PinStore(paths.root, paths.portrait_pins),
+                node_id,
+            )
         except (ReviewError, UnknownPortrait) as err:
             raise fail(str(err)) from err
         typer.echo(f"cleared portrait {node_id} (was {pin.asset_digest})")

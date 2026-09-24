@@ -33,7 +33,7 @@ it, do not unilaterally edit.
 - **A cloud session is ephemeral: commit what generation produced before it ends.** `spend.json`
   is the ledger; spend a session never pushes is spend the ceiling forgets. Unpinned candidates
   (`data/candidates/`, gitignored) die with the container, so review, pin and publish in the same
-  session, then commit and push the pins, `data/media/` and `spend.json`.
+  session, then commit and push `data/pins/`, `data/media/` and `spend.json`.
 - **Deploy from a cloud session with a `[deploy]` commit on `main`**, never with credentials in the
   session. The `deploy` workflow ships the committed state of `main` (ADR-052); see
   `deploy/README.md` for the other triggers.
@@ -57,6 +57,8 @@ sources/<name>/     manifest.toml, fetch.py, normalise.py, fixture/, README.md
 pipeline/           models, shapes, asset graph, generators, review CLI, spend ledger
 data/raw/           gitignored — reproducible via fetch.py + sha256
 data/curated/       parquet, one of five shapes
+data/candidates/    gitignored — generated candidates, local scratch
+data/pins/          picked candidates the pins point at — Git LFS (ADR-055)
 data/media/         published manifest + media — Git LFS
 web/                Next.js static export
   scene/            2.5D displaced stills + dissolve

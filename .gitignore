@@ -1,7 +1,7 @@
 # Raw data — never committed, reproducible via sources/*/fetch.py + sha256
 data/raw/
 
-# Generated candidates — local scratch; only pinned images are committed, via `make pins` (ADR-018)
+# Generated candidates — local scratch; a pick copies its image into the committed data/pins/ (ADR-055)
 data/candidates/
 
 # Cached reconstruction models (gplately)

@@ -7360,3 +7360,39 @@ moment took two steps.
 - **Seeking on a globe arrival.** The expanded globe animates in `t`; moving it on a click would
   redraw the map the viewer just clicked on.
 
+
+## ADR-055 — Pinned images live in a tracked `data/pins/`, not force-added from `data/candidates/`
+
+**Status:** accepted — human-directed 2026-09-24. Amends ADR-018's "every pinned candidate image"
+bullet and its `make pins` consequence; the rest of ADR-018 stands.
+
+**Context.** Under ADR-018 a pin pointed into the gitignored `data/candidates/`, and `make pins`
+force-added the image. Nothing flagged a skipped `make pins`: an ignored file never shows in
+`git status`. Four pinned images (cretaceous-forest, jebel-irhoud-firelight, uruk-city,
+simiiformes) went uncommitted that way, and a superseded shenzhen-bay-present image stayed tracked
+after a cloud session re-pinned it.
+
+**Decision.**
+- `earthlapse review pick` (and `review portraits pick`) copies the chosen candidate, after
+  checking its digest, to `data/pins/scenes/<id>/<asset digest><ext>` or
+  `data/pins/portraits/<id>/<asset digest><ext>`, and the pin's `path` points there. `review clear`
+  deletes that copy. `ScenePin.path` must start with `data/pins/`.
+- `data/pins/` is tracked, through Git LFS. `data/candidates/` is entirely local scratch; nothing
+  under it is committed. `make pins` and `pipeline/stage_pins.py` are removed.
+- The candidate is copied, not moved, so it stays in the store: a cleared pin can be picked again
+  without regenerating it.
+- Sidecar JSON stays uncommitted, for ADR-018's reasons.
+
+**Consequences.**
+- A new or cleared pin shows up in `git status` like any other change, so a forgotten commit is
+  visible.
+- Pins are content-addressed, so the move changed no `asset_digest`, no graph status and no
+  published byte. The 112 committed pins moved as git renames of the same LFS objects.
+- A picked image exists twice on the machine that generated it (candidate and pin), about 3.5 MB
+  per pin.
+
+**Rejected.**
+- **Keep the force-add and guard it** with a test or hook that every pin path is tracked. That adds
+  a second rule to police the first, instead of removing the need for either.
+- **Commit `data/candidates/` whole.** It is about 1.2 GB of mostly rejected images, and LFS keeps
+  them forever.

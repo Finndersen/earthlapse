@@ -1,5 +1,8 @@
 """Local content-addressed candidate store: data/candidates/<scene_id>/<image node digest>/.
 
+Candidates are uncommitted scratch. Picking one copies its image into a `PinStore`
+(data/pins/, committed), which is what a pin points at (ADR-055).
+
 Each candidate is an image named by its own content digest plus a JSON sidecar recording the
 prompt, digests, usage and cost. A node digest counts as built once a sidecar exists under it,
 so an interrupted write (image without sidecar) is rebuilt rather than trusted.
@@ -13,8 +16,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
 
-from pipeline.generators.image import GeneratedImage, ImageRequest, TokenUsage
+from pipeline.generators.image import GeneratedImage, ImageRequest, TokenUsage, asset_digest
 from pipeline.graph import AssetNode
+from pipeline.scenes import ScenePin
 
 
 class CandidateRecord(BaseModel):
@@ -98,3 +102,27 @@ class CandidateStore:
         )
         (directory / f"{stem}.json").write_text(record.model_dump_json(indent=2))
         return StoredCandidate(record=record, image_path=image_path)
+
+
+class PinStore:
+    """Committed copies of picked candidates: `<directory>/<subject_id>/<asset digest><ext>`."""
+
+    def __init__(self, root: Path, directory: Path) -> None:
+        self.root = root
+        self.directory = directory
+
+    def add(self, subject_id: str, candidate: StoredCandidate) -> ScenePin:
+        data = candidate.image_path.read_bytes()
+        digest = candidate.record.asset_digest
+        if asset_digest(data) != digest:
+            raise ValueError(f"{candidate.image_path} no longer matches its digest {digest}")
+        target = self.directory / subject_id / f"{digest}{candidate.image_path.suffix}"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        return ScenePin(asset_digest=digest, path=target.relative_to(self.root).as_posix())
+
+    def remove(self, pin: ScenePin) -> None:
+        pinned = self.root / pin.path
+        pinned.unlink()
+        if not any(pinned.parent.iterdir()):
+            pinned.parent.rmdir()

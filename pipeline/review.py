@@ -16,7 +16,7 @@ from pipeline.contact_sheet import Tile, write_contact_sheet
 from pipeline.plan import BuildPlan, PortraitBuildPlan, PortraitPlan, ScenePlan, format_age
 from pipeline.portraits import PortraitAssets, PortraitBook, PortraitGraph, write_portrait_pin
 from pipeline.scenes import SceneBook, ScenePin, SceneRecord, write_pin
-from pipeline.store import CandidateStore, StoredCandidate
+from pipeline.store import CandidateStore, PinStore, StoredCandidate
 
 OVERVIEW_NAME = "overview.jpg"
 PORTRAIT_OVERVIEW_COLUMNS = 8
@@ -249,7 +249,12 @@ def _portrait_tile(
 
 
 def pick_candidate(
-    book_path: Path, book: SceneBook, store: CandidateStore, root: Path, scene_id: str, number: int
+    book_path: Path,
+    book: SceneBook,
+    store: CandidateStore,
+    pins: PinStore,
+    scene_id: str,
+    number: int,
 ) -> ScenePin:
     """Pin candidate `number` (1-based, as listed by `earthlapse review`) into data/scenes.yaml."""
     scene = book.scene(scene_id)
@@ -258,7 +263,7 @@ def pick_candidate(
             f"{scene_id} is already pinned to {scene.pin.asset_digest}; "
             "clear it first with `earthlapse review clear`"
         )
-    pin = _chosen_pin(store, root, scene_id, number)
+    pin = pins.add(scene_id, _chosen(store, scene_id, number))
     write_pin(book_path, scene_id, pin)
     return pin
 
@@ -267,7 +272,7 @@ def pick_portrait(
     book_path: Path,
     book: PortraitBook,
     store: CandidateStore,
-    root: Path,
+    pins: PinStore,
     node_id: str,
     number: int,
 ) -> ScenePin:
@@ -278,34 +283,35 @@ def pick_portrait(
             f"{node_id} is already pinned to {record.pin.asset_digest}; "
             "clear it first with `earthlapse review portraits clear`"
         )
-    pin = _chosen_pin(store, root, node_id, number)
+    pin = pins.add(node_id, _chosen(store, node_id, number))
     write_portrait_pin(book_path, node_id, pin)
     return pin
 
 
-def _chosen_pin(store: CandidateStore, root: Path, subject_id: str, number: int) -> ScenePin:
+def _chosen(store: CandidateStore, subject_id: str, number: int) -> StoredCandidate:
     candidates = store.candidates(subject_id)
     if not 1 <= number <= len(candidates):
         raise ReviewError(f"{subject_id} has {len(candidates)} candidate(s); no candidate {number}")
-    chosen = candidates[number - 1]
-    return ScenePin(
-        asset_digest=chosen.record.asset_digest, path=_relative(chosen.image_path, root)
-    )
+    return candidates[number - 1]
 
 
-def clear_pin(book_path: Path, book: SceneBook, scene_id: str) -> ScenePin:
+def clear_pin(book_path: Path, book: SceneBook, pins: PinStore, scene_id: str) -> ScenePin:
     pin = book.scene(scene_id).pin
     if pin is None:
         raise ReviewError(f"{scene_id} is not pinned")
     write_pin(book_path, scene_id, None)
+    pins.remove(pin)
     return pin
 
 
-def clear_portrait_pin(book_path: Path, book: PortraitBook, node_id: str) -> ScenePin:
+def clear_portrait_pin(
+    book_path: Path, book: PortraitBook, pins: PinStore, node_id: str
+) -> ScenePin:
     pin = book.portrait(node_id).pin
     if pin is None:
         raise ReviewError(f"{node_id} is not pinned")
     write_portrait_pin(book_path, node_id, None)
+    pins.remove(pin)
     return pin
 
 

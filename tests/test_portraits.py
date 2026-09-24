@@ -220,7 +220,8 @@ def test_review_portraits_pick_writes_one_pin_line_and_clear_restores_the_file(r
         )
         if old != new
     ]
-    path = chosen.image_path.relative_to(root).as_posix()
+    path = f"data/pins/portraits/tetrapod/{chosen.record.asset_digest}{chosen.image_path.suffix}"
+    assert (root / path).read_bytes() == chosen.image_path.read_bytes()
     assert changed == [
         (
             "    pin: null",
@@ -234,6 +235,7 @@ def test_review_portraits_pick_writes_one_pin_line_and_clear_restores_the_file(r
 
     assert run_cli(backend, root, "review", "portraits", "clear", "tetrapod")[0] == 0
     assert paths.portraits.read_text() == original
+    assert not (paths.portrait_pins / "tetrapod").exists()
 
 
 # -- publish --------------------------------------------------------------------------------
@@ -336,7 +338,7 @@ def test_publish_writes_a_dark_plate_exposure_normalised_and_leaves_its_pin_unto
     paths = ProjectPaths(root)
     original = jpeg_bytes(specimen_plate(90))
     digest = asset_digest(original)
-    pinned = paths.portrait_candidates / "human" / f"{digest}.jpg"
+    pinned = paths.portrait_pins / "human" / f"{digest}.jpg"
     pinned.parent.mkdir(parents=True)
     pinned.write_bytes(original)
     write_portrait_pin(
