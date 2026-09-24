@@ -37,7 +37,7 @@ import { clamp, clampUnit } from '../util'
 import { ClusterPopover } from './ClusterPopover'
 import type { AnchorEdge } from './ClusterPopover'
 import styles from './ScrubTrack.module.css'
-import { TouchMagnifier } from './TouchMagnifier'
+import { MAGNIFIER_ZOOM, TouchMagnifier } from './TouchMagnifier'
 
 /** Most member rows a cluster's hover preview lists before collapsing the rest into "+N more"
  *  — long enough to be useful, short enough to still read as a preview, not a panel. */
@@ -163,13 +163,21 @@ export function ScrubTrack({
     [shown, scale],
   )
 
+  // A touch or pen drag is read through the magnifier, so it snaps at the magnifier's zoom: a
+  // marker pulls only when it is within `SNAP_PX` of the finger as the bubble draws it, and the
+  // gaps the bubble shows between markers stay reachable.
+  const snapWidthPx = useCallback(
+    (pointerType: string): number => (pointerType === 'mouse' ? trackWidthPx : trackWidthPx * MAGNIFIER_ZOOM),
+    [trackWidthPx],
+  )
+
   const scrubToClientX = useCallback(
-    (clientX: number): void => {
+    (clientX: number, pointerType: string): void => {
       const rawT = scale.fromUnit(uFromClientX(clientX))
-      const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
+      const snap = findSnapTarget(candidates, scale, rawT, snapWidthPx(pointerType))
       onScrub(snap?.t ?? rawT)
     },
-    [onScrub, scale, uFromClientX, candidates, trackWidthPx],
+    [onScrub, scale, uFromClientX, candidates, snapWidthPx],
   )
 
   // Hover readout visibility (ADR-017, brief §3: "while the pointer is over the scrub track
@@ -210,6 +218,7 @@ export function ScrubTrack({
   // else here. `null` for a mouse pointer (the magnifier is touch/pen-only) and whenever nothing
   // is currently pressed.
   const [touchPoint, setTouchPoint] = useState<{ clientX: number; clientY: number } | null>(null)
+  const touching = touchPoint !== null
 
   // The open checkpoint cluster's member-list popover (ADR-021) — tracked by id, not a frozen
   // snapshot of its layout entry, so it stays in sync with `checkpointLayout` as the fisheye lens
@@ -283,7 +292,7 @@ export function ScrubTrack({
       return
     }
     pendingMarkerPressRef.current = null
-    scrubToClientX(e.clientX)
+    scrubToClientX(e.clientX, e.pointerType)
   }
 
   const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
@@ -298,7 +307,7 @@ export function ScrubTrack({
       pendingMarkerPressRef.current = null
     }
     if (e.buttons === 0) return
-    scrubToClientX(e.clientX)
+    scrubToClientX(e.clientX, e.pointerType)
   }
 
   // Shared by both release paths below — everything that ends a gesture regardless of how it
@@ -400,9 +409,11 @@ export function ScrubTrack({
   const hoverInfo = useMemo(() => {
     if (hoverU === null) return lastHoverInfoRef.current
     const rawT = scale.fromUnit(hoverU)
-    const snap = findSnapTarget(candidates, scale, rawT, trackWidthPx)
+    // Read at the magnifier's zoom while it is up, like the drag's own snapping.
+    const readWidthPx = touching ? trackWidthPx * MAGNIFIER_ZOOM : trackWidthPx
+    const snap = findSnapTarget(candidates, scale, rawT, readWidthPx)
     const t = snap?.t ?? rawT
-    const precisionYears = yearsPerDisplayedPixelAt(scale, hoverU, trackWidthPx)
+    const precisionYears = yearsPerDisplayedPixelAt(scale, hoverU, readWidthPx)
     const info = {
       u: hoverU,
       snappedU: snap ? clampUnit(scale.toUnit(snap.t)) : hoverU,
@@ -412,7 +423,7 @@ export function ScrubTrack({
     }
     lastHoverInfoRef.current = info
     return info
-  }, [hoverU, scale, candidates, trackWidthPx])
+  }, [hoverU, scale, candidates, trackWidthPx, touching])
 
   return (
     <div

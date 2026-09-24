@@ -47,7 +47,7 @@ const EDGE_MARGIN_PX = 8
  *  to `centerU`'s surroundings — the lens spreads a gap open on the real track; this then blows
  *  that already-opened gap up further so it reads clearly in a bubble a fraction of the track's
  *  own width. */
-const MAGNIFIER_ZOOM = 3
+export const MAGNIFIER_ZOOM = 3
 
 /** How far above the touch point the bubble's own bottom edge sits (screen px) — comfortably
  *  clear of a real fingertip's own contact width so the finger never covers it. */
