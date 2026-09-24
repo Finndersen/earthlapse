@@ -64,8 +64,8 @@ Every date was checked against its cited source with WebSearch, not asserted fro
 knowledge (per the hard rule: an LLM must not be the source of truth for dates). Stratigraphic
 boundaries (Cambrian base, Ediacaran top, Cryogenian bounds, Permian-Triassic boundary,
 K-Pg boundary) are checked against the **ICS International Chronostratigraphic Chart v2024/12**
-(`stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf`), fetched by `fetch.py` and hashed in
-`manifest.toml`. First-appearance dates for clades use the primary literature that established
+(`stratigraphy.org/ICSchart/ChronostratChart2024-12.pdf`), a reference consulted while
+authoring and cited in `manifest.toml`; the build does not download it (`fetch.py` is a no-op). First-appearance dates for clades use the primary literature that established
 them (with DOI/journal where available) rather than PBDB directly — PBDB's occurrence API
 returns raw specimen records, not a curated "first appearance" figure, so for a ~30-event
 set the primary paper for each landmark specimen is the more precise and more easily
