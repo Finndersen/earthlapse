@@ -556,9 +556,9 @@ peak_dbfs = -0.2
 
 # https://freesound.org/people/craigsmith/sounds/486027/ -- CC0 1.0, craigsmith,
 # "R12-31-Artillery Guns Firing.wav" (vintage Hollywood optical effect, the same source style as
-# `impact`/`archosaurs`). A distant-bombardment loop for `somme-1916` only (`normandy-landings-dday`
-# uses `water` instead). No genuine period WWI/WWII field recording of distant artillery is
-# licensed CC0/PD on Freesound or Wikimedia Commons -- this vintage optical-library recording is a
+# `impact`/`archosaurs`). A distant-bombardment loop for `somme-1916` only. No genuine period
+# WWI/WWII field recording of distant artillery is licensed CC0/PD on Freesound or Wikimedia
+# Commons -- this vintage optical-library recording is a
 # documented substitution, the same "library effect stands in for the real thing" precedent
 # `impact`/`rocket`/`aircraft` use. Spectrogram: several sustained bursts of broadband low-mid
 # rumble (100-800 Hz, reading as overlapping reports rather than one shot) separated by quieter

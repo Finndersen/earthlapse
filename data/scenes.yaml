@@ -2158,8 +2158,8 @@ scenes:
     pin: {asset_digest: "9efe47ae999402d2", path: "data/pins/scenes/somme-1916/9efe47ae999402d2.jpg"}
 
   # About 1930, Tokyo's Ginza district at the height of its interwar "Ginbura" mass urban
-  # culture; t = 2025 - 1930 = 95. Fills the 1916-1944 hole a review flagged between somme-1916
-  # (t = 109) and normandy-landings-dday (t = 81) -- the 1920s-30s -- with the first modern mass
+  # culture; t = 2025 - 1930 = 95. Fills the interwar years between somme-1916 (t = 109) and
+  # trinity-test (t = 80) -- the 1920s-30s -- with the first modern mass
   # urban lifestyle rather than more war, and deliberately does not repeat ford-model-t-street's
   # 1913 Detroit street: different city, continent and decade. Wikipedia "Ginza": the custom of
   # "killing time in Ginza" ("Ginbura") develops strongly between the two world wars. Wikipedia
@@ -2177,8 +2177,8 @@ scenes:
   # green-revolution-fields use. TONE: no legible Japanese or English signage, no glowing neon --
   # VISUAL_SPEC §2 holds this chapter's time of day to daylight, so the era's famous electric
   # signs are shown unlit, exactly as ford-model-t-street's already are. Kept in open-ground
-  # (GROUND), continuing the run from somme-1916 before the existing cut to waters-edge at
-  # normandy-landings-dday: no water is intrinsic to a Ginza street. Review fix (2026-09-15):
+  # (GROUND), continuing the run from somme-1916 before the cut to molten-earth at
+  # trinity-test: no water is intrinsic to a Ginza street. Review fix (2026-09-15):
   # `setting` dropped its camera-position clause (ADR-008 -- shot/composition set the viewpoint,
   # subject fields describe only the place); Tokyo's municipal bus service in fact dates to 1924
   # (Wikipedia "Toei Bus": emergency routes started after streetcar lines were damaged in the
@@ -2220,63 +2220,6 @@ scenes:
     framing: {focus: [0.6, 0.62], pan: 180}
     pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/pins/scenes/ginza-modern-tokyo/81ccaf1dcc006f1f.jpg"}
 
-  # 6 June 1944, D-Day, the Normandy landings; t = 2025 - 1944 = 81 (events.yaml
-  # d-day-normandy-landings). Wikipedia "Normandy landings": the amphibious assault went in at
-  # about 06:30, roughly half an hour after that morning's ~05:58 sunrise -- shortly after
-  # sunrise, not at dawn or pre-dawn, and every other waters-edge scene is daylight, so this
-  # keeps the chapter's held time of day rather than breaking it. The often-quoted 156,000
-  # troops ashore "on the first day" is the whole day's total across sea and air -- 24,000 of
-  # them airborne troops who dropped inland overnight, not landing-craft arrivals -- so the
-  # caption states the seaborne and airborne figures separately rather than crediting the whole
-  # total to the beach landing craft this scene shows. The WATER_EDGE_SERIES composition fixes
-  # "calm water fills the bottom third of the frame," so the sea is described as a low swell,
-  # not the heavy breaking surf an earlier draft named, which flatly contradicted that fixed
-  # composition text; the invasion fleet is placed far out on the Channel horizon, not behind
-  # the beach's own bluff, where ships could not physically stand. Framed at the water's edge
-  # per the brief -- a landing craft grounding and troops wading ashore -- returning to the
-  # waters-edge chapter after the open-ground run (first-powered-flight/ford-model-t-street/
-  # somme-1916): a deliberate cut, appropriate for the shift from a static trench landscape to a
-  # seaborne invasion. TONE per the brief: documentary and sombre -- no bodies, wounds, blood or
-  # gore; troops seen from behind and at a distance, faces and unit insignia not distinguishable;
-  # no national flag shown.
-  - id: normandy-landings-dday
-    t: 81.0
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "D-Day Landings"
-    caption: Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches, with a further 24,000 landing by parachute and glider overnight.
-    unsourced:
-      o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: mid-20th-century global mean, close to pre-industrial
-    subject:
-      setting: A Normandy invasion beach shortly after sunrise on 6 June 1944, at the waterline as landing craft approach
-      left_mass: a steel beach obstacle, an angled iron "hedgehog" obstacle half-submerged at the tideline
-      vegetation: none on the open sand; low dune grass visible on the bluff far behind
-      fauna: none
-      main_subject: a landing craft grounding in the shallows just off the beach, its ramp dropping as soldiers in helmets and full kit wade forward through the surf, seen from behind and at a distance, no face distinguishable, no unit insignia or flag visible
-      ground: the wet, dark sand of the tideline in the immediate foreground, with tank tracks and churned ripples
-      water: a light chop on the grey Channel water, a low swell breaking around the landing craft's hull
-      far_bank: a low, smoke-hazed bluff above the beach, scarred with earthworks; more landing craft closer along the shore, with the invasion fleet lying far out on the grey Channel horizon
-      sky_and_light: a heavily overcast, grey early-morning sky with low broken cloud; flat, cool, diffused light
-      absent: [bodies, visible wounds, blood, gore, national flags or insignia shown prominently, identifiable faces, glorified heroic posing, modern military equipment, dropped kit or supplies]
-    events: [d-day-normandy-landings, world-war-ii]
-    # ADR-023 (2026-09-15 human-history scene sounds): `water` `loop` -- the scene is framed at
-    # the waterline as the ramp drops and soldiers wade through surf, the most immediate sound of
-    # the moment depicted. `artillery` (new this amendment, see `somme-1916`) was considered --
-    # the queue named this scene as an optional second use -- but the scene's own subject is the
-    # landing itself, not the bombardment; using `artillery` here too would also blur the two
-    # scenes' distinct character when they dissolve past each other on the timeline. Gain raised
-    # from 0.55 to 0.7 by that amendment's own 2026-09-15 re-review: 0.55 (-35.2 dB) led the flat
-    # 0.48 (-36.4 dB) `settlement` floor by only 1.2 dB, a weak margin for the deliberate surf cue
-    # over incidental background murmur; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
-    sound: {stem: water, mode: loop, gain: 0.7}
-    # ADR-034: Omaha Beach, Normandy, France, as a representative point among the five landing
-    # beaches. t = 81 BP sits inside the human-era basemap domain (ADR-030), so publish marks
-    # these present-day coordinates directly.
-    location: {lat: 49.3721, lon: -0.8256, label: "Normandy, France"}
-    framing: {focus: [0.68, 0.6], pan: 330}
-    pin: {asset_digest: "3376a765c7aa7975", path: "data/pins/scenes/normandy-landings-dday/3376a765c7aa7975.jpg"}
-
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
   # Jornada del Muerto desert, New Mexico; t = 2025 - 1945 = 80. Wikipedia "Trinity (nuclear test)":
   # the Gadget device, about 21 kilotons, detonated atop a 100-foot tower at first light. Besides the
@@ -2291,15 +2234,11 @@ scenes:
   # distant-sky-event framing fits an actual, well-attested observation point. Framed on the existing
   # molten-earth chapter's ridge-vista composition (WIDE_RIDGE), not open-ground: VISUAL_SPEC §2 holds
   # time of day constant within a chapter, and this pre-dawn fireball's light has nothing in common
-  # with open-ground's scenes (daytime, per first-powered-flight/ford-model-t-street/somme-1916) or
-  # with its new immediate neighbour normandy-landings-dday (t = 81, an overcast early-morning
-  # waters-edge scene, shortly after sunrise rather than at dawn -- see that scene's own comment)
-  # -- molten-earth's WIDE_RIDGE vista, by contrast, already holds one extreme, singular event
-  # (the Moon-forming impact) far from any neighbour in time, and a chapter recurring as non-adjacent
-  # runs is exactly what ADR-020 permits. No new chapter or composition was added. (Updated
-  # 2026-09-15: this note originally compared only against first-powered-flight, t = 122; three human-
-  # era scenes were added between them, and this paragraph is corrected to describe the current
-  # neighbours rather than left to describe scenes that no longer sit adjacent.)
+  # with open-ground's daytime scenes (first-powered-flight through ginza-modern-tokyo) -- molten-
+  # earth's WIDE_RIDGE vista, by contrast, already holds one extreme, singular event (the
+  # Moon-forming impact) far from any neighbour in time, and a chapter recurring as non-adjacent
+  # runs is exactly what ADR-020 permits. It is the one Second World War scene, so it also carries
+  # the world-war-ii event.
   - id: trinity-test
     t: 80.0
     chapter: molten-earth
@@ -2320,7 +2259,7 @@ scenes:
       far_bank: no far bank; the desert basin drops away below the hilltop to a broad, flat plain running to a low, distant line of mountains silhouetted at the horizon
       sky_and_light: a dark pre-dawn sky at the edges, the eastern horizon just beginning to pale, overwhelmed at centre by the fireball's own blinding white-orange light
       absent: [a city, buildings, roads, modern military vehicles, people close-up, identifiable faces, a mushroom cloud far larger than the scale of a single test, a second sun, other explosions]
-    events: [trinity-test]
+    events: [trinity-test, world-war-ii]
     # ADR-023 (v2): scene-only one-shot `impact` (a vintage explosion rumble: a sharp attack,
     # then ~20 s of low rolling rumble), fired `once` at a lower gain than kpg-arrival -- the
     # detonation as heard from ~20 miles away.
