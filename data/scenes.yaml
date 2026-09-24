@@ -1047,7 +1047,8 @@ scenes:
     events: [paraceratherium]
     # ADR-023: `large-animal` `loop`, as for the other scenes led by one big mammal.
     sound: {stem: large-animal, mode: loop, gain: 0.85}
-    pin: null
+    framing: {focus: [0.5, 0.6], pan: 0}
+    pin: {asset_digest: "de44454e569c6a6e", path: "data/pins/scenes/paraceratherium-woodland/de44454e569c6a6e.jpg"}
 
   # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
   # taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North
@@ -1341,7 +1342,8 @@ scenes:
     # of what the scene shows.
     sound: {stem: water, mode: loop, gain: 0.8}
     location: {lat: -4.84, lon: 122.65, label: "Muna Island, Sulawesi, Indonesia"}
-    pin: null
+    framing: {focus: [0.6, 0.62], pan: 180}
+    pin: {asset_digest: "69e247d721e82b02", path: "data/pins/scenes/wallacea-hand-stencil/69e247d721e82b02.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
@@ -2101,7 +2103,8 @@ scenes:
     # ADR-034: Nihonbashi, Tokyo, Japan. t = 285 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 35.6841, lon: 139.7745, label: "Nihonbashi, Tokyo"}
-    pin: null
+    framing: {focus: [0.62, 0.6], pan: 180}
+    pin: {asset_digest: "777a0ddfc512b4bb", path: "data/pins/scenes/edo-nihonbashi/777a0ddfc512b4bb.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
   # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
@@ -2178,7 +2181,8 @@ scenes:
     sound: {stem: settlement, mode: loop, gain: 0.8}
     # ADR-034: Golden Spike National Historical Park, Promontory Summit, Utah.
     location: {lat: 41.6179, lon: -112.5516, label: "Promontory Summit, Utah"}
-    pin: null
+    framing: {focus: [0.52, 0.62], pan: 0}
+    pin: {asset_digest: "4ebc6badc624af87", path: "data/pins/scenes/promontory-golden-spike/4ebc6badc624af87.jpg"}
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
   # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,
