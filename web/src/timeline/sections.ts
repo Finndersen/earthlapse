@@ -24,15 +24,11 @@
 
 import { EARTH_FORMATION, type GeoTime } from '@/types/layer'
 
-import { PRESENT_CE_YEAR } from './format'
+import { HOLOCENE_BASE, yearsBeforePresent } from './epoch'
 import { SYMLOG_C, symlogKnee, type TimeWindow } from './scale'
 
 const GA = 1e9
 const MA = 1e6
-
-function yearsBeforePresent(ceYear: number): GeoTime {
-  return PRESENT_CE_YEAR - ceYear
-}
 
 const ICS_CHART =
   'International Commission on Stratigraphy, International Chronostratigraphic Chart v2024/12 ' +
@@ -57,9 +53,6 @@ const CRETACEOUS_BASE = 143.1 * MA
 const CENOZOIC_BASE = 66.0 * MA
 const NEOGENE_BASE = 23.04 * MA
 const QUATERNARY_BASE = 2.58 * MA
-/** The chart gives the Holocene base as 11,700 years before AD 2000 (b2k); shifted onto this
- *  package's AD 2025 present. */
-const HOLOCENE_BASE = 11_700 + (PRESENT_CE_YEAR - 2000)
 
 const WRITING_BASE = yearsBeforePresent(-3200)
 const MEDIEVAL_BASE = yearsBeforePresent(500)

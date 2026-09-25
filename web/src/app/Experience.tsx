@@ -55,6 +55,7 @@ import {
   createSymlogScale,
   eraNameForTime,
   EraShortcuts,
+  formatCompanionReading,
   formatGeoTime,
   isOpenEventBrowserShortcut,
   sectionById,
@@ -825,12 +826,22 @@ export function Experience() {
   )
 }
 
-/** The lens's headline: the current time in large light numerals, the eon/era beneath. */
+/** The lens's headline: the current time in large light numerals; beneath it the eon/era,
+ *  after the time's other reading where it has one ("533 years ago" under "1492"). */
 function TimeTitle({ t }: { t: GeoTime }) {
+  const companion = formatCompanionReading(t)
   return (
     <div className={styles.timeTitle} data-testid="time-title">
       <span className={styles.time}>{formatGeoTime(t)}</span>
-      <span className={styles.era}>{eraNameForTime(t)}</span>
+      <span className={styles.era}>
+        <span>
+          {companion !== null && <span className={styles.companion}>{companion}</span>}
+          <span className={styles.eraName}>
+            {companion !== null && ' · '}
+            {eraNameForTime(t)}
+          </span>
+        </span>
+      </span>
     </div>
   )
 }

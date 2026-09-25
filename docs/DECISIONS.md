@@ -7727,3 +7727,33 @@ asked for an info popup per empire like the ones arrivals and events have.
   constants, so a paint hands the GPU an `ImageBitmap` transferred off the `OffscreenCanvas`
   instead of reading back and rewriting ~25 MB of pixels; the border width now follows the live
   pixel ratio. The geometry file is fetched only once the globe is expanded with the layer on.
+
+## ADR-060 — Calendar years inside the Holocene, ages beyond it
+
+**Status:** accepted — human-directed 2026-09-25. Closes ADR-024's follow-up "Historical sections
+still label times as 'N years ago'".
+
+**Context.** Every printed time was elapsed time ("533 years ago", "11.7 ka"). For recorded
+history a reader thinks in dates, and a relative figure goes stale every year. For deep time the
+reverse holds: "66,000,000 BCE" is false precision on a radiometric age and longer than "66 Ma".
+`formatCalendarYear` already existed but was used by two callers only, with a 3000-year horizon.
+
+**Decision.**
+- **One notation policy, in `format.ts`.** `notationAt(t)` is `'calendar'` at or after the
+  Holocene base (`HOLOCENE_BASE`, 9700 BCE) and `'age'` before it; `formatGeoTime` follows it, so
+  every caller switches together. Calendar years print bare from 1000 CE (`"1492"`), with `CE`
+  below it (`"476 CE"`) and `BCE` before year one. Years before 3000 BCE are rounded to the
+  century: before writing, a date is an archaeological estimate. `"present"` stays.
+- **A window has one notation, its oldest edge's** (`notationForWindow`), so an axis or a range
+  never mixes the two: the Pleistocene reads `"3 Ma – 11.7 ka"`, the Holocene
+  `"9700 BCE – present"`.
+- **Calendar axes round in calendar years.** Linear ticks step through multiples of a nice
+  calendar step (1500, 1600, …, not "425 years ago"). Log ticks offer granularities by 5× and 2×
+  down to 5 years, coarsest first, and a finer year only inside an interval whose coarser
+  endpoints are both drawn.
+- **The headline shows both readings.** Beneath a calendar date the era line leads with its
+  elapsed time ("533 years ago · Cenozoic"); beneath "present" it gives the anchor year. On a
+  phone the row has room for that companion reading only.
+- **The anchor year stays AD 2025** (`epoch.ts`). It is the conversion every curated source and
+  `data/events.yaml` was normalised with; moving it is a data migration across every source,
+  not a display change.

@@ -13,11 +13,12 @@
 import { useId, useMemo } from 'react'
 
 import { EventDock } from '@/events/components/EventDock'
+import { formatGeoTime } from '@/timeline'
 import type { GeoTime } from '@/types/layer'
 
 import styles from './EmpireDetailPanel.module.css'
 import { empireColour } from './empireStyle'
-import { formatEmpireArea, formatEmpireSpan, formatEmpireYear, lineageAreaAt, memberAt, type EmpireLineageSummary } from './empires'
+import { formatEmpireArea, formatEmpireSpan, lineageAreaAt, memberAt, type EmpireLineageSummary } from './empires'
 
 export interface EmpireRelatedEvent {
   id: string
@@ -91,7 +92,7 @@ export function EmpireDetailPanel({ summary, t, relatedEvents, onClose, onOpenEv
               viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
               width="100%"
               role="img"
-              aria-label={`${lineage.name}: territory over time, peak ${formatEmpireArea(peak.areaKm2)} in ${formatEmpireYear(peak.tStart)}`}
+              aria-label={`${lineage.name}: territory over time, peak ${formatEmpireArea(peak.areaKm2)} in ${formatGeoTime(peak.tStart)}`}
               className={styles.chartSvg}
             >
               <polyline className={styles.chartLine} points={chart.points} style={{ stroke: colour }} />
@@ -105,7 +106,7 @@ export function EmpireDetailPanel({ summary, t, relatedEvents, onClose, onOpenEv
             </svg>
             <figcaption className={styles.chartCaption}>
               <span>
-                Peak {formatEmpireArea(peak.areaKm2)} · {formatEmpireYear(peak.tStart)}
+                Peak {formatEmpireArea(peak.areaKm2)} · {formatGeoTime(peak.tStart)}
               </span>
               {inSpan && <span>Now {areaNow > 0 ? formatEmpireArea(areaNow) : 'no territory'}</span>}
             </figcaption>
@@ -165,7 +166,7 @@ export function EmpireDetailPanel({ summary, t, relatedEvents, onClose, onOpenEv
       <div className={styles.footer}>
         <button type="button" className={styles.footerButton} onClick={() => onJumpTo(peak.tStart)}>
           <span className={styles.footerHint}>Jump to peak ›</span>
-          <span className={styles.footerTitle}>{formatEmpireYear(peak.tStart)}</span>
+          <span className={styles.footerTitle}>{formatGeoTime(peak.tStart)}</span>
         </button>
         {active !== null && active.wikipedia !== null && (
           <a
