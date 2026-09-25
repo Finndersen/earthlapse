@@ -225,14 +225,15 @@
   }
 
   .era {
-    gap: 8px;
+    padding-left: 0.3em;
     font-size: 9px;
     letter-spacing: 0.3em;
   }
 
+  /* The header row sits between the orb and the portrait: no room for the rules either side. */
   .era::before,
   .era::after {
-    width: 14px;
+    display: none;
   }
 
   /* The header row has room for one reading beside the orb and portrait: the companion one. */
