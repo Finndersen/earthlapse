@@ -826,22 +826,14 @@ export function Experience() {
   )
 }
 
-/** The lens's headline: the current time in large light numerals; beneath it the eon/era,
- *  after the time's other reading where it has one ("533 years ago" under "1492"). */
+/** The lens's headline: the current time in large light numerals; beneath it the time's other
+ *  reading where it has one ("533 years ago" under "1492"), else the eon/era. Within the
+ *  Holocene the era is always the Cenozoic, which says nothing a date does not. */
 function TimeTitle({ t }: { t: GeoTime }) {
-  const companion = formatCompanionReading(t)
   return (
     <div className={styles.timeTitle} data-testid="time-title">
       <span className={styles.time}>{formatGeoTime(t)}</span>
-      <span className={styles.era}>
-        <span>
-          {companion !== null && <span className={styles.companion}>{companion}</span>}
-          <span className={styles.eraName}>
-            {companion !== null && ' · '}
-            {eraNameForTime(t)}
-          </span>
-        </span>
-      </span>
+      <span className={styles.era}>{formatCompanionReading(t) ?? eraNameForTime(t)}</span>
     </div>
   )
 }

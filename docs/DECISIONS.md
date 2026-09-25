@@ -7751,9 +7751,9 @@ reverse holds: "66,000,000 BCE" is false precision on a radiometric age and long
   calendar step (1500, 1600, …, not "425 years ago"). Log ticks offer granularities by 5× and 2×
   down to 5 years, coarsest first, and a finer year only inside an interval whose coarser
   endpoints are both drawn.
-- **The headline shows both readings.** Beneath a calendar date the era line leads with its
-  elapsed time ("533 years ago · Cenozoic"); beneath "present" it gives the anchor year. On a
-  phone the row has room for that companion reading only.
+- **The headline shows both readings.** Beneath a calendar date the era line gives its elapsed
+  time ("533 years ago") in place of the era name, which inside the Holocene is always
+  "Cenozoic"; beneath "present" it gives the anchor year.
 - **The anchor year stays AD 2025** (`epoch.ts`). It is the conversion every curated source and
   `data/events.yaml` was normalised with; moving it is a data migration across every source,
   not a display change.

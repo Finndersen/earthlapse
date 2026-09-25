@@ -236,11 +236,6 @@
     display: none;
   }
 
-  /* The header row has room for one reading beside the orb and portrait: the companion one. */
-  .companion + .eraName {
-    display: none;
-  }
-
   .readouts {
     flex-direction: row;
     flex-wrap: wrap;
