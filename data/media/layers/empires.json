@@ -1,6 +1,6 @@
 {
   "id": "empires",
-  "geometry": "vectors/cliopatria_territories-f484d4be9b.json",
+  "geometry": "vectors/cliopatria_territories-f77da43ea1.json",
   "lineages": [
     {
       "id": "egypt",
@@ -640,6 +640,45 @@
         {
           "label": "First Spanish Republic",
           "wikipedia": "First Spanish Republic"
+        }
+      ]
+    },
+    {
+      "id": "portugal",
+      "name": "Portugal",
+      "colourSlot": 6,
+      "description": "Portugal's capture of Ceuta in 1415 began six centuries overseas. Its navigators reached India in 1498 and Brazil in 1500, and trading posts ran from West Africa to Goa, Malacca and Macau. Brazil became independent in 1822; Angola, Mozambique and the other African colonies followed in 1975.",
+      "events": [
+        "transatlantic-slave-trade"
+      ],
+      "members": [
+        {
+          "label": "Portugal",
+          "wikipedia": "Kingdom of Portugal"
+        },
+        {
+          "label": "Portuguese Empire",
+          "wikipedia": "Portuguese Empire"
+        },
+        {
+          "label": "Portuguese India",
+          "wikipedia": "Portuguese India"
+        },
+        {
+          "label": "Portuguese Africa",
+          "wikipedia": "Portuguese Empire"
+        },
+        {
+          "label": "Portuguese Ceylon",
+          "wikipedia": "Portuguese Ceylon"
+        },
+        {
+          "label": "Portugal",
+          "wikipedia": "First Portuguese Republic"
+        },
+        {
+          "label": "Portugal",
+          "wikipedia": "Estado Novo (Portugal)"
         }
       ]
     },
@@ -6316,6 +6355,17 @@
       "areaKm2": 4710094.132047783
     },
     {
+      "id": "kingdom-of-portugal-1415ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 610.0,
+      "tEnd": 557.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 91935.9434290014
+    },
+    {
       "id": "mali-empire-1415ce",
       "lineage": "sahel",
       "member": 1,
@@ -6613,6 +6663,17 @@
       "areaKm2": 550386.4391752669
     },
     {
+      "id": "kingdom-of-portugal-1468ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 557.0,
+      "tEnd": 509.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 102747.86193812297
+    },
+    {
       "id": "ming-dynasty-1468ce",
       "lineage": "china",
       "member": 21,
@@ -6745,6 +6806,17 @@
       "areaKm2": 211464.85571990494
     },
     {
+      "id": "portuguese-empire-1502ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 523.0,
+      "tEnd": 518.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 102966.19731767036
+    },
+    {
       "id": "safavid-dynasty-1502ce",
       "lineage": "persia",
       "member": 3,
@@ -6754,6 +6826,39 @@
       "lat": 38.803449630737305,
       "lon": 46.548215437031544,
       "areaKm2": 159055.70566122042
+    },
+    {
+      "id": "portuguese-africa-1507ce",
+      "lineage": "portugal",
+      "member": 3,
+      "label": "Portuguese Africa",
+      "tStart": 518.0,
+      "tEnd": 491.0,
+      "lat": -15.03,
+      "lon": 40.73,
+      "areaKm2": 34830.74827213591
+    },
+    {
+      "id": "portuguese-ceylon-1507ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 518.0,
+      "tEnd": 430.0,
+      "lat": 7.710882186889648,
+      "lon": 80.89003732378322,
+      "areaKm2": 49757.966252573984
+    },
+    {
+      "id": "portuguese-empire-1507ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 518.0,
+      "tEnd": 513.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 97659.27352521832
     },
     {
       "id": "safavid-dynasty-1507ce",
@@ -6767,6 +6872,17 @@
       "areaKm2": 1390021.1994904398
     },
     {
+      "id": "portuguese-empire-1512ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 513.0,
+      "tEnd": 496.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 129551.6518384736
+    },
+    {
       "id": "safavid-dynasty-1512ce",
       "lineage": "persia",
       "member": 3,
@@ -6776,6 +6892,17 @@
       "lat": 33.393062591552734,
       "lon": 53.57130843099755,
       "areaKm2": 2846209.7662168057
+    },
+    {
+      "id": "kingdom-of-portugal-1516ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 509.0,
+      "tEnd": 504.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 104002.57214502395
     },
     {
       "id": "kingdom-of-spain-1516ce",
@@ -6853,6 +6980,17 @@
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 945241.3549625858
+    },
+    {
+      "id": "kingdom-of-portugal-1521ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 504.0,
+      "tEnd": 443.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 173745.87133196
     },
     {
       "id": "kingdom-of-spain-1521ce",
@@ -6943,6 +7081,17 @@
       "areaKm2": 1200132.4253850228
     },
     {
+      "id": "portuguese-empire-1529ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 496.0,
+      "tEnd": 485.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 116907.55233545069
+    },
+    {
       "id": "safavid-dynasty-1529ce",
       "lineage": "persia",
       "member": 3,
@@ -6985,6 +7134,17 @@
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3176947.8268498685
+    },
+    {
+      "id": "portuguese-africa-1534ce",
+      "lineage": "portugal",
+      "member": 3,
+      "label": "Portuguese Africa",
+      "tStart": 491.0,
+      "tEnd": 478.0,
+      "lat": -15.03,
+      "lon": 40.73,
+      "areaKm2": 33195.48091717397
     },
     {
       "id": "safavid-dynasty-1534ce",
@@ -7042,6 +7202,17 @@
       "areaKm2": 344712.5999243542
     },
     {
+      "id": "portuguese-empire-1540ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 485.0,
+      "tEnd": 473.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 173772.7851265227
+    },
+    {
       "id": "spanish-empire-1540ce",
       "lineage": "spain",
       "member": 1,
@@ -7062,6 +7233,17 @@
       "lat": 33.48950386047363,
       "lon": 67.21874478004479,
       "areaKm2": 316589.44953047443
+    },
+    {
+      "id": "portuguese-africa-1547ce",
+      "lineage": "portugal",
+      "member": 3,
+      "label": "Portuguese Africa",
+      "tStart": 478.0,
+      "tEnd": 446.0,
+      "lat": -15.03,
+      "lon": 40.73,
+      "areaKm2": 29002.56799227186
     },
     {
       "id": "tsardom-of-russia-1547ce",
@@ -7095,6 +7277,17 @@
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3482235.225604025
+    },
+    {
+      "id": "portuguese-empire-1552ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 473.0,
+      "tEnd": 453.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 260670.17940656608
     },
     {
       "id": "spanish-empire-1552ce",
@@ -7196,6 +7389,17 @@
       "areaKm2": 3641931.06148246
     },
     {
+      "id": "portuguese-colonies-1564ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 461.0,
+      "tEnd": 425.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 38049.1856339247
+    },
+    {
       "id": "holy-roman-empire-1572ce",
       "lineage": "hre",
       "member": 0,
@@ -7218,6 +7422,17 @@
       "areaKm2": 1385841.9677368102
     },
     {
+      "id": "portuguese-empire-1572ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 453.0,
+      "tEnd": 443.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 363034.58426779794
+    },
+    {
       "id": "mughal-empire-1579ce",
       "lineage": "timurid",
       "member": 1,
@@ -7227,6 +7442,17 @@
       "lat": 28.990234375,
       "lon": 74.31108833303844,
       "areaKm2": 1961436.3705765926
+    },
+    {
+      "id": "portuguese-africa-1579ce",
+      "lineage": "portugal",
+      "member": 3,
+      "label": "Portuguese Africa",
+      "tStart": 446.0,
+      "tEnd": 443.0,
+      "lat": -15.03,
+      "lon": 40.73,
+      "areaKm2": 35787.06715982712
     },
     {
       "id": "spanish-empire-1579ce",
@@ -7328,6 +7554,17 @@
       "areaKm2": 2714072.955940652
     },
     {
+      "id": "portuguese-ceylon-1595ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 430.0,
+      "tEnd": 425.0,
+      "lat": 7.710882186889648,
+      "lon": 80.89003732378322,
+      "areaKm2": 61280.399568876135
+    },
+    {
       "id": "spanish-empire-1595ce",
       "lineage": "spain",
       "member": 1,
@@ -7348,6 +7585,28 @@
       "lat": 58.35451889038086,
       "lon": 53.88313936018408,
       "areaKm2": 4790798.590125488
+    },
+    {
+      "id": "portuguese-ceylon-1600ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 425.0,
+      "tEnd": 406.0,
+      "lat": 7.775169849395752,
+      "lon": 81.08726664043787,
+      "areaKm2": 54463.21679579928
+    },
+    {
+      "id": "portuguese-colonies-1600ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 425.0,
+      "tEnd": 385.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 1161.12883922795
     },
     {
       "id": "ottoman-empire-1609ce",
@@ -7438,6 +7697,28 @@
       "areaKm2": 50291.10578138616
     },
     {
+      "id": "portuguese-ceylon-1619ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 406.0,
+      "tEnd": 393.0,
+      "lat": 7.4537317752838135,
+      "lon": 81.06718063354492,
+      "areaKm2": 42154.49435986531
+    },
+    {
+      "id": "portuguese-empire-1619ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 406.0,
+      "tEnd": 403.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 9924.239983364656
+    },
+    {
       "id": "spanish-empire-1619ce",
       "lineage": "spain",
       "member": 1,
@@ -7513,6 +7794,17 @@
       "lat": 42.20373344421387,
       "lon": 126.00128126940018,
       "areaKm2": 281244.2713985973
+    },
+    {
+      "id": "portuguese-ceylon-1632ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 393.0,
+      "tEnd": 366.0,
+      "lat": 7.421587944030762,
+      "lon": 81.07392578125,
+      "areaKm2": 33102.141278853705
     },
     {
       "id": "spanish-empire-1632ce",
@@ -7592,6 +7884,17 @@
       "areaKm2": 8492853.516605323
     },
     {
+      "id": "kingdom-of-portugal-1640ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 385.0,
+      "tEnd": 319.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 101052.63025711518
+    },
+    {
       "id": "kingdom-of-spain-1640ce",
       "lineage": "spain",
       "member": 0,
@@ -7625,6 +7928,28 @@
       "areaKm2": 3522723.6527446457
     },
     {
+      "id": "portuguese-colonies-1640ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 385.0,
+      "tEnd": 377.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 102012.92398016957
+    },
+    {
+      "id": "portuguese-empire-1640ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 385.0,
+      "tEnd": 383.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 853807.7071622986
+    },
+    {
       "id": "spanish-empire-1640ce",
       "lineage": "spain",
       "member": 1,
@@ -7647,6 +7972,17 @@
       "areaKm2": 9511999.262908446
     },
     {
+      "id": "portuguese-empire-1642ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 383.0,
+      "tEnd": 380.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 598752.6560647293
+    },
+    {
       "id": "holy-roman-empire-1645ce",
       "lineage": "hre",
       "member": 0,
@@ -7656,6 +7992,17 @@
       "lat": 50.678815841674805,
       "lon": 9.136297172874787,
       "areaKm2": 241797.63845929437
+    },
+    {
+      "id": "portuguese-empire-1645ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 380.0,
+      "tEnd": 355.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 856054.7659796434
     },
     {
       "id": "qing-dynasty-1645ce",
@@ -7689,6 +8036,17 @@
       "lat": 50.87884712219238,
       "lon": 8.934023716110941,
       "areaKm2": 252522.00747887915
+    },
+    {
+      "id": "portuguese-colonies-1648ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 377.0,
+      "tEnd": 366.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 71873.61786420639
     },
     {
       "id": "qing-dynasty-1648ce",
@@ -7746,6 +8104,28 @@
       "areaKm2": 3210250.5208944827
     },
     {
+      "id": "portuguese-ceylon-1659ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 366.0,
+      "tEnd": 355.0,
+      "lat": 7.710882186889648,
+      "lon": 80.55030954642278,
+      "areaKm2": 59878.01172117655
+    },
+    {
+      "id": "portuguese-colonies-1659ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 366.0,
+      "tEnd": 355.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 31903.621165910972
+    },
+    {
       "id": "tsardom-of-russia-1659ce",
       "lineage": "russia",
       "member": 0,
@@ -7766,6 +8146,39 @@
       "lat": 58.910972595214844,
       "lon": 75.37605408950256,
       "areaKm2": 12180452.537169404
+    },
+    {
+      "id": "portuguese-ceylon-1670ce",
+      "lineage": "portugal",
+      "member": 4,
+      "label": "Portuguese Ceylon",
+      "tStart": 355.0,
+      "tEnd": 338.0,
+      "lat": 7.710882186889648,
+      "lon": 80.65608024368925,
+      "areaKm2": 42183.85975189923
+    },
+    {
+      "id": "portuguese-colonies-1670ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 355.0,
+      "tEnd": 319.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 27477.674054553703
+    },
+    {
+      "id": "portuguese-empire-1670ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 355.0,
+      "tEnd": 325.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1015253.7130824697
     },
     {
       "id": "tsardom-of-russia-1670ce",
@@ -7922,6 +8335,17 @@
       "areaKm2": 8472403.43522642
     },
     {
+      "id": "portuguese-empire-1700ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 325.0,
+      "tEnd": 319.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1135455.5143491656
+    },
+    {
       "id": "qing-dynasty-1700ce",
       "lineage": "china",
       "member": 23,
@@ -7955,6 +8379,17 @@
       "areaKm2": 552429.971376513
     },
     {
+      "id": "kingdom-of-portugal-1706ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 319.0,
+      "tEnd": 316.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 113220.52728192759
+    },
+    {
       "id": "kingdom-of-spain-1706ce",
       "lineage": "spain",
       "member": 0,
@@ -7975,6 +8410,28 @@
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 3148678.407647667
+    },
+    {
+      "id": "portuguese-colonies-1706ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 319.0,
+      "tEnd": 307.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 75634.35386075117
+    },
+    {
+      "id": "portuguese-empire-1706ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 319.0,
+      "tEnd": 307.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1274341.4016766388
     },
     {
       "id": "british-colonial-empire-1709ce",
@@ -8008,6 +8465,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 341477.4116260992
+    },
+    {
+      "id": "kingdom-of-portugal-1709ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 316.0,
+      "tEnd": 214.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 96466.64389669737
     },
     {
       "id": "kingdom-of-spain-1709ce",
@@ -8096,6 +8564,28 @@
       "lat": 25.67931365966797,
       "lon": 75.19467852772686,
       "areaKm2": 3234462.177933045
+    },
+    {
+      "id": "portuguese-colonies-1718ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 307.0,
+      "tEnd": 172.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 27381.69497088649
+    },
+    {
+      "id": "portuguese-empire-1718ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 307.0,
+      "tEnd": 273.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 1583875.1225593532
     },
     {
       "id": "tsardom-of-russia-1718ce",
@@ -8329,6 +8819,17 @@
       "areaKm2": 844437.3279093114
     },
     {
+      "id": "portuguese-empire-1752ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 273.0,
+      "tEnd": 247.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 6344346.564718159
+    },
+    {
       "id": "russian-empire-1752ce",
       "lineage": "russia",
       "member": 1,
@@ -8525,6 +9026,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1056036.0534378744
+    },
+    {
+      "id": "portuguese-empire-1778ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 247.0,
+      "tEnd": 205.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 7832513.690825151
     },
     {
       "id": "spanish-empire-1778ce",
@@ -8824,6 +9336,17 @@
       "areaKm2": 1150236.401210473
     },
     {
+      "id": "kingdom-of-portugal-1811ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 214.0,
+      "tEnd": 213.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 77788.6386796817
+    },
+    {
       "id": "kingdom-of-spain-1811ce",
       "lineage": "spain",
       "member": 0,
@@ -8877,6 +9400,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1289340.9431753377
+    },
+    {
+      "id": "kingdom-of-portugal-1812ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 213.0,
+      "tEnd": 201.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 96466.64389669737
     },
     {
       "id": "kingdom-of-spain-1812ce",
@@ -9011,6 +9545,17 @@
       "areaKm2": 2669744.7758302577
     },
     {
+      "id": "portuguese-empire-1820ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 205.0,
+      "tEnd": 203.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 8087194.122063307
+    },
+    {
       "id": "spanish-empire-1820ce",
       "lineage": "spain",
       "member": 1,
@@ -9022,6 +9567,17 @@
       "areaKm2": 7831231.991060452
     },
     {
+      "id": "portuguese-empire-1822ce",
+      "lineage": "portugal",
+      "member": 1,
+      "label": "Portuguese Empire",
+      "tStart": 203.0,
+      "tEnd": 201.0,
+      "lat": -12.97,
+      "lon": -38.51,
+      "areaKm2": 92925.91729536394
+    },
+    {
       "id": "spanish-empire-1822ce",
       "lineage": "spain",
       "member": 1,
@@ -9031,6 +9587,17 @@
       "lat": 40.42,
       "lon": -3.7,
       "areaKm2": 1984058.1658999017
+    },
+    {
+      "id": "kingdom-of-portugal-1824ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 201.0,
+      "tEnd": 140.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 189392.56119206132
     },
     {
       "id": "spanish-empire-1824ce",
@@ -9196,6 +9763,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 1539588.1745357383
+    },
+    {
+      "id": "portuguese-colonies-1853ce",
+      "lineage": "portugal",
+      "member": 2,
+      "label": "Portuguese India",
+      "tStart": 172.0,
+      "tEnd": 114.0,
+      "lat": 15.5,
+      "lon": 73.83,
+      "areaKm2": 24328.497187440207
     },
     {
       "id": "british-colonial-empire-1856ce",
@@ -9594,6 +10172,17 @@
       "areaKm2": 4816230.175096621
     },
     {
+      "id": "kingdom-of-portugal-1885ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 140.0,
+      "tEnd": 135.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1142245.689076493
+    },
+    {
       "id": "british-africa-1890ce",
       "lineage": "britain",
       "member": 3,
@@ -9625,6 +10214,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 665539.1491905568
+    },
+    {
+      "id": "kingdom-of-portugal-1890ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 135.0,
+      "tEnd": 130.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1426222.1388038225
     },
     {
       "id": "kingdom-of-spain-1890ce",
@@ -9669,6 +10269,17 @@
       "lat": 51.51,
       "lon": -0.13,
       "areaKm2": 740000.2764929283
+    },
+    {
+      "id": "kingdom-of-portugal-1895ce",
+      "lineage": "portugal",
+      "member": 0,
+      "label": "Portugal",
+      "tStart": 130.0,
+      "tEnd": 114.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1941263.7090781413
     },
     {
       "id": "qajar-dynasty-1895ce",
@@ -9836,6 +10447,17 @@
       "areaKm2": 19064321.430317495
     },
     {
+      "id": "portuguese-republic-1911ce",
+      "lineage": "portugal",
+      "member": 5,
+      "label": "Portugal",
+      "tStart": 114.0,
+      "tEnd": 111.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1965031.6431549613
+    },
+    {
       "id": "ottoman-empire-1913ce",
       "lineage": "ottoman",
       "member": 0,
@@ -9845,6 +10467,17 @@
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 1929824.0980275238
+    },
+    {
+      "id": "portuguese-republic-1914ce",
+      "lineage": "portugal",
+      "member": 5,
+      "label": "Portugal",
+      "tStart": 111.0,
+      "tEnd": 107.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2201763.8989105504
     },
     {
       "id": "british-colonial-empire-1915ce",
@@ -9946,6 +10579,17 @@
       "areaKm2": 1144040.8026759739
     },
     {
+      "id": "portuguese-republic-1918ce",
+      "lineage": "portugal",
+      "member": 5,
+      "label": "Portugal",
+      "tStart": 107.0,
+      "tEnd": 106.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 1959230.1258626727
+    },
+    {
       "id": "british-africa-1919ce",
       "lineage": "britain",
       "member": 3,
@@ -9966,6 +10610,17 @@
       "lat": 40.19,
       "lon": 29.06,
       "areaKm2": 759971.1841840012
+    },
+    {
+      "id": "portuguese-republic-1919ce",
+      "lineage": "portugal",
+      "member": 5,
+      "label": "Portugal",
+      "tStart": 106.0,
+      "tEnd": 99.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2201904.6436545574
     },
     {
       "id": "british-africa-1920ce",
@@ -10054,6 +10709,17 @@
       "lat": 35.69,
       "lon": 51.39,
       "areaKm2": 1624334.9976886772
+    },
+    {
+      "id": "estado-novo-1926ce",
+      "lineage": "portugal",
+      "member": 6,
+      "label": "Portugal",
+      "tStart": 99.0,
+      "tEnd": 49.0,
+      "lat": 38.72,
+      "lon": -9.14,
+      "areaKm2": 2201904.6436545574
     },
     {
       "id": "british-africa-1930ce",

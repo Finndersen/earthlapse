@@ -395,6 +395,29 @@ members = [
 ]
 
 [[lineage]]
+id = "portugal"
+name = "Portugal"
+colour_slot = 6
+reason = "The first European seaborne empire, from Ceuta to Brazil, Goa and Macau"
+description = "Portugal's capture of Ceuta in 1415 began six centuries overseas. Its navigators reached India in 1498 and Brazil in 1500, and trading posts ran from West Africa to Goa, Malacca and Macau. Brazil became independent in 1822; Angola, Mozambique and the other African colonies followed in 1975."
+events = ["transatlantic-slave-trade"]
+members = [
+  # From Ceuta: before 1415 the kingdom is a European realm, not an empire.
+  { polity = "Kingdom of Portugal", from = 1415, to = 1910, label = "Portugal", wikipedia = "Kingdom of Portugal", anchor = [38.72, -9.14] },
+  # Salvador, colonial Brazil's capital: the bare series is the overseas territory alone, mostly
+  # Brazil, and a Lisbon label loses to Spain's at Madrid.
+  { polity = "Portuguese Empire", wikipedia = "Portuguese Empire", anchor = [-12.97, -38.51] },
+  # Goa, the capital of the Estado da India.
+  { polity = "Portuguese Colonies", label = "Portuguese India", wikipedia = "Portuguese India", anchor = [15.50, 73.83] },
+  # Mozambique Island, capital of Portuguese East Africa: the representative point lies at Ceuta.
+  { polity = "Portuguese Africa", wikipedia = "Portuguese Empire", anchor = [-15.03, 40.73] },
+  { polity = "Portuguese Ceylon", wikipedia = "Portuguese Ceylon" },
+  # Metropole and colonies together, until the African colonies' independence in 1975.
+  { polity = "Portuguese Republic", label = "Portugal", wikipedia = "First Portuguese Republic", anchor = [38.72, -9.14] },
+  { polity = "Estado Novo", label = "Portugal", wikipedia = "Estado Novo (Portugal)", anchor = [38.72, -9.14] },
+]
+
+[[lineage]]
 id = "britain"
 name = "Britain"
 colour_slot = 3

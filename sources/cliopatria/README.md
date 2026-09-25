@@ -182,7 +182,8 @@ empires carry a roster `to`: `Kingdom of Spain` ends in 1931 with the monarchy, 
 Great Britain` in 1997 with `British Colonial Empire`, at the handover of Hong Kong.
 
 The last snapshots: Qing 1911, Russian Empire 1916, Ottoman Empire and Qajar 1923, Spain 1931,
-British Raj 1947, British Africa 1960, Britain and its colonial empire 1997.
+British Raj 1947, British Africa 1960, Portugal (the Estado Novo's last window) 1975, Britain and
+its colonial empire 1997.
 
 ## Empire roster
 
@@ -225,19 +226,22 @@ output, so editing them rebuilds the source to identical curated data and geomet
 that overlaps its predecessor: Byzantium to 1453, the Abbasids to 1258, the Khmer to 1431, the
 Holy Roman Empire from 962, the Carolingian Empire to 751–887 (the dynasty takes the throne in 751; its parenthesised aggregate
 otherwise swallows the Kingdom of the Franks), the Mughals to 1526–1857, the Yuan to 1368, the
-Golden Horde to 1502, Mali to 1462, Songhai to 1591, Later Mayan City-States to 1200.
+Golden Horde to 1502, Mali to 1462, Songhai to 1591, Later Mayan City-States to 1200, the Kingdom
+of Portugal to 1415–1910 (from Ceuta; the Republic follows it).
 
 **Left out**, from the investigation behind the roster: the Kingdom of France (its bare series
 is the royal demesne, alternating with a much larger aggregate — unusable), the First French
 Empire (only colonial scraps after 1815), `Assyrian Egypt` (wholly inside Neo-Assyrian), and for
-crowding Portugal, Ethiopia, England, Moscow, the Marathas and the Kushans. More than 8 lineages
+crowding Ethiopia, England, Moscow, the Marathas and the Kushans. More than 8 lineages
 are active in 187 of the 5,301 years (max 10, 202–171 BCE).
 
 **Colour slots** are assigned by a greedy graph colouring, most famous lineages first (Rome,
 China, Persia, Mongols, Caliphate, Ottoman, Britain, Spain, Russia, …): two lineages that are
 ever active at the same time with member bounding boxes within 10° of each other never share a
-slot. Eight slots suffice. The numbers are written into `roster.toml`, so inserting a lineage
-later does not recolour the others. Lineage names, labels, colour slots and the info-card fields are
+slot. Eight slots suffice. Portugal, added last, is the one exception to the box test: its
+Brazil-to-Macau box meets all eight, so it shares the Holy Roman Empire's slot, whose actual
+territory never comes within 11° of Portugal's (Russia's is the other candidate, 14°). The
+numbers are written into `roster.toml`, so inserting a lineage later does not recolour the others. Lineage names, labels, colour slots and the info-card fields are
 read again at publish, so changing them needs no data rebuild; membership, clamps, anchors and the polity
 list are read by `normalise.py`, and `databuild`'s fingerprint covers `*.toml`, so editing them does.
 
