@@ -3200,6 +3200,22 @@
       "estimated_usd": 0.154736,
       "actual_usd": 0.13946,
       "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154834,
+      "actual_usd": 0.140422,
+      "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154834,
+      "actual_usd": 0.141106,
+      "note": null
     }
   ]
 }
