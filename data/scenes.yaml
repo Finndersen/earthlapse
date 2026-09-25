@@ -2577,10 +2577,9 @@ scenes:
       sky_and_light: a clear, pale-blue afternoon sky with a little industrial haze; bright, flat daylight
       absent: [modern cars, SUVs, minivans, electric vehicles, cell-phone masts, LED traffic signals, shopping mall, satellite dishes, identifiable faces, modern clothing or branding, legible number plates, legible signage]
     events: [postwar-suburban-boom]
-    # ADR-023 (2026-09-15 human-history scene sounds): `traffic` `loop` -- a busy highway
-    # cloverleaf of sedans and station wagons, above the curve's own ~0.26 at t = 68 (post-war
-    # motorisation is well underway but not yet at its curve peak).
-    sound: {stem: traffic, mode: loop, gain: 0.6}
+    # ADR-023: `traffic` `loop` -- a busy highway cloverleaf of sedans and station wagons, at full
+    # gain: the clip is a steady, horn-free road bed that reads as background hum any lower.
+    sound: {stem: traffic, mode: loop, gain: 1.0}
     framing: {focus: [0.62, 0.5], pan: 0}
     pin: {asset_digest: "cb19517050596667", path: "data/pins/scenes/post-war-boom-suburbia/cb19517050596667.jpg"}
 

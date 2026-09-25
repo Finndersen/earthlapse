@@ -58,17 +58,6 @@ const LGM_WIND_YOUNGER_EDGE = 1.9e4
 const LGM_WIND_BUMP_GAIN = 0.65
 
 /**
- * Street traffic under `ginza-modern-tokyo` (95 yr), the city's motor-age street scene, whose one
- * `sound` slot already holds the tram bell `once`. The global `traffic` curve is still low there,
- * so it gets a scene-local bump centred on its own `t`, bounded by its dominant span in the
- * published manifest like `barrenSceneDuck`, so neither `somme-1916` nor `trinity-test` hears it.
- */
-const GINZA_TRAFFIC_OLDER_EDGE = 101.8
-const GINZA_TRAFFIC_SCENE_T = 95
-const GINZA_TRAFFIC_YOUNGER_EDGE = 87.2
-const GINZA_TRAFFIC_BUMP_GAIN = 0.4
-
-/**
  * Charcoal is most abundant from the late Carboniferous through the Permian, as atmospheric O2
  * climbs toward ~30% and fire reaches an ever wider range of ecosystems (Scott, A.C. &
  * Glasspool, I.J. (2006), "The diversification of Paleozoic fire systems and fluctuations in
@@ -426,9 +415,7 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
       // Ford Model T from October 1908; half of US cars by 1918. 80 yr = 1945.
       (rampLog(t, 118, 80, 0, 0.25) +
         // Post-war mass motorisation, 1945 → 2000.
-        rampLog(t, 80, 25, 0, 0.3) +
-        GINZA_TRAFFIC_BUMP_GAIN *
-          (1 - presenceNotch(t, GINZA_TRAFFIC_OLDER_EDGE, GINZA_TRAFFIC_SCENE_T, GINZA_TRAFFIC_YOUNGER_EDGE))) *
+        rampLog(t, 80, 25, 0, 0.3)) *
         people,
     ),
   }

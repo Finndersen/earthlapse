@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "07033689e7137a9d",
+  "buildId": "cc60912f07e44313",
   "assetBase": "/media",
   "scenes": [
     {
@@ -379,7 +379,7 @@
       "sound": {
         "stem": "traffic",
         "mode": "loop",
-        "gain": 0.6
+        "gain": 1.0
       },
       "framing": {
         "focus": [

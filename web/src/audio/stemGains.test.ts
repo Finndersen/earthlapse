@@ -83,12 +83,6 @@ describe('stemGains', () => {
     expect(millTown.traffic).toBe(0)
   })
 
-  it('carries street traffic under Ginza but not the neighbouring Somme', () => {
-    const somme = stemGains(109, NONE).traffic
-    expect(stemGains(95, NONE).traffic).toBeGreaterThan(somme + 0.35)
-    expect(somme).toBeLessThan(0.1)
-  })
-
   it('silences life through the K-Pg aftermath and recovers by 64.1 Ma', () => {
     expect(stemGains(6.6043e7, NONE).forest).toBeCloseTo(0.3, 2)
     const aftermath = stemGains(6.60429e7, NONE)
