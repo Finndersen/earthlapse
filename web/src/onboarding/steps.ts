@@ -1,10 +1,11 @@
 /**
- * The tour's steps, as data. Four things a viewer cannot work out by looking (IMPLEMENTATION
+ * The tour's steps, as data. Things a viewer cannot work out by looking (IMPLEMENTATION
  * § Backlog — onboarding): that play runs the timeline through the scenes, that the timeline
- * scrubs, what the era shortcuts are, and that the corner orb opens.
+ * scrubs, that events pop up as it passes them and all of them can be browsed, what the era
+ * shortcuts are, and that the corner orb opens.
  *
  * Each step names its target by CSS selector, resolved against the live DOM at runtime — never a
- * fixed coordinate, since three of the four targets genuinely move between the phone and desktop
+ * fixed coordinate, since most of the targets genuinely move between the phone and desktop
  * layouts. The selectors reuse the `data-testid`s those controls already carry rather than
  * introducing a second attribute convention.
  *
@@ -13,7 +14,7 @@
  * real geological unit. Its copy names both halves of each pairing.
  */
 
-export type TourStepId = 'play' | 'scrub' | 'eras' | 'globe' | 'about' | GlobeTourStepId
+export type TourStepId = 'play' | 'scrub' | 'events' | 'eras' | 'globe' | 'about' | GlobeTourStepId
 
 export type GlobeTourStepId = 'globe-view' | 'globe-empires' | 'globe-overlay'
 
@@ -70,6 +71,18 @@ export const TOUR_STEPS: readonly TourStep[] = [
     body: {
       compact: 'Drag the playhead to land anywhere in the whole 4.6 billion years.',
       wide: 'Drag the playhead, or click the track, to land anywhere in the whole 4.6 billion years.',
+    },
+    shape: 'rounded',
+  },
+  {
+    // The "All events" button rather than the cards: it is drawn even when no card is showing.
+    id: 'events',
+    selector: '[data-testid="event-feed-browse"]',
+    title: 'Events as they happen',
+    body: {
+      compact:
+        'Events pop up above the timeline as it reaches them; tap one for its story. The list button holds all of them, searchable and filterable by topic.',
+      wide: 'Events pop up here as the timeline reaches them; click one for its story. All events lists every one, searchable and filterable by topic.',
     },
     shape: 'rounded',
   },
