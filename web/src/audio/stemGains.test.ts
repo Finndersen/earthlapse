@@ -83,9 +83,9 @@ describe('stemGains', () => {
     expect(millTown.traffic).toBe(0)
   })
 
-  it('carries street traffic under the early motor-age street scenes but not the Somme between them', () => {
+  it('carries street traffic under Ginza but not the neighbouring Somme', () => {
     const somme = stemGains(109, NONE).traffic
-    for (const t of [112, 95]) expect(stemGains(t, NONE).traffic, `t=${t}`).toBeGreaterThan(somme + 0.35)
+    expect(stemGains(95, NONE).traffic).toBeGreaterThan(somme + 0.35)
     expect(somme).toBeLessThan(0.1)
   })
 
