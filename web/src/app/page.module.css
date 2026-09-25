@@ -186,6 +186,53 @@
   outline-offset: 4px;
 }
 
+/* The title as a disclosure toggle for the passage beneath it: drawn exactly as the heading, with
+   a chevron that points down while the passage is folded away. Its box is the drawn label. */
+.captionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: inherit;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+
+.captionToggle:focus-visible {
+  outline: 1px solid var(--hud-accent);
+  outline-offset: 4px;
+}
+
+.captionChevron {
+  flex: none;
+  width: 0.8em;
+  height: 0.8em;
+  color: var(--hud-dim);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+  transform: rotate(180deg);
+  transition:
+    transform 200ms ease,
+    color 200ms ease;
+}
+
+.captionToggle[aria-expanded='false'] .captionChevron {
+  transform: none;
+}
+
+.captionToggle:hover .captionChevron,
+.captionToggle:focus-visible .captionChevron {
+  color: var(--hud-accent);
+}
+
+/* Beats the portrait layout's `display: -webkit-box` below. */
+.caption[hidden] {
+  display: none;
+}
+
 /* The passage as the caption panel's body. */
 .captionDetail {
   margin: 0;

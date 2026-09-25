@@ -68,6 +68,8 @@ import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
 import { yearsBeforePresent } from '@/timeline/epoch'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, TimelineEvent, TimeScale } from '@/types/layer'
+
+import { loadCaptionCollapsed, saveCaptionCollapsed } from './captionPrefs'
 import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
 
 import { buildLayers, rawEvents } from './buildLayers'
@@ -189,6 +191,14 @@ export function Experience() {
   // under the panel stays the one it describes.
   const [captionDetailScene, setCaptionDetailScene] = useState<Scene | null>(null)
   const captionDetailHold = usePlaybackHold(playback.playing, setPlaying)
+  // Every other layout folds the passage away under its title on a tap of the title. Read after
+  // mount so the static export's prerendered markup (passage shown) hydrates unchanged.
+  const [captionCollapsed, setCaptionCollapsed] = useState(false)
+  useEffect(() => setCaptionCollapsed(loadCaptionCollapsed()), [])
+  const toggleCaptionCollapsed = (): void => {
+    saveCaptionCollapsed(!captionCollapsed)
+    setCaptionCollapsed(!captionCollapsed)
+  }
 
   // The expanded globe's own Globe/Map toggle's real rendered height (`Globe`'s own
   // `onViewModeToggleHeightChange` doc comment), lifted here so
@@ -636,13 +646,22 @@ export function Experience() {
     captionHost === null
       ? null
       : createPortal(
-          // A styled `<p>`, not `<h2>`: the page has no `<h1>` to root a heading hierarchy under,
-          // and this slot is a visual heading (distinct font/weight/size from `.caption` below
-          // it), not a document-outline one.
+          // The title is the passage's disclosure toggle; short landscape swaps it for
+          // `.captionButton`, which opens the passage in a panel instead.
           <div className={styles.captionBlock} style={{ opacity }}>
-            <p className={styles.captionTitle} data-testid="scene-caption-title">
+            <button
+              type="button"
+              className={`${styles.captionTitle} ${styles.captionToggle}`}
+              aria-expanded={!captionCollapsed}
+              aria-controls={`scene-caption-text-${scene.id}`}
+              data-testid="scene-caption-title"
+              onClick={toggleCaptionCollapsed}
+            >
               {scene.title}
-            </p>
+              <svg className={styles.captionChevron} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M4 6.5l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
             <button
               type="button"
               className={styles.captionButton}
@@ -658,7 +677,7 @@ export function Experience() {
                 <path d="M8 7.2v4.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
             </button>
-            <p className={styles.caption} data-testid="scene-caption-text">
+            <p id={`scene-caption-text-${scene.id}`} className={styles.caption} hidden={captionCollapsed} data-testid="scene-caption-text">
               {scene.caption}
             </p>
           </div>,

@@ -1436,7 +1436,7 @@ export default [
     name: 'layout-390x844-resting',
     description:
       'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, readouts, feed strip, ' +
-      'caption, timeline) overlaps another or leaves the viewport; the drawn orb 102-112% of the drawn portrait; the ' +
+      'caption, timeline) overlaps another or leaves the viewport; a tap on the caption title folds it to that one line; the drawn orb 102-112% of the drawn portrait; the ' +
       'readouts sit 0-8px under the drawn orb and the shortcuts 8-14px under the title; the timeline draws 170-310px ' +
       'tall, its breadcrumb row taking no height at the root; the rate picker inside the transport row, clear of the ' +
       'transport buttons, the row no taller than the play button (1px); the secondary controls clear of each other and ' +
@@ -1460,6 +1460,12 @@ export default [
       const tag = await page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first().boundingBox()
       const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
       const secondarySelfOverlaps = overlappingPairCount(await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR))
+
+      await page.locator(SCENE_CAPTION_TITLE_SELECTOR).first().click()
+      await rafTicks(page, 2)
+      const foldedCaptionHeightPx = (await captionBox(page)).height
+      await page.locator(SCENE_CAPTION_TITLE_SELECTOR).first().click()
+      await rafTicks(page, 2)
 
       await hook.setTourOpen(true)
       await rafTicks(page, 2)
@@ -1494,6 +1500,7 @@ export default [
         timeline,
         sectionsHeightAtRootPx,
         secondarySelfOverlaps,
+        foldedCaptionHeightPx,
         secondaryOverlapsCore: rectsOverlap(root.secondary, root.core) ? 1 : 0,
         pickerOutsideRowPx: Math.max(root.core.y - root.picker.y, root.picker.y + root.picker.height - (root.core.y + root.core.height)),
         rowTallerThanPlayPx: root.core.height - root.play.height,
@@ -1519,6 +1526,8 @@ export default [
       'timeline.height': [170, 310],
       sectionsHeightAtRootPx: [0, 0],
       secondarySelfOverlaps: [0, 0],
+      // The title line alone: the passage (three lines, ~50px more) folds away under it.
+      foldedCaptionHeightPx: [14, 24],
       secondaryOverlapsCore: [0, 0],
       pickerOutsideRowPx: [-40, 0],
       rowTallerThanPlayPx: [0, 1],

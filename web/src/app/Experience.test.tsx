@@ -147,6 +147,18 @@ describe('Experience integration', () => {
     10000,
   )
 
+  it("folds the caption's passage away under its title, remembered for the next visit", async () => {
+    await renderSettled()
+    const toggle = screen.getByTestId('scene-caption-title')
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.getByTestId('scene-caption-text').hidden).toBe(true)
+    expect(window.localStorage.getItem('earthlapse.caption.collapsed')).toBe('true')
+
+    fireEvent.click(toggle)
+    expect(screen.getByTestId('scene-caption-text').hidden).toBe(false)
+  })
+
   it('marks every scene as a timeline checkpoint with its thumbnail', async () => {
     await renderSettled()
 
