@@ -29,11 +29,11 @@ import {
   type BrowseEventsFilters,
   type EventStep,
 } from '@/events'
-import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
+import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, empiresHaveDataAt, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
-import { OnboardingTour } from '@/onboarding'
+import { GlobeTour, OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
   PREFETCH_LOOKAHEAD_SECONDS,
@@ -55,6 +55,7 @@ import {
   createSymlogScale,
   eraNameForTime,
   EraShortcuts,
+  formatCompanionReading,
   formatGeoTime,
   isOpenEventBrowserShortcut,
   sectionById,
@@ -64,6 +65,7 @@ import {
   usePlaybackLoop,
 } from '@/timeline'
 import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
+import { yearsBeforePresent } from '@/timeline/epoch'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, TimelineEvent, TimeScale } from '@/types/layer'
 import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
@@ -110,6 +112,10 @@ const RATE_SMOOTHING_SECONDS = 0.5
 const EVENT_TAG_LEGEND = <EventTagLegend />
 const FEEDBACK_LINK = <FeedbackLink />
 const ONBOARDING_TOUR = <OnboardingTour />
+/** Where the globe tour takes a viewer who opens the globe before the empire layer begins: 117 CE,
+ *  the Roman Empire's greatest extent, with the Han, Parthian and Kushan empires alongside. Must
+ *  match `GLOBE_TOUR_JUMP_LEAD` (`onboarding/steps.ts`). */
+const GLOBE_TOUR_EMPIRES_T: GeoTime = yearsBeforePresent(117)
 
 /** Whether every layer `include` selects has loaded — `false` until the manifest has. */
 function layersLoaded(
@@ -139,6 +145,8 @@ export function Experience() {
   const setYearsPerSecond = useTimeStore((s) => s.setYearsPerSecond)
   const setPlaybackMode = useTimeStore((s) => s.setPlaybackMode)
   const globeExpanded = useTimeStore((s) => s.globeExpanded)
+  /** Where the viewer was before the globe tour jumped to the empires, until the tour ends. */
+  const globeTourReturnTRef = useRef<GeoTime | null>(null)
   const setGlobeExpanded = useTimeStore((s) => s.setGlobeExpanded)
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
@@ -821,16 +829,33 @@ export function Experience() {
           rendered only past the loading/error branches above so every control it rings is
           already in the DOM to be measured. */}
       {ONBOARDING_TOUR}
+      <GlobeTour
+        expanded={globeExpanded}
+        empiresInDomain={empiresHaveDataAt(empires, t)}
+        onJumpToEmpires={() => {
+          globeTourReturnTRef.current = useTimeStore.getState().t
+          setPlaying(false)
+          setT(GLOBE_TOUR_EMPIRES_T)
+        }}
+        onEnd={() => {
+          const returnT = globeTourReturnTRef.current
+          globeTourReturnTRef.current = null
+          // Only if the viewer hasn't moved the timeline themselves since the jump.
+          if (returnT !== null && useTimeStore.getState().t === GLOBE_TOUR_EMPIRES_T) setT(returnT)
+        }}
+      />
     </>
   )
 }
 
-/** The lens's headline: the current time in large light numerals, the eon/era beneath. */
+/** The lens's headline: the current time in large light numerals; beneath it the time's other
+ *  reading where it has one ("533 years ago" under "1492"), else the eon/era. Within the
+ *  Holocene the era is always the Cenozoic, which says nothing a date does not. */
 function TimeTitle({ t }: { t: GeoTime }) {
   return (
     <div className={styles.timeTitle} data-testid="time-title">
       <span className={styles.time}>{formatGeoTime(t)}</span>
-      <span className={styles.era}>{eraNameForTime(t)}</span>
+      <span className={styles.era}>{formatCompanionReading(t) ?? eraNameForTime(t)}</span>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 """`earthlapse`: plan, build, review and publish scene images and ancestor portraits (DESIGN §9).
 
-    earthlapse plan [--candidates 3] [--scene ID ...] [--portrait-candidates 1] [--node ID ...]
+    earthlapse plan [--candidates 2] [--scene ID ...] [--portrait-candidates 1] [--node ID ...]
     earthlapse build --max-spend <USD> [--only images|portraits] [--candidates N]
                     [--scene ID ... | --node ID ...]
     earthlapse review [sheet | pick <scene_id> <n> | clear <scene_id>]
@@ -79,9 +79,11 @@ class BuildTarget(StrEnum):
     PORTRAITS = "portraits"
 
 
-# Portraits default to one candidate: 42 plates at three each would spend most of a small
-# budget before the style gate (VISUAL_SPEC §10) has approved the look.
-DEFAULT_CANDIDATES = {BuildTarget.IMAGES: 3, BuildTarget.PORTRAITS: 1}
+# Scenes default to two candidates: enough to choose between, and a pair that both fail
+# review is regenerated from a revised subject rather than widened. Portraits default to one:
+# 42 plates at three each would spend most of a small budget before the style gate
+# (VISUAL_SPEC §10) has approved the look.
+DEFAULT_CANDIDATES = {BuildTarget.IMAGES: 2, BuildTarget.PORTRAITS: 1}
 
 
 @dataclass(frozen=True)
@@ -202,7 +204,7 @@ def create_app(backend: ImageBackend) -> typer.Typer:
         candidates: Annotated[
             int | None,
             typer.Option(
-                min=1, help="Candidates per image; default 3 for images, 1 for portraits."
+                min=1, help="Candidates per image; default 2 for images, 1 for portraits."
             ),
         ] = None,
         scene: Annotated[list[str] | None, typer.Option(help="Restrict to this scene.")] = None,

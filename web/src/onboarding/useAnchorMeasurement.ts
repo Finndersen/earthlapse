@@ -20,8 +20,39 @@ function readViewport(): Size {
   return { width: window.innerWidth, height: window.innerHeight }
 }
 
+/** Splits a selector list on its top-level commas only, leaving those inside `:is(...)` or an
+ *  attribute value intact. */
+function topLevelSelectors(selector: string): string[] {
+  const parts: string[] = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < selector.length; i += 1) {
+    const ch = selector[i]
+    if (ch === '(' || ch === '[') depth += 1
+    else if (ch === ')' || ch === ']') depth -= 1
+    else if (ch === ',' && depth === 0) {
+      parts.push(selector.slice(start, i))
+      start = i + 1
+    }
+  }
+  parts.push(selector.slice(start))
+  return parts
+}
+
+/** The first selector in the list, in the order written, whose element has a drawn box: a
+ *  hidden fallback (the map frame while the globe shows) measures zero and is passed over. */
+function findTarget(selector: string): Element | null {
+  for (const part of topLevelSelectors(selector)) {
+    const element = document.querySelector(part)
+    if (element === null) continue
+    const box = element.getBoundingClientRect()
+    if (box.width > 0 && box.height > 0) return element
+  }
+  return document.querySelector(selector)
+}
+
 function readRect(selector: string): Rect | null {
-  const element = document.querySelector(selector)
+  const element = findTarget(selector)
   if (element === null) return null
   const { x, y, width, height } = element.getBoundingClientRect()
   return { x, y, width, height }
@@ -51,7 +82,7 @@ export function useAnchorMeasurement(selector: string): AnchorMeasurement {
     // the resize listener and the follow-up frame still cover every case a test exercises.
     const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null
     observer?.observe(document.documentElement)
-    const target = document.querySelector(selector)
+    const target = findTarget(selector)
     if (target !== null) observer?.observe(target)
 
     return () => {

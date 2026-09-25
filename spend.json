@@ -2984,6 +2984,238 @@
       "estimated_usd": 0.155128,
       "actual_usd": 0.139506,
       "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.14104,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.141652,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154716,
+      "actual_usd": 0.140356,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.140448,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.14094,
+      "note": null
+    },
+    {
+      "node_id": "edo-nihonbashi.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154888,
+      "actual_usd": 0.139356,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.140456,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.139352,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15479,
+      "actual_usd": 0.140672,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.140908,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.139468,
+      "note": null
+    },
+    {
+      "node_id": "paraceratherium-woodland.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154656,
+      "actual_usd": 0.139,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.1396,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.139972,
+      "note": null
+    },
+    {
+      "node_id": "vredefort-impact.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155292,
+      "actual_usd": 0.14086,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154948,
+      "actual_usd": 0.140488,
+      "note": null
+    },
+    {
+      "node_id": "promontory-golden-spike.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154948,
+      "actual_usd": 0.140236,
+      "note": null
+    },
+    {
+      "node_id": "tikal-classic-maya.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15474,
+      "actual_usd": 0.141866,
+      "note": null
+    },
+    {
+      "node_id": "tikal-classic-maya.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15474,
+      "actual_usd": 0.13931,
+      "note": null
+    },
+    {
+      "node_id": "hattusa-abandoned.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.140106,
+      "note": null
+    },
+    {
+      "node_id": "hattusa-abandoned.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154534,
+      "actual_usd": 0.139446,
+      "note": null
+    },
+    {
+      "node_id": "eemian-thames-hippos.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15455,
+      "actual_usd": 0.139464,
+      "note": null
+    },
+    {
+      "node_id": "eemian-thames-hippos.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15455,
+      "actual_usd": 0.141048,
+      "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154726,
+      "actual_usd": 0.140186,
+      "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154726,
+      "actual_usd": 0.14099,
+      "note": null
+    },
+    {
+      "node_id": "end-triassic-extinction.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154736,
+      "actual_usd": 0.139784,
+      "note": null
+    },
+    {
+      "node_id": "end-triassic-extinction.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154736,
+      "actual_usd": 0.13946,
+      "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154834,
+      "actual_usd": 0.140422,
+      "note": null
+    },
+    {
+      "node_id": "western-interior-seaway.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.154834,
+      "actual_usd": 0.141106,
+      "note": null
     }
   ]
 }

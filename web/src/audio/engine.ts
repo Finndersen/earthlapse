@@ -62,6 +62,9 @@ const SCORE_DUCK_AMOUNT = 0.6
 const ONCE_DUCK_MAX_SECONDS = 20
 const AMBIENCE_FADE_SECONDS = 1.5
 const ONCE_FADE_SECONDS = 0.05
+/** A one-shot stopped early by its published `endSeconds` fades out over this long, ending there
+ *  (`pipeline.audio.ONE_SHOT_END_FADE_SECONDS`). */
+const ONCE_END_FADE_SECONDS = 1
 /** A once voice still sounding when its scene is no longer on screen fades out over this long. */
 const ONCE_LEAVE_FADE_SECONDS = 1.5
 /** Below this, a loop voice's gain is inaudible under any reasonable system/master volume —
@@ -628,6 +631,7 @@ function startOnceVoice(
   // one-shot-only) — its `once` playback starts at 0, like the loop player itself absent a
   // `loop` region.
   const startSeconds = plan.kind === 'one-shot' ? plan.stem.startSeconds : undefined
+  const endSeconds = plan.kind === 'one-shot' ? plan.stem.endSeconds : undefined
   const oneShotGain = new Tone.Gain(clampVolume(gain) * levelGain).connect(runtime.onceBus)
   const voice: OnceVoice = {
     sceneId,
@@ -639,7 +643,7 @@ function startOnceVoice(
       url: buffer,
       loop: false,
       fadeIn: ONCE_FADE_SECONDS,
-      fadeOut: ONCE_FADE_SECONDS,
+      fadeOut: endSeconds === undefined ? ONCE_FADE_SECONDS : ONCE_END_FADE_SECONDS,
       onstop: () => {
         runtime.onceVoices.delete(voice)
         voice.player.dispose()
@@ -650,7 +654,10 @@ function startOnceVoice(
   runtime.onceVoices.add(voice)
   // A published `startSeconds` skips a silent (or otherwise unwanted) lead-in so playback
   // starts right on the scene's `once` trigger (`AudioStem.startSeconds`).
-  voice.player.start(undefined, startSeconds ?? 0)
+  // A published `endSeconds` stops it early: Tone begins `fadeOut` at the scheduled stop, so the
+  // stop comes that long before the end.
+  const offset = startSeconds ?? 0
+  voice.player.start(undefined, offset, endSeconds === undefined ? undefined : endSeconds - ONCE_END_FADE_SECONDS - offset)
 }
 
 /** Fires a scene's once-mode stem from whatever buffer the loader already has for it — no
@@ -966,7 +973,8 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       playOnce(Tone, runtime, sceneId, sound.stem, sound.gain, firedAtMs)
     })
     const stem = manifest.audioStems.find((s) => s.id === sound.stem)
-    const durationSeconds = Math.min(stem?.durationSeconds ?? ONCE_DUCK_MAX_SECONDS, ONCE_DUCK_MAX_SECONDS)
+    const playedSeconds = stem?.endSeconds === undefined ? stem?.durationSeconds : stem.endSeconds - (stem.startSeconds ?? 0)
+    const durationSeconds = Math.min(playedSeconds ?? ONCE_DUCK_MAX_SECONDS, ONCE_DUCK_MAX_SECONDS)
     onceDuckRef.current = { sceneId, gain: sound.gain, untilMs: performance.now() + durationSeconds * 1000, hasBeenPresented: false }
   }, [onceFired, manifest])
 

@@ -29,7 +29,7 @@
  * sample after a calibrated wait instead.
  */
 
-import { setOnboardingTourOpen } from '@/onboarding'
+import { setGlobeTourOpen, setOnboardingTourOpen } from '@/onboarding'
 import type { SectionId } from '@/timeline/sections'
 import type { PlaybackMode } from '@/types/layer'
 
@@ -71,7 +71,8 @@ export interface EarthlapseDevHook {
    *  toggle only renders then) — never silently no-ops. */
   setGlobeViewMode: (mode: 'globe' | 'map') => void
   /** Opens the first-visit tour (`@/onboarding`), or dismisses it and records it as seen — the
-   *  same single path its own Skip button takes. The harness runs in a fresh browser context
+   *  same single path its own Skip button takes. Dismissing also marks the globe tour seen, so it
+   *  never opens over a shot that expands the globe. The harness runs in a fresh browser context
    *  whose `localStorage` is empty, so the tour would otherwise open over every shot in the run;
    *  `run.mjs` dismisses it immediately after load and the one shot that guards the tour itself
    *  re-opens it. Session state, so this does not need a reload — which is what makes it
@@ -238,7 +239,10 @@ export function installDevHook(): void {
     setGlobeExpanded: (expanded) => useTimeStore.getState().setGlobeExpanded(expanded),
     getGlobeViewMode,
     setGlobeViewMode,
-    setTourOpen: setOnboardingTourOpen,
+    setTourOpen: (open) => {
+      setOnboardingTourOpen(open)
+      if (!open) setGlobeTourOpen(false)
+    },
     setLayerToggle,
     ready,
   }

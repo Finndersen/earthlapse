@@ -1,7 +1,8 @@
 """sources/audio-stems against its committed fixture.
 
 This source's normalise() emits no curated shape; its work is fetch.py's per-stem download and
-write_outputs()'s verified copy into data/media/audio/ (ADR-023).
+write_outputs()'s verified copy into data/media/audio/, cut to its loop region for a looping
+MP3 (ADR-023).
 """
 
 from __future__ import annotations
@@ -14,11 +15,14 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from pipeline import mp3
 from pipeline.audio import (
     AudioFormat,
     StemManifest,
     content_hashed_filename,
     load_stem_book,
+    published_bytes,
+    published_timing,
     sniff_audio,
 )
 from tests.sources.support import fixture_dir, load_source_module
@@ -169,11 +173,15 @@ def test_level_trim_reaches_the_reference_without_lifting_a_peak_past_full_scale
     assert _stem(loudness_db=-45.0, peak_dbfs=-8.0).level_trim_db == 8.0
 
 
-def test_a_loop_region_must_lie_inside_a_loop_safe_clip() -> None:
+def test_a_loop_region_or_end_must_fit_its_kind_of_clip() -> None:
     with pytest.raises(ValidationError, match="before its end"):
         _stem(loop={"start_seconds": 30.0, "end_seconds": 10.0})
     with pytest.raises(ValidationError, match="one-shot"):
         _stem(loop_safe=False, loop={"start_seconds": 0.0, "end_seconds": 10.0})
+    with pytest.raises(ValidationError, match="one-shots only"):
+        _stem(end_seconds=10.0)
+    with pytest.raises(ValidationError, match="room for its fade"):
+        _stem(loop_safe=False, start_seconds=9.5, end_seconds=10.0)
 
 
 def test_measure_levels_reads_a_full_scale_1khz_sine_as_minus_3_db() -> None:
@@ -182,3 +190,67 @@ def test_measure_levels_reads_a_full_scale_1khz_sine_as_minus_3_db() -> None:
     sine = np.sin(2 * np.pi * 1000.0 * t)[:, None]
 
     assert levels.measure_levels(sine, 48000) == levels.StemLevels(loudness_db=-3.0, peak_dbfs=0.0)
+
+
+# -- publishing an MP3 stem --------------------------------------------------------------------
+
+_RATE = 48000
+
+
+def _raw_mp3_with_clicks(click_seconds: list[float]) -> tuple[bytes, list[float]]:
+    """A 6 s quiet sine with one-sample clicks, and where each click lands in the decoded raw
+    clip -- the timeline `stems.toml` times are in."""
+    t = np.arange(6 * _RATE) / _RATE
+    signal = 0.05 * np.sin(2 * np.pi * 220 * t)
+    for seconds in click_seconds:
+        signal[round(seconds * _RATE)] = 0.95
+    pcm = mp3.Pcm((np.stack([signal, signal], 1) * 32767).astype(np.int16), _RATE)
+    raw = mp3.encode(pcm)
+    return raw, [_click_at(mp3.decode(raw), seconds) for seconds in click_seconds]
+
+
+def _click_at(pcm: mp3.Pcm, near_seconds: float) -> float:
+    lo = max(0, round((near_seconds - 0.05) * pcm.sample_rate))
+    window = np.abs(pcm.samples[lo : lo + round(0.1 * pcm.sample_rate), 0].astype(float))
+    return (lo + int(np.argmax(window))) / pcm.sample_rate
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"loop_safe": True, "loop": ("a", "b")},
+        {"loop_safe": False, "start_seconds": "a", "end_seconds": "b"},
+    ],
+    ids=["loop", "one-shot"],
+)
+def test_a_published_mp3_is_cut_small_with_its_times_on_the_same_audio(
+    fields: dict[str, object],
+) -> None:
+    raw, (a, b) = _raw_mp3_with_clicks([2.0, 4.0])
+    values = {"a": a, "b": b}
+    overrides = {
+        key: {"start_seconds": a, "end_seconds": b} if key == "loop" else values.get(value, value)  # type: ignore[arg-type]
+        for key, value in fields.items()
+    }
+    stem = _stem(duration_seconds=6.0, **overrides)
+
+    published = published_bytes(stem, raw)
+    timing = published_timing(stem, published)
+    decoded = mp3.decode(published)
+
+    assert len(published) < len(raw) / 2
+    start, end = (
+        (timing.loop.start_seconds, timing.loop.end_seconds)
+        if timing.loop is not None
+        else (timing.start_seconds, timing.end_seconds)
+    )
+    assert start is not None and end is not None
+    one_sample = 1.5 / decoded.sample_rate
+    assert _click_at(decoded, start) == pytest.approx(start, abs=one_sample)
+    assert _click_at(decoded, end) == pytest.approx(end, abs=one_sample)
+
+
+def test_a_looping_mp3_without_a_region_is_refused() -> None:
+    raw, _ = _raw_mp3_with_clicks([])
+    with pytest.raises(ValueError, match="needs a `loop` region"):
+        published_bytes(_stem(duration_seconds=6.0), raw)

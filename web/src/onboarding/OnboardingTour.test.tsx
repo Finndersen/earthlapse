@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useTimeStore } from '@/store/time'
 
-import { OnboardingTour } from './OnboardingTour'
-import { TOUR_STEPS } from './steps'
-import { getServerTourOpenToken, getTourOpenToken, setOnboardingTourOpen } from './visibility'
+import { GlobeTour, OnboardingTour } from './OnboardingTour'
+import { GLOBE_TOUR_JUMP_LEAD, TOUR_STEPS } from './steps'
+import { getServerTourOpenToken, getTourOpenToken, setGlobeTourOpen, setOnboardingTourOpen } from './visibility'
 
 /** Stand-ins for the controls the steps anchor to, carrying the same `data-testid`s and
  *  accessible names the real app's do — the tour resolves its targets from the live DOM. */
@@ -14,6 +14,7 @@ function mountAnchors(): void {
   host.innerHTML = `
     <div data-testid="globe-expand"></div>
     <div data-testid="era-shortcuts"></div>
+    <button type="button" data-testid="event-feed-browse"></button>
     <div data-testid="timeline-track-stack"></div>
     <div data-testid="timeline-controls-core"><button type="button" aria-label="Play"></button></div>
     <button type="button" aria-label="About & credits"></button>
@@ -46,6 +47,7 @@ const initialStoreState = useTimeStore.getState()
 
 beforeEach(() => {
   setOnboardingTourOpen(false)
+  setGlobeTourOpen(false)
   window.localStorage.clear()
   useTimeStore.setState(initialStoreState, true)
   mountAnchors()
@@ -85,7 +87,7 @@ describe('OnboardingTour', () => {
     render(<OnboardingTour />)
     const dialog = screen.getByRole('dialog', { name: TOUR_STEPS[0]!.title })
     expect(document.activeElement).toBe(dialog)
-    expect(screen.getByText('1 of 5')).toBeTruthy()
+    expect(screen.getByText('1 of 6')).toBeTruthy()
     expect(screen.getByTestId('onboarding-spotlight')).toBeTruthy()
     expect(screen.getByTestId('onboarding-skip')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
@@ -93,12 +95,12 @@ describe('OnboardingTour', () => {
 
   it('advances to the era step and back', () => {
     render(<OnboardingTour />)
-    clickNext(2)
-    expect(screen.getByText('3 of 5')).toBeTruthy()
+    clickNext(3)
+    expect(screen.getByText('4 of 6')).toBeTruthy()
     const copy = card().textContent ?? ''
     for (const name of ['Dinosaurs', 'Mesozoic', 'Humans', 'Holocene']) expect(copy).toContain(name)
     fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-    expect(screen.getByText('2 of 5')).toBeTruthy()
+    expect(screen.getByText('3 of 6')).toBeTruthy()
   })
 
   it.each([
@@ -119,14 +121,14 @@ describe('OnboardingTour', () => {
     mockMatchMedia()
     render(<OnboardingTour />)
     expect(card().textContent).toContain('Click play')
-    clickNext(4)
+    clickNext(5)
     expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy()
     cleanup()
     mockMatchMedia('max-width: 760px')
     render(<OnboardingTour />)
     expect(card().textContent).toContain('Tap play')
-    clickNext(3)
-    expect(screen.getByText('4 of 4')).toBeTruthy()
+    clickNext(4)
+    expect(screen.getByText('5 of 5')).toBeTruthy()
     fireEvent.click(screen.getByTestId('onboarding-next'))
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
   })
@@ -135,9 +137,43 @@ describe('OnboardingTour', () => {
     render(<OnboardingTour />)
     clickNext(2)
     act(() => setOnboardingTourOpen(true))
-    expect(screen.getByText('1 of 5')).toBeTruthy()
+    expect(screen.getByText('1 of 6')).toBeTruthy()
     fireEvent.click(screen.getByTestId('onboarding-skip'))
     act(() => setOnboardingTourOpen(true))
-    expect(screen.getByText('1 of 5')).toBeTruthy()
+    expect(screen.getByText('1 of 6')).toBeTruthy()
+  })
+})
+
+describe('GlobeTour', () => {
+  it('opens on the first expand, only once the first tour is closed, jumps to the empires when out of range and reports its end', () => {
+    const onJump = vi.fn()
+    const onEnd = vi.fn()
+    const collapse = vi.fn()
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') collapse()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.localStorage.clear()
+    const tours = (expanded: boolean) => (
+      <>
+        <OnboardingTour />
+        <GlobeTour expanded={expanded} empiresInDomain={false} onJumpToEmpires={onJump} onEnd={onEnd} />
+      </>
+    )
+    const { rerender } = render(tours(false))
+    rerender(tours(true))
+    expect(screen.getAllByTestId('onboarding-card')).toHaveLength(1)
+    expect(screen.getByText('1 of 6')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('onboarding-skip'))
+    expect(screen.getByRole('dialog', { name: 'Globe or map' })).toBeTruthy()
+    expect(onJump).not.toHaveBeenCalled()
+    clickNext(1)
+    expect(onJump).toHaveBeenCalledOnce()
+    expect(card().textContent).toContain(GLOBE_TOUR_JUMP_LEAD)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByTestId('onboarding-card')).toBeNull()
+    expect(onEnd).toHaveBeenCalledOnce()
+    expect(collapse).not.toHaveBeenCalled()
+    window.removeEventListener('keydown', onKeyDown)
   })
 })

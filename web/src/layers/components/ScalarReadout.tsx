@@ -19,7 +19,7 @@
 
 import { memo } from 'react'
 
-import { formatCalendarYear, formatGeoTime } from '@/timeline'
+import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { formatScalarValue } from '../format'
@@ -60,7 +60,7 @@ const ScalarReadoutBody = memo(function ScalarReadoutBody({ layer, t }: ScalarRe
         </span>
       )}
       {held && value !== null && (
-        <span className={styles.ancestorSince}>as of {formatCalendarYear(sampledT) ?? formatGeoTime(sampledT)}</span>
+        <span className={styles.ancestorSince}>as of {formatGeoTime(sampledT)}</span>
       )}
     </span>
   )

@@ -7729,10 +7729,143 @@ asked for an info popup per empire like the ones arrivals and events have.
   pixel ratio. The geometry file is fetched only once the globe is expanded with the layer on.
 
 **Amendment (2026-09-25) — Portugal joins the roster (29 lineages).** Left out at first for
-crowding, it was the one major early-modern seaborne empire the globe lacked. The lineage runs
-from Ceuta (1415) to the African colonies' independence (1975): the Kingdom of Portugal, the
-overseas `Portuguese Empire` (labelled at Salvador, since its bulk is Brazil), `Portuguese Colonies` (labelled "Portuguese India", anchored at Goa),
-Africa and Ceylon, then the Republic and the Estado Novo, which carry the colonies. Its
-Brazil-to-Macau bounding box meets every slot under the 10° box test, so it takes the Holy Roman
-Empire's slot 6: their actual territories never come within 11° while both exist, which is what
-the shader's slot-contour borders need.
+crowding, it was the one major early-modern seaborne empire the globe lacked. The lineage runs from
+Ceuta (1415) to the African colonies' independence (1975): the Kingdom of Portugal, the overseas
+`Portuguese Empire` (labelled at Salvador, since its bulk is Brazil), `Portuguese Colonies`
+(labelled "Portuguese India", anchored at Goa), Africa and Ceylon, then the Republic and the Estado
+Novo, which carry the colonies. Its Brazil-to-Macau bounding box meets every slot under the 10° box
+test, so it takes the Holy Roman Empire's slot 6: their actual territories never come within 11°
+while both exist, which is what the shader's slot-contour borders need.
+
+## ADR-060 — Calendar years inside the Holocene, ages beyond it
+
+**Status:** accepted — human-directed 2026-09-25. Closes ADR-024's follow-up "Historical sections
+still label times as 'N years ago'".
+
+**Context.** Every printed time was elapsed time ("533 years ago", "11.7 ka"). For recorded
+history a reader thinks in dates, and a relative figure goes stale every year. For deep time the
+reverse holds: "66,000,000 BCE" is false precision on a radiometric age and longer than "66 Ma".
+`formatCalendarYear` already existed but was used by two callers only, with a 3000-year horizon.
+
+**Decision.**
+- **One notation policy, in `format.ts`.** `notationAt(t)` is `'calendar'` at or after the
+  Holocene base (`HOLOCENE_BASE`, 9700 BCE) and `'age'` before it; `formatGeoTime` follows it, so
+  every caller switches together. Calendar years print bare from 1000 CE (`"1492"`), with `CE`
+  below it (`"476 CE"`) and `BCE` before year one. Years before 3000 BCE are rounded to the
+  century: before writing, a date is an archaeological estimate. `"present"` stays.
+- **A window has one notation, its oldest edge's** (`notationForWindow`), so an axis or a range
+  never mixes the two: the Pleistocene reads `"3 Ma – 11.7 ka"`, the Holocene
+  `"9700 BCE – present"`.
+- **Calendar axes round in calendar years.** Linear ticks step through multiples of a nice
+  calendar step (1500, 1600, …, not "425 years ago"). Log ticks offer granularities by 5× and 2×
+  down to 5 years, coarsest first, and a finer year only inside an interval whose coarser
+  endpoints are both drawn.
+- **The headline shows both readings.** Beneath a calendar date the era line gives its elapsed
+  time ("533 years ago") in place of the era name, which inside the Holocene is always
+  "Cenozoic"; beneath "present" it gives the anchor year.
+- **The anchor year stays AD 2025** (`epoch.ts`). It is the conversion every curated source and
+  `data/events.yaml` was normalised with; moving it is a data migration across every source,
+  not a display change.
+
+## ADR-023 amendment (2026-09-25): looping MP3 stems publish cut to their loop region
+
+ADR-023 §4 made `write_outputs()` a verified copy: no trimming, no loudness normalisation, no
+transcoding, because the machine has no `ffmpeg` or `sox` and none may become a pipeline
+dependency. Loop regions were then added to skip unusable heads and tails at playback, so every
+looping stem shipped its whole recording while playing only its region. By the time eleven
+single-scene stems joined, that was 17.6 MB of 47.1 MB published audio that never played:
+`lake-water` shipped 175 s to loop 11 s, `geiger-counter` 180 s to loop 31 s.
+
+**Decision.** A looping MP3 stem (`loop` set, `format = "mp3"`) now publishes cut to its loop
+region plus 0.1 s either side (`pipeline.audio.published_bytes`, `TRIM_MARGIN_SECONDS`). The cut
+drops whole MP3 frames and copies the kept frames' bytes unchanged (`pipeline/mp3.py`), so §4's
+rule that the pipeline decodes and re-encodes nothing stands; the pure-Python frame parser adds no
+dependency. The LAME/Xing info frame is kept and rewritten (frame and byte counts, a linear seek
+table, music length, tag CRC), so a gapless decoder applies the same encoder-delay trim as before
+and the shift is exactly the dropped frames' duration. Publish reads each published file's frame
+format back and moves `loop` and `durationSeconds` by that shift (`published_timing`);
+`stems.toml` keeps its values in the raw clip's own timeline, so a stem's sourcing comments and
+`levels.py` measurements still describe the file `fetch.py` downloads.
+
+**Checked.** Decoded in headless Chromium, all twenty trimmed stems match their raw clips
+sample for sample across the whole loop region, to within one 16-bit step (3.05e-5). The margin
+covers the one to two frames after the cut that the bit reservoir and MDCT overlap can disturb,
+since playback starts at `loopStart`. Published audio falls from 47.1 MB to 29.5 MB.
+
+**Not trimmed.** One-shots play from `start_seconds` to their end, and stems with no `loop` region
+loop the whole clip, so neither has unplayed audio to drop beyond a one-shot's short lead-in.
+
+## ADR-023 amendment (2026-09-25): scene-only stems play at most about 10 s
+
+The amendment above cut each looping stem to its loop region but left the regions and one-shots
+as sourced: `rocket` still shipped a 2:12 launch, and scene-only loops ran up to 43 s. No viewer
+holds a scene long enough to hear either, so the user set a ceiling of about 10 s on every
+scene-only stem, most shorter.
+
+**Decision.** (1) **One-shots gain an optional `end_seconds`**, one-shots only, at least the fade
+after the start: the engine schedules the stop so a one-second fade-out ends there
+(`ONE_SHOT_END_FADE_SECONDS`, `ONCE_END_FADE_SECONDS`), and the published file is cut to
+`start_seconds`..`end_seconds` like a loop region. `rocket`, `impact` and `aircraft` stop at
+10 s, and `steam-whistle` at 7.4 s, after its first blast. (2) **Every scene-only loop region is
+re-chosen at 7-10 s**, inside its earlier region so the sourcing checks on it still hold: a search
+over start and end points keeps the two ends within 0.75 dB of each other over half a second, a
+wrap step no bigger than the clip's own sample-to-sample movement nearby, and the smallest
+waveform difference across 3 ms either side of the wrap. (3) **Levels are re-measured over the
+part that now plays** (`levels.py`), since a short span can sit well off its clip's average
+(`rocket` +6.3 dB without its long decay, `howler-monkeys` +2.5 dB), and `level_trim_db` follows.
+
+Ambience stems are unchanged: they are beds that cross-fade across many scenes, not a scene's
+effect. Published audio falls from 29.5 MB to 20.2 MB; every cut file still decodes in Chromium
+to its raw clip's samples across the part that plays, within one 16-bit step (four at the head of
+`steam-whistle`, -78 dB).
+
+## ADR-023 amendment (2026-09-25): stems publish re-encoded small
+
+ADR-023 §4 ruled out transcoding because the tools to do it (`ffmpeg`, `sox`, `afconvert`) are
+system binaries the pipeline must not depend on. So every stem shipped at the bitrate of its
+download, Freesound's ~185 kbps VBR preview, and the two frame-slicing amendments above could
+only drop audio that never played, not make what does play smaller: 20.2 MB still published for
+about 6 minutes of 1x playthrough, most of it ambience beds heard from phone speakers or
+headphones.
+
+**Decision.** Publish decodes each MP3 stem (`miniaudio`), cuts the span that plays plus 0.1 s,
+and re-encodes it as constant-bitrate MP3 (`lameenc`): 96 kbps stereo, 56 kbps mono, which LAME
+resamples to 32 kHz. Both are pip wheels bundling their C libraries, so the rule behind §4
+stands: nothing needs a system binary, and every source builds and tests offline. The raw
+downloads are never modified and `stems.toml` stays in their timeline; this replaces the
+frame-slicing cut (`pipeline/mp3.py`), which re-encoding makes unnecessary.
+
+The published file carries no gapless tag, deliberately. `miniaudio` and Chromium both honour the
+raw files' LAME tags and decode them sample for sample alike, but a tag written here would be
+honoured by some browsers' decoders and not others, putting a loop point in a different place in
+each. Untagged, every decoder plays LAME's fixed 1105-sample priming as lead-in, and publish moves
+every time by exactly that. A looping MP3 must therefore name a `loop` region: a whole-clip loop
+would play the lead-in as a gap.
+
+**Loop lengths.** Ambience beds were re-cut from the same sizing a 1x playthrough gives: each is
+audible for between 23 s and 317 s of the 368 s run, so any of them repeats whatever its length,
+and the length only decides how noticeable the repeat is. Noise-like beds (wind, water, storm,
+insects, fire, volcanic, industry, traffic) loop 12-20 s; beds with recognisable calls or voices
+(birds, mammals, livestock, settlement, archosaurs) 18-29 s. `forest` and `wing-hum` keep their
+9 s and 13 s regions, the longest their vetted stretches allow.
+
+**Checked.** Decoded in Chromium, every published stem's played span lines up with its raw clip
+to within one sample at 32 kHz at both ends (correlation 0.86-1.00; the lower figures are
+high-frequency content above the new ~14 kHz ceiling). Published audio falls from 20.2 MB to
+4.8 MB.
+
+## ADR-023 amendment (2026-09-25): fire is not a permanent bed
+
+ADR-023 §1's table gave `fire` a wildfire baseline of 0.15 from 420-400 Ma onward, then a hearth
+layer from `control-of-fire`, ducked only by `humanDominance`. Simulating a 1x playthrough showed
+the result: a crackle under 317 of its 368 s, beneath every land scene from the Devonian to the
+present, loud for only 104 of them. Wildfire is an event, not the sound of every landscape.
+
+**Decision.** The wildfire baseline becomes a `bump` over 330-255 Ma, the late Palaeozoic
+high-oxygen window in which charcoal is most abundant and fire reaches the widest range of
+ecosystems (Scott, A.C. & Glasspool, I.J. (2006), PNAS 103(29), 10861-10865), peaking between
+`carboniferous-swamp` and `permian-conifer-forest`. The hearth layer keeps its ramp in over
+`control-of-fire` and now ramps out over `agriculture` (11.5-10 ka), where `settlement` takes over
+the human soundscape; the scenes that show a fire (`jebel-irhoud-firelight`, `hattusa-abandoned`)
+carry their own `fire` sound. `fire` is now audible for 49 s of the playthrough: 10 s of wildfire,
+33 s of hearth, 6 s of Hattusa.

@@ -613,6 +613,43 @@ scenes:
     framing: {focus: [0.69, 0.8], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "0ea6dc80408755ae", path: "data/pins/scenes/late-triassic-dinosaurs/0ea6dc80408755ae.jpg"}
 
+  # ~201.5 Ma, the end-Triassic extinction (events.yaml end-triassic-extinction; Blackburn, T.J.
+  # et al. (2013), Science 340, 941-945, tie it to the first Central Atlantic Magmatic Province
+  # lavas). Set in a Newark-type rift basin in what is now New Jersey, where the Orange Mountain
+  # Basalt, the first CAMP flow there (~201 Ma, up to ~200 m thick), lies between lake beds, and
+  # footprints are preserved on the mud flats bordering the rift lakes (Rutgers EPS, "Newark
+  # Basin" virtual field trip). Newark carbon-isotope data show CO2, already ~2,000 ppm, rapidly
+  # doubling with the eruptions (Schaller, M.F. et al. (2011), Science 331, 1404-1409; via
+  # Wikipedia "Triassic-Jurassic extinction event"). The large theropod track Eubrontes appears in
+  # these basins just after the boundary. Fern-dominated vegetation is the palynological "fern
+  # spike" across the boundary. The eruption is shown as a distant fissure: whether any one
+  # lakeshore saw lava in sight is not established, so the scene carries no `location`.
+  - id: end-triassic-extinction
+    t: 2.015e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The End-Triassic Extinction"
+    caption: About 201.5 million years ago, flood basalts pour out as Pangaea begins to split, doubling carbon dioxide. About three quarters of species die out, among them the crocodile-line reptiles that had kept dinosaurs in check.
+    unsourced:
+      o2_percent: 17  # rounded, between late-triassic-dinosaurs (16) and the Jurassic
+      mean_temp_c: 24  # rounded: a CO2-doubling hothouse pulse
+    subject:
+      setting: The muddy shore of a lake in a young rift valley on the supercontinent Pangaea, where it is beginning to tear apart, during the end-Triassic mass extinction
+      left_mass: a steep, dark escarpment of fresh black basalt at the valley side, its top edge still steaming, with a few dead, leafless conifers standing before it
+      vegetation: sparse, low ferns spreading over the bare shore, the few conifers dead or browning, a thin stand of horsetails at the water's edge; a stripped, impoverished landscape
+      fauna: a lone crocodile-like phytosaur, long-snouted and armoured, lying still in the shallows; a few small insects over the water
+      main_subject: a single lean, two-legged theropod dinosaur about five metres long, crested, with a long stiff tail, walking the lake's mud flat and leaving a line of deep three-toed footprints behind it
+      ground: grey-red lake mud cracked at the edges, crossed by lines of three-toed footprints, with ash grit and scattered dead wood
+      water: a shallow, murky grey-green rift lake, still and dull under the haze
+      far_bank: the far side of the rift valley, where a long, low fissure eruption glows orange along the ground, sending a curtain of lava fountains and a broad grey plume up into the sky
+      sky_and_light: a heavy yellow-grey volcanic haze across the whole sky, the sun a dim disc; dull, hot, sulphurous light
+      absent: [flowers, grass, broadleaf trees, palms, mammals, birds, feathers covering the dinosaur, sauropods, a volcanic cone or mountain, an explosive mushroom cloud, people, buildings]
+    events: [end-triassic-extinction]
+    # ADR-023: `volcanic` `loop` -- the fissure eruption across the rift is the scene's cause.
+    sound: {stem: volcanic, mode: loop, gain: 0.8}
+    framing: {focus: [0.64, 0.64], pan: 0}
+    pin: {asset_digest: "abb55ef32b32aaec", path: "data/pins/scenes/end-triassic-extinction/abb55ef32b32aaec.jpg"}
+
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
   # 165-155 Ma, Callovian-Oxfordian): Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al.
   # (2009), "A Probable Pollination Mode Before Angiosperms: Eurasian, Long-Proboscid
@@ -736,6 +773,40 @@ scenes:
     sound: {stem: buzzing, mode: loop, gain: 0.9}
     framing: {focus: [0.49, 0.55], pan: 270}
     pin: {asset_digest: "cfa0c916e9ea3943", path: "data/pins/scenes/mid-cretaceous-pollinators/cfa0c916e9ea3943.jpg"}
+
+  # ~85 Ma, the Western Interior Seaway in the time of the Smoky Hill Chalk (Niobrara Formation,
+  # Kansas, Coniacian to early Campanian, ~87-82 Ma; Kansas Geological Survey Bulletin 225;
+  # Wikipedia "Smoky Hill Chalk"). The chalk fauna gives the animals: the mosasaur Tylosaurus (up
+  # to ~13-15 m), Pteranodon (lower chalk ~86 Ma), the flightless toothed diving bird Hesperornis,
+  # the ~5 m predatory fish Xiphactinus, plesiosaurs, turtles and ammonites (events.yaml mosasaurs,
+  # western-interior-seaway). The chalk itself was laid down far offshore, so the shore is the
+  # chapter's framing onto the seaway rather than a claim about Kansas, and the scene carries no
+  # `location`.
+  - id: western-interior-seaway
+    t: 8.5e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The Western Interior Seaway"
+    caption: About 85 million years ago, a warm, shallow sea splits North America in two. Pteranodon rest on its sandbars while mosasaurs up to 13 metres long hunt offshore.
+    unsourced:
+      o2_percent: 27  # rounded, as cretaceous-forest
+      mean_temp_c: 26  # rounded: just after the mid-Cretaceous thermal maximum
+    subject:
+      setting: A low sandy shore on the margin of the Western Interior Seaway, the shallow, warm sea that splits Late Cretaceous North America from the Gulf of Mexico to the Arctic
+      left_mass: a low coastal rise of dune sand held by a stand of tall conifers and a few flowering broadleaf trees, with cycads and ferns at their feet
+      vegetation: conifers, early flowering shrubs, cycads and ferns behind the beach; no grass
+      fauna: a hundred metres offshore in deeper water, the long, dark, low back and upright tail fin of a large mosasaur breaking the calm surface as it cruises past, most of its body hidden below; a few flightless Hesperornis, loon-like diving birds, riding low on the water nearer shore; two more Pteranodon gliding high over the sea
+      main_subject: a small group of Pteranodon resting on a low sandbar at the waterline, large toothless pterosaurs with a long backward-pointing head crest and a wingspan of about six metres, standing on all fours with their wings folded, one stretching its wings to dry, one gliding in to land
+      ground: pale sand and broken shell at the tideline, scattered with coiled ammonite shells and drifted seaweed
+      water: a warm, calm, milky turquoise sea, shallow and pale near shore, deepening to blue offshore
+      far_bank: open sea to a flat horizon with no land in sight
+      sky_and_light: a hot, hazy, humid sky with towering cumulus; bright, diffused light
+      absent: [any animal leaping or bursting from the water, splashing action, open jaws or a kill, animals posed for the camera, grass, mammals, modern birds such as gulls, whales or dolphins, crocodile-shaped mosasaurs with legs, a long-necked plesiosaur, people, boats, buildings, land on the horizon]
+    events: [western-interior-seaway, mosasaurs]
+    # ADR-023: `water` `loop` -- surf and splash on an open seaway shore.
+    sound: {stem: water, mode: loop, gain: 0.85}
+    framing: {focus: [0.55, 0.6], pan: 0}
+    pin: {asset_digest: "ad9b0a3200dfe336", path: "data/pins/scenes/western-interior-seaway/ad9b0a3200dfe336.jpg"}
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
@@ -946,18 +1017,25 @@ scenes:
     framing: {focus: [0.58, 0.62], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "32b5e8d94688fbc7", path: "data/pins/scenes/arctic-hothouse-forest/32b5e8d94688fbc7.jpg"}
 
-  # Early Eocene Climatic Optimum, ~50 Ma; after the first primates (events.yaml: 56-65.9 Ma).
+  # ~47.5 Ma, the Messel maar lake, Hesse, Germany (events.yaml messel-pit): a volcanic crater
+  # lake in paratropical rainforest whose oil shale preserves the early horse Eurohippus, the
+  # lemur-like primate Darwinius and the crocodilian Diplocynodon (Lenz, O.K. et al. (2015),
+  # International Journal of Earth Sciences 104, 873-889; Franzen, J.L. et al. (2009), PLoS ONE
+  # 4(5), e5723). Messel comes a few million years after the Early Eocene Climatic Optimum
+  # (53.3-49.1 Ma; Inglis, G.N. et al. (2020), Climate of the Past 16, 1953-1968), in a world
+  # Westerhold, T. et al. (2020), Science 369, 1383-1387, still class as Hothouse, more than
+  # 10 °C warmer than today; arctic-hothouse-forest (52 Ma) holds the EECO itself.
   - id: eocene-jungle
-    t: 5.0e7
+    t: 4.75e7
     chapter: waters-edge
     shot: WATER_EDGE
     title: "A Hothouse Rainforest"
-    caption: In the hottest world of the last 66 million years, a paratropical rainforest crowds a still lake where tiny early horses come to drink.
+    caption: About 47.5 million years ago, in a hothouse world still more than 10 °C warmer than today, paratropical rainforest rings the Messel crater lake, in what is now Germany, where tiny early horses come to drink.
     unsourced:
       o2_percent: 23  # rounded: near modern
-      mean_temp_c: 27  # rounded: Early Eocene Climatic Optimum global mean, commonly put at 23-29 °C
+      mean_temp_c: 25  # rounded: no verified single figure for ~47.5 Ma; Hothouse, >10 °C above today, below the EECO's ~27 °C
     subject:
-      setting: The shore of a still lake in the paratropical rainforest of the early Eocene hothouse
+      setting: The shore of a deep, still volcanic crater lake at Messel, in what is now Germany, in the paratropical rainforest of the middle Eocene hothouse
       left_mass: a towering wall of dense rainforest, tall buttressed laurel and fig-like trees draped with lianas above palms and giant-leaved understory plants
       vegetation: dense broadleaf rainforest with palms, lianas, tree ferns and aroids, and no open ground
       fauna: a small lemur-like early primate clinging to a branch over the water; a crocodile basking on the bank
@@ -967,6 +1045,10 @@ scenes:
       far_bank: unbroken rainforest across the lake, steaming in the heat
       sky_and_light: a hot, humid, hazy sky with towering white cumulus; bright but softened sunlight in heavy, moist air
       absent: [dinosaurs, open grassland, grazing herds, elephants, deer, cattle, monkeys, apes, people, buildings]
+    events: [messel-pit]
+    # ADR-034: Messel Pit, Hesse, Germany (UNESCO site 720). Older than the human-era basemap
+    # domain, so publish reconstructs its paleo position.
+    location: {lat: 49.918, lon: 8.757, label: "Messel Pit, Germany"}
     framing: {focus: [0.63, 0.8], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "6fd97ed7b5dbfd9a", path: "data/pins/scenes/eocene-jungle/6fd97ed7b5dbfd9a.jpg"}
 
@@ -1000,6 +1082,44 @@ scenes:
     sound: {stem: wind, mode: loop, gain: 0.9}
     framing: {focus: [0.22, 0.4], pan: 0}
     pin: {asset_digest: "a2fe73ed75939b32", path: "data/pins/scenes/eocene-oligocene-icesheet/a2fe73ed75939b32.jpg"}
+
+  # ~26.5 Ma, late Oligocene, the Linxia Basin, Gansu, northwest China: Paraceratherium
+  # linxiaense from the Jiaozigou Formation, dated faunally and palaeomagnetically to the middle of
+  # chron C8r (Deng, T. et al. (2021), "An Oligocene giant rhino provides insights into
+  # Paraceratherium evolution," Communications Biology 4, 639). About 17-21 t, nearly 5 m at the shoulder and over 7.4 m
+  # long; a hornless browser with a long neck, long legs and three-toed feet. Its snout is shown
+  # as a short, mobile upper lip: reconstructions range from a prehensile lip to a short
+  # tapir-like proboscis, never an elephant trunk. Deng et al. describe late Oligocene northwest
+  # China as open woodland, with the Tibetan region still low (possibly under 2,000 m), so no
+  # grassland and no high snowy skyline. The same fauna holds the entelodont Paraentelodon and the
+  # chalicothere Schizotherium. Whether the Linxia locality was a river or lake margin is not
+  # established: the river is the chapter's framing, not a claim about the site, so the scene
+  # carries no `location`.
+  - id: paraceratherium-woodland
+    t: 2.65e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "A Giant Hornless Rhino"
+    caption: About 26.5 million years ago, in what is now northwest China, Paraceratherium, a hornless rhinoceros nearly 5 metres tall at the shoulder and one of the largest land mammals ever, browses the treetops of an open woodland.
+    unsourced:
+      o2_percent: 23  # rounded: Oligocene estimates run a little above modern
+      mean_temp_c: null  # no verified single global figure for the late Oligocene
+    subject:
+      setting: The bank of a shallow river through open woodland in what is now the Linxia Basin, northwest China, in the late Oligocene
+      left_mass: a tall, spreading broadleaf tree with a dense crown, its lower branches already stripped bare of leaves to well above head height
+      vegetation: open woodland of scattered tall broadleaf trees and dense shrubs, with bare earth and low herbs between them; only small, patchy tufts of grass
+      fauna: a heavy, pig-like entelodont rooting along the far bank; a few birds
+      main_subject: "a Paraceratherium: a colossal hornless rhinoceros nearly five metres tall at the shoulder, with long, pillar-like legs ending in three-toed feet, a deep barrel body, a long thick neck held high, and a long, low, hornless skull with a short, mobile, overhanging upper lip, stretching up at the waterline to pull leaves from a tree's high branches; thick, dull grey-brown, sparsely haired hide"
+      ground: dry, pale earth and gravel along the riverbank, scattered with fallen leaves and churned by large three-toed footprints
+      water: a shallow, slow, silty river, calm and brown-green
+      far_bank: more open woodland and shrubs on a low far bank, rolling low hills beyond, hazy in the distance
+      sky_and_light: a warm, dry, pale blue sky with a few high clouds; bright, clear sunlight
+      absent: [horn, nose horn, elephant trunk, tusks, giraffe, elephant, horses, antelope, cattle, open grassland, savanna, prairie, snow-capped mountains, high plateau skyline, people, buildings]
+    events: [paraceratherium]
+    # ADR-023: `large-animal` `loop`, as for the other scenes led by one big mammal.
+    sound: {stem: large-animal, mode: loop, gain: 0.85}
+    framing: {focus: [0.5, 0.6], pan: 0}
+    pin: {asset_digest: "de44454e569c6a6e", path: "data/pins/scenes/paraceratherium-woodland/de44454e569c6a6e.jpg"}
 
   # Early Miocene, ~18 Ma (events.yaml grassland-spread). Stromberg, C.A.E. (2005), "Decoupled
   # taxonomic radiation and ecological expansion of open-habitat grasses in the Cenozoic of North
@@ -1255,6 +1375,79 @@ scenes:
     location: {lat: 31.8514, lon: -8.8722, label: "Jebel Irhoud, Morocco"}
     framing: {focus: [0.38, 0.85], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "ca26d88194e6bbd2", path: "data/pins/scenes/jebel-irhoud-firelight/ca26d88194e6bbd2.jpg"}
+
+  # ~125 ka, the Eemian last interglacial (events.yaml eemian-interglacial), Britain's
+  # Ipswichian. The river gravels under Trafalgar Square, London, are the Ipswichian type fauna:
+  # hippopotamus, straight-tusked elephant (Palaeoloxodon antiquus), narrow-nosed rhinoceros,
+  # lion and hyena; humans and horses are absent from Britain's Ipswichian record (Sutcliffe,
+  # A.J. (1976), Phil. Trans. R. Soc. B 276, 165-195; Wikipedia "Ipswichian"). The river is the
+  # Thames at what is now central London.
+  - id: eemian-thames-hippos
+    t: 1.25e5
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Hippos in the Thames"
+    caption: About 125,000 years ago, in a world slightly warmer than today, hippos wallow in the Thames where London's Trafalgar Square now stands, and straight-tusked elephants browse its banks. No people live in Britain.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: up to ~2 C warmer than the pre-industrial Holocene at peak
+    subject:
+      setting: The broad, slow River Thames in southern Britain during the last interglacial, about 125,000 years ago, at the spot where central London now stands
+      left_mass: a stand of tall oak, hazel and maple on the near bank, dense summer foliage hanging over the water
+      vegetation: temperate deciduous woodland of oak, hazel, maple and hornbeam, reedbeds and water plants along the margins, grassy clearings between the trees
+      fauna: a straight-tusked elephant, taller than a modern elephant with long, nearly straight tusks, browsing at the woodland edge on the far bank; a few fallow deer in a clearing; herons in the reeds
+      main_subject: a group of hippopotamuses wallowing in the shallows near the bank, backs and heads above the water, one yawning
+      ground: soft grey river mud and trampled reeds on the near bank, with hippo trails worn into it
+      water: the wide, calm, slightly muddy river, reflecting the trees
+      far_bank: low wooded banks and marshy meadows fading into summer haze; no hills
+      sky_and_light: a warm, bright summer sky with scattered cumulus; soft, warm afternoon light
+      absent: [people, buildings, boats, bridges, fields, fences, domestic animals, horses, woolly mammoths, snow or ice, conifers dominating the woodland, palm trees, tropical jungle]
+    events: [eemian-interglacial]
+    # ADR-023: `hippo` `loop` -- the wallowing pod's grunts and honks.
+    sound: {stem: hippo, mode: loop, gain: 0.8}
+    location: {lat: 51.508, lon: -0.128, label: "Trafalgar Square, London"}
+    framing: {focus: [0.66, 0.64], pan: 0}
+    pin: {asset_digest: "8d06cece05af9d8e", path: "data/pins/scenes/eemian-thames-hippos/8d06cece05af9d8e.jpg"}
+
+  # At least 67.8 ka, the hand stencil in Liang Metanduno, Muna Island, Sulawesi (events.yaml
+  # earliest-cave-art; Oktaviana et al. 2026, Nature 650): faint red ochre sprayed by mouth around
+  # a hand about 14 x 10 cm, its fingertips reshaped to look pointed, a style known only from
+  # Sulawesi. The authors place the artists within "the same broad population of modern humans
+  # who went on to colonize Australia by 65,000 years ago" by the northern route through Wallacea
+  # (events.yaml sahul-arrival, whose long chronology this scene assumes), so the scene joins the
+  # two. With sea level some 75-85 m lower, reaching Sahul still took several open-water
+  # crossings, at least one near 100 km (Bird, M.I. et al. (2019), Scientific Reports 9, 8220).
+  # No watercraft survives from this period: the bamboo raft is the commonly proposed form, not
+  # evidenced, and the caption does not name one. The cave's much later (~4 ka) paintings of
+  # boats, horses and people are kept out. `location` marks Muna Island, not the cave, whose
+  # exact coordinates are unpublished.
+  - id: wallacea-hand-stencil
+    t: 6.78e4
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The Oldest Known Rock Art"
+    caption: At least 67,800 years ago, on Muna Island in Sulawesi, people spray red ochre around a hand on a cave wall, the oldest dated rock art. They are likely of the population that crossed open sea to reach Australia and New Guinea.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 11  # rounded: MIS 4 glacial stage, colder than pre-industrial but milder than the LGM (pleistocene-steppe uses 8)
+    subject:
+      setting: A tropical limestone coast on an island in Wallacea, between mainland Asia and Australia, during the last ice age, the sea lower than today but still open water between the islands
+      left_mass: a tall, pale grey limestone karst cliff streaked with dark water stains and hung with vines, a low cave mouth at its foot; just inside the entrance a person seen from behind sprays red ochre from their mouth around a hand pressed to the rock, several faint red hand stencils with narrowed, pointed fingertips already on the wall beside it
+      vegetation: dense tropical forest on the karst above the cliff, with palms, pandanus and tall broadleaf trees; mangroves and beach shrubs along the shore
+      fauna: a Sulawesi warty pig rooting at the forest edge; a few seabirds over the water
+      main_subject: a small group of people, seen from behind or in profile at a distance, dragging a simple raft of lashed bamboo poles from the beach into the shallows, a bundle of gear and a gourd lashed aboard
+      ground: a narrow beach of pale coral sand and limestone rubble, washed-up driftwood and bamboo
+      water: calm, clear, turquoise tropical shallows over pale sand, darkening to deep blue further out
+      far_bank: open sea to the horizon, where the faint, low outline of another island shows through the haze
+      sky_and_light: a warm, humid, bright tropical morning sky with scattered cumulus; clear, even sunlight
+      absent: [boats with sails, carved dugout canoes, paddles with blades, horses, dogs, metal, pottery, woven cloth, clothing beyond a simple wrap, modern people, buildings, painted boats or animals on the cave wall, identifiable faces, legible symbols]
+    events: [earliest-cave-art, sahul-arrival]
+    # ADR-023: `water` `loop` -- surf and shallows as the raft is launched, the crossing being half
+    # of what the scene shows.
+    sound: {stem: water, mode: loop, gain: 0.8}
+    location: {lat: -4.84, lon: 122.65, label: "Muna Island, Sulawesi, Indonesia"}
+    framing: {focus: [0.6, 0.62], pan: 180}
+    pin: {asset_digest: "69e247d721e82b02", path: "data/pins/scenes/wallacea-hand-stencil/69e247d721e82b02.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
@@ -1548,54 +1741,40 @@ scenes:
     framing: {focus: [0.67, 0.5], pan: 270}
     pin: {asset_digest: "ae2cd69144d41861", path: "data/pins/scenes/giza-great-pyramid/ae2cd69144d41861.jpg"}
 
-  # About 2500 BCE, the Mature ("Integration Era") Harappan phase of the Indus Valley
-  # Civilisation, conventionally c. 2600-1900 BCE (Wikipedia "Indus Valley Civilisation"); t =
-  # 2025 + 2500 = 4,525. New scene, filling the 2,700-year gap between giza-great-pyramid
-  # (t = 4,585) and imperial-rome-pantheon (t = 1,900), per the brief. Mohenjo-daro, on the
-  # Indus floodplain in Sindh, grew to tens of thousands of people in this phase (30,000-60,000
-  # is the commonly cited range for the largest Harappan cities) laid out on a strict street
-  # grid, with fired-brick houses drained by covered brick sewers running beneath the streets --
-  # "waste water was channeled to covered drains that lined the major streets" -- and served by
-  # over 700 wells, "one well for every three houses" (Wikipedia "Mohenjo-daro"). Framed on a
-  # street corner, not another riverbank: giza-great-pyramid already ends the run on water, and
-  # the brief asks for open ground/a street here. No palace or temple is shown, and no ruler:
-  # decades of excavation have found no monumental royal or religious architecture at
-  # Mohenjo-daro, and the so-called "Priest-King" is a modern archaeological label for a
-  # sculpture, not an attested title (Wikipedia "Mohenjo-daro") -- the absence of a visible
-  # elite is as distinctive and attested as the Great Bath itself, so the scene depicts
-  # ordinary street life, not a monument. The Indus script remains undeciphered, so no legible
-  # writing is shown. New event indus-valley-urbanism added (events.yaml) since no existing
-  # event covers the Indus civilisation.
-  - id: mohenjo-daro
-    t: 4.525e3
+  # About 1185 BCE; t = 2025 + 1185 = 3,210, inside events.yaml late-bronze-age-collapse. Hattusa,
+  # the Hittite capital: Jürgen Seeher's excavations show it was invaded and burned early in the
+  # 12th century BC, but only after many residents had left over several decades, taking valuables
+  # and the state archives with them (Wikipedia "Hattusa"; Biblical Archaeology Society, "The Last
+  # Days of Hattusa"). So the scene shows emptying and fire, not a battle, and does not name a
+  # cause. The Lion Gate, in the southwestern stretch of the upper city's wall, is the tall mass;
+  # the road out through it is the leading line. Framed on open ground to match
+  # classical-athens-parthenon, which follows it.
+  - id: hattusa-abandoned
+    t: 3.21e3
     chapter: open-ground
     shot: GROUND
-    title: "Mohenjo-daro, a City Without a King"
-    caption: By 2500 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.
+    title: "The Bronze Age Collapse"
+    caption: Around 1185 BCE, as the kingdoms of the Bronze Age Mediterranean collapse, the last people leave the Hittite capital, Hattusa, and fire takes what remains.
     unsourced:
       o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: same broad era as giza-great-pyramid, close to pre-industrial
+      mean_temp_c: 14  # rounded, close to pre-industrial
     subject:
-      setting: A street corner in Mohenjo-daro on the Indus floodplain, Sindh, at the edge of the raised citadel mound, about 2500 BCE
-      left_mass: a fired-mudbrick house wall two storeys high, its corner rounded smooth by generations of cart traffic, a covered brick drain with an inspection hole running along its base
-      vegetation: a few date palms and scrubby acacia beyond the mudbrick perimeter wall; nothing growing within the paved street itself
-      fauna: a humped zebu bullock harnessed to a cart; pigeons on the flat rooftops
-      main_subject: a woman drawing water at a brick-lined public well on the street corner, a zebu-drawn cart loaded with sealed pottery jars waiting behind her while a covered brick drain runs past their feet along the street's edge
-      ground: a straight, gridded street of fired mudbrick paving over the covered drain, brick house walls rising directly from the street with no encroachment
-      water: none in the frame; the city's water runs underground through covered brick drains and a public well, not an open channel
-      far_bank: no far bank; the street runs straight to a crossing lane at a right angle in the distance, part of the city's grid, with the raised brick mass of the citadel mound visible beyond the rooftops
-      sky_and_light: a hot, hazy, pale sky over the Indus floodplain; bright, hard midday sunlight
-      absent: [temples, palaces, a ruler or throne, legible Indus script, wheeled war chariots, horses, metal armour, decorative stone statuary, modern clothing, identifiable faces]
-    events: [indus-valley-urbanism]
-    # ADR-023: `settlement` `loop` -- ordinary street life in one of the largest cities of its
-    # age, on the same footing as uruk-city's own `settlement` above its ambient floor.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
-    # ADR-034: Mohenjo-daro, Sindh, Pakistan (named in `subject.setting` above). t = 4,525 BP
-    # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
-    # coordinates directly.
-    location: {lat: 27.3286, lon: 68.1381, label: "Mohenjo-daro, Pakistan"}
-    framing: {focus: [0.53, 0.55], pan: 0}
-    pin: {asset_digest: "126ac8292443ad22", path: "data/pins/scenes/mohenjo-daro/126ac8292443ad22.jpg"}
+      setting: The road leading out of Hattusa, the Hittite capital on a rocky upland in central Anatolia, about 1185 BCE, as the city is abandoned
+      left_mass: the Lion Gate, its great stone jamb carved as a snarling lion's forepart, set in a massive wall of fitted stone blocks topped with mudbrick
+      vegetation: dry summer grass, thistles and a few scrubby oaks on the rocky slopes; untended fields gone to weed
+      fauna: a donkey carrying bundles; a pair of kites circling high over the smoke
+      main_subject: a small family walking away down the road from the gate, seen from behind, leading the laden donkey, the last of the city's people leaving
+      ground: a rutted, dusty stone-edged road running from the gate across the dry slope toward the viewer, a dropped basket beside it
+      water: none in the frame; the city sits on dry, rocky upland
+      far_bank: no far bank; beyond the wall, the stone roofs and mudbrick upper storeys of the city fall away down the slope toward the citadel rock, where columns of dark smoke rise from burning public buildings
+      sky_and_light: a hot, pale, dusty late-summer sky, smoke drifting across it; hard, flat afternoon light
+      absent: [soldiers, battle, corpses, chariots in motion, ships, legible cuneiform or hieroglyphs, Greek or Roman buildings, marble, iron armour, modern clothing, identifiable faces, crowds]
+    events: [late-bronze-age-collapse]
+    # ADR-023: `fire` `loop` -- the burning citadel, the only active sound in an emptied city.
+    sound: {stem: fire, mode: loop, gain: 0.6}
+    location: {lat: 40.0197, lon: 34.6153, label: "Hattusa, Turkey"}
+    framing: {focus: [0.58, 0.52], pan: 0}
+    pin: {asset_digest: "b8e5be44eb1c7f5f", path: "data/pins/scenes/hattusa-abandoned/b8e5be44eb1c7f5f.jpg"}
 
   # About 430 BCE, the Age of Pericles; t = 2025 + 430 = 2,455. New scene, continuing the gap
   # between giza-great-pyramid and imperial-rome-pantheon. Pericles' building programme, funded
@@ -1784,6 +1963,41 @@ scenes:
     framing: {focus: [0.73, 0.55], pan: 270}
     pin: {asset_digest: "042036ae90c6428a", path: "data/pins/scenes/imperial-rome-pantheon/042036ae90c6428a.jpg"}
 
+  # About 740 CE; t = 2025 - 740 = 1,285. Tikal in the Late Classic, under Yik'in Chan K'awiil
+  # (734-766), who completed Temple I, his father Jasaw Chan K'awiil's funerary
+  # pyramid (Wikipedia "Tikal Temple I", "Yik'in Chan K'awiil"). Temple I faces Temple II
+  # across the Great Plaza. Temple facades were stuccoed and painted, mostly red, and Temple I's
+  # roof comb carried a sculpture of the enthroned ruler. Tikal drew its water from rain-fed
+  # reservoirs, among them the Palace Reservoir south of the Central Acropolis, which gives the
+  # chapter its water's edge (Wikipedia "Tikal"). Population estimates for the Late Classic city
+  # run to tens of thousands; the caption gives no number.
+  - id: tikal-classic-maya
+    t: 1.285e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Tikal"
+    caption: Around 740 CE, at the height of Classic Maya civilisation, Tikal's red temple-pyramids rise above the rainforest. Tens of thousands of people depend on the city's rain-fed reservoirs.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded, close to pre-industrial
+    subject:
+      setting: The edge of a plaster-lined rain-fed reservoir in the Maya city of Tikal, in the lowland rainforest of present-day Guatemala, about 740 CE, looking north toward the Great Plaza
+      left_mass: a tall ceiba tree and dense rainforest at the reservoir's corner, buttress roots and hanging vines
+      vegetation: dense tropical rainforest of ceiba, sapodilla and palms surrounding the city, with water lilies along the reservoir margin
+      fauna: a pair of scarlet macaws flying over; a heron wading at the reservoir edge
+      main_subject: two women filling large pottery water jars at the stone steps down into the reservoir, seen in profile at a distance, wearing plain white cotton wrapped skirts
+      ground: stuccoed stone steps and a plastered causeway edge, damp at the waterline
+      water: the still, green reservoir, reflecting the buildings and sky
+      far_bank: the long, many-roomed palace ranges of the Central Acropolis, plastered and painted red, with the steep stepped pyramid of Temple I rising sharply beyond them, a single small temple on its summit topped by a tall roof comb, painted deep red with its stucco decoration picked out in colour, and other temple roof combs rising above the forest canopy in the distance
+      sky_and_light: a humid tropical morning sky with building cumulus; bright, clear light after rain
+      absent: [ruins, collapsed stonework, trees growing from the pyramids, bare grey unpainted stone, moss or lichen, tourists, modern clothing, identifiable faces, horses, metal tools, wheels, Aztec or Egyptian style pyramids, legible glyphs]
+    events: [tikal-late-classic]
+    # ADR-023: `howler-monkeys` `loop` -- recorded in Guatemala, the forest around the city.
+    sound: {stem: howler-monkeys, mode: loop, gain: 0.85}
+    location: {lat: 17.2220, lon: -89.6237, label: "Tikal, Guatemala"}
+    framing: {focus: [0.6, 0.6], pan: 0}
+    pin: {asset_digest: "a3b536712371d79f", path: "data/pins/scenes/tikal-classic-maya/a3b536712371d79f.jpg"}
+
   # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =
   # 2025 - 1150 = 875. Wikipedia "Angkor Wat": construction ran 1113-1150 (his reign), building
   # work usually dated 1122-1150, close to his death; a Hindu temple to Vishnu, later converted
@@ -1963,16 +2177,55 @@ scenes:
       sky_and_light: a pale, cool, partly overcast North Sea sky with breaks of sun; soft, even daylight
       absent: [steam power, steamships, motor vehicles, bicycles, canal tour boats, houseboats, cars parked along the canal, cast-iron street lamps, modern clothing, electric light, legible text or ledger writing, identifiable faces, factory chimneys, tourists, modern signage]
     events: [dutch-golden-age-voc]
-    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
-    # ambient floor -- merchants, a clerk's ledger and dockworkers rolling barrels read as
-    # commerce, not a quiet canal; `industry`/`traffic` are both still 0 this early (t = 375,
-    # ahead of `industrial-revolution`).
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `ship-rigging` `loop` -- creaking hulls and rigging of the moored fleet.
+    sound: {stem: ship-rigging, mode: loop, gain: 0.7}
     # ADR-034: Amsterdam, Netherlands. t = 375 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 52.3730, lon: 4.8924, label: "Amsterdam, Netherlands"}
     framing: {focus: [0.56, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "815e21329ccda9ba", path: "data/pins/scenes/amsterdam-voc-harbour/815e21329ccda9ba.jpg"}
+
+  # About 1740, Nihonbashi in Edo; t = 2025 - 1740 = 285. Edo passes about a million people in
+  # the 1720s (events.yaml edo-million-city). The fish market (Uogashi) stood on the Nihonbashi
+  # River's north bank from the early 1600s until 1923. Hokusai's (c. 1830-32) and Hiroshige's
+  # (1856) Nihonbashi prints show storehouses lining the canal, laden cargo boats, Edo Castle
+  # beyond and Fuji ~100 km to the west-southwest; they are a century later than this scene,
+  # so they stand as evidence of a stable townscape, not a picture of 1740. Edo Castle has no
+  # main keep: it burned in the Meireki fire of 1657 and was never rebuilt, so only turrets
+  # (yagura) and white walls on stone ramparts show. The bridge is wooden (the stone one dates
+  # from 1911). Plastered, tile-roofed fireproof storehouses (dozo kura) were permitted along
+  # riverbanks from 1691 and encouraged in the Kyoho era (1716-35). Townspeople's cotton
+  # clothing was held to subdued browns, greys and indigo by sumptuary law. Sources: Met Museum
+  # and Brooklyn Museum print records; MLIT multilingual interpretation database (Edo Castle,
+  # Nihonbashi); Chuo City tourism (Uogashi).
+  - id: edo-nihonbashi
+    t: 285.0
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Edo, a City of a Million"
+    caption: By 1740, Edo is one of the largest cities in the world, with around a million people. At Nihonbashi, cargo boats crowd the canal beside the city's fish market.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: mid-18th-century global mean, within the Little Ice Age, close to pre-industrial
+    subject:
+      setting: The Nihonbashi River in the heart of Edo, Japan, about 1740, beside the fish market and the arched wooden Nihonbashi bridge
+      left_mass: a row of two-storey fireproof merchant storehouses rising straight from the stone canal wall, thick white-plastered walls with black tile facing at their base and heavy grey tiled roofs, small shuttered windows
+      vegetation: a single pine leaning over the canal wall; otherwise stone, timber and tile
+      fauna: gulls and crows over the fish market; a cat on a boat's gunwale
+      main_subject: long, narrow, flat-bottomed wooden cargo boats moored at a stone landing, men in short indigo jackets, loincloths and cloth headbands unloading baskets of fish and bales of goods onto the quay, a slim roofless river-taxi boat sculled past them by a single stern oar, faces not distinguishable
+      ground: the stone and timber landing of the fish market, wet with water, wooden tubs and shallow baskets of fish, straw mats and coiled rope
+      water: the calm, grey-green water of the city canal, crowded with moored cargo boats and small sculled boats
+      far_bank: the low wooden arch of the Nihonbashi bridge crossing the river, crowded with pedestrians; beyond it, dark tiled roofs of the merchant quarter, the white walls and low turrets of Edo Castle on stone ramparts, and far off on the horizon the snow-capped cone of Mount Fuji
+      sky_and_light: a clear, crisp winter morning sky; bright, low, clean sunlight
+      absent: [a tall multi-storey castle keep, stone bridge, rickshaws, steamships, sailing ships with square sails, Western clothing, Western hats, umbrellas, gas or electric lamps, telegraph poles, glass windows, brick buildings, colour woodblock prints, legible signage or text, bright silk clothing, identifiable faces, modern Tokyo skyline]
+    events: [edo-million-city]
+    # ADR-023: `ship-rigging` `loop` -- the cargo boats creaking at the quay.
+    sound: {stem: ship-rigging, mode: loop, gain: 0.7}
+    # ADR-034: Nihonbashi, Tokyo, Japan. t = 285 BP sits inside the human-era basemap domain
+    # (ADR-030), so publish marks these present-day coordinates directly.
+    location: {lat: 35.6841, lon: 139.7745, label: "Nihonbashi, Tokyo"}
+    framing: {focus: [0.62, 0.6], pan: 180}
+    pin: {asset_digest: "777a0ddfc512b4bb", path: "data/pins/scenes/edo-nihonbashi/777a0ddfc512b4bb.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
   # documented place and view (t = 2025 - 1830 = 195). By this date steam power had become dominant in
@@ -2009,6 +2262,48 @@ scenes:
     sound: {stem: industry, mode: loop, gain: 1.0}
     framing: {focus: [0.62, 0.62], pan: 180}
     pin: {asset_digest: "4ee06d67fed510e9", path: "data/pins/scenes/industrial-mill-town/4ee06d67fed510e9.jpg"}
+
+  # 10 May 1869, Promontory Summit, Utah; t = 2025 - 1869 = 156 (events.yaml
+  # first-transcontinental-railroad). Central Pacific No. 60 "Jupiter" (wood-burning, balloon
+  # stack; reported in March 1869 as ultramarine blue with crimson driving wheels) and Union
+  # Pacific No. 119 (coal-burning, straight stack) stood pilot to pilot; an eight-man Chinese crew
+  # brought up and laid the last rail. The crowd, estimated at a few hundred to about 3,000,
+  # included track workers of both lines, officials, four companies of the 21st Infantry and two
+  # bands. The site is a treeless sagebrush basin among low, arid ranges, with a telegraph line
+  # along the track that carried "DONE" at 12:47 pm. Sources: Wikipedia "Jupiter (locomotive)",
+  # "Union Pacific No. 119", "Golden Spike National Historical Park"; cprr.org; Stanford Chinese
+  # Railroad Workers in North America Project. No. 119's original paint scheme is unsettled, so
+  # the subject names only its stack. Open-ground (GROUND): the single track runs across the
+  # frame so both engines read nose to nose, and a wagon track is the chapter's low leading line;
+  # a track running toward the camera made the model split them onto crossing tracks.
+  - id: promontory-golden-spike
+    t: 156.0
+    chapter: open-ground
+    shot: GROUND
+    title: "The Railroad Spans a Continent"
+    caption: On 10 May 1869 in Utah, a Chinese crew lays the last rail of the first railroad across North America.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded: late-19th-century global mean, close to pre-industrial
+    subject:
+      setting: Promontory Summit, Utah, a treeless high-desert basin, at midday on 10 May 1869, where the two halves of the first railroad across North America meet
+      left_mass: a tall stack of fresh wooden railroad ties and spare iron rails beside a wooden telegraph pole, its wires running off toward the right
+      vegetation: grey-green sagebrush scattered across the dry ground; no trees anywhere
+      fauna: none
+      main_subject: two steam locomotives standing on one single straight track that runs level across the middle ground from left to right, facing each other nose to nose with their cowcatchers almost touching and both seen from the side; on the left a wood-burning 4-4-0 with a large funnel-shaped balloon smokestack, painted deep ultramarine blue with crimson driving wheels; on the right a coal-burning 4-4-0 with a straight smokestack; in the short gap between their cowcatchers a small crew of Chinese railroad workers with long braided queues lowers the last iron rail onto the ties, a crowd of workers, soldiers in dark blue uniforms and men in dark frock coats gathered along both sides of the track, faces not distinguishable
+      ground: dry, pale earth and sagebrush, a worn wagon track running from the near foreground toward the meeting point of the two locomotives
+      water: none; the basin is dry sagebrush desert
+      far_bank: no far bank; a scatter of canvas tents and rough plank shacks behind the track, the line of telegraph poles running along it into the distance, and low, bare, brown mountains on the horizon
+      sky_and_light: a clear, cool spring sky with a few high clouds; bright, crisp midday sunlight
+      absent: [a second track, crossing tracks, parallel tracks, tracks running toward the camera, legible text, legible locomotive names or numbers, banners, company flags, state flags, snow-capped peaks, trees, grass lawns, paved roads, monuments, visitor centre, modern clothing, cars, electric power lines, identifiable faces, handshake pose]
+    events: [first-transcontinental-railroad]
+    # ADR-023: `steam-whistle` `once` -- a later locomotive's chime whistle stands in; no 1869
+    # recording can exist.
+    sound: {stem: steam-whistle, mode: once, gain: 1.0}
+    # ADR-034: Golden Spike National Historical Park, Promontory Summit, Utah.
+    location: {lat: 41.6179, lon: -112.5516, label: "Promontory Summit, Utah"}
+    framing: {focus: [0.52, 0.62], pan: 0}
+    pin: {asset_digest: "4ebc6badc624af87", path: "data/pins/scenes/promontory-golden-spike/4ebc6badc624af87.jpg"}
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
   # Wikipedia, "Wright Flyer" and "Wright brothers": ~12 s, ~36.5 m, witnessed by the brothers,
@@ -2084,19 +2379,8 @@ scenes:
       sky_and_light: a clear, pale industrial-city sky with a faint haze of coal smoke; bright, flat daylight
       absent: [modern cars, motor buses, traffic lights, painted lane markings, neon signs, skyscrapers, identifiable faces, legible number plates, legible signage, solid-black Model Ts, night scene, lit electric streetlights]
     events: [ford-model-t-assembly-line, edison-electric-light]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.5, to
-    # carry the moment motor traffic arrives (the global `traffic` curve is only ~0.01 at
-    # t = 112). Dropped by that amendment's own 2026-09-15 re-review: the `traffic` stem is
-    # qubodup's "Seamless City Loop", a dense *modern* road-traffic bed (engine hum concentrated
-    # near 250 Hz, steady and continuous) -- it does not match a 1913 street of Model Ts, a
-    # streetcar and a horse-drawn wagon at any gain. No CC0/PD clip of period-correct early
-    # motor traffic (or streetcar bell/trolley) was sourced in the time this pass budgeted, so
-    # per CLAUDE.md ("if something is unusable, stop and report; do not silently substitute a
-    # different dataset") this scene carries no `sound` -- the flat 0.48 `settlement` floor every
-    # scene this side of Uruk already has is what plays here.
-    # ADR-034: Highland Park, Michigan -- the Ford Highland Park Plant named in this record's own
-    # comment above. t = 112 BP sits inside the human-era basemap domain (ADR-030), so publish
-    # marks these present-day coordinates directly.
+    # ADR-023: `klaxon-horn` `once` -- the period's electric Klaxon horn.
+    sound: {stem: klaxon-horn, mode: once, gain: 0.9}
     location: {lat: 42.4048, lon: -83.0966, label: "Highland Park, Michigan"}
     framing: {focus: [0.55, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "1bb72621b940a4f0", path: "data/pins/scenes/ford-model-t-street/1bb72621b940a4f0.jpg"}
@@ -2158,8 +2442,8 @@ scenes:
     pin: {asset_digest: "9efe47ae999402d2", path: "data/pins/scenes/somme-1916/9efe47ae999402d2.jpg"}
 
   # About 1930, Tokyo's Ginza district at the height of its interwar "Ginbura" mass urban
-  # culture; t = 2025 - 1930 = 95. Fills the 1916-1944 hole a review flagged between somme-1916
-  # (t = 109) and normandy-landings-dday (t = 81) -- the 1920s-30s -- with the first modern mass
+  # culture; t = 2025 - 1930 = 95. Fills the interwar years between somme-1916 (t = 109) and
+  # trinity-test (t = 80) -- the 1920s-30s -- with the first modern mass
   # urban lifestyle rather than more war, and deliberately does not repeat ford-model-t-street's
   # 1913 Detroit street: different city, continent and decade. Wikipedia "Ginza": the custom of
   # "killing time in Ginza" ("Ginbura") develops strongly between the two world wars. Wikipedia
@@ -2177,8 +2461,8 @@ scenes:
   # green-revolution-fields use. TONE: no legible Japanese or English signage, no glowing neon --
   # VISUAL_SPEC §2 holds this chapter's time of day to daylight, so the era's famous electric
   # signs are shown unlit, exactly as ford-model-t-street's already are. Kept in open-ground
-  # (GROUND), continuing the run from somme-1916 before the existing cut to waters-edge at
-  # normandy-landings-dday: no water is intrinsic to a Ginza street. Review fix (2026-09-15):
+  # (GROUND), continuing the run from somme-1916 before the cut to molten-earth at
+  # trinity-test: no water is intrinsic to a Ginza street. Review fix (2026-09-15):
   # `setting` dropped its camera-position clause (ADR-008 -- shot/composition set the viewpoint,
   # subject fields describe only the place); Tokyo's municipal bus service in fact dates to 1924
   # (Wikipedia "Toei Bus": emergency routes started after streetcar lines were damaged in the
@@ -2205,77 +2489,11 @@ scenes:
       sky_and_light: a clear, pale sky faintly hazed with coal smoke over the city; bright, flat daylight, streetlamps unlit in the daytime brightness
       absent: [glowing neon signs, night scene, cars from after the 1930s, modern traffic lights, legible Japanese or English signage, any lettering or characters on facades, awnings, signboards, streetcars or buses, shop names, route numbers, modern clothing, identifiable faces, horse-drawn traffic, skyscrapers, post-war architecture, a visible subway or metro entrance]
     events: [ginza-modern-urban-culture]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.55, for
-    # the streetcars, motor bus and sedan sharing the street. Dropped by that amendment's own
-    # 2026-09-15 re-review: `traffic` is qubodup's "Seamless City Loop", a dense *modern*
-    # road-traffic bed (steady engine hum near 250 Hz) -- it does not match 1930 streetcars and a
-    # handful of early motor vehicles at any gain. No CC0/PD clip of a period streetcar bell/trolley
-    # or a single early motor vehicle was sourced in the time this pass budgeted, so per CLAUDE.md
-    # ("if something is unusable, stop and report; do not silently substitute a different dataset")
-    # this scene carries no `sound` -- the flat 0.48 `settlement` floor already covers the crowd
-    # murmur ("Ginbura" strollers) this scene's own subject calls for.
-    # ADR-034: Ginza, Tokyo, Japan. t = 95 BP sits inside the human-era basemap domain (ADR-030),
-    # so publish marks these present-day coordinates directly.
+    # ADR-023: `tram-bell` `once` -- an American trolley bell stands in for the Tokyo streetcar's.
+    sound: {stem: tram-bell, mode: once, gain: 0.9}
     location: {lat: 35.6717, lon: 139.7650, label: "Ginza, Tokyo"}
     framing: {focus: [0.6, 0.62], pan: 180}
     pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/pins/scenes/ginza-modern-tokyo/81ccaf1dcc006f1f.jpg"}
-
-  # 6 June 1944, D-Day, the Normandy landings; t = 2025 - 1944 = 81 (events.yaml
-  # d-day-normandy-landings). Wikipedia "Normandy landings": the amphibious assault went in at
-  # about 06:30, roughly half an hour after that morning's ~05:58 sunrise -- shortly after
-  # sunrise, not at dawn or pre-dawn, and every other waters-edge scene is daylight, so this
-  # keeps the chapter's held time of day rather than breaking it. The often-quoted 156,000
-  # troops ashore "on the first day" is the whole day's total across sea and air -- 24,000 of
-  # them airborne troops who dropped inland overnight, not landing-craft arrivals -- so the
-  # caption states the seaborne and airborne figures separately rather than crediting the whole
-  # total to the beach landing craft this scene shows. The WATER_EDGE_SERIES composition fixes
-  # "calm water fills the bottom third of the frame," so the sea is described as a low swell,
-  # not the heavy breaking surf an earlier draft named, which flatly contradicted that fixed
-  # composition text; the invasion fleet is placed far out on the Channel horizon, not behind
-  # the beach's own bluff, where ships could not physically stand. Framed at the water's edge
-  # per the brief -- a landing craft grounding and troops wading ashore -- returning to the
-  # waters-edge chapter after the open-ground run (first-powered-flight/ford-model-t-street/
-  # somme-1916): a deliberate cut, appropriate for the shift from a static trench landscape to a
-  # seaborne invasion. TONE per the brief: documentary and sombre -- no bodies, wounds, blood or
-  # gore; troops seen from behind and at a distance, faces and unit insignia not distinguishable;
-  # no national flag shown.
-  - id: normandy-landings-dday
-    t: 81.0
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "D-Day Landings"
-    caption: Shortly after sunrise on 6 June 1944, Allied landing craft put some 132,000 troops ashore on five Normandy beaches, with a further 24,000 landing by parachute and glider overnight.
-    unsourced:
-      o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: mid-20th-century global mean, close to pre-industrial
-    subject:
-      setting: A Normandy invasion beach shortly after sunrise on 6 June 1944, at the waterline as landing craft approach
-      left_mass: a steel beach obstacle, an angled iron "hedgehog" obstacle half-submerged at the tideline
-      vegetation: none on the open sand; low dune grass visible on the bluff far behind
-      fauna: none
-      main_subject: a landing craft grounding in the shallows just off the beach, its ramp dropping as soldiers in helmets and full kit wade forward through the surf, seen from behind and at a distance, no face distinguishable, no unit insignia or flag visible
-      ground: the wet, dark sand of the tideline in the immediate foreground, with tank tracks and churned ripples
-      water: a light chop on the grey Channel water, a low swell breaking around the landing craft's hull
-      far_bank: a low, smoke-hazed bluff above the beach, scarred with earthworks; more landing craft closer along the shore, with the invasion fleet lying far out on the grey Channel horizon
-      sky_and_light: a heavily overcast, grey early-morning sky with low broken cloud; flat, cool, diffused light
-      absent: [bodies, visible wounds, blood, gore, national flags or insignia shown prominently, identifiable faces, glorified heroic posing, modern military equipment, dropped kit or supplies]
-    events: [d-day-normandy-landings, world-war-ii]
-    # ADR-023 (2026-09-15 human-history scene sounds): `water` `loop` -- the scene is framed at
-    # the waterline as the ramp drops and soldiers wade through surf, the most immediate sound of
-    # the moment depicted. `artillery` (new this amendment, see `somme-1916`) was considered --
-    # the queue named this scene as an optional second use -- but the scene's own subject is the
-    # landing itself, not the bombardment; using `artillery` here too would also blur the two
-    # scenes' distinct character when they dissolve past each other on the timeline. Gain raised
-    # from 0.55 to 0.7 by that amendment's own 2026-09-15 re-review: 0.55 (-35.2 dB) led the flat
-    # 0.48 (-36.4 dB) `settlement` floor by only 1.2 dB, a weak margin for the deliberate surf cue
-    # over incidental background murmur; 0.7 (-33.1 dB) clears it by comfortably over 3 dB.
-    sound: {stem: water, mode: loop, gain: 0.7}
-    # ADR-034: Omaha Beach, Normandy, France, as a representative point among the five landing
-    # beaches. t = 81 BP sits inside the human-era basemap domain (ADR-030), so publish marks
-    # these present-day coordinates directly.
-    location: {lat: 49.3721, lon: -0.8256, label: "Normandy, France"}
-    framing: {focus: [0.68, 0.6], pan: 330}
-    pin: {asset_digest: "3376a765c7aa7975", path: "data/pins/scenes/normandy-landings-dday/3376a765c7aa7975.jpg"}
 
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
   # Jornada del Muerto desert, New Mexico; t = 2025 - 1945 = 80. Wikipedia "Trinity (nuclear test)":
@@ -2291,15 +2509,11 @@ scenes:
   # distant-sky-event framing fits an actual, well-attested observation point. Framed on the existing
   # molten-earth chapter's ridge-vista composition (WIDE_RIDGE), not open-ground: VISUAL_SPEC §2 holds
   # time of day constant within a chapter, and this pre-dawn fireball's light has nothing in common
-  # with open-ground's scenes (daytime, per first-powered-flight/ford-model-t-street/somme-1916) or
-  # with its new immediate neighbour normandy-landings-dday (t = 81, an overcast early-morning
-  # waters-edge scene, shortly after sunrise rather than at dawn -- see that scene's own comment)
-  # -- molten-earth's WIDE_RIDGE vista, by contrast, already holds one extreme, singular event
-  # (the Moon-forming impact) far from any neighbour in time, and a chapter recurring as non-adjacent
-  # runs is exactly what ADR-020 permits. No new chapter or composition was added. (Updated
-  # 2026-09-15: this note originally compared only against first-powered-flight, t = 122; three human-
-  # era scenes were added between them, and this paragraph is corrected to describe the current
-  # neighbours rather than left to describe scenes that no longer sit adjacent.)
+  # with open-ground's daytime scenes (first-powered-flight through ginza-modern-tokyo) -- molten-
+  # earth's WIDE_RIDGE vista, by contrast, already holds one extreme, singular event (the
+  # Moon-forming impact) far from any neighbour in time, and a chapter recurring as non-adjacent
+  # runs is exactly what ADR-020 permits. It is the one Second World War scene, so it also carries
+  # the world-war-ii event.
   - id: trinity-test
     t: 80.0
     chapter: molten-earth
@@ -2320,7 +2534,7 @@ scenes:
       far_bank: no far bank; the desert basin drops away below the hilltop to a broad, flat plain running to a low, distant line of mountains silhouetted at the horizon
       sky_and_light: a dark pre-dawn sky at the edges, the eastern horizon just beginning to pale, overwhelmed at centre by the fireball's own blinding white-orange light
       absent: [a city, buildings, roads, modern military vehicles, people close-up, identifiable faces, a mushroom cloud far larger than the scale of a single test, a second sun, other explosions]
-    events: [trinity-test]
+    events: [trinity-test, world-war-ii]
     # ADR-023 (v2): scene-only one-shot `impact` (a vintage explosion rumble: a sharp attack,
     # then ~20 s of low rolling rumble), fired `once` at a lower gain than kpg-arrival -- the
     # detonation as heard from ~20 miles away.
@@ -2490,14 +2704,8 @@ scenes:
       sky_and_light: a lightly hazy industrial harbour sky; bright, flat daylight
       absent: [modern megamax container ships, automated straddle carriers, RFID gate scanners, legible shipping-line logos, legible container markings, identifiable faces, modern gantry-crane design, sailing ships]
     events: [containerization]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `industry` `loop`, gain 0.7, for
-    # gantry cranes and dock machinery. Dropped by that amendment's own 2026-09-15 re-review: the
-    # `industry` stem is blukotek's "Work of a Large Steam Engine", a Victorian piston beat at
-    # about 1.5 strokes/s (`sources/audio-stems/stems.toml`) -- it does not match 1975 gantry
-    # cranes and dockside machinery at any gain. No CC0/PD clip of period crane/container-yard
-    # sound was sourced in the time this pass budgeted, so per CLAUDE.md ("if something is
-    # unusable, stop and report; do not silently substitute a different dataset") this scene
-    # carries no `sound` -- the flat 0.48 `settlement` floor covers the working-port ambience.
+    # ADR-023: `ship-horn` `once` -- a container ship's horn over the yard.
+    sound: {stem: ship-horn, mode: once, gain: 1.0}
     framing: {focus: [0.52, 0.5], pan: 180}
     pin: {asset_digest: "8cc9c5451b9b81f3", path: "data/pins/scenes/containerisation-port/8cc9c5451b9b81f3.jpg"}
 
@@ -2547,6 +2755,8 @@ scenes:
     # aral-sea-drying, energy-transition-solar-wind) means reading web/src/audio/stemGains.ts,
     # which this pass does not own (data/scenes.yaml and data/events.yaml only). Left unset
     # rather than guessed; a follow-up owning web/src/audio can add it.
+    # ADR-023: `geiger-counter` `loop` -- the exclusion zone's defining sound.
+    sound: {stem: geiger-counter, mode: loop, gain: 0.8}
     location: {lat: 51.4046, lon: 30.0538, label: "Pripyat, Ukraine"}
     framing: {focus: [0.44, 0.45], pan: 90}
     pin: {asset_digest: "73f83b86278a7119", path: "data/pins/scenes/chernobyl-exclusion-zone/73f83b86278a7119.jpg"}
@@ -2593,13 +2803,9 @@ scenes:
       sky_and_light: a bright, cold, clear November sky with thin high cloud; crisp, direct daylight
       absent: [post-1990s clothing, identifiable faces, national flags or political symbols shown prominently, legible graffiti text or lettering, violence, weapons, modern vehicles, night scene, floodlights]
     events: [berlin-wall-falls]
-    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
-    # ambient floor -- a crowd at the wall, hammering and chiselling. `knapping` (stone-on-stone
-    # hits) was considered for the hammer/chisel strikes but rejected: it is a single rhythmic
-    # tapping loop built for one person's flintwork, not a crowd, and reusing it here would blur
-    # its own acheulean-erectus association; a foregrounded crowd murmur reads truer to a jubilant
-    # gathering than a mismatched percussion loop would.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `wall-chiselling` `loop` -- hammer-on-chisel strikes stand in for the crowds chipping at
+    # the Wall; the `settlement` floor carries the crowd.
+    sound: {stem: wall-chiselling, mode: loop, gain: 0.85}
     # ADR-034: Berlin, Germany, at the Brandenburg Gate -- a representative point on the wall's
     # line, not the single unnamed crossing this record's subject depicts. t = 36 BP sits inside
     # the human-era basemap domain (ADR-030), so publish marks these present-day coordinates
@@ -2654,6 +2860,8 @@ scenes:
     # candidate for the smouldering burn, but verifying its gain against the traffic/settlement
     # ambient floor at this t needs web/src/audio/stemGains.ts, which this pass does not own.
     # Left unset rather than guessed.
+    # ADR-023: `chainsaw` `loop` -- a close recording held low so it reads as distant clearing.
+    sound: {stem: chainsaw, mode: loop, gain: 0.6}
     framing: {focus: [0.63, 0.66], pan: 270}
     pin: {asset_digest: "43a0d45ebd59fac5", path: "data/pins/scenes/amazon-deforestation-fishbone/43a0d45ebd59fac5.jpg"}
 
@@ -2790,6 +2998,8 @@ scenes:
     # own comment computes (e.g. global-city-rush-hour, shenzhen-bay-present) -- there is no
     # mechanism in the stem catalogue for muting the global bed locally to one scene, and this
     # pass does not own web/src/audio to add one. Left unset rather than guessed.
+    # ADR-023: `church-bell` `loop` -- a Venice bell over the emptied waterfront.
+    sound: {stem: church-bell, mode: loop, gain: 0.7}
     location: {lat: 45.4340, lon: 12.3417, label: "Riva degli Schiavoni, Venice, Italy"}
     framing: {focus: [0.19, 0.45], pan: 0}
     pin: {asset_digest: "a1bd3a8153aa5efc", path: "data/pins/scenes/covid-19-venice-lockdown/a1bd3a8153aa5efc.jpg"}

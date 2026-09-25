@@ -57,6 +57,16 @@ const LGM_WIND_SCENE_T = 2.0e4
 const LGM_WIND_YOUNGER_EDGE = 1.9e4
 const LGM_WIND_BUMP_GAIN = 0.65
 
+/**
+ * Charcoal is most abundant from the late Carboniferous through the Permian, as atmospheric O2
+ * climbs toward ~30% and fire reaches an ever wider range of ecosystems (Scott, A.C. &
+ * Glasspool, I.J. (2006), "The diversification of Paleozoic fire systems and fluctuations in
+ * atmospheric oxygen concentration," PNAS 103(29), 10861-10865). The window peaks between
+ * `carboniferous-swamp` (310 Ma) and `permian-conifer-forest` (294 Ma).
+ */
+const LATE_PALEOZOIC_FIRE_WINDOW: TimeWindow = { tMin: 2.55e8, tMax: 3.3e8 }
+const LATE_PALEOZOIC_FIRE_GAIN = 0.15
+
 /** `k-pg-impact` t: the `kpg-arrival` scene. */
 const K_PG_IMPACT = 6.6043e7
 /** ~4 days after the impact; `kpg-darkness` sits here. */
@@ -308,10 +318,13 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
     // `livestock-domestication`: Fertile Crescent goats, sheep, cattle 10–11 ka (Zeder).
     livestock: clampUnit(rampLog(t, 1.3025e4, 9.5e3, 0, 0.22) * duck(0.9, dominance)),
     fire: clampUnit(
-      // Wildfire once land plants burn (ADR-023 §1).
-      rampLog(t, 4.2e8, 4.0e8, 0, 0.15) * duck(0.5, dominance) +
-        // Hearth fire: `control-of-fire` t_max → t_min.
-        rampLog(t, 1.5e6, 4.0e5, 0, 0.17) * duck(1, dominance),
+      // Wildfire only through the late Palaeozoic high-oxygen window, not as a bed under every
+      // land scene since plants first burned (ADR-023 amendment "fire is not a permanent bed").
+      bump(t, LATE_PALEOZOIC_FIRE_WINDOW) * LATE_PALEOZOIC_FIRE_GAIN +
+        // Hearth fire: in over `control-of-fire` t_max → t_min, out as `agriculture`'s villages
+        // hand the human soundscape to `settlement` (its t_max → t_min). The scenes that show a
+        // fire carry their own `fire` sound.
+        rampLog(t, 1.5e6, 4.0e5, 0, 0.17) * rampLog(t, 1.1525e4, 1.0025e4, 1, 0),
     ),
     settlement: clampUnit(
       // Distant camp voices: `homo-sapiens-origin` t → `out-of-africa-migration` t_min.

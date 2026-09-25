@@ -193,6 +193,8 @@ export interface AudioStem {
    *  unwanted) lead-in so playback starts right on the scene's `once` trigger. Absent: starts
    *  at 0. Additive: absent on any manifest published before this field existed. */
   startSeconds?: number
+  /** Where a one-shot stops, fading out over the second before. Absent: it plays to its end. */
+  endSeconds?: number
 }
 
 export interface AudioLoop {

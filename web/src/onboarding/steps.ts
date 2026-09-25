@@ -1,10 +1,11 @@
 /**
- * The tour's steps, as data. Four things a viewer cannot work out by looking (IMPLEMENTATION
+ * The tour's steps, as data. Things a viewer cannot work out by looking (IMPLEMENTATION
  * § Backlog — onboarding): that play runs the timeline through the scenes, that the timeline
- * scrubs, what the era shortcuts are, and that the corner orb opens.
+ * scrubs, that events pop up as it passes them and all of them can be browsed, what the era
+ * shortcuts are, and that the corner orb opens.
  *
  * Each step names its target by CSS selector, resolved against the live DOM at runtime — never a
- * fixed coordinate, since three of the four targets genuinely move between the phone and desktop
+ * fixed coordinate, since most of the targets genuinely move between the phone and desktop
  * layouts. The selectors reuse the `data-testid`s those controls already carry rather than
  * introducing a second attribute convention.
  *
@@ -13,7 +14,9 @@
  * real geological unit. Its copy names both halves of each pairing.
  */
 
-export type TourStepId = 'play' | 'scrub' | 'eras' | 'globe' | 'about'
+export type TourStepId = 'play' | 'scrub' | 'events' | 'eras' | 'globe' | 'about' | GlobeTourStepId
+
+export type GlobeTourStepId = 'globe-view' | 'globe-empires' | 'globe-overlay'
 
 /** The highlight ring's outline. `'circle'` for a target that is itself round (the globe orb's
  *  expand affordance is a circle inset inside the orb's square box), `'rounded'` otherwise. */
@@ -29,6 +32,8 @@ export interface BreakpointCopy {
 
 export interface TourStep {
   id: TourStepId
+  /** A selector list is tried in the order written, and the first match with a drawn box wins —
+   *  so a step can name a fallback for a target one layout doesn't render. */
   selector: string
   title: string
   body: BreakpointCopy
@@ -70,6 +75,18 @@ export const TOUR_STEPS: readonly TourStep[] = [
     shape: 'rounded',
   },
   {
+    // The "All events" button rather than the cards: it is drawn even when no card is showing.
+    id: 'events',
+    selector: '[data-testid="event-feed-browse"]',
+    title: 'Events as they happen',
+    body: {
+      compact:
+        'Events pop up above the timeline as it reaches them; tap one for its story. Tap here to view all events, searchable and filterable by topic.',
+      wide: 'Events pop up here as the timeline reaches them; click one for its story. Click here to view all events, searchable and filterable by topic.',
+    },
+    shape: 'rounded',
+  },
+  {
     id: 'eras',
     selector: '[data-testid="era-shortcuts"]',
     title: 'Two shortcuts to an era',
@@ -99,5 +116,44 @@ export const TOUR_STEPS: readonly TourStep[] = [
     },
     shape: 'rounded',
     desktopOnly: true,
+  },
+]
+
+/** The empire territories are only drawn from 3400 BCE on, so the empires step names the moment
+ *  the host jumps to when the viewer is outside that range (`GlobeTour`'s `onJumpToEmpires`). */
+export const GLOBE_TOUR_JUMP_LEAD = 'Here is the world in 117 CE, with Rome at its height; the tour takes you back after.'
+
+/** Shown the first time the globe is expanded: what the expanded view holds that the first tour
+ *  cannot point at, since none of it exists until the globe opens. */
+export const GLOBE_TOUR_STEPS: readonly TourStep[] = [
+  {
+    id: 'globe-view',
+    selector: '[data-testid="globe-view-mode-group"]',
+    title: 'Globe or map',
+    body: {
+      compact: 'Switch between the globe and a flat map of the same moment.',
+      wide: 'Switch between the globe and a flat map of the same moment. Drag to turn it, scroll to zoom.',
+    },
+    shape: 'rounded',
+  },
+  {
+    id: 'globe-empires',
+    selector: '[data-testid="globe-legend-corner"], [data-testid="globe-sphere-fit-frame"], [data-testid="globe-map-fit-frame"]',
+    title: 'Empires and peoples',
+    body: {
+      compact: 'Tap an empire, a migration arc or a settlement, then tap again for its story.',
+      wide: 'Hover over an empire to trace its borders, and click it, a migration arc or a settlement for its story.',
+    },
+    shape: 'rounded',
+  },
+  {
+    id: 'globe-overlay',
+    selector: '[data-testid="globe-overlay-select-stack"]',
+    title: 'Map overlays',
+    body: {
+      compact: 'Shade the land by population density or by land cleared for farming.',
+      wide: 'Shade the land by population density or by land cleared for farming, back to 10,000 BCE.',
+    },
+    shape: 'rounded',
   },
 ]

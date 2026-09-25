@@ -12,7 +12,7 @@
 
 import type { TerritoryData, TerritoryGeometry, TerritoryLineageData, TerritoryPolygon, TerritorySnapshotData } from '@/data/curated'
 import type { MixKeying } from '@/lib/presentedMix'
-import { formatCalendarYear, formatGeoTime } from '@/timeline'
+import { formatGeoTime, formatTimeRange } from '@/timeline'
 import type { GeoTime } from '@/types/layer'
 
 export interface EmpireSnapshot extends TerritorySnapshotData {
@@ -422,17 +422,12 @@ export function empireAreaLine(summary: EmpireLineageSummary, t: GeoTime): strin
   if (peak.tEnd < t && t <= peak.tStart) return `${summary.lineage.name} · at its peak, ${formatEmpireArea(peak.areaKm2)}`
   return (
     `${summary.lineage.name} · about ${formatEmpireArea(lineageAreaAt(summary, t))} now ` +
-    `(peak ${formatEmpireArea(peak.areaKm2)} in ${formatEmpireYear(peak.tStart)})`
+    `(peak ${formatEmpireArea(peak.areaKm2)} in ${formatGeoTime(peak.tStart)})`
   )
-}
-
-/** `t` as a calendar year where one reads naturally, else as elapsed time. */
-export function formatEmpireYear(t: GeoTime): string {
-  return formatCalendarYear(t) ?? formatGeoTime(t)
 }
 
 /** A `tEnd < t <= tStart` span as its first and last calendar years (`tEnd` itself is the first
  *  year after it). */
 export function formatEmpireSpan(tStart: GeoTime, tEnd: GeoTime): string {
-  return `${formatEmpireYear(tStart)} – ${formatEmpireYear(tEnd + 1)}`
+  return formatTimeRange([tEnd + 1, tStart])
 }

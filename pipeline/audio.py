@@ -24,6 +24,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from pipeline import mp3
+
 # Hex characters of `sha256(published bytes)` kept in a stem's published filename (ADR-023
 # amendment "on-demand loading"). Not cryptographic -- this catalogue holds dozens of files,
 # not billions, so 10 hex chars (40 bits) is far beyond its actual collision risk; the same
@@ -58,6 +60,9 @@ SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 # without pushing any clip's peak past full scale (ADR-023 amendment "stem levels").
 LOOP_REFERENCE_LOUDNESS_DB = -30.0
 ONE_SHOT_REFERENCE_LOUDNESS_DB = -20.0
+
+# How long a one-shot stopped early by `end_seconds` takes to fade out, ending at `end_seconds`.
+ONE_SHOT_END_FADE_SECONDS = 1.0
 
 
 class LoopRegion(BaseModel):
@@ -115,6 +120,9 @@ class StemManifest(BaseModel):
     # `loop_safe = false` clip so playback starts right on the scene's `once` trigger instead of
     # lagging behind it -- the one-shot counterpart to `loop`'s head/tail trim for loops.
     start_seconds: float | None = Field(default=None, ge=0.0)
+    # Absent: a one-shot plays to the end of its clip. Where it stops instead, the last
+    # `ONE_SHOT_END_FADE_SECONDS` fading out, so a long recording plays only its opening.
+    end_seconds: float | None = Field(default=None, gt=0.0)
 
     @model_validator(mode="after")
     def _loop_region_fits_a_loop_safe_clip(self) -> StemManifest:
@@ -142,6 +150,20 @@ class StemManifest(BaseModel):
             raise ValueError(
                 f"stem {self.id}: start_seconds {self.start_seconds} s is at or after the clip's "
                 f"{self.duration_seconds} s"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _end_fits_a_one_shot_clip(self) -> StemManifest:
+        if self.end_seconds is None:
+            return self
+        if self.loop_safe:
+            raise ValueError(f"stem {self.id}: end_seconds is for one-shots only")
+        start = self.start_seconds or 0.0
+        if not start + ONE_SHOT_END_FADE_SECONDS < self.end_seconds <= self.duration_seconds:
+            raise ValueError(
+                f"stem {self.id}: end_seconds {self.end_seconds} s must leave room for its fade "
+                f"after start {start} s and lie inside the clip's {self.duration_seconds} s"
             )
         return self
 
@@ -214,3 +236,78 @@ def sniff_audio(data: bytes) -> AudioFormat:
     if data[:3] == b"ID3" or (len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0):
         return AudioFormat.MP3
     raise ValueError("unrecognised audio format (expected WAV, OGG, MP3 or M4A)")
+
+
+# Audio kept either side of the span a published stem is cut to (`published_bytes`), so the
+# encoder's start-up and flush never touch a sample that plays.
+TRIM_MARGIN_SECONDS = 0.1
+
+
+def _played_span(stem: StemManifest) -> tuple[float, float | None]:
+    """The part of a stem that ever plays, in its raw clip's timeline: a loop region, a
+    one-shot's `start_seconds` to `end_seconds`, or from its start to the clip's end (`None`)."""
+    if stem.loop is not None:
+        return stem.loop.start_seconds, stem.loop.end_seconds
+    return stem.start_seconds or 0.0, stem.end_seconds
+
+
+def _cut_start_seconds(stem: StemManifest) -> float:
+    return max(0.0, _played_span(stem)[0] - TRIM_MARGIN_SECONDS)
+
+
+def published_bytes(stem: StemManifest, raw: bytes) -> bytes:
+    """The bytes a stem publishes: an MP3 decoded, cut to the span that plays plus a margin, and
+    re-encoded at a bitrate sized for ambience and effects (`pipeline.mp3`); anything else
+    unchanged."""
+    if stem.format != AudioFormat.MP3:
+        return raw
+    if stem.loop_safe and stem.loop is None:
+        raise ValueError(
+            f"stem {stem.id}: a looping MP3 needs a `loop` region -- re-encoding adds a lead-in "
+            f"that a whole-clip loop would play as a gap"
+        )
+    pcm = mp3.decode(raw)
+    _, end = _played_span(stem)
+    end_seconds = len(pcm.samples) / pcm.sample_rate if end is None else end + TRIM_MARGIN_SECONDS
+    return mp3.encode(pcm.span(_cut_start_seconds(stem), end_seconds))
+
+
+class PublishedTiming(BaseModel):
+    """A stem's timing in its published file, which the cut and the encoder's lead-in move."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    duration_seconds: float
+    loop: LoopRegion | None
+    start_seconds: float | None
+    end_seconds: float | None
+
+
+def published_timing(stem: StemManifest, published: bytes) -> PublishedTiming:
+    """`stem`'s curator-attested timing, moved onto the file `published_bytes` wrote: earlier by
+    the cut, later by the encoder's lead-in (`pipeline.mp3.ENCODER_PRIMING_SAMPLES`)."""
+    if stem.format != AudioFormat.MP3:
+        return PublishedTiming(
+            duration_seconds=stem.duration_seconds,
+            loop=stem.loop,
+            start_seconds=stem.start_seconds,
+            end_seconds=stem.end_seconds,
+        )
+    info = mp3.stream_info(published)
+    offset = info.lead_in_seconds - _cut_start_seconds(stem)
+
+    def moved(seconds: float) -> float:
+        return round(seconds + offset, 6)
+
+    return PublishedTiming(
+        duration_seconds=round(info.duration_seconds, 3),
+        loop=None
+        if stem.loop is None
+        else LoopRegion(
+            start_seconds=moved(stem.loop.start_seconds),
+            end_seconds=moved(stem.loop.end_seconds),
+        ),
+        # A one-shot always names its start: the clip's own 0 now sits after the lead-in.
+        start_seconds=None if stem.loop_safe else moved(stem.start_seconds or 0.0),
+        end_seconds=None if stem.end_seconds is None else moved(stem.end_seconds),
+    )
