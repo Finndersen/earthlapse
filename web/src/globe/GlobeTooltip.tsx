@@ -19,6 +19,8 @@
  * opens its detail (`bindGlobeHitTest`). A tooltip a touch tap opened is *pinned*: its body is a
  * button that opens the same detail a second tap on the target would, a × closes it, and every
  * press on it stops there, so it never falls through to a target or the backdrop underneath.
+ * Pinning is expanded-only: on the minimised orb there is no room for a card and a tap there
+ * expands the globe, so touch presses pass straight through while mouse hover still labels.
  * Neither kind moves or traps focus, and both carry `role="status"` with a polite live region, so a
  * screen-reader user hears what a sighted user is pointing at. The same detail is reachable by
  * keyboard through the event feed and browser.
@@ -268,6 +270,9 @@ export interface GlobeHitTestBindings {
   /** Set true for as long as a touch press landed on a target, so the orb's own tap-to-expand
    *  gesture can stand down and let the tap open a tooltip instead. */
   touchHitRef: MutableRefObject<boolean>
+  /** Whether a touch tap may pin a tooltip, read at press time; while false, touch presses are
+   *  ignored entirely and fall through to the orb's own tap-to-expand. */
+  touchTapsRef: MutableRefObject<boolean>
   /** Opens an event's detail, read at click time; `null` while activation is off (the
    *  minimised orb, whose click expands it instead). */
   activateRef: MutableRefObject<((eventId: string) => void) | null>
@@ -301,8 +306,8 @@ export interface GlobeHitTestHandle {
  * touch activation also clears the tooltip, as `activateShown` does, since the detail replaces it.
  */
 export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBindings): GlobeHitTestHandle {
-  const { resolve, onChange, touchHitRef, activateRef, activateEmpireRef } = bindings
-  const press = { x: 0, y: 0, touch: false }
+  const { resolve, onChange, touchHitRef, touchTapsRef, activateRef, activateEmpireRef } = bindings
+  const press = { x: 0, y: 0, touch: false, taps: false }
   let shown: GlobeHitTarget | null = null
   let shownViaTouch = false
   // What was showing when the current press began — a touch tap activates only a target that
@@ -331,11 +336,12 @@ export function bindGlobeHitTest(canvas: HTMLElement, bindings: GlobeHitTestBind
     press.x = event.clientX
     press.y = event.clientY
     press.touch = event.pointerType === 'touch'
+    press.taps = touchTapsRef.current
     shownAtPress = shown
-    if (press.touch) touchHitRef.current = resolve(event.clientX, event.clientY) !== null
+    if (press.touch && press.taps) touchHitRef.current = resolve(event.clientX, event.clientY) !== null
   }
   const onPointerUp = (event: PointerEvent): void => {
-    if (!press.touch) return
+    if (!press.touch || !press.taps) return
     const moved = Math.hypot(event.clientX - press.x, event.clientY - press.y)
     if (moved <= TAP_SLOP_PX) show(resolve(event.clientX, event.clientY), true)
     touchHitRef.current = false
@@ -396,6 +402,9 @@ export interface GlobeHitTestOptions {
   groupRef: MutableRefObject<THREE.Group | null>
   enabled: boolean
   touchHitRef: MutableRefObject<boolean>
+  /** Whether a touch tap pins a tooltip (`GlobeHitTestBindings.touchTapsRef`); turning it off
+   *  also clears whatever is shown. */
+  touchTaps: boolean
   /** Opens an event from its target (`bindGlobeHitTest`'s "Activation"); `null` turns it off. */
   onActivate: ((eventId: string) => void) | null
   /** Opens an empire lineage from an `empire` target; `null` or absent turns it off. */
@@ -431,6 +440,7 @@ export function useGlobeHitTest({
   groupRef,
   enabled,
   touchHitRef,
+  touchTaps,
   onActivate,
   onActivateEmpire = null,
   fallbackCandidatesRef,
@@ -443,6 +453,8 @@ export function useGlobeHitTest({
   // playback (which is what a dependency on `unfold`/`size` would mean) is what this avoids.
   const frameRef = useRef({ unfold, radius, width: size.width, height: size.height })
   frameRef.current = { unfold, radius, width: size.width, height: size.height }
+  const touchTapsRef = useRef(touchTaps)
+  touchTapsRef.current = touchTaps
   const activateRef = useRef(onActivate)
   activateRef.current = onActivate
   const activateEmpireRef = useRef(onActivateEmpire)
@@ -478,6 +490,7 @@ export function useGlobeHitTest({
       resolve,
       onChange: (target, viaTouch) => setHit(target === null ? NO_HIT : { target, viaTouch }),
       touchHitRef,
+      touchTapsRef,
       activateRef,
       activateEmpireRef,
     })
@@ -487,6 +500,10 @@ export function useGlobeHitTest({
       handle.unbind()
     }
   }, [camera, gl, enabled, candidatesRef, fallbackCandidatesRef, surfaceRef, groupRef, touchHitRef])
+
+  useEffect(() => {
+    if (!touchTaps) handleRef.current?.dismiss()
+  }, [touchTaps])
 
   const dismiss = useCallback(() => handleRef.current?.dismiss(), [])
   const activateShown = useCallback(() => handleRef.current?.activateShown(), [])

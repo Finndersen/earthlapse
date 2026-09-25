@@ -675,6 +675,7 @@ export function HumanCivilisation({
     groupRef,
     enabled,
     touchHitRef,
+    touchTaps: expanded,
     onActivate,
     onActivateEmpire: onActivateEmpireHere,
     fallbackCandidatesRef: empireCandidatesRef,

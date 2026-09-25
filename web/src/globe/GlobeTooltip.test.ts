@@ -192,17 +192,19 @@ describe('bindGlobeHitTest', () => {
     return event
   }
 
-  function setup(hitAt: (x: number) => GlobeHitTarget | null, activate: ((eventId: string) => void) | null) {
+  function setup(hitAt: (x: number) => GlobeHitTarget | null, activate: ((eventId: string) => void) | null, touchTaps = true) {
     const canvas = document.createElement('canvas')
     const parent = document.createElement('div')
     parent.appendChild(canvas)
     const shown: { target: GlobeHitTarget | null; viaTouch: boolean }[] = []
     const parentClicks: Event[] = []
+    const touchHitRef = { current: false }
     parent.addEventListener('click', (event) => parentClicks.push(event))
     const handle = bindGlobeHitTest(canvas, {
       resolve: (x) => hitAt(x),
       onChange: (target, viaTouch) => shown.push({ target, viaTouch }),
-      touchHitRef: { current: false },
+      touchHitRef,
+      touchTapsRef: { current: touchTaps },
       activateRef: { current: activate },
     })
     const tap = (pointerType: 'mouse' | 'touch', x: number, releaseX = x): void => {
@@ -210,7 +212,7 @@ describe('bindGlobeHitTest', () => {
       canvas.dispatchEvent(pointer('pointerup', pointerType, releaseX))
       canvas.dispatchEvent(pointer('click', pointerType, releaseX))
     }
-    return { canvas, shown, parentClicks, handle, tap }
+    return { canvas, shown, parentClicks, handle, tap, touchHitRef }
   }
 
   it('opens an arrival on a mouse click, but not on a drag or while no handler is bound, as on the minimised orb', () => {
@@ -224,6 +226,17 @@ describe('bindGlobeHitTest', () => {
     const minimised = setup(() => ARRIVAL, null)
     minimised.tap('mouse', 10)
     expect(minimised.parentClicks).toHaveLength(1)
+  })
+
+  it('pins nothing on a touch tap while taps are off, as on the minimised orb, leaving the tap to expand it', () => {
+    const { canvas, tap, shown, parentClicks, touchHitRef } = setup(() => ARRIVAL, null, false)
+    canvas.dispatchEvent(pointer('pointerdown', 'touch', 10))
+    expect(touchHitRef.current).toBe(false)
+    tap('touch', 10)
+    expect(shown).toHaveLength(0)
+    expect(parentClicks).toHaveLength(1)
+    canvas.dispatchEvent(pointer('pointermove', 'mouse', 10))
+    expect(shown.at(-1)).toEqual({ target: ARRIVAL, viaTouch: false })
   })
 
   it('shows the tooltip on a first touch tap and opens the event, closing it, on a second tap or from the tooltip', () => {
