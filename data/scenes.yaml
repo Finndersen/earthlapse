@@ -647,7 +647,8 @@ scenes:
     events: [end-triassic-extinction]
     # ADR-023: `volcanic` `loop` -- the fissure eruption across the rift is the scene's cause.
     sound: {stem: volcanic, mode: loop, gain: 0.8}
-    pin: null
+    framing: {focus: [0.64, 0.64], pan: 0}
+    pin: {asset_digest: "abb55ef32b32aaec", path: "data/pins/scenes/end-triassic-extinction/abb55ef32b32aaec.jpg"}
 
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
   # 165-155 Ma, Callovian-Oxfordian): Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al.
@@ -804,7 +805,8 @@ scenes:
     events: [western-interior-seaway, mosasaurs]
     # ADR-023: `water` `loop` -- surf and splash on an open seaway shore.
     sound: {stem: water, mode: loop, gain: 0.85}
-    pin: null
+    framing: {focus: [0.55, 0.6], pan: 0}
+    pin: {asset_digest: "ad9b0a3200dfe336", path: "data/pins/scenes/western-interior-seaway/ad9b0a3200dfe336.jpg"}
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
@@ -1404,7 +1406,8 @@ scenes:
     # ADR-023: `lake-water` `loop` -- a slow river's quiet lapping, not surf.
     sound: {stem: lake-water, mode: loop, gain: 0.7}
     location: {lat: 51.508, lon: -0.128, label: "Trafalgar Square, London"}
-    pin: null
+    framing: {focus: [0.66, 0.64], pan: 0}
+    pin: {asset_digest: "8d06cece05af9d8e", path: "data/pins/scenes/eemian-thames-hippos/8d06cece05af9d8e.jpg"}
 
   # At least 67.8 ka, the hand stencil in Liang Metanduno, Muna Island, Sulawesi (events.yaml
   # earliest-cave-art; Oktaviana et al. 2026, Nature 650): faint red ochre sprayed by mouth around
@@ -1819,7 +1822,8 @@ scenes:
     # ADR-023: `fire` `loop` -- the burning citadel, the only active sound in an emptied city.
     sound: {stem: fire, mode: loop, gain: 0.6}
     location: {lat: 40.0197, lon: 34.6153, label: "Hattusa, Turkey"}
-    pin: null
+    framing: {focus: [0.58, 0.52], pan: 0}
+    pin: {asset_digest: "b8e5be44eb1c7f5f", path: "data/pins/scenes/hattusa-abandoned/b8e5be44eb1c7f5f.jpg"}
 
   # About 430 BCE, the Age of Pericles; t = 2025 + 430 = 2,455. New scene, continuing the gap
   # between giza-great-pyramid and imperial-rome-pantheon. Pericles' building programme, funded
@@ -2040,7 +2044,8 @@ scenes:
     # ADR-023: `settlement` `loop` -- a working city, on the same footing as imperial-rome-pantheon.
     sound: {stem: settlement, mode: loop, gain: 0.85}
     location: {lat: 17.2220, lon: -89.6237, label: "Tikal, Guatemala"}
-    pin: null
+    framing: {focus: [0.6, 0.6], pan: 0}
+    pin: {asset_digest: "a3b536712371d79f", path: "data/pins/scenes/tikal-classic-maya/a3b536712371d79f.jpg"}
 
   # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =
   # 2025 - 1150 = 875. Wikipedia "Angkor Wat": construction ran 1113-1150 (his reign), building

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "96d470d1efe7e365",
+  "buildId": "f41c6a2c22fd6d99",
   "assetBase": "/media",
   "scenes": [
     {
@@ -821,6 +821,45 @@
       "height": 1536
     },
     {
+      "id": "tikal-classic-maya",
+      "t": 1285.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/tikal-classic-maya-adb768b790.webp",
+      "thumbnail": "scenes/tikal-classic-maya-thumb-b768e25c7c.webp",
+      "shot": "WATER_EDGE",
+      "title": "Tikal",
+      "caption": "Around 740 CE, at the height of Classic Maya civilisation, Tikal's red temple-pyramids rise above the rainforest. Tens of thousands of people depend on the city's rain-fed reservoirs.",
+      "events": [
+        "tikal-late-classic"
+      ],
+      "sound": {
+        "stem": "settlement",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "location": {
+        "label": "Tikal, Guatemala",
+        "presentDay": {
+          "lat": 17.222,
+          "lon": -89.6237
+        },
+        "marker": {
+          "lat": 17.222,
+          "lon": -89.6237
+        }
+      },
+      "framing": {
+        "focus": [
+          0.6,
+          0.6
+        ],
+        "pan": 0.0
+      },
+      "pinned": "a3b536712371d79f",
+      "width": 2752,
+      "height": 1536
+    },
+    {
       "id": "imperial-rome-pantheon",
       "t": 1900.0,
       "chapterId": "waters-edge",
@@ -934,6 +973,45 @@
         "pan": 270.0
       },
       "pinned": "c5cc528bfc6d0344",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "hattusa-abandoned",
+      "t": 3210.0,
+      "chapterId": "open-ground",
+      "image": "scenes/hattusa-abandoned-330fb16bc7.webp",
+      "thumbnail": "scenes/hattusa-abandoned-thumb-063a290a61.webp",
+      "shot": "GROUND",
+      "title": "The Fall of Hattusa",
+      "caption": "Around 1185 BCE, as the Bronze Age world of palace kingdoms falls apart, the last people leave the Hittite capital, Hattusa. Most have already gone, taking its treasures and archives, and fire takes what remains.",
+      "events": [
+        "late-bronze-age-collapse"
+      ],
+      "sound": {
+        "stem": "fire",
+        "mode": "loop",
+        "gain": 0.6
+      },
+      "location": {
+        "label": "Hattusa, Turkey",
+        "presentDay": {
+          "lat": 40.0197,
+          "lon": 34.6153
+        },
+        "marker": {
+          "lat": 40.0197,
+          "lon": 34.6153
+        }
+      },
+      "framing": {
+        "focus": [
+          0.58,
+          0.52
+        ],
+        "pan": 0.0
+      },
+      "pinned": "b8e5be44eb1c7f5f",
       "width": 2752,
       "height": 1536
     },
@@ -1251,6 +1329,45 @@
         "pan": 180.0
       },
       "pinned": "69e247d721e82b02",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "eemian-thames-hippos",
+      "t": 125000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/eemian-thames-hippos-9eba0b4af0.webp",
+      "thumbnail": "scenes/eemian-thames-hippos-thumb-dc26b94caa.webp",
+      "shot": "WATER_EDGE",
+      "title": "Hippos in the Thames",
+      "caption": "About 125,000 years ago, in a world slightly warmer than today, hippos wallow in the Thames where London's Trafalgar Square now stands, and straight-tusked elephants browse its banks. No people live in Britain.",
+      "events": [
+        "eemian-interglacial"
+      ],
+      "sound": {
+        "stem": "lake-water",
+        "mode": "loop",
+        "gain": 0.7
+      },
+      "location": {
+        "label": "Trafalgar Square, London",
+        "presentDay": {
+          "lat": 51.508,
+          "lon": -0.128
+        },
+        "marker": {
+          "lat": 51.508,
+          "lon": -0.128
+        }
+      },
+      "framing": {
+        "focus": [
+          0.66,
+          0.64
+        ],
+        "pan": 0.0
+      },
+      "pinned": "8d06cece05af9d8e",
       "width": 2752,
       "height": 1536
     },
@@ -1734,6 +1851,35 @@
       "height": 1536
     },
     {
+      "id": "western-interior-seaway",
+      "t": 85000000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/western-interior-seaway-27fe54b973.webp",
+      "thumbnail": "scenes/western-interior-seaway-thumb-17d1fc8ec6.webp",
+      "shot": "WATER_EDGE",
+      "title": "The Western Interior Seaway",
+      "caption": "About 85 million years ago, a warm, shallow sea splits North America in two. Pteranodon rest on its sandbars while mosasaurs up to 13 metres long hunt offshore.",
+      "events": [
+        "western-interior-seaway",
+        "mosasaurs"
+      ],
+      "sound": {
+        "stem": "water",
+        "mode": "loop",
+        "gain": 0.85
+      },
+      "framing": {
+        "focus": [
+          0.55,
+          0.6
+        ],
+        "pan": 0.0
+      },
+      "pinned": "ad9b0a3200dfe336",
+      "width": 2752,
+      "height": 1536
+    },
+    {
       "id": "mid-cretaceous-pollinators",
       "t": 100000000.0,
       "chapterId": "waters-edge",
@@ -1825,6 +1971,34 @@
         "pan": 270.0
       },
       "pinned": "6219f8eaaaec486a",
+      "width": 2752,
+      "height": 1536
+    },
+    {
+      "id": "end-triassic-extinction",
+      "t": 201500000.0,
+      "chapterId": "waters-edge",
+      "image": "scenes/end-triassic-extinction-be5f037fab.webp",
+      "thumbnail": "scenes/end-triassic-extinction-thumb-7db04f7b9b.webp",
+      "shot": "WATER_EDGE",
+      "title": "The End-Triassic Extinction",
+      "caption": "About 201.5 million years ago, flood basalts pour out as Pangaea begins to split, doubling carbon dioxide. About three quarters of species die out, among them the crocodile-line reptiles that had kept dinosaurs in check.",
+      "events": [
+        "end-triassic-extinction"
+      ],
+      "sound": {
+        "stem": "volcanic",
+        "mode": "loop",
+        "gain": 0.8
+      },
+      "framing": {
+        "focus": [
+          0.64,
+          0.64
+        ],
+        "pan": 0.0
+      },
+      "pinned": "abb55ef32b32aaec",
       "width": 2752,
       "height": 1536
     },
@@ -2332,12 +2506,12 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 15165.789409759738,
-      "tEnd": 146140.65320332188
+      "tEnd": 198431.45702505403
     },
     {
       "id": "open-ground",
       "label": "On open ground",
-      "tStart": 146140.65320332188,
+      "tStart": 198431.45702505403,
       "tEnd": 744580.8121610277
     },
     {
@@ -4075,6 +4249,20 @@
       }
     },
     {
+      "id": "classic-maya-collapse",
+      "label": "Classic Maya collapse",
+      "kind": "period",
+      "tMin": 1075.0,
+      "tMax": 1275.0,
+      "tags": [
+        "society",
+        "catastrophe"
+      ],
+      "importance": 0.5,
+      "description": "Across the southern Maya lowlands, the great Classic cities stop raising dated monuments and lose most of their people between the late 8th and 10th centuries; Tikal's last dated monument is from 869. Repeated droughts, warfare between city states, and the failure of divine kingship are all proposed causes and are debated.\n",
+      "citation": "Via Wikipedia \"Classic Maya collapse\" and \"Stela 11\" of Tikal, Long Count 10.2.0.0.0, 15 August 869 (accessed 2026-09-25). Evans, N.P. et al. (2018). \"Quantification of drought during the collapse of the classic Maya civilization.\" Science, 361(6401), 498-501. UNVERIFIED: the 750-950 bracket is the conventional span, not a single source's figure.\n"
+    },
+    {
       "id": "an-lushan-rebellion",
       "label": "An Lushan Rebellion",
       "kind": "period",
@@ -4100,6 +4288,19 @@
       "importance": 0.4,
       "description": "With the conquest of the Iberian Peninsula complete by 718, and Sindh and much of Transoxiana taken under al-Walid I, the Umayyad Caliphate ruled from the Atlantic to the Indus, the largest state the world had yet seen. The Berber Revolt of 740 cost it most of the Maghreb, and the Abbasid Revolution overthrew the dynasty in 750.\n",
       "citation": "Via Wikipedia \"Umayyad Caliphate\", \"Muslim conquest of the Iberian Peninsula\" and \"Berber Revolt\" (searched 2026-09-24): conquest of Hispania 711-718; North Africa, Hispania, Transoxiana and Sindh conquered under al-Walid I (705-715); Berber Revolt from 740, the Maghreb beyond Ifriqiya never recovered.\n"
+    },
+    {
+      "id": "tikal-late-classic",
+      "label": "Tikal at its Late Classic height",
+      "kind": "period",
+      "tMin": 1259.0,
+      "tMax": 1343.0,
+      "tags": [
+        "society"
+      ],
+      "importance": 0.5,
+      "description": "Under Jasaw Chan K'awiil (acceded 682) and his son Yik'in Chan K'awiil (734-c.766), Tikal becomes one of the largest Classic Maya cities, with tens of thousands of people in the rainforest of present-day Guatemala living from rain-fed reservoirs. Its tallest temple-pyramids are built in this era, among them Temple I, Jasaw Chan K'awiil's funerary temple, completed by his son.\n",
+      "citation": "Via Wikipedia \"Tikal\", \"Tikal Temple I\", \"Jasaw Chan K'awiil I\" and \"Yik'in Chan K'awiil\" (accessed 2026-09-25): Jasaw Chan K'awiil I entombed in Temple I c. 734; Yik'in Chan K'awiil acceded 8 December 734, ruled to 766 and completed Temple I; Jasaw Chan K'awiil I acceded 3 May 682.\n"
     },
     {
       "id": "fall-of-western-roman-empire",
