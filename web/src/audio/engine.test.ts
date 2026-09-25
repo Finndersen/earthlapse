@@ -116,6 +116,8 @@ describe('useAudioEngine "active" — real audio state vs. the stored preference
   beforeEach(() => {
     vi.useFakeTimers()
     window.localStorage.clear()
+    // EMPTY_MANIFEST publishes no stems, so starting audio warns once per catalogued stem.
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   })
 
   afterEach(() => {

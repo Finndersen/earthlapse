@@ -54,6 +54,8 @@ beforeEach(() => {
   useTimeStore.setState(initialStoreState, true)
   // A returning viewer, so the first-visit tour is not on screen.
   window.localStorage.setItem('earthlapse.onboarding.seen', 'true')
+  // jsdom has no Web Audio for Tone.js to start on.
+  window.localStorage.setItem('earthlapse.audio.enabled', 'false')
 
   vi.stubGlobal(
     'fetch',
@@ -61,6 +63,10 @@ beforeEach(() => {
       const url = String(input)
       if (url === '/media/manifest.json') {
         return { ok: false, status: 404, json: async () => undefined } as Response
+      }
+      // The scene fallback prefetches every scene image; only the bytes' arrival matters here.
+      if (url.startsWith('/stub/scenes/')) {
+        return new Response('', { headers: { 'Content-Type': 'image/svg+xml' } })
       }
       const body = FETCH_RESPONSES[url]
       if (body === undefined) {

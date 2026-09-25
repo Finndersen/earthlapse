@@ -18,4 +18,9 @@ if (typeof HTMLElement !== 'undefined') {
   if (typeof HTMLElement.prototype.scrollIntoView !== 'function') {
     HTMLElement.prototype.scrollIntoView = () => {}
   }
+
+  // Without the `canvas` package jsdom's getContext already returns null, but logs "Not
+  // implemented" to stderr on every call (each WebGL probe, each 2D texture bake). Same null,
+  // no log: callers take their no-canvas path exactly as before.
+  HTMLCanvasElement.prototype.getContext = () => null
 }
