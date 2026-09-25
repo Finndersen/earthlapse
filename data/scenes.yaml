@@ -1741,69 +1741,20 @@ scenes:
     framing: {focus: [0.67, 0.5], pan: 270}
     pin: {asset_digest: "ae2cd69144d41861", path: "data/pins/scenes/giza-great-pyramid/ae2cd69144d41861.jpg"}
 
-  # About 2300 BCE, the Mature ("Integration Era") Harappan phase of the Indus Valley
-  # Civilisation, conventionally c. 2600-1900 BCE (Wikipedia "Indus Valley Civilisation"); t =
-  # 2025 + 2300 = 4,325: mid-phase, so it does not sit beside giza-great-pyramid (t = 4,585)
-  # and still falls before the 4.2 ka aridification (events.yaml 4-2-kiloyear-event). Mohenjo-daro, on the
-  # Indus floodplain in Sindh, grew to tens of thousands of people in this phase (30,000-60,000
-  # is the commonly cited range for the largest Harappan cities) laid out on a strict street
-  # grid, with fired-brick houses drained by covered brick sewers running beneath the streets --
-  # "waste water was channeled to covered drains that lined the major streets" -- and served by
-  # over 700 wells, "one well for every three houses" (Wikipedia "Mohenjo-daro"). Framed on a
-  # street corner, not another riverbank: giza-great-pyramid already ends the run on water, and
-  # the brief asks for open ground/a street here. No palace or temple is shown, and no ruler:
-  # decades of excavation have found no monumental royal or religious architecture at
-  # Mohenjo-daro, and the so-called "Priest-King" is a modern archaeological label for a
-  # sculpture, not an attested title (Wikipedia "Mohenjo-daro") -- the absence of a visible
-  # elite is as distinctive and attested as the Great Bath itself, so the scene depicts
-  # ordinary street life, not a monument. The Indus script remains undeciphered, so no legible
-  # writing is shown. New event indus-valley-urbanism added (events.yaml) since no existing
-  # event covers the Indus civilisation.
-  - id: mohenjo-daro
-    t: 4.325e3
-    chapter: open-ground
-    shot: GROUND
-    title: "Mohenjo-daro, a City Without a King"
-    caption: Around 2300 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.
-    unsourced:
-      o2_percent: 21  # modern
-      mean_temp_c: 14  # rounded: same broad era as giza-great-pyramid, close to pre-industrial
-    subject:
-      setting: A street corner in Mohenjo-daro on the Indus floodplain, Sindh, at the edge of the raised citadel mound, about 2300 BCE
-      left_mass: a fired-mudbrick house wall two storeys high, its corner rounded smooth by generations of cart traffic, a covered brick drain with an inspection hole running along its base
-      vegetation: a few date palms and scrubby acacia beyond the mudbrick perimeter wall; nothing growing within the paved street itself
-      fauna: a humped zebu bullock harnessed to a cart; pigeons on the flat rooftops
-      main_subject: a woman drawing water at a brick-lined public well on the street corner, a zebu-drawn cart loaded with sealed pottery jars waiting behind her while a covered brick drain runs past their feet along the street's edge
-      ground: a straight, gridded street of fired mudbrick paving over the covered drain, brick house walls rising directly from the street with no encroachment
-      water: none in the frame; the city's water runs underground through covered brick drains and a public well, not an open channel
-      far_bank: no far bank; the street runs straight to a crossing lane at a right angle in the distance, part of the city's grid, with the raised brick mass of the citadel mound visible beyond the rooftops
-      sky_and_light: a hot, hazy, pale sky over the Indus floodplain; bright, hard midday sunlight
-      absent: [temples, palaces, a ruler or throne, legible Indus script, wheeled war chariots, horses, metal armour, decorative stone statuary, modern clothing, identifiable faces]
-    events: [indus-valley-urbanism]
-    # ADR-023: `settlement` `loop` -- ordinary street life in one of the largest cities of its
-    # age, on the same footing as uruk-city's own `settlement` above its ambient floor.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
-    # ADR-034: Mohenjo-daro, Sindh, Pakistan (named in `subject.setting` above). t = 4,325 BP
-    # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
-    # coordinates directly.
-    location: {lat: 27.3286, lon: 68.1381, label: "Mohenjo-daro, Pakistan"}
-    framing: {focus: [0.53, 0.55], pan: 0}
-    pin: {asset_digest: "126ac8292443ad22", path: "data/pins/scenes/mohenjo-daro/126ac8292443ad22.jpg"}
-
   # About 1185 BCE; t = 2025 + 1185 = 3,210, inside events.yaml late-bronze-age-collapse. Hattusa,
   # the Hittite capital: Jürgen Seeher's excavations show it was invaded and burned early in the
   # 12th century BC, but only after many residents had left over several decades, taking valuables
   # and the state archives with them (Wikipedia "Hattusa"; Biblical Archaeology Society, "The Last
   # Days of Hattusa"). So the scene shows emptying and fire, not a battle, and does not name a
   # cause. The Lion Gate, in the southwestern stretch of the upper city's wall, is the tall mass;
-  # the road out through it is the leading line. Framed on open ground to match its neighbours
-  # mohenjo-daro and classical-athens-parthenon.
+  # the road out through it is the leading line. Framed on open ground to match
+  # classical-athens-parthenon, which follows it.
   - id: hattusa-abandoned
     t: 3.21e3
     chapter: open-ground
     shot: GROUND
-    title: "The Fall of Hattusa"
-    caption: Around 1185 BCE, as the Bronze Age world of palace kingdoms falls apart, the last people leave the Hittite capital, Hattusa. Most have already gone, taking its treasures and archives, and fire takes what remains.
+    title: "The Bronze Age Collapse"
+    caption: Around 1185 BCE, as the kingdoms of the Bronze Age Mediterranean collapse, the last people leave the Hittite capital, Hattusa, and fire takes what remains.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded, close to pre-industrial
@@ -2334,7 +2285,7 @@ scenes:
     chapter: open-ground
     shot: GROUND
     title: "The Railroad Spans a Continent"
-    caption: On 10 May 1869 at Promontory Summit, Utah, a Chinese crew lays the last rail joining the Central Pacific and Union Pacific railroads across North America. Chinese workers made up about 90% of the Central Pacific's workforce.
+    caption: On 10 May 1869 in Utah, a Chinese crew lays the last rail of the first railroad across North America.
     unsourced:
       o2_percent: 21  # modern
       mean_temp_c: 14  # rounded: late-19th-century global mean, close to pre-industrial

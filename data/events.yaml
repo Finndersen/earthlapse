@@ -2313,9 +2313,8 @@ events:
       Ramsey, C.B. et al. (2010), Egyptian radiocarbon chronology re-analysis, 2613-2577
       BC. Via Wikipedia "Great Pyramid of Giza"; primary paper not independently read.
 
-  # Added for the mohenjo-daro scene (data/scenes.yaml), filling the gap between
-  # great-pyramid-giza and roman-empire-peak. No existing event covered the Indus Valley
-  # Civilisation.
+  # The only event covering the Indus Valley Civilisation, between great-pyramid-giza and
+  # roman-empire-peak.
 
   - id: indus-valley-urbanism
     label: Indus Valley Civilisation's Mature Harappan phase

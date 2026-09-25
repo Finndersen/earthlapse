@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "f41c6a2c22fd6d99",
+  "buildId": "6c274bfcf36e7e00",
   "assetBase": "/media",
   "scenes": [
     {
@@ -565,7 +565,7 @@
       "thumbnail": "scenes/promontory-golden-spike-thumb-5be8628f23.webp",
       "shot": "GROUND",
       "title": "The Railroad Spans a Continent",
-      "caption": "On 10 May 1869 at Promontory Summit, Utah, a Chinese crew lays the last rail joining the Central Pacific and Union Pacific railroads across North America. Chinese workers made up about 90% of the Central Pacific's workforce.",
+      "caption": "On 10 May 1869 in Utah, a Chinese crew lays the last rail of the first railroad across North America.",
       "events": [
         "first-transcontinental-railroad"
       ],
@@ -983,8 +983,8 @@
       "image": "scenes/hattusa-abandoned-330fb16bc7.webp",
       "thumbnail": "scenes/hattusa-abandoned-thumb-063a290a61.webp",
       "shot": "GROUND",
-      "title": "The Fall of Hattusa",
-      "caption": "Around 1185 BCE, as the Bronze Age world of palace kingdoms falls apart, the last people leave the Hittite capital, Hattusa. Most have already gone, taking its treasures and archives, and fire takes what remains.",
+      "title": "The Bronze Age Collapse",
+      "caption": "Around 1185 BCE, as the kingdoms of the Bronze Age Mediterranean collapse, the last people leave the Hittite capital, Hattusa, and fire takes what remains.",
       "events": [
         "late-bronze-age-collapse"
       ],
@@ -1012,45 +1012,6 @@
         "pan": 0.0
       },
       "pinned": "b8e5be44eb1c7f5f",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "mohenjo-daro",
-      "t": 4325.0,
-      "chapterId": "open-ground",
-      "image": "scenes/mohenjo-daro-98f616c411.webp",
-      "thumbnail": "scenes/mohenjo-daro-thumb-4f8cda3370.webp",
-      "shot": "GROUND",
-      "title": "Mohenjo-daro, a City Without a King",
-      "caption": "Around 2300 BCE, Mohenjo-daro's grid of brick streets, covered drains and a monumental Great Bath serve a city of tens of thousands — with no palace, temple or king ever found.",
-      "events": [
-        "indus-valley-urbanism"
-      ],
-      "sound": {
-        "stem": "settlement",
-        "mode": "loop",
-        "gain": 0.85
-      },
-      "location": {
-        "label": "Mohenjo-daro, Pakistan",
-        "presentDay": {
-          "lat": 27.3286,
-          "lon": 68.1381
-        },
-        "marker": {
-          "lat": 27.3286,
-          "lon": 68.1381
-        }
-      },
-      "framing": {
-        "focus": [
-          0.53,
-          0.55
-        ],
-        "pan": 0.0
-      },
-      "pinned": "126ac8292443ad22",
       "width": 2752,
       "height": 1536
     },
@@ -2488,12 +2449,12 @@
       "id": "open-ground",
       "label": "On open ground",
       "tStart": 2060.7070596959206,
-      "tEnd": 4453.103276755047
+      "tEnd": 3836.4009433469446
     },
     {
       "id": "waters-edge",
       "label": "At the water's edge",
-      "tStart": 4453.103276755047,
+      "tStart": 3836.4009433469446,
       "tEnd": 8485.283108640675
     },
     {
