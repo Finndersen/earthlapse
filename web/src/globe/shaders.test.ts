@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
-import { GLOBE_FRAGMENT_SHADER, RIM_FRAGMENT_SHADER } from './shaders'
+import { EMPIRES_DEFINE, GLOBE_FRAGMENT_SHADER, RIM_FRAGMENT_SHADER } from './shaders'
 
 describe('globe fragment shaders', () => {
   it('re-encode their linear-light output for the sRGB canvas', () => {
@@ -21,6 +21,15 @@ describe("the globe's single overlay slot", () => {
     const dispatchBody = GLOBE_FRAGMENT_SHADER.slice(dispatchStart, dispatchStart + 400)
     expect(dispatchBody).toContain('clearedLandRampAt(')
     expect(dispatchBody).toContain('densityRampAt(')
+  })
+})
+
+describe('the empire territories', () => {
+  it('compile into the globe shader only under their define', () => {
+    const block = new RegExp(`#ifdef ${EMPIRES_DEFINE}\\n[\\s\\S]*?#endif`, 'g')
+    const withoutEmpires = GLOBE_FRAGMENT_SHADER.replace(block, '').replace(/\/\/.*$/gm, '')
+    expect(GLOBE_FRAGMENT_SHADER).toMatch(block)
+    expect(withoutEmpires).not.toMatch(/empire/i)
   })
 })
 

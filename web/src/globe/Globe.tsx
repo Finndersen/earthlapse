@@ -120,8 +120,11 @@ import { isPoleVisible, poleDirection, type PoleId } from './poles'
 import { EQUAL_EARTH_HALF_HEIGHT, EQUAL_EARTH_HALF_WIDTH, lonLatToMap, mapToLonLat, unrolledHalfHeight, unrolledHalfWidth } from './projection'
 import {
   ATMOSPHERE_SCALE,
+  GLOBE_DEFINES_WITH_EMPIRES,
+  GLOBE_DEFINES_WITHOUT_EMPIRES,
   GLOBE_FRAGMENT_SHADER,
   GLOBE_VERTEX_SHADER,
+  isEmpireShaderSource,
   RIM_FRAGMENT_SHADER,
   RIM_VERTEX_SHADER,
 } from './shaders'
@@ -596,11 +599,17 @@ export function Globe({
   const empireTarget = useMemo((): Mix<EmpireFrame> => ({ from: empireFrame, to: empireFrame, mix: 1 }), [empireFrame])
   const presentedEmpires = usePresentedMix(empireTarget, EMPIRE_CROSSFADE_SECONDS, EMPIRE_FRAME_KEYING)
   const empiresInDomain = empiresHaveDataAt(empires, t)
+  // Set once this GPU fails to link the globe shader's empire variant: the layer is then dropped
+  // for the session rather than leaving the whole globe undrawn.
+  const [empireShaderFailed, setEmpireShaderFailed] = useState(false)
+  const onEmpireShaderFailed = useCallback(() => setEmpireShaderFailed(true), [])
+  // Expanded only (`EmpireTier`): the orb draws no empires.
+  const empiresOn = humanOn && expanded && !empireShaderFailed
   const empireGeometry = useEmpireGeometry(
     empires,
     empires === null ? null : resolveAssetUrl(assetBase, empires.data.geometry),
-    // Fetched only once empires can be drawn: the orb never draws them.
-    webgl && expanded && humanOn && empires !== null && t <= empires.domain[1] + EMPIRE_FETCH_MARGIN_YEARS,
+    // Fetched only once empires can be drawn.
+    webgl && empiresOn && empires !== null && t <= empires.domain[1] + EMPIRE_FETCH_MARGIN_YEARS,
   )
   const empireCache = useMemo(
     () => (empires !== null && empireGeometry !== null ? createEmpireTextureCache(empires, empireGeometry) : null),
@@ -611,8 +620,6 @@ export function Globe({
     return () => empireCache?.clear()
   }, [empireCache])
   const empireTier = selectEmpireTier(t1Available)
-  // Expanded only (`EmpireTier`): the orb draws no empires.
-  const empiresOn = humanOn && expanded
   const empireFill = overlayKind === null
   // The hovered lineage, else the one whose panel is open, is emphasised in the texture itself
   // (expanded only). Hover reaches here settled (`EMPIRE_HOVER_SETTLE_MS`), so the painter runs
@@ -996,6 +1003,8 @@ export function Globe({
                 empireAfterTex={empirePair.afterTex}
                 empireMix={empirePair.mix}
                 empireStrength={empireStrength}
+                empiresCompiled={empiresOn}
+                onEmpireShaderFailed={onEmpireShaderFailed}
                 onWebglContextRestored={onWebglContextRestored}
               />
               {/* Both siblings of the same `GlobeRotatingGroup` (see its own doc comment for why
@@ -1977,10 +1986,46 @@ interface GlobeSphereProps {
   empireAfterTex: THREE.Texture | null
   empireMix: number
   empireStrength: number
+  /** Compiles the empire territories into the material (`EMPIRES_DEFINE`). */
+  empiresCompiled: boolean
+  /** Called when this GPU fails to link the empire variant of the globe shader. */
+  onEmpireShaderFailed: () => void
   /** Called once, the moment `webglcontextrestored` fires on the
    *  renderer's canvas — see `Globe`'s own `onWebglContextRestored` doc comment for why the
    *  human-era cache needs this and the PaleoDEM one doesn't. */
   onWebglContextRestored: () => void
+}
+
+/**
+ * Replaces three.js's own shader-error logging on `gl` for as long as the globe is mounted: the
+ * same compile and link logs, plus the GPU they came from, since a failure here is almost always
+ * specific to one driver. A failure in the globe's empire variant also calls `onEmpireFailed`.
+ */
+function useShaderErrorReport(gl: THREE.WebGLRenderer, onEmpireFailed: () => void): void {
+  const onEmpireFailedRef = useRef(onEmpireFailed)
+  useEffect(() => {
+    onEmpireFailedRef.current = onEmpireFailed
+  })
+  useEffect(() => {
+    const previous = gl.debug.onShaderError
+    gl.debug.onShaderError = (context, program, vertexShader, fragmentShader) => {
+      const logs = [
+        `program: ${context.getProgramInfoLog(program) ?? ''}`,
+        `vertex: ${context.getShaderInfoLog(vertexShader) ?? ''}`,
+        `fragment: ${context.getShaderInfoLog(fragmentShader) ?? ''}`,
+      ]
+      console.error(`Globe: shader failed to link on ${gpuName(context)}\n${logs.join('\n')}`)
+      if (isEmpireShaderSource(context.getShaderSource(fragmentShader) ?? '')) onEmpireFailedRef.current()
+    }
+    return () => {
+      gl.debug.onShaderError = previous
+    }
+  }, [gl])
+}
+
+function gpuName(context: WebGLRenderingContext): string {
+  const info = context.getExtension('WEBGL_debug_renderer_info')
+  return String(context.getParameter(info === null ? context.RENDERER : info.UNMASKED_RENDERER_WEBGL))
 }
 
 /** `uImpactFlashAnchorUv`'s value when no anchored effect is active (`effects.impactFlash` is
@@ -2009,6 +2054,8 @@ function GlobeSphere({
   empireAfterTex,
   empireMix,
   empireStrength,
+  empiresCompiled,
+  onEmpireShaderFailed,
   onWebglContextRestored,
 }: GlobeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
@@ -2108,6 +2155,8 @@ function GlobeSphere({
     }
   }, [gl, basemapTex, overlayBeforeTex, overlayAfterTex, empireBeforeTex, empireAfterTex])
 
+  useShaderErrorReport(gl, onEmpireShaderFailed)
+
   // On `webglcontextrestored`, every texture this WeakSet remembers
   // having already force-uploaded is gone from the GPU regardless — clearing it lets any texture
   // that does survive (a fresh one from a just-cleared, re-fetched human-era cache) be
@@ -2190,7 +2239,11 @@ function GlobeSphere({
       frustumCulled={false}
       onPointerOver={NOOP_POINTER_HANDLER}
     >
+      {/* Keyed by variant: three.js only rebuilds a material's program when told to, so a
+          change of `defines` mounts a fresh material instead. Both share `uniforms`. */}
       <shaderMaterial
+        key={empiresCompiled ? 'empires' : 'base'}
+        defines={empiresCompiled ? GLOBE_DEFINES_WITH_EMPIRES : GLOBE_DEFINES_WITHOUT_EMPIRES}
         uniforms={uniforms}
         vertexShader={GLOBE_VERTEX_SHADER}
         fragmentShader={GLOBE_FRAGMENT_SHADER}

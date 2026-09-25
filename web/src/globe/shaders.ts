@@ -42,6 +42,46 @@ function linearVec3(hex: string): string {
   return `vec3(${channels.map((c) => glslFloat(Number(c.toFixed(5)))).join(', ')})`
 }
 
+/** The preprocessor symbol that compiles the empire territories into the globe shader. Left
+ *  undefined, the shader carries none of their code, so the orb (which never draws empires) does
+ *  not depend on a GPU driver being able to compile by far the heaviest part of the shader. */
+export const EMPIRES_DEFINE = 'EMPIRES'
+
+/** The globe material's `defines`, with and without the empire territories. */
+export const GLOBE_DEFINES_WITH_EMPIRES: Readonly<Record<string, string>> = { [EMPIRES_DEFINE]: '' }
+export const GLOBE_DEFINES_WITHOUT_EMPIRES: Readonly<Record<string, string>> = {}
+
+/** Whether a compiled shader's source is the globe's empire variant. */
+export function isEmpireShaderSource(source: string): boolean {
+  return new RegExp(`^#define ${EMPIRES_DEFINE}\\b`, 'm').test(source)
+}
+
+/** One palette slot's GLSL operands: its colour, and its components of the packed `vec4`s holding
+ *  every slot's contour distance, highlight emphasis and fill alpha. */
+interface EmpireSlot {
+  colour: string
+  distance: string
+  emphasis: string
+  fillAlpha: string
+}
+
+const EMPIRE_SLOTS: readonly EmpireSlot[] = EMPIRE_PALETTE.map((hex, k) => {
+  const half = k < 4 ? 'Low' : 'High'
+  const component = 'xyzw'[k % 4]!
+  return {
+    colour: linearVec3(hex),
+    distance: `distance${half}.${component}`,
+    emphasis: `emphasis${half}.${component}`,
+    fillAlpha: `fillAlpha${half}.${component}`,
+  }
+})
+
+/** One statement per palette slot, in slot order. Unrolled here rather than written as a GLSL loop
+ *  over local arrays, which mobile compilers handle far less reliably than straight-line code. */
+function eachEmpireSlot(statement: (slot: EmpireSlot) => string): string {
+  return EMPIRE_SLOTS.map(statement).join('\n  ')
+}
+
 /**
  * The empire territories' fills and borders over `base`, from one coverage texture
  * (`empireTexture.ts` has the layout). Each palette slot's border is the half-way contour of its
@@ -51,7 +91,6 @@ function linearVec3(hex: string): string {
  * matches a painter: every fill, every casing, every line, then the highlighted lineage's.
  */
 const EMPIRE_GLSL = /* glsl */ `
-const vec3 EMPIRE_COLOURS[${EMPIRE_PALETTE.length}] = vec3[](${EMPIRE_PALETTE.map(linearVec3).join(', ')});
 const vec3 EMPIRE_CASING_COLOUR = ${linearVec3(EMPIRE_CASING.colour)};
 const float EMPIRE_CASING_ALPHA = ${glslFloat(EMPIRE_CASING.alpha)};
 const float EMPIRE_LINE_WIDTH_PX = ${glslFloat(EMPIRE_LINE_WIDTH_PX)};
@@ -98,14 +137,8 @@ vec3 empireOver(vec3 base, sampler2D tex, vec2 params, float pixelRatio, vec2 uv
     * clamp(highlightCoverage / max(slotsLow, vec4(1e-3)), 0.0, 1.0);
   vec4 emphasisHigh = vec4(equal(vec4(4.0, 5.0, 6.0, 7.0), vec4(highlightSlot)))
     * clamp(highlightCoverage / max(slotsHigh, vec4(1e-3)), 0.0, 1.0);
-  float distancePx[8] = float[](
-    distanceLow.x, distanceLow.y, distanceLow.z, distanceLow.w,
-    distanceHigh.x, distanceHigh.y, distanceHigh.z, distanceHigh.w
-  );
-  float emphasis[8] = float[](
-    emphasisLow.x, emphasisLow.y, emphasisLow.z, emphasisLow.w,
-    emphasisHigh.x, emphasisHigh.y, emphasisHigh.z, emphasisHigh.w
-  );
+  vec4 fillAlphaLow = fillOn * mix(vec4(EMPIRE_FILL_ALPHA * dim), vec4(EMPIRE_HIGHLIGHT_FILL_ALPHA), emphasisLow);
+  vec4 fillAlphaHigh = fillOn * mix(vec4(EMPIRE_FILL_ALPHA * dim), vec4(EMPIRE_HIGHLIGHT_FILL_ALPHA), emphasisHigh);
 
   float lineWidth = EMPIRE_LINE_WIDTH_PX * pixelRatio;
   float casingWidth = EMPIRE_CASING_WIDTH_PX * pixelRatio;
@@ -117,22 +150,11 @@ vec3 empireOver(vec3 base, sampler2D tex, vec2 params, float pixelRatio, vec2 uv
   float lineKeep = clamp(seamPx - 0.5 * highlightCasingWidth, 0.0, 1.0);
 
   vec3 color = base;
-  for (int k = 0; k < 8; k++) {
-    float fillAlpha = mix(EMPIRE_FILL_ALPHA * dim, EMPIRE_HIGHLIGHT_FILL_ALPHA, emphasis[k]);
-    color = mix(color, EMPIRE_COLOURS[k], fillOn * fillAlpha * clamp(distancePx[k] + 0.5, 0.0, 1.0));
-  }
-  for (int k = 0; k < 8; k++) {
-    float alpha = lineKeep * EMPIRE_CASING_ALPHA * dim * (1.0 - emphasis[k]);
-    color = mix(color, EMPIRE_CASING_COLOUR, alpha * empireLine(distancePx[k], casingWidth));
-  }
-  for (int k = 0; k < 8; k++) {
-    color = mix(color, EMPIRE_COLOURS[k], lineKeep * dim * (1.0 - emphasis[k]) * empireLine(distancePx[k], lineWidth));
-  }
-  for (int k = 0; k < 8; k++) {
-    float alpha = lineKeep * emphasis[k];
-    color = mix(color, EMPIRE_CASING_COLOUR, alpha * EMPIRE_CASING_ALPHA * empireLine(distancePx[k], highlightCasingWidth));
-    color = mix(color, EMPIRE_COLOURS[k], alpha * empireLine(distancePx[k], highlightLineWidth));
-  }
+  ${eachEmpireSlot((s) => `color = mix(color, ${s.colour}, ${s.fillAlpha} * clamp(${s.distance} + 0.5, 0.0, 1.0));`)}
+  ${eachEmpireSlot((s) => `color = mix(color, EMPIRE_CASING_COLOUR, lineKeep * EMPIRE_CASING_ALPHA * dim * (1.0 - ${s.emphasis}) * empireLine(${s.distance}, casingWidth));`)}
+  ${eachEmpireSlot((s) => `color = mix(color, ${s.colour}, lineKeep * dim * (1.0 - ${s.emphasis}) * empireLine(${s.distance}, lineWidth));`)}
+  ${eachEmpireSlot((s) => `color = mix(color, EMPIRE_CASING_COLOUR, lineKeep * ${s.emphasis} * EMPIRE_CASING_ALPHA * empireLine(${s.distance}, highlightCasingWidth));`)}
+  ${eachEmpireSlot((s) => `color = mix(color, ${s.colour}, lineKeep * ${s.emphasis} * empireLine(${s.distance}, highlightLineWidth));`)}
   return color;
 }
 `
@@ -238,6 +260,7 @@ uniform vec3 uOverlayChannel;
 uniform float uOverlayDMax;
 uniform float uOverlayStrength;
 
+#ifdef ${EMPIRES_DEFINE}
 // The historical-empires coverage textures (ADR-059, empireTexture.ts), drawn by empireOver.
 // uEmpireMix crossfades between two active sets; uEmpireStrength is 0 while the layer is off or no
 // texture is bound yet. Outside the domain the active set is empty, so the texture has no coverage.
@@ -249,6 +272,7 @@ uniform float uEmpireMix;
 uniform float uEmpireStrength;
 uniform float uPixelRatio;
 ${EMPIRE_GLSL}
+#endif
 
 // docs/GLOBE.md §10 (ADR-030 amendment): the basemap tone-match grade — one TS constant each
 // (blend.ts's gradeBasemapColor doc comment has the measurements and reasoning), interpolated
@@ -420,6 +444,7 @@ void main() {
   // crossfade is drawn whole and the results mixed, so a border fades rather than slides. The
   // branches are on uniforms, so derivatives inside stay defined, and a side not on screen (or the
   // whole layer, while off) costs nothing.
+#ifdef ${EMPIRES_DEFINE}
   if (uEmpireStrength > 0.0) {
     vec3 empire;
     if (uEmpireMix <= 0.0) {
@@ -435,6 +460,7 @@ void main() {
     }
     baseColor = mix(baseColor, empire, uEmpireStrength);
   }
+#endif
 
   // docs/GLOBE.md §5.1: the schematic ice sheets, over the shelf and density, clipped at their
   // margins to land (including exposed shelf). Under the basemap only the ice beyond today's
