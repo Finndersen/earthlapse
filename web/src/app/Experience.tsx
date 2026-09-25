@@ -29,11 +29,11 @@ import {
   type BrowseEventsFilters,
   type EventStep,
 } from '@/events'
-import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
+import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, empiresHaveDataAt, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
 import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
-import { OnboardingTour } from '@/onboarding'
+import { GlobeTour, OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
   PREFETCH_LOOKAHEAD_SECONDS,
@@ -64,6 +64,7 @@ import {
   usePlaybackLoop,
 } from '@/timeline'
 import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
+import { PRESENT_CE_YEAR } from '@/timeline/format'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, TimelineEvent, TimeScale } from '@/types/layer'
 import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
@@ -110,6 +111,10 @@ const RATE_SMOOTHING_SECONDS = 0.5
 const EVENT_TAG_LEGEND = <EventTagLegend />
 const FEEDBACK_LINK = <FeedbackLink />
 const ONBOARDING_TOUR = <OnboardingTour />
+/** Where the globe tour takes a viewer who opens the globe before the empire layer begins: 117 CE,
+ *  the Roman Empire's greatest extent, with the Han, Parthian and Kushan empires alongside. Must
+ *  match `GLOBE_TOUR_JUMP_LEAD` (`onboarding/steps.ts`). */
+const GLOBE_TOUR_EMPIRES_T: GeoTime = PRESENT_CE_YEAR - 117
 
 /** Whether every layer `include` selects has loaded — `false` until the manifest has. */
 function layersLoaded(
@@ -821,6 +826,14 @@ export function Experience() {
           rendered only past the loading/error branches above so every control it rings is
           already in the DOM to be measured. */}
       {ONBOARDING_TOUR}
+      <GlobeTour
+        expanded={globeExpanded}
+        empiresInDomain={empiresHaveDataAt(empires, t)}
+        onJumpToEmpires={() => {
+          setPlaying(false)
+          setT(GLOBE_TOUR_EMPIRES_T)
+        }}
+      />
     </>
   )
 }

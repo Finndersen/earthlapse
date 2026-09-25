@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useTimeStore } from '@/store/time'
 
-import { OnboardingTour } from './OnboardingTour'
-import { TOUR_STEPS } from './steps'
-import { getServerTourOpenToken, getTourOpenToken, setOnboardingTourOpen } from './visibility'
+import { GlobeTour, OnboardingTour } from './OnboardingTour'
+import { GLOBE_TOUR_JUMP_LEAD, TOUR_STEPS } from './steps'
+import { getServerTourOpenToken, getTourOpenToken, setGlobeTourOpen, setOnboardingTourOpen } from './visibility'
 
 /** Stand-ins for the controls the steps anchor to, carrying the same `data-testid`s and
  *  accessible names the real app's do — the tour resolves its targets from the live DOM. */
@@ -46,6 +46,7 @@ const initialStoreState = useTimeStore.getState()
 
 beforeEach(() => {
   setOnboardingTourOpen(false)
+  setGlobeTourOpen(false)
   window.localStorage.clear()
   useTimeStore.setState(initialStoreState, true)
   mountAnchors()
@@ -139,5 +140,37 @@ describe('OnboardingTour', () => {
     fireEvent.click(screen.getByTestId('onboarding-skip'))
     act(() => setOnboardingTourOpen(true))
     expect(screen.getByText('1 of 5')).toBeTruthy()
+  })
+})
+
+describe('GlobeTour', () => {
+  it('opens on the first expand, only once the first tour is closed, and jumps to the empires when out of range', () => {
+    const onJump = vi.fn()
+    const collapse = vi.fn()
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') collapse()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.localStorage.clear()
+    const tours = (expanded: boolean) => (
+      <>
+        <OnboardingTour />
+        <GlobeTour expanded={expanded} empiresInDomain={false} onJumpToEmpires={onJump} />
+      </>
+    )
+    const { rerender } = render(tours(false))
+    rerender(tours(true))
+    expect(screen.getAllByTestId('onboarding-card')).toHaveLength(1)
+    expect(screen.getByText('1 of 5')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('onboarding-skip'))
+    expect(screen.getByRole('dialog', { name: 'Globe or map' })).toBeTruthy()
+    expect(onJump).not.toHaveBeenCalled()
+    clickNext(1)
+    expect(onJump).toHaveBeenCalledOnce()
+    expect(card().textContent).toContain(GLOBE_TOUR_JUMP_LEAD)
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByTestId('onboarding-card')).toBeNull()
+    expect(collapse).not.toHaveBeenCalled()
+    window.removeEventListener('keydown', onKeyDown)
   })
 })
