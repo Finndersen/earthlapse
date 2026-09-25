@@ -7,14 +7,11 @@ returns no `CuratedShape` at all. The real work happens in `write_outputs()`, th
 textures: it runs after `normalise()`, writes outside `data/curated/`, and is declared via
 `manifest.toml`'s `outputs` globs.
 
-No decoding, loudness normalisation or transcoding happens here -- this machine has neither
-ffmpeg nor sox, and macOS's `afconvert` must not become a hard pipeline dependency (every
-`sources/<name>/` source must build and test offline). Each raw file is published after checking
-its container format actually matches the `format` a `[[stems]]` entry declares, either
-unchanged or, for a looping MP3, cut losslessly by whole frames to its loop region
-(`pipeline.audio.published_bytes`). Level matching and loop points are curator-attested
-`stems.toml` fields applied at playback -- see README.md "Why levels are attested, not measured
-at build time".
+Each raw file is published after checking its container format actually matches the `format` a
+`[[stems]]` entry declares: a WAV unchanged, an MP3 decoded, cut to the span that plays and
+re-encoded small (`pipeline.audio.published_bytes`, `pipeline/mp3.py`). The raw file itself is
+never modified. Level matching and loop points are curator-attested `stems.toml` fields applied at
+playback -- see README.md "Why levels are attested, not measured at build time".
 """
 
 from __future__ import annotations

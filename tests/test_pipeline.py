@@ -934,7 +934,8 @@ def test_publish_emits_framing_with_portrait_zoom_only_when_it_zooms(root: Path)
 
 # -- scene sound -----------------------------------------------------------------------------
 
-_FAKE_MP3_BYTES = b"ID3" + b"\x00" * 20
+# Published as-is (only MP3 is decoded and re-encoded), so placeholder bytes will do.
+_FAKE_M4A_BYTES = b"\x00\x00\x00\x18ftypM4A " + b"\x00" * 12
 
 
 def _write_stem_catalogue(
@@ -942,7 +943,7 @@ def _write_stem_catalogue(
     stem_id: str = "wind",
     publish_file: bool = True,
     loop_safe: bool = True,
-    format: str = "mp3",
+    format: str = "m4a",
 ) -> None:
     source_dir = paths.sources / "audio-stems"
     source_dir.mkdir(parents=True, exist_ok=True)
@@ -956,8 +957,8 @@ def _write_stem_catalogue(
     if publish_file:
         audio_dir = paths.media / "audio"
         audio_dir.mkdir(parents=True, exist_ok=True)
-        (audio_dir / content_hashed_filename(stem_id, "mp3", _FAKE_MP3_BYTES)).write_bytes(
-            _FAKE_MP3_BYTES
+        (audio_dir / content_hashed_filename(stem_id, format, _FAKE_M4A_BYTES)).write_bytes(
+            _FAKE_M4A_BYTES
         )
 
 
@@ -982,7 +983,7 @@ def test_scene_stem_links_and_the_stem_catalogue_appear_in_the_manifest(root: Pa
     assert raw["audioStems"] == [
         {
             "id": "wind",
-            "file": f"audio/{content_hashed_filename('wind', 'mp3', _FAKE_MP3_BYTES)}",
+            "file": f"audio/{content_hashed_filename('wind', 'm4a', _FAKE_M4A_BYTES)}",
             "title": "Ridge Wind",
             "author": "Test Author",
             "licence": "CC0 1.0",

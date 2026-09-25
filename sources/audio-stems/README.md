@@ -68,16 +68,16 @@ match, rather than guessing.
 - **Why levels are attested, not measured at build time.** This machine has neither `ffmpeg`
   nor `sox`, and macOS's `/usr/bin/afconvert` must not become a hard pipeline dependency — every
   source must build and its tests must run offline on any machine (CLAUDE.md, CONTRIBUTING.md).
-  `write_outputs()` therefore does no decoding or DSP: it publishes the downloaded bytes, except
-  that a looping MP3 is cut losslessly, by whole frames, to its loop region plus 0.1 s either
-  side (`pipeline/mp3.py`, ADR-023 amendment "looping MP3 stems publish cut to their loop
-  region"); publish moves `loop` onto the cut file, and `stems.toml` stays in the raw clip's
-  timeline. Level matching and loop points are instead
+  `write_outputs()` decodes and re-encodes with two pip wheels instead (`miniaudio`, `lameenc`,
+  `pipeline/mp3.py`; ADR-023 amendment "stems publish re-encoded small"): each MP3 is cut to the
+  span that plays plus 0.1 s either side and re-encoded at 96 kbps stereo or 56 kbps mono.
+  The raw downloads are never modified; publish moves every time onto the published file, and
+  `stems.toml` stays in the raw clip's timeline. Level matching and loop points are instead
   **curator-attested numbers applied at playback**: `levels.py` (numpy, run by hand on a decoded
   16-bit WAV when a clip is sourced) prints `loudness_db`/`peak_dbfs`; publish turns them into a
   per-stem `level_trim_db` the web engine multiplies into every gain; and a `loop` region is
   handed to the looping player (`loopStart`/`loopEnd`), so a silent head, a fade or a splice is
-  skipped without re-encoding. The same way `sources/astronomy`'s checkpoint values are cited
+  skipped. The same way `sources/astronomy`'s checkpoint values are cited
   numbers a human entered. Decoding for measurement: headless Chromium's
   `OfflineAudioContext.decodeAudioData` handles every published format (the 2026-09-15 values
   were measured that way); `afconvert -f WAVE -d LEI16` handles MP3/M4A where it is available.
@@ -105,10 +105,9 @@ contribution — see its own `stems.toml` entry comment, `forest` re-sourced a T
 2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
 rain recording, then a FOURTH time the same day after an independent review found the third pick
 was itself low-frequency wind rumble rather than genuine leaf rustle, and eleven single-scene
-stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~20.2 MB published, since each looping stem publishes cut to its loop region and a one-shot to
-its `start_seconds`..`end_seconds`, and every scene-only stem plays at most about 10 s. The
-largest published files are ambience beds: `birds` (2.1 MB, its 92 s loop), `mammals` (1.6 MB)
-and `storm` (1.5 MB). Every stem is CC0 or public domain.
+stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~4.8 MB published: every stem is cut to the span that plays and re-encoded small, each
+scene-only stem plays at most about 10 s, and each ambience bed loops for 9-29 s, sized to how
+long a 1x playthrough hears it. Every stem is CC0 or public domain.
 
 ## Sourcing checks (nobody can listen)
 

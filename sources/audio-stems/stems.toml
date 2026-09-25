@@ -41,6 +41,8 @@
 # Spectrogram: broadband gusts, no tonal events. The clip starts and ends in near-silence and has
 # two hard edit splices where all content stops at once (22.7-23.3 s, 78.7-79.1 s), so only the
 # 54 s between the splices loops (23.74-77.81 s, matched level, continuous samples at the wrap).
+# Loop re-chosen 2026-09-25 at 16.6 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "wind"
 title = "Desert Sand - Dune Atmosphere"
@@ -52,9 +54,9 @@ raw_filename = "wind.mp3"
 format = "mp3"
 duration_seconds = 128.2
 loop_safe = true
-loudness_db = -37.2
-peak_dbfs = -13.4
-loop = { start_seconds = 23.73998, end_seconds = 77.80567 }
+loudness_db = -39.0
+peak_dbfs = -17.7
+loop = { start_seconds = 35.2199, end_seconds = 51.834 }
 
 # https://freesound.org/people/Nox_Sound/sounds/829629/ -- CC0 1.0, Nox_Sound,
 # "Ambiance_Ocean_Ribeira_Grande_Loop_Stereo_02". Surf on a sandy Azores beach, authored as a
@@ -62,6 +64,8 @@ loop = { start_seconds = 23.73998, end_seconds = 77.80567 }
 # FM chirps at 4-5.5 kHz (bird calls) -- birds under a stem that plays from 4.5 Ga. This clip is
 # a continuous broadband surf roar (energy 150-1600 Hz) with no tonal events, and its first and
 # last 50 ms sit within 1.5 dB of each other.
+# Loop re-chosen 2026-09-25 at 16.5 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "water"
 title = "Ocean Surf Loop (Ribeira Grande)"
@@ -73,13 +77,16 @@ raw_filename = "water.mp3"
 format = "mp3"
 duration_seconds = 60.0
 loop_safe = true
-loudness_db = -28.9
+loudness_db = -28.7
 peak_dbfs = -7.7
+loop = { start_seconds = 33.7289, end_seconds = 50.1847 }
 
 # https://freesound.org/people/plyboard9/sounds/531873/ -- CC0 1.0, plyboard9,
 # "Rain&ThunderLoop1Light.wav". Steady rain with soft, distant ("Light") thunder -- no single
 # sharp startling clap, matching the wishlist's non-jarring-on-loop requirement. Spectrogram:
 # energy almost all below 500 Hz (distant rumbles), quiet between rumbles.
+# Loop re-chosen 2026-09-25 at 16.1 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "storm"
 title = "Rain and Thunder Loop (Light)"
@@ -91,8 +98,9 @@ raw_filename = "storm.mp3"
 format = "mp3"
 duration_seconds = 65.1
 loop_safe = true
-loudness_db = -39.8
-peak_dbfs = -8.5
+loudness_db = -37.7
+peak_dbfs = -9.7
+loop = { start_seconds = 25.1162, end_seconds = 41.2073 }
 
 # https://freesound.org/people/pwigger0029/sounds/710561/ -- CC0 1.0, pwigger0029,
 # "661147__felixblume__volcano-mount-yasur-tanna-island-short": a 28 s excerpt of felix.blume's
@@ -102,6 +110,8 @@ peak_dbfs = -8.5
 # no voices. Replaces the Furnas hot-spring clip, which now lives on as `geothermal`. The clip's
 # own ends jump 0.05 against a 0.0016 median sample step (a click on every wrap), so the loop
 # region runs 0.87-26.95 s between matched, near-equal samples.
+# Loop re-chosen 2026-09-25 at 11.6 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "volcanic"
 title = "Volcano Mount Yasur, Tanna Island (excerpt)"
@@ -113,9 +123,9 @@ raw_filename = "volcanic.mp3"
 format = "mp3"
 duration_seconds = 28.06
 loop_safe = true
-loudness_db = -19.9
-peak_dbfs = -0.7
-loop = { start_seconds = 0.872, end_seconds = 26.94646 }
+loudness_db = -18.4
+peak_dbfs = -0.6
+loop = { start_seconds = 9.5347, end_seconds = 21.1265 }
 
 # https://freesound.org/people/mathiaslyhne1/sounds/798157/ -- CC0 1.0, mathiaslyhne1, "3. Forest,
 # beech leaves, trees". Terrestrial ambience bed standing in for `wind`/`water`/`storm` once life
@@ -155,6 +165,8 @@ loop = { start_seconds = 17.308, end_seconds = 26.224 }
 # as a loop. Spectrogram: pulsed stridulation chirps at 4.3-5.2 kHz, no cicada buzz, birds,
 # frogs or hum. Replaces the Ngguls cicada chorus (loud cicadas are Cenozoic). A very quiet
 # recording (peak -28.3 dBFS, loudness -46.7 dB), lifted by its +16.7 dB level trim.
+# Loop re-chosen 2026-09-25 at 17.2 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "insects"
 title = "Night Crickets Calm Loop"
@@ -167,7 +179,8 @@ format = "mp3"
 duration_seconds = 59.79
 loop_safe = true
 loudness_db = -46.7
-peak_dbfs = -28.3
+peak_dbfs = -28.7
+loop = { start_seconds = 38.9196, end_seconds = 56.1244 }
 
 # https://freesound.org/people/kangaroovindaloo/sounds/324590/ -- CC0 1.0, kangaroovindaloo,
 # "Blowflies!" (tags: blowfly, buzz, buzzing, flies, insect, swarm). A generic wing-hum fills
@@ -222,6 +235,8 @@ loop = { start_seconds = 35.296, end_seconds = 47.919 }
 # dinosaur, used only for its low-frequency bellow character, the same "real animal proxy"
 # precedent as `archosaurs`. Spectrogram: five discrete broadband bellows across 30 s (harmonic
 # stacks to ~4 kHz), quiet gaps between, no insect/bird bed underneath.
+# Loop re-chosen 2026-09-25 at 13.7 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "large-animal"
 title = "Bison Bellowing (Yellowstone)"
@@ -233,10 +248,12 @@ raw_filename = "large-animal.mp3"
 format = "mp3"
 duration_seconds = 30.37
 loop_safe = true
-loudness_db = -29.4
+loudness_db = -25.3
 peak_dbfs = -6.6
-loop = { start_seconds = 1.34, end_seconds = 29.996 }
+loop = { start_seconds = 2.7084, end_seconds = 16.3967 }
 
+# Loop re-chosen 2026-09-25 at 28.5 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "birds"
 title = "Dawn Chorus (Wicklow)"
@@ -248,9 +265,9 @@ raw_filename = "birds.mp3"
 format = "mp3"
 duration_seconds = 96.17
 loop_safe = true
-loudness_db = -49.1
-peak_dbfs = -20.9
-loop = { start_seconds = 1.84338, end_seconds = 93.34889 }
+loudness_db = -49.7
+peak_dbfs = -28.6
+loop = { start_seconds = 27.8203, end_seconds = 56.3666 }
 
 # https://freesound.org/people/craigsmith/sounds/437933/ -- CC0 1.0, craigsmith, "G12-01-Alligator
 # Growl.wav" (vintage Hollywood optical effect, the same source style as `impact`). Re-sourced from
@@ -262,6 +279,8 @@ loop = { start_seconds = 1.84338, end_seconds = 93.34889 }
 # different edited segment carried over from the source tape (splice clicks, a harmonic call sweep,
 # then a steady hiss/buzz) with no growl content, so the loop region starts after it, in the quiet
 # floor both that segment's end and the clip's own tail share.
+# Loop re-chosen 2026-09-25 at 18.5 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "archosaurs"
 title = "Alligator Growl"
@@ -273,9 +292,9 @@ raw_filename = "archosaurs.mp3"
 format = "mp3"
 duration_seconds = 37.27
 loop_safe = true
-loudness_db = -34.7
+loudness_db = -35.2
 peak_dbfs = -11.4
-loop = { start_seconds = 7.122, end_seconds = 37.264 }
+loop = { start_seconds = 13.6938, end_seconds = 32.1956 }
 
 # https://freesound.org/people/KevZim/sounds/531439/ -- CC0 1.0, KevZim, "Lions_in_Gonarezhou.wav"
 # (Gonarezhou National Park, Zimbabwe; Zoom H4n field recording, lions "fairly far away", bass
@@ -290,6 +309,8 @@ loop = { start_seconds = 7.122, end_seconds = 37.264 }
 # and tigers (an edited effects reel with hard cuts every few seconds), craigsmith 675444 (close,
 # gapped studio roars), L.Finck 653532 deer rut (a bird chorus over the stags), felix.blume 376832
 # (56% of energy is a 4-8 kHz insect bed).
+# Loop re-chosen 2026-09-25 at 22.7 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "mammals"
 title = "Lions in Gonarezhou"
@@ -301,9 +322,9 @@ raw_filename = "mammals.mp3"
 format = "mp3"
 duration_seconds = 70.09
 loop_safe = true
-loudness_db = -40.4
+loudness_db = -38.1
 peak_dbfs = -8.9
-loop = { start_seconds = 0.16408, end_seconds = 68.24245 }
+loop = { start_seconds = 20.7083, end_seconds = 43.3714 }
 
 # https://freesound.org/people/felix.blume/sounds/779856/ -- CC0 1.0, felix.blume, "Goats moving
 # and bleating in a pen" (Arenbou, Morocco). Re-sourced from a Wikimedia Commons Ogg original
@@ -315,6 +336,8 @@ loop = { start_seconds = 0.16408, end_seconds = 68.24245 }
 # active and runs busier in its second half, so it needs an explicit loop region skipping that
 # busier stretch; `loudness_db`/`peak_dbfs` are measured on the loop region itself, since a peak
 # transient elsewhere in the full clip would otherwise cap the trim short of the loop reference.
+# Loop re-chosen 2026-09-25 at 24.3 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "livestock"
 title = "Goats Moving and Bleating in a Pen"
@@ -326,13 +349,15 @@ raw_filename = "livestock.mp3"
 format = "mp3"
 duration_seconds = 96.31
 loop_safe = true
-loudness_db = -28.6
+loudness_db = -29.3
 peak_dbfs = -0.1
-loop = { start_seconds = 50.92, end_seconds = 95.88 }
+loop = { start_seconds = 55.6732, end_seconds = 79.9686 }
 
 # https://freesound.org/people/NickTayloe/sounds/813328/ -- CC0 1.0, NickTayloe, "Crackling
 # Flames (loop)". Campfire-scale crackling fire, explicitly authored as a loop. Spectrogram:
 # steady broadband crackle, 150-4000 Hz, no tonal events.
+# Loop re-chosen 2026-09-25 at 17.6 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "fire"
 title = "Crackling Flames Loop"
@@ -344,8 +369,9 @@ raw_filename = "fire.mp3"
 format = "mp3"
 duration_seconds = 35.0
 loop_safe = true
-loudness_db = -34.0
-peak_dbfs = -5.2
+loudness_db = -34.2
+peak_dbfs = -5.5
+loop = { start_seconds = 7.0237, end_seconds = 24.6054 }
 
 # https://freesound.org/people/kyles/sounds/637466/ -- CC0 1.0, kyles, "crowd int show movement
 # walla murmur active whispers no steps nice smooth detailed sweetener". A professional
@@ -353,6 +379,8 @@ peak_dbfs = -5.2
 # texture layer, not a recording of any individual conversation; no single word is meant to
 # read as intelligible. Spectrogram: diffuse 150-1600 Hz murmur, no formant arcs standing out,
 # no siren sweeps, vehicles or music; a faint steady sub-100 Hz room tone (it is an indoor take).
+# Loop re-chosen 2026-09-25 at 29.1 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "settlement"
 title = "Crowd Walla Murmur"
@@ -365,13 +393,16 @@ format = "mp3"
 duration_seconds = 58.64
 loop_safe = true
 loudness_db = -37.4
-peak_dbfs = -14.5
+peak_dbfs = -15.0
+loop = { start_seconds = 2.4103, end_seconds = 31.5227 }
 
 # https://freesound.org/people/blukotek/sounds/424942/ -- CC0 1.0, blukotek, "work of a large
 # steam engine.wav" (tags: steam, steamengine, factory, industrial, machinery). Spectrogram: a
 # steady broadband piston beat (~1.5 strokes/s) with faint constant mechanical tones near 2.2
 # and 5.8 kHz; no sirens, horns, steam whistles, vehicles, electronic hum or voices. Two
 # near-full-scale samples; a small sample-level step at the loop point.
+# Loop re-chosen 2026-09-25 at 14.5 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "industry"
 title = "Work of a Large Steam Engine"
@@ -383,14 +414,17 @@ raw_filename = "industry.mp3"
 format = "mp3"
 duration_seconds = 37.1
 loop_safe = true
-loudness_db = -22.9
-peak_dbfs = 0.0
+loudness_db = -22.5
+peak_dbfs = -0.3
+loop = { start_seconds = 5.1959, end_seconds = 19.7084 }
 
 # https://freesound.org/people/qubodup/sounds/223093/ -- CC0 1.0, qubodup, "Seamless City Loop"
 # (tags: city, traffic, street, gapless, seamless). Spectrogram: a dense, steady road-traffic
 # bed at 150-2000 Hz with engine hum near 250 Hz and one car pass-by at ~16 s; NO siren sweeps,
 # horns, voices, PA or music. Replaces v1 `machinery` (vdr3, Budapest Keleti station), whose
 # loop was ~75% electronic siren wail.
+# Loop re-chosen 2026-09-25 at 19.4 s, sized to how long a 1x playthrough hears this bed, inside
+# the clip, where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "traffic"
 title = "Seamless City Loop"
@@ -402,8 +436,9 @@ raw_filename = "traffic.mp3"
 format = "mp3"
 duration_seconds = 30.0
 loop_safe = true
-loudness_db = -19.5
+loudness_db = -18.6
 peak_dbfs = -0.3
+loop = { start_seconds = 1.8271, end_seconds = 21.2282 }
 
 # ---------------------------------------------------------------------------- scene-only stems
 

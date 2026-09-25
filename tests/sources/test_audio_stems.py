@@ -192,61 +192,65 @@ def test_measure_levels_reads_a_full_scale_1khz_sine_as_minus_3_db() -> None:
     assert levels.measure_levels(sine, 48000) == levels.StemLevels(loudness_db=-3.0, peak_dbfs=0.0)
 
 
-# -- trimming a looping MP3 ------------------------------------------------------------------
+# -- publishing an MP3 stem --------------------------------------------------------------------
 
-# MPEG-1 Layer III, 128 kbps, 48 kHz, joint stereo, no padding: 384-byte frames of 1152 samples.
-_MP3_HEADER = bytes([0xFF, 0xFB, 0x94, 0x64])
-_FRAME_BYTES = 384
-_XING_AT = 4 + 32
-_LAME_AT = _XING_AT + 8 + 4 + 4 + 100 + 4
+_RATE = 48000
 
 
-def _synthetic_mp3(audio_frames: int) -> bytes:
-    """A LAME-style info frame then `audio_frames` frames whose payload is their own index --
-    enough for the frame arithmetic; nothing here is decoded."""
-    info = bytearray(_MP3_HEADER + bytes(_FRAME_BYTES - 4))
-    info[_XING_AT : _XING_AT + 8] = b"Info" + (0xF).to_bytes(4, "big")
-    info[_LAME_AT : _LAME_AT + 4] = b"LAME"
-    frames = [_MP3_HEADER + bytes([i]) * (_FRAME_BYTES - 4) for i in range(audio_frames)]
-    return bytes(info) + b"".join(frames)
+def _raw_mp3_with_clicks(click_seconds: list[float]) -> tuple[bytes, list[float]]:
+    """A 6 s quiet sine with one-sample clicks, and where each click lands in the decoded raw
+    clip -- the timeline `stems.toml` times are in."""
+    t = np.arange(6 * _RATE) / _RATE
+    signal = 0.05 * np.sin(2 * np.pi * 220 * t)
+    for seconds in click_seconds:
+        signal[round(seconds * _RATE)] = 0.95
+    pcm = mp3.Pcm((np.stack([signal, signal], 1) * 32767).astype(np.int16), _RATE)
+    raw = mp3.encode(pcm)
+    return raw, [_click_at(mp3.decode(raw), seconds) for seconds in click_seconds]
 
 
-def test_a_looping_mp3_publishes_cut_to_its_loop_with_the_loop_on_the_same_frames() -> None:
-    frame = 1152 / 48000
-    stem = _stem(
-        duration_seconds=40 * frame, loop={"start_seconds": 10.5 * frame, "end_seconds": 20 * frame}
-    )
-    published = published_bytes(stem, _synthetic_mp3(40))
+def _click_at(pcm: mp3.Pcm, near_seconds: float) -> float:
+    lo = max(0, round((near_seconds - 0.05) * pcm.sample_rate))
+    window = np.abs(pcm.samples[lo : lo + round(0.1 * pcm.sample_rate), 0].astype(float))
+    return (lo + int(np.argmax(window))) / pcm.sample_rate
 
-    kept = [published[o + 4] for o in range(_FRAME_BYTES, len(published), _FRAME_BYTES)]
-    assert 0 < kept[0] < 10 and 20 <= kept[-1] < 39
-    assert kept == list(range(kept[0], kept[-1] + 1))
-    info = published[:_FRAME_BYTES]
-    assert int.from_bytes(info[_XING_AT + 8 : _XING_AT + 12], "big") == len(kept)
-    assert int.from_bytes(info[_XING_AT + 12 : _XING_AT + 16], "big") == len(published)
-    crc_at = _LAME_AT + 34
-    assert int.from_bytes(info[crc_at : crc_at + 2], "big") == mp3._crc16(info[:crc_at])
 
+@pytest.mark.parametrize(
+    "fields",
+    [
+        {"loop_safe": True, "loop": ("a", "b")},
+        {"loop_safe": False, "start_seconds": "a", "end_seconds": "b"},
+    ],
+    ids=["loop", "one-shot"],
+)
+def test_a_published_mp3_is_cut_small_with_its_times_on_the_same_audio(
+    fields: dict[str, object],
+) -> None:
+    raw, (a, b) = _raw_mp3_with_clicks([2.0, 4.0])
+    values = {"a": a, "b": b}
+    overrides = {
+        key: {"start_seconds": a, "end_seconds": b} if key == "loop" else values.get(value, value)  # type: ignore[arg-type]
+        for key, value in fields.items()
+    }
+    stem = _stem(duration_seconds=6.0, **overrides)
+
+    published = published_bytes(stem, raw)
     timing = published_timing(stem, published)
-    assert timing.loop is not None
-    assert timing.loop.start_seconds == pytest.approx((10.5 - kept[0]) * frame)
-    assert timing.loop.end_seconds - timing.loop.start_seconds == pytest.approx(9.5 * frame)
+    decoded = mp3.decode(published)
 
-
-def test_a_one_shot_stopped_early_publishes_cut_to_its_end_with_start_and_end_on_the_same_frames() -> (
-    None
-):
-    frame = 1152 / 48000
-    stem = _stem(
-        loop_safe=False,
-        duration_seconds=80 * frame,
-        start_seconds=6.5 * frame,
-        end_seconds=60 * frame,
+    assert len(published) < len(raw) / 2
+    start, end = (
+        (timing.loop.start_seconds, timing.loop.end_seconds)
+        if timing.loop is not None
+        else (timing.start_seconds, timing.end_seconds)
     )
-    published = published_bytes(stem, _synthetic_mp3(80))
+    assert start is not None and end is not None
+    one_sample = 1.5 / decoded.sample_rate
+    assert _click_at(decoded, start) == pytest.approx(start, abs=one_sample)
+    assert _click_at(decoded, end) == pytest.approx(end, abs=one_sample)
 
-    kept = [published[o + 4] for o in range(_FRAME_BYTES, len(published), _FRAME_BYTES)]
-    assert 0 < kept[0] < 6 and 60 <= kept[-1] < 79
-    timing = published_timing(stem, published)
-    assert timing.start_seconds == pytest.approx((6.5 - kept[0]) * frame)
-    assert timing.end_seconds == pytest.approx((60 - kept[0]) * frame)
+
+def test_a_looping_mp3_without_a_region_is_refused() -> None:
+    raw, _ = _raw_mp3_with_clicks([])
+    with pytest.raises(ValueError, match="needs a `loop` region"):
+        published_bytes(_stem(duration_seconds=6.0), raw)

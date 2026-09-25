@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "800810840260737b",
+  "buildId": "aa4c681d0898ef0c",
   "assetBase": "/media",
   "scenes": [
     {
@@ -6272,288 +6272,316 @@
   "audioStems": [
     {
       "id": "wind",
-      "file": "audio/wind-bd0538a129.mp3",
+      "file": "audio/wind-bbed7193e4.mp3",
       "title": "Desert Sand - Dune Atmosphere",
       "author": "Vrymaa",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/825/825860_13973196-hq.mp3",
-      "durationSeconds": 54.312,
+      "durationSeconds": 16.884,
       "loopSafe": true,
-      "levelTrimDb": 7.2,
+      "levelTrimDb": 9.0,
       "loop": {
-        "startSeconds": 0.12398,
-        "endSeconds": 54.18967
+        "startSeconds": 0.134531,
+        "endSeconds": 16.748631
       }
     },
     {
       "id": "water",
-      "file": "audio/water-53baa50944.mp3",
+      "file": "audio/water-d1012dbbdf.mp3",
       "title": "Ocean Surf Loop (Ribeira Grande)",
       "author": "Nox_Sound",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/829/829629_9250976-hq.mp3",
-      "durationSeconds": 60.0,
+      "durationSeconds": 16.704,
       "loopSafe": true,
-      "levelTrimDb": -1.1
+      "levelTrimDb": -1.3,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 16.590331
+      }
     },
     {
       "id": "storm",
-      "file": "audio/storm-9d6b402865.mp3",
+      "file": "audio/storm-c63c988bec.mp3",
       "title": "Rain and Thunder Loop (Light)",
       "author": "plyboard9",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/531/531873_1059037-hq.mp3",
-      "durationSeconds": 65.1,
+      "durationSeconds": 16.344,
       "loopSafe": true,
-      "levelTrimDb": 8.5
+      "levelTrimDb": 7.7,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 16.225631
+      }
     },
     {
       "id": "volcanic",
-      "file": "audio/volcanic-836e9c7665.mp3",
+      "file": "audio/volcanic-a467f897f7.mp3",
       "title": "Volcano Mount Yasur, Tanna Island (excerpt)",
       "author": "felix.blume (excerpt by pwigger0029)",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/710/710561_15406682-hq.mp3",
-      "durationSeconds": 26.28,
+      "durationSeconds": 11.844,
       "loopSafe": true,
-      "levelTrimDb": -10.1,
+      "levelTrimDb": -11.6,
       "loop": {
-        "startSeconds": 0.104,
-        "endSeconds": 26.17846
+        "startSeconds": 0.134531,
+        "endSeconds": 11.726331
       }
     },
     {
       "id": "forest",
-      "file": "audio/forest-97649c8a68.mp3",
+      "file": "audio/forest-638f8a2b67.mp3",
       "title": "3. Forest, beech leaves, trees",
       "author": "mathiaslyhne1",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/798/798157_4977295-hq.mp3",
-      "durationSeconds": 9.144,
+      "durationSeconds": 9.18,
       "loopSafe": true,
       "levelTrimDb": 18.8,
       "loop": {
-        "startSeconds": 0.124,
-        "endSeconds": 9.04
+        "startSeconds": 0.134531,
+        "endSeconds": 9.050531
       }
     },
     {
       "id": "insects",
-      "file": "audio/insects-4ee4af53ef.mp3",
+      "file": "audio/insects-e0e46bd627.mp3",
       "title": "Night Crickets Calm Loop",
       "author": "Nox_Sound",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/637/637083_9250976-hq.mp3",
-      "durationSeconds": 59.79,
+      "durationSeconds": 17.46,
       "loopSafe": true,
-      "levelTrimDb": 16.7
+      "levelTrimDb": 16.7,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 17.339331
+      }
     },
     {
       "id": "wing-hum",
-      "file": "audio/wing-hum-b622affa03.mp3",
+      "file": "audio/wing-hum-5012a6af7a.mp3",
       "title": "Blowflies!",
       "author": "kangaroovindaloo",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/324/324590_1728127-hq.mp3",
-      "durationSeconds": 12.84,
+      "durationSeconds": 12.888,
       "loopSafe": true,
       "levelTrimDb": -5.7,
       "loop": {
-        "startSeconds": 0.112,
-        "endSeconds": 12.735
+        "startSeconds": 0.134531,
+        "endSeconds": 12.757531
       }
     },
     {
       "id": "large-animal",
-      "file": "audio/large-animal-b4cf4bc620.mp3",
+      "file": "audio/large-animal-eb522c5786.mp3",
       "title": "Bison Bellowing (Yellowstone)",
       "author": "Nivatius",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/519/519594_7143328-hq.mp3",
-      "durationSeconds": 28.891,
+      "durationSeconds": 13.932,
       "loopSafe": true,
-      "levelTrimDb": -0.6,
+      "levelTrimDb": -4.7,
       "loop": {
-        "startSeconds": 0.112245,
-        "endSeconds": 28.768245
+        "startSeconds": 0.134531,
+        "endSeconds": 13.822831
       }
     },
     {
       "id": "birds",
-      "file": "audio/birds-8c848959bd.mp3",
+      "file": "audio/birds-1ce625f3e0.mp3",
       "title": "Dawn Chorus (Wicklow)",
       "author": "Synge101",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/611/611453_13531950-hq.mp3",
-      "durationSeconds": 91.728,
+      "durationSeconds": 28.8,
       "loopSafe": true,
-      "levelTrimDb": 19.1,
+      "levelTrimDb": 19.7,
       "loop": {
-        "startSeconds": 0.11538,
-        "endSeconds": 91.62089
+        "startSeconds": 0.134531,
+        "endSeconds": 28.680831
       }
     },
     {
       "id": "archosaurs",
-      "file": "audio/archosaurs-2e1d8dad36.mp3",
+      "file": "audio/archosaurs-6ea5a7879f.mp3",
       "title": "Alligator Growl",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/437/437933_2524442-hq.mp3",
-      "durationSeconds": 30.262,
+      "durationSeconds": 18.756,
       "loopSafe": true,
-      "levelTrimDb": 4.7,
+      "levelTrimDb": 5.2,
       "loop": {
-        "startSeconds": 0.114,
-        "endSeconds": 30.256
+        "startSeconds": 0.134531,
+        "endSeconds": 18.636331
       }
     },
     {
       "id": "mammals",
-      "file": "audio/mammals-4acbf6221f.mp3",
+      "file": "audio/mammals-7464a4ba2f.mp3",
       "title": "Lions in Gonarezhou",
       "author": "KevZim",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/531/531439_7083541-hq.mp3",
-      "durationSeconds": 68.31,
+      "durationSeconds": 22.932,
       "loopSafe": true,
-      "levelTrimDb": 8.9,
+      "levelTrimDb": 8.1,
       "loop": {
-        "startSeconds": 0.111835,
-        "endSeconds": 68.190205
+        "startSeconds": 0.134531,
+        "endSeconds": 22.797631
       }
     },
     {
       "id": "livestock",
-      "file": "audio/livestock-af14ff444b.mp3",
+      "file": "audio/livestock-8f59a13359.mp3",
       "title": "Goats Moving and Bleating in a Pen",
       "author": "felix.blume",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/779/779856_1661766-hq.mp3",
-      "durationSeconds": 45.192,
+      "durationSeconds": 24.552,
       "loopSafe": true,
-      "levelTrimDb": -1.4,
+      "levelTrimDb": -0.7,
       "loop": {
-        "startSeconds": 0.112,
-        "endSeconds": 45.072
+        "startSeconds": 0.134531,
+        "endSeconds": 24.429931
       }
     },
     {
       "id": "fire",
-      "file": "audio/fire-b7a16eddca.mp3",
+      "file": "audio/fire-07a3db2e0f.mp3",
       "title": "Crackling Flames Loop",
       "author": "NickTayloe",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/813/813328_11606594-hq.mp3",
-      "durationSeconds": 35.0,
+      "durationSeconds": 17.82,
       "loopSafe": true,
-      "levelTrimDb": 4.0
+      "levelTrimDb": 4.2,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 17.716231
+      }
     },
     {
       "id": "settlement",
-      "file": "audio/settlement-1b9a4284d9.mp3",
+      "file": "audio/settlement-f1afab0fe1.mp3",
       "title": "Crowd Walla Murmur",
       "author": "kyles",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/637/637466_612689-hq.mp3",
-      "durationSeconds": 58.64,
+      "durationSeconds": 29.376,
       "loopSafe": true,
-      "levelTrimDb": 7.4
+      "levelTrimDb": 7.4,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 29.246931
+      }
     },
     {
       "id": "industry",
-      "file": "audio/industry-9df868c98c.mp3",
+      "file": "audio/industry-05a4f2482f.mp3",
       "title": "Work of a Large Steam Engine",
       "author": "blukotek",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/424/424942_4451798-hq.mp3",
-      "durationSeconds": 37.1,
+      "durationSeconds": 14.76,
       "loopSafe": true,
-      "levelTrimDb": -7.1
+      "levelTrimDb": -7.5,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 14.647031
+      }
     },
     {
       "id": "traffic",
-      "file": "audio/traffic-f2ac02efee.mp3",
+      "file": "audio/traffic-8930ce8b30.mp3",
       "title": "Seamless City Loop",
       "author": "qubodup",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/223/223093_71257-hq.mp3",
-      "durationSeconds": 30.0,
+      "durationSeconds": 19.656,
       "loopSafe": true,
-      "levelTrimDb": -10.5
+      "levelTrimDb": -11.4,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 19.535631
+      }
     },
     {
       "id": "geothermal",
-      "file": "audio/geothermal-0dfe762ffd.mp3",
+      "file": "audio/geothermal-f3b448af3c.mp3",
       "title": "Hot Spring Caldeira Ambience Loop",
       "author": "Nox_Sound",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/829/829623_9250976-hq.mp3",
-      "durationSeconds": 8.712,
+      "durationSeconds": 8.748,
       "loopSafe": true,
       "levelTrimDb": -3.3,
       "loop": {
-        "startSeconds": 0.1099,
-        "endSeconds": 8.5943
+        "startSeconds": 0.134531,
+        "endSeconds": 8.618931
       }
     },
     {
       "id": "impact",
-      "file": "audio/impact-7ee7b39045.mp3",
+      "file": "audio/impact-81a0e5c7ee.mp3",
       "title": "Long Rumble for Earthquake or Explosion",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/483/483287_2524442-hq.mp3",
-      "durationSeconds": 10.104,
+      "durationSeconds": 10.152,
       "loopSafe": false,
       "levelTrimDb": 14.8,
-      "startSeconds": 0.0,
-      "endSeconds": 10.0
+      "startSeconds": 0.034531,
+      "endSeconds": 10.034531
     },
     {
       "id": "rocket",
-      "file": "audio/rocket-8829cf98b1.mp3",
+      "file": "audio/rocket-1693d2c4a6.mp3",
       "title": "Space Shuttle Launch",
       "author": "klangfabrik (from NASA public-domain audio)",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/220/220127_181941-hq.mp3",
-      "durationSeconds": 10.109,
+      "durationSeconds": 10.152,
       "loopSafe": false,
       "levelTrimDb": -1.3,
-      "startSeconds": 0.0,
-      "endSeconds": 10.0
+      "startSeconds": 0.034531,
+      "endSeconds": 10.034531
     },
     {
       "id": "aircraft",
-      "file": "audio/aircraft-152ad9c927.mp3",
+      "file": "audio/aircraft-1725675c21.mp3",
       "title": "Biplane Flyby",
       "author": "itinerantmonk108",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/648/648720_2397507-hq.mp3",
-      "durationSeconds": 10.104,
+      "durationSeconds": 10.152,
       "loopSafe": false,
       "levelTrimDb": 3.6,
-      "startSeconds": 0.0,
-      "endSeconds": 10.0
+      "startSeconds": 0.034531,
+      "endSeconds": 10.034531
     },
     {
       "id": "buzzing",
-      "file": "audio/buzzing-ef9fd5f87f.mp3",
+      "file": "audio/buzzing-b233908297.mp3",
       "title": "Bee Flying Loop",
       "author": "fury12",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/496/496237_5898088-hq.mp3",
-      "durationSeconds": 3.056,
+      "durationSeconds": 3.096,
       "loopSafe": true,
       "levelTrimDb": 1.7,
       "loop": {
-        "startSeconds": 0.10049,
-        "endSeconds": 2.95249
+        "startSeconds": 0.134531,
+        "endSeconds": 2.986531
       }
     },
     {
       "id": "knapping",
-      "file": "audio/knapping-ac8ddabed5.mp3",
+      "file": "audio/knapping-277e706f25.mp3",
       "title": "Stone on Stone Hit",
       "author": "xtra1",
       "licence": "CC0 1.0",
@@ -6562,204 +6590,205 @@
       "loopSafe": true,
       "levelTrimDb": -7.5,
       "loop": {
-        "startSeconds": 0.113261,
-        "endSeconds": 8.729761
+        "startSeconds": 0.134531,
+        "endSeconds": 8.751031
       }
     },
     {
       "id": "mammoth",
-      "file": "audio/mammoth-c066a3a0c9.mp3",
+      "file": "audio/mammoth-b1fb9f222b.mp3",
       "title": "Angry Elephant",
       "author": "Danjocross",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/507/507467_2977885-hq.mp3",
-      "durationSeconds": 6.72,
+      "durationSeconds": 5.58,
       "loopSafe": false,
       "levelTrimDb": -5.3,
-      "startSeconds": 1.3
+      "startSeconds": 0.134531
     },
     {
       "id": "artillery",
-      "file": "audio/artillery-3fffb477ef.mp3",
+      "file": "audio/artillery-7d84e28e41.mp3",
       "title": "Artillery Guns Firing",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/486/486027_2524442-hq.mp3",
-      "durationSeconds": 7.992,
+      "durationSeconds": 8.028,
       "loopSafe": true,
       "levelTrimDb": -0.4,
       "loop": {
-        "startSeconds": 0.1109,
-        "endSeconds": 7.8822
+        "startSeconds": 0.134531,
+        "endSeconds": 7.905831
       }
     },
     {
       "id": "lake-water",
-      "file": "audio/lake-water-65a862af52.mp3",
+      "file": "audio/lake-water-4465738978.mp3",
       "title": "Gentle waves on a lake",
       "author": "TheFlyFishingFilmmaker",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/614/614299_6501596-hq.mp3",
-      "durationSeconds": 8.359,
+      "durationSeconds": 8.388,
       "loopSafe": true,
       "levelTrimDb": 6.9,
       "loop": {
-        "startSeconds": 0.107845,
-        "endSeconds": 8.247245
+        "startSeconds": 0.134531,
+        "endSeconds": 8.273931
       }
     },
     {
       "id": "geiger-counter",
-      "file": "audio/geiger-counter-3e383cff58.mp3",
+      "file": "audio/geiger-counter-779a7fe46b.mp3",
       "title": "Geiger counter clicks (MED)",
       "author": "cookies+policy",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/555/555923_10713160-hq.mp3",
-      "durationSeconds": 9.12,
+      "durationSeconds": 9.144,
       "loopSafe": true,
       "levelTrimDb": 1.4,
       "loop": {
-        "startSeconds": 0.1054,
-        "endSeconds": 9.0073
+        "startSeconds": 0.134531,
+        "endSeconds": 9.036431
       }
     },
     {
       "id": "steam-whistle",
-      "file": "audio/steam-whistle-25a542178f.mp3",
+      "file": "audio/steam-whistle-f20e938c2a.mp3",
       "title": "Train Steam Whistle, Distant",
       "author": "CHallSmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/870/870877_18412227-hq.mp3",
-      "durationSeconds": 7.392,
+      "durationSeconds": 7.416,
       "loopSafe": false,
       "levelTrimDb": -0.2,
-      "startSeconds": 0.1,
-      "endSeconds": 7.28
+      "startSeconds": 0.134531,
+      "endSeconds": 7.314531
     },
     {
       "id": "ship-horn",
-      "file": "audio/ship-horn-44feadd082.mp3",
+      "file": "audio/ship-horn-66869a7fe8.mp3",
       "title": "ship horn very close",
       "author": "tierrafilm@gmail.com",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/420/420716_7849117-hq.mp3",
-      "durationSeconds": 6.08,
+      "durationSeconds": 6.12,
       "loopSafe": false,
-      "levelTrimDb": -2.4
+      "levelTrimDb": -2.4,
+      "startSeconds": 0.034531
     },
     {
       "id": "chainsaw",
-      "file": "audio/chainsaw-81e40a0d16.mp3",
+      "file": "audio/chainsaw-177863af41.mp3",
       "title": "CHAINSAW - 1",
       "author": "SamuelGremaud",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/463/463207_8031303-hq.mp3",
-      "durationSeconds": 8.04,
+      "durationSeconds": 8.064,
       "loopSafe": true,
       "levelTrimDb": -6.5,
       "loop": {
-        "startSeconds": 0.1106,
-        "endSeconds": 7.9254
+        "startSeconds": 0.134531,
+        "endSeconds": 7.949331
       }
     },
     {
       "id": "howler-monkeys",
-      "file": "audio/howler-monkeys-2493cce749.mp3",
+      "file": "audio/howler-monkeys-4a7dc5a967.mp3",
       "title": "Howler Monkeys",
       "author": "Lenguaverde",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/490/490315_1441734-hq.mp3",
-      "durationSeconds": 9.216,
+      "durationSeconds": 9.252,
       "loopSafe": true,
       "levelTrimDb": -10.6,
       "loop": {
-        "startSeconds": 0.1196,
-        "endSeconds": 9.1018
+        "startSeconds": 0.134531,
+        "endSeconds": 9.116731
       }
     },
     {
       "id": "klaxon-horn",
-      "file": "audio/klaxon-horn-76b2eba1ce.mp3",
+      "file": "audio/klaxon-horn-dcde9b7d9b.mp3",
       "title": "Old Car Ahooga Horn",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/480/480002_2524442-hq.mp3",
-      "durationSeconds": 5.2,
+      "durationSeconds": 4.86,
       "loopSafe": false,
       "levelTrimDb": 8.8,
-      "startSeconds": 0.5
+      "startSeconds": 0.134531
     },
     {
       "id": "hippo",
-      "file": "audio/hippo-77380fe1f4.mp3",
+      "file": "audio/hippo-bda3884ca3.mp3",
       "title": "hippos",
       "author": "toadie",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/194/194870_3311332-hq.mp3",
-      "durationSeconds": 9.691,
+      "durationSeconds": 9.72,
       "loopSafe": true,
       "levelTrimDb": -2.0,
       "loop": {
-        "startSeconds": 0.107031,
-        "endSeconds": 9.574131
+        "startSeconds": 0.134531,
+        "endSeconds": 9.601631
       }
     },
     {
       "id": "wall-chiselling",
-      "file": "audio/wall-chiselling-fcd9b3e7b9.mp3",
+      "file": "audio/wall-chiselling-bc5c488f33.mp3",
       "title": "chisel in the quarry",
       "author": "Artiom_Constantinov",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/841/841053_7254491-hq.mp3",
-      "durationSeconds": 7.368,
+      "durationSeconds": 7.416,
       "loopSafe": true,
       "levelTrimDb": 1.8,
       "loop": {
-        "startSeconds": 0.1051,
-        "endSeconds": 7.2611
+        "startSeconds": 0.134531,
+        "endSeconds": 7.290531
       }
     },
     {
       "id": "church-bell",
-      "file": "audio/church-bell-7430770c10.mp3",
+      "file": "audio/church-bell-2bc1dc2b2d.mp3",
       "title": "Venice Church Bells",
       "author": "freesoundjon01",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/324/324257_2814925-hq.mp3",
-      "durationSeconds": 9.384,
+      "durationSeconds": 9.432,
       "loopSafe": true,
       "levelTrimDb": 12.4,
       "loop": {
-        "startSeconds": 0.1126,
-        "endSeconds": 9.2731
+        "startSeconds": 0.134531,
+        "endSeconds": 9.295031
       }
     },
     {
       "id": "ship-rigging",
-      "file": "audio/ship-rigging-d6faf91772.mp3",
+      "file": "audio/ship-rigging-4f8dcbbea3.mp3",
       "title": "Large Wood Ship Creaking",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/483/483355_2524442-hq.mp3",
-      "durationSeconds": 10.2,
+      "durationSeconds": 10.224,
       "loopSafe": true,
       "levelTrimDb": 1.9,
       "loop": {
-        "startSeconds": 0.1222,
-        "endSeconds": 10.1
+        "startSeconds": 0.134531,
+        "endSeconds": 10.112331
       }
     },
     {
       "id": "tram-bell",
-      "file": "audio/tram-bell-56625726a8.mp3",
+      "file": "audio/tram-bell-6172310dea.mp3",
       "title": "Trolley Bell",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/479/479980_2524442-hq.mp3",
-      "durationSeconds": 6.35,
+      "durationSeconds": 6.228,
       "loopSafe": false,
       "levelTrimDb": 8.5,
-      "startSeconds": 0.28
+      "startSeconds": 0.134531
     }
   ],
   "credits": [

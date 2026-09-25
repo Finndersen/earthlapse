@@ -238,46 +238,42 @@ def sniff_audio(data: bytes) -> AudioFormat:
     raise ValueError("unrecognised audio format (expected WAV, OGG, MP3 or M4A)")
 
 
-# Audio kept either side of a loop region when a published stem is cut down to it
-# (`published_bytes`): a few MP3 frames, enough that the bit reservoir and MDCT overlap the cut
-# disturbs (`pipeline.mp3`) have settled before `loopStart`, and that a gapless decoder's end
-# padding trim never reaches `loopEnd`.
+# Audio kept either side of the span a published stem is cut to (`published_bytes`), so the
+# encoder's start-up and flush never touch a sample that plays.
 TRIM_MARGIN_SECONDS = 0.1
 
 
-def _played_span(stem: StemManifest) -> tuple[float, float] | None:
-    """The part of an MP3 stem that ever plays, when that is less than the whole clip: a loop
-    region, or a one-shot's `start_seconds` to `end_seconds`."""
-    if stem.format != AudioFormat.MP3:
-        return None
+def _played_span(stem: StemManifest) -> tuple[float, float | None]:
+    """The part of a stem that ever plays, in its raw clip's timeline: a loop region, a
+    one-shot's `start_seconds` to `end_seconds`, or from its start to the clip's end (`None`)."""
     if stem.loop is not None:
         return stem.loop.start_seconds, stem.loop.end_seconds
-    if stem.end_seconds is not None:
-        return stem.start_seconds or 0.0, stem.end_seconds
-    return None
+    return stem.start_seconds or 0.0, stem.end_seconds
 
 
-def _is_trimmed(stem: StemManifest) -> bool:
-    return _played_span(stem) is not None
-
-
-def _trim_window(stem: StemManifest, fmt: mp3.StreamFormat) -> tuple[int, int]:
-    span = _played_span(stem)
-    assert span is not None
-    return mp3.frame_window(fmt, span[0] - TRIM_MARGIN_SECONDS, span[1] + TRIM_MARGIN_SECONDS)
+def _cut_start_seconds(stem: StemManifest) -> float:
+    return max(0.0, _played_span(stem)[0] - TRIM_MARGIN_SECONDS)
 
 
 def published_bytes(stem: StemManifest, raw: bytes) -> bytes:
-    """The bytes a stem publishes: an MP3 cut losslessly to the span that plays (its loop region,
-    or a one-shot's start to end) plus a margin; anything else unchanged."""
-    if not _is_trimmed(stem):
+    """The bytes a stem publishes: an MP3 decoded, cut to the span that plays plus a margin, and
+    re-encoded at a bitrate sized for ambience and effects (`pipeline.mp3`); anything else
+    unchanged."""
+    if stem.format != AudioFormat.MP3:
         return raw
-    first, stop = _trim_window(stem, mp3.stream_format(raw))
-    return mp3.trim_frames(raw, first, min(stop, mp3.audio_frame_count(raw)))
+    if stem.loop_safe and stem.loop is None:
+        raise ValueError(
+            f"stem {stem.id}: a looping MP3 needs a `loop` region -- re-encoding adds a lead-in "
+            f"that a whole-clip loop would play as a gap"
+        )
+    pcm = mp3.decode(raw)
+    _, end = _played_span(stem)
+    end_seconds = len(pcm.samples) / pcm.sample_rate if end is None else end + TRIM_MARGIN_SECONDS
+    return mp3.encode(pcm.span(_cut_start_seconds(stem), end_seconds))
 
 
 class PublishedTiming(BaseModel):
-    """A stem's timing in its published file, which a trim has shifted earlier."""
+    """A stem's timing in its published file, which the cut and the encoder's lead-in move."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -288,34 +284,30 @@ class PublishedTiming(BaseModel):
 
 
 def published_timing(stem: StemManifest, published: bytes) -> PublishedTiming:
-    """`stem`'s curator-attested timing, moved onto the published file `published_bytes` wrote.
-    The shift is whole frames, so every time lands on the same samples it did in the raw clip."""
-    if not _is_trimmed(stem):
+    """`stem`'s curator-attested timing, moved onto the file `published_bytes` wrote: earlier by
+    the cut, later by the encoder's lead-in (`pipeline.mp3.ENCODER_PRIMING_SAMPLES`)."""
+    if stem.format != AudioFormat.MP3:
         return PublishedTiming(
             duration_seconds=stem.duration_seconds,
             loop=stem.loop,
             start_seconds=stem.start_seconds,
             end_seconds=stem.end_seconds,
         )
-    fmt = mp3.stream_format(published)
-    first, _ = _trim_window(stem, fmt)
-    shift = fmt.frame_seconds(first)
-    duration = min(
-        stem.duration_seconds - shift, fmt.frame_seconds(mp3.audio_frame_count(published))
-    )
+    info = mp3.stream_info(published)
+    offset = info.lead_in_seconds - _cut_start_seconds(stem)
 
-    def shifted(seconds: float | None) -> float | None:
-        return None if seconds is None else round(max(0.0, seconds - shift), 6)
+    def moved(seconds: float) -> float:
+        return round(seconds + offset, 6)
 
     return PublishedTiming(
-        duration_seconds=round(duration, 3),
+        duration_seconds=round(info.duration_seconds, 3),
         loop=None
         if stem.loop is None
         else LoopRegion(
-            start_seconds=round(stem.loop.start_seconds - shift, 6),
-            end_seconds=round(stem.loop.end_seconds - shift, 6),
+            start_seconds=moved(stem.loop.start_seconds),
+            end_seconds=moved(stem.loop.end_seconds),
         ),
-        # A cut one-shot always names its start: the clip's own 0 has moved into the margin.
-        start_seconds=None if stem.loop is not None else shifted(stem.start_seconds or 0.0),
-        end_seconds=shifted(stem.end_seconds),
+        # A one-shot always names its start: the clip's own 0 now sits after the lead-in.
+        start_seconds=None if stem.loop_safe else moved(stem.start_seconds or 0.0),
+        end_seconds=None if stem.end_seconds is None else moved(stem.end_seconds),
     )

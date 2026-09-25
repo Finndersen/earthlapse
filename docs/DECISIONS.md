@@ -7809,3 +7809,38 @@ Ambience stems are unchanged: they are beds that cross-fade across many scenes, 
 effect. Published audio falls from 29.5 MB to 20.2 MB; every cut file still decodes in Chromium
 to its raw clip's samples across the part that plays, within one 16-bit step (four at the head of
 `steam-whistle`, -78 dB).
+
+## ADR-023 amendment (2026-09-25): stems publish re-encoded small
+
+ADR-023 §4 ruled out transcoding because the tools to do it (`ffmpeg`, `sox`, `afconvert`) are
+system binaries the pipeline must not depend on. So every stem shipped at the bitrate of its
+download, Freesound's ~185 kbps VBR preview, and the two frame-slicing amendments above could
+only drop audio that never played, not make what does play smaller: 20.2 MB still published for
+about 6 minutes of 1x playthrough, most of it ambience beds heard from phone speakers or
+headphones.
+
+**Decision.** Publish decodes each MP3 stem (`miniaudio`), cuts the span that plays plus 0.1 s,
+and re-encodes it as constant-bitrate MP3 (`lameenc`): 96 kbps stereo, 56 kbps mono, which LAME
+resamples to 32 kHz. Both are pip wheels bundling their C libraries, so the rule behind §4
+stands: nothing needs a system binary, and every source builds and tests offline. The raw
+downloads are never modified and `stems.toml` stays in their timeline; this replaces the
+frame-slicing cut (`pipeline/mp3.py`), which re-encoding makes unnecessary.
+
+The published file carries no gapless tag, deliberately. `miniaudio` and Chromium both honour the
+raw files' LAME tags and decode them sample for sample alike, but a tag written here would be
+honoured by some browsers' decoders and not others, putting a loop point in a different place in
+each. Untagged, every decoder plays LAME's fixed 1105-sample priming as lead-in, and publish moves
+every time by exactly that. A looping MP3 must therefore name a `loop` region: a whole-clip loop
+would play the lead-in as a gap.
+
+**Loop lengths.** Ambience beds were re-cut from the same sizing a 1x playthrough gives: each is
+audible for between 23 s and 317 s of the 368 s run, so any of them repeats whatever its length,
+and the length only decides how noticeable the repeat is. Noise-like beds (wind, water, storm,
+insects, fire, volcanic, industry, traffic) loop 12-20 s; beds with recognisable calls or voices
+(birds, mammals, livestock, settlement, archosaurs) 18-29 s. `forest` and `wing-hum` keep their
+9 s and 13 s regions, the longest their vetted stretches allow.
+
+**Checked.** Decoded in Chromium, every published stem's played span lines up with its raw clip
+to within one sample at 32 kHz at both ends (correlation 0.86-1.00; the lower figures are
+high-frequency content above the new ~14 kHz ceiling). Published audio falls from 20.2 MB to
+4.8 MB.
