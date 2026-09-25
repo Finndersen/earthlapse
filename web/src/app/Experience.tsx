@@ -55,6 +55,7 @@ import {
   createSymlogScale,
   eraNameForTime,
   EraShortcuts,
+  formatCompanionReading,
   formatGeoTime,
   isOpenEventBrowserShortcut,
   sectionById,
@@ -64,7 +65,7 @@ import {
   usePlaybackLoop,
 } from '@/timeline'
 import type { TimelineCheckpoint, TimeWindow } from '@/timeline'
-import { PRESENT_CE_YEAR } from '@/timeline/format'
+import { yearsBeforePresent } from '@/timeline/epoch'
 import { EARTH_FORMATION } from '@/types/layer'
 import type { GeoTime, TimelineEvent, TimeScale } from '@/types/layer'
 import type { LayerManifest, Manifest, Scene } from '@/types/manifest'
@@ -114,7 +115,7 @@ const ONBOARDING_TOUR = <OnboardingTour />
 /** Where the globe tour takes a viewer who opens the globe before the empire layer begins: 117 CE,
  *  the Roman Empire's greatest extent, with the Han, Parthian and Kushan empires alongside. Must
  *  match `GLOBE_TOUR_JUMP_LEAD` (`onboarding/steps.ts`). */
-const GLOBE_TOUR_EMPIRES_T: GeoTime = PRESENT_CE_YEAR - 117
+const GLOBE_TOUR_EMPIRES_T: GeoTime = yearsBeforePresent(117)
 
 /** Whether every layer `include` selects has loaded — `false` until the manifest has. */
 function layersLoaded(
@@ -838,12 +839,14 @@ export function Experience() {
   )
 }
 
-/** The lens's headline: the current time in large light numerals, the eon/era beneath. */
+/** The lens's headline: the current time in large light numerals; beneath it the time's other
+ *  reading where it has one ("533 years ago" under "1492"), else the eon/era. Within the
+ *  Holocene the era is always the Cenozoic, which says nothing a date does not. */
 function TimeTitle({ t }: { t: GeoTime }) {
   return (
     <div className={styles.timeTitle} data-testid="time-title">
       <span className={styles.time}>{formatGeoTime(t)}</span>
-      <span className={styles.era}>{eraNameForTime(t)}</span>
+      <span className={styles.era}>{formatCompanionReading(t) ?? eraNameForTime(t)}</span>
     </div>
   )
 }

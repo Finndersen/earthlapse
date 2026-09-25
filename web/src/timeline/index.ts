@@ -59,10 +59,12 @@
  *   photosensitivity safety floor (ADR-029). `usePlaybackLoop` drives either off
  *   `requestAnimationFrame`. `playbackRates.ts` holds each mode's detents, the `[`/`]` step rule
  *   and `defaultSteadyRate`, the context default on entering steady mode.
- * - `formatGeoTime(t)` renders a `GeoTime` for humans (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`,
- *   `"250 years ago"`, `"present"`); `formatTimeRange(window)` does the same for a whole window
- *   (`"12 ka – present"`, `"252–201 Ma"`) — both exported for other packages that need to print
- *   a time without the rest of the timeline UI. `formatGeoTimePrecise(t, precisionYears)`
+ * - `formatGeoTime(t)` renders a `GeoTime` for humans: a calendar year inside the Holocene
+ *   (`"1492"`, `"3200 BCE"`, `"present"`), an age beyond it (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`)
+ *   — `notationAt(t)` decides which. `formatTimeRange(window)` does the same for a whole window
+ *   in the window's one notation (`"12 ka – present"`, `"252–201 Ma"`, `"1914–1945"`), and
+ *   `formatCompanionReading(t)` gives a calendar date's elapsed-time companion. All are exported for
+ *   other packages that need to print a time without the rest of the timeline UI. `formatGeoTimePrecise(t, precisionYears)`
  *   (ADR-021) is `formatGeoTime` with extra decimal digits once `precisionYears` — the local
  *   years-per-displayed-pixel, e.g. `yearsPerDisplayedPixelAt` in `fisheye.ts` — is finer than
  *   what the plain bucket already resolves; `ScrubTrack`'s pointer-driven readouts use it so a
@@ -113,7 +115,18 @@ export {
 } from './checkpoints'
 export { declutterEvents, MIN_EVENT_GAP_PX, MIN_EVENT_MARKER_PX } from './declutter'
 export { ERA_SHORTCUTS, isEraShortcutActive, type EraShortcut } from './eraShortcuts'
-export { formatCalendarYear, formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
+export {
+  formatAge,
+  formatCalendar,
+  formatCompanionReading,
+  formatGeoTime,
+  formatGeoTimePrecise,
+  formatRate,
+  formatTimeRange,
+  notationAt,
+  notationForWindow,
+  type TimeNotation,
+} from './format'
 export { isOpenEventBrowserShortcut, timelineKeyIntent, type TimelineKeyEvent, type TimelineKeyIntent } from './keyboard'
 export { nearestNeighbourEvent, type EventStepDirection } from './lod'
 export {

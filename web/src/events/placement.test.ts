@@ -34,7 +34,7 @@ describe('formatEventDate', () => {
   })
 
   it('treats a kind-less exact-point interval as a moment', () => {
-    expect(formatEventDate(event({ tMin: 1e4, tMax: 1e4 }))).toBe('10 ka')
+    expect(formatEventDate(event({ tMin: 1e4, tMax: 1e4 }))).toBe('8000 BCE')
   })
 
 })
