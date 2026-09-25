@@ -2759,6 +2759,44 @@ events:
       windows:
         - {t_min: 0.0, t_max: 2375.0}
 
+  - id: tikal-late-classic
+    label: Tikal at its Late Classic height
+    kind: period
+    t_min: 1259
+    t_max: 1343
+    tags: [society]
+    importance: 0.5
+    description: >
+      Under Jasaw Chan K'awiil (acceded 682) and his son Yik'in Chan K'awiil (734-c.766),
+      Tikal becomes one of the largest Classic Maya
+      cities, with tens of thousands of people in the rainforest of present-day Guatemala
+      living from rain-fed reservoirs. Its tallest temple-pyramids are built in this era,
+      among them Temple I, Jasaw Chan K'awiil's funerary temple, completed by his son.
+    citation: >
+      Via Wikipedia "Tikal", "Tikal Temple I", "Jasaw Chan K'awiil I" and "Yik'in Chan
+      K'awiil" (accessed 2026-09-25): Jasaw Chan K'awiil I entombed in Temple I c. 734;
+      Yik'in Chan K'awiil acceded 8 December 734, ruled to 766 and completed Temple I;
+      Jasaw Chan K'awiil I acceded 3 May 682.
+
+  - id: classic-maya-collapse
+    label: Classic Maya collapse
+    kind: period
+    t_min: 1075
+    t_max: 1275
+    tags: [society, catastrophe]
+    importance: 0.5
+    description: >
+      Across the southern Maya lowlands, the great Classic cities stop raising dated
+      monuments and lose most of their people between the late 8th and 10th centuries;
+      Tikal's last dated monument is from 869. Repeated droughts, warfare between city
+      states, and the failure of divine kingship are all proposed causes and are debated.
+    citation: >
+      Via Wikipedia "Classic Maya collapse" and "Stela 11" of Tikal, Long Count 10.2.0.0.0,
+      15 August 869 (accessed 2026-09-25). Evans, N.P.
+      et al. (2018). "Quantification of drought during the collapse of the classic Maya
+      civilization." Science, 361(6401), 498-501. UNVERIFIED: the 750-950 bracket is the
+      conventional span, not a single source's figure.
+
   - id: norse-north-atlantic-settlement
     label: Norse settlement of Iceland
     kind: moment

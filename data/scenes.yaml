@@ -613,6 +613,42 @@ scenes:
     framing: {focus: [0.69, 0.8], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "0ea6dc80408755ae", path: "data/pins/scenes/late-triassic-dinosaurs/0ea6dc80408755ae.jpg"}
 
+  # ~201.5 Ma, the end-Triassic extinction (events.yaml end-triassic-extinction; Blackburn, T.J.
+  # et al. (2013), Science 340, 941-945, tie it to the first Central Atlantic Magmatic Province
+  # lavas). Set in a Newark-type rift basin in what is now New Jersey, where the Orange Mountain
+  # Basalt, the first CAMP flow there (~201 Ma, up to ~200 m thick), lies between lake beds, and
+  # footprints are preserved on the mud flats bordering the rift lakes (Rutgers EPS, "Newark
+  # Basin" virtual field trip). Newark carbon-isotope data show CO2, already ~2,000 ppm, rapidly
+  # doubling with the eruptions (Schaller, M.F. et al. (2011), Science 331, 1404-1409; via
+  # Wikipedia "Triassic-Jurassic extinction event"). The large theropod track Eubrontes appears in
+  # these basins just after the boundary. Fern-dominated vegetation is the palynological "fern
+  # spike" across the boundary. The eruption is shown as a distant fissure: whether any one
+  # lakeshore saw lava in sight is not established, so the scene carries no `location`.
+  - id: end-triassic-extinction
+    t: 2.015e8
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The End-Triassic Extinction"
+    caption: About 201.5 million years ago, flood basalts pour out as Pangaea begins to split, doubling carbon dioxide. About three quarters of species die out, among them the crocodile-line reptiles that had kept dinosaurs in check.
+    unsourced:
+      o2_percent: 17  # rounded, between late-triassic-dinosaurs (16) and the Jurassic
+      mean_temp_c: 24  # rounded: a CO2-doubling hothouse pulse
+    subject:
+      setting: The muddy shore of a lake in a young rift valley on the supercontinent Pangaea, where it is beginning to tear apart, during the end-Triassic mass extinction
+      left_mass: a steep, dark escarpment of fresh black basalt at the valley side, its top edge still steaming, with a few dead, leafless conifers standing before it
+      vegetation: sparse, low ferns spreading over the bare shore, the few conifers dead or browning, a thin stand of horsetails at the water's edge; a stripped, impoverished landscape
+      fauna: a lone crocodile-like phytosaur, long-snouted and armoured, lying still in the shallows; a few small insects over the water
+      main_subject: a single lean, two-legged theropod dinosaur about five metres long, crested, with a long stiff tail, walking the lake's mud flat and leaving a line of deep three-toed footprints behind it
+      ground: grey-red lake mud cracked at the edges, crossed by lines of three-toed footprints, with ash grit and scattered dead wood
+      water: a shallow, murky grey-green rift lake, still and dull under the haze
+      far_bank: the far side of the rift valley, where a long, low fissure eruption glows orange along the ground, sending a curtain of lava fountains and a broad grey plume up into the sky
+      sky_and_light: a heavy yellow-grey volcanic haze across the whole sky, the sun a dim disc; dull, hot, sulphurous light
+      absent: [flowers, grass, broadleaf trees, palms, mammals, birds, feathers covering the dinosaur, sauropods, a volcanic cone or mountain, an explosive mushroom cloud, people, buildings]
+    events: [end-triassic-extinction]
+    # ADR-023: `volcanic` `loop` -- the fissure eruption across the rift is the scene's cause.
+    sound: {stem: volcanic, mode: loop, gain: 0.8}
+    pin: null
+
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
   # 165-155 Ma, Callovian-Oxfordian): Ren, D., Labandeira, C.C., Santiago-Blay, J.A. et al.
   # (2009), "A Probable Pollination Mode Before Angiosperms: Eurasian, Long-Proboscid
@@ -736,6 +772,39 @@ scenes:
     sound: {stem: buzzing, mode: loop, gain: 0.9}
     framing: {focus: [0.49, 0.55], pan: 270}
     pin: {asset_digest: "cfa0c916e9ea3943", path: "data/pins/scenes/mid-cretaceous-pollinators/cfa0c916e9ea3943.jpg"}
+
+  # ~85 Ma, the Western Interior Seaway in the time of the Smoky Hill Chalk (Niobrara Formation,
+  # Kansas, Coniacian to early Campanian, ~87-82 Ma; Kansas Geological Survey Bulletin 225;
+  # Wikipedia "Smoky Hill Chalk"). The chalk fauna gives the animals: the mosasaur Tylosaurus (up
+  # to ~13-15 m), Pteranodon (lower chalk ~86 Ma), the flightless toothed diving bird Hesperornis,
+  # the ~5 m predatory fish Xiphactinus, plesiosaurs, turtles and ammonites (events.yaml mosasaurs,
+  # western-interior-seaway). The chalk itself was laid down far offshore, so the shore is the
+  # chapter's framing onto the seaway rather than a claim about Kansas, and the scene carries no
+  # `location`.
+  - id: western-interior-seaway
+    t: 8.5e7
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "The Western Interior Seaway"
+    caption: About 85 million years ago, a warm, shallow sea splits North America in two. Mosasaurs up to 13 metres long hunt its waters, and Pteranodon fish from above.
+    unsourced:
+      o2_percent: 27  # rounded, as cretaceous-forest
+      mean_temp_c: 26  # rounded: just after the mid-Cretaceous thermal maximum
+    subject:
+      setting: A low sandy shore on the margin of the Western Interior Seaway, the shallow, warm sea that splits Late Cretaceous North America from the Gulf of Mexico to the Arctic
+      left_mass: a low coastal rise of dune sand held by a stand of tall conifers and a few flowering broadleaf trees, with cycads and ferns at their feet
+      vegetation: conifers, early flowering shrubs, cycads and ferns behind the beach; no grass
+      fauna: several Pteranodon, large toothless pterosaurs with a long backward-pointing head crest and a wingspan of about six metres, gliding low over the waves, one skimming for fish; a few flightless Hesperornis, loon-like diving birds, swimming near the surface; coiled ammonite shells washed up at the tideline
+      main_subject: a large mosasaur, Tylosaurus, a long, sleek marine lizard with a long pointed snout, four paddle-flippers and a shark-like tail fin, bursting through the surface in the near shallows as it seizes a big silver fish, spray flying
+      ground: pale sand and broken shell at the tideline, scattered with coiled ammonite shells and drifted seaweed
+      water: a warm, calm, milky turquoise sea, shallow and pale near shore, deepening to blue offshore
+      far_bank: open sea to a flat horizon with no land in sight
+      sky_and_light: a hot, hazy, humid sky with towering cumulus; bright, diffused light
+      absent: [grass, mammals, modern birds such as gulls, sharks' dorsal fins breaking the surface, whales or dolphins, crocodile-shaped mosasaurs with legs, a long-necked plesiosaur, people, boats, buildings]
+    events: [western-interior-seaway, mosasaurs]
+    # ADR-023: `water` `loop` -- surf and splash on an open seaway shore.
+    sound: {stem: water, mode: loop, gain: 0.85}
+    pin: null
 
   # Hell Creek-age, ~68 Ma: after flowering plants spread, before the K-Pg impact (66.04 Ma).
   - id: cretaceous-forest
@@ -1305,6 +1374,38 @@ scenes:
     framing: {focus: [0.38, 0.85], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "ca26d88194e6bbd2", path: "data/pins/scenes/jebel-irhoud-firelight/ca26d88194e6bbd2.jpg"}
 
+  # ~125 ka, the Eemian last interglacial (events.yaml eemian-interglacial), Britain's
+  # Ipswichian. The river gravels under Trafalgar Square, London, are the Ipswichian type fauna:
+  # hippopotamus, straight-tusked elephant (Palaeoloxodon antiquus), narrow-nosed rhinoceros,
+  # lion and hyena; humans and horses are absent from Britain's Ipswichian record (Sutcliffe,
+  # A.J. (1976), Phil. Trans. R. Soc. B 276, 165-195; Wikipedia "Ipswichian"). The river is the
+  # Thames at what is now central London.
+  - id: eemian-thames-hippos
+    t: 1.25e5
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Hippos in the Thames"
+    caption: About 125,000 years ago, in a world slightly warmer than today, hippos wallow in the Thames where London's Trafalgar Square now stands, and straight-tusked elephants browse its banks. No people live in Britain.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 15  # rounded: up to ~2 C warmer than the pre-industrial Holocene at peak
+    subject:
+      setting: The broad, slow River Thames in southern Britain during the last interglacial, about 125,000 years ago, at the spot where central London now stands
+      left_mass: a stand of tall oak, hazel and maple on the near bank, dense summer foliage hanging over the water
+      vegetation: temperate deciduous woodland of oak, hazel, maple and hornbeam, reedbeds and water plants along the margins, grassy clearings between the trees
+      fauna: a straight-tusked elephant, taller than a modern elephant with long, nearly straight tusks, browsing at the woodland edge on the far bank; a few fallow deer in a clearing; herons in the reeds
+      main_subject: a group of hippopotamuses wallowing in the shallows near the bank, backs and heads above the water, one yawning
+      ground: soft grey river mud and trampled reeds on the near bank, with hippo trails worn into it
+      water: the wide, calm, slightly muddy river, reflecting the trees
+      far_bank: low wooded banks and marshy meadows fading into summer haze; no hills
+      sky_and_light: a warm, bright summer sky with scattered cumulus; soft, warm afternoon light
+      absent: [people, buildings, boats, bridges, fields, fences, domestic animals, horses, woolly mammoths, snow or ice, conifers dominating the woodland, palm trees, tropical jungle]
+    events: [eemian-interglacial]
+    # ADR-023: `lake-water` `loop` -- a slow river's quiet lapping, not surf.
+    sound: {stem: lake-water, mode: loop, gain: 0.7}
+    location: {lat: 51.508, lon: -0.128, label: "Trafalgar Square, London"}
+    pin: null
+
   # At least 67.8 ka, the hand stencil in Liang Metanduno, Muna Island, Sulawesi (events.yaml
   # earliest-cave-art; Oktaviana et al. 2026, Nature 650): faint red ochre sprayed by mouth around
   # a hand about 14 x 10 cm, its fingertips reshaped to look pointed, a style known only from
@@ -1686,6 +1787,40 @@ scenes:
     framing: {focus: [0.53, 0.55], pan: 0}
     pin: {asset_digest: "126ac8292443ad22", path: "data/pins/scenes/mohenjo-daro/126ac8292443ad22.jpg"}
 
+  # About 1185 BCE; t = 2025 + 1185 = 3,210, inside events.yaml late-bronze-age-collapse. Hattusa,
+  # the Hittite capital: Jürgen Seeher's excavations show it was invaded and burned early in the
+  # 12th century BC, but only after many residents had left over several decades, taking valuables
+  # and the state archives with them (Wikipedia "Hattusa"; Biblical Archaeology Society, "The Last
+  # Days of Hattusa"). So the scene shows emptying and fire, not a battle, and does not name a
+  # cause. The Lion Gate, in the southwestern stretch of the upper city's wall, is the tall mass;
+  # the road out through it is the leading line. Framed on open ground to match its neighbours
+  # mohenjo-daro and classical-athens-parthenon.
+  - id: hattusa-abandoned
+    t: 3.21e3
+    chapter: open-ground
+    shot: GROUND
+    title: "The Fall of Hattusa"
+    caption: Around 1185 BCE, as the Bronze Age world of palace kingdoms falls apart, the last people leave the Hittite capital, Hattusa. Most have already gone, taking its treasures and archives, and fire takes what remains.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded, close to pre-industrial
+    subject:
+      setting: The road leading out of Hattusa, the Hittite capital on a rocky upland in central Anatolia, about 1185 BCE, as the city is abandoned
+      left_mass: the Lion Gate, its great stone jamb carved as a snarling lion's forepart, set in a massive wall of fitted stone blocks topped with mudbrick
+      vegetation: dry summer grass, thistles and a few scrubby oaks on the rocky slopes; untended fields gone to weed
+      fauna: a donkey carrying bundles; a pair of kites circling high over the smoke
+      main_subject: a small family walking away down the road from the gate, seen from behind, leading the laden donkey, the last of the city's people leaving
+      ground: a rutted, dusty stone-edged road running from the gate across the dry slope toward the viewer, a dropped basket beside it
+      water: none in the frame; the city sits on dry, rocky upland
+      far_bank: no far bank; beyond the wall, the stone roofs and mudbrick upper storeys of the city fall away down the slope toward the citadel rock, where columns of dark smoke rise from burning public buildings
+      sky_and_light: a hot, pale, dusty late-summer sky, smoke drifting across it; hard, flat afternoon light
+      absent: [soldiers, battle, corpses, chariots in motion, ships, legible cuneiform or hieroglyphs, Greek or Roman buildings, marble, iron armour, modern clothing, identifiable faces, crowds]
+    events: [late-bronze-age-collapse]
+    # ADR-023: `fire` `loop` -- the burning citadel, the only active sound in an emptied city.
+    sound: {stem: fire, mode: loop, gain: 0.6}
+    location: {lat: 40.0197, lon: 34.6153, label: "Hattusa, Turkey"}
+    pin: null
+
   # About 430 BCE, the Age of Pericles; t = 2025 + 430 = 2,455. New scene, continuing the gap
   # between giza-great-pyramid and imperial-rome-pantheon. Pericles' building programme, funded
   # from the Delian League's treasury, "generated most of the surviving structures on the
@@ -1872,6 +2007,40 @@ scenes:
     location: {lat: 41.8986, lon: 12.4769, label: "Rome, Italy"}
     framing: {focus: [0.73, 0.55], pan: 270}
     pin: {asset_digest: "042036ae90c6428a", path: "data/pins/scenes/imperial-rome-pantheon/042036ae90c6428a.jpg"}
+
+  # About 740 CE; t = 2025 - 740 = 1,285. Tikal in the Late Classic, under Yik'in Chan K'awiil
+  # (734-766), who completed Temple I, his father Jasaw Chan K'awiil's funerary
+  # pyramid (Wikipedia "Tikal Temple I", "Yik'in Chan K'awiil"). Temple I faces Temple II
+  # across the Great Plaza. Temple facades were stuccoed and painted, mostly red, and Temple I's
+  # roof comb carried a sculpture of the enthroned ruler. Tikal drew its water from rain-fed
+  # reservoirs, among them the Palace Reservoir south of the Central Acropolis, which gives the
+  # chapter its water's edge (Wikipedia "Tikal"). Population estimates for the Late Classic city
+  # run to tens of thousands; the caption gives no number.
+  - id: tikal-classic-maya
+    t: 1.285e3
+    chapter: waters-edge
+    shot: WATER_EDGE
+    title: "Tikal"
+    caption: Around 740 CE, at the height of Classic Maya civilisation, Tikal's red temple-pyramids rise above the rainforest. Tens of thousands of people depend on the city's rain-fed reservoirs.
+    unsourced:
+      o2_percent: 21  # modern
+      mean_temp_c: 14  # rounded, close to pre-industrial
+    subject:
+      setting: The edge of a plaster-lined rain-fed reservoir in the Maya city of Tikal, in the lowland rainforest of present-day Guatemala, about 740 CE, looking north toward the Great Plaza
+      left_mass: a tall ceiba tree and dense rainforest at the reservoir's corner, buttress roots and hanging vines
+      vegetation: dense tropical rainforest of ceiba, sapodilla and palms surrounding the city, with water lilies along the reservoir margin
+      fauna: a pair of scarlet macaws flying over; a heron wading at the reservoir edge
+      main_subject: two women filling large pottery water jars at the stone steps down into the reservoir, seen in profile at a distance, wearing plain white cotton wrapped skirts
+      ground: stuccoed stone steps and a plastered causeway edge, damp at the waterline
+      water: the still, green reservoir, reflecting the buildings and sky
+      far_bank: the long, many-roomed palace ranges of the Central Acropolis, plastered and painted red, with the steep stepped pyramid of Temple I rising sharply beyond them, a single small temple on its summit topped by a tall roof comb, painted deep red with its stucco decoration picked out in colour, and other temple roof combs rising above the forest canopy in the distance
+      sky_and_light: a humid tropical morning sky with building cumulus; bright, clear light after rain
+      absent: [ruins, collapsed stonework, trees growing from the pyramids, bare grey unpainted stone, moss or lichen, tourists, modern clothing, identifiable faces, horses, metal tools, wheels, Aztec or Egyptian style pyramids, legible glyphs]
+    events: [tikal-late-classic]
+    # ADR-023: `settlement` `loop` -- a working city, on the same footing as imperial-rome-pantheon.
+    sound: {stem: settlement, mode: loop, gain: 0.85}
+    location: {lat: 17.2220, lon: -89.6237, label: "Tikal, Guatemala"}
+    pin: null
 
   # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =
   # 2025 - 1150 = 875. Wikipedia "Angkor Wat": construction ran 1113-1150 (his reign), building
