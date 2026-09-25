@@ -3,7 +3,7 @@
 /**
  * The shared About/Controls/Credits content — self-contained (it loads the manifest itself) so
  * it can be dropped into either surface that shows it: the About & credits panel and the
- * `/credits` route (`app/credits/page.tsx`), with one implementation instead of two. Three
+ * `/credits` route (`app/credits/page.tsx`), with one implementation instead of two. Four
  * sections, in order:
  *
  * 1. **About** — what the project is, what it covers, and the artistic-reconstruction
@@ -17,11 +17,11 @@
  *    hint, previously the only place interactions and keyboard shortcuts were explained, was
  *    removed (ADR-012 amendment follow-up, 2026-09-18); this is now the one place they're
  *    documented, kept in sync with `timeline/keyboard.ts` by `controlsData.test.ts`.
- * 3. **Credits** — every real dataset behind the project, audio stem credits, and a slot for the
- *    event colour legend (W-followup item 11) — a small reference a viewer wants at most
- *    occasionally, so it lives here rather than claiming any of the event feed's own tight
+ * 3. **Event colours** — a slot for the event colour legend, a small reference a viewer wants at
+ *    most occasionally, so it lives here rather than claiming any of the event feed's own tight
  *    vertical budget permanently. See `CreditsListProps.eventLegend` below for why this
  *    component doesn't import `EventTagLegend` itself.
+ * 4. **Credits** — every real dataset behind the project and the audio stem credits.
  */
 
 import { useEffect, useState } from 'react'
@@ -41,7 +41,7 @@ type LoadState =
 
 export interface CreditsListProps {
   /** The event colour legend (`@/events`'s `EventTagLegend`), rendered under its own "Event
-   *  colours" heading below — supplied by the caller rather than imported here (re-review fix,
+   *  colours" heading, before the credits — supplied by the caller rather than imported here (re-review fix,
    *  2026-09-15: `shell` no longer imports `@/events` at all — see this file's own doc comment).
    *  Optional so a caller with nothing to show there can omit the section entirely. */
   eventLegend?: ReactNode
@@ -100,6 +100,14 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
       <h3 className={styles.sectionTitle}>Controls &amp; shortcuts</h3>
       <ControlsShortcuts />
 
+      {eventLegend && (
+        <>
+          <h3 className={styles.sectionTitle}>Event colours</h3>
+          <p className={styles.intro}>What each event feed card's primary tag colour means.</p>
+          {eventLegend}
+        </>
+      )}
+
       <h3 className={styles.sectionTitle}>Credits</h3>
       <p className={styles.intro}>Every real dataset behind this project, with its citation and licence.</p>
 
@@ -150,14 +158,6 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
                   </li>
                 ))}
               </ul>
-            </>
-          )}
-
-          {eventLegend && (
-            <>
-              <h3 className={styles.sectionTitle}>Event colours</h3>
-              <p className={styles.intro}>What each event feed card's primary tag colour means.</p>
-              {eventLegend}
             </>
           )}
         </>
