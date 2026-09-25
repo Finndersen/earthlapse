@@ -7844,3 +7844,19 @@ insects, fire, volcanic, industry, traffic) loop 12-20 s; beds with recognisable
 to within one sample at 32 kHz at both ends (correlation 0.86-1.00; the lower figures are
 high-frequency content above the new ~14 kHz ceiling). Published audio falls from 20.2 MB to
 4.8 MB.
+
+## ADR-023 amendment (2026-09-25): fire is not a permanent bed
+
+ADR-023 §1's table gave `fire` a wildfire baseline of 0.15 from 420-400 Ma onward, then a hearth
+layer from `control-of-fire`, ducked only by `humanDominance`. Simulating a 1x playthrough showed
+the result: a crackle under 317 of its 368 s, beneath every land scene from the Devonian to the
+present, loud for only 104 of them. Wildfire is an event, not the sound of every landscape.
+
+**Decision.** The wildfire baseline becomes a `bump` over 330-255 Ma, the late Palaeozoic
+high-oxygen window in which charcoal is most abundant and fire reaches the widest range of
+ecosystems (Scott, A.C. & Glasspool, I.J. (2006), PNAS 103(29), 10861-10865), peaking between
+`carboniferous-swamp` and `permian-conifer-forest`. The hearth layer keeps its ramp in over
+`control-of-fire` and now ramps out over `agriculture` (11.5-10 ka), where `settlement` takes over
+the human soundscape; the scenes that show a fire (`jebel-irhoud-firelight`, `hattusa-abandoned`)
+carry their own `fire` sound. `fire` is now audible for 49 s of the playthrough: 10 s of wildfire,
+33 s of hearth, 6 s of Hattusa.

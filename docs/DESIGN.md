@@ -788,7 +788,9 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 >   `pleistocene-steppe` alone, which has no free `sound` slot for it (era-fit v3, ADR-023
 >   amendment 2026-09-15, corrected by its "era fit v3 fixes" amendment, also 2026-09-15). A pure
 >   `humanDominance(t)` (0 before 1761, 1 at present) ducks `forest`, `wing-hum`, `insects`,
->   `birds`, `mammals`, `livestock` and `fire` as industry and traffic take over. Twenty further
+>   `birds`, `mammals` and `livestock` as industry and traffic take over; `fire` is a late
+>   Palaeozoic wildfire window and a hearth layer that ends with agriculture (ADR-023 amendment
+>   "fire is not a permanent bed"). Twenty further
 >   **scene-only** stems have no curve and are reached only through a scene's
 >   `sound`: `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`,
 >   `chainsaw`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`, `ship-rigging` (loop)
