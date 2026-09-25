@@ -81,8 +81,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: 'Events as they happen',
     body: {
       compact:
-        'Events pop up above the timeline as it reaches them; tap one for its story. The list button holds all of them, searchable and filterable by topic.',
-      wide: 'Events pop up here as the timeline reaches them; click one for its story. All events lists every one, searchable and filterable by topic.',
+        'Events pop up above the timeline as it reaches them; tap one for its story. Tap here to view all events, searchable and filterable by topic.',
+      wide: 'Events pop up here as the timeline reaches them; click one for its story. Click here to view all events, searchable and filterable by topic.',
     },
     shape: 'rounded',
   },
