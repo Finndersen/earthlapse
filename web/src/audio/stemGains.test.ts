@@ -83,6 +83,12 @@ describe('stemGains', () => {
     expect(millTown.traffic).toBe(0)
   })
 
+  it('carries street traffic under the early motor-age street scenes but not the Somme between them', () => {
+    const somme = stemGains(109, NONE).traffic
+    for (const t of [112, 95]) expect(stemGains(t, NONE).traffic, `t=${t}`).toBeGreaterThan(somme + 0.35)
+    expect(somme).toBeLessThan(0.1)
+  })
+
   it('silences life through the K-Pg aftermath and recovers by 64.1 Ma', () => {
     expect(stemGains(6.6043e7, NONE).forest).toBeCloseTo(0.3, 2)
     const aftermath = stemGains(6.60429e7, NONE)

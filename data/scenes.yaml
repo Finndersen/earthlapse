@@ -921,7 +921,7 @@ scenes:
     # this scene's own on-screen presentation weight) rather than `once`; `wind` is the closest
     # cataloged texture to the sifting-ash stillness described above.
     sound: {stem: wind, mode: loop, gain: 0.8}
-    framing: {focus: [0.63, 0.68], pan: 0}
+    framing: {focus: [0.63, 0.67], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "ad31c5b96308e6e0", path: "data/pins/scenes/kpg-darkness/ad31c5b96308e6e0.jpg"}
 
   # ~100 years after kpg-arrival, inside events.yaml k-pg-aftermath (66.038-66.043 Ma). Vajda, V.,
@@ -1405,7 +1405,7 @@ scenes:
     # ADR-023: `hippo` `loop` -- the wallowing pod's grunts and honks.
     sound: {stem: hippo, mode: loop, gain: 0.8}
     location: {lat: 51.508, lon: -0.128, label: "Trafalgar Square, London"}
-    framing: {focus: [0.66, 0.64], pan: 0}
+    framing: {focus: [0.66, 0.67], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "8d06cece05af9d8e", path: "data/pins/scenes/eemian-thames-hippos/8d06cece05af9d8e.jpg"}
 
   # At least 67.8 ka, the hand stencil in Liang Metanduno, Muna Island, Sulawesi (events.yaml
@@ -1445,7 +1445,7 @@ scenes:
     # of what the scene shows.
     sound: {stem: water, mode: loop, gain: 0.8}
     location: {lat: -4.84, lon: 122.65, label: "Muna Island, Sulawesi, Indonesia"}
-    framing: {focus: [0.6, 0.62], pan: 180}
+    framing: {focus: [0.13, 0.67], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "69e247d721e82b02", path: "data/pins/scenes/wallacea-hand-stencil/69e247d721e82b02.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
@@ -1483,7 +1483,7 @@ scenes:
     # pre-land ambient bed is silent by this era regardless, so this is the only wind a viewer
     # hears across either scene.
     sound: {stem: wind, mode: loop, gain: 0.85}
-    framing: {focus: [0.65, 0.59], pan: 180}
+    framing: {focus: [0.65, 0.66], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "3905f2c4c1a2641b", path: "data/pins/scenes/ice-age-europe-neanderthal/3905f2c4c1a2641b.jpg"}
 
   # Last Glacial Maximum, ~20 ka; after Homo sapiens left Africa (events.yaml: 50-70 ka).
@@ -1557,7 +1557,7 @@ scenes:
     # above). t = 11,500 BP sits inside the human-era basemap domain (ADR-030), so publish marks
     # these present-day coordinates directly.
     location: {lat: 37.2231, lon: 38.9224, label: "Göbekli Tepe, Turkey"}
-    framing: {focus: [0.6, 0.52], pan: 0}
+    framing: {focus: [0.6, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "84e970ce9bbc7b8c", path: "data/pins/scenes/gobekli-tepe/84e970ce9bbc7b8c.jpg"}
 
   # About 7000 BCE, when Çatalhöyük "flourished" per the excavation record (occupation c.
@@ -1617,7 +1617,7 @@ scenes:
     # sits inside the human-era basemap domain (ADR-030), so publish marks these present-day
     # coordinates directly.
     location: {lat: 37.6667, lon: 32.8250, label: "Çatalhöyük, Turkey"}
-    framing: {focus: [0.58, 0.58], pan: 180}
+    framing: {focus: [0.58, 0.67], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "f29cdedc423a5aa5", path: "data/pins/scenes/catalhoyuk/f29cdedc423a5aa5.jpg"}
 
   # About 6000 BCE / 8,000 BP, within the African Humid Period ("Green Sahara"); distinct from
@@ -1655,7 +1655,7 @@ scenes:
     # ADR-023 (v2): `livestock` (the goat-herd recording) `loop` -- Saharan pastoral-Neolithic
     # herders with cattle; a near fit, kept quiet.
     sound: {stem: livestock, mode: loop, gain: 0.8}
-    framing: {focus: [0.56, 0.6], pan: 0, portrait_zoom: 1.2}
+    framing: {focus: [0.56, 0.62], pan: 0, portrait_zoom: 1.3}
     pin: {asset_digest: "69f1684c8d9654bb", path: "data/pins/scenes/green-sahara/69f1684c8d9654bb.jpg"}
 
   # About 3200 BCE, late Uruk period, southern Mesopotamia; t = 2025 + 3200 = 5,225, rounded to 5,200,
@@ -1959,7 +1959,7 @@ scenes:
     # ADR-034: Rome, Italy (the Pantheon). t = 1,900 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 41.8986, lon: 12.4769, label: "Rome, Italy"}
-    framing: {focus: [0.73, 0.55], pan: 270}
+    framing: {focus: [0.73, 0.62], pan: 270, portrait_zoom: 1.3}
     pin: {asset_digest: "042036ae90c6428a", path: "data/pins/scenes/imperial-rome-pantheon/042036ae90c6428a.jpg"}
 
   # About 740 CE; t = 2025 - 740 = 1,285. Tikal in the Late Classic, under Yik'in Chan K'awiil
@@ -2129,7 +2129,7 @@ scenes:
     # inside the human-era basemap domain (ADR-030), so publish marks these present-day
     # coordinates directly.
     location: {lat: 24.0342, lon: -74.4986, label: "San Salvador Island, Bahamas"}
-    framing: {focus: [0.72, 0.58], pan: 0}
+    framing: {focus: [0.72, 0.67], pan: 0, portrait_zoom: 1.4}
     pin: {asset_digest: "80840169388e234f", path: "data/pins/scenes/columbus-landfall-1492/80840169388e234f.jpg"}
 
   # About 1650, the Dutch Golden Age; t = 2025 - 1650 = 375. Fills the 338-year gap a review
@@ -2223,7 +2223,7 @@ scenes:
     # ADR-034: Nihonbashi, Tokyo, Japan. t = 285 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 35.6841, lon: 139.7745, label: "Nihonbashi, Tokyo"}
-    framing: {focus: [0.62, 0.6], pan: 180}
+    framing: {focus: [0.62, 0.7], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "777a0ddfc512b4bb", path: "data/pins/scenes/edo-nihonbashi/777a0ddfc512b4bb.jpg"}
 
   # About 1830, a composite/representative northern English cotton-mill town rather than one specific
@@ -2259,7 +2259,7 @@ scenes:
     # vehicles, sirens or whistles) as a continuous `loop` above its 0.5 ambient -- the steam-powered
     # cotton mills' constant working noise.
     sound: {stem: industry, mode: loop, gain: 1.0}
-    framing: {focus: [0.62, 0.62], pan: 180}
+    framing: {focus: [0.62, 0.68], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "4ee06d67fed510e9", path: "data/pins/scenes/industrial-mill-town/4ee06d67fed510e9.jpg"}
 
   # 10 May 1869, Promontory Summit, Utah; t = 2025 - 1869 = 156 (events.yaml
@@ -2301,7 +2301,7 @@ scenes:
     sound: {stem: steam-whistle, mode: once, gain: 1.0}
     # ADR-034: Golden Spike National Historical Park, Promontory Summit, Utah.
     location: {lat: 41.6179, lon: -112.5516, label: "Promontory Summit, Utah"}
-    framing: {focus: [0.52, 0.62], pan: 0}
+    framing: {focus: [0.52, 0.65], pan: 0, portrait_zoom: 1.3}
     pin: {asset_digest: "4ebc6badc624af87", path: "data/pins/scenes/promontory-golden-spike/4ebc6badc624af87.jpg"}
 
   # 17 December 1903, about 10:35 am, Kill Devil Hills near Kitty Hawk, North Carolina; t = 2025 - 1903.
@@ -2491,7 +2491,7 @@ scenes:
     # ADR-023: `tram-bell` `once` -- an American trolley bell stands in for the Tokyo streetcar's.
     sound: {stem: tram-bell, mode: once, gain: 0.9}
     location: {lat: 35.6717, lon: 139.7650, label: "Ginza, Tokyo"}
-    framing: {focus: [0.6, 0.62], pan: 180}
+    framing: {focus: [0.6, 0.67], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/pins/scenes/ginza-modern-tokyo/81ccaf1dcc006f1f.jpg"}
 
   # 16 July 1945, 05:29:45 Mountain War Time, the Trinity test, Alamogordo Bombing and Gunnery Range,
@@ -2861,7 +2861,7 @@ scenes:
     # Left unset rather than guessed.
     # ADR-023: `chainsaw` `loop` -- a close recording held low so it reads as distant clearing.
     sound: {stem: chainsaw, mode: loop, gain: 0.6}
-    framing: {focus: [0.63, 0.66], pan: 270}
+    framing: {focus: [0.63, 0.67], pan: 270, portrait_zoom: 1.4}
     pin: {asset_digest: "43a0d45ebd59fac5", path: "data/pins/scenes/amazon-deforestation-fishbone/43a0d45ebd59fac5.jpg"}
 
   # About 2014, mid-way through solar power's rapid scale-up (events.yaml renewable-energy-scaleup,
@@ -2906,7 +2906,7 @@ scenes:
     # above 0.5's own -36.0 dB -- the deliberate coastal-wind cue was quieter than background
     # road noise. 0.8 (-31.9 dB) clears it by over 3 dB.
     sound: {stem: wind, mode: loop, gain: 0.8}
-    framing: {focus: [0.62, 0.62], pan: 180}
+    framing: {focus: [0.34, 0.67], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "744c0c444494da52", path: "data/pins/scenes/energy-transition-solar-wind/744c0c444494da52.jpg"}
 
   # End of 2018 (t = 2025 - 2018 = 7), matching events.yaml half-of-humanity-online (t 7): the ITU
@@ -2945,7 +2945,7 @@ scenes:
     # ADR-023 (v2): `settlement` (wordless crowd murmur) `loop` -- a busy holiday
     # promenade; ambient `traffic` and `water` already carry the city and the sea.
     sound: {stem: settlement, mode: loop, gain: 0.85}
-    framing: {focus: [0.47, 0.68], pan: 180}
+    framing: {focus: [0.47, 0.67], pan: 180, portrait_zoom: 1.5}
     pin: {asset_digest: "e42a28ac748277c4", path: "data/pins/scenes/smartphone-seafront-2018/e42a28ac748277c4.jpg"}
 
   # 9-10 March 2020, Italy's national COVID-19 lockdown (events.yaml covid-19-pandemic, t_min/
@@ -3055,13 +3055,11 @@ scenes:
       sky_and_light: a bright, slightly hazy morning sky over the city; clear daylight with long low shadows
       absent: [futuristic architecture, flying vehicles, holograms, driverless robotaxis, legible text, logos or brand names, identifiable faces, face masks, historical costume, ruins, empty streets, a pedestrian bridge]
     events: [urban-majority-milestone]
-    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
-    # ambient floor -- a dense rush-hour crowd streaming out of a metro station, at t = 4 the
-    # busiest human presence this catalogue depicts. Not `traffic`: the subject is pedestrians and
-    # a metro entrance, no road vehicles in frame, and `traffic`'s own curve is already near its
-    # post-2000 ceiling (~0.55) here regardless.
-    sound: {stem: settlement, mode: loop, gain: 0.75}
-    framing: {focus: [0.62, 0.58], pan: 270}
+    # ADR-023: `traffic` `loop` -- the buses and taxis queued at the kerb, raised above its
+    # ~0.55 ambient curve so the commute reads as one; the crowd itself is carried by
+    # `settlement`'s flat 0.48 ambient floor.
+    sound: {stem: traffic, mode: loop, gain: 0.85}
+    framing: {focus: [0.62, 0.67], pan: 270, portrait_zoom: 1.5}
     pin: {asset_digest: "4bddd2b3509ab4b6", path: "data/pins/scenes/global-city-rush-hour/4bddd2b3509ab4b6.jpg"}
 
   # The present day, t = 0 (events.yaml present), and the last scene of the timeline: Shenzhen,

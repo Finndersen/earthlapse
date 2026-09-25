@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "77b34ea6ea1d7737",
+  "buildId": "07033689e7137a9d",
   "assetBase": "/media",
   "scenes": [
     {
@@ -53,16 +53,17 @@
         "urban-majority-milestone"
       ],
       "sound": {
-        "stem": "settlement",
+        "stem": "traffic",
         "mode": "loop",
-        "gain": 0.75
+        "gain": 0.85
       },
       "framing": {
         "focus": [
           0.62,
-          0.58
+          0.67
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.5
       },
       "pinned": "4bddd2b3509ab4b6",
       "width": 2752,
@@ -127,9 +128,10 @@
       "framing": {
         "focus": [
           0.47,
-          0.68
+          0.67
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.5
       },
       "pinned": "e42a28ac748277c4",
       "width": 2752,
@@ -154,10 +156,11 @@
       },
       "framing": {
         "focus": [
-          0.62,
-          0.62
+          0.34,
+          0.67
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.5
       },
       "pinned": "744c0c444494da52",
       "width": 2752,
@@ -183,9 +186,10 @@
       "framing": {
         "focus": [
           0.63,
-          0.66
+          0.67
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.4
       },
       "pinned": "43a0d45ebd59fac5",
       "width": 2752,
@@ -459,9 +463,10 @@
       "framing": {
         "focus": [
           0.6,
-          0.62
+          0.67
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "81ccaf1dcc006f1f",
       "width": 2752,
@@ -618,9 +623,10 @@
       "framing": {
         "focus": [
           0.52,
-          0.62
+          0.65
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.3
       },
       "pinned": "4ebc6badc624af87",
       "width": 2752,
@@ -646,9 +652,10 @@
       "framing": {
         "focus": [
           0.62,
-          0.62
+          0.68
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "4ee06d67fed510e9",
       "width": 2752,
@@ -685,9 +692,10 @@
       "framing": {
         "focus": [
           0.62,
-          0.6
+          0.7
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "777a0ddfc512b4bb",
       "width": 2752,
@@ -764,9 +772,10 @@
       "framing": {
         "focus": [
           0.72,
-          0.58
+          0.67
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.4
       },
       "pinned": "80840169388e234f",
       "width": 2752,
@@ -920,9 +929,10 @@
       "framing": {
         "focus": [
           0.73,
-          0.55
+          0.62
         ],
-        "pan": 270.0
+        "pan": 270.0,
+        "portraitZoom": 1.3
       },
       "pinned": "042036ae90c6428a",
       "width": 2752,
@@ -1143,10 +1153,10 @@
       "framing": {
         "focus": [
           0.56,
-          0.6
+          0.62
         ],
         "pan": 0.0,
-        "portraitZoom": 1.2
+        "portraitZoom": 1.3
       },
       "pinned": "69f1684c8d9654bb",
       "width": 2752,
@@ -1183,9 +1193,10 @@
       "framing": {
         "focus": [
           0.58,
-          0.58
+          0.67
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "f29cdedc423a5aa5",
       "width": 2752,
@@ -1222,9 +1233,10 @@
       "framing": {
         "focus": [
           0.6,
-          0.52
+          0.62
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.25
       },
       "pinned": "84e970ce9bbc7b8c",
       "width": 2752,
@@ -1275,9 +1287,10 @@
       "framing": {
         "focus": [
           0.65,
-          0.59
+          0.66
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "3905f2c4c1a2641b",
       "width": 2752,
@@ -1314,10 +1327,11 @@
       },
       "framing": {
         "focus": [
-          0.6,
-          0.62
+          0.13,
+          0.67
         ],
-        "pan": 180.0
+        "pan": 180.0,
+        "portraitZoom": 1.4
       },
       "pinned": "69e247d721e82b02",
       "width": 2752,
@@ -1354,9 +1368,10 @@
       "framing": {
         "focus": [
           0.66,
-          0.64
+          0.67
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "8d06cece05af9d8e",
       "width": 2752,
@@ -1777,9 +1792,10 @@
       "framing": {
         "focus": [
           0.63,
-          0.68
+          0.67
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.5
       },
       "pinned": "ad31c5b96308e6e0",
       "width": 2752,

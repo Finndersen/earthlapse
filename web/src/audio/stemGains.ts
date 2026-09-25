@@ -58,6 +58,23 @@ const LGM_WIND_YOUNGER_EDGE = 1.9e4
 const LGM_WIND_BUMP_GAIN = 0.65
 
 /**
+ * Street traffic under the two early motor-age street scenes, whose one `sound` slot already holds
+ * a `once` effect (`ford-model-t-street`'s klaxon, `ginza-modern-tokyo`'s tram bell). The global
+ * `traffic` curve is still near 0 there, so each gets a scene-local bump centred on its own `t`,
+ * bounded by its dominant span in the published manifest like `barrenSceneDuck` — which keeps
+ * `somme-1916` (109 yr), between the two, free of it.
+ */
+function streetTrafficBump(t: GeoTime): number {
+  return (
+    STREET_TRAFFIC_BUMP_GAIN *
+    (2 -
+      presenceNotch(t, 116.9, 112, 110.5) - // ford-model-t-street
+      presenceNotch(t, 101.8, 95, 87.2)) // ginza-modern-tokyo
+  )
+}
+const STREET_TRAFFIC_BUMP_GAIN = 0.4
+
+/**
  * Charcoal is most abundant from the late Carboniferous through the Permian, as atmospheric O2
  * climbs toward ~30% and fire reaches an ever wider range of ecosystems (Scott, A.C. &
  * Glasspool, I.J. (2006), "The diversification of Paleozoic fire systems and fluctuations in
@@ -415,7 +432,8 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
       // Ford Model T from October 1908; half of US cars by 1918. 80 yr = 1945.
       (rampLog(t, 118, 80, 0, 0.25) +
         // Post-war mass motorisation, 1945 → 2000.
-        rampLog(t, 80, 25, 0, 0.3)) *
+        rampLog(t, 80, 25, 0, 0.3) +
+        streetTrafficBump(t)) *
         people,
     ),
   }
