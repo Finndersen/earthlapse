@@ -1994,7 +1994,7 @@ scenes:
     # ADR-023: `howler-monkeys` `loop` -- recorded in Guatemala, the forest around the city.
     sound: {stem: howler-monkeys, mode: loop, gain: 0.85}
     location: {lat: 17.2220, lon: -89.6237, label: "Tikal, Guatemala"}
-    framing: {focus: [0.6, 0.6], pan: 0}
+    framing: {focus: [0.78, 0.5], pan: 0}
     pin: {asset_digest: "a3b536712371d79f", path: "data/pins/scenes/tikal-classic-maya/a3b536712371d79f.jpg"}
 
   # About AD 1150, completion of Angkor Wat under King Suryavarman II of the Khmer Empire; t =

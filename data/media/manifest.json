@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "06b6d5d3741cbe79",
+  "buildId": "d42b81298e2866e8",
   "assetBase": "/media",
   "scenes": [
     {
@@ -884,8 +884,8 @@
       },
       "framing": {
         "focus": [
-          0.6,
-          0.6
+          0.78,
+          0.5
         ],
         "pan": 0.0
       },
