@@ -56,7 +56,7 @@ import {
   eraNameForTime,
   EraShortcuts,
   formatCompanionReading,
-  formatGeoTime,
+  formatPosition,
   isOpenEventBrowserShortcut,
   sectionById,
   sectionSymlogKnee,
@@ -854,7 +854,7 @@ export function Experience() {
 function TimeTitle({ t }: { t: GeoTime }) {
   return (
     <div className={styles.timeTitle} data-testid="time-title">
-      <span className={styles.time}>{formatGeoTime(t)}</span>
+      <span className={styles.time}>{formatPosition(t)}</span>
       <span className={styles.era}>{formatCompanionReading(t) ?? eraNameForTime(t)}</span>
     </div>
   )

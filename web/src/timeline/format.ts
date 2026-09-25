@@ -21,15 +21,15 @@ export function notationForWindow([, oldest]: TimeWindow): TimeNotation {
 }
 
 /** Years before this are printed to the century: before writing, a date is an archaeological
- *  estimate and a single-year figure would read as more precise than it is. */
+ *  estimate and a single-year figure would read as more precise than it is. A readout of the
+ *  playhead's own position (`formatPosition`) names no dated claim, so it keeps the decade. */
 const PREHISTORIC_YEAR = -3000
 const PREHISTORIC_RESOLUTION_YEARS = 100
+const PREHISTORIC_POSITION_RESOLUTION_YEARS = 10
 
 const YEARS_PER_KA = 1e3
 const YEARS_PER_MA = 1e6
 const YEARS_PER_GA = 1e9
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
 
 /** Below this `formatRate` prints a bound rather than a figure: two significant figures of a
  *  smaller rate are noise from the readout's smoothing. */
@@ -53,11 +53,11 @@ function isPresent(t: GeoTime): boolean {
   return Math.round(t) === 0
 }
 
-/** The signed year at `t`, rounded to the resolution its era supports. */
-function displayedYear(t: GeoTime): number {
+/** The signed year at `t`, rounded to `prehistoricResolution` years before writing. */
+function displayedYear(t: GeoTime, prehistoricResolution = PREHISTORIC_RESOLUTION_YEARS): number {
   const year = Math.round(calendarYearAt(t))
   if (year >= PREHISTORIC_YEAR) return year
-  return Math.round(year / PREHISTORIC_RESOLUTION_YEARS) * PREHISTORIC_RESOLUTION_YEARS
+  return Math.round(year / prehistoricResolution) * prehistoricResolution
 }
 
 /** `1914 -> "1914"`, `476 -> "476 CE"`, `-3200 -> "3200 BCE"`. The era is left off a four-digit
@@ -95,6 +95,13 @@ export function formatGeoTime(t: GeoTime): string {
   return notationAt(t) === 'calendar' ? formatCalendar(t) : formatAge(t)
 }
 
+/** `formatGeoTime` for where the playhead is rather than when something happened: prehistoric
+ *  years to the decade (`10_012 -> "7990 BCE"`), since the reading tracks a scrub, not a date. */
+export function formatPosition(t: GeoTime): string {
+  if (notationAt(t) === 'age' || isPresent(t)) return formatGeoTime(t)
+  return formatYear(displayedYear(t, PREHISTORIC_POSITION_RESOLUTION_YEARS))
+}
+
 /** The other reading of a calendar-era `t`, to print beside `formatGeoTime`'s: elapsed time for
  *  a date (`533 -> "533 years ago"`), and the anchor year for the present (`0 -> "2025"`). Null
  *  for an age, which has no calendar reading worth giving. */
@@ -104,52 +111,6 @@ export function formatCompanionReading(t: GeoTime): string | null {
   if (isPresent(t)) return formatYear(PRESENT_CE_YEAR)
   const years = Math.round(t)
   return years === 1 ? '1 year ago' : `${years.toLocaleString('en-US')} years ago`
-}
-
-/** Extra decimal-digit budget `formatGeoTimePrecise` may reach for — enough for the K-Pg
- *  trio's ~0.01yr sub-gaps (ADR-017/ADR-021) to resolve to well under a minute, capped so a
- *  vanishingly small pixel budget can't produce an absurd digit count. */
-const MAX_PRECISE_DECIMALS = 6
-
-/** The number of years `formatGeoTime` already resolves to at `t`. `formatGeoTimePrecise` only
- *  reaches for extra precision once the local pixel budget needs to resolve something finer. */
-function bucketResolutionYears(t: GeoTime): number {
-  if (notationAt(t) === 'calendar') return calendarYearAt(t) < PREHISTORIC_YEAR ? PREHISTORIC_RESOLUTION_YEARS : 1
-  if (t < YEARS_PER_KA) return 1
-  if (t < YEARS_PER_MA) return YEARS_PER_KA / 10
-  if (t < YEARS_PER_GA) return YEARS_PER_MA
-  return YEARS_PER_GA / 100
-}
-
-/** A calendar reading finer than `formatCalendar`'s: the exact year, or the month once one pixel
- *  spans less than a year. Months are given only for CE years. */
-function formatCalendarPrecise(t: GeoTime, precisionYears: number): string {
-  const year = calendarYearAt(t)
-  if (precisionYears >= 1 || year < 1) return formatYear(Math.round(year))
-  const whole = Math.floor(year)
-  const month = Math.min(11, Math.floor((year - whole) * 12))
-  return `${MONTHS[month]} ${formatYear(whole)}`
-}
-
-/**
- * `formatGeoTime(t)`, but finer once the pointer's local resolution (`precisionYears` — years
- * spanned by one displayed pixel, see `yearsPerDisplayedPixelAt` in `fisheye.ts`) is finer than
- * what `formatGeoTime` already shows. Falls straight back to `formatGeoTime(t)` whenever it
- * already resolves at least as finely as one pixel does, or `precisionYears` isn't a usable
- * positive number. Inside a resolved gap an age switches to comma-grouped raw years with just
- * enough decimals that a 1px pointer move visibly changes the reading (the K-Pg trio reads
- * `"66,043,000 years ago"`, `"66,042,999.99 years ago"`, ...), and a calendar date to its exact
- * year or month.
- */
-export function formatGeoTimePrecise(t: GeoTime, precisionYears: number): string {
-  assertGeoTime(t, 'formatGeoTimePrecise')
-  if (t === 0) return 'present'
-  if (!(precisionYears > 0) || precisionYears >= bucketResolutionYears(t)) return formatGeoTime(t)
-  if (notationAt(t) === 'calendar') return formatCalendarPrecise(t, precisionYears)
-
-  const decimals = Math.min(MAX_PRECISE_DECIMALS, Math.max(0, Math.ceil(-Math.log10(precisionYears))))
-  const grouped = t.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-  return `${grouped} years ago`
 }
 
 type SharedUnitBucket = 'ka' | 'ma' | 'ga'
@@ -164,6 +125,34 @@ function sharedUnitBucket(t: GeoTime): SharedUnitBucket | null {
 const BUCKET_UNIT: Record<SharedUnitBucket, string> = { ka: 'ka', ma: 'Ma', ga: 'Ga' }
 const BUCKET_DIVISOR: Record<SharedUnitBucket, number> = { ka: YEARS_PER_KA, ma: YEARS_PER_MA, ga: YEARS_PER_GA }
 const BUCKET_DECIMALS: Record<SharedUnitBucket, number> = { ka: 1, ma: 0, ga: 2 }
+
+/** The most decimals a precise age reading reaches for (`"66.04 Ma"`): finer than this the
+ *  readout would be naming a figure no dating method gives, so it stops refining. */
+const MAX_PRECISE_AGE_DECIMALS = 2
+
+/**
+ * `formatPosition(t)`, but finer once the pointer's local resolution (`precisionYears` — years
+ * spanned by one displayed pixel, see `yearsPerDisplayedPixelAt` in `fisheye.ts`) is finer than
+ * what `formatPosition` already shows. An age keeps its own unit and gains decimals, up to
+ * `MAX_PRECISE_AGE_DECIMALS` (`"26.5 Ma"`, `"66.04 Ma"`, `"22.83 ka"`); a calendar date resolves
+ * to its exact year, never a month. Falls straight back to `formatPosition(t)` whenever
+ * `precisionYears` isn't a usable positive number.
+ */
+export function formatGeoTimePrecise(t: GeoTime, precisionYears: number): string {
+  assertGeoTime(t, 'formatGeoTimePrecise')
+  if (!(precisionYears > 0) || isPresent(t)) return formatPosition(t)
+  if (notationAt(t) === 'calendar') {
+    return precisionYears < PREHISTORIC_POSITION_RESOLUTION_YEARS ? formatYear(Math.round(calendarYearAt(t))) : formatPosition(t)
+  }
+
+  const bucket = sharedUnitBucket(t)
+  if (bucket === null) return formatAge(t)
+  const divisor = BUCKET_DIVISOR[bucket]
+  const needed = Math.ceil(-Math.log10(precisionYears / divisor))
+  const decimals = Math.min(MAX_PRECISE_AGE_DECIMALS, Math.max(BUCKET_DECIMALS[bucket], needed))
+  if (decimals === BUCKET_DECIMALS[bucket]) return formatAge(t)
+  return `${(t / divisor).toFixed(decimals)} ${BUCKET_UNIT[bucket]}`
+}
 
 function formatAgeRange(newest: GeoTime, oldest: GeoTime): string {
   const newestBucket = sharedUnitBucket(newest)

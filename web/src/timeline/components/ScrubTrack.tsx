@@ -28,7 +28,7 @@ import type { TimelineCheckpoint } from '../checkpoints'
 import { declutterEvents } from '../declutter'
 import type { FisheyeScale } from '../fisheye'
 import { yearsPerDisplayedPixelAt } from '../fisheye'
-import { formatGeoTime, formatGeoTimePrecise } from '../format'
+import { formatGeoTime, formatGeoTimePrecise, formatPosition } from '../format'
 import { hasExceededTapSlop } from '../markerGesture'
 import type { TimeWindow } from '../scale'
 import { findSnapTarget, snapCandidates } from '../snap'
@@ -559,10 +559,10 @@ export function ScrubTrack({
       <span
         aria-live="polite"
         className={styles.timeLabel}
-        data-anchor={playheadLabelAnchor(playheadU, formatGeoTime(t), trackWidthPx)}
+        data-anchor={playheadLabelAnchor(playheadU, formatPosition(t), trackWidthPx)}
         style={{ left: `${playheadU * 100}%` }}
       >
-        {formatGeoTime(t)}
+        {formatPosition(t)}
       </span>
 
       {hoverInfo && (

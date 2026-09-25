@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatAge, formatCompanionReading, formatGeoTime, formatGeoTimePrecise, formatRate, formatTimeRange } from './format'
+import {
+  formatAge,
+  formatCompanionReading,
+  formatGeoTime,
+  formatGeoTimePrecise,
+  formatPosition,
+  formatRate,
+  formatTimeRange,
+} from './format'
 
 describe('formatGeoTime', () => {
   it('writes calendar years inside the Holocene and ages beyond it', () => {
@@ -23,6 +31,12 @@ describe('formatGeoTime', () => {
   it('rounds prehistoric calendar years to the century', () => {
     expect(formatGeoTime(10_000)).toBe('8000 BCE')
     expect(formatGeoTime(5025)).toBe('3000 BCE')
+  })
+
+  it('reads the playhead position to the prehistoric decade', () => {
+    expect(formatPosition(10_012)).toBe('7990 BCE')
+    expect(formatPosition(533)).toBe('1492')
+    expect(formatPosition(6.6e7)).toBe('66 Ma')
   })
 
   it('rejects negative or non-finite t', () => {
@@ -81,16 +95,17 @@ describe('formatGeoTimePrecise', () => {
     expect(formatGeoTimePrecise(0, 1e-9)).toBe('present')
   })
 
-  it('prints just enough decimals of raw years to resolve the precision, capped', () => {
-    expect(formatGeoTimePrecise(123_456.789, 0.01)).toBe('123,456.79 years ago')
-    expect(formatGeoTimePrecise(66_043_000, 1e-9)).toBe('66,043,000.000000 years ago')
-    const trio = [66_043_000, 66_042_999.99, 66_042_900].map((t) => formatGeoTimePrecise(t, 0.001))
-    expect(new Set(trio).size).toBe(3)
+  it('refines an age in its own unit, to at most two decimals', () => {
+    expect(formatGeoTimePrecise(26_512_345, 1e5)).toBe('26.5 Ma')
+    expect(formatGeoTimePrecise(66_043_000, 1e-9)).toBe('66.04 Ma')
+    expect(formatGeoTimePrecise(22_834, 10)).toBe('22.83 ka')
+    expect(formatGeoTimePrecise(4.567e9, 1)).toBe('4.57 Ga')
   })
 
-  it('resolves a calendar date to the exact year, then the month', () => {
-    expect(formatGeoTimePrecise(10_000, 10)).toBe('7975 BCE')
-    expect(formatGeoTimePrecise(0.5, 0.05)).toBe('Jul 2024')
+  it('resolves a calendar date to the exact year and never finer', () => {
+    expect(formatGeoTimePrecise(10_000, 5)).toBe('7975 BCE')
+    expect(formatGeoTimePrecise(10_012, 50)).toBe('7990 BCE')
+    expect(formatGeoTimePrecise(9.5, 0.05)).toBe('2016')
   })
 
   it('rejects negative t', () => {

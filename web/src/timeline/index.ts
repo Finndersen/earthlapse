@@ -63,12 +63,13 @@
  *   (`"1492"`, `"3200 BCE"`, `"present"`), an age beyond it (`"4.57 Ga"`, `"66 Ma"`, `"11.7 ka"`)
  *   — `notationAt(t)` decides which. `formatTimeRange(window)` does the same for a whole window
  *   in the window's one notation (`"12 ka – present"`, `"252–201 Ma"`, `"1914–1945"`), and
- *   `formatCompanionReading(t)` gives a calendar date's elapsed-time companion. All are exported for
+ *   `formatCompanionReading(t)` gives a calendar date's elapsed-time companion, and `formatPosition(t)`
+ *   reads the playhead's own position (prehistoric years to the decade). All are exported for
  *   other packages that need to print a time without the rest of the timeline UI. `formatGeoTimePrecise(t, precisionYears)`
- *   (ADR-021) is `formatGeoTime` with extra decimal digits once `precisionYears` — the local
- *   years-per-displayed-pixel, e.g. `yearsPerDisplayedPixelAt` in `fisheye.ts` — is finer than
- *   what the plain bucket already resolves; `ScrubTrack`'s pointer-driven readouts use it so a
- *   1px move inside a fisheye-resolved gap visibly changes the reading.
+ *   (ADR-021) is `formatPosition` refined — an age to at most two decimals in its own unit, a date
+ *   to its exact year — once `precisionYears`, the local years-per-displayed-pixel (e.g.
+ *   `yearsPerDisplayedPixelAt` in `fisheye.ts`), is finer than the plain format; `ScrubTrack`'s
+ *   pointer-driven readouts use it.
  * - Era sections (`sections.ts`, ADR-024): one fixed tree of `TimelineSection`s (ICS v2024/12
  *   boundaries, plus cited Holocene human-history sections). The pure navigation functions:
  *   `sectionById`, `childSections`, `sectionPath` (the breadcrumb), `childSectionAt`/`sectionAt`,
@@ -121,6 +122,7 @@ export {
   formatCompanionReading,
   formatGeoTime,
   formatGeoTimePrecise,
+  formatPosition,
   formatRate,
   formatTimeRange,
   notationAt,
