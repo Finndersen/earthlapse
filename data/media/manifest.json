@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "8d9c7cbbb8315a79",
+  "buildId": "0455eacf83b164ed",
   "assetBase": "/media",
   "scenes": [
     {
@@ -6272,17 +6272,17 @@
   "audioStems": [
     {
       "id": "wind",
-      "file": "audio/wind-077abd6e63.mp3",
+      "file": "audio/wind-bd0538a129.mp3",
       "title": "Desert Sand - Dune Atmosphere",
       "author": "Vrymaa",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/825/825860_13973196-hq.mp3",
-      "durationSeconds": 128.2,
+      "durationSeconds": 54.312,
       "loopSafe": true,
       "levelTrimDb": 7.2,
       "loop": {
-        "startSeconds": 23.73998,
-        "endSeconds": 77.80567
+        "startSeconds": 0.12398,
+        "endSeconds": 54.18967
       }
     },
     {
@@ -6309,32 +6309,32 @@
     },
     {
       "id": "volcanic",
-      "file": "audio/volcanic-711f8c54cb.mp3",
+      "file": "audio/volcanic-836e9c7665.mp3",
       "title": "Volcano Mount Yasur, Tanna Island (excerpt)",
       "author": "felix.blume (excerpt by pwigger0029)",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/710/710561_15406682-hq.mp3",
-      "durationSeconds": 28.06,
+      "durationSeconds": 26.28,
       "loopSafe": true,
       "levelTrimDb": -10.1,
       "loop": {
-        "startSeconds": 0.872,
-        "endSeconds": 26.94646
+        "startSeconds": 0.104,
+        "endSeconds": 26.17846
       }
     },
     {
       "id": "forest",
-      "file": "audio/forest-d19ca9dc96.mp3",
+      "file": "audio/forest-97649c8a68.mp3",
       "title": "3. Forest, beech leaves, trees",
       "author": "mathiaslyhne1",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/798/798157_4977295-hq.mp3",
-      "durationSeconds": 27.12,
+      "durationSeconds": 9.144,
       "loopSafe": true,
       "levelTrimDb": 18.8,
       "loop": {
-        "startSeconds": 17.308,
-        "endSeconds": 26.224
+        "startSeconds": 0.124,
+        "endSeconds": 9.04
       }
     },
     {
@@ -6350,92 +6350,92 @@
     },
     {
       "id": "wing-hum",
-      "file": "audio/wing-hum-e9b0b7cd2d.mp3",
+      "file": "audio/wing-hum-b622affa03.mp3",
       "title": "Blowflies!",
       "author": "kangaroovindaloo",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/324/324590_1728127-hq.mp3",
-      "durationSeconds": 66.894,
+      "durationSeconds": 12.84,
       "loopSafe": true,
       "levelTrimDb": -5.7,
       "loop": {
-        "startSeconds": 35.296,
-        "endSeconds": 47.919
+        "startSeconds": 0.112,
+        "endSeconds": 12.735
       }
     },
     {
       "id": "large-animal",
-      "file": "audio/large-animal-10ebf79cf1.mp3",
+      "file": "audio/large-animal-b4cf4bc620.mp3",
       "title": "Bison Bellowing (Yellowstone)",
       "author": "Nivatius",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/519/519594_7143328-hq.mp3",
-      "durationSeconds": 30.37,
+      "durationSeconds": 28.891,
       "loopSafe": true,
       "levelTrimDb": -0.6,
       "loop": {
-        "startSeconds": 1.34,
-        "endSeconds": 29.996
+        "startSeconds": 0.112245,
+        "endSeconds": 28.768245
       }
     },
     {
       "id": "birds",
-      "file": "audio/birds-8a8b3f8682.mp3",
+      "file": "audio/birds-8c848959bd.mp3",
       "title": "Dawn Chorus (Wicklow)",
       "author": "Synge101",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/611/611453_13531950-hq.mp3",
-      "durationSeconds": 96.17,
+      "durationSeconds": 91.728,
       "loopSafe": true,
       "levelTrimDb": 19.1,
       "loop": {
-        "startSeconds": 1.84338,
-        "endSeconds": 93.34889
+        "startSeconds": 0.11538,
+        "endSeconds": 91.62089
       }
     },
     {
       "id": "archosaurs",
-      "file": "audio/archosaurs-88aaf54f45.mp3",
+      "file": "audio/archosaurs-2e1d8dad36.mp3",
       "title": "Alligator Growl",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/437/437933_2524442-hq.mp3",
-      "durationSeconds": 37.27,
+      "durationSeconds": 30.262,
       "loopSafe": true,
       "levelTrimDb": 4.7,
       "loop": {
-        "startSeconds": 7.122,
-        "endSeconds": 37.264
+        "startSeconds": 0.114,
+        "endSeconds": 30.256
       }
     },
     {
       "id": "mammals",
-      "file": "audio/mammals-facbb66331.mp3",
+      "file": "audio/mammals-4acbf6221f.mp3",
       "title": "Lions in Gonarezhou",
       "author": "KevZim",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/531/531439_7083541-hq.mp3",
-      "durationSeconds": 70.09,
+      "durationSeconds": 68.31,
       "loopSafe": true,
       "levelTrimDb": 8.9,
       "loop": {
-        "startSeconds": 0.16408,
-        "endSeconds": 68.24245
+        "startSeconds": 0.111835,
+        "endSeconds": 68.190205
       }
     },
     {
       "id": "livestock",
-      "file": "audio/livestock-c2481ee697.mp3",
+      "file": "audio/livestock-af14ff444b.mp3",
       "title": "Goats Moving and Bleating in a Pen",
       "author": "felix.blume",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/779/779856_1661766-hq.mp3",
-      "durationSeconds": 96.31,
+      "durationSeconds": 45.192,
       "loopSafe": true,
       "levelTrimDb": -1.4,
       "loop": {
-        "startSeconds": 50.92,
-        "endSeconds": 95.88
+        "startSeconds": 0.112,
+        "endSeconds": 45.072
       }
     },
     {
@@ -6528,32 +6528,32 @@
     },
     {
       "id": "buzzing",
-      "file": "audio/buzzing-0f7e37825f.mp3",
+      "file": "audio/buzzing-ef9fd5f87f.mp3",
       "title": "Bee Flying Loop",
       "author": "fury12",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/496/496237_5898088-hq.mp3",
-      "durationSeconds": 5.75,
+      "durationSeconds": 3.056,
       "loopSafe": true,
       "levelTrimDb": 1.7,
       "loop": {
-        "startSeconds": 1.276,
-        "endSeconds": 4.128
+        "startSeconds": 0.10049,
+        "endSeconds": 2.95249
       }
     },
     {
       "id": "knapping",
-      "file": "audio/knapping-d0f9bbab9c.mp3",
+      "file": "audio/knapping-ed6a5aa45f.mp3",
       "title": "Stone on Stone Hit",
       "author": "xtra1",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/858/858891_18963922-hq.mp3",
-      "durationSeconds": 17.69,
+      "durationSeconds": 16.771,
       "loopSafe": true,
       "levelTrimDb": -7.0,
       "loop": {
-        "startSeconds": 0.99215,
-        "endSeconds": 17.55596
+        "startSeconds": 0.103987,
+        "endSeconds": 16.667797
       }
     },
     {
@@ -6570,47 +6570,47 @@
     },
     {
       "id": "artillery",
-      "file": "audio/artillery-07e355cee5.mp3",
+      "file": "audio/artillery-62ef341701.mp3",
       "title": "Artillery Guns Firing",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/486/486027_2524442-hq.mp3",
-      "durationSeconds": 46.56,
+      "durationSeconds": 14.952,
       "loopSafe": true,
       "levelTrimDb": -0.2,
       "loop": {
-        "startSeconds": 13.269,
-        "endSeconds": 27.984
+        "startSeconds": 0.117,
+        "endSeconds": 14.832
       }
     },
     {
       "id": "lake-water",
-      "file": "audio/lake-water-29adca4215.mp3",
+      "file": "audio/lake-water-3687b1ad6e.mp3",
       "title": "Gentle waves on a lake",
       "author": "TheFlyFishingFilmmaker",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/614/614299_6501596-hq.mp3",
-      "durationSeconds": 175.47,
+      "durationSeconds": 11.233,
       "loopSafe": true,
       "levelTrimDb": 8.2,
       "loop": {
-        "startSeconds": 73.93,
-        "endSeconds": 84.929
+        "startSeconds": 0.107959,
+        "endSeconds": 11.106959
       }
     },
     {
       "id": "geiger-counter",
-      "file": "audio/geiger-counter-29e7585b5a.mp3",
+      "file": "audio/geiger-counter-49a87f33a4.mp3",
       "title": "Geiger counter clicks (MED)",
       "author": "cookies+policy",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/555/555923_10713160-hq.mp3",
-      "durationSeconds": 180.0,
+      "durationSeconds": 31.272,
       "loopSafe": true,
       "levelTrimDb": 1.6,
       "loop": {
-        "startSeconds": 24.0025,
-        "endSeconds": 55.0495
+        "startSeconds": 0.1225,
+        "endSeconds": 31.1695
       }
     },
     {
@@ -6638,32 +6638,32 @@
     },
     {
       "id": "chainsaw",
-      "file": "audio/chainsaw-b3bf15950c.mp3",
+      "file": "audio/chainsaw-8012b12e51.mp3",
       "title": "CHAINSAW - 1",
       "author": "SamuelGremaud",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/463/463207_8031303-hq.mp3",
-      "durationSeconds": 61.83,
+      "durationSeconds": 18.624,
       "loopSafe": true,
       "levelTrimDb": -7.7,
       "loop": {
-        "startSeconds": 14.9925,
-        "endSeconds": 33.4015
+        "startSeconds": 0.1125,
+        "endSeconds": 18.5215
       }
     },
     {
       "id": "howler-monkeys",
-      "file": "audio/howler-monkeys-b2a310bca0.mp3",
+      "file": "audio/howler-monkeys-8078354fc0.mp3",
       "title": "Howler Monkeys",
       "author": "Lenguaverde",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/490/490315_1441734-hq.mp3",
-      "durationSeconds": 168.84,
+      "durationSeconds": 83.328,
       "loopSafe": true,
       "levelTrimDb": -8.1,
       "loop": {
-        "startSeconds": 66.041,
-        "endSeconds": 149.15
+        "startSeconds": 0.113,
+        "endSeconds": 83.222
       }
     },
     {
@@ -6680,62 +6680,62 @@
     },
     {
       "id": "hippo",
-      "file": "audio/hippo-7336e499f5.mp3",
+      "file": "audio/hippo-e3afe2e958.mp3",
       "title": "hippos",
       "author": "toadie",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/194/194870_3311332-hq.mp3",
-      "durationSeconds": 16.35,
+      "durationSeconds": 15.726,
       "loopSafe": true,
       "levelTrimDb": -1.7,
       "loop": {
-        "startSeconds": 0.2405,
-        "endSeconds": 15.7495
+        "startSeconds": 0.109888,
+        "endSeconds": 15.618888
       }
     },
     {
       "id": "wall-chiselling",
-      "file": "audio/wall-chiselling-19102dab22.mp3",
+      "file": "audio/wall-chiselling-08fa4eb976.mp3",
       "title": "chisel in the quarry",
       "author": "Artiom_Constantinov",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/841/841053_7254491-hq.mp3",
-      "durationSeconds": 37.08,
+      "durationSeconds": 36.408,
       "loopSafe": true,
       "levelTrimDb": 0.7,
       "loop": {
-        "startSeconds": 0.2,
-        "endSeconds": 36.389
+        "startSeconds": 0.104,
+        "endSeconds": 36.293
       }
     },
     {
       "id": "church-bell",
-      "file": "audio/church-bell-1f245ae7b1.mp3",
+      "file": "audio/church-bell-16a42f3d9b.mp3",
       "title": "Venice Church Bells",
       "author": "freesoundjon01",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/324/324257_2814925-hq.mp3",
-      "durationSeconds": 54.42,
+      "durationSeconds": 43.248,
       "loopSafe": true,
       "levelTrimDb": 13.0,
       "loop": {
-        "startSeconds": 5.424,
-        "endSeconds": 48.451
+        "startSeconds": 0.12,
+        "endSeconds": 43.147
       }
     },
     {
       "id": "ship-rigging",
-      "file": "audio/ship-rigging-9bf39bcd35.mp3",
+      "file": "audio/ship-rigging-a0b281ce6e.mp3",
       "title": "Large Wood Ship Creaking",
       "author": "craigsmith",
       "licence": "CC0 1.0",
       "sourceUrl": "https://cdn.freesound.org/previews/483/483355_2524442-hq.mp3",
-      "durationSeconds": 72.56,
+      "durationSeconds": 43.464,
       "loopSafe": true,
       "levelTrimDb": 2.3,
       "loop": {
-        "startSeconds": 14.6825,
-        "endSeconds": 57.932
+        "startSeconds": 0.1145,
+        "endSeconds": 43.364
       }
     },
     {

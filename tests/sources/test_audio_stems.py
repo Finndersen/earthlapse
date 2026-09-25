@@ -1,7 +1,8 @@
 """sources/audio-stems against its committed fixture.
 
 This source's normalise() emits no curated shape; its work is fetch.py's per-stem download and
-write_outputs()'s verified copy into data/media/audio/ (ADR-023).
+write_outputs()'s verified copy into data/media/audio/, cut to its loop region for a looping
+MP3 (ADR-023).
 """
 
 from __future__ import annotations
@@ -14,11 +15,14 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from pipeline import mp3
 from pipeline.audio import (
     AudioFormat,
     StemManifest,
     content_hashed_filename,
     load_stem_book,
+    published_bytes,
+    published_timing,
     sniff_audio,
 )
 from tests.sources.support import fixture_dir, load_source_module
@@ -182,3 +186,44 @@ def test_measure_levels_reads_a_full_scale_1khz_sine_as_minus_3_db() -> None:
     sine = np.sin(2 * np.pi * 1000.0 * t)[:, None]
 
     assert levels.measure_levels(sine, 48000) == levels.StemLevels(loudness_db=-3.0, peak_dbfs=0.0)
+
+
+# -- trimming a looping MP3 ------------------------------------------------------------------
+
+# MPEG-1 Layer III, 128 kbps, 48 kHz, joint stereo, no padding: 384-byte frames of 1152 samples.
+_MP3_HEADER = bytes([0xFF, 0xFB, 0x94, 0x64])
+_FRAME_BYTES = 384
+_XING_AT = 4 + 32
+_LAME_AT = _XING_AT + 8 + 4 + 4 + 100 + 4
+
+
+def _synthetic_mp3(audio_frames: int) -> bytes:
+    """A LAME-style info frame then `audio_frames` frames whose payload is their own index --
+    enough for the frame arithmetic; nothing here is decoded."""
+    info = bytearray(_MP3_HEADER + bytes(_FRAME_BYTES - 4))
+    info[_XING_AT : _XING_AT + 8] = b"Info" + (0xF).to_bytes(4, "big")
+    info[_LAME_AT : _LAME_AT + 4] = b"LAME"
+    frames = [_MP3_HEADER + bytes([i]) * (_FRAME_BYTES - 4) for i in range(audio_frames)]
+    return bytes(info) + b"".join(frames)
+
+
+def test_a_looping_mp3_publishes_cut_to_its_loop_with_the_loop_on_the_same_frames() -> None:
+    frame = 1152 / 48000
+    stem = _stem(
+        duration_seconds=40 * frame, loop={"start_seconds": 10.5 * frame, "end_seconds": 20 * frame}
+    )
+    published = published_bytes(stem, _synthetic_mp3(40))
+
+    kept = [published[o + 4] for o in range(_FRAME_BYTES, len(published), _FRAME_BYTES)]
+    assert 0 < kept[0] < 10 and 20 <= kept[-1] < 39
+    assert kept == list(range(kept[0], kept[-1] + 1))
+    info = published[:_FRAME_BYTES]
+    assert int.from_bytes(info[_XING_AT + 8 : _XING_AT + 12], "big") == len(kept)
+    assert int.from_bytes(info[_XING_AT + 12 : _XING_AT + 16], "big") == len(published)
+    crc_at = _LAME_AT + 34
+    assert int.from_bytes(info[crc_at : crc_at + 2], "big") == mp3._crc16(info[:crc_at])
+
+    timing = published_timing(stem, published)
+    assert timing.loop is not None
+    assert timing.loop.start_seconds == pytest.approx((10.5 - kept[0]) * frame)
+    assert timing.loop.end_seconds - timing.loop.start_seconds == pytest.approx(9.5 * frame)

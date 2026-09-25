@@ -26,6 +26,7 @@ from pipeline.audio import (
     StemBook,
     content_hashed_filename,
     load_stem_book,
+    published_timing,
 )
 from pipeline.databuild import discover_sources, load_source_module
 from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
@@ -831,6 +832,9 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
                 f"to clear the stale one(s)"
             )
         published = f"audio/{matches[0].name}"
+        # A looping MP3 is published cut to its loop region, so its timing is read back off the
+        # published file (`pipeline.audio.published_timing`).
+        timing = published_timing(stem, matches[0].read_bytes())
         stems.append(
             AudioStem(
                 id=stem.id,
@@ -839,13 +843,13 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
                 author=stem.author,
                 licence=stem.licence,
                 source_url=stem.url,
-                duration_seconds=stem.duration_seconds,
+                duration_seconds=timing.duration_seconds,
                 loop_safe=stem.loop_safe,
                 level_trim_db=stem.level_trim_db,
                 loop=None
-                if stem.loop is None
+                if timing.loop is None
                 else AudioLoop(
-                    start_seconds=stem.loop.start_seconds, end_seconds=stem.loop.end_seconds
+                    start_seconds=timing.loop.start_seconds, end_seconds=timing.loop.end_seconds
                 ),
                 start_seconds=stem.start_seconds,
             )

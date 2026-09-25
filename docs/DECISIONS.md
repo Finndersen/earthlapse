@@ -7757,3 +7757,31 @@ reverse holds: "66,000,000 BCE" is false precision on a radiometric age and long
 - **The anchor year stays AD 2025** (`epoch.ts`). It is the conversion every curated source and
   `data/events.yaml` was normalised with; moving it is a data migration across every source,
   not a display change.
+
+## ADR-023 amendment (2026-09-25): looping MP3 stems publish cut to their loop region
+
+ADR-023 §4 made `write_outputs()` a verified copy: no trimming, no loudness normalisation, no
+transcoding, because the machine has no `ffmpeg` or `sox` and none may become a pipeline
+dependency. Loop regions were then added to skip unusable heads and tails at playback, so every
+looping stem shipped its whole recording while playing only its region. By the time eleven
+single-scene stems joined, that was 17.6 MB of 47.1 MB published audio that never played:
+`lake-water` shipped 175 s to loop 11 s, `geiger-counter` 180 s to loop 31 s.
+
+**Decision.** A looping MP3 stem (`loop` set, `format = "mp3"`) now publishes cut to its loop
+region plus 0.1 s either side (`pipeline.audio.published_bytes`, `TRIM_MARGIN_SECONDS`). The cut
+drops whole MP3 frames and copies the kept frames' bytes unchanged (`pipeline/mp3.py`), so §4's
+rule that the pipeline decodes and re-encodes nothing stands; the pure-Python frame parser adds no
+dependency. The LAME/Xing info frame is kept and rewritten (frame and byte counts, a linear seek
+table, music length, tag CRC), so a gapless decoder applies the same encoder-delay trim as before
+and the shift is exactly the dropped frames' duration. Publish reads each published file's frame
+format back and moves `loop` and `durationSeconds` by that shift (`published_timing`);
+`stems.toml` keeps its values in the raw clip's own timeline, so a stem's sourcing comments and
+`levels.py` measurements still describe the file `fetch.py` downloads.
+
+**Checked.** Decoded in headless Chromium, all twenty trimmed stems match their raw clips
+sample for sample across the whole loop region, to within one 16-bit step (3.05e-5). The margin
+covers the one to two frames after the cut that the bit reservoir and MDCT overlap can disturb,
+since playback starts at `loopStart`. Published audio falls from 47.1 MB to 29.5 MB.
+
+**Not trimmed.** One-shots play from `start_seconds` to their end, and stems with no `loop` region
+loop the whole clip, so neither has unplayed audio to drop beyond a one-shot's short lead-in.

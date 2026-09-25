@@ -67,8 +67,11 @@ match, rather than guessing.
 - **Why levels are attested, not measured at build time.** This machine has neither `ffmpeg`
   nor `sox`, and macOS's `/usr/bin/afconvert` must not become a hard pipeline dependency — every
   source must build and its tests must run offline on any machine (CLAUDE.md, CONTRIBUTING.md).
-  `write_outputs()` therefore does no decoding or DSP: it is a verified copy, nothing else, and
-  the published files are the downloaded bytes. Level matching and loop points are instead
+  `write_outputs()` therefore does no decoding or DSP: it publishes the downloaded bytes, except
+  that a looping MP3 is cut losslessly, by whole frames, to its loop region plus 0.1 s either
+  side (`pipeline/mp3.py`, ADR-023 amendment "looping MP3 stems publish cut to their loop
+  region"); publish moves `loop` onto the cut file, and `stems.toml` stays in the raw clip's
+  timeline. Level matching and loop points are instead
   **curator-attested numbers applied at playback**: `levels.py` (numpy, run by hand on a decoded
   16-bit WAV when a clip is sourced) prints `loudness_db`/`peak_dbfs`; publish turns them into a
   per-stem `level_trim_db` the web engine multiplies into every gain; and a `loop` region is
@@ -101,15 +104,10 @@ contribution — see its own `stems.toml` entry comment, `forest` re-sourced a T
 2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
 rain recording, then a FOURTH time the same day after an independent review found the third pick
 was itself low-frequency wind rumble rather than genuine leaf rustle, and eleven single-scene
-stems added 2026-09-25, ~13.9 MB of the total) — over ADR-023's "<~15 MB"
-default; the human has said audio size is not strictly budgeted and higher totals were already
-accepted, so this is reported rather than trimmed. The largest files are `lake-water` (4.5 MB, of
-which its own loop region plays), `geiger-counter` (4.1 MB, a 3:00 recording of which a 31 s loop
-region plays), `howler-monkeys` (3.6 MB, 2:49, 83 s loop region), `rocket` (3.0 MB, a 2:12
-launch) and `wind` (2.8 MB, of which its 54 s loop region plays); `wing-hum` is 1.4 MB (a 66.9 s field recording, of which its
-35.3-47.9 s loop region plays) -- down from its first pick's 5.0 MB/230 s. `forest` is 0.6 MB (a
-27.1 s field recording, of which its 17.308-26.224 s loop region plays) -- down from its third
-pick's 0.8 MB/43.5 s. Every stem is CC0 or public domain.
+stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~29.5 MB published, since each
+looping stem publishes cut to its loop region. The largest published files are `rocket` (3.1 MB,
+a 2:12 one-shot launch played whole), `birds` (2.1 MB, its 92 s loop) and `howler-monkeys`
+(1.9 MB, its 83 s loop). Every stem is CC0 or public domain.
 
 ## Sourcing checks (nobody can listen)
 

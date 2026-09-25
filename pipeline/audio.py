@@ -24,6 +24,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from pipeline import mp3
+
 # Hex characters of `sha256(published bytes)` kept in a stem's published filename (ADR-023
 # amendment "on-demand loading"). Not cryptographic -- this catalogue holds dozens of files,
 # not billions, so 10 hex chars (40 bits) is far beyond its actual collision risk; the same
@@ -214,3 +216,62 @@ def sniff_audio(data: bytes) -> AudioFormat:
     if data[:3] == b"ID3" or (len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0):
         return AudioFormat.MP3
     raise ValueError("unrecognised audio format (expected WAV, OGG, MP3 or M4A)")
+
+
+# Audio kept either side of a loop region when a published stem is cut down to it
+# (`published_bytes`): a few MP3 frames, enough that the bit reservoir and MDCT overlap the cut
+# disturbs (`pipeline.mp3`) have settled before `loopStart`, and that a gapless decoder's end
+# padding trim never reaches `loopEnd`.
+TRIM_MARGIN_SECONDS = 0.1
+
+
+def _is_trimmed(stem: StemManifest) -> bool:
+    return stem.loop is not None and stem.format == AudioFormat.MP3
+
+
+def _trim_window(stem: StemManifest, fmt: mp3.StreamFormat) -> tuple[int, int]:
+    assert stem.loop is not None
+    return mp3.frame_window(
+        fmt,
+        stem.loop.start_seconds - TRIM_MARGIN_SECONDS,
+        stem.loop.end_seconds + TRIM_MARGIN_SECONDS,
+    )
+
+
+def published_bytes(stem: StemManifest, raw: bytes) -> bytes:
+    """The bytes a stem publishes: a looping MP3 cut losslessly to its loop region plus a margin,
+    since nothing outside the region ever plays; anything else unchanged."""
+    if not _is_trimmed(stem):
+        return raw
+    first, stop = _trim_window(stem, mp3.stream_format(raw))
+    return mp3.trim_frames(raw, first, min(stop, mp3.audio_frame_count(raw)))
+
+
+class PublishedTiming(BaseModel):
+    """A stem's timing in its published file, which a trim has shifted earlier."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    duration_seconds: float
+    loop: LoopRegion | None
+
+
+def published_timing(stem: StemManifest, published: bytes) -> PublishedTiming:
+    """`stem`'s curator-attested timing, moved onto the published file `published_bytes` wrote.
+    The shift is whole frames, so the loop lands on the same samples it did in the raw clip."""
+    if not _is_trimmed(stem):
+        return PublishedTiming(duration_seconds=stem.duration_seconds, loop=stem.loop)
+    assert stem.loop is not None
+    fmt = mp3.stream_format(published)
+    first, _ = _trim_window(stem, fmt)
+    shift = fmt.frame_seconds(first)
+    duration = min(
+        stem.duration_seconds - shift, fmt.frame_seconds(mp3.audio_frame_count(published))
+    )
+    return PublishedTiming(
+        duration_seconds=round(duration, 3),
+        loop=LoopRegion(
+            start_seconds=round(stem.loop.start_seconds - shift, 6),
+            end_seconds=round(stem.loop.end_seconds - shift, 6),
+        ),
+    )
