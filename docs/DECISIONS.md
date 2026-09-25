@@ -7727,3 +7727,12 @@ asked for an info popup per empire like the ones arrivals and events have.
   constants, so a paint hands the GPU an `ImageBitmap` transferred off the `OffscreenCanvas`
   instead of reading back and rewriting ~25 MB of pixels; the border width now follows the live
   pixel ratio. The geometry file is fetched only once the globe is expanded with the layer on.
+
+**Amendment (2026-09-25) — Portugal joins the roster (29 lineages).** Left out at first for
+crowding, it was the one major early-modern seaborne empire the globe lacked. The lineage runs
+from Ceuta (1415) to the African colonies' independence (1975): the Kingdom of Portugal, the
+overseas `Portuguese Empire` (labelled at Salvador, since its bulk is Brazil), `Portuguese Colonies` (labelled "Portuguese India", anchored at Goa),
+Africa and Ceylon, then the Republic and the Estado Novo, which carry the colonies. Its
+Brazil-to-Macau bounding box meets every slot under the 10° box test, so it takes the Holy Roman
+Empire's slot 6: their actual territories never come within 11° while both exist, which is what
+the shader's slot-contour borders need.

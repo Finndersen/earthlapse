@@ -429,7 +429,7 @@ nation-states out, and its two modern-state members (`Kingdom of Spain`, `Kingdo
 Britain`) carry a `to` year.
 
 **Selection is a hand-picked roster (ADR-059)**, replacing ADR-037's era-relative top-6-by-area
-rule. `sources/cliopatria/roster.toml` lists 28 lineages (Rome, China, Persia, the Caliphate, the
+rule. `sources/cliopatria/roster.toml` lists 29 lineages (Rome, China, Persia, the Caliphate, the
 Mongols, the Ottomans, …), each an ordered list of Cliopatria polities with optional year clamps
 and globe labels, a one-line `reason` and a colour slot. A roster name absent from the data, or a
 member left empty by its clamp, fails the build. Curated data holds only roster polities, over
