@@ -18,7 +18,7 @@
 # non-adjacent runs (ADR-020), but every boundary between runs of different chapters reads as a
 # cut, so chapters follow composition, never one per scene. Gate v2 showed the WATER_EDGE framing
 # holding across very different worlds (ADR-010), so waters-edge is the default. over-under holds
-# one early run, archean-shore to silurian-shore, where the story is life under the water
+# one early run, archean-shore to ordovician-reef-shore, where the story is life under the water
 # (ADR-025).
 #
 # Pins
@@ -260,39 +260,6 @@ scenes:
     framing: {focus: [0.6, 0.72], pan: 180}
     pin: {asset_digest: "b282ea0ed3284209", path: "data/pins/scenes/cryogenian-snowball/b282ea0ed3284209.jpg"}
 
-  # Inside the Ediacaran biota's range (events.yaml ediacaran-biota: 538.8-571 Ma). In over-under
-  # (ADR-025), so these are the first animals the viewer clearly sees. Dickinsonia (567-550 Ma), a
-  # shallow-water mat feeder, is an animal by its cholesteroid biomarkers: Bobrovskiy, I. et al.
-  # (2018), Science 361(6408), 1246-1249 (volume and pages checked against Wikipedia's Dickinsonia
-  # article; the title's "steroids"/"sterols" wording is still unconfirmed). Charnia itself is not
-  # depicted: it is mainly a deep-water Avalon taxon, living well below the photic zone. The
-  # shallower White Sea assemblage (~560-550 Ma) does include rangeomorphs and other fronds
-  # (Wikipedia, Ediacaran biota), so the fronds are generic and small, standing behind the
-  # Dickinsonia. Their affinity is unresolved, hence "some of them early animals". Kimberella and
-  # Tribrachidium date ~555 Ma, after this t, and are not depicted.
-  - id: ediacaran-shallows
-    t: 5.6e8
-    chapter: over-under
-    shot: SPLIT_LEVEL
-    title: "Life Grows Large"
-    caption: Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in sunlit shallows beside a barren coast.
-    unsourced:
-      o2_percent: 12  # contested: Ediacaran oxygen estimates range widely below modern
-      mean_temp_c: 18  # rounded: post-glacial Ediacaran climate, poorly constrained
-    subject:
-      setting: A shallow, sunlit Ediacaran sea floor off a barren coast, seen half above and half below the surface
-      left_mass: a tall, bare outcrop of layered tan and grey sandstone with no plants on it, its base underwater
-      vegetation: none on land, which is bare rock and sand; underwater, a wrinkled olive-brown microbial mat carpets the sea floor
-      fauna: underwater, soft-bodied Ediacaran organisms, flat oval quilted Dickinsonia of several sizes lying on the mat, a few small, pale, frond-shaped organisms a hand-span tall standing up from the mat on disc holdfasts in the background, and small disc-shaped holdfasts
-      main_subject: underwater, a large, flat, quilted oval Dickinsonia about half a metre long lying on the mat, its fine rib-like segments running out from a central line and plainly readable in the clear water, with a few small, pale fronds standing on disc holdfasts behind it
-      ground: the sea floor, rippled pale sand under the microbial mat
-      water: very clear, calm turquoise water, soft dappled sunlight across the sea floor
-      far_bank: a low, barren coastline of reddish rock and sand, with no green
-      sky_and_light: a clear, pale-blue sky with thin high cloud; bright, clean sunlight
-      absent: [plants on land, green vegetation, trees, grass, fish, crabs, shelled animals, trilobites, birds, people, jellyfish, seaweed, kelp, sea grass, corals, anemones, sponges, starfish]
-    framing: {focus: [0.7, 0.85], pan: 0, portrait_zoom: 1.5}
-    pin: {asset_digest: "b1473d8e9161781f", path: "data/pins/scenes/ediacaran-shallows/b1473d8e9161781f.jpg"}
-
   # ~518 Ma, the Chengjiang biota (Yunnan, China): Yang, C., Li, X.-H., Zhu, M. & Condon, D.J.
   # (2018), "Geochronological constraint on the Cambrian Chengjiang biota, South China," Journal of
   # the Geological Society 175(4), 659-666. Shu, D. et al. (1999), "Lower Cambrian vertebrates from
@@ -366,42 +333,6 @@ scenes:
     framing: {focus: [0.64, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "8f32a35b5ef95389", path: "data/pins/scenes/ordovician-reef-shore/8f32a35b5ef95389.jpg"}
 
-  # ~425 Ma, at the Cooksonia end of events.yaml land-plants (t_min = 425 Ma): Edwards, D., Fanning,
-  # U. & Richardson, J.B. (1994), Silurian Cooksonia macrofossils. Cooksonia is a transitional
-  # stem-group form, not demonstrably vascular: only one species shows conducting tissue, the
-  # oldest species (C. barrandei) is ~432 Ma, and the plants were a few centimetres tall. In
-  # over-under (ADR-025), the last split scene before life comes ashore at rhynie-chert.
-  # One environment only: a shallow, restricted Euramerican lagoon. Eurypterus lived on the coasts
-  # and in the shallow, hypersaline inland seas of Laurussia, 432-418 Ma, 13-23 cm long (Wikipedia,
-  # Eurypterus), so there is no reef patch and no brachiopods. The fish are small anaspid-grade
-  # jawless fish like Birkenia (up to 10 cm, Silurian of Great Britain, Scandinavia and Estonia;
-  # Wikipedia, Birkenia), the same region as Estonian Eurypterus; direct co-occurrence in one bed
-  # is UNVERIFIED this session. Jawed fish are left out: Guiyu oneiros (~425 Ma; Zhu, M. et al.
-  # 2009, Nature 458, 469-474) comes from open-marine strata in South China, a different continent
-  # and setting.
-  - id: silurian-shore
-    t: 4.25e8
-    chapter: over-under
-    shot: SPLIT_LEVEL
-    title: "Sea Scorpions and the First Stems"
-    caption: Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and armoured early fish swim above them.
-    unsourced:
-      o2_percent: 16  # rounded
-      mean_temp_c: 28  # rounded: warm Silurian greenhouse, high sea levels
-    subject:
-      setting: A sheltered, shallow Silurian coastal lagoon, seen half above and half below the surface, its shore fringed by Cooksonia, among the earliest upright, branching land plants
-      left_mass: a bank of pale Silurian sandstone and shale, undercut where it meets the water, its submerged face bare
-      vegetation: above the waterline, a low, wiry fringe of Cooksonia, leafless branching stems only a few centimetres tall, forked at the tips into small rounded spore capsules, growing in a band along the bank; nothing grows more than a few steps inland; underwater, only thin green algal films on the sand
-      fauna: underwater, a few more eurypterid sea scorpions on the sandy lagoon floor; a loose shoal of small, slender jawless fish about 10 cm long in mid-water, each with a small mouth and no jaws, a row of small gill openings behind the eye, a body covered in rows of narrow bony scales and a tail whose lower lobe is the larger
-      main_subject: underwater, a eurypterid sea scorpion about 20 cm long walking over the sand, with a broad, rounded head shield, a pair of paddle-shaped rear legs and a narrow spine-like tail, and two or three of the small jawless fish swimming just above it
-      ground: the lagoon floor, ripple-marked pale sand and mud
-      water: shallow, clear and calm
-      far_bank: a low, barren coastal plain of grey-tan rock and sand, with only the faint dark-green fringe of Cooksonia visible at its edge
-      sky_and_light: a clear, pale-blue sky with a few high clouds; warm, even sunlight
-      absent: [trees, ferns, seed plants, grass, flowers, land vertebrates, winged insects, jawed fish, fish with teeth, modern fish, sharks, birds, people, kelp, seaweed, sea grass, coral reef, scleractinian corals, anemones, brachiopods, shells, crabs, lobsters]
-    framing: {focus: [0.62, 0.85], pan: 0, portrait_zoom: 1.5}
-    pin: {asset_digest: "45f0b3f478c76df1", path: "data/pins/scenes/silurian-shore/45f0b3f478c76df1.jpg"}
-
   # ~407 Ma, inside the Rhynie chert's radiometric age (events.yaml insects, 3.96e8-4.11e8;
   # Parry, S.F. et al. 2011, "A high-precision U-Pb age constraint on the Rhynie Chert,"
   # Journal of the Geological Society 168(4), 863-872, giving ~410 Ma). Flora (Rhynia,
@@ -445,6 +376,10 @@ scenes:
   # its own caption names (Archaeopteris by ~385 Ma; events.yaml first-forests). Pin cleared to
   # regenerate; the cleared pin was {asset_digest: "8674f9e4388274cc",
   # path: "data/candidates/devonian-estuary/eedc05d6e15201f6/01-8674f9e4388274cc.jpg"}.
+  # The Archaeopteris stand now runs along the receding shore to stand behind the tetrapodomorph,
+  # so a phone-portrait crop holds the forest and the animal together. Pin cleared to regenerate;
+  # the cleared pin was {asset_digest: "04b683b74388043c",
+  # path: "data/pins/scenes/devonian-estuary/04b683b74388043c.jpg"}.
   - id: devonian-estuary
     t: 3.75e8
     chapter: waters-edge
@@ -457,9 +392,9 @@ scenes:
     subject:
       setting: A Late Devonian estuary where a river meets a shallow sea, on the coastal lowland of a bare continent
       left_mass: "a stand of Archaeopteris, the first true trees: straight slender trunks up to 20 m tall with rough bark, carrying spirally arranged horizontal branches along the upper two-thirds of the trunk, each branch bearing flat sprays of small fern-like leaflets, giving a narrow, conical, conifer-like outline with sky visible between the tiers — never a bare trunk with a crown of fronds at the top"
-      vegetation: "Archaeopteris trees with branches tiered down the upper trunk, with scattered low tufts of leafless green Psilophyton stems and small clubmosses, much bare ground between them"
+      vegetation: "Archaeopteris trees with branches tiered down the upper trunk; the stand does not stop at the left third but continues along the bank as the shoreline recedes, so a row of tall Archaeopteris trees stands on the mud bank a few metres directly behind the main subject, their trunks and tiered crowns rising above it into the sky; scattered low tufts of leafless green Psilophyton stems and small clubmosses on the ground beneath them"
       fauna: lobe-finned fishes in the shallows; no land animals larger than a small arthropod
-      main_subject: "a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, rough diamond-shaped overlapping scales down its flanks, a wide flattened head joined to the shoulders by a short distinct neck with no gill cover, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface; its lobe-fins are flattened fleshy paddles with no toes, claws or elbow joint, lying in the water rather than propping the body up"
+      main_subject: "at the foot of the Archaeopteris trees, a Tiktaalik-like tetrapodomorph, a 2 m fish with paired lobe-fins ending in fin rays rather than digits, rough diamond-shaped overlapping scales down its flanks, a wide flattened head joined to the shoulders by a short distinct neck with no gill cover, small eyes set on top of the skull, and a long fish tail trailing behind; mostly submerged in the shallows with only its head and shoulders raised above the surface; its lobe-fins are flattened fleshy paddles with no toes, claws or elbow joint, lying in the water rather than propping the body up"
       ground: bare, wet grey-brown mud and sand
       water: shallow, calm, slightly silty brackish water
       far_bank: "a low upland of grey and ochre rock with dark, narrow, conical stands of Archaeopteris trees along the distant river margins"
@@ -468,8 +403,8 @@ scenes:
     # ADR-023 (v2 review): `water` `loop` above its 0.25 Phanerozoic ambient -- a river meeting
     # a shallow sea, where the surf that recedes inland after the first forests still belongs.
     sound: {stem: water, mode: loop, gain: 0.8}
-    framing: {focus: [0.63, 0.75], pan: 180, portrait_zoom: 1.5}
-    pin: {asset_digest: "04b683b74388043c", path: "data/pins/scenes/devonian-estuary/04b683b74388043c.jpg"}
+    framing: {focus: [0.57, 0.8], pan: 180, portrait_zoom: 1.45}
+    pin: {asset_digest: "016ed4555b6092ff", path: "data/pins/scenes/devonian-estuary/016ed4555b6092ff.jpg"}
 
   # Late Carboniferous coal swamps; Hylonomus-grade amniotes (events.yaml amniotes: 307-359 Ma).
   - id: carboniferous-swamp
@@ -523,33 +458,6 @@ scenes:
       absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, dense swamp forest, giant lycopsid trees, dragonflies, damselflies]
     framing: {focus: [0.57, 0.56], pan: 0}
     pin: {asset_digest: "56d38ae859aa81c6", path: "data/pins/scenes/permian-conifer-forest/56d38ae859aa81c6.jpg"}
-
-  # Middle Permian, before the end-Permian extinction (events.yaml permian-extinction: ~251.9 Ma).
-  - id: permian-interior
-    t: 2.6e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "The Heart of Pangaea"
-    caption: Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.
-    unsourced:
-      o2_percent: 26  # rounded: declining from the Carboniferous peak
-      mean_temp_c: 20  # rounded: warming out of the Late Paleozoic Ice Age
-    subject:
-      setting: The arid interior of the supercontinent Pangaea in the Middle Permian, far from any sea
-      left_mass: a sparse, ragged stand of Walchia-like early conifers and Glossopteris trees clinging to the river bank, dusty grey-green, several dead and leafless, open ground visible between the trunks
-      vegetation: sparse early conifers and Glossopteris only; the land is mostly bare
-      fauna: large synapsids at the river; nothing else in view
-      main_subject: two Moschops-like dinocephalians, massive barrel-bodied synapsids about 3 m long with thick skulls and sprawling limbs, standing in the shallows, one drinking
-      ground: cracked red mud and dry banks of layered red sandstone and mudstone, bare of plants
-      water: a shallow, shrinking seasonal river, opaque red-brown with silt
-      far_bank: flat-lying red beds and low dunes, bare to the horizon under dust
-      sky_and_light: a cloudless sky bleached almost white by suspended dust; a hard, glaring sun and short, sharp, dark shadows; heat shimmer and a tan dust haze over the distance
-      absent: [flowers, grass, broadleaf trees, palms, dinosaurs, mammals, birds, swamp forest, lush green vegetation]
-    # ADR-023 (era-fit v3): `large-animal` `loop` -- two dinocephalian synapsids at the river,
-    # matching the new large-animal ambient stem's own ~270-260 Ma rise.
-    sound: {stem: large-animal, mode: loop, gain: 0.85}
-    framing: {focus: [0.62, 0.65], pan: 90, portrait_zoom: 1.25}
-    pin: {asset_digest: "736e79c67e650684", path: "data/pins/scenes/permian-interior/736e79c67e650684.jpg"}
 
   # ~251 Ma, just after events.yaml permian-extinction (2.5188e8-2.51941e8) and inside
   # Lystrosaurus's own dated range, ~255-248 Ma (Wikipedia, "Lystrosaurus"), and this file's
@@ -647,7 +555,7 @@ scenes:
     events: [end-triassic-extinction]
     # ADR-023: `volcanic` `loop` -- the fissure eruption across the rift is the scene's cause.
     sound: {stem: volcanic, mode: loop, gain: 0.8}
-    framing: {focus: [0.64, 0.64], pan: 0}
+    framing: {focus: [0.64, 0.75], pan: 0, portrait_zoom: 1.3}
     pin: {asset_digest: "abb55ef32b32aaec", path: "data/pins/scenes/end-triassic-extinction/abb55ef32b32aaec.jpg"}
 
   # ~160 Ma, inside the dated range of long-proboscid scorpionflies (Aneuretopsychidae,
@@ -709,34 +617,6 @@ scenes:
     framing: {focus: [0.53, 0.55], pan: 0}
     pin: {asset_digest: "fff98516543632ed", path: "data/pins/scenes/jurassic-floodplain/fff98516543632ed.jpg"}
 
-  # ~125 Ma, exactly inside events.yaml flowering-plants (1.25e8-1.33e8): Gomez, B. et al.
-  # (2015), "Montsechia, an ancient aquatic angiosperm," PNAS 112(35), 10985-10988; Archaefructus
-  # (Sun et al. 2002), a comparably aged Early Cretaceous aquatic flowering plant.
-  # Earliest known macrofossils, not a proven first appearance. Archaefructus has no sepals or
-  # petals. Reeds are grasses, and the earliest grass fossils are ~113-100 Ma, hence absent.
-  - id: early-cretaceous-flowers
-    t: 1.25e8
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "Early Flowering Plants"
-    caption: Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.
-    unsourced:
-      o2_percent: 24  # rounded
-      mean_temp_c: 20  # rounded: cooler Early Cretaceous, before the mid-Cretaceous thermal maximum
-    subject:
-      setting: The edge of a freshwater lake where, among a conifer-and-cycad flora, some of the earliest known flowering plants grow in the shallows
-      left_mass: a stand of tall conifers and cycads at the lake's edge, still the dominant plants, largely unchanged from earlier in this series
-      vegetation: conifers and cycads on the bank; in the shallows, mats of Archaefructus-like aquatic plants with fine divided leaves, their thin shoots rising above the water bearing small pod-like seed cases and pollen organs spaced along the stem, with no petals
-      fauna: small feathered dinosaurs foraging at the lake margin
-      main_subject: a dense floating mat of fine-leaved aquatic plants covering the shallows, thin reproductive shoots standing a hand's height above the water
-      ground: damp lakeshore mud fringed with horsetails and low ferns
-      water: a calm, clear freshwater lake
-      far_bank: conifer-and-cycad woodland along the far shore
-      sky_and_light: a clear, warm sky with scattered cumulus; bright, even sunlight
-      absent: [large showy flowers, petals, grass, reeds, grasses, broadleaf trees, bees, butterflies, large mammals, birds, people]
-    framing: {focus: [0.46, 0.75], pan: 0, portrait_zoom: 1.5}
-    pin: {asset_digest: "fba843f413d942db", path: "data/pins/scenes/early-cretaceous-flowers/fba843f413d942db.jpg"}
-
   # ~100 Ma, inside events.yaml's new angiosperm-radiation (8.0e7-1.25e8) and
   # earliest-pollinating-insects (9.3e7-1.65e8) events. Melittosphex burmensis, ~100 Ma Burmese
   # amber, was originally described as the oldest bee (Poinar, G.O. & Danforth, B.N. 2006, "A
@@ -750,7 +630,7 @@ scenes:
     chapter: waters-edge
     shot: WATER_EDGE
     title: "Flowers and Their Pollinators"
-    caption: Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.
+    caption: Flowering plants, first known as petal-less water plants some 25 million years earlier, now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.
     unsourced:
       o2_percent: 25  # rounded
       mean_temp_c: 26  # rounded: approaching the Cretaceous thermal maximum
@@ -985,37 +865,6 @@ scenes:
     framing: {focus: [0.63, 0.8], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "735c1240a8062713", path: "data/pins/scenes/paleocene-recovery/735c1240a8062713.jpg"}
 
-  # Early Eocene Climatic Optimum (events.yaml early-eocene-climatic-optimum), Margaret Formation,
-  # Ellesmere Island, ~52 Ma, ~77 degrees N palaeolatitude: Miller, K., Tietjen, K. & Beard, K.C.
-  # (2023), PLOS ONE (primatomorphs; crocodilians and tapiroid perissodactyls in the same fauna).
-  # Coryphodon lived there year-round: Eberle, J.J., Fricke, H.C. & Humphrey, J.D. (2009),
-  # "Lower-latitude mammals as year-round residents in Eocene Arctic forests," Geology 37, 499-502.
-  # The June noon sun at 77 N is ~36 degrees up, so the light is slanting, not near the horizon.
-  # The same hothouse as eocene-jungle (50 Ma) from the opposite latitude, with a mammal rather than
-  # a crocodilian as the main subject so the two frames differ.
-  - id: arctic-hothouse-forest
-    t: 5.2e7
-    chapter: waters-edge
-    shot: WATER_EDGE
-    title: "A High Arctic Forest"
-    caption: In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun vanishes for months, Coryphodon wading its lakes.
-    unsourced:
-      o2_percent: 23  # rounded: near modern
-      mean_temp_c: 27  # rounded: EECO global mean, as eocene-jungle
-    subject:
-      setting: A still lake in a swamp conifer forest at 77 degrees north, in the high Arctic, in midsummer during the warmest sustained interval of the last 66 million years
-      left_mass: a stand of very tall, straight deciduous swamp conifers with soft, feathery, bright green needles, their broad trunks standing in shallow water
-      vegetation: tall deciduous swamp conifers and broadleaf trees in full green summer leaf, with a low fern understory
-      fauna: a heavy semi-aquatic Coryphodon in the shallows; a blunt-snouted crocodilian and a large freshwater turtle basking on a fallen log in the middle distance
-      main_subject: "a Coryphodon: a massive, heavy-limbed early hoofed mammal about two and a half metres long and a metre tall at the shoulder, with a long, low, flat-topped skull held close to the water, small eyes on the sides of the head, long dagger-like upper tusks showing at the front of a long muzzle, broad feet spreading into five short blunt toes, and thick, dull brown, deeply wrinkled hide, wading knee-deep"
-      ground: waterlogged peat scattered with fallen green needles and cones
-      water: a still, dark, tannin-brown lake reflecting the forest
-      far_bank: more swamp conifer forest fading into a low summer mist
-      sky_and_light: a hazy, humid summer sky; the sun well above the horizon but lower than in the tropics, giving long, slanting warm light; warm, humid air despite the polar latitude
-      absent: [snow, ice, autumn colours, palm trees, open grassland, hippopotamus, hippo-shaped head, eyes or nostrils raised on top of the head, smooth pink or grey hairless skin, rhinoceros, tapir, trunk, people, buildings]
-    framing: {focus: [0.58, 0.62], pan: 180, portrait_zoom: 1.4}
-    pin: {asset_digest: "32b5e8d94688fbc7", path: "data/pins/scenes/arctic-hothouse-forest/32b5e8d94688fbc7.jpg"}
-
   # ~47.5 Ma, the Messel maar lake, Hesse, Germany (events.yaml messel-pit): a volcanic crater
   # lake in paratropical rainforest whose oil shale preserves the early horse Eurohippus, the
   # lemur-like primate Darwinius and the crocodilian Diplocynodon (Lenz, O.K. et al. (2015),
@@ -1023,7 +872,7 @@ scenes:
   # 4(5), e5723). Messel comes a few million years after the Early Eocene Climatic Optimum
   # (53.3-49.1 Ma; Inglis, G.N. et al. (2020), Climate of the Past 16, 1953-1968), in a world
   # Westerhold, T. et al. (2020), Science 369, 1383-1387, still class as Hothouse, more than
-  # 10 °C warmer than today; arctic-hothouse-forest (52 Ma) holds the EECO itself.
+  # 10 °C warmer than today.
   - id: eocene-jungle
     t: 4.75e7
     chapter: waters-edge
@@ -1419,7 +1268,10 @@ scenes:
   # No watercraft survives from this period: the bamboo raft is the commonly proposed form, not
   # evidenced, and the caption does not name one. The cave's much later (~4 ka) paintings of
   # boats, horses and people are kept out. `location` marks Muna Island, not the cave, whose
-  # exact coordinates are unpublished.
+  # exact coordinates are unpublished. A stencil is negative: the hand shape is bare rock inside a
+  # halo of sprayed pigment, which the subject spells out because models default to red handprints.
+  # Pin cleared to regenerate for that; the cleared pin was {asset_digest: "69e247d721e82b02",
+  # path: "data/pins/scenes/wallacea-hand-stencil/69e247d721e82b02.jpg"}.
   - id: wallacea-hand-stencil
     t: 6.78e4
     chapter: waters-edge
@@ -1431,7 +1283,7 @@ scenes:
       mean_temp_c: 11  # rounded: MIS 4 glacial stage, colder than pre-industrial but milder than the LGM (pleistocene-steppe uses 8)
     subject:
       setting: A tropical limestone coast on an island in Wallacea, between mainland Asia and Australia, during the last ice age, the sea lower than today but still open water between the islands
-      left_mass: a tall, pale grey limestone karst cliff streaked with dark water stains and hung with vines, a low cave mouth at its foot; just inside the entrance a person seen from behind sprays red ochre from their mouth around a hand pressed to the rock, several faint red hand stencils with narrowed, pointed fingertips already on the wall beside it
+      left_mass: a tall, pale grey limestone karst cliff streaked with dark water stains and hung with vines, a low cave mouth at its foot; at the entrance a person in profile stands close to the wall with one hand pressed flat against the rock, head bent to it, lips just behind the back of the hand, blowing a fine cloud of red ochre spray from their mouth onto the rock around the fingers; beside them on the wall, several older hand stencils, each a negative image, a hand-shaped silhouette of bare, unpainted pale rock, with narrowed, pointed fingertips, left clean inside a soft, cloudy halo of sprayed red ochre, like a hand-shaped hole in a red mist
       vegetation: dense tropical forest on the karst above the cliff, with palms, pandanus and tall broadleaf trees; mangroves and beach shrubs along the shore
       fauna: a Sulawesi warty pig rooting at the forest edge; a few seabirds over the water
       main_subject: a small group of people, seen from behind or in profile at a distance, dragging a simple raft of lashed bamboo poles from the beach into the shallows, a bundle of gear and a gourd lashed aboard
@@ -1439,14 +1291,14 @@ scenes:
       water: calm, clear, turquoise tropical shallows over pale sand, darkening to deep blue further out
       far_bank: open sea to the horizon, where the faint, low outline of another island shows through the haze
       sky_and_light: a warm, humid, bright tropical morning sky with scattered cumulus; clear, even sunlight
-      absent: [boats with sails, carved dugout canoes, paddles with blades, horses, dogs, metal, pottery, woven cloth, clothing beyond a simple wrap, modern people, buildings, painted boats or animals on the cave wall, identifiable faces, legible symbols]
+      absent: [boats with sails, carved dugout canoes, paddles with blades, horses, dogs, metal, pottery, woven cloth, clothing beyond a simple wrap, modern people, buildings, painted boats or animals on the cave wall, identifiable faces, legible symbols, red handprints, hands painted or dipped in red, red-filled hand shapes, a brush, a person simply waving or touching the wall]
     events: [earliest-cave-art, sahul-arrival]
     # ADR-023: `water` `loop` -- surf and shallows as the raft is launched, the crossing being half
     # of what the scene shows.
     sound: {stem: water, mode: loop, gain: 0.8}
     location: {lat: -4.84, lon: 122.65, label: "Muna Island, Sulawesi, Indonesia"}
     framing: {focus: [0.13, 0.67], pan: 180, portrait_zoom: 1.4}
-    pin: {asset_digest: "69e247d721e82b02", path: "data/pins/scenes/wallacea-hand-stencil/69e247d721e82b02.jpg"}
+    pin: {asset_digest: "2120c8ec6bb452cb", path: "data/pins/scenes/wallacea-hand-stencil/2120c8ec6bb452cb.jpg"}
 
   # Neanderthal-Homo sapiens overlap in Europe, ~45-39 ka, placed at the midpoint, 42 ka
   # (events.yaml neanderthal-sapiens-overlap). Verified: Higham, T. et al. (2014), "The
@@ -3058,7 +2910,7 @@ scenes:
     # `traffic` curve's ~0.55 ambient hum; the crowd itself is carried by `settlement`'s flat 0.48
     # ambient floor.
     sound: {stem: street-traffic, mode: loop, gain: 0.8}
-    framing: {focus: [0.62, 0.67], pan: 270, portrait_zoom: 1.5}
+    framing: {focus: [0.62, 0.56], pan: 270, portrait_zoom: 1.5}
     pin: {asset_digest: "4bddd2b3509ab4b6", path: "data/pins/scenes/global-city-rush-hour/4bddd2b3509ab4b6.jpg"}
 
   # The present day, t = 0 (events.yaml present), and the last scene of the timeline: Shenzhen,

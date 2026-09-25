@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "d42b81298e2866e8",
+  "buildId": "2acf1fd00a0dfc08",
   "assetBase": "/media",
   "scenes": [
     {
@@ -55,7 +55,7 @@
       "framing": {
         "focus": [
           0.62,
-          0.67
+          0.56
         ],
         "pan": 270.0,
         "portraitZoom": 1.5
@@ -1295,8 +1295,8 @@
       "id": "wallacea-hand-stencil",
       "t": 67800.0,
       "chapterId": "waters-edge",
-      "image": "scenes/wallacea-hand-stencil-b22d61cba9.webp",
-      "thumbnail": "scenes/wallacea-hand-stencil-thumb-88a615e207.webp",
+      "image": "scenes/wallacea-hand-stencil-cc33964bd1.webp",
+      "thumbnail": "scenes/wallacea-hand-stencil-thumb-294681727a.webp",
       "shot": "WATER_EDGE",
       "title": "The Oldest Known Rock Art",
       "caption": "At least 67,800 years ago, on Muna Island in Sulawesi, people spray red ochre around a hand on a cave wall, the oldest dated rock art. They are likely of the population that crossed open sea to reach Australia and New Guinea.",
@@ -1328,7 +1328,7 @@
         "pan": 180.0,
         "portraitZoom": 1.4
       },
-      "pinned": "69e247d721e82b02",
+      "pinned": "2120c8ec6bb452cb",
       "width": 2752,
       "height": 1536
     },
@@ -1701,28 +1701,6 @@
       "height": 1536
     },
     {
-      "id": "arctic-hothouse-forest",
-      "t": 52000000.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/arctic-hothouse-forest-590d44ca74.webp",
-      "thumbnail": "scenes/arctic-hothouse-forest-thumb-830ed83f58.webp",
-      "shot": "WATER_EDGE",
-      "title": "A High Arctic Forest",
-      "caption": "In the warmest stretch of the last 66 million years, a swamp forest of deciduous conifers grows at 77 degrees north, where the sun vanishes for months, Coryphodon wading its lakes.",
-      "events": [],
-      "framing": {
-        "focus": [
-          0.58,
-          0.62
-        ],
-        "pan": 180.0,
-        "portraitZoom": 1.4
-      },
-      "pinned": "32b5e8d94688fbc7",
-      "width": 2752,
-      "height": 1536
-    },
-    {
       "id": "paleocene-recovery",
       "t": 62000000.0,
       "chapterId": "waters-edge",
@@ -1889,7 +1867,7 @@
       "thumbnail": "scenes/mid-cretaceous-pollinators-thumb-b81e6ee9af.webp",
       "shot": "WATER_EDGE",
       "title": "Flowers and Their Pollinators",
-      "caption": "Flowering plants now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.",
+      "caption": "Flowering plants, first known as petal-less water plants some 25 million years earlier, now form a real understory beneath the conifers, visited by small pollen-collecting wasps not yet confidently called bees.",
       "events": [],
       "sound": {
         "stem": "buzzing",
@@ -1904,28 +1882,6 @@
         "pan": 270.0
       },
       "pinned": "cfa0c916e9ea3943",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "early-cretaceous-flowers",
-      "t": 125000000.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/early-cretaceous-flowers-709761f97d.webp",
-      "thumbnail": "scenes/early-cretaceous-flowers-thumb-10e97523d6.webp",
-      "shot": "WATER_EDGE",
-      "title": "Early Flowering Plants",
-      "caption": "Among the earliest known flowering plants, petal-less aquatic herbs raise their seed pods above a lake still ringed by conifers and cycads.",
-      "events": [],
-      "framing": {
-        "focus": [
-          0.46,
-          0.75
-        ],
-        "pan": 0.0,
-        "portraitZoom": 1.5
-      },
-      "pinned": "fba843f413d942db",
       "width": 2752,
       "height": 1536
     },
@@ -1996,9 +1952,10 @@
       "framing": {
         "focus": [
           0.64,
-          0.64
+          0.75
         ],
-        "pan": 0.0
+        "pan": 0.0,
+        "portraitZoom": 1.3
       },
       "pinned": "abb55ef32b32aaec",
       "width": 2752,
@@ -2054,33 +2011,6 @@
       "height": 1536
     },
     {
-      "id": "permian-interior",
-      "t": 260000000.0,
-      "chapterId": "waters-edge",
-      "image": "scenes/permian-interior-568de4bf7c.webp",
-      "thumbnail": "scenes/permian-interior-thumb-462f85db32.webp",
-      "shot": "WATER_EDGE",
-      "title": "The Heart of Pangaea",
-      "caption": "Deep in the arid interior of Pangaea, massive synapsids drink from a shrinking seasonal river.",
-      "events": [],
-      "sound": {
-        "stem": "large-animal",
-        "mode": "loop",
-        "gain": 0.85
-      },
-      "framing": {
-        "focus": [
-          0.62,
-          0.65
-        ],
-        "pan": 90.0,
-        "portraitZoom": 1.25
-      },
-      "pinned": "736e79c67e650684",
-      "width": 2752,
-      "height": 1536
-    },
-    {
       "id": "permian-conifer-forest",
       "t": 294000000.0,
       "chapterId": "waters-edge",
@@ -2127,8 +2057,8 @@
       "id": "devonian-estuary",
       "t": 375000000.0,
       "chapterId": "waters-edge",
-      "image": "scenes/devonian-estuary-fe607b7aee.webp",
-      "thumbnail": "scenes/devonian-estuary-thumb-ffa18b0f73.webp",
+      "image": "scenes/devonian-estuary-fbf35549aa.webp",
+      "thumbnail": "scenes/devonian-estuary-thumb-80adac4329.webp",
       "shot": "WATER_EDGE",
       "title": "The First Forests",
       "caption": "The first forests of Archaeopteris shade a Devonian estuary where lobe-finned fishes haul themselves into the shallows.",
@@ -2140,13 +2070,13 @@
       },
       "framing": {
         "focus": [
-          0.63,
-          0.75
+          0.57,
+          0.8
         ],
         "pan": 180.0,
-        "portraitZoom": 1.5
+        "portraitZoom": 1.45
       },
-      "pinned": "04b683b74388043c",
+      "pinned": "016ed4555b6092ff",
       "width": 2752,
       "height": 1536
     },
@@ -2184,28 +2114,6 @@
         "pan": 90.0
       },
       "pinned": "7ea8b194c790ed34",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "silurian-shore",
-      "t": 425000000.0,
-      "chapterId": "over-under",
-      "image": "scenes/silurian-shore-f98eda7a35.webp",
-      "thumbnail": "scenes/silurian-shore-thumb-02f3502290.webp",
-      "shot": "SPLIT_LEVEL",
-      "title": "Sea Scorpions and the First Stems",
-      "caption": "Cooksonia, among the earliest plants with water-conducting stems, fringes a Silurian shore while sea scorpions crawl the lagoon floor and armoured early fish swim above them.",
-      "events": [],
-      "framing": {
-        "focus": [
-          0.62,
-          0.85
-        ],
-        "pan": 0.0,
-        "portraitZoom": 1.5
-      },
-      "pinned": "45f0b3f478c76df1",
       "width": 2752,
       "height": 1536
     },
@@ -2250,28 +2158,6 @@
         "portraitZoom": 1.4
       },
       "pinned": "18445a4ae4e6c53c",
-      "width": 2752,
-      "height": 1536
-    },
-    {
-      "id": "ediacaran-shallows",
-      "t": 560000000.0,
-      "chapterId": "over-under",
-      "image": "scenes/ediacaran-shallows-5d5407bcbd.webp",
-      "thumbnail": "scenes/ediacaran-shallows-thumb-685352810b.webp",
-      "shot": "SPLIT_LEVEL",
-      "title": "Life Grows Large",
-      "caption": "Soft-bodied Ediacaran organisms, among the first large living things and some of them early animals, lie on and rise from microbial mats in sunlit shallows beside a barren coast.",
-      "events": [],
-      "framing": {
-        "focus": [
-          0.7,
-          0.85
-        ],
-        "pan": 0.0,
-        "portraitZoom": 1.5
-      },
-      "pinned": "b1473d8e9161781f",
       "width": 2752,
       "height": 1536
     },
@@ -2520,12 +2406,12 @@
       "id": "waters-edge",
       "label": "At the water's edge",
       "tStart": 744580.8121610277,
-      "tEnd": 415902632.83633447
+      "tEnd": 427960278.53187335
     },
     {
       "id": "over-under",
       "label": "Above and below the surface",
-      "tStart": 415902632.83633447,
+      "tStart": 427960278.53187335,
       "tEnd": 3668105778.193118
     },
     {

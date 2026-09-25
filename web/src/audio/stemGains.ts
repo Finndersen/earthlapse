@@ -335,8 +335,7 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
     // megafauna by the Guadalupian, ~270-260 Ma; gorgonopsians rise to dominance later, in the
     // Lopingian, after the dinocephalians' own end-Guadalupian extinction (Kemp, T.S. (2005).
     // *The Origin and Evolution of Mammals*. Oxford University Press) — matches the
-    // `permian-interior` (260 Ma, "massive synapsids drink from a shrinking seasonal river") and
-    // `early-triassic-lystrosaurus` (251 Ma) scenes. Recedes from `end-triassic-extinction`'s own
+    // `early-triassic-lystrosaurus` (251 Ma) scene. Recedes from `end-triassic-extinction`'s own
     // t_max (2.31e8, the same instant `archosaurs`' Triassic radiation ramp starts rising) to its
     // t_min (2.01e8, `archosaurs`' second ramp's own start) — moved earlier than the window
     // `archosaurs` itself recedes across, so the two stems no longer both peak together at the

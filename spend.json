@@ -3216,6 +3216,38 @@
       "estimated_usd": 0.154834,
       "actual_usd": 0.141106,
       "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15523,
+      "actual_usd": 0.140088,
+      "note": null
+    },
+    {
+      "node_id": "devonian-estuary.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.15523,
+      "actual_usd": 0.141228,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155076,
+      "actual_usd": 0.141992,
+      "note": null
+    },
+    {
+      "node_id": "wallacea-hand-stencil.image",
+      "generator": "google-ai-studio-image",
+      "n": 1,
+      "estimated_usd": 0.155076,
+      "actual_usd": 0.139688,
+      "note": null
     }
   ]
 }
