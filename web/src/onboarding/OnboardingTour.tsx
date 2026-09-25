@@ -13,7 +13,8 @@
  * drives them, so a viewer who skips at step one lands on exactly the view they would have had
  * without it. The globe tour's empires step is the one exception, and it goes through the host:
  * `onJumpToEmpires` moves `t` into the empire layer's range when the viewer is outside it,
- * because a step about empires over a globe with none on it would describe nothing. A tour
+ * because a step about empires over a globe with none on it would describe nothing, and `onEnd`
+ * lets the host put it back. A tour
  * advances only on an explicit press: no timer advances a step or dismisses it, and nothing
  * here fades on inactivity.
  *
@@ -60,9 +61,11 @@ export interface GlobeTourProps {
   empiresInDomain: boolean
   /** Moves `t` to the moment `GLOBE_TOUR_JUMP_LEAD` names. */
   onJumpToEmpires: () => void
+  /** The tour has closed, however it closed — the host's cue to undo a jump. */
+  onEnd: () => void
 }
 
-export function GlobeTour({ expanded, empiresInDomain, onJumpToEmpires }: GlobeTourProps) {
+export function GlobeTour({ expanded, empiresInDomain, onJumpToEmpires, onEnd }: GlobeTourProps) {
   const openToken = useSyncExternalStore(globeTour.subscribe, globeTour.getToken, getServerTourOpenToken)
   const mainOpen = useSyncExternalStore(mainTour.subscribe, mainTour.getToken, getServerTourOpenToken) > 0
 
@@ -83,10 +86,13 @@ export function GlobeTour({ expanded, empiresInDomain, onJumpToEmpires }: GlobeT
   // frame, and a new callback would re-run the overlay's step-entry effect each time.
   const inDomainRef = useRef(empiresInDomain)
   const jumpRef = useRef(onJumpToEmpires)
+  const endRef = useRef(onEnd)
   useEffect(() => {
     inDomainRef.current = empiresInDomain
     jumpRef.current = onJumpToEmpires
+    endRef.current = onEnd
   })
+  const onOverlayEnd = useMemo(() => () => endRef.current(), [])
   const onStepEnter = useMemo(
     () =>
       (id: TourStepId): string | undefined => {
@@ -98,7 +104,14 @@ export function GlobeTour({ expanded, empiresInDomain, onJumpToEmpires }: GlobeT
   )
 
   return openToken > 0 && expanded ? (
-    <TourOverlay key={openToken} allSteps={GLOBE_TOUR_STEPS} onDismiss={dismissGlobeTour} onStepEnter={onStepEnter} escapeFirst />
+    <TourOverlay
+      key={openToken}
+      allSteps={GLOBE_TOUR_STEPS}
+      onDismiss={dismissGlobeTour}
+      onStepEnter={onStepEnter}
+      onEnd={onOverlayEnd}
+      escapeFirst
+    />
   ) : null
 }
 
@@ -107,12 +120,14 @@ interface TourOverlayProps {
   onDismiss: () => void
   /** Called as each step is shown; a returned string leads that step's copy from then on. */
   onStepEnter?: (id: TourStepId) => string | undefined
+  /** Called when the overlay goes, which is the tour ending: it is mounted only while open. */
+  onEnd?: () => void
   /** Take Escape before anything else listening on the window, so dismissing the tour doesn't
    *  also collapse the expanded globe underneath it. */
   escapeFirst?: boolean
 }
 
-function TourOverlay({ allSteps, onDismiss, onStepEnter, escapeFirst = false }: TourOverlayProps) {
+function TourOverlay({ allSteps, onDismiss, onStepEnter, onEnd, escapeFirst = false }: TourOverlayProps) {
   const compact = useIsCompactViewport()
   const reducedMotion = useReducedMotion()
   // `desktopOnly` steps (keyboard shortcuts, via About) drop out on a compact viewport, where
@@ -129,6 +144,8 @@ function TourOverlay({ allSteps, onDismiss, onStepEnter, escapeFirst = false }: 
     if (lead !== undefined) setLeads((current) => ({ ...current, [step.id]: lead }))
   }, [onStepEnter, step.id])
   const lead = leads[step.id]
+
+  useEffect(() => () => onEnd?.(), [onEnd])
 
   const cardRef = useRef<HTMLDivElement>(null)
   const [callout, setCallout] = useState<Callout | null>(null)

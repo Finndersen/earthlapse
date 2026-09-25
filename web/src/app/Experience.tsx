@@ -144,6 +144,8 @@ export function Experience() {
   const setYearsPerSecond = useTimeStore((s) => s.setYearsPerSecond)
   const setPlaybackMode = useTimeStore((s) => s.setPlaybackMode)
   const globeExpanded = useTimeStore((s) => s.globeExpanded)
+  /** Where the viewer was before the globe tour jumped to the empires, until the tour ends. */
+  const globeTourReturnTRef = useRef<GeoTime | null>(null)
   const setGlobeExpanded = useTimeStore((s) => s.setGlobeExpanded)
   const detailEventId = useTimeStore((s) => s.detailEventId)
   const setDetailEventId = useTimeStore((s) => s.setDetailEventId)
@@ -830,8 +832,15 @@ export function Experience() {
         expanded={globeExpanded}
         empiresInDomain={empiresHaveDataAt(empires, t)}
         onJumpToEmpires={() => {
+          globeTourReturnTRef.current = useTimeStore.getState().t
           setPlaying(false)
           setT(GLOBE_TOUR_EMPIRES_T)
+        }}
+        onEnd={() => {
+          const returnT = globeTourReturnTRef.current
+          globeTourReturnTRef.current = null
+          // Only if the viewer hasn't moved the timeline themselves since the jump.
+          if (returnT !== null && useTimeStore.getState().t === GLOBE_TOUR_EMPIRES_T) setT(returnT)
         }}
       />
     </>

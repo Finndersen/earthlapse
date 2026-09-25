@@ -108,7 +108,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
 
 /** The empire territories are only drawn from 3400 BCE on, so the empires step names the moment
  *  the host jumps to when the viewer is outside that range (`GlobeTour`'s `onJumpToEmpires`). */
-export const GLOBE_TOUR_JUMP_LEAD = 'Here is the world in 117 CE, with Rome at its height.'
+export const GLOBE_TOUR_JUMP_LEAD = 'Here is the world in 117 CE, with Rome at its height; the tour takes you back after.'
 
 /** Shown the first time the globe is expanded: what the expanded view holds that the first tour
  *  cannot point at, since none of it exists until the globe opens. */

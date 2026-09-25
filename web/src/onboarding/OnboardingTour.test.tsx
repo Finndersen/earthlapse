@@ -144,8 +144,9 @@ describe('OnboardingTour', () => {
 })
 
 describe('GlobeTour', () => {
-  it('opens on the first expand, only once the first tour is closed, and jumps to the empires when out of range', () => {
+  it('opens on the first expand, only once the first tour is closed, jumps to the empires when out of range and reports its end', () => {
     const onJump = vi.fn()
+    const onEnd = vi.fn()
     const collapse = vi.fn()
     const onKeyDown = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') collapse()
@@ -155,7 +156,7 @@ describe('GlobeTour', () => {
     const tours = (expanded: boolean) => (
       <>
         <OnboardingTour />
-        <GlobeTour expanded={expanded} empiresInDomain={false} onJumpToEmpires={onJump} />
+        <GlobeTour expanded={expanded} empiresInDomain={false} onJumpToEmpires={onJump} onEnd={onEnd} />
       </>
     )
     const { rerender } = render(tours(false))
@@ -170,6 +171,7 @@ describe('GlobeTour', () => {
     expect(card().textContent).toContain(GLOBE_TOUR_JUMP_LEAD)
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByTestId('onboarding-card')).toBeNull()
+    expect(onEnd).toHaveBeenCalledOnce()
     expect(collapse).not.toHaveBeenCalled()
     window.removeEventListener('keydown', onKeyDown)
   })
