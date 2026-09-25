@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "6c274bfcf36e7e00",
+  "buildId": "8d9c7cbbb8315a79",
   "assetBase": "/media",
   "scenes": [
     {
@@ -80,6 +80,11 @@
       "events": [
         "covid-19-pandemic"
       ],
+      "sound": {
+        "stem": "church-bell",
+        "mode": "loop",
+        "gain": 0.7
+      },
       "location": {
         "label": "Riva degli Schiavoni, Venice, Italy",
         "presentDay": {
@@ -170,6 +175,11 @@
       "events": [
         "amazon-deforestation"
       ],
+      "sound": {
+        "stem": "chainsaw",
+        "mode": "loop",
+        "gain": 0.6
+      },
       "framing": {
         "focus": [
           0.63,
@@ -194,7 +204,7 @@
         "berlin-wall-falls"
       ],
       "sound": {
-        "stem": "settlement",
+        "stem": "wall-chiselling",
         "mode": "loop",
         "gain": 0.85
       },
@@ -232,6 +242,11 @@
       "events": [
         "chernobyl-disaster"
       ],
+      "sound": {
+        "stem": "geiger-counter",
+        "mode": "loop",
+        "gain": 0.8
+      },
       "location": {
         "label": "Pripyat, Ukraine",
         "presentDay": {
@@ -266,6 +281,11 @@
       "events": [
         "containerization"
       ],
+      "sound": {
+        "stem": "ship-horn",
+        "mode": "once",
+        "gain": 1.0
+      },
       "framing": {
         "focus": [
           0.52,
@@ -420,6 +440,11 @@
       "events": [
         "ginza-modern-urban-culture"
       ],
+      "sound": {
+        "stem": "tram-bell",
+        "mode": "once",
+        "gain": 0.9
+      },
       "location": {
         "label": "Ginza, Tokyo",
         "presentDay": {
@@ -495,6 +520,11 @@
         "ford-model-t-assembly-line",
         "edison-electric-light"
       ],
+      "sound": {
+        "stem": "klaxon-horn",
+        "mode": "once",
+        "gain": 0.9
+      },
       "location": {
         "label": "Highland Park, Michigan",
         "presentDay": {
@@ -570,9 +600,9 @@
         "first-transcontinental-railroad"
       ],
       "sound": {
-        "stem": "settlement",
-        "mode": "loop",
-        "gain": 0.8
+        "stem": "steam-whistle",
+        "mode": "once",
+        "gain": 1.0
       },
       "location": {
         "label": "Promontory Summit, Utah",
@@ -637,9 +667,9 @@
         "edo-million-city"
       ],
       "sound": {
-        "stem": "settlement",
+        "stem": "ship-rigging",
         "mode": "loop",
-        "gain": 0.85
+        "gain": 0.7
       },
       "location": {
         "label": "Nihonbashi, Tokyo",
@@ -676,9 +706,9 @@
         "dutch-golden-age-voc"
       ],
       "sound": {
-        "stem": "settlement",
+        "stem": "ship-rigging",
         "mode": "loop",
-        "gain": 0.85
+        "gain": 0.7
       },
       "location": {
         "label": "Amsterdam, Netherlands",
@@ -833,7 +863,7 @@
         "tikal-late-classic"
       ],
       "sound": {
-        "stem": "settlement",
+        "stem": "howler-monkeys",
         "mode": "loop",
         "gain": 0.85
       },
@@ -1306,9 +1336,9 @@
         "eemian-interglacial"
       ],
       "sound": {
-        "stem": "lake-water",
+        "stem": "hippo",
         "mode": "loop",
-        "gain": 0.7
+        "gain": 0.8
       },
       "location": {
         "label": "Trafalgar Square, London",
@@ -6567,6 +6597,158 @@
         "startSeconds": 73.93,
         "endSeconds": 84.929
       }
+    },
+    {
+      "id": "geiger-counter",
+      "file": "audio/geiger-counter-29e7585b5a.mp3",
+      "title": "Geiger counter clicks (MED)",
+      "author": "cookies+policy",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/555/555923_10713160-hq.mp3",
+      "durationSeconds": 180.0,
+      "loopSafe": true,
+      "levelTrimDb": 1.6,
+      "loop": {
+        "startSeconds": 24.0025,
+        "endSeconds": 55.0495
+      }
+    },
+    {
+      "id": "steam-whistle",
+      "file": "audio/steam-whistle-233bd09e0e.mp3",
+      "title": "Train Steam Whistle, Distant",
+      "author": "CHallSmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/870/870877_18412227-hq.mp3",
+      "durationSeconds": 22.17,
+      "loopSafe": false,
+      "levelTrimDb": 0.5,
+      "startSeconds": 0.22
+    },
+    {
+      "id": "ship-horn",
+      "file": "audio/ship-horn-44feadd082.mp3",
+      "title": "ship horn very close",
+      "author": "tierrafilm@gmail.com",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/420/420716_7849117-hq.mp3",
+      "durationSeconds": 6.08,
+      "loopSafe": false,
+      "levelTrimDb": -2.4
+    },
+    {
+      "id": "chainsaw",
+      "file": "audio/chainsaw-b3bf15950c.mp3",
+      "title": "CHAINSAW - 1",
+      "author": "SamuelGremaud",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/463/463207_8031303-hq.mp3",
+      "durationSeconds": 61.83,
+      "loopSafe": true,
+      "levelTrimDb": -7.7,
+      "loop": {
+        "startSeconds": 14.9925,
+        "endSeconds": 33.4015
+      }
+    },
+    {
+      "id": "howler-monkeys",
+      "file": "audio/howler-monkeys-b2a310bca0.mp3",
+      "title": "Howler Monkeys",
+      "author": "Lenguaverde",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/490/490315_1441734-hq.mp3",
+      "durationSeconds": 168.84,
+      "loopSafe": true,
+      "levelTrimDb": -8.1,
+      "loop": {
+        "startSeconds": 66.041,
+        "endSeconds": 149.15
+      }
+    },
+    {
+      "id": "klaxon-horn",
+      "file": "audio/klaxon-horn-76b2eba1ce.mp3",
+      "title": "Old Car Ahooga Horn",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/480/480002_2524442-hq.mp3",
+      "durationSeconds": 5.2,
+      "loopSafe": false,
+      "levelTrimDb": 8.8,
+      "startSeconds": 0.5
+    },
+    {
+      "id": "hippo",
+      "file": "audio/hippo-7336e499f5.mp3",
+      "title": "hippos",
+      "author": "toadie",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/194/194870_3311332-hq.mp3",
+      "durationSeconds": 16.35,
+      "loopSafe": true,
+      "levelTrimDb": -1.7,
+      "loop": {
+        "startSeconds": 0.2405,
+        "endSeconds": 15.7495
+      }
+    },
+    {
+      "id": "wall-chiselling",
+      "file": "audio/wall-chiselling-19102dab22.mp3",
+      "title": "chisel in the quarry",
+      "author": "Artiom_Constantinov",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/841/841053_7254491-hq.mp3",
+      "durationSeconds": 37.08,
+      "loopSafe": true,
+      "levelTrimDb": 0.7,
+      "loop": {
+        "startSeconds": 0.2,
+        "endSeconds": 36.389
+      }
+    },
+    {
+      "id": "church-bell",
+      "file": "audio/church-bell-1f245ae7b1.mp3",
+      "title": "Venice Church Bells",
+      "author": "freesoundjon01",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/324/324257_2814925-hq.mp3",
+      "durationSeconds": 54.42,
+      "loopSafe": true,
+      "levelTrimDb": 13.0,
+      "loop": {
+        "startSeconds": 5.424,
+        "endSeconds": 48.451
+      }
+    },
+    {
+      "id": "ship-rigging",
+      "file": "audio/ship-rigging-9bf39bcd35.mp3",
+      "title": "Large Wood Ship Creaking",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/483/483355_2524442-hq.mp3",
+      "durationSeconds": 72.56,
+      "loopSafe": true,
+      "levelTrimDb": 2.3,
+      "loop": {
+        "startSeconds": 14.6825,
+        "endSeconds": 57.932
+      }
+    },
+    {
+      "id": "tram-bell",
+      "file": "audio/tram-bell-56625726a8.mp3",
+      "title": "Trolley Bell",
+      "author": "craigsmith",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/479/479980_2524442-hq.mp3",
+      "durationSeconds": 6.35,
+      "loopSafe": false,
+      "levelTrimDb": 8.5,
+      "startSeconds": 0.28
     }
   ],
   "credits": [

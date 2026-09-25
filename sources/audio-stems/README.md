@@ -12,9 +12,11 @@ Two kinds of stem share one catalogue:
   `traffic`) have a web `stemGains` row and loop continuously at their curve gain. Always
   `loop_safe = true`.
 - **Scene-only stems** have no curve and are reached only through a scene's `sound`:
-  `geothermal`, `buzzing`, `knapping`, `artillery` and `lake-water` (`loop_safe = true`, usable
-  as `mode: loop`) and the one-shots `impact`, `rocket`, `aircraft` and `mammoth`
-  (`loop_safe = false`, `mode: once` only). No separate `kind` field: "one-shot" means
+  `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`, `chainsaw`,
+  `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell` and `ship-rigging`
+  (`loop_safe = true`, usable as `mode: loop`) and the one-shots `impact`, `rocket`, `aircraft`,
+  `mammoth`, `steam-whistle`, `ship-horn`, `klaxon-horn` and `tram-bell` (`loop_safe = false`,
+  `mode: once` only). No separate `kind` field: "one-shot" means
   "not loop-safe".
 
 ## Schema
@@ -53,13 +55,14 @@ match, rather than guessing.
 
 ## Gotchas
 
-- **An empty `stems.toml` is valid** (though this one now carries twenty-five stems: the
+- **An empty `stems.toml` is valid** (though this one now carries thirty-six stems: the
   seventeen v2 stems sourced 2026-09-14, `forest`, `large-animal`, `buzzing`, `knapping` and
   `mammoth` sourced 2026-09-15 "era fit v3", `archosaurs`/`livestock` re-sourced and `artillery`/
-  `lake-water` added the same day by later 2026-09-15 amendments, and `wing-hum` added by a
-  further 2026-09-15 amendment) — `pipeline.audio.load_stem_book` treats a missing
-  or empty catalogue as zero stems, not an error, matching how `data/portraits.yaml`/
-  `data/scenes.yaml` ship partially before everything is pinned. A future stem added or
+  `lake-water` added the same day by later 2026-09-15 amendments, `wing-hum` added by a
+  further 2026-09-15 amendment, and eleven single-scene stems added 2026-09-25) —
+  `pipeline.audio.load_stem_book` treats a missing or empty catalogue as zero stems, not an
+  error, matching how `data/portraits.yaml`/`data/scenes.yaml` ship partially before everything
+  is pinned. A future stem added or
   replaced here works the same way.
 - **Why levels are attested, not measured at build time.** This machine has neither `ffmpeg`
   nor `sox`, and macOS's `/usr/bin/afconvert` must not become a hard pipeline dependency — every
@@ -87,7 +90,7 @@ match, rather than guessing.
 
 ## Measured volume
 
-~31.0 MB (25 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
+~44.9 MB (36 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
 re-sourced 2026-09-15, `large-animal`/`buzzing`/`knapping`/`mammoth` added 2026-09-15 "era fit v3",
 `forest` re-sourced again the same day by the "era fit v3 fixes" amendment after its first pick
 turned out to carry bird/primate-like FM chirps, `archosaurs`/`livestock` re-sourced and
@@ -97,11 +100,13 @@ bird tones, an audible in-loop repeat and a memory footprint out of proportion t
 contribution — see its own `stems.toml` entry comment, `forest` re-sourced a THIRD time on
 2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
 rain recording, then a FOURTH time the same day after an independent review found the third pick
-was itself low-frequency wind rumble rather than genuine leaf rustle) — over ADR-023's "<~15 MB"
+was itself low-frequency wind rumble rather than genuine leaf rustle, and eleven single-scene
+stems added 2026-09-25, ~13.9 MB of the total) — over ADR-023's "<~15 MB"
 default; the human has said audio size is not strictly budgeted and higher totals were already
 accepted, so this is reported rather than trimmed. The largest files are `lake-water` (4.5 MB, of
-which its own loop region plays), `rocket` (3.0 MB, a 2:12 launch) and `wind` (2.8 MB, of which
-its 54 s loop region plays); `wing-hum` is 1.4 MB (a 66.9 s field recording, of which its
+which its own loop region plays), `geiger-counter` (4.1 MB, a 3:00 recording of which a 31 s loop
+region plays), `howler-monkeys` (3.6 MB, 2:49, 83 s loop region), `rocket` (3.0 MB, a 2:12
+launch) and `wind` (2.8 MB, of which its 54 s loop region plays); `wing-hum` is 1.4 MB (a 66.9 s field recording, of which its
 35.3-47.9 s loop region plays) -- down from its first pick's 5.0 MB/230 s. `forest` is 0.6 MB (a
 27.1 s field recording, of which its 17.308-26.224 s loop region plays) -- down from its third
 pick's 0.8 MB/43.5 s. Every stem is CC0 or public domain.

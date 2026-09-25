@@ -3,9 +3,11 @@
  *
  * - **Ambience** stems have a `stemGains` row and always loop at their curve gain.
  * - **Scene-only** stems have no curve and are reached only through a scene's `sound`. Whether
- *   one may loop (`geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`) or is a
- *   one-shot (`impact`, `rocket`, `aircraft`, `mammoth`) is the published `AudioStem.loopSafe`
- *   flag, not a second web-side list — see `stemVoices.ts`.
+ *   one may loop (`geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`,
+ *   `geiger-counter`, `chainsaw`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`,
+ *   `ship-rigging`) or is a one-shot (`impact`, `rocket`, `aircraft`, `mammoth`, `steam-whistle`,
+ *   `ship-horn`, `klaxon-horn`, `tram-bell`) is the published `AudioStem.loopSafe` flag, not a
+ *   second web-side list — see `stemVoices.ts`.
  *
  * A new stem is a new id here (plus a `stemGains.ts` row if it is ambience), never a free-text
  * string threaded through from `Manifest.audioStems`/`SceneRecord.sound`: both are `string` on
@@ -41,6 +43,17 @@ export type SceneStemId =
   | 'mammoth'
   | 'artillery'
   | 'lake-water'
+  | 'geiger-counter'
+  | 'steam-whistle'
+  | 'ship-horn'
+  | 'chainsaw'
+  | 'howler-monkeys'
+  | 'klaxon-horn'
+  | 'hippo'
+  | 'wall-chiselling'
+  | 'church-bell'
+  | 'ship-rigging'
+  | 'tram-bell'
 
 export type StemId = AmbienceStemId | SceneStemId
 
@@ -73,6 +86,17 @@ export const SCENE_STEM_IDS: readonly SceneStemId[] = [
   'mammoth',
   'artillery',
   'lake-water',
+  'geiger-counter',
+  'steam-whistle',
+  'ship-horn',
+  'chainsaw',
+  'howler-monkeys',
+  'klaxon-horn',
+  'hippo',
+  'wall-chiselling',
+  'church-bell',
+  'ship-rigging',
+  'tram-bell',
 ]
 
 export const STEM_IDS: readonly StemId[] = [...AMBIENCE_STEM_IDS, ...SCENE_STEM_IDS]

@@ -1403,8 +1403,8 @@ scenes:
       sky_and_light: a warm, bright summer sky with scattered cumulus; soft, warm afternoon light
       absent: [people, buildings, boats, bridges, fields, fences, domestic animals, horses, woolly mammoths, snow or ice, conifers dominating the woodland, palm trees, tropical jungle]
     events: [eemian-interglacial]
-    # ADR-023: `lake-water` `loop` -- a slow river's quiet lapping, not surf.
-    sound: {stem: lake-water, mode: loop, gain: 0.7}
+    # ADR-023: `hippo` `loop` -- the wallowing pod's grunts and honks.
+    sound: {stem: hippo, mode: loop, gain: 0.8}
     location: {lat: 51.508, lon: -0.128, label: "Trafalgar Square, London"}
     framing: {focus: [0.66, 0.64], pan: 0}
     pin: {asset_digest: "8d06cece05af9d8e", path: "data/pins/scenes/eemian-thames-hippos/8d06cece05af9d8e.jpg"}
@@ -1992,8 +1992,8 @@ scenes:
       sky_and_light: a humid tropical morning sky with building cumulus; bright, clear light after rain
       absent: [ruins, collapsed stonework, trees growing from the pyramids, bare grey unpainted stone, moss or lichen, tourists, modern clothing, identifiable faces, horses, metal tools, wheels, Aztec or Egyptian style pyramids, legible glyphs]
     events: [tikal-late-classic]
-    # ADR-023: `settlement` `loop` -- a working city, on the same footing as imperial-rome-pantheon.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `howler-monkeys` `loop` -- recorded in Guatemala, the forest around the city.
+    sound: {stem: howler-monkeys, mode: loop, gain: 0.85}
     location: {lat: 17.2220, lon: -89.6237, label: "Tikal, Guatemala"}
     framing: {focus: [0.6, 0.6], pan: 0}
     pin: {asset_digest: "a3b536712371d79f", path: "data/pins/scenes/tikal-classic-maya/a3b536712371d79f.jpg"}
@@ -2177,11 +2177,8 @@ scenes:
       sky_and_light: a pale, cool, partly overcast North Sea sky with breaks of sun; soft, even daylight
       absent: [steam power, steamships, motor vehicles, bicycles, canal tour boats, houseboats, cars parked along the canal, cast-iron street lamps, modern clothing, electric light, legible text or ledger writing, identifiable faces, factory chimneys, tourists, modern signage]
     events: [dutch-golden-age-voc]
-    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
-    # ambient floor -- merchants, a clerk's ledger and dockworkers rolling barrels read as
-    # commerce, not a quiet canal; `industry`/`traffic` are both still 0 this early (t = 375,
-    # ahead of `industrial-revolution`).
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `ship-rigging` `loop` -- creaking hulls and rigging of the moored fleet.
+    sound: {stem: ship-rigging, mode: loop, gain: 0.7}
     # ADR-034: Amsterdam, Netherlands. t = 375 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 52.3730, lon: 4.8924, label: "Amsterdam, Netherlands"}
@@ -2222,9 +2219,8 @@ scenes:
       sky_and_light: a clear, crisp winter morning sky; bright, low, clean sunlight
       absent: [a tall multi-storey castle keep, stone bridge, rickshaws, steamships, sailing ships with square sails, Western clothing, Western hats, umbrellas, gas or electric lamps, telegraph poles, glass windows, brick buildings, colour woodblock prints, legible signage or text, bright silk clothing, identifiable faces, modern Tokyo skyline]
     events: [edo-million-city]
-    # ADR-023: `settlement` `loop` -- the fish market and quayside unloading read as commerce, the
-    # same footing as amsterdam-voc-harbour.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `ship-rigging` `loop` -- the cargo boats creaking at the quay.
+    sound: {stem: ship-rigging, mode: loop, gain: 0.7}
     # ADR-034: Nihonbashi, Tokyo, Japan. t = 285 BP sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 35.6841, lon: 139.7745, label: "Nihonbashi, Tokyo"}
@@ -2301,9 +2297,9 @@ scenes:
       sky_and_light: a clear, cool spring sky with a few high clouds; bright, crisp midday sunlight
       absent: [a second track, crossing tracks, parallel tracks, tracks running toward the camera, legible text, legible locomotive names or numbers, banners, company flags, state flags, snow-capped peaks, trees, grass lawns, paved roads, monuments, visitor centre, modern clothing, cars, electric power lines, identifiable faces, handshake pose]
     events: [first-transcontinental-railroad]
-    # ADR-023: `settlement` `loop` -- the gathered crowd; no CC0/PD 1860s steam-locomotive
-    # recording is in the stem catalogue.
-    sound: {stem: settlement, mode: loop, gain: 0.8}
+    # ADR-023: `steam-whistle` `once` -- a later locomotive's chime whistle stands in; no 1869
+    # recording can exist.
+    sound: {stem: steam-whistle, mode: once, gain: 1.0}
     # ADR-034: Golden Spike National Historical Park, Promontory Summit, Utah.
     location: {lat: 41.6179, lon: -112.5516, label: "Promontory Summit, Utah"}
     framing: {focus: [0.52, 0.62], pan: 0}
@@ -2383,19 +2379,8 @@ scenes:
       sky_and_light: a clear, pale industrial-city sky with a faint haze of coal smoke; bright, flat daylight
       absent: [modern cars, motor buses, traffic lights, painted lane markings, neon signs, skyscrapers, identifiable faces, legible number plates, legible signage, solid-black Model Ts, night scene, lit electric streetlights]
     events: [ford-model-t-assembly-line, edison-electric-light]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.5, to
-    # carry the moment motor traffic arrives (the global `traffic` curve is only ~0.01 at
-    # t = 112). Dropped by that amendment's own 2026-09-15 re-review: the `traffic` stem is
-    # qubodup's "Seamless City Loop", a dense *modern* road-traffic bed (engine hum concentrated
-    # near 250 Hz, steady and continuous) -- it does not match a 1913 street of Model Ts, a
-    # streetcar and a horse-drawn wagon at any gain. No CC0/PD clip of period-correct early
-    # motor traffic (or streetcar bell/trolley) was sourced in the time this pass budgeted, so
-    # per CLAUDE.md ("if something is unusable, stop and report; do not silently substitute a
-    # different dataset") this scene carries no `sound` -- the flat 0.48 `settlement` floor every
-    # scene this side of Uruk already has is what plays here.
-    # ADR-034: Highland Park, Michigan -- the Ford Highland Park Plant named in this record's own
-    # comment above. t = 112 BP sits inside the human-era basemap domain (ADR-030), so publish
-    # marks these present-day coordinates directly.
+    # ADR-023: `klaxon-horn` `once` -- the period's electric Klaxon horn.
+    sound: {stem: klaxon-horn, mode: once, gain: 0.9}
     location: {lat: 42.4048, lon: -83.0966, label: "Highland Park, Michigan"}
     framing: {focus: [0.55, 0.85], pan: 0, portrait_zoom: 1.5}
     pin: {asset_digest: "1bb72621b940a4f0", path: "data/pins/scenes/ford-model-t-street/1bb72621b940a4f0.jpg"}
@@ -2504,17 +2489,8 @@ scenes:
       sky_and_light: a clear, pale sky faintly hazed with coal smoke over the city; bright, flat daylight, streetlamps unlit in the daytime brightness
       absent: [glowing neon signs, night scene, cars from after the 1930s, modern traffic lights, legible Japanese or English signage, any lettering or characters on facades, awnings, signboards, streetcars or buses, shop names, route numbers, modern clothing, identifiable faces, horse-drawn traffic, skyscrapers, post-war architecture, a visible subway or metro entrance]
     events: [ginza-modern-urban-culture]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `traffic` `loop`, gain 0.55, for
-    # the streetcars, motor bus and sedan sharing the street. Dropped by that amendment's own
-    # 2026-09-15 re-review: `traffic` is qubodup's "Seamless City Loop", a dense *modern*
-    # road-traffic bed (steady engine hum near 250 Hz) -- it does not match 1930 streetcars and a
-    # handful of early motor vehicles at any gain. No CC0/PD clip of a period streetcar bell/trolley
-    # or a single early motor vehicle was sourced in the time this pass budgeted, so per CLAUDE.md
-    # ("if something is unusable, stop and report; do not silently substitute a different dataset")
-    # this scene carries no `sound` -- the flat 0.48 `settlement` floor already covers the crowd
-    # murmur ("Ginbura" strollers) this scene's own subject calls for.
-    # ADR-034: Ginza, Tokyo, Japan. t = 95 BP sits inside the human-era basemap domain (ADR-030),
-    # so publish marks these present-day coordinates directly.
+    # ADR-023: `tram-bell` `once` -- an American trolley bell stands in for the Tokyo streetcar's.
+    sound: {stem: tram-bell, mode: once, gain: 0.9}
     location: {lat: 35.6717, lon: 139.7650, label: "Ginza, Tokyo"}
     framing: {focus: [0.6, 0.62], pan: 180}
     pin: {asset_digest: "81ccaf1dcc006f1f", path: "data/pins/scenes/ginza-modern-tokyo/81ccaf1dcc006f1f.jpg"}
@@ -2728,14 +2704,8 @@ scenes:
       sky_and_light: a lightly hazy industrial harbour sky; bright, flat daylight
       absent: [modern megamax container ships, automated straddle carriers, RFID gate scanners, legible shipping-line logos, legible container markings, identifiable faces, modern gantry-crane design, sailing ships]
     events: [containerization]
-    # ADR-023 (2026-09-15 human-history scene sounds): originally `industry` `loop`, gain 0.7, for
-    # gantry cranes and dock machinery. Dropped by that amendment's own 2026-09-15 re-review: the
-    # `industry` stem is blukotek's "Work of a Large Steam Engine", a Victorian piston beat at
-    # about 1.5 strokes/s (`sources/audio-stems/stems.toml`) -- it does not match 1975 gantry
-    # cranes and dockside machinery at any gain. No CC0/PD clip of period crane/container-yard
-    # sound was sourced in the time this pass budgeted, so per CLAUDE.md ("if something is
-    # unusable, stop and report; do not silently substitute a different dataset") this scene
-    # carries no `sound` -- the flat 0.48 `settlement` floor covers the working-port ambience.
+    # ADR-023: `ship-horn` `once` -- a container ship's horn over the yard.
+    sound: {stem: ship-horn, mode: once, gain: 1.0}
     framing: {focus: [0.52, 0.5], pan: 180}
     pin: {asset_digest: "8cc9c5451b9b81f3", path: "data/pins/scenes/containerisation-port/8cc9c5451b9b81f3.jpg"}
 
@@ -2785,6 +2755,8 @@ scenes:
     # aral-sea-drying, energy-transition-solar-wind) means reading web/src/audio/stemGains.ts,
     # which this pass does not own (data/scenes.yaml and data/events.yaml only). Left unset
     # rather than guessed; a follow-up owning web/src/audio can add it.
+    # ADR-023: `geiger-counter` `loop` -- the exclusion zone's defining sound.
+    sound: {stem: geiger-counter, mode: loop, gain: 0.8}
     location: {lat: 51.4046, lon: 30.0538, label: "Pripyat, Ukraine"}
     framing: {focus: [0.44, 0.45], pan: 90}
     pin: {asset_digest: "73f83b86278a7119", path: "data/pins/scenes/chernobyl-exclusion-zone/73f83b86278a7119.jpg"}
@@ -2831,13 +2803,9 @@ scenes:
       sky_and_light: a bright, cold, clear November sky with thin high cloud; crisp, direct daylight
       absent: [post-1990s clothing, identifiable faces, national flags or political symbols shown prominently, legible graffiti text or lettering, violence, weapons, modern vehicles, night scene, floodlights]
     events: [berlin-wall-falls]
-    # ADR-023 (2026-09-15 human-history scene sounds): `settlement` `loop` above its flat 0.48
-    # ambient floor -- a crowd at the wall, hammering and chiselling. `knapping` (stone-on-stone
-    # hits) was considered for the hammer/chisel strikes but rejected: it is a single rhythmic
-    # tapping loop built for one person's flintwork, not a crowd, and reusing it here would blur
-    # its own acheulean-erectus association; a foregrounded crowd murmur reads truer to a jubilant
-    # gathering than a mismatched percussion loop would.
-    sound: {stem: settlement, mode: loop, gain: 0.85}
+    # ADR-023: `wall-chiselling` `loop` -- hammer-on-chisel strikes stand in for the crowds chipping at
+    # the Wall; the `settlement` floor carries the crowd.
+    sound: {stem: wall-chiselling, mode: loop, gain: 0.85}
     # ADR-034: Berlin, Germany, at the Brandenburg Gate -- a representative point on the wall's
     # line, not the single unnamed crossing this record's subject depicts. t = 36 BP sits inside
     # the human-era basemap domain (ADR-030), so publish marks these present-day coordinates
@@ -2892,6 +2860,8 @@ scenes:
     # candidate for the smouldering burn, but verifying its gain against the traffic/settlement
     # ambient floor at this t needs web/src/audio/stemGains.ts, which this pass does not own.
     # Left unset rather than guessed.
+    # ADR-023: `chainsaw` `loop` -- a close recording held low so it reads as distant clearing.
+    sound: {stem: chainsaw, mode: loop, gain: 0.6}
     framing: {focus: [0.63, 0.66], pan: 270}
     pin: {asset_digest: "43a0d45ebd59fac5", path: "data/pins/scenes/amazon-deforestation-fishbone/43a0d45ebd59fac5.jpg"}
 
@@ -3028,6 +2998,8 @@ scenes:
     # own comment computes (e.g. global-city-rush-hour, shenzhen-bay-present) -- there is no
     # mechanism in the stem catalogue for muting the global bed locally to one scene, and this
     # pass does not own web/src/audio to add one. Left unset rather than guessed.
+    # ADR-023: `church-bell` `loop` -- a Venice bell over the emptied waterfront.
+    sound: {stem: church-bell, mode: loop, gain: 0.7}
     location: {lat: 45.4340, lon: 12.3417, label: "Riva degli Schiavoni, Venice, Italy"}
     framing: {focus: [0.19, 0.45], pan: 0}
     pin: {asset_digest: "a1bd3a8153aa5efc", path: "data/pins/scenes/covid-19-venice-lockdown/a1bd3a8153aa5efc.jpg"}

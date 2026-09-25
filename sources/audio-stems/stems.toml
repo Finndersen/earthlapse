@@ -1,10 +1,11 @@
-# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Twenty-four CC0/public-domain
+# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Thirty-six CC0/public-domain
 # clips in two kinds:
 #
 # - Ambience stems (wind ... traffic) have a web `stemGains` row and loop at their curve gain.
 # - Scene-only stems (geothermal, impact, rocket, aircraft, buzzing, knapping, mammoth, artillery,
-#   lake-water) have no curve and are reached only through a scene's `sound`. `loop_safe = false`
-#   marks a one-shot (`mode: once` only).
+#   lake-water, geiger-counter, steam-whistle, ship-horn, chainsaw, howler-monkeys, klaxon-horn,
+#   hippo, wall-chiselling, church-bell, ship-rigging, tram-bell) have no curve and are reached only
+#   through a scene's `sound`. `loop_safe = false` marks a one-shot (`mode: once` only).
 #
 # Every clip is spectrogram-checked against the anachronism/rain/rumble criteria in
 # sources/audio-stems/README.md ("Sourcing checks"); each entry's comment records only what that
@@ -604,3 +605,243 @@ loop_safe = true
 loudness_db = -38.2
 peak_dbfs = -12.3
 loop = { start_seconds = 73.930, end_seconds = 84.929 }
+
+# https://freesound.org/people/cookies+policy/sounds/555923/ -- CC0 1.0, cookies+policy, "Geiger
+# counter clicks (MED)": a real Eberline E-120 Geiger counter's speaker, close-miked.
+# chernobyl-exclusion-zone's scene sound. Spectrogram: irregular (Poisson-like) broadband clicks
+# at a steady medium rate with near-silent gaps between them; no beeping tone, dosimeter alarm,
+# speech, hum or music. Rejected ImAFoley "Geiger Counter Radioactive" (575360), a battery
+# charger's beeping by its own description, and the synthesized Reaper/continuity-meter
+# "Geiger" clips. The loop region wraps between two silent inter-click gaps; a denser burst near
+# 148 s lies outside it.
+[[stems]]
+id = "geiger-counter"
+title = "Geiger counter clicks (MED)"
+author = "cookies+policy"
+url = "https://cdn.freesound.org/previews/555/555923_10713160-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "29e7585b5a97623d9fff6430bfc7a9f6dec267a30caced018c359634aa96935b"
+raw_filename = "geiger-counter.mp3"
+format = "mp3"
+duration_seconds = 180.0
+loop_safe = true
+loudness_db = -31.6
+peak_dbfs = -3.1
+loop = { start_seconds = 24.0025, end_seconds = 55.0495 }
+
+# https://freesound.org/people/CHallSmith/sounds/870877/ -- CC0 1.0, CHallSmith, "Train Steam
+# Whistle, Distant": a steam locomotive whistling about a mile off, echoing across open prairie.
+# promontory-golden-spike's scene sound. No recording of an 1869 locomotive can exist (sound
+# recording postdates it), so a recent recording of an unnamed later engine's chime whistle stands
+# in -- a documented substitution. Spectrogram: three long blasts of a chime chord (~310/380/480 Hz with harmonics)
+# with a prairie echo tail; no diesel horn, speech, bird calls or music. `start_seconds = 0.22`
+# skips the file's digital-silence lead-in.
+[[stems]]
+id = "steam-whistle"
+title = "Train Steam Whistle, Distant"
+author = "CHallSmith"
+url = "https://cdn.freesound.org/previews/870/870877_18412227-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "233bd09e0e73a51242c21f95079e4df6d51881a026873285aa12b7ec1fcaf81e"
+raw_filename = "steam-whistle.mp3"
+format = "mp3"
+duration_seconds = 22.17
+loop_safe = false
+start_seconds = 0.22
+loudness_db = -20.5
+peak_dbfs = -0.8
+
+# https://freesound.org/people/tierrafilm@gmail.com/sounds/420716/ -- CC0 1.0,
+# tierrafilm@gmail.com, "ship horn very close": the horn of the merchant ship m/s Lubie, recorded
+# at sea. containerisation-port's scene sound. Spectrogram: one 4.8 s blast, a harmonic stack on
+# a ~132 Hz fundamental, starting on the file's first frame; two faint wind bursts under it and
+# sea/wind after it; no speech, music or second vessel. Rejected Grotelue "Ship Horn.mp3" (64601):
+# a cruise ship's three blasts followed by 17 s of harbour tail with faint tonal events that could
+# not be ruled out as voices.
+[[stems]]
+id = "ship-horn"
+title = "ship horn very close"
+author = "tierrafilm@gmail.com"
+url = "https://cdn.freesound.org/previews/420/420716_7849117-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "44feadd08272a4a3c006209d6cbd5e9e9da5effcc913f701ffd23bca17bcdc04"
+raw_filename = "ship-horn.mp3"
+format = "mp3"
+duration_seconds = 6.08
+loop_safe = false
+loudness_db = -17.6
+peak_dbfs = -1.3
+
+# https://freesound.org/people/SamuelGremaud/sounds/463207/ -- CC0 1.0, SamuelGremaud, "CHAINSAW -
+# 1": a chainsaw felling trees, field-recorded. amazon-deforestation-fishbone's scene sound.
+# Spectrogram: a two-stroke engine's harmonic whine (~150-300 Hz fundamental) rising and falling
+# as it revs into cuts, with idle stretches between; no speech, music, birds or vehicles. The loop
+# region runs idle -> sustained cutting -> idle, wrapping between two idle stretches at matched
+# level and pitch; one low thud (a falling branch, ~27 s) lies inside it. The recording is close,
+# so scene gain carries the distance.
+[[stems]]
+id = "chainsaw"
+title = "CHAINSAW - 1"
+author = "SamuelGremaud"
+url = "https://cdn.freesound.org/previews/463/463207_8031303-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "b3bf15950ce12d229882e118c851dea24c7e491822c69f42563e2f16aff7e3ce"
+raw_filename = "chainsaw.mp3"
+format = "mp3"
+duration_seconds = 61.83
+loop_safe = true
+loudness_db = -22.3
+peak_dbfs = -0.7
+loop = { start_seconds = 14.9925, end_seconds = 33.4015 }
+
+# https://freesound.org/people/Lenguaverde/sounds/490315/ -- CC0 1.0, Lenguaverde, "Howler
+# Monkeys": howler monkeys (Alouatta) calling at dawn in the Guatemalan jungle -- the same region
+# as tikal-classic-maya, its scene sound. Spectrogram: roar bouts every ~7 s, broadband 400-1200 Hz
+# energy with a ~650 Hz band, over a quiet forest floor with a faint steady insect band near 7 kHz;
+# no speech, music or engines. Rejected jredd "HowlerMonkey.mp3" (354039, Petén): clipped and
+# low-passed at 5 kHz; FlyingMarmot "Howler Monkeys" (414248, Lamanai): 92% of its energy is
+# wind/handling rumble below 150 Hz. The loop region (83 s, about a dozen bouts) wraps between two
+# matched quiet gaps between calls, and `loudness_db`/`peak_dbfs` are measured on it.
+[[stems]]
+id = "howler-monkeys"
+title = "Howler Monkeys"
+author = "Lenguaverde"
+url = "https://cdn.freesound.org/previews/490/490315_1441734-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "b2a310bca0a48207f40021ef51e087cad696fd1472f6a0c955e78ee1a6a56d4b"
+raw_filename = "howler-monkeys.mp3"
+format = "mp3"
+duration_seconds = 168.84
+loop_safe = true
+loudness_db = -21.9
+peak_dbfs = -0.4
+loop = { start_seconds = 66.0410, end_seconds = 149.1500 }
+
+# https://freesound.org/people/craigsmith/sounds/480002/ -- CC0 1.0, craigsmith, "R18-31-Old Car
+# Ahooga Horn.wav" (vintage Hollywood optical effect, the same source style as `impact`/
+# `artillery`). ford-model-t-street's scene sound. Spectrogram: two "ah-oo-gah" blasts, each a
+# ~395 Hz harmonic stack with the rising-then-falling formant sweep of a Klaxon diaphragm horn,
+# silence between; no engine, speech or music. Quiet (peak -17.7 dBFS), lifted by its level trim.
+# `start_seconds = 0.5` skips the near-silent lead-in before the first blast.
+[[stems]]
+id = "klaxon-horn"
+title = "Old Car Ahooga Horn"
+author = "craigsmith"
+url = "https://cdn.freesound.org/previews/480/480002_2524442-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "76b2eba1ce4d7d24b67eef816912fc4477e30d4b0c070f612a5333c17051a6a6"
+raw_filename = "klaxon-horn.mp3"
+format = "mp3"
+duration_seconds = 5.2
+loop_safe = false
+start_seconds = 0.5
+loudness_db = -28.8
+peak_dbfs = -17.7
+
+# https://freesound.org/people/toadie/sounds/194870/ -- CC0 1.0, toadie, "hippos.mp3": a group of
+# hippopotamuses grunting in the Kafue River, Zambia, recorded in the morning. eemian-thames-hippos'
+# scene sound. Spectrogram: overlapping low harmonic grunts (~50-70 Hz spacing, 1-2 s each) and a
+# pulsed wheeze-honk series near the end; a faint pulsed insect band at ~3.8 kHz throughout; no
+# speech formants, vehicles or music. The 15.5 s loop region wraps between two matched quiet
+# moments, skipping the file's near-silent first 0.24 s.
+[[stems]]
+id = "hippo"
+title = "hippos"
+author = "toadie"
+url = "https://cdn.freesound.org/previews/194/194870_3311332-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "7336e499f51693925676bb5ae8c6c42d73c94d554cbe277fd2b8ee6a74aa1b19"
+raw_filename = "hippo.mp3"
+format = "mp3"
+duration_seconds = 16.35
+loop_safe = true
+loudness_db = -28.3
+peak_dbfs = -4.2
+loop = { start_seconds = 0.2405, end_seconds = 15.7495 }
+
+# https://freesound.org/people/Artiom_Constantinov/sounds/841053/ -- CC0 1.0, Artiom_Constantinov,
+# "chisel in the quarry": hammer blows on a chisel against rock, recorded in a quarry.
+# berlin-wall-fall's scene sound: no CC0/PD recording of hammers and chisels on the Berlin Wall
+# (or on concrete, with a crowd) was found, so a stone-chiselling rhythm stands in, with no crowd.
+# Spectrogram: sharp broadband strikes in fast runs (~2 per second) broken by pauses of up to
+# 1.3 s, with clean decays between; no speech, music, power tools or engines. The loop region is
+# almost the whole clip, wrapping in the near-silence before the first strike and after the last
+# full decay.
+[[stems]]
+id = "wall-chiselling"
+title = "chisel in the quarry"
+author = "Artiom_Constantinov"
+url = "https://cdn.freesound.org/previews/841/841053_7254491-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "19102dab22c11f52637d5d6f4ce8357471192a473284dcb523f13825ed73ddfd"
+raw_filename = "wall-chiselling.mp3"
+format = "mp3"
+duration_seconds = 37.08
+loop_safe = true
+loudness_db = -31.8
+peak_dbfs = -0.7
+loop = { start_seconds = 0.2000, end_seconds = 36.3890 }
+
+# https://freesound.org/people/freesoundjon01/sounds/324257/ -- CC0 1.0, freesoundjon01, "Venice
+# Church Bells.wav": one church bell in Venice (behind the Hotel Belle Arti, Dorsoduro) struck
+# about every 1.5 s. covid-19-venice-lockdown's scene sound. Spectrogram: a single bell's partials
+# (~355/430/1080 Hz) at every strike with a soft clapper thud under each, over a near-silent floor;
+# no second bell, speech, boat engines or music. The loop region wraps in the decay just before a
+# strike, so the strike rhythm continues across the wrap. A quiet recording (peak -20.6 dBFS),
+# lifted by its level trim.
+[[stems]]
+id = "church-bell"
+title = "Venice Church Bells"
+author = "freesoundjon01"
+url = "https://cdn.freesound.org/previews/324/324257_2814925-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "1f245ae7b1f15fa251ac2fc8e3b8394d90e3345892ec9d30c7b4a1ebd6c4b3f0"
+raw_filename = "church-bell.mp3"
+format = "mp3"
+duration_seconds = 54.42
+loop_safe = true
+loudness_db = -43.0
+peak_dbfs = -20.6
+loop = { start_seconds = 5.4240, end_seconds = 48.4510 }
+
+# https://freesound.org/people/craigsmith/sounds/483355/ -- CC0 1.0, craigsmith, "R28-03-Large
+# Wood Ship Creaking.wav" (vintage Hollywood optical effect). Moored-ship bed for
+# amsterdam-voc-harbour and edo-nihonbashi. Spectrogram: continuous slow wooden creaks and groans
+# (FM contours at 250-500 Hz over a broadband floor) with no silence gaps; no ship's bell, water,
+# speech or music. Rejected craigsmith "G27-08-Movie Boat Creak Scene" (438354), which carries
+# dialogue. The loop region wraps between the clip's two quiet dips (~15 s and ~58 s).
+[[stems]]
+id = "ship-rigging"
+title = "Large Wood Ship Creaking"
+author = "craigsmith"
+url = "https://cdn.freesound.org/previews/483/483355_2524442-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "9bf39bcd3547f7e3610fb36c05a98a51351563035d2f056858142c723fe179a2"
+raw_filename = "ship-rigging.mp3"
+format = "mp3"
+duration_seconds = 72.56
+loop_safe = true
+loudness_db = -32.3
+peak_dbfs = -12.5
+loop = { start_seconds = 14.6825, end_seconds = 57.9320 }
+
+# https://freesound.org/people/craigsmith/sounds/479980/ -- CC0 1.0, craigsmith, "R04-39-Trolley
+# Bell.wav" (vintage Hollywood optical effect). ginza-modern-tokyo's scene sound -- a stand-in
+# for the double "chin-chin" of a 1930s Tokyo streetcar, from an American trolley. Spectrogram: two
+# strikes of one bell (~550/1300/2130 Hz partials), damped abruptly at 3.3 s; a few faint optical
+# ticks afterwards, about 40 dB down; no traffic, speech or music. `start_seconds = 0.28` skips
+# the quiet lead-in to the first strike.
+[[stems]]
+id = "tram-bell"
+title = "Trolley Bell"
+author = "craigsmith"
+url = "https://cdn.freesound.org/previews/479/479980_2524442-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "56625726a89a3bfe0dee7bf417aa9ccbebb503e853f9f1042bc16136ecacad27"
+raw_filename = "tram-bell.mp3"
+format = "mp3"
+duration_seconds = 6.35
+loop_safe = false
+start_seconds = 0.28
+loudness_db = -28.5
+peak_dbfs = -16.4
