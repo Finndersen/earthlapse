@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from pipeline.assets import build_scene_graph
 from pipeline.audio import content_hashed_filename
+from pipeline.credits_doc import CREDITS_DOC, render_credits
 from pipeline.curated import load_world, write_shape
 from pipeline.density_encoding import POPULATION_DENSITY_D_MAX
 from pipeline.generators.image import ImageRequest, PartKind, asset_digest
@@ -1040,6 +1041,16 @@ def test_the_committed_stub_manifest_and_layers_validate() -> None:
         ("paleodem", RasterData),
     ):
         model.model_validate_json((STUB_DIR / "layers" / f"{layer_id}.json").read_text())
+
+
+@pytest.mark.content
+def test_the_committed_credits_doc_matches_the_published_manifest() -> None:
+    manifest = Manifest.model_validate_json(
+        (REPO_ROOT / "data" / "media" / "manifest.json").read_text()
+    )
+    assert (REPO_ROOT / CREDITS_DOC).read_text() == render_credits(manifest), (
+        "docs/CREDITS.md is stale: run `earthlapse publish`"
+    )
 
 
 def test_layer_publishing_carries_a_series_gap_into_the_wire_data() -> None:

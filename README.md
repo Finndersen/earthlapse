@@ -152,6 +152,7 @@ It is an artistic reconstruction, and says so.
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Architecture, time model, `WorldState`, scene rendering, layout |
 | [`docs/VISUAL_SPEC.md`](docs/VISUAL_SPEC.md) | Art direction, prompt architecture, style contract |
 | [`docs/GLOBE.md`](docs/GLOBE.md) | The globe: projection, reconstructions, overlays |
+| [`docs/CREDITS.md`](docs/CREDITS.md) | Every dataset, recording and event citation, with licences (generated) |
 | [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) | Every dataset — access, volume, storage, processing |
 | [`docs/IMPLEMENTATION.md`](docs/IMPLEMENTATION.md) | Phasing and agent work packages |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | ADR log |
@@ -235,6 +236,12 @@ layer needs neither: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Data
 
-Built on open scientific datasets — PALEOMAP PaleoDEMs, GPlates, the Paleobiology Database,
-HYDE, TimeTree, ice-core and proxy records. All cited; see
-[`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) and the generated credits page.
+Built on open scientific datasets: PALEOMAP PaleoDEMs and Merdith et al. (2021) plate
+reconstructions (via GPlates), HYDE population and land use, Cliopatria historical polities,
+historical city populations, Natural Earth, ice-core and GEOCARB CO₂, the LR04 benthic stack,
+an ancestor lineage dated from the primary literature, and some 200 individually cited events.
+
+Every dataset, sound recording and event citation, with licences, is listed in
+[`docs/CREDITS.md`](docs/CREDITS.md), generated from the same manifest as the site's credits
+panel. How each dataset is fetched and processed is in
+[`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md).

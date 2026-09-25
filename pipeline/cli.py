@@ -22,6 +22,7 @@ import typer
 
 from pipeline.assets import SceneGraph, build_scene_graph
 from pipeline.build import ImageJob, build_images, format_report
+from pipeline.credits_doc import write_credits
 from pipeline.curated import load_world
 from pipeline.generators.image import MissingCredentials
 from pipeline.generators.registry import ImageBackend, image_backend
@@ -460,12 +461,14 @@ def create_app(backend: ImageBackend) -> typer.Typer:
             raise fail(f"REFUSED: {err}") from err
         manifest_path = write_publication(publication, paths.media)
         manifest = publication.manifest
+        credits_path = write_credits(manifest, paths.root)
         typer.echo(
             f"wrote {manifest_path.relative_to(paths.root)} (build {manifest.build_id}): "
             f"{len(manifest.scenes)} scenes, {len(manifest.chapters)} chapters, "
             f"{len(manifest.layers)} layers, {len(manifest.events)} events, "
             f"{len(manifest.credits)} credits"
         )
+        typer.echo(f"wrote {credits_path.relative_to(paths.root)}")
         if publication.portraits is not None:
             typer.echo(format_portrait_publication(publication.portraits))
 
