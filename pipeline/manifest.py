@@ -254,6 +254,9 @@ class AudioStem(_WireModel):
     loop: AudioLoop | None = Field(default=None, exclude_if=lambda value: value is None)
     # Absent: a one-shot starts at 0 (`pipeline.audio.StemManifest.start_seconds`).
     start_seconds: float | None = Field(default=None, exclude_if=lambda value: value is None)
+    # Absent: a one-shot plays to its end. Otherwise where it stops, fading out over the second
+    # before (`pipeline.audio.StemManifest.end_seconds`).
+    end_seconds: float | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class Credit(_WireModel):

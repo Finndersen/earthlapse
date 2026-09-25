@@ -173,11 +173,15 @@ def test_level_trim_reaches_the_reference_without_lifting_a_peak_past_full_scale
     assert _stem(loudness_db=-45.0, peak_dbfs=-8.0).level_trim_db == 8.0
 
 
-def test_a_loop_region_must_lie_inside_a_loop_safe_clip() -> None:
+def test_a_loop_region_or_end_must_fit_its_kind_of_clip() -> None:
     with pytest.raises(ValidationError, match="before its end"):
         _stem(loop={"start_seconds": 30.0, "end_seconds": 10.0})
     with pytest.raises(ValidationError, match="one-shot"):
         _stem(loop_safe=False, loop={"start_seconds": 0.0, "end_seconds": 10.0})
+    with pytest.raises(ValidationError, match="one-shots only"):
+        _stem(end_seconds=10.0)
+    with pytest.raises(ValidationError, match="room for its fade"):
+        _stem(loop_safe=False, start_seconds=9.5, end_seconds=10.0)
 
 
 def test_measure_levels_reads_a_full_scale_1khz_sine_as_minus_3_db() -> None:
@@ -227,3 +231,22 @@ def test_a_looping_mp3_publishes_cut_to_its_loop_with_the_loop_on_the_same_frame
     assert timing.loop is not None
     assert timing.loop.start_seconds == pytest.approx((10.5 - kept[0]) * frame)
     assert timing.loop.end_seconds - timing.loop.start_seconds == pytest.approx(9.5 * frame)
+
+
+def test_a_one_shot_stopped_early_publishes_cut_to_its_end_with_start_and_end_on_the_same_frames() -> (
+    None
+):
+    frame = 1152 / 48000
+    stem = _stem(
+        loop_safe=False,
+        duration_seconds=80 * frame,
+        start_seconds=6.5 * frame,
+        end_seconds=60 * frame,
+    )
+    published = published_bytes(stem, _synthetic_mp3(80))
+
+    kept = [published[o + 4] for o in range(_FRAME_BYTES, len(published), _FRAME_BYTES)]
+    assert 0 < kept[0] < 6 and 60 <= kept[-1] < 79
+    timing = published_timing(stem, published)
+    assert timing.start_seconds == pytest.approx((6.5 - kept[0]) * frame)
+    assert timing.end_seconds == pytest.approx((60 - kept[0]) * frame)

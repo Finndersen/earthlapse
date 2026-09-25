@@ -303,6 +303,9 @@ function validateAudioStem(v: unknown, path: string): AudioStem {
   if (r.startSeconds !== undefined) {
     stem.startSeconds = expectNumber(r.startSeconds, `${path}.startSeconds`)
   }
+  if (r.endSeconds !== undefined) {
+    stem.endSeconds = expectNumber(r.endSeconds, `${path}.endSeconds`)
+  }
   return stem
 }
 

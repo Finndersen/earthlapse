@@ -412,6 +412,8 @@ peak_dbfs = -0.3
 # field recording (Furnas caldeira, Azores), authored as a loop. Was `volcanic` in v1, where it
 # read as water; the same bytes now serve only the hot-spring scenes. Spectrogram: dense
 # unpitched granular energy at 150-1000 Hz, no transients.
+# Loop re-chosen 2026-09-25 to at most 10 s (8.5 s), inside the clip, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "geothermal"
 title = "Hot Spring Caldeira Ambience Loop"
@@ -423,8 +425,9 @@ raw_filename = "geothermal.mp3"
 format = "mp3"
 duration_seconds = 30.0
 loop_safe = true
-loudness_db = -26.8
-peak_dbfs = -7.2
+loudness_db = -26.7
+peak_dbfs = -7.6
+loop = { start_seconds = 8.3899, end_seconds = 16.8743 }
 
 # https://freesound.org/people/craigsmith/sounds/483287/ -- CC0 1.0, craigsmith, "R29-03-Long
 # Rumble for Earthquake or Explosion.wav" (vintage Hollywood optical effect). Spectrogram: a
@@ -432,6 +435,8 @@ peak_dbfs = -7.2
 # out; no speech, music or clipping. Quiet (peak -19.5 dBFS), lifted by its level trim. The
 # alternate "G33-24-Atomic Bomb" (438530) was rejected: its first 1.5 s is a spoken slate
 # (formant arcs), which the pipeline cannot trim.
+# Stops at 10.0 s, fading out over the last second (end_seconds, 2026-09-25): no scene holds
+# long enough for more; levels re-measured over the part that plays.
 [[stems]]
 id = "impact"
 title = "Long Rumble for Earthquake or Explosion"
@@ -443,8 +448,9 @@ raw_filename = "impact.mp3"
 format = "mp3"
 duration_seconds = 23.23
 loop_safe = false
-loudness_db = -35.7
+loudness_db = -34.8
 peak_dbfs = -19.5
+end_seconds = 10.0
 
 # https://freesound.org/people/klangfabrik/sounds/220127/ -- CC0 1.0, klangfabrik,
 # "shuttlelaunch.wav": a re-edit of public-domain NASA **Space Shuttle** launch recordings with
@@ -452,6 +458,8 @@ peak_dbfs = -19.5
 # NASA's image and audio library, Internet Archive), so apollo-11-launch plays a Shuttle
 # launch -- a documented substitution. Spectrogram: broadband roar (61% below 150 Hz)
 # decaying over 2:12 to silence; no speech formants, crowd or music.
+# Stops at 10.0 s, fading out over the last second (end_seconds, 2026-09-25): no scene holds
+# long enough for more; levels re-measured over the part that plays.
 [[stems]]
 id = "rocket"
 title = "Space Shuttle Launch"
@@ -463,14 +471,17 @@ raw_filename = "rocket.mp3"
 format = "mp3"
 duration_seconds = 132.42
 loop_safe = false
-loudness_db = -25.0
+loudness_db = -18.7
 peak_dbfs = -0.2
+end_seconds = 10.0
 
 # https://freesound.org/people/itinerantmonk108/sounds/648720/ -- CC0 1.0, itinerantmonk108,
 # "Bi-plane flyby.wav". A modern single-prop biplane passing (mono). No CC0/PD recording of a
 # 1903 Wright Flyer engine (or replica) exists, so first-powered-flight plays this at low gain
 # -- a documented substitution. Spectrogram: piston firing harmonics near 100-250 Hz with a
 # Doppler swell at 5-7 s; no jet whine, rotor or voices; a few faint bird chirps after 8 s.
+# Stops at 10.0 s, fading out over the last second (end_seconds, 2026-09-25): no scene holds
+# long enough for more; levels re-measured over the part that plays.
 [[stems]]
 id = "aircraft"
 title = "Biplane Flyby"
@@ -482,8 +493,9 @@ raw_filename = "aircraft.mp3"
 format = "mp3"
 duration_seconds = 14.34
 loop_safe = false
-loudness_db = -24.8
+loudness_db = -23.9
 peak_dbfs = -3.6
+end_seconds = 10.0
 
 # https://freesound.org/people/fury12/sounds/496237/ -- CC0 1.0, fury12, "Bee flying loop"
 # (tags: bee, loop, mono; authored as a loop). mid-cretaceous-pollinators' scene sound, a
@@ -515,6 +527,8 @@ loop = { start_seconds = 1.276, end_seconds = 4.128 }
 # loop region drops the very first strike the clip opens on, so both wrap ends sit in a matched
 # quiet gap. Rejected Fenodyrie "stone on stone.wav" (565914): heavier slapping thuds (tags
 # brick/concrete/slab), not fine hand-knapping.
+# Loop re-chosen 2026-09-25 to at most 10 s (8.6 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "knapping"
 title = "Stone on Stone Hit"
@@ -526,9 +540,9 @@ raw_filename = "knapping.mp3"
 format = "mp3"
 duration_seconds = 17.69
 loop_safe = true
-loudness_db = -23.0
-peak_dbfs = -0.3
-loop = { start_seconds = 0.99215, end_seconds = 17.55596 }
+loudness_db = -22.5
+peak_dbfs = -0.4
+loop = { start_seconds = 7.1402, end_seconds = 15.7567 }
 
 # https://freesound.org/people/Danjocross/sounds/507467/ -- CC0 1.0, Danjocross, "Angry
 # Elephant.aiff" (tags: angry, blare, elephant, horn, trumpet). pleistocene-steppe's scene sound.
@@ -566,6 +580,8 @@ peak_dbfs = -0.2
 # gaps; no siren, speech, music or ricochet/whistle effects. The loop region spans one continuous
 # sustained-burst stretch (14.7 s) long enough not to repeat too often for a "distant bombardment"
 # bed.
+# Loop re-chosen 2026-09-25 to at most 10 s (7.8 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "artillery"
 title = "Artillery Guns Firing"
@@ -577,9 +593,9 @@ raw_filename = "artillery.mp3"
 format = "mp3"
 duration_seconds = 46.56
 loop_safe = true
-loudness_db = -29.8
+loudness_db = -29.6
 peak_dbfs = -11.8
-loop = { start_seconds = 13.269, end_seconds = 27.984 }
+loop = { start_seconds = 17.6309, end_seconds = 25.4022 }
 
 # https://freesound.org/people/TheFlyFishingFilmmaker/sounds/614299/ -- CC0 1.0,
 # TheFlyFishingFilmmaker, "Gentle waves on a lake". Scene-only water bed for `angkor-wat` and
@@ -591,6 +607,8 @@ loop = { start_seconds = 13.269, end_seconds = 27.984 }
 # earlier candidate region wrapped just as cleanly but crossed that splash, whose peak-to-loudness
 # crest then kept the trim from meeting the loop reference's tolerance -- caught by
 # `test_real_catalogue_trims_every_loop_to_within_1_5_db_of_the_reference`.
+# Loop re-chosen 2026-09-25 to at most 10 s (8.1 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "lake-water"
 title = "Gentle waves on a lake"
@@ -602,9 +620,9 @@ raw_filename = "lake-water.mp3"
 format = "mp3"
 duration_seconds = 175.47
 loop_safe = true
-loudness_db = -38.2
-peak_dbfs = -12.3
-loop = { start_seconds = 73.930, end_seconds = 84.929 }
+loudness_db = -36.9
+peak_dbfs = -9.8
+loop = { start_seconds = 74.2956, end_seconds = 82.435 }
 
 # https://freesound.org/people/cookies+policy/sounds/555923/ -- CC0 1.0, cookies+policy, "Geiger
 # counter clicks (MED)": a real Eberline E-120 Geiger counter's speaker, close-miked.
@@ -614,6 +632,8 @@ loop = { start_seconds = 73.930, end_seconds = 84.929 }
 # charger's beeping by its own description, and the synthesized Reaper/continuity-meter
 # "Geiger" clips. The loop region wraps between two silent inter-click gaps; a denser burst near
 # 148 s lies outside it.
+# Loop re-chosen 2026-09-25 to at most 10 s (8.9 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "geiger-counter"
 title = "Geiger counter clicks (MED)"
@@ -625,9 +645,9 @@ raw_filename = "geiger-counter.mp3"
 format = "mp3"
 duration_seconds = 180.0
 loop_safe = true
-loudness_db = -31.6
-peak_dbfs = -3.1
-loop = { start_seconds = 24.0025, end_seconds = 55.0495 }
+loudness_db = -31.4
+peak_dbfs = -3.2
+loop = { start_seconds = 36.3694, end_seconds = 45.2713 }
 
 # https://freesound.org/people/CHallSmith/sounds/870877/ -- CC0 1.0, CHallSmith, "Train Steam
 # Whistle, Distant": a steam locomotive whistling about a mile off, echoing across open prairie.
@@ -636,6 +656,8 @@ loop = { start_seconds = 24.0025, end_seconds = 55.0495 }
 # in -- a documented substitution. Spectrogram: three long blasts of a chime chord (~310/380/480 Hz with harmonics)
 # with a prairie echo tail; no diesel horn, speech, bird calls or music. `start_seconds = 0.22`
 # skips the file's digital-silence lead-in.
+# Stops at 7.4 s, fading out over the last second (end_seconds, 2026-09-25): no scene holds
+# long enough for more; levels re-measured over the part that plays.
 [[stems]]
 id = "steam-whistle"
 title = "Train Steam Whistle, Distant"
@@ -648,8 +670,9 @@ format = "mp3"
 duration_seconds = 22.17
 loop_safe = false
 start_seconds = 0.22
-loudness_db = -20.5
-peak_dbfs = -0.8
+loudness_db = -19.8
+peak_dbfs = -3.5
+end_seconds = 7.4
 
 # https://freesound.org/people/tierrafilm@gmail.com/sounds/420716/ -- CC0 1.0,
 # tierrafilm@gmail.com, "ship horn very close": the horn of the merchant ship m/s Lubie, recorded
@@ -679,6 +702,8 @@ peak_dbfs = -1.3
 # region runs idle -> sustained cutting -> idle, wrapping between two idle stretches at matched
 # level and pitch; one low thud (a falling branch, ~27 s) lies inside it. The recording is close,
 # so scene gain carries the distance.
+# Loop re-chosen 2026-09-25 to at most 10 s (7.8 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "chainsaw"
 title = "CHAINSAW - 1"
@@ -690,9 +715,9 @@ raw_filename = "chainsaw.mp3"
 format = "mp3"
 duration_seconds = 61.83
 loop_safe = true
-loudness_db = -22.3
-peak_dbfs = -0.7
-loop = { start_seconds = 14.9925, end_seconds = 33.4015 }
+loudness_db = -23.5
+peak_dbfs = -1.1
+loop = { start_seconds = 19.1666, end_seconds = 26.9814 }
 
 # https://freesound.org/people/Lenguaverde/sounds/490315/ -- CC0 1.0, Lenguaverde, "Howler
 # Monkeys": howler monkeys (Alouatta) calling at dawn in the Guatemalan jungle -- the same region
@@ -702,6 +727,8 @@ loop = { start_seconds = 14.9925, end_seconds = 33.4015 }
 # low-passed at 5 kHz; FlyingMarmot "Howler Monkeys" (414248, Lamanai): 92% of its energy is
 # wind/handling rumble below 150 Hz. The loop region (83 s, about a dozen bouts) wraps between two
 # matched quiet gaps between calls, and `loudness_db`/`peak_dbfs` are measured on it.
+# Loop re-chosen 2026-09-25 to at most 10 s (9.0 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "howler-monkeys"
 title = "Howler Monkeys"
@@ -713,9 +740,9 @@ raw_filename = "howler-monkeys.mp3"
 format = "mp3"
 duration_seconds = 168.84
 loop_safe = true
-loudness_db = -21.9
-peak_dbfs = -0.4
-loop = { start_seconds = 66.0410, end_seconds = 149.1500 }
+loudness_db = -19.4
+peak_dbfs = -3.3
+loop = { start_seconds = 91.9916, end_seconds = 100.9738 }
 
 # https://freesound.org/people/craigsmith/sounds/480002/ -- CC0 1.0, craigsmith, "R18-31-Old Car
 # Ahooga Horn.wav" (vintage Hollywood optical effect, the same source style as `impact`/
@@ -744,6 +771,8 @@ peak_dbfs = -17.7
 # pulsed wheeze-honk series near the end; a faint pulsed insect band at ~3.8 kHz throughout; no
 # speech formants, vehicles or music. The 15.5 s loop region wraps between two matched quiet
 # moments, skipping the file's near-silent first 0.24 s.
+# Loop re-chosen 2026-09-25 to at most 10 s (9.5 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "hippo"
 title = "hippos"
@@ -755,9 +784,9 @@ raw_filename = "hippo.mp3"
 format = "mp3"
 duration_seconds = 16.35
 loop_safe = true
-loudness_db = -28.3
+loudness_db = -28.0
 peak_dbfs = -4.2
-loop = { start_seconds = 0.2405, end_seconds = 15.7495 }
+loop = { start_seconds = 0.4205, end_seconds = 9.8876 }
 
 # https://freesound.org/people/Artiom_Constantinov/sounds/841053/ -- CC0 1.0, Artiom_Constantinov,
 # "chisel in the quarry": hammer blows on a chisel against rock, recorded in a quarry.
@@ -767,6 +796,8 @@ loop = { start_seconds = 0.2405, end_seconds = 15.7495 }
 # 1.3 s, with clean decays between; no speech, music, power tools or engines. The loop region is
 # almost the whole clip, wrapping in the near-silence before the first strike and after the last
 # full decay.
+# Loop re-chosen 2026-09-25 to at most 10 s (7.2 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "wall-chiselling"
 title = "chisel in the quarry"
@@ -778,9 +809,9 @@ raw_filename = "wall-chiselling.mp3"
 format = "mp3"
 duration_seconds = 37.08
 loop_safe = true
-loudness_db = -31.8
-peak_dbfs = -0.7
-loop = { start_seconds = 0.2000, end_seconds = 36.3890 }
+loudness_db = -32.7
+peak_dbfs = -1.8
+loop = { start_seconds = 22.6651, end_seconds = 29.8211 }
 
 # https://freesound.org/people/freesoundjon01/sounds/324257/ -- CC0 1.0, freesoundjon01, "Venice
 # Church Bells.wav": one church bell in Venice (behind the Hotel Belle Arti, Dorsoduro) struck
@@ -789,6 +820,8 @@ loop = { start_seconds = 0.2000, end_seconds = 36.3890 }
 # no second bell, speech, boat engines or music. The loop region wraps in the decay just before a
 # strike, so the strike rhythm continues across the wrap. A quiet recording (peak -20.6 dBFS),
 # lifted by its level trim.
+# Loop re-chosen 2026-09-25 to at most 10 s (9.2 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "church-bell"
 title = "Venice Church Bells"
@@ -800,9 +833,9 @@ raw_filename = "church-bell.mp3"
 format = "mp3"
 duration_seconds = 54.42
 loop_safe = true
-loudness_db = -43.0
-peak_dbfs = -20.6
-loop = { start_seconds = 5.4240, end_seconds = 48.4510 }
+loudness_db = -42.4
+peak_dbfs = -20.7
+loop = { start_seconds = 34.9126, end_seconds = 44.0731 }
 
 # https://freesound.org/people/craigsmith/sounds/483355/ -- CC0 1.0, craigsmith, "R28-03-Large
 # Wood Ship Creaking.wav" (vintage Hollywood optical effect). Moored-ship bed for
@@ -810,6 +843,8 @@ loop = { start_seconds = 5.4240, end_seconds = 48.4510 }
 # (FM contours at 250-500 Hz over a broadband floor) with no silence gaps; no ship's bell, water,
 # speech or music. Rejected craigsmith "G27-08-Movie Boat Creak Scene" (438354), which carries
 # dialogue. The loop region wraps between the clip's two quiet dips (~15 s and ~58 s).
+# Loop re-chosen 2026-09-25 to at most 10 s (10.0 s), inside the earlier region, at the
+# point where the waveform either side of the wrap best matches; levels re-measured over it.
 [[stems]]
 id = "ship-rigging"
 title = "Large Wood Ship Creaking"
@@ -821,9 +856,9 @@ raw_filename = "ship-rigging.mp3"
 format = "mp3"
 duration_seconds = 72.56
 loop_safe = true
-loudness_db = -32.3
+loudness_db = -31.9
 peak_dbfs = -12.5
-loop = { start_seconds = 14.6825, end_seconds = 57.9320 }
+loop = { start_seconds = 41.5702, end_seconds = 51.548 }
 
 # https://freesound.org/people/craigsmith/sounds/479980/ -- CC0 1.0, craigsmith, "R04-39-Trolley
 # Bell.wav" (vintage Hollywood optical effect). ginza-modern-tokyo's scene sound -- a stand-in

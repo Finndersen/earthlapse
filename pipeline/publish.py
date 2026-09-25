@@ -832,7 +832,7 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
                 f"to clear the stale one(s)"
             )
         published = f"audio/{matches[0].name}"
-        # A looping MP3 is published cut to its loop region, so its timing is read back off the
+        # An MP3 is published cut to the span that plays, so its timing is read back off the
         # published file (`pipeline.audio.published_timing`).
         timing = published_timing(stem, matches[0].read_bytes())
         stems.append(
@@ -851,7 +851,8 @@ def _audio_stems(stem_book: StemBook, root: Path) -> tuple[AudioStem, ...]:
                 else AudioLoop(
                     start_seconds=timing.loop.start_seconds, end_seconds=timing.loop.end_seconds
                 ),
-                start_seconds=stem.start_seconds,
+                start_seconds=timing.start_seconds,
+                end_seconds=timing.end_seconds,
             )
         )
     return tuple(stems)

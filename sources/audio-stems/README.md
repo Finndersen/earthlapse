@@ -38,6 +38,7 @@ upstream file). Each `[[stems]]` entry:
 | `loudness_db`, `peak_dbfs` | curator-attested, measured with `levels.py` on the decoded clip: gated A-weighted loudness and sample peak. Publish derives `AudioStem.level_trim_db` from them (`pipeline.audio.StemManifest.level_trim_db`): loops are trimmed to -30 dB, one-shots to -20 dB, never lifting a peak past full scale |
 | `loop` | optional `{ start_seconds, end_seconds }`, loop-safe stems only: the span a looping player repeats, chosen from the decoded samples to skip a silent head/tail, a fade or an edit splice, with both ends at matched level and near-equal samples. Absent: the whole clip loops |
 | `start_seconds` | optional, one-shots only (`loop_safe = false`; a loop trims its head via `loop` instead): playback start offset in seconds, skipping a silent (or otherwise unwanted) lead-in so a `once` sound starts right on the scene's trigger instead of lagging behind it (era-fit v3 fixes, 2026-09-15: `mammoth`'s ~1.4 s near-silent lead-in). Absent: starts at 0 |
+| `end_seconds` | optional, one-shots only, at least a second after the start: where playback stops, the last second fading out, so a long recording plays only its opening (2026-09-25: scene-only stems play at most about 10 s). The published file is cut to the played span. Absent: plays to the end |
 
 `fetch.py` loops `pipeline.fetching.ensure_verified_artefact` once per `[[stems]]` entry, sending a
 descriptive `User-Agent` (Wikimedia's upload servers answer 403 without one).
@@ -104,10 +105,10 @@ contribution — see its own `stems.toml` entry comment, `forest` re-sourced a T
 2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
 rain recording, then a FOURTH time the same day after an independent review found the third pick
 was itself low-frequency wind rumble rather than genuine leaf rustle, and eleven single-scene
-stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~29.5 MB published, since each
-looping stem publishes cut to its loop region. The largest published files are `rocket` (3.1 MB,
-a 2:12 one-shot launch played whole), `birds` (2.1 MB, its 92 s loop) and `howler-monkeys`
-(1.9 MB, its 83 s loop). Every stem is CC0 or public domain.
+stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~20.2 MB published, since each looping stem publishes cut to its loop region and a one-shot to
+its `start_seconds`..`end_seconds`, and every scene-only stem plays at most about 10 s. The
+largest published files are ambience beds: `birds` (2.1 MB, its 92 s loop), `mammals` (1.6 MB)
+and `storm` (1.5 MB). Every stem is CC0 or public domain.
 
 ## Sourcing checks (nobody can listen)
 

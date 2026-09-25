@@ -7785,3 +7785,27 @@ since playback starts at `loopStart`. Published audio falls from 47.1 MB to 29.5
 
 **Not trimmed.** One-shots play from `start_seconds` to their end, and stems with no `loop` region
 loop the whole clip, so neither has unplayed audio to drop beyond a one-shot's short lead-in.
+
+## ADR-023 amendment (2026-09-25): scene-only stems play at most about 10 s
+
+The amendment above cut each looping stem to its loop region but left the regions and one-shots
+as sourced: `rocket` still shipped a 2:12 launch, and scene-only loops ran up to 43 s. No viewer
+holds a scene long enough to hear either, so the user set a ceiling of about 10 s on every
+scene-only stem, most shorter.
+
+**Decision.** (1) **One-shots gain an optional `end_seconds`**, one-shots only, at least the fade
+after the start: the engine schedules the stop so a one-second fade-out ends there
+(`ONE_SHOT_END_FADE_SECONDS`, `ONCE_END_FADE_SECONDS`), and the published file is cut to
+`start_seconds`..`end_seconds` like a loop region. `rocket`, `impact` and `aircraft` stop at
+10 s, and `steam-whistle` at 7.4 s, after its first blast. (2) **Every scene-only loop region is
+re-chosen at 7-10 s**, inside its earlier region so the sourcing checks on it still hold: a search
+over start and end points keeps the two ends within 0.75 dB of each other over half a second, a
+wrap step no bigger than the clip's own sample-to-sample movement nearby, and the smallest
+waveform difference across 3 ms either side of the wrap. (3) **Levels are re-measured over the
+part that now plays** (`levels.py`), since a short span can sit well off its clip's average
+(`rocket` +6.3 dB without its long decay, `howler-monkeys` +2.5 dB), and `level_trim_db` follows.
+
+Ambience stems are unchanged: they are beds that cross-fade across many scenes, not a scene's
+effect. Published audio falls from 29.5 MB to 20.2 MB; every cut file still decodes in Chromium
+to its raw clip's samples across the part that plays, within one 16-bit step (four at the head of
+`steam-whistle`, -78 dB).

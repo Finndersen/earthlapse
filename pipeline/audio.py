@@ -61,6 +61,9 @@ SLUG_PATTERN = r"^[a-z0-9][a-z0-9-]*$"
 LOOP_REFERENCE_LOUDNESS_DB = -30.0
 ONE_SHOT_REFERENCE_LOUDNESS_DB = -20.0
 
+# How long a one-shot stopped early by `end_seconds` takes to fade out, ending at `end_seconds`.
+ONE_SHOT_END_FADE_SECONDS = 1.0
+
 
 class LoopRegion(BaseModel):
     """The span of a clip a looping player repeats, in seconds from the clip start. Chosen at
@@ -117,6 +120,9 @@ class StemManifest(BaseModel):
     # `loop_safe = false` clip so playback starts right on the scene's `once` trigger instead of
     # lagging behind it -- the one-shot counterpart to `loop`'s head/tail trim for loops.
     start_seconds: float | None = Field(default=None, ge=0.0)
+    # Absent: a one-shot plays to the end of its clip. Where it stops instead, the last
+    # `ONE_SHOT_END_FADE_SECONDS` fading out, so a long recording plays only its opening.
+    end_seconds: float | None = Field(default=None, gt=0.0)
 
     @model_validator(mode="after")
     def _loop_region_fits_a_loop_safe_clip(self) -> StemManifest:
@@ -144,6 +150,20 @@ class StemManifest(BaseModel):
             raise ValueError(
                 f"stem {self.id}: start_seconds {self.start_seconds} s is at or after the clip's "
                 f"{self.duration_seconds} s"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _end_fits_a_one_shot_clip(self) -> StemManifest:
+        if self.end_seconds is None:
+            return self
+        if self.loop_safe:
+            raise ValueError(f"stem {self.id}: end_seconds is for one-shots only")
+        start = self.start_seconds or 0.0
+        if not start + ONE_SHOT_END_FADE_SECONDS < self.end_seconds <= self.duration_seconds:
+            raise ValueError(
+                f"stem {self.id}: end_seconds {self.end_seconds} s must leave room for its fade "
+                f"after start {start} s and lie inside the clip's {self.duration_seconds} s"
             )
         return self
 
@@ -225,22 +245,31 @@ def sniff_audio(data: bytes) -> AudioFormat:
 TRIM_MARGIN_SECONDS = 0.1
 
 
+def _played_span(stem: StemManifest) -> tuple[float, float] | None:
+    """The part of an MP3 stem that ever plays, when that is less than the whole clip: a loop
+    region, or a one-shot's `start_seconds` to `end_seconds`."""
+    if stem.format != AudioFormat.MP3:
+        return None
+    if stem.loop is not None:
+        return stem.loop.start_seconds, stem.loop.end_seconds
+    if stem.end_seconds is not None:
+        return stem.start_seconds or 0.0, stem.end_seconds
+    return None
+
+
 def _is_trimmed(stem: StemManifest) -> bool:
-    return stem.loop is not None and stem.format == AudioFormat.MP3
+    return _played_span(stem) is not None
 
 
 def _trim_window(stem: StemManifest, fmt: mp3.StreamFormat) -> tuple[int, int]:
-    assert stem.loop is not None
-    return mp3.frame_window(
-        fmt,
-        stem.loop.start_seconds - TRIM_MARGIN_SECONDS,
-        stem.loop.end_seconds + TRIM_MARGIN_SECONDS,
-    )
+    span = _played_span(stem)
+    assert span is not None
+    return mp3.frame_window(fmt, span[0] - TRIM_MARGIN_SECONDS, span[1] + TRIM_MARGIN_SECONDS)
 
 
 def published_bytes(stem: StemManifest, raw: bytes) -> bytes:
-    """The bytes a stem publishes: a looping MP3 cut losslessly to its loop region plus a margin,
-    since nothing outside the region ever plays; anything else unchanged."""
+    """The bytes a stem publishes: an MP3 cut losslessly to the span that plays (its loop region,
+    or a one-shot's start to end) plus a margin; anything else unchanged."""
     if not _is_trimmed(stem):
         return raw
     first, stop = _trim_window(stem, mp3.stream_format(raw))
@@ -254,24 +283,39 @@ class PublishedTiming(BaseModel):
 
     duration_seconds: float
     loop: LoopRegion | None
+    start_seconds: float | None
+    end_seconds: float | None
 
 
 def published_timing(stem: StemManifest, published: bytes) -> PublishedTiming:
     """`stem`'s curator-attested timing, moved onto the published file `published_bytes` wrote.
-    The shift is whole frames, so the loop lands on the same samples it did in the raw clip."""
+    The shift is whole frames, so every time lands on the same samples it did in the raw clip."""
     if not _is_trimmed(stem):
-        return PublishedTiming(duration_seconds=stem.duration_seconds, loop=stem.loop)
-    assert stem.loop is not None
+        return PublishedTiming(
+            duration_seconds=stem.duration_seconds,
+            loop=stem.loop,
+            start_seconds=stem.start_seconds,
+            end_seconds=stem.end_seconds,
+        )
     fmt = mp3.stream_format(published)
     first, _ = _trim_window(stem, fmt)
     shift = fmt.frame_seconds(first)
     duration = min(
         stem.duration_seconds - shift, fmt.frame_seconds(mp3.audio_frame_count(published))
     )
+
+    def shifted(seconds: float | None) -> float | None:
+        return None if seconds is None else round(max(0.0, seconds - shift), 6)
+
     return PublishedTiming(
         duration_seconds=round(duration, 3),
-        loop=LoopRegion(
+        loop=None
+        if stem.loop is None
+        else LoopRegion(
             start_seconds=round(stem.loop.start_seconds - shift, 6),
             end_seconds=round(stem.loop.end_seconds - shift, 6),
         ),
+        # A cut one-shot always names its start: the clip's own 0 has moved into the margin.
+        start_seconds=None if stem.loop is not None else shifted(stem.start_seconds or 0.0),
+        end_seconds=shifted(stem.end_seconds),
     )
