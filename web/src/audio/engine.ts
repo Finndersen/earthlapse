@@ -57,6 +57,9 @@ const TICK_MS = 80
 const GAIN_SMOOTH_SECONDS = 0.5
 /** ADR-023 §2: the score recedes by up to 60% while a scene's own sound is prominent. */
 const SCORE_DUCK_AMOUNT = 0.6
+/** The ambience bed recedes by up to 40% under a scene's own sound, so the sound a scene names
+ *  stands out from the curve stems around it. The stem the scene names is never ducked. */
+const BED_DUCK_AMOUNT = 0.4
 /** A fired once-mode effect ducks the score for at most this long, even if a stem's own
  *  published `durationSeconds` (ADR-023 §4/§5) is longer or missing. */
 const ONCE_DUCK_MAX_SECONDS = 20
@@ -745,15 +748,19 @@ function runLoaderStep(Tone: ToneModule, runtime: ToneRuntime, needed: ReadonlyS
  *  scene's own loop-mode sound can foreground an ambience stem above its curve while the scene
  *  is on screen; it never suppresses the curve, so the two combine with `Math.max` — the same
  *  rule `sceneSoundLoopGains` uses for two scenes sharing a stem. A scene-only loop has no
- *  curve and sounds only while its scene is presented. Returns the max scene-sound gain seen,
- *  for the score's own ducking. */
-function updateLoopVoices(runtime: ToneRuntime, ambient: Record<string, number>, sceneLoop: Partial<Record<string, number>>, nowMs: number): number {
-  let maxSceneSoundGain = 0
+ *  curve and sounds only while its scene is presented. `bedScale` ducks the curve gains
+ *  (`BED_DUCK_AMOUNT`). */
+function updateLoopVoices(
+  runtime: ToneRuntime,
+  ambient: Record<string, number>,
+  sceneLoop: Partial<Record<string, number>>,
+  bedScale: number,
+  nowMs: number,
+): void {
   for (const voice of runtime.loopVoices.values()) {
     const { plan } = voice
     const sceneGain = sceneLoop[plan.id] ?? 0
-    maxSceneSoundGain = Math.max(maxSceneSoundGain, sceneGain)
-    voice.target = plan.kind === 'ambience-loop' ? Math.max(ambient[plan.id] ?? 0, sceneGain) : sceneGain
+    voice.target = plan.kind === 'ambience-loop' ? Math.max((ambient[plan.id] ?? 0) * bedScale, sceneGain) : sceneGain
     const effectiveGain = voice.target * voice.levelGain
 
     if (effectiveGain > SILENCE_GAIN_THRESHOLD) {
@@ -773,7 +780,6 @@ function updateLoopVoices(runtime: ToneRuntime, ambient: Record<string, number>,
       }
     }
   }
-  return maxSceneSoundGain
 }
 
 // -------------------------------------------------------------------------------- the hook
@@ -1044,8 +1050,8 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
       const onceDuckActive = duck !== null && nowMs < duck.untilMs && !onceSoundOutlived(targetNow, presentedNow, duck.sceneId, duck.hasBeenPresented)
       const onceGain = onceDuckActive ? duck.gain : 0
 
-      const loopSceneSoundGain = updateLoopVoices(runtime, ambient, sceneLoop, nowMs)
-      const maxSceneSoundGain = Math.max(onceGain, loopSceneSoundGain)
+      const maxSceneSoundGain = Math.max(onceGain, ...Object.values(sceneLoop).map((g) => g ?? 0))
+      updateLoopVoices(runtime, ambient, sceneLoop, 1 - BED_DUCK_AMOUNT * maxSceneSoundGain, nowMs)
 
       const params = scoreParams(
         tickT,

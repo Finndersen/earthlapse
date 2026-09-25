@@ -7860,3 +7860,37 @@ ecosystems (Scott, A.C. & Glasspool, I.J. (2006), PNAS 103(29), 10861-10865), pe
 the human soundscape; the scenes that show a fire (`jebel-irhoud-firelight`, `hattusa-abandoned`)
 carry their own `fire` sound. `fire` is now audible for 49 s of the playthrough: 10 s of wildfire,
 33 s of hearth, 6 s of Hattusa.
+
+## ADR-023 amendment (2026-09-25): the bed follows the scene
+
+Tabulating every ambience stem's curve gain at every scene's `t` showed beds that contradict the
+scene on screen:
+
+- `insects` summed three stridulation ramps to 0.35, the loudest stem in the bed from 56 Ma on,
+  above `forest`'s 0.3. Being ducked only by `humanDominance` (from 1761), it kept a full cricket
+  chorus under Göbekli Tepe, Çatalhöyük, Athens, Rome and Edo.
+- `mammals` is a lion-roaring bout. It sat at 0.13 under every Holocene city.
+- `forest` and `insects` played a humid summer bed under the glacial steppe of
+  `ice-age-europe-neanderthal` and `pleistocene-steppe`.
+- `settlement` (a crowd), `industry` and `traffic` played under scenes with nobody in them:
+  `hattusa-abandoned`, `chernobyl-exclusion-zone`, `covid-19-venice-lockdown`, `trinity-test`,
+  `green-revolution-fields`, `amazon-deforestation-fishbone` and `energy-transition-solar-wind`.
+  The hearth bed also played under `eemian-thames-hippos`, though Britain was deserted then.
+- `livestock` (goats) played under `tikal-classic-maya` and `columbus-landfall-1492`.
+- A scene's own sound never ducked the bed, so a named sound competed with five or six stems
+  at full level.
+
+**Decision.**
+
+- **Insects.** `insects` peaks at 0.18, under `forest`.
+- **Farms and cities.** The wildlife stems (`forest`, `wing-hum`, `insects`, `birds`, `mammals`)
+  are ducked by `wildlifeDominance`: the larger of `humanDominance` and a ramp to 0.7 from
+  `agriculture` t_max to `uruk-first-city` t_min.
+- **Scene-local dips.** These reach 0 at one scene's own `t` and recover by the log-space midpoint
+  to its neighbours, the same `presenceNotch` mechanism `barrenSceneDuck` uses. They approximate
+  what is on screen; they make no claim about the whole globe.
+  - A glacial-steppe dip on `forest`, `wing-hum` and `insects`.
+  - A no-people dip on `fire`, `settlement`, `industry` and `traffic` for the scenes above.
+  - An Americas dip on `livestock`.
+- **Scene sounds.** While a scene's own sound plays, the engine scales every curve gain by
+  `1 - 0.4 × scene gain`. The stem the scene names is never ducked.

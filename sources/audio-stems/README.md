@@ -15,7 +15,7 @@ Two kinds of stem share one catalogue:
   `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`, `chainsaw`,
   `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell` and `ship-rigging`
   (`loop_safe = true`, usable as `mode: loop`) and the one-shots `impact`, `rocket`, `aircraft`,
-  `mammoth`, `steam-whistle`, `ship-horn`, `klaxon-horn` and `tram-bell` (`loop_safe = false`,
+  `mammoth`, `steam-whistle`, `ship-horn`, `klaxon-horn`, `tram-bell` and `sauropod` (`loop_safe = false`,
   `mode: once` only). No separate `kind` field: "one-shot" means
   "not loop-safe".
 
@@ -56,7 +56,7 @@ match, rather than guessing.
 
 ## Gotchas
 
-- **An empty `stems.toml` is valid** (though this one now carries thirty-six stems: the
+- **An empty `stems.toml` is valid** (though this one now carries thirty-seven stems: the
   seventeen v2 stems sourced 2026-09-14, `forest`, `large-animal`, `buzzing`, `knapping` and
   `mammoth` sourced 2026-09-15 "era fit v3", `archosaurs`/`livestock` re-sourced and `artillery`/
   `lake-water` added the same day by later 2026-09-15 amendments, `wing-hum` added by a
@@ -94,7 +94,7 @@ match, rather than guessing.
 
 ## Measured volume
 
-~44.9 MB (36 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
+~45.3 MB (37 stems, `data/raw/audio-stems/`; v2 set sourced 2026-09-14, `birds`/`mammals`
 re-sourced 2026-09-15, `large-animal`/`buzzing`/`knapping`/`mammoth` added 2026-09-15 "era fit v3",
 `forest` re-sourced again the same day by the "era fit v3 fixes" amendment after its first pick
 turned out to carry bird/primate-like FM chirps, `archosaurs`/`livestock` re-sourced and
@@ -105,7 +105,7 @@ contribution — see its own `stems.toml` entry comment, `forest` re-sourced a T
 2026-09-16 after listening feedback found its second pick, though frog/bird-free, was a literal
 rain recording, then a FOURTH time the same day after an independent review found the third pick
 was itself low-frequency wind rumble rather than genuine leaf rustle, and eleven single-scene
-stems added 2026-09-25, ~13.9 MB of the total) downloaded; ~4.8 MB published: every stem is cut to the span that plays and re-encoded small, each
+stems added 2026-09-25, ~13.9 MB of the total, and `sauropod` the same day) downloaded; ~4.8 MB published: every stem is cut to the span that plays and re-encoded small, each
 scene-only stem plays at most about 10 s, and each ambience bed loops for 9-29 s, sized to how
 long a 1x playthrough hears it. Every stem is CC0 or public domain.
 

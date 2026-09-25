@@ -788,14 +788,18 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 >   `pleistocene-steppe` alone, which has no free `sound` slot for it (era-fit v3, ADR-023
 >   amendment 2026-09-15, corrected by its "era fit v3 fixes" amendment, also 2026-09-15). A pure
 >   `humanDominance(t)` (0 before 1761, 1 at present) ducks `forest`, `wing-hum`, `insects`,
->   `birds`, `mammals` and `livestock` as industry and traffic take over; `fire` is a late
+>   `birds`, `mammals` and `livestock` as industry and traffic take over, the wild stems already
+>   receding to 0.7 of it as farms and cities spread (11.5 → 5 ka); scene-local dips drop the
+>   humid bed under the glacial steppe, the crowd, hearth and traffic under scenes with nobody in
+>   them, and goats under the pre-1492 Americas; a scene's own sound ducks the rest of the bed by
+>   up to 40% (ADR-023 amendment "the bed follows the scene"); `fire` is a late
 >   Palaeozoic wildfire window and a hearth layer that ends with agriculture (ADR-023 amendment
->   "fire is not a permanent bed"). Twenty further
+>   "fire is not a permanent bed"). Twenty-one further
 >   **scene-only** stems have no curve and are reached only through a scene's
 >   `sound`: `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`,
 >   `chainsaw`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`, `ship-rigging` (loop)
 >   and the one-shots `impact`, `rocket`, `aircraft`, `mammoth`, `steam-whistle`, `ship-horn`,
->   `klaxon-horn`, `tram-bell` (a one-shot is a stem published with
+>   `klaxon-horn`, `tram-bell`, `sauropod` (a one-shot is a stem published with
 >   `loopSafe: false`, and
 >   may name a `startSeconds` offset to skip a silent lead-in). `archosaurs`/`livestock` (both
 >   ambience stems) were re-sourced in place, same ids and curve, after their original Wikimedia

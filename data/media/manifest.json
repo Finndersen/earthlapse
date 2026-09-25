@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "aa4c681d0898ef0c",
+  "buildId": "302263372923109a",
   "assetBase": "/media",
   "scenes": [
     {
@@ -1929,9 +1929,9 @@
       "caption": "Sauropods wade a Late Jurassic braided river through a floodplain of conifers, cycads and ferns, without a single flower.",
       "events": [],
       "sound": {
-        "stem": "archosaurs",
-        "mode": "loop",
-        "gain": 0.9
+        "stem": "sauropod",
+        "mode": "once",
+        "gain": 1.0
       },
       "framing": {
         "focus": [
@@ -6789,6 +6789,19 @@
       "loopSafe": false,
       "levelTrimDb": 8.5,
       "startSeconds": 0.134531
+    },
+    {
+      "id": "sauropod",
+      "file": "audio/sauropod-9cd062af67.mp3",
+      "title": "Dinosaur Breath, Moan, and Roar",
+      "author": "2create",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/670/670510_621042-hq.mp3",
+      "durationSeconds": 8.856,
+      "loopSafe": false,
+      "levelTrimDb": 3.9,
+      "startSeconds": 0.134531,
+      "endSeconds": 8.734531
     }
   ],
   "credits": [

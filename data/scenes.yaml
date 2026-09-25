@@ -703,10 +703,9 @@ scenes:
       far_bank: low, open fern prairie with scattered conifers under distant haze
       sky_and_light: a clear, deep blue sky with high thin cirrus and a bank of building cumulus on the horizon; crisp air with moderate distance haze
       absent: [flowers, flowering plants, grass, broadleaf trees, palms, large mammals, modern birds, people]
-    # ADR-023 (v2): `archosaurs` (public-domain USFWS alligator bellows: closed-mouth,
-    # low-frequency calls, Riede et al. 2016) as a `loop` above its 0.35 ambient -- sauropods
-    # in the foreground.
-    sound: {stem: archosaurs, mode: loop, gain: 0.9}
+    # A deep sauropod moan and bellow once on arrival, over the 0.35 `archosaurs` bed
+    # (closed-mouth, low-frequency calls, Riede et al. 2016).
+    sound: {stem: sauropod, mode: once, gain: 1.0}
     framing: {focus: [0.53, 0.55], pan: 0}
     pin: {asset_digest: "fff98516543632ed", path: "data/pins/scenes/jurassic-floodplain/fff98516543632ed.jpg"}
 

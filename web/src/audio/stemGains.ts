@@ -144,6 +144,65 @@ function lifePresence(t: GeoTime): number {
 }
 
 /**
+ * Farming, then cities, push wild animals off the land people live on: from `agriculture` t_max
+ * to `uruk-first-city` t_min the wildlife stems recede as if human dominance were already
+ * `SETTLED_LAND_DOMINANCE`, so Göbekli Tepe still sits in wild country while Athens, Rome or Edo
+ * no longer carry a lion or cricket chorus. `humanDominance` takes over once industry passes it.
+ */
+const SETTLED_LAND_DOMINANCE = 0.7
+
+function wildlifeDominance(t: GeoTime, dominance: number): number {
+  return Math.max(dominance, rampLog(t, 1.1525e4, 5.125e3, 0, SETTLED_LAND_DOMINANCE))
+}
+
+/**
+ * `ice-age-europe-neanderthal` (42 ka) and `pleistocene-steppe` (20 ka) show the cold, open
+ * steppe of the last glacial, with no humid forest or summer cricket chorus. The dip spans both
+ * scenes and leaves out `wallacea-hand-stencil` (67.8 ka, tropical Sulawesi) and `gobekli-tepe`
+ * (11.5 ka, Holocene): scene-local like `barrenSceneDuck`, not a claim about the whole globe.
+ */
+function glacialSteppe(t: GeoTime): number {
+  return 1 - 0.75 * rampLog(t, 5.5e4, 4.5e4, 0, 1) * rampLog(t, 1.6e4, 1.2e4, 1, 0)
+}
+
+/**
+ * Scenes with no crowd, hearth or traffic in them, centred on each scene's own `t` like
+ * `barrenSceneDuck`:
+ *
+ * - `eemian-thames-hippos` (125 ka): Britain was deserted between ~180 and ~60 ka (Ashton, N. &
+ *   Lewis, S. (2002). "Deserted Britain: declining populations in the British Late Middle
+ *   Pleistocene." *Antiquity* 76(292), 388-396), so no hearth or camp voices.
+ * - `hattusa-abandoned` (3.21 ka), `chernobyl-exclusion-zone` (39 yr) and
+ *   `covid-19-venice-lockdown` (5 yr): an abandoned or emptied city.
+ * - `trinity-test` (80 yr), `green-revolution-fields` (60 yr), `amazon-deforestation-fishbone`
+ *   (30 yr) and `energy-transition-solar-wind` (11 yr): a desert hilltop, a wheat field, a forest
+ *   clearing and a coastline, far from any city.
+ */
+function peoplePresence(t: GeoTime): number {
+  return clampUnit(
+    presenceNotch(t, 1.984e5, 1.25e5, 9.21e4) * // eemian-thames-hippos
+      presenceNotch(t, 3.836e3, 3.21e3, 2.807e3) * // hattusa-abandoned
+      presenceNotch(t, 87.2, 80, 73.8) * // trinity-test
+      presenceNotch(t, 63.9, 60, 58) * // green-revolution-fields
+      presenceNotch(t, 44.2, 39, 37.47) * // chernobyl-exclusion-zone
+      presenceNotch(t, 32.9, 30, 18.3) * // amazon-deforestation-fishbone
+      presenceNotch(t, 18.3, 11, 8.8) * // energy-transition-solar-wind
+      presenceNotch(t, 5.9, 5, 4.48), // covid-19-venice-lockdown
+  )
+}
+
+/**
+ * `livestock` is Old World goats, sheep and cattle, which reached the Americas only after 1492;
+ * `tikal-classic-maya` (1.285 ka) and `columbus-landfall-1492` (533 yr) carry none.
+ */
+function americasSceneDuck(t: GeoTime): number {
+  return clampUnit(
+    presenceNotch(t, 1563, 1285, 1060) * // tikal-classic-maya
+      presenceNotch(t, 601, 533, 447), // columbus-landfall-1492
+  )
+}
+
+/**
  * `wing-hum` — a QUIET, generic winged-insect wing-drone, filling the gap `insects` (a
  * cricket-STRIDULATION clip) honestly cannot: Grimaldi, D. & Engel, M.S. (2005). *Evolution of
  * the Insects*. Cambridge University Press dates unambiguous WINGED insects (Meganisoptera —
@@ -155,7 +214,7 @@ function lifePresence(t: GeoTime): number {
  * chirps or periodic frog croaking), so it can rise on its own citation without inheriting
  * `insects`' stridulation date. Ramps in 325 -> 320 Ma to a plateau just under `fire`'s own 0.15
  * texture level — clearly audible in the mix from `carboniferous-swamp` onwards without
- * outweighing `forest`'s 0.3 baseline — ducked by `humanDominance` and `lifePresence` exactly
+ * outweighing `forest`'s 0.3 baseline — ducked by `wildlifeDominance` and `lifePresence` exactly
  * like `insects`.
  *
  * **Persists, rather than receding, once `insects` itself starts at 300 Ma.** The two read as
@@ -204,8 +263,11 @@ function floodBasaltBump(t: GeoTime, windows: ReadonlyArray<TimeWindow>): number
 export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindow>): StemGains {
   const dominance = humanDominance(t)
 
+  const wild = wildlifeDominance(t, dominance)
   const bedFade = terrestrialBedFade(t)
   const life = lifePresence(t)
+  const cold = glacialSteppe(t)
+  const people = peoplePresence(t)
 
   return {
     // `land-plants`/`first-forests`: vegetation softens open wind, THEN the whole pre-land bed
@@ -243,13 +305,13 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
     // The terrestrial bed `wind`/`water`/`storm` hand off to — humid forest/swamp rustle, rising
     // in lockstep with the bed's own fade-out (`TERRESTRIAL_BED_FADE_START`/`_END`) and holding
     // as the "the world has land life on it now" backdrop ever after (ducked by
-    // `humanDominance` like the other wildlife stems, and by `lifePresence` wherever the
+    // `wildlifeDominance` like the other wildlife stems, and by `lifePresence` wherever the
     // on-screen scene itself is a global die-off or a barren, lifeless setting).
-    forest: clampUnit(rampLog(t, TERRESTRIAL_BED_FADE_START, TERRESTRIAL_BED_FADE_END, 0, 0.3) * duck(0.8, dominance) * life),
+    forest: clampUnit(rampLog(t, TERRESTRIAL_BED_FADE_START, TERRESTRIAL_BED_FADE_END, 0, 0.3) * duck(0.8, wild) * life * cold),
     // See `wingHum`'s own doc comment: a quiet, generic wing-drone (a DIFFERENT, non-stridulating
     // clip from `insects`') covering the 325-300 Ma gap `insects` itself cannot honestly cover,
     // then persisting rather than receding once `insects` starts.
-    'wing-hum': clampUnit(wingHum(t, dominance, life)),
+    'wing-hum': clampUnit(wingHum(t, wild, life) * cold),
     insects: clampUnit(
       // Forewing stridulation — the only character this clip has (a cricket-stridulation loop,
       // `sources/audio-stems/stems.toml`) — evolves late Carboniferous–early Permian (Song et
@@ -257,14 +319,16 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
       // before 300 Ma (there is still no evidence for stridulation any earlier); the 325-300 Ma
       // gap is covered instead by `wing-hum` (above), a genuinely non-stridulating clip on its
       // own citation.
-      (rampLog(t, 3.0e8, 2.52e8, 0, 0.1) +
+      // Kept under `forest`'s 0.3 at its fullest: a texture in the bed, not its loudest voice.
+      (rampLog(t, 3.0e8, 2.52e8, 0, 0.06) +
         // Triassic ensiferans with modern-homologous stridulatory files; Archaboilus musicus
         // sings a 6.4 kHz pure tone at ~165 Ma (Gu et al. 2012, PNAS 109(10):3868–3873).
-        rampLog(t, 2.3e8, 1.65e8, 0, 0.18) +
+        rampLog(t, 2.3e8, 1.65e8, 0, 0.08) +
         // Oldest loud modern cicadid, Davispia bearcreekensis, 59–56 Ma: denser chorus only.
-        rampLog(t, 5.9e7, 5.6e7, 0, 0.07)) *
-        duck(0.85, dominance) *
-        life,
+        rampLog(t, 5.9e7, 5.6e7, 0, 0.04)) *
+        duck(0.85, wild) *
+        life *
+        cold,
     ),
     // Large synapsid/large reptile groans and bellows, filling the gap between the pre-land
     // bed's silence and `archosaurs`. Large dinocephalian synapsids dominate Permian terrestrial
@@ -286,7 +350,7 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Passerines originate ~47 Ma (Oliveros et al. 2019, PNAS 116(16):7916–7925), reaching
         // Eurasia/Africa by the Oligocene.
         rampLog(t, 4.7e7, 3.0e7, 0, 0.16)) *
-        duck(0.75, dominance) *
+        duck(0.75, wild) *
         // Silences the dawn chorus under `eocene-oligocene-icesheet` ("no animals in view") and
         // `messinian-salt-flats` ("absent: any animal") — the only two barren windows birds' own
         // 66 Ma floor overlaps.
@@ -309,14 +373,14 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Late Quaternary megafaunal extinctions, 50–10 ka (Koch & Barnosky 2006, Annu. Rev.
         // Ecol. Evol. Syst. 37:215–250).
         rampLog(t, 5.0e4, 1.0e4, 1, 0.6) *
-        duck(0.95, dominance) *
+        duck(0.95, wild) *
         // Silences the herd-and-lion bed under `eocene-oligocene-icesheet` and
         // `messinian-salt-flats` ("absent: any animal") — the only barren window `mammals`' own
         // 66 Ma floor overlaps.
         barrenSceneDuck(t),
     ),
     // `livestock-domestication`: Fertile Crescent goats, sheep, cattle 10–11 ka (Zeder).
-    livestock: clampUnit(rampLog(t, 1.3025e4, 9.5e3, 0, 0.22) * duck(0.9, dominance)),
+    livestock: clampUnit(rampLog(t, 1.3025e4, 9.5e3, 0, 0.22) * duck(0.9, dominance) * americasSceneDuck(t)),
     fire: clampUnit(
       // Wildfire only through the late Palaeozoic high-oxygen window, not as a bed under every
       // land scene since plants first burned (ADR-023 amendment "fire is not a permanent bed").
@@ -324,17 +388,18 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Hearth fire: in over `control-of-fire` t_max → t_min, out as `agriculture`'s villages
         // hand the human soundscape to `settlement` (its t_max → t_min). The scenes that show a
         // fire carry their own `fire` sound.
-        rampLog(t, 1.5e6, 4.0e5, 0, 0.17) * rampLog(t, 1.1525e4, 1.0025e4, 1, 0),
+        rampLog(t, 1.5e6, 4.0e5, 0, 0.17) * rampLog(t, 1.1525e4, 1.0025e4, 1, 0) * people,
     ),
     settlement: clampUnit(
       // Distant camp voices: `homo-sapiens-origin` t → `out-of-africa-migration` t_min.
-      rampLog(t, 3.15e5, 5.0e4, 0, 0.08) +
+      (rampLog(t, 3.15e5, 5.0e4, 0, 0.08) +
         // `natufian-settlements`: first sedentary villages.
         rampLog(t, 1.5e4, 1.15e4, 0, 0.16) +
         // `agriculture` t_max → t_min.
         rampLog(t, 1.1525e4, 1.0025e4, 0, 0.14) +
         // `uruk-first-city`; flat afterwards until HYDE population is curated.
-        rampLog(t, 6.025e3, 5.125e3, 0, 0.1),
+        rampLog(t, 6.025e3, 5.125e3, 0, 0.1)) *
+        people,
     ),
     industry: clampUnit(
       // `industrial-revolution` t_max (1761) → steam-powered mills of 1830, then the Victorian
@@ -343,13 +408,15 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
         // Electrification retires steam line shafts from the early 1900s (Devine 1983), then
         // later deindustrialisation.
         rampLog(t, 125, 60, 1, 0.35) *
-        rampLog(t, 60, 0, 1, 0.6),
+        rampLog(t, 60, 0, 1, 0.6) *
+        people,
     ),
     traffic: clampUnit(
       // Ford Model T from October 1908; half of US cars by 1918. 80 yr = 1945.
-      rampLog(t, 118, 80, 0, 0.25) +
+      (rampLog(t, 118, 80, 0, 0.25) +
         // Post-war mass motorisation, 1945 → 2000.
-        rampLog(t, 80, 25, 0, 0.3),
+        rampLog(t, 80, 25, 0, 0.3)) *
+        people,
     ),
   }
 }

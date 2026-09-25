@@ -1,10 +1,10 @@
-# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Thirty-six CC0/public-domain
+# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Thirty-seven CC0/public-domain
 # clips in two kinds:
 #
 # - Ambience stems (wind ... traffic) have a web `stemGains` row and loop at their curve gain.
 # - Scene-only stems (geothermal, impact, rocket, aircraft, buzzing, knapping, mammoth, artillery,
 #   lake-water, geiger-counter, steam-whistle, ship-horn, chainsaw, howler-monkeys, klaxon-horn,
-#   hippo, wall-chiselling, church-bell, ship-rigging, tram-bell) have no curve and are reached only
+#   hippo, wall-chiselling, church-bell, ship-rigging, tram-bell, sauropod) have no curve and are reached only
 #   through a scene's `sound`. `loop_safe = false` marks a one-shot (`mode: once` only).
 #
 # Every clip is spectrogram-checked against the anachronism/rain/rumble criteria in
@@ -915,3 +915,30 @@ loop_safe = false
 start_seconds = 0.28
 loudness_db = -28.5
 peak_dbfs = -16.4
+
+# https://freesound.org/people/2create/sounds/670510/ -- CC0 1.0, 2create, "Dinosaur Breath,
+# Moan, and Roar" (a creature vocalisation recorded with an Oktava MK-012 and Zoom F3).
+# jurassic-floodplain's scene sound. Five calls separated by near-silence: two deep moans (0.4-3.0
+# s, energy centred at 120-200 Hz; 5.4-7.6 s, 200-380 Hz), then three louder roars centred near
+# 300 Hz. The second moan and first roar play (5.2-13.8 s): low, closed-mouth-sounding calls, as a
+# sauropod most plausibly made (Riede, T. et al. (2016). "Coos, booms, and hoots: the evolution of
+# closed-mouth vocal behavior in birds." *Evolution* 70(8), 1734-1746), and loud enough to reach
+# the one-shot reference where the first moan alone sits 8 dB short, below what phone speakers
+# carry. Spectrogram: 77% of energy at 150-400 Hz, no speech, music, birds or background. Rejected
+# Mastersoundboy2005 770876 "Alien Sauropod Dinosaur Roaring" (a pitched-down Wilhelm scream, per
+# its own description) and the roar/snarl reels tagged for theropods or dragons.
+[[stems]]
+id = "sauropod"
+title = "Dinosaur Breath, Moan, and Roar"
+author = "2create"
+url = "https://cdn.freesound.org/previews/670/670510_621042-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "3e95b4444f91d2dbca7a601aba9364e470e99be8dadb66f9cbfe09d21ae089ba"
+raw_filename = "sauropod.mp3"
+format = "mp3"
+duration_seconds = 21.97
+loop_safe = false
+start_seconds = 5.2
+loudness_db = -26.5
+peak_dbfs = -3.9
+end_seconds = 13.8

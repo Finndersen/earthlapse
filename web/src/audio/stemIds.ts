@@ -6,7 +6,7 @@
  *   one may loop (`geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`,
  *   `geiger-counter`, `chainsaw`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`,
  *   `ship-rigging`) or is a one-shot (`impact`, `rocket`, `aircraft`, `mammoth`, `steam-whistle`,
- *   `ship-horn`, `klaxon-horn`, `tram-bell`) is the published `AudioStem.loopSafe` flag, not a
+ *   `ship-horn`, `klaxon-horn`, `tram-bell`, `sauropod`) is the published `AudioStem.loopSafe` flag, not a
  *   second web-side list — see `stemVoices.ts`.
  *
  * A new stem is a new id here (plus a `stemGains.ts` row if it is ambience), never a free-text
@@ -54,6 +54,7 @@ export type SceneStemId =
   | 'church-bell'
   | 'ship-rigging'
   | 'tram-bell'
+  | 'sauropod'
 
 export type StemId = AmbienceStemId | SceneStemId
 
@@ -97,6 +98,7 @@ export const SCENE_STEM_IDS: readonly SceneStemId[] = [
   'church-bell',
   'ship-rigging',
   'tram-bell',
+  'sauropod',
 ]
 
 export const STEM_IDS: readonly StemId[] = [...AMBIENCE_STEM_IDS, ...SCENE_STEM_IDS]

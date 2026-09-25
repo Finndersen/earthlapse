@@ -64,6 +64,15 @@ describe('stemGains', () => {
     expect(stemGains(2.9e8, NONE).insects).toBeGreaterThan(0)
   })
 
+  it('keeps insects under the forest bed and recedes wildlife once cities stand', () => {
+    for (const t of [2.9e8, 1.5e8, 3.0e7, 1.1e4]) {
+      const gains = stemGains(t, NONE)
+      expect(gains.insects, `t=${t}`).toBeLessThan(gains.forest)
+    }
+    const rome = stemGains(1.9e3, NONE)
+    expect(Math.max(...WILDLIFE.filter((id) => id !== 'livestock').map((id) => rome[id]))).toBeLessThan(rome.settlement / 3)
+  })
+
   it('makes traffic loudest at the present with wildlife ducked but not silenced', () => {
     const now = stemGains(0, NONE)
     for (const id of AMBIENCE_STEM_IDS) if (id !== 'traffic') expect(now.traffic, id).toBeGreaterThan(now[id])
