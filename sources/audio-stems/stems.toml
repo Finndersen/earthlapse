@@ -1,9 +1,9 @@
-# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Thirty-seven CC0/public-domain
+# The audio-stems catalogue (ADR-023; pipeline/audio.py's StemBook). Thirty-eight CC0/public-domain
 # clips in two kinds:
 #
 # - Ambience stems (wind ... traffic) have a web `stemGains` row and loop at their curve gain.
 # - Scene-only stems (geothermal, impact, rocket, aircraft, buzzing, knapping, mammoth, artillery,
-#   lake-water, geiger-counter, steam-whistle, ship-horn, chainsaw, howler-monkeys, klaxon-horn,
+#   lake-water, geiger-counter, steam-whistle, ship-horn, chainsaw, street-traffic, howler-monkeys, klaxon-horn,
 #   hippo, wall-chiselling, church-bell, ship-rigging, tram-bell, sauropod) have no curve and are reached only
 #   through a scene's `sound`. `loop_safe = false` marks a one-shot (`mode: once` only).
 #
@@ -753,6 +753,31 @@ loop_safe = true
 loudness_db = -23.5
 peak_dbfs = -1.1
 loop = { start_seconds = 19.1666, end_seconds = 26.9814 }
+
+# https://freesound.org/people/Damiankearns/sounds/690111/ -- CC0 1.0, Damiankearns, "Toronto,
+# Ossington Street at Dupont, traffic, facing North, great horn_STEREO.wav" (tags: Toronto,
+# Canada, intersection, traffic). The foreground street for scenes with road traffic in frame
+# (`traffic` stays the quieter ambient bed). A kerbside intersection: a road bed at 150-1000 Hz
+# under distinct car pass-bys (1 s RMS swelling from about -31 to -15 dB at ~19 s, ~31 s and
+# ~40 s) and one clean car-horn blast at ~41 s, a harmonic stack reaching 7 kHz. Spectrogram: NO
+# siren sweeps, voices, PA or music. The loop spans the three pass-bys and the horn, longer than
+# the usual 10 s scene-stem cap so the horn does not recur every few seconds; both ends sit at
+# matched level (-17.5 dB over 400 ms) and spectrum, with continuous samples at the wrap. Levels
+# measured over it; the peak is the recording's own normalisation, with no clipped samples.
+[[stems]]
+id = "street-traffic"
+title = "Toronto, Ossington Street at Dupont, traffic, facing North, great horn"
+author = "Damiankearns"
+url = "https://cdn.freesound.org/previews/690/690111_4019555-hq.mp3"
+licence = "CC0 1.0"
+sha256 = "9eef0306d8389fbded4523d3078c559873452616a0cd87a6dc96e8499b473937"
+raw_filename = "street-traffic.mp3"
+format = "mp3"
+duration_seconds = 56.44
+loop_safe = true
+loudness_db = -19.2
+peak_dbfs = -0.0
+loop = { start_seconds = 17.4173, end_seconds = 45.3653 }
 
 # https://freesound.org/people/Lenguaverde/sounds/490315/ -- CC0 1.0, Lenguaverde, "Howler
 # Monkeys": howler monkeys (Alouatta) calling at dawn in the Guatemalan jungle -- the same region

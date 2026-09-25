@@ -12,7 +12,7 @@ Two kinds of stem share one catalogue:
   `traffic`) have a web `stemGains` row and loop continuously at their curve gain. Always
   `loop_safe = true`.
 - **Scene-only stems** have no curve and are reached only through a scene's `sound`:
-  `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`, `chainsaw`,
+  `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`, `chainsaw`, `street-traffic`,
   `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell` and `ship-rigging`
   (`loop_safe = true`, usable as `mode: loop`) and the one-shots `impact`, `rocket`, `aircraft`,
   `mammoth`, `steam-whistle`, `ship-horn`, `klaxon-horn`, `tram-bell` and `sauropod` (`loop_safe = false`,
@@ -56,7 +56,7 @@ match, rather than guessing.
 
 ## Gotchas
 
-- **An empty `stems.toml` is valid** (though this one now carries thirty-seven stems: the
+- **An empty `stems.toml` is valid** (though this one now carries thirty-eight stems: the
   seventeen v2 stems sourced 2026-09-14, `forest`, `large-animal`, `buzzing`, `knapping` and
   `mammoth` sourced 2026-09-15 "era fit v3", `archosaurs`/`livestock` re-sourced and `artillery`/
   `lake-water` added the same day by later 2026-09-15 amendments, `wing-hum` added by a

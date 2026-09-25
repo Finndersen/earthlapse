@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "cc60912f07e44313",
+  "buildId": "06b6d5d3741cbe79",
   "assetBase": "/media",
   "scenes": [
     {
@@ -13,11 +13,6 @@
       "title": "Shenzhen Today",
       "caption": "Shenzhen, a rural area of about 30,000 people forty-five years ago, is now a city of some 18 million — a forest of glass supertalls on its bay, drones crossing between the towers.",
       "events": [],
-      "sound": {
-        "stem": "traffic",
-        "mode": "loop",
-        "gain": 0.9
-      },
       "location": {
         "label": "Shenzhen Bay, China",
         "presentDay": {
@@ -53,9 +48,9 @@
         "urban-majority-milestone"
       ],
       "sound": {
-        "stem": "traffic",
+        "stem": "street-traffic",
         "mode": "loop",
-        "gain": 0.85
+        "gain": 0.8
       },
       "framing": {
         "focus": [
@@ -377,9 +372,9 @@
         "postwar-suburban-boom"
       ],
       "sound": {
-        "stem": "traffic",
+        "stem": "street-traffic",
         "mode": "loop",
-        "gain": 1.0
+        "gain": 0.8
       },
       "framing": {
         "focus": [
@@ -6705,6 +6700,21 @@
       "loop": {
         "startSeconds": 0.134531,
         "endSeconds": 7.949331
+      }
+    },
+    {
+      "id": "street-traffic",
+      "file": "audio/street-traffic-42dcfe9d82.mp3",
+      "title": "Toronto, Ossington Street at Dupont, traffic, facing North, great horn",
+      "author": "Damiankearns",
+      "licence": "CC0 1.0",
+      "sourceUrl": "https://cdn.freesound.org/previews/690/690111_4019555-hq.mp3",
+      "durationSeconds": 28.188,
+      "loopSafe": true,
+      "levelTrimDb": -10.8,
+      "loop": {
+        "startSeconds": 0.134531,
+        "endSeconds": 28.082531
       }
     },
     {

@@ -2577,9 +2577,9 @@ scenes:
       sky_and_light: a clear, pale-blue afternoon sky with a little industrial haze; bright, flat daylight
       absent: [modern cars, SUVs, minivans, electric vehicles, cell-phone masts, LED traffic signals, shopping mall, satellite dishes, identifiable faces, modern clothing or branding, legible number plates, legible signage]
     events: [postwar-suburban-boom]
-    # ADR-023: `traffic` `loop` -- a busy highway cloverleaf of sedans and station wagons, at full
-    # gain: the clip is a steady, horn-free road bed that reads as background hum any lower.
-    sound: {stem: traffic, mode: loop, gain: 1.0}
+    # ADR-023: `street-traffic` `loop` -- a busy highway cloverleaf of sedans and station wagons,
+    # heard as cars passing over the `traffic` curve's own ambient hum.
+    sound: {stem: street-traffic, mode: loop, gain: 0.8}
     framing: {focus: [0.62, 0.5], pan: 0}
     pin: {asset_digest: "cb19517050596667", path: "data/pins/scenes/post-war-boom-suburbia/cb19517050596667.jpg"}
 
@@ -3054,10 +3054,10 @@ scenes:
       sky_and_light: a bright, slightly hazy morning sky over the city; clear daylight with long low shadows
       absent: [futuristic architecture, flying vehicles, holograms, driverless robotaxis, legible text, logos or brand names, identifiable faces, face masks, historical costume, ruins, empty streets, a pedestrian bridge]
     events: [urban-majority-milestone]
-    # ADR-023: `traffic` `loop` -- the buses and taxis queued at the kerb, raised above its
-    # ~0.55 ambient curve so the commute reads as one; the crowd itself is carried by
-    # `settlement`'s flat 0.48 ambient floor.
-    sound: {stem: traffic, mode: loop, gain: 0.85}
+    # ADR-023: `street-traffic` `loop` -- the buses and taxis queued at the kerb, over the
+    # `traffic` curve's ~0.55 ambient hum; the crowd itself is carried by `settlement`'s flat 0.48
+    # ambient floor.
+    sound: {stem: street-traffic, mode: loop, gain: 0.8}
     framing: {focus: [0.62, 0.67], pan: 270, portrait_zoom: 1.5}
     pin: {asset_digest: "4bddd2b3509ab4b6", path: "data/pins/scenes/global-city-rush-hour/4bddd2b3509ab4b6.jpg"}
 
@@ -3097,9 +3097,8 @@ scenes:
       far_bank: across the basin, instead of a low shore, an unbroken wall of slender glass supertalls of the Shenzhen Bay Super Headquarters district, dozens of towers of varied heights crowding the horizon, some still topped out with tower cranes
       sky_and_light: a clear, lightly hazy pale-blue subtropical sky; bright, crisp afternoon sunlight flashing off the glass curtain walls, the white ribs of the tall tower and the skybridges
       absent: [trees, mangroves, grass, birds, beaches, natural shoreline, roads, cars, traffic jams, flying cars, holograms, invented science-fiction buildings, humanoid robots, night scene, neon, rain, ruins, heavy smog hiding the skyline, advertising billboards, legible text, brand logos, identifiable faces]
-    # ADR-023 (v2): `traffic` `loop` above its 0.55 present-day ambient -- a megacity
-    # waterfront, heard as distant traffic and city hum, never sirens.
-    sound: {stem: traffic, mode: loop, gain: 0.9}
+    # No `sound`: no road is in frame and the city's traffic is largely electric, so only the
+    # `traffic` curve's own ~0.55 present-day hum plays under it.
     # ADR-034: Shenzhen Bay (Houhai), China. t = 0 sits inside the human-era basemap domain
     # (ADR-030), so publish marks these present-day coordinates directly.
     location: {lat: 22.4800, lon: 113.9300, label: "Shenzhen Bay, China"}

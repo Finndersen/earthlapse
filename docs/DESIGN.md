@@ -794,10 +794,10 @@ Three tiers. Tier 1 is the highest value-per-effort item in the project.
 >   them, and goats under the pre-1492 Americas; a scene's own sound ducks the rest of the bed by
 >   up to 40% (ADR-023 amendment "the bed follows the scene"); `fire` is a late
 >   Palaeozoic wildfire window and a hearth layer that ends with agriculture (ADR-023 amendment
->   "fire is not a permanent bed"). Twenty-one further
+>   "fire is not a permanent bed"). Twenty-two further
 >   **scene-only** stems have no curve and are reached only through a scene's
 >   `sound`: `geothermal`, `buzzing`, `knapping`, `artillery`, `lake-water`, `geiger-counter`,
->   `chainsaw`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`, `ship-rigging` (loop)
+>   `chainsaw`, `street-traffic`, `howler-monkeys`, `hippo`, `wall-chiselling`, `church-bell`, `ship-rigging` (loop)
 >   and the one-shots `impact`, `rocket`, `aircraft`, `mammoth`, `steam-whistle`, `ship-horn`,
 >   `klaxon-horn`, `tram-bell`, `sauropod` (a one-shot is a stem published with
 >   `loopSafe: false`, and
