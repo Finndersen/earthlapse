@@ -41,6 +41,17 @@ describe('generateTicks', () => {
     expect(generateTicks([1e6, 1e8], createSymlogScale([1e6, 1e8]), TRACK_WIDTH).some((t) => t.label === 'present')).toBe(false)
   })
 
+  it('labels a Holocene window in round calendar years, linear or log', () => {
+    const window: TimeWindow = [0, 1.17e4]
+    for (const scale of [createLinearScale(window), createSymlogScale(window)]) {
+      const years = generateTicks(window, scale, TRACK_WIDTH)
+        .filter((tick) => tick.t !== 0)
+        .map((tick) => 2025 - tick.t)
+      expect(years.length).toBeGreaterThan(1)
+      for (const year of years) expect(Math.abs(year % 10)).toBe(0)
+    }
+  })
+
   it('thins rather than overlaps on a narrow track, and yields nothing at zero width', () => {
     const window: TimeWindow = [0, EARTH_FORMATION]
     assertNoOverlapSimple(generateTicks(window, createSymlogScale(window), 120), 120)
