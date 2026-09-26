@@ -432,7 +432,7 @@
     {
       "id": "hre",
       "name": "Holy Roman Empire",
-      "colourSlot": 6,
+      "colourSlot": 7,
       "description": "The Holy Roman Empire is usually dated from the coronation of Otto I in 962. A decentralised realm of hundreds of principalities, bishoprics and cities under an elected emperor, it covered much of central Europe. Its central authority waned after the Thirty Years' War, and Francis II dissolved it in 1806.",
       "events": [
         "holy-roman-empire-dissolved"

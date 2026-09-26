@@ -7734,8 +7734,9 @@ Ceuta (1415) to the African colonies' independence (1975): the Kingdom of Portug
 `Portuguese Empire` (labelled at Salvador, since its bulk is Brazil), `Portuguese Colonies`
 (labelled "Portuguese India", anchored at Goa), Africa and Ceylon, then the Republic and the Estado
 Novo, which carry the colonies. Its Brazil-to-Macau bounding box meets every slot under the 10° box
-test, so it takes the Holy Roman Empire's slot 6: their actual territories never come within 11°
-while both exist, which is what the shader's slot-contour borders need.
+test, so the Holy Roman Empire moves from slot 6 to the Timurids' and Mughals' slot 7 (9.6° apart at
+their nearest, 1402–06, where the shader's slot-contour borders need only territories that never
+touch), and Portugal takes orange alone: no lineage alive between 1415 and 1975 shares it.
 
 ## ADR-060 — Calendar years inside the Holocene, ages beyond it
 

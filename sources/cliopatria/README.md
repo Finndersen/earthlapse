@@ -238,10 +238,12 @@ are active in 187 of the 5,301 years (max 10, 202–171 BCE).
 **Colour slots** are assigned by a greedy graph colouring, most famous lineages first (Rome,
 China, Persia, Mongols, Caliphate, Ottoman, Britain, Spain, Russia, …): two lineages that are
 ever active at the same time with member bounding boxes within 10° of each other never share a
-slot. Eight slots suffice. Portugal, added last, is the one exception to the box test: its
-Brazil-to-Macau box meets all eight, so it shares the Holy Roman Empire's slot, whose actual
-territory never comes within 11° of Portugal's (Russia's is the other candidate, 14°). The
-numbers are written into `roster.toml`, so inserting a lineage later does not recolour the others. Lineage names, labels, colour slots and the info-card fields are
+slot. Eight slots suffice. Portugal, added last, broke the box test: its Brazil-to-Macau box
+meets all eight slots. It takes orange (slot 6) alone, and the Holy Roman Empire moves to Timur and
+the Mughals' orchid (slot 7), a pair the box test would forbid but whose territories are 9.6° apart
+at their nearest (Timur in Anatolia, 1402–06): a shared slot needs only territories that never
+touch. The numbers are written into `roster.toml`, so inserting a lineage later does not recolour
+the others. Lineage names, labels, colour slots and the info-card fields are
 read again at publish, so changing them needs no data rebuild; membership, clamps, anchors and the polity
 list are read by `normalise.py`, and `databuild`'s fingerprint covers `*.toml`, so editing them does.
 

@@ -254,7 +254,7 @@ members = [
 [[lineage]]
 id = "hre"
 name = "Holy Roman Empire"
-colour_slot = 6
+colour_slot = 7
 reason = "Central Europe's elective empire from Otto I to Napoleon"
 description = "The Holy Roman Empire is usually dated from the coronation of Otto I in 962. A decentralised realm of hundreds of principalities, bishoprics and cities under an elected emperor, it covered much of central Europe. Its central authority waned after the Thirty Years' War, and Francis II dissolved it in 1806."
 events = ["holy-roman-empire-dissolved"]
