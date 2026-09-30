@@ -1,7 +1,8 @@
 /**
  * The tour's steps, as data. Things a viewer cannot work out by looking (IMPLEMENTATION
- * § Backlog — onboarding): that play runs the timeline through the scenes, that the timeline
- * scrubs, that events pop up as it passes them and all of them can be browsed, what the era
+ * § Backlog — onboarding): that play runs the timeline through the scenes and what the controls
+ * beside it do, that the timeline can be dragged and its eras zoomed into, what the two playback
+ * modes mean, that events pop up as it passes them and all of them can be browsed, what the era
  * shortcuts are, and that the corner orb opens.
  *
  * Each step names its target by CSS selector, resolved against the live DOM at runtime — never a
@@ -14,7 +15,7 @@
  * real geological unit. Its copy names both halves of each pairing.
  */
 
-export type TourStepId = 'play' | 'scrub' | 'events' | 'eras' | 'globe' | 'about' | GlobeTourStepId
+export type TourStepId = 'play' | 'scrub' | 'playback' | 'events' | 'eras' | 'globe' | 'about' | GlobeTourStepId
 
 export type GlobeTourStepId = 'globe-view' | 'globe-empires' | 'globe-overlay'
 
@@ -59,8 +60,9 @@ export const TOUR_STEPS: readonly TourStep[] = [
     selector: PLAY_BUTTON_SELECTOR,
     title: 'Press play',
     body: {
-      compact: 'Tap play and the timeline runs forward through 4.6 billion years, scene by scene.',
-      wide: 'Click play and the timeline runs forward through 4.6 billion years, scene by scene.',
+      compact:
+        'Tap play and the timeline runs forward through 4.6 billion years, scene by scene. The arrows beside it skip to the previous or next scene, and the speed control sets the pace.',
+      wide: 'Click play and the timeline runs forward through 4.6 billion years, scene by scene. The arrows beside it skip to the previous or next scene, and the speed control sets the pace.',
     },
     shape: 'circle',
   },
@@ -69,8 +71,19 @@ export const TOUR_STEPS: readonly TourStep[] = [
     selector: '[data-testid="timeline-track-stack"]',
     title: 'Travel through time',
     body: {
-      compact: 'Drag the playhead to land anywhere in the whole 4.6 billion years.',
-      wide: 'Drag the playhead, or click the track, to land anywhere in the whole 4.6 billion years.',
+      compact:
+        'Drag the playhead to land anywhere in the whole 4.6 billion years. Tap an era below the track to zoom into it, and the trail above to zoom back out.',
+      wide: 'Drag the playhead, or click the track, to land anywhere in the whole 4.6 billion years. Click an era below the track to zoom into it, and the trail above to zoom back out.',
+    },
+    shape: 'rounded',
+  },
+  {
+    id: 'playback',
+    selector: '[data-testid="timeline-controls-secondary"]',
+    title: 'Scenes or steady',
+    body: {
+      compact: 'Scenes gives every scene the same time, however far apart; Steady runs at an even number of years a second.',
+      wide: 'Scenes gives every scene the same time, however far apart; Steady runs at an even number of years a second, and the arrows then step by that rate. Scale switches the track between room for recent history and true proportions.',
     },
     shape: 'rounded',
   },
