@@ -5,7 +5,7 @@ import { preload } from "react-dom";
 import "./globals.css";
 
 const DESCRIPTION =
-  "Scrub through 4.6 billion years of Earth's history, from a molten planet and the first life to the dinosaurs, our ancestors and modern cities.";
+  "Travel through 4.6 billion years of Earth's history, from a molten planet and the first life to the dinosaurs, our ancestors and modern cities.";
 
 /** Link previews use `opengraph-image.jpg` beside this file; `metadataBase` makes its URL absolute,
  *  which the crawlers that read Open Graph tags require. */

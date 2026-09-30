@@ -76,7 +76,7 @@ export function CreditsList({ eventLegend, feedbackLink }: CreditsListProps = {}
     <div className={styles.wrap}>
       <p className={styles.disclaimer}>Artistic reconstruction — plausibility, not accuracy.</p>
       <p className={styles.intro}>
-        Earthlapse is a scrubbable view of the planet's surface across all 4.6 billion years of its history,
+        Earthlapse is an explorable view of the planet's surface across all 4.6 billion years of its history,
         from the molten Hadean to the present — one continuous timeline, not a slideshow. The scenes above are
         generated; the data driving everything else — continents, climate, atmosphere, the tree of life,
         population — is real, drawn from paleoclimate proxies, geological and satellite surveys, phylogenetic

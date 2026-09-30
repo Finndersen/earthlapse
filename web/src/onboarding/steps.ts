@@ -67,7 +67,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'scrub',
     selector: '[data-testid="timeline-track-stack"]',
-    title: 'The timeline scrubs',
+    title: 'Travel through time',
     body: {
       compact: 'Drag the playhead to land anywhere in the whole 4.6 billion years.',
       wide: 'Drag the playhead, or click the track, to land anywhere in the whole 4.6 billion years.',

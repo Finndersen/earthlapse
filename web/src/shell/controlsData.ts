@@ -27,7 +27,7 @@ export interface PointerControl {
 }
 
 export const POINTER_CONTROLS: PointerControl[] = [
-  { label: 'Drag the timeline', description: 'Scrub to any point in time.' },
+  { label: 'Drag the timeline', description: 'Jump to any point in time.' },
   {
     label: 'Hover the timeline',
     description:

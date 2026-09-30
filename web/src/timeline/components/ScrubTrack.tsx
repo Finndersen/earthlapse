@@ -429,7 +429,7 @@ export function ScrubTrack({
     <div
       ref={trackRef}
       role="slider"
-      aria-label="Scrub timeline"
+      aria-label="Timeline position"
       aria-valuemin={visibleWindow[0]}
       aria-valuemax={visibleWindow[1]}
       aria-valuenow={t}
