@@ -2111,6 +2111,8 @@ scenes:
     # vehicles, sirens or whistles) as a continuous `loop` above its 0.5 ambient -- the steam-powered
     # cotton mills' constant working noise.
     sound: {stem: industry, mode: loop, gain: 1.0}
+    # ADR-034: the brief names Lancashire's cotton-mill towns; marked at Blackburn, a leading one.
+    location: {lat: 53.7480, lon: -2.4820, label: "Lancashire, England"}
     framing: {focus: [0.62, 0.68], pan: 180, portrait_zoom: 1.4}
     pin: {asset_digest: "4ee06d67fed510e9", path: "data/pins/scenes/industrial-mill-town/4ee06d67fed510e9.jpg"}
 
@@ -2481,6 +2483,9 @@ scenes:
     # diesel pump/tractor was sourced in the time this pass budgeted, so per CLAUDE.md ("if
     # something is unusable, stop and report; do not silently substitute a different dataset")
     # this scene carries no `sound` -- the flat 0.48 `settlement` floor covers the rural ambience.
+    # ADR-034: the brief names Punjab; marked at Ludhiana, home of the agricultural university that
+    # led the region's high-yield wheat trials.
+    location: {lat: 30.9010, lon: 75.8573, label: "Punjab, India"}
     framing: {focus: [0.6, 0.62], pan: 0, portrait_zoom: 1.25}
     pin: {asset_digest: "d6a9b3f322ea5a15", path: "data/pins/scenes/green-revolution-fields/d6a9b3f322ea5a15.jpg"}
 
@@ -2712,6 +2717,9 @@ scenes:
     # Left unset rather than guessed.
     # ADR-023: `chainsaw` `loop` -- a close recording held low so it reads as distant clearing.
     sound: {stem: chainsaw, mode: loop, gain: 0.6}
+    # ADR-034: the brief names Rondônia, whose colonisation roads made the fishbone pattern;
+    # marked at the state's centre.
+    location: {lat: -10.8300, lon: -63.3400, label: "Rondônia, Brazil"}
     framing: {focus: [0.63, 0.67], pan: 270, portrait_zoom: 1.4}
     pin: {asset_digest: "43a0d45ebd59fac5", path: "data/pins/scenes/amazon-deforestation-fishbone/43a0d45ebd59fac5.jpg"}
 
@@ -2910,6 +2918,9 @@ scenes:
     # `traffic` curve's ~0.55 ambient hum; the crowd itself is carried by `settlement`'s flat 0.48
     # ambient floor.
     sound: {stem: street-traffic, mode: loop, gain: 0.8}
+    # ADR-034: the pinned image is the Thames embankment in the City of London, looking downriver
+    # to Canary Wharf.
+    location: {lat: 51.5080, lon: -0.0850, label: "River Thames, London"}
     framing: {focus: [0.62, 0.56], pan: 270, portrait_zoom: 1.5}
     pin: {asset_digest: "4bddd2b3509ab4b6", path: "data/pins/scenes/global-city-rush-hour/4bddd2b3509ab4b6.jpg"}
 

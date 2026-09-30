@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "497448959c5f4ee4",
+  "buildId": "2f754a863b843f63",
   "assetBase": "/media",
   "scenes": [
     {
@@ -51,6 +51,17 @@
         "stem": "street-traffic",
         "mode": "loop",
         "gain": 0.8
+      },
+      "location": {
+        "label": "River Thames, London",
+        "presentDay": {
+          "lat": 51.508,
+          "lon": -0.085
+        },
+        "marker": {
+          "lat": 51.508,
+          "lon": -0.085
+        }
       },
       "framing": {
         "focus": [
@@ -177,6 +188,17 @@
         "stem": "chainsaw",
         "mode": "loop",
         "gain": 0.6
+      },
+      "location": {
+        "label": "Rondônia, Brazil",
+        "presentDay": {
+          "lat": -10.83,
+          "lon": -63.34
+        },
+        "marker": {
+          "lat": -10.83,
+          "lon": -63.34
+        }
       },
       "framing": {
         "focus": [
@@ -347,6 +369,17 @@
       "events": [
         "green-revolution"
       ],
+      "location": {
+        "label": "Punjab, India",
+        "presentDay": {
+          "lat": 30.901,
+          "lon": 75.8573
+        },
+        "marker": {
+          "lat": 30.901,
+          "lon": 75.8573
+        }
+      },
       "framing": {
         "focus": [
           0.6,
@@ -643,6 +676,17 @@
         "stem": "industry",
         "mode": "loop",
         "gain": 1.0
+      },
+      "location": {
+        "label": "Lancashire, England",
+        "presentDay": {
+          "lat": 53.748,
+          "lon": -2.482
+        },
+        "marker": {
+          "lat": 53.748,
+          "lon": -2.482
+        }
       },
       "framing": {
         "focus": [
