@@ -174,16 +174,15 @@ function glacialSteppe(t: GeoTime): number {
  *   Pleistocene." *Antiquity* 76(292), 388-396), so no hearth or camp voices.
  * - `hattusa-abandoned` (3.21 ka), `chernobyl-exclusion-zone` (39 yr) and
  *   `covid-19-venice-lockdown` (5 yr): an abandoned or emptied city.
- * - `trinity-test` (80 yr), `green-revolution-fields` (60 yr), `amazon-deforestation-fishbone`
- *   (30 yr) and `energy-transition-solar-wind` (11 yr): a desert hilltop, a wheat field, a forest
- *   clearing and a coastline, far from any city.
+ * - `trinity-test` (80 yr), `amazon-deforestation-fishbone` (30 yr) and
+ *   `energy-transition-solar-wind` (11 yr): a desert hilltop, a forest clearing and a coastline,
+ *   far from any city.
  */
 function peoplePresence(t: GeoTime): number {
   return clampUnit(
     presenceNotch(t, 1.984e5, 1.25e5, 9.21e4) * // eemian-thames-hippos
       presenceNotch(t, 3.836e3, 3.21e3, 2.807e3) * // hattusa-abandoned
       presenceNotch(t, 87.2, 80, 73.8) * // trinity-test
-      presenceNotch(t, 63.9, 60, 58) * // green-revolution-fields
       presenceNotch(t, 44.2, 39, 37.47) * // chernobyl-exclusion-zone
       presenceNotch(t, 32.9, 30, 18.3) * // amazon-deforestation-fishbone
       presenceNotch(t, 18.3, 11, 8.8) * // energy-transition-solar-wind
