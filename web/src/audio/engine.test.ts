@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Layer, Playback, ScalarValue } from '@/types/layer'
@@ -195,5 +195,43 @@ describe('useAudioEngine "active" — real audio state vs. the stored preference
 
     expect(result.current.enabled).toBe(false)
     expect(result.current.active).toBe(false)
+  })
+})
+
+describe('useAudioEngine gesture unlock', () => {
+  beforeEach(() => {
+    cleanup()
+    vi.useFakeTimers()
+    window.localStorage.clear()
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('resumes the audio context synchronously within a touch tap and within the toggle click', async () => {
+    const resume = vi.fn(() => Promise.resolve())
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'suspended'
+        resume = resume
+      },
+    )
+    window.localStorage.setItem('earthlapse.audio.enabled', 'false')
+    const { result } = renderHook(() =>
+      useAudioEngine({ manifest: EMPTY_MANIFEST, t: 0, playing: true, playback: PLAYBACK, sectionWindow: FULL_SECTION_WINDOW, scalarLayers: emptyLayers }),
+    )
+    await vi.advanceTimersByTimeAsync(0)
+
+    act(() => result.current.setEnabled(true))
+    expect(resume).toHaveBeenCalledTimes(1)
+
+    // A touch `pointerdown` grants no user activation; the `pointerup` that ends the tap does.
+    document.dispatchEvent(new Event('pointerup'))
+    expect(resume).toHaveBeenCalledTimes(2)
   })
 })

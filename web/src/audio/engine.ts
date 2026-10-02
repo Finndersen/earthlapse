@@ -47,6 +47,7 @@ import { onceSoundOutlived, onceVoiceHasBeenPresented, sceneSoundLoopGains, useS
 import { stemGains } from './stemGains'
 import { isStemId, type StemId } from './stemIds'
 import { planStemVoices, stemLevelGain, type StemVoicePlan } from './stemVoices'
+import { ACTIVATION_EVENTS, sharedAudioContext, unlockAudio } from './unlock'
 
 /** How often live gain/parameter values are recomputed and written, and how often the loader
  *  re-plans what to fetch/evict (ADR-023: full 60fps is unnecessary for a gain ramp; ~10-20 Hz
@@ -315,8 +316,17 @@ interface ToneRuntime {
   dispose: () => void
 }
 
-async function loadTone(): Promise<ToneModule> {
-  return import('tone')
+let tonePromise: Promise<ToneModule> | null = null
+
+/** Loads `tone` once and points it at `unlock.ts`'s gesture-owned context, replacing the one Tone
+ *  creates at import, before any node exists. */
+function loadTone(): Promise<ToneModule> {
+  tonePromise ??= import('tone').then((Tone) => {
+    const ctx = sharedAudioContext()
+    if (ctx !== null) Tone.setContext(ctx, true)
+    return Tone
+  })
+  return tonePromise
 }
 
 /** Development-only automation hook, mirroring `store/devHook.ts`'s own `window.__earthlapse`
@@ -798,24 +808,23 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   // session's "active" state before its own gesture-gated start.
   const [active, setActive] = useState(false)
 
-  // A `Tone.start()` issued with no user gesture yet does not resolve on its own once one finally
-  // arrives: a context blocked by the autoplay policy only starts when `resume()` is called from
-  // *inside* a gesture handler. With sound on by default the first attempt always runs at mount,
-  // before any gesture, so without this the toggle sits in `pending` forever and only an explicit
-  // off-then-on cycle ever produces sound — while the button promises the opposite. Bumping this
-  // re-runs the start effect below from within the gesture that set it.
+  // A context blocked by the autoplay policy only starts when `resume()` is called from *inside*
+  // a gesture handler, and a `Tone.start()` issued before that does not resolve on its own once
+  // one arrives. With sound on by default the first attempt always runs at mount, before any
+  // gesture, so every gesture while enabled unlocks the context synchronously (`unlockAudio`,
+  // which also recovers one iOS has since `interrupted`) and, until the graph is built, bumps
+  // this to re-run the start effect below.
   const [gestureNonce, setGestureNonce] = useState(0)
   useEffect(() => {
-    if (!prefs.enabled || active) return
+    if (!prefs.enabled) return
     function onGesture(): void {
-      setGestureNonce((nonce) => nonce + 1)
+      unlockAudio()
+      if (!active) setGestureNonce((nonce) => nonce + 1)
     }
     const options = { capture: true } as const
-    document.addEventListener('pointerdown', onGesture, options)
-    document.addEventListener('keydown', onGesture, options)
+    for (const type of ACTIVATION_EVENTS) document.addEventListener(type, onGesture, options)
     return () => {
-      document.removeEventListener('pointerdown', onGesture, options)
-      document.removeEventListener('keydown', onGesture, options)
+      for (const type of ACTIVATION_EVENTS) document.removeEventListener(type, onGesture, options)
     }
   }, [prefs.enabled, active])
 
@@ -911,8 +920,9 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
     // user gesture — with sound on by default this effect first runs at page load with none yet,
     // so the call sits pending rather than rejecting. `active` only flips once it resolves, and
     // `enabled`/the toggle stay exactly as they were meanwhile (the catch below still covers a
-    // real failure, e.g. a browser that rejects instead of deferring). `gestureNonce` re-runs
-    // this effect from inside the first gesture, which is what actually unblocks the context.
+    // real failure, e.g. a browser that rejects instead of deferring). The first gesture
+    // unlocks the context itself (`unlockAudio`); `gestureNonce` then re-runs this effect so a
+    // fresh `Tone.start()` sees it running.
     loadTone()
       .then(async (Tone) => {
         await Tone.start()
@@ -943,18 +953,11 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
   useEffect(() => {
     if (!prefs.enabled) return
     function onVisibilityChange(): void {
-      if (runtimeRef.current === null) return
-      loadTone().then((Tone) => {
-        const ctx = Tone.getContext()
-        if (document.hidden) {
-          // `rawContext` is typed `AudioContext | OfflineAudioContext`; only a live
-          // `AudioContext` reaches this tab-visibility-driven path, and only its `suspend()`
-          // takes no argument.
-          ;(ctx.rawContext as AudioContext).suspend().catch(() => {})
-        } else {
-          ctx.resume().catch(() => {})
-        }
-      })
+      const ctx = sharedAudioContext()
+      if (runtimeRef.current === null || ctx === null) return
+      // iOS may refuse this gesture-less resume; the next gesture's `unlockAudio` retries it.
+      if (document.hidden) ctx.suspend().catch(() => {})
+      else ctx.resume().catch(() => {})
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -1067,7 +1070,9 @@ export function useAudioEngine(input: UseAudioEngineInput): AudioEngineControls 
     enabled: prefs.enabled,
     active,
     masterVolume: prefs.masterVolume,
+    // Called from the toggle's click and the `M` keydown, so this is still inside the gesture.
     setEnabled: (enabled) => {
+      if (enabled) unlockAudio()
       setPrefs((p) => ({ ...p, enabled }))
       saveAudioEnabled(enabled)
     },
