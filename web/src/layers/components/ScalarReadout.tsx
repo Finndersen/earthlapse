@@ -2,7 +2,7 @@
 
 /** `value unit` for a scalar layer at `t`. Bounds are deliberately not printed: they come and go
  *  between samples and reflow the HUD, and are usually narrower than the value's own precision
- *  (the chart dock still draws them as a band). Never `0` when the layer has nothing at `t`:
+ *  (the expanded chart draws them as a band). Never `0` when the layer has nothing at `t`:
  *  "no data" when `t` sits outside the layer's whole domain, or "no record" when it is inside
  *  the domain but in a declared gap (ADR-027) — the only other reason `sample()` returns null
  *  there.

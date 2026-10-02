@@ -499,9 +499,10 @@ expands to fill; it is never the default focus.
 
 > **v1 note (ADR-012):** the boxed layout above is superseded. The scene fills the window
 > behind an elliptical lens vignette. The same slots float, unboxed, in the darkened periphery:
-> - globe orb top-left, readouts beneath it
+> - globe orb top-left, the climate readouts beneath it (empty until `mean_temp` is curated)
 > - time/era title top-centre
-> - ancestor top-right
+> - ancestor top-right, the global population readout beneath it, right-aligned
+>   (`web/src/layers/hudVisibility.ts`'s `hudColumnFor` maps a layer to its column)
 > - caption as a subtitle above the timeline
 >
 > Scene checkpoints are marked on the timeline. Below 760px the ancestor panel stays in that
@@ -566,7 +567,9 @@ expands to fill; it is never the default focus.
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as a readout over a sparkline of the story so far: linear time
 from the layer's first sample to `t`, linear value from zero to the peak reached, so the playhead
-is always the trace's right end (ADR-053). One sparkline component, N layers.
+is always the trace's right end (ADR-053). One sparkline component, N layers. Clicking a
+sparkline opens its expanded chart: the whole record with its uncertainty band, labelled axes, the
+playhead and a hover readout, on a linear or log time axis (ADR-053 amendment).
 
 ### Event feed
 

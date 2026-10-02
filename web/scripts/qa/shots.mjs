@@ -35,7 +35,6 @@ import {
   SCENE_CANVAS_SELECTOR,
   SECTION_BANDS_SELECTOR,
   SHELL_FEED_SELECTOR,
-  SHELL_READOUTS_SELECTOR,
   TIMELINE_CONTROLS_CORE_SELECTOR,
   TIMELINE_CONTROLS_SECONDARY_SELECTOR,
   TIMELINE_CONTROLS_SECTIONS_SELECTOR,
@@ -211,6 +210,61 @@ function allRects(page, selector) {
 async function polylineTraceBounds(page, containerSelector) {
   const boxes = await allRects(page, `${containerSelector} polyline`)
   return boxes.length === 0 ? { x: 0, y: 0, width: 0, height: 0 } : unionBox(boxes)
+}
+
+/** The union of the drawn text rects (a `Range` per non-empty text node, cut to any clipping
+ *  ancestor's box, so an ellipsised line counts only its visible part) inside `selector`'s first
+ *  match — where the glyphs are, not the box around them, so a right-aligned box with left-set
+ *  text still reads as left-set. */
+async function textBounds(page, selector) {
+  const rects = await page.evaluate((sel) => {
+    const root = document.querySelector(sel)
+    if (root === null) return []
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+    const out = []
+    for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+      if (node.textContent.trim() === '') continue
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      const r = range.getBoundingClientRect()
+      let [left, top, right, bottom] = [r.left, r.top, r.right, r.bottom]
+      for (let el = node.parentElement; el !== null; el = el.parentElement) {
+        if (getComputedStyle(el).overflowX === 'visible') continue
+        const clip = el.getBoundingClientRect()
+        ;[left, top, right, bottom] = [Math.max(left, clip.left), Math.max(top, clip.top), Math.min(right, clip.right), Math.min(bottom, clip.bottom)]
+      }
+      if (right - left > 1 && bottom - top > 1) out.push({ x: left, y: top, width: right - left, height: bottom - top })
+    }
+    return out
+  }, selector)
+  if (rects.length === 0) throw new Error(`textBounds: no drawn text in ${selector}`)
+  return unionBox(rects)
+}
+
+/** The population readout under the ancestor panel: its text's top below the ancestor text's
+ *  bottom, and its value's and sparkline trace's right ends against the ancestor text's. The
+ *  value, not the whole readout: the caps label is the widest line, so the union's right edge
+ *  stays put on a phone even when the value beneath it is left-set. */
+async function ancestorColumnReadoutGeometry(page) {
+  const ancestor = await textBounds(page, ANCESTOR_READOUT_SELECTOR)
+  const text = await textBounds(page, POPULATION_READOUT_SELECTOR)
+  const value = await textBounds(page, `${POPULATION_READOUT_SELECTOR} [data-testid="scalar-readout-value"]`)
+  const trace = await polylineTraceBounds(page, `${POPULATION_READOUT_SELECTOR} svg`)
+  const ancestorRight = ancestor.x + ancestor.width
+  return {
+    gapBelowAncestorPx: text.y - (ancestor.y + ancestor.height),
+    valueRightOffsetPx: value.x + value.width - ancestorRight,
+    traceRightOffsetPx: trace.x + trace.width - ancestorRight,
+  }
+}
+
+/** `expect` entries for `ancestorColumnReadoutGeometry`, measured as `populationReadout`. */
+const ANCESTOR_COLUMN_READOUT_EXPECT = {
+  'populationReadout.gapBelowAncestorPx': [4, 48],
+  'populationReadout.valueRightOffsetPx': [-3, 3],
+  // The trace stops short of the sparkline's right edge by its viewBox padding plus up to a few px
+  // of data-dependent window; a left-set sparkline in the phone column misses by ~100px.
+  'populationReadout.traceRightOffsetPx': [-16, 2],
 }
 
 /** The rate picker inside the transport row. */
@@ -913,7 +967,7 @@ const RESTING_REGIONS = {
   title: TIME_TITLE_SELECTOR,
   era: ERA_SHORTCUTS_SELECTOR,
   orb: GLOBE_EXPAND_SELECTOR,
-  readouts: SHELL_READOUTS_SELECTOR,
+  population: POPULATION_READOUT_SELECTOR,
   feed: EVENT_FEED_ITEM_SELECTOR,
   timeline: BOTTOM_CHROME_SELECTOR,
 }
@@ -929,10 +983,11 @@ const TRANSPORT_ROW_REGIONS = {
 /**
  * Desktop resting layout at one viewport, root section then three levels deep (Earth › Cenozoic ›
  * Quaternary › Holocene, the longest trail that still shows whole):
- * - no chrome region (title, era shortcuts, orb, readouts, feed, caption, timeline, ancestor
- *   column) overlaps another or leaves the viewport, at the root and in the section;
+ * - no chrome region (title, era shortcuts, orb, feed, caption, timeline, ancestor column)
+ *   overlaps another or leaves the viewport, at the root and in the section;
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
- *   the ancestor column, its readouts 0-40px under it;
+ *   the ancestor column;
+ * - the population readout under the ancestor text, its value and trace on that text's right edge;
  * - the transport row: breadcrumb, rate picker, play, secondary cluster and (playing in steady)
  *   the rate readout's text clear of each other; the picker on the transport's centre line (where
  *   the readout sits is per viewport); the secondary cluster's children clear of each
@@ -957,13 +1012,15 @@ function desktopRestingShot(viewport, extra) {
       "the rate readout's text) clear of itself, the picker on the transport's centre line (±3px), " +
       'play on the track centre (±2px), transport vertically centred ' +
       '(±3px) with the breadcrumb on its line (±2px), row inside the track edges, breadcrumb on one line and whole, ' +
-      `transport and secondary cluster fixed in x (±0.5px) as the trail grows${extra.description}`,
+      'transport and secondary cluster fixed in x (±0.5px) as the trail grows; the population readout 4-48px under ' +
+      `the ancestor text, its value's right edge on that text's (±3px)${extra.description}`,
     viewport,
     t: 0,
     measure: async ({ page, hook }) => {
       const orb = await minimisedOrbDrawnBounds(page)
       const root = await boxesOf(page, { ...regions, about: ABOUT_BUTTON_SELECTOR, core: TIMELINE_CONTROLS_CORE_SELECTOR, secondary: TIMELINE_CONTROLS_SECONDARY_SELECTOR, track: TIMELINE_TRACK_STACK_SELECTOR })
       const rootLayout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, viewport)
+      const populationReadout = await ancestorColumnReadoutGeometry(page)
       const extraAtRoot = extra.atRoot === undefined ? {} : await extra.atRoot(page)
 
       await selectSection(page, hook, 'holocene')
@@ -993,7 +1050,7 @@ function desktopRestingShot(viewport, extra) {
         orb,
         orbTopOffsetPx: orb.y - root.about.y,
         orbToAncestorTopPx: orb.y - Math.min(root.about.y, root.ancestor.y),
-        orbToReadoutsGapPx: root.readouts.y - (orb.y + orb.height),
+        populationReadout,
         transportRow: pairwiseOverlapFlags({ ...rowParts, readout }),
         pickerCentreOffsetPx: centreY(deep.speed) - centreY(transport),
         readoutGapPx: readout.x - (transport.x + transport.width),
@@ -1021,7 +1078,7 @@ function desktopRestingShot(viewport, extra) {
       ...Object.fromEntries(Object.entries(layoutExpect([...Object.keys(regions), 'caption'])).flatMap(([key, range]) => [[`root.${key}`, range], [`inSection.${key}`, range]])),
       orbTopOffsetPx: [-4, 4],
       orbToAncestorTopPx: [-3, 3],
-      orbToReadoutsGapPx: [0, 40],
+      ...ANCESTOR_COLUMN_READOUT_EXPECT,
       ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary', 'readout'])).map(([key, range]) => [`transportRow.${key}`, range])),
       pickerCentreOffsetPx: [-3, 3],
       readoutTextWidthPx: [20, 120],
@@ -1243,7 +1300,8 @@ export default [
       "; the rate readout's text on the transport's centre line (±3px), 4-24px right of it; the orb's hover ring " +
       "100-106% of its drawn (alpha ≥ 0.5) limb; the scene canvas draws over at least half " +
       'the viewport; the timeline draws 135-175px tall; mode and scale ' +
-      'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; the "All events" browser ' +
+      'share a row; the population sparkline trace is 120-200 x 15-32px beneath its value; clicking it opens a chart ' +
+      'inside the viewport whose trace spans the full plot width and most of its height; the "All events" browser ' +
       '(`/`) is 300-720px wide, clear of the timeline, its rail labels inside it and apart.',
     atRoot: async (page) => {
       const [mode, scale] = await childRects(page, TIMELINE_CONTROLS_SECONDARY_SELECTOR)
@@ -1255,6 +1313,13 @@ export default [
       // The hover/focus ring is the expand button's 1px box-shadow spread: its box plus 1px a side.
       const ringDiameterPx = (await boxOf(page, GLOBE_EXPAND_SELECTOR)).width + 2
       const limb = await minimisedOrbLimbBounds(page)
+
+      await page.click(`${POPULATION_READOUT_SELECTOR} button[aria-haspopup="dialog"]`)
+      const chartPlot = await boxOf(page, '[data-testid="layer-chart"] svg')
+      const chartTrace = await polylineTraceBounds(page, '[data-testid="layer-chart"]')
+      const chartDialog = await boxOf(page, '[role="dialog"]')
+      await page.keyboard.press('Escape')
+      await rafTicks(page, 2)
 
       await page.keyboard.press('/')
       const panel = await drawnBounds(page, EVENT_BROWSER_SELECTOR)
@@ -1272,6 +1337,9 @@ export default [
         sparklineWidth: trace.width,
         sparklineHeight: trace.height,
         sparklineBelowValue: trace.y >= value.y + value.height - 1 ? 1 : 0,
+        chartTraceWidthFraction: chartTrace.width / chartPlot.width,
+        chartTraceHeightFraction: chartTrace.height / chartPlot.height,
+        chartDialogInViewport: chartDialog.x >= 0 && chartDialog.y >= 0 && chartDialog.x + chartDialog.width <= DEFAULT_VIEWPORT.width && chartDialog.y + chartDialog.height <= DEFAULT_VIEWPORT.height ? 1 : 0,
         browserWidth: panel.width,
         browserOverlapsTimeline,
         railLabelCount: rail.labelCount,
@@ -1287,6 +1355,9 @@ export default [
       sparklineWidth: [120, 200],
       sparklineHeight: [15, 32],
       sparklineBelowValue: [1, 1],
+      chartTraceWidthFraction: [0.97, 1.01],
+      chartTraceHeightFraction: [0.75, 1.01],
+      chartDialogInViewport: [1, 1],
       browserWidth: [300, 720],
       browserOverlapsTimeline: [0, 0],
       railLabelCount: [1, 40],
@@ -1435,9 +1506,10 @@ export default [
   {
     name: 'layout-390x844-resting',
     description:
-      'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, readouts, feed strip, ' +
+      'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, feed strip, ' +
       'caption, timeline) overlaps another or leaves the viewport; a tap on the caption title folds it to that one line; the drawn orb 102-112% of the drawn portrait; the ' +
-      'readouts sit 0-8px under the drawn orb and the shortcuts 8-14px under the title; the timeline draws 170-310px ' +
+      'shortcuts sit 8-14px under the title; the population readout 4-48px ' +
+      "under the ancestor text, its value's right edge on that text's (±3px); the timeline draws 170-310px " +
       'tall, its breadcrumb row taking no height at the root; the rate picker inside the transport row, clear of the ' +
       'transport buttons, the row no taller than the play button (1px); the secondary controls clear of each other and ' +
       'of the transport; in a section the stacked row stays inside the track (6px slack) without collisions and renders its ' +
@@ -1455,7 +1527,7 @@ export default [
       const globe = await opacityMatteBounds(page, GLOBE_CANVAS_SELECTOR)
       const portrait = await opacityMatteBounds(page, ANCESTOR_PORTRAIT_SELECTOR)
       const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
-      const orbToReadoutsPx = await gapBetween(page, GLOBE_CANVAS_SELECTOR, SHELL_READOUTS_SELECTOR)
+      const populationReadout = await ancestorColumnReadoutGeometry(page)
       const titleToShortcutsPx = await gapBetween(page, TIME_TITLE_SELECTOR, ERA_SHORTCUTS_SELECTOR)
       const tag = await page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first().boundingBox()
       const sectionsHeightAtRootPx = (await hiddenBoxOf(page, TIMELINE_CONTROLS_SECTIONS_SELECTOR)).height
@@ -1495,7 +1567,7 @@ export default [
         layout,
         tour,
         globePortraitRatioPct: Math.round((100 * globe.width) / portrait.width),
-        orbToReadoutsPx,
+        populationReadout,
         titleToShortcutsPx,
         timeline,
         sectionsHeightAtRootPx,
@@ -1521,7 +1593,7 @@ export default [
     expect: {
       ...prefixedLayoutExpect('layout', [...Object.keys(RESTING_REGIONS), 'ancestor', 'caption']),
       globePortraitRatioPct: [102, 112],
-      orbToReadoutsPx: [0, 8],
+      ...ANCESTOR_COLUMN_READOUT_EXPECT,
       titleToShortcutsPx: [8, 14],
       'timeline.height': [170, 310],
       sectionsHeightAtRootPx: [0, 0],

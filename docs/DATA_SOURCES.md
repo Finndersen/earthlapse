@@ -505,6 +505,26 @@ glacial lowstand (docs/GLOBE.md §5.1). Not on the HUD.
 | **Shape** | `RasterSequence` (Köppen) + `TimeSeries` (temp, sea level) |
 | **Storage** | CSVs → git; gridded → R2 |
 
+**Global mean temperature — candidate segments, checked 2026-10-02.** Curates as the `mean_temp`
+`TimeSeries` (absolute °C), which `WorldState.climate.mean_temp_c` already reads; publishing it is
+one `LayerSpec` in `SCALAR_LAYERS`, and the HUD puts it under the globe.
+
+| Segment | Dataset | Host | Licence |
+|---|---|---|---|
+| 1850/1880 → present | NASA GISTEMP v4 (`GLB.Ts+dSST.csv`) or HadCRUT5 | data.giss.nasa.gov, metoffice.gov.uk | US public domain; UK OGL v3 |
+| 24 ka → present | Osman et al. 2021 LGMR GMST | ncei.noaa.gov/pub/data/paleo/reconstructions/osman2021 | ⚠️ VERIFY (NOAA: free with citation) |
+| 4.5 Ma → present | Clark et al. 2024 (Science 383:884) GMST | PANGAEA | ⚠️ VERIFY (PANGAEA: usually CC-BY) |
+| 485 Ma → Holocene | Judd et al. 2024 PhanDA, `5_Outputs/PhanDA_GMSTandCO2_percentiles.csv` (85 stage averages, 5/16/50/84/95th percentiles, absolute °C) | raw.githubusercontent.com/EJJudd/PhanDA | ⚠️ none stated: the repo has no licence file; the paper calls it publicly available |
+
+- **Rejected: Berkeley Earth** — CC BY-NC 4.0, the same reason HYDE 3.3 was (ADR-031).
+- PhanDA's stage averages smooth out glacial cycles (Upper Pleistocene reads ~11.4 °C), so the
+  ice ages need the Clark 2024 / LGMR segments; PhanDA alone would hold the Holocene average to
+  the present.
+- Instrumental anomalies need an absolute offset per baseline (GISTEMP 1951–80; HadCRUT5
+  1961–90), documented in the source README.
+- The cloud environment's network policy blocked NOAA, NASA GISS, the Met Office and PANGAEA on
+  2026-10-02; those hosts must be allowed before this source can be fetched.
+
 **Key challenge — stitching.** Three sources at wildly different resolutions covering
 overlapping ranges. Needs an explicit, documented splice policy with crossfades at the
 boundaries, not a naive concat. **Document the splice points in the source README** — this

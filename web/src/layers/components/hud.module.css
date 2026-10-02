@@ -194,15 +194,9 @@
     width: var(--orb-size, 84px);
   }
 
-  /* The scalar readouts share a full-width row with nothing else on a phone, so the desktop
-     `clamp(20px, 1.7vw, 26px)` value type is far larger than it needs to be for a figure that is
-     glanced at, not read. Left-aligned explicitly rather than relying on the slot's own
-     `justify-self: start`, so the text inside each readout lines up with the column edge. */
-  .readout {
-    align-items: flex-start;
-    text-align: left;
-  }
-
+  /* The desktop `clamp(20px, 1.7vw, 26px)` value type is far larger than a phone needs for a
+     figure that is glanced at, not read. Alignment is inherited from the column the readout sits
+     in: left under the globe, right under the ancestor panel. */
   .value {
     font-size: 13px;
   }

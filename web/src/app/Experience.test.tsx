@@ -488,7 +488,7 @@ describe('Experience navigation wiring', () => {
   })
 })
 
-describe('Experience population readout and chart', () => {
+describe('Experience HUD scalar readouts', () => {
   const POPULATION_ENTRY = {
     id: 'population',
     name: 'Global population',
@@ -512,12 +512,34 @@ describe('Experience population readout and chart', () => {
       [12025, 4_432_265],
     ].map(([t, value]) => ({ t, value, lower: null, upper: null })),
   }
+  const MEAN_TEMP_ENTRY = {
+    id: 'mean_temp',
+    name: 'Global temperature',
+    surface: 'hud',
+    dataKind: 'scalar',
+    timeDomain: [0, 485_000_000],
+    source: 'test',
+    chartable: true,
+    unit: '°C',
+    interpolation: 'linear',
+    data: 'layers/mean_temp.json',
+  }
+  const MEAN_TEMP_DATA = {
+    id: 'mean_temp',
+    unit: '°C',
+    interpolation: 'linear',
+    samples: [
+      [0, 14],
+      [485_000_000, 30],
+    ].map(([t, value]) => ({ t, value, lower: null, upper: null })),
+  }
 
   beforeEach(() => {
     const responses: Record<string, unknown> = {
       ...FETCH_RESPONSES,
-      '/stub/manifest.json': { ...stubManifest, layers: [...stubManifest.layers, POPULATION_ENTRY] },
+      '/stub/manifest.json': { ...stubManifest, layers: [...stubManifest.layers, POPULATION_ENTRY, MEAN_TEMP_ENTRY] },
       '/stub/layers/population.json': POPULATION_DATA,
+      '/stub/layers/mean_temp.json': MEAN_TEMP_DATA,
     }
     vi.stubGlobal(
       'fetch',
@@ -531,13 +553,24 @@ describe('Experience population readout and chart', () => {
     )
   })
 
-  it('hides the population readout before its data begins and shows it inside the domain', async () => {
+  it('puts population under the ancestor panel, shown only inside its domain, and other scalars under the globe', async () => {
     await renderSettled()
     expect(screen.queryByTestId('scalar-readout-population')).toBeNull()
     act(() => {
       useTimeStore.getState().setT(100)
     })
-    expect(screen.getByTestId('scalar-readout-population')).toBeTruthy()
+    expect(within(screen.getByTestId('shell-ancestor-readouts')).getByTestId('scalar-readout-population')).toBeTruthy()
+    expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp')).toBeTruthy()
+  })
+
+  it("opens a readout's expanded chart from its sparkline, on a log time axis for a deep-time record", async () => {
+    await renderSettled()
+    fireEvent.click(screen.getByRole('button', { name: 'Expand Global temperature chart' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByTestId('layer-chart').getAttribute('data-layer-id')).toBe('mean_temp')
+    expect(within(dialog).getByRole('button', { name: 'Log time' }).getAttribute('aria-pressed')).toBe('true')
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 })
 

@@ -9,9 +9,8 @@
  * `createScalarLayer`'s sampling are untouched, and other consumers of `scalarLayers` (e.g.
  * `web/src/audio/engine.ts`'s score filter cutoff) are unaffected.
  *
- * Since the row and its click-to-expand chart share one gate in `Experience.tsx`
- * (`HudSparkline`'s `onToggle` only wires up for `hudScalarEntries`), hiding the readout also
- * makes the CO2 chart unreachable from the HUD — intended, not a side effect.
+ * The expanded chart opens from the readout's own sparkline, so hiding the readout also makes the
+ * CO2 chart unreachable from the HUD — intended, not a side effect.
  *
  * To bring a layer back: remove its id from this set. No re-fetch, re-curation, manifest edit,
  * or pipeline change needed.
@@ -35,4 +34,16 @@ export function isHiddenFromHud(layerId: string): boolean {
  *  domain — this is a display-only carve-out for one layer, not a general rule. */
 export function isPopulationReadoutHiddenAt(layerId: string, timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): boolean {
   return layerId === 'population' && t > timeDomain[1]
+}
+
+/** Which HUD column a scalar readout sits in: `'globe'` under the globe orb (left), or
+ *  `'ancestor'` under the "Your ancestor" panel (right), right-aligned to that column. */
+export type HudColumn = 'globe' | 'ancestor'
+
+/** Layers placed somewhere other than the default `'globe'` column. Population reads with the
+ *  ancestor panel because both are about people; climate readouts stay with the globe. */
+const HUD_COLUMN_BY_LAYER_ID: ReadonlyMap<string, HudColumn> = new Map([['population', 'ancestor']])
+
+export function hudColumnFor(layerId: string): HudColumn {
+  return HUD_COLUMN_BY_LAYER_ID.get(layerId) ?? 'globe'
 }

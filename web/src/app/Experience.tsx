@@ -32,7 +32,8 @@ import {
 import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, empiresHaveDataAt, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, isHiddenFromHud, isPopulationReadoutHiddenAt, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, hudColumnFor, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import type { HudColumn } from '@/layers'
 import { GlobeTour, OnboardingTour } from '@/onboarding'
 import {
   dominantScene,
@@ -190,6 +191,8 @@ export function Experience() {
   // Like the event detail panel, opening it pauses playback and closing it resumes, so the scene
   // under the panel stays the one it describes.
   const [captionDetailScene, setCaptionDetailScene] = useState<Scene | null>(null)
+  // The HUD scalar whose expanded chart is open, if any.
+  const [chartLayerId, setChartLayerId] = useState<string | null>(null)
   const captionDetailHold = usePlaybackHold(playback.playing, setPlaying)
   // Every other layout folds the passage away under its title on a tap of the title. Read after
   // mount so the static export's prerendered markup (passage shown) hydrates unchanged.
@@ -469,6 +472,7 @@ export function Experience() {
   const globeLayersLoaded = layersLoaded(readyManifest, readyLayerData, (entry) => entry.surface === 'globe')
   const regimeEvents = useMemo(() => rawEvents(eventLayers, 'globe-regimes'), [eventLayers])
   const iceAgeLayers = useMemo(() => iceAgeLayersFrom(scalarLayers), [scalarLayers])
+  const chartLayer = chartLayerId === null ? undefined : scalarLayers.get(chartLayerId)
   // ADR-035's `cities` FeatureSet, selected by id the same way the raster layers above are.
   const cities = featureSets.get('cities')?.data.features ?? null
   // ADR-059's `empires` territories, indexed once per published layer file.
@@ -494,6 +498,7 @@ export function Experience() {
   // Only chartable scalars get a HUD readout and sparkline. `isHiddenFromHud`
   // additionally excludes a small, reversible set of layers (currently just CO2) from this list
   // specifically — see `@/layers/hudVisibility.ts` for the rationale and revert instructions.
+  // `hudColumnFor` splits the rest between the globe column and the ancestor column.
   const hudScalarEntries = useMemo(
     () =>
       (readyManifest?.layers ?? []).filter(
@@ -501,6 +506,30 @@ export function Experience() {
       ),
     [readyManifest],
   )
+  const renderHudReadouts = (column: HudColumn) => {
+    const rows = hudScalarEntries.flatMap((entry) => {
+      const layer = scalarLayers.get(entry.id)
+      if (hudColumnFor(entry.id) !== column || layer === undefined) return []
+      if (isPopulationReadoutHiddenAt(entry.id, layer.timeDomain, t)) return []
+      return [
+        <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
+          <ScalarReadout layer={layer} t={t} />
+          <button
+            type="button"
+            className={styles.sparkline}
+            aria-haspopup="dialog"
+            aria-label={`Expand ${layer.name} chart`}
+            onClick={() => setChartLayerId(entry.id)}
+          >
+            <Sparkline layer={layer} t={t} />
+          </button>
+        </div>,
+      ]
+    })
+    // Nothing at all when the column has no readout at `t`, so ShellLayout's slot is `:empty`.
+    if (rows.length === 0) return null
+    return <div className={column === 'ancestor' ? `${styles.readouts} ${styles.readoutsEnd}` : styles.readouts}>{rows}</div>
+  }
   // The derived chain each arrival continues (ADR-032) — the detail panel's Route section lists it.
   const arrivalIndex = useMemo(() => buildArrivalIndex(readyManifest?.events ?? []), [readyManifest])
   const arrivalChainFor = useCallback(
@@ -734,23 +763,8 @@ export function Experience() {
             <div className={styles.placeholder}>No paleogeographic data in manifest.</div>
           )
         }
-        readouts={
-          <div className={styles.readouts}>
-            {hudScalarEntries.map((entry) => {
-              const layer = scalarLayers.get(entry.id)
-              if (layer === undefined) return null
-              if (isPopulationReadoutHiddenAt(entry.id, layer.timeDomain, t)) return null
-              return (
-                <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
-                  <ScalarReadout layer={layer} t={t} />
-                  <div className={styles.sparkline}>
-                    <Sparkline layer={layer} t={t} />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        }
+        readouts={renderHudReadouts('globe')}
+        ancestorReadouts={renderHudReadouts('ancestor')}
         feed={
           <EventFeed
             t={t}
@@ -835,6 +849,11 @@ export function Experience() {
             browserFilters.current = filters
           }}
         />
+      )}
+      {chartLayer && (
+        <Panel label={`${chartLayer.name} chart`} title={chartLayer.name} onClose={() => setChartLayerId(null)} className={styles.chartPanel}>
+          <LayerChart layer={chartLayer} t={t} />
+        </Panel>
       )}
       {captionDetailScene && (
         <Panel label={captionDetailScene.title} onClose={closeCaptionDetail}>

@@ -20,6 +20,9 @@ export interface ShellLayoutProps {
   globe: ReactNode
   /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). */
   readouts: ReactNode
+  /** Right edge, below the ancestor panel: the scalar readouts placed in that column
+   *  (`@/layers`'s `hudColumnFor`), right-aligned to it. */
+  ancestorReadouts: ReactNode
   /** Left edge, below the readouts: the event feed (DESIGN § Event feed) — recently-reached
    *  events as cards, so they surface as playback passes them instead of only on a timeline
    *  hover. The one empty stretch of the periphery on every breakpoint, so it never sits over
@@ -71,6 +74,7 @@ export function ShellLayout({
   scene,
   globe,
   readouts,
+  ancestorReadouts,
   feed,
   title,
   badge,
@@ -175,6 +179,9 @@ export function ShellLayout({
           </button>
           <span className={styles.label}>Your ancestor</span>
           {ancestor}
+          <div className={styles.ancestorReadouts} data-testid="shell-ancestor-readouts">
+            {ancestorReadouts}
+          </div>
         </div>
 
         <div className={styles.bottom}>

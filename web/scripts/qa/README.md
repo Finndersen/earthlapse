@@ -72,7 +72,7 @@ the page load and the globe's pointer interactions:
 | Shot | Guards |
 |---|---|
 | `loading-screen` | the loader is in the static HTML, animates only with motion allowed, steps its progress, and is gone once the shell mounts |
-| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser and population sparkline against the timeline |
+| `layout-1440x900-resting` | no chrome region overlaps another or leaves the viewport (root and three sections deep); the drawn orb, its hover ring against the drawn limb, scene and timeline; the transport row's geometry, rate picker and (playing) rate readout included; the event browser and population sparkline against the timeline; the sparkline's expanded chart inside the viewport, its trace across the plot; the population readout under the ancestor text and right-aligned to it (also at 1000x810 and 390x844) |
 | `globe-interactions` | clicks on the orb, sphere, "Map" button, map and backdrop hit what they should; one zoom press grows the drawn sphere; a click on a drawn arrival opens its detail panel's Route section, opaque and ending inside the viewport (full run only, not `--smoke`) |
 | `layout-1000x810-resting` | the same at narrow desktop, with the rate readout under the transport and the secondary controls on one row |
 | `layout-390x844-resting` | phone portrait: chrome regions, drawn orb vs portrait size, stacked controls rows and the rate picker inside its row, the feed's "All events" tap target and the sheet it opens, the tour's first step |

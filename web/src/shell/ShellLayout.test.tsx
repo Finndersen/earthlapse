@@ -28,6 +28,7 @@ function renderShell({
       scene={<div>SCENE_SLOT</div>}
       globe={<div>GLOBE_SLOT</div>}
       readouts={<div>READOUTS_SLOT</div>}
+      ancestorReadouts={<div>ANCESTOR_READOUTS_SLOT</div>}
       feed={<div>FEED_SLOT</div>}
       title={<div>TITLE_SLOT</div>}
       badge={<div>BADGE_SLOT</div>}
@@ -49,6 +50,7 @@ describe('ShellLayout', () => {
       'SCENE_SLOT',
       'GLOBE_SLOT',
       'READOUTS_SLOT',
+      'ANCESTOR_READOUTS_SLOT',
       'FEED_SLOT',
       'TITLE_SLOT',
       'BADGE_SLOT',

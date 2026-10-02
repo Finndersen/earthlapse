@@ -150,7 +150,7 @@
   grid-template-areas:
     'globe    title    ancestor'
     'readouts .        ancestor'
-    'feed     .        .'
+    'feed     .        ancestor'
     'bottom   bottom   bottom';
   column-gap: var(--gutter);
   padding: var(--gutter-top) var(--gutter) var(--hud-bottom-inset);
@@ -203,7 +203,7 @@
 
 /* Below the readouts, filling the empty row above `.bottom` — the one *column* of the periphery
    that is never the globe orb, the ancestor panel or the scene caption: `.feed`'s own grid area
-   (`'feed . .'`) never shares a cell with `.caption`'s (`'bottom bottom bottom'`), so the two
+   (`'feed . ancestor'`) never shares a cell with `.caption`'s (`'bottom bottom bottom'`), so the two
    never draw over each other. `.feed` does not always get the height it wants, though — this row
    is the grid's one `minmax(0, 1fr)` track, so it yields whatever `.bottom` (an `auto` track,
    sized to fit the caption heading + passage + timeline) needs. `.caption`'s own `max-height`
@@ -261,9 +261,14 @@
   margin-top: 3px;
 }
 
+/* The area reaches into the `1fr` feed row so the column can grow (the population readout under
+   the panel appears partway through playback) without stretching the `auto` rows beside it, which
+   would push the feed down. `align-self: start` keeps the box to its content, so the empty run
+   below it never takes the pointer from the scene. */
 .ancestor {
   grid-area: ancestor;
   justify-self: end;
+  align-self: start;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -358,13 +363,14 @@
     visibility 0s linear 0s;
 }
 
-/* Feathered local scrims behind the two blocks that sit over open sky — the caption
-   and the left readout/feed column. Each is an edgeless gradient that
+/* Feathered local scrims behind the blocks that sit over open sky — the caption, the left
+   readout/feed column and the readouts under the ancestor panel. Each is an edgeless gradient that
    carries legibility where the type actually is, so the global `.lens` vignette can stay light
    and show more of the plate. No fill, border or blur: a panel would read as app chrome against
    the photograph (DESIGN §8). */
 .caption,
 .readouts,
+.ancestorReadouts,
 .feed {
   position: relative;
   isolation: isolate;
@@ -372,6 +378,7 @@
 
 .caption::before,
 .readouts::before,
+.ancestorReadouts::before,
 .feed::before {
   content: '';
   position: absolute;
@@ -395,11 +402,37 @@
   );
 }
 
+/* The ancestor column's mirror of the left scrim, weighted towards the screen edge it sits on. */
+.ancestorReadouts::before {
+  inset: -16px -48px -20px -56px;
+  background: radial-gradient(
+    ellipse 72% 62% at 60% 50%,
+    rgba(3, 4, 6, var(--scrim-core, 0.46)) 0%,
+    rgba(3, 4, 6, var(--scrim-mid, 0.34)) 52%,
+    transparent 84%
+  );
+}
+
 /* The readouts are a few short lines with their own text-shadow halo, so they need less backing
    than the feed's running text. */
-.readouts {
+.readouts,
+.ancestorReadouts {
   --scrim-core: 0.3;
   --scrim-mid: 0.2;
+}
+
+/* An empty slot (no readout in that column at `t`) draws no scrim, and the ancestor column spends
+   no flex gap on it. */
+.readouts:empty::before {
+  display: none;
+}
+
+.ancestorReadouts:empty {
+  display: none;
+}
+
+.ancestorReadouts {
+  margin-top: 8px;
 }
 
 .caption,
@@ -788,6 +821,19 @@
     order: -1;
   }
 
+  /* After the kicker, with the same lighter, tighter scrim as the readouts under the orb. */
+  .ancestorReadouts {
+    --scrim-core: 0.2;
+    --scrim-mid: 0.12;
+    order: 2;
+    max-width: 100%;
+    margin-top: 4px;
+  }
+
+  .ancestorReadouts::before {
+    inset: -8px -16px -10px -20px;
+  }
+
   /* Caps the panel's own width to the column (`.ancestor`'s `max-width`) so the ellipsis rules
      on the name/since text inside it (hud.module.css) have an actual limit to measure against
      — without this, the panel and the readout span nested in it size to their own longest
@@ -839,7 +885,7 @@
    opposite, with the era shortcuts centred in a row beneath it — the desktop arrangement, not a
    shortcut either side of the title; the globe orb and the ancestor portrait fill the corners
    beside it as far down as the height allows; one row holds the event strip (left) and the
-   caption's title (right); the timeline runs beneath. The layer readouts are hidden; the orb
+   caption's title (right); the timeline runs beneath. The layer readouts (both columns) are hidden; the orb
    still expands the globe, which shows them. */
 @media (orientation: landscape) and (max-height: 500px) {
   .shell {
@@ -887,7 +933,8 @@
     height: min(var(--globe-orb-size), 100cqw);
   }
 
-  .readouts {
+  .readouts,
+  .ancestorReadouts {
     display: none;
   }
 

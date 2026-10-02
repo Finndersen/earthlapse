@@ -246,8 +246,7 @@ export interface Layer<V extends LayerValue = LayerValue> {
   /** MUST be pure in `t`. No fetching, no refs, no component state. */
   sample(t: GeoTime): V | null
 
-  /** Optional: expands to a full-width chart docked to the timeline. Because the chart
-   *  shares the timeline's warped x-axis, the value under the playhead sits above it. */
+  /** Optional: gets a HUD readout and sparkline, which opens the layer's expanded chart. */
   chartable?: boolean
 }
 

@@ -7904,3 +7904,34 @@ scene on screen:
   - An Americas dip on `livestock`.
 - **Scene sounds.** While a scene's own sound plays, the engine scales every curve gain by
   `1 - 0.4 × scene gain`. The stem the scene names is never ducked.
+
+## ADR-053 amendment (2026-10-02): the sparkline opens an expanded chart again
+
+**Status:** accepted — 2026-10-02. Amends ADR-053's removal of the chart dock; the sparkline's own
+growing axes are unchanged.
+
+**Context.** The human asked for every HUD sparkline to open a larger view. ADR-053 removed the
+dock because it served only population, a sliver of the timeline, and was hard to find. Global
+temperature is about to join the HUD with a record spanning 485 Myr, and it needs a larger view
+more than population did: on any linear axis the instrumental era and the glacial cycles are a
+fraction of a pixel.
+
+**Decision.**
+
+- **The sparkline is a button again** ("Expand <layer> chart") and opens `LayerChart` in the shared
+  `Panel` dialog, not a dock above the timeline. It is modal chrome like the About panel, so it
+  needs no slot in the shell and no store state.
+- **The chart shows the whole record**, solid where playback has reached and faint beyond it, with
+  the uncertainty band, value and time ticks, the playhead and a hover readout.
+- **The time axis is linear or log**, toggled in the chart. It defaults to log when the record's
+  oldest-to-newest ratio exceeds 10⁴, so population (12 kyr) opens linear and a deep-time record
+  opens log. ADR-053's objection to log was to a log *value* axis, which hid population's modern
+  rise; a log *time* axis keeps that rise intact and gives each decade of age equal width.
+- **The value axis keeps zero only for a count growing from near nothing** (minimum under a
+  quarter of the maximum); anything else is fitted to its own range, so a few degrees of
+  temperature change is not flattened against an arbitrary zero.
+
+**Rejected.**
+- **Restoring the timeline-docked chart.** Docking to the timeline's own warped scale fixed the
+  chart to one axis, which is exactly the limitation the toggle removes.
+
