@@ -553,18 +553,26 @@ describe('Experience HUD scalar readouts', () => {
     )
   })
 
-  it('puts population under the ancestor panel, shown only inside its domain, and other scalars under the globe', async () => {
+  it('puts population under the ancestor panel and temperature under the globe, each shown only inside its domain', async () => {
     await renderSettled()
+    act(() => {
+      useTimeStore.getState().setT(1e9)
+    })
     expect(screen.queryByTestId('scalar-readout-population')).toBeNull()
+    // The globe column keeps a hidden readout's box, so the event feed below it does not move.
+    expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp').hasAttribute('data-readout-hidden')).toBe(true)
     act(() => {
       useTimeStore.getState().setT(100)
     })
     expect(within(screen.getByTestId('shell-ancestor-readouts')).getByTestId('scalar-readout-population')).toBeTruthy()
-    expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp')).toBeTruthy()
+    expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp').hasAttribute('data-readout-hidden')).toBe(false)
   })
 
   it("opens a readout's expanded chart from its sparkline, on a log time axis for a deep-time record", async () => {
     await renderSettled()
+    act(() => {
+      useTimeStore.getState().setT(100)
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Expand Global temperature chart' }))
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByTestId('layer-chart').getAttribute('data-layer-id')).toBe('mean_temp')

@@ -27,13 +27,12 @@ export function isHiddenFromHud(layerId: string): boolean {
   return HUD_HIDDEN_LAYER_IDS.has(layerId)
 }
 
-/** The global population readout only: hidden entirely for any `t` older than the layer's own
- *  domain start (HYDE 3.2's population series only reaches back into the Holocene), rather than
- *  showing "no data" across the whole of deep time, which reads as a load failure. Every other
- *  HUD scalar keeps `ScalarReadout`'s existing "no data"/"no record" behaviour outside its own
- *  domain — this is a display-only carve-out for one layer, not a general rule. */
-export function isPopulationReadoutHiddenAt(layerId: string, timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): boolean {
-  return layerId === 'population' && t > timeDomain[1]
+/** Whether a HUD readout is hidden at `t`: entirely, for any `t` older than its layer's own domain
+ *  (population only reaches back into the Holocene, temperature to 482 Ma), rather than showing
+ *  "no data" across the rest of deep time, which reads as a load failure. Inside the domain a
+ *  declared gap still reads "no record" (`ScalarReadout`). */
+export function isReadoutHiddenAt(timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): boolean {
+  return t > timeDomain[1]
 }
 
 /** Which HUD column a scalar readout sits in: `'globe'` under the globe orb (left), or
@@ -47,3 +46,8 @@ const HUD_COLUMN_BY_LAYER_ID: ReadonlyMap<string, HudColumn> = new Map([['popula
 export function hudColumnFor(layerId: string): HudColumn {
   return HUD_COLUMN_BY_LAYER_ID.get(layerId) ?? 'globe'
 }
+
+/** Whether a column keeps a hidden readout's space. The event feed stacks under the globe
+ *  column, so that column holds its height and the feed never moves as readouts come and go; the
+ *  ancestor column has nothing below it to displace. */
+export const HUD_COLUMN_RESERVES_SPACE: Readonly<Record<HudColumn, boolean>> = { globe: true, ancestor: false }

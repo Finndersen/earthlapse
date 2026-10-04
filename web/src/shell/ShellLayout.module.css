@@ -421,9 +421,10 @@
   --scrim-mid: 0.2;
 }
 
-/* An empty slot (no readout in that column at `t`) draws no scrim, and the ancestor column spends
-   no flex gap on it. */
-.readouts:empty::before {
+/* An empty slot (no readout in that column at `t`), or one whose content only holds its space,
+   draws no scrim; the ancestor column spends no flex gap on an empty one. */
+.readouts:empty::before,
+.readouts:has(> [data-reserved])::before {
   display: none;
 }
 

@@ -147,6 +147,11 @@
   width: min(720px, 100%);
 }
 
+/* A readout outside its layer's domain keeps its box, so the event feed below never moves. */
+.readout[data-readout-hidden] {
+  visibility: hidden;
+}
+
 /* The ancestor column's readouts: text and sparkline on that column's right edge. */
 .readoutsEnd,
 .readoutsEnd .readout {

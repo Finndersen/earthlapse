@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud, isPopulationReadoutHiddenAt } from './hudVisibility'
+import { HUD_HIDDEN_LAYER_IDS, isHiddenFromHud, isReadoutHiddenAt } from './hudVisibility'
 
 describe('isHiddenFromHud', () => {
   it('hides co2 from the HUD', () => {
@@ -14,17 +14,13 @@ describe('isHiddenFromHud', () => {
   })
 })
 
-describe('isPopulationReadoutHiddenAt', () => {
+describe('isReadoutHiddenAt', () => {
   const domain: [number, number] = [10, 12000]
 
-  it('hides the population readout older than the domain start', () => {
-    expect(isPopulationReadoutHiddenAt('population', domain, 3.45e9)).toBe(true)
-    expect(isPopulationReadoutHiddenAt('population', domain, 12001)).toBe(true)
+  it('hides a readout older than its domain start and shows it at or inside the domain', () => {
+    expect(isReadoutHiddenAt(domain, 3.45e9)).toBe(true)
+    expect(isReadoutHiddenAt(domain, 12001)).toBe(true)
+    expect(isReadoutHiddenAt(domain, 12000)).toBe(false)
+    expect(isReadoutHiddenAt(domain, 0)).toBe(false)
   })
-
-  it('shows the population readout at or inside the domain', () => {
-    expect(isPopulationReadoutHiddenAt('population', domain, 12000)).toBe(false)
-    expect(isPopulationReadoutHiddenAt('population', domain, 0)).toBe(false)
-  })
-
 })

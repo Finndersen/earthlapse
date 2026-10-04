@@ -989,6 +989,7 @@ const TRANSPORT_ROW_REGIONS = {
  *   column) overlaps another or leaves the viewport, at the root and in the section;
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
  *   the ancestor column, its readouts 0-40px under it;
+ * - the event feed's top unmoved at 1 Ga, where the temperature readout hides but keeps its box;
  * - the population readout under the ancestor text, its value and trace on that text's right edge;
  * - the transport row: breadcrumb, rate picker, play, secondary cluster and (playing in steady)
  *   the rate readout's text clear of each other; the picker on the transport's centre line (where
@@ -1015,7 +1016,8 @@ function desktopRestingShot(viewport, extra) {
       'play on the track centre (±2px), transport vertically centred ' +
       '(±3px) with the breadcrumb on its line (±2px), row inside the track edges, breadcrumb on one line and whole, ' +
       'transport and secondary cluster fixed in x (±0.5px) as the trail grows; the population readout 4-48px under ' +
-      `the ancestor text, its value's right edge on that text's (±3px)${extra.description}`,
+      `the ancestor text, its value's right edge on that text's (±3px); at 1 Ga, with the temperature readout ` +
+      `hidden, the event feed stays put (±0.5px)${extra.description}`,
     viewport,
     t: 0,
     measure: async ({ page, hook }) => {
@@ -1024,6 +1026,15 @@ function desktopRestingShot(viewport, extra) {
       const rootLayout = layoutFlags({ ...Object.fromEntries(Object.keys(regions).map((name) => [name, root[name]])), caption: await captionBox(page) }, viewport)
       const populationReadout = await ancestorColumnReadoutGeometry(page)
       const extraAtRoot = extra.atRoot === undefined ? {} : await extra.atRoot(page)
+
+      // At 1 Ga, before temperature's record, its readout hides but keeps its box.
+      const feedTop = (await boxOf(page, SHELL_FEED_SELECTOR)).y
+      await hook.setT(1e9)
+      await rafTicks(page, 2)
+      const feedTopShiftPx = (await boxOf(page, SHELL_FEED_SELECTOR)).y - feedTop
+      const readoutsReservedAt1Ga = await page.locator(`${SHELL_READOUTS_SELECTOR} > [data-reserved]`).count()
+      await hook.setT(0)
+      await waitForSceneCrossfadeSettle(page)
 
       await selectSection(page, hook, 'holocene')
       const deep = await boxesOf(page, {
@@ -1053,6 +1064,8 @@ function desktopRestingShot(viewport, extra) {
         orbTopOffsetPx: orb.y - root.about.y,
         orbToAncestorTopPx: orb.y - Math.min(root.about.y, root.ancestor.y),
         orbToReadoutsGapPx: root.readouts.y - (orb.y + orb.height),
+        feedTopShiftPx,
+        readoutsReservedAt1Ga,
         populationReadout,
         transportRow: pairwiseOverlapFlags({ ...rowParts, readout }),
         pickerCentreOffsetPx: centreY(deep.speed) - centreY(transport),
@@ -1082,6 +1095,8 @@ function desktopRestingShot(viewport, extra) {
       orbTopOffsetPx: [-4, 4],
       orbToAncestorTopPx: [-3, 3],
       orbToReadoutsGapPx: [0, 40],
+      feedTopShiftPx: [-0.5, 0.5],
+      readoutsReservedAt1Ga: [1, 1],
       ...ANCESTOR_COLUMN_READOUT_EXPECT,
       ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary', 'readout'])).map(([key, range]) => [`transportRow.${key}`, range])),
       pickerCentreOffsetPx: [-3, 3],

@@ -18,7 +18,8 @@ export interface ShellLayoutProps {
   scene: ReactNode
   /** Top-left floating orb: the independent paleogeographic globe (DESIGN §7). */
   globe: ReactNode
-  /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). */
+  /** Left edge, below the globe: scalar layer readouts and sparklines (DESIGN §8, §10). A child
+   *  marked `data-reserved` holds its space without drawing, so it gets no scrim. */
   readouts: ReactNode
   /** Right edge, below the ancestor panel: the scalar readouts placed in that column
    *  (`@/layers`'s `hudColumnFor`), right-aligned to it. */

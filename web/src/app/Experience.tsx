@@ -32,7 +32,7 @@ import {
 import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, empiresHaveDataAt, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, hudColumnFor, isHiddenFromHud, isPopulationReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, HUD_COLUMN_RESERVES_SPACE, hudColumnFor, isHiddenFromHud, isReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
 import type { HudColumn } from '@/layers'
 import { GlobeTour, OnboardingTour } from '@/onboarding'
 import {
@@ -510,10 +510,20 @@ export function Experience() {
     const rows = hudScalarEntries.flatMap((entry) => {
       const layer = scalarLayers.get(entry.id)
       if (hudColumnFor(entry.id) !== column || layer === undefined) return []
-      if (isPopulationReadoutHiddenAt(entry.id, layer.timeDomain, t)) return []
+      const hidden = isReadoutHiddenAt(layer.timeDomain, t)
+      if (hidden && !HUD_COLUMN_RESERVES_SPACE[column]) return []
+      // A hidden row draws at its record's oldest edge, so its box is the size of a shown one.
+      const rowT = hidden ? layer.timeDomain[1] : t
       return [
-        <div key={entry.id} className={styles.readout} data-testid={`scalar-readout-${entry.id}`}>
-          <ScalarReadout layer={layer} t={t} />
+        <div
+          key={entry.id}
+          className={styles.readout}
+          data-testid={`scalar-readout-${entry.id}`}
+          data-readout-hidden={hidden || undefined}
+          aria-hidden={hidden || undefined}
+          inert={hidden}
+        >
+          <ScalarReadout layer={layer} t={rowT} />
           <button
             type="button"
             className={styles.sparkline}
@@ -521,14 +531,20 @@ export function Experience() {
             aria-label={`Expand ${layer.name} chart`}
             onClick={() => setChartLayerId(entry.id)}
           >
-            <Sparkline layer={layer} t={t} />
+            <Sparkline layer={layer} t={rowT} />
           </button>
         </div>,
       ]
     })
-    // Nothing at all when the column has no readout at `t`, so ShellLayout's slot is `:empty`.
+    // Nothing at all when the column has no readout, so ShellLayout's slot is `:empty`; marked
+    // `data-reserved` when every row is only holding its space.
     if (rows.length === 0) return null
-    return <div className={column === 'ancestor' ? `${styles.readouts} ${styles.readoutsEnd}` : styles.readouts}>{rows}</div>
+    const reserved = rows.every((row) => row.props['data-readout-hidden'] === true)
+    return (
+      <div className={column === 'ancestor' ? `${styles.readouts} ${styles.readoutsEnd}` : styles.readouts} data-reserved={reserved || undefined}>
+        {rows}
+      </div>
+    )
   }
   // The derived chain each arrival continues (ADR-032) — the detail panel's Route section lists it.
   const arrivalIndex = useMemo(() => buildArrivalIndex(readyManifest?.events ?? []), [readyManifest])
