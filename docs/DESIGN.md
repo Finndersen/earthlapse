@@ -499,7 +499,7 @@ expands to fill; it is never the default focus.
 
 > **v1 note (ADR-012):** the boxed layout above is superseded. The scene fills the window
 > behind an elliptical lens vignette. The same slots float, unboxed, in the darkened periphery:
-> - globe orb top-left, the climate readouts beneath it (empty until `mean_temp` is curated)
+> - globe orb top-left, the global temperature readout beneath it
 > - time/era title top-centre
 > - ancestor top-right, the global population readout beneath it, right-aligned
 >   (`web/src/layers/hudVisibility.ts`'s `hudColumnFor` maps a layer to its column)

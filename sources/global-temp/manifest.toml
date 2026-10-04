@@ -1,0 +1,43 @@
+# See docs/DATA_SOURCES.md for field meanings, and README.md for the splice policy.
+#
+# global-temp splices three upstream files into one `mean_temp` TimeSeries (instrumental ->
+# LGM reanalysis -> Phanerozoic reconstruction), so the top-level url/sha256 name no single
+# file; per-file provenance lives in [[artefacts]], which fetch.py loops over. Same split as
+# sources/co2-o2.
+
+name = "global-temp"
+title = "Global mean surface temperature: HadCRUT5, the Last Glacial Maximum Reanalysis and PhanDA"
+url = "https://github.com/finndersen/earthlapse/blob/main/sources/global-temp/README.md"
+sha256 = ""
+licence = "Open Government Licence v3 (HadCRUT5); NOAA NCEI distributes LGMR without restriction, citation requested; PhanDA states no licence (publicly released with the paper, citation requested); per-file detail in [[artefacts]]"
+citation = "Morice, C.P. et al., 2021: An updated assessment of near-surface temperature change from 1850: the HadCRUT5 data set. JGR Atmospheres 126, e2019JD032361, doi:10.1029/2019JD032361; absolute baseline from Jones, P.D. et al., 1999, Reviews of Geophysics 37, 173-199, doi:10.1029/1999RG900002. Osman, M.B. et al., 2021: Globally resolved surface temperatures since the Last Glacial Maximum. Nature 599, 239-244, doi:10.1038/s41586-021-03984-4. Judd, E.J. et al., 2024: A 485-million-year history of Earth's surface temperature. Science 385, eadk3705, doi:10.1126/science.adk3705."
+time_domain = [4.81965e8, 0.0]  # years before the AD 2025 present, [oldest, newest]
+output_shape = "TimeSeries"
+interpolation = "linear"
+volume_bytes = 41586         # measured: sum of the three files below (7,046 + 16,027 + 18,513)
+storage_tier = "git"
+
+# Newest segment first -- the order normalise.py splices them in.
+
+[[artefacts]]
+filename = "HadCRUT.5.2.0.0.analysis.summary_series.global.annual.csv"
+url = "https://www.metoffice.gov.uk/hadobs/hadcrut5/data/HadCRUT.5.2.0.0/analysis/diagnostics/HadCRUT.5.2.0.0.analysis.summary_series.global.annual.csv"
+# Regenerated upstream as each month is added (the current year's row is a running partial
+# mean), so this pin goes stale and `make data` fails loudly on a fresh raw dir. Re-pin by hand.
+sha256 = "7f750b673bb34aad722736ee21f122b5ea692c99877fa0b1066df65e51f32c04"
+licence = "Open Government Licence v3 (UK Met Office Hadley Centre and Climatic Research Unit, University of East Anglia)"
+citation = "Morice, C.P., Kennedy, J.J., Rayner, N.A., Winn, J.P., Hogan, E., Killick, R.E., Dunn, R.J.H., Osborn, T.J., Jones, P.D. and I.R. Simpson, 2021: An updated assessment of near-surface temperature change from 1850: the HadCRUT5 data set. Journal of Geophysical Research: Atmospheres 126, e2019JD032361, doi:10.1029/2019JD032361. HadCRUT.5.2.0.0."
+
+[[artefacts]]
+filename = "LGMR_GMST_climo.nc"
+url = "https://www.ncei.noaa.gov/pub/data/paleo/reconstructions/osman2021/LGMR_GMST_climo.nc"
+sha256 = "3c62f06b89a2f613d914bce77200358305e13279236fd6d1db48671bea3a4bb1"
+licence = "NOAA NCEI Paleoclimatology (study 33112, doi:10.25921/njxd-hg08): distributed without restriction; its study JSON states no licence, citation requested"
+citation = "Osman, M.B., Tierney, J.E., Zhu, J., Tardif, R., Hakim, G.J., King, J. and C.J. Poulsen, 2021: Globally resolved surface temperatures since the Last Glacial Maximum. Nature 599, 239-244, doi:10.1038/s41586-021-03984-4. Data: NOAA NCEI, doi:10.25921/njxd-hg08."
+
+[[artefacts]]
+filename = "PhanDA_GMSTandCO2_percentiles.csv"
+url = "https://raw.githubusercontent.com/EJJudd/PhanDA/main/5_Outputs/PhanDA_GMSTandCO2_percentiles.csv"
+sha256 = "22cad7964bac3b679ad83bf8a9c83eb66e995898a01eb9e93142087b2d4f6e1f"
+licence = "No licence stated: the repository carries no licence file; the paper's data statement releases the GMST values publicly on GitHub. Citation given regardless."
+citation = "Judd, E.J., Tierney, J.E., Lunt, D.J., Montañez, I.P., Huber, B.T., Wing, S.L. and P.J. Valdes, 2024: A 485-million-year history of Earth's surface temperature. Science 385, eadk3705, doi:10.1126/science.adk3705. Data: github.com/EJJudd/PhanDA, 5_Outputs."

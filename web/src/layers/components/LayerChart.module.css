@@ -93,7 +93,6 @@
 
 .timeTicks span {
   position: absolute;
-  transform: translateX(-50%);
   white-space: nowrap;
 }
 

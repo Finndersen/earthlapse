@@ -173,9 +173,8 @@ coverage, globe motion and ancestor portraits come first.
 - **Layer picker.** Day length is already off the HUD (2026-09-14: it reaches ~24 h early and
   then barely moves, and the event feed took its space); a picker could offer it as opt-in.
   Moon distance and solar luminosity move behind the same picker.
-- **Global mean surface temperature.** The strongest candidate. Scotese et al. 2021 for the
-  Phanerozoic, CENOGRID (Westerhold 2020) for the Cenozoic, EPICA/Vostok for the last 800 kyr.
-  See DATA_SOURCES `paleoclimate`.
+- **Global mean surface temperature.** Done (2026-10-04): `sources/global-temp`, the HUD readout
+  under the globe. See DATA_SOURCES `global-temp`.
 - **Atmospheric O₂.** Explains the giant Carboniferous insects. Source it next to `co2-o2`.
 - **Marine biodiversity.** PBDB genus counts, with the Big Five extinctions as visible dips.
   See DATA_SOURCES `pbdb`.

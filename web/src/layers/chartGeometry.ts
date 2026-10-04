@@ -99,6 +99,7 @@ export function sampleCurve(layer: Layer<ScalarValue>, axis: TimeAxis, count: nu
   let run: ChartPoint[] = []
   let lo = Infinity
   let hi = -Infinity
+  let unit = ''
   for (let i = 0; i <= count; i++) {
     const u = i / count
     const t = axis.fromUnit(u)
@@ -108,6 +109,7 @@ export function sampleCurve(layer: Layer<ScalarValue>, axis: TimeAxis, count: nu
       run = []
       continue
     }
+    unit = v.unit
     const lower = v.bounds?.[0] ?? null
     const upper = v.bounds?.[1] ?? null
     run.push({ u, t, value: v.value, lower, upper })
@@ -115,17 +117,20 @@ export function sampleCurve(layer: Layer<ScalarValue>, axis: TimeAxis, count: nu
     hi = Math.max(hi, v.value, upper ?? v.value)
   }
   if (run.length > 1) runs.push(run)
-  return { runs, valueRange: Number.isFinite(lo) ? fitValueRange(lo, hi) : null }
+  return { runs, valueRange: Number.isFinite(lo) ? fitValueRange(lo, hi, unit) : null }
 }
 
+/** Units whose zero is a convention rather than an absence: a temperature in °C, a sea level
+ *  relative to today's. Plotting these against zero only flattens their change. */
+const INTERVAL_SCALE_UNITS: ReadonlySet<string> = new Set(['°C', 'm'])
+
 /**
- * The data's extent plus headroom. A positive series whose minimum is under a quarter of its
- * maximum (a count growing from near nothing) keeps zero as its floor, so its growth reads as a
- * proportion; anything else (a temperature, a sea level) is fitted to its own range, so a few
- * degrees of change is not flattened against an arbitrary zero.
+ * The data's extent plus headroom. A non-negative quantity with a real zero whose minimum is under
+ * a quarter of its maximum (a count growing from near nothing) keeps zero as its floor, so its
+ * growth reads as a proportion; anything else is fitted to its own range.
  */
-export function fitValueRange(lo: number, hi: number): [number, number] {
-  if (lo >= 0 && lo < hi / 4) return [0, hi * (1 + VALUE_PAD_FRACTION)]
+export function fitValueRange(lo: number, hi: number, unit: string): [number, number] {
+  if (!INTERVAL_SCALE_UNITS.has(unit) && lo >= 0 && lo < hi / 4) return [0, hi * (1 + VALUE_PAD_FRACTION)]
   const pad = (hi - lo || Math.abs(hi) || 1) * VALUE_PAD_FRACTION
   return [lo - pad, hi + pad]
 }

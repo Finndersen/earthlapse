@@ -133,7 +133,7 @@ export function LayerChart({ layer, t }: LayerChartProps) {
         </div>
         <div className={styles.timeTicks} aria-hidden="true">
           {axis.ticks().map((tick) => (
-            <span key={tick} style={{ left: `${axis.toUnit(tick) * 100}%` }}>
+            <span key={tick} style={{ left: `${axis.toUnit(tick) * 100}%`, transform: `translateX(${tickLabelShift(axis.toUnit(tick))}%)` }}>
               {formatAge(tick)}
             </span>
           ))}
@@ -142,6 +142,13 @@ export function LayerChart({ layer, t }: LayerChartProps) {
       {unit !== '' && <p className={styles.unitNote}>Values in {unit}</p>}
     </div>
   )
+}
+
+/** A time label's horizontal anchor: centred on its tick, but kept inside the plot at either end. */
+function tickLabelShift(u: number): number {
+  if (u > 0.94) return -100
+  if (u < 0.06) return 0
+  return -50
 }
 
 /** The sub-runs of `run` where every point carries both bounds. */

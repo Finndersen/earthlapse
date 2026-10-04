@@ -492,6 +492,34 @@ glacial lowstand (docs/GLOBE.md §5.1). Not on the HUD.
 
 ---
 
+## `global-temp` — Global mean surface temperature, 482 Ma → AD 2025
+
+| | |
+|---|---|
+| **Source** | HadCRUT5 global annual means (Morice et al. 2021); the Last Glacial Maximum Reanalysis (Osman et al. 2021, Nature 599:239); PhanDA (Judd et al. 2024, Science 385:eadk3705) |
+| **Access** | **VERIFIED.** Met Office HadCRUT.5.2.0.0 summary-series CSV; NOAA NCEI `reconstructions/osman2021/LGMR_GMST_climo.nc` (study 33112); `raw.githubusercontent.com/EJJudd/PhanDA/main/5_Outputs/PhanDA_GMSTandCO2_percentiles.csv`. sha256 per file in `manifest.toml` |
+| **Format** | CSV (HadCRUT5, PhanDA) + netCDF4/HDF5 (LGMR, read with the `data` extra) |
+| **Coverage** | stage averages 482 Ma → 70 ka; 200-year bins 24 ka → AD 1850; annual AD 1850 → 2025 |
+| **Volume** | measured 41,586 bytes raw; 379 curated samples |
+| **Licence** | HadCRUT5 OGL v3; LGMR distributed by NCEI without restriction, citation requested; PhanDA ⚠️ no licence stated (released publicly with the paper) |
+| **Shape** | `TimeSeries` `mean_temp` (absolute °C, linear, each file's own ~90–95% band) |
+| **Storage** | **git**, committed parquet |
+
+**Processing** — newest-first splice, each segment keeping only samples older than those before it
+(`sources/global-temp/README.md` § Splice policy). HadCRUT5's 1961–90 anomalies are made absolute
+with 14.0 °C (Jones et al. 1999); LGMR and PhanDA are absolute already.
+
+**Integration** — `WorldState.climate.mean_temp_c`; published as the HUD's "Global temperature"
+readout under the globe. Scene prompts still use each scene's hand-written `mean_temp_c`
+(`UnsourcedConditions`).
+
+**Known limits** — glacial cycles older than the last are averaged away by PhanDA's stages.
+Clark et al. 2024 (4.5 Ma, glacial-cycle resolution) would fill 24 ka–4.5 Ma, but its data were
+in neither NOAA NCEI nor PANGAEA. Berkeley Earth was rejected for its CC BY-NC licence (as HYDE 3.3
+was, ADR-031).
+
+---
+
 ## `paleoclimate` — Temperature, Köppen classes, sea level
 
 | | |
@@ -505,25 +533,8 @@ glacial lowstand (docs/GLOBE.md §5.1). Not on the HUD.
 | **Shape** | `RasterSequence` (Köppen) + `TimeSeries` (temp, sea level) |
 | **Storage** | CSVs → git; gridded → R2 |
 
-**Global mean temperature — candidate segments, checked 2026-10-02.** Curates as the `mean_temp`
-`TimeSeries` (absolute °C), which `WorldState.climate.mean_temp_c` already reads; publishing it is
-one `LayerSpec` in `SCALAR_LAYERS`, and the HUD puts it under the globe.
-
-| Segment | Dataset | Host | Licence |
-|---|---|---|---|
-| 1850/1880 → present | NASA GISTEMP v4 (`GLB.Ts+dSST.csv`) or HadCRUT5 | data.giss.nasa.gov, metoffice.gov.uk | US public domain; UK OGL v3 |
-| 24 ka → present | Osman et al. 2021 LGMR GMST | ncei.noaa.gov/pub/data/paleo/reconstructions/osman2021 | ⚠️ VERIFY (NOAA: free with citation) |
-| 4.5 Ma → present | Clark et al. 2024 (Science 383:884) GMST | PANGAEA | ⚠️ VERIFY (PANGAEA: usually CC-BY) |
-| 485 Ma → Holocene | Judd et al. 2024 PhanDA, `5_Outputs/PhanDA_GMSTandCO2_percentiles.csv` (85 stage averages, 5/16/50/84/95th percentiles, absolute °C) | raw.githubusercontent.com/EJJudd/PhanDA | ⚠️ none stated: the repo has no licence file; the paper calls it publicly available |
-
-- **Rejected: Berkeley Earth** — CC BY-NC 4.0, the same reason HYDE 3.3 was (ADR-031).
-- PhanDA's stage averages smooth out glacial cycles (Upper Pleistocene reads ~11.4 °C), so the
-  ice ages need the Clark 2024 / LGMR segments; PhanDA alone would hold the Holocene average to
-  the present.
-- Instrumental anomalies need an absolute offset per baseline (GISTEMP 1951–80; HadCRUT5
-  1961–90), documented in the source README.
-- The cloud environment's network policy blocked NOAA, NASA GISS, the Met Office and PANGAEA on
-  2026-10-02; those hosts must be allowed before this source can be fetched.
+Global mean temperature is curated separately, as `global-temp` (above); Köppen classes remain
+here.
 
 **Key challenge — stitching.** Three sources at wildly different resolutions covering
 overlapping ranges. Needs an explicit, documented splice policy with crossfades at the

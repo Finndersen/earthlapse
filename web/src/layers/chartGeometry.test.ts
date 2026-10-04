@@ -27,12 +27,12 @@ describe('timeAxis', () => {
 })
 
 describe('fitValueRange', () => {
-  it('keeps zero as the floor for a count growing from near nothing, and fits anything else to its own range', () => {
-    expect(fitValueRange(4e6, 8e9)[0]).toBe(0)
-    const [lo, hi] = fitValueRange(11, 15)
-    expect(lo).toBeGreaterThan(10)
-    expect(lo).toBeLessThan(11)
-    expect(hi).toBeGreaterThan(15)
+  it('keeps zero as the floor for a count growing from near nothing, and fits a temperature to its own range', () => {
+    expect(fitValueRange(4e6, 8e9, 'people')[0]).toBe(0)
+    const [lo, hi] = fitValueRange(6, 36, '°C')
+    expect(lo).toBeGreaterThan(4)
+    expect(lo).toBeLessThan(6)
+    expect(hi).toBeGreaterThan(36)
   })
 })
 

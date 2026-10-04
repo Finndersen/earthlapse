@@ -35,6 +35,7 @@ import {
   SCENE_CANVAS_SELECTOR,
   SECTION_BANDS_SELECTOR,
   SHELL_FEED_SELECTOR,
+  SHELL_READOUTS_SELECTOR,
   TIMELINE_CONTROLS_CORE_SELECTOR,
   TIMELINE_CONTROLS_SECONDARY_SELECTOR,
   TIMELINE_CONTROLS_SECTIONS_SELECTOR,
@@ -967,6 +968,7 @@ const RESTING_REGIONS = {
   title: TIME_TITLE_SELECTOR,
   era: ERA_SHORTCUTS_SELECTOR,
   orb: GLOBE_EXPAND_SELECTOR,
+  readouts: SHELL_READOUTS_SELECTOR,
   population: POPULATION_READOUT_SELECTOR,
   feed: EVENT_FEED_ITEM_SELECTOR,
   timeline: BOTTOM_CHROME_SELECTOR,
@@ -983,10 +985,10 @@ const TRANSPORT_ROW_REGIONS = {
 /**
  * Desktop resting layout at one viewport, root section then three levels deep (Earth › Cenozoic ›
  * Quaternary › Holocene, the longest trail that still shows whole):
- * - no chrome region (title, era shortcuts, orb, feed, caption, timeline, ancestor column)
- *   overlaps another or leaves the viewport, at the root and in the section;
+ * - no chrome region (title, era shortcuts, orb, readouts, feed, caption, timeline, ancestor
+ *   column) overlaps another or leaves the viewport, at the root and in the section;
  * - the orb's drawn top (scene hidden) sits at the top inset the About button does, level with
- *   the ancestor column;
+ *   the ancestor column, its readouts 0-40px under it;
  * - the population readout under the ancestor text, its value and trace on that text's right edge;
  * - the transport row: breadcrumb, rate picker, play, secondary cluster and (playing in steady)
  *   the rate readout's text clear of each other; the picker on the transport's centre line (where
@@ -1050,6 +1052,7 @@ function desktopRestingShot(viewport, extra) {
         orb,
         orbTopOffsetPx: orb.y - root.about.y,
         orbToAncestorTopPx: orb.y - Math.min(root.about.y, root.ancestor.y),
+        orbToReadoutsGapPx: root.readouts.y - (orb.y + orb.height),
         populationReadout,
         transportRow: pairwiseOverlapFlags({ ...rowParts, readout }),
         pickerCentreOffsetPx: centreY(deep.speed) - centreY(transport),
@@ -1078,6 +1081,7 @@ function desktopRestingShot(viewport, extra) {
       ...Object.fromEntries(Object.entries(layoutExpect([...Object.keys(regions), 'caption'])).flatMap(([key, range]) => [[`root.${key}`, range], [`inSection.${key}`, range]])),
       orbTopOffsetPx: [-4, 4],
       orbToAncestorTopPx: [-3, 3],
+      orbToReadoutsGapPx: [0, 40],
       ...ANCESTOR_COLUMN_READOUT_EXPECT,
       ...Object.fromEntries(Object.entries(noPairOverlaps(['breadcrumb', 'speed', 'transport', 'secondary', 'readout'])).map(([key, range]) => [`transportRow.${key}`, range])),
       pickerCentreOffsetPx: [-3, 3],
@@ -1506,9 +1510,9 @@ export default [
   {
     name: 'layout-390x844-resting',
     description:
-      'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, feed strip, ' +
+      'Phone portrait 390x844, collapsed: no chrome region (title, era shortcuts, orb, ancestor, readouts, feed strip, ' +
       'caption, timeline) overlaps another or leaves the viewport; a tap on the caption title folds it to that one line; the drawn orb 102-112% of the drawn portrait; the ' +
-      'shortcuts sit 8-14px under the title; the population readout 4-48px ' +
+      'readouts sit 0-8px under the drawn orb and the shortcuts 8-14px under the title; the population readout 4-48px ' +
       "under the ancestor text, its value's right edge on that text's (±3px); the timeline draws 170-310px " +
       'tall, its breadcrumb row taking no height at the root; the rate picker inside the transport row, clear of the ' +
       'transport buttons, the row no taller than the play button (1px); the secondary controls clear of each other and ' +
@@ -1527,6 +1531,7 @@ export default [
       const globe = await opacityMatteBounds(page, GLOBE_CANVAS_SELECTOR)
       const portrait = await opacityMatteBounds(page, ANCESTOR_PORTRAIT_SELECTOR)
       const timeline = await drawnBounds(page, BOTTOM_CHROME_SELECTOR)
+      const orbToReadoutsPx = await gapBetween(page, GLOBE_CANVAS_SELECTOR, SHELL_READOUTS_SELECTOR)
       const populationReadout = await ancestorColumnReadoutGeometry(page)
       const titleToShortcutsPx = await gapBetween(page, TIME_TITLE_SELECTOR, ERA_SHORTCUTS_SELECTOR)
       const tag = await page.locator(`${SHELL_FEED_SELECTOR} [data-testid^="event-feed-card-"] [class*="tag"]`).first().boundingBox()
@@ -1567,6 +1572,7 @@ export default [
         layout,
         tour,
         globePortraitRatioPct: Math.round((100 * globe.width) / portrait.width),
+        orbToReadoutsPx,
         populationReadout,
         titleToShortcutsPx,
         timeline,
@@ -1594,6 +1600,7 @@ export default [
       ...prefixedLayoutExpect('layout', [...Object.keys(RESTING_REGIONS), 'ancestor', 'caption']),
       globePortraitRatioPct: [102, 112],
       ...ANCESTOR_COLUMN_READOUT_EXPECT,
+      orbToReadoutsPx: [0, 8],
       titleToShortcutsPx: [8, 14],
       'timeline.height': [170, 310],
       sectionsHeightAtRootPx: [0, 0],

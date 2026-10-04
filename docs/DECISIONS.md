@@ -7927,11 +7927,40 @@ fraction of a pixel.
   oldest-to-newest ratio exceeds 10⁴, so population (12 kyr) opens linear and a deep-time record
   opens log. ADR-053's objection to log was to a log *value* axis, which hid population's modern
   rise; a log *time* axis keeps that rise intact and gives each decade of age equal width.
-- **The value axis keeps zero only for a count growing from near nothing** (minimum under a
-  quarter of the maximum); anything else is fitted to its own range, so a few degrees of
-  temperature change is not flattened against an arbitrary zero.
+- **The value axis keeps zero only for a quantity with a real zero growing from near nothing**
+  (minimum under a quarter of the maximum). A unit whose zero is a convention (°C, metres
+  relative to today) is always fitted to its own range, so a few degrees of temperature change is
+  not flattened against an arbitrary zero.
 
 **Rejected.**
 - **Restoring the timeline-docked chart.** Docking to the timeline's own warped scale fixed the
   chart to one axis, which is exactly the limitation the toggle removes.
+
+## ADR-061 — Global mean temperature on the HUD, spliced from HadCRUT5, LGMR and PhanDA
+
+**Status:** accepted — 2026-10-04.
+
+**Context.** The human asked for an Earth-temperature readout that shows the ice ages and recent
+warming, under the globe where population used to sit. `WorldState.climate.mean_temp_c` already
+read a `mean_temp` series that no source provided.
+
+**Decision.** A new source, `global-temp`, splices three files newest first into one absolute
+`mean_temp` series (`sources/global-temp/README.md`): HadCRUT5 annual means from AD 1850 (made
+absolute with 14.0 °C for 1961–90), the LGMR's 200-year bins for 24–0 ka, and PhanDA's stage
+means back to 482 Ma. It is published as the HUD scalar "Global temperature".
+
+- **PhanDA is used although it states no licence.** Its repository has no licence file; the
+  paper's data statement releases the values there publicly. Citation is given, and the licence
+  field says plainly that none is stated. If a licence turns up that forbids redistribution, the
+  Phanerozoic segment is the one to replace.
+- **Only the last glacial cycle is resolved.** Before 24 ka the series is stage means. Clark et
+  al. 2024's 4.5 Myr stack would resolve the older cycles, but its data were in neither NOAA
+  NCEI nor PANGAEA.
+- **Scene prompts are unchanged.** They keep each scene's hand-written `mean_temp_c`; switching
+  them to `WorldState` changes every prompt and is its own decision.
+
+**Rejected.**
+- **Berkeley Earth** for the instrumental record: CC BY-NC 4.0 (as HYDE 3.3, ADR-031).
+- **Scaling LR04 δ¹⁸O to temperature** for the older glacial cycles: a calibration of our own,
+  not a published temperature reconstruction.
 

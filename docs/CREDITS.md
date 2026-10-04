@@ -48,6 +48,14 @@ Gough, D.O. (1981) 'Solar interior structure and luminosity variations', Solar P
 
 Source directory: [`sources/astronomy/`](../sources/astronomy/)
 
+### [Global mean surface temperature: HadCRUT5, the Last Glacial Maximum Reanalysis and PhanDA](https://github.com/finndersen/earthlapse/blob/main/sources/global-temp/README.md)
+
+Morice, C.P. et al., 2021: An updated assessment of near-surface temperature change from 1850: the HadCRUT5 data set. JGR Atmospheres 126, e2019JD032361, doi:10.1029/2019JD032361; absolute baseline from Jones, P.D. et al., 1999, Reviews of Geophysics 37, 173-199, doi:10.1029/1999RG900002. Osman, M.B. et al., 2021: Globally resolved surface temperatures since the Last Glacial Maximum. Nature 599, 239-244, doi:10.1038/s41586-021-03984-4. Judd, E.J. et al., 2024: A 485-million-year history of Earth's surface temperature. Science 385, eadk3705, doi:10.1126/science.adk3705.
+
+**Licence:** Open Government Licence v3 (HadCRUT5); NOAA NCEI distributes LGMR without restriction, citation requested; PhanDA states no licence (publicly released with the paper, citation requested); per-file detail in [[artefacts]]
+
+Source directory: [`sources/global-temp/`](../sources/global-temp/)
+
 ### [Historical Urban Population, 3700 BC - AD 2000 (Chandler + Modelski)](https://www.nature.com/articles/sdata201634)
 
 Reba, M., Reitsma, F. & Seto, K.C. Spatializing 6,000 years of global urbanization from 3700 BC to AD 2000. Sci Data 3, 160034 (2016). https://doi.org/10.1038/sdata.2016.34

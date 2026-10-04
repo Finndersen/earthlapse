@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "buildId": "2f754a863b843f63",
+  "buildId": "675ef9c951c98434",
   "assetBase": "/media",
   "scenes": [
     {
@@ -2516,6 +2516,21 @@
       "unit": "people",
       "interpolation": "log-linear",
       "data": "layers/population.json"
+    },
+    {
+      "id": "mean_temp",
+      "name": "Global temperature",
+      "surface": "hud",
+      "dataKind": "scalar",
+      "timeDomain": [
+        0.0,
+        481965000.0
+      ],
+      "source": "global-temp",
+      "chartable": true,
+      "unit": "°C",
+      "interpolation": "linear",
+      "data": "layers/mean_temp.json"
     },
     {
       "id": "ice_volume",
@@ -6809,6 +6824,13 @@
       "citation": "Every event in data/events.yaml carries its own specific citation. This manifest's citation covers only the ICS International Chronostratigraphic Chart v2024/12, stratigraphy.org, used as a boundary-dating reference.",
       "licence": "CC0 (Wikidata candidate pool, unused here) + ICS chart free-for-research/non-commercial-use-with-attribution (not modified beyond resizing) + per-event literature citations retain their own copyright, paraphrased not copied — see README.md",
       "url": ""
+    },
+    {
+      "sourceId": "global-temp",
+      "title": "Global mean surface temperature: HadCRUT5, the Last Glacial Maximum Reanalysis and PhanDA",
+      "citation": "Morice, C.P. et al., 2021: An updated assessment of near-surface temperature change from 1850: the HadCRUT5 data set. JGR Atmospheres 126, e2019JD032361, doi:10.1029/2019JD032361; absolute baseline from Jones, P.D. et al., 1999, Reviews of Geophysics 37, 173-199, doi:10.1029/1999RG900002. Osman, M.B. et al., 2021: Globally resolved surface temperatures since the Last Glacial Maximum. Nature 599, 239-244, doi:10.1038/s41586-021-03984-4. Judd, E.J. et al., 2024: A 485-million-year history of Earth's surface temperature. Science 385, eadk3705, doi:10.1126/science.adk3705.",
+      "licence": "Open Government Licence v3 (HadCRUT5); NOAA NCEI distributes LGMR without restriction, citation requested; PhanDA states no licence (publicly released with the paper, citation requested); per-file detail in [[artefacts]]",
+      "url": "https://github.com/finndersen/earthlapse/blob/main/sources/global-temp/README.md"
     },
     {
       "sourceId": "globe-regimes",
