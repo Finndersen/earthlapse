@@ -50,6 +50,11 @@
   gap: 14px;
 }
 
+/* Sharing a line with its note, the value steps down a size so the line reads as one unit. */
+.readoutLine .value {
+  font-size: clamp(17px, 1.4vw, 22px);
+}
+
 .noData {
   font-family: var(--hud-mono, ui-monospace, monospace);
   font-size: 11px;
@@ -193,6 +198,10 @@
      in: left under the globe, right under the ancestor panel. */
   .value {
     font-size: 13px;
+  }
+
+  .readoutLine .value {
+    font-size: 12px;
   }
 
   .label {
