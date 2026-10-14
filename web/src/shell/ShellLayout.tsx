@@ -178,7 +178,6 @@ export function ShellLayout({
                 accessible name below keeps the credits discoverable by name. */}
             About
           </button>
-          <span className={styles.label}>Your ancestor</span>
           {ancestor}
           <div className={styles.ancestorReadouts} data-testid="shell-ancestor-readouts">
             {ancestorReadouts}

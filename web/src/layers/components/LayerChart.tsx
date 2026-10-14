@@ -7,9 +7,7 @@
  * the chart stays readable at any `t` without presenting what lies ahead as already reached.
  *
  * It shows the whole record or zooms to a recent window (since the last glacial maximum, the Common
- * Era, the industrial era), with the value axis refitted to what is in view. The time axis is
- * linear or log (`../chartGeometry`), defaulting to whichever suits the span shown, with a toggle
- * to switch.
+ * Era, the industrial era), with the value axis refitted to what is in view.
  */
 
 import { useMemo, useState } from 'react'
@@ -18,8 +16,8 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
-import { defaultTimeAxisKind, niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
-import type { ChartPoint, TimeAxisKind } from '../chartGeometry'
+import { niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
+import type { ChartPoint } from '../chartGeometry'
 import { formatScalarValue } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './LayerChart.module.css'
@@ -34,8 +32,6 @@ export interface LayerChartProps {
   t: GeoTime
 }
 
-const AXIS_LABELS: Record<TimeAxisKind, string> = { linear: 'Linear time', log: 'Log time' }
-
 /** `null` is the whole record; a number is the last that many years. */
 type ChartRange = number | null
 
@@ -46,15 +42,10 @@ function rangeLabel(range: ChartRange): string {
 export function LayerChart({ layer, t }: LayerChartProps) {
   const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
   const [range, setRange] = useState<ChartRange>(null)
-  const [axisKind, setAxisKind] = useState<TimeAxisKind>(() => defaultTimeAxisKind(layer.timeDomain))
   const [hoverU, setHoverU] = useState<number | null>(null)
 
   const shown = useMemo(() => windowDomain(layer.timeDomain, range), [layer.timeDomain, range])
-  const axis = useMemo(() => timeAxis(axisKind, shown), [axisKind, shown])
-  const selectRange = (next: ChartRange) => {
-    setRange(next)
-    setAxisKind(defaultTimeAxisKind(windowDomain(layer.timeDomain, next)))
-  }
+  const axis = useMemo(() => timeAxis(shown), [shown])
   const curve = useMemo(() => sampleCurve(layer, axis, SAMPLE_COUNT), [layer, axis])
   const [vMin, vMax] = curve.valueRange ?? [0, 1]
 
@@ -102,21 +93,12 @@ export function LayerChart({ layer, t }: LayerChartProps) {
             <span className={styles.readingTime}>Not yet reached</span>
           )}
         </span>
-        <div className={styles.controls}>
-          <div className={styles.axisToggle} role="group" aria-label="Range">
+        <div className={styles.rangeToggle} role="group" aria-label="Range">
           {[null, ...recentWindowsFor(layer.timeDomain)].map((option) => (
-            <button key={option ?? 'all'} type="button" aria-pressed={range === option} onClick={() => selectRange(option)}>
+            <button key={option ?? 'all'} type="button" aria-pressed={range === option} onClick={() => setRange(option)}>
               {rangeLabel(option)}
             </button>
           ))}
-        </div>
-        <div className={styles.axisToggle} role="group" aria-label="Time axis">
-          {(['linear', 'log'] as const).map((kind) => (
-            <button key={kind} type="button" aria-pressed={axisKind === kind} onClick={() => setAxisKind(kind)}>
-              {AXIS_LABELS[kind]}
-            </button>
-          ))}
-          </div>
         </div>
       </div>
 

@@ -1,19 +1,13 @@
 /**
- * Pure geometry for the expanded layer chart (`components/LayerChart.tsx`): a time axis that maps
- * `t` to a unit position, a fitted value axis, and the layer resampled into gap-broken runs.
- *
- * The time axis is linear or logarithmic in years-before-present. A log axis gives each decade of
- * age the same width, so a record spanning hundreds of millions of years can show its deep-time
- * trend, the glacial cycles of the last few million years and the instrumental era side by side;
- * on a linear axis the last few centuries of such a record are a fraction of a pixel. Unit `0` is
- * the oldest edge and `1` the newest, so the plot reads left to right in playback order.
+ * Pure geometry for the expanded layer chart (`components/LayerChart.tsx`): a linear time axis
+ * over the whole record or a recent window of it, a fitted value axis, and the layer resampled
+ * into gap-broken runs. Unit `0` is the oldest edge and `1` the newest, so the plot reads left to
+ * right in playback order.
  */
 
 import { formatAge, formatCalendar } from '@/timeline'
 import { calendarYearAt, HOLOCENE_BASE, yearsBeforePresent } from '@/timeline/epoch'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
-
-export type TimeAxisKind = 'linear' | 'log'
 
 export interface TimeTick {
   t: GeoTime
@@ -21,23 +15,15 @@ export interface TimeTick {
 }
 
 export interface TimeAxis {
-  kind: TimeAxisKind
-  /** `[newest, oldest]`, as `Layer.timeDomain`. On a log axis `newest` is at least one year. */
+  /** `[newest, oldest]`, as `Layer.timeDomain`. */
   domain: readonly [GeoTime, GeoTime]
   toUnit: (t: GeoTime) => number
   fromUnit: (u: number) => GeoTime
   ticks: () => TimeTick[]
 }
 
-/** A log axis needs a positive near edge; a year is the finest age anything here resolves. */
-const LOG_FLOOR_YEARS = 1
-
-/** Above this oldest-to-newest ratio a linear axis squeezes the recent record out of sight. Set so
- *  a span up to the last glacial cycle (25 kyr against a one-year floor) still opens linear. */
-const LOG_DEFAULT_RATIO = 1e5
-
 /** The recent spans the chart can zoom to, in years before present: since the last glacial
- *  maximum, the Common Era, and the industrial era. */
+ *  maximum, the Common Era, and the industrial era. On a whole-record axis these are a sliver. */
 export const RECENT_WINDOWS = [25_000, 2_000, 200] as const
 
 /** The recent windows worth offering for a record: those under half its span. */
@@ -52,32 +38,14 @@ export function windowDomain(timeDomain: readonly [GeoTime, GeoTime], window: nu
   return window === null ? [newest, oldest] : [newest, Math.min(oldest, Math.max(window, newest + 1))]
 }
 
-export function defaultTimeAxisKind(timeDomain: readonly [GeoTime, GeoTime]): TimeAxisKind {
+export function timeAxis(timeDomain: readonly [GeoTime, GeoTime]): TimeAxis {
   const [newest, oldest] = timeDomain
-  return oldest / Math.max(newest, LOG_FLOOR_YEARS) > LOG_DEFAULT_RATIO ? 'log' : 'linear'
-}
-
-export function timeAxis(kind: TimeAxisKind, timeDomain: readonly [GeoTime, GeoTime]): TimeAxis {
-  const [rawNewest, oldest] = timeDomain
-  if (kind === 'linear') {
-    const span = oldest - rawNewest || 1
-    return {
-      kind,
-      domain: [rawNewest, oldest],
-      toUnit: (t) => (oldest - t) / span,
-      fromUnit: (u) => oldest - u * span,
-      ticks: () => linearTicks(rawNewest, oldest),
-    }
-  }
-  const newest = Math.max(rawNewest, LOG_FLOOR_YEARS)
-  const logOldest = Math.log10(oldest)
-  const logSpan = logOldest - Math.log10(newest) || 1
+  const span = oldest - newest || 1
   return {
-    kind,
     domain: [newest, oldest],
-    toUnit: (t) => (logOldest - Math.log10(Math.max(t, newest))) / logSpan,
-    fromUnit: (u) => 10 ** (logOldest - u * logSpan),
-    ticks: () => decadeTicks(newest, oldest).map((t) => ({ t, label: compactAge(t) })),
+    toUnit: (t) => (oldest - t) / span,
+    fromUnit: (u) => oldest - u * span,
+    ticks: () => linearTicks(newest, oldest),
   }
 }
 
@@ -89,20 +57,7 @@ function linearTicks(newest: GeoTime, oldest: GeoTime): TimeTick[] {
       return { t, label: formatCalendar(t) }
     })
   }
-  return niceTicks(newest, oldest, 5).map((t) => ({ t, label: compactAge(t) }))
-}
-
-/** `formatAge`, but "100 yr" rather than "100 years ago", which collides with its neighbours on a
- *  narrow plot. */
-function compactAge(t: GeoTime): string {
-  return t >= 1 && t < 1000 ? `${Math.round(t)} yr` : formatAge(t)
-}
-
-/** Powers of ten inside `[lo, hi]`, thinned to every other one when there are more than seven. */
-function decadeTicks(lo: number, hi: number): GeoTime[] {
-  const ticks: GeoTime[] = []
-  for (let p = Math.ceil(Math.log10(lo)); p <= Math.floor(Math.log10(hi)); p++) ticks.push(10 ** p)
-  return ticks.length > 7 ? ticks.filter((_, i) => (ticks.length - 1 - i) % 2 === 0) : ticks
+  return niceTicks(newest, oldest, 5).map((t) => ({ t, label: formatAge(t) }))
 }
 
 /** Round-numbered ticks (1, 2 or 5 × a power of ten apart) covering `[lo, hi]`, about `count` of them. */
@@ -165,13 +120,17 @@ export function sampleCurve(layer: Layer<ScalarValue>, axis: TimeAxis, count: nu
  *  relative to today's. Plotting these against zero only flattens their change. */
 const INTERVAL_SCALE_UNITS: ReadonlySet<string> = new Set(['°C', 'm'])
 
+export function isIntervalScale(unit: string): boolean {
+  return INTERVAL_SCALE_UNITS.has(unit)
+}
+
 /**
  * The data's extent plus headroom. A non-negative quantity with a real zero whose minimum is under
  * a quarter of its maximum (a count growing from near nothing) keeps zero as its floor, so its
  * growth reads as a proportion; anything else is fitted to its own range.
  */
 export function fitValueRange(lo: number, hi: number, unit: string): [number, number] {
-  if (!INTERVAL_SCALE_UNITS.has(unit) && lo >= 0 && lo < hi / 4) return [0, hi * (1 + VALUE_PAD_FRACTION)]
+  if (!isIntervalScale(unit) && lo >= 0 && lo < hi / 4) return [0, hi * (1 + VALUE_PAD_FRACTION)]
   const pad = (hi - lo || Math.abs(hi) || 1) * VALUE_PAD_FRACTION
   return [lo - pad, hi + pad]
 }

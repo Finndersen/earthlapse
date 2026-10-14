@@ -26,19 +26,13 @@
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.axisToggle {
+.rangeToggle {
   display: inline-flex;
   border-radius: 999px;
   box-shadow: 0 0 0 1px var(--hud-hairline, rgba(239, 233, 220, 0.18));
 }
 
-.axisToggle button {
+.rangeToggle button {
   padding: 4px 11px;
   border: none;
   border-radius: 999px;
@@ -52,16 +46,16 @@
   transition: color 180ms ease;
 }
 
-.axisToggle button:hover {
+.rangeToggle button:hover {
   color: var(--hud-ink, #efe9dc);
 }
 
-.axisToggle button[aria-pressed='true'] {
+.rangeToggle button[aria-pressed='true'] {
   color: var(--hud-ink, #efe9dc);
   background: rgba(239, 233, 220, 0.08);
 }
 
-.axisToggle button:focus-visible {
+.rangeToggle button:focus-visible {
   outline: none;
   box-shadow: 0 0 0 1.5px var(--hud-accent, #e8b06a);
 }

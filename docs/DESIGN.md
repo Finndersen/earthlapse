@@ -566,11 +566,12 @@ expands to fill; it is never the default focus.
 
 Muted, blurred surround holding globe, metrics and overlays around a bright central
 viewport. Scalar layers appear as a readout over a sparkline of the story so far: linear time
-from the layer's first sample to `t`, linear value from zero to the peak reached, so the playhead
-is always the trace's right end (ADR-053). One sparkline component, N layers. Clicking a
+from the layer's first sample (or, once `t` reaches it, from 10,000 BCE) to `t`, linear value from
+zero to the peak reached (or fitted to its range for °C and metres), so the playhead is always the
+trace's right end (ADR-053 and its amendment). One sparkline component, N layers. Clicking a
 sparkline opens its expanded chart: the whole record with its uncertainty band, labelled axes, the
-playhead and a hover readout, on a linear or log time axis, zoomable to the last 25,000, 2,000
-or 200 years (ADR-053 amendment).
+playhead and a hover readout, on a linear time axis zoomable to the last 25,000, 2,000 or 200
+years (ADR-053 amendment).
 
 ### Event feed
 

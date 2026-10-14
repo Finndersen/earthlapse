@@ -31,7 +31,7 @@ describe('<Sparkline>', () => {
       samples: [0, 1e9, 2e9, EARTH_FORMATION].map((t, i) => ({ t, value: [420, 400, 300, 4000][i]!, lower: null, upper: null })),
       gaps: [{ fromIndex: 1, toIndex: 2 }],
     }
-    const { container } = render(<Sparkline layer={createScalarLayer(CO2_MANIFEST, data)} t={0} />)
+    const { container } = render(<Sparkline layer={createScalarLayer(CO2_MANIFEST, data)} t={5e8} />)
     expect(container.querySelectorAll('svg > g')).toHaveLength(2)
   })
 
@@ -57,6 +57,24 @@ describe('<Sparkline>', () => {
     const [dotX] = dot(container)!
     expect(dotX).toBeGreaterThan(3)
     expect(dotX).toBeLessThan(100)
+  })
+
+  it('narrows a longer interval-scale record to the human era, fitted to its own range', () => {
+    const data: SeriesData = {
+      id: 'mean_temp',
+      unit: '°C',
+      interpolation: 'linear',
+      samples: [0, 175, 12_000, 21_000, 4.8e8].map((t, i) => ({ t, value: [15, 13.6, 13, 7.5, 20][i]!, lower: null, upper: null })),
+      gaps: [],
+    }
+    const { container } = render(<Sparkline layer={createScalarLayer(CO2_MANIFEST, data)} t={0} />)
+    const trace = points(container.querySelector('polyline'))
+    const [dotX, dotY] = dot(container)!
+    // Starts at 10,000 BCE rather than 480 Ma, with the recent rise spanning the full height.
+    expect(trace[0]![0]).toBeLessThan(4)
+    expect(trace[0]![1]).toBeGreaterThan(32)
+    expect(dotX).toBeGreaterThan(196)
+    expect(dotY).toBeLessThan(4)
   })
 
   it('draws nothing before the domain starts', () => {

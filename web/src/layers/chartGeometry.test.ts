@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { createScalarLayer } from './factories'
-import { defaultTimeAxisKind, fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
+import { fitValueRange, niceTicks, recentWindowsFor, sampleCurve, timeAxis, windowDomain } from './chartGeometry'
 
 describe('timeAxis', () => {
-  it.each(['linear', 'log'] as const)('maps the oldest edge to 0 and the newest to 1, round-tripping in between (%s)', (kind) => {
-    const axis = timeAxis(kind, [10, 4.8e8])
+  it('maps the oldest edge to 0 and the newest to 1, round-tripping in between, with ticks inside the span', () => {
+    const axis = timeAxis([10, 4.8e8])
     expect(axis.toUnit(4.8e8)).toBeCloseTo(0)
     expect(axis.toUnit(10)).toBeCloseTo(1)
     expect(axis.fromUnit(axis.toUnit(21_000))).toBeCloseTo(21_000, 3)
@@ -15,18 +15,8 @@ describe('timeAxis', () => {
     }
   })
 
-  it('gives the last two centuries of a deep-time record visible width on a log axis', () => {
-    const axis = timeAxis('log', [0, 4.8e8])
-    expect(1 - axis.toUnit(200)).toBeGreaterThan(0.1)
-  })
-
-  it('defaults to log only for spans of many orders of magnitude, so the last glacial cycle opens linear', () => {
-    expect(defaultTimeAxisKind([0, 4.8e8])).toBe('log')
-    expect(defaultTimeAxisKind([0, 25_000])).toBe('linear')
-  })
-
   it('labels a span inside the Holocene with round calendar years', () => {
-    expect(timeAxis('linear', [0, 200]).ticks().map((tick) => tick.label)).toEqual(['1850', '1900', '1950', '2000'])
+    expect(timeAxis([0, 200]).ticks().map((tick) => tick.label)).toEqual(['1850', '1900', '1950', '2000'])
   })
 })
 
@@ -61,7 +51,7 @@ describe('sampleCurve', () => {
         gaps: [{ fromIndex: 1, toIndex: 2 }],
       },
     )
-    expect(sampleCurve(layer, timeAxis('linear', layer.timeDomain), 100).runs).toHaveLength(2)
+    expect(sampleCurve(layer, timeAxis(layer.timeDomain), 100).runs).toHaveLength(2)
   })
 })
 

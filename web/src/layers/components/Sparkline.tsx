@@ -3,10 +3,14 @@
 /**
  * A small inline SVG trend line for a scalar layer: the story so far, from the layer's own start
  * up to `t`. Both axes grow with `t`: x spans linear time from the layer's oldest sample to `t`
- * (never less than `MIN_SPAN_FRACTION` of the domain, so the first moments don't stretch a
+ * (never less than `MIN_SPAN_FRACTION` of that span, so the first moments don't stretch a
  * handful of years across the whole width), and y spans linearly from zero to the largest value
- * reached so far. The playhead is therefore always the trace's right end, and the curve's shape
- * shows how steeply the value has risen relative to its own history.
+ * reached so far — or, for an interval-scale unit such as °C, from the lowest to the highest. The
+ * playhead is therefore always the trace's right end.
+ *
+ * Once `t` reaches `HUMAN_ERA_START`, a record reaching further back narrows to start there, so
+ * every readout shares the population record's window and a recent change is not a sliver at the
+ * edge of a long history.
  *
  * Nothing draws before the domain starts. Where the layer has no record (a declared gap, ADR-027)
  * the line breaks rather than bridging. Past the domain's newest sample the last value is held,
@@ -15,8 +19,10 @@
 
 import { memo } from 'react'
 
+import { yearsBeforePresent } from '@/timeline/epoch'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
+import { isIntervalScale } from '../chartGeometry'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './hud.module.css'
 
@@ -26,6 +32,8 @@ const PAD = 3
 /** One sample per viewBox unit of trace: the finest detail the sparkline can show. */
 const SAMPLE_COUNT = VIEW_WIDTH - 2 * PAD
 const MIN_SPAN_FRACTION = 0.025
+/** 10,000 BCE, where the human population record begins. */
+export const HUMAN_ERA_START: GeoTime = yearsBeforePresent(-10_000)
 
 export interface SparklineProps {
   layer: Layer<ScalarValue>
@@ -39,8 +47,9 @@ interface Point {
 
 /** The `[oldest, newest]` time window the x-axis spans at `t`, or `null` before the domain. */
 export function sparklineWindow(timeDomain: readonly [GeoTime, GeoTime], t: GeoTime): [GeoTime, GeoTime] | null {
-  const [newest, oldest] = timeDomain
-  if (t > oldest) return null
+  const [newest, domainOldest] = timeDomain
+  if (t > domainOldest) return null
+  const oldest = t <= HUMAN_ERA_START && HUMAN_ERA_START < domainOldest ? HUMAN_ERA_START : domainOldest
   const minSpan = (oldest - newest) * MIN_SPAN_FRACTION
   return [oldest, Math.min(t, oldest - minSpan)]
 }
@@ -61,8 +70,9 @@ const SparklineBody = memo(function SparklineBody({ layer, t }: SparklineProps) 
 
   const segments: Point[][] = []
   let current: Point[] = []
-  let max = 0
-  let min = 0
+  let lo = Infinity
+  let hi = -Infinity
+  let unit = ''
   if (axis !== null) {
     for (let i = 0; i <= SAMPLE_COUNT; i++) {
       // Clamped to `t` so the trace never runs past the playhead while the window is held at its
@@ -74,14 +84,16 @@ const SparklineBody = memo(function SparklineBody({ layer, t }: SparklineProps) 
         current = []
       } else {
         current.push({ t: sampleT, value: v.value })
-        max = Math.max(max, v.value)
-        min = Math.min(min, v.value)
+        lo = Math.min(lo, v.value)
+        hi = Math.max(hi, v.value)
+        unit = v.unit
       }
       if (sampleT === t) break
     }
   }
   if (current.length > 1) segments.push(current)
 
+  const [min, max] = isIntervalScale(unit) ? [lo, hi] : [Math.min(lo, 0), Math.max(hi, 0)]
   const span = max - min || 1
   const x = (at: GeoTime): number => PAD + ((from - at) / (from - to)) * (VIEW_WIDTH - 2 * PAD)
   const y = (value: number): number => VIEW_HEIGHT - PAD - ((value - min) / span) * (VIEW_HEIGHT - 2 * PAD)

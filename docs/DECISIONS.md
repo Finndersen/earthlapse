@@ -7923,23 +7923,26 @@ fraction of a pixel.
   needs no slot in the shell and no store state.
 - **The chart shows the whole record**, solid where playback has reached and faint beyond it, with
   the uncertainty band, value and time ticks, the playhead and a hover readout.
-- **The time axis is linear or log**, toggled in the chart. It defaults to log when the span shown
-  has an oldest-to-newest ratio above 10⁵, so population (12 kyr) and the last glacial cycle open
-  linear and a deep-time record opens log.
+- **The time axis is linear.** A log-time toggle was tried (2026-10-02) and removed on 2026-10-14:
+  the recent windows below show recent change more directly, and one axis is one less control.
 - **The chart zooms to recent windows** — the last 25,000, 2,000 or 200 years, each offered only
   when under half the record — with the value axis refitted to what is in view. On a whole-record
   axis the instrumental warming of ~1.5 °C is a sliver beside deep-time swings of 25 °C; in the
   200-year window it fills the plot. Windows inside the Holocene label their ticks in calendar
-  years. ADR-053's objection to log was to a log *value* axis, which hid population's modern
-  rise; a log *time* axis keeps that rise intact and gives each decade of age equal width.
+  years.
 - **The value axis keeps zero only for a quantity with a real zero growing from near nothing**
   (minimum under a quarter of the maximum). A unit whose zero is a convention (°C, metres
   relative to today) is always fitted to its own range, so a few degrees of temperature change is
-  not flattened against an arbitrary zero.
+  not flattened against an arbitrary zero. The sparkline follows the same rule.
+- **Once `t` reaches 10,000 BCE, a sparkline whose record reaches further back starts its window
+  there** (added 2026-10-14), the start of the population record. The HUD's readouts then share one
+  window through the human era, and the temperature preview shows the industrial rise rather than
+  holding it as the last pixel of a 485-Myr trace. Before 10,000 BCE the sparkline still spans
+  from its record's start.
 
 **Rejected.**
 - **Restoring the timeline-docked chart.** Docking to the timeline's own warped scale fixed the
-  chart to one axis, which is exactly the limitation the toggle removes.
+  chart to one axis, which is exactly the limitation the recent windows remove.
 
 ## ADR-061 — Global mean temperature on the HUD, spliced from HadCRUT5, LGMR and PhanDA
 

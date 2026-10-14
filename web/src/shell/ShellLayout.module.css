@@ -67,7 +67,6 @@
 }
 
 /* Faint caps type needs a tighter, darker halo than --hud-shadow to survive a bright plate. */
-.label,
 .aboutButton {
   text-shadow:
     0 0 6px rgba(0, 0, 0, 0.9),
@@ -159,15 +158,6 @@
 
 .hud > * {
   pointer-events: auto;
-}
-
-.label {
-  display: block;
-  font-family: var(--hud-mono);
-  font-size: 10px;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--hud-faint);
 }
 
 /* How far the globe orb starts below the top inset. On desktop the orb's drawn top sits on the
@@ -638,8 +628,7 @@
      opposite — its own full-width row (the bug this fixes) both hid the scene behind it and
      pushed the readouts/caption/playhead into each other below. */
   .hud {
-    /* The kicker moves below the portrait here (`.ancestor > .label`'s `order`), so only the
-       About button precedes it. */
+    /* Clears the About button leading the ancestor column, so orb and portrait share a top. */
     --hud-column-top: 26px;
 
     grid-template-rows: auto auto minmax(0, 1fr) auto;
@@ -793,40 +782,22 @@
      hud.module.css) so the row balances, and its kicker/name/since text (below) becomes a short
      right-aligned caps stack instead of the desktop's prose column. `min-height` holds row 1 at
      the same height whether or not the lineage has started (`<AncestorPortrait>` renders nothing
-     before it has): sized for the portrait-present case (portrait + panel gap + two text lines +
-     ancestor gap + kicker + gap + the About button), it stops the readouts/feed below from
+     before it has): sized for the portrait-present case (the About button + gap + portrait + panel
+     gap + kicker + caption gap + two text lines), it stops the readouts/feed below from
      jumping down the moment a portrait first appears. */
   .ancestor {
     justify-self: end;
     align-items: flex-end;
     max-width: 132px;
-    min-height: calc(var(--orb-size) + 8px + 30px + 4px + 12px + 4px + 22px);
+    min-height: calc(22px + 4px + var(--orb-size) + 8px + 12px + 3px + 30px);
     text-align: right;
     gap: 4px;
   }
 
-  /* The kicker moves after the portrait+readout panel (`order`, not DOM order) so the portrait
-     leads its own text, matching the globe orb opposite. The About button keeps the top of the
-     column ahead of both. */
-  .ancestor > .label {
-    order: 1;
-    font-size: 8px;
-    letter-spacing: 0.16em;
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .ancestor > .aboutButton {
-    order: -1;
-  }
-
-  /* After the kicker, with the same lighter, tighter scrim as the readouts under the orb. */
+  /* The same lighter, tighter scrim as the readouts under the orb. */
   .ancestorReadouts {
     --scrim-core: 0.2;
     --scrim-mid: 0.12;
-    order: 2;
     max-width: 100%;
     margin-top: 4px;
   }
@@ -952,10 +923,6 @@
     max-width: none;
     gap: 4px;
     container-type: inline-size;
-  }
-
-  .ancestor > .label {
-    display: none;
   }
 
   .ancestor > [data-testid='ancestor-readout'] {
