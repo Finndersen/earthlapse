@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { clampUnit, formatPopulation, formatScalarValue, formatValue } from './format'
+import { axisUnit, clampUnit, formatPopulation, formatScalarValue, formatValue } from './format'
 
 describe('formatValue', () => {
   it('rounds to a whole number once the magnitude is large (>= 100)', () => {
@@ -14,6 +14,14 @@ describe('formatValue', () => {
 
   it('never renders a genuinely nonzero value as a bare "0"', () => {
     expect(formatValue(0.001)).not.toBe('0')
+  })
+})
+
+describe('axisUnit', () => {
+  it('states a population axis in the tier of its largest value, any other unit as is', () => {
+    expect(axisUnit(4.2e9, 'people')).toEqual({ divisor: 1e9, label: 'billion people' })
+    expect(axisUnit(8e8, 'people')).toEqual({ divisor: 1e6, label: 'million people' })
+    expect(axisUnit(15, '°C')).toEqual({ divisor: 1, label: '°C' })
   })
 })
 

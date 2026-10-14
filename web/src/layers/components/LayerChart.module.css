@@ -114,22 +114,45 @@
   font-variant-numeric: tabular-nums;
 }
 
-.valueTicks {
-  color: var(--series, var(--hud-faint, rgba(239, 233, 220, 0.36)));
-  opacity: 0.7;
+/* A vertical title beside each value axis's tick labels, on the side away from the plot. */
+.valueAxis {
+  display: flex;
+  gap: 6px;
+  color: var(--series);
+}
+
+.valueAxisRight {
+  flex-direction: row-reverse;
+}
+
+.valueAxisEmpty {
+  min-width: 1ch;
+}
+
+.axisTitle {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+  font-family: var(--hud-mono, ui-monospace, monospace);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .valueTicks span {
   position: absolute;
   transform: translateY(-50%);
   white-space: nowrap;
+  opacity: 0.75;
 }
 
-.valueTicksLeft span {
+.valueAxisLeft .valueTicks span {
   right: 0;
 }
 
-.valueTicksRight span {
+.valueAxisRight .valueTicks span {
   left: 0;
 }
 
@@ -220,19 +243,6 @@
   pointer-events: none;
 }
 
-.unitNote {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 16px;
-  margin: 0;
-  font-family: var(--hud-mono, ui-monospace, monospace);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--hud-faint, rgba(239, 233, 220, 0.36));
-}
-
-.unitNote span {
-  color: var(--series);
-  opacity: 0.7;
+.valueAxis .valueTicks {
+  color: inherit;
 }

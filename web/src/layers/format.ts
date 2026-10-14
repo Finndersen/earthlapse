@@ -77,6 +77,15 @@ export function formatScalarValue(value: number, unit: string): string {
   return unit === 'people' ? formatPopulation(value) : formatValue(value)
 }
 
+/** How a value axis states its unit once, so its tick labels can be bare numbers: a population
+ *  axis divides by the tier its largest value reads in (`4e9 -> 1e9, "billion people"`); any other
+ *  unit is plotted as is. */
+export function axisUnit(max: number, unit: string): { divisor: number; label: string } {
+  if (unit !== 'people') return { divisor: 1, label: unit }
+  const tier = [...POPULATION_SCALES].reverse().find((s) => Math.abs(max) >= s.scale)
+  return tier === undefined ? { divisor: 1, label: unit } : { divisor: tier.scale, label: `${tier.word} ${unit}` }
+}
+
 /** Clamps to `[0, 1]`, treating `NaN` as `0` rather than letting it pass through unclamped. */
 export function clampUnit(u: number): number {
   if (Number.isNaN(u)) return 0

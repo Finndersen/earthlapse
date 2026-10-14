@@ -21,7 +21,7 @@ import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { defaultRange, niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
 import type { ChartCurve, ChartPoint } from '../chartGeometry'
-import { formatScalarValue } from '../format'
+import { axisUnit, formatScalarValue } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './LayerChart.module.css'
 
@@ -164,7 +164,7 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
       </p>
 
       <div className={styles.frame}>
-        <ValueTicks series={leftAxis} side="left" />
+        <ValueAxis series={leftAxis} side="left" />
         <div className={styles.plot} onPointerMove={onPointerMove} onPointerLeave={() => setHoverU(null)}>
           {/* Stretched to the plot box, so text and the dots live in HTML above it rather than
               being squashed with it. */}
@@ -198,7 +198,7 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
               )
             })}
         </div>
-        <ValueTicks series={rightAxis} side="right" />
+        <ValueAxis series={rightAxis} side="right" />
         <div className={styles.timeTicks} aria-hidden="true">
           {axis.ticks().map((tick, i, ticks) => (
             <span key={tick.t} data-minor={(ticks.length > 4 && i % 2 === 1) || undefined} style={{ left: `${axis.toUnit(tick.t) * 100}%`, transform: `translateX(${tickLabelShift(axis.toUnit(tick.t))}%)` }}>
@@ -207,15 +207,6 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
           ))}
         </div>
       </div>
-      <p className={styles.unitNote}>
-        {series
-          .filter((s) => s.unit !== '')
-          .map((s) => (
-            <span key={s.layer.id} className={s.className}>
-              {s.layer.name} in {s.unit}
-            </span>
-          ))}
-      </p>
     </div>
   )
 }
@@ -245,22 +236,25 @@ function SeriesPaths({ series, t, x }: { series: Series; t: GeoTime; x: (u: numb
   )
 }
 
-/** One value axis's labels, in the series' colour, or an empty gutter when no series uses it. */
-function ValueTicks({ series, side }: { series: Series | undefined; side: 'left' | 'right' }) {
+/** One value axis in its series' colour: a vertical title naming the layer and its unit, and
+ *  bare-number tick labels; an empty gutter when no series uses it. */
+function ValueAxis({ series, side }: { series: Series | undefined; side: 'left' | 'right' }) {
   const range = series?.curve.valueRange ?? null
-  const ticks = series === undefined || range === null ? [] : niceTicks(range[0], range[1], 4).map((value) => ({ value, label: formatScalarValue(value, series.unit) }))
+  if (series === undefined || range === null) return <div className={side === 'left' ? styles.valueAxisEmpty : undefined} aria-hidden="true" />
+  const unit = axisUnit(range[1], series.unit)
+  const ticks = niceTicks(range[0], range[1], 4).map((value) => ({ value, label: String(Number((value / unit.divisor).toPrecision(12))) }))
+  const title = unit.label === '' ? series.layer.name : `${series.layer.name}, ${unit.label}`
   return (
-    // The labels are absolutely placed, so the gutter is sized to the longest one.
-    <div
-      className={`${styles.valueTicks} ${side === 'left' ? styles.valueTicksLeft : styles.valueTicksRight} ${series?.className ?? ''}`}
-      style={{ minWidth: `${Math.max(...ticks.map((tick) => tick.label.length), side === 'left' ? 2 : 0)}ch` }}
-      aria-hidden="true"
-    >
-      {ticks.map((tick) => (
-        <span key={tick.value} style={{ top: `${(series!.y(tick.value) / VIEW_HEIGHT) * 100}%` }}>
-          {tick.label}
-        </span>
-      ))}
+    <div className={`${styles.valueAxis} ${side === 'left' ? styles.valueAxisLeft : styles.valueAxisRight} ${series.className}`} aria-hidden="true">
+      <span className={styles.axisTitle}>{title}</span>
+      {/* The labels are absolutely placed, so the gutter is sized to the longest one. */}
+      <div className={styles.valueTicks} style={{ minWidth: `${Math.max(...ticks.map((tick) => tick.label.length))}ch` }}>
+        {ticks.map((tick) => (
+          <span key={tick.value} style={{ top: `${(series.y(tick.value) / VIEW_HEIGHT) * 100}%` }}>
+            {tick.label}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
