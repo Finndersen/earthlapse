@@ -431,6 +431,9 @@ exact sanity check as its own test oracle rather than recomputing it independent
 
 ## Global population total (ADR-031 amendment, 2026-09-18)
 
+From 1950 the HUD reads `sources/un-wpp` instead: `pipeline/curated.py` joins the two at load, so
+this series supplies 10,000 BCE to 1940 (ADR-063).
+
 A third curated output, id **`population`** (a `TimeSeries`, not a `RasterSequence` like the two
 above) — deliberately *not* `hyde_population_total`: it is the plain semantic id
 `WorldModel.at()` already looks up (`pipeline/models.py`'s `self._s("population", t)`) and
