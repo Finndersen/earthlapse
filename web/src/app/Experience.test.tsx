@@ -553,7 +553,7 @@ describe('Experience HUD scalar readouts', () => {
     )
   })
 
-  it('puts population under the ancestor panel and temperature under the globe, each shown only inside its domain', async () => {
+  it('puts population under the ancestor panel and temperature under the globe with its sparkline start, each shown only inside its domain', async () => {
     await renderSettled()
     act(() => {
       useTimeStore.getState().setT(1e9)
@@ -564,8 +564,12 @@ describe('Experience HUD scalar readouts', () => {
     act(() => {
       useTimeStore.getState().setT(100)
     })
-    expect(within(screen.getByTestId('shell-ancestor-readouts')).getByTestId('scalar-readout-population')).toBeTruthy()
-    expect(within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp').hasAttribute('data-readout-hidden')).toBe(false)
+    const population = within(screen.getByTestId('shell-ancestor-readouts')).getByTestId('scalar-readout-population')
+    const temperature = within(screen.getByTestId('shell-readouts')).getByTestId('scalar-readout-mean_temp')
+    expect(temperature.hasAttribute('data-readout-hidden')).toBe(false)
+    // Only the globe column notes where its sparkline starts.
+    expect(temperature.textContent).toMatch(/since \S/)
+    expect(population.textContent).not.toMatch(/since/)
   })
 
   it("opens the chart on a readout's layer from its sparkline, with other layers toggleable and a recent window zoomable", async () => {

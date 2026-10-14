@@ -106,9 +106,13 @@
 
 /* --------------------------------------------------------------------------- readouts */
 
+/* Each readout is as wide as its widest line, and its sparkline spans that width, so a value set
+   at the end of its line sits above the trace's current end. */
+
 .readouts {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: clamp(20px, 3.4vh, 34px);
 }
 
@@ -120,8 +124,8 @@
 
 .sparkline {
   display: block;
-  width: clamp(140px, 12vw, 190px);
-  max-width: 100%;
+  width: 100%;
+  min-width: clamp(140px, 12vw, 190px);
   height: 28px;
   padding: 0;
   border: none;
@@ -330,7 +334,7 @@
   }
 
   .sparkline {
-    width: 104px;
+    min-width: 104px;
     height: 20px;
   }
 

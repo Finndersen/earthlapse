@@ -42,4 +42,4 @@ export { AncestorPanel, type AncestorPanelProps } from './components/AncestorPan
 export { AncestorPortrait, type AncestorPortraitProps } from './components/AncestorPortrait'
 export { AncestorReadout, type AncestorReadoutProps } from './components/AncestorReadout'
 export { ScalarReadout, type ScalarReadoutProps } from './components/ScalarReadout'
-export { Sparkline, type SparklineProps } from './components/Sparkline'
+export { Sparkline, sparklineWindow, type SparklineProps } from './components/Sparkline'

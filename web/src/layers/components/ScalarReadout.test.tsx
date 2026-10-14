@@ -14,10 +14,10 @@ describe('<ScalarReadout>', () => {
   const population = createScalarLayer(POPULATION_MANIFEST, POPULATION_DATA)
   const text = (layer: typeof co2, t: number) => render(<ScalarReadout layer={layer} t={t} />).container.textContent ?? ''
 
-  it('prints the value alone, never its bounds, in human-scale words for people', () => {
+  it('prints the value alone, never its bounds, in human-scale words, with no unit word for a population count', () => {
     expect(text(co2, 1e8)).toBe('Atmospheric CO2 1200 ppm')
     cleanup()
-    expect(text(population, 2025)).toBe('Global population 232 million people')
+    expect(text(population, 2025)).toBe('Global population 232 million')
   })
 
   it('distinguishes "no record" in a gap from "no data" outside the domain, never showing 0', () => {

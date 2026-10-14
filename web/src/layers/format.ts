@@ -77,6 +77,12 @@ export function formatScalarValue(value: number, unit: string): string {
   return unit === 'people' ? formatPopulation(value) : formatValue(value)
 }
 
+/** The unit printed after a formatted value: none for a population count, which
+ *  `formatPopulation`'s "8.2 billion" already reads as people. */
+export function valueUnitLabel(unit: string): string {
+  return unit === 'people' ? '' : unit
+}
+
 /** How a value axis states its unit once, so its tick labels can be bare numbers: a population
  *  axis divides by the tier its largest value reads in (`4e9 -> 1e9, "billion people"`); any other
  *  unit is plotted as is. */

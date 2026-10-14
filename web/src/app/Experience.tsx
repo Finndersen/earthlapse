@@ -32,7 +32,7 @@ import {
 import { buildArrivalIndex, buildEmpireIndex, EmpireDetailPanel, empiresHaveDataAt, Globe, GLOBE_OVERLAYS, GLOBE_OVERLAY_KINDS, traceToOrigin } from '@/globe'
 import { iceAgeLayersFrom } from '@/globe/ice'
 import type { GlobeRasterLayers } from '@/globe'
-import { AncestorPanel, HUD_COLUMN_RESERVES_SPACE, hudColumnFor, isHiddenFromHud, isReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline } from '@/layers'
+import { AncestorPanel, HUD_COLUMN_RESERVES_SPACE, hudColumnFor, isHiddenFromHud, isReadoutHiddenAt, LayerChart, ScalarReadout, Sparkline, sparklineWindow } from '@/layers'
 import type { HudColumn } from '@/layers'
 import { GlobeTour, OnboardingTour } from '@/onboarding'
 import {
@@ -526,7 +526,8 @@ export function Experience() {
           aria-hidden={hidden || undefined}
           inert={hidden}
         >
-          <ScalarReadout layer={layer} t={rowT} />
+          {/* Under the globe, the value sits at the end of its line, above the sparkline's end. */}
+          <ScalarReadout layer={layer} t={rowT} since={column === 'globe' ? (sparklineWindow(layer.timeDomain, rowT)?.[0] ?? null) : undefined} />
           <button
             type="button"
             className={styles.sparkline}

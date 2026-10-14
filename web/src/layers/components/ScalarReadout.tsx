@@ -15,53 +15,65 @@
  *  since that reads naturally for a recent date) because silently freezing the number would
  *  misrepresent a 2015 total as a live reading for right now. Driven by the domain, not a layer
  *  id, so this applies to any future layer whose data ends before the present the same way, not
- *  just this one. */
+ *  just this one.
+ *
+ *  Given `since` (where the sparkline below starts), a "since <age>" note shares the value's line,
+ *  with the value at the line's end, above the trace's current end. */
 
 import { memo } from 'react'
 
 import { formatGeoTime } from '@/timeline'
 import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
-import { formatScalarValue } from '../format'
+import { formatScalarValue, valueUnitLabel } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './hud.module.css'
 
 export interface ScalarReadoutProps {
   layer: Layer<ScalarValue>
   t: GeoTime
+  since?: GeoTime | null
 }
 
 /** Throttles `t` (see `useThrottledValue`'s own doc comment) before handing off to the memoised
  *  body below, so playback's per-frame `t` writes only re-run the sampling/formatting work a few
  *  times a second, not every frame. This wrapper itself still re-renders every frame — it's the
  *  body doing the real work that skips renders when the throttled `t` hasn't moved. */
-export function ScalarReadout({ layer, t }: ScalarReadoutProps) {
+export function ScalarReadout({ layer, t, since }: ScalarReadoutProps) {
   const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
-  return <ScalarReadoutBody layer={layer} t={throttledT} />
+  return <ScalarReadoutBody layer={layer} t={throttledT} since={since} />
 }
 
-const ScalarReadoutBody = memo(function ScalarReadoutBody({ layer, t }: ScalarReadoutProps) {
+const ScalarReadoutBody = memo(function ScalarReadoutBody({ layer, t, since }: ScalarReadoutProps) {
   const [newest, oldest] = layer.timeDomain
   const held = t < newest
   const sampledT = held ? newest : t
   const value = layer.sample(sampledT)
   const inDomain = sampledT >= newest && sampledT <= oldest
 
+  const reading =
+    value === null ? (
+      <span className={styles.noData} aria-live="polite">
+        {inDomain ? 'no record' : 'no data'}
+      </span>
+    ) : (
+      <span className={styles.value} data-testid="scalar-readout-value" aria-live="polite">
+        {formatScalarValue(value.value, value.unit)}
+        {valueUnitLabel(value.unit) !== '' && <> <span className={styles.unit}>{valueUnitLabel(value.unit)}</span></>}
+      </span>
+    )
+
   return (
     <span className={styles.readout}>
       <span className={styles.label}>{layer.name}</span>{' '}
-      {value === null ? (
-        <span className={styles.noData} aria-live="polite">
-          {inDomain ? 'no record' : 'no data'}
-        </span>
+      {since === undefined || since === null ? (
+        reading
       ) : (
-        <span className={styles.value} data-testid="scalar-readout-value" aria-live="polite">
-          {formatScalarValue(value.value, value.unit)} <span className={styles.unit}>{value.unit}</span>
+        <span className={styles.readoutLine}>
+          <span className={styles.note}>since {formatGeoTime(since)}</span> {reading}
         </span>
       )}
-      {held && value !== null && (
-        <span className={styles.asOf}>as of {formatGeoTime(sampledT)}</span>
-      )}
+      {held && value !== null && <span className={styles.note}>as of {formatGeoTime(sampledT)}</span>}
     </span>
   )
 })

@@ -21,7 +21,7 @@ import type { GeoTime, Layer, ScalarValue } from '@/types/layer'
 
 import { defaultRange, niceTicks, recentWindowsFor, sampleCurve, splitAtT, timeAxis, windowDomain } from '../chartGeometry'
 import type { ChartCurve, ChartPoint } from '../chartGeometry'
-import { axisUnit, formatScalarValue } from '../format'
+import { axisUnit, formatScalarValue, valueUnitLabel } from '../format'
 import { HUD_READOUT_THROTTLE_MS, useThrottledValue } from '@/lib/useThrottledValue'
 import styles from './LayerChart.module.css'
 
@@ -155,7 +155,7 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
               const value = readingT <= s.layer.timeDomain[1] ? s.layer.sample(Math.max(readingT, s.layer.timeDomain[0])) : null
               return (
                 <span key={s.layer.id} className={`${styles.readingValue} ${s.className}`}>
-                  {value === null ? 'no record' : `${formatScalarValue(value.value, s.unit)} ${s.unit}`}
+                  {value === null ? 'no record' : `${formatScalarValue(value.value, s.unit)} ${valueUnitLabel(s.unit)}`.trim()}
                 </span>
               )
             })}

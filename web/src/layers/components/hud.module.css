@@ -42,6 +42,14 @@
   color: var(--hud-dim, rgba(239, 233, 220, 0.62));
 }
 
+/* A note and the value on one line, the value at its end. */
+.readoutLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
 .noData {
   font-family: var(--hud-mono, ui-monospace, monospace);
   font-size: 11px;
@@ -123,10 +131,11 @@
   color: var(--hud-ink, #efe9dc);
 }
 
-.asOf {
+.note {
   font-family: var(--hud-mono, ui-monospace, monospace);
   font-size: 10px;
   letter-spacing: 0.2em;
+  white-space: nowrap;
   text-transform: uppercase;
   color: var(--hud-faint, rgba(239, 233, 220, 0.36));
 }
@@ -216,7 +225,7 @@
   }
 
   .ancestorName,
-  .asOf {
+  .note {
     font-family: var(--hud-mono, ui-monospace, monospace);
     font-weight: 400;
     text-transform: uppercase;
@@ -232,7 +241,7 @@
     letter-spacing: 0.14em;
   }
 
-  .asOf {
+  .note {
     font-size: 8px;
     letter-spacing: 0.18em;
   }
