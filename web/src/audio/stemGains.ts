@@ -403,10 +403,10 @@ export function stemGains(t: GeoTime, flatBasaltWindows: ReadonlyArray<TimeWindo
       // `industrial-revolution` t_max (1761) → steam-powered mills of 1830, then the Victorian
       // steam peak to ~1900. Isolated Newcomen mine pumps (313 yr) are not an ambient soundscape.
       (rampLog(t, 265, 195, 0, 0.5) + rampLog(t, 195, 125, 0, 0.15)) *
-        // Electrification retires steam line shafts from the early 1900s (Devine 1983), then
-        // later deindustrialisation.
+        // Electrification retires steam line shafts from the early 1900s (Devine 1983), and
+        // the last steam plant goes with late-century deindustrialisation: silent by 2000.
         rampLog(t, 125, 60, 1, 0.35) *
-        rampLog(t, 60, 0, 1, 0.6) *
+        rampLog(t, 60, 25, 1, 0) *
         people,
     ),
     traffic: clampUnit(

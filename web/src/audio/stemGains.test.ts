@@ -73,8 +73,9 @@ describe('stemGains', () => {
     expect(Math.max(...WILDLIFE.filter((id) => id !== 'livestock').map((id) => rome[id]))).toBeLessThan(rome.settlement / 3)
   })
 
-  it('makes traffic loudest at the present with wildlife ducked but not silenced', () => {
+  it('makes traffic loudest at the present, with steam industry gone and wildlife ducked but not silenced', () => {
     const now = stemGains(0, NONE)
+    expect(now.industry).toBe(0)
     for (const id of AMBIENCE_STEM_IDS) if (id !== 'traffic') expect(now.traffic, id).toBeGreaterThan(now[id])
     expect(Math.max(...WILDLIFE.map((id) => now[id]))).toBeLessThan(0.1)
     expect(now.forest).toBeGreaterThan(0)
