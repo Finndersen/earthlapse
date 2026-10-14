@@ -62,19 +62,18 @@ function unionDomain(domains: readonly (readonly [GeoTime, GeoTime])[]): [GeoTim
 export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
   const throttledT = useThrottledValue(t, HUD_READOUT_THROTTLE_MS)
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(() => new Set([initialLayerId]))
-  /** `'auto'` follows `defaultRange` until a range is picked; a toggle returns to it. */
-  const [chosenRange, setRange] = useState<ChartRange | 'auto'>('auto')
   const [hoverU, setHoverU] = useState<number | null>(null)
 
-  const selected = useMemo(() => layers.filter((layer) => selectedIds.has(layer.id)), [layers, selectedIds])
-  const span = useMemo(() => unionDomain(selected.map((layer) => layer.timeDomain)), [selected])
+  // The time axis spans every dataset on offer, not just the selected ones, so toggling a
+  // dataset never moves the window it is drawn in.
+  const span = useMemo(() => unionDomain(layers.map((layer) => layer.timeDomain)), [layers])
   const windows = recentWindowsFor(span)
-  const range =
-    chosenRange === 'auto'
-      ? defaultRange(windows, selected.map((layer) => layer.timeDomain[1] - layer.timeDomain[0]))
-      : chosenRange !== null && windows.includes(chosenRange)
-        ? chosenRange
-        : null
+  const [range, setRange] = useState<ChartRange>(() => {
+    const initial = layers.find((layer) => layer.id === initialLayerId)
+    return initial === undefined ? null : defaultRange(windows, [initial.timeDomain[1] - initial.timeDomain[0]])
+  })
+
+  const selected = useMemo(() => layers.filter((layer) => selectedIds.has(layer.id)), [layers, selectedIds])
   const shown = useMemo(() => windowDomain(span, range), [span, range])
   const axis = useMemo(() => timeAxis(shown), [shown])
 
@@ -99,7 +98,6 @@ export function LayerChart({ layers, initialLayerId, t }: LayerChartProps) {
       if (!next.delete(id)) next.add(id)
       return next.size === 0 ? current : next
     })
-    setRange('auto')
   }
 
   const x = (u: number) => u * VIEW_WIDTH

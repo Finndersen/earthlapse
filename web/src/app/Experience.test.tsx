@@ -581,11 +581,10 @@ describe('Experience HUD scalar readouts', () => {
     const dialog = screen.getByRole('dialog')
     const chart = within(dialog).getByTestId('layer-chart')
     expect(chart.getAttribute('data-layer-ids')).toBe('mean_temp')
+    fireEvent.click(within(dialog).getByRole('button', { name: '200 yr' }))
     fireEvent.click(within(dialog).getByRole('button', { name: 'Global population' }))
     expect(chart.getAttribute('data-layer-ids')).toBe('population mean_temp')
-    // Opens on the window that holds the shorter record whole.
-    expect(within(dialog).getByRole('button', { name: '25,000 yr' }).getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(within(dialog).getByRole('button', { name: '200 yr' }))
+    // Toggling a dataset keeps the chosen window.
     expect(within(dialog).getByRole('button', { name: '200 yr' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.keyDown(dialog, { key: 'Escape' })
     expect(screen.queryByRole('dialog')).toBeNull()
